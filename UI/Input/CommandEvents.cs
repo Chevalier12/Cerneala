@@ -5,22 +5,22 @@ public static class CommandEvents
     public static readonly RoutedEvent PreviewCanExecuteEvent = Register(
         "PreviewCanExecute",
         RoutingStrategy.Tunnel,
-        typeof(RoutedEventArgs));
+        typeof(CanExecuteRoutedEventArgs));
 
     public static readonly RoutedEvent CanExecuteEvent = Register(
         "CanExecute",
         RoutingStrategy.Bubble,
-        typeof(RoutedEventArgs));
+        typeof(CanExecuteRoutedEventArgs));
 
     public static readonly RoutedEvent PreviewExecutedEvent = Register(
         "PreviewExecuted",
         RoutingStrategy.Tunnel,
-        typeof(RoutedEventArgs));
+        typeof(ExecutedRoutedEventArgs));
 
     public static readonly RoutedEvent ExecutedEvent = Register(
         "Executed",
         RoutingStrategy.Bubble,
-        typeof(RoutedEventArgs));
+        typeof(ExecutedRoutedEventArgs));
 
     public static IReadOnlyList<RoutedEvent> All { get; } =
     [
