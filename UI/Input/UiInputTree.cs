@@ -62,6 +62,11 @@ public sealed class UiInputTree
 
     internal IReadOnlyList<RoutedEventHandler> GetHandlers(UiElementId id, RoutedEvent routedEvent)
     {
+        if (!elements[id].IsEnabled)
+        {
+            return [];
+        }
+
         return handlers.TryGetValue((id, routedEvent), out List<RoutedEventHandler>? registeredHandlers)
             ? registeredHandlers
             : [];

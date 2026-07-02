@@ -18,6 +18,18 @@ public sealed class InputFrameTests
     }
 
     [Fact]
+    public void InputFrameReportsMouseWheelDelta()
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithWheelValue(120);
+        PointerSnapshot current = previous.WithWheelValue(360);
+
+        InputFrame frame = new(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+
+        Assert.Equal(360, frame.Pointer.WheelValue);
+        Assert.Equal(240, frame.Pointer.WheelDelta);
+    }
+
+    [Fact]
     public void InputFrameReportsKeyTransitions()
     {
         KeyboardSnapshot previous = KeyboardSnapshot.Empty;

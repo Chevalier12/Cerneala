@@ -4,18 +4,21 @@ public sealed class PointerSnapshot
 {
     private readonly IReadOnlyDictionary<InputMouseButton, bool> buttons;
 
-    private PointerSnapshot(float x, float y, IReadOnlyDictionary<InputMouseButton, bool> buttons)
+    private PointerSnapshot(float x, float y, int wheelValue, IReadOnlyDictionary<InputMouseButton, bool> buttons)
     {
         X = x;
         Y = y;
+        WheelValue = wheelValue;
         this.buttons = buttons;
     }
 
-    public static PointerSnapshot Empty { get; } = new(0, 0, new Dictionary<InputMouseButton, bool>());
+    public static PointerSnapshot Empty { get; } = new(0, 0, 0, new Dictionary<InputMouseButton, bool>());
 
     public float X { get; }
 
     public float Y { get; }
+
+    public int WheelValue { get; }
 
     public bool IsDown(InputMouseButton button)
     {
@@ -24,7 +27,12 @@ public sealed class PointerSnapshot
 
     public PointerSnapshot WithPosition(float x, float y)
     {
-        return new PointerSnapshot(x, y, buttons);
+        return new PointerSnapshot(x, y, WheelValue, buttons);
+    }
+
+    public PointerSnapshot WithWheelValue(int wheelValue)
+    {
+        return new PointerSnapshot(X, Y, wheelValue, buttons);
     }
 
     public PointerSnapshot WithButton(InputMouseButton button, bool isDown)
@@ -34,6 +42,6 @@ public sealed class PointerSnapshot
             [button] = isDown
         };
 
-        return new PointerSnapshot(X, Y, nextButtons);
+        return new PointerSnapshot(X, Y, WheelValue, nextButtons);
     }
 }

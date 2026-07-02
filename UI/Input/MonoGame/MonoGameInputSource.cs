@@ -35,6 +35,7 @@ public sealed class MonoGameInputSource : IInputSource
 
         return PointerSnapshot.Empty
             .WithPosition(state.X, state.Y)
+            .WithWheelValue(state.ScrollWheelValue)
             .WithButton(InputMouseButton.Left, state.LeftButton == ButtonState.Pressed)
             .WithButton(InputMouseButton.Middle, state.MiddleButton == ButtonState.Pressed)
             .WithButton(InputMouseButton.Right, state.RightButton == ButtonState.Pressed)

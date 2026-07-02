@@ -41,6 +41,10 @@ public sealed class InputFrame
 
         public float Y => current.Y;
 
+        public int WheelValue => current.WheelValue;
+
+        public int WheelDelta => current.WheelValue - previous.WheelValue;
+
         public bool IsDown(InputMouseButton button)
         {
             return current.IsDown(button);

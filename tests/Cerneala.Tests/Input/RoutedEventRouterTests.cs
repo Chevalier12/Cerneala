@@ -70,4 +70,26 @@ public sealed class RoutedEventRouterTests
 
         Assert.Equal(["button"], calls);
     }
+
+    [Fact]
+    public void DisabledElementsDoNotInvokeHandlers()
+    {
+        UiInputTree tree = new();
+        UiElementId root = new("root");
+        UiElementId panel = new("panel");
+        UiElementId button = new("button");
+        List<string> calls = new();
+
+        tree.Add(root, null);
+        tree.Add(panel, root, isEnabled: false);
+        tree.Add(button, panel);
+        tree.AddHandler(root, InputEvents.MouseDownEvent, (_, _) => calls.Add("root"));
+        tree.AddHandler(panel, InputEvents.MouseDownEvent, (_, _) => calls.Add("panel"));
+        tree.AddHandler(button, InputEvents.MouseDownEvent, (_, _) => calls.Add("button"));
+
+        MouseButtonEventArgs args = new(InputEvents.MouseDownEvent, button, InputMouseButton.Left, 0, 0, 1);
+        RoutedEventRouter.Raise(tree, button, args);
+
+        Assert.Equal(["button", "root"], calls);
+    }
 }
