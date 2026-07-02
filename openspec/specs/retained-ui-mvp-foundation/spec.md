@@ -42,6 +42,10 @@ Cerneala SHALL capture the confirmed MVP decisions from `ROADMAPv2.md`.
 - **WHEN** the v2 architecture is documented
 - **THEN** it states that MVP uses separate logical and visual trees
 
+#### Scenario: Retained element implementation follows confirmed tree decision
+- **WHEN** retained element tree work is planned or implemented
+- **THEN** it follows the confirmed separate logical and visual tree MVP decision instead of stale single-tree wording
+
 #### Scenario: Input route decision is captured
 - **WHEN** the v2 architecture is documented
 - **THEN** it states that the new retained route model replaces `UiInputTree` as the future route table while preserving useful routed-event concepts
