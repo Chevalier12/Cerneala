@@ -1,4 +1,5 @@
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 
 namespace Cerneala.Tests.UI.Elements;
 
@@ -85,6 +86,21 @@ public sealed class UIRootTests
 
         Assert.True(afterAdd > initialVersion);
         Assert.True(root.TreeVersion > afterAdd);
+    }
+
+    [Fact]
+    public void RootOwnsSchedulerAndReturnsFrameStats()
+    {
+        UIRoot root = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+        child.Invalidate(InvalidationFlags.Render, "render");
+
+        FrameStats stats = root.ProcessFrame();
+
+        Assert.Same(root.Scheduler, root.Scheduler);
+        Assert.Equal(1, stats.RenderedElements);
+        Assert.False(root.Scheduler.HasWork);
     }
 
     private sealed class EqualValueElement(int value) : UIElement

@@ -255,6 +255,19 @@ Acceptance checklist:
 
 This phase is the core of the game-loop-friendly retained model. Update and draw can run every frame, but layout and drawing command generation should run only when dirty state requires it.
 
+OpenSpec: `openspec/changes/add-retained-invalidation-frame-scheduler` tracks the implementation contract and checklist for this phase.
+
+Planning:
+
+- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/proposal.md`
+- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/design.md`
+- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/tasks.md`
+- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/specs/retained-invalidation-frame-scheduler/spec.md`
+- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/specs/retained-element-tree/spec.md`
+- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/specs/typed-state-model/spec.md`
+- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/specs/retained-ui-mvp-foundation/spec.md`
+- [x] `openspec validate add-retained-invalidation-frame-scheduler --strict`
+
 Invalidation model:
 
 ```text
@@ -276,52 +289,55 @@ UiFrameScheduler.ProcessFrame()
         +--> expose cached root DrawCommandList for backend rendering
 ```
 
-- [ ] `UI/Invalidation/InvalidationFlags.cs` — `[Flags]`: `None`, `Measure`, `Arrange`, `Render`, `Text`, `Image`, `Resource`, `Style`, `InputVisual`, `HitTest`, `Subtree`.
-- [ ] `UI/Invalidation/DirtyState.cs` — compact per-element dirty state and version stamps.
-- [ ] `UI/Invalidation/DirtyPropagation.cs` — rules for upward/downward propagation.
-- [ ] `UI/Invalidation/IInvalidationSink.cs`
-- [ ] `UI/Invalidation/InvalidationRequest.cs`
-- [ ] `UI/Invalidation/LayoutQueue.cs` — stable queue for measure and arrange invalidations.
-- [ ] `UI/Invalidation/RenderQueue.cs` — stable queue for render command regeneration.
-- [ ] `UI/Invalidation/HitTestQueue.cs` — rebuild hit-test data only when needed.
-- [ ] `UI/Invalidation/UiFrameScheduler.cs` — runs input effects, layout, render-cache updates, and diagnostics.
-- [ ] `UI/Invalidation/FramePhase.cs` — `Input`, `Style`, `Measure`, `Arrange`, `RenderCache`, `Idle`.
-- [ ] `UI/Invalidation/FrameStats.cs` — counts measured elements, arranged elements, rendered elements, reused caches.
-- [ ] `UI/Invalidation/FrameBudget.cs` — optional limits for later large trees; MVP may process all work.
-- [ ] `UI/Diagnostics/InvalidationTrace.cs`
+- [x] `UI/Invalidation/InvalidationFlags.cs` — `[Flags]`: `None`, `Measure`, `Arrange`, `Render`, `Text`, `Image`, `Resource`, `Style`, `InputVisual`, `HitTest`, `Subtree`.
+- [x] `UI/Invalidation/DirtyState.cs` — compact per-element dirty state and version stamps.
+- [x] `UI/Invalidation/DirtyPropagation.cs` — rules for upward/downward propagation.
+- [x] `UI/Invalidation/IInvalidationSink.cs`
+- [x] `UI/Invalidation/InvalidationRequest.cs`
+- [x] `UI/Invalidation/LayoutQueue.cs` — stable queue for measure and arrange invalidations.
+- [x] `UI/Invalidation/RenderQueue.cs` — stable queue for render command regeneration.
+- [x] `UI/Invalidation/HitTestQueue.cs` — rebuild hit-test data only when needed.
+- [x] `UI/Invalidation/UiFrameScheduler.cs` — runs input effects, layout, render-cache updates, and diagnostics.
+- [x] `UI/Invalidation/FramePhase.cs` — `Input`, `Style`, `Measure`, `Arrange`, `RenderCache`, `Idle`.
+- [x] `UI/Invalidation/FrameStats.cs` — counts measured elements, arranged elements, rendered elements, reused caches.
+- [x] `UI/Invalidation/FrameBudget.cs` — optional limits for later large trees; MVP may process all work.
+- [x] `UI/Diagnostics/InvalidationTrace.cs`
 
 Dirty propagation rules:
 
-- [ ] `Measure` invalidation marks the element measure-dirty and propagates measure/arrange need to layout ancestors until a layout boundary.
-- [ ] `Arrange` invalidation marks the element arrange-dirty and propagates render need for affected visual bounds.
-- [ ] `Render` invalidation marks local render cache dirty without forcing measure or arrange.
-- [ ] `Text` invalidation invalidates text measurement, local render cache, and layout only when text metrics may change.
-- [ ] `Image` invalidation invalidates image measurement when intrinsic size is used; otherwise render only.
-- [ ] `Resource` invalidation follows the metadata of the properties/resources that consumed the resource.
-- [ ] `Style` invalidation reapplies style and then raises property-specific invalidations.
-- [ ] `InputVisual` invalidation is render-only unless a control explicitly maps state to layout-affecting properties.
-- [ ] Clearing dirty flags happens only after successful phase processing.
+- [x] `Measure` invalidation marks the element measure-dirty and propagates measure/arrange need to layout ancestors until a layout boundary.
+- [x] `Arrange` invalidation marks the element arrange-dirty and propagates render need for affected visual bounds.
+- [x] `Render` invalidation marks local render cache dirty without forcing measure or arrange.
+- [x] `Text` invalidation invalidates text measurement, local render cache, and layout only when text metrics may change.
+- [x] `Image` invalidation invalidates image measurement when intrinsic size is used; otherwise render only.
+- [x] `Resource` invalidation follows the metadata of the properties/resources that consumed the resource.
+- [x] `Style` invalidation reapplies style and then raises property-specific invalidations.
+- [x] `InputVisual` invalidation is render-only unless a control explicitly maps state to layout-affecting properties.
+- [x] Clearing dirty flags happens only after successful phase processing.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Invalidation/InvalidationFlagsTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Invalidation/DirtyPropagationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Invalidation/LayoutQueueTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Invalidation/RenderQueueTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Invalidation/UiFrameSchedulerTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Invalidation/FrameStatsTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Invalidation/RetainedNoWorkFrameTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Invalidation/InvalidationFlagsTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Invalidation/DirtyStateTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Invalidation/DirtyPropagationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Invalidation/LayoutQueueTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Invalidation/RenderQueueTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Invalidation/HitTestQueueTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Invalidation/UiFrameSchedulerTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Invalidation/FrameStatsTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Invalidation/RetainedNoWorkFrameTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Diagnostics/InvalidationTraceTests.cs`
 
 Required retained-mode tests:
 
-- [ ] `RetainedNoWorkFrameTests.UnchangedTreeDoesNotMeasureOnSecondFrame`
-- [ ] `RetainedNoWorkFrameTests.UnchangedTreeDoesNotArrangeOnSecondFrame`
-- [ ] `RetainedNoWorkFrameTests.UnchangedTreeDoesNotRegenerateRenderCommandsOnSecondDraw`
-- [ ] `RetainedNoWorkFrameTests.DrawEveryFrameCanReuseCachedRootCommandList`
-- [ ] `RetainedNoWorkFrameTests.RenderOnlyInvalidationDoesNotRunMeasure`
-- [ ] `RetainedNoWorkFrameTests.MeasureInvalidationRegeneratesRenderCommandsOnlyAfterLayoutSettles`
-- [ ] `RetainedNoWorkFrameTests.HoverChangeInvalidatesRenderOnlyWhenVisualStateActuallyChanges`
-- [ ] `RetainedNoWorkFrameTests.TextColorChangeRebuildsRenderCommandsWithoutReshapingWhenMetricsAreUnchanged`
+- [x] `RetainedNoWorkFrameTests.UnchangedTreeDoesNotMeasureOnSecondFrame`
+- [x] `RetainedNoWorkFrameTests.UnchangedTreeDoesNotArrangeOnSecondFrame`
+- [x] `RetainedNoWorkFrameTests.UnchangedTreeDoesNotRegenerateRenderCommandsOnSecondDraw`
+- [x] `RetainedNoWorkFrameTests.DrawEveryFrameCanReuseCachedRootCommandList`
+- [x] `RetainedNoWorkFrameTests.RenderOnlyInvalidationDoesNotRunMeasure`
+- [x] `RetainedNoWorkFrameTests.MeasureInvalidationRegeneratesRenderCommandsOnlyAfterLayoutSettles`
+- [x] `RetainedNoWorkFrameTests.HoverChangeInvalidatesRenderOnlyWhenVisualStateActuallyChanges`
+- [x] `RetainedNoWorkFrameTests.TextColorChangeRebuildsRenderCommandsWithoutReshapingWhenMetricsAreUnchanged`
 
 ## 5. [MVP] Layout system
 

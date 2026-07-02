@@ -104,7 +104,8 @@ public class UiObject
             UiPropertyOptions.AffectsArrange |
             UiPropertyOptions.AffectsRender |
             UiPropertyOptions.AffectsHitTest |
-            UiPropertyOptions.AffectsStyle);
+            UiPropertyOptions.AffectsStyle |
+            UiPropertyOptions.AffectsInputVisual);
         if (invalidationOptions != UiPropertyOptions.None && this is IUiPropertyOwner owner)
         {
             owner.OnPropertyInvalidated(args, invalidationOptions);

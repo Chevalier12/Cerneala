@@ -9,6 +9,7 @@ public enum UiPropertyOptions
     AffectsRender = 1 << 2,
     AffectsHitTest = 1 << 3,
     AffectsStyle = 1 << 4,
-    Inherits = 1 << 5,
-    ReadOnly = 1 << 6
+    AffectsInputVisual = 1 << 5,
+    Inherits = 1 << 6,
+    ReadOnly = 1 << 7
 }
