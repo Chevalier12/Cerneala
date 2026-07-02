@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Playground/">
+    <Project Path="Playground/Cerneala.Playground/Cerneala.Playground.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Cerneala.Tests/Cerneala.Tests.csproj" />
+  </Folder>
+</Solution>
