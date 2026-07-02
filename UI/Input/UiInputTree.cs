@@ -68,7 +68,7 @@ public sealed class UiInputTree
         }
 
         return handlers.TryGetValue((id, routedEvent), out List<RoutedEventHandler>? registeredHandlers)
-            ? registeredHandlers
+            ? registeredHandlers.ToArray()
             : [];
     }
 }

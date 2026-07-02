@@ -18,6 +18,14 @@ public sealed class InputFrameTests
     }
 
     [Fact]
+    public void PointerSnapshotIgnoresNoMouseButtonSentinel()
+    {
+        PointerSnapshot snapshot = PointerSnapshot.Empty.WithButton(InputMouseButton.None, isDown: true);
+
+        Assert.False(snapshot.IsDown(InputMouseButton.None));
+    }
+
+    [Fact]
     public void InputFrameReportsMouseWheelDelta()
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithWheelValue(120);
@@ -53,6 +61,12 @@ public sealed class InputFrameTests
     }
 
     [Fact]
+    public void TextInputSnapshotEventRejectsNullText()
+    {
+        Assert.Throws<ArgumentNullException>(() => new TextInputSnapshotEvent(null!));
+    }
+
+    [Fact]
     public void InputFrameCopiesTextInputEvents()
     {
         List<TextInputSnapshotEvent> events = [new("a")];
@@ -61,5 +75,25 @@ public sealed class InputFrameTests
         events.Add(new("b"));
 
         Assert.Equal("a", frame.TextInputEvents.Single().Text);
+    }
+
+    [Fact]
+    public void InputFrameExposesImmutableTextInputEvents()
+    {
+        TextInputSnapshotEvent original = new("a");
+        InputFrame frame = new(PointerSnapshot.Empty, PointerSnapshot.Empty, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, [original]);
+
+        if (frame.TextInputEvents is IList<TextInputSnapshotEvent> exposedEvents)
+        {
+            try
+            {
+                exposedEvents[0] = new TextInputSnapshotEvent("b");
+            }
+            catch (NotSupportedException)
+            {
+            }
+        }
+
+        Assert.Same(original, frame.TextInputEvents.Single());
     }
 }

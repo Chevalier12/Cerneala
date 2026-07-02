@@ -44,4 +44,31 @@ public sealed class CommandingTests
 
         Assert.True(executed);
     }
+
+    [Fact]
+    public void CommandBindingIgnoresExecutedArgsForDifferentCommand()
+    {
+        RoutedCommand save = new("Save", typeof(CommandingTests));
+        RoutedCommand open = new("Open", typeof(CommandingTests));
+        bool executed = false;
+        CommandBinding binding = new(save, (_, _) => executed = true);
+
+        ExecutedRoutedEventArgs args = new(CommandEvents.ExecutedEvent, new object(), open, null);
+        binding.OnExecuted(new UiElementId("target"), args);
+
+        Assert.False(executed);
+    }
+
+    [Fact]
+    public void CommandBindingIgnoresCanExecuteArgsForDifferentCommand()
+    {
+        RoutedCommand save = new("Save", typeof(CommandingTests));
+        RoutedCommand open = new("Open", typeof(CommandingTests));
+        CommandBinding binding = new(save, null, (_, args) => args.CanExecute = true);
+
+        CanExecuteRoutedEventArgs args = new(CommandEvents.CanExecuteEvent, new object(), open, null);
+        binding.OnCanExecute(new UiElementId("target"), args);
+
+        Assert.False(args.CanExecute);
+    }
 }

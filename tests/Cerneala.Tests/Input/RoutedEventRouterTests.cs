@@ -27,6 +27,27 @@ public sealed class RoutedEventRouterTests
     }
 
     [Fact]
+    public void BubbleEventsSetSourceToCurrentRouteElementForEachHandler()
+    {
+        UiInputTree tree = new();
+        UiElementId root = new("root");
+        UiElementId button = new("button");
+        List<object> sources = new();
+
+        tree.Add(root, null);
+        tree.Add(button, root);
+        tree.AddHandler(button, InputEvents.MouseDownEvent, (_, args) => sources.Add(args.Source));
+        tree.AddHandler(root, InputEvents.MouseDownEvent, (_, args) => sources.Add(args.Source));
+
+        MouseButtonEventArgs args = new(InputEvents.MouseDownEvent, button, InputMouseButton.Left, 0, 0, 1);
+        RoutedEventRouter.Raise(tree, button, args);
+
+        Assert.Equal([button, root], sources);
+        Assert.Equal(root, args.Source);
+        Assert.Equal(button, args.OriginalSource);
+    }
+
+    [Fact]
     public void TunnelEventsInvokeRootThenTarget()
     {
         UiInputTree tree = new();
@@ -69,6 +90,29 @@ public sealed class RoutedEventRouterTests
         RoutedEventRouter.Raise(tree, button, args);
 
         Assert.Equal(["button"], calls);
+    }
+
+    [Fact]
+    public void HandlersAddedDuringDispatchDoNotRunUntilNextDispatch()
+    {
+        UiInputTree tree = new();
+        UiElementId button = new("button");
+        List<string> calls = new();
+
+        tree.Add(button, null);
+        tree.AddHandler(button, InputEvents.MouseDownEvent, (_, _) =>
+        {
+            calls.Add("first");
+            tree.AddHandler(button, InputEvents.MouseDownEvent, (_, _) => calls.Add("added"));
+        });
+
+        MouseButtonEventArgs firstArgs = new(InputEvents.MouseDownEvent, button, InputMouseButton.Left, 0, 0, 1);
+        RoutedEventRouter.Raise(tree, button, firstArgs);
+
+        MouseButtonEventArgs secondArgs = new(InputEvents.MouseDownEvent, button, InputMouseButton.Left, 0, 0, 1);
+        RoutedEventRouter.Raise(tree, button, secondArgs);
+
+        Assert.Equal(["first", "first", "added"], calls);
     }
 
     [Fact]

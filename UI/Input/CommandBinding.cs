@@ -20,12 +20,22 @@ public sealed class CommandBinding
     public void OnExecuted(UiElementId sender, ExecutedRoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
+        if (!ReferenceEquals(Command, args.Command))
+        {
+            return;
+        }
+
         executed?.Invoke(sender, args);
     }
 
     public void OnCanExecute(UiElementId sender, CanExecuteRoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
+        if (!ReferenceEquals(Command, args.Command))
+        {
+            return;
+        }
+
         canExecute?.Invoke(sender, args);
     }
 }

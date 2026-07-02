@@ -29,6 +29,24 @@ public sealed class RoutedEventTests
     }
 
     [Fact]
+    public void RegisterRejectsNullArgsType()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => RoutedEventRegistry.Register("MouseMove", typeof(RoutedEventTests), RoutingStrategy.Bubble, null!));
+    }
+
+    [Fact]
+    public void RegisterRejectsUnsupportedRoutingStrategy()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => RoutedEventRegistry.Register(
+                "MouseMove",
+                typeof(RoutedEventTests),
+                (RoutingStrategy)42,
+                typeof(RoutedEventArgs)));
+    }
+
+    [Fact]
     public void RoutedEventArgsDefaultsSourceToOriginalSource()
     {
         object source = new();

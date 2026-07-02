@@ -22,6 +22,11 @@ public sealed class PointerSnapshot
 
     public bool IsDown(InputMouseButton button)
     {
+        if (button is InputMouseButton.None)
+        {
+            return false;
+        }
+
         return buttons.TryGetValue(button, out bool isDown) && isDown;
     }
 
@@ -37,6 +42,11 @@ public sealed class PointerSnapshot
 
     public PointerSnapshot WithButton(InputMouseButton button, bool isDown)
     {
+        if (button is InputMouseButton.None)
+        {
+            return this;
+        }
+
         Dictionary<InputMouseButton, bool> nextButtons = new(buttons)
         {
             [button] = isDown
