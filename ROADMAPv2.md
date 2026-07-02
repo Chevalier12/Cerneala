@@ -132,8 +132,8 @@ Existing input tests:
 This phase makes the intended v2 architecture explicit before adding framework surface area. It keeps design decisions testable and prevents accidental WPF compatibility sprawl.
 
 - [x] `openspec/config.yaml` — existing OpenSpec configuration using the `spec-driven` schema.
-- [ ] `openspec/README.md` — document how this repo uses OpenSpec for Cerneala planning.
-- [ ] `openspec/project.md` — product principles, scope bands, and non-goals for the retained UI core.
+- [x] `openspec/README.md` — document how this repo uses OpenSpec for Cerneala planning.
+- [x] `openspec/project.md` — product principles, scope bands, and non-goals for the retained UI core.
 - [ ] `openspec/specs/retained-ui-tree/spec.md`
 - [ ] `openspec/specs/invalidation-and-frame-loop/spec.md`
 - [ ] `openspec/specs/typed-state/spec.md`
@@ -141,9 +141,9 @@ This phase makes the intended v2 architecture explicit before adding framework s
 - [ ] `openspec/specs/render-cache/spec.md`
 - [ ] `openspec/specs/input-focus-command-bridge/spec.md`
 - [ ] `openspec/specs/styling-theme/spec.md`
-- [ ] `docs/architecture-v2.md` — concise architecture complement to `architecture.md`, focused on layers above drawing/input.
-- [ ] `docs/diagrams/retained-frame-loop.md` — text diagram for update/layout/render-cache/draw flow.
-- [ ] `docs/diagrams/ui-layer-boundaries.md` — text diagram showing UI core -> drawing/input -> MonoGame adapters.
+- [x] `docs/architecture-v2.md` — concise architecture complement to `architecture.md`, focused on layers above drawing/input.
+- [x] `docs/diagrams/retained-frame-loop.md` — text diagram for update/layout/render-cache/draw flow.
+- [x] `docs/diagrams/ui-layer-boundaries.md` — text diagram showing UI core -> drawing/input -> MonoGame adapters.
 
 Tests and checks:
 
@@ -154,39 +154,51 @@ Tests and checks:
 
 This phase replaces the idea of cloning WPF `DependencyProperty` with a smaller typed property/state system. Properties should be strongly typed, explicitly registered, easy to test, and able to declare invalidation effects without reflection-heavy behavior.
 
-- [ ] `UI/Core/UiObject.cs` — base object with typed property storage and lifecycle hooks.
-- [ ] `UI/Core/UiProperty.cs` — non-generic descriptor base for internal indexing and diagnostics.
-- [ ] `UI/Core/UiProperty{T}.cs` — strongly typed property descriptor.
-- [ ] `UI/Core/UiPropertyKey{T}.cs` — key for read-only or owner-only properties.
-- [ ] `UI/Core/UiPropertyMetadata{T}.cs` — default value, equality, validation, and invalidation metadata.
-- [ ] `UI/Core/UiPropertyOptions.cs` — `[Flags]` for `AffectsMeasure`, `AffectsArrange`, `AffectsRender`, `AffectsHitTest`, `AffectsStyle`, `Inherits`, and `ReadOnly`.
-- [ ] `UI/Core/UiPropertyValueSource.cs` — local, style, inherited, animated, default.
-- [ ] `UI/Core/UiPropertyStore.cs` — internal compact store keyed by `UiProperty` identity.
-- [ ] `UI/Core/UiPropertyChangedEventArgs.cs`
-- [ ] `UI/Core/UiPropertyChangedEventArgs{T}.cs`
-- [ ] `UI/Core/IUiPropertyOwner.cs`
-- [ ] `UI/Core/UiPropertyRegistry.cs` — explicit registration and duplicate detection.
-- [ ] `UI/Core/Unset.cs` — internal sentinel only; avoid public magic values unless proven necessary.
-- [ ] `UI/Core/CoerceValue.cs` — optional typed coercion delegate, explicit and non-reflective.
-- [ ] `UI/Core/ValidateValue.cs` — optional typed validation delegate.
+OpenSpec: `openspec/changes/add-typed-state-model` tracks the implementation contract and checklist for this phase.
+
+Planning:
+
+- [x] `openspec/changes/add-typed-state-model/proposal.md`
+- [x] `openspec/changes/add-typed-state-model/design.md`
+- [x] `openspec/changes/add-typed-state-model/tasks.md`
+- [x] `openspec/changes/add-typed-state-model/specs/typed-state-model/spec.md`
+- [x] `openspec validate add-typed-state-model`
+
+- [x] `UI/Core/UiObject.cs` — base object with typed property storage and lifecycle hooks.
+- [x] `UI/Core/UiProperty.cs` — non-generic descriptor base for internal indexing and diagnostics.
+- [x] `UI/Core/UiProperty{T}.cs` — strongly typed property descriptor.
+- [x] `UI/Core/UiPropertyKey{T}.cs` — key for read-only or owner-only properties.
+- [x] `UI/Core/UiPropertyMetadata{T}.cs` — default value, equality, validation, and invalidation metadata.
+- [x] `UI/Core/UiPropertyOptions.cs` — `[Flags]` for `AffectsMeasure`, `AffectsArrange`, `AffectsRender`, `AffectsHitTest`, `AffectsStyle`, `Inherits`, and `ReadOnly`.
+- [x] `UI/Core/UiPropertyValueSource.cs` — local, style, inherited, animated, default.
+- [x] `UI/Core/UiPropertyStore.cs` — internal compact store keyed by `UiProperty` identity.
+- [x] `UI/Core/UiPropertyChangedEventArgs.cs`
+- [x] `UI/Core/UiPropertyChangedEventArgs{T}.cs`
+- [x] `UI/Core/IUiPropertyOwner.cs`
+- [x] `UI/Core/UiPropertyRegistry.cs` — explicit registration and duplicate detection.
+- [x] `UI/Core/Unset.cs` — internal sentinel only; avoid public magic values unless proven necessary.
+- [x] `UI/Core/CoerceValue.cs` — optional typed coercion delegate, explicit and non-reflective.
+- [x] `UI/Core/ValidateValue.cs` — optional typed validation delegate.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Core/UiPropertyTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Core/UiPropertyRegistryTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Core/UiPropertyStoreTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Core/UiPropertyInvalidationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Core/ReadOnlyUiPropertyTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Core/InheritedUiPropertyTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Core/UiPropertyTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Core/UiPropertyRegistryTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Core/UiPropertyStoreTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Core/UiPropertyInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Core/ReadOnlyUiPropertyTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Core/InheritedUiPropertyTests.cs`
+- [x] `dotnet test` passes.
 
 Acceptance checklist:
 
-- [ ] Setting a typed property returns the previous typed value without casts in user code.
-- [ ] Setting an equal value does not enqueue layout or render work.
-- [ ] `AffectsMeasure` invalidates measure and render through the invalidation system.
-- [ ] `AffectsRender` invalidates render without forcing measure.
-- [ ] Style values and local values have explicit precedence.
-- [ ] Property registration is deterministic and testable.
+- [x] Setting a typed property returns the previous typed value without casts in user code.
+- [x] Setting an equal value does not enqueue layout or render work.
+- [x] `AffectsMeasure` invalidates measure and render through the invalidation system.
+- [x] `AffectsRender` invalidates render without forcing measure.
+- [x] Non-invalidation options such as `Inherits` do not emit owner invalidation hooks.
+- [x] Style values and local values have explicit precedence.
+- [x] Property registration is deterministic and testable.
 
 ## 3. [MVP] Retained element tree
 
