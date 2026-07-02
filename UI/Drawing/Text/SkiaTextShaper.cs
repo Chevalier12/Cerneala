@@ -29,7 +29,42 @@ public sealed class SkiaTextShaper
         harfBuzzFont.SetScale(scale, scale);
         harfBuzzFont.Shape(buffer);
 
-        return new TextShapeResult(textRun.Text, buffer.Length);
+        return new TextShapeResult(
+            textRun.Text,
+            buffer.Length,
+            GetGlyphIds(buffer),
+            GetGlyphPositions(buffer));
+    }
+
+    private static ushort[] GetGlyphIds(HarfBuzzBuffer buffer)
+    {
+        ReadOnlySpan<GlyphInfo> glyphInfos = buffer.GetGlyphInfoSpan();
+        ushort[] glyphIds = new ushort[glyphInfos.Length];
+
+        for (int i = 0; i < glyphInfos.Length; i++)
+        {
+            glyphIds[i] = checked((ushort)glyphInfos[i].Codepoint);
+        }
+
+        return glyphIds;
+    }
+
+    private static DrawPoint[] GetGlyphPositions(HarfBuzzBuffer buffer)
+    {
+        ReadOnlySpan<GlyphPosition> glyphPositions = buffer.GetGlyphPositionSpan();
+        DrawPoint[] positions = new DrawPoint[glyphPositions.Length];
+        float x = 0;
+        float y = 0;
+
+        for (int i = 0; i < glyphPositions.Length; i++)
+        {
+            GlyphPosition glyphPosition = glyphPositions[i];
+            positions[i] = new DrawPoint(x + ToPixels(glyphPosition.XOffset), y - ToPixels(glyphPosition.YOffset));
+            x += ToPixels(glyphPosition.XAdvance);
+            y -= ToPixels(glyphPosition.YAdvance);
+        }
+
+        return positions;
     }
 
     private static byte[] ReadFontData(SkiaFont font)
@@ -44,5 +79,10 @@ public sealed class SkiaTextShaper
         }
 
         return data;
+    }
+
+    private static float ToPixels(int harfBuzzValue)
+    {
+        return harfBuzzValue / 64f;
     }
 }

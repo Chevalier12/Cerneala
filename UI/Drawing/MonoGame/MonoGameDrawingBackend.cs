@@ -4,9 +4,13 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Cerneala.Drawing.MonoGame;
 
-public sealed class MonoGameDrawingBackend : IDrawingBackend
+public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 {
+    private static readonly Rectangle EmptyClip = new(0, 0, 0, 0);
+
+    private readonly Stack<Rectangle> _clipStack = new();
     private readonly SpriteBatch _spriteBatch;
+    private readonly Dictionary<TextTextureKey, Texture2D> _textTextureCache = new();
     private readonly Texture2D _whitePixel;
     private readonly SkiaTextRasterizer? _textRasterizer;
 
@@ -16,6 +20,11 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend
         _whitePixel = whitePixel ?? throw new ArgumentNullException(nameof(whitePixel));
         _textRasterizer = textRasterizer;
     }
+
+    public static RasterizerState ScissorRasterizerState { get; } = new()
+    {
+        ScissorTestEnable = true
+    };
 
     public void Render(DrawCommandList commands)
     {
@@ -48,7 +57,11 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend
                 break;
 
             case DrawCommandKind.PushClip:
+                PushClip(command.Rect);
+                break;
+
             case DrawCommandKind.PopClip:
+                PopClip();
                 break;
 
             default:
@@ -90,10 +103,49 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend
             return;
         }
 
-        RasterizedText text = _textRasterizer.Rasterize(command.TextRun, command.Color);
-        Texture2D texture = new(_spriteBatch.GraphicsDevice, text.Width, text.Height);
-        texture.SetData(text.RgbaPixels);
+        TextTextureKey key = TextTextureKey.From(command.TextRun, command.Color);
+
+        if (!_textTextureCache.TryGetValue(key, out Texture2D? texture))
+        {
+            RasterizedText text = _textRasterizer.Rasterize(command.TextRun, command.Color);
+            texture = new Texture2D(_spriteBatch.GraphicsDevice, text.Width, text.Height);
+            texture.SetData(text.RgbaPixels);
+            _textTextureCache.Add(key, texture);
+        }
+
         _spriteBatch.Draw(texture, ToVector2(command.Position), Color.White);
+    }
+
+    private void PushClip(DrawRect rect)
+    {
+        GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
+        Rectangle previousClip = _clipStack.Count == 0
+            ? new Rectangle(0, 0, graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height)
+            : graphicsDevice.ScissorRectangle;
+        Rectangle requestedClip = ToRectangle(rect);
+
+        _clipStack.Push(previousClip);
+        graphicsDevice.ScissorRectangle = Intersect(previousClip, requestedClip);
+    }
+
+    private void PopClip()
+    {
+        if (_clipStack.Count == 0)
+        {
+            return;
+        }
+
+        _spriteBatch.GraphicsDevice.ScissorRectangle = _clipStack.Pop();
+    }
+
+    public void Dispose()
+    {
+        foreach (Texture2D texture in _textTextureCache.Values)
+        {
+            texture.Dispose();
+        }
+
+        _textTextureCache.Clear();
     }
 
     private static Rectangle ToRectangle(DrawRect rect)
@@ -113,5 +165,32 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend
     private static Vector2 ToVector2(DrawPoint point)
     {
         return new Vector2(point.X, point.Y);
+    }
+
+    private static Rectangle Intersect(Rectangle first, Rectangle second)
+    {
+        int left = Math.Max(first.Left, second.Left);
+        int top = Math.Max(first.Top, second.Top);
+        int right = Math.Min(first.Right, second.Right);
+        int bottom = Math.Min(first.Bottom, second.Bottom);
+
+        if (right <= left || bottom <= top)
+        {
+            return EmptyClip;
+        }
+
+        return new Rectangle(left, top, right - left, bottom - top);
+    }
+
+    private readonly record struct TextTextureKey(
+        string Text,
+        string FontFamily,
+        float FontSize,
+        DrawColor Color)
+    {
+        public static TextTextureKey From(DrawTextRun textRun, DrawColor color)
+        {
+            return new TextTextureKey(textRun.Text, textRun.Font.FamilyName, textRun.Size, color);
+        }
     }
 }

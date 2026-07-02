@@ -24,6 +24,8 @@ public sealed class TextPipelineTests
 
         Assert.Equal("Cerneala", result.Text);
         Assert.True(result.GlyphCount > 0);
+        Assert.Equal(result.GlyphCount, result.GlyphIds.Length);
+        Assert.Equal(result.GlyphCount, result.GlyphPositions.Length);
     }
 
     [Fact]
@@ -38,5 +40,7 @@ public sealed class TextPipelineTests
         Assert.True(result.Width > 0);
         Assert.True(result.Height > 0);
         Assert.NotEmpty(result.RgbaPixels);
+        Assert.True(result.ShapeResult.GlyphCount > 0);
+        Assert.Equal(result.ShapeResult.GlyphCount, result.ShapeResult.GlyphIds.Length);
     }
 }
