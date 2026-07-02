@@ -3,7 +3,7 @@ using HarfBuzzSharp;
 using HarfBuzzBuffer = HarfBuzzSharp.Buffer;
 using HarfBuzzFont = HarfBuzzSharp.Font;
 
-namespace Cerneala.Text;
+namespace Cerneala.Drawing.Text;
 
 public sealed class SkiaTextShaper
 {

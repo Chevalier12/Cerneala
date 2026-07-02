@@ -1,7 +1,7 @@
 using Cerneala.Drawing;
 using SkiaSharp;
 
-namespace Cerneala.Text;
+namespace Cerneala.Drawing.Text;
 
 public sealed class SystemFontSource : IFontSource
 {
@@ -10,6 +10,6 @@ public sealed class SystemFontSource : IFontSource
         ArgumentNullException.ThrowIfNull(familyName);
 
         SKTypeface typeface = SKFontManager.Default.MatchFamily(familyName) ?? SKTypeface.Default;
-        return new SkiaFont(typeface, size);
+        return new SkiaFont(typeface, familyName, size);
     }
 }

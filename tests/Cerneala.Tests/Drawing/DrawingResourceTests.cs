@@ -1,6 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
-using Cerneala.Text;
+using Cerneala.Drawing.Text;
 
 namespace Cerneala.Tests.Drawing;
 
@@ -15,7 +15,7 @@ public sealed class DrawingResourceTests
     [Fact]
     public void SkiaFontRejectsNullTypeface()
     {
-        Assert.Throws<ArgumentNullException>(() => new SkiaFont(null!, 16));
+        Assert.Throws<ArgumentNullException>(() => new SkiaFont(null!, "Arial", 16));
     }
 
     [Fact]
@@ -26,6 +26,17 @@ public sealed class DrawingResourceTests
         IDrawFont font = fonts.LoadFont("Arial", 16);
 
         Assert.IsType<SkiaFont>(font);
+    }
+
+    [Fact]
+    public void SystemFontSourcePreservesRequestedFontMetadata()
+    {
+        SystemFontSource fonts = new();
+
+        IDrawFont font = fonts.LoadFont("Arial", 16);
+
+        Assert.Equal("Arial", font.FamilyName);
+        Assert.Equal(16, font.Size);
     }
 
     [Fact]

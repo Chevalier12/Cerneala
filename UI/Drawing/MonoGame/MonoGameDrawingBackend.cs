@@ -1,4 +1,4 @@
-using Cerneala.Text;
+using Cerneala.Drawing.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 

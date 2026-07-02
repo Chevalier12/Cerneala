@@ -1,7 +1,7 @@
 using Cerneala.Drawing;
 using SkiaSharp;
 
-namespace Cerneala.Text;
+namespace Cerneala.Drawing.Text;
 
 public sealed class SkiaTextRasterizer
 {

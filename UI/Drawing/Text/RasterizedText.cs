@@ -1,4 +1,4 @@
-namespace Cerneala.Text;
+namespace Cerneala.Drawing.Text;
 
 public sealed class RasterizedText
 {

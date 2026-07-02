@@ -94,4 +94,7 @@ public sealed class FakeDrawImage : IDrawImage
 
 public sealed class FakeDrawFont : IDrawFont
 {
+    public string FamilyName => "Fake";
+
+    public float Size => 16;
 }

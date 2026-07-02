@@ -91,7 +91,7 @@
   <text class="tiny" x="645" y="1310">No MonoGame / No Skia / No HarfBuzz</text>
 
   <rect class="textpipe" x="1180" y="220" width="500" height="1260" rx="22" />
-  <text class="section-title" x="1220" y="280">3. Cerneala.Text</text>
+  <text class="section-title" x="1220" y="280">3. Cerneala.Drawing.Text</text>
   <text class="small" x="1220" y="320">Text preparation only</text>
 
   <rect class="neutral" x="1230" y="370" width="400" height="230" rx="18" />
@@ -167,3 +167,4 @@
   <path class="no-line" d="M820 1350 C1000 1610 2020 1605 2040 1240" />
   <text class="label" x="1250" y="1585">NO direct dependency from Drawing core to MonoGame</text>
 </svg>
+

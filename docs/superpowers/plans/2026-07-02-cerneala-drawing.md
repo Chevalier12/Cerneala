@@ -4,7 +4,7 @@
 
 **Goal:** Build `Cerneala.Drawing`, a small 2D drawing abstraction that records primitive draw intent without knowing anything about UI controls, input, layout, or retained/immediate UI systems.
 
-**Architecture:** `Cerneala.Drawing` owns value types, draw resources, text draw payloads, commands, a command list, and `DrawingContext`. `Cerneala.Text` owns OS font loading plus Skia/HarfBuzz text preparation. `Cerneala.Drawing.MonoGame` is the concrete drawing adapter: it consumes `Cerneala.Drawing` commands, uses `Cerneala.Text` for text data, and performs the final draw through MonoGame.
+**Architecture:** `Cerneala.Drawing` owns value types, draw resources, text draw payloads, commands, a command list, and `DrawingContext`. `Cerneala.Drawing.Text` owns OS font loading plus Skia/HarfBuzz text preparation. `Cerneala.Drawing.MonoGame` is the concrete drawing adapter: it consumes `Cerneala.Drawing` commands, uses `Cerneala.Drawing.Text` for text shaping/raster data, and performs the final draw, including text, through MonoGame.
 
 **Tech Stack:** C#/.NET 8, MonoGame.Framework.DesktopGL 3.8.4.1, SkiaSharp 4.148.0, HarfBuzzSharp 14.2.0, xUnit.
 
@@ -14,7 +14,7 @@
 - `Cerneala.Drawing` must not know about controls, layout, input, focus, hover, pressed state, immediate mode, or retained mode.
 - `Cerneala.Drawing` public abstractions must not expose `Texture2D`, `SpriteFont`, `SpriteBatch`, or other MonoGame-specific types except inside `Cerneala.Drawing.MonoGame`.
 - `Cerneala.Drawing` public abstractions must not expose `SKCanvas`, `SKTypeface`, `SKFont`, HarfBuzz buffers, or other Skia/HarfBuzz-specific types.
-- Skia/HarfBuzz belong to `Cerneala.Text`; they prepare font/text/glyph data only. They are not the final drawing backend.
+- Skia/HarfBuzz belong to `Cerneala.Drawing.Text`; they prepare font/text/glyph data for drawing. They are not UI control renderers; the concrete drawing adapters perform the final rendering.
 - The final renderer for this milestone is `Cerneala.Drawing.MonoGame`.
 - Font loading must use OS-installed fonts through the Skia font manager. Do not add fonts to MonoGame Content.
 - Keep the first primitive set to rectangles, text, images, and clipping.
@@ -678,7 +678,7 @@ Create `tests/Cerneala.Tests/Drawing/DrawingResourceTests.cs`:
 ```csharp
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
-using Cerneala.Text;
+using Cerneala.Drawing.Text;
 using Microsoft.Xna.Framework.Graphics;
 using SkiaSharp;
 
@@ -767,7 +767,7 @@ Create `UI/Text/SkiaFont.cs`:
 using Cerneala.Drawing;
 using SkiaSharp;
 
-namespace Cerneala.Text;
+namespace Cerneala.Drawing.Text;
 
 public sealed class SkiaFont : IDrawFont
 {
@@ -789,7 +789,7 @@ Create `UI/Text/SystemFontSource.cs`:
 using Cerneala.Drawing;
 using SkiaSharp;
 
-namespace Cerneala.Text;
+namespace Cerneala.Drawing.Text;
 
 public sealed class SystemFontSource : IFontSource
 {
@@ -995,7 +995,7 @@ Create `tests/Cerneala.Tests/Drawing/TextPipelineTests.cs`:
 
 ```csharp
 using Cerneala.Drawing;
-using Cerneala.Text;
+using Cerneala.Drawing.Text;
 
 namespace Cerneala.Tests.Drawing;
 
@@ -1053,7 +1053,7 @@ Expected: FAIL because `TextShapeResult`, `RasterizedText`, `SkiaTextShaper`, an
 Create `UI/Text/TextShapeResult.cs`:
 
 ```csharp
-namespace Cerneala.Text;
+namespace Cerneala.Drawing.Text;
 
 public readonly record struct TextShapeResult(string Text, int GlyphCount);
 ```
@@ -1061,7 +1061,7 @@ public readonly record struct TextShapeResult(string Text, int GlyphCount);
 Create `UI/Text/RasterizedText.cs`:
 
 ```csharp
-namespace Cerneala.Text;
+namespace Cerneala.Drawing.Text;
 
 public sealed class RasterizedText
 {
@@ -1086,7 +1086,7 @@ Create `UI/Text/SkiaTextShaper.cs`:
 using Cerneala.Drawing;
 using HarfBuzzSharp;
 
-namespace Cerneala.Text;
+namespace Cerneala.Drawing.Text;
 
 public sealed class SkiaTextShaper
 {
@@ -1108,7 +1108,7 @@ Create `UI/Text/SkiaTextRasterizer.cs`:
 using Cerneala.Drawing;
 using SkiaSharp;
 
-namespace Cerneala.Text;
+namespace Cerneala.Drawing.Text;
 
 public sealed class SkiaTextRasterizer
 {
@@ -1154,7 +1154,7 @@ public sealed class SkiaTextRasterizer
 Modify `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`:
 
 ```csharp
-using Cerneala.Text;
+using Cerneala.Drawing.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -1430,3 +1430,4 @@ Expected: only intended committed changes, or a clean tree if all task commits w
 - Known limitation: `PushClip` and `PopClip` are recorded but no-op in the first MonoGame backend. This is intentional YAGNI for the first implementation; clipping can become a focused follow-up once rectangle/text/image rendering exists.
 - Known limitation: `SkiaTextShaper` introduces the HarfBuzz dependency and first shaping boundary, but it does not yet expose glyph runs as public drawing commands. A later focused task should add `DrawGlyphRun` once text measurement and shaping requirements are clearer.
 - Known limitation: `SkiaTextRasterizer` returns simple RGBA pixel data for the first MonoGame adapter path. A later focused task should add glyph atlas caching and verified pixel-format handling instead of creating a texture per text command.
+

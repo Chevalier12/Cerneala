@@ -1,5 +1,5 @@
 using Cerneala.Drawing;
-using Cerneala.Text;
+using Cerneala.Drawing.Text;
 
 namespace Cerneala.Tests.Drawing;
 
