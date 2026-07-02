@@ -17,7 +17,7 @@ public sealed class InputFrame
 
         Pointer = new PointerFrame(previousPointer, currentPointer);
         Keyboard = new KeyboardFrame(previousKeyboard, currentKeyboard);
-        TextInputEvents = textInputEvents;
+        TextInputEvents = textInputEvents.ToArray();
     }
 
     public PointerFrame Pointer { get; }
