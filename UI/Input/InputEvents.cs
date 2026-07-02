@@ -15,16 +15,16 @@ public static class InputEvents
     public static readonly RoutedEvent GotMouseCaptureEvent = Register("GotMouseCapture", RoutingStrategy.Bubble, typeof(MouseEventArgs));
     public static readonly RoutedEvent LostMouseCaptureEvent = Register("LostMouseCapture", RoutingStrategy.Bubble, typeof(MouseEventArgs));
     public static readonly RoutedEvent QueryCursorEvent = Register("QueryCursor", RoutingStrategy.Bubble, typeof(MouseEventArgs));
-    public static readonly RoutedEvent PreviewMouseLeftButtonDownEvent = Register("PreviewMouseLeftButtonDown", RoutingStrategy.Tunnel, typeof(MouseButtonEventArgs));
-    public static readonly RoutedEvent MouseLeftButtonDownEvent = Register("MouseLeftButtonDown", RoutingStrategy.Bubble, typeof(MouseButtonEventArgs));
-    public static readonly RoutedEvent PreviewMouseLeftButtonUpEvent = Register("PreviewMouseLeftButtonUp", RoutingStrategy.Tunnel, typeof(MouseButtonEventArgs));
-    public static readonly RoutedEvent MouseLeftButtonUpEvent = Register("MouseLeftButtonUp", RoutingStrategy.Bubble, typeof(MouseButtonEventArgs));
-    public static readonly RoutedEvent PreviewMouseRightButtonDownEvent = Register("PreviewMouseRightButtonDown", RoutingStrategy.Tunnel, typeof(MouseButtonEventArgs));
-    public static readonly RoutedEvent MouseRightButtonDownEvent = Register("MouseRightButtonDown", RoutingStrategy.Bubble, typeof(MouseButtonEventArgs));
-    public static readonly RoutedEvent PreviewMouseRightButtonUpEvent = Register("PreviewMouseRightButtonUp", RoutingStrategy.Tunnel, typeof(MouseButtonEventArgs));
-    public static readonly RoutedEvent MouseRightButtonUpEvent = Register("MouseRightButtonUp", RoutingStrategy.Bubble, typeof(MouseButtonEventArgs));
-    public static readonly RoutedEvent PreviewMouseDoubleClickEvent = Register("PreviewMouseDoubleClick", RoutingStrategy.Tunnel, typeof(MouseButtonEventArgs));
-    public static readonly RoutedEvent MouseDoubleClickEvent = Register("MouseDoubleClick", RoutingStrategy.Bubble, typeof(MouseButtonEventArgs));
+    public static readonly RoutedEvent PreviewMouseLeftButtonDownEvent = Register("PreviewMouseLeftButtonDown", RoutingStrategy.Direct, typeof(MouseButtonEventArgs));
+    public static readonly RoutedEvent MouseLeftButtonDownEvent = Register("MouseLeftButtonDown", RoutingStrategy.Direct, typeof(MouseButtonEventArgs));
+    public static readonly RoutedEvent PreviewMouseLeftButtonUpEvent = Register("PreviewMouseLeftButtonUp", RoutingStrategy.Direct, typeof(MouseButtonEventArgs));
+    public static readonly RoutedEvent MouseLeftButtonUpEvent = Register("MouseLeftButtonUp", RoutingStrategy.Direct, typeof(MouseButtonEventArgs));
+    public static readonly RoutedEvent PreviewMouseRightButtonDownEvent = Register("PreviewMouseRightButtonDown", RoutingStrategy.Direct, typeof(MouseButtonEventArgs));
+    public static readonly RoutedEvent MouseRightButtonDownEvent = Register("MouseRightButtonDown", RoutingStrategy.Direct, typeof(MouseButtonEventArgs));
+    public static readonly RoutedEvent PreviewMouseRightButtonUpEvent = Register("PreviewMouseRightButtonUp", RoutingStrategy.Direct, typeof(MouseButtonEventArgs));
+    public static readonly RoutedEvent MouseRightButtonUpEvent = Register("MouseRightButtonUp", RoutingStrategy.Direct, typeof(MouseButtonEventArgs));
+    public static readonly RoutedEvent PreviewMouseDoubleClickEvent = Register("PreviewMouseDoubleClick", RoutingStrategy.Direct, typeof(MouseButtonEventArgs));
+    public static readonly RoutedEvent MouseDoubleClickEvent = Register("MouseDoubleClick", RoutingStrategy.Direct, typeof(MouseButtonEventArgs));
 
     public static readonly RoutedEvent PreviewKeyDownEvent = Register("PreviewKeyDown", RoutingStrategy.Tunnel, typeof(KeyEventArgs));
     public static readonly RoutedEvent KeyDownEvent = Register("KeyDown", RoutingStrategy.Bubble, typeof(KeyEventArgs));

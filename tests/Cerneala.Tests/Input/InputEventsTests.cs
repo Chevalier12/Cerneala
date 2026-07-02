@@ -8,6 +8,16 @@ public sealed class InputEventsTests
     [InlineData("PreviewMouseDown", RoutingStrategy.Tunnel)]
     [InlineData("MouseDown", RoutingStrategy.Bubble)]
     [InlineData("MouseEnter", RoutingStrategy.Direct)]
+    [InlineData("PreviewMouseLeftButtonDown", RoutingStrategy.Direct)]
+    [InlineData("MouseLeftButtonDown", RoutingStrategy.Direct)]
+    [InlineData("PreviewMouseLeftButtonUp", RoutingStrategy.Direct)]
+    [InlineData("MouseLeftButtonUp", RoutingStrategy.Direct)]
+    [InlineData("PreviewMouseRightButtonDown", RoutingStrategy.Direct)]
+    [InlineData("MouseRightButtonDown", RoutingStrategy.Direct)]
+    [InlineData("PreviewMouseRightButtonUp", RoutingStrategy.Direct)]
+    [InlineData("MouseRightButtonUp", RoutingStrategy.Direct)]
+    [InlineData("PreviewMouseDoubleClick", RoutingStrategy.Direct)]
+    [InlineData("MouseDoubleClick", RoutingStrategy.Direct)]
     [InlineData("PreviewKeyDown", RoutingStrategy.Tunnel)]
     [InlineData("KeyDown", RoutingStrategy.Bubble)]
     [InlineData("PreviewTextInput", RoutingStrategy.Tunnel)]
@@ -20,6 +30,20 @@ public sealed class InputEventsTests
         RoutedEvent routedEvent = InputEvents.All.Single(e => e.Name == name);
 
         Assert.Equal(strategy, routedEvent.RoutingStrategy);
+    }
+
+    [Theory]
+    [InlineData("PreviewStylusDown")]
+    [InlineData("StylusButtonUp")]
+    [InlineData("PreviewTouchDown")]
+    [InlineData("TouchLeave")]
+    [InlineData("ManipulationDelta")]
+    [InlineData("ManipulationCompleted")]
+    [InlineData("PreviewDragEnter")]
+    [InlineData("Drop")]
+    public void InputEventsIncludeRepresentativeNonMouseCategories(string name)
+    {
+        Assert.Contains(InputEvents.All, e => e.Name == name);
     }
 
     [Theory]
