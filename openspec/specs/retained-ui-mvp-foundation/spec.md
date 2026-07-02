@@ -25,15 +25,19 @@ Cerneala SHALL build retained UI layers above the existing `UI/Drawing` and `UI/
 - **THEN** existing input snapshots, routed event metadata, and command primitives are described as foundations to preserve or adapt, not behavior to duplicate blindly
 
 ### Requirement: Retained-mode frame loop is documented
-Cerneala SHALL document that the game loop may run every frame while layout and render command generation are invalidation-driven.
+Cerneala SHALL document and implement the foundation that allows the game loop to run every frame while layout and render command generation are invalidation-driven.
 
 #### Scenario: Unchanged frame work is avoided
 - **WHEN** no retained UI state changes between frames
-- **THEN** the architecture documentation states that layout and render command generation are reused rather than recomputed
+- **THEN** the architecture documentation and retained invalidation scheduler state that layout and render command generation are reused rather than recomputed
 
 #### Scenario: Dirty state drives work
 - **WHEN** retained UI state changes
-- **THEN** the architecture documentation identifies dirty flags, propagation, layout queues, render queues, and cache updates as the mechanism for recomputing only needed work
+- **THEN** the architecture documentation and retained invalidation scheduler identify dirty flags, propagation, layout queues, render queues, hit-test queues, and cache-update hooks as the mechanism for recomputing only needed work
+
+#### Scenario: Scheduler is game-loop friendly
+- **WHEN** update and draw are called every frame
+- **THEN** the retained frame scheduler processes no dirty phase work on unchanged frames while still allowing draw to use cached output
 
 ### Requirement: Confirmed MVP decisions are captured
 Cerneala SHALL capture the confirmed MVP decisions from `ROADMAPv2.md`.
