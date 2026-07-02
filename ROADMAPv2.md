@@ -202,39 +202,54 @@ Acceptance checklist:
 
 ## 3. [MVP] Retained element tree
 
-This phase creates the retained UI tree that owns state, layout, rendering hooks, event handlers, and child relationships. It should be a modern single tree at first; logical/visual splits can be introduced later only if a real feature requires them.
+This phase creates the retained UI tree that owns state, layout, rendering hooks, event handlers, and child relationships. It follows the confirmed MVP decision to use separate logical and visual trees so semantic ownership, generated visuals, layout participation, rendering, hit testing, and input routing do not get collapsed into one ambiguous parent relationship.
 
-- [ ] `UI/Elements/UIElement.cs` — retained element base with parent, children, enabled/visible state, layout slots, dirty flags, handlers, and virtual lifecycle methods.
-- [ ] `UI/Elements/UIElementCollection.cs` — owned child collection with parent validation and change notifications.
-- [ ] `UI/Elements/UIRoot.cs` — root element with viewport size, scaling, input route ownership, and render cache root.
-- [ ] `UI/Elements/ElementLifecycle.cs` — attach/detach hooks and tree versioning.
-- [ ] `UI/Elements/ElementIdProvider.cs` — assigns stable `UiElementId` values for input routing.
-- [ ] `UI/Elements/ElementTreeWalker.cs` — pre-order, post-order, ancestor, and descendant traversal helpers.
-- [ ] `UI/Elements/ElementTreeChange.cs`
-- [ ] `UI/Elements/IElementChildHost.cs` — explicit contract for controls that own generated children.
-- [ ] `UI/Elements/IElementHost.cs` — implemented by `UIRoot` and future platform hosts.
-- [ ] `UI/Elements/ElementHandlerStore.cs` — stores routed event handlers on retained elements.
-- [~] `UI/Input/UiInputTree.cs` — keep as low-level route table unless a later decision replaces it.
-- [ ] `UI/Input/ElementInputRouteBuilder.cs` — builds or updates `UiInputTree` from the retained element tree.
-- [ ] `UI/Input/ElementInputRouteMap.cs` — maps `UIElement` <-> `UiElementId` for routed events.
+OpenSpec: `openspec/changes/add-retained-element-tree` tracks the implementation contract and checklist for this phase.
+
+Planning:
+
+- [x] `openspec/changes/add-retained-element-tree/proposal.md`
+- [x] `openspec/changes/add-retained-element-tree/design.md`
+- [x] `openspec/changes/add-retained-element-tree/tasks.md`
+- [x] `openspec/changes/add-retained-element-tree/specs/retained-element-tree/spec.md`
+- [x] `openspec/changes/add-retained-element-tree/specs/retained-ui-mvp-foundation/spec.md`
+- [x] `openspec validate add-retained-element-tree --strict`
+
+- [x] `UI/Elements/UIElement.cs` — retained element base with parent, children, enabled/visible state, handlers, and virtual lifecycle methods.
+- [x] `UI/Elements/UIElementCollection.cs` — owned child collection with parent validation and change notifications.
+- [x] `UI/Elements/UIRoot.cs` — root element with viewport size, scaling, input route ownership, and render cache root.
+- [x] `UI/Elements/ElementLifecycle.cs` — attach/detach hooks and tree versioning.
+- [x] `UI/Elements/ElementIdProvider.cs` — assigns stable `UiElementId` values for input routing.
+- [x] `UI/Elements/ElementTreeWalker.cs` — pre-order, post-order, ancestor, and descendant traversal helpers.
+- [x] `UI/Elements/ElementTreeChange.cs`
+- [x] `UI/Elements/ElementTreeChangeKind.cs`
+- [x] `UI/Elements/ElementChildRole.cs`
+- [x] `UI/Elements/IElementChildHost.cs` — explicit contract for controls that own generated children.
+- [x] `UI/Elements/IElementHost.cs` — implemented by `UIRoot` and future platform hosts.
+- [x] `UI/Elements/ElementHandlerStore.cs` — stores routed event handlers on retained elements.
+- [x] `UI/Input/UiInputTree.cs` — remains a low-level route table; retained elements are the route source.
+- [x] `UI/Input/ElementInputRouteBuilder.cs` — builds or updates `UiInputTree` from the retained element tree.
+- [x] `UI/Input/ElementInputRouteMap.cs` — maps `UIElement` <-> `UiElementId` for routed events.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Elements/UIElementTreeTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Elements/UIElementCollectionTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Elements/UIRootTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Elements/ElementLifecycleTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Elements/ElementTreeWalkerTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/ElementInputRouteBuilderTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Elements/UIElementTreeTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Elements/UIElementCollectionTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Elements/UIRootTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Elements/ElementLifecycleTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Elements/ElementTreeWalkerTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Elements/ElementHandlerStoreTests.cs`
+- [x] `tests/Cerneala.Tests/Input/ElementInputRouteBuilderTests.cs`
 
 Acceptance checklist:
 
-- [ ] Adding a child sets exactly one parent.
-- [ ] Removing a child clears parent and invalidates layout/render for affected ancestors.
-- [ ] Reparenting without removal is rejected.
-- [ ] Element ids are stable across frames while an element remains attached.
-- [ ] `UiInputTree` route order matches the retained element ancestor chain.
-- [ ] Disabled or invisible elements can be excluded from input routing according to explicit policy.
+- [x] Adding a child sets exactly one parent for the matching logical or visual relationship.
+- [x] Removing a child clears parent for the matching logical or visual relationship.
+- [ ] Removing a child invalidates layout/render for affected ancestors after invalidation/layout/render systems exist.
+- [x] Reparenting without removal is rejected.
+- [x] Element ids are stable across frames while an element remains attached.
+- [x] `UiInputTree` route order matches the retained visual element ancestor chain.
+- [x] Disabled or invisible elements can be excluded from input routing according to explicit policy.
 
 ## 4. [MVP] Retained invalidation and frame scheduler
 
