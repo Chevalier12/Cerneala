@@ -4,6 +4,8 @@ public sealed class DrawTextRun
 {
     public DrawTextRun(IDrawFont font, string text, float size)
     {
+        DrawArgument.ThrowIfNotValidTextSize(size, nameof(size));
+
         Font = font ?? throw new ArgumentNullException(nameof(font));
         Text = text ?? throw new ArgumentNullException(nameof(text));
         Size = size;

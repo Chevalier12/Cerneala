@@ -27,7 +27,13 @@ public sealed class SkiaTextRasterizer
         }
 
         TextShapeResult shapeResult = _textShaper.Shape(textRun);
-        using SKFont skFont = new(font.Typeface, font.Size);
+
+        if (shapeResult.GlyphCount == 0)
+        {
+            return new RasterizedText(1, 1, new byte[4], shapeResult);
+        }
+
+        using SKFont skFont = new(font.Typeface, textRun.Size);
         using SKPaint paint = new()
         {
             Color = ToColor(color),

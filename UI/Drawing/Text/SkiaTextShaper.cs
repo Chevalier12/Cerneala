@@ -25,7 +25,7 @@ public sealed class SkiaTextShaper
         using Blob blob = Blob.FromStream(fontStream);
         using Face face = new(blob, 0);
         using HarfBuzzFont harfBuzzFont = new(face);
-        int scale = Math.Max(1, (int)MathF.Round(font.Size * 64));
+        int scale = Math.Max(1, (int)MathF.Round(textRun.Size * 64));
         harfBuzzFont.SetScale(scale, scale);
         harfBuzzFont.Shape(buffer);
 

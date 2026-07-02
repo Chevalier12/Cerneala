@@ -18,6 +18,25 @@ public sealed class DrawingResourceTests
         Assert.Throws<ArgumentNullException>(() => new SkiaFont(null!, "Arial", 16));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void SkiaFontRejectsEmptyFamilyName(string familyName)
+    {
+        Assert.Throws<ArgumentException>(() => new SkiaFont(SkiaSharp.SKTypeface.Default, familyName, 16));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    [InlineData(float.MaxValue)]
+    public void SkiaFontRejectsInvalidSize(float size)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new SkiaFont(SkiaSharp.SKTypeface.Default, "Arial", size));
+    }
+
     [Fact]
     public void SystemFontSourceLoadsFontFromOperatingSystem()
     {
@@ -39,6 +58,29 @@ public sealed class DrawingResourceTests
         Assert.Equal(16, font.Size);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void SystemFontSourceRejectsEmptyFamilyName(string familyName)
+    {
+        SystemFontSource fonts = new();
+
+        Assert.Throws<ArgumentException>(() => fonts.LoadFont(familyName, 16));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    [InlineData(float.MaxValue)]
+    public void SystemFontSourceRejectsInvalidSize(float size)
+    {
+        SystemFontSource fonts = new();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => fonts.LoadFont("Arial", size));
+    }
+
     [Fact]
     public void BackendInterfaceConsumesCommandList()
     {
@@ -49,5 +91,19 @@ public sealed class DrawingResourceTests
     public void MonoGameDrawingBackendImplementsBackendInterface()
     {
         Assert.True(typeof(IDrawingBackend).IsAssignableFrom(typeof(MonoGameDrawingBackend)));
+    }
+
+    [Fact]
+    public void MonoGameTextTextureKeyDistinguishesFontInstances()
+    {
+        Type keyType = typeof(MonoGameDrawingBackend).GetNestedType("TextTextureKey", System.Reflection.BindingFlags.NonPublic)!;
+        System.Reflection.MethodInfo fromMethod = keyType.GetMethod("From")!;
+        DrawTextRun firstRun = new(new SkiaFont(SkiaSharp.SKTypeface.Default, "Same", 16), "Cerneala", 16);
+        DrawTextRun secondRun = new(new SkiaFont(SkiaSharp.SKTypeface.FromFamilyName("Times New Roman"), "Same", 16), "Cerneala", 16);
+
+        object firstKey = fromMethod.Invoke(null, [firstRun, DrawColor.White])!;
+        object secondKey = fromMethod.Invoke(null, [secondRun, DrawColor.White])!;
+
+        Assert.NotEqual(firstKey, secondKey);
     }
 }

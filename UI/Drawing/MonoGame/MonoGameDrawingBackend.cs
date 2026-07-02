@@ -184,13 +184,13 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 
     private readonly record struct TextTextureKey(
         string Text,
-        string FontFamily,
+        IDrawFont Font,
         float FontSize,
         DrawColor Color)
     {
         public static TextTextureKey From(DrawTextRun textRun, DrawColor color)
         {
-            return new TextTextureKey(textRun.Text, textRun.Font.FamilyName, textRun.Size, color);
+            return new TextTextureKey(textRun.Text, textRun.Font, textRun.Size, color);
         }
     }
 }

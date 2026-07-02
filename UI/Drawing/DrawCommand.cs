@@ -49,6 +49,8 @@ public readonly record struct DrawCommand
 
     public static DrawCommand DrawRectangle(DrawRect rect, DrawColor color, float thickness)
     {
+        DrawArgument.ThrowIfNotValidPixelSize(thickness, nameof(thickness));
+
         return new DrawCommand(DrawCommandKind.DrawRectangle, rect, color, thickness, null, null, default, null, null);
     }
 
