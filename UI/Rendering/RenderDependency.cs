@@ -4,7 +4,8 @@ public readonly record struct RenderDependency(
     int TextVersion = 0,
     string TextLayoutIdentity = "",
     int ImageVersion = 0,
-    int ResourceVersion = 0,
+    string ResourceIdentity = "",
+    long ResourceVersion = 0,
     int CustomVersion = 0)
 {
     public static RenderDependency None { get; } = new();
@@ -24,7 +25,12 @@ public readonly record struct RenderDependency(
         return this with { ImageVersion = version };
     }
 
-    public RenderDependency WithResourceVersion(int version)
+    public RenderDependency WithResourceIdentity(string identity)
+    {
+        return this with { ResourceIdentity = identity ?? string.Empty };
+    }
+
+    public RenderDependency WithResourceVersion(long version)
     {
         return this with { ResourceVersion = version };
     }

@@ -37,7 +37,7 @@ public class TextRenderer
             return measurement;
         }
 
-        ResolvedTextFont font = fontResolver.Resolve(style.FontFamily, style.FontSize * style.Scale);
+        ResolvedTextFont font = fontResolver.Resolve(style);
         drawingContext.DrawText(style.ToDrawTextRun(font, text), position, style.Color);
         return measurement;
     }

@@ -76,6 +76,53 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void UiResourcesCoreDoesNotReferenceConcreteBackends()
+    {
+        string resourcesRoot = FindRepositoryPath("UI", "Resources");
+        string monoGameResourcesRoot = Path.Combine(resourcesRoot, "MonoGame");
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch"
+        ];
+
+        foreach (string file in Directory.EnumerateFiles(resourcesRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            if (file.StartsWith(monoGameResourcesRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            string text = File.ReadAllText(file);
+
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
+    public void MonoGameImageLoadingIsAdapterScoped()
+    {
+        string resourcesRoot = FindRepositoryPath("UI", "Resources");
+        string monoGameResourcesRoot = Path.Combine(resourcesRoot, "MonoGame");
+
+        foreach (string file in Directory.EnumerateFiles(resourcesRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+            if (text.Contains("Texture2D", StringComparison.Ordinal) ||
+                text.Contains("SpriteBatch", StringComparison.Ordinal))
+            {
+                Assert.StartsWith(monoGameResourcesRoot, file, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+    }
+
+    [Fact]
     public void UiDrawingDoesNotReferenceRetainedRendering()
     {
         string drawingRoot = FindRepositoryPath("UI", "Drawing");
@@ -113,6 +160,18 @@ public sealed class ArchitectureBoundaryTests
         Assert.Contains("- [x] `UI/Text/TextRenderer.cs`", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] `tests/Cerneala.Tests/UI/Text/TextRendererTests.cs`", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] Re-rendering unchanged text reuses cached text layout and retained render commands.", roadmap, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ResourceServicesRoadmapCompletionIsDocumented()
+    {
+        string roadmap = File.ReadAllText(FindRepositoryPath("ROADMAPv2.md"));
+
+        Assert.Contains("- [x] `tests/Cerneala.Tests/UI/Rendering/ResourceRenderDependencyTests.cs`", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs` — covers resource and control backend boundaries.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Retained render caches include resource dependency identity/version in staleness checks.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Core resources and controls do not reference MonoGame, Skia, HarfBuzz, `Texture2D`, or `SpriteBatch`.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] MonoGame image loading is adapter-scoped under `UI/Resources/MonoGame`.", roadmap, StringComparison.Ordinal);
     }
 
     [Fact]

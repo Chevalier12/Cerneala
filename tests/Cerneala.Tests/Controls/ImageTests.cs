@@ -69,6 +69,24 @@ public sealed class ImageTests
         Assert.Equal(new LayoutSize(64, 8), desired);
     }
 
+    [Fact]
+    public void ChangingUseIntrinsicSizeInvalidatesMeasurementAndRender()
+    {
+        Image image = new()
+        {
+            Source = new FakeImage(32, 16)
+        };
+        MeasureContext context = new(new LayoutSize(100, 100));
+        image.Measure(context);
+        image.DirtyState.ClearAll();
+
+        image.UseIntrinsicSize = false;
+
+        Assert.True(image.DirtyState.Has(InvalidationFlags.Measure));
+        Assert.True(image.DirtyState.Has(InvalidationFlags.Render));
+        Assert.Equal(LayoutSize.Zero, image.Measure(context));
+    }
+
     private sealed class FakeImage(int width, int height) : IDrawImage
     {
         public int Width { get; } = width;

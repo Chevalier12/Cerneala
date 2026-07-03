@@ -43,6 +43,22 @@ public sealed class TextMeasurerTests
     }
 
     [Fact]
+    public void MeasureAllowsConcurrentAccessToSharedCache()
+    {
+        TextLayoutCache cache = new();
+        TextMeasurer measurer = new(FontResolver.Default, LineBreakService.Default, cache);
+        TextRunStyle style = new("Default", 16);
+
+        Parallel.For(
+            0,
+            64,
+            _ => measurer.Measure("Hello", style, 100));
+
+        Assert.Equal(1, cache.Misses);
+        Assert.Equal(63, cache.Hits);
+    }
+
+    [Fact]
     public void TextStyleRejectsInvalidMetricInputs()
     {
         Assert.Throws<ArgumentException>(() => new TextRunStyle("", 16));

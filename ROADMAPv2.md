@@ -696,32 +696,37 @@ Acceptance checklist:
 
 This phase introduces explicit resource identity and invalidation without recreating WPF resource dictionaries as core machinery. Resources should be typed and observable enough to invalidate dependent layout/render caches.
 
-- [ ] `UI/Resources/ResourceId{T}.cs`
-- [ ] `UI/Resources/IResourceProvider.cs`
-- [ ] `UI/Resources/ResourceStore.cs`
-- [ ] `UI/Resources/ResourceChangedEventArgs.cs`
-- [ ] `UI/Resources/ResourceDependencyTracker.cs`
-- [ ] `UI/Resources/FontResource.cs`
-- [ ] `UI/Resources/ImageResource.cs`
-- [ ] `UI/Resources/IImageLoader.cs`
-- [ ] `UI/Resources/MonoGame/MonoGameImageLoader.cs` — adapter that returns `IDrawImage`/`MonoGameImage` without leaking `Texture2D` into controls.
+- [x] `UI/Resources/ResourceId{T}.cs` — typed `ResourceId<T>` identity.
+- [x] `UI/Resources/IResourceProvider.cs`
+- [x] `UI/Resources/ResourceStore.cs`
+- [x] `UI/Resources/ResourceChangedEventArgs.cs`
+- [x] `UI/Resources/ResourceDependencyTracker.cs`
+- [x] `UI/Resources/FontResource.cs`
+- [x] `UI/Resources/ImageResource.cs`
+- [x] `UI/Resources/IImageLoader.cs`
+- [x] `UI/Resources/MonoGame/MonoGameImageLoader.cs` — adapter that returns `IDrawImage`/`MonoGameImage` without leaking `Texture2D` into controls.
 - [~] `UI/Drawing/IDrawImage.cs` — keep as draw-level image handle.
 - [~] `UI/Drawing/IDrawFont.cs` — keep as draw-level font handle.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Resources/ResourceIdTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Resources/ResourceStoreTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Resources/ResourceDependencyTrackerTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Resources/ImageResourceInvalidationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Resources/FontResourceInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Resources/ResourceIdTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Resources/ResourceStoreTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Resources/ResourceDependencyTrackerTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Resources/ImageResourceInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Resources/FontResourceInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/ResourceRenderDependencyTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs` — covers resource and control backend boundaries.
 
 Acceptance checklist:
 
-- [ ] Replacing an image resource invalidates render for controls using fixed size.
-- [ ] Replacing an image resource invalidates layout if the control uses intrinsic image size.
-- [ ] Replacing a font resource invalidates text measurement and render for dependent text controls.
-- [ ] Resource lookup is explicit through host/services, not hidden global lookup.
+- [x] Replacing an image resource invalidates render for controls using fixed size.
+- [x] Replacing an image resource invalidates layout if the control uses intrinsic image size.
+- [x] Replacing a font resource invalidates text measurement and render for dependent text controls.
+- [x] Resource lookup is explicit through host/services, not hidden global lookup.
+- [x] Retained render caches include resource dependency identity/version in staleness checks.
+- [x] Core resources and controls do not reference MonoGame, Skia, HarfBuzz, `Texture2D`, or `SpriteBatch`.
+- [x] MonoGame image loading is adapter-scoped under `UI/Resources/MonoGame`.
 
 ## 13. [MVP] Playground scenario
 

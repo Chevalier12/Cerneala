@@ -7,6 +7,7 @@ public class TextMeasurer
     private readonly FontResolver fontResolver;
     private readonly LineBreakService lineBreakService;
     private readonly TextLayoutCache layoutCache;
+    private readonly object layoutCacheSync = new();
 
     public TextMeasurer()
         : this(FontResolver.Default, LineBreakService.Default, new TextLayoutCache())
@@ -28,16 +29,19 @@ public class TextMeasurer
     {
         ArgumentNullException.ThrowIfNull(text);
         float wrappingWidth = NormalizeWrappingWidth(style, availableWidth);
-        ResolvedTextFont font = fontResolver.Resolve(style.FontFamily, style.FontSize * style.Scale);
+        ResolvedTextFont font = fontResolver.Resolve(style);
         TextLayoutKey key = new(text, font.Identity, style.FontSize, style.Wrapping, wrappingWidth, style.Trimming, style.Scale);
 
-        return layoutCache.GetOrAdd(key, _ =>
+        lock (layoutCacheSync)
         {
-            IReadOnlyList<TextLine> lines = lineBreakService.BreakLines(text, style, wrappingWidth);
-            float width = lines.Count == 0 ? 0 : lines.Max(line => line.Width);
-            float height = style.FontSize * style.Scale * Math.Max(1, lines.Count);
-            return new TextMeasureResult(new LayoutSize(width, height), lines.Count, key, font.Identity, lines);
-        });
+            return layoutCache.GetOrAdd(key, _ =>
+            {
+                IReadOnlyList<TextLine> lines = lineBreakService.BreakLines(text, style, wrappingWidth);
+                float width = lines.Count == 0 ? 0 : lines.Max(line => line.Width);
+                float height = style.FontSize * style.Scale * Math.Max(1, lines.Count);
+                return new TextMeasureResult(new LayoutSize(width, height), lines.Count, key, font.Identity, lines);
+            });
+        }
     }
 
     private static float NormalizeWrappingWidth(TextRunStyle style, float availableWidth)
