@@ -18,15 +18,17 @@ Goal: `Update` does retained work. `Draw` only submits previously committed cach
 
 ### Plan 1: `fix-retained-render-frame-contract`
 
-- [ ] Make `RenderQueueProcessor` the only production path that can rebuild local element render caches.
-- [ ] Make `DrawCommandListBuilder` compose only already-valid local caches.
-- [ ] Remove the `ElementRenderCache.Ensure(...)` backdoor from root composition.
-- [ ] Make root command-list composition an explicit update commit step or a counted frame phase.
-- [ ] Make `UiHost.Draw(...)` submit only the last committed root command list.
-- [ ] Remove per-draw command-list copying or replace it with a clear read-only backend contract.
-- [ ] Add `tests/Cerneala.Tests/UI/Rendering/RenderBackdoorContractTests.cs`.
-- [ ] Add `tests/Cerneala.Tests/UI/Rendering/RetainedRendererDrawPurityTests.cs`.
-- [ ] Add `tests/Cerneala.Tests/UI/Hosting/UiHostFrameStatsIntegrityTests.cs`.
+Detailed plan: `docs/superpowers/plans/2026-07-03-fix-retained-render-frame-contract.md`
+
+- [x] Make `RenderQueueProcessor` the only production path that can rebuild local element render caches.
+- [x] Make `DrawCommandListBuilder` compose only already-valid local caches.
+- [x] Remove the `ElementRenderCache.Ensure(...)` backdoor from root composition.
+- [x] Make root command-list composition an explicit update commit step or a counted frame phase.
+- [x] Make `UiHost.Draw(...)` submit only the last committed root command list.
+- [x] Remove per-draw command-list copying or replace it with a clear read-only backend contract.
+- [x] Add `tests/Cerneala.Tests/UI/Rendering/RenderBackdoorContractTests.cs`.
+- [x] Add `tests/Cerneala.Tests/UI/Rendering/RetainedRendererDrawPurityTests.cs`.
+- [x] Add `tests/Cerneala.Tests/UI/Hosting/UiHostFrameStatsIntegrityTests.cs`.
 
 ### Plan 2: `fix-tree-mutation-invalidation`
 
@@ -68,9 +70,9 @@ Goal: retained systems are owned by the frame scheduler/root, not side services 
 - [ ] Make `ElementInputBridge.Dispatch(...)` consume retained cache instead of rebuilding route maps every frame.
 - [ ] Move button command execution out of `ElementInputBridge`.
 - [ ] Move thumb drag behavior behind handlers or an input-level interface.
-- [ ] Add `tests.Cerneala.Tests/UI/Input/ElementInputCacheInvalidationTests.cs`.
-- [ ] Add `tests.Cerneala.Tests/UI/Input/HitTestCacheInvalidationTests.cs`.
-- [ ] Add `tests.Cerneala.Tests/UI/Input/InputControlBoundaryTests.cs`.
+- [ ] Add `tests/Cerneala.Tests/UI/Input/ElementInputCacheInvalidationTests.cs`.
+- [ ] Add `tests/Cerneala.Tests/UI/Input/HitTestCacheInvalidationTests.cs`.
+- [ ] Add `tests/Cerneala.Tests/UI/Input/InputControlBoundaryTests.cs`.
 
 ### Phase 2 Gate
 

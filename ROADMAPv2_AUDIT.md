@@ -86,6 +86,8 @@ Required changes:
 - [ ] Add `tests/Cerneala.Tests/UI/Rendering/RetainedRendererDrawPurityTests.cs` proving `UiHost.Draw(...)` cannot increment element render counters.
 - [ ] Add `tests/Cerneala.Tests/UI/Hosting/UiHostFrameStatsIntegrityTests.cs` proving all render-cache generation done during update is counted.
 
+Implementation note: fixed by `fix-retained-render-frame-contract`; local render-cache generation is scheduler-owned, root command-list composition is explicit during update, and draw submission uses the last committed root commands.
+
 ### 3. `RetainedRenderer.Submit(...)` copies commands every draw
 
 Files:
