@@ -1,13 +1,17 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Text;
 
 namespace Cerneala.UI.Controls;
 
 public class TextBlock : Control
 {
     private TextMeasurer textMeasurer = TextMeasurer.Default;
+    private TextRenderer textRenderer = TextRenderer.Default;
+    private TextMeasureResult? lastMeasurement;
 
     public static readonly UiProperty<string> TextProperty = UiProperty<string>.Register(
         nameof(Text),
@@ -29,14 +33,41 @@ public class TextBlock : Control
         set
         {
             ArgumentNullException.ThrowIfNull(value);
+            if (ReferenceEquals(textMeasurer, value))
+            {
+                return;
+            }
+
             textMeasurer = value;
+            IncrementLayoutVersion();
+            IncrementRenderVersion();
+            Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "Text measurer changed");
+        }
+    }
+
+    public TextRenderer TextRenderer
+    {
+        get => textRenderer;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (ReferenceEquals(textRenderer, value))
+            {
+                return;
+            }
+
+            textRenderer = value;
+            IncrementRenderVersion();
+            Invalidate(InvalidationFlags.Render, "Text renderer changed");
         }
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
-        TextMeasurement measurement = TextMeasurer.Measure(Text, FontFamily, FontSize);
-        return new LayoutSize(measurement.Width, measurement.Height);
+        TextMeasureResult measurement = TextMeasurer.Measure(Text, CreateTextStyle(), context.AvailableSize.Width);
+        lastMeasurement = measurement;
+        SetRenderDependencies(RenderDependencies.WithTextLayoutIdentity(measurement.CacheKey.ToString()));
+        return measurement.Size;
     }
 
     protected override void OnRender(RenderContext context)
@@ -46,8 +77,24 @@ public class TextBlock : Control
             return;
         }
 
-        ControlTextFont font = new(FontFamily, FontSize);
-        DrawTextRun run = new(font, Text, FontSize);
-        context.DrawingContext.DrawText(run, new DrawPoint(context.Bounds.X, context.Bounds.Y), Foreground);
+        TextRunStyle style = CreateTextStyle();
+        TextMeasureResult measurement = TextRenderer.Render(
+            context.DrawingContext,
+            Text,
+            style,
+            context.Bounds.Width,
+            new DrawPoint(context.Bounds.X, context.Bounds.Y),
+            Foreground);
+
+        if (lastMeasurement is null || lastMeasurement.CacheKey != measurement.CacheKey)
+        {
+            lastMeasurement = measurement;
+            SetRenderDependencies(RenderDependencies.WithTextLayoutIdentity(measurement.CacheKey.ToString()));
+        }
+    }
+
+    private TextRunStyle CreateTextStyle()
+    {
+        return new TextRunStyle(FontFamily, FontSize, color: Foreground);
     }
 }

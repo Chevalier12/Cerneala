@@ -2,6 +2,7 @@ namespace Cerneala.UI.Rendering;
 
 public readonly record struct RenderDependency(
     int TextVersion = 0,
+    string TextLayoutIdentity = "",
     int ImageVersion = 0,
     int ResourceVersion = 0,
     int CustomVersion = 0)
@@ -11,6 +12,11 @@ public readonly record struct RenderDependency(
     public RenderDependency WithTextVersion(int version)
     {
         return this with { TextVersion = version };
+    }
+
+    public RenderDependency WithTextLayoutIdentity(string identity)
+    {
+        return this with { TextLayoutIdentity = identity ?? string.Empty };
     }
 
     public RenderDependency WithImageVersion(int version)

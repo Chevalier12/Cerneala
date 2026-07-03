@@ -52,6 +52,30 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void UiTextDoesNotReferenceConcreteBackends()
+    {
+        string textRoot = FindRepositoryPath("UI", "Text");
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch"
+        ];
+
+        foreach (string file in Directory.EnumerateFiles(textRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public void UiDrawingDoesNotReferenceRetainedRendering()
     {
         string drawingRoot = FindRepositoryPath("UI", "Drawing");
@@ -78,6 +102,35 @@ public sealed class ArchitectureBoundaryTests
         Assert.Contains("DrawCommandListPool.cs", roadmap, StringComparison.Ordinal);
         Assert.Contains("deferred", roadmap, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("DrawCommandListPool is deferred", spec, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TextServicesRoadmapCompletionIsDocumented()
+    {
+        string roadmap = File.ReadAllText(FindRepositoryPath("ROADMAPv2.md"));
+
+        Assert.Contains("- [x] A retained `TextBlock` measures text using the existing Skia/HarfBuzz pipeline through higher-level text services.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `UI/Text/TextRenderer.cs`", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `tests/Cerneala.Tests/UI/Text/TextRendererTests.cs`", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Re-rendering unchanged text reuses cached text layout and retained render commands.", roadmap, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RuntimeTestsDoNotDependOnActiveOpenSpecChanges()
+    {
+        string testsRoot = FindRepositoryPath("tests", "Cerneala.Tests");
+        string openSpecSegment = "open" + "spec";
+        string changesSegment = "chang" + "es";
+        string activeChangePathPattern = string.Join("\", \"", openSpecSegment, changesSegment);
+        string activeChangeSlashPattern = string.Join("/", openSpecSegment, changesSegment);
+
+        foreach (string file in Directory.EnumerateFiles(testsRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+
+            Assert.DoesNotContain(activeChangePathPattern, text, StringComparison.Ordinal);
+            Assert.DoesNotContain(activeChangeSlashPattern, text, StringComparison.Ordinal);
+        }
     }
 
     private static string FindRepositoryPath(params string[] segments)

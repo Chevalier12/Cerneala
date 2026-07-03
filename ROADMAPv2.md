@@ -652,7 +652,7 @@ Tests:
 MVP control acceptance checklist:
 
 - [x] A retained `Button` can be added to `UIRoot`, measured, arranged, rendered, hit-tested, hovered, pressed, clicked, and command-bound.
-- [ ] A retained `TextBlock` measures text using the existing Skia/HarfBuzz pipeline through higher-level text services.
+- [x] A retained `TextBlock` measures text using the existing Skia/HarfBuzz pipeline through higher-level text services.
 - [x] A retained `Border` renders fill/stroke with existing rectangle commands.
 - [x] A retained `StackPanel` lays out children and avoids re-measuring unchanged children.
 - [x] Control visual states invalidate render only when the state affects visible output.
@@ -664,33 +664,33 @@ This phase adds layout and cache services for controls such as `TextBlock` witho
 - [~] `UI/Drawing/DrawTextRun.cs`
 - [~] `UI/Drawing/Text/SkiaTextShaper.cs`
 - [~] `UI/Drawing/Text/SkiaTextRasterizer.cs`
-- [ ] `UI/Text/FontResolver.cs` — wraps `IFontSource` and theme/default font decisions.
-- [ ] `UI/Text/TextRunStyle.cs` — font family, size, color, wrapping flags; converts to `DrawTextRun`.
-- [ ] `UI/Text/TextMeasureResult.cs`
-- [ ] `UI/Text/TextMeasurer.cs` — computes desired size and caches metrics.
-- [ ] `UI/Text/TextLayoutCache.cs` — keyed by text, font, size, wrapping width, and DPI/scale.
-- [ ] `UI/Text/TextRenderer.cs` — records text commands with `DrawingContext.DrawText`.
-- [ ] `UI/Text/TextWrapping.cs`
-- [ ] `UI/Text/TextTrimming.cs` — Core if MVP does not need trimming.
-- [ ] `UI/Text/LineBreakService.cs` — Core if MVP only supports single-line text.
+- [x] `UI/Text/FontResolver.cs` — wraps `IFontSource` and theme/default font decisions.
+- [x] `UI/Text/TextRunStyle.cs` — font family, size, color, wrapping flags; converts to `DrawTextRun`.
+- [x] `UI/Text/TextMeasureResult.cs`
+- [x] `UI/Text/TextMeasurer.cs` — computes desired size and caches metrics.
+- [x] `UI/Text/TextLayoutCache.cs` — keyed by text, font, size, wrapping width, and DPI/scale.
+- [x] `UI/Text/TextRenderer.cs` — records text commands with `DrawingContext.DrawText`.
+- [x] `UI/Text/TextWrapping.cs`
+- [x] `UI/Text/TextTrimming.cs` — Core if MVP does not need trimming.
+- [x] `UI/Text/LineBreakService.cs` — Core if MVP only supports single-line text.
 - [ ] `UI/Text/BidiTextService.cs` — Later.
 - [ ] `UI/Text/TextSelection.cs` — Later.
 - [ ] `UI/Text/TextEditingController.cs` — Later.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Text/FontResolverTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Text/TextMeasurerTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Text/TextLayoutCacheTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Text/TextRendererTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/TextBlockInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Text/FontResolverTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Text/TextMeasurerTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Text/TextLayoutCacheTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Text/TextRendererTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/TextBlockInvalidationTests.cs`
 
 Acceptance checklist:
 
-- [ ] Text content changes invalidate text metrics and render commands.
-- [ ] Text color changes invalidate render commands without forcing text shaping when glyph metrics are unchanged.
-- [ ] Font family or font size changes invalidate measurement and render.
-- [ ] Re-rendering unchanged text reuses cached text layout and retained render commands.
+- [x] Text content changes invalidate text metrics and render commands.
+- [x] Text color changes invalidate render commands without forcing text shaping when glyph metrics are unchanged.
+- [x] Font family or font size changes invalidate measurement and render.
+- [x] Re-rendering unchanged text reuses cached text layout and retained render commands.
 
 ## 12. [MVP] Resources for fonts and images
 

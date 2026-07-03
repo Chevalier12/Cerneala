@@ -3,6 +3,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Text;
 
 namespace Cerneala.Tests.Controls;
 
@@ -25,7 +26,7 @@ public sealed class TextBlockTests
     [Fact]
     public void MeasureUsesInjectedTextMeasurerWithFontProperties()
     {
-        RecordingTextMeasurer measurer = new(new TextMeasurement(12, 7));
+        RecordingTextMeasurer measurer = new(CreateMeasurement(12, 7));
         TextBlock textBlock = new()
         {
             Text = "Hello",
@@ -38,8 +39,9 @@ public sealed class TextBlockTests
 
         Assert.Equal(new LayoutSize(12, 7), desired);
         Assert.Equal("Hello", measurer.Text);
-        Assert.Equal("Serif", measurer.FontFamily);
-        Assert.Equal(13, measurer.FontSize);
+        Assert.Equal("Serif", measurer.Style.FontFamily);
+        Assert.Equal(13, measurer.Style.FontSize);
+        Assert.Equal(100, measurer.AvailableWidth);
     }
 
     [Fact]
@@ -48,6 +50,14 @@ public sealed class TextBlockTests
         TextBlock textBlock = new();
 
         Assert.Throws<ArgumentNullException>(() => textBlock.TextMeasurer = null!);
+    }
+
+    [Fact]
+    public void TextBlockRejectsNullTextRenderer()
+    {
+        TextBlock textBlock = new();
+
+        Assert.Throws<ArgumentNullException>(() => textBlock.TextRenderer = null!);
     }
 
     [Fact]
@@ -108,25 +118,31 @@ public sealed class TextBlockTests
 
     private sealed class RecordingTextMeasurer : TextMeasurer
     {
-        private readonly TextMeasurement measurement;
+        private readonly TextMeasureResult measurement;
 
-        public RecordingTextMeasurer(TextMeasurement measurement)
+        public RecordingTextMeasurer(TextMeasureResult measurement)
         {
             this.measurement = measurement;
         }
 
         public string? Text { get; private set; }
 
-        public string? FontFamily { get; private set; }
+        public TextRunStyle Style { get; private set; }
 
-        public float FontSize { get; private set; }
+        public float AvailableWidth { get; private set; }
 
-        public override TextMeasurement Measure(string text, string fontFamily, float fontSize)
+        public override TextMeasureResult Measure(string text, TextRunStyle style, float availableWidth)
         {
             Text = text;
-            FontFamily = fontFamily;
-            FontSize = fontSize;
+            Style = style;
+            AvailableWidth = availableWidth;
             return measurement;
         }
+    }
+
+    private static TextMeasureResult CreateMeasurement(float width, float height)
+    {
+        TextLayoutKey key = new("Hello", "Serif:13", 13, TextWrapping.NoWrap, float.PositiveInfinity, TextTrimming.None, 1);
+        return new TextMeasureResult(new LayoutSize(width, height), 1, key, key.FontIdentity, [new TextLine("Hello", width)]);
     }
 }
