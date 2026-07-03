@@ -161,6 +161,8 @@ Required changes:
 - [ ] Add `tests/Cerneala.Tests/UI/Input/ElementInputCacheInvalidationTests.cs` proving unchanged input frames do not rebuild route data.
 - [ ] Add `tests/Cerneala.Tests/UI/Input/HitTestCacheInvalidationTests.cs` proving layout bounds, visibility, enabled, and visual tree mutations invalidate hit-test data.
 
+Implementation note: fixed by `cache-input-route-hit-test`; `UIRoot` now owns a retained `ElementInputCache`, route/hit-test data rebuilds only when hit-test/input-route invalidation marks it dirty, mouse/touch/stylus dispatch consume the retained route map, handler changes invalidate the cache, and `UI/Input` no longer depends directly on concrete controls.
+
 ### 6. `UI/Input` knows too much about controls
 
 Files:

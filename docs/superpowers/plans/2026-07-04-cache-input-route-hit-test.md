@@ -1229,7 +1229,7 @@ If no files changed, do not create an empty commit.
 - Modify: `ROADMAPv2_AUDIT.md`
 - Modify: `docs/superpowers/plans/2026-07-04-cache-input-route-hit-test.md`
 
-- [ ] **Step 1: Update `AUDIT_FIX_PLAN.md` Plan 4 checklist**
+- [x] **Step 1: Update `AUDIT_FIX_PLAN.md` Plan 4 checklist**
 
 Under `### Plan 4: cache-input-route-hit-test`, add this link if it is not already present:
 
@@ -1251,7 +1251,7 @@ After implementation and focused verification pass, change these Plan 4 items fr
 - [x] Add `tests/Cerneala.Tests/UI/Input/InputControlBoundaryTests.cs`.
 ```
 
-- [ ] **Step 2: Add completion note to `ROADMAPv2_AUDIT.md`**
+- [x] **Step 2: Add completion note to `ROADMAPv2_AUDIT.md`**
 
 Only after `dotnet test Cerneala.slnx` passes, add this note under `## Must Fix` > `### 5. Input route/hit-test caching is not retained`, after the required changes list:
 
@@ -1259,7 +1259,7 @@ Only after `dotnet test Cerneala.slnx` passes, add this note under `## Must Fix`
 Implementation note: fixed by `cache-input-route-hit-test`; `UIRoot` now owns a retained `ElementInputCache`, route/hit-test data rebuilds only when hit-test/input-route invalidation marks it dirty, mouse/touch/stylus dispatch consume the retained route map, handler changes invalidate the cache, and `UI/Input` no longer depends directly on concrete controls.
 ```
 
-- [ ] **Step 3: Run markdown reference check**
+- [x] **Step 3: Run markdown reference check**
 
 Run:
 
@@ -1269,7 +1269,7 @@ rg -n "cache-input-route-hit-test|ElementInputCache|HitTestCacheInvalidationTest
 
 Expected: all three docs reference the completed plan and the new retained input cache pieces.
 
-- [ ] **Step 4: Commit docs**
+- [x] **Step 4: Commit docs**
 
 ```powershell
 git add AUDIT_FIX_PLAN.md ROADMAPv2_AUDIT.md docs\superpowers\plans\2026-07-04-cache-input-route-hit-test.md

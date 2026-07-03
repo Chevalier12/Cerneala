@@ -70,15 +70,15 @@ Detailed plan: `docs/superpowers/plans/2026-07-03-integrate-style-phase.md`
 
 Detailed plan: `docs/superpowers/plans/2026-07-04-cache-input-route-hit-test.md`
 
-- [ ] Add root-owned retained input route / hit-test cache.
-- [ ] Rebuild route/hit-test data only when dirty.
-- [ ] Invalidate cache for tree changes, layout bounds changes, visibility, enabled state, handlers, and relevant capture changes.
-- [ ] Make `ElementInputBridge.Dispatch(...)` consume retained cache instead of rebuilding route maps every frame.
-- [ ] Move button command execution out of `ElementInputBridge`.
-- [ ] Move thumb drag behavior behind handlers or an input-level interface.
-- [ ] Add `tests/Cerneala.Tests/UI/Input/ElementInputCacheInvalidationTests.cs`.
-- [ ] Add `tests/Cerneala.Tests/UI/Input/HitTestCacheInvalidationTests.cs`.
-- [ ] Add `tests/Cerneala.Tests/UI/Input/InputControlBoundaryTests.cs`.
+- [x] Add root-owned retained input route / hit-test cache.
+- [x] Rebuild route/hit-test data only when dirty.
+- [x] Invalidate cache for tree changes, layout bounds changes, visibility, enabled state, handlers, and relevant capture changes.
+- [x] Make `ElementInputBridge.Dispatch(...)` consume retained cache instead of rebuilding route maps every frame.
+- [x] Move button command execution out of `ElementInputBridge`.
+- [x] Move thumb drag behavior behind handlers or an input-level interface.
+- [x] Add `tests/Cerneala.Tests/UI/Input/ElementInputCacheInvalidationTests.cs`.
+- [x] Add `tests/Cerneala.Tests/UI/Input/HitTestCacheInvalidationTests.cs`.
+- [x] Add `tests/Cerneala.Tests/UI/Input/InputControlBoundaryTests.cs`.
 
 ### Phase 2 Gate
 
