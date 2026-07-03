@@ -33,6 +33,31 @@ public sealed class UIElementCollectionInvalidationTests
     }
 
     [Fact]
+    public void AttachedRootVisualChildAddInvalidatesRootOwnerAndAddedSubtree()
+    {
+        UIRoot root = new();
+        ProcessInitialFrame(root);
+        UIElement child = new();
+        UIElement grandchild = new();
+        child.VisualChildren.Add(grandchild);
+
+        root.VisualChildren.Add(child);
+
+        Assert.Contains(root, root.LayoutQueue.SnapshotMeasure());
+        Assert.Contains(root, root.LayoutQueue.SnapshotArrange());
+        Assert.Contains(root, root.RenderQueue.Snapshot());
+        Assert.Contains(root, root.HitTestQueue.Snapshot());
+        Assert.Contains(child, root.LayoutQueue.SnapshotMeasure());
+        Assert.Contains(child, root.LayoutQueue.SnapshotArrange());
+        Assert.Contains(child, root.RenderQueue.Snapshot());
+        Assert.Contains(child, root.HitTestQueue.Snapshot());
+        Assert.Contains(grandchild, root.LayoutQueue.SnapshotMeasure());
+        Assert.Contains(grandchild, root.LayoutQueue.SnapshotArrange());
+        Assert.Contains(grandchild, root.RenderQueue.Snapshot());
+        Assert.Contains(grandchild, root.HitTestQueue.Snapshot());
+    }
+
+    [Fact]
     public void AttachedVisualChildRemoveInvalidatesNonRootOwner()
     {
         UIRoot root = new();

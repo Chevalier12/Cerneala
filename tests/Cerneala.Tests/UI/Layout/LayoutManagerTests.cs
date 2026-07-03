@@ -122,6 +122,26 @@ public sealed class LayoutManagerTests
     }
 
     [Fact]
+    public void SubtreeArrangeUnderNonArrangingAncestorDoesNotClearChildArrangeWithoutProcessing()
+    {
+        UIRoot root = new(100, 100);
+        UIElement parent = new();
+        StretchingElement child = new(new LayoutSize(20, 10));
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+
+        parent.Invalidate(
+            InvalidationFlags.Measure |
+            InvalidationFlags.Arrange |
+            InvalidationFlags.Subtree,
+            "subtree layout");
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(0, 0, 100, 100), child.ArrangedBounds);
+        Assert.False(child.DirtyState.Has(InvalidationFlags.Arrange));
+    }
+
+    [Fact]
     public void FailedMeasureKeepsDirtyFlagsAndQueue()
     {
         UIRoot root = new(100, 100);

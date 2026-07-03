@@ -156,12 +156,9 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
             InvalidationFlags.Render |
             InvalidationFlags.HitTest;
 
-        if (kind != ElementTreeChangeKind.Added || owner is not UIRoot)
-        {
-            owner.IncrementLayoutVersion();
-            owner.IncrementRenderVersion();
-            owner.Invalidate(flags, reason);
-        }
+        owner.IncrementLayoutVersion();
+        owner.IncrementRenderVersion();
+        owner.Invalidate(flags, reason);
 
         if (kind == ElementTreeChangeKind.Added && child.Root is not null)
         {

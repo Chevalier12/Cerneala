@@ -94,6 +94,7 @@ public sealed class UIRootTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        root.ProcessFrame();
         child.Invalidate(InvalidationFlags.Render, "render");
 
         FrameStats stats = root.ProcessFrame();

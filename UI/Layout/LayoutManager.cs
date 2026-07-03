@@ -107,6 +107,11 @@ public sealed class LayoutManager
                 element.DesiredSize.Height);
         }
 
+        if (element.LastArrangeFinalRect is LayoutRect currentSlot)
+        {
+            return currentSlot;
+        }
+
         if (parent is not null && parent.ArrangedBounds.Width > 0 && parent.ArrangedBounds.Height > 0)
         {
             return new LayoutRect(parent.ArrangedBounds.X, parent.ArrangedBounds.Y, parent.ArrangedBounds.Width, parent.ArrangedBounds.Height);

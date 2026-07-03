@@ -18,6 +18,7 @@ public sealed class UIElementInvalidationTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        root.ProcessFrame();
 
         child.SetValue(property, 1);
 

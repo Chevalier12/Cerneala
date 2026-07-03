@@ -26,6 +26,7 @@ public sealed class UiFrameSchedulerTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        root.ProcessFrame();
         List<FramePhase> phases = [];
         child.Invalidate(InvalidationFlags.Measure | InvalidationFlags.HitTest, "all");
 
@@ -50,6 +51,7 @@ public sealed class UiFrameSchedulerTests
         UIElement second = new();
         root.VisualChildren.Add(first);
         root.VisualChildren.Add(second);
+        root.ProcessFrame();
         first.Invalidate(InvalidationFlags.Render, "render");
         second.Invalidate(InvalidationFlags.Render, "render");
 
@@ -65,6 +67,7 @@ public sealed class UiFrameSchedulerTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        root.ProcessFrame();
         child.Invalidate(InvalidationFlags.Render, "render");
 
         Assert.Throws<InvalidOperationException>(() => root.ProcessFrame(new FramePhaseProcessors
