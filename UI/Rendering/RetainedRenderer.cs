@@ -16,7 +16,7 @@ public sealed class RetainedRenderer
         this.counters = counters ?? throw new ArgumentNullException(nameof(counters));
     }
 
-    public DrawCommandList Render(UIRoot root)
+    public DrawCommandList Commit(UIRoot root)
     {
         ArgumentNullException.ThrowIfNull(root);
         if (!renderCache.IsRootValid)
@@ -27,20 +27,20 @@ public sealed class RetainedRenderer
         return renderCache.RootCommands;
     }
 
+    public DrawCommandList Render(UIRoot root)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        if (!renderCache.IsRootValid)
+        {
+            throw new InvalidOperationException("Root command list is not committed. Call RetainedRenderer.Commit during update before rendering or submitting.");
+        }
+
+        return renderCache.RootCommands;
+    }
+
     public void Submit(UIRoot root, IDrawingBackend backend)
     {
         ArgumentNullException.ThrowIfNull(backend);
-        backend.Render(CopyCommands(Render(root)));
-    }
-
-    private static DrawCommandList CopyCommands(DrawCommandList commands)
-    {
-        DrawCommandList copy = new();
-        foreach (DrawCommand command in commands)
-        {
-            copy.Add(command);
-        }
-
-        return copy;
+        backend.Render(Render(root));
     }
 }

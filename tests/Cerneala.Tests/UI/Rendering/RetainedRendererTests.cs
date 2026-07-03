@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.Tests.UI.Rendering;
 
@@ -13,7 +14,8 @@ public sealed class RetainedRendererTests
         UIRoot root = new();
         root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        PrepareSubtree(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Single(commands);
         Assert.Equal(DrawCommandKind.FillRectangle, commands[0].Kind);
@@ -27,11 +29,12 @@ public sealed class RetainedRendererTests
         RenderingTestElement second = new(DrawColor.Black);
         root.VisualChildren.Add(first);
         root.VisualChildren.Add(second);
-        root.RetainedRenderer.Render(root);
+        PrepareSubtree(root);
+        root.RetainedRenderer.Commit(root);
 
         first.Invalidate(InvalidationFlags.Render, "test");
         root.ProcessFrame();
-        root.RetainedRenderer.Render(root);
+        root.RetainedRenderer.Commit(root);
 
         Assert.Equal(2, first.RenderCount);
         Assert.Equal(1, second.RenderCount);
@@ -46,7 +49,8 @@ public sealed class RetainedRendererTests
             Visibility = Visibility.Hidden
         });
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        PrepareSubtree(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Empty(commands);
     }
@@ -57,38 +61,51 @@ public sealed class RetainedRendererTests
         UIRoot root = new();
         RenderingTestElement child = new(DrawColor.White);
         root.VisualChildren.Add(child);
-        root.RetainedRenderer.Render(root);
+        PrepareSubtree(root);
+        root.RetainedRenderer.Commit(root);
 
         child.Arrange(new ArrangeContext(new LayoutRect(4, 5, 10, 10)));
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        child.Invalidate(InvalidationFlags.Render, "moved");
+        root.ProcessFrame();
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Single(commands);
         Assert.Equal(new DrawRect(4, 5, 1, 1), commands[0].Rect);
     }
 
     [Fact]
-    public void BackendCannotMutateCachedRootCommandsDuringSubmit()
+    public void SubmitPassesCommittedRootCommandsByReference()
     {
         UIRoot root = new();
         root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
-        MutatingDrawingBackend backend = new();
+        PrepareSubtree(root);
+        DrawCommandList committed = root.RetainedRenderer.Commit(root);
+        CapturingDrawingBackend backend = new();
 
         root.RetainedRenderer.Submit(root, backend);
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
 
-        Assert.Equal(1, backend.SubmittedCommandCount);
-        Assert.Single(commands);
-        Assert.Equal(DrawCommandKind.FillRectangle, commands[0].Kind);
+        Assert.Same(committed, backend.LastCommands);
+        Assert.Single(committed);
     }
 
-    private sealed class MutatingDrawingBackend : IDrawingBackend
+    private static void PrepareSubtree(UIElement element)
     {
-        public int SubmittedCommandCount { get; private set; }
+        UIRoot root = element.Root ?? throw new InvalidOperationException("Element must be attached.");
+        RenderCounters counters = root.RenderCounters;
+        root.RetainedRenderCache.GetElementCache(element).Ensure(element, counters, forceRebuild: true);
+        foreach (UIElement child in element.VisualChildren)
+        {
+            PrepareSubtree(child);
+        }
+    }
+
+    private sealed class CapturingDrawingBackend : IDrawingBackend
+    {
+        public DrawCommandList? LastCommands { get; private set; }
 
         public void Render(DrawCommandList commands)
         {
-            SubmittedCommandCount = commands.Count;
-            commands.Clear();
+            LastCommands = commands;
         }
     }
 }
