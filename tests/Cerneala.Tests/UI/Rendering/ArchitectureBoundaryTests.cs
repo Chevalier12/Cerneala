@@ -218,11 +218,54 @@ public sealed class ArchitectureBoundaryTests
             "Texture2D",
             "SpriteBatch",
             "System.Windows.Forms.Clipboard",
+            "System.Windows.Automation",
             "Windows.UI",
-            "Microsoft.UI"
+            "Microsoft.UI",
+            "NSAccessibility"
         ];
 
         foreach (string file in Directory.EnumerateFiles(platformRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
+    public void AccessibilityPlatformBoundaryCoversNativeAccessibilityApis()
+    {
+        string testText = File.ReadAllText(FindRepositoryPath("tests", "Cerneala.Tests", "UI", "Rendering", "ArchitectureBoundaryTests.cs"));
+        int methodStart = testText.IndexOf("public void UiPlatformAbstractionsDoNotReferenceConcreteBackends()", StringComparison.Ordinal);
+        Assert.NotEqual(-1, methodStart);
+        int nextFact = testText.IndexOf("    [Fact]", methodStart + 1, StringComparison.Ordinal);
+        Assert.NotEqual(-1, nextFact);
+        string methodText = testText[methodStart..nextFact];
+
+        Assert.Contains("\"System.Windows.Automation\"", methodText, StringComparison.Ordinal);
+        Assert.Contains("\"NSAccessibility\"", methodText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void UiAccessibilityDoesNotReferenceConcreteBackendsOrNativeAccessibilityApis()
+    {
+        string accessibilityRoot = FindRepositoryPath("UI", "Accessibility");
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch",
+            "System.Windows.Automation",
+            "Windows.UI",
+            "Microsoft.UI",
+            "NSAccessibility"
+        ];
+
+        foreach (string file in Directory.EnumerateFiles(accessibilityRoot, "*.cs", SearchOption.AllDirectories))
         {
             string text = File.ReadAllText(file);
             foreach (string forbiddenTerm in forbiddenTerms)
@@ -607,6 +650,39 @@ public sealed class ArchitectureBoundaryTests
                 Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
             }
         }
+    }
+
+    [Fact]
+    public void Section21AccessibilityRoadmapCompletionIsDocumentedConsistently()
+    {
+        string root = FindRepositoryRoot();
+        string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
+        string[] requiredFiles =
+        [
+            "UI/Accessibility/SemanticsNode.cs",
+            "UI/Accessibility/SemanticsRole.cs",
+            "UI/Accessibility/SemanticsProperty.cs",
+            "UI/Accessibility/SemanticsTree.cs",
+            "UI/Accessibility/SemanticsProvider.cs",
+            "UI/Accessibility/AccessibleName.cs",
+            "UI/Accessibility/AutomationPeer.cs",
+            "UI/Accessibility/ButtonAutomationPeer.cs",
+            "UI/Accessibility/TextBoxAutomationPeer.cs",
+            "UI/Accessibility/ItemsControlAutomationPeer.cs",
+            "UI/Platform/IAccessibilityPlatform.cs",
+            "tests/Cerneala.Tests/UI/Accessibility/SemanticsTreeTests.cs",
+            "tests/Cerneala.Tests/UI/Accessibility/SemanticsProviderTests.cs",
+            "tests/Cerneala.Tests/UI/Accessibility/ButtonSemanticsTests.cs",
+            "tests/Cerneala.Tests/UI/Accessibility/TextBoxSemanticsTests.cs"
+        ];
+
+        foreach (string requiredFile in requiredFiles)
+        {
+            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
+            Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("- [x] 21. Add accessibility semantics and platform-neutral semantic tree.", roadmap, StringComparison.Ordinal);
     }
 
     private static string FindRepositoryPath(params string[] segments)

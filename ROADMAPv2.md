@@ -997,24 +997,24 @@ Tests:
 
 This phase makes UI meaning available to assistive technologies and testing tools. It should be designed around a platform-neutral semantics tree first, with platform adapters later.
 
-- [ ] `UI/Accessibility/SemanticsNode.cs`
-- [ ] `UI/Accessibility/SemanticsRole.cs`
-- [ ] `UI/Accessibility/SemanticsProperty.cs`
-- [ ] `UI/Accessibility/SemanticsTree.cs`
-- [ ] `UI/Accessibility/SemanticsProvider.cs`
-- [ ] `UI/Accessibility/AccessibleName.cs`
-- [ ] `UI/Accessibility/AutomationPeer.cs` — only if WPF naming remains useful.
-- [ ] `UI/Accessibility/ButtonAutomationPeer.cs`
-- [ ] `UI/Accessibility/TextBoxAutomationPeer.cs`
-- [ ] `UI/Accessibility/ItemsControlAutomationPeer.cs`
-- [ ] `UI/Platform/IAccessibilityPlatform.cs`
+- [x] `UI/Accessibility/SemanticsNode.cs`
+- [x] `UI/Accessibility/SemanticsRole.cs`
+- [x] `UI/Accessibility/SemanticsProperty.cs`
+- [x] `UI/Accessibility/SemanticsTree.cs`
+- [x] `UI/Accessibility/SemanticsProvider.cs`
+- [x] `UI/Accessibility/AccessibleName.cs`
+- [x] `UI/Accessibility/AutomationPeer.cs` — only if WPF naming remains useful.
+- [x] `UI/Accessibility/ButtonAutomationPeer.cs`
+- [x] `UI/Accessibility/TextBoxAutomationPeer.cs`
+- [x] `UI/Accessibility/ItemsControlAutomationPeer.cs`
+- [x] `UI/Platform/IAccessibilityPlatform.cs`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Accessibility/SemanticsTreeTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Accessibility/SemanticsProviderTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Accessibility/ButtonSemanticsTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Accessibility/TextBoxSemanticsTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Accessibility/SemanticsTreeTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Accessibility/SemanticsProviderTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Accessibility/ButtonSemanticsTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Accessibility/TextBoxSemanticsTests.cs`
 
 ## 22. [Later] Advanced rendering and media
 
@@ -1199,7 +1199,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 ### Later order
 
 - [x] 20. Add text editing and IME composition.
-- [ ] 21. Add accessibility semantics and platform adapters.
+- [x] 21. Add accessibility semantics and platform-neutral semantic tree.
 - [ ] 22. Add advanced rendering/media primitives as scenarios require.
 - [ ] 23. Add animation and transitions.
 - [ ] 24. Decide package/platform split.
