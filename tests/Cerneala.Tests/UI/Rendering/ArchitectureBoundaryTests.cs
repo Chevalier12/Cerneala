@@ -207,6 +207,32 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void UiPlatformAbstractionsDoNotReferenceConcreteBackends()
+    {
+        string platformRoot = FindRepositoryPath("UI", "Platform");
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch",
+            "System.Windows.Forms.Clipboard",
+            "Windows.UI",
+            "Microsoft.UI"
+        ];
+
+        foreach (string file in Directory.EnumerateFiles(platformRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public void UiDiagnosticsDoesNotReferenceConcreteBackends()
     {
         string diagnosticsRoot = FindRepositoryPath("UI", "Diagnostics");
@@ -481,12 +507,51 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Section20TextEditingRoadmapCompletionIsDocumentedConsistently()
+    {
+        string root = FindRepositoryRoot();
+        string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
+        string openSpecSegment = "open" + "spec";
+        string changesSegment = "chang" + "es";
+        string tasks = File.ReadAllText(Path.Combine(root, openSpecSegment, changesSegment, "add-text-editing-ime", "tasks.md"));
+        string[] requiredFiles =
+        [
+            "UI/Controls/TextBoxBase.cs",
+            "UI/Controls/TextBox.cs",
+            "UI/Controls/PasswordBox.cs",
+            "UI/Text/TextDocument.cs",
+            "UI/Text/TextCaret.cs",
+            "UI/Text/TextSelection.cs",
+            "UI/Text/TextEditor.cs",
+            "UI/Text/TextCompositionManager.cs",
+            "UI/Text/TextCompositionState.cs",
+            "UI/Text/UndoRedoStack.cs",
+            "UI/Text/ClipboardAdapter.cs",
+            "UI/Platform/ITextInputPlatform.cs",
+            "tests/Cerneala.Tests/Controls/TextBoxTests.cs",
+            "tests/Cerneala.Tests/Controls/PasswordBoxTests.cs",
+            "tests/Cerneala.Tests/UI/Text/TextEditorTests.cs",
+            "tests/Cerneala.Tests/UI/Text/TextCompositionManagerTests.cs",
+            "tests/Cerneala.Tests/UI/Text/UndoRedoStackTests.cs"
+        ];
+
+        foreach (string requiredFile in requiredFiles)
+        {
+            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
+            Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("- [x] 4.5 Run `openspec validate add-text-editing-ime --strict` and `dotnet test`.", tasks, StringComparison.Ordinal);
+        Assert.Contains("- [x] 20. Add text editing and IME composition.", roadmap, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RuntimeTestsDoNotDependOnActiveOpenSpecChanges()
     {
         string testsRoot = FindRepositoryPath("tests", "Cerneala.Tests");
         string openSpecSegment = "open" + "spec";
         string changesSegment = "chang" + "es";
-        string activeChangePathPattern = string.Join("\", \"", openSpecSegment, changesSegment);
+        string activeChangePathPattern = string.Join("\"" + ", " + "\"", openSpecSegment, changesSegment);
         string activeChangeSlashPattern = string.Join("/", openSpecSegment, changesSegment);
 
         foreach (string file in Directory.EnumerateFiles(testsRoot, "*.cs", SearchOption.AllDirectories))
@@ -495,6 +560,53 @@ public sealed class ArchitectureBoundaryTests
 
             Assert.DoesNotContain(activeChangePathPattern, text, StringComparison.Ordinal);
             Assert.DoesNotContain(activeChangeSlashPattern, text, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void Section20TextEditingApisDoNotReferenceConcreteBackendsOrNativeTextApis()
+    {
+        string root = FindRepositoryRoot();
+        string[] files =
+        [
+            Path.Combine(root, "UI", "Controls", "TextBoxBase.cs"),
+            Path.Combine(root, "UI", "Controls", "TextBox.cs"),
+            Path.Combine(root, "UI", "Controls", "PasswordBox.cs"),
+            Path.Combine(root, "UI", "Text", "TextDocument.cs"),
+            Path.Combine(root, "UI", "Text", "TextCaret.cs"),
+            Path.Combine(root, "UI", "Text", "TextSelection.cs"),
+            Path.Combine(root, "UI", "Text", "TextEditor.cs"),
+            Path.Combine(root, "UI", "Text", "TextCompositionManager.cs"),
+            Path.Combine(root, "UI", "Text", "TextCompositionState.cs"),
+            Path.Combine(root, "UI", "Text", "UndoRedoStack.cs"),
+            Path.Combine(root, "UI", "Text", "ClipboardAdapter.cs"),
+            Path.Combine(root, "UI", "Platform", "ITextInputPlatform.cs")
+        ];
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch",
+            "System.Windows.Forms.Clipboard",
+            "System.Windows.Clipboard",
+            "System.Windows.Input.InputMethod",
+            "Windows.UI",
+            "Microsoft.UI",
+            "TextServicesFramework",
+            "ImmGet",
+            "ImmSet",
+            "HIMC"
+        ];
+
+        foreach (string file in files)
+        {
+            string text = File.ReadAllText(file);
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
         }
     }
 

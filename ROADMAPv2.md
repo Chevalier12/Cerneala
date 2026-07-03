@@ -972,26 +972,26 @@ Acceptance checklist:
 
 This phase should wait until input, focus, text layout, and diagnostics are stable. Text editing should build on `TextInputSnapshotEvent` but add composition lifecycle where platform adapters support it.
 
-- [ ] `UI/Controls/TextBoxBase.cs`
-- [ ] `UI/Controls/TextBox.cs`
-- [ ] `UI/Controls/PasswordBox.cs`
-- [ ] `UI/Text/TextDocument.cs`
-- [ ] `UI/Text/TextCaret.cs`
-- [ ] `UI/Text/TextSelection.cs`
-- [ ] `UI/Text/TextEditor.cs`
-- [ ] `UI/Text/TextCompositionManager.cs`
-- [ ] `UI/Text/TextCompositionState.cs`
-- [ ] `UI/Text/UndoRedoStack.cs`
-- [ ] `UI/Text/ClipboardAdapter.cs`
-- [ ] `UI/Platform/ITextInputPlatform.cs`
+- [x] `UI/Controls/TextBoxBase.cs`
+- [x] `UI/Controls/TextBox.cs`
+- [x] `UI/Controls/PasswordBox.cs`
+- [x] `UI/Text/TextDocument.cs`
+- [x] `UI/Text/TextCaret.cs`
+- [x] `UI/Text/TextSelection.cs`
+- [x] `UI/Text/TextEditor.cs`
+- [x] `UI/Text/TextCompositionManager.cs`
+- [x] `UI/Text/TextCompositionState.cs`
+- [x] `UI/Text/UndoRedoStack.cs`
+- [x] `UI/Text/ClipboardAdapter.cs`
+- [x] `UI/Platform/ITextInputPlatform.cs`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/Controls/TextBoxTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/PasswordBoxTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Text/TextEditorTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Text/TextCompositionManagerTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Text/UndoRedoStackTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/TextBoxTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/PasswordBoxTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Text/TextEditorTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Text/TextCompositionManagerTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Text/UndoRedoStackTests.cs`
 
 ## 21. [Later] Accessibility and semantics
 
@@ -1198,7 +1198,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 
 ### Later order
 
-- [ ] 20. Add text editing and IME composition.
+- [x] 20. Add text editing and IME composition.
 - [ ] 21. Add accessibility semantics and platform adapters.
 - [ ] 22. Add advanced rendering/media primitives as scenarios require.
 - [ ] 23. Add animation and transitions.
