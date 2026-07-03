@@ -2,11 +2,15 @@ using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Styling;
 
 namespace Cerneala.UI.Elements;
 
 public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 {
+    private readonly StyleApplicator styleApplicator;
+    private ThemeProvider? themeProvider;
+
     public UIRoot(float viewportWidth = 0, float viewportHeight = 0, float scale = 1)
     {
         ViewportWidth = viewportWidth;
@@ -23,6 +27,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         RetainedRenderCache = new RetainedRenderCache();
         RenderQueueProcessor = new RenderQueueProcessor(RetainedRenderCache, RenderCounters);
         RetainedRenderer = new RetainedRenderer(RetainedRenderCache, new DrawCommandListBuilder(), RenderCounters);
+        styleApplicator = new StyleApplicator();
+        StyleProcessor = new StyleProcessor(styleApplicator, () => StyleSheet, () => themeProvider);
         Scheduler = new UiFrameScheduler(LayoutQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
         IsLayoutBoundary = true;
         ElementLifecycle.AttachSubtree(this, this);
@@ -62,12 +68,55 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public UiFrameScheduler Scheduler { get; }
 
+    public StyleSheet? StyleSheet { get; private set; }
+
+    public ThemeProvider? ThemeProvider => themeProvider;
+
+    public StyleProcessor StyleProcessor { get; }
+
     public void SetViewport(float width, float height, float scale)
     {
         ViewportWidth = width;
         ViewportHeight = height;
         Scale = scale;
         IncrementTreeVersion();
+    }
+
+    public void SetStyleSheet(StyleSheet? styleSheet)
+    {
+        if (ReferenceEquals(StyleSheet, styleSheet))
+        {
+            return;
+        }
+
+        StyleSheet = styleSheet;
+        Invalidate(InvalidationFlags.Style | InvalidationFlags.Subtree, "Style sheet changed");
+    }
+
+    public void SetThemeProvider(ThemeProvider? provider)
+    {
+        if (ReferenceEquals(themeProvider, provider))
+        {
+            return;
+        }
+
+        if (themeProvider is not null)
+        {
+            themeProvider.ThemeChanged -= OnThemeChanged;
+        }
+
+        themeProvider = provider;
+        if (themeProvider is not null)
+        {
+            themeProvider.ThemeChanged += OnThemeChanged;
+        }
+
+        Invalidate(InvalidationFlags.Style | InvalidationFlags.Subtree, "Theme provider changed");
+    }
+
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs args)
+    {
+        Invalidate(InvalidationFlags.Style | InvalidationFlags.Subtree, "Theme changed");
     }
 
     internal void IncrementTreeVersion()
@@ -98,6 +147,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         FramePhaseProcessors layoutProcessors = LayoutManager.CreatePhaseProcessors();
         return new FramePhaseProcessors
         {
+            Style = StyleProcessor.Process,
             Measure = layoutProcessors.Measure,
             Arrange = layoutProcessors.Arrange,
             RenderCache = RenderQueueProcessor.Process

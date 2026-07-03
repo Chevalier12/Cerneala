@@ -162,7 +162,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
         if (kind == ElementTreeChangeKind.Added && child.Root is not null)
         {
-            child.Invalidate(flags | InvalidationFlags.Subtree, reason);
+            child.Invalidate(flags | InvalidationFlags.Style | InvalidationFlags.Subtree, reason);
         }
     }
 
