@@ -41,7 +41,7 @@ public sealed class ElementInputCache
         return RouteMap;
     }
 
-    public ElementInputRouteMap Rebuild(UIRoot root)
+    private ElementInputRouteMap Rebuild(UIRoot root)
     {
         ArgumentNullException.ThrowIfNull(root);
         RouteMap = routeBuilder.Build(root);
