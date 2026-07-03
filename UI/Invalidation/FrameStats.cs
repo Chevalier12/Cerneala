@@ -2,6 +2,8 @@ namespace Cerneala.UI.Invalidation;
 
 public sealed class FrameStats
 {
+    public int StyledElements { get; private set; }
+
     public int MeasuredElements { get; private set; }
 
     public int ArrangedElements { get; private set; }
@@ -15,6 +17,7 @@ public sealed class FrameStats
     public int NoWorkFrames { get; private set; }
 
     public bool HasWork =>
+        StyledElements > 0 ||
         MeasuredElements > 0 ||
         ArrangedElements > 0 ||
         RenderedElements > 0 ||
@@ -24,6 +27,9 @@ public sealed class FrameStats
     {
         switch (phase)
         {
+            case FramePhase.Style:
+                StyledElements++;
+                break;
             case FramePhase.Measure:
                 MeasuredElements++;
                 break;

@@ -6,6 +6,8 @@ public sealed class FramePhaseProcessors
 {
     public static FramePhaseProcessors Empty { get; } = new();
 
+    public Action<UIElement>? Style { get; init; }
+
     public Action<UIElement>? Measure { get; init; }
 
     public Action<UIElement>? Arrange { get; init; }
@@ -18,6 +20,9 @@ public sealed class FramePhaseProcessors
     {
         switch (phase)
         {
+            case FramePhase.Style:
+                Style?.Invoke(element);
+                break;
             case FramePhase.Measure:
                 Measure?.Invoke(element);
                 break;

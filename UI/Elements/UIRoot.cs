@@ -15,6 +15,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         ElementIds = new ElementIdProvider();
         Trace = new InvalidationTrace();
         LayoutQueue = new LayoutQueue(this);
+        StyleQueue = new StyleQueue(this);
         RenderQueue = new RenderQueue(this);
         HitTestQueue = new HitTestQueue(this);
         LayoutManager = new LayoutManager(this);
@@ -22,7 +23,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         RetainedRenderCache = new RetainedRenderCache();
         RenderQueueProcessor = new RenderQueueProcessor(RetainedRenderCache, RenderCounters);
         RetainedRenderer = new RetainedRenderer(RetainedRenderCache, new DrawCommandListBuilder(), RenderCounters);
-        Scheduler = new UiFrameScheduler(LayoutQueue, RenderQueue, HitTestQueue, Trace);
+        Scheduler = new UiFrameScheduler(LayoutQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
         IsLayoutBoundary = true;
         ElementLifecycle.AttachSubtree(this, this);
     }
@@ -42,6 +43,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public InvalidationTrace Trace { get; }
 
     public LayoutQueue LayoutQueue { get; }
+
+    public StyleQueue StyleQueue { get; }
 
     public RenderQueue RenderQueue { get; }
 
@@ -82,7 +85,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
             RetainedRenderCache.InvalidateRoot();
         }
 
-        DirtyPropagation.Default.Propagate(request, this, LayoutQueue, RenderQueue, HitTestQueue, Trace);
+        DirtyPropagation.Default.Propagate(request, this, LayoutQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
     }
 
     public FrameStats ProcessFrame(FramePhaseProcessors? processors = null, FrameBudget budget = default)

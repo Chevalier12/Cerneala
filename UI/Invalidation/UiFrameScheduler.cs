@@ -5,10 +5,12 @@ namespace Cerneala.UI.Invalidation;
 public sealed class UiFrameScheduler
 {
     private readonly LayoutQueue layoutQueue;
+    private readonly StyleQueue styleQueue;
     private readonly RenderQueue renderQueue;
     private readonly HitTestQueue hitTestQueue;
     private readonly InvalidationTrace trace;
     private const InvalidationFlags ConcreteWorkFlags =
+        InvalidationFlags.Style |
         InvalidationFlags.Measure |
         InvalidationFlags.Arrange |
         InvalidationFlags.Render |
@@ -18,23 +20,24 @@ public sealed class UiFrameScheduler
         InvalidationFlags.Text |
         InvalidationFlags.Image |
         InvalidationFlags.Resource |
-        InvalidationFlags.Style |
         InvalidationFlags.InputVisual |
         InvalidationFlags.Subtree;
 
     public UiFrameScheduler(
         LayoutQueue layoutQueue,
+        StyleQueue styleQueue,
         RenderQueue renderQueue,
         HitTestQueue hitTestQueue,
         InvalidationTrace? trace = null)
     {
         this.layoutQueue = layoutQueue ?? throw new ArgumentNullException(nameof(layoutQueue));
+        this.styleQueue = styleQueue ?? throw new ArgumentNullException(nameof(styleQueue));
         this.renderQueue = renderQueue ?? throw new ArgumentNullException(nameof(renderQueue));
         this.hitTestQueue = hitTestQueue ?? throw new ArgumentNullException(nameof(hitTestQueue));
         this.trace = trace ?? InvalidationTrace.Disabled;
     }
 
-    public bool HasWork => layoutQueue.HasWork || renderQueue.HasWork || hitTestQueue.HasWork;
+    public bool HasWork => styleQueue.HasWork || layoutQueue.HasWork || renderQueue.HasWork || hitTestQueue.HasWork;
 
     public FrameStats ProcessFrame(
         FramePhaseProcessors? processors = null,
@@ -51,12 +54,29 @@ public sealed class UiFrameScheduler
             return stats;
         }
 
+        ProcessStyle(processors, stats);
         ProcessMeasure(processors, stats);
         ProcessArrange(processors, stats);
         ProcessRender(processors, stats);
         ProcessHitTest(processors, stats);
 
         return stats;
+    }
+
+    private void ProcessStyle(FramePhaseProcessors processors, FrameStats stats)
+    {
+        IReadOnlyList<Elements.UIElement> snapshot = styleQueue.Snapshot();
+        foreach (Elements.UIElement element in snapshot)
+        {
+            processors.Process(FramePhase.Style, element);
+            InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Style);
+            styleQueue.Remove(element);
+            stats.Count(FramePhase.Style);
+            trace.RecordPhase(FramePhase.Style, element, InvalidationFlags.Style);
+            trace.RecordClear(element, cleared);
+        }
+
+        trace.RecordPhaseSummary(FramePhase.Style, snapshot.Count);
     }
 
     private void ProcessMeasure(FramePhaseProcessors processors, FrameStats stats)
