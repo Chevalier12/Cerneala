@@ -751,41 +751,41 @@ MVP demo acceptance checklist:
 
 This phase adds modern styling after properties, retained tree, and invalidation are stable. Styling should be typed and explicit, not a XAML-first clone of WPF triggers/resources.
 
-- [ ] `UI/Styling/Style.cs`
-- [ ] `UI/Styling/StyleRule.cs`
-- [ ] `UI/Styling/StyleSelector.cs`
-- [ ] `UI/Styling/StyleSheet.cs`
-- [ ] `UI/Styling/Setter.cs`
-- [ ] `UI/Styling/Setter{T}.cs`
-- [ ] `UI/Styling/StyleApplicator.cs`
-- [ ] `UI/Styling/StyleInvalidation.cs`
-- [ ] `UI/Styling/Theme.cs`
-- [ ] `UI/Styling/ThemeKey{T}.cs`
-- [ ] `UI/Styling/ThemeProvider.cs`
-- [ ] `UI/Styling/ThemeResource.cs`
-- [ ] `UI/Styling/PseudoClass.cs` — hover, pressed, focus, disabled, selected.
-- [ ] `UI/Styling/VisualStateRule.cs`
-- [ ] `UI/Styling/DefaultTheme.cs`
-- [ ] `UI/Styling/ThemePalette.cs`
-- [ ] `UI/Styling/StyleDiagnostics.cs`
+- [x] `UI/Styling/Style.cs`
+- [x] `UI/Styling/StyleRule.cs`
+- [x] `UI/Styling/StyleSelector.cs`
+- [x] `UI/Styling/StyleSheet.cs`
+- [x] `UI/Styling/Setter.cs`
+- [x] `UI/Styling/Setter{T}.cs`
+- [x] `UI/Styling/StyleApplicator.cs`
+- [x] `UI/Styling/StyleInvalidation.cs`
+- [x] `UI/Styling/Theme.cs`
+- [x] `UI/Styling/ThemeKey{T}.cs`
+- [x] `UI/Styling/ThemeProvider.cs`
+- [x] `UI/Styling/ThemeResource.cs`
+- [x] `UI/Styling/PseudoClass.cs` — hover, pressed, focus, disabled, selected.
+- [x] `UI/Styling/VisualStateRule.cs`
+- [x] `UI/Styling/DefaultTheme.cs`
+- [x] `UI/Styling/ThemePalette.cs`
+- [x] `UI/Styling/StyleDiagnostics.cs`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Styling/StyleTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Styling/StyleRuleTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Styling/SetterTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Styling/StyleApplicatorTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Styling/StyleInvalidationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Styling/ThemeTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Styling/PseudoClassTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Styling/StyleTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Styling/StyleRuleTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Styling/SetterTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Styling/StyleApplicatorTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Styling/StyleInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Styling/ThemeTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Styling/PseudoClassTests.cs`
 
 Acceptance checklist:
 
-- [ ] Applying a style sets typed properties without reflection in the hot path.
-- [ ] Style changes invalidate only affected layout/render/style work.
-- [ ] Visual state changes can activate style rules and enqueue render invalidation.
-- [ ] Theme changes propagate through resource dependencies.
-- [ ] Local values override style values through explicit precedence.
+- [x] Applying a style sets typed properties without reflection in the hot path.
+- [x] Style changes invalidate only affected layout/render/style work.
+- [x] Visual state changes can activate style rules and enqueue render invalidation.
+- [x] Theme changes propagate through resource dependencies.
+- [x] Local values override style values through explicit precedence.
 
 ## 15. [Core] Templates and composition
 

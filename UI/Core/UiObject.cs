@@ -12,6 +12,12 @@ public class UiObject
         return (T)propertyStore.GetValue(property)!;
     }
 
+    public object? GetValue(UiProperty property)
+    {
+        ArgumentNullException.ThrowIfNull(property);
+        return propertyStore.GetValue(property);
+    }
+
     public UiPropertyValueSource GetValueSource(UiProperty property)
     {
         ArgumentNullException.ThrowIfNull(property);
