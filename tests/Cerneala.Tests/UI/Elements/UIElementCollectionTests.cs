@@ -42,6 +42,24 @@ public sealed class UIElementCollectionTests
     }
 
     [Fact]
+    public void RemovingAttachedVisualChildInvalidatesOwnerLayoutRenderAndHitTesting()
+    {
+        UIRoot root = new();
+        UIElement parent = new();
+        UIElement child = new();
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        root.ProcessFrame();
+
+        parent.VisualChildren.Remove(child);
+
+        Assert.Contains(parent, root.LayoutQueue.SnapshotMeasure());
+        Assert.Contains(parent, root.LayoutQueue.SnapshotArrange());
+        Assert.Contains(parent, root.RenderQueue.Snapshot());
+        Assert.Contains(parent, root.HitTestQueue.Snapshot());
+    }
+
+    [Fact]
     public void DuplicateAddIsRejected()
     {
         UIElement parent = new();

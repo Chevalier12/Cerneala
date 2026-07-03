@@ -1,4 +1,5 @@
 using System.Collections;
+using Cerneala.UI.Invalidation;
 
 namespace Cerneala.UI.Elements;
 
@@ -89,6 +90,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         }
 
         Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Removed));
+        InvalidateOwnerForVisualChildRemoval();
         return true;
     }
 
@@ -135,6 +137,20 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         {
             child.SetVisualParent(parent);
         }
+    }
+
+    private void InvalidateOwnerForVisualChildRemoval()
+    {
+        if (role != ElementChildRole.Visual || owner is UIRoot)
+        {
+            return;
+        }
+
+        owner.IncrementLayoutVersion();
+        owner.IncrementRenderVersion();
+        owner.Invalidate(
+            InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.HitTest,
+            "Visual child removed");
     }
 
     private bool ContainsReference(UIElement child)

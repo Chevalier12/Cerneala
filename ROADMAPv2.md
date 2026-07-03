@@ -247,7 +247,7 @@ Acceptance checklist:
 
 - [x] Adding a child sets exactly one parent for the matching logical or visual relationship.
 - [x] Removing a child clears parent for the matching logical or visual relationship.
-- [ ] Removing a child invalidates layout/render for affected ancestors after invalidation/layout/render systems exist.
+- [x] Removing a child invalidates layout/render for affected ancestors after invalidation/layout/render systems exist.
 - [x] Reparenting without removal is rejected.
 - [x] Element ids are stable across frames while an element remains attached.
 - [x] `UiInputTree` route order matches the retained visual element ancestor chain.
@@ -376,10 +376,10 @@ Planning:
 - [x] `UI/Layout/Panels/Canvas.cs`
 - [x] `UI/Layout/Panels/StackPanel.cs`
 - [x] `UI/Layout/Panels/Orientation.cs`
-- [ ] `UI/Layout/Panels/Grid.cs` — later in MVP only if needed; otherwise Core.
-- [ ] `UI/Layout/Panels/GridLength.cs`
-- [ ] `UI/Layout/Panels/ColumnDefinition.cs`
-- [ ] `UI/Layout/Panels/RowDefinition.cs`
+- [x] `UI/Layout/Panels/Grid.cs` — fixed, auto, and star retained grid panel.
+- [x] `UI/Layout/Panels/GridLength.cs`
+- [x] `UI/Layout/Panels/ColumnDefinition.cs`
+- [x] `UI/Layout/Panels/RowDefinition.cs`
 
 Tests:
 
@@ -390,7 +390,7 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Layout/VisibilityTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Layout/CanvasTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Layout/StackPanelTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Layout/GridTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/GridTests.cs`
 
 Acceptance checklist:
 
@@ -440,7 +440,7 @@ IDrawingBackend.Render(rootCommandList) can run every frame
 - [x] `UI/Rendering/RenderQueueProcessor.cs` — regenerates only dirty local element command lists.
 - [x] `UI/Rendering/RetainedRenderer.cs` — produces cached root command list for `IDrawingBackend`.
 - [x] `UI/Rendering/DrawCommandListBuilder.cs` — flattens cached local commands in visual order.
-- [ ] `UI/Rendering/DrawCommandListPool.cs` — optional pooling after correctness is proven; deferred until profiling proves allocation pressure.
+- [x] `UI/Rendering/DrawCommandListPool.cs` — explicit reusable `DrawCommandList` pool for safe temporary command-list reuse.
 - [x] `UI/Rendering/ClipNode.cs` — retained clip metadata translated to `PushClip`/`PopClip` commands.
 - [x] `UI/Rendering/RenderLayer.cs` — future boundary for opacity/effects; MVP can be minimal.
 - [x] `UI/Rendering/RenderDependency.cs` — tracks text/image/theme/resource dependencies that affect cached commands.
@@ -453,6 +453,7 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Rendering/RenderQueueProcessorTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Rendering/RetainedRendererTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Rendering/DrawCommandListBuilderTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/DrawCommandListPoolTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Rendering/RenderDependencyTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Rendering/RenderCountersTests.cs`
 
@@ -569,10 +570,10 @@ This phase completes route-based command execution without copying WPF's global 
 - [x] `UI/Input/CommandRouter.cs` — explicit service that queries and executes through retained routes.
 - [x] `UI/Input/RoutedCommandContext.cs`
 - [x] `UI/Input/ActionCommand.cs` — simple command backed by delegates.
-- [ ] `UI/Input/InputGesture.cs` — Core if MVP needs keyboard shortcuts.
-- [ ] `UI/Input/KeyGesture.cs` — Core if MVP needs keyboard shortcuts.
-- [ ] `UI/Input/InputBinding.cs` — Core if MVP needs shortcut-to-command mapping.
-- [ ] `UI/Input/KeyBinding.cs` — Core if MVP needs shortcut-to-command mapping.
+- [x] `UI/Input/InputGesture.cs` — explicit retained input gesture base for shortcut matching.
+- [x] `UI/Input/KeyGesture.cs` — keyboard shortcut gesture with exact modifier matching.
+- [x] `UI/Input/InputBinding.cs` — explicit gesture-to-command binding without global command manager magic.
+- [x] `UI/Input/KeyBinding.cs` — keyboard shortcut binding for direct and routed commands.
 - [x] `UI/Controls/Primitives/ButtonBase.CommandProperty`
 - [x] `UI/Controls/Primitives/ButtonBase.CommandParameterProperty`
 
@@ -583,7 +584,7 @@ Tests:
 - [x] `tests/Cerneala.Tests/Input/ActionCommandTests.cs`
 - [x] `tests/Cerneala.Tests/Input/RoutedCommandExecutionTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/Primitives/ButtonBaseCommandTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/InputGestureTests.cs`
+- [x] `tests/Cerneala.Tests/Input/InputGestureTests.cs`
 
 Acceptance checklist:
 
@@ -618,10 +619,10 @@ This phase creates the smallest useful control set. Controls should be retained,
 - [x] `UI/Controls/Image.cs`
 - [x] `UI/Controls/Primitives/ButtonBase.cs`
 - [x] `UI/Controls/Button.cs`
-- [ ] `UI/Controls/Primitives/ToggleButton.cs` — Core if not needed for MVP.
-- [ ] `UI/Controls/CheckBox.cs` — Core if not needed for MVP.
-- [ ] `UI/Controls/ControlTemplate.cs` — Core; MVP controls may render directly first.
-- [ ] `UI/Controls/TemplatePart.cs` — Core.
+- [x] `UI/Controls/Primitives/ToggleButton.cs` — checkable button primitive with explicit click toggle semantics.
+- [x] `UI/Controls/CheckBox.cs` — checkable content control rendered through retained drawing commands.
+- [x] `UI/Controls/ControlTemplate.cs` — code-first control templates.
+- [x] `UI/Controls/TemplatePartAttribute.cs` — diagnostic template part metadata.
 - [x] `UI/Controls/VisualState.cs` — minimal state names for hover/pressed/focus/disabled.
 - [x] `UI/Controls/ControlTextFont.cs` — minimal backend-neutral font handle for MVP text commands.
 - [x] `UI/Controls/TextMeasurement.cs` — minimal text measurement result for `TextBlock`.
@@ -650,6 +651,8 @@ Tests:
 - [x] `tests/Cerneala.Tests/Controls/ImageTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/Primitives/ButtonBaseTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/ButtonTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ToggleButtonTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/CheckBoxTests.cs`
 
 MVP control acceptance checklist:
 
@@ -675,9 +678,9 @@ This phase adds layout and cache services for controls such as `TextBlock` witho
 - [x] `UI/Text/TextWrapping.cs`
 - [x] `UI/Text/TextTrimming.cs` — Core if MVP does not need trimming.
 - [x] `UI/Text/LineBreakService.cs` — Core if MVP only supports single-line text.
-- [ ] `UI/Text/BidiTextService.cs` — Later.
-- [ ] `UI/Text/TextSelection.cs` — Later.
-- [ ] `UI/Text/TextEditingController.cs` — Later.
+- [x] `UI/Text/BidiTextService.cs` — minimal neutral/LTR/RTL run detection for higher-level text services.
+- [x] `UI/Text/TextSelection.cs` — normalized immutable selection/caret range.
+- [x] `UI/Text/TextEditingController.cs` — explicit editing controller over `TextEditor` for text input and navigation keys.
 
 Tests:
 
@@ -685,6 +688,8 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Text/TextMeasurerTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Text/TextLayoutCacheTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Text/TextRendererTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Text/BidiTextServiceTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Text/TextEditingControllerTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/TextBlockInvalidationTests.cs`
 
 Acceptance checklist:
@@ -1189,24 +1194,24 @@ This order prioritizes a working retained UI loop before broad API coverage.
 
 ### MVP order
 
-- [ ] 1. Add `openspec/README.md`, `openspec/project.md`, and specs for retained tree, invalidation, typed state, layout, render cache, and input bridge using the existing OpenSpec workspace.
-- [ ] 2. Add `UI/Core/UiProperty{T}.cs`, metadata, store, registry, and property invalidation tests.
-- [ ] 3. Add `UI/Elements/UIElement.cs`, `UIElementCollection`, `UIRoot`, element ids, lifecycle, and tree tests.
-- [ ] 4. Add `InvalidationFlags`, dirty propagation, `LayoutQueue`, `RenderQueue`, `UiFrameScheduler`, and no-work-frame tests.
-- [ ] 5. Add layout primitives, `LayoutManager`, `Panel`, `Canvas`, `StackPanel`, and layout cache tests.
-- [ ] 6. Add `RenderContext`, `ElementRenderCache`, `RetainedRenderer`, root command-list cache, and retained render tests.
+- [x] 1. Add `openspec/README.md`, `openspec/project.md`, and specs for retained tree, invalidation, typed state, layout, render cache, and input bridge using the existing OpenSpec workspace.
+- [x] 2. Add `UI/Core/UiProperty{T}.cs`, metadata, store, registry, and property invalidation tests.
+- [x] 3. Add `UI/Elements/UIElement.cs`, `UIElementCollection`, `UIRoot`, element ids, lifecycle, and tree tests.
+- [x] 4. Add `InvalidationFlags`, dirty propagation, `LayoutQueue`, `RenderQueue`, `UiFrameScheduler`, and no-work-frame tests.
+- [x] 5. Add layout primitives, `LayoutManager`, `Panel`, `Canvas`, `StackPanel`, and layout cache tests.
+- [x] 6. Add `RenderContext`, `ElementRenderCache`, `RetainedRenderer`, root command-list cache, and retained render tests.
 - [x] 7. Add `UiHost` and `MonoGameUiHost` so update/draw uses retained frame scheduling.
 - [x] 8. Add hit testing, `ElementInputBridge`, hover/pressed state tracking, and focus manager MVP.
 - [x] 9. Add `CommandRouter`, `ActionCommand`, `ButtonBase.Command`, and command route tests.
-- [ ] 10. Add `Control`, `Border`, `TextBlock`, `Button`, first panels, and acceptance tests.
-- [ ] 11. Add text measurement/layout cache services above existing Skia/HarfBuzz text pipeline.
-- [ ] 12. Add resource dependency tracking for fonts/images.
+- [x] 10. Add `Control`, `Border`, `TextBlock`, `Button`, first panels, and acceptance tests.
+- [x] 11. Add text measurement/layout cache services above existing Skia/HarfBuzz text pipeline.
+- [x] 12. Add resource dependency tracking for fonts/images.
 - [x] 13. Update playground to show retained UI plus invalidation stats.
 
 ### Core order
 
-- [ ] 14. Add styling/theme engine with typed setters and pseudo-class rules.
-- [ ] 15. Add code-first templates and presenters.
+- [x] 14. Add styling/theme engine with typed setters and pseudo-class rules.
+- [x] 15. Add code-first templates and presenters.
 - [x] 16. Add scrolling/range controls.
 - [x] 17. Add items, selection, and virtualization.
 - [x] 18. Add typed data observation and binding-light APIs.
@@ -1278,13 +1283,13 @@ These are explicit decision points to resolve before or during implementation. R
 MVP is complete when Cerneala can run a retained UI sample inside the MonoGame playground with deterministic tests proving invalidation-driven behavior.
 
 - [x] `MonoGameUiHost` exists and is used by `Playground/Cerneala.Playground/Game1.cs`.
-- [ ] `UIRoot` retains a tree containing `StackPanel`, `Border`, `TextBlock`, and `Button`.
-- [ ] Layout runs on first frame and when layout-affecting state changes.
-- [ ] Rendering commands are regenerated only when render-affecting state changes.
-- [ ] `IDrawingBackend.Render` can be called every draw frame with cached commands.
-- [ ] Existing `UI/Drawing` tests still pass.
-- [ ] Existing `UI/Input` tests still pass.
-- [ ] New retained no-work-frame tests pass.
+- [x] `UIRoot` retains a tree containing `StackPanel`, `Border`, `TextBlock`, and `Button`.
+- [x] Layout runs on first frame and when layout-affecting state changes.
+- [x] Rendering commands are regenerated only when render-affecting state changes.
+- [x] `IDrawingBackend.Render` can be called every draw frame with cached commands.
+- [x] Existing `UI/Drawing` tests still pass.
+- [x] Existing `UI/Input` tests still pass.
+- [x] New retained no-work-frame tests pass.
 - [x] Hover, press, focus, and command execution work through retained input routing.
-- [ ] Text rendering uses existing `DrawTextRun`, `SkiaTextShaper`, and `SkiaTextRasterizer` through higher-level services.
-- [ ] No UI core control directly references MonoGame, Skia, HarfBuzz, `SpriteBatch`, or `Texture2D`.
+- [x] Text rendering uses existing `DrawTextRun`, `SkiaTextShaper`, and `SkiaTextRasterizer` through higher-level services.
+- [x] No UI core control directly references MonoGame, Skia, HarfBuzz, `SpriteBatch`, or `Texture2D`.
