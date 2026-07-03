@@ -134,21 +134,23 @@ This phase makes the intended v2 architecture explicit before adding framework s
 - [x] `openspec/config.yaml` — existing OpenSpec configuration using the `spec-driven` schema.
 - [x] `openspec/README.md` — document how this repo uses OpenSpec for Cerneala planning.
 - [x] `openspec/project.md` — product principles, scope bands, and non-goals for the retained UI core.
-- [ ] `openspec/specs/retained-ui-tree/spec.md`
-- [ ] `openspec/specs/invalidation-and-frame-loop/spec.md`
-- [ ] `openspec/specs/typed-state/spec.md`
-- [ ] `openspec/specs/layout/spec.md`
-- [ ] `openspec/specs/render-cache/spec.md`
-- [ ] `openspec/specs/input-focus-command-bridge/spec.md`
-- [ ] `openspec/specs/styling-theme/spec.md`
+- [x] `openspec/specs/retained-ui-mvp-foundation/spec.md`
+- [x] `openspec/specs/retained-element-tree/spec.md`
+- [x] `openspec/specs/retained-invalidation-frame-scheduler/spec.md`
+- [x] `openspec/specs/typed-state-model/spec.md`
+- [x] `openspec/specs/layout-system/spec.md`
+- [x] `openspec/specs/retained-rendering-cache/spec.md`
+- [x] `openspec/specs/retained-input-bridge/spec.md`
+- [x] `openspec/specs/command-router-actions/spec.md`
+- [x] `openspec/specs/styling-theme-engine/spec.md`
 - [x] `docs/architecture-v2.md` — concise architecture complement to `architecture.md`, focused on layers above drawing/input.
 - [x] `docs/diagrams/retained-frame-loop.md` — text diagram for update/layout/render-cache/draw flow.
 - [x] `docs/diagrams/ui-layer-boundaries.md` — text diagram showing UI core -> drawing/input -> MonoGame adapters.
 
 Tests and checks:
 
-- [ ] `tests/Cerneala.Tests/Architecture/RepositoryShapeTests.cs` — verifies planned top-level folders do not accidentally depend on MonoGame except adapter folders.
-- [ ] `tests/Cerneala.Tests/Architecture/NamespaceBoundaryTests.cs` — verifies new UI core namespaces do not reference Skia, HarfBuzz, `SpriteBatch`, `Texture2D`, or `Mouse.GetState()`.
+- [x] `tests/Cerneala.Tests/Architecture/RepositoryShapeTests.cs` — verifies section 1 planning files and canonical spec paths exist.
+- [x] `tests/Cerneala.Tests/Architecture/NamespaceBoundaryTests.cs` — verifies UI core namespaces do not reference Skia, HarfBuzz, MonoGame, `SpriteBatch`, `Texture2D`, or direct platform input polling outside adapter folders.
 
 ## 2. [MVP] Typed state model
 
