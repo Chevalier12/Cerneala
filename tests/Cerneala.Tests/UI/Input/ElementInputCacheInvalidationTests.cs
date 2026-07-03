@@ -59,7 +59,7 @@ public sealed class ElementInputCacheInvalidationTests
     [Fact]
     public void HitTestPhaseRebuildsDirtyInputCacheBeforeNoWorkFrames()
     {
-        UIRoot root = RootWithChild(out UIElement child);
+        UIRoot root = RootWithChildAfterFrame(out UIElement child);
         root.InputCache.EnsureCurrent(root);
         int rebuildsAfterInitialBuild = root.InputCache.RebuildCount;
 
@@ -76,6 +76,12 @@ public sealed class ElementInputCacheInvalidationTests
         UIRoot root = new(100, 100);
         child = Arranged(0, 0, 40, 40);
         root.VisualChildren.Add(child);
+        return root;
+    }
+
+    private static UIRoot RootWithChildAfterFrame(out UIElement child)
+    {
+        UIRoot root = RootWithChild(out child);
         root.ProcessFrame();
         return root;
     }
