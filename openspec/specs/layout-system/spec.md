@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines Cerneala's retained measure/arrange layout system, layout-specific geometry, layout policy, panel behavior, layout invalidation, and rendering/input boundaries.
-
 ## Requirements
-
 ### Requirement: Layout geometry is distinct from drawing geometry
 Cerneala SHALL provide layout-specific geometry types under `UI/Layout` without reusing drawing command primitives as layout state.
 
@@ -167,3 +165,19 @@ Cerneala SHALL include focused tests for layout primitives, layout manager, elem
 #### Scenario: Full tests pass
 - **WHEN** this implementation phase is complete
 - **THEN** `dotnet test` passes
+
+### Requirement: Controls-facing panels reuse layout panel behavior
+Cerneala SHALL expose controls-facing panel types without duplicating or weakening existing retained layout semantics.
+
+#### Scenario: Controls Panel uses visual children for layout
+- **WHEN** `UI/Controls/Panel` is measured or arranged
+- **THEN** it lays out retained visual children using the same behavior as the layout panel base
+
+#### Scenario: Controls Canvas matches layout Canvas behavior
+- **WHEN** `UI/Controls/Canvas` arranges children
+- **THEN** child arranged bounds match `UI/Layout/Panels/Canvas` behavior for the same inputs
+
+#### Scenario: Controls StackPanel matches layout StackPanel behavior
+- **WHEN** `UI/Controls/StackPanel` measures and arranges children
+- **THEN** desired size and arranged bounds match `UI/Layout/Panels/StackPanel` behavior for the same orientation and children
+
