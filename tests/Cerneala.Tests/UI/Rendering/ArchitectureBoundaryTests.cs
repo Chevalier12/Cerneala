@@ -747,11 +747,9 @@ public sealed class ArchitectureBoundaryTests
     {
         string root = FindRepositoryRoot();
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
-        string openSpecSegment = "open" + "spec";
-        string changesSegment = "chang" + "es";
-        string tasks = File.ReadAllText(Path.Combine(root, openSpecSegment, changesSegment, "add-advanced-rendering-media", "tasks.md"));
+        string spec = File.ReadAllText(Path.Combine(root, "openspec", "specs", "advanced-rendering-media", "spec.md"));
 
-        Assert.Contains("- [x] 4.2 Run OpenSpec validation and full project tests.", tasks, StringComparison.Ordinal);
+        Assert.Contains("### Requirement: Advanced rendering and media is tested", spec, StringComparison.Ordinal);
         Assert.Contains("- [x] Full project tests pass for this phase.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] 22. Add advanced rendering/media primitives as scenarios require.", roadmap, StringComparison.Ordinal);
     }
