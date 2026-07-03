@@ -132,6 +132,10 @@ Cerneala SHALL provide `UiFrameScheduler` that processes dirty work through expl
 - **WHEN** a frame processes dirty work
 - **THEN** `FrameStats` reports processed measure, arrange, render-cache, hit-test, reused-cache, and no-work counts as applicable
 
+#### Scenario: Render-cache phase delegates to retained rendering
+- **WHEN** the frame scheduler processes queued render work for a retained root
+- **THEN** the root's retained render queue processor updates element render caches during the render-cache phase
+
 ### Requirement: Dirty flags clear only after successful processing
 Cerneala SHALL clear dirty flags only after the matching frame phase has completed successfully.
 
@@ -203,3 +207,7 @@ Cerneala SHALL include focused tests proving retained invalidation avoids repeat
 #### Scenario: Measure invalidation refreshes render after layout settles
 - **WHEN** an element receives measure invalidation
 - **THEN** render-cache work is scheduled only after layout-related work has been processed
+
+#### Scenario: Render-only invalidation rebuilds only render cache
+- **WHEN** an element receives render-only invalidation
+- **THEN** the next frame rebuilds the affected retained render cache without running measure or arrange

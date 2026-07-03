@@ -46,14 +46,13 @@ public sealed class ArchitectureBoundaryTests
     [Fact]
     public void DrawCommandListPoolDeferralIsDocumentedConsistently()
     {
-        string changeRoot = FindRepositoryPath("openspec", "changes", "add-retained-rendering-cache");
         string renderingRoot = FindRepositoryPath("UI", "Rendering");
-        string design = File.ReadAllText(Path.Combine(changeRoot, "design.md"));
-        string spec = File.ReadAllText(Path.Combine(changeRoot, "specs", "retained-rendering-cache", "spec.md"));
+        string roadmap = File.ReadAllText(FindRepositoryPath("ROADMAPv2.md"));
+        string spec = File.ReadAllText(FindRepositoryPath("openspec", "specs", "retained-rendering-cache", "spec.md"));
 
         Assert.False(File.Exists(Path.Combine(renderingRoot, "DrawCommandListPool.cs")));
-        Assert.DoesNotContain("Should `DrawCommandListPool`", design, StringComparison.Ordinal);
-        Assert.Contains("DrawCommandListPool is deferred", design, StringComparison.Ordinal);
+        Assert.Contains("DrawCommandListPool.cs", roadmap, StringComparison.Ordinal);
+        Assert.Contains("deferred", roadmap, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("DrawCommandListPool is deferred", spec, StringComparison.Ordinal);
     }
 

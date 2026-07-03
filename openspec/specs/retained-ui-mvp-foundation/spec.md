@@ -43,6 +43,10 @@ Cerneala SHALL document and implement the foundation that allows the game loop t
 - **WHEN** retained measure or arrange work is queued
 - **THEN** the retained layout system processes that work before render-cache work in the frame loop
 
+#### Scenario: Render-cache phase is concrete
+- **WHEN** retained render work is queued
+- **THEN** the retained rendering system regenerates only dirty local command lists and exposes a cached root command list for draw
+
 ### Requirement: Confirmed MVP decisions are captured
 Cerneala SHALL capture the confirmed MVP decisions from `ROADMAPv2.md`.
 
