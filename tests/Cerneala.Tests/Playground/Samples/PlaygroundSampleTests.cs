@@ -95,7 +95,7 @@ public sealed class PlaygroundSampleTests
         SampleSelector selector = SampleSelector.CreateDefault();
         root.VisualChildren.Add(selector.Root);
         selector.Root.Invalidate(
-            InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.HitTest,
+            InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.HitTest | InvalidationFlags.Subtree,
             "Initial selector test frame");
         root.ProcessFrame();
         Button layoutButton = ButtonWithText(selector.Root, "Layout");

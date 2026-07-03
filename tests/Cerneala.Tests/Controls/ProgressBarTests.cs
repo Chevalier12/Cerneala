@@ -19,8 +19,9 @@ public sealed class ProgressBarTests
             Value = 25,
             Foreground = DrawColor.White
         };
-        progress.Arrange(new ArrangeContext(new LayoutRect(0, 0, 80, 10)));
         root.VisualChildren.Add(progress);
+        root.ProcessFrame();
+        progress.Arrange(new ArrangeContext(new LayoutRect(0, 0, 80, 10)));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();
 

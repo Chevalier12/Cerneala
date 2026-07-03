@@ -126,6 +126,7 @@ public sealed class ScrollViewerTests
             Content = new FixedElement(new LayoutSize(200, 200))
         };
         root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
         presenter.Measure(new MeasureContext(new LayoutSize(50, 50)));
         presenter.Arrange(new ArrangeContext(new LayoutRect(0, 0, 50, 50)));
 

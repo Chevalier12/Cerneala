@@ -32,6 +32,7 @@ public sealed class ImageTests
             Foreground = DrawColor.White
         };
         root.VisualChildren.Add(image);
+        root.ProcessFrame();
         image.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();

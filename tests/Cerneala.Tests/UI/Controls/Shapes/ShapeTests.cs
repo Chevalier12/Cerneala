@@ -22,6 +22,7 @@ public sealed class ShapeTests
             StrokeThickness = 2
         };
         root.VisualChildren.Add(rectangle);
+        root.ProcessFrame();
         rectangle.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();
@@ -45,6 +46,7 @@ public sealed class ShapeTests
             StrokeThickness = 3
         };
         root.VisualChildren.Add(ellipse);
+        root.ProcessFrame();
         ellipse.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();
@@ -67,6 +69,7 @@ public sealed class ShapeTests
             RenderTransform = new Transform(Matrix3x2.CreateTranslation(10, 20))
         };
         root.VisualChildren.Add(rectangle);
+        root.ProcessFrame();
         rectangle.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();
@@ -89,6 +92,7 @@ public sealed class ShapeTests
             StrokeThickness = 2
         };
         root.VisualChildren.Add(path);
+        root.ProcessFrame();
         path.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();

@@ -70,6 +70,7 @@ public sealed class TextBlockTests
             Foreground = DrawColor.White
         };
         root.VisualChildren.Add(textBlock);
+        root.ProcessFrame();
         textBlock.Arrange(new ArrangeContext(new LayoutRect(2, 3, 50, 20)));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();

@@ -36,6 +36,7 @@ public sealed class BorderTests
         };
         UIRoot root = new();
         root.VisualChildren.Add(border);
+        root.ProcessFrame();
         border.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();
