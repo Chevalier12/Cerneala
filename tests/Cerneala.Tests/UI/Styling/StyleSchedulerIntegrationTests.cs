@@ -74,6 +74,34 @@ public sealed class StyleSchedulerIntegrationTests
     }
 
     [Fact]
+    public void StyleSetterThatChangesPseudoStateQueuesFollowUpStyleWork()
+    {
+        UIRoot root = new(100, 100);
+        Button button = new();
+        StyleSheet sheet = new StyleSheet()
+            .Add(new StyleRule(StyleSelector.ForType<Button>())
+                .Add(new Setter<bool>(UIElement.IsEnabledProperty, false)))
+            .Add(new StyleRule(
+                    StyleSelector.ForType<Button>(),
+                    new VisualStateRule(PseudoClass.Disabled))
+                .Add(new Setter<DrawColor>(Control.BackgroundProperty, DrawColor.Black)));
+        root.SetStyleSheet(sheet);
+        root.VisualChildren.Add(button);
+
+        root.ProcessFrame();
+
+        Assert.False(button.IsEnabled);
+        Assert.Contains(button, root.StyleQueue.Snapshot());
+        Assert.True(button.DirtyState.Has(InvalidationFlags.Style));
+
+        root.ProcessFrame();
+
+        Assert.Equal(DrawColor.Black, button.Background);
+        Assert.False(button.DirtyState.Has(InvalidationFlags.Style));
+        Assert.False(root.Scheduler.HasWork);
+    }
+
+    [Fact]
     public void ThemeChangeQueuesStyleForAttachedTree()
     {
         ThemeKey<DrawColor> key = new("Accent");

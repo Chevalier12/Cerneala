@@ -68,9 +68,19 @@ public sealed class UiFrameScheduler
         IReadOnlyList<Elements.UIElement> snapshot = styleQueue.Snapshot();
         foreach (Elements.UIElement element in snapshot)
         {
-            processors.Process(FramePhase.Style, element);
-            InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Style);
             styleQueue.Remove(element);
+            InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Style);
+            try
+            {
+                processors.Process(FramePhase.Style, element);
+            }
+            catch
+            {
+                element.DirtyState.Mark(cleared);
+                styleQueue.Enqueue(element);
+                throw;
+            }
+
             stats.Count(FramePhase.Style);
             trace.RecordPhase(FramePhase.Style, element, InvalidationFlags.Style);
             trace.RecordClear(element, cleared);
