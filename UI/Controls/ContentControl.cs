@@ -6,7 +6,7 @@ namespace Cerneala.UI.Controls;
 
 public class ContentControl : Control
 {
-    private static readonly IEqualityComparer<object?> ContentEqualityComparer = new ContentValueEqualityComparer();
+    internal static readonly IEqualityComparer<object?> ContentEqualityComparer = new ContentValueEqualityComparer();
 
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
         nameof(Content),
@@ -29,26 +29,40 @@ public class ContentControl : Control
             }
 
             ValidateCanOwnChild(this, value as UIElement);
-            RemoveContentElement(oldContent);
-            try
+            if (HostsContentDirectly)
             {
-                AddContentElement(value);
-                SetValue(ContentProperty, value);
+                RemoveContentElement(oldContent);
+                try
+                {
+                    AddContentElement(value);
+                    SetValue(ContentProperty, value);
+                }
+                catch
+                {
+                    RemoveContentElement(value);
+                    AddContentElement(oldContent);
+                    SetValue(ContentProperty, oldContent);
+                    throw;
+                }
+
+                return;
             }
-            catch
-            {
-                RemoveContentElement(value);
-                AddContentElement(oldContent);
-                SetValue(ContentProperty, oldContent);
-                throw;
-            }
+
+            SetValue(ContentProperty, value);
         }
     }
 
     protected UIElement? ContentElement => Content as UIElement;
 
+    private bool HostsContentDirectly => Template is null;
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
+        if (TemplateChild is not null)
+        {
+            return base.MeasureCore(context);
+        }
+
         Thickness insets = Insets;
         LayoutSize available = Deflate(context.AvailableSize, insets);
         LayoutSize contentSize = ContentElement?.Measure(new MeasureContext(available, context.Rounding)) ?? LayoutSize.Zero;
@@ -57,10 +71,31 @@ public class ContentControl : Control
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
+        if (TemplateChild is not null)
+        {
+            return base.ArrangeCore(context);
+        }
+
         Thickness insets = Insets;
         LayoutRect inner = Deflate(context.FinalRect, insets);
         ContentElement?.Arrange(new ArrangeContext(inner, context.Rounding));
         return context.FinalRect;
+    }
+
+    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+    {
+        if (!ReferenceEquals(args.Property, TemplateProperty))
+        {
+            base.OnPropertyChanged(args);
+            return;
+        }
+
+        ReleaseContentElementFromOwnedSubtree();
+        base.OnPropertyChanged(args);
+        if (HostsContentDirectly)
+        {
+            AddContentElement(Content);
+        }
     }
 
     internal static LayoutSize Deflate(LayoutSize size, Thickness thickness)
@@ -116,6 +151,24 @@ public class ContentControl : Control
         }
     }
 
+    internal static void DetachChildFromOwnedSubtree(UIElement owner, UIElement child)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        ArgumentNullException.ThrowIfNull(child);
+
+        UIElement? visualParent = child.VisualParent;
+        if (IsOwnedBy(visualParent, owner, ElementChildRole.Visual))
+        {
+            visualParent!.VisualChildren.Remove(child);
+        }
+
+        UIElement? logicalParent = child.LogicalParent;
+        if (IsOwnedBy(logicalParent, owner, ElementChildRole.Logical))
+        {
+            logicalParent!.LogicalChildren.Remove(child);
+        }
+    }
+
     private void AddContentElement(object? content)
     {
         if (content is not UIElement element)
@@ -138,6 +191,14 @@ public class ContentControl : Control
         LogicalChildren.Remove(element);
     }
 
+    private void ReleaseContentElementFromOwnedSubtree()
+    {
+        if (Content is UIElement element)
+        {
+            DetachChildFromOwnedSubtree(this, element);
+        }
+    }
+
     private static bool IsAncestor(UIElement owner, UIElement candidate, ElementChildRole role)
     {
         UIElement? current = role == ElementChildRole.Logical
@@ -147,6 +208,23 @@ public class ContentControl : Control
         while (current is not null)
         {
             if (ReferenceEquals(current, candidate))
+            {
+                return true;
+            }
+
+            current = role == ElementChildRole.Logical
+                ? current.LogicalParent
+                : current.VisualParent;
+        }
+
+        return false;
+    }
+
+    private static bool IsOwnedBy(UIElement? parent, UIElement owner, ElementChildRole role)
+    {
+        for (UIElement? current = parent; current is not null;)
+        {
+            if (ReferenceEquals(current, owner))
             {
                 return true;
             }

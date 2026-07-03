@@ -7,6 +7,17 @@ namespace Cerneala.UI.Controls;
 
 public class Control : UIElement
 {
+    public static readonly UiProperty<ControlTemplate?> TemplateProperty = UiProperty<ControlTemplate?>.Register(
+        nameof(Template),
+        typeof(Control),
+        new UiPropertyMetadata<ControlTemplate?>(
+            null,
+            UiPropertyOptions.AffectsMeasure |
+            UiPropertyOptions.AffectsArrange |
+            UiPropertyOptions.AffectsRender |
+            UiPropertyOptions.AffectsHitTest |
+            UiPropertyOptions.AffectsInputVisual));
+
     public static readonly UiProperty<DrawColor> BackgroundProperty = UiProperty<DrawColor>.Register(
         nameof(Background),
         typeof(Control),
@@ -84,11 +95,68 @@ public class Control : UIElement
         set => SetValue(FontSizeProperty, value);
     }
 
+    public ControlTemplate? Template
+    {
+        get => GetValue(TemplateProperty);
+        set => SetValue(TemplateProperty, value);
+    }
+
+    public TemplateInstance? TemplateInstance { get; private set; }
+
+    protected UIElement? TemplateChild => TemplateInstance?.Root;
+
     protected Thickness Insets => new(
         Padding.Left + BorderThickness.Left,
         Padding.Top + BorderThickness.Top,
         Padding.Right + BorderThickness.Right,
         Padding.Bottom + BorderThickness.Bottom);
+
+    public void ApplyTemplate()
+    {
+        ControlTemplate? template = Template;
+        if (TemplateInstance is not null && ReferenceEquals(TemplateInstanceTemplate, template))
+        {
+            return;
+        }
+
+        TemplateInstance?.Detach();
+        TemplateInstance = null;
+        TemplateInstanceTemplate = null;
+
+        if (template is null)
+        {
+            return;
+        }
+
+        TemplateInstance instance = template.CreateInstance(this);
+        instance.Attach(this);
+        TemplateInstance = instance;
+        TemplateInstanceTemplate = template;
+    }
+
+    protected override LayoutSize MeasureCore(MeasureContext context)
+    {
+        ApplyTemplate();
+        return TemplateChild?.Measure(context) ?? LayoutSize.Zero;
+    }
+
+    protected override LayoutRect ArrangeCore(ArrangeContext context)
+    {
+        ApplyTemplate();
+        TemplateChild?.Arrange(context);
+        return context.FinalRect;
+    }
+
+    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+    {
+        base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, TemplateProperty))
+        {
+            ApplyTemplate();
+        }
+    }
+
+    private ControlTemplate? TemplateInstanceTemplate { get; set; }
 
     private static bool IsValidThickness(Thickness value)
     {

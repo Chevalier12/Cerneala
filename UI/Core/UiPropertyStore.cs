@@ -8,6 +8,7 @@ public sealed class UiPropertyStore
         UiPropertyValueSource.Animation,
         UiPropertyValueSource.StyleVisualState,
         UiPropertyValueSource.StyleBase,
+        UiPropertyValueSource.TemplateBinding,
         UiPropertyValueSource.Inherited
     ];
 

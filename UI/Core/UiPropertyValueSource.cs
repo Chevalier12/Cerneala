@@ -4,8 +4,9 @@ public enum UiPropertyValueSource
 {
     Default = 0,
     Inherited = 1,
-    StyleBase = 2,
-    StyleVisualState = 3,
-    Animation = 4,
-    Local = 5
+    TemplateBinding = 2,
+    StyleBase = 3,
+    StyleVisualState = 4,
+    Animation = 5,
+    Local = 6
 }

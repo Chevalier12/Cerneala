@@ -45,6 +45,33 @@ public sealed class ButtonTests
     }
 
     [Fact]
+    public void TemplatedButtonPresentsElementContentAndUpdatesEqualElementReplacement()
+    {
+        Button button = new();
+        ContentPresenter? presenter = null;
+        button.Template = new ControlTemplate<Button>(context =>
+        {
+            presenter = new ContentPresenter();
+            context.Bind(Button.ContentProperty, presenter, ContentPresenter.ContentProperty);
+            return presenter;
+        });
+        EqualElement oldChild = new(1);
+        EqualElement newChild = new(1);
+
+        button.Content = oldChild;
+        button.Content = newChild;
+
+        Assert.Same(newChild, button.Content);
+        Assert.Same(newChild, presenter!.PresentedChild);
+        Assert.Null(oldChild.LogicalParent);
+        Assert.Null(oldChild.VisualParent);
+        Assert.Same(presenter, newChild.LogicalParent);
+        Assert.Same(presenter, newChild.VisualParent);
+        Assert.DoesNotContain(newChild, button.LogicalChildren);
+        Assert.DoesNotContain(newChild, button.VisualChildren);
+    }
+
+    [Fact]
     public void ButtonRendersTextContentAndVisualState()
     {
         UIRoot root = new();

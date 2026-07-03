@@ -791,32 +791,32 @@ Acceptance checklist:
 
 This phase enables reusable controls without forcing every control to hand-code rendering. Templates should be code-first and strongly typed first; optional markup can come later.
 
-- [ ] `UI/Controls/ControlTemplate.cs`
-- [ ] `UI/Controls/ControlTemplate{TControl}.cs`
-- [ ] `UI/Controls/TemplateContext.cs`
-- [ ] `UI/Controls/TemplateInstance.cs`
-- [ ] `UI/Controls/TemplateBinding{T}.cs`
-- [ ] `UI/Controls/TemplatePartAttribute.cs` — diagnostic only; no hidden runtime magic required.
-- [ ] `UI/Controls/ItemsPanelTemplate.cs`
-- [ ] `UI/Controls/DataTemplate.cs`
-- [ ] `UI/Controls/DataTemplate{T}.cs`
-- [ ] `UI/Controls/ContentPresenter.cs`
-- [ ] `UI/Controls/ItemsPresenter.cs`
+- [x] `UI/Controls/ControlTemplate.cs`
+- [x] `UI/Controls/ControlTemplate{TControl}.cs`
+- [x] `UI/Controls/TemplateContext.cs`
+- [x] `UI/Controls/TemplateInstance.cs`
+- [x] `UI/Controls/TemplateBinding{T}.cs`
+- [x] `UI/Controls/TemplatePartAttribute.cs` — diagnostic only; no hidden runtime magic required.
+- [x] `UI/Controls/ItemsPanelTemplate.cs`
+- [x] `UI/Controls/DataTemplate.cs`
+- [x] `UI/Controls/DataTemplate{T}.cs`
+- [x] `UI/Controls/ContentPresenter.cs`
+- [x] `UI/Controls/ItemsPresenter.cs`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/Controls/ControlTemplateTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/TemplateBindingTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ContentPresenterTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/DataTemplateTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ItemsPanelTemplateTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ControlTemplateTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/TemplateBindingTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ContentPresenterTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/DataTemplateTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ItemsPanelTemplateTests.cs`
 
 Acceptance checklist:
 
-- [ ] Template-generated children are retained across frames.
-- [ ] Changing a template invalidates the subtree once, not every frame.
-- [ ] Template bindings are strongly typed and do not use string property paths in the hot path.
-- [ ] Template children participate in layout, rendering, hit testing, and input routing.
+- [x] Template-generated children are retained across frames.
+- [x] Changing a template invalidates the subtree once, not every frame.
+- [x] Template bindings are strongly typed and do not use string property paths in the hot path.
+- [x] Template children participate in layout, rendering, hit testing, and input routing.
 
 ## 16. [Core] Additional controls and scrolling
 

@@ -52,6 +52,43 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void UiControlTemplateApisDoNotReferenceConcreteBackends()
+    {
+        string controlsRoot = FindRepositoryPath("UI", "Controls");
+        string[] templateFiles =
+        [
+            "ControlTemplate.cs",
+            "ControlTemplate{TControl}.cs",
+            "TemplateContext.cs",
+            "TemplateInstance.cs",
+            "TemplateBinding{T}.cs",
+            "TemplatePartAttribute.cs",
+            "ContentPresenter.cs",
+            "ItemsPresenter.cs",
+            "ItemsPanelTemplate.cs",
+            "DataTemplate.cs",
+            "DataTemplate{T}.cs"
+        ];
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch"
+        ];
+
+        foreach (string templateFile in templateFiles)
+        {
+            string text = File.ReadAllText(Path.Combine(controlsRoot, templateFile));
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public void UiTextDoesNotReferenceConcreteBackends()
     {
         string textRoot = FindRepositoryPath("UI", "Text");

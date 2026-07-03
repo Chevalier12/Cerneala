@@ -58,6 +58,29 @@ public sealed class ContentControlTests
     }
 
     [Fact]
+    public void TemplateContentPresenterCanHostExistingElementContent()
+    {
+        ContentControl control = new();
+        UIElement child = new();
+        ContentPresenter? presenter = null;
+        control.Content = child;
+
+        control.Template = new ControlTemplate<ContentControl>(context =>
+        {
+            presenter = new ContentPresenter { Content = context.Owner.Content };
+            return presenter;
+        });
+
+        Assert.Same(child, presenter!.PresentedChild);
+        Assert.Same(presenter, child.LogicalParent);
+        Assert.Same(presenter, child.VisualParent);
+        Assert.DoesNotContain(child, control.LogicalChildren);
+        Assert.DoesNotContain(child, control.VisualChildren);
+        Assert.Contains(presenter, control.LogicalChildren);
+        Assert.Contains(presenter, control.VisualChildren);
+    }
+
+    [Fact]
     public void RejectedReparentLeavesExistingContentOwned()
     {
         ContentControl control = new();

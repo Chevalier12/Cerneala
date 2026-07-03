@@ -12,7 +12,10 @@ public class Button : ButtonBase
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
         nameof(Content),
         typeof(Button),
-        new UiPropertyMetadata<object?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<object?>(
+            null,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            ContentControl.ContentEqualityComparer));
 
     public object? Content
     {
@@ -32,16 +35,29 @@ public class Button : ButtonBase
                 ValidateCanAttachContentElement(newElement);
             }
 
-            RemoveContentElement(oldContent);
+            if (HostsContentDirectly)
+            {
+                RemoveContentElement(oldContent);
+                SetValue(ContentProperty, value);
+                AddContentElement(value);
+                return;
+            }
+
             SetValue(ContentProperty, value);
-            AddContentElement(value);
         }
     }
 
     private UIElement? ContentElement => Content as UIElement;
 
+    private bool HostsContentDirectly => Template is null;
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
+        if (TemplateChild is not null)
+        {
+            return base.MeasureCore(context);
+        }
+
         Thickness insets = Insets;
         LayoutSize contentSize = ContentElement?.Measure(new MeasureContext(ContentControl.Deflate(context.AvailableSize, insets), context.Rounding)) ??
             MeasureTextContent();
@@ -50,12 +66,22 @@ public class Button : ButtonBase
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
+        if (TemplateChild is not null)
+        {
+            return base.ArrangeCore(context);
+        }
+
         ContentElement?.Arrange(new ArrangeContext(ContentControl.Deflate(context.FinalRect, Insets), context.Rounding));
         return context.FinalRect;
     }
 
     protected override void OnRender(RenderContext context)
     {
+        if (TemplateChild is not null)
+        {
+            return;
+        }
+
         DrawColor background = ResolveBackground();
         DrawRect rect = Border.ToDrawRect(context.Bounds);
         if (background.A != 0 && rect.Width > 0 && rect.Height > 0)
@@ -73,6 +99,22 @@ public class Button : ButtonBase
         {
             DrawPoint point = new(context.Bounds.X + Insets.Left, context.Bounds.Y + Insets.Top);
             context.DrawingContext.DrawText(new DrawTextRun(new ControlTextFont(FontFamily, FontSize), text, FontSize), point, Foreground);
+        }
+    }
+
+    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+    {
+        if (!ReferenceEquals(args.Property, TemplateProperty))
+        {
+            base.OnPropertyChanged(args);
+            return;
+        }
+
+        ReleaseContentElementFromOwnedSubtree();
+        base.OnPropertyChanged(args);
+        if (HostsContentDirectly)
+        {
+            AddContentElement(Content);
         }
     }
 
@@ -123,6 +165,14 @@ public class Button : ButtonBase
 
         VisualChildren.Remove(element);
         LogicalChildren.Remove(element);
+    }
+
+    private void ReleaseContentElementFromOwnedSubtree()
+    {
+        if (Content is UIElement element)
+        {
+            ContentControl.DetachChildFromOwnedSubtree(this, element);
+        }
     }
 
     private void ValidateCanAttachContentElement(UIElement element)
