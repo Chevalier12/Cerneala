@@ -511,9 +511,7 @@ public sealed class ArchitectureBoundaryTests
     {
         string root = FindRepositoryRoot();
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
-        string openSpecSegment = "open" + "spec";
-        string changesSegment = "chang" + "es";
-        string tasks = File.ReadAllText(Path.Combine(root, openSpecSegment, changesSegment, "add-text-editing-ime", "tasks.md"));
+        string spec = File.ReadAllText(Path.Combine(root, "openspec", "specs", "text-editing-ime", "spec.md"));
         string[] requiredFiles =
         [
             "UI/Controls/TextBoxBase.cs",
@@ -541,7 +539,8 @@ public sealed class ArchitectureBoundaryTests
             Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
         }
 
-        Assert.Contains("- [x] 4.5 Run `openspec validate add-text-editing-ime --strict` and `dotnet test`.", tasks, StringComparison.Ordinal);
+        Assert.Contains("### Requirement: Textbox controls edit retained text", spec, StringComparison.Ordinal);
+        Assert.Contains("### Requirement: Composition manager tracks IME lifecycle", spec, StringComparison.Ordinal);
         Assert.Contains("- [x] 20. Add text editing and IME composition.", roadmap, StringComparison.Ordinal);
     }
 
