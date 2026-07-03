@@ -822,31 +822,41 @@ Acceptance checklist:
 
 This phase expands the useful control set after MVP controls, styling, and templates are stable.
 
-- [ ] `UI/Controls/Primitives/RangeBase.cs`
-- [ ] `UI/Controls/Primitives/Thumb.cs`
-- [ ] `UI/Controls/Primitives/Track.cs`
-- [ ] `UI/Controls/Primitives/ScrollBar.cs`
-- [ ] `UI/Controls/ScrollViewer.cs`
-- [ ] `UI/Controls/ScrollContentPresenter.cs`
-- [ ] `UI/Controls/ScrollBarVisibility.cs`
-- [ ] `UI/Controls/IScrollInfo.cs`
-- [ ] `UI/Controls/Slider.cs`
-- [ ] `UI/Controls/ProgressBar.cs`
-- [ ] `UI/Controls/RadioButton.cs`
-- [ ] `UI/Controls/Label.cs`
-- [ ] `UI/Controls/ToolTip.cs`
-- [ ] `UI/Controls/PopupRoot.cs`
+- [x] `UI/Controls/Primitives/RangeBase.cs`
+- [x] `UI/Controls/Primitives/Thumb.cs`
+- [x] `UI/Controls/Primitives/Track.cs`
+- [x] `UI/Controls/Primitives/ScrollBar.cs`
+- [x] `UI/Controls/ScrollViewer.cs`
+- [x] `UI/Controls/ScrollContentPresenter.cs`
+- [x] `UI/Controls/ScrollBarVisibility.cs`
+- [x] `UI/Controls/IScrollInfo.cs`
+- [x] `UI/Controls/Slider.cs`
+- [x] `UI/Controls/ProgressBar.cs`
+- [x] `UI/Controls/RadioButton.cs`
+- [x] `UI/Controls/Label.cs`
+- [x] `UI/Controls/ToolTip.cs`
+- [x] `UI/Controls/PopupRoot.cs`
+
+Completion notes:
+
+- [x] `RangeBase` clamps values and coerces value state when range endpoints change.
+- [x] `Thumb` uses retained pointer capture through `ElementInputBridge` and reports drag start/delta/completion.
+- [x] `Track`, `ScrollBar`, and `Slider` map retained drag movement to range values for horizontal and vertical orientations.
+- [x] `ScrollContentPresenter` computes extent/viewport state, clamps offsets, clips content, and arranges content with retained scroll offsets.
+- [x] `ScrollViewer` handles retained mouse wheel scrolling and disabled, hidden, visible, and auto scrollbar visibility policies.
+- [x] `ProgressBar`, `RadioButton`, `Label`, `ToolTip`, and `PopupRoot` are retained controls and stay backend-neutral.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/Controls/Primitives/RangeBaseTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/Primitives/ThumbTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/Primitives/TrackTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ScrollBarTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ScrollViewerTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/SliderTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ProgressBarTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ToolTipTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/Primitives/RangeBaseTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/Primitives/ThumbTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/Primitives/TrackTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ScrollBarTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ScrollViewerTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/SliderTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ProgressBarTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ToolTipTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs` - covers section 16 backend boundaries.
 
 ## 17. [Core] Items, selection, and virtualization
 
@@ -1167,7 +1177,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 
 - [ ] 14. Add styling/theme engine with typed setters and pseudo-class rules.
 - [ ] 15. Add code-first templates and presenters.
-- [ ] 16. Add scrolling/range controls.
+- [x] 16. Add scrolling/range controls.
 - [ ] 17. Add items, selection, and virtualization.
 - [ ] 18. Add typed data observation and binding-light APIs.
 - [ ] 19. Add diagnostics/devtools overlays and tree/cache dumpers.

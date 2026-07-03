@@ -76,6 +76,7 @@ public sealed class ElementInputBridge
             if (hasLastPointerPosition)
             {
                 RaiseMouseMovePair(routeMap, pointerTarget);
+                UpdateThumbDrag(pointerTarget);
             }
         }
 
@@ -100,13 +101,18 @@ public sealed class ElementInputBridge
                     focusManager.Focus(pointerTarget.Element, routeMap);
                 }
 
-                RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseDownEvent, InputEvents.MouseDownEvent, button, 1);
+                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseDownEvent, InputEvents.MouseDownEvent, button, 1);
+                if (!handled)
+                {
+                    BeginThumbDrag(routeMap, pointerTarget, button);
+                }
             }
 
             if (inputFrame.Pointer.IsReleased(button))
             {
                 int clickCount = clickTracker.Release(hitTarget?.Element);
                 RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount);
+                CompleteThumbDrag(routeMap, pointerTarget, button, clickCount);
                 ExecuteButtonCommandOnClick(routeMap, pointerTarget, hitTarget, button, clickCount);
                 pressedStateTracker.Release();
             }
@@ -156,7 +162,74 @@ public sealed class ElementInputBridge
         return null;
     }
 
-    private static void RaiseMousePair(
+    private void BeginThumbDrag(ElementInputRouteMap routeMap, HitTestResult? target, InputMouseButton button)
+    {
+        if (button != InputMouseButton.Left || target is null)
+        {
+            return;
+        }
+
+        Thumb? thumb = FindThumb(target.Element);
+        if (thumb is null)
+        {
+            return;
+        }
+
+        int x = (int)MathF.Round(target.X);
+        int y = (int)MathF.Round(target.Y);
+        thumb.BeginDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.ElementId, button, x, y, 1));
+    }
+
+    private static void UpdateThumbDrag(HitTestResult? target)
+    {
+        if (target is null)
+        {
+            return;
+        }
+
+        Thumb? thumb = FindThumb(target.Element);
+        if (thumb is null)
+        {
+            return;
+        }
+
+        int x = (int)MathF.Round(target.X);
+        int y = (int)MathF.Round(target.Y);
+        thumb.UpdateDrag(new MouseEventArgs(InputEvents.MouseMoveEvent, target.ElementId, x, y));
+    }
+
+    private void CompleteThumbDrag(ElementInputRouteMap routeMap, HitTestResult? target, InputMouseButton button, int clickCount)
+    {
+        if (button != InputMouseButton.Left || target is null)
+        {
+            return;
+        }
+
+        Thumb? thumb = FindThumb(target.Element);
+        if (thumb is null)
+        {
+            return;
+        }
+
+        int x = (int)MathF.Round(target.X);
+        int y = (int)MathF.Round(target.Y);
+        thumb.CompleteDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseUpEvent, target.ElementId, button, x, y, clickCount));
+    }
+
+    private static Thumb? FindThumb(UIElement element)
+    {
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (current is Thumb thumb)
+            {
+                return thumb;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool RaiseMousePair(
         ElementInputRouteMap routeMap,
         HitTestResult? target,
         RoutedEvent previewEvent,
@@ -166,16 +239,19 @@ public sealed class ElementInputBridge
     {
         if (target is null)
         {
-            return;
+            return false;
         }
 
         int x = (int)MathF.Round(target.X);
         int y = (int)MathF.Round(target.Y);
+        MouseButtonEventArgs previewArgs = new(previewEvent, target.ElementId, button, x, y, clickCount);
+        MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.ElementId, button, x, y, clickCount);
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
             target.ElementId,
-            new MouseButtonEventArgs(previewEvent, target.ElementId, button, x, y, clickCount),
-            new MouseButtonEventArgs(bubbleEvent, target.ElementId, button, x, y, clickCount));
+            previewArgs,
+            bubbleArgs);
+        return previewArgs.Handled || bubbleArgs.Handled;
     }
 
     private static void RaiseMouseMovePair(ElementInputRouteMap routeMap, HitTestResult? target)

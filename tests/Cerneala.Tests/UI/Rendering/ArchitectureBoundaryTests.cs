@@ -52,6 +52,46 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Section16ControlsDoNotReferenceConcreteBackends()
+    {
+        string controlsRoot = FindRepositoryPath("UI", "Controls");
+        string[] section16Files =
+        [
+            Path.Combine(controlsRoot, "Primitives", "RangeBase.cs"),
+            Path.Combine(controlsRoot, "Primitives", "Thumb.cs"),
+            Path.Combine(controlsRoot, "Primitives", "Track.cs"),
+            Path.Combine(controlsRoot, "Primitives", "ScrollBar.cs"),
+            Path.Combine(controlsRoot, "ScrollBarVisibility.cs"),
+            Path.Combine(controlsRoot, "IScrollInfo.cs"),
+            Path.Combine(controlsRoot, "ScrollContentPresenter.cs"),
+            Path.Combine(controlsRoot, "ScrollViewer.cs"),
+            Path.Combine(controlsRoot, "Slider.cs"),
+            Path.Combine(controlsRoot, "ProgressBar.cs"),
+            Path.Combine(controlsRoot, "RadioButton.cs"),
+            Path.Combine(controlsRoot, "Label.cs"),
+            Path.Combine(controlsRoot, "ToolTip.cs"),
+            Path.Combine(controlsRoot, "PopupRoot.cs")
+        ];
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch"
+        ];
+
+        foreach (string file in section16Files)
+        {
+            string text = File.ReadAllText(file);
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public void UiControlTemplateApisDoNotReferenceConcreteBackends()
     {
         string controlsRoot = FindRepositoryPath("UI", "Controls");
@@ -233,6 +273,17 @@ public sealed class ArchitectureBoundaryTests
         Assert.Contains("- [x] Retained render caches include resource dependency identity/version in staleness checks.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] Core resources and controls do not reference MonoGame, Skia, HarfBuzz, `Texture2D`, or `SpriteBatch`.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] MonoGame image loading is adapter-scoped under `UI/Resources/MonoGame`.", roadmap, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Section16RoadmapCompletionIsDocumentedConsistently()
+    {
+        string roadmap = File.ReadAllText(FindRepositoryPath("ROADMAPv2.md"));
+
+        Assert.Contains("- [x] `UI/Controls/Primitives/RangeBase.cs`", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `tests/Cerneala.Tests/Controls/ScrollViewerTests.cs`", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs` - covers section 16 backend boundaries.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] 16. Add scrolling/range controls.", roadmap, StringComparison.Ordinal);
     }
 
     [Fact]
