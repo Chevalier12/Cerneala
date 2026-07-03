@@ -59,6 +59,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         {
             ElementLifecycle.AttachSubtree(root, child);
             root.IncrementTreeVersion();
+            InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Added);
         }
 
         Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Added));
@@ -89,8 +90,8 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
             oldRoot?.IncrementTreeVersion();
         }
 
+        InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Removed);
         Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Removed));
-        InvalidateOwnerForVisualChildRemoval();
         return true;
     }
 
@@ -139,18 +140,33 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         }
     }
 
-    private void InvalidateOwnerForVisualChildRemoval()
+    private void InvalidateForVisualChildMutation(UIElement child, ElementTreeChangeKind kind)
     {
-        if (role != ElementChildRole.Visual || owner is UIRoot)
+        if (role != ElementChildRole.Visual || owner.Root is null)
         {
             return;
         }
 
-        owner.IncrementLayoutVersion();
-        owner.IncrementRenderVersion();
-        owner.Invalidate(
-            InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.HitTest,
-            "Visual child removed");
+        string reason = kind == ElementTreeChangeKind.Added
+            ? "Visual child added"
+            : "Visual child removed";
+        InvalidationFlags flags =
+            InvalidationFlags.Measure |
+            InvalidationFlags.Arrange |
+            InvalidationFlags.Render |
+            InvalidationFlags.HitTest;
+
+        if (kind != ElementTreeChangeKind.Added || owner is not UIRoot)
+        {
+            owner.IncrementLayoutVersion();
+            owner.IncrementRenderVersion();
+            owner.Invalidate(flags, reason);
+        }
+
+        if (kind == ElementTreeChangeKind.Added && child.Root is not null)
+        {
+            child.Invalidate(flags | InvalidationFlags.Subtree, reason);
+        }
     }
 
     private bool ContainsReference(UIElement child)
