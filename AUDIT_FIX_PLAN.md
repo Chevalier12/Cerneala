@@ -68,6 +68,8 @@ Detailed plan: `docs/superpowers/plans/2026-07-03-integrate-style-phase.md`
 
 ### Plan 4: `cache-input-route-hit-test`
 
+Detailed plan: `docs/superpowers/plans/2026-07-04-cache-input-route-hit-test.md`
+
 - [ ] Add root-owned retained input route / hit-test cache.
 - [ ] Rebuild route/hit-test data only when dirty.
 - [ ] Invalidate cache for tree changes, layout bounds changes, visibility, enabled state, handlers, and relevant capture changes.
