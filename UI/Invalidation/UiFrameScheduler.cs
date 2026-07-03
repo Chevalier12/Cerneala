@@ -78,9 +78,16 @@ public sealed class UiFrameScheduler
     private void ProcessArrange(FramePhaseProcessors processors, FrameStats stats)
     {
         IReadOnlyList<Elements.UIElement> snapshot = layoutQueue.SnapshotArrange();
+        List<Elements.UIElement> processedSubtreeRoots = [];
         foreach (Elements.UIElement element in snapshot)
         {
-            processors.Process(FramePhase.Arrange, element);
+            bool coveredByAncestor = HasProcessedNonRootArrangeAncestor(element, processedSubtreeRoots);
+            if (!coveredByAncestor)
+            {
+                processors.Process(FramePhase.Arrange, element);
+                processedSubtreeRoots.Add(element);
+            }
+
             InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Arrange);
             layoutQueue.RemoveArrange(element);
             stats.Count(FramePhase.Arrange);
@@ -89,6 +96,26 @@ public sealed class UiFrameScheduler
         }
 
         trace.RecordPhaseSummary(FramePhase.Arrange, snapshot.Count);
+    }
+
+    private static bool HasProcessedNonRootArrangeAncestor(
+        Elements.UIElement element,
+        IReadOnlyCollection<Elements.UIElement> processedSubtreeRoots)
+    {
+        for (Elements.UIElement? ancestor = element.VisualParent; ancestor is not null; ancestor = ancestor.VisualParent)
+        {
+            if (ancestor is Elements.UIRoot)
+            {
+                return false;
+            }
+
+            if (processedSubtreeRoots.Contains(ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ProcessRender(FramePhaseProcessors processors, FrameStats stats)

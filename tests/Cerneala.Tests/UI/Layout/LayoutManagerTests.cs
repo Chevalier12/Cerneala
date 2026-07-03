@@ -1,6 +1,7 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Layout.Panels;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -97,6 +98,30 @@ public sealed class LayoutManagerTests
     }
 
     [Fact]
+    public void SubtreeArrangeDoesNotOverwritePanelChildSlots()
+    {
+        UIRoot root = new(100, 100);
+        StackPanel panel = new();
+        StretchingElement first = new(new LayoutSize(20, 10));
+        StretchingElement second = new(new LayoutSize(30, 5));
+        panel.VisualChildren.Add(first);
+        panel.VisualChildren.Add(second);
+        root.VisualChildren.Add(panel);
+
+        panel.Invalidate(
+            InvalidationFlags.Measure |
+            InvalidationFlags.Arrange |
+            InvalidationFlags.Render |
+            InvalidationFlags.HitTest |
+            InvalidationFlags.Subtree,
+            "subtree layout");
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(0, 0, 100, 10), first.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 10, 100, 5), second.ArrangedBounds);
+    }
+
+    [Fact]
     public void FailedMeasureKeepsDirtyFlagsAndQueue()
     {
         UIRoot root = new(100, 100);
@@ -126,6 +151,14 @@ public sealed class LayoutManagerTests
         {
             ArrangeCount++;
             return new LayoutRect(context.FinalRect.X, context.FinalRect.Y, DesiredSize.Width, DesiredSize.Height);
+        }
+    }
+
+    private sealed class StretchingElement(LayoutSize size) : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            return size;
         }
     }
 
