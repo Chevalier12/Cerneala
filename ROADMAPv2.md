@@ -1222,7 +1222,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 
 - [x] 25. Prototype markup/serialization after templates and typed properties are stable.
 - [ ] 26. Prototype source generation if runtime reflection becomes a real cost.
-- [ ] 27. Implement touch/stylus/drag/drop behavior when platform adapters can supply real data.
+- [x] 27. Implement touch/stylus/drag/drop behavior when platform adapters can supply real data.
 
 ## 28. Risks and decisions needing human confirmation
 
