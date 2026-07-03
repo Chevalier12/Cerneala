@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines retained rendering, local element render caches, root command-list cache composition, render dependency tracking, clip command emission, and cache diagnostics for Cerneala.
-
 ## Requirements
-
 ### Requirement: Render context records local drawing commands
 Cerneala SHALL provide a retained render context that lets retained elements record local visual commands through the existing drawing command layer.
 
@@ -146,3 +144,19 @@ Cerneala SHALL include focused tests for retained rendering cache behavior.
 #### Scenario: Full tests pass
 - **WHEN** this implementation phase is complete
 - **THEN** `dotnet test` passes
+
+### Requirement: Host draw submits retained root cache
+Cerneala SHALL expose retained rendering cache submission through `UiHost.Draw(...)`.
+
+#### Scenario: Host draw uses retained renderer
+- **WHEN** `UiHost.Draw(...)` is called
+- **THEN** it submits the retained root command cache through the root retained renderer and the provided `IDrawingBackend`
+
+#### Scenario: Cached root commands survive unchanged frames
+- **WHEN** host update and draw run repeatedly without retained invalidation
+- **THEN** the retained root command cache remains reusable across draw frames
+
+#### Scenario: Host draw keeps backend-neutral cache contract
+- **WHEN** cached retained commands are submitted by the host
+- **THEN** the submission remains expressed as `DrawCommandList` rendered by `IDrawingBackend`
+

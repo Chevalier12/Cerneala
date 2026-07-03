@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines the planning, documentation, and architectural memory requirements for Cerneala's retained UI MVP foundation.
-
 ## Requirements
-
 ### Requirement: V2 roadmap is the active retained UI plan
 Cerneala SHALL treat `ROADMAPv2.md` as the active roadmap for retained UI work.
 
@@ -94,3 +92,15 @@ Cerneala SHALL not change runtime drawing or input behavior as part of this plan
 #### Scenario: No runtime production code is added
 - **WHEN** this change is complete
 - **THEN** no new runtime implementation files under `UI/Core`, `UI/Elements`, `UI/Layout`, `UI/Rendering`, `UI/Controls`, or `UI/Hosting` are required by this change
+
+### Requirement: Retained frame loop has application host
+Cerneala SHALL expose the retained-mode frame loop through a concrete application-facing host while preserving `ROADMAPv2.md` as the active implementation plan.
+
+#### Scenario: Host is the game-loop entry point
+- **WHEN** application integration is implemented for the retained UI MVP
+- **THEN** update and draw integration are represented by `UiHost` and backend adapters instead of ad-hoc application wiring
+
+#### Scenario: Roadmap tracks host completion
+- **WHEN** game-loop host integration tasks are implemented
+- **THEN** `ROADMAPv2.md` section 7 checkboxes are updated to match completed files and contracts
+
