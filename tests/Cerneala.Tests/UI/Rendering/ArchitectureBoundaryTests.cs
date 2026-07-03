@@ -77,6 +77,31 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void UiAnimationDoesNotReferenceConcreteBackends()
+    {
+        string animationRoot = FindRepositoryPath("UI", "Animation");
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch",
+            "MonoGameDrawingBackend"
+        ];
+
+        foreach (string file in Directory.EnumerateFiles(animationRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public void Section16ControlsDoNotReferenceConcreteBackends()
     {
         string controlsRoot = FindRepositoryPath("UI", "Controls");
@@ -752,6 +777,41 @@ public sealed class ArchitectureBoundaryTests
         Assert.Contains("### Requirement: Advanced rendering and media is tested", spec, StringComparison.Ordinal);
         Assert.Contains("- [x] Full project tests pass for this phase.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] 22. Add advanced rendering/media primitives as scenarios require.", roadmap, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Section23AnimationRoadmapCompletionIsDocumentedConsistently()
+    {
+        string root = FindRepositoryRoot();
+        string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
+        string[] requiredFiles =
+        [
+            "UI/Animation/AnimationClock.cs",
+            "UI/Animation/AnimationScheduler.cs",
+            "UI/Animation/Animation.cs",
+            "UI/Animation/Animation{T}.cs",
+            "UI/Animation/Easing.cs",
+            "UI/Animation/Transition.cs",
+            "UI/Animation/Transition{T}.cs",
+            "UI/Animation/Storyboard.cs",
+            "UI/Animation/AnimatedValueSource.cs",
+            "UI/Styling/StyleTransition.cs",
+            "tests/Cerneala.Tests/UI/Animation/AnimationClockTests.cs",
+            "tests/Cerneala.Tests/UI/Animation/AnimationSchedulerTests.cs",
+            "tests/Cerneala.Tests/UI/Animation/TypedAnimationTests.cs",
+            "tests/Cerneala.Tests/UI/Animation/TransitionTests.cs",
+            "tests/Cerneala.Tests/UI/Animation/AnimationInvalidationTests.cs",
+            "tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs"
+        ];
+
+        foreach (string requiredFile in requiredFiles)
+        {
+            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
+            Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("- [x] Animation and style transition APIs stay backend-neutral.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] 23. Add animation and transitions.", roadmap, StringComparison.Ordinal);
     }
 
     private static string FindRepositoryPath(params string[] segments)

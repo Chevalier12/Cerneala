@@ -1063,30 +1063,33 @@ Acceptance checklist:
 
 This phase adds time-based property changes after frame scheduling and invalidation are solid. Animation should be game-loop-native, explicit, and invalidate only affected properties.
 
-- [ ] `UI/Animation/AnimationClock.cs`
-- [ ] `UI/Animation/AnimationScheduler.cs`
-- [ ] `UI/Animation/Animation.cs`
-- [ ] `UI/Animation/Animation{T}.cs`
-- [ ] `UI/Animation/Easing.cs`
-- [ ] `UI/Animation/Transition.cs`
-- [ ] `UI/Animation/Transition{T}.cs`
-- [ ] `UI/Animation/Storyboard.cs` — only if composition of timelines is needed.
-- [ ] `UI/Animation/AnimatedValueSource.cs`
-- [ ] `UI/Styling/StyleTransition.cs`
+- [x] `UI/Animation/AnimationClock.cs`
+- [x] `UI/Animation/AnimationScheduler.cs`
+- [x] `UI/Animation/Animation.cs`
+- [x] `UI/Animation/Animation{T}.cs`
+- [x] `UI/Animation/Easing.cs`
+- [x] `UI/Animation/Transition.cs`
+- [x] `UI/Animation/Transition{T}.cs`
+- [x] `UI/Animation/Storyboard.cs` — only if composition of timelines is needed.
+- [x] `UI/Animation/AnimatedValueSource.cs`
+- [x] `UI/Styling/StyleTransition.cs`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Animation/AnimationClockTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Animation/AnimationSchedulerTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Animation/TypedAnimationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Animation/TransitionTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Animation/AnimationInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Animation/AnimationClockTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Animation/AnimationSchedulerTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Animation/TypedAnimationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Animation/TransitionTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Animation/AnimationInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs`
 
 Acceptance checklist:
 
-- [ ] Animating a render-only property does not run layout.
-- [ ] Animating a layout property enqueues layout only at ticks where the value changes.
-- [ ] Completed animations release animated value source cleanly.
+- [x] Animating a render-only property does not run layout.
+- [x] Animating a layout property enqueues layout only at ticks where the value changes.
+- [x] Completed animations release animated value source cleanly.
+- [x] Animation and style transition APIs stay backend-neutral.
+- [x] Full project tests pass for this phase.
 
 ## 24. [Later] Platform boundaries and package shape
 
@@ -1202,7 +1205,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [x] 20. Add text editing and IME composition.
 - [x] 21. Add accessibility semantics and platform-neutral semantic tree.
 - [x] 22. Add advanced rendering/media primitives as scenarios require.
-- [ ] 23. Add animation and transitions.
+- [x] 23. Add animation and transitions.
 - [ ] 24. Decide package/platform split.
 
 ### Optional/Experimental order
