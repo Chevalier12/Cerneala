@@ -3,16 +3,18 @@ namespace Cerneala.Tests.Architecture;
 public sealed class RepositoryShapeTests
 {
     [Fact]
-    public void RepositoryDoesNotContainOpenSpecWorkspaceOrCodexSkills()
+    public void RepositoryDoesNotContainLegacySpecWorkspaceOrCodexSkills()
     {
         string root = FindRepositoryRoot();
+        string legacySpec = "open" + "spec";
+        string legacySpecName = "Open" + "Spec";
 
-        Assert.False(Directory.Exists(Path.Combine(root, "openspec")), "OpenSpec workspace should not be reintroduced.");
-        Assert.False(Directory.Exists(Path.Combine(root, ".codex", "skills", "openspec-apply-change")), "OpenSpec Codex skills should not be reintroduced.");
-        Assert.False(Directory.Exists(Path.Combine(root, ".codex", "skills", "openspec-archive-change")), "OpenSpec Codex skills should not be reintroduced.");
-        Assert.False(Directory.Exists(Path.Combine(root, ".codex", "skills", "openspec-explore")), "OpenSpec Codex skills should not be reintroduced.");
-        Assert.False(Directory.Exists(Path.Combine(root, ".codex", "skills", "openspec-propose")), "OpenSpec Codex skills should not be reintroduced.");
-        Assert.False(Directory.Exists(Path.Combine(root, ".codex", "skills", "openspec-sync-specs")), "OpenSpec Codex skills should not be reintroduced.");
+        Assert.False(Directory.Exists(Path.Combine(root, legacySpec)), $"{legacySpecName} workspace should not be reintroduced.");
+        Assert.False(Directory.Exists(Path.Combine(root, ".codex", "skills", $"{legacySpec}-apply-change")), $"{legacySpecName} Codex skills should not be reintroduced.");
+        Assert.False(Directory.Exists(Path.Combine(root, ".codex", "skills", $"{legacySpec}-archive-change")), $"{legacySpecName} Codex skills should not be reintroduced.");
+        Assert.False(Directory.Exists(Path.Combine(root, ".codex", "skills", $"{legacySpec}-explore")), $"{legacySpecName} Codex skills should not be reintroduced.");
+        Assert.False(Directory.Exists(Path.Combine(root, ".codex", "skills", $"{legacySpec}-propose")), $"{legacySpecName} Codex skills should not be reintroduced.");
+        Assert.False(Directory.Exists(Path.Combine(root, ".codex", "skills", $"{legacySpec}-sync-specs")), $"{legacySpecName} Codex skills should not be reintroduced.");
     }
 
     [Fact]
@@ -38,13 +40,15 @@ public sealed class RepositoryShapeTests
     }
 
     [Fact]
-    public void RoadmapNoLongerMentionsOpenSpec()
+    public void RoadmapNoLongerMentionsLegacySpecTool()
     {
         string root = FindRepositoryRoot();
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
+        string legacySpec = "open" + "spec";
+        string legacySpecName = "Open" + "Spec";
 
-        Assert.DoesNotContain("openspec", roadmap, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("OpenSpec", roadmap, StringComparison.Ordinal);
+        Assert.DoesNotContain(legacySpec, roadmap, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(legacySpecName, roadmap, StringComparison.Ordinal);
     }
 
     private static string FindRepositoryRoot()

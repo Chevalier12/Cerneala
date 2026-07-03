@@ -634,16 +634,16 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
-    public void RuntimeTestsDoNotDependOnActiveOpenSpecChanges()
+    public void RuntimeTestsDoNotDependOnActiveLegacySpecChanges()
     {
         string testsRoot = FindRepositoryPath("tests", "Cerneala.Tests");
-        string openSpecSegment = "open" + "spec";
+        string legacySpecSegment = "open" + "spec";
         string changesSegment = "chang" + "es";
         string[] forbiddenPatterns =
         [
-            string.Join("\"" + ", " + "\"", openSpecSegment, changesSegment),
-            string.Join("/", openSpecSegment, changesSegment),
-            string.Join("\\", openSpecSegment, changesSegment)
+            string.Join("\"" + ", " + "\"", legacySpecSegment, changesSegment),
+            string.Join("/", legacySpecSegment, changesSegment),
+            string.Join("\\", legacySpecSegment, changesSegment)
         ];
         string[] testDependencyExtensions =
         [
@@ -668,10 +668,10 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
-    public void RuntimeOpenSpecDependencyBoundaryCoversProjectLevelTestFiles()
+    public void RuntimeLegacySpecDependencyBoundaryCoversProjectLevelTestFiles()
     {
         string testText = File.ReadAllText(FindRepositoryPath("tests", "Cerneala.Tests", "UI", "Rendering", "ArchitectureBoundaryTests.cs"));
-        int methodStart = testText.IndexOf("public void RuntimeTestsDoNotDependOnActiveOpenSpecChanges()", StringComparison.Ordinal);
+        int methodStart = testText.IndexOf("public void RuntimeTestsDoNotDependOnActiveLegacySpecChanges()", StringComparison.Ordinal);
         Assert.NotEqual(-1, methodStart);
         int nextFact = testText.IndexOf("    [Fact]", methodStart + 1, StringComparison.Ordinal);
         Assert.NotEqual(-1, nextFact);
