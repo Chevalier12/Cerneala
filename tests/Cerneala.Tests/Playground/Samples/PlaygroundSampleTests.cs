@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.Drawing.Text;
 using Cerneala.Playground.Samples;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
@@ -41,7 +42,7 @@ public sealed class PlaygroundSampleTests
         SampleSelector selector = SampleSelector.CreateDefault();
         UIElement? initial = selector.ActiveElement;
 
-        Assert.Equal(new[] { "Button", "Layout", "Text" }, selector.Samples.Select(sample => sample.Name));
+        Assert.Equal(new[] { "Button", "Layout", "Text", "Diagnostics" }, selector.Samples.Select(sample => sample.Name));
 
         selector.SelectSample(1);
 
@@ -49,6 +50,16 @@ public sealed class PlaygroundSampleTests
         Assert.Equal("Layout", selector.ActiveSample.Name);
         Assert.NotNull(selector.ActiveElement);
         Assert.NotSame(initial, selector.ActiveElement);
+    }
+
+    [Fact]
+    public void DiagnosticsSampleBuildsRetainedDebugUi()
+    {
+        UIElement root = new DiagnosticsSample().Build();
+
+        Assert.Contains(DescendantsAndSelf<TextBlock>(root), _ => true);
+        Assert.Contains(DescendantsAndSelf<DebugAdorner>(root), _ => true);
+        Assert.Contains(DescendantsAndSelf<Button>(root), _ => true);
     }
 
     [Fact]
@@ -107,6 +118,24 @@ public sealed class PlaygroundSampleTests
         UIRoot root = new(800, 600);
         SampleSelector selector = SampleSelector.CreateDefault(resources, fontId);
         root.VisualChildren.Add(selector.Root);
+        root.ProcessFrame();
+
+        DrawCommandList commands = root.RetainedRenderer.Render(root);
+
+        Assert.NotEmpty(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
+        Assert.All(
+            commands.Where(command => command.Kind == DrawCommandKind.DrawText),
+            command => Assert.IsType<SkiaFont>(command.TextRun!.Font));
+    }
+
+    [Fact]
+    public void DiagnosticsSampleUsesSkiaFontsWhenFontResourceIsProvided()
+    {
+        ResourceStore resources = new();
+        ResourceId<FontResource> fontId = new("Playground/Body");
+        resources.SetResource(fontId, new FontResource(new SystemFontSource().LoadFont("Arial", 16)));
+        UIRoot root = new(800, 600);
+        root.VisualChildren.Add(new DiagnosticsSample(resources, fontId).Build());
         root.ProcessFrame();
 
         DrawCommandList commands = root.RetainedRenderer.Render(root);

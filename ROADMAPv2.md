@@ -939,34 +939,34 @@ Acceptance checklist:
 
 This phase makes retained UI behavior inspectable. Diagnostics are required because invalidation-driven systems are hard to reason about without counters and tree dumps.
 
-- [ ] `UI/Diagnostics/FrameDiagnostics.cs`
-- [ ] `UI/Diagnostics/LayoutDiagnostics.cs`
-- [ ] `UI/Diagnostics/RenderDiagnostics.cs`
-- [ ] `UI/Diagnostics/InputDiagnostics.cs`
-- [ ] `UI/Diagnostics/DirtyTreeDumper.cs`
-- [ ] `UI/Diagnostics/ElementTreeDumper.cs`
-- [ ] `UI/Diagnostics/RenderCacheDumper.cs`
-- [ ] `UI/Diagnostics/RoutedEventTrace.cs`
-- [ ] `UI/Diagnostics/StyleTrace.cs`
-- [ ] `UI/Diagnostics/DebugOverlay.cs`
-- [ ] `UI/Diagnostics/DebugAdorner.cs`
-- [ ] `Playground/Cerneala.Playground/Samples/DiagnosticsSample.cs`
+- [x] `UI/Diagnostics/FrameDiagnostics.cs`
+- [x] `UI/Diagnostics/LayoutDiagnostics.cs`
+- [x] `UI/Diagnostics/RenderDiagnostics.cs`
+- [x] `UI/Diagnostics/InputDiagnostics.cs`
+- [x] `UI/Diagnostics/DirtyTreeDumper.cs`
+- [x] `UI/Diagnostics/ElementTreeDumper.cs`
+- [x] `UI/Diagnostics/RenderCacheDumper.cs`
+- [x] `UI/Diagnostics/RoutedEventTrace.cs`
+- [x] `UI/Diagnostics/StyleTrace.cs`
+- [x] `UI/Diagnostics/DebugOverlay.cs`
+- [x] `UI/Diagnostics/DebugAdorner.cs`
+- [x] `Playground/Cerneala.Playground/Samples/DiagnosticsSample.cs`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Diagnostics/FrameDiagnosticsTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Diagnostics/DirtyTreeDumperTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Diagnostics/ElementTreeDumperTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Diagnostics/RenderCacheDumperTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Diagnostics/RoutedEventTraceTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Diagnostics/StyleTraceTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Diagnostics/FrameDiagnosticsTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Diagnostics/DirtyTreeDumperTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Diagnostics/ElementTreeDumperTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Diagnostics/RenderCacheDumperTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Diagnostics/RoutedEventTraceTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Diagnostics/StyleTraceTests.cs`
 
 Acceptance checklist:
 
-- [ ] Developers can see per-frame measure/arrange/render-cache counts.
-- [ ] Developers can dump which elements are dirty and why.
-- [ ] Developers can trace routed event paths.
-- [ ] Developers can inspect style sources for a property value.
+- [x] Developers can see per-frame measure/arrange/render-cache counts.
+- [x] Developers can dump which elements are dirty and why.
+- [x] Developers can trace routed event paths.
+- [x] Developers can inspect style sources for a property value.
 
 ## 20. [Later] Text editing and IME
 
@@ -1194,7 +1194,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [x] 16. Add scrolling/range controls.
 - [x] 17. Add items, selection, and virtualization.
 - [x] 18. Add typed data observation and binding-light APIs.
-- [ ] 19. Add diagnostics/devtools overlays and tree/cache dumpers.
+- [x] 19. Add diagnostics/devtools overlays and tree/cache dumpers.
 
 ### Later order
 

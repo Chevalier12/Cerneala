@@ -207,6 +207,30 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void UiDiagnosticsDoesNotReferenceConcreteBackends()
+    {
+        string diagnosticsRoot = FindRepositoryPath("UI", "Diagnostics");
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch",
+            "MonoGameDrawingBackend"
+        ];
+
+        foreach (string file in Directory.EnumerateFiles(diagnosticsRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public void MonoGameImageLoadingIsAdapterScoped()
     {
         string resourcesRoot = FindRepositoryPath("UI", "Resources");
@@ -414,6 +438,46 @@ public sealed class ArchitectureBoundaryTests
         }
 
         Assert.Contains("- [x] 18. Add typed data observation and binding-light APIs.", roadmap, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Section19DiagnosticsRoadmapCompletionIsDocumentedConsistently()
+    {
+        string root = FindRepositoryRoot();
+        string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
+        string[] requiredFiles =
+        [
+            "UI/Diagnostics/FrameDiagnostics.cs",
+            "UI/Diagnostics/LayoutDiagnostics.cs",
+            "UI/Diagnostics/RenderDiagnostics.cs",
+            "UI/Diagnostics/InputDiagnostics.cs",
+            "UI/Diagnostics/DirtyTreeDumper.cs",
+            "UI/Diagnostics/ElementTreeDumper.cs",
+            "UI/Diagnostics/RenderCacheDumper.cs",
+            "UI/Diagnostics/RoutedEventTrace.cs",
+            "UI/Diagnostics/StyleTrace.cs",
+            "UI/Diagnostics/DebugOverlay.cs",
+            "UI/Diagnostics/DebugAdorner.cs",
+            "Playground/Cerneala.Playground/Samples/DiagnosticsSample.cs",
+            "tests/Cerneala.Tests/UI/Diagnostics/FrameDiagnosticsTests.cs",
+            "tests/Cerneala.Tests/UI/Diagnostics/DirtyTreeDumperTests.cs",
+            "tests/Cerneala.Tests/UI/Diagnostics/ElementTreeDumperTests.cs",
+            "tests/Cerneala.Tests/UI/Diagnostics/RenderCacheDumperTests.cs",
+            "tests/Cerneala.Tests/UI/Diagnostics/RoutedEventTraceTests.cs",
+            "tests/Cerneala.Tests/UI/Diagnostics/StyleTraceTests.cs"
+        ];
+
+        foreach (string requiredFile in requiredFiles)
+        {
+            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
+            Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("- [x] Developers can see per-frame measure/arrange/render-cache counts.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Developers can dump which elements are dirty and why.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Developers can trace routed event paths.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Developers can inspect style sources for a property value.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] 19. Add diagnostics/devtools overlays and tree/cache dumpers.", roadmap, StringComparison.Ordinal);
     }
 
     [Fact]
