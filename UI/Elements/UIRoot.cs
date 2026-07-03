@@ -10,6 +10,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 {
     private readonly StyleApplicator styleApplicator;
     private ThemeProvider? themeProvider;
+    private ThemeChangedSubscription? themeChangedSubscription;
 
     public UIRoot(float viewportWidth = 0, float viewportHeight = 0, float scale = 1)
     {
@@ -100,21 +101,19 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
             return;
         }
 
-        if (themeProvider is not null)
-        {
-            themeProvider.ThemeChanged -= OnThemeChanged;
-        }
+        themeChangedSubscription?.Dispose();
+        themeChangedSubscription = null;
 
         themeProvider = provider;
         if (themeProvider is not null)
         {
-            themeProvider.ThemeChanged += OnThemeChanged;
+            themeChangedSubscription = new ThemeChangedSubscription(this, themeProvider);
         }
 
         Invalidate(InvalidationFlags.Style | InvalidationFlags.Subtree, "Theme provider changed");
     }
 
-    private void OnThemeChanged(object? sender, ThemeChangedEventArgs args)
+    private void InvalidateThemeChange()
     {
         Invalidate(InvalidationFlags.Style | InvalidationFlags.Subtree, "Theme changed");
     }
@@ -152,5 +151,41 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
             Arrange = layoutProcessors.Arrange,
             RenderCache = RenderQueueProcessor.Process
         };
+    }
+
+    private sealed class ThemeChangedSubscription : IDisposable
+    {
+        private readonly WeakReference<UIRoot> rootReference;
+        private readonly ThemeProvider provider;
+        private bool disposed;
+
+        public ThemeChangedSubscription(UIRoot root, ThemeProvider provider)
+        {
+            rootReference = new WeakReference<UIRoot>(root);
+            this.provider = provider;
+            provider.ThemeChanged += OnThemeChanged;
+        }
+
+        public void Dispose()
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            provider.ThemeChanged -= OnThemeChanged;
+            disposed = true;
+        }
+
+        private void OnThemeChanged(object? sender, ThemeChangedEventArgs args)
+        {
+            if (rootReference.TryGetTarget(out UIRoot? root))
+            {
+                root.InvalidateThemeChange();
+                return;
+            }
+
+            Dispose();
+        }
     }
 }

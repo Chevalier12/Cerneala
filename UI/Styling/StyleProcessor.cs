@@ -4,6 +4,8 @@ namespace Cerneala.UI.Styling;
 
 public sealed class StyleProcessor
 {
+    private static readonly StyleSheet EmptyStyleSheet = new();
+
     private readonly StyleApplicator applicator;
     private readonly Func<StyleSheet?> styleSheetProvider;
     private readonly Func<ThemeProvider?> themeProviderProvider;
@@ -21,11 +23,7 @@ public sealed class StyleProcessor
     public void Process(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        StyleSheet? styleSheet = styleSheetProvider();
-        if (styleSheet is null)
-        {
-            return;
-        }
+        StyleSheet styleSheet = styleSheetProvider() ?? EmptyStyleSheet;
 
         applicator.Apply(element, styleSheet, themeProviderProvider());
     }

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
@@ -27,6 +28,24 @@ public sealed class StyleSchedulerIntegrationTests
         Assert.True(stats.RenderedElements > 0);
         Assert.False(button.DirtyState.Has(InvalidationFlags.Style));
         Assert.False(root.Scheduler.HasWork);
+    }
+
+    [Fact]
+    public void ClearingRootStyleSheetClearsPreviouslyAppliedStyleValues()
+    {
+        UIRoot root = new(100, 100);
+        Button button = new();
+        StyleSheet sheet = new StyleSheet().Add(new StyleRule(StyleSelector.ForType<Button>())
+            .Add(new Setter<DrawColor>(Control.BackgroundProperty, DrawColor.White)));
+
+        root.SetStyleSheet(sheet);
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+
+        root.SetStyleSheet(null);
+        root.ProcessFrame();
+
+        Assert.Equal(UiPropertyValueSource.Default, button.GetValueSource(Control.BackgroundProperty));
     }
 
     [Fact]
@@ -80,6 +99,18 @@ public sealed class StyleSchedulerIntegrationTests
     }
 
     [Fact]
+    public void ThemeProviderDoesNotKeepDetachedRootAlive()
+    {
+        ThemeProvider provider = new(new Theme());
+        WeakReference reference = CreateThemeProviderRootReference(provider);
+
+        ForceFullCollection();
+
+        Assert.False(reference.IsAlive);
+        GC.KeepAlive(provider);
+    }
+
+    [Fact]
     public void StylePhaseQueuesMeasureWorkForMeasureAffectingSetterInSameFrame()
     {
         UIRoot root = new(100, 100);
@@ -115,5 +146,23 @@ public sealed class StyleSchedulerIntegrationTests
         Assert.Contains(element, root.StyleQueue.Snapshot());
         Assert.DoesNotContain(element, root.RenderQueue.Snapshot());
         Assert.True(element.DirtyState.Has(InvalidationFlags.Style));
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference CreateThemeProviderRootReference(ThemeProvider provider)
+    {
+        UIRoot root = new(100, 100);
+        root.SetThemeProvider(provider);
+        return new WeakReference(root);
+    }
+
+    private static void ForceFullCollection()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
     }
 }
