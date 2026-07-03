@@ -107,7 +107,7 @@ public sealed class LayoutManager
                 element.DesiredSize.Height);
         }
 
-        if (element.LastArrangeFinalRect is LayoutRect currentSlot)
+        if (parent is not UIRoot && element.LastArrangeFinalRect is LayoutRect currentSlot)
         {
             return currentSlot;
         }

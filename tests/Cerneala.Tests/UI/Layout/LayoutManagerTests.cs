@@ -142,6 +142,25 @@ public sealed class LayoutManagerTests
     }
 
     [Fact]
+    public void ViewportArrangeSubtreeRecomputesDirectRootChildSlot()
+    {
+        UIRoot root = new(100, 100);
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+        root.ProcessFrame();
+
+        root.SetViewport(200, 150, 1);
+        root.Invalidate(
+            InvalidationFlags.Arrange |
+            InvalidationFlags.Render |
+            InvalidationFlags.Subtree,
+            "viewport changed");
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(0, 0, 200, 150), child.ArrangedBounds);
+    }
+
+    [Fact]
     public void FailedMeasureKeepsDirtyFlagsAndQueue()
     {
         UIRoot root = new(100, 100);
