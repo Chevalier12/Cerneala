@@ -37,6 +37,10 @@ public sealed class DirtyPropagation
             {
                 InvalidationFlags ancestorFlags = InvalidationFlags.Measure | InvalidationFlags.Arrange;
                 MarkAndQueue(ancestor, ancestorFlags, layoutQueue, renderQueue, hitTestQueue, trace, "Measure ancestor propagation");
+                if (ancestor.IsLayoutBoundary)
+                {
+                    break;
+                }
             }
         }
 

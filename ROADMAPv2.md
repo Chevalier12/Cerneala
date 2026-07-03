@@ -343,23 +343,37 @@ Required retained-mode tests:
 
 This phase adds WPF-inspired measure/arrange without copying WPF complexity. Layout types are intentionally named as layout types so they are not confused with `DrawPoint` and `DrawRect`, whose role is backend-neutral drawing command geometry.
 
-- [ ] `UI/Layout/LayoutSize.cs` — layout measurement size; may support unconstrained dimensions where drawing primitives must not.
-- [ ] `UI/Layout/LayoutPoint.cs` — layout coordinate, not a drawing command point.
-- [ ] `UI/Layout/LayoutRect.cs` — layout slot, not a drawing command rectangle.
-- [ ] `UI/Layout/Thickness.cs` — margin, padding, border thickness.
-- [ ] `UI/Layout/Alignment.cs` — horizontal/vertical alignment values.
-- [ ] `UI/Layout/Visibility.cs` — `Visible`, `Hidden`, `Collapsed`.
-- [ ] `UI/Layout/LayoutRounding.cs` — explicit pixel snapping policy.
-- [ ] `UI/Layout/MeasureContext.cs`
-- [ ] `UI/Layout/ArrangeContext.cs`
-- [ ] `UI/Layout/LayoutResult.cs`
-- [ ] `UI/Layout/LayoutManager.cs` — consumes `LayoutQueue`, caches desired size and arranged bounds.
-- [ ] `UI/Layout/LayoutBoundary.cs` — marks roots or subtrees where propagation can stop.
-- [ ] `UI/Layout/ILayoutElement.cs`
-- [ ] `UI/Layout/Panels/Panel.cs`
-- [ ] `UI/Layout/Panels/Canvas.cs`
-- [ ] `UI/Layout/Panels/StackPanel.cs`
-- [ ] `UI/Layout/Panels/Orientation.cs`
+OpenSpec: `openspec/changes/add-layout-system` tracks the implementation contract and checklist for this phase.
+
+Planning:
+
+- [x] `openspec/changes/add-layout-system/proposal.md`
+- [x] `openspec/changes/add-layout-system/design.md`
+- [x] `openspec/changes/add-layout-system/tasks.md`
+- [x] `openspec/changes/add-layout-system/specs/layout-system/spec.md`
+- [x] `openspec/changes/add-layout-system/specs/retained-element-tree/spec.md`
+- [x] `openspec/changes/add-layout-system/specs/retained-invalidation-frame-scheduler/spec.md`
+- [x] `openspec/changes/add-layout-system/specs/retained-ui-mvp-foundation/spec.md`
+- [x] `openspec validate add-layout-system --strict`
+- [x] `openspec validate --all --strict`
+
+- [x] `UI/Layout/LayoutSize.cs` — layout measurement size; may support unconstrained dimensions where drawing primitives must not.
+- [x] `UI/Layout/LayoutPoint.cs` — layout coordinate, not a drawing command point.
+- [x] `UI/Layout/LayoutRect.cs` — layout slot, not a drawing command rectangle.
+- [x] `UI/Layout/Thickness.cs` — margin, padding, border thickness.
+- [x] `UI/Layout/Alignment.cs` — horizontal/vertical alignment values.
+- [x] `UI/Layout/Visibility.cs` — `Visible`, `Hidden`, `Collapsed`.
+- [x] `UI/Layout/LayoutRounding.cs` — explicit pixel snapping policy.
+- [x] `UI/Layout/MeasureContext.cs`
+- [x] `UI/Layout/ArrangeContext.cs`
+- [x] `UI/Layout/LayoutResult.cs`
+- [x] `UI/Layout/LayoutManager.cs` — consumes `LayoutQueue`, caches desired size and arranged bounds.
+- [x] `UI/Layout/LayoutBoundary.cs` — marks roots or subtrees where propagation can stop.
+- [x] `UI/Layout/ILayoutElement.cs`
+- [x] `UI/Layout/Panels/Panel.cs`
+- [x] `UI/Layout/Panels/Canvas.cs`
+- [x] `UI/Layout/Panels/StackPanel.cs`
+- [x] `UI/Layout/Panels/Orientation.cs`
 - [ ] `UI/Layout/Panels/Grid.cs` — later in MVP only if needed; otherwise Core.
 - [ ] `UI/Layout/Panels/GridLength.cs`
 - [ ] `UI/Layout/Panels/ColumnDefinition.cs`
@@ -367,23 +381,23 @@ This phase adds WPF-inspired measure/arrange without copying WPF complexity. Lay
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Layout/LayoutPrimitiveTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Layout/LayoutManagerTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Layout/UIElementMeasureArrangeTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Layout/LayoutInvalidationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Layout/VisibilityTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Layout/CanvasTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Layout/StackPanelTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/LayoutPrimitiveTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/LayoutManagerTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/UIElementMeasureArrangeTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/LayoutInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/VisibilityTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/CanvasTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/StackPanelTests.cs`
 - [ ] `tests/Cerneala.Tests/UI/Layout/GridTests.cs`
 
 Acceptance checklist:
 
-- [ ] Measure results are cached by available size and element version.
-- [ ] Arrange results are cached by final rect and element version.
-- [ ] A no-op property set does not invalidate layout.
-- [ ] Parent layout invalidation does not force unchanged children to re-measure when constraints are unchanged.
-- [ ] `Collapsed` removes an element from layout and hit testing.
-- [ ] Layout output can be converted explicitly to `DrawRect` only at rendering boundaries.
+- [x] Measure results are cached by available size and element version.
+- [x] Arrange results are cached by final rect and element version.
+- [x] A no-op property set does not invalidate layout.
+- [x] Parent layout invalidation does not force unchanged children to re-measure when constraints are unchanged.
+- [x] `Collapsed` removes an element from layout and hit testing.
+- [x] Layout output stays as layout state and does not generate drawing commands before rendering boundaries.
 
 ## 6. [MVP] Retained rendering and render cache
 

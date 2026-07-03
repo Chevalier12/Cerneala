@@ -1,7 +1,8 @@
-namespace Cerneala.UI.Elements;
-
 using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Layout;
+
+namespace Cerneala.UI.Elements;
 
 public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 {
@@ -15,7 +16,9 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         LayoutQueue = new LayoutQueue(this);
         RenderQueue = new RenderQueue(this);
         HitTestQueue = new HitTestQueue(this);
+        LayoutManager = new LayoutManager(this);
         Scheduler = new UiFrameScheduler(LayoutQueue, RenderQueue, HitTestQueue, Trace);
+        IsLayoutBoundary = true;
         ElementLifecycle.AttachSubtree(this, this);
     }
 
@@ -38,6 +41,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public RenderQueue RenderQueue { get; }
 
     public HitTestQueue HitTestQueue { get; }
+
+    public LayoutManager LayoutManager { get; }
 
     public UiFrameScheduler Scheduler { get; }
 
@@ -63,6 +68,6 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public FrameStats ProcessFrame(FramePhaseProcessors? processors = null, FrameBudget budget = default)
     {
-        return Scheduler.ProcessFrame(processors, budget);
+        return Scheduler.ProcessFrame(processors ?? LayoutManager.CreatePhaseProcessors(), budget);
     }
 }
