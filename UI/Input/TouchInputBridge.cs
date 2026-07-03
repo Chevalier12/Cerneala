@@ -91,9 +91,13 @@ public sealed class TouchInputBridge
             return hit;
         }
 
-        return routeMap.TryGetId(captured, out UiElementId id)
-            ? new HitTestResult(captured, id, point.X, point.Y)
-            : hit;
+        if (routeMap.TryGetId(captured, out UiElementId id))
+        {
+            return new HitTestResult(captured, id, point.X, point.Y);
+        }
+
+        capturedElementsByTouchId.Remove(point.Id);
+        return hit;
     }
 }
 

@@ -49,6 +49,31 @@ public sealed class TouchInputBridgeTests
     }
 
     [Fact]
+    public void StaleTouchCaptureIsClearedWhenCapturedElementLeavesRouteMap()
+    {
+        UIRoot root = new(100, 100);
+        UIElement captured = Arranged(0, 0, 40, 40);
+        UIElement fallback = Arranged(50, 0, 40, 40);
+        root.VisualChildren.Add(captured);
+        root.VisualChildren.Add(fallback);
+        int capturedMoves = 0;
+        int fallbackMoves = 0;
+        captured.Handlers.AddHandler(InputEvents.TouchMoveEvent, (_, _) => capturedMoves++);
+        fallback.Handlers.AddHandler(InputEvents.TouchMoveEvent, (_, _) => fallbackMoves++);
+        TouchInputBridge bridge = new();
+        ElementInputRouteMap map = root.InputCache.EnsureCurrent(root);
+
+        bridge.Capture(3, captured, map);
+        root.VisualChildren.Remove(captured);
+        bridge.Dispatch(root, new TouchInputFrame(new TouchInputPoint(3, 60, 10, TouchInputAction.Move)));
+        root.VisualChildren.Add(captured);
+        bridge.Dispatch(root, new TouchInputFrame(new TouchInputPoint(3, 60, 10, TouchInputAction.Move)));
+
+        Assert.Equal(0, capturedMoves);
+        Assert.Equal(2, fallbackMoves);
+    }
+
+    [Fact]
     public void CaptureChangeRaisesLostAndGotTouchCapture()
     {
         UIRoot root = new(100, 100);
