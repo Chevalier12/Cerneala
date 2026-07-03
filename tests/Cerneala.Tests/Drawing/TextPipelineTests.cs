@@ -101,6 +101,22 @@ public sealed class TextPipelineTests
     }
 
     [Fact]
+    public void TextRasterizerCanRepeatedlyShapeSystemFontText()
+    {
+        SystemFontSource fonts = new();
+        IDrawFont font = fonts.LoadFont("Arial", 16);
+        SkiaTextRasterizer rasterizer = new();
+
+        for (int i = 0; i < 100; i++)
+        {
+            RasterizedText result = rasterizer.Rasterize(new DrawTextRun(font, $"Cerneala {i}", 16), DrawColor.White);
+
+            Assert.True(result.ShapeResult.GlyphCount > 0);
+            Assert.NotEmpty(result.RgbaPixels);
+        }
+    }
+
+    [Fact]
     public void TextShapeResultRejectsMismatchedGlyphData()
     {
         ushort[] glyphIds = [1, 2];

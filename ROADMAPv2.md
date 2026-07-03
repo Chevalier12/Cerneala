@@ -732,20 +732,20 @@ Acceptance checklist:
 
 This phase proves the retained architecture in a real MonoGame loop. The sample should draw every frame but do no layout/render command regeneration on no-op frames.
 
-- [ ] `Playground/Cerneala.Playground/Samples/RetainedButtonSample.cs`
-- [ ] `Playground/Cerneala.Playground/Samples/LayoutSample.cs`
-- [ ] `Playground/Cerneala.Playground/Samples/TextSample.cs`
-- [ ] `Playground/Cerneala.Playground/Samples/InvalidationStatsOverlay.cs`
-- [ ] `Playground/Cerneala.Playground/Samples/SampleSelector.cs`
-- [~] `Playground/Cerneala.Playground/Game1.cs` — wire sample selector through `MonoGameUiHost`.
+- [x] `Playground/Cerneala.Playground/Samples/RetainedButtonSample.cs`
+- [x] `Playground/Cerneala.Playground/Samples/LayoutSample.cs`
+- [x] `Playground/Cerneala.Playground/Samples/TextSample.cs`
+- [x] `Playground/Cerneala.Playground/Samples/InvalidationStatsOverlay.cs`
+- [x] `Playground/Cerneala.Playground/Samples/SampleSelector.cs`
+- [x] `Playground/Cerneala.Playground/Game1.cs` — wire sample selector through `MonoGameUiHost`.
 
 MVP demo acceptance checklist:
 
-- [ ] Window shows retained `StackPanel` containing `TextBlock`, `Button`, and `Border`.
-- [ ] Mouse hover changes button visuals through retained input state.
-- [ ] Button click executes an explicit command/action.
-- [ ] On unchanged frames, diagnostics show zero measured elements, zero arranged elements, and zero regenerated local render caches.
-- [ ] Draw still happens every frame through `MonoGameDrawingBackend.Render(cachedCommands)`.
+- [x] Window shows retained `StackPanel` containing `TextBlock`, `Button`, and `Border`.
+- [x] Mouse hover changes button visuals through retained input state.
+- [x] Button click executes an explicit command/action.
+- [x] On unchanged frames, diagnostics show zero measured elements, zero arranged elements, and zero regenerated local render caches.
+- [x] Draw still happens every frame through `MonoGameDrawingBackend.Render(cachedCommands)`.
 
 ## 14. [Core] Styling and themes
 
@@ -1161,7 +1161,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [ ] 10. Add `Control`, `Border`, `TextBlock`, `Button`, first panels, and acceptance tests.
 - [ ] 11. Add text measurement/layout cache services above existing Skia/HarfBuzz text pipeline.
 - [ ] 12. Add resource dependency tracking for fonts/images.
-- [ ] 13. Update playground to show retained UI plus invalidation stats.
+- [x] 13. Update playground to show retained UI plus invalidation stats.
 
 ### Core order
 

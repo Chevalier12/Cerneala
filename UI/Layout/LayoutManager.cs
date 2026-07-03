@@ -1,5 +1,6 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Layout.Panels;
 
 namespace Cerneala.UI.Layout;
 
@@ -97,6 +98,15 @@ public sealed class LayoutManager
         }
 
         UIElement? parent = element.VisualParent;
+        if (parent is Canvas)
+        {
+            return new LayoutRect(
+                parent.ArrangedBounds.X + Canvas.GetLeft(element),
+                parent.ArrangedBounds.Y + Canvas.GetTop(element),
+                element.DesiredSize.Width,
+                element.DesiredSize.Height);
+        }
+
         if (parent is not null && parent.ArrangedBounds.Width > 0 && parent.ArrangedBounds.Height > 0)
         {
             return new LayoutRect(parent.ArrangedBounds.X, parent.ArrangedBounds.Y, parent.ArrangedBounds.Width, parent.ArrangedBounds.Height);

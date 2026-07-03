@@ -1,12 +1,11 @@
 #nullable enable
 
 using System;
-using Cerneala.Drawing;
+using Cerneala.Playground.Samples;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.MonoGame;
-using Cerneala.UI.Layout;
-using Cerneala.UI.Rendering;
+using Cerneala.UI.Resources;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -15,10 +14,12 @@ namespace Cerneala.Playground;
 
 public class Game1 : Game
 {
-    private const string DemoFontFamily = "sans-serif";
+    private static readonly ResourceId<FontResource> PlaygroundFontId = new("Playground/Body");
 
     private GraphicsDeviceManager _graphics;
+    private ResourceStore? _resources;
     private MonoGameUiHost? _uiHost;
+    private SampleSelector? _sampleSelector;
     private SpriteBatch? _spriteBatch;
     private Texture2D? _whitePixel;
 
@@ -48,14 +49,18 @@ public class Game1 : Game
             Viewport = GetViewport()
         });
 
-        IDrawFont font = _uiHost.ContentServices.LoadFont(DemoFontFamily, 28);
-        uiRoot.VisualChildren.Add(new PlaygroundDemoElement(font));
+        _resources = new ResourceStore();
+        _resources.SetResource(PlaygroundFontId, new FontResource(_uiHost.ContentServices.LoadFont("Arial", 16)));
+        _sampleSelector = SampleSelector.CreateDefault(_resources, PlaygroundFontId);
+        uiRoot.VisualChildren.Add(_sampleSelector.Root);
         Window.TextInput += OnTextInput;
     }
 
     protected override void UnloadContent()
     {
         Window.TextInput -= OnTextInput;
+        _sampleSelector = null;
+        _resources = null;
         _uiHost?.Dispose();
         _uiHost = null;
         _whitePixel?.Dispose();
@@ -70,13 +75,14 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        RequireUiHost().Update(GetViewport(), gameTime.ElapsedGameTime);
+        UiFrame frame = RequireUiHost().Update(GetViewport(), gameTime.ElapsedGameTime);
+        _sampleSelector?.UpdateFrame(frame);
         base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(global::Cerneala.GameBootstrap.CreateDefaultClearColor());
+        GraphicsDevice.Clear(new Color(248, 250, 252));
 
         RequireUiHost().Draw();
 
@@ -99,30 +105,4 @@ public class Game1 : Game
         return _uiHost ?? throw new InvalidOperationException("Game1 requires LoadContent to create the retained UI host before update or draw.");
     }
 
-    private sealed class PlaygroundDemoElement : UIElement
-    {
-        private readonly IDrawFont font;
-
-        public PlaygroundDemoElement(IDrawFont font)
-        {
-            this.font = font;
-        }
-
-        protected override LayoutSize MeasureCore(MeasureContext context)
-        {
-            return new LayoutSize(240, 96);
-        }
-
-        protected override LayoutRect ArrangeCore(ArrangeContext context)
-        {
-            return new LayoutRect(32, 32, DesiredSize.Width, DesiredSize.Height);
-        }
-
-        protected override void OnRender(RenderContext context)
-        {
-            context.DrawingContext.FillRectangle(new DrawRect(32, 32, 240, 96), new DrawColor(20, 20, 24, 220));
-            context.DrawingContext.DrawRectangle(new DrawRect(32, 32, 240, 96), DrawColor.White, 2);
-            context.DrawingContext.DrawText(new DrawTextRun(font, "Hello world!", 28), new DrawPoint(56, 72), DrawColor.White);
-        }
-    }
 }

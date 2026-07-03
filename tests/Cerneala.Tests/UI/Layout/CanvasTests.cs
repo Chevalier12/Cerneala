@@ -38,6 +38,25 @@ public sealed class CanvasTests
     }
 
     [Fact]
+    public void RootFrameKeepsCanvasChildCoordinates()
+    {
+        UIRoot root = new(100, 100);
+        Canvas canvas = new();
+        FixedElement child = new(new LayoutSize(20, 10));
+        Canvas.SetLeft(child, 5);
+        Canvas.SetTop(child, 7);
+        root.VisualChildren.Add(canvas);
+        canvas.VisualChildren.Add(child);
+        root.Invalidate(
+            InvalidationFlags.Subtree | InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.HitTest,
+            "initial canvas frame");
+
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(5, 7, 20, 10), child.ArrangedBounds);
+    }
+
+    [Fact]
     public void ChangingAttachedChildCoordinatesQueuesCanvasArrange()
     {
         UIRoot root = new(100, 100);

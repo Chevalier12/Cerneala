@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
+    <ProjectReference Include="..\..\Playground\Cerneala.Playground\Cerneala.Playground.csproj" />
   </ItemGroup>
 
 </Project>

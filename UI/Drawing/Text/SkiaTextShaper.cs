@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using HarfBuzzSharp;
+using System.Runtime.InteropServices;
 using HarfBuzzBuffer = HarfBuzzSharp.Buffer;
 using HarfBuzzFont = HarfBuzzSharp.Font;
 
@@ -20,9 +21,7 @@ public sealed class SkiaTextShaper
         buffer.AddUtf16(textRun.Text);
         buffer.GuessSegmentProperties();
 
-        byte[] fontData = ReadFontData(font);
-        using MemoryStream fontStream = new(fontData);
-        using Blob blob = Blob.FromStream(fontStream);
+        using Blob blob = CreatePinnedBlob(ReadFontData(font));
         using Face face = new(blob, 0);
         using HarfBuzzFont harfBuzzFont = new(face);
         int scale = Math.Max(1, (int)MathF.Round(textRun.Size * 64));
@@ -79,6 +78,27 @@ public sealed class SkiaTextShaper
         }
 
         return data;
+    }
+
+    private static Blob CreatePinnedBlob(byte[] data)
+    {
+        if (data.Length == 0)
+        {
+            throw new InvalidOperationException("Cannot shape text because the font data is empty.");
+        }
+
+        GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+        bool released = false;
+        return new Blob(handle.AddrOfPinnedObject(), data.Length, MemoryMode.ReadOnly, () =>
+        {
+            if (released)
+            {
+                return;
+            }
+
+            released = true;
+            handle.Free();
+        });
     }
 
     private static float ToPixels(int harfBuzzValue)
