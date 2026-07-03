@@ -131,40 +131,22 @@ Existing input tests:
 
 This phase makes the intended v2 architecture explicit before adding framework surface area. It keeps design decisions testable and prevents accidental WPF compatibility sprawl.
 
-- [x] `openspec/config.yaml` — existing OpenSpec configuration using the `spec-driven` schema.
-- [x] `openspec/README.md` — document how this repo uses OpenSpec for Cerneala planning.
-- [x] `openspec/project.md` — product principles, scope bands, and non-goals for the retained UI core.
-- [x] `openspec/specs/retained-ui-mvp-foundation/spec.md`
-- [x] `openspec/specs/retained-element-tree/spec.md`
-- [x] `openspec/specs/retained-invalidation-frame-scheduler/spec.md`
-- [x] `openspec/specs/typed-state-model/spec.md`
-- [x] `openspec/specs/layout-system/spec.md`
-- [x] `openspec/specs/retained-rendering-cache/spec.md`
-- [x] `openspec/specs/retained-input-bridge/spec.md`
-- [x] `openspec/specs/command-router-actions/spec.md`
-- [x] `openspec/specs/styling-theme-engine/spec.md`
 - [x] `docs/architecture-v2.md` — concise architecture complement to `architecture.md`, focused on layers above drawing/input.
 - [x] `docs/diagrams/retained-frame-loop.md` — text diagram for update/layout/render-cache/draw flow.
 - [x] `docs/diagrams/ui-layer-boundaries.md` — text diagram showing UI core -> drawing/input -> MonoGame adapters.
 
 Tests and checks:
 
-- [x] `tests/Cerneala.Tests/Architecture/RepositoryShapeTests.cs` — verifies section 1 planning files and canonical spec paths exist.
+- [x] `tests/Cerneala.Tests/Architecture/RepositoryShapeTests.cs` — verifies section 1 planning files exist and the old planning-tool workspace stays removed.
 - [x] `tests/Cerneala.Tests/Architecture/NamespaceBoundaryTests.cs` — verifies UI core namespaces do not reference Skia, HarfBuzz, MonoGame, `SpriteBatch`, `Texture2D`, or direct platform input polling outside adapter folders.
 
 ## 2. [MVP] Typed state model
 
 This phase replaces the idea of cloning WPF `DependencyProperty` with a smaller typed property/state system. Properties should be strongly typed, explicitly registered, easy to test, and able to declare invalidation effects without reflection-heavy behavior.
 
-OpenSpec: `openspec/changes/add-typed-state-model` tracks the implementation contract and checklist for this phase.
 
 Planning:
 
-- [x] `openspec/changes/add-typed-state-model/proposal.md`
-- [x] `openspec/changes/add-typed-state-model/design.md`
-- [x] `openspec/changes/add-typed-state-model/tasks.md`
-- [x] `openspec/changes/add-typed-state-model/specs/typed-state-model/spec.md`
-- [x] `openspec validate add-typed-state-model`
 
 - [x] `UI/Core/UiObject.cs` — base object with typed property storage and lifecycle hooks.
 - [x] `UI/Core/UiProperty.cs` — non-generic descriptor base for internal indexing and diagnostics.
@@ -206,16 +188,9 @@ Acceptance checklist:
 
 This phase creates the retained UI tree that owns state, layout, rendering hooks, event handlers, and child relationships. It follows the confirmed MVP decision to use separate logical and visual trees so semantic ownership, generated visuals, layout participation, rendering, hit testing, and input routing do not get collapsed into one ambiguous parent relationship.
 
-OpenSpec: `openspec/changes/add-retained-element-tree` tracks the implementation contract and checklist for this phase.
 
 Planning:
 
-- [x] `openspec/changes/add-retained-element-tree/proposal.md`
-- [x] `openspec/changes/add-retained-element-tree/design.md`
-- [x] `openspec/changes/add-retained-element-tree/tasks.md`
-- [x] `openspec/changes/add-retained-element-tree/specs/retained-element-tree/spec.md`
-- [x] `openspec/changes/add-retained-element-tree/specs/retained-ui-mvp-foundation/spec.md`
-- [x] `openspec validate add-retained-element-tree --strict`
 
 - [x] `UI/Elements/UIElement.cs` — retained element base with parent, children, enabled/visible state, handlers, and virtual lifecycle methods.
 - [x] `UI/Elements/UIElementCollection.cs` — owned child collection with parent validation and change notifications.
@@ -257,18 +232,9 @@ Acceptance checklist:
 
 This phase is the core of the game-loop-friendly retained model. Update and draw can run every frame, but layout and drawing command generation should run only when dirty state requires it.
 
-OpenSpec: `openspec/changes/add-retained-invalidation-frame-scheduler` tracks the implementation contract and checklist for this phase.
 
 Planning:
 
-- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/proposal.md`
-- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/design.md`
-- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/tasks.md`
-- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/specs/retained-invalidation-frame-scheduler/spec.md`
-- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/specs/retained-element-tree/spec.md`
-- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/specs/typed-state-model/spec.md`
-- [x] `openspec/changes/add-retained-invalidation-frame-scheduler/specs/retained-ui-mvp-foundation/spec.md`
-- [x] `openspec validate add-retained-invalidation-frame-scheduler --strict`
 
 Invalidation model:
 
@@ -345,19 +311,9 @@ Required retained-mode tests:
 
 This phase adds WPF-inspired measure/arrange without copying WPF complexity. Layout types are intentionally named as layout types so they are not confused with `DrawPoint` and `DrawRect`, whose role is backend-neutral drawing command geometry.
 
-OpenSpec: `openspec/changes/add-layout-system` tracks the implementation contract and checklist for this phase.
 
 Planning:
 
-- [x] `openspec/changes/add-layout-system/proposal.md`
-- [x] `openspec/changes/add-layout-system/design.md`
-- [x] `openspec/changes/add-layout-system/tasks.md`
-- [x] `openspec/changes/add-layout-system/specs/layout-system/spec.md`
-- [x] `openspec/changes/add-layout-system/specs/retained-element-tree/spec.md`
-- [x] `openspec/changes/add-layout-system/specs/retained-invalidation-frame-scheduler/spec.md`
-- [x] `openspec/changes/add-layout-system/specs/retained-ui-mvp-foundation/spec.md`
-- [x] `openspec validate add-layout-system --strict`
-- [x] `openspec validate --all --strict`
 
 - [x] `UI/Layout/LayoutSize.cs` — layout measurement size; may support unconstrained dimensions where drawing primitives must not.
 - [x] `UI/Layout/LayoutPoint.cs` — layout coordinate, not a drawing command point.
@@ -405,18 +361,9 @@ Acceptance checklist:
 
 This phase connects retained elements to the existing `DrawingContext`, `DrawCommandList`, and `IDrawingBackend`. The retained renderer owns cache invalidation above the drawing layer; the drawing layer remains a command recorder/backend contract.
 
-OpenSpec: `openspec/changes/add-retained-rendering-cache` tracks the implementation contract and checklist for this phase.
 
 Planning:
 
-- [x] `openspec/changes/add-retained-rendering-cache/proposal.md`
-- [x] `openspec/changes/add-retained-rendering-cache/design.md`
-- [x] `openspec/changes/add-retained-rendering-cache/tasks.md`
-- [x] `openspec/changes/add-retained-rendering-cache/specs/retained-rendering-cache/spec.md`
-- [x] `openspec/changes/add-retained-rendering-cache/specs/retained-invalidation-frame-scheduler/spec.md`
-- [x] `openspec/changes/add-retained-rendering-cache/specs/retained-ui-mvp-foundation/spec.md`
-- [x] `openspec validate add-retained-rendering-cache --strict`
-- [x] `openspec validate --all --strict`
 
 Rendering model:
 
@@ -554,13 +501,6 @@ Acceptance checklist:
 
 This phase completes route-based command execution without copying WPF's global `CommandManager` magic. Commands should be explicit, testable, and based on existing command primitives.
 
-- [x] `openspec/changes/add-command-router-actions/proposal.md`
-- [x] `openspec/changes/add-command-router-actions/design.md`
-- [x] `openspec/changes/add-command-router-actions/tasks.md`
-- [x] `openspec/changes/add-command-router-actions/specs/command-router-actions/spec.md`
-- [x] `openspec/changes/add-command-router-actions/specs/retained-input-bridge/spec.md`
-- [x] `openspec/changes/add-command-router-actions/specs/retained-ui-mvp-foundation/spec.md`
-- [x] `openspec validate add-command-router-actions --strict`
 
 - [x] `UI/Input/ICommand.cs`
 - [x] `UI/Input/RoutedCommand.cs`
@@ -597,16 +537,6 @@ Acceptance checklist:
 
 This phase creates the smallest useful control set. Controls should be retained, layout-aware, input-aware, and render through `DrawingContext` commands. Keep names familiar where they are ergonomic.
 
-- [x] `openspec/changes/add-first-controls-panels/proposal.md`
-- [x] `openspec/changes/add-first-controls-panels/design.md`
-- [x] `openspec/changes/add-first-controls-panels/tasks.md`
-- [x] `openspec/changes/add-first-controls-panels/specs/first-controls-panels/spec.md`
-- [x] `openspec/changes/add-first-controls-panels/specs/layout-system/spec.md`
-- [x] `openspec/changes/add-first-controls-panels/specs/retained-rendering-cache/spec.md`
-- [x] `openspec/changes/add-first-controls-panels/specs/retained-input-bridge/spec.md`
-- [x] `openspec/changes/add-first-controls-panels/specs/command-router-actions/spec.md`
-- [x] `openspec/changes/add-first-controls-panels/specs/retained-ui-mvp-foundation/spec.md`
-- [x] `openspec validate add-first-controls-panels --strict`
 
 - [x] `UI/Controls/Control.cs` — base control with styling hooks and common visual properties.
 - [x] `UI/Controls/ContentControl.cs`
@@ -1145,7 +1075,6 @@ This phase is optional. Cerneala should be code-first and strongly typed before 
 - [x] `UI/Markup/ContentPropertyAttribute.cs` — optional ergonomic hint.
 - [x] `UI/Markup/DesignTimeOnlyAttribute.cs`
 - [x] `Cerneala.SourceGen/UiMarkupGenerator.cs` — optional incremental source generator for `.cui.xml` files that emits code-first retained UI factories.
-- [x] `openspec/specs/markup-serialization/spec.md`
 
 Tests:
 
@@ -1194,7 +1123,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 
 ### MVP order
 
-- [x] 1. Add `openspec/README.md`, `openspec/project.md`, and specs for retained tree, invalidation, typed state, layout, render cache, and input bridge using the existing OpenSpec workspace.
+- [x] 1. Add durable architecture docs, retained frame-loop diagrams, and repository shape tests for project memory.
 - [x] 2. Add `UI/Core/UiProperty{T}.cs`, metadata, store, registry, and property invalidation tests.
 - [x] 3. Add `UI/Elements/UIElement.cs`, `UIElementCollection`, `UIRoot`, element ids, lifecycle, and tree tests.
 - [x] 4. Add `InvalidationFlags`, dirty propagation, `LayoutQueue`, `RenderQueue`, `UiFrameScheduler`, and no-work-frame tests.
@@ -1233,7 +1162,6 @@ This order prioritizes a working retained UI loop before broad API coverage.
 
 ## 28. Risks and decisions needing human confirmation
 
-These are explicit decision points to resolve before or during implementation. Record the decision in this file and the matching `openspec` spec when confirmed.
 
 ### Naming and API shape
 

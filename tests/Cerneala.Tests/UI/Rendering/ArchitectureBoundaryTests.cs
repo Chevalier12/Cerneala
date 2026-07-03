@@ -601,7 +601,6 @@ public sealed class ArchitectureBoundaryTests
     {
         string root = FindRepositoryRoot();
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
-        string spec = File.ReadAllText(Path.Combine(root, "openspec", "specs", "text-editing-ime", "spec.md"));
         string[] requiredFiles =
         [
             "UI/Controls/TextBoxBase.cs",
@@ -629,8 +628,8 @@ public sealed class ArchitectureBoundaryTests
             Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
         }
 
-        Assert.Contains("### Requirement: Textbox controls edit retained text", spec, StringComparison.Ordinal);
-        Assert.Contains("### Requirement: Composition manager tracks IME lifecycle", spec, StringComparison.Ordinal);
+        Assert.Contains("- [x] `UI/Text/TextDocument.cs`", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `UI/Text/TextCompositionManager.cs`", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] 20. Add text editing and IME composition.", roadmap, StringComparison.Ordinal);
     }
 
@@ -769,9 +768,7 @@ public sealed class ArchitectureBoundaryTests
     {
         string root = FindRepositoryRoot();
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
-        string spec = File.ReadAllText(Path.Combine(root, "openspec", "specs", "advanced-rendering-media", "spec.md"));
 
-        Assert.Contains("### Requirement: Advanced rendering and media is tested", spec, StringComparison.Ordinal);
         Assert.Contains("- [x] Full project tests pass for this phase.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] 22. Add advanced rendering/media primitives as scenarios require.", roadmap, StringComparison.Ordinal);
     }
