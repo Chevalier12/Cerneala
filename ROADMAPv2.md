@@ -1137,7 +1137,7 @@ This phase is optional. Cerneala should be code-first and strongly typed before 
 - [x] `UI/Markup/MarkupDiagnostic.cs`
 - [x] `UI/Markup/ContentPropertyAttribute.cs` — optional ergonomic hint.
 - [x] `UI/Markup/DesignTimeOnlyAttribute.cs`
-- [ ] `Cerneala.SourceGen/UiMarkupGenerator.cs` — optional future project; deferred until runtime reflection or build-time generation becomes a proven cost.
+- [x] `Cerneala.SourceGen/UiMarkupGenerator.cs` — optional incremental source generator for `.cui.xml` files that emits code-first retained UI factories.
 - [x] `openspec/specs/markup-serialization/spec.md`
 
 Tests:
@@ -1146,7 +1146,7 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Markup/UiMarkupWriterTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Markup/UiFactoryTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Markup/MarkupDiagnosticTests.cs`
-- [ ] `tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTests.cs` — optional future project; deferred with `Cerneala.SourceGen/UiMarkupGenerator.cs`.
+- [x] `tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTests.cs` — source generator tests for generated source, compilation, typed property emission, and diagnostics.
 
 Acceptance checklist:
 
@@ -1221,7 +1221,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 ### Optional/Experimental order
 
 - [x] 25. Prototype markup/serialization after templates and typed properties are stable.
-- [ ] 26. Prototype source generation if runtime reflection becomes a real cost.
+- [x] 26. Prototype source generation if runtime reflection becomes a real cost.
 - [x] 27. Implement touch/stylus/drag/drop behavior when platform adapters can supply real data.
 
 ## 28. Risks and decisions needing human confirmation

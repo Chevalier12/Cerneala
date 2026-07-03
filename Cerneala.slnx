@@ -3,6 +3,9 @@
     <Project Path="Playground/Cerneala.Playground/Cerneala.Playground.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj" />
     <Project Path="tests/Cerneala.Tests/Cerneala.Tests.csproj" />
   </Folder>
+  <Project Path="Cerneala.csproj" />
+  <Project Path="Cerneala.SourceGen/Cerneala.SourceGen.csproj" />
 </Solution>

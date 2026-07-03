@@ -8,12 +8,15 @@
 
   <ItemGroup>
     <Compile Remove="docs\**" />
+    <Compile Remove="Cerneala.SourceGen\**" />
     <Compile Remove="Playground\**" />
     <Compile Remove="tests\**" />
     <EmbeddedResource Remove="docs\**" />
+    <EmbeddedResource Remove="Cerneala.SourceGen\**" />
     <EmbeddedResource Remove="Playground\**" />
     <EmbeddedResource Remove="tests\**" />
     <None Remove="docs\**" />
+    <None Remove="Cerneala.SourceGen\**" />
     <None Remove="Playground\**" />
     <None Remove="tests\**" />
   </ItemGroup>
@@ -23,6 +26,11 @@
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4.1" />
     <PackageReference Include="SkiaSharp" Version="4.148.0" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.148.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="Cerneala.SourceGen\Cerneala.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**;Cerneala.SourceGen\**;docs\**;Playground\**;tests\**" />
   </ItemGroup>
 
 </Project>
