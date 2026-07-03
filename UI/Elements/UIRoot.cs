@@ -1,5 +1,6 @@
 using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Styling;
@@ -23,6 +24,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         StyleQueue = new StyleQueue(this);
         RenderQueue = new RenderQueue(this);
         HitTestQueue = new HitTestQueue(this);
+        InputCache = new ElementInputCache();
         LayoutManager = new LayoutManager(this);
         RenderCounters = new RenderCounters();
         RetainedRenderCache = new RetainedRenderCache();
@@ -56,6 +58,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public RenderQueue RenderQueue { get; }
 
     public HitTestQueue HitTestQueue { get; }
+
+    public ElementInputCache InputCache { get; }
 
     public LayoutManager LayoutManager { get; }
 
@@ -133,9 +137,15 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     {
         ArgumentNullException.ThrowIfNull(request);
         Trace.RecordRequest(request);
-        if (DirtyPropagation.Default.GetEffectiveFlags(request).HasFlag(InvalidationFlags.Render))
+        InvalidationFlags effective = DirtyPropagation.Default.GetEffectiveFlags(request);
+        if (effective.HasFlag(InvalidationFlags.Render))
         {
             RetainedRenderCache.InvalidateRoot();
+        }
+
+        if (effective.HasFlag(InvalidationFlags.HitTest))
+        {
+            InputCache.Invalidate(request.Reason);
         }
 
         DirtyPropagation.Default.Propagate(request, this, LayoutQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
@@ -154,7 +164,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
             Style = StyleProcessor.Process,
             Measure = layoutProcessors.Measure,
             Arrange = layoutProcessors.Arrange,
-            RenderCache = RenderQueueProcessor.Process
+            RenderCache = RenderQueueProcessor.Process,
+            HitTest = _ => InputCache.EnsureCurrent(this)
         };
     }
 

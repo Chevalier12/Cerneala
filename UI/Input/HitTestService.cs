@@ -5,14 +5,10 @@ namespace Cerneala.UI.Input;
 
 public sealed class HitTestService
 {
-    private readonly ElementInputRouteBuilder routeBuilder = new();
-
     public HitTestResult? HitTest(UIRoot root, float x, float y, HitTestFilter? filter = null)
     {
         ArgumentNullException.ThrowIfNull(root);
-
-        ElementInputRouteMap map = routeBuilder.Build(root);
-        return HitTest(root, map, x, y, filter);
+        return root.InputCache.HitTest(root, x, y, filter);
     }
 
     public HitTestResult? HitTest(UIElement root, ElementInputRouteMap routeMap, float x, float y, HitTestFilter? filter = null)
