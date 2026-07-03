@@ -13,7 +13,7 @@ public sealed class PointerCaptureManagerTests
         UIElement hit = new();
         root.VisualChildren.Add(captured);
         root.VisualChildren.Add(hit);
-        ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
+        ElementInputRouteMap map = root.InputCache.EnsureCurrent(root);
         Assert.True(map.TryGetId(hit, out UiElementId hitId));
         HitTestResult hitTarget = new(hit, hitId, 5, 6);
         PointerCaptureManager manager = new();
@@ -32,11 +32,11 @@ public sealed class PointerCaptureManagerTests
         UIElement hit = new();
         root.VisualChildren.Add(captured);
         root.VisualChildren.Add(hit);
-        ElementInputRouteMap firstMap = new ElementInputRouteBuilder().Build(root);
+        ElementInputRouteMap firstMap = root.InputCache.EnsureCurrent(root);
         PointerCaptureManager manager = new();
         manager.Capture(captured, firstMap);
         root.VisualChildren.Remove(captured);
-        ElementInputRouteMap secondMap = new ElementInputRouteBuilder().Build(root);
+        ElementInputRouteMap secondMap = root.InputCache.EnsureCurrent(root);
         Assert.True(secondMap.TryGetId(hit, out UiElementId hitId));
         HitTestResult hitTarget = new(hit, hitId, 5, 6);
 
@@ -57,7 +57,7 @@ public sealed class PointerCaptureManagerTests
         List<string> calls = [];
         first.Handlers.AddHandler(InputEvents.LostMouseCaptureEvent, (_, _) => calls.Add("lost-first"));
         second.Handlers.AddHandler(InputEvents.GotMouseCaptureEvent, (_, _) => calls.Add("got-second"));
-        ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
+        ElementInputRouteMap map = root.InputCache.EnsureCurrent(root);
         PointerCaptureManager manager = new();
 
         manager.Capture(first, map);
