@@ -66,7 +66,7 @@ public sealed class UiHost
         InputBridge.Dispatch(currentRoot, inputFrame);
 
         FrameStats stats = currentRoot.ProcessFrame();
-        currentRoot.RetainedRenderer.Render(currentRoot);
+        currentRoot.RetainedRenderer.Commit(currentRoot);
         LastFrame = new UiFrame(elapsedTime ?? Clock?.GetElapsedTime() ?? TimeSpan.Zero, this.viewport, inputFrame, stats);
         return LastFrame;
     }

@@ -101,9 +101,10 @@ public sealed class UiHostFrameContractTests
         int renderCountAfterUpdate = child.RenderCount;
 
         child.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "after update");
-        host.Draw(backend);
 
+        Assert.Throws<InvalidOperationException>(() => host.Draw(backend));
         Assert.Equal(renderCountAfterUpdate, child.RenderCount);
+        Assert.Equal(0, backend.RenderCalls);
     }
 
     private static UiHost HostWithRenderableRoot(out UIRoot root, out RenderCountingElement child)

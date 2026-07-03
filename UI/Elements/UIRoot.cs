@@ -77,6 +77,11 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     {
         ArgumentNullException.ThrowIfNull(request);
         Trace.RecordRequest(request);
+        if (DirtyPropagation.Default.GetEffectiveFlags(request).HasFlag(InvalidationFlags.Render))
+        {
+            RetainedRenderCache.InvalidateRoot();
+        }
+
         DirtyPropagation.Default.Propagate(request, this, LayoutQueue, RenderQueue, HitTestQueue, Trace);
     }
 
