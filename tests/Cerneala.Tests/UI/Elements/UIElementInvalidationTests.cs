@@ -41,7 +41,7 @@ public sealed class UIElementInvalidationTests
     }
 
     [Fact]
-    public void StylePropertyInvalidationSchedulesFrameWorkAndClearsAfterFrame()
+    public void StylePropertyInvalidationQueuesStyleWorkAndClearsAfterFrame()
     {
         UiProperty<int> property = UiProperty<int>.Register(
             UniqueName(),
@@ -50,10 +50,12 @@ public sealed class UIElementInvalidationTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        root.ProcessFrame();
 
         child.SetValue(property, 1);
 
-        Assert.True(root.Scheduler.HasWork);
+        Assert.Contains(child, root.StyleQueue.Snapshot());
+        Assert.DoesNotContain(child, root.RenderQueue.Snapshot());
 
         root.ProcessFrame();
 

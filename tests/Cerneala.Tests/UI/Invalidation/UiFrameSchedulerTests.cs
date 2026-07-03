@@ -80,6 +80,48 @@ public sealed class UiFrameSchedulerTests
     }
 
     [Fact]
+    public void ProcessesStyleBeforeLayoutAndRender()
+    {
+        UIRoot root = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+        root.ProcessFrame();
+        List<FramePhase> phases = [];
+        child.Invalidate(InvalidationFlags.Style | InvalidationFlags.Measure | InvalidationFlags.HitTest, "style and layout");
+
+        root.ProcessFrame(new FramePhaseProcessors
+        {
+            Style = _ => phases.Add(FramePhase.Style),
+            Measure = _ => phases.Add(FramePhase.Measure),
+            Arrange = _ => phases.Add(FramePhase.Arrange),
+            RenderCache = _ => phases.Add(FramePhase.RenderCache),
+            HitTest = _ => phases.Add(FramePhase.HitTest)
+        });
+
+        Assert.Equal(
+            [FramePhase.Style, FramePhase.Measure, FramePhase.Measure, FramePhase.Arrange, FramePhase.Arrange, FramePhase.RenderCache, FramePhase.HitTest],
+            phases);
+    }
+
+    [Fact]
+    public void FailedStylePhaseKeepsDirtyFlagsAndQueuedWork()
+    {
+        UIRoot root = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+        root.ProcessFrame();
+        child.Invalidate(InvalidationFlags.Style, "style");
+
+        Assert.Throws<InvalidOperationException>(() => root.ProcessFrame(new FramePhaseProcessors
+        {
+            Style = _ => throw new InvalidOperationException("boom")
+        }));
+
+        Assert.True(child.DirtyState.Has(InvalidationFlags.Style));
+        Assert.Equal(1, root.StyleQueue.Count);
+    }
+
+    [Fact]
     public void SuccessfulDerivedPhaseClearsOriginalSpecializedDirtyFlags()
     {
         UIRoot root = new();
