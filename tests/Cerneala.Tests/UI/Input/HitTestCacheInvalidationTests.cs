@@ -32,6 +32,8 @@ public sealed class HitTestCacheInvalidationTests
         root.VisualChildren.Add(child);
         root.ProcessFrame();
         root.InputCache.EnsureCurrent(root);
+        int rebuildsAfterInitialBuild = root.InputCache.RebuildCount;
+        ElementInputRouteMap firstMap = root.InputCache.RouteMap;
 
         child.Arrange(new ArrangeContext(new LayoutRect(50, 0, 20, 20)));
         child.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.HitTest, "manual bounds change");
@@ -39,6 +41,8 @@ public sealed class HitTestCacheInvalidationTests
         HitTestResult? oldPoint = root.InputCache.HitTest(root, 10, 10);
         HitTestResult? newPoint = root.InputCache.HitTest(root, 55, 10);
 
+        Assert.Equal(rebuildsAfterInitialBuild + 1, root.InputCache.RebuildCount);
+        Assert.NotSame(firstMap, root.InputCache.RouteMap);
         Assert.NotSame(child, oldPoint?.Element);
         Assert.Same(child, newPoint!.Element);
     }
