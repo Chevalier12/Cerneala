@@ -39,6 +39,10 @@ Cerneala SHALL document and implement the foundation that allows the game loop t
 - **WHEN** update and draw are called every frame
 - **THEN** the retained frame scheduler processes no dirty phase work on unchanged frames while still allowing draw to use cached output
 
+#### Scenario: Layout phase is concrete
+- **WHEN** retained measure or arrange work is queued
+- **THEN** the retained layout system processes that work before render-cache work in the frame loop
+
 ### Requirement: Confirmed MVP decisions are captured
 Cerneala SHALL capture the confirmed MVP decisions from `ROADMAPv2.md`.
 
