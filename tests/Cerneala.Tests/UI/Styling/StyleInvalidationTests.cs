@@ -10,6 +10,25 @@ namespace Cerneala.Tests.UI.Styling;
 public sealed class StyleInvalidationTests
 {
     [Fact]
+    public void ManualStyleInvalidationUsesRegistryInsteadOfPropertyNameStrings()
+    {
+        string source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "..",
+            "UI",
+            "Styling",
+            "StyleInvalidation.cs"));
+
+        Assert.DoesNotContain("property.Name ==", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"IsPressed\"", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"IsSelected\"", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RecomputesVisualStateWhenHoverChanges()
     {
         Button button = new();

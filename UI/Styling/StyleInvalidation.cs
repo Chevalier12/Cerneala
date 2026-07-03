@@ -8,14 +8,20 @@ public sealed class StyleInvalidation : IDisposable
     private readonly StyleApplicator applicator;
     private readonly StyleSheet styleSheet;
     private readonly ThemeProvider? themeProvider;
+    private readonly PseudoClassRegistry pseudoClassRegistry;
     private readonly HashSet<UIElement> trackedElements = new(ReferenceEqualityComparer.Instance);
     private bool disposed;
 
-    public StyleInvalidation(StyleApplicator applicator, StyleSheet styleSheet, ThemeProvider? themeProvider = null)
+    public StyleInvalidation(
+        StyleApplicator applicator,
+        StyleSheet styleSheet,
+        ThemeProvider? themeProvider = null,
+        PseudoClassRegistry? pseudoClassRegistry = null)
     {
         this.applicator = applicator ?? throw new ArgumentNullException(nameof(applicator));
         this.styleSheet = styleSheet ?? throw new ArgumentNullException(nameof(styleSheet));
         this.themeProvider = themeProvider;
+        this.pseudoClassRegistry = pseudoClassRegistry ?? PseudoClassRegistry.Default;
         if (themeProvider is not null)
         {
             themeProvider.ThemeChanged += OnThemeChanged;
@@ -62,14 +68,9 @@ public sealed class StyleInvalidation : IDisposable
         }
     }
 
-    private static bool AffectsPseudoClass(UiProperty property)
+    private bool AffectsPseudoClass(UiProperty property)
     {
-        return ReferenceEquals(property, UIElement.IsPointerOverProperty) ||
-            ReferenceEquals(property, UIElement.IsKeyboardFocusedProperty) ||
-            ReferenceEquals(property, UIElement.IsKeyboardFocusWithinProperty) ||
-            ReferenceEquals(property, UIElement.IsEnabledProperty) ||
-            property.Name == "IsPressed" ||
-            property.Name == "IsSelected" ||
+        return pseudoClassRegistry.AffectsPseudoClass(property) ||
             property.Options.HasFlag(UiPropertyOptions.AffectsStyle);
     }
 
