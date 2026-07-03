@@ -5,7 +5,6 @@ namespace Cerneala.UI.Input;
 
 public sealed class ElementInputBridge
 {
-    private readonly ElementInputRouteBuilder routeBuilder;
     private readonly HitTestService hitTestService;
     private readonly PointerCaptureManager pointerCaptureManager;
     private readonly HoverTracker hoverTracker;
@@ -19,7 +18,6 @@ public sealed class ElementInputBridge
     private float lastPointerY;
 
     public ElementInputBridge(
-        ElementInputRouteBuilder? routeBuilder = null,
         HitTestService? hitTestService = null,
         PointerCaptureManager? pointerCaptureManager = null,
         HoverTracker? hoverTracker = null,
@@ -29,7 +27,6 @@ public sealed class ElementInputBridge
         FocusManager? focusManager = null,
         TextInputBridge? textInputBridge = null)
     {
-        this.routeBuilder = routeBuilder ?? new ElementInputRouteBuilder();
         this.hitTestService = hitTestService ?? new HitTestService();
         this.pointerCaptureManager = pointerCaptureManager ?? new PointerCaptureManager();
         this.hoverTracker = hoverTracker ?? new HoverTracker();
@@ -55,7 +52,7 @@ public sealed class ElementInputBridge
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(inputFrame);
 
-        ElementInputRouteMap routeMap = routeBuilder.Build(root);
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         HitTestResult? hitTarget = hitTestService.HitTest(root, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
         HitTestResult? pointerTarget = pointerCaptureManager.OverrideTarget(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
 

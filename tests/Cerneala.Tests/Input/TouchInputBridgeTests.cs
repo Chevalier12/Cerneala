@@ -38,7 +38,7 @@ public sealed class TouchInputBridgeTests
         List<object> sources = [];
         captured.Handlers.AddHandler(InputEvents.TouchMoveEvent, (_, args) => sources.Add(args.OriginalSource));
         TouchInputBridge bridge = new();
-        ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
+        ElementInputRouteMap map = root.InputCache.EnsureCurrent(root);
 
         bridge.Capture(3, captured, map);
         bridge.Dispatch(root, new TouchInputFrame(new TouchInputPoint(3, 45, 5, TouchInputAction.Move)));
@@ -59,7 +59,7 @@ public sealed class TouchInputBridgeTests
         List<string> calls = [];
         first.Handlers.AddHandler(InputEvents.LostTouchCaptureEvent, (_, _) => calls.Add("lost-first"));
         second.Handlers.AddHandler(InputEvents.GotTouchCaptureEvent, (_, _) => calls.Add("got-second"));
-        ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
+        ElementInputRouteMap map = root.InputCache.EnsureCurrent(root);
         TouchInputBridge bridge = new();
 
         bridge.Capture(3, first, map);

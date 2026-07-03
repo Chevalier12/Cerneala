@@ -4,13 +4,11 @@ namespace Cerneala.UI.Input;
 
 public sealed class TouchInputBridge
 {
-    private readonly ElementInputRouteBuilder routeBuilder;
     private readonly HitTestService hitTestService;
     private readonly Dictionary<int, UIElement> capturedElementsByTouchId = [];
 
-    public TouchInputBridge(ElementInputRouteBuilder? routeBuilder = null, HitTestService? hitTestService = null)
+    public TouchInputBridge(HitTestService? hitTestService = null)
     {
-        this.routeBuilder = routeBuilder ?? new ElementInputRouteBuilder();
         this.hitTestService = hitTestService ?? new HitTestService();
     }
 
@@ -55,7 +53,7 @@ public sealed class TouchInputBridge
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(frame);
 
-        ElementInputRouteMap routeMap = routeBuilder.Build(root);
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         foreach (TouchInputPoint point in frame.Points)
         {
             DispatchPoint(root, routeMap, point);

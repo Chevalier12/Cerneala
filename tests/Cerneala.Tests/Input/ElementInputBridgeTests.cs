@@ -87,7 +87,7 @@ public sealed class ElementInputBridgeTests
         bool executed = false;
         button.Command = new ActionCommand(_ => executed = true);
         ElementInputBridge bridge = new();
-        ElementInputRouteMap routeMap = new ElementInputRouteBuilder().Build(root);
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         bridge.PointerCaptureManager.Capture(button, routeMap);
 
         bridge.Dispatch(root, PointerFrame(10, 10, 10, 10, currentDown: true));

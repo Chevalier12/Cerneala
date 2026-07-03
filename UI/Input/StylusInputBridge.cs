@@ -4,12 +4,10 @@ namespace Cerneala.UI.Input;
 
 public sealed class StylusInputBridge
 {
-    private readonly ElementInputRouteBuilder routeBuilder;
     private readonly HitTestService hitTestService;
 
-    public StylusInputBridge(ElementInputRouteBuilder? routeBuilder = null, HitTestService? hitTestService = null)
+    public StylusInputBridge(HitTestService? hitTestService = null)
     {
-        this.routeBuilder = routeBuilder ?? new ElementInputRouteBuilder();
         this.hitTestService = hitTestService ?? new HitTestService();
     }
 
@@ -18,7 +16,7 @@ public sealed class StylusInputBridge
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(frame);
 
-        ElementInputRouteMap routeMap = routeBuilder.Build(root);
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         foreach (StylusInputPoint point in frame.Points)
         {
             HitTestResult? target = hitTestService.HitTest(root, routeMap, point.X, point.Y);
