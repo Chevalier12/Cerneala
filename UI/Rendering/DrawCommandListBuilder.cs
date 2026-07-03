@@ -38,8 +38,7 @@ public sealed class DrawCommandListBuilder
         }
 
         ElementRenderCache localCache = renderCache.GetElementCache(element);
-        localCache.Ensure(element, counters);
-        foreach (DrawCommand command in localCache.Commands)
+        foreach (DrawCommand command in localCache.GetValidCommands(element))
         {
             rootCommands.Add(command);
             counters.CountEmittedCommands(1);

@@ -26,6 +26,19 @@ public sealed class ElementRenderCache
             Dependencies != element.RenderDependencies;
     }
 
+    public DrawCommandList GetValidCommands(UIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        if (IsStale(element))
+        {
+            throw new InvalidOperationException(
+                $"Element '{element.GetType().Name}' does not have a valid local render cache. " +
+                "Local render caches must be rebuilt by RenderQueueProcessor before root command composition.");
+        }
+
+        return commands;
+    }
+
     public bool Ensure(UIElement element, RenderCounters counters, bool forceRebuild = false)
     {
         ArgumentNullException.ThrowIfNull(element);
