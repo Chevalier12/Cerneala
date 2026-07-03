@@ -44,6 +44,40 @@ public sealed class DirtyTreeDumperTests
     }
 
     [Fact]
+    public void DumpKeepsRequeuedStyleReasonWhenStyleProcessorInvalidatesAgain()
+    {
+        UIRoot root = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+        root.ProcessFrame();
+
+        child.Invalidate(InvalidationFlags.Style, "initial style");
+
+        root.ProcessFrame(new FramePhaseProcessors
+        {
+            Style = element =>
+            {
+                if (ReferenceEquals(element, child))
+                {
+                    element.Invalidate(InvalidationFlags.Style, "style requeued during style processor");
+                }
+            }
+        });
+
+        Assert.True(child.DirtyState.IsDirty);
+        Assert.True(child.DirtyState.Has(InvalidationFlags.Style));
+        Assert.Equal(1, root.StyleQueue.Count);
+
+        string dump = new DirtyTreeDumper().Dump(root, root.Trace);
+        string childLine = Assert.Single(
+            dump.Split(Environment.NewLine),
+            line => line.Contains($"UIElement#{child.ElementId}", StringComparison.Ordinal));
+
+        Assert.Contains("reason=style requeued during style processor", childLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("reason=Clear", childLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void DumpReportsNoneForCleanTree()
     {
         UIRoot root = new();

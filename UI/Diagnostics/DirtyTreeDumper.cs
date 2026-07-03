@@ -56,13 +56,20 @@ public sealed class DirtyTreeDumper
         for (int index = trace.Entries.Count - 1; index >= 0; index--)
         {
             InvalidationTraceEntry entry = trace.Entries[index];
-            if (ReferenceEquals(entry.Element, element))
+            if (ReferenceEquals(entry.Element, element) && IsDirtyCause(entry.Kind))
             {
                 return new DirtyTraceInfo(entry.Reason, FindSourcePropertyName(trace, element, index));
             }
         }
 
         return null;
+    }
+
+    private static bool IsDirtyCause(InvalidationTraceEventKind kind)
+    {
+        return kind is InvalidationTraceEventKind.Request
+            or InvalidationTraceEventKind.Propagation
+            or InvalidationTraceEventKind.Queue;
     }
 
     private static string? FindSourcePropertyName(InvalidationTrace trace, UIElement element, int startIndex)
