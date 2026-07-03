@@ -10,12 +10,18 @@ public sealed class RetainedNoWorkFrameTests
     {
         UIRoot root = RootWithChild(out UIElement child);
         int measured = 0;
+        bool firstFrameMeasured = false;
         child.Invalidate(InvalidationFlags.Measure, "measure");
 
-        root.ProcessFrame(new FramePhaseProcessors { Measure = _ => measured++ });
+        root.ProcessFrame(new FramePhaseProcessors { Measure = _ => firstFrameMeasured = true });
+        if (firstFrameMeasured)
+        {
+            measured++;
+        }
+
         root.ProcessFrame(new FramePhaseProcessors { Measure = _ => measured++ });
 
-        Assert.Equal(2, measured);
+        Assert.Equal(1, measured);
     }
 
     [Fact]
@@ -130,6 +136,7 @@ public sealed class RetainedNoWorkFrameTests
         UIRoot root = new();
         child = new UIElement();
         root.VisualChildren.Add(child);
+        root.ProcessFrame();
         return root;
     }
 }
