@@ -50,6 +50,26 @@ public sealed class DragDropControllerTests
     }
 
     [Fact]
+    public void DragMoveUsesRetainedInputCacheWhenDirty()
+    {
+        UIRoot root = new(100, 100);
+        UIElement source = Arranged(0, 0, 20, 20);
+        UIElement target = Arranged(40, 0, 20, 20);
+        root.VisualChildren.Add(source);
+        root.VisualChildren.Add(target);
+        root.InputCache.EnsureCurrent(root);
+        int rebuildsAfterInitialBuild = root.InputCache.RebuildCount;
+        DragDropController controller = new();
+
+        target.IsEnabled = false;
+        controller.Begin(source, new DataTransfer().SetData("text/plain", "payload"));
+        controller.Move(root, 45, 5);
+
+        Assert.Equal(rebuildsAfterInitialBuild + 1, root.InputCache.RebuildCount);
+        Assert.False(root.InputCache.RouteMap.TryGetId(target, out _));
+    }
+
+    [Fact]
     public void DataTransferTryGetDataReturnsTrueForStoredNullPayload()
     {
         DataTransfer data = new DataTransfer().SetData("application/x-null", null);
@@ -70,6 +90,25 @@ public sealed class DragDropControllerTests
 
         Assert.Equal(Cursor.Hand, service.Resolve(root, 5, 5));
         Assert.Equal(Cursor.Arrow, service.Resolve(root, 50, 50));
+    }
+
+    [Fact]
+    public void CursorServiceUsesRetainedInputCacheWhenDirty()
+    {
+        UIRoot root = new(100, 100);
+        UIElement target = Arranged(0, 0, 20, 20);
+        root.VisualChildren.Add(target);
+        root.InputCache.EnsureCurrent(root);
+        int rebuildsAfterInitialBuild = root.InputCache.RebuildCount;
+        CursorService service = new();
+        service.SetCursor(target, Cursor.Hand);
+
+        target.IsEnabled = false;
+        Cursor cursor = service.Resolve(root, 5, 5);
+
+        Assert.Equal(Cursor.Arrow, cursor);
+        Assert.Equal(rebuildsAfterInitialBuild + 1, root.InputCache.RebuildCount);
+        Assert.False(root.InputCache.RouteMap.TryGetId(target, out _));
     }
 
     private static UIElement Arranged(float x, float y, float width, float height)

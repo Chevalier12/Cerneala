@@ -4,13 +4,11 @@ namespace Cerneala.UI.Input;
 
 public sealed class DragDropController
 {
-    private readonly ElementInputRouteBuilder routeBuilder;
     private readonly HitTestService hitTestService;
     private DragSession? session;
 
-    public DragDropController(ElementInputRouteBuilder? routeBuilder = null, HitTestService? hitTestService = null)
+    public DragDropController(HitTestService? hitTestService = null)
     {
-        this.routeBuilder = routeBuilder ?? new ElementInputRouteBuilder();
         this.hitTestService = hitTestService ?? new HitTestService();
     }
 
@@ -25,12 +23,13 @@ public sealed class DragDropController
 
     public void Move(UIRoot root, float x, float y)
     {
+        ArgumentNullException.ThrowIfNull(root);
         if (session is null)
         {
             return;
         }
 
-        ElementInputRouteMap routeMap = routeBuilder.Build(root);
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         HitTestResult? target = hitTestService.HitTest(root, routeMap, x, y);
         if (session.CurrentTarget is not null && !ReferenceEquals(session.CurrentTarget.Element, target?.Element))
         {
@@ -52,12 +51,13 @@ public sealed class DragDropController
 
     public void Drop(UIRoot root, float x, float y)
     {
+        ArgumentNullException.ThrowIfNull(root);
         if (session is null)
         {
             return;
         }
 
-        ElementInputRouteMap routeMap = routeBuilder.Build(root);
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         HitTestResult? target = hitTestService.HitTest(root, routeMap, x, y);
         if (target is not null)
         {

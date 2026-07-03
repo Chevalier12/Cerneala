@@ -2,7 +2,7 @@
 
 Scope: static architecture audit of the extracted repository, with emphasis on `ROADMAPv2.md`, `architecture.md`, `docs/architecture-v2.md`, `UI/Core`, `UI/Elements`, `UI/Layout`, `UI/Rendering`, `UI/Input`, `UI/Controls`, `UI/Text`, `UI/Resources`, `UI/Hosting`, and `tests/Cerneala.Tests`.
 
-Build/test note: I could not run `dotnet test` in this container because `dotnet` is not installed here. This audit is based on source review and the checked-in tests/specs. The repository contains prior `obj/Debug/net8.0` outputs, but I am not treating them as proof that the current source passes.
+Build/test note: `dotnet test Cerneala.slnx` passed after the retained input cache work (`963` total tests, `0` failed). The audit findings below remain as architecture review context, with completed remediation items checked off where implementation has landed.
 
 ## Executive verdict
 
@@ -10,22 +10,22 @@ Build/test note: I could not run `dotnet test` in this container because `dotnet
 - [x] The `UI/Drawing` and `UI/Input` foundations are being reused rather than duplicated in the obvious low-level places.
 - [x] The code avoids WPF `DependencyProperty` cloning and uses a saner typed `UiProperty<T>` model.
 - [x] The static backend boundary looks mostly clean: no obvious MonoGame/Skia/HarfBuzz/SpriteBatch/Texture2D references in controls/layout/rendering outside adapter/text/drawing areas.
-- [ ] The retained rendering/game-loop contract is not yet coherent enough to trust. `DrawCommandListBuilder` can call `ElementRenderCache.Ensure(...)`, which can run `OnRender(...)` outside the render-cache scheduler phase.
-- [ ] Tree mutations are under-invalidated. Adding a visual child under an attached root increments tree/root cache version but does not enqueue measure/arrange/render/hit-test work.
-- [ ] Styling is not integrated into the frame scheduler. `InvalidationFlags.Style` exists, but `UIElement.MapInvalidationOptions(...)` maps `AffectsStyle` to render, and `StyleInvalidation.Track(...)` is an opt-in side service.
-- [ ] Hit-test/input routing is rebuilt every input dispatch instead of being driven by the retained `HitTestQueue`. `HitTestQueue` exists, but it is not the owner of a retained input/hit-test cache.
+- [x] The retained rendering/game-loop contract has been tightened: local render-cache generation is scheduler-owned, root command composition is explicit during update, and draw submits committed commands.
+- [x] Attached visual tree mutations now enqueue retained measure/arrange/render/hit-test work instead of relying on tree-version bookkeeping alone.
+- [x] Styling is integrated into the frame scheduler through root-owned style/theme scope and `FramePhase.Style`.
+- [x] Hit-test/input routing no longer rebuilds the mouse/touch/stylus bridge route map every input dispatch; `UIRoot` owns a retained `ElementInputCache`, and `HitTestQueue` drives the cache rebuild phase.
 - [ ] ROADMAPv2 now overclaims maturity. Several Later/Optional sections are marked `[x]` because files/tests exist, but the implementations are descriptor-level, MVP-only, or not wired into the retained core.
 
 Brutal summary: the repo has a good skeleton and a lot of useful pieces, but the most important invariant — “update may do retained work, draw must only submit cached output, unchanged UI must not regenerate layout/render data” — has holes. Fix that before adding any more controls, media, animation, markup, accessibility, or advanced input.
 
 ## Requested checks
 
-- [ ] **1. Implementation respects ROADMAPv2 intent.** Partially. The broad layering is right, but frame/render invalidation is not strict enough, styling is not scheduler-owned, and route/hit-test caching is not retained enough.
+- [ ] **1. Implementation respects ROADMAPv2 intent.** Partially. The broad layering is right, and the retained render, tree mutation, style phase, and input route cache fixes have landed; remaining concerns are roadmap honesty/deferred scope and later foundation areas.
 - [ ] **2. WPF legacy API risk.** Some names are fine (`RoutedEvent`, `CommandBinding`, `Visibility`), but `AutomationPeer`, `ButtonAutomationPeer`, `TextBoxAutomationPeer`, and `ItemsControlAutomationPeer` pull the public shape toward WPF compatibility language without a compatibility goal. `IsVisible` plus `Visibility` is also WPF-ish ambiguity without enough semantic payoff.
 - [ ] **3. Over-engineering/YAGNI.** Later/Optional work was implemented too early: markup/source generation, advanced input categories, animation/storyboard, accessibility peers, advanced media descriptors, text editing, and IME scaffolding are ahead of core correctness.
-- [ ] **4. Under-engineering.** The most dangerous under-built areas are tree mutation invalidation, render-cache composition purity, style phase integration, route/hit-test caching, resource invalidation ownership, and realistic text/layout/virtualization behavior.
-- [ ] **5. Retained rendering + invalidation + game loop coherence.** Not yet. It is close structurally, but `RetainedRenderer.Render(...)` and `DrawCommandListBuilder.Build(...)` can still generate local commands outside scheduler accounting.
-- [x] **6. Drawing/UI/Input boundaries.** Mostly clean for backend references. The main violation is architectural rather than package-level: `UI/Input/ElementInputBridge.cs` knows about `ButtonBase` and `Thumb` from `UI/Controls/Primitives`.
+- [ ] **4. Under-engineering.** The most dangerous under-built areas are now resource invalidation ownership and realistic text/layout/virtualization behavior; the retained render contract, tree mutation invalidation, style phase integration, and route/hit-test caching have been remediated.
+- [x] **5. Retained rendering + invalidation + game loop coherence.** The retained render and tree-mutation contracts have been fixed: draw-path generation is blocked, update owns cache generation/composition, and late tree mutations are processed during update.
+- [x] **6. Drawing/UI/Input boundaries.** Mostly clean for backend references. `UI/Input` no longer references `ButtonBase` or `Thumb`; `InputControlBoundaryTests` now guards the control boundary.
 - [ ] **7. WPF-like names familiar but not dragging design backward.** Mixed. Core property model is modern; accessibility and some input/control naming need a hard naming decision.
 - [ ] **8. Tests cover the right risks.** There are many tests, but several prove file-level happy paths rather than the high-risk integration contracts. Missing tests are listed below.
 - [x] **9. Unchecked ROADMAPv2 items can remain deferred.** The unchecked package split files can remain deferred, but the current single project’s hard dependency on MonoGame/Skia/HarfBuzz should be treated as a packaging-boundary risk, not ignored.
@@ -35,7 +35,7 @@ Brutal summary: the repo has a good skeleton and a lot of useful pieces, but the
 
 These are not polish items. They affect correctness of the retained/game-loop contract.
 
-### 1. Tree mutation invalidation is broken
+### 1. Tree mutation invalidation was broken
 
 Files:
 
@@ -47,22 +47,22 @@ Files:
 - `tests/Cerneala.Tests/UI/Elements/UIElementCollectionTests.cs`
 - `tests/Cerneala.Tests/UI/Hosting/UiHostFrameContractTests.cs`
 
-Problem: `UIElementCollection.Add(...)` attaches the child and calls `root.IncrementTreeVersion()`, but it does not invalidate owner layout, child layout, render cache, or hit-test data. Removal has a special `InvalidateOwnerForVisualChildRemoval()` path, but addition does not. Removal also skips invalidating when `owner is UIRoot`.
+Original problem: `UIElementCollection.Add(...)` attached the child and called `root.IncrementTreeVersion()`, but did not invalidate owner layout, child layout, render cache, or hit-test data. Removal had a special `InvalidateOwnerForVisualChildRemoval()` path, but addition did not. Removal also skipped invalidating when `owner is UIRoot`.
 
 Why this is bad: after the first frame, adding a visual child can make the root command cache invalid while leaving layout queues empty. The next `UiHost.Update(...)` can report a no-work frame while `RetainedRenderer.Render(...)` rebuilds commands lazily. That violates ROADMAPv2’s retained invalidation model.
 
 Required changes:
 
-- [ ] In `UIElementCollection.Add(...)`, for `ElementChildRole.Visual`, enqueue owner/ancestor measure + arrange, child subtree measure + arrange, render, and hit-test invalidation.
-- [ ] In `UIElementCollection.Remove(...)`, handle `UIRoot` the same way as other visual owners for retained invalidation purposes.
-- [ ] Keep `root.IncrementTreeVersion()` as tree-version bookkeeping, not as a substitute for retained dirty work.
-- [ ] Add `UIElementCollection.InvalidateOwnerForVisualChildMutation(...)` or equivalent shared helper for add/remove.
-- [ ] Add tests in `tests/Cerneala.Tests/UI/Elements/UIElementCollectionInvalidationTests.cs` proving attached add/remove enqueue layout/render/hit-test.
-- [ ] Add `tests/Cerneala.Tests/UI/Hosting/UiHostLateTreeMutationTests.cs` proving a child added after the first frame is measured/arranged/rendered during `Update`, not lazily during `Draw`.
+- [x] In `UIElementCollection.Add(...)`, for `ElementChildRole.Visual`, enqueue owner/ancestor measure + arrange, child subtree measure + arrange, render, and hit-test invalidation.
+- [x] In `UIElementCollection.Remove(...)`, handle `UIRoot` the same way as other visual owners for retained invalidation purposes.
+- [x] Keep `root.IncrementTreeVersion()` as tree-version bookkeeping, not as a substitute for retained dirty work.
+- [x] Add `UIElementCollection.InvalidateOwnerForVisualChildMutation(...)` or equivalent shared helper for add/remove.
+- [x] Add tests in `tests/Cerneala.Tests/UI/Elements/UIElementCollectionInvalidationTests.cs` proving attached add/remove enqueue layout/render/hit-test.
+- [x] Add `tests/Cerneala.Tests/UI/Hosting/UiHostLateTreeMutationTests.cs` proving a child added after the first frame is measured/arranged/rendered during `Update`, not lazily during `Draw`.
 
 Implementation note: fixed by `fix-tree-mutation-invalidation`; attached visual add/remove now schedules retained measure, arrange, render-cache, and hit-test work during update, while tree-version increments remain bookkeeping.
 
-### 2. Renderer has a backdoor that can run `OnRender` outside the render-cache phase
+### 2. Renderer had a backdoor that could run `OnRender` outside the render-cache phase
 
 Files:
 
@@ -73,20 +73,20 @@ Files:
 - `UI/Hosting/UiHost.cs`
 - `UI/Invalidation/FrameStats.cs`
 
-Problem: `DrawCommandListBuilder.AppendElement(...)` calls `localCache.Ensure(element, counters)`. `Ensure(...)` can rebuild the local command list by calling the element render hook. That means root composition can generate local drawing commands, even when the render queue did not process that element.
+Original problem: `DrawCommandListBuilder.AppendElement(...)` called `localCache.Ensure(element, counters)`. `Ensure(...)` could rebuild the local command list by calling the element render hook. That meant root composition could generate local drawing commands, even when the render queue did not process that element.
 
 Why this is bad: `UiHost.Update(...)` collects `FrameStats` from `currentRoot.ProcessFrame()`, then calls `currentRoot.RetainedRenderer.Render(currentRoot)`. Any command generation done during that render call is not represented in the frame stats. Worse, `UiHost.Draw(...)` calls `RetainedRenderer.Submit(...)`, which calls `Render(root)` and can also rebuild if the root cache is invalid.
 
 Required changes:
 
-- [ ] Make `RenderQueueProcessor.Process(...)` the only production path that can call `ElementRenderCache.Ensure(...)` for local command generation.
-- [ ] Make `DrawCommandListBuilder.Build(...)` compose only already-valid local element caches. It should not call `OnRender(...)` transitively.
-- [ ] Decide behavior when root composition finds an invalid/missing local cache: fail fast in debug/tests, enqueue render work, or return the previous root command list until the next update. Do not silently render from outside the scheduler.
-- [ ] Move root command-list composition into an explicit update commit phase, or count it explicitly in `FrameStats` as composition work separate from local render-cache rebuilds.
-- [ ] Make `UiHost.Draw(...)` submit only a previously committed cached root command list. Draw must not generate local commands.
-- [ ] Add `tests/Cerneala.Tests/UI/Rendering/RenderBackdoorContractTests.cs` proving `DrawCommandListBuilder` never calls `OnRender(...)` for stale/missing local caches.
-- [ ] Add `tests/Cerneala.Tests/UI/Rendering/RetainedRendererDrawPurityTests.cs` proving `UiHost.Draw(...)` cannot increment element render counters.
-- [ ] Add `tests/Cerneala.Tests/UI/Hosting/UiHostFrameStatsIntegrityTests.cs` proving all render-cache generation done during update is counted.
+- [x] Make `RenderQueueProcessor.Process(...)` the only production path that can call `ElementRenderCache.Ensure(...)` for local command generation.
+- [x] Make `DrawCommandListBuilder.Build(...)` compose only already-valid local element caches. It should not call `OnRender(...)` transitively.
+- [x] Decide behavior when root composition finds an invalid/missing local cache: fail fast in debug/tests, enqueue render work, or return the previous root command list until the next update. Do not silently render from outside the scheduler.
+- [x] Move root command-list composition into an explicit update commit phase, or count it explicitly in `FrameStats` as composition work separate from local render-cache rebuilds.
+- [x] Make `UiHost.Draw(...)` submit only a previously committed cached root command list. Draw must not generate local commands.
+- [x] Add `tests/Cerneala.Tests/UI/Rendering/RenderBackdoorContractTests.cs` proving `DrawCommandListBuilder` never calls `OnRender(...)` for stale/missing local caches.
+- [x] Add `tests/Cerneala.Tests/UI/Rendering/RetainedRendererDrawPurityTests.cs` proving `UiHost.Draw(...)` cannot increment element render counters.
+- [x] Add `tests/Cerneala.Tests/UI/Hosting/UiHostFrameStatsIntegrityTests.cs` proving all render-cache generation done during update is counted.
 
 Implementation note: fixed by `fix-retained-render-frame-contract`; local render-cache generation is scheduler-owned, root command-list composition is explicit during update, and draw submission uses the last committed root commands.
 
@@ -108,7 +108,7 @@ Required changes:
 - [ ] Replace `BackendCannotMutateCachedRootCommandsDuringSubmit` with a test that enforces backend read-only behavior or validates the immutable view.
 - [ ] Add `tests/Cerneala.Tests/UI/Rendering/BackendSubmitAllocationTests.cs` or a simpler command-list identity test proving unchanged draw frames reuse cached root commands without copying.
 
-### 4. Styling is not a retained frame phase yet
+### 4. Styling was not a retained frame phase yet
 
 Files:
 
@@ -122,23 +122,23 @@ Files:
 - `UI/Styling/ThemeProvider.cs`
 - `tests/Cerneala.Tests/UI/Styling/StyleInvalidationTests.cs`
 
-Problem: `InvalidationFlags.Style` exists, and `FramePhase.Style` exists, but the scheduler does not process a style phase. `UIElement.MapInvalidationOptions(...)` maps `UiPropertyOptions.AffectsStyle` to `InvalidationFlags.Render`, not `InvalidationFlags.Style`. `StyleInvalidation.Track(...)` is manual opt-in and not root/host-owned.
+Original problem: `InvalidationFlags.Style` existed, and `FramePhase.Style` existed, but the scheduler did not process a style phase. `UIElement.MapInvalidationOptions(...)` mapped `UiPropertyOptions.AffectsStyle` to `InvalidationFlags.Render`, not `InvalidationFlags.Style`. `StyleInvalidation.Track(...)` was manual opt-in and not root/host-owned.
 
 Why this is bad: style/theme invalidation is currently a side system, not part of retained frame scheduling. That makes visual state styling brittle and makes ROADMAPv2’s “style invalidation reapplies style and then raises property-specific invalidations” claim false.
 
 Required changes:
 
-- [ ] Map `UiPropertyOptions.AffectsStyle` to `InvalidationFlags.Style`, not render.
-- [ ] Add a scheduler-owned style processor before measure/arrange/render.
-- [ ] Decide whether style work uses a dedicated `StyleQueue` or a typed style processor over dirty elements.
-- [ ] Make `UIRoot` or `UiHost` own style/theme services for an attached tree.
-- [ ] Make element attach/detach register/unregister with the style system automatically when a stylesheet is active.
-- [ ] Remove string-name pseudo-class detection in `StyleInvalidation.AffectsPseudoClass(...)` (`property.Name == "IsPressed"`, `property.Name == "IsSelected"`). Use `IStylePseudoClassProvider`, property metadata, or explicit pseudo-class registration.
-- [ ] Add `tests/Cerneala.Tests/UI/Styling/StyleSchedulerIntegrationTests.cs` proving pseudo-class/theme changes are applied through `UiHost.Update(...)` and reflected in frame stats/invalidation.
+- [x] Map `UiPropertyOptions.AffectsStyle` to `InvalidationFlags.Style`, not render.
+- [x] Add a scheduler-owned style processor before measure/arrange/render.
+- [x] Decide whether style work uses a dedicated `StyleQueue` or a typed style processor over dirty elements.
+- [x] Make `UIRoot` or `UiHost` own style/theme services for an attached tree.
+- [x] Make element attach/detach register/unregister with the style system automatically when a stylesheet is active.
+- [x] Remove string-name pseudo-class detection in `StyleInvalidation.AffectsPseudoClass(...)` (`property.Name == "IsPressed"`, `property.Name == "IsSelected"`). Use `IStylePseudoClassProvider`, property metadata, or explicit pseudo-class registration.
+- [x] Add `tests/Cerneala.Tests/UI/Styling/StyleSchedulerIntegrationTests.cs` proving pseudo-class/theme changes are applied through `UiHost.Update(...)` and reflected in frame stats/invalidation.
 
 Implementation note: fixed by `integrate-style-phase`; `AffectsStyle` now queues retained style work, `UIRoot` owns the active style/theme scope, the scheduler processes `FramePhase.Style` before layout/render phases, and pseudo-class invalidation uses explicit property registration instead of string property-name checks.
 
-### 5. Input route/hit-test caching is not retained
+### 5. Input route/hit-test caching was not retained
 
 Files:
 
@@ -150,20 +150,20 @@ Files:
 - `UI/Elements/UIElementCollection.cs`
 - `UI/Layout/LayoutManager.cs`
 
-Problem: `ElementInputBridge.Dispatch(...)` builds a fresh `ElementInputRouteMap` every input frame. `HitTestQueue` is only a queue/counter; it does not rebuild or own retained hit-test/route data. The architecture says hit-test data should rebuild only when dirty.
+Original problem: `ElementInputBridge.Dispatch(...)` built a fresh `ElementInputRouteMap` every input frame. `HitTestQueue` was only a queue/counter; it did not rebuild or own retained hit-test/route data. The architecture says hit-test data should rebuild only when dirty.
 
 Required changes:
 
-- [ ] Add a retained `ElementInputCache` or `HitTestRouteCache` owned by `UIRoot`.
-- [ ] Rebuild route/hit-test data only when tree version, layout bounds, visibility/enabled state, handlers, or hit-test invalidation requires it.
-- [ ] Make `ElementInputBridge.Dispatch(...)` consume the retained cache instead of rebuilding the route map every frame.
-- [ ] Add handler add/remove invalidation if route maps cache handler lists.
-- [ ] Add `tests/Cerneala.Tests/UI/Input/ElementInputCacheInvalidationTests.cs` proving unchanged input frames do not rebuild route data.
-- [ ] Add `tests/Cerneala.Tests/UI/Input/HitTestCacheInvalidationTests.cs` proving layout bounds, visibility, enabled, and visual tree mutations invalidate hit-test data.
+- [x] Add a retained `ElementInputCache` or `HitTestRouteCache` owned by `UIRoot`.
+- [x] Rebuild route/hit-test data only when tree version, layout bounds, visibility/enabled state, handlers, or hit-test invalidation requires it.
+- [x] Make `ElementInputBridge.Dispatch(...)` consume the retained cache instead of rebuilding the route map every frame.
+- [x] Add handler add/remove invalidation if route maps cache handler lists.
+- [x] Add `tests/Cerneala.Tests/UI/Input/ElementInputCacheInvalidationTests.cs` proving unchanged input frames do not rebuild route data.
+- [x] Add `tests/Cerneala.Tests/UI/Input/HitTestCacheInvalidationTests.cs` proving layout bounds, visibility, enabled, and visual tree mutations invalidate hit-test data.
 
 Implementation note: fixed by `cache-input-route-hit-test`; `UIRoot` now owns a retained `ElementInputCache`, route/hit-test data rebuilds only when hit-test/input-route invalidation marks it dirty, mouse/touch/stylus dispatch consume the retained route map, handler changes invalidate the cache, and `UI/Input` no longer depends directly on concrete controls.
 
-### 6. `UI/Input` knows too much about controls
+### 6. `UI/Input` knew too much about controls
 
 Files:
 
@@ -173,14 +173,16 @@ Files:
 - `UI/Input/CommandRouter.cs`
 - `UI/Input/PointerCaptureManager.cs`
 
-Problem: `ElementInputBridge` directly references `ButtonBase` and `Thumb`. That makes the input bridge a control-behavior coordinator. It should route input and update generic state; controls should opt into behavior through handlers/interfaces.
+Original problem: `ElementInputBridge` directly referenced `ButtonBase` and `Thumb`. That made the input bridge a control-behavior coordinator. It should route input and update generic state; controls should opt into behavior through handlers/interfaces.
 
 Required changes:
 
-- [ ] Move button command execution into `ButtonBase` event handlers or an `ICommandSource` interface in an input-neutral location.
-- [ ] Move thumb drag behavior behind an interface such as `IDragSource`/`IPointerDragHandler`, or have `Thumb` register routed handlers itself.
-- [ ] Keep `ElementInputBridge` generic: hit-test, hover, capture, focus, routed event dispatch, text input dispatch.
-- [ ] Add `tests/Cerneala.Tests/UI/Input/InputControlBoundaryTests.cs` or extend architecture boundary tests so `UI/Input` does not depend on `UI/Controls`.
+- [x] Move button command execution into `ButtonBase` event handlers or an `ICommandSource` interface in an input-neutral location.
+- [x] Move thumb drag behavior behind an interface such as `IDragSource`/`IPointerDragHandler`, or have `Thumb` register routed handlers itself.
+- [x] Keep `ElementInputBridge` generic: hit-test, hover, capture, focus, routed event dispatch, text input dispatch.
+- [x] Add `tests/Cerneala.Tests/UI/Input/InputControlBoundaryTests.cs` or extend architecture boundary tests so `UI/Input` does not depend on `UI/Controls`.
+
+Implementation note: fixed by `cache-input-route-hit-test`; `ButtonBase` and `Thumb` now implement input-level interfaces, `ElementInputBridge` no longer references concrete controls, and `InputControlBoundaryTests` verifies the `UI/Input` boundary.
 
 ### 7. Focus has no real focusability policy
 
@@ -432,15 +434,17 @@ These are valid product areas, but they should not consume design energy before 
 
 ### Risk 3: Style/theme system can become parallel state
 
-- [ ] Current risk: style tracking is opt-in and not rooted in `UIRoot`/`UiHost`.
-- [ ] Consequence: some elements update styles, some do not; pseudo-classes become string conventions; theme changes become manual refresh bugs.
-- [ ] Mitigation: scheduler-owned style phase and explicit style scope services.
+- [x] Current risk: style tracking is opt-in and not rooted in `UIRoot`/`UiHost`.
+- [x] Consequence: some elements update styles, some do not; pseudo-classes become string conventions; theme changes become manual refresh bugs.
+- [x] Mitigation: scheduler-owned style phase and explicit style scope services.
+- [x] Status: mitigated by `integrate-style-phase`; style work is scheduler-owned and rooted through `UIRoot`.
 
 ### Risk 4: Input route tree duplication
 
-- [ ] Current risk: retained UI tree and `UiInputTree` are bridged by rebuilding a transient route map every dispatch.
-- [ ] Consequence: input cost scales with tree size every frame, and `HitTestQueue` does not mean what it says.
-- [ ] Mitigation: root-owned retained input/hit-test cache keyed by tree/layout/input-affecting versions.
+- [x] Current risk: retained UI tree and `UiInputTree` are bridged by rebuilding a transient route map every dispatch.
+- [x] Consequence: input cost scales with tree size every frame, and `HitTestQueue` does not mean what it says.
+- [x] Mitigation: root-owned retained input/hit-test cache keyed by tree/layout/input-affecting versions.
+- [x] Status: mitigated by `cache-input-route-hit-test`; mouse/touch/stylus dispatch now consume `UIRoot.InputCache`, and handler/tree/layout/input-affecting invalidations rebuild it when dirty.
 
 ### Risk 5: WPF naming surface may ossify before Cerneala semantics are stable
 
@@ -528,10 +532,10 @@ Planning artifacts:
 
 Tasks:
 
-- [ ] Define root-owned route/hit-test cache.
-- [ ] Define cache invalidation triggers: tree changes, layout bounds changes, visibility, enabled, handler changes, capture changes where relevant.
-- [ ] Define that pointer movement may run hit-test lookup every frame, but not rebuild route data every frame.
-- [ ] Remove or formalize transient `UiInputTree` usage.
+- [x] Define root-owned route/hit-test cache.
+- [x] Define cache invalidation triggers: tree changes, layout bounds changes, visibility, enabled, handler changes, capture changes where relevant.
+- [x] Define that pointer movement may run hit-test lookup every frame, but not rebuild route data every frame.
+- [x] Remove or formalize transient `UiInputTree` usage.
 
 ### `clarify-text-services-mvp`
 
@@ -578,18 +582,18 @@ Tasks:
 
 ## Test gaps to add
 
-- [ ] `tests/Cerneala.Tests/UI/Elements/UIElementCollectionInvalidationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Hosting/UiHostLateTreeMutationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Hosting/UiHostFrameStatsIntegrityTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Rendering/RenderBackdoorContractTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Rendering/RetainedRendererDrawPurityTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Elements/UIElementCollectionInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Hosting/UiHostLateTreeMutationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Hosting/UiHostFrameStatsIntegrityTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/RenderBackdoorContractTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/RetainedRendererDrawPurityTests.cs`
 - [ ] `tests/Cerneala.Tests/UI/Rendering/BackendSubmitAllocationTests.cs`
 - [ ] `tests/Cerneala.Tests/UI/Invalidation/FrameSchedulerStabilityTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Input/ElementInputCacheInvalidationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Input/HitTestCacheInvalidationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Input/InputControlBoundaryTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Input/ElementInputCacheInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Input/HitTestCacheInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Input/InputControlBoundaryTests.cs`
 - [ ] `tests/Cerneala.Tests/Input/FocusPolicyTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Styling/StyleSchedulerIntegrationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Styling/StyleSchedulerIntegrationTests.cs`
 - [ ] `tests/Cerneala.Tests/UI/Resources/HostResourceInvalidationIntegrationTests.cs`
 - [ ] `tests/Cerneala.Tests/UI/Core/InheritedPropertyTreePropagationTests.cs`
 - [ ] `tests/Cerneala.Tests/UI/Layout/LayoutDiagnosticsAccuracyTests.cs`
@@ -630,8 +634,8 @@ Reconsider or constrain:
 
 ## Next 5 steps, in order
 
-1. [ ] **Fix retained frame/render contract.** Make render-cache generation scheduler-only, make root composition explicit/countable, remove draw-path generation, remove per-draw command-list copying. Primary files: `UI/Rendering/DrawCommandListBuilder.cs`, `UI/Rendering/RetainedRenderer.cs`, `UI/Rendering/RenderQueueProcessor.cs`, `UI/Hosting/UiHost.cs`.
-2. [ ] **Fix visual tree mutation invalidation.** Attached add/remove/reorder must enqueue layout/render/hit-test work, not just increment tree/root cache version. Primary files: `UI/Elements/UIElementCollection.cs`, `UI/Elements/UIRoot.cs`, `UI/Invalidation/DirtyPropagation.cs`.
-3. [ ] **Integrate style/theme into the retained scheduler.** Add real style phase/queue, root-owned style scope, explicit pseudo-class invalidation, and remove string property-name detection. Primary files: `UI/Styling/*`, `UI/Invalidation/UiFrameScheduler.cs`, `UI/Elements/UIElement.cs`.
-4. [ ] **Build retained input route/hit-test cache and clean input/control coupling.** Stop rebuilding route maps every frame; remove direct `ButtonBase`/`Thumb` dependencies from `ElementInputBridge`. Primary files: `UI/Input/ElementInputBridge.cs`, `UI/Input/ElementInputRouteBuilder.cs`, `UI/Input/HitTestService.cs`, `UI/Invalidation/HitTestQueue.cs`.
-5. [ ] **Freeze Later/Optional and add high-risk tests.** Stop expanding controls/media/markup/accessibility/animation until the tests listed above prove no-work frames, draw purity, style/resource propagation, route-cache reuse, and virtualization scale.
+1. [x] **Fix retained frame/render contract.** Make render-cache generation scheduler-only, make root composition explicit/countable, remove draw-path generation, remove per-draw command-list copying. Primary files: `UI/Rendering/DrawCommandListBuilder.cs`, `UI/Rendering/RetainedRenderer.cs`, `UI/Rendering/RenderQueueProcessor.cs`, `UI/Hosting/UiHost.cs`.
+2. [x] **Fix visual tree mutation invalidation.** Attached add/remove/reorder must enqueue layout/render/hit-test work, not just increment tree/root cache version. Primary files: `UI/Elements/UIElementCollection.cs`, `UI/Elements/UIRoot.cs`, `UI/Invalidation/DirtyPropagation.cs`.
+3. [x] **Integrate style/theme into the retained scheduler.** Add real style phase/queue, root-owned style scope, explicit pseudo-class invalidation, and remove string property-name detection. Primary files: `UI/Styling/*`, `UI/Invalidation/UiFrameScheduler.cs`, `UI/Elements/UIElement.cs`.
+4. [x] **Build retained input route/hit-test cache and clean input/control coupling.** Stop rebuilding route maps every frame; remove direct `ButtonBase`/`Thumb` dependencies from `ElementInputBridge`. Primary files: `UI/Input/ElementInputBridge.cs`, `UI/Input/ElementInputRouteBuilder.cs`, `UI/Input/HitTestService.cs`, `UI/Invalidation/HitTestQueue.cs`.
+5. [ ] **Freeze Later/Optional and add remaining high-risk tests.** Stop expanding controls/media/markup/accessibility/animation until the remaining unchecked tests above prove resource propagation, focus policy, inheritance, layout diagnostics, visibility semantics, virtualization scale, text wrapping, and architecture boundaries.

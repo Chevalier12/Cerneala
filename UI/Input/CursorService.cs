@@ -6,12 +6,10 @@ namespace Cerneala.UI.Input;
 public sealed class CursorService
 {
     private readonly ConditionalWeakTable<UIElement, CursorBox> cursors = new();
-    private readonly ElementInputRouteBuilder routeBuilder;
     private readonly HitTestService hitTestService;
 
-    public CursorService(ElementInputRouteBuilder? routeBuilder = null, HitTestService? hitTestService = null)
+    public CursorService(HitTestService? hitTestService = null)
     {
-        this.routeBuilder = routeBuilder ?? new ElementInputRouteBuilder();
         this.hitTestService = hitTestService ?? new HitTestService();
     }
 
@@ -24,7 +22,8 @@ public sealed class CursorService
 
     public Cursor Resolve(UIRoot root, float x, float y)
     {
-        ElementInputRouteMap routeMap = routeBuilder.Build(root);
+        ArgumentNullException.ThrowIfNull(root);
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         HitTestResult? hit = hitTestService.HitTest(root, routeMap, x, y);
         for (UIElement? current = hit?.Element; current is not null; current = current.VisualParent)
         {
