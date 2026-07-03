@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines retained text editing controls, text document/editor state, selection/caret behavior, undo/redo, clipboard boundaries, and IME composition lifecycle for Cerneala.
-
 ## Requirements
-
 ### Requirement: Text document stores editable plain text
 Cerneala SHALL provide a backend-neutral text document model that stores plain text content, exposes length/version state, and applies explicit replacement operations.
 
@@ -94,3 +92,11 @@ Cerneala SHALL include focused tests for text document operations, editor mutati
 #### Scenario: Full tests pass
 - **WHEN** this implementation phase is complete
 - **THEN** `dotnet test` passes
+
+### Requirement: Text input platform participates in platform services
+Cerneala SHALL expose `ITextInputPlatform` through the platform service aggregate without coupling text editing to native text APIs.
+
+#### Scenario: Text input service is optional platform member
+- **WHEN** platform services are created with a text input platform
+- **THEN** callers can retrieve that `ITextInputPlatform` through the aggregate
+

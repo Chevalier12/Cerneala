@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines platform-neutral semantics nodes, semantic roles/properties, retained semantics tree building, control semantics providers, automation peer adapters, and accessibility platform boundaries for Cerneala.
-
 ## Requirements
-
 ### Requirement: Semantics nodes describe retained UI meaning
 Cerneala SHALL provide platform-neutral semantics nodes with role, accessible name, retained element id, semantic properties, and child nodes.
 
@@ -71,3 +69,11 @@ Cerneala SHALL include focused tests for semantics tree construction, provider b
 #### Scenario: Full tests pass
 - **WHEN** this implementation phase is complete
 - **THEN** `dotnet test` passes
+
+### Requirement: Accessibility platform participates in platform services
+Cerneala SHALL expose `IAccessibilityPlatform` through the platform service aggregate without coupling accessibility semantics to native accessibility APIs.
+
+#### Scenario: Accessibility service is optional platform member
+- **WHEN** platform services are created with an accessibility platform
+- **THEN** callers can retrieve that `IAccessibilityPlatform` through the aggregate
+

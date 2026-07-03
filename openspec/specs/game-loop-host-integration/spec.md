@@ -177,3 +177,11 @@ Cerneala SHALL wire `Game1` to retained playground samples through `MonoGameUiHo
 #### Scenario: Playground avoids custom immediate demo element
 - **WHEN** the playground sample UI is rendered
 - **THEN** retained controls and sample classes own the UI content instead of a single local custom immediate-style demo element
+
+### Requirement: Host adapters consume platform services through boundaries
+Cerneala SHALL keep host adapter platform integration behind explicit platform service contracts.
+
+#### Scenario: Host adapter boundary remains isolated
+- **WHEN** MonoGame host adapter code is inspected
+- **THEN** MonoGame references remain in adapter-specific folders and do not leak into core platform contracts
+
