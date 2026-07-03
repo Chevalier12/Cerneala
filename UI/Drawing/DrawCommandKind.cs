@@ -4,6 +4,9 @@ public enum DrawCommandKind
 {
     FillRectangle,
     DrawRectangle,
+    FillEllipse,
+    DrawEllipse,
+    DrawLine,
     DrawText,
     DrawImage,
     PushClip,

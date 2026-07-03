@@ -1020,43 +1020,44 @@ Tests:
 
 This phase expands drawing capabilities only when controls and scenarios require them. New media concepts must translate into `DrawCommand` extensions or clear backend abstractions instead of duplicating existing primitives.
 
-- [ ] `UI/Drawing/DrawCommandKind.cs` — add new command kinds only with tests and backend support.
-- [ ] `UI/Drawing/DrawingContext.cs` — add methods only when corresponding command kinds exist.
-- [ ] `UI/Media/Brush.cs` — introduce when more than solid `DrawColor` is needed.
-- [ ] `UI/Media/SolidColorBrush.cs` — may remain a thin wrapper over `DrawColor` only if it participates in styling/resource identity.
-- [ ] `UI/Media/LinearGradientBrush.cs`
-- [ ] `UI/Media/RadialGradientBrush.cs`
-- [ ] `UI/Media/Pen.cs`
-- [ ] `UI/Media/Geometry.cs`
-- [ ] `UI/Media/RectangleGeometry.cs`
-- [ ] `UI/Media/EllipseGeometry.cs`
-- [ ] `UI/Media/PathGeometry.cs`
-- [ ] `UI/Media/Transform.cs`
-- [ ] `UI/Media/Matrix3x2.cs`
-- [ ] `UI/Media/OpacityLayer.cs`
-- [ ] `UI/Media/ShadowEffect.cs`
-- [ ] `UI/Controls/Shapes/Shape.cs`
-- [ ] `UI/Controls/Shapes/Rectangle.cs`
-- [ ] `UI/Controls/Shapes/Ellipse.cs`
-- [ ] `UI/Controls/Shapes/Path.cs`
-- [ ] `UI/Media/ImageSource.cs` — only if it owns decoding, resource identity, caching, or metadata beyond `IDrawImage`.
-- [ ] `UI/Media/BitmapImage.cs`
-- [ ] `UI/Media/RenderTargetImage.cs`
+- [x] `UI/Drawing/DrawCommandKind.cs` — add new command kinds only with tests and backend support.
+- [x] `UI/Drawing/DrawingContext.cs` — add methods only when corresponding command kinds exist.
+- [x] `UI/Media/Brush.cs` — introduce when more than solid `DrawColor` is needed.
+- [x] `UI/Media/SolidColorBrush.cs` — may remain a thin wrapper over `DrawColor` only if it participates in styling/resource identity.
+- [x] `UI/Media/LinearGradientBrush.cs`
+- [x] `UI/Media/RadialGradientBrush.cs`
+- [x] `UI/Media/Pen.cs`
+- [x] `UI/Media/Geometry.cs`
+- [x] `UI/Media/RectangleGeometry.cs`
+- [x] `UI/Media/EllipseGeometry.cs`
+- [x] `UI/Media/PathGeometry.cs`
+- [x] `UI/Media/Transform.cs`
+- [x] `UI/Media/Matrix3x2.cs`
+- [x] `UI/Media/OpacityLayer.cs`
+- [x] `UI/Media/ShadowEffect.cs`
+- [x] `UI/Controls/Shapes/Shape.cs`
+- [x] `UI/Controls/Shapes/Rectangle.cs`
+- [x] `UI/Controls/Shapes/Ellipse.cs`
+- [x] `UI/Controls/Shapes/Path.cs`
+- [x] `UI/Media/ImageSource.cs` — owns media identity, intrinsic size metadata, and draw-image resolution beyond `IDrawImage`.
+- [x] `UI/Media/BitmapImage.cs`
+- [x] `UI/Media/RenderTargetImage.cs`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/Drawing/AdvancedDrawCommandTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Media/BrushTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Media/GeometryTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Media/TransformTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Controls/Shapes/ShapeTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Media/ImageSourceTests.cs`
+- [x] `tests/Cerneala.Tests/Drawing/AdvancedDrawCommandTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Media/BrushTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Media/GeometryTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Media/TransformTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Controls/Shapes/ShapeTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Media/ImageSourceTests.cs`
 
 Acceptance checklist:
 
-- [ ] Every new media abstraction has a responsibility not already covered by `DrawColor`, `DrawRect`, `DrawPoint`, `DrawTextRun`, or `IDrawImage`.
-- [ ] Every new drawing command has backend tests or adapter coverage.
-- [ ] Controls do not reference Skia, HarfBuzz, MonoGame, `SpriteBatch`, or `Texture2D`.
+- [x] Every new media abstraction has a responsibility not already covered by `DrawColor`, `DrawRect`, `DrawPoint`, `DrawTextRun`, or `IDrawImage`.
+- [x] Every new drawing command has backend tests or adapter coverage.
+- [x] Controls do not reference Skia, HarfBuzz, MonoGame, `SpriteBatch`, or `Texture2D`.
+- [x] Full project tests pass for this phase.
 
 ## 23. [Later] Animation and transitions
 
@@ -1200,7 +1201,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 
 - [x] 20. Add text editing and IME composition.
 - [x] 21. Add accessibility semantics and platform-neutral semantic tree.
-- [ ] 22. Add advanced rendering/media primitives as scenarios require.
+- [x] 22. Add advanced rendering/media primitives as scenarios require.
 - [ ] 23. Add animation and transitions.
 - [ ] 24. Decide package/platform split.
 

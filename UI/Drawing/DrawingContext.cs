@@ -19,6 +19,21 @@ public sealed class DrawingContext
         _commands.Add(DrawCommand.DrawRectangle(rect, color, thickness));
     }
 
+    public void FillEllipse(DrawRect bounds, DrawColor color)
+    {
+        _commands.Add(DrawCommand.FillEllipse(bounds, color));
+    }
+
+    public void DrawEllipse(DrawRect bounds, DrawColor color, float thickness)
+    {
+        _commands.Add(DrawCommand.DrawEllipse(bounds, color, thickness));
+    }
+
+    public void DrawLine(DrawPoint start, DrawPoint end, DrawColor color, float thickness)
+    {
+        _commands.Add(DrawCommand.DrawLine(start, end, color, thickness));
+    }
+
     public void DrawText(DrawTextRun textRun, DrawPoint position, DrawColor color)
     {
         _commands.Add(DrawCommand.DrawText(textRun, position, color));

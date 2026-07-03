@@ -52,6 +52,31 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void UiMediaDoesNotReferenceConcreteBackends()
+    {
+        string mediaRoot = FindRepositoryPath("UI", "Media");
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch",
+            "MonoGameDrawingBackend"
+        ];
+
+        foreach (string file in Directory.EnumerateFiles(mediaRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public void Section16ControlsDoNotReferenceConcreteBackends()
     {
         string controlsRoot = FindRepositoryPath("UI", "Controls");
@@ -593,16 +618,48 @@ public sealed class ArchitectureBoundaryTests
         string testsRoot = FindRepositoryPath("tests", "Cerneala.Tests");
         string openSpecSegment = "open" + "spec";
         string changesSegment = "chang" + "es";
-        string activeChangePathPattern = string.Join("\"" + ", " + "\"", openSpecSegment, changesSegment);
-        string activeChangeSlashPattern = string.Join("/", openSpecSegment, changesSegment);
+        string[] forbiddenPatterns =
+        [
+            string.Join("\"" + ", " + "\"", openSpecSegment, changesSegment),
+            string.Join("/", openSpecSegment, changesSegment),
+            string.Join("\\", openSpecSegment, changesSegment)
+        ];
+        string[] testDependencyExtensions =
+        [
+            ".cs",
+            ".csproj",
+            ".props",
+            ".targets",
+            ".runsettings"
+        ];
 
-        foreach (string file in Directory.EnumerateFiles(testsRoot, "*.cs", SearchOption.AllDirectories))
+        foreach (string file in Directory.EnumerateFiles(testsRoot, "*", SearchOption.AllDirectories)
+            .Where(file => testDependencyExtensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
+            .Where(file => !HasPathSegment(file, "bin") && !HasPathSegment(file, "obj")))
         {
             string text = File.ReadAllText(file);
 
-            Assert.DoesNotContain(activeChangePathPattern, text, StringComparison.Ordinal);
-            Assert.DoesNotContain(activeChangeSlashPattern, text, StringComparison.Ordinal);
+            foreach (string forbiddenPattern in forbiddenPatterns)
+            {
+                Assert.DoesNotContain(forbiddenPattern, text, StringComparison.Ordinal);
+            }
         }
+    }
+
+    [Fact]
+    public void RuntimeOpenSpecDependencyBoundaryCoversProjectLevelTestFiles()
+    {
+        string testText = File.ReadAllText(FindRepositoryPath("tests", "Cerneala.Tests", "UI", "Rendering", "ArchitectureBoundaryTests.cs"));
+        int methodStart = testText.IndexOf("public void RuntimeTestsDoNotDependOnActiveOpenSpecChanges()", StringComparison.Ordinal);
+        Assert.NotEqual(-1, methodStart);
+        int nextFact = testText.IndexOf("    [Fact]", methodStart + 1, StringComparison.Ordinal);
+        Assert.NotEqual(-1, nextFact);
+        string methodText = testText[methodStart..nextFact];
+
+        Assert.Contains(".csproj", methodText, StringComparison.Ordinal);
+        Assert.Contains(".props", methodText, StringComparison.Ordinal);
+        Assert.Contains(".targets", methodText, StringComparison.Ordinal);
+        Assert.Contains(".runsettings", methodText, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -685,6 +742,20 @@ public sealed class ArchitectureBoundaryTests
         Assert.Contains("- [x] 21. Add accessibility semantics and platform-neutral semantic tree.", roadmap, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Section22RoadmapCompletionIsDocumentedConsistently()
+    {
+        string root = FindRepositoryRoot();
+        string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
+        string openSpecSegment = "open" + "spec";
+        string changesSegment = "chang" + "es";
+        string tasks = File.ReadAllText(Path.Combine(root, openSpecSegment, changesSegment, "add-advanced-rendering-media", "tasks.md"));
+
+        Assert.Contains("- [x] 4.2 Run OpenSpec validation and full project tests.", tasks, StringComparison.Ordinal);
+        Assert.Contains("- [x] Full project tests pass for this phase.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] 22. Add advanced rendering/media primitives as scenarios require.", roadmap, StringComparison.Ordinal);
+    }
+
     private static string FindRepositoryPath(params string[] segments)
     {
         string repositoryRoot = FindRepositoryRoot();
@@ -696,6 +767,12 @@ public sealed class ArchitectureBoundaryTests
         }
 
         throw new DirectoryNotFoundException($"Could not find repository path: {Path.Combine(segments)}");
+    }
+
+    private static bool HasPathSegment(string path, string segment)
+    {
+        return path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            .Contains(segment, StringComparer.OrdinalIgnoreCase);
     }
 
     private static string FindRepositoryRoot()

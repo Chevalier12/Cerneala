@@ -48,6 +48,18 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
                 DrawRectangle(command.Rect, command.Color, command.Thickness);
                 break;
 
+            case DrawCommandKind.FillEllipse:
+                FillEllipse(command.Rect, command.Color);
+                break;
+
+            case DrawCommandKind.DrawEllipse:
+                DrawEllipse(command.Rect, command.Color, command.Thickness);
+                break;
+
+            case DrawCommandKind.DrawLine:
+                DrawLine(command.Position, command.EndPoint, command.Color, command.Thickness);
+                break;
+
             case DrawCommandKind.DrawImage:
                 DrawImage(command);
                 break;
@@ -84,6 +96,88 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         _spriteBatch.Draw(_whitePixel, new Rectangle(bounds.Left, bounds.Bottom - lineThickness, bounds.Width, lineThickness), monoGameColor);
         _spriteBatch.Draw(_whitePixel, new Rectangle(bounds.Left, bounds.Top, lineThickness, bounds.Height), monoGameColor);
         _spriteBatch.Draw(_whitePixel, new Rectangle(bounds.Right - lineThickness, bounds.Top, lineThickness, bounds.Height), monoGameColor);
+    }
+
+    private void FillEllipse(DrawRect rect, DrawColor color)
+    {
+        Rectangle bounds = ToRectangle(rect);
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return;
+        }
+
+        Color monoGameColor = ToColor(color);
+        float radiusX = bounds.Width / 2f;
+        float radiusY = bounds.Height / 2f;
+        float centerY = bounds.Top + radiusY;
+
+        for (int y = 0; y < bounds.Height; y++)
+        {
+            float normalizedY = ((bounds.Top + y + 0.5f) - centerY) / radiusY;
+            float span = MathF.Sqrt(MathF.Max(0, 1 - (normalizedY * normalizedY))) * radiusX;
+            int left = (int)MathF.Round(bounds.Left + radiusX - span);
+            int right = (int)MathF.Round(bounds.Left + radiusX + span);
+            int width = Math.Max(1, right - left);
+            _spriteBatch.Draw(_whitePixel, new Rectangle(left, bounds.Top + y, width, 1), monoGameColor);
+        }
+    }
+
+    private void DrawEllipse(DrawRect rect, DrawColor color, float thickness)
+    {
+        int lineThickness = Math.Max(1, (int)MathF.Round(thickness));
+        Rectangle bounds = ToRectangle(rect);
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return;
+        }
+
+        DrawEllipseRing(bounds, ToColor(color), lineThickness);
+    }
+
+    private void DrawEllipseRing(Rectangle bounds, Color color, int thickness)
+    {
+        float radiusX = bounds.Width / 2f;
+        float radiusY = bounds.Height / 2f;
+        float centerX = bounds.Left + radiusX;
+        float centerY = bounds.Top + radiusY;
+        int segments = Math.Max(24, (int)MathF.Ceiling(MathF.PI * MathF.Max(radiusX, radiusY) / 2f));
+        Vector2 previous = new(centerX + radiusX, centerY);
+
+        for (int i = 1; i <= segments; i++)
+        {
+            float angle = MathHelper.TwoPi * i / segments;
+            Vector2 next = new(centerX + (MathF.Cos(angle) * radiusX), centerY + (MathF.Sin(angle) * radiusY));
+            DrawLine(previous, next, color, thickness);
+            previous = next;
+        }
+    }
+
+    private void DrawLine(DrawPoint start, DrawPoint end, DrawColor color, float thickness)
+    {
+        DrawLine(ToVector2(start), ToVector2(end), ToColor(color), Math.Max(1, (int)MathF.Round(thickness)));
+    }
+
+    private void DrawLine(Vector2 start, Vector2 end, Color color, int thickness)
+    {
+        Vector2 delta = end - start;
+        float length = delta.Length();
+        if (length <= 0)
+        {
+            _spriteBatch.Draw(_whitePixel, new Rectangle((int)MathF.Round(start.X), (int)MathF.Round(start.Y), thickness, thickness), color);
+            return;
+        }
+
+        float angle = MathF.Atan2(delta.Y, delta.X);
+        _spriteBatch.Draw(
+            _whitePixel,
+            start,
+            null,
+            color,
+            angle,
+            Vector2.Zero,
+            new Vector2(length, thickness),
+            SpriteEffects.None,
+            0);
     }
 
     private void DrawImage(DrawCommand command)
