@@ -71,8 +71,10 @@ public sealed class TextBlockTests
         };
         root.VisualChildren.Add(textBlock);
         textBlock.Arrange(new ArrangeContext(new LayoutRect(2, 3, 50, 20)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Single(commands);
         Assert.Equal(DrawCommandKind.DrawText, commands[0].Kind);

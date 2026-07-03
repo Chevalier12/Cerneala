@@ -118,9 +118,10 @@ public sealed class PlaygroundSampleTests
         UIRoot root = new(800, 600);
         SampleSelector selector = SampleSelector.CreateDefault(resources, fontId);
         root.VisualChildren.Add(selector.Root);
+        selector.Root.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.Subtree, "Initial playground sample test frame");
         root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.NotEmpty(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
         Assert.All(
@@ -136,9 +137,10 @@ public sealed class PlaygroundSampleTests
         resources.SetResource(fontId, new FontResource(new SystemFontSource().LoadFont("Arial", 16)));
         UIRoot root = new(800, 600);
         root.VisualChildren.Add(new DiagnosticsSample(resources, fontId).Build());
+        root.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.Subtree, "Initial diagnostics sample test frame");
         root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.NotEmpty(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
         Assert.All(

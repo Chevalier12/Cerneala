@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.Tests.UI.Rendering;
@@ -13,7 +14,9 @@ public sealed class RetainedRenderCacheTests
         root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
         int initialVersion = root.RetainedRenderCache.Version;
 
-        root.RetainedRenderer.Render(root);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        root.RetainedRenderer.Commit(root);
 
         Assert.True(root.RetainedRenderCache.IsRootValid);
         Assert.True(root.RetainedRenderCache.Version > initialVersion);
@@ -25,7 +28,9 @@ public sealed class RetainedRenderCacheTests
         UIRoot root = new();
         root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
 
-        DrawCommandList first = root.RetainedRenderer.Render(root);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        DrawCommandList first = root.RetainedRenderer.Commit(root);
         DrawCommandList second = root.RetainedRenderer.Render(root);
 
         Assert.Same(first, second);
@@ -36,10 +41,14 @@ public sealed class RetainedRenderCacheTests
     public void RootCacheIsInvalidatedWhenVisualTreeChanges()
     {
         UIRoot root = new();
-        root.RetainedRenderer.Render(root);
+        root.Invalidate(InvalidationFlags.Render, "test");
+        root.ProcessFrame();
+        root.RetainedRenderer.Commit(root);
 
         root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Single(commands);
     }

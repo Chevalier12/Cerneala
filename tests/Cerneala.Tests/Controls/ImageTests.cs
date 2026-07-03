@@ -33,8 +33,10 @@ public sealed class ImageTests
         };
         root.VisualChildren.Add(image);
         image.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Single(commands);
         Assert.Equal(DrawCommandKind.DrawImage, commands[0].Kind);

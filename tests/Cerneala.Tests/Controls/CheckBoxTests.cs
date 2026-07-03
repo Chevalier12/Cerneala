@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 
 namespace Cerneala.Tests.Controls;
@@ -29,8 +30,10 @@ public sealed class CheckBoxTests
         };
         checkBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 80, 20)));
         root.VisualChildren.Add(checkBox);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Contains(commands, command => command.Kind == DrawCommandKind.FillRectangle && command.Color == DrawColor.White);
         Assert.Contains(commands, command => command.Kind == DrawCommandKind.DrawText);

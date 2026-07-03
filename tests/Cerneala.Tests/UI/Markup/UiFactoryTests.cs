@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Markup;
 
@@ -112,11 +113,13 @@ public sealed class UiFactoryTests
         UIRoot root = new();
         root.VisualChildren.Add(border);
         border.Arrange(new ArrangeContext(new LayoutRect(0, 0, 10, 10)));
-        root.RetainedRenderer.Render(root);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        root.RetainedRenderer.Commit(root);
 
         border.Background = DrawColor.Black;
         root.ProcessFrame();
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Single(commands);
         Assert.Equal(DrawColor.Black, commands[0].Color);

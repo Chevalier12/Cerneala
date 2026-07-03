@@ -3,6 +3,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Styling;
 
@@ -166,8 +167,10 @@ public sealed class ControlTemplateTests
         control.Measure(new MeasureContext(new LayoutSize(100, 100)));
         control.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 20)));
         RenderableElement child = Assert.IsType<RenderableElement>(control.TemplateInstance!.Root);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
         HitTestResult? hit = new HitTestService().HitTest(root, 10, 10);
         bool routed = false;
         child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => routed = true);

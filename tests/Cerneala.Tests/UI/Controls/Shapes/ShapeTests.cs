@@ -23,8 +23,10 @@ public sealed class ShapeTests
         };
         root.VisualChildren.Add(rectangle);
         rectangle.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Equal(2, commands.Count);
         Assert.Equal(DrawCommandKind.FillRectangle, commands[0].Kind);
@@ -44,8 +46,10 @@ public sealed class ShapeTests
         };
         root.VisualChildren.Add(ellipse);
         ellipse.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Equal(2, commands.Count);
         Assert.Equal(DrawCommandKind.FillEllipse, commands[0].Kind);
@@ -64,8 +68,10 @@ public sealed class ShapeTests
         };
         root.VisualChildren.Add(rectangle);
         rectangle.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         DrawCommand command = Assert.Single(commands);
         Assert.Equal(DrawCommandKind.FillRectangle, command.Kind);
@@ -84,8 +90,10 @@ public sealed class ShapeTests
         };
         root.VisualChildren.Add(path);
         path.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Equal(2, commands.Count);
         Assert.All(commands, command => Assert.Equal(DrawCommandKind.DrawLine, command.Kind));

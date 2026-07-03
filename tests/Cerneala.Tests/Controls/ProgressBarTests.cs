@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 
 namespace Cerneala.Tests.Controls;
@@ -20,8 +21,10 @@ public sealed class ProgressBarTests
         };
         progress.Arrange(new ArrangeContext(new LayoutRect(0, 0, 80, 10)));
         root.VisualChildren.Add(progress);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Equal(DrawCommandKind.FillRectangle, commands[1].Kind);
         Assert.Equal(new DrawRect(0, 0, 20, 10), commands[1].Rect);

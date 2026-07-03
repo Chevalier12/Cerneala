@@ -16,7 +16,7 @@ public sealed class PasswordBoxTests
         passwordBox.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render, "Initial password test frame");
         root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Equal("secret", passwordBox.Password);
         Assert.Contains(commands, command => command.Kind == DrawCommandKind.DrawText && command.Text == "******");

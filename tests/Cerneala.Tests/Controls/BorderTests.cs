@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 
 namespace Cerneala.Tests.Controls;
@@ -36,8 +37,10 @@ public sealed class BorderTests
         UIRoot root = new();
         root.VisualChildren.Add(border);
         border.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
 
-        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Equal(2, commands.Count);
         Assert.Equal(DrawCommandKind.FillRectangle, commands[0].Kind);
