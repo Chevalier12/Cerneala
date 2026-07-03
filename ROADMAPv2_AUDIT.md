@@ -60,6 +60,8 @@ Required changes:
 - [ ] Add tests in `tests/Cerneala.Tests/UI/Elements/UIElementCollectionInvalidationTests.cs` proving attached add/remove enqueue layout/render/hit-test.
 - [ ] Add `tests/Cerneala.Tests/UI/Hosting/UiHostLateTreeMutationTests.cs` proving a child added after the first frame is measured/arranged/rendered during `Update`, not lazily during `Draw`.
 
+Implementation note: fixed by `fix-tree-mutation-invalidation`; attached visual add/remove now schedules retained measure, arrange, render-cache, and hit-test work during update, while tree-version increments remain bookkeeping.
+
 ### 2. Renderer has a backdoor that can run `OnRender` outside the render-cache phase
 
 Files:

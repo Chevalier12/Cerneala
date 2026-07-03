@@ -32,13 +32,15 @@ Detailed plan: `docs/superpowers/plans/2026-07-03-fix-retained-render-frame-cont
 
 ### Plan 2: `fix-tree-mutation-invalidation`
 
-- [ ] Visual child add invalidates measure, arrange, render, and hit-test work.
-- [ ] Visual child remove invalidates measure, arrange, render, and hit-test work.
-- [ ] `UIRoot` is not skipped for visual child mutation invalidation.
-- [ ] Tree version increments remain bookkeeping, not a substitute for dirty work.
-- [ ] Add shared helper for visual child mutation invalidation.
-- [ ] Add `tests/Cerneala.Tests/UI/Elements/UIElementCollectionInvalidationTests.cs`.
-- [ ] Add `tests/Cerneala.Tests/UI/Hosting/UiHostLateTreeMutationTests.cs`.
+Detailed plan: `docs/superpowers/plans/2026-07-03-fix-tree-mutation-invalidation.md`
+
+- [x] Visual child add invalidates measure, arrange, render, and hit-test work.
+- [x] Visual child remove invalidates measure, arrange, render, and hit-test work.
+- [x] `UIRoot` is not skipped for visual child mutation invalidation.
+- [x] Tree version increments remain bookkeeping, not a substitute for dirty work.
+- [x] Add shared helper for visual child mutation invalidation.
+- [x] Add `tests/Cerneala.Tests/UI/Elements/UIElementCollectionInvalidationTests.cs`.
+- [x] Add `tests/Cerneala.Tests/UI/Hosting/UiHostLateTreeMutationTests.cs`.
 
 ### Phase 1 Gate
 
