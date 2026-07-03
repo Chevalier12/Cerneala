@@ -1126,33 +1126,33 @@ Acceptance checklist:
 
 This phase is optional. Cerneala should be code-first and strongly typed before any markup layer exists. Markup may become useful for tooling or designer workflows, but it should compile into typed object creation rather than becoming a reflection-heavy runtime requirement.
 
-- [ ] `UI/Markup/UiMarkupDocument.cs`
-- [ ] `UI/Markup/UiMarkupReader.cs`
-- [ ] `UI/Markup/UiMarkupWriter.cs`
-- [ ] `UI/Markup/UiMarkupSchema.cs`
-- [ ] `UI/Markup/UiMarkupTypeRegistry.cs`
-- [ ] `UI/Markup/UiFactory.cs`
-- [ ] `UI/Markup/GeneratedUiFactory.cs`
-- [ ] `UI/Markup/MarkupLoadOptions.cs`
-- [ ] `UI/Markup/MarkupDiagnostic.cs`
-- [ ] `UI/Markup/ContentPropertyAttribute.cs` — optional ergonomic hint.
-- [ ] `UI/Markup/DesignTimeOnlyAttribute.cs`
-- [ ] `Cerneala.SourceGen/UiMarkupGenerator.cs` — optional future project.
-- [ ] `openspec/specs/markup-serialization/spec.md`
+- [x] `UI/Markup/UiMarkupDocument.cs`
+- [x] `UI/Markup/UiMarkupReader.cs`
+- [x] `UI/Markup/UiMarkupWriter.cs`
+- [x] `UI/Markup/UiMarkupSchema.cs`
+- [x] `UI/Markup/UiMarkupTypeRegistry.cs`
+- [x] `UI/Markup/UiFactory.cs`
+- [x] `UI/Markup/GeneratedUiFactory.cs`
+- [x] `UI/Markup/MarkupLoadOptions.cs`
+- [x] `UI/Markup/MarkupDiagnostic.cs`
+- [x] `UI/Markup/ContentPropertyAttribute.cs` — optional ergonomic hint.
+- [x] `UI/Markup/DesignTimeOnlyAttribute.cs`
+- [ ] `Cerneala.SourceGen/UiMarkupGenerator.cs` — optional future project; deferred until runtime reflection or build-time generation becomes a proven cost.
+- [x] `openspec/changes/add-markup-serialization/specs/markup-serialization/spec.md`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Markup/UiMarkupReaderTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Markup/UiMarkupWriterTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Markup/UiFactoryTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Markup/MarkupDiagnosticTests.cs`
-- [ ] `tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Markup/UiMarkupReaderTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Markup/UiMarkupWriterTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Markup/UiFactoryTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Markup/MarkupDiagnosticTests.cs`
+- [ ] `tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTests.cs` — optional future project; deferred with `Cerneala.SourceGen/UiMarkupGenerator.cs`.
 
 Acceptance checklist:
 
-- [ ] Markup is not required to create controls.
-- [ ] Markup does not bypass typed property validation.
-- [ ] Generated factories produce retained trees that use the same invalidation and render-cache paths as code-created trees.
+- [x] Markup is not required to create controls.
+- [x] Markup does not bypass typed property validation.
+- [x] Generated factories produce retained trees that use the same invalidation and render-cache paths as code-created trees.
 
 ## 26. [Optional/Experimental] Advanced input categories
 

@@ -3,6 +3,39 @@ namespace Cerneala.Tests.Architecture;
 public sealed class MonoGameDependencyBoundaryTests
 {
     [Fact]
+    public void MarkupSourcesStayIndependentOfRenderingBackends()
+    {
+        string root = FindRepositoryRoot();
+        string markupRoot = Path.Combine(root, "UI", "Markup");
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Microsoft.Xna",
+            "Skia",
+            "SkiaSharp",
+            "HarfBuzz",
+            "SkiaTextShaper",
+            "SkiaTextRasterizer",
+            "MonoGameDrawingBackend",
+            "MonoGameImageLoader",
+            "MonoGameUiHost",
+            "MonoGameInput"
+        ];
+
+        foreach (string file in EnumerateSourceFiles(markupRoot))
+        {
+            string text = File.ReadAllText(file);
+            string[] foundTerms = forbiddenTerms
+                .Where(term => text.Contains(term, StringComparison.Ordinal))
+                .ToArray();
+
+            Assert.True(
+                foundTerms.Length == 0,
+                $"{Path.GetRelativePath(root, file)} references backend-specific markup dependency terms: {string.Join(", ", foundTerms)}.");
+        }
+    }
+
+    [Fact]
     public void MonoGameHostAdapterReferencesStayUnderHostingMonoGame()
     {
         string root = FindRepositoryRoot();
