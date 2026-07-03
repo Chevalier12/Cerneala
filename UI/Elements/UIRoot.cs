@@ -124,6 +124,11 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         RetainedRenderCache.InvalidateRoot();
     }
 
+    internal void ClearStyleScope(UIElement element)
+    {
+        styleApplicator.Clear(element);
+    }
+
     public override void Invalidate(InvalidationRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);

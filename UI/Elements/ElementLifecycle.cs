@@ -59,5 +59,6 @@ public static class ElementLifecycle
 
         root.ElementIds.Release(element);
         element.DetachFromRoot();
+        root.ClearStyleScope(element);
     }
 }

@@ -49,6 +49,33 @@ public sealed class StyleSchedulerIntegrationTests
     }
 
     [Fact]
+    public void MovingElementToRootWithoutStyleSheetClearsPreviousRootStyleValues()
+    {
+        UIRoot root1 = new(100, 100);
+        UIRoot root2 = new(100, 100);
+        UIElement container = new();
+        Button button = new();
+        StyleSheet sheet = new StyleSheet().Add(new StyleRule(StyleSelector.ForType<Button>())
+            .Add(new Setter<DrawColor>(Control.BackgroundProperty, DrawColor.White)));
+        container.VisualChildren.Add(button);
+
+        root1.SetStyleSheet(sheet);
+        root1.VisualChildren.Add(container);
+        root1.ProcessFrame();
+
+        Assert.Equal(UiPropertyValueSource.StyleBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(DrawColor.White, button.Background);
+
+        root1.VisualChildren.Remove(container);
+        root2.VisualChildren.Add(container);
+        root2.ProcessFrame();
+
+        Assert.Equal(UiPropertyValueSource.Default, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(DrawColor.Transparent, button.Background);
+        Assert.False(root2.Scheduler.HasWork);
+    }
+
+    [Fact]
     public void PseudoClassChangeIsAppliedDuringNextStylePhase()
     {
         UIRoot root = new(100, 100);

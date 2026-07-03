@@ -47,6 +47,19 @@ public sealed class StyleApplicator
         return new StyleApplicationResult(matchedRules, appliedValues, clearedValues);
     }
 
+    internal void Clear(UIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        if (!states.TryGetValue(element, out AppliedStyleState? state))
+        {
+            return;
+        }
+
+        ClearSource(element, UiPropertyValueSource.StyleBase, state.BaseValues);
+        ClearSource(element, UiPropertyValueSource.StyleVisualState, state.VisualStateValues);
+        states.Remove(element);
+    }
+
     public StyleDiagnostics.Snapshot GetDiagnostics(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
@@ -93,6 +106,19 @@ public sealed class StyleApplicator
         {
             previous[property] = applied;
         }
+    }
+
+    private static void ClearSource(
+        UIElement element,
+        UiPropertyValueSource source,
+        Dictionary<UiProperty, AppliedSetter> previous)
+    {
+        foreach (AppliedSetter old in previous.Values)
+        {
+            old.Setter.Clear(element, source);
+        }
+
+        previous.Clear();
     }
 
     private sealed class AppliedStyleState
