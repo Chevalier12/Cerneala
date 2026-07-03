@@ -1138,7 +1138,7 @@ This phase is optional. Cerneala should be code-first and strongly typed before 
 - [x] `UI/Markup/ContentPropertyAttribute.cs` — optional ergonomic hint.
 - [x] `UI/Markup/DesignTimeOnlyAttribute.cs`
 - [ ] `Cerneala.SourceGen/UiMarkupGenerator.cs` — optional future project; deferred until runtime reflection or build-time generation becomes a proven cost.
-- [x] `openspec/changes/add-markup-serialization/specs/markup-serialization/spec.md`
+- [x] `openspec/specs/markup-serialization/spec.md`
 
 Tests:
 
@@ -1219,7 +1219,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 
 ### Optional/Experimental order
 
-- [ ] 25. Prototype markup/serialization after templates and typed properties are stable.
+- [x] 25. Prototype markup/serialization after templates and typed properties are stable.
 - [ ] 26. Prototype source generation if runtime reflection becomes a real cost.
 - [ ] 27. Implement touch/stylus/drag/drop behavior when platform adapters can supply real data.
 
