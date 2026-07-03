@@ -1,6 +1,7 @@
 using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Elements;
 
@@ -17,6 +18,10 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         RenderQueue = new RenderQueue(this);
         HitTestQueue = new HitTestQueue(this);
         LayoutManager = new LayoutManager(this);
+        RenderCounters = new RenderCounters();
+        RetainedRenderCache = new RetainedRenderCache();
+        RenderQueueProcessor = new RenderQueueProcessor(RetainedRenderCache, RenderCounters);
+        RetainedRenderer = new RetainedRenderer(RetainedRenderCache, new DrawCommandListBuilder(), RenderCounters);
         Scheduler = new UiFrameScheduler(LayoutQueue, RenderQueue, HitTestQueue, Trace);
         IsLayoutBoundary = true;
         ElementLifecycle.AttachSubtree(this, this);
@@ -44,6 +49,14 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public LayoutManager LayoutManager { get; }
 
+    public RenderCounters RenderCounters { get; }
+
+    public RetainedRenderCache RetainedRenderCache { get; }
+
+    public RenderQueueProcessor RenderQueueProcessor { get; }
+
+    public RetainedRenderer RetainedRenderer { get; }
+
     public UiFrameScheduler Scheduler { get; }
 
     public void SetViewport(float width, float height, float scale)
@@ -57,6 +70,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     internal void IncrementTreeVersion()
     {
         TreeVersion++;
+        RetainedRenderCache.InvalidateRoot();
     }
 
     public override void Invalidate(InvalidationRequest request)
@@ -68,6 +82,17 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public FrameStats ProcessFrame(FramePhaseProcessors? processors = null, FrameBudget budget = default)
     {
-        return Scheduler.ProcessFrame(processors ?? LayoutManager.CreatePhaseProcessors(), budget);
+        return Scheduler.ProcessFrame(processors ?? CreatePhaseProcessors(), budget);
+    }
+
+    private FramePhaseProcessors CreatePhaseProcessors()
+    {
+        FramePhaseProcessors layoutProcessors = LayoutManager.CreatePhaseProcessors();
+        return new FramePhaseProcessors
+        {
+            Measure = layoutProcessors.Measure,
+            Arrange = layoutProcessors.Arrange,
+            RenderCache = RenderQueueProcessor.Process
+        };
     }
 }

@@ -403,6 +403,19 @@ Acceptance checklist:
 
 This phase connects retained elements to the existing `DrawingContext`, `DrawCommandList`, and `IDrawingBackend`. The retained renderer owns cache invalidation above the drawing layer; the drawing layer remains a command recorder/backend contract.
 
+OpenSpec: `openspec/changes/add-retained-rendering-cache` tracks the implementation contract and checklist for this phase.
+
+Planning:
+
+- [x] `openspec/changes/add-retained-rendering-cache/proposal.md`
+- [x] `openspec/changes/add-retained-rendering-cache/design.md`
+- [x] `openspec/changes/add-retained-rendering-cache/tasks.md`
+- [x] `openspec/changes/add-retained-rendering-cache/specs/retained-rendering-cache/spec.md`
+- [x] `openspec/changes/add-retained-rendering-cache/specs/retained-invalidation-frame-scheduler/spec.md`
+- [x] `openspec/changes/add-retained-rendering-cache/specs/retained-ui-mvp-foundation/spec.md`
+- [x] `openspec validate add-retained-rendering-cache --strict`
+- [x] `openspec validate --all --strict`
+
 Rendering model:
 
 ```text
@@ -418,37 +431,37 @@ RetainedRenderer composes cached element command lists into a root DrawCommandLi
 IDrawingBackend.Render(rootCommandList) can run every frame
 ```
 
-- [ ] `UI/Rendering/RenderContext.cs` — exposes `DrawingContext`, layout bounds, inherited opacity/clip, and diagnostics.
-- [ ] `UI/Rendering/IRenderableElement.cs`
-- [ ] `UI/Rendering/ElementRenderCache.cs` — local cached `DrawCommandList`, local version, content bounds, and dependency versions.
-- [ ] `UI/Rendering/RetainedRenderCache.cs` — root/subtree command cache and cache versioning.
-- [ ] `UI/Rendering/RenderQueueProcessor.cs` — regenerates only dirty local element command lists.
-- [ ] `UI/Rendering/RetainedRenderer.cs` — produces cached root command list for `IDrawingBackend`.
-- [ ] `UI/Rendering/DrawCommandListBuilder.cs` — flattens cached local commands in visual order.
-- [ ] `UI/Rendering/DrawCommandListPool.cs` — optional pooling after correctness is proven.
-- [ ] `UI/Rendering/ClipNode.cs` — retained clip metadata translated to `PushClip`/`PopClip` commands.
-- [ ] `UI/Rendering/RenderLayer.cs` — future boundary for opacity/effects; MVP can be minimal.
-- [ ] `UI/Rendering/RenderDependency.cs` — tracks text/image/theme/resource dependencies that affect cached commands.
-- [ ] `UI/Rendering/RenderCounters.cs` — counts cache hits/misses and command regeneration.
+- [x] `UI/Rendering/RenderContext.cs` — exposes `DrawingContext`, layout bounds, inherited opacity/clip, and diagnostics.
+- [x] `UI/Rendering/IRenderableElement.cs`
+- [x] `UI/Rendering/ElementRenderCache.cs` — local cached `DrawCommandList`, local version, content bounds, and dependency versions.
+- [x] `UI/Rendering/RetainedRenderCache.cs` — root/subtree command cache and cache versioning.
+- [x] `UI/Rendering/RenderQueueProcessor.cs` — regenerates only dirty local element command lists.
+- [x] `UI/Rendering/RetainedRenderer.cs` — produces cached root command list for `IDrawingBackend`.
+- [x] `UI/Rendering/DrawCommandListBuilder.cs` — flattens cached local commands in visual order.
+- [ ] `UI/Rendering/DrawCommandListPool.cs` — optional pooling after correctness is proven; deferred until profiling proves allocation pressure.
+- [x] `UI/Rendering/ClipNode.cs` — retained clip metadata translated to `PushClip`/`PopClip` commands.
+- [x] `UI/Rendering/RenderLayer.cs` — future boundary for opacity/effects; MVP can be minimal.
+- [x] `UI/Rendering/RenderDependency.cs` — tracks text/image/theme/resource dependencies that affect cached commands.
+- [x] `UI/Rendering/RenderCounters.cs` — counts cache hits/misses and command regeneration.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Rendering/ElementRenderCacheTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Rendering/RetainedRenderCacheTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Rendering/RenderQueueProcessorTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Rendering/RetainedRendererTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Rendering/DrawCommandListBuilderTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Rendering/RenderDependencyTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Rendering/RenderCountersTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/ElementRenderCacheTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/RetainedRenderCacheTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/RenderQueueProcessorTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/RetainedRendererTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/DrawCommandListBuilderTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/RenderDependencyTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/RenderCountersTests.cs`
 
 Acceptance checklist:
 
-- [ ] `OnRender` is called only for elements with render dirty state or changed render dependencies.
-- [ ] The same unchanged root command list can be rendered by `IDrawingBackend` across multiple draw frames.
-- [ ] A child render change does not regenerate unrelated sibling local command lists.
-- [ ] Render order is deterministic and matches retained tree order.
-- [ ] Clip commands are balanced even when a subtree renders no visible commands.
-- [ ] Current primitive drawing uses existing `DrawRect`, `DrawPoint`, `DrawColor`, `DrawTextRun`, and `IDrawImage`.
+- [x] `OnRender` is called only for elements with render dirty state or changed render dependencies.
+- [x] The same unchanged root command list can be rendered by `IDrawingBackend` across multiple draw frames.
+- [x] A child render change does not regenerate unrelated sibling local command lists.
+- [x] Render order is deterministic and matches retained tree order.
+- [x] Clip commands are balanced even when a subtree renders no visible commands.
+- [x] Current primitive drawing uses existing `DrawRect`, `DrawPoint`, `DrawColor`, `DrawTextRun`, and `IDrawImage`.
 
 ## 7. [MVP] Game-loop host integration
 

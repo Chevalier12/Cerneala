@@ -2,10 +2,11 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Elements;
 
-public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement
+public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderableElement
 {
     public static readonly UiProperty<bool> IsEnabledProperty = UiProperty<bool>.Register(
         nameof(IsEnabled),
@@ -68,6 +69,10 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement
     public LayoutRect ArrangedBounds { get; private set; }
 
     public int LayoutVersion { get; private set; }
+
+    public int RenderVersion { get; private set; }
+
+    public RenderDependency RenderDependencies { get; private set; }
 
     public bool IsLayoutBoundary { get; set; }
 
@@ -200,6 +205,16 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement
         return context.FinalRect;
     }
 
+    public void Render(RenderContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        OnRender(context);
+    }
+
+    protected virtual void OnRender(RenderContext context)
+    {
+    }
+
     internal void SetDesiredSize(LayoutSize desiredSize)
     {
         DesiredSize = desiredSize;
@@ -213,12 +228,31 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement
         }
 
         ArrangedBounds = arrangedBounds;
+        IncrementRenderVersion();
+        Root?.RetainedRenderCache.InvalidateRoot();
         return true;
     }
 
     internal void IncrementLayoutVersion()
     {
         LayoutVersion++;
+    }
+
+    internal void IncrementRenderVersion()
+    {
+        RenderVersion++;
+    }
+
+    protected void SetRenderDependencies(RenderDependency dependencies)
+    {
+        if (RenderDependencies == dependencies)
+        {
+            return;
+        }
+
+        RenderDependencies = dependencies;
+        IncrementRenderVersion();
+        Invalidate(InvalidationFlags.Render, "Render dependencies changed");
     }
 
     private LayoutRect ApplyAlignment(LayoutRect finalRect)
@@ -275,6 +309,11 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement
         if ((options & (UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange)) != UiPropertyOptions.None)
         {
             IncrementLayoutVersion();
+        }
+
+        if ((options & (UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual)) != UiPropertyOptions.None)
+        {
+            IncrementRenderVersion();
         }
 
         InvalidationFlags flags = MapInvalidationOptions(options);
