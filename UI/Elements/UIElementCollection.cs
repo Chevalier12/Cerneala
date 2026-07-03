@@ -59,9 +59,9 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         {
             ElementLifecycle.AttachSubtree(root, child);
             root.IncrementTreeVersion();
-            InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Added);
         }
 
+        InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Added);
         Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Added));
     }
 
@@ -142,7 +142,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
     private void InvalidateForVisualChildMutation(UIElement child, ElementTreeChangeKind kind)
     {
-        if (role != ElementChildRole.Visual || owner.Root is null)
+        if (role != ElementChildRole.Visual)
         {
             return;
         }

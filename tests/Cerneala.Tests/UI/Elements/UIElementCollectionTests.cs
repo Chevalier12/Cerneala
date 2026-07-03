@@ -1,4 +1,6 @@
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
+using Cerneala.UI.Layout;
 
 namespace Cerneala.Tests.UI.Elements;
 
@@ -57,6 +59,24 @@ public sealed class UIElementCollectionTests
         Assert.Contains(parent, root.LayoutQueue.SnapshotArrange());
         Assert.Contains(parent, root.RenderQueue.Snapshot());
         Assert.Contains(parent, root.HitTestQueue.Snapshot());
+    }
+
+    [Fact]
+    public void RemovingDetachedVisualChildInvalidatesOwnerLayoutCache()
+    {
+        UIElement parent = new MeasuringParent();
+        UIElement child = new FixedElement(new LayoutSize(10, 7));
+        parent.VisualChildren.Add(child);
+        MeasureContext context = new(new LayoutSize(100, 100));
+        LayoutSize first = parent.Measure(context);
+
+        parent.VisualChildren.Remove(child);
+        LayoutSize second = parent.Measure(context);
+
+        Assert.Equal(new LayoutSize(10, 7), first);
+        Assert.Equal(LayoutSize.Zero, second);
+        Assert.True(parent.DirtyState.Has(InvalidationFlags.Measure));
+        Assert.True(parent.DirtyState.Has(InvalidationFlags.Render));
     }
 
     [Fact]
@@ -149,6 +169,31 @@ public sealed class UIElementCollectionTests
         public override int GetHashCode()
         {
             return value;
+        }
+    }
+
+    private sealed class MeasuringParent : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            float width = 0;
+            float height = 0;
+            foreach (UIElement child in VisualChildren)
+            {
+                LayoutSize childSize = child.Measure(context);
+                width = Math.Max(width, childSize.Width);
+                height += childSize.Height;
+            }
+
+            return new LayoutSize(width, height);
+        }
+    }
+
+    private sealed class FixedElement(LayoutSize size) : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            return size;
         }
     }
 }
