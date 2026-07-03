@@ -1,3 +1,4 @@
+using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Input;
@@ -10,6 +11,7 @@ public sealed class ElementInputBridge
     private readonly HoverTracker hoverTracker;
     private readonly PressedStateTracker pressedStateTracker;
     private readonly ClickTracker clickTracker;
+    private readonly CommandRouter commandRouter;
     private readonly FocusManager focusManager;
     private readonly TextInputBridge textInputBridge;
     private bool hasLastPointerPosition;
@@ -23,6 +25,7 @@ public sealed class ElementInputBridge
         HoverTracker? hoverTracker = null,
         PressedStateTracker? pressedStateTracker = null,
         ClickTracker? clickTracker = null,
+        CommandRouter? commandRouter = null,
         FocusManager? focusManager = null,
         TextInputBridge? textInputBridge = null)
     {
@@ -32,6 +35,7 @@ public sealed class ElementInputBridge
         this.hoverTracker = hoverTracker ?? new HoverTracker();
         this.pressedStateTracker = pressedStateTracker ?? new PressedStateTracker();
         this.clickTracker = clickTracker ?? new ClickTracker();
+        this.commandRouter = commandRouter ?? new CommandRouter();
         this.focusManager = focusManager ?? new FocusManager();
         this.textInputBridge = textInputBridge ?? new TextInputBridge();
     }
@@ -43,6 +47,8 @@ public sealed class ElementInputBridge
     public PressedStateTracker PressedStateTracker => pressedStateTracker;
 
     public FocusManager FocusManager => focusManager;
+
+    public CommandRouter CommandRouter => commandRouter;
 
     public void Dispatch(UIRoot root, InputFrame inputFrame)
     {
@@ -87,7 +93,7 @@ public sealed class ElementInputBridge
 
             if (inputFrame.Pointer.IsPressed(button))
             {
-                clickTracker.Press(pointerTarget?.Element);
+                clickTracker.Press(hitTarget?.Element);
                 pressedStateTracker.Press(pointerTarget?.Element);
                 if (button == InputMouseButton.Left && pointerTarget is not null)
                 {
@@ -99,8 +105,9 @@ public sealed class ElementInputBridge
 
             if (inputFrame.Pointer.IsReleased(button))
             {
-                int clickCount = clickTracker.Release(pointerTarget?.Element);
+                int clickCount = clickTracker.Release(hitTarget?.Element);
                 RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount);
+                ExecuteButtonCommandOnClick(routeMap, pointerTarget, hitTarget, button, clickCount);
                 pressedStateTracker.Release();
             }
         }
@@ -108,6 +115,26 @@ public sealed class ElementInputBridge
         hasLastPointerPosition = true;
         lastPointerX = inputFrame.Pointer.X;
         lastPointerY = inputFrame.Pointer.Y;
+    }
+
+    private void ExecuteButtonCommandOnClick(
+        ElementInputRouteMap routeMap,
+        HitTestResult? routedTarget,
+        HitTestResult? clickTarget,
+        InputMouseButton button,
+        int clickCount)
+    {
+        if (button != InputMouseButton.Left ||
+            clickCount <= 0 ||
+            routedTarget is null ||
+            clickTarget is null ||
+            !ReferenceEquals(routedTarget.Element, clickTarget.Element) ||
+            routedTarget.Element is not ButtonBase buttonBase)
+        {
+            return;
+        }
+
+        buttonBase.ExecuteCommand(commandRouter, routeMap);
     }
 
     private static void RaiseMousePair(

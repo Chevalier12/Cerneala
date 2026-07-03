@@ -1,3 +1,4 @@
+using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
@@ -76,6 +77,26 @@ public sealed class ElementInputBridgeTests
     }
 
     [Fact]
+    public void CapturedButtonReleaseOutsideDoesNotExecuteCommand()
+    {
+        UIRoot root = new(100, 100);
+        ButtonBase button = ArrangedButton(0, 0, 40, 40);
+        UIElement other = HitTestServiceTests.Arranged(50, 0, 40, 40);
+        root.VisualChildren.Add(button);
+        root.VisualChildren.Add(other);
+        bool executed = false;
+        button.Command = new ActionCommand(_ => executed = true);
+        ElementInputBridge bridge = new();
+        ElementInputRouteMap routeMap = new ElementInputRouteBuilder().Build(root);
+        bridge.PointerCaptureManager.Capture(button, routeMap);
+
+        bridge.Dispatch(root, PointerFrame(10, 10, 10, 10, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, 60, 10, previousDown: true));
+
+        Assert.False(executed);
+    }
+
+    [Fact]
     public void HostUpdateDispatchesInputBeforeScheduler()
     {
         UIRoot root = RootWithChild(out UIElement child);
@@ -95,6 +116,13 @@ public sealed class ElementInputBridgeTests
         return root;
     }
 
+    private static ButtonBase ArrangedButton(float x, float y, float width, float height)
+    {
+        ButtonBase button = new();
+        button.Arrange(new ArrangeContext(new LayoutRect(x, y, width, height)));
+        return button;
+    }
+
     private static InputFrame PointerFrame(float x, float y, bool pressed = false)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);
@@ -107,10 +135,26 @@ public sealed class ElementInputBridgeTests
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
     }
 
-    private static InputFrame PointerFrame(float previousX, float previousY, float currentX, float currentY)
+    private static InputFrame PointerFrame(
+        float previousX,
+        float previousY,
+        float currentX,
+        float currentY,
+        bool previousDown = false,
+        bool currentDown = false)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(previousX, previousY);
         PointerSnapshot current = PointerSnapshot.Empty.WithPosition(currentX, currentY);
+        if (previousDown)
+        {
+            previous = previous.WithButton(InputMouseButton.Left, true);
+        }
+
+        if (currentDown)
+        {
+            current = current.WithButton(InputMouseButton.Left, true);
+        }
+
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
     }
 }

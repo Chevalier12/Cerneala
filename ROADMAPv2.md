@@ -551,36 +551,44 @@ Acceptance checklist:
 
 This phase completes route-based command execution without copying WPF's global `CommandManager` magic. Commands should be explicit, testable, and based on existing command primitives.
 
-- [~] `UI/Input/ICommand.cs`
-- [~] `UI/Input/RoutedCommand.cs`
-- [~] `UI/Input/CommandBinding.cs`
-- [~] `UI/Input/CommandEvents.cs`
-- [ ] `UI/Input/CommandBindingCollection.cs`
-- [ ] `UI/Input/CommandRouter.cs` — explicit service that queries and executes through retained routes.
-- [ ] `UI/Input/RoutedCommandContext.cs`
-- [ ] `UI/Input/ActionCommand.cs` — simple command backed by delegates.
+- [x] `openspec/changes/add-command-router-actions/proposal.md`
+- [x] `openspec/changes/add-command-router-actions/design.md`
+- [x] `openspec/changes/add-command-router-actions/tasks.md`
+- [x] `openspec/changes/add-command-router-actions/specs/command-router-actions/spec.md`
+- [x] `openspec/changes/add-command-router-actions/specs/retained-input-bridge/spec.md`
+- [x] `openspec/changes/add-command-router-actions/specs/retained-ui-mvp-foundation/spec.md`
+- [x] `openspec validate add-command-router-actions --strict`
+
+- [x] `UI/Input/ICommand.cs`
+- [x] `UI/Input/RoutedCommand.cs`
+- [x] `UI/Input/CommandBinding.cs`
+- [x] `UI/Input/CommandEvents.cs`
+- [x] `UI/Input/CommandBindingCollection.cs`
+- [x] `UI/Input/CommandRouter.cs` — explicit service that queries and executes through retained routes.
+- [x] `UI/Input/RoutedCommandContext.cs`
+- [x] `UI/Input/ActionCommand.cs` — simple command backed by delegates.
 - [ ] `UI/Input/InputGesture.cs` — Core if MVP needs keyboard shortcuts.
 - [ ] `UI/Input/KeyGesture.cs` — Core if MVP needs keyboard shortcuts.
 - [ ] `UI/Input/InputBinding.cs` — Core if MVP needs shortcut-to-command mapping.
 - [ ] `UI/Input/KeyBinding.cs` — Core if MVP needs shortcut-to-command mapping.
-- [ ] `UI/Controls/Primitives/ButtonBase.CommandProperty`
-- [ ] `UI/Controls/Primitives/ButtonBase.CommandParameterProperty`
+- [x] `UI/Controls/Primitives/ButtonBase.CommandProperty`
+- [x] `UI/Controls/Primitives/ButtonBase.CommandParameterProperty`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/Input/CommandRouterTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/CommandBindingCollectionTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/ActionCommandTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/RoutedCommandExecutionTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/Primitives/ButtonBaseCommandTests.cs`
+- [x] `tests/Cerneala.Tests/Input/CommandRouterTests.cs`
+- [x] `tests/Cerneala.Tests/Input/CommandBindingCollectionTests.cs`
+- [x] `tests/Cerneala.Tests/Input/ActionCommandTests.cs`
+- [x] `tests/Cerneala.Tests/Input/RoutedCommandExecutionTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/Primitives/ButtonBaseCommandTests.cs`
 - [ ] `tests/Cerneala.Tests/Input/InputGestureTests.cs`
 
 Acceptance checklist:
 
-- [ ] `RoutedCommand.CanExecute` uses the current command route only through explicit `CommandRouter` APIs.
-- [ ] `RoutedCommand.Execute` no longer throws after command routing is implemented.
-- [ ] `ButtonBase` queries command state during update or invalidation, not through hidden global requery magic.
-- [ ] Command state changes can invalidate visual state for controls that display enabled/disabled state.
+- [x] Routed command `CanExecute` uses the current command route only through explicit `CommandRouter` APIs.
+- [x] Routed command execution works through explicit `CommandRouter.Execute`; direct `RoutedCommand.Execute` fails with a router-required error.
+- [x] `ButtonBase` queries command state through explicit refresh/click paths, not through hidden global requery magic.
+- [x] Command state changes can invalidate visual state for controls that display enabled/disabled state.
 
 ## 10. [MVP] First controls and panels
 
@@ -1130,7 +1138,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [ ] 6. Add `RenderContext`, `ElementRenderCache`, `RetainedRenderer`, root command-list cache, and retained render tests.
 - [x] 7. Add `UiHost` and `MonoGameUiHost` so update/draw uses retained frame scheduling.
 - [x] 8. Add hit testing, `ElementInputBridge`, hover/pressed state tracking, and focus manager MVP.
-- [ ] 9. Add `CommandRouter`, `ActionCommand`, `ButtonBase.Command`, and command route tests.
+- [x] 9. Add `CommandRouter`, `ActionCommand`, `ButtonBase.Command`, and command route tests.
 - [ ] 10. Add `Control`, `Border`, `TextBlock`, `Button`, first panels, and acceptance tests.
 - [ ] 11. Add text measurement/layout cache services above existing Skia/HarfBuzz text pipeline.
 - [ ] 12. Add resource dependency tracking for fonts/images.
@@ -1218,6 +1226,6 @@ MVP is complete when Cerneala can run a retained UI sample inside the MonoGame p
 - [ ] Existing `UI/Drawing` tests still pass.
 - [ ] Existing `UI/Input` tests still pass.
 - [ ] New retained no-work-frame tests pass.
-- [ ] Hover, press, focus, and command execution work through retained input routing.
+- [x] Hover, press, focus, and command execution work through retained input routing.
 - [ ] Text rendering uses existing `DrawTextRun`, `SkiaTextShaper`, and `SkiaTextRasterizer` through higher-level services.
 - [ ] No UI core control directly references MonoGame, Skia, HarfBuzz, `SpriteBatch`, or `Texture2D`.

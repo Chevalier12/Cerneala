@@ -19,11 +19,11 @@ public sealed class RoutedCommand : ICommand
 
     public bool CanExecute(object? parameter)
     {
-        return false;
+        throw new InvalidOperationException("RoutedCommand requires CommandRouter.CanExecute with a retained command context.");
     }
 
     public void Execute(object? parameter)
     {
-        throw new InvalidOperationException("RoutedCommand cannot execute directly until command routing is available.");
+        throw new InvalidOperationException("RoutedCommand requires CommandRouter.Execute with a retained command context.");
     }
 }

@@ -77,6 +77,8 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
     public ElementHandlerStore Handlers { get; } = new();
 
+    public CommandBindingCollection CommandBindings { get; } = new();
+
     public DirtyState DirtyState { get; } = new();
 
     public LayoutSize DesiredSize { get; private set; }
