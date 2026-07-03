@@ -28,6 +28,30 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void UiControlsDoNotReferenceConcreteBackends()
+    {
+        string controlsRoot = FindRepositoryPath("UI", "Controls");
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch"
+        ];
+
+        foreach (string file in Directory.EnumerateFiles(controlsRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public void UiDrawingDoesNotReferenceRetainedRendering()
     {
         string drawingRoot = FindRepositoryPath("UI", "Drawing");

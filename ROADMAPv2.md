@@ -594,54 +594,68 @@ Acceptance checklist:
 
 This phase creates the smallest useful control set. Controls should be retained, layout-aware, input-aware, and render through `DrawingContext` commands. Keep names familiar where they are ergonomic.
 
-- [ ] `UI/Controls/Control.cs` — base control with styling hooks and common visual properties.
-- [ ] `UI/Controls/ContentControl.cs`
-- [ ] `UI/Controls/Decorator.cs`
-- [ ] `UI/Controls/Border.cs`
-- [ ] `UI/Controls/Panel.cs` — public alias or wrapper over `UI/Layout/Panels/Panel` if the final namespace should be controls-oriented.
-- [ ] `UI/Controls/Canvas.cs`
-- [ ] `UI/Controls/StackPanel.cs`
-- [ ] `UI/Controls/TextBlock.cs`
-- [ ] `UI/Controls/Image.cs`
-- [ ] `UI/Controls/Primitives/ButtonBase.cs`
-- [ ] `UI/Controls/Button.cs`
+- [x] `openspec/changes/add-first-controls-panels/proposal.md`
+- [x] `openspec/changes/add-first-controls-panels/design.md`
+- [x] `openspec/changes/add-first-controls-panels/tasks.md`
+- [x] `openspec/changes/add-first-controls-panels/specs/first-controls-panels/spec.md`
+- [x] `openspec/changes/add-first-controls-panels/specs/layout-system/spec.md`
+- [x] `openspec/changes/add-first-controls-panels/specs/retained-rendering-cache/spec.md`
+- [x] `openspec/changes/add-first-controls-panels/specs/retained-input-bridge/spec.md`
+- [x] `openspec/changes/add-first-controls-panels/specs/command-router-actions/spec.md`
+- [x] `openspec/changes/add-first-controls-panels/specs/retained-ui-mvp-foundation/spec.md`
+- [x] `openspec validate add-first-controls-panels --strict`
+
+- [x] `UI/Controls/Control.cs` — base control with styling hooks and common visual properties.
+- [x] `UI/Controls/ContentControl.cs`
+- [x] `UI/Controls/Decorator.cs`
+- [x] `UI/Controls/Border.cs`
+- [x] `UI/Controls/Panel.cs` — public alias or wrapper over `UI/Layout/Panels/Panel` if the final namespace should be controls-oriented.
+- [x] `UI/Controls/Canvas.cs`
+- [x] `UI/Controls/StackPanel.cs`
+- [x] `UI/Controls/TextBlock.cs`
+- [x] `UI/Controls/Image.cs`
+- [x] `UI/Controls/Primitives/ButtonBase.cs`
+- [x] `UI/Controls/Button.cs`
 - [ ] `UI/Controls/Primitives/ToggleButton.cs` — Core if not needed for MVP.
 - [ ] `UI/Controls/CheckBox.cs` — Core if not needed for MVP.
 - [ ] `UI/Controls/ControlTemplate.cs` — Core; MVP controls may render directly first.
 - [ ] `UI/Controls/TemplatePart.cs` — Core.
-- [ ] `UI/Controls/VisualState.cs` — minimal state names for hover/pressed/focus/disabled.
+- [x] `UI/Controls/VisualState.cs` — minimal state names for hover/pressed/focus/disabled.
+- [x] `UI/Controls/ControlTextFont.cs` — minimal backend-neutral font handle for MVP text commands.
+- [x] `UI/Controls/TextMeasurement.cs` — minimal text measurement result for `TextBlock`.
+- [x] `UI/Controls/TextMeasurer.cs` — deterministic MVP text measurer; full text services remain section 11.
 
 Common control properties:
 
-- [ ] `Control.BackgroundProperty` — MVP can use `DrawColor`; richer brushes wait for Core rendering features.
-- [ ] `Control.ForegroundProperty` — MVP can use `DrawColor`.
-- [ ] `Control.BorderColorProperty` — MVP can use `DrawColor`.
-- [ ] `Control.BorderThicknessProperty` — `Thickness`.
-- [ ] `Control.PaddingProperty` — `Thickness`.
-- [ ] `Control.FontFamilyProperty` — string or typed font reference backed by `IFontSource`.
-- [ ] `Control.FontSizeProperty` — validates through drawing/text size constraints.
+- [x] `Control.BackgroundProperty` — MVP can use `DrawColor`; richer brushes wait for Core rendering features.
+- [x] `Control.ForegroundProperty` — MVP can use `DrawColor`.
+- [x] `Control.BorderColorProperty` — MVP can use `DrawColor`.
+- [x] `Control.BorderThicknessProperty` — `Thickness`.
+- [x] `Control.PaddingProperty` — `Thickness`.
+- [x] `Control.FontFamilyProperty` — string or typed font reference backed by `IFontSource`.
+- [x] `Control.FontSizeProperty` — validates through drawing/text size constraints.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/Controls/ControlTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ContentControlTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/DecoratorTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/BorderTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/PanelTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/CanvasTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/StackPanelTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/TextBlockTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ImageTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/Primitives/ButtonBaseTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ButtonTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ControlTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ContentControlTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/DecoratorTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/BorderTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/PanelTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/CanvasTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/StackPanelTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/TextBlockTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ImageTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/Primitives/ButtonBaseTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ButtonTests.cs`
 
 MVP control acceptance checklist:
 
-- [ ] A retained `Button` can be added to `UIRoot`, measured, arranged, rendered, hit-tested, hovered, pressed, clicked, and command-bound.
+- [x] A retained `Button` can be added to `UIRoot`, measured, arranged, rendered, hit-tested, hovered, pressed, clicked, and command-bound.
 - [ ] A retained `TextBlock` measures text using the existing Skia/HarfBuzz pipeline through higher-level text services.
-- [ ] A retained `Border` renders fill/stroke with existing rectangle commands.
-- [ ] A retained `StackPanel` lays out children and avoids re-measuring unchanged children.
-- [ ] Control visual states invalidate render only when the state affects visible output.
+- [x] A retained `Border` renders fill/stroke with existing rectangle commands.
+- [x] A retained `StackPanel` lays out children and avoids re-measuring unchanged children.
+- [x] Control visual states invalidate render only when the state affects visible output.
 
 ## 11. [MVP] Text services above the existing drawing text pipeline
 

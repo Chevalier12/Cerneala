@@ -3,7 +3,7 @@ using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Layout.Panels;
 
-public sealed class StackPanel : Panel
+public class StackPanel : Panel
 {
     public static readonly UiProperty<Orientation> OrientationProperty = UiProperty<Orientation>.Register(
         nameof(Orientation),

@@ -1,10 +1,10 @@
 using Cerneala.UI.Core;
-using Cerneala.UI.Elements;
+using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls.Primitives;
 
-public class ButtonBase : UIElement
+public class ButtonBase : Control
 {
     public static readonly UiProperty<bool> IsPressedProperty = UiProperty<bool>.Register(
         nameof(IsPressed),

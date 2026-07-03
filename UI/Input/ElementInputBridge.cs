@@ -127,14 +127,33 @@ public sealed class ElementInputBridge
         if (button != InputMouseButton.Left ||
             clickCount <= 0 ||
             routedTarget is null ||
-            clickTarget is null ||
-            !ReferenceEquals(routedTarget.Element, clickTarget.Element) ||
-            routedTarget.Element is not ButtonBase buttonBase)
+            clickTarget is null)
+        {
+            return;
+        }
+
+        ButtonBase? buttonBase = FindButtonBase(clickTarget.Element);
+        if (buttonBase is null ||
+            (!ReferenceEquals(routedTarget.Element, clickTarget.Element) &&
+            !ReferenceEquals(routedTarget.Element, buttonBase)))
         {
             return;
         }
 
         buttonBase.ExecuteCommand(commandRouter, routeMap);
+    }
+
+    private static ButtonBase? FindButtonBase(UIElement element)
+    {
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (current is ButtonBase buttonBase)
+            {
+                return buttonBase;
+            }
+        }
+
+        return null;
     }
 
     private static void RaiseMousePair(

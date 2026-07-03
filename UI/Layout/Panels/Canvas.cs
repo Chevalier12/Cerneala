@@ -4,7 +4,7 @@ using Cerneala.UI.Invalidation;
 
 namespace Cerneala.UI.Layout.Panels;
 
-public sealed class Canvas : Panel
+public class Canvas : Panel
 {
     private static readonly ConditionalWeakTable<UIElement, CanvasPosition> positions = new();
 
