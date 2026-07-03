@@ -1158,27 +1158,28 @@ Acceptance checklist:
 
 This phase turns existing metadata-only event categories into real behavior only when platform support and product scenarios require them.
 
-- [~] `UI/Input/InputEvents.cs` already declares stylus, touch, manipulation, and drag/drop event metadata.
-- [ ] `UI/Input/TouchInputBridge.cs`
-- [ ] `UI/Input/StylusInputBridge.cs`
-- [ ] `UI/Input/GestureRecognizer.cs`
-- [ ] `UI/Input/ManipulationProcessor.cs`
-- [ ] `UI/Input/DragDropController.cs`
-- [ ] `UI/Input/DataTransfer.cs`
-- [ ] `UI/Input/Cursor.cs`
-- [ ] `UI/Input/CursorService.cs`
-- [ ] `UI/Controls/InkCanvas.cs`
-- [ ] `UI/Ink/Stroke.cs`
-- [ ] `UI/Ink/StrokeCollection.cs`
+- [x] `UI/Input/InputEvents.cs` already declares stylus, touch, manipulation, and drag/drop event metadata.
+- [x] `UI/Input/TouchInputBridge.cs`
+- [x] `UI/Input/StylusInputBridge.cs`
+- [x] `UI/Input/GestureRecognizer.cs`
+- [x] `UI/Input/ManipulationProcessor.cs`
+- [x] `UI/Input/DragDropController.cs`
+- [x] `UI/Input/DataTransfer.cs`
+- [x] `UI/Input/Cursor.cs`
+- [x] `UI/Input/CursorService.cs`
+- [x] `UI/Controls/InkCanvas.cs`
+- [x] `UI/Ink/Stroke.cs`
+- [x] `UI/Ink/StrokeCollection.cs`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/Input/TouchInputBridgeTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/StylusInputBridgeTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/GestureRecognizerTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/ManipulationProcessorTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/DragDropControllerTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/InkCanvasTests.cs`
+- [x] `tests/Cerneala.Tests/Input/TouchInputBridgeTests.cs`
+- [x] `tests/Cerneala.Tests/Input/StylusInputBridgeTests.cs`
+- [x] `tests/Cerneala.Tests/Input/GestureRecognizerTests.cs`
+- [x] `tests/Cerneala.Tests/Input/ManipulationProcessorTests.cs`
+- [x] `tests/Cerneala.Tests/Input/DragDropControllerTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/InkCanvasTests.cs`
+- [x] `tests/Cerneala.Tests/Architecture/MonoGameDependencyBoundaryTests.cs` — covers advanced input backend-neutral boundaries.
 
 ## 27. Implementation order
 

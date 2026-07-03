@@ -2,6 +2,81 @@ namespace Cerneala.Tests.Architecture;
 
 public sealed class MonoGameDependencyBoundaryTests
 {
+    private static readonly string[] AdvancedInputForbiddenBackendTerms =
+    [
+        "MonoGame",
+        "Microsoft.Xna",
+        "Skia",
+        "SkiaSharp",
+        "HarfBuzz",
+        "SpriteBatch",
+        "Texture2D",
+        "Mouse.GetState",
+        "Keyboard.GetState",
+        "GamePad.GetState",
+        "TouchPanel.GetState",
+        "System.Windows",
+        "Windows.Win32",
+        "Microsoft.Win32"
+    ];
+
+    [Fact]
+    public void AdvancedInputBackendGuardCoversPlatformPollingAndOsBackendTerms()
+    {
+        string[] expectedTerms =
+        [
+            "Keyboard.GetState",
+            "GamePad.GetState",
+            "TouchPanel.GetState",
+            "System.Windows",
+            "Windows.Win32",
+            "Microsoft.Win32"
+        ];
+
+        foreach (string term in expectedTerms)
+        {
+            Assert.Contains(term, AdvancedInputForbiddenBackendTerms, StringComparer.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void AdvancedInputSourcesStayIndependentOfRenderingAndPlatformBackends()
+    {
+        string root = FindRepositoryRoot();
+        string[] checkedRoots =
+        [
+            Path.Combine(root, "UI", "Input"),
+            Path.Combine(root, "UI", "Ink"),
+            Path.Combine(root, "UI", "Controls")
+        ];
+        string[] checkedFiles =
+        [
+            "TouchInputBridge.cs",
+            "StylusInputBridge.cs",
+            "GestureRecognizer.cs",
+            "ManipulationProcessor.cs",
+            "DragDropController.cs",
+            "DataTransfer.cs",
+            "Cursor.cs",
+            "CursorService.cs",
+            "Stroke.cs",
+            "StrokeCollection.cs",
+            "InkCanvas.cs"
+        ];
+
+        foreach (string file in checkedRoots.SelectMany(EnumerateSourceFiles).Where(file => checkedFiles.Contains(Path.GetFileName(file), StringComparer.Ordinal)))
+        {
+            string text = File.ReadAllText(file);
+            string[] foundTerms = AdvancedInputForbiddenBackendTerms
+                .Where(term => text.Contains(term, StringComparison.Ordinal))
+                .ToArray();
+
+            Assert.True(
+                foundTerms.Length == 0,
+                $"{Path.GetRelativePath(root, file)} references backend-specific advanced input terms: {string.Join(", ", foundTerms)}.");
+        }
+    }
+
     [Fact]
     public void MarkupSourcesStayIndependentOfRenderingBackends()
     {
