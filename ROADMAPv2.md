@@ -905,26 +905,35 @@ Acceptance checklist:
 
 This phase provides modern data flow without making classic reflection-heavy binding the core. Start with explicit typed observation and templates; add string-path binding later only if needed.
 
-- [ ] `UI/Data/ObservableValue{T}.cs`
-- [ ] `UI/Data/ObservableList{T}.cs`
-- [ ] `UI/Data/IObservableList{T}.cs`
-- [ ] `UI/Data/PropertyAdapter{TOwner,TValue}.cs`
-- [ ] `UI/Data/Binding.cs` — optional typed binding facade.
-- [ ] `UI/Data/Binding{T}.cs`
-- [ ] `UI/Data/BindingMode.cs`
-- [ ] `UI/Data/IValueConverter{TIn,TOut}.cs`
-- [ ] `UI/Data/CollectionView{T}.cs`
-- [ ] `UI/Data/SortDescription{T}.cs`
-- [ ] `UI/Data/FilterPredicate{T}.cs`
-- [ ] `UI/Data/StringPropertyPath.cs` — Later, not hot-path core.
+- [x] `UI/Data/ObservableValue{T}.cs`
+- [x] `UI/Data/ObservableList{T}.cs`
+- [x] `UI/Data/IObservableList{T}.cs`
+- [x] `UI/Data/PropertyAdapter{TOwner,TValue}.cs`
+- [x] `UI/Data/Binding.cs` — optional typed binding facade.
+- [x] `UI/Data/Binding{T}.cs`
+- [x] `UI/Data/BindingMode.cs`
+- [x] `UI/Data/IValueConverter{TIn,TOut}.cs`
+- [x] `UI/Data/CollectionView{T}.cs`
+- [x] `UI/Data/SortDescription{T}.cs`
+- [x] `UI/Data/FilterPredicate{T}.cs`
+- [x] `UI/Data/StringPropertyPath.cs` — Later, not hot-path core.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Data/ObservableValueTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Data/ObservableListTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Data/TypedBindingTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Data/CollectionViewTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Data/StringPropertyPathTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Data/ObservableValueTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Data/ObservableListTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Data/TypedBindingTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Data/CollectionViewTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Data/StringPropertyPathTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs` - covers section 18 backend boundaries.
+
+Acceptance checklist:
+
+- [x] Observable scalar values publish typed old/new value changes.
+- [x] Observable lists publish ordered add/remove/replace/move/clear/reset changes.
+- [x] Typed binding connects observable sources to explicit target setters and can be disposed.
+- [x] Collection views support typed filtering and sorting.
+- [x] String property paths remain deferred and unsupported in core hot paths.
 
 ## 19. [Core] Diagnostics and developer tools
 
@@ -1184,7 +1193,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [ ] 15. Add code-first templates and presenters.
 - [x] 16. Add scrolling/range controls.
 - [x] 17. Add items, selection, and virtualization.
-- [ ] 18. Add typed data observation and binding-light APIs.
+- [x] 18. Add typed data observation and binding-light APIs.
 - [ ] 19. Add diagnostics/devtools overlays and tree/cache dumpers.
 
 ### Later order

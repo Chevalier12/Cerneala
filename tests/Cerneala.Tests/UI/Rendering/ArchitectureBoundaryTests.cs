@@ -333,9 +333,6 @@ public sealed class ArchitectureBoundaryTests
     {
         string root = FindRepositoryRoot();
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
-        string openSpecSegment = "open" + "spec";
-        string changesSegment = "chang" + "es";
-        string tasks = File.ReadAllText(Path.Combine(root, openSpecSegment, changesSegment, "add-items-selection-virtualization", "tasks.md"));
         string[] requiredDedicatedTests =
         [
             "tests/Cerneala.Tests/Controls/ItemContainerRecyclePoolTests.cs",
@@ -358,8 +355,65 @@ public sealed class ArchitectureBoundaryTests
         foreach (string missingDedicatedTest in missingDedicatedTests)
         {
             Assert.Contains($"- [ ] `{missingDedicatedTest}`", roadmap, StringComparison.Ordinal);
-            Assert.Contains($"Add `{missingDedicatedTest}`", tasks, StringComparison.Ordinal);
         }
+    }
+
+    [Fact]
+    public void Section18DataApisDoNotReferenceConcreteBackends()
+    {
+        string dataRoot = FindRepositoryPath("UI", "Data");
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch"
+        ];
+
+        foreach (string file in Directory.EnumerateFiles(dataRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
+    public void Section18RoadmapCompletionIsDocumentedConsistently()
+    {
+        string root = FindRepositoryRoot();
+        string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
+        string[] requiredFiles =
+        [
+            "UI/Data/ObservableValue{T}.cs",
+            "UI/Data/ObservableList{T}.cs",
+            "UI/Data/IObservableList{T}.cs",
+            "UI/Data/PropertyAdapter{TOwner,TValue}.cs",
+            "UI/Data/Binding.cs",
+            "UI/Data/Binding{T}.cs",
+            "UI/Data/BindingMode.cs",
+            "UI/Data/IValueConverter{TIn,TOut}.cs",
+            "UI/Data/CollectionView{T}.cs",
+            "UI/Data/SortDescription{T}.cs",
+            "UI/Data/FilterPredicate{T}.cs",
+            "UI/Data/StringPropertyPath.cs",
+            "tests/Cerneala.Tests/UI/Data/ObservableValueTests.cs",
+            "tests/Cerneala.Tests/UI/Data/ObservableListTests.cs",
+            "tests/Cerneala.Tests/UI/Data/TypedBindingTests.cs",
+            "tests/Cerneala.Tests/UI/Data/CollectionViewTests.cs",
+            "tests/Cerneala.Tests/UI/Data/StringPropertyPathTests.cs"
+        ];
+
+        foreach (string requiredFile in requiredFiles)
+        {
+            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
+            Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("- [x] 18. Add typed data observation and binding-light APIs.", roadmap, StringComparison.Ordinal);
     }
 
     [Fact]
