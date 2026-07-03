@@ -5,7 +5,7 @@ using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls.Primitives;
 
-public class Thumb : Control
+public class Thumb : Control, IPointerDragSource
 {
     private bool isDragging;
     private int lastX;
@@ -61,6 +61,11 @@ public class Thumb : Control
         return true;
     }
 
+    public bool BeginPointerDrag(PointerCaptureManager captureManager, ElementInputRouteMap routeMap, MouseButtonEventArgs args)
+    {
+        return BeginDrag(captureManager, routeMap, args);
+    }
+
     public bool UpdateDrag(MouseEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
@@ -84,6 +89,11 @@ public class Thumb : Control
         return true;
     }
 
+    public bool UpdatePointerDrag(MouseEventArgs args)
+    {
+        return UpdateDrag(args);
+    }
+
     public bool CompleteDrag(PointerCaptureManager captureManager, ElementInputRouteMap routeMap, MouseButtonEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(captureManager);
@@ -100,6 +110,11 @@ public class Thumb : Control
         DragCompleted?.Invoke(this, new DragCompletedEventArgs(TotalHorizontalChange, TotalVerticalChange, false));
         args.Handled = true;
         return true;
+    }
+
+    public bool CompletePointerDrag(PointerCaptureManager captureManager, ElementInputRouteMap routeMap, MouseButtonEventArgs args)
+    {
+        return CompleteDrag(captureManager, routeMap, args);
     }
 
     public void CancelDrag()

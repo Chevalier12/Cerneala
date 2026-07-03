@@ -1,28 +1,27 @@
-using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Input;
 
 public sealed class PressedStateTracker
 {
-    public ButtonBase? PressedElement { get; private set; }
+    public IInputPressable? PressedElement { get; private set; }
 
     public void Press(UIElement? target)
     {
-        if (target is not ButtonBase button)
+        if (target is not IInputPressable pressable)
         {
             Cancel();
             return;
         }
 
-        if (ReferenceEquals(PressedElement, button))
+        if (ReferenceEquals(PressedElement, pressable))
         {
             return;
         }
 
         Cancel();
-        PressedElement = button;
-        button.IsPressed = true;
+        PressedElement = pressable;
+        pressable.IsPressed = true;
     }
 
     public void Release()

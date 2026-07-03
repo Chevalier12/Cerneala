@@ -4,7 +4,7 @@ using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls.Primitives;
 
-public class ButtonBase : Control
+public class ButtonBase : Control, IInputPressable, IInputCommandSource
 {
     public static readonly UiProperty<bool> IsPressedProperty = UiProperty<bool>.Register(
         nameof(IsPressed),
