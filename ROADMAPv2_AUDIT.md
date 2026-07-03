@@ -136,6 +136,8 @@ Required changes:
 - [ ] Remove string-name pseudo-class detection in `StyleInvalidation.AffectsPseudoClass(...)` (`property.Name == "IsPressed"`, `property.Name == "IsSelected"`). Use `IStylePseudoClassProvider`, property metadata, or explicit pseudo-class registration.
 - [ ] Add `tests/Cerneala.Tests/UI/Styling/StyleSchedulerIntegrationTests.cs` proving pseudo-class/theme changes are applied through `UiHost.Update(...)` and reflected in frame stats/invalidation.
 
+Implementation note: fixed by `integrate-style-phase`; `AffectsStyle` now queues retained style work, `UIRoot` owns the active style/theme scope, the scheduler processes `FramePhase.Style` before layout/render phases, and pseudo-class invalidation uses explicit property registration instead of string property-name checks.
+
 ### 5. Input route/hit-test caching is not retained
 
 Files:

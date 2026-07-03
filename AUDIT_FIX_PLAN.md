@@ -58,13 +58,13 @@ Goal: retained systems are owned by the frame scheduler/root, not side services 
 
 Detailed plan: `docs/superpowers/plans/2026-07-03-integrate-style-phase.md`
 
-- [ ] Map `UiPropertyOptions.AffectsStyle` to `InvalidationFlags.Style`, not `Render`.
-- [ ] Add scheduler-owned style processing before measure/arrange/render.
-- [ ] Decide whether style work uses `StyleQueue` or a typed style processor over dirty elements.
-- [ ] Make `UIRoot` or `UiHost` own style/theme scope for an attached tree.
-- [ ] Remove string property-name pseudo-class detection.
-- [ ] Add explicit pseudo-class registration or provider contract.
-- [ ] Add `tests/Cerneala.Tests/UI/Styling/StyleSchedulerIntegrationTests.cs`.
+- [x] Map `UiPropertyOptions.AffectsStyle` to `InvalidationFlags.Style`, not `Render`.
+- [x] Add scheduler-owned style processing before measure/arrange/render.
+- [x] Decide whether style work uses `StyleQueue` or a typed style processor over dirty elements.
+- [x] Make `UIRoot` or `UiHost` own style/theme scope for an attached tree.
+- [x] Remove string property-name pseudo-class detection.
+- [x] Add explicit pseudo-class registration or provider contract.
+- [x] Add `tests/Cerneala.Tests/UI/Styling/StyleSchedulerIntegrationTests.cs`.
 
 ### Plan 4: `cache-input-route-hit-test`
 
@@ -128,7 +128,7 @@ Goal: stop the roadmap from claiming maturity for descriptor-level or experiment
 3. [x] Execute `fix-retained-render-frame-contract`.
 4. [x] Execute `fix-tree-mutation-invalidation`.
 5. [x] Run full tests and commit Phase 1.
-6. [ ] Execute `integrate-style-phase`.
+6. [x] Execute `integrate-style-phase`.
 7. [ ] Execute `cache-input-route-hit-test`.
 8. [ ] Run full tests and commit Phase 2.
 9. [ ] Execute roadmap honesty pass: `freeze-later-experimental-scope`.
