@@ -1095,23 +1095,32 @@ Acceptance checklist:
 
 This phase keeps the core portable. The current repository has a single project with MonoGame dependencies; v2 should keep adapter code isolated and later decide whether to split packages.
 
-- [ ] `UI/Platform/IPlatformServices.cs`
-- [ ] `UI/Platform/IClipboard.cs`
-- [ ] `UI/Platform/ICursorService.cs`
-- [ ] `UI/Platform/IFileDialogService.cs`
-- [ ] `UI/Platform/ITextInputPlatform.cs`
-- [ ] `UI/Platform/IDpiProvider.cs`
-- [ ] `UI/Hosting/MonoGame/` remains the only MonoGame UI host adapter folder.
-- [ ] `Cerneala.Core.csproj` — optional future package split.
-- [ ] `Cerneala.MonoGame.csproj` — optional future adapter package split.
-- [ ] `Cerneala.Tests.Core.csproj` — optional future test split.
-- [ ] `Cerneala.Tests.MonoGame.csproj` — optional future adapter test split.
+Section summary: Platform contracts and boundary tests are complete; package split project files stay deferred until real split work exists.
+
+- [x] `UI/Platform/IPlatformServices.cs`
+- [x] `UI/Platform/IClipboard.cs`
+- [x] `UI/Platform/ICursorService.cs`
+- [x] `UI/Platform/IFileDialogService.cs`
+- [x] `UI/Platform/ITextInputPlatform.cs`
+- [x] `UI/Platform/IDpiProvider.cs`
+- [x] `UI/Hosting/MonoGame/` remains the only MonoGame UI host adapter folder.
+- [ ] `Cerneala.Core.csproj` — optional future package split, deferred until real split work.
+- [ ] `Cerneala.MonoGame.csproj` — optional future package split, deferred until real split work.
+- [ ] `Cerneala.Tests.Core.csproj` — optional future package split, deferred until real split work.
+- [ ] `Cerneala.Tests.MonoGame.csproj` — optional future package split, deferred until real split work.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Platform/PlatformBoundaryTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Platform/ServiceRegistrationTests.cs`
-- [ ] `tests/Cerneala.Tests/Architecture/MonoGameDependencyBoundaryTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Platform/PlatformBoundaryTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Platform/ServiceRegistrationTests.cs`
+- [x] `tests/Cerneala.Tests/Architecture/MonoGameDependencyBoundaryTests.cs`
+
+Acceptance checklist:
+
+- [x] Platform services expose clipboard, cursor, dialogs, text input, DPI, and accessibility seams without backend dependencies.
+- [x] MonoGame host integration remains adapter-scoped under `UI/Hosting/MonoGame/`.
+- [x] Optional package split project files are intentionally deferred and not claimed as implemented.
+- [x] Full project tests pass for this phase.
 
 ## 25. [Optional/Experimental] Markup, serialization, and source generation
 
@@ -1206,7 +1215,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [x] 21. Add accessibility semantics and platform-neutral semantic tree.
 - [x] 22. Add advanced rendering/media primitives as scenarios require.
 - [x] 23. Add animation and transitions.
-- [ ] 24. Decide package/platform split.
+- [x] 24. Decide package/platform split.
 
 ### Optional/Experimental order
 

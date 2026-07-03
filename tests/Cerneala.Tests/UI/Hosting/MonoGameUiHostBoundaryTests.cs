@@ -11,7 +11,9 @@ public sealed class MonoGameUiHostBoundaryTests
         string hostingDirectory = Path.Combine(FindRepositoryRoot(), "UI", "Hosting");
         string[] forbidden =
         [
+            "Cerneala.UI.Hosting.MonoGame",
             "Microsoft.Xna.Framework",
+            "MonoGame",
             "SpriteBatch",
             "Texture2D",
             "GameTime",

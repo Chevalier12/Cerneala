@@ -1,10 +1,8 @@
-using Cerneala.UI.Text;
-
 namespace Cerneala.UI.Platform;
 
 public interface ITextInputPlatform
 {
-    ClipboardAdapter Clipboard { get; }
+    IClipboard? Clipboard => null;
 
     bool SupportsIme { get; }
 }

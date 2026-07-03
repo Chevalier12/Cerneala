@@ -814,6 +814,52 @@ public sealed class ArchitectureBoundaryTests
         Assert.Contains("- [x] 23. Add animation and transitions.", roadmap, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Section24PlatformRoadmapCompletionIsDocumentedConsistently()
+    {
+        string root = FindRepositoryRoot();
+        string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
+        string[] requiredFiles =
+        [
+            "UI/Platform/IPlatformServices.cs",
+            "UI/Platform/IClipboard.cs",
+            "UI/Platform/ICursorService.cs",
+            "UI/Platform/IFileDialogService.cs",
+            "UI/Platform/ITextInputPlatform.cs",
+            "UI/Platform/IDpiProvider.cs",
+            "tests/Cerneala.Tests/UI/Platform/PlatformBoundaryTests.cs",
+            "tests/Cerneala.Tests/UI/Platform/ServiceRegistrationTests.cs",
+            "tests/Cerneala.Tests/Architecture/MonoGameDependencyBoundaryTests.cs"
+        ];
+
+        foreach (string requiredFile in requiredFiles)
+        {
+            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
+            Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("- [x] `UI/Hosting/MonoGame/` remains the only MonoGame UI host adapter folder.", roadmap, StringComparison.Ordinal);
+        string[] deferredSplitFiles =
+        [
+            "Cerneala.Core.csproj",
+            "Cerneala.MonoGame.csproj",
+            "Cerneala.Tests.Core.csproj",
+            "Cerneala.Tests.MonoGame.csproj"
+        ];
+
+        foreach (string deferredSplitFile in deferredSplitFiles)
+        {
+            Assert.Contains($"- [ ] `{deferredSplitFile}` — optional future package split, deferred until real split work.", roadmap, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("Section summary: Platform contracts and boundary tests are complete; package split project files stay deferred until real split work exists.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Platform services expose clipboard, cursor, dialogs, text input, DPI, and accessibility seams without backend dependencies.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] MonoGame host integration remains adapter-scoped under `UI/Hosting/MonoGame/`.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Optional package split project files are intentionally deferred and not claimed as implemented.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Full project tests pass for this phase.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] 24. Decide package/platform split.", roadmap, StringComparison.Ordinal);
+    }
+
     private static string FindRepositoryPath(params string[] segments)
     {
         string repositoryRoot = FindRepositoryRoot();
