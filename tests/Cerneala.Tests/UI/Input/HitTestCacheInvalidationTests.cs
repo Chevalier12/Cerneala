@@ -77,11 +77,15 @@ public sealed class HitTestCacheInvalidationTests
         root.ProcessFrame();
         ElementInputBridge bridge = new();
         root.InputCache.EnsureCurrent(root);
+        int rebuildsAfterInitialBuild = root.InputCache.RebuildCount;
+        ElementInputRouteMap firstMap = root.InputCache.RouteMap;
         bridge.PointerCaptureManager.Capture(captured, root.InputCache.RouteMap);
 
         root.VisualChildren.Remove(captured);
         bridge.Dispatch(root, PointerFrame(60, 10));
 
+        Assert.Equal(rebuildsAfterInitialBuild + 1, root.InputCache.RebuildCount);
+        Assert.NotSame(firstMap, root.InputCache.RouteMap);
         Assert.False(bridge.PointerCaptureManager.HasCapture);
     }
 

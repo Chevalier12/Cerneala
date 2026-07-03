@@ -16,6 +16,8 @@ public sealed class ElementInputCacheInvalidationTests
         int rebuildsAfterFirstDispatch = root.InputCache.RebuildCount;
         ElementInputRouteMap firstMap = root.InputCache.RouteMap;
 
+        Assert.Equal(1, rebuildsAfterFirstDispatch);
+
         bridge.Dispatch(root, PointerFrame(11, 10));
 
         Assert.Same(firstMap, root.InputCache.RouteMap);
