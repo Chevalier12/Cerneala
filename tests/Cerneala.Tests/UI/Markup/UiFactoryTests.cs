@@ -110,7 +110,7 @@ public sealed class UiFactoryTests
         UiMarkupDocument document = Read("<Border Background=\"255,255,255\" />");
         UiFactory factory = new(UiMarkupSchema.CreateDefault());
         Border border = Assert.IsType<Border>(factory.Create(document).Value);
-        UIRoot root = new();
+        UIRoot root = new(10, 10);
         root.VisualChildren.Add(border);
         border.Arrange(new ArrangeContext(new LayoutRect(0, 0, 10, 10)));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");

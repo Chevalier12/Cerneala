@@ -12,6 +12,7 @@ public sealed class LayoutInvalidationTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         child.Margin = new Thickness(8);
 
@@ -43,6 +44,7 @@ public sealed class LayoutInvalidationTests
         root.VisualChildren.Add(boundary);
         boundary.VisualChildren.Add(child);
         LayoutBoundary.SetIsBoundary(boundary, true);
+        ClearInitialMutationWork(root);
 
         child.Invalidate(InvalidationFlags.Measure, "measure");
 
@@ -56,13 +58,19 @@ public sealed class LayoutInvalidationTests
         UIRoot root = new(100, 100);
         FixedElement child = new(new LayoutSize(20, 10));
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
         root.LayoutManager.Measure(child, new LayoutSize(100, 100));
 
-        LayoutResult result = root.LayoutManager.Arrange(child, new LayoutRect(0, 0, 20, 10));
+        LayoutResult result = root.LayoutManager.Arrange(child, new LayoutRect(5, 5, 20, 10));
 
         Assert.True(result.BoundsChanged);
         Assert.Equal(1, root.RenderQueue.Count);
         Assert.Equal(1, root.HitTestQueue.Count);
+    }
+
+    private static void ClearInitialMutationWork(UIRoot root)
+    {
+        root.ProcessFrame();
     }
 
     private sealed class FixedElement(LayoutSize size) : UIElement

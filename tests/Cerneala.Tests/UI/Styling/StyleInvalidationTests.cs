@@ -31,6 +31,7 @@ public sealed class StyleInvalidationTests
         UIRoot root = new(100, 100);
         Button button = new();
         root.VisualChildren.Add(button);
+        root.ProcessFrame();
         StyleSheet sheet = new StyleSheet().Add(new StyleRule(StyleSelector.ForType<Button>())
             .Add(new Setter<DrawColor>(Control.BackgroundProperty, DrawColor.White)));
 

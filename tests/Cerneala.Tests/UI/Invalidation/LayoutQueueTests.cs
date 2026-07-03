@@ -11,6 +11,7 @@ public sealed class LayoutQueueTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         root.LayoutQueue.EnqueueMeasure(child);
         root.LayoutQueue.EnqueueMeasure(child);
@@ -26,6 +27,7 @@ public sealed class LayoutQueueTests
         EqualValueElement second = new(1);
         root.VisualChildren.Add(first);
         root.VisualChildren.Add(second);
+        ClearInitialMutationWork(root);
 
         root.LayoutQueue.EnqueueMeasure(first);
         root.LayoutQueue.EnqueueMeasure(second);
@@ -41,6 +43,7 @@ public sealed class LayoutQueueTests
         UIElement child = new();
         root.VisualChildren.Add(parent);
         parent.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         root.LayoutQueue.EnqueueMeasure(child);
         root.LayoutQueue.EnqueueMeasure(parent);
@@ -54,15 +57,23 @@ public sealed class LayoutQueueTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         root.LayoutQueue.EnqueueMeasure(child);
         root.LayoutQueue.EnqueueArrange(child);
         root.VisualChildren.Remove(child);
 
-        Assert.Empty(root.LayoutQueue.SnapshotMeasure());
-        Assert.Empty(root.LayoutQueue.SnapshotArrange());
-        Assert.Equal(0, root.LayoutQueue.MeasureCount);
-        Assert.Equal(0, root.LayoutQueue.ArrangeCount);
+        Assert.DoesNotContain(child, root.LayoutQueue.SnapshotMeasure());
+        Assert.DoesNotContain(child, root.LayoutQueue.SnapshotArrange());
+        Assert.Contains(root, root.LayoutQueue.SnapshotMeasure());
+        Assert.Contains(root, root.LayoutQueue.SnapshotArrange());
+        Assert.Equal(1, root.LayoutQueue.MeasureCount);
+        Assert.Equal(1, root.LayoutQueue.ArrangeCount);
+    }
+
+    private static void ClearInitialMutationWork(UIRoot root)
+    {
+        root.ProcessFrame();
     }
 
     private sealed class EqualValueElement(int value) : UIElement

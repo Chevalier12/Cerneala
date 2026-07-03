@@ -12,12 +12,14 @@ public sealed class RenderQueueProcessorTests
         UIRoot root = new();
         RenderingTestElement child = new(DrawColor.White);
         root.VisualChildren.Add(child);
+        root.ProcessFrame();
+        int renderCountAfterInitialFrame = child.RenderCount;
 
         child.Invalidate(InvalidationFlags.Render, "test");
         FrameStats stats = root.ProcessFrame();
 
         Assert.Equal(1, stats.RenderedElements);
-        Assert.Equal(1, child.RenderCount);
+        Assert.Equal(renderCountAfterInitialFrame + 1, child.RenderCount);
         Assert.True(root.RetainedRenderCache.GetElementCache(child).IsValid);
     }
 
@@ -41,6 +43,7 @@ public sealed class RenderQueueProcessorTests
         UIRoot root = new();
         RenderingTestElement child = new(DrawColor.White);
         root.VisualChildren.Add(child);
+        root.ProcessFrame();
 
         child.Invalidate(InvalidationFlags.Render, "test");
         FrameStats stats = root.ProcessFrame();

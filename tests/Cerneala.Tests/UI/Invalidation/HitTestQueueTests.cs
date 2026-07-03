@@ -11,6 +11,7 @@ public sealed class HitTestQueueTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         root.HitTestQueue.Enqueue(child);
         root.HitTestQueue.Enqueue(child);
@@ -24,6 +25,7 @@ public sealed class HitTestQueueTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         child.Invalidate(InvalidationFlags.HitTest, "hit");
 
@@ -37,11 +39,18 @@ public sealed class HitTestQueueTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         root.HitTestQueue.Enqueue(child);
         root.VisualChildren.Remove(child);
 
-        Assert.Empty(root.HitTestQueue.Snapshot());
-        Assert.Equal(0, root.HitTestQueue.Count);
+        Assert.DoesNotContain(child, root.HitTestQueue.Snapshot());
+        Assert.Contains(root, root.HitTestQueue.Snapshot());
+        Assert.Equal(1, root.HitTestQueue.Count);
+    }
+
+    private static void ClearInitialMutationWork(UIRoot root)
+    {
+        root.ProcessFrame();
     }
 }

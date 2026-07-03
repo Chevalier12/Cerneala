@@ -13,6 +13,7 @@ public sealed class DirtyPropagationTests
         UIElement child = new();
         root.VisualChildren.Add(parent);
         parent.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         child.Invalidate(InvalidationFlags.Measure, "measure");
 
@@ -30,6 +31,7 @@ public sealed class DirtyPropagationTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         child.Invalidate(InvalidationFlags.Arrange, "arrange");
 
@@ -45,6 +47,7 @@ public sealed class DirtyPropagationTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         child.Invalidate(InvalidationFlags.Render, "render");
 
@@ -59,6 +62,7 @@ public sealed class DirtyPropagationTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         child.Invalidate(InvalidationFlags.Text, "text");
 
@@ -73,6 +77,7 @@ public sealed class DirtyPropagationTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
         InvalidationRequest request = new(child, InvalidationFlags.Image, "image", affectsIntrinsicSize: false);
 
         child.Invalidate(request);
@@ -87,6 +92,7 @@ public sealed class DirtyPropagationTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
         InvalidationRequest request = new(
             child,
             InvalidationFlags.Resource,
@@ -105,6 +111,7 @@ public sealed class DirtyPropagationTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         child.Invalidate(InvalidationFlags.InputVisual, "input visual");
 
@@ -120,6 +127,7 @@ public sealed class DirtyPropagationTests
         UIElement child = new();
         root.VisualChildren.Add(parent);
         parent.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         parent.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "subtree render");
 
@@ -139,6 +147,7 @@ public sealed class DirtyPropagationTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
         InvalidationRequest request = new(
             child,
             InvalidationFlags.Resource,
@@ -153,5 +162,10 @@ public sealed class DirtyPropagationTests
         root.ProcessFrame();
 
         Assert.False(child.DirtyState.IsDirty);
+    }
+
+    private static void ClearInitialMutationWork(UIRoot root)
+    {
+        root.ProcessFrame();
     }
 }

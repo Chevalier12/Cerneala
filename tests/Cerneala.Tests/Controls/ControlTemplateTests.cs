@@ -116,7 +116,7 @@ public sealed class ControlTemplateTests
     [Fact]
     public void TemplateReplacementQueuesRetainedInvalidationAndSameTemplateDoesNotDuplicateWork()
     {
-        UIRoot root = new(100, 100);
+        UIRoot root = new(40, 20);
         Control control = new();
         root.VisualChildren.Add(control);
         ControlTemplate<Control> template = new(_ => new UIElement());
@@ -141,7 +141,7 @@ public sealed class ControlTemplateTests
     [Fact]
     public void TemplateRootAttachesToExistingRootAndKeepsStableIdentity()
     {
-        UIRoot root = new(100, 100);
+        UIRoot root = new(40, 20);
         Control control = new();
         root.VisualChildren.Add(control);
         LifecycleElement child = new();
@@ -158,7 +158,7 @@ public sealed class ControlTemplateTests
     [Fact]
     public void TemplateChildParticipatesInLayoutRenderingHitTestingInputAndStyling()
     {
-        UIRoot root = new(100, 100);
+        UIRoot root = new(40, 20);
         Control control = new()
         {
             Template = new ControlTemplate<Control>(_ => new RenderableElement(DrawColor.White))

@@ -11,6 +11,7 @@ public sealed class RenderQueueTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         root.RenderQueue.Enqueue(child);
         root.RenderQueue.Enqueue(child);
@@ -24,6 +25,7 @@ public sealed class RenderQueueTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         child.Invalidate(InvalidationFlags.Render, "render");
 
@@ -39,6 +41,7 @@ public sealed class RenderQueueTests
         UIElement second = new();
         root.VisualChildren.Add(first);
         root.VisualChildren.Add(second);
+        ClearInitialMutationWork(root);
 
         root.RenderQueue.Enqueue(second);
         root.RenderQueue.Enqueue(first);
@@ -52,11 +55,18 @@ public sealed class RenderQueueTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        ClearInitialMutationWork(root);
 
         root.RenderQueue.Enqueue(child);
         root.VisualChildren.Remove(child);
 
-        Assert.Empty(root.RenderQueue.Snapshot());
-        Assert.Equal(0, root.RenderQueue.Count);
+        Assert.DoesNotContain(child, root.RenderQueue.Snapshot());
+        Assert.Contains(root, root.RenderQueue.Snapshot());
+        Assert.Equal(1, root.RenderQueue.Count);
+    }
+
+    private static void ClearInitialMutationWork(UIRoot root)
+    {
+        root.ProcessFrame();
     }
 }

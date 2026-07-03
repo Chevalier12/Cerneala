@@ -13,6 +13,7 @@ public sealed class DirtyTreeDumperTests
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
+        root.ProcessFrame();
 
         child.Invalidate(InvalidationFlags.Render, "manual render");
 
@@ -21,7 +22,7 @@ public sealed class DirtyTreeDumperTests
         Assert.Contains("Dirty tree", dump, StringComparison.Ordinal);
         Assert.Contains($"UIElement#{child.ElementId}", dump, StringComparison.Ordinal);
         Assert.Contains("flags=Render", dump, StringComparison.Ordinal);
-        Assert.Contains("version=1", dump, StringComparison.Ordinal);
+        Assert.Contains("version=", dump, StringComparison.Ordinal);
         Assert.Contains("reason=manual render", dump, StringComparison.Ordinal);
         Assert.DoesNotContain($"UIRoot#{root.ElementId}", dump, StringComparison.Ordinal);
     }

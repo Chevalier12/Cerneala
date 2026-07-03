@@ -29,15 +29,18 @@ public sealed class RetainedRendererTests
         RenderingTestElement second = new(DrawColor.Black);
         root.VisualChildren.Add(first);
         root.VisualChildren.Add(second);
+        root.ProcessFrame();
         PrepareSubtree(root);
         root.RetainedRenderer.Commit(root);
+        int firstRenderCountAfterPrepare = first.RenderCount;
+        int secondRenderCountAfterPrepare = second.RenderCount;
 
         first.Invalidate(InvalidationFlags.Render, "test");
         root.ProcessFrame();
         root.RetainedRenderer.Commit(root);
 
-        Assert.Equal(2, first.RenderCount);
-        Assert.Equal(1, second.RenderCount);
+        Assert.Equal(firstRenderCountAfterPrepare + 1, first.RenderCount);
+        Assert.Equal(secondRenderCountAfterPrepare, second.RenderCount);
     }
 
     [Fact]
@@ -61,6 +64,7 @@ public sealed class RetainedRendererTests
         UIRoot root = new();
         RenderingTestElement child = new(DrawColor.White);
         root.VisualChildren.Add(child);
+        root.ProcessFrame();
         PrepareSubtree(root);
         root.RetainedRenderer.Commit(root);
 

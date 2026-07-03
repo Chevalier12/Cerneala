@@ -45,7 +45,7 @@ public sealed class InvalidationTraceTests
         child.Invalidate(InvalidationFlags.Render, "render");
         InvalidationTraceEntry requestEntry = Assert.Single(
             root.Trace.Entries,
-            entry => entry.Kind == InvalidationTraceEventKind.Request);
+            entry => entry.Kind == InvalidationTraceEventKind.Request && entry.Reason == "render");
 
         root.VisualChildren.Remove(child);
 
