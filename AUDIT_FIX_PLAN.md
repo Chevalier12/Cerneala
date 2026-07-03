@@ -56,6 +56,8 @@ Goal: retained systems are owned by the frame scheduler/root, not side services 
 
 ### Plan 3: `integrate-style-phase`
 
+Detailed plan: `docs/superpowers/plans/2026-07-03-integrate-style-phase.md`
+
 - [ ] Map `UiPropertyOptions.AffectsStyle` to `InvalidationFlags.Style`, not `Render`.
 - [ ] Add scheduler-owned style processing before measure/arrange/render.
 - [ ] Decide whether style work uses `StyleQueue` or a typed style processor over dirty elements.
