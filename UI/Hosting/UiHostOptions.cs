@@ -14,4 +14,6 @@ public sealed class UiHostOptions
     public IUiBackend? Backend { get; set; }
 
     public IUiClock? Clock { get; set; }
+
+    public ElementInputBridge? InputBridge { get; set; }
 }

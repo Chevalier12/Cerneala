@@ -19,6 +19,7 @@ public sealed class UiHost
         InputSource = options.InputSource;
         Backend = options.Backend;
         Clock = options.Clock;
+        InputBridge = options.InputBridge ?? new ElementInputBridge();
 
         if (root is not null)
         {
@@ -33,6 +34,8 @@ public sealed class UiHost
     public IUiBackend? Backend { get; set; }
 
     public IUiClock? Clock { get; set; }
+
+    public ElementInputBridge InputBridge { get; }
 
     public UiViewport Viewport => viewport;
 
@@ -60,6 +63,7 @@ public sealed class UiHost
         UiViewport currentViewport = viewport ?? this.viewport;
         ApplyViewportIfChanged(currentRoot, currentViewport);
         PrimeInitialFrame(currentRoot);
+        InputBridge.Dispatch(currentRoot, inputFrame);
 
         FrameStats stats = currentRoot.ProcessFrame();
         currentRoot.RetainedRenderer.Render(currentRoot);

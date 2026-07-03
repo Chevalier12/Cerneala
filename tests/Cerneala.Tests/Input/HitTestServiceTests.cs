@@ -1,0 +1,95 @@
+using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
+using Cerneala.UI.Layout;
+
+namespace Cerneala.Tests.Input;
+
+public sealed class HitTestServiceTests
+{
+    [Fact]
+    public void TopmostVisualChildWins()
+    {
+        UIRoot root = new(100, 100);
+        UIElement bottom = Arranged(0, 0, 50, 50);
+        UIElement top = Arranged(0, 0, 50, 50);
+        root.VisualChildren.Add(bottom);
+        root.VisualChildren.Add(top);
+
+        HitTestResult? result = new HitTestService().HitTest(root, 10, 10);
+
+        Assert.Same(top, result!.Element);
+    }
+
+    [Fact]
+    public void RootViewportBoundsAreHitWhenNoChildContainsPoint()
+    {
+        UIRoot root = new(100, 100);
+
+        HitTestResult? result = new HitTestService().HitTest(root, 10, 10);
+
+        Assert.Same(root, result!.Element);
+    }
+
+    [Fact]
+    public void DescendantOutsideParentBoundsIsSkipped()
+    {
+        UIRoot root = new(100, 100);
+        UIElement parent = Arranged(0, 0, 20, 20);
+        UIElement child = Arranged(40, 40, 10, 10);
+        UIElement fallback = Arranged(40, 40, 10, 10);
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(fallback);
+        root.VisualChildren.Add(parent);
+
+        HitTestResult? result = new HitTestService().HitTest(root, 45, 45);
+
+        Assert.Same(fallback, result!.Element);
+    }
+
+    [Fact]
+    public void InvisibleCollapsedAndDisabledElementsAreSkipped()
+    {
+        UIRoot root = new(100, 100);
+        UIElement invisible = Arranged(0, 0, 50, 50);
+        UIElement collapsed = Arranged(0, 0, 50, 50);
+        UIElement disabled = Arranged(0, 0, 50, 50);
+        UIElement target = Arranged(0, 0, 50, 50);
+        invisible.IsVisible = false;
+        collapsed.Visibility = Visibility.Collapsed;
+        disabled.IsEnabled = false;
+        root.VisualChildren.Add(target);
+        root.VisualChildren.Add(disabled);
+        root.VisualChildren.Add(collapsed);
+        root.VisualChildren.Add(invisible);
+
+        HitTestResult? result = new HitTestService().HitTest(root, 10, 10);
+
+        Assert.Same(target, result!.Element);
+    }
+
+    [Fact]
+    public void FilterCanRejectSubtree()
+    {
+        UIRoot root = new(100, 100);
+        UIElement parent = Arranged(0, 0, 50, 50);
+        UIElement child = Arranged(0, 0, 50, 50);
+        UIElement sibling = Arranged(0, 0, 50, 50);
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(sibling);
+        root.VisualChildren.Add(parent);
+        HitTestFilter filter = new(element => ReferenceEquals(element, parent)
+            ? HitTestFilterBehavior.ExcludeSubtree
+            : HitTestFilterBehavior.Include);
+
+        HitTestResult? result = new HitTestService().HitTest(root, 10, 10, filter);
+
+        Assert.Same(sibling, result!.Element);
+    }
+
+    internal static UIElement Arranged(float x, float y, float width, float height)
+    {
+        UIElement element = new();
+        element.Arrange(new ArrangeContext(new LayoutRect(x, y, width, height)));
+        return element;
+    }
+}

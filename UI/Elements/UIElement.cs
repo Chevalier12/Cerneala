@@ -40,6 +40,21 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
             Visibility.Visible,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest));
 
+    public static readonly UiProperty<bool> IsPointerOverProperty = UiProperty<bool>.Register(
+        nameof(IsPointerOver),
+        typeof(UIElement),
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+
+    public static readonly UiProperty<bool> IsKeyboardFocusedProperty = UiProperty<bool>.Register(
+        nameof(IsKeyboardFocused),
+        typeof(UIElement),
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+
+    public static readonly UiProperty<bool> IsKeyboardFocusWithinProperty = UiProperty<bool>.Register(
+        nameof(IsKeyboardFocusWithin),
+        typeof(UIElement),
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+
     public UIElement()
     {
         LogicalChildren = new UIElementCollection(this, ElementChildRole.Logical);
@@ -118,6 +133,24 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     {
         get => GetValue(VisibilityProperty);
         set => SetValue(VisibilityProperty, value);
+    }
+
+    public bool IsPointerOver
+    {
+        get => GetValue(IsPointerOverProperty);
+        set => SetValue(IsPointerOverProperty, value);
+    }
+
+    public bool IsKeyboardFocused
+    {
+        get => GetValue(IsKeyboardFocusedProperty);
+        set => SetValue(IsKeyboardFocusedProperty, value);
+    }
+
+    public bool IsKeyboardFocusWithin
+    {
+        get => GetValue(IsKeyboardFocusWithinProperty);
+        set => SetValue(IsKeyboardFocusWithinProperty, value);
     }
 
     internal bool HasAttachedParent =>

@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
+using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
 
@@ -61,6 +62,20 @@ public sealed class UiHostFrameContractTests
     }
 
     [Fact]
+    public void InputVisualInvalidationIsProcessedInSameUpdateFrame()
+    {
+        UiHost host = HostWithRenderableRoot(out _, out RenderCountingElement child);
+        host.Update(PointerFrame(50, 50), new UiViewport(100, 100), TimeSpan.Zero);
+        int renderCountAfterInitialFrame = child.RenderCount;
+
+        UiFrame hoverFrame = host.Update(PointerFrame(50, 50, 5, 5), new UiViewport(100, 100), TimeSpan.Zero);
+
+        Assert.True(child.IsPointerOver);
+        Assert.True(hoverFrame.Stats.RenderedElements > 0);
+        Assert.True(child.RenderCount > renderCountAfterInitialFrame);
+    }
+
+    [Fact]
     public void DrawSubmitsCachedCommandsWithoutReRendering()
     {
         UiHost host = HostWithRenderableRoot(out _, out RenderCountingElement child);
@@ -97,6 +112,18 @@ public sealed class UiHostFrameContractTests
         child = new RenderCountingElement();
         root.VisualChildren.Add(child);
         return new UiHost(new UiHostOptions { Root = root });
+    }
+
+    private static InputFrame PointerFrame(float previousX, float previousY, float currentX, float currentY)
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(previousX, previousY);
+        PointerSnapshot current = PointerSnapshot.Empty.WithPosition(currentX, currentY);
+        return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    private static InputFrame PointerFrame(float x, float y)
+    {
+        return PointerFrame(x, y, x, y);
     }
 
     private sealed class RenderCountingElement : UIElement

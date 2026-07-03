@@ -2,6 +2,18 @@ namespace Cerneala.UI.Input;
 
 public static class RoutedEventRouter
 {
+    public static void RaisePair(UiInputTree tree, UiElementId targetId, RoutedEventArgs previewArgs, RoutedEventArgs bubbleArgs)
+    {
+        ArgumentNullException.ThrowIfNull(previewArgs);
+        ArgumentNullException.ThrowIfNull(bubbleArgs);
+
+        Raise(tree, targetId, previewArgs);
+        if (!previewArgs.Handled)
+        {
+            Raise(tree, targetId, bubbleArgs);
+        }
+    }
+
     public static void Raise(UiInputTree tree, UiElementId targetId, RoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(tree);

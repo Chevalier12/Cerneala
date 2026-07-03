@@ -76,6 +76,19 @@ public sealed class UiHostTests
     }
 
     [Fact]
+    public void OptionsCanProvideInputBridge()
+    {
+        ElementInputBridge inputBridge = new();
+        UiHost host = new(new UiHostOptions
+        {
+            Root = new UIRoot(),
+            InputBridge = inputBridge
+        });
+
+        Assert.Same(inputBridge, host.InputBridge);
+    }
+
+    [Fact]
     public void MissingRootFailsBeforeUpdateWork()
     {
         UiHost host = new(new UiHostOptions { InputSource = new FakeInputSource() });

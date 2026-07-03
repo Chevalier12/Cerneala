@@ -500,52 +500,52 @@ Tests:
 
 This phase turns existing input snapshots and routed events into retained-control behavior. It should reuse `InputFrame`, `UiInputTree`, `RoutedEventRouter`, and WPF-familiar event names instead of replacing them.
 
-- [ ] `UI/Input/ElementInputBridge.cs` — converts `InputFrame` transitions into routed events against retained elements.
-- [ ] `UI/Input/HitTestService.cs` — hit tests retained layout/render bounds.
-- [ ] `UI/Input/HitTestResult.cs`
-- [ ] `UI/Input/HitTestFilter.cs`
-- [ ] `UI/Input/PointerCaptureManager.cs`
-- [ ] `UI/Input/HoverTracker.cs` — drives `IsPointerOver` and render invalidation.
-- [ ] `UI/Input/PressedStateTracker.cs` — drives button pressed state and click synthesis.
-- [ ] `UI/Input/ClickTracker.cs`
-- [ ] `UI/Input/FocusManager.cs` — explicit focus service, not a global static dependency.
-- [ ] `UI/Input/FocusScope.cs` — Core if MVP does not need nested scopes.
-- [ ] `UI/Input/KeyboardNavigation.cs` — Core if MVP only supports direct focus.
-- [ ] `UI/Input/TextInputBridge.cs` — maps `TextInputSnapshotEvent` to preview/bubble text events.
-- [ ] `UI/Input/ElementRoutedEventStore.cs` — handler storage attached to `UIElement`.
-- [~] `UI/Input/RoutedEventRouter.cs` — keep routing core; add retained-tree bridge rather than duplicating route logic.
+- [x] `UI/Input/ElementInputBridge.cs` — converts `InputFrame` transitions into routed events against retained elements.
+- [x] `UI/Input/HitTestService.cs` — hit tests retained layout/render bounds.
+- [x] `UI/Input/HitTestResult.cs`
+- [x] `UI/Input/HitTestFilter.cs`
+- [x] `UI/Input/PointerCaptureManager.cs`
+- [x] `UI/Input/HoverTracker.cs` — drives `IsPointerOver` and render invalidation.
+- [x] `UI/Input/PressedStateTracker.cs` — drives button pressed state and click synthesis.
+- [x] `UI/Input/ClickTracker.cs`
+- [x] `UI/Input/FocusManager.cs` — explicit focus service, not a global static dependency.
+- [x] `UI/Input/FocusScope.cs` — Core if MVP does not need nested scopes.
+- [x] `UI/Input/KeyboardNavigation.cs` — Core if MVP only supports direct focus.
+- [x] `UI/Input/TextInputBridge.cs` — maps `TextInputSnapshotEvent` to preview/bubble text events.
+- [x] `UI/Input/ElementRoutedEventStore.cs` — handler storage attached to `UIElement`.
+- [x] `UI/Input/RoutedEventRouter.cs` — keep routing core; add retained-tree bridge rather than duplicating route logic.
 - [~] `UI/Input/InputEvents.cs` — use existing mouse/key/text events first; stylus/touch/drag metadata remains later behavior.
 
 Visual state properties:
 
-- [ ] `UI/Elements/UIElement.IsEnabledProperty`
-- [ ] `UI/Elements/UIElement.IsVisibleProperty`
-- [ ] `UI/Elements/UIElement.IsPointerOverProperty`
-- [ ] `UI/Elements/UIElement.IsKeyboardFocusWithinProperty`
-- [ ] `UI/Elements/UIElement.IsKeyboardFocusedProperty`
-- [ ] `UI/Controls/Primitives/ButtonBase.IsPressedProperty`
+- [x] `UI/Elements/UIElement.IsEnabledProperty`
+- [x] `UI/Elements/UIElement.IsVisibleProperty`
+- [x] `UI/Elements/UIElement.IsPointerOverProperty`
+- [x] `UI/Elements/UIElement.IsKeyboardFocusWithinProperty`
+- [x] `UI/Elements/UIElement.IsKeyboardFocusedProperty`
+- [x] `UI/Controls/Primitives/ButtonBase.IsPressedProperty`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/Input/ElementInputBridgeTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/HitTestServiceTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/PointerCaptureManagerTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/HoverTrackerTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/PressedStateTrackerTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/ClickTrackerTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/FocusManagerTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/TextInputBridgeTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/RetainedRoutedEventIntegrationTests.cs`
+- [x] `tests/Cerneala.Tests/Input/ElementInputBridgeTests.cs`
+- [x] `tests/Cerneala.Tests/Input/HitTestServiceTests.cs`
+- [x] `tests/Cerneala.Tests/Input/PointerCaptureManagerTests.cs`
+- [x] `tests/Cerneala.Tests/Input/HoverTrackerTests.cs`
+- [x] `tests/Cerneala.Tests/Input/PressedStateTrackerTests.cs`
+- [x] `tests/Cerneala.Tests/Input/ClickTrackerTests.cs`
+- [x] `tests/Cerneala.Tests/Input/FocusManagerTests.cs`
+- [x] `tests/Cerneala.Tests/Input/TextInputBridgeTests.cs`
+- [x] `tests/Cerneala.Tests/Input/RetainedRoutedEventIntegrationTests.cs`
 
 Acceptance checklist:
 
-- [ ] Mouse down raises preview then bubble events on the hit-tested retained element.
-- [ ] Mouse move updates hover state and invalidates render only when hover target changes.
-- [ ] Disabled elements do not receive input handlers.
-- [ ] Keyboard events target focused element.
-- [ ] Focus change raises existing focus routed events.
-- [ ] Text input uses `TextInputSnapshotEvent` and existing text routed event args.
-- [ ] Input routing parent chain matches retained tree parent chain.
+- [x] Mouse down raises preview then bubble events on the hit-tested retained element.
+- [x] Mouse move updates hover state and invalidates render only when hover target changes.
+- [x] Disabled elements do not receive input handlers.
+- [x] Keyboard events target focused element.
+- [x] Focus change raises existing focus routed events.
+- [x] Text input uses `TextInputSnapshotEvent` and existing text routed event args.
+- [x] Input routing parent chain matches retained tree parent chain.
 
 ## 9. [MVP] Commands and actions
 
@@ -1129,7 +1129,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [ ] 5. Add layout primitives, `LayoutManager`, `Panel`, `Canvas`, `StackPanel`, and layout cache tests.
 - [ ] 6. Add `RenderContext`, `ElementRenderCache`, `RetainedRenderer`, root command-list cache, and retained render tests.
 - [x] 7. Add `UiHost` and `MonoGameUiHost` so update/draw uses retained frame scheduling.
-- [ ] 8. Add hit testing, `ElementInputBridge`, hover/pressed state tracking, and focus manager MVP.
+- [x] 8. Add hit testing, `ElementInputBridge`, hover/pressed state tracking, and focus manager MVP.
 - [ ] 9. Add `CommandRouter`, `ActionCommand`, `ButtonBase.Command`, and command route tests.
 - [ ] 10. Add `Control`, `Border`, `TextBlock`, `Button`, first panels, and acceptance tests.
 - [ ] 11. Add text measurement/layout cache services above existing Skia/HarfBuzz text pipeline.
