@@ -57,6 +57,24 @@ public sealed class ElementInputCacheInvalidationTests
     }
 
     [Fact]
+    public void HandlerRemovedAfterCacheBuildInvalidatesRouteMap()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        ElementInputBridge bridge = new();
+        int calls = 0;
+        RoutedEventHandler handler = (_, _) => calls++;
+        child.Handlers.AddHandler(InputEvents.MouseDownEvent, handler);
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+        int rebuildsAfterFirstDispatch = root.InputCache.RebuildCount;
+
+        Assert.True(child.Handlers.RemoveHandler(InputEvents.MouseDownEvent, handler));
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+
+        Assert.Equal(1, calls);
+        Assert.Equal(rebuildsAfterFirstDispatch + 1, root.InputCache.RebuildCount);
+    }
+
+    [Fact]
     public void HitTestPhaseRebuildsDirtyInputCacheBeforeNoWorkFrames()
     {
         UIRoot root = RootWithChildAfterFrame(out UIElement child);

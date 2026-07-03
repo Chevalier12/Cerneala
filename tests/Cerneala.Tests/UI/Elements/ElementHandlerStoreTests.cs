@@ -13,7 +13,7 @@ public sealed class ElementHandlerStoreTests
             typeof(ElementHandlerStoreTests),
             RoutingStrategy.Bubble,
             typeof(RoutedEventArgs));
-        ElementHandlerStore store = new();
+        ElementHandlerStore store = new UIElement().Handlers;
         RoutedEventHandler handler = (_, _) => { };
 
         store.AddHandler(routedEvent, handler);
@@ -29,7 +29,7 @@ public sealed class ElementHandlerStoreTests
             typeof(ElementHandlerStoreTests),
             RoutingStrategy.Bubble,
             typeof(RoutedEventArgs));
-        ElementHandlerStore store = new();
+        ElementHandlerStore store = new UIElement().Handlers;
         RoutedEventHandler handler = (_, _) => { };
         store.AddHandler(routedEvent, handler);
 

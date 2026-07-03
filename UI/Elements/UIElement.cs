@@ -59,6 +59,7 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     {
         LogicalChildren = new UIElementCollection(this, ElementChildRole.Logical);
         VisualChildren = new UIElementCollection(this, ElementChildRole.Visual);
+        Handlers = new ElementHandlerStore(this);
     }
 
     public UIElement? LogicalParent { get; private set; }
@@ -75,7 +76,7 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
     public UiElementId? ElementId { get; private set; }
 
-    public ElementHandlerStore Handlers { get; } = new();
+    public ElementHandlerStore Handlers { get; }
 
     public CommandBindingCollection CommandBindings { get; } = new();
 
