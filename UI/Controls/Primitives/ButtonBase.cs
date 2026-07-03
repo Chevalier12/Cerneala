@@ -9,7 +9,7 @@ public class ButtonBase : Control
     public static readonly UiProperty<bool> IsPressedProperty = UiProperty<bool>.Register(
         nameof(IsPressed),
         typeof(ButtonBase),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
 
     public static readonly UiProperty<ICommand?> CommandProperty = UiProperty<ICommand?>.Register(
         nameof(Command),

@@ -11,7 +11,7 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     public static readonly UiProperty<bool> IsEnabledProperty = UiProperty<bool>.Register(
         nameof(IsEnabled),
         typeof(UIElement),
-        new UiPropertyMetadata<bool>(true, UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<bool>(true, UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
 
     public static readonly UiProperty<bool> IsVisibleProperty = UiProperty<bool>.Register(
         nameof(IsVisible),
@@ -43,17 +43,17 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     public static readonly UiProperty<bool> IsPointerOverProperty = UiProperty<bool>.Register(
         nameof(IsPointerOver),
         typeof(UIElement),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
 
     public static readonly UiProperty<bool> IsKeyboardFocusedProperty = UiProperty<bool>.Register(
         nameof(IsKeyboardFocused),
         typeof(UIElement),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
 
     public static readonly UiProperty<bool> IsKeyboardFocusWithinProperty = UiProperty<bool>.Register(
         nameof(IsKeyboardFocusWithin),
         typeof(UIElement),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
 
     public UIElement()
     {
@@ -383,7 +383,7 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
         if (options.HasFlag(UiPropertyOptions.AffectsStyle))
         {
-            flags |= InvalidationFlags.Render;
+            flags |= InvalidationFlags.Style;
         }
 
         if (options.HasFlag(UiPropertyOptions.AffectsInputVisual))
