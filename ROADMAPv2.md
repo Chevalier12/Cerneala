@@ -467,34 +467,34 @@ Acceptance checklist:
 
 This phase gives applications a simple retained UI entry point that fits MonoGame's `Update`/`Draw` rhythm while keeping Cerneala backend-neutral above adapters.
 
-- [ ] `UI/Hosting/UiHost.cs` — owns root, frame scheduler, input bridge, layout manager, renderer, and services.
-- [ ] `UI/Hosting/UiHostOptions.cs`
-- [ ] `UI/Hosting/UiFrame.cs` — frame time, viewport, input frame, diagnostics.
-- [ ] `UI/Hosting/UiViewport.cs`
-- [ ] `UI/Hosting/IUiClock.cs`
-- [ ] `UI/Hosting/IUiBackend.cs` — backend-neutral host bridge for drawing/input adapters.
-- [ ] `UI/Hosting/MonoGame/MonoGameUiHost.cs` — adapter around `MonoGameInputSource` and `MonoGameDrawingBackend`.
-- [ ] `UI/Hosting/MonoGame/MonoGameUiHostOptions.cs`
-- [ ] `UI/Hosting/MonoGame/MonoGameContentServices.cs` — image/font service glue; no control should use MonoGame types directly.
-- [~] `Playground/Cerneala.Playground/Game1.cs` — update to create `MonoGameUiHost`, set a retained `UIRoot`, call `Update`, then call `Draw`.
+- [x] `UI/Hosting/UiHost.cs` — owns root, frame scheduler, input bridge, layout manager, renderer, and services.
+- [x] `UI/Hosting/UiHostOptions.cs`
+- [x] `UI/Hosting/UiFrame.cs` — frame time, viewport, input frame, diagnostics.
+- [x] `UI/Hosting/UiViewport.cs`
+- [x] `UI/Hosting/IUiClock.cs`
+- [x] `UI/Hosting/IUiBackend.cs` — backend-neutral host bridge for drawing/input adapters.
+- [x] `UI/Hosting/MonoGame/MonoGameUiHost.cs` — adapter around `MonoGameInputSource` and `MonoGameDrawingBackend`.
+- [x] `UI/Hosting/MonoGame/MonoGameUiHostOptions.cs`
+- [x] `UI/Hosting/MonoGame/MonoGameContentServices.cs` — image/font service glue; no control should use MonoGame types directly.
+- [x] `Playground/Cerneala.Playground/Game1.cs` — update to create `MonoGameUiHost`, set a retained `UIRoot`, call `Update`, then call `Draw`.
 
 Frame contract:
 
-- [ ] `UiHost.Update(frameTime)` reads or receives `InputFrame`, dispatches input, updates visual states, processes style/layout/render queues, and records frame stats.
-- [ ] `UiHost.Draw(IDrawingBackend backend)` renders the cached root `DrawCommandList` without forcing layout or render regeneration.
-- [ ] Viewport size changes invalidate root arrange and render.
-- [ ] First frame performs full measure, arrange, and render cache generation.
-- [ ] Later frames do no layout/render work unless invalidated.
+- [x] `UiHost.Update(frameTime)` reads or receives `InputFrame`, dispatches input, updates visual states, processes style/layout/render queues, and records frame stats.
+- [x] `UiHost.Draw(IDrawingBackend backend)` renders the cached root `DrawCommandList` without forcing layout or render regeneration.
+- [x] Viewport size changes invalidate root arrange and render.
+- [x] First frame performs full measure, arrange, and render cache generation.
+- [x] Later frames do no layout/render work unless invalidated.
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/UI/Hosting/UiHostTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Hosting/UiHostFrameContractTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Hosting/UiViewportTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Hosting/MonoGameUiHostBoundaryTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Hosting/FakeUiClock.cs`
-- [ ] `tests/Cerneala.Tests/UI/Hosting/FakeDrawingBackend.cs`
-- [ ] `tests/Cerneala.Tests/UI/Hosting/FakeInputSource.cs`
+- [x] `tests/Cerneala.Tests/UI/Hosting/UiHostTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Hosting/UiHostFrameContractTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Hosting/UiViewportTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Hosting/MonoGameUiHostBoundaryTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Hosting/FakeUiClock.cs`
+- [x] `tests/Cerneala.Tests/UI/Hosting/FakeDrawingBackend.cs`
+- [x] `tests/Cerneala.Tests/UI/Hosting/FakeInputSource.cs`
 
 ## 8. [MVP] Input bridge, hit testing, focus, and visual state
 
@@ -1128,7 +1128,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [ ] 4. Add `InvalidationFlags`, dirty propagation, `LayoutQueue`, `RenderQueue`, `UiFrameScheduler`, and no-work-frame tests.
 - [ ] 5. Add layout primitives, `LayoutManager`, `Panel`, `Canvas`, `StackPanel`, and layout cache tests.
 - [ ] 6. Add `RenderContext`, `ElementRenderCache`, `RetainedRenderer`, root command-list cache, and retained render tests.
-- [ ] 7. Add `UiHost` and `MonoGameUiHost` so update/draw uses retained frame scheduling.
+- [x] 7. Add `UiHost` and `MonoGameUiHost` so update/draw uses retained frame scheduling.
 - [ ] 8. Add hit testing, `ElementInputBridge`, hover/pressed state tracking, and focus manager MVP.
 - [ ] 9. Add `CommandRouter`, `ActionCommand`, `ButtonBase.Command`, and command route tests.
 - [ ] 10. Add `Control`, `Border`, `TextBlock`, `Button`, first panels, and acceptance tests.
@@ -1210,7 +1210,7 @@ These are explicit decision points to resolve before or during implementation. R
 
 MVP is complete when Cerneala can run a retained UI sample inside the MonoGame playground with deterministic tests proving invalidation-driven behavior.
 
-- [ ] `MonoGameUiHost` exists and is used by `Playground/Cerneala.Playground/Game1.cs`.
+- [x] `MonoGameUiHost` exists and is used by `Playground/Cerneala.Playground/Game1.cs`.
 - [ ] `UIRoot` retains a tree containing `StackPanel`, `Border`, `TextBlock`, and `Button`.
 - [ ] Layout runs on first frame and when layout-affecting state changes.
 - [ ] Rendering commands are regenerated only when render-affecting state changes.

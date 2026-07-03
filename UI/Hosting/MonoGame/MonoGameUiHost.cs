@@ -1,0 +1,87 @@
+using Cerneala.Drawing;
+using Cerneala.Drawing.MonoGame;
+using Cerneala.Drawing.Text;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
+using Cerneala.UI.Input.MonoGame;
+using Microsoft.Xna.Framework.Graphics;
+
+namespace Cerneala.UI.Hosting.MonoGame;
+
+public sealed class MonoGameUiHost : IDisposable
+{
+    private readonly SpriteBatch spriteBatch;
+    private readonly MonoGameDrawingBackend drawingBackend;
+    private readonly MonoGameUiBackend backend;
+    private readonly UiHost host;
+
+    public MonoGameUiHost(MonoGameUiHostOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        spriteBatch = options.SpriteBatch ?? throw new ArgumentNullException(nameof(options.SpriteBatch));
+        InputSource = options.InputSource ?? new MonoGameInputSource();
+        ContentServices = options.ContentServices ?? new MonoGameContentServices(textRasterizer: options.TextRasterizer);
+        drawingBackend = new MonoGameDrawingBackend(spriteBatch, options.WhitePixel, ContentServices.TextRasterizer);
+        backend = new MonoGameUiBackend(InputSource, drawingBackend);
+        host = new UiHost(new UiHostOptions
+        {
+            Root = options.Root,
+            Viewport = options.Viewport,
+            Backend = backend,
+            Clock = options.Clock
+        });
+    }
+
+    public MonoGameInputSource InputSource { get; }
+
+    public MonoGameContentServices ContentServices { get; }
+
+    public UIRoot? Root => host.Root;
+
+    public UiFrame? LastFrame => host.LastFrame;
+
+    public void SetRoot(UIRoot root)
+    {
+        host.SetRoot(root);
+    }
+
+    public UiFrame Update(UiViewport viewport, TimeSpan elapsedTime)
+    {
+        return host.Update(viewport, elapsedTime);
+    }
+
+    public UiFrame Update(InputFrame inputFrame, UiViewport viewport, TimeSpan elapsedTime)
+    {
+        return host.Update(inputFrame, viewport, elapsedTime);
+    }
+
+    public void QueueTextInput(string text)
+    {
+        InputSource.QueueTextInput(text);
+    }
+
+    public void Draw()
+    {
+        spriteBatch.Begin(rasterizerState: MonoGameDrawingBackend.ScissorRasterizerState);
+        host.Draw(drawingBackend);
+        spriteBatch.End();
+    }
+
+    public void Dispose()
+    {
+        drawingBackend.Dispose();
+    }
+
+    private sealed class MonoGameUiBackend : IUiBackend
+    {
+        public MonoGameUiBackend(IInputSource inputSource, IDrawingBackend drawingBackend)
+        {
+            InputSource = inputSource ?? throw new ArgumentNullException(nameof(inputSource));
+            DrawingBackend = drawingBackend ?? throw new ArgumentNullException(nameof(drawingBackend));
+        }
+
+        public IInputSource InputSource { get; }
+
+        public IDrawingBackend DrawingBackend { get; }
+    }
+}
