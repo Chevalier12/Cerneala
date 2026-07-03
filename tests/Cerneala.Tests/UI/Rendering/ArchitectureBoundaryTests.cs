@@ -287,6 +287,82 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Section17ControlsAndVirtualizationDoNotReferenceConcreteBackends()
+    {
+        string root = FindRepositoryRoot();
+        string[] files =
+        [
+            Path.Combine(root, "UI", "Controls", "ItemsControl.cs"),
+            Path.Combine(root, "UI", "Controls", "ItemCollection.cs"),
+            Path.Combine(root, "UI", "Controls", "ItemContainerGenerator.cs"),
+            Path.Combine(root, "UI", "Controls", "ItemContainerRecyclePool.cs"),
+            Path.Combine(root, "UI", "Controls", "ItemsPresenter.cs"),
+            Path.Combine(root, "UI", "Controls", "SelectionModel.cs"),
+            Path.Combine(root, "UI", "Controls", "SelectionModel{T}.cs"),
+            Path.Combine(root, "UI", "Controls", "Primitives", "Selector.cs"),
+            Path.Combine(root, "UI", "Controls", "ListBox.cs"),
+            Path.Combine(root, "UI", "Controls", "ListBoxItem.cs"),
+            Path.Combine(root, "UI", "Controls", "ComboBox.cs"),
+            Path.Combine(root, "UI", "Controls", "TabControl.cs"),
+            Path.Combine(root, "UI", "Controls", "TabItem.cs"),
+            Path.Combine(root, "UI", "Layout", "Panels", "VirtualizingStackPanel.cs"),
+            Path.Combine(root, "UI", "Layout", "Virtualization", "VirtualizationContext.cs"),
+            Path.Combine(root, "UI", "Layout", "Virtualization", "RealizationWindow.cs")
+        ];
+        string[] forbiddenTerms =
+        [
+            "MonoGame",
+            "Skia",
+            "HarfBuzz",
+            "Texture2D",
+            "SpriteBatch"
+        ];
+
+        foreach (string file in files)
+        {
+            string text = File.ReadAllText(file);
+            foreach (string forbiddenTerm in forbiddenTerms)
+            {
+                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
+    public void Section17RoadmapDoesNotClaimCompletionWhenDedicatedPublicControlTestsAreMissing()
+    {
+        string root = FindRepositoryRoot();
+        string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
+        string openSpecSegment = "open" + "spec";
+        string changesSegment = "chang" + "es";
+        string tasks = File.ReadAllText(Path.Combine(root, openSpecSegment, changesSegment, "add-items-selection-virtualization", "tasks.md"));
+        string[] requiredDedicatedTests =
+        [
+            "tests/Cerneala.Tests/Controls/ItemContainerRecyclePoolTests.cs",
+            "tests/Cerneala.Tests/Controls/ComboBoxTests.cs",
+            "tests/Cerneala.Tests/Controls/TabControlTests.cs",
+            "tests/Cerneala.Tests/Controls/TabItemTests.cs"
+        ];
+
+        string[] missingDedicatedTests = requiredDedicatedTests
+            .Where(testPath => !File.Exists(Path.Combine(root, testPath.Replace('/', Path.DirectorySeparatorChar))))
+            .ToArray();
+
+        if (missingDedicatedTests.Length == 0)
+        {
+            Assert.Contains("- [x] 17. Add items, selection, and virtualization.", roadmap, StringComparison.Ordinal);
+            return;
+        }
+
+        Assert.DoesNotContain("- [x] 17. Add items, selection, and virtualization.", roadmap, StringComparison.Ordinal);
+        foreach (string missingDedicatedTest in missingDedicatedTests)
+        {
+            Assert.Contains($"- [ ] `{missingDedicatedTest}`", roadmap, StringComparison.Ordinal);
+            Assert.Contains($"Add `{missingDedicatedTest}`", tasks, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
     public void RuntimeTestsDoNotDependOnActiveOpenSpecChanges()
     {
         string testsRoot = FindRepositoryPath("tests", "Cerneala.Tests");

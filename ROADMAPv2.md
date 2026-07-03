@@ -862,39 +862,44 @@ Tests:
 
 This phase should come after templates and scrolling. Lists must be retained and virtualized so large data sets do not create or re-render every element every frame.
 
-- [ ] `UI/Controls/ItemsControl.cs`
-- [ ] `UI/Controls/ItemCollection.cs`
-- [ ] `UI/Controls/ItemContainerGenerator.cs`
-- [ ] `UI/Controls/ItemContainerRecyclePool.cs`
-- [ ] `UI/Controls/ItemsPresenter.cs`
-- [ ] `UI/Controls/SelectionModel.cs`
-- [ ] `UI/Controls/SelectionModel{T}.cs`
-- [ ] `UI/Controls/Primitives/Selector.cs`
-- [ ] `UI/Controls/ListBox.cs`
-- [ ] `UI/Controls/ListBoxItem.cs`
-- [ ] `UI/Controls/ComboBox.cs`
-- [ ] `UI/Controls/TabControl.cs`
-- [ ] `UI/Controls/TabItem.cs`
-- [ ] `UI/Layout/Panels/VirtualizingStackPanel.cs`
-- [ ] `UI/Layout/Virtualization/VirtualizationContext.cs`
-- [ ] `UI/Layout/Virtualization/RealizationWindow.cs`
+- [x] `UI/Controls/ItemsControl.cs`
+- [x] `UI/Controls/ItemCollection.cs`
+- [x] `UI/Controls/ItemContainerGenerator.cs`
+- [x] `UI/Controls/ItemContainerRecyclePool.cs`
+- [x] `UI/Controls/ItemsPresenter.cs`
+- [x] `UI/Controls/SelectionModel.cs`
+- [x] `UI/Controls/SelectionModel{T}.cs`
+- [x] `UI/Controls/Primitives/Selector.cs`
+- [x] `UI/Controls/ListBox.cs`
+- [x] `UI/Controls/ListBoxItem.cs`
+- [x] `UI/Controls/ComboBox.cs`
+- [x] `UI/Controls/TabControl.cs`
+- [x] `UI/Controls/TabItem.cs`
+- [x] `UI/Layout/Panels/VirtualizingStackPanel.cs`
+- [x] `UI/Layout/Virtualization/VirtualizationContext.cs`
+- [x] `UI/Layout/Virtualization/RealizationWindow.cs`
 
 Tests:
 
-- [ ] `tests/Cerneala.Tests/Controls/ItemsControlTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ItemContainerGeneratorTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/SelectionModelTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/Primitives/SelectorTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ListBoxTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Layout/VirtualizingStackPanelTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Layout/VirtualizationTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ItemsControlTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ItemContainerGeneratorTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ItemContainerRecyclePoolTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/SelectionModelTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/Primitives/SelectorTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ListBoxTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ComboBoxTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/TabControlTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/TabItemTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/VirtualizingStackPanelTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/VirtualizationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs` - covers section 17 backend boundaries.
 
 Acceptance checklist:
 
-- [ ] Items controls retain generated containers only for realized items.
-- [ ] Scrolling changes realization window and invalidates layout/render for affected items only.
-- [ ] Selection changes invalidate visual state for selected containers only.
-- [ ] Data updates do not rebuild unrelated realized containers.
+- [x] Items controls retain generated containers only for realized items.
+- [x] Scrolling changes realization window and invalidates layout/render for affected items only.
+- [x] Selection changes invalidate visual state for selected containers only.
+- [x] Data updates do not rebuild unrelated realized containers.
 
 ## 18. [Core] Data observation and binding-light APIs
 
@@ -1178,7 +1183,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [ ] 14. Add styling/theme engine with typed setters and pseudo-class rules.
 - [ ] 15. Add code-first templates and presenters.
 - [x] 16. Add scrolling/range controls.
-- [ ] 17. Add items, selection, and virtualization.
+- [x] 17. Add items, selection, and virtualization.
 - [ ] 18. Add typed data observation and binding-light APIs.
 - [ ] 19. Add diagnostics/devtools overlays and tree/cache dumpers.
 

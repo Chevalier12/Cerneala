@@ -1,15 +1,19 @@
 using System.Collections;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Layout.Panels;
+using Cerneala.UI.Layout.Virtualization;
 
 namespace Cerneala.UI.Controls;
 
 public class ItemsPresenter : Control
 {
     private static readonly ItemsPanelTemplate DefaultItemsPanelTemplate = new(() => new Panel());
-    private Panel? panelRoot;
+    private Layout.Panels.Panel? panelRoot;
     private bool itemsDirty = true;
+    private RealizationWindow? lastRealizationWindow;
 
     public static readonly UiProperty<IEnumerable?> ItemsProperty = UiProperty<IEnumerable?>.Register(
         nameof(Items),
@@ -50,7 +54,33 @@ public class ItemsPresenter : Control
         set => SetValue(ItemsPanelProperty, value);
     }
 
-    public Panel? PanelRoot => panelRoot;
+    public Panel? PanelRoot => panelRoot as Panel;
+
+    public Layout.Panels.Panel? LayoutPanelRoot => panelRoot;
+
+    public ItemsControl? ItemsOwner { get; set; }
+
+    public VirtualizationContext? VirtualizationContext { get; set; }
+
+    public RealizationWindow CurrentRealizationWindow => lastRealizationWindow ?? RealizationWindow.Empty;
+
+    public void MarkItemsDirty()
+    {
+        itemsDirty = true;
+        IncrementLayoutVersion();
+        IncrementRenderVersion();
+        Invalidate(
+            InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.HitTest,
+            "Items presenter items changed");
+    }
+
+    public void UpdateVirtualizationFromScrollInfo(IScrollInfo scrollInfo, float itemExtent, int cacheItems = 0)
+    {
+        ArgumentNullException.ThrowIfNull(scrollInfo);
+        int itemCount = ItemsOwner?.Items.Count ?? Items?.Cast<object?>().Count() ?? 0;
+        VirtualizationContext = new VirtualizationContext(itemCount, itemExtent, scrollInfo.ViewportHeight, scrollInfo.VerticalOffset, cacheItems);
+        MarkItemsDirty();
+    }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
@@ -79,15 +109,29 @@ public class ItemsPresenter : Control
 
     private void RefreshItems()
     {
-        if (!itemsDirty)
+        RealizationWindow? nextWindow = GetRealizationWindow();
+        if (!itemsDirty && nextWindow == lastRealizationWindow)
         {
             return;
         }
 
         itemsDirty = false;
-        Panel nextPanel = (ItemsPanel ?? DefaultItemsPanelTemplate).CreatePanel();
-        List<UIElement> nextChildren = [.. CreateItemChildren()];
-        Panel? oldPanel = panelRoot;
+        lastRealizationWindow = nextWindow;
+        if (ItemsOwner is not null)
+        {
+            RefreshOwnerItems(nextWindow);
+            return;
+        }
+
+        Layout.Panels.Panel nextPanel = (ItemsPanel ?? DefaultItemsPanelTemplate).CreateLayoutPanel();
+        if (nextPanel is VirtualizingStackPanel virtualizingPanel && VirtualizationContext is VirtualizationContext context)
+        {
+            virtualizingPanel.VirtualizationContext = context;
+            virtualizingPanel.FirstRealizedIndex = nextWindow?.StartIndex ?? 0;
+        }
+
+        List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
+        Layout.Panels.Panel? oldPanel = panelRoot;
         List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
         if (oldPanel is not null)
         {
@@ -127,7 +171,44 @@ public class ItemsPresenter : Control
         }
     }
 
-    private static void AddPanelChild(Panel panel, UIElement child)
+    private void RefreshOwnerItems(RealizationWindow? nextWindow)
+    {
+        Layout.Panels.Panel nextPanel = (ItemsPanel ?? ItemsOwner?.ItemsPanel ?? DefaultItemsPanelTemplate).CreateLayoutPanel();
+        if (nextPanel is VirtualizingStackPanel virtualizingPanel && VirtualizationContext is VirtualizationContext context)
+        {
+            virtualizingPanel.VirtualizationContext = context;
+            virtualizingPanel.FirstRealizedIndex = nextWindow?.StartIndex ?? 0;
+        }
+
+        Layout.Panels.Panel? oldPanel = panelRoot;
+        if (oldPanel is not null)
+        {
+            ClearPanelChildren(oldPanel);
+            VisualChildren.Remove(oldPanel);
+            LogicalChildren.Remove(oldPanel);
+            panelRoot = null;
+        }
+
+        try
+        {
+            foreach (UIElement child in CreateItemChildren(nextWindow))
+            {
+                AddPanelChild(nextPanel, child);
+            }
+
+            AddPanelRoot(nextPanel);
+            panelRoot = nextPanel;
+        }
+        catch
+        {
+            ClearPanelChildren(nextPanel);
+            RemovePanelRoot(nextPanel);
+            panelRoot = null;
+            throw;
+        }
+    }
+
+    private static void AddPanelChild(Layout.Panels.Panel panel, UIElement child)
     {
         panel.LogicalChildren.Add(child);
         try
@@ -141,7 +222,7 @@ public class ItemsPresenter : Control
         }
     }
 
-    private void AddPanelRoot(Panel panel)
+    private void AddPanelRoot(Layout.Panels.Panel panel)
     {
         LogicalChildren.Add(panel);
         try
@@ -155,13 +236,13 @@ public class ItemsPresenter : Control
         }
     }
 
-    private void RemovePanelRoot(Panel panel)
+    private void RemovePanelRoot(Layout.Panels.Panel panel)
     {
         VisualChildren.Remove(panel);
         LogicalChildren.Remove(panel);
     }
 
-    private static void ClearPanelChildren(Panel panel)
+    private static void ClearPanelChildren(Layout.Panels.Panel panel)
     {
         while (panel.VisualChildren.Count > 0)
         {
@@ -174,8 +255,19 @@ public class ItemsPresenter : Control
         }
     }
 
-    private IEnumerable<UIElement> CreateItemChildren()
+    private IEnumerable<UIElement> CreateItemChildren(RealizationWindow? window)
     {
+        if (ItemsOwner is ItemsControl owner)
+        {
+            foreach (UIElement container in owner.ItemContainerGenerator.Realize(window))
+            {
+                owner.OnItemContainerPrepared(container, ItemContainerGenerator.GetItemIndex(container));
+                yield return container;
+            }
+
+            yield break;
+        }
+
         if (Items is null)
         {
             yield break;
@@ -189,5 +281,10 @@ public class ItemsPresenter : Control
                 yield return child;
             }
         }
+    }
+
+    private RealizationWindow? GetRealizationWindow()
+    {
+        return VirtualizationContext?.GetRealizationWindow();
     }
 }
