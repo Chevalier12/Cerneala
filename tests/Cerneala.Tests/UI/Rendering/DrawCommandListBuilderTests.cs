@@ -13,7 +13,7 @@ public sealed class DrawCommandListBuilderTests
         RenderingTestElement parent = new(new DrawColor(1, 0, 0));
         RenderingTestElement child = new(new DrawColor(2, 0, 0));
         parent.VisualChildren.Add(child);
-        RetainedRenderCache cache = new();
+        RetainedRenderCache cache = PreparedCache(parent);
 
         new DrawCommandListBuilder().Build(parent, cache, new RenderCounters());
 
@@ -29,7 +29,7 @@ public sealed class DrawCommandListBuilderTests
         RenderingTestElement second = new(new DrawColor(2, 0, 0));
         root.VisualChildren.Add(first);
         root.VisualChildren.Add(second);
-        RetainedRenderCache cache = new();
+        RetainedRenderCache cache = PreparedCache(root);
 
         new DrawCommandListBuilder().Build(root, cache, new RenderCounters());
 
@@ -47,7 +47,7 @@ public sealed class DrawCommandListBuilderTests
         };
         child.VisualChildren.Add(new RenderingTestElement(DrawColor.Black));
         root.VisualChildren.Add(child);
-        RetainedRenderCache cache = new();
+        RetainedRenderCache cache = PreparedCache(root);
 
         new DrawCommandListBuilder().Build(root, cache, new RenderCounters());
 
@@ -59,7 +59,7 @@ public sealed class DrawCommandListBuilderTests
     {
         UIElement root = new();
         ClipNode.SetClip(root, new LayoutRect(0, 0, 10, 10));
-        RetainedRenderCache cache = new();
+        RetainedRenderCache cache = PreparedCache(root);
 
         new DrawCommandListBuilder().Build(root, cache, new RenderCounters());
 
@@ -73,12 +73,29 @@ public sealed class DrawCommandListBuilderTests
     {
         RenderingTestElement root = new(DrawColor.White);
         ClipNode.SetClip(root, new LayoutRect(0, 0, 10, 10));
-        RetainedRenderCache cache = new();
+        RetainedRenderCache cache = PreparedCache(root);
 
         new DrawCommandListBuilder().Build(root, cache, new RenderCounters());
 
         Assert.Equal(DrawCommandKind.PushClip, cache.RootCommands[0].Kind);
         Assert.Equal(DrawCommandKind.FillRectangle, cache.RootCommands[1].Kind);
         Assert.Equal(DrawCommandKind.PopClip, cache.RootCommands[2].Kind);
+    }
+
+    private static RetainedRenderCache PreparedCache(UIElement root)
+    {
+        RetainedRenderCache cache = new();
+        RenderCounters counters = new();
+        PrepareSubtree(root, cache, counters);
+        return cache;
+    }
+
+    private static void PrepareSubtree(UIElement element, RetainedRenderCache cache, RenderCounters counters)
+    {
+        cache.GetElementCache(element).Ensure(element, counters, forceRebuild: true);
+        foreach (UIElement child in element.VisualChildren)
+        {
+            PrepareSubtree(child, cache, counters);
+        }
     }
 }
