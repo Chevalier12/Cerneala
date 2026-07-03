@@ -44,11 +44,11 @@ Detailed plan: `docs/superpowers/plans/2026-07-03-fix-tree-mutation-invalidation
 
 ### Phase 1 Gate
 
-- [ ] `dotnet test Cerneala.slnx` passes.
-- [ ] No-work-frame tests still pass.
-- [ ] Draw path cannot call element render hooks.
-- [ ] Late tree mutation is processed during update, not lazily during draw.
-- [ ] Commit Phase 1.
+- [x] `dotnet test Cerneala.slnx` passes.
+- [x] No-work-frame tests still pass.
+- [x] Draw path cannot call element render hooks.
+- [x] Late tree mutation is processed during update, not lazily during draw.
+- [x] Commit Phase 1.
 
 ## Phase 2: Scheduler Ownership
 
@@ -123,9 +123,9 @@ Goal: stop the roadmap from claiming maturity for descriptor-level or experiment
 
 1. [ ] Commit current cleanup.
 2. [ ] Restart/reload Codex for Superpowers.
-3. [ ] Execute `fix-retained-render-frame-contract`.
-4. [ ] Execute `fix-tree-mutation-invalidation`.
-5. [ ] Run full tests and commit Phase 1.
+3. [x] Execute `fix-retained-render-frame-contract`.
+4. [x] Execute `fix-tree-mutation-invalidation`.
+5. [x] Run full tests and commit Phase 1.
 6. [ ] Execute `integrate-style-phase`.
 7. [ ] Execute `cache-input-route-hit-test`.
 8. [ ] Run full tests and commit Phase 2.
