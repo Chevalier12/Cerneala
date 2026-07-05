@@ -18,6 +18,7 @@ Generated from `.`.
 |   |       |-- 2026-07-03-fix-tree-mutation-invalidation.md
 |   |       |-- 2026-07-03-integrate-style-phase.md
 |   |       |-- 2026-07-04-cache-input-route-hit-test.md
+|   |       |-- 2026-07-05-clarify-package-boundary-dependencies.md
 |   |       |-- 2026-07-05-clarify-text-services-mvp.md
 |   |       +-- 2026-07-05-freeze-later-experimental-scope.md
 |   +-- architecture-v2.md
