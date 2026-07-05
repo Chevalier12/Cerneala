@@ -1056,9 +1056,9 @@ Acceptance checklist:
 
 ## 24. [Later] Platform boundaries and package shape
 
-This phase keeps the core portable. The current repository has a single project with MonoGame dependencies; v2 should keep adapter code isolated and later decide whether to split packages.
+This phase keeps the source architecture portable while acknowledging that the current package is not dependency-neutral yet. The repository intentionally remains a single main project for MVP, and `Cerneala.csproj` currently carries `MonoGame.Framework.DesktopGL`, `SkiaSharp`, `SkiaSharp.NativeAssets.Linux`, and `HarfBuzzSharp`.
 
-Section summary: Platform contracts and boundary tests are complete; package split project files stay deferred until real split work exists.
+Section summary: Platform contracts and source boundary tests are complete; package split project files stay deferred until real split work exists. The dependency risk is tracked explicitly so "single project now" does not silently become the permanent package architecture.
 
 - [x] `UI/Platform/IPlatformServices.cs`
 - [x] `UI/Platform/IClipboard.cs`
@@ -1072,6 +1072,23 @@ Section summary: Platform contracts and boundary tests are complete; package spl
 - [ ] `Cerneala.Tests.Core.csproj` — optional future package split, deferred until real split work.
 - [ ] `Cerneala.Tests.MonoGame.csproj` — optional future package split, deferred until real split work.
 
+Current package dependency note:
+
+- [x] `Cerneala.csproj` is the only main library project today.
+- [x] `Cerneala.csproj` references `MonoGame.Framework.DesktopGL` for current adapter and playground integration.
+- [x] `Cerneala.csproj` references `SkiaSharp`, `SkiaSharp.NativeAssets.Linux`, and `HarfBuzzSharp` for the current text shaping/rasterization path.
+- [x] These dependencies are acceptable for the MVP single-project shape, but they are not a neutral core package boundary.
+
+Future split acceptance criteria:
+
+- [ ] `Cerneala.Core.csproj` can build UI core, layout, controls, retained rendering contracts, resources abstractions, platform abstractions, and backend-neutral input/drawing contracts without referencing MonoGame, SkiaSharp, native Skia assets, or HarfBuzzSharp packages.
+- [ ] `Cerneala.MonoGame.csproj` owns MonoGame drawing, input, resource loading, hosting adapters, and any MonoGame-specific package references.
+- [ ] The text shaping/rasterization dependency decision is explicit: either it remains in a dedicated adapter package or it is accepted as a core dependency with a documented reason.
+- [ ] `Cerneala.Tests.Core.csproj` covers backend-neutral contracts without referencing MonoGame packages.
+- [ ] `Cerneala.Tests.MonoGame.csproj` covers MonoGame adapter behavior and can depend on MonoGame packages.
+- [ ] The playground references the adapter package, not the core package alone.
+- [ ] Package-shape tests are added in the same change that creates the split projects; until then, existing source-boundary tests are the active guard.
+
 Tests:
 
 - [x] `tests/Cerneala.Tests/UI/Platform/PlatformBoundaryTests.cs`
@@ -1080,10 +1097,13 @@ Tests:
 
 Acceptance checklist:
 
-- [x] Platform services expose clipboard, cursor, dialogs, text input, DPI, and accessibility seams without backend dependencies.
+- [x] Platform services expose clipboard, cursor, dialogs, text input, DPI, and accessibility seams without backend-specific source dependencies.
 - [x] MonoGame host integration remains adapter-scoped under `UI/Hosting/MonoGame/`.
 - [x] Optional package split project files are intentionally deferred and not claimed as implemented.
-- [x] Full project tests pass for this phase.
+- [x] The current `Cerneala.csproj` MonoGame/Skia/HarfBuzz package dependency risk is explicitly recorded.
+- [x] Future split acceptance criteria distinguish source boundaries from package dependency boundaries.
+- [ ] Package-shape tests are deferred until the split projects are created.
+- [x] Full project tests pass for this documentation phase.
 
 ## 25. [Optional/Experimental] Markup, serialization, and source generation
 
