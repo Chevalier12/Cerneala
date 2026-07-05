@@ -1112,20 +1112,20 @@ Acceptance checklist:
 
 ## 26. [Optional/Experimental] Advanced input categories
 
-This phase turns existing metadata-only event categories into real behavior only when platform support and product scenarios require them.
+This phase is **experimental/frozen** until platform adapters can supply real touch, stylus, drag/drop, manipulation, cursor, and ink data. Existing event metadata and processors can remain as prototypes, but platform-backed behavior is not scenario-complete unless the line explicitly says so.
 
-- [x] `UI/Input/InputEvents.cs` already declares stylus, touch, manipulation, and drag/drop event metadata.
-- [x] `UI/Input/TouchInputBridge.cs`
-- [x] `UI/Input/StylusInputBridge.cs`
-- [x] `UI/Input/GestureRecognizer.cs`
-- [x] `UI/Input/ManipulationProcessor.cs`
-- [x] `UI/Input/DragDropController.cs`
-- [x] `UI/Input/DataTransfer.cs`
-- [x] `UI/Input/Cursor.cs`
-- [x] `UI/Input/CursorService.cs`
-- [x] `UI/Controls/InkCanvas.cs`
-- [x] `UI/Ink/Stroke.cs`
-- [x] `UI/Ink/StrokeCollection.cs`
+- [~] `UI/Input/InputEvents.cs` already declares stylus, touch, manipulation, and drag/drop event metadata; behavior remains platform-gated.
+- [~] `UI/Input/TouchInputBridge.cs` — prototype exists; frozen until platform touch data is available.
+- [~] `UI/Input/StylusInputBridge.cs` — prototype exists; frozen until platform stylus data is available.
+- [~] `UI/Input/GestureRecognizer.cs` — prototype exists; frozen until gesture scenarios are platform-backed.
+- [~] `UI/Input/ManipulationProcessor.cs` — prototype exists; frozen until manipulation scenarios are platform-backed.
+- [~] `UI/Input/DragDropController.cs` — prototype exists; frozen until drag/drop platform behavior exists.
+- [~] `UI/Input/DataTransfer.cs` — type exists; frozen until drag/drop and clipboard/platform transfer behavior exist.
+- [~] `UI/Input/Cursor.cs` — type exists; frozen until cursor platform behavior is wired.
+- [~] `UI/Input/CursorService.cs` — type exists; frozen until cursor platform behavior is wired.
+- [~] `UI/Controls/InkCanvas.cs` — prototype exists; frozen until stylus/touch platform behavior is real.
+- [~] `UI/Ink/Stroke.cs` — type exists; frozen with ink scenarios.
+- [~] `UI/Ink/StrokeCollection.cs` — type exists; frozen with ink scenarios.
 
 Tests:
 
@@ -1136,6 +1136,13 @@ Tests:
 - [x] `tests/Cerneala.Tests/Input/DragDropControllerTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/InkCanvasTests.cs`
 - [x] `tests/Cerneala.Tests/Architecture/MonoGameDependencyBoundaryTests.cs` — covers advanced input backend-neutral boundaries.
+
+Acceptance checklist:
+
+- [~] Event metadata and prototype processors exist.
+- [ ] Platform adapters provide real touch/stylus/drag/drop/manipulation input data.
+- [ ] Retained input cache, focus, capture, and hit testing are proven under advanced input scenarios.
+- [ ] Full project tests pass for platform-backed advanced input before this phase is scenario-complete.
 
 ## 27. Implementation order
 
