@@ -18,9 +18,16 @@ Generated from `.`.
 |   |       |-- 2026-07-03-fix-tree-mutation-invalidation.md
 |   |       |-- 2026-07-03-integrate-style-phase.md
 |   |       |-- 2026-07-04-cache-input-route-hit-test.md
+|   |       |-- 2026-07-05-clarify-layout-scheduler-contract-and-diagnostics.md
 |   |       |-- 2026-07-05-clarify-package-boundary-dependencies.md
 |   |       |-- 2026-07-05-clarify-text-services-mvp.md
-|   |       +-- 2026-07-05-freeze-later-experimental-scope.md
+|   |       |-- 2026-07-05-consolidate-button-content-composition.md
+|   |       |-- 2026-07-05-create-retained-ui-mvp-vertical-slice.md
+|   |       |-- 2026-07-05-fix-focus-visibility-semantics.md
+|   |       |-- 2026-07-05-freeze-later-experimental-scope.md
+|   |       |-- 2026-07-05-implement-inherited-property-tree-propagation.md
+|   |       |-- 2026-07-05-next-core-completion-plan-index.md
+|   |       +-- 2026-07-05-root-owned-resource-invalidation.md
 |   +-- architecture-v2.md
 |-- Playground/
 |   +-- Cerneala.Playground/
@@ -33,6 +40,7 @@ Generated from `.`.
 |       |   |-- InvalidationStatsOverlay.cs
 |       |   |-- LayoutSample.cs
 |       |   |-- PlaygroundText.cs
+|       |   |-- RetainedAppSample.cs
 |       |   |-- RetainedButtonSample.cs
 |       |   |-- SampleSelector.cs
 |       |   +-- TextSample.cs
@@ -107,6 +115,7 @@ Generated from `.`.
 |   |   |   |-- ElementInputBridgeTests.cs
 |   |   |   |-- ElementInputRouteBuilderTests.cs
 |   |   |   |-- FocusManagerTests.cs
+|   |   |   |-- FocusPolicyTests.cs
 |   |   |   |-- GestureRecognizerTests.cs
 |   |   |   |-- HitTestServiceTests.cs
 |   |   |   |-- HoverTrackerTests.cs
@@ -127,7 +136,8 @@ Generated from `.`.
 |   |   |-- Playground/
 |   |   |   |-- Samples/
 |   |   |   |   +-- PlaygroundSampleTests.cs
-|   |   |   +-- Game1SourceTests.cs
+|   |   |   |-- Game1SourceTests.cs
+|   |   |   +-- RetainedAppSampleContractTests.cs
 |   |   |-- UI/
 |   |   |   |-- Accessibility/
 |   |   |   |   |-- AccessibilityPlatformTests.cs
@@ -145,6 +155,7 @@ Generated from `.`.
 |   |   |   |   +-- Shapes/
 |   |   |   |       +-- ShapeTests.cs
 |   |   |   |-- Core/
+|   |   |   |   |-- InheritedPropertyTreePropagationTests.cs
 |   |   |   |   |-- InheritedUiPropertyTests.cs
 |   |   |   |   |-- ReadOnlyUiPropertyTests.cs
 |   |   |   |   |-- UiPropertyInvalidationTests.cs
@@ -179,6 +190,7 @@ Generated from `.`.
 |   |   |   |   |-- FakeInputSource.cs
 |   |   |   |   |-- FakeUiClock.cs
 |   |   |   |   |-- MonoGameUiHostBoundaryTests.cs
+|   |   |   |   |-- RetainedVerticalSliceTests.cs
 |   |   |   |   |-- UiHostFrameContractTests.cs
 |   |   |   |   |-- UiHostFrameStatsIntegrityTests.cs
 |   |   |   |   |-- UiHostLateTreeMutationTests.cs
@@ -191,6 +203,7 @@ Generated from `.`.
 |   |   |   |-- Invalidation/
 |   |   |   |   |-- DirtyPropagationTests.cs
 |   |   |   |   |-- DirtyStateTests.cs
+|   |   |   |   |-- FrameSchedulerStabilityTests.cs
 |   |   |   |   |-- FrameStatsTests.cs
 |   |   |   |   |-- HitTestQueueTests.cs
 |   |   |   |   |-- InvalidationFlagsTests.cs
@@ -201,6 +214,7 @@ Generated from `.`.
 |   |   |   |-- Layout/
 |   |   |   |   |-- CanvasTests.cs
 |   |   |   |   |-- GridTests.cs
+|   |   |   |   |-- LayoutDiagnosticsAccuracyTests.cs
 |   |   |   |   |-- LayoutInvalidationTests.cs
 |   |   |   |   |-- LayoutManagerTests.cs
 |   |   |   |   |-- LayoutPrimitiveTests.cs
@@ -208,6 +222,7 @@ Generated from `.`.
 |   |   |   |   |-- UIElementMeasureArrangeTests.cs
 |   |   |   |   |-- VirtualizationTests.cs
 |   |   |   |   |-- VirtualizingStackPanelTests.cs
+|   |   |   |   |-- VisibilityCombinationTests.cs
 |   |   |   |   +-- VisibilityTests.cs
 |   |   |   |-- Markup/
 |   |   |   |   |-- MarkupDiagnosticTests.cs
@@ -239,6 +254,7 @@ Generated from `.`.
 |   |   |   |   +-- TextRenderDependencyTests.cs
 |   |   |   |-- Resources/
 |   |   |   |   |-- FontResourceInvalidationTests.cs
+|   |   |   |   |-- HostResourceInvalidationIntegrationTests.cs
 |   |   |   |   |-- ImageResourceInvalidationTests.cs
 |   |   |   |   |-- ResourceDependencyTrackerTests.cs
 |   |   |   |   |-- ResourceIdTests.cs
@@ -478,8 +494,10 @@ Generated from `.`.
 |   |   |-- ElementTreeWalker.cs
 |   |   |-- IElementChildHost.cs
 |   |   |-- IElementHost.cs
+|   |   |-- InheritedPropertyPropagator.cs
 |   |   |-- UIElement.cs
 |   |   |-- UIElementCollection.cs
+|   |   |-- UIElementVisibility.cs
 |   |   +-- UIRoot.cs
 |   |-- Hosting/
 |   |   |-- MonoGame/
@@ -517,6 +535,7 @@ Generated from `.`.
 |   |   |-- ElementRoutedEventStore.cs
 |   |   |-- ExecutedRoutedEventArgs.cs
 |   |   |-- FocusManager.cs
+|   |   |-- FocusPolicy.cs
 |   |   |-- FocusScope.cs
 |   |   |-- GestureRecognizer.cs
 |   |   |-- HitTestFilter.cs
@@ -573,6 +592,7 @@ Generated from `.`.
 |   |   |-- FrameStats.cs
 |   |   |-- HitTestQueue.cs
 |   |   |-- IInvalidationSink.cs
+|   |   |-- InheritedPropertyQueue.cs
 |   |   |-- InvalidationFlags.cs
 |   |   |-- InvalidationRequest.cs
 |   |   |-- LayoutQueue.cs
@@ -664,6 +684,7 @@ Generated from `.`.
 |   |   |-- FontResource.cs
 |   |   |-- IImageLoader.cs
 |   |   |-- ImageResource.cs
+|   |   |-- IObservableResourceProvider.cs
 |   |   |-- IResourceProvider.cs
 |   |   |-- ResourceChangedEventArgs.cs
 |   |   |-- ResourceDependencyTracker.cs

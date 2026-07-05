@@ -52,6 +52,7 @@ public sealed class SampleSelector
     {
         return new SampleSelector(new IPlaygroundSample[]
         {
+            new RetainedAppSample(resourceProvider, fontResourceId),
             new RetainedButtonSample(resourceProvider, fontResourceId),
             new LayoutSample(resourceProvider, fontResourceId),
             new TextSample(resourceProvider, fontResourceId),

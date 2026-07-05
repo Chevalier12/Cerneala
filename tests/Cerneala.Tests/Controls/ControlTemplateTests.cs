@@ -42,6 +42,30 @@ public sealed class ControlTemplateTests
     }
 
     [Fact]
+    public void TemplatedButtonContentPresenterHostsExistingElementContent()
+    {
+        Button button = new();
+        UIElement child = new();
+        ContentPresenter? presenter = null;
+        button.Content = child;
+
+        button.Template = new ControlTemplate<Button>(context =>
+        {
+            presenter = new ContentPresenter { Content = context.Owner.Content };
+            return presenter;
+        });
+        button.Measure(new MeasureContext(new LayoutSize(100, 100)));
+
+        Assert.Same(child, presenter!.PresentedChild);
+        Assert.Same(presenter, child.LogicalParent);
+        Assert.Same(presenter, child.VisualParent);
+        Assert.DoesNotContain(child, button.LogicalChildren);
+        Assert.DoesNotContain(child, button.VisualChildren);
+        Assert.Contains(presenter, button.LogicalChildren);
+        Assert.Contains(presenter, button.VisualChildren);
+    }
+
+    [Fact]
     public void ApplyingSameTemplateReusesGeneratedRoot()
     {
         Control control = new();

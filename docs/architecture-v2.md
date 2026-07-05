@@ -137,7 +137,10 @@ Confirmed behavior:
 - render invalidation does not imply measure;
 - input visual invalidation is decided by style metadata;
 - resource invalidation is decided by resource metadata;
-- MVP processes all dirty work deterministically.
+- MVP processes one deterministic snapshot per frame phase.
+- same-phase work enqueued while a phase is processing is deferred to a later frame.
+- downstream phase work can run in the same frame if that phase snapshot has not yet been taken.
+- `FrameStats.MeasuredElements` and `FrameStats.ArrangedElements` count queued scheduler phase items; `FrameStats.MeasureCalls` and `FrameStats.ArrangeCalls` count actual recursive layout method calls.
 
 `FrameBudget` is a later optimization.
 

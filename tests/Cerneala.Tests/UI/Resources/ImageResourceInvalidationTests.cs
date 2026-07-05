@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
@@ -41,17 +42,16 @@ public sealed class ImageResourceInvalidationTests
     public void ReplacingIntrinsicImageResourceInvalidatesMeasureAndRender()
     {
         ResourceStore store = new();
-        ResourceDependencyTracker tracker = new();
-        tracker.Track(store);
         ResourceId<ImageResource> id = new("Logo");
         store.SetResource(id, new ImageResource(new TestImage(10, 20)));
+        UIRoot root = new(100, 100);
+        root.SetResourceProvider(store);
         Image image = new()
         {
-            SourceResourceId = id,
-            ResourceProvider = store,
-            ResourceDependencyTracker = tracker
+            SourceResourceId = id
         };
-        image.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        root.VisualChildren.Add(image);
+        root.ProcessFrame();
         image.DirtyState.ClearAll();
 
         store.SetResource(id, new ImageResource(new TestImage(30, 40)));
@@ -65,18 +65,17 @@ public sealed class ImageResourceInvalidationTests
     public void ReplacingFixedSizeImageResourceInvalidatesRenderOnly()
     {
         ResourceStore store = new();
-        ResourceDependencyTracker tracker = new();
-        tracker.Track(store);
         ResourceId<ImageResource> id = new("Logo");
         store.SetResource(id, new ImageResource(new TestImage(10, 20)));
+        UIRoot root = new(100, 100);
+        root.SetResourceProvider(store);
         Image image = new()
         {
             SourceResourceId = id,
-            ResourceProvider = store,
-            ResourceDependencyTracker = tracker,
             UseIntrinsicSize = false
         };
-        image.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        root.VisualChildren.Add(image);
+        root.ProcessFrame();
         image.DirtyState.ClearAll();
 
         store.SetResource(id, new ImageResource(new TestImage(30, 40)));

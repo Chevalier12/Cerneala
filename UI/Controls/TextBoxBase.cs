@@ -29,6 +29,8 @@ public abstract class TextBoxBase : Control
     protected TextBoxBase()
     {
         editor = new TextEditor();
+        Focusable = true;
+        IsTabStop = true;
         Padding = new Thickness(4, 2, 4, 2);
         BorderThickness = new Thickness(1);
         BorderColor = new DrawColor(120, 130, 145);

@@ -35,4 +35,17 @@ public static class UiPropertyRegistry
 
         return new UiPropertyKey<T>(Register(name, ownerType, readOnlyMetadata));
     }
+
+    public static IReadOnlyList<UiProperty> GetRegisteredProperties()
+    {
+        return Properties.Values.OrderBy(property => property.Id).ToArray();
+    }
+
+    public static IReadOnlyList<UiProperty> GetPropertiesWithOptions(UiPropertyOptions options)
+    {
+        return Properties.Values
+            .Where(property => (property.Options & options) == options)
+            .OrderBy(property => property.Id)
+            .ToArray();
+    }
 }

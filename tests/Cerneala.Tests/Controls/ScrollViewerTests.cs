@@ -138,6 +138,26 @@ public sealed class ScrollViewerTests
         Assert.Contains(presenter, root.HitTestQueue.Snapshot());
     }
 
+    [Fact]
+    public void UnchangedScrollViewerFrameDoesNotRetainLateArrangeWork()
+    {
+        UIRoot root = new(100, 100);
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(80, 300)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        FrameStats second = root.ProcessFrame();
+
+        Assert.Equal(0, second.MeasuredElements);
+        Assert.Equal(0, second.ArrangedElements);
+        Assert.Equal(0, second.RenderedElements);
+        Assert.Equal(1, second.NoWorkFrames);
+    }
+
     private static InputFrame PointerWheelFrame(float x, float y, int delta)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);

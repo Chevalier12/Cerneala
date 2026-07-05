@@ -104,6 +104,28 @@ public sealed class UiFrameSchedulerTests
     }
 
     [Fact]
+    public void ProcessesInheritedPropertiesBeforeStyle()
+    {
+        UIRoot root = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+        root.ProcessFrame();
+        List<FramePhase> phases = [];
+        child.Invalidate(InvalidationFlags.Inherited | InvalidationFlags.Style | InvalidationFlags.Measure, "inherit and style");
+
+        root.ProcessFrame(new FramePhaseProcessors
+        {
+            InheritedProperties = _ => phases.Add(FramePhase.InheritedProperties),
+            Style = _ => phases.Add(FramePhase.Style),
+            Measure = _ => phases.Add(FramePhase.Measure)
+        });
+
+        Assert.Equal(
+            [FramePhase.InheritedProperties, FramePhase.Style, FramePhase.Measure, FramePhase.Measure],
+            phases);
+    }
+
+    [Fact]
     public void FailedStylePhaseKeepsDirtyFlagsAndQueuedWork()
     {
         UIRoot root = new();

@@ -10,8 +10,8 @@ public sealed class FocusManagerTests
     {
         UIRoot root = new();
         UIElement parent = new();
-        UIElement first = new();
-        UIElement second = new();
+        UIElement first = new() { Focusable = true };
+        UIElement second = new() { Focusable = true };
         parent.VisualChildren.Add(first);
         parent.VisualChildren.Add(second);
         root.VisualChildren.Add(parent);
@@ -34,8 +34,8 @@ public sealed class FocusManagerTests
     public void FocusChangeRaisesPreviewEventsBeforeBubbleEvents()
     {
         UIRoot root = new();
-        UIElement first = new();
-        UIElement second = new();
+        UIElement first = new() { Focusable = true };
+        UIElement second = new() { Focusable = true };
         root.VisualChildren.Add(first);
         root.VisualChildren.Add(second);
         List<string> calls = [];
@@ -58,9 +58,9 @@ public sealed class FocusManagerTests
     {
         UIRoot root = new();
         UIElement oldParent = new();
-        UIElement oldChild = new();
+        UIElement oldChild = new() { Focusable = true };
         UIElement newParent = new();
-        UIElement newChild = new();
+        UIElement newChild = new() { Focusable = true };
         oldParent.VisualChildren.Add(oldChild);
         newParent.VisualChildren.Add(newChild);
         root.VisualChildren.Add(oldParent);
@@ -82,8 +82,8 @@ public sealed class FocusManagerTests
     public void FocusWithinPreservesSharedAncestorWhenFocusMovesToAncestor()
     {
         UIRoot root = new();
-        UIElement parent = new();
-        UIElement child = new();
+        UIElement parent = new() { Focusable = true };
+        UIElement child = new() { Focusable = true };
         parent.VisualChildren.Add(child);
         root.VisualChildren.Add(parent);
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
@@ -101,7 +101,7 @@ public sealed class FocusManagerTests
     public void FocusedElementReceivesKeyboardEvents()
     {
         UIRoot root = new();
-        UIElement target = new();
+        UIElement target = new() { Focusable = true };
         root.VisualChildren.Add(target);
         List<InputKey> keys = [];
         target.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) => keys.Add(((KeyEventArgs)args).Key));
@@ -118,7 +118,7 @@ public sealed class FocusManagerTests
     public void HandledPreviewKeyDownSuppressesBubbleKeyDown()
     {
         UIRoot root = new();
-        UIElement target = new();
+        UIElement target = new() { Focusable = true };
         root.VisualChildren.Add(target);
         bool bubbleCalled = false;
         target.Handlers.AddHandler(InputEvents.PreviewKeyDownEvent, (_, args) => args.Handled = true);

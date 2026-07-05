@@ -5,11 +5,13 @@ namespace Cerneala.UI.Invalidation;
 public sealed class UiFrameScheduler
 {
     private readonly LayoutQueue layoutQueue;
+    private readonly InheritedPropertyQueue inheritedPropertyQueue;
     private readonly StyleQueue styleQueue;
     private readonly RenderQueue renderQueue;
     private readonly HitTestQueue hitTestQueue;
     private readonly InvalidationTrace trace;
     private const InvalidationFlags ConcreteWorkFlags =
+        InvalidationFlags.Inherited |
         InvalidationFlags.Style |
         InvalidationFlags.Measure |
         InvalidationFlags.Arrange |
@@ -25,28 +27,36 @@ public sealed class UiFrameScheduler
 
     public UiFrameScheduler(
         LayoutQueue layoutQueue,
+        InheritedPropertyQueue inheritedPropertyQueue,
         StyleQueue styleQueue,
         RenderQueue renderQueue,
         HitTestQueue hitTestQueue,
         InvalidationTrace? trace = null)
     {
         this.layoutQueue = layoutQueue ?? throw new ArgumentNullException(nameof(layoutQueue));
+        this.inheritedPropertyQueue = inheritedPropertyQueue ?? throw new ArgumentNullException(nameof(inheritedPropertyQueue));
         this.styleQueue = styleQueue ?? throw new ArgumentNullException(nameof(styleQueue));
         this.renderQueue = renderQueue ?? throw new ArgumentNullException(nameof(renderQueue));
         this.hitTestQueue = hitTestQueue ?? throw new ArgumentNullException(nameof(hitTestQueue));
         this.trace = trace ?? InvalidationTrace.Disabled;
     }
 
-    public bool HasWork => styleQueue.HasWork || layoutQueue.HasWork || renderQueue.HasWork || hitTestQueue.HasWork;
+    public bool HasWork =>
+        inheritedPropertyQueue.HasWork ||
+        styleQueue.HasWork ||
+        layoutQueue.HasWork ||
+        renderQueue.HasWork ||
+        hitTestQueue.HasWork;
 
     public FrameStats ProcessFrame(
         FramePhaseProcessors? processors = null,
-        FrameBudget budget = default)
+        FrameBudget budget = default,
+        FrameStats? stats = null)
     {
         processors ??= FramePhaseProcessors.Empty;
         budget = budget == default ? FrameBudget.ProcessAll : budget;
 
-        FrameStats stats = new();
+        stats ??= new FrameStats();
         if (!HasWork)
         {
             stats.CountNoWorkFrame();
@@ -54,13 +64,54 @@ public sealed class UiFrameScheduler
             return stats;
         }
 
+        // MVP scheduler contract: each phase processes one deterministic snapshot.
+        // Same-phase work enqueued during processing is deferred to a later frame.
+        // Downstream phase work may still run in this frame if its snapshot has not been taken yet.
+        ProcessInheritedProperties(processors, stats);
         ProcessStyle(processors, stats);
+        ProcessInheritedProperties(processors, stats);
         ProcessMeasure(processors, stats);
         ProcessArrange(processors, stats);
         ProcessRender(processors, stats);
         ProcessHitTest(processors, stats);
 
         return stats;
+    }
+
+    private void ProcessInheritedProperties(FramePhaseProcessors processors, FrameStats stats)
+    {
+        int processed = 0;
+        while (inheritedPropertyQueue.HasWork)
+        {
+            IReadOnlyList<Elements.UIElement> snapshot = inheritedPropertyQueue.Snapshot();
+            if (snapshot.Count == 0)
+            {
+                break;
+            }
+
+            foreach (Elements.UIElement element in snapshot)
+            {
+                inheritedPropertyQueue.Remove(element);
+                InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Inherited);
+                try
+                {
+                    processors.Process(FramePhase.InheritedProperties, element);
+                }
+                catch
+                {
+                    element.DirtyState.Mark(cleared);
+                    inheritedPropertyQueue.Enqueue(element);
+                    throw;
+                }
+
+                stats.Count(FramePhase.InheritedProperties);
+                processed++;
+                trace.RecordPhase(FramePhase.InheritedProperties, element, InvalidationFlags.Inherited);
+                trace.RecordClear(element, cleared);
+            }
+        }
+
+        trace.RecordPhaseSummary(FramePhase.InheritedProperties, processed);
     }
 
     private void ProcessStyle(FramePhaseProcessors processors, FrameStats stats)

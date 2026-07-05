@@ -1,5 +1,4 @@
 using Cerneala.UI.Elements;
-using Cerneala.UI.Layout;
 
 namespace Cerneala.UI.Accessibility;
 
@@ -16,7 +15,7 @@ public sealed class SemanticsProvider
         List<SemanticsNode> children = [];
         foreach (UIElement child in element.VisualChildren)
         {
-            if (!IsVisibleForSemantics(child))
+            if (!UIElementVisibility.ParticipatesInRendering(child))
             {
                 continue;
             }
@@ -25,10 +24,5 @@ public sealed class SemanticsProvider
         }
 
         return AutomationPeer.Create(element).CreateNode(children);
-    }
-
-    private static bool IsVisibleForSemantics(UIElement element)
-    {
-        return element.IsVisible && element.Visibility == Visibility.Visible;
     }
 }

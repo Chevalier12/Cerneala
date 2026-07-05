@@ -55,6 +55,16 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         typeof(UIElement),
         new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
 
+    public static readonly UiProperty<bool> FocusableProperty = UiProperty<bool>.Register(
+        nameof(Focusable),
+        typeof(UIElement),
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsStyle));
+
+    public static readonly UiProperty<bool> IsTabStopProperty = UiProperty<bool>.Register(
+        nameof(IsTabStop),
+        typeof(UIElement),
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsStyle));
+
     public UIElement()
     {
         LogicalChildren = new UIElementCollection(this, ElementChildRole.Logical);
@@ -156,6 +166,18 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         set => SetValue(IsKeyboardFocusWithinProperty, value);
     }
 
+    public bool Focusable
+    {
+        get => GetValue(FocusableProperty);
+        set => SetValue(FocusableProperty, value);
+    }
+
+    public bool IsTabStop
+    {
+        get => GetValue(IsTabStopProperty);
+        set => SetValue(IsTabStopProperty, value);
+    }
+
     internal bool HasAttachedParent =>
         (LogicalParent?.Root is not null) || (VisualParent?.Root is not null);
 
@@ -193,13 +215,14 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
     public LayoutSize Measure(MeasureContext context)
     {
+        Root?.CountMeasureCall();
         if (LastMeasureAvailableSize == context.AvailableSize &&
             LastMeasureLayoutVersion == LayoutVersion)
         {
             return DesiredSize;
         }
 
-        LayoutSize desired = Visibility == Visibility.Collapsed
+        LayoutSize desired = !UIElementVisibility.ParticipatesInLayout(this)
             ? LayoutSize.Zero
             : MeasureCore(context).ClampNonNegative();
         desired = context.Rounding.Round(desired);
@@ -211,17 +234,18 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
     public LayoutRect Arrange(ArrangeContext context)
     {
+        Root?.CountArrangeCall();
         if (LastArrangeFinalRect == context.FinalRect &&
             LastArrangeLayoutVersion == LayoutVersion)
         {
             return ArrangedBounds;
         }
 
-        LayoutRect finalRect = Visibility == Visibility.Collapsed
+        LayoutRect finalRect = !UIElementVisibility.ParticipatesInLayout(this)
             ? context.FinalRect
             : ApplyAlignment(context.FinalRect);
 
-        LayoutRect arranged = Visibility == Visibility.Collapsed
+        LayoutRect arranged = !UIElementVisibility.ParticipatesInLayout(this)
             ? new LayoutRect(context.FinalRect.X, context.FinalRect.Y, 0, 0)
             : ArrangeCore(new ArrangeContext(finalRect, context.Rounding));
         arranged = context.Rounding.Round(arranged);
@@ -390,6 +414,11 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         if (options.HasFlag(UiPropertyOptions.AffectsInputVisual))
         {
             flags |= InvalidationFlags.InputVisual;
+        }
+
+        if (options.HasFlag(UiPropertyOptions.Inherits))
+        {
+            flags |= InvalidationFlags.Inherited;
         }
 
         return flags;

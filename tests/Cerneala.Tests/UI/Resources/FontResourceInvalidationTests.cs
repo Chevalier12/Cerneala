@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
@@ -22,18 +23,17 @@ public sealed class FontResourceInvalidationTests
     public void ReplacingFontResourceInvalidatesTextMeasurementAndRender()
     {
         ResourceStore store = new();
-        ResourceDependencyTracker tracker = new();
-        tracker.Track(store);
         ResourceId<FontResource> id = new("Body");
         store.SetResource(id, new FontResource(new TestFont("Default", 16)));
+        UIRoot root = new(100, 100);
+        root.SetResourceProvider(store);
         TextBlock textBlock = new()
         {
             Text = "Hello",
-            FontResourceId = id,
-            ResourceProvider = store,
-            ResourceDependencyTracker = tracker
+            FontResourceId = id
         };
-        textBlock.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        root.VisualChildren.Add(textBlock);
+        root.ProcessFrame();
         textBlock.DirtyState.ClearAll();
 
         store.SetResource(id, new FontResource(new TestFont("Serif", 16)));

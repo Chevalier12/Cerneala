@@ -3,6 +3,7 @@ using Cerneala.UI.Invalidation;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Resources;
 using Cerneala.UI.Styling;
 
 namespace Cerneala.UI.Elements;
@@ -12,6 +13,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     private readonly StyleApplicator styleApplicator;
     private ThemeProvider? themeProvider;
     private ThemeChangedSubscription? themeChangedSubscription;
+    private IObservableResourceProvider? observableResourceProvider;
+    private FrameStats? activeFrameStats;
 
     public UIRoot(float viewportWidth = 0, float viewportHeight = 0, float scale = 1)
     {
@@ -21,6 +24,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         ElementIds = new ElementIdProvider();
         Trace = new InvalidationTrace();
         LayoutQueue = new LayoutQueue(this);
+        InheritedPropertyQueue = new InheritedPropertyQueue(this);
         StyleQueue = new StyleQueue(this);
         RenderQueue = new RenderQueue(this);
         HitTestQueue = new HitTestQueue(this);
@@ -30,9 +34,11 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         RetainedRenderCache = new RetainedRenderCache();
         RenderQueueProcessor = new RenderQueueProcessor(RetainedRenderCache, RenderCounters);
         RetainedRenderer = new RetainedRenderer(RetainedRenderCache, new DrawCommandListBuilder(), RenderCounters);
+        InheritedPropertyPropagator = new InheritedPropertyPropagator();
+        ResourceDependencyTracker = new ResourceDependencyTracker();
         styleApplicator = new StyleApplicator();
         StyleProcessor = new StyleProcessor(styleApplicator, () => StyleSheet, () => themeProvider);
-        Scheduler = new UiFrameScheduler(LayoutQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
+        Scheduler = new UiFrameScheduler(LayoutQueue, InheritedPropertyQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
         IsLayoutBoundary = true;
         ElementLifecycle.AttachSubtree(this, this);
     }
@@ -53,6 +59,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public LayoutQueue LayoutQueue { get; }
 
+    public InheritedPropertyQueue InheritedPropertyQueue { get; }
+
     public StyleQueue StyleQueue { get; }
 
     public RenderQueue RenderQueue { get; }
@@ -71,6 +79,12 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public RetainedRenderer RetainedRenderer { get; }
 
+    public InheritedPropertyPropagator InheritedPropertyPropagator { get; }
+
+    public IResourceProvider? ResourceProvider { get; private set; }
+
+    public ResourceDependencyTracker ResourceDependencyTracker { get; }
+
     public UiFrameScheduler Scheduler { get; }
 
     public StyleSheet? StyleSheet { get; private set; }
@@ -78,6 +92,28 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public ThemeProvider? ThemeProvider => themeProvider;
 
     public StyleProcessor StyleProcessor { get; }
+
+    public void SetResourceProvider(IResourceProvider? provider)
+    {
+        if (ReferenceEquals(ResourceProvider, provider))
+        {
+            return;
+        }
+
+        if (observableResourceProvider is not null)
+        {
+            observableResourceProvider.ResourceChanged -= OnResourceChanged;
+        }
+
+        ResourceProvider = provider;
+        observableResourceProvider = provider as IObservableResourceProvider;
+        if (observableResourceProvider is not null)
+        {
+            observableResourceProvider.ResourceChanged += OnResourceChanged;
+        }
+
+        Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Root resource provider changed");
+    }
 
     public void SetViewport(float width, float height, float scale)
     {
@@ -122,6 +158,29 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         Invalidate(InvalidationFlags.Style | InvalidationFlags.Subtree, "Theme changed");
     }
 
+    private void OnResourceChanged(object? sender, ResourceChangedEventArgs args)
+    {
+        foreach (ResourceDependencyChange change in ResourceDependencyTracker.NotifyResourceChanged(args))
+        {
+            if ((change.Effects & (InvalidationFlags.Measure | InvalidationFlags.Arrange)) != InvalidationFlags.None)
+            {
+                change.Owner.IncrementLayoutVersion();
+            }
+
+            if (change.Effects.HasFlag(InvalidationFlags.Render))
+            {
+                change.Owner.IncrementRenderVersion();
+            }
+
+            change.Owner.Invalidate(new InvalidationRequest(
+                change.Owner,
+                InvalidationFlags.Resource,
+                "Resource changed",
+                resourceEffects: change.Effects,
+                affectsIntrinsicSize: change.AffectsIntrinsicSize));
+        }
+    }
+
     internal void IncrementTreeVersion()
     {
         TreeVersion++;
@@ -148,12 +207,31 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
             InputCache.Invalidate(request.Reason);
         }
 
-        DirtyPropagation.Default.Propagate(request, this, LayoutQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
+        DirtyPropagation.Default.Propagate(request, this, LayoutQueue, InheritedPropertyQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
     }
 
-    public FrameStats ProcessFrame(FramePhaseProcessors? processors = null, FrameBudget budget = default)
+    public FrameStats ProcessFrame(FramePhaseProcessors? processors = null, FrameBudget budget = default, FrameStats? stats = null)
     {
-        return Scheduler.ProcessFrame(processors ?? CreatePhaseProcessors(), budget);
+        FrameStats frameStats = stats ?? new FrameStats();
+        activeFrameStats = frameStats;
+        try
+        {
+            return Scheduler.ProcessFrame(processors ?? CreatePhaseProcessors(), budget, frameStats);
+        }
+        finally
+        {
+            activeFrameStats = null;
+        }
+    }
+
+    internal void CountMeasureCall()
+    {
+        activeFrameStats?.CountMeasureCall();
+    }
+
+    internal void CountArrangeCall()
+    {
+        activeFrameStats?.CountArrangeCall();
     }
 
     private FramePhaseProcessors CreatePhaseProcessors()
@@ -161,6 +239,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         FramePhaseProcessors layoutProcessors = LayoutManager.CreatePhaseProcessors();
         return new FramePhaseProcessors
         {
+            InheritedProperties = element => InheritedPropertyPropagator.PropagateFrom(element),
             Style = StyleProcessor.Process,
             Measure = layoutProcessors.Measure,
             Arrange = layoutProcessors.Arrange,

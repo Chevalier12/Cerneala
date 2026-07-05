@@ -29,22 +29,22 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
     public static readonly UiProperty<float> ExtentWidthProperty = UiProperty<float>.Register(
         nameof(ExtentWidth),
         typeof(ScrollContentPresenter),
-        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsArrange, validateValue: IsValidExtent));
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.None, validateValue: IsValidExtent));
 
     public static readonly UiProperty<float> ExtentHeightProperty = UiProperty<float>.Register(
         nameof(ExtentHeight),
         typeof(ScrollContentPresenter),
-        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsArrange, validateValue: IsValidExtent));
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.None, validateValue: IsValidExtent));
 
     public static readonly UiProperty<float> ViewportWidthProperty = UiProperty<float>.Register(
         nameof(ViewportWidth),
         typeof(ScrollContentPresenter),
-        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsArrange, validateValue: IsValidExtent));
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.None, validateValue: IsValidExtent));
 
     public static readonly UiProperty<float> ViewportHeightProperty = UiProperty<float>.Register(
         nameof(ViewportHeight),
         typeof(ScrollContentPresenter),
-        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsArrange, validateValue: IsValidExtent));
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.None, validateValue: IsValidExtent));
 
     public float HorizontalOffset
     {

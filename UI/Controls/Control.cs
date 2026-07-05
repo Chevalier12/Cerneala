@@ -26,7 +26,7 @@ public class Control : UIElement
     public static readonly UiProperty<DrawColor> ForegroundProperty = UiProperty<DrawColor>.Register(
         nameof(Foreground),
         typeof(Control),
-        new UiPropertyMetadata<DrawColor>(DrawColor.Black, UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<DrawColor>(DrawColor.Black, UiPropertyOptions.Inherits | UiPropertyOptions.AffectsRender));
 
     public static readonly UiProperty<DrawColor> BorderColorProperty = UiProperty<DrawColor>.Register(
         nameof(BorderColor),
@@ -46,12 +46,18 @@ public class Control : UIElement
     public static readonly UiProperty<string> FontFamilyProperty = UiProperty<string>.Register(
         nameof(FontFamily),
         typeof(Control),
-        new UiPropertyMetadata<string>("Default", UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender, validateValue: value => !string.IsNullOrWhiteSpace(value)));
+        new UiPropertyMetadata<string>(
+            "Default",
+            UiPropertyOptions.Inherits | UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            validateValue: value => !string.IsNullOrWhiteSpace(value)));
 
     public static readonly UiProperty<float> FontSizeProperty = UiProperty<float>.Register(
         nameof(FontSize),
         typeof(Control),
-        new UiPropertyMetadata<float>(16, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender, validateValue: value => value > 0 && float.IsFinite(value)));
+        new UiPropertyMetadata<float>(
+            16,
+            UiPropertyOptions.Inherits | UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            validateValue: value => value > 0 && float.IsFinite(value)));
 
     public DrawColor Background
     {

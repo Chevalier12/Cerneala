@@ -60,7 +60,7 @@ public sealed class UiPropertyInvalidationTests
     }
 
     [Fact]
-    public void NonInvalidationOptionsDoNotTriggerOwnerInvalidationHook()
+    public void InheritsOptionTriggersOwnerInvalidationHook()
     {
         UiProperty<string> property = UiProperty<string>.Register(
             UniqueName(),
@@ -71,7 +71,9 @@ public sealed class UiPropertyInvalidationTests
         owner.SetValue(property, "inherited", UiPropertyValueSource.Inherited);
 
         Assert.Equal("inherited", owner.GetValue(property));
-        Assert.Empty(owner.Invalidations);
+        Assert.Single(owner.Invalidations);
+        Assert.Same(property, owner.Invalidations[0].Property);
+        Assert.Equal(UiPropertyOptions.Inherits, owner.Invalidations[0].Options);
     }
 
     private static string UniqueName()

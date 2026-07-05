@@ -92,9 +92,11 @@ public sealed class ElementInputBridge
             {
                 clickTracker.Press(hitTarget?.Element);
                 pressedStateTracker.Press(pointerTarget?.Element);
-                if (button == InputMouseButton.Left && pointerTarget is not null)
+                if (button == InputMouseButton.Left &&
+                    pointerTarget is not null &&
+                    ResolveFocusTarget(pointerTarget.Element, routeMap) is UIElement focusTarget)
                 {
-                    focusManager.Focus(pointerTarget.Element, routeMap);
+                    focusManager.Focus(focusTarget, routeMap);
                 }
 
                 bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseDownEvent, InputEvents.MouseDownEvent, button, 1);
@@ -201,6 +203,19 @@ public sealed class ElementInputBridge
         for (UIElement? current = element; current is not null; current = current.VisualParent)
         {
             if (current is TContract)
+            {
+                return current;
+            }
+        }
+
+        return null;
+    }
+
+    private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)
+    {
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (FocusPolicy.CanFocus(current, routeMap))
             {
                 return current;
             }

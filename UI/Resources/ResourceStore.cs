@@ -1,6 +1,6 @@
 namespace Cerneala.UI.Resources;
 
-public sealed class ResourceStore : IResourceProvider
+public sealed class ResourceStore : IObservableResourceProvider
 {
     private readonly Dictionary<ResourceKey, Entry> entries = new();
 

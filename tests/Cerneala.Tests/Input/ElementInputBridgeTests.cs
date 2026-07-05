@@ -1,3 +1,4 @@
+using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
@@ -74,6 +75,74 @@ public sealed class ElementInputBridgeTests
         new ElementInputBridge().Dispatch(root, PointerFrame(10, 10, pressed: true));
 
         Assert.False(called);
+    }
+
+    [Fact]
+    public void PointerPressOnPlainUiElementDoesNotFocusIt()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+
+        Assert.Null(bridge.FocusManager.FocusedElement);
+        Assert.False(child.IsKeyboardFocused);
+    }
+
+    [Fact]
+    public void PointerPressOnButtonFocusesButton()
+    {
+        UIRoot root = new(100, 100);
+        Button button = new();
+        button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        root.VisualChildren.Add(button);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+
+        Assert.Same(button, bridge.FocusManager.FocusedElement);
+        Assert.True(button.IsKeyboardFocused);
+    }
+
+    [Fact]
+    public void PointerPressOnButtonElementContentFocusesOwningButton()
+    {
+        UIRoot root = new(100, 100);
+        UIElement content = new();
+        Button button = new()
+        {
+            Content = content
+        };
+        button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        root.VisualChildren.Add(button);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+
+        Assert.Same(button, bridge.FocusManager.FocusedElement);
+        Assert.True(button.IsKeyboardFocused);
+        Assert.False(content.IsKeyboardFocused);
+    }
+
+    [Fact]
+    public void PointerPressOnNonFocusableButtonRoutesMouseWithoutFocusing()
+    {
+        UIRoot root = new(100, 100);
+        Button button = new()
+        {
+            Focusable = false
+        };
+        button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        root.VisualChildren.Add(button);
+        bool mouseDownCalled = false;
+        button.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => mouseDownCalled = true);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+
+        Assert.True(mouseDownCalled);
+        Assert.Null(bridge.FocusManager.FocusedElement);
+        Assert.False(button.IsKeyboardFocused);
     }
 
     [Fact]

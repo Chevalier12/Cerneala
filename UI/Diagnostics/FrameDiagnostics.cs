@@ -11,6 +11,8 @@ public static class FrameDiagnostics
         return new FrameDiagnosticsSnapshot(
             stats.MeasuredElements,
             stats.ArrangedElements,
+            stats.MeasureCalls,
+            stats.ArrangeCalls,
             stats.RenderedElements,
             stats.HitTestElements,
             stats.ReusedCaches,
@@ -25,8 +27,10 @@ public static class FrameDiagnostics
 }
 
 public sealed record FrameDiagnosticsSnapshot(
-    int MeasuredElements,
-    int ArrangedElements,
+    int QueuedMeasureElements,
+    int QueuedArrangeElements,
+    int MeasureCalls,
+    int ArrangeCalls,
     int RenderedElements,
     int HitTestElements,
     int ReusedCaches,
@@ -37,6 +41,6 @@ public sealed record FrameDiagnosticsSnapshot(
     {
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"frame measured={MeasuredElements}, arranged={ArrangedElements}, renderCache={RenderedElements}, hitTest={HitTestElements}, reusedCaches={ReusedCaches}, noWork={NoWorkFrames}, hasWork={HasWork}");
+            $"frame queuedMeasure={QueuedMeasureElements}, queuedArrange={QueuedArrangeElements}, measureCalls={MeasureCalls}, arrangeCalls={ArrangeCalls}, renderCache={RenderedElements}, hitTest={HitTestElements}, reusedCaches={ReusedCaches}, noWork={NoWorkFrames}, hasWork={HasWork}");
     }
 }

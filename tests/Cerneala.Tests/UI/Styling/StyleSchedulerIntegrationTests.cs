@@ -185,6 +185,27 @@ public sealed class StyleSchedulerIntegrationTests
     }
 
     [Fact]
+    public void StyleSetterForInheritedParentPropertyPropagatesToChildInSameFrame()
+    {
+        UIRoot root = new(100, 100);
+        Control parent = new();
+        TextBlock child = new() { Text = "child" };
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+        StyleSheet sheet = new StyleSheet().Add(new StyleRule(StyleSelector.Where("parent", element => ReferenceEquals(element, parent)))
+            .Add(new Setter<DrawColor>(Control.ForegroundProperty, DrawColor.White)));
+        root.SetStyleSheet(sheet);
+
+        FrameStats stats = root.ProcessFrame();
+
+        Assert.Equal(DrawColor.White, parent.Foreground);
+        Assert.Equal(DrawColor.White, child.Foreground);
+        Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.ForegroundProperty));
+        Assert.True(stats.InheritedElements > 0);
+        Assert.False(root.Scheduler.HasWork);
+    }
+
+    [Fact]
     public void StylePropertyInvalidationDoesNotQueueRenderUntilStyleAppliesASetter()
     {
         UiProperty<int> property = UiProperty<int>.Register(

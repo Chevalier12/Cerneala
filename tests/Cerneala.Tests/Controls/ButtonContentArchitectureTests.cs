@@ -1,5 +1,7 @@
+using System.Reflection;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Text;
@@ -8,6 +10,73 @@ namespace Cerneala.Tests.Controls;
 
 public sealed class ButtonContentArchitectureTests
 {
+    [Fact]
+    public void ButtonUsesContentControlContentProperty()
+    {
+        Button button = new();
+
+        button.SetValue(ContentControl.ContentProperty, "Go");
+
+        Assert.Equal("Go", button.Content);
+    }
+
+    [Fact]
+    public void ButtonDoesNotDeclareSeparateContentProperty()
+    {
+        IEnumerable<FieldInfo> declaredFields = typeof(Button).GetFields(
+            BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
+
+        Assert.DoesNotContain(declaredFields, field => field.Name == "ContentProperty");
+    }
+
+    [Fact]
+    public void ButtonElementContentUsesContentControlOwnership()
+    {
+        Button button = new();
+        UIElement child = new();
+
+        button.Content = child;
+
+        Assert.Same(button, child.LogicalParent);
+        Assert.Same(button, child.VisualParent);
+        Assert.Contains(child, button.LogicalChildren);
+        Assert.Contains(child, button.VisualChildren);
+    }
+
+    [Fact]
+    public void ButtonReplacingElementContentUsesContentControlOwnership()
+    {
+        Button button = new();
+        UIElement oldChild = new();
+        UIElement newChild = new();
+        button.Content = oldChild;
+
+        button.Content = newChild;
+
+        Assert.Null(oldChild.LogicalParent);
+        Assert.Null(oldChild.VisualParent);
+        Assert.Same(button, newChild.LogicalParent);
+        Assert.Same(button, newChild.VisualParent);
+        Assert.Contains(newChild, button.LogicalChildren);
+        Assert.Contains(newChild, button.VisualChildren);
+    }
+
+    [Fact]
+    public void ButtonRejectsAlreadyParentedContent()
+    {
+        ContentControl owner = new();
+        UIElement child = new();
+        Button button = new();
+        owner.Content = child;
+
+        Assert.Throws<InvalidOperationException>(() => button.Content = child);
+
+        Assert.Same(owner, child.LogicalParent);
+        Assert.Same(owner, child.VisualParent);
+        Assert.DoesNotContain(child, button.LogicalChildren);
+        Assert.DoesNotContain(child, button.VisualChildren);
+    }
+
     [Fact]
     public void StringContentMeasurementUsesSharedTextMeasurer()
     {

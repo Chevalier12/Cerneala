@@ -51,6 +51,7 @@ public class Game1 : Game
 
         _resources = new ResourceStore();
         _resources.SetResource(PlaygroundFontId, new FontResource(_uiHost.ContentServices.LoadFont("Arial", 16)));
+        uiRoot.SetResourceProvider(_resources);
         _sampleSelector = SampleSelector.CreateDefault(_resources, PlaygroundFontId);
         uiRoot.VisualChildren.Add(_sampleSelector.Root);
         Window.TextInput += OnTextInput;

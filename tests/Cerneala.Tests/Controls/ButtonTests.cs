@@ -53,7 +53,7 @@ public sealed class ButtonTests
         button.Template = new ControlTemplate<Button>(context =>
         {
             presenter = new ContentPresenter();
-            context.Bind(Button.ContentProperty, presenter, ContentPresenter.ContentProperty);
+            context.Bind(ContentControl.ContentProperty, presenter, ContentPresenter.ContentProperty);
             return presenter;
         });
         EqualElement oldChild = new(1);

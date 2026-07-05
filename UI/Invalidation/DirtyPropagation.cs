@@ -11,6 +11,7 @@ public sealed class DirtyPropagation
         InvalidationRequest request,
         UIRoot root,
         LayoutQueue layoutQueue,
+        InheritedPropertyQueue inheritedPropertyQueue,
         StyleQueue styleQueue,
         RenderQueue renderQueue,
         HitTestQueue hitTestQueue,
@@ -19,6 +20,7 @@ public sealed class DirtyPropagation
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(layoutQueue);
+        ArgumentNullException.ThrowIfNull(inheritedPropertyQueue);
         ArgumentNullException.ThrowIfNull(styleQueue);
         ArgumentNullException.ThrowIfNull(renderQueue);
         ArgumentNullException.ThrowIfNull(hitTestQueue);
@@ -31,14 +33,14 @@ public sealed class DirtyPropagation
         }
 
         InvalidationFlags propagated = effective & ~InvalidationFlags.Subtree;
-        MarkAndQueue(request.Target, propagated, layoutQueue, styleQueue, renderQueue, hitTestQueue, trace, request.Reason);
+        MarkAndQueue(request.Target, propagated, layoutQueue, inheritedPropertyQueue, styleQueue, renderQueue, hitTestQueue, trace, request.Reason);
 
         if (effective.HasFlag(InvalidationFlags.Measure))
         {
             foreach (UIElement ancestor in ElementTreeWalker.Ancestors(request.Target, ElementChildRole.Visual))
             {
                 InvalidationFlags ancestorFlags = InvalidationFlags.Measure | InvalidationFlags.Arrange;
-                MarkAndQueue(ancestor, ancestorFlags, layoutQueue, styleQueue, renderQueue, hitTestQueue, trace, "Measure ancestor propagation");
+                MarkAndQueue(ancestor, ancestorFlags, layoutQueue, inheritedPropertyQueue, styleQueue, renderQueue, hitTestQueue, trace, "Measure ancestor propagation");
                 if (ancestor.IsLayoutBoundary)
                 {
                     break;
@@ -50,7 +52,7 @@ public sealed class DirtyPropagation
         {
             foreach (UIElement descendant in ElementTreeWalker.Descendants(request.Target, ElementChildRole.Visual))
             {
-                MarkAndQueue(descendant, propagated, layoutQueue, styleQueue, renderQueue, hitTestQueue, trace, "Subtree propagation");
+                MarkAndQueue(descendant, propagated, layoutQueue, inheritedPropertyQueue, styleQueue, renderQueue, hitTestQueue, trace, "Subtree propagation");
             }
         }
     }
@@ -60,6 +62,11 @@ public sealed class DirtyPropagation
         ArgumentNullException.ThrowIfNull(request);
 
         InvalidationFlags effective = request.Flags;
+        if (request.SourceProperty?.Options.HasFlag(Core.UiPropertyOptions.Inherits) == true)
+        {
+            effective |= InvalidationFlags.Inherited | InvalidationFlags.Subtree;
+        }
+
         if (request.SourceProperty?.Options.HasFlag(Core.UiPropertyOptions.AffectsStyle) == true)
         {
             effective |= InvalidationFlags.Style;
@@ -109,6 +116,7 @@ public sealed class DirtyPropagation
         UIElement element,
         InvalidationFlags flags,
         LayoutQueue layoutQueue,
+        InheritedPropertyQueue inheritedPropertyQueue,
         StyleQueue styleQueue,
         RenderQueue renderQueue,
         HitTestQueue hitTestQueue,
@@ -133,6 +141,12 @@ public sealed class DirtyPropagation
         {
             layoutQueue.EnqueueArrange(element);
             trace.RecordQueue(element, InvalidationFlags.Arrange, reason);
+        }
+
+        if (flags.HasFlag(InvalidationFlags.Inherited))
+        {
+            inheritedPropertyQueue.Enqueue(element);
+            trace.RecordQueue(element, InvalidationFlags.Inherited, reason);
         }
 
         if (flags.HasFlag(InvalidationFlags.Style))

@@ -46,6 +46,16 @@ public sealed class ScrollBarTests
     }
 
     [Fact]
+    public void ScrollBarInitializesTrackToCurrentOrientation()
+    {
+        ScrollBar vertical = new();
+        ScrollBar horizontal = new() { Orientation = Orientation.Horizontal };
+
+        Assert.Equal(Orientation.Vertical, vertical.Track.Orientation);
+        Assert.Equal(Orientation.Horizontal, horizontal.Track.Orientation);
+    }
+
+    [Fact]
     public void TemplatedScrollBarKeepsGeneratedRootStable()
     {
         ScrollBar scrollBar = new();

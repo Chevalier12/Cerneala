@@ -33,7 +33,7 @@ public sealed class HitTestService
             return null;
         }
 
-        if (!IsVisibleForHitTest(element))
+        if (!UIElementVisibility.ParticipatesInHitTest(element))
         {
             return null;
         }
@@ -60,11 +60,6 @@ public sealed class HitTestService
         return routeMap.TryGetId(element, out UiElementId elementId)
             ? new HitTestResult(element, elementId, x, y)
             : null;
-    }
-
-    private static bool IsVisibleForHitTest(UIElement element)
-    {
-        return element.IsVisible && element.Visibility == Visibility.Visible;
     }
 
     private static LayoutRect GetHitTestBounds(UIElement element)

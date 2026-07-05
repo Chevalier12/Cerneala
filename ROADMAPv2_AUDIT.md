@@ -16,14 +16,14 @@ Build/test note: `dotnet test Cerneala.slnx` passed after the retained input cac
 - [x] Hit-test/input routing no longer rebuilds the mouse/touch/stylus bridge route map every input dispatch; `UIRoot` owns a retained `ElementInputCache`, and `HitTestQueue` drives the cache rebuild phase.
 - [x] ROADMAPv2 maturity overclaim has been corrected by `freeze-later-experimental-scope`; Later and Optional/Experimental sections now distinguish descriptor/type existence from retained-pipeline, backend/platform, and scenario-complete maturity.
 
-Brutal summary: the repo has a good skeleton and the retained update/draw, tree mutation, style scheduling, input route cache, and roadmap honesty fixes have landed. Remaining risks are later foundation areas such as resource invalidation ownership, realistic text/layout behavior, accessibility/platform adapters, animation stress, markup/source generation, and package boundaries.
+Brutal summary: the repo has a good skeleton and the retained update/draw, tree mutation, style scheduling, input route cache, root-owned resource invalidation, and roadmap honesty fixes have landed. Remaining risks are later foundation areas such as realistic text/layout behavior, accessibility/platform adapters, animation stress, markup/source generation, and package boundaries.
 
 ## Requested checks
 
 - [ ] **1. Implementation respects ROADMAPv2 intent.** Partially. The broad layering is right, and the retained render, tree mutation, style phase, input route cache, and roadmap honesty/deferred scope fixes have landed; remaining concerns are later foundation areas.
-- [ ] **2. WPF legacy API risk.** Some names are fine (`RoutedEvent`, `CommandBinding`, `Visibility`), but `AutomationPeer`, `ButtonAutomationPeer`, `TextBoxAutomationPeer`, and `ItemsControlAutomationPeer` pull the public shape toward WPF compatibility language without a compatibility goal. `IsVisible` plus `Visibility` is also WPF-ish ambiguity without enough semantic payoff.
+- [ ] **2. WPF legacy API risk.** Some names are fine (`RoutedEvent`, `CommandBinding`, `Visibility`), but `AutomationPeer`, `ButtonAutomationPeer`, `TextBoxAutomationPeer`, and `ItemsControlAutomationPeer` pull the public shape toward WPF compatibility language without a compatibility goal. The `IsVisible`/`Visibility` split is now explicit and tested, but still needs API-shape review before public stabilization.
 - [ ] **3. Over-engineering/YAGNI.** Later/Optional work was implemented too early: markup/source generation, advanced input categories, animation/storyboard, accessibility peers, advanced media descriptors, text editing, and IME scaffolding are ahead of core correctness.
-- [ ] **4. Under-engineering.** The most dangerous under-built areas are now resource invalidation ownership and realistic text/layout/virtualization behavior; the retained render contract, tree mutation invalidation, style phase integration, and route/hit-test caching have been remediated.
+- [ ] **4. Under-engineering.** The most dangerous under-built areas are now realistic text/layout/virtualization behavior; the retained render contract, tree mutation invalidation, style phase integration, route/hit-test caching, and root-owned resource invalidation have been remediated.
 - [x] **5. Retained rendering + invalidation + game loop coherence.** The retained render and tree-mutation contracts have been fixed: draw-path generation is blocked, update owns cache generation/composition, and late tree mutations are processed during update.
 - [x] **6. Drawing/UI/Input boundaries.** Mostly clean for backend references. `UI/Input` no longer references `ButtonBase` or `Thumb`; `InputControlBoundaryTests` now guards the control boundary.
 - [ ] **7. WPF-like names familiar but not dragging design backward.** Mixed. Core property model is modern; accessibility and some input/control naming need a hard naming decision.
@@ -201,10 +201,12 @@ Problem: focus can be assigned to any routed element that appears in the current
 
 Required changes:
 
-- [ ] Add an explicit focusability contract. Keep it simple: `Focusable`, `IsTabStop`, or a small `IFocusTarget` interface.
-- [ ] Prevent disabled/invisible/non-focusable elements from becoming keyboard focus targets.
-- [ ] Decide whether root-level focus scope memory exists in MVP or remains deferred.
-- [ ] Add `tests/Cerneala.Tests/Input/FocusPolicyTests.cs` proving focus ignores non-focusable, disabled, invisible, detached, and collapsed elements.
+- [x] Add an explicit focusability contract. Keep it simple: `Focusable`, `IsTabStop`, or a small `IFocusTarget` interface.
+- [x] Prevent disabled/invisible/non-focusable elements from becoming keyboard focus targets.
+- [x] Decide whether root-level focus scope memory exists in MVP or remains deferred.
+- [x] Add `tests/Cerneala.Tests/Input/FocusPolicyTests.cs` proving focus ignores non-focusable, disabled, invisible, detached, and collapsed elements.
+
+Implementation note: fixed by `fix-focus-visibility-semantics`; `UIElement` now exposes `Focusable` and `IsTabStop`, `FocusPolicy` gates `FocusManager` and pointer focus, `ButtonBase`/`TextBoxBase` opt in by default, and root-level focus scope memory remains deferred.
 
 ## Should Fix
 
@@ -271,10 +273,12 @@ Problem: `UiPropertyOptions.Inherits` and `UiPropertyValueSource.Inherited` exis
 
 Required changes:
 
-- [ ] Decide which properties actually inherit in Cerneala v2: probably font family, font size, foreground, theme/resource scope, flow direction later.
-- [ ] Implement explicit inherited-value propagation or document that inheritance is not automatic yet.
-- [ ] Add `tests/Cerneala.Tests/UI/Core/InheritedPropertyTreePropagationTests.cs`.
-- [ ] Avoid WPF-style global inheritance magic. Keep propagation explicit and invalidation-driven.
+- [x] Decide which properties actually inherit in Cerneala v2: probably font family, font size, foreground, theme/resource scope, flow direction later.
+- [x] Implement explicit inherited-value propagation or document that inheritance is not automatic yet.
+- [x] Add `tests/Cerneala.Tests/UI/Core/InheritedPropertyTreePropagationTests.cs`.
+- [x] Avoid WPF-style global inheritance magic. Keep propagation explicit and invalidation-driven.
+
+Implementation note: fixed by `implement-inherited-property-tree-propagation`; font family, font size, and foreground now inherit through the retained visual tree in an explicit `InheritedProperties` frame phase owned by `UIRoot`. Logical-tree inheritance, theme/resource scope inheritance, and flow direction remain deferred.
 
 ### 4. `IsVisible` plus `Visibility` is ambiguous
 
@@ -289,9 +293,11 @@ Problem: `IsVisible` is a bool property and `Visibility` is a `Visible/Hidden/Co
 
 Required changes:
 
-- [ ] Decide whether `IsVisible` means “participates in rendering/hit-test but not layout” or whether it should be removed/deprecated in favor of `Visibility`.
-- [ ] If both remain, document exact semantics and add tests for all combinations.
-- [ ] Add `tests/Cerneala.Tests/UI/Layout/VisibilityCombinationTests.cs`.
+- [x] Decide whether `IsVisible` means “participates in rendering/hit-test but not layout” or whether it should be removed/deprecated in favor of `Visibility`.
+- [x] If both remain, document exact semantics and add tests for all combinations.
+- [x] Add `tests/Cerneala.Tests/UI/Layout/VisibilityCombinationTests.cs`.
+
+Implementation note: fixed by `fix-focus-visibility-semantics`; `Visibility` is the primary public layout/render/input semantic, `IsVisible=false` remains a runtime render/input gate that does not collapse layout, and `UIElementVisibility` centralizes participation checks.
 
 ### 5. Layout diagnostics undercount real child work
 
@@ -307,9 +313,11 @@ Problem: panels call `child.Measure(...)` and `child.Arrange(...)` recursively i
 
 Required changes:
 
-- [ ] Decide whether `FrameStats.MeasuredElements` means queued layout items or actual measure calls.
-- [ ] If diagnostics should reflect real work, add instrumentation at `UIElement.Measure(...)` and `UIElement.Arrange(...)`, or expose both counters.
-- [ ] Add `tests/Cerneala.Tests/UI/Layout/LayoutDiagnosticsAccuracyTests.cs`.
+- [x] Decide whether `FrameStats.MeasuredElements` means queued layout items or actual measure calls.
+- [x] If diagnostics should reflect real work, add instrumentation at `UIElement.Measure(...)` and `UIElement.Arrange(...)`, or expose both counters.
+- [x] Add `tests/Cerneala.Tests/UI/Layout/LayoutDiagnosticsAccuracyTests.cs`.
+
+Implementation note: fixed by `clarify-layout-scheduler-contract-and-diagnostics`; `MeasuredElements` and `ArrangedElements` remain queued scheduler phase counts, while `MeasureCalls` and `ArrangeCalls` count actual recursive layout method calls.
 
 ### 6. Layout queue stability needs a decision
 
@@ -319,14 +327,16 @@ Files:
 - `UI/Invalidation/LayoutQueue.cs`
 - `ROADMAPv2.md`
 
-Problem: ROADMAPv2 says “process layout queue until stable”. `UiFrameScheduler` snapshots each phase once. Work enqueued during a phase can be deferred to a later frame. That may be acceptable, but it must be explicit.
+Problem: ROADMAPv2 used to say “process layout queue until stable”. `UiFrameScheduler` snapshots each phase once. Work enqueued during a phase can be deferred to a later frame. That behavior is now the explicit MVP contract.
 
 Required changes:
 
-- [ ] Decide whether MVP processes a single snapshot per phase or loops until queues are stable.
-- [ ] If single-pass is intentional, update ROADMAP and Superpowers plan wording.
-- [ ] If stable processing is required, implement bounded phase loops to avoid infinite invalidation.
-- [ ] Add `tests/Cerneala.Tests/UI/Invalidation/FrameSchedulerStabilityTests.cs`.
+- [x] Decide whether MVP processes a single snapshot per phase or loops until queues are stable.
+- [x] If single-pass is intentional, update ROADMAP and Superpowers plan wording.
+- [x] If stable processing is required, implement bounded phase loops to avoid infinite invalidation.
+- [x] Add `tests/Cerneala.Tests/UI/Invalidation/FrameSchedulerStabilityTests.cs`.
+
+Implementation note: MVP processes one deterministic snapshot per phase. Same-phase work enqueued during processing is deferred to a later frame; downstream phase work can still run in the same frame if its snapshot has not yet been taken. Bounded until-stable loops remain deferred until `FrameBudget` scheduling exists.
 
 ### 7. Resource invalidation is too control-specific
 
@@ -342,10 +352,12 @@ Problem: `TextBlock` and `Image` subscribe to `ResourceStore` directly when thei
 
 Required changes:
 
-- [ ] Define a resource observation contract beyond `ResourceStore` if custom providers can change.
-- [ ] Let `UIRoot` or a retained resource service own dependency tracking for attached elements.
-- [ ] Ensure resource changes enqueue the correct invalidation based on dependency metadata.
-- [ ] Add `tests/Cerneala.Tests/UI/Resources/HostResourceInvalidationIntegrationTests.cs`.
+- [x] Define a resource observation contract beyond `ResourceStore` if custom providers can change.
+- [x] Let `UIRoot` or a retained resource service own dependency tracking for attached elements.
+- [x] Ensure resource changes enqueue the correct invalidation based on dependency metadata.
+- [x] Add `tests/Cerneala.Tests/UI/Resources/HostResourceInvalidationIntegrationTests.cs`.
+
+Implementation note: fixed by `root-owned-resource-invalidation`; `IObservableResourceProvider` separates change observation from `ResourceStore`, `UIRoot` owns the attached-tree `ResourceDependencyTracker`, `TextBlock` and `Image` resolve local provider overrides or the root provider without direct `ResourceStore` subscriptions, and host integration tests cover font/image resource changes plus custom observable and non-observable providers.
 
 ### 8. Text services are MVP-fake but ROADMAPv2 reads mature
 
@@ -364,11 +376,11 @@ Required changes:
 
 - [ ] Keep rough text layout if it is explicitly MVP.
 - [ ] Do not claim full wrapping/trimming/multiline rendering yet.
-- [ ] Make `Button` inherit content behavior from `ContentControl` or route string content through `ContentPresenter`/`TextBlock`.
+- [x] Make `Button` inherit content behavior from `ContentControl` or route string content through `ContentPresenter`/`TextBlock`.
 - [ ] Add `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs` proving render output matches measured lines if wrapping is exposed.
-- [ ] Add `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs` proving Button does not duplicate content/layout logic.
+- [x] Add `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs` proving Button does not duplicate content/layout logic.
 
-Implementation note: fixed by `clarify-text-services-mvp`; `ROADMAPv2.md` now marks line breaking, wrapping, trimming, and multiline rendering as deterministic MVP/partial scope, `TextRenderer` draws measured MVP lines instead of the original unwrapped string, and `Button` string content uses shared text services instead of local width formulas.
+Implementation note: fixed by `clarify-text-services-mvp` and `consolidate-button-content-composition`; `ROADMAPv2.md` now marks line breaking, wrapping, trimming, and multiline rendering as deterministic MVP/partial scope, `TextRenderer` draws measured MVP lines instead of the original unwrapped string, `ButtonBase` inherits `ContentControl`, `Button` uses shared `ContentControl.ContentProperty`/child ownership, and `Button` string content uses shared text services instead of local width formulas.
 
 ### 9. Items virtualization is not mature enough for Core-complete claims
 
@@ -410,7 +422,7 @@ These are valid product areas, but they should not consume design energy before 
 - [ ] Keep `UI/Animation/*` small and explicit. Do not expand `Storyboard`/timeline composition until style/layout/render invalidation is proven under animation stress.
 - [ ] Keep `UI/Markup/*` and `Cerneala.SourceGen/*` frozen as optional. Do not add XAML-like features, runtime object graph magic, or reflection-heavy bindings.
 - [ ] Keep `UI/Accessibility/Semantics*` as the preferred architecture. Decide later whether `AutomationPeer` names survive as public API.
-- [ ] Keep `UI/Text/TextEditor.cs`, `TextCompositionManager`, `TextBox`, and `PasswordBox` limited until focus, text layout, platform text input, and selection rendering are more real.
+- [ ] Keep `UI/Text/TextEditor.cs`, `TextCompositionManager`, `TextBox`, and `PasswordBox` limited until text layout, platform text input, and selection rendering are more real.
 - [ ] Keep `UI/Data/StringPropertyPath.cs` unsupported. That is a good decision. Do not add string-path binding until typed binding and templates are insufficient in real scenarios.
 - [ ] Keep `DrawCommandListPool` out of correctness. Add it only after profiling proves command-list allocation is a bottleneck; per-draw root command copying has already been removed.
 - [ ] Add richer diagnostics/devtools after stats are honest. Diagnostics built on false counters are worse than no diagnostics.
@@ -421,7 +433,7 @@ These are valid product areas, but they should not consume design energy before 
 - [ ] Do not expand advanced rendering/media. Gradients, shadows, opacity layers, render targets, and real paths need drawing command/backend semantics first.
 - [ ] Do not add a WPF-compatible binding engine. Keep typed observation and explicit setters.
 - [ ] Do not build full native accessibility adapters until the platform-neutral semantics API is stable.
-- [ ] Do not build full IME/text editing until focus policy, text layout, platform text input, and retained selection/caret invalidation are coherent.
+- [ ] Do not build full IME/text editing until text layout, platform text input, and retained selection/caret invalidation are coherent.
 - [ ] Do not implement `FrameBudget` scheduling yet. First prove the all-work frame contract is correct.
 - [ ] Do not split projects just to satisfy roadmap optics. Split only when package dependency boundaries are ready and tested.
 - [ ] Do not add more WPF event/name coverage unless there is a Cerneala-native scenario requiring it.
@@ -479,6 +491,8 @@ These are valid product areas, but they should not consume design energy before 
 - [ ] Current risk: many tests prove class existence and simple behavior, not frame-level invariants under mutation, resource/style changes, and large retained trees.
 - [ ] Consequence: the roadmap looks complete while the architecture can still violate its central performance contract.
 - [ ] Mitigation: add integration tests around late mutation, draw purity, cache reuse, style/resource invalidation, input cache reuse, and virtualization scale.
+
+Implementation note: partially mitigated by `create-retained-ui-mvp-vertical-slice`; `RetainedAppSample` is now registered first in the playground selector, and `RetainedVerticalSliceTests` prove first-frame retained work, unchanged no-work frames, draw purity, command mutation invalidation, and root-owned font resource invalidation for a cohesive sample tree.
 
 ## Recommended Next Superpowers Plans
 
@@ -602,15 +616,15 @@ Tasks:
 - [x] `tests/Cerneala.Tests/UI/Input/ElementInputCacheInvalidationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Input/HitTestCacheInvalidationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Input/InputControlBoundaryTests.cs`
-- [ ] `tests/Cerneala.Tests/Input/FocusPolicyTests.cs`
+- [x] `tests/Cerneala.Tests/Input/FocusPolicyTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Styling/StyleSchedulerIntegrationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Resources/HostResourceInvalidationIntegrationTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Core/InheritedPropertyTreePropagationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Resources/HostResourceInvalidationIntegrationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Core/InheritedPropertyTreePropagationTests.cs`
 - [ ] `tests/Cerneala.Tests/UI/Layout/LayoutDiagnosticsAccuracyTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Layout/VisibilityCombinationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/VisibilityCombinationTests.cs`
 - [ ] `tests/Cerneala.Tests/UI/Layout/VirtualizationScaleTests.cs`
 - [ ] `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs`
 - [ ] `tests/Cerneala.Tests/Architecture/ReflectionBoundaryTests.cs`
 - [ ] `tests/Cerneala.Tests/Architecture/PublicApiLegacyNameTests.cs`
 
@@ -626,7 +640,7 @@ Keep unless behavior drifts:
 Reconsider or constrain:
 
 - [ ] `AutomationPeer` and concrete peer names — prefer `SemanticsProvider`/`SemanticsNode` as public Cerneala architecture; keep peer names only as adapter/internal compatibility language if deliberately chosen.
-- [ ] `IsVisible` plus `Visibility` — choose one primary visibility model or document the split aggressively.
+- [x] `IsVisible` plus `Visibility` — `Visibility` is primary; `IsVisible=false` remains a runtime render/input gate that does not collapse layout.
 - [ ] More WPF event surface in `InputEvents.cs` — do not add names unless Cerneala behavior is implemented.
 - [ ] `Storyboard` — keep only if timeline composition is really needed; otherwise prefer explicit game-loop animation scheduler.
 - [ ] `TemplateBinding` — keep the concept, but avoid runtime-reflection creation in core authoring paths.
@@ -648,4 +662,4 @@ Reconsider or constrain:
 2. [x] **Fix visual tree mutation invalidation.** Attached add/remove/reorder must enqueue layout/render/hit-test work, not just increment tree/root cache version. Primary files: `UI/Elements/UIElementCollection.cs`, `UI/Elements/UIRoot.cs`, `UI/Invalidation/DirtyPropagation.cs`.
 3. [x] **Integrate style/theme into the retained scheduler.** Add real style phase/queue, root-owned style scope, explicit pseudo-class invalidation, and remove string property-name detection. Primary files: `UI/Styling/*`, `UI/Invalidation/UiFrameScheduler.cs`, `UI/Elements/UIElement.cs`.
 4. [x] **Build retained input route/hit-test cache and clean input/control coupling.** Stop rebuilding route maps every frame; remove direct `ButtonBase`/`Thumb` dependencies from `ElementInputBridge`. Primary files: `UI/Input/ElementInputBridge.cs`, `UI/Input/ElementInputRouteBuilder.cs`, `UI/Input/HitTestService.cs`, `UI/Invalidation/HitTestQueue.cs`.
-5. [ ] **Freeze Later/Optional and add remaining high-risk tests.** Stop expanding controls/media/markup/accessibility/animation until the remaining unchecked tests above prove resource propagation, focus policy, inheritance, layout diagnostics, visibility semantics, virtualization scale, text wrapping, and architecture boundaries.
+5. [ ] **Freeze Later/Optional and add remaining high-risk tests.** Stop expanding controls/media/markup/accessibility/animation until the remaining unchecked tests above prove resource propagation, layout diagnostics, virtualization scale, text wrapping, and architecture boundaries.

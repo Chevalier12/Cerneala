@@ -22,6 +22,7 @@ public class ScrollBar : RangeBase
         BorderColor = new DrawColor(130, 130, 130);
         BorderThickness = new Thickness(1);
         ViewportSize = 0;
+        SyncTrack();
     }
 
     public static readonly UiProperty<Orientation> OrientationProperty = UiProperty<Orientation>.Register(

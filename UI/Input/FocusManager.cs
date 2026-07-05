@@ -15,6 +15,11 @@ public sealed class FocusManager
             return false;
         }
 
+        if (element is not null && !FocusPolicy.CanFocus(element, routeMap))
+        {
+            return false;
+        }
+
         UIElement? oldFocus = FocusedElement;
         FocusedElement = element;
 
@@ -31,7 +36,18 @@ public sealed class FocusManager
         ArgumentNullException.ThrowIfNull(inputFrame);
         ArgumentNullException.ThrowIfNull(routeMap);
 
-        if (FocusedElement is null || !routeMap.TryGetId(FocusedElement, out UiElementId focusedId))
+        if (FocusedElement is null)
+        {
+            return;
+        }
+
+        if (!FocusPolicy.CanFocus(FocusedElement, routeMap))
+        {
+            Focus(null, routeMap);
+            return;
+        }
+
+        if (!routeMap.TryGetId(FocusedElement, out UiElementId focusedId))
         {
             return;
         }

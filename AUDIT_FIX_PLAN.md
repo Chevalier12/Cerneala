@@ -90,6 +90,24 @@ Detailed plan: `docs/superpowers/plans/2026-07-04-cache-input-route-hit-test.md`
 
 ## Phase 3: Roadmap Honesty And Deferred Scope
 
+## Root-Owned Resource Invalidation
+
+- [x] Add provider-neutral `IObservableResourceProvider`.
+- [x] Make `UIRoot` own the retained resource provider subscription and dependency tracker.
+- [x] Remove direct `ResourceStore` subscriptions from `TextBlock` and `Image`.
+- [x] Add `tests/Cerneala.Tests/UI/Resources/HostResourceInvalidationIntegrationTests.cs`.
+- [x] Wire playground resources through `UIRoot.SetResourceProvider(...)`.
+- [x] `dotnet test Cerneala.slnx` passes.
+
+## Layout Scheduler Contract And Diagnostics
+
+- [x] Add `FrameStats.MeasureCalls` and `FrameStats.ArrangeCalls`.
+- [x] Keep `MeasuredElements` and `ArrangedElements` as queued scheduler phase counts.
+- [x] Count actual recursive layout calls from `UIElement.Measure(...)` and `UIElement.Arrange(...)`.
+- [x] Lock MVP scheduler behavior to one deterministic snapshot per phase.
+- [x] Update diagnostics and playground overlay wording.
+- [x] Add layout diagnostics accuracy and scheduler stability tests.
+
 Goal: stop the roadmap from claiming maturity for descriptor-level or experimental work.
 
 ### Plan 5: `freeze-later-experimental-scope`
@@ -112,6 +130,20 @@ Detailed plan: `docs/superpowers/plans/2026-07-05-clarify-text-services-mvp.md`
 - [x] Make controls with text content use shared text services or a content presenter path.
 - [x] Add `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs`.
 - [x] Add `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs`.
+
+Implementation note: `ButtonBase` now inherits `ContentControl`; `Button` no longer declares a separate `ContentProperty` or child ownership path, while MVP string content still uses shared text services.
+
+### Plan 6b: `create-retained-ui-mvp-vertical-slice`
+
+Detailed plan: `docs/superpowers/plans/2026-07-05-create-retained-ui-mvp-vertical-slice.md`
+
+- [x] Add `Playground/Cerneala.Playground/Samples/RetainedAppSample.cs`.
+- [x] Register `Retained App` first in `SampleSelector.CreateDefault(...)`.
+- [x] Add retained app contract/source tests.
+- [x] Add `tests/Cerneala.Tests/UI/Hosting/RetainedVerticalSliceTests.cs` for first-frame work, unchanged no-work frames, draw purity, command mutation, and resource mutation.
+- [x] Keep the sample retained; it builds its tree once and mutates state through properties/commands/resources.
+
+Implementation note: `RetainedAppSample` now exercises retained layout/render/input/control/resource behavior as one MVP vertical slice, with targeted tests covering no-work frames and draw purity.
 
 ### Plan 7: `clarify-package-boundary-dependencies`
 

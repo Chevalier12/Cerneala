@@ -6,6 +6,8 @@ public sealed class FramePhaseProcessors
 {
     public static FramePhaseProcessors Empty { get; } = new();
 
+    public Action<UIElement>? InheritedProperties { get; init; }
+
     public Action<UIElement>? Style { get; init; }
 
     public Action<UIElement>? Measure { get; init; }
@@ -20,6 +22,9 @@ public sealed class FramePhaseProcessors
     {
         switch (phase)
         {
+            case FramePhase.InheritedProperties:
+                InheritedProperties?.Invoke(element);
+                break;
             case FramePhase.Style:
                 Style?.Invoke(element);
                 break;

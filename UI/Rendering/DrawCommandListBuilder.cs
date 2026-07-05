@@ -24,7 +24,7 @@ public sealed class DrawCommandListBuilder
         RenderCounters counters,
         DrawCommandList rootCommands)
     {
-        if (element.Visibility != Visibility.Visible || !element.IsVisible)
+        if (!UIElementVisibility.ParticipatesInRendering(element))
         {
             return;
         }

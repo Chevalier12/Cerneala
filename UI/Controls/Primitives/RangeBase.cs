@@ -9,7 +9,7 @@ public class RangeBase : Control
         typeof(RangeBase),
         new UiPropertyMetadata<float>(
             0,
-            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender,
+            UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender,
             validateValue: IsValidFloat));
 
     public static readonly UiProperty<float> MaximumProperty = UiProperty<float>.Register(
@@ -17,7 +17,7 @@ public class RangeBase : Control
         typeof(RangeBase),
         new UiPropertyMetadata<float>(
             1,
-            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender,
+            UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender,
             validateValue: IsValidFloat));
 
     public static readonly UiProperty<float> ValueProperty = UiProperty<float>.Register(

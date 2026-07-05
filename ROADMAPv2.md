@@ -169,7 +169,7 @@ Planning:
 - [x] `UI/Core/UiPropertyChangedEventArgs.cs`
 - [x] `UI/Core/UiPropertyChangedEventArgs{T}.cs`
 - [x] `UI/Core/IUiPropertyOwner.cs`
-- [x] `UI/Core/UiPropertyRegistry.cs` — explicit registration and duplicate detection.
+- [x] `UI/Core/UiPropertyRegistry.cs` — explicit registration, duplicate detection, and safe property enumeration for framework phases.
 - [x] `UI/Core/Unset.cs` — internal sentinel only; avoid public magic values unless proven necessary.
 - [x] `UI/Core/CoerceValue.cs` — optional typed coercion delegate, explicit and non-reflective.
 - [x] `UI/Core/ValidateValue.cs` — optional typed validation delegate.
@@ -182,6 +182,7 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Core/UiPropertyInvalidationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Core/ReadOnlyUiPropertyTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Core/InheritedUiPropertyTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Core/InheritedPropertyTreePropagationTests.cs`
 - [x] `dotnet test` passes.
 
 Acceptance checklist:
@@ -190,9 +191,10 @@ Acceptance checklist:
 - [x] Setting an equal value does not enqueue layout or render work.
 - [x] `AffectsMeasure` invalidates measure and render through the invalidation system.
 - [x] `AffectsRender` invalidates render without forcing measure.
-- [x] Non-invalidation options such as `Inherits` do not emit owner invalidation hooks.
+- [x] `Inherits` emits explicit retained inherited-property work instead of hidden getter-time propagation.
 - [x] Style values and local values have explicit precedence.
 - [x] Property registration is deterministic and testable.
+- [x] Font family, font size, and foreground inherit through the retained visual tree during `Update`.
 
 ## 3. [MVP] Retained element tree
 
@@ -202,7 +204,8 @@ This phase creates the retained UI tree that owns state, layout, rendering hooks
 Planning:
 
 
-- [x] `UI/Elements/UIElement.cs` — retained element base with parent, children, enabled/visible state, handlers, and virtual lifecycle methods.
+- [x] `UI/Elements/UIElement.cs` — retained element base with parent, children, enabled/visible/focusable state, handlers, and virtual lifecycle methods.
+- [x] `UI/Elements/UIElementVisibility.cs` — centralized visibility participation rules for layout, rendering, input routing, and hit testing.
 - [x] `UI/Elements/UIElementCollection.cs` — owned child collection with parent validation and change notifications.
 - [x] `UI/Elements/UIRoot.cs` — root element with viewport size, scaling, input route ownership, and render cache root.
 - [x] `UI/Elements/ElementLifecycle.cs` — attach/detach hooks and tree versioning.
@@ -262,7 +265,7 @@ InvalidationFlags on affected element
         v
 UiFrameScheduler.ProcessFrame()
         |
-        +--> process layout queue until stable
+        +--> process one deterministic snapshot per frame phase
         +--> process render queue into retained render caches
         +--> expose cached root DrawCommandList for backend rendering
 ```
@@ -272,12 +275,13 @@ UiFrameScheduler.ProcessFrame()
 - [x] `UI/Invalidation/DirtyPropagation.cs` — rules for upward/downward propagation.
 - [x] `UI/Invalidation/IInvalidationSink.cs`
 - [x] `UI/Invalidation/InvalidationRequest.cs`
+- [x] `UI/Invalidation/InheritedPropertyQueue.cs` — queued retained visual-tree inherited-property refresh roots.
 - [x] `UI/Invalidation/LayoutQueue.cs` — stable queue for measure and arrange invalidations.
 - [x] `UI/Invalidation/RenderQueue.cs` — stable queue for render command regeneration.
 - [x] `UI/Invalidation/HitTestQueue.cs` — rebuild hit-test data only when needed.
 - [x] `UI/Invalidation/UiFrameScheduler.cs` — runs input effects, layout, render-cache updates, and diagnostics.
-- [x] `UI/Invalidation/FramePhase.cs` — `Input`, `Style`, `Measure`, `Arrange`, `RenderCache`, `Idle`.
-- [x] `UI/Invalidation/FrameStats.cs` — counts measured elements, arranged elements, rendered elements, reused caches.
+- [x] `UI/Invalidation/FramePhase.cs` — `Input`, `InheritedProperties`, `Style`, `Measure`, `Arrange`, `RenderCache`, `HitTest`, `Idle`.
+- [x] `UI/Invalidation/FrameStats.cs` — counts inherited, styled, queued measure/arrange phase elements, rendered, hit-tested elements, actual recursive layout calls, and reused caches.
 - [x] `UI/Invalidation/FrameBudget.cs` — optional limits for later large trees; MVP may process all work.
 - [x] `UI/Diagnostics/InvalidationTrace.cs`
 
@@ -290,8 +294,11 @@ Dirty propagation rules:
 - [x] `Image` invalidation invalidates image measurement when intrinsic size is used; otherwise render only.
 - [x] `Resource` invalidation follows the metadata of the properties/resources that consumed the resource.
 - [x] `Style` invalidation reapplies style and then raises property-specific invalidations.
+- [x] `Inherited` invalidation refreshes inherited values through the retained visual tree before style/layout/render.
 - [x] `InputVisual` invalidation is render-only unless a control explicitly maps state to layout-affecting properties.
 - [x] Clearing dirty flags happens only after successful phase processing.
+- [x] MVP scheduler processes one deterministic snapshot per phase. Same-phase work enqueued during processing is deferred to a later frame; downstream phase work can run in the same frame if its snapshot has not yet been taken. Bounded until-stable loops are deferred until `FrameBudget` scheduling exists.
+- [x] `MeasuredElements` / `ArrangedElements` are queued scheduler phase counts; `MeasureCalls` / `ArrangeCalls` are actual recursive layout method calls.
 
 Tests:
 
@@ -354,6 +361,7 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Layout/UIElementMeasureArrangeTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Layout/LayoutInvalidationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Layout/VisibilityTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Layout/VisibilityCombinationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Layout/CanvasTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Layout/StackPanelTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Layout/GridTests.cs`
@@ -469,6 +477,7 @@ This phase turns existing input snapshots and routed events into retained-contro
 - [x] `UI/Input/PressedStateTracker.cs` — drives button pressed state and click synthesis.
 - [x] `UI/Input/ClickTracker.cs`
 - [x] `UI/Input/FocusManager.cs` — explicit focus service, not a global static dependency.
+- [x] `UI/Input/FocusPolicy.cs` — explicit focus eligibility policy for attached, enabled, visible, focusable route targets.
 - [x] `UI/Input/FocusScope.cs` — Core if MVP does not need nested scopes.
 - [x] `UI/Input/KeyboardNavigation.cs` — Core if MVP only supports direct focus.
 - [x] `UI/Input/TextInputBridge.cs` — maps `TextInputSnapshotEvent` to preview/bubble text events.
@@ -483,6 +492,8 @@ Visual state properties:
 - [x] `UI/Elements/UIElement.IsPointerOverProperty`
 - [x] `UI/Elements/UIElement.IsKeyboardFocusWithinProperty`
 - [x] `UI/Elements/UIElement.IsKeyboardFocusedProperty`
+- [x] `UI/Elements/UIElement.FocusableProperty`
+- [x] `UI/Elements/UIElement.IsTabStopProperty`
 - [x] `UI/Controls/Primitives/ButtonBase.IsPressedProperty`
 
 Tests:
@@ -494,6 +505,7 @@ Tests:
 - [x] `tests/Cerneala.Tests/Input/PressedStateTrackerTests.cs`
 - [x] `tests/Cerneala.Tests/Input/ClickTrackerTests.cs`
 - [x] `tests/Cerneala.Tests/Input/FocusManagerTests.cs`
+- [x] `tests/Cerneala.Tests/Input/FocusPolicyTests.cs`
 - [x] `tests/Cerneala.Tests/Input/TextInputBridgeTests.cs`
 - [x] `tests/Cerneala.Tests/Input/RetainedRoutedEventIntegrationTests.cs`
 
@@ -504,6 +516,8 @@ Acceptance checklist:
 - [x] Disabled elements do not receive input handlers.
 - [x] Keyboard events target focused element.
 - [x] Focus change raises existing focus routed events.
+- [x] Keyboard focus can only land on explicitly focusable, enabled, visible, attached route targets.
+- [x] Pointer press does not steal keyboard focus for non-focusable routed visuals.
 - [x] Text input uses `TextInputSnapshotEvent` and existing text routed event args.
 - [x] Input routing parent chain matches retained tree parent chain.
 
@@ -558,7 +572,7 @@ This phase creates the smallest useful control set. Controls should be retained,
 - [x] `UI/Controls/TextBlock.cs`
 - [x] `UI/Controls/Image.cs`
 - [x] `UI/Controls/Primitives/ButtonBase.cs`
-- [x] `UI/Controls/Button.cs`
+- [x] `UI/Controls/Button.cs` — button chrome and MVP string rendering; content ownership is inherited from `ContentControl`.
 - [x] `UI/Controls/Primitives/ToggleButton.cs` — checkable button primitive with explicit click toggle semantics.
 - [x] `UI/Controls/CheckBox.cs` — checkable content control rendered through retained drawing commands.
 - [x] `UI/Controls/ControlTemplate.cs` — code-first control templates.
@@ -597,6 +611,7 @@ Tests:
 MVP control acceptance checklist:
 
 - [x] A retained `Button` can be added to `UIRoot`, measured, arranged, rendered, hit-tested, hovered, pressed, clicked, and command-bound.
+- [x] `Button` uses the shared `ContentControl.ContentProperty` and `ContentControl` child ownership/template handoff instead of a duplicate content property.
 - [x] A retained `TextBlock` measures text using shared MVP text services; production Skia/HarfBuzz-backed glyph-accurate layout remains tracked in section 11.
 - [x] A retained `Border` renders fill/stroke with existing rectangle commands.
 - [x] A retained `StackPanel` lays out children and avoids re-measuring unchanged children.
@@ -652,9 +667,10 @@ This phase introduces explicit resource identity and invalidation without recrea
 
 - [x] `UI/Resources/ResourceId{T}.cs` — typed `ResourceId<T>` identity.
 - [x] `UI/Resources/IResourceProvider.cs`
+- [x] `UI/Resources/IObservableResourceProvider.cs` — provider-neutral resource change notification.
 - [x] `UI/Resources/ResourceStore.cs`
 - [x] `UI/Resources/ResourceChangedEventArgs.cs`
-- [x] `UI/Resources/ResourceDependencyTracker.cs`
+- [x] `UI/Resources/ResourceDependencyTracker.cs` — root-owned attached-tree dependency metadata and versions.
 - [x] `UI/Resources/FontResource.cs`
 - [x] `UI/Resources/ImageResource.cs`
 - [x] `UI/Resources/IImageLoader.cs`
@@ -667,6 +683,7 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Resources/ResourceIdTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Resources/ResourceStoreTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Resources/ResourceDependencyTrackerTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Resources/HostResourceInvalidationIntegrationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Resources/ImageResourceInvalidationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Resources/FontResourceInvalidationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Rendering/ResourceRenderDependencyTests.cs`
@@ -678,6 +695,7 @@ Acceptance checklist:
 - [x] Replacing an image resource invalidates layout if the control uses intrinsic image size.
 - [x] Replacing a font resource invalidates text measurement and render for dependent text controls.
 - [x] Resource lookup is explicit through host/services, not hidden global lookup.
+- [x] Attached-tree resource observation is owned by `UIRoot`, not by direct `ResourceStore` subscriptions in controls.
 - [x] Retained render caches include resource dependency identity/version in staleness checks.
 - [x] Core resources and controls do not reference MonoGame, Skia, HarfBuzz, `Texture2D`, or `SpriteBatch`.
 - [x] MonoGame image loading is adapter-scoped under `UI/Resources/MonoGame`.
@@ -1231,6 +1249,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [x] Replace `UiInputTree` as the route table for the new retained architecture. Preserve useful routed-event concepts and tests, but route through the new retained tree model instead of maintaining a parallel input tree.
 - [x] Disabled, hidden, and collapsed elements are skipped by hit testing and do not receive pointer input.
 - [x] Invisible but layout-reserved elements cannot receive focus or input.
+- [x] `Visibility` is the primary public participation semantic; `IsVisible=false` remains a runtime render/input gate that does not collapse layout.
 
 ### Invalidation and rendering
 
@@ -1278,6 +1297,8 @@ MVP is complete when Cerneala can run a retained UI sample inside the MonoGame p
 - [x] Existing `UI/Drawing` tests still pass.
 - [x] Existing `UI/Input` tests still pass.
 - [x] New retained no-work-frame tests pass.
+- [x] `Playground/Cerneala.Playground/Samples/RetainedAppSample.cs` proves a retained app vertical slice: stable tree creation, layout, render cache reuse, command mutation, text/resource invalidation, image content, and a simple retained list/scroll area.
+- [x] `tests/Cerneala.Tests/UI/Hosting/RetainedVerticalSliceTests.cs` proves first-frame work, unchanged no-work frames, draw purity, command mutation invalidation, and root-owned font resource mutation for the retained app sample.
 - [x] Hover, press, focus, and command execution work through retained input routing.
 - [x] Text rendering uses existing `DrawTextRun`, `SkiaTextShaper`, and `SkiaTextRasterizer` through higher-level services.
 - [x] No UI core control directly references MonoGame, Skia, HarfBuzz, `SpriteBatch`, or `Texture2D`.

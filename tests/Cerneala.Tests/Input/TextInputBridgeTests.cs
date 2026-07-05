@@ -9,7 +9,7 @@ public sealed class TextInputBridgeTests
     public void FocusedElementReceivesTextInputPayload()
     {
         UIRoot root = new();
-        UIElement target = new();
+        UIElement target = new() { Focusable = true };
         root.VisualChildren.Add(target);
         List<string> text = [];
         target.Handlers.AddHandler(InputEvents.TextInputEvent, (_, args) => text.Add(((TextCompositionEventArgs)args).Text));
@@ -26,7 +26,7 @@ public sealed class TextInputBridgeTests
     public void HandledPreviewTextInputSuppressesBubbleTextInput()
     {
         UIRoot root = new();
-        UIElement target = new();
+        UIElement target = new() { Focusable = true };
         root.VisualChildren.Add(target);
         bool bubbleCalled = false;
         target.Handlers.AddHandler(InputEvents.PreviewTextInputEvent, (_, args) => args.Handled = true);

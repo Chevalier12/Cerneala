@@ -22,6 +22,7 @@ public class ScrollViewer : Control
         presenter = new ScrollContentPresenter();
         horizontalScrollBar = new ScrollBar { Orientation = Orientation.Horizontal };
         verticalScrollBar = new ScrollBar { Orientation = Orientation.Vertical };
+        horizontalScrollBar.Visibility = Visibility.Collapsed;
         presenter.PropertyChanged += OnPresenterPropertyChanged;
         horizontalScrollBar.PropertyChanged += OnScrollBarPropertyChanged;
         verticalScrollBar.PropertyChanged += OnScrollBarPropertyChanged;

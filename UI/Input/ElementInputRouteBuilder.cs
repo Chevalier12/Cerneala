@@ -1,6 +1,4 @@
 using Cerneala.UI.Elements;
-using Cerneala.UI.Layout;
-
 namespace Cerneala.UI.Input;
 
 public sealed class ElementInputRouteBuilder
@@ -21,7 +19,7 @@ public sealed class ElementInputRouteBuilder
     {
         UiElementId? parentForDescendants = nearestIncludedParentId;
 
-        if (!IsVisibleForInput(element))
+        if (!UIElementVisibility.ParticipatesInInput(element))
         {
             return;
         }
@@ -46,11 +44,6 @@ public sealed class ElementInputRouteBuilder
 
     private static bool ShouldInclude(UIElement element)
     {
-        return element.IsEnabled && IsVisibleForInput(element);
-    }
-
-    private static bool IsVisibleForInput(UIElement element)
-    {
-        return element.IsVisible && element.Visibility == Visibility.Visible;
+        return element.IsEnabled && UIElementVisibility.ParticipatesInInput(element);
     }
 }

@@ -11,7 +11,6 @@ public class Image : Control
 {
     private IResourceProvider? resourceProvider;
     private ResourceDependencyTracker? resourceDependencyTracker;
-    private ResourceStore? subscribedStore;
     private ResourceId<ImageResource>? sourceResourceId;
     private bool useIntrinsicSize = true;
 
@@ -71,19 +70,7 @@ public class Image : Control
                 return;
             }
 
-            if (subscribedStore is not null)
-            {
-                subscribedStore.ResourceChanged -= OnResourceChanged;
-                subscribedStore = null;
-            }
-
             resourceProvider = value;
-            if (value is ResourceStore store)
-            {
-                subscribedStore = store;
-                subscribedStore.ResourceChanged += OnResourceChanged;
-            }
-
             IncrementLayoutVersion();
             IncrementRenderVersion();
             Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "Image resource provider changed");
@@ -117,13 +104,18 @@ public class Image : Control
     {
         if (SourceResourceId is ResourceId<ImageResource> id)
         {
-            ResourceDependencyTracker?.RecordDependency(this, id);
-            long version = ResourceDependencyTracker?.GetDependencyVersion(this) ?? GetProviderVersion(id);
+            InvalidationFlags effects = UseIntrinsicSize
+                ? InvalidationFlags.Measure | InvalidationFlags.Render
+                : InvalidationFlags.Render;
+            ResourceDependencyTracker? tracker = ResolveResourceDependencyTracker();
+            tracker?.RecordDependency(this, id, effects, affectsIntrinsicSize: UseIntrinsicSize);
+            long version = tracker?.GetDependencyVersion(this) ?? GetProviderVersion(id);
             SetRenderDependencies(RenderDependencies
                 .WithResourceIdentity(id.ToString())
                 .WithResourceVersion(version));
 
-            if (ResourceProvider is null || !ResourceProvider.TryGetResource(id, out ImageResource? resource))
+            IResourceProvider? provider = ResolveResourceProvider();
+            if (provider is null || !provider.TryGetResource(id, out ImageResource? resource))
             {
                 return null;
             }
@@ -136,27 +128,17 @@ public class Image : Control
 
     private long GetProviderVersion(ResourceId<ImageResource> id)
     {
-        return ResourceProvider is ResourceStore store ? store.GetVersion(id) : 0;
+        return ResolveResourceProvider() is ResourceStore store ? store.GetVersion(id) : 0;
     }
 
-    private void OnResourceChanged(object? sender, ResourceChangedEventArgs args)
+    private IResourceProvider? ResolveResourceProvider()
     {
-        if (SourceResourceId is not ResourceId<ImageResource> id || !args.Matches(id))
-        {
-            return;
-        }
+        return ResourceProvider ?? Root?.ResourceProvider;
+    }
 
-        ResourceDependencyTracker?.NotifyResourceChanged(args);
-        InvalidationFlags flags = UseIntrinsicSize
-            ? InvalidationFlags.Measure | InvalidationFlags.Render
-            : InvalidationFlags.Render;
-        IncrementRenderVersion();
-        if (flags.HasFlag(InvalidationFlags.Measure))
-        {
-            IncrementLayoutVersion();
-        }
-
-        Invalidate(flags, "Image resource changed");
+    private ResourceDependencyTracker? ResolveResourceDependencyTracker()
+    {
+        return ResourceDependencyTracker ?? Root?.ResourceDependencyTracker;
     }
 
     private void InvalidateResolvedSource(string reason)

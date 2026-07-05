@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Rendering;
 
@@ -51,7 +52,9 @@ public sealed class ResourceRenderDependencyTests
         tracker.Track(store);
         ResourceId<string> first = new("First");
         ResourceId<string> second = new("Second");
+        UIRoot root = new();
         RenderingTestElement element = new(DrawColor.White);
+        root.VisualChildren.Add(element);
         tracker.RecordDependency(element, first);
         tracker.RecordDependency(element, second);
 

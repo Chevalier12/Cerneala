@@ -75,6 +75,46 @@ public class UiObject
         return oldValue;
     }
 
+    internal object? SetValueUntyped(UiProperty property, object? value, UiPropertyValueSource source)
+    {
+        ArgumentNullException.ThrowIfNull(property);
+        if (property.IsReadOnly)
+        {
+            throw new InvalidOperationException($"UI property '{property.DiagnosticName}' is read-only.");
+        }
+
+        object? oldValue = GetValue(property);
+        object? coerced = property.CoerceUntyped(this, value);
+        property.ValidateUntyped(coerced);
+        propertyStore.SetValue(property, source, coerced);
+        object? newValue = GetValue(property);
+        if (!property.AreEqualUntyped(oldValue, newValue))
+        {
+            NotifyPropertyChangedUntyped(property, oldValue, newValue, GetValueSource(property));
+        }
+
+        return oldValue;
+    }
+
+    internal object? ClearValueUntyped(UiProperty property, UiPropertyValueSource source)
+    {
+        ArgumentNullException.ThrowIfNull(property);
+        if (property.IsReadOnly)
+        {
+            throw new InvalidOperationException($"UI property '{property.DiagnosticName}' is read-only.");
+        }
+
+        object? oldValue = GetValue(property);
+        propertyStore.ClearValue(property, source);
+        object? newValue = GetValue(property);
+        if (!property.AreEqualUntyped(oldValue, newValue))
+        {
+            NotifyPropertyChangedUntyped(property, oldValue, newValue, GetValueSource(property));
+        }
+
+        return oldValue;
+    }
+
     protected virtual void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         PropertyChanged?.Invoke(this, args);
@@ -111,7 +151,31 @@ public class UiObject
             UiPropertyOptions.AffectsRender |
             UiPropertyOptions.AffectsHitTest |
             UiPropertyOptions.AffectsStyle |
-            UiPropertyOptions.AffectsInputVisual);
+            UiPropertyOptions.AffectsInputVisual |
+            UiPropertyOptions.Inherits);
+        if (invalidationOptions != UiPropertyOptions.None && this is IUiPropertyOwner owner)
+        {
+            owner.OnPropertyInvalidated(args, invalidationOptions);
+        }
+    }
+
+    private void NotifyPropertyChangedUntyped(
+        UiProperty property,
+        object? oldValue,
+        object? newValue,
+        UiPropertyValueSource valueSource)
+    {
+        UiPropertyChangedEventArgs args = new(this, property, oldValue, newValue, valueSource);
+        OnPropertyChanged(args);
+
+        UiPropertyOptions invalidationOptions = property.Options & (
+            UiPropertyOptions.AffectsMeasure |
+            UiPropertyOptions.AffectsArrange |
+            UiPropertyOptions.AffectsRender |
+            UiPropertyOptions.AffectsHitTest |
+            UiPropertyOptions.AffectsStyle |
+            UiPropertyOptions.AffectsInputVisual |
+            UiPropertyOptions.Inherits);
         if (invalidationOptions != UiPropertyOptions.None && this is IUiPropertyOwner owner)
         {
             owner.OnPropertyInvalidated(args, invalidationOptions);

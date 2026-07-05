@@ -13,5 +13,6 @@ public enum InvalidationFlags
     Style = 1 << 6,
     InputVisual = 1 << 7,
     HitTest = 1 << 8,
-    Subtree = 1 << 9
+    Subtree = 1 << 9,
+    Inherited = 1 << 10
 }

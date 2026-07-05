@@ -42,12 +42,12 @@ public sealed class PlaygroundSampleTests
         SampleSelector selector = SampleSelector.CreateDefault();
         UIElement? initial = selector.ActiveElement;
 
-        Assert.Equal(new[] { "Button", "Layout", "Text", "Diagnostics" }, selector.Samples.Select(sample => sample.Name));
+        Assert.Equal(new[] { "Retained App", "Button", "Layout", "Text", "Diagnostics" }, selector.Samples.Select(sample => sample.Name));
 
         selector.SelectSample(1);
 
         Assert.Equal(1, selector.ActiveIndex);
-        Assert.Equal("Layout", selector.ActiveSample.Name);
+        Assert.Equal("Button", selector.ActiveSample.Name);
         Assert.NotNull(selector.ActiveElement);
         Assert.NotSame(initial, selector.ActiveElement);
     }
@@ -74,7 +74,7 @@ public sealed class PlaygroundSampleTests
         Assert.Throws<NotSupportedException>(() => mutableSamples.Clear());
 
         Assert.Equal(originalCount, selector.Samples.Count);
-        Assert.Equal("Button", selector.ActiveSample.Name);
+        Assert.Equal("Retained App", selector.ActiveSample.Name);
     }
 
     [Fact]
@@ -158,8 +158,10 @@ public sealed class PlaygroundSampleTests
 
         overlay.Update(frame);
 
-        Assert.Contains("measured=0", overlay.Text, StringComparison.Ordinal);
-        Assert.Contains("arranged=0", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("queuedMeasure=0", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("queuedArrange=0", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("measureCalls=0", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("arrangeCalls=0", overlay.Text, StringComparison.Ordinal);
         Assert.Contains("renderCache=0", overlay.Text, StringComparison.Ordinal);
         Assert.Contains("reusedCaches=1", overlay.Text, StringComparison.Ordinal);
         Assert.Contains("noWork=1", overlay.Text, StringComparison.Ordinal);

@@ -4,7 +4,7 @@ using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls.Primitives;
 
-public class ButtonBase : Control, IInputPressable, IInputCommandSource
+public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource
 {
     public static readonly UiProperty<bool> IsPressedProperty = UiProperty<bool>.Register(
         nameof(IsPressed),
@@ -20,6 +20,12 @@ public class ButtonBase : Control, IInputPressable, IInputCommandSource
         nameof(CommandParameter),
         typeof(ButtonBase),
         new UiPropertyMetadata<object?>(null, UiPropertyOptions.None));
+
+    public ButtonBase()
+    {
+        Focusable = true;
+        IsTabStop = true;
+    }
 
     public bool IsPressed
     {

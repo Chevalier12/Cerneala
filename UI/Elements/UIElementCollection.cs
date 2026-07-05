@@ -154,7 +154,8 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
             InvalidationFlags.Measure |
             InvalidationFlags.Arrange |
             InvalidationFlags.Render |
-            InvalidationFlags.HitTest;
+            InvalidationFlags.HitTest |
+            InvalidationFlags.Inherited;
 
         owner.IncrementLayoutVersion();
         owner.IncrementRenderVersion();

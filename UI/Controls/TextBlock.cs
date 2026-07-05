@@ -16,7 +16,6 @@ public class TextBlock : Control
     private readonly TextLayoutCache resourceTextLayoutCache = new();
     private IResourceProvider? resourceProvider;
     private ResourceDependencyTracker? resourceDependencyTracker;
-    private ResourceStore? subscribedStore;
     private ResourceId<FontResource>? fontResourceId;
 
     public static readonly UiProperty<string> TextProperty = UiProperty<string>.Register(
@@ -96,19 +95,8 @@ public class TextBlock : Control
                 return;
             }
 
-            if (subscribedStore is not null)
-            {
-                subscribedStore.ResourceChanged -= OnResourceChanged;
-                subscribedStore = null;
-            }
-
             resourceProvider = value;
-            if (value is ResourceStore store)
-            {
-                subscribedStore = store;
-                subscribedStore.ResourceChanged += OnResourceChanged;
-            }
-
+            resourceTextLayoutCache.Clear();
             IncrementLayoutVersion();
             IncrementRenderVersion();
             Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "Text resource provider changed");
@@ -162,9 +150,10 @@ public class TextBlock : Control
 
     private TextMeasurer GetTextMeasurer()
     {
-        if (FontResourceId is not null && ResourceProvider is not null)
+        IResourceProvider? provider = ResolveResourceProvider();
+        if (FontResourceId is not null && provider is not null)
         {
-            return new TextMeasurer(new FontResolver(ResourceProvider), LineBreakService.Default, resourceTextLayoutCache);
+            return new TextMeasurer(new FontResolver(provider), LineBreakService.Default, resourceTextLayoutCache);
         }
 
         return TextMeasurer;
@@ -172,10 +161,11 @@ public class TextBlock : Control
 
     private TextRenderer GetTextRenderer()
     {
-        if (FontResourceId is not null && ResourceProvider is not null)
+        IResourceProvider? provider = ResolveResourceProvider();
+        if (FontResourceId is not null && provider is not null)
         {
-            TextMeasurer measurer = new(new FontResolver(ResourceProvider), LineBreakService.Default, resourceTextLayoutCache);
-            return new TextRenderer(new FontResolver(ResourceProvider), measurer);
+            TextMeasurer measurer = new(new FontResolver(provider), LineBreakService.Default, resourceTextLayoutCache);
+            return new TextRenderer(new FontResolver(provider), measurer);
         }
 
         return TextRenderer;
@@ -188,25 +178,26 @@ public class TextBlock : Control
             return;
         }
 
-        ResourceDependencyTracker?.RecordDependency(this, id);
-        long version = ResourceDependencyTracker?.GetDependencyVersion(this) ??
-            (ResourceProvider is ResourceStore store ? store.GetVersion(id) : 0);
+        ResourceDependencyTracker? tracker = ResolveResourceDependencyTracker();
+        tracker?.RecordDependency(
+            this,
+            id,
+            InvalidationFlags.Measure | InvalidationFlags.Render,
+            affectsIntrinsicSize: true);
+        long version = tracker?.GetDependencyVersion(this) ??
+            (ResolveResourceProvider() is ResourceStore store ? store.GetVersion(id) : 0);
         SetRenderDependencies(RenderDependencies
             .WithResourceIdentity(id.ToString())
             .WithResourceVersion(version));
     }
 
-    private void OnResourceChanged(object? sender, ResourceChangedEventArgs args)
+    private IResourceProvider? ResolveResourceProvider()
     {
-        if (FontResourceId is not ResourceId<FontResource> id || !args.Matches(id))
-        {
-            return;
-        }
+        return ResourceProvider ?? Root?.ResourceProvider;
+    }
 
-        ResourceDependencyTracker?.NotifyResourceChanged(args);
-        resourceTextLayoutCache.Clear();
-        IncrementLayoutVersion();
-        IncrementRenderVersion();
-        Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "Font resource changed");
+    private ResourceDependencyTracker? ResolveResourceDependencyTracker()
+    {
+        return ResourceDependencyTracker ?? Root?.ResourceDependencyTracker;
     }
 }
