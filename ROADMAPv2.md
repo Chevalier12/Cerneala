@@ -630,11 +630,11 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Text/TextMeasurerTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Text/TextLayoutCacheTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Text/TextRendererTests.cs`
-- [ ] `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Text/BidiTextServiceTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Text/TextEditingControllerTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/TextBlockInvalidationTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs`
 
 Acceptance checklist:
 
@@ -642,8 +642,8 @@ Acceptance checklist:
 - [x] Text color changes invalidate render commands without forcing text shaping when glyph metrics are unchanged.
 - [x] Font family or font size changes invalidate measurement and render.
 - [x] Re-rendering unchanged text reuses cached text layout and retained render commands.
-- [ ] Rendered MVP wrapped lines match the lines returned by `TextMeasurer`.
-- [ ] `Button` string content uses shared text services instead of local text-width formulas.
+- [x] Rendered MVP wrapped lines match the lines returned by `TextMeasurer`.
+- [x] `Button` string content uses shared text services instead of local text-width formulas.
 - [ ] Production wrapping, trimming, bidi-aware multiline layout, and glyph-accurate line breaking are proven before text services are marked scenario-complete.
 
 ## 12. [MVP] Resources for fonts and images

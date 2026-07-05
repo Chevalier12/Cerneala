@@ -398,9 +398,14 @@ public sealed class ArchitectureBoundaryTests
         string roadmap = File.ReadAllText(FindRepositoryPath("ROADMAPv2.md"));
 
         Assert.Contains("- [x] A retained `TextBlock` measures text using the existing Skia/HarfBuzz pipeline through higher-level text services.", roadmap, StringComparison.Ordinal);
-        Assert.Contains("- [x] `UI/Text/TextRenderer.cs`", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [~] `UI/Text/TextRenderer.cs` — records measured MVP text lines with `DrawingContext.DrawText`; production multiline shaping remains later.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] `tests/Cerneala.Tests/UI/Text/TextRendererTests.cs`", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs`", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs`", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] Re-rendering unchanged text reuses cached text layout and retained render commands.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Rendered MVP wrapped lines match the lines returned by `TextMeasurer`.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `Button` string content uses shared text services instead of local text-width formulas.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [ ] Production wrapping, trimming, bidi-aware multiline layout, and glyph-accurate line breaking are proven before text services are marked scenario-complete.", roadmap, StringComparison.Ordinal);
     }
 
     [Fact]
