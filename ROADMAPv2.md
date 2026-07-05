@@ -1016,7 +1016,7 @@ Acceptance checklist:
 
 ## 23. [Later] Animation and transitions
 
-This phase adds time-based property changes after frame scheduling and invalidation are solid. Animation should be game-loop-native, explicit, and invalidate only affected properties.
+This phase keeps the existing animation primitives small and **frozen for expansion** until scheduler/render invalidation is proven under animation stress. Animation should be game-loop-native, explicit, and invalidate only affected properties; timeline/storyboard growth waits for stress tests that prove no hidden layout/render churn.
 
 - [x] `UI/Animation/AnimationClock.cs`
 - [x] `UI/Animation/AnimationScheduler.cs`
@@ -1025,9 +1025,9 @@ This phase adds time-based property changes after frame scheduling and invalidat
 - [x] `UI/Animation/Easing.cs`
 - [x] `UI/Animation/Transition.cs`
 - [x] `UI/Animation/Transition{T}.cs`
-- [x] `UI/Animation/Storyboard.cs` — only if composition of timelines is needed.
+- [~] `UI/Animation/Storyboard.cs` — type exists; composition expansion is frozen until animation stress invalidation tests exist.
 - [x] `UI/Animation/AnimatedValueSource.cs`
-- [x] `UI/Styling/StyleTransition.cs`
+- [~] `UI/Styling/StyleTransition.cs` — type exists; expansion is frozen until style/render invalidation under animation stress is proven.
 
 Tests:
 
@@ -1040,11 +1040,12 @@ Tests:
 
 Acceptance checklist:
 
-- [x] Animating a render-only property does not run layout.
-- [x] Animating a layout property enqueues layout only at ticks where the value changes.
+- [x] Animating a render-only property does not run layout in focused unit tests.
+- [x] Animating a layout property enqueues layout only at ticks where the value changes in focused unit tests.
 - [x] Completed animations release animated value source cleanly.
 - [x] Animation and style transition APIs stay backend-neutral.
-- [x] Full project tests pass for this phase.
+- [ ] Animation stress tests prove retained scheduler/render invalidation stays honest across many animated elements.
+- [ ] Full project tests pass for the stress-tested animation scenario before this phase is scenario-complete.
 
 ## 24. [Later] Platform boundaries and package shape
 
