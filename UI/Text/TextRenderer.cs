@@ -38,7 +38,14 @@ public class TextRenderer
         }
 
         ResolvedTextFont font = fontResolver.Resolve(style);
-        drawingContext.DrawText(style.ToDrawTextRun(font, text), position, style.Color);
+        float lineHeight = style.FontSize * style.Scale;
+        for (int i = 0; i < measurement.Lines.Count; i++)
+        {
+            TextLine line = measurement.Lines[i];
+            DrawPoint linePosition = new(position.X, position.Y + (i * lineHeight));
+            drawingContext.DrawText(style.ToDrawTextRun(font, line.Text), linePosition, style.Color);
+        }
+
         return measurement;
     }
 }
