@@ -8,9 +8,17 @@ The UI tree is retained. The game loop may call update and draw every frame, but
 
 Legend:
 
-- `[x]` Exists now.
+- `[x]` Exists now at the maturity claimed by the line text.
 - `[ ]` Planned.
-- `[~]` Exists partially, exists as a low-level primitive, or needs reshaping/integration for the v2 architecture.
+- `[~]` Exists partially, exists as a low-level primitive, is descriptor-only, or needs reshaping/integration for the v2 architecture.
+
+Maturity markers used in Later and Optional/Experimental sections:
+
+- **Type exists**: public/API shape or descriptor exists, but scenario behavior may be incomplete.
+- **Wired into retained pipeline**: update/invalidation/render/input scheduling uses it through retained contracts.
+- **Backend-supported**: drawing/input/platform adapters implement the behavior, not just metadata.
+- **Scenario-complete**: realistic product scenario is implemented and covered by integration tests.
+- **Frozen**: do not expand public surface until the named prerequisite is complete.
 
 Scope bands:
 
@@ -18,6 +26,8 @@ Scope bands:
 - **Core**: architecture that should become stable before broad control growth.
 - **Later**: important product areas that should wait for stable core layers.
 - **Optional/Experimental**: useful ideas that should not shape the core until proven.
+
+Later and Optional/Experimental work may have checked files or tests because prototypes exist. Those checks do not mean the feature is scenario-complete unless the line explicitly says so. Frozen sections can keep their existing code and tests, but should not drive core architecture or add public surface until their listed prerequisites are met.
 
 Architectural invariants:
 
