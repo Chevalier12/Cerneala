@@ -971,7 +971,7 @@ Acceptance checklist:
 
 ## 22. [Later] Advanced rendering and media
 
-This phase is **experimental/frozen** until drawing command and backend semantics exist for each advanced primitive. Existing files may remain as descriptors, typed state, or tests, but they are not scenario-complete unless the roadmap line explicitly says `backend-supported` or `scenario-complete`.
+This phase is experimental/frozen until drawing command and backend semantics exist for each advanced primitive. Existing files may remain as descriptors, typed state, or tests, but they are not scenario-complete unless the roadmap line explicitly says `backend-supported` or `scenario-complete`.
 
 New media concepts must translate into `DrawCommand` extensions or clear backend abstractions before they can be marked implemented. Descriptor existence alone is not enough.
 
@@ -1112,7 +1112,7 @@ Acceptance checklist:
 
 ## 26. [Optional/Experimental] Advanced input categories
 
-This phase is **experimental/frozen** until platform adapters can supply real touch, stylus, drag/drop, manipulation, cursor, and ink data. Existing event metadata and processors can remain as prototypes, but platform-backed behavior is not scenario-complete unless the line explicitly says so.
+This phase is experimental/frozen until platform adapters can supply real touch, stylus, drag/drop, manipulation, cursor, and ink data. Existing event metadata and processors can remain as prototypes, but platform-backed behavior is not scenario-complete unless the line explicitly says so.
 
 - [~] `UI/Input/InputEvents.cs` already declares stylus, touch, manipulation, and drag/drop event metadata; behavior remains platform-gated.
 - [~] `UI/Input/TouchInputBridge.cs` — prototype exists; frozen until platform touch data is available.
