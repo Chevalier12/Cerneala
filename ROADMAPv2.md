@@ -1083,7 +1083,7 @@ Future split acceptance criteria:
 
 - [ ] `Cerneala.Core.csproj` can build UI core, layout, controls, retained rendering contracts, resources abstractions, platform abstractions, and backend-neutral input/drawing contracts without referencing MonoGame, SkiaSharp, native Skia assets, or HarfBuzzSharp packages.
 - [ ] `Cerneala.MonoGame.csproj` owns MonoGame drawing, input, resource loading, hosting adapters, and any MonoGame-specific package references.
-- [ ] The text shaping/rasterization dependency decision is explicit: either it remains in a dedicated adapter package or it is accepted as a core dependency with a documented reason.
+- [ ] The text shaping/rasterization dependency remains outside `Cerneala.Core.csproj` unless a future explicit architecture decision revises the core package boundary and its tests in the same change.
 - [ ] `Cerneala.Tests.Core.csproj` covers backend-neutral contracts without referencing MonoGame packages.
 - [ ] `Cerneala.Tests.MonoGame.csproj` covers MonoGame adapter behavior and can depend on MonoGame packages.
 - [ ] The playground references the adapter package, not the core package alone.
