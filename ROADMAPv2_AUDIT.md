@@ -366,6 +366,8 @@ Required changes:
 - [ ] Add `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs` proving render output matches measured lines if wrapping is exposed.
 - [ ] Add `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs` proving Button does not duplicate content/layout logic.
 
+Implementation note: fixed by `clarify-text-services-mvp`; `ROADMAPv2.md` now marks line breaking, wrapping, trimming, and multiline rendering as deterministic MVP/partial scope, `TextRenderer` draws measured MVP lines instead of the original unwrapped string, and `Button` string content uses shared text services instead of local width formulas.
+
 ### 9. Items virtualization is not mature enough for Core-complete claims
 
 Files:

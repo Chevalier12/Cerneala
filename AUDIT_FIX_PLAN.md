@@ -105,11 +105,13 @@ Detailed plan: `docs/superpowers/plans/2026-07-05-freeze-later-experimental-scop
 
 ### Plan 6: `clarify-text-services-mvp`
 
-- [ ] Mark current line breaking as deterministic MVP approximation.
-- [ ] Do not claim production wrapping/trimming/multiline rendering until measurement and rendering align.
-- [ ] Make controls with text content use shared text services or a content presenter path.
-- [ ] Add `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs`.
-- [ ] Add `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs`.
+Detailed plan: `docs/superpowers/plans/2026-07-05-clarify-text-services-mvp.md`
+
+- [x] Mark current line breaking as deterministic MVP approximation.
+- [x] Do not claim production wrapping/trimming/multiline rendering until measurement and rendering align.
+- [x] Make controls with text content use shared text services or a content presenter path.
+- [x] Add `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs`.
+- [x] Add `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs`.
 
 ### Plan 7: `clarify-package-boundary-dependencies`
 
@@ -136,7 +138,7 @@ Detailed plan: `docs/superpowers/plans/2026-07-05-freeze-later-experimental-scop
 7. [x] Execute `cache-input-route-hit-test`.
 8. [x] Run full tests and commit Phase 2.
 9. [x] Execute roadmap honesty pass: `freeze-later-experimental-scope`.
-10. [ ] Execute `clarify-text-services-mvp`.
+10. [x] Execute `clarify-text-services-mvp`.
 11. [ ] Execute `clarify-package-boundary-dependencies`.
 12. [ ] Run full tests and commit Phase 3.
 
