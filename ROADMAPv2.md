@@ -965,30 +965,32 @@ Tests:
 
 ## 22. [Later] Advanced rendering and media
 
-This phase expands drawing capabilities only when controls and scenarios require them. New media concepts must translate into `DrawCommand` extensions or clear backend abstractions instead of duplicating existing primitives.
+This phase is **experimental/frozen** until drawing command and backend semantics exist for each advanced primitive. Existing files may remain as descriptors, typed state, or tests, but they are not scenario-complete unless the roadmap line explicitly says `backend-supported` or `scenario-complete`.
+
+New media concepts must translate into `DrawCommand` extensions or clear backend abstractions before they can be marked implemented. Descriptor existence alone is not enough.
 
 - [x] `UI/Drawing/DrawCommandKind.cs` — add new command kinds only with tests and backend support.
 - [x] `UI/Drawing/DrawingContext.cs` — add methods only when corresponding command kinds exist.
 - [x] `UI/Media/Brush.cs` — introduce when more than solid `DrawColor` is needed.
 - [x] `UI/Media/SolidColorBrush.cs` — may remain a thin wrapper over `DrawColor` only if it participates in styling/resource identity.
-- [x] `UI/Media/LinearGradientBrush.cs`
-- [x] `UI/Media/RadialGradientBrush.cs`
+- [~] `UI/Media/LinearGradientBrush.cs` — type exists; frozen until gradient draw commands and backend rendering exist.
+- [~] `UI/Media/RadialGradientBrush.cs` — type exists; frozen until gradient draw commands and backend rendering exist.
 - [x] `UI/Media/Pen.cs`
 - [x] `UI/Media/Geometry.cs`
 - [x] `UI/Media/RectangleGeometry.cs`
 - [x] `UI/Media/EllipseGeometry.cs`
-- [x] `UI/Media/PathGeometry.cs`
+- [~] `UI/Media/PathGeometry.cs` — type exists; frozen until real path fill/stroke command semantics exist.
 - [x] `UI/Media/Transform.cs`
 - [x] `UI/Media/Matrix3x2.cs`
-- [x] `UI/Media/OpacityLayer.cs`
-- [x] `UI/Media/ShadowEffect.cs`
+- [~] `UI/Media/OpacityLayer.cs` — type exists; frozen until layer composition has retained render-cache and backend semantics.
+- [~] `UI/Media/ShadowEffect.cs` — type exists; frozen until shadow/effect command semantics and backend behavior exist.
 - [x] `UI/Controls/Shapes/Shape.cs`
 - [x] `UI/Controls/Shapes/Rectangle.cs`
 - [x] `UI/Controls/Shapes/Ellipse.cs`
 - [x] `UI/Controls/Shapes/Path.cs`
 - [x] `UI/Media/ImageSource.cs` — owns media identity, intrinsic size metadata, and draw-image resolution beyond `IDrawImage`.
 - [x] `UI/Media/BitmapImage.cs`
-- [x] `UI/Media/RenderTargetImage.cs`
+- [~] `UI/Media/RenderTargetImage.cs` — type exists; frozen until render-target lifecycle and backend ownership are designed.
 
 Tests:
 
@@ -1001,10 +1003,10 @@ Tests:
 
 Acceptance checklist:
 
-- [x] Every new media abstraction has a responsibility not already covered by `DrawColor`, `DrawRect`, `DrawPoint`, `DrawTextRun`, or `IDrawImage`.
-- [x] Every new drawing command has backend tests or adapter coverage.
+- [~] Every new media abstraction has a responsibility not already covered by `DrawColor`, `DrawRect`, `DrawPoint`, `DrawTextRun`, or `IDrawImage`; descriptor-only abstractions remain experimental.
+- [ ] Every advanced drawing command has backend tests or adapter coverage before being marked implemented.
 - [x] Controls do not reference Skia, HarfBuzz, MonoGame, `SpriteBatch`, or `Texture2D`.
-- [x] Full project tests pass for this phase.
+- [ ] Full project tests pass for the backend-supported advanced media scenario before this phase is scenario-complete.
 
 ## 23. [Later] Animation and transitions
 
