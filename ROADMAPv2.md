@@ -1058,7 +1058,7 @@ Acceptance checklist:
 
 This phase keeps the source architecture portable while acknowledging that the current package is not dependency-neutral yet. The repository intentionally remains a single main project for MVP, and `Cerneala.csproj` currently carries `MonoGame.Framework.DesktopGL`, `SkiaSharp`, `SkiaSharp.NativeAssets.Linux`, and `HarfBuzzSharp`.
 
-Section summary: Platform contracts and source boundary tests are complete; package split project files stay deferred until real split work exists. The dependency risk is tracked explicitly so "single project now" does not silently become the permanent package architecture.
+Section summary: Platform contracts and boundary tests are complete; package split project files stay deferred until real split work exists. Source boundary tests are complete, while the dependency risk is tracked explicitly so "single project now" does not silently become the permanent package architecture.
 
 - [x] `UI/Platform/IPlatformServices.cs`
 - [x] `UI/Platform/IClipboard.cs`
@@ -1097,13 +1097,13 @@ Tests:
 
 Acceptance checklist:
 
-- [x] Platform services expose clipboard, cursor, dialogs, text input, DPI, and accessibility seams without backend-specific source dependencies.
+- [x] Platform services expose clipboard, cursor, dialogs, text input, DPI, and accessibility seams without backend dependencies.
 - [x] MonoGame host integration remains adapter-scoped under `UI/Hosting/MonoGame/`.
 - [x] Optional package split project files are intentionally deferred and not claimed as implemented.
 - [x] The current `Cerneala.csproj` MonoGame/Skia/HarfBuzz package dependency risk is explicitly recorded.
 - [x] Future split acceptance criteria distinguish source boundaries from package dependency boundaries.
 - [ ] Package-shape tests are deferred until the split projects are created.
-- [x] Full project tests pass for this documentation phase.
+- [x] Full project tests pass for this phase.
 
 ## 25. [Optional/Experimental] Markup, serialization, and source generation
 
