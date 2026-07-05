@@ -606,6 +606,8 @@ MVP control acceptance checklist:
 
 This phase adds layout and cache services for controls such as `TextBlock` without rebuilding shaping/rasterization. The existing Skia/HarfBuzz code remains the low-level text engine.
 
+Current line breaking is a deterministic MVP approximation: `LineBreakService` uses fixed-width character slicing from `fontSize * scale * 0.5f`. That is acceptable for retained layout tests and simple samples, but it is not production Unicode line breaking, glyph-accurate wrapping, ellipsis trimming, or full multiline text layout.
+
 - [~] `UI/Drawing/DrawTextRun.cs`
 - [~] `UI/Drawing/Text/SkiaTextShaper.cs`
 - [~] `UI/Drawing/Text/SkiaTextRasterizer.cs`
@@ -614,10 +616,10 @@ This phase adds layout and cache services for controls such as `TextBlock` witho
 - [x] `UI/Text/TextMeasureResult.cs`
 - [x] `UI/Text/TextMeasurer.cs` — computes desired size and caches metrics.
 - [x] `UI/Text/TextLayoutCache.cs` — keyed by text, font, size, wrapping width, and DPI/scale.
-- [x] `UI/Text/TextRenderer.cs` — records text commands with `DrawingContext.DrawText`.
-- [x] `UI/Text/TextWrapping.cs`
-- [x] `UI/Text/TextTrimming.cs` — Core if MVP does not need trimming.
-- [x] `UI/Text/LineBreakService.cs` — Core if MVP only supports single-line text.
+- [~] `UI/Text/TextRenderer.cs` — records measured MVP text lines with `DrawingContext.DrawText`; production multiline shaping remains later.
+- [~] `UI/Text/TextWrapping.cs` — option exists; current wrapping is deterministic MVP fixed-character slicing.
+- [~] `UI/Text/TextTrimming.cs` — enum exists with `None`; ellipsis and clipping semantics remain later.
+- [~] `UI/Text/LineBreakService.cs` — deterministic MVP approximation, not production Unicode line breaking.
 - [x] `UI/Text/BidiTextService.cs` — minimal neutral/LTR/RTL run detection for higher-level text services.
 - [x] `UI/Text/TextSelection.cs` — normalized immutable selection/caret range.
 - [x] `UI/Text/TextEditingController.cs` — explicit editing controller over `TextEditor` for text input and navigation keys.
@@ -628,9 +630,11 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Text/TextMeasurerTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Text/TextLayoutCacheTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Text/TextRendererTests.cs`
+- [ ] `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Text/BidiTextServiceTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Text/TextEditingControllerTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/TextBlockInvalidationTests.cs`
+- [ ] `tests/Cerneala.Tests/Controls/ButtonContentArchitectureTests.cs`
 
 Acceptance checklist:
 
@@ -638,6 +642,9 @@ Acceptance checklist:
 - [x] Text color changes invalidate render commands without forcing text shaping when glyph metrics are unchanged.
 - [x] Font family or font size changes invalidate measurement and render.
 - [x] Re-rendering unchanged text reuses cached text layout and retained render commands.
+- [ ] Rendered MVP wrapped lines match the lines returned by `TextMeasurer`.
+- [ ] `Button` string content uses shared text services instead of local text-width formulas.
+- [ ] Production wrapping, trimming, bidi-aware multiline layout, and glyph-accurate line breaking are proven before text services are marked scenario-complete.
 
 ## 12. [MVP] Resources for fonts and images
 
