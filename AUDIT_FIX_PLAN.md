@@ -82,11 +82,11 @@ Detailed plan: `docs/superpowers/plans/2026-07-04-cache-input-route-hit-test.md`
 
 ### Phase 2 Gate
 
-- [ ] `dotnet test Cerneala.slnx` passes.
-- [ ] Style invalidation is scheduler-owned.
-- [ ] Input route data is retained and invalidation-driven.
-- [ ] `UI/Input` no longer depends directly on `UI/Controls`.
-- [ ] Commit Phase 2.
+- [x] `dotnet test Cerneala.slnx` passes.
+- [x] Style invalidation is scheduler-owned.
+- [x] Input route data is retained and invalidation-driven.
+- [x] `UI/Input` no longer depends directly on `UI/Controls`.
+- [x] Commit Phase 2.
 
 ## Phase 3: Roadmap Honesty And Deferred Scope
 
@@ -94,12 +94,14 @@ Goal: stop the roadmap from claiming maturity for descriptor-level or experiment
 
 ### Plan 5: `freeze-later-experimental-scope`
 
-- [ ] Mark advanced media/rendering as experimental/frozen until drawing command/backend semantics exist.
-- [ ] Mark advanced input categories as experimental/frozen until platform behavior exists.
-- [ ] Mark markup/source generation as optional/frozen until retained core contracts are stable.
-- [ ] Mark accessibility platform adapters as later; keep semantic tree architecture.
-- [ ] Mark animation/storyboard expansion as later until scheduler/render invalidation is proven under animation stress.
-- [ ] Update `ROADMAPv2.md` without deleting useful history.
+Detailed plan: `docs/superpowers/plans/2026-07-05-freeze-later-experimental-scope.md`
+
+- [x] Mark advanced media/rendering as experimental/frozen until drawing command/backend semantics exist.
+- [x] Mark advanced input categories as experimental/frozen until platform behavior exists.
+- [x] Mark markup/source generation as optional/frozen until retained core contracts are stable.
+- [x] Mark accessibility platform adapters as later; keep semantic tree architecture.
+- [x] Mark animation/storyboard expansion as later until scheduler/render invalidation is proven under animation stress.
+- [x] Update `ROADMAPv2.md` without deleting useful history.
 
 ### Plan 6: `clarify-text-services-mvp`
 
@@ -131,9 +133,9 @@ Goal: stop the roadmap from claiming maturity for descriptor-level or experiment
 4. [x] Execute `fix-tree-mutation-invalidation`.
 5. [x] Run full tests and commit Phase 1.
 6. [x] Execute `integrate-style-phase`.
-7. [ ] Execute `cache-input-route-hit-test`.
-8. [ ] Run full tests and commit Phase 2.
-9. [ ] Execute roadmap honesty pass: `freeze-later-experimental-scope`.
+7. [x] Execute `cache-input-route-hit-test`.
+8. [x] Run full tests and commit Phase 2.
+9. [x] Execute roadmap honesty pass: `freeze-later-experimental-scope`.
 10. [ ] Execute `clarify-text-services-mvp`.
 11. [ ] Execute `clarify-package-boundary-dependencies`.
 12. [ ] Run full tests and commit Phase 3.

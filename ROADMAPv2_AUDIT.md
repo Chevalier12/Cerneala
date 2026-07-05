@@ -14,13 +14,13 @@ Build/test note: `dotnet test Cerneala.slnx` passed after the retained input cac
 - [x] Attached visual tree mutations now enqueue retained measure/arrange/render/hit-test work instead of relying on tree-version bookkeeping alone.
 - [x] Styling is integrated into the frame scheduler through root-owned style/theme scope and `FramePhase.Style`.
 - [x] Hit-test/input routing no longer rebuilds the mouse/touch/stylus bridge route map every input dispatch; `UIRoot` owns a retained `ElementInputCache`, and `HitTestQueue` drives the cache rebuild phase.
-- [ ] ROADMAPv2 now overclaims maturity. Several Later/Optional sections are marked `[x]` because files/tests exist, but the implementations are descriptor-level, MVP-only, or not wired into the retained core.
+- [x] ROADMAPv2 maturity overclaim has been corrected by `freeze-later-experimental-scope`; Later and Optional/Experimental sections now distinguish descriptor/type existence from retained-pipeline, backend/platform, and scenario-complete maturity.
 
-Brutal summary: the repo has a good skeleton and a lot of useful pieces, but the most important invariant — “update may do retained work, draw must only submit cached output, unchanged UI must not regenerate layout/render data” — has holes. Fix that before adding any more controls, media, animation, markup, accessibility, or advanced input.
+Brutal summary: the repo has a good skeleton and the retained update/draw, tree mutation, style scheduling, input route cache, and roadmap honesty fixes have landed. Remaining risks are later foundation areas such as resource invalidation ownership, realistic text/layout behavior, accessibility/platform adapters, animation stress, markup/source generation, and package boundaries.
 
 ## Requested checks
 
-- [ ] **1. Implementation respects ROADMAPv2 intent.** Partially. The broad layering is right, and the retained render, tree mutation, style phase, and input route cache fixes have landed; remaining concerns are roadmap honesty/deferred scope and later foundation areas.
+- [ ] **1. Implementation respects ROADMAPv2 intent.** Partially. The broad layering is right, and the retained render, tree mutation, style phase, input route cache, and roadmap honesty/deferred scope fixes have landed; remaining concerns are later foundation areas.
 - [ ] **2. WPF legacy API risk.** Some names are fine (`RoutedEvent`, `CommandBinding`, `Visibility`), but `AutomationPeer`, `ButtonAutomationPeer`, `TextBoxAutomationPeer`, and `ItemsControlAutomationPeer` pull the public shape toward WPF compatibility language without a compatibility goal. `IsVisible` plus `Visibility` is also WPF-ish ambiguity without enough semantic payoff.
 - [ ] **3. Over-engineering/YAGNI.** Later/Optional work was implemented too early: markup/source generation, advanced input categories, animation/storyboard, accessibility peers, advanced media descriptors, text editing, and IME scaffolding are ahead of core correctness.
 - [ ] **4. Under-engineering.** The most dangerous under-built areas are now resource invalidation ownership and realistic text/layout/virtualization behavior; the retained render contract, tree mutation invalidation, style phase integration, and route/hit-test caching have been remediated.
@@ -90,7 +90,7 @@ Required changes:
 
 Implementation note: fixed by `fix-retained-render-frame-contract`; local render-cache generation is scheduler-owned, root command-list composition is explicit during update, and draw submission uses the last committed root commands.
 
-### 3. `RetainedRenderer.Submit(...)` copies commands every draw
+### 3. `RetainedRenderer.Submit(...)` originally copied commands every draw
 
 Files:
 
@@ -98,15 +98,17 @@ Files:
 - `UI/Drawing/IDrawingBackend.cs`
 - `tests/Cerneala.Tests/UI/Rendering/RetainedRendererTests.cs`
 
-Problem: `Submit(...)` calls `backend.Render(CopyCommands(Render(root)))`. That protects the cache from a mutating backend, but it allocates/copies a new `DrawCommandList` every draw. ROADMAPv2 explicitly wants game-loop-friendly retained UI. A per-frame copy of the root command list is exactly the kind of hidden cost retained rendering is supposed to avoid.
+Original problem: `Submit(...)` called `backend.Render(CopyCommands(Render(root)))`. That protected the cache from a mutating backend, but it allocated/copied a new `DrawCommandList` every draw. ROADMAPv2 explicitly wants game-loop-friendly retained UI. A per-frame copy of the root command list was exactly the kind of hidden cost retained rendering is supposed to avoid.
+
+Implementation note: fixed by `fix-retained-render-frame-contract`; `RetainedRenderer.Submit(...)` now submits the committed root command list directly through `Render(root)`, and `CopyCommands(...)` is no longer present.
 
 Required changes:
 
-- [ ] Strengthen `IDrawingBackend.Render(...)` contract so backends treat command lists as read-only during submission.
-- [ ] Or introduce an immutable/read-only command-list view for backend submission.
-- [ ] Remove the per-draw `CopyCommands(...)` from the hot path.
-- [ ] Replace `BackendCannotMutateCachedRootCommandsDuringSubmit` with a test that enforces backend read-only behavior or validates the immutable view.
-- [ ] Add `tests/Cerneala.Tests/UI/Rendering/BackendSubmitAllocationTests.cs` or a simpler command-list identity test proving unchanged draw frames reuse cached root commands without copying.
+- [x] Strengthen `IDrawingBackend.Render(...)` contract so backends treat command lists as read-only during submission.
+- [x] Resolve the immutable/read-only submission concern through the backend read-only contract. A separate immutable command-list view can remain a future option if backend APIs need it.
+- [x] Remove the per-draw `CopyCommands(...)` from the hot path.
+- [x] Replace `BackendCannotMutateCachedRootCommandsDuringSubmit` with a test that enforces backend read-only behavior or validates the immutable view.
+- [x] Add `tests/Cerneala.Tests/UI/Rendering/BackendSubmitAllocationTests.cs` or a simpler command-list identity test proving unchanged draw frames reuse cached root commands without copying.
 
 ### 4. Styling was not a retained frame phase yet
 
@@ -231,6 +233,8 @@ Required changes:
 - [ ] Add an audit marker or status correction pass to ROADMAPv2 after Must Fix items land. Do not rewrite the roadmap; just stop treating descriptor files as finished product features.
 - [ ] In Superpowers planning/checklist artifacts, distinguish “type exists”, “wired into retained pipeline”, “backend-supported”, and “scenario-complete”.
 - [ ] Add explicit “experimental/frozen” status to Later/Optional areas that should not drive core design.
+
+Implementation note: fixed by `freeze-later-experimental-scope`; `ROADMAPv2.md` now distinguishes type existence, retained-pipeline integration, backend/platform support, and scenario completeness. Later and Optional/Experimental areas for media, accessibility adapters, animation expansion, markup/source generation, and advanced input are explicitly marked partial or frozen instead of completed.
 
 ### 2. Main project still has hard backend/package dependencies
 
@@ -404,7 +408,7 @@ These are valid product areas, but they should not consume design energy before 
 - [ ] Keep `UI/Accessibility/Semantics*` as the preferred architecture. Decide later whether `AutomationPeer` names survive as public API.
 - [ ] Keep `UI/Text/TextEditor.cs`, `TextCompositionManager`, `TextBox`, and `PasswordBox` limited until focus, text layout, platform text input, and selection rendering are more real.
 - [ ] Keep `UI/Data/StringPropertyPath.cs` unsupported. That is a good decision. Do not add string-path binding until typed binding and templates are insufficient in real scenarios.
-- [ ] Keep `DrawCommandListPool` out of correctness. Add it only after profiling proves command-list allocation is a bottleneck and after the per-draw copy is removed.
+- [ ] Keep `DrawCommandListPool` out of correctness. Add it only after profiling proves command-list allocation is a bottleneck; per-draw root command copying has already been removed.
 - [ ] Add richer diagnostics/devtools after stats are honest. Diagnostics built on false counters are worse than no diagnostics.
 
 ## Do Not Build Yet
@@ -422,15 +426,17 @@ These are valid product areas, but they should not consume design energy before 
 
 ### Risk 1: Silent work outside the update phase
 
-- [ ] Current risk: `RetainedRenderer.Render(...)` can generate local commands after `FrameStats` are produced.
-- [ ] Consequence: performance diagnostics lie, draw can become non-pure, and unchanged game-loop frames may allocate/rebuild unexpectedly.
-- [ ] Mitigation: render-cache generation must be scheduler-only; draw must submit last committed output.
+- [x] Original risk: `RetainedRenderer.Render(...)` could generate local commands after `FrameStats` were produced.
+- [x] Consequence: performance diagnostics could lie, draw could become non-pure, and unchanged game-loop frames could allocate/rebuild unexpectedly.
+- [x] Mitigation: render-cache generation is scheduler-only; draw submits last committed output.
+- [x] Status: mitigated by `fix-retained-render-frame-contract`; render-cache generation is scheduler-owned and draw/submit use committed commands.
 
 ### Risk 2: Tree-version invalidation is being used as a shortcut
 
-- [ ] Current risk: `root.IncrementTreeVersion()` invalidates root composition but does not schedule layout/hit-test/render-cache work.
-- [ ] Consequence: visual tree changes can skip layout and rely on lazy render behavior.
-- [ ] Mitigation: tree mutations must raise retained invalidation requests with explicit flags.
+- [x] Original risk: `root.IncrementTreeVersion()` invalidated root composition but did not schedule layout/hit-test/render-cache work.
+- [x] Consequence: visual tree changes could skip layout and rely on lazy render behavior.
+- [x] Mitigation: tree mutations raise retained invalidation requests with explicit flags.
+- [x] Status: mitigated by `fix-tree-mutation-invalidation`; visual add/remove schedules retained measure/arrange/render/hit-test work and tree version remains bookkeeping.
 
 ### Risk 3: Style/theme system can become parallel state
 
@@ -561,10 +567,10 @@ Planning artifacts:
 
 Tasks:
 
-- [ ] Add “experimental/frozen until retained core contract is stable” language.
-- [ ] Separate descriptor/API existence from scenario-complete implementation.
-- [ ] Require backend support before marking advanced media as implemented.
-- [ ] Require platform adapter support before marking advanced input/accessibility as implemented.
+- [x] Add “experimental/frozen until retained core contract is stable” language.
+- [x] Separate descriptor/API existence from scenario-complete implementation.
+- [x] Require backend support before marking advanced media as implemented.
+- [x] Require platform adapter support before marking advanced input/accessibility as implemented.
 
 ### `clarify-package-boundary-dependencies`
 
