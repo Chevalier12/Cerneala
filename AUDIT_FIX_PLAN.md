@@ -115,10 +115,12 @@ Detailed plan: `docs/superpowers/plans/2026-07-05-clarify-text-services-mvp.md`
 
 ### Plan 7: `clarify-package-boundary-dependencies`
 
-- [ ] Keep `Cerneala.Core.csproj`, `Cerneala.MonoGame.csproj`, `Cerneala.Tests.Core.csproj`, and `Cerneala.Tests.MonoGame.csproj` deferred.
-- [ ] Record that `Cerneala.csproj` currently carries MonoGame/Skia/HarfBuzz dependencies.
-- [ ] Define future acceptance criteria for splitting core/adapters.
-- [ ] Add package-shape tests only when the split criteria are ready.
+Detailed plan: `docs/superpowers/plans/2026-07-05-clarify-package-boundary-dependencies.md`
+
+- [x] Keep `Cerneala.Core.csproj`, `Cerneala.MonoGame.csproj`, `Cerneala.Tests.Core.csproj`, and `Cerneala.Tests.MonoGame.csproj` deferred.
+- [x] Record that `Cerneala.csproj` currently carries MonoGame/Skia/HarfBuzz dependencies.
+- [x] Define future acceptance criteria for splitting core/adapters.
+- [x] Add package-shape tests only when the split criteria are ready.
 
 ### Phase 3 Gate
 
@@ -139,7 +141,7 @@ Detailed plan: `docs/superpowers/plans/2026-07-05-clarify-text-services-mvp.md`
 8. [x] Run full tests and commit Phase 2.
 9. [x] Execute roadmap honesty pass: `freeze-later-experimental-scope`.
 10. [x] Execute `clarify-text-services-mvp`.
-11. [ ] Execute `clarify-package-boundary-dependencies`.
+11. [x] Execute `clarify-package-boundary-dependencies`.
 12. [ ] Run full tests and commit Phase 3.
 
 ## Stop Conditions
