@@ -397,7 +397,7 @@ public sealed class ArchitectureBoundaryTests
     {
         string roadmap = File.ReadAllText(FindRepositoryPath("ROADMAPv2.md"));
 
-        Assert.Contains("- [x] A retained `TextBlock` measures text using the existing Skia/HarfBuzz pipeline through higher-level text services.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] A retained `TextBlock` measures text using shared MVP text services; production Skia/HarfBuzz-backed glyph-accurate layout remains tracked in section 11.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [~] `UI/Text/TextRenderer.cs` — records measured MVP text lines with `DrawingContext.DrawText`; production multiline shaping remains later.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] `tests/Cerneala.Tests/UI/Text/TextRendererTests.cs`", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] `tests/Cerneala.Tests/UI/Text/TextRendererWrapContractTests.cs`", roadmap, StringComparison.Ordinal);

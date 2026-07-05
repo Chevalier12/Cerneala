@@ -565,8 +565,8 @@ This phase creates the smallest useful control set. Controls should be retained,
 - [x] `UI/Controls/TemplatePartAttribute.cs` — diagnostic template part metadata.
 - [x] `UI/Controls/VisualState.cs` — minimal state names for hover/pressed/focus/disabled.
 - [x] `UI/Controls/ControlTextFont.cs` — minimal backend-neutral font handle for MVP text commands.
-- [x] `UI/Controls/TextMeasurement.cs` — minimal text measurement result for `TextBlock`.
-- [x] `UI/Controls/TextMeasurer.cs` — deterministic MVP text measurer; full text services remain section 11.
+- [x] `UI/Text/TextMeasureResult.cs` — minimal text measurement result for `TextBlock`.
+- [x] `UI/Text/TextMeasurer.cs` — deterministic MVP text measurer; full text services remain section 11.
 
 Common control properties:
 
@@ -597,7 +597,7 @@ Tests:
 MVP control acceptance checklist:
 
 - [x] A retained `Button` can be added to `UIRoot`, measured, arranged, rendered, hit-tested, hovered, pressed, clicked, and command-bound.
-- [x] A retained `TextBlock` measures text using the existing Skia/HarfBuzz pipeline through higher-level text services.
+- [x] A retained `TextBlock` measures text using shared MVP text services; production Skia/HarfBuzz-backed glyph-accurate layout remains tracked in section 11.
 - [x] A retained `Border` renders fill/stroke with existing rectangle commands.
 - [x] A retained `StackPanel` lays out children and avoids re-measuring unchanged children.
 - [x] Control visual states invalidate render only when the state affects visible output.
