@@ -251,10 +251,12 @@ Problem: source boundaries are mostly clean, but the main package still referenc
 
 Required changes:
 
-- [ ] Keep `Cerneala.Core.csproj` and `Cerneala.MonoGame.csproj` deferred if the project is not ready.
-- [ ] But record a Superpowers decision note for “single project now, adapter dependencies later” so this does not become accidental architecture.
-- [ ] Consider `PrivateAssets`/conditional compilation only if it does not create build complexity.
-- [ ] Add package-shape tests that distinguish source boundary from package dependency boundary.
+- [x] Keep `Cerneala.Core.csproj` and `Cerneala.MonoGame.csproj` deferred because the project is not ready for a real package split.
+- [x] Record a Superpowers decision note for "single project now, adapter dependencies later" so this does not become accidental architecture.
+- [x] Defer `PrivateAssets`/conditional compilation because adding build complexity without a real split would be premature.
+- [x] Defer package-shape tests until split criteria are ready and split projects exist.
+
+Implementation note: fixed by `clarify-package-boundary-dependencies`; `ROADMAPv2.md` now records that `Cerneala.csproj` intentionally remains the single MVP project while carrying `MonoGame.Framework.DesktopGL`, `SkiaSharp`, `SkiaSharp.NativeAssets.Linux`, and `HarfBuzzSharp`. The future split criteria distinguish source isolation from package dependency isolation, and package-shape tests remain deferred until the split projects exist.
 
 ### 3. Inherited property behavior is only store-level, not tree-level
 
@@ -584,9 +586,9 @@ Planning artifacts:
 
 Tasks:
 
-- [ ] Keep package split project files deferred.
-- [ ] Add explicit risk/requirement that the main package currently carries adapter dependencies.
-- [ ] Define the future acceptance criteria for splitting core/adapters without forcing the split now.
+- [x] Keep package split project files deferred.
+- [x] Add explicit risk/requirement that the main package currently carries adapter dependencies.
+- [x] Define the future acceptance criteria for splitting core/adapters without forcing the split now.
 
 ## Test gaps to add
 
@@ -633,7 +635,7 @@ Reconsider or constrain:
 
 - [x] `Cerneala.Core.csproj`, `Cerneala.MonoGame.csproj`, `Cerneala.Tests.Core.csproj`, and `Cerneala.Tests.MonoGame.csproj` can remain unchecked/deferred for now.
 - [x] Full package split should wait until the core/adapters API line is stable.
-- [ ] The dependency problem behind the package split should not be deferred indefinitely. `Cerneala.csproj` currently pulls MonoGame/Skia/HarfBuzz into the main package.
+- [x] The dependency problem behind the package split is explicitly tracked instead of deferred indefinitely. `Cerneala.csproj` currently pulls MonoGame/Skia/HarfBuzz into the main package.
 - [x] `DrawCommandListPool` can remain deferred.
 - [x] String property path binding can remain unsupported.
 - [x] Full native accessibility can remain deferred.
