@@ -2,13 +2,18 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Text;
 
 namespace Cerneala.UI.Controls;
 
 public class Button : ButtonBase
 {
+    private TextMeasurer textMeasurer = TextMeasurer.Default;
+    private TextRenderer textRenderer = TextRenderer.Default;
+
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
         nameof(Content),
         typeof(Button),
@@ -47,6 +52,41 @@ public class Button : ButtonBase
         }
     }
 
+    public TextMeasurer TextMeasurer
+    {
+        get => textMeasurer;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (ReferenceEquals(textMeasurer, value))
+            {
+                return;
+            }
+
+            textMeasurer = value;
+            IncrementLayoutVersion();
+            IncrementRenderVersion();
+            Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "Button text measurer changed");
+        }
+    }
+
+    public TextRenderer TextRenderer
+    {
+        get => textRenderer;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (ReferenceEquals(textRenderer, value))
+            {
+                return;
+            }
+
+            textRenderer = value;
+            IncrementRenderVersion();
+            Invalidate(InvalidationFlags.Render, "Button text renderer changed");
+        }
+    }
+
     private UIElement? ContentElement => Content as UIElement;
 
     private bool HostsContentDirectly => Template is null;
@@ -59,8 +99,9 @@ public class Button : ButtonBase
         }
 
         Thickness insets = Insets;
-        LayoutSize contentSize = ContentElement?.Measure(new MeasureContext(ContentControl.Deflate(context.AvailableSize, insets), context.Rounding)) ??
-            MeasureTextContent();
+        LayoutSize available = ContentControl.Deflate(context.AvailableSize, insets);
+        LayoutSize contentSize = ContentElement?.Measure(new MeasureContext(available, context.Rounding)) ??
+            MeasureTextContent(available);
         return ContentControl.Inflate(contentSize, insets);
     }
 
@@ -97,8 +138,9 @@ public class Button : ButtonBase
 
         if (Content is string text && !string.IsNullOrEmpty(text))
         {
-            DrawPoint point = new(context.Bounds.X + Insets.Left, context.Bounds.Y + Insets.Top);
-            context.DrawingContext.DrawText(new DrawTextRun(new ControlTextFont(FontFamily, FontSize), text, FontSize), point, Foreground);
+            LayoutRect contentBounds = ContentControl.Deflate(context.Bounds, Insets);
+            DrawPoint point = new(contentBounds.X, contentBounds.Y);
+            TextRenderer.Render(context.DrawingContext, text, CreateTextStyle(), contentBounds.Width, point, Foreground);
         }
     }
 
@@ -118,11 +160,16 @@ public class Button : ButtonBase
         }
     }
 
-    private LayoutSize MeasureTextContent()
+    private LayoutSize MeasureTextContent(LayoutSize availableSize)
     {
         return Content is string text
-            ? new LayoutSize(text.Length * FontSize * 0.5f, FontSize)
+            ? TextMeasurer.Measure(text, CreateTextStyle(), availableSize.Width).Size
             : LayoutSize.Zero;
+    }
+
+    private TextRunStyle CreateTextStyle()
+    {
+        return new TextRunStyle(FontFamily, FontSize, color: Foreground);
     }
 
     private DrawColor ResolveBackground()
