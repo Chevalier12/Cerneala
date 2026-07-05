@@ -942,7 +942,7 @@ Tests:
 
 ## 21. [Later] Accessibility and semantics
 
-This phase makes UI meaning available to assistive technologies and testing tools. It should be designed around a platform-neutral semantics tree first, with platform adapters later.
+This phase keeps the platform-neutral semantics tree as the retained-core architecture. Platform accessibility adapters are **later/frozen** until the semantics API is stable and at least one backend adapter exposes real platform behavior.
 
 - [x] `UI/Accessibility/SemanticsNode.cs`
 - [x] `UI/Accessibility/SemanticsRole.cs`
@@ -950,11 +950,11 @@ This phase makes UI meaning available to assistive technologies and testing tool
 - [x] `UI/Accessibility/SemanticsTree.cs`
 - [x] `UI/Accessibility/SemanticsProvider.cs`
 - [x] `UI/Accessibility/AccessibleName.cs`
-- [x] `UI/Accessibility/AutomationPeer.cs` — only if WPF naming remains useful.
-- [x] `UI/Accessibility/ButtonAutomationPeer.cs`
-- [x] `UI/Accessibility/TextBoxAutomationPeer.cs`
-- [x] `UI/Accessibility/ItemsControlAutomationPeer.cs`
-- [x] `UI/Platform/IAccessibilityPlatform.cs`
+- [~] `UI/Accessibility/AutomationPeer.cs` — type exists; naming remains under review and platform adapter behavior is frozen.
+- [~] `UI/Accessibility/ButtonAutomationPeer.cs` — type exists; keep behind semantic tree behavior until platform adapters exist.
+- [~] `UI/Accessibility/TextBoxAutomationPeer.cs` — type exists; keep behind semantic tree behavior until platform adapters exist.
+- [~] `UI/Accessibility/ItemsControlAutomationPeer.cs` — type exists; keep behind semantic tree behavior until platform adapters exist.
+- [~] `UI/Platform/IAccessibilityPlatform.cs` — contract exists; real adapter behavior remains later.
 
 Tests:
 
@@ -962,6 +962,12 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Accessibility/SemanticsProviderTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Accessibility/ButtonSemanticsTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Accessibility/TextBoxSemanticsTests.cs`
+
+Acceptance checklist:
+
+- [x] Platform-neutral semantic nodes can be produced for retained controls.
+- [~] WPF-like peer names are tolerated only as implementation vocabulary while public API decision remains open.
+- [ ] Native platform accessibility adapters exist and are tested before scenario-complete.
 
 ## 22. [Later] Advanced rendering and media
 
