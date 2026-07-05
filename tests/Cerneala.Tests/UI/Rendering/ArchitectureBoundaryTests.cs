@@ -630,7 +630,8 @@ public sealed class ArchitectureBoundaryTests
 
         Assert.Contains("- [x] `UI/Text/TextDocument.cs`", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] `UI/Text/TextCompositionManager.cs`", roadmap, StringComparison.Ordinal);
-        Assert.Contains("- [x] 20. Add text editing and IME composition.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [~] 20. Add text editing and IME composition — foundations exist; production text services and platform behavior remain later.", roadmap, StringComparison.Ordinal);
+        Assert.DoesNotContain("- [x] 20. Add text editing and IME composition", roadmap, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -735,7 +736,7 @@ public sealed class ArchitectureBoundaryTests
     {
         string root = FindRepositoryRoot();
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
-        string[] requiredFiles =
+        string[] completeFiles =
         [
             "UI/Accessibility/SemanticsNode.cs",
             "UI/Accessibility/SemanticsRole.cs",
@@ -743,24 +744,38 @@ public sealed class ArchitectureBoundaryTests
             "UI/Accessibility/SemanticsTree.cs",
             "UI/Accessibility/SemanticsProvider.cs",
             "UI/Accessibility/AccessibleName.cs",
-            "UI/Accessibility/AutomationPeer.cs",
-            "UI/Accessibility/ButtonAutomationPeer.cs",
-            "UI/Accessibility/TextBoxAutomationPeer.cs",
-            "UI/Accessibility/ItemsControlAutomationPeer.cs",
-            "UI/Platform/IAccessibilityPlatform.cs",
             "tests/Cerneala.Tests/UI/Accessibility/SemanticsTreeTests.cs",
             "tests/Cerneala.Tests/UI/Accessibility/SemanticsProviderTests.cs",
             "tests/Cerneala.Tests/UI/Accessibility/ButtonSemanticsTests.cs",
             "tests/Cerneala.Tests/UI/Accessibility/TextBoxSemanticsTests.cs"
         ];
+        string[] partialEntries =
+        [
+            "`UI/Accessibility/AutomationPeer.cs` — type exists; naming remains under review and platform adapter behavior is frozen.",
+            "`UI/Accessibility/ButtonAutomationPeer.cs` — type exists; keep behind semantic tree behavior until platform adapters exist.",
+            "`UI/Accessibility/TextBoxAutomationPeer.cs` — type exists; keep behind semantic tree behavior until platform adapters exist.",
+            "`UI/Accessibility/ItemsControlAutomationPeer.cs` — type exists; keep behind semantic tree behavior until platform adapters exist.",
+            "`UI/Platform/IAccessibilityPlatform.cs` — contract exists; real adapter behavior remains later."
+        ];
 
-        foreach (string requiredFile in requiredFiles)
+        foreach (string requiredFile in completeFiles)
         {
             Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
             Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
         }
 
-        Assert.Contains("- [x] 21. Add accessibility semantics and platform-neutral semantic tree.", roadmap, StringComparison.Ordinal);
+        foreach (string partialEntry in partialEntries)
+        {
+            string requiredFile = partialEntry.Split('`')[1];
+
+            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
+            Assert.Contains($"- [~] {partialEntry}", roadmap, StringComparison.Ordinal);
+            Assert.DoesNotContain($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("- [ ] Native platform accessibility adapters exist and are tested before scenario-complete.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [~] 21. Add accessibility semantics and platform-neutral semantic tree — semantic tree exists; platform adapters remain later.", roadmap, StringComparison.Ordinal);
+        Assert.DoesNotContain("- [x] 21. Add accessibility semantics and platform-neutral semantic tree", roadmap, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -768,9 +783,65 @@ public sealed class ArchitectureBoundaryTests
     {
         string root = FindRepositoryRoot();
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
+        int sectionStart = roadmap.IndexOf("## 22. [Later] Advanced rendering and media", StringComparison.Ordinal);
+        Assert.NotEqual(-1, sectionStart);
+        int nextSection = roadmap.IndexOf("## 23. [Later] Animation and transitions", sectionStart, StringComparison.Ordinal);
+        Assert.NotEqual(-1, nextSection);
+        string section22 = roadmap[sectionStart..nextSection];
+        string[] completeFiles =
+        [
+            "UI/Drawing/DrawCommandKind.cs",
+            "UI/Drawing/DrawingContext.cs",
+            "UI/Media/Brush.cs",
+            "UI/Media/SolidColorBrush.cs",
+            "UI/Media/Pen.cs",
+            "UI/Media/Geometry.cs",
+            "UI/Media/RectangleGeometry.cs",
+            "UI/Media/EllipseGeometry.cs",
+            "UI/Media/Transform.cs",
+            "UI/Media/Matrix3x2.cs",
+            "UI/Controls/Shapes/Shape.cs",
+            "UI/Controls/Shapes/Rectangle.cs",
+            "UI/Controls/Shapes/Ellipse.cs",
+            "UI/Controls/Shapes/Path.cs",
+            "UI/Media/ImageSource.cs",
+            "UI/Media/BitmapImage.cs",
+            "tests/Cerneala.Tests/Drawing/AdvancedDrawCommandTests.cs",
+            "tests/Cerneala.Tests/UI/Media/BrushTests.cs",
+            "tests/Cerneala.Tests/UI/Media/GeometryTests.cs",
+            "tests/Cerneala.Tests/UI/Media/TransformTests.cs",
+            "tests/Cerneala.Tests/UI/Controls/Shapes/ShapeTests.cs",
+            "tests/Cerneala.Tests/UI/Media/ImageSourceTests.cs"
+        ];
+        string[] partialEntries =
+        [
+            "`UI/Media/LinearGradientBrush.cs` — type exists; frozen until gradient draw commands and backend rendering exist.",
+            "`UI/Media/RadialGradientBrush.cs` — type exists; frozen until gradient draw commands and backend rendering exist.",
+            "`UI/Media/PathGeometry.cs` — type exists; frozen until real path fill/stroke command semantics exist.",
+            "`UI/Media/OpacityLayer.cs` — type exists; frozen until layer composition has retained render-cache and backend semantics.",
+            "`UI/Media/ShadowEffect.cs` — type exists; frozen until shadow/effect command semantics and backend behavior exist.",
+            "`UI/Media/RenderTargetImage.cs` — type exists; frozen until render-target lifecycle and backend ownership are designed."
+        ];
 
-        Assert.Contains("- [x] Full project tests pass for this phase.", roadmap, StringComparison.Ordinal);
-        Assert.Contains("- [x] 22. Add advanced rendering/media primitives as scenarios require.", roadmap, StringComparison.Ordinal);
+        foreach (string requiredFile in completeFiles)
+        {
+            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
+            Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
+        }
+
+        foreach (string partialEntry in partialEntries)
+        {
+            string requiredFile = partialEntry.Split('`')[1];
+
+            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
+            Assert.Contains($"- [~] {partialEntry}", roadmap, StringComparison.Ordinal);
+            Assert.DoesNotContain($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("- [ ] Full project tests pass for the backend-supported advanced media scenario before this phase is scenario-complete.", roadmap, StringComparison.Ordinal);
+        Assert.DoesNotContain("- [x] Full project tests pass for this phase.", section22, StringComparison.Ordinal);
+        Assert.Contains("- [~] 22. Add advanced rendering/media primitives as scenarios require — descriptor types exist; backend-supported rendering remains later.", roadmap, StringComparison.Ordinal);
+        Assert.DoesNotContain("- [x] 22. Add advanced rendering/media primitives as scenarios require", roadmap, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -778,7 +849,7 @@ public sealed class ArchitectureBoundaryTests
     {
         string root = FindRepositoryRoot();
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
-        string[] requiredFiles =
+        string[] completeFiles =
         [
             "UI/Animation/AnimationClock.cs",
             "UI/Animation/AnimationScheduler.cs",
@@ -787,9 +858,7 @@ public sealed class ArchitectureBoundaryTests
             "UI/Animation/Easing.cs",
             "UI/Animation/Transition.cs",
             "UI/Animation/Transition{T}.cs",
-            "UI/Animation/Storyboard.cs",
             "UI/Animation/AnimatedValueSource.cs",
-            "UI/Styling/StyleTransition.cs",
             "tests/Cerneala.Tests/UI/Animation/AnimationClockTests.cs",
             "tests/Cerneala.Tests/UI/Animation/AnimationSchedulerTests.cs",
             "tests/Cerneala.Tests/UI/Animation/TypedAnimationTests.cs",
@@ -797,15 +866,31 @@ public sealed class ArchitectureBoundaryTests
             "tests/Cerneala.Tests/UI/Animation/AnimationInvalidationTests.cs",
             "tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs"
         ];
+        string[] partialEntries =
+        [
+            "`UI/Animation/Storyboard.cs` — type exists; composition expansion is frozen until animation stress invalidation tests exist.",
+            "`UI/Styling/StyleTransition.cs` — type exists; expansion is frozen until style/render invalidation under animation stress is proven."
+        ];
 
-        foreach (string requiredFile in requiredFiles)
+        foreach (string requiredFile in completeFiles)
         {
             Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
             Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
         }
 
+        foreach (string partialEntry in partialEntries)
+        {
+            string requiredFile = partialEntry.Split('`')[1];
+
+            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
+            Assert.Contains($"- [~] {partialEntry}", roadmap, StringComparison.Ordinal);
+            Assert.DoesNotContain($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
+        }
+
         Assert.Contains("- [x] Animation and style transition APIs stay backend-neutral.", roadmap, StringComparison.Ordinal);
-        Assert.Contains("- [x] 23. Add animation and transitions.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [ ] Animation stress tests prove retained scheduler/render invalidation stays honest across many animated elements.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [~] 23. Add animation and transitions — primitives exist; expansion waits for animation stress invalidation proof.", roadmap, StringComparison.Ordinal);
+        Assert.DoesNotContain("- [x] 23. Add animation and transitions", roadmap, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -851,7 +936,8 @@ public sealed class ArchitectureBoundaryTests
         Assert.Contains("- [x] MonoGame host integration remains adapter-scoped under `UI/Hosting/MonoGame/`.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] Optional package split project files are intentionally deferred and not claimed as implemented.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] Full project tests pass for this phase.", roadmap, StringComparison.Ordinal);
-        Assert.Contains("- [x] 24. Decide package/platform split.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [~] 24. Decide package/platform split — platform contracts exist; package split remains deferred.", roadmap, StringComparison.Ordinal);
+        Assert.DoesNotContain("- [x] 24. Decide package/platform split", roadmap, StringComparison.Ordinal);
     }
 
     private static string FindRepositoryPath(params string[] segments)
