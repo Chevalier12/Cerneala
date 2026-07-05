@@ -336,7 +336,8 @@ foreach ($projectFile in $projectFiles) {
     throw "Deferred split project unexpectedly exists: $projectFile"
   }
 
-  if ($roadmap -notlike "*- [ ] ``$projectFile``*") {
+  $expectedLine = "- [ ] ``$projectFile``"
+  if (-not $roadmap.Contains($expectedLine, [StringComparison]::Ordinal)) {
     throw "ROADMAPv2.md does not keep $projectFile unchecked."
   }
 }
@@ -350,31 +351,31 @@ Run:
 
 ```powershell
 $roadmapRequired = @(
-  "not dependency-neutral yet",
-  "Current package dependency note",
-  "MonoGame.Framework.DesktopGL",
-  "SkiaSharp.NativeAssets.Linux",
-  "Future split acceptance criteria",
-  "Package-shape tests are deferred until the split projects are created"
+  'not dependency-neutral yet',
+  'Current package dependency note',
+  'MonoGame.Framework.DesktopGL',
+  'SkiaSharp.NativeAssets.Linux',
+  'Future split acceptance criteria',
+  'Package-shape tests are deferred until the split projects are created'
 )
 
 $auditRequired = @(
-  "Implementation note: fixed by `clarify-package-boundary-dependencies`",
-  "package-shape tests remain deferred until the split projects exist",
-  "explicitly tracked instead of deferred indefinitely"
+  'Implementation note: fixed by `clarify-package-boundary-dependencies`',
+  'package-shape tests remain deferred until the split projects exist',
+  'explicitly tracked instead of deferred indefinitely'
 )
 
 $roadmap = Get-Content -LiteralPath ROADMAPv2.md -Raw
 $audit = Get-Content -LiteralPath ROADMAPv2_AUDIT.md -Raw
 
 foreach ($phrase in $roadmapRequired) {
-  if ($roadmap -notlike "*$phrase*") {
+  if (-not $roadmap.Contains($phrase, [StringComparison]::Ordinal)) {
     throw "Missing roadmap phrase: $phrase"
   }
 }
 
 foreach ($phrase in $auditRequired) {
-  if ($audit -notlike "*$phrase*") {
+  if (-not $audit.Contains($phrase, [StringComparison]::Ordinal)) {
     throw "Missing audit phrase: $phrase"
   }
 }
