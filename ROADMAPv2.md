@@ -1175,17 +1175,17 @@ This order prioritizes a working retained UI loop before broad API coverage.
 
 ### Later order
 
-- [x] 20. Add text editing and IME composition.
-- [x] 21. Add accessibility semantics and platform-neutral semantic tree.
-- [x] 22. Add advanced rendering/media primitives as scenarios require.
-- [x] 23. Add animation and transitions.
-- [x] 24. Decide package/platform split.
+- [~] 20. Add text editing and IME composition — foundations exist; production text services and platform behavior remain later.
+- [~] 21. Add accessibility semantics and platform-neutral semantic tree — semantic tree exists; platform adapters remain later.
+- [~] 22. Add advanced rendering/media primitives as scenarios require — descriptor types exist; backend-supported rendering remains later.
+- [~] 23. Add animation and transitions — primitives exist; expansion waits for animation stress invalidation proof.
+- [~] 24. Decide package/platform split — platform contracts exist; package split remains deferred.
 
 ### Optional/Experimental order
 
-- [x] 25. Prototype markup/serialization after templates and typed properties are stable.
-- [x] 26. Prototype source generation if runtime reflection becomes a real cost.
-- [x] 27. Implement touch/stylus/drag/drop behavior when platform adapters can supply real data.
+- [~] 25. Prototype markup/serialization after templates and typed properties are stable — prototype exists and is frozen until retained core contracts are stable.
+- [~] 26. Prototype source generation if runtime reflection becomes a real cost — prototype exists and is frozen until tooling or runtime cost justifies expansion.
+- [~] 27. Implement touch/stylus/drag/drop behavior when platform adapters can supply real data — prototype pieces exist; platform-backed behavior remains later.
 
 ## 28. Risks and decisions needing human confirmation
 
@@ -1232,6 +1232,12 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [x] Retained no-work-frame tests are release blockers for MVP.
 - [x] Architecture boundary tests fail if UI core references MonoGame, Skia, HarfBuzz, or backend-specific types.
 - [x] Use both command-list assertions and visual golden-image tests after the first retained playground sample.
+
+### Roadmap honesty
+
+- [x] File/test existence is not enough to mark Later or Optional/Experimental work scenario-complete.
+- [x] Descriptor-only APIs remain `[~]` until they are wired into retained scheduling and relevant backend/platform adapters.
+- [x] Frozen areas may keep existing code, but should not expand public surface until their prerequisites are met.
 
 ## 29. MVP completion definition
 
