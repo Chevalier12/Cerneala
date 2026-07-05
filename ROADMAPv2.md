@@ -1080,20 +1080,20 @@ Acceptance checklist:
 
 ## 25. [Optional/Experimental] Markup, serialization, and source generation
 
-This phase is optional. Cerneala should be code-first and strongly typed before any markup layer exists. Markup may become useful for tooling or designer workflows, but it should compile into typed object creation rather than becoming a reflection-heavy runtime requirement.
+This phase is optional and **frozen** until retained core contracts are stable. Cerneala stays code-first and strongly typed; markup may remain as a prototype for tooling/designer workflows, but it must not become a reflection-heavy runtime requirement or force core API shape.
 
-- [x] `UI/Markup/UiMarkupDocument.cs`
-- [x] `UI/Markup/UiMarkupReader.cs`
-- [x] `UI/Markup/UiMarkupWriter.cs`
-- [x] `UI/Markup/UiMarkupSchema.cs`
-- [x] `UI/Markup/UiMarkupTypeRegistry.cs`
-- [x] `UI/Markup/UiFactory.cs`
-- [x] `UI/Markup/GeneratedUiFactory.cs`
-- [x] `UI/Markup/MarkupLoadOptions.cs`
-- [x] `UI/Markup/MarkupDiagnostic.cs`
-- [x] `UI/Markup/ContentPropertyAttribute.cs` — optional ergonomic hint.
-- [x] `UI/Markup/DesignTimeOnlyAttribute.cs`
-- [x] `Cerneala.SourceGen/UiMarkupGenerator.cs` — optional incremental source generator for `.cui.xml` files that emits code-first retained UI factories.
+- [~] `UI/Markup/UiMarkupDocument.cs` — prototype exists; frozen until retained core contracts are stable.
+- [~] `UI/Markup/UiMarkupReader.cs` — prototype exists; frozen until retained core contracts are stable.
+- [~] `UI/Markup/UiMarkupWriter.cs` — prototype exists; frozen until retained core contracts are stable.
+- [~] `UI/Markup/UiMarkupSchema.cs` — prototype exists; frozen until retained core contracts are stable.
+- [~] `UI/Markup/UiMarkupTypeRegistry.cs` — prototype exists; frozen until retained core contracts are stable.
+- [~] `UI/Markup/UiFactory.cs` — prototype exists; keep as typed factory path, not core runtime magic.
+- [~] `UI/Markup/GeneratedUiFactory.cs` — prototype exists; frozen until retained core contracts are stable.
+- [~] `UI/Markup/MarkupLoadOptions.cs` — prototype exists; frozen until retained core contracts are stable.
+- [~] `UI/Markup/MarkupDiagnostic.cs` — prototype exists; frozen until retained core contracts are stable.
+- [~] `UI/Markup/ContentPropertyAttribute.cs` — optional ergonomic hint; frozen with markup.
+- [~] `UI/Markup/DesignTimeOnlyAttribute.cs` — optional tooling hint; frozen with markup.
+- [~] `Cerneala.SourceGen/UiMarkupGenerator.cs` — optional source generator prototype; frozen until runtime reflection cost or tooling demand proves it is needed.
 
 Tests:
 
@@ -1106,8 +1106,9 @@ Tests:
 Acceptance checklist:
 
 - [x] Markup is not required to create controls.
-- [x] Markup does not bypass typed property validation.
-- [x] Generated factories produce retained trees that use the same invalidation and render-cache paths as code-created trees.
+- [x] Markup does not bypass typed property validation in covered prototype tests.
+- [~] Generated factories produce retained trees through typed creation paths in prototype tests.
+- [ ] Markup/source generation remains frozen until retained core contracts are stable and a real tooling scenario requires expansion.
 
 ## 26. [Optional/Experimental] Advanced input categories
 
