@@ -82,6 +82,11 @@ public sealed class LayoutManager
         }
 
         UIElement? parent = element.VisualParent;
+        if (parent is UIRoot)
+        {
+            return new LayoutSize(root.ViewportWidth, root.ViewportHeight);
+        }
+
         if (parent is not null && parent.ArrangedBounds.Width > 0 && parent.ArrangedBounds.Height > 0)
         {
             return parent.ArrangedBounds.Size;

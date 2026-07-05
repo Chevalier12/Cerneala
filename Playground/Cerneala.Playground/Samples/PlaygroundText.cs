@@ -19,17 +19,23 @@ internal sealed class PlaygroundText
         this.fontResourceId = fontResourceId;
     }
 
-    public TextBlock Create(string text, float size, DrawColor color, Thickness margin = default)
+    public TextBlock Create(string text, float size, DrawColor? color = null, Thickness margin = default)
     {
-        return new TextBlock
+        TextBlock block = new()
         {
             Text = text,
             FontSize = size,
-            Foreground = color,
             Margin = margin,
             ResourceProvider = resourceProvider,
             FontResourceId = fontResourceId
         };
+
+        if (color is DrawColor foreground)
+        {
+            block.Foreground = foreground;
+        }
+
+        return block;
     }
 
     public UIElement Row(string text, float size, DrawColor color, Thickness padding)

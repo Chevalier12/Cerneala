@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Core;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
@@ -120,6 +121,11 @@ public class Button : ButtonBase
 
     private DrawColor ResolveBackground()
     {
+        if (GetValueSource(BackgroundProperty) != UiPropertyValueSource.Default)
+        {
+            return Background;
+        }
+
         if (!IsEnabled)
         {
             return new DrawColor(160, 160, 160);

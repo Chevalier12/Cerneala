@@ -135,7 +135,7 @@ Existing input tests:
 - [x] `Playground/Cerneala.Playground/Cerneala.Playground.csproj`
 - [x] `Playground/Cerneala.Playground/Game1.cs`
 - [x] `Playground/Cerneala.Playground/Program.cs`
-- [~] `Playground/Cerneala.Playground/Game1.cs` manually clears and records drawing commands every frame; the v2 retained host should replace this sample pattern for UI scenarios.
+- [x] `Playground/Cerneala.Playground/Game1.cs` uses `MonoGameUiHost`/retained renderer integration for UI update and draw submission.
 
 ## 1. [MVP] Architecture contracts and project memory
 
@@ -549,6 +549,8 @@ Tests:
 - [x] `tests/Cerneala.Tests/Input/RoutedCommandExecutionTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/Primitives/ButtonBaseCommandTests.cs`
 - [x] `tests/Cerneala.Tests/Input/InputGestureTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ButtonKeyboardActivationTests.cs`
+- [x] `tests/Cerneala.Tests/Input/RetainedInputBindingTests.cs`
 
 Acceptance checklist:
 
@@ -750,6 +752,8 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Styling/StyleInvalidationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Styling/ThemeTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Styling/PseudoClassTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Styling/DefaultThemeVerticalSliceTests.cs`
+- [x] `tests/Cerneala.Tests/Playground/RetainedAppStyleContractTests.cs`
 
 Acceptance checklist:
 
@@ -865,6 +869,8 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Layout/VirtualizingStackPanelTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Layout/VirtualizationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs` - covers section 17 backend boundaries.
+- [x] `tests/Cerneala.Tests/Controls/ItemsControlRetainedInvalidationTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Hosting/RetainedListScrollVerticalSliceTests.cs`
 
 Acceptance checklist:
 
@@ -1299,6 +1305,7 @@ MVP is complete when Cerneala can run a retained UI sample inside the MonoGame p
 - [x] New retained no-work-frame tests pass.
 - [x] `Playground/Cerneala.Playground/Samples/RetainedAppSample.cs` proves a retained app vertical slice: stable tree creation, layout, render cache reuse, command mutation, text/resource invalidation, image content, and a simple retained list/scroll area.
 - [x] `tests/Cerneala.Tests/UI/Hosting/RetainedVerticalSliceTests.cs` proves first-frame work, unchanged no-work frames, draw purity, command mutation invalidation, and root-owned font resource mutation for the retained app sample.
+- [x] `tests/Cerneala.Tests/UI/Hosting/CorePreviewContractTests.cs` proves the Core Preview gate across retained frame work, draw purity, mouse/keyboard command activation, theme mutation, text wrapping resize, list mutation, and scroll invalidation.
 - [x] Hover, press, focus, and command execution work through retained input routing.
 - [x] Text rendering uses existing `DrawTextRun`, `SkiaTextShaper`, and `SkiaTextRasterizer` through higher-level services.
 - [x] No UI core control directly references MonoGame, Skia, HarfBuzz, `SpriteBatch`, or `Texture2D`.

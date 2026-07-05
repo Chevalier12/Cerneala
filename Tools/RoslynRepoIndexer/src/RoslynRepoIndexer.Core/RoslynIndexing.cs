@@ -109,14 +109,14 @@ public sealed class WorkspaceLoader
         var workspace = IndexBuilder.CreateWorkspace();
         if (input.Kind.Equals("csproj", StringComparison.OrdinalIgnoreCase))
         {
-            await workspace.OpenProjectAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var project = await workspace.OpenProjectAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return new LoadedWorkspace(workspace, IndexBuilder.RemoveAnalyzerReferences(project).Solution);
         }
         else
         {
-            await workspace.OpenSolutionAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var solution = await workspace.OpenSolutionAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return new LoadedWorkspace(workspace, IndexBuilder.RemoveAnalyzerReferences(solution));
         }
-
-        return new LoadedWorkspace(workspace, workspace.CurrentSolution);
     }
 }
 
@@ -330,6 +330,29 @@ public sealed class IndexBuilder
         return workspace;
     }
 
+    public static Project RemoveAnalyzerReferences(Project project)
+    {
+        foreach (var reference in project.AnalyzerReferences.ToArray())
+        {
+            project = project.RemoveAnalyzerReference(reference);
+        }
+
+        return project;
+    }
+
+    public static Solution RemoveAnalyzerReferences(Solution solution)
+    {
+        foreach (var project in solution.Projects.ToArray())
+        {
+            foreach (var reference in project.AnalyzerReferences.ToArray())
+            {
+                solution = solution.RemoveAnalyzerReference(project.Id, reference);
+            }
+        }
+
+        return solution;
+    }
+
     public async Task<IndexSummary> BuildAsync(string startPath, bool force, IndexerConfig config, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -374,6 +397,7 @@ public sealed class IndexBuilder
                 {
                     var workspaceLoadStart = Stopwatch.GetTimestamp();
                     var project = await workspace.OpenProjectAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    project = RemoveAnalyzerReferences(project);
                     workspaceLoadMs += (long)Stopwatch.GetElapsedTime(workspaceLoadStart).TotalMilliseconds;
                     var semanticDirtyPlan = await CreateSemanticDirtyPlanAsync(repoRoot, new[] { project }, config, oldSnapshot, cancellationToken).ConfigureAwait(false);
                     var semanticIndexStart = Stopwatch.GetTimestamp();
@@ -384,6 +408,7 @@ public sealed class IndexBuilder
                 {
                     var workspaceLoadStart = Stopwatch.GetTimestamp();
                     var solution = await workspace.OpenSolutionAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    solution = RemoveAnalyzerReferences(solution);
                     workspaceLoadMs += (long)Stopwatch.GetElapsedTime(workspaceLoadStart).TotalMilliseconds;
                     var csharpProjects = solution.Projects.Where(p => p.Language == LanguageNames.CSharp).OrderBy(p => p.Name, StringComparer.Ordinal).ToArray();
                     var semanticDirtyPlan = await CreateSemanticDirtyPlanAsync(repoRoot, csharpProjects, config, oldSnapshot, cancellationToken).ConfigureAwait(false);
@@ -1409,8 +1434,9 @@ public sealed class ExactReferenceService
 
         var inputPath = WorkspaceInputPaths.Resolve(repoRoot, input.Path);
         var solution = input.Kind.Equals("csproj", StringComparison.OrdinalIgnoreCase)
-            ? (await workspace.OpenProjectAsync(inputPath, cancellationToken: cts.Token).ConfigureAwait(false)).Solution
+            ? IndexBuilder.RemoveAnalyzerReferences(await workspace.OpenProjectAsync(inputPath, cancellationToken: cts.Token).ConfigureAwait(false)).Solution
             : await workspace.OpenSolutionAsync(inputPath, cancellationToken: cts.Token).ConfigureAwait(false);
+        solution = IndexBuilder.RemoveAnalyzerReferences(solution);
 
         var declarations = new List<ISymbol>();
         foreach (var project in solution.Projects)
@@ -1478,11 +1504,11 @@ public sealed class DoctorService
                 var input = inputs[0];
                 if (input.Kind.Equals("csproj", StringComparison.OrdinalIgnoreCase))
                 {
-                    _ = await workspace.OpenProjectAsync(WorkspaceInputPaths.Resolve(root.RootPath, input.Path), cancellationToken: cancellationToken).ConfigureAwait(false);
+                    _ = IndexBuilder.RemoveAnalyzerReferences(await workspace.OpenProjectAsync(WorkspaceInputPaths.Resolve(root.RootPath, input.Path), cancellationToken: cancellationToken).ConfigureAwait(false));
                 }
                 else
                 {
-                    _ = await workspace.OpenSolutionAsync(WorkspaceInputPaths.Resolve(root.RootPath, input.Path), cancellationToken: cancellationToken).ConfigureAwait(false);
+                    _ = IndexBuilder.RemoveAnalyzerReferences(await workspace.OpenSolutionAsync(WorkspaceInputPaths.Resolve(root.RootPath, input.Path), cancellationToken: cancellationToken).ConfigureAwait(false));
                 }
 
                 checks.Add(new DoctorCheck("workspace-load", "pass", warnings.Count == 0 ? "info" : "warning", warnings.Count == 0 ? "Workspace opened" : string.Join("; ", warnings.Take(3))));

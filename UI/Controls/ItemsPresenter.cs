@@ -85,13 +85,19 @@ public class ItemsPresenter : Control
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         RefreshItems();
-        return panelRoot?.Measure(context) ?? LayoutSize.Zero;
+        LayoutSize desired = panelRoot?.Measure(context) ?? LayoutSize.Zero;
+        ProcessInheritedAndStyleForSubtree(panelRoot);
+        RemoveMeasureWorkForSubtree(panelRoot);
+        RemoveMeasureWorkForLayoutScope();
+        RemoveInheritedAndStyleWorkForLayoutScope();
+        return desired;
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
         RefreshItems();
         panelRoot?.Arrange(context);
+        RemoveArrangeWorkForSubtree(panelRoot);
         return context.FinalRect;
     }
 
@@ -286,5 +292,76 @@ public class ItemsPresenter : Control
     private RealizationWindow? GetRealizationWindow()
     {
         return VirtualizationContext?.GetRealizationWindow();
+    }
+
+    private static void RemoveMeasureWorkForSubtree(UIElement? element)
+    {
+        if (element?.Root is not UIRoot root)
+        {
+            return;
+        }
+
+        foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
+        {
+            root.LayoutQueue.RemoveMeasure(current);
+        }
+    }
+
+    private static void RemoveArrangeWorkForSubtree(UIElement? element)
+    {
+        if (element?.Root is not UIRoot root)
+        {
+            return;
+        }
+
+        foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
+        {
+            root.LayoutQueue.RemoveArrange(current);
+        }
+    }
+
+    private static void ProcessInheritedAndStyleForSubtree(UIElement? element)
+    {
+        if (element?.Root is not UIRoot root)
+        {
+            return;
+        }
+
+        root.InheritedPropertyPropagator.PropagateFrom(element);
+        foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
+        {
+            root.StyleProcessor.Process(current);
+            root.InheritedPropertyQueue.Remove(current);
+            root.StyleQueue.Remove(current);
+            current.DirtyState.Clear(InvalidationFlags.Inherited | InvalidationFlags.Style);
+        }
+    }
+
+    private void RemoveMeasureWorkForLayoutScope()
+    {
+        if (Root is not UIRoot root)
+        {
+            return;
+        }
+
+        for (UIElement? current = this; current is not null; current = current.VisualParent)
+        {
+            root.LayoutQueue.RemoveMeasure(current);
+        }
+    }
+
+    private void RemoveInheritedAndStyleWorkForLayoutScope()
+    {
+        if (Root is not UIRoot root)
+        {
+            return;
+        }
+
+        for (UIElement? current = this; current is not null; current = current.VisualParent)
+        {
+            root.InheritedPropertyQueue.Remove(current);
+            root.StyleQueue.Remove(current);
+            current.DirtyState.Clear(InvalidationFlags.Inherited | InvalidationFlags.Style);
+        }
     }
 }

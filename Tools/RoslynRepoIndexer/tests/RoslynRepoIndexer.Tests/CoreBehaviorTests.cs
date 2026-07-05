@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.Text.Json;
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 using RoslynRepoIndexer.Core;
 
 namespace RoslynRepoIndexer.Tests;
@@ -355,6 +358,45 @@ public sealed class CoreBehaviorTests
     }
 
     [Fact]
+    public void IndexBuilder_removes_analyzer_references_before_semantic_compilation()
+    {
+        var projectId = ProjectId.CreateNewId();
+        var analyzerPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".dll");
+        File.WriteAllBytes(analyzerPath, Array.Empty<byte>());
+        using var workspace = new AdhocWorkspace();
+        var solution = workspace.CurrentSolution
+            .AddProject(projectId, "App", "App", LanguageNames.CSharp)
+            .AddMetadataReference(projectId, MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
+            .AddAnalyzerReference(projectId, new AnalyzerFileReference(analyzerPath, new EmptyAnalyzerAssemblyLoader()))
+            .AddDocument(DocumentId.CreateNewId(projectId), "App.cs", "public sealed class App { }");
+        var project = solution.GetProject(projectId)!;
+
+        Project sanitized = IndexBuilder.RemoveAnalyzerReferences(project);
+
+        Assert.NotEmpty(project.AnalyzerReferences);
+        Assert.Empty(sanitized.AnalyzerReferences);
+    }
+
+    [Fact]
+    public async Task IndexStore_allows_concurrent_writers_to_publish_complete_snapshots()
+    {
+        using var repo = TestRepo.Create();
+        var first = Snapshot(repo.Root, "first");
+        var second = Snapshot(repo.Root, "second");
+
+        await Task.WhenAll(
+            Task.Run(() => IndexStore.Write(repo.Root, first)),
+            Task.Run(() => IndexStore.Write(repo.Root, second)));
+
+        var status = IndexStore.GetStatus(repo.Root);
+        var read = IndexStore.Read(repo.Root);
+
+        Assert.Equal(IndexStatus.Valid, status.Status);
+        Assert.Single(read.Documents);
+        Assert.True(read.Documents[0].DocumentId is "first" or "second");
+    }
+
+    [Fact]
     public void New_projects_do_not_reference_forbidden_ai_http_or_search_packages()
     {
         var root = TestPaths.RepositoryRoot;
@@ -400,6 +442,26 @@ public sealed class CoreBehaviorTests
                 Include: element.Attribute("Include")?.Value ?? string.Empty,
                 Version: element.Attribute("Version")?.Value ?? string.Empty))
             .Where(package => !string.IsNullOrWhiteSpace(package.Include));
+    }
+
+    private static IndexSnapshot Snapshot(string repoRoot, string id)
+        => new(
+            IndexManifest.CreateNew(repoRoot, "cfg", "workspace"),
+            new[] { Doc(id, $"{id}.cs", "App") },
+            Array.Empty<SymbolEntry>(),
+            Array.Empty<ReferenceEntry>(),
+            Array.Empty<TokenPosting>());
+
+    private sealed class EmptyAnalyzerAssemblyLoader : IAnalyzerAssemblyLoader
+    {
+        public void AddDependencyLocation(string fullPath)
+        {
+        }
+
+        public System.Reflection.Assembly LoadFromPath(string fullPath)
+        {
+            throw new NotSupportedException("Test loader should not load analyzers.");
+        }
     }
 }
 

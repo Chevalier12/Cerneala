@@ -6,6 +6,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.MonoGame;
 using Cerneala.UI.Resources;
+using Cerneala.UI.Styling;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -41,6 +42,8 @@ public class Game1 : Game
         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
         _whitePixel.SetData(new[] { Color.White });
         UIRoot uiRoot = new(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+        uiRoot.SetThemeProvider(new ThemeProvider(DefaultTheme.Create()));
+        uiRoot.SetStyleSheet(DefaultTheme.CreateStyleSheet());
         _uiHost = new MonoGameUiHost(new MonoGameUiHostOptions
         {
             SpriteBatch = _spriteBatch,

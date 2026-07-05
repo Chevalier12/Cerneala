@@ -295,19 +295,26 @@ public abstract class TextBoxBase : Control
 
     private TextMeasurer GetTextMeasurer()
     {
-        return FontResourceId is not null && ResourceProvider is not null
-            ? new TextMeasurer(new FontResolver(ResourceProvider), LineBreakService.Default, resourceTextLayoutCache)
+        IResourceProvider? provider = ResolveResourceProvider();
+        return FontResourceId is not null && provider is not null
+            ? new TextMeasurer(new FontResolver(provider), LineBreakService.Default, resourceTextLayoutCache)
             : TextMeasurer;
     }
 
     private TextRenderer GetTextRenderer()
     {
-        if (FontResourceId is not null && ResourceProvider is not null)
+        IResourceProvider? provider = ResolveResourceProvider();
+        if (FontResourceId is not null && provider is not null)
         {
-            FontResolver resolver = new(ResourceProvider);
+            FontResolver resolver = new(provider);
             return new TextRenderer(resolver, new TextMeasurer(resolver, LineBreakService.Default, resourceTextLayoutCache));
         }
 
         return TextRenderer;
+    }
+
+    private IResourceProvider? ResolveResourceProvider()
+    {
+        return ResourceProvider ?? Root?.ResourceProvider;
     }
 }

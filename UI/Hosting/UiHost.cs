@@ -63,9 +63,24 @@ public sealed class UiHost
         UiViewport currentViewport = viewport ?? this.viewport;
         ApplyViewportIfChanged(currentRoot, currentViewport);
         PrimeInitialFrame(currentRoot);
+
+        FrameStats stats = new();
+        if (currentRoot.Scheduler.HasWork)
+        {
+            currentRoot.ProcessFrame(stats: stats);
+        }
+
         InputBridge.Dispatch(currentRoot, inputFrame);
 
-        FrameStats stats = currentRoot.ProcessFrame();
+        if (currentRoot.Scheduler.HasWork)
+        {
+            currentRoot.ProcessFrame(stats: stats);
+        }
+        else if (!stats.HasWork)
+        {
+            stats.CountNoWorkFrame();
+        }
+
         currentRoot.RetainedRenderer.Commit(currentRoot);
         LastFrame = new UiFrame(elapsedTime ?? Clock?.GetElapsedTime() ?? TimeSpan.Zero, this.viewport, inputFrame, stats);
         return LastFrame;
@@ -100,7 +115,13 @@ public sealed class UiHost
 
         viewport = nextViewport;
         ApplyViewport(currentRoot, viewport);
-        currentRoot.Invalidate(InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.Subtree, "Viewport changed");
+        currentRoot.Invalidate(
+            InvalidationFlags.Measure |
+            InvalidationFlags.Arrange |
+            InvalidationFlags.Render |
+            InvalidationFlags.HitTest |
+            InvalidationFlags.Subtree,
+            "Viewport changed");
     }
 
     private static void ApplyViewport(UIRoot root, UiViewport viewport)
@@ -115,7 +136,13 @@ public sealed class UiHost
             return;
         }
 
-        currentRoot.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.Subtree, "Initial host frame");
+        currentRoot.Invalidate(
+            InvalidationFlags.Measure |
+            InvalidationFlags.Arrange |
+            InvalidationFlags.Render |
+            InvalidationFlags.HitTest |
+            InvalidationFlags.Subtree,
+            "Initial host frame");
         needsInitialFrame = false;
     }
 }

@@ -19,7 +19,7 @@ public class Selector : ItemsControl
     public static readonly UiProperty<int> SelectedIndexProperty = UiProperty<int>.Register(
         nameof(SelectedIndex),
         typeof(Selector),
-        new UiPropertyMetadata<int>(-1, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual, validateValue: value => value >= -1));
+        new UiPropertyMetadata<int>(-1, UiPropertyOptions.None, validateValue: value => value >= -1));
 
     public int SelectedIndex
     {

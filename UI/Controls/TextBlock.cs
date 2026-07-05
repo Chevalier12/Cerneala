@@ -26,10 +26,38 @@ public class TextBlock : Control
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
             coerceValue: (_, value) => value ?? string.Empty));
 
+    public static readonly UiProperty<TextWrapping> TextWrappingProperty = UiProperty<TextWrapping>.Register(
+        nameof(TextWrapping),
+        typeof(TextBlock),
+        new UiPropertyMetadata<TextWrapping>(
+            TextWrapping.NoWrap,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            validateValue: value => Enum.IsDefined(value)));
+
+    public static readonly UiProperty<TextTrimming> TextTrimmingProperty = UiProperty<TextTrimming>.Register(
+        nameof(TextTrimming),
+        typeof(TextBlock),
+        new UiPropertyMetadata<TextTrimming>(
+            TextTrimming.None,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            validateValue: value => Enum.IsDefined(value)));
+
     public string Text
     {
         get => GetValue(TextProperty);
         set => SetValue(TextProperty, value ?? string.Empty);
+    }
+
+    public TextWrapping TextWrapping
+    {
+        get => GetValue(TextWrappingProperty);
+        set => SetValue(TextWrappingProperty, value);
+    }
+
+    public TextTrimming TextTrimming
+    {
+        get => GetValue(TextTrimmingProperty);
+        set => SetValue(TextTrimmingProperty, value);
     }
 
     public TextMeasurer TextMeasurer
@@ -145,7 +173,13 @@ public class TextBlock : Control
 
     private TextRunStyle CreateTextStyle()
     {
-        return new TextRunStyle(FontFamily, FontSize, color: Foreground, fontResourceId: FontResourceId);
+        return new TextRunStyle(
+            FontFamily,
+            FontSize,
+            wrapping: TextWrapping,
+            trimming: TextTrimming,
+            color: Foreground,
+            fontResourceId: FontResourceId);
     }
 
     private TextMeasurer GetTextMeasurer()

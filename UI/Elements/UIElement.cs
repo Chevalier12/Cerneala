@@ -90,6 +90,8 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
     public CommandBindingCollection CommandBindings { get; } = new();
 
+    public InputBindingCollection InputBindings { get; } = new();
+
     public DirtyState DirtyState { get; } = new();
 
     public LayoutSize DesiredSize { get; private set; }
@@ -290,6 +292,7 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         ArrangedBounds = arrangedBounds;
         IncrementRenderVersion();
         Root?.RetainedRenderCache.InvalidateRoot();
+        Root?.RenderQueue.Enqueue(this);
         return true;
     }
 

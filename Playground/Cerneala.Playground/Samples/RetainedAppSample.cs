@@ -29,14 +29,11 @@ public sealed class RetainedAppSample : IPlaygroundSample
     public UIElement Build()
     {
         clickCount = 0;
-        StatusText = text.Create("Ready. No retained work should run on unchanged frames.", 14, new DrawColor(51, 65, 85));
+        StatusText = text.Create("Ready. No retained work should run on unchanged frames.", 14);
         PrimaryButton = new Button
         {
-            Content = text.Create("Run retained command", 14, new DrawColor(15, 23, 42)),
+            Content = text.Create("Run retained command", 14),
             Padding = new Thickness(12, 8, 12, 8),
-            Background = new DrawColor(248, 250, 252),
-            BorderColor = new DrawColor(100, 116, 139),
-            BorderThickness = new Thickness(1),
             Command = new ActionCommand(_ =>
             {
                 clickCount++;
@@ -50,8 +47,8 @@ public sealed class RetainedAppSample : IPlaygroundSample
             Orientation = PanelOrientation.Vertical
         };
 
-        root.VisualChildren.Add(text.Create("Cerneala retained app", 26, new DrawColor(15, 23, 42)));
-        root.VisualChildren.Add(text.Create("Retained tree, invalidation-driven layout/render, explicit input.", 15, new DrawColor(71, 85, 105)));
+        root.VisualChildren.Add(text.Create("Cerneala retained app", 26));
+        root.VisualChildren.Add(text.Create("Retained tree, invalidation-driven layout/render, explicit input.", 15));
         root.VisualChildren.Add(BuildInteractionCard());
         root.VisualChildren.Add(BuildListCard());
         return root;
@@ -63,7 +60,7 @@ public sealed class RetainedAppSample : IPlaygroundSample
         {
             Orientation = PanelOrientation.Vertical
         };
-        content.VisualChildren.Add(text.Create("Interactive state", 18, new DrawColor(30, 41, 59)));
+        content.VisualChildren.Add(text.Create("Interactive state", 18));
         content.VisualChildren.Add(BuildImagePreview());
         content.VisualChildren.Add(StatusText!);
         content.VisualChildren.Add(PrimaryButton!);
@@ -72,8 +69,6 @@ public sealed class RetainedAppSample : IPlaygroundSample
         {
             Margin = new Thickness(0, 16, 0, 0),
             Padding = new Thickness(14),
-            Background = new DrawColor(241, 245, 249),
-            BorderColor = new DrawColor(148, 163, 184),
             BorderThickness = new Thickness(1),
             Child = content
         };
@@ -85,8 +80,6 @@ public sealed class RetainedAppSample : IPlaygroundSample
         {
             Margin = new Thickness(0, 8, 0, 8),
             Padding = new Thickness(8),
-            Background = new DrawColor(226, 232, 240),
-            BorderColor = new DrawColor(148, 163, 184),
             BorderThickness = new Thickness(1),
             Child = new Image
             {
@@ -98,22 +91,17 @@ public sealed class RetainedAppSample : IPlaygroundSample
 
     private UIElement BuildListCard()
     {
-        StackPanel list = new()
-        {
-            Orientation = PanelOrientation.Vertical
-        };
+        ListBox list = new();
 
         for (int i = 1; i <= 8; i++)
         {
-            list.VisualChildren.Add(text.Row($"Retained row {i}", 14, new DrawColor(51, 65, 85), new Thickness(0, 4, 0, 4)));
+            list.Items.Add(text.Row($"Retained row {i}", 14, new DrawColor(51, 65, 85), new Thickness(0, 4, 0, 4)));
         }
 
         return new Border
         {
             Margin = new Thickness(0, 12, 0, 0),
             Padding = new Thickness(14),
-            Background = new DrawColor(255, 255, 255),
-            BorderColor = new DrawColor(203, 213, 225),
             BorderThickness = new Thickness(1),
             Child = new ScrollViewer
             {

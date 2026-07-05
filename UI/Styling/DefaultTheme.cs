@@ -1,4 +1,6 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Layout;
 
 namespace Cerneala.UI.Styling;
 
@@ -27,5 +29,37 @@ public static class DefaultTheme
             .Set(SurfaceKey, palette.Surface)
             .Set(BorderKey, palette.Border)
             .Set(AccentKey, palette.Accent);
+    }
+
+    public static StyleSheet CreateStyleSheet()
+    {
+        return new StyleSheet()
+            .Add(new StyleRule(StyleSelector.ForType<Button>())
+                .Add(new Setter<DrawColor>(Control.BackgroundProperty, new ThemeResource<DrawColor>(SurfaceKey)))
+                .Add(new Setter<DrawColor>(Control.ForegroundProperty, new ThemeResource<DrawColor>(ForegroundKey)))
+                .Add(new Setter<DrawColor>(Control.BorderColorProperty, new ThemeResource<DrawColor>(BorderKey)))
+                .Add(new Setter<Thickness>(Control.BorderThicknessProperty, new Thickness(1))))
+            .Add(new StyleRule(
+                    StyleSelector.ForType<Button>(),
+                    new VisualStateRule(PseudoClass.Hover))
+                .Add(new Setter<DrawColor>(Control.BackgroundProperty, new ThemeResource<DrawColor>(AccentKey))))
+            .Add(new StyleRule(
+                    StyleSelector.ForType<Button>(),
+                    new VisualStateRule(PseudoClass.Focus))
+                .Add(new Setter<DrawColor>(Control.BorderColorProperty, new ThemeResource<DrawColor>(AccentKey))))
+            .Add(new StyleRule(
+                    StyleSelector.ForType<Button>(),
+                    new VisualStateRule(PseudoClass.Pressed))
+                .Add(new Setter<DrawColor>(Control.BackgroundProperty, new ThemeResource<DrawColor>(BorderKey)))
+                .Add(new Setter<DrawColor>(Control.ForegroundProperty, new ThemeResource<DrawColor>(SurfaceKey))))
+            .Add(new StyleRule(
+                    StyleSelector.ForType<Button>(),
+                    new VisualStateRule(PseudoClass.Disabled))
+                .Add(new Setter<DrawColor>(Control.BackgroundProperty, new ThemeResource<DrawColor>(BorderKey))))
+            .Add(new StyleRule(StyleSelector.ForType<TextBlock>())
+                .Add(new Setter<DrawColor>(Control.ForegroundProperty, new ThemeResource<DrawColor>(ForegroundKey))))
+            .Add(new StyleRule(StyleSelector.ForType<Border>())
+                .Add(new Setter<DrawColor>(Control.BackgroundProperty, new ThemeResource<DrawColor>(SurfaceKey)))
+                .Add(new Setter<DrawColor>(Control.BorderColorProperty, new ThemeResource<DrawColor>(BorderKey))));
     }
 }

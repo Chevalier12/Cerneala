@@ -17,8 +17,9 @@ public static class IndexStore
     public static IndexTimingSummary Write(string repoRoot, IndexSnapshot snapshot)
     {
         var indexRoot = GetIndexDirectory(repoRoot);
-        var target = GetVersionDirectory(repoRoot);
         Directory.CreateDirectory(indexRoot);
+        using var writeLock = IndexWriteLock.Acquire(indexRoot);
+        var target = GetVersionDirectory(repoRoot);
         var temp = Path.Combine(indexRoot, "tmp-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temp);
 
@@ -267,6 +268,68 @@ public static class IndexStore
 
     private sealed record IndexDiagnosticEntry(string Severity, string Message, DateTimeOffset TimestampUtc, string? Stage = null, long? ElapsedMs = null);
     private sealed record ExactReferenceCacheEntry(DateTimeOffset IndexUpdatedUtc, IReadOnlyList<SearchResult> Results);
+
+    private sealed class IndexWriteLock : IDisposable
+    {
+        private readonly FileStream stream;
+        private readonly string path;
+
+        private IndexWriteLock(FileStream stream, string path)
+        {
+            this.stream = stream;
+            this.path = path;
+        }
+
+        public static IndexWriteLock Acquire(string indexRoot)
+        {
+            var path = Path.Combine(indexRoot, "write.lock");
+            while (true)
+            {
+                try
+                {
+                    var stream = new FileStream(path, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
+                    return new IndexWriteLock(stream, path);
+                }
+                catch (IOException)
+                {
+                    DeleteStaleLock(path);
+                    Thread.Sleep(25);
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                stream.Dispose();
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        private static void DeleteStaleLock(string path)
+        {
+            try
+            {
+                if (File.Exists(path) && DateTime.UtcNow - File.GetLastWriteTimeUtc(path) > TimeSpan.FromMinutes(5))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+    }
 }
 
 public sealed class IndexUnavailableException : Exception

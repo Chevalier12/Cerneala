@@ -21,13 +21,21 @@ Generated from `.`.
 |   |       |-- 2026-07-05-clarify-layout-scheduler-contract-and-diagnostics.md
 |   |       |-- 2026-07-05-clarify-package-boundary-dependencies.md
 |   |       |-- 2026-07-05-clarify-text-services-mvp.md
+|   |       |-- 2026-07-05-complete-textblock-layout-contract.md
 |   |       |-- 2026-07-05-consolidate-button-content-composition.md
+|   |       |-- 2026-07-05-core-preview-completion-gate.md
 |   |       |-- 2026-07-05-create-retained-ui-mvp-vertical-slice.md
+|   |       |-- 2026-07-05-default-theme-and-style-vertical-slice.md
 |   |       |-- 2026-07-05-fix-focus-visibility-semantics.md
+|   |       |-- 2026-07-05-fix-viewport-and-pre-input-frame-contract.md
 |   |       |-- 2026-07-05-freeze-later-experimental-scope.md
 |   |       |-- 2026-07-05-implement-inherited-property-tree-propagation.md
+|   |       |-- 2026-07-05-items-scroll-data-vertical-slice.md
 |   |       |-- 2026-07-05-next-core-completion-plan-index.md
-|   |       +-- 2026-07-05-root-owned-resource-invalidation.md
+|   |       |-- 2026-07-05-next-core-preview-plan-index.md
+|   |       |-- 2026-07-05-root-owned-resource-invalidation.md
+|   |       |-- 2026-07-05-wire-keyboard-control-activation.md
+|   |       +-- 2026-07-05-wire-minimal-retained-input-bindings.md
 |   +-- architecture-v2.md
 |-- Playground/
 |   +-- Cerneala.Playground/
@@ -66,6 +74,7 @@ Generated from `.`.
 |   |   |   |   +-- TrackTests.cs
 |   |   |   |-- BorderTests.cs
 |   |   |   |-- ButtonContentArchitectureTests.cs
+|   |   |   |-- ButtonKeyboardActivationTests.cs
 |   |   |   |-- ButtonTests.cs
 |   |   |   |-- CanvasTests.cs
 |   |   |   |-- CheckBoxTests.cs
@@ -95,6 +104,7 @@ Generated from `.`.
 |   |   |   |-- TabItemTests.cs
 |   |   |   |-- TemplateBindingTests.cs
 |   |   |   |-- TextBlockInvalidationTests.cs
+|   |   |   |-- TextBlockLayoutContractTests.cs
 |   |   |   |-- TextBlockTests.cs
 |   |   |   |-- TextBoxTests.cs
 |   |   |   |-- ToggleButtonTests.cs
@@ -126,6 +136,7 @@ Generated from `.`.
 |   |   |   |-- MonoGameInputMapperTests.cs
 |   |   |   |-- PointerCaptureManagerTests.cs
 |   |   |   |-- PressedStateTrackerTests.cs
+|   |   |   |-- RetainedInputBindingTests.cs
 |   |   |   |-- RetainedRoutedEventIntegrationTests.cs
 |   |   |   |-- RoutedCommandExecutionTests.cs
 |   |   |   |-- RoutedEventRouterTests.cs
@@ -137,7 +148,8 @@ Generated from `.`.
 |   |   |   |-- Samples/
 |   |   |   |   +-- PlaygroundSampleTests.cs
 |   |   |   |-- Game1SourceTests.cs
-|   |   |   +-- RetainedAppSampleContractTests.cs
+|   |   |   |-- RetainedAppSampleContractTests.cs
+|   |   |   +-- RetainedAppStyleContractTests.cs
 |   |   |-- UI/
 |   |   |   |-- Accessibility/
 |   |   |   |   |-- AccessibilityPlatformTests.cs
@@ -195,6 +207,7 @@ Generated from `.`.
 |   |   |   |   |-- UiHostFrameStatsIntegrityTests.cs
 |   |   |   |   |-- UiHostLateTreeMutationTests.cs
 |   |   |   |   |-- UiHostTests.cs
+|   |   |   |   |-- UiHostViewportFrameContractTests.cs
 |   |   |   |   +-- UiViewportTests.cs
 |   |   |   |-- Input/
 |   |   |   |   |-- ElementInputCacheInvalidationTests.cs
@@ -260,6 +273,7 @@ Generated from `.`.
 |   |   |   |   |-- ResourceIdTests.cs
 |   |   |   |   +-- ResourceStoreTests.cs
 |   |   |   |-- Styling/
+|   |   |   |   |-- DefaultThemeVerticalSliceTests.cs
 |   |   |   |   |-- PseudoClassTests.cs
 |   |   |   |   |-- SetterTests.cs
 |   |   |   |   |-- StyleApplicatorTests.cs
@@ -271,6 +285,7 @@ Generated from `.`.
 |   |   |   +-- Text/
 |   |   |       |-- BidiTextServiceTests.cs
 |   |   |       |-- FontResolverTests.cs
+|   |   |       |-- TextBlockTextServiceIntegrationTests.cs
 |   |   |       |-- TextCompositionManagerTests.cs
 |   |   |       |-- TextEditingControllerTests.cs
 |   |   |       |-- TextEditorTests.cs
@@ -547,6 +562,7 @@ Generated from `.`.
 |   |   |-- IInputPressable.cs
 |   |   |-- IInputSource.cs
 |   |   |-- InputBinding.cs
+|   |   |-- InputBindingCollection.cs
 |   |   |-- InputButtonState.cs
 |   |   |-- InputEvents.cs
 |   |   |-- InputFrame.cs
@@ -555,6 +571,8 @@ Generated from `.`.
 |   |   |-- InputMouseButton.cs
 |   |   |-- IPointerDragSource.cs
 |   |   |-- KeyBinding.cs
+|   |   |-- KeyboardActivationController.cs
+|   |   |-- KeyboardDispatchResult.cs
 |   |   |-- KeyboardFocusChangedEventArgs.cs
 |   |   |-- KeyboardNavigation.cs
 |   |   |-- KeyboardSnapshot.cs
@@ -567,6 +585,7 @@ Generated from `.`.
 |   |   |-- PointerCaptureManager.cs
 |   |   |-- PointerSnapshot.cs
 |   |   |-- PressedStateTracker.cs
+|   |   |-- RetainedInputBindingProcessor.cs
 |   |   |-- RoutedCommand.cs
 |   |   |-- RoutedCommandContext.cs
 |   |   |-- RoutedEvent.cs
