@@ -1,4 +1,5 @@
 using Cerneala.Drawing.Text;
+using Cerneala.UI.Hosting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -13,6 +14,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
     private readonly Dictionary<TextTextureKey, Texture2D> _textTextureCache = new();
     private readonly Texture2D _whitePixel;
     private readonly SkiaTextRasterizer? _textRasterizer;
+    private float coordinateScale = 1;
 
     public MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer = null)
     {
@@ -25,6 +27,16 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
     {
         ScissorTestEnable = true
     };
+
+    public float CoordinateScale
+    {
+        get => coordinateScale;
+        set
+        {
+            UiCoordinateMapper.ValidateScale(value);
+            coordinateScale = value;
+        }
+    }
 
     public void Render(DrawCommandList commands)
     {

@@ -29,4 +29,23 @@ public readonly record struct UiViewport
     public float Height { get; }
 
     public float Scale { get; }
+
+    public static UiViewport FromPhysicalPixels(int pixelWidth, int pixelHeight, float scale)
+    {
+        if (pixelWidth < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pixelWidth), "Viewport pixel width cannot be negative.");
+        }
+
+        if (pixelHeight < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pixelHeight), "Viewport pixel height cannot be negative.");
+        }
+
+        UiCoordinateMapper.ValidateScale(scale);
+        return new UiViewport(
+            UiCoordinateMapper.PhysicalToLogical(pixelWidth, scale),
+            UiCoordinateMapper.PhysicalToLogical(pixelHeight, scale),
+            scale);
+    }
 }

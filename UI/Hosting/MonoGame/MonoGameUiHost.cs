@@ -47,6 +47,7 @@ public sealed class MonoGameUiHost : IDisposable
 
     public UiFrame Update(UiViewport viewport, TimeSpan elapsedTime)
     {
+        InputSource.CoordinateScale = viewport.Scale;
         return host.Update(viewport, elapsedTime);
     }
 
@@ -62,6 +63,7 @@ public sealed class MonoGameUiHost : IDisposable
 
     public void Draw()
     {
+        drawingBackend.CoordinateScale = host.Viewport.Scale;
         spriteBatch.Begin(rasterizerState: MonoGameDrawingBackend.ScissorRasterizerState);
         host.Draw(drawingBackend);
         spriteBatch.End();
