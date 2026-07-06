@@ -52,6 +52,24 @@ public sealed class MonoGameUiHostBoundaryTests
             property => property.PropertyType == typeof(UiHost));
     }
 
+    [Fact]
+    public void MonoGameUiHostDrawUsesTryFinallyAroundSpriteBatchEnd()
+    {
+        string source = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "UI", "Hosting", "MonoGame", "MonoGameUiHost.cs"));
+
+        Assert.Contains("spriteBatch.Begin", source, StringComparison.Ordinal);
+        Assert.Contains("try", source, StringComparison.Ordinal);
+        Assert.Contains("host.Draw(drawingBackend);", source, StringComparison.Ordinal);
+        Assert.Contains("finally", source, StringComparison.Ordinal);
+        Assert.Contains("spriteBatch.End();", source, StringComparison.Ordinal);
+        Assert.True(
+            source.IndexOf("try", StringComparison.Ordinal) <
+            source.IndexOf("host.Draw(drawingBackend);", StringComparison.Ordinal));
+        Assert.True(
+            source.IndexOf("finally", StringComparison.Ordinal) <
+            source.IndexOf("spriteBatch.End();", StringComparison.Ordinal));
+    }
+
     private static string FindRepositoryRoot()
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

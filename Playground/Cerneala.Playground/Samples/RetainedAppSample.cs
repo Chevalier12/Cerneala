@@ -13,10 +13,17 @@ namespace Cerneala.Playground.Samples;
 public sealed class RetainedAppSample : IPlaygroundSample
 {
     private readonly PlaygroundText text;
+    private readonly IResourceProvider? resourceProvider;
+    private readonly ResourceId<ImageResource>? imageResourceId;
     private int clickCount;
 
-    public RetainedAppSample(IResourceProvider? resourceProvider = null, ResourceId<FontResource>? fontResourceId = null)
+    public RetainedAppSample(
+        IResourceProvider? resourceProvider = null,
+        ResourceId<FontResource>? fontResourceId = null,
+        ResourceId<ImageResource>? imageResourceId = null)
     {
+        this.resourceProvider = resourceProvider;
+        this.imageResourceId = imageResourceId;
         text = new PlaygroundText(resourceProvider, fontResourceId);
     }
 
@@ -76,16 +83,26 @@ public sealed class RetainedAppSample : IPlaygroundSample
 
     private UIElement BuildImagePreview()
     {
+        Image image = new()
+        {
+            Foreground = new DrawColor(59, 130, 246)
+        };
+        if (imageResourceId is ResourceId<ImageResource> id)
+        {
+            image.SourceResourceId = id;
+            image.ResourceProvider = resourceProvider;
+        }
+        else
+        {
+            image.Source = new SampleImage(96, 36);
+        }
+
         return new Border
         {
             Margin = new Thickness(0, 8, 0, 8),
             Padding = new Thickness(8),
             BorderThickness = new Thickness(1),
-            Child = new Image
-            {
-                Source = new SampleImage(96, 36),
-                Foreground = new DrawColor(59, 130, 246)
-            }
+            Child = image
         };
     }
 

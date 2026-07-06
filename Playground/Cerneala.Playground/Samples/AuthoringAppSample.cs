@@ -13,9 +13,13 @@ namespace Cerneala.Playground.Samples;
 public sealed class AuthoringAppSample : IPlaygroundSample
 {
     private readonly PlaygroundText text;
+    private readonly IResourceProvider? resourceProvider;
+    private readonly ResourceId<FontResource>? fontResourceId;
 
     public AuthoringAppSample(IResourceProvider? resourceProvider = null, ResourceId<FontResource>? fontResourceId = null)
     {
+        this.resourceProvider = resourceProvider;
+        this.fontResourceId = fontResourceId;
         text = new PlaygroundText(resourceProvider, fontResourceId);
         SubmitCommand = new ActionCommand(_ => Submit(), _ => !string.IsNullOrWhiteSpace(NameValue.Value));
         NameValue.ValueChanged += (_, args) =>
@@ -52,7 +56,12 @@ public sealed class AuthoringAppSample : IPlaygroundSample
         NameValue.Value = string.Empty;
         Status.Value = "Type a name to enable submit.";
 
-        NameTextBox = new TextBox { Padding = new Thickness(6, 4, 6, 4) };
+        NameTextBox = new TextBox
+        {
+            Padding = new Thickness(6, 4, 6, 4),
+            ResourceProvider = resourceProvider,
+            FontResourceId = fontResourceId
+        };
         NameTextBox.Bindings.Add(BindingOperations.BindTwoWay(NameTextBox, TextBoxBase.TextProperty, NameValue));
 
         SubmitButton = new Button

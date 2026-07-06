@@ -6,13 +6,21 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
+using Cerneala.UI.Resources;
 
 namespace Cerneala.Playground.Samples;
 
 public sealed class GettingStartedSample : IPlaygroundSample
 {
-    public GettingStartedSample()
+    private readonly PlaygroundText text;
+    private readonly IResourceProvider? resourceProvider;
+    private readonly ResourceId<FontResource>? fontResourceId;
+
+    public GettingStartedSample(IResourceProvider? resourceProvider = null, ResourceId<FontResource>? fontResourceId = null)
     {
+        this.resourceProvider = resourceProvider;
+        this.fontResourceId = fontResourceId;
+        text = new PlaygroundText(resourceProvider, fontResourceId);
         AddCommand = new ActionCommand(_ => AddItem(), _ => !string.IsNullOrWhiteSpace(EntryText.Value));
         EntryText.ValueChanged += (_, args) =>
         {
@@ -60,29 +68,27 @@ public sealed class GettingStartedSample : IPlaygroundSample
         LayoutGrid.RowDefinitions.Add(new RowDefinition(GridLength.Pixels(40)));
         LayoutGrid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
 
-        TextBlock title = new()
-        {
-            Text = "Getting started",
-            FontSize = 20
-        };
+        TextBlock title = text.Create("Getting started", 20);
         Grid.SetRow(title, 0);
 
         EntryTextBox = new TextBox
         {
-            Padding = new Thickness(6, 4, 6, 4)
+            Padding = new Thickness(6, 4, 6, 4),
+            ResourceProvider = resourceProvider,
+            FontResourceId = fontResourceId
         };
         EntryTextBox.Bindings.Add(BindingOperations.BindTwoWay(EntryTextBox, TextBoxBase.TextProperty, EntryText));
         Grid.SetRow(EntryTextBox, 1);
 
         AddButton = new Button
         {
-            Content = "Add item",
+            Content = text.Create("Add item", 14),
             Padding = new Thickness(12, 8, 12, 8),
             Command = AddCommand
         };
         Grid.SetRow(AddButton, 2);
 
-        StatusBlock = new TextBlock();
+        StatusBlock = text.Create(string.Empty, 14);
         StatusBlock.Bindings.Add(BindingOperations.BindOneWay(StatusBlock, TextBlock.TextProperty, StatusText));
         Grid.SetRow(StatusBlock, 3);
 

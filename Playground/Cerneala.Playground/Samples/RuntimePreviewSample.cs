@@ -17,6 +17,7 @@ public sealed class RuntimePreviewSample : IPlaygroundSample
 {
     private readonly PlaygroundText text;
     private readonly IResourceProvider? resourceProvider;
+    private readonly ResourceId<FontResource>? fontResourceId;
     private readonly ResourceId<ImageResource>? imageResourceId;
     private readonly ActionCommand appendCommand;
 
@@ -26,6 +27,7 @@ public sealed class RuntimePreviewSample : IPlaygroundSample
         ResourceId<ImageResource>? imageResourceId = null)
     {
         this.resourceProvider = resourceProvider;
+        this.fontResourceId = fontResourceId;
         this.imageResourceId = imageResourceId;
         text = new PlaygroundText(resourceProvider, fontResourceId);
         appendCommand = new ActionCommand(_ => AppendItem(), _ => !string.IsNullOrWhiteSpace(InputValue.Value));
@@ -81,7 +83,9 @@ public sealed class RuntimePreviewSample : IPlaygroundSample
 
         InputTextBox = new TextBox
         {
-            Padding = new Thickness(8, 5, 8, 5)
+            Padding = new Thickness(8, 5, 8, 5),
+            ResourceProvider = resourceProvider,
+            FontResourceId = fontResourceId
         };
         InputTextBox.Bindings.Add(BindingOperations.BindTwoWay(InputTextBox, TextBoxBase.TextProperty, InputValue));
 

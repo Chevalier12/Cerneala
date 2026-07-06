@@ -1,10 +1,12 @@
 #nullable enable
 
 using System;
+using Cerneala.Drawing.MonoGame;
 using Cerneala.Playground.Samples;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.MonoGame;
+using Cerneala.UI.Input;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Styling;
 using Microsoft.Xna.Framework;
@@ -16,6 +18,7 @@ namespace Cerneala.Playground;
 public class Game1 : Game
 {
     private static readonly ResourceId<FontResource> PlaygroundFontId = new("Playground/Body");
+    private static readonly ResourceId<ImageResource> PlaygroundPreviewImageId = new("Playground/PreviewImage");
 
     private GraphicsDeviceManager _graphics;
     private ResourceStore? _resources;
@@ -23,9 +26,12 @@ public class Game1 : Game
     private SampleSelector? _sampleSelector;
     private SpriteBatch? _spriteBatch;
     private Texture2D? _whitePixel;
+    private readonly bool _exitAfterFirstSuccessfulDraw;
+    private bool _smokeDrawCompleted;
 
-    public Game1()
+    public Game1(bool exitAfterFirstSuccessfulDraw = false)
     {
+        _exitAfterFirstSuccessfulDraw = exitAfterFirstSuccessfulDraw;
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
@@ -54,9 +60,11 @@ public class Game1 : Game
 
         _resources = new ResourceStore();
         _resources.SetResource(PlaygroundFontId, new FontResource(_uiHost.ContentServices.LoadFont("Arial", 16)));
+        _resources.SetResource(PlaygroundPreviewImageId, new ImageResource(new MonoGameImage(_whitePixel)));
         uiRoot.SetResourceProvider(_resources);
-        _sampleSelector = SampleSelector.CreateDefault(_resources, PlaygroundFontId);
+        _sampleSelector = SampleSelector.CreateDefault(_resources, PlaygroundFontId, PlaygroundPreviewImageId);
         uiRoot.VisualChildren.Add(_sampleSelector.Root);
+        PrimeUiFrameForFirstDraw();
         Window.TextInput += OnTextInput;
     }
 
@@ -79,8 +87,9 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        UiFrame frame = RequireUiHost().Update(GetViewport(), gameTime.ElapsedGameTime);
-        _sampleSelector?.UpdateFrame(frame);
+        MonoGameUiHost host = RequireUiHost();
+        _sampleSelector?.UpdateFrame(host.LastFrame);
+        host.Update(GetViewport(), gameTime.ElapsedGameTime);
         base.Update(gameTime);
     }
 
@@ -89,6 +98,11 @@ public class Game1 : Game
         GraphicsDevice.Clear(new Color(248, 250, 252));
 
         RequireUiHost().Draw();
+        if (_exitAfterFirstSuccessfulDraw && !_smokeDrawCompleted)
+        {
+            _smokeDrawCompleted = true;
+            Exit();
+        }
 
         base.Draw(gameTime);
     }
@@ -102,6 +116,21 @@ public class Game1 : Game
     private void OnTextInput(object? sender, TextInputEventArgs e)
     {
         _uiHost?.QueueTextInput(e.Character.ToString());
+    }
+
+    private void PrimeUiFrameForFirstDraw()
+    {
+        RequireUiHost().Update(CreateEmptyInputFrame(), GetViewport(), TimeSpan.Zero);
+    }
+
+    private static InputFrame CreateEmptyInputFrame()
+    {
+        return new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []);
     }
 
     private MonoGameUiHost RequireUiHost()

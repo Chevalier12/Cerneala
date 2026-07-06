@@ -48,18 +48,21 @@ public sealed class SampleSelector
         SelectSample(0);
     }
 
-    public static SampleSelector CreateDefault(IResourceProvider? resourceProvider = null, ResourceId<FontResource>? fontResourceId = null)
+    public static SampleSelector CreateDefault(
+        IResourceProvider? resourceProvider = null,
+        ResourceId<FontResource>? fontResourceId = null,
+        ResourceId<ImageResource>? imageResourceId = null)
     {
         return new SampleSelector(new IPlaygroundSample[]
         {
-            new RetainedAppSample(resourceProvider, fontResourceId),
+            new RetainedAppSample(resourceProvider, fontResourceId, imageResourceId),
             new RetainedButtonSample(resourceProvider, fontResourceId),
             new LayoutSample(resourceProvider, fontResourceId),
             new TextSample(resourceProvider, fontResourceId),
             new DiagnosticsSample(resourceProvider, fontResourceId),
-            new RuntimePreviewSample(resourceProvider, fontResourceId),
+            new RuntimePreviewSample(resourceProvider, fontResourceId, imageResourceId),
             new AuthoringAppSample(resourceProvider, fontResourceId),
-            new GettingStartedSample()
+            new GettingStartedSample(resourceProvider, fontResourceId)
         }, resourceProvider, fontResourceId);
     }
 
@@ -92,22 +95,17 @@ public sealed class SampleSelector
         statsOverlay.Update(frame);
     }
 
-    private Canvas BuildRoot()
+    private StackPanel BuildRoot()
     {
-        Canvas root = new();
+        StackPanel root = new()
+        {
+            Margin = new Thickness(24, 20, 24, 0),
+            Orientation = PanelOrientation.Vertical
+        };
         StackPanel header = BuildHeader();
-        Canvas.SetLeft(header, 24);
-        Canvas.SetTop(header, 20);
-
-        Canvas.SetLeft(activeSampleHost, 24);
-        Canvas.SetTop(activeSampleHost, 74);
-
-        Canvas.SetLeft(statsOverlay.Root, 24);
-        Canvas.SetTop(statsOverlay.Root, 212);
-
         root.VisualChildren.Add(header);
-        root.VisualChildren.Add(activeSampleHost);
         root.VisualChildren.Add(statsOverlay.Root);
+        root.VisualChildren.Add(activeSampleHost);
         return root;
     }
 

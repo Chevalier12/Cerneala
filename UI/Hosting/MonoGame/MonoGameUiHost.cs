@@ -72,8 +72,14 @@ public sealed class MonoGameUiHost : IDisposable
     {
         drawingBackend.CoordinateScale = host.Viewport.Scale;
         spriteBatch.Begin(rasterizerState: MonoGameDrawingBackend.ScissorRasterizerState);
-        host.Draw(drawingBackend);
-        spriteBatch.End();
+        try
+        {
+            host.Draw(drawingBackend);
+        }
+        finally
+        {
+            spriteBatch.End();
+        }
     }
 
     public void Dispose()

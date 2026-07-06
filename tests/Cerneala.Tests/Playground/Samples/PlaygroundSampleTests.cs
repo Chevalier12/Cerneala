@@ -53,6 +53,24 @@ public sealed class PlaygroundSampleTests
     }
 
     [Fact]
+    public void SelectorPassesImageResourceToPreviewSamplesWhenProvided()
+    {
+        ResourceStore resources = new();
+        ResourceId<ImageResource> imageId = new("Playground/PreviewImage");
+        resources.SetResource(imageId, new ImageResource(new TestImage(2, 2)));
+        SampleSelector selector = SampleSelector.CreateDefault(resources, null, imageId);
+
+        Image retainedImage = DescendantsAndSelf<Image>(selector.ActiveElement!).Single();
+        selector.SelectSample(selector.Samples.ToList().FindIndex(sample => sample.Name == "Runtime Preview"));
+        Image runtimeImage = DescendantsAndSelf<Image>(selector.ActiveElement!).Single();
+
+        Assert.Equal(imageId, retainedImage.SourceResourceId);
+        Assert.Same(resources, retainedImage.ResourceProvider);
+        Assert.Equal(imageId, runtimeImage.SourceResourceId);
+        Assert.Same(resources, runtimeImage.ResourceProvider);
+    }
+
+    [Fact]
     public void DiagnosticsSampleBuildsRetainedDebugUi()
     {
         UIElement root = new DiagnosticsSample().Build();
@@ -110,6 +128,26 @@ public sealed class PlaygroundSampleTests
     }
 
     [Fact]
+    public void SelectorPlacesFrameStatsBeforeActiveSampleContent()
+    {
+        UIRoot root = new(1000, 640);
+        SampleSelector selector = SampleSelector.CreateDefault();
+        root.VisualChildren.Add(selector.Root);
+        selector.Root.Invalidate(
+            InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.Subtree,
+            "Initial selector layout test frame");
+        root.ProcessFrame();
+        Border stats = StatsOverlayBorder(selector.Root);
+
+        float statsBottom = stats.ArrangedBounds.Y + stats.ArrangedBounds.Height;
+
+        Assert.NotNull(selector.ActiveElement);
+        Assert.True(
+            statsBottom <= selector.ActiveElement!.ArrangedBounds.Y,
+            $"Expected frame stats bottom {statsBottom} to be before active sample Y {selector.ActiveElement.ArrangedBounds.Y}.");
+    }
+
+    [Fact]
     public void PlaygroundSamplesUseSkiaFontsWhenFontResourceIsProvided()
     {
         ResourceStore resources = new();
@@ -121,6 +159,94 @@ public sealed class PlaygroundSampleTests
         selector.Root.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.Subtree, "Initial playground sample test frame");
         root.ProcessFrame();
 
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.NotEmpty(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
+        Assert.All(
+            commands.Where(command => command.Kind == DrawCommandKind.DrawText),
+            command => Assert.IsType<SkiaFont>(command.TextRun!.Font));
+    }
+
+    [Fact]
+    public void GettingStartedSelectionUsesSkiaFontsWhenFontResourceIsProvided()
+    {
+        ResourceStore resources = new();
+        ResourceId<FontResource> fontId = new("Playground/Body");
+        resources.SetResource(fontId, new FontResource(new SystemFontSource().LoadFont("Arial", 16)));
+        UIRoot root = new(800, 600);
+        SampleSelector selector = SampleSelector.CreateDefault(resources, fontId);
+        root.VisualChildren.Add(selector.Root);
+        selector.SelectSample(selector.Samples.ToList().FindIndex(sample => sample.Name == "Getting Started"));
+        selector.Root.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.Subtree, "Initial getting started sample test frame");
+        root.ProcessFrame();
+
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.NotEmpty(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
+        Assert.All(
+            commands.Where(command => command.Kind == DrawCommandKind.DrawText),
+            command => Assert.IsType<SkiaFont>(command.TextRun!.Font));
+    }
+
+    [Fact]
+    public void RuntimePreviewSelectionUsesSkiaFontsWhenFontResourceIsProvided()
+    {
+        ResourceStore resources = new();
+        ResourceId<FontResource> fontId = new("Playground/Body");
+        resources.SetResource(fontId, new FontResource(new SystemFontSource().LoadFont("Arial", 16)));
+        UIRoot root = new(800, 600);
+        SampleSelector selector = SampleSelector.CreateDefault(resources, fontId);
+        root.VisualChildren.Add(selector.Root);
+        selector.SelectSample(selector.Samples.ToList().FindIndex(sample => sample.Name == "Runtime Preview"));
+        selector.Root.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.Subtree, "Initial runtime preview sample test frame");
+        root.ProcessFrame();
+
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.NotEmpty(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
+        Assert.All(
+            commands.Where(command => command.Kind == DrawCommandKind.DrawText),
+            command => Assert.IsType<SkiaFont>(command.TextRun!.Font));
+    }
+
+    [Fact]
+    public void AuthoringAppSelectionUsesSkiaFontsAfterTextInputWhenFontResourceIsProvided()
+    {
+        ResourceStore resources = new();
+        ResourceId<FontResource> fontId = new("Playground/Body");
+        resources.SetResource(fontId, new FontResource(new SystemFontSource().LoadFont("Arial", 16)));
+        UIRoot root = new(800, 600);
+        SampleSelector selector = SampleSelector.CreateDefault(resources, fontId);
+        root.VisualChildren.Add(selector.Root);
+        selector.SelectSample(selector.Samples.ToList().FindIndex(sample => sample.Name == "Authoring App"));
+        root.ProcessFrame();
+        AuthoringAppSample sample = Assert.IsType<AuthoringAppSample>(selector.ActiveSample);
+
+        sample.NameTextBox!.ReceiveTextInput("Ada");
+        root.ProcessFrame();
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.NotEmpty(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
+        Assert.All(
+            commands.Where(command => command.Kind == DrawCommandKind.DrawText),
+            command => Assert.IsType<SkiaFont>(command.TextRun!.Font));
+    }
+
+    [Fact]
+    public void GettingStartedSelectionUsesSkiaFontsAfterTextInputWhenFontResourceIsProvided()
+    {
+        ResourceStore resources = new();
+        ResourceId<FontResource> fontId = new("Playground/Body");
+        resources.SetResource(fontId, new FontResource(new SystemFontSource().LoadFont("Arial", 16)));
+        UIRoot root = new(800, 600);
+        SampleSelector selector = SampleSelector.CreateDefault(resources, fontId);
+        root.VisualChildren.Add(selector.Root);
+        selector.SelectSample(selector.Samples.ToList().FindIndex(sample => sample.Name == "Getting Started"));
+        root.ProcessFrame();
+        GettingStartedSample sample = Assert.IsType<GettingStartedSample>(selector.ActiveSample);
+
+        sample.EntryTextBox!.ReceiveTextInput("Ada");
+        root.ProcessFrame();
         DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.NotEmpty(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
@@ -246,5 +372,18 @@ public sealed class PlaygroundSampleTests
     {
         return DescendantsAndSelf<Button>(root)
             .Single(button => button.Content is TextBlock textBlock && textBlock.Text == text);
+    }
+
+    private static Border StatsOverlayBorder(UIElement root)
+    {
+        return DescendantsAndSelf<Border>(root)
+            .Single(border => border.Child is TextBlock textBlock && textBlock.Text.StartsWith("Frame stats:", StringComparison.Ordinal));
+    }
+
+    private sealed class TestImage(int width, int height) : IDrawImage
+    {
+        public int Width { get; } = width;
+
+        public int Height { get; } = height;
     }
 }

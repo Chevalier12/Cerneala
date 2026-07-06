@@ -8,6 +8,7 @@ Generated from `.`.
 |   |-- Cerneala.SourceGen.csproj
 |   +-- UiMarkupGenerator.cs
 |-- docs/
+|   |-- bug-reports/
 |   |-- diagrams/
 |   |   |-- cerneala-drawing-flowchart.svg
 |   |   |-- retained-frame-loop.md
@@ -58,9 +59,12 @@ Generated from `.`.
 |   |       |-- 2026-07-06-runtime-diagnostics-and-playground-polish.md
 |   |       |-- 2026-07-06-runtime-preview-completion-gate.md
 |   |       |-- 2026-07-06-wire-platform-services-cursor-and-clipboard.md
-|   |       +-- 2026-07-06-wire-tab-focus-navigation-contract.md
+|   |       |-- 2026-07-06-wire-tab-focus-navigation-contract.md
+|   |       +-- developer-preview-smoke-failure-fix-plan.md
 |   |-- architecture-v2.md
-|   +-- developer-preview-scope.md
+|   |-- developer-preview-checklist.md
+|   |-- developer-preview-scope.md
+|   +-- getting-started.md
 |-- Playground/
 |   +-- Cerneala.Playground/
 |       |-- .config/
@@ -70,6 +74,7 @@ Generated from `.`.
 |       |-- Samples/
 |       |   |-- AuthoringAppSample.cs
 |       |   |-- DiagnosticsSample.cs
+|       |   |-- GettingStartedSample.cs
 |       |   |-- InvalidationStatsOverlay.cs
 |       |   |-- LayoutSample.cs
 |       |   |-- PlaygroundText.cs
@@ -89,6 +94,7 @@ Generated from `.`.
 |-- tests/
 |   |-- Cerneala.Tests/
 |   |   |-- Architecture/
+|   |   |   |-- DeveloperPreviewCompletionTests.cs
 |   |   |   |-- DeveloperPreviewScopeTests.cs
 |   |   |   |-- MonoGameDependencyBoundaryTests.cs
 |   |   |   |-- NamespaceBoundaryTests.cs
@@ -147,6 +153,8 @@ Generated from `.`.
 |   |   |   |-- TextBoxTwoWayBindingTests.cs
 |   |   |   |-- ToggleButtonTests.cs
 |   |   |   +-- ToolTipTests.cs
+|   |   |-- Docs/
+|   |   |   +-- GettingStartedDocsTests.cs
 |   |   |-- Drawing/
 |   |   |   |-- MonoGame/
 |   |   |   |   |-- MonoGameClipStackTests.cs
@@ -193,10 +201,12 @@ Generated from `.`.
 |   |   |-- Playground/
 |   |   |   |-- Samples/
 |   |   |   |   |-- AuthoringAppSampleContractTests.cs
+|   |   |   |   |-- GettingStartedSampleContractTests.cs
 |   |   |   |   |-- PlaygroundSampleTests.cs
 |   |   |   |   |-- RuntimePreviewIntegrationTests.cs
 |   |   |   |   +-- RuntimePreviewSampleContractTests.cs
 |   |   |   |-- Game1SourceTests.cs
+|   |   |   |-- PlaygroundGameLoopSmokeTests.cs
 |   |   |   |-- RetainedAppSampleContractTests.cs
 |   |   |   +-- RetainedAppStyleContractTests.cs
 |   |   |-- UI/
@@ -206,6 +216,7 @@ Generated from `.`.
 |   |   |   |   |-- ButtonSemanticsTests.cs
 |   |   |   |   |-- RetainedSemanticsCacheTests.cs
 |   |   |   |   |-- SemanticsProviderTests.cs
+|   |   |   |   |-- SemanticsStressBudgetTests.cs
 |   |   |   |   |-- SemanticsTreeTests.cs
 |   |   |   |   +-- TextBoxSemanticsTests.cs
 |   |   |   |-- Animation/
@@ -215,8 +226,9 @@ Generated from `.`.
 |   |   |   |   |-- TransitionTests.cs
 |   |   |   |   +-- TypedAnimationTests.cs
 |   |   |   |-- Controls/
-|   |   |   |   +-- Shapes/
-|   |   |   |       +-- ShapeTests.cs
+|   |   |   |   |-- Shapes/
+|   |   |   |   |   +-- ShapeTests.cs
+|   |   |   |   +-- ListStressBudgetTests.cs
 |   |   |   |-- Core/
 |   |   |   |   |-- InheritedPropertyTreePropagationTests.cs
 |   |   |   |   |-- InheritedUiPropertyTests.cs
@@ -254,6 +266,7 @@ Generated from `.`.
 |   |   |   |-- Hosting/
 |   |   |   |   |-- AuthoringPreviewContractTests.cs
 |   |   |   |   |-- CorePreviewContractTests.cs
+|   |   |   |   |-- DeveloperPreviewContractTests.cs
 |   |   |   |   |-- FakeDrawingBackend.cs
 |   |   |   |   |-- FakeInputSource.cs
 |   |   |   |   |-- FakeUiClock.cs
@@ -262,6 +275,7 @@ Generated from `.`.
 |   |   |   |   |-- MonoGameUiHostBoundaryTests.cs
 |   |   |   |   |-- ObservableListAuthoringSliceTests.cs
 |   |   |   |   |-- RetainedListScrollVerticalSliceTests.cs
+|   |   |   |   |-- RetainedStressBudgetTests.cs
 |   |   |   |   |-- RetainedVerticalSliceTests.cs
 |   |   |   |   |-- RuntimePreviewContractTests.cs
 |   |   |   |   |-- TabNavigationFrameContractTests.cs
@@ -327,6 +341,7 @@ Generated from `.`.
 |   |   |   |   |-- RenderDependencyTests.cs
 |   |   |   |   |-- RenderingTestElement.cs
 |   |   |   |   |-- RenderQueueProcessorTests.cs
+|   |   |   |   |-- RenderStressBudgetTests.cs
 |   |   |   |   |-- ResourceRenderDependencyTests.cs
 |   |   |   |   |-- RetainedRenderCacheTests.cs
 |   |   |   |   |-- RetainedRendererDrawPurityTests.cs
