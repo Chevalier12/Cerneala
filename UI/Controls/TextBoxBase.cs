@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
@@ -17,14 +18,25 @@ public abstract class TextBoxBase : Control
     private TextRenderer textRenderer = TextRenderer.Default;
     private IResourceProvider? resourceProvider;
     private ResourceId<FontResource>? fontResourceId;
+    private float horizontalTextOffset;
 
     public static readonly UiProperty<string> TextProperty = UiProperty<string>.Register(
         nameof(Text),
         typeof(TextBoxBase),
         new UiPropertyMetadata<string>(
             string.Empty,
-            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsSemantics,
             coerceValue: (_, value) => value ?? string.Empty));
+
+    public static readonly UiProperty<DrawColor> CaretColorProperty = UiProperty<DrawColor>.Register(
+        nameof(CaretColor),
+        typeof(TextBoxBase),
+        new UiPropertyMetadata<DrawColor>(DrawColor.Black, UiPropertyOptions.AffectsRender));
+
+    public static readonly UiProperty<DrawColor> SelectionBackgroundProperty = UiProperty<DrawColor>.Register(
+        nameof(SelectionBackground),
+        typeof(TextBoxBase),
+        new UiPropertyMetadata<DrawColor>(new DrawColor(96, 165, 250, 120), UiPropertyOptions.AffectsRender));
 
     protected TextBoxBase()
     {
@@ -50,6 +62,18 @@ public abstract class TextBoxBase : Control
     public TextSelection Selection => editor.Selection;
 
     public TextCaret Caret => editor.Caret;
+
+    public DrawColor CaretColor
+    {
+        get => GetValue(CaretColorProperty);
+        set => SetValue(CaretColorProperty, value);
+    }
+
+    public DrawColor SelectionBackground
+    {
+        get => GetValue(SelectionBackgroundProperty);
+        set => SetValue(SelectionBackgroundProperty, value);
+    }
 
     public TextMeasurer TextMeasurer
     {
@@ -119,17 +143,20 @@ public abstract class TextBoxBase : Control
     {
         editor.InsertText(text ?? string.Empty);
         SyncTextFromEditor("TextBox text input");
+        EnsureCaretVisible();
     }
 
     public void Select(int anchor, int active)
     {
         editor.Select(anchor, active);
+        EnsureCaretVisible();
         Invalidate(InvalidationFlags.Render, "TextBox selection changed");
     }
 
     public void MoveCaret(int position, bool extendSelection = false)
     {
         editor.MoveCaret(position, extendSelection);
+        EnsureCaretVisible();
         Invalidate(InvalidationFlags.Render, "TextBox caret changed");
     }
 
@@ -166,6 +193,7 @@ public abstract class TextBoxBase : Control
         SetValue(TextProperty, next);
         editor.SetText(next);
         editor.UndoRedo.Clear();
+        EnsureCaretVisible();
         InvalidateTextMetrics("TextBox text changed");
     }
 
@@ -183,6 +211,17 @@ public abstract class TextBoxBase : Control
         return context.FinalRect;
     }
 
+    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+    {
+        base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, TextProperty) && editor.Document.Text != Text)
+        {
+            editor.SetText(Text);
+            editor.UndoRedo.Clear();
+            EnsureCaretVisible();
+        }
+    }
+
     protected override void OnRender(RenderContext context)
     {
         DrawRect rect = Border.ToDrawRect(context.Bounds);
@@ -198,18 +237,36 @@ public abstract class TextBoxBase : Control
         }
 
         LayoutRect content = ContentControl.Deflate(context.Bounds, Insets);
-        if (DisplayText.Length == 0 || content.Width <= 0 || content.Height <= 0)
+        if (content.Width <= 0 || content.Height <= 0)
         {
             return;
         }
 
-        GetTextRenderer().Render(
-            context.DrawingContext,
-            DisplayText,
-            CreateTextStyle(),
-            content.Width,
-            new DrawPoint(content.X, content.Y),
-            Foreground);
+        DrawRect clip = Border.ToDrawRect(content);
+        context.DrawingContext.PushClip(clip);
+
+        if (!Selection.IsEmpty && SelectionBackground.A != 0)
+        {
+            DrawSelection(context, content);
+        }
+
+        if (DisplayText.Length > 0)
+        {
+            GetTextRenderer().Render(
+                context.DrawingContext,
+                DisplayText,
+                CreateTextStyle(),
+                content.Width + horizontalTextOffset,
+                new DrawPoint(content.X - horizontalTextOffset, content.Y),
+                Foreground);
+        }
+
+        if (ShouldRenderCaret())
+        {
+            DrawCaret(context, content);
+        }
+
+        context.DrawingContext.PopClip();
     }
 
     private void OnRoutedTextInput(UiElementId sender, RoutedEventArgs args)
@@ -234,6 +291,8 @@ public abstract class TextBoxBase : Control
         {
             InputKey.Back => HandleBackspace(),
             InputKey.Delete => HandleDelete(),
+            InputKey.Home => HandleMoveTo(0),
+            InputKey.End => HandleMoveTo(editor.Document.Length),
             InputKey.Left => HandleMove(-1),
             InputKey.Right => HandleMove(1),
             _ => false
@@ -252,6 +311,7 @@ public abstract class TextBoxBase : Control
         }
 
         SyncTextFromEditor("TextBox backspace");
+        EnsureCaretVisible();
         return true;
     }
 
@@ -265,12 +325,22 @@ public abstract class TextBoxBase : Control
         }
 
         SyncTextFromEditor("TextBox delete");
+        EnsureCaretVisible();
         return true;
     }
 
     private bool HandleMove(int delta)
     {
         editor.MoveCaret(editor.Caret.Position + delta);
+        EnsureCaretVisible();
+        Invalidate(InvalidationFlags.Render, "TextBox caret changed");
+        return true;
+    }
+
+    private bool HandleMoveTo(int position)
+    {
+        editor.MoveCaret(position);
+        EnsureCaretVisible();
         Invalidate(InvalidationFlags.Render, "TextBox caret changed");
         return true;
     }
@@ -278,7 +348,79 @@ public abstract class TextBoxBase : Control
     private void SyncTextFromEditor(string reason)
     {
         SetValue(TextProperty, editor.Document.Text);
+        EnsureCaretVisible();
         InvalidateTextMetrics(reason);
+    }
+
+    private void DrawSelection(RenderContext context, LayoutRect content)
+    {
+        float start = content.X + MeasureTextWidth(DisplayText[..Selection.Start]) - horizontalTextOffset;
+        float end = content.X + MeasureTextWidth(DisplayText[..Selection.End]) - horizontalTextOffset;
+        float x = Math.Clamp(start, content.X, content.X + content.Width);
+        float right = Math.Clamp(end, content.X, content.X + content.Width);
+        if (right <= x)
+        {
+            return;
+        }
+
+        context.DrawingContext.FillRectangle(
+            new DrawRect(x, content.Y, right - x, MathF.Max(1, content.Height)),
+            SelectionBackground);
+    }
+
+    private void DrawCaret(RenderContext context, LayoutRect content)
+    {
+        float x = content.X + MeasureTextWidth(DisplayText[..Caret.Position]) - horizontalTextOffset;
+        x = Math.Clamp(x, content.X, content.X + content.Width);
+        context.DrawingContext.FillRectangle(
+            new DrawRect(x, content.Y, 1, MathF.Max(1, content.Height)),
+            CaretColor);
+    }
+
+    private bool ShouldRenderCaret()
+    {
+        return IsKeyboardFocused &&
+            IsEnabled &&
+            UIElementVisibility.ParticipatesInRendering(this) &&
+            CaretColor.A != 0;
+    }
+
+    private void EnsureCaretVisible()
+    {
+        float contentWidth = MathF.Max(0, ArrangedBounds.Width - Insets.Left - Insets.Right);
+        if (contentWidth <= 0)
+        {
+            horizontalTextOffset = 0;
+            return;
+        }
+
+        float caretX = MeasureTextWidth(DisplayText[..Caret.Position]);
+        float oldOffset = horizontalTextOffset;
+        if (caretX - horizontalTextOffset > contentWidth)
+        {
+            horizontalTextOffset = caretX - contentWidth;
+        }
+        else if (caretX < horizontalTextOffset)
+        {
+            horizontalTextOffset = caretX;
+        }
+
+        horizontalTextOffset = MathF.Max(0, horizontalTextOffset);
+        if (Math.Abs(oldOffset - horizontalTextOffset) > float.Epsilon)
+        {
+            IncrementRenderVersion();
+            Invalidate(InvalidationFlags.Render, "TextBox horizontal viewport changed");
+        }
+    }
+
+    private float MeasureTextWidth(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return 0;
+        }
+
+        return GetTextMeasurer().Measure(text, CreateTextStyle(), float.PositiveInfinity).Size.Width;
     }
 
     private void InvalidateTextMetrics(string reason)

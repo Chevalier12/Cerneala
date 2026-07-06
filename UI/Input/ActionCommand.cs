@@ -1,6 +1,6 @@
 namespace Cerneala.UI.Input;
 
-public sealed class ActionCommand : ICommand
+public sealed class ActionCommand : IObservableCommand
 {
     private readonly Action<object?> execute;
     private readonly Predicate<object?>? canExecute;
@@ -10,6 +10,8 @@ public sealed class ActionCommand : ICommand
         this.execute = execute ?? throw new ArgumentNullException(nameof(execute));
         this.canExecute = canExecute;
     }
+
+    public event EventHandler? CanExecuteChanged;
 
     public bool CanExecute(object? parameter)
     {
@@ -24,5 +26,10 @@ public sealed class ActionCommand : ICommand
         }
 
         execute(parameter);
+    }
+
+    public void RaiseCanExecuteChanged()
+    {
+        CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 }

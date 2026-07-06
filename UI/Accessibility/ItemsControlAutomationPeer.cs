@@ -18,7 +18,7 @@ public sealed class ItemsControlAutomationPeer : AutomationPeer
     {
         Dictionary<SemanticsProperty, object?> properties = new(base.GetProperties())
         {
-            [SemanticsProperty.ItemCount] = itemsControl.Items.Count
+            [SemanticsProperty.ItemCount] = itemsControl.ItemCount
         };
         return properties;
     }

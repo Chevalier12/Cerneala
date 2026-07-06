@@ -1,5 +1,6 @@
 using System.Collections;
 using Cerneala.UI.Core;
+using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
@@ -10,6 +11,7 @@ namespace Cerneala.UI.Controls;
 public class ItemsControl : Control
 {
     private readonly ItemsPresenter itemsPresenter;
+    private IObservableList? observableItemsSource;
 
     public ItemsControl()
     {
@@ -34,11 +36,26 @@ public class ItemsControl : Control
         typeof(ItemsControl),
         new UiPropertyMetadata<ItemsPanelTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
+    public static readonly UiProperty<IEnumerable?> ItemsSourceProperty = UiProperty<IEnumerable?>.Register(
+        nameof(ItemsSource),
+        typeof(ItemsControl),
+        new UiPropertyMetadata<IEnumerable?>(
+            null,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsSemantics));
+
     public ItemCollection Items { get; }
 
     public ItemContainerGenerator ItemContainerGenerator { get; }
 
     public ItemsPresenter ItemsPresenter => itemsPresenter;
+
+    public IEnumerable? ItemsSource
+    {
+        get => GetValue(ItemsSourceProperty);
+        set => SetValue(ItemsSourceProperty, value);
+    }
+
+    public int ItemCount => observableItemsSource?.Count ?? ItemsSource?.Cast<object?>().Count() ?? Items.Count;
 
     public DataTemplate? ItemTemplate
     {
@@ -55,6 +72,21 @@ public class ItemsControl : Control
     public void SetItems(IEnumerable? items)
     {
         Items.ReplaceWith(items);
+    }
+
+    public object? GetItemAt(int index)
+    {
+        if (observableItemsSource is not null)
+        {
+            return observableItemsSource[index];
+        }
+
+        if (ItemsSource is not null)
+        {
+            return ItemsSource.Cast<object?>().ElementAt(index);
+        }
+
+        return Items[index];
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -87,6 +119,13 @@ public class ItemsControl : Control
             ItemContainerGenerator.Clear();
             itemsPresenter.MarkItemsDirty();
             InvalidateItems("ItemsControl item policy changed");
+        }
+        else if (ReferenceEquals(args.Property, ItemsSourceProperty))
+        {
+            SubscribeItemsSource(args.OldValue as IEnumerable, args.NewValue as IEnumerable);
+            ItemContainerGenerator.Clear();
+            itemsPresenter.MarkItemsDirty();
+            InvalidateItems("ItemsControl items source changed");
         }
     }
 
@@ -178,13 +217,44 @@ public class ItemsControl : Control
     {
         IncrementLayoutVersion();
         IncrementRenderVersion();
-        Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.HitTest, reason);
+        Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.HitTest | InvalidationFlags.Semantics, reason);
     }
 
     private void OnItemsChanged(object? sender, EventArgs args)
     {
+        if (ItemsSource is not null)
+        {
+            return;
+        }
+
         itemsPresenter.MarkItemsDirty();
         InvalidateItems("Items changed");
+    }
+
+    private void SubscribeItemsSource(IEnumerable? oldSource, IEnumerable? newSource)
+    {
+        if (ReferenceEquals(oldSource, newSource))
+        {
+            return;
+        }
+
+        if (observableItemsSource is not null)
+        {
+            observableItemsSource.Changed -= OnObservableItemsSourceChanged;
+            observableItemsSource = null;
+        }
+
+        observableItemsSource = newSource as IObservableList;
+        if (observableItemsSource is not null)
+        {
+            observableItemsSource.Changed += OnObservableItemsSourceChanged;
+        }
+    }
+
+    private void OnObservableItemsSourceChanged(object? sender, ObservableListChangedEventArgs args)
+    {
+        itemsPresenter.MarkItemsDirty();
+        InvalidateItems("Observable items source changed");
     }
 }
 

@@ -18,6 +18,7 @@ Generated from `.`.
 |   |       |-- 2026-07-03-fix-tree-mutation-invalidation.md
 |   |       |-- 2026-07-03-integrate-style-phase.md
 |   |       |-- 2026-07-04-cache-input-route-hit-test.md
+|   |       |-- 2026-07-05-authoring-preview-completion-gate.md
 |   |       |-- 2026-07-05-clarify-layout-scheduler-contract-and-diagnostics.md
 |   |       |-- 2026-07-05-clarify-package-boundary-dependencies.md
 |   |       |-- 2026-07-05-clarify-text-services-mvp.md
@@ -31,9 +32,16 @@ Generated from `.`.
 |   |       |-- 2026-07-05-freeze-later-experimental-scope.md
 |   |       |-- 2026-07-05-implement-inherited-property-tree-propagation.md
 |   |       |-- 2026-07-05-items-scroll-data-vertical-slice.md
+|   |       |-- 2026-07-05-next-authoring-preview-plan-index.md
 |   |       |-- 2026-07-05-next-core-completion-plan-index.md
 |   |       |-- 2026-07-05-next-core-preview-plan-index.md
+|   |       |-- 2026-07-05-observable-items-source-and-recycling-stability.md
+|   |       |-- 2026-07-05-retained-command-state-refresh.md
+|   |       |-- 2026-07-05-retained-semantics-tree-core-contract.md
 |   |       |-- 2026-07-05-root-owned-resource-invalidation.md
+|   |       |-- 2026-07-05-template-content-presenter-state-contract.md
+|   |       |-- 2026-07-05-textbox-editing-viewport-and-caret-contract.md
+|   |       |-- 2026-07-05-typed-binding-lifetime-and-two-way-text.md
 |   |       |-- 2026-07-05-wire-keyboard-control-activation.md
 |   |       +-- 2026-07-05-wire-minimal-retained-input-bindings.md
 |   +-- architecture-v2.md
@@ -66,6 +74,7 @@ Generated from `.`.
 |   |   |   +-- RepositoryShapeTests.cs
 |   |   |-- Controls/
 |   |   |   |-- Primitives/
+|   |   |   |   |-- ButtonBaseCommandStateIntegrationTests.cs
 |   |   |   |   |-- ButtonBaseCommandTests.cs
 |   |   |   |   |-- ButtonBaseTests.cs
 |   |   |   |   |-- RangeBaseTests.cs
@@ -89,6 +98,7 @@ Generated from `.`.
 |   |   |   |-- InkCanvasTests.cs
 |   |   |   |-- ItemContainerGeneratorTests.cs
 |   |   |   |-- ItemContainerRecyclePoolTests.cs
+|   |   |   |-- ItemsControlRetainedInvalidationTests.cs
 |   |   |   |-- ItemsControlTests.cs
 |   |   |   |-- ItemsPanelTemplateTests.cs
 |   |   |   |-- ListBoxTests.cs
@@ -121,6 +131,7 @@ Generated from `.`.
 |   |   |   |-- CommandBindingCollectionTests.cs
 |   |   |   |-- CommandingTests.cs
 |   |   |   |-- CommandRouterTests.cs
+|   |   |   |-- CommandStateSchedulerTests.cs
 |   |   |   |-- DragDropControllerTests.cs
 |   |   |   |-- ElementInputBridgeTests.cs
 |   |   |   |-- ElementInputRouteBuilderTests.cs
@@ -198,10 +209,12 @@ Generated from `.`.
 |   |   |   |   |-- UIElementTreeTests.cs
 |   |   |   |   +-- UIRootTests.cs
 |   |   |   |-- Hosting/
+|   |   |   |   |-- CorePreviewContractTests.cs
 |   |   |   |   |-- FakeDrawingBackend.cs
 |   |   |   |   |-- FakeInputSource.cs
 |   |   |   |   |-- FakeUiClock.cs
 |   |   |   |   |-- MonoGameUiHostBoundaryTests.cs
+|   |   |   |   |-- RetainedListScrollVerticalSliceTests.cs
 |   |   |   |   |-- RetainedVerticalSliceTests.cs
 |   |   |   |   |-- UiHostFrameContractTests.cs
 |   |   |   |   |-- UiHostFrameStatsIntegrityTests.cs
@@ -558,6 +571,7 @@ Generated from `.`.
 |   |   |-- HitTestService.cs
 |   |   |-- HoverTracker.cs
 |   |   |-- ICommand.cs
+|   |   |-- ICommandStateSource.cs
 |   |   |-- IInputCommandSource.cs
 |   |   |-- IInputPressable.cs
 |   |   |-- IInputSource.cs
@@ -569,6 +583,7 @@ Generated from `.`.
 |   |   |-- InputGesture.cs
 |   |   |-- InputKey.cs
 |   |   |-- InputMouseButton.cs
+|   |   |-- IObservableCommand.cs
 |   |   |-- IPointerDragSource.cs
 |   |   |-- KeyBinding.cs
 |   |   |-- KeyboardActivationController.cs
@@ -602,6 +617,7 @@ Generated from `.`.
 |   |   |-- UiInputElement.cs
 |   |   +-- UiInputTree.cs
 |   |-- Invalidation/
+|   |   |-- CommandStateQueue.cs
 |   |   |-- DirtyPropagation.cs
 |   |   |-- DirtyState.cs
 |   |   |-- ElementQueueOrder.cs

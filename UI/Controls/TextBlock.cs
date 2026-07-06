@@ -23,7 +23,7 @@ public class TextBlock : Control
         typeof(TextBlock),
         new UiPropertyMetadata<string>(
             string.Empty,
-            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsSemantics,
             coerceValue: (_, value) => value ?? string.Empty));
 
     public static readonly UiProperty<TextWrapping> TextWrappingProperty = UiProperty<TextWrapping>.Register(

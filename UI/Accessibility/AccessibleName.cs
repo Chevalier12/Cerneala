@@ -9,7 +9,7 @@ public static class AccessibleName
     public static readonly UiProperty<string?> NameProperty = UiProperty<string?>.Register(
         "AccessibleName",
         typeof(AccessibleName),
-        new UiPropertyMetadata<string?>(null, UiPropertyOptions.None, coerceValue: (_, value) => string.IsNullOrWhiteSpace(value) ? null : value));
+        new UiPropertyMetadata<string?>(null, UiPropertyOptions.AffectsSemantics, coerceValue: (_, value) => string.IsNullOrWhiteSpace(value) ? null : value));
 
     public static string? GetName(UIElement element)
     {

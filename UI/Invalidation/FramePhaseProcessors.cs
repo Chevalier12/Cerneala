@@ -8,6 +8,8 @@ public sealed class FramePhaseProcessors
 
     public Action<UIElement>? InheritedProperties { get; init; }
 
+    public Action<UIElement>? CommandState { get; init; }
+
     public Action<UIElement>? Style { get; init; }
 
     public Action<UIElement>? Measure { get; init; }
@@ -24,6 +26,9 @@ public sealed class FramePhaseProcessors
         {
             case FramePhase.InheritedProperties:
                 InheritedProperties?.Invoke(element);
+                break;
+            case FramePhase.CommandState:
+                CommandState?.Invoke(element);
                 break;
             case FramePhase.Style:
                 Style?.Invoke(element);

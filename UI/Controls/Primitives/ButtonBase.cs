@@ -4,8 +4,10 @@ using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls.Primitives;
 
-public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource
+public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, ICommandStateSource
 {
+    private IObservableCommand? observableCommand;
+
     public static readonly UiProperty<bool> IsPressedProperty = UiProperty<bool>.Register(
         nameof(IsPressed),
         typeof(ButtonBase),
@@ -97,5 +99,74 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource
 
         IsEnabled = canExecute;
         return true;
+    }
+
+    protected override void OnAttached()
+    {
+        base.OnAttached();
+        SubscribeObservableCommand(Command);
+        QueueCommandStateRefresh();
+    }
+
+    protected override void OnDetached()
+    {
+        UnsubscribeObservableCommand();
+        base.OnDetached();
+    }
+
+    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+    {
+        base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, CommandProperty))
+        {
+            if (IsAttached)
+            {
+                SubscribeObservableCommand(Command);
+            }
+            else
+            {
+                UnsubscribeObservableCommand();
+            }
+
+            QueueCommandStateRefresh();
+        }
+        else if (ReferenceEquals(args.Property, CommandParameterProperty))
+        {
+            QueueCommandStateRefresh();
+        }
+    }
+
+    private void SubscribeObservableCommand(ICommand? command)
+    {
+        if (!IsAttached)
+        {
+            return;
+        }
+
+        if (ReferenceEquals(observableCommand, command))
+        {
+            return;
+        }
+
+        UnsubscribeObservableCommand();
+        observableCommand = command as IObservableCommand;
+        if (observableCommand is not null)
+        {
+            observableCommand.CanExecuteChanged += OnCanExecuteChanged;
+        }
+    }
+
+    private void UnsubscribeObservableCommand()
+    {
+        if (observableCommand is not null)
+        {
+            observableCommand.CanExecuteChanged -= OnCanExecuteChanged;
+            observableCommand = null;
+        }
+    }
+
+    private void OnCanExecuteChanged(object? sender, EventArgs args)
+    {
+        QueueCommandStateRefresh();
     }
 }

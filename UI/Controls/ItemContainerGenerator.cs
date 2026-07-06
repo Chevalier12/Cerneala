@@ -22,7 +22,7 @@ public sealed class ItemContainerGenerator
 
     public IReadOnlyList<UIElement> Realize(RealizationWindow? window = null)
     {
-        int count = owner.Items.Count;
+        int count = owner.ItemCount;
         int start = window?.StartIndex ?? 0;
         int end = window?.EndIndexExclusive ?? count;
         start = Math.Clamp(start, 0, count);
@@ -45,12 +45,12 @@ public sealed class ItemContainerGenerator
 
     public UIElement GetOrCreate(int index)
     {
-        if (index < 0 || index >= owner.Items.Count)
+        if (index < 0 || index >= owner.ItemCount)
         {
             throw new ArgumentOutOfRangeException(nameof(index));
         }
 
-        object? item = owner.Items[index];
+        object? item = owner.GetItemAt(index);
         Type containerType = owner.GetContainerTypeForItem(item);
         if (realized.TryGetValue(index, out UIElement? existing))
         {

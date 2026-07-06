@@ -1,4 +1,5 @@
 using Cerneala.UI.Diagnostics;
+using Cerneala.UI.Accessibility;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -15,6 +16,10 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     private ThemeChangedSubscription? themeChangedSubscription;
     private IObservableResourceProvider? observableResourceProvider;
     private FrameStats? activeFrameStats;
+    private readonly SemanticsProvider semanticsProvider = new();
+    private SemanticsTree? cachedSemanticsTree;
+    private int cachedSemanticsTreeVersion = -1;
+    private bool semanticsDirty = true;
 
     public UIRoot(float viewportWidth = 0, float viewportHeight = 0, float scale = 1)
     {
@@ -25,6 +30,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         Trace = new InvalidationTrace();
         LayoutQueue = new LayoutQueue(this);
         InheritedPropertyQueue = new InheritedPropertyQueue(this);
+        CommandStateQueue = new CommandStateQueue(this);
         StyleQueue = new StyleQueue(this);
         RenderQueue = new RenderQueue(this);
         HitTestQueue = new HitTestQueue(this);
@@ -38,7 +44,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         ResourceDependencyTracker = new ResourceDependencyTracker();
         styleApplicator = new StyleApplicator();
         StyleProcessor = new StyleProcessor(styleApplicator, () => StyleSheet, () => themeProvider);
-        Scheduler = new UiFrameScheduler(LayoutQueue, InheritedPropertyQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
+        Scheduler = new UiFrameScheduler(LayoutQueue, InheritedPropertyQueue, CommandStateQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
         IsLayoutBoundary = true;
         ElementLifecycle.AttachSubtree(this, this);
     }
@@ -60,6 +66,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public LayoutQueue LayoutQueue { get; }
 
     public InheritedPropertyQueue InheritedPropertyQueue { get; }
+
+    public CommandStateQueue CommandStateQueue { get; }
 
     public StyleQueue StyleQueue { get; }
 
@@ -184,6 +192,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     internal void IncrementTreeVersion()
     {
         TreeVersion++;
+        semanticsDirty = true;
         RetainedRenderCache.InvalidateRoot();
     }
 
@@ -197,6 +206,11 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         ArgumentNullException.ThrowIfNull(request);
         Trace.RecordRequest(request);
         InvalidationFlags effective = DirtyPropagation.Default.GetEffectiveFlags(request);
+        if (effective.HasFlag(InvalidationFlags.Semantics))
+        {
+            semanticsDirty = true;
+        }
+
         if (effective.HasFlag(InvalidationFlags.Render))
         {
             RetainedRenderCache.InvalidateRoot();
@@ -208,6 +222,19 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         }
 
         DirtyPropagation.Default.Propagate(request, this, LayoutQueue, InheritedPropertyQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
+    }
+
+    public SemanticsTree GetSemanticsTree()
+    {
+        if (!semanticsDirty && cachedSemanticsTree is not null && cachedSemanticsTreeVersion == TreeVersion)
+        {
+            return cachedSemanticsTree;
+        }
+
+        cachedSemanticsTree = semanticsProvider.Build(this);
+        cachedSemanticsTreeVersion = TreeVersion;
+        semanticsDirty = false;
+        return cachedSemanticsTree;
     }
 
     public FrameStats ProcessFrame(FramePhaseProcessors? processors = null, FrameBudget budget = default, FrameStats? stats = null)
@@ -237,15 +264,38 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     private FramePhaseProcessors CreatePhaseProcessors()
     {
         FramePhaseProcessors layoutProcessors = LayoutManager.CreatePhaseProcessors();
+        CommandRouter commandRouter = new();
+        ElementInputRouteMap? commandStateRouteMap = null;
         return new FramePhaseProcessors
         {
             InheritedProperties = element => InheritedPropertyPropagator.PropagateFrom(element),
+            CommandState = element =>
+            {
+                commandStateRouteMap ??= CreateCommandStateRouteMap();
+                ProcessCommandState(element, commandRouter, commandStateRouteMap);
+            },
             Style = StyleProcessor.Process,
             Measure = layoutProcessors.Measure,
             Arrange = layoutProcessors.Arrange,
             RenderCache = RenderQueueProcessor.Process,
             HitTest = _ => InputCache.EnsureCurrent(this)
         };
+    }
+
+    private ElementInputRouteMap CreateCommandStateRouteMap()
+    {
+        InputCache.EnsureCurrent(this);
+        return new ElementInputRouteBuilder().BuildForCommandState(this);
+    }
+
+    private static void ProcessCommandState(UIElement element, CommandRouter router, ElementInputRouteMap routeMap)
+    {
+        if (element is not ICommandStateSource source)
+        {
+            return;
+        }
+
+        _ = source.RefreshCommandState(router, routeMap);
     }
 
     private sealed class ThemeChangedSubscription : IDisposable

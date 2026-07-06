@@ -8,14 +8,24 @@ public sealed class ElementInputRouteBuilder
         ArgumentNullException.ThrowIfNull(root);
 
         ElementInputRouteMap map = new();
-        AddElementAndDescendants(root, null, map);
+        AddElementAndDescendants(root, null, map, includeDisabled: false);
+        return map;
+    }
+
+    public ElementInputRouteMap BuildForCommandState(UIRoot root)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+
+        ElementInputRouteMap map = new();
+        AddElementAndDescendants(root, null, map, includeDisabled: true);
         return map;
     }
 
     private static void AddElementAndDescendants(
         UIElement element,
         UiElementId? nearestIncludedParentId,
-        ElementInputRouteMap map)
+        ElementInputRouteMap map,
+        bool includeDisabled)
     {
         UiElementId? parentForDescendants = nearestIncludedParentId;
 
@@ -24,7 +34,7 @@ public sealed class ElementInputRouteBuilder
             return;
         }
 
-        if (element.IsAttached && element.ElementId.HasValue && ShouldInclude(element))
+        if (element.IsAttached && element.ElementId.HasValue && ShouldInclude(element, includeDisabled))
         {
             UiElementId id = element.ElementId.Value;
             map.Add(element, id, nearestIncludedParentId);
@@ -38,12 +48,12 @@ public sealed class ElementInputRouteBuilder
 
         foreach (UIElement child in element.VisualChildren)
         {
-            AddElementAndDescendants(child, parentForDescendants, map);
+            AddElementAndDescendants(child, parentForDescendants, map, includeDisabled);
         }
     }
 
-    private static bool ShouldInclude(UIElement element)
+    private static bool ShouldInclude(UIElement element, bool includeDisabled)
     {
-        return element.IsEnabled && UIElementVisibility.ParticipatesInInput(element);
+        return (includeDisabled || element.IsEnabled) && UIElementVisibility.ParticipatesInInput(element);
     }
 }

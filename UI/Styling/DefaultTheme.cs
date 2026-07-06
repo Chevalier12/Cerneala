@@ -35,6 +35,7 @@ public static class DefaultTheme
     {
         return new StyleSheet()
             .Add(new StyleRule(StyleSelector.ForType<Button>())
+                .Add(new Setter<ControlTemplate?>(Control.TemplateProperty, CreateButtonTemplate()))
                 .Add(new Setter<DrawColor>(Control.BackgroundProperty, new ThemeResource<DrawColor>(SurfaceKey)))
                 .Add(new Setter<DrawColor>(Control.ForegroundProperty, new ThemeResource<DrawColor>(ForegroundKey)))
                 .Add(new Setter<DrawColor>(Control.BorderColorProperty, new ThemeResource<DrawColor>(BorderKey)))
@@ -61,5 +62,25 @@ public static class DefaultTheme
             .Add(new StyleRule(StyleSelector.ForType<Border>())
                 .Add(new Setter<DrawColor>(Control.BackgroundProperty, new ThemeResource<DrawColor>(SurfaceKey)))
                 .Add(new Setter<DrawColor>(Control.BorderColorProperty, new ThemeResource<DrawColor>(BorderKey))));
+    }
+
+    public static ControlTemplate<Button> CreateButtonTemplate()
+    {
+        return new ControlTemplate<Button>(context =>
+        {
+            ContentPresenter presenter = new();
+            Border border = new() { Child = presenter };
+
+            context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty);
+            context.Bind(Control.BorderColorProperty, border, Control.BorderColorProperty);
+            context.Bind(Control.BorderThicknessProperty, border, Control.BorderThicknessProperty);
+            context.Bind(Control.PaddingProperty, border, Control.PaddingProperty);
+            context.Bind(ContentControl.ContentProperty, presenter, ContentPresenter.ContentProperty);
+            context.Bind(Control.ForegroundProperty, presenter, Control.ForegroundProperty);
+            context.Bind(Control.FontFamilyProperty, presenter, Control.FontFamilyProperty);
+            context.Bind(Control.FontSizeProperty, presenter, Control.FontSizeProperty);
+
+            return border;
+        });
     }
 }

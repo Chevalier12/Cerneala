@@ -6,6 +6,7 @@ public sealed class UiFrameScheduler
 {
     private readonly LayoutQueue layoutQueue;
     private readonly InheritedPropertyQueue inheritedPropertyQueue;
+    private readonly CommandStateQueue commandStateQueue;
     private readonly StyleQueue styleQueue;
     private readonly RenderQueue renderQueue;
     private readonly HitTestQueue hitTestQueue;
@@ -23,11 +24,13 @@ public sealed class UiFrameScheduler
         InvalidationFlags.Image |
         InvalidationFlags.Resource |
         InvalidationFlags.InputVisual |
+        InvalidationFlags.Semantics |
         InvalidationFlags.Subtree;
 
     public UiFrameScheduler(
         LayoutQueue layoutQueue,
         InheritedPropertyQueue inheritedPropertyQueue,
+        CommandStateQueue commandStateQueue,
         StyleQueue styleQueue,
         RenderQueue renderQueue,
         HitTestQueue hitTestQueue,
@@ -35,6 +38,7 @@ public sealed class UiFrameScheduler
     {
         this.layoutQueue = layoutQueue ?? throw new ArgumentNullException(nameof(layoutQueue));
         this.inheritedPropertyQueue = inheritedPropertyQueue ?? throw new ArgumentNullException(nameof(inheritedPropertyQueue));
+        this.commandStateQueue = commandStateQueue ?? throw new ArgumentNullException(nameof(commandStateQueue));
         this.styleQueue = styleQueue ?? throw new ArgumentNullException(nameof(styleQueue));
         this.renderQueue = renderQueue ?? throw new ArgumentNullException(nameof(renderQueue));
         this.hitTestQueue = hitTestQueue ?? throw new ArgumentNullException(nameof(hitTestQueue));
@@ -43,6 +47,7 @@ public sealed class UiFrameScheduler
 
     public bool HasWork =>
         inheritedPropertyQueue.HasWork ||
+        commandStateQueue.HasWork ||
         styleQueue.HasWork ||
         layoutQueue.HasWork ||
         renderQueue.HasWork ||
@@ -68,6 +73,7 @@ public sealed class UiFrameScheduler
         // Same-phase work enqueued during processing is deferred to a later frame.
         // Downstream phase work may still run in this frame if its snapshot has not been taken yet.
         ProcessInheritedProperties(processors, stats);
+        ProcessCommandState(processors, stats);
         ProcessStyle(processors, stats);
         ProcessInheritedProperties(processors, stats);
         ProcessMeasure(processors, stats);
@@ -112,6 +118,29 @@ public sealed class UiFrameScheduler
         }
 
         trace.RecordPhaseSummary(FramePhase.InheritedProperties, processed);
+    }
+
+    private void ProcessCommandState(FramePhaseProcessors processors, FrameStats stats)
+    {
+        IReadOnlyList<Elements.UIElement> snapshot = commandStateQueue.Snapshot();
+        foreach (Elements.UIElement element in snapshot)
+        {
+            commandStateQueue.Remove(element);
+            try
+            {
+                processors.Process(FramePhase.CommandState, element);
+            }
+            catch
+            {
+                commandStateQueue.Enqueue(element);
+                throw;
+            }
+
+            stats.Count(FramePhase.CommandState);
+            trace.RecordPhase(FramePhase.CommandState, element, InvalidationFlags.None);
+        }
+
+        trace.RecordPhaseSummary(FramePhase.CommandState, snapshot.Count);
     }
 
     private void ProcessStyle(FramePhaseProcessors processors, FrameStats stats)

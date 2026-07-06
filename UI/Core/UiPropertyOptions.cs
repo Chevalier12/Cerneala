@@ -11,5 +11,6 @@ public enum UiPropertyOptions
     AffectsStyle = 1 << 4,
     AffectsInputVisual = 1 << 5,
     Inherits = 1 << 6,
-    ReadOnly = 1 << 7
+    ReadOnly = 1 << 7,
+    AffectsSemantics = 1 << 8
 }

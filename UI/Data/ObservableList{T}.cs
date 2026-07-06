@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace Cerneala.UI.Data;
 
-public sealed class ObservableList<T> : IObservableList<T>, IList<T>
+public sealed class ObservableList<T> : IObservableList<T>, IObservableList, IList<T>
 {
     private readonly List<T> items = [];
 
@@ -17,6 +17,14 @@ public sealed class ObservableList<T> : IObservableList<T>, IList<T>
     }
 
     public event EventHandler<ObservableListChangedEventArgs<T>>? Changed;
+
+    private event EventHandler<ObservableListChangedEventArgs>? UntypedChanged;
+
+    event EventHandler<ObservableListChangedEventArgs>? IObservableList.Changed
+    {
+        add => UntypedChanged += value;
+        remove => UntypedChanged -= value;
+    }
 
     public int Count => items.Count;
 
@@ -43,6 +51,8 @@ public sealed class ObservableList<T> : IObservableList<T>, IList<T>
                 oldItems: [oldItem]));
         }
     }
+
+    object? IObservableList.this[int index] => items[index];
 
     public void Add(T item)
     {
@@ -168,5 +178,13 @@ public sealed class ObservableList<T> : IObservableList<T>, IList<T>
     private void Notify(ObservableListChangedEventArgs<T> args)
     {
         Changed?.Invoke(this, args);
+        UntypedChanged?.Invoke(this, new ObservableListChangedEventArgs(
+            args.Kind,
+            args.Index,
+            args.OldIndex,
+            args.Item,
+            args.OldItem,
+            [.. args.Items.Cast<object?>()],
+            [.. args.OldItems.Cast<object?>()]));
     }
 }

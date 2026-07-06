@@ -4,6 +4,7 @@ public enum FramePhase
 {
     Input,
     InheritedProperties,
+    CommandState,
     Style,
     Measure,
     Arrange,

@@ -77,7 +77,7 @@ public class ItemsPresenter : Control
     public void UpdateVirtualizationFromScrollInfo(IScrollInfo scrollInfo, float itemExtent, int cacheItems = 0)
     {
         ArgumentNullException.ThrowIfNull(scrollInfo);
-        int itemCount = ItemsOwner?.Items.Count ?? Items?.Cast<object?>().Count() ?? 0;
+        int itemCount = ItemsOwner?.ItemCount ?? Items?.Cast<object?>().Count() ?? 0;
         VirtualizationContext = new VirtualizationContext(itemCount, itemExtent, scrollInfo.ViewportHeight, scrollInfo.VerticalOffset, cacheItems);
         MarkItemsDirty();
     }

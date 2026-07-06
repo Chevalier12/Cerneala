@@ -14,5 +14,6 @@ public enum InvalidationFlags
     InputVisual = 1 << 7,
     HitTest = 1 << 8,
     Subtree = 1 << 9,
-    Inherited = 1 << 10
+    Inherited = 1 << 10,
+    Semantics = 1 << 11
 }

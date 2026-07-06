@@ -1,4 +1,5 @@
 using Cerneala.UI.Core;
+using Cerneala.UI.Data;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
@@ -11,12 +12,12 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     public static readonly UiProperty<bool> IsEnabledProperty = UiProperty<bool>.Register(
         nameof(IsEnabled),
         typeof(UIElement),
-        new UiPropertyMetadata<bool>(true, UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
+        new UiPropertyMetadata<bool>(true, UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle | UiPropertyOptions.AffectsSemantics));
 
     public static readonly UiProperty<bool> IsVisibleProperty = UiProperty<bool>.Register(
         nameof(IsVisible),
         typeof(UIElement),
-        new UiPropertyMetadata<bool>(true, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest));
+        new UiPropertyMetadata<bool>(true, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsSemantics));
 
     public static readonly UiProperty<Thickness> MarginProperty = UiProperty<Thickness>.Register(
         nameof(Margin),
@@ -38,12 +39,12 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         typeof(UIElement),
         new UiPropertyMetadata<Visibility>(
             Visibility.Visible,
-            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest));
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsSemantics));
 
     public static readonly UiProperty<bool> IsPointerOverProperty = UiProperty<bool>.Register(
         nameof(IsPointerOver),
         typeof(UIElement),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle | UiPropertyOptions.AffectsSemantics));
 
     public static readonly UiProperty<bool> IsKeyboardFocusedProperty = UiProperty<bool>.Register(
         nameof(IsKeyboardFocused),
@@ -70,6 +71,8 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         LogicalChildren = new UIElementCollection(this, ElementChildRole.Logical);
         VisualChildren = new UIElementCollection(this, ElementChildRole.Visual);
         Handlers = new ElementHandlerStore(this);
+        CommandBindings = new CommandBindingCollection(this);
+        Bindings = new BindingSubscriptionCollection();
     }
 
     public UIElement? LogicalParent { get; private set; }
@@ -88,7 +91,9 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
     public ElementHandlerStore Handlers { get; }
 
-    public CommandBindingCollection CommandBindings { get; } = new();
+    public CommandBindingCollection CommandBindings { get; }
+
+    public BindingSubscriptionCollection Bindings { get; }
 
     public InputBindingCollection InputBindings { get; } = new();
 
@@ -105,6 +110,8 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     public RenderDependency RenderDependencies { get; private set; }
 
     public bool IsLayoutBoundary { get; set; }
+
+    private bool hasPendingCommandStateRefresh;
 
     internal LayoutSize? LastMeasureAvailableSize { get; set; }
 
@@ -203,16 +210,47 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     internal void DetachFromRoot()
     {
         OnDetached();
+        Bindings.Clear();
         ElementId = null;
         Root = null;
     }
 
     protected virtual void OnAttached()
     {
+        if (hasPendingCommandStateRefresh)
+        {
+            hasPendingCommandStateRefresh = false;
+            QueueCommandStateRefresh();
+        }
     }
 
     protected virtual void OnDetached()
     {
+    }
+
+    public void QueueCommandStateRefresh()
+    {
+        if (this is not ICommandStateSource)
+        {
+            return;
+        }
+
+        if (Root is null)
+        {
+            hasPendingCommandStateRefresh = true;
+            return;
+        }
+
+        hasPendingCommandStateRefresh = false;
+        Root.CommandStateQueue.Enqueue(this);
+    }
+
+    internal void QueueDescendantCommandStateRefreshes()
+    {
+        foreach (UIElement element in ElementTreeWalker.PreOrder(this, ElementChildRole.Visual))
+        {
+            element.QueueCommandStateRefresh();
+        }
     }
 
     public LayoutSize Measure(MeasureContext context)
@@ -422,6 +460,11 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         if (options.HasFlag(UiPropertyOptions.Inherits))
         {
             flags |= InvalidationFlags.Inherited;
+        }
+
+        if (options.HasFlag(UiPropertyOptions.AffectsSemantics))
+        {
+            flags |= InvalidationFlags.Semantics;
         }
 
         return flags;

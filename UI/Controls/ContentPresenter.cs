@@ -10,6 +10,7 @@ public class ContentPresenter : Control
     private static readonly IEqualityComparer<object?> ContentReferenceEqualityComparer = new ReferenceContentEqualityComparer();
     private UIElement? presentedChild;
     private bool presentationDirty = true;
+    private bool generatedTextChild;
 
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
         nameof(Content),
@@ -97,11 +98,31 @@ public class ContentPresenter : Control
         object? content = Content;
         if (content is UIElement element)
         {
+            generatedTextChild = false;
             return element;
         }
 
         DataTemplate? template = ContentTemplate;
-        return template is null ? null : template.CreateElement(content);
+        if (template is not null)
+        {
+            generatedTextChild = false;
+            return template.CreateElement(content);
+        }
+
+        if (content is string text)
+        {
+            if (generatedTextChild && presentedChild is TextBlock textBlock)
+            {
+                textBlock.Text = text;
+                return textBlock;
+            }
+
+            generatedTextChild = true;
+            return new TextBlock { Text = text };
+        }
+
+        generatedTextChild = false;
+        return null;
     }
 
     private void AddPresentedChild(UIElement? child)

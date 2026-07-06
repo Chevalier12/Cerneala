@@ -13,7 +13,7 @@ public class ContentControl : Control
         typeof(ContentControl),
         new UiPropertyMetadata<object?>(
             null,
-            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsSemantics,
             ContentEqualityComparer));
 
     public object? Content

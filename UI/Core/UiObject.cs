@@ -152,6 +152,7 @@ public class UiObject
             UiPropertyOptions.AffectsHitTest |
             UiPropertyOptions.AffectsStyle |
             UiPropertyOptions.AffectsInputVisual |
+            UiPropertyOptions.AffectsSemantics |
             UiPropertyOptions.Inherits);
         if (invalidationOptions != UiPropertyOptions.None && this is IUiPropertyOwner owner)
         {
@@ -175,6 +176,7 @@ public class UiObject
             UiPropertyOptions.AffectsHitTest |
             UiPropertyOptions.AffectsStyle |
             UiPropertyOptions.AffectsInputVisual |
+            UiPropertyOptions.AffectsSemantics |
             UiPropertyOptions.Inherits);
         if (invalidationOptions != UiPropertyOptions.None && this is IUiPropertyOwner owner)
         {

@@ -56,7 +56,8 @@ public sealed class SampleSelector
             new RetainedButtonSample(resourceProvider, fontResourceId),
             new LayoutSample(resourceProvider, fontResourceId),
             new TextSample(resourceProvider, fontResourceId),
-            new DiagnosticsSample(resourceProvider, fontResourceId)
+            new DiagnosticsSample(resourceProvider, fontResourceId),
+            new AuthoringAppSample(resourceProvider, fontResourceId)
         }, resourceProvider, fontResourceId);
     }
 
