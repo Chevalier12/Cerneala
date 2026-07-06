@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using HarfBuzzSharp;
+using SkiaSharp;
 using System.Runtime.InteropServices;
 using HarfBuzzBuffer = HarfBuzzSharp.Buffer;
 using HarfBuzzFont = HarfBuzzSharp.Font;
@@ -28,11 +29,15 @@ public sealed class SkiaTextShaper
         harfBuzzFont.SetScale(scale, scale);
         harfBuzzFont.Shape(buffer);
 
+        ushort[] glyphIds = GetGlyphIds(buffer);
+        DrawPoint[] glyphPositions = GetGlyphPositions(buffer, out float advanceWidth);
         return new TextShapeResult(
             textRun.Text,
             buffer.Length,
-            GetGlyphIds(buffer),
-            GetGlyphPositions(buffer));
+            glyphIds,
+            glyphPositions,
+            advanceWidth,
+            GetOriginOffset(font, textRun.Size, glyphIds, glyphPositions));
     }
 
     private static ushort[] GetGlyphIds(HarfBuzzBuffer buffer)
@@ -48,7 +53,7 @@ public sealed class SkiaTextShaper
         return glyphIds;
     }
 
-    private static DrawPoint[] GetGlyphPositions(HarfBuzzBuffer buffer)
+    private static DrawPoint[] GetGlyphPositions(HarfBuzzBuffer buffer, out float advanceWidth)
     {
         ReadOnlySpan<GlyphPosition> glyphPositions = buffer.GetGlyphPositionSpan();
         DrawPoint[] positions = new DrawPoint[glyphPositions.Length];
@@ -63,7 +68,35 @@ public sealed class SkiaTextShaper
             y -= ToPixels(glyphPosition.YAdvance);
         }
 
+        advanceWidth = x;
         return positions;
+    }
+
+    private static DrawPoint GetOriginOffset(SkiaFont font, float size, ushort[] glyphIds, DrawPoint[] glyphPositions)
+    {
+        if (glyphIds.Length == 0)
+        {
+            return default;
+        }
+
+        using SKFont skFont = new(font.Typeface, size);
+        using SKTextBlobBuilder builder = new();
+        builder.AddPositionedRun(glyphIds, skFont, ToPoints(glyphPositions));
+        using SKTextBlob textBlob = builder.Build() ?? throw new InvalidOperationException("Could not build text blob.");
+        SKRect bounds = textBlob.Bounds;
+        return new DrawPoint(bounds.Left, bounds.Top);
+    }
+
+    private static SKPoint[] ToPoints(DrawPoint[] positions)
+    {
+        SKPoint[] points = new SKPoint[positions.Length];
+
+        for (int i = 0; i < positions.Length; i++)
+        {
+            points[i] = new SKPoint(positions[i].X, positions[i].Y);
+        }
+
+        return points;
     }
 
     private static byte[] ReadFontData(SkiaFont font)

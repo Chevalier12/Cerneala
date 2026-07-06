@@ -89,7 +89,7 @@ public class Game1 : Game
 
         MonoGameUiHost host = RequireUiHost();
         _sampleSelector?.UpdateFrame(host.LastFrame);
-        host.Update(GetViewport(), gameTime.ElapsedGameTime);
+        host.Update(GetViewport(), gameTime.TotalGameTime);
         base.Update(gameTime);
     }
 

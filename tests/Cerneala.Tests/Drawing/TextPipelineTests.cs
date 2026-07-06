@@ -86,6 +86,31 @@ public sealed class TextPipelineTests
     }
 
     [Fact]
+    public void TextRasterizerReportsCroppedTextureOriginOffset()
+    {
+        SystemFontSource fonts = new();
+        IDrawFont font = fonts.LoadFont("Arial", 16);
+        SkiaTextRasterizer rasterizer = new();
+
+        RasterizedText result = rasterizer.Rasterize(new DrawTextRun(font, "hahahehe", 16), DrawColor.White);
+
+        Assert.True(result.ShapeResult.AdvanceWidth < result.Width);
+        Assert.True(result.OriginOffset.X >= 0);
+    }
+
+    [Fact]
+    public void TextRasterizerTrimsTransparentLeftPadding()
+    {
+        SystemFontSource fonts = new();
+        IDrawFont font = fonts.LoadFont("Arial", 16);
+        SkiaTextRasterizer rasterizer = new();
+
+        RasterizedText result = rasterizer.Rasterize(new DrawTextRun(font, "a", 16), DrawColor.White);
+
+        Assert.Equal(0, FirstInkX(result));
+    }
+
+    [Fact]
     public void TextRasterizerHandlesEmptyText()
     {
         SystemFontSource fonts = new();
@@ -231,5 +256,23 @@ public sealed class TextPipelineTests
         result.RgbaPixels[0] = 99;
 
         Assert.Equal(1, result.RgbaPixels[0]);
+    }
+
+    private static int FirstInkX(RasterizedText text)
+    {
+        byte[] pixels = text.RgbaPixels;
+        for (int x = 0; x < text.Width; x++)
+        {
+            for (int y = 0; y < text.Height; y++)
+            {
+                int alphaIndex = (((y * text.Width) + x) * 4) + 3;
+                if (pixels[alphaIndex] != 0)
+                {
+                    return x;
+                }
+            }
+        }
+
+        return -1;
     }
 }

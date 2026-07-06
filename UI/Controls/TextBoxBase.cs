@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.Text;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -11,15 +12,21 @@ using Cerneala.UI.Text;
 
 namespace Cerneala.UI.Controls;
 
-public abstract class TextBoxBase : Control
+public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
 {
+    private static readonly TimeSpan CaretBlinkPeriod = TimeSpan.FromMilliseconds(1000);
+    private static readonly TimeSpan CaretBlinkVisibleDuration = TimeSpan.FromMilliseconds(500);
     private readonly TextEditor editor;
+    private readonly TextCaretLayout caretLayout = TextCaretLayout.Default;
     private readonly TextLayoutCache resourceTextLayoutCache = new();
     private TextMeasurer textMeasurer = TextMeasurer.Default;
     private TextRenderer textRenderer = TextRenderer.Default;
     private IResourceProvider? resourceProvider;
     private ResourceId<FontResource>? fontResourceId;
     private float horizontalTextOffset;
+    private TimeSpan caretBlinkAnchor;
+    private TimeSpan lastCaretFrameTime;
+    private bool caretBlinkVisible = true;
 
     public static readonly UiProperty<string> TextProperty = UiProperty<string>.Register(
         nameof(Text),
@@ -51,6 +58,7 @@ public abstract class TextBoxBase : Control
         Cursor = Cerneala.UI.Input.Cursor.IBeam;
         Handlers.AddHandler(InputEvents.TextInputEvent, OnRoutedTextInput);
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnRoutedKeyDown);
+        Handlers.AddHandler(InputEvents.MouseDownEvent, OnRoutedMouseDown);
     }
 
     public TextEditor Editor => editor;
@@ -146,6 +154,7 @@ public abstract class TextBoxBase : Control
         editor.InsertText(text ?? string.Empty);
         SyncTextFromEditor("TextBox text input");
         EnsureCaretVisible();
+        ResetCaretBlink();
     }
 
     public void Select(int anchor, int active)
@@ -159,6 +168,7 @@ public abstract class TextBoxBase : Control
     {
         editor.MoveCaret(position, extendSelection);
         EnsureCaretVisible();
+        ResetCaretBlink();
         Invalidate(InvalidationFlags.Render, "TextBox caret changed");
     }
 
@@ -205,7 +215,10 @@ public abstract class TextBoxBase : Control
         LayoutSize available = ContentControl.Deflate(context.AvailableSize, insets);
         TextRunStyle style = CreateTextStyle();
         TextMeasureResult result = GetTextMeasurer().Measure(DisplayText, style, available.Width);
-        return ContentControl.Inflate(result.Size, insets);
+        TextCaretVerticalMetrics caretMetrics = caretLayout.GetCaretVerticalMetrics(style, CreateFontResolver());
+        float textEditingHeight = caretMetrics.OffsetY + caretMetrics.Height;
+        LayoutSize contentSize = new(result.Size.Width, MathF.Max(result.Size.Height, textEditingHeight));
+        return ContentControl.Inflate(contentSize, insets);
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
@@ -221,6 +234,11 @@ public abstract class TextBoxBase : Control
             editor.SetText(Text);
             editor.UndoRedo.Clear();
             EnsureCaretVisible();
+        }
+
+        if (ReferenceEquals(args.Property, IsKeyboardFocusedProperty) && IsKeyboardFocused)
+        {
+            ResetCaretBlink();
         }
     }
 
@@ -307,6 +325,20 @@ public abstract class TextBoxBase : Control
         };
 
         keyArgs.Handled = handled;
+    }
+
+    private void OnRoutedMouseDown(UiElementId sender, RoutedEventArgs args)
+    {
+        if (args is not MouseButtonEventArgs mouseArgs || mouseArgs.Handled || mouseArgs.ChangedButton != InputMouseButton.Left)
+        {
+            return;
+        }
+
+        LayoutRect content = ContentControl.Deflate(ArrangedBounds, Insets);
+        float textX = mouseArgs.X - content.X + horizontalTextOffset;
+        int index = caretLayout.GetCaretIndexAtX(DisplayText, textX, CreateTextStyle(), CreateFontResolver());
+        MoveCaret(index);
+        mouseArgs.Handled = true;
     }
 
     private bool HandleClipboardShortcut(InputKey key)
@@ -409,6 +441,7 @@ public abstract class TextBoxBase : Control
     {
         editor.MoveCaret(editor.Caret.Position + delta);
         EnsureCaretVisible();
+        ResetCaretBlink();
         Invalidate(InvalidationFlags.Render, "TextBox caret changed");
         return true;
     }
@@ -417,6 +450,7 @@ public abstract class TextBoxBase : Control
     {
         editor.MoveCaret(position);
         EnsureCaretVisible();
+        ResetCaretBlink();
         Invalidate(InvalidationFlags.Render, "TextBox caret changed");
         return true;
     }
@@ -425,13 +459,14 @@ public abstract class TextBoxBase : Control
     {
         SetValue(TextProperty, editor.Document.Text);
         EnsureCaretVisible();
+        ResetCaretBlink();
         InvalidateTextMetrics(reason);
     }
 
     private void DrawSelection(RenderContext context, LayoutRect content)
     {
-        float start = content.X + MeasureTextWidth(DisplayText[..Selection.Start]) - horizontalTextOffset;
-        float end = content.X + MeasureTextWidth(DisplayText[..Selection.End]) - horizontalTextOffset;
+        float start = content.X + GetCaretTextX(Selection.Start) - horizontalTextOffset;
+        float end = content.X + GetCaretTextX(Selection.End) - horizontalTextOffset;
         float x = Math.Clamp(start, content.X, content.X + content.Width);
         float right = Math.Clamp(end, content.X, content.X + content.Width);
         if (right <= x)
@@ -446,14 +481,58 @@ public abstract class TextBoxBase : Control
 
     private void DrawCaret(RenderContext context, LayoutRect content)
     {
-        float x = content.X + MeasureTextWidth(DisplayText[..Caret.Position]) - horizontalTextOffset;
+        float x = content.X + GetCaretTextX(Caret.Position) - horizontalTextOffset;
         x = Math.Clamp(x, content.X, content.X + content.Width);
+        DrawRect verticalBounds = GetCaretVerticalBounds(content);
         context.DrawingContext.FillRectangle(
-            new DrawRect(x, content.Y, 1, MathF.Max(1, content.Height)),
+            new DrawRect(x, verticalBounds.Y, 1, verticalBounds.Height),
             CaretColor);
     }
 
+    private DrawRect GetCaretVerticalBounds(LayoutRect content)
+    {
+        TextRunStyle style = CreateTextStyle();
+        TextCaretVerticalMetrics metrics = caretLayout.GetCaretVerticalMetrics(style, CreateFontResolver());
+        float offsetY = Math.Clamp(metrics.OffsetY, 0, MathF.Max(0, content.Height - 1));
+        float availableHeight = MathF.Max(1, content.Height - offsetY);
+        float height = MathF.Min(MathF.Max(1, metrics.Height), availableHeight);
+        return new DrawRect(content.X, content.Y + offsetY, content.Width, height);
+    }
+
     private bool ShouldRenderCaret()
+    {
+        return IsCaretRenderEligible() &&
+            caretBlinkVisible;
+    }
+
+    public bool UpdateRenderTime(TimeSpan frameTime)
+    {
+        lastCaretFrameTime = frameTime;
+        if (!IsCaretRenderEligible())
+        {
+            caretBlinkVisible = true;
+            return false;
+        }
+
+        TimeSpan elapsed = frameTime - caretBlinkAnchor;
+        if (elapsed < TimeSpan.Zero)
+        {
+            elapsed = TimeSpan.Zero;
+        }
+
+        long phaseTicks = elapsed.Ticks % CaretBlinkPeriod.Ticks;
+        bool visible = phaseTicks < CaretBlinkVisibleDuration.Ticks;
+        if (visible == caretBlinkVisible)
+        {
+            return false;
+        }
+
+        caretBlinkVisible = visible;
+        Invalidate(InvalidationFlags.Render, "TextBox caret blink phase changed");
+        return true;
+    }
+
+    private bool IsCaretRenderEligible()
     {
         return IsKeyboardFocused &&
             IsEnabled &&
@@ -470,7 +549,7 @@ public abstract class TextBoxBase : Control
             return;
         }
 
-        float caretX = MeasureTextWidth(DisplayText[..Caret.Position]);
+        float caretX = GetCaretTextX(Caret.Position);
         float oldOffset = horizontalTextOffset;
         if (caretX - horizontalTextOffset > contentWidth)
         {
@@ -499,6 +578,23 @@ public abstract class TextBoxBase : Control
         return GetTextMeasurer().Measure(text, CreateTextStyle(), float.PositiveInfinity).Size.Width;
     }
 
+    private float GetCaretTextX(int position)
+    {
+        return caretLayout.GetCaretX(DisplayText, position, CreateTextStyle(), CreateFontResolver());
+    }
+
+    private void ResetCaretBlink()
+    {
+        caretBlinkAnchor = lastCaretFrameTime;
+        if (caretBlinkVisible)
+        {
+            return;
+        }
+
+        caretBlinkVisible = true;
+        Invalidate(InvalidationFlags.Render, "TextBox caret blink reset");
+    }
+
     private void InvalidateTextMetrics(string reason)
     {
         IncrementLayoutVersion();
@@ -515,7 +611,7 @@ public abstract class TextBoxBase : Control
     {
         IResourceProvider? provider = ResolveResourceProvider();
         return FontResourceId is not null && provider is not null
-            ? new TextMeasurer(new FontResolver(provider), LineBreakService.Default, resourceTextLayoutCache)
+            ? new TextMeasurer(CreateFontResolver(), LineBreakService.Default, resourceTextLayoutCache)
             : TextMeasurer;
     }
 
@@ -524,11 +620,19 @@ public abstract class TextBoxBase : Control
         IResourceProvider? provider = ResolveResourceProvider();
         if (FontResourceId is not null && provider is not null)
         {
-            FontResolver resolver = new(provider);
+            FontResolver resolver = CreateFontResolver();
             return new TextRenderer(resolver, new TextMeasurer(resolver, LineBreakService.Default, resourceTextLayoutCache));
         }
 
         return TextRenderer;
+    }
+
+    private FontResolver CreateFontResolver()
+    {
+        IResourceProvider? provider = ResolveResourceProvider();
+        return FontResourceId is not null && provider is not null
+            ? new FontResolver(provider)
+            : new FontResolver();
     }
 
     private IResourceProvider? ResolveResourceProvider()

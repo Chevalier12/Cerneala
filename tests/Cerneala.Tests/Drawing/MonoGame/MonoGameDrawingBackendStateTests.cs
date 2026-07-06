@@ -55,6 +55,17 @@ public sealed class MonoGameDrawingBackendStateTests
     }
 
     [Fact]
+    public void TextTextureOriginKeepsDrawTextTopLeftPosition()
+    {
+        Vector2 origin = InvokeTextTexturePositionDiagnostics(
+            new DrawPoint(20, 30),
+            new DrawPoint(-10.5f, -16.25f),
+            coordinateScale: 1);
+
+        Assert.Equal(new Vector2(20, 30), origin);
+    }
+
+    [Fact]
     public void DisposeIsIdempotent()
     {
         MonoGameDrawingBackend backend = CreateBackendShell();
@@ -113,6 +124,22 @@ public sealed class MonoGameDrawingBackendStateTests
         return Assert.IsType<MonoGameDrawMapper>(mapperProperty!.GetValue(backend));
     }
 
+    private static Vector2 InvokeTextTexturePositionDiagnostics(DrawPoint position, DrawPoint originOffset, float coordinateScale)
+    {
+        MethodInfo? method = typeof(MonoGameDrawingBackend).GetMethod(
+            "MapTextTexturePositionForDiagnostics",
+            BindingFlags.Static | BindingFlags.NonPublic,
+            binder: null,
+            types: [typeof(DrawPoint), typeof(DrawPoint), typeof(float)],
+            modifiers: null);
+
+        Assert.True(
+            method is not null,
+            "Expected MonoGameDrawingBackend to expose a GPU-free text texture position diagnostic seam.");
+
+        return Assert.IsType<Vector2>(method!.Invoke(null, [position, originOffset, coordinateScale]));
+    }
+
     private static IDictionary CreateTextTextureCache()
     {
         return (IDictionary)Activator.CreateInstance(TextTextureCacheField().FieldType)!;
@@ -123,10 +150,12 @@ public sealed class MonoGameDrawingBackendStateTests
         FieldInfo cacheField = TextTextureCacheField();
         IDictionary cache = (IDictionary)Activator.CreateInstance(cacheField.FieldType)!;
         Type keyType = cacheField.FieldType.GetGenericArguments()[0];
+        Type valueType = cacheField.FieldType.GetGenericArguments()[1];
         object key = Activator.CreateInstance(keyType)!;
         object texture = RuntimeHelpers.GetUninitializedObject(typeof(Texture2D));
+        object value = Activator.CreateInstance(valueType, texture, default(DrawPoint))!;
 
-        cache.Add(key, texture);
+        cache.Add(key, value);
         return cache;
     }
 

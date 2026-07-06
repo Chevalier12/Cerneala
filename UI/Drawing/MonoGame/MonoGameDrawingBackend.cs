@@ -8,7 +8,7 @@ namespace Cerneala.Drawing.MonoGame;
 public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 {
     private readonly SpriteBatch _spriteBatch;
-    private readonly Dictionary<TextTextureKey, Texture2D> _textTextureCache = new();
+    private readonly Dictionary<TextTextureKey, TextTexture> _textTextureCache = new();
     private readonly Texture2D _whitePixel;
     private readonly SkiaTextRasterizer? _textRasterizer;
     private float coordinateScale = 1;
@@ -225,15 +225,17 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         DrawTextRun mappedTextRun = mapper.MapTextRun(command.TextRun);
         TextTextureKey key = TextTextureKey.From(mappedTextRun, command.Color);
 
-        if (!_textTextureCache.TryGetValue(key, out Texture2D? texture))
+        if (!_textTextureCache.TryGetValue(key, out TextTexture cachedText))
         {
             RasterizedText text = _textRasterizer.Rasterize(mappedTextRun, command.Color);
-            texture = new Texture2D(_spriteBatch.GraphicsDevice, text.Width, text.Height);
+            Texture2D texture = new(_spriteBatch.GraphicsDevice, text.Width, text.Height);
             texture.SetData(text.RgbaPixels);
-            _textTextureCache.Add(key, texture);
+            cachedText = new TextTexture(texture, text.OriginOffset);
+            _textTextureCache.Add(key, cachedText);
         }
 
-        _spriteBatch.Draw(texture, mapper.MapVector(command.Position), Color.White);
+        Vector2 origin = MapTextTexturePosition(command.Position, cachedText.OriginOffset, coordinateScale);
+        _spriteBatch.Draw(cachedText.Texture, origin, Color.White);
     }
 
     private void PushClip(DrawRect rect)
@@ -259,9 +261,9 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             return;
         }
 
-        foreach (Texture2D texture in _textTextureCache.Values)
+        foreach (TextTexture text in _textTextureCache.Values)
         {
-            texture.Dispose();
+            text.Texture.Dispose();
         }
 
         _textTextureCache.Clear();
@@ -273,6 +275,17 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
     internal int TextTextureCacheCount => _textTextureCache.Count;
 
     private MonoGameDrawMapper Mapper => new(coordinateScale);
+
+    private static Vector2 MapTextTexturePosition(DrawPoint position, DrawPoint originOffset, float coordinateScale)
+    {
+        _ = originOffset;
+        return new MonoGameDrawMapper(coordinateScale).MapVector(position);
+    }
+
+    private static Vector2 MapTextTexturePositionForDiagnostics(DrawPoint position, DrawPoint originOffset, float coordinateScale)
+    {
+        return MapTextTexturePosition(position, originOffset, coordinateScale);
+    }
 
     internal void RenderClipCommandsForDiagnostics(DrawCommandList commands, Rectangle viewport)
     {
@@ -315,4 +328,6 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             return new TextTextureKey(textRun.Text, textRun.Font, textRun.Size, color);
         }
     }
+
+    private readonly record struct TextTexture(Texture2D Texture, DrawPoint OriginOffset);
 }

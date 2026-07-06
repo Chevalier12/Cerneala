@@ -20,6 +20,11 @@
 - Before editing a C# file, prefer `roslyn_read` to read the full file. Use `roslyn_pread` only for targeted partial reads.
 - RoslynIndexer is read/search/index only. Do not add or expect shell execution or write-file capabilities through MCP.
 
+## Local Tooling
+
+- `csi` is available as a local C# scripting/REPL command via the globally installed `dotnet-csi` tool. Use it for small C# experiments when a focused script is faster than adding throwaway project code.
+- When using `csi`, prefer running a temporary `.csx` file instead of piping script text into stdin, always use a short timeout, clean up the temp file, and check/kill any stuck `csi` process after suspicious runs. Do not leave interactive `csi` sessions or long-running scripts in the background; they can leak or balloon memory badly.
+
 ## Principles
 
 1. Ask, don't assume. If something is unclear, ask before writing a single line. Never make silent assumptions about intent, architecture, or requirements. When running unattended, pick the most reasonable interpretation, proceed, and record the assumption rather than blocking.

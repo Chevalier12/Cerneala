@@ -58,6 +58,7 @@ Generated from `.`.
 |   |       |-- 2026-07-06-normalize-viewport-scale-pointer-and-render-coordinates.md
 |   |       |-- 2026-07-06-runtime-diagnostics-and-playground-polish.md
 |   |       |-- 2026-07-06-runtime-preview-completion-gate.md
+|   |       |-- 2026-07-06-textbox-caret-blink-hit-testing.md
 |   |       |-- 2026-07-06-wire-platform-services-cursor-and-clipboard.md
 |   |       |-- 2026-07-06-wire-tab-focus-navigation-contract.md
 |   |       +-- developer-preview-smoke-failure-fix-plan.md
@@ -147,6 +148,7 @@ Generated from `.`.
 |   |   |   |-- TextBlockInvalidationTests.cs
 |   |   |   |-- TextBlockLayoutContractTests.cs
 |   |   |   |-- TextBlockTests.cs
+|   |   |   |-- TextBoxCaretBlinkTests.cs
 |   |   |   |-- TextBoxClipboardShortcutTests.cs
 |   |   |   |-- TextBoxEditingVisualContractTests.cs
 |   |   |   |-- TextBoxTests.cs
@@ -373,6 +375,7 @@ Generated from `.`.
 |   |   |       |-- FontResolverTests.cs
 |   |   |       |-- TextBlockTextServiceIntegrationTests.cs
 |   |   |       |-- TextBoxEditorIntegrationTests.cs
+|   |   |       |-- TextCaretLayoutTests.cs
 |   |   |       |-- TextCompositionManagerTests.cs
 |   |   |       |-- TextEditingControllerTests.cs
 |   |   |       |-- TextEditorTests.cs
@@ -578,6 +581,8 @@ Generated from `.`.
 |   |   |   |-- SkiaTextRasterizer.cs
 |   |   |   |-- SkiaTextShaper.cs
 |   |   |   |-- SystemFontSource.cs
+|   |   |   |-- TextCaretVerticalMetrics.cs
+|   |   |   |-- TextShaper.cs
 |   |   |   +-- TextShapeResult.cs
 |   |   |-- DrawArgument.cs
 |   |   |-- DrawColor.cs
@@ -789,13 +794,15 @@ Generated from `.`.
 |   |   |-- DrawCommandListPool.cs
 |   |   |-- ElementRenderCache.cs
 |   |   |-- IRenderableElement.cs
+|   |   |-- ITimeSensitiveRenderElement.cs
 |   |   |-- RenderContext.cs
 |   |   |-- RenderCounters.cs
 |   |   |-- RenderDependency.cs
 |   |   |-- RenderLayer.cs
 |   |   |-- RenderQueueProcessor.cs
 |   |   |-- RetainedRenderCache.cs
-|   |   +-- RetainedRenderer.cs
+|   |   |-- RetainedRenderer.cs
+|   |   +-- TimeSensitiveRenderInvalidator.cs
 |   |-- Resources/
 |   |   |-- MonoGame/
 |   |   |   +-- MonoGameImageLoader.cs
@@ -837,6 +844,7 @@ Generated from `.`.
 |       |-- LineBreakService.cs
 |       |-- ResolvedTextFont.cs
 |       |-- TextCaret.cs
+|       |-- TextCaretLayout.cs
 |       |-- TextCompositionManager.cs
 |       |-- TextCompositionState.cs
 |       |-- TextDocument.cs

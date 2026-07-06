@@ -9,13 +9,32 @@ public readonly record struct TextShapeResult
     private readonly DrawPoint[] _glyphPositions;
 
     public TextShapeResult(string text, int glyphCount)
-        : this(text, glyphCount, CreateGlyphIds(glyphCount), CreateGlyphPositions(glyphCount))
+        : this(text, glyphCount, CreateGlyphIds(glyphCount), CreateGlyphPositions(glyphCount), 0, default)
     {
     }
 
     public TextShapeResult(string text, int glyphCount, ushort[] glyphIds, DrawPoint[] glyphPositions)
+        : this(text, glyphCount, glyphIds, glyphPositions, 0, default)
+    {
+    }
+
+    public TextShapeResult(string text, int glyphCount, ushort[] glyphIds, DrawPoint[] glyphPositions, float advanceWidth)
+        : this(text, glyphCount, glyphIds, glyphPositions, advanceWidth, default)
+    {
+    }
+
+    public TextShapeResult(string text, int glyphCount, ushort[] glyphIds, DrawPoint[] glyphPositions, float advanceWidth, DrawPoint originOffset)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(glyphCount);
+        if (!float.IsFinite(advanceWidth) || advanceWidth < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(advanceWidth), "Advance width must be finite and non-negative.");
+        }
+
+        if (!float.IsFinite(originOffset.X) || !float.IsFinite(originOffset.Y))
+        {
+            throw new ArgumentOutOfRangeException(nameof(originOffset), "Origin offset must be finite.");
+        }
 
         _text = text ?? throw new ArgumentNullException(nameof(text));
         ArgumentNullException.ThrowIfNull(glyphIds);
@@ -34,11 +53,17 @@ public readonly record struct TextShapeResult
         _glyphIds = (ushort[])glyphIds.Clone();
         _glyphPositions = (DrawPoint[])glyphPositions.Clone();
         GlyphCount = glyphCount;
+        AdvanceWidth = advanceWidth;
+        OriginOffset = originOffset;
     }
 
     public string Text => _text ?? string.Empty;
 
     public int GlyphCount { get; }
+
+    public float AdvanceWidth { get; }
+
+    public DrawPoint OriginOffset { get; }
 
     public ushort[] GlyphIds => _glyphIds is null ? Array.Empty<ushort>() : (ushort[])_glyphIds.Clone();
 

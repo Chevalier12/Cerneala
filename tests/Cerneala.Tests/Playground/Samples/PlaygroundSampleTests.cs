@@ -8,6 +8,7 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Resources;
+using Cerneala.UI.Text;
 
 namespace Cerneala.Tests.Playground.Samples;
 
@@ -210,6 +211,32 @@ public sealed class PlaygroundSampleTests
     }
 
     [Fact]
+    public void RuntimePreviewTextBoxCaretUsesRasterInkVerticalMetrics()
+    {
+        ResourceStore resources = CreateFontResources(out ResourceId<FontResource> fontId);
+        UIRoot root = new(1000, 600);
+        RuntimePreviewSample sample = new(resources, fontId);
+        root.VisualChildren.Add(sample.Build());
+        UiHost host = new(new UiHostOptions { Root = root });
+        host.Update(EmptyInputFrame(), new UiViewport(1000, 600), TimeSpan.Zero);
+        TextBox textBox = sample.InputTextBox!;
+        textBox.CaretColor = new DrawColor(11, 22, 33);
+        textBox.IsKeyboardFocused = true;
+        textBox.MoveCaret(textBox.Text.Length);
+
+        host.Update(EmptyInputFrame(), new UiViewport(1000, 600), TimeSpan.Zero);
+        DrawCommand caret = CaretCommand(root, textBox.CaretColor);
+        TextCaretVerticalMetrics metrics = TextCaretLayout.Default.GetCaretVerticalMetrics(
+            CreateTextStyle(textBox),
+            new FontResolver(textBox.ResourceProvider!));
+        float contentY = textBox.ArrangedBounds.Y + textBox.BorderThickness.Top + textBox.Padding.Top;
+
+        Assert.Equal(contentY + metrics.OffsetY, caret.Rect.Y, precision: 2);
+        Assert.Equal(contentY, caret.Rect.Y, precision: 2);
+        Assert.Equal(metrics.Height, caret.Rect.Height, precision: 2);
+    }
+
+    [Fact]
     public void AuthoringAppSelectionUsesSkiaFontsAfterTextInputWhenFontResourceIsProvided()
     {
         ResourceStore resources = new();
@@ -233,6 +260,33 @@ public sealed class PlaygroundSampleTests
     }
 
     [Fact]
+    public void AuthoringAppTextInputRendersVisibleAlignedCaretWithSkiaFont()
+    {
+        ResourceStore resources = CreateFontResources(out ResourceId<FontResource> fontId);
+        UIRoot root = new(800, 600);
+        AuthoringAppSample sample = new(resources, fontId);
+        root.VisualChildren.Add(sample.Build());
+        UiHost host = new(new UiHostOptions { Root = root });
+        host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.Zero);
+        TextBox textBox = sample.NameTextBox!;
+        textBox.CaretColor = new DrawColor(9, 210, 160);
+        textBox.IsKeyboardFocused = true;
+
+        textBox.ReceiveTextInput("hahahehe");
+        Exception? exception = Record.Exception(() => host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.Zero));
+        DrawCommand caret = CaretCommand(root, textBox.CaretColor);
+        float expectedX = ContentX(textBox) + TextCaretLayout.Default.GetCaretX(
+            textBox.Text,
+            textBox.Caret.Position,
+            CreateTextStyle(textBox),
+            new FontResolver(textBox.ResourceProvider!));
+
+        Assert.Null(exception);
+        Assert.InRange(caret.Rect.X, ContentX(textBox), ContentX(textBox) + ContentWidth(textBox));
+        Assert.Equal(expectedX, caret.Rect.X, precision: 2);
+    }
+
+    [Fact]
     public void GettingStartedSelectionUsesSkiaFontsAfterTextInputWhenFontResourceIsProvided()
     {
         ResourceStore resources = new();
@@ -253,6 +307,26 @@ public sealed class PlaygroundSampleTests
         Assert.All(
             commands.Where(command => command.Kind == DrawCommandKind.DrawText),
             command => Assert.IsType<SkiaFont>(command.TextRun!.Font));
+    }
+
+    [Fact]
+    public void GettingStartedTextInputRendersVisibleCaretWithSkiaFont()
+    {
+        ResourceStore resources = CreateFontResources(out ResourceId<FontResource> fontId);
+        UIRoot root = new(800, 600);
+        GettingStartedSample sample = new(resources, fontId);
+        root.VisualChildren.Add(sample.Build());
+        UiHost host = new(new UiHostOptions { Root = root });
+        host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.Zero);
+        TextBox textBox = sample.EntryTextBox!;
+        textBox.CaretColor = new DrawColor(120, 20, 240);
+        textBox.IsKeyboardFocused = true;
+
+        textBox.ReceiveTextInput("Ada");
+        Exception? exception = Record.Exception(() => host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.Zero));
+
+        Assert.Null(exception);
+        Assert.Equal(1, root.RetainedRenderer.Render(root).Count(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == textBox.CaretColor));
     }
 
     [Fact]
@@ -332,6 +406,34 @@ public sealed class PlaygroundSampleTests
             KeyboardSnapshot.Empty,
             KeyboardSnapshot.Empty,
             Array.Empty<TextInputSnapshotEvent>());
+    }
+
+    private static ResourceStore CreateFontResources(out ResourceId<FontResource> fontId)
+    {
+        ResourceStore resources = new();
+        fontId = new ResourceId<FontResource>("Playground/Body");
+        resources.SetResource(fontId, new FontResource(new SystemFontSource().LoadFont("Arial", 16)));
+        return resources;
+    }
+
+    private static DrawCommand CaretCommand(UIRoot root, DrawColor caretColor)
+    {
+        return root.RetainedRenderer.Render(root).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == caretColor);
+    }
+
+    private static TextRunStyle CreateTextStyle(TextBox textBox)
+    {
+        return new TextRunStyle(textBox.FontFamily, textBox.FontSize, color: textBox.Foreground, fontResourceId: textBox.FontResourceId);
+    }
+
+    private static float ContentX(TextBox textBox)
+    {
+        return textBox.ArrangedBounds.X + textBox.BorderThickness.Left + textBox.Padding.Left;
+    }
+
+    private static float ContentWidth(TextBox textBox)
+    {
+        return textBox.ArrangedBounds.Width - textBox.BorderThickness.Left - textBox.Padding.Left - textBox.BorderThickness.Right - textBox.Padding.Right;
     }
 
     private static InputFrame PointerFrame(float x, float y, bool previousDown = false, bool currentDown = false)

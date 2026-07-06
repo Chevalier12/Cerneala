@@ -51,7 +51,13 @@ public sealed class SkiaTextRasterizer
         canvas.DrawText(textBlob, -bounds.Left, -bounds.Top, paint);
 
         byte[] pixels = bitmap.Bytes;
-        return new RasterizedText(width, height, pixels, shapeResult);
+        pixels = TrimTransparentLeftColumns(pixels, width, height, out int trimmedLeftColumns);
+        return new RasterizedText(
+            width - trimmedLeftColumns,
+            height,
+            pixels,
+            shapeResult,
+            new DrawPoint(bounds.Left + trimmedLeftColumns, bounds.Top));
     }
 
     private static SKColor ToColor(DrawColor color)
@@ -76,5 +82,44 @@ public sealed class SkiaTextRasterizer
         }
 
         return points;
+    }
+
+    private static byte[] TrimTransparentLeftColumns(byte[] pixels, int width, int height, out int trimmedColumns)
+    {
+        trimmedColumns = 0;
+        while (trimmedColumns < width - 1 && IsColumnTransparent(pixels, width, height, trimmedColumns))
+        {
+            trimmedColumns++;
+        }
+
+        if (trimmedColumns == 0)
+        {
+            return pixels;
+        }
+
+        int nextWidth = width - trimmedColumns;
+        byte[] trimmed = new byte[nextWidth * height * 4];
+        for (int y = 0; y < height; y++)
+        {
+            int sourceOffset = ((y * width) + trimmedColumns) * 4;
+            int destinationOffset = (y * nextWidth) * 4;
+            Buffer.BlockCopy(pixels, sourceOffset, trimmed, destinationOffset, nextWidth * 4);
+        }
+
+        return trimmed;
+    }
+
+    private static bool IsColumnTransparent(byte[] pixels, int width, int height, int x)
+    {
+        for (int y = 0; y < height; y++)
+        {
+            int alphaIndex = (((y * width) + x) * 4) + 3;
+            if (pixels[alphaIndex] != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

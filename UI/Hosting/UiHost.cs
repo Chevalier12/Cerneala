@@ -3,6 +3,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Platform;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Hosting;
 
@@ -67,8 +68,10 @@ public sealed class UiHost
 
         UIRoot currentRoot = RequireRoot();
         UiViewport currentViewport = viewport ?? this.viewport;
+        TimeSpan frameTime = elapsedTime ?? Clock?.GetElapsedTime() ?? TimeSpan.Zero;
         ApplyViewportIfChanged(currentRoot, currentViewport);
         PrimeInitialFrame(currentRoot);
+        TimeSensitiveRenderInvalidator.Invalidate(currentRoot, frameTime);
 
         FrameStats stats = new();
         if (currentRoot.Scheduler.HasWork)
@@ -89,7 +92,7 @@ public sealed class UiHost
 
         currentRoot.RetainedRenderer.Commit(currentRoot);
         PublishCursor(currentRoot, inputFrame);
-        LastFrame = new UiFrame(elapsedTime ?? Clock?.GetElapsedTime() ?? TimeSpan.Zero, this.viewport, inputFrame, stats);
+        LastFrame = new UiFrame(frameTime, this.viewport, inputFrame, stats);
         return LastFrame;
     }
 
