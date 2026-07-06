@@ -854,6 +854,7 @@ Generated from `.`.
 |       |-- TextLayoutCache.cs
 |       |-- TextLayoutKey.cs
 |       |-- TextLine.cs
+|       |-- TextLineMetrics.cs
 |       |-- TextMeasurer.cs
 |       |-- TextMeasureResult.cs
 |       |-- TextRenderer.cs

@@ -25,8 +25,8 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
     private IResourceProvider? resourceProvider;
     private ResourceId<FontResource>? fontResourceId;
     private float horizontalTextOffset;
+    private TimeSpan caretBlinkClock;
     private TimeSpan caretBlinkAnchor;
-    private TimeSpan lastCaretFrameTime;
     private bool caretBlinkVisible = true;
     private bool isMouseSelecting;
     private int mouseSelectionAnchor;
@@ -576,14 +576,18 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
 
     public bool UpdateRenderTime(TimeSpan frameTime)
     {
-        lastCaretFrameTime = frameTime;
+        if (frameTime > TimeSpan.Zero)
+        {
+            caretBlinkClock += frameTime;
+        }
+
         if (!IsCaretRenderEligible())
         {
             caretBlinkVisible = true;
             return false;
         }
 
-        TimeSpan elapsed = frameTime - caretBlinkAnchor;
+        TimeSpan elapsed = caretBlinkClock - caretBlinkAnchor;
         if (elapsed < TimeSpan.Zero)
         {
             elapsed = TimeSpan.Zero;
@@ -660,7 +664,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
 
     private void ResetCaretBlink()
     {
-        caretBlinkAnchor = lastCaretFrameTime;
+        caretBlinkAnchor = caretBlinkClock;
         if (caretBlinkVisible)
         {
             return;

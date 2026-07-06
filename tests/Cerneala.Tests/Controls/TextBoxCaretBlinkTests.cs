@@ -34,6 +34,21 @@ public sealed class TextBoxCaretBlinkTests
     }
 
     [Fact]
+    public void FocusedCaretTurnsOffAfterAccumulatedElapsedFrames()
+    {
+        UIRoot root = RootWithTextBox(focused: true);
+        UiHost host = HostFor(root);
+
+        Update(host, 0);
+        for (int i = 0; i < 32; i++)
+        {
+            Update(host, 16);
+        }
+
+        Assert.Equal(0, CountCaretCommands(root));
+    }
+
+    [Fact]
     public void FocusedCaretTurnsBackOnAfterFullBlinkPeriod()
     {
         UIRoot root = RootWithTextBox(focused: true);
@@ -41,7 +56,7 @@ public sealed class TextBoxCaretBlinkTests
 
         Update(host, 0);
         Update(host, 500);
-        Update(host, 1000);
+        Update(host, 500);
 
         Assert.Equal(1, CountCaretCommands(root));
     }
@@ -58,11 +73,11 @@ public sealed class TextBoxCaretBlinkTests
         UiFrame samePhaseFrame = Update(host, 250);
         Assert.Equal(1, CountCaretCommands(root));
 
-        UiFrame offFrame = Update(host, 550);
+        UiFrame offFrame = Update(host, 300);
         Assert.Equal(0, CountCaretCommands(root));
         Assert.True(offFrame.Stats.RenderedElements > samePhaseFrame.Stats.RenderedElements);
 
-        Update(host, 1050);
+        Update(host, 500);
         Assert.Equal(1, CountCaretCommands(root));
     }
 

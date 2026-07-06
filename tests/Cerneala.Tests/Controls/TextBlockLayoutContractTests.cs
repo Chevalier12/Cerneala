@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
@@ -85,6 +86,32 @@ public sealed class TextBlockLayoutContractTests
         root.RetainedRenderer.Commit(root);
 
         Assert.Equal(measuredIdentity, textBlock.RenderDependencies.TextLayoutIdentity);
+    }
+
+    [Fact]
+    public void TextBlockMeasureReservesRasterizedLineHeightForSystemFonts()
+    {
+        const float fontSize = 14;
+        ResourceStore store = new();
+        ResourceId<FontResource> id = new("Body");
+        IDrawFont font = new SystemFontSource().LoadFont("Arial", fontSize);
+        store.SetResource(id, new FontResource(font));
+        TextBlock textBlock = new()
+        {
+            Text = "Ready. No retained work should run on unchanged frames.",
+            FontSize = fontSize,
+            FontResourceId = id,
+            ResourceProvider = store
+        };
+        RasterizedText rasterizedLine = new SkiaTextRasterizer().Rasterize(
+            new DrawTextRun(font, "Ag", fontSize),
+            DrawColor.White);
+
+        LayoutSize measured = textBlock.Measure(new MeasureContext(new LayoutSize(500, 100)));
+
+        Assert.True(
+            measured.Height >= rasterizedLine.Height,
+            $"Expected TextBlock to reserve at least the rasterized line height {rasterizedLine.Height}, but measured {measured.Height}.");
     }
 
     [Fact]

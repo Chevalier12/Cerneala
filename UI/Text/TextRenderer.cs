@@ -38,7 +38,7 @@ public class TextRenderer
         }
 
         ResolvedTextFont font = fontResolver.Resolve(style);
-        float lineHeight = style.FontSize * style.Scale;
+        float lineHeight = TextLineMetrics.MeasureLineHeight(style, font);
         for (int i = 0; i < measurement.Lines.Count; i++)
         {
             TextLine line = measurement.Lines[i];

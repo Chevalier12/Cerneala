@@ -38,7 +38,8 @@ public class TextMeasurer
             {
                 IReadOnlyList<TextLine> lines = lineBreakService.BreakLines(text, style, wrappingWidth);
                 float width = lines.Count == 0 ? 0 : lines.Max(line => line.Width);
-                float height = style.FontSize * style.Scale * Math.Max(1, lines.Count);
+                float lineHeight = TextLineMetrics.MeasureLineHeight(style, font);
+                float height = lineHeight * Math.Max(1, lines.Count);
                 return new TextMeasureResult(new LayoutSize(width, height), lines.Count, key, font.Identity, lines);
             });
         }
