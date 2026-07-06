@@ -31,6 +31,11 @@ public sealed class CursorService
             {
                 return box.Cursor;
             }
+
+            if (current.Cursor is Cursor cursor)
+            {
+                return cursor;
+            }
         }
 
         return Cursor.Arrow;

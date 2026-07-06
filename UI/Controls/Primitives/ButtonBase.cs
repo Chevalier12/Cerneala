@@ -27,6 +27,7 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
     {
         Focusable = true;
         IsTabStop = true;
+        Cursor = Cerneala.UI.Input.Cursor.Hand;
     }
 
     public bool IsPressed

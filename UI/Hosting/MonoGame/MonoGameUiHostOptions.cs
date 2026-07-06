@@ -1,6 +1,7 @@
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input.MonoGame;
+using Cerneala.UI.Platform;
 using Cerneala.UI.Resources;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -25,4 +26,6 @@ public sealed class MonoGameUiHostOptions
     public IUiClock? Clock { get; init; }
 
     public SkiaTextRasterizer? TextRasterizer { get; init; }
+
+    public IPlatformServices? PlatformServices { get; init; }
 }

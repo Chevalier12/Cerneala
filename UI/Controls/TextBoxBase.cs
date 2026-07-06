@@ -4,6 +4,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Platform;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Text;
@@ -47,6 +48,7 @@ public abstract class TextBoxBase : Control
         BorderThickness = new Thickness(1);
         BorderColor = new DrawColor(120, 130, 145);
         Background = DrawColor.White;
+        Cursor = Cerneala.UI.Input.Cursor.IBeam;
         Handlers.AddHandler(InputEvents.TextInputEvent, OnRoutedTextInput);
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnRoutedKeyDown);
     }
@@ -287,6 +289,12 @@ public abstract class TextBoxBase : Control
             return;
         }
 
+        if (keyArgs.IsControlDown && !keyArgs.IsAltDown && HandleClipboardShortcut(keyArgs.Key))
+        {
+            keyArgs.Handled = true;
+            return;
+        }
+
         bool handled = keyArgs.Key switch
         {
             InputKey.Back => HandleBackspace(),
@@ -299,6 +307,74 @@ public abstract class TextBoxBase : Control
         };
 
         keyArgs.Handled = handled;
+    }
+
+    private bool HandleClipboardShortcut(InputKey key)
+    {
+        return key switch
+        {
+            InputKey.A => SelectAllText(),
+            InputKey.C => CopySelection(),
+            InputKey.X => CutSelection(),
+            InputKey.V => PasteClipboardText(),
+            _ => false
+        };
+    }
+
+    private bool SelectAllText()
+    {
+        Select(0, Text.Length);
+        return true;
+    }
+
+    private bool CopySelection()
+    {
+        IClipboard? clipboard = ResolveClipboard();
+        if (clipboard is null || Selection.IsEmpty)
+        {
+            return false;
+        }
+
+        clipboard.SetText(Text.Substring(Selection.Start, Selection.Length));
+        return true;
+    }
+
+    private bool CutSelection()
+    {
+        IClipboard? clipboard = ResolveClipboard();
+        if (clipboard is null || Selection.IsEmpty)
+        {
+            return false;
+        }
+
+        clipboard.SetText(Text.Substring(Selection.Start, Selection.Length));
+        editor.ReplaceSelection(string.Empty);
+        SyncTextFromEditor("TextBox cut");
+        return true;
+    }
+
+    private bool PasteClipboardText()
+    {
+        IClipboard? clipboard = ResolveClipboard();
+        if (clipboard?.HasText != true)
+        {
+            return false;
+        }
+
+        string? text = clipboard.GetText();
+        if (string.IsNullOrEmpty(text))
+        {
+            return false;
+        }
+
+        editor.InsertText(text);
+        SyncTextFromEditor("TextBox paste");
+        return true;
+    }
+
+    private IClipboard? ResolveClipboard()
+    {
+        return Root?.PlatformServices.Clipboard ?? Root?.PlatformServices.TextInput?.Clipboard;
     }
 
     private bool HandleBackspace()

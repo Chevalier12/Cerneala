@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Platform;
 
 namespace Cerneala.UI.Hosting;
 
@@ -10,6 +11,8 @@ public sealed class UiHost
     private UIRoot? root;
     private UiViewport viewport;
     private bool needsInitialFrame = true;
+    private readonly IPlatformServices? platformServices;
+    private readonly CursorService cursorService = new();
 
     public UiHost(UiHostOptions? options = null)
     {
@@ -20,9 +23,11 @@ public sealed class UiHost
         Backend = options.Backend;
         Clock = options.Clock;
         InputBridge = options.InputBridge ?? new ElementInputBridge();
+        platformServices = options.PlatformServices;
 
         if (root is not null)
         {
+            root.SetPlatformServices(platformServices);
             ApplyViewport(root, viewport);
         }
     }
@@ -45,6 +50,7 @@ public sealed class UiHost
     {
         root = newRoot ?? throw new ArgumentNullException(nameof(newRoot));
         needsInitialFrame = true;
+        root.SetPlatformServices(platformServices);
         ApplyViewport(root, viewport);
     }
 
@@ -82,6 +88,7 @@ public sealed class UiHost
         }
 
         currentRoot.RetainedRenderer.Commit(currentRoot);
+        PublishCursor(currentRoot, inputFrame);
         LastFrame = new UiFrame(elapsedTime ?? Clock?.GetElapsedTime() ?? TimeSpan.Zero, this.viewport, inputFrame, stats);
         return LastFrame;
     }
@@ -144,5 +151,37 @@ public sealed class UiHost
             InvalidationFlags.Subtree,
             "Initial host frame");
         needsInitialFrame = false;
+    }
+
+    private void PublishCursor(UIRoot currentRoot, InputFrame inputFrame)
+    {
+        ICursorService? platformCursor = currentRoot.PlatformServices.Cursor;
+        if (platformCursor is null)
+        {
+            return;
+        }
+
+        Cursor cursor = cursorService.Resolve(currentRoot, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        platformCursor.SetCursor(ToCursorShape(cursor));
+    }
+
+    private static CursorShape ToCursorShape(Cursor cursor)
+    {
+        if (cursor == Cursor.Hand)
+        {
+            return CursorShape.Hand;
+        }
+
+        if (cursor == Cursor.IBeam)
+        {
+            return CursorShape.IBeam;
+        }
+
+        if (cursor == Cursor.Crosshair)
+        {
+            return CursorShape.Crosshair;
+        }
+
+        return CursorShape.Arrow;
     }
 }

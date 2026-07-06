@@ -67,13 +67,13 @@ public sealed class FocusManager
 
             if (inputFrame.Keyboard.IsPressed(key))
             {
-                bool handled = RaiseKeyPair(routeMap, focusedId, key, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent);
+                bool handled = RaiseKeyPair(routeMap, focusedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent);
                 results.Add(new KeyboardDispatchResult(FocusedElement, focusedId, key, KeyboardDispatchKind.Pressed, handled));
             }
 
             if (inputFrame.Keyboard.IsReleased(key))
             {
-                bool handled = RaiseKeyPair(routeMap, focusedId, key, InputEvents.PreviewKeyUpEvent, InputEvents.KeyUpEvent);
+                bool handled = RaiseKeyPair(routeMap, focusedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyUpEvent, InputEvents.KeyUpEvent);
                 results.Add(new KeyboardDispatchResult(FocusedElement, focusedId, key, KeyboardDispatchKind.Released, handled));
             }
         }
@@ -81,10 +81,19 @@ public sealed class FocusManager
         return results;
     }
 
-    private static bool RaiseKeyPair(ElementInputRouteMap routeMap, UiElementId targetId, InputKey key, RoutedEvent previewEvent, RoutedEvent bubbleEvent)
+    private static bool RaiseKeyPair(
+        ElementInputRouteMap routeMap,
+        UiElementId targetId,
+        InputKey key,
+        InputFrame.KeyboardFrame keyboard,
+        RoutedEvent previewEvent,
+        RoutedEvent bubbleEvent)
     {
-        KeyEventArgs previewArgs = new(previewEvent, targetId, key);
-        KeyEventArgs bubbleArgs = new(bubbleEvent, targetId, key);
+        bool isControlDown = keyboard.IsDown(InputKey.LeftCtrl) || keyboard.IsDown(InputKey.RightCtrl);
+        bool isShiftDown = keyboard.IsDown(InputKey.LeftShift) || keyboard.IsDown(InputKey.RightShift);
+        bool isAltDown = keyboard.IsDown(InputKey.LeftAlt) || keyboard.IsDown(InputKey.RightAlt);
+        KeyEventArgs previewArgs = new(previewEvent, targetId, key, isControlDown, isShiftDown, isAltDown);
+        KeyEventArgs bubbleArgs = new(bubbleEvent, targetId, key, isControlDown, isShiftDown, isAltDown);
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
             targetId,

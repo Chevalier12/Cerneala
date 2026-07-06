@@ -66,6 +66,11 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         typeof(UIElement),
         new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsStyle));
 
+    public static readonly UiProperty<Cursor?> CursorProperty = UiProperty<Cursor?>.Register(
+        nameof(Cursor),
+        typeof(UIElement),
+        new UiPropertyMetadata<Cursor?>(null, UiPropertyOptions.None));
+
     public UIElement()
     {
         LogicalChildren = new UIElementCollection(this, ElementChildRole.Logical);
@@ -185,6 +190,12 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     {
         get => GetValue(IsTabStopProperty);
         set => SetValue(IsTabStopProperty, value);
+    }
+
+    public Cursor? Cursor
+    {
+        get => GetValue(CursorProperty);
+        set => SetValue(CursorProperty, value);
     }
 
     internal bool HasAttachedParent =>

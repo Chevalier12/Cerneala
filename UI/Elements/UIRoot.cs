@@ -3,6 +3,7 @@ using Cerneala.UI.Accessibility;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Platform;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Styling;
@@ -93,6 +94,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public ResourceDependencyTracker ResourceDependencyTracker { get; }
 
+    public IPlatformServices PlatformServices { get; private set; } = Cerneala.UI.Platform.PlatformServices.Empty;
+
     public IImageLoader? ImageLoader { get; private set; }
 
     public ImageResourceCache? ImageResourceCache { get; private set; }
@@ -125,6 +128,11 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         }
 
         Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Root resource provider changed");
+    }
+
+    public void SetPlatformServices(IPlatformServices? services)
+    {
+        PlatformServices = services ?? Cerneala.UI.Platform.PlatformServices.Empty;
     }
 
     public void SetImageLoader(IImageLoader? loader)

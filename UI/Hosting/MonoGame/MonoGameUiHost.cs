@@ -32,7 +32,8 @@ public sealed class MonoGameUiHost : IDisposable
             Root = options.Root,
             Viewport = options.Viewport,
             Backend = backend,
-            Clock = options.Clock
+            Clock = options.Clock,
+            PlatformServices = options.PlatformServices
         });
         AttachContentServices(host.Root);
     }

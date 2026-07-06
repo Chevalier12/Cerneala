@@ -1,5 +1,6 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Platform;
 
 namespace Cerneala.UI.Hosting;
 
@@ -16,4 +17,6 @@ public sealed class UiHostOptions
     public IUiClock? Clock { get; set; }
 
     public ElementInputBridge? InputBridge { get; set; }
+
+    public IPlatformServices? PlatformServices { get; set; }
 }
