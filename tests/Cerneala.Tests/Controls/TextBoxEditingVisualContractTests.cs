@@ -77,9 +77,66 @@ public sealed class TextBoxEditingVisualContractTests
 
         DrawCommand[] commands = Render(textBox).ToArray();
         int selectionIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.FillRectangle && command.Color == SelectionColor);
-        int textIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText);
+        int normalTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == DrawColor.Black);
+        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == DrawColor.White);
 
-        Assert.InRange(selectionIndex, 0, textIndex - 1);
+        Assert.True(normalTextIndex < selectionIndex);
+        Assert.True(selectionIndex < selectedTextIndex);
+    }
+
+    [Fact]
+    public void SelectionRangeRendersSelectedTextInWhiteAboveNormalText()
+    {
+        TextBox textBox = ArrangedTextBox("abcd");
+        textBox.Select(1, 3);
+
+        DrawCommand[] textCommands = Render(textBox)
+            .Where(command => command.Kind == DrawCommandKind.DrawText)
+            .ToArray();
+
+        Assert.Equal(2, textCommands.Length);
+        Assert.Equal(DrawColor.Black, textCommands[0].Color);
+        Assert.Equal(DrawColor.White, textCommands[1].Color);
+    }
+
+    [Fact]
+    public void SelectionRangeMasksNormalTextBeforeSelectedTextPass()
+    {
+        TextBox textBox = ArrangedTextBox("abcd");
+        textBox.Select(1, 3);
+
+        DrawCommand[] commands = Render(textBox).ToArray();
+        int normalTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == DrawColor.Black);
+        int selectionIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.FillRectangle && command.Color == textBox.SelectionBackground);
+        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == DrawColor.White);
+
+        Assert.True(normalTextIndex < selectionIndex);
+        Assert.True(selectionIndex < selectedTextIndex);
+    }
+
+    [Fact]
+    public void SelectionRangeRendersFullTextInWhiteInsideSelectionClip()
+    {
+        TextBox textBox = ArrangedTextBox("abcd");
+        textBox.Select(1, 3);
+
+        DrawCommand[] commands = Render(textBox).ToArray();
+        DrawCommand selectedText = Render(textBox)
+            .Where(command => command.Kind == DrawCommandKind.DrawText)
+            .Single(command => command.Color == DrawColor.White);
+        int clipIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.PushClip);
+        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == DrawColor.White);
+
+        Assert.Equal("abcd", selectedText.Text);
+        Assert.True(clipIndex < selectedTextIndex);
+    }
+
+    [Fact]
+    public void DefaultSelectionBackgroundIsOpaqueBlue()
+    {
+        TextBox textBox = new();
+
+        Assert.Equal(new DrawColor(0, 120, 215), textBox.SelectionBackground);
     }
 
     [Fact]

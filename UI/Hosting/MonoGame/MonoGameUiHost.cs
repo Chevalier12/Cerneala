@@ -71,7 +71,7 @@ public sealed class MonoGameUiHost : IDisposable
     public void Draw()
     {
         drawingBackend.CoordinateScale = host.Viewport.Scale;
-        spriteBatch.Begin(rasterizerState: MonoGameDrawingBackend.ScissorRasterizerState);
+        spriteBatch.Begin(sortMode: SpriteSortMode.Immediate, rasterizerState: MonoGameDrawingBackend.ScissorRasterizerState);
         try
         {
             host.Draw(drawingBackend);

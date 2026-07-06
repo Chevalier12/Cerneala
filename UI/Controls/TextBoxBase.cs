@@ -9,6 +9,7 @@ using Cerneala.UI.Platform;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Text;
+using System.Text;
 
 namespace Cerneala.UI.Controls;
 
@@ -27,6 +28,8 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
     private TimeSpan caretBlinkAnchor;
     private TimeSpan lastCaretFrameTime;
     private bool caretBlinkVisible = true;
+    private bool isMouseSelecting;
+    private int mouseSelectionAnchor;
 
     public static readonly UiProperty<string> TextProperty = UiProperty<string>.Register(
         nameof(Text),
@@ -44,7 +47,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
     public static readonly UiProperty<DrawColor> SelectionBackgroundProperty = UiProperty<DrawColor>.Register(
         nameof(SelectionBackground),
         typeof(TextBoxBase),
-        new UiPropertyMetadata<DrawColor>(new DrawColor(96, 165, 250, 120), UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<DrawColor>(new DrawColor(0, 120, 215), UiPropertyOptions.AffectsRender));
 
     protected TextBoxBase()
     {
@@ -59,6 +62,8 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         Handlers.AddHandler(InputEvents.TextInputEvent, OnRoutedTextInput);
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnRoutedKeyDown);
         Handlers.AddHandler(InputEvents.MouseDownEvent, OnRoutedMouseDown);
+        Handlers.AddHandler(InputEvents.MouseMoveEvent, OnRoutedMouseMove);
+        Handlers.AddHandler(InputEvents.MouseUpEvent, OnRoutedMouseUp);
     }
 
     public TextEditor Editor => editor;
@@ -151,7 +156,13 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
 
     public void ReceiveTextInput(string text)
     {
-        editor.InsertText(text ?? string.Empty);
+        string input = NormalizeTextInput(text);
+        if (input.Length == 0)
+        {
+            return;
+        }
+
+        editor.InsertText(input);
         SyncTextFromEditor("TextBox text input");
         EnsureCaretVisible();
         ResetCaretBlink();
@@ -265,20 +276,22 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         DrawRect clip = Border.ToDrawRect(content);
         context.DrawingContext.PushClip(clip);
 
-        if (!Selection.IsEmpty && SelectionBackground.A != 0)
-        {
-            DrawSelection(context, content);
-        }
-
+        DrawRect? selectionBounds = GetSelectionBounds(content);
         if (DisplayText.Length > 0)
         {
-            GetTextRenderer().Render(
-                context.DrawingContext,
-                DisplayText,
-                CreateTextStyle(),
-                content.Width + horizontalTextOffset,
-                new DrawPoint(content.X - horizontalTextOffset, content.Y),
-                Foreground);
+            DrawText(context, content, Foreground);
+        }
+
+        if (!Selection.IsEmpty && SelectionBackground.A != 0)
+        {
+            DrawSelection(context, selectionBounds);
+        }
+
+        if (DisplayText.Length > 0 && selectionBounds is DrawRect selectedTextClip)
+        {
+            context.DrawingContext.PushClip(selectedTextClip);
+            DrawText(context, content, DrawColor.White);
+            context.DrawingContext.PopClip();
         }
 
         if (ShouldRenderCaret())
@@ -335,9 +348,42 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         }
 
         LayoutRect content = ContentControl.Deflate(ArrangedBounds, Insets);
-        float textX = mouseArgs.X - content.X + horizontalTextOffset;
-        int index = caretLayout.GetCaretIndexAtX(DisplayText, textX, CreateTextStyle(), CreateFontResolver());
+        int index = GetCaretIndexAtMouseX(mouseArgs.X, content);
+        isMouseSelecting = true;
+        mouseSelectionAnchor = index;
         MoveCaret(index);
+        mouseArgs.Handled = true;
+    }
+
+    private void OnRoutedMouseMove(UiElementId sender, RoutedEventArgs args)
+    {
+        if (!isMouseSelecting || args is not MouseEventArgs mouseArgs || mouseArgs.Handled)
+        {
+            return;
+        }
+
+        LayoutRect content = ContentControl.Deflate(ArrangedBounds, Insets);
+        int index = GetCaretIndexAtMouseX(mouseArgs.X, content);
+        Select(mouseSelectionAnchor, index);
+        ResetCaretBlink();
+        mouseArgs.Handled = true;
+    }
+
+    private void OnRoutedMouseUp(UiElementId sender, RoutedEventArgs args)
+    {
+        if (!isMouseSelecting ||
+            args is not MouseButtonEventArgs mouseArgs ||
+            mouseArgs.Handled ||
+            mouseArgs.ChangedButton != InputMouseButton.Left)
+        {
+            return;
+        }
+
+        LayoutRect content = ContentControl.Deflate(ArrangedBounds, Insets);
+        int index = GetCaretIndexAtMouseX(mouseArgs.X, content);
+        Select(mouseSelectionAnchor, index);
+        ResetCaretBlink();
+        isMouseSelecting = false;
         mouseArgs.Handled = true;
     }
 
@@ -463,7 +509,15 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         InvalidateTextMetrics(reason);
     }
 
-    private void DrawSelection(RenderContext context, LayoutRect content)
+    private void DrawSelection(RenderContext context, DrawRect? bounds)
+    {
+        if (bounds is DrawRect rect)
+        {
+            context.DrawingContext.FillRectangle(rect, SelectionBackground);
+        }
+    }
+
+    private DrawRect? GetSelectionBounds(LayoutRect content)
     {
         float start = content.X + GetCaretTextX(Selection.Start) - horizontalTextOffset;
         float end = content.X + GetCaretTextX(Selection.End) - horizontalTextOffset;
@@ -471,12 +525,21 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         float right = Math.Clamp(end, content.X, content.X + content.Width);
         if (right <= x)
         {
-            return;
+            return null;
         }
 
-        context.DrawingContext.FillRectangle(
-            new DrawRect(x, content.Y, right - x, MathF.Max(1, content.Height)),
-            SelectionBackground);
+        return new DrawRect(x, content.Y, right - x, MathF.Max(1, content.Height));
+    }
+
+    private void DrawText(RenderContext context, LayoutRect content, DrawColor color)
+    {
+        GetTextRenderer().Render(
+            context.DrawingContext,
+            DisplayText,
+            CreateTextStyle(color),
+            content.Width + horizontalTextOffset,
+            new DrawPoint(content.X - horizontalTextOffset, content.Y),
+            color);
     }
 
     private void DrawCaret(RenderContext context, LayoutRect content)
@@ -583,6 +646,12 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         return caretLayout.GetCaretX(DisplayText, position, CreateTextStyle(), CreateFontResolver());
     }
 
+    private int GetCaretIndexAtMouseX(float mouseX, LayoutRect content)
+    {
+        float textX = mouseX - content.X + horizontalTextOffset;
+        return caretLayout.GetCaretIndexAtX(DisplayText, textX, CreateTextStyle(), CreateFontResolver());
+    }
+
     private void ResetCaretBlink()
     {
         caretBlinkAnchor = lastCaretFrameTime;
@@ -595,6 +664,29 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         Invalidate(InvalidationFlags.Render, "TextBox caret blink reset");
     }
 
+    private static string NormalizeTextInput(string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        StringBuilder? builder = null;
+        for (int i = 0; i < text.Length; i++)
+        {
+            char character = text[i];
+            if (char.IsControl(character))
+            {
+                builder ??= new StringBuilder(text.Length).Append(text, 0, i);
+                continue;
+            }
+
+            builder?.Append(character);
+        }
+
+        return builder?.ToString() ?? text;
+    }
+
     private void InvalidateTextMetrics(string reason)
     {
         IncrementLayoutVersion();
@@ -604,7 +696,12 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
 
     private TextRunStyle CreateTextStyle()
     {
-        return new TextRunStyle(FontFamily, FontSize, color: Foreground, fontResourceId: FontResourceId);
+        return CreateTextStyle(Foreground);
+    }
+
+    private TextRunStyle CreateTextStyle(DrawColor color)
+    {
+        return new TextRunStyle(FontFamily, FontSize, color: color, fontResourceId: FontResourceId);
     }
 
     private TextMeasurer GetTextMeasurer()
