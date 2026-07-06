@@ -4,6 +4,7 @@ using Cerneala.Drawing.Text;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Input.MonoGame;
+using Cerneala.UI.Resources.MonoGame;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Cerneala.UI.Hosting.MonoGame;
@@ -14,13 +15,16 @@ public sealed class MonoGameUiHost : IDisposable
     private readonly MonoGameDrawingBackend drawingBackend;
     private readonly MonoGameUiBackend backend;
     private readonly UiHost host;
+    private bool disposed;
 
     public MonoGameUiHost(MonoGameUiHostOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
         spriteBatch = options.SpriteBatch ?? throw new ArgumentNullException(nameof(options.SpriteBatch));
         InputSource = options.InputSource ?? new MonoGameInputSource();
-        ContentServices = options.ContentServices ?? new MonoGameContentServices(textRasterizer: options.TextRasterizer);
+        ContentServices = options.ContentServices ?? new MonoGameContentServices(
+            textRasterizer: options.TextRasterizer,
+            imageLoader: options.ImageLoader ?? new MonoGameImageLoader(spriteBatch.GraphicsDevice));
         drawingBackend = new MonoGameDrawingBackend(spriteBatch, options.WhitePixel, ContentServices.TextRasterizer);
         backend = new MonoGameUiBackend(InputSource, drawingBackend);
         host = new UiHost(new UiHostOptions
@@ -30,6 +34,7 @@ public sealed class MonoGameUiHost : IDisposable
             Backend = backend,
             Clock = options.Clock
         });
+        AttachContentServices(host.Root);
     }
 
     public MonoGameInputSource InputSource { get; }
@@ -43,6 +48,7 @@ public sealed class MonoGameUiHost : IDisposable
     public void SetRoot(UIRoot root)
     {
         host.SetRoot(root);
+        AttachContentServices(root);
     }
 
     public UiFrame Update(UiViewport viewport, TimeSpan elapsedTime)
@@ -71,7 +77,19 @@ public sealed class MonoGameUiHost : IDisposable
 
     public void Dispose()
     {
+        if (disposed)
+        {
+            return;
+        }
+
         drawingBackend.Dispose();
+        ContentServices.Dispose();
+        disposed = true;
+    }
+
+    private void AttachContentServices(UIRoot? root)
+    {
+        root?.SetImageLoader(ContentServices.ImageLoader);
     }
 
     private sealed class MonoGameUiBackend : IUiBackend

@@ -120,6 +120,12 @@ public class Image : Control
                 return null;
             }
 
+            ImageResourceCache? cache = Root?.ImageResourceCache;
+            if (cache is not null)
+            {
+                return cache.Resolve(resource);
+            }
+
             return resource.Resolve();
         }
 

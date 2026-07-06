@@ -22,6 +22,14 @@ public sealed class ImageResource
         this.path = path;
     }
 
+    public string Identity => path ?? $"embedded:{System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(image!)}";
+
+    public bool IsPathBacked => path is not null;
+
+    public string? Path => path;
+
+    public bool HasEmbeddedImage => image is not null;
+
     public IDrawImage Resolve(IImageLoader? loader = null)
     {
         if (image is not null)

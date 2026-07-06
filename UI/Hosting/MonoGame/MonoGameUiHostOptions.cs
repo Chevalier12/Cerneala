@@ -1,6 +1,7 @@
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input.MonoGame;
+using Cerneala.UI.Resources;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Cerneala.UI.Hosting.MonoGame;
@@ -18,6 +19,8 @@ public sealed class MonoGameUiHostOptions
     public MonoGameInputSource? InputSource { get; init; }
 
     public MonoGameContentServices? ContentServices { get; init; }
+
+    public IImageLoader? ImageLoader { get; init; }
 
     public IUiClock? Clock { get; init; }
 

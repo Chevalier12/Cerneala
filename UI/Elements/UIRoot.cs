@@ -93,6 +93,10 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public ResourceDependencyTracker ResourceDependencyTracker { get; }
 
+    public IImageLoader? ImageLoader { get; private set; }
+
+    public ImageResourceCache? ImageResourceCache { get; private set; }
+
     public UiFrameScheduler Scheduler { get; }
 
     public StyleSheet? StyleSheet { get; private set; }
@@ -121,6 +125,19 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         }
 
         Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Root resource provider changed");
+    }
+
+    public void SetImageLoader(IImageLoader? loader)
+    {
+        if (ReferenceEquals(ImageLoader, loader))
+        {
+            return;
+        }
+
+        ImageResourceCache?.Clear();
+        ImageLoader = loader;
+        ImageResourceCache = loader is null ? null : new ImageResourceCache(loader);
+        Invalidate(InvalidationFlags.Resource | InvalidationFlags.Render | InvalidationFlags.Subtree, "Root image loader changed");
     }
 
     public void SetViewport(float width, float height, float scale)
