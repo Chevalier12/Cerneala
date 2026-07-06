@@ -23,6 +23,7 @@ public sealed class InvalidationStatsOverlay
         {
             Foreground = DrawColor.White,
             FontSize = 13,
+            TextWrapping = TextWrapping.Wrap,
             ResourceProvider = resourceProvider,
             FontResourceId = fontResourceId
         };
@@ -128,7 +129,7 @@ public sealed class InvalidationStatsOverlay
 
         private TextRunStyle CreateTextStyle()
         {
-            return new TextRunStyle(FontFamily, FontSize, color: Foreground, fontResourceId: FontResourceId);
+            return new TextRunStyle(FontFamily, FontSize, wrapping: TextWrapping, color: Foreground, fontResourceId: FontResourceId);
         }
 
         private TextMeasurer GetTextMeasurer()

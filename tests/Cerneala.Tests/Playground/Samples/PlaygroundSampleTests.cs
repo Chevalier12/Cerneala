@@ -405,6 +405,30 @@ public sealed class PlaygroundSampleTests
     }
 
     [Fact]
+    public void StatsOverlayWrapsRenderedTextInsideAvailableWidth()
+    {
+        UIRoot root = new(420, 320);
+        SampleSelector selector = SampleSelector.CreateDefault();
+        root.VisualChildren.Add(selector.Root);
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(420, 320) });
+        UiFrame first = host.Update(EmptyInputFrame(), new UiViewport(420, 320), TimeSpan.Zero);
+        Border stats = StatsOverlayBorder(selector.Root);
+
+        selector.UpdateFrame(first);
+        host.Update(EmptyInputFrame(), new UiViewport(420, 320), TimeSpan.Zero);
+        DrawCommandList commands = root.RetainedRenderer.Render(root);
+        DrawCommand[] statLines = commands
+            .Where(command => command.Kind == DrawCommandKind.DrawText && IsFrameStatsText(command.Text!))
+            .ToArray();
+        float contentWidth = stats.ArrangedBounds.Width - stats.Padding.Left - stats.Padding.Right;
+
+        Assert.True(statLines.Length > 1, "Frame stats should wrap onto multiple rendered text lines.");
+        Assert.All(statLines, command => Assert.True(
+            command.TextRun!.Size * 0.5f * command.Text!.Length <= contentWidth,
+            $"Expected '{command.Text}' to fit inside stats overlay content width {contentWidth}."));
+    }
+
+    [Fact]
     public void UnchangedRootFramesReportNoRetainedRegeneration()
     {
         UIRoot root = new(800, 600);
@@ -504,6 +528,15 @@ public sealed class PlaygroundSampleTests
                 border.Child is TextBlock &&
                 border.Background == new DrawColor(24, 28, 36, 230) &&
                 border.BorderColor == new DrawColor(74, 86, 104));
+    }
+
+    private static bool IsFrameStatsText(string text)
+    {
+        return text.StartsWith("Frame stats:", StringComparison.Ordinal) ||
+            text.Contains("queuedMeasure=", StringComparison.Ordinal) ||
+            text.Contains("measureCalls=", StringComparison.Ordinal) ||
+            text.Contains("renderCache=", StringComparison.Ordinal) ||
+            text.Contains("noWork=", StringComparison.Ordinal);
     }
 
     private sealed class TestImage(int width, int height) : IDrawImage

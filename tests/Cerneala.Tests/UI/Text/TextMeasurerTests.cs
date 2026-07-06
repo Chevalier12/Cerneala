@@ -54,6 +54,41 @@ public sealed class TextMeasurerTests
     }
 
     [Fact]
+    public void WrappedMeasurementBreaksAtWordBoundariesBeforeHardWrapping()
+    {
+        TextMeasurer measurer = new();
+        TextRunStyle style = new("Default", 10, TextWrapping.Wrap);
+
+        TextMeasureResult result = measurer.Measure("Alpha beta gamma", style, 45);
+
+        Assert.Equal(["Alpha", "beta", "gamma"], result.Lines.Select(line => line.Text).ToArray());
+        Assert.All(result.Lines, line => Assert.DoesNotMatch(@"\s$", line.Text));
+    }
+
+    [Fact]
+    public void WrappedMeasurementPreservesExplicitLineBreaks()
+    {
+        TextMeasurer measurer = new();
+        TextRunStyle style = new("Default", 10, TextWrapping.Wrap);
+
+        TextMeasureResult result = measurer.Measure("Alpha beta\r\ngamma", style, 100);
+
+        Assert.Equal(["Alpha beta", "gamma"], result.Lines.Select(line => line.Text).ToArray());
+    }
+
+    [Fact]
+    public void WrappedMeasurementPreservesWhitespaceOnlyParagraphHeight()
+    {
+        TextMeasurer measurer = new();
+        TextRunStyle style = new("Default", 10, TextWrapping.Wrap);
+
+        TextMeasureResult result = measurer.Measure("   \nAlpha", style, 100);
+
+        Assert.Equal(["", "Alpha"], result.Lines.Select(line => line.Text).ToArray());
+        Assert.True(result.Size.Height > style.FontSize);
+    }
+
+    [Fact]
     public void MeasureAllowsConcurrentAccessToSharedCache()
     {
         TextLayoutCache cache = new();
