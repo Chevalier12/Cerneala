@@ -12,6 +12,8 @@ public sealed class ImageResourceCache : IDisposable
         this.loader = loader;
     }
 
+    public int LoadCount { get; private set; }
+
     public IDrawImage Resolve(ImageResource resource)
     {
         ArgumentNullException.ThrowIfNull(resource);
@@ -37,6 +39,7 @@ public sealed class ImageResourceCache : IDisposable
         }
 
         IDrawImage loaded = resource.Resolve(loader);
+        LoadCount++;
         images.Add(resource.Identity, loaded);
         return loaded;
     }

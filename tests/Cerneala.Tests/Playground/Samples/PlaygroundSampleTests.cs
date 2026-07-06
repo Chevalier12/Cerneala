@@ -42,7 +42,7 @@ public sealed class PlaygroundSampleTests
         SampleSelector selector = SampleSelector.CreateDefault();
         UIElement? initial = selector.ActiveElement;
 
-        Assert.Equal(new[] { "Retained App", "Button", "Layout", "Text", "Diagnostics", "Authoring App" }, selector.Samples.Select(sample => sample.Name));
+        Assert.Equal(new[] { "Retained App", "Button", "Layout", "Text", "Diagnostics", "Runtime Preview", "Authoring App" }, selector.Samples.Select(sample => sample.Name));
 
         selector.SelectSample(1);
 

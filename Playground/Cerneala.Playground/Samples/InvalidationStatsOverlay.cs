@@ -54,6 +54,6 @@ public sealed class InvalidationStatsOverlay
 
         return string.Create(
             System.Globalization.CultureInfo.InvariantCulture,
-            $"Frame stats: queuedMeasure={frame.Stats.MeasuredElements}, queuedArrange={frame.Stats.ArrangedElements}, measureCalls={frame.Stats.MeasureCalls}, arrangeCalls={frame.Stats.ArrangeCalls}, renderCache={frame.Stats.RenderedElements}, hitTest={frame.Stats.HitTestElements}, reusedCaches={frame.Stats.ReusedCaches}, noWork={frame.Stats.NoWorkFrames}");
+            $"Frame stats: scale={frame.Viewport.Scale}, inherited={frame.Stats.InheritedElements}, commandState={frame.Stats.CommandStateElements}, style={frame.Stats.StyledElements}, queuedMeasure={frame.Stats.MeasuredElements}, queuedArrange={frame.Stats.ArrangedElements}, measureCalls={frame.Stats.MeasureCalls}, arrangeCalls={frame.Stats.ArrangeCalls}, renderCache={frame.Stats.RenderedElements}, hitTest={frame.Stats.HitTestElements}, reusedCaches={frame.Stats.ReusedCaches}, noWork={frame.Stats.NoWorkFrames}");
     }
 }
