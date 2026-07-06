@@ -60,6 +60,21 @@ public sealed class ResourceDependencyTracker
         return dependencies.Keys.ToArray();
     }
 
+    public void RemoveOwner(UIElement owner)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        ownerVersions.Remove(owner);
+        foreach (ResourceKey key in dependenciesByResource.Keys.ToArray())
+        {
+            Dictionary<UIElement, ResourceDependency> dependencies = dependenciesByResource[key];
+            dependencies.Remove(owner);
+            if (dependencies.Count == 0)
+            {
+                dependenciesByResource.Remove(key);
+            }
+        }
+    }
+
     public IReadOnlyList<ResourceDependencyChange> NotifyResourceChanged(ResourceChangedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);

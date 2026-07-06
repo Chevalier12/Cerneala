@@ -12,6 +12,7 @@ public sealed class ElementInputBridge
     private readonly CommandRouter commandRouter;
     private readonly FocusManager focusManager;
     private readonly RetainedInputBindingProcessor retainedInputBindingProcessor;
+    private readonly KeyboardNavigationController keyboardNavigationController;
     private readonly KeyboardActivationController keyboardActivationController;
     private readonly TextInputBridge textInputBridge;
     private bool hasLastPointerPosition;
@@ -36,6 +37,7 @@ public sealed class ElementInputBridge
         this.commandRouter = commandRouter ?? new CommandRouter();
         this.focusManager = focusManager ?? new FocusManager();
         retainedInputBindingProcessor = new RetainedInputBindingProcessor();
+        keyboardNavigationController = new KeyboardNavigationController();
         keyboardActivationController = new KeyboardActivationController();
         this.textInputBridge = textInputBridge ?? new TextInputBridge();
     }
@@ -62,6 +64,7 @@ public sealed class ElementInputBridge
         DispatchPointer(inputFrame, routeMap, hitTarget, pointerTarget);
         IReadOnlyList<KeyboardDispatchResult> keyboardResults = focusManager.DispatchKeyboardWithResults(inputFrame, routeMap);
         IReadOnlyList<KeyboardDispatchResult> activationResults = retainedInputBindingProcessor.Process(keyboardResults, inputFrame, commandRouter, routeMap);
+        keyboardNavigationController.Process(activationResults, inputFrame, root, focusManager, routeMap);
         keyboardActivationController.Process(activationResults, focusManager, commandRouter, routeMap);
         textInputBridge.Dispatch(inputFrame.TextInputEvents, focusManager, routeMap);
     }

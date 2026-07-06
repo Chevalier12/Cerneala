@@ -10,9 +10,21 @@ public class Grid : Panel
     private float[] measuredColumnSizes = [0];
     private float[] measuredRowSizes = [0];
 
-    public List<ColumnDefinition> ColumnDefinitions { get; } = [];
+    public Grid()
+    {
+        ColumnDefinitions = new GridDefinitionCollection<ColumnDefinition>(
+            this,
+            static (definition, owner) => definition.Attach(owner),
+            static (definition, owner) => definition.Detach(owner));
+        RowDefinitions = new GridDefinitionCollection<RowDefinition>(
+            this,
+            static (definition, owner) => definition.Attach(owner),
+            static (definition, owner) => definition.Detach(owner));
+    }
 
-    public List<RowDefinition> RowDefinitions { get; } = [];
+    public GridDefinitionCollection<ColumnDefinition> ColumnDefinitions { get; }
+
+    public GridDefinitionCollection<RowDefinition> RowDefinitions { get; }
 
     public static int GetColumn(UIElement element)
     {
@@ -74,7 +86,7 @@ public class Grid : Panel
             }
 
             child.Measure(new MeasureContext(context.AvailableSize, context.Rounding));
-            GridPlacement placement = GetPlacement(child);
+            GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
             if (placement.ColumnSpan == 1 && columns[placement.Column].IsAuto)
             {
                 columnSizes[placement.Column] = MathF.Max(columnSizes[placement.Column], child.DesiredSize.Width);
@@ -96,7 +108,7 @@ public class Grid : Panel
                 continue;
             }
 
-            GridPlacement placement = GetPlacement(child);
+            GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
             child.Measure(new MeasureContext(
                 new LayoutSize(
                     Sum(columnSizes, placement.Column, placement.ColumnSpan),
@@ -124,7 +136,7 @@ public class Grid : Panel
                 continue;
             }
 
-            GridPlacement placement = GetPlacement(child);
+            GridPlacement placement = GetPlacement(child, columnSizes.Length, rowSizes.Length);
             child.Arrange(new ArrangeContext(
                 new LayoutRect(
                     context.FinalRect.X + Sum(columnSizes, 0, placement.Column),
@@ -226,6 +238,25 @@ public class Grid : Panel
         return placement;
     }
 
+    private static GridPlacement GetPlacement(UIElement element, int columnCount, int rowCount)
+    {
+        GridPlacement placement = GetPlacement(element);
+        placement.ClampToGrid(columnCount, rowCount);
+        return placement;
+    }
+
+    internal void InvalidateDefinitions(string reason)
+    {
+        IncrementLayoutVersion();
+        IncrementRenderVersion();
+        Invalidate(
+            InvalidationFlags.Measure |
+            InvalidationFlags.Arrange |
+            InvalidationFlags.Render |
+            InvalidationFlags.HitTest,
+            reason);
+    }
+
     private static void SetPlacement(UIElement element, Action<GridPlacement> update)
     {
         ArgumentNullException.ThrowIfNull(element);
@@ -277,6 +308,16 @@ public class Grid : Panel
         {
             RowSpan = Math.Max(1, RowSpan);
             ColumnSpan = Math.Max(1, ColumnSpan);
+        }
+
+        public void ClampToGrid(int columnCount, int rowCount)
+        {
+            columnCount = Math.Max(1, columnCount);
+            rowCount = Math.Max(1, rowCount);
+            Column = Math.Min(Column, columnCount - 1);
+            Row = Math.Min(Row, rowCount - 1);
+            ColumnSpan = Math.Min(Math.Max(1, ColumnSpan), columnCount - Column);
+            RowSpan = Math.Min(Math.Max(1, RowSpan), rowCount - Row);
         }
     }
 }

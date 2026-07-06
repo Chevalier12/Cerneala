@@ -49,12 +49,12 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     public static readonly UiProperty<bool> IsKeyboardFocusedProperty = UiProperty<bool>.Register(
         nameof(IsKeyboardFocused),
         typeof(UIElement),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle | UiPropertyOptions.AffectsSemantics));
 
     public static readonly UiProperty<bool> IsKeyboardFocusWithinProperty = UiProperty<bool>.Register(
         nameof(IsKeyboardFocusWithin),
         typeof(UIElement),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle | UiPropertyOptions.AffectsSemantics));
 
     public static readonly UiProperty<bool> FocusableProperty = UiProperty<bool>.Register(
         nameof(Focusable),
@@ -65,6 +65,11 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         nameof(IsTabStop),
         typeof(UIElement),
         new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsStyle));
+
+    public static readonly UiProperty<int> TabIndexProperty = UiProperty<int>.Register(
+        nameof(TabIndex),
+        typeof(UIElement),
+        new UiPropertyMetadata<int>(0, UiPropertyOptions.AffectsHitTest, validateValue: value => value >= 0));
 
     public static readonly UiProperty<Cursor?> CursorProperty = UiProperty<Cursor?>.Register(
         nameof(Cursor),
@@ -190,6 +195,12 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     {
         get => GetValue(IsTabStopProperty);
         set => SetValue(IsTabStopProperty, value);
+    }
+
+    public int TabIndex
+    {
+        get => GetValue(TabIndexProperty);
+        set => SetValue(TabIndexProperty, value);
     }
 
     public Cursor? Cursor

@@ -57,10 +57,6 @@ public sealed class DiagnosticsSample : IPlaygroundSample
         {
             Content = text.Create("Invalidate diagnostics sample", 14, new DrawColor(28, 35, 48)),
             Padding = new Thickness(12, 8, 12, 8),
-            Background = new DrawColor(248, 250, 252),
-            BorderColor = new DrawColor(135, 148, 166),
-            BorderThickness = new Thickness(1),
-            Foreground = new DrawColor(28, 35, 48),
             Command = new Cerneala.UI.Input.ActionCommand(_ =>
             {
                 overlay.Text = "Frame diagnostics: overlay invalidated\n" +

@@ -12,6 +12,8 @@ public class ItemsControl : Control
 {
     private readonly ItemsPresenter itemsPresenter;
     private IObservableList? observableItemsSource;
+    private bool isObservableItemsSourceSubscribed;
+    private bool hasEverAttached;
 
     public ItemsControl()
     {
@@ -131,6 +133,19 @@ public class ItemsControl : Control
 
     protected virtual Type DefaultContainerType => typeof(ContentPresenter);
 
+    protected override void OnAttached()
+    {
+        base.OnAttached();
+        hasEverAttached = true;
+        SubscribeObservableItemsSourceIfAttached();
+    }
+
+    protected override void OnDetached()
+    {
+        UnsubscribeObservableItemsSource();
+        base.OnDetached();
+    }
+
     protected internal virtual Type GetContainerTypeForItem(object? item)
     {
         return item is UIElement element ? element.GetType() : DefaultContainerType;
@@ -238,17 +253,32 @@ public class ItemsControl : Control
             return;
         }
 
-        if (observableItemsSource is not null)
-        {
-            observableItemsSource.Changed -= OnObservableItemsSourceChanged;
-            observableItemsSource = null;
-        }
+        UnsubscribeObservableItemsSource();
 
         observableItemsSource = newSource as IObservableList;
-        if (observableItemsSource is not null)
+        SubscribeObservableItemsSourceIfAttached();
+    }
+
+    private void SubscribeObservableItemsSourceIfAttached()
+    {
+        if ((hasEverAttached && !IsAttached) || observableItemsSource is null || isObservableItemsSourceSubscribed)
         {
-            observableItemsSource.Changed += OnObservableItemsSourceChanged;
+            return;
         }
+
+        observableItemsSource.Changed += OnObservableItemsSourceChanged;
+        isObservableItemsSourceSubscribed = true;
+    }
+
+    private void UnsubscribeObservableItemsSource()
+    {
+        if (observableItemsSource is null || !isObservableItemsSourceSubscribed)
+        {
+            return;
+        }
+
+        observableItemsSource.Changed -= OnObservableItemsSourceChanged;
+        isObservableItemsSourceSubscribed = false;
     }
 
     private void OnObservableItemsSourceChanged(object? sender, ObservableListChangedEventArgs args)

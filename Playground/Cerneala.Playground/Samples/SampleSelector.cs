@@ -58,7 +58,8 @@ public sealed class SampleSelector
             new TextSample(resourceProvider, fontResourceId),
             new DiagnosticsSample(resourceProvider, fontResourceId),
             new RuntimePreviewSample(resourceProvider, fontResourceId),
-            new AuthoringAppSample(resourceProvider, fontResourceId)
+            new AuthoringAppSample(resourceProvider, fontResourceId),
+            new GettingStartedSample()
         }, resourceProvider, fontResourceId);
     }
 
@@ -125,10 +126,6 @@ public sealed class SampleSelector
             {
                 Content = text.Create(samples[index].Name, 14, new DrawColor(28, 35, 48)),
                 Padding = new Thickness(12, 8, 12, 8),
-                Background = new DrawColor(248, 250, 252),
-                BorderColor = new DrawColor(135, 148, 166),
-                BorderThickness = new Thickness(1),
-                Foreground = new DrawColor(28, 35, 48),
                 Command = new ActionCommand(_ => SelectSample(capturedIndex))
             });
         }

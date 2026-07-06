@@ -142,6 +142,7 @@ Existing input tests:
 This phase makes the intended v2 architecture explicit before adding framework surface area. It keeps design decisions testable and prevents accidental WPF compatibility sprawl.
 
 - [x] `docs/architecture-v2.md` — concise architecture complement to `architecture.md`, focused on layers above drawing/input.
+- [x] `docs/developer-preview-scope.md` — concise Developer Preview supported/deferred surface guardrail for docs, samples, and roadmap claims.
 - [x] `docs/diagrams/retained-frame-loop.md` — text diagram for update/layout/render-cache/draw flow.
 - [x] `docs/diagrams/ui-layer-boundaries.md` — text diagram showing UI core -> drawing/input -> MonoGame adapters.
 
@@ -149,6 +150,21 @@ Tests and checks:
 
 - [x] `tests/Cerneala.Tests/Architecture/RepositoryShapeTests.cs` — verifies section 1 planning files exist and the old planning-tool workspace stays removed.
 - [x] `tests/Cerneala.Tests/Architecture/NamespaceBoundaryTests.cs` — verifies UI core namespaces do not reference Skia, HarfBuzz, MonoGame, `SpriteBatch`, `Texture2D`, or direct platform input polling outside adapter folders.
+- [x] `tests/Cerneala.Tests/Architecture/DeveloperPreviewScopeTests.cs` — verifies Developer Preview docs, sample dependencies, string-path binding scope, default theme use, and deferred/frozen roadmap claims.
+- [x] `tests/Cerneala.Tests/Architecture/DeveloperPreviewCompletionTests.cs` — verifies Developer Preview docs, roadmap scope, stress gate presence, sample registration, archive script presence, and frozen namespace boundaries.
+- [x] `tests/Cerneala.Tests/UI/Hosting/DeveloperPreviewContractTests.cs` — integrated Developer Preview retained game-loop gate for the Getting Started sample.
+
+Developer Preview hardening checkpoint:
+
+- [x] Tab focus navigation is covered by input and retained frame contract tests.
+- [x] Grid definition mutation invalidation is covered by layout and host integration tests.
+- [x] Retained lifecycle/subscription cleanup is covered for command, resource, queued, and detached sample notifications.
+- [x] Developer Preview scope guardrails are covered by docs/sample/roadmap architecture tests.
+- [x] Retained stress budget gates cover retained host, render resources, virtualized lists, and semantics cache behavior.
+- [x] Getting Started docs/sample demonstrate the supported code-first preview path.
+- [x] Developer Preview completion gate ties keyboard traversal, layout mutation, lifecycle cleanup, API scope, stress budgets, docs, samples, and retained draw/update invariants together.
+
+Deferred state remains unchanged: package split, native accessibility adapters, full IME, markup/sourcegen expansion, animation expansion, and advanced rendering are not marked scenario-complete by this checkpoint.
 
 ## 2. [MVP] Typed state model
 
@@ -1290,6 +1306,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [x] File/test existence is not enough to mark Later or Optional/Experimental work scenario-complete.
 - [x] Descriptor-only APIs remain `[~]` until they are wired into retained scheduling and relevant backend/platform adapters.
 - [x] Frozen areas may keep existing code, but should not expand public surface until their prerequisites are met.
+- [x] Developer Preview hardening keeps Runtime Preview, command state, typed binding, TextBox MVP, default templates, observable ItemsSource, retained semantics, and runtime seams scoped to the contracts proven by Core/Authoring/Runtime/Developer Preview gates.
 
 ## 29. MVP completion definition
 

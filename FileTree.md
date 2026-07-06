@@ -43,8 +43,24 @@ Generated from `.`.
 |   |       |-- 2026-07-05-textbox-editing-viewport-and-caret-contract.md
 |   |       |-- 2026-07-05-typed-binding-lifetime-and-two-way-text.md
 |   |       |-- 2026-07-05-wire-keyboard-control-activation.md
-|   |       +-- 2026-07-05-wire-minimal-retained-input-bindings.md
-|   +-- architecture-v2.md
+|   |       |-- 2026-07-05-wire-minimal-retained-input-bindings.md
+|   |       |-- 2026-07-06-add-preview-api-scope-guardrails.md
+|   |       |-- 2026-07-06-add-retained-stress-budget-tests.md
+|   |       |-- 2026-07-06-cache-content-resources-and-textures-lifetime.md
+|   |       |-- 2026-07-06-close-retained-lifecycle-subscription-leaks.md
+|   |       |-- 2026-07-06-create-developer-preview-docs-and-sample-gate.md
+|   |       |-- 2026-07-06-developer-preview-completion-gate.md
+|   |       |-- 2026-07-06-harden-layout-authoring-mutation-contracts.md
+|   |       |-- 2026-07-06-harden-monogame-render-backend-state.md
+|   |       |-- 2026-07-06-next-developer-preview-hardening-plan-index.md
+|   |       |-- 2026-07-06-next-runtime-preview-plan-index.md
+|   |       |-- 2026-07-06-normalize-viewport-scale-pointer-and-render-coordinates.md
+|   |       |-- 2026-07-06-runtime-diagnostics-and-playground-polish.md
+|   |       |-- 2026-07-06-runtime-preview-completion-gate.md
+|   |       |-- 2026-07-06-wire-platform-services-cursor-and-clipboard.md
+|   |       +-- 2026-07-06-wire-tab-focus-navigation-contract.md
+|   |-- architecture-v2.md
+|   +-- developer-preview-scope.md
 |-- Playground/
 |   +-- Cerneala.Playground/
 |       |-- .config/
@@ -52,12 +68,14 @@ Generated from `.`.
 |       |-- Content/
 |       |   +-- Content.mgcb
 |       |-- Samples/
+|       |   |-- AuthoringAppSample.cs
 |       |   |-- DiagnosticsSample.cs
 |       |   |-- InvalidationStatsOverlay.cs
 |       |   |-- LayoutSample.cs
 |       |   |-- PlaygroundText.cs
 |       |   |-- RetainedAppSample.cs
 |       |   |-- RetainedButtonSample.cs
+|       |   |-- RuntimePreviewSample.cs
 |       |   |-- SampleSelector.cs
 |       |   +-- TextSample.cs
 |       |-- app.manifest
@@ -66,9 +84,12 @@ Generated from `.`.
 |       |-- Icon.bmp
 |       |-- Icon.ico
 |       +-- Program.cs
+|-- Properties/
+|   +-- AssemblyInfo.cs
 |-- tests/
 |   |-- Cerneala.Tests/
 |   |   |-- Architecture/
+|   |   |   |-- DeveloperPreviewScopeTests.cs
 |   |   |   |-- MonoGameDependencyBoundaryTests.cs
 |   |   |   |-- NamespaceBoundaryTests.cs
 |   |   |   +-- RepositoryShapeTests.cs
@@ -89,6 +110,7 @@ Generated from `.`.
 |   |   |   |-- CheckBoxTests.cs
 |   |   |   |-- ComboBoxTests.cs
 |   |   |   |-- ContentControlTests.cs
+|   |   |   |-- ContentPresenterDefaultTextTests.cs
 |   |   |   |-- ContentPresenterTests.cs
 |   |   |   |-- ControlTemplateTests.cs
 |   |   |   |-- ControlTests.cs
@@ -98,9 +120,11 @@ Generated from `.`.
 |   |   |   |-- InkCanvasTests.cs
 |   |   |   |-- ItemContainerGeneratorTests.cs
 |   |   |   |-- ItemContainerRecyclePoolTests.cs
+|   |   |   |-- ItemsControlRecyclingStabilityTests.cs
 |   |   |   |-- ItemsControlRetainedInvalidationTests.cs
 |   |   |   |-- ItemsControlTests.cs
 |   |   |   |-- ItemsPanelTemplateTests.cs
+|   |   |   |-- ItemsSourceObservableTests.cs
 |   |   |   |-- ListBoxTests.cs
 |   |   |   |-- PanelTests.cs
 |   |   |   |-- PasswordBoxTests.cs
@@ -113,13 +137,21 @@ Generated from `.`.
 |   |   |   |-- TabControlTests.cs
 |   |   |   |-- TabItemTests.cs
 |   |   |   |-- TemplateBindingTests.cs
+|   |   |   |-- TemplatedButtonStateContractTests.cs
 |   |   |   |-- TextBlockInvalidationTests.cs
 |   |   |   |-- TextBlockLayoutContractTests.cs
 |   |   |   |-- TextBlockTests.cs
+|   |   |   |-- TextBoxClipboardShortcutTests.cs
+|   |   |   |-- TextBoxEditingVisualContractTests.cs
 |   |   |   |-- TextBoxTests.cs
+|   |   |   |-- TextBoxTwoWayBindingTests.cs
 |   |   |   |-- ToggleButtonTests.cs
 |   |   |   +-- ToolTipTests.cs
 |   |   |-- Drawing/
+|   |   |   |-- MonoGame/
+|   |   |   |   |-- MonoGameClipStackTests.cs
+|   |   |   |   |-- MonoGameDrawingBackendStateTests.cs
+|   |   |   |   +-- MonoGameDrawMapperTests.cs
 |   |   |   |-- AdvancedDrawCommandTests.cs
 |   |   |   |-- DrawCommandListTests.cs
 |   |   |   |-- DrawingContextTests.cs
@@ -132,6 +164,7 @@ Generated from `.`.
 |   |   |   |-- CommandingTests.cs
 |   |   |   |-- CommandRouterTests.cs
 |   |   |   |-- CommandStateSchedulerTests.cs
+|   |   |   |-- CursorPlatformIntegrationTests.cs
 |   |   |   |-- DragDropControllerTests.cs
 |   |   |   |-- ElementInputBridgeTests.cs
 |   |   |   |-- ElementInputRouteBuilderTests.cs
@@ -143,7 +176,9 @@ Generated from `.`.
 |   |   |   |-- InputEventsTests.cs
 |   |   |   |-- InputFrameTests.cs
 |   |   |   |-- InputGestureTests.cs
+|   |   |   |-- KeyboardNavigationContractTests.cs
 |   |   |   |-- ManipulationProcessorTests.cs
+|   |   |   |-- MonoGameInputCoordinateScaleTests.cs
 |   |   |   |-- MonoGameInputMapperTests.cs
 |   |   |   |-- PointerCaptureManagerTests.cs
 |   |   |   |-- PressedStateTrackerTests.cs
@@ -157,14 +192,19 @@ Generated from `.`.
 |   |   |   +-- TouchInputBridgeTests.cs
 |   |   |-- Playground/
 |   |   |   |-- Samples/
-|   |   |   |   +-- PlaygroundSampleTests.cs
+|   |   |   |   |-- AuthoringAppSampleContractTests.cs
+|   |   |   |   |-- PlaygroundSampleTests.cs
+|   |   |   |   |-- RuntimePreviewIntegrationTests.cs
+|   |   |   |   +-- RuntimePreviewSampleContractTests.cs
 |   |   |   |-- Game1SourceTests.cs
 |   |   |   |-- RetainedAppSampleContractTests.cs
 |   |   |   +-- RetainedAppStyleContractTests.cs
 |   |   |-- UI/
 |   |   |   |-- Accessibility/
 |   |   |   |   |-- AccessibilityPlatformTests.cs
+|   |   |   |   |-- AuthoringSemanticsContractTests.cs
 |   |   |   |   |-- ButtonSemanticsTests.cs
+|   |   |   |   |-- RetainedSemanticsCacheTests.cs
 |   |   |   |   |-- SemanticsProviderTests.cs
 |   |   |   |   |-- SemanticsTreeTests.cs
 |   |   |   |   +-- TextBoxSemanticsTests.cs
@@ -190,7 +230,8 @@ Generated from `.`.
 |   |   |   |   |-- ObservableListTests.cs
 |   |   |   |   |-- ObservableValueTests.cs
 |   |   |   |   |-- StringPropertyPathTests.cs
-|   |   |   |   +-- TypedBindingTests.cs
+|   |   |   |   |-- TypedBindingTests.cs
+|   |   |   |   +-- UiPropertyBindingTests.cs
 |   |   |   |-- Diagnostics/
 |   |   |   |   |-- DirtyTreeDumperTests.cs
 |   |   |   |   |-- ElementTreeDumperTests.cs
@@ -198,35 +239,46 @@ Generated from `.`.
 |   |   |   |   |-- InvalidationTraceTests.cs
 |   |   |   |   |-- RenderCacheDumperTests.cs
 |   |   |   |   |-- RoutedEventTraceTests.cs
+|   |   |   |   |-- RuntimeDiagnosticsTests.cs
 |   |   |   |   +-- StyleTraceTests.cs
 |   |   |   |-- Elements/
 |   |   |   |   |-- ElementHandlerStoreTests.cs
 |   |   |   |   |-- ElementLifecycleTests.cs
 |   |   |   |   |-- ElementTreeWalkerTests.cs
+|   |   |   |   |-- RetainedLifecycleCleanupTests.cs
 |   |   |   |   |-- UIElementCollectionInvalidationTests.cs
 |   |   |   |   |-- UIElementCollectionTests.cs
 |   |   |   |   |-- UIElementInvalidationTests.cs
 |   |   |   |   |-- UIElementTreeTests.cs
 |   |   |   |   +-- UIRootTests.cs
 |   |   |   |-- Hosting/
+|   |   |   |   |-- AuthoringPreviewContractTests.cs
 |   |   |   |   |-- CorePreviewContractTests.cs
 |   |   |   |   |-- FakeDrawingBackend.cs
 |   |   |   |   |-- FakeInputSource.cs
 |   |   |   |   |-- FakeUiClock.cs
+|   |   |   |   |-- GridAuthoringFrameContractTests.cs
+|   |   |   |   |-- MonoGameContentServicesLifetimeTests.cs
 |   |   |   |   |-- MonoGameUiHostBoundaryTests.cs
+|   |   |   |   |-- ObservableListAuthoringSliceTests.cs
 |   |   |   |   |-- RetainedListScrollVerticalSliceTests.cs
 |   |   |   |   |-- RetainedVerticalSliceTests.cs
+|   |   |   |   |-- RuntimePreviewContractTests.cs
+|   |   |   |   |-- TabNavigationFrameContractTests.cs
 |   |   |   |   |-- UiHostFrameContractTests.cs
 |   |   |   |   |-- UiHostFrameStatsIntegrityTests.cs
 |   |   |   |   |-- UiHostLateTreeMutationTests.cs
+|   |   |   |   |-- UiHostScaleHitTestContractTests.cs
 |   |   |   |   |-- UiHostTests.cs
 |   |   |   |   |-- UiHostViewportFrameContractTests.cs
+|   |   |   |   |-- UiViewportScaleContractTests.cs
 |   |   |   |   +-- UiViewportTests.cs
 |   |   |   |-- Input/
 |   |   |   |   |-- ElementInputCacheInvalidationTests.cs
 |   |   |   |   |-- HitTestCacheInvalidationTests.cs
 |   |   |   |   +-- InputControlBoundaryTests.cs
 |   |   |   |-- Invalidation/
+|   |   |   |   |-- DetachedQueuedElementTests.cs
 |   |   |   |   |-- DirtyPropagationTests.cs
 |   |   |   |   |-- DirtyStateTests.cs
 |   |   |   |   |-- FrameSchedulerStabilityTests.cs
@@ -239,6 +291,7 @@ Generated from `.`.
 |   |   |   |   +-- UiFrameSchedulerTests.cs
 |   |   |   |-- Layout/
 |   |   |   |   |-- CanvasTests.cs
+|   |   |   |   |-- GridDefinitionMutationTests.cs
 |   |   |   |   |-- GridTests.cs
 |   |   |   |   |-- LayoutDiagnosticsAccuracyTests.cs
 |   |   |   |   |-- LayoutInvalidationTests.cs
@@ -262,7 +315,8 @@ Generated from `.`.
 |   |   |   |   +-- TransformTests.cs
 |   |   |   |-- Platform/
 |   |   |   |   |-- PlatformBoundaryTests.cs
-|   |   |   |   +-- ServiceRegistrationTests.cs
+|   |   |   |   |-- ServiceRegistrationTests.cs
+|   |   |   |   +-- UiHostPlatformServicesIntegrationTests.cs
 |   |   |   |-- Rendering/
 |   |   |   |   |-- ArchitectureBoundaryTests.cs
 |   |   |   |   |-- DrawCommandListBuilderTests.cs
@@ -279,13 +333,17 @@ Generated from `.`.
 |   |   |   |   |-- RetainedRendererTests.cs
 |   |   |   |   +-- TextRenderDependencyTests.cs
 |   |   |   |-- Resources/
+|   |   |   |   |-- DetachedResourceDependencyCleanupTests.cs
 |   |   |   |   |-- FontResourceInvalidationTests.cs
 |   |   |   |   |-- HostResourceInvalidationIntegrationTests.cs
+|   |   |   |   |-- ImageResourceCacheTests.cs
 |   |   |   |   |-- ImageResourceInvalidationTests.cs
+|   |   |   |   |-- PathBackedImageResourceIntegrationTests.cs
 |   |   |   |   |-- ResourceDependencyTrackerTests.cs
 |   |   |   |   |-- ResourceIdTests.cs
 |   |   |   |   +-- ResourceStoreTests.cs
 |   |   |   |-- Styling/
+|   |   |   |   |-- DefaultThemeTemplateTests.cs
 |   |   |   |   |-- DefaultThemeVerticalSliceTests.cs
 |   |   |   |   |-- PseudoClassTests.cs
 |   |   |   |   |-- SetterTests.cs
@@ -299,6 +357,7 @@ Generated from `.`.
 |   |   |       |-- BidiTextServiceTests.cs
 |   |   |       |-- FontResolverTests.cs
 |   |   |       |-- TextBlockTextServiceIntegrationTests.cs
+|   |   |       |-- TextBoxEditorIntegrationTests.cs
 |   |   |       |-- TextCompositionManagerTests.cs
 |   |   |       |-- TextEditingControllerTests.cs
 |   |   |       |-- TextEditorTests.cs
@@ -466,6 +525,8 @@ Generated from `.`.
 |   |   |-- Binding.cs
 |   |   |-- Binding{T}.cs
 |   |   |-- BindingMode.cs
+|   |   |-- BindingOperations.cs
+|   |   |-- BindingSubscriptionCollection.cs
 |   |   |-- CollectionView{T}.cs
 |   |   |-- FilterPredicate{T}.cs
 |   |   |-- IObservableList{T}.cs
@@ -474,7 +535,8 @@ Generated from `.`.
 |   |   |-- ObservableValue{T}.cs
 |   |   |-- PropertyAdapter{TOwner,TValue}.cs
 |   |   |-- SortDescription{T}.cs
-|   |   +-- StringPropertyPath.cs
+|   |   |-- StringPropertyPath.cs
+|   |   +-- UiPropertyBinding{T}.cs
 |   |-- Diagnostics/
 |   |   |-- DebugAdorner.cs
 |   |   |-- DebugOverlay.cs
@@ -487,10 +549,13 @@ Generated from `.`.
 |   |   |-- RenderCacheDumper.cs
 |   |   |-- RenderDiagnostics.cs
 |   |   |-- RoutedEventTrace.cs
+|   |   |-- RuntimeDiagnostics.cs
 |   |   +-- StyleTrace.cs
 |   |-- Drawing/
 |   |   |-- MonoGame/
+|   |   |   |-- MonoGameClipStack.cs
 |   |   |   |-- MonoGameDrawingBackend.cs
+|   |   |   |-- MonoGameDrawMapper.cs
 |   |   |   +-- MonoGameImage.cs
 |   |   |-- Text/
 |   |   |   |-- RasterizedText.cs
@@ -534,6 +599,7 @@ Generated from `.`.
 |   |   |   +-- MonoGameUiHostOptions.cs
 |   |   |-- IUiBackend.cs
 |   |   |-- IUiClock.cs
+|   |   |-- UiCoordinateMapper.cs
 |   |   |-- UiFrame.cs
 |   |   |-- UiHost.cs
 |   |   |-- UiHostOptions.cs
@@ -590,6 +656,7 @@ Generated from `.`.
 |   |   |-- KeyboardDispatchResult.cs
 |   |   |-- KeyboardFocusChangedEventArgs.cs
 |   |   |-- KeyboardNavigation.cs
+|   |   |-- KeyboardNavigationController.cs
 |   |   |-- KeyboardSnapshot.cs
 |   |   |-- KeyEventArgs.cs
 |   |   |-- KeyGesture.cs
@@ -639,6 +706,7 @@ Generated from `.`.
 |   |   |   |-- Canvas.cs
 |   |   |   |-- ColumnDefinition.cs
 |   |   |   |-- Grid.cs
+|   |   |   |-- GridDefinitionCollection{TDefinition}.cs
 |   |   |   |-- GridLength.cs
 |   |   |   |-- Orientation.cs
 |   |   |   |-- Panel.cs
@@ -719,6 +787,7 @@ Generated from `.`.
 |   |   |-- FontResource.cs
 |   |   |-- IImageLoader.cs
 |   |   |-- ImageResource.cs
+|   |   |-- ImageResourceCache.cs
 |   |   |-- IObservableResourceProvider.cs
 |   |   |-- IResourceProvider.cs
 |   |   |-- ResourceChangedEventArgs.cs

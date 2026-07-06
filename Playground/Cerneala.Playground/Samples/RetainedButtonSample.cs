@@ -30,10 +30,6 @@ public sealed class RetainedButtonSample : IPlaygroundSample
         {
             Content = Text("Click retained button", 16, new DrawColor(28, 35, 48), Thickness.Zero),
             Padding = new Thickness(12, 8, 12, 8),
-            Background = new DrawColor(246, 248, 252),
-            BorderColor = new DrawColor(75, 96, 130),
-            BorderThickness = new Thickness(1),
-            Foreground = new DrawColor(28, 35, 48),
             Command = new ActionCommand(_ => status.Text = $"Clicked at {DateTime.Now:HH:mm:ss}")
         };
 

@@ -6,10 +6,13 @@ public sealed class ElementInputRouteMap
 {
     private readonly Dictionary<UIElement, UiElementId> idsByElement = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<UiElementId, UIElement> elementsById = [];
+    private readonly List<UIElement> elementsInRouteOrder = [];
 
     public UiInputTree InputTree { get; } = new();
 
     public int Count => idsByElement.Count;
+
+    public IReadOnlyList<UIElement> ElementsInRouteOrder => elementsInRouteOrder;
 
     public void Add(UIElement element, UiElementId id, UiElementId? parentId)
     {
@@ -17,6 +20,7 @@ public sealed class ElementInputRouteMap
 
         idsByElement.Add(element, id);
         elementsById.Add(id, element);
+        elementsInRouteOrder.Add(element);
         InputTree.Add(id, parentId, element.IsEnabled);
     }
 
