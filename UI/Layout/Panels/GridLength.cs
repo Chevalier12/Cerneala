@@ -34,7 +34,7 @@ public readonly record struct GridLength(float Value, GridUnitType UnitType)
             throw new ArgumentOutOfRangeException(nameof(UnitType), "Grid unit type is not valid.");
         }
 
-        if (UnitType != GridUnitType.Auto && (Value < 0 || float.IsNaN(Value) || float.IsInfinity(Value)))
+        if (Value < 0 || float.IsNaN(Value) || float.IsInfinity(Value))
         {
             throw new ArgumentOutOfRangeException(nameof(Value), "Grid length value must be finite and non-negative.");
         }

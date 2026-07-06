@@ -43,6 +43,17 @@ public sealed class TextMeasurerTests
     }
 
     [Fact]
+    public void WrappedMeasurementDoesNotSplitSurrogatePairsAcrossLines()
+    {
+        TextMeasurer measurer = new();
+        TextRunStyle style = new("Default", 10, TextWrapping.Wrap);
+
+        TextMeasureResult result = measurer.Measure("a\U0001F600b", style, 10);
+
+        Assert.Equal(["a", "\U0001F600", "b"], result.Lines.Select(line => line.Text).ToArray());
+    }
+
+    [Fact]
     public void MeasureAllowsConcurrentAccessToSharedCache()
     {
         TextLayoutCache cache = new();

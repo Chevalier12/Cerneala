@@ -37,6 +37,25 @@ public sealed class ResourceDependencyTrackerTests
     }
 
     [Fact]
+    public void TrackingSameProviderTwiceDoesNotDuplicateResourceChangeNotifications()
+    {
+        ResourceStore store = new();
+        ResourceDependencyTracker tracker = new();
+        tracker.Track(store);
+        tracker.Track(store);
+        UIRoot root = new();
+        UIElement owner = new();
+        ResourceId<string> id = new("Greeting");
+        root.VisualChildren.Add(owner);
+        tracker.RecordDependency(owner, id, InvalidationFlags.Render);
+
+        store.SetResource(id, "Hello");
+
+        Assert.Equal(1, tracker.GetDependencyVersion(owner));
+        Assert.Equal(1, tracker.GetResourceVersion(id));
+    }
+
+    [Fact]
     public void DifferentResourceReplacementsAdvanceOwnerDependencyVersion()
     {
         ResourceStore store = new();

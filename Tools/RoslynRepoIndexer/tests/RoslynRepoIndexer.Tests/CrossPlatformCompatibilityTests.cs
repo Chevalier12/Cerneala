@@ -1,4 +1,5 @@
 using System.Text;
+using System.Runtime.CompilerServices;
 using RoslynRepoIndexer.Core;
 
 namespace RoslynRepoIndexer.Tests;
@@ -77,6 +78,23 @@ public sealed class CrossPlatformCompatibilityTests
     }
 
     [Fact]
+    public void Cli_publish_test_paths_match_repository_directory_casing()
+    {
+        var testSource = Path.Combine(
+            GetRepositoryRootFromSourceFile(),
+            "Tools",
+            "RoslynRepoIndexer",
+            "tests",
+            "RoslynRepoIndexer.Tests",
+            "FileReadCliTests.cs");
+
+        var source = File.ReadAllText(testSource);
+
+        Assert.DoesNotContain("Path.Combine(TestPaths.RepositoryRoot, \"tools\",", source, StringComparison.Ordinal);
+        Assert.Contains("Path.Combine(TestPaths.RepositoryRoot, \"Tools\",", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Index_handles_reasonably_long_relative_paths()
     {
         using var repo = TestRepo.Create();
@@ -107,6 +125,22 @@ public sealed class CrossPlatformCompatibilityTests
             </Project>
             """);
         File.WriteAllText(Path.Combine(root, "Program.cs"), "namespace App; public sealed class Program { }");
+    }
+
+    private static string GetRepositoryRootFromSourceFile([CallerFilePath] string sourceFile = "")
+    {
+        DirectoryInfo? directory = new(Path.GetDirectoryName(sourceFile)!);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "Cerneala.slnx")))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new InvalidOperationException("Repository root not found.");
     }
 
     private sealed class SpacedTestRepo : IDisposable

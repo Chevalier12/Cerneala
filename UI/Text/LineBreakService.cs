@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Cerneala.UI.Text;
 
 public sealed class LineBreakService
@@ -19,16 +21,29 @@ public sealed class LineBreakService
         }
 
         int maxCharsPerLine = Math.Max(1, (int)MathF.Floor(availableWidth / charWidth));
-        List<TextLine> lines = new();
-        int index = 0;
-        while (index < text.Length)
+        List<TextLine> lines = [];
+        int[] textElementStarts = StringInfo.ParseCombiningCharacters(text);
+        int lineStart = 0;
+        int lineLength = 0;
+
+        for (int i = 0; i < textElementStarts.Length; i++)
         {
-            int count = Math.Min(maxCharsPerLine, text.Length - index);
-            string line = text.Substring(index, count);
-            lines.Add(new TextLine(line, MeasureTextWidth(line, charWidth)));
-            index += count;
+            int elementStart = textElementStarts[i];
+            int elementEnd = i + 1 < textElementStarts.Length ? textElementStarts[i + 1] : text.Length;
+            int elementLength = elementEnd - elementStart;
+
+            if (lineLength > 0 && lineLength + elementLength > maxCharsPerLine)
+            {
+                AddLine(text, lineStart, lineLength, charWidth, lines);
+                lineStart = elementStart;
+                lineLength = elementLength;
+                continue;
+            }
+
+            lineLength += elementLength;
         }
 
+        AddLine(text, lineStart, lineLength, charWidth, lines);
         return lines;
     }
 
@@ -46,5 +61,11 @@ public sealed class LineBreakService
     private static float MeasureTextWidth(string text, float charWidth)
     {
         return text.Length * charWidth;
+    }
+
+    private static void AddLine(string text, int start, int length, float charWidth, List<TextLine> lines)
+    {
+        string line = text.Substring(start, length);
+        lines.Add(new TextLine(line, MeasureTextWidth(line, charWidth)));
     }
 }

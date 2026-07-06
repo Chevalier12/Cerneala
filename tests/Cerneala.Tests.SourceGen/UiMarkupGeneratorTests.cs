@@ -130,6 +130,15 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void InvalidBooleanPropertyValueDiagnosticNamesMarkupProperty()
+    {
+        GeneratorRunResult result = RunGenerator("BadVisibility.cui.xml", "<TextBlock IsVisible=\"maybe\" />", out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "BadVisibility.cui.xml");
+        Assert.Contains("TextBlock.IsVisible", diagnostic.GetMessage());
+    }
+
+    [Fact]
     public void DistinctMarkupFilesWithSameBaseNameEmitUniqueFactories()
     {
         GeneratorRunResult result = RunGenerator(
@@ -191,11 +200,12 @@ public sealed class UiMarkupGeneratorTests
         return result.GeneratedSources.Single().SourceText.ToString();
     }
 
-    private static void AssertDiagnostic(GeneratorRunResult result, string id, string path)
+    private static Diagnostic AssertDiagnostic(GeneratorRunResult result, string id, string path)
     {
         Diagnostic diagnostic = Assert.Single(result.Diagnostics, diagnostic => diagnostic.Id == id);
         Assert.Equal(DiagnosticSeverity.Error, diagnostic.Severity);
         Assert.Equal(path, diagnostic.Location.GetLineSpan().Path);
+        return diagnostic;
     }
 
     private static UIElement InvokeCreate(MemoryStream stream, string typeName)

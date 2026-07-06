@@ -1,4 +1,5 @@
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 
 namespace Cerneala.Tests.Input;
@@ -29,6 +30,20 @@ public sealed class PressedStateTrackerTests
 
         Assert.False(button.IsPressed);
         Assert.Null(tracker.PressedElement);
+    }
+
+    [Fact]
+    public void PressingChildSetsAncestorPressedState()
+    {
+        ButtonBase button = new();
+        UIElement child = new();
+        button.VisualChildren.Add(child);
+        PressedStateTracker tracker = new();
+
+        tracker.Press(child);
+
+        Assert.True(button.IsPressed);
+        Assert.Same(button, tracker.PressedElement);
     }
 
     [Fact]

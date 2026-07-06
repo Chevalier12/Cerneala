@@ -40,6 +40,26 @@ public sealed class ItemsControlTests
     }
 
     [Fact]
+    public void ItemTemplateCreatesContainerForElementItem()
+    {
+        UIElement item = new();
+        ItemsControl control = new()
+        {
+            ItemTemplate = new DataTemplate<UIElement>(_ => new FixedElement("templated", new LayoutSize(10, 5))),
+            ItemsPanel = new ItemsPanelTemplate(() => new Cerneala.UI.Controls.Panel())
+        };
+        control.SetItems(new[] { item });
+
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+
+        ContentPresenter container = Assert.IsType<ContentPresenter>(control.ItemsPresenter.PanelRoot!.VisualChildren[0]);
+        FixedElement child = Assert.IsType<FixedElement>(container.PresentedChild);
+        Assert.Equal("templated", child.Value);
+        Assert.Null(item.LogicalParent);
+        Assert.Null(item.VisualParent);
+    }
+
+    [Fact]
     public void ItemsControlVirtualizationRealizesOnlyWindow()
     {
         ItemsControl control = new()

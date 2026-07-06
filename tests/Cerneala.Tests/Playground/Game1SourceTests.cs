@@ -22,7 +22,7 @@ public sealed class Game1SourceTests
         Assert.Contains("uiRoot.SetResourceProvider(_resources)", source, StringComparison.Ordinal);
         Assert.Contains("SampleSelector.CreateDefault(_resources, PlaygroundFontId, PlaygroundPreviewImageId)", source, StringComparison.Ordinal);
         Assert.Contains("uiRoot.VisualChildren.Add(_sampleSelector.Root)", source, StringComparison.Ordinal);
-        Assert.Contains("host.Update(GetViewport(), gameTime.TotalGameTime)", source, StringComparison.Ordinal);
+        Assert.Contains("host.Update(GetViewport(), gameTime.ElapsedGameTime)", source, StringComparison.Ordinal);
         Assert.Contains("RequireUiHost().Draw()", source, StringComparison.Ordinal);
         Assert.Contains("QueueTextInput(e.Character.ToString())", source, StringComparison.Ordinal);
         Assert.DoesNotContain("PlaygroundDemoElement", source, StringComparison.Ordinal);
@@ -49,10 +49,19 @@ public sealed class Game1SourceTests
         string source = Game1Source();
 
         Assert.Contains("_sampleSelector?.UpdateFrame(host.LastFrame);", source, StringComparison.Ordinal);
-        Assert.Contains("host.Update(GetViewport(), gameTime.TotalGameTime);", source, StringComparison.Ordinal);
+        Assert.Contains("host.Update(GetViewport(), gameTime.ElapsedGameTime);", source, StringComparison.Ordinal);
         Assert.True(
             source.IndexOf("_sampleSelector?.UpdateFrame(host.LastFrame);", StringComparison.Ordinal) <
-            source.IndexOf("host.Update(GetViewport(), gameTime.TotalGameTime);", StringComparison.Ordinal));
+            source.IndexOf("host.Update(GetViewport(), gameTime.ElapsedGameTime);", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Game1PassesPerFrameElapsedTimeToUiHost()
+    {
+        string updateBody = Game1UpdateBody();
+
+        Assert.Contains("host.Update(GetViewport(), gameTime.ElapsedGameTime);", updateBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("gameTime.TotalGameTime", updateBody, StringComparison.Ordinal);
     }
 
     [Fact]

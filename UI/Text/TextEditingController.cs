@@ -34,10 +34,10 @@ public sealed class TextEditingController
                 Editor.Delete();
                 break;
             case InputKey.Left:
-                Editor.MoveCaret(Editor.Caret.Position - 1, extendSelection);
+                Editor.MoveCaretByTextElement(-1, extendSelection);
                 break;
             case InputKey.Right:
-                Editor.MoveCaret(Editor.Caret.Position + 1, extendSelection);
+                Editor.MoveCaretByTextElement(1, extendSelection);
                 break;
             case InputKey.Home:
                 Editor.MoveCaret(0, extendSelection);

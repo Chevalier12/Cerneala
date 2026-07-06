@@ -46,6 +46,11 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
             throw new InvalidOperationException("Element must be removed from its current parent before reparenting.");
         }
 
+        if (owner.Root is null && child.Root is not null)
+        {
+            throw new InvalidOperationException("Attached element cannot be added under a detached parent.");
+        }
+
         if (owner.Root is not null && child.Root is not null && !ReferenceEquals(owner.Root, child.Root))
         {
             throw new InvalidOperationException("Element cannot be added under a different root.");
@@ -114,15 +119,41 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
     private bool IsAncestor(UIElement candidate)
     {
-        UIElement? current = GetParent(owner);
-        while (current is not null)
+        Stack<UIElement> pending = new();
+        HashSet<UIElement> visited = new(ReferenceEqualityComparer.Instance);
+
+        if (owner.LogicalParent is not null)
         {
+            pending.Push(owner.LogicalParent);
+        }
+
+        if (owner.VisualParent is not null)
+        {
+            pending.Push(owner.VisualParent);
+        }
+
+        while (pending.Count > 0)
+        {
+            UIElement current = pending.Pop();
+            if (!visited.Add(current))
+            {
+                continue;
+            }
+
             if (ReferenceEquals(current, candidate))
             {
                 return true;
             }
 
-            current = GetParent(current);
+            if (current.LogicalParent is not null)
+            {
+                pending.Push(current.LogicalParent);
+            }
+
+            if (current.VisualParent is not null)
+            {
+                pending.Push(current.VisualParent);
+            }
         }
 
         return false;

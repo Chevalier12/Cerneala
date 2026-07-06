@@ -58,6 +58,21 @@ public sealed class ButtonBaseCommandTests
     }
 
     [Fact]
+    public void HandledMouseUpDoesNotExecuteCommand()
+    {
+        UIRoot root = RootWithButton(out ButtonBase button);
+        bool executed = false;
+        button.Command = new ActionCommand(_ => executed = true);
+        root.Handlers.AddHandler(InputEvents.PreviewMouseUpEvent, (_, args) => args.Handled = true);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, previousDown: true));
+
+        Assert.False(executed);
+    }
+
+    [Fact]
     public void CanceledClickDoesNotExecuteCommand()
     {
         UIRoot root = new(100, 100);

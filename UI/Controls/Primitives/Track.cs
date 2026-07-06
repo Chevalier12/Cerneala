@@ -197,6 +197,16 @@ public class Track : Control
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, MinimumProperty) || ReferenceEquals(args.Property, MaximumProperty))
         {
+            if (ReferenceEquals(args.Property, MinimumProperty) && Maximum < Minimum)
+            {
+                Maximum = Minimum;
+            }
+
+            if (ReferenceEquals(args.Property, MaximumProperty) && Minimum > Maximum)
+            {
+                Minimum = Maximum;
+            }
+
             Value = RangeBase.Clamp(Value, Minimum, Maximum);
         }
 
@@ -264,6 +274,7 @@ public class Track : Control
         }
 
         float pixelDelta = Orientation == Orientation.Horizontal ? args.HorizontalChange : args.VerticalChange;
+        float oldValue = Value;
         updatingFromThumb = true;
         try
         {
@@ -274,7 +285,10 @@ public class Track : Control
             updatingFromThumb = false;
         }
 
-        ValueChanged?.Invoke(this, EventArgs.Empty);
+        if (oldValue != Value)
+        {
+            ValueChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private void OnMouseDown(UiElementId source, RoutedEventArgs args)

@@ -148,11 +148,21 @@ public class ItemsControl : Control
 
     protected internal virtual Type GetContainerTypeForItem(object? item)
     {
+        if (ItemTemplate is not null)
+        {
+            return DefaultContainerType;
+        }
+
         return item is UIElement element ? element.GetType() : DefaultContainerType;
     }
 
     protected internal virtual UIElement CreateItemContainer(int index, object? item)
     {
+        if (ItemTemplate is not null)
+        {
+            return new ContentPresenter();
+        }
+
         return item is UIElement element ? element : new ContentPresenter();
     }
 

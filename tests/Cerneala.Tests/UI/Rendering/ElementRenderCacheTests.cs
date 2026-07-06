@@ -52,6 +52,18 @@ public sealed class ElementRenderCacheTests
     }
 
     [Fact]
+    public void CacheBuiltForOneElementIsStaleForAnotherElementWithMatchingVersion()
+    {
+        RenderingTestElement first = new(DrawColor.White);
+        RenderingTestElement second = new(DrawColor.Black);
+        ElementRenderCache cache = new();
+        cache.Ensure(first, new RenderCounters(), forceRebuild: true);
+
+        Assert.True(cache.IsStale(second));
+        Assert.Throws<InvalidOperationException>(() => cache.GetValidCommands(second));
+    }
+
+    [Fact]
     public void RebuildStoresContentBounds()
     {
         RenderingTestElement element = new(DrawColor.White);

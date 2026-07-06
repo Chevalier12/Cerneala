@@ -47,6 +47,30 @@ public sealed class TrackTests
     }
 
     [Fact]
+    public void ThumbDragDoesNotRaiseValueChangedWhenValueIsClampedUnchanged()
+    {
+        UIRoot root = new(200, 100);
+        Track track = new()
+        {
+            Minimum = 0,
+            Maximum = 100,
+            Value = 100
+        };
+        track.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+        root.VisualChildren.Add(track);
+        ElementInputBridge bridge = new();
+        int changes = 0;
+        track.ValueChanged += (_, _) => changes++;
+
+        bridge.Dispatch(root, PointerFrame(105, 5, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(105, 5, 120, 5, previousDown: true, currentDown: true));
+
+        Assert.Equal(100, track.Value);
+        Assert.Equal(0, changes);
+    }
+
+    [Fact]
     public void TrackLargeChangeRegionsMoveValue()
     {
         Track track = new()
@@ -64,6 +88,27 @@ public sealed class TrackTests
 
         track.IncreaseLarge();
         Assert.Equal(50, track.Value);
+    }
+
+    [Fact]
+    public void EndpointChangesKeepRangeOrdered()
+    {
+        Track track = new()
+        {
+            Minimum = 0,
+            Maximum = 10,
+            Value = 5
+        };
+
+        track.Minimum = 20;
+
+        Assert.Equal(20, track.Maximum);
+        Assert.Equal(20, track.Value);
+
+        track.Maximum = 5;
+
+        Assert.Equal(5, track.Minimum);
+        Assert.Equal(5, track.Value);
     }
 
     private static InputFrame PointerFrame(

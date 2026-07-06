@@ -43,7 +43,7 @@ public class TextRenderer
         {
             TextLine line = measurement.Lines[i];
             DrawPoint linePosition = new(position.X, position.Y + (i * lineHeight));
-            drawingContext.DrawText(style.ToDrawTextRun(font, line.Text), linePosition, style.Color);
+            drawingContext.DrawText(style.ToDrawTextRun(font, line.Text), linePosition, color);
         }
 
         return measurement;

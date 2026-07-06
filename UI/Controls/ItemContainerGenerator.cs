@@ -131,9 +131,12 @@ public sealed class ItemContainerGenerator
 
     private static bool IsCompatibleContainer(UIElement container, object? item, Type containerType)
     {
-        return item is UIElement element
-            ? ReferenceEquals(container, element)
-            : containerType.IsAssignableFrom(container.GetType());
+        if (item is UIElement element && ReferenceEquals(containerType, element.GetType()))
+        {
+            return ReferenceEquals(container, element);
+        }
+
+        return containerType.IsAssignableFrom(container.GetType());
     }
 
     private static void DetachContainer(UIElement container)

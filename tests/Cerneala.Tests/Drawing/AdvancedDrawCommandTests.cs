@@ -61,6 +61,17 @@ public sealed class AdvancedDrawCommandTests
             () => DrawCommand.DrawLine(new DrawPoint(startX, startY), new DrawPoint(endX, endY), DrawColor.Black, 1));
     }
 
+    [Theory]
+    [InlineData(2_147_483_648f, 0)]
+    [InlineData(0, -2_147_483_648f)]
+    public void DrawTextRejectsPositionOutsidePixelRange(float x, float y)
+    {
+        DrawTextRun textRun = new(new TestFont(), "Hello", 12);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => DrawCommand.DrawText(textRun, new DrawPoint(x, y), DrawColor.Black));
+    }
+
     [Fact]
     public void MonoGameBackendHandlesAdvancedCommands()
     {
@@ -86,5 +97,12 @@ public sealed class AdvancedDrawCommandTests
         }
 
         throw new DirectoryNotFoundException("Could not find repository root.");
+    }
+
+    private sealed class TestFont : IDrawFont
+    {
+        public string FamilyName => "Test";
+
+        public float Size => 12;
     }
 }

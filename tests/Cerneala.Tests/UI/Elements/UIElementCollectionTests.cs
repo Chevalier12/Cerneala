@@ -145,6 +145,18 @@ public sealed class UIElementCollectionTests
     }
 
     [Fact]
+    public void CrossRoleAncestorCannotBeAddedAsChild()
+    {
+        UIRoot root = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+
+        Assert.Throws<InvalidOperationException>(() => child.LogicalChildren.Add(root));
+        Assert.Null(root.LogicalParent);
+        Assert.Empty(child.LogicalChildren);
+    }
+
+    [Fact]
     public void AttachedElementCannotBeAddedUnderDifferentRoot()
     {
         UIRoot firstRoot = new();
@@ -155,6 +167,20 @@ public sealed class UIElementCollectionTests
         Assert.Throws<InvalidOperationException>(() => secondRoot.LogicalChildren.Add(child));
         Assert.Null(child.LogicalParent);
         Assert.Same(firstRoot, child.Root);
+    }
+
+    [Fact]
+    public void AttachedElementCannotBeAddedUnderDetachedParent()
+    {
+        UIRoot root = new();
+        UIElement detachedParent = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+
+        Assert.Throws<InvalidOperationException>(() => detachedParent.LogicalChildren.Add(child));
+        Assert.Null(child.LogicalParent);
+        Assert.Empty(detachedParent.LogicalChildren);
+        Assert.Same(root, child.Root);
     }
 
     private sealed class EqualValueElement(int value) : UIElement

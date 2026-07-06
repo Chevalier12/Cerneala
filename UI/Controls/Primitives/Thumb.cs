@@ -128,6 +128,12 @@ public class Thumb : Control, IPointerDragSource
         DragCompleted?.Invoke(this, new DragCompletedEventArgs(TotalHorizontalChange, TotalVerticalChange, true));
     }
 
+    protected override void OnDetached()
+    {
+        CancelDrag();
+        base.OnDetached();
+    }
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         return new LayoutSize(10, 10);

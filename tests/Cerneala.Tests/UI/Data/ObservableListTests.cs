@@ -108,6 +108,22 @@ public sealed class ObservableListTests
     }
 
     [Fact]
+    public void ReplaceWithSnapshotsNewItemsBeforeMutatingCurrentList()
+    {
+        ObservableList<string> list = new(["a", "b"]);
+        List<ObservableListChangedEventArgs<string>> changes = [];
+        list.Changed += (_, args) => changes.Add(args);
+
+        list.ReplaceWith(list);
+
+        Assert.Equal(["a", "b"], list.ToArray());
+        ObservableListChangedEventArgs<string> change = Assert.Single(changes);
+        Assert.Equal(ObservableListChangeKind.Reset, change.Kind);
+        Assert.Equal(["a", "b"], change.OldItems);
+        Assert.Equal(["a", "b"], change.Items);
+    }
+
+    [Fact]
     public void EmptyAndNoOpOperationsDoNotNotify()
     {
         ObservableList<string> list = new(["a"]);

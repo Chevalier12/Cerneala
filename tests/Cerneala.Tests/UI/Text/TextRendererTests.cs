@@ -88,12 +88,13 @@ public sealed class TextRendererTests
     }
 
     [Fact]
-    public void RenderRecordsStyleColorInDrawCommand()
+    public void RenderUsesRequestedDrawColor()
     {
         TextRenderer renderer = new();
         DrawCommandList commands = new();
         DrawingContext drawingContext = new(commands);
         DrawColor styleColor = new(12, 34, 56);
+        DrawColor requestedColor = new(98, 76, 54);
 
         renderer.Render(
             drawingContext,
@@ -101,9 +102,9 @@ public sealed class TextRendererTests
             new TextRunStyle("Default", 16, color: styleColor),
             100,
             default,
-            DrawColor.White);
+            requestedColor);
 
         Assert.Single(commands);
-        Assert.Equal(styleColor, commands[0].Color);
+        Assert.Equal(requestedColor, commands[0].Color);
     }
 }

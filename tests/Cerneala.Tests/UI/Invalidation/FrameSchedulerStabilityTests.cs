@@ -44,6 +44,46 @@ public sealed class FrameSchedulerStabilityTests
     }
 
     [Fact]
+    public void SameElementRequeuedDuringMeasureRunsOnLaterFrame()
+    {
+        UIRoot root = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+        root.ProcessFrame();
+        child.Invalidate(InvalidationFlags.Measure, "initial measure");
+        int measurements = 0;
+
+        root.ProcessFrame(new FramePhaseProcessors
+        {
+            Measure = element =>
+            {
+                if (ReferenceEquals(element, child))
+                {
+                    measurements++;
+                    child.Invalidate(InvalidationFlags.Measure, "measure invalidated itself");
+                }
+            }
+        });
+
+        Assert.Equal(1, measurements);
+        Assert.True(child.DirtyState.Has(InvalidationFlags.Measure));
+        Assert.Contains(child, root.LayoutQueue.SnapshotMeasure());
+
+        root.ProcessFrame(new FramePhaseProcessors
+        {
+            Measure = element =>
+            {
+                if (ReferenceEquals(element, child))
+                {
+                    measurements++;
+                }
+            }
+        });
+
+        Assert.Equal(2, measurements);
+    }
+
+    [Fact]
     public void DownstreamWorkQueuedBeforeSnapshotRunsInSameFrame()
     {
         UIRoot root = new();

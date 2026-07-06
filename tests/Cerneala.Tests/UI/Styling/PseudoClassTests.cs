@@ -73,6 +73,18 @@ public sealed class PseudoClassTests
     }
 
     [Fact]
+    public void SelectedMatchesBuiltInSelectableContainers()
+    {
+        ListBoxItem listBoxItem = new() { IsSelected = true };
+        TabItem tabItem = new() { IsSelected = true };
+
+        Assert.True(PseudoClassMatcher.Matches(listBoxItem, PseudoClass.Selected));
+        Assert.True(PseudoClassMatcher.Matches(tabItem, PseudoClass.Selected));
+        Assert.False(PseudoClassMatcher.Matches(new ListBoxItem(), PseudoClass.Selected));
+        Assert.False(PseudoClassMatcher.Matches(new TabItem(), PseudoClass.Selected));
+    }
+
+    [Fact]
     public void SelectedCanMatchProviderSupportedState()
     {
         SelectableElement element = new(selected: true);

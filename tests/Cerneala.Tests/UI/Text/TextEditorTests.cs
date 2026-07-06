@@ -18,6 +18,18 @@ public sealed class TextEditorTests
     }
 
     [Fact]
+    public void InsertTextExpandsSelectionAwayFromTextElementMiddle()
+    {
+        TextEditor editor = new(new TextDocument("a😀b"));
+        editor.Select(1, 2);
+
+        editor.InsertText("x");
+
+        Assert.Equal("axb", editor.Document.Text);
+        Assert.Equal(2, editor.Caret.Position);
+    }
+
+    [Fact]
     public void BackspaceDeletesPreviousCharacter()
     {
         TextEditor editor = new(new TextDocument("abc"));

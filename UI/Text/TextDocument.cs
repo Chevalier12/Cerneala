@@ -48,7 +48,7 @@ public sealed class TextDocument
             throw new ArgumentOutOfRangeException(nameof(start), start, "Text range start must be inside the document.");
         }
 
-        if (length < 0 || start + length > Length)
+        if (length < 0 || length > Length - start)
         {
             throw new ArgumentOutOfRangeException(nameof(length), length, "Text range length must fit inside the document.");
         }

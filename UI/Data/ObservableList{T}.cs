@@ -141,9 +141,10 @@ public sealed class ObservableList<T> : IObservableList<T>, IObservableList, ILi
     public void ReplaceWith(IEnumerable<T> newItems)
     {
         ArgumentNullException.ThrowIfNull(newItems);
+        List<T> replacementItems = [.. newItems];
         List<T> oldItems = [.. items];
         items.Clear();
-        items.AddRange(newItems);
+        items.AddRange(replacementItems);
         Notify(new ObservableListChangedEventArgs<T>(
             ObservableListChangeKind.Reset,
             items: [.. items],

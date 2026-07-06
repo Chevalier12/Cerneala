@@ -48,6 +48,27 @@ public sealed class ThumbTests
         Assert.False(bridge.PointerCaptureManager.HasCapture);
     }
 
+    [Fact]
+    public void DragCancelsWhenThumbIsDetachedBeforeRelease()
+    {
+        UIRoot root = new(100, 100);
+        Thumb thumb = new();
+        thumb.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
+        root.VisualChildren.Add(thumb);
+        ElementInputBridge bridge = new();
+        List<DragCompletedEventArgs> completed = [];
+        thumb.DragCompleted += (_, args) => completed.Add(args);
+
+        bridge.Dispatch(root, PointerFrame(5, 5, currentDown: true));
+        root.VisualChildren.Remove(thumb);
+        bridge.Dispatch(root, PointerFrame(5, 5, 10, 10, previousDown: true, currentDown: true));
+
+        Assert.False(bridge.PointerCaptureManager.HasCapture);
+        Assert.False(thumb.IsDragging);
+        DragCompletedEventArgs args = Assert.Single(completed);
+        Assert.True(args.Canceled);
+    }
+
     private static InputFrame PointerFrame(
         float previousX,
         float previousY,

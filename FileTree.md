@@ -377,6 +377,7 @@ Generated from `.`.
 |   |   |       |-- TextBoxEditorIntegrationTests.cs
 |   |   |       |-- TextCaretLayoutTests.cs
 |   |   |       |-- TextCompositionManagerTests.cs
+|   |   |       |-- TextDocumentTests.cs
 |   |   |       |-- TextEditingControllerTests.cs
 |   |   |       |-- TextEditorTests.cs
 |   |   |       |-- TextLayoutCacheTests.cs

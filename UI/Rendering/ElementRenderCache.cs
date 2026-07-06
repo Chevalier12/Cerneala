@@ -7,6 +7,7 @@ namespace Cerneala.UI.Rendering;
 public sealed class ElementRenderCache
 {
     private readonly DrawCommandList commands = new();
+    private UIElement? cachedElement;
 
     public DrawCommandList Commands => commands;
 
@@ -22,6 +23,7 @@ public sealed class ElementRenderCache
     {
         ArgumentNullException.ThrowIfNull(element);
         return !IsValid ||
+            !ReferenceEquals(cachedElement, element) ||
             RenderVersion != element.RenderVersion ||
             Dependencies != element.RenderDependencies;
     }
@@ -53,6 +55,7 @@ public sealed class ElementRenderCache
         counters.CountCacheMiss();
         counters.CountLocalRebuild();
         IsValid = false;
+        cachedElement = null;
         commands.Clear();
 
         if (element.Visibility == Visibility.Visible && element.IsVisible)
@@ -65,6 +68,7 @@ public sealed class ElementRenderCache
         RenderVersion = element.RenderVersion;
         Dependencies = element.RenderDependencies;
         ContentBounds = element.ArrangedBounds;
+        cachedElement = element;
         IsValid = true;
         return true;
     }
@@ -72,5 +76,6 @@ public sealed class ElementRenderCache
     public void Invalidate()
     {
         IsValid = false;
+        cachedElement = null;
     }
 }

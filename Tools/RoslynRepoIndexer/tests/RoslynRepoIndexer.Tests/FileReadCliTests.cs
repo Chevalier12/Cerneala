@@ -262,7 +262,7 @@ public sealed class FileReadCliTests
                 return cliDllPath;
             }
 
-            var project = Path.Combine(TestPaths.RepositoryRoot, "tools", "RoslynRepoIndexer", "src", "RoslynRepoIndexer.Cli", "RoslynRepoIndexer.Cli.csproj");
+            var project = Path.Combine(TestPaths.RepositoryRoot, "Tools", "RoslynRepoIndexer", "src", "RoslynRepoIndexer.Cli", "RoslynRepoIndexer.Cli.csproj");
             var output = Path.Combine(Path.GetTempPath(), "RoslynRepoIndexer.Cli.FileReadTests", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(output);
 

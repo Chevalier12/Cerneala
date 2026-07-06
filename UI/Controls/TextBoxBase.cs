@@ -330,10 +330,10 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         {
             InputKey.Back => HandleBackspace(),
             InputKey.Delete => HandleDelete(),
-            InputKey.Home => HandleMoveTo(0),
-            InputKey.End => HandleMoveTo(editor.Document.Length),
-            InputKey.Left => HandleMove(-1),
-            InputKey.Right => HandleMove(1),
+            InputKey.Home => HandleMoveTo(0, keyArgs.IsShiftDown),
+            InputKey.End => HandleMoveTo(editor.Document.Length, keyArgs.IsShiftDown),
+            InputKey.Left => HandleMove(-1, keyArgs.IsShiftDown),
+            InputKey.Right => HandleMove(1, keyArgs.IsShiftDown),
             _ => false
         };
 
@@ -445,7 +445,13 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
             return false;
         }
 
-        editor.InsertText(text);
+        string input = NormalizeTextInput(text);
+        if (input.Length == 0)
+        {
+            return false;
+        }
+
+        editor.InsertText(input);
         SyncTextFromEditor("TextBox paste");
         return true;
     }
@@ -483,18 +489,18 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         return true;
     }
 
-    private bool HandleMove(int delta)
+    private bool HandleMove(int delta, bool extendSelection)
     {
-        editor.MoveCaret(editor.Caret.Position + delta);
+        editor.MoveCaretByTextElement(delta, extendSelection);
         EnsureCaretVisible();
         ResetCaretBlink();
         Invalidate(InvalidationFlags.Render, "TextBox caret changed");
         return true;
     }
 
-    private bool HandleMoveTo(int position)
+    private bool HandleMoveTo(int position, bool extendSelection)
     {
-        editor.MoveCaret(position);
+        editor.MoveCaret(position, extendSelection);
         EnsureCaretVisible();
         ResetCaretBlink();
         Invalidate(InvalidationFlags.Render, "TextBox caret changed");

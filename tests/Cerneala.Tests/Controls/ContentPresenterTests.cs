@@ -36,6 +36,24 @@ public sealed class ContentPresenterTests
     }
 
     [Fact]
+    public void ContentTemplateCreatesPresentedChildForElementContent()
+    {
+        UIElement content = new();
+        ContentPresenter presenter = new()
+        {
+            Content = content,
+            ContentTemplate = new DataTemplate<UIElement>(_ => new FixedElement(new LayoutSize(10, 5)))
+        };
+
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
+
+        FixedElement child = Assert.IsType<FixedElement>(presenter.PresentedChild);
+        Assert.Same(presenter, child.LogicalParent);
+        Assert.Null(content.LogicalParent);
+        Assert.Null(content.VisualParent);
+    }
+
+    [Fact]
     public void ContentReplacementDetachesOldPresentedChild()
     {
         ContentPresenter presenter = new();

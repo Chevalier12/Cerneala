@@ -96,17 +96,17 @@ public class ContentPresenter : Control
     private UIElement? CreatePresentedChild()
     {
         object? content = Content;
-        if (content is UIElement element)
-        {
-            generatedTextChild = false;
-            return element;
-        }
-
         DataTemplate? template = ContentTemplate;
         if (template is not null)
         {
             generatedTextChild = false;
             return template.CreateElement(content);
+        }
+
+        if (content is UIElement element)
+        {
+            generatedTextChild = false;
+            return element;
         }
 
         if (content is string text)

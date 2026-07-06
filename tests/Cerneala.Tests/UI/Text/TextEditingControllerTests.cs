@@ -44,4 +44,32 @@ public sealed class TextEditingControllerTests
         Assert.True(changed);
         Assert.Equal(new TextSelection(1, 2), editor.Selection);
     }
+
+    [Fact]
+    public void HandleKeyRightMovesOverSurrogatePairAsOneTextElement()
+    {
+        TextEditor editor = new(new TextDocument("a😀b"));
+        editor.MoveCaret(1);
+        TextEditingController controller = new(editor);
+
+        bool changed = controller.HandleKey(InputKey.Right);
+
+        Assert.True(changed);
+        Assert.Equal(3, editor.Caret.Position);
+        Assert.True(editor.Selection.IsEmpty);
+    }
+
+    [Fact]
+    public void HandleKeyLeftMovesOverSurrogatePairAsOneTextElement()
+    {
+        TextEditor editor = new(new TextDocument("a😀b"));
+        editor.MoveCaret(3);
+        TextEditingController controller = new(editor);
+
+        bool changed = controller.HandleKey(InputKey.Left);
+
+        Assert.True(changed);
+        Assert.Equal(1, editor.Caret.Position);
+        Assert.True(editor.Selection.IsEmpty);
+    }
 }

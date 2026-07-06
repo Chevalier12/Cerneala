@@ -26,6 +26,11 @@ public sealed class RenderQueue
         }
     }
 
+    internal bool Contains(UIElement element)
+    {
+        return elements.Contains(element);
+    }
+
     public IReadOnlyList<UIElement> Snapshot()
     {
         ElementQueueOrder.RemoveElementsOutsideRoot(root, elements, order);

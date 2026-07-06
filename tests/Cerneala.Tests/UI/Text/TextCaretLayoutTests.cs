@@ -68,6 +68,19 @@ public sealed class TextCaretLayoutTests
     }
 
     [Fact]
+    public void GetCaretIndexAtXDoesNotReturnMiddleOfSurrogatePair()
+    {
+        TextCaretLayout layout = TextCaretLayout.Default;
+        FontResolver resolver = new(new SystemFontSource());
+        string text = "a\U0001F600b";
+        float middleOfSurrogatePair = layout.GetCaretX(text, 2, Style, resolver);
+
+        int index = layout.GetCaretIndexAtX(text, middleOfSurrogatePair, Style, resolver);
+
+        Assert.NotEqual(2, index);
+    }
+
+    [Fact]
     public void GetCaretIndexAtXMapsViewportCoordinatesThroughHorizontalOffset()
     {
         TextCaretLayout layout = TextCaretLayout.Default;

@@ -1,3 +1,4 @@
+using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 
@@ -36,7 +37,8 @@ public static class PseudoClassMatcher
             (!pseudoClasses.HasFlag(PseudoClass.Focus) || element.IsKeyboardFocused) &&
             (!pseudoClasses.HasFlag(PseudoClass.FocusWithin) || element.IsKeyboardFocusWithin) &&
             (!pseudoClasses.HasFlag(PseudoClass.Disabled) || !element.IsEnabled) &&
-            (!pseudoClasses.HasFlag(PseudoClass.Selected) || false);
+            (!pseudoClasses.HasFlag(PseudoClass.Selected) ||
+                (element is ISelectableItemContainer { IsSelected: true }));
     }
 
     private static bool MatchesProvider(IStylePseudoClassProvider provider, PseudoClass pseudoClasses)

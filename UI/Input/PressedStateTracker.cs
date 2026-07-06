@@ -8,7 +8,8 @@ public sealed class PressedStateTracker
 
     public void Press(UIElement? target)
     {
-        if (target is not IInputPressable pressable)
+        IInputPressable? pressable = ResolvePressable(target);
+        if (pressable is null)
         {
             Cancel();
             return;
@@ -38,5 +39,18 @@ public sealed class PressedStateTracker
 
         PressedElement.IsPressed = false;
         PressedElement = null;
+    }
+
+    private static IInputPressable? ResolvePressable(UIElement? target)
+    {
+        for (UIElement? current = target; current is not null; current = current.VisualParent)
+        {
+            if (current is IInputPressable pressable)
+            {
+                return pressable;
+            }
+        }
+
+        return null;
     }
 }

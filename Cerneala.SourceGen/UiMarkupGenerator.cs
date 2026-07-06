@@ -299,8 +299,8 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             {
                 "Text" when elementName == "TextBlock" => Literal(value),
                 "Content" when elementName == "Button" => Literal(value),
-                "IsEnabled" => Bool(attribute),
-                "IsVisible" => Bool(attribute),
+                "IsEnabled" => Bool(elementName, propertyName, attribute),
+                "IsVisible" => Bool(elementName, propertyName, attribute),
                 "Margin" => Thickness(elementName, propertyName, attribute),
                 "Background" when IsControlElement(elementName) => Color(elementName, propertyName, attribute),
                 "Foreground" when IsControlElement(elementName) => Color(elementName, propertyName, attribute),
@@ -400,9 +400,9 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             return builder.ToString();
         }
 
-        private string? Bool(XAttribute attribute)
+        private string? Bool(string elementName, string propertyName, XAttribute attribute)
         {
-            return bool.TryParse(attribute.Value, out bool parsed) ? (parsed ? "true" : "false") : Invalid(attribute, "Boolean", "value", attribute.Value);
+            return bool.TryParse(attribute.Value, out bool parsed) ? (parsed ? "true" : "false") : Invalid(attribute, elementName, propertyName, attribute.Value);
         }
 
         private string? Float(string elementName, string propertyName, XAttribute attribute)

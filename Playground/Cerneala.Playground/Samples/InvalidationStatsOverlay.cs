@@ -5,20 +5,28 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
+using Cerneala.UI.Text;
 
 namespace Cerneala.Playground.Samples;
 
 public sealed class InvalidationStatsOverlay
 {
-    private readonly PlaygroundText playgroundText;
-    private readonly TextBlock text;
+    private readonly DiagnosticsTextBlock text;
 
     public InvalidationStatsOverlay(IResourceProvider? resourceProvider = null, ResourceId<FontResource>? fontResourceId = null)
     {
-        playgroundText = new PlaygroundText(resourceProvider, fontResourceId);
-        text = playgroundText.Create(Format(null), 13, DrawColor.White);
+        text = new DiagnosticsTextBlock
+        {
+            Foreground = DrawColor.White,
+            FontSize = 13,
+            ResourceProvider = resourceProvider,
+            FontResourceId = fontResourceId
+        };
+        text.SetDiagnosticsText(Format(null));
 
         Root = new Border
         {
@@ -33,7 +41,7 @@ public sealed class InvalidationStatsOverlay
 
     public UIElement Root { get; }
 
-    public string Text => text.Text;
+    public string Text => text.DiagnosticsText;
 
     public void Update(UiFrame? frame)
     {
@@ -42,7 +50,7 @@ public sealed class InvalidationStatsOverlay
             return;
         }
 
-        text.Text = Format(frame);
+        text.SetDiagnosticsText(Format(frame));
     }
 
     public static string Format(UiFrame? frame)
@@ -55,5 +63,95 @@ public sealed class InvalidationStatsOverlay
         return string.Create(
             System.Globalization.CultureInfo.InvariantCulture,
             $"Frame stats: scale={frame.Viewport.Scale}, inherited={frame.Stats.InheritedElements}, commandState={frame.Stats.CommandStateElements}, style={frame.Stats.StyledElements}, queuedMeasure={frame.Stats.MeasuredElements}, queuedArrange={frame.Stats.ArrangedElements}, measureCalls={frame.Stats.MeasureCalls}, arrangeCalls={frame.Stats.ArrangeCalls}, renderCache={frame.Stats.RenderedElements}, hitTest={frame.Stats.HitTestElements}, reusedCaches={frame.Stats.ReusedCaches}, noWork={frame.Stats.NoWorkFrames}");
+    }
+
+    private sealed class DiagnosticsTextBlock : TextBlock
+    {
+        private const string LayoutReservationText =
+            "Frame stats: scale=1, inherited=0000, commandState=0000, style=0000, queuedMeasure=0000, queuedArrange=0000, measureCalls=0000, arrangeCalls=0000, renderCache=0000, hitTest=0000, reusedCaches=0000, noWork=0000";
+
+        private readonly TextLayoutCache resourceTextLayoutCache = new();
+        private string diagnosticsText = string.Empty;
+
+        public string DiagnosticsText => diagnosticsText;
+
+        public void SetDiagnosticsText(string? value)
+        {
+            string next = value ?? string.Empty;
+            if (diagnosticsText == next)
+            {
+                return;
+            }
+
+            diagnosticsText = next;
+            Invalidate(InvalidationFlags.Render | InvalidationFlags.Semantics, "Diagnostics text changed");
+            FlushDiagnosticsRender();
+        }
+
+        private void FlushDiagnosticsRender()
+        {
+            UIRoot? root = Root;
+            if (root is null)
+            {
+                return;
+            }
+
+            root.RenderQueueProcessor.Process(this);
+            root.RenderQueue.Remove(this);
+            DirtyState.Clear(InvalidationFlags.Render | InvalidationFlags.Semantics);
+        }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            TextRunStyle style = CreateTextStyle();
+            TextMeasureResult measurement = GetTextMeasurer().Measure(LayoutReservationText, style, context.AvailableSize.Width);
+            SetRenderDependencies(RenderDependency.None.WithTextLayoutIdentity(measurement.CacheKey.ToString()));
+            return measurement.Size;
+        }
+
+        protected override void OnRender(RenderContext context)
+        {
+            if (string.IsNullOrEmpty(diagnosticsText))
+            {
+                return;
+            }
+
+            TextRunStyle style = CreateTextStyle();
+            _ = GetTextRenderer().Render(
+                context.DrawingContext,
+                diagnosticsText,
+                style,
+                context.Bounds.Width,
+                new DrawPoint(context.Bounds.X, context.Bounds.Y),
+                Foreground);
+        }
+
+        private TextRunStyle CreateTextStyle()
+        {
+            return new TextRunStyle(FontFamily, FontSize, color: Foreground, fontResourceId: FontResourceId);
+        }
+
+        private TextMeasurer GetTextMeasurer()
+        {
+            IResourceProvider? provider = ResourceProvider ?? Root?.ResourceProvider;
+            if (FontResourceId is not null && provider is not null)
+            {
+                return new TextMeasurer(new FontResolver(provider), LineBreakService.Default, resourceTextLayoutCache);
+            }
+
+            return TextMeasurer;
+        }
+
+        private TextRenderer GetTextRenderer()
+        {
+            IResourceProvider? provider = ResourceProvider ?? Root?.ResourceProvider;
+            if (FontResourceId is not null && provider is not null)
+            {
+                TextMeasurer measurer = new(new FontResolver(provider), LineBreakService.Default, resourceTextLayoutCache);
+                return new TextRenderer(new FontResolver(provider), measurer);
+            }
+
+            return TextRenderer;
+        }
     }
 }

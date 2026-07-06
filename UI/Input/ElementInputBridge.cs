@@ -118,9 +118,13 @@ public sealed class ElementInputBridge
             if (inputFrame.Pointer.IsReleased(button))
             {
                 int clickCount = clickTracker.Release(hitTarget?.Element);
-                RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount);
+                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount);
                 CompletePointerDrag(routeMap, pointerTarget, button, clickCount);
-                ExecuteButtonCommandOnClick(routeMap, pointerTarget, hitTarget, button, clickCount);
+                if (!handled)
+                {
+                    ExecuteButtonCommandOnClick(routeMap, pointerTarget, hitTarget, button, clickCount);
+                }
+
                 pressedStateTracker.Release();
             }
         }

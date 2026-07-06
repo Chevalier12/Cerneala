@@ -384,6 +384,27 @@ public sealed class PlaygroundSampleTests
     }
 
     [Fact]
+    public void StatsOverlayUpdateDoesNotCreateRetainedWorkForNextFrame()
+    {
+        UIRoot root = new(1000, 600);
+        SampleSelector selector = SampleSelector.CreateDefault();
+        root.VisualChildren.Add(selector.Root);
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(1000, 600) });
+        UiFrame first = host.Update(EmptyInputFrame(), new UiViewport(1000, 600), TimeSpan.Zero);
+
+        selector.UpdateFrame(first);
+        UiFrame second = host.Update(EmptyInputFrame(), new UiViewport(1000, 600), TimeSpan.Zero);
+
+        Assert.Equal(0, second.Stats.MeasuredElements);
+        Assert.Equal(0, second.Stats.ArrangedElements);
+        Assert.Equal(0, second.Stats.MeasureCalls);
+        Assert.Equal(0, second.Stats.ArrangeCalls);
+        Assert.Equal(0, second.Stats.RenderedElements);
+        Assert.Equal(1, second.Stats.NoWorkFrames);
+        Assert.Contains("queuedMeasure=", selector.StatsText, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void UnchangedRootFramesReportNoRetainedRegeneration()
     {
         UIRoot root = new(800, 600);
@@ -479,7 +500,10 @@ public sealed class PlaygroundSampleTests
     private static Border StatsOverlayBorder(UIElement root)
     {
         return DescendantsAndSelf<Border>(root)
-            .Single(border => border.Child is TextBlock textBlock && textBlock.Text.StartsWith("Frame stats:", StringComparison.Ordinal));
+            .Single(border =>
+                border.Child is TextBlock &&
+                border.Background == new DrawColor(24, 28, 36, 230) &&
+                border.BorderColor == new DrawColor(74, 86, 104));
     }
 
     private sealed class TestImage(int width, int height) : IDrawImage

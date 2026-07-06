@@ -26,16 +26,33 @@ public sealed class TextEditor
 
     public void MoveCaret(int position, bool extendSelection = false)
     {
-        TextCaret caret = TextCaret.At(position, Document.Length);
+        int caretPosition = NormalizeCaretPosition(Document.Text, Caret.Position, position);
+        TextCaret caret = TextCaret.At(caretPosition, Document.Length);
         Caret = caret;
         Selection = extendSelection
             ? new TextSelection(Selection.Anchor, caret.Position).Clamp(Document.Length)
             : TextSelection.Caret(caret.Position);
     }
 
+    public void MoveCaretByTextElement(int direction, bool extendSelection = false)
+    {
+        if (direction < 0)
+        {
+            (int start, _) = GetPreviousTextElementRange(Document.Text, Caret.Position);
+            MoveCaret(start, extendSelection);
+            return;
+        }
+
+        if (direction > 0)
+        {
+            (int start, int length) = GetNextTextElementRange(Document.Text, Caret.Position);
+            MoveCaret(start + length, extendSelection);
+        }
+    }
+
     public void Select(int anchor, int active)
     {
-        Selection = new TextSelection(anchor, active).Clamp(Document.Length);
+        Selection = NormalizeSelection(Document.Text, anchor, active);
         Caret = TextCaret.At(Selection.Active, Document.Length);
     }
 
@@ -177,5 +194,50 @@ public sealed class TextEditor
         }
 
         return (text.Length, 0);
+    }
+
+    private static int NormalizeCaretPosition(string text, int currentPosition, int requestedPosition)
+    {
+        int position = Math.Clamp(requestedPosition, 0, text.Length);
+        if (position == 0 || position == text.Length)
+        {
+            return position;
+        }
+
+        int[] starts = StringInfo.ParseCombiningCharacters(text);
+        for (int i = 0; i < starts.Length; i++)
+        {
+            int start = starts[i];
+            int end = i + 1 < starts.Length ? starts[i + 1] : text.Length;
+            if (position == start || position == end)
+            {
+                return position;
+            }
+
+            if (position > start && position < end)
+            {
+                return requestedPosition < currentPosition ? start : end;
+            }
+        }
+
+        return position;
+    }
+
+    private TextSelection NormalizeSelection(string text, int anchor, int active)
+    {
+        if (anchor == active)
+        {
+            int caretPosition = NormalizeCaretPosition(text, Caret.Position, active);
+            return TextSelection.Caret(caretPosition);
+        }
+
+        int start = Math.Min(anchor, active);
+        int end = Math.Max(anchor, active);
+        int normalizedStart = NormalizeCaretPosition(text, end, start);
+        int normalizedEnd = NormalizeCaretPosition(text, start, end);
+
+        return anchor <= active
+            ? new TextSelection(normalizedStart, normalizedEnd)
+            : new TextSelection(normalizedEnd, normalizedStart);
     }
 }

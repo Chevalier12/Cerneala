@@ -39,6 +39,16 @@ public sealed class LayoutQueue
         }
     }
 
+    internal bool ContainsMeasure(UIElement element)
+    {
+        return measure.Contains(element);
+    }
+
+    internal bool ContainsArrange(UIElement element)
+    {
+        return arrange.Contains(element);
+    }
+
     public IReadOnlyList<UIElement> SnapshotMeasure()
     {
         ElementQueueOrder.RemoveElementsOutsideRoot(root, measure, measureOrder);

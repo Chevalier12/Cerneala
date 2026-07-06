@@ -82,6 +82,7 @@ public readonly record struct DrawCommand
     public static DrawCommand DrawText(DrawTextRun textRun, DrawPoint position, DrawColor color)
     {
         ArgumentNullException.ThrowIfNull(textRun);
+        ThrowIfPointOutsidePixelRange(position, nameof(position));
 
         return new DrawCommand(DrawCommandKind.DrawText, default, color, 0, textRun.Text, textRun, position, default, null, textRun.Font);
     }

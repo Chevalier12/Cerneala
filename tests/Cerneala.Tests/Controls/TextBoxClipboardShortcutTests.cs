@@ -65,6 +65,19 @@ public sealed class TextBoxClipboardShortcutTests
     }
 
     [Fact]
+    public void CtrlVPastesClipboardTextThroughTextInputNormalization()
+    {
+        FakeClipboard clipboard = new("a\r\nb\tc");
+        UIRoot root = FocusedTextBox("hello", clipboard, out TextBox textBox, out ElementInputBridge bridge);
+        textBox.MoveCaret(textBox.Text.Length);
+
+        DispatchCtrlShortcut(root, bridge, InputKey.V);
+
+        Assert.Equal("helloabc", textBox.Text);
+        Assert.Equal("helloabc".Length, textBox.Caret.Position);
+    }
+
+    [Fact]
     public void ClipboardShortcutsDoNothingWhenNoClipboardIsAvailable()
     {
         UIRoot root = FocusedTextBox("hello", clipboard: null, out TextBox textBox, out ElementInputBridge bridge);

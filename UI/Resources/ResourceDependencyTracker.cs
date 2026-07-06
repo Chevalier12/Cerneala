@@ -8,11 +8,17 @@ public sealed class ResourceDependencyTracker
     private readonly Dictionary<ResourceKey, Dictionary<UIElement, ResourceDependency>> dependenciesByResource = new();
     private readonly Dictionary<UIElement, long> ownerVersions = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<ResourceKey, long> resourceVersions = new();
+    private readonly HashSet<IObservableResourceProvider> trackedProviders = new(ResourceProviderReferenceEqualityComparer.Instance);
     private long nextOwnerVersion;
 
     public void Track(IObservableResourceProvider provider)
     {
         ArgumentNullException.ThrowIfNull(provider);
+        if (!trackedProviders.Add(provider))
+        {
+            return;
+        }
+
         provider.ResourceChanged += OnResourceChanged;
     }
 
@@ -142,6 +148,21 @@ public sealed class ResourceDependencyTracker
         }
 
         public int GetHashCode(UIElement obj)
+        {
+            return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
+        }
+    }
+
+    private sealed class ResourceProviderReferenceEqualityComparer : IEqualityComparer<IObservableResourceProvider>
+    {
+        public static ResourceProviderReferenceEqualityComparer Instance { get; } = new();
+
+        public bool Equals(IObservableResourceProvider? x, IObservableResourceProvider? y)
+        {
+            return ReferenceEquals(x, y);
+        }
+
+        public int GetHashCode(IObservableResourceProvider obj)
         {
             return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
         }

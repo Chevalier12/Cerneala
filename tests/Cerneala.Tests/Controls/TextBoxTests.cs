@@ -73,6 +73,22 @@ public sealed class TextBoxTests
     }
 
     [Fact]
+    public void ArrowKeysMoveCaretAcrossTextElements()
+    {
+        string face = "\U0001F600";
+        UIRoot root = RootWithFocusedTextBox("a" + face + "b", out TextBox textBox, out ElementInputBridge bridge);
+        textBox.MoveCaret(1 + face.Length);
+
+        bridge.Dispatch(root, KeyboardFrame(InputKey.Left));
+
+        Assert.Equal(1, textBox.Caret.Position);
+
+        bridge.Dispatch(root, KeyboardFrame(InputKey.Right));
+
+        Assert.Equal(1 + face.Length, textBox.Caret.Position);
+    }
+
+    [Fact]
     public void MouseDownInsideTextBoxMovesCaretToNearestCharacter()
     {
         UIRoot root = RootWithTextBox("iiiiWWWW", 220, out TextBox textBox);
@@ -153,6 +169,21 @@ public sealed class TextBoxTests
         Assert.Equal(1, textBox.Selection.Start);
         Assert.Equal(4, textBox.Selection.End);
         Assert.Equal(1, textBox.Caret.Position);
+    }
+
+    [Fact]
+    public void ShiftRightExtendsSelectionFromCaret()
+    {
+        UIRoot root = RootWithFocusedTextBox("abcd", out TextBox textBox, out ElementInputBridge bridge);
+        textBox.MoveCaret(1);
+
+        bridge.Dispatch(root, KeyboardFrame(InputKey.Right, InputKey.LeftShift));
+
+        Assert.Equal(1, textBox.Selection.Anchor);
+        Assert.Equal(2, textBox.Selection.Active);
+        Assert.Equal(1, textBox.Selection.Start);
+        Assert.Equal(2, textBox.Selection.End);
+        Assert.Equal(2, textBox.Caret.Position);
     }
 
     private static UIRoot RootWithFocusedTextBox(string text, out TextBox textBox, out ElementInputBridge bridge)
@@ -248,6 +279,16 @@ public sealed class TextBoxTests
             KeyboardSnapshot.Empty,
             KeyboardSnapshot.FromDownKeys([key]),
             [new TextInputSnapshotEvent(text)]);
+    }
+
+    private static InputFrame KeyboardFrame(InputKey key, params InputKey[] modifiers)
+    {
+        return new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.FromDownKeys(modifiers),
+            KeyboardSnapshot.FromDownKeys([.. modifiers, key]),
+            []);
     }
 
     private static TextRunStyle CreateTextStyle(TextBox textBox)

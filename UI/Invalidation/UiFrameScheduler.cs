@@ -174,12 +174,24 @@ public sealed class UiFrameScheduler
         IReadOnlyList<Elements.UIElement> snapshot = layoutQueue.SnapshotMeasure();
         foreach (Elements.UIElement element in snapshot)
         {
-            processors.Process(FramePhase.Measure, element);
-            InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Measure);
             layoutQueue.RemoveMeasure(element);
+            try
+            {
+                processors.Process(FramePhase.Measure, element);
+            }
+            catch
+            {
+                layoutQueue.EnqueueMeasure(element);
+                throw;
+            }
+
             stats.Count(FramePhase.Measure);
             trace.RecordPhase(FramePhase.Measure, element, InvalidationFlags.Measure);
-            trace.RecordClear(element, cleared);
+            if (!layoutQueue.ContainsMeasure(element))
+            {
+                InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Measure);
+                trace.RecordClear(element, cleared);
+            }
         }
 
         trace.RecordPhaseSummary(FramePhase.Measure, snapshot.Count);
@@ -190,12 +202,24 @@ public sealed class UiFrameScheduler
         IReadOnlyList<Elements.UIElement> snapshot = layoutQueue.SnapshotArrange();
         foreach (Elements.UIElement element in snapshot)
         {
-            processors.Process(FramePhase.Arrange, element);
-            InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Arrange);
             layoutQueue.RemoveArrange(element);
+            try
+            {
+                processors.Process(FramePhase.Arrange, element);
+            }
+            catch
+            {
+                layoutQueue.EnqueueArrange(element);
+                throw;
+            }
+
             stats.Count(FramePhase.Arrange);
             trace.RecordPhase(FramePhase.Arrange, element, InvalidationFlags.Arrange);
-            trace.RecordClear(element, cleared);
+            if (!layoutQueue.ContainsArrange(element))
+            {
+                InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Arrange);
+                trace.RecordClear(element, cleared);
+            }
         }
 
         trace.RecordPhaseSummary(FramePhase.Arrange, snapshot.Count);
@@ -206,12 +230,24 @@ public sealed class UiFrameScheduler
         IReadOnlyList<Elements.UIElement> snapshot = renderQueue.Snapshot();
         foreach (Elements.UIElement element in snapshot)
         {
-            processors.Process(FramePhase.RenderCache, element);
-            InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Render);
             renderQueue.Remove(element);
+            try
+            {
+                processors.Process(FramePhase.RenderCache, element);
+            }
+            catch
+            {
+                renderQueue.Enqueue(element);
+                throw;
+            }
+
             stats.Count(FramePhase.RenderCache);
             trace.RecordPhase(FramePhase.RenderCache, element, InvalidationFlags.Render);
-            trace.RecordClear(element, cleared);
+            if (!renderQueue.Contains(element))
+            {
+                InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Render);
+                trace.RecordClear(element, cleared);
+            }
         }
 
         trace.RecordPhaseSummary(FramePhase.RenderCache, snapshot.Count);
@@ -222,12 +258,24 @@ public sealed class UiFrameScheduler
         IReadOnlyList<Elements.UIElement> snapshot = hitTestQueue.Snapshot();
         foreach (Elements.UIElement element in snapshot)
         {
-            processors.Process(FramePhase.HitTest, element);
-            InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.HitTest);
             hitTestQueue.Remove(element);
+            try
+            {
+                processors.Process(FramePhase.HitTest, element);
+            }
+            catch
+            {
+                hitTestQueue.Enqueue(element);
+                throw;
+            }
+
             stats.Count(FramePhase.HitTest);
             trace.RecordPhase(FramePhase.HitTest, element, InvalidationFlags.HitTest);
-            trace.RecordClear(element, cleared);
+            if (!hitTestQueue.Contains(element))
+            {
+                InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.HitTest);
+                trace.RecordClear(element, cleared);
+            }
         }
 
         trace.RecordPhaseSummary(FramePhase.HitTest, snapshot.Count);
