@@ -43,9 +43,6 @@ public class VirtualizingStackPanel : Panel
         float itemExtent = VirtualizationContext is { ItemExtent: > 0 } virtualizationContext && float.IsFinite(virtualizationContext.ItemExtent)
             ? virtualizationContext.ItemExtent
             : 0;
-        float scrollOffset = VirtualizationContext is { ScrollOffset: > 0 } scrollContext && float.IsFinite(scrollContext.ScrollOffset)
-            ? scrollContext.ScrollOffset
-            : 0;
         float y = context.FinalRect.Y;
 
         for (int i = 0; i < VisualChildren.Count; i++)
@@ -59,7 +56,7 @@ public class VirtualizingStackPanel : Panel
             }
 
             float childY = itemExtent > 0
-                ? context.FinalRect.Y + (itemIndex * itemExtent) - scrollOffset
+                ? context.FinalRect.Y + (itemIndex * itemExtent)
                 : y;
             float height = itemExtent > 0 ? itemExtent : child.DesiredSize.Height;
             child.Arrange(new ArrangeContext(new LayoutRect(context.FinalRect.X, childY, context.FinalRect.Width, height), context.Rounding));

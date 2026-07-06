@@ -63,7 +63,7 @@ public sealed class LayoutManagerTests
         child.Margin = new Thickness(1);
         root.ProcessFrame();
 
-        Assert.Equal(new LayoutSize(25, 5), parent.DesiredSize);
+        Assert.Equal(new LayoutSize(27, 7), parent.DesiredSize);
         Assert.Equal(2, parent.MeasureCount);
         Assert.True(child.MeasureCount >= 2);
     }

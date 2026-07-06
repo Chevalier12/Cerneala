@@ -20,6 +20,12 @@ public class StackPanel : Panel
     {
         float width = 0;
         float height = 0;
+        Orientation orientation = Orientation;
+        LayoutSize childAvailableSize = orientation == Orientation.Vertical
+            ? new LayoutSize(context.AvailableSize.Width, float.PositiveInfinity)
+            : new LayoutSize(float.PositiveInfinity, context.AvailableSize.Height);
+        MeasureContext childContext = new(childAvailableSize, context.Rounding);
+
         foreach (UIElement child in VisualChildren)
         {
             if (child.Visibility == Visibility.Collapsed)
@@ -28,8 +34,8 @@ public class StackPanel : Panel
                 continue;
             }
 
-            LayoutSize childSize = child.Measure(context);
-            if (Orientation == Orientation.Vertical)
+            LayoutSize childSize = child.Measure(childContext);
+            if (orientation == Orientation.Vertical)
             {
                 width = MathF.Max(width, childSize.Width);
                 height += childSize.Height;

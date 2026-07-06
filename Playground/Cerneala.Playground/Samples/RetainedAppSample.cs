@@ -6,7 +6,11 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
+using ColumnDefinition = Cerneala.UI.Layout.Panels.ColumnDefinition;
+using GridLength = Cerneala.UI.Layout.Panels.GridLength;
+using LayoutGrid = Cerneala.UI.Layout.Panels.Grid;
 using PanelOrientation = Cerneala.UI.Layout.Panels.Orientation;
+using RowDefinition = Cerneala.UI.Layout.Panels.RowDefinition;
 
 namespace Cerneala.Playground.Samples;
 
@@ -48,16 +52,31 @@ public sealed class RetainedAppSample : IPlaygroundSample
             })
         };
 
-        StackPanel root = new()
+        LayoutGrid root = new()
         {
-            Margin = new Thickness(32, 24, 32, 24),
-            Orientation = PanelOrientation.Vertical
+            Margin = new Thickness(32, 24, 32, 24)
         };
+        root.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        root.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        root.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        root.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        root.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
 
-        root.VisualChildren.Add(text.Create("Cerneala retained app", 26));
-        root.VisualChildren.Add(text.Create("Retained tree, invalidation-driven layout/render, explicit input.", 15));
-        root.VisualChildren.Add(BuildInteractionCard());
-        root.VisualChildren.Add(BuildListCard());
+        UIElement title = text.Create("Cerneala retained app", 26);
+        UIElement subtitle = text.Create("Retained tree, invalidation-driven layout/render, explicit input.", 15);
+        UIElement interactionCard = BuildInteractionCard();
+        UIElement listCard = BuildListCard();
+        LayoutGrid.SetColumnSpan(title, 2);
+        LayoutGrid.SetColumnSpan(subtitle, 2);
+        LayoutGrid.SetRow(subtitle, 1);
+        LayoutGrid.SetRow(interactionCard, 2);
+        LayoutGrid.SetRow(listCard, 2);
+        LayoutGrid.SetColumn(listCard, 1);
+
+        root.VisualChildren.Add(title);
+        root.VisualChildren.Add(subtitle);
+        root.VisualChildren.Add(interactionCard);
+        root.VisualChildren.Add(listCard);
         return root;
     }
 

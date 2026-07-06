@@ -11,7 +11,10 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
+using GridLength = Cerneala.UI.Layout.Panels.GridLength;
+using LayoutGrid = Cerneala.UI.Layout.Panels.Grid;
 using PanelOrientation = Cerneala.UI.Layout.Panels.Orientation;
+using RowDefinition = Cerneala.UI.Layout.Panels.RowDefinition;
 
 namespace Cerneala.Playground.Samples;
 
@@ -95,14 +98,20 @@ public sealed class SampleSelector
         statsOverlay.Update(frame);
     }
 
-    private StackPanel BuildRoot()
+    private LayoutGrid BuildRoot()
     {
-        StackPanel root = new()
+        LayoutGrid root = new()
         {
-            Margin = new Thickness(24, 20, 24, 0),
-            Orientation = PanelOrientation.Vertical
+            Margin = new Thickness(24, 20, 24, 0)
         };
+        root.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        root.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        root.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+
         StackPanel header = BuildHeader();
+        LayoutGrid.SetRow(statsOverlay.Root, 1);
+        LayoutGrid.SetRow(activeSampleHost, 2);
+
         root.VisualChildren.Add(header);
         root.VisualChildren.Add(statsOverlay.Root);
         root.VisualChildren.Add(activeSampleHost);

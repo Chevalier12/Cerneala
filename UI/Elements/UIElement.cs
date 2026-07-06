@@ -286,7 +286,7 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
         LayoutSize desired = !UIElementVisibility.ParticipatesInLayout(this)
             ? LayoutSize.Zero
-            : MeasureCore(context).ClampNonNegative();
+            : MeasureWithMargin(context);
         desired = context.Rounding.Round(desired);
         SetDesiredSize(desired);
         LastMeasureAvailableSize = context.AvailableSize;
@@ -305,7 +305,7 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
         LayoutRect finalRect = !UIElementVisibility.ParticipatesInLayout(this)
             ? context.FinalRect
-            : ApplyAlignment(context.FinalRect);
+            : ApplyMarginAndAlignment(context.FinalRect);
 
         LayoutRect arranged = !UIElementVisibility.ParticipatesInLayout(this)
             ? new LayoutRect(context.FinalRect.X, context.FinalRect.Y, 0, 0)
@@ -378,14 +378,43 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         Invalidate(InvalidationFlags.Render, "Render dependencies changed");
     }
 
-    private LayoutRect ApplyAlignment(LayoutRect finalRect)
+    private LayoutSize MeasureWithMargin(MeasureContext context)
+    {
+        Thickness margin = Margin;
+        LayoutSize contentAvailableSize = Deflate(context.AvailableSize, margin);
+        LayoutSize contentDesiredSize = MeasureCore(new MeasureContext(contentAvailableSize, context.Rounding)).ClampNonNegative();
+        return new LayoutSize(
+            contentDesiredSize.Width + margin.Horizontal,
+            contentDesiredSize.Height + margin.Vertical).ClampNonNegative();
+    }
+
+    private LayoutRect ApplyMarginAndAlignment(LayoutRect finalRect)
+    {
+        Thickness margin = Margin;
+        LayoutRect contentRect = new(
+            finalRect.X + margin.Left,
+            finalRect.Y + margin.Top,
+            MathF.Max(0, finalRect.Width - margin.Horizontal),
+            MathF.Max(0, finalRect.Height - margin.Vertical));
+        LayoutSize contentDesiredSize = Deflate(DesiredSize, margin);
+        return ApplyAlignment(contentRect, contentDesiredSize);
+    }
+
+    private static LayoutSize Deflate(LayoutSize size, Thickness thickness)
+    {
+        return new LayoutSize(
+            MathF.Max(0, size.Width - thickness.Horizontal),
+            MathF.Max(0, size.Height - thickness.Vertical));
+    }
+
+    private LayoutRect ApplyAlignment(LayoutRect finalRect, LayoutSize desiredSize)
     {
         float width = HorizontalAlignment == HorizontalAlignment.Stretch
             ? finalRect.Width
-            : Math.Min(DesiredSize.Width, finalRect.Width);
+            : Math.Min(desiredSize.Width, finalRect.Width);
         float height = VerticalAlignment == VerticalAlignment.Stretch
             ? finalRect.Height
-            : Math.Min(DesiredSize.Height, finalRect.Height);
+            : Math.Min(desiredSize.Height, finalRect.Height);
 
         float x = HorizontalAlignment switch
         {

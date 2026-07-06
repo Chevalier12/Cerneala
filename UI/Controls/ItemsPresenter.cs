@@ -279,13 +279,35 @@ public class ItemsPresenter : Control
             yield break;
         }
 
+        if (window is { IsEmpty: true })
+        {
+            yield break;
+        }
+
+        int index = 0;
         foreach (object? item in Items)
         {
+            if (window is { } realizationWindow)
+            {
+                if (index < realizationWindow.StartIndex)
+                {
+                    index++;
+                    continue;
+                }
+
+                if (index >= realizationWindow.EndIndexExclusive)
+                {
+                    yield break;
+                }
+            }
+
             UIElement? child = item as UIElement ?? ItemTemplate?.CreateElement(item);
             if (child is not null)
             {
                 yield return child;
             }
+
+            index++;
         }
     }
 

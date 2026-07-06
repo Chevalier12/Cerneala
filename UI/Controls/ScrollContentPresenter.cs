@@ -159,12 +159,22 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
     private static float CoerceHorizontalOffset(UiObject owner, float value)
     {
         ScrollContentPresenter presenter = (ScrollContentPresenter)owner;
+        if (!presenter.CanHorizontallyScroll)
+        {
+            return 0;
+        }
+
         return MathF.Min(MathF.Max(0, value), presenter.MaxHorizontalOffset);
     }
 
     private static float CoerceVerticalOffset(UiObject owner, float value)
     {
         ScrollContentPresenter presenter = (ScrollContentPresenter)owner;
+        if (!presenter.CanVerticallyScroll)
+        {
+            return 0;
+        }
+
         return MathF.Min(MathF.Max(0, value), presenter.MaxVerticalOffset);
     }
 

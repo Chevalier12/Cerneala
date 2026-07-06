@@ -65,6 +65,27 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void DisablingVerticalScrollingCoercesExistingOffsetToZero()
+    {
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(80, 300)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        viewer.Measure(new MeasureContext(new LayoutSize(80, 80)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 80, 80)));
+        viewer.ScrollInfo.SetVerticalOffset(120);
+
+        viewer.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+        viewer.Measure(new MeasureContext(new LayoutSize(80, 80)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 80, 80)));
+
+        Assert.Equal(0, viewer.Presenter.VerticalOffset);
+        Assert.Equal(0, viewer.VerticalScrollBar.Value);
+        Assert.Equal(Visibility.Collapsed, viewer.VerticalScrollBar.Visibility);
+    }
+
+    [Fact]
     public void ScrollBarVisibilityPolicyControlsVisibleAndReservedBars()
     {
         ScrollViewer viewer = new()

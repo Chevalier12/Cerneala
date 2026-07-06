@@ -149,6 +149,26 @@ public sealed class PlaygroundSampleTests
     }
 
     [Fact]
+    public void RetainedAppSelectionKeepsRowsScrollViewerInsideCompactViewport()
+    {
+        UIRoot root = new(800, 360);
+        SampleSelector selector = SampleSelector.CreateDefault();
+        root.VisualChildren.Add(selector.Root);
+
+        root.ProcessFrame();
+
+        ScrollViewer rows = DescendantsAndSelf<ScrollViewer>(selector.ActiveElement!).Single();
+        float rowsBottom = rows.ArrangedBounds.Y + rows.ArrangedBounds.Height;
+
+        Assert.True(
+            rowsBottom <= 360,
+            $"Expected retained rows ScrollViewer bottom {rowsBottom} to fit inside the 360px viewport.");
+        Assert.True(
+            rows.ScrollInfo.ExtentHeight > rows.ScrollInfo.ViewportHeight,
+            "Expected retained rows to remain scrollable inside the compact viewport.");
+    }
+
+    [Fact]
     public void PlaygroundSamplesUseSkiaFontsWhenFontResourceIsProvided()
     {
         ResourceStore resources = new();
@@ -426,6 +446,25 @@ public sealed class PlaygroundSampleTests
         Assert.All(statLines, command => Assert.True(
             command.TextRun!.Size * 0.5f * command.Text!.Length <= contentWidth,
             $"Expected '{command.Text}' to fit inside stats overlay content width {contentWidth}."));
+    }
+
+    [Fact]
+    public void RetainedAppListScrollBarStaysInsideViewport()
+    {
+        UIRoot root = new(1000, 600);
+        SampleSelector selector = SampleSelector.CreateDefault();
+        root.VisualChildren.Add(selector.Root);
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(1000, 600) });
+        UiFrame first = host.Update(EmptyInputFrame(), new UiViewport(1000, 600), TimeSpan.Zero);
+
+        selector.UpdateFrame(first);
+        host.Update(EmptyInputFrame(), new UiViewport(1000, 600), TimeSpan.Zero);
+        ScrollViewer scrollViewer = DescendantsAndSelf<ScrollViewer>(selector.ActiveElement!).Single();
+        float scrollBarBottom = scrollViewer.VerticalScrollBar.ArrangedBounds.Y + scrollViewer.VerticalScrollBar.ArrangedBounds.Height;
+
+        Assert.True(
+            scrollBarBottom <= root.ViewportHeight,
+            $"Expected retained app scrollbar bottom {scrollBarBottom} to stay inside viewport height {root.ViewportHeight}.");
     }
 
     [Fact]

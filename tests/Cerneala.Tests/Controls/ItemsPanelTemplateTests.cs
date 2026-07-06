@@ -1,6 +1,7 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Layout.Virtualization;
 
 namespace Cerneala.Tests.Controls;
 
@@ -94,6 +95,23 @@ public sealed class ItemsPanelTemplateTests
 
         Assert.Equal(1, created);
         Assert.Same(child, presenter.PanelRoot!.VisualChildren[0]);
+    }
+
+    [Fact]
+    public void ItemsPresenterVirtualizationMaterializesOnlyWindowItems()
+    {
+        ItemsPresenter presenter = new()
+        {
+            Items = new[] { "zero", "one", "two", "three", "four" },
+            ItemTemplate = new DataTemplate<string>(value => new ItemElement(value)),
+            ItemsPanel = new ItemsPanelTemplate(() => new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()),
+            VirtualizationContext = new VirtualizationContext(5, 10, 20, 20)
+        };
+
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 20)));
+
+        Assert.Equal(new RealizationWindow(2, 4), presenter.CurrentRealizationWindow);
+        Assert.Equal(["two", "three"], presenter.LayoutPanelRoot!.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
     }
 
     private sealed class ItemElement(string value) : UIElement

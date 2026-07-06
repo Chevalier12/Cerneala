@@ -50,7 +50,30 @@ public sealed class StackPanelTests
     }
 
     [Fact]
-    public void ParentRemeasureReusesUnchangedChildMeasureWhenConstraintsMatch()
+    public void VerticalStackUsesChildMarginsForMeasureAndSlots()
+    {
+        StackPanel panel = new();
+        FixedElement first = new(new LayoutSize(20, 10))
+        {
+            Margin = new Thickness(1, 2, 3, 4)
+        };
+        FixedElement second = new(new LayoutSize(30, 5))
+        {
+            Margin = new Thickness(0, 1, 0, 2)
+        };
+        panel.VisualChildren.Add(first);
+        panel.VisualChildren.Add(second);
+
+        LayoutSize desired = panel.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(new LayoutSize(30, 24), desired);
+        Assert.Equal(new LayoutRect(1, 2, 96, 10), first.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 17, 100, 5), second.ArrangedBounds);
+    }
+
+    [Fact]
+    public void ParentMarginRemeasureUpdatesChildMeasureWhenConstraintsChange()
     {
         StackPanel panel = new();
         FixedElement child = new(new LayoutSize(20, 10));
@@ -60,7 +83,7 @@ public sealed class StackPanelTests
         panel.Margin = new Thickness(1);
         panel.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
-        Assert.Equal(1, child.MeasureCount);
+        Assert.Equal(2, child.MeasureCount);
     }
 
     private sealed class FixedElement(LayoutSize size) : UIElement
