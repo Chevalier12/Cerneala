@@ -1,6 +1,7 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout.Panels;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Layout;
 
@@ -64,6 +65,7 @@ public sealed class LayoutManager
         LayoutRect arranged = element.Arrange(new ArrangeContext(finalRect));
         element.LastArrangeFinalRect = finalRect;
         element.LastArrangeLayoutVersion = element.LayoutVersion;
+        PruneTranslatedDescendantRenderWork(element);
 
         bool boundsChanged = previous != arranged;
         if (boundsChanged && element.IsAttached)
@@ -72,6 +74,39 @@ public sealed class LayoutManager
         }
 
         return new LayoutResult(element.DesiredSize, arranged, false, false, boundsChanged);
+    }
+
+    private void PruneTranslatedDescendantRenderWork(UIElement element)
+    {
+        if (!element.IsAttached)
+        {
+            return;
+        }
+
+        foreach (UIElement descendant in ElementTreeWalker.Descendants(element, ElementChildRole.Visual))
+        {
+            if (CanReuseTranslatedRenderCache(descendant))
+            {
+                root.RenderQueue.Remove(descendant);
+                root.RetainedRenderCache.InvalidateRoot();
+            }
+        }
+    }
+
+    private bool CanReuseTranslatedRenderCache(UIElement element)
+    {
+        if (element.DirtyState.Has(InvalidationFlags.Render))
+        {
+            return false;
+        }
+
+        ElementRenderCache cache = root.RetainedRenderCache.GetElementCache(element);
+        return cache.IsValid &&
+            cache.Dependencies == element.RenderDependencies &&
+            cache.ContentBounds.Width == element.ArrangedBounds.Width &&
+            cache.ContentBounds.Height == element.ArrangedBounds.Height &&
+            (cache.ContentBounds.X != element.ArrangedBounds.X ||
+             cache.ContentBounds.Y != element.ArrangedBounds.Y);
     }
 
     private LayoutSize GetAvailableSize(UIElement element)

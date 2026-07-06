@@ -96,7 +96,11 @@ public sealed class RetainedAppSample : IPlaygroundSample
             Margin = new Thickness(0, 16, 0, 0),
             Padding = new Thickness(14),
             BorderThickness = new Thickness(1),
-            Child = content
+            Child = new ScrollViewer
+            {
+                Content = content,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            }
         };
     }
 
@@ -104,7 +108,7 @@ public sealed class RetainedAppSample : IPlaygroundSample
     {
         Image image = new()
         {
-            Foreground = new DrawColor(59, 130, 246)
+            Foreground = DrawColor.White
         };
         if (imageResourceId is ResourceId<ImageResource> id)
         {
@@ -116,13 +120,16 @@ public sealed class RetainedAppSample : IPlaygroundSample
             image.Source = new SampleImage(96, 36);
         }
 
-        return new Border
+        LayoutGrid previewSlot = new();
+        previewSlot.RowDefinitions.Add(new RowDefinition(GridLength.Pixels(156)));
+        previewSlot.VisualChildren.Add(new Border
         {
             Margin = new Thickness(0, 8, 0, 8),
             Padding = new Thickness(8),
             BorderThickness = new Thickness(1),
             Child = image
-        };
+        });
+        return previewSlot;
     }
 
     private UIElement BuildListCard()

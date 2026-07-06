@@ -448,7 +448,26 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
         if (Root is null)
         {
-            DirtyState.Mark(DirtyPropagation.Default.GetEffectiveFlags(request));
+            InvalidationFlags effective = DirtyPropagation.Default.GetEffectiveFlags(request);
+            DirtyState.Mark(effective);
+            if ((effective & (InvalidationFlags.Measure | InvalidationFlags.Arrange)) != InvalidationFlags.None)
+            {
+                IncrementLayoutVersion();
+            }
+
+            if (effective.HasFlag(InvalidationFlags.Measure))
+            {
+                foreach (UIElement ancestor in ElementTreeWalker.Ancestors(this, ElementChildRole.Visual))
+                {
+                    ancestor.DirtyState.Mark(InvalidationFlags.Measure | InvalidationFlags.Arrange);
+                    ancestor.IncrementLayoutVersion();
+                    if (ancestor.IsLayoutBoundary)
+                    {
+                        break;
+                    }
+                }
+            }
+
             return;
         }
 

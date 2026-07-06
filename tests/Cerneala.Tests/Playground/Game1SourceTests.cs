@@ -19,6 +19,8 @@ public sealed class Game1SourceTests
 
         Assert.Contains("_resources = new ResourceStore()", source, StringComparison.Ordinal);
         Assert.Contains("new FontResource(_uiHost.ContentServices.LoadFont(\"Arial\", 16))", source, StringComparison.Ordinal);
+        Assert.Contains("new ImageResource(Path.Combine(AppContext.BaseDirectory, \"Content\", \"PreviewImage.png\"))", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("new ImageResource(new MonoGameImage(_whitePixel))", source, StringComparison.Ordinal);
         Assert.Contains("uiRoot.SetResourceProvider(_resources)", source, StringComparison.Ordinal);
         Assert.Contains("SampleSelector.CreateDefault(_resources, PlaygroundFontId, PlaygroundPreviewImageId)", source, StringComparison.Ordinal);
         Assert.Contains("uiRoot.VisualChildren.Add(_sampleSelector.Root)", source, StringComparison.Ordinal);

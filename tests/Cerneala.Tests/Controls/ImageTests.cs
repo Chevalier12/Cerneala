@@ -42,7 +42,29 @@ public sealed class ImageTests
         Assert.Single(commands);
         Assert.Equal(DrawCommandKind.DrawImage, commands[0].Kind);
         Assert.Same(source, commands[0].Image);
-        Assert.Equal(new DrawRect(1, 2, 30, 20), commands[0].Rect);
+        Assert.Equal(new DrawRect(1, 4.5f, 30, 15), commands[0].Rect);
+    }
+
+    [Fact]
+    public void ImageRendersInsideBoundsWithoutDistortingAspectRatio()
+    {
+        UIRoot root = new();
+        FakeImage source = new(512, 512);
+        Image image = new()
+        {
+            Source = source,
+            Foreground = DrawColor.White
+        };
+        root.VisualChildren.Add(image);
+        root.ProcessFrame();
+        image.Arrange(new ArrangeContext(new LayoutRect(10, 20, 300, 100)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.Single(commands);
+        Assert.Equal(new DrawRect(110, 20, 100, 100), commands[0].Rect);
     }
 
     [Fact]

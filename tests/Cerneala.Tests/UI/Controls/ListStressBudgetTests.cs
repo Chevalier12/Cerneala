@@ -77,6 +77,32 @@ public sealed class ListStressBudgetTests
         Assert.True(stats.RenderedElements <= 21, $"Rendered {stats.RenderedElements} elements for one list scroll.");
     }
 
+    [Fact]
+    public void LargeListScrollInsideSameRealizationWindowDoesNotRebuildItems()
+    {
+        UIRoot root = RootWithList(out ItemsControl list, out ObservableList<string> items);
+        list.SetVirtualizationContext(new VirtualizationContext(items.Count, ItemExtent, ViewportExtent, 1, CacheItems: 1));
+        root.ProcessFrame();
+        Cerneala.UI.Layout.Panels.Panel panel = list.ItemsPresenter.LayoutPanelRoot!;
+        Dictionary<int, UIElement> before = SnapshotRealizedContainers(list);
+        TestScrollInfo scrollInfo = new()
+        {
+            ExtentHeight = items.Count * ItemExtent,
+            ViewportHeight = ViewportExtent,
+            VerticalOffset = 2
+        };
+
+        list.UpdateVirtualizationFromScrollInfo(scrollInfo, ItemExtent, cacheItems: 1);
+        FrameStats stats = root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(0, 7), list.ItemsPresenter.CurrentRealizationWindow);
+        Assert.Same(panel, list.ItemsPresenter.LayoutPanelRoot);
+        AssertSameRealizedContainers(before, list);
+        Assert.Equal(0, stats.MeasuredElements);
+        Assert.Equal(0, stats.ArrangedElements);
+        Assert.Equal(0, stats.RenderedElements);
+    }
+
     private static UIRoot RootWithList(out ItemsControl list, out ObservableList<string> items)
     {
         items = LargeList(ItemCount);
@@ -107,6 +133,35 @@ public sealed class ListStressBudgetTests
         {
             Assert.True(list.ItemContainerGenerator.RealizedContainers.TryGetValue(index, out UIElement? current), $"Index {index} was unrealized.");
             Assert.Same(container, current);
+        }
+    }
+
+    private sealed class TestScrollInfo : IScrollInfo
+    {
+        public float HorizontalOffset { get; private set; }
+
+        public float VerticalOffset { get; set; }
+
+        public float ExtentWidth { get; set; }
+
+        public float ExtentHeight { get; set; }
+
+        public float ViewportWidth { get; set; }
+
+        public float ViewportHeight { get; set; }
+
+        public bool CanHorizontallyScroll { get; set; } = true;
+
+        public bool CanVerticallyScroll { get; set; } = true;
+
+        public void SetHorizontalOffset(float offset)
+        {
+            HorizontalOffset = offset;
+        }
+
+        public void SetVerticalOffset(float offset)
+        {
+            VerticalOffset = offset;
         }
     }
 }

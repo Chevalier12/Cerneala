@@ -33,7 +33,7 @@ public sealed class HitTestService
             return null;
         }
 
-        if (!UIElementVisibility.ParticipatesInHitTest(element))
+        if (!UIElementVisibility.ParticipatesInHitTest(element) || !element.IsEnabled)
         {
             return null;
         }
@@ -52,7 +52,7 @@ public sealed class HitTestService
             }
         }
 
-        if (behavior == HitTestFilterBehavior.Exclude || !element.IsEnabled)
+        if (behavior == HitTestFilterBehavior.Exclude)
         {
             return null;
         }

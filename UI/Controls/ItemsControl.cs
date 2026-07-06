@@ -234,8 +234,10 @@ public class ItemsControl : Control
 
     public void UpdateVirtualizationFromScrollInfo(IScrollInfo scrollInfo, float itemExtent, int cacheItems = 0)
     {
-        itemsPresenter.UpdateVirtualizationFromScrollInfo(scrollInfo, itemExtent, cacheItems);
-        InvalidateItems("Items scroll virtualization changed");
+        if (itemsPresenter.UpdateVirtualizationFromScrollInfoCore(scrollInfo, itemExtent, cacheItems))
+        {
+            InvalidateItems("Items scroll virtualization changed");
+        }
     }
 
     internal void InvalidateItems(string reason)

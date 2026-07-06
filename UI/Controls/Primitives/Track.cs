@@ -255,9 +255,14 @@ public class Track : Control
 
     private float GetThumbLength(float trackLength)
     {
-        if (ViewportSize <= 0 || Range <= 0)
+        if (ViewportSize <= 0)
         {
             return MathF.Min(trackLength, 10);
+        }
+
+        if (Range <= 0)
+        {
+            return trackLength;
         }
 
         float length = trackLength * (ViewportSize / (Range + ViewportSize));

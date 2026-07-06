@@ -56,6 +56,7 @@ public class ScrollViewer : Control
 
             content = value;
             presenter.Content = value;
+            IncrementLayoutVersion();
             Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Measure | Cerneala.UI.Invalidation.InvalidationFlags.Render, "ScrollViewer content changed");
         }
     }
@@ -90,8 +91,11 @@ public class ScrollViewer : Control
         presenter.CanHorizontallyScroll = HorizontalScrollBarVisibility != ScrollBarVisibility.Disabled;
         presenter.CanVerticallyScroll = VerticalScrollBarVisibility != ScrollBarVisibility.Disabled;
 
-        bool needsHorizontal = HorizontalScrollBarVisibility == ScrollBarVisibility.Visible;
-        bool needsVertical = VerticalScrollBarVisibility == ScrollBarVisibility.Visible;
+        bool needsHorizontal = HorizontalScrollBarVisibility == ScrollBarVisibility.Visible || horizontalScrollBar.Visibility == Visibility.Visible;
+        bool needsVertical = VerticalScrollBarVisibility == ScrollBarVisibility.Visible || verticalScrollBar.Visibility == Visibility.Visible;
+        bool sawHorizontal = needsHorizontal;
+        bool sawVertical = needsVertical;
+        bool converged = false;
         for (int pass = 0; pass < 3; pass++)
         {
             bool reserveHorizontal = ReservesSpace(HorizontalScrollBarVisibility) || needsHorizontal;
@@ -103,14 +107,32 @@ public class ScrollViewer : Control
             presenter.Measure(new MeasureContext(presenterAvailable, context.Rounding));
             bool nextNeedsHorizontal = ShowsScrollBar(HorizontalScrollBarVisibility, presenter.ExtentWidth > presenter.ViewportWidth);
             bool nextNeedsVertical = ShowsScrollBar(VerticalScrollBarVisibility, presenter.ExtentHeight > presenter.ViewportHeight);
+            sawHorizontal |= nextNeedsHorizontal;
+            sawVertical |= nextNeedsVertical;
             if (nextNeedsHorizontal == needsHorizontal && nextNeedsVertical == needsVertical)
             {
+                converged = true;
                 break;
             }
 
             needsHorizontal = nextNeedsHorizontal;
             needsVertical = nextNeedsVertical;
         }
+
+        if (!converged)
+        {
+            needsHorizontal = sawHorizontal;
+            needsVertical = sawVertical;
+            bool reserveHorizontal = ReservesSpace(HorizontalScrollBarVisibility) || needsHorizontal;
+            bool reserveVertical = ReservesSpace(VerticalScrollBarVisibility) || needsVertical;
+            LayoutSize presenterAvailable = new(
+                DeflateAvailable(available.Width, reserveVertical),
+                DeflateAvailable(available.Height, reserveHorizontal));
+            presenter.Measure(new MeasureContext(presenterAvailable, context.Rounding));
+        }
+
+        needsHorizontal |= HorizontalScrollBarVisibility == ScrollBarVisibility.Auto && horizontalScrollBar.Visibility == Visibility.Visible;
+        needsVertical |= VerticalScrollBarVisibility == ScrollBarVisibility.Auto && verticalScrollBar.Visibility == Visibility.Visible;
 
         UpdateScrollBarState();
         horizontalScrollBar.Visibility = ToVisibility(HorizontalScrollBarVisibility, needsHorizontal);
@@ -131,16 +153,57 @@ public class ScrollViewer : Control
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
-        bool verticalSpace = verticalScrollBar.Visibility is Visibility.Visible or Visibility.Hidden;
-        bool horizontalSpace = horizontalScrollBar.Visibility is Visibility.Visible or Visibility.Hidden;
-        LayoutRect presenterRect = new(
-            context.FinalRect.X,
-            context.FinalRect.Y,
-            MathF.Max(0, context.FinalRect.Width - (verticalSpace ? ScrollBarThickness : 0)),
-            MathF.Max(0, context.FinalRect.Height - (horizontalSpace ? ScrollBarThickness : 0)));
-        presenter.Arrange(new ArrangeContext(presenterRect, context.Rounding));
+        bool needsHorizontal = HorizontalScrollBarVisibility == ScrollBarVisibility.Visible || horizontalScrollBar.Visibility == Visibility.Visible;
+        bool needsVertical = VerticalScrollBarVisibility == ScrollBarVisibility.Visible || verticalScrollBar.Visibility == Visibility.Visible;
+        bool sawHorizontal = needsHorizontal;
+        bool sawVertical = needsVertical;
+        bool converged = false;
+        LayoutRect presenterRect = context.FinalRect;
+        for (int pass = 0; pass < 3; pass++)
+        {
+            bool reserveHorizontal = ReservesSpace(HorizontalScrollBarVisibility) || needsHorizontal;
+            bool reserveVertical = ReservesSpace(VerticalScrollBarVisibility) || needsVertical;
+            presenterRect = new LayoutRect(
+                context.FinalRect.X,
+                context.FinalRect.Y,
+                MathF.Max(0, context.FinalRect.Width - (reserveVertical ? ScrollBarThickness : 0)),
+                MathF.Max(0, context.FinalRect.Height - (reserveHorizontal ? ScrollBarThickness : 0)));
+            presenter.Arrange(new ArrangeContext(presenterRect, context.Rounding));
+
+            bool nextNeedsHorizontal = ShowsScrollBar(HorizontalScrollBarVisibility, presenter.ExtentWidth > presenter.ViewportWidth);
+            bool nextNeedsVertical = ShowsScrollBar(VerticalScrollBarVisibility, presenter.ExtentHeight > presenter.ViewportHeight);
+            sawHorizontal |= nextNeedsHorizontal;
+            sawVertical |= nextNeedsVertical;
+            if (nextNeedsHorizontal == needsHorizontal && nextNeedsVertical == needsVertical)
+            {
+                converged = true;
+                break;
+            }
+
+            needsHorizontal = nextNeedsHorizontal;
+            needsVertical = nextNeedsVertical;
+        }
+
+        if (!converged)
+        {
+            needsHorizontal = sawHorizontal;
+            needsVertical = sawVertical;
+            bool reserveHorizontal = ReservesSpace(HorizontalScrollBarVisibility) || needsHorizontal;
+            bool reserveVertical = ReservesSpace(VerticalScrollBarVisibility) || needsVertical;
+            presenterRect = new LayoutRect(
+                context.FinalRect.X,
+                context.FinalRect.Y,
+                MathF.Max(0, context.FinalRect.Width - (reserveVertical ? ScrollBarThickness : 0)),
+                MathF.Max(0, context.FinalRect.Height - (reserveHorizontal ? ScrollBarThickness : 0)));
+            presenter.Arrange(new ArrangeContext(presenterRect, context.Rounding));
+        }
+
+        horizontalScrollBar.Visibility = ToVisibility(HorizontalScrollBarVisibility, needsHorizontal);
+        verticalScrollBar.Visibility = ToVisibility(VerticalScrollBarVisibility, needsVertical);
         UpdateScrollBarState();
 
+        bool horizontalSpace = horizontalScrollBar.Visibility is Visibility.Visible or Visibility.Hidden;
+        bool verticalSpace = verticalScrollBar.Visibility is Visibility.Visible or Visibility.Hidden;
         horizontalScrollBar.Arrange(new ArrangeContext(
             new LayoutRect(
                 presenterRect.X,

@@ -46,6 +46,23 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void PresenterArrangesDisabledHorizontalAxisToViewportWidth()
+    {
+        ScrollContentPresenter presenter = new()
+        {
+            CanHorizontallyScroll = false,
+            CanVerticallyScroll = true,
+            Content = new FixedElement(new LayoutSize(800, 200))
+        };
+
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 80)));
+        presenter.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 80)));
+
+        UIElement child = Assert.IsType<FixedElement>(presenter.Content);
+        Assert.Equal(new LayoutRect(0, 0, 100, 200), child.ArrangedBounds);
+    }
+
+    [Fact]
     public void ScrollViewerWheelScrollsVerticalOffset()
     {
         UIRoot root = new(100, 100);
@@ -120,6 +137,73 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void AutoScrollbarsReevaluateAgainstArrangeViewport()
+    {
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(80, 120)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+
+        viewer.Measure(new MeasureContext(new LayoutSize(100, float.PositiveInfinity)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 80)));
+
+        Assert.True(viewer.IsVerticalScrollBarVisible);
+        Assert.Equal(new LayoutRect(0, 0, 88, 80), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(88, 0, 12, 80), viewer.VerticalScrollBar.ArrangedBounds);
+    }
+
+    [Fact]
+    public void AutoScrollbarsCollapseWhenContentNoLongerRequiresScrolling()
+    {
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(200, 200)),
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        Assert.True(viewer.IsHorizontalScrollBarVisible);
+        Assert.True(viewer.IsVerticalScrollBarVisible);
+
+        viewer.Content = new FixedElement(new LayoutSize(20, 20));
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.False(viewer.IsHorizontalScrollBarVisible);
+        Assert.False(viewer.IsVerticalScrollBarVisible);
+        Assert.Equal(new LayoutRect(0, 0, 100, 100), viewer.Presenter.ArrangedBounds);
+    }
+
+    [Fact]
+    public void AutoScrollbarsCollapseWhenExistingContentShrinks()
+    {
+        MutableElement content = new(new LayoutSize(300, 300));
+        ScrollViewer viewer = new()
+        {
+            Content = content,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        viewer.Presenter.SetHorizontalOffset(200);
+        viewer.Presenter.SetVerticalOffset(200);
+
+        content.Resize(new LayoutSize(40, 40));
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(40, viewer.ScrollInfo.ExtentWidth);
+        Assert.Equal(40, viewer.ScrollInfo.ExtentHeight);
+        Assert.Equal(0, viewer.Presenter.HorizontalOffset);
+        Assert.Equal(0, viewer.Presenter.VerticalOffset);
+        Assert.False(viewer.IsHorizontalScrollBarVisible);
+        Assert.False(viewer.IsVerticalScrollBarVisible);
+    }
+
+    [Fact]
     public void ScrollInfoOffsetUpdatesScrollBarValues()
     {
         ScrollViewer viewer = new()
@@ -188,6 +272,22 @@ public sealed class ScrollViewerTests
 
     private sealed class FixedElement(LayoutSize size) : UIElement
     {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            return size;
+        }
+    }
+
+    private sealed class MutableElement(LayoutSize size) : UIElement
+    {
+        private LayoutSize size = size;
+
+        public void Resize(LayoutSize newSize)
+        {
+            size = newSize;
+            Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "Test content resized");
+        }
+
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
             return size;

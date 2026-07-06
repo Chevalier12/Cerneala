@@ -1,3 +1,4 @@
+using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -65,6 +66,27 @@ public sealed class HitTestServiceTests
         HitTestResult? result = new HitTestService().HitTest(root, 10, 10);
 
         Assert.Same(target, result!.Element);
+    }
+
+    [Fact]
+    public void DisabledScrollBarSubtreeIsSkipped()
+    {
+        UIRoot root = new(100, 100);
+        UIElement fallback = Arranged(0, 0, 50, 80);
+        ScrollBar disabledScrollBar = new()
+        {
+            IsEnabled = false,
+            Maximum = 100,
+            ViewportSize = 10
+        };
+        disabledScrollBar.Measure(new MeasureContext(new LayoutSize(12, 80)));
+        disabledScrollBar.Arrange(new ArrangeContext(new LayoutRect(0, 0, 12, 80)));
+        root.VisualChildren.Add(fallback);
+        root.VisualChildren.Add(disabledScrollBar);
+
+        HitTestResult? result = new HitTestService().HitTest(root, 6, 20);
+
+        Assert.Same(fallback, result!.Element);
     }
 
     [Fact]

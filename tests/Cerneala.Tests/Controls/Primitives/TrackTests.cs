@@ -26,6 +26,23 @@ public sealed class TrackTests
     }
 
     [Fact]
+    public void ThumbFillsTrackWhenViewportHasNoScrollableRange()
+    {
+        Track track = new()
+        {
+            Minimum = 0,
+            Maximum = 0,
+            ViewportSize = 100,
+            Orientation = Orientation.Horizontal
+        };
+
+        track.Measure(new MeasureContext(new LayoutSize(100, 20)));
+        track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 20)));
+
+        Assert.Equal(new LayoutRect(0, 0, 100, 20), track.Thumb.ArrangedBounds);
+    }
+
+    [Fact]
     public void ThumbDragUpdatesTrackValue()
     {
         UIRoot root = new(200, 100);

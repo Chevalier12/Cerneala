@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.IO;
 using Cerneala.Drawing.MonoGame;
 using Cerneala.Playground.Samples;
 using Cerneala.UI.Elements;
@@ -60,7 +61,7 @@ public class Game1 : Game
 
         _resources = new ResourceStore();
         _resources.SetResource(PlaygroundFontId, new FontResource(_uiHost.ContentServices.LoadFont("Arial", 16)));
-        _resources.SetResource(PlaygroundPreviewImageId, new ImageResource(new MonoGameImage(_whitePixel)));
+        _resources.SetResource(PlaygroundPreviewImageId, new ImageResource(Path.Combine(AppContext.BaseDirectory, "Content", "PreviewImage.png")));
         uiRoot.SetResourceProvider(_resources);
         _sampleSelector = SampleSelector.CreateDefault(_resources, PlaygroundFontId, PlaygroundPreviewImageId);
         uiRoot.VisualChildren.Add(_sampleSelector.Root);

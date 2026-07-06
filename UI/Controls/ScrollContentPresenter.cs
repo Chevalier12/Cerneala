@@ -118,12 +118,14 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         ViewportHeight = MathF.Max(0, context.FinalRect.Height);
         CoerceOffsets();
         ClipNode.SetClip(this, context.FinalRect);
+        float contentWidth = CanHorizontallyScroll ? MathF.Max(ExtentWidth, ViewportWidth) : ViewportWidth;
+        float contentHeight = CanVerticallyScroll ? MathF.Max(ExtentHeight, ViewportHeight) : ViewportHeight;
         ContentElement?.Arrange(new ArrangeContext(
             new LayoutRect(
                 context.FinalRect.X - HorizontalOffset,
                 context.FinalRect.Y - VerticalOffset,
-                MathF.Max(ExtentWidth, ViewportWidth),
-                MathF.Max(ExtentHeight, ViewportHeight)),
+                contentWidth,
+                contentHeight),
             context.Rounding));
         return context.FinalRect;
     }

@@ -1,7 +1,9 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -161,6 +163,35 @@ public sealed class LayoutManagerTests
     }
 
     [Fact]
+    public void ScrollOffsetDoesNotRebuildContentLocalRenderCache()
+    {
+        UIRoot root = new(100, 100);
+        RenderableFixedElement content = new(new LayoutSize(80, 300), DrawColor.White);
+        Cerneala.UI.Controls.ScrollViewer viewer = new()
+        {
+            Content = content,
+            VerticalScrollBarVisibility = Cerneala.UI.Controls.ScrollBarVisibility.Auto
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        root.RetainedRenderer.Commit(root);
+        int renderCount = content.RenderCount;
+
+        viewer.Presenter.SetVerticalOffset(48);
+        FrameStats stats = root.ProcessFrame();
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.True(stats.ArrangedElements > 0);
+        Assert.True(stats.RenderedElements > 0);
+        Assert.Equal(renderCount, content.RenderCount);
+        Assert.Contains(
+            commands,
+            command => command.Kind == DrawCommandKind.FillRectangle &&
+                command.Rect.X == 0 &&
+                command.Rect.Y == -48);
+    }
+
+    [Fact]
     public void FailedMeasureKeepsDirtyFlagsAndQueue()
     {
         UIRoot root = new(100, 100);
@@ -237,6 +268,22 @@ public sealed class LayoutManagerTests
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
             throw new InvalidOperationException("boom");
+        }
+    }
+
+    private sealed class RenderableFixedElement(LayoutSize size, DrawColor color) : UIElement
+    {
+        public int RenderCount { get; private set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            return size;
+        }
+
+        protected override void OnRender(RenderContext context)
+        {
+            RenderCount++;
+            context.DrawingContext.FillRectangle(new DrawRect(context.Bounds.X, context.Bounds.Y, 1, 1), color);
         }
     }
 }

@@ -72,6 +72,79 @@ public sealed class PlaygroundSampleTests
     }
 
     [Fact]
+    public void RetainedAppPreviewUsesBoundedUntintedImageSlot()
+    {
+        ResourceStore resources = new();
+        ResourceId<ImageResource> imageId = new("Playground/PreviewImage");
+        resources.SetResource(imageId, new ImageResource(new TestImage(512, 512)));
+        UIRoot root = new(1000, 600);
+        RetainedAppSample sample = new(resources, null, imageId);
+        root.SetResourceProvider(resources);
+        root.VisualChildren.Add(sample.Build());
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(1000, 600) });
+
+        host.Update(EmptyInputFrame(), new UiViewport(1000, 600), TimeSpan.Zero);
+        DrawCommand preview = root.RetainedRenderer.Render(root).Single(command => command.Kind == DrawCommandKind.DrawImage);
+
+        Assert.Equal(DrawColor.White, preview.Color);
+        Assert.True(preview.Rect.Height <= 160, $"Expected preview height {preview.Rect.Height} to stay thumbnail-sized.");
+        Assert.Equal(preview.Rect.Width, preview.Rect.Height, precision: 2);
+    }
+
+    [Fact]
+    public void RetainedAppInteractionContentScrollsInsideSelectorViewport()
+    {
+        ResourceStore resources = new();
+        ResourceId<ImageResource> imageId = new("Playground/PreviewImage");
+        resources.SetResource(imageId, new ImageResource(new TestImage(512, 512)));
+        UIRoot root = new(1000, 480);
+        SampleSelector selector = SampleSelector.CreateDefault(resources, null, imageId);
+        root.VisualChildren.Add(selector.Root);
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(1000, 480) });
+        UiFrame first = host.Update(EmptyInputFrame(), new UiViewport(1000, 480), TimeSpan.Zero);
+
+        selector.UpdateFrame(first);
+        host.Update(EmptyInputFrame(), new UiViewport(1000, 480), TimeSpan.Zero);
+        RetainedAppSample retainedSample = Assert.IsType<RetainedAppSample>(selector.ActiveSample);
+        ScrollViewer interactionScrollViewer = DescendantsAndSelf<ScrollViewer>(selector.ActiveElement!)
+            .Single(scrollViewer => scrollViewer.Content is StackPanel stackPanel &&
+                stackPanel.VisualChildren.Contains(retainedSample.StatusText!));
+        float scrollViewerBottom = interactionScrollViewer.ArrangedBounds.Y + interactionScrollViewer.ArrangedBounds.Height;
+
+        Assert.True(
+            interactionScrollViewer.ScrollInfo.ExtentHeight > interactionScrollViewer.ScrollInfo.ViewportHeight,
+            "Expected the retained app interaction card to scroll overflowing preview, status, and button content.");
+        Assert.Equal(ScrollBarVisibility.Auto, interactionScrollViewer.VerticalScrollBarVisibility);
+        Assert.True(interactionScrollViewer.IsVerticalScrollBarVisible);
+        Assert.True(
+            scrollViewerBottom <= root.ViewportHeight,
+            $"Expected interaction ScrollViewer bottom {scrollViewerBottom} to stay inside viewport height {root.ViewportHeight}.");
+    }
+
+    [Fact]
+    public void RetainedAppAutoScrollBarStabilizesAfterCompactLayout()
+    {
+        ResourceStore resources = new();
+        ResourceId<ImageResource> imageId = new("Playground/PreviewImage");
+        resources.SetResource(imageId, new ImageResource(new TestImage(512, 512)));
+        UIRoot root = new(1000, 480);
+        SampleSelector selector = SampleSelector.CreateDefault(resources, null, imageId);
+        root.VisualChildren.Add(selector.Root);
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(1000, 480) });
+        UiFrame first = host.Update(EmptyInputFrame(), new UiViewport(1000, 480), TimeSpan.Zero);
+
+        selector.UpdateFrame(first);
+        host.Update(EmptyInputFrame(), new UiViewport(1000, 480), TimeSpan.Zero);
+        UiFrame settled = host.Update(EmptyInputFrame(), new UiViewport(1000, 480), TimeSpan.Zero);
+
+        Assert.Equal(0, settled.Stats.MeasuredElements);
+        Assert.Equal(0, settled.Stats.ArrangedElements);
+        Assert.Equal(0, settled.Stats.MeasureCalls);
+        Assert.Equal(0, settled.Stats.ArrangeCalls);
+        Assert.Equal(1, settled.Stats.NoWorkFrames);
+    }
+
+    [Fact]
     public void DiagnosticsSampleBuildsRetainedDebugUi()
     {
         UIElement root = new DiagnosticsSample().Build();
@@ -157,7 +230,8 @@ public sealed class PlaygroundSampleTests
 
         root.ProcessFrame();
 
-        ScrollViewer rows = DescendantsAndSelf<ScrollViewer>(selector.ActiveElement!).Single();
+        ScrollViewer rows = DescendantsAndSelf<ScrollViewer>(selector.ActiveElement!)
+            .Single(scrollViewer => scrollViewer.Content is ListBox);
         float rowsBottom = rows.ArrangedBounds.Y + rows.ArrangedBounds.Height;
 
         Assert.True(
@@ -459,7 +533,8 @@ public sealed class PlaygroundSampleTests
 
         selector.UpdateFrame(first);
         host.Update(EmptyInputFrame(), new UiViewport(1000, 600), TimeSpan.Zero);
-        ScrollViewer scrollViewer = DescendantsAndSelf<ScrollViewer>(selector.ActiveElement!).Single();
+        ScrollViewer scrollViewer = DescendantsAndSelf<ScrollViewer>(selector.ActiveElement!)
+            .Single(viewer => viewer.Content is ListBox);
         float scrollBarBottom = scrollViewer.VerticalScrollBar.ArrangedBounds.Y + scrollViewer.VerticalScrollBar.ArrangedBounds.Height;
 
         Assert.True(

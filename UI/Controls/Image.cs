@@ -97,7 +97,7 @@ public class Image : Control
             return;
         }
 
-        context.DrawingContext.DrawImage(source, Border.ToDrawRect(context.Bounds), Foreground);
+        context.DrawingContext.DrawImage(source, CalculateDestinationRect(source, context.Bounds), Foreground);
     }
 
     private IDrawImage? ResolveSource()
@@ -140,6 +140,16 @@ public class Image : Control
     private IResourceProvider? ResolveResourceProvider()
     {
         return ResourceProvider ?? Root?.ResourceProvider;
+    }
+
+    private static DrawRect CalculateDestinationRect(IDrawImage source, LayoutRect bounds)
+    {
+        float scale = MathF.Min(bounds.Width / source.Width, bounds.Height / source.Height);
+        float width = source.Width * scale;
+        float height = source.Height * scale;
+        float x = bounds.X + ((bounds.Width - width) / 2);
+        float y = bounds.Y + ((bounds.Height - height) / 2);
+        return new DrawRect(x, y, width, height);
     }
 
     private ResourceDependencyTracker? ResolveResourceDependencyTracker()

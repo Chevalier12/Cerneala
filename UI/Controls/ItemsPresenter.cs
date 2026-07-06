@@ -76,10 +76,33 @@ public class ItemsPresenter : Control
 
     public void UpdateVirtualizationFromScrollInfo(IScrollInfo scrollInfo, float itemExtent, int cacheItems = 0)
     {
+        UpdateVirtualizationFromScrollInfoCore(scrollInfo, itemExtent, cacheItems);
+    }
+
+    internal bool UpdateVirtualizationFromScrollInfoCore(IScrollInfo scrollInfo, float itemExtent, int cacheItems = 0)
+    {
         ArgumentNullException.ThrowIfNull(scrollInfo);
         int itemCount = ItemsOwner?.ItemCount ?? Items?.Cast<object?>().Count() ?? 0;
-        VirtualizationContext = new VirtualizationContext(itemCount, itemExtent, scrollInfo.ViewportHeight, scrollInfo.VerticalOffset, cacheItems);
+        VirtualizationContext? previousContext = VirtualizationContext;
+        VirtualizationContext nextContext = new(itemCount, itemExtent, scrollInfo.ViewportHeight, scrollInfo.VerticalOffset, cacheItems);
+        RealizationWindow nextWindow = nextContext.GetRealizationWindow();
+        bool virtualizationShapeChanged =
+            previousContext is not VirtualizationContext previous ||
+            previous.ItemCount != nextContext.ItemCount ||
+            previous.ItemExtent != nextContext.ItemExtent ||
+            previous.ViewportExtent != nextContext.ViewportExtent ||
+            previous.CacheItems != nextContext.CacheItems;
+        bool needsItemsRefresh = itemsDirty || virtualizationShapeChanged || lastRealizationWindow != nextWindow;
+
+        VirtualizationContext = nextContext;
+        if (!needsItemsRefresh)
+        {
+            ApplyVirtualizationContext(panelRoot, nextContext, nextWindow);
+            return false;
+        }
+
         MarkItemsDirty();
+        return true;
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -130,11 +153,7 @@ public class ItemsPresenter : Control
         }
 
         Layout.Panels.Panel nextPanel = (ItemsPanel ?? DefaultItemsPanelTemplate).CreateLayoutPanel();
-        if (nextPanel is VirtualizingStackPanel virtualizingPanel && VirtualizationContext is VirtualizationContext context)
-        {
-            virtualizingPanel.VirtualizationContext = context;
-            virtualizingPanel.FirstRealizedIndex = nextWindow?.StartIndex ?? 0;
-        }
+        ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
 
         List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
         Layout.Panels.Panel? oldPanel = panelRoot;
@@ -180,11 +199,7 @@ public class ItemsPresenter : Control
     private void RefreshOwnerItems(RealizationWindow? nextWindow)
     {
         Layout.Panels.Panel nextPanel = (ItemsPanel ?? ItemsOwner?.ItemsPanel ?? DefaultItemsPanelTemplate).CreateLayoutPanel();
-        if (nextPanel is VirtualizingStackPanel virtualizingPanel && VirtualizationContext is VirtualizationContext context)
-        {
-            virtualizingPanel.VirtualizationContext = context;
-            virtualizingPanel.FirstRealizedIndex = nextWindow?.StartIndex ?? 0;
-        }
+        ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
 
         Layout.Panels.Panel? oldPanel = panelRoot;
         if (oldPanel is not null)
@@ -314,6 +329,15 @@ public class ItemsPresenter : Control
     private RealizationWindow? GetRealizationWindow()
     {
         return VirtualizationContext?.GetRealizationWindow();
+    }
+
+    private static void ApplyVirtualizationContext(Layout.Panels.Panel? panel, VirtualizationContext? context, RealizationWindow? window)
+    {
+        if (panel is VirtualizingStackPanel virtualizingPanel && context is VirtualizationContext virtualizationContext)
+        {
+            virtualizingPanel.VirtualizationContext = virtualizationContext;
+            virtualizingPanel.FirstRealizedIndex = window?.StartIndex ?? 0;
+        }
     }
 
     private static void RemoveMeasureWorkForSubtree(UIElement? element)

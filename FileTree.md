@@ -71,7 +71,8 @@ Generated from `.`.
 |       |-- .config/
 |       |   +-- dotnet-tools.json
 |       |-- Content/
-|       |   +-- Content.mgcb
+|       |   |-- Content.mgcb
+|       |   +-- PreviewImage.png
 |       |-- Samples/
 |       |   |-- AuthoringAppSample.cs
 |       |   |-- DiagnosticsSample.cs
