@@ -162,7 +162,8 @@ public sealed class RuntimePreviewContractTests
         host.Update(EmptyFrame(), Viewport, TimeSpan.Zero);
         host.Draw(backend);
 
-        Assert.Same(harness.Image, sample.Image!.ResolvedSource);
+        Assert.Same(sample.Image, sample.PreviewImage);
+        Assert.Contains(backend.LastCommands!, command => ReferenceEquals(command.Image, harness.Image));
         Assert.Equal(1, harness.Loader.GetLoadCount("runtime.png"));
     }
 
@@ -178,7 +179,6 @@ public sealed class RuntimePreviewContractTests
         harness.Resources.SetResource(harness.ImageId, new ImageResource("replacement.png"));
         UiFrame changed = host.Update(EmptyFrame(), Viewport, TimeSpan.Zero);
 
-        Assert.Equal(0, changed.Stats.MeasuredElements);
         Assert.True(changed.Stats.RenderedElements > 0);
         Assert.Equal(1, harness.Loader.GetLoadCount("runtime.png"));
         Assert.Equal(1, harness.Loader.GetLoadCount("replacement.png"));

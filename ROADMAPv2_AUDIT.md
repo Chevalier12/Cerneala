@@ -2,7 +2,7 @@
 
 Scope: static architecture audit of the extracted repository, with emphasis on `ROADMAPv2.md`, `architecture.md`, `docs/architecture-v2.md`, `UI/Core`, `UI/Elements`, `UI/Layout`, `UI/Rendering`, `UI/Input`, `UI/Controls`, `UI/Text`, `UI/Resources`, `UI/Hosting`, and `tests/Cerneala.Tests`.
 
-Build/test note: `dotnet test Cerneala.slnx` passed after the retained input cache work (`963` total tests, `0` failed). The audit findings below remain as architecture review context, with completed remediation items checked off where implementation has landed.
+Build/test note: `dotnet test Cerneala.slnx` and root `dotnet test` passed after the Runtime Preview completion gate (`1248` total tests, `0` failed). The audit findings below remain as architecture review context, with completed remediation items checked off where implementation has landed.
 
 ## Executive verdict
 

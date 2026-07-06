@@ -18,6 +18,7 @@ public sealed class RuntimePreviewSample : IPlaygroundSample
     private readonly PlaygroundText text;
     private readonly IResourceProvider? resourceProvider;
     private readonly ResourceId<ImageResource>? imageResourceId;
+    private readonly ActionCommand appendCommand;
 
     public RuntimePreviewSample(
         IResourceProvider? resourceProvider = null,
@@ -27,27 +28,41 @@ public sealed class RuntimePreviewSample : IPlaygroundSample
         this.resourceProvider = resourceProvider;
         this.imageResourceId = imageResourceId;
         text = new PlaygroundText(resourceProvider, fontResourceId);
+        appendCommand = new ActionCommand(_ => AppendItem(), _ => !string.IsNullOrWhiteSpace(InputValue.Value));
+        InputValue.ValueChanged += (_, _) => appendCommand.RaiseCanExecuteChanged();
         Items = new ObservableList<string>(["Scaled viewport", "Cached image resource", "Clipboard-ready TextBox"]);
     }
 
     public string Name => "Runtime Preview";
 
+    public ObservableValue<string> InputValue { get; } = new("copy paste here");
+
     public ObservableList<string> Items { get; }
 
     public Image? PreviewImage { get; private set; }
+
+    public Image? Image => PreviewImage;
 
     public TextBox? InputTextBox { get; private set; }
 
     public Button? ActionButton { get; private set; }
 
+    public Button? PrimaryButton => ActionButton;
+
     public ListBox? ItemsList { get; private set; }
 
+    public ListBox? ListBox => ItemsList;
+
     public TextBlock? DiagnosticsText { get; private set; }
+
+    public TextBlock? DiagnosticsOverlay => DiagnosticsText;
 
     public UIElement? RootElement { get; private set; }
 
     public UIElement Build()
     {
+        InputValue.Value = "copy paste here";
+
         PreviewImage = new Image
         {
             UseIntrinsicSize = true,
@@ -66,9 +81,9 @@ public sealed class RuntimePreviewSample : IPlaygroundSample
 
         InputTextBox = new TextBox
         {
-            Text = "copy paste here",
             Padding = new Thickness(8, 5, 8, 5)
         };
+        InputTextBox.Bindings.Add(BindingOperations.BindTwoWay(InputTextBox, TextBoxBase.TextProperty, InputValue));
 
         DiagnosticsText = text.Create("runtime diagnostics: waiting for first frame", 13, new DrawColor(71, 85, 105));
 
@@ -76,7 +91,7 @@ public sealed class RuntimePreviewSample : IPlaygroundSample
         {
             Content = text.Create("Append runtime item", 14, new DrawColor(28, 35, 48)),
             Padding = new Thickness(12, 8, 12, 8),
-            Command = new ActionCommand(_ => Items.Add($"Runtime item {Items.Count + 1}"))
+            Command = appendCommand
         };
 
         ItemsList = new ListBox { ItemsSource = Items };
@@ -125,6 +140,17 @@ public sealed class RuntimePreviewSample : IPlaygroundSample
             BorderThickness = new Thickness(1),
             Child = panel
         };
+    }
+
+    private void AppendItem()
+    {
+        string value = InputValue.Value.Trim();
+        if (value.Length == 0)
+        {
+            return;
+        }
+
+        Items.Add(value);
     }
 
     private sealed record SampleImage(int Width, int Height) : IDrawImage;

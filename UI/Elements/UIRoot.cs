@@ -137,14 +137,23 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public void SetImageLoader(IImageLoader? loader)
     {
-        if (ReferenceEquals(ImageLoader, loader))
+        SetImageResourceCache(loader, loader is null ? null : new ImageResourceCache(loader));
+    }
+
+    public void SetImageResourceCache(IImageLoader? loader, ImageResourceCache? cache)
+    {
+        if (ReferenceEquals(ImageLoader, loader) && ReferenceEquals(ImageResourceCache, cache))
         {
             return;
         }
 
-        ImageResourceCache?.Clear();
+        if (!ReferenceEquals(ImageResourceCache, cache))
+        {
+            ImageResourceCache?.Clear();
+        }
+
         ImageLoader = loader;
-        ImageResourceCache = loader is null ? null : new ImageResourceCache(loader);
+        ImageResourceCache = cache;
         Invalidate(InvalidationFlags.Resource | InvalidationFlags.Render | InvalidationFlags.Subtree, "Root image loader changed");
     }
 

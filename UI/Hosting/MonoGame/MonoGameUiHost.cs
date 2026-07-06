@@ -90,7 +90,7 @@ public sealed class MonoGameUiHost : IDisposable
 
     private void AttachContentServices(UIRoot? root)
     {
-        root?.SetImageLoader(ContentServices.ImageLoader);
+        root?.SetImageResourceCache(ContentServices.ImageLoader, ContentServices.ImageResourceCache);
     }
 
     private sealed class MonoGameUiBackend : IUiBackend

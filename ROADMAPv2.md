@@ -1306,6 +1306,7 @@ MVP is complete when Cerneala can run a retained UI sample inside the MonoGame p
 - [x] `Playground/Cerneala.Playground/Samples/RetainedAppSample.cs` proves a retained app vertical slice: stable tree creation, layout, render cache reuse, command mutation, text/resource invalidation, image content, and a simple retained list/scroll area.
 - [x] `tests/Cerneala.Tests/UI/Hosting/RetainedVerticalSliceTests.cs` proves first-frame work, unchanged no-work frames, draw purity, command mutation invalidation, and root-owned font resource mutation for the retained app sample.
 - [x] `tests/Cerneala.Tests/UI/Hosting/CorePreviewContractTests.cs` proves the Core Preview gate across retained frame work, draw purity, mouse/keyboard command activation, theme mutation, text wrapping resize, list mutation, and scroll invalidation.
+- [x] `tests/Cerneala.Tests/UI/Hosting/RuntimePreviewContractTests.cs` and `tests/Cerneala.Tests/Playground/Samples/RuntimePreviewIntegrationTests.cs` prove the Runtime Preview gate across viewport scale coordinates, scaled pointer/render adapter contracts, path-backed image cache lifetime, cursor/clipboard platform seams, diagnostics truthfulness, and retained no-work/draw-purity invariants.
 - [x] Hover, press, focus, and command execution work through retained input routing.
 - [x] Text rendering uses existing `DrawTextRun`, `SkiaTextShaper`, and `SkiaTextRasterizer` through higher-level services.
 - [x] No UI core control directly references MonoGame, Skia, HarfBuzz, `SpriteBatch`, or `Texture2D`.
