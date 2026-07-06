@@ -7,14 +7,13 @@ namespace Cerneala.Drawing.MonoGame;
 
 public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 {
-    private static readonly Rectangle EmptyClip = new(0, 0, 0, 0);
-
-    private readonly Stack<Rectangle> _clipStack = new();
     private readonly SpriteBatch _spriteBatch;
     private readonly Dictionary<TextTextureKey, Texture2D> _textTextureCache = new();
     private readonly Texture2D _whitePixel;
     private readonly SkiaTextRasterizer? _textRasterizer;
     private float coordinateScale = 1;
+    private bool disposed;
+    private MonoGameClipStack? clipStack;
 
     public MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer = null)
     {
@@ -41,10 +40,23 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
     public void Render(DrawCommandList commands)
     {
         ArgumentNullException.ThrowIfNull(commands);
+        ObjectDisposedException.ThrowIf(disposed, this);
 
-        foreach (DrawCommand command in commands)
+        GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
+        Rectangle previousScissor = graphicsDevice.ScissorRectangle;
+        clipStack = new MonoGameClipStack(new Rectangle(0, 0, graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height));
+
+        try
         {
-            RenderCommand(command);
+            foreach (DrawCommand command in commands)
+            {
+                RenderCommand(command);
+            }
+        }
+        finally
+        {
+            clipStack.Reset();
+            graphicsDevice.ScissorRectangle = previousScissor;
         }
     }
 
@@ -95,13 +107,13 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 
     private void FillRectangle(DrawRect rect, DrawColor color)
     {
-        _spriteBatch.Draw(_whitePixel, ToRectangle(rect), ToColor(color));
+        _spriteBatch.Draw(_whitePixel, Mapper.MapRectangle(rect), ToColor(color));
     }
 
     private void DrawRectangle(DrawRect rect, DrawColor color, float thickness)
     {
-        int lineThickness = Math.Max(1, (int)MathF.Round(thickness));
-        Rectangle bounds = ToRectangle(rect);
+        int lineThickness = Mapper.MapThickness(thickness);
+        Rectangle bounds = Mapper.MapRectangle(rect);
         Color monoGameColor = ToColor(color);
 
         _spriteBatch.Draw(_whitePixel, new Rectangle(bounds.Left, bounds.Top, bounds.Width, lineThickness), monoGameColor);
@@ -112,7 +124,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 
     private void FillEllipse(DrawRect rect, DrawColor color)
     {
-        Rectangle bounds = ToRectangle(rect);
+        Rectangle bounds = Mapper.MapRectangle(rect);
         if (bounds.Width <= 0 || bounds.Height <= 0)
         {
             return;
@@ -136,8 +148,8 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 
     private void DrawEllipse(DrawRect rect, DrawColor color, float thickness)
     {
-        int lineThickness = Math.Max(1, (int)MathF.Round(thickness));
-        Rectangle bounds = ToRectangle(rect);
+        int lineThickness = Mapper.MapThickness(thickness);
+        Rectangle bounds = Mapper.MapRectangle(rect);
         if (bounds.Width <= 0 || bounds.Height <= 0)
         {
             return;
@@ -166,7 +178,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 
     private void DrawLine(DrawPoint start, DrawPoint end, DrawColor color, float thickness)
     {
-        DrawLine(ToVector2(start), ToVector2(end), ToColor(color), Math.Max(1, (int)MathF.Round(thickness)));
+        DrawLine(Mapper.MapVector(start), Mapper.MapVector(end), ToColor(color), Mapper.MapThickness(thickness));
     }
 
     private void DrawLine(Vector2 start, Vector2 end, Color color, int thickness)
@@ -199,7 +211,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             throw new InvalidOperationException("DrawImage requires a MonoGameImage when using MonoGameDrawingBackend.");
         }
 
-        _spriteBatch.Draw(image.Texture, ToRectangle(command.Rect), ToColor(command.Color));
+        _spriteBatch.Draw(image.Texture, Mapper.MapRectangle(command.Rect), ToColor(command.Color));
     }
 
     private void DrawText(DrawCommand command)
@@ -209,83 +221,87 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             return;
         }
 
-        TextTextureKey key = TextTextureKey.From(command.TextRun, command.Color);
+        MonoGameDrawMapper mapper = Mapper;
+        DrawTextRun mappedTextRun = mapper.MapTextRun(command.TextRun);
+        TextTextureKey key = TextTextureKey.From(mappedTextRun, command.Color);
 
         if (!_textTextureCache.TryGetValue(key, out Texture2D? texture))
         {
-            RasterizedText text = _textRasterizer.Rasterize(command.TextRun, command.Color);
+            RasterizedText text = _textRasterizer.Rasterize(mappedTextRun, command.Color);
             texture = new Texture2D(_spriteBatch.GraphicsDevice, text.Width, text.Height);
             texture.SetData(text.RgbaPixels);
             _textTextureCache.Add(key, texture);
         }
 
-        _spriteBatch.Draw(texture, ToVector2(command.Position), Color.White);
+        _spriteBatch.Draw(texture, mapper.MapVector(command.Position), Color.White);
     }
 
     private void PushClip(DrawRect rect)
     {
         GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
-        Rectangle previousClip = _clipStack.Count == 0
-            ? new Rectangle(0, 0, graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height)
-            : graphicsDevice.ScissorRectangle;
-        Rectangle requestedClip = ToRectangle(rect);
+        MonoGameClipStack stack = clipStack ??= new MonoGameClipStack(new Rectangle(0, 0, graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height));
 
-        _clipStack.Push(previousClip);
-        graphicsDevice.ScissorRectangle = Intersect(previousClip, requestedClip);
+        stack.Push(Mapper.MapRectangle(rect));
+        graphicsDevice.ScissorRectangle = stack.CurrentClip;
     }
 
     private void PopClip()
     {
-        if (_clipStack.Count == 0)
-        {
-            return;
-        }
-
-        _spriteBatch.GraphicsDevice.ScissorRectangle = _clipStack.Pop();
+        GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
+        MonoGameClipStack stack = clipStack ??= new MonoGameClipStack(new Rectangle(0, 0, graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height));
+        graphicsDevice.ScissorRectangle = stack.Pop();
     }
 
     public void Dispose()
     {
+        if (disposed)
+        {
+            return;
+        }
+
         foreach (Texture2D texture in _textTextureCache.Values)
         {
             texture.Dispose();
         }
 
         _textTextureCache.Clear();
+        disposed = true;
     }
 
-    private static Rectangle ToRectangle(DrawRect rect)
+    internal int ClipStackDepth => clipStack?.Depth ?? 0;
+
+    internal int TextTextureCacheCount => _textTextureCache.Count;
+
+    private MonoGameDrawMapper Mapper => new(coordinateScale);
+
+    internal void RenderClipCommandsForDiagnostics(DrawCommandList commands, Rectangle viewport)
     {
-        return new Rectangle(
-            (int)MathF.Round(rect.X),
-            (int)MathF.Round(rect.Y),
-            (int)MathF.Round(rect.Width),
-            (int)MathF.Round(rect.Height));
+        ArgumentNullException.ThrowIfNull(commands);
+
+        clipStack = new MonoGameClipStack(viewport);
+        try
+        {
+            foreach (DrawCommand command in commands)
+            {
+                if (command.Kind == DrawCommandKind.PushClip)
+                {
+                    clipStack.Push(Mapper.MapRectangle(command.Rect));
+                }
+                else if (command.Kind == DrawCommandKind.PopClip)
+                {
+                    clipStack.Pop();
+                }
+            }
+        }
+        finally
+        {
+            clipStack.Reset();
+        }
     }
 
     private static Color ToColor(DrawColor color)
     {
         return new Color(color.R, color.G, color.B, color.A);
-    }
-
-    private static Vector2 ToVector2(DrawPoint point)
-    {
-        return new Vector2(point.X, point.Y);
-    }
-
-    private static Rectangle Intersect(Rectangle first, Rectangle second)
-    {
-        int left = Math.Max(first.Left, second.Left);
-        int top = Math.Max(first.Top, second.Top);
-        int right = Math.Min(first.Right, second.Right);
-        int bottom = Math.Min(first.Bottom, second.Bottom);
-
-        if (right <= left || bottom <= top)
-        {
-            return EmptyClip;
-        }
-
-        return new Rectangle(left, top, right - left, bottom - top);
     }
 
     private readonly record struct TextTextureKey(
