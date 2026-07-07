@@ -713,12 +713,13 @@ MotionValue<Transform> transform = MotionValue.Combine(x, y, (cx, cy) => Transfo
 
 - [x] `MotionPropertyBinding<T>` connects a `MotionValue<T>` to a `UiObject` + `UiProperty<T>`.
 - [x] It writes with `UiPropertyValueSource.Animation`.
-- [x] It clears animation source on natural completion unless configured to hold.
+- [ ] It clears animation source on natural completion unless configured to hold. (quality blocker: synchronous completion can be missed before `Completed` is subscribed)
 - [x] It tracks the property source before animation starts.
 - [x] It handles local value masking without losing sampled animation state.
 - [x] It stops when target element detaches from root.
 - [x] It must ignore writes where `UiPropertyValueSource.Animation` is already the source to avoid transaction feedback loops.
 - [x] It must stage writes through the frame coordinator, not write directly while graph nodes are being sampled.
+- [ ] Binding rejects or prevents cross-root `MotionValue<T>` usage. (quality blocker from Phase 6 review)
 
 ### API
 
@@ -752,6 +753,7 @@ public sealed class MotionPropertyBinding<T> : IDisposable
 
 - [x] Binding writes animation source.
 - [x] Binding clears on completion.
+- [ ] Binding clears on synchronous/reduced-motion completion.
 - [x] Binding survives local source masking.
 - [x] Binding does not invalidate when sampled value equals effective value.
 - [x] Render-only binding does not enqueue measure/arrange.
