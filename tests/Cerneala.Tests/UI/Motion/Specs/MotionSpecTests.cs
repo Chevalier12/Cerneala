@@ -121,6 +121,17 @@ public sealed class MotionSpecTests
         Assert.Contains(diagnostics.Warnings, warning => warning.Contains("clamped", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public void SpringAdvanceWithHugeDeltaWithoutDiagnosticsFailsClearly()
+    {
+        SpringSpec<float> spec = MotionFactory.Spring<float>();
+        MotionSampler<float> sampler = spec.CreateSampler(0, 100, new FloatMixer(), Context());
+
+        ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            sampler.Advance(TimeSpan.FromSeconds(20)));
+        Assert.Contains("diagnostics", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Theory]
     [InlineData(float.NaN, 38, 1, 0.01f, 0.01f)]
     [InlineData(float.PositiveInfinity, 38, 1, 0.01f, 0.01f)]
@@ -176,6 +187,16 @@ public sealed class MotionSpecTests
 
         Assert.True(sampler.IsComplete);
         Assert.Equal(25, sampler.Current, precision: 3);
+    }
+
+    [Fact]
+    public void DecayBoundsRejectInvertedComparableRange()
+    {
+        DecaySpec<float> spec = MotionFactory.Decay(new MotionVelocity<float>(1000), deceleration: 0.9f);
+
+        ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            spec.WithBounds(min: 25, max: 0));
+        Assert.Contains("min", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

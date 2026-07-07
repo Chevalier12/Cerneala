@@ -121,7 +121,14 @@ public sealed class SpringSpec<T> : MotionSpec<T>
             double maxAdvanceSeconds = MaxSubsteps * FixedStepSeconds;
             if (remaining > maxAdvanceSeconds)
             {
-                context.Diagnostics?.RecordWarning(
+                if (context.Diagnostics is null)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(delta),
+                        $"Spring advance delta exceeds the supported integration window of {maxAdvanceSeconds:0.###} seconds. Provide MotionDiagnostics to record an explicit clamp.");
+                }
+
+                context.Diagnostics.RecordWarning(
                     $"Spring '{context.DebugName ?? typeof(T).Name}' advance delta was clamped to {maxAdvanceSeconds:0.###} seconds.");
                 remaining = maxAdvanceSeconds;
             }

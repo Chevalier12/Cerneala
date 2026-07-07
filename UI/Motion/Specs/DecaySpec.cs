@@ -46,6 +46,11 @@ public sealed class DecaySpec<T> : MotionSpec<T>
 
     public DecaySpec<T> WithBounds(T min, T max)
     {
+        if (TryCompareComparable(min, max, out int comparison) && comparison > 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(min), "Decay minimum bound must be less than or equal to the maximum bound.");
+        }
+
         return new DecaySpec<T>(InitialVelocity, Deceleration, min, max, hasMin: true, hasMax: true);
     }
 
@@ -70,6 +75,24 @@ public sealed class DecaySpec<T> : MotionSpec<T>
     {
         Type type = typeof(T);
         return typeof(IComparable<T>).IsAssignableFrom(type) || typeof(IComparable).IsAssignableFrom(type);
+    }
+
+    private static bool TryCompareComparable(T left, T right, out int comparison)
+    {
+        if (left is IComparable<T> genericComparable)
+        {
+            comparison = genericComparable.CompareTo(right);
+            return true;
+        }
+
+        if (left is IComparable comparable)
+        {
+            comparison = comparable.CompareTo(right);
+            return true;
+        }
+
+        comparison = 0;
+        return false;
     }
 
     private sealed class DecaySampler : MotionSampler<T>
@@ -149,14 +172,9 @@ public sealed class DecaySpec<T> : MotionSpec<T>
 
         private static int Compare(T left, T right)
         {
-            if (left is IComparable<T> genericComparable)
+            if (TryCompareComparable(left, right, out int comparison))
             {
-                return genericComparable.CompareTo(right);
-            }
-
-            if (left is IComparable comparable)
-            {
-                return comparable.CompareTo(right);
+                return comparison;
             }
 
             throw new InvalidOperationException($"Decay bounds for {typeof(T).Name} require comparable values.");
