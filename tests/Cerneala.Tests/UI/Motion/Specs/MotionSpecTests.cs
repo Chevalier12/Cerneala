@@ -1,7 +1,9 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Diagnostics;
 using Cerneala.UI.Motion.Interpolation;
 using Cerneala.UI.Motion.Specs;
+using Cerneala.UI.Media;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.UI.Motion.Specs;
@@ -23,6 +25,23 @@ public sealed class MotionSpecTests
         sampler.Advance(TimeSpan.FromMilliseconds(50));
         Assert.Equal(10, sampler.Current, precision: 3);
         Assert.True(sampler.IsComplete);
+    }
+
+    [Fact]
+    public void TweenSamplerWithoutVelocityReturnsNull()
+    {
+        TweenSpec<Transform> spec = MotionFactory.Tween<Transform>(TimeSpan.FromMilliseconds(100), Easings.Linear);
+        MotionSampler<Transform> sampler = spec.CreateSampler(
+            Transform.Identity,
+            new Transform(Matrix3x2.CreateTranslation(10, 20)),
+            new TransformMixer(),
+            Context());
+
+        MotionVelocity<Transform>? velocity = null;
+        Exception? exception = Record.Exception(() => velocity = sampler.Velocity);
+
+        Assert.Null(exception);
+        Assert.Null(velocity);
     }
 
     [Fact]

@@ -46,7 +46,7 @@ public sealed class MotionSample : IPlaygroundSample
         };
         panel.VisualChildren.Add(target);
         panel.VisualChildren.Add(Button("Hover color", () => target.Background = new DrawColor(14, 165, 233)));
-        panel.VisualChildren.Add(Button("Press scale", () => target.Scale = target.Scale < 1 ? 1.04f : 0.94f));
+        panel.VisualChildren.Add(Button("Press scale", () => active = AnimateScale(target, target.Scale < 1 ? 1.04f : 0.94f)));
         panel.VisualChildren.Add(Button("Animate", () => active = AnimateOpacity(target, 0.35f)));
         panel.VisualChildren.Add(Button("Cancel", () => active?.Cancel()));
         panel.VisualChildren.Add(Button("Restart", () => active = AnimateOpacity(target, 1f)));
@@ -71,6 +71,29 @@ public sealed class MotionSample : IPlaygroundSample
             return null;
         }
 
-        return target.Motion().Opacity.To(opacity, MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(180)));
+        float currentOpacity = target.Opacity;
+        target.ClearValue(UIElement.OpacityProperty);
+        return target.Motion()
+            .Animate(UIElement.OpacityProperty)
+            .From(currentOpacity)
+            .To(opacity)
+            .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(180)));
+    }
+
+    private static MotionHandle? AnimateScale(Border target, float scale)
+    {
+        if (target.Root is null)
+        {
+            target.Scale = scale;
+            return null;
+        }
+
+        float currentScale = target.Scale;
+        target.ClearValue(UIElement.ScaleProperty);
+        return target.Motion()
+            .Animate(UIElement.ScaleProperty)
+            .From(currentScale)
+            .To(scale)
+            .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(180)));
     }
 }

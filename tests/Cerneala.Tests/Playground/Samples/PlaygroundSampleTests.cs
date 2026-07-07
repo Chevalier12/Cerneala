@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.Text;
 using Cerneala.Playground.Samples;
+using Cerneala.Tests.UI.Motion.Core;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Elements;
@@ -238,6 +239,52 @@ public sealed class PlaygroundSampleTests
     }
 
     [Fact]
+    public void MotionSampleAnimateCommandStartsOpacityMotion()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        UIElement sampleRoot = new MotionSample().Build();
+        root.VisualChildren.Add(sampleRoot);
+        root.ProcessFrame();
+        Button animate = ButtonWithText(sampleRoot, "Animate");
+        Border target = DescendantsAndSelf<Border>(sampleRoot)
+            .Single(border => border.Child is TextBlock textBlock && textBlock.Text == "Motion target");
+
+        Exception? exception = Record.Exception(() => animate.Command!.Execute(null));
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(90));
+        root.ProcessFrame();
+
+        Assert.Null(exception);
+        Assert.InRange(target.Opacity, 0.35f, 0.88f);
+        Assert.NotEqual(0.88f, target.Opacity);
+    }
+
+    [Fact]
+    public void MotionSamplePressScaleCommandAnimatesScale()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        UIElement sampleRoot = new MotionSample().Build();
+        root.VisualChildren.Add(sampleRoot);
+        root.ProcessFrame();
+        Button pressScale = ButtonWithText(sampleRoot, "Press scale");
+        Border target = DescendantsAndSelf<Border>(sampleRoot)
+            .Single(border => border.Child is TextBlock textBlock && textBlock.Text == "Motion target");
+
+        Exception? exception = Record.Exception(() => pressScale.Command!.Execute(null));
+        root.ProcessFrame();
+        float startFrameScale = target.Scale;
+        clock.Advance(TimeSpan.FromMilliseconds(90));
+        root.ProcessFrame();
+
+        Assert.Null(exception);
+        Assert.Equal(0.98f, startFrameScale);
+        Assert.InRange(target.Scale, 1f, 1.04f);
+        Assert.NotEqual(1.04f, target.Scale);
+    }
+
+    [Fact]
     public void LayoutMotionSampleBuildsReorderExpandAndStatsTargets()
     {
         UIElement root = new LayoutMotionSample().Build();
@@ -246,6 +293,70 @@ public sealed class PlaygroundSampleTests
         Assert.NotNull(ButtonWithText(root, "Expand").Command);
         Assert.Contains(DescendantsAndSelf<Border>(root), border => border.LayoutMotionId is not null);
         Assert.Contains(DescendantsAndSelf<TextBlock>(root), text => text.Text.Contains("measure", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void LayoutMotionSampleExpandTwiceKeepsRenderCachesValid()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(800, 600, motionClock: clock);
+        UIElement sampleRoot = new LayoutMotionSample().Build();
+        root.VisualChildren.Add(sampleRoot);
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(800, 600) });
+        host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.Zero);
+        Button expand = ButtonWithText(sampleRoot, "Expand");
+
+        Exception? firstExpand = Record.Exception(() =>
+        {
+            expand.Command!.Execute(null);
+            host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.FromMilliseconds(16));
+        });
+        clock.Advance(TimeSpan.FromMilliseconds(16));
+        host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.FromMilliseconds(16));
+        Exception? secondExpand = Record.Exception(() =>
+        {
+            expand.Command!.Execute(null);
+            host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.FromMilliseconds(16));
+        });
+
+        Assert.Null(firstExpand);
+        Assert.Null(secondExpand);
+    }
+
+    [Fact]
+    public void LayoutMotionSampleExpandStartsFromCurrentVisualBounds()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(800, 600, motionClock: clock);
+        UIElement sampleRoot = new LayoutMotionSample().Build();
+        root.VisualChildren.Add(sampleRoot);
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(800, 600) });
+        host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.Zero);
+        Button expand = ButtonWithText(sampleRoot, "Expand");
+        DrawRect initial = FillRectWithColor(root, new DrawColor(219, 234, 254));
+
+        expand.Command!.Execute(null);
+        host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.FromMilliseconds(16));
+        DrawRect firstExpandStart = FillRectWithColor(root, new DrawColor(219, 234, 254));
+        clock.Advance(TimeSpan.FromMilliseconds(16));
+        host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.FromMilliseconds(16));
+        clock.Advance(TimeSpan.FromMilliseconds(16));
+        host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.FromMilliseconds(16));
+        DrawRect beforeInterruptedExpand = FillRectWithColor(root, new DrawColor(219, 234, 254));
+
+        expand.Command!.Execute(null);
+        host.Update(EmptyInputFrame(), new UiViewport(800, 600), TimeSpan.FromMilliseconds(16));
+        DrawRect interruptedExpandStart = FillRectWithColor(root, new DrawColor(219, 234, 254));
+
+        Assert.True(
+            MathF.Abs(firstExpandStart.Y - initial.Y) <= 1,
+            $"Expected first expand to start near Y={initial.Y}, but rendered at Y={firstExpandStart.Y}.");
+        Assert.True(
+            MathF.Abs(interruptedExpandStart.Y - beforeInterruptedExpand.Y) <= 1,
+            $"Expected interrupted expand to start near Y={beforeInterruptedExpand.Y}, but rendered at Y={interruptedExpandStart.Y}.");
+        Assert.True(
+            MathF.Abs(interruptedExpandStart.Height - beforeInterruptedExpand.Height) <= 1,
+            $"Expected interrupted expand to preserve height {beforeInterruptedExpand.Height}, but rendered height {interruptedExpandStart.Height}.");
     }
 
     [Fact]
@@ -265,9 +376,88 @@ public sealed class PlaygroundSampleTests
         UIElement root = new ScrollMotionSample().Build();
 
         Assert.Contains(DescendantsAndSelf<ScrollViewer>(root), _ => true);
-        Assert.Contains(DescendantsAndSelf<Border>(root), border => border.Opacity < 1);
-        Assert.Contains(DescendantsAndSelf<Border>(root), border => border.TranslateY != 0);
-        Assert.Contains(DescendantsAndSelf<Border>(root), border => border.ScaleX < 1);
+        Assert.NotNull(BorderWithText(root, "Header fade"));
+        Assert.NotNull(BorderWithText(root, "Parallax"));
+        Assert.NotNull(BorderWithBackground(root, new DrawColor(34, 197, 94)));
+    }
+
+    [Fact]
+    public void ScrollMotionSampleLinksVisualsToScrollOffset()
+    {
+        UIElement sampleRoot = new ScrollMotionSample().Build();
+        UIRoot root = new(800, 360);
+        root.VisualChildren.Add(sampleRoot);
+        root.ProcessFrame();
+
+        ScrollViewer scrollViewer = DescendantsAndSelf<ScrollViewer>(sampleRoot).Single();
+        Border header = BorderWithText(sampleRoot, "Header fade");
+        Border parallax = BorderWithText(sampleRoot, "Parallax");
+        Border progress = BorderWithBackground(sampleRoot, new DrawColor(34, 197, 94));
+
+        Assert.True(
+            scrollViewer.ScrollInfo.ExtentHeight > scrollViewer.ScrollInfo.ViewportHeight,
+            "Expected Scroll Motion sample content to exceed the viewport so scroll-linked motion can be demonstrated.");
+
+        float initialOpacity = header.Opacity;
+        float initialTranslateY = parallax.TranslateY;
+        float initialScaleX = progress.ScaleX;
+        float maxOffset = scrollViewer.ScrollInfo.ExtentHeight - scrollViewer.ScrollInfo.ViewportHeight;
+
+        scrollViewer.ScrollInfo.SetVerticalOffset(maxOffset * 0.5f);
+        root.ProcessFrame();
+
+        Assert.True(header.Opacity < initialOpacity, $"Expected header opacity to fade below {initialOpacity}, but was {header.Opacity}.");
+        Assert.True(parallax.TranslateY < initialTranslateY, $"Expected parallax Y to move above {initialTranslateY}, but was {parallax.TranslateY}.");
+        Assert.True(progress.ScaleX > initialScaleX, $"Expected progress scale to grow above {initialScaleX}, but was {progress.ScaleX}.");
+    }
+
+    [Fact]
+    public void ScrollMotionSampleKeepsMotionChromeOutsideScrollableContent()
+    {
+        UIElement sampleRoot = new ScrollMotionSample().Build();
+        ScrollViewer scrollViewer = DescendantsAndSelf<ScrollViewer>(sampleRoot).Single();
+        UIElement scrollContent = Assert.IsAssignableFrom<UIElement>(scrollViewer.Content);
+
+        Border header = BorderWithText(sampleRoot, "Header fade");
+        Border parallax = BorderWithText(sampleRoot, "Parallax");
+        Border progress = BorderWithBackground(sampleRoot, new DrawColor(34, 197, 94));
+        IEnumerable<UIElement> scrollDescendants = DescendantsAndSelf<UIElement>(scrollContent);
+
+        Assert.DoesNotContain(scrollDescendants, element => ReferenceEquals(element, header));
+        Assert.DoesNotContain(scrollDescendants, element => ReferenceEquals(element, parallax));
+        Assert.DoesNotContain(scrollDescendants, element => ReferenceEquals(element, progress));
+    }
+
+    [Fact]
+    public void ScrollMotionSampleClipsParallaxInsideDedicatedViewport()
+    {
+        UIElement sampleRoot = new ScrollMotionSample().Build();
+        Border parallax = BorderWithText(sampleRoot, "Parallax");
+
+        Border viewport = Assert.IsType<Border>(parallax.VisualParent);
+
+        Assert.True(viewport.ClipToBounds, "Expected Parallax to be clipped by its own viewport instead of drawing over surrounding playground chrome.");
+    }
+
+    [Fact]
+    public void ScrollMotionSampleUsesCompactPolishedChrome()
+    {
+        UIElement sampleRoot = new ScrollMotionSample().Build();
+        UIRoot root = new(800, 360);
+        root.VisualChildren.Add(sampleRoot);
+        root.ProcessFrame();
+
+        ScrollViewer scrollViewer = DescendantsAndSelf<ScrollViewer>(sampleRoot).Single();
+        Border parallax = BorderWithText(sampleRoot, "Parallax");
+        Border parallaxViewport = Assert.IsType<Border>(parallax.VisualParent);
+        Border progress = BorderWithBackground(sampleRoot, new DrawColor(34, 197, 94));
+
+        Assert.Null(progress.Child);
+        Assert.InRange(progress.ArrangedBounds.Height, 2, 6);
+        Assert.InRange(parallaxViewport.ArrangedBounds.Height, 56, 96);
+        Assert.True(
+            scrollViewer.ArrangedBounds.Y >= progress.ArrangedBounds.Y + progress.ArrangedBounds.Height,
+            "Expected scroll rows to start below the fixed motion chrome.");
     }
 
     [Fact]
@@ -701,6 +891,14 @@ public sealed class PlaygroundSampleTests
         return root.RetainedRenderer.Render(root).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == caretColor);
     }
 
+    private static DrawRect FillRectWithColor(UIRoot root, DrawColor color)
+    {
+        return root.RetainedRenderer.Render(root)
+            .Where(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == color)
+            .Select(command => command.Rect)
+            .First();
+    }
+
     private static TextRunStyle CreateTextStyle(TextBox textBox)
     {
         return new TextRunStyle(textBox.FontFamily, textBox.FontSize, color: textBox.Foreground, fontResourceId: textBox.FontResourceId);
@@ -760,6 +958,18 @@ public sealed class PlaygroundSampleTests
     {
         return DescendantsAndSelf<Button>(root)
             .Single(button => string.Equals(button.Content as string, text, StringComparison.Ordinal));
+    }
+
+    private static Border BorderWithText(UIElement root, string text)
+    {
+        return DescendantsAndSelf<Border>(root)
+            .Single(border => border.Child is TextBlock textBlock && textBlock.Text == text);
+    }
+
+    private static Border BorderWithBackground(UIElement root, DrawColor background)
+    {
+        return DescendantsAndSelf<Border>(root)
+            .Single(border => border.Background == background);
     }
 
     private static Border StatsOverlayBorder(UIElement root)

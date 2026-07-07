@@ -191,7 +191,19 @@ public sealed class LayoutMotionCoordinator
         Matrix3x2 correction = Matrix3x2.Multiply(
             Matrix3x2.Multiply(ancestorTransform, rootCorrection),
             inverseAncestorTransform);
+        correction = CompensateForRenderPivot(element, correction);
         return new Transform(correction);
+    }
+
+    private static Matrix3x2 CompensateForRenderPivot(UIElement element, Matrix3x2 correction)
+    {
+        LayoutRect bounds = element.ArrangedBounds;
+        LayoutPoint origin = element.RenderTransformOrigin;
+        float pivotX = bounds.X + (bounds.Width * origin.X);
+        float pivotY = bounds.Y + (bounds.Height * origin.Y);
+        return Matrix3x2.Multiply(
+            Matrix3x2.Multiply(Matrix3x2.CreateTranslation(pivotX, pivotY), correction),
+            Matrix3x2.CreateTranslation(-pivotX, -pivotY));
     }
 
     private static bool TryInvert(Matrix3x2 matrix, out Matrix3x2 inverse)

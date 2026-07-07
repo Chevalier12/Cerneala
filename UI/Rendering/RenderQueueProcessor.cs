@@ -17,14 +17,18 @@ public sealed class RenderQueueProcessor
     public void Process(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
+        ElementRenderCache elementCache = renderCache.GetElementCache(element);
         if (element.ConsumeRenderScopeOnlyInvalidation())
         {
             renderCache.InvalidateRoot();
-            return;
+            if (!elementCache.IsStale(element))
+            {
+                return;
+            }
         }
 
         bool forceRebuild = element.DirtyState.Has(InvalidationFlags.Render);
-        bool rebuilt = renderCache.GetElementCache(element).Ensure(element, counters, forceRebuild);
+        bool rebuilt = elementCache.Ensure(element, counters, forceRebuild);
         if (rebuilt)
         {
             renderCache.InvalidateRoot();
