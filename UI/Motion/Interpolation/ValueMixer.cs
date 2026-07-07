@@ -8,6 +8,12 @@ public abstract class ValueMixer<T> : IValueMixer
 
     public abstract T Mix(T from, T to, float progress);
 
+    public virtual bool EqualsWithinTolerance(T left, T right, float tolerance)
+    {
+        ThrowIfNegativeTolerance(tolerance);
+        return EqualityComparer<T>.Default.Equals(left, right);
+    }
+
     public virtual T Add(T left, T right)
     {
         throw CreateVectorException();
@@ -33,6 +39,11 @@ public abstract class ValueMixer<T> : IValueMixer
         return Mix(Cast(from, nameof(from)), Cast(to, nameof(to)), progress);
     }
 
+    public bool EqualsWithinToleranceUntyped(object? left, object? right, float tolerance)
+    {
+        return EqualsWithinTolerance(Cast(left, nameof(left)), Cast(right, nameof(right)), tolerance);
+    }
+
     public object? AddUntyped(object? left, object? right)
     {
         return Add(Cast(left, nameof(left)), Cast(right, nameof(right)));
@@ -56,6 +67,19 @@ public abstract class ValueMixer<T> : IValueMixer
     protected static InvalidOperationException CreateVectorException()
     {
         return new InvalidOperationException($"Mixer for {typeof(T).Name} does not support vector operations.");
+    }
+
+    protected static float Lerp(float from, float to, float progress)
+    {
+        return from + ((to - from) * progress);
+    }
+
+    protected static void ThrowIfNegativeTolerance(float tolerance)
+    {
+        if (!float.IsFinite(tolerance) || tolerance < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(tolerance), "Tolerance must be a finite non-negative value.");
+        }
     }
 
     private static T Cast(object? value, string parameterName)

@@ -1,3 +1,7 @@
+using Cerneala.Drawing;
+using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
+
 namespace Cerneala.UI.Motion.Interpolation;
 
 public sealed class ValueMixerRegistry
@@ -24,17 +28,53 @@ public sealed class ValueMixerRegistry
 
     public ValueMixer<T> Resolve<T>()
     {
+        return Resolve<T>(propertyName: null);
+    }
+
+    public ValueMixer<T> Resolve<T>(string? propertyName)
+    {
         if (TryResolve(out ValueMixer<T> mixer))
         {
             return mixer;
         }
 
-        throw new InvalidOperationException($"No value mixer registered for {typeof(T).Name}.");
+        throw CreateMissingMixerException(typeof(T), propertyName);
     }
 
     public bool TryResolve(Type valueType, out IValueMixer mixer)
     {
         ArgumentNullException.ThrowIfNull(valueType);
         return mixers.TryGetValue(valueType, out mixer!);
+    }
+
+    public IValueMixer Resolve(Type valueType, string? propertyName = null)
+    {
+        ArgumentNullException.ThrowIfNull(valueType);
+        if (TryResolve(valueType, out IValueMixer mixer))
+        {
+            return mixer;
+        }
+
+        throw CreateMissingMixerException(valueType, propertyName);
+    }
+
+    public void RegisterBuiltIns()
+    {
+        Register(new FloatMixer());
+        Register(new DoubleMixer());
+        Register(new ColorMixer());
+        Register(new ThicknessMixer());
+        Register(new DrawPointMixer());
+        Register(new DrawRectMixer());
+        Register(new TransformMixer());
+    }
+
+    private static InvalidOperationException CreateMissingMixerException(Type valueType, string? propertyName)
+    {
+        string propertyText = string.IsNullOrWhiteSpace(propertyName)
+            ? string.Empty
+            : $" for property '{propertyName}'";
+        return new InvalidOperationException(
+            $"No ValueMixer registered for {valueType.Name}{propertyText}. Register a ValueMixer<{valueType.Name}> in the root MotionSystem mixer registry or provide a local custom mixer.");
     }
 }

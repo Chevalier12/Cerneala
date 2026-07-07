@@ -1,5 +1,6 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.Diagnostics;
+using Cerneala.UI.Motion.Interpolation;
 using Cerneala.UI.Motion.Styling;
 
 namespace Cerneala.UI.Motion.Core;
@@ -26,6 +27,8 @@ public sealed class MotionSystem
         Timelines = new MotionTimelineRegistry();
         Diagnostics = new MotionDiagnostics();
         Tokens = new MotionTokens();
+        Mixers = new ValueMixerRegistry();
+        Mixers.RegisterBuiltIns();
         Frames = new MotionFrameCoordinator(root, this);
     }
 
@@ -44,6 +47,8 @@ public sealed class MotionSystem
     public MotionFrameCoordinator Frames { get; }
 
     public MotionTokens Tokens { get; }
+
+    public ValueMixerRegistry Mixers { get; }
 
     public TimeSpan MaxDelta { get; set; } = TimeSpan.FromMilliseconds(100);
 

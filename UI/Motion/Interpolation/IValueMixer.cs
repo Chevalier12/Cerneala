@@ -8,6 +8,8 @@ public interface IValueMixer
 
     object? MixUntyped(object? from, object? to, float progress);
 
+    bool EqualsWithinToleranceUntyped(object? left, object? right, float tolerance);
+
     object? AddUntyped(object? left, object? right);
 
     object? SubtractUntyped(object? left, object? right);
