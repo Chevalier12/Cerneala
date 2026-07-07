@@ -341,26 +341,26 @@ public sealed class MotionThreadGuard
 
 ### Files
 
-- [ ] Add `UI/Motion/Specs/MotionSpec.cs` for the type-erased base spec.
-- [ ] Add `UI/Motion/Specs/MotionSpec{T}.cs` for the typed spec.
-- [ ] Add `UI/Motion/Specs/MotionSpecContext.cs`.
-- [ ] Add `UI/Motion/Specs/MotionSampler.cs`.
-- [ ] Add `UI/Motion/Specs/MotionVelocity.cs`.
-- [ ] Add `UI/Motion/Specs/RetargetMode.cs`.
-- [ ] Add `UI/Motion/Interpolation/IValueMixer.cs` as the minimal non-generic contract needed by type-erased specs.
-- [ ] Add `UI/Motion/Interpolation/ValueMixer.cs` as the generic base needed by `MotionSpec<T>`.
-- [ ] Add `UI/Motion/Interpolation/ValueMixerRegistry.cs` as a shell registry; Phase 4 registers built-ins.
-- [ ] Add `UI/Motion/Specs/TweenSpec.cs`.
-- [ ] Add `UI/Motion/Specs/SpringSpec.cs`.
-- [ ] Add `UI/Motion/Specs/DecaySpec.cs`.
-- [ ] Add `UI/Motion/Specs/KeyframesSpec.cs`.
-- [ ] Add `UI/Motion/Specs/MotionCompletion.cs`.
-- [ ] Add `UI/Motion/Specs/Motion.cs`.
-- [ ] Add tests under `tests/Cerneala.Tests/UI/Motion/Specs/`.
+- [x] Add `UI/Motion/Specs/MotionSpec.cs` for the type-erased base spec.
+- [x] Add `UI/Motion/Specs/MotionSpec{T}.cs` for the typed spec.
+- [x] Add `UI/Motion/Specs/MotionSpecContext.cs`.
+- [x] Add `UI/Motion/Specs/MotionSampler.cs`.
+- [x] Add `UI/Motion/Specs/MotionVelocity.cs`.
+- [x] Add `UI/Motion/Specs/RetargetMode.cs`.
+- [x] Add `UI/Motion/Interpolation/IValueMixer.cs` as the minimal non-generic contract needed by type-erased specs.
+- [x] Add `UI/Motion/Interpolation/ValueMixer.cs` as the generic base needed by `MotionSpec<T>`.
+- [x] Add `UI/Motion/Interpolation/ValueMixerRegistry.cs` as a shell registry; Phase 4 registers built-ins.
+- [x] Add `UI/Motion/Specs/TweenSpec.cs`.
+- [x] Add `UI/Motion/Specs/SpringSpec.cs`.
+- [x] Add `UI/Motion/Specs/DecaySpec.cs`.
+- [x] Add `UI/Motion/Specs/KeyframesSpec.cs`.
+- [x] Add `UI/Motion/Specs/MotionCompletion.cs`.
+- [x] Add `UI/Motion/Specs/Motion.cs`.
+- [x] Add tests under `tests/Cerneala.Tests/UI/Motion/Specs/`.
 
 ### `MotionSpec<T>`
 
-- [ ] Define a type-erased base spec first, because transactions and theme tokens need specs that can apply to multiple property types:
+- [x] Define a type-erased base spec first, because transactions and theme tokens need specs that can apply to multiple property types:
 
 ```csharp
 public abstract class MotionSpec
@@ -373,7 +373,7 @@ public abstract class MotionSpec
 }
 ```
 
-- [ ] Define as the base for all typed animation specs:
+- [x] Define as the base for all typed animation specs:
 
 ```csharp
 public abstract class MotionSpec<T> : MotionSpec
@@ -382,78 +382,78 @@ public abstract class MotionSpec<T> : MotionSpec
 }
 ```
 
-- [ ] Add non-generic `MotionSampler`:
-  - [ ] `object? CurrentUntyped { get; }`
-  - [ ] `bool IsComplete { get; }`
-  - [ ] `void Advance(TimeSpan delta)`
-  - [ ] `void RetargetUntyped(object? to, RetargetMode mode)`
-- [ ] Add `MotionSampler<T>`:
-  - [ ] `T Current { get; }`
-  - [ ] `bool IsComplete { get; }`
-  - [ ] `MotionVelocity<T>? Velocity { get; }`
-  - [ ] `void Advance(TimeSpan delta)`
-  - [ ] `void Retarget(T to, RetargetMode mode)`
-- [ ] `MotionSpecContext` should contain:
-  - [ ] `ReducedMotionPolicy ReducedMotion`
-  - [ ] `ValueMixerRegistry Mixers`
-  - [ ] `MotionDiagnostics? Diagnostics`
-  - [ ] `TimeSpan Now`
-  - [ ] `string? DebugName`
-- [ ] `MotionVelocity<T>` should:
-  - [ ] Wrap a value-space velocity `T Value`.
-  - [ ] Be produced/consumed only by mixers that support vector operations.
-  - [ ] Fail clearly when velocity is requested for non-vector types.
+- [x] Add non-generic `MotionSampler`:
+  - [x] `object? CurrentUntyped { get; }`
+  - [x] `bool IsComplete { get; }`
+  - [x] `void Advance(TimeSpan delta)`
+  - [x] `void RetargetUntyped(object? to, RetargetMode mode)`
+- [x] Add `MotionSampler<T>`:
+  - [x] `T Current { get; }`
+  - [x] `bool IsComplete { get; }`
+  - [x] `MotionVelocity<T>? Velocity { get; }`
+  - [x] `void Advance(TimeSpan delta)`
+  - [x] `void Retarget(T to, RetargetMode mode)`
+- [x] `MotionSpecContext` should contain:
+  - [x] `ReducedMotionPolicy ReducedMotion`
+  - [x] `ValueMixerRegistry Mixers`
+  - [x] `MotionDiagnostics? Diagnostics`
+  - [x] `TimeSpan Now`
+  - [x] `string? DebugName`
+- [x] `MotionVelocity<T>` should:
+  - [x] Wrap a value-space velocity `T Value`.
+  - [x] Be produced/consumed only by mixers that support vector operations.
+  - [x] Fail clearly when velocity is requested for non-vector types.
 
 ### `TweenSpec`
 
-- [ ] Properties:
-  - [ ] `TimeSpan Duration`
-  - [ ] `TimeSpan Delay`
-  - [ ] `IEasing Easing`
-  - [ ] `FillMode FillMode`
-- [ ] Behavior:
-  - [ ] Delay does not write target value until elapsed unless fill mode says so.
-  - [ ] Duration zero is allowed only through reduced-motion conversion, not general public creation.
-  - [ ] Completion is exact and deterministic.
+- [x] Properties:
+  - [x] `TimeSpan Duration`
+  - [x] `TimeSpan Delay`
+  - [x] `IEasing Easing`
+  - [x] `FillMode FillMode`
+- [x] Behavior:
+  - [x] Delay does not write target value until elapsed unless fill mode says so.
+  - [x] Duration zero is allowed only through reduced-motion conversion, not general public creation.
+  - [x] Completion is exact and deterministic.
 
 ### `SpringSpec`
 
-- [ ] Properties:
-  - [ ] `float Stiffness`
-  - [ ] `float Damping`
-  - [ ] `float Mass`
-  - [ ] `float RestSpeed`
-  - [ ] `float RestDelta`
-  - [ ] `SpringVelocityMode VelocityMode`
-- [ ] Behavior:
-  - [ ] Retarget preserves typed velocity by default when the mixer supports vector operations.
-  - [ ] Retarget falls back to no-velocity continuity for non-vector mixers and records a diagnostic.
-  - [ ] Spring can complete without fixed duration.
-  - [ ] Max iteration safety exists to avoid numerical nonsense.
-  - [ ] Use semi-implicit Euler or RK4, document the chosen integrator.
+- [x] Properties:
+  - [x] `float Stiffness`
+  - [x] `float Damping`
+  - [x] `float Mass`
+  - [x] `float RestSpeed`
+  - [x] `float RestDelta`
+  - [x] `SpringVelocityMode VelocityMode`
+- [x] Behavior:
+  - [x] Retarget preserves typed velocity by default when the mixer supports vector operations.
+  - [x] Retarget falls back to no-velocity continuity for non-vector mixers and records a diagnostic.
+  - [x] Spring can complete without fixed duration.
+  - [x] Max iteration safety exists to avoid numerical nonsense.
+  - [x] Use semi-implicit Euler or RK4, document the chosen integrator.
 
 ### `DecaySpec`
 
-- [ ] Properties:
-  - [ ] `MotionVelocity<T> InitialVelocity`
-  - [ ] `float Deceleration`
-  - [ ] `T? Min`
-  - [ ] `T? Max`
-  - [ ] `MotionSpec<T>? Bounce`
-- [ ] Use for inertia and scroll/drag handoff later.
-- [ ] `DecaySpec<T>` must require a mixer with vector operations; otherwise construction or sampler creation fails with a clear exception.
+- [x] Properties:
+  - [x] `MotionVelocity<T> InitialVelocity`
+  - [x] `float Deceleration`
+  - [x] `T? Min`
+  - [x] `T? Max`
+  - [ ] `MotionSpec<T>? Bounce` (deferred from Phase 2; fake unused API was removed instead of shipped)
+- [x] Use for inertia and scroll/drag handoff later.
+- [x] `DecaySpec<T>` must require a mixer with vector operations; otherwise construction or sampler creation fails with a clear exception.
 
 ### `KeyframesSpec`
 
-- [ ] Supports:
-  - [ ] Explicit offsets 0..1.
-  - [ ] Per-segment easing.
-  - [ ] Mixed hold/interpolate segments.
-  - [ ] Validation that offsets are sorted and endpoints are valid.
+- [x] Supports:
+  - [x] Explicit offsets 0..1.
+  - [x] Per-segment easing.
+  - [x] Mixed hold/interpolate segments.
+  - [x] Validation that offsets are sorted and endpoints are valid.
 
 ### Static Factory
 
-- [ ] `Motion` static class should expose:
+- [x] `Motion` static class should expose:
 
 ```csharp
 public static TweenSpec<T> Tween<T>(TimeSpan duration, IEasing? easing = null);
@@ -466,16 +466,16 @@ public static MotionSpec Spring(float stiffness = 520, float damping = 38, float
 
 ### Tests
 
-- [ ] Tween samples start/mid/end.
-- [ ] Tween applies delay.
-- [ ] Tween retarget can either restart or preserve progress based on `RetargetMode`.
-- [ ] Spring approaches target and completes under rest thresholds.
-- [ ] Spring retarget preserves velocity.
-- [ ] Spring retarget over non-vector mixer records fallback diagnostic instead of pretending velocity exists.
-- [ ] Decay clamps at bounds.
-- [ ] Decay rejects non-vector mixers.
-- [ ] Keyframes validate offsets.
-- [ ] Keyframes sample exact endpoint values.
+- [x] Tween samples start/mid/end.
+- [x] Tween applies delay.
+- [x] Tween retarget can either restart or preserve progress based on `RetargetMode`.
+- [x] Spring approaches target and completes under rest thresholds.
+- [x] Spring retarget preserves velocity.
+- [x] Spring retarget over non-vector mixer records fallback diagnostic instead of pretending velocity exists.
+- [x] Decay clamps at bounds.
+- [x] Decay rejects non-vector mixers.
+- [x] Keyframes validate offsets.
+- [x] Keyframes sample exact endpoint values.
 
 ---
 
@@ -483,15 +483,15 @@ public static MotionSpec Spring(float stiffness = 520, float damping = 38, float
 
 ### Files
 
-- [ ] Add `UI/Motion/Specs/IEasing.cs`.
-- [ ] Add `UI/Motion/Specs/Easings.cs`.
-- [ ] Add `UI/Motion/Specs/CubicBezierEasing.cs`.
-- [ ] Add `UI/Motion/Specs/StepEasing.cs`.
-- [ ] Keep `UI/Animation/Easing.cs` as legacy adapter.
+- [x] Add `UI/Motion/Specs/IEasing.cs`.
+- [x] Add `UI/Motion/Specs/Easings.cs`.
+- [x] Add `UI/Motion/Specs/CubicBezierEasing.cs`.
+- [x] Add `UI/Motion/Specs/StepEasing.cs`.
+- [x] Keep `UI/Animation/Easing.cs` as legacy adapter.
 
 ### Requirements
 
-- [ ] `IEasing` exposes:
+- [x] `IEasing` exposes:
 
 ```csharp
 public interface IEasing
@@ -500,27 +500,27 @@ public interface IEasing
 }
 ```
 
-- [ ] `Easings` includes:
-  - [ ] `Linear`
-  - [ ] `Standard`
-  - [ ] `Emphasized`
-  - [ ] `EaseIn`
-  - [ ] `EaseOut`
-  - [ ] `EaseInOut`
-  - [ ] `Sharp`
-- [ ] `CubicBezierEasing`:
-  - [ ] Validates x control points in [0, 1].
-  - [ ] Uses deterministic Newton/bisection fallback.
-  - [ ] Clamps NaN to 0.
-- [ ] `StepEasing`:
-  - [ ] Supports `JumpStart`, `JumpEnd`, `JumpBoth`, `JumpNone`.
+- [x] `Easings` includes:
+  - [x] `Linear`
+  - [x] `Standard`
+  - [x] `Emphasized`
+  - [x] `EaseIn`
+  - [x] `EaseOut`
+  - [x] `EaseInOut`
+  - [x] `Sharp`
+- [x] `CubicBezierEasing`:
+  - [x] Validates x control points in [0, 1].
+  - [x] Uses deterministic Newton/bisection fallback.
+  - [x] Clamps NaN to 0.
+- [x] `StepEasing`:
+  - [x] Supports `JumpStart`, `JumpEnd`, `JumpBoth`, `JumpNone`.
 
 ### Tests
 
-- [ ] Bezier endpoints are exact.
-- [ ] Bezier monotonicity holds for valid curves.
-- [ ] Step easing behavior matches mode.
-- [ ] Legacy `Easing.Linear` delegates safely or remains unchanged until removal.
+- [x] Bezier endpoints are exact.
+- [x] Bezier monotonicity holds for valid curves.
+- [x] Step easing behavior matches mode.
+- [x] Legacy `Easing.Linear` delegates safely or remains unchanged until removal.
 
 ---
 
@@ -1470,7 +1470,7 @@ motion=3, sampled=3, motionWrites=2, motionRender=2, motionLayout=0
 
 - [x] 1. Phase 0: freeze legacy behavior.
 - [x] 2. Phase 1: root-owned clock/system/frame stats.
-- [ ] 3. Phase 2 and 3: specs/easing.
+- [x] 3. Phase 2 and 3: specs/easing.
 - [ ] 4. Phase 4: mixers.
 - [ ] 5. Phase 5: motion graph/values.
 - [ ] 6. Phase 6: property bindings.
