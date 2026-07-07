@@ -616,7 +616,7 @@ public sealed class MotionValue<T> : MotionValue
   - [x] Store active sampler.
   - [x] Store optional velocity vector.
   - [x] Notify only when effective sampled value changes.
-  - [x] Allow retarget without tearing.
+  - [ ] Allow retarget without tearing. (quality blocker: reentrant value callbacks can mutate/replace the active handle while tick/complete/cancel logic continues)
 
 ### `MotionGraph`
 
@@ -650,7 +650,7 @@ public sealed class MotionGraph
   - [x] `void Dispose()`
   - [x] `event EventHandler<MotionCompletedEventArgs>? Completed`
 - [x] Implement `IDisposable` so app code can unregister callbacks and release graph references before natural completion.
-- [x] `Completed` callbacks should be cleared when the handle completes, cancels, or disposes.
+- [ ] `Completed` callbacks should be cleared when the handle completes, cancels, or disposes. (quality blocker: cleanup is not exception-safe if a callback throws)
 - [x] `Completion` should complete successfully for natural completion and `Complete()`.
 - [x] `Completion` should complete as canceled for cancellation if .NET cancellation plumbing is available; otherwise document the result type in `MotionCompletedEventArgs`.
 - [x] `Cancel()` and `Dispose()` must be idempotent.
@@ -687,6 +687,10 @@ MotionValue<Transform> transform = MotionValue.Combine(x, y, (cx, cy) => Transfo
 - [x] Canceling a handle resolves/marks completion as canceled according to the documented contract.
 - [x] Derived values recompute when dependencies change.
 - [x] Graph tolerates nodes adding/removing nodes during callbacks.
+- [ ] Reentrant value callbacks cannot crash ticks or let an old handle finish the active new handle. (quality blocker from Phase 5 review)
+- [ ] Throwing `Completed` callback still clears callbacks/actions and releases retained targets. (quality blocker from Phase 5 review)
+- [ ] Cancel revert and cancel complete behaviors are covered by tests. (coverage gap from Phase 5 review)
+- [ ] Disposing a derived value unsubscribes from dependencies. (coverage gap from Phase 5 review)
 
 ---
 
