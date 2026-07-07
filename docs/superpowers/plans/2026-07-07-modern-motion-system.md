@@ -584,19 +584,19 @@ public interface IEasing
 
 ### Files
 
-- [ ] Add `UI/Motion/Core/MotionValue.cs`.
-- [ ] Add `UI/Motion/Core/MotionValue{T}.cs`.
-- [ ] Add `UI/Motion/Core/DerivedMotionValue{T}.cs`.
-- [ ] Add `UI/Motion/Core/MotionNode.cs`.
-- [ ] Add `UI/Motion/Core/MotionGraph.cs`.
-- [ ] Add `UI/Motion/Core/MotionHandle.cs`.
-- [ ] Add `UI/Motion/Core/MotionCompletionSource.cs`.
-- [ ] Add `UI/Motion/Core/MotionCancellation.cs`.
-- [ ] Add `UI/Motion/Core/MotionPriority.cs`.
+- [x] Add `UI/Motion/Core/MotionValue.cs`.
+- [x] Add `UI/Motion/Core/MotionValue{T}.cs`.
+- [x] Add `UI/Motion/Core/DerivedMotionValue{T}.cs`.
+- [x] Add `UI/Motion/Core/MotionNode.cs`.
+- [x] Add `UI/Motion/Core/MotionGraph.cs`.
+- [x] Add `UI/Motion/Core/MotionHandle.cs`.
+- [x] Add `UI/Motion/Core/MotionCompletionSource.cs`.
+- [x] Add `UI/Motion/Core/MotionCancellation.cs`.
+- [x] Add `UI/Motion/Core/MotionPriority.cs`.
 
 ### `MotionValue<T>`
 
-- [ ] Design it as a mutable, observable motion cell:
+- [x] Design it as a mutable, observable motion cell:
 
 ```csharp
 public sealed class MotionValue<T> : MotionValue
@@ -610,23 +610,23 @@ public sealed class MotionValue<T> : MotionValue
 }
 ```
 
-- [ ] It should:
-  - [ ] Store current value.
-  - [ ] Store target value.
-  - [ ] Store active sampler.
-  - [ ] Store optional velocity vector.
-  - [ ] Notify only when effective sampled value changes.
-  - [ ] Allow retarget without tearing.
+- [x] It should:
+  - [x] Store current value.
+  - [x] Store target value.
+  - [x] Store active sampler.
+  - [x] Store optional velocity vector.
+  - [x] Notify only when effective sampled value changes.
+  - [x] Allow retarget without tearing.
 
 ### `MotionGraph`
 
-- [ ] Responsibilities:
-  - [ ] Own active nodes.
-  - [ ] Advance nodes in deterministic insertion order.
-  - [ ] Remove completed nodes after notification flush.
-  - [ ] Avoid mutation while iterating by staging graph changes.
-  - [ ] Provide counters for diagnostics.
-- [ ] API:
+- [x] Responsibilities:
+  - [x] Own active nodes.
+  - [x] Advance nodes in deterministic insertion order.
+  - [x] Remove completed nodes after notification flush.
+  - [x] Avoid mutation while iterating by staging graph changes.
+  - [x] Provide counters for diagnostics.
+- [x] API:
 
 ```csharp
 public sealed class MotionGraph
@@ -640,29 +640,29 @@ public sealed class MotionGraph
 
 ### `MotionHandle`
 
-- [ ] Expose:
-  - [ ] `bool IsActive`
-  - [ ] `bool IsCompleted`
-  - [ ] `bool IsCanceled`
-  - [ ] `ValueTask Completion { get; }`
-  - [ ] `void Cancel(MotionCancelBehavior behavior = MotionCancelBehavior.KeepCurrent)`
-  - [ ] `void Complete()`
-  - [ ] `void Dispose()`
-  - [ ] `event EventHandler<MotionCompletedEventArgs>? Completed`
-- [ ] Implement `IDisposable` so app code can unregister callbacks and release graph references before natural completion.
-- [ ] `Completed` callbacks should be cleared when the handle completes, cancels, or disposes.
-- [ ] `Completion` should complete successfully for natural completion and `Complete()`.
-- [ ] `Completion` should complete as canceled for cancellation if .NET cancellation plumbing is available; otherwise document the result type in `MotionCompletedEventArgs`.
-- [ ] `Cancel()` and `Dispose()` must be idempotent.
-- [ ] Completion semantics:
-  - [ ] Natural completion applies final value.
-  - [ ] Cancel keep-current leaves sampled value.
-  - [ ] Cancel revert restores pre-animation value if explicitly requested.
-  - [ ] Cancel complete jumps to target if explicitly requested.
+- [x] Expose:
+  - [x] `bool IsActive`
+  - [x] `bool IsCompleted`
+  - [x] `bool IsCanceled`
+  - [x] `ValueTask Completion { get; }`
+  - [x] `void Cancel(MotionCancelBehavior behavior = MotionCancelBehavior.KeepCurrent)`
+  - [x] `void Complete()`
+  - [x] `void Dispose()`
+  - [x] `event EventHandler<MotionCompletedEventArgs>? Completed`
+- [x] Implement `IDisposable` so app code can unregister callbacks and release graph references before natural completion.
+- [x] `Completed` callbacks should be cleared when the handle completes, cancels, or disposes.
+- [x] `Completion` should complete successfully for natural completion and `Complete()`.
+- [x] `Completion` should complete as canceled for cancellation if .NET cancellation plumbing is available; otherwise document the result type in `MotionCompletedEventArgs`.
+- [x] `Cancel()` and `Dispose()` must be idempotent.
+- [x] Completion semantics:
+  - [x] Natural completion applies final value.
+  - [x] Cancel keep-current leaves sampled value.
+  - [x] Cancel revert restores pre-animation value if explicitly requested.
+  - [x] Cancel complete jumps to target if explicitly requested.
 
 ### Derived Values
 
-- [ ] Add `DerivedMotionValue<T>` for computed transforms:
+- [x] Add `DerivedMotionValue<T>` for computed transforms:
 
 ```csharp
 MotionValue<float> x = root.Motion.Value(0f);
@@ -670,19 +670,19 @@ MotionValue<float> y = root.Motion.Value(0f);
 MotionValue<Transform> transform = MotionValue.Combine(x, y, (cx, cy) => Transform.Translate(cx, cy));
 ```
 
-- [ ] Derived values should:
-  - [ ] Subscribe to dependencies.
-  - [ ] Recompute only when dependency values changed.
-  - [ ] Dispose subscriptions.
+- [x] Derived values should:
+  - [x] Subscribe to dependencies.
+  - [x] Recompute only when dependency values changed.
+  - [x] Dispose subscriptions.
 
 ### Tests
 
-- [ ] Motion value `JumpTo` notifies once.
-- [ ] `AnimateTo` updates over manual ticks.
-- [ ] Retarget preserves active motion.
-- [ ] Cancel keep-current stops future ticks.
-- [ ] Complete jumps to target and fires completion once.
-- [ ] Disposing a handle unregisters completion callbacks and stops retaining target element.
+- [x] Motion value `JumpTo` notifies once.
+- [x] `AnimateTo` updates over manual ticks.
+- [x] Retarget preserves active motion.
+- [x] Cancel keep-current stops future ticks.
+- [x] Complete jumps to target and fires completion once.
+- [x] Disposing a handle unregisters completion callbacks and stops retaining target element.
 - [ ] Awaiting `Completion` resolves after natural completion.
 - [ ] Canceling a handle resolves/marks completion as canceled according to the documented contract.
 - [ ] Derived values recompute when dependencies change.
@@ -1472,7 +1472,7 @@ motion=3, sampled=3, motionWrites=2, motionRender=2, motionLayout=0
 - [x] 2. Phase 1: root-owned clock/system/frame stats.
 - [x] 3. Phase 2 and 3: specs/easing.
 - [x] 4. Phase 4: mixers.
-- [ ] 5. Phase 5: motion graph/values.
+- [x] 5. Phase 5: motion graph/values.
 - [ ] 6. Phase 6: property bindings.
 - [ ] 7. Phase 7: render-layer properties on `UIElement`.
 - [ ] 8. Phase 8: public facade.
