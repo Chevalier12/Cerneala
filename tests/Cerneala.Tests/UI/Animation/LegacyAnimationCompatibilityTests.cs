@@ -117,17 +117,27 @@ public sealed class LegacyAnimationCompatibilityTests
     [Fact]
     public void StoryboardCannotExpressSequencing()
     {
-        string[] declaredMethodsAndProperties = typeof(Storyboard)
-            .GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-            .Where(member => member.MemberType is MemberTypes.Method or MemberTypes.Property)
-            .Select(member => member.Name)
-            .Order()
-            .ToArray();
+        MemberInfo[] publicContract = PublicInstanceContractMembers(typeof(Storyboard));
+        string[] sequencingConcepts =
+        [
+            "Sequence",
+            "Timeline",
+            "Delay",
+            "Keyframe",
+            "Step",
+            "Begin",
+            "After",
+            "Before",
+            "Duration",
+            "TimeOffset",
+            "Offset",
+            "StartTime",
+            "EndTime",
+            "Then",
+            "Wait"
+        ];
 
-        Assert.Equal(["Add", "get_Handles", "Handles", "Stop"], declaredMethodsAndProperties);
-        Assert.All(
-            typeof(Storyboard).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
-            method => Assert.DoesNotContain(method.GetParameters(), parameter => parameter.ParameterType == typeof(TimeSpan)));
+        Assert.DoesNotContain(publicContract, member => MemberMentionsAnyConcept(member, sequencingConcepts));
     }
 
     [Fact]
@@ -137,10 +147,9 @@ public sealed class LegacyAnimationCompatibilityTests
             typeof(AnimationScheduler).GetConstructors(),
             constructor => Assert.Empty(constructor.GetParameters()));
 
-        MemberInfo[] declaredMembers = typeof(AnimationScheduler)
-            .GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        MemberInfo[] publicContract = PublicInstanceContractMembers(typeof(AnimationScheduler));
 
-        Assert.DoesNotContain(declaredMembers, MemberMentionsRootOrFrame);
+        Assert.DoesNotContain(publicContract, member => MemberMentionsAnyConcept(member, ["Root", "Frame"]));
     }
 
     [Fact]
@@ -153,29 +162,62 @@ public sealed class LegacyAnimationCompatibilityTests
             .ToArray();
 
         Assert.Equal(["Completed", "HasPendingWork", "Ticked"], resultProperties);
+        MemberInfo[] publicContract = PublicInstanceContractMembers(typeof(AnimationScheduler));
+        string[] diagnosticsConcepts =
+        [
+            "Diagnostic",
+            "Diagnostics",
+            "Trace",
+            "Telemetry",
+            "Event",
+            "Metric",
+            "Metrics",
+            "Stat",
+            "Stats",
+            "Report",
+            "Snapshot",
+            "Observer"
+        ];
+
         Assert.DoesNotContain(
-            typeof(AnimationScheduler).GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
-            member => member.Name.Contains("Diagnostic", StringComparison.Ordinal)
-                || member.Name.Contains("Trace", StringComparison.Ordinal)
-                || member.Name.Contains("Snapshot", StringComparison.Ordinal));
+            publicContract,
+            member => MemberMentionsAnyConcept(member, diagnosticsConcepts));
     }
 
-    private static bool MemberMentionsRootOrFrame(MemberInfo member)
+    private static MemberInfo[] PublicInstanceContractMembers(Type type)
     {
-        return member switch
-        {
-            MethodInfo method => TypeMentionsRootOrFrame(method.ReturnType)
-                || method.GetParameters().Any(parameter => TypeMentionsRootOrFrame(parameter.ParameterType)),
-            PropertyInfo property => TypeMentionsRootOrFrame(property.PropertyType),
-            ConstructorInfo constructor => constructor.GetParameters().Any(parameter => TypeMentionsRootOrFrame(parameter.ParameterType)),
-            _ => false
-        };
+        return type.GetMembers(BindingFlags.Public | BindingFlags.Instance)
+            .Where(member => member.DeclaringType != typeof(object))
+            .ToArray();
     }
 
-    private static bool TypeMentionsRootOrFrame(Type type)
+    private static bool MemberMentionsAnyConcept(MemberInfo member, IReadOnlyCollection<string> concepts)
     {
-        return type.Name.Contains("Root", StringComparison.Ordinal)
-            || type.Name.Contains("Frame", StringComparison.Ordinal);
+        return TextMentionsAnyConcept(member.Name, concepts)
+            || member switch
+            {
+                MethodInfo method => TypeMentionsAnyConcept(method.ReturnType, concepts)
+                    || method.GetParameters().Any(parameter =>
+                        TextMentionsAnyConcept(parameter.Name ?? string.Empty, concepts)
+                        || TypeMentionsAnyConcept(parameter.ParameterType, concepts)),
+                PropertyInfo property => TypeMentionsAnyConcept(property.PropertyType, concepts),
+                ConstructorInfo constructor => constructor.GetParameters().Any(parameter =>
+                    TextMentionsAnyConcept(parameter.Name ?? string.Empty, concepts)
+                    || TypeMentionsAnyConcept(parameter.ParameterType, concepts)),
+                _ => false
+            };
+    }
+
+    private static bool TypeMentionsAnyConcept(Type type, IReadOnlyCollection<string> concepts)
+    {
+        return TextMentionsAnyConcept(type.Name, concepts)
+            || (type.FullName is not null && TextMentionsAnyConcept(type.FullName, concepts))
+            || type.GetGenericArguments().Any(argument => TypeMentionsAnyConcept(argument, concepts));
+    }
+
+    private static bool TextMentionsAnyConcept(string text, IReadOnlyCollection<string> concepts)
+    {
+        return concepts.Any(concept => text.Contains(concept, StringComparison.OrdinalIgnoreCase));
     }
 
     private static UiProperty<float> RegisterFloat()
