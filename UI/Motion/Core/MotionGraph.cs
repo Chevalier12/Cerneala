@@ -111,15 +111,20 @@ public sealed class MotionGraph
     {
         threadGuard.VerifyAccess();
         ArgumentNullException.ThrowIfNull(node);
-        if (node.IsRegistered || pendingAdds.Contains(node))
-        {
-            return;
-        }
-
         if (isTicking)
         {
             pendingRemoves.Remove(node);
+            if (node.IsRegistered || pendingAdds.Contains(node))
+            {
+                return;
+            }
+
             pendingAdds.Add(node);
+            return;
+        }
+
+        if (node.IsRegistered || pendingAdds.Contains(node))
+        {
             return;
         }
 

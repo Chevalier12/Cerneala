@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Specs;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
@@ -85,6 +86,42 @@ public sealed class MotionValueTests
     }
 
     [Fact]
+    public void PreserveProgressRetargetUsesNewSpec()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100), Easings.Linear));
+        harness.Tick(TimeSpan.Zero);
+        harness.Tick(TimeSpan.FromMilliseconds(80));
+
+        value.AnimateTo(
+            20d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(1000), Easings.Linear),
+            new MotionStartOptions(RetargetMode.PreserveProgress));
+        harness.Tick(TimeSpan.FromMilliseconds(10));
+
+        Assert.InRange(value.Current, 8.01d, 12d);
+    }
+
+    [Fact]
+    public void OldRetargetedHandleCannotCancelNewHandle()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle oldHandle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        harness.Tick(TimeSpan.Zero);
+        harness.Tick(TimeSpan.FromMilliseconds(40));
+
+        MotionHandle newHandle = value.AnimateTo(20d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        oldHandle.Cancel(MotionCancelBehavior.Complete);
+        harness.Tick(TimeSpan.FromMilliseconds(20));
+
+        Assert.True(newHandle.IsActive);
+        Assert.True(value.IsAnimating);
+        Assert.NotEqual(20d, value.Current);
+    }
+
+    [Fact]
     public void CancelKeepCurrentStopsFutureTicks()
     {
         UIRootHarness harness = new();
@@ -143,6 +180,20 @@ public sealed class MotionValueTests
         Assert.True(handle.IsCanceled);
         Assert.False(callbackInvoked);
         Assert.False(value.IsAnimating);
+    }
+
+    [Fact]
+    public void DisposingHandleReleasesCompletionCallbackTarget()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle handle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        WeakReference callbackTarget = AttachCompletionTargetAndDispose(handle);
+
+        ForceCollection();
+
+        Assert.False(callbackTarget.IsAlive);
+        GC.KeepAlive(handle);
     }
 
     [Fact]
@@ -211,6 +262,65 @@ public sealed class MotionValueTests
         Assert.NotNull(secondHandle);
         Assert.True(secondHandle.IsCompleted);
         Assert.Equal(1d, second.Current);
+    }
+
+    [Fact]
+    public void GraphKeepsNodeWhenCallbackRemovesAndReaddsSameNode()
+    {
+        UIRootHarness harness = new();
+        RemoveAndReaddNode node = new(harness.Graph);
+        harness.Graph.Register(node);
+
+        MotionFrameResult first = harness.Tick(TimeSpan.FromMilliseconds(1));
+        MotionFrameResult second = harness.Tick(TimeSpan.FromMilliseconds(1));
+
+        Assert.True(first.NeedsAnotherFrame);
+        Assert.True(second.HasWork);
+        Assert.Equal(2, node.Ticks);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference AttachCompletionTargetAndDispose(MotionHandle handle)
+    {
+        CompletionCallbackTarget target = new();
+        handle.Completed += target.OnCompleted;
+        WeakReference reference = new(target);
+        handle.Dispose();
+        return reference;
+    }
+
+    private static void ForceCollection()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
+    }
+
+    private sealed class CompletionCallbackTarget
+    {
+        public void OnCompleted(object? sender, MotionCompletedEventArgs args)
+        {
+        }
+    }
+
+    private sealed class RemoveAndReaddNode(MotionGraph graph) : MotionNode
+    {
+        public int Ticks { get; private set; }
+
+        protected internal override MotionNodeTickResult Tick(MotionFrame frame)
+        {
+            Ticks++;
+            if (Ticks == 1)
+            {
+                graph.Unregister(this);
+                graph.Register(this);
+            }
+
+            return new MotionNodeTickResult();
+        }
     }
 
     private sealed class UIRootHarness

@@ -14,6 +14,7 @@ public sealed class MotionValue<T> : MotionValue
     private T current;
     private T target;
     private T animationStart;
+    private TimeSpan animationElapsed;
     private MotionVelocity<T>? velocity;
 
     internal MotionValue(MotionGraph graph, ValueMixer<T> mixer, T initial)
@@ -46,19 +47,25 @@ public sealed class MotionValue<T> : MotionValue
             activeHandle?.IsActive == true &&
             effectiveOptions.RetargetMode == RetargetMode.PreserveProgress)
         {
+            TimeSpan preservedElapsed = animationElapsed;
             activeHandle.FinishCanceled(MotionCancelBehavior.KeepCurrent, fireEvent: true);
             activeHandle = null;
             this.target = target;
-            sampler.Retarget(target, RetargetMode.PreserveProgress);
+            animationStart = current;
+            sampler = spec.CreateSampler(
+                current,
+                target,
+                mixer,
+                graph.CreateSpecContext(effectiveOptions.DebugName));
+            if (preservedElapsed > TimeSpan.Zero)
+            {
+                sampler.Advance(preservedElapsed);
+            }
+
+            animationElapsed = preservedElapsed;
 
             MotionHandle retargetedHandle = CreateHandle();
             activeHandle = retargetedHandle;
-            if (sampler.IsComplete)
-            {
-                ApplySample(sampler.Current);
-                FinishNaturalCompletion();
-                return retargetedHandle;
-            }
 
             graph.Register(node);
             return retargetedHandle;
@@ -67,6 +74,7 @@ public sealed class MotionValue<T> : MotionValue
         CancelActiveHandle(MotionCancelBehavior.KeepCurrent, fireEvent: true);
         this.target = target;
         animationStart = current;
+        animationElapsed = TimeSpan.Zero;
         sampler = spec.CreateSampler(
             current,
             target,
@@ -93,6 +101,7 @@ public sealed class MotionValue<T> : MotionValue
         CancelActiveHandle(MotionCancelBehavior.KeepCurrent, fireEvent: true);
         target = value;
         animationStart = value;
+        animationElapsed = TimeSpan.Zero;
         ApplySample(value);
     }
 
@@ -111,6 +120,7 @@ public sealed class MotionValue<T> : MotionValue
             return 0;
         }
 
+        animationElapsed += frame.Delta;
         sampler.Advance(frame.Delta);
         velocity = TryGetVelocity(sampler);
         int changed = ApplySample(sampler.Current) ? 1 : 0;
@@ -135,10 +145,12 @@ public sealed class MotionValue<T> : MotionValue
 
     private MotionHandle CreateHandle()
     {
-        return new MotionHandle(
-            behavior => CancelHandle(handle: null, behavior, fireEvent: true),
-            () => CompleteHandle(handle: null),
-            () => DisposeHandle(handle: null));
+        MotionHandle? handle = null;
+        handle = new MotionHandle(
+            behavior => CancelHandle(handle, behavior, fireEvent: true),
+            () => CompleteHandle(handle),
+            () => DisposeHandle(handle));
+        return handle;
     }
 
     private void CompleteHandle(MotionHandle? handle)
@@ -202,6 +214,7 @@ public sealed class MotionValue<T> : MotionValue
     private void FinishHandle(MotionCompletionState state, MotionCancelBehavior behavior, bool fireEvent)
     {
         sampler = null;
+        animationElapsed = TimeSpan.Zero;
         velocity = null;
         graph.Unregister(node);
 
