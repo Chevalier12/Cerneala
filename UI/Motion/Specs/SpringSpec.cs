@@ -74,9 +74,13 @@ public sealed class SpringSpec<T> : MotionSpec<T>
     {
         ArgumentNullException.ThrowIfNull(mixer);
         ArgumentNullException.ThrowIfNull(context);
-        return mixer.SupportsVectorOperations
-            ? new VectorSpringSampler(this, from, to, mixer, context)
-            : new NonVectorSpringSampler(this, from, to, mixer, context);
+        if (!mixer.SupportsVectorOperations)
+        {
+            throw new InvalidOperationException(
+                $"Spring for {typeof(T).Name} requires a vector-capable mixer. Register a vector adapter/mixer or use tween/keyframes for non-vector interpolation.");
+        }
+
+        return new VectorSpringSampler(this, from, to, mixer, context);
     }
 
     private sealed class VectorSpringSampler : MotionSampler<T>
@@ -171,67 +175,6 @@ public sealed class SpringSpec<T> : MotionSpec<T>
             T acceleration = mixer.Scale(mixer.Add(springForce, dampingForce), 1 / spec.Mass);
             velocity = mixer.Add(velocity, mixer.Scale(acceleration, seconds));
             current = mixer.Add(current, mixer.Scale(velocity, seconds));
-        }
-    }
-
-    private sealed class NonVectorSpringSampler : MotionSampler<T>
-    {
-        private readonly SpringSpec<T> spec;
-        private readonly ValueMixer<T> mixer;
-        private readonly MotionSpecContext context;
-        private TimeSpan elapsed;
-        private T current;
-        private T target;
-        private bool isComplete;
-
-        public NonVectorSpringSampler(SpringSpec<T> spec, T from, T to, ValueMixer<T> mixer, MotionSpecContext context)
-        {
-            this.spec = spec;
-            this.mixer = mixer;
-            this.context = context;
-            current = from;
-            target = to;
-            RecordFallback("created");
-        }
-
-        public override T Current => current;
-
-        public override bool IsComplete => isComplete;
-
-        public override void Advance(TimeSpan delta)
-        {
-            if (delta < TimeSpan.Zero)
-            {
-                throw new ArgumentOutOfRangeException(nameof(delta), "Delta cannot be negative.");
-            }
-
-            if (isComplete)
-            {
-                return;
-            }
-
-            elapsed += delta;
-            float progress = Math.Clamp((float)(elapsed.TotalSeconds * 12), 0, 1);
-            current = mixer.Mix(current, target, progress);
-            if (progress >= 1)
-            {
-                current = target;
-                isComplete = true;
-            }
-        }
-
-        public override void Retarget(T to, RetargetMode mode)
-        {
-            target = to;
-            elapsed = TimeSpan.Zero;
-            isComplete = false;
-            RecordFallback("retargeted");
-        }
-
-        private void RecordFallback(string action)
-        {
-            context.Diagnostics?.RecordWarning(
-                $"Spring '{context.DebugName ?? typeof(T).Name}' {action} without vector velocity support; velocity continuity was dropped.");
         }
     }
 }

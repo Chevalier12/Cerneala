@@ -71,6 +71,31 @@ public abstract class ValueMixer<T> : IValueMixer
 
     protected static float Lerp(float from, float to, float progress)
     {
+        if (progress <= 0)
+        {
+            return from;
+        }
+
+        if (progress >= 1)
+        {
+            return to;
+        }
+
+        return from + ((to - from) * progress);
+    }
+
+    protected static double Lerp(double from, double to, float progress)
+    {
+        if (progress <= 0)
+        {
+            return from;
+        }
+
+        if (progress >= 1)
+        {
+            return to;
+        }
+
         return from + ((to - from) * progress);
     }
 

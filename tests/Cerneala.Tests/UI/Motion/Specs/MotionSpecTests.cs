@@ -94,19 +94,34 @@ public sealed class MotionSpecTests
     }
 
     [Fact]
-    public void SpringRetargetOverNonVectorMixerRecordsFallbackDiagnostic()
+    public void SpringRejectsNonVectorMixerClearly()
     {
         MotionDiagnostics diagnostics = new();
         SpringSpec<float> spec = MotionFactory.Spring<float>();
-        MotionSampler<float> sampler = spec.CreateSampler(0, 100, new NonVectorFloatMixer(), Context(diagnostics));
 
-        Assert.Contains(diagnostics.Warnings, warning => warning.Contains("without vector velocity support", StringComparison.OrdinalIgnoreCase));
+        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+            spec.CreateSampler(0, 100, new NonVectorFloatMixer(), Context(diagnostics)));
 
-        sampler.Retarget(50, RetargetMode.Restart);
+        Assert.Contains("spring", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("vector", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(nameof(Single), ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
 
-        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => sampler.Velocity);
-        Assert.Contains("velocity", ex.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains(diagnostics.Warnings, warning => warning.Contains("velocity", StringComparison.OrdinalIgnoreCase));
+    [Fact]
+    public void SpringRejectsBuiltInNonVectorMixersClearly()
+    {
+        SpringSpec<Cerneala.Drawing.DrawRect> spec = MotionFactory.Spring<Cerneala.Drawing.DrawRect>();
+
+        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+            spec.CreateSampler(
+                new Cerneala.Drawing.DrawRect(0, 0, 10, 10),
+                new Cerneala.Drawing.DrawRect(10, 10, 20, 20),
+                new Cerneala.UI.Motion.Interpolation.DrawRectMixer(),
+                Context()));
+
+        Assert.Contains("spring", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("vector", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(nameof(Cerneala.Drawing.DrawRect), ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

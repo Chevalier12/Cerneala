@@ -21,6 +21,21 @@ public sealed class ValueMixerBuiltInTests
     }
 
     [Fact]
+    public void NumericAndVectorMixersReturnExactEndpointsForLargeValues()
+    {
+        AssertExactEndpoints(new FloatMixer(), 1e20f, 1f);
+        AssertExactEndpoints(new DoubleMixer(), 1e20d, 1d);
+        AssertExactEndpoints(
+            new ThicknessMixer(),
+            new Thickness(1e20f, 2e20f, 3e20f, 4e20f),
+            new Thickness(1, 2, 3, 4));
+        AssertExactEndpoints(
+            new DrawPointMixer(),
+            new DrawPoint(1e20f, 2e20f),
+            new DrawPoint(1, 2));
+    }
+
+    [Fact]
     public void ColorInterpolationHandlesAlpha()
     {
         ColorMixer mixer = new();
@@ -131,6 +146,14 @@ public sealed class ValueMixerBuiltInTests
     {
         Assert.Equal(from, mixer.Mix(from, to, 0));
         Assert.Equal(to, mixer.Mix(from, to, 1));
+    }
+
+    private static void AssertExactEndpoints<T>(ValueMixer<T> mixer, T from, T to)
+    {
+        Assert.Equal(from, mixer.Mix(from, to, 0));
+        Assert.Equal(from, mixer.Mix(from, to, -0.5f));
+        Assert.Equal(to, mixer.Mix(from, to, 1));
+        Assert.Equal(to, mixer.Mix(from, to, 1.5f));
     }
 
     private static void AssertSameMatrix(Transform expected, Transform actual)

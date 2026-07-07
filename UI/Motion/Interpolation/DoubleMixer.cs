@@ -6,7 +6,7 @@ public sealed class DoubleMixer : ValueMixer<double>
 
     public override double Mix(double from, double to, float progress)
     {
-        return from + ((to - from) * progress);
+        return Lerp(from, to, progress);
     }
 
     public override bool EqualsWithinTolerance(double left, double right, float tolerance)
