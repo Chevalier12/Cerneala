@@ -4,6 +4,8 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Specs;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.UI.Motion.Core;
 
@@ -14,7 +16,8 @@ public sealed class MotionSystemTests
     {
         ManualMotionClock clock = new();
         UIRoot root = new(motionClock: clock);
-        root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
+        MotionValue<double> value = root.Motion.Graph.CreateValue(0d);
+        value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
 
         MotionFrameResult first = root.Motion.Tick();
         clock.Advance(TimeSpan.FromMilliseconds(16));
@@ -44,7 +47,10 @@ public sealed class MotionSystemTests
     public void MotionSystemRequestsAnotherFrameWhileGraphActive()
     {
         UIRoot root = new();
-        root.Motion.Graph.ActivateShellNode(nodesSampled: 2);
+        MotionValue<double> first = root.Motion.Graph.CreateValue(0d);
+        MotionValue<double> second = root.Motion.Graph.CreateValue(0d);
+        first.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        second.AnimateTo(20d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
 
         MotionFrameResult result = root.Motion.Tick();
 
@@ -58,7 +64,8 @@ public sealed class MotionSystemTests
     {
         ManualMotionClock clock = new();
         UIRoot root = new(motionClock: clock);
-        root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
+        MotionValue<double> value = root.Motion.Graph.CreateValue(0d);
+        value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
         root.Motion.Tick();
 
         clock.Advance(TimeSpan.FromSeconds(5));
@@ -72,11 +79,14 @@ public sealed class MotionSystemTests
     {
         ManualMotionClock clock = new();
         UIRoot root = new(motionClock: clock);
-        root.Motion.Graph.ActivateShellNode(nodesSampled: 1, completed: 1);
+        MotionValue<double> value = root.Motion.Graph.CreateValue(0d);
+        value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(1)));
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(1));
         root.Motion.Tick();
 
         clock.Advance(TimeSpan.FromSeconds(5));
-        root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
+        value.AnimateTo(20d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
         MotionFrameResult result = root.Motion.Tick();
 
         Assert.Equal(TimeSpan.Zero, result.Frame.Delta);
@@ -99,7 +109,8 @@ public sealed class MotionSystemTests
         {
             try
             {
-                root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
+                MotionValue<double> value = root.Motion.Graph.CreateValue(0d);
+                value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
             }
             catch (Exception ex)
             {
@@ -117,7 +128,8 @@ public sealed class MotionSystemTests
     public void MotionFrameCoordinatorRunsBeforeAndAfterLayoutPhasesInOrder()
     {
         UIRoot root = new();
-        root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
+        MotionValue<double> value = root.Motion.Graph.CreateValue(0d);
+        value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
 
         root.Motion.Frames.BeginFrame(MotionFrameReason.Manual);
         root.Motion.Frames.BeforeLayout();
@@ -201,26 +213,27 @@ public sealed class MotionSystemTests
     [Fact]
     public void UIRootFrameStatsIncludeMotionCounters()
     {
-        UIRoot root = new();
-        root.Motion.Graph.ActivateShellNode(
-            nodesSampled: 3,
-            valuesChanged: 2,
-            propertyWrites: 1,
-            renderInvalidations: 1,
-            layoutInvalidations: 1,
-            completed: 1,
-            skippedByReducedMotion: 1);
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        MotionValue<double> first = root.Motion.Graph.CreateValue(0d);
+        MotionValue<double> second = root.Motion.Graph.CreateValue(0d);
+        MotionValue<double> third = root.Motion.Graph.CreateValue(0d);
+        first.AnimateTo(1d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(1)));
+        second.AnimateTo(2d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(1)));
+        third.AnimateTo(3d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(1));
 
         FrameStats stats = root.ProcessFrame();
 
         Assert.Equal(1, stats.MotionFrames);
         Assert.Equal(3, stats.MotionNodesSampled);
-        Assert.Equal(2, stats.MotionValuesChanged);
-        Assert.Equal(1, stats.MotionPropertyWrites);
-        Assert.Equal(1, stats.MotionCompleted);
-        Assert.Equal(1, stats.MotionRenderInvalidations);
-        Assert.Equal(1, stats.MotionLayoutInvalidations);
-        Assert.Equal(1, stats.MotionSkippedByReducedMotion);
+        Assert.Equal(3, stats.MotionValuesChanged);
+        Assert.Equal(0, stats.MotionPropertyWrites);
+        Assert.Equal(2, stats.MotionCompleted);
+        Assert.Equal(0, stats.MotionRenderInvalidations);
+        Assert.Equal(0, stats.MotionLayoutInvalidations);
+        Assert.Equal(0, stats.MotionSkippedByReducedMotion);
         Assert.True(stats.HasWork);
     }
 
@@ -230,7 +243,8 @@ public sealed class MotionSystemTests
         UIRoot root = new();
         UiHost host = new(new UiHostOptions { Root = root });
         host.Update(EmptyInputFrame(), new UiViewport(100, 100), TimeSpan.Zero);
-        root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
+        MotionValue<double> value = root.Motion.Graph.CreateValue(0d);
+        value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
 
         UiFrame frame = host.Update(EmptyInputFrame(), new UiViewport(100, 100), TimeSpan.Zero);
 

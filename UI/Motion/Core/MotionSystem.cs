@@ -23,12 +23,12 @@ public sealed class MotionSystem
         this.clock = clock ?? throw new ArgumentNullException(nameof(clock));
         ReducedMotion = reducedMotion ?? throw new ArgumentNullException(nameof(reducedMotion));
         ThreadGuard = new MotionThreadGuard(Environment.CurrentManagedThreadId);
-        Graph = new MotionGraph(ThreadGuard);
         Timelines = new MotionTimelineRegistry();
         Diagnostics = new MotionDiagnostics();
         Tokens = new MotionTokens();
         Mixers = new ValueMixerRegistry();
         Mixers.RegisterBuiltIns();
+        Graph = new MotionGraph(ThreadGuard, Mixers, ReducedMotion, Diagnostics);
         Frames = new MotionFrameCoordinator(root, this);
     }
 
@@ -82,7 +82,7 @@ public sealed class MotionSystem
         previousTimestamp = now;
         frameIndex++;
         MotionFrame frame = new(now, delta, frameIndex, reason, phase);
-        MotionFrameResult result = Graph.Sample(frame);
+        MotionFrameResult result = Graph.Tick(frame);
         wasActiveLastTick = result.NeedsAnotherFrame || Graph.HasActiveMotion;
         if (!wasActiveLastTick)
         {
