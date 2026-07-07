@@ -4,6 +4,8 @@ namespace Cerneala.UI.Input;
 
 public sealed class HoverTracker
 {
+    private IReadOnlyList<UIElement> hoveredPath = [];
+
     public UIElement? HoveredElement { get; private set; }
 
     public bool Update(HitTestResult? target, ElementInputRouteMap routeMap)
@@ -21,22 +23,63 @@ public sealed class HoverTracker
             return false;
         }
 
-        UIElement? old = HoveredElement;
+        IReadOnlyList<UIElement> oldPath = hoveredPath;
+        IReadOnlyList<UIElement> nextPath = BuildPath(next);
         HoveredElement = next;
+        hoveredPath = nextPath;
 
-        if (old is not null)
+        foreach (UIElement oldElement in oldPath)
         {
-            old.IsPointerOver = false;
-            RaiseDirect(routeMap, old, InputEvents.MouseLeaveEvent, x, y);
+            if (ContainsReference(nextPath, oldElement))
+            {
+                continue;
+            }
+
+            oldElement.IsPointerOver = false;
+            RaiseDirect(routeMap, oldElement, InputEvents.MouseLeaveEvent, x, y);
         }
 
-        if (next is not null)
+        foreach (UIElement nextElement in nextPath)
         {
-            next.IsPointerOver = true;
-            RaiseDirect(routeMap, next, InputEvents.MouseEnterEvent, x, y);
+            if (ContainsReference(oldPath, nextElement))
+            {
+                continue;
+            }
+
+            nextElement.IsPointerOver = true;
+            RaiseDirect(routeMap, nextElement, InputEvents.MouseEnterEvent, x, y);
         }
 
         return true;
+    }
+
+    private static IReadOnlyList<UIElement> BuildPath(UIElement? element)
+    {
+        if (element is null)
+        {
+            return [];
+        }
+
+        List<UIElement> path = [];
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            path.Add(current);
+        }
+
+        return path;
+    }
+
+    private static bool ContainsReference(IReadOnlyList<UIElement> elements, UIElement target)
+    {
+        foreach (UIElement element in elements)
+        {
+            if (ReferenceEquals(element, target))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void RaiseDirect(ElementInputRouteMap routeMap, UIElement element, RoutedEvent routedEvent, float x, float y)

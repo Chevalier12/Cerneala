@@ -63,6 +63,25 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void PresenterRoundedClipMatchesRoundedHitTestBounds()
+    {
+        UIRoot root = new(100, 100);
+        FixedElement content = new(new LayoutSize(20, 20));
+        ScrollContentPresenter presenter = new()
+        {
+            Content = content
+        };
+        root.VisualChildren.Add(presenter);
+        LayoutRounding rounding = LayoutRounding.Enabled;
+        presenter.Measure(new MeasureContext(new LayoutSize(10.4f, 10.4f), rounding));
+        presenter.Arrange(new ArrangeContext(new LayoutRect(0.4f, 0.4f, 10.4f, 10.4f), rounding));
+
+        HitTestResult? result = new HitTestService().HitTest(root, 0.2f, 0.2f);
+
+        Assert.Same(content, result!.Element);
+    }
+
+    [Fact]
     public void ScrollViewerWheelScrollsVerticalOffset()
     {
         UIRoot root = new(100, 100);
@@ -204,6 +223,29 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void AutoScrollbarsCollapseDuringUnboundedMeasureWhenExistingContentShrinks()
+    {
+        MutableElement content = new(new LayoutSize(300, 300));
+        ScrollViewer viewer = new()
+        {
+            Content = content,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        Assert.True(viewer.IsHorizontalScrollBarVisible);
+        Assert.True(viewer.IsVerticalScrollBarVisible);
+
+        content.Resize(new LayoutSize(40, 40));
+        viewer.Measure(new MeasureContext(new LayoutSize(float.PositiveInfinity, float.PositiveInfinity)));
+
+        Assert.False(viewer.IsHorizontalScrollBarVisible);
+        Assert.False(viewer.IsVerticalScrollBarVisible);
+        Assert.Equal(new LayoutSize(40, 40), viewer.DesiredSize);
+    }
+
+    [Fact]
     public void ScrollInfoOffsetUpdatesScrollBarValues()
     {
         ScrollViewer viewer = new()
@@ -257,6 +299,27 @@ public sealed class ScrollViewerTests
 
         FrameStats second = root.ProcessFrame();
 
+        Assert.Equal(0, second.MeasuredElements);
+        Assert.Equal(0, second.ArrangedElements);
+        Assert.Equal(0, second.RenderedElements);
+        Assert.Equal(1, second.NoWorkFrames);
+    }
+
+    [Fact]
+    public void AutoVerticalScrollBarWithoutOverflowDoesNotRetainLateLayoutWork()
+    {
+        UIRoot root = new(100, 100);
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(40, 40)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        FrameStats second = root.ProcessFrame();
+
+        Assert.False(viewer.IsVerticalScrollBarVisible);
         Assert.Equal(0, second.MeasuredElements);
         Assert.Equal(0, second.ArrangedElements);
         Assert.Equal(0, second.RenderedElements);

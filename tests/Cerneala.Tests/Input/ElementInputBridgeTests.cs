@@ -125,6 +125,25 @@ public sealed class ElementInputBridgeTests
     }
 
     [Fact]
+    public void PointerHoverOverButtonElementContentMarksOwningButtonPointerOver()
+    {
+        UIRoot root = new(100, 100);
+        UIElement content = new();
+        Button button = new()
+        {
+            Content = content
+        };
+        button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        root.VisualChildren.Add(button);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10));
+
+        Assert.True(content.IsPointerOver);
+        Assert.True(button.IsPointerOver);
+    }
+
+    [Fact]
     public void PointerPressOnNonFocusableButtonRoutesMouseWithoutFocusing()
     {
         UIRoot root = new(100, 100);
@@ -163,6 +182,26 @@ public sealed class ElementInputBridgeTests
         bridge.Dispatch(root, PointerFrame(10, 10, 60, 10, previousDown: true));
 
         Assert.False(executed);
+    }
+
+    [Fact]
+    public void ButtonCommandExecutesWhenPressAndReleaseHitDifferentChildrenInsideSameButton()
+    {
+        UIRoot root = new(100, 100);
+        ButtonBase button = ArrangedButton(0, 0, 40, 40);
+        UIElement left = HitTestServiceTests.Arranged(0, 0, 20, 40);
+        UIElement right = HitTestServiceTests.Arranged(20, 0, 20, 40);
+        button.VisualChildren.Add(left);
+        button.VisualChildren.Add(right);
+        root.VisualChildren.Add(button);
+        bool executed = false;
+        button.Command = new ActionCommand(_ => executed = true);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, 30, 10, previousDown: true));
+
+        Assert.True(executed);
     }
 
     [Fact]

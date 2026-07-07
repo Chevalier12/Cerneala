@@ -1,5 +1,6 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Input;
 
@@ -38,7 +39,13 @@ public sealed class HitTestService
             return null;
         }
 
-        if (!Contains(GetHitTestBounds(element), x, y))
+        if (ClipNode.TryGetClip(element, out ClipNode clip) && !Contains(clip.Bounds, x, y))
+        {
+            return null;
+        }
+
+        bool containsElement = Contains(GetHitTestBounds(element), x, y);
+        if (element is UIRoot && !containsElement)
         {
             return null;
         }
@@ -52,7 +59,7 @@ public sealed class HitTestService
             }
         }
 
-        if (behavior == HitTestFilterBehavior.Exclude)
+        if (!containsElement || behavior == HitTestFilterBehavior.Exclude)
         {
             return null;
         }

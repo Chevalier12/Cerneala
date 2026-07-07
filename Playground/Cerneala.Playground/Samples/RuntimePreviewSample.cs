@@ -68,7 +68,7 @@ public sealed class RuntimePreviewSample : IPlaygroundSample
         PreviewImage = new Image
         {
             UseIntrinsicSize = true,
-            Foreground = new DrawColor(59, 130, 246)
+            Foreground = DrawColor.White
         };
 
         if (imageResourceId is ResourceId<ImageResource> id)
@@ -110,8 +110,14 @@ public sealed class RuntimePreviewSample : IPlaygroundSample
         content.VisualChildren.Add(BuildPreviewCard());
         content.VisualChildren.Add(DiagnosticsText);
 
-        RootElement = content;
-        return content;
+        ScrollViewer scrollViewer = new()
+        {
+            Content = content,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+
+        RootElement = scrollViewer;
+        return scrollViewer;
     }
 
     public void UpdateFrame(UiFrame? frame)

@@ -2,6 +2,7 @@ using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.Tests.Input;
 
@@ -32,13 +33,42 @@ public sealed class HitTestServiceTests
     }
 
     [Fact]
-    public void DescendantOutsideParentBoundsIsSkipped()
+    public void RootViewportBoundsRejectOverflowingDescendant()
+    {
+        UIRoot root = new(100, 100);
+        UIElement child = Arranged(120, 10, 20, 20);
+        root.VisualChildren.Add(child);
+
+        HitTestResult? result = new HitTestService().HitTest(root, 125, 15);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void DescendantOutsideParentBoundsCanBeHitWhenNotClipped()
     {
         UIRoot root = new(100, 100);
         UIElement parent = Arranged(0, 0, 20, 20);
         UIElement child = Arranged(40, 40, 10, 10);
         UIElement fallback = Arranged(40, 40, 10, 10);
         parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(fallback);
+        root.VisualChildren.Add(parent);
+
+        HitTestResult? result = new HitTestService().HitTest(root, 45, 45);
+
+        Assert.Same(child, result!.Element);
+    }
+
+    [Fact]
+    public void ClipBoundsRejectOverflowingDescendant()
+    {
+        UIRoot root = new(100, 100);
+        UIElement parent = Arranged(0, 0, 20, 20);
+        UIElement child = Arranged(40, 40, 10, 10);
+        UIElement fallback = Arranged(40, 40, 10, 10);
+        parent.VisualChildren.Add(child);
+        ClipNode.SetClip(parent, parent.ArrangedBounds);
         root.VisualChildren.Add(fallback);
         root.VisualChildren.Add(parent);
 

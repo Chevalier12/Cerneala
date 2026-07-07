@@ -99,7 +99,7 @@ public sealed class ElementInputBridge
 
             if (inputFrame.Pointer.IsPressed(button))
             {
-                clickTracker.Press(hitTarget?.Element);
+                clickTracker.Press(ResolveClickTarget(hitTarget?.Element));
                 pressedStateTracker.Press(pointerTarget?.Element);
                 if (button == InputMouseButton.Left &&
                     pointerTarget is not null &&
@@ -117,7 +117,7 @@ public sealed class ElementInputBridge
 
             if (inputFrame.Pointer.IsReleased(button))
             {
-                int clickCount = clickTracker.Release(hitTarget?.Element);
+                int clickCount = clickTracker.Release(ResolveClickTarget(hitTarget?.Element));
                 bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount);
                 CompletePointerDrag(routeMap, pointerTarget, button, clickCount);
                 if (!handled)
@@ -222,6 +222,16 @@ public sealed class ElementInputBridge
         }
 
         return null;
+    }
+
+    private static UIElement? ResolveClickTarget(UIElement? element)
+    {
+        if (element is null)
+        {
+            return null;
+        }
+
+        return FindAncestor<IInputCommandSource>(element) ?? element;
     }
 
     private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)

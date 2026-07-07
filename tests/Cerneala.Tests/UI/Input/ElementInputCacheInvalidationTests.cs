@@ -89,6 +89,24 @@ public sealed class ElementInputCacheInvalidationTests
         Assert.False(root.Scheduler.HasWork);
     }
 
+    [Fact]
+    public void EnsureCurrentRebuildsWhenRootChanges()
+    {
+        ElementInputCache cache = new();
+        UIRoot firstRoot = RootWithChild(out UIElement firstChild);
+        UIRoot secondRoot = RootWithChild(out UIElement secondChild);
+
+        ElementInputRouteMap firstMap = cache.EnsureCurrent(firstRoot);
+        int rebuildsAfterFirstRoot = cache.RebuildCount;
+
+        ElementInputRouteMap secondMap = cache.EnsureCurrent(secondRoot);
+
+        Assert.NotSame(firstMap, secondMap);
+        Assert.Equal(rebuildsAfterFirstRoot + 1, cache.RebuildCount);
+        Assert.False(secondMap.TryGetId(firstChild, out _));
+        Assert.True(secondMap.TryGetId(secondChild, out _));
+    }
+
     private static UIRoot RootWithChild(out UIElement child)
     {
         UIRoot root = new(100, 100);

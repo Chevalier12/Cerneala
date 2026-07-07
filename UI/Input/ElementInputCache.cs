@@ -6,6 +6,7 @@ public sealed class ElementInputCache
 {
     private readonly ElementInputRouteBuilder routeBuilder = new();
     private readonly HitTestService hitTestService = new();
+    private UIRoot? currentRoot;
     private bool isDirty = true;
 
     public ElementInputCache()
@@ -33,7 +34,7 @@ public sealed class ElementInputCache
     public ElementInputRouteMap EnsureCurrent(UIRoot root)
     {
         ArgumentNullException.ThrowIfNull(root);
-        if (isDirty)
+        if (isDirty || !ReferenceEquals(currentRoot, root))
         {
             Rebuild(root);
         }
@@ -45,6 +46,7 @@ public sealed class ElementInputCache
     {
         ArgumentNullException.ThrowIfNull(root);
         RouteMap = routeBuilder.Build(root);
+        currentRoot = root;
         RebuildCount++;
         isDirty = false;
         return RouteMap;

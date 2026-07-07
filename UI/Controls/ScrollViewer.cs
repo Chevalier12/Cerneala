@@ -2,6 +2,7 @@ using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 
@@ -23,6 +24,7 @@ public class ScrollViewer : Control
         horizontalScrollBar = new ScrollBar { Orientation = Orientation.Horizontal };
         verticalScrollBar = new ScrollBar { Orientation = Orientation.Vertical };
         horizontalScrollBar.Visibility = Visibility.Collapsed;
+        verticalScrollBar.Visibility = Visibility.Collapsed;
         presenter.PropertyChanged += OnPresenterPropertyChanged;
         horizontalScrollBar.PropertyChanged += OnScrollBarPropertyChanged;
         verticalScrollBar.PropertyChanged += OnScrollBarPropertyChanged;
@@ -57,7 +59,7 @@ public class ScrollViewer : Control
             content = value;
             presenter.Content = value;
             IncrementLayoutVersion();
-            Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Measure | Cerneala.UI.Invalidation.InvalidationFlags.Render, "ScrollViewer content changed");
+            Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "ScrollViewer content changed");
         }
     }
 
@@ -131,14 +133,13 @@ public class ScrollViewer : Control
             presenter.Measure(new MeasureContext(presenterAvailable, context.Rounding));
         }
 
-        needsHorizontal |= HorizontalScrollBarVisibility == ScrollBarVisibility.Auto && horizontalScrollBar.Visibility == Visibility.Visible;
-        needsVertical |= VerticalScrollBarVisibility == ScrollBarVisibility.Auto && verticalScrollBar.Visibility == Visibility.Visible;
-
         UpdateScrollBarState();
-        horizontalScrollBar.Visibility = ToVisibility(HorizontalScrollBarVisibility, needsHorizontal);
-        verticalScrollBar.Visibility = ToVisibility(VerticalScrollBarVisibility, needsVertical);
+        SetScrollBarVisibility(horizontalScrollBar, ToVisibility(HorizontalScrollBarVisibility, needsHorizontal));
+        SetScrollBarVisibility(verticalScrollBar, ToVisibility(VerticalScrollBarVisibility, needsVertical));
         horizontalScrollBar.Measure(new MeasureContext(new LayoutSize(presenter.ViewportWidth, ScrollBarThickness), context.Rounding));
         verticalScrollBar.Measure(new MeasureContext(new LayoutSize(ScrollBarThickness, presenter.ViewportHeight), context.Rounding));
+        ConsumeOwnedScrollBarLayoutWork(horizontalScrollBar);
+        ConsumeOwnedScrollBarLayoutWork(verticalScrollBar);
 
         bool finalReserveHorizontal = ReservesSpace(HorizontalScrollBarVisibility) || needsHorizontal;
         bool finalReserveVertical = ReservesSpace(VerticalScrollBarVisibility) || needsVertical;
@@ -198,8 +199,8 @@ public class ScrollViewer : Control
             presenter.Arrange(new ArrangeContext(presenterRect, context.Rounding));
         }
 
-        horizontalScrollBar.Visibility = ToVisibility(HorizontalScrollBarVisibility, needsHorizontal);
-        verticalScrollBar.Visibility = ToVisibility(VerticalScrollBarVisibility, needsVertical);
+        SetScrollBarVisibility(horizontalScrollBar, ToVisibility(HorizontalScrollBarVisibility, needsHorizontal));
+        SetScrollBarVisibility(verticalScrollBar, ToVisibility(VerticalScrollBarVisibility, needsVertical));
         UpdateScrollBarState();
 
         bool horizontalSpace = horizontalScrollBar.Visibility is Visibility.Visible or Visibility.Hidden;
@@ -218,6 +219,10 @@ public class ScrollViewer : Control
                 verticalSpace ? ScrollBarThickness : 0,
                 presenterRect.Height),
             context.Rounding));
+        ConsumeOwnedScrollBarLayoutWork(horizontalScrollBar);
+        ConsumeOwnedScrollBarLayoutWork(verticalScrollBar);
+        ConsumeOwnedScrollBarLayoutPropagation(horizontalScrollBar);
+        ConsumeOwnedScrollBarLayoutPropagation(verticalScrollBar);
         return context.FinalRect;
     }
 
@@ -283,6 +288,50 @@ public class ScrollViewer : Control
     {
         LogicalChildren.Add(child);
         VisualChildren.Add(child);
+    }
+
+    private static void SetScrollBarVisibility(UIElement scrollBar, Visibility visibility)
+    {
+        if (scrollBar.Visibility == visibility)
+        {
+            return;
+        }
+
+        scrollBar.Visibility = visibility;
+        ConsumeOwnedScrollBarLayoutWork(scrollBar);
+    }
+
+    private static void ConsumeOwnedScrollBarLayoutWork(UIElement scrollBar)
+    {
+        UIRoot? root = scrollBar.Root;
+        if (root is null)
+        {
+            return;
+        }
+
+        root.LayoutQueue.RemoveMeasure(scrollBar);
+        root.LayoutQueue.RemoveArrange(scrollBar);
+        scrollBar.DirtyState.Clear(InvalidationFlags.Measure | InvalidationFlags.Arrange);
+    }
+
+    private static void ConsumeOwnedScrollBarLayoutPropagation(UIElement scrollBar)
+    {
+        UIRoot? root = scrollBar.Root;
+        if (root is null)
+        {
+            return;
+        }
+
+        for (UIElement? current = scrollBar.VisualParent; current is not null; current = current.VisualParent)
+        {
+            root.LayoutQueue.RemoveMeasure(current);
+            root.LayoutQueue.RemoveArrange(current);
+            current.DirtyState.Clear(InvalidationFlags.Measure | InvalidationFlags.Arrange);
+            if (current is UIRoot || current.IsLayoutBoundary)
+            {
+                break;
+            }
+        }
     }
 
     private static float DeflateAvailable(float size, bool deflate)

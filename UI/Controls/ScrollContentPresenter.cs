@@ -108,7 +108,6 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         ExtentHeight = ResolveExtent(contentSize.Height, available.Height);
         ViewportWidth = ResolveViewport(available.Width, ExtentWidth);
         ViewportHeight = ResolveViewport(available.Height, ExtentHeight);
-        CoerceOffsets();
         return new LayoutSize(ViewportWidth, ViewportHeight);
     }
 
@@ -117,7 +116,7 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         ViewportWidth = MathF.Max(0, context.FinalRect.Width);
         ViewportHeight = MathF.Max(0, context.FinalRect.Height);
         CoerceOffsets();
-        ClipNode.SetClip(this, context.FinalRect);
+        ClipNode.SetClip(this, context.Rounding.Round(context.FinalRect));
         float contentWidth = CanHorizontallyScroll ? MathF.Max(ExtentWidth, ViewportWidth) : ViewportWidth;
         float contentHeight = CanVerticallyScroll ? MathF.Max(ExtentHeight, ViewportHeight) : ViewportHeight;
         ContentElement?.Arrange(new ArrangeContext(
@@ -128,18 +127,6 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
                 contentHeight),
             context.Rounding));
         return context.FinalRect;
-    }
-
-    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
-    {
-        base.OnPropertyChanged(args);
-        if (ReferenceEquals(args.Property, ExtentWidthProperty) ||
-            ReferenceEquals(args.Property, ExtentHeightProperty) ||
-            ReferenceEquals(args.Property, ViewportWidthProperty) ||
-            ReferenceEquals(args.Property, ViewportHeightProperty))
-        {
-            CoerceOffsets();
-        }
     }
 
     protected override void OnDetached()

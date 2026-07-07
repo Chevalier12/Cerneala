@@ -43,6 +43,29 @@ public sealed class RuntimePreviewSampleContractTests
     }
 
     [Fact]
+    public void RuntimePreviewSampleUsesUntintedPreviewImage()
+    {
+        RuntimePreviewSample sample = new();
+
+        sample.Build();
+
+        Assert.NotNull(sample.PreviewImage);
+        Assert.Equal(DrawColor.White, sample.PreviewImage!.Foreground);
+    }
+
+    [Fact]
+    public void RuntimePreviewSampleWrapsContentInVerticalScrollViewer()
+    {
+        RuntimePreviewSample sample = new();
+
+        UIElement root = sample.Build();
+
+        ScrollViewer scrollViewer = Assert.IsType<ScrollViewer>(root);
+        Assert.Equal(ScrollBarVisibility.Auto, scrollViewer.VerticalScrollBarVisibility);
+        Assert.NotNull(scrollViewer.Content);
+    }
+
+    [Fact]
     public void RuntimePreviewSampleContainsTextBoxButtonAndObservableList()
     {
         RuntimePreviewSample sample = new();
@@ -110,6 +133,50 @@ public sealed class RuntimePreviewSampleContractTests
         Assert.Equal(1, afterDraw.NoWorkFrames);
     }
 
+    [Fact]
+    public void RuntimePreviewTextInputPreservesScrollOffset()
+    {
+        UIRoot root = new(800, 220);
+        RuntimePreviewSample sample = new();
+        ScrollViewer scrollViewer = Assert.IsType<ScrollViewer>(sample.Build());
+        root.VisualChildren.Add(scrollViewer);
+        root.ProcessFrame();
+        scrollViewer.Presenter.SetVerticalOffset(120);
+        root.ProcessFrame();
+        float offsetBeforeInput = scrollViewer.Presenter.VerticalOffset;
+        Assert.True(offsetBeforeInput > 0);
+
+        sample.InputTextBox!.ReceiveTextInput("x");
+        root.ProcessFrame();
+
+        Assert.Equal(offsetBeforeInput, scrollViewer.Presenter.VerticalOffset);
+    }
+
+    [Fact]
+    public void RuntimePreviewHostTextInputPreservesScrollOffsetAfterFrameDiagnosticsUpdate()
+    {
+        UIRoot root = new(800, 360);
+        SampleSelector selector = SampleSelector.CreateDefault();
+        root.VisualChildren.Add(selector.Root);
+        selector.SelectSample(selector.Samples.ToList().FindIndex(sample => sample.Name == "Runtime Preview"));
+        UiHost host = new(new UiHostOptions { Root = root });
+        UiViewport viewport = new(800, 360);
+        host.Update(EmptyInputFrame(), viewport, TimeSpan.Zero);
+        RuntimePreviewSample sample = Assert.IsType<RuntimePreviewSample>(selector.ActiveSample);
+        ScrollViewer scrollViewer = Assert.IsType<ScrollViewer>(sample.RootElement);
+        scrollViewer.Presenter.SetVerticalOffset(120);
+        host.Update(EmptyInputFrame(), viewport, TimeSpan.Zero);
+        float offsetBeforeInput = scrollViewer.Presenter.VerticalOffset;
+        Assert.True(offsetBeforeInput > 0);
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
+        host.InputBridge.FocusManager.Focus(sample.InputTextBox!, routeMap);
+
+        selector.UpdateFrame(host.LastFrame);
+        host.Update(TextInputFrame("x"), viewport, TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal(offsetBeforeInput, scrollViewer.Presenter.VerticalOffset);
+    }
+
     private static InputFrame EmptyInputFrame()
     {
         return new InputFrame(
@@ -118,6 +185,16 @@ public sealed class RuntimePreviewSampleContractTests
             KeyboardSnapshot.Empty,
             KeyboardSnapshot.Empty,
             Array.Empty<TextInputSnapshotEvent>());
+    }
+
+    private static InputFrame TextInputFrame(string text)
+    {
+        return new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            [new TextInputSnapshotEvent(text)]);
     }
 
     private static IEnumerable<T> DescendantsAndSelf<T>(UIElement element)
