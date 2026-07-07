@@ -122,17 +122,17 @@ public static class Motion
 
         public UntypedSpringSpec(float stiffness, float damping, float mass)
         {
-            if (stiffness <= 0)
+            if (!float.IsFinite(stiffness) || stiffness <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(stiffness), "Stiffness must be positive.");
             }
 
-            if (damping < 0)
+            if (!float.IsFinite(damping) || damping < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(damping), "Damping cannot be negative.");
             }
 
-            if (mass <= 0)
+            if (!float.IsFinite(mass) || mass <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(mass), "Mass must be positive.");
             }

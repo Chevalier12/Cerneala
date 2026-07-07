@@ -138,6 +138,19 @@ public sealed class MotionSpecTests
             new SpringSpec<float>(stiffness, damping, mass, restSpeed, restDelta));
     }
 
+    [Theory]
+    [InlineData(float.NaN, 38, 1)]
+    [InlineData(float.PositiveInfinity, 38, 1)]
+    [InlineData(520, float.NaN, 1)]
+    [InlineData(520, float.PositiveInfinity, 1)]
+    [InlineData(520, 38, float.NaN)]
+    [InlineData(520, 38, float.PositiveInfinity)]
+    public void UntypedSpringRejectsNaNAndInfinityParameters(float stiffness, float damping, float mass)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            MotionFactory.Spring(stiffness, damping, mass));
+    }
+
     [Fact]
     public void MotionDiagnosticsClearsWarningsAtFrameStart()
     {
