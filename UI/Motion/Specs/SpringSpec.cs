@@ -5,6 +5,7 @@ namespace Cerneala.UI.Motion.Specs;
 public sealed class SpringSpec<T> : MotionSpec<T>
 {
     private const int MaxSubsteps = 1000;
+    private const double FixedStepSeconds = 1d / 120d;
 
     public SpringSpec(
         float stiffness = 520,
@@ -14,27 +15,27 @@ public sealed class SpringSpec<T> : MotionSpec<T>
         float restDelta = 0.01f,
         SpringVelocityMode velocityMode = SpringVelocityMode.Preserve)
     {
-        if (stiffness <= 0)
+        if (!float.IsFinite(stiffness) || stiffness <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(stiffness), "Stiffness must be positive.");
         }
 
-        if (damping < 0)
+        if (!float.IsFinite(damping) || damping < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(damping), "Damping cannot be negative.");
         }
 
-        if (mass <= 0)
+        if (!float.IsFinite(mass) || mass <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(mass), "Mass must be positive.");
         }
 
-        if (restSpeed < 0)
+        if (!float.IsFinite(restSpeed) || restSpeed < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(restSpeed), "Rest speed cannot be negative.");
         }
 
-        if (restDelta < 0)
+        if (!float.IsFinite(restDelta) || restDelta < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(restDelta), "Rest delta cannot be negative.");
         }
@@ -74,7 +75,7 @@ public sealed class SpringSpec<T> : MotionSpec<T>
         ArgumentNullException.ThrowIfNull(mixer);
         ArgumentNullException.ThrowIfNull(context);
         return mixer.SupportsVectorOperations
-            ? new VectorSpringSampler(this, from, to, mixer)
+            ? new VectorSpringSampler(this, from, to, mixer, context)
             : new NonVectorSpringSampler(this, from, to, mixer, context);
     }
 
@@ -82,15 +83,17 @@ public sealed class SpringSpec<T> : MotionSpec<T>
     {
         private readonly SpringSpec<T> spec;
         private readonly ValueMixer<T> mixer;
+        private readonly MotionSpecContext context;
         private T current;
         private T target;
         private T velocity;
         private bool isComplete;
 
-        public VectorSpringSampler(SpringSpec<T> spec, T from, T to, ValueMixer<T> mixer)
+        public VectorSpringSampler(SpringSpec<T> spec, T from, T to, ValueMixer<T> mixer, MotionSpecContext context)
         {
             this.spec = spec;
             this.mixer = mixer;
+            this.context = context;
             current = from;
             target = to;
             velocity = mixer.Scale(mixer.Subtract(to, from), 0);
@@ -115,10 +118,18 @@ public sealed class SpringSpec<T> : MotionSpec<T>
             }
 
             double remaining = delta.TotalSeconds;
+            double maxAdvanceSeconds = MaxSubsteps * FixedStepSeconds;
+            if (remaining > maxAdvanceSeconds)
+            {
+                context.Diagnostics?.RecordWarning(
+                    $"Spring '{context.DebugName ?? typeof(T).Name}' advance delta was clamped to {maxAdvanceSeconds:0.###} seconds.");
+                remaining = maxAdvanceSeconds;
+            }
+
             int iterations = 0;
             while (remaining > 0 && iterations < MaxSubsteps)
             {
-                double step = Math.Min(remaining, 1d / 120d);
+                double step = Math.Min(remaining, FixedStepSeconds);
                 Integrate((float)step);
                 remaining -= step;
                 iterations++;
@@ -173,6 +184,7 @@ public sealed class SpringSpec<T> : MotionSpec<T>
             this.context = context;
             current = from;
             target = to;
+            RecordFallback("created");
         }
 
         public override T Current => current;
@@ -206,8 +218,13 @@ public sealed class SpringSpec<T> : MotionSpec<T>
             target = to;
             elapsed = TimeSpan.Zero;
             isComplete = false;
+            RecordFallback("retargeted");
+        }
+
+        private void RecordFallback(string action)
+        {
             context.Diagnostics?.RecordWarning(
-                $"Spring '{context.DebugName ?? typeof(T).Name}' retargeted without vector velocity support; velocity continuity was dropped.");
+                $"Spring '{context.DebugName ?? typeof(T).Name}' {action} without vector velocity support; velocity continuity was dropped.");
         }
     }
 }

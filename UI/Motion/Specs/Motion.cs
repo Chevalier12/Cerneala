@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using Cerneala.UI.Motion.Interpolation;
 
 namespace Cerneala.UI.Motion.Specs;
@@ -157,7 +158,8 @@ public static class Motion
         }
         catch (TargetInvocationException ex) when (ex.InnerException is not null)
         {
-            throw ex.InnerException;
+            ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+            throw;
         }
     }
 }

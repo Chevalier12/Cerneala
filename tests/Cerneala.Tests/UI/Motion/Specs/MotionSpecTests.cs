@@ -100,11 +100,53 @@ public sealed class MotionSpecTests
         SpringSpec<float> spec = MotionFactory.Spring<float>();
         MotionSampler<float> sampler = spec.CreateSampler(0, 100, new NonVectorFloatMixer(), Context(diagnostics));
 
+        Assert.Contains(diagnostics.Warnings, warning => warning.Contains("without vector velocity support", StringComparison.OrdinalIgnoreCase));
+
         sampler.Retarget(50, RetargetMode.Restart);
 
         InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => sampler.Velocity);
         Assert.Contains("velocity", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(diagnostics.Warnings, warning => warning.Contains("velocity", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void SpringAdvanceWithHugeDeltaRecordsClampedDeltaDiagnostic()
+    {
+        MotionDiagnostics diagnostics = new();
+        SpringSpec<float> spec = MotionFactory.Spring<float>();
+        MotionSampler<float> sampler = spec.CreateSampler(0, 100, new FloatMixer(), Context(diagnostics));
+
+        sampler.Advance(TimeSpan.FromSeconds(20));
+
+        Assert.Contains(diagnostics.Warnings, warning => warning.Contains("clamped", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Theory]
+    [InlineData(float.NaN, 38, 1, 0.01f, 0.01f)]
+    [InlineData(float.PositiveInfinity, 38, 1, 0.01f, 0.01f)]
+    [InlineData(520, float.NaN, 1, 0.01f, 0.01f)]
+    [InlineData(520, float.PositiveInfinity, 1, 0.01f, 0.01f)]
+    [InlineData(520, 38, float.NaN, 0.01f, 0.01f)]
+    [InlineData(520, 38, float.PositiveInfinity, 0.01f, 0.01f)]
+    [InlineData(520, 38, 1, float.NaN, 0.01f)]
+    [InlineData(520, 38, 1, float.PositiveInfinity, 0.01f)]
+    [InlineData(520, 38, 1, 0.01f, float.NaN)]
+    [InlineData(520, 38, 1, 0.01f, float.PositiveInfinity)]
+    public void SpringRejectsNaNAndInfinityParameters(float stiffness, float damping, float mass, float restSpeed, float restDelta)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpringSpec<float>(stiffness, damping, mass, restSpeed, restDelta));
+    }
+
+    [Fact]
+    public void MotionDiagnosticsClearsWarningsAtFrameStart()
+    {
+        MotionDiagnostics diagnostics = new();
+        diagnostics.RecordWarning("temporary warning");
+
+        diagnostics.BeginFrame();
+
+        Assert.Empty(diagnostics.Warnings);
     }
 
     [Fact]
@@ -121,6 +163,39 @@ public sealed class MotionSpecTests
 
         Assert.True(sampler.IsComplete);
         Assert.Equal(25, sampler.Current, precision: 3);
+    }
+
+    [Fact]
+    public void DecayWithoutBoundsDoesNotClampToDefaultValue()
+    {
+        DecaySpec<float> spec = MotionFactory.Decay(new MotionVelocity<float>(100), deceleration: 0.9f);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 0, new FloatMixer(), Context());
+
+        sampler.Advance(TimeSpan.FromMilliseconds(16));
+
+        Assert.False(sampler.IsComplete);
+        Assert.True(sampler.Current > 0);
+    }
+
+    [Fact]
+    public void DecayBoundsRejectNonComparableVectorValuesClearly()
+    {
+        DecaySpec<TestVector> spec = MotionFactory.Decay(new MotionVelocity<TestVector>(new TestVector(10)), deceleration: 0.9f)
+            .WithBounds(new TestVector(0), new TestVector(25));
+
+        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+            spec.CreateSampler(new TestVector(0), new TestVector(0), new TestVectorMixer(), Context()));
+        Assert.Contains("comparable", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    [InlineData(float.NegativeInfinity)]
+    public void DecayRejectsNaNAndInfinityDeceleration(float deceleration)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            MotionFactory.Decay(new MotionVelocity<float>(100), deceleration));
     }
 
     [Fact]
@@ -161,6 +236,17 @@ public sealed class MotionSpecTests
 
         Assert.Equal(30, sampler.Current);
         Assert.True(sampler.IsComplete);
+    }
+
+    [Fact]
+    public void UntypedMotionFactoryPreservesInnerExceptionStackTrace()
+    {
+        MotionSpec spec = MotionFactory.Tween(TimeSpan.FromMilliseconds(100));
+
+        ArgumentException ex = Assert.Throws<ArgumentException>(() =>
+            spec.CreateSamplerUntyped("bad", 10f, new FloatMixer(), Context()));
+
+        Assert.Contains("CreateTweenSampler", ex.StackTrace);
     }
 
     private static MotionSpecContext Context(MotionDiagnostics? diagnostics = null)
@@ -208,6 +294,38 @@ public sealed class MotionSpecTests
         public override float Mix(float from, float to, float progress)
         {
             return from + ((to - from) * progress);
+        }
+    }
+
+    private readonly record struct TestVector(float X);
+
+    private sealed class TestVectorMixer : ValueMixer<TestVector>
+    {
+        public override bool SupportsVectorOperations => true;
+
+        public override TestVector Mix(TestVector from, TestVector to, float progress)
+        {
+            return new TestVector(from.X + ((to.X - from.X) * progress));
+        }
+
+        public override TestVector Add(TestVector left, TestVector right)
+        {
+            return new TestVector(left.X + right.X);
+        }
+
+        public override TestVector Subtract(TestVector left, TestVector right)
+        {
+            return new TestVector(left.X - right.X);
+        }
+
+        public override TestVector Scale(TestVector value, float scalar)
+        {
+            return new TestVector(value.X * scalar);
+        }
+
+        public override float Magnitude(TestVector value)
+        {
+            return MathF.Abs(value.X);
         }
     }
 }

@@ -18,6 +18,7 @@ public sealed class MotionDiagnostics
     internal void BeginFrame()
     {
         phases.Clear();
+        warnings.Clear();
         BeforeLayoutSnapshotCaptures = 0;
         AfterLayoutSnapshotCaptures = 0;
     }

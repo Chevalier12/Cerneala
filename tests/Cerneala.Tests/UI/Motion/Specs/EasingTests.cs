@@ -28,6 +28,18 @@ public sealed class EasingTests
         }
     }
 
+    [Theory]
+    [InlineData(float.NaN, 1)]
+    [InlineData(float.PositiveInfinity, 1)]
+    [InlineData(float.NegativeInfinity, 1)]
+    [InlineData(0, float.NaN)]
+    [InlineData(0, float.PositiveInfinity)]
+    [InlineData(0, float.NegativeInfinity)]
+    public void CubicBezierRejectsNaNAndInfinityYControlPoints(float y1, float y2)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new CubicBezierEasing(0.4f, y1, 0.2f, y2));
+    }
+
     [Fact]
     public void StepEasingMatchesJumpModes()
     {

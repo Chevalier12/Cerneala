@@ -20,6 +20,16 @@ public sealed class CubicBezierEasing : IEasing
             throw new ArgumentOutOfRangeException(nameof(x2), "The second x control point must be in [0, 1].");
         }
 
+        if (!float.IsFinite(y1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(y1), "The first y control point must be finite.");
+        }
+
+        if (!float.IsFinite(y2))
+        {
+            throw new ArgumentOutOfRangeException(nameof(y2), "The second y control point must be finite.");
+        }
+
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;
