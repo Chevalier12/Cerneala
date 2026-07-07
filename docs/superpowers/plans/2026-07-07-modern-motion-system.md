@@ -616,7 +616,7 @@ public sealed class MotionValue<T> : MotionValue
   - [x] Store active sampler.
   - [x] Store optional velocity vector.
   - [x] Notify only when effective sampled value changes.
-  - [x] Allow retarget without tearing.
+  - [ ] Allow retarget without tearing. (quality blocker: replacement/retarget old-handle callbacks can start an animation that gets overwritten, leaving an orphan active handle)
 
 ### `MotionGraph`
 
@@ -688,6 +688,7 @@ MotionValue<Transform> transform = MotionValue.Combine(x, y, (cx, cy) => Transfo
 - [x] Derived values recompute when dependencies change.
 - [x] Graph tolerates nodes adding/removing nodes during callbacks.
 - [x] Reentrant value callbacks cannot crash ticks or let an old handle finish the active new handle.
+- [ ] Replacement/retarget completion callbacks cannot leave callback-started handles orphaned.
 - [x] Throwing `Completed` callback still clears callbacks/actions and releases retained targets.
 - [x] Cancel revert and cancel complete behaviors are covered by tests.
 - [x] Disposing a derived value unsubscribes from dependencies.
