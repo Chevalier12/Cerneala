@@ -142,6 +142,111 @@ public sealed class MotionValueTests
     }
 
     [Fact]
+    public void CancelRevertRestoresAnimationStart()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(5d);
+        MotionHandle handle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        harness.Tick(TimeSpan.Zero);
+        harness.Tick(TimeSpan.FromMilliseconds(40));
+
+        handle.Cancel(MotionCancelBehavior.Revert);
+
+        Assert.True(handle.IsCanceled);
+        Assert.False(value.IsAnimating);
+        Assert.Equal(5d, value.Current);
+        Assert.Equal(5d, value.Target);
+        Assert.False(harness.Graph.HasActiveMotion);
+    }
+
+    [Fact]
+    public void CancelCompleteJumpsToTarget()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle handle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        harness.Tick(TimeSpan.Zero);
+        harness.Tick(TimeSpan.FromMilliseconds(40));
+
+        handle.Cancel(MotionCancelBehavior.Complete);
+
+        Assert.True(handle.IsCanceled);
+        Assert.False(value.IsAnimating);
+        Assert.Equal(10d, value.Current);
+        Assert.Equal(10d, value.Target);
+        Assert.False(harness.Graph.HasActiveMotion);
+    }
+
+    [Fact]
+    public void ListenerCanCancelDuringTickWithoutCrashing()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle? handle = null;
+        using IDisposable subscription = value.Subscribe(_ => handle?.Cancel());
+        handle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+
+        Exception? exception = Record.Exception(() => harness.Tick(TimeSpan.FromMilliseconds(50)));
+
+        Assert.Null(exception);
+        Assert.True(handle.IsCanceled);
+        Assert.False(value.IsAnimating);
+        Assert.False(harness.Graph.HasActiveMotion);
+    }
+
+    [Fact]
+    public void ListenerCanCompleteDuringTickWithoutCrashing()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle? handle = null;
+        bool completedFromListener = false;
+        using IDisposable subscription = value.Subscribe(_ =>
+        {
+            if (!completedFromListener)
+            {
+                completedFromListener = true;
+                handle?.Complete();
+            }
+        });
+        handle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+
+        Exception? exception = Record.Exception(() => harness.Tick(TimeSpan.FromMilliseconds(50)));
+
+        Assert.Null(exception);
+        Assert.True(handle.IsCompleted);
+        Assert.False(value.IsAnimating);
+        Assert.Equal(10d, value.Current);
+        Assert.False(harness.Graph.HasActiveMotion);
+    }
+
+    [Fact]
+    public void ListenerCanRestartDuringTickWithoutOldTickCancelingNewHandle()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle? newHandle = null;
+        bool restarted = false;
+        using IDisposable subscription = value.Subscribe(_ =>
+        {
+            if (!restarted)
+            {
+                restarted = true;
+                newHandle = value.AnimateTo(20d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+            }
+        });
+
+        value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        harness.Tick(TimeSpan.FromMilliseconds(100));
+
+        Assert.NotNull(newHandle);
+        Assert.True(newHandle.IsActive);
+        Assert.True(value.IsAnimating);
+        Assert.Equal(20d, value.Target);
+        Assert.True(harness.Graph.HasActiveMotion);
+    }
+
+    [Fact]
     public void CompleteJumpsToTargetAndFiresCompletionOnce()
     {
         UIRootHarness harness = new();
@@ -163,6 +268,30 @@ public sealed class MotionValueTests
         Assert.True(handle.IsCompleted);
         Assert.Equal(1, completed);
         Assert.Equal(MotionCompletionState.Completed, state);
+    }
+
+    [Fact]
+    public void ListenerCanRestartFromCompleteWithoutOldCompletionFinishingNewHandle()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle oldHandle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromSeconds(1)));
+        MotionHandle? newHandle = null;
+        using IDisposable subscription = value.Subscribe(change =>
+        {
+            if (change.NewValue == 10d)
+            {
+                newHandle = value.AnimateTo(20d, MotionFactory.Tween<double>(TimeSpan.FromSeconds(1)));
+            }
+        });
+
+        oldHandle.Complete();
+
+        Assert.True(oldHandle.IsCompleted);
+        Assert.NotNull(newHandle);
+        Assert.True(newHandle.IsActive);
+        Assert.True(value.IsAnimating);
+        Assert.Equal(20d, value.Target);
     }
 
     [Fact]
@@ -190,6 +319,21 @@ public sealed class MotionValueTests
         MotionHandle handle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
         WeakReference callbackTarget = AttachCompletionTargetAndDispose(handle);
 
+        ForceCollection();
+
+        Assert.False(callbackTarget.IsAlive);
+        GC.KeepAlive(handle);
+    }
+
+    [Fact]
+    public void ThrowingCompletionHandlerStillReleasesCallbackTarget()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle handle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        WeakReference callbackTarget = AttachThrowingCompletionTarget(handle);
+
+        Assert.Throws<InvalidOperationException>(() => handle.Complete());
         ForceCollection();
 
         Assert.False(callbackTarget.IsAlive);
@@ -242,6 +386,25 @@ public sealed class MotionValueTests
     }
 
     [Fact]
+    public void DisposingDerivedValueUnsubscribesFromDependencies()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> x = harness.Graph.CreateValue(2d);
+        MotionValue<double> y = harness.Graph.CreateValue(3d);
+        DerivedMotionValue<double> sum = MotionValue.Combine(x, y, static (left, right) => left + right);
+        List<double> observed = [];
+        using IDisposable subscription = sum.Subscribe(change => observed.Add(change.NewValue));
+
+        sum.Dispose();
+        x.JumpTo(4d);
+        y.JumpTo(6d);
+
+        Assert.Equal(5d, sum.Current);
+        Assert.Empty(observed);
+        Assert.Throws<ObjectDisposedException>(() => sum.Subscribe(_ => { }));
+    }
+
+    [Fact]
     public void GraphStagesMutationFromCallbacks()
     {
         UIRootHarness harness = new();
@@ -289,6 +452,14 @@ public sealed class MotionValueTests
         return reference;
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference AttachThrowingCompletionTarget(MotionHandle handle)
+    {
+        ThrowingCompletionCallbackTarget target = new();
+        handle.Completed += target.OnCompleted;
+        return new WeakReference(target);
+    }
+
     private static void ForceCollection()
     {
         for (int i = 0; i < 3; i++)
@@ -303,6 +474,14 @@ public sealed class MotionValueTests
     {
         public void OnCompleted(object? sender, MotionCompletedEventArgs args)
         {
+        }
+    }
+
+    private sealed class ThrowingCompletionCallbackTarget
+    {
+        public void OnCompleted(object? sender, MotionCompletedEventArgs args)
+        {
+            throw new InvalidOperationException("Completion handler failed.");
         }
     }
 

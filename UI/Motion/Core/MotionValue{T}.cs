@@ -86,8 +86,7 @@ public sealed class MotionValue<T> : MotionValue
 
         if (sampler.IsComplete)
         {
-            ApplySample(sampler.Current);
-            FinishNaturalCompletion();
+            FinishNaturalCompletion(handle, sampler);
             return handle;
         }
 
@@ -115,22 +114,32 @@ public sealed class MotionValue<T> : MotionValue
     internal int Advance(MotionFrame frame, out bool completed)
     {
         completed = false;
-        if (sampler is null)
+        MotionSampler<T>? expectedSampler = sampler;
+        if (expectedSampler is null)
         {
             return 0;
         }
 
+        MotionHandle? expectedHandle = activeHandle;
         animationElapsed += frame.Delta;
-        sampler.Advance(frame.Delta);
-        velocity = TryGetVelocity(sampler);
-        int changed = ApplySample(sampler.Current) ? 1 : 0;
-        if (sampler.IsComplete)
+        expectedSampler.Advance(frame.Delta);
+        velocity = TryGetVelocity(expectedSampler);
+        if (expectedSampler.IsComplete)
         {
-            completed = true;
-            FinishNaturalCompletion();
+            T completionTarget = target;
+            int changed = mixer.EqualsWithinTolerance(current, completionTarget, 0) ? 0 : 1;
+            completed = FinishNaturalCompletion(expectedHandle, expectedSampler);
+            return changed;
         }
 
-        return changed;
+        int sampledChanged = ApplySample(expectedSampler.Current) ? 1 : 0;
+        if (!ReferenceEquals(activeHandle, expectedHandle) ||
+            !ReferenceEquals(sampler, expectedSampler))
+        {
+            return sampledChanged;
+        }
+
+        return sampledChanged;
     }
 
     private void CancelHandle(MotionHandle? handle, MotionCancelBehavior behavior, bool fireEvent)
@@ -165,8 +174,16 @@ public sealed class MotionValue<T> : MotionValue
             return;
         }
 
-        ApplySample(target);
-        FinishHandle(MotionCompletionState.Completed, MotionCancelBehavior.Complete, fireEvent: true);
+        MotionHandle? expectedHandle = activeHandle;
+        MotionSampler<T>? expectedSampler = sampler;
+        T completionTarget = target;
+        if (!TryDetachActiveMotion(expectedHandle, expectedSampler, out MotionHandle? finishingHandle))
+        {
+            return;
+        }
+
+        ApplySample(completionTarget);
+        finishingHandle?.FinishCompleted(fireEvent: true);
     }
 
     private void DisposeHandle(MotionHandle? handle)
@@ -186,6 +203,11 @@ public sealed class MotionValue<T> : MotionValue
             return;
         }
 
+        MotionHandle? expectedHandle = activeHandle;
+        MotionSampler<T>? expectedSampler = sampler;
+        T valueToApply = current;
+        bool applyValue = false;
+
         switch (behavior)
         {
             case MotionCancelBehavior.KeepCurrent:
@@ -193,46 +215,63 @@ public sealed class MotionValue<T> : MotionValue
                 break;
             case MotionCancelBehavior.Revert:
                 target = animationStart;
-                ApplySample(animationStart);
+                valueToApply = animationStart;
+                applyValue = true;
                 break;
             case MotionCancelBehavior.Complete:
-                ApplySample(target);
+                valueToApply = target;
+                applyValue = true;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(behavior), behavior, "Unknown motion cancel behavior.");
         }
 
-        FinishHandle(MotionCompletionState.Canceled, behavior, fireEvent);
+        if (!TryDetachActiveMotion(expectedHandle, expectedSampler, out MotionHandle? finishingHandle))
+        {
+            return;
+        }
+
+        if (applyValue)
+        {
+            ApplySample(valueToApply);
+        }
+
+        finishingHandle?.FinishCanceled(behavior, fireEvent);
     }
 
-    private void FinishNaturalCompletion()
+    private bool FinishNaturalCompletion(MotionHandle? expectedHandle, MotionSampler<T>? expectedSampler)
     {
-        ApplySample(target);
-        FinishHandle(MotionCompletionState.Completed, MotionCancelBehavior.Complete, fireEvent: true);
+        T completionTarget = target;
+        if (!TryDetachActiveMotion(expectedHandle, expectedSampler, out MotionHandle? finishingHandle))
+        {
+            return false;
+        }
+
+        ApplySample(completionTarget);
+        finishingHandle?.FinishCompleted(fireEvent: true);
+        return sampler is null && activeHandle is null;
     }
 
-    private void FinishHandle(MotionCompletionState state, MotionCancelBehavior behavior, bool fireEvent)
+    private bool TryDetachActiveMotion(
+        MotionHandle? expectedHandle,
+        MotionSampler<T>? expectedSampler,
+        out MotionHandle? finishingHandle)
     {
+        finishingHandle = null;
+        if (!ReferenceEquals(activeHandle, expectedHandle) ||
+            !ReferenceEquals(sampler, expectedSampler))
+        {
+            return false;
+        }
+
         sampler = null;
         animationElapsed = TimeSpan.Zero;
         velocity = null;
         graph.Unregister(node);
 
-        MotionHandle? handle = activeHandle;
+        finishingHandle = activeHandle;
         activeHandle = null;
-        if (handle is null)
-        {
-            return;
-        }
-
-        if (state == MotionCompletionState.Completed)
-        {
-            handle.FinishCompleted(fireEvent);
-        }
-        else
-        {
-            handle.FinishCanceled(behavior, fireEvent);
-        }
+        return true;
     }
 
     private bool ApplySample(T value)

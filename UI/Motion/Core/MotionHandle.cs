@@ -67,9 +67,15 @@ public sealed class MotionHandle : IDisposable
         }
 
         disposed = true;
-        dispose?.Invoke();
-        completed = null;
-        ClearActions();
+        try
+        {
+            dispose?.Invoke();
+        }
+        finally
+        {
+            completed = null;
+            ClearActions();
+        }
     }
 
     internal void FinishCompleted(bool fireEvent)
@@ -81,13 +87,18 @@ public sealed class MotionHandle : IDisposable
 
         IsCompleted = true;
         completionSource.TrySetResult();
-        if (fireEvent)
+        try
         {
-            completed?.Invoke(this, new MotionCompletedEventArgs(MotionCompletionState.Completed, null));
+            if (fireEvent)
+            {
+                completed?.Invoke(this, new MotionCompletedEventArgs(MotionCompletionState.Completed, null));
+            }
         }
-
-        completed = null;
-        ClearActions();
+        finally
+        {
+            completed = null;
+            ClearActions();
+        }
     }
 
     internal void FinishCanceled(MotionCancelBehavior behavior, bool fireEvent)
@@ -99,13 +110,18 @@ public sealed class MotionHandle : IDisposable
 
         IsCanceled = true;
         completionSource.TrySetCanceled();
-        if (fireEvent)
+        try
         {
-            completed?.Invoke(this, new MotionCompletedEventArgs(MotionCompletionState.Canceled, behavior));
+            if (fireEvent)
+            {
+                completed?.Invoke(this, new MotionCompletedEventArgs(MotionCompletionState.Canceled, behavior));
+            }
         }
-
-        completed = null;
-        ClearActions();
+        finally
+        {
+            completed = null;
+            ClearActions();
+        }
     }
 
     private void ClearActions()
