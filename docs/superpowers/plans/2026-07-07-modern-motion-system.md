@@ -566,7 +566,7 @@ public interface IEasing
   - [x] `RotationRadians`
   - [x] `SkewX`
   - [x] `SkewY`
-- [x] `TransformMixer` should decompose/recompose where possible.
+- [ ] `TransformMixer` should decompose/recompose where possible. (quality blocker: skew + non-uniform scale does not round-trip correctly yet)
 - [x] Fallback to matrix lerp only with explicit `TransformInterpolationMode.Matrix`.
 
 ### Tests
