@@ -528,55 +528,55 @@ public interface IEasing
 
 ### Files
 
-- [ ] Extend the Phase 2 interpolation contracts instead of creating duplicate files.
-- [ ] Add `UI/Motion/Interpolation/FloatMixer.cs`.
-- [ ] Add `UI/Motion/Interpolation/DoubleMixer.cs`.
-- [ ] Add `UI/Motion/Interpolation/ColorMixer.cs`.
-- [ ] Add `UI/Motion/Interpolation/ThicknessMixer.cs`.
-- [ ] Add `UI/Motion/Interpolation/DrawPointMixer.cs`.
-- [ ] Add `UI/Motion/Interpolation/DrawSizeMixer.cs`.
-- [ ] Add `UI/Motion/Interpolation/DrawRectMixer.cs`.
-- [ ] Add `UI/Motion/Interpolation/TransformMixer.cs`.
+- [x] Extend the Phase 2 interpolation contracts instead of creating duplicate files.
+- [x] Add `UI/Motion/Interpolation/FloatMixer.cs`.
+- [x] Add `UI/Motion/Interpolation/DoubleMixer.cs`.
+- [x] Add `UI/Motion/Interpolation/ColorMixer.cs`.
+- [x] Add `UI/Motion/Interpolation/ThicknessMixer.cs`.
+- [x] Add `UI/Motion/Interpolation/DrawPointMixer.cs`.
+- [ ] Add `UI/Motion/Interpolation/DrawSizeMixer.cs` (N/A for now: no `DrawSize` type exists in the repo).
+- [x] Add `UI/Motion/Interpolation/DrawRectMixer.cs`.
+- [x] Add `UI/Motion/Interpolation/TransformMixer.cs`.
 
 ### Contract
 
 - [ ] `ValueMixer<T>` should handle:
-  - [ ] `T Mix(T from, T to, float progress)`
-  - [ ] `bool EqualsWithinTolerance(T left, T right, float tolerance)`
-  - [ ] `bool SupportsVectorOperations { get; }`
-  - [ ] `T Add(T left, T right)` only when `SupportsVectorOperations` is true.
-  - [ ] `T Subtract(T left, T right)` only when `SupportsVectorOperations` is true.
-  - [ ] `T Scale(T value, float scalar)` only when `SupportsVectorOperations` is true.
+  - [ ] `T Mix(T from, T to, float progress)` (implemented, but exact-endpoint review blocker remains for numeric/vector mixers)
+  - [x] `bool EqualsWithinTolerance(T left, T right, float tolerance)`
+  - [x] `bool SupportsVectorOperations { get; }`
+  - [x] `T Add(T left, T right)` only when `SupportsVectorOperations` is true.
+  - [x] `T Subtract(T left, T right)` only when `SupportsVectorOperations` is true.
+  - [x] `T Scale(T value, float scalar)` only when `SupportsVectorOperations` is true.
 - [ ] For non-vector types, either:
-  - [ ] Do not support spring/decay, and fail clearly.
+  - [ ] Do not support spring/decay, and fail clearly. (review blocker: non-vector spring still falls back instead of failing)
   - [ ] Or provide a vector adapter.
-- [ ] `ValueMixerRegistry`:
-  - [ ] Is root/system owned, not static-only.
-  - [ ] Registers built-ins during `MotionSystem` creation.
-  - [ ] Allows local custom mixers for app-specific structs.
+- [x] `ValueMixerRegistry`:
+  - [x] Is root/system owned, not static-only.
+  - [x] Registers built-ins during `MotionSystem` creation.
+  - [x] Allows local custom mixers for app-specific structs.
 
 ### Transform Rules
 
-- [ ] Avoid naive matrix lerp as default if it gives ugly transforms.
-- [ ] Add `TransformComponents`:
-  - [ ] `TranslationX`
-  - [ ] `TranslationY`
-  - [ ] `ScaleX`
-  - [ ] `ScaleY`
-  - [ ] `RotationRadians`
-  - [ ] `SkewX`
-  - [ ] `SkewY`
-- [ ] `TransformMixer` should decompose/recompose where possible.
-- [ ] Fallback to matrix lerp only with explicit `TransformInterpolationMode.Matrix`.
+- [x] Avoid naive matrix lerp as default if it gives ugly transforms.
+- [x] Add `TransformComponents`:
+  - [x] `TranslationX`
+  - [x] `TranslationY`
+  - [x] `ScaleX`
+  - [x] `ScaleY`
+  - [x] `RotationRadians`
+  - [x] `SkewX`
+  - [x] `SkewY`
+- [x] `TransformMixer` should decompose/recompose where possible.
+- [x] Fallback to matrix lerp only with explicit `TransformInterpolationMode.Matrix`.
 
 ### Tests
 
-- [ ] All built-in mixers return exact endpoints.
-- [ ] Color interpolation handles alpha.
-- [ ] Thickness interpolation handles each edge.
-- [ ] Rect interpolation handles x/y/width/height.
-- [ ] Transform interpolation preserves identity endpoints.
-- [ ] Missing mixer produces actionable exception with property/type name.
+- [ ] All built-in mixers return exact endpoints. (review blocker: float/double/vector lerp can miss exact endpoint for large values)
+- [x] Color interpolation handles alpha.
+- [x] Thickness interpolation handles each edge.
+- [x] Rect interpolation handles x/y/width/height.
+- [x] Transform interpolation preserves identity endpoints.
+- [x] Missing mixer produces actionable exception with property/type name.
 
 ---
 
