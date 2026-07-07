@@ -122,6 +122,55 @@ public sealed class MotionValueTests
     }
 
     [Fact]
+    public async Task ReplacementCancelsHandleStartedFromOldCompletionCallback()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle oldHandle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        MotionHandle? callbackHandle = null;
+        oldHandle.Completed += (_, _) =>
+        {
+            callbackHandle = value.AnimateTo(30d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        };
+
+        MotionHandle replacementHandle = value.AnimateTo(20d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+
+        Assert.NotNull(callbackHandle);
+        Assert.True(callbackHandle.IsCanceled);
+        Assert.False(callbackHandle.IsActive);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await callbackHandle.Completion.AsTask());
+        Assert.True(replacementHandle.IsActive);
+        Assert.Equal(20d, value.Target);
+    }
+
+    [Fact]
+    public async Task PreserveProgressRetargetCancelsHandleStartedFromOldCompletionCallback()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle oldHandle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        MotionHandle? callbackHandle = null;
+        oldHandle.Completed += (_, _) =>
+        {
+            callbackHandle = value.AnimateTo(30d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        };
+        harness.Tick(TimeSpan.Zero);
+        harness.Tick(TimeSpan.FromMilliseconds(40));
+
+        MotionHandle retargetedHandle = value.AnimateTo(
+            20d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)),
+            new MotionStartOptions(RetargetMode.PreserveProgress));
+
+        Assert.NotNull(callbackHandle);
+        Assert.True(callbackHandle.IsCanceled);
+        Assert.False(callbackHandle.IsActive);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await callbackHandle.Completion.AsTask());
+        Assert.True(retargetedHandle.IsActive);
+        Assert.Equal(20d, value.Target);
+    }
+
+    [Fact]
     public void CancelKeepCurrentStopsFutureTicks()
     {
         UIRootHarness harness = new();

@@ -47,9 +47,22 @@ public sealed class MotionValue<T> : MotionValue
             activeHandle?.IsActive == true &&
             effectiveOptions.RetargetMode == RetargetMode.PreserveProgress)
         {
+            MotionHandle? expectedHandle = activeHandle;
+            MotionSampler<T>? expectedSampler = sampler;
             TimeSpan preservedElapsed = animationElapsed;
-            activeHandle.FinishCanceled(MotionCancelBehavior.KeepCurrent, fireEvent: true);
-            activeHandle = null;
+            if (!TryDetachActiveMotion(expectedHandle, expectedSampler, out MotionHandle? finishingHandle))
+            {
+                return AnimateTo(
+                    target,
+                    spec,
+                    new MotionStartOptions(
+                        RetargetMode.Restart,
+                        effectiveOptions.Priority,
+                        effectiveOptions.DebugName));
+            }
+
+            finishingHandle?.FinishCanceled(MotionCancelBehavior.KeepCurrent, fireEvent: true);
+            CancelCallbackCreatedMotion();
             this.target = target;
             animationStart = current;
             sampler = spec.CreateSampler(
@@ -72,6 +85,7 @@ public sealed class MotionValue<T> : MotionValue
         }
 
         CancelActiveHandle(MotionCancelBehavior.KeepCurrent, fireEvent: true);
+        CancelCallbackCreatedMotion();
         this.target = target;
         animationStart = current;
         animationElapsed = TimeSpan.Zero;
@@ -237,6 +251,16 @@ public sealed class MotionValue<T> : MotionValue
         }
 
         finishingHandle?.FinishCanceled(behavior, fireEvent);
+    }
+
+    private void CancelCallbackCreatedMotion()
+    {
+        if (activeHandle is null && sampler is null)
+        {
+            return;
+        }
+
+        CancelActiveHandle(MotionCancelBehavior.KeepCurrent, fireEvent: false);
     }
 
     private bool FinishNaturalCompletion(MotionHandle? expectedHandle, MotionSampler<T>? expectedSampler)
