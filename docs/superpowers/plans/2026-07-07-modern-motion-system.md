@@ -616,7 +616,7 @@ public sealed class MotionValue<T> : MotionValue
   - [x] Store active sampler.
   - [x] Store optional velocity vector.
   - [x] Notify only when effective sampled value changes.
-  - [x] Allow retarget without tearing.
+  - [ ] Allow retarget without tearing. (spec blocker: PreserveProgress retarget currently ignores the new spec)
 
 ### `MotionGraph`
 
@@ -624,7 +624,7 @@ public sealed class MotionValue<T> : MotionValue
   - [x] Own active nodes.
   - [x] Advance nodes in deterministic insertion order.
   - [x] Remove completed nodes after notification flush.
-  - [x] Avoid mutation while iterating by staging graph changes.
+  - [ ] Avoid mutation while iterating by staging graph changes. (spec blocker: remove + re-add same node during callbacks can still remove it)
   - [x] Provide counters for diagnostics.
 - [x] API:
 
@@ -682,7 +682,7 @@ MotionValue<Transform> transform = MotionValue.Combine(x, y, (cx, cy) => Transfo
 - [x] Retarget preserves active motion.
 - [x] Cancel keep-current stops future ticks.
 - [x] Complete jumps to target and fires completion once.
-- [x] Disposing a handle unregisters completion callbacks and stops retaining target element.
+- [ ] Disposing a handle unregisters completion callbacks and stops retaining target element. (spec blocker: retention is not proven yet)
 - [ ] Awaiting `Completion` resolves after natural completion.
 - [ ] Canceling a handle resolves/marks completion as canceled according to the documented contract.
 - [ ] Derived values recompute when dependencies change.
