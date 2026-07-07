@@ -102,7 +102,8 @@ public sealed class MotionSpecTests
 
         sampler.Retarget(50, RetargetMode.Restart);
 
-        Assert.Null(sampler.Velocity);
+        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => sampler.Velocity);
+        Assert.Contains("velocity", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(diagnostics.Warnings, warning => warning.Contains("velocity", StringComparison.OrdinalIgnoreCase));
     }
 

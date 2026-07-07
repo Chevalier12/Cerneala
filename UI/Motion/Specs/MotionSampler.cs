@@ -15,7 +15,8 @@ public abstract class MotionSampler<T> : MotionSampler
 {
     public abstract T Current { get; }
 
-    public virtual MotionVelocity<T>? Velocity => null;
+    public virtual MotionVelocity<T>? Velocity =>
+        throw new InvalidOperationException($"Sampler for {typeof(T).Name} does not provide velocity.");
 
     public override object? CurrentUntyped => Current;
 
