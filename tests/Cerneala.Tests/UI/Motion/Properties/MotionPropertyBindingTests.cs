@@ -80,6 +80,39 @@ public sealed class MotionPropertyBindingTests
     }
 
     [Fact]
+    public void BindingClearsAnimationSourceWhenSpecCompletesSynchronously()
+    {
+        UIRoot root = new(reducedMotion: new ReducedMotionPolicy(ReducedMotionMode.Reduce));
+        Control control = new();
+        root.VisualChildren.Add(control);
+        control.SetValue(Control.BackgroundProperty, DrawColor.Black, UiPropertyValueSource.StyleBase);
+        MotionValue<DrawColor> value = root.Motion.Graph.CreateValue(control.Background);
+        using MotionPropertyBinding<DrawColor> binding = new(root.Motion, control, Control.BackgroundProperty, value);
+
+        MotionHandle handle = binding.AnimateTo(DrawColor.White, MotionFactory.Tween<DrawColor>(TimeSpan.FromMilliseconds(100)));
+        root.ProcessFrame();
+
+        Assert.True(handle.IsCompleted);
+        Assert.Equal(UiPropertyValueSource.StyleBase, control.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(DrawColor.Black, control.Background);
+    }
+
+    [Fact]
+    public void BindingRejectsMotionValueFromDifferentMotionSystem()
+    {
+        UIRoot targetRoot = new();
+        UIRoot valueRoot = new();
+        Control control = new();
+        targetRoot.VisualChildren.Add(control);
+        MotionValue<DrawColor> foreignValue = valueRoot.Motion.Graph.CreateValue(DrawColor.Black);
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+            new MotionPropertyBinding<DrawColor>(targetRoot.Motion, control, Control.BackgroundProperty, foreignValue));
+
+        Assert.Contains("same MotionSystem", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BindingClearFlushesRestoreBaseEvenAfterCancelingLastMotionNode()
     {
         ManualMotionClock clock = new();

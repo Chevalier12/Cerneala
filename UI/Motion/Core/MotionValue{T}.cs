@@ -37,6 +37,8 @@ public sealed class MotionValue<T> : MotionValue
 
     internal override Type ValueType => typeof(T);
 
+    internal MotionGraph Graph => graph;
+
     public MotionHandle AnimateTo(T target, MotionSpec<T> spec, MotionStartOptions? options = null)
     {
         graph.VerifyAccess();

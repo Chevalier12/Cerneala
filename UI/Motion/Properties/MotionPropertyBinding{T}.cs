@@ -12,7 +12,6 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
     private readonly BindingNode node;
     private readonly IDisposable valueSubscription;
     private MotionHandle? activeHandle;
-    private UiPropertyValueSource sourceBeforeAnimation;
     private bool hasPendingSample;
     private T pendingSample = default!;
     private bool holdOnComplete;
@@ -25,11 +24,14 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         Target = target ?? throw new ArgumentNullException(nameof(target));
         Property = property ?? throw new ArgumentNullException(nameof(property));
         Value = value ?? throw new ArgumentNullException(nameof(value));
+        if (!ReferenceEquals(Value.Graph, motion.Graph))
+        {
+            throw new InvalidOperationException("MotionPropertyBinding requires a MotionValue created by the same MotionSystem as the binding.");
+        }
+
         invalidationCategory = MotionPropertyInvalidationClassifier.Classify(property);
-        sourceBeforeAnimation = Target.GetValueSource(Property);
         node = new BindingNode(this);
         valueSubscription = Value.Subscribe(OnValueChanged);
-        Target.PropertyChanged += OnTargetPropertyChanged;
     }
 
     internal override MotionSystem Motion => motion;
@@ -49,14 +51,30 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         ArgumentNullException.ThrowIfNull(spec);
 
         MotionPropertyStartOptions effectiveOptions = options ?? MotionPropertyStartOptions.Default;
-        sourceBeforeAnimation = Target.GetValueSource(Property);
         holdOnComplete = effectiveOptions.HoldOnComplete;
         completedNaturally = false;
-        activeHandle = Value.AnimateTo(to, spec, effectiveOptions.ToMotionStartOptions());
+        MotionHandle handle = Value.AnimateTo(to, spec, effectiveOptions.ToMotionStartOptions());
+        activeHandle = handle;
         activeHandle.Completed += OnMotionCompleted;
+        if (handle.IsCompleted)
+        {
+            activeHandle = null;
+            completedNaturally = true;
+            if (holdOnComplete)
+            {
+                motion.Properties.StageSet(Target, Property, Value.Current, invalidationCategory);
+            }
+            else
+            {
+                motion.Properties.StageClear(Target, Property, invalidationCategory);
+            }
+
+            return handle;
+        }
+
         StageCurrent();
         motion.Graph.Register(node);
-        return activeHandle;
+        return handle;
     }
 
     public override void Clear(MotionClearBehavior behavior = MotionClearBehavior.RestoreBase)
@@ -92,7 +110,6 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
 
         Clear();
         disposed = true;
-        Target.PropertyChanged -= OnTargetPropertyChanged;
         valueSubscription.Dispose();
     }
 
@@ -100,16 +117,6 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
     {
         pendingSample = change.NewValue;
         hasPendingSample = true;
-    }
-
-    private void OnTargetPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
-    {
-        if (!ReferenceEquals(args.Property, Property) || args.ValueSource == UiPropertyValueSource.Animation)
-        {
-            return;
-        }
-
-        sourceBeforeAnimation = args.ValueSource;
     }
 
     private void OnMotionCompleted(object? sender, MotionCompletedEventArgs args)
