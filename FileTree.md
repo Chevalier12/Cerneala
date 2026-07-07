@@ -339,6 +339,8 @@ Generated from `.`.
 |   |   |   |   |   +-- MotionValueTests.cs
 |   |   |   |   |-- Interpolation/
 |   |   |   |   |   +-- ValueMixerBuiltInTests.cs
+|   |   |   |   |-- Properties/
+|   |   |   |   |   +-- MotionPropertyBindingTests.cs
 |   |   |   |   +-- Specs/
 |   |   |   |       |-- EasingTests.cs
 |   |   |   |       +-- MotionSpecTests.cs
@@ -829,6 +831,17 @@ Generated from `.`.
 |   |   |   |-- TransformMixer.cs
 |   |   |   |-- ValueMixer.cs
 |   |   |   +-- ValueMixerRegistry.cs
+|   |   |-- Properties/
+|   |   |   |-- AnimatablePropertyRegistry.cs
+|   |   |   |-- MotionClearBehavior.cs
+|   |   |   |-- MotionPropertyBinding.cs
+|   |   |   |-- MotionPropertyBinding{T}.cs
+|   |   |   |-- MotionPropertyInvalidationCategory.cs
+|   |   |   |-- MotionPropertyInvalidationClassifier.cs
+|   |   |   |-- MotionPropertyKey.cs
+|   |   |   |-- MotionPropertyOptions.cs
+|   |   |   |-- MotionPropertyStartOptions.cs
+|   |   |   +-- MotionPropertyStore.cs
 |   |   |-- Specs/
 |   |   |   |-- CubicBezierEasing.cs
 |   |   |   |-- DecaySpec.cs
