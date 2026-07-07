@@ -8,6 +8,10 @@ public enum TransformInterpolationMode
     Matrix
 }
 
+/// <summary>
+/// Component form used for transform interpolation. Compose honors both skew axes,
+/// while Decompose returns an equivalent canonical form with SkewY set to zero.
+/// </summary>
 public readonly record struct TransformComponents(
     float TranslationX,
     float TranslationY,
@@ -61,54 +65,14 @@ public sealed class TransformMixer : ValueMixer<Transform>
             && MathF.Abs(left.Matrix.M32 - right.Matrix.M32) <= tolerance;
     }
 
-    public override Transform Add(Transform left, Transform right)
-    {
-        EnsureComponentVectorOperations();
-        return Compose(Add(Decompose(left), Decompose(right)));
-    }
-
-    public override Transform Subtract(Transform left, Transform right)
-    {
-        EnsureComponentVectorOperations();
-        return Compose(Subtract(Decompose(left), Decompose(right)));
-    }
-
-    public override Transform Scale(Transform value, float scalar)
-    {
-        EnsureComponentVectorOperations();
-        TransformComponents components = Decompose(value);
-        return Compose(new TransformComponents(
-            components.TranslationX * scalar,
-            components.TranslationY * scalar,
-            components.ScaleX * scalar,
-            components.ScaleY * scalar,
-            components.RotationRadians * scalar,
-            components.SkewX * scalar,
-            components.SkewY * scalar));
-    }
-
-    public override float Magnitude(Transform value)
-    {
-        EnsureComponentVectorOperations();
-        TransformComponents components = Decompose(value);
-        return MathF.Sqrt(
-            (components.TranslationX * components.TranslationX)
-            + (components.TranslationY * components.TranslationY)
-            + (components.ScaleX * components.ScaleX)
-            + (components.ScaleY * components.ScaleY)
-            + (components.RotationRadians * components.RotationRadians)
-            + (components.SkewX * components.SkewX)
-            + (components.SkewY * components.SkewY));
-    }
-
     public static TransformComponents Decompose(Transform transform)
     {
         ArgumentNullException.ThrowIfNull(transform);
         Matrix3x2 matrix = transform.Matrix;
 
-        // Simple affine decomposition for common UI transforms: translation, scale,
-        // rotation, and X skew. Matrices with collapsed X scale are rejected instead
-        // of silently falling back to matrix lerp in component mode.
+        // Canonical affine decomposition for UI transforms: translation, scale,
+        // rotation, and equivalent X skew. Matrices with collapsed scale are
+        // rejected instead of silently falling back to matrix lerp in component mode.
         float scaleX = MathF.Sqrt((matrix.M11 * matrix.M11) + (matrix.M12 * matrix.M12));
         if (scaleX <= DecompositionEpsilon)
         {
@@ -118,8 +82,13 @@ public sealed class TransformMixer : ValueMixer<Transform>
         float rotation = MathF.Atan2(matrix.M12, matrix.M11);
         float determinant = (matrix.M11 * matrix.M22) - (matrix.M12 * matrix.M21);
         float scaleY = determinant / scaleX;
+        if (MathF.Abs(scaleY) <= DecompositionEpsilon)
+        {
+            throw new InvalidOperationException("Transform matrix cannot be decomposed because ScaleY is too close to zero.");
+        }
+
         float dot = (matrix.M11 * matrix.M21) + (matrix.M12 * matrix.M22);
-        float skewX = MathF.Atan2(dot, scaleX * scaleX);
+        float skewX = MathF.Atan(dot / (scaleX * scaleY));
 
         return new TransformComponents(matrix.M31, matrix.M32, scaleX, scaleY, rotation, skewX, 0);
     }
@@ -178,35 +147,4 @@ public sealed class TransformMixer : ValueMixer<Transform>
         return from + (delta * progress);
     }
 
-    private static TransformComponents Add(TransformComponents left, TransformComponents right)
-    {
-        return new TransformComponents(
-            left.TranslationX + right.TranslationX,
-            left.TranslationY + right.TranslationY,
-            left.ScaleX + right.ScaleX,
-            left.ScaleY + right.ScaleY,
-            left.RotationRadians + right.RotationRadians,
-            left.SkewX + right.SkewX,
-            left.SkewY + right.SkewY);
-    }
-
-    private static TransformComponents Subtract(TransformComponents left, TransformComponents right)
-    {
-        return new TransformComponents(
-            left.TranslationX - right.TranslationX,
-            left.TranslationY - right.TranslationY,
-            left.ScaleX - right.ScaleX,
-            left.ScaleY - right.ScaleY,
-            left.RotationRadians - right.RotationRadians,
-            left.SkewX - right.SkewX,
-            left.SkewY - right.SkewY);
-    }
-
-    private void EnsureComponentVectorOperations()
-    {
-        if (!SupportsVectorOperations)
-        {
-            throw CreateVectorException();
-        }
-    }
 }

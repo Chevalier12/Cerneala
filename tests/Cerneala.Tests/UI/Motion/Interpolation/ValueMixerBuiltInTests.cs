@@ -107,6 +107,73 @@ public sealed class ValueMixerBuiltInTests
     }
 
     [Fact]
+    public void TransformComponentsRoundTripScaleAndRotation()
+    {
+        Transform transform = TransformMixer.Compose(new TransformComponents(
+            TranslationX: 7,
+            TranslationY: 11,
+            ScaleX: 2,
+            ScaleY: 3,
+            RotationRadians: 0.75f,
+            SkewX: 0,
+            SkewY: 0));
+
+        Transform roundTripped = TransformMixer.Compose(TransformMixer.Decompose(transform));
+
+        AssertSameMatrix(transform, roundTripped);
+    }
+
+    [Fact]
+    public void TransformComponentsRoundTripSkewWithNonUniformScale()
+    {
+        Transform transform = TransformMixer.Compose(new TransformComponents(
+            TranslationX: 0,
+            TranslationY: 0,
+            ScaleX: 2,
+            ScaleY: 3,
+            RotationRadians: 0,
+            SkewX: 0.5f,
+            SkewY: 0));
+
+        TransformComponents components = TransformMixer.Decompose(transform);
+        Transform roundTripped = TransformMixer.Compose(components);
+
+        Assert.Equal(0.5f, components.SkewX, precision: 3);
+        Assert.Equal(0, components.SkewY, precision: 3);
+        AssertSameMatrix(transform, roundTripped);
+    }
+
+    [Fact]
+    public void TransformDecomposeReturnsCanonicalZeroSkewY()
+    {
+        Transform transform = TransformMixer.Compose(new TransformComponents(
+            TranslationX: 0,
+            TranslationY: 0,
+            ScaleX: 2,
+            ScaleY: 3,
+            RotationRadians: 0.25f,
+            SkewX: 0.1f,
+            SkewY: 0.2f));
+
+        TransformComponents components = TransformMixer.Decompose(transform);
+
+        Assert.Equal(0, components.SkewY, precision: 3);
+        AssertSameMatrix(transform, TransformMixer.Compose(components));
+    }
+
+    [Fact]
+    public void TransformDecomposeRejectsDegenerateScale()
+    {
+        InvalidOperationException scaleX = Assert.Throws<InvalidOperationException>(() =>
+            TransformMixer.Decompose(TransformMixer.Compose(new TransformComponents(0, 0, 0, 2, 0, 0, 0))));
+        InvalidOperationException scaleY = Assert.Throws<InvalidOperationException>(() =>
+            TransformMixer.Decompose(TransformMixer.Compose(new TransformComponents(0, 0, 2, 0, 0, 0, 0))));
+
+        Assert.Contains("ScaleX", scaleX.Message, StringComparison.Ordinal);
+        Assert.Contains("ScaleY", scaleY.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RegistryMissingMixerExceptionIncludesPropertyAndType()
     {
         ValueMixerRegistry registry = new();
