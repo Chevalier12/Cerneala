@@ -1,3 +1,4 @@
+using System.Reflection;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
@@ -13,7 +14,7 @@ public sealed class MotionSystemTests
     {
         ManualMotionClock clock = new();
         UIRoot root = new(motionClock: clock);
-        root.Motion.Graph.ActivateTestNode(nodesSampled: 1);
+        root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
 
         MotionFrameResult first = root.Motion.Tick();
         clock.Advance(TimeSpan.FromMilliseconds(16));
@@ -43,7 +44,7 @@ public sealed class MotionSystemTests
     public void MotionSystemRequestsAnotherFrameWhileGraphActive()
     {
         UIRoot root = new();
-        root.Motion.Graph.ActivateTestNode(nodesSampled: 2);
+        root.Motion.Graph.ActivateShellNode(nodesSampled: 2);
 
         MotionFrameResult result = root.Motion.Tick();
 
@@ -57,13 +58,36 @@ public sealed class MotionSystemTests
     {
         ManualMotionClock clock = new();
         UIRoot root = new(motionClock: clock);
-        root.Motion.Graph.ActivateTestNode(nodesSampled: 1);
+        root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
         root.Motion.Tick();
 
         clock.Advance(TimeSpan.FromSeconds(5));
         MotionFrameResult result = root.Motion.Tick();
 
         Assert.Equal(TimeSpan.FromMilliseconds(100), result.Frame.Delta);
+    }
+
+    [Fact]
+    public void MotionSystemRestartsDeltaAtZeroAfterMotionBecomesIdle()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        root.Motion.Graph.ActivateShellNode(nodesSampled: 1, completed: 1);
+        root.Motion.Tick();
+
+        clock.Advance(TimeSpan.FromSeconds(5));
+        root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
+        MotionFrameResult result = root.Motion.Tick();
+
+        Assert.Equal(TimeSpan.Zero, result.Frame.Delta);
+    }
+
+    [Fact]
+    public void MotionGraphPublicApiDoesNotExposeTestHooks()
+    {
+        MethodInfo[] publicMethods = typeof(MotionGraph).GetMethods(BindingFlags.Instance | BindingFlags.Public);
+
+        Assert.DoesNotContain(publicMethods, method => method.Name.Contains("Test", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -75,7 +99,7 @@ public sealed class MotionSystemTests
         {
             try
             {
-                root.Motion.Graph.ActivateTestNode(nodesSampled: 1);
+                root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
             }
             catch (Exception ex)
             {
@@ -93,7 +117,7 @@ public sealed class MotionSystemTests
     public void MotionFrameCoordinatorRunsBeforeAndAfterLayoutPhasesInOrder()
     {
         UIRoot root = new();
-        root.Motion.Graph.ActivateTestNode(nodesSampled: 1);
+        root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
 
         root.Motion.Frames.BeginFrame(MotionFrameReason.Manual);
         root.Motion.Frames.BeforeLayout();
@@ -178,7 +202,7 @@ public sealed class MotionSystemTests
     public void UIRootFrameStatsIncludeMotionCounters()
     {
         UIRoot root = new();
-        root.Motion.Graph.ActivateTestNode(
+        root.Motion.Graph.ActivateShellNode(
             nodesSampled: 3,
             valuesChanged: 2,
             propertyWrites: 1,
@@ -206,7 +230,7 @@ public sealed class MotionSystemTests
         UIRoot root = new();
         UiHost host = new(new UiHostOptions { Root = root });
         host.Update(EmptyInputFrame(), new UiViewport(100, 100), TimeSpan.Zero);
-        root.Motion.Graph.ActivateTestNode(nodesSampled: 1);
+        root.Motion.Graph.ActivateShellNode(nodesSampled: 1);
 
         UiFrame frame = host.Update(EmptyInputFrame(), new UiViewport(100, 100), TimeSpan.Zero);
 

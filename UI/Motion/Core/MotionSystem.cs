@@ -9,7 +9,13 @@ public sealed class MotionSystem
     private readonly IMotionClock clock;
     private TimeSpan? previousTimestamp;
     private int frameIndex;
+    private bool wasActiveLastTick;
 
+    /// <summary>
+    /// Creates the root-owned motion system and captures thread affinity immediately.
+    /// Construct the owning root on the UI thread; marshal cross-thread motion requests
+    /// through the platform UI dispatcher before calling motion APIs.
+    /// </summary>
     public MotionSystem(UIRoot root, IMotionClock clock, ReducedMotionPolicy reducedMotion)
     {
         Root = root ?? throw new ArgumentNullException(nameof(root));
@@ -52,10 +58,12 @@ public sealed class MotionSystem
         MotionFrame idleFrame = new(now, TimeSpan.Zero, frameIndex, reason, phase);
         if (!HasActiveMotion)
         {
+            previousTimestamp = null;
+            wasActiveLastTick = false;
             return MotionFrameResult.Empty(idleFrame);
         }
 
-        TimeSpan delta = previousTimestamp is null ? TimeSpan.Zero : now - previousTimestamp.Value;
+        TimeSpan delta = !wasActiveLastTick || previousTimestamp is null ? TimeSpan.Zero : now - previousTimestamp.Value;
         if (delta < TimeSpan.Zero)
         {
             delta = TimeSpan.Zero;
@@ -69,6 +77,13 @@ public sealed class MotionSystem
         previousTimestamp = now;
         frameIndex++;
         MotionFrame frame = new(now, delta, frameIndex, reason, phase);
-        return Graph.Sample(frame);
+        MotionFrameResult result = Graph.Sample(frame);
+        wasActiveLastTick = result.NeedsAnotherFrame || Graph.HasActiveMotion;
+        if (!wasActiveLastTick)
+        {
+            previousTimestamp = null;
+        }
+
+        return result;
     }
 }

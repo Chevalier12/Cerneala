@@ -22,7 +22,7 @@ public sealed class MotionGraph
 
     public bool HasActiveMotion { get; private set; }
 
-    public void ActivateTestNode(
+    internal void ActivateShellNode(
         int nodesSampled = 1,
         int valuesChanged = 0,
         int propertyWrites = 0,
@@ -42,7 +42,7 @@ public sealed class MotionGraph
         this.skippedByReducedMotion = skippedByReducedMotion;
     }
 
-    public void CompleteTestNode()
+    internal void DeactivateShellNode()
     {
         threadGuard.VerifyAccess();
         HasActiveMotion = false;
