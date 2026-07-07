@@ -540,15 +540,15 @@ public interface IEasing
 
 ### Contract
 
-- [ ] `ValueMixer<T>` should handle:
-  - [ ] `T Mix(T from, T to, float progress)` (implemented, but exact-endpoint review blocker remains for numeric/vector mixers)
+- [x] `ValueMixer<T>` should handle:
+  - [x] `T Mix(T from, T to, float progress)`
   - [x] `bool EqualsWithinTolerance(T left, T right, float tolerance)`
   - [x] `bool SupportsVectorOperations { get; }`
   - [x] `T Add(T left, T right)` only when `SupportsVectorOperations` is true.
   - [x] `T Subtract(T left, T right)` only when `SupportsVectorOperations` is true.
   - [x] `T Scale(T value, float scalar)` only when `SupportsVectorOperations` is true.
 - [ ] For non-vector types, either:
-  - [ ] Do not support spring/decay, and fail clearly. (review blocker: non-vector spring still falls back instead of failing)
+  - [x] Do not support spring/decay, and fail clearly.
   - [ ] Or provide a vector adapter.
 - [x] `ValueMixerRegistry`:
   - [x] Is root/system owned, not static-only.
@@ -571,7 +571,7 @@ public interface IEasing
 
 ### Tests
 
-- [ ] All built-in mixers return exact endpoints. (review blocker: float/double/vector lerp can miss exact endpoint for large values)
+- [x] All built-in mixers return exact endpoints.
 - [x] Color interpolation handles alpha.
 - [x] Thickness interpolation handles each edge.
 - [x] Rect interpolation handles x/y/width/height.
