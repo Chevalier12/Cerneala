@@ -6,6 +6,7 @@ public sealed class MotionFrameCoordinator
 {
     private readonly MotionSystem motion;
     private MotionFrameReason currentReason = MotionFrameReason.Scheduled;
+    private bool sampledThisFrame;
 
     public MotionFrameCoordinator(UIRoot root, MotionSystem motion)
     {
@@ -17,6 +18,7 @@ public sealed class MotionFrameCoordinator
     {
         motion.ThreadGuard.VerifyAccess();
         currentReason = reason;
+        sampledThisFrame = false;
         motion.Diagnostics.BeginFrame();
         MotionFramePhase phase = reason == MotionFrameReason.Input
             ? MotionFramePhase.AfterInput
@@ -30,7 +32,13 @@ public sealed class MotionFrameCoordinator
         motion.ThreadGuard.VerifyAccess();
         motion.Diagnostics.RecordPhase(MotionFramePhase.BeforeLayout);
         motion.Diagnostics.CaptureBeforeLayoutSnapshots();
-        return MotionFrameResult.Empty(new MotionFrame(default, default, 0, currentReason, MotionFramePhase.BeforeLayout));
+        if (!motion.HasActiveMotion)
+        {
+            return MotionFrameResult.Empty(new MotionFrame(default, default, 0, currentReason, MotionFramePhase.BeforeLayout));
+        }
+
+        sampledThisFrame = true;
+        return motion.Tick(currentReason, MotionFramePhase.BeforeLayout);
     }
 
     public MotionFrameResult AfterLayout()
@@ -45,6 +53,12 @@ public sealed class MotionFrameCoordinator
     {
         motion.ThreadGuard.VerifyAccess();
         motion.Diagnostics.RecordPhase(MotionFramePhase.BeforeRender);
+        if (sampledThisFrame)
+        {
+            return MotionFrameResult.Empty(new MotionFrame(default, default, 0, currentReason, MotionFramePhase.BeforeRender));
+        }
+
+        sampledThisFrame = true;
         return motion.Tick(currentReason, MotionFramePhase.BeforeRender);
     }
 

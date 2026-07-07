@@ -70,7 +70,13 @@ public sealed class UiFrameScheduler
             if (motion is not null)
             {
                 stats.CountMotion(motion.BeginFrame(motionReason));
+                stats.CountMotion(motion.BeforeLayout());
+                ProcessMeasure(processors, stats);
+                ProcessArrange(processors, stats);
+                stats.CountMotion(motion.AfterLayout());
                 stats.CountMotion(motion.BeforeRender());
+                ProcessRender(processors, stats);
+                ProcessHitTest(processors, stats);
                 stats.CountMotion(motion.EndFrame());
                 return stats;
             }
