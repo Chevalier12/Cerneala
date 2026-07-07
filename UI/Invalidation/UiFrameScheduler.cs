@@ -1,4 +1,5 @@
 using Cerneala.UI.Diagnostics;
+using Cerneala.UI.Motion.Core;
 
 namespace Cerneala.UI.Invalidation;
 
@@ -56,7 +57,9 @@ public sealed class UiFrameScheduler
     public FrameStats ProcessFrame(
         FramePhaseProcessors? processors = null,
         FrameBudget budget = default,
-        FrameStats? stats = null)
+        FrameStats? stats = null,
+        MotionFrameCoordinator? motion = null,
+        MotionFrameReason motionReason = MotionFrameReason.Scheduled)
     {
         processors ??= FramePhaseProcessors.Empty;
         budget = budget == default ? FrameBudget.ProcessAll : budget;
@@ -64,6 +67,14 @@ public sealed class UiFrameScheduler
         stats ??= new FrameStats();
         if (!HasWork)
         {
+            if (motion is not null)
+            {
+                stats.CountMotion(motion.BeginFrame(motionReason));
+                stats.CountMotion(motion.BeforeRender());
+                stats.CountMotion(motion.EndFrame());
+                return stats;
+            }
+
             stats.CountNoWorkFrame();
             trace.RecordPhaseSummary(FramePhase.Idle, 0);
             return stats;
@@ -72,14 +83,19 @@ public sealed class UiFrameScheduler
         // MVP scheduler contract: each phase processes one deterministic snapshot.
         // Same-phase work enqueued during processing is deferred to a later frame.
         // Downstream phase work may still run in this frame if its snapshot has not been taken yet.
+        stats.CountMotion(motion?.BeginFrame(motionReason) ?? default);
         ProcessInheritedProperties(processors, stats);
         ProcessCommandState(processors, stats);
         ProcessStyle(processors, stats);
         ProcessInheritedProperties(processors, stats);
+        stats.CountMotion(motion?.BeforeLayout() ?? default);
         ProcessMeasure(processors, stats);
         ProcessArrange(processors, stats);
+        stats.CountMotion(motion?.AfterLayout() ?? default);
+        stats.CountMotion(motion?.BeforeRender() ?? default);
         ProcessRender(processors, stats);
         ProcessHitTest(processors, stats);
+        stats.CountMotion(motion?.EndFrame() ?? default);
 
         return stats;
     }

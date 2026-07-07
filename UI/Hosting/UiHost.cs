@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Rendering;
 
@@ -76,14 +77,14 @@ public sealed class UiHost
         FrameStats stats = new();
         if (currentRoot.Scheduler.HasWork)
         {
-            currentRoot.ProcessFrame(stats: stats);
+            currentRoot.ProcessFrame(stats: stats, motionReason: MotionFrameReason.Scheduled);
         }
 
         InputBridge.Dispatch(currentRoot, inputFrame);
 
-        if (currentRoot.Scheduler.HasWork)
+        if (currentRoot.Scheduler.HasWork || (currentRoot.Motion.HasActiveMotion && stats.MotionFrames == 0))
         {
-            currentRoot.ProcessFrame(stats: stats);
+            currentRoot.ProcessFrame(stats: stats, motionReason: MotionFrameReason.Input);
         }
         else if (!stats.HasWork)
         {

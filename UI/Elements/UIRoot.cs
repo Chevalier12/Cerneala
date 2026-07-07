@@ -3,6 +3,7 @@ using Cerneala.UI.Accessibility;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
@@ -22,7 +23,12 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     private int cachedSemanticsTreeVersion = -1;
     private bool semanticsDirty = true;
 
-    public UIRoot(float viewportWidth = 0, float viewportHeight = 0, float scale = 1)
+    public UIRoot(
+        float viewportWidth = 0,
+        float viewportHeight = 0,
+        float scale = 1,
+        IMotionClock? motionClock = null,
+        ReducedMotionPolicy? reducedMotion = null)
     {
         ViewportWidth = viewportWidth;
         ViewportHeight = viewportHeight;
@@ -46,6 +52,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         styleApplicator = new StyleApplicator();
         StyleProcessor = new StyleProcessor(styleApplicator, () => StyleSheet, () => themeProvider);
         Scheduler = new UiFrameScheduler(LayoutQueue, InheritedPropertyQueue, CommandStateQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
+        Motion = new MotionSystem(this, motionClock ?? new SystemMotionClock(), reducedMotion ?? ReducedMotionPolicy.Default);
         IsLayoutBoundary = true;
         ElementLifecycle.AttachSubtree(this, this);
     }
@@ -101,6 +108,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public ImageResourceCache? ImageResourceCache { get; private set; }
 
     public UiFrameScheduler Scheduler { get; }
+
+    public MotionSystem Motion { get; }
 
     public StyleSheet? StyleSheet { get; private set; }
 
@@ -271,13 +280,18 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         return cachedSemanticsTree;
     }
 
-    public FrameStats ProcessFrame(FramePhaseProcessors? processors = null, FrameBudget budget = default, FrameStats? stats = null)
+    public FrameStats ProcessFrame(
+        FramePhaseProcessors? processors = null,
+        FrameBudget budget = default,
+        FrameStats? stats = null,
+        MotionFrameReason motionReason = MotionFrameReason.Scheduled)
     {
         FrameStats frameStats = stats ?? new FrameStats();
         activeFrameStats = frameStats;
         try
         {
-            return Scheduler.ProcessFrame(processors ?? CreatePhaseProcessors(), budget, frameStats);
+            MotionFrameCoordinator? motion = Scheduler.HasWork || Motion.HasActiveMotion ? Motion.Frames : null;
+            return Scheduler.ProcessFrame(processors ?? CreatePhaseProcessors(), budget, frameStats, motion, motionReason);
         }
         finally
         {

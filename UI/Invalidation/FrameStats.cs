@@ -1,3 +1,5 @@
+using Cerneala.UI.Motion.Core;
+
 namespace Cerneala.UI.Invalidation;
 
 public sealed class FrameStats
@@ -24,6 +26,22 @@ public sealed class FrameStats
 
     public int NoWorkFrames { get; private set; }
 
+    public int MotionFrames { get; private set; }
+
+    public int MotionNodesSampled { get; private set; }
+
+    public int MotionValuesChanged { get; private set; }
+
+    public int MotionPropertyWrites { get; private set; }
+
+    public int MotionCompleted { get; private set; }
+
+    public int MotionRenderInvalidations { get; private set; }
+
+    public int MotionLayoutInvalidations { get; private set; }
+
+    public int MotionSkippedByReducedMotion { get; private set; }
+
     public bool HasWork =>
         InheritedElements > 0 ||
         CommandStateElements > 0 ||
@@ -31,7 +49,15 @@ public sealed class FrameStats
         MeasuredElements > 0 ||
         ArrangedElements > 0 ||
         RenderedElements > 0 ||
-        HitTestElements > 0;
+        HitTestElements > 0 ||
+        MotionFrames > 0 ||
+        MotionNodesSampled > 0 ||
+        MotionValuesChanged > 0 ||
+        MotionPropertyWrites > 0 ||
+        MotionCompleted > 0 ||
+        MotionRenderInvalidations > 0 ||
+        MotionLayoutInvalidations > 0 ||
+        MotionSkippedByReducedMotion > 0;
 
     public void Count(FramePhase phase)
     {
@@ -80,5 +106,17 @@ public sealed class FrameStats
     {
         NoWorkFrames++;
         CountReusedCache();
+    }
+
+    public void CountMotion(MotionFrameResult result)
+    {
+        MotionFrames += result.MotionFrames;
+        MotionNodesSampled += result.MotionNodesSampled;
+        MotionValuesChanged += result.MotionValuesChanged;
+        MotionPropertyWrites += result.MotionPropertyWrites;
+        MotionCompleted += result.MotionCompleted;
+        MotionRenderInvalidations += result.MotionRenderInvalidations;
+        MotionLayoutInvalidations += result.MotionLayoutInvalidations;
+        MotionSkippedByReducedMotion += result.MotionSkippedByReducedMotion;
     }
 }
