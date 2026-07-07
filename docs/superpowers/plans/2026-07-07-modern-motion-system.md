@@ -566,7 +566,7 @@ public interface IEasing
   - [x] `RotationRadians`
   - [x] `SkewX`
   - [x] `SkewY`
-- [ ] `TransformMixer` should decompose/recompose where possible. (quality blocker: skew + non-uniform scale does not round-trip correctly yet)
+- [x] `TransformMixer` should decompose/recompose where possible.
 - [x] Fallback to matrix lerp only with explicit `TransformInterpolationMode.Matrix`.
 
 ### Tests
@@ -1471,7 +1471,7 @@ motion=3, sampled=3, motionWrites=2, motionRender=2, motionLayout=0
 - [x] 1. Phase 0: freeze legacy behavior.
 - [x] 2. Phase 1: root-owned clock/system/frame stats.
 - [x] 3. Phase 2 and 3: specs/easing.
-- [ ] 4. Phase 4: mixers.
+- [x] 4. Phase 4: mixers.
 - [ ] 5. Phase 5: motion graph/values.
 - [ ] 6. Phase 6: property bindings.
 - [ ] 7. Phase 7: render-layer properties on `UIElement`.
