@@ -5,8 +5,39 @@ namespace Cerneala.UI.Motion.Properties;
 public sealed class MotionPropertyStore
 {
     private readonly Dictionary<MotionPropertyKey, PendingWrite> writes = [];
+    private readonly List<PendingWrite> writeSnapshot = [];
+    private readonly Dictionary<MotionPropertyKey, MotionPropertyBinding> bindings = [];
 
     public bool HasPendingWrites => writes.Count > 0;
+
+    public int BindingCount => bindings.Count;
+
+    public MotionPropertyBinding<T> GetOrCreateBinding<T>(
+        Core.MotionSystem motion,
+        Elements.UIElement target,
+        UiProperty<T> property)
+    {
+        ArgumentNullException.ThrowIfNull(motion);
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(property);
+
+        MotionPropertyKey key = new(target, property);
+        if (bindings.TryGetValue(key, out MotionPropertyBinding? existing))
+        {
+            if (existing is MotionPropertyBinding<T> typed)
+            {
+                return typed;
+            }
+
+            throw new InvalidOperationException($"Existing motion binding for '{property.DiagnosticName}' has an incompatible value type.");
+        }
+
+        T current = target.GetValue(property);
+        Core.MotionValue<T> value = motion.Graph.CreateValue(current, motion.Mixers.Resolve<T>(property.DiagnosticName));
+        MotionPropertyBinding<T> binding = new(motion, target, property, value);
+        bindings[key] = binding;
+        return binding;
+    }
 
     internal void StageSet<T>(
         UiObject target,
@@ -34,14 +65,19 @@ public sealed class MotionPropertyStore
             return default;
         }
 
-        PendingWrite[] snapshot = writes.Values.ToArray();
+        writeSnapshot.Clear();
+        foreach (PendingWrite write in writes.Values)
+        {
+            writeSnapshot.Add(write);
+        }
+
         writes.Clear();
 
         int propertyWrites = 0;
         int renderInvalidations = 0;
         int layoutInvalidations = 0;
 
-        foreach (PendingWrite write in snapshot)
+        foreach (PendingWrite write in writeSnapshot)
         {
             object? oldValue = write.Target.GetValue(write.Property);
             UiPropertyValueSource oldSource = write.Target.GetValueSource(write.Property);
@@ -80,6 +116,7 @@ public sealed class MotionPropertyStore
             }
         }
 
+        writeSnapshot.Clear();
         return new MotionPropertyFlushResult(propertyWrites, renderInvalidations, layoutInvalidations);
     }
 

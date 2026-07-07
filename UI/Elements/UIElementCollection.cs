@@ -24,6 +24,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
     public void Add(UIElement child)
     {
         ArgumentNullException.ThrowIfNull(child);
+        owner.Root?.Motion.Presence.TryCancelExitForAdd(owner, child);
 
         if (ReferenceEquals(owner, child))
         {
@@ -78,6 +79,16 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         if (index < 0)
         {
             return false;
+        }
+
+        if (role == ElementChildRole.Visual && owner.Root?.Motion.Presence.TryBeginExit(owner, child) == true)
+        {
+            children.RemoveAt(index);
+            SetParent(child, null);
+            owner.Root.IncrementTreeVersion();
+            InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Removed);
+            Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Removed));
+            return true;
         }
 
         children.RemoveAt(index);

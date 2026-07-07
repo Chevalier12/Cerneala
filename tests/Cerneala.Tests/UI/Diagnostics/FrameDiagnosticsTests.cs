@@ -39,6 +39,6 @@ public sealed class FrameDiagnosticsTests
 
         string formatted = FrameDiagnostics.Format(stats);
 
-        Assert.Equal("frame queuedMeasure=0, queuedArrange=0, measureCalls=0, arrangeCalls=0, renderCache=0, hitTest=0, reusedCaches=1, noWork=1, hasWork=False", formatted);
+        Assert.Equal("frame queuedMeasure=0, queuedArrange=0, measureCalls=0, arrangeCalls=0, renderCache=0, hitTest=0, reusedCaches=1, noWork=1, motion=0, sampled=0, motionValues=0, motionWrites=0, completed=0, motionRender=0, motionLayout=0, reduced=0, hasWork=False", formatted);
     }
 }

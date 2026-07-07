@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Rendering;
 
@@ -15,7 +16,7 @@ public sealed class DrawCommandListBuilder
 
         DrawCommandList rootCommands = renderCache.RootCommands;
         rootCommands.Clear();
-        AppendElement(root, renderCache, counters, rootCommands);
+        AppendElement(root, renderCache, counters, rootCommands, Matrix3x2.Identity, 1);
         renderCache.MarkRootBuilt();
     }
 
@@ -23,18 +24,27 @@ public sealed class DrawCommandListBuilder
         UIElement element,
         RetainedRenderCache renderCache,
         RenderCounters counters,
-        DrawCommandList rootCommands)
+        DrawCommandList rootCommands,
+        Matrix3x2 ancestorTransform,
+        float ancestorOpacity)
     {
         if (!UIElementVisibility.ParticipatesInRendering(element))
         {
             return;
         }
 
+        Matrix3x2 elementTransform = Matrix3x2.Multiply(GetElementTransform(element), ancestorTransform);
+        float elementOpacity = ancestorOpacity * element.Opacity * element.PresenceOpacity;
+        if (elementOpacity <= 0)
+        {
+            return;
+        }
+
         counters.CountComposedElement();
-        bool hasClip = ClipNode.TryGetClip(element, out ClipNode clip);
+        bool hasClip = TryGetClip(element, out LayoutRect clipBounds);
         if (hasClip)
         {
-            rootCommands.Add(DrawCommand.PushClip(ToDrawRect(clip.Bounds)));
+            rootCommands.Add(ApplyRenderScope(DrawCommand.PushClip(ToDrawRect(clipBounds)), elementTransform, 1));
             counters.CountEmittedCommands(1);
         }
 
@@ -42,13 +52,21 @@ public sealed class DrawCommandListBuilder
         DrawCommandList localCommands = GetLocalCommands(element, localCache, out float offsetX, out float offsetY);
         foreach (DrawCommand command in localCommands)
         {
-            rootCommands.Add(Translate(command, offsetX, offsetY));
+            rootCommands.Add(ApplyRenderScope(Translate(command, offsetX, offsetY), elementTransform, elementOpacity));
             counters.CountEmittedCommands(1);
         }
 
         foreach (UIElement child in element.VisualChildren)
         {
-            AppendElement(child, renderCache, counters, rootCommands);
+            AppendElement(child, renderCache, counters, rootCommands, elementTransform, elementOpacity);
+        }
+
+        if (element.Root is UIRoot root)
+        {
+            foreach (UIElement child in root.Motion.Presence.GetExitingVisualChildren(element))
+            {
+                AppendElement(child, renderCache, counters, rootCommands, elementTransform, elementOpacity);
+            }
         }
 
         if (hasClip)
@@ -56,6 +74,24 @@ public sealed class DrawCommandListBuilder
             rootCommands.Add(DrawCommand.PopClip());
             counters.CountEmittedCommands(1);
         }
+    }
+
+    private static bool TryGetClip(UIElement element, out LayoutRect bounds)
+    {
+        if (ClipNode.TryGetClip(element, out ClipNode clip))
+        {
+            bounds = clip.Bounds;
+            return true;
+        }
+
+        if (element.ClipToBounds)
+        {
+            bounds = element.ArrangedBounds;
+            return true;
+        }
+
+        bounds = default;
+        return false;
     }
 
     private static DrawRect ToDrawRect(LayoutRect rect)
@@ -135,5 +171,78 @@ public sealed class DrawCommandListBuilder
     private static DrawPoint Translate(DrawPoint point, float offsetX, float offsetY)
     {
         return new DrawPoint(point.X + offsetX, point.Y + offsetY);
+    }
+
+    private static DrawCommand ApplyRenderScope(DrawCommand command, Matrix3x2 transform, float opacity)
+    {
+        return command.Kind switch
+        {
+            DrawCommandKind.FillRectangle => DrawCommand.FillRectangle(Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawRectangle => DrawCommand.DrawRectangle(Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity), command.Thickness),
+            DrawCommandKind.FillEllipse => DrawCommand.FillEllipse(Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawEllipse => DrawCommand.DrawEllipse(Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity), command.Thickness),
+            DrawCommandKind.DrawLine => DrawCommand.DrawLine(
+                transform.Transform(command.Position),
+                transform.Transform(command.EndPoint),
+                ApplyOpacity(command.Color, opacity),
+                command.Thickness),
+            DrawCommandKind.DrawText => DrawCommand.DrawText(command.TextRun!, transform.Transform(command.Position), ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawImage => DrawCommand.DrawImage(command.Image!, Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.PushClip => DrawCommand.PushClip(Transform(command.Rect, transform)),
+            DrawCommandKind.PopClip => command,
+            _ => command
+        };
+    }
+
+    private static Matrix3x2 GetElementTransform(UIElement element)
+    {
+        LayoutRect bounds = element.ArrangedBounds;
+        LayoutPoint origin = element.RenderTransformOrigin;
+        float pivotX = bounds.X + (bounds.Width * origin.X);
+        float pivotY = bounds.Y + (bounds.Height * origin.Y);
+
+        Matrix3x2 channelTransform = Matrix3x2.Identity;
+        channelTransform = Matrix3x2.Multiply(channelTransform, Matrix3x2.CreateScale(
+            element.Scale * element.ScaleX * element.PresenceScale,
+            element.Scale * element.ScaleY * element.PresenceScale));
+        channelTransform = Matrix3x2.Multiply(channelTransform, Matrix3x2.CreateSkew(element.SkewX, element.SkewY));
+        channelTransform = Matrix3x2.Multiply(channelTransform, Matrix3x2.CreateRotation(element.Rotation));
+        channelTransform = Matrix3x2.Multiply(channelTransform, Matrix3x2.CreateTranslation(element.TranslateX, element.TranslateY));
+        channelTransform = Matrix3x2.Multiply(channelTransform, element.RenderTransform.Matrix);
+        channelTransform = Matrix3x2.Multiply(channelTransform, element.LayoutCorrectionTransform.Matrix);
+
+        if (channelTransform == Matrix3x2.Identity)
+        {
+            return Matrix3x2.Identity;
+        }
+
+        return Matrix3x2.Multiply(
+            Matrix3x2.Multiply(Matrix3x2.CreateTranslation(-pivotX, -pivotY), channelTransform),
+            Matrix3x2.CreateTranslation(pivotX, pivotY));
+    }
+
+    private static DrawRect Transform(DrawRect rect, Matrix3x2 transform)
+    {
+        DrawPoint topLeft = transform.Transform(new DrawPoint(rect.X, rect.Y));
+        DrawPoint topRight = transform.Transform(new DrawPoint(rect.Right, rect.Y));
+        DrawPoint bottomLeft = transform.Transform(new DrawPoint(rect.X, rect.Bottom));
+        DrawPoint bottomRight = transform.Transform(new DrawPoint(rect.Right, rect.Bottom));
+
+        float minX = MathF.Min(MathF.Min(topLeft.X, topRight.X), MathF.Min(bottomLeft.X, bottomRight.X));
+        float minY = MathF.Min(MathF.Min(topLeft.Y, topRight.Y), MathF.Min(bottomLeft.Y, bottomRight.Y));
+        float maxX = MathF.Max(MathF.Max(topLeft.X, topRight.X), MathF.Max(bottomLeft.X, bottomRight.X));
+        float maxY = MathF.Max(MathF.Max(topLeft.Y, topRight.Y), MathF.Max(bottomLeft.Y, bottomRight.Y));
+
+        return new DrawRect(minX, minY, maxX - minX, maxY - minY);
+    }
+
+    private static DrawColor ApplyOpacity(DrawColor color, float opacity)
+    {
+        if (opacity >= 1)
+        {
+            return color;
+        }
+
+        return new DrawColor(color.R, color.G, color.B, (byte)Math.Clamp((int)MathF.Round(color.A * opacity), 0, 255));
     }
 }

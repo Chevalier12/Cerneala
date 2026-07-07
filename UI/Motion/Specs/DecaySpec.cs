@@ -7,7 +7,7 @@ public sealed class DecaySpec<T> : MotionSpec<T>
     public DecaySpec(
         MotionVelocity<T> initialVelocity,
         float deceleration = 0.998f)
-        : this(initialVelocity, deceleration, default, default, hasMin: false, hasMax: false)
+        : this(initialVelocity, deceleration, default, default, hasMin: false, hasMax: false, bounce: null)
     {
     }
 
@@ -17,7 +17,8 @@ public sealed class DecaySpec<T> : MotionSpec<T>
         T? min,
         T? max,
         bool hasMin,
-        bool hasMax)
+        bool hasMax,
+        MotionSpec<T>? bounce)
     {
         if (!float.IsFinite(deceleration) || deceleration <= 0 || deceleration >= 1)
         {
@@ -30,6 +31,7 @@ public sealed class DecaySpec<T> : MotionSpec<T>
         Max = max;
         HasMin = hasMin;
         HasMax = hasMax;
+        Bounce = bounce;
     }
 
     public MotionVelocity<T> InitialVelocity { get; }
@@ -44,6 +46,8 @@ public sealed class DecaySpec<T> : MotionSpec<T>
 
     public bool HasMax { get; }
 
+    public MotionSpec<T>? Bounce { get; }
+
     public DecaySpec<T> WithBounds(T min, T max)
     {
         if (TryCompareComparable(min, max, out int comparison) && comparison > 0)
@@ -51,7 +55,13 @@ public sealed class DecaySpec<T> : MotionSpec<T>
             throw new ArgumentOutOfRangeException(nameof(min), "Decay minimum bound must be less than or equal to the maximum bound.");
         }
 
-        return new DecaySpec<T>(InitialVelocity, Deceleration, min, max, hasMin: true, hasMax: true);
+        return new DecaySpec<T>(InitialVelocity, Deceleration, min, max, hasMin: true, hasMax: true, Bounce);
+    }
+
+    public DecaySpec<T> WithBounce(MotionSpec<T> bounce)
+    {
+        ArgumentNullException.ThrowIfNull(bounce);
+        return new DecaySpec<T>(InitialVelocity, Deceleration, Min, Max, HasMin, HasMax, bounce);
     }
 
     public override MotionSampler<T> CreateSampler(T from, T to, ValueMixer<T> mixer, MotionSpecContext context)
@@ -68,7 +78,12 @@ public sealed class DecaySpec<T> : MotionSpec<T>
             throw new InvalidOperationException($"Decay bounds for {typeof(T).Name} require values that implement IComparable or IComparable<{typeof(T).Name}>.");
         }
 
-        return new DecaySampler(this, from, mixer);
+        if (Bounce is not null && (!HasMin || !HasMax))
+        {
+            throw new InvalidOperationException($"Decay bounce for {typeof(T).Name} requires both min and max bounds.");
+        }
+
+        return new DecaySampler(this, from, mixer, context);
     }
 
     private static bool SupportsComparableBounds()
@@ -99,14 +114,17 @@ public sealed class DecaySpec<T> : MotionSpec<T>
     {
         private readonly DecaySpec<T> spec;
         private readonly ValueMixer<T> mixer;
+        private readonly MotionSpecContext context;
+        private MotionSampler<T>? bounceSampler;
         private T current;
         private T velocity;
         private bool isComplete;
 
-        public DecaySampler(DecaySpec<T> spec, T from, ValueMixer<T> mixer)
+        public DecaySampler(DecaySpec<T> spec, T from, ValueMixer<T> mixer, MotionSpecContext context)
         {
             this.spec = spec;
             this.mixer = mixer;
+            this.context = context;
             current = from;
             velocity = spec.InitialVelocity.Value;
         }
@@ -115,7 +133,10 @@ public sealed class DecaySpec<T> : MotionSpec<T>
 
         public override bool IsComplete => isComplete;
 
-        public override MotionVelocity<T>? Velocity => new(velocity);
+        public override MotionVelocity<T>? Velocity
+            => bounceSampler is not null && TryGetVelocity(bounceSampler, out MotionVelocity<T> bounceVelocity)
+                ? bounceVelocity
+                : new MotionVelocity<T>(velocity);
 
         public override void Advance(TimeSpan delta)
         {
@@ -129,21 +150,69 @@ public sealed class DecaySpec<T> : MotionSpec<T>
                 return;
             }
 
-            current = mixer.Add(current, mixer.Scale(velocity, (float)delta.TotalSeconds));
-            if (TryClamp(current, spec, out T clamped))
+            if (bounceSampler is not null)
+            {
+                bounceSampler.Advance(delta);
+                current = bounceSampler.Current;
+                if (TryGetVelocity(bounceSampler, out MotionVelocity<T> bounceVelocity))
+                {
+                    velocity = bounceVelocity.Value;
+                }
+
+                isComplete = bounceSampler.IsComplete;
+                return;
+            }
+
+            T next = mixer.Add(current, mixer.Scale(velocity, (float)delta.TotalSeconds));
+            if (TryClamp(next, spec, out T clamped))
             {
                 current = clamped;
+                if (spec.Bounce is not null)
+                {
+                    T reflected = ReflectIntoBounds(next, clamped, spec, mixer);
+                    velocity = mixer.Scale(velocity, 0);
+                    bounceSampler = spec.Bounce.CreateSampler(clamped, reflected, mixer, context);
+                    return;
+                }
+
                 velocity = mixer.Scale(velocity, 0);
                 isComplete = true;
                 return;
             }
 
+            current = next;
             float decay = MathF.Pow(spec.Deceleration, (float)(delta.TotalMilliseconds / 16.6666667));
             velocity = mixer.Scale(velocity, decay);
             if (mixer.Magnitude(velocity) <= 0.01f)
             {
                 isComplete = true;
             }
+        }
+
+        private static T ReflectIntoBounds(T value, T clamped, DecaySpec<T> spec, ValueMixer<T> mixer)
+        {
+            T overshoot = mixer.Subtract(value, clamped);
+            T reflected = mixer.Subtract(clamped, overshoot);
+            return TryClamp(reflected, spec, out T bounded) ? bounded : reflected;
+        }
+
+        private static bool TryGetVelocity(MotionSampler<T> sampler, out MotionVelocity<T> velocity)
+        {
+            try
+            {
+                MotionVelocity<T>? samplerVelocity = sampler.Velocity;
+                if (samplerVelocity is MotionVelocity<T> typedVelocity)
+                {
+                    velocity = typedVelocity;
+                    return true;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+            }
+
+            velocity = default;
+            return false;
         }
 
         public override void Retarget(T to, RetargetMode mode)

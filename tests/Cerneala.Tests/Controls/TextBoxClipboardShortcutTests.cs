@@ -1,6 +1,7 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
 
 namespace Cerneala.Tests.Controls;
@@ -178,5 +179,7 @@ public sealed class TextBoxClipboardShortcutTests
         public IDpiProvider? Dpi => null;
 
         public IAccessibilityPlatform? Accessibility => null;
+
+        public IReducedMotionSource? ReducedMotion => null;
     }
 }

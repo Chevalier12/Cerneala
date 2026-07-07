@@ -4,6 +4,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Rendering;
 
@@ -138,6 +139,8 @@ public sealed class UiHostPlatformServicesIntegrationTests
         public IDpiProvider? Dpi => null;
 
         public IAccessibilityPlatform? Accessibility => null;
+
+        public IReducedMotionSource? ReducedMotion => null;
     }
 
     private sealed class RenderCountingElement : UIElement

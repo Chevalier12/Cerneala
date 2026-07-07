@@ -33,8 +33,13 @@ public class Game1 : Game
     public Game1(bool exitAfterFirstSuccessfulDraw = false)
     {
         _exitAfterFirstSuccessfulDraw = exitAfterFirstSuccessfulDraw;
-        _graphics = new GraphicsDeviceManager(this);
+        _graphics = new GraphicsDeviceManager(this)
+        {
+            PreferredBackBufferWidth = 1280,
+            PreferredBackBufferHeight = 720
+        };
         Content.RootDirectory = "Content";
+        Window.AllowUserResizing = true;
         IsMouseVisible = true;
     }
 

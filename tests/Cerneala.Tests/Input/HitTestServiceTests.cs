@@ -2,6 +2,7 @@ using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.Tests.Input;
@@ -136,6 +137,22 @@ public sealed class HitTestServiceTests
         HitTestResult? result = new HitTestService().HitTest(root, 10, 10, filter);
 
         Assert.Same(sibling, result!.Element);
+    }
+
+    [Fact]
+    public void RenderTransformDoesNotAffectHitTestBounds()
+    {
+        UIRoot root = new(200, 200);
+        UIElement element = Arranged(0, 0, 20, 20);
+        element.RenderTransform = new Transform(Matrix3x2.CreateTranslation(50, 0));
+        root.VisualChildren.Add(element);
+
+        HitTestResult? layoutHit = new HitTestService().HitTest(root, 10, 10);
+        HitTestResult? visualOnlyHit = new HitTestService().HitTest(root, 55, 10);
+
+        Assert.Same(element, layoutHit!.Element);
+        Assert.NotSame(element, visualOnlyHit!.Element);
+        Assert.Same(root, visualOnlyHit.Element);
     }
 
     internal static UIElement Arranged(float x, float y, float width, float height)

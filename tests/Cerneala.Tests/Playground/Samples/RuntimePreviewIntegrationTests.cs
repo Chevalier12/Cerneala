@@ -2,6 +2,7 @@ using Cerneala.Playground.Samples;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
 
 namespace Cerneala.Tests.Playground.Samples;
@@ -122,6 +123,8 @@ public sealed class RuntimePreviewIntegrationTests
         public IDpiProvider? Dpi { get; } = new FakeDpiProvider();
 
         public IAccessibilityPlatform? Accessibility => null;
+
+        public IReducedMotionSource? ReducedMotion => null;
     }
 
     private sealed class FakeClipboard : IClipboard

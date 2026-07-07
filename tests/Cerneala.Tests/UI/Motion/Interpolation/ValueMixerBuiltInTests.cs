@@ -16,6 +16,7 @@ public sealed class ValueMixerBuiltInTests
         AssertEndpoints(new ColorMixer(), new DrawColor(1, 2, 3, 4), new DrawColor(250, 251, 252, 253));
         AssertEndpoints(new ThicknessMixer(), new Thickness(1, 2, 3, 4), new Thickness(5, 6, 7, 8));
         AssertEndpoints(new DrawPointMixer(), new DrawPoint(1, 2), new DrawPoint(5, 6));
+        AssertEndpoints(new DrawSizeMixer(), new DrawSize(1, 2), new DrawSize(5, 6));
         AssertEndpoints(new DrawRectMixer(), new DrawRect(1, 2, 3, 4), new DrawRect(5, 6, 7, 8));
         AssertEndpoints(new TransformMixer(), Transform.Identity, new Transform(Matrix3x2.CreateTranslation(10, 20)));
     }
@@ -33,6 +34,10 @@ public sealed class ValueMixerBuiltInTests
             new DrawPointMixer(),
             new DrawPoint(1e20f, 2e20f),
             new DrawPoint(1, 2));
+        AssertExactEndpoints(
+            new DrawSizeMixer(),
+            new DrawSize(1e20f, 2e20f),
+            new DrawSize(1, 2));
     }
 
     [Fact]
@@ -196,6 +201,7 @@ public sealed class ValueMixerBuiltInTests
         Assert.IsType<ColorMixer>(root.Motion.Mixers.Resolve<DrawColor>());
         Assert.IsType<ThicknessMixer>(root.Motion.Mixers.Resolve<Thickness>());
         Assert.IsType<DrawPointMixer>(root.Motion.Mixers.Resolve<DrawPoint>());
+        Assert.IsType<DrawSizeMixer>(root.Motion.Mixers.Resolve<DrawSize>());
         Assert.IsType<DrawRectMixer>(root.Motion.Mixers.Resolve<DrawRect>());
         Assert.IsType<TransformMixer>(root.Motion.Mixers.Resolve<Transform>());
     }
@@ -207,6 +213,18 @@ public sealed class ValueMixerBuiltInTests
 
         Assert.True(mixer.EqualsWithinTolerance(new DrawPoint(1, 2), new DrawPoint(1.01f, 2.01f), 0.02f));
         Assert.False(mixer.EqualsWithinTolerance(new DrawPoint(1, 2), new DrawPoint(1.1f, 2), 0.02f));
+    }
+
+    [Fact]
+    public void DrawSizeMixerSupportsVectorOperations()
+    {
+        DrawSizeMixer mixer = new();
+
+        Assert.True(mixer.SupportsVectorOperations);
+        Assert.Equal(new DrawSize(4, 6), mixer.Add(new DrawSize(1, 2), new DrawSize(3, 4)));
+        Assert.Equal(new DrawSize(2, 3), mixer.Subtract(new DrawSize(5, 7), new DrawSize(3, 4)));
+        Assert.Equal(new DrawSize(4, 6), mixer.Scale(new DrawSize(2, 3), 2));
+        Assert.Equal(5, mixer.Magnitude(new DrawSize(3, 4)), precision: 3);
     }
 
     private static void AssertEndpoints<T>(ValueMixer<T> mixer, T from, T to)

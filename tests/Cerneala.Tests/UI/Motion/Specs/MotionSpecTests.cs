@@ -258,6 +258,37 @@ public sealed class MotionSpecTests
     }
 
     [Fact]
+    public void DecayBounceRequiresBounds()
+    {
+        TweenSpec<float> bounce = MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear);
+        DecaySpec<float> spec = MotionFactory.Decay(new MotionVelocity<float>(100), deceleration: 0.9f)
+            .WithBounce(bounce);
+
+        Assert.Same(bounce, spec.Bounce);
+        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+            spec.CreateSampler(0, 0, new FloatMixer(), Context()));
+        Assert.Contains("bounds", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void DecayBounceReflectsOvershootIntoBoundsWithBounceSpec()
+    {
+        DecaySpec<float> spec = MotionFactory.Decay(new MotionVelocity<float>(1000), deceleration: 0.9f)
+            .WithBounds(min: 0, max: 25)
+            .WithBounce(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear));
+        MotionSampler<float> sampler = spec.CreateSampler(0, 0, new FloatMixer(), Context());
+
+        sampler.Advance(TimeSpan.FromMilliseconds(100));
+
+        Assert.False(sampler.IsComplete);
+        Assert.Equal(25, sampler.Current, precision: 3);
+
+        sampler.Advance(TimeSpan.FromMilliseconds(50));
+
+        Assert.Equal(12.5f, sampler.Current, precision: 3);
+    }
+
+    [Fact]
     public void KeyframesValidateOffsets()
     {
         ArgumentException ex = Assert.Throws<ArgumentException>(() =>

@@ -1,3 +1,5 @@
+using Cerneala.UI.Motion.Core;
+
 namespace Cerneala.UI.Platform;
 
 public interface IPlatformServices
@@ -13,4 +15,6 @@ public interface IPlatformServices
     IDpiProvider? Dpi { get; }
 
     IAccessibilityPlatform? Accessibility { get; }
+
+    IReducedMotionSource? ReducedMotion { get; }
 }

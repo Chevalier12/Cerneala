@@ -1,13 +1,21 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.Diagnostics;
 using Cerneala.UI.Motion.Interpolation;
+using Cerneala.UI.Motion.Layout;
+using Cerneala.UI.Motion.Presence;
 using Cerneala.UI.Motion.Properties;
+using Cerneala.UI.Motion.Specs;
 using Cerneala.UI.Motion.Styling;
+using Cerneala.UI.Motion.Transactions;
 
 namespace Cerneala.UI.Motion.Core;
 
 public sealed class MotionSystem
 {
+    public const int ActiveOpacityRenderInvalidationsPerTickBudget = 1;
+    public const int SimultaneousRenderAnimationStressBudget = 100;
+    public const int LayoutMotionStressBudget = 100;
+
     private readonly IMotionClock clock;
     private TimeSpan? previousTimestamp;
     private int frameIndex;
@@ -32,6 +40,9 @@ public sealed class MotionSystem
         Properties = new MotionPropertyStore();
         AnimatableProperties = new AnimatablePropertyRegistry();
         Graph = new MotionGraph(ThreadGuard, Mixers, ReducedMotion, Diagnostics);
+        Layout = new LayoutMotionCoordinator(this);
+        Presence = new PresenceCoordinator(this);
+        Transactions = new MotionTransactionContext(this);
         Frames = new MotionFrameCoordinator(root, this);
     }
 
@@ -57,9 +68,30 @@ public sealed class MotionSystem
 
     public AnimatablePropertyRegistry AnimatableProperties { get; }
 
+    public MotionTransactionContext Transactions { get; }
+
+    public LayoutMotionCoordinator Layout { get; }
+
+    public PresenceCoordinator Presence { get; }
+
     public TimeSpan MaxDelta { get; set; } = TimeSpan.FromMilliseconds(100);
 
     public bool HasActiveMotion => Graph.HasActiveMotion || Properties.HasPendingWrites;
+
+    public MotionTransactionScope BeginTransaction(MotionSpec defaultSpec)
+    {
+        return Transactions.Begin(defaultSpec);
+    }
+
+    public MotionTransactionScope BeginTransaction(MotionTransactionOptions options)
+    {
+        return Transactions.Begin(options);
+    }
+
+    public MotionTransactionScope Disable()
+    {
+        return Transactions.Disable();
+    }
 
     public MotionFrameResult Tick(
         MotionFrameReason reason = MotionFrameReason.Scheduled,

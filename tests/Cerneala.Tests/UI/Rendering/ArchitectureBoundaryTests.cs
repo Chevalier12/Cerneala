@@ -77,28 +77,11 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
-    public void UiAnimationDoesNotReferenceConcreteBackends()
+    public void LegacyUiAnimationFolderIsRemoved()
     {
-        string animationRoot = FindRepositoryPath("UI", "Animation");
-        string[] forbiddenTerms =
-        [
-            "MonoGame",
-            "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "SpriteBatch",
-            "MonoGameDrawingBackend"
-        ];
+        string root = FindRepositoryRoot();
 
-        foreach (string file in Directory.EnumerateFiles(animationRoot, "*.cs", SearchOption.AllDirectories))
-        {
-            string text = File.ReadAllText(file);
-
-            foreach (string forbiddenTerm in forbiddenTerms)
-            {
-                Assert.DoesNotContain(forbiddenTerm, text, StringComparison.Ordinal);
-            }
-        }
+        Assert.False(Directory.Exists(Path.Combine(root, "UI", "Animation")));
     }
 
     [Fact]
@@ -854,48 +837,12 @@ public sealed class ArchitectureBoundaryTests
     {
         string root = FindRepositoryRoot();
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
-        string[] completeFiles =
-        [
-            "UI/Animation/AnimationClock.cs",
-            "UI/Animation/AnimationScheduler.cs",
-            "UI/Animation/Animation.cs",
-            "UI/Animation/Animation{T}.cs",
-            "UI/Animation/Easing.cs",
-            "UI/Animation/Transition.cs",
-            "UI/Animation/Transition{T}.cs",
-            "UI/Animation/AnimatedValueSource.cs",
-            "tests/Cerneala.Tests/UI/Animation/AnimationClockTests.cs",
-            "tests/Cerneala.Tests/UI/Animation/AnimationSchedulerTests.cs",
-            "tests/Cerneala.Tests/UI/Animation/TypedAnimationTests.cs",
-            "tests/Cerneala.Tests/UI/Animation/TransitionTests.cs",
-            "tests/Cerneala.Tests/UI/Animation/AnimationInvalidationTests.cs",
-            "tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs"
-        ];
-        string[] partialEntries =
-        [
-            "`UI/Animation/Storyboard.cs` — type exists; composition expansion is frozen until animation stress invalidation tests exist.",
-            "`UI/Styling/StyleTransition.cs` — type exists; expansion is frozen until style/render invalidation under animation stress is proven."
-        ];
-
-        foreach (string requiredFile in completeFiles)
-        {
-            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
-            Assert.Contains($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
-        }
-
-        foreach (string partialEntry in partialEntries)
-        {
-            string requiredFile = partialEntry.Split('`')[1];
-
-            Assert.True(File.Exists(Path.Combine(root, requiredFile.Replace('/', Path.DirectorySeparatorChar))), requiredFile);
-            Assert.Contains($"- [~] {partialEntry}", roadmap, StringComparison.Ordinal);
-            Assert.DoesNotContain($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
-        }
-
-        Assert.Contains("- [x] Animation and style transition APIs stay backend-neutral.", roadmap, StringComparison.Ordinal);
-        Assert.Contains("- [ ] Animation stress tests prove retained scheduler/render invalidation stays honest across many animated elements.", roadmap, StringComparison.Ordinal);
-        Assert.Contains("- [~] 23. Add animation and transitions — primitives exist; expansion waits for animation stress invalidation proof.", roadmap, StringComparison.Ordinal);
-        Assert.DoesNotContain("- [x] 23. Add animation and transitions", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Legacy `UI/Animation` primitives removed; supported animation APIs live under `UI/Motion`.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `UI/Motion/` remains backend-neutral.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] `tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs`", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [~] 23. Add animation and transitions — legacy primitives removed; modern motion system is the supported path.", roadmap, StringComparison.Ordinal);
+        Assert.DoesNotContain("UI/Animation/AnimationClock.cs", roadmap, StringComparison.Ordinal);
+        Assert.DoesNotContain("UI/Styling/StyleTransition.cs", roadmap, StringComparison.Ordinal);
     }
 
     [Fact]

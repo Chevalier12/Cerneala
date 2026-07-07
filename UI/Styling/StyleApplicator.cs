@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Motion.Styling;
 
 namespace Cerneala.UI.Styling;
 
@@ -82,7 +83,7 @@ public sealed class StyleApplicator
     {
         foreach ((UiProperty property, AppliedSetter applied) in next)
         {
-            applied.Setter.Apply(element, source, themeProvider);
+            ApplySetter(element, source, applied, themeProvider);
             appliedValues.Add(new StyleDiagnostics.AppliedValue(
                 property,
                 element.GetValue(property),
@@ -97,7 +98,7 @@ public sealed class StyleApplicator
                 continue;
             }
 
-            old.Setter.Clear(element, source);
+            ClearSetter(element, source, old, themeProvider);
             clearedValues.Add(new StyleDiagnostics.ClearedValue(property, source, old.Rule));
         }
 
@@ -119,6 +120,57 @@ public sealed class StyleApplicator
         }
 
         previous.Clear();
+    }
+
+    private static void ApplySetter(
+        UIElement element,
+        UiPropertyValueSource source,
+        AppliedSetter applied,
+        ThemeProvider? themeProvider)
+    {
+        StyleMotion? motion = FindMotion(applied.Rule, applied.Setter.Property, source);
+        if (motion is null || element.Root is null || themeProvider is null)
+        {
+            applied.Setter.Apply(element, source, themeProvider);
+            return;
+        }
+
+        using (element.Root.Motion.BeginTransaction(ThemeMotionTokens.Resolve(themeProvider, motion.TokenName)))
+        {
+            applied.Setter.Apply(element, source, themeProvider);
+        }
+    }
+
+    private static void ClearSetter(
+        UIElement element,
+        UiPropertyValueSource source,
+        AppliedSetter old,
+        ThemeProvider? themeProvider)
+    {
+        StyleMotion? motion = FindMotion(old.Rule, old.Setter.Property, source);
+        if (motion is null || element.Root is null || themeProvider is null)
+        {
+            old.Setter.Clear(element, source);
+            return;
+        }
+
+        using (element.Root.Motion.BeginTransaction(ThemeMotionTokens.Resolve(themeProvider, motion.TokenName)))
+        {
+            old.Setter.Clear(element, source);
+        }
+    }
+
+    private static StyleMotion? FindMotion(StyleRule rule, UiProperty property, UiPropertyValueSource source)
+    {
+        foreach (StyleMotion motion in rule.Motions)
+        {
+            if (ReferenceEquals(motion.Property, property) && motion.AppliesTo(source))
+            {
+                return motion;
+            }
+        }
+
+        return null;
     }
 
     private sealed class AppliedStyleState

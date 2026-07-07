@@ -34,7 +34,7 @@ public sealed class HitTestService
             return null;
         }
 
-        if (!UIElementVisibility.ParticipatesInHitTest(element) || !element.IsEnabled)
+        if (element.IsPresenceExiting || !UIElementVisibility.ParticipatesInHitTest(element) || !element.IsEnabled)
         {
             return null;
         }

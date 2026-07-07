@@ -101,6 +101,14 @@ public sealed class MotionSystemTests
     }
 
     [Fact]
+    public void MotionSystemExposesStressBudgetConstants()
+    {
+        Assert.Equal(1, MotionSystem.ActiveOpacityRenderInvalidationsPerTickBudget);
+        Assert.Equal(100, MotionSystem.SimultaneousRenderAnimationStressBudget);
+        Assert.Equal(100, MotionSystem.LayoutMotionStressBudget);
+    }
+
+    [Fact]
     public void MotionSystemRejectsGraphMutationFromWrongThread()
     {
         UIRoot root = new();

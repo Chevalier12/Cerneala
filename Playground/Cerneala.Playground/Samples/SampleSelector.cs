@@ -65,7 +65,11 @@ public sealed class SampleSelector
             new DiagnosticsSample(resourceProvider, fontResourceId),
             new RuntimePreviewSample(resourceProvider, fontResourceId, imageResourceId),
             new AuthoringAppSample(resourceProvider, fontResourceId),
-            new GettingStartedSample(resourceProvider, fontResourceId)
+            new GettingStartedSample(resourceProvider, fontResourceId),
+            new MotionSample(resourceProvider, fontResourceId),
+            new LayoutMotionSample(resourceProvider, fontResourceId),
+            new PresenceMotionSample(resourceProvider, fontResourceId),
+            new ScrollMotionSample(resourceProvider, fontResourceId)
         }, resourceProvider, fontResourceId);
     }
 

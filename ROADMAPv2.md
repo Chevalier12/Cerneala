@@ -1063,36 +1063,20 @@ Acceptance checklist:
 
 ## 23. [Later] Animation and transitions
 
-This phase keeps the existing animation primitives small and **frozen for expansion** until scheduler/render invalidation is proven under animation stress. Animation should be game-loop-native, explicit, and invalidate only affected properties; timeline/storyboard growth waits for stress tests that prove no hidden layout/render churn.
+This phase now delegates animation work to the modern motion system. The old rootless animation primitives were removed instead of being kept as a parallel compatibility surface.
 
-- [x] `UI/Animation/AnimationClock.cs`
-- [x] `UI/Animation/AnimationScheduler.cs`
-- [x] `UI/Animation/Animation.cs`
-- [x] `UI/Animation/Animation{T}.cs`
-- [x] `UI/Animation/Easing.cs`
-- [x] `UI/Animation/Transition.cs`
-- [x] `UI/Animation/Transition{T}.cs`
-- [~] `UI/Animation/Storyboard.cs` — type exists; composition expansion is frozen until animation stress invalidation tests exist.
-- [x] `UI/Animation/AnimatedValueSource.cs`
-- [~] `UI/Styling/StyleTransition.cs` — type exists; expansion is frozen until style/render invalidation under animation stress is proven.
+- [x] Legacy `UI/Animation` primitives removed; supported animation APIs live under `UI/Motion`.
+- [x] `UI/Motion/` remains backend-neutral.
 
 Tests:
 
-- [x] `tests/Cerneala.Tests/UI/Animation/AnimationClockTests.cs`
-- [x] `tests/Cerneala.Tests/UI/Animation/AnimationSchedulerTests.cs`
-- [x] `tests/Cerneala.Tests/UI/Animation/TypedAnimationTests.cs`
-- [x] `tests/Cerneala.Tests/UI/Animation/TransitionTests.cs`
-- [x] `tests/Cerneala.Tests/UI/Animation/AnimationInvalidationTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Rendering/ArchitectureBoundaryTests.cs`
 
 Acceptance checklist:
 
-- [x] Animating a render-only property does not run layout in focused unit tests.
-- [x] Animating a layout property enqueues layout only at ticks where the value changes in focused unit tests.
-- [x] Completed animations release animated value source cleanly.
-- [x] Animation and style transition APIs stay backend-neutral.
-- [ ] Animation stress tests prove retained scheduler/render invalidation stays honest across many animated elements.
-- [ ] Full project tests pass for the stress-tested animation scenario before this phase is scenario-complete.
+- [x] Legacy animation APIs no longer exist as a parallel public surface.
+- [x] Modern motion APIs own scalar, layout, style, and grouped animation behavior.
+- [ ] Full project tests pass for the modern motion scenario before this phase is scenario-complete.
 
 ## 24. [Later] Platform boundaries and package shape
 
@@ -1245,7 +1229,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [~] 20. Add text editing and IME composition — foundations exist; production text services and platform behavior remain later.
 - [~] 21. Add accessibility semantics and platform-neutral semantic tree — semantic tree exists; platform adapters remain later.
 - [~] 22. Add advanced rendering/media primitives as scenarios require — descriptor types exist; backend-supported rendering remains later.
-- [~] 23. Add animation and transitions — primitives exist; expansion waits for animation stress invalidation proof.
+- [~] 23. Add animation and transitions — legacy primitives removed; modern motion system is the supported path.
 - [~] 24. Decide package/platform split — platform contracts exist; package split remains deferred.
 
 ### Optional/Experimental order

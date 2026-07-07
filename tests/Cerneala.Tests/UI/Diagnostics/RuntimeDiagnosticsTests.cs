@@ -4,6 +4,7 @@ using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.Tests.UI.Diagnostics;
@@ -48,6 +49,37 @@ public sealed class RuntimeDiagnosticsTests
     }
 
     [Fact]
+    public void RuntimeDiagnosticsSnapshotIncludesMotionFrameCounts()
+    {
+        UIRoot root = new();
+        UiViewport viewport = new(100, 50);
+        FrameStats stats = new();
+        stats.CountMotion(new MotionFrameResult(
+            new MotionFrame(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16), 1, MotionFrameReason.Scheduled, MotionFramePhase.BeforeRender),
+            NeedsAnotherFrame: true,
+            MotionFrames: 1,
+            MotionNodesSampled: 2,
+            MotionValuesChanged: 3,
+            MotionPropertyWrites: 4,
+            MotionCompleted: 5,
+            MotionRenderInvalidations: 6,
+            MotionLayoutInvalidations: 7,
+            MotionSkippedByReducedMotion: 8));
+
+        RuntimeDiagnosticsSnapshot snapshot = RuntimeDiagnostics.Capture(root, viewport, stats);
+
+        Assert.Equal(1, snapshot.Frame.MotionFrames);
+        Assert.Equal(2, snapshot.Frame.MotionNodesSampled);
+        Assert.Equal(3, snapshot.Frame.MotionValuesChanged);
+        Assert.Equal(4, snapshot.Frame.MotionPropertyWrites);
+        Assert.Equal(5, snapshot.Frame.MotionCompleted);
+        Assert.Equal(6, snapshot.Frame.MotionRenderInvalidations);
+        Assert.Equal(7, snapshot.Frame.MotionLayoutInvalidations);
+        Assert.Equal(8, snapshot.Frame.MotionSkippedByReducedMotion);
+        Assert.True(snapshot.Frame.HasWork);
+    }
+
+    [Fact]
     public void RuntimeDiagnosticsSnapshotIncludesRenderCommandCountWithoutRebuild()
     {
         UIRoot root = RootWithCommittedRenderCache(out RenderingTestElement child);
@@ -77,6 +109,35 @@ public sealed class RuntimeDiagnosticsTests
         Assert.Contains("style=1", formatted, StringComparison.Ordinal);
         Assert.Contains("hitTest=1", formatted, StringComparison.Ordinal);
         Assert.Contains("commands=1", formatted, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RuntimeDiagnosticsFormatIncludesMotionCounters()
+    {
+        UIRoot root = new();
+        UiViewport viewport = new(100, 50);
+        FrameStats stats = new();
+        stats.CountMotion(new MotionFrameResult(
+            new MotionFrame(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16), 1, MotionFrameReason.Scheduled, MotionFramePhase.BeforeRender),
+            NeedsAnotherFrame: true,
+            MotionFrames: 1,
+            MotionNodesSampled: 2,
+            MotionValuesChanged: 3,
+            MotionPropertyWrites: 4,
+            MotionCompleted: 5,
+            MotionRenderInvalidations: 6,
+            MotionLayoutInvalidations: 7,
+            MotionSkippedByReducedMotion: 8));
+        RuntimeDiagnosticsSnapshot snapshot = RuntimeDiagnostics.Capture(root, viewport, stats);
+
+        string formatted = RuntimeDiagnostics.Format(snapshot);
+
+        Assert.Contains("motion=1", formatted, StringComparison.Ordinal);
+        Assert.Contains("sampled=2", formatted, StringComparison.Ordinal);
+        Assert.Contains("motionWrites=4", formatted, StringComparison.Ordinal);
+        Assert.Contains("motionRender=6", formatted, StringComparison.Ordinal);
+        Assert.Contains("motionLayout=7", formatted, StringComparison.Ordinal);
+        Assert.Contains("reduced=8", formatted, StringComparison.Ordinal);
     }
 
     [Fact]

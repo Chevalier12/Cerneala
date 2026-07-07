@@ -53,6 +53,11 @@ public sealed class TweenSpec<T> : MotionSpec<T>
         TimeSpan effectiveDuration = context.ReducedMotion.Mode == ReducedMotionMode.Reduce
             ? TimeSpan.Zero
             : Duration;
+        if (effectiveDuration == TimeSpan.Zero && Duration > TimeSpan.Zero)
+        {
+            context.Diagnostics?.RecordReducedMotionSkip(context.DebugName);
+        }
+
         return new TweenSampler(this, from, to, mixer, effectiveDuration);
     }
 

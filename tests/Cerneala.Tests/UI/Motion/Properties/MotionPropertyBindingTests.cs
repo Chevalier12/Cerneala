@@ -36,8 +36,13 @@ public sealed class MotionPropertyBindingTests
         Assert.True(margin.InvalidationCategory.HasFlag(MotionPropertyInvalidationCategory.Layout));
 
         Assert.Null(typeof(Control).GetField("BorderBrushProperty"));
-        Assert.Null(typeof(UIElement).GetField("OpacityProperty"));
-        Assert.Null(typeof(UIElement).GetField("RenderTransformProperty"));
+        Assert.True(registry.TryGet(UIElement.OpacityProperty, out MotionPropertyOptions? opacity));
+        Assert.True(opacity.IsSafeForImplicitAnimation);
+        Assert.True(opacity.InvalidationCategory.HasFlag(MotionPropertyInvalidationCategory.Render));
+
+        Assert.True(registry.TryGet(UIElement.RenderTransformProperty, out MotionPropertyOptions? renderTransform));
+        Assert.True(renderTransform.IsSafeForImplicitAnimation);
+        Assert.True(renderTransform.InvalidationCategory.HasFlag(MotionPropertyInvalidationCategory.Render));
     }
 
     [Fact]

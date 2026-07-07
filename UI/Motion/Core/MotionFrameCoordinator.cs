@@ -32,6 +32,7 @@ public sealed class MotionFrameCoordinator
         motion.ThreadGuard.VerifyAccess();
         motion.Diagnostics.RecordPhase(MotionFramePhase.BeforeLayout);
         motion.Diagnostics.CaptureBeforeLayoutSnapshots();
+        motion.Layout.CaptureFirstSnapshots();
         if (!motion.HasActiveMotion)
         {
             return MotionFrameResult.Empty(new MotionFrame(default, default, 0, currentReason, MotionFramePhase.BeforeLayout));
@@ -46,6 +47,7 @@ public sealed class MotionFrameCoordinator
         motion.ThreadGuard.VerifyAccess();
         motion.Diagnostics.RecordPhase(MotionFramePhase.AfterLayout);
         motion.Diagnostics.CaptureAfterLayoutSnapshots();
+        motion.Layout.CaptureLastSnapshotsAndStartCorrections();
         return MotionFrameResult.Empty(new MotionFrame(default, default, 0, currentReason, MotionFramePhase.AfterLayout));
     }
 

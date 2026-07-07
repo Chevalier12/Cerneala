@@ -65,6 +65,7 @@ public sealed class ValueMixerRegistry
         Register(new ColorMixer());
         Register(new ThicknessMixer());
         Register(new DrawPointMixer());
+        Register(new DrawSizeMixer());
         Register(new DrawRectMixer());
         Register(new TransformMixer());
     }

@@ -19,12 +19,12 @@ public static class UIElementVisibility
     public static bool ParticipatesInInput(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return element.IsVisible && element.Visibility == Visibility.Visible;
+        return !element.IsPresenceExiting && element.IsVisible && element.Visibility == Visibility.Visible;
     }
 
     public static bool ParticipatesInHitTest(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return element.IsVisible && element.Visibility == Visibility.Visible;
+        return !element.IsPresenceExiting && element.IsVisible && element.Visibility == Visibility.Visible;
     }
 }

@@ -4,6 +4,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
 
 namespace Cerneala.Tests.Input;
@@ -135,6 +136,8 @@ public sealed class CursorPlatformIntegrationTests
         public IDpiProvider? Dpi => null;
 
         public IAccessibilityPlatform? Accessibility => null;
+
+        public IReducedMotionSource? ReducedMotion => null;
     }
 
     private sealed class FakeCursorService : ICursorService

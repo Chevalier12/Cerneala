@@ -49,6 +49,21 @@ public readonly record struct Matrix3x2
         return new Matrix3x2(x, 0, 0, y, 0, 0);
     }
 
+    public static Matrix3x2 CreateRotation(float radians)
+    {
+        ThrowIfNotFinite(radians, nameof(radians));
+        float sin = MathF.Sin(radians);
+        float cos = MathF.Cos(radians);
+        return new Matrix3x2(cos, sin, -sin, cos, 0, 0);
+    }
+
+    public static Matrix3x2 CreateSkew(float radiansX, float radiansY)
+    {
+        ThrowIfNotFinite(radiansX, nameof(radiansX));
+        ThrowIfNotFinite(radiansY, nameof(radiansY));
+        return new Matrix3x2(1, MathF.Tan(radiansY), MathF.Tan(radiansX), 1, 0, 0);
+    }
+
     public DrawPoint Transform(DrawPoint point)
     {
         return new DrawPoint(

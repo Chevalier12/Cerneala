@@ -1,4 +1,5 @@
 using Cerneala.UI.Motion.Interpolation;
+using Cerneala.UI.Motion.Diagnostics;
 using Cerneala.UI.Motion.Specs;
 
 namespace Cerneala.UI.Motion.Core;
@@ -99,6 +100,7 @@ public sealed class MotionValue<T> : MotionValue
 
         MotionHandle handle = CreateHandle();
         activeHandle = handle;
+        graph.Diagnostics?.Record(MotionTraceEventKind.MotionStarted);
 
         if (sampler.IsComplete)
         {
@@ -139,6 +141,7 @@ public sealed class MotionValue<T> : MotionValue
         MotionHandle? expectedHandle = activeHandle;
         animationElapsed += frame.Delta;
         expectedSampler.Advance(frame.Delta);
+        graph.Diagnostics?.Record(MotionTraceEventKind.MotionSampled);
         velocity = TryGetVelocity(expectedSampler);
         if (expectedSampler.IsComplete)
         {
@@ -199,6 +202,7 @@ public sealed class MotionValue<T> : MotionValue
         }
 
         ApplySample(completionTarget);
+        graph.Diagnostics?.Record(MotionTraceEventKind.MotionCompleted);
         finishingHandle?.FinishCompleted(fireEvent: true);
     }
 
@@ -274,6 +278,7 @@ public sealed class MotionValue<T> : MotionValue
         }
 
         ApplySample(completionTarget);
+        graph.Diagnostics?.Record(MotionTraceEventKind.MotionCompleted);
         finishingHandle?.FinishCompleted(fireEvent: true);
         return sampler is null && activeHandle is null;
     }

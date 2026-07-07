@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Motion.Styling;
 
 namespace Cerneala.UI.Styling;
 
@@ -28,7 +29,8 @@ public static class DefaultTheme
             .Set(ForegroundKey, palette.Foreground)
             .Set(SurfaceKey, palette.Surface)
             .Set(BorderKey, palette.Border)
-            .Set(AccentKey, palette.Accent);
+            .Set(AccentKey, palette.Accent)
+            .Set(ThemeMotionTokens.Key, ThemeMotionTokens.CreateDefault());
     }
 
     public static StyleSheet CreateStyleSheet()

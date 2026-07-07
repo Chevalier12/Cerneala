@@ -29,12 +29,12 @@ public abstract class Shape : Control
         typeof(Shape),
         new UiPropertyMetadata<Geometry?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<Transform> RenderTransformProperty = UiProperty<Transform>.Register(
+    public new static readonly UiProperty<Transform> RenderTransformProperty = UiProperty<Transform>.Register(
         nameof(RenderTransform),
         typeof(Shape),
         new UiPropertyMetadata<Transform>(Transform.Identity, UiPropertyOptions.AffectsRender, validateValue: value => value is not null));
 
-    public static readonly UiProperty<float> OpacityProperty = UiProperty<float>.Register(
+    public new static readonly UiProperty<float> OpacityProperty = UiProperty<float>.Register(
         nameof(Opacity),
         typeof(Shape),
         new UiPropertyMetadata<float>(1, UiPropertyOptions.AffectsRender, validateValue: value => float.IsFinite(value) && value >= 0 && value <= 1));
@@ -68,13 +68,13 @@ public abstract class Shape : Control
         set => SetValue(GeometryProperty, value);
     }
 
-    public Transform RenderTransform
+    public new Transform RenderTransform
     {
         get => GetValue(RenderTransformProperty);
         set => SetValue(RenderTransformProperty, value);
     }
 
-    public float Opacity
+    public new float Opacity
     {
         get => GetValue(OpacityProperty);
         set => SetValue(OpacityProperty, value);

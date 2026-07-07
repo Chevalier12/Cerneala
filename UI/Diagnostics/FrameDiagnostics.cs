@@ -20,6 +20,14 @@ public static class FrameDiagnostics
             stats.HitTestElements,
             stats.ReusedCaches,
             stats.NoWorkFrames,
+            stats.MotionFrames,
+            stats.MotionNodesSampled,
+            stats.MotionValuesChanged,
+            stats.MotionPropertyWrites,
+            stats.MotionCompleted,
+            stats.MotionRenderInvalidations,
+            stats.MotionLayoutInvalidations,
+            stats.MotionSkippedByReducedMotion,
             stats.HasWork);
     }
 
@@ -41,12 +49,20 @@ public sealed record FrameDiagnosticsSnapshot(
     int HitTestElements,
     int ReusedCaches,
     int NoWorkFrames,
+    int MotionFrames,
+    int MotionNodesSampled,
+    int MotionValuesChanged,
+    int MotionPropertyWrites,
+    int MotionCompleted,
+    int MotionRenderInvalidations,
+    int MotionLayoutInvalidations,
+    int MotionSkippedByReducedMotion,
     bool HasWork)
 {
     public override string ToString()
     {
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"frame queuedMeasure={QueuedMeasureElements}, queuedArrange={QueuedArrangeElements}, measureCalls={MeasureCalls}, arrangeCalls={ArrangeCalls}, renderCache={RenderedElements}, hitTest={HitTestElements}, reusedCaches={ReusedCaches}, noWork={NoWorkFrames}, hasWork={HasWork}");
+            $"frame queuedMeasure={QueuedMeasureElements}, queuedArrange={QueuedArrangeElements}, measureCalls={MeasureCalls}, arrangeCalls={ArrangeCalls}, renderCache={RenderedElements}, hitTest={HitTestElements}, reusedCaches={ReusedCaches}, noWork={NoWorkFrames}, motion={MotionFrames}, sampled={MotionNodesSampled}, motionValues={MotionValuesChanged}, motionWrites={MotionPropertyWrites}, completed={MotionCompleted}, motionRender={MotionRenderInvalidations}, motionLayout={MotionLayoutInvalidations}, reduced={MotionSkippedByReducedMotion}, hasWork={HasWork}");
     }
 }

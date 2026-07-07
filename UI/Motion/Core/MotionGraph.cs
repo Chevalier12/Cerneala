@@ -38,6 +38,10 @@ public sealed class MotionGraph
 
     public bool HasActiveMotion => nodes.Count > 0 || pendingAdds.Count > 0;
 
+    public int ActiveNodeCount => nodes.Count + pendingAdds.Count;
+
+    internal MotionDiagnostics? Diagnostics => diagnostics;
+
     public MotionValue<T> CreateValue<T>(T initial, ValueMixer<T>? mixer = null)
     {
         threadGuard.VerifyAccess();

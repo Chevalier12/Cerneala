@@ -3,6 +3,9 @@ using Cerneala.UI.Data;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
+using Cerneala.UI.Motion.Layout;
+using Cerneala.UI.Motion.Presence;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Elements;
@@ -40,6 +43,81 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         new UiPropertyMetadata<Visibility>(
             Visibility.Visible,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsSemantics));
+
+    public static readonly UiProperty<Transform> RenderTransformProperty = UiProperty<Transform>.Register(
+        nameof(RenderTransform),
+        typeof(UIElement),
+        new UiPropertyMetadata<Transform>(Transform.Identity, UiPropertyOptions.AffectsRender, validateValue: value => value is not null));
+
+    public static readonly UiProperty<LayoutPoint> RenderTransformOriginProperty = UiProperty<LayoutPoint>.Register(
+        nameof(RenderTransformOrigin),
+        typeof(UIElement),
+        new UiPropertyMetadata<LayoutPoint>(new LayoutPoint(0.5f, 0.5f), UiPropertyOptions.AffectsRender, validateValue: IsValidNormalizedPoint));
+
+    public static readonly UiProperty<float> OpacityProperty = UiProperty<float>.Register(
+        nameof(Opacity),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(1, UiPropertyOptions.AffectsRender, validateValue: value => float.IsFinite(value) && value >= 0 && value <= 1));
+
+    public static readonly UiProperty<float> TranslateXProperty = UiProperty<float>.Register(
+        nameof(TranslateX),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsRender, validateValue: float.IsFinite));
+
+    public static readonly UiProperty<float> TranslateYProperty = UiProperty<float>.Register(
+        nameof(TranslateY),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsRender, validateValue: float.IsFinite));
+
+    public static readonly UiProperty<float> ScaleProperty = UiProperty<float>.Register(
+        nameof(Scale),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(1, UiPropertyOptions.AffectsRender, validateValue: float.IsFinite));
+
+    public static readonly UiProperty<float> ScaleXProperty = UiProperty<float>.Register(
+        nameof(ScaleX),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(1, UiPropertyOptions.AffectsRender, validateValue: float.IsFinite));
+
+    public static readonly UiProperty<float> ScaleYProperty = UiProperty<float>.Register(
+        nameof(ScaleY),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(1, UiPropertyOptions.AffectsRender, validateValue: float.IsFinite));
+
+    public static readonly UiProperty<float> RotationProperty = UiProperty<float>.Register(
+        nameof(Rotation),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsRender, validateValue: float.IsFinite));
+
+    public static readonly UiProperty<float> SkewXProperty = UiProperty<float>.Register(
+        nameof(SkewX),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsRender, validateValue: float.IsFinite));
+
+    public static readonly UiProperty<float> SkewYProperty = UiProperty<float>.Register(
+        nameof(SkewY),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsRender, validateValue: float.IsFinite));
+
+    public static readonly UiProperty<bool> ClipToBoundsProperty = UiProperty<bool>.Register(
+        nameof(ClipToBounds),
+        typeof(UIElement),
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest));
+
+    public static readonly UiProperty<LayoutMotionId?> LayoutMotionIdProperty = UiProperty<LayoutMotionId?>.Register(
+        nameof(LayoutMotionId),
+        typeof(UIElement),
+        new UiPropertyMetadata<LayoutMotionId?>(null, UiPropertyOptions.None, validateValue: IsValidLayoutMotionId));
+
+    public static readonly UiProperty<LayoutMotionOptions?> LayoutMotionOptionsProperty = UiProperty<LayoutMotionOptions?>.Register(
+        nameof(LayoutMotion),
+        typeof(UIElement),
+        new UiPropertyMetadata<LayoutMotionOptions?>(null, UiPropertyOptions.None));
+
+    public static readonly UiProperty<PresenceOptions?> PresenceProperty = UiProperty<PresenceOptions?>.Register(
+        nameof(Presence),
+        typeof(UIElement),
+        new UiPropertyMetadata<PresenceOptions?>(null, UiPropertyOptions.None));
 
     public static readonly UiProperty<bool> IsPointerOverProperty = UiProperty<bool>.Register(
         nameof(IsPointerOver),
@@ -117,11 +195,25 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
     public int RenderVersion { get; private set; }
 
+    public int RenderScopeVersion { get; private set; }
+
     public RenderDependency RenderDependencies { get; private set; }
 
     public bool IsLayoutBoundary { get; set; }
 
+    internal Transform LayoutCorrectionTransform { get; private set; } = Transform.Identity;
+
+    internal bool IsPresenceExiting { get; private set; }
+
+    public float PresenceOpacity { get; private set; } = 1;
+
+    public float PresenceScale { get; private set; } = 1;
+
+    protected override UiPropertyMutationObserver? MutationObserver => Root?.Motion.Transactions;
+
     private bool hasPendingCommandStateRefresh;
+    private bool hasPendingRenderScopeInvalidation;
+    private bool hasPendingRenderContentInvalidation;
 
     internal LayoutSize? LastMeasureAvailableSize { get; set; }
 
@@ -165,6 +257,96 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     {
         get => GetValue(VisibilityProperty);
         set => SetValue(VisibilityProperty, value);
+    }
+
+    public Transform RenderTransform
+    {
+        get => GetValue(RenderTransformProperty);
+        set => SetValue(RenderTransformProperty, value);
+    }
+
+    public LayoutPoint RenderTransformOrigin
+    {
+        get => GetValue(RenderTransformOriginProperty);
+        set => SetValue(RenderTransformOriginProperty, value);
+    }
+
+    public float Opacity
+    {
+        get => GetValue(OpacityProperty);
+        set => SetValue(OpacityProperty, value);
+    }
+
+    public float TranslateX
+    {
+        get => GetValue(TranslateXProperty);
+        set => SetValue(TranslateXProperty, value);
+    }
+
+    public float TranslateY
+    {
+        get => GetValue(TranslateYProperty);
+        set => SetValue(TranslateYProperty, value);
+    }
+
+    public float Scale
+    {
+        get => GetValue(ScaleProperty);
+        set => SetValue(ScaleProperty, value);
+    }
+
+    public float ScaleX
+    {
+        get => GetValue(ScaleXProperty);
+        set => SetValue(ScaleXProperty, value);
+    }
+
+    public float ScaleY
+    {
+        get => GetValue(ScaleYProperty);
+        set => SetValue(ScaleYProperty, value);
+    }
+
+    public float Rotation
+    {
+        get => GetValue(RotationProperty);
+        set => SetValue(RotationProperty, value);
+    }
+
+    public float SkewX
+    {
+        get => GetValue(SkewXProperty);
+        set => SetValue(SkewXProperty, value);
+    }
+
+    public float SkewY
+    {
+        get => GetValue(SkewYProperty);
+        set => SetValue(SkewYProperty, value);
+    }
+
+    public bool ClipToBounds
+    {
+        get => GetValue(ClipToBoundsProperty);
+        set => SetValue(ClipToBoundsProperty, value);
+    }
+
+    public LayoutMotionId? LayoutMotionId
+    {
+        get => GetValue(LayoutMotionIdProperty);
+        set => SetValue(LayoutMotionIdProperty, value);
+    }
+
+    public LayoutMotionOptions? LayoutMotion
+    {
+        get => GetValue(LayoutMotionOptionsProperty);
+        set => SetValue(LayoutMotionOptionsProperty, value);
+    }
+
+    public PresenceOptions? Presence
+    {
+        get => GetValue(PresenceProperty);
+        set => SetValue(PresenceProperty, value);
     }
 
     public bool IsPointerOver
@@ -227,10 +409,12 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         Root = root ?? throw new ArgumentNullException(nameof(root));
         ElementId = id;
         OnAttached();
+        Root?.Motion.Presence.MarkAttached(this);
     }
 
     internal void DetachFromRoot()
     {
+        Root?.Motion.Presence.MarkDetached(this);
         OnDetached();
         Bindings.Clear();
         ElementId = null;
@@ -366,6 +550,59 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         RenderVersion++;
     }
 
+    internal bool ConsumeRenderScopeOnlyInvalidation()
+    {
+        bool isScopeOnly = hasPendingRenderScopeInvalidation && !hasPendingRenderContentInvalidation;
+        hasPendingRenderScopeInvalidation = false;
+        hasPendingRenderContentInvalidation = false;
+        return isScopeOnly;
+    }
+
+    internal void SetLayoutCorrectionTransform(Transform correction)
+    {
+        ArgumentNullException.ThrowIfNull(correction);
+        if (LayoutCorrectionTransform == correction)
+        {
+            return;
+        }
+
+        LayoutCorrectionTransform = correction;
+        RenderScopeVersion++;
+        hasPendingRenderScopeInvalidation = true;
+        Invalidate(InvalidationFlags.Render, "Layout motion correction changed");
+    }
+
+    internal void SetPresenceExiting(bool isExiting)
+    {
+        if (IsPresenceExiting == isExiting)
+        {
+            return;
+        }
+
+        IsPresenceExiting = isExiting;
+        Invalidate(InvalidationFlags.HitTest, "Presence state changed");
+    }
+
+    internal void SetPresenceVisual(float opacity, float scale)
+    {
+        opacity = Math.Clamp(opacity, 0, 1);
+        if (!float.IsFinite(scale))
+        {
+            throw new ArgumentOutOfRangeException(nameof(scale), "Presence scale must be finite.");
+        }
+
+        if (PresenceOpacity == opacity && PresenceScale == scale)
+        {
+            return;
+        }
+
+        PresenceOpacity = opacity;
+        PresenceScale = scale;
+        RenderScopeVersion++;
+        hasPendingRenderScopeInvalidation = true;
+        Invalidate(InvalidationFlags.Render, "Presence visual state changed");
+    }
+
     protected void SetRenderDependencies(RenderDependency dependencies)
     {
         if (RenderDependencies == dependencies)
@@ -484,7 +721,16 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
         if ((options & (UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual)) != UiPropertyOptions.None)
         {
-            IncrementRenderVersion();
+            if (IsRenderScopeProperty(args.Property))
+            {
+                RenderScopeVersion++;
+                hasPendingRenderScopeInvalidation = true;
+            }
+            else
+            {
+                IncrementRenderVersion();
+                hasPendingRenderContentInvalidation = true;
+            }
         }
 
         InvalidationFlags flags = MapInvalidationOptions(options);
@@ -538,5 +784,36 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         }
 
         return flags;
+    }
+
+    private static bool IsValidNormalizedPoint(LayoutPoint point)
+    {
+        return float.IsFinite(point.X) &&
+            float.IsFinite(point.Y) &&
+            point.X >= 0 &&
+            point.X <= 1 &&
+            point.Y >= 0 &&
+            point.Y <= 1;
+    }
+
+    private static bool IsValidLayoutMotionId(LayoutMotionId? id)
+    {
+        return id is null || !string.IsNullOrWhiteSpace(id.Value.Value);
+    }
+
+    private static bool IsRenderScopeProperty(UiProperty property)
+    {
+        return ReferenceEquals(property, RenderTransformProperty) ||
+            ReferenceEquals(property, RenderTransformOriginProperty) ||
+            ReferenceEquals(property, OpacityProperty) ||
+            ReferenceEquals(property, TranslateXProperty) ||
+            ReferenceEquals(property, TranslateYProperty) ||
+            ReferenceEquals(property, ScaleProperty) ||
+            ReferenceEquals(property, ScaleXProperty) ||
+            ReferenceEquals(property, ScaleYProperty) ||
+            ReferenceEquals(property, RotationProperty) ||
+            ReferenceEquals(property, SkewXProperty) ||
+            ReferenceEquals(property, SkewYProperty) ||
+            ReferenceEquals(property, ClipToBoundsProperty);
     }
 }

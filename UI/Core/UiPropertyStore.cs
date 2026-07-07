@@ -24,6 +24,16 @@ public sealed class UiPropertyStore
         return GetEffectiveValue(property).Source;
     }
 
+    public object? GetSourceValue(UiProperty property, UiPropertyValueSource source)
+    {
+        ArgumentNullException.ThrowIfNull(property);
+        ValidateSource(source);
+        return values.TryGetValue(property, out Dictionary<UiPropertyValueSource, object?>? propertyValues) &&
+            propertyValues.TryGetValue(source, out object? value)
+            ? value
+            : null;
+    }
+
     public void SetValue(UiProperty property, UiPropertyValueSource source, object? value)
     {
         ArgumentNullException.ThrowIfNull(property);

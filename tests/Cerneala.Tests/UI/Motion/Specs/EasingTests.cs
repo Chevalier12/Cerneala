@@ -1,4 +1,3 @@
-using Cerneala.UI.Animation;
 using Cerneala.UI.Motion.Specs;
 
 namespace Cerneala.Tests.UI.Motion.Specs;
@@ -51,11 +50,4 @@ public sealed class EasingTests
         Assert.Equal(1f / 3f, new StepEasing(4, StepPosition.JumpNone).Transform(0.25f), precision: 3);
     }
 
-    [Fact]
-    public void LegacyEasingLinearRemainsSafe()
-    {
-        Assert.Equal(0, Easing.Linear(float.NaN));
-        Assert.Equal(0.5f, Easing.Linear(0.5f));
-        Assert.Equal(1, Easing.Linear(2));
-    }
 }

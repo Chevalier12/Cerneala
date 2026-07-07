@@ -66,7 +66,10 @@ Generated from `.`.
 |   |-- architecture-v2.md
 |   |-- developer-preview-checklist.md
 |   |-- developer-preview-scope.md
-|   +-- getting-started.md
+|   |-- getting-started.md
+|   |-- motion-api.md
+|   |-- motion-diagnostics.md
+|   +-- motion-system.md
 |-- Playground/
 |   +-- Cerneala.Playground/
 |       |-- .config/
@@ -79,12 +82,16 @@ Generated from `.`.
 |       |   |-- DiagnosticsSample.cs
 |       |   |-- GettingStartedSample.cs
 |       |   |-- InvalidationStatsOverlay.cs
+|       |   |-- LayoutMotionSample.cs
 |       |   |-- LayoutSample.cs
+|       |   |-- MotionSample.cs
 |       |   |-- PlaygroundText.cs
+|       |   |-- PresenceMotionSample.cs
 |       |   |-- RetainedAppSample.cs
 |       |   |-- RetainedButtonSample.cs
 |       |   |-- RuntimePreviewSample.cs
 |       |   |-- SampleSelector.cs
+|       |   |-- ScrollMotionSample.cs
 |       |   +-- TextSample.cs
 |       |-- app.manifest
 |       |-- Cerneala.Playground.csproj
@@ -224,12 +231,6 @@ Generated from `.`.
 |   |   |   |   |-- SemanticsTreeTests.cs
 |   |   |   |   +-- TextBoxSemanticsTests.cs
 |   |   |   |-- Animation/
-|   |   |   |   |-- AnimationClockTests.cs
-|   |   |   |   |-- AnimationInvalidationTests.cs
-|   |   |   |   |-- AnimationSchedulerTests.cs
-|   |   |   |   |-- LegacyAnimationCompatibilityTests.cs
-|   |   |   |   |-- TransitionTests.cs
-|   |   |   |   +-- TypedAnimationTests.cs
 |   |   |   |-- Controls/
 |   |   |   |   |-- Shapes/
 |   |   |   |   |   +-- ShapeTests.cs
@@ -266,6 +267,7 @@ Generated from `.`.
 |   |   |   |   |-- UIElementCollectionInvalidationTests.cs
 |   |   |   |   |-- UIElementCollectionTests.cs
 |   |   |   |   |-- UIElementInvalidationTests.cs
+|   |   |   |   |-- UIElementMotionPropertyTests.cs
 |   |   |   |   |-- UIElementTreeTests.cs
 |   |   |   |   +-- UIRootTests.cs
 |   |   |   |-- Hosting/
@@ -335,15 +337,34 @@ Generated from `.`.
 |   |   |   |-- Motion/
 |   |   |   |   |-- Core/
 |   |   |   |   |   |-- ManualMotionClock.cs
+|   |   |   |   |   |-- MotionCompositionReducedMotionTests.cs
+|   |   |   |   |   |-- MotionGroupTests.cs
+|   |   |   |   |   |-- MotionRepeatTimelineTests.cs
 |   |   |   |   |   |-- MotionSystemTests.cs
 |   |   |   |   |   +-- MotionValueTests.cs
+|   |   |   |   |-- Diagnostics/
+|   |   |   |   |   +-- MotionDiagnosticsTests.cs
+|   |   |   |   |-- Input/
+|   |   |   |   |   +-- MotionInputTimelineTests.cs
 |   |   |   |   |-- Interpolation/
 |   |   |   |   |   +-- ValueMixerBuiltInTests.cs
+|   |   |   |   |-- Layout/
+|   |   |   |   |   +-- LayoutMotionCoordinatorTests.cs
+|   |   |   |   |-- Presence/
+|   |   |   |   |   +-- PresenceCoordinatorTests.cs
 |   |   |   |   |-- Properties/
 |   |   |   |   |   +-- MotionPropertyBindingTests.cs
-|   |   |   |   +-- Specs/
-|   |   |   |       |-- EasingTests.cs
-|   |   |   |       +-- MotionSpecTests.cs
+|   |   |   |   |-- Specs/
+|   |   |   |   |   |-- EasingTests.cs
+|   |   |   |   |   +-- MotionSpecTests.cs
+|   |   |   |   |-- Styling/
+|   |   |   |   |   |-- MotionVisualStateTests.cs
+|   |   |   |   |   +-- StyleMotionTests.cs
+|   |   |   |   |-- Transactions/
+|   |   |   |   |   +-- MotionTransactionTests.cs
+|   |   |   |   |-- MotionAllocationTests.cs
+|   |   |   |   |-- MotionFacadeTests.cs
+|   |   |   |   +-- MotionStressTests.cs
 |   |   |   |-- Platform/
 |   |   |   |   |-- PlatformBoundaryTests.cs
 |   |   |   |   |-- ServiceRegistrationTests.cs
@@ -357,6 +378,7 @@ Generated from `.`.
 |   |   |   |   |-- RenderCountersTests.cs
 |   |   |   |   |-- RenderDependencyTests.cs
 |   |   |   |   |-- RenderingTestElement.cs
+|   |   |   |   |-- RenderLayerMotionTests.cs
 |   |   |   |   |-- RenderQueueProcessorTests.cs
 |   |   |   |   |-- RenderStressBudgetTests.cs
 |   |   |   |   |-- ResourceRenderDependencyTests.cs
@@ -466,16 +488,6 @@ Generated from `.`.
 |   |   |-- SemanticsRole.cs
 |   |   |-- SemanticsTree.cs
 |   |   +-- TextBoxAutomationPeer.cs
-|   |-- Animation/
-|   |   |-- AnimatedValueSource.cs
-|   |   |-- Animation.cs
-|   |   |-- Animation{T}.cs
-|   |   |-- AnimationClock.cs
-|   |   |-- AnimationScheduler.cs
-|   |   |-- Easing.cs
-|   |   |-- Storyboard.cs
-|   |   |-- Transition.cs
-|   |   +-- Transition{T}.cs
 |   |-- Controls/
 |   |   |-- Primitives/
 |   |   |   |-- ButtonBase.cs
@@ -549,6 +561,8 @@ Generated from `.`.
 |   |   |-- UiPropertyChangedEventArgs{T}.cs
 |   |   |-- UiPropertyKey{T}.cs
 |   |   |-- UiPropertyMetadata{T}.cs
+|   |   |-- UiPropertyMutation.cs
+|   |   |-- UiPropertyMutationObserver.cs
 |   |   |-- UiPropertyOptions.cs
 |   |   |-- UiPropertyRegistry.cs
 |   |   |-- UiPropertyStore.cs
@@ -608,6 +622,7 @@ Generated from `.`.
 |   |   |-- DrawingContext.cs
 |   |   |-- DrawPoint.cs
 |   |   |-- DrawRect.cs
+|   |   |-- DrawSize.cs
 |   |   |-- DrawTextRun.cs
 |   |   |-- IDrawFont.cs
 |   |   |-- IDrawImage.cs
@@ -799,19 +814,29 @@ Generated from `.`.
 |   |   |-- Core/
 |   |   |   |-- DerivedMotionValue{T}.cs
 |   |   |   |-- IMotionClock.cs
+|   |   |   |-- IReducedMotionSource.cs
+|   |   |   |-- ManualMotionTimeline.cs
 |   |   |   |-- MotionCancellation.cs
+|   |   |   |-- MotionChannel.cs
 |   |   |   |-- MotionCompletionSource.cs
+|   |   |   |-- MotionComposition.cs
+|   |   |   |-- MotionConflictResolver.cs
 |   |   |   |-- MotionFrame.cs
 |   |   |   |-- MotionFrameCoordinator.cs
 |   |   |   |-- MotionFramePhase.cs
 |   |   |   |-- MotionFrameResult.cs
 |   |   |   |-- MotionGraph.cs
+|   |   |   |-- MotionGroup.cs
+|   |   |   |-- MotionGroupHandle.cs
 |   |   |   |-- MotionHandle.cs
 |   |   |   |-- MotionNode.cs
 |   |   |   |-- MotionPriority.cs
+|   |   |   |-- MotionSequence.cs
+|   |   |   |-- MotionStagger.cs
 |   |   |   |-- MotionStartOptions.cs
 |   |   |   |-- MotionSystem.cs
 |   |   |   |-- MotionThreadGuard.cs
+|   |   |   |-- MotionTimeline.cs
 |   |   |   |-- MotionTimelineRegistry.cs
 |   |   |   |-- MotionValue.cs
 |   |   |   |-- MotionValue{T}.cs
@@ -819,18 +844,41 @@ Generated from `.`.
 |   |   |   |-- ReducedMotionPolicy.cs
 |   |   |   +-- SystemMotionClock.cs
 |   |   |-- Diagnostics/
-|   |   |   +-- MotionDiagnostics.cs
+|   |   |   |-- MotionDiagnostics.cs
+|   |   |   |-- MotionGraphSnapshot.cs
+|   |   |   |-- MotionTrace.cs
+|   |   |   +-- MotionTraceEvent.cs
+|   |   |-- Input/
+|   |   |   |-- DragMotionController.cs
+|   |   |   |-- GestureMotionController.cs
+|   |   |   |-- MotionRange.cs
+|   |   |   |-- PointerMotionState.cs
+|   |   |   |-- ScrollMotionBinding.cs
+|   |   |   |-- ScrollTimeline.cs
+|   |   |   +-- VelocityTracker.cs
 |   |   |-- Interpolation/
 |   |   |   |-- ColorMixer.cs
 |   |   |   |-- DoubleMixer.cs
 |   |   |   |-- DrawPointMixer.cs
 |   |   |   |-- DrawRectMixer.cs
+|   |   |   |-- DrawSizeMixer.cs
 |   |   |   |-- FloatMixer.cs
 |   |   |   |-- IValueMixer.cs
 |   |   |   |-- ThicknessMixer.cs
 |   |   |   |-- TransformMixer.cs
 |   |   |   |-- ValueMixer.cs
 |   |   |   +-- ValueMixerRegistry.cs
+|   |   |-- Layout/
+|   |   |   |-- LayoutMotionBinding.cs
+|   |   |   |-- LayoutMotionCoordinator.cs
+|   |   |   |-- LayoutMotionId.cs
+|   |   |   |-- LayoutMotionOptions.cs
+|   |   |   +-- LayoutSnapshot.cs
+|   |   |-- Presence/
+|   |   |   |-- PresenceCoordinator.cs
+|   |   |   |-- PresenceHandle.cs
+|   |   |   |-- PresenceOptions.cs
+|   |   |   +-- PresenceState.cs
 |   |   |-- Properties/
 |   |   |   |-- AnimatablePropertyRegistry.cs
 |   |   |   |-- MotionClearBehavior.cs
@@ -856,13 +904,30 @@ Generated from `.`.
 |   |   |   |-- MotionSpec{T}.cs
 |   |   |   |-- MotionSpecContext.cs
 |   |   |   |-- MotionVelocity.cs
+|   |   |   |-- PingPongSpec.cs
+|   |   |   |-- RepeatSpec.cs
 |   |   |   |-- RetargetMode.cs
 |   |   |   |-- SpringSpec.cs
 |   |   |   |-- SpringVelocityMode.cs
 |   |   |   |-- StepEasing.cs
 |   |   |   +-- TweenSpec.cs
-|   |   +-- Styling/
-|   |       +-- MotionTokens.cs
+|   |   |-- Styling/
+|   |   |   |-- MotionStateRule.cs
+|   |   |   |-- MotionTokens.cs
+|   |   |   |-- MotionVisualStateController.cs
+|   |   |   |-- MotionVisualStateSnapshot.cs
+|   |   |   |-- StyleMotion.cs
+|   |   |   +-- ThemeMotionTokens.cs
+|   |   |-- Transactions/
+|   |   |   |-- MotionTransaction.cs
+|   |   |   |-- MotionTransactionContext.cs
+|   |   |   |-- MotionTransactionOptions.cs
+|   |   |   +-- MotionTransactionScope.cs
+|   |   |-- MotionAnimationBuilder.cs
+|   |   |-- MotionDefaults.cs
+|   |   |-- MotionElementFacade.cs
+|   |   |-- MotionExtensions.cs
+|   |   +-- MotionStateBuilder.cs
 |   |-- Platform/
 |   |   |-- IAccessibilityPlatform.cs
 |   |   |-- IClipboard.cs
@@ -914,7 +979,6 @@ Generated from `.`.
 |   |   |-- StyleRule.cs
 |   |   |-- StyleSelector.cs
 |   |   |-- StyleSheet.cs
-|   |   |-- StyleTransition.cs
 |   |   |-- Theme.cs
 |   |   |-- ThemeKey{T}.cs
 |   |   |-- ThemePalette.cs

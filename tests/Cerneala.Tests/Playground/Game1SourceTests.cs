@@ -91,6 +91,18 @@ public sealed class Game1SourceTests
     }
 
     [Fact]
+    public void Game1AllowsWindowResizeAndMaximize()
+    {
+        string source = Game1Source();
+
+        Assert.Contains("Window.AllowUserResizing = true;", source, StringComparison.Ordinal);
+        Assert.Contains("PreferredBackBufferWidth = 1280", source, StringComparison.Ordinal);
+        Assert.Contains("PreferredBackBufferHeight = 720", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("Window.IsBorderless = true", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("IsFullScreen = true", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ProgramPassesSmokeOpenArgumentToGame1()
     {
         string source = File.ReadAllText(ProgramPath());

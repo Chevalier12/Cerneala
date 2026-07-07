@@ -63,7 +63,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public float ViewportHeight { get; private set; }
 
-    public float Scale { get; private set; }
+    public new float Scale { get; private set; }
 
     public int TreeVersion { get; private set; }
 
@@ -142,6 +142,10 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public void SetPlatformServices(IPlatformServices? services)
     {
         PlatformServices = services ?? Cerneala.UI.Platform.PlatformServices.Empty;
+        if (PlatformServices.ReducedMotion is not null)
+        {
+            Motion.ReducedMotion.SetMode(PlatformServices.ReducedMotion.Mode);
+        }
     }
 
     public void SetImageLoader(IImageLoader? loader)

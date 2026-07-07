@@ -7,6 +7,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Text;
 
@@ -43,7 +44,23 @@ public sealed class PlaygroundSampleTests
         SampleSelector selector = SampleSelector.CreateDefault();
         UIElement? initial = selector.ActiveElement;
 
-        Assert.Equal(new[] { "Retained App", "Button", "Layout", "Text", "Diagnostics", "Runtime Preview", "Authoring App", "Getting Started" }, selector.Samples.Select(sample => sample.Name));
+        Assert.Equal(
+            new[]
+            {
+                "Retained App",
+                "Button",
+                "Layout",
+                "Text",
+                "Diagnostics",
+                "Runtime Preview",
+                "Authoring App",
+                "Getting Started",
+                "Motion",
+                "Layout Motion",
+                "Presence",
+                "Scroll Motion"
+            },
+            selector.Samples.Select(sample => sample.Name));
 
         selector.SelectSample(1);
 
@@ -202,6 +219,58 @@ public sealed class PlaygroundSampleTests
     }
 
     [Fact]
+    public void MotionSampleBuildsExpectedMotionControls()
+    {
+        UIElement root = new MotionSample().Build();
+
+        Button hover = ButtonWithText(root, "Hover color");
+        Button press = ButtonWithText(root, "Press scale");
+        Button animate = ButtonWithText(root, "Animate");
+        Button cancel = ButtonWithText(root, "Cancel");
+        Button restart = ButtonWithText(root, "Restart");
+
+        Assert.NotNull(hover.Command);
+        Assert.NotNull(press.Command);
+        Assert.NotNull(animate.Command);
+        Assert.NotNull(cancel.Command);
+        Assert.NotNull(restart.Command);
+        Assert.Contains(DescendantsAndSelf<Border>(root), border => border.Opacity < 1 || border.Scale != 1);
+    }
+
+    [Fact]
+    public void LayoutMotionSampleBuildsReorderExpandAndStatsTargets()
+    {
+        UIElement root = new LayoutMotionSample().Build();
+
+        Assert.NotNull(ButtonWithText(root, "Reorder").Command);
+        Assert.NotNull(ButtonWithText(root, "Expand").Command);
+        Assert.Contains(DescendantsAndSelf<Border>(root), border => border.LayoutMotionId is not null);
+        Assert.Contains(DescendantsAndSelf<TextBlock>(root), text => text.Text.Contains("measure", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void PresenceSampleBuildsAddRemoveAndReducedMotionToggle()
+    {
+        UIElement root = new PresenceMotionSample().Build();
+
+        Assert.NotNull(ButtonWithText(root, "Add").Command);
+        Assert.NotNull(ButtonWithText(root, "Remove").Command);
+        Assert.NotNull(ButtonWithText(root, "Reduced motion").Command);
+        Assert.Contains(DescendantsAndSelf<Border>(root), border => border.Presence is not null);
+    }
+
+    [Fact]
+    public void ScrollMotionSampleBuildsHeaderParallaxAndProgressIndicator()
+    {
+        UIElement root = new ScrollMotionSample().Build();
+
+        Assert.Contains(DescendantsAndSelf<ScrollViewer>(root), _ => true);
+        Assert.Contains(DescendantsAndSelf<Border>(root), border => border.Opacity < 1);
+        Assert.Contains(DescendantsAndSelf<Border>(root), border => border.TranslateY != 0);
+        Assert.Contains(DescendantsAndSelf<Border>(root), border => border.ScaleX < 1);
+    }
+
+    [Fact]
     public void SelectorPlacesFrameStatsBeforeActiveSampleContent()
     {
         UIRoot root = new(1000, 640);
@@ -294,6 +363,28 @@ public sealed class PlaygroundSampleTests
         root.VisualChildren.Add(selector.Root);
         selector.SelectSample(selector.Samples.ToList().FindIndex(sample => sample.Name == "Runtime Preview"));
         selector.Root.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.Subtree, "Initial runtime preview sample test frame");
+        root.ProcessFrame();
+
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.NotEmpty(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
+        Assert.All(
+            commands.Where(command => command.Kind == DrawCommandKind.DrawText),
+            command => Assert.IsType<SkiaFont>(command.TextRun!.Font));
+    }
+
+    [Theory]
+    [InlineData("Motion")]
+    [InlineData("Layout Motion")]
+    [InlineData("Presence")]
+    [InlineData("Scroll Motion")]
+    public void MotionSamplesUseSkiaFontsWhenFontResourceIsProvided(string sampleName)
+    {
+        ResourceStore resources = CreateFontResources(out ResourceId<FontResource> fontId);
+        UIRoot root = new(800, 600);
+        SampleSelector selector = SampleSelector.CreateDefault(resources, fontId);
+        root.VisualChildren.Add(selector.Root);
+        selector.SelectSample(selector.Samples.ToList().FindIndex(sample => sample.Name == sampleName));
         root.ProcessFrame();
 
         DrawCommandList commands = root.RetainedRenderer.Commit(root);
@@ -460,6 +551,36 @@ public sealed class PlaygroundSampleTests
         Assert.Contains("reusedCaches=1", overlay.Text, StringComparison.Ordinal);
         Assert.Contains("noWork=1", overlay.Text, StringComparison.Ordinal);
         Assert.Contains(DescendantsAndSelf<TextBlock>(overlay.Root), _ => true);
+    }
+
+    [Fact]
+    public void StatsOverlayMapsMotionFrameCountersToRetainedText()
+    {
+        FrameStats stats = new();
+        stats.CountMotion(new MotionFrameResult(
+            new MotionFrame(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16), 1, MotionFrameReason.Scheduled, MotionFramePhase.BeforeRender),
+            NeedsAnotherFrame: true,
+            MotionFrames: 1,
+            MotionNodesSampled: 2,
+            MotionValuesChanged: 3,
+            MotionPropertyWrites: 4,
+            MotionCompleted: 5,
+            MotionRenderInvalidations: 6,
+            MotionLayoutInvalidations: 7,
+            MotionSkippedByReducedMotion: 8));
+        UiFrame frame = new(TimeSpan.FromMilliseconds(16), new UiViewport(800, 600), EmptyInputFrame(), stats);
+        InvalidationStatsOverlay overlay = new();
+
+        overlay.Update(frame);
+
+        Assert.Contains("motion=1", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("sampled=2", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("motionValues=3", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("motionWrites=4", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("completed=5", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("motionRender=6", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("motionLayout=7", overlay.Text, StringComparison.Ordinal);
+        Assert.Contains("reduced=8", overlay.Text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -633,6 +754,12 @@ public sealed class PlaygroundSampleTests
     {
         return DescendantsAndSelf<Button>(root)
             .Single(button => button.Content is TextBlock textBlock && textBlock.Text == text);
+    }
+
+    private static Button ButtonWithString(UIElement root, string text)
+    {
+        return DescendantsAndSelf<Button>(root)
+            .Single(button => string.Equals(button.Content as string, text, StringComparison.Ordinal));
     }
 
     private static Border StatsOverlayBorder(UIElement root)
