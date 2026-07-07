@@ -699,26 +699,26 @@ MotionValue<Transform> transform = MotionValue.Combine(x, y, (cx, cy) => Transfo
 
 ### Files
 
-- [ ] Add `UI/Motion/Properties/MotionPropertyBinding.cs`.
-- [ ] Add `UI/Motion/Properties/MotionPropertyBinding{T}.cs`.
-- [ ] Add `UI/Motion/Properties/MotionPropertyStore.cs`.
-- [ ] Add `UI/Motion/Properties/MotionPropertyKey.cs`.
-- [ ] Add `UI/Motion/Properties/MotionPropertyOptions.cs`.
-- [ ] Add `UI/Motion/Properties/AnimatablePropertyRegistry.cs`.
-- [ ] Add `UI/Motion/Properties/MotionPropertyInvalidationClassifier.cs`.
-- [ ] Modify `UI/Core/UiPropertyMetadata.cs` if metadata needs animation hints.
-- [ ] Modify `UI/Core/UiPropertyOptions.cs` if render-only/layout-affecting classification is incomplete.
+- [x] Add `UI/Motion/Properties/MotionPropertyBinding.cs`.
+- [x] Add `UI/Motion/Properties/MotionPropertyBinding{T}.cs`.
+- [x] Add `UI/Motion/Properties/MotionPropertyStore.cs`.
+- [x] Add `UI/Motion/Properties/MotionPropertyKey.cs`.
+- [x] Add `UI/Motion/Properties/MotionPropertyOptions.cs`.
+- [x] Add `UI/Motion/Properties/AnimatablePropertyRegistry.cs`.
+- [x] Add `UI/Motion/Properties/MotionPropertyInvalidationClassifier.cs`.
+- [x] Modify `UI/Core/UiPropertyMetadata.cs` if metadata needs animation hints. (not needed for Phase 6; classification lives in `MotionPropertyInvalidationClassifier`)
+- [x] Modify `UI/Core/UiPropertyOptions.cs` if render-only/layout-affecting classification is incomplete. (not needed for Phase 6; existing flags are enough)
 
 ### Contract
 
-- [ ] `MotionPropertyBinding<T>` connects a `MotionValue<T>` to a `UiObject` + `UiProperty<T>`.
-- [ ] It writes with `UiPropertyValueSource.Animation`.
-- [ ] It clears animation source on natural completion unless configured to hold.
-- [ ] It tracks the property source before animation starts.
-- [ ] It handles local value masking without losing sampled animation state.
-- [ ] It stops when target element detaches from root.
-- [ ] It must ignore writes where `UiPropertyValueSource.Animation` is already the source to avoid transaction feedback loops.
-- [ ] It must stage writes through the frame coordinator, not write directly while graph nodes are being sampled.
+- [x] `MotionPropertyBinding<T>` connects a `MotionValue<T>` to a `UiObject` + `UiProperty<T>`.
+- [x] It writes with `UiPropertyValueSource.Animation`.
+- [x] It clears animation source on natural completion unless configured to hold.
+- [x] It tracks the property source before animation starts.
+- [x] It handles local value masking without losing sampled animation state.
+- [x] It stops when target element detaches from root.
+- [x] It must ignore writes where `UiPropertyValueSource.Animation` is already the source to avoid transaction feedback loops.
+- [x] It must stage writes through the frame coordinator, not write directly while graph nodes are being sampled.
 
 ### API
 
@@ -735,28 +735,28 @@ public sealed class MotionPropertyBinding<T> : IDisposable
 
 ### `AnimatablePropertyRegistry`
 
-- [ ] Register built-in animatable properties:
-  - [ ] `Control.BackgroundProperty`
-  - [ ] `Control.BorderBrushProperty`
-  - [ ] `Control.BorderThicknessProperty`
-  - [ ] common width/height/margin/padding if present.
-  - [ ] `UIElement.RenderTransformProperty` after Phase 7.
-  - [ ] `UIElement.OpacityProperty` after Phase 7.
-- [ ] Store:
-  - [ ] Mixer type.
-  - [ ] Default spec.
-  - [ ] Invalidation category: render, layout, hit-test, semantics.
-  - [ ] Whether property is safe for implicit animation.
+- [x] Register built-in animatable properties:
+  - [x] `Control.BackgroundProperty`
+  - [x] `Control.BorderBrushProperty` (implemented as existing `Control.BorderColorProperty`; no `BorderBrushProperty` exists)
+  - [x] `Control.BorderThicknessProperty`
+  - [x] common width/height/margin/padding if present. (`Margin`/`Padding` registered; width/height do not exist)
+  - [ ] `UIElement.RenderTransformProperty` after Phase 7. (deferred; property does not exist yet)
+  - [ ] `UIElement.OpacityProperty` after Phase 7. (deferred; property does not exist yet)
+- [x] Store:
+  - [x] Mixer type.
+  - [x] Default spec.
+  - [x] Invalidation category: render, layout, hit-test, semantics.
+  - [x] Whether property is safe for implicit animation.
 
 ### Tests
 
-- [ ] Binding writes animation source.
-- [ ] Binding clears on completion.
-- [ ] Binding survives local source masking.
-- [ ] Binding does not invalidate when sampled value equals effective value.
-- [ ] Render-only binding does not enqueue measure/arrange.
-- [ ] Layout-affecting binding enqueues measure/arrange only when value changes.
-- [ ] Detached target cancels and clears source.
+- [x] Binding writes animation source.
+- [x] Binding clears on completion.
+- [x] Binding survives local source masking.
+- [x] Binding does not invalidate when sampled value equals effective value.
+- [x] Render-only binding does not enqueue measure/arrange.
+- [x] Layout-affecting binding enqueues measure/arrange only when value changes.
+- [x] Detached target cancels and clears source.
 
 ---
 
