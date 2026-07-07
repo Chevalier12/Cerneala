@@ -61,6 +61,7 @@ Generated from `.`.
 |   |       |-- 2026-07-06-textbox-caret-blink-hit-testing.md
 |   |       |-- 2026-07-06-wire-platform-services-cursor-and-clipboard.md
 |   |       |-- 2026-07-06-wire-tab-focus-navigation-contract.md
+|   |       |-- 2026-07-07-modern-motion-system.md
 |   |       +-- developer-preview-smoke-failure-fix-plan.md
 |   |-- architecture-v2.md
 |   |-- developer-preview-checklist.md
@@ -226,6 +227,7 @@ Generated from `.`.
 |   |   |   |   |-- AnimationClockTests.cs
 |   |   |   |   |-- AnimationInvalidationTests.cs
 |   |   |   |   |-- AnimationSchedulerTests.cs
+|   |   |   |   |-- LegacyAnimationCompatibilityTests.cs
 |   |   |   |   |-- TransitionTests.cs
 |   |   |   |   +-- TypedAnimationTests.cs
 |   |   |   |-- Controls/
@@ -330,6 +332,16 @@ Generated from `.`.
 |   |   |   |   |-- GeometryTests.cs
 |   |   |   |   |-- ImageSourceTests.cs
 |   |   |   |   +-- TransformTests.cs
+|   |   |   |-- Motion/
+|   |   |   |   |-- Core/
+|   |   |   |   |   |-- ManualMotionClock.cs
+|   |   |   |   |   |-- MotionSystemTests.cs
+|   |   |   |   |   +-- MotionValueTests.cs
+|   |   |   |   |-- Interpolation/
+|   |   |   |   |   +-- ValueMixerBuiltInTests.cs
+|   |   |   |   +-- Specs/
+|   |   |   |       |-- EasingTests.cs
+|   |   |   |       +-- MotionSpecTests.cs
 |   |   |   |-- Platform/
 |   |   |   |   |-- PlatformBoundaryTests.cs
 |   |   |   |   |-- ServiceRegistrationTests.cs
@@ -781,6 +793,63 @@ Generated from `.`.
 |   |   |-- ShadowEffect.cs
 |   |   |-- SolidColorBrush.cs
 |   |   +-- Transform.cs
+|   |-- Motion/
+|   |   |-- Core/
+|   |   |   |-- DerivedMotionValue{T}.cs
+|   |   |   |-- IMotionClock.cs
+|   |   |   |-- MotionCancellation.cs
+|   |   |   |-- MotionCompletionSource.cs
+|   |   |   |-- MotionFrame.cs
+|   |   |   |-- MotionFrameCoordinator.cs
+|   |   |   |-- MotionFramePhase.cs
+|   |   |   |-- MotionFrameResult.cs
+|   |   |   |-- MotionGraph.cs
+|   |   |   |-- MotionHandle.cs
+|   |   |   |-- MotionNode.cs
+|   |   |   |-- MotionPriority.cs
+|   |   |   |-- MotionStartOptions.cs
+|   |   |   |-- MotionSystem.cs
+|   |   |   |-- MotionThreadGuard.cs
+|   |   |   |-- MotionTimelineRegistry.cs
+|   |   |   |-- MotionValue.cs
+|   |   |   |-- MotionValue{T}.cs
+|   |   |   |-- ReducedMotionMode.cs
+|   |   |   |-- ReducedMotionPolicy.cs
+|   |   |   +-- SystemMotionClock.cs
+|   |   |-- Diagnostics/
+|   |   |   +-- MotionDiagnostics.cs
+|   |   |-- Interpolation/
+|   |   |   |-- ColorMixer.cs
+|   |   |   |-- DoubleMixer.cs
+|   |   |   |-- DrawPointMixer.cs
+|   |   |   |-- DrawRectMixer.cs
+|   |   |   |-- FloatMixer.cs
+|   |   |   |-- IValueMixer.cs
+|   |   |   |-- ThicknessMixer.cs
+|   |   |   |-- TransformMixer.cs
+|   |   |   |-- ValueMixer.cs
+|   |   |   +-- ValueMixerRegistry.cs
+|   |   |-- Specs/
+|   |   |   |-- CubicBezierEasing.cs
+|   |   |   |-- DecaySpec.cs
+|   |   |   |-- Easings.cs
+|   |   |   |-- FillMode.cs
+|   |   |   |-- IEasing.cs
+|   |   |   |-- KeyframesSpec.cs
+|   |   |   |-- Motion.cs
+|   |   |   |-- MotionCompletion.cs
+|   |   |   |-- MotionSampler.cs
+|   |   |   |-- MotionSpec.cs
+|   |   |   |-- MotionSpec{T}.cs
+|   |   |   |-- MotionSpecContext.cs
+|   |   |   |-- MotionVelocity.cs
+|   |   |   |-- RetargetMode.cs
+|   |   |   |-- SpringSpec.cs
+|   |   |   |-- SpringVelocityMode.cs
+|   |   |   |-- StepEasing.cs
+|   |   |   +-- TweenSpec.cs
+|   |   +-- Styling/
+|   |       +-- MotionTokens.cs
 |   |-- Platform/
 |   |   |-- IAccessibilityPlatform.cs
 |   |   |-- IClipboard.cs
