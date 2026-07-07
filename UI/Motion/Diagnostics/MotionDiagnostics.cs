@@ -5,8 +5,11 @@ namespace Cerneala.UI.Motion.Diagnostics;
 public sealed class MotionDiagnostics
 {
     private readonly List<MotionFramePhase> phases = [];
+    private readonly List<string> warnings = [];
 
     public IReadOnlyList<MotionFramePhase> Phases => phases;
+
+    public IReadOnlyList<string> Warnings => warnings;
 
     public int BeforeLayoutSnapshotCaptures { get; private set; }
 
@@ -32,5 +35,11 @@ public sealed class MotionDiagnostics
     internal void CaptureAfterLayoutSnapshots()
     {
         AfterLayoutSnapshotCaptures++;
+    }
+
+    public void RecordWarning(string message)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
+        warnings.Add(message);
     }
 }
