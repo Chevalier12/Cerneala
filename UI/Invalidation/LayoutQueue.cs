@@ -19,7 +19,7 @@ public sealed class LayoutQueue
 
     public int ArrangeCount => arrange.Count;
 
-    public bool HasWork => measure.Count > 0 || arrange.Count > 0;
+    public bool HasWork => SnapshotMeasure().Count > 0 || SnapshotArrange().Count > 0;
 
     public void EnqueueMeasure(UIElement element)
     {

@@ -28,13 +28,13 @@ public sealed class DetachedQueuedElementTests
     }
 
     [Fact]
-    public void DetachedStyleQueuedElementIsNotStyled()
+    public void DetachedAspectQueuedElementIsNotAspected()
     {
         UIRoot root = RootWithChild(out UIElement child);
-        child.Invalidate(InvalidationFlags.Style, "queued");
+        child.Invalidate(InvalidationFlags.Aspect, "queued");
         root.VisualChildren.Remove(child);
 
-        Assert.DoesNotContain(child, root.StyleQueue.Snapshot());
+        Assert.DoesNotContain(child, root.AspectQueue.Snapshot());
     }
 
     [Fact]

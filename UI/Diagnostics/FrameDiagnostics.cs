@@ -11,7 +11,7 @@ public static class FrameDiagnostics
         return new FrameDiagnosticsSnapshot(
             stats.InheritedElements,
             stats.CommandStateElements,
-            stats.StyledElements,
+            stats.AspectElements,
             stats.MeasuredElements,
             stats.ArrangedElements,
             stats.MeasureCalls,
@@ -40,7 +40,7 @@ public static class FrameDiagnostics
 public sealed record FrameDiagnosticsSnapshot(
     int InheritedElements,
     int CommandStateElements,
-    int StyledElements,
+    int AspectElements,
     int QueuedMeasureElements,
     int QueuedArrangeElements,
     int MeasureCalls,

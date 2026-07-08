@@ -109,10 +109,10 @@ public class ItemsPresenter : Control
     {
         RefreshItems();
         LayoutSize desired = panelRoot?.Measure(context) ?? LayoutSize.Zero;
-        ProcessInheritedAndStyleForSubtree(panelRoot);
+        ProcessInheritedAndAspectForSubtree(panelRoot);
         RemoveMeasureWorkForSubtree(panelRoot);
         RemoveMeasureWorkForLayoutScope();
-        RemoveInheritedAndStyleWorkForLayoutScope();
+        RemoveInheritedAndAspectWorkForLayoutScope();
         return desired;
     }
 
@@ -366,7 +366,7 @@ public class ItemsPresenter : Control
         }
     }
 
-    private static void ProcessInheritedAndStyleForSubtree(UIElement? element)
+    private static void ProcessInheritedAndAspectForSubtree(UIElement? element)
     {
         if (element?.Root is not UIRoot root)
         {
@@ -376,10 +376,10 @@ public class ItemsPresenter : Control
         root.InheritedPropertyPropagator.PropagateFrom(element);
         foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
         {
-            root.StyleProcessor.Process(current);
+            root.AspectProcessor.Process(current);
             root.InheritedPropertyQueue.Remove(current);
-            root.StyleQueue.Remove(current);
-            current.DirtyState.Clear(InvalidationFlags.Inherited | InvalidationFlags.Style);
+            root.AspectQueue.Remove(current);
+            current.DirtyState.Clear(InvalidationFlags.Inherited | InvalidationFlags.Aspect);
         }
     }
 
@@ -396,7 +396,7 @@ public class ItemsPresenter : Control
         }
     }
 
-    private void RemoveInheritedAndStyleWorkForLayoutScope()
+    private void RemoveInheritedAndAspectWorkForLayoutScope()
     {
         if (Root is not UIRoot root)
         {
@@ -406,8 +406,8 @@ public class ItemsPresenter : Control
         for (UIElement? current = this; current is not null; current = current.VisualParent)
         {
             root.InheritedPropertyQueue.Remove(current);
-            root.StyleQueue.Remove(current);
-            current.DirtyState.Clear(InvalidationFlags.Inherited | InvalidationFlags.Style);
+            root.AspectQueue.Remove(current);
+            current.DirtyState.Clear(InvalidationFlags.Inherited | InvalidationFlags.Aspect);
         }
     }
 }

@@ -123,9 +123,9 @@ public sealed class TextBlockInvalidationTests
             this.height = height;
         }
 
-        public override TextMeasureResult Measure(string text, TextRunStyle style, float availableWidth)
+        public override TextMeasureResult Measure(string text, TextAspect aspect, float availableWidth)
         {
-            TextLayoutKey key = new(text, $"{style.FontFamily}:{width}x{height}", style.FontSize, style.Wrapping, availableWidth, style.Trimming, style.Scale);
+            TextLayoutKey key = new(text, $"{aspect.FontFamily}:{width}x{height}", aspect.FontSize, aspect.Wrapping, availableWidth, aspect.Trimming, aspect.Scale);
             return new TextMeasureResult(new LayoutSize(width, height), 1, key, key.FontIdentity, [new TextLine(text, width)]);
         }
     }

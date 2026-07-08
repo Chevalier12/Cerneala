@@ -9,7 +9,7 @@ public sealed class TextCaretLayout
 
     public static TextCaretLayout Default { get; } = new();
 
-    public float GetCaretX(string text, int position, TextRunStyle style, FontResolver resolver)
+    public float GetCaretX(string text, int position, TextAspect aspect, FontResolver resolver)
     {
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(resolver);
@@ -20,15 +20,15 @@ public sealed class TextCaretLayout
             return 0;
         }
 
-        return MeasurePrefix(text[..clampedPosition], style, resolver);
+        return MeasurePrefix(text[..clampedPosition], aspect, resolver);
     }
 
-    public int GetCaretIndexAtX(string text, float x, TextRunStyle style, FontResolver resolver)
+    public int GetCaretIndexAtX(string text, float x, TextAspect aspect, FontResolver resolver)
     {
-        return GetCaretIndexAtX(text, x, 0, style, resolver);
+        return GetCaretIndexAtX(text, x, 0, aspect, resolver);
     }
 
-    public int GetCaretIndexAtX(string text, float x, float horizontalTextOffset, TextRunStyle style, FontResolver resolver)
+    public int GetCaretIndexAtX(string text, float x, float horizontalTextOffset, TextAspect aspect, FontResolver resolver)
     {
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(resolver);
@@ -40,7 +40,7 @@ public sealed class TextCaretLayout
 
         float textX = x + horizontalTextOffset;
         int[] positions = BuildCaretPositions(text);
-        float[] stops = BuildCaretStops(text, positions, style, resolver);
+        float[] stops = BuildCaretStops(text, positions, aspect, resolver);
         if (textX <= stops[0])
         {
             return 0;
@@ -66,38 +66,38 @@ public sealed class TextCaretLayout
         return positions[nearestIndex];
     }
 
-    public float GetCaretLineHeight(TextRunStyle style, FontResolver resolver)
+    public float GetCaretLineHeight(TextAspect aspect, FontResolver resolver)
     {
         ArgumentNullException.ThrowIfNull(resolver);
 
-        ResolvedTextFont font = resolver.Resolve(style);
-        if (shaper.TryMeasureLineHeight(style.ToDrawTextRun(font, "Ag"), out float lineHeight))
+        ResolvedTextFont font = resolver.Resolve(aspect);
+        if (shaper.TryMeasureLineHeight(aspect.ToDrawTextRun(font, "Ag"), out float lineHeight))
         {
             return lineHeight;
         }
 
-        return style.FontSize * style.Scale;
+        return aspect.FontSize * aspect.Scale;
     }
 
-    public TextCaretVerticalMetrics GetCaretVerticalMetrics(TextRunStyle style, FontResolver resolver)
+    public TextCaretVerticalMetrics GetCaretVerticalMetrics(TextAspect aspect, FontResolver resolver)
     {
         ArgumentNullException.ThrowIfNull(resolver);
 
-        ResolvedTextFont font = resolver.Resolve(style);
-        if (shaper.TryMeasureCaretVerticalMetrics(style.ToDrawTextRun(font, "Ag"), out TextCaretVerticalMetrics metrics))
+        ResolvedTextFont font = resolver.Resolve(aspect);
+        if (shaper.TryMeasureCaretVerticalMetrics(aspect.ToDrawTextRun(font, "Ag"), out TextCaretVerticalMetrics metrics))
         {
             return metrics;
         }
 
-        return new TextCaretVerticalMetrics(0, style.FontSize * style.Scale);
+        return new TextCaretVerticalMetrics(0, aspect.FontSize * aspect.Scale);
     }
 
-    private float[] BuildCaretStops(string text, int[] positions, TextRunStyle style, FontResolver resolver)
+    private float[] BuildCaretStops(string text, int[] positions, TextAspect aspect, FontResolver resolver)
     {
         float[] stops = new float[positions.Length];
         for (int i = 1; i < stops.Length; i++)
         {
-            stops[i] = MeasurePrefix(text[..positions[i]], style, resolver);
+            stops[i] = MeasurePrefix(text[..positions[i]], aspect, resolver);
         }
 
         return stops;
@@ -143,19 +143,19 @@ public sealed class TextCaretLayout
         return previous;
     }
 
-    private float MeasurePrefix(string prefix, TextRunStyle style, FontResolver resolver)
+    private float MeasurePrefix(string prefix, TextAspect aspect, FontResolver resolver)
     {
         if (prefix.Length == 0)
         {
             return 0;
         }
 
-        ResolvedTextFont font = resolver.Resolve(style);
-        if (shaper.TryShape(style.ToDrawTextRun(font, prefix), out TextShapeResult shape))
+        ResolvedTextFont font = resolver.Resolve(aspect);
+        if (shaper.TryShape(aspect.ToDrawTextRun(font, prefix), out TextShapeResult shape))
         {
             return shape.AdvanceWidth;
         }
 
-        return TextMeasurer.Default.Measure(prefix, style, float.PositiveInfinity).Size.Width;
+        return TextMeasurer.Default.Measure(prefix, aspect, float.PositiveInfinity).Size.Width;
     }
 }

@@ -94,8 +94,8 @@ public sealed class TextBoxTests
         UIRoot root = RootWithTextBox("iiiiWWWW", 220, out TextBox textBox);
         bool rootSawMouseDown = false;
         root.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => rootSawMouseDown = true);
-        float stop2 = TextCaretLayout.Default.GetCaretX(textBox.Text, 2, CreateTextStyle(textBox), new FontResolver(textBox.ResourceProvider!));
-        float stop3 = TextCaretLayout.Default.GetCaretX(textBox.Text, 3, CreateTextStyle(textBox), new FontResolver(textBox.ResourceProvider!));
+        float stop2 = TextCaretLayout.Default.GetCaretX(textBox.Text, 2, CreateTextAspect(textBox), new FontResolver(textBox.ResourceProvider!));
+        float stop3 = TextCaretLayout.Default.GetCaretX(textBox.Text, 3, CreateTextAspect(textBox), new FontResolver(textBox.ResourceProvider!));
         float clickX = ContentX(textBox) + stop2 + ((stop3 - stop2) * 0.75f);
 
         Click(root, clickX, 10);
@@ -111,12 +111,12 @@ public sealed class TextBoxTests
     {
         UIRoot root = RootWithTextBox("iiiiWWWW", 56, out TextBox textBox);
         textBox.MoveCaret(textBox.Text.Length);
-        float fullWidth = TextCaretLayout.Default.GetCaretX(textBox.Text, textBox.Text.Length, CreateTextStyle(textBox), new FontResolver(textBox.ResourceProvider!));
+        float fullWidth = TextCaretLayout.Default.GetCaretX(textBox.Text, textBox.Text.Length, CreateTextAspect(textBox), new FontResolver(textBox.ResourceProvider!));
         float horizontalOffset = MathF.Max(0, fullWidth - ContentWidth(textBox));
         int expectedIndex = TextCaretLayout.Default.GetCaretIndexAtX(
             textBox.Text,
             2 + horizontalOffset,
-            CreateTextStyle(textBox),
+            CreateTextAspect(textBox),
             new FontResolver(textBox.ResourceProvider!));
 
         Click(root, ContentX(textBox) + 2, 10);
@@ -291,9 +291,9 @@ public sealed class TextBoxTests
             []);
     }
 
-    private static TextRunStyle CreateTextStyle(TextBox textBox)
+    private static TextAspect CreateTextAspect(TextBox textBox)
     {
-        return new TextRunStyle(textBox.FontFamily, textBox.FontSize, color: textBox.Foreground, fontResourceId: textBox.FontResourceId);
+        return new TextAspect(textBox.FontFamily, textBox.FontSize, color: textBox.Foreground, fontResourceId: textBox.FontResourceId);
     }
 
     private static float ContentX(TextBox textBox)
@@ -311,7 +311,7 @@ public sealed class TextBoxTests
         return TextCaretLayout.Default.GetCaretX(
             textBox.Text,
             position,
-            CreateTextStyle(textBox),
+            CreateTextAspect(textBox),
             new FontResolver(textBox.ResourceProvider!));
     }
 }

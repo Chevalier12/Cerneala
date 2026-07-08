@@ -36,7 +36,7 @@ public sealed class RuntimeDiagnosticsTests
 
         Assert.Equal(1, snapshot.Frame.InheritedElements);
         Assert.Equal(1, snapshot.Frame.CommandStateElements);
-        Assert.Equal(1, snapshot.Frame.StyledElements);
+        Assert.Equal(1, snapshot.Frame.AspectElements);
         Assert.Equal(1, snapshot.Frame.QueuedMeasureElements);
         Assert.Equal(1, snapshot.Frame.QueuedArrangeElements);
         Assert.Equal(2, snapshot.Frame.MeasureCalls);
@@ -96,7 +96,7 @@ public sealed class RuntimeDiagnosticsTests
     }
 
     [Fact]
-    public void RuntimeDiagnosticsFormatIncludesCommandStateStyleAndHitTestCounts()
+    public void RuntimeDiagnosticsFormatIncludesCommandStateAspectAndHitTestCounts()
     {
         UIRoot root = RootWithCommittedRenderCache(out _);
         UiViewport viewport = new(root.ViewportWidth, root.ViewportHeight, root.Scale);
@@ -106,7 +106,7 @@ public sealed class RuntimeDiagnosticsTests
         string formatted = RuntimeDiagnostics.Format(snapshot);
 
         Assert.Contains("commandState=1", formatted, StringComparison.Ordinal);
-        Assert.Contains("style=1", formatted, StringComparison.Ordinal);
+        Assert.Contains("aspect=1", formatted, StringComparison.Ordinal);
         Assert.Contains("hitTest=1", formatted, StringComparison.Ordinal);
         Assert.Contains("commands=1", formatted, StringComparison.Ordinal);
     }
@@ -204,7 +204,7 @@ public sealed class RuntimeDiagnosticsTests
         FrameStats stats = new();
         stats.Count(FramePhase.InheritedProperties);
         stats.Count(FramePhase.CommandState);
-        stats.Count(FramePhase.Style);
+        stats.Count(FramePhase.Aspect);
         stats.Count(FramePhase.Measure);
         stats.Count(FramePhase.Arrange);
         stats.Count(FramePhase.RenderCache);

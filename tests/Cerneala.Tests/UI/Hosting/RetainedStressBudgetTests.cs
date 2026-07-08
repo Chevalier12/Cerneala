@@ -70,13 +70,13 @@ public sealed class RetainedStressBudgetTests
         UiFrame tab = host.Update(KeyPressFrame(InputKey.Tab), new UiViewport(800, 600), TimeSpan.Zero);
 
         Assert.NotNull(host.InputBridge.FocusManager.FocusedElement);
-        Assert.True(tab.Stats.StyledElements > 0);
+        Assert.True(tab.Stats.AspectElements > 0);
         Assert.True(tab.Stats.RenderedElements > 0);
         Assert.Equal(0, tab.Stats.MeasuredElements);
         Assert.Equal(0, tab.Stats.ArrangedElements);
         Assert.Equal(0, tab.Stats.MeasureCalls);
         Assert.Equal(0, tab.Stats.ArrangeCalls);
-        Assert.True(tab.Stats.StyledElements <= 6, $"Styled {tab.Stats.StyledElements} elements for one focus move.");
+        Assert.True(tab.Stats.AspectElements <= 6, $"Aspect {tab.Stats.AspectElements} elements for one focus move.");
         Assert.True(tab.Stats.RenderedElements <= 6, $"Rendered {tab.Stats.RenderedElements} elements for one focus move.");
         Assert.True(tab.Stats.HitTestElements <= 1, $"Rebuilt hit-test for {tab.Stats.HitTestElements} elements.");
     }

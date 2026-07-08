@@ -2,7 +2,7 @@
 
 ## What Cerneala Is
 
-Cerneala is a retained, code-first UI layer. The Developer Preview path is C# objects, retained invalidation, typed bindings, commands, theme styles, and a host that you update and draw every frame.
+Cerneala is a retained, code-first UI layer. The Developer Preview path is C# objects, retained invalidation, typed bindings, commands, aspect packages, and a host that you update and draw every frame.
 
 ## Retained Update/Draw Contract
 
@@ -15,15 +15,14 @@ UIRoot root = new(800, 600);
 UiHost host = new(new UiHostOptions { Root = root });
 ```
 
-## Apply Default Theme
+## Apply Default Aspects
 
 ```csharp
-ThemeProvider themeProvider = new(DefaultTheme.Create());
-root.SetThemeProvider(themeProvider);
-root.SetStyleSheet(DefaultTheme.CreateStyleSheet());
+// UIRoot registers DefaultAspectPackage.Create() automatically.
+root.AspectRegistry.Register(AppAspectPackage.Create());
 ```
 
-Let the default theme provide control chrome for `Button`, `TextBox`, and list controls. Local sample code should focus on layout and state.
+`UIRoot` registers the default aspect package automatically. Register an app package when you want app-level tokens, variants, slots, component templates, or content templates.
 
 ## Build UI In Code
 

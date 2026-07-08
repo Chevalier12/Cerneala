@@ -6,7 +6,7 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
-using Cerneala.UI.Styling;
+using Cerneala.UI.Theming;
 using Cerneala.UI.Text;
 
 namespace Cerneala.Tests.UI.Hosting;
@@ -14,13 +14,13 @@ namespace Cerneala.Tests.UI.Hosting;
 public sealed class CorePreviewContractTests
 {
     [Fact]
-    public void CorePreviewFirstFrameDoesLayoutRenderHitTestStyleWork()
+    public void CorePreviewFirstFrameDoesLayoutRenderHitTestAspectWork()
     {
         UiHost host = CorePreviewHost(out _, out _);
 
         UiFrame frame = host.Update(EmptyFrame(), new UiViewport(800, 600), TimeSpan.Zero);
 
-        Assert.True(frame.Stats.StyledElements > 0);
+        Assert.True(frame.Stats.AspectElements > 0);
         Assert.True(frame.Stats.MeasuredElements > 0);
         Assert.True(frame.Stats.ArrangedElements > 0);
         Assert.True(frame.Stats.RenderedElements > 0);
@@ -82,7 +82,7 @@ public sealed class CorePreviewContractTests
     }
 
     [Fact]
-    public void CorePreviewThemeChangeInvalidatesStyledRenderOnlyWhenPossible()
+    public void CorePreviewThemeChangeInvalidatesAspectWithoutLayoutWork()
     {
         UiHost host = CorePreviewHost(out _, out _, out ThemeProvider provider);
         host.Update(EmptyFrame(), new UiViewport(800, 600), TimeSpan.Zero);
@@ -97,8 +97,7 @@ public sealed class CorePreviewContractTests
 
         UiFrame changed = host.Update(EmptyFrame(), new UiViewport(800, 600), TimeSpan.Zero);
 
-        Assert.True(changed.Stats.StyledElements > 0);
-        Assert.True(changed.Stats.RenderedElements > 0);
+        Assert.True(changed.Stats.AspectElements > 0);
         Assert.Equal(0, changed.Stats.MeasureCalls);
         Assert.Equal(0, changed.Stats.ArrangeCalls);
     }
@@ -179,7 +178,6 @@ public sealed class CorePreviewContractTests
         root = new UIRoot();
         root.SetResourceProvider(resources);
         root.SetThemeProvider(themeProvider);
-        root.SetStyleSheet(DefaultTheme.CreateStyleSheet());
         sample = new RetainedAppSample(resources, fontId);
         root.VisualChildren.Add(sample.Build());
         return new UiHost(new UiHostOptions { Root = root });

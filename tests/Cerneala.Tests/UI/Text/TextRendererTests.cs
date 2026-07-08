@@ -15,7 +15,7 @@ public sealed class TextRendererTests
         TextMeasureResult result = renderer.Render(
             drawingContext,
             "Hello",
-            new TextRunStyle("Default", 16),
+            new TextAspect("Default", 16),
             100,
             new DrawPoint(2, 3),
             DrawColor.White);
@@ -28,7 +28,7 @@ public sealed class TextRendererTests
         Assert.Equal(result.CacheKey, renderer.Render(
             new DrawingContext(new DrawCommandList()),
             "Hello",
-            new TextRunStyle("Default", 16),
+            new TextAspect("Default", 16),
             100,
             new DrawPoint(0, 0),
             DrawColor.Black).CacheKey);
@@ -41,8 +41,8 @@ public sealed class TextRendererTests
         TextMeasurer measurer = new(FontResolver.Default, LineBreakService.Default, cache);
         TextRenderer renderer = new(FontResolver.Default, measurer);
 
-        renderer.Render(new DrawingContext(new DrawCommandList()), "Hello", new TextRunStyle("Default", 16), 100, default, DrawColor.Black);
-        renderer.Render(new DrawingContext(new DrawCommandList()), "Hello", new TextRunStyle("Default", 16), 100, default, DrawColor.White);
+        renderer.Render(new DrawingContext(new DrawCommandList()), "Hello", new TextAspect("Default", 16), 100, default, DrawColor.Black);
+        renderer.Render(new DrawingContext(new DrawCommandList()), "Hello", new TextAspect("Default", 16), 100, default, DrawColor.White);
 
         Assert.Equal(1, cache.Misses);
         Assert.Equal(1, cache.Hits);
@@ -57,7 +57,7 @@ public sealed class TextRendererTests
         TextMeasureResult result = renderer.Render(
             new DrawingContext(commands),
             string.Empty,
-            new TextRunStyle("Default", 16),
+            new TextAspect("Default", 16),
             100,
             default,
             DrawColor.White);
@@ -69,7 +69,7 @@ public sealed class TextRendererTests
     }
 
     [Fact]
-    public void RenderRecordsScaledStyleInDrawTextRun()
+    public void RenderRecordsScaledAspectInDrawTextRun()
     {
         TextRenderer renderer = new();
         DrawCommandList commands = new();
@@ -77,7 +77,7 @@ public sealed class TextRendererTests
         renderer.Render(
             new DrawingContext(commands),
             "Hello",
-            new TextRunStyle("Serif", 12, scale: 2),
+            new TextAspect("Serif", 12, scale: 2),
             100,
             default,
             DrawColor.White);
@@ -99,7 +99,7 @@ public sealed class TextRendererTests
         renderer.Render(
             drawingContext,
             "Hello",
-            new TextRunStyle("Default", 16, color: styleColor),
+            new TextAspect("Default", 16, color: styleColor),
             100,
             default,
             requestedColor);

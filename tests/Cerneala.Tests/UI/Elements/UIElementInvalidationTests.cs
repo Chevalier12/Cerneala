@@ -41,12 +41,12 @@ public sealed class UIElementInvalidationTests
     }
 
     [Fact]
-    public void StylePropertyInvalidationQueuesStyleWorkAndClearsAfterFrame()
+    public void AspectPropertyInvalidationQueuesAspectWorkAndClearsAfterFrame()
     {
         UiProperty<int> property = UiProperty<int>.Register(
             UniqueName(),
             typeof(UIElementInvalidationTests),
-            new UiPropertyMetadata<int>(0, UiPropertyOptions.AffectsStyle));
+            new UiPropertyMetadata<int>(0, UiPropertyOptions.AffectsAspect));
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
@@ -54,7 +54,7 @@ public sealed class UIElementInvalidationTests
 
         child.SetValue(property, 1);
 
-        Assert.Contains(child, root.StyleQueue.Snapshot());
+        Assert.Contains(child, root.AspectQueue.Snapshot());
         Assert.DoesNotContain(child, root.RenderQueue.Snapshot());
 
         root.ProcessFrame();

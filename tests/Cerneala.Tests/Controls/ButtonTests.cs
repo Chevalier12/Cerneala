@@ -89,9 +89,10 @@ public sealed class ButtonTests
 
         DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
-        Assert.Equal(2, commands.Count);
+        Assert.Equal(3, commands.Count);
         Assert.Equal(DrawCommandKind.FillRectangle, commands[0].Kind);
-        Assert.Equal(DrawCommandKind.DrawText, commands[1].Kind);
+        Assert.Equal(DrawCommandKind.DrawRectangle, commands[1].Kind);
+        Assert.Equal(DrawCommandKind.DrawText, commands[2].Kind);
     }
 
     [Fact]

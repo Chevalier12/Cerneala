@@ -26,7 +26,7 @@ public sealed class InvalidationFlagsTests
             InvalidationFlags.Text |
             InvalidationFlags.Image |
             InvalidationFlags.Resource |
-            InvalidationFlags.Style |
+            InvalidationFlags.Aspect |
             InvalidationFlags.InputVisual |
             InvalidationFlags.HitTest |
             InvalidationFlags.Subtree;
@@ -34,7 +34,7 @@ public sealed class InvalidationFlagsTests
         Assert.True(specialized.HasFlag(InvalidationFlags.Text));
         Assert.True(specialized.HasFlag(InvalidationFlags.Image));
         Assert.True(specialized.HasFlag(InvalidationFlags.Resource));
-        Assert.True(specialized.HasFlag(InvalidationFlags.Style));
+        Assert.True(specialized.HasFlag(InvalidationFlags.Aspect));
         Assert.True(specialized.HasFlag(InvalidationFlags.InputVisual));
         Assert.True(specialized.HasFlag(InvalidationFlags.HitTest));
         Assert.True(specialized.HasFlag(InvalidationFlags.Subtree));

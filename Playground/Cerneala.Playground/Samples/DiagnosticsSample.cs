@@ -35,7 +35,7 @@ public sealed class DiagnosticsSample : IPlaygroundSample
         };
 
         TextBlock heading = text.Create("Diagnostics", 28, new DrawColor(28, 35, 48));
-        TextBlock summary = text.Create("Frame, tree, dirty-state, render-cache, routed-event, and style traces are retained diagnostics.", 16, new DrawColor(71, 85, 105));
+        TextBlock summary = text.Create("Frame, tree, dirty-state, render-cache, routed-event, and aspect traces are retained diagnostics.", 16, new DrawColor(71, 85, 105));
         DebugOverlay overlay = new(resourceProvider, fontResourceId)
         {
             Text = "Frame diagnostics: waiting for retained frame\nDirty tree: inspect root.Trace\nRender cache: inspect root.RetainedRenderCache"

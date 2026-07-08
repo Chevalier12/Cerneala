@@ -941,7 +941,7 @@ This phase makes retained UI behavior inspectable. Diagnostics are required beca
 - [x] `UI/Diagnostics/ElementTreeDumper.cs`
 - [x] `UI/Diagnostics/RenderCacheDumper.cs`
 - [x] `UI/Diagnostics/RoutedEventTrace.cs`
-- [x] `UI/Diagnostics/StyleTrace.cs`
+- [x] `UI/Diagnostics/AspectTrace.cs`
 - [x] `UI/Diagnostics/DebugOverlay.cs`
 - [x] `UI/Diagnostics/DebugAdorner.cs`
 - [x] `Playground/Cerneala.Playground/Samples/DiagnosticsSample.cs`
@@ -953,14 +953,14 @@ Tests:
 - [x] `tests/Cerneala.Tests/UI/Diagnostics/ElementTreeDumperTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Diagnostics/RenderCacheDumperTests.cs`
 - [x] `tests/Cerneala.Tests/UI/Diagnostics/RoutedEventTraceTests.cs`
-- [x] `tests/Cerneala.Tests/UI/Diagnostics/StyleTraceTests.cs`
+- [x] `tests/Cerneala.Tests/UI/Diagnostics/ModernAspectTraceTests.cs`
 
 Acceptance checklist:
 
 - [x] Developers can see per-frame measure/arrange/render-cache counts.
 - [x] Developers can dump which elements are dirty and why.
 - [x] Developers can trace routed event paths.
-- [x] Developers can inspect style sources for a property value.
+- [x] Developers can inspect aspect sources for a property value.
 
 ## 20. [Later] Text editing and IME
 

@@ -11,7 +11,7 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
     public static readonly UiProperty<bool> IsPressedProperty = UiProperty<bool>.Register(
         nameof(IsPressed),
         typeof(ButtonBase),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect));
 
     public static readonly UiProperty<ICommand?> CommandProperty = UiProperty<ICommand?>.Register(
         nameof(Command),

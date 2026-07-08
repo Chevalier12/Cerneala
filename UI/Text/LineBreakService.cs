@@ -6,10 +6,10 @@ public sealed class LineBreakService
 {
     public static LineBreakService Default { get; } = new();
 
-    public IReadOnlyList<TextLine> BreakLines(string text, TextRunStyle style, float availableWidth)
+    public IReadOnlyList<TextLine> BreakLines(string text, TextAspect aspect, float availableWidth)
     {
         ArgumentNullException.ThrowIfNull(text);
-        float charWidth = GetCharacterWidth(style);
+        float charWidth = GetCharacterWidth(aspect);
         if (text.Length == 0)
         {
             return [new TextLine(string.Empty, 0)];
@@ -18,7 +18,7 @@ public sealed class LineBreakService
         List<TextLine> lines = [];
         foreach (string paragraph in EnumerateParagraphs(text))
         {
-            if (style.Wrapping == TextWrapping.NoWrap || float.IsPositiveInfinity(availableWidth) || availableWidth <= 0)
+            if (aspect.Wrapping == TextWrapping.NoWrap || float.IsPositiveInfinity(availableWidth) || availableWidth <= 0)
             {
                 AddLine(paragraph, 0, paragraph.Length, charWidth, lines);
                 continue;
@@ -115,15 +115,15 @@ public sealed class LineBreakService
         yield return text[start..];
     }
 
-    public float MeasureTextWidth(string text, TextRunStyle style)
+    public float MeasureTextWidth(string text, TextAspect aspect)
     {
         ArgumentNullException.ThrowIfNull(text);
-        return MeasureTextWidth(text, GetCharacterWidth(style));
+        return MeasureTextWidth(text, GetCharacterWidth(aspect));
     }
 
-    private static float GetCharacterWidth(TextRunStyle style)
+    private static float GetCharacterWidth(TextAspect aspect)
     {
-        return style.FontSize * style.Scale * 0.5f;
+        return aspect.FontSize * aspect.Scale * 0.5f;
     }
 
     private static float MeasureTextWidth(string text, float charWidth)

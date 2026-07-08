@@ -53,7 +53,7 @@ public sealed class UiPropertyInvalidationTests
         owner.SetValue(property, "local");
         owner.Invalidations.Clear();
 
-        owner.SetValue(property, "style", UiPropertyValueSource.StyleBase);
+        owner.SetValue(property, "aspect", UiPropertyValueSource.AspectBase);
 
         Assert.Equal("local", owner.GetValue(property));
         Assert.Empty(owner.Invalidations);

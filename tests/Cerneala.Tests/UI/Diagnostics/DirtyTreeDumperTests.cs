@@ -44,36 +44,36 @@ public sealed class DirtyTreeDumperTests
     }
 
     [Fact]
-    public void DumpKeepsRequeuedStyleReasonWhenStyleProcessorInvalidatesAgain()
+    public void DumpKeepsRequeuedAspectReasonWhenAspectProcessorInvalidatesAgain()
     {
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
         root.ProcessFrame();
 
-        child.Invalidate(InvalidationFlags.Style, "initial style");
+        child.Invalidate(InvalidationFlags.Aspect, "initial aspect");
 
         root.ProcessFrame(new FramePhaseProcessors
         {
-            Style = element =>
+            Aspect = element =>
             {
                 if (ReferenceEquals(element, child))
                 {
-                    element.Invalidate(InvalidationFlags.Style, "style requeued during style processor");
+                    element.Invalidate(InvalidationFlags.Aspect, "aspect requeued during aspect processor");
                 }
             }
         });
 
         Assert.True(child.DirtyState.IsDirty);
-        Assert.True(child.DirtyState.Has(InvalidationFlags.Style));
-        Assert.Equal(1, root.StyleQueue.Count);
+        Assert.True(child.DirtyState.Has(InvalidationFlags.Aspect));
+        Assert.Equal(1, root.AspectQueue.Count);
 
         string dump = new DirtyTreeDumper().Dump(root, root.Trace);
         string childLine = Assert.Single(
             dump.Split(Environment.NewLine),
             line => line.Contains($"UIElement#{child.ElementId}", StringComparison.Ordinal));
 
-        Assert.Contains("reason=style requeued during style processor", childLine, StringComparison.Ordinal);
+        Assert.Contains("reason=aspect requeued during aspect processor", childLine, StringComparison.Ordinal);
         Assert.DoesNotContain("reason=Clear", childLine, StringComparison.Ordinal);
     }
 

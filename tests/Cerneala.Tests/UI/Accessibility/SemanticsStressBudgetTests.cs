@@ -46,7 +46,7 @@ public sealed class SemanticsStressBudgetTests
         FrameStats stats = root.ProcessFrame();
 
         Assert.Equal(ButtonCount, stats.CommandStateElements);
-        Assert.True(stats.StyledElements <= ButtonCount, $"Styled {stats.StyledElements} elements for {ButtonCount} command sources.");
+        Assert.True(stats.AspectElements <= ButtonCount, $"Aspect {stats.AspectElements} elements for {ButtonCount} command sources.");
         Assert.True(stats.RenderedElements <= ButtonCount, $"Rendered {stats.RenderedElements} elements for {ButtonCount} command sources.");
         Assert.Equal(0, stats.MeasuredElements);
         Assert.Equal(0, stats.ArrangedElements);

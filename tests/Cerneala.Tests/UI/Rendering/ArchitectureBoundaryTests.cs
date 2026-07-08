@@ -216,9 +216,9 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
-    public void UiStylingDoesNotReferenceConcreteBackends()
+    public void UiThemingDoesNotReferenceConcreteBackends()
     {
-        string stylingRoot = FindRepositoryPath("UI", "Styling");
+        string themingRoot = FindRepositoryPath("UI", "Theming");
         string[] forbiddenTerms =
         [
             "MonoGame",
@@ -228,7 +228,7 @@ public sealed class ArchitectureBoundaryTests
             "SpriteBatch"
         ];
 
-        foreach (string file in Directory.EnumerateFiles(stylingRoot, "*.cs", SearchOption.AllDirectories))
+        foreach (string file in Directory.EnumerateFiles(themingRoot, "*.cs", SearchOption.AllDirectories))
         {
             string text = File.ReadAllText(file);
 
@@ -559,7 +559,7 @@ public sealed class ArchitectureBoundaryTests
             "UI/Diagnostics/ElementTreeDumper.cs",
             "UI/Diagnostics/RenderCacheDumper.cs",
             "UI/Diagnostics/RoutedEventTrace.cs",
-            "UI/Diagnostics/StyleTrace.cs",
+            "UI/Diagnostics/AspectTrace.cs",
             "UI/Diagnostics/DebugOverlay.cs",
             "UI/Diagnostics/DebugAdorner.cs",
             "Playground/Cerneala.Playground/Samples/DiagnosticsSample.cs",
@@ -568,7 +568,7 @@ public sealed class ArchitectureBoundaryTests
             "tests/Cerneala.Tests/UI/Diagnostics/ElementTreeDumperTests.cs",
             "tests/Cerneala.Tests/UI/Diagnostics/RenderCacheDumperTests.cs",
             "tests/Cerneala.Tests/UI/Diagnostics/RoutedEventTraceTests.cs",
-            "tests/Cerneala.Tests/UI/Diagnostics/StyleTraceTests.cs"
+            "tests/Cerneala.Tests/UI/Diagnostics/ModernAspectTraceTests.cs"
         ];
 
         foreach (string requiredFile in requiredFiles)
@@ -580,7 +580,7 @@ public sealed class ArchitectureBoundaryTests
         Assert.Contains("- [x] Developers can see per-frame measure/arrange/render-cache counts.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] Developers can dump which elements are dirty and why.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] Developers can trace routed event paths.", roadmap, StringComparison.Ordinal);
-        Assert.Contains("- [x] Developers can inspect style sources for a property value.", roadmap, StringComparison.Ordinal);
+        Assert.Contains("- [x] Developers can inspect aspect sources for a property value.", roadmap, StringComparison.Ordinal);
         Assert.Contains("- [x] 19. Add diagnostics/devtools overlays and tree/cache dumpers.", roadmap, StringComparison.Ordinal);
     }
 

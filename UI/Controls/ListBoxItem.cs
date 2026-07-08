@@ -10,7 +10,7 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
     public static readonly UiProperty<bool> IsSelectedProperty = UiProperty<bool>.Register(
         nameof(IsSelected),
         typeof(ListBoxItem),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsStyle));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect));
 
     public int ItemIndex { get; set; } = -1;
 

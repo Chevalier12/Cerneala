@@ -103,20 +103,20 @@ public class Button : ButtonBase
         {
             LayoutRect contentBounds = ContentControl.Deflate(context.Bounds, Insets);
             DrawPoint point = new(contentBounds.X, contentBounds.Y);
-            TextRenderer.Render(context.DrawingContext, text, CreateTextStyle(), contentBounds.Width, point, Foreground);
+            TextRenderer.Render(context.DrawingContext, text, CreateTextAspect(), contentBounds.Width, point, Foreground);
         }
     }
 
     private LayoutSize MeasureTextContent(LayoutSize availableSize)
     {
         return Content is string text
-            ? TextMeasurer.Measure(text, CreateTextStyle(), availableSize.Width).Size
+            ? TextMeasurer.Measure(text, CreateTextAspect(), availableSize.Width).Size
             : LayoutSize.Zero;
     }
 
-    private TextRunStyle CreateTextStyle()
+    private TextAspect CreateTextAspect()
     {
-        return new TextRunStyle(FontFamily, FontSize, color: Foreground);
+        return new TextAspect(FontFamily, FontSize, color: Foreground);
     }
 
     private DrawColor ResolveBackground()

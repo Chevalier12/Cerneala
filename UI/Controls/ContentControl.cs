@@ -1,6 +1,7 @@
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Controls;
 
@@ -51,6 +52,10 @@ public class ContentControl : Control
             SetValue(ContentProperty, value);
         }
     }
+
+    public ResourceId<FontResource>? FontResourceId { get; set; }
+
+    public IResourceProvider? ResourceProvider { get; set; }
 
     protected UIElement? ContentElement => Content as UIElement;
 

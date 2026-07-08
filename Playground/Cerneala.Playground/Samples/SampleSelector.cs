@@ -69,7 +69,9 @@ public sealed class SampleSelector
             new MotionSample(resourceProvider, fontResourceId),
             new LayoutMotionSample(resourceProvider, fontResourceId),
             new PresenceMotionSample(resourceProvider, fontResourceId),
-            new ScrollMotionSample(resourceProvider, fontResourceId)
+            new ScrollMotionSample(resourceProvider, fontResourceId),
+            new ModernAspectSample(resourceProvider, fontResourceId),
+            new AspectMotionSample(resourceProvider, fontResourceId)
         }, resourceProvider, fontResourceId);
     }
 

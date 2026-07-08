@@ -48,14 +48,14 @@ public sealed class FontResolver
         return new ResolvedTextFont(font);
     }
 
-    public ResolvedTextFont Resolve(TextRunStyle style)
+    public ResolvedTextFont Resolve(TextAspect aspect)
     {
-        if (style.FontResourceId is ResourceId<FontResource> fontResourceId)
+        if (aspect.FontResourceId is ResourceId<FontResource> fontResourceId)
         {
             return Resolve(fontResourceId);
         }
 
-        return Resolve(style.FontFamily, style.FontSize * style.Scale);
+        return Resolve(aspect.FontFamily, aspect.FontSize * aspect.Scale);
     }
 
     public ResolvedTextFont Resolve(ResourceId<FontResource> id)

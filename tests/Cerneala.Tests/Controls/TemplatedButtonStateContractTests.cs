@@ -13,7 +13,7 @@ public sealed class TemplatedButtonStateContractTests
         Button button = new()
         {
             Content = "Save",
-            Template = Cerneala.UI.Styling.DefaultTheme.CreateButtonTemplate()
+            Template = Cerneala.UI.Theming.DefaultTheme.CreateButtonTemplate()
         };
 
         button.Measure(new MeasureContext(new LayoutSize(200, 40)));
@@ -55,7 +55,7 @@ public sealed class TemplatedButtonStateContractTests
         return new Button
         {
             Content = content,
-            Template = Cerneala.UI.Styling.DefaultTheme.CreateButtonTemplate()
+            Template = Cerneala.UI.Theming.DefaultTheme.CreateButtonTemplate()
         };
     }
 

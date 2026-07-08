@@ -6,8 +6,8 @@ public sealed class UiPropertyStore
     [
         UiPropertyValueSource.Local,
         UiPropertyValueSource.Animation,
-        UiPropertyValueSource.StyleVisualState,
-        UiPropertyValueSource.StyleBase,
+        UiPropertyValueSource.AspectVisualState,
+        UiPropertyValueSource.AspectBase,
         UiPropertyValueSource.TemplateBinding,
         UiPropertyValueSource.Inherited
     ];

@@ -39,7 +39,7 @@ public sealed class TextBoxEditingVisualContractTests
 
         DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
         TextCaretVerticalMetrics expectedMetrics = TextCaretLayout.Default.GetCaretVerticalMetrics(
-            CreateTextStyle(textBox),
+            CreateTextAspect(textBox),
             new FontResolver(textBox.ResourceProvider!));
 
         Assert.Equal(ContentY(textBox) + expectedMetrics.OffsetY, caret.Rect.Y, precision: 2);
@@ -188,7 +188,7 @@ public sealed class TextBoxEditingVisualContractTests
         float expectedX = ContentX(textBox) + TextCaretLayout.Default.GetCaretX(
             textBox.Text,
             textBox.Text.Length,
-            CreateTextStyle(textBox),
+            CreateTextAspect(textBox),
             new FontResolver(textBox.ResourceProvider!));
 
         Assert.Equal(expectedX, caret.Rect.X, precision: 2);
@@ -206,8 +206,8 @@ public sealed class TextBoxEditingVisualContractTests
         DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
         float contentX = ContentX(textBox);
         float contentWidth = ContentWidth(textBox);
-        float fullWidth = TextCaretLayout.Default.GetCaretX(textBox.Text, textBox.Text.Length, CreateTextStyle(textBox), new FontResolver(textBox.ResourceProvider!));
-        float caretWidth = TextCaretLayout.Default.GetCaretX(textBox.Text, textBox.Caret.Position, CreateTextStyle(textBox), new FontResolver(textBox.ResourceProvider!));
+        float fullWidth = TextCaretLayout.Default.GetCaretX(textBox.Text, textBox.Text.Length, CreateTextAspect(textBox), new FontResolver(textBox.ResourceProvider!));
+        float caretWidth = TextCaretLayout.Default.GetCaretX(textBox.Text, textBox.Caret.Position, CreateTextAspect(textBox), new FontResolver(textBox.ResourceProvider!));
         float expectedX = contentX + caretWidth - MathF.Max(0, fullWidth - contentWidth);
 
         Assert.InRange(caret.Rect.X, contentX, contentX + contentWidth);
@@ -270,9 +270,9 @@ public sealed class TextBoxEditingVisualContractTests
         return textBox;
     }
 
-    private static TextRunStyle CreateTextStyle(TextBox textBox)
+    private static TextAspect CreateTextAspect(TextBox textBox)
     {
-        return new TextRunStyle(textBox.FontFamily, textBox.FontSize, color: textBox.Foreground, fontResourceId: textBox.FontResourceId);
+        return new TextAspect(textBox.FontFamily, textBox.FontSize, color: textBox.Foreground, fontResourceId: textBox.FontResourceId);
     }
 
     private static float ContentX(TextBox textBox)

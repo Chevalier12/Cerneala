@@ -12,7 +12,7 @@ public sealed class DirtyPropagation
         UIRoot root,
         LayoutQueue layoutQueue,
         InheritedPropertyQueue inheritedPropertyQueue,
-        StyleQueue styleQueue,
+        AspectQueue aspectQueue,
         RenderQueue renderQueue,
         HitTestQueue hitTestQueue,
         InvalidationTrace trace)
@@ -21,7 +21,7 @@ public sealed class DirtyPropagation
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(layoutQueue);
         ArgumentNullException.ThrowIfNull(inheritedPropertyQueue);
-        ArgumentNullException.ThrowIfNull(styleQueue);
+        ArgumentNullException.ThrowIfNull(aspectQueue);
         ArgumentNullException.ThrowIfNull(renderQueue);
         ArgumentNullException.ThrowIfNull(hitTestQueue);
         ArgumentNullException.ThrowIfNull(trace);
@@ -33,14 +33,14 @@ public sealed class DirtyPropagation
         }
 
         InvalidationFlags propagated = effective & ~InvalidationFlags.Subtree;
-        MarkAndQueue(request.Target, propagated, layoutQueue, inheritedPropertyQueue, styleQueue, renderQueue, hitTestQueue, trace, request.Reason);
+        MarkAndQueue(request.Target, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, request.Reason);
 
         if (effective.HasFlag(InvalidationFlags.Measure))
         {
             foreach (UIElement ancestor in ElementTreeWalker.Ancestors(request.Target, ElementChildRole.Visual))
             {
                 InvalidationFlags ancestorFlags = InvalidationFlags.Measure | InvalidationFlags.Arrange;
-                MarkAndQueue(ancestor, ancestorFlags, layoutQueue, inheritedPropertyQueue, styleQueue, renderQueue, hitTestQueue, trace, "Measure ancestor propagation");
+                MarkAndQueue(ancestor, ancestorFlags, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, "Measure ancestor propagation");
                 if (ancestor.IsLayoutBoundary)
                 {
                     break;
@@ -52,7 +52,7 @@ public sealed class DirtyPropagation
         {
             foreach (UIElement descendant in ElementTreeWalker.Descendants(request.Target, ElementChildRole.Visual))
             {
-                MarkAndQueue(descendant, propagated, layoutQueue, inheritedPropertyQueue, styleQueue, renderQueue, hitTestQueue, trace, "Subtree propagation");
+                MarkAndQueue(descendant, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, "Subtree propagation");
             }
         }
     }
@@ -67,9 +67,9 @@ public sealed class DirtyPropagation
             effective |= InvalidationFlags.Inherited | InvalidationFlags.Subtree;
         }
 
-        if (request.SourceProperty?.Options.HasFlag(Core.UiPropertyOptions.AffectsStyle) == true)
+        if (request.SourceProperty?.Options.HasFlag(Core.UiPropertyOptions.AffectsAspect) == true)
         {
-            effective |= InvalidationFlags.Style;
+            effective |= InvalidationFlags.Aspect;
             if (!request.SourceProperty.Options.HasFlag(Core.UiPropertyOptions.AffectsRender))
             {
                 effective &= ~InvalidationFlags.Render;
@@ -117,7 +117,7 @@ public sealed class DirtyPropagation
         InvalidationFlags flags,
         LayoutQueue layoutQueue,
         InheritedPropertyQueue inheritedPropertyQueue,
-        StyleQueue styleQueue,
+        AspectQueue aspectQueue,
         RenderQueue renderQueue,
         HitTestQueue hitTestQueue,
         InvalidationTrace trace,
@@ -149,10 +149,10 @@ public sealed class DirtyPropagation
             trace.RecordQueue(element, InvalidationFlags.Inherited, reason);
         }
 
-        if (flags.HasFlag(InvalidationFlags.Style))
+        if (flags.HasFlag(InvalidationFlags.Aspect))
         {
-            styleQueue.Enqueue(element);
-            trace.RecordQueue(element, InvalidationFlags.Style, reason);
+            aspectQueue.Enqueue(element);
+            trace.RecordQueue(element, InvalidationFlags.Aspect, reason);
         }
 
         if (flags.HasFlag(InvalidationFlags.Render))

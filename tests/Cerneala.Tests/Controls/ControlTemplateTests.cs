@@ -5,7 +5,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
-using Cerneala.UI.Styling;
+using Cerneala.UI.Theming;
 
 namespace Cerneala.Tests.Controls;
 
@@ -180,7 +180,7 @@ public sealed class ControlTemplateTests
     }
 
     [Fact]
-    public void TemplateChildParticipatesInLayoutRenderingHitTestingInputAndStyling()
+    public void TemplateChildParticipatesInLayoutRenderingHitTestingInputAndAspect()
     {
         UIRoot root = new(40, 20);
         Control control = new()
@@ -200,8 +200,7 @@ public sealed class ControlTemplateTests
         child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => routed = true);
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
         RoutedEventRouter.Raise(map.InputTree, child.ElementId!.Value, new MouseButtonEventArgs(InputEvents.MouseDownEvent, child.ElementId.Value, InputMouseButton.Left, 10, 10, 1));
-        new StyleApplicator().Apply(child, new StyleSheet().Add(new StyleRule(StyleSelector.ForType<RenderableElement>())
-            .Add(new Setter<bool>(UIElement.IsEnabledProperty, false))));
+        child.SetValue(UIElement.IsEnabledProperty, false, UiPropertyValueSource.AspectBase);
 
         Assert.Equal(new LayoutSize(20, 10), child.DesiredSize);
         Assert.Equal(new LayoutRect(0, 0, 40, 20), child.ArrangedBounds);

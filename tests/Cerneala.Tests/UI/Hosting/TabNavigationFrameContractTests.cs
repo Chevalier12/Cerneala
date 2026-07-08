@@ -12,7 +12,7 @@ namespace Cerneala.Tests.UI.Hosting;
 public sealed class TabNavigationFrameContractTests
 {
     [Fact]
-    public void TabFocusChangeInvalidatesRenderStyleAndSemanticsWithoutMeasure()
+    public void TabFocusChangeInvalidatesRenderAspectAndSemanticsWithoutMeasure()
     {
         UiHost host = HostWithTabStops(out UIRoot root, out Button first, out _);
         host.Update(EmptyFrame(), new UiViewport(100, 100), TimeSpan.Zero);
@@ -23,7 +23,7 @@ public sealed class TabNavigationFrameContractTests
 
         Assert.Same(first, host.InputBridge.FocusManager.FocusedElement);
         Assert.True(tabFrame.Stats.RenderedElements > 0);
-        Assert.True(tabFrame.Stats.StyledElements > 0);
+        Assert.True(tabFrame.Stats.AspectElements > 0);
         Assert.NotSame(before, after);
         Assert.Equal(0, tabFrame.Stats.MeasuredElements);
         Assert.Equal(0, tabFrame.Stats.ArrangedElements);

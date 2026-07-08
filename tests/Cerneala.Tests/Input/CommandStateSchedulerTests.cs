@@ -18,7 +18,7 @@ public sealed class CommandStateSchedulerTests
 
         Assert.False(button.IsEnabled);
         Assert.True(stats.CommandStateElements > 0);
-        Assert.True(stats.StyledElements > 0);
+        Assert.True(stats.AspectElements > 0);
         Assert.True(stats.RenderedElements > 0);
     }
 

@@ -1,7 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
-using Cerneala.UI.Styling;
 
 namespace Cerneala.Tests.Controls;
 
@@ -41,7 +40,7 @@ public sealed class TemplateBindingTests
     }
 
     [Fact]
-    public void BindingValueSurvivesStyleValueBeingCleared()
+    public void BindingValueSurvivesAspectValueBeingCleared()
     {
         Button button = new() { Background = DrawColor.White };
         Border? border = null;
@@ -51,14 +50,10 @@ public sealed class TemplateBindingTests
             context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty);
             return border;
         });
-        StyleApplicator applicator = new();
-        StyleSheet sheet = new StyleSheet().Add(new StyleRule(StyleSelector.ForType<Border>())
-            .Add(new Setter<DrawColor>(Control.BackgroundProperty, DrawColor.Black)));
+        border!.SetValue(Control.BackgroundProperty, DrawColor.Black, UiPropertyValueSource.AspectBase);
+        border.ClearValue(Control.BackgroundProperty, UiPropertyValueSource.AspectBase);
 
-        applicator.Apply(border!, sheet);
-        applicator.Apply(border!, new StyleSheet());
-
-        Assert.Equal(DrawColor.White, border!.Background);
+        Assert.Equal(DrawColor.White, border.Background);
     }
 
     [Fact]

@@ -6,7 +6,7 @@ namespace Cerneala.Tests.UI.Text;
 public sealed class TextCaretLayoutTests
 {
     private const string VariableWidthText = "iiiiWWWW";
-    private static readonly TextRunStyle Style = new("Arial", 20);
+    private static readonly TextAspect TextAspect = new("Arial", 20);
 
     [Fact]
     public void GetCaretXUsesNonUniformShapedPrefixMetrics()
@@ -16,7 +16,7 @@ public sealed class TextCaretLayoutTests
 
         float[] stops = Enumerable
             .Range(0, VariableWidthText.Length + 1)
-            .Select(position => layout.GetCaretX(VariableWidthText, position, Style, resolver))
+            .Select(position => layout.GetCaretX(VariableWidthText, position, TextAspect, resolver))
             .ToArray();
 
         Assert.Equal(0, stops[0]);
@@ -32,10 +32,10 @@ public sealed class TextCaretLayoutTests
     {
         TextCaretLayout layout = TextCaretLayout.Default;
         FontResolver resolver = new(new SystemFontSource());
-        ResolvedTextFont font = resolver.Resolve(Style);
-        TextShapeResult shape = new SkiaTextShaper().Shape(Style.ToDrawTextRun(font, VariableWidthText));
+        ResolvedTextFont font = resolver.Resolve(TextAspect);
+        TextShapeResult shape = new SkiaTextShaper().Shape(TextAspect.ToDrawTextRun(font, VariableWidthText));
 
-        float caretX = layout.GetCaretX(VariableWidthText, VariableWidthText.Length, Style, resolver);
+        float caretX = layout.GetCaretX(VariableWidthText, VariableWidthText.Length, TextAspect, resolver);
 
         Assert.Equal(shape.AdvanceWidth, caretX, precision: 2);
     }
@@ -46,11 +46,11 @@ public sealed class TextCaretLayoutTests
         TextCaretLayout layout = TextCaretLayout.Default;
         FontResolver resolver = new(new SystemFontSource());
 
-        float start = layout.GetCaretX(VariableWidthText, 0, Style, resolver);
-        float end = layout.GetCaretX(VariableWidthText, VariableWidthText.Length, Style, resolver);
+        float start = layout.GetCaretX(VariableWidthText, 0, TextAspect, resolver);
+        float end = layout.GetCaretX(VariableWidthText, VariableWidthText.Length, TextAspect, resolver);
 
-        Assert.Equal(start, layout.GetCaretX(VariableWidthText, -10, Style, resolver));
-        Assert.Equal(end, layout.GetCaretX(VariableWidthText, VariableWidthText.Length + 10, Style, resolver));
+        Assert.Equal(start, layout.GetCaretX(VariableWidthText, -10, TextAspect, resolver));
+        Assert.Equal(end, layout.GetCaretX(VariableWidthText, VariableWidthText.Length + 10, TextAspect, resolver));
     }
 
     [Fact]
@@ -58,13 +58,13 @@ public sealed class TextCaretLayoutTests
     {
         TextCaretLayout layout = TextCaretLayout.Default;
         FontResolver resolver = new(new SystemFontSource());
-        float second = layout.GetCaretX(VariableWidthText, 2, Style, resolver);
-        float third = layout.GetCaretX(VariableWidthText, 3, Style, resolver);
+        float second = layout.GetCaretX(VariableWidthText, 2, TextAspect, resolver);
+        float third = layout.GetCaretX(VariableWidthText, 3, TextAspect, resolver);
 
-        Assert.Equal(0, layout.GetCaretIndexAtX(VariableWidthText, -10, Style, resolver));
-        Assert.Equal(VariableWidthText.Length, layout.GetCaretIndexAtX(VariableWidthText, 10_000, Style, resolver));
-        Assert.Equal(2, layout.GetCaretIndexAtX(VariableWidthText, second + ((third - second) * 0.25f), Style, resolver));
-        Assert.Equal(3, layout.GetCaretIndexAtX(VariableWidthText, second + ((third - second) * 0.75f), Style, resolver));
+        Assert.Equal(0, layout.GetCaretIndexAtX(VariableWidthText, -10, TextAspect, resolver));
+        Assert.Equal(VariableWidthText.Length, layout.GetCaretIndexAtX(VariableWidthText, 10_000, TextAspect, resolver));
+        Assert.Equal(2, layout.GetCaretIndexAtX(VariableWidthText, second + ((third - second) * 0.25f), TextAspect, resolver));
+        Assert.Equal(3, layout.GetCaretIndexAtX(VariableWidthText, second + ((third - second) * 0.75f), TextAspect, resolver));
     }
 
     [Fact]
@@ -73,9 +73,9 @@ public sealed class TextCaretLayoutTests
         TextCaretLayout layout = TextCaretLayout.Default;
         FontResolver resolver = new(new SystemFontSource());
         string text = "a\U0001F600b";
-        float middleOfSurrogatePair = layout.GetCaretX(text, 2, Style, resolver);
+        float middleOfSurrogatePair = layout.GetCaretX(text, 2, TextAspect, resolver);
 
-        int index = layout.GetCaretIndexAtX(text, middleOfSurrogatePair, Style, resolver);
+        int index = layout.GetCaretIndexAtX(text, middleOfSurrogatePair, TextAspect, resolver);
 
         Assert.NotEqual(2, index);
     }
@@ -85,10 +85,10 @@ public sealed class TextCaretLayoutTests
     {
         TextCaretLayout layout = TextCaretLayout.Default;
         FontResolver resolver = new(new SystemFontSource());
-        float target = layout.GetCaretX(VariableWidthText, 5, Style, resolver);
+        float target = layout.GetCaretX(VariableWidthText, 5, TextAspect, resolver);
         float horizontalTextOffset = target - 2;
 
-        int index = layout.GetCaretIndexAtX(VariableWidthText, 2, horizontalTextOffset, Style, resolver);
+        int index = layout.GetCaretIndexAtX(VariableWidthText, 2, horizontalTextOffset, TextAspect, resolver);
 
         Assert.Equal(5, index);
     }
@@ -98,22 +98,22 @@ public sealed class TextCaretLayoutTests
     {
         TextCaretLayout layout = TextCaretLayout.Default;
         FontResolver resolver = new(new SystemFontSource());
-        ResolvedTextFont font = resolver.Resolve(Style);
-        float expected = new SkiaTextRasterizer().Rasterize(Style.ToDrawTextRun(font, "Ag"), Cerneala.Drawing.DrawColor.White).Height;
+        ResolvedTextFont font = resolver.Resolve(TextAspect);
+        float expected = new SkiaTextRasterizer().Rasterize(TextAspect.ToDrawTextRun(font, "Ag"), Cerneala.Drawing.DrawColor.White).Height;
 
-        float height = layout.GetCaretLineHeight(Style, resolver);
+        float height = layout.GetCaretLineHeight(TextAspect, resolver);
 
         Assert.Equal(expected, height, precision: 2);
     }
 
     [Fact]
-    public void GetCaretLineHeightFallsBackToStyleHeightWithoutRasterMetrics()
+    public void GetCaretLineHeightFallsBackToAspectHeightWithoutRasterMetrics()
     {
         TextCaretLayout layout = TextCaretLayout.Default;
 
-        float height = layout.GetCaretLineHeight(Style, FontResolver.Default);
+        float height = layout.GetCaretLineHeight(TextAspect, FontResolver.Default);
 
-        Assert.Equal(Style.FontSize * Style.Scale, height);
+        Assert.Equal(TextAspect.FontSize * TextAspect.Scale, height);
     }
 
     [Fact]
@@ -121,26 +121,26 @@ public sealed class TextCaretLayoutTests
     {
         TextCaretLayout layout = TextCaretLayout.Default;
         FontResolver resolver = new(new SystemFontSource());
-        ResolvedTextFont font = resolver.Resolve(Style);
+        ResolvedTextFont font = resolver.Resolve(TextAspect);
         RasterizedText rasterizedLine = new SkiaTextRasterizer().Rasterize(
-            Style.ToDrawTextRun(font, "Ag"),
+            TextAspect.ToDrawTextRun(font, "Ag"),
             Cerneala.Drawing.DrawColor.White);
 
-        TextCaretVerticalMetrics metrics = layout.GetCaretVerticalMetrics(Style, resolver);
+        TextCaretVerticalMetrics metrics = layout.GetCaretVerticalMetrics(TextAspect, resolver);
 
         Assert.Equal(0, metrics.OffsetY);
         Assert.Equal(rasterizedLine.Height, metrics.Height, precision: 2);
     }
 
     [Fact]
-    public void GetCaretVerticalMetricsFallsBackToStyleHeightWithoutRasterMetrics()
+    public void GetCaretVerticalMetricsFallsBackToAspectHeightWithoutRasterMetrics()
     {
         TextCaretLayout layout = TextCaretLayout.Default;
 
-        TextCaretVerticalMetrics metrics = layout.GetCaretVerticalMetrics(Style, FontResolver.Default);
+        TextCaretVerticalMetrics metrics = layout.GetCaretVerticalMetrics(TextAspect, FontResolver.Default);
 
         Assert.Equal(0, metrics.OffsetY);
-        Assert.Equal(Style.FontSize * Style.Scale, metrics.Height);
+        Assert.Equal(TextAspect.FontSize * TextAspect.Scale, metrics.Height);
     }
 
     [Fact]
@@ -148,8 +148,8 @@ public sealed class TextCaretLayoutTests
     {
         TextCaretLayout layout = TextCaretLayout.Default;
 
-        float x = layout.GetCaretX("abcd", 2, Style, FontResolver.Default);
-        int index = layout.GetCaretIndexAtX("abcd", x + 1, Style, FontResolver.Default);
+        float x = layout.GetCaretX("abcd", 2, TextAspect, FontResolver.Default);
+        int index = layout.GetCaretIndexAtX("abcd", x + 1, TextAspect, FontResolver.Default);
 
         Assert.True(x > 0);
         Assert.Equal(2, index);

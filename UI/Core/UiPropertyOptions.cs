@@ -8,7 +8,7 @@ public enum UiPropertyOptions
     AffectsArrange = 1 << 1,
     AffectsRender = 1 << 2,
     AffectsHitTest = 1 << 3,
-    AffectsStyle = 1 << 4,
+    AffectsAspect = 1 << 4,
     AffectsInputVisual = 1 << 5,
     Inherits = 1 << 6,
     ReadOnly = 1 << 7,

@@ -129,7 +129,7 @@ public sealed class ButtonContentArchitectureTests
 
         public float LastAvailableWidth { get; private set; }
 
-        public override TextMeasureResult Measure(string text, TextRunStyle style, float availableWidth)
+        public override TextMeasureResult Measure(string text, TextAspect aspect, float availableWidth)
         {
             Calls++;
             LastText = text;
@@ -151,7 +151,7 @@ public sealed class ButtonContentArchitectureTests
         public override TextMeasureResult Render(
             DrawingContext drawingContext,
             string text,
-            TextRunStyle style,
+            TextAspect aspect,
             float availableWidth,
             DrawPoint position,
             DrawColor color)

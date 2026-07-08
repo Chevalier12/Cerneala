@@ -15,7 +15,7 @@ public sealed class CommandStateQueue
 
     public int Count => elements.Count;
 
-    public bool HasWork => elements.Count > 0;
+    public bool HasWork => Snapshot().Count > 0;
 
     public void Enqueue(UIElement element)
     {

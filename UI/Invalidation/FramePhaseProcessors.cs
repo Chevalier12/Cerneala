@@ -10,7 +10,7 @@ public sealed class FramePhaseProcessors
 
     public Action<UIElement>? CommandState { get; init; }
 
-    public Action<UIElement>? Style { get; init; }
+    public Action<UIElement>? Aspect { get; init; }
 
     public Action<UIElement>? Measure { get; init; }
 
@@ -30,8 +30,8 @@ public sealed class FramePhaseProcessors
             case FramePhase.CommandState:
                 CommandState?.Invoke(element);
                 break;
-            case FramePhase.Style:
-                Style?.Invoke(element);
+            case FramePhase.Aspect:
+                Aspect?.Invoke(element);
                 break;
             case FramePhase.Measure:
                 Measure?.Invoke(element);

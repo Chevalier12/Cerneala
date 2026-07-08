@@ -1,5 +1,6 @@
 using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Accessibility;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -7,13 +8,12 @@ using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
-using Cerneala.UI.Styling;
+using Cerneala.UI.Theming;
 
 namespace Cerneala.UI.Elements;
 
 public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 {
-    private readonly StyleApplicator styleApplicator;
     private ThemeProvider? themeProvider;
     private ThemeChangedSubscription? themeChangedSubscription;
     private IObservableResourceProvider? observableResourceProvider;
@@ -38,7 +38,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         LayoutQueue = new LayoutQueue(this);
         InheritedPropertyQueue = new InheritedPropertyQueue(this);
         CommandStateQueue = new CommandStateQueue(this);
-        StyleQueue = new StyleQueue(this);
+        AspectQueue = new AspectQueue(this);
         RenderQueue = new RenderQueue(this);
         HitTestQueue = new HitTestQueue(this);
         InputCache = new ElementInputCache();
@@ -49,9 +49,10 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         RetainedRenderer = new RetainedRenderer(RetainedRenderCache, new DrawCommandListBuilder(), RenderCounters);
         InheritedPropertyPropagator = new InheritedPropertyPropagator();
         ResourceDependencyTracker = new ResourceDependencyTracker();
-        styleApplicator = new StyleApplicator();
-        StyleProcessor = new StyleProcessor(styleApplicator, () => StyleSheet, () => themeProvider);
-        Scheduler = new UiFrameScheduler(LayoutQueue, InheritedPropertyQueue, CommandStateQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
+        AspectRegistry = new AspectRegistry(InvalidateAspectRegistryChange);
+        AspectRegistry.Register(DefaultAspectPackage.Create(), notify: false);
+        AspectProcessor = new AspectProcessor(this);
+        Scheduler = new UiFrameScheduler(LayoutQueue, InheritedPropertyQueue, CommandStateQueue, AspectQueue, RenderQueue, HitTestQueue, Trace);
         Motion = new MotionSystem(this, motionClock ?? new SystemMotionClock(), reducedMotion ?? ReducedMotionPolicy.Default);
         IsLayoutBoundary = true;
         ElementLifecycle.AttachSubtree(this, this);
@@ -77,7 +78,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public CommandStateQueue CommandStateQueue { get; }
 
-    public StyleQueue StyleQueue { get; }
+    public AspectQueue AspectQueue { get; }
 
     public RenderQueue RenderQueue { get; }
 
@@ -111,11 +112,11 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public MotionSystem Motion { get; }
 
-    public StyleSheet? StyleSheet { get; private set; }
-
     public ThemeProvider? ThemeProvider => themeProvider;
 
-    public StyleProcessor StyleProcessor { get; }
+    public AspectRegistry AspectRegistry { get; }
+
+    public AspectProcessor AspectProcessor { get; }
 
     public void SetResourceProvider(IResourceProvider? provider)
     {
@@ -178,17 +179,6 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         IncrementTreeVersion();
     }
 
-    public void SetStyleSheet(StyleSheet? styleSheet)
-    {
-        if (ReferenceEquals(StyleSheet, styleSheet))
-        {
-            return;
-        }
-
-        StyleSheet = styleSheet;
-        Invalidate(InvalidationFlags.Style | InvalidationFlags.Subtree, "Style sheet changed");
-    }
-
     public void SetThemeProvider(ThemeProvider? provider)
     {
         if (ReferenceEquals(themeProvider, provider))
@@ -205,12 +195,17 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
             themeChangedSubscription = new ThemeChangedSubscription(this, themeProvider);
         }
 
-        Invalidate(InvalidationFlags.Style | InvalidationFlags.Subtree, "Theme provider changed");
+        Invalidate(InvalidationFlags.Aspect | InvalidationFlags.Subtree, "Theme provider changed");
     }
 
     private void InvalidateThemeChange()
     {
-        Invalidate(InvalidationFlags.Style | InvalidationFlags.Subtree, "Theme changed");
+        Invalidate(InvalidationFlags.Aspect | InvalidationFlags.Subtree, "Theme changed");
+    }
+
+    private void InvalidateAspectRegistryChange()
+    {
+        Invalidate(InvalidationFlags.Aspect | InvalidationFlags.Subtree, "Aspect registry changed");
     }
 
     private void OnResourceChanged(object? sender, ResourceChangedEventArgs args)
@@ -243,11 +238,6 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         RetainedRenderCache.InvalidateRoot();
     }
 
-    internal void ClearStyleScope(UIElement element)
-    {
-        styleApplicator.Clear(element);
-    }
-
     public override void Invalidate(InvalidationRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -268,7 +258,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
             InputCache.Invalidate(request.Reason);
         }
 
-        DirtyPropagation.Default.Propagate(request, this, LayoutQueue, InheritedPropertyQueue, StyleQueue, RenderQueue, HitTestQueue, Trace);
+        DirtyPropagation.Default.Propagate(request, this, LayoutQueue, InheritedPropertyQueue, AspectQueue, RenderQueue, HitTestQueue, Trace);
     }
 
     public SemanticsTree GetSemanticsTree()
@@ -326,7 +316,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
                 commandStateRouteMap ??= CreateCommandStateRouteMap();
                 ProcessCommandState(element, commandRouter, commandStateRouteMap);
             },
-            Style = StyleProcessor.Process,
+            Aspect = AspectProcessor.Process,
             Measure = layoutProcessors.Measure,
             Arrange = layoutProcessors.Arrange,
             RenderCache = RenderQueueProcessor.Process,

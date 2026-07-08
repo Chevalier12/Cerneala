@@ -49,11 +49,11 @@ public sealed class FontResourceInvalidationTests
         ResourceId<FontResource> id = new("Body");
         store.SetResource(id, new FontResource(new TestFont("Default", 16)));
         TextMeasurer measurer = new(new FontResolver(store), LineBreakService.Default, new TextLayoutCache());
-        TextRunStyle style = new("Fallback", 16, fontResourceId: id);
-        TextMeasureResult first = measurer.Measure("Hello", style, 100);
+        TextAspect aspect = new("Fallback", 16, fontResourceId: id);
+        TextMeasureResult first = measurer.Measure("Hello", aspect, 100);
 
         store.SetResource(id, new FontResource(new TestFont("Serif", 16)));
-        TextMeasureResult second = measurer.Measure("Hello", style, 100);
+        TextMeasureResult second = measurer.Measure("Hello", aspect, 100);
 
         Assert.NotEqual(first.CacheKey, second.CacheKey);
     }

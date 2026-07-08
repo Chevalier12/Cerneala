@@ -21,14 +21,14 @@ public sealed class GettingStartedDocsTests
     }
 
     [Fact]
-    public void GettingStartedDocumentUsesUiHostUiRootDefaultThemeAndBindingOperations()
+    public void GettingStartedDocumentUsesUiHostUiRootDefaultAspectPackageAndBindingOperations()
     {
         string text = ReadGettingStarted();
 
         Assert.Contains("UIRoot", text, StringComparison.Ordinal);
         Assert.Contains("UiHost", text, StringComparison.Ordinal);
         Assert.Contains("UiViewport", text, StringComparison.Ordinal);
-        Assert.Contains("DefaultTheme.CreateStyleSheet()", text, StringComparison.Ordinal);
+        Assert.Contains("DefaultAspectPackage.Create()", text, StringComparison.Ordinal);
         Assert.Contains("ObservableValue<string>", text, StringComparison.Ordinal);
         Assert.Contains("ObservableList<string>", text, StringComparison.Ordinal);
         Assert.Contains("BindingOperations.BindTwoWay", text, StringComparison.Ordinal);

@@ -63,13 +63,13 @@ public sealed class InvalidationStatsOverlay
 
         return string.Create(
             System.Globalization.CultureInfo.InvariantCulture,
-            $"Frame stats: scale={frame.Viewport.Scale}, inherited={frame.Stats.InheritedElements}, commandState={frame.Stats.CommandStateElements}, style={frame.Stats.StyledElements}, queuedMeasure={frame.Stats.MeasuredElements}, queuedArrange={frame.Stats.ArrangedElements}, measureCalls={frame.Stats.MeasureCalls}, arrangeCalls={frame.Stats.ArrangeCalls}, renderCache={frame.Stats.RenderedElements}, hitTest={frame.Stats.HitTestElements}, reusedCaches={frame.Stats.ReusedCaches}, noWork={frame.Stats.NoWorkFrames}, motion={frame.Stats.MotionFrames}, sampled={frame.Stats.MotionNodesSampled}, motionValues={frame.Stats.MotionValuesChanged}, motionWrites={frame.Stats.MotionPropertyWrites}, completed={frame.Stats.MotionCompleted}, motionRender={frame.Stats.MotionRenderInvalidations}, motionLayout={frame.Stats.MotionLayoutInvalidations}, reduced={frame.Stats.MotionSkippedByReducedMotion}");
+            $"Frame stats: scale={frame.Viewport.Scale}, inherited={frame.Stats.InheritedElements}, commandState={frame.Stats.CommandStateElements}, aspect={frame.Stats.AspectElements}, queuedMeasure={frame.Stats.MeasuredElements}, queuedArrange={frame.Stats.ArrangedElements}, measureCalls={frame.Stats.MeasureCalls}, arrangeCalls={frame.Stats.ArrangeCalls}, renderCache={frame.Stats.RenderedElements}, hitTest={frame.Stats.HitTestElements}, reusedCaches={frame.Stats.ReusedCaches}, noWork={frame.Stats.NoWorkFrames}, motion={frame.Stats.MotionFrames}, sampled={frame.Stats.MotionNodesSampled}, motionValues={frame.Stats.MotionValuesChanged}, motionWrites={frame.Stats.MotionPropertyWrites}, completed={frame.Stats.MotionCompleted}, motionRender={frame.Stats.MotionRenderInvalidations}, motionLayout={frame.Stats.MotionLayoutInvalidations}, reduced={frame.Stats.MotionSkippedByReducedMotion}");
     }
 
     private sealed class DiagnosticsTextBlock : TextBlock
     {
         private const string LayoutReservationText =
-            "Frame stats: scale=1, inherited=0000, commandState=0000, style=0000, queuedMeasure=0000, queuedArrange=0000, measureCalls=0000, arrangeCalls=0000, renderCache=0000, hitTest=0000, reusedCaches=0000, noWork=0000, motion=0000, sampled=0000, motionValues=0000, motionWrites=0000, completed=0000, motionRender=0000, motionLayout=0000, reduced=0000";
+            "Frame stats: scale=1, inherited=0000, commandState=0000, aspect=0000, queuedMeasure=0000, queuedArrange=0000, measureCalls=0000, arrangeCalls=0000, renderCache=0000, hitTest=0000, reusedCaches=0000, noWork=0000, motion=0000, sampled=0000, motionValues=0000, motionWrites=0000, completed=0000, motionRender=0000, motionLayout=0000, reduced=0000";
 
         private readonly TextLayoutCache resourceTextLayoutCache = new();
         private string diagnosticsText = string.Empty;
@@ -104,8 +104,8 @@ public sealed class InvalidationStatsOverlay
 
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
-            TextRunStyle style = CreateTextStyle();
-            TextMeasureResult measurement = GetTextMeasurer().Measure(LayoutReservationText, style, context.AvailableSize.Width);
+            TextAspect aspect = CreateTextAspect();
+            TextMeasureResult measurement = GetTextMeasurer().Measure(LayoutReservationText, aspect, context.AvailableSize.Width);
             SetRenderDependencies(RenderDependency.None.WithTextLayoutIdentity(measurement.CacheKey.ToString()));
             return measurement.Size;
         }
@@ -117,19 +117,19 @@ public sealed class InvalidationStatsOverlay
                 return;
             }
 
-            TextRunStyle style = CreateTextStyle();
+            TextAspect aspect = CreateTextAspect();
             _ = GetTextRenderer().Render(
                 context.DrawingContext,
                 diagnosticsText,
-                style,
+                aspect,
                 context.Bounds.Width,
                 new DrawPoint(context.Bounds.X, context.Bounds.Y),
                 Foreground);
         }
 
-        private TextRunStyle CreateTextStyle()
+        private TextAspect CreateTextAspect()
         {
-            return new TextRunStyle(FontFamily, FontSize, wrapping: TextWrapping, color: Foreground, fontResourceId: FontResourceId);
+            return new TextAspect(FontFamily, FontSize, wrapping: TextWrapping, color: Foreground, fontResourceId: FontResourceId);
         }
 
         private TextMeasurer GetTextMeasurer()

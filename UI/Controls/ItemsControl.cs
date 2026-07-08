@@ -1,5 +1,6 @@
 using System.Collections;
 using Cerneala.UI.Core;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
@@ -14,6 +15,7 @@ public class ItemsControl : Control
     private IObservableList? observableItemsSource;
     private bool isObservableItemsSourceSubscribed;
     private bool hasEverAttached;
+    private ContentTemplateRegistry contentTemplateRegistry = new();
 
     public ItemsControl()
     {
@@ -37,6 +39,11 @@ public class ItemsControl : Control
         nameof(ItemsPanel),
         typeof(ItemsControl),
         new UiPropertyMetadata<ItemsPanelTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+
+    public static readonly UiProperty<string?> ItemTemplateKeyProperty = UiProperty<string?>.Register(
+        nameof(ItemTemplateKey),
+        typeof(ItemsControl),
+        new UiPropertyMetadata<string?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
     public static readonly UiProperty<IEnumerable?> ItemsSourceProperty = UiProperty<IEnumerable?>.Register(
         nameof(ItemsSource),
@@ -63,6 +70,30 @@ public class ItemsControl : Control
     {
         get => GetValue(ItemTemplateProperty);
         set => SetValue(ItemTemplateProperty, value);
+    }
+
+    public string? ItemTemplateKey
+    {
+        get => GetValue(ItemTemplateKeyProperty);
+        set => SetValue(ItemTemplateKeyProperty, value);
+    }
+
+    public ContentTemplateRegistry ContentTemplateRegistry
+    {
+        get => contentTemplateRegistry;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (ReferenceEquals(contentTemplateRegistry, value))
+            {
+                return;
+            }
+
+            contentTemplateRegistry = value;
+            ItemContainerGenerator.Clear();
+            itemsPresenter.MarkItemsDirty();
+            InvalidateItems("ItemsControl content template registry changed");
+        }
     }
 
     public ItemsPanelTemplate? ItemsPanel
@@ -116,6 +147,7 @@ public class ItemsControl : Control
     {
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, ItemTemplateProperty) ||
+            ReferenceEquals(args.Property, ItemTemplateKeyProperty) ||
             ReferenceEquals(args.Property, ItemsPanelProperty))
         {
             ItemContainerGenerator.Clear();
@@ -187,6 +219,9 @@ public class ItemsControl : Control
             case ContentPresenter presenter:
                 presenter.Content = item;
                 presenter.ContentTemplate = ItemTemplate;
+                presenter.ContentTemplateKey = ItemTemplateKey;
+                presenter.LocalTemplateRegistry = ContentTemplateRegistry;
+                presenter.ContentIndex = index;
                 break;
             case ContentControl contentControl:
                 contentControl.Content = item;
@@ -209,6 +244,9 @@ public class ItemsControl : Control
             case ContentPresenter presenter:
                 presenter.Content = null;
                 presenter.ContentTemplate = null;
+                presenter.ContentTemplateKey = null;
+                presenter.LocalTemplateRegistry = null;
+                presenter.ContentIndex = -1;
                 break;
             case ContentControl contentControl:
                 contentControl.Content = null;

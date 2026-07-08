@@ -224,9 +224,9 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
     {
         Thickness insets = Insets;
         LayoutSize available = ContentControl.Deflate(context.AvailableSize, insets);
-        TextRunStyle style = CreateTextStyle();
-        TextMeasureResult result = GetTextMeasurer().Measure(DisplayText, style, available.Width);
-        TextCaretVerticalMetrics caretMetrics = caretLayout.GetCaretVerticalMetrics(style, CreateFontResolver());
+        TextAspect aspect = CreateTextAspect();
+        TextMeasureResult result = GetTextMeasurer().Measure(DisplayText, aspect, available.Width);
+        TextCaretVerticalMetrics caretMetrics = caretLayout.GetCaretVerticalMetrics(aspect, CreateFontResolver());
         float textEditingHeight = caretMetrics.OffsetY + caretMetrics.Height;
         LayoutSize contentSize = new(result.Size.Width, MathF.Max(result.Size.Height, textEditingHeight));
         return ContentControl.Inflate(contentSize, insets);
@@ -542,7 +542,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         GetTextRenderer().Render(
             context.DrawingContext,
             DisplayText,
-            CreateTextStyle(color),
+            CreateTextAspect(color),
             content.Width + horizontalTextOffset,
             new DrawPoint(content.X - horizontalTextOffset, content.Y),
             color);
@@ -560,8 +560,8 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
 
     private DrawRect GetCaretVerticalBounds(LayoutRect content)
     {
-        TextRunStyle style = CreateTextStyle();
-        TextCaretVerticalMetrics metrics = caretLayout.GetCaretVerticalMetrics(style, CreateFontResolver());
+        TextAspect aspect = CreateTextAspect();
+        TextCaretVerticalMetrics metrics = caretLayout.GetCaretVerticalMetrics(aspect, CreateFontResolver());
         float offsetY = Math.Clamp(metrics.OffsetY, 0, MathF.Max(0, content.Height - 1));
         float availableHeight = MathF.Max(1, content.Height - offsetY);
         float height = MathF.Min(MathF.Max(1, metrics.Height), availableHeight);
@@ -648,18 +648,18 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
             return 0;
         }
 
-        return GetTextMeasurer().Measure(text, CreateTextStyle(), float.PositiveInfinity).Size.Width;
+        return GetTextMeasurer().Measure(text, CreateTextAspect(), float.PositiveInfinity).Size.Width;
     }
 
     private float GetCaretTextX(int position)
     {
-        return caretLayout.GetCaretX(DisplayText, position, CreateTextStyle(), CreateFontResolver());
+        return caretLayout.GetCaretX(DisplayText, position, CreateTextAspect(), CreateFontResolver());
     }
 
     private int GetCaretIndexAtMouseX(float mouseX, LayoutRect content)
     {
         float textX = mouseX - content.X + horizontalTextOffset;
-        return caretLayout.GetCaretIndexAtX(DisplayText, textX, CreateTextStyle(), CreateFontResolver());
+        return caretLayout.GetCaretIndexAtX(DisplayText, textX, CreateTextAspect(), CreateFontResolver());
     }
 
     private void ResetCaretBlink()
@@ -704,14 +704,14 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, reason);
     }
 
-    private TextRunStyle CreateTextStyle()
+    private TextAspect CreateTextAspect()
     {
-        return CreateTextStyle(Foreground);
+        return CreateTextAspect(Foreground);
     }
 
-    private TextRunStyle CreateTextStyle(DrawColor color)
+    private TextAspect CreateTextAspect(DrawColor color)
     {
-        return new TextRunStyle(FontFamily, FontSize, color: color, fontResourceId: FontResourceId);
+        return new TextAspect(FontFamily, FontSize, color: color, fontResourceId: FontResourceId);
     }
 
     private TextMeasurer GetTextMeasurer()

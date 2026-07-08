@@ -39,8 +39,8 @@ public sealed class TextBlockTests
 
         Assert.Equal(new LayoutSize(12, 7), desired);
         Assert.Equal("Hello", measurer.Text);
-        Assert.Equal("Serif", measurer.Style.FontFamily);
-        Assert.Equal(13, measurer.Style.FontSize);
+        Assert.Equal("Serif", measurer.CapturedTextAspect.FontFamily);
+        Assert.Equal(13, measurer.CapturedTextAspect.FontSize);
         Assert.Equal(100, measurer.AvailableWidth);
     }
 
@@ -130,14 +130,14 @@ public sealed class TextBlockTests
 
         public string? Text { get; private set; }
 
-        public TextRunStyle Style { get; private set; }
+        public TextAspect CapturedTextAspect { get; private set; }
 
         public float AvailableWidth { get; private set; }
 
-        public override TextMeasureResult Measure(string text, TextRunStyle style, float availableWidth)
+        public override TextMeasureResult Measure(string text, TextAspect aspect, float availableWidth)
         {
             Text = text;
-            Style = style;
+            CapturedTextAspect = aspect;
             AvailableWidth = availableWidth;
             return measurement;
         }

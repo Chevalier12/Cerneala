@@ -22,7 +22,7 @@ public sealed class DeveloperPreviewCompletionTests
 
         Assert.Contains("UIRoot", gettingStarted, StringComparison.Ordinal);
         Assert.Contains("UiHost", gettingStarted, StringComparison.Ordinal);
-        Assert.Contains("DefaultTheme", gettingStarted, StringComparison.Ordinal);
+        Assert.Contains("DefaultAspectPackage", gettingStarted, StringComparison.Ordinal);
         Assert.Contains("BindingOperations", gettingStarted, StringComparison.Ordinal);
         Assert.Contains("ActionCommand", gettingStarted, StringComparison.Ordinal);
         Assert.Contains("TextBox", gettingStarted, StringComparison.Ordinal);

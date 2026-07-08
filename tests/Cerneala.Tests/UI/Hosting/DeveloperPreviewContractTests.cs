@@ -4,7 +4,7 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout.Panels;
-using Cerneala.UI.Styling;
+using Cerneala.UI.Theming;
 
 namespace Cerneala.Tests.UI.Hosting;
 
@@ -108,7 +108,7 @@ public sealed class DeveloperPreviewContractTests
     [Fact]
     public void DeveloperPreviewDetachingSampleStopsExternalNotifications()
     {
-        UIRoot root = StyledRoot();
+        UIRoot root = ThemedRoot();
         GettingStartedSample sample = new();
         UIElement sampleRoot = sample.Build();
         root.VisualChildren.Add(sampleRoot);
@@ -135,17 +135,16 @@ public sealed class DeveloperPreviewContractTests
 
     private static UiHost HostWithGettingStartedSample(out UIRoot root, out GettingStartedSample sample)
     {
-        root = StyledRoot();
+        root = ThemedRoot();
         sample = new GettingStartedSample();
         root.VisualChildren.Add(sample.Build());
         return new UiHost(new UiHostOptions { Root = root });
     }
 
-    private static UIRoot StyledRoot()
+    private static UIRoot ThemedRoot()
     {
         UIRoot root = new(420, 320);
         root.SetThemeProvider(new ThemeProvider(DefaultTheme.Create()));
-        root.SetStyleSheet(DefaultTheme.CreateStyleSheet());
         return root;
     }
 

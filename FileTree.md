@@ -62,8 +62,10 @@ Generated from `.`.
 |   |       |-- 2026-07-06-wire-platform-services-cursor-and-clipboard.md
 |   |       |-- 2026-07-06-wire-tab-focus-navigation-contract.md
 |   |       |-- 2026-07-07-modern-motion-system.md
+|   |       |-- 2026-07-08-modern-aspect-template-system.md
 |   |       +-- developer-preview-smoke-failure-fix-plan.md
 |   |-- architecture-v2.md
+|   |-- aspect-system.md
 |   |-- developer-preview-checklist.md
 |   |-- developer-preview-scope.md
 |   |-- getting-started.md
@@ -78,12 +80,14 @@ Generated from `.`.
 |       |   |-- Content.mgcb
 |       |   +-- PreviewImage.png
 |       |-- Samples/
+|       |   |-- AspectMotionSample.cs
 |       |   |-- AuthoringAppSample.cs
 |       |   |-- DiagnosticsSample.cs
 |       |   |-- GettingStartedSample.cs
 |       |   |-- InvalidationStatsOverlay.cs
 |       |   |-- LayoutMotionSample.cs
 |       |   |-- LayoutSample.cs
+|       |   |-- ModernAspectSample.cs
 |       |   |-- MotionSample.cs
 |       |   |-- PlaygroundText.cs
 |       |   |-- PresenceMotionSample.cs
@@ -106,6 +110,7 @@ Generated from `.`.
 |   |   |-- Architecture/
 |   |   |   |-- DeveloperPreviewCompletionTests.cs
 |   |   |   |-- DeveloperPreviewScopeTests.cs
+|   |   |   |-- ModernAspectArchitectureTests.cs
 |   |   |   |-- MonoGameDependencyBoundaryTests.cs
 |   |   |   |-- NamespaceBoundaryTests.cs
 |   |   |   +-- RepositoryShapeTests.cs
@@ -118,6 +123,10 @@ Generated from `.`.
 |   |   |   |   |-- SelectorTests.cs
 |   |   |   |   |-- ThumbTests.cs
 |   |   |   |   +-- TrackTests.cs
+|   |   |   |-- Templates/
+|   |   |   |   |-- ComponentTemplateTests.cs
+|   |   |   |   |-- ContentTemplateRegistryTests.cs
+|   |   |   |   +-- ItemsContentTemplateIntegrationTests.cs
 |   |   |   |-- BorderTests.cs
 |   |   |   |-- ButtonContentArchitectureTests.cs
 |   |   |   |-- ButtonKeyboardActivationTests.cs
@@ -165,6 +174,7 @@ Generated from `.`.
 |   |   |   |-- ToggleButtonTests.cs
 |   |   |   +-- ToolTipTests.cs
 |   |   |-- Docs/
+|   |   |   |-- AspectDocsTests.cs
 |   |   |   +-- GettingStartedDocsTests.cs
 |   |   |-- Drawing/
 |   |   |   |-- MonoGame/
@@ -211,15 +221,17 @@ Generated from `.`.
 |   |   |   +-- TouchInputBridgeTests.cs
 |   |   |-- Playground/
 |   |   |   |-- Samples/
+|   |   |   |   |-- AspectMotionSampleTests.cs
 |   |   |   |   |-- AuthoringAppSampleContractTests.cs
 |   |   |   |   |-- GettingStartedSampleContractTests.cs
+|   |   |   |   |-- ModernAspectSampleTests.cs
 |   |   |   |   |-- PlaygroundSampleTests.cs
 |   |   |   |   |-- RuntimePreviewIntegrationTests.cs
 |   |   |   |   +-- RuntimePreviewSampleContractTests.cs
 |   |   |   |-- Game1SourceTests.cs
 |   |   |   |-- PlaygroundGameLoopSmokeTests.cs
-|   |   |   |-- RetainedAppSampleContractTests.cs
-|   |   |   +-- RetainedAppStyleContractTests.cs
+|   |   |   |-- RetainedAppAspectContractTests.cs
+|   |   |   +-- RetainedAppSampleContractTests.cs
 |   |   |-- UI/
 |   |   |   |-- Accessibility/
 |   |   |   |   |-- AccessibilityPlatformTests.cs
@@ -231,6 +243,18 @@ Generated from `.`.
 |   |   |   |   |-- SemanticsTreeTests.cs
 |   |   |   |   +-- TextBoxSemanticsTests.cs
 |   |   |   |-- Animation/
+|   |   |   |-- Aspect/
+|   |   |   |   |-- AspectEngineStressBudgetTests.cs
+|   |   |   |   |-- AspectEngineTests.cs
+|   |   |   |   |-- AspectPackageTests.cs
+|   |   |   |   |-- AspectRootRegistryTests.cs
+|   |   |   |   |-- AspectRuleSetTests.cs
+|   |   |   |   |-- AspectSlotTests.cs
+|   |   |   |   |-- AspectStateSetTests.cs
+|   |   |   |   |-- AspectTokenTests.cs
+|   |   |   |   |-- AspectVariantTests.cs
+|   |   |   |   |-- DefaultAspectPackageTests.cs
+|   |   |   |   +-- ThemeTokenBridgeTests.cs
 |   |   |   |-- Controls/
 |   |   |   |   |-- Shapes/
 |   |   |   |   |   +-- ShapeTests.cs
@@ -255,10 +279,10 @@ Generated from `.`.
 |   |   |   |   |-- ElementTreeDumperTests.cs
 |   |   |   |   |-- FrameDiagnosticsTests.cs
 |   |   |   |   |-- InvalidationTraceTests.cs
+|   |   |   |   |-- ModernAspectTraceTests.cs
 |   |   |   |   |-- RenderCacheDumperTests.cs
 |   |   |   |   |-- RoutedEventTraceTests.cs
-|   |   |   |   |-- RuntimeDiagnosticsTests.cs
-|   |   |   |   +-- StyleTraceTests.cs
+|   |   |   |   +-- RuntimeDiagnosticsTests.cs
 |   |   |   |-- Elements/
 |   |   |   |   |-- ElementHandlerStoreTests.cs
 |   |   |   |   |-- ElementLifecycleTests.cs
@@ -357,9 +381,7 @@ Generated from `.`.
 |   |   |   |   |-- Specs/
 |   |   |   |   |   |-- EasingTests.cs
 |   |   |   |   |   +-- MotionSpecTests.cs
-|   |   |   |   |-- Styling/
-|   |   |   |   |   |-- MotionVisualStateTests.cs
-|   |   |   |   |   +-- StyleMotionTests.cs
+|   |   |   |   |-- States/
 |   |   |   |   |-- Transactions/
 |   |   |   |   |   +-- MotionTransactionTests.cs
 |   |   |   |   |-- MotionAllocationTests.cs
@@ -396,32 +418,23 @@ Generated from `.`.
 |   |   |   |   |-- ResourceDependencyTrackerTests.cs
 |   |   |   |   |-- ResourceIdTests.cs
 |   |   |   |   +-- ResourceStoreTests.cs
-|   |   |   |-- Styling/
-|   |   |   |   |-- DefaultThemeTemplateTests.cs
-|   |   |   |   |-- DefaultThemeVerticalSliceTests.cs
-|   |   |   |   |-- PseudoClassTests.cs
-|   |   |   |   |-- SetterTests.cs
-|   |   |   |   |-- StyleApplicatorTests.cs
-|   |   |   |   |-- StyleInvalidationTests.cs
-|   |   |   |   |-- StyleRuleTests.cs
-|   |   |   |   |-- StyleSchedulerIntegrationTests.cs
-|   |   |   |   |-- StyleTests.cs
-|   |   |   |   +-- ThemeTests.cs
-|   |   |   +-- Text/
-|   |   |       |-- BidiTextServiceTests.cs
-|   |   |       |-- FontResolverTests.cs
-|   |   |       |-- TextBlockTextServiceIntegrationTests.cs
-|   |   |       |-- TextBoxEditorIntegrationTests.cs
-|   |   |       |-- TextCaretLayoutTests.cs
-|   |   |       |-- TextCompositionManagerTests.cs
-|   |   |       |-- TextDocumentTests.cs
-|   |   |       |-- TextEditingControllerTests.cs
-|   |   |       |-- TextEditorTests.cs
-|   |   |       |-- TextLayoutCacheTests.cs
-|   |   |       |-- TextMeasurerTests.cs
-|   |   |       |-- TextRendererTests.cs
-|   |   |       |-- TextRendererWrapContractTests.cs
-|   |   |       +-- UndoRedoStackTests.cs
+|   |   |   |-- Text/
+|   |   |   |   |-- BidiTextServiceTests.cs
+|   |   |   |   |-- FontResolverTests.cs
+|   |   |   |   |-- TextBlockTextServiceIntegrationTests.cs
+|   |   |   |   |-- TextBoxEditorIntegrationTests.cs
+|   |   |   |   |-- TextCaretLayoutTests.cs
+|   |   |   |   |-- TextCompositionManagerTests.cs
+|   |   |   |   |-- TextDocumentTests.cs
+|   |   |   |   |-- TextEditingControllerTests.cs
+|   |   |   |   |-- TextEditorTests.cs
+|   |   |   |   |-- TextLayoutCacheTests.cs
+|   |   |   |   |-- TextMeasurerTests.cs
+|   |   |   |   |-- TextRendererTests.cs
+|   |   |   |   |-- TextRendererWrapContractTests.cs
+|   |   |   |   +-- UndoRedoStackTests.cs
+|   |   |   +-- Theming/
+|   |   |       +-- ThemeTests.cs
 |   |   |-- Cerneala.Tests.csproj
 |   |   +-- GameBootstrapTests.cs
 |   +-- Cerneala.Tests.SourceGen/
@@ -488,6 +501,57 @@ Generated from `.`.
 |   |   |-- SemanticsRole.cs
 |   |   |-- SemanticsTree.cs
 |   |   +-- TextBoxAutomationPeer.cs
+|   |-- Aspect/
+|   |   |-- AspectCatalog.cs
+|   |   |-- AspectCondition.cs
+|   |   |-- AspectConditionDependency.cs
+|   |   |-- AspectConditionNode.cs
+|   |   |-- AspectConditionResult.cs
+|   |   |-- AspectDataContext.cs
+|   |   |-- AspectDataDependency.cs
+|   |   |-- AspectDeclaration.cs
+|   |   |-- AspectDependencySet.cs
+|   |   |-- AspectDiagnostics.cs
+|   |   |-- AspectEngine.cs
+|   |   |-- AspectEngineCounters.cs
+|   |   |-- AspectEngineElementState.cs
+|   |   |-- AspectEnvironment.cs
+|   |   |-- AspectInvalidation.cs
+|   |   |-- AspectInvalidationGraph.cs
+|   |   |-- AspectLayer.cs
+|   |   |-- AspectMatchContext.cs
+|   |   |-- AspectMotion.cs
+|   |   |-- AspectPackage.cs
+|   |   |-- AspectPackageBuilder.cs
+|   |   |-- AspectProcessor.cs
+|   |   |-- AspectRef.cs
+|   |   |-- AspectRegistry.cs
+|   |   |-- AspectResolutionContext.cs
+|   |   |-- AspectResolutionStep.cs
+|   |   |-- AspectRuleSet.cs
+|   |   |-- AspectRuleSetBuilder.cs
+|   |   |-- AspectSlot.cs
+|   |   |-- AspectSlot{TOwner,TTarget}.cs
+|   |   |-- AspectSlotPath.cs
+|   |   |-- AspectSpecificity.cs
+|   |   |-- AspectState.cs
+|   |   |-- AspectStateSet.cs
+|   |   |-- AspectTarget.cs
+|   |   |-- AspectToken.cs
+|   |   |-- AspectToken{T}.cs
+|   |   |-- AspectTokenDefinition.cs
+|   |   |-- AspectTokenTrace.cs
+|   |   |-- AspectValue.cs
+|   |   |-- AspectValue{T}.cs
+|   |   |-- AspectVariantKey.cs
+|   |   |-- AspectVariantKey{TOwner,TValue}.cs
+|   |   |-- AspectVariantSet.cs
+|   |   |-- DefaultAspectPackage.cs
+|   |   |-- DefaultAspectTokens.cs
+|   |   |-- RejectedAspectDeclaration.cs
+|   |   |-- ResolvedAspect.cs
+|   |   |-- ResolvedAspectValue.cs
+|   |   +-- ThemeTokenBridge.cs
 |   |-- Controls/
 |   |   |-- Primitives/
 |   |   |   |-- ButtonBase.cs
@@ -502,8 +566,27 @@ Generated from `.`.
 |   |   |   |-- Path.cs
 |   |   |   |-- Rectangle.cs
 |   |   |   +-- Shape.cs
+|   |   |-- Templates/
+|   |   |   |-- ComponentTemplate.cs
+|   |   |   |-- ComponentTemplateContext.cs
+|   |   |   |-- ComponentTemplateDefinition.cs
+|   |   |   |-- ComponentTemplateInstance.cs
+|   |   |   |-- ContentTemplate.cs
+|   |   |   |-- ContentTemplateContext.cs
+|   |   |   |-- ContentTemplateDefinition.cs
+|   |   |   |-- ContentTemplateMatchContext.cs
+|   |   |   |-- ContentTemplateRegistry.cs
+|   |   |   |-- ControlTemplateAdapter.cs
+|   |   |   |-- DataTemplateAdapter.cs
+|   |   |   |-- TemplatePartMap.cs
+|   |   |   |-- TemplateRecycleKey.cs
+|   |   |   |-- TemplateRecyclePool.cs
+|   |   |   |-- TemplateSlotMap.cs
+|   |   |   +-- TemplateTokenBinding.cs
 |   |   |-- Border.cs
 |   |   |-- Button.cs
+|   |   |-- ButtonAspects.cs
+|   |   |-- ButtonTemplates.cs
 |   |   |-- Canvas.cs
 |   |   |-- CheckBox.cs
 |   |   |-- ComboBox.cs
@@ -586,6 +669,7 @@ Generated from `.`.
 |   |   |-- StringPropertyPath.cs
 |   |   +-- UiPropertyBinding{T}.cs
 |   |-- Diagnostics/
+|   |   |-- AspectTrace.cs
 |   |   |-- DebugAdorner.cs
 |   |   |-- DebugOverlay.cs
 |   |   |-- DirtyTreeDumper.cs
@@ -597,8 +681,7 @@ Generated from `.`.
 |   |   |-- RenderCacheDumper.cs
 |   |   |-- RenderDiagnostics.cs
 |   |   |-- RoutedEventTrace.cs
-|   |   |-- RuntimeDiagnostics.cs
-|   |   +-- StyleTrace.cs
+|   |   +-- RuntimeDiagnostics.cs
 |   |-- Drawing/
 |   |   |-- MonoGame/
 |   |   |   |-- MonoGameClipStack.cs
@@ -735,6 +818,7 @@ Generated from `.`.
 |   |   |-- UiInputElement.cs
 |   |   +-- UiInputTree.cs
 |   |-- Invalidation/
+|   |   |-- AspectQueue.cs
 |   |   |-- CommandStateQueue.cs
 |   |   |-- DirtyPropagation.cs
 |   |   |-- DirtyState.cs
@@ -750,7 +834,6 @@ Generated from `.`.
 |   |   |-- InvalidationRequest.cs
 |   |   |-- LayoutQueue.cs
 |   |   |-- RenderQueue.cs
-|   |   |-- StyleQueue.cs
 |   |   +-- UiFrameScheduler.cs
 |   |-- Layout/
 |   |   |-- Panels/
@@ -911,12 +994,11 @@ Generated from `.`.
 |   |   |   |-- SpringVelocityMode.cs
 |   |   |   |-- StepEasing.cs
 |   |   |   +-- TweenSpec.cs
-|   |   |-- Styling/
+|   |   |-- States/
 |   |   |   |-- MotionStateRule.cs
 |   |   |   |-- MotionTokens.cs
 |   |   |   |-- MotionVisualStateController.cs
 |   |   |   |-- MotionVisualStateSnapshot.cs
-|   |   |   |-- StyleMotion.cs
 |   |   |   +-- ThemeMotionTokens.cs
 |   |   |-- Transactions/
 |   |   |   |-- MotionTransaction.cs
@@ -965,51 +1047,38 @@ Generated from `.`.
 |   |   |-- ResourceDependencyTracker.cs
 |   |   |-- ResourceId{T}.cs
 |   |   +-- ResourceStore.cs
-|   |-- Styling/
-|   |   |-- DefaultTheme.cs
-|   |   |-- PseudoClass.cs
-|   |   |-- PseudoClassRegistry.cs
-|   |   |-- Setter.cs
-|   |   |-- Setter{T}.cs
-|   |   |-- Style.cs
-|   |   |-- StyleApplicator.cs
-|   |   |-- StyleDiagnostics.cs
-|   |   |-- StyleInvalidation.cs
-|   |   |-- StyleProcessor.cs
-|   |   |-- StyleRule.cs
-|   |   |-- StyleSelector.cs
-|   |   |-- StyleSheet.cs
-|   |   |-- Theme.cs
-|   |   |-- ThemeKey{T}.cs
-|   |   |-- ThemePalette.cs
-|   |   |-- ThemeProvider.cs
-|   |   |-- ThemeResource.cs
-|   |   +-- VisualStateRule.cs
-|   +-- Text/
-|       |-- BidiTextService.cs
-|       |-- ClipboardAdapter.cs
-|       |-- FontResolver.cs
-|       |-- LineBreakService.cs
-|       |-- ResolvedTextFont.cs
-|       |-- TextCaret.cs
-|       |-- TextCaretLayout.cs
-|       |-- TextCompositionManager.cs
-|       |-- TextCompositionState.cs
-|       |-- TextDocument.cs
-|       |-- TextEditingController.cs
-|       |-- TextEditor.cs
-|       |-- TextLayoutCache.cs
-|       |-- TextLayoutKey.cs
-|       |-- TextLine.cs
-|       |-- TextLineMetrics.cs
-|       |-- TextMeasurer.cs
-|       |-- TextMeasureResult.cs
-|       |-- TextRenderer.cs
-|       |-- TextRunStyle.cs
-|       |-- TextSelection.cs
-|       |-- TextTrimming.cs
-|       |-- TextWrapping.cs
-|       +-- UndoRedoStack.cs
+|   |-- Text/
+|   |   |-- BidiTextService.cs
+|   |   |-- ClipboardAdapter.cs
+|   |   |-- FontResolver.cs
+|   |   |-- LineBreakService.cs
+|   |   |-- ResolvedTextFont.cs
+|   |   |-- TextAspect.cs
+|   |   |-- TextCaret.cs
+|   |   |-- TextCaretLayout.cs
+|   |   |-- TextCompositionManager.cs
+|   |   |-- TextCompositionState.cs
+|   |   |-- TextDocument.cs
+|   |   |-- TextEditingController.cs
+|   |   |-- TextEditor.cs
+|   |   |-- TextLayoutCache.cs
+|   |   |-- TextLayoutKey.cs
+|   |   |-- TextLine.cs
+|   |   |-- TextLineMetrics.cs
+|   |   |-- TextMeasurer.cs
+|   |   |-- TextMeasureResult.cs
+|   |   |-- TextRenderer.cs
+|   |   |-- TextSelection.cs
+|   |   |-- TextTrimming.cs
+|   |   |-- TextWrapping.cs
+|   |   +-- UndoRedoStack.cs
+|   +-- Theming/
+|       |-- DefaultTheme.cs
+|       |-- Theme.cs
+|       |-- ThemeKey{T}.cs
+|       |-- ThemePalette.cs
+|       |-- ThemeProvider.cs
+|       +-- ThemeResource.cs
 |-- .gitignore
 |-- AGENTS.md
 |-- architecture.md

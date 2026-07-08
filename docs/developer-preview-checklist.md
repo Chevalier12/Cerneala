@@ -8,6 +8,8 @@
 - Scroll-linked motion avoids scroll feedback loops.
 - Reduced motion preserves final target values.
 - Diagnostics expose trace events and active graph snapshots.
+- Default UI chrome uses the modern Aspect runtime path.
+- Aspect samples cover tokens, variants, slots, component templates, and content templates.
 - Legacy animation remains compatibility-only.
 
 ## Verification Commands

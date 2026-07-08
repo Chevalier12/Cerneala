@@ -80,18 +80,18 @@ public sealed class UiFrameSchedulerTests
     }
 
     [Fact]
-    public void ProcessesStyleBeforeLayoutAndRender()
+    public void ProcessesAspectBeforeLayoutAndRender()
     {
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
         root.ProcessFrame();
         List<FramePhase> phases = [];
-        child.Invalidate(InvalidationFlags.Style | InvalidationFlags.Measure | InvalidationFlags.HitTest, "style and layout");
+        child.Invalidate(InvalidationFlags.Aspect | InvalidationFlags.Measure | InvalidationFlags.HitTest, "aspect and layout");
 
         root.ProcessFrame(new FramePhaseProcessors
         {
-            Style = _ => phases.Add(FramePhase.Style),
+            Aspect = _ => phases.Add(FramePhase.Aspect),
             Measure = _ => phases.Add(FramePhase.Measure),
             Arrange = _ => phases.Add(FramePhase.Arrange),
             RenderCache = _ => phases.Add(FramePhase.RenderCache),
@@ -99,48 +99,48 @@ public sealed class UiFrameSchedulerTests
         });
 
         Assert.Equal(
-            [FramePhase.Style, FramePhase.Measure, FramePhase.Measure, FramePhase.Arrange, FramePhase.Arrange, FramePhase.RenderCache, FramePhase.HitTest],
+            [FramePhase.Aspect, FramePhase.Measure, FramePhase.Measure, FramePhase.Arrange, FramePhase.Arrange, FramePhase.RenderCache, FramePhase.HitTest],
             phases);
     }
 
     [Fact]
-    public void ProcessesInheritedPropertiesBeforeStyle()
+    public void ProcessesInheritedPropertiesBeforeAspect()
     {
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
         root.ProcessFrame();
         List<FramePhase> phases = [];
-        child.Invalidate(InvalidationFlags.Inherited | InvalidationFlags.Style | InvalidationFlags.Measure, "inherit and style");
+        child.Invalidate(InvalidationFlags.Inherited | InvalidationFlags.Aspect | InvalidationFlags.Measure, "inherit and aspect");
 
         root.ProcessFrame(new FramePhaseProcessors
         {
             InheritedProperties = _ => phases.Add(FramePhase.InheritedProperties),
-            Style = _ => phases.Add(FramePhase.Style),
+            Aspect = _ => phases.Add(FramePhase.Aspect),
             Measure = _ => phases.Add(FramePhase.Measure)
         });
 
         Assert.Equal(
-            [FramePhase.InheritedProperties, FramePhase.Style, FramePhase.Measure, FramePhase.Measure],
+            [FramePhase.InheritedProperties, FramePhase.Aspect, FramePhase.Measure, FramePhase.Measure],
             phases);
     }
 
     [Fact]
-    public void FailedStylePhaseKeepsDirtyFlagsAndQueuedWork()
+    public void FailedAspectPhaseKeepsDirtyFlagsAndQueuedWork()
     {
         UIRoot root = new();
         UIElement child = new();
         root.VisualChildren.Add(child);
         root.ProcessFrame();
-        child.Invalidate(InvalidationFlags.Style, "style");
+        child.Invalidate(InvalidationFlags.Aspect, "aspect");
 
         Assert.Throws<InvalidOperationException>(() => root.ProcessFrame(new FramePhaseProcessors
         {
-            Style = _ => throw new InvalidOperationException("boom")
+            Aspect = _ => throw new InvalidOperationException("boom")
         }));
 
-        Assert.True(child.DirtyState.Has(InvalidationFlags.Style));
-        Assert.Equal(1, root.StyleQueue.Count);
+        Assert.True(child.DirtyState.Has(InvalidationFlags.Aspect));
+        Assert.Equal(1, root.AspectQueue.Count);
     }
 
     [Fact]

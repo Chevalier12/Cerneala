@@ -8,13 +8,13 @@ public sealed class UiFrameScheduler
     private readonly LayoutQueue layoutQueue;
     private readonly InheritedPropertyQueue inheritedPropertyQueue;
     private readonly CommandStateQueue commandStateQueue;
-    private readonly StyleQueue styleQueue;
+    private readonly AspectQueue aspectQueue;
     private readonly RenderQueue renderQueue;
     private readonly HitTestQueue hitTestQueue;
     private readonly InvalidationTrace trace;
     private const InvalidationFlags ConcreteWorkFlags =
         InvalidationFlags.Inherited |
-        InvalidationFlags.Style |
+        InvalidationFlags.Aspect |
         InvalidationFlags.Measure |
         InvalidationFlags.Arrange |
         InvalidationFlags.Render |
@@ -32,7 +32,7 @@ public sealed class UiFrameScheduler
         LayoutQueue layoutQueue,
         InheritedPropertyQueue inheritedPropertyQueue,
         CommandStateQueue commandStateQueue,
-        StyleQueue styleQueue,
+        AspectQueue aspectQueue,
         RenderQueue renderQueue,
         HitTestQueue hitTestQueue,
         InvalidationTrace? trace = null)
@@ -40,7 +40,7 @@ public sealed class UiFrameScheduler
         this.layoutQueue = layoutQueue ?? throw new ArgumentNullException(nameof(layoutQueue));
         this.inheritedPropertyQueue = inheritedPropertyQueue ?? throw new ArgumentNullException(nameof(inheritedPropertyQueue));
         this.commandStateQueue = commandStateQueue ?? throw new ArgumentNullException(nameof(commandStateQueue));
-        this.styleQueue = styleQueue ?? throw new ArgumentNullException(nameof(styleQueue));
+        this.aspectQueue = aspectQueue ?? throw new ArgumentNullException(nameof(aspectQueue));
         this.renderQueue = renderQueue ?? throw new ArgumentNullException(nameof(renderQueue));
         this.hitTestQueue = hitTestQueue ?? throw new ArgumentNullException(nameof(hitTestQueue));
         this.trace = trace ?? InvalidationTrace.Disabled;
@@ -49,7 +49,7 @@ public sealed class UiFrameScheduler
     public bool HasWork =>
         inheritedPropertyQueue.HasWork ||
         commandStateQueue.HasWork ||
-        styleQueue.HasWork ||
+        aspectQueue.HasWork ||
         layoutQueue.HasWork ||
         renderQueue.HasWork ||
         hitTestQueue.HasWork;
@@ -92,7 +92,7 @@ public sealed class UiFrameScheduler
         stats.CountMotion(motion?.BeginFrame(motionReason) ?? default);
         ProcessInheritedProperties(processors, stats);
         ProcessCommandState(processors, stats);
-        ProcessStyle(processors, stats);
+        ProcessAspect(processors, stats);
         ProcessInheritedProperties(processors, stats);
         stats.CountMotion(motion?.BeforeLayout() ?? default);
         ProcessMeasure(processors, stats);
@@ -165,30 +165,30 @@ public sealed class UiFrameScheduler
         trace.RecordPhaseSummary(FramePhase.CommandState, snapshot.Count);
     }
 
-    private void ProcessStyle(FramePhaseProcessors processors, FrameStats stats)
+    private void ProcessAspect(FramePhaseProcessors processors, FrameStats stats)
     {
-        IReadOnlyList<Elements.UIElement> snapshot = styleQueue.Snapshot();
+        IReadOnlyList<Elements.UIElement> snapshot = aspectQueue.Snapshot();
         foreach (Elements.UIElement element in snapshot)
         {
-            styleQueue.Remove(element);
-            InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Style);
+            aspectQueue.Remove(element);
+            InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Aspect);
             try
             {
-                processors.Process(FramePhase.Style, element);
+                processors.Process(FramePhase.Aspect, element);
             }
             catch
             {
                 element.DirtyState.Mark(cleared);
-                styleQueue.Enqueue(element);
+                aspectQueue.Enqueue(element);
                 throw;
             }
 
-            stats.Count(FramePhase.Style);
-            trace.RecordPhase(FramePhase.Style, element, InvalidationFlags.Style);
+            stats.Count(FramePhase.Aspect);
+            trace.RecordPhase(FramePhase.Aspect, element, InvalidationFlags.Aspect);
             trace.RecordClear(element, cleared);
         }
 
-        trace.RecordPhaseSummary(FramePhase.Style, snapshot.Count);
+        trace.RecordPhaseSummary(FramePhase.Aspect, snapshot.Count);
     }
 
     private void ProcessMeasure(FramePhaseProcessors processors, FrameStats stats)

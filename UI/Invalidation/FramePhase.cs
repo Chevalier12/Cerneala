@@ -5,7 +5,7 @@ public enum FramePhase
     Input,
     InheritedProperties,
     CommandState,
-    Style,
+    Aspect,
     Measure,
     Arrange,
     RenderCache,

@@ -192,7 +192,7 @@ public class UiObject
             UiPropertyOptions.AffectsArrange |
             UiPropertyOptions.AffectsRender |
             UiPropertyOptions.AffectsHitTest |
-            UiPropertyOptions.AffectsStyle |
+            UiPropertyOptions.AffectsAspect |
             UiPropertyOptions.AffectsInputVisual |
             UiPropertyOptions.AffectsSemantics |
             UiPropertyOptions.Inherits);
@@ -222,7 +222,7 @@ public class UiObject
             UiPropertyOptions.AffectsArrange |
             UiPropertyOptions.AffectsRender |
             UiPropertyOptions.AffectsHitTest |
-            UiPropertyOptions.AffectsStyle |
+            UiPropertyOptions.AffectsAspect |
             UiPropertyOptions.AffectsInputVisual |
             UiPropertyOptions.AffectsSemantics |
             UiPropertyOptions.Inherits);

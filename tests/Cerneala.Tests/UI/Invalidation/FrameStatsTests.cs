@@ -10,14 +10,14 @@ public sealed class FrameStatsTests
         FrameStats stats = new();
 
         stats.Count(FramePhase.InheritedProperties);
-        stats.Count(FramePhase.Style);
+        stats.Count(FramePhase.Aspect);
         stats.Count(FramePhase.Measure);
         stats.Count(FramePhase.Arrange);
         stats.Count(FramePhase.RenderCache);
         stats.Count(FramePhase.HitTest);
 
         Assert.Equal(1, stats.InheritedElements);
-        Assert.Equal(1, stats.StyledElements);
+        Assert.Equal(1, stats.AspectElements);
         Assert.Equal(1, stats.MeasuredElements);
         Assert.Equal(1, stats.ArrangedElements);
         Assert.Equal(1, stats.RenderedElements);

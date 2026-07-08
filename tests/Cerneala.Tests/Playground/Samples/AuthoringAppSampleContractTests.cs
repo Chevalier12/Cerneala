@@ -1,8 +1,9 @@
 using Cerneala.Playground.Samples;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
 using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
-using Cerneala.UI.Styling;
+using Cerneala.UI.Theming;
 
 namespace Cerneala.Tests.Playground.Samples;
 
@@ -23,15 +24,15 @@ public sealed class AuthoringAppSampleContractTests
     }
 
     [Fact]
-    public void AuthoringAppSampleUsesDefaultThemeTemplateForPrimaryButton()
+    public void AuthoringAppSampleUsesDefaultAspectChromeForPrimaryButton()
     {
-        UIRoot root = StyledRoot();
+        UIRoot root = ThemedRoot();
         AuthoringAppSample sample = new();
         root.VisualChildren.Add(sample.Build());
 
         root.ProcessFrame();
 
-        Assert.NotNull(sample.SubmitButton!.TemplateInstance);
+        Assert.Equal(UiPropertyValueSource.AspectBase, sample.SubmitButton!.GetValueSource(Control.BackgroundProperty));
     }
 
     [Fact]
@@ -55,11 +56,10 @@ public sealed class AuthoringAppSampleContractTests
         Assert.Equal("Ready to add Zoe.", sample.StatusText!.Text);
     }
 
-    private static UIRoot StyledRoot()
+    private static UIRoot ThemedRoot()
     {
         UIRoot root = new(300, 200);
         root.SetThemeProvider(new ThemeProvider(DefaultTheme.Create()));
-        root.SetStyleSheet(DefaultTheme.CreateStyleSheet());
         return root;
     }
 }

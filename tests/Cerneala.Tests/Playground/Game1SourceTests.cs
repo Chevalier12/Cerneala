@@ -32,6 +32,15 @@ public sealed class Game1SourceTests
     }
 
     [Fact]
+    public void Game1UsesModernAspectRuntimePathInsteadOfLegacyDefaultStyleSheet()
+    {
+        string source = Game1Source();
+
+        Assert.Contains("uiRoot.AspectRegistry.Register(ModernAspectSample.CreatePackage()", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("uiRoot.SetStyleSheet(DefaultTheme.CreateStyleSheet())", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Game1PrimesUiHostAfterBuildingSampleTreeBeforeFirstDraw()
     {
         string source = Game1Source();

@@ -9,7 +9,7 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.MonoGame;
 using Cerneala.UI.Input;
 using Cerneala.UI.Resources;
-using Cerneala.UI.Styling;
+using Cerneala.UI.Theming;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -55,7 +55,8 @@ public class Game1 : Game
         _whitePixel.SetData(new[] { Color.White });
         UIRoot uiRoot = new(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
         uiRoot.SetThemeProvider(new ThemeProvider(DefaultTheme.Create()));
-        uiRoot.SetStyleSheet(DefaultTheme.CreateStyleSheet());
+        uiRoot.AspectRegistry.Register(ModernAspectSample.CreatePackage(), notify: false);
+        uiRoot.AspectRegistry.Register(AspectMotionSample.CreatePackage(), notify: false);
         _uiHost = new MonoGameUiHost(new MonoGameUiHostOptions
         {
             SpriteBatch = _spriteBatch,

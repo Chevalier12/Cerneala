@@ -59,7 +59,9 @@ public sealed class PlaygroundSampleTests
                 "Motion",
                 "Layout Motion",
                 "Presence",
-                "Scroll Motion"
+                "Scroll Motion",
+                "Modern Aspect",
+                "Aspect Motion"
             },
             selector.Samples.Select(sample => sample.Name));
 
@@ -602,7 +604,7 @@ public sealed class PlaygroundSampleTests
         host.Update(EmptyInputFrame(), new UiViewport(1000, 600), TimeSpan.Zero);
         DrawCommand caret = CaretCommand(root, textBox.CaretColor);
         TextCaretVerticalMetrics metrics = TextCaretLayout.Default.GetCaretVerticalMetrics(
-            CreateTextStyle(textBox),
+            CreateTextAspect(textBox),
             new FontResolver(textBox.ResourceProvider!));
         float contentY = textBox.ArrangedBounds.Y + textBox.BorderThickness.Top + textBox.Padding.Top;
 
@@ -653,7 +655,7 @@ public sealed class PlaygroundSampleTests
         float expectedX = ContentX(textBox) + TextCaretLayout.Default.GetCaretX(
             textBox.Text,
             textBox.Caret.Position,
-            CreateTextStyle(textBox),
+            CreateTextAspect(textBox),
             new FontResolver(textBox.ResourceProvider!));
 
         Assert.Null(exception);
@@ -899,9 +901,9 @@ public sealed class PlaygroundSampleTests
             .First();
     }
 
-    private static TextRunStyle CreateTextStyle(TextBox textBox)
+    private static TextAspect CreateTextAspect(TextBox textBox)
     {
-        return new TextRunStyle(textBox.FontFamily, textBox.FontSize, color: textBox.Foreground, fontResourceId: textBox.FontResourceId);
+        return new TextAspect(textBox.FontFamily, textBox.FontSize, color: textBox.Foreground, fontResourceId: textBox.FontResourceId);
     }
 
     private static float ContentX(TextBox textBox)

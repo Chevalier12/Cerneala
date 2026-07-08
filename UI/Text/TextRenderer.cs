@@ -23,7 +23,7 @@ public class TextRenderer
     public virtual TextMeasureResult Render(
         DrawingContext drawingContext,
         string text,
-        TextRunStyle style,
+        TextAspect aspect,
         float availableWidth,
         DrawPoint position,
         DrawColor color)
@@ -31,19 +31,19 @@ public class TextRenderer
         ArgumentNullException.ThrowIfNull(drawingContext);
         ArgumentNullException.ThrowIfNull(text);
 
-        TextMeasureResult measurement = textMeasurer.Measure(text, style, availableWidth);
+        TextMeasureResult measurement = textMeasurer.Measure(text, aspect, availableWidth);
         if (text.Length == 0)
         {
             return measurement;
         }
 
-        ResolvedTextFont font = fontResolver.Resolve(style);
-        float lineHeight = TextLineMetrics.MeasureLineHeight(style, font);
+        ResolvedTextFont font = fontResolver.Resolve(aspect);
+        float lineHeight = TextLineMetrics.MeasureLineHeight(aspect, font);
         for (int i = 0; i < measurement.Lines.Count; i++)
         {
             TextLine line = measurement.Lines[i];
             DrawPoint linePosition = new(position.X, position.Y + (i * lineHeight));
-            drawingContext.DrawText(style.ToDrawTextRun(font, line.Text), linePosition, color);
+            drawingContext.DrawText(aspect.ToDrawTextRun(font, line.Text), linePosition, color);
         }
 
         return measurement;

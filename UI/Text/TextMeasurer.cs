@@ -25,29 +25,29 @@ public class TextMeasurer
 
     public TextLayoutCache LayoutCache => layoutCache;
 
-    public virtual TextMeasureResult Measure(string text, TextRunStyle style, float availableWidth)
+    public virtual TextMeasureResult Measure(string text, TextAspect aspect, float availableWidth)
     {
         ArgumentNullException.ThrowIfNull(text);
-        float wrappingWidth = NormalizeWrappingWidth(style, availableWidth);
-        ResolvedTextFont font = fontResolver.Resolve(style);
-        TextLayoutKey key = new(text, font.Identity, style.FontSize, style.Wrapping, wrappingWidth, style.Trimming, style.Scale);
+        float wrappingWidth = NormalizeWrappingWidth(aspect, availableWidth);
+        ResolvedTextFont font = fontResolver.Resolve(aspect);
+        TextLayoutKey key = new(text, font.Identity, aspect.FontSize, aspect.Wrapping, wrappingWidth, aspect.Trimming, aspect.Scale);
 
         lock (layoutCacheSync)
         {
             return layoutCache.GetOrAdd(key, _ =>
             {
-                IReadOnlyList<TextLine> lines = lineBreakService.BreakLines(text, style, wrappingWidth);
+                IReadOnlyList<TextLine> lines = lineBreakService.BreakLines(text, aspect, wrappingWidth);
                 float width = lines.Count == 0 ? 0 : lines.Max(line => line.Width);
-                float lineHeight = TextLineMetrics.MeasureLineHeight(style, font);
+                float lineHeight = TextLineMetrics.MeasureLineHeight(aspect, font);
                 float height = lineHeight * Math.Max(1, lines.Count);
                 return new TextMeasureResult(new LayoutSize(width, height), lines.Count, key, font.Identity, lines);
             });
         }
     }
 
-    private static float NormalizeWrappingWidth(TextRunStyle style, float availableWidth)
+    private static float NormalizeWrappingWidth(TextAspect aspect, float availableWidth)
     {
-        if (style.Wrapping == TextWrapping.NoWrap || float.IsPositiveInfinity(availableWidth))
+        if (aspect.Wrapping == TextWrapping.NoWrap || float.IsPositiveInfinity(availableWidth))
         {
             return float.PositiveInfinity;
         }

@@ -10,7 +10,7 @@ public enum InvalidationFlags
     Text = 1 << 3,
     Image = 1 << 4,
     Resource = 1 << 5,
-    Style = 1 << 6,
+    Aspect = 1 << 6,
     InputVisual = 1 << 7,
     HitTest = 1 << 8,
     Subtree = 1 << 9,

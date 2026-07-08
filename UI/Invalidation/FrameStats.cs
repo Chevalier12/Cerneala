@@ -8,7 +8,7 @@ public sealed class FrameStats
 
     public int CommandStateElements { get; private set; }
 
-    public int StyledElements { get; private set; }
+    public int AspectElements { get; private set; }
 
     public int MeasuredElements { get; private set; }
 
@@ -45,7 +45,7 @@ public sealed class FrameStats
     public bool HasWork =>
         InheritedElements > 0 ||
         CommandStateElements > 0 ||
-        StyledElements > 0 ||
+        AspectElements > 0 ||
         MeasuredElements > 0 ||
         ArrangedElements > 0 ||
         RenderedElements > 0 ||
@@ -69,8 +69,8 @@ public sealed class FrameStats
             case FramePhase.CommandState:
                 CommandStateElements++;
                 break;
-            case FramePhase.Style:
-                StyledElements++;
+            case FramePhase.Aspect:
+                AspectElements++;
                 break;
             case FramePhase.Measure:
                 MeasuredElements++;

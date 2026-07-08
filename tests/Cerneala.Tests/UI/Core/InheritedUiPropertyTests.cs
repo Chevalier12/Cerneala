@@ -20,7 +20,7 @@ public sealed class InheritedUiPropertyTests
     }
 
     [Fact]
-    public void StyleAndLocalValuesWinOverInheritedValue()
+    public void AspectAndLocalValuesWinOverInheritedValue()
     {
         UiProperty<string> property = UiProperty<string>.Register(
             UniqueName(),
@@ -29,10 +29,10 @@ public sealed class InheritedUiPropertyTests
         UiObject owner = new();
 
         owner.SetValue(property, "inherited", UiPropertyValueSource.Inherited);
-        owner.SetValue(property, "style", UiPropertyValueSource.StyleBase);
+        owner.SetValue(property, "aspect", UiPropertyValueSource.AspectBase);
 
-        Assert.Equal("style", owner.GetValue(property));
-        Assert.Equal(UiPropertyValueSource.StyleBase, owner.GetValueSource(property));
+        Assert.Equal("aspect", owner.GetValue(property));
+        Assert.Equal(UiPropertyValueSource.AspectBase, owner.GetValueSource(property));
 
         owner.SetValue(property, "local");
 

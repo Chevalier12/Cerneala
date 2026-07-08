@@ -3,7 +3,7 @@ using Cerneala.UI.Accessibility;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
-using Cerneala.UI.Styling;
+using Cerneala.UI.Theming;
 
 namespace Cerneala.Tests.UI.Hosting;
 
@@ -80,7 +80,6 @@ public sealed class AuthoringPreviewContractTests
     {
         root = new UIRoot(360, 240);
         root.SetThemeProvider(new ThemeProvider(DefaultTheme.Create()));
-        root.SetStyleSheet(DefaultTheme.CreateStyleSheet());
         sample = new AuthoringAppSample();
         root.VisualChildren.Add(sample.Build());
         return new UiHost(new UiHostOptions { Root = root });

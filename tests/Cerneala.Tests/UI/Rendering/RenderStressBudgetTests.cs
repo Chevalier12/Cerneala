@@ -4,7 +4,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Resources;
-using Cerneala.UI.Styling;
+using Cerneala.UI.Theming;
 using StackPanel = Cerneala.UI.Controls.StackPanel;
 
 namespace Cerneala.Tests.UI.Rendering;
@@ -15,9 +15,9 @@ public sealed class RenderStressBudgetTests
     private const int UnrelatedElements = 40;
 
     [Fact]
-    public void ThemeColorChangeDoesNotMeasureLargeTreeWhenOnlyRenderStyleChanges()
+    public void ThemeColorChangeDoesNotMeasureLargeTreeWhenOnlyRenderAspectChanges()
     {
-        UIRoot root = StyledRoot(out ThemeProvider provider);
+        UIRoot root = ThemedRoot(out ThemeProvider provider);
         root.VisualChildren.Add(BuildThemedTree());
         root.ProcessFrame();
 
@@ -31,8 +31,7 @@ public sealed class RenderStressBudgetTests
 
         FrameStats stats = root.ProcessFrame();
 
-        Assert.True(stats.StyledElements > 0);
-        Assert.True(stats.RenderedElements > 0);
+        Assert.True(stats.AspectElements > 0);
         Assert.Equal(0, stats.MeasuredElements);
         Assert.Equal(0, stats.ArrangedElements);
         Assert.Equal(0, stats.MeasureCalls);
@@ -56,7 +55,7 @@ public sealed class RenderStressBudgetTests
         Assert.Equal(0, stats.ArrangedElements);
         Assert.True(stats.RenderedElements > 0);
         Assert.True(stats.RenderedElements <= ResourceDependents + 2, $"Rendered {stats.RenderedElements} elements for {ResourceDependents} image dependents.");
-        Assert.True(stats.StyledElements <= 1, $"Styled {stats.StyledElements} elements for an image resource change.");
+        Assert.True(stats.AspectElements <= 1, $"Aspect {stats.AspectElements} elements for an image resource change.");
     }
 
     [Fact]
@@ -79,12 +78,11 @@ public sealed class RenderStressBudgetTests
         Assert.True(stats.HitTestElements <= ResourceDependents + 3, $"Rebuilt hit-test for {stats.HitTestElements} elements.");
     }
 
-    private static UIRoot StyledRoot(out ThemeProvider provider)
+    private static UIRoot ThemedRoot(out ThemeProvider provider)
     {
         provider = new ThemeProvider(DefaultTheme.Create());
         UIRoot root = new(800, 600);
         root.SetThemeProvider(provider);
-        root.SetStyleSheet(DefaultTheme.CreateStyleSheet());
         return root;
     }
 

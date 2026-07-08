@@ -1,7 +1,10 @@
 using System.Runtime.CompilerServices;
 using Cerneala.UI.Core;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Controls;
 
@@ -11,6 +14,8 @@ public class ContentPresenter : Control
     private UIElement? presentedChild;
     private bool presentationDirty = true;
     private bool generatedTextChild;
+    private int contentIndex = -1;
+    private ContentTemplateRegistry? localTemplateRegistry;
 
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
         nameof(Content),
@@ -27,6 +32,16 @@ public class ContentPresenter : Control
             null,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
+    public static readonly UiProperty<string?> ContentTemplateKeyProperty = UiProperty<string?>.Register(
+        nameof(ContentTemplateKey),
+        typeof(ContentPresenter),
+        new UiPropertyMetadata<string?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+
+    public static readonly UiProperty<ContentTemplate?> ModernContentTemplateProperty = UiProperty<ContentTemplate?>.Register(
+        nameof(ModernContentTemplate),
+        typeof(ContentPresenter),
+        new UiPropertyMetadata<ContentTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+
     public object? Content
     {
         get => GetValue(ContentProperty);
@@ -37,6 +52,56 @@ public class ContentPresenter : Control
     {
         get => GetValue(ContentTemplateProperty);
         set => SetValue(ContentTemplateProperty, value);
+    }
+
+    public string? ContentTemplateKey
+    {
+        get => GetValue(ContentTemplateKeyProperty);
+        set => SetValue(ContentTemplateKeyProperty, value);
+    }
+
+    public ContentTemplate? ModernContentTemplate
+    {
+        get => GetValue(ModernContentTemplateProperty);
+        set => SetValue(ModernContentTemplateProperty, value);
+    }
+
+    public ContentTemplateRegistry? LocalTemplateRegistry
+    {
+        get => localTemplateRegistry;
+        set
+        {
+            if (ReferenceEquals(localTemplateRegistry, value))
+            {
+                return;
+            }
+
+            localTemplateRegistry = value;
+            presentationDirty = true;
+            RefreshPresentedChild();
+            Invalidate(
+                InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render,
+                "Content presenter local template registry changed");
+        }
+    }
+
+    public ResourceId<FontResource>? FontResourceId { get; set; }
+
+    public IResourceProvider? ResourceProvider { get; set; }
+
+    public int ContentIndex
+    {
+        get => contentIndex;
+        set
+        {
+            if (contentIndex == value)
+            {
+                return;
+            }
+
+            contentIndex = value;
+            presentationDirty = true;
+        }
     }
 
     public UIElement? PresentedChild => presentedChild;
@@ -58,7 +123,9 @@ public class ContentPresenter : Control
     {
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, ContentProperty) ||
-            ReferenceEquals(args.Property, ContentTemplateProperty))
+            ReferenceEquals(args.Property, ContentTemplateProperty) ||
+            ReferenceEquals(args.Property, ContentTemplateKeyProperty) ||
+            ReferenceEquals(args.Property, ModernContentTemplateProperty))
         {
             presentationDirty = true;
             RefreshPresentedChild();
@@ -103,6 +170,21 @@ public class ContentPresenter : Control
             return template.CreateElement(content);
         }
 
+        ContentTemplate? modernTemplate = ModernContentTemplate;
+        if (modernTemplate is not null)
+        {
+            generatedTextChild = false;
+            return modernTemplate.Create(new ContentTemplateContext(content, this, index: ContentIndex));
+        }
+
+        ContentTemplateRegistry? registry = LocalTemplateRegistry;
+        if (registry is not null &&
+            registry.TryResolve(new ContentTemplateMatchContext(content, ContentTemplateKey, this), out ContentTemplate? resolved))
+        {
+            generatedTextChild = false;
+            return resolved.Create(new ContentTemplateContext(content, this, index: ContentIndex));
+        }
+
         if (content is UIElement element)
         {
             generatedTextChild = false;
@@ -114,15 +196,27 @@ public class ContentPresenter : Control
             if (generatedTextChild && presentedChild is TextBlock textBlock)
             {
                 textBlock.Text = text;
+                ApplyGeneratedTextAspect(textBlock);
                 return textBlock;
             }
 
             generatedTextChild = true;
-            return new TextBlock { Text = text };
+            TextBlock generated = new() { Text = text };
+            ApplyGeneratedTextAspect(generated);
+            return generated;
         }
 
         generatedTextChild = false;
         return null;
+    }
+
+    private void ApplyGeneratedTextAspect(TextBlock textBlock)
+    {
+        textBlock.FontFamily = FontFamily;
+        textBlock.FontSize = FontSize;
+        textBlock.Foreground = Foreground;
+        textBlock.ResourceProvider = ResourceProvider;
+        textBlock.FontResourceId = FontResourceId;
     }
 
     private void AddPresentedChild(UIElement? child)

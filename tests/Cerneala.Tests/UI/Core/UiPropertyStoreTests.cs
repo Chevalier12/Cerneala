@@ -14,8 +14,8 @@ public sealed class UiPropertyStoreTests
         UiObject owner = new();
 
         owner.SetValue(property, "inherited", UiPropertyValueSource.Inherited);
-        owner.SetValue(property, "style-base", UiPropertyValueSource.StyleBase);
-        owner.SetValue(property, "style-state", UiPropertyValueSource.StyleVisualState);
+        owner.SetValue(property, "aspect-base", UiPropertyValueSource.AspectBase);
+        owner.SetValue(property, "aspect-state", UiPropertyValueSource.AspectVisualState);
         owner.SetValue(property, "animation", UiPropertyValueSource.Animation);
         owner.SetValue(property, "local", UiPropertyValueSource.Local);
 
@@ -31,14 +31,14 @@ public sealed class UiPropertyStoreTests
             typeof(UiPropertyStoreTests),
             new UiPropertyMetadata<string>("default"));
         UiObject owner = new();
-        owner.SetValue(property, "style", UiPropertyValueSource.StyleBase);
+        owner.SetValue(property, "aspect", UiPropertyValueSource.AspectBase);
         owner.SetValue(property, "local");
 
         string previous = owner.ClearValue(property);
 
         Assert.Equal("local", previous);
-        Assert.Equal("style", owner.GetValue(property));
-        Assert.Equal(UiPropertyValueSource.StyleBase, owner.GetValueSource(property));
+        Assert.Equal("aspect", owner.GetValue(property));
+        Assert.Equal(UiPropertyValueSource.AspectBase, owner.GetValueSource(property));
     }
 
     [Fact]

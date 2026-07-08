@@ -1,6 +1,9 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
+using Cerneala.UI.Aspect;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 
 namespace Cerneala.UI.Controls;
@@ -11,6 +14,17 @@ public class Control : UIElement
         nameof(Template),
         typeof(Control),
         new UiPropertyMetadata<ControlTemplate?>(
+            null,
+            UiPropertyOptions.AffectsMeasure |
+            UiPropertyOptions.AffectsArrange |
+            UiPropertyOptions.AffectsRender |
+            UiPropertyOptions.AffectsHitTest |
+            UiPropertyOptions.AffectsInputVisual));
+
+    public static readonly UiProperty<ComponentTemplate?> ComponentTemplateProperty = UiProperty<ComponentTemplate?>.Register(
+        nameof(ComponentTemplate),
+        typeof(Control),
+        new UiPropertyMetadata<ComponentTemplate?>(
             null,
             UiPropertyOptions.AffectsMeasure |
             UiPropertyOptions.AffectsArrange |
@@ -109,7 +123,29 @@ public class Control : UIElement
 
     public TemplateInstance? TemplateInstance { get; private set; }
 
-    protected UIElement? TemplateChild => TemplateInstance?.Root;
+    public ComponentTemplate? ComponentTemplate
+    {
+        get => GetValue(ComponentTemplateProperty);
+        set => SetValue(ComponentTemplateProperty, value);
+    }
+
+    public AspectVariantSet AspectVariants { get; private set; } = AspectVariantSet.Empty;
+
+    public void SetAspectVariant<TControl, TValue>(AspectVariantKey<TControl, TValue> key, TValue value)
+    {
+        AspectVariantSet next = AspectVariants.Set(key, value);
+        if (AspectVariants.Equals(next))
+        {
+            return;
+        }
+
+        AspectVariants = next;
+        Invalidate(InvalidationFlags.Aspect | InvalidationFlags.Render, "Aspect variant changed");
+    }
+
+    public ComponentTemplateInstance? ComponentTemplateInstance { get; private set; }
+
+    protected UIElement? TemplateChild => ComponentTemplateInstance?.Root ?? TemplateInstance?.Root;
 
     protected Thickness Insets => new(
         Padding.Left + BorderThickness.Left,
@@ -119,12 +155,41 @@ public class Control : UIElement
 
     public void ApplyTemplate()
     {
+        ComponentTemplate? componentTemplate = ComponentTemplate;
+        if (componentTemplate is not null)
+        {
+            if (ComponentTemplateInstance is not null && ReferenceEquals(ComponentTemplateInstanceTemplate, componentTemplate))
+            {
+                return;
+            }
+
+            TemplateInstance?.Detach();
+            TemplateInstance = null;
+            TemplateInstanceTemplate = null;
+            ComponentTemplateInstance?.Detach();
+            ComponentTemplateInstance = null;
+            ComponentTemplateInstanceTemplate = null;
+
+            AspectEnvironment environment = Root?.ThemeProvider is null
+                ? new AspectEnvironment("template")
+                : ThemeTokenBridge.CreateEnvironment(Root.ThemeProvider.Theme);
+            ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
+            ComponentTemplateInstance componentInstance = componentTemplate.CreateInstance(this, context);
+            componentInstance.Attach(this);
+            ComponentTemplateInstance = componentInstance;
+            ComponentTemplateInstanceTemplate = componentTemplate;
+            return;
+        }
+
         ControlTemplate? template = Template;
         if (TemplateInstance is not null && ReferenceEquals(TemplateInstanceTemplate, template))
         {
             return;
         }
 
+        ComponentTemplateInstance?.Detach();
+        ComponentTemplateInstance = null;
+        ComponentTemplateInstanceTemplate = null;
         TemplateInstance?.Detach();
         TemplateInstance = null;
         TemplateInstanceTemplate = null;
@@ -160,9 +225,15 @@ public class Control : UIElement
         {
             ApplyTemplate();
         }
+        else if (ReferenceEquals(args.Property, ComponentTemplateProperty))
+        {
+            ApplyTemplate();
+        }
     }
 
     private ControlTemplate? TemplateInstanceTemplate { get; set; }
+
+    private ComponentTemplate? ComponentTemplateInstanceTemplate { get; set; }
 
     private static bool IsValidThickness(Thickness value)
     {

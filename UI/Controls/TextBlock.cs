@@ -139,9 +139,9 @@ public class TextBlock : Control
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
-        TextRunStyle style = CreateTextStyle();
+        TextAspect aspect = CreateTextAspect();
         RecordFontResourceDependency();
-        TextMeasureResult measurement = GetTextMeasurer().Measure(Text, style, context.AvailableSize.Width);
+        TextMeasureResult measurement = GetTextMeasurer().Measure(Text, aspect, context.AvailableSize.Width);
         lastMeasurement = measurement;
         SetRenderDependencies(RenderDependencies.WithTextLayoutIdentity(measurement.CacheKey.ToString()));
         return measurement.Size;
@@ -154,12 +154,12 @@ public class TextBlock : Control
             return;
         }
 
-        TextRunStyle style = CreateTextStyle();
+        TextAspect aspect = CreateTextAspect();
         RecordFontResourceDependency();
         TextMeasureResult measurement = GetTextRenderer().Render(
             context.DrawingContext,
             Text,
-            style,
+            aspect,
             context.Bounds.Width,
             new DrawPoint(context.Bounds.X, context.Bounds.Y),
             Foreground);
@@ -171,9 +171,9 @@ public class TextBlock : Control
         }
     }
 
-    private TextRunStyle CreateTextStyle()
+    private TextAspect CreateTextAspect()
     {
-        return new TextRunStyle(
+        return new TextAspect(
             FontFamily,
             FontSize,
             wrapping: TextWrapping,

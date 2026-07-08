@@ -1,13 +1,14 @@
 using Cerneala.Playground.Samples;
 using Cerneala.Tests.UI.Hosting;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
 using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
-using Cerneala.UI.Styling;
+using Cerneala.UI.Theming;
 using StackPanel = Cerneala.UI.Controls.StackPanel;
 
 namespace Cerneala.Tests.Playground.Samples;
@@ -54,15 +55,15 @@ public sealed class GettingStartedSampleContractTests
     }
 
     [Fact]
-    public void GettingStartedSampleUsesDefaultThemeForButtonChrome()
+    public void GettingStartedSampleUsesDefaultAspectForButtonChrome()
     {
-        UIRoot root = StyledRoot();
+        UIRoot root = ThemedRoot();
         GettingStartedSample sample = new();
         root.VisualChildren.Add(sample.Build());
 
         root.ProcessFrame();
 
-        Assert.NotNull(sample.AddButton!.TemplateInstance);
+        Assert.Equal(UiPropertyValueSource.AspectBase, sample.AddButton!.GetValueSource(Control.BackgroundProperty));
         Assert.DoesNotContain("Background =", SourceText(), StringComparison.Ordinal);
         Assert.DoesNotContain("BorderColor =", SourceText(), StringComparison.Ordinal);
         Assert.DoesNotContain("BorderThickness =", SourceText(), StringComparison.Ordinal);
@@ -185,17 +186,16 @@ public sealed class GettingStartedSampleContractTests
 
     private static UiHost HostWithSample(out UIRoot root, out GettingStartedSample sample)
     {
-        root = StyledRoot();
+        root = ThemedRoot();
         sample = new GettingStartedSample();
         root.VisualChildren.Add(sample.Build());
         return new UiHost(new UiHostOptions { Root = root });
     }
 
-    private static UIRoot StyledRoot()
+    private static UIRoot ThemedRoot()
     {
         UIRoot root = new(420, 320);
         root.SetThemeProvider(new ThemeProvider(DefaultTheme.Create()));
-        root.SetStyleSheet(DefaultTheme.CreateStyleSheet());
         return root;
     }
 

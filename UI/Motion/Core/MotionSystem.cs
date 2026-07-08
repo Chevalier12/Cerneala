@@ -5,7 +5,7 @@ using Cerneala.UI.Motion.Layout;
 using Cerneala.UI.Motion.Presence;
 using Cerneala.UI.Motion.Properties;
 using Cerneala.UI.Motion.Specs;
-using Cerneala.UI.Motion.Styling;
+using Cerneala.UI.Motion.States;
 using Cerneala.UI.Motion.Transactions;
 
 namespace Cerneala.UI.Motion.Core;
