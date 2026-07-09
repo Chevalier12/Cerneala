@@ -756,7 +756,7 @@ footer{
       <svg class="feature-tile__icon accent-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2-7 4 14 2-7h8"/></svg>
       <span class="feature-tile__tag accent-orange">Diag</span>
       <h3>Diagnostics</h3>
-      <p>Frame stats, invalidation traces, runtime snapshots, routed event traces, and render diagnostics make the frame visible instead of guessed at.</p>
+      <p>Frame stats, runtime snapshots, invalidation traces, routed event routes, render cache dumps, motion traces, and platform probes make the frame visible instead of guessed at.</p>
     </div>
 
     <div class="feature-tile">
@@ -884,39 +884,47 @@ footer{
       <div>
         <p class="eyebrow">Runtime diagnostics</p>
         <h2 style="font-family:var(--disp);font-weight:600;font-size:clamp(1.9rem,3.4vw,2.7rem);letter-spacing:-.01em;line-height:1.12;margin-top:14px;">See inside the frame.</h2>
-        <p style="color:var(--slate);margin-top:16px;line-height:1.65;max-width:460px;">Frame stats, runtime snapshots, invalidation traces, routed event traces, dirty-tree dumps, and render diagnostics are part of the developer-preview surface.</p>
-        <p style="color:var(--slate);margin-top:16px;line-height:1.65;max-width:460px;">Use the diagnostic layer to reason about what changed, what rendered, and how input moved through the retained tree.</p>
+        <p style="color:var(--slate);margin-top:16px;line-height:1.65;max-width:500px;">Cerneala exposes frame snapshots, invalidation traces, dirty-tree dumps, routed event routes, render cache diagnostics, layout captures, input targets, motion traces, and platform/resource probes.</p>
+        <p style="color:var(--slate);margin-top:16px;line-height:1.65;max-width:500px;">Use the diagnostic layer to see what changed, which caches were reused, why layout ran, how input routed, and what services the runtime can actually reach.</p>
       </div>
 
       <div class="diag__panel">
         <div class="diag__row">
-          <span class="diag__key">Frame time</span>
+          <span class="diag__key">Frame stats</span>
           <span class="diag__spark">
             <i style="height:8px;"></i><i style="height:10px;"></i><i style="height:7px;"></i><i style="height:9px;"></i>
             <i style="height:20px;background:var(--pink);"></i><i style="height:8px;"></i><i style="height:11px;"></i>
             <i style="height:9px;"></i><i style="height:8px;"></i><i style="height:10px;"></i><i style="height:9px;"></i><i style="height:8px;"></i>
           </span>
-          <span class="diag__val accent-cyan">16.62&nbsp;ms</span>
+          <span class="diag__val accent-cyan">measure=1 / arrange=1</span>
         </div>
         <div class="diag__row">
-          <span class="diag__key">Invalidations</span>
-          <span class="diag__val" style="color:var(--paper);">3&nbsp;nodes</span>
+          <span class="diag__key">Invalidation trace</span>
+          <span class="diag__val" style="color:var(--paper);">request -> queue -> phase</span>
         </div>
         <div class="diag__row">
           <span class="diag__key">Render cache</span>
-          <span class="diag__val accent-lime">retained</span>
+          <span class="diag__val accent-lime">rootValid + commands</span>
         </div>
         <div class="diag__row">
-          <span class="diag__key">Render pass</span>
-          <span class="diag__val" style="color:var(--paper);">cached</span>
+          <span class="diag__key">Element cache</span>
+          <span class="diag__val" style="color:var(--paper);">cacheValid / stale / deps</span>
         </div>
         <div class="diag__row">
-          <span class="diag__key">Layout passes</span>
-          <span class="diag__val" style="color:var(--paper);">1&nbsp;/&nbsp;frame</span>
+          <span class="diag__key">Input route</span>
+          <span class="diag__val" style="color:var(--paper);">Tunnel -> target -> Bubble</span>
         </div>
         <div class="diag__row">
           <span class="diag__key">Focused element</span>
           <span class="diag__val accent-orange">Button#Increment</span>
+        </div>
+        <div class="diag__row">
+          <span class="diag__key">Motion trace</span>
+          <span class="diag__val accent-pink">sampled + writes + completed</span>
+        </div>
+        <div class="diag__row">
+          <span class="diag__key">Runtime probes</span>
+          <span class="diag__val accent-lime">clipboard / cursor / dpi</span>
         </div>
       </div>
     </div>
