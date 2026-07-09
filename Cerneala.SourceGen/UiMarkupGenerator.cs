@@ -373,6 +373,62 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
 
         public bool HasErrors { get; private set; }
 
+        private enum MarkupValueKind
+        {
+            String,
+            Bool,
+            Float,
+            PositiveFloat,
+            Thickness,
+            NonNegativeThickness,
+            DrawColor
+        }
+
+        private sealed class PropertySpec
+        {
+            public PropertySpec(string name, Func<string, bool> appliesToElement, MarkupValueKind valueKind)
+            {
+                Name = name;
+                AppliesToElement = appliesToElement;
+                ValueKind = valueKind;
+            }
+
+            public string Name { get; }
+
+            public Func<string, bool> AppliesToElement { get; }
+
+            public MarkupValueKind ValueKind { get; }
+        }
+
+        private sealed class GeneratedExpression
+        {
+            public GeneratedExpression(string code, MarkupValueKind kind)
+            {
+                Code = code;
+                Kind = kind;
+            }
+
+            public string Code { get; }
+
+            public MarkupValueKind Kind { get; }
+        }
+
+        private static readonly PropertySpec[] PropertySpecs =
+        [
+            new("Text", element => element == "TextBlock", MarkupValueKind.String),
+            new("Content", element => element == "Button", MarkupValueKind.String),
+            new("IsEnabled", _ => true, MarkupValueKind.Bool),
+            new("IsVisible", _ => true, MarkupValueKind.Bool),
+            new("Margin", _ => true, MarkupValueKind.Thickness),
+            new("Background", IsControlElement, MarkupValueKind.DrawColor),
+            new("Foreground", IsControlElement, MarkupValueKind.DrawColor),
+            new("BorderColor", IsControlElement, MarkupValueKind.DrawColor),
+            new("BorderThickness", IsControlElement, MarkupValueKind.NonNegativeThickness),
+            new("Padding", IsControlElement, MarkupValueKind.NonNegativeThickness),
+            new("FontFamily", IsControlElement, MarkupValueKind.String),
+            new("FontSize", IsControlElement, MarkupValueKind.PositiveFloat)
+        ];
+
         public string EmitElement(XElement element)
         {
             string variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
@@ -421,24 +477,8 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             string propertyName = attribute.Name.LocalName;
             string value = attribute.Value;
 
-            string? expression = propertyName switch
-            {
-                "Text" when elementName == "TextBlock" => Literal(value),
-                "Content" when elementName == "Button" => Literal(value),
-                "IsEnabled" => Bool(elementName, propertyName, attribute),
-                "IsVisible" => Bool(elementName, propertyName, attribute),
-                "Margin" => Thickness(elementName, propertyName, attribute),
-                "Background" when IsControlElement(elementName) => Color(elementName, propertyName, attribute),
-                "Foreground" when IsControlElement(elementName) => Color(elementName, propertyName, attribute),
-                "BorderColor" when IsControlElement(elementName) => Color(elementName, propertyName, attribute),
-                "BorderThickness" when IsControlElement(elementName) => NonNegativeThickness(elementName, propertyName, attribute),
-                "Padding" when IsControlElement(elementName) => NonNegativeThickness(elementName, propertyName, attribute),
-                "FontFamily" when IsControlElement(elementName) && !string.IsNullOrWhiteSpace(value) => Literal(value),
-                "FontSize" when IsControlElement(elementName) => PositiveFloat(elementName, propertyName, attribute),
-                _ => null
-            };
-
-            if (expression is null)
+            PropertySpec? spec = FindPropertySpec(elementName, propertyName);
+            if (spec is null)
             {
                 if (!HasErrors)
                 {
@@ -448,7 +488,45 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            Lines.Add(variable + "." + propertyName + " = " + expression + ";");
+            GeneratedExpression? expression = ParseLiteralValue(elementName, propertyName, attribute, value, spec.ValueKind);
+            if (expression is null)
+            {
+                return;
+            }
+
+            Lines.Add(variable + "." + propertyName + " = " + expression.Code + ";");
+        }
+
+        private static PropertySpec? FindPropertySpec(string elementName, string propertyName)
+        {
+            return PropertySpecs.FirstOrDefault(spec => spec.Name == propertyName && spec.AppliesToElement(elementName));
+        }
+
+        private GeneratedExpression? ParseLiteralValue(string elementName, string propertyName, XAttribute attribute, string value, MarkupValueKind kind)
+        {
+            string? code = kind switch
+            {
+                MarkupValueKind.String when !string.IsNullOrWhiteSpace(value) => Literal(value),
+                MarkupValueKind.Bool => Bool(elementName, propertyName, attribute),
+                MarkupValueKind.Float => Float(elementName, propertyName, attribute),
+                MarkupValueKind.PositiveFloat => PositiveFloat(elementName, propertyName, attribute),
+                MarkupValueKind.Thickness => Thickness(elementName, propertyName, attribute),
+                MarkupValueKind.NonNegativeThickness => NonNegativeThickness(elementName, propertyName, attribute),
+                MarkupValueKind.DrawColor => Color(elementName, propertyName, attribute),
+                _ => null
+            };
+
+            if (code is null)
+            {
+                if (kind == MarkupValueKind.String)
+                {
+                    Report(InvalidPropertyValue, attribute, elementName, propertyName, value);
+                }
+
+                return null;
+            }
+
+            return new GeneratedExpression(code, kind);
         }
 
         private void EmitTextContent(XElement element, string variable, string text)

@@ -84,6 +84,33 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void RefactoredPropertySpecsPreserveExistingDirectAssignments()
+    {
+        const string markup = """
+            <Border Background="White" BorderColor="0, 1, 2, 3" BorderThickness="1" Padding="2">
+              <TextBlock Text="Typed" FontFamily="Consolas" FontSize="12" Foreground="Black" Margin="1,2,3,4" />
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("DirectAssignments.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains(".Background = global::Cerneala.Drawing.DrawColor.White;", generatedSource);
+        Assert.Contains(".BorderColor = new global::Cerneala.Drawing.DrawColor(0, 1, 2, 3);", generatedSource);
+        Assert.Contains(".BorderThickness = new global::Cerneala.UI.Layout.Thickness(1f);", generatedSource);
+        Assert.Contains(".Padding = new global::Cerneala.UI.Layout.Thickness(2f);", generatedSource);
+        Assert.Contains(".FontFamily = \"Consolas\";", generatedSource);
+        Assert.Contains(".FontSize = 12f;", generatedSource);
+        Assert.Contains(".Foreground = global::Cerneala.Drawing.DrawColor.Black;", generatedSource);
+        Assert.Contains(".Margin = new global::Cerneala.UI.Layout.Thickness(1f, 2f, 3f, 4f);", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
     public void ResourcesCanPrecedeSingleUiRootWithoutEmittingResourceElement()
     {
         const string markup = """
