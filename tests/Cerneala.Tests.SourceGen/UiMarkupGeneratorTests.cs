@@ -175,6 +175,73 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void UnnamedAspectAppliesToEveryMatchingElement()
+    {
+        const string markup = """
+            <Resources>
+              <Aspect Type="TextBlock">
+                @default
+                {
+                  FontFamily = "Consolas";
+                  FontSize = 12;
+                }
+              </Aspect>
+            </Resources>
+            <StackPanel>
+              <TextBlock Text="One" />
+              <TextBlock Text="Two" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("DefaultTextAspect.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Equal(2, Count(generatedSource, ".FontFamily = \"Consolas\";"));
+        Assert.Equal(2, Count(generatedSource, ".FontSize = 12f;"));
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void NamedAspectAppliesAfterUnnamedDefault()
+    {
+        const string markup = """
+            <Resources>
+              <Aspect Type="TextBlock">
+                @default
+                {
+                  FontSize = 14;
+                  Foreground = Black;
+                }
+              </Aspect>
+              <Aspect Name="KickerText" Type="TextBlock">
+                @default
+                {
+                  FontSize = 12;
+                  Margin = "0,0,0,12";
+                }
+              </Aspect>
+            </Resources>
+            <TextBlock Aspect="$KickerText" Text="HELLO" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("NamedAspect.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.True(generatedSource.IndexOf(".FontSize = 14f;", StringComparison.Ordinal) < generatedSource.IndexOf(".FontSize = 12f;", StringComparison.Ordinal));
+        Assert.True(generatedSource.IndexOf(".FontSize = 12f;", StringComparison.Ordinal) < generatedSource.IndexOf(".Text = \"HELLO\";", StringComparison.Ordinal));
+        Assert.Contains(".Margin = new global::Cerneala.UI.Layout.Thickness(0f, 0f, 0f, 12f);", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
     public void MultipleUiRootsReportMalformedMarkupDiagnostic()
     {
         const string markup = """
@@ -405,6 +472,19 @@ public sealed class UiMarkupGeneratorTests
         MethodInfo method = type.GetMethod("Create", BindingFlags.Public | BindingFlags.Static)
             ?? throw new InvalidOperationException("Generated factory Create method was not found.");
         return Assert.IsAssignableFrom<UIElement>(method.Invoke(null, null));
+    }
+
+    private static int Count(string text, string value)
+    {
+        int count = 0;
+        int index = 0;
+        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += value.Length;
+        }
+
+        return count;
     }
 
     private readonly record struct MarkupFile(string Path, string Text);
