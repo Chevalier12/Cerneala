@@ -367,6 +367,8 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             this.context = context;
             this.file = file;
             this.document = document;
+
+            ReadResources();
         }
 
         public List<string> Lines { get; } = new();
@@ -382,6 +384,13 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             Thickness,
             NonNegativeThickness,
             DrawColor
+        }
+
+        private enum NamedSymbolKind
+        {
+            Element,
+            SolidColorBrush,
+            Aspect
         }
 
         private sealed class PropertySpec
@@ -413,6 +422,113 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             public MarkupValueKind Kind { get; }
         }
 
+        private sealed class NamedSymbol
+        {
+            public NamedSymbol(string name, NamedSymbolKind kind, object source)
+            {
+                Name = name;
+                Kind = kind;
+                Source = source;
+            }
+
+            public string Name { get; }
+
+            public NamedSymbolKind Kind { get; }
+
+            public object Source { get; }
+        }
+
+        private sealed class SolidColorBrushResource
+        {
+            public SolidColorBrushResource(string name, string variable, string colorExpression, DrawColorLiteral color, XElement source)
+            {
+                Name = name;
+                Variable = variable;
+                ColorExpression = colorExpression;
+                Color = color;
+                Source = source;
+            }
+
+            public string Name { get; }
+
+            public string Variable { get; }
+
+            public string ColorExpression { get; }
+
+            public DrawColorLiteral Color { get; }
+
+            public XElement Source { get; }
+        }
+
+        private sealed class AspectResource
+        {
+            public AspectResource(string? name, string typeName, IReadOnlyList<AspectPropertyAssignment> assignments, XElement source)
+            {
+                Name = name;
+                TypeName = typeName;
+                Assignments = assignments;
+                Source = source;
+            }
+
+            public string? Name { get; }
+
+            public string TypeName { get; }
+
+            public IReadOnlyList<AspectPropertyAssignment> Assignments { get; }
+
+            public XElement Source { get; }
+        }
+
+        private sealed class AspectPropertyAssignment
+        {
+            public AspectPropertyAssignment(string propertyName, string rawValue, bool isReference, XObject source)
+            {
+                PropertyName = propertyName;
+                RawValue = rawValue;
+                IsReference = isReference;
+                Source = source;
+            }
+
+            public string PropertyName { get; }
+
+            public string RawValue { get; }
+
+            public bool IsReference { get; }
+
+            public XObject Source { get; }
+        }
+
+        private readonly struct DrawColorLiteral
+        {
+            public DrawColorLiteral(byte r, byte g, byte b, byte a)
+            {
+                R = r;
+                G = g;
+                B = b;
+                A = a;
+            }
+
+            public byte R { get; }
+
+            public byte G { get; }
+
+            public byte B { get; }
+
+            public byte A { get; }
+
+            public string ToExpression()
+            {
+                return A == 255
+                    ? "new global::Cerneala.Drawing.DrawColor(" + R + ", " + G + ", " + B + ")"
+                    : "new global::Cerneala.Drawing.DrawColor(" + R + ", " + G + ", " + B + ", " + A + ")";
+            }
+        }
+
+        private readonly Dictionary<string, NamedSymbol> symbols = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, SolidColorBrushResource> solidColorBrushes = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, AspectResource> namedAspects = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, AspectResource> defaultAspectsByType = new(StringComparer.Ordinal);
+
         private static readonly PropertySpec[] PropertySpecs =
         [
             new("Text", element => element == "TextBlock", MarkupValueKind.String),
@@ -429,20 +545,232 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             new("FontSize", IsControlElement, MarkupValueKind.PositiveFloat)
         ];
 
+        private void ReadResources()
+        {
+            if (document.Resources is null)
+            {
+                return;
+            }
+
+            foreach (XElement resource in document.Resources.Elements())
+            {
+                switch (resource.Name.LocalName)
+                {
+                    case "SolidColorBrush":
+                        ReadSolidColorBrush(resource);
+                        break;
+                    case "Aspect":
+                        ReadAspect(resource);
+                        break;
+                    case "Resources":
+                        Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Nested Resources declarations are not supported.");
+                        break;
+                    default:
+                        Report(UnsupportedElement, resource, resource.Name.LocalName);
+                        break;
+                }
+            }
+        }
+
+        private void ReadSolidColorBrush(XElement resource)
+        {
+            string? name = RequiredName(resource);
+            if (name is null)
+            {
+                return;
+            }
+
+            XAttribute? colorAttribute = resource.Attribute("Color");
+            if (colorAttribute is null || ParseHexColor(colorAttribute.Value) is not DrawColorLiteral color)
+            {
+                Report(InvalidPropertyValue, (object?)colorAttribute ?? resource, "SolidColorBrush", "Color", colorAttribute?.Value ?? string.Empty);
+                return;
+            }
+
+            string variable = CreateIdentifier(name);
+            SolidColorBrushResource brush = new(name, variable, color.ToExpression(), color, resource);
+            if (!AddSymbol(name, NamedSymbolKind.SolidColorBrush, brush, resource))
+            {
+                return;
+            }
+
+            solidColorBrushes[name] = brush;
+            Lines.Add("global::Cerneala.UI.Media.SolidColorBrush " + variable + " = new(" + brush.ColorExpression + ");");
+        }
+
+        private void ReadAspect(XElement resource)
+        {
+            string typeName = resource.Attribute("Type")?.Value ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(typeName))
+            {
+                Report(InvalidPropertyValue, resource, "Aspect", "Type", typeName);
+                return;
+            }
+
+            typeName = typeName.Trim();
+            if (ResolveElementType(typeName) is null)
+            {
+                Report(UnsupportedElement, resource, typeName);
+                return;
+            }
+
+            string? name = resource.Attribute("Name")?.Value;
+            IReadOnlyList<AspectPropertyAssignment> assignments = ParseAspectAssignments(resource);
+            if (HasErrors)
+            {
+                return;
+            }
+
+            AspectResource aspect = new(string.IsNullOrWhiteSpace(name) ? null : name, typeName, assignments, resource);
+            if (aspect.Name is null)
+            {
+                if (defaultAspectsByType.ContainsKey(typeName))
+                {
+                    Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate unnamed Aspect for type '" + typeName + "'.");
+                    return;
+                }
+
+                defaultAspectsByType.Add(typeName, aspect);
+                return;
+            }
+
+            if (!AddSymbol(aspect.Name, NamedSymbolKind.Aspect, aspect, resource))
+            {
+                return;
+            }
+
+            namedAspects.Add(aspect.Name, aspect);
+        }
+
+        private IReadOnlyList<AspectPropertyAssignment> ParseAspectAssignments(XElement aspect)
+        {
+            string text = string.Concat(aspect.Nodes().OfType<XText>().Select(node => node.Value));
+            int start = text.IndexOf('{');
+            int end = text.LastIndexOf('}');
+            if (start < 0 || end <= start)
+            {
+                Report(InvalidPropertyValue, aspect, "Aspect", "#body", text.Trim());
+                return [];
+            }
+
+            string body = text.Substring(start + 1, end - start - 1);
+            List<AspectPropertyAssignment> assignments = [];
+            foreach (string rawStatement in body.Split(';'))
+            {
+                string statement = rawStatement.Trim();
+                if (statement.Length == 0)
+                {
+                    continue;
+                }
+
+                int equals = statement.IndexOf('=');
+                if (equals <= 0 || equals == statement.Length - 1)
+                {
+                    Report(InvalidPropertyValue, aspect, "Aspect", "#body", statement);
+                    return [];
+                }
+
+                string propertyName = statement.Substring(0, equals).Trim();
+                string value = statement.Substring(equals + 1).Trim();
+                bool isReference = value.StartsWith("$", StringComparison.Ordinal);
+                if (isReference)
+                {
+                    value = value.Substring(1);
+                }
+
+                if (value.Length >= 2 && value[0] == '"' && value[value.Length - 1] == '"')
+                {
+                    value = value.Substring(1, value.Length - 2);
+                }
+
+                assignments.Add(new AspectPropertyAssignment(propertyName, value, isReference, aspect));
+            }
+
+            return assignments;
+        }
+
+        private string? RequiredName(XElement element)
+        {
+            string? name = element.Attribute("Name")?.Value;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                Report(InvalidPropertyValue, element, element.Name.LocalName, "Name", name ?? string.Empty);
+                return null;
+            }
+
+            return name;
+        }
+
+        private bool AddSymbol(string name, NamedSymbolKind kind, object source, XElement location)
+        {
+            if (symbols.ContainsKey(name))
+            {
+                Report(InvalidDocumentShape, location, Path.GetFileName(file.Path), "Duplicate Name '" + name + "'.");
+                return false;
+            }
+
+            symbols.Add(name, new NamedSymbol(name, kind, source));
+            return true;
+        }
+
+        private static DrawColorLiteral? ParseHexColor(string value)
+        {
+            if (value.Length != 7 && value.Length != 9)
+            {
+                return null;
+            }
+
+            if (value[0] != '#')
+            {
+                return null;
+            }
+
+            static bool TryByte(string text, out byte parsed)
+            {
+                return byte.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out parsed);
+            }
+
+            if (value.Length == 7 &&
+                TryByte(value.Substring(1, 2), out byte r) &&
+                TryByte(value.Substring(3, 2), out byte g) &&
+                TryByte(value.Substring(5, 2), out byte b))
+            {
+                return new DrawColorLiteral(r, g, b, 255);
+            }
+
+            if (value.Length == 9 &&
+                TryByte(value.Substring(1, 2), out byte a) &&
+                TryByte(value.Substring(3, 2), out byte rr) &&
+                TryByte(value.Substring(5, 2), out byte gg) &&
+                TryByte(value.Substring(7, 2), out byte bb))
+            {
+                return new DrawColorLiteral(rr, gg, bb, a);
+            }
+
+            return null;
+        }
+
         public string EmitElement(XElement element)
         {
-            string variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
-            nextId++;
-
-            string? typeName = element.Name.LocalName switch
+            string? requestedName = element.Attribute("Name")?.Value;
+            string variable;
+            if (string.IsNullOrWhiteSpace(requestedName))
             {
-                "Panel" => "global::Cerneala.UI.Controls.Panel",
-                "StackPanel" => "global::Cerneala.UI.Controls.StackPanel",
-                "Border" => "global::Cerneala.UI.Controls.Border",
-                "Button" => "global::Cerneala.UI.Controls.Button",
-                "TextBlock" => "global::Cerneala.UI.Controls.TextBlock",
-                _ => null
-            };
+                variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
+                nextId++;
+            }
+            else
+            {
+                string symbolName = requestedName!.Trim();
+                variable = CreateIdentifier(symbolName);
+                if (!AddSymbol(symbolName, NamedSymbolKind.Element, variable, element))
+                {
+                    variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
+                    nextId++;
+                }
+            }
+
+            string? typeName = ResolveElementType(element.Name.LocalName);
 
             if (typeName is null)
             {
@@ -451,7 +779,8 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             }
 
             Lines.Add(typeName + " " + variable + " = new();");
-            foreach (XAttribute attribute in element.Attributes().Where(attribute => !attribute.IsNamespaceDeclaration))
+            ApplyAspects(element, variable);
+            foreach (XAttribute attribute in element.Attributes().Where(attribute => !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name"))
             {
                 EmitProperty(element, variable, attribute);
             }
@@ -469,6 +798,113 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             }
 
             return variable;
+        }
+
+        private static string? ResolveElementType(string elementName)
+        {
+            return elementName switch
+            {
+                "Panel" => "global::Cerneala.UI.Controls.Panel",
+                "StackPanel" => "global::Cerneala.UI.Controls.StackPanel",
+                "Border" => "global::Cerneala.UI.Controls.Border",
+                "Button" => "global::Cerneala.UI.Controls.Button",
+                "TextBlock" => "global::Cerneala.UI.Controls.TextBlock",
+                _ => null
+            };
+        }
+
+        private void ApplyAspects(XElement element, string variable)
+        {
+            string elementName = element.Name.LocalName;
+            if (defaultAspectsByType.TryGetValue(elementName, out AspectResource? defaultAspect))
+            {
+                EmitAspectAssignments(elementName, variable, defaultAspect);
+            }
+
+            XAttribute? aspectAttribute = element.Attribute("Aspect");
+            if (aspectAttribute is null)
+            {
+                return;
+            }
+
+            string referenceName = ReadReferenceName(elementName, "Aspect", aspectAttribute);
+            if (referenceName.Length == 0)
+            {
+                return;
+            }
+
+            if (!namedAspects.TryGetValue(referenceName, out AspectResource? namedAspect))
+            {
+                Report(InvalidPropertyValue, aspectAttribute, elementName, "Aspect", aspectAttribute.Value);
+                return;
+            }
+
+            if (!string.Equals(namedAspect.TypeName, elementName, StringComparison.Ordinal))
+            {
+                Report(InvalidPropertyValue, aspectAttribute, elementName, "Aspect", aspectAttribute.Value);
+                return;
+            }
+
+            EmitAspectAssignments(elementName, variable, namedAspect);
+        }
+
+        private string ReadReferenceName(string elementName, string propertyName, XAttribute attribute)
+        {
+            string value = attribute.Value.Trim();
+            if (!value.StartsWith("$", StringComparison.Ordinal) || value.Length == 1)
+            {
+                Report(InvalidPropertyValue, attribute, elementName, propertyName, attribute.Value);
+                return string.Empty;
+            }
+
+            return value.Substring(1);
+        }
+
+        private void EmitAspectAssignments(string elementName, string variable, AspectResource aspect)
+        {
+            foreach (AspectPropertyAssignment assignment in aspect.Assignments)
+            {
+                PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName);
+                if (spec is null)
+                {
+                    Report(UnsupportedProperty, assignment.Source, elementName, assignment.PropertyName);
+                    return;
+                }
+
+                GeneratedExpression? expression = assignment.IsReference
+                    ? ResolveReferenceValue(elementName, assignment.PropertyName, assignment.RawValue, spec.ValueKind, assignment.Source)
+                    : ParseAspectLiteralValue(elementName, assignment.PropertyName, assignment.RawValue, spec.ValueKind, assignment.Source);
+
+                if (expression is null)
+                {
+                    return;
+                }
+
+                Lines.Add(variable + "." + assignment.PropertyName + " = " + expression.Code + ";");
+            }
+        }
+
+        private GeneratedExpression? ParseAspectLiteralValue(string elementName, string propertyName, string value, MarkupValueKind kind, XObject source)
+        {
+            XAttribute synthetic = new(propertyName, value);
+            return ParseLiteralValue(elementName, propertyName, synthetic, value, kind);
+        }
+
+        private GeneratedExpression? ResolveReferenceValue(string elementName, string propertyName, string referenceName, MarkupValueKind targetKind, XObject source)
+        {
+            if (!symbols.TryGetValue(referenceName, out NamedSymbol? symbol))
+            {
+                Report(InvalidPropertyValue, source, elementName, propertyName, "$" + referenceName);
+                return null;
+            }
+
+            if (targetKind == MarkupValueKind.DrawColor && symbol.Source is SolidColorBrushResource brush)
+            {
+                return new GeneratedExpression(brush.ColorExpression, MarkupValueKind.DrawColor);
+            }
+
+            Report(InvalidPropertyValue, source, elementName, propertyName, "$" + referenceName);
+            return null;
         }
 
         private void EmitProperty(XElement element, string variable, XAttribute attribute)
