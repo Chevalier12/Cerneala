@@ -11,6 +11,7 @@ This design adds authoring syntax for aspect resources in markup without exposin
 - Allow markup authors to declare reusable aspect resources.
 - Allow a type-wide default aspect for all elements of a given type.
 - Allow a named aspect to be applied explicitly to an element.
+- Use one reference identity concept: `Name`.
 - Preserve a clear cascade order that is easy to reason about.
 - Keep invalid references and type mismatches as generator errors.
 
@@ -27,8 +28,8 @@ Aspect resources are declared inside a top-level `Resources` element.
 
 ```xml
 <Resources>
-  <SolidColorBrush Key="TextColor" Color="#1E293B" />
-  <SolidColorBrush Key="PulseColor" Color="#FF5D73" />
+  <SolidColorBrush Name="TextColor" Color="#1E293B" />
+  <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
 
   <Aspect Type="TextBlock">
     @default
@@ -39,7 +40,7 @@ Aspect resources are declared inside a top-level `Resources` element.
     }
   </Aspect>
 
-  <Aspect Key="KickerText" Type="TextBlock">
+  <Aspect Name="KickerText" Type="TextBlock">
     @default
     {
       FontFamily = "Consolas";
@@ -53,13 +54,21 @@ Aspect resources are declared inside a top-level `Resources` element.
 <TextBlock Aspect="$KickerText" Text="HELLO" />
 ```
 
-`Aspect Type="TextBlock"` without a `Key` defines the implicit default aspect for every `TextBlock` in the document.
+Elements may also declare a `Name` for reference purposes:
 
-`Aspect Key="KickerText" Type="TextBlock"` defines a named aspect resource. It is not applied automatically. Elements opt into it with `Aspect="$KickerText"`.
+```xml
+<TextBlock Name="KickerLabel" Aspect="$KickerText" Text="HELLO" />
+```
 
-`SolidColorBrush Key="PulseColor"` defines a reusable brush resource. Property values inside aspect declaration bodies can reference it with `$PulseColor`.
+`Aspect Type="TextBlock"` without a `Name` defines the implicit default aspect for every `TextBlock` in the document.
 
-`Aspect="$KickerText"` resolves only against named `Aspect` resources. Declaration values such as `Foreground = $PulseColor;` resolve only against non-aspect resources. The same `$` prefix is intentionally context-sensitive.
+`Aspect Name="KickerText" Type="TextBlock"` defines a named aspect resource. It is not applied automatically. Elements opt into it with `Aspect="$KickerText"`.
+
+`SolidColorBrush Name="PulseColor"` defines a reusable brush resource. Property values inside aspect declaration bodies can reference it with `$PulseColor`.
+
+`$Identifier` is the general markup reference syntax. It refers to a `Name`; the consuming context decides which named target kinds are valid.
+
+For example, `Aspect="$KickerText"` requires the referenced symbol to be an `Aspect` resource. `Foreground = $PulseColor;` requires the referenced symbol to be assignable or coercible to the `Foreground` property type.
 
 ## Cascade
 
@@ -90,12 +99,12 @@ Local element attributes always win over aspect declarations.
 The generator reports an error when:
 
 - An `Aspect` resource is missing `Type`.
-- A named aspect has an empty `Key`.
-- Two keyless aspects target the same `Type` in the same document.
-- Two keyed resources have the same `Key` in the same document.
-- An element references an unknown aspect key.
+- A named resource or element has an empty `Name`.
+- Two unnamed aspects target the same `Type` in the same document.
+- Two named items use the same `Name` in the same document.
+- A `$Identifier` reference cannot be resolved to a `Name`.
+- A `$Identifier` reference resolves to a symbol that is not valid for the consuming context.
 - An element references an aspect whose `Type` does not match the element type.
-- An aspect declaration references an unknown non-aspect resource key.
 - An aspect declaration references a resource that cannot be assigned or coerced to the target property type.
 - An aspect declaration assigns an unsupported property for its target type.
 - An aspect declaration value cannot be parsed using the same typed rules as element attributes.
@@ -105,7 +114,7 @@ Type mismatch example:
 
 ```xml
 <Resources>
-  <Aspect Key="KickerText" Type="TextBlock">
+  <Aspect Name="KickerText" Type="TextBlock">
     @default
     {
       FontSize = 12;
@@ -124,9 +133,9 @@ The first implementation should support document-level resources. Scoped/nested 
 
 For document-level resources:
 
-- Keyless type defaults apply to all matching elements in the document.
-- Keyed resource names are unique within the document, across both named aspects and non-aspect resources.
-- Named aspect references use `$KeyName`.
+- Unnamed type defaults apply to all matching elements in the document.
+- Elements and resources share one document-level `Name` namespace.
+- `$Identifier` references resolve only through that `Name` namespace.
 - Nested `Resources` declarations are rejected with a clear diagnostic in the first implementation.
 
 ## Generation Model
@@ -134,19 +143,25 @@ For document-level resources:
 The generator should parse resources before emitting elements. For each element:
 
 1. Emit the element construction.
-2. Apply declarations from the keyless default aspect for that element type.
-3. Apply declarations from the named aspect referenced by `Aspect="$Key"`, if present.
+2. Apply declarations from the unnamed default aspect for that element type.
+3. Apply declarations from the named aspect referenced by `Aspect="$Name"`, if present.
 4. Apply normal element attributes and content.
 5. Emit children using the existing child rules.
 
 The generated code should continue to use public typed properties directly where possible, matching the current generator style.
+
+The generator should also build a document symbol table before emitting element references:
+
+- Element `Name` entries identify generated element variables.
+- Resource `Name` entries identify generated resource values or aspect resources.
+- Duplicate `Name` identifiers are diagnostics.
 
 ## Resource Declarations
 
 The first implementation supports `SolidColorBrush` resources:
 
 ```xml
-<SolidColorBrush Key="PulseColor" Color="#FF5D73" />
+<SolidColorBrush Name="PulseColor" Color="#FF5D73" />
 ```
 
 `Color` accepts hex color syntax:
@@ -171,30 +186,33 @@ Numbers use invariant culture:
 FontSize = 12;
 ```
 
-Resource references use `$Name`:
+References use `$Name`:
 
 ```text
 Foreground = $PulseColor;
 ```
 
-Resource references are resolved by declaration context. For example, `Foreground = $PulseColor` targets `Control.ForegroundProperty`, whose runtime type is `DrawColor`. If `PulseColor` is a `SolidColorBrush`, the generator uses its solid color value for `DrawColor` properties.
+References are resolved by declaration context. For example, `Foreground = $PulseColor` targets `Control.ForegroundProperty`, whose runtime type is `DrawColor`. If `PulseColor` is a named `SolidColorBrush`, the generator uses its solid color value for `DrawColor` properties.
 
 For a `Brush` property, the same reference would resolve to the `SolidColorBrush` resource itself. For a `DrawColor` property, only resources with a solid color are accepted. A gradient brush or incompatible resource used for a `DrawColor` property is a generator error.
 
-Resource references never silently become strings.
+Named element references use the same `$Name` syntax, but only contexts that accept an element reference may consume them. A reference never silently becomes a string.
 
 ## Tests
 
 Add focused source generator tests for:
 
-- A keyless `Aspect Type="TextBlock"` applying to every `TextBlock`.
+- An unnamed `Aspect Type="TextBlock"` applying to every `TextBlock`.
 - A named aspect applying after the type default.
 - Local attributes overriding named aspect values.
-- Unknown aspect key diagnostic.
-- Unknown non-aspect resource key diagnostic.
+- Element `Name` registration.
+- Resource `Name` registration.
+- `$Identifier` resolving to a named resource.
+- `$Identifier` resolving to a named element in a context that accepts element references.
+- Unknown `$Identifier` diagnostic.
+- Duplicate `Name` diagnostic across elements/resources.
 - Aspect type mismatch diagnostic.
 - Duplicate default aspect diagnostic.
-- Duplicate keyed resource diagnostic.
 - Unsupported property inside an aspect diagnostic.
 - `SolidColorBrush` resource declaration.
 - Invalid `SolidColorBrush.Color` diagnostic.
