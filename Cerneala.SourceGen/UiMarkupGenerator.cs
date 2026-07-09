@@ -15,6 +15,9 @@ namespace Cerneala.SourceGen;
 [Generator]
 public sealed class UiMarkupGenerator : IIncrementalGenerator
 {
+    private const string FragmentWrapperStart = "<__CernealaFragment>";
+    private const string FragmentWrapperEnd = "</__CernealaFragment>";
+
     private static readonly DiagnosticDescriptor MalformedMarkup = new(
         "CERNEALAUI001",
         "Malformed UI markup",
@@ -43,6 +46,14 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         "CERNEALAUI004",
         "Invalid UI markup property value",
         "Markup property '{0}.{1}' has invalid value '{2}'",
+        "Cerneala.UiMarkup",
+        DiagnosticSeverity.Error,
+        true);
+
+    private static readonly DiagnosticDescriptor InvalidDocumentShape = new(
+        "CERNEALAUI005",
+        "Invalid UI markup document shape",
+        "Markup file '{0}' has invalid document shape: {1}",
         "Cerneala.UiMarkup",
         DiagnosticSeverity.Error,
         true);
@@ -111,24 +122,15 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             return;
         }
 
-        XDocument document;
-        try
+        ParsedDocument parsed = ParseDocument(file);
+        if (parsed.Diagnostic is not null)
         {
-            document = XDocument.Parse(file.Text, LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace);
-        }
-        catch (XmlException ex)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(MalformedMarkup, CreateLocation(file, ex.LineNumber, ex.LinePosition), Path.GetFileName(file.Path), ex.Message));
+            context.ReportDiagnostic(parsed.Diagnostic);
             return;
         }
 
-        if (document.Root is null)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(MalformedMarkup, CreateLocation(file, 1, 1), Path.GetFileName(file.Path), "Root element is missing."));
-            return;
-        }
-
-        GenerationScope scope = new(context, file);
+        MarkupDocument document = parsed.Document!;
+        GenerationScope scope = new(context, file, document);
         string rootVariable = scope.EmitElement(document.Root);
         if (scope.HasErrors)
         {
@@ -160,6 +162,102 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
 
         string hintName = CreateHintName(file.Path, className);
         context.AddSource(hintName, SourceText.From(source.ToString(), Encoding.UTF8));
+    }
+
+    private static ParsedDocument ParseDocument(MarkupSource file)
+    {
+        try
+        {
+            List<XElement> elements = [];
+            XDocument fragment = XDocument.Parse(
+                FragmentWrapperStart + StripXmlDeclarationPreservingPositions(file.Text ?? string.Empty) + FragmentWrapperEnd,
+                LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace);
+
+            foreach (XNode node in fragment.Root!.Nodes())
+            {
+                if (node is XElement element)
+                {
+                    elements.Add(element);
+                    continue;
+                }
+
+                if (node is XText text && !string.IsNullOrWhiteSpace(text.Value))
+                {
+                    return new ParsedDocument(
+                        null,
+                        Diagnostic.Create(
+                            MalformedMarkup,
+                            CreateLocation(file, text),
+                            Path.GetFileName(file.Path),
+                            "Markup must contain exactly one UI root element."));
+                }
+            }
+
+            XElement? resources = null;
+            List<XElement> roots = [];
+            foreach (XElement element in elements)
+            {
+                if (element.Name.LocalName == "Resources")
+                {
+                    if (resources is not null)
+                    {
+                        return InvalidShape(file, element, "Only one top-level Resources element is allowed.");
+                    }
+
+                    resources = element;
+                    continue;
+                }
+
+                roots.Add(element);
+            }
+
+            if (roots.Count != 1)
+            {
+                return new ParsedDocument(
+                    null,
+                    Diagnostic.Create(
+                        MalformedMarkup,
+                        CreateLocation(file, roots.FirstOrDefault() ?? resources ?? new XElement("Missing")),
+                        Path.GetFileName(file.Path),
+                        "Markup must contain exactly one UI root element."));
+            }
+
+            return new ParsedDocument(new MarkupDocument(resources, roots[0]), null);
+        }
+        catch (XmlException ex)
+        {
+            return new ParsedDocument(null, Diagnostic.Create(MalformedMarkup, CreateLocation(file, ex.LineNumber, ex.LinePosition), Path.GetFileName(file.Path), ex.Message));
+        }
+    }
+
+    private static ParsedDocument InvalidShape(MarkupSource file, object locationSource, string message)
+    {
+        return new ParsedDocument(null, Diagnostic.Create(InvalidDocumentShape, CreateLocation(file, locationSource), Path.GetFileName(file.Path), message));
+    }
+
+    private static string StripXmlDeclarationPreservingPositions(string text)
+    {
+        if (!text.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase))
+        {
+            return text;
+        }
+
+        int end = text.IndexOf("?>", StringComparison.Ordinal);
+        if (end < 0)
+        {
+            return text;
+        }
+
+        StringBuilder builder = new(text);
+        for (int i = 0; i < end + 2; i++)
+        {
+            if (builder[i] != '\r' && builder[i] != '\n')
+            {
+                builder[i] = ' ';
+            }
+        }
+
+        return builder.ToString();
     }
 
     private static string CreateClassName(string path)
@@ -231,16 +329,44 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         public string? Text { get; }
     }
 
+    private sealed class MarkupDocument
+    {
+        public MarkupDocument(XElement? resources, XElement root)
+        {
+            Resources = resources;
+            Root = root;
+        }
+
+        public XElement? Resources { get; }
+
+        public XElement Root { get; }
+    }
+
+    private sealed class ParsedDocument
+    {
+        public ParsedDocument(MarkupDocument? document, Diagnostic? diagnostic)
+        {
+            Document = document;
+            Diagnostic = diagnostic;
+        }
+
+        public MarkupDocument? Document { get; }
+
+        public Diagnostic? Diagnostic { get; }
+    }
+
     private sealed class GenerationScope
     {
         private readonly SourceProductionContext context;
         private readonly MarkupSource file;
+        private readonly MarkupDocument document;
         private int nextId;
 
-        public GenerationScope(SourceProductionContext context, MarkupSource file)
+        public GenerationScope(SourceProductionContext context, MarkupSource file, MarkupDocument document)
         {
             this.context = context;
             this.file = file;
+            this.document = document;
         }
 
         public List<string> Lines { get; } = new();
@@ -576,7 +702,13 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
     {
         SourceText sourceText = SourceText.From(file.Text ?? string.Empty, Encoding.UTF8);
         int line = Math.Max(0, Math.Min(sourceText.Lines.Count - 1, oneBasedLine - 1));
-        int column = Math.Max(0, oneBasedColumn - 1);
+        int adjustedColumn = oneBasedColumn;
+        if (oneBasedLine == 1 && adjustedColumn > FragmentWrapperStart.Length)
+        {
+            adjustedColumn -= FragmentWrapperStart.Length;
+        }
+
+        int column = Math.Max(0, adjustedColumn - 1);
         int start = Math.Min(sourceText.Length, sourceText.Lines[line].Start + column);
         LinePosition position = sourceText.Lines.GetLinePosition(start);
         return Location.Create(file.Path, TextSpan.FromBounds(start, start), new LinePositionSpan(position, position));

@@ -84,6 +84,131 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void ResourcesCanPrecedeSingleUiRootWithoutEmittingResourceElement()
+    {
+        const string markup = """
+            <Resources>
+              <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
+            </Resources>
+            <TextBlock Text="Hello" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("ResourceFragment.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("public static partial class ResourceFragmentFactory", generatedSource);
+        Assert.DoesNotContain("global::Cerneala.UI.Controls.Resources", generatedSource);
+        Assert.Contains("global::Cerneala.UI.Controls.TextBlock", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        TextBlock root = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.ResourceFragmentFactory"));
+        Assert.Equal("Hello", root.Text);
+    }
+
+    [Fact]
+    public void MultipleUiRootsReportMalformedMarkupDiagnostic()
+    {
+        const string markup = """
+            <TextBlock Text="One" />
+            <TextBlock Text="Two" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("MultipleRoots.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "MultipleRoots.cui.xml");
+        Assert.Contains("exactly one UI root", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void FragmentDiagnosticsPreserveElementLineInformation()
+    {
+        const string markup = """
+            <Resources>
+              <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
+            </Resources>
+            <TextBlock Width="12" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("FragmentDiagnosticLocation.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "FragmentDiagnosticLocation.cui.xml");
+        Assert.Equal(3, diagnostic.Location.GetLineSpan().StartLinePosition.Line);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void FirstLineFragmentDiagnosticsUseOriginalMarkupColumn()
+    {
+        GeneratorRunResult result = RunGenerator("FirstLineDiagnosticLocation.cui.xml", "<TextBlock Width=\"12\" />", out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "FirstLineDiagnosticLocation.cui.xml");
+        Assert.Equal(11, diagnostic.Location.GetLineSpan().StartLinePosition.Character);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void XmlDeclarationCanPrecedeFragmentMarkup()
+    {
+        const string markup = """
+            <?xml version="1.0"?>
+            <Resources>
+              <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
+            </Resources>
+            <TextBlock Text="Hello" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("XmlDeclarationFragment.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("public static partial class XmlDeclarationFragmentFactory", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void TopLevelTextReportsMalformedMarkupDiagnostic()
+    {
+        const string markup = """
+            stray text
+            <TextBlock Text="Hello" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("TopLevelText.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "TopLevelText.cui.xml");
+        Assert.Contains("exactly one UI root", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void AdjacentMultipleUiRootsReportMalformedMarkupDiagnostic()
+    {
+        GeneratorRunResult result = RunGenerator("AdjacentRoots.cui.xml", "<TextBlock Text=\"One\" /><TextBlock Text=\"Two\" />", out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "AdjacentRoots.cui.xml");
+        Assert.Contains("exactly one UI root", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void TopLevelCDataAfterRootReportsMalformedMarkupDiagnostic()
+    {
+        GeneratorRunResult result = RunGenerator("TrailingCData.cui.xml", "<TextBlock Text=\"Hello\" /><![CDATA[stray]]>", out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "TrailingCData.cui.xml");
+        Assert.Contains("exactly one UI root", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
     public void MalformedMarkupReportsDiagnostic()
     {
         GeneratorRunResult result = RunGenerator("Broken.cui.xml", "<StackPanel>", out _);
