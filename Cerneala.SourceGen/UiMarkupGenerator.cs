@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace Cerneala.SourceGen;
 
 [Generator]
-public sealed class UiMarkupGenerator : IIncrementalGenerator
+public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 {
     private const string FragmentWrapperStart = "<__CernealaFragment>";
     private const string FragmentWrapperEnd = "</__CernealaFragment>";
@@ -58,6 +58,22 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true);
 
+    private static readonly DiagnosticDescriptor InvalidDirective = new(
+        "CERNEALAUI006",
+        "Invalid UI markup directive",
+        "Markup directive in '{0}' is invalid: {1}",
+        "Cerneala.UiMarkup",
+        DiagnosticSeverity.Error,
+        true);
+
+    private static readonly DiagnosticDescriptor InvalidBindingSource = new(
+        "CERNEALAUI007",
+        "Invalid UI markup binding source",
+        "Markup binding source '{0}' is invalid: {1}",
+        "Cerneala.UiMarkup",
+        DiagnosticSeverity.Error,
+        true);
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         IncrementalValuesProvider<MarkupSource> markupFiles = context.AdditionalTextsProvider
@@ -66,7 +82,9 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
                 file.Path,
                 file.GetText(cancellationToken)?.ToString()));
 
-        context.RegisterSourceOutput(markupFiles.Collect(), static (sourceContext, files) => GenerateFiles(sourceContext, files));
+        context.RegisterSourceOutput(
+            markupFiles.Collect().Combine(context.CompilationProvider),
+            static (sourceContext, input) => GenerateFiles(sourceContext, input.Left, input.Right));
     }
 
     private static bool IsMarkupFile(AdditionalText file)
@@ -74,12 +92,12 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         return file.Path.EndsWith(".cui.xml", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void GenerateFiles(SourceProductionContext context, ImmutableArray<MarkupSource> files)
+    private static void GenerateFiles(SourceProductionContext context, ImmutableArray<MarkupSource> files, Compilation compilation)
     {
         string[] classNames = AssignClassNames(files);
         for (int i = 0; i < files.Length; i++)
         {
-            GenerateFile(context, files[i], classNames[i]);
+            GenerateFile(context, files[i], classNames[i], compilation);
         }
     }
 
@@ -115,7 +133,7 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         return classNames;
     }
 
-    private static void GenerateFile(SourceProductionContext context, MarkupSource file, string className)
+    private static void GenerateFile(SourceProductionContext context, MarkupSource file, string className, Compilation compilation)
     {
         if (file.Text is null)
         {
@@ -130,7 +148,26 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         }
 
         MarkupDocument document = parsed.Document!;
-        GenerationScope scope = new(context, file, document);
+        XAttribute? nestedDataType = document.Root.Descendants()
+            .Select(element => element.Attribute("DataType"))
+            .FirstOrDefault(attribute => attribute is not null);
+        if (nestedDataType is not null)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                InvalidBindingSource,
+                CreateLocation(file, nestedDataType),
+                nestedDataType.Value,
+                "DataType is allowed only on the root UI element."));
+            return;
+        }
+
+        INamedTypeSymbol? dataType = ResolveDataType(context, file, document, compilation);
+        if (document.Root.Attribute("DataType") is not null && dataType is null)
+        {
+            return;
+        }
+
+        GenerationScope scope = new(context, file, document, compilation, dataType);
         string rootVariable = scope.EmitElement(document.Root);
         if (scope.HasErrors)
         {
@@ -146,7 +183,27 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         source.AppendLine("{");
         source.AppendLine("    public static global::Cerneala.UI.Elements.UIElement Create()");
         source.AppendLine("    {");
+        source.AppendLine("        return CreateCore(null);");
+        source.AppendLine("    }");
+        if (dataType is not null)
+        {
+            source.AppendLine();
+            source.Append("    public static global::Cerneala.UI.Elements.UIElement Create(").Append(scope.DataTypeCode).AppendLine(" dataContext)");
+            source.AppendLine("    {");
+            source.AppendLine("        return CreateCore(dataContext);");
+            source.AppendLine("    }");
+        }
+
+        source.AppendLine();
+        source.AppendLine("    private static global::Cerneala.UI.Elements.UIElement CreateCore(object? dataContext)");
+        source.AppendLine("    {");
         foreach (string line in scope.Lines)
+        {
+            source.Append("        ").AppendLine(line);
+        }
+
+        source.Append("        ").Append(rootVariable).AppendLine(".DataContext = dataContext;");
+        foreach (string line in scope.PostLines)
         {
             source.Append("        ").AppendLine(line);
         }
@@ -158,10 +215,50 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         source.AppendLine("    {");
         source.AppendLine("        return new global::Cerneala.UI.Markup.GeneratedUiFactory(Create);");
         source.AppendLine("    }");
+        if (dataType is not null)
+        {
+            source.AppendLine();
+            source.Append("    public static global::Cerneala.UI.Markup.GeneratedUiFactory AsGeneratedFactory(").Append(scope.DataTypeCode).AppendLine(" dataContext)");
+            source.AppendLine("    {");
+            source.AppendLine("        return new global::Cerneala.UI.Markup.GeneratedUiFactory(() => Create(dataContext));");
+            source.AppendLine("    }");
+        }
         source.AppendLine("}");
 
         string hintName = CreateHintName(file.Path, className);
         context.AddSource(hintName, SourceText.From(source.ToString(), Encoding.UTF8));
+    }
+
+    private static INamedTypeSymbol? ResolveDataType(
+        SourceProductionContext context,
+        MarkupSource file,
+        MarkupDocument document,
+        Compilation compilation)
+    {
+        XAttribute? attribute = document.Root.Attribute("DataType");
+        if (attribute is null)
+        {
+            return null;
+        }
+
+        string metadataName = attribute.Value.Trim();
+        if (metadataName.StartsWith("global::", StringComparison.Ordinal))
+        {
+            metadataName = metadataName.Substring("global::".Length);
+        }
+
+        INamedTypeSymbol? type = compilation.GetTypeByMetadataName(metadataName);
+        if (type is null || type.DeclaredAccessibility is not Accessibility.Public and not Accessibility.Internal)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                InvalidBindingSource,
+                CreateLocation(file, attribute),
+                attribute.Value,
+                "DataType must name an accessible type in the current compilation."));
+            return null;
+        }
+
+        return type;
     }
 
     private static ParsedDocument ParseDocument(MarkupSource file)
@@ -355,23 +452,43 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         public Diagnostic? Diagnostic { get; }
     }
 
-    private sealed class GenerationScope
+    private sealed partial class GenerationScope
     {
         private readonly SourceProductionContext context;
         private readonly MarkupSource file;
         private readonly MarkupDocument document;
+        private readonly Compilation compilation;
+        private readonly INamedTypeSymbol? dataType;
+        private readonly bool reactiveDocument;
         private int nextId;
 
-        public GenerationScope(SourceProductionContext context, MarkupSource file, MarkupDocument document)
+        public GenerationScope(
+            SourceProductionContext context,
+            MarkupSource file,
+            MarkupDocument document,
+            Compilation compilation,
+            INamedTypeSymbol? dataType)
         {
             this.context = context;
             this.file = file;
             this.document = document;
+            this.compilation = compilation;
+            this.dataType = dataType;
+            currentLines = Lines;
+            currentPostLines = PostLines;
 
             ReadResources();
+            reactiveDocument = namedAspects.Values.Any(aspect => aspect.Conditions.Count > 0) ||
+                defaultAspectsByTarget.Values.Any(aspect => aspect.Conditions.Count > 0) ||
+                document.Root.DescendantsAndSelf().Any(element =>
+                    GetDirectiveContent(element, allowAssignments: false, allowElements: true).HasDirectives);
         }
 
         public List<string> Lines { get; } = new();
+
+        public List<string> PostLines { get; } = new();
+
+        public string? DataTypeCode => dataType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
         public bool HasErrors { get; private set; }
 
@@ -395,11 +512,18 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
 
         private sealed class PropertySpec
         {
-            public PropertySpec(string name, Func<string, bool> appliesToElement, MarkupValueKind valueKind)
+            public PropertySpec(
+                string name,
+                Func<string, bool> appliesToElement,
+                MarkupValueKind valueKind,
+                string propertyCode,
+                bool assignable = true)
             {
                 Name = name;
                 AppliesToElement = appliesToElement;
                 ValueKind = valueKind;
+                PropertyCode = propertyCode;
+                Assignable = assignable;
             }
 
             public string Name { get; }
@@ -407,6 +531,10 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             public Func<string, bool> AppliesToElement { get; }
 
             public MarkupValueKind ValueKind { get; }
+
+            public string PropertyCode { get; }
+
+            public bool Assignable { get; }
         }
 
         private sealed class GeneratedExpression
@@ -462,11 +590,17 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
 
         private sealed class AspectResource
         {
-            public AspectResource(string? name, string targetName, IReadOnlyList<AspectPropertyAssignment> assignments, XElement source)
+            public AspectResource(
+                string? name,
+                string targetName,
+                IReadOnlyList<AspectPropertyAssignment> assignments,
+                IReadOnlyList<DirectiveWhenNode> conditions,
+                XElement source)
             {
                 Name = name;
                 TargetName = targetName;
                 Assignments = assignments;
+                Conditions = conditions;
                 Source = source;
             }
 
@@ -475,6 +609,8 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             public string TargetName { get; }
 
             public IReadOnlyList<AspectPropertyAssignment> Assignments { get; }
+
+            public IReadOnlyList<DirectiveWhenNode> Conditions { get; }
 
             public XElement Source { get; }
         }
@@ -528,21 +664,27 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         private readonly Dictionary<string, SolidColorBrushResource> solidColorBrushes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, AspectResource> namedAspects = new(StringComparer.Ordinal);
         private readonly Dictionary<string, AspectResource> defaultAspectsByTarget = new(StringComparer.Ordinal);
+        private readonly Dictionary<XElement, DirectiveParseResult> directiveContent = new();
+        private List<string> currentLines;
+        private List<string> currentPostLines;
+        private int nextReactiveId;
 
         private static readonly PropertySpec[] PropertySpecs =
         [
-            new("Text", element => element == "TextBlock", MarkupValueKind.String),
-            new("Content", element => element == "Button", MarkupValueKind.String),
-            new("IsEnabled", _ => true, MarkupValueKind.Bool),
-            new("IsVisible", _ => true, MarkupValueKind.Bool),
-            new("Margin", _ => true, MarkupValueKind.Thickness),
-            new("Background", IsControlElement, MarkupValueKind.DrawColor),
-            new("Foreground", IsControlElement, MarkupValueKind.DrawColor),
-            new("BorderColor", IsControlElement, MarkupValueKind.DrawColor),
-            new("BorderThickness", IsControlElement, MarkupValueKind.NonNegativeThickness),
-            new("Padding", IsControlElement, MarkupValueKind.NonNegativeThickness),
-            new("FontFamily", IsControlElement, MarkupValueKind.String),
-            new("FontSize", IsControlElement, MarkupValueKind.PositiveFloat)
+            new("Text", element => element == "TextBlock", MarkupValueKind.String, "global::Cerneala.UI.Controls.TextBlock.TextProperty"),
+            new("Content", element => element == "Button", MarkupValueKind.String, "global::Cerneala.UI.Controls.ContentControl.ContentProperty"),
+            new("IsEnabled", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsEnabledProperty"),
+            new("IsVisible", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsVisibleProperty"),
+            new("Margin", _ => true, MarkupValueKind.Thickness, "global::Cerneala.UI.Elements.UIElement.MarginProperty"),
+            new("Background", IsControlElement, MarkupValueKind.DrawColor, "global::Cerneala.UI.Controls.Control.BackgroundProperty"),
+            new("Foreground", IsControlElement, MarkupValueKind.DrawColor, "global::Cerneala.UI.Controls.Control.ForegroundProperty"),
+            new("BorderColor", IsControlElement, MarkupValueKind.DrawColor, "global::Cerneala.UI.Controls.Control.BorderColorProperty"),
+            new("BorderThickness", IsControlElement, MarkupValueKind.NonNegativeThickness, "global::Cerneala.UI.Controls.Control.BorderThicknessProperty"),
+            new("Padding", IsControlElement, MarkupValueKind.NonNegativeThickness, "global::Cerneala.UI.Controls.Control.PaddingProperty"),
+            new("FontFamily", IsControlElement, MarkupValueKind.String, "global::Cerneala.UI.Controls.Control.FontFamilyProperty"),
+            new("FontSize", IsControlElement, MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Control.FontSizeProperty"),
+            new("IsMouseOver", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsPointerOverProperty", assignable: false),
+            new("IsPointerOver", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsPointerOverProperty", assignable: false)
         ];
 
         private void ReadResources()
@@ -595,7 +737,7 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             }
 
             solidColorBrushes[name] = brush;
-            Lines.Add("global::Cerneala.UI.Media.SolidColorBrush " + variable + " = new(" + brush.ColorExpression + ");");
+            currentLines.Add("global::Cerneala.UI.Media.SolidColorBrush " + variable + " = new(" + brush.ColorExpression + ");");
         }
 
         private void ReadAspect(XElement resource)
@@ -615,13 +757,53 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             }
 
             string? name = resource.Attribute("Name")?.Value;
-            IReadOnlyList<AspectPropertyAssignment> assignments = ParseAspectAssignments(resource);
+            DirectiveParseResult parsed = ParseDirectiveContent(resource, allowAssignments: true, allowElements: false);
+            if (parsed.Error is not null)
+            {
+                Report(InvalidDirective, parsed.ErrorSource ?? resource, Path.GetFileName(file.Path), parsed.Error);
+                return;
+            }
+
+            List<AspectPropertyAssignment> assignments = [];
+            List<DirectiveWhenNode> conditions = [];
+            foreach (DirectiveNode node in parsed.Nodes)
+            {
+                if (node is DirectiveDefaultNode defaults)
+                {
+                    foreach (DirectiveNode child in defaults.Body)
+                    {
+                        if (child is DirectiveAssignmentNode assignment)
+                        {
+                            assignments.Add(ToAspectAssignment(assignment));
+                        }
+                        else if (child is DirectiveWhenNode nestedWhen)
+                        {
+                            conditions.Add(nestedWhen);
+                        }
+                        else
+                        {
+                            Report(InvalidDirective, child.Source, Path.GetFileName(file.Path), "@default may contain only property assignments or @when blocks.");
+                            return;
+                        }
+                    }
+                }
+                else if (node is DirectiveWhenNode when)
+                {
+                    conditions.Add(when);
+                }
+                else
+                {
+                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default and @when blocks.");
+                    return;
+                }
+            }
+
             if (HasErrors)
             {
                 return;
             }
 
-            AspectResource aspect = new(string.IsNullOrWhiteSpace(name) ? null : name, targetName, assignments, resource);
+            AspectResource aspect = new(string.IsNullOrWhiteSpace(name) ? null : name, targetName, assignments, conditions, resource);
             if (aspect.Name is null)
             {
                 if (defaultAspectsByTarget.ContainsKey(targetName))
@@ -640,6 +822,23 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             }
 
             namedAspects.Add(aspect.Name, aspect);
+        }
+
+        private static AspectPropertyAssignment ToAspectAssignment(DirectiveAssignmentNode assignment)
+        {
+            string value = assignment.Value.Trim();
+            bool isReference = value.StartsWith("$", StringComparison.Ordinal);
+            if (isReference)
+            {
+                value = value.Substring(1);
+            }
+
+            if (value.Length >= 2 && value[0] == '"' && value[value.Length - 1] == '"')
+            {
+                value = value.Substring(1, value.Length - 2);
+            }
+
+            return new AspectPropertyAssignment(assignment.PropertyName, value, isReference, assignment.Source);
         }
 
         private IReadOnlyList<AspectPropertyAssignment> ParseAspectAssignments(XElement aspect)
@@ -778,23 +977,38 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
                 return variable;
             }
 
-            Lines.Add(typeName + " " + variable + " = new();");
-            ApplyAspects(element, variable);
-            foreach (XAttribute attribute in element.Attributes().Where(attribute => !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name"))
+            currentLines.Add(typeName + " " + variable + " = new();");
+            DirectiveParseResult parsedContent = GetDirectiveContent(element, allowAssignments: false, allowElements: true);
+            if (parsedContent.Error is not null)
+            {
+                Report(InvalidDirective, parsedContent.ErrorSource ?? element, Path.GetFileName(file.Path), parsedContent.Error);
+                return variable;
+            }
+
+            IReadOnlyList<AspectResource> aspects = ResolveAspects(element);
+            ApplyAspects(element, variable, aspects);
+            foreach (XAttribute attribute in element.Attributes().Where(attribute => !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name" and not "DataType"))
             {
                 EmitProperty(element, variable, attribute);
             }
 
-            string? directText = ReadDirectText(element);
-            if (directText is not null)
+            if (parsedContent.HasDirectives || aspects.Any(aspect => aspect.Conditions.Count > 0))
             {
-                EmitTextContent(element, variable, directText);
+                EmitReactiveContent(element, variable, parsedContent, aspects);
             }
-
-            foreach (XElement child in element.Elements())
+            else
             {
-                string childVariable = EmitElement(child);
-                EmitChild(element, variable, childVariable);
+                string? directText = ReadDirectText(element);
+                if (directText is not null)
+                {
+                    EmitTextContent(element, variable, directText);
+                }
+
+                foreach (XElement child in element.Elements())
+                {
+                    string childVariable = EmitElement(child);
+                    EmitChild(element, variable, childVariable);
+                }
             }
 
             return variable;
@@ -813,39 +1027,49 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             };
         }
 
-        private void ApplyAspects(XElement element, string variable)
+        private IReadOnlyList<AspectResource> ResolveAspects(XElement element)
         {
             string elementName = element.Name.LocalName;
+            List<AspectResource> resolved = [];
             if (defaultAspectsByTarget.TryGetValue(elementName, out AspectResource? defaultAspect))
             {
-                EmitAspectAssignments(elementName, variable, defaultAspect);
+                resolved.Add(defaultAspect);
             }
 
             XAttribute? aspectAttribute = element.Attribute("Aspect");
             if (aspectAttribute is null)
             {
-                return;
+                return resolved;
             }
 
             string referenceName = ReadReferenceName(elementName, "Aspect", aspectAttribute);
             if (referenceName.Length == 0)
             {
-                return;
+                return resolved;
             }
 
             if (!namedAspects.TryGetValue(referenceName, out AspectResource? namedAspect))
             {
                 Report(InvalidPropertyValue, aspectAttribute, elementName, "Aspect", aspectAttribute.Value);
-                return;
+                return resolved;
             }
 
             if (!string.Equals(namedAspect.TargetName, elementName, StringComparison.Ordinal))
             {
                 Report(InvalidPropertyValue, aspectAttribute, elementName, "Aspect", aspectAttribute.Value);
-                return;
+                return resolved;
             }
 
-            EmitAspectAssignments(elementName, variable, namedAspect);
+            resolved.Add(namedAspect);
+            return resolved;
+        }
+
+        private void ApplyAspects(XElement element, string variable, IReadOnlyList<AspectResource> aspects)
+        {
+            foreach (AspectResource aspect in aspects)
+            {
+                EmitAspectAssignments(element.Name.LocalName, variable, aspect);
+            }
         }
 
         private string ReadReferenceName(string elementName, string propertyName, XAttribute attribute)
@@ -880,7 +1104,10 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
                     return;
                 }
 
-                Lines.Add(variable + "." + assignment.PropertyName + " = " + expression.Code + ";");
+                currentLines.Add(reactiveDocument
+                    ? variable + ".SetValue(" + spec.PropertyCode + ", " + expression.Code +
+                        ", global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase);"
+                    : variable + "." + spec.Name + " = " + expression.Code + ";");
             }
         }
 
@@ -914,7 +1141,7 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             string value = attribute.Value;
 
             PropertySpec? spec = FindPropertySpec(elementName, propertyName);
-            if (spec is null)
+            if (spec is null || !spec.Assignable)
             {
                 if (!HasErrors)
                 {
@@ -930,7 +1157,10 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            Lines.Add(variable + "." + propertyName + " = " + expression.Code + ";");
+            currentLines.Add(reactiveDocument
+                ? variable + ".SetValue(" + spec.PropertyCode + ", " + expression.Code +
+                    ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
+                : variable + "." + spec.Name + " = " + expression.Code + ";");
         }
 
         private static PropertySpec? FindPropertySpec(string elementName, string propertyName)
@@ -970,10 +1200,16 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             switch (element.Name.LocalName)
             {
                 case "TextBlock":
-                    Lines.Add(variable + ".Text = " + Literal(text) + ";");
+                    currentLines.Add(reactiveDocument
+                        ? variable + ".SetValue(global::Cerneala.UI.Controls.TextBlock.TextProperty, " + Literal(text) +
+                            ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
+                        : variable + ".Text = " + Literal(text) + ";");
                     break;
                 case "Button":
-                    Lines.Add(variable + ".Content = " + Literal(text) + ";");
+                    currentLines.Add(reactiveDocument
+                        ? variable + ".SetValue(global::Cerneala.UI.Controls.ContentControl.ContentProperty, (object?)" + Literal(text) +
+                            ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
+                        : variable + ".Content = " + Literal(text) + ";");
                     break;
                 default:
                     Report(UnsupportedProperty, element, element.Name.LocalName, "#text");
@@ -987,14 +1223,14 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             {
                 case "Panel":
                 case "StackPanel":
-                    Lines.Add(parentVariable + ".LogicalChildren.Add(" + childVariable + ");");
-                    Lines.Add(parentVariable + ".VisualChildren.Add(" + childVariable + ");");
+                    currentLines.Add(parentVariable + ".LogicalChildren.Add(" + childVariable + ");");
+                    currentLines.Add(parentVariable + ".VisualChildren.Add(" + childVariable + ");");
                     break;
                 case "Border":
-                    Lines.Add(parentVariable + ".Child = " + childVariable + ";");
+                    currentLines.Add(parentVariable + ".Child = " + childVariable + ";");
                     break;
                 case "Button":
-                    Lines.Add(parentVariable + ".Content = " + childVariable + ";");
+                    currentLines.Add(parentVariable + ".Content = " + childVariable + ";");
                     break;
                 default:
                     Report(UnsupportedProperty, parent, parent.Name.LocalName, "#child");

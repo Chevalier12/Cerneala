@@ -12,6 +12,11 @@ namespace Cerneala.UI.Elements;
 
 public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderableElement
 {
+    public static readonly UiProperty<object?> DataContextProperty = UiProperty<object?>.Register(
+        nameof(DataContext),
+        typeof(UIElement),
+        new UiPropertyMetadata<object?>(null, UiPropertyOptions.Inherits | UiPropertyOptions.AffectsAspect));
+
     public static readonly UiProperty<bool> IsEnabledProperty = UiProperty<bool>.Register(
         nameof(IsEnabled),
         typeof(UIElement),
@@ -214,6 +219,7 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     private bool hasPendingCommandStateRefresh;
     private bool hasPendingRenderScopeInvalidation;
     private bool hasPendingRenderContentInvalidation;
+    private readonly List<IElementLifecycleBehavior> lifecycleBehaviors = [];
 
     internal LayoutSize? LastMeasureAvailableSize { get; set; }
 
@@ -222,6 +228,12 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     internal LayoutRect? LastArrangeFinalRect { get; set; }
 
     internal int LastArrangeLayoutVersion { get; set; } = -1;
+
+    public object? DataContext
+    {
+        get => GetValue(DataContextProperty);
+        set => SetValue(DataContextProperty, value);
+    }
 
     public bool IsEnabled
     {
@@ -409,12 +421,20 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         Root = root ?? throw new ArgumentNullException(nameof(root));
         ElementId = id;
         OnAttached();
+        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+        {
+            behavior.Attach();
+        }
         Root?.Motion.Presence.MarkAttached(this);
     }
 
     internal void DetachFromRoot()
     {
         Root?.Motion.Presence.MarkDetached(this);
+        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+        {
+            behavior.Detach();
+        }
         OnDetached();
         Bindings.Clear();
         ElementId = null;
@@ -432,6 +452,12 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
     protected virtual void OnDetached()
     {
+    }
+
+    internal void AddLifecycleBehavior(IElementLifecycleBehavior behavior)
+    {
+        ArgumentNullException.ThrowIfNull(behavior);
+        lifecycleBehaviors.Add(behavior);
     }
 
     public void QueueCommandStateRefresh()

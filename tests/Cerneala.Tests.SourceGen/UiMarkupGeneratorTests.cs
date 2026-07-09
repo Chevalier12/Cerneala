@@ -599,9 +599,512 @@ public sealed class UiMarkupGeneratorTests
         Assert.Contains(result.GeneratedSources, source => source.SourceText.ToString().Contains("DialogsMainFactory"));
     }
 
+    [Fact]
+    public void WhenReevaluatesIndependentIfBranchesAndRestoresMarkupBase()
+    {
+        const string markup = """
+            <Border Background="Black">
+              @when IsMouseOver
+              {
+                @if value == True
+                {
+                  Background = White;
+                }
+              }
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("ReactiveBorder.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.ReactiveBorderFactory"));
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+
+        border.IsPointerOver = true;
+        Assert.Equal(Cerneala.Drawing.DrawColor.White, border.Background);
+
+        border.IsPointerOver = false;
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+    }
+
+    [Fact]
+    public void ConditionalChildrenAreLazyCachedAndKeepMarkupOrder()
+    {
+        const string markup = """
+            <StackPanel>
+              <TextBlock Text="Before" />
+              @when IsMouseOver
+              {
+                @if value == True
+                {
+                  <TextBlock Text="Conditional" />
+                }
+              }
+              <TextBlock Text="After" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("ConditionalChildren.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.ConditionalChildrenFactory"));
+        Assert.Equal(new[] { "Before", "After" }, panel.VisualChildren.Cast<TextBlock>().Select(child => child.Text));
+
+        panel.IsPointerOver = true;
+        Assert.Equal(new[] { "Before", "Conditional", "After" }, panel.VisualChildren.Cast<TextBlock>().Select(child => child.Text));
+        Assert.Equal(new[] { "Before", "Conditional", "After" }, panel.LogicalChildren.Cast<TextBlock>().Select(child => child.Text));
+        TextBlock cached = Assert.IsType<TextBlock>(panel.VisualChildren[1]);
+
+        panel.IsPointerOver = false;
+        Assert.Equal(new[] { "Before", "After" }, panel.VisualChildren.Cast<TextBlock>().Select(child => child.Text));
+
+        panel.IsPointerOver = true;
+        Assert.Same(cached, panel.VisualChildren[1]);
+    }
+
+    [Fact]
+    public void ConditionalButtonChildFallsBackToStaticContentAndRespectsLocalContent()
+    {
+        const string markup = """
+            <Button Content="Static">
+              @when IsMouseOver
+              {
+                @if value == True
+                {
+                  <TextBlock Text="Conditional" />
+                }
+              }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("ConditionalButton.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.ConditionalButtonFactory"));
+        Assert.Equal("Static", button.Content);
+        button.IsPointerOver = true;
+        Assert.Equal("Conditional", Assert.IsType<TextBlock>(button.Content).Text);
+        button.IsPointerOver = false;
+        Assert.Equal("Static", button.Content);
+
+        button.Content = "CodeBehind";
+        button.IsPointerOver = true;
+        Assert.Equal("CodeBehind", button.Content);
+    }
+
+    [Fact]
+    public void DataContextSourceEmitsTypedFactoryAndTracksUiObjectChanges()
+    {
+        const string markup = """
+            <TextBlock DataType="Cerneala.UI.Elements.UIElement" Text="Off">
+              @when $DataContext.IsEnabled
+              {
+                @if value == True
+                {
+                  Text = "On";
+                }
+              }
+            </TextBlock>
+            """;
+
+        GeneratorRunResult result = RunGenerator("TypedContext.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("Create(global::Cerneala.UI.Elements.UIElement dataContext)", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        UIElement context = new() { IsEnabled = false };
+        TextBlock text = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.TypedContextFactory", context));
+        Assert.Equal("Off", text.Text);
+
+        context.IsEnabled = true;
+        Assert.Equal("On", text.Text);
+
+        context.IsEnabled = false;
+        Assert.Equal("Off", text.Text);
+    }
+
+    [Fact]
+    public void NullAndInheritedDataContextsAreSafeAndRebindOnReplacement()
+    {
+        const string markup = """
+            <StackPanel DataType="Cerneala.UI.Elements.UIElement">
+              <TextBlock Text="Off">
+                @when $DataContext.IsEnabled
+                {
+                  @if value == True { Text = "On"; }
+                }
+              </TextBlock>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("InheritedContext.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel withoutContext = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.InheritedContextFactory"));
+        Assert.Equal("Off", Assert.IsType<TextBlock>(withoutContext.VisualChildren[0]).Text);
+
+        UIElement first = new() { IsEnabled = false };
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.InheritedContextFactory", first));
+        TextBlock child = Assert.IsType<TextBlock>(panel.VisualChildren[0]);
+        Assert.Equal("Off", child.Text);
+
+        first.IsEnabled = true;
+        Assert.Equal("On", child.Text);
+
+        UIElement second = new() { IsEnabled = false };
+        panel.DataContext = second;
+        Assert.Equal("Off", child.Text);
+
+        first.IsEnabled = false;
+        first.IsEnabled = true;
+        Assert.Equal("Off", child.Text);
+
+        second.IsEnabled = true;
+        Assert.Equal("On", child.Text);
+    }
+
+    [Fact]
+    public void NestedNotifyPropertyChangedPathRebindsEverySegment()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+            namespace TestInput;
+
+            public sealed class RootViewModel : INotifyPropertyChanged
+            {
+                private ChildViewModel? child;
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public ChildViewModel? Child
+                {
+                    get => child;
+                    set
+                    {
+                        child = value;
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Child)));
+                    }
+                }
+            }
+
+            public sealed class ChildViewModel : INotifyPropertyChanged
+            {
+                private bool active;
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public bool Active
+                {
+                    get => active;
+                    set
+                    {
+                        active = value;
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Active)));
+                    }
+                }
+            }
+            """;
+        const string markup = """
+            <TextBlock DataType="TestInput.RootViewModel" Text="Off">
+              @when $DataContext.Child.Active
+              {
+                @if value == True { Text = "On"; }
+              }
+            </TextBlock>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput("NestedPath.cui.xml", markup, inputSource, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type rootType = assembly.GetType("TestInput.RootViewModel", throwOnError: true)!;
+        Type childType = assembly.GetType("TestInput.ChildViewModel", throwOnError: true)!;
+        object viewModel = Activator.CreateInstance(rootType)!;
+        object first = Activator.CreateInstance(childType)!;
+        rootType.GetProperty("Child")!.SetValue(viewModel, first);
+        MethodInfo create = assembly.GetType("Cerneala.GeneratedUi.NestedPathFactory", throwOnError: true)!
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(candidate => candidate.Name == "Create" && candidate.GetParameters().Length == 1);
+        TextBlock text = Assert.IsType<TextBlock>(create.Invoke(null, new[] { viewModel }));
+        Assert.Equal("Off", text.Text);
+
+        childType.GetProperty("Active")!.SetValue(first, true);
+        Assert.Equal("On", text.Text);
+
+        object second = Activator.CreateInstance(childType)!;
+        rootType.GetProperty("Child")!.SetValue(viewModel, second);
+        Assert.Equal("Off", text.Text);
+
+        childType.GetProperty("Active")!.SetValue(first, false);
+        childType.GetProperty("Active")!.SetValue(first, true);
+        Assert.Equal("Off", text.Text);
+
+        childType.GetProperty("Active")!.SetValue(second, true);
+        Assert.Equal("On", text.Text);
+    }
+
+    [Fact]
+    public void DataContextOperandIsTypedAndObserved()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+            namespace TestInput;
+
+            public sealed class PairViewModel : INotifyPropertyChanged
+            {
+                private string left = "A";
+                private string right = "B";
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public string Left
+                {
+                    get => left;
+                    set { left = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Left))); }
+                }
+                public string Right
+                {
+                    get => right;
+                    set { right = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Right))); }
+                }
+            }
+            """;
+        const string markup = """
+            <TextBlock DataType="TestInput.PairViewModel" Text="Different">
+              @when $DataContext.Left
+              {
+                @if value == $DataContext.Right { Text = "Same"; }
+              }
+            </TextBlock>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput("ContextOperand.cui.xml", markup, inputSource, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type viewModelType = assembly.GetType("TestInput.PairViewModel", throwOnError: true)!;
+        object viewModel = Activator.CreateInstance(viewModelType)!;
+        MethodInfo create = assembly.GetType("Cerneala.GeneratedUi.ContextOperandFactory", throwOnError: true)!
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(candidate => candidate.Name == "Create" && candidate.GetParameters().Length == 1);
+        TextBlock text = Assert.IsType<TextBlock>(create.Invoke(null, new[] { viewModel }));
+        Assert.Equal("Different", text.Text);
+
+        viewModelType.GetProperty("Right")!.SetValue(viewModel, "A");
+        Assert.Equal("Same", text.Text);
+        viewModelType.GetProperty("Left")!.SetValue(viewModel, "C");
+        Assert.Equal("Different", text.Text);
+    }
+
+    [Fact]
+    public void AllComparisonOperatorsAreTypedAndReactive()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+            namespace TestInput;
+            public sealed class NumberViewModel : INotifyPropertyChanged
+            {
+                private int value = 10;
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public int Value
+                {
+                    get => value;
+                    set { this.value = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Value))); }
+                }
+            }
+            """;
+        const string markup = """
+            <StackPanel DataType="TestInput.NumberViewModel">
+              <TextBlock Text="F">@when $DataContext.Value { @if value == 10 { Text = "T"; } }</TextBlock>
+              <TextBlock Text="F">@when $DataContext.Value { @if value != 10 { Text = "T"; } }</TextBlock>
+              <TextBlock Text="F">@when $DataContext.Value { @if value &lt; 10 { Text = "T"; } }</TextBlock>
+              <TextBlock Text="F">@when $DataContext.Value { @if value &lt;= 10 { Text = "T"; } }</TextBlock>
+              <TextBlock Text="F">@when $DataContext.Value { @if value &gt; 10 { Text = "T"; } }</TextBlock>
+              <TextBlock Text="F">@when $DataContext.Value { @if value &gt;= 10 { Text = "T"; } }</TextBlock>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput("Comparators.cui.xml", markup, inputSource, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type viewModelType = assembly.GetType("TestInput.NumberViewModel", throwOnError: true)!;
+        object viewModel = Activator.CreateInstance(viewModelType)!;
+        MethodInfo create = assembly.GetType("Cerneala.GeneratedUi.ComparatorsFactory", throwOnError: true)!
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(candidate => candidate.Name == "Create" && candidate.GetParameters().Length == 1);
+        StackPanel panel = Assert.IsType<StackPanel>(create.Invoke(null, new[] { viewModel }));
+
+        Assert.Equal(new[] { "T", "F", "F", "T", "F", "T" }, panel.VisualChildren.Cast<TextBlock>().Select(child => child.Text));
+        viewModelType.GetProperty("Value")!.SetValue(viewModel, 5);
+        Assert.Equal(new[] { "F", "T", "T", "T", "F", "F" }, panel.VisualChildren.Cast<TextBlock>().Select(child => child.Text));
+        viewModelType.GetProperty("Value")!.SetValue(viewModel, 15);
+        Assert.Equal(new[] { "F", "T", "F", "F", "T", "T" }, panel.VisualChildren.Cast<TextBlock>().Select(child => child.Text));
+    }
+
+    [Fact]
+    public void LocalCodeBehindValueStaysAboveConditionalMarkup()
+    {
+        const string markup = """
+            <Border Background="Black">
+              @when IsMouseOver
+              {
+                @if value == True { Background = White; }
+              }
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("LocalWins.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.LocalWinsFactory"));
+        Cerneala.Drawing.DrawColor local = new(12, 34, 56);
+        border.Background = local;
+        border.IsPointerOver = true;
+        Assert.Equal(local, border.Background);
+        border.IsPointerOver = false;
+        Assert.Equal(local, border.Background);
+    }
+
+    [Fact]
+    public void NestedWhenConditionsAreCombinedWithAnd()
+    {
+        const string markup = """
+            <TextBlock Text="Base" IsEnabled="False">
+              @when IsMouseOver
+              {
+                @if value == True
+                {
+                  @when IsEnabled
+                  {
+                    @if value == True { Text = "Both"; }
+                  }
+                }
+              }
+            </TextBlock>
+            """;
+
+        GeneratorRunResult result = RunGenerator("NestedWhen.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        TextBlock text = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.NestedWhenFactory"));
+        text.IsPointerOver = true;
+        Assert.Equal("Base", text.Text);
+        text.IsEnabled = true;
+        Assert.Equal("Both", text.Text);
+        text.IsPointerOver = false;
+        Assert.Equal("Base", text.Text);
+    }
+
+    [Fact]
+    public void ConditionalAspectFallsBackWhenConditionStopsMatching()
+    {
+        const string markup = """
+            <Resources>
+              <Aspect Name="Hover" Target="Border">
+                @default { Background = Black; }
+                @when IsMouseOver
+                {
+                  @if value == True { Background = White; }
+                }
+              </Aspect>
+            </Resources>
+            <Border Aspect="$Hover" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("ReactiveAspect.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.ReactiveAspectFactory"));
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+        border.IsPointerOver = true;
+        Assert.Equal(Cerneala.Drawing.DrawColor.White, border.Background);
+        border.IsPointerOver = false;
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+    }
+
+    [Fact]
+    public void UnsupportedDirectiveReportsGeneratorDiagnostic()
+    {
+        const string markup = """
+            <Border>
+              @animate $base { Background = White; }
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("UnsupportedDirective.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI006", "UnsupportedDirective.cui.xml");
+        Assert.Contains("@animate", diagnostic.GetMessage());
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void DataTypeBelowRootReportsGeneratorDiagnostic()
+    {
+        const string markup = """
+            <StackPanel>
+              <TextBlock DataType="Cerneala.UI.Elements.UIElement" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("NestedDataType.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI007", "NestedDataType.cui.xml");
+        Assert.Contains("only on the root", diagnostic.GetMessage());
+        Assert.Empty(result.GeneratedSources);
+    }
+
     private static GeneratorRunResult RunGenerator(string fileName, string markup, out Compilation outputCompilation)
     {
         return RunGenerator(new[] { new MarkupFile(fileName, markup) }, out outputCompilation);
+    }
+
+    private static GeneratorRunResult RunGeneratorWithInput(
+        string fileName,
+        string markup,
+        string inputSource,
+        out Compilation outputCompilation)
+    {
+        return RunGenerator(new[] { new MarkupFile(fileName, markup) }, out outputCompilation, inputSource);
     }
 
     private static GeneratorRunResult RunGenerator(params MarkupFile[] files)
@@ -611,8 +1114,13 @@ public sealed class UiMarkupGeneratorTests
 
     private static GeneratorRunResult RunGenerator(MarkupFile[] files, out Compilation outputCompilation)
     {
+        return RunGenerator(files, out outputCompilation, "namespace TestInput { public static class Anchor { } }");
+    }
+
+    private static GeneratorRunResult RunGenerator(MarkupFile[] files, out Compilation outputCompilation, string inputSource)
+    {
         SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
-            "namespace TestInput { public static class Anchor { } }",
+            inputSource,
             CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest));
 
         CSharpCompilation compilation = CSharpCompilation.Create(
@@ -659,9 +1167,18 @@ public sealed class UiMarkupGeneratorTests
     {
         Assembly assembly = Assembly.Load(stream.ToArray());
         Type type = assembly.GetType(typeName, throwOnError: true)!;
-        MethodInfo method = type.GetMethod("Create", BindingFlags.Public | BindingFlags.Static)
-            ?? throw new InvalidOperationException("Generated factory Create method was not found.");
+        MethodInfo method = type.GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(candidate => candidate.Name == "Create" && candidate.GetParameters().Length == 0);
         return Assert.IsAssignableFrom<UIElement>(method.Invoke(null, null));
+    }
+
+    private static UIElement InvokeCreate(MemoryStream stream, string typeName, object dataContext)
+    {
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type type = assembly.GetType(typeName, throwOnError: true)!;
+        MethodInfo method = type.GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(candidate => candidate.Name == "Create" && candidate.GetParameters().Length == 1);
+        return Assert.IsAssignableFrom<UIElement>(method.Invoke(null, new[] { dataContext }));
     }
 
     private static int Count(string text, string value)

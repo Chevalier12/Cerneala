@@ -42,6 +42,33 @@ public sealed class UiPropertyStoreTests
     }
 
     [Fact]
+    public void MarkupSourcesSitBetweenAnimationAndAspectState()
+    {
+        UiProperty<string> property = UiProperty<string>.Register(
+            UniqueName(),
+            typeof(UiPropertyStoreTests),
+            new UiPropertyMetadata<string>("default"));
+        UiObject owner = new();
+
+        owner.SetValue(property, "aspect-base", UiPropertyValueSource.AspectBase);
+        owner.SetValue(property, "aspect-state", UiPropertyValueSource.AspectVisualState);
+        owner.SetValue(property, "markup-base", UiPropertyValueSource.MarkupBase);
+        owner.SetValue(property, "markup-condition", UiPropertyValueSource.MarkupConditional);
+        Assert.Equal("markup-condition", owner.GetValue(property));
+
+        owner.SetValue(property, "animation", UiPropertyValueSource.Animation);
+        Assert.Equal("animation", owner.GetValue(property));
+
+        owner.SetValue(property, "local", UiPropertyValueSource.Local);
+        Assert.Equal("local", owner.GetValue(property));
+
+        owner.ClearValue(property, UiPropertyValueSource.Local);
+        owner.ClearValue(property, UiPropertyValueSource.Animation);
+        owner.ClearValue(property, UiPropertyValueSource.MarkupConditional);
+        Assert.Equal("markup-base", owner.GetValue(property));
+    }
+
+    [Fact]
     public void StoreRejectsDefaultAsStoredSource()
     {
         UiPropertyStore store = new();

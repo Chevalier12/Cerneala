@@ -23,7 +23,17 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
     public void Add(UIElement child)
     {
+        Insert(children.Count, child);
+    }
+
+    public void Insert(int index, UIElement child)
+    {
         ArgumentNullException.ThrowIfNull(child);
+        if ((uint)index > (uint)children.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+
         owner.Root?.Motion.Presence.TryCancelExitForAdd(owner, child);
 
         if (ReferenceEquals(owner, child))
@@ -57,7 +67,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
             throw new InvalidOperationException("Element cannot be added under a different root.");
         }
 
-        children.Add(child);
+        children.Insert(index, child);
         SetParent(child, owner);
 
         UIRoot? root = owner.Root;
@@ -69,6 +79,29 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
         InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Added);
         Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Added));
+    }
+
+    public void Move(int oldIndex, int newIndex)
+    {
+        if ((uint)oldIndex >= (uint)children.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(oldIndex));
+        }
+
+        if ((uint)newIndex >= (uint)children.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(newIndex));
+        }
+
+        if (oldIndex == newIndex)
+        {
+            return;
+        }
+
+        UIElement child = children[oldIndex];
+        children.RemoveAt(oldIndex);
+        children.Insert(newIndex, child);
+        InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Added);
     }
 
     public bool Remove(UIElement child)

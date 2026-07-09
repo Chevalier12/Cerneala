@@ -17,7 +17,9 @@ Generated from `.`.
 |               +-- server-stopped
 |-- Cerneala.SourceGen/
 |   |-- Cerneala.SourceGen.csproj
-|   +-- UiMarkupGenerator.cs
+|   |-- UiMarkupDirectiveParser.cs
+|   |-- UiMarkupGenerator.cs
+|   +-- UiMarkupReactiveEmitter.cs
 |-- docs/
 |   |-- bug-reports/
 |   |-- diagrams/
@@ -1481,6 +1483,7 @@ Generated from `.`.
 |   |   |-- ElementTreeWalker.cs
 |   |   |-- IElementChildHost.cs
 |   |   |-- IElementHost.cs
+|   |   |-- IElementLifecycleBehavior.cs
 |   |   |-- InheritedPropertyPropagator.cs
 |   |   |-- UIElement.cs
 |   |   |-- UIElementCollection.cs
@@ -1632,6 +1635,7 @@ Generated from `.`.
 |   |-- Markup/
 |   |   |-- ContentPropertyAttribute.cs
 |   |   |-- DesignTimeOnlyAttribute.cs
+|   |   |-- GeneratedMarkupConditions.cs
 |   |   |-- GeneratedUiFactory.cs
 |   |   |-- MarkupDiagnostic.cs
 |   |   |-- MarkupLoadOptions.cs
