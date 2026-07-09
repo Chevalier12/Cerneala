@@ -234,14 +234,14 @@ section.bordered{border-top:1px solid var(--line);}
 
 .hero__stage{
   position:relative;
-  min-height:640px;
+  min-height:520px;
   display:grid;
   grid-template-columns:1fr;
-  padding:56px 44px 20px;
+  padding:72px 44px 44px;
 }
 .hero__copy{
   position:relative;z-index:3;
-  max-width:560px;
+  max-width:720px;
 }
 .hero__h1{
   font-family:var(--disp);font-weight:700;
@@ -263,49 +263,10 @@ section.bordered{border-top:1px solid var(--line);}
   color:var(--slate);
   font-size:.98rem;
   line-height:1.7;
-  max-width:480px;
+  max-width:560px;
 }
 .hero__ctas{
   display:flex;gap:14px;margin-top:34px;flex-wrap:wrap;
-}
-
-.hero__diagram{
-  position:absolute;
-  right:28px;top:38%;
-  transform:translateY(-46%);
-  width:min(560px, 44vw);
-  z-index:1;
-  opacity:.98;
-  overflow:hidden;
-}
-@media (max-width:980px){
-  .hero__diagram{
-    position:relative;right:auto;top:auto;transform:none;
-    width:100%;max-width:420px;margin:44px auto 0;
-  }
-}
-
-.hud{
-  position:absolute;z-index:4;
-  font-family:var(--mono);font-size:.72rem;
-  background:rgba(10,11,14,.62);
-  border:1px solid var(--line-strong);
-  border-radius:var(--radius-sm);
-  padding:10px 14px;
-  backdrop-filter:blur(6px);
-  display:flex;flex-direction:column;gap:6px;
-}
-.hud--top-right{top:56px;right:44px;}
-.hud--bottom-left{bottom:36px;left:44px;}
-.hud__row{display:flex;justify-content:space-between;gap:18px;}
-.hud__key{color:var(--slate-dim);letter-spacing:.06em;}
-.hud__val{color:var(--paper);font-weight:600;}
-.hud__val--cyan{color:var(--cyan);}
-.hud__val--lime{color:var(--lime);}
-.hud__val--pink{color:var(--pink);}
-@media (max-width:980px){
-  .hud{position:static;background:none;border:none;padding:0;backdrop-filter:none;flex-direction:row;gap:22px;}
-  .hud--top-right,.hud--bottom-left{justify-content:center;margin-top:18px;}
 }
 
 .hero__console{
@@ -319,29 +280,6 @@ section.bordered{border-top:1px solid var(--line);}
 }
 .console__cursor{color:var(--lime);animation:blink 1.1s step-end infinite;}
 @keyframes blink{50%{opacity:0;}}
-
-/* --- loop svg --- */
-.loop-svg{width:100%;height:auto;overflow:hidden;}
-.loop-ring{fill:none;stroke:var(--line-strong);stroke-width:1;stroke-dasharray:2 6;}
-.loop-ring--faint{stroke:var(--line);stroke-dasharray:1 5;}
-.loop-pulse{fill:var(--cyan);filter:drop-shadow(0 0 8px var(--cyan)) drop-shadow(0 0 16px rgba(77,240,255,.6));}
-.loop-node circle{fill:var(--ink);stroke-width:2;}
-.loop-node text{font-family:var(--mono);font-weight:700;font-size:15px;}
-.loop-node__label{font-family:var(--mono);font-weight:500;font-size:10px;letter-spacing:.05em;fill:var(--slate-dim)!important;}
-.loop-node--in circle{stroke:var(--cyan);} .loop-node--in text{fill:var(--cyan);}
-.loop-node--st circle{stroke:var(--lime);} .loop-node--st text{fill:var(--lime);}
-.loop-node--ly circle{stroke:var(--orange);} .loop-node--ly text{fill:var(--orange);}
-.loop-node--mo circle{stroke:var(--pink);} .loop-node--mo text{fill:var(--pink);}
-.loop-node--rn circle{stroke:var(--cyan);} .loop-node--rn text{fill:var(--cyan);}
-.loop-node--mg circle{stroke:var(--lime);} .loop-node--mg text{fill:var(--lime);}
-.mini-tree line{stroke:var(--line-strong);stroke-width:1.4;}
-.mini-tree circle{fill:var(--panel);stroke:var(--slate);stroke-width:1.4;}
-.mini-tree__halo{fill:rgba(77,240,255,.05)!important;stroke:var(--line)!important;stroke-dasharray:2 4;}
-.mini-tree__root{fill:var(--cyan)!important;stroke:var(--cyan)!important;animation:pulseNode 2.4s ease-in-out infinite;}
-@keyframes pulseNode{
-  0%,100%{opacity:1;r:5;}
-  50%{opacity:.55;r:7;}
-}
 
 /* ============================= TICKER ============================= */
 .ticker{
@@ -549,14 +487,13 @@ footer{
 @media (max-width:520px){
   .wrap{padding:0 20px;}
   .hero{padding:96px 12px 0;}
-  .hero__stage{padding:40px 24px 18px;min-height:720px;}
+  .hero__stage{padding:40px 24px 32px;min-height:auto;}
   .hero__copy{max-width:100%;}
   .hero__h1{font-size:clamp(2.6rem,15vw,3.4rem);}
   .hero__sub{font-size:1.06rem;}
   .hero__body{font-size:.93rem;}
   .hero__titlebar{padding:12px 14px;gap:14px;}
   .hero__tabs{gap:13px;font-size:.62rem;}
-  .hero__diagram{max-width:280px;}
   .ticker__track span{font-size:.68rem;}
 }
 </style>
@@ -613,63 +550,6 @@ footer{
           <a class="btn btn--solid" href="https://github.com/Chevalier12/Cerneala">View on GitHub</a>
           <a class="btn btn--ghost" href="documentation.html">Read the Docs</a>
         </div>
-      </div>
-
-      <div class="hero__diagram">
-        <svg class="loop-svg" viewBox="0 0 520 520" role="img" aria-label="Diagram of the Cerneala frame loop: Input, State, Layout, Motion, Render, MonoGame, arranged in a ring around a small retained UI tree.">
-          <circle cx="260" cy="260" r="150" class="loop-ring loop-ring--faint"/>
-          <circle cx="260" cy="260" r="200" class="loop-ring"/>
-
-          <circle r="5" class="loop-pulse">
-            <animateMotion dur="7s" repeatCount="indefinite"
-              path="M 260 60 A 200 200 0 1 1 259.98 60 Z"/>
-          </circle>
-
-          <g class="loop-node loop-node--in" transform="translate(260,60)">
-            <circle r="9"/><text text-anchor="middle" y="-20">IN</text>
-            <text class="loop-node__label" text-anchor="middle" y="32">Input</text>
-          </g>
-          <g class="loop-node loop-node--st" transform="translate(433,160)">
-            <circle r="9"/><text x="24" y="4">ST</text>
-            <text class="loop-node__label" x="24" y="20">State</text>
-          </g>
-          <g class="loop-node loop-node--ly" transform="translate(433,360)">
-            <circle r="9"/><text x="24" y="4">LY</text>
-            <text class="loop-node__label" x="24" y="20">Layout</text>
-          </g>
-          <g class="loop-node loop-node--mo" transform="translate(260,460)">
-            <circle r="9"/><text text-anchor="middle" y="32">MO</text>
-            <text class="loop-node__label" text-anchor="middle" y="46">Motion</text>
-          </g>
-          <g class="loop-node loop-node--rn" transform="translate(87,360)">
-            <circle r="9"/><text x="-24" y="4" text-anchor="end">RN</text>
-            <text class="loop-node__label" x="-24" y="20" text-anchor="end">Render</text>
-          </g>
-          <g class="loop-node loop-node--mg" transform="translate(87,160)">
-            <circle r="9"/><text x="-24" y="4" text-anchor="end">MG</text>
-            <text class="loop-node__label" x="-24" y="20" text-anchor="end">MonoGame</text>
-          </g>
-
-          <g class="mini-tree" transform="translate(260,260)">
-            <circle r="48" class="mini-tree__halo"/>
-            <line x1="0" y1="-22" x2="-24" y2="10"/>
-            <line x1="0" y1="-22" x2="0" y2="16"/>
-            <line x1="0" y1="-22" x2="24" y2="10"/>
-            <circle cx="0" cy="-22" r="5" class="mini-tree__root"/>
-            <circle cx="-24" cy="10" r="4"/>
-            <circle cx="0" cy="16" r="4"/>
-            <circle cx="24" cy="10" r="4"/>
-          </g>
-        </svg>
-      </div>
-
-      <div class="hud hud--top-right">
-        <span class="hud__row"><span class="hud__key">FRAME&nbsp;</span><span class="hud__val hud__val--cyan">16.62ms</span></span>
-        <span class="hud__row"><span class="hud__key">CACHE&nbsp;</span><span class="hud__val hud__val--lime">retained</span></span>
-      </div>
-      <div class="hud hud--bottom-left">
-        <span class="hud__row"><span class="hud__key">UI&nbsp;NODES&nbsp;</span><span class="hud__val">214</span></span>
-        <span class="hud__row"><span class="hud__key">DIRTY&nbsp;</span><span class="hud__val hud__val--pink">6</span></span>
       </div>
     </div>
 
