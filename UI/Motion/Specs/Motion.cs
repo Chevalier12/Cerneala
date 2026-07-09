@@ -1,17 +1,9 @@
-using System.Reflection;
-using System.Runtime.ExceptionServices;
 using Cerneala.UI.Motion.Interpolation;
 
 namespace Cerneala.UI.Motion.Specs;
 
 public static class Motion
 {
-    private static readonly MethodInfo CreateTweenSamplerMethod =
-        typeof(Motion).GetMethod(nameof(CreateTweenSampler), BindingFlags.NonPublic | BindingFlags.Static)!;
-
-    private static readonly MethodInfo CreateSpringSamplerMethod =
-        typeof(Motion).GetMethod(nameof(CreateSpringSampler), BindingFlags.NonPublic | BindingFlags.Static)!;
-
     public static TweenSpec<T> Tween<T>(TimeSpan duration, IEasing? easing = null)
     {
         return new TweenSpec<T>(duration, easing);
@@ -42,54 +34,6 @@ public static class Motion
         return new UntypedSpringSpec(stiffness, damping, mass);
     }
 
-    private static MotionSampler CreateTweenSampler<T>(
-        TimeSpan duration,
-        IEasing? easing,
-        object? from,
-        object? to,
-        IValueMixer mixer,
-        MotionSpecContext context)
-    {
-        if (mixer is not ValueMixer<T> typedMixer)
-        {
-            throw new ArgumentException($"Expected mixer for {typeof(T).Name}.", nameof(mixer));
-        }
-
-        return new TweenSpec<T>(duration, easing).CreateSampler(Cast<T>(from, nameof(from)), Cast<T>(to, nameof(to)), typedMixer, context);
-    }
-
-    private static MotionSampler CreateSpringSampler<T>(
-        float stiffness,
-        float damping,
-        float mass,
-        object? from,
-        object? to,
-        IValueMixer mixer,
-        MotionSpecContext context)
-    {
-        if (mixer is not ValueMixer<T> typedMixer)
-        {
-            throw new ArgumentException($"Expected mixer for {typeof(T).Name}.", nameof(mixer));
-        }
-
-        return new SpringSpec<T>(stiffness, damping, mass).CreateSampler(Cast<T>(from, nameof(from)), Cast<T>(to, nameof(to)), typedMixer, context);
-    }
-
-    private static T Cast<T>(object? value, string parameterName)
-    {
-        if (value is T typed)
-        {
-            return typed;
-        }
-
-        if (value is null && default(T) is null)
-        {
-            return default!;
-        }
-
-        throw new ArgumentException($"Expected value of type {typeof(T).Name}.", parameterName);
-    }
-
     private sealed class UntypedTweenSpec : MotionSpec
     {
         private readonly TimeSpan duration;
@@ -108,9 +52,7 @@ public static class Motion
 
         public override MotionSampler CreateSamplerUntyped(object? from, object? to, IValueMixer mixer, MotionSpecContext context)
         {
-            return InvokeSampler(
-                CreateTweenSamplerMethod.MakeGenericMethod(mixer.ValueType),
-                [duration, easing, from, to, mixer, context]);
+            return Dispatcher(mixer).CreateTweenSampler(duration, easing, from, to, context);
         }
     }
 
@@ -144,22 +86,13 @@ public static class Motion
 
         public override MotionSampler CreateSamplerUntyped(object? from, object? to, IValueMixer mixer, MotionSpecContext context)
         {
-            return InvokeSampler(
-                CreateSpringSamplerMethod.MakeGenericMethod(mixer.ValueType),
-                [stiffness, damping, mass, from, to, mixer, context]);
+            return Dispatcher(mixer).CreateSpringSampler(stiffness, damping, mass, from, to, context);
         }
     }
 
-    private static MotionSampler InvokeSampler(MethodInfo method, object?[] arguments)
+    private static IValueMixerDispatcher Dispatcher(IValueMixer mixer)
     {
-        try
-        {
-            return (MotionSampler)method.Invoke(null, arguments)!;
-        }
-        catch (TargetInvocationException ex) when (ex.InnerException is not null)
-        {
-            ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
-            throw;
-        }
+        return mixer as IValueMixerDispatcher
+            ?? throw new InvalidOperationException($"Mixer for {mixer.ValueType.Name} cannot create motion samplers.");
     }
 }

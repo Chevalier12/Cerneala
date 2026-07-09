@@ -932,6 +932,7 @@ Generated from `.`.
 |   |   |   |-- TabItemTests.cs
 |   |   |   |-- TemplateBindingTests.cs
 |   |   |   |-- TemplatedButtonStateContractTests.cs
+|   |   |   |-- TemplateReflectionTests.cs
 |   |   |   |-- TextBlockInvalidationTests.cs
 |   |   |   |-- TextBlockLayoutContractTests.cs
 |   |   |   |-- TextBlockTests.cs
@@ -1155,6 +1156,7 @@ Generated from `.`.
 |   |   |   |   |   +-- MotionTransactionTests.cs
 |   |   |   |   |-- MotionAllocationTests.cs
 |   |   |   |   |-- MotionFacadeTests.cs
+|   |   |   |   |-- MotionReflectionTests.cs
 |   |   |   |   +-- MotionStressTests.cs
 |   |   |   |-- Platform/
 |   |   |   |   |-- PlatformBoundaryTests.cs
@@ -1719,6 +1721,7 @@ Generated from `.`.
 |   |   |   |-- DrawSizeMixer.cs
 |   |   |   |-- FloatMixer.cs
 |   |   |   |-- IValueMixer.cs
+|   |   |   |-- IValueMixerDispatcher.cs
 |   |   |   |-- ThicknessMixer.cs
 |   |   |   |-- TransformComponents.cs
 |   |   |   |-- TransformInterpolationMode.cs

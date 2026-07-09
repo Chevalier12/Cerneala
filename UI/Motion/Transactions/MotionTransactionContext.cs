@@ -99,23 +99,24 @@ public sealed class MotionTransactionContext : UiPropertyMutationObserver, IDisp
     {
         IValueMixer mixer = motion.Mixers.Resolve(mutation.Property.ValueType, mutation.Property.DiagnosticName);
         MotionSpec typedSpec = spec is null ? options.DefaultSpec : spec;
-        GetType()
-            .GetMethod(nameof(AnimateMutation), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .MakeGenericMethod(mutation.Property.ValueType)
-            .Invoke(this, [element, mutation, mixer, typedSpec]);
+        if (mixer is not IValueMixerDispatcher dispatcher)
+        {
+            throw new InvalidOperationException($"Mixer for {mutation.Property.ValueType.Name} cannot animate property mutations.");
+        }
+
+        dispatcher.AnimateMutation(this, element, mutation, typedSpec);
     }
 
-    private void AnimateMutation<T>(
+    internal void AnimateMutation<T>(
         UIElement element,
         UiPropertyMutation mutation,
-        IValueMixer mixer,
+        ValueMixer<T> mixer,
         MotionSpec spec)
     {
         UiProperty<T> property = (UiProperty<T>)mutation.Property;
-        ValueMixer<T> typedMixer = (ValueMixer<T>)mixer;
         MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, element, property);
         binding.Value.JumpTo(Cast<T>(mutation.OldEffectiveValue));
-        binding.AnimateTo(Cast<T>(mutation.NewEffectiveValue), ToTypedSpec<T>(spec, typedMixer));
+        binding.AnimateTo(Cast<T>(mutation.NewEffectiveValue), ToTypedSpec<T>(spec, mixer));
     }
 
     private static MotionSpec<T> ToTypedSpec<T>(MotionSpec spec, ValueMixer<T> mixer)

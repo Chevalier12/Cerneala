@@ -13,7 +13,7 @@ This design adds authoring syntax for aspect resources in markup without exposin
 - Allow a named aspect to be applied explicitly to an element.
 - Use one reference identity concept: `Name`.
 - Preserve a clear cascade order that is easy to reason about.
-- Keep invalid references and type mismatches as generator errors.
+- Keep invalid references and target mismatches as generator errors.
 
 ## Non-Goals
 
@@ -31,7 +31,7 @@ Aspect resources are declared inside a top-level `Resources` element.
   <SolidColorBrush Name="TextColor" Color="#1E293B" />
   <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
 
-  <Aspect Type="TextBlock">
+  <Aspect Target="TextBlock">
     @default
     {
       FontFamily = "Segoe UI";
@@ -40,7 +40,7 @@ Aspect resources are declared inside a top-level `Resources` element.
     }
   </Aspect>
 
-  <Aspect Name="KickerText" Type="TextBlock">
+  <Aspect Name="KickerText" Target="TextBlock">
     @default
     {
       FontFamily = "Consolas";
@@ -60,9 +60,9 @@ Elements may also declare a `Name` for reference purposes:
 <TextBlock Name="KickerLabel" Aspect="$KickerText" Text="HELLO" />
 ```
 
-`Aspect Type="TextBlock"` without a `Name` defines the implicit default aspect for every `TextBlock` in the document.
+`Aspect Target="TextBlock"` without a `Name` defines the implicit default aspect for every `TextBlock` in the document.
 
-`Aspect Name="KickerText" Type="TextBlock"` defines a named aspect resource. It is not applied automatically. Elements opt into it with `Aspect="$KickerText"`.
+`Aspect Name="KickerText" Target="TextBlock"` defines a named aspect resource. It is not applied automatically. Elements opt into it with `Aspect="$KickerText"`.
 
 `SolidColorBrush Name="PulseColor"` defines a reusable brush resource. Property values inside aspect declaration bodies can reference it with `$PulseColor`.
 
@@ -98,23 +98,23 @@ Local element attributes always win over aspect declarations.
 
 The generator reports an error when:
 
-- An `Aspect` resource is missing `Type`.
+- An `Aspect` resource is missing `Target`.
 - A named resource or element has an empty `Name`.
-- Two unnamed aspects target the same `Type` in the same document.
+- Two unnamed aspects have the same `Target` in the same document.
 - Two named items use the same `Name` in the same document.
 - A `$Identifier` reference cannot be resolved to a `Name`.
 - A `$Identifier` reference resolves to a symbol that is not valid for the consuming context.
-- An element references an aspect whose `Type` does not match the element type.
+- An element references an aspect whose `Target` does not match the element type.
 - An aspect declaration references a resource that cannot be assigned or coerced to the target property type.
 - An aspect declaration assigns an unsupported property for its target type.
 - An aspect declaration value cannot be parsed using the same typed rules as element attributes.
 - A `SolidColorBrush` resource has an invalid or missing `Color`.
 
-Type mismatch example:
+Target mismatch example:
 
 ```xml
 <Resources>
-  <Aspect Name="KickerText" Type="TextBlock">
+  <Aspect Name="KickerText" Target="TextBlock">
     @default
     {
       FontSize = 12;
@@ -202,7 +202,7 @@ Named element references use the same `$Name` syntax, but only contexts that acc
 
 Add focused source generator tests for:
 
-- An unnamed `Aspect Type="TextBlock"` applying to every `TextBlock`.
+- An unnamed `Aspect Target="TextBlock"` applying to every `TextBlock`.
 - A named aspect applying after the type default.
 - Local attributes overriding named aspect values.
 - Element `Name` registration.
@@ -211,7 +211,7 @@ Add focused source generator tests for:
 - `$Identifier` resolving to a named element in a context that accepts element references.
 - Unknown `$Identifier` diagnostic.
 - Duplicate `Name` diagnostic across elements/resources.
-- Aspect type mismatch diagnostic.
+- Aspect target mismatch diagnostic.
 - Duplicate default aspect diagnostic.
 - Unsupported property inside an aspect diagnostic.
 - `SolidColorBrush` resource declaration.

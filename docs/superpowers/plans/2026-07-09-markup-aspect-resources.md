@@ -685,7 +685,7 @@ public void UnnamedAspectAppliesToEveryMatchingElement()
 {
     const string markup = """
         <Resources>
-          <Aspect Type="TextBlock">
+          <Aspect Target="TextBlock">
             @default
             {
               FontFamily = "Consolas";
@@ -716,14 +716,14 @@ public void NamedAspectAppliesAfterUnnamedDefault()
 {
     const string markup = """
         <Resources>
-          <Aspect Type="TextBlock">
+          <Aspect Target="TextBlock">
             @default
             {
               FontSize = 14;
               Foreground = Black;
             }
           </Aspect>
-          <Aspect Name="KickerText" Type="TextBlock">
+          <Aspect Name="KickerText" Target="TextBlock">
             @default
             {
               FontSize = 12;
@@ -780,12 +780,12 @@ Expected: FAIL because `Aspect` resources are not parsed or applied.
 Inside `GenerationScope`, add:
 
 ```csharp
-private sealed record AspectResource(string? Name, string TypeName, IReadOnlyList<AspectPropertyAssignment> Assignments, XElement Source);
+private sealed record AspectResource(string? Name, string TargetName, IReadOnlyList<AspectPropertyAssignment> Assignments, XElement Source);
 
 private sealed record AspectPropertyAssignment(string PropertyName, string RawValue, bool IsReference, XObject Source);
 
 private readonly Dictionary<string, AspectResource> namedAspects = new(StringComparer.Ordinal);
-private readonly Dictionary<string, AspectResource> defaultAspectsByType = new(StringComparer.Ordinal);
+private readonly Dictionary<string, AspectResource> defaultAspectsByTarget = new(StringComparer.Ordinal);
 ```
 
 - [ ] **Step 4: Parse `Aspect` resources**
@@ -802,16 +802,16 @@ Add:
 ```csharp
 private void ReadAspect(XElement resource)
 {
-    string? typeName = resource.Attribute("Type")?.Value;
-    if (string.IsNullOrWhiteSpace(typeName))
+    string? targetName = resource.Attribute("Target")?.Value;
+    if (string.IsNullOrWhiteSpace(targetName))
     {
-        Report(InvalidPropertyValue, resource, "Aspect", "Type", typeName ?? string.Empty);
+        Report(InvalidPropertyValue, resource, "Aspect", "Target", targetName ?? string.Empty);
         return;
     }
 
-    if (ResolveElementType(typeName) is null)
+    if (ResolveElementType(targetName) is null)
     {
-        Report(UnsupportedElement, resource, typeName);
+        Report(UnsupportedElement, resource, targetName);
         return;
     }
 
@@ -822,16 +822,16 @@ private void ReadAspect(XElement resource)
         return;
     }
 
-    AspectResource aspect = new(string.IsNullOrWhiteSpace(name) ? null : name, typeName, assignments, resource);
+    AspectResource aspect = new(string.IsNullOrWhiteSpace(name) ? null : name, targetName, assignments, resource);
     if (aspect.Name is null)
     {
-        if (defaultAspectsByType.ContainsKey(typeName))
+        if (defaultAspectsByTarget.ContainsKey(targetName))
         {
-            Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate unnamed Aspect for type '" + typeName + "'.");
+            Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate unnamed Aspect for target '" + targetName + "'.");
             return;
         }
 
-        defaultAspectsByType.Add(typeName, aspect);
+        defaultAspectsByTarget.Add(targetName, aspect);
         return;
     }
 
@@ -928,7 +928,7 @@ Add:
 private void ApplyAspects(XElement element, string variable)
 {
     string elementName = element.Name.LocalName;
-    if (defaultAspectsByType.TryGetValue(elementName, out AspectResource? defaultAspect))
+    if (defaultAspectsByTarget.TryGetValue(elementName, out AspectResource? defaultAspect))
     {
         EmitAspectAssignments(elementName, variable, defaultAspect);
     }
@@ -951,7 +951,7 @@ private void ApplyAspects(XElement element, string variable)
         return;
     }
 
-    if (!string.Equals(namedAspect.TypeName, elementName, StringComparison.Ordinal))
+    if (!string.Equals(namedAspect.TargetName, elementName, StringComparison.Ordinal))
     {
         Report(InvalidPropertyValue, aspectAttribute, elementName, "Aspect", aspectAttribute.Value);
         return;
@@ -1059,7 +1059,7 @@ public void AspectCanReferenceSolidColorBrushForDrawColorProperty()
     const string markup = """
         <Resources>
           <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
-          <Aspect Name="KickerText" Type="TextBlock">
+          <Aspect Name="KickerText" Target="TextBlock">
             @default
             {
               Foreground = $PulseColor;
@@ -1088,7 +1088,7 @@ public void UnknownNameReferenceReportsDiagnostic()
 {
     const string markup = """
         <Resources>
-          <Aspect Name="KickerText" Type="TextBlock">
+          <Aspect Name="KickerText" Target="TextBlock">
             @default
             {
               Foreground = $MissingColor;
@@ -1278,11 +1278,11 @@ Add:
 
 ```csharp
 [Fact]
-public void AspectTypeMismatchReportsDiagnostic()
+public void AspectTargetMismatchReportsDiagnostic()
 {
     const string markup = """
         <Resources>
-          <Aspect Name="KickerText" Type="TextBlock">
+          <Aspect Name="KickerText" Target="TextBlock">
             @default
             {
               FontSize = 12;
@@ -1300,14 +1300,14 @@ public void AspectTypeMismatchReportsDiagnostic()
 }
 
 [Fact]
-public void DuplicateUnnamedAspectForTypeReportsDiagnostic()
+public void DuplicateUnnamedAspectForTargetReportsDiagnostic()
 {
     const string markup = """
         <Resources>
-          <Aspect Type="TextBlock">
+          <Aspect Target="TextBlock">
             @default { FontSize = 12; }
           </Aspect>
-          <Aspect Type="TextBlock">
+          <Aspect Target="TextBlock">
             @default { FontSize = 14; }
           </Aspect>
         </Resources>
@@ -1326,7 +1326,7 @@ public void UnsupportedAspectPropertyReportsDiagnostic()
 {
     const string markup = """
         <Resources>
-          <Aspect Type="TextBlock">
+          <Aspect Target="TextBlock">
             @default
             {
               Width = 100;
@@ -1366,7 +1366,7 @@ public void NestedResourcesReportsDiagnostic()
 Run:
 
 ```powershell
-dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --filter "FullyQualifiedName~AspectTypeMismatchReportsDiagnostic|FullyQualifiedName~DuplicateUnnamedAspectForTypeReportsDiagnostic|FullyQualifiedName~UnsupportedAspectPropertyReportsDiagnostic|FullyQualifiedName~NestedResourcesReportsDiagnostic"
+dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --filter "FullyQualifiedName~AspectTargetMismatchReportsDiagnostic|FullyQualifiedName~DuplicateUnnamedAspectForTargetReportsDiagnostic|FullyQualifiedName~UnsupportedAspectPropertyReportsDiagnostic|FullyQualifiedName~NestedResourcesReportsDiagnostic"
 ```
 
 Expected: any missing validation fails. If a test already passes from previous tasks, keep it as coverage.
@@ -1377,7 +1377,7 @@ Ensure these code paths exist and report the expected descriptor:
 
 ```csharp
 Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Nested Resources declarations are not supported.");
-Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate unnamed Aspect for type '" + typeName + "'.");
+Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate unnamed Aspect for target '" + targetName + "'.");
 Report(UnsupportedProperty, assignment.Source, elementName, assignment.PropertyName);
 Report(InvalidPropertyValue, aspectAttribute, elementName, "Aspect", aspectAttribute.Value);
 ```

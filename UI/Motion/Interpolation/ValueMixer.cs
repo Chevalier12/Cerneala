@@ -1,6 +1,11 @@
+using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Motion.Specs;
+using Cerneala.UI.Motion.Transactions;
+
 namespace Cerneala.UI.Motion.Interpolation;
 
-public abstract class ValueMixer<T> : IValueMixer
+public abstract class ValueMixer<T> : IValueMixer, IValueMixerDispatcher
 {
     public Type ValueType => typeof(T);
 
@@ -62,6 +67,44 @@ public abstract class ValueMixer<T> : IValueMixer
     public float MagnitudeUntyped(object? value)
     {
         return Magnitude(Cast(value, nameof(value)));
+    }
+
+    MotionSampler IValueMixerDispatcher.CreateTweenSampler(
+        TimeSpan duration,
+        IEasing? easing,
+        object? from,
+        object? to,
+        MotionSpecContext context)
+    {
+        return new TweenSpec<T>(duration, easing).CreateSampler(
+            Cast(from, nameof(from)),
+            Cast(to, nameof(to)),
+            this,
+            context);
+    }
+
+    MotionSampler IValueMixerDispatcher.CreateSpringSampler(
+        float stiffness,
+        float damping,
+        float mass,
+        object? from,
+        object? to,
+        MotionSpecContext context)
+    {
+        return new SpringSpec<T>(stiffness, damping, mass).CreateSampler(
+            Cast(from, nameof(from)),
+            Cast(to, nameof(to)),
+            this,
+            context);
+    }
+
+    void IValueMixerDispatcher.AnimateMutation(
+        MotionTransactionContext context,
+        UIElement element,
+        UiPropertyMutation mutation,
+        MotionSpec spec)
+    {
+        context.AnimateMutation(element, mutation, this, spec);
     }
 
     protected static InvalidOperationException CreateVectorException()

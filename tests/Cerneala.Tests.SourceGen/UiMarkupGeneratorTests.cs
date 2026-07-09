@@ -175,11 +175,30 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void UnnamedAspectAppliesToEveryMatchingElement()
+    public void AspectTypeAttributeIsNotAcceptedAsTarget()
     {
         const string markup = """
             <Resources>
               <Aspect Type="TextBlock">
+                @default { FontSize = 12; }
+              </Aspect>
+            </Resources>
+            <TextBlock />
+            """;
+
+        GeneratorRunResult result = RunGenerator("LegacyAspectType.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "LegacyAspectType.cui.xml");
+        Assert.Contains("Aspect.Target", diagnostic.GetMessage());
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void UnnamedAspectAppliesToEveryMatchingElement()
+    {
+        const string markup = """
+            <Resources>
+              <Aspect Target="TextBlock">
                 @default
                 {
                   FontFamily = "Consolas";
@@ -210,14 +229,14 @@ public sealed class UiMarkupGeneratorTests
     {
         const string markup = """
             <Resources>
-              <Aspect Type="TextBlock">
+              <Aspect Target="TextBlock">
                 @default
                 {
                   FontSize = 14;
                   Foreground = Black;
                 }
               </Aspect>
-              <Aspect Name="KickerText" Type="TextBlock">
+              <Aspect Name="KickerText" Target="TextBlock">
                 @default
                 {
                   FontSize = 12;
@@ -247,7 +266,7 @@ public sealed class UiMarkupGeneratorTests
         const string markup = """
             <Resources>
               <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
-              <Aspect Name="KickerText" Type="TextBlock">
+              <Aspect Name="KickerText" Target="TextBlock">
                 @default
                 {
                   Foreground = $PulseColor;
@@ -276,7 +295,7 @@ public sealed class UiMarkupGeneratorTests
     {
         const string markup = """
             <Resources>
-              <Aspect Name="KickerText" Type="TextBlock">
+              <Aspect Name="KickerText" Target="TextBlock">
                 @default
                 {
                   Foreground = $MissingColor;
@@ -330,11 +349,11 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void AspectTypeMismatchReportsDiagnostic()
+    public void AspectTargetMismatchReportsDiagnostic()
     {
         const string markup = """
             <Resources>
-              <Aspect Name="KickerText" Type="TextBlock">
+              <Aspect Name="KickerText" Target="TextBlock">
                 @default
                 {
                   FontSize = 12;
@@ -352,14 +371,14 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void DuplicateUnnamedAspectForTypeReportsDiagnostic()
+    public void DuplicateUnnamedAspectForTargetReportsDiagnostic()
     {
         const string markup = """
             <Resources>
-              <Aspect Type="TextBlock">
+              <Aspect Target="TextBlock">
                 @default { FontSize = 12; }
               </Aspect>
-              <Aspect Type="TextBlock">
+              <Aspect Target="TextBlock">
                 @default { FontSize = 14; }
               </Aspect>
             </Resources>
@@ -378,7 +397,7 @@ public sealed class UiMarkupGeneratorTests
     {
         const string markup = """
             <Resources>
-              <Aspect Type="TextBlock">
+              <Aspect Target="TextBlock">
                 @default
                 {
                   Width = 100;

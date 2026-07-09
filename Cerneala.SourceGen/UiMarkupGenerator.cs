@@ -462,17 +462,17 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
 
         private sealed class AspectResource
         {
-            public AspectResource(string? name, string typeName, IReadOnlyList<AspectPropertyAssignment> assignments, XElement source)
+            public AspectResource(string? name, string targetName, IReadOnlyList<AspectPropertyAssignment> assignments, XElement source)
             {
                 Name = name;
-                TypeName = typeName;
+                TargetName = targetName;
                 Assignments = assignments;
                 Source = source;
             }
 
             public string? Name { get; }
 
-            public string TypeName { get; }
+            public string TargetName { get; }
 
             public IReadOnlyList<AspectPropertyAssignment> Assignments { get; }
 
@@ -527,7 +527,7 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         private readonly Dictionary<string, NamedSymbol> symbols = new(StringComparer.Ordinal);
         private readonly Dictionary<string, SolidColorBrushResource> solidColorBrushes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, AspectResource> namedAspects = new(StringComparer.Ordinal);
-        private readonly Dictionary<string, AspectResource> defaultAspectsByType = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, AspectResource> defaultAspectsByTarget = new(StringComparer.Ordinal);
 
         private static readonly PropertySpec[] PropertySpecs =
         [
@@ -600,17 +600,17 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
 
         private void ReadAspect(XElement resource)
         {
-            string typeName = resource.Attribute("Type")?.Value ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(typeName))
+            string targetName = resource.Attribute("Target")?.Value ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(targetName))
             {
-                Report(InvalidPropertyValue, resource, "Aspect", "Type", typeName);
+                Report(InvalidPropertyValue, resource, "Aspect", "Target", targetName);
                 return;
             }
 
-            typeName = typeName.Trim();
-            if (ResolveElementType(typeName) is null)
+            targetName = targetName.Trim();
+            if (ResolveElementType(targetName) is null)
             {
-                Report(UnsupportedElement, resource, typeName);
+                Report(UnsupportedElement, resource, targetName);
                 return;
             }
 
@@ -621,16 +621,16 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            AspectResource aspect = new(string.IsNullOrWhiteSpace(name) ? null : name, typeName, assignments, resource);
+            AspectResource aspect = new(string.IsNullOrWhiteSpace(name) ? null : name, targetName, assignments, resource);
             if (aspect.Name is null)
             {
-                if (defaultAspectsByType.ContainsKey(typeName))
+                if (defaultAspectsByTarget.ContainsKey(targetName))
                 {
-                    Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate unnamed Aspect for type '" + typeName + "'.");
+                    Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate unnamed Aspect for target '" + targetName + "'.");
                     return;
                 }
 
-                defaultAspectsByType.Add(typeName, aspect);
+                defaultAspectsByTarget.Add(targetName, aspect);
                 return;
             }
 
@@ -816,7 +816,7 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
         private void ApplyAspects(XElement element, string variable)
         {
             string elementName = element.Name.LocalName;
-            if (defaultAspectsByType.TryGetValue(elementName, out AspectResource? defaultAspect))
+            if (defaultAspectsByTarget.TryGetValue(elementName, out AspectResource? defaultAspect))
             {
                 EmitAspectAssignments(elementName, variable, defaultAspect);
             }
@@ -839,7 +839,7 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            if (!string.Equals(namedAspect.TypeName, elementName, StringComparison.Ordinal))
+            if (!string.Equals(namedAspect.TargetName, elementName, StringComparison.Ordinal))
             {
                 Report(InvalidPropertyValue, aspectAttribute, elementName, "Aspect", aspectAttribute.Value);
                 return;

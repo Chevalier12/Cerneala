@@ -129,6 +129,7 @@ public sealed class ControlTemplateTests
         {
             Template = new ControlTemplate<Control>(_ => new UIElement())
         };
+        TemplatePartAttribute.Register<PartedControl>("PART_Content", typeof(ContentPresenter));
 
         IReadOnlyList<TemplatePartAttribute> parts = TemplatePartAttribute.GetParts(typeof(PartedControl));
 
@@ -235,7 +236,6 @@ public sealed class ControlTemplateTests
         }
     }
 
-    [TemplatePart("PART_Content", typeof(ContentPresenter))]
     private sealed class PartedControl : Control
     {
     }

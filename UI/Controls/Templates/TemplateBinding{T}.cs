@@ -64,8 +64,68 @@ public abstract class TemplateBinding
                 nameof(targetProperty));
         }
 
-        Type bindingType = typeof(TemplateBinding<>).MakeGenericType(sourceProperty.ValueType);
-        return (TemplateBinding)Activator.CreateInstance(bindingType, sourceProperty, target, targetProperty, targetSource)!;
+        return new UntypedTemplateBinding(sourceProperty, target, targetProperty, targetSource);
+    }
+
+    private sealed class UntypedTemplateBinding(
+        UiProperty sourceProperty,
+        UIElement target,
+        UiProperty targetProperty,
+        UiPropertyValueSource targetSource)
+        : TemplateBinding(sourceProperty, target, targetProperty, targetSource)
+    {
+        private Control? owner;
+
+        public override void Attach(Control owner)
+        {
+            ArgumentNullException.ThrowIfNull(owner);
+            if (this.owner is not null)
+            {
+                throw new InvalidOperationException("Template binding is already attached.");
+            }
+
+            this.owner = owner;
+            owner.PropertyChanged += OnOwnerPropertyChanged;
+            try
+            {
+                UpdateTarget(owner);
+            }
+            catch
+            {
+                owner.PropertyChanged -= OnOwnerPropertyChanged;
+                this.owner = null;
+                throw;
+            }
+        }
+
+        public override void Detach()
+        {
+            if (owner is null)
+            {
+                return;
+            }
+
+            if (TargetSource != UiPropertyValueSource.TemplateBinding)
+            {
+                Target.ClearValueUntyped(TargetProperty, TargetSource);
+            }
+
+            owner.PropertyChanged -= OnOwnerPropertyChanged;
+            owner = null;
+        }
+
+        private void OnOwnerPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
+        {
+            if (sender is Control control && ReferenceEquals(args.Property, SourceProperty))
+            {
+                UpdateTarget(control);
+            }
+        }
+
+        private void UpdateTarget(Control control)
+        {
+            Target.SetValueUntyped(TargetProperty, control.GetValue(SourceProperty), TargetSource);
+        }
     }
 }
 
