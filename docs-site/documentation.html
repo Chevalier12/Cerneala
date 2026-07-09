@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cerneala UI — Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#0a0b0e;
+  --panel:#14161b;
+  --panel-alt:#101217;
+  --line:rgba(237,239,243,.09);
+  --line-strong:rgba(237,239,243,.18);
+  --cyan:#4df0ff;
+  --pink:#ff3ea5;
+  --lime:#c6ff3d;
+  --orange:#ff8a3d;
+  --paper:#edeff3;
+  --slate:#8a93a6;
+  --slate-dim:#565e6e;
+  --radius-sm:6px;
+  --radius:8px;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',sans-serif;
+  --body:'Inter',sans-serif;
+}
+html{scroll-behavior:smooth;}
+*{
+  scrollbar-width:thin;
+  scrollbar-color:rgba(77,240,255,.55) rgba(237,239,243,.055);
+}
+*::-webkit-scrollbar{
+  width:12px;
+  height:12px;
+}
+*::-webkit-scrollbar-track{
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0px,rgba(255,255,255,.035) 1px,transparent 1px,transparent 4px),
+    rgba(237,239,243,.045);
+  border-left:1px solid var(--line);
+}
+*::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,rgba(77,240,255,.82),rgba(198,255,61,.72));
+  border:3px solid #101217;
+  border-radius:999px;
+  box-shadow:0 0 18px rgba(77,240,255,.22);
+}
+*::-webkit-scrollbar-thumb:hover{
+  background:linear-gradient(180deg,var(--cyan),var(--lime));
+}
+*::-webkit-scrollbar-corner{
+  background:var(--panel-alt);
+}
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(720px 420px at 82% 10%,rgba(77,240,255,.08),transparent 62%),
+    radial-gradient(580px 520px at 12% 72%,rgba(255,62,165,.06),transparent 64%),
+    var(--ink);
+  color:var(--paper);
+  font-family:var(--body);
+  line-height:1.5;
+  overflow:hidden;
+}
+a{color:inherit;text-decoration:none;}
+code,pre{font-family:var(--mono);}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;}
+
+.btn{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-weight:600;font-size:.72rem;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:9px 16px;border-radius:var(--radius-sm);
+  border:1px solid transparent;text-decoration:none;
+  cursor:pointer;transition:transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease, color .16s ease;
+  white-space:nowrap;
+}
+.btn--solid{background:var(--lime);color:#08110a;}
+.btn--ghost{background:transparent;border-color:var(--line-strong);color:var(--paper);}
+.btn:hover{transform:translateY(-2px);}
+.btn--ghost:hover{border-color:var(--cyan);color:var(--cyan);box-shadow:inset 0 0 0 1px var(--cyan);}
+
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:10;
+  border-bottom:1px solid var(--line);
+  background:rgba(10,11,14,.78);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.nav__inner{
+  max-width:1440px;margin:0 auto;padding:0 32px;
+  height:64px;display:flex;align-items:center;justify-content:space-between;gap:24px;
+}
+.nav__brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.nav__mark{width:26px;height:26px;flex:none;}
+.nav__brand span{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--paper);}
+.nav__brand em{color:var(--cyan);font-style:normal;}
+.nav__links{display:flex;gap:28px;}
+.nav__links a{
+  font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--slate);position:relative;padding-bottom:4px;
+}
+.nav__links a.is-active{color:var(--paper);}
+.nav__links a.is-active::after,.nav__links a:hover::after{
+  content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;background:var(--cyan);
+}
+.nav__actions{display:flex;align-items:center;gap:10px;}
+
+.docs-shell{
+  height:100vh;
+  padding-top:64px;
+  display:grid;
+  grid-template-columns:minmax(300px,360px) minmax(0,1fr);
+  max-width:100vw;
+  overflow-x:hidden;
+}
+.sidebar{
+  min-width:0;
+  border-right:1px solid var(--line);
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0px,rgba(255,255,255,.018) 1px,transparent 1px,transparent 3px),
+    rgba(16,18,23,.78);
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+.sidebar__head{
+  padding:24px 24px 18px;
+  border-bottom:1px solid var(--line);
+}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:.68rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--cyan);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.eyebrow::before{content:"";width:7px;height:7px;background:var(--cyan);box-shadow:0 0 8px var(--cyan);display:inline-block;}
+h1{
+  font-family:var(--disp);
+  font-size:clamp(2rem,3.2vw,2.75rem);
+  line-height:.98;
+  letter-spacing:-.02em;
+  margin-top:14px;
+  max-width:100%;
+  overflow-wrap:anywhere;
+}
+.sidebar__meta{
+  color:var(--slate);
+  font-family:var(--mono);
+  font-size:.72rem;
+  margin-top:12px;
+  letter-spacing:.04em;
+}
+.search-box{
+  margin-top:20px;
+  position:relative;
+}
+.search-box input{
+  width:100%;
+  height:44px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--line-strong);
+  background:rgba(10,11,14,.7);
+  color:var(--paper);
+  padding:0 14px;
+  font:600 .86rem var(--mono);
+  letter-spacing:.02em;
+}
+.search-box input::placeholder{color:var(--slate-dim);}
+.class-list{
+  min-height:0;
+  overflow:auto;
+  padding:12px;
+}
+.class-item{
+  width:100%;
+  display:block;
+  text-align:left;
+  border:1px solid transparent;
+  border-radius:var(--radius-sm);
+  background:transparent;
+  color:var(--slate);
+  cursor:pointer;
+  padding:10px 11px;
+  font:600 .78rem/1.35 var(--mono);
+  word-break:break-word;
+  overflow-wrap:anywhere;
+}
+.class-item:hover{color:var(--paper);background:rgba(255,255,255,.035);border-color:var(--line);}
+.class-item.is-active{
+  color:var(--lime);
+  background:rgba(198,255,61,.07);
+  border-color:rgba(198,255,61,.28);
+  box-shadow:inset 3px 0 0 var(--lime);
+}
+.empty-state{
+  color:var(--slate-dim);
+  padding:18px 12px;
+  font:600 .78rem var(--mono);
+}
+
+.doc-view{
+  min-width:0;
+  min-height:0;
+  overflow:auto;
+  position:relative;
+}
+.doc-card,.markdown{min-width:0;}
+.doc-view::before{
+  content:"";
+  position:fixed;
+  inset:64px 0 0 360px;
+  pointer-events:none;
+  background:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:linear-gradient(to bottom,black,transparent 82%);
+}
+.doc-card{
+  position:relative;
+  z-index:1;
+  width:min(920px,calc(100% - 64px));
+  margin:34px auto 80px;
+  border:1px solid var(--line-strong);
+  border-radius:10px;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0px,rgba(255,255,255,.018) 1px,transparent 1px,transparent 3px),
+    rgba(16,18,23,.86);
+  box-shadow:0 30px 110px rgba(0,0,0,.32);
+  overflow:hidden;
+}
+.doc-titlebar{
+  display:flex;align-items:center;gap:18px;
+  padding:13px 18px;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.015);
+}
+.doc-dots{display:flex;gap:6px;flex:none;}
+.doc-dots span{width:8px;height:8px;border-radius:50%;display:block;}
+.doc-dots span:nth-child(1){background:var(--pink);}
+.doc-dots span:nth-child(2){background:var(--lime);}
+.doc-dots span:nth-child(3){background:var(--cyan);}
+.doc-filename{
+  font:700 .72rem var(--mono);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--slate-dim);
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.markdown{
+  padding:38px 44px 52px;
+  color:#d7deea;
+}
+.markdown h1,.markdown h2,.markdown h3,.markdown h4{
+  font-family:var(--disp);
+  color:var(--paper);
+  letter-spacing:-.01em;
+  line-height:1.12;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.markdown h1{font-size:clamp(2.2rem,4.4vw,3.5rem);margin-bottom:18px;}
+.markdown h2{font-size:1.8rem;margin:42px 0 14px;padding-top:8px;border-top:1px solid var(--line);}
+.markdown h3{font-size:1.25rem;margin:28px 0 12px;color:var(--cyan);}
+.markdown h4{font-size:1rem;margin:22px 0 10px;color:var(--lime);}
+.markdown p{margin:13px 0;color:#c4ccda;line-height:1.72;}
+.markdown ul,.markdown ol{margin:14px 0 18px 24px;color:#c4ccda;}
+.markdown li{margin:7px 0;}
+.markdown code{
+  color:var(--lime);
+  background:rgba(198,255,61,.08);
+  border:1px solid rgba(198,255,61,.16);
+  border-radius:5px;
+  padding:.12em .38em;
+  font-size:.88em;
+}
+.markdown pre{
+  max-width:100%;
+  margin:18px 0;
+  padding:18px;
+  overflow:auto;
+  border-radius:var(--radius);
+  border:1px solid var(--line-strong);
+  background:#090b10;
+  color:#e5edf8;
+}
+.markdown pre code{background:transparent;border:0;padding:0;color:inherit;}
+.markdown pre .tok-kw{color:var(--pink);}
+.markdown pre .tok-type{color:var(--cyan);}
+.markdown pre .tok-str{color:var(--lime);}
+.markdown pre .tok-com{color:var(--slate-dim);font-style:italic;}
+.markdown pre .tok-num{color:var(--orange);}
+.markdown pre .tok-op{color:#e5edf8;}
+.markdown table{
+  display:block;
+  width:100%;
+  max-width:100%;
+  overflow:auto;
+  border-collapse:collapse;
+  margin:18px 0 24px;
+  font-size:.92rem;
+  overflow:hidden;
+  border:1px solid var(--line-strong);
+}
+.markdown th,.markdown td{
+  border:1px solid var(--line);
+  padding:11px 12px;
+  vertical-align:top;
+}
+.markdown th{
+  color:var(--cyan);
+  text-align:left;
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  background:rgba(77,240,255,.04);
+}
+.markdown blockquote{
+  margin:18px 0;
+  padding:13px 16px;
+  border-left:3px solid var(--pink);
+  background:rgba(255,62,165,.06);
+  color:#d8bfd2;
+}
+.loading{
+  color:var(--slate);
+  font:700 .84rem var(--mono);
+  padding:42px;
+}
+
+@media (max-width:920px){
+  body{overflow:auto;overflow-x:hidden;}
+  .nav__links{display:none;}
+  .docs-shell{
+    height:auto;
+    min-height:100vh;
+    grid-template-columns:1fr;
+    width:100%;
+    max-width:100vw;
+  }
+  .sidebar{
+    width:100vw;
+    max-width:100vw;
+    max-height:56vh;
+    border-right:0;
+    border-bottom:1px solid var(--line);
+  }
+  .doc-view{overflow:visible;width:100vw;max-width:100vw;}
+  .doc-view::before{display:none;}
+  .doc-card{width:calc(100vw - 28px);max-width:calc(100vw - 28px);margin:24px auto 48px;}
+  .markdown{padding:30px 24px 42px;}
+  .nav__inner{padding:0 16px;}
+  .nav__actions .btn--ghost{display:none;}
+}
+@media (max-width:560px){
+  h1{font-size:clamp(1.75rem,10vw,2.35rem);}
+  .markdown h1{
+    font-size:clamp(1.55rem,8vw,2.1rem);
+    word-break:break-all;
+    max-width:calc(100vw - 72px);
+  }
+  .nav__actions{display:none;}
+  .sidebar__head{padding:20px 16px 16px;}
+  .class-list{padding:10px;}
+  .doc-card{width:calc(100vw - 20px);max-width:calc(100vw - 20px);}
+  .markdown{padding:26px 20px 38px;}
+}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="nav__inner">
+    <a class="nav__brand" href="index.html">
+      <svg class="nav__mark" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="13" fill="none" stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="1.5 4"/>
+        <circle cx="16" cy="7" r="2.4" fill="none" stroke="var(--cyan)" stroke-width="1.6"/>
+        <circle cx="24" cy="21" r="2.4" fill="none" stroke="var(--pink)" stroke-width="1.6"/>
+        <circle cx="8" cy="21" r="2.4" fill="none" stroke="var(--lime)" stroke-width="1.6"/>
+        <circle cx="16" cy="16" r="2.2" fill="var(--cyan)"/>
+      </svg>
+      <span>Cerneala <em>UI</em></span>
+    </a>
+    <nav class="nav__links">
+      <a href="index.html#features">Features</a>
+      <a href="index.html#pipeline">Pipeline</a>
+      <a class="is-active" href="documentation.html">Documentation</a>
+      <a href="index.html#diagnostics">Diagnostics</a>
+    </nav>
+    <div class="nav__actions">
+      <a class="btn btn--ghost" href="index.html">Landing</a>
+      <a class="btn btn--solid" href="https://github.com/Chevalier12/Cerneala">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main class="docs-shell">
+  <aside class="sidebar">
+    <div class="sidebar__head">
+      <p class="eyebrow">API surface</p>
+      <h1>Documentation</h1>
+      <p class="sidebar__meta"><span id="doc-count">0</span> class docs indexed</p>
+      <div class="search-box">
+        <input id="search" type="search" placeholder="Search classes..." autocomplete="off">
+      </div>
+    </div>
+    <div id="class-list" class="class-list" role="listbox" aria-label="Documented classes"></div>
+  </aside>
+
+  <section class="doc-view">
+    <article class="doc-card">
+      <div class="doc-titlebar">
+        <div class="doc-dots"><span></span><span></span><span></span></div>
+        <div id="doc-filename" class="doc-filename">Select a class</div>
+      </div>
+      <div id="doc-content" class="markdown">
+        <div class="loading">Loading documentation index...</div>
+      </div>
+    </article>
+  </section>
+</main>
+
+<script>
+const state = {
+  docs: [],
+  filtered: [],
+  active: null
+};
+
+const listEl = document.getElementById('class-list');
+const searchEl = document.getElementById('search');
+const contentEl = document.getElementById('doc-content');
+const filenameEl = document.getElementById('doc-filename');
+const countEl = document.getElementById('doc-count');
+
+function escapeHtml(value) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function inlineMarkdown(value) {
+  let output = escapeHtml(value);
+  output = output.replace(/`([^`]+)`/g, '<code>$1</code>');
+  output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+  return output;
+}
+
+function headingMarkdown(value) {
+  return inlineMarkdown(value)
+    .replace(/([a-z0-9])([A-Z])/g, '$1<wbr>$2')
+    .replace(/([._])/g, '$1<wbr>');
+}
+
+const csharpKeywords = new Set([
+  'abstract','as','base','bool','break','byte','case','catch','char','checked','class','const',
+  'continue','decimal','default','delegate','do','double','else','enum','event','explicit',
+  'extern','false','finally','fixed','float','for','foreach','goto','if','implicit','in','int',
+  'interface','internal','is','lock','long','namespace','new','null','object','operator','out',
+  'override','params','private','protected','public','readonly','record','ref','return','sbyte',
+  'sealed','short','sizeof','stackalloc','static','string','struct','switch','this','throw',
+  'true','try','typeof','uint','ulong','unchecked','unsafe','ushort','using','var','virtual',
+  'void','volatile','while','file','required','init','get','set','with'
+]);
+
+function span(className, value) {
+  return '<span class="' + className + '">' + escapeHtml(value) + '</span>';
+}
+
+function highlightCSharp(code) {
+  let html = '';
+  let i = 0;
+
+  while (i < code.length) {
+    const ch = code[i];
+    const next = code[i + 1];
+
+    if (ch === '/' && next === '/') {
+      const end = code.indexOf('\n', i);
+      const stop = end === -1 ? code.length : end;
+      html += span('tok-com', code.slice(i, stop));
+      i = stop;
+      continue;
+    }
+
+    if (ch === '/' && next === '*') {
+      const end = code.indexOf('*/', i + 2);
+      const stop = end === -1 ? code.length : end + 2;
+      html += span('tok-com', code.slice(i, stop));
+      i = stop;
+      continue;
+    }
+
+    if (ch === '@' && next === '"') {
+      let j = i + 2;
+      while (j < code.length) {
+        if (code[j] === '"' && code[j + 1] === '"') {
+          j += 2;
+          continue;
+        }
+        if (code[j] === '"') {
+          j++;
+          break;
+        }
+        j++;
+      }
+      html += span('tok-str', code.slice(i, j));
+      i = j;
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      let j = i + 1;
+      while (j < code.length) {
+        if (code[j] === '\\') {
+          j += 2;
+          continue;
+        }
+        if (code[j] === quote) {
+          j++;
+          break;
+        }
+        j++;
+      }
+      html += span('tok-str', code.slice(i, j));
+      i = j;
+      continue;
+    }
+
+    if (/[0-9]/.test(ch)) {
+      let j = i + 1;
+      while (j < code.length && /[0-9a-fA-FxXbB_.]/.test(code[j])) j++;
+      html += span('tok-num', code.slice(i, j));
+      i = j;
+      continue;
+    }
+
+    if (/[A-Za-z_]/.test(ch)) {
+      let j = i + 1;
+      while (j < code.length && /[A-Za-z0-9_]/.test(code[j])) j++;
+      const word = code.slice(i, j);
+      if (csharpKeywords.has(word)) {
+        html += span('tok-kw', word);
+      } else if (/^[A-Z]/.test(word)) {
+        html += span('tok-type', word);
+      } else {
+        html += escapeHtml(word);
+      }
+      i = j;
+      continue;
+    }
+
+    html += escapeHtml(ch);
+    i++;
+  }
+
+  return html;
+}
+
+function renderMarkdown(markdown) {
+  const lines = markdown.replace(/\r\n/g, '\n').split('\n');
+  const html = [];
+  let inCode = false;
+  let codeLines = [];
+  let inList = false;
+  let listType = 'ul';
+  let tableRows = [];
+
+  function closeList() {
+    if (!inList) return;
+    html.push(`</${listType}>`);
+    inList = false;
+  }
+
+  function closeTable() {
+    if (!tableRows.length) return;
+    const header = tableRows[0];
+    const rows = tableRows.slice(1).filter(row => !row.every(cell => /^:?-{3,}:?$/.test(cell.trim())));
+    html.push('<table><thead><tr>' + header.map(cell => `<th>${inlineMarkdown(cell.trim())}</th>`).join('') + '</tr></thead><tbody>');
+    rows.forEach(row => {
+      html.push('<tr>' + row.map(cell => `<td>${inlineMarkdown(cell.trim())}</td>`).join('') + '</tr>');
+    });
+    html.push('</tbody></table>');
+    tableRows = [];
+  }
+
+  function parseTable(line) {
+    if (!line.includes('|')) return null;
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) return null;
+    return trimmed.slice(1, -1).split('|');
+  }
+
+  for (const line of lines) {
+    if (line.startsWith('```')) {
+      closeList();
+      closeTable();
+      if (inCode) {
+        html.push(`<pre><code>${highlightCSharp(codeLines.join('\n'))}</code></pre>`);
+        codeLines = [];
+        inCode = false;
+      } else {
+        inCode = true;
+      }
+      continue;
+    }
+
+    if (inCode) {
+      codeLines.push(line);
+      continue;
+    }
+
+    const tableCells = parseTable(line);
+    if (tableCells) {
+      closeList();
+      tableRows.push(tableCells);
+      continue;
+    }
+    closeTable();
+
+    if (!line.trim()) {
+      closeList();
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,4})\s+(.+)$/);
+    if (heading) {
+      closeList();
+      const level = heading[1].length;
+      html.push(`<h${level}>${headingMarkdown(heading[2])}</h${level}>`);
+      continue;
+    }
+
+    const bullet = line.match(/^\s*[-*]\s+(.+)$/);
+    if (bullet) {
+      if (!inList || listType !== 'ul') {
+        closeList();
+        html.push('<ul>');
+        inList = true;
+        listType = 'ul';
+      }
+      html.push(`<li>${inlineMarkdown(bullet[1])}</li>`);
+      continue;
+    }
+
+    const numbered = line.match(/^\s*\d+\.\s+(.+)$/);
+    if (numbered) {
+      if (!inList || listType !== 'ol') {
+        closeList();
+        html.push('<ol>');
+        inList = true;
+        listType = 'ol';
+      }
+      html.push(`<li>${inlineMarkdown(numbered[1])}</li>`);
+      continue;
+    }
+
+    const quote = line.match(/^>\s?(.+)$/);
+    if (quote) {
+      closeList();
+      html.push(`<blockquote>${inlineMarkdown(quote[1])}</blockquote>`);
+      continue;
+    }
+
+    closeList();
+    html.push(`<p>${inlineMarkdown(line)}</p>`);
+  }
+
+  closeList();
+  closeTable();
+  if (inCode) html.push(`<pre><code>${highlightCSharp(codeLines.join('\n'))}</code></pre>`);
+  return html.join('\n');
+}
+
+function renderList() {
+  listEl.innerHTML = '';
+  if (!state.filtered.length) {
+    listEl.innerHTML = '<div class="empty-state">No matching classes.</div>';
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  state.filtered.forEach(doc => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'class-item' + (state.active && state.active.file === doc.file ? ' is-active' : '');
+    button.textContent = doc.name;
+    button.setAttribute('role', 'option');
+    button.addEventListener('click', () => selectDoc(doc, true));
+    fragment.appendChild(button);
+  });
+  listEl.appendChild(fragment);
+}
+
+function filterDocs() {
+  const query = searchEl.value.trim().toLowerCase();
+  state.filtered = query
+    ? state.docs.filter(doc => doc.name.toLowerCase().includes(query))
+    : state.docs.slice();
+  renderList();
+}
+
+async function selectDoc(doc, updateHash) {
+  state.active = doc;
+  renderList();
+  filenameEl.textContent = doc.name + '.md';
+  contentEl.innerHTML = '<div class="loading">Loading ' + escapeHtml(doc.name) + '...</div>';
+
+  if (updateHash) {
+    history.replaceState(null, '', '#' + encodeURIComponent(doc.name));
+  }
+
+  try {
+    const response = await fetch(doc.file);
+    if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
+    const markdown = await response.text();
+    contentEl.innerHTML = renderMarkdown(markdown);
+  } catch (error) {
+    contentEl.innerHTML = '<div class="loading">Could not load this markdown file: ' + escapeHtml(error.message) + '</div>';
+  }
+}
+
+async function init() {
+  try {
+    const response = await fetch('documentation/manifest.json');
+    if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
+    state.docs = await response.json();
+    state.filtered = state.docs.slice();
+    countEl.textContent = state.docs.length.toString();
+    renderList();
+
+    const hashName = decodeURIComponent(location.hash.slice(1));
+    const initial = state.docs.find(doc => doc.name === hashName) || state.docs[0];
+    if (initial) selectDoc(initial, false);
+  } catch (error) {
+    contentEl.innerHTML = '<div class="loading">Could not load documentation index: ' + escapeHtml(error.message) + '</div>';
+  }
+}
+
+searchEl.addEventListener('input', filterDocs);
+init();
+</script>
+</body>
+</html>

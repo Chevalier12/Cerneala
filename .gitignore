@@ -6,3 +6,5 @@ obj/
 *.suo
 TestResults/
 .roslyn-index/
+.superpowers/
+.artifacts/
