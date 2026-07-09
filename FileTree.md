@@ -74,6 +74,7 @@ Generated from `.`.
 |   |   |   |-- 2026-07-06-wire-tab-focus-navigation-contract.md
 |   |   |   |-- 2026-07-07-modern-motion-system.md
 |   |   |   |-- 2026-07-08-modern-aspect-template-system.md
+|   |   |   |-- 2026-07-09-markup-aspect-resources.md
 |   |   |   +-- developer-preview-smoke-failure-fix-plan.md
 |   |   +-- specs/
 |   |       +-- 2026-07-09-markup-aspect-resources-design.md
