@@ -367,6 +367,8 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             this.context = context;
             this.file = file;
             this.document = document;
+
+            ReadResources();
         }
 
         public List<string> Lines { get; } = new();
@@ -382,6 +384,13 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             Thickness,
             NonNegativeThickness,
             DrawColor
+        }
+
+        private enum NamedSymbolKind
+        {
+            Element,
+            SolidColorBrush,
+            Aspect
         }
 
         private sealed class PropertySpec
@@ -413,6 +422,73 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             public MarkupValueKind Kind { get; }
         }
 
+        private sealed class NamedSymbol
+        {
+            public NamedSymbol(string name, NamedSymbolKind kind, object source)
+            {
+                Name = name;
+                Kind = kind;
+                Source = source;
+            }
+
+            public string Name { get; }
+
+            public NamedSymbolKind Kind { get; }
+
+            public object Source { get; }
+        }
+
+        private sealed class SolidColorBrushResource
+        {
+            public SolidColorBrushResource(string name, string variable, string colorExpression, DrawColorLiteral color, XElement source)
+            {
+                Name = name;
+                Variable = variable;
+                ColorExpression = colorExpression;
+                Color = color;
+                Source = source;
+            }
+
+            public string Name { get; }
+
+            public string Variable { get; }
+
+            public string ColorExpression { get; }
+
+            public DrawColorLiteral Color { get; }
+
+            public XElement Source { get; }
+        }
+
+        private readonly struct DrawColorLiteral
+        {
+            public DrawColorLiteral(byte r, byte g, byte b, byte a)
+            {
+                R = r;
+                G = g;
+                B = b;
+                A = a;
+            }
+
+            public byte R { get; }
+
+            public byte G { get; }
+
+            public byte B { get; }
+
+            public byte A { get; }
+
+            public string ToExpression()
+            {
+                return A == 255
+                    ? "new global::Cerneala.Drawing.DrawColor(" + R + ", " + G + ", " + B + ")"
+                    : "new global::Cerneala.Drawing.DrawColor(" + R + ", " + G + ", " + B + ", " + A + ")";
+            }
+        }
+
+        private readonly Dictionary<string, NamedSymbol> symbols = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, SolidColorBrushResource> solidColorBrushes = new(StringComparer.Ordinal);
+
         private static readonly PropertySpec[] PropertySpecs =
         [
             new("Text", element => element == "TextBlock", MarkupValueKind.String),
@@ -428,6 +504,119 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
             new("FontFamily", IsControlElement, MarkupValueKind.String),
             new("FontSize", IsControlElement, MarkupValueKind.PositiveFloat)
         ];
+
+        private void ReadResources()
+        {
+            if (document.Resources is null)
+            {
+                return;
+            }
+
+            foreach (XElement resource in document.Resources.Elements())
+            {
+                switch (resource.Name.LocalName)
+                {
+                    case "SolidColorBrush":
+                        ReadSolidColorBrush(resource);
+                        break;
+                    case "Aspect":
+                        break;
+                    case "Resources":
+                        Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Nested Resources declarations are not supported.");
+                        break;
+                    default:
+                        Report(UnsupportedElement, resource, resource.Name.LocalName);
+                        break;
+                }
+            }
+        }
+
+        private void ReadSolidColorBrush(XElement resource)
+        {
+            string? name = RequiredName(resource);
+            if (name is null)
+            {
+                return;
+            }
+
+            XAttribute? colorAttribute = resource.Attribute("Color");
+            if (colorAttribute is null || ParseHexColor(colorAttribute.Value) is not DrawColorLiteral color)
+            {
+                Report(InvalidPropertyValue, (object?)colorAttribute ?? resource, "SolidColorBrush", "Color", colorAttribute?.Value ?? string.Empty);
+                return;
+            }
+
+            string variable = CreateIdentifier(name);
+            SolidColorBrushResource brush = new(name, variable, color.ToExpression(), color, resource);
+            if (!AddSymbol(name, NamedSymbolKind.SolidColorBrush, brush, resource))
+            {
+                return;
+            }
+
+            solidColorBrushes[name] = brush;
+            Lines.Add("global::Cerneala.UI.Media.SolidColorBrush " + variable + " = new(" + brush.ColorExpression + ");");
+        }
+
+        private string? RequiredName(XElement element)
+        {
+            string? name = element.Attribute("Name")?.Value;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                Report(InvalidPropertyValue, element, element.Name.LocalName, "Name", name ?? string.Empty);
+                return null;
+            }
+
+            return name;
+        }
+
+        private bool AddSymbol(string name, NamedSymbolKind kind, object source, XElement location)
+        {
+            if (symbols.ContainsKey(name))
+            {
+                Report(InvalidDocumentShape, location, Path.GetFileName(file.Path), "Duplicate Name '" + name + "'.");
+                return false;
+            }
+
+            symbols.Add(name, new NamedSymbol(name, kind, source));
+            return true;
+        }
+
+        private static DrawColorLiteral? ParseHexColor(string value)
+        {
+            if (value.Length != 7 && value.Length != 9)
+            {
+                return null;
+            }
+
+            if (value[0] != '#')
+            {
+                return null;
+            }
+
+            static bool TryByte(string text, out byte parsed)
+            {
+                return byte.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out parsed);
+            }
+
+            if (value.Length == 7 &&
+                TryByte(value.Substring(1, 2), out byte r) &&
+                TryByte(value.Substring(3, 2), out byte g) &&
+                TryByte(value.Substring(5, 2), out byte b))
+            {
+                return new DrawColorLiteral(r, g, b, 255);
+            }
+
+            if (value.Length == 9 &&
+                TryByte(value.Substring(1, 2), out byte a) &&
+                TryByte(value.Substring(3, 2), out byte rr) &&
+                TryByte(value.Substring(5, 2), out byte gg) &&
+                TryByte(value.Substring(7, 2), out byte bb))
+            {
+                return new DrawColorLiteral(rr, gg, bb, a);
+            }
+
+            return null;
+        }
 
         public string EmitElement(XElement element)
         {

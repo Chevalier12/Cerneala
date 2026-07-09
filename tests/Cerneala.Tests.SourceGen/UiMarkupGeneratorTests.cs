@@ -137,6 +137,44 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void SolidColorBrushResourceEmitsNamedBrushVariable()
+    {
+        const string markup = """
+            <Resources>
+              <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
+            </Resources>
+            <TextBlock Text="Hello" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("BrushResource.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("global::Cerneala.UI.Media.SolidColorBrush PulseColor = new(new global::Cerneala.Drawing.DrawColor(255, 93, 115));", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void InvalidSolidColorBrushColorReportsDiagnostic()
+    {
+        const string markup = """
+            <Resources>
+              <SolidColorBrush Name="PulseColor" Color="#NOPE" />
+            </Resources>
+            <TextBlock Text="Hello" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("BadBrush.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "BadBrush.cui.xml");
+        Assert.Contains("SolidColorBrush.Color", diagnostic.GetMessage());
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
     public void MultipleUiRootsReportMalformedMarkupDiagnostic()
     {
         const string markup = """
