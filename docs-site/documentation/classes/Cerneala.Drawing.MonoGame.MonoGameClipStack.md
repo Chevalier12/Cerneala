@@ -6,7 +6,7 @@ Namespace: `Cerneala.Drawing.MonoGame`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/MonoGame/MonoGameClipStack.cs`
+Source: `Drawing/MonoGame/MonoGameClipStack.cs`
 
 Tracks nested MonoGame scissor rectangles by intersecting pushed clips with the current clip and restoring previous clips on pop.
 

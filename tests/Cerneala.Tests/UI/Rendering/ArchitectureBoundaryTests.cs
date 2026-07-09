@@ -130,17 +130,17 @@ public sealed class ArchitectureBoundaryTests
         string controlsRoot = FindRepositoryPath("UI", "Controls");
         string[] templateFiles =
         [
-            "ControlTemplate.cs",
-            "ControlTemplate{TControl}.cs",
-            "TemplateContext.cs",
-            "TemplateInstance.cs",
-            "TemplateBinding{T}.cs",
-            "TemplatePartAttribute.cs",
+            Path.Combine("Templates", "ControlTemplate.cs"),
+            Path.Combine("Templates", "ControlTemplate{TControl}.cs"),
+            Path.Combine("Templates", "TemplateContext.cs"),
+            Path.Combine("Templates", "TemplateInstance.cs"),
+            Path.Combine("Templates", "TemplateBinding{T}.cs"),
+            Path.Combine("Templates", "TemplatePartAttribute.cs"),
             "ContentPresenter.cs",
             "ItemsPresenter.cs",
-            "ItemsPanelTemplate.cs",
-            "DataTemplate.cs",
-            "DataTemplate{T}.cs"
+            Path.Combine("Items", "ItemsPanelTemplate.cs"),
+            Path.Combine("Templates", "DataTemplate.cs"),
+            Path.Combine("Templates", "DataTemplate{T}.cs")
         ];
         string[] forbiddenTerms =
         [
@@ -352,7 +352,7 @@ public sealed class ArchitectureBoundaryTests
     [Fact]
     public void UiDrawingDoesNotReferenceRetainedRendering()
     {
-        string drawingRoot = FindRepositoryPath("UI", "Drawing");
+        string drawingRoot = FindRepositoryPath("Drawing");
 
         foreach (string file in Directory.EnumerateFiles(drawingRoot, "*.cs", SearchOption.AllDirectories))
         {
@@ -421,12 +421,12 @@ public sealed class ArchitectureBoundaryTests
         string[] files =
         [
             Path.Combine(root, "UI", "Controls", "ItemsControl.cs"),
-            Path.Combine(root, "UI", "Controls", "ItemCollection.cs"),
-            Path.Combine(root, "UI", "Controls", "ItemContainerGenerator.cs"),
-            Path.Combine(root, "UI", "Controls", "ItemContainerRecyclePool.cs"),
+            Path.Combine(root, "UI", "Controls", "Items", "ItemCollection.cs"),
+            Path.Combine(root, "UI", "Controls", "Items", "ItemContainerGenerator.cs"),
+            Path.Combine(root, "UI", "Controls", "Items", "ItemContainerRecyclePool.cs"),
             Path.Combine(root, "UI", "Controls", "ItemsPresenter.cs"),
-            Path.Combine(root, "UI", "Controls", "SelectionModel.cs"),
-            Path.Combine(root, "UI", "Controls", "SelectionModel{T}.cs"),
+            Path.Combine(root, "UI", "Controls", "Selection", "SelectionModel.cs"),
+            Path.Combine(root, "UI", "Controls", "Selection", "SelectionModel{T}.cs"),
             Path.Combine(root, "UI", "Controls", "Primitives", "Selector.cs"),
             Path.Combine(root, "UI", "Controls", "ListBox.cs"),
             Path.Combine(root, "UI", "Controls", "ListBoxItem.cs"),
@@ -601,7 +601,6 @@ public sealed class ArchitectureBoundaryTests
             "UI/Text/TextCompositionManager.cs",
             "UI/Text/TextCompositionState.cs",
             "UI/Text/UndoRedoStack.cs",
-            "UI/Text/ClipboardAdapter.cs",
             "UI/Platform/ITextInputPlatform.cs",
             "tests/Cerneala.Tests/Controls/TextBoxTests.cs",
             "tests/Cerneala.Tests/Controls/PasswordBoxTests.cs",
@@ -688,7 +687,6 @@ public sealed class ArchitectureBoundaryTests
             Path.Combine(root, "UI", "Text", "TextCompositionManager.cs"),
             Path.Combine(root, "UI", "Text", "TextCompositionState.cs"),
             Path.Combine(root, "UI", "Text", "UndoRedoStack.cs"),
-            Path.Combine(root, "UI", "Text", "ClipboardAdapter.cs"),
             Path.Combine(root, "UI", "Platform", "ITextInputPlatform.cs")
         ];
         string[] forbiddenTerms =
@@ -778,8 +776,8 @@ public sealed class ArchitectureBoundaryTests
         string section22 = roadmap[sectionStart..nextSection];
         string[] completeFiles =
         [
-            "UI/Drawing/DrawCommandKind.cs",
-            "UI/Drawing/DrawingContext.cs",
+            "Drawing/DrawCommandKind.cs",
+            "Drawing/DrawingContext.cs",
             "UI/Media/Brush.cs",
             "UI/Media/SolidColorBrush.cs",
             "UI/Media/Pen.cs",

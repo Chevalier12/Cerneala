@@ -39,11 +39,3 @@ public sealed class StrokeCollection : IReadOnlyList<Stroke>
         return GetEnumerator();
     }
 }
-
-public sealed record StrokeCollectionChangedEventArgs(StrokeCollectionChangeKind Kind, Stroke Stroke);
-
-public enum StrokeCollectionChangeKind
-{
-    Added,
-    Removed
-}

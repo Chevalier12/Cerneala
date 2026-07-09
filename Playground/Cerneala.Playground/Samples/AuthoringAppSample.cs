@@ -6,7 +6,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
-using PanelOrientation = Cerneala.UI.Layout.Panels.Orientation;
+using PanelOrientation = Cerneala.UI.Layout.Orientation;
 
 namespace Cerneala.Playground.Samples;
 

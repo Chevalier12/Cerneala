@@ -4,12 +4,13 @@ using System;
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
-using PanelOrientation = Cerneala.UI.Layout.Panels.Orientation;
+using PanelOrientation = Cerneala.UI.Layout.Orientation;
 
 namespace Cerneala.Playground.Samples;
 

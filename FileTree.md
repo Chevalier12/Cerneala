@@ -89,16 +89,22 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.DrawArgument.md
 |   |   |   |-- Cerneala.Drawing.DrawColor.md
 |   |   |   |-- Cerneala.Drawing.DrawCommand.md
+|   |   |   |-- Cerneala.Drawing.DrawCommandKind.md
 |   |   |   |-- Cerneala.Drawing.DrawCommandList.md
 |   |   |   |-- Cerneala.Drawing.DrawingContext.md
 |   |   |   |-- Cerneala.Drawing.DrawPoint.md
 |   |   |   |-- Cerneala.Drawing.DrawRect.md
 |   |   |   |-- Cerneala.Drawing.DrawSize.md
 |   |   |   |-- Cerneala.Drawing.DrawTextRun.md
+|   |   |   |-- Cerneala.Drawing.IDrawFont.md
+|   |   |   |-- Cerneala.Drawing.IDrawImage.md
+|   |   |   |-- Cerneala.Drawing.IDrawingBackend.md
+|   |   |   |-- Cerneala.Drawing.IFontSource.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameClipStack.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTexture.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTextureKey.md
+|   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawMapper.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameImage.md
 |   |   |   |-- Cerneala.Drawing.Text.RasterizedText.md
 |   |   |   |-- Cerneala.Drawing.Text.SkiaFont.md
@@ -110,13 +116,16 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.Text.TextShapeResult.md
 |   |   |   |-- Cerneala.GameBootstrap.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.GenerationScope.md
+|   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.MarkupSource.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.md
 |   |   |   |-- Cerneala.UI.Accessibility.AccessibleName.md
 |   |   |   |-- Cerneala.UI.Accessibility.AutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.ButtonAutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.ItemsControlAutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.SemanticsNode.md
+|   |   |   |-- Cerneala.UI.Accessibility.SemanticsProperty.md
 |   |   |   |-- Cerneala.UI.Accessibility.SemanticsProvider.md
+|   |   |   |-- Cerneala.UI.Accessibility.SemanticsRole.md
 |   |   |   |-- Cerneala.UI.Accessibility.SemanticsTree.md
 |   |   |   |-- Cerneala.UI.Accessibility.TextBoxAutomationPeer.md
 |   |   |   |-- Cerneala.UI.Aspect.AllAspectCondition.md
@@ -126,6 +135,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.AspectCatalog.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectConditionDependency.md
+|   |   |   |-- Cerneala.UI.Aspect.AspectConditionDependencyKind.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectConditionNode.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectConditionResult.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectDataContext.md
@@ -144,6 +154,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.AspectLayer.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectMatchContext.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectMotion.md
+|   |   |   |-- Cerneala.UI.Aspect.AspectMotionSource.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectPackage.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectPackageBuilder.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectPackageDiagnostic.md
@@ -194,10 +205,12 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.VariantAspectCondition.md
 |   |   |   |-- Cerneala.UI.Controls.Border.md
 |   |   |   |-- Cerneala.UI.Controls.Button.md
-|   |   |   |-- Cerneala.UI.Controls.ButtonSlots.md
-|   |   |   |-- Cerneala.UI.Controls.ButtonTemplates.md
-|   |   |   |-- Cerneala.UI.Controls.ButtonTokens.md
-|   |   |   |-- Cerneala.UI.Controls.ButtonVariants.md
+|   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonKind.md
+|   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonSize.md
+|   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonSlots.md
+|   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonTemplates.md
+|   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonTokens.md
+|   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonVariants.md
 |   |   |   |-- Cerneala.UI.Controls.Canvas.md
 |   |   |   |-- Cerneala.UI.Controls.CheckBox.md
 |   |   |   |-- Cerneala.UI.Controls.ComboBox.md
@@ -206,22 +219,22 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.ContentPresenter.md
 |   |   |   |-- Cerneala.UI.Controls.ContentPresenter.ReferenceContentEqualityComparer.md
 |   |   |   |-- Cerneala.UI.Controls.Control.md
-|   |   |   |-- Cerneala.UI.Controls.ControlTemplate_TControl_.md
-|   |   |   |-- Cerneala.UI.Controls.ControlTemplate.md
 |   |   |   |-- Cerneala.UI.Controls.ControlTextFont.md
-|   |   |   |-- Cerneala.UI.Controls.DataTemplate_T_.md
-|   |   |   |-- Cerneala.UI.Controls.DataTemplate.md
 |   |   |   |-- Cerneala.UI.Controls.Decorator.md
 |   |   |   |-- Cerneala.UI.Controls.Image.md
 |   |   |   |-- Cerneala.UI.Controls.Image.ReferenceImageComparer.md
+|   |   |   |-- Cerneala.UI.Controls.InkCanvas.InkInputAction.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.InkInputKey.md
+|   |   |   |-- Cerneala.UI.Controls.InkCanvas.InkInputKind.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.md
-|   |   |   |-- Cerneala.UI.Controls.ItemCollection.md
-|   |   |   |-- Cerneala.UI.Controls.ItemContainerGenerator.ItemContainerInfo.md
-|   |   |   |-- Cerneala.UI.Controls.ItemContainerGenerator.md
-|   |   |   |-- Cerneala.UI.Controls.ItemContainerRecyclePool.md
+|   |   |   |-- Cerneala.UI.Controls.IScrollInfo.md
+|   |   |   |-- Cerneala.UI.Controls.ISelectableItemContainer.md
+|   |   |   |-- Cerneala.UI.Controls.Items.ItemCollection.md
+|   |   |   |-- Cerneala.UI.Controls.Items.ItemContainerGenerator.ItemContainerInfo.md
+|   |   |   |-- Cerneala.UI.Controls.Items.ItemContainerGenerator.md
+|   |   |   |-- Cerneala.UI.Controls.Items.ItemContainerRecyclePool.md
+|   |   |   |-- Cerneala.UI.Controls.Items.ItemsPanelTemplate.md
 |   |   |   |-- Cerneala.UI.Controls.ItemsControl.md
-|   |   |   |-- Cerneala.UI.Controls.ItemsPanelTemplate.md
 |   |   |   |-- Cerneala.UI.Controls.ItemsPresenter.md
 |   |   |   |-- Cerneala.UI.Controls.Label.md
 |   |   |   |-- Cerneala.UI.Controls.ListBox.md
@@ -242,12 +255,13 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Primitives.Track.md
 |   |   |   |-- Cerneala.UI.Controls.ProgressBar.md
 |   |   |   |-- Cerneala.UI.Controls.RadioButton.md
+|   |   |   |-- Cerneala.UI.Controls.ScrollBarVisibility.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollContentPresenter.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollViewer.md
-|   |   |   |-- Cerneala.UI.Controls.SelectionChangedEventArgs.md
-|   |   |   |-- Cerneala.UI.Controls.SelectionChangeResult.md
-|   |   |   |-- Cerneala.UI.Controls.SelectionModel_T_.md
-|   |   |   |-- Cerneala.UI.Controls.SelectionModel.md
+|   |   |   |-- Cerneala.UI.Controls.Selection.SelectionChangedEventArgs.md
+|   |   |   |-- Cerneala.UI.Controls.Selection.SelectionChangeResult.md
+|   |   |   |-- Cerneala.UI.Controls.Selection.SelectionModel_T_.md
+|   |   |   |-- Cerneala.UI.Controls.Selection.SelectionModel.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Ellipse.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Path.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Rectangle.md
@@ -256,13 +270,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.StackPanel.md
 |   |   |   |-- Cerneala.UI.Controls.TabControl.md
 |   |   |   |-- Cerneala.UI.Controls.TabItem.md
-|   |   |   |-- Cerneala.UI.Controls.TemplateBinding_T_.md
-|   |   |   |-- Cerneala.UI.Controls.TemplateBinding.md
-|   |   |   |-- Cerneala.UI.Controls.TemplateChildOwner.md
-|   |   |   |-- Cerneala.UI.Controls.TemplateContext_TControl_.md
-|   |   |   |-- Cerneala.UI.Controls.TemplateContext.md
-|   |   |   |-- Cerneala.UI.Controls.TemplateInstance.md
-|   |   |   |-- Cerneala.UI.Controls.TemplatePartAttribute.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.ComponentTemplate_TControl_.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.ComponentTemplate.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.ComponentTemplateContext_TControl_.md
@@ -278,8 +285,19 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Templates.ContentTemplateRegistry.CacheKey.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.ContentTemplateRegistry.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.ContentTemplateRegistry.RegisteredTemplate.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.ControlTemplate_TControl_.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.ControlTemplate.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.ControlTemplateAdapter.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.DataTemplate_T_.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.DataTemplate.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.DataTemplateAdapter.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.TemplateBinding_T_.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.TemplateBinding.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.TemplateChildOwner.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.TemplateContext_TControl_.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.TemplateContext.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.TemplateInstance.md
+|   |   |   |-- Cerneala.UI.Controls.Templates.TemplatePartAttribute.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.TemplatePartMap.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.TemplateRecycleKey.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.TemplateRecyclePool.md
@@ -290,6 +308,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.TextBox.md
 |   |   |   |-- Cerneala.UI.Controls.TextBoxBase.md
 |   |   |   |-- Cerneala.UI.Controls.ToolTip.md
+|   |   |   |-- Cerneala.UI.Core.CoerceValue_T_.md
+|   |   |   |-- Cerneala.UI.Core.IUiPropertyOwner.md
 |   |   |   |-- Cerneala.UI.Core.UiObject.md
 |   |   |   |-- Cerneala.UI.Core.UiProperty_T_.md
 |   |   |   |-- Cerneala.UI.Core.UiProperty.md
@@ -299,18 +319,27 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Core.UiPropertyMetadata_T_.md
 |   |   |   |-- Cerneala.UI.Core.UiPropertyMutation.md
 |   |   |   |-- Cerneala.UI.Core.UiPropertyMutationObserver.md
+|   |   |   |-- Cerneala.UI.Core.UiPropertyOptions.md
 |   |   |   |-- Cerneala.UI.Core.UiPropertyRegistry.md
 |   |   |   |-- Cerneala.UI.Core.UiPropertyStore.md
+|   |   |   |-- Cerneala.UI.Core.UiPropertyValueSource.md
 |   |   |   |-- Cerneala.UI.Core.Unset.md
 |   |   |   |-- Cerneala.UI.Core.Unset.UnsetValue.md
+|   |   |   |-- Cerneala.UI.Core.ValidateValue_T_.md
 |   |   |   |-- Cerneala.UI.Data.Binding_T_.md
 |   |   |   |-- Cerneala.UI.Data.Binding.md
+|   |   |   |-- Cerneala.UI.Data.BindingMode.md
 |   |   |   |-- Cerneala.UI.Data.BindingOperations.md
 |   |   |   |-- Cerneala.UI.Data.BindingSubscriptionCollection.md
 |   |   |   |-- Cerneala.UI.Data.CollectionView_T_.md
+|   |   |   |-- Cerneala.UI.Data.FilterPredicate_T_.md
+|   |   |   |-- Cerneala.UI.Data.IObservableList_T_.md
+|   |   |   |-- Cerneala.UI.Data.IObservableList.md
+|   |   |   |-- Cerneala.UI.Data.IValueConverter_TIn_TOut_.md
 |   |   |   |-- Cerneala.UI.Data.ObservableList_T_.md
 |   |   |   |-- Cerneala.UI.Data.ObservableListChangedEventArgs_T_.md
 |   |   |   |-- Cerneala.UI.Data.ObservableListChangedEventArgs.md
+|   |   |   |-- Cerneala.UI.Data.ObservableListChangeKind.md
 |   |   |   |-- Cerneala.UI.Data.ObservableValue_T_.md
 |   |   |   |-- Cerneala.UI.Data.ObservableValueChangedEventArgs_T_.md
 |   |   |   |-- Cerneala.UI.Data.PropertyAdapter_TOwner_TValue_.md
@@ -331,6 +360,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Diagnostics.InputDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Diagnostics.InvalidationTrace.md
 |   |   |   |-- Cerneala.UI.Diagnostics.InvalidationTraceEntry.md
+|   |   |   |-- Cerneala.UI.Diagnostics.InvalidationTraceEventKind.md
 |   |   |   |-- Cerneala.UI.Diagnostics.LayoutDiagnostics.md
 |   |   |   |-- Cerneala.UI.Diagnostics.LayoutDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Diagnostics.RenderCacheDumper.md
@@ -346,17 +376,23 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Diagnostics.RuntimeRenderDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Diagnostics.RuntimeResourceDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Diagnostics.RuntimeViewportDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Elements.ElementChildRole.md
 |   |   |   |-- Cerneala.UI.Elements.ElementHandlerStore.md
 |   |   |   |-- Cerneala.UI.Elements.ElementIdProvider.md
 |   |   |   |-- Cerneala.UI.Elements.ElementLifecycle.md
 |   |   |   |-- Cerneala.UI.Elements.ElementTreeChange.md
+|   |   |   |-- Cerneala.UI.Elements.ElementTreeChangeKind.md
 |   |   |   |-- Cerneala.UI.Elements.ElementTreeWalker.md
+|   |   |   |-- Cerneala.UI.Elements.IElementChildHost.md
+|   |   |   |-- Cerneala.UI.Elements.IElementHost.md
 |   |   |   |-- Cerneala.UI.Elements.InheritedPropertyPropagator.md
 |   |   |   |-- Cerneala.UI.Elements.UIElement.md
 |   |   |   |-- Cerneala.UI.Elements.UIElementCollection.md
 |   |   |   |-- Cerneala.UI.Elements.UIElementVisibility.md
 |   |   |   |-- Cerneala.UI.Elements.UIRoot.md
 |   |   |   |-- Cerneala.UI.Elements.UIRoot.ThemeChangedSubscription.md
+|   |   |   |-- Cerneala.UI.Hosting.IUiBackend.md
+|   |   |   |-- Cerneala.UI.Hosting.IUiClock.md
 |   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameContentServices.md
 |   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.md
 |   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.MonoGameUiBackend.md
@@ -369,6 +405,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Ink.Stroke.md
 |   |   |   |-- Cerneala.UI.Ink.StrokeCollection.md
 |   |   |   |-- Cerneala.UI.Ink.StrokeCollectionChangedEventArgs.md
+|   |   |   |-- Cerneala.UI.Ink.StrokeCollectionChangeKind.md
 |   |   |   |-- Cerneala.UI.Input.ActionCommand.md
 |   |   |   |-- Cerneala.UI.Input.CanExecuteRoutedEventArgs.md
 |   |   |   |-- Cerneala.UI.Input.ClickTracker.md
@@ -393,12 +430,19 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Input.FocusPolicy.md
 |   |   |   |-- Cerneala.UI.Input.FocusScope.md
 |   |   |   |-- Cerneala.UI.Input.GestureEvent.md
+|   |   |   |-- Cerneala.UI.Input.GestureKind.md
 |   |   |   |-- Cerneala.UI.Input.GestureRecognizer.md
 |   |   |   |-- Cerneala.UI.Input.GestureSample.md
 |   |   |   |-- Cerneala.UI.Input.HitTestFilter.md
+|   |   |   |-- Cerneala.UI.Input.HitTestFilterBehavior.md
 |   |   |   |-- Cerneala.UI.Input.HitTestResult.md
 |   |   |   |-- Cerneala.UI.Input.HitTestService.md
 |   |   |   |-- Cerneala.UI.Input.HoverTracker.md
+|   |   |   |-- Cerneala.UI.Input.ICommand.md
+|   |   |   |-- Cerneala.UI.Input.ICommandStateSource.md
+|   |   |   |-- Cerneala.UI.Input.IInputCommandSource.md
+|   |   |   |-- Cerneala.UI.Input.IInputPressable.md
+|   |   |   |-- Cerneala.UI.Input.IInputSource.md
 |   |   |   |-- Cerneala.UI.Input.InputBinding.md
 |   |   |   |-- Cerneala.UI.Input.InputBindingCollection.md
 |   |   |   |-- Cerneala.UI.Input.InputButtonState.md
@@ -407,8 +451,13 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Input.InputFrame.md
 |   |   |   |-- Cerneala.UI.Input.InputFrame.PointerFrame.md
 |   |   |   |-- Cerneala.UI.Input.InputGesture.md
+|   |   |   |-- Cerneala.UI.Input.InputKey.md
+|   |   |   |-- Cerneala.UI.Input.InputMouseButton.md
+|   |   |   |-- Cerneala.UI.Input.IObservableCommand.md
+|   |   |   |-- Cerneala.UI.Input.IPointerDragSource.md
 |   |   |   |-- Cerneala.UI.Input.KeyBinding.md
 |   |   |   |-- Cerneala.UI.Input.KeyboardActivationController.md
+|   |   |   |-- Cerneala.UI.Input.KeyboardDispatchKind.md
 |   |   |   |-- Cerneala.UI.Input.KeyboardDispatchResult.md
 |   |   |   |-- Cerneala.UI.Input.KeyboardFocusChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Input.KeyboardNavigation.md
@@ -417,6 +466,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Input.KeyboardSnapshot.md
 |   |   |   |-- Cerneala.UI.Input.KeyEventArgs.md
 |   |   |   |-- Cerneala.UI.Input.KeyGesture.md
+|   |   |   |-- Cerneala.UI.Input.KeyModifiers.md
 |   |   |   |-- Cerneala.UI.Input.ManipulationDelta.md
 |   |   |   |-- Cerneala.UI.Input.ManipulationPoint.md
 |   |   |   |-- Cerneala.UI.Input.ManipulationProcessor.md
@@ -434,9 +484,12 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Input.RoutedCommandContext.md
 |   |   |   |-- Cerneala.UI.Input.RoutedEvent.md
 |   |   |   |-- Cerneala.UI.Input.RoutedEventArgs.md
+|   |   |   |-- Cerneala.UI.Input.RoutedEventHandler.md
 |   |   |   |-- Cerneala.UI.Input.RoutedEventRegistry.md
 |   |   |   |-- Cerneala.UI.Input.RoutedEventRouter.md
+|   |   |   |-- Cerneala.UI.Input.RoutingStrategy.md
 |   |   |   |-- Cerneala.UI.Input.StylusEventArgs.md
+|   |   |   |-- Cerneala.UI.Input.StylusInputAction.md
 |   |   |   |-- Cerneala.UI.Input.StylusInputBridge.md
 |   |   |   |-- Cerneala.UI.Input.StylusInputFrame.md
 |   |   |   |-- Cerneala.UI.Input.StylusInputPoint.md
@@ -444,6 +497,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Input.TextInputBridge.md
 |   |   |   |-- Cerneala.UI.Input.TextInputSnapshotEvent.md
 |   |   |   |-- Cerneala.UI.Input.TouchEventArgs.md
+|   |   |   |-- Cerneala.UI.Input.TouchInputAction.md
 |   |   |   |-- Cerneala.UI.Input.TouchInputBridge.md
 |   |   |   |-- Cerneala.UI.Input.TouchInputFrame.md
 |   |   |   |-- Cerneala.UI.Input.TouchInputPoint.md
@@ -457,15 +511,20 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Invalidation.ElementQueueOrder.ElementOrder.md
 |   |   |   |-- Cerneala.UI.Invalidation.ElementQueueOrder.md
 |   |   |   |-- Cerneala.UI.Invalidation.FrameBudget.md
+|   |   |   |-- Cerneala.UI.Invalidation.FramePhase.md
 |   |   |   |-- Cerneala.UI.Invalidation.FramePhaseProcessors.md
 |   |   |   |-- Cerneala.UI.Invalidation.FrameStats.md
 |   |   |   |-- Cerneala.UI.Invalidation.HitTestQueue.md
+|   |   |   |-- Cerneala.UI.Invalidation.IInvalidationSink.md
 |   |   |   |-- Cerneala.UI.Invalidation.InheritedPropertyQueue.md
+|   |   |   |-- Cerneala.UI.Invalidation.InvalidationFlags.md
 |   |   |   |-- Cerneala.UI.Invalidation.InvalidationRequest.md
 |   |   |   |-- Cerneala.UI.Invalidation.LayoutQueue.md
 |   |   |   |-- Cerneala.UI.Invalidation.RenderQueue.md
 |   |   |   |-- Cerneala.UI.Invalidation.UiFrameScheduler.md
 |   |   |   |-- Cerneala.UI.Layout.ArrangeContext.md
+|   |   |   |-- Cerneala.UI.Layout.HorizontalAlignment.md
+|   |   |   |-- Cerneala.UI.Layout.ILayoutElement.md
 |   |   |   |-- Cerneala.UI.Layout.LayoutBoundary.md
 |   |   |   |-- Cerneala.UI.Layout.LayoutManager.md
 |   |   |   |-- Cerneala.UI.Layout.LayoutPoint.md
@@ -474,6 +533,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Layout.LayoutRounding.md
 |   |   |   |-- Cerneala.UI.Layout.LayoutSize.md
 |   |   |   |-- Cerneala.UI.Layout.MeasureContext.md
+|   |   |   |-- Cerneala.UI.Layout.Orientation.md
 |   |   |   |-- Cerneala.UI.Layout.Panels.Canvas.CanvasPosition.md
 |   |   |   |-- Cerneala.UI.Layout.Panels.Canvas.md
 |   |   |   |-- Cerneala.UI.Layout.Panels.ColumnDefinition.md
@@ -481,17 +541,21 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Layout.Panels.Grid.md
 |   |   |   |-- Cerneala.UI.Layout.Panels.GridDefinitionCollection_TDefinition_.md
 |   |   |   |-- Cerneala.UI.Layout.Panels.GridLength.md
+|   |   |   |-- Cerneala.UI.Layout.Panels.GridUnitType.md
 |   |   |   |-- Cerneala.UI.Layout.Panels.Panel.md
 |   |   |   |-- Cerneala.UI.Layout.Panels.RowDefinition.md
 |   |   |   |-- Cerneala.UI.Layout.Panels.StackPanel.md
 |   |   |   |-- Cerneala.UI.Layout.Panels.VirtualizingStackPanel.md
 |   |   |   |-- Cerneala.UI.Layout.Thickness.md
+|   |   |   |-- Cerneala.UI.Layout.VerticalAlignment.md
 |   |   |   |-- Cerneala.UI.Layout.Virtualization.RealizationWindow.md
 |   |   |   |-- Cerneala.UI.Layout.Virtualization.VirtualizationContext.md
+|   |   |   |-- Cerneala.UI.Layout.Visibility.md
 |   |   |   |-- Cerneala.UI.Markup.ContentPropertyAttribute.md
 |   |   |   |-- Cerneala.UI.Markup.DesignTimeOnlyAttribute.md
 |   |   |   |-- Cerneala.UI.Markup.GeneratedUiFactory.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupDiagnostic.md
+|   |   |   |-- Cerneala.UI.Markup.MarkupDiagnosticSeverity.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupLoadOptions.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupResult_T_.md
 |   |   |   |-- Cerneala.UI.Markup.UiFactory.md
@@ -512,7 +576,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Media.EllipseGeometry.md
 |   |   |   |-- Cerneala.UI.Media.Geometry.md
 |   |   |   |-- Cerneala.UI.Media.GradientStop.md
-|   |   |   |-- Cerneala.UI.Media.GradientStopCollection.md
 |   |   |   |-- Cerneala.UI.Media.ImageSource.md
 |   |   |   |-- Cerneala.UI.Media.LinearGradientBrush.md
 |   |   |   |-- Cerneala.UI.Media.Matrix3x2.md
@@ -527,13 +590,20 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Media.Transform.md
 |   |   |   |-- Cerneala.UI.Motion.Core.DerivedMotionValue_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Core.DerivedMotionValue_T_.Subscription.md
+|   |   |   |-- Cerneala.UI.Motion.Core.IMotionClock.md
+|   |   |   |-- Cerneala.UI.Motion.Core.IReducedMotionSource.md
 |   |   |   |-- Cerneala.UI.Motion.Core.ManualMotionTimeline.md
+|   |   |   |-- Cerneala.UI.Motion.Core.MotionCancelBehavior.md
+|   |   |   |-- Cerneala.UI.Motion.Core.MotionChannel.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionCompletedEventArgs.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionCompletionSource.md
+|   |   |   |-- Cerneala.UI.Motion.Core.MotionCompletionState.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionComposition.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionConflictResolver.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionFrame.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionFrameCoordinator.md
+|   |   |   |-- Cerneala.UI.Motion.Core.MotionFramePhase.md
+|   |   |   |-- Cerneala.UI.Motion.Core.MotionFrameReason.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionFrameResult.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionGraph.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionGroup.md
@@ -541,6 +611,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionHandle.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionNode.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionNodeTickResult.md
+|   |   |   |-- Cerneala.UI.Motion.Core.MotionPriority.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionSequence.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionStagger.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionStartOptions.md
@@ -553,15 +624,18 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionValue_T_.ValueNode.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionValue.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionValueChanged_T_.md
+|   |   |   |-- Cerneala.UI.Motion.Core.ReducedMotionMode.md
 |   |   |   |-- Cerneala.UI.Motion.Core.ReducedMotionPolicy.md
 |   |   |   |-- Cerneala.UI.Motion.Core.SystemMotionClock.md
 |   |   |   |-- Cerneala.UI.Motion.Diagnostics.MotionDiagnostics.md
 |   |   |   |-- Cerneala.UI.Motion.Diagnostics.MotionGraphSnapshot.md
 |   |   |   |-- Cerneala.UI.Motion.Diagnostics.MotionTrace.md
 |   |   |   |-- Cerneala.UI.Motion.Diagnostics.MotionTraceEvent.md
+|   |   |   |-- Cerneala.UI.Motion.Diagnostics.MotionTraceEventKind.md
 |   |   |   |-- Cerneala.UI.Motion.Input.DragMotionController.md
 |   |   |   |-- Cerneala.UI.Motion.Input.GestureMotionController.md
 |   |   |   |-- Cerneala.UI.Motion.Input.MotionRange.md
+|   |   |   |-- Cerneala.UI.Motion.Input.PointerMotionState.md
 |   |   |   |-- Cerneala.UI.Motion.Input.ScrollMotionBinding_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Input.ScrollTimeline.md
 |   |   |   |-- Cerneala.UI.Motion.Input.ScrollTimelineProgress.md
@@ -572,8 +646,10 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.DrawRectMixer.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.DrawSizeMixer.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.FloatMixer.md
+|   |   |   |-- Cerneala.UI.Motion.Interpolation.IValueMixer.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.ThicknessMixer.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.TransformComponents.md
+|   |   |   |-- Cerneala.UI.Motion.Interpolation.TransformInterpolationMode.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.TransformMixer.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.ValueMixer_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.ValueMixerRegistry.md
@@ -591,27 +667,34 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceCoordinator.md
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceHandle.md
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceOptions.md
+|   |   |   |-- Cerneala.UI.Motion.Presence.PresenceState.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.AnimatablePropertyRegistry.md
+|   |   |   |-- Cerneala.UI.Motion.Properties.MotionClearBehavior.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyBinding_T_.BindingNode.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyBinding_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyBinding.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyFlushResult.md
+|   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyInvalidationCategory.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyInvalidationClassifier.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyKey.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyOptions.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyStartOptions.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyStore.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyStore.PendingWrite.md
+|   |   |   |-- Cerneala.UI.Motion.Properties.MotionPropertyStore.PendingWriteKind.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.CubicBezierEasing.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.DecaySpec_T_.DecaySampler.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.DecaySpec_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.Easings.LinearEasing.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.Easings.md
+|   |   |   |-- Cerneala.UI.Motion.Specs.FillMode.md
+|   |   |   |-- Cerneala.UI.Motion.Specs.IEasing.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.KeyframesSpec_T_.KeyframesSampler.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.KeyframesSpec_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.Motion.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.Motion.UntypedSpringSpec.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.Motion.UntypedTweenSpec.md
+|   |   |   |-- Cerneala.UI.Motion.Specs.MotionCompletion.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.MotionKeyframe_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.MotionSampler_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.MotionSampler.md
@@ -624,9 +707,12 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.Specs.RepeatSpec_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.RepeatSpec_T_.Sampler.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.RepeatSpec_T_.StaticSampler.md
+|   |   |   |-- Cerneala.UI.Motion.Specs.RetargetMode.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.SpringSpec_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.SpringSpec_T_.VectorSpringSampler.md
+|   |   |   |-- Cerneala.UI.Motion.Specs.SpringVelocityMode.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.StepEasing.md
+|   |   |   |-- Cerneala.UI.Motion.Specs.StepPosition.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.TweenSpec_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Specs.TweenSpec_T_.TweenSampler.md
 |   |   |   |-- Cerneala.UI.Motion.States.MotionStateRule.md
@@ -639,14 +725,24 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.Transactions.MotionTransactionContext.UntypedMotionSpecAdapter_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Transactions.MotionTransactionOptions.md
 |   |   |   |-- Cerneala.UI.Motion.Transactions.MotionTransactionScope.md
+|   |   |   |-- Cerneala.UI.Platform.CursorShape.md
 |   |   |   |-- Cerneala.UI.Platform.FileDialogFilter.md
 |   |   |   |-- Cerneala.UI.Platform.FileDialogOptions.md
+|   |   |   |-- Cerneala.UI.Platform.IAccessibilityPlatform.md
+|   |   |   |-- Cerneala.UI.Platform.IClipboard.md
+|   |   |   |-- Cerneala.UI.Platform.ICursorService.md
+|   |   |   |-- Cerneala.UI.Platform.IDpiProvider.md
+|   |   |   |-- Cerneala.UI.Platform.IFileDialogService.md
+|   |   |   |-- Cerneala.UI.Platform.IPlatformServices.md
+|   |   |   |-- Cerneala.UI.Platform.ITextInputPlatform.md
 |   |   |   |-- Cerneala.UI.Platform.PlatformServices.md
 |   |   |   |-- Cerneala.UI.Rendering.ClipNode.ClipBox.md
 |   |   |   |-- Cerneala.UI.Rendering.ClipNode.md
 |   |   |   |-- Cerneala.UI.Rendering.DrawCommandListBuilder.md
 |   |   |   |-- Cerneala.UI.Rendering.DrawCommandListPool.md
 |   |   |   |-- Cerneala.UI.Rendering.ElementRenderCache.md
+|   |   |   |-- Cerneala.UI.Rendering.IRenderableElement.md
+|   |   |   |-- Cerneala.UI.Rendering.ITimeSensitiveRenderElement.md
 |   |   |   |-- Cerneala.UI.Rendering.RenderContext.md
 |   |   |   |-- Cerneala.UI.Rendering.RenderCounters.md
 |   |   |   |-- Cerneala.UI.Rendering.RenderDependency.md
@@ -656,8 +752,11 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Rendering.RetainedRenderer.md
 |   |   |   |-- Cerneala.UI.Rendering.TimeSensitiveRenderInvalidator.md
 |   |   |   |-- Cerneala.UI.Resources.FontResource.md
+|   |   |   |-- Cerneala.UI.Resources.IImageLoader.md
 |   |   |   |-- Cerneala.UI.Resources.ImageResource.md
 |   |   |   |-- Cerneala.UI.Resources.ImageResourceCache.md
+|   |   |   |-- Cerneala.UI.Resources.IObservableResourceProvider.md
+|   |   |   |-- Cerneala.UI.Resources.IResourceProvider.md
 |   |   |   |-- Cerneala.UI.Resources.MonoGame.MonoGameImageLoader.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceDependencyChange.md
@@ -666,7 +765,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Resources.ResourceDependencyTracker.ResourceDependency.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceDependencyTracker.ResourceKey.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceDependencyTracker.ResourceProviderReferenceEqualityComparer.md
-|   |   |   |-- Cerneala.UI.Resources.ResourceIdT.md
+|   |   |   |-- Cerneala.UI.Resources.ResourceId_T_.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceStore.Entry.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceStore.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceStore.ResourceKey.md
@@ -682,6 +781,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Text.TextCaretLayout.md
 |   |   |   |-- Cerneala.UI.Text.TextCompositionManager.md
 |   |   |   |-- Cerneala.UI.Text.TextCompositionState.md
+|   |   |   |-- Cerneala.UI.Text.TextDirection.md
 |   |   |   |-- Cerneala.UI.Text.TextDocument.md
 |   |   |   |-- Cerneala.UI.Text.TextEditingController.md
 |   |   |   |-- Cerneala.UI.Text.TextEditor.md
@@ -694,6 +794,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Text.TextMeasureResult.md
 |   |   |   |-- Cerneala.UI.Text.TextRenderer.md
 |   |   |   |-- Cerneala.UI.Text.TextSelection.md
+|   |   |   |-- Cerneala.UI.Text.TextTrimming.md
+|   |   |   |-- Cerneala.UI.Text.TextWrapping.md
 |   |   |   |-- Cerneala.UI.Text.UndoRedoStack.md
 |   |   |   |-- Cerneala.UI.Theming.DefaultTheme.md
 |   |   |   |-- Cerneala.UI.Theming.Theme.EntryKey.md
@@ -707,6 +809,35 @@ Generated from `.`.
 |   |-- .nojekyll
 |   |-- documentation.html
 |   +-- index.html
+|-- Drawing/
+|   |-- MonoGame/
+|   |   |-- MonoGameClipStack.cs
+|   |   |-- MonoGameDrawingBackend.cs
+|   |   |-- MonoGameDrawMapper.cs
+|   |   +-- MonoGameImage.cs
+|   |-- Text/
+|   |   |-- RasterizedText.cs
+|   |   |-- SkiaFont.cs
+|   |   |-- SkiaTextRasterizer.cs
+|   |   |-- SkiaTextShaper.cs
+|   |   |-- SystemFontSource.cs
+|   |   |-- TextCaretVerticalMetrics.cs
+|   |   |-- TextShaper.cs
+|   |   +-- TextShapeResult.cs
+|   |-- DrawArgument.cs
+|   |-- DrawColor.cs
+|   |-- DrawCommand.cs
+|   |-- DrawCommandKind.cs
+|   |-- DrawCommandList.cs
+|   |-- DrawingContext.cs
+|   |-- DrawPoint.cs
+|   |-- DrawRect.cs
+|   |-- DrawSize.cs
+|   |-- DrawTextRun.cs
+|   |-- IDrawFont.cs
+|   |-- IDrawImage.cs
+|   |-- IDrawingBackend.cs
+|   +-- IFontSource.cs
 |-- Playground/
 |   +-- Cerneala.Playground/
 |       |-- .config/
@@ -1071,7 +1202,8 @@ Generated from `.`.
 |   |   |   +-- Theming/
 |   |   |       +-- ThemeTests.cs
 |   |   |-- Cerneala.Tests.csproj
-|   |   +-- GameBootstrapTests.cs
+|   |   |-- GameBootstrapTests.cs
+|   |   +-- GlobalUsings.cs
 |   +-- Cerneala.Tests.SourceGen/
 |       |-- Cerneala.Tests.SourceGen.csproj
 |       +-- UiMarkupGeneratorTests.cs
@@ -1174,6 +1306,7 @@ Generated from `.`.
 |   |   |-- AspectTarget.cs
 |   |   |-- AspectToken.cs
 |   |   |-- AspectToken{T}.cs
+|   |   |-- AspectTokenBuilder.cs
 |   |   |-- AspectTokenDefinition.cs
 |   |   |-- AspectTokenTrace.cs
 |   |   |-- AspectValue.cs
@@ -1181,6 +1314,8 @@ Generated from `.`.
 |   |   |-- AspectVariantKey.cs
 |   |   |-- AspectVariantKey{TOwner,TValue}.cs
 |   |   |-- AspectVariantSet.cs
+|   |   |-- ComponentAspectBuilder.cs
+|   |   |-- ContentTemplateBuilder.cs
 |   |   |-- DefaultAspectPackage.cs
 |   |   |-- DefaultAspectTokens.cs
 |   |   |-- RejectedAspectDeclaration.cs
@@ -1188,14 +1323,34 @@ Generated from `.`.
 |   |   |-- ResolvedAspectValue.cs
 |   |   +-- ThemeTokenBridge.cs
 |   |-- Controls/
+|   |   |-- Buttons/
+|   |   |   |-- ButtonKind.cs
+|   |   |   |-- ButtonSize.cs
+|   |   |   |-- ButtonSlots.cs
+|   |   |   |-- ButtonTemplates.cs
+|   |   |   |-- ButtonTokens.cs
+|   |   |   +-- ButtonVariants.cs
+|   |   |-- Items/
+|   |   |   |-- ItemCollection.cs
+|   |   |   |-- ItemContainerGenerator.cs
+|   |   |   |-- ItemContainerRecyclePool.cs
+|   |   |   +-- ItemsPanelTemplate.cs
 |   |   |-- Primitives/
 |   |   |   |-- ButtonBase.cs
+|   |   |   |-- DragCompletedEventArgs.cs
+|   |   |   |-- DragDeltaEventArgs.cs
+|   |   |   |-- DragStartedEventArgs.cs
 |   |   |   |-- RangeBase.cs
 |   |   |   |-- ScrollBar.cs
 |   |   |   |-- Selector.cs
 |   |   |   |-- Thumb.cs
 |   |   |   |-- ToggleButton.cs
 |   |   |   +-- Track.cs
+|   |   |-- Selection/
+|   |   |   |-- SelectionChangedEventArgs.cs
+|   |   |   |-- SelectionChangeResult.cs
+|   |   |   |-- SelectionModel.cs
+|   |   |   +-- SelectionModel{T}.cs
 |   |   |-- Shapes/
 |   |   |   |-- Ellipse.cs
 |   |   |   |-- Path.cs
@@ -1211,8 +1366,16 @@ Generated from `.`.
 |   |   |   |-- ContentTemplateDefinition.cs
 |   |   |   |-- ContentTemplateMatchContext.cs
 |   |   |   |-- ContentTemplateRegistry.cs
+|   |   |   |-- ControlTemplate.cs
+|   |   |   |-- ControlTemplate{TControl}.cs
 |   |   |   |-- ControlTemplateAdapter.cs
+|   |   |   |-- DataTemplate.cs
+|   |   |   |-- DataTemplate{T}.cs
 |   |   |   |-- DataTemplateAdapter.cs
+|   |   |   |-- TemplateBinding{T}.cs
+|   |   |   |-- TemplateContext.cs
+|   |   |   |-- TemplateInstance.cs
+|   |   |   |-- TemplatePartAttribute.cs
 |   |   |   |-- TemplatePartMap.cs
 |   |   |   |-- TemplateRecycleKey.cs
 |   |   |   |-- TemplateRecyclePool.cs
@@ -1220,28 +1383,18 @@ Generated from `.`.
 |   |   |   +-- TemplateTokenBinding.cs
 |   |   |-- Border.cs
 |   |   |-- Button.cs
-|   |   |-- ButtonAspects.cs
-|   |   |-- ButtonTemplates.cs
 |   |   |-- Canvas.cs
 |   |   |-- CheckBox.cs
 |   |   |-- ComboBox.cs
 |   |   |-- ContentControl.cs
 |   |   |-- ContentPresenter.cs
 |   |   |-- Control.cs
-|   |   |-- ControlTemplate.cs
-|   |   |-- ControlTemplate{TControl}.cs
 |   |   |-- ControlTextFont.cs
-|   |   |-- DataTemplate.cs
-|   |   |-- DataTemplate{T}.cs
 |   |   |-- Decorator.cs
 |   |   |-- Image.cs
 |   |   |-- InkCanvas.cs
 |   |   |-- IScrollInfo.cs
-|   |   |-- ItemCollection.cs
-|   |   |-- ItemContainerGenerator.cs
-|   |   |-- ItemContainerRecyclePool.cs
 |   |   |-- ItemsControl.cs
-|   |   |-- ItemsPanelTemplate.cs
 |   |   |-- ItemsPresenter.cs
 |   |   |-- Label.cs
 |   |   |-- ListBox.cs
@@ -1254,21 +1407,14 @@ Generated from `.`.
 |   |   |-- ScrollBarVisibility.cs
 |   |   |-- ScrollContentPresenter.cs
 |   |   |-- ScrollViewer.cs
-|   |   |-- SelectionModel.cs
-|   |   |-- SelectionModel{T}.cs
 |   |   |-- Slider.cs
 |   |   |-- StackPanel.cs
 |   |   |-- TabControl.cs
 |   |   |-- TabItem.cs
-|   |   |-- TemplateBinding{T}.cs
-|   |   |-- TemplateContext.cs
-|   |   |-- TemplateInstance.cs
-|   |   |-- TemplatePartAttribute.cs
 |   |   |-- TextBlock.cs
 |   |   |-- TextBox.cs
 |   |   |-- TextBoxBase.cs
-|   |   |-- ToolTip.cs
-|   |   +-- VisualState.cs
+|   |   +-- ToolTip.cs
 |   |-- Core/
 |   |   |-- CoerceValue.cs
 |   |   |-- IUiPropertyOwner.cs
@@ -1298,6 +1444,9 @@ Generated from `.`.
 |   |   |-- IObservableList{T}.cs
 |   |   |-- IValueConverter{TIn,TOut}.cs
 |   |   |-- ObservableList{T}.cs
+|   |   |-- ObservableListChangedEventArgs.cs
+|   |   |-- ObservableListChangedEventArgs{T}.cs
+|   |   |-- ObservableListChangeKind.cs
 |   |   |-- ObservableValue{T}.cs
 |   |   |-- PropertyAdapter{TOwner,TValue}.cs
 |   |   |-- SortDescription{T}.cs
@@ -1317,35 +1466,6 @@ Generated from `.`.
 |   |   |-- RenderDiagnostics.cs
 |   |   |-- RoutedEventTrace.cs
 |   |   +-- RuntimeDiagnostics.cs
-|   |-- Drawing/
-|   |   |-- MonoGame/
-|   |   |   |-- MonoGameClipStack.cs
-|   |   |   |-- MonoGameDrawingBackend.cs
-|   |   |   |-- MonoGameDrawMapper.cs
-|   |   |   +-- MonoGameImage.cs
-|   |   |-- Text/
-|   |   |   |-- RasterizedText.cs
-|   |   |   |-- SkiaFont.cs
-|   |   |   |-- SkiaTextRasterizer.cs
-|   |   |   |-- SkiaTextShaper.cs
-|   |   |   |-- SystemFontSource.cs
-|   |   |   |-- TextCaretVerticalMetrics.cs
-|   |   |   |-- TextShaper.cs
-|   |   |   +-- TextShapeResult.cs
-|   |   |-- DrawArgument.cs
-|   |   |-- DrawColor.cs
-|   |   |-- DrawCommand.cs
-|   |   |-- DrawCommandKind.cs
-|   |   |-- DrawCommandList.cs
-|   |   |-- DrawingContext.cs
-|   |   |-- DrawPoint.cs
-|   |   |-- DrawRect.cs
-|   |   |-- DrawSize.cs
-|   |   |-- DrawTextRun.cs
-|   |   |-- IDrawFont.cs
-|   |   |-- IDrawImage.cs
-|   |   |-- IDrawingBackend.cs
-|   |   +-- IFontSource.cs
 |   |-- Elements/
 |   |   |-- ElementChildRole.cs
 |   |   |-- ElementHandlerStore.cs
@@ -1375,7 +1495,9 @@ Generated from `.`.
 |   |   +-- UiViewport.cs
 |   |-- Ink/
 |   |   |-- Stroke.cs
-|   |   +-- StrokeCollection.cs
+|   |   |-- StrokeCollection.cs
+|   |   |-- StrokeCollectionChangedEventArgs.cs
+|   |   +-- StrokeCollectionChangeKind.cs
 |   |-- Input/
 |   |   |-- MonoGame/
 |   |   |   |-- MonoGameInputMapper.cs
@@ -1444,7 +1566,11 @@ Generated from `.`.
 |   |   |-- RoutedEventRegistry.cs
 |   |   |-- RoutedEventRouter.cs
 |   |   |-- RoutingStrategy.cs
+|   |   |-- StylusEventArgs.cs
+|   |   |-- StylusInputAction.cs
 |   |   |-- StylusInputBridge.cs
+|   |   |-- StylusInputFrame.cs
+|   |   |-- StylusInputPoint.cs
 |   |   |-- TextCompositionEventArgs.cs
 |   |   |-- TextInputBridge.cs
 |   |   |-- TextInputSnapshotEvent.cs
@@ -1477,7 +1603,6 @@ Generated from `.`.
 |   |   |   |-- Grid.cs
 |   |   |   |-- GridDefinitionCollection{TDefinition}.cs
 |   |   |   |-- GridLength.cs
-|   |   |   |-- Orientation.cs
 |   |   |   |-- Panel.cs
 |   |   |   |-- RowDefinition.cs
 |   |   |   |-- StackPanel.cs
@@ -1496,6 +1621,7 @@ Generated from `.`.
 |   |   |-- LayoutRounding.cs
 |   |   |-- LayoutSize.cs
 |   |   |-- MeasureContext.cs
+|   |   |-- Orientation.cs
 |   |   |-- Thickness.cs
 |   |   +-- Visibility.cs
 |   |-- Markup/
@@ -1504,10 +1630,18 @@ Generated from `.`.
 |   |   |-- GeneratedUiFactory.cs
 |   |   |-- MarkupDiagnostic.cs
 |   |   |-- MarkupLoadOptions.cs
+|   |   |-- MarkupResult{T}.cs
 |   |   |-- UiFactory.cs
+|   |   |-- UiMarkupAttribute.cs
+|   |   |-- UiMarkupChildContent.cs
+|   |   |-- UiMarkupContent.cs
 |   |   |-- UiMarkupDocument.cs
+|   |   |-- UiMarkupElementRegistration.cs
+|   |   |-- UiMarkupNode.cs
+|   |   |-- UiMarkupPropertyRegistration.cs
 |   |   |-- UiMarkupReader.cs
 |   |   |-- UiMarkupSchema.cs
+|   |   |-- UiMarkupTextContent.cs
 |   |   |-- UiMarkupTypeRegistry.cs
 |   |   +-- UiMarkupWriter.cs
 |   |-- Media/
@@ -1583,6 +1717,8 @@ Generated from `.`.
 |   |   |   |-- FloatMixer.cs
 |   |   |   |-- IValueMixer.cs
 |   |   |   |-- ThicknessMixer.cs
+|   |   |   |-- TransformComponents.cs
+|   |   |   |-- TransformInterpolationMode.cs
 |   |   |   |-- TransformMixer.cs
 |   |   |   |-- ValueMixer.cs
 |   |   |   +-- ValueMixerRegistry.cs
@@ -1644,8 +1780,12 @@ Generated from `.`.
 |   |   |-- MotionDefaults.cs
 |   |   |-- MotionElementFacade.cs
 |   |   |-- MotionExtensions.cs
+|   |   |-- MotionPropertyShortcut.cs
 |   |   +-- MotionStateBuilder.cs
 |   |-- Platform/
+|   |   |-- CursorShape.cs
+|   |   |-- FileDialogFilter.cs
+|   |   |-- FileDialogOptions.cs
 |   |   |-- IAccessibilityPlatform.cs
 |   |   |-- IClipboard.cs
 |   |   |-- ICursorService.cs
@@ -1683,8 +1823,8 @@ Generated from `.`.
 |   |   |-- ResourceId{T}.cs
 |   |   +-- ResourceStore.cs
 |   |-- Text/
+|   |   |-- BidiTextRun.cs
 |   |   |-- BidiTextService.cs
-|   |   |-- ClipboardAdapter.cs
 |   |   |-- FontResolver.cs
 |   |   |-- LineBreakService.cs
 |   |   |-- ResolvedTextFont.cs
@@ -1693,9 +1833,11 @@ Generated from `.`.
 |   |   |-- TextCaretLayout.cs
 |   |   |-- TextCompositionManager.cs
 |   |   |-- TextCompositionState.cs
+|   |   |-- TextDirection.cs
 |   |   |-- TextDocument.cs
 |   |   |-- TextEditingController.cs
 |   |   |-- TextEditor.cs
+|   |   |-- TextEditorSnapshot.cs
 |   |   |-- TextLayoutCache.cs
 |   |   |-- TextLayoutKey.cs
 |   |   |-- TextLine.cs

@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing.MonoGame`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
+Source: `Drawing/MonoGame/MonoGameDrawingBackend.cs`
 
 Stores a cached MonoGame texture and the rasterized text origin offset used by `MonoGameDrawingBackend`.
 

@@ -107,4 +107,4 @@ Cerneala retained UI controls in the `Cerneala` project.
 - `UI/Controls/Image.cs`
 - `UI/Resources/ImageResource.cs`
 - `UI/Resources/ResourceId{T}.cs`
-- `UI/Drawing/IDrawImage.cs`
+- `Drawing/IDrawImage.cs`

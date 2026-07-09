@@ -76,8 +76,8 @@ UI area: retained controls, classic control templates, modern component template
 
 ## See Also
 - `UI/Controls/Templates/ControlTemplateAdapter.cs`
-- `UI/Controls/ControlTemplate.cs`
-- `UI/Controls/ControlTemplate{TControl}.cs`
-- `UI/Controls/TemplateInstance.cs`
+- `UI/Controls/Templates/ControlTemplate.cs`
+- `UI/Controls/Templates/ControlTemplate{TControl}.cs`
+- `UI/Controls/Templates/TemplateInstance.cs`
 - `UI/Controls/Templates/ComponentTemplate.cs`
 - `UI/Controls/Templates/ComponentTemplateInstance.cs`

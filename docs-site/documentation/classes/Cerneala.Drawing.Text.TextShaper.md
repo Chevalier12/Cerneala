@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing.Text`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/Text/TextShaper.cs`
+Source: `Drawing/Text/TextShaper.cs`
 
 Provides a non-throwing facade for shaping and measuring Skia-backed drawing text runs.
 

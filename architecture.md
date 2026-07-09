@@ -1,12 +1,12 @@
 # Cerneala Architecture
 
-This document explains how `UI/Drawing` and `UI/Input` work in this repository.
+This document explains how `Drawing` and `UI/Input` work in this repository.
 
 Read this before changing drawing or input, adding WPF-style media/input classes, or implementing anything from `ROADMAP.md` that touches rendering, text, images, colors, geometry, shapes, controls, visual tree behavior, routed events, commands, focus, keyboard, mouse, drag/drop, or input routing.
 
 ## Big Picture
 
-`UI/Drawing` is a small retained command pipeline:
+`Drawing` is a small retained command pipeline:
 
 ```text
 future controls / playground code
@@ -58,27 +58,27 @@ The input core separates raw frame state from routed UI dispatch. `InputFrame` s
 
 Production drawing files:
 
-- `UI/Drawing/DrawArgument.cs`
-- `UI/Drawing/DrawColor.cs`
-- `UI/Drawing/DrawCommand.cs`
-- `UI/Drawing/DrawCommandKind.cs`
-- `UI/Drawing/DrawCommandList.cs`
-- `UI/Drawing/DrawingContext.cs`
-- `UI/Drawing/DrawPoint.cs`
-- `UI/Drawing/DrawRect.cs`
-- `UI/Drawing/DrawTextRun.cs`
-- `UI/Drawing/IDrawFont.cs`
-- `UI/Drawing/IDrawImage.cs`
-- `UI/Drawing/IDrawingBackend.cs`
-- `UI/Drawing/IFontSource.cs`
-- `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
-- `UI/Drawing/MonoGame/MonoGameImage.cs`
-- `UI/Drawing/Text/RasterizedText.cs`
-- `UI/Drawing/Text/SkiaFont.cs`
-- `UI/Drawing/Text/SkiaTextRasterizer.cs`
-- `UI/Drawing/Text/SkiaTextShaper.cs`
-- `UI/Drawing/Text/SystemFontSource.cs`
-- `UI/Drawing/Text/TextShapeResult.cs`
+- `Drawing/DrawArgument.cs`
+- `Drawing/DrawColor.cs`
+- `Drawing/DrawCommand.cs`
+- `Drawing/DrawCommandKind.cs`
+- `Drawing/DrawCommandList.cs`
+- `Drawing/DrawingContext.cs`
+- `Drawing/DrawPoint.cs`
+- `Drawing/DrawRect.cs`
+- `Drawing/DrawTextRun.cs`
+- `Drawing/IDrawFont.cs`
+- `Drawing/IDrawImage.cs`
+- `Drawing/IDrawingBackend.cs`
+- `Drawing/IFontSource.cs`
+- `Drawing/MonoGame/MonoGameDrawingBackend.cs`
+- `Drawing/MonoGame/MonoGameImage.cs`
+- `Drawing/Text/RasterizedText.cs`
+- `Drawing/Text/SkiaFont.cs`
+- `Drawing/Text/SkiaTextRasterizer.cs`
+- `Drawing/Text/SkiaTextShaper.cs`
+- `Drawing/Text/SystemFontSource.cs`
+- `Drawing/Text/TextShapeResult.cs`
 
 Drawing tests:
 
@@ -136,7 +136,7 @@ Existing architecture diagram:
 
 ## Namespaces
 
-The files live under the `UI/Drawing` folder, but the main namespace is:
+The files live under the `Drawing` folder, but the main namespace is:
 
 ```csharp
 namespace Cerneala.Drawing;
@@ -259,7 +259,7 @@ Important detail: `DrawingContext` does not render. It only appends commands to 
 
 File:
 
-- `UI/Drawing/DrawingContext.cs`
+- `Drawing/DrawingContext.cs`
 
 `DrawingContext` is a command recorder. It holds a `DrawCommandList` passed into its constructor.
 
@@ -292,7 +292,7 @@ Implications:
 
 File:
 
-- `UI/Drawing/DrawCommandList.cs`
+- `Drawing/DrawCommandList.cs`
 
 `DrawCommandList` is a mutable ordered list of `DrawCommand`.
 
@@ -322,7 +322,7 @@ This is not a scene graph. It has no retained element hierarchy, no invalidation
 
 File:
 
-- `UI/Drawing/DrawCommand.cs`
+- `Drawing/DrawCommand.cs`
 
 `DrawCommand` is a `readonly record struct`.
 
@@ -368,7 +368,7 @@ The `Text` and `Font` properties duplicate data from `TextRun` for convenient in
 
 File:
 
-- `UI/Drawing/DrawCommandKind.cs`
+- `Drawing/DrawCommandKind.cs`
 
 Current command kinds:
 
@@ -389,7 +389,7 @@ That matters for the roadmap: WPF-style classes such as `Shape`, `Brush`, `Geome
 
 File:
 
-- `UI/Drawing/DrawRect.cs`
+- `Drawing/DrawRect.cs`
 
 `DrawRect` is a `readonly record struct` with:
 
@@ -418,7 +418,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/DrawPoint.cs`
+- `Drawing/DrawPoint.cs`
 
 `DrawPoint` is a `readonly record struct` with:
 
@@ -438,7 +438,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/DrawColor.cs`
+- `Drawing/DrawColor.cs`
 
 `DrawColor` is a `readonly record struct` with:
 
@@ -467,7 +467,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/DrawArgument.cs`
+- `Drawing/DrawArgument.cs`
 
 `DrawArgument` is `internal static`, so validation is currently implementation detail of the drawing assembly.
 
@@ -503,7 +503,7 @@ Why text max is smaller:
 
 File:
 
-- `UI/Drawing/IDrawFont.cs`
+- `Drawing/IDrawFont.cs`
 
 Public abstraction for a font used by drawing.
 
@@ -518,7 +518,7 @@ It intentionally does not expose Skia types.
 
 File:
 
-- `UI/Drawing/IFontSource.cs`
+- `Drawing/IFontSource.cs`
 
 Public abstraction for loading fonts.
 
@@ -532,7 +532,7 @@ IDrawFont LoadFont(string familyName, float size);
 
 File:
 
-- `UI/Drawing/Text/SkiaFont.cs`
+- `Drawing/Text/SkiaFont.cs`
 
 Concrete `IDrawFont` backed by SkiaSharp.
 
@@ -560,7 +560,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/Text/SystemFontSource.cs`
+- `Drawing/Text/SystemFontSource.cs`
 
 Concrete `IFontSource` that loads fonts from the operating system through:
 
@@ -591,7 +591,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/DrawTextRun.cs`
+- `Drawing/DrawTextRun.cs`
 
 `DrawTextRun` represents a specific text drawing request before shaping/rasterization.
 
@@ -626,7 +626,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/Text/SkiaTextShaper.cs`
+- `Drawing/Text/SkiaTextShaper.cs`
 
 `SkiaTextShaper` turns a `DrawTextRun` into a `TextShapeResult`.
 
@@ -673,7 +673,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/Text/TextShapeResult.cs`
+- `Drawing/Text/TextShapeResult.cs`
 
 `TextShapeResult` is a `readonly record struct`.
 
@@ -714,7 +714,7 @@ Tests prove all of the above, including defensive copying.
 
 File:
 
-- `UI/Drawing/Text/SkiaTextRasterizer.cs`
+- `Drawing/Text/SkiaTextRasterizer.cs`
 
 `SkiaTextRasterizer` turns a `DrawTextRun` and `DrawColor` into rasterized RGBA pixels.
 
@@ -753,7 +753,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/Text/RasterizedText.cs`
+- `Drawing/Text/RasterizedText.cs`
 
 `RasterizedText` stores rasterized RGBA text pixels.
 
@@ -794,7 +794,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/IDrawImage.cs`
+- `Drawing/IDrawImage.cs`
 
 Public drawing abstraction for images.
 
@@ -809,7 +809,7 @@ It intentionally does not expose backend-specific texture types.
 
 File:
 
-- `UI/Drawing/MonoGame/MonoGameImage.cs`
+- `Drawing/MonoGame/MonoGameImage.cs`
 
 Concrete `IDrawImage` wrapper around MonoGame `Texture2D`.
 
@@ -827,7 +827,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/IDrawingBackend.cs`
+- `Drawing/IDrawingBackend.cs`
 
 The backend contract is:
 
@@ -846,7 +846,7 @@ Tests prove:
 
 File:
 
-- `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
+- `Drawing/MonoGame/MonoGameDrawingBackend.cs`
 
 `MonoGameDrawingBackend` is the final renderer for MonoGame.
 
@@ -1967,7 +1967,7 @@ Future command work should complete route-based query/execute behavior rather th
 
 ## What Drawing Is Not
 
-`UI/Drawing` is not:
+`Drawing` is not:
 
 - a WPF visual tree;
 - a layout system;
@@ -2100,7 +2100,7 @@ MonoGameDrawingBackend
 
 ## Summary
 
-`UI/Drawing` is already a clean low-level command architecture:
+`Drawing` is already a clean low-level command architecture:
 
 - `DrawingContext` records;
 - `DrawCommandList` stores;

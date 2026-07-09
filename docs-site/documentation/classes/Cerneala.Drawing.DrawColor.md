@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/DrawColor.cs`
+Source: `Drawing/DrawColor.cs`
 
 Represents an RGBA color used by Cerneala drawing commands.
 

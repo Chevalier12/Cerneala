@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing.Text`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/Text/SkiaTextRasterizer.cs`
+Source: `Drawing/Text/SkiaTextRasterizer.cs`
 
 Rasterizes a `DrawTextRun` into an RGBA pixel buffer by shaping the text with `SkiaTextShaper` and drawing the resulting glyphs with SkiaSharp.
 

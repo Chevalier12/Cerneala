@@ -47,5 +47,3 @@ public sealed class UndoRedoStack
         redo.Clear();
     }
 }
-
-public readonly record struct TextEditorSnapshot(string Text, TextCaret Caret, TextSelection Selection);

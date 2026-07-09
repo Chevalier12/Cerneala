@@ -81,12 +81,3 @@ public sealed class BidiTextService
             (value >= '\uFE70' && value <= '\uFEFF');
     }
 }
-
-public readonly record struct BidiTextRun(int Start, int Length, TextDirection Direction);
-
-public enum TextDirection
-{
-    Neutral,
-    LeftToRight,
-    RightToLeft
-}

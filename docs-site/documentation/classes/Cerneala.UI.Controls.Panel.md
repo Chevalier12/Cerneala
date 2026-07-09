@@ -102,6 +102,6 @@ Cerneala retained UI controls and item presentation paths that need the default 
 ## See Also
 
 - `Cerneala.UI.Layout.Panels.Panel`
-- `Cerneala.UI.Controls.ItemsPanelTemplate`
+- `Cerneala.UI.Controls.Items.ItemsPanelTemplate`
 - `Cerneala.UI.Controls.ItemsPresenter`
 - `Cerneala.UI.Elements.UIElement`

@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
 using Cerneala.UI.Core;
+using Cerneala.UI.Controls.Items;
+using Cerneala.UI.Controls.Selection;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
@@ -62,7 +64,7 @@ public class Selector : ItemsControl
 
     protected void SelectContainer(UIElement container)
     {
-        int index = ItemContainerGenerator.GetItemIndex(container);
+        int index = global::Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItemIndex(container);
         if (index >= 0)
         {
             SelectedIndex = index;

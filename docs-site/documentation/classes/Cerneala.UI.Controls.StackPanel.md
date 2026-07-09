@@ -122,6 +122,6 @@ Cerneala retained UI controls and item presentation paths that need controls-nam
 ## See Also
 
 - `Cerneala.UI.Layout.Panels.StackPanel`
-- `Cerneala.UI.Layout.Panels.Orientation`
+- `Cerneala.UI.Layout.Orientation`
 - `Cerneala.UI.Controls.Panel`
 - `Cerneala.UI.Elements.UIElement`

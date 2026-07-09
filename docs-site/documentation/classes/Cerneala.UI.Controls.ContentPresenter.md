@@ -126,7 +126,7 @@ Changing `Content`, `ContentTemplate`, `ContentTemplateKey`, or `ModernContentTe
 ## See Also
 
 - `Cerneala.UI.Controls.ContentControl`
-- `Cerneala.UI.Controls.DataTemplate`
+- `Cerneala.UI.Controls.Templates.DataTemplate`
 - `Cerneala.UI.Controls.Templates.ContentTemplate`
 - `Cerneala.UI.Controls.Templates.ContentTemplateRegistry`
 - `Cerneala.UI.Controls.TextBlock`

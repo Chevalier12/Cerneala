@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/DrawArgument.cs`
+Source: `Drawing/DrawArgument.cs`
 
 Provides internal validation helpers for drawing coordinates, pixel sizes, text sizes, and finite numeric arguments.
 

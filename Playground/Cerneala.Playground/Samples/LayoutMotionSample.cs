@@ -9,7 +9,7 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
 using Cerneala.UI.Motion.Layout;
 using Cerneala.UI.Resources;
-using PanelOrientation = Cerneala.UI.Layout.Panels.Orientation;
+using PanelOrientation = Cerneala.UI.Layout.Orientation;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Playground.Samples;

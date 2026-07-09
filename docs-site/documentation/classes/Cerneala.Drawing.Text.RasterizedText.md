@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing.Text`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/Text/RasterizedText.cs`
+Source: `Drawing/Text/RasterizedText.cs`
 
 Stores the rasterized RGBA pixel buffer and shaping metadata produced by the text rasterization pipeline.
 

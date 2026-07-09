@@ -74,5 +74,5 @@ UI area: retained controls, legacy data templates, modern content-template migra
 - `UI/Controls/Templates/DataTemplateAdapter.cs`
 - `UI/Controls/Templates/ContentTemplate.cs`
 - `UI/Controls/Templates/ContentTemplateContext.cs`
-- `UI/Controls/DataTemplate.cs`
-- `UI/Controls/DataTemplate{T}.cs`
+- `UI/Controls/Templates/DataTemplate.cs`
+- `UI/Controls/Templates/DataTemplate{T}.cs`

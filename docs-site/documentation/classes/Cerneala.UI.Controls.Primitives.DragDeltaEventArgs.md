@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Controls.Primitives`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Controls/Primitives/Thumb.cs`
+Source: `UI/Controls/Primitives/DragDeltaEventArgs.cs`
 
 Provides per-update and total drag movement values for the `Thumb.DragDelta` event.
 

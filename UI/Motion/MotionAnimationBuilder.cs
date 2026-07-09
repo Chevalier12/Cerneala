@@ -52,26 +52,3 @@ public sealed class MotionAnimationBuilder<T>
         binding.Bind(facade.Element, property);
     }
 }
-
-public sealed class MotionPropertyShortcut<T>
-{
-    private readonly MotionElementFacade facade;
-    private readonly UiProperty<T> property;
-
-    internal MotionPropertyShortcut(MotionElementFacade facade, UiProperty<T> property)
-    {
-        this.facade = facade ?? throw new ArgumentNullException(nameof(facade));
-        this.property = property ?? throw new ArgumentNullException(nameof(property));
-    }
-
-    public MotionHandle To(T value, MotionSpec<T> spec)
-    {
-        return facade.Animate(property).To(value).With(spec);
-    }
-
-    public void Bind(ScrollMotionBinding<T> binding)
-    {
-        ArgumentNullException.ThrowIfNull(binding);
-        binding.Bind(facade.Element, property);
-    }
-}

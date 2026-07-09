@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Controls.Primitives`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Controls/Primitives/Thumb.cs`
+Source: `UI/Controls/Primitives/DragStartedEventArgs.cs`
 
 Provides the starting pointer coordinates for a `Thumb.DragStarted` event.
 

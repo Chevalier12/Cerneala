@@ -20,7 +20,7 @@
   - Keep interface small; add no platform types.
 - Modify: `UI/Resources/MonoGame/MonoGameImageLoader.cs`
   - Ensure returned `MonoGameImage` participates in disposal if supported.
-- Modify: `UI/Drawing/MonoGame/MonoGameImage.cs`
+- Modify: `Drawing/MonoGame/MonoGameImage.cs`
   - Implement `IDisposable` if needed for owned texture lifetime.
 - Modify: `UI/Hosting/MonoGame/MonoGameContentServices.cs`
   - Own and expose `IImageLoader` and image cache service.
@@ -255,6 +255,6 @@ Expected: GREEN.
 - [ ] **Step 5: Commit implementation**
 
 ```powershell
-git add UI\Resources UI\Drawing\MonoGame UI\Hosting\MonoGame UI\Elements\UIRoot.cs UI\Controls\Image.cs tests\Cerneala.Tests
+git add UI\Resources Drawing\\MonoGame UI\Hosting\MonoGame UI\Elements\UIRoot.cs UI\Controls\Image.cs tests\Cerneala.Tests
 git commit -m "feat: cache path backed image resources"
 ```

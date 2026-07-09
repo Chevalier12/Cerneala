@@ -1,5 +1,7 @@
 using System.Collections;
 using Cerneala.UI.Core;
+using Cerneala.UI.Controls.Items;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;

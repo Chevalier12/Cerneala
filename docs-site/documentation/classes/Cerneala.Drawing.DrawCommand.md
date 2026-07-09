@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Drawing/DrawCommand.cs`](../../UI/Drawing/DrawCommand.cs)
+Source: [`Drawing/DrawCommand.cs`](../../Drawing/DrawCommand.cs)
 
 Represents one immutable drawing instruction recorded by the Cerneala drawing pipeline.
 
@@ -98,6 +98,6 @@ Cerneala drawing command recording and rendering paths.
 
 ## See Also
 
-- [`DrawCommandKind`](../../UI/Drawing/DrawCommandKind.cs)
-- [`DrawCommandList`](../../UI/Drawing/DrawCommandList.cs)
-- [`DrawingContext`](../../UI/Drawing/DrawingContext.cs)
+- [`DrawCommandKind`](../../Drawing/DrawCommandKind.cs)
+- [`DrawCommandList`](../../Drawing/DrawCommandList.cs)
+- [`DrawingContext`](../../Drawing/DrawingContext.cs)

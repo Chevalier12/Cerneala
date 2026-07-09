@@ -1,6 +1,6 @@
 # Cerneala Architecture v2
 
-This document describes the retained UI architecture planned above the existing `UI/Drawing` and `UI/Input` foundations.
+This document describes the retained UI architecture planned above the existing `Drawing` and `UI/Input` foundations.
 
 Read `architecture.md` first. That file explains what drawing and input already do. This file explains how the retained UI layers should use them.
 
@@ -9,7 +9,7 @@ Read `architecture.md` first. That file explains what drawing and input already 
 - Build a modern retained UI framework, not a WPF compatibility clone.
 - Let the game loop call update/draw every frame without forcing layout/render regeneration every frame.
 - Keep layout, rendering, input, focus, commands, and styling explicit and testable.
-- Preserve `UI/Drawing` as the command rendering layer.
+- Preserve `Drawing` as the command rendering layer.
 - Preserve useful `UI/Input` concepts while replacing `UiInputTree` as the future route table.
 
 ## Layer Model
@@ -34,7 +34,7 @@ UIRoot
         +--> Commands
         +--> Styling Metadata
         |
-        +--> UI/Drawing
+        +--> Drawing
         |
         +--> UI/Input
         |
@@ -44,7 +44,7 @@ MonoGame adapters
 
 ## Existing Foundations
 
-`UI/Drawing` remains the low-level drawing command layer:
+`Drawing` remains the low-level drawing command layer:
 
 - `DrawingContext` records commands.
 - `DrawCommandList` stores ordered commands.
@@ -259,7 +259,7 @@ MVP retained UI work must prove:
 - render-only invalidation does not run measure;
 - layout invalidation eventually refreshes render caches;
 - UI core does not reference backend-specific types;
-- existing `UI/Drawing` tests still pass;
+- existing `Drawing` tests still pass;
 - existing `UI/Input` tests still pass.
 
 After the first retained playground sample, use both:

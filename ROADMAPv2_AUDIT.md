@@ -7,7 +7,7 @@ Build/test note: `dotnet test Cerneala.slnx` and root `dotnet test` passed after
 ## Executive verdict
 
 - [x] The direction is mostly aligned with ROADMAPv2: retained tree, typed state, explicit layout, backend-neutral rendering commands, backend-neutral input snapshots, and MonoGame adapter isolation are real.
-- [x] The `UI/Drawing` and `UI/Input` foundations are being reused rather than duplicated in the obvious low-level places.
+- [x] The `Drawing` and `UI/Input` foundations are being reused rather than duplicated in the obvious low-level places.
 - [x] The code avoids WPF `DependencyProperty` cloning and uses a saner typed `UiProperty<T>` model.
 - [x] The static backend boundary looks mostly clean: no obvious MonoGame/Skia/HarfBuzz/SpriteBatch/Texture2D references in controls/layout/rendering outside adapter/text/drawing areas.
 - [x] The retained rendering/game-loop contract has been tightened: local render-cache generation is scheduler-owned, root command composition is explicit during update, and draw submits committed commands.
@@ -95,7 +95,7 @@ Implementation note: fixed by `fix-retained-render-frame-contract`; local render
 Files:
 
 - `UI/Rendering/RetainedRenderer.cs`
-- `UI/Drawing/IDrawingBackend.cs`
+- `Drawing/IDrawingBackend.cs`
 - `tests/Cerneala.Tests/UI/Rendering/RetainedRendererTests.cs`
 
 Original problem: `Submit(...)` called `backend.Render(CopyCommands(Render(root)))`. That protected the cache from a mutating backend, but it allocated/copied a new `DrawCommandList` every draw. ROADMAPv2 explicitly wants game-loop-friendly retained UI. A per-frame copy of the root command list was exactly the kind of hidden cost retained rendering is supposed to avoid.
@@ -243,11 +243,11 @@ Implementation note: fixed by `freeze-later-experimental-scope`; `ROADMAPv2.md` 
 Files:
 
 - `Cerneala.csproj`
-- `UI/Drawing/MonoGame/*`
+- `Drawing/MonoGame/*`
 - `UI/Input/MonoGame/*`
 - `UI/Hosting/MonoGame/*`
 - `UI/Resources/MonoGame/*`
-- `UI/Drawing/Text/Skia*`
+- `Drawing/Text/Skia*`
 
 Problem: source boundaries are mostly clean, but the main package still references `MonoGame.Framework.DesktopGL`, `SkiaSharp`, `SkiaSharp.NativeAssets.Linux`, and `HarfBuzzSharp`. ROADMAPv2 says the package split can be deferred, and that is true. But the core dependency story is not neutral if every core consumer must bring MonoGame/Skia/HarfBuzz.
 
@@ -388,7 +388,7 @@ Files:
 
 - `UI/Controls/ItemsControl.cs`
 - `UI/Controls/ItemsPresenter.cs`
-- `UI/Controls/ItemContainerGenerator.cs`
+- `UI/Controls/Items/ItemContainerGenerator.cs`
 - `UI/Layout/Panels/VirtualizingStackPanel.cs`
 
 Problem: the generator can recycle containers, but `ItemsPresenter.RefreshOwnerItems(...)` recreates a panel root on refresh. `UpdateVirtualizationFromScrollInfo(...)` can count an arbitrary `IEnumerable` with `Cast<object?>().Count()`. This is not a large-data-safe virtualization architecture.
@@ -405,7 +405,7 @@ Required changes:
 Files:
 
 - `UI/Styling/Setter.cs`
-- `UI/Controls/TemplateBinding{T}.cs`
+- `UI/Controls/Templates/TemplateBinding{T}.cs`
 
 Problem: `Setter.Create(...)` and `TemplateBinding.Create(...)` use `MakeGenericType(...)` and `Activator.CreateInstance(...)`. That is not catastrophic if isolated to markup/tooling, but ROADMAPv2 explicitly prefers avoiding reflection-heavy behavior.
 

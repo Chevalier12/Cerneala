@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Motion.States;
 

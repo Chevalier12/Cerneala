@@ -133,4 +133,4 @@ UI area: retained controls, component templates, aspect-aware templating.
 - `UI/Controls/Templates/TemplateSlotMap.cs`
 - `UI/Controls/Templates/TemplatePartMap.cs`
 - `UI/Controls/Templates/TemplateTokenBinding.cs`
-- `UI/Controls/ButtonTemplates.cs`
+- `UI/Controls/Buttons/ButtonTemplates.cs`

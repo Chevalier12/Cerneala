@@ -13,7 +13,7 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
 using GridLength = Cerneala.UI.Layout.Panels.GridLength;
 using LayoutGrid = Cerneala.UI.Layout.Panels.Grid;
-using PanelOrientation = Cerneala.UI.Layout.Panels.Orientation;
+using PanelOrientation = Cerneala.UI.Layout.Orientation;
 using RowDefinition = Cerneala.UI.Layout.Panels.RowDefinition;
 
 namespace Cerneala.Playground.Samples;

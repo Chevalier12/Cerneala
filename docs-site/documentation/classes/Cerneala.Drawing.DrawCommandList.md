@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/DrawCommandList.cs`
+Source: `Drawing/DrawCommandList.cs`
 
 Stores an ordered mutable list of drawing commands.
 

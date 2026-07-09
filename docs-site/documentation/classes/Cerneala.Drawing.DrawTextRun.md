@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/DrawTextRun.cs`
+Source: `Drawing/DrawTextRun.cs`
 
 Represents an immutable run of text plus the font and effective size used by the drawing text pipeline.
 

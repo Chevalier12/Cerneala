@@ -34,7 +34,7 @@
   - Set default cursor intent to hand if not already styled.
 - Modify: `UI/Controls/TextBoxBase.cs`
   - Set default cursor intent to IBeam and implement minimal Ctrl+A/C/X/V through `IClipboard`.
-- Modify: `UI/Text/ClipboardAdapter.cs`
+- Modify: `UI/Platform/IClipboard.cs`
   - Do not expand this duplicate seam; either leave it frozen or bridge tests to `UI/Platform/IClipboard`.
 - Create: `tests/Cerneala.Tests/UI/Platform/UiHostPlatformServicesIntegrationTests.cs`
 - Create: `tests/Cerneala.Tests/Input/CursorPlatformIntegrationTests.cs`
@@ -47,7 +47,7 @@
 - `UI/Platform/ICursorService` exposes `CursorShape` for platform cursor state.
 - `TextBoxBase` supports focus, text input, caret, selection, delete/backspace, Home/End/Left/Right.
 - `KeyEventArgs` currently carries only the key; modifier state may need to be surfaced explicitly.
-- `UI/Text/ClipboardAdapter` exists as an older text seam; avoid growing duplicate clipboard abstractions.
+- `UI/Platform/IClipboard` is the active clipboard contract; avoid growing duplicate clipboard abstractions.
 
 Target behavior:
 
@@ -66,7 +66,7 @@ Target behavior:
 - [ ] Do not implement native accessibility adapters.
 - [ ] Do not add WPF `Application.Current` or global service locator.
 - [ ] Do not add text formatting/rich text features.
-- [ ] Do not expand `UI/Text/ClipboardAdapter` as a second clipboard platform model.
+- [ ] Do not reintroduce a second clipboard platform model outside `UI/Platform/IClipboard`.
 
 ---
 

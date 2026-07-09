@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Controls.Primitives`
 
 Assembly/Project: `Cerneala`
 
-Source: [UI/Controls/Primitives/Thumb.cs](../../UI/Controls/Primitives/Thumb.cs)
+Source: [UI/Controls/Primitives/DragCompletedEventArgs.cs](../../UI/Controls/Primitives/DragCompletedEventArgs.cs)
 
 Provides data for the `Thumb.DragCompleted` event.
 

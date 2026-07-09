@@ -746,15 +746,30 @@ function renderMarkdown(markdown) {
 
 function enrichDoc(doc) {
   const parts = doc.name.split('.');
-  const shortName = parts.pop() || doc.name;
-  const namespaceParts = parts[0] === 'Cerneala' ? parts.slice(1) : parts;
-  const category = namespaceParts.length ? namespaceParts.join('.') : 'Core';
+  const sourceCategory = categoryFromSource(doc.source);
+  const namespaceParts = parts[0] === 'Cerneala' ? parts.slice(1, -1) : parts.slice(0, -1);
+  const category = sourceCategory || (namespaceParts.length ? namespaceParts.join('.') : 'Core');
+  const categoryPrefix = 'Cerneala.' + category + '.';
+  const shortName = doc.name.startsWith(categoryPrefix)
+    ? doc.name.slice(categoryPrefix.length)
+    : (parts.at(-1) || doc.name);
   return {
     ...doc,
     category,
     shortName,
     searchText: (doc.name + ' ' + category + ' ' + shortName).toLowerCase()
   };
+}
+
+function categoryFromSource(source) {
+  if (!source) return '';
+  const normalized = source.replace(/\\/g, '/');
+  const slash = normalized.lastIndexOf('/');
+  if (slash === -1) return 'Core';
+
+  const folder = normalized.slice(0, slash);
+  if (folder === 'Cerneala.SourceGen') return 'SourceGen';
+  return folder.split('/').join('.');
 }
 
 function groupDocs(docs) {

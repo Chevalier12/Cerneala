@@ -37,7 +37,7 @@ public sealed class MonoGameDependencyBoundaryTests
         [
             Path.Combine(root, "UI", "Hosting", "MonoGame"),
             Path.Combine(root, "UI", "Input", "MonoGame"),
-            Path.Combine(root, "UI", "Drawing", "MonoGame"),
+            Path.Combine(root, "Drawing", "MonoGame"),
             Path.Combine(root, "UI", "Resources", "MonoGame"),
             Path.Combine(root, "Playground")
         ];

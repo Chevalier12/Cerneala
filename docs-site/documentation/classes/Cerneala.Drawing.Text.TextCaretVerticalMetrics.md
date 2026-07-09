@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing.Text`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/Text/TextCaretVerticalMetrics.cs`
+Source: `Drawing/Text/TextCaretVerticalMetrics.cs`
 
 Stores the vertical offset and height used to draw a text caret.
 

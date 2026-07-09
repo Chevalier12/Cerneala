@@ -2,7 +2,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
-using Orientation = Cerneala.UI.Layout.Panels.Orientation;
+using Orientation = Cerneala.UI.Layout.Orientation;
 
 namespace Cerneala.Tests.Controls;
 

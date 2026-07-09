@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/DrawingContext.cs`
+Source: `Drawing/DrawingContext.cs`
 
 Records high-level drawing operations into a `DrawCommandList`.
 

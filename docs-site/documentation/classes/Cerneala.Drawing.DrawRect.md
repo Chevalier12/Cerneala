@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/DrawRect.cs`
+Source: `Drawing/DrawRect.cs`
 
 Represents an immutable drawing-space rectangle using floating-point pixel coordinates and dimensions.
 

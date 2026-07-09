@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/DrawSize.cs`
+Source: `Drawing/DrawSize.cs`
 
 Represents an immutable drawing-space size with finite `float` width and height components.
 

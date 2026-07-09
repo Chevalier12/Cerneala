@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing.Text`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/Text/SystemFontSource.cs`
+Source: `Drawing/Text/SystemFontSource.cs`
 
 Loads draw fonts from the host system font manager for the Cerneala drawing text pipeline.
 

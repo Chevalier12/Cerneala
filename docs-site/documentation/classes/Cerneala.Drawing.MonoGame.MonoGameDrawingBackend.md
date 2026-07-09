@@ -6,7 +6,7 @@ Namespace: `Cerneala.Drawing.MonoGame`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
+Source: `Drawing/MonoGame/MonoGameDrawingBackend.cs`
 
 Renders `DrawCommandList` instances through a MonoGame `SpriteBatch`.
 

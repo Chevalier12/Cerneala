@@ -90,4 +90,4 @@ Cerneala UI aspect variant declarations, component template selection, and aspec
 - `Cerneala.UI.Aspect.AspectVariantSet`
 - `Cerneala.UI.Aspect.AspectCondition`
 - `Cerneala.UI.Controls.Control`
-- `Cerneala.UI.Controls.ButtonVariants`
+- `Cerneala.UI.Controls.Buttons.ButtonVariants`

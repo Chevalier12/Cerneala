@@ -27,7 +27,7 @@ This diagram shows where each layer is allowed to depend.
                  │                              │
                  ▼                              ▼
 ┌───────────────────────────────┐  ┌────────────────────────────┐
-│          UI/Drawing           │  │          UI/Input          │
+│          Drawing           │  │          UI/Input          │
 ├───────────────────────────────┤  ├────────────────────────────┤
 │ DrawingContext                │  │ IInputSource               │
 │ DrawCommandList               │  │ InputFrame                 │
@@ -39,7 +39,7 @@ This diagram shows where each layer is allowed to depend.
                  │                              │
                  ▼                              ▼
 ┌───────────────────────────────┐  ┌────────────────────────────┐
-│   UI/Drawing/MonoGame         │  │   UI/Input/MonoGame        │
+│   Drawing/MonoGame         │  │   UI/Input/MonoGame        │
 ├───────────────────────────────┤  ├────────────────────────────┤
 │ MonoGameDrawingBackend        │  │ MonoGameInputSource        │
 │ MonoGameImage                 │  │ Mouse.GetState             │
@@ -53,14 +53,14 @@ This diagram shows where each layer is allowed to depend.
 - UI core must not reference `SpriteBatch`, `Texture2D`, `Mouse.GetState()`, `Keyboard.GetState()`, Skia, or HarfBuzz.
 - Controls render through retained render caches and `DrawingContext`.
 - Controls consume input through retained input/focus/command services, not through MonoGame directly.
-- `UI/Drawing` remains a command layer, not a scene graph.
+- `Drawing` remains a command layer, not a scene graph.
 - `UI/Input` remains an input foundation; v2 route ownership moves to the retained tree.
 - MonoGame-specific code stays in adapter folders.
 
 ## Allowed Direction
 
 ```text
-UI core -> UI/Drawing abstractions
+UI core -> Drawing abstractions
 UI core -> UI/Input abstractions
 Adapters -> MonoGame
 ```
@@ -70,7 +70,7 @@ Adapters -> MonoGame
 ```text
 UI core -> MonoGame
 UI core -> Skia/HarfBuzz
-UI/Drawing core -> MonoGame
+Drawing core -> MonoGame
 UI/Input core -> MonoGame
 Controls -> backend-specific rendering/input APIs
 ```

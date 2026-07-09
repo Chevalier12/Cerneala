@@ -77,4 +77,4 @@ Cerneala UI aspect slot declarations, component template slots, and aspect targe
 - `Cerneala.UI.Aspect.AspectSlot`
 - `Cerneala.UI.Aspect.AspectSlotPath`
 - `Cerneala.UI.Aspect.AspectTarget`
-- `Cerneala.UI.Controls.ButtonSlots`
+- `Cerneala.UI.Controls.Buttons.ButtonSlots`

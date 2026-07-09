@@ -94,7 +94,7 @@ Cerneala motion interpolation APIs that animate `DrawSize` values.
 
 ## See Also
 
-- [`DrawSize`](../../UI/Drawing/DrawSize.cs)
+- [`DrawSize`](../../Drawing/DrawSize.cs)
 - [`DrawPointMixer`](Cerneala.UI.Motion.Interpolation.DrawPointMixer.md)
 - [`ValueMixer<T>`](../../UI/Motion/Interpolation/ValueMixer.cs)
 - [`ValueMixerRegistry`](../../UI/Motion/Interpolation/ValueMixerRegistry.cs)

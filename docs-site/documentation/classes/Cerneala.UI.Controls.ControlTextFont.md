@@ -66,5 +66,5 @@ Project: `Cerneala`
 ## See also
 
 - `UI/Controls/ControlTextFont.cs`
-- `UI/Drawing/IDrawFont.cs`
-- `UI/Drawing/DrawTextRun.cs`
+- `Drawing/IDrawFont.cs`
+- `Drawing/DrawTextRun.cs`

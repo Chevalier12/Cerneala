@@ -2,7 +2,7 @@
 
 This file is the long-term project memory for Cerneala's modern retained UI architecture.
 
-Product vision: **WPF 2026**, not WPF 2000. Cerneala should keep the WPF ideas that still help developer ergonomics while avoiding a compatibility-driven clone. The core should be retained-mode, game-loop-friendly, strongly typed, explicit, testable, backend-neutral where possible, and built on the existing `UI/Drawing` and `UI/Input` foundations.
+Product vision: **WPF 2026**, not WPF 2000. Cerneala should keep the WPF ideas that still help developer ergonomics while avoiding a compatibility-driven clone. The core should be retained-mode, game-loop-friendly, strongly typed, explicit, testable, backend-neutral where possible, and built on the existing `Drawing` and `UI/Input` foundations.
 
 The UI tree is retained. The game loop may call update and draw every frame, but Cerneala should not recompute layout or regenerate drawing commands unless invalidated state requires it.
 
@@ -31,7 +31,7 @@ Later and Optional/Experimental work may have checked files or tests because pro
 
 Architectural invariants:
 
-- Use `UI/Drawing` for low-level command recording and backend rendering.
+- Use `Drawing` for low-level command recording and backend rendering.
 - Use `UI/Input` for raw snapshots, routed event metadata, routing, and command primitives.
 - Do not make `DrawCommandList` a scene graph.
 - Do not make `DrawingContext` own layout, styling, input, or control state.
@@ -47,21 +47,21 @@ This section records what the repository already provides. Future work should bu
 ### Drawing command foundation
 
 - [x] `architecture.md` documents the drawing/input boundaries.
-- [x] `UI/Drawing/DrawArgument.cs`
-- [x] `UI/Drawing/DrawColor.cs`
-- [x] `UI/Drawing/DrawCommand.cs`
-- [x] `UI/Drawing/DrawCommandKind.cs`
-- [x] `UI/Drawing/DrawCommandList.cs`
-- [x] `UI/Drawing/DrawingContext.cs`
-- [x] `UI/Drawing/DrawPoint.cs`
-- [x] `UI/Drawing/DrawRect.cs`
-- [x] `UI/Drawing/DrawTextRun.cs`
-- [x] `UI/Drawing/IDrawFont.cs`
-- [x] `UI/Drawing/IDrawImage.cs`
-- [x] `UI/Drawing/IDrawingBackend.cs`
-- [x] `UI/Drawing/IFontSource.cs`
-- [x] `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
-- [x] `UI/Drawing/MonoGame/MonoGameImage.cs`
+- [x] `Drawing/DrawArgument.cs`
+- [x] `Drawing/DrawColor.cs`
+- [x] `Drawing/DrawCommand.cs`
+- [x] `Drawing/DrawCommandKind.cs`
+- [x] `Drawing/DrawCommandList.cs`
+- [x] `Drawing/DrawingContext.cs`
+- [x] `Drawing/DrawPoint.cs`
+- [x] `Drawing/DrawRect.cs`
+- [x] `Drawing/DrawTextRun.cs`
+- [x] `Drawing/IDrawFont.cs`
+- [x] `Drawing/IDrawImage.cs`
+- [x] `Drawing/IDrawingBackend.cs`
+- [x] `Drawing/IFontSource.cs`
+- [x] `Drawing/MonoGame/MonoGameDrawingBackend.cs`
+- [x] `Drawing/MonoGame/MonoGameImage.cs`
 
 Existing drawing tests:
 
@@ -71,12 +71,12 @@ Existing drawing tests:
 
 ### Text shaping and rasterization foundation
 
-- [x] `UI/Drawing/Text/RasterizedText.cs`
-- [x] `UI/Drawing/Text/SkiaFont.cs`
-- [x] `UI/Drawing/Text/SkiaTextRasterizer.cs`
-- [x] `UI/Drawing/Text/SkiaTextShaper.cs`
-- [x] `UI/Drawing/Text/SystemFontSource.cs`
-- [x] `UI/Drawing/Text/TextShapeResult.cs`
+- [x] `Drawing/Text/RasterizedText.cs`
+- [x] `Drawing/Text/SkiaFont.cs`
+- [x] `Drawing/Text/SkiaTextRasterizer.cs`
+- [x] `Drawing/Text/SkiaTextShaper.cs`
+- [x] `Drawing/Text/SystemFontSource.cs`
+- [x] `Drawing/Text/TextShapeResult.cs`
 
 Existing text tests:
 
@@ -364,7 +364,7 @@ Planning:
 - [x] `UI/Layout/Panels/Panel.cs`
 - [x] `UI/Layout/Panels/Canvas.cs`
 - [x] `UI/Layout/Panels/StackPanel.cs`
-- [x] `UI/Layout/Panels/Orientation.cs`
+- [x] `UI/Layout/Orientation.cs`
 - [x] `UI/Layout/Panels/Grid.cs` — fixed, auto, and star retained grid panel.
 - [x] `UI/Layout/Panels/GridLength.cs`
 - [x] `UI/Layout/Panels/ColumnDefinition.cs`
@@ -593,9 +593,8 @@ This phase creates the smallest useful control set. Controls should be retained,
 - [x] `UI/Controls/Button.cs` — button chrome and MVP string rendering; content ownership is inherited from `ContentControl`.
 - [x] `UI/Controls/Primitives/ToggleButton.cs` — checkable button primitive with explicit click toggle semantics.
 - [x] `UI/Controls/CheckBox.cs` — checkable content control rendered through retained drawing commands.
-- [x] `UI/Controls/ControlTemplate.cs` — code-first control templates.
-- [x] `UI/Controls/TemplatePartAttribute.cs` — diagnostic template part metadata.
-- [x] `UI/Controls/VisualState.cs` — minimal state names for hover/pressed/focus/disabled.
+- [x] `UI/Controls/Templates/ControlTemplate.cs` — code-first control templates.
+- [x] `UI/Controls/Templates/TemplatePartAttribute.cs` — diagnostic template part metadata.
 - [x] `UI/Controls/ControlTextFont.cs` — minimal backend-neutral font handle for MVP text commands.
 - [x] `UI/Text/TextMeasureResult.cs` — minimal text measurement result for `TextBlock`.
 - [x] `UI/Text/TextMeasurer.cs` — deterministic MVP text measurer; full text services remain section 11.
@@ -641,9 +640,9 @@ This phase adds layout and cache services for controls such as `TextBlock` witho
 
 Current line breaking is a deterministic MVP approximation: `LineBreakService` uses fixed-width character slicing from `fontSize * scale * 0.5f`. That is acceptable for retained layout tests and simple samples, but it is not production Unicode line breaking, glyph-accurate wrapping, ellipsis trimming, or full multiline text layout.
 
-- [~] `UI/Drawing/DrawTextRun.cs`
-- [~] `UI/Drawing/Text/SkiaTextShaper.cs`
-- [~] `UI/Drawing/Text/SkiaTextRasterizer.cs`
+- [~] `Drawing/DrawTextRun.cs`
+- [~] `Drawing/Text/SkiaTextShaper.cs`
+- [~] `Drawing/Text/SkiaTextRasterizer.cs`
 - [x] `UI/Text/FontResolver.cs` — wraps `IFontSource` and theme/default font decisions.
 - [x] `UI/Text/TextRunStyle.cs` — font family, size, color, wrapping flags; converts to `DrawTextRun`.
 - [x] `UI/Text/TextMeasureResult.cs`
@@ -693,8 +692,8 @@ This phase introduces explicit resource identity and invalidation without recrea
 - [x] `UI/Resources/ImageResource.cs`
 - [x] `UI/Resources/IImageLoader.cs`
 - [x] `UI/Resources/MonoGame/MonoGameImageLoader.cs` — adapter that returns `IDrawImage`/`MonoGameImage` without leaking `Texture2D` into controls.
-- [~] `UI/Drawing/IDrawImage.cs` — keep as draw-level image handle.
-- [~] `UI/Drawing/IDrawFont.cs` — keep as draw-level font handle.
+- [~] `Drawing/IDrawImage.cs` — keep as draw-level image handle.
+- [~] `Drawing/IDrawFont.cs` — keep as draw-level font handle.
 
 Tests:
 
@@ -783,15 +782,15 @@ Acceptance checklist:
 
 This phase enables reusable controls without forcing every control to hand-code rendering. Templates should be code-first and strongly typed first; optional markup can come later.
 
-- [x] `UI/Controls/ControlTemplate.cs`
-- [x] `UI/Controls/ControlTemplate{TControl}.cs`
-- [x] `UI/Controls/TemplateContext.cs`
-- [x] `UI/Controls/TemplateInstance.cs`
-- [x] `UI/Controls/TemplateBinding{T}.cs`
-- [x] `UI/Controls/TemplatePartAttribute.cs` — diagnostic only; no hidden runtime magic required.
-- [x] `UI/Controls/ItemsPanelTemplate.cs`
-- [x] `UI/Controls/DataTemplate.cs`
-- [x] `UI/Controls/DataTemplate{T}.cs`
+- [x] `UI/Controls/Templates/ControlTemplate.cs`
+- [x] `UI/Controls/Templates/ControlTemplate{TControl}.cs`
+- [x] `UI/Controls/Templates/TemplateContext.cs`
+- [x] `UI/Controls/Templates/TemplateInstance.cs`
+- [x] `UI/Controls/Templates/TemplateBinding{T}.cs`
+- [x] `UI/Controls/Templates/TemplatePartAttribute.cs` — diagnostic only; no hidden runtime magic required.
+- [x] `UI/Controls/Items/ItemsPanelTemplate.cs`
+- [x] `UI/Controls/Templates/DataTemplate.cs`
+- [x] `UI/Controls/Templates/DataTemplate{T}.cs`
 - [x] `UI/Controls/ContentPresenter.cs`
 - [x] `UI/Controls/ItemsPresenter.cs`
 
@@ -855,12 +854,12 @@ Tests:
 This phase should come after templates and scrolling. Lists must be retained and virtualized so large data sets do not create or re-render every element every frame.
 
 - [x] `UI/Controls/ItemsControl.cs`
-- [x] `UI/Controls/ItemCollection.cs`
-- [x] `UI/Controls/ItemContainerGenerator.cs`
-- [x] `UI/Controls/ItemContainerRecyclePool.cs`
+- [x] `UI/Controls/Items/ItemCollection.cs`
+- [x] `UI/Controls/Items/ItemContainerGenerator.cs`
+- [x] `UI/Controls/Items/ItemContainerRecyclePool.cs`
 - [x] `UI/Controls/ItemsPresenter.cs`
-- [x] `UI/Controls/SelectionModel.cs`
-- [x] `UI/Controls/SelectionModel{T}.cs`
+- [x] `UI/Controls/Selection/SelectionModel.cs`
+- [x] `UI/Controls/Selection/SelectionModel{T}.cs`
 - [x] `UI/Controls/Primitives/Selector.cs`
 - [x] `UI/Controls/ListBox.cs`
 - [x] `UI/Controls/ListBoxItem.cs`
@@ -976,7 +975,6 @@ This phase should wait until input, focus, text layout, and diagnostics are stab
 - [x] `UI/Text/TextCompositionManager.cs`
 - [x] `UI/Text/TextCompositionState.cs`
 - [x] `UI/Text/UndoRedoStack.cs`
-- [x] `UI/Text/ClipboardAdapter.cs`
 - [x] `UI/Platform/ITextInputPlatform.cs`
 
 Tests:
@@ -1022,8 +1020,8 @@ This phase is experimental/frozen until drawing command and backend semantics ex
 
 New media concepts must translate into `DrawCommand` extensions or clear backend abstractions before they can be marked implemented. Descriptor existence alone is not enough.
 
-- [x] `UI/Drawing/DrawCommandKind.cs` — add new command kinds only with tests and backend support.
-- [x] `UI/Drawing/DrawingContext.cs` — add methods only when corresponding command kinds exist.
+- [x] `Drawing/DrawCommandKind.cs` — add new command kinds only with tests and backend support.
+- [x] `Drawing/DrawingContext.cs` — add methods only when corresponding command kinds exist.
 - [x] `UI/Media/Brush.cs` — introduce when more than solid `DrawColor` is needed.
 - [x] `UI/Media/SolidColorBrush.cs` — may remain a thin wrapper over `DrawColor` only if it participates in styling/resource identity.
 - [~] `UI/Media/LinearGradientBrush.cs` — type exists; frozen until gradient draw commands and backend rendering exist.
@@ -1301,7 +1299,7 @@ MVP is complete when Cerneala can run a retained UI sample inside the MonoGame p
 - [x] Layout runs on first frame and when layout-affecting state changes.
 - [x] Rendering commands are regenerated only when render-affecting state changes.
 - [x] `IDrawingBackend.Render` can be called every draw frame with cached commands.
-- [x] Existing `UI/Drawing` tests still pass.
+- [x] Existing `Drawing` tests still pass.
 - [x] Existing `UI/Input` tests still pass.
 - [x] New retained no-work-frame tests pass.
 - [x] `Playground/Cerneala.Playground/Samples/RetainedAppSample.cs` proves a retained app vertical slice: stable tree creation, layout, render cache reuse, command mutation, text/resource invalidation, image content, and a simple retained list/scroll area.

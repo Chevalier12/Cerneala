@@ -4,7 +4,7 @@
 
 **Goal:** Make `MonoGameDrawingBackend` safe and predictable as a real runtime adapter: scaled draw mapping, balanced clipping, scissor restoration, text texture cache behavior, image validation, and idempotent disposal. The retained UI core can be correct and still feel broken if the backend leaks render state or maps coordinates inconsistently.
 
-**Architecture:** Keep `UI/Drawing` as command recording and backend rendering only. Do not turn `DrawCommandList` into a scene graph. Extract tiny pure helper classes only where they make backend behavior testable without requiring a live graphics device. MonoGame-specific code stays under `UI/Drawing/MonoGame` and `UI/Hosting/MonoGame`.
+**Architecture:** Keep `Drawing` as command recording and backend rendering only. Do not turn `DrawCommandList` into a scene graph. Extract tiny pure helper classes only where they make backend behavior testable without requiring a live graphics device. MonoGame-specific code stays under `Drawing/MonoGame` and `UI/Hosting/MonoGame`.
 
 **Tech Stack:** C#/.NET 8, xUnit, existing `DrawCommandList`, `DrawingContext`, `MonoGameDrawingBackend`, MonoGame adapter folders.
 
@@ -12,13 +12,13 @@
 
 ## File Structure
 
-- Modify: `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
+- Modify: `Drawing/MonoGame/MonoGameDrawingBackend.cs`
   - Apply `CoordinateScale` consistently to rectangles, positions, thicknesses, and clips.
   - Restore scissor state reliably after render.
   - Make `Dispose()` idempotent.
-- Create: `UI/Drawing/MonoGame/MonoGameDrawMapper.cs`
+- Create: `Drawing/MonoGame/MonoGameDrawMapper.cs`
   - Pure helper for scaled rectangle/vector/thickness/scissor mapping.
-- Create: `UI/Drawing/MonoGame/MonoGameClipStack.cs`
+- Create: `Drawing/MonoGame/MonoGameClipStack.cs`
   - Pure or mostly pure helper for nested clip intersection/restoration if useful.
 - Modify: `UI/Hosting/MonoGame/MonoGameUiHost.cs`
   - Ensure draw lifecycle sets scale and does not expose backend state leaks.
@@ -106,9 +106,9 @@ git commit -m "test: capture monogame draw mapping and clip contracts"
 ### Task 2: Extract Tiny Backend Helpers
 
 **Files:**
-- Create: `UI/Drawing/MonoGame/MonoGameDrawMapper.cs`
-- Create: `UI/Drawing/MonoGame/MonoGameClipStack.cs`
-- Modify: `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
+- Create: `Drawing/MonoGame/MonoGameDrawMapper.cs`
+- Create: `Drawing/MonoGame/MonoGameClipStack.cs`
+- Modify: `Drawing/MonoGame/MonoGameDrawingBackend.cs`
 
 - [ ] **Step 1: Implement `MonoGameDrawMapper`**
 
@@ -140,7 +140,7 @@ Do not rewrite rendering algorithms unless tests require it.
 ### Task 3: Harden Backend State Restoration
 
 **Files:**
-- Modify: `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
+- Modify: `Drawing/MonoGame/MonoGameDrawingBackend.cs`
 - Create: `tests/Cerneala.Tests/Drawing/MonoGame/MonoGameDrawingBackendStateTests.cs`
 
 - [ ] **Step 1: Add RED backend state tests that do not need a real GPU where possible**
@@ -174,7 +174,7 @@ Multiple `Dispose()` calls should not double-dispose textures or throw.
 ### Task 4: Keep Text And Image Runtime Behavior Honest
 
 **Files:**
-- Modify: `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
+- Modify: `Drawing/MonoGame/MonoGameDrawingBackend.cs`
 - Modify tests only as required.
 
 - [ ] **Step 1: Add diagnostics for text texture cache count if needed**
@@ -220,6 +220,6 @@ Expected: GREEN.
 - [ ] **Step 4: Commit implementation**
 
 ```powershell
-git add UI\Drawing\MonoGame UI\Hosting\MonoGame tests\Cerneala.Tests
+git add Drawing\\MonoGame UI\Hosting\MonoGame tests\Cerneala.Tests
 git commit -m "fix: harden monogame drawing backend state"
 ```

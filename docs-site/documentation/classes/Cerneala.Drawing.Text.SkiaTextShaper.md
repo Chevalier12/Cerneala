@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing.Text`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/Text/SkiaTextShaper.cs`
+Source: `Drawing/Text/SkiaTextShaper.cs`
 
 Shapes `DrawTextRun` text with Skia-backed fonts and HarfBuzz glyph positioning.
 

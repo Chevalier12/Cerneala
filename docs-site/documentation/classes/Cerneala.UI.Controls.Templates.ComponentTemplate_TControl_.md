@@ -115,4 +115,4 @@ UI area: retained controls, component templates, aspect-aware templating.
 - `UI/Controls/Templates/ComponentTemplateContext.cs`
 - `UI/Controls/Templates/ComponentTemplateInstance.cs`
 - `UI/Controls/Control.cs`
-- `UI/Controls/ButtonTemplates.cs`
+- `UI/Controls/Buttons/ButtonTemplates.cs`

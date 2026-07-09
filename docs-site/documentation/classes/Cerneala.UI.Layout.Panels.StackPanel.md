@@ -103,5 +103,5 @@ Changing `Orientation` uses `UiPropertyOptions.AffectsMeasure`, so orientation c
 ## See also
 
 - `Cerneala.UI.Layout.Panels.Panel`
-- `Cerneala.UI.Layout.Panels.Orientation`
+- `Cerneala.UI.Layout.Orientation`
 - `Cerneala.UI.Elements.UIElement`

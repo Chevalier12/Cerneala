@@ -6,7 +6,7 @@
 
 **Architecture:** Keep layout primitives and draw primitives backend-neutral. Do not add duplicate `Point`, `Rect`, or color types. Add small host/adapter helpers where needed. Core `UiHost.Update(InputFrame, ...)` should treat explicit `InputFrame` coordinates as already-normalized logical UI coordinates. MonoGame input and drawing adapters perform physical/logical conversion.
 
-**Tech Stack:** C#/.NET 8, xUnit, existing `UI/Hosting`, `UI/Input/MonoGame`, `UI/Drawing/MonoGame`, retained layout/render tests.
+**Tech Stack:** C#/.NET 8, xUnit, existing `UI/Hosting`, `UI/Input/MonoGame`, `Drawing/MonoGame`, retained layout/render tests.
 
 ---
 
@@ -26,7 +26,7 @@
   - Ensure MonoGame input scale and drawing scale are updated from the current `UiViewport`.
 - Modify: `UI/Hosting/MonoGame/MonoGameUiHostOptions.cs`
   - Add explicit default scale/coordinate options only if required.
-- Modify later in the next plan: `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
+- Modify later in the next plan: `Drawing/MonoGame/MonoGameDrawingBackend.cs`
   - This plan may add the property/contract; backend implementation can be completed in the render backend hardening plan.
 - Create: `tests/Cerneala.Tests/UI/Hosting/UiViewportScaleContractTests.cs`
 - Create: `tests/Cerneala.Tests/Input/MonoGameInputCoordinateScaleTests.cs`
@@ -201,7 +201,7 @@ Do not scale explicit `Update(InputFrame, viewport, elapsedTime)` frames.
 ### Task 4: Prepare Drawing Scale Contract For Backend Hardening
 
 **Files:**
-- Modify: `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
+- Modify: `Drawing/MonoGame/MonoGameDrawingBackend.cs`
 - Modify: `UI/Hosting/MonoGame/MonoGameUiHost.cs`
 
 - [ ] **Step 1: Add a backend coordinate scale property**

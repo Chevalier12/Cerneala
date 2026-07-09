@@ -40,8 +40,8 @@ The fix must therefore cover metrics, hit testing, and time-driven retained inva
 - `UI/Text/FontResolver.cs`
 - `UI/Text/ResolvedTextFont.cs`
 - `UI/Text/TextRunStyle.cs`
-- `UI/Drawing/Text/SkiaTextShaper.cs`
-- `UI/Drawing/Text/TextShapeResult.cs`
+- `Drawing/Text/SkiaTextShaper.cs`
+- `Drawing/Text/TextShapeResult.cs`
 - `tests/Cerneala.Tests/Controls/TextBoxEditingVisualContractTests.cs`
 
 **Files to change**
@@ -123,8 +123,8 @@ public sealed class TextCaretLayout
 **Files likely touched**
 
 - `UI/Text/TextCaretLayout.cs`
-- `UI/Drawing/Text/TextShapeResult.cs`
-- `UI/Drawing/Text/SkiaTextShaper.cs`
+- `Drawing/Text/TextShapeResult.cs`
+- `Drawing/Text/SkiaTextShaper.cs`
 
 **Re-index command after edits**
 
@@ -150,8 +150,8 @@ Passed!  - Failed: 0
 
 - `tests/Cerneala.Tests/Controls/TextBoxEditingVisualContractTests.cs`
 - `UI/Controls/TextBoxBase.cs`
-- `UI/Drawing/DrawCommand.cs`
-- `UI/Drawing/DrawCommandList.cs`
+- `Drawing/DrawCommand.cs`
+- `Drawing/DrawCommandList.cs`
 
 **Files to change**
 
@@ -555,8 +555,8 @@ Manual checks:
 ## Expected Changed Files
 
 - `UI/Text/TextCaretLayout.cs`
-- `UI/Drawing/Text/TextShapeResult.cs`
-- `UI/Drawing/Text/SkiaTextShaper.cs`
+- `Drawing/Text/TextShapeResult.cs`
+- `Drawing/Text/SkiaTextShaper.cs`
 - `UI/Controls/TextBoxBase.cs`
 - `UI/Rendering/ITimeSensitiveRenderElement.cs`
 - `UI/Rendering/TimeSensitiveRenderInvalidator.cs`

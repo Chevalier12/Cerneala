@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing.Text`
 
 Assembly/Project: `Cerneala` (`Cerneala.csproj`)
 
-Source: `UI/Drawing/Text/TextShapeResult.cs`
+Source: `Drawing/Text/TextShapeResult.cs`
 
 Stores the shaped glyph data and text metrics produced by the drawing text pipeline.
 

@@ -75,7 +75,7 @@ public sealed class AdvancedDrawCommandTests
     [Fact]
     public void MonoGameBackendHandlesAdvancedCommands()
     {
-        string backendText = File.ReadAllText(FindRepositoryPath("UI", "Drawing", "MonoGame", "MonoGameDrawingBackend.cs"));
+        string backendText = File.ReadAllText(FindRepositoryPath("Drawing", "MonoGame", "MonoGameDrawingBackend.cs"));
 
         Assert.Contains("case DrawCommandKind.FillEllipse:", backendText, StringComparison.Ordinal);
         Assert.Contains("case DrawCommandKind.DrawEllipse:", backendText, StringComparison.Ordinal);

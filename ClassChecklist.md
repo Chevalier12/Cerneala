@@ -1,17 +1,99 @@
 # Class Checklist
 
-Generated from `.roslyn-index/symbols.jsonl` using RoslynIndexer data.
+Generated from `.roslyn-index/v1/symbols.jsonl` using RoslynIndexer data.
 Test projects, test paths, Playground classes, and RoslynRepoIndexer tool classes are excluded.
 Verified at: 2026-07-09
 
 Total relevant class-like types: 617
 Classes: 487
 Records: 130
-Excluded test class-like types: 487
+Excluded test class-like types: 462
 Excluded Playground class-like types: 24
-Excluded RoslynRepoIndexer class-like types: 102
+Excluded RoslynRepoIndexer class-like types: 0
 
 ## Cerneala
+
+### Drawing/DrawArgument.cs
+
+- [x] `Cerneala.Drawing.DrawArgument` - class, internal, static, line 3
+
+### Drawing/DrawColor.cs
+
+- [x] `Cerneala.Drawing.DrawColor` - record, public, sealed, line 3
+
+### Drawing/DrawCommand.cs
+
+- [x] `Cerneala.Drawing.DrawCommand` - record, public, sealed, line 3
+
+### Drawing/DrawCommandList.cs
+
+- [x] `Cerneala.Drawing.DrawCommandList` - class, public, sealed, line 5
+
+### Drawing/DrawingContext.cs
+
+- [x] `Cerneala.Drawing.DrawingContext` - class, public, sealed, line 3
+
+### Drawing/DrawPoint.cs
+
+- [x] `Cerneala.Drawing.DrawPoint` - record, public, sealed, line 3
+
+### Drawing/DrawRect.cs
+
+- [x] `Cerneala.Drawing.DrawRect` - record, public, sealed, line 3
+
+### Drawing/DrawSize.cs
+
+- [x] `Cerneala.Drawing.DrawSize` - record, public, sealed, line 3
+
+### Drawing/DrawTextRun.cs
+
+- [x] `Cerneala.Drawing.DrawTextRun` - class, public, sealed, line 3
+
+### Drawing/MonoGame/MonoGameClipStack.cs
+
+- [x] `Cerneala.Drawing.MonoGame.MonoGameClipStack` - class, internal, sealed, line 5
+
+### Drawing/MonoGame/MonoGameDrawingBackend.cs
+
+- [x] `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend` - class, public, sealed, line 8
+- [x] `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTextureKey` - record, private, sealed, line 320
+- [x] `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTexture` - record, private, sealed, line 332
+
+### Drawing/MonoGame/MonoGameImage.cs
+
+- [x] `Cerneala.Drawing.MonoGame.MonoGameImage` - class, public, sealed, line 5
+
+### Drawing/Text/RasterizedText.cs
+
+- [x] `Cerneala.Drawing.Text.RasterizedText` - class, public, sealed, line 5
+
+### Drawing/Text/SkiaFont.cs
+
+- [x] `Cerneala.Drawing.Text.SkiaFont` - class, public, sealed, line 6
+
+### Drawing/Text/SkiaTextRasterizer.cs
+
+- [x] `Cerneala.Drawing.Text.SkiaTextRasterizer` - class, public, sealed, line 6
+
+### Drawing/Text/SkiaTextShaper.cs
+
+- [x] `Cerneala.Drawing.Text.SkiaTextShaper` - class, public, sealed, line 10
+
+### Drawing/Text/SystemFontSource.cs
+
+- [x] `Cerneala.Drawing.Text.SystemFontSource` - class, public, sealed, line 6
+
+### Drawing/Text/TextCaretVerticalMetrics.cs
+
+- [x] `Cerneala.Drawing.Text.TextCaretVerticalMetrics` - record, public, sealed, line 3
+
+### Drawing/Text/TextShaper.cs
+
+- [x] `Cerneala.Drawing.Text.TextShaper` - class, public, sealed, line 4
+
+### Drawing/Text/TextShapeResult.cs
+
+- [x] `Cerneala.Drawing.Text.TextShapeResult` - record, public, sealed, line 5
 
 ### GameBootstrap.cs
 
@@ -39,7 +121,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Accessibility/SemanticsProvider.cs
 
-- [x] `Cerneala.UI.Accessibility.SemanticsProvider` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Accessibility.SemanticsProvider` - class, public, sealed, line 5
 
 ### UI/Accessibility/SemanticsTree.cs
 
@@ -49,23 +131,237 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Accessibility.TextBoxAutomationPeer` - class, public, sealed, line 5
 
+### UI/Aspect/AspectCatalog.cs
 
+- [x] `Cerneala.UI.Aspect.AspectCatalog` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Aspect.AspectPackageDiagnostic` - record, public, sealed, line 81
 
+### UI/Aspect/AspectCondition.cs
 
+- [x] `Cerneala.UI.Aspect.AspectCondition` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Aspect.AspectPropertyConditionBuilder<TValue>` - class, public, sealed, line 86
 
+### UI/Aspect/AspectConditionDependency.cs
 
+- [x] `Cerneala.UI.Aspect.AspectConditionDependency` - record, public, sealed, line 15
 
+### UI/Aspect/AspectConditionNode.cs
 
+- [x] `Cerneala.UI.Aspect.AspectConditionNode` - class, internal, abstract, line 5
+- [x] `Cerneala.UI.Aspect.StateAspectCondition` - class, internal, sealed, line 12
+- [x] `Cerneala.UI.Aspect.VariantAspectCondition` - class, internal, sealed, line 33
+- [x] `Cerneala.UI.Aspect.PropertyAspectCondition<TValue>` - class, internal, sealed, line 57
+- [x] `Cerneala.UI.Aspect.DataAspectCondition<TData>` - class, internal, sealed, line 88
+- [x] `Cerneala.UI.Aspect.DataAspectCondition<TData, TValue>` - class, internal, sealed, line 123
+- [x] `Cerneala.UI.Aspect.AllAspectCondition` - class, internal, sealed, line 160
+- [x] `Cerneala.UI.Aspect.AnyAspectCondition` - class, internal, sealed, line 182
+- [x] `Cerneala.UI.Aspect.NotAspectCondition` - class, internal, sealed, line 204
+- [x] `Cerneala.UI.Aspect.PredicateAspectCondition` - class, internal, sealed, line 226
 
+### UI/Aspect/AspectConditionResult.cs
 
+- [x] `Cerneala.UI.Aspect.AspectConditionResult` - class, public, sealed, line 3
 
+### UI/Aspect/AspectDataContext.cs
 
+- [x] `Cerneala.UI.Aspect.AspectDataContext` - class, public, sealed, line 3
 
+### UI/Aspect/AspectDataDependency.cs
 
+- [x] `Cerneala.UI.Aspect.AspectDataDependency` - record, public, sealed, line 3
 
+### UI/Aspect/AspectDeclaration.cs
 
+- [x] `Cerneala.UI.Aspect.AspectDeclaration` - class, public, sealed, line 5
 
+### UI/Aspect/AspectDependencySet.cs
 
+- [x] `Cerneala.UI.Aspect.AspectDependencySet` - class, public, sealed, line 5
+
+### UI/Aspect/AspectDiagnostics.cs
+
+- [x] `Cerneala.UI.Aspect.AspectDiagnostics` - class, public, static, line 3
+- [x] `Cerneala.UI.Aspect.AspectDiagnostics.Snapshot` - class, public, sealed, line 5
+
+### UI/Aspect/AspectEngine.cs
+
+- [x] `Cerneala.UI.Aspect.AspectEngine` - class, public, sealed, line 8
+- [x] `Cerneala.UI.Aspect.AspectApplicationResult` - record, public, sealed, line 219
+
+### UI/Aspect/AspectEngineCounters.cs
+
+- [x] `Cerneala.UI.Aspect.AspectEngineCounters` - class, public, sealed, line 3
+
+### UI/Aspect/AspectEngineElementState.cs
+
+- [x] `Cerneala.UI.Aspect.AspectEngineElementState` - class, internal, sealed, line 3
+
+### UI/Aspect/AspectEnvironment.cs
+
+- [x] `Cerneala.UI.Aspect.AspectEnvironment` - class, public, sealed, line 3
+
+### UI/Aspect/AspectInvalidation.cs
+
+- [x] `Cerneala.UI.Aspect.AspectInvalidation` - class, public, sealed, line 5
+
+### UI/Aspect/AspectInvalidationGraph.cs
+
+- [x] `Cerneala.UI.Aspect.AspectInvalidationGraph` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Aspect.AspectInvalidationGraph.DependencyHolder` - class, private, sealed, line 36
+
+### UI/Aspect/AspectLayer.cs
+
+- [x] `Cerneala.UI.Aspect.AspectLayer` - class, public, sealed, line 3
+
+### UI/Aspect/AspectMatchContext.cs
+
+- [x] `Cerneala.UI.Aspect.AspectMatchContext` - class, public, sealed, line 5
+
+### UI/Aspect/AspectMotion.cs
+
+- [x] `Cerneala.UI.Aspect.AspectMotion` - class, public, sealed, line 5
+
+### UI/Aspect/AspectPackage.cs
+
+- [x] `Cerneala.UI.Aspect.AspectPackage` - class, public, sealed, line 5
+
+### UI/Aspect/AspectPackageBuilder.cs
+
+- [x] `Cerneala.UI.Aspect.AspectPackageBuilder` - class, public, sealed, line 5
+
+### UI/Aspect/AspectProcessor.cs
+
+- [x] `Cerneala.UI.Aspect.AspectProcessor` - class, public, sealed, line 5
+
+### UI/Aspect/AspectRef.cs
+
+- [x] `Cerneala.UI.Aspect.AspectRef` - class, public, static, line 3
+
+### UI/Aspect/AspectRegistry.cs
+
+- [x] `Cerneala.UI.Aspect.AspectRegistry` - class, public, sealed, line 3
+
+### UI/Aspect/AspectResolutionContext.cs
+
+- [x] `Cerneala.UI.Aspect.AspectResolutionContext` - class, public, sealed, line 6
+
+### UI/Aspect/AspectResolutionStep.cs
+
+- [x] `Cerneala.UI.Aspect.AspectResolutionStep` - record, public, sealed, line 3
+
+### UI/Aspect/AspectRuleSet.cs
+
+- [x] `Cerneala.UI.Aspect.AspectRuleSet` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Aspect.AspectCascadeKey` - record, internal, sealed, line 79
+
+### UI/Aspect/AspectRuleSetBuilder.cs
+
+- [x] `Cerneala.UI.Aspect.AspectRuleSetBuilder` - class, public, sealed, line 3
+
+### UI/Aspect/AspectSlot.cs
+
+- [x] `Cerneala.UI.Aspect.AspectSlot` - class, public, abstract, line 3
+
+### UI/Aspect/AspectSlot{TOwner,TTarget}.cs
+
+- [x] `Cerneala.UI.Aspect.AspectSlot<TOwner, TTarget>` - class, public, sealed, line 3
+
+### UI/Aspect/AspectSlotPath.cs
+
+- [x] `Cerneala.UI.Aspect.AspectSlotPath` - class, public, sealed, line 3
+
+### UI/Aspect/AspectSpecificity.cs
+
+- [x] `Cerneala.UI.Aspect.AspectSpecificity` - record, public, sealed, line 3
+
+### UI/Aspect/AspectState.cs
+
+- [x] `Cerneala.UI.Aspect.AspectState` - class, public, sealed, line 3
+
+### UI/Aspect/AspectStateSet.cs
+
+- [x] `Cerneala.UI.Aspect.AspectStateSet` - class, public, sealed, line 7
+
+### UI/Aspect/AspectTarget.cs
+
+- [x] `Cerneala.UI.Aspect.AspectTarget` - class, public, sealed, line 5
+
+### UI/Aspect/AspectToken.cs
+
+- [x] `Cerneala.UI.Aspect.AspectToken` - class, public, abstract, line 7
+
+### UI/Aspect/AspectToken{T}.cs
+
+- [x] `Cerneala.UI.Aspect.AspectToken<T>` - class, public, sealed, line 3
+
+### UI/Aspect/AspectTokenBuilder.cs
+
+- [x] `Cerneala.UI.Aspect.AspectTokenBuilder` - class, public, sealed, line 3
+
+### UI/Aspect/AspectTokenDefinition.cs
+
+- [x] `Cerneala.UI.Aspect.AspectTokenDefinition` - class, public, sealed, line 3
+
+### UI/Aspect/AspectTokenTrace.cs
+
+- [x] `Cerneala.UI.Aspect.AspectTokenTrace` - record, public, sealed, line 3
+
+### UI/Aspect/AspectValue.cs
+
+- [x] `Cerneala.UI.Aspect.AspectValue` - class, public, abstract, line 3
+
+### UI/Aspect/AspectValue{T}.cs
+
+- [x] `Cerneala.UI.Aspect.AspectValue<T>` - class, public, sealed, line 3
+
+### UI/Aspect/AspectVariantKey.cs
+
+- [x] `Cerneala.UI.Aspect.AspectVariantKey` - class, public, abstract, line 3
+
+### UI/Aspect/AspectVariantKey{TOwner,TValue}.cs
+
+- [x] `Cerneala.UI.Aspect.AspectVariantKey<TOwner, TValue>` - class, public, sealed, line 3
+
+### UI/Aspect/AspectVariantSet.cs
+
+- [x] `Cerneala.UI.Aspect.AspectVariantSet` - class, public, sealed, line 3
+
+### UI/Aspect/ComponentAspectBuilder.cs
+
+- [x] `Cerneala.UI.Aspect.ComponentAspectBuilder` - class, public, sealed, line 5
+
+### UI/Aspect/ContentTemplateBuilder.cs
+
+- [x] `Cerneala.UI.Aspect.ContentTemplateBuilder` - class, public, sealed, line 5
+
+### UI/Aspect/DefaultAspectPackage.cs
+
+- [x] `Cerneala.UI.Aspect.DefaultAspectPackage` - class, public, static, line 10
+
+### UI/Aspect/DefaultAspectTokens.cs
+
+- [x] `Cerneala.UI.Aspect.DefaultAspectTokens` - class, public, static, line 7
+- [x] `Cerneala.UI.Aspect.DefaultAspectTokens.Color` - class, public, static, line 9
+- [x] `Cerneala.UI.Aspect.DefaultAspectTokens.Typography` - class, public, static, line 18
+- [x] `Cerneala.UI.Aspect.DefaultAspectTokens.Spacing` - class, public, static, line 24
+- [x] `Cerneala.UI.Aspect.DefaultAspectTokens.Stroke` - class, public, static, line 29
+- [x] `Cerneala.UI.Aspect.DefaultAspectTokens.Motion` - class, public, static, line 34
+
+### UI/Aspect/RejectedAspectDeclaration.cs
+
+- [x] `Cerneala.UI.Aspect.RejectedAspectDeclaration` - class, public, sealed, line 3
+
+### UI/Aspect/ResolvedAspect.cs
+
+- [x] `Cerneala.UI.Aspect.ResolvedAspect` - class, public, sealed, line 5
+
+### UI/Aspect/ResolvedAspectValue.cs
+
+- [x] `Cerneala.UI.Aspect.ResolvedAspectValue` - class, public, sealed, line 5
+
+### UI/Aspect/ThemeTokenBridge.cs
+
+- [x] `Cerneala.UI.Aspect.ThemeTokenBridge` - class, public, static, line 6
 
 ### UI/Controls/Border.cs
 
@@ -73,7 +369,23 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Controls/Button.cs
 
-- [x] `Cerneala.UI.Controls.Button` - class, public, line 10
+- [x] `Cerneala.UI.Controls.Button` - class, public, line 12
+
+### UI/Controls/Buttons/ButtonSlots.cs
+
+- [x] `Cerneala.UI.Controls.Buttons.ButtonSlots` - class, public, static, line 5
+
+### UI/Controls/Buttons/ButtonTemplates.cs
+
+- [x] `Cerneala.UI.Controls.Buttons.ButtonTemplates` - class, public, static, line 6
+
+### UI/Controls/Buttons/ButtonTokens.cs
+
+- [x] `Cerneala.UI.Controls.Buttons.ButtonTokens` - class, public, static, line 7
+
+### UI/Controls/Buttons/ButtonVariants.cs
+
+- [x] `Cerneala.UI.Controls.Buttons.ButtonVariants` - class, public, static, line 5
 
 ### UI/Controls/Canvas.cs
 
@@ -89,37 +401,21 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Controls/ContentControl.cs
 
-- [x] `Cerneala.UI.Controls.ContentControl` - class, public, line 7
-- [x] `Cerneala.UI.Controls.ContentControl.ContentValueEqualityComparer` - class, private, sealed, line 240
+- [x] `Cerneala.UI.Controls.ContentControl` - class, public, line 8
+- [x] `Cerneala.UI.Controls.ContentControl.ContentValueEqualityComparer` - class, private, sealed, line 245
 
 ### UI/Controls/ContentPresenter.cs
 
-- [x] `Cerneala.UI.Controls.ContentPresenter` - class, public, line 8
-- [x] `Cerneala.UI.Controls.ContentPresenter.ReferenceContentEqualityComparer` - class, private, sealed, line 138
+- [x] `Cerneala.UI.Controls.ContentPresenter` - class, public, line 11
+- [x] `Cerneala.UI.Controls.ContentPresenter.ReferenceContentEqualityComparer` - class, private, sealed, line 253
 
 ### UI/Controls/Control.cs
 
-- [x] `Cerneala.UI.Controls.Control` - class, public, line 8
-
-### UI/Controls/ControlTemplate.cs
-
-- [x] `Cerneala.UI.Controls.ControlTemplate` - class, public, abstract, line 5
-
-### UI/Controls/ControlTemplate{TControl}.cs
-
-- [x] `Cerneala.UI.Controls.ControlTemplate<TControl>` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Controls.Control` - class, public, line 11
 
 ### UI/Controls/ControlTextFont.cs
 
 - [x] `Cerneala.UI.Controls.ControlTextFont` - class, public, sealed, line 5
-
-### UI/Controls/DataTemplate.cs
-
-- [x] `Cerneala.UI.Controls.DataTemplate` - class, public, abstract, line 5
-
-### UI/Controls/DataTemplate{T}.cs
-
-- [x] `Cerneala.UI.Controls.DataTemplate<T>` - class, public, sealed, line 5
 
 ### UI/Controls/Decorator.cs
 
@@ -128,37 +424,37 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Controls/Image.cs
 
 - [x] `Cerneala.UI.Controls.Image` - class, public, line 10
-- [x] `Cerneala.UI.Controls.Image.ReferenceImageComparer` - class, private, sealed, line 176
+- [x] `Cerneala.UI.Controls.Image.ReferenceImageComparer` - class, private, sealed, line 174
 
 ### UI/Controls/InkCanvas.cs
 
 - [x] `Cerneala.UI.Controls.InkCanvas` - class, public, sealed, line 8
 - [x] `Cerneala.UI.Controls.InkCanvas.InkInputKey` - record, private, sealed, line 66
 
-### UI/Controls/ItemCollection.cs
+### UI/Controls/Items/ItemCollection.cs
 
-- [x] `Cerneala.UI.Controls.ItemCollection` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Controls.Items.ItemCollection` - class, public, sealed, line 6
 
-### UI/Controls/ItemContainerGenerator.cs
+### UI/Controls/Items/ItemContainerGenerator.cs
 
-- [x] `Cerneala.UI.Controls.ItemContainerGenerator` - class, public, sealed, line 7
-- [x] `Cerneala.UI.Controls.ItemContainerGenerator.ItemContainerInfo` - class, private, sealed, line 158
+- [x] `Cerneala.UI.Controls.Items.ItemContainerGenerator` - class, public, sealed, line 7
+- [x] `Cerneala.UI.Controls.Items.ItemContainerGenerator.ItemContainerInfo` - class, private, sealed, line 161
 
-### UI/Controls/ItemContainerRecyclePool.cs
+### UI/Controls/Items/ItemContainerRecyclePool.cs
 
-- [x] `Cerneala.UI.Controls.ItemContainerRecyclePool` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Controls.Items.ItemContainerRecyclePool` - class, public, sealed, line 5
+
+### UI/Controls/Items/ItemsPanelTemplate.cs
+
+- [x] `Cerneala.UI.Controls.Items.ItemsPanelTemplate` - class, public, sealed, line 3
 
 ### UI/Controls/ItemsControl.cs
 
-- [x] `Cerneala.UI.Controls.ItemsControl` - class, public, line 10
-
-### UI/Controls/ItemsPanelTemplate.cs
-
-- [x] `Cerneala.UI.Controls.ItemsPanelTemplate` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Controls.ItemsControl` - class, public, line 13
 
 ### UI/Controls/ItemsPresenter.cs
 
-- [x] `Cerneala.UI.Controls.ItemsPresenter` - class, public, line 11
+- [x] `Cerneala.UI.Controls.ItemsPresenter` - class, public, line 13
 
 ### UI/Controls/Label.cs
 
@@ -166,7 +462,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Controls/ListBox.cs
 
-- [x] `Cerneala.UI.Controls.ListBox` - class, public, line 6
+- [x] `Cerneala.UI.Controls.ListBox` - class, public, line 7
 
 ### UI/Controls/ListBoxItem.cs
 
@@ -188,6 +484,18 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Controls.Primitives.ButtonBase` - class, public, line 7
 
+### UI/Controls/Primitives/DragCompletedEventArgs.cs
+
+- [x] `Cerneala.UI.Controls.Primitives.DragCompletedEventArgs` - class, public, sealed, line 3
+
+### UI/Controls/Primitives/DragDeltaEventArgs.cs
+
+- [x] `Cerneala.UI.Controls.Primitives.DragDeltaEventArgs` - class, public, sealed, line 3
+
+### UI/Controls/Primitives/DragStartedEventArgs.cs
+
+- [x] `Cerneala.UI.Controls.Primitives.DragStartedEventArgs` - class, public, sealed, line 3
+
 ### UI/Controls/Primitives/RangeBase.cs
 
 - [x] `Cerneala.UI.Controls.Primitives.RangeBase` - class, public, line 5
@@ -198,15 +506,12 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Controls/Primitives/Selector.cs
 
-- [x] `Cerneala.UI.Controls.Primitives.Selector` - class, public, line 9
-- [x] `Cerneala.UI.Controls.Primitives.Selector.SelectorClickHandlerRegistration` - class, private, sealed, line 100
+- [x] `Cerneala.UI.Controls.Primitives.Selector` - class, public, line 11
+- [x] `Cerneala.UI.Controls.Primitives.Selector.SelectorClickHandlerRegistration` - class, private, sealed, line 102
 
 ### UI/Controls/Primitives/Thumb.cs
 
 - [x] `Cerneala.UI.Controls.Primitives.Thumb` - class, public, line 8
-- [x] `Cerneala.UI.Controls.Primitives.DragStartedEventArgs` - class, public, sealed, line 152
-- [x] `Cerneala.UI.Controls.Primitives.DragDeltaEventArgs` - class, public, sealed, line 165
-- [x] `Cerneala.UI.Controls.Primitives.DragCompletedEventArgs` - class, public, sealed, line 184
 
 ### UI/Controls/Primitives/ToggleButton.cs
 
@@ -230,17 +535,23 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Controls/ScrollViewer.cs
 
-- [x] `Cerneala.UI.Controls.ScrollViewer` - class, public, line 10
+- [x] `Cerneala.UI.Controls.ScrollViewer` - class, public, line 11
 
-### UI/Controls/SelectionModel.cs
+### UI/Controls/Selection/SelectionChangedEventArgs.cs
 
-- [x] `Cerneala.UI.Controls.SelectionModel` - class, public, line 3
-- [x] `Cerneala.UI.Controls.SelectionChangeResult` - record, public, sealed, line 43
-- [x] `Cerneala.UI.Controls.SelectionChangedEventArgs` - class, public, sealed, line 45
+- [x] `Cerneala.UI.Controls.Selection.SelectionChangedEventArgs` - class, public, sealed, line 3
 
-### UI/Controls/SelectionModel{T}.cs
+### UI/Controls/Selection/SelectionChangeResult.cs
 
-- [x] `Cerneala.UI.Controls.SelectionModel<T>` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Controls.Selection.SelectionChangeResult` - record, public, sealed, line 3
+
+### UI/Controls/Selection/SelectionModel.cs
+
+- [x] `Cerneala.UI.Controls.Selection.SelectionModel` - class, public, line 3
+
+### UI/Controls/Selection/SelectionModel{T}.cs
+
+- [x] `Cerneala.UI.Controls.Selection.SelectionModel<T>` - class, public, sealed, line 3
 
 ### UI/Controls/Shapes/Ellipse.cs
 
@@ -272,26 +583,113 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Controls/TabItem.cs
 
-- [x] `Cerneala.UI.Controls.TabItem` - class, public, line 5
+- [x] `Cerneala.UI.Controls.TabItem` - class, public, line 7
 
-### UI/Controls/TemplateBinding{T}.cs
+### UI/Controls/Templates/ComponentTemplate.cs
 
-- [x] `Cerneala.UI.Controls.TemplateBinding` - class, public, abstract, line 6
-- [x] `Cerneala.UI.Controls.TemplateBinding<T>` - class, public, sealed, line 61
+- [x] `Cerneala.UI.Controls.Templates.ComponentTemplate` - class, public, abstract, line 5
+- [x] `Cerneala.UI.Controls.Templates.ComponentTemplate<TControl>` - class, public, sealed, line 42
 
-### UI/Controls/TemplateContext.cs
+### UI/Controls/Templates/ComponentTemplateContext.cs
 
-- [x] `Cerneala.UI.Controls.TemplateContext` - class, public, line 7
-- [x] `Cerneala.UI.Controls.TemplateContext<TControl>` - class, public, sealed, line 35
+- [x] `Cerneala.UI.Controls.Templates.ComponentTemplateContext` - class, public, line 7
+- [x] `Cerneala.UI.Controls.Templates.ComponentTemplateContext<TControl>` - class, public, sealed, line 83
 
-### UI/Controls/TemplateInstance.cs
+### UI/Controls/Templates/ComponentTemplateDefinition.cs
 
-- [x] `Cerneala.UI.Controls.TemplateInstance` - class, public, sealed, line 5
-- [x] `Cerneala.UI.Controls.TemplateChildOwner` - class, internal, static, line 84
+- [x] `Cerneala.UI.Controls.Templates.ComponentTemplateDefinition` - class, public, sealed, line 3
 
-### UI/Controls/TemplatePartAttribute.cs
+### UI/Controls/Templates/ComponentTemplateInstance.cs
 
-- [x] `Cerneala.UI.Controls.TemplatePartAttribute` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Controls.Templates.ComponentTemplateInstance` - class, public, sealed, line 5
+
+### UI/Controls/Templates/ContentTemplate.cs
+
+- [x] `Cerneala.UI.Controls.Templates.ContentTemplate` - class, public, line 6
+- [x] `Cerneala.UI.Controls.Templates.ContentTemplate<TData>` - class, public, sealed, line 67
+
+### UI/Controls/Templates/ContentTemplateContext.cs
+
+- [x] `Cerneala.UI.Controls.Templates.ContentTemplateContext` - class, public, line 5
+- [x] `Cerneala.UI.Controls.Templates.ContentTemplateContext<TData>` - class, public, sealed, line 36
+
+### UI/Controls/Templates/ContentTemplateDefinition.cs
+
+- [x] `Cerneala.UI.Controls.Templates.ContentTemplateDefinition` - class, public, sealed, line 3
+
+### UI/Controls/Templates/ContentTemplateMatchContext.cs
+
+- [x] `Cerneala.UI.Controls.Templates.ContentTemplateMatchContext` - class, public, sealed, line 3
+
+### UI/Controls/Templates/ContentTemplateRegistry.cs
+
+- [x] `Cerneala.UI.Controls.Templates.ContentTemplateRegistry` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Controls.Templates.ContentTemplateRegistry.RegisteredTemplate` - record, private, sealed, line 99
+- [x] `Cerneala.UI.Controls.Templates.ContentTemplateRegistry.CacheKey` - record, private, sealed, line 101
+
+### UI/Controls/Templates/ControlTemplate.cs
+
+- [x] `Cerneala.UI.Controls.Templates.ControlTemplate` - class, public, abstract, line 5
+
+### UI/Controls/Templates/ControlTemplate{TControl}.cs
+
+- [x] `Cerneala.UI.Controls.Templates.ControlTemplate<TControl>` - class, public, sealed, line 5
+
+### UI/Controls/Templates/ControlTemplateAdapter.cs
+
+- [x] `Cerneala.UI.Controls.Templates.ControlTemplateAdapter` - class, public, sealed, line 6
+
+### UI/Controls/Templates/DataTemplate.cs
+
+- [x] `Cerneala.UI.Controls.Templates.DataTemplate` - class, public, abstract, line 5
+
+### UI/Controls/Templates/DataTemplate{T}.cs
+
+- [x] `Cerneala.UI.Controls.Templates.DataTemplate<T>` - class, public, sealed, line 5
+
+### UI/Controls/Templates/DataTemplateAdapter.cs
+
+- [x] `Cerneala.UI.Controls.Templates.DataTemplateAdapter` - class, public, sealed, line 5
+
+### UI/Controls/Templates/TemplateBinding{T}.cs
+
+- [x] `Cerneala.UI.Controls.Templates.TemplateBinding` - class, public, abstract, line 6
+- [x] `Cerneala.UI.Controls.Templates.TemplateBinding<T>` - class, public, sealed, line 72
+
+### UI/Controls/Templates/TemplateContext.cs
+
+- [x] `Cerneala.UI.Controls.Templates.TemplateContext` - class, public, line 7
+- [x] `Cerneala.UI.Controls.Templates.TemplateContext<TControl>` - class, public, sealed, line 35
+
+### UI/Controls/Templates/TemplateInstance.cs
+
+- [x] `Cerneala.UI.Controls.Templates.TemplateInstance` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Controls.Templates.TemplateChildOwner` - class, internal, static, line 84
+
+### UI/Controls/Templates/TemplatePartAttribute.cs
+
+- [x] `Cerneala.UI.Controls.Templates.TemplatePartAttribute` - class, public, sealed, line 3
+
+### UI/Controls/Templates/TemplatePartMap.cs
+
+- [x] `Cerneala.UI.Controls.Templates.TemplatePartMap` - class, public, sealed, line 5
+
+### UI/Controls/Templates/TemplateRecycleKey.cs
+
+- [x] `Cerneala.UI.Controls.Templates.TemplateRecycleKey` - record, public, sealed, line 3
+
+### UI/Controls/Templates/TemplateRecyclePool.cs
+
+- [x] `Cerneala.UI.Controls.Templates.TemplateRecyclePool` - class, public, sealed, line 5
+
+### UI/Controls/Templates/TemplateSlotMap.cs
+
+- [x] `Cerneala.UI.Controls.Templates.TemplateSlotMap` - class, public, sealed, line 6
+
+### UI/Controls/Templates/TemplateTokenBinding.cs
+
+- [x] `Cerneala.UI.Controls.Templates.TemplateTokenBinding` - class, public, abstract, line 7
+- [x] `Cerneala.UI.Controls.Templates.TemplateTokenBinding<T>` - class, public, sealed, line 14
 
 ### UI/Controls/TextBlock.cs
 
@@ -303,7 +701,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Controls/TextBoxBase.cs
 
-- [x] `Cerneala.UI.Controls.TextBoxBase` - class, public, abstract, line 12
+- [x] `Cerneala.UI.Controls.TextBoxBase` - class, public, abstract, line 16
 
 ### UI/Controls/ToolTip.cs
 
@@ -316,9 +714,6 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Core/UiProperty.cs
 
 - [x] `Cerneala.UI.Core.UiProperty` - class, public, abstract, line 3
-
-### UI/Core/UiPropertyMutation.cs
-- [x] `Cerneala.UI.Core.UiPropertyMutation`
 
 ### UI/Core/UiProperty{T}.cs
 
@@ -339,6 +734,14 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Core/UiPropertyMetadata{T}.cs
 
 - [x] `Cerneala.UI.Core.UiPropertyMetadata<T>` - class, public, sealed, line 5
+
+### UI/Core/UiPropertyMutation.cs
+
+- [x] `Cerneala.UI.Core.UiPropertyMutation` - record, public, sealed, line 3
+
+### UI/Core/UiPropertyMutationObserver.cs
+
+- [x] `Cerneala.UI.Core.UiPropertyMutationObserver` - class, public, abstract, line 3
 
 ### UI/Core/UiPropertyRegistry.cs
 
@@ -361,18 +764,29 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Data.Binding<T>` - class, public, sealed, line 3
 
+### UI/Data/BindingOperations.cs
+
+- [x] `Cerneala.UI.Data.BindingOperations` - class, public, static, line 5
+
+### UI/Data/BindingSubscriptionCollection.cs
+
+- [x] `Cerneala.UI.Data.BindingSubscriptionCollection` - class, public, sealed, line 3
+
 ### UI/Data/CollectionView{T}.cs
 
 - [x] `Cerneala.UI.Data.CollectionView<T>` - class, public, sealed, line 5
 
-### UI/Data/IObservableList{T}.cs
-
-- [x] `Cerneala.UI.Data.ObservableListChangedEventArgs<T>` - class, public, sealed, line 20
-
-- [x] `Cerneala.UI.Data.ObservableListChangedEventArgs`
 ### UI/Data/ObservableList{T}.cs
 
 - [x] `Cerneala.UI.Data.ObservableList<T>` - class, public, sealed, line 5
+
+### UI/Data/ObservableListChangedEventArgs.cs
+
+- [x] `Cerneala.UI.Data.ObservableListChangedEventArgs` - class, public, sealed, line 3
+
+### UI/Data/ObservableListChangedEventArgs{T}.cs
+
+- [x] `Cerneala.UI.Data.ObservableListChangedEventArgs<T>` - class, public, sealed, line 3
 
 ### UI/Data/ObservableValue{T}.cs
 
@@ -390,6 +804,15 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Data/StringPropertyPath.cs
 
 - [x] `Cerneala.UI.Data.StringPropertyPath` - class, public, sealed, line 3
+
+### UI/Data/UiPropertyBinding{T}.cs
+
+- [x] `Cerneala.UI.Data.UiPropertyBinding<T>` - class, public, sealed, line 5
+
+### UI/Diagnostics/AspectTrace.cs
+
+- [x] `Cerneala.UI.Diagnostics.AspectTrace` - class, public, static, line 7
+- [x] `Cerneala.UI.Diagnostics.AspectTraceSnapshot` - class, public, sealed, line 55
 
 ### UI/Diagnostics/DebugAdorner.cs
 
@@ -411,7 +834,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Diagnostics/FrameDiagnostics.cs
 
 - [x] `Cerneala.UI.Diagnostics.FrameDiagnostics` - class, public, static, line 6
-- [x] `Cerneala.UI.Diagnostics.FrameDiagnosticsSnapshot` - record, public, sealed, line 27
+- [x] `Cerneala.UI.Diagnostics.FrameDiagnosticsSnapshot` - record, public, sealed, line 40
 
 ### UI/Diagnostics/InputDiagnostics.cs
 
@@ -444,76 +867,15 @@ Excluded RoslynRepoIndexer class-like types: 102
 - [x] `Cerneala.UI.Diagnostics.RoutedEventTraceSnapshot` - record, public, sealed, line 30
 - [x] `Cerneala.UI.Diagnostics.RoutedEventTraceStep` - record, public, sealed, line 42
 
+### UI/Diagnostics/RuntimeDiagnostics.cs
 
-
-### UI/Drawing/DrawArgument.cs
-
-- [x] `Cerneala.Drawing.DrawArgument` - class, internal, static, line 3
-
-### UI/Drawing/DrawColor.cs
-
-- [x] `Cerneala.Drawing.DrawColor` - record, public, sealed, line 3
-
-### UI/Drawing/DrawCommand.cs
-
-- [x] `Cerneala.Drawing.DrawCommand` - record, public, sealed, line 3
-
-### UI/Drawing/DrawCommandList.cs
-
-- [x] `Cerneala.Drawing.DrawCommandList` - class, public, sealed, line 5
-
-### UI/Drawing/DrawSize.cs
-- [x] `Cerneala.Drawing.DrawSize`
-
-### UI/Drawing/DrawingContext.cs
-
-- [x] `Cerneala.Drawing.DrawingContext` - class, public, sealed, line 3
-
-### UI/Drawing/DrawPoint.cs
-
-- [x] `Cerneala.Drawing.DrawPoint` - record, public, sealed, line 3
-
-### UI/Drawing/DrawRect.cs
-
-- [x] `Cerneala.Drawing.DrawRect` - record, public, sealed, line 3
-
-### UI/Drawing/DrawTextRun.cs
-
-- [x] `Cerneala.Drawing.DrawTextRun` - class, public, sealed, line 3
-
-### UI/Drawing/MonoGame/MonoGameDrawingBackend.cs
-
-- [x] `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend` - class, public, sealed, line 7
-- [x] `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTextureKey` - record, private, sealed, line 279
-- [x] `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTexture`
-
-### UI/Drawing/MonoGame/MonoGameImage.cs
-
-- [x] `Cerneala.Drawing.MonoGame.MonoGameImage` - class, public, sealed, line 5
-
-### UI/Drawing/Text/RasterizedText.cs
-
-- [x] `Cerneala.Drawing.Text.RasterizedText` - class, public, sealed, line 3
-
-### UI/Drawing/Text/SkiaFont.cs
-
-- [x] `Cerneala.Drawing.Text.SkiaFont` - class, public, sealed, line 6
-
-### UI/Drawing/Text/SkiaTextRasterizer.cs
-
-- [x] `Cerneala.Drawing.Text.SkiaTextRasterizer` - class, public, sealed, line 6
-
-### UI/Drawing/Text/SkiaTextShaper.cs
-
-- [x] `Cerneala.Drawing.Text.SkiaTextShaper` - class, public, sealed, line 9
-
-### UI/Drawing/Text/SystemFontSource.cs
-
-- [x] `Cerneala.Drawing.Text.SystemFontSource` - class, public, sealed, line 6
-
-### UI/Drawing/Text/TextShapeResult.cs
-
-- [x] `Cerneala.Drawing.Text.TextShapeResult` - record, public, sealed, line 5
+- [x] `Cerneala.UI.Diagnostics.RuntimeDiagnostics` - class, public, static, line 8
+- [x] `Cerneala.UI.Diagnostics.RuntimeDiagnosticsSnapshot` - record, public, sealed, line 45
+- [x] `Cerneala.UI.Diagnostics.RuntimeViewportDiagnosticsSnapshot` - record, public, sealed, line 61
+- [x] `Cerneala.UI.Diagnostics.RuntimeInputDiagnosticsSnapshot` - record, public, sealed, line 63
+- [x] `Cerneala.UI.Diagnostics.RuntimeRenderDiagnosticsSnapshot` - record, public, sealed, line 65
+- [x] `Cerneala.UI.Diagnostics.RuntimeResourceDiagnosticsSnapshot` - record, public, sealed, line 67
+- [x] `Cerneala.UI.Diagnostics.RuntimePlatformDiagnosticsSnapshot` - record, public, sealed, line 69
 
 ### UI/Elements/ElementHandlerStore.cs
 
@@ -535,31 +897,43 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Elements.ElementTreeWalker` - class, public, static, line 3
 
+### UI/Elements/InheritedPropertyPropagator.cs
+
+- [x] `Cerneala.UI.Elements.InheritedPropertyPropagator` - class, public, sealed, line 5
+
 ### UI/Elements/UIElement.cs
 
-- [x] `Cerneala.UI.Elements.UIElement` - class, public, line 9
+- [x] `Cerneala.UI.Elements.UIElement` - class, public, line 13
 
 ### UI/Elements/UIElementCollection.cs
 
 - [x] `Cerneala.UI.Elements.UIElementCollection` - class, public, sealed, line 6
 
+### UI/Elements/UIElementVisibility.cs
+
+- [x] `Cerneala.UI.Elements.UIElementVisibility` - class, public, static, line 5
+
 ### UI/Elements/UIRoot.cs
 
-- [x] `Cerneala.UI.Elements.UIRoot` - class, public, sealed, line 10
-- [x] `Cerneala.UI.Elements.UIRoot.ThemeChangedSubscription` - class, private, sealed, line 172
+- [x] `Cerneala.UI.Elements.UIRoot` - class, public, sealed, line 15
+- [x] `Cerneala.UI.Elements.UIRoot.ThemeChangedSubscription` - class, private, sealed, line 343
 
 ### UI/Hosting/MonoGame/MonoGameContentServices.cs
 
-- [x] `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices` - class, public, sealed, line 7
 
 ### UI/Hosting/MonoGame/MonoGameUiHost.cs
 
-- [x] `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost` - class, public, sealed, line 11
-- [x] `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.MonoGameUiBackend` - class, private, sealed, line 75
+- [x] `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost` - class, public, sealed, line 12
+- [x] `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.MonoGameUiBackend` - class, private, sealed, line 102
 
 ### UI/Hosting/MonoGame/MonoGameUiHostOptions.cs
 
-- [x] `Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions` - class, public, sealed, line 8
+- [x] `Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions` - class, public, sealed, line 10
+
+### UI/Hosting/UiCoordinateMapper.cs
+
+- [x] `Cerneala.UI.Hosting.UiCoordinateMapper` - class, public, static, line 3
 
 ### UI/Hosting/UiFrame.cs
 
@@ -567,11 +941,11 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Hosting/UiHost.cs
 
-- [x] `Cerneala.UI.Hosting.UiHost` - class, public, sealed, line 8
+- [x] `Cerneala.UI.Hosting.UiHost` - class, public, sealed, line 11
 
 ### UI/Hosting/UiHostOptions.cs
 
-- [x] `Cerneala.UI.Hosting.UiHostOptions` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Hosting.UiHostOptions` - class, public, sealed, line 7
 
 ### UI/Hosting/UiViewport.cs
 
@@ -584,7 +958,10 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Ink/StrokeCollection.cs
 
 - [x] `Cerneala.UI.Ink.StrokeCollection` - class, public, sealed, line 3
-- [x] `Cerneala.UI.Ink.StrokeCollectionChangedEventArgs` - record, public, sealed, line 43
+
+### UI/Ink/StrokeCollectionChangedEventArgs.cs
+
+- [x] `Cerneala.UI.Ink.StrokeCollectionChangedEventArgs` - record, public, sealed, line 3
 
 ### UI/Input/ActionCommand.cs
 
@@ -604,7 +981,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Input/CommandBindingCollection.cs
 
-- [x] `Cerneala.UI.Input.CommandBindingCollection` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Input.CommandBindingCollection` - class, public, sealed, line 6
 
 ### UI/Input/CommandEvents.cs
 
@@ -621,7 +998,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Input/CursorService.cs
 
 - [x] `Cerneala.UI.Input.CursorService` - class, public, sealed, line 6
-- [x] `Cerneala.UI.Input.CursorService.CursorBox` - class, private, sealed, line 39
+- [x] `Cerneala.UI.Input.CursorService.CursorBox` - class, private, sealed, line 44
 
 ### UI/Input/DataTransfer.cs
 
@@ -643,7 +1020,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Input/ElementInputRouteBuilder.cs
 
-- [x] `Cerneala.UI.Input.ElementInputRouteBuilder` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Input.ElementInputRouteBuilder` - class, public, sealed, line 4
 
 ### UI/Input/ElementInputRouteMap.cs
 
@@ -660,6 +1037,10 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Input/FocusManager.cs
 
 - [x] `Cerneala.UI.Input.FocusManager` - class, public, sealed, line 5
+
+### UI/Input/FocusPolicy.cs
+
+- [x] `Cerneala.UI.Input.FocusPolicy` - class, public, static, line 5
 
 ### UI/Input/FocusScope.cs
 
@@ -681,7 +1062,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Input/HitTestService.cs
 
-- [x] `Cerneala.UI.Input.HitTestService` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Input.HitTestService` - class, public, sealed, line 7
 
 ### UI/Input/HoverTracker.cs
 
@@ -690,6 +1071,10 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Input/InputBinding.cs
 
 - [x] `Cerneala.UI.Input.InputBinding` - class, public, line 5
+
+### UI/Input/InputBindingCollection.cs
+
+- [x] `Cerneala.UI.Input.InputBindingCollection` - class, public, sealed, line 5
 
 ### UI/Input/InputButtonState.cs
 
@@ -713,8 +1098,13 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Input.KeyBinding` - class, public, sealed, line 3
 
+### UI/Input/KeyboardActivationController.cs
+
+- [x] `Cerneala.UI.Input.KeyboardActivationController` - class, internal, sealed, line 5
+
 ### UI/Input/KeyboardDispatchResult.cs
-- [x] `Cerneala.UI.Input.KeyboardDispatchResult`
+
+- [x] `Cerneala.UI.Input.KeyboardDispatchResult` - record, internal, sealed, line 11
 
 ### UI/Input/KeyboardFocusChangedEventArgs.cs
 
@@ -723,7 +1113,11 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Input/KeyboardNavigation.cs
 
 - [x] `Cerneala.UI.Input.KeyboardNavigation` - class, public, sealed, line 5
-- [x] `Cerneala.UI.Input.KeyboardNavigation.NavigationCandidate`
+- [x] `Cerneala.UI.Input.KeyboardNavigation.NavigationCandidate` - record, private, sealed, line 125
+
+### UI/Input/KeyboardNavigationController.cs
+
+- [x] `Cerneala.UI.Input.KeyboardNavigationController` - class, internal, sealed, line 5
 
 ### UI/Input/KeyboardSnapshot.cs
 
@@ -750,7 +1144,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Input/MonoGame/MonoGameInputSource.cs
 
-- [x] `Cerneala.UI.Input.MonoGame.MonoGameInputSource` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Input.MonoGame.MonoGameInputSource` - class, public, sealed, line 6
 
 ### UI/Input/MouseButtonEventArgs.cs
 
@@ -776,6 +1170,10 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Input.PressedStateTracker` - class, public, sealed, line 5
 
+### UI/Input/RetainedInputBindingProcessor.cs
+
+- [x] `Cerneala.UI.Input.RetainedInputBindingProcessor` - class, internal, sealed, line 5
+
 ### UI/Input/RoutedCommand.cs
 
 - [x] `Cerneala.UI.Input.RoutedCommand` - class, public, sealed, line 3
@@ -800,12 +1198,21 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Input.RoutedEventRouter` - class, public, static, line 3
 
+### UI/Input/StylusEventArgs.cs
+
+- [x] `Cerneala.UI.Input.StylusEventArgs` - class, public, sealed, line 3
+
 ### UI/Input/StylusInputBridge.cs
 
 - [x] `Cerneala.UI.Input.StylusInputBridge` - class, public, sealed, line 5
-- [x] `Cerneala.UI.Input.StylusInputFrame` - record, public, sealed, line 54
-- [x] `Cerneala.UI.Input.StylusInputPoint` - record, public, sealed, line 62
-- [x] `Cerneala.UI.Input.StylusEventArgs` - class, public, sealed, line 82
+
+### UI/Input/StylusInputFrame.cs
+
+- [x] `Cerneala.UI.Input.StylusInputFrame` - record, public, sealed, line 3
+
+### UI/Input/StylusInputPoint.cs
+
+- [x] `Cerneala.UI.Input.StylusInputPoint` - record, public, sealed, line 3
 
 ### UI/Input/TextCompositionEventArgs.cs
 
@@ -838,6 +1245,14 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Input.UiInputTree` - class, public, sealed, line 5
 
+### UI/Invalidation/AspectQueue.cs
+
+- [x] `Cerneala.UI.Invalidation.AspectQueue` - class, public, sealed, line 5
+
+### UI/Invalidation/CommandStateQueue.cs
+
+- [x] `Cerneala.UI.Invalidation.CommandStateQueue` - class, public, sealed, line 5
+
 ### UI/Invalidation/DirtyPropagation.cs
 
 - [x] `Cerneala.UI.Invalidation.DirtyPropagation` - class, public, sealed, line 6
@@ -861,11 +1276,15 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Invalidation/FrameStats.cs
 
-- [x] `Cerneala.UI.Invalidation.FrameStats` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Invalidation.FrameStats` - class, public, sealed, line 5
 
 ### UI/Invalidation/HitTestQueue.cs
 
 - [x] `Cerneala.UI.Invalidation.HitTestQueue` - class, public, sealed, line 5
+
+### UI/Invalidation/InheritedPropertyQueue.cs
+
+- [x] `Cerneala.UI.Invalidation.InheritedPropertyQueue` - class, public, sealed, line 5
 
 ### UI/Invalidation/InvalidationRequest.cs
 
@@ -879,11 +1298,9 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Invalidation.RenderQueue` - class, public, sealed, line 5
 
-
-
 ### UI/Invalidation/UiFrameScheduler.cs
 
-- [x] `Cerneala.UI.Invalidation.UiFrameScheduler` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Invalidation.UiFrameScheduler` - class, public, sealed, line 6
 
 ### UI/Layout/ArrangeContext.cs
 
@@ -895,7 +1312,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Layout/LayoutManager.cs
 
-- [x] `Cerneala.UI.Layout.LayoutManager` - class, public, sealed, line 7
+- [x] `Cerneala.UI.Layout.LayoutManager` - class, public, sealed, line 8
 
 ### UI/Layout/LayoutPoint.cs
 
@@ -933,7 +1350,11 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Layout/Panels/Grid.cs
 
 - [x] `Cerneala.UI.Layout.Panels.Grid` - class, public, line 7
-- [x] `Cerneala.UI.Layout.Panels.Grid.GridPlacement` - class, private, sealed, line 266
+- [x] `Cerneala.UI.Layout.Panels.Grid.GridPlacement` - class, private, sealed, line 297
+
+### UI/Layout/Panels/GridDefinitionCollection{TDefinition}.cs
+
+- [x] `Cerneala.UI.Layout.Panels.GridDefinitionCollection<TDefinition>` - class, public, sealed, line 5
 
 ### UI/Layout/Panels/GridLength.cs
 
@@ -987,19 +1408,41 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Markup.MarkupLoadOptions` - record, public, sealed, line 3
 
+### UI/Markup/MarkupResult{T}.cs
+
+- [x] `Cerneala.UI.Markup.MarkupResult<T>` - class, public, sealed, line 5
+
 ### UI/Markup/UiFactory.cs
 
 - [x] `Cerneala.UI.Markup.UiFactory` - class, public, sealed, line 5
 
+### UI/Markup/UiMarkupAttribute.cs
+
+- [x] `Cerneala.UI.Markup.UiMarkupAttribute` - record, public, sealed, line 3
+
+### UI/Markup/UiMarkupChildContent.cs
+
+- [x] `Cerneala.UI.Markup.UiMarkupChildContent` - class, public, sealed, line 3
+
+### UI/Markup/UiMarkupContent.cs
+
+- [x] `Cerneala.UI.Markup.UiMarkupContent` - class, public, abstract, line 3
+
 ### UI/Markup/UiMarkupDocument.cs
 
 - [x] `Cerneala.UI.Markup.UiMarkupDocument` - class, public, sealed, line 5
-- [x] `Cerneala.UI.Markup.UiMarkupNode` - class, public, sealed, line 26
-- [x] `Cerneala.UI.Markup.UiMarkupContent` - class, public, abstract, line 90
-- [x] `Cerneala.UI.Markup.UiMarkupTextContent` - class, public, sealed, line 92
-- [x] `Cerneala.UI.Markup.UiMarkupChildContent` - class, public, sealed, line 107
-- [x] `Cerneala.UI.Markup.UiMarkupAttribute` - record, public, sealed, line 117
-- [x] `Cerneala.UI.Markup.MarkupResult<T>` - class, public, sealed, line 141
+
+### UI/Markup/UiMarkupElementRegistration.cs
+
+- [x] `Cerneala.UI.Markup.UiMarkupElementRegistration` - class, public, sealed, line 5
+
+### UI/Markup/UiMarkupNode.cs
+
+- [x] `Cerneala.UI.Markup.UiMarkupNode` - class, public, sealed, line 5
+
+### UI/Markup/UiMarkupPropertyRegistration.cs
+
+- [x] `Cerneala.UI.Markup.UiMarkupPropertyRegistration` - class, public, sealed, line 5
 
 ### UI/Markup/UiMarkupReader.cs
 
@@ -1009,11 +1452,13 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Markup.UiMarkupSchema` - class, public, static, line 8
 
+### UI/Markup/UiMarkupTextContent.cs
+
+- [x] `Cerneala.UI.Markup.UiMarkupTextContent` - class, public, sealed, line 3
+
 ### UI/Markup/UiMarkupTypeRegistry.cs
 
-- [x] `Cerneala.UI.Markup.UiMarkupTypeRegistry` - class, public, sealed, line 5
-- [x] `Cerneala.UI.Markup.UiMarkupElementRegistration` - class, public, sealed, line 26
-- [x] `Cerneala.UI.Markup.UiMarkupPropertyRegistration` - class, public, sealed, line 74
+- [x] `Cerneala.UI.Markup.UiMarkupTypeRegistry` - class, public, sealed, line 3
 
 ### UI/Markup/UiMarkupWriter.cs
 
@@ -1088,14 +1533,404 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Media.Transform` - record, public, sealed, line 5
 
-### UI/Platform/IFileDialogService.cs
+### UI/Motion/Core/DerivedMotionValue{T}.cs
 
-- [x] `Cerneala.UI.Platform.FileDialogOptions` - record, public, sealed, line 10
-- [x] `Cerneala.UI.Platform.FileDialogFilter` - record, public, sealed, line 33
+- [x] `Cerneala.UI.Motion.Core.DerivedMotionValue<T>` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Motion.Core.DerivedMotionValue<T>.Subscription` - class, private, sealed, line 79
+
+### UI/Motion/Core/ManualMotionTimeline.cs
+
+- [x] `Cerneala.UI.Motion.Core.ManualMotionTimeline` - class, public, sealed, line 5
+
+### UI/Motion/Core/MotionCompletionSource.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionCompletionSource` - class, public, sealed, line 3
+
+### UI/Motion/Core/MotionComposition.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionComposition` - record, public, sealed, line 3
+
+### UI/Motion/Core/MotionConflictResolver.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionConflictResolver` - class, public, sealed, line 3
+
+### UI/Motion/Core/MotionFrame.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionFrame` - record, public, sealed, line 3
+
+### UI/Motion/Core/MotionFrameCoordinator.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionFrameCoordinator` - class, public, sealed, line 5
+
+### UI/Motion/Core/MotionFrameResult.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionFrameResult` - record, public, sealed, line 3
+
+### UI/Motion/Core/MotionGraph.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionGraph` - class, public, sealed, line 11
+
+### UI/Motion/Core/MotionGroup.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionGroup` - class, public, static, line 3
+
+### UI/Motion/Core/MotionGroupHandle.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionGroupHandle` - class, public, sealed, line 3
+
+### UI/Motion/Core/MotionHandle.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionHandle` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Motion.Core.MotionCompletedEventArgs` - class, public, sealed, line 135
+
+### UI/Motion/Core/MotionNode.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionNode` - class, public, abstract, line 3
+- [x] `Cerneala.UI.Motion.Core.MotionNodeTickResult` - record, public, sealed, line 18
+
+### UI/Motion/Core/MotionSequence.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionSequence` - class, public, static, line 3
+
+### UI/Motion/Core/MotionStagger.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionStagger` - class, public, sealed, line 3
+
+### UI/Motion/Core/MotionStartOptions.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionStartOptions` - record, public, sealed, line 5
+
+### UI/Motion/Core/MotionSystem.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionSystem` - class, public, sealed, line 13
+
+### UI/Motion/Core/MotionThreadGuard.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionThreadGuard` - class, public, sealed, line 3
+
+### UI/Motion/Core/MotionTimeline.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionTimeline` - class, public, abstract, line 3
+
+### UI/Motion/Core/MotionTimelineRegistry.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionTimelineRegistry` - class, public, sealed, line 3
+
+### UI/Motion/Core/MotionValue.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionValue` - class, public, abstract, line 3
+
+### UI/Motion/Core/MotionValue{T}.cs
+
+- [x] `Cerneala.UI.Motion.Core.MotionValue<T>` - class, public, sealed, line 7
+- [x] `Cerneala.UI.Motion.Core.MotionValue<T>.ValueNode` - class, private, sealed, line 338
+- [x] `Cerneala.UI.Motion.Core.MotionValue<T>.Subscription` - class, private, sealed, line 347
+- [x] `Cerneala.UI.Motion.Core.MotionValueChanged<T>` - record, public, sealed, line 366
+
+### UI/Motion/Core/ReducedMotionPolicy.cs
+
+- [x] `Cerneala.UI.Motion.Core.ReducedMotionPolicy` - class, public, sealed, line 3
+
+### UI/Motion/Core/SystemMotionClock.cs
+
+- [x] `Cerneala.UI.Motion.Core.SystemMotionClock` - class, public, sealed, line 5
+
+### UI/Motion/Diagnostics/MotionDiagnostics.cs
+
+- [x] `Cerneala.UI.Motion.Diagnostics.MotionDiagnostics` - class, public, sealed, line 5
+
+### UI/Motion/Diagnostics/MotionGraphSnapshot.cs
+
+- [x] `Cerneala.UI.Motion.Diagnostics.MotionGraphSnapshot` - record, public, sealed, line 3
+
+### UI/Motion/Diagnostics/MotionTrace.cs
+
+- [x] `Cerneala.UI.Motion.Diagnostics.MotionTrace` - class, public, sealed, line 3
+
+### UI/Motion/Diagnostics/MotionTraceEvent.cs
+
+- [x] `Cerneala.UI.Motion.Diagnostics.MotionTraceEvent` - record, public, sealed, line 16
+
+### UI/Motion/Input/DragMotionController.cs
+
+- [x] `Cerneala.UI.Motion.Input.DragMotionController` - class, public, sealed, line 8
+
+### UI/Motion/Input/GestureMotionController.cs
+
+- [x] `Cerneala.UI.Motion.Input.GestureMotionController` - class, public, sealed, line 6
+
+### UI/Motion/Input/MotionRange.cs
+
+- [x] `Cerneala.UI.Motion.Input.MotionRange` - record, public, sealed, line 3
+
+### UI/Motion/Input/ScrollMotionBinding.cs
+
+- [x] `Cerneala.UI.Motion.Input.ScrollMotionBinding<T>` - class, public, sealed, line 7
+
+### UI/Motion/Input/ScrollTimeline.cs
+
+- [x] `Cerneala.UI.Motion.Input.ScrollTimeline` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Motion.Input.ScrollTimelineProgress` - class, public, sealed, line 40
+
+### UI/Motion/Input/VelocityTracker.cs
+
+- [x] `Cerneala.UI.Motion.Input.VelocityTracker` - class, public, sealed, line 3
+
+### UI/Motion/Interpolation/ColorMixer.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.ColorMixer` - class, public, sealed, line 5
+
+### UI/Motion/Interpolation/DoubleMixer.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.DoubleMixer` - class, public, sealed, line 3
+
+### UI/Motion/Interpolation/DrawPointMixer.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.DrawPointMixer` - class, public, sealed, line 5
+
+### UI/Motion/Interpolation/DrawRectMixer.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.DrawRectMixer` - class, public, sealed, line 5
+
+### UI/Motion/Interpolation/DrawSizeMixer.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.DrawSizeMixer` - class, public, sealed, line 5
+
+### UI/Motion/Interpolation/FloatMixer.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.FloatMixer` - class, public, sealed, line 3
+
+### UI/Motion/Interpolation/ThicknessMixer.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.ThicknessMixer` - class, public, sealed, line 5
+
+### UI/Motion/Interpolation/TransformComponents.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.TransformComponents` - record, public, sealed, line 7
+
+### UI/Motion/Interpolation/TransformMixer.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.TransformMixer` - class, public, sealed, line 5
+
+### UI/Motion/Interpolation/ValueMixer.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.ValueMixer<T>` - class, public, abstract, line 3
+
+### UI/Motion/Interpolation/ValueMixerRegistry.cs
+
+- [x] `Cerneala.UI.Motion.Interpolation.ValueMixerRegistry` - class, public, sealed, line 7
+
+### UI/Motion/Layout/LayoutMotionBinding.cs
+
+- [x] `Cerneala.UI.Motion.Layout.LayoutMotionBinding` - class, public, sealed, line 8
+
+### UI/Motion/Layout/LayoutMotionCoordinator.cs
+
+- [x] `Cerneala.UI.Motion.Layout.LayoutMotionCoordinator` - class, public, sealed, line 9
+
+### UI/Motion/Layout/LayoutMotionId.cs
+
+- [x] `Cerneala.UI.Motion.Layout.LayoutMotionId` - record, public, sealed, line 3
+
+### UI/Motion/Layout/LayoutMotionOptions.cs
+
+- [x] `Cerneala.UI.Motion.Layout.LayoutMotionOptions` - class, public, sealed, line 6
+
+### UI/Motion/Layout/LayoutSnapshot.cs
+
+- [x] `Cerneala.UI.Motion.Layout.LayoutSnapshot` - record, public, sealed, line 6
+
+### UI/Motion/MotionAnimationBuilder.cs
+
+- [x] `Cerneala.UI.Motion.MotionAnimationBuilder<T>` - class, public, sealed, line 9
+
+### UI/Motion/MotionDefaults.cs
+
+- [x] `Cerneala.UI.Motion.MotionDefaults` - class, public, static, line 5
+
+### UI/Motion/MotionElementFacade.cs
+
+- [x] `Cerneala.UI.Motion.MotionElementFacade` - class, public, sealed, line 8
+
+### UI/Motion/MotionExtensions.cs
+
+- [x] `Cerneala.UI.Motion.MotionExtensions` - class, public, static, line 5
+
+### UI/Motion/MotionPropertyShortcut.cs
+
+- [x] `Cerneala.UI.Motion.MotionPropertyShortcut<T>` - class, public, sealed, line 8
+
+### UI/Motion/MotionStateBuilder.cs
+
+- [x] `Cerneala.UI.Motion.MotionStateBuilder` - class, public, sealed, line 3
+
+### UI/Motion/Presence/PresenceCoordinator.cs
+
+- [x] `Cerneala.UI.Motion.Presence.PresenceCoordinator` - class, public, sealed, line 6
+
+### UI/Motion/Presence/PresenceHandle.cs
+
+- [x] `Cerneala.UI.Motion.Presence.PresenceHandle` - class, public, sealed, line 6
+
+### UI/Motion/Presence/PresenceOptions.cs
+
+- [x] `Cerneala.UI.Motion.Presence.PresenceOptions` - class, public, sealed, line 5
+
+### UI/Motion/Properties/AnimatablePropertyRegistry.cs
+
+- [x] `Cerneala.UI.Motion.Properties.AnimatablePropertyRegistry` - class, public, sealed, line 13
+
+### UI/Motion/Properties/MotionPropertyBinding.cs
+
+- [x] `Cerneala.UI.Motion.Properties.MotionPropertyBinding` - class, public, abstract, line 6
+
+### UI/Motion/Properties/MotionPropertyBinding{T}.cs
+
+- [x] `Cerneala.UI.Motion.Properties.MotionPropertyBinding<T>` - class, public, sealed, line 8
+- [x] `Cerneala.UI.Motion.Properties.MotionPropertyBinding<T>.BindingNode` - class, private, sealed, line 179
+
+### UI/Motion/Properties/MotionPropertyInvalidationClassifier.cs
+
+- [x] `Cerneala.UI.Motion.Properties.MotionPropertyInvalidationClassifier` - class, public, static, line 5
+
+### UI/Motion/Properties/MotionPropertyKey.cs
+
+- [x] `Cerneala.UI.Motion.Properties.MotionPropertyKey` - class, public, sealed, line 6
+
+### UI/Motion/Properties/MotionPropertyOptions.cs
+
+- [x] `Cerneala.UI.Motion.Properties.MotionPropertyOptions` - class, public, sealed, line 5
+
+### UI/Motion/Properties/MotionPropertyStartOptions.cs
+
+- [x] `Cerneala.UI.Motion.Properties.MotionPropertyStartOptions` - class, public, sealed, line 6
+
+### UI/Motion/Properties/MotionPropertyStore.cs
+
+- [x] `Cerneala.UI.Motion.Properties.MotionPropertyStore` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Motion.Properties.MotionPropertyStore.PendingWrite` - record, private, sealed, line 129
+- [x] `Cerneala.UI.Motion.Properties.MotionPropertyFlushResult` - record, public, sealed, line 155
+
+### UI/Motion/Specs/CubicBezierEasing.cs
+
+- [x] `Cerneala.UI.Motion.Specs.CubicBezierEasing` - class, public, sealed, line 3
+
+### UI/Motion/Specs/DecaySpec.cs
+
+- [x] `Cerneala.UI.Motion.Specs.DecaySpec<T>` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Motion.Specs.DecaySpec<T>.DecaySampler` - class, private, sealed, line 113
+
+### UI/Motion/Specs/Easings.cs
+
+- [x] `Cerneala.UI.Motion.Specs.Easings` - class, public, static, line 3
+- [x] `Cerneala.UI.Motion.Specs.Easings.LinearEasing` - class, private, sealed, line 19
+
+### UI/Motion/Specs/KeyframesSpec.cs
+
+- [x] `Cerneala.UI.Motion.Specs.MotionKeyframe<T>` - record, public, sealed, line 5
+- [x] `Cerneala.UI.Motion.Specs.KeyframesSpec<T>` - class, public, sealed, line 7
+- [x] `Cerneala.UI.Motion.Specs.KeyframesSpec<T>.KeyframesSampler` - class, private, sealed, line 66
+
+### UI/Motion/Specs/Motion.cs
+
+- [x] `Cerneala.UI.Motion.Specs.Motion` - class, public, static, line 7
+- [x] `Cerneala.UI.Motion.Specs.Motion.UntypedTweenSpec` - class, private, sealed, line 93
+- [x] `Cerneala.UI.Motion.Specs.Motion.UntypedSpringSpec` - class, private, sealed, line 117
+
+### UI/Motion/Specs/MotionSampler.cs
+
+- [x] `Cerneala.UI.Motion.Specs.MotionSampler` - class, public, abstract, line 3
+- [x] `Cerneala.UI.Motion.Specs.MotionSampler<T>` - class, public, abstract, line 14
+
+### UI/Motion/Specs/MotionSpec.cs
+
+- [x] `Cerneala.UI.Motion.Specs.MotionSpec` - class, public, abstract, line 5
+
+### UI/Motion/Specs/MotionSpec{T}.cs
+
+- [x] `Cerneala.UI.Motion.Specs.MotionSpec<T>` - class, public, abstract, line 5
+
+### UI/Motion/Specs/MotionSpecContext.cs
+
+- [x] `Cerneala.UI.Motion.Specs.MotionSpecContext` - record, public, sealed, line 7
+
+### UI/Motion/Specs/MotionVelocity.cs
+
+- [x] `Cerneala.UI.Motion.Specs.MotionVelocity<T>` - record, public, sealed, line 3
+
+### UI/Motion/Specs/PingPongSpec.cs
+
+- [x] `Cerneala.UI.Motion.Specs.PingPongSpec<T>` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Motion.Specs.PingPongSpec<T>.Sampler` - class, private, sealed, line 27
+
+### UI/Motion/Specs/RepeatSpec.cs
+
+- [x] `Cerneala.UI.Motion.Specs.RepeatSpec<T>` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Motion.Specs.RepeatSpec<T>.StaticSampler` - class, private, sealed, line 34
+- [x] `Cerneala.UI.Motion.Specs.RepeatSpec<T>.Sampler` - class, private, sealed, line 49
+
+### UI/Motion/Specs/SpringSpec.cs
+
+- [x] `Cerneala.UI.Motion.Specs.SpringSpec<T>` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Motion.Specs.SpringSpec<T>.VectorSpringSampler` - class, private, sealed, line 86
+
+### UI/Motion/Specs/StepEasing.cs
+
+- [x] `Cerneala.UI.Motion.Specs.StepEasing` - class, public, sealed, line 11
+
+### UI/Motion/Specs/TweenSpec.cs
+
+- [x] `Cerneala.UI.Motion.Specs.TweenSpec<T>` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Motion.Specs.TweenSpec<T>.TweenSampler` - class, private, sealed, line 64
+
+### UI/Motion/States/MotionStateRule.cs
+
+- [x] `Cerneala.UI.Motion.States.MotionStateRule` - class, public, sealed, line 3
+
+### UI/Motion/States/MotionTokens.cs
+
+- [x] `Cerneala.UI.Motion.States.MotionTokens` - class, public, sealed, line 5
+
+### UI/Motion/States/MotionVisualStateController.cs
+
+- [x] `Cerneala.UI.Motion.States.MotionVisualStateController` - class, public, sealed, line 5
+
+### UI/Motion/States/MotionVisualStateSnapshot.cs
+
+- [x] `Cerneala.UI.Motion.States.MotionVisualStateSnapshot` - record, public, sealed, line 3
+
+### UI/Motion/States/ThemeMotionTokens.cs
+
+- [x] `Cerneala.UI.Motion.States.ThemeMotionTokens` - class, public, static, line 7
+
+### UI/Motion/Transactions/MotionTransaction.cs
+
+- [x] `Cerneala.UI.Motion.Transactions.MotionTransaction` - class, public, sealed, line 3
+
+### UI/Motion/Transactions/MotionTransactionContext.cs
+
+- [x] `Cerneala.UI.Motion.Transactions.MotionTransactionContext` - class, public, sealed, line 10
+- [x] `Cerneala.UI.Motion.Transactions.MotionTransactionContext.UntypedMotionSpecAdapter<T>` - class, private, sealed, line 143
+
+### UI/Motion/Transactions/MotionTransactionOptions.cs
+
+- [x] `Cerneala.UI.Motion.Transactions.MotionTransactionOptions` - class, public, sealed, line 5
+
+### UI/Motion/Transactions/MotionTransactionScope.cs
+
+- [x] `Cerneala.UI.Motion.Transactions.MotionTransactionScope` - class, public, sealed, line 3
+
+### UI/Platform/FileDialogFilter.cs
+
+- [x] `Cerneala.UI.Platform.FileDialogFilter` - record, public, sealed, line 3
+
+### UI/Platform/FileDialogOptions.cs
+
+- [x] `Cerneala.UI.Platform.FileDialogOptions` - record, public, sealed, line 3
 
 ### UI/Platform/PlatformServices.cs
 
-- [x] `Cerneala.UI.Platform.PlatformServices` - record, public, sealed, line 3
+- [x] `Cerneala.UI.Platform.PlatformServices` - record, public, sealed, line 5
 
 ### UI/Rendering/ClipNode.cs
 
@@ -1104,7 +1939,7 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Rendering/DrawCommandListBuilder.cs
 
-- [x] `Cerneala.UI.Rendering.DrawCommandListBuilder` - class, public, sealed, line 7
+- [x] `Cerneala.UI.Rendering.DrawCommandListBuilder` - class, public, sealed, line 9
 
 ### UI/Rendering/DrawCommandListPool.cs
 
@@ -1142,6 +1977,10 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Rendering.RetainedRenderer` - class, public, sealed, line 6
 
+### UI/Rendering/TimeSensitiveRenderInvalidator.cs
+
+- [x] `Cerneala.UI.Rendering.TimeSensitiveRenderInvalidator` - class, public, static, line 5
+
 ### UI/Resources/FontResource.cs
 
 - [x] `Cerneala.UI.Resources.FontResource` - class, public, sealed, line 5
@@ -1149,6 +1988,10 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Resources/ImageResource.cs
 
 - [x] `Cerneala.UI.Resources.ImageResource` - class, public, sealed, line 5
+
+### UI/Resources/ImageResourceCache.cs
+
+- [x] `Cerneala.UI.Resources.ImageResourceCache` - class, public, sealed, line 5
 
 ### UI/Resources/MonoGame/MonoGameImageLoader.cs
 
@@ -1160,13 +2003,13 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Resources/ResourceDependencyTracker.cs
 
-- [x] `Cerneala.UI.Resources.ResourceDependencyTracker` - class, public, sealed, line 3
-- [x] `Cerneala.UI.Resources.ResourceDependencyTracker.ResourceKey` - record, private, sealed, line 69
-- [x] `Cerneala.UI.Resources.ResourceDependencyTracker.ReferenceEqualityComparer` - class, private, sealed, line 77
+- [x] `Cerneala.UI.Resources.ResourceDependencyTracker` - class, public, sealed, line 6
+- [x] `Cerneala.UI.Resources.ResourceDependencyTracker.ResourceDependency` - record, private, sealed, line 127
+- [x] `Cerneala.UI.Resources.ResourceDependencyTracker.ResourceKey` - record, private, sealed, line 133
+- [x] `Cerneala.UI.Resources.ResourceDependencyTracker.ReferenceEqualityComparer` - class, private, sealed, line 141
+- [x] `Cerneala.UI.Resources.ResourceDependencyTracker.ResourceProviderReferenceEqualityComparer` - class, private, sealed, line 156
+- [x] `Cerneala.UI.Resources.ResourceDependencyChange` - record, public, sealed, line 172
 
-- [x] `Cerneala.UI.Resources.ResourceDependencyTracker.ResourceProviderReferenceEqualityComparer`
-- [x] `Cerneala.UI.Resources.ResourceDependencyTracker.ResourceDependency`
-- [x] `Cerneala.UI.Resources.ResourceDependencyChange`
 ### UI/Resources/ResourceId{T}.cs
 
 - [x] `Cerneala.UI.Resources.ResourceId<T>` - record, public, sealed, line 3
@@ -1177,50 +2020,13 @@ Excluded RoslynRepoIndexer class-like types: 102
 - [x] `Cerneala.UI.Resources.ResourceStore.Entry` - record, private, sealed, line 57
 - [x] `Cerneala.UI.Resources.ResourceStore.ResourceKey` - record, private, sealed, line 59
 
+### UI/Text/BidiTextRun.cs
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- [x] `Cerneala.UI.Text.BidiTextRun` - record, public, sealed, line 3
 
 ### UI/Text/BidiTextService.cs
 
 - [x] `Cerneala.UI.Text.BidiTextService` - class, public, sealed, line 5
-- [x] `Cerneala.UI.Text.BidiTextRun` - record, public, sealed, line 85
 
 ### UI/Text/FontResolver.cs
 
@@ -1229,19 +2035,24 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 ### UI/Text/LineBreakService.cs
 
-- [x] `Cerneala.UI.Text.LineBreakService` - class, public, sealed, line 3
-- [x] `Cerneala.UI.Text.LineBreakService.TextElement`
+- [x] `Cerneala.UI.Text.LineBreakService` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Text.LineBreakService.TextElement` - record, private, sealed, line 200
 
 ### UI/Text/ResolvedTextFont.cs
 
 - [x] `Cerneala.UI.Text.ResolvedTextFont` - class, public, sealed, line 5
 
 ### UI/Text/TextAspect.cs
-- [x] `Cerneala.UI.Text.TextAspect`
+
+- [x] `Cerneala.UI.Text.TextAspect` - record, public, sealed, line 6
 
 ### UI/Text/TextCaret.cs
 
 - [x] `Cerneala.UI.Text.TextCaret` - record, public, sealed, line 3
+
+### UI/Text/TextCaretLayout.cs
+
+- [x] `Cerneala.UI.Text.TextCaretLayout` - class, public, sealed, line 6
 
 ### UI/Text/TextCompositionManager.cs
 
@@ -1263,6 +2074,10 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Text.TextEditor` - class, public, sealed, line 5
 
+### UI/Text/TextEditorSnapshot.cs
+
+- [x] `Cerneala.UI.Text.TextEditorSnapshot` - record, public, sealed, line 3
+
 ### UI/Text/TextLayoutCache.cs
 
 - [x] `Cerneala.UI.Text.TextLayoutCache` - class, public, sealed, line 3
@@ -1274,6 +2089,10 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Text/TextLine.cs
 
 - [x] `Cerneala.UI.Text.TextLine` - record, public, sealed, line 3
+
+### UI/Text/TextLineMetrics.cs
+
+- [x] `Cerneala.UI.Text.TextLineMetrics` - class, internal, static, line 5
 
 ### UI/Text/TextMeasurer.cs
 
@@ -1287,8 +2106,6 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.UI.Text.TextRenderer` - class, public, line 5
 
-
-
 ### UI/Text/TextSelection.cs
 
 - [x] `Cerneala.UI.Text.TextSelection` - record, public, sealed, line 3
@@ -1296,7 +2113,32 @@ Excluded RoslynRepoIndexer class-like types: 102
 ### UI/Text/UndoRedoStack.cs
 
 - [x] `Cerneala.UI.Text.UndoRedoStack` - class, public, sealed, line 3
-- [x] `Cerneala.UI.Text.TextEditorSnapshot` - record, public, sealed, line 51
+
+### UI/Theming/DefaultTheme.cs
+
+- [x] `Cerneala.UI.Theming.DefaultTheme` - class, public, static, line 9
+
+### UI/Theming/Theme.cs
+
+- [x] `Cerneala.UI.Theming.Theme` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Theming.Theme.EntryKey` - record, private, sealed, line 50
+
+### UI/Theming/ThemeKey{T}.cs
+
+- [x] `Cerneala.UI.Theming.ThemeKey<T>` - record, public, sealed, line 3
+
+### UI/Theming/ThemePalette.cs
+
+- [x] `Cerneala.UI.Theming.ThemePalette` - class, public, sealed, line 5
+
+### UI/Theming/ThemeProvider.cs
+
+- [x] `Cerneala.UI.Theming.ThemeProvider` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Theming.ThemeChangedEventArgs` - class, public, sealed, line 42
+
+### UI/Theming/ThemeResource.cs
+
+- [x] `Cerneala.UI.Theming.ThemeResource<T>` - class, public, sealed, line 3
 
 ## Cerneala.SourceGen
 
@@ -1304,634 +2146,3 @@ Excluded RoslynRepoIndexer class-like types: 102
 
 - [x] `Cerneala.SourceGen.UiMarkupGenerator` - class, public, sealed, line 15
 - [x] `Cerneala.SourceGen.UiMarkupGenerator.GenerationScope` - class, private, sealed, line 234
-
-### UI/Aspect/AspectCatalog.cs
-- [x] `Cerneala.UI.Aspect.AspectCatalog`
-- [x] `Cerneala.UI.Aspect.AspectPackageDiagnostic`
-
-### UI/Aspect/AspectCondition.cs
-- [x] `Cerneala.UI.Aspect.AspectCondition`
-- [x] `Cerneala.UI.Aspect.AspectPropertyConditionBuilder<TValue>`
-
-### UI/Aspect/AspectConditionDependency.cs
-- [x] `Cerneala.UI.Aspect.AspectConditionDependency`
-
-### UI/Aspect/AspectConditionNode.cs
-- [x] `Cerneala.UI.Aspect.AspectConditionNode`
-- [x] `Cerneala.UI.Aspect.StateAspectCondition`
-- [x] `Cerneala.UI.Aspect.VariantAspectCondition`
-- [x] `Cerneala.UI.Aspect.PropertyAspectCondition<TValue>`
-- [x] `Cerneala.UI.Aspect.DataAspectCondition<TData>`
-- [x] `Cerneala.UI.Aspect.DataAspectCondition<TData, TValue>`
-- [x] `Cerneala.UI.Aspect.AllAspectCondition`
-- [x] `Cerneala.UI.Aspect.AnyAspectCondition`
-- [x] `Cerneala.UI.Aspect.NotAspectCondition`
-- [x] `Cerneala.UI.Aspect.PredicateAspectCondition`
-
-### UI/Aspect/AspectConditionResult.cs
-- [x] `Cerneala.UI.Aspect.AspectConditionResult`
-
-### UI/Aspect/AspectDataContext.cs
-- [x] `Cerneala.UI.Aspect.AspectDataContext`
-
-### UI/Aspect/AspectDataDependency.cs
-- [x] `Cerneala.UI.Aspect.AspectDataDependency`
-
-### UI/Aspect/AspectDeclaration.cs
-- [x] `Cerneala.UI.Aspect.AspectDeclaration`
-
-### UI/Aspect/AspectDependencySet.cs
-- [x] `Cerneala.UI.Aspect.AspectDependencySet`
-
-### UI/Aspect/AspectDiagnostics.cs
-- [x] `Cerneala.UI.Aspect.AspectDiagnostics`
-- [x] `Cerneala.UI.Aspect.AspectDiagnostics.Snapshot`
-
-### UI/Aspect/AspectEngine.cs
-- [x] `Cerneala.UI.Aspect.AspectEngine`
-- [x] `Cerneala.UI.Aspect.AspectApplicationResult`
-
-### UI/Aspect/AspectEngineCounters.cs
-- [x] `Cerneala.UI.Aspect.AspectEngineCounters`
-
-### UI/Aspect/AspectEngineElementState.cs
-- [x] `Cerneala.UI.Aspect.AspectEngineElementState`
-
-### UI/Aspect/AspectEnvironment.cs
-- [x] `Cerneala.UI.Aspect.AspectEnvironment`
-
-### UI/Aspect/AspectInvalidation.cs
-- [x] `Cerneala.UI.Aspect.AspectInvalidation`
-
-### UI/Aspect/AspectInvalidationGraph.cs
-- [x] `Cerneala.UI.Aspect.AspectInvalidationGraph`
-- [x] `Cerneala.UI.Aspect.AspectInvalidationGraph.DependencyHolder`
-
-### UI/Aspect/AspectLayer.cs
-- [x] `Cerneala.UI.Aspect.AspectLayer`
-
-### UI/Aspect/AspectMatchContext.cs
-- [x] `Cerneala.UI.Aspect.AspectMatchContext`
-
-### UI/Aspect/AspectMotion.cs
-- [x] `Cerneala.UI.Aspect.AspectMotion`
-
-### UI/Aspect/AspectPackage.cs
-- [x] `Cerneala.UI.Aspect.AspectPackage`
-
-### UI/Aspect/AspectPackageBuilder.cs
-- [x] `Cerneala.UI.Aspect.AspectPackageBuilder`
-- [x] `Cerneala.UI.Aspect.AspectTokenBuilder`
-- [x] `Cerneala.UI.Aspect.ComponentAspectBuilder`
-- [x] `Cerneala.UI.Aspect.ContentTemplateBuilder`
-
-### UI/Aspect/AspectProcessor.cs
-- [x] `Cerneala.UI.Aspect.AspectProcessor`
-
-### UI/Aspect/AspectRef.cs
-- [x] `Cerneala.UI.Aspect.AspectRef`
-
-### UI/Aspect/AspectRegistry.cs
-- [x] `Cerneala.UI.Aspect.AspectRegistry`
-
-### UI/Aspect/AspectResolutionContext.cs
-- [x] `Cerneala.UI.Aspect.AspectResolutionContext`
-
-### UI/Aspect/AspectResolutionStep.cs
-- [x] `Cerneala.UI.Aspect.AspectResolutionStep`
-
-### UI/Aspect/AspectRuleSet.cs
-- [x] `Cerneala.UI.Aspect.AspectRuleSet`
-- [x] `Cerneala.UI.Aspect.AspectCascadeKey`
-
-### UI/Aspect/AspectRuleSetBuilder.cs
-- [x] `Cerneala.UI.Aspect.AspectRuleSetBuilder`
-
-### UI/Aspect/AspectSlot.cs
-- [x] `Cerneala.UI.Aspect.AspectSlot`
-
-### UI/Aspect/AspectSlot{TOwner,TTarget}.cs
-- [x] `Cerneala.UI.Aspect.AspectSlot<TOwner, TTarget>`
-
-### UI/Aspect/AspectSlotPath.cs
-- [x] `Cerneala.UI.Aspect.AspectSlotPath`
-
-### UI/Aspect/AspectSpecificity.cs
-- [x] `Cerneala.UI.Aspect.AspectSpecificity`
-
-### UI/Aspect/AspectState.cs
-- [x] `Cerneala.UI.Aspect.AspectState`
-
-### UI/Aspect/AspectStateSet.cs
-- [x] `Cerneala.UI.Aspect.AspectStateSet`
-
-### UI/Aspect/AspectTarget.cs
-- [x] `Cerneala.UI.Aspect.AspectTarget`
-
-### UI/Aspect/AspectToken.cs
-- [x] `Cerneala.UI.Aspect.AspectToken`
-
-### UI/Aspect/AspectTokenTrace.cs
-- [x] `Cerneala.UI.Aspect.AspectTokenTrace`
-
-### UI/Aspect/AspectToken{T}.cs
-- [x] `Cerneala.UI.Aspect.AspectToken<T>`
-
-### UI/Aspect/AspectTokenDefinition.cs
-- [x] `Cerneala.UI.Aspect.AspectTokenDefinition`
-
-### UI/Aspect/AspectValue.cs
-- [x] `Cerneala.UI.Aspect.AspectValue`
-
-### UI/Aspect/AspectValue{T}.cs
-- [x] `Cerneala.UI.Aspect.AspectValue<T>`
-
-### UI/Aspect/AspectVariantKey.cs
-- [x] `Cerneala.UI.Aspect.AspectVariantKey`
-
-### UI/Aspect/AspectVariantKey{TOwner,TValue}.cs
-- [x] `Cerneala.UI.Aspect.AspectVariantKey<TOwner, TValue>`
-
-### UI/Aspect/AspectVariantSet.cs
-- [x] `Cerneala.UI.Aspect.AspectVariantSet`
-
-### UI/Aspect/DefaultAspectPackage.cs
-- [x] `Cerneala.UI.Aspect.DefaultAspectPackage`
-
-### UI/Aspect/DefaultAspectTokens.cs
-- [x] `Cerneala.UI.Aspect.DefaultAspectTokens`
-- [x] `Cerneala.UI.Aspect.DefaultAspectTokens.Color`
-- [x] `Cerneala.UI.Aspect.DefaultAspectTokens.Typography`
-- [x] `Cerneala.UI.Aspect.DefaultAspectTokens.Spacing`
-- [x] `Cerneala.UI.Aspect.DefaultAspectTokens.Stroke`
-- [x] `Cerneala.UI.Aspect.DefaultAspectTokens.Motion`
-
-### UI/Aspect/RejectedAspectDeclaration.cs
-- [x] `Cerneala.UI.Aspect.RejectedAspectDeclaration`
-
-### UI/Aspect/ResolvedAspect.cs
-- [x] `Cerneala.UI.Aspect.ResolvedAspect`
-
-### UI/Aspect/ResolvedAspectValue.cs
-- [x] `Cerneala.UI.Aspect.ResolvedAspectValue`
-
-### UI/Aspect/ThemeTokenBridge.cs
-- [x] `Cerneala.UI.Aspect.ThemeTokenBridge`
-
-### UI/Controls/ButtonAspects.cs
-- [x] `Cerneala.UI.Controls.ButtonSlots`
-- [x] `Cerneala.UI.Controls.ButtonVariants`
-- [x] `Cerneala.UI.Controls.ButtonTokens`
-
-### UI/Controls/ButtonTemplates.cs
-- [x] `Cerneala.UI.Controls.ButtonTemplates`
-
-### UI/Controls/Templates/ComponentTemplate.cs
-- [x] `Cerneala.UI.Controls.Templates.ComponentTemplate`
-- [x] `Cerneala.UI.Controls.Templates.ComponentTemplate<TControl>`
-
-### UI/Controls/Templates/ComponentTemplateContext.cs
-- [x] `Cerneala.UI.Controls.Templates.ComponentTemplateContext`
-- [x] `Cerneala.UI.Controls.Templates.ComponentTemplateContext<TControl>`
-
-### UI/Controls/Templates/ComponentTemplateDefinition.cs
-- [x] `Cerneala.UI.Controls.Templates.ComponentTemplateDefinition`
-
-### UI/Controls/Templates/ComponentTemplateInstance.cs
-- [x] `Cerneala.UI.Controls.Templates.ComponentTemplateInstance`
-
-### UI/Controls/Templates/ContentTemplate.cs
-- [x] `Cerneala.UI.Controls.Templates.ContentTemplate`
-- [x] `Cerneala.UI.Controls.Templates.ContentTemplate<TData>`
-
-### UI/Controls/Templates/ContentTemplateContext.cs
-- [x] `Cerneala.UI.Controls.Templates.ContentTemplateContext`
-- [x] `Cerneala.UI.Controls.Templates.ContentTemplateContext<TData>`
-
-### UI/Controls/Templates/ContentTemplateDefinition.cs
-- [x] `Cerneala.UI.Controls.Templates.ContentTemplateDefinition`
-
-### UI/Controls/Templates/ContentTemplateMatchContext.cs
-- [x] `Cerneala.UI.Controls.Templates.ContentTemplateMatchContext`
-
-### UI/Controls/Templates/ContentTemplateRegistry.cs
-- [x] `Cerneala.UI.Controls.Templates.ContentTemplateRegistry`
-- [x] `Cerneala.UI.Controls.Templates.ContentTemplateRegistry.RegisteredTemplate`
-- [x] `Cerneala.UI.Controls.Templates.ContentTemplateRegistry.CacheKey`
-
-### UI/Controls/Templates/ControlTemplateAdapter.cs
-- [x] `Cerneala.UI.Controls.Templates.ControlTemplateAdapter`
-
-### UI/Controls/Templates/DataTemplateAdapter.cs
-- [x] `Cerneala.UI.Controls.Templates.DataTemplateAdapter`
-
-### UI/Controls/Templates/TemplatePartMap.cs
-- [x] `Cerneala.UI.Controls.Templates.TemplatePartMap`
-
-### UI/Controls/Templates/TemplateRecycleKey.cs
-- [x] `Cerneala.UI.Controls.Templates.TemplateRecycleKey`
-
-### UI/Controls/Templates/TemplateRecyclePool.cs
-- [x] `Cerneala.UI.Controls.Templates.TemplateRecyclePool`
-
-### UI/Controls/Templates/TemplateSlotMap.cs
-- [x] `Cerneala.UI.Controls.Templates.TemplateSlotMap`
-
-### UI/Controls/Templates/TemplateTokenBinding.cs
-- [x] `Cerneala.UI.Controls.Templates.TemplateTokenBinding`
-- [x] `Cerneala.UI.Controls.Templates.TemplateTokenBinding<T>`
-
-### UI/Core/UiPropertyMutationObserver.cs
-- [x] `Cerneala.UI.Core.UiPropertyMutationObserver`
-
-### UI/Data/BindingOperations.cs
-- [x] `Cerneala.UI.Data.BindingOperations`
-
-### UI/Data/BindingSubscriptionCollection.cs
-- [x] `Cerneala.UI.Data.BindingSubscriptionCollection`
-
-### UI/Data/UiPropertyBinding{T}.cs
-- [x] `Cerneala.UI.Data.UiPropertyBinding<T>`
-
-### UI/Diagnostics/AspectTrace.cs
-- [x] `Cerneala.UI.Diagnostics.AspectTrace`
-- [x] `Cerneala.UI.Diagnostics.AspectTraceSnapshot`
-
-### UI/Diagnostics/RuntimeDiagnostics.cs
-- [x] `Cerneala.UI.Diagnostics.RuntimeDiagnostics`
-- [x] `Cerneala.UI.Diagnostics.RuntimeDiagnosticsSnapshot`
-- [x] `Cerneala.UI.Diagnostics.RuntimeViewportDiagnosticsSnapshot`
-- [x] `Cerneala.UI.Diagnostics.RuntimeInputDiagnosticsSnapshot`
-- [x] `Cerneala.UI.Diagnostics.RuntimeRenderDiagnosticsSnapshot`
-- [x] `Cerneala.UI.Diagnostics.RuntimeResourceDiagnosticsSnapshot`
-- [x] `Cerneala.UI.Diagnostics.RuntimePlatformDiagnosticsSnapshot`
-
-### UI/Drawing/MonoGame/MonoGameClipStack.cs
-- [x] `Cerneala.Drawing.MonoGame.MonoGameClipStack`
-
-### UI/Drawing/Text/TextCaretVerticalMetrics.cs
-- [x] `Cerneala.Drawing.Text.TextCaretVerticalMetrics`
-
-### UI/Drawing/Text/TextShaper.cs
-- [x] `Cerneala.Drawing.Text.TextShaper`
-
-### UI/Elements/InheritedPropertyPropagator.cs
-- [x] `Cerneala.UI.Elements.InheritedPropertyPropagator`
-
-### UI/Elements/UIElementVisibility.cs
-- [x] `Cerneala.UI.Elements.UIElementVisibility`
-
-### UI/Hosting/UiCoordinateMapper.cs
-- [x] `Cerneala.UI.Hosting.UiCoordinateMapper`
-
-### UI/Input/FocusPolicy.cs
-- [x] `Cerneala.UI.Input.FocusPolicy`
-
-### UI/Input/InputBindingCollection.cs
-- [x] `Cerneala.UI.Input.InputBindingCollection`
-
-### UI/Input/KeyboardActivationController.cs
-- [x] `Cerneala.UI.Input.KeyboardActivationController`
-
-### UI/Input/KeyboardNavigationController.cs
-- [x] `Cerneala.UI.Input.KeyboardNavigationController`
-
-### UI/Input/RetainedInputBindingProcessor.cs
-- [x] `Cerneala.UI.Input.RetainedInputBindingProcessor`
-
-### UI/Invalidation/AspectQueue.cs
-- [x] `Cerneala.UI.Invalidation.AspectQueue`
-
-### UI/Invalidation/CommandStateQueue.cs
-- [x] `Cerneala.UI.Invalidation.CommandStateQueue`
-
-### UI/Invalidation/InheritedPropertyQueue.cs
-- [x] `Cerneala.UI.Invalidation.InheritedPropertyQueue`
-
-### UI/Layout/Panels/GridDefinitionCollection{TDefinition}.cs
-- [x] `Cerneala.UI.Layout.Panels.GridDefinitionCollection<TDefinition>`
-
-### UI/Motion/Core/DerivedMotionValue{T}.cs
-- [x] `Cerneala.UI.Motion.Core.DerivedMotionValue<T>`
-- [x] `Cerneala.UI.Motion.Core.DerivedMotionValue<T>.Subscription`
-
-### UI/Motion/Core/ManualMotionTimeline.cs
-- [x] `Cerneala.UI.Motion.Core.ManualMotionTimeline`
-
-### UI/Motion/Core/MotionCompletionSource.cs
-- [x] `Cerneala.UI.Motion.Core.MotionCompletionSource`
-
-### UI/Motion/Core/MotionComposition.cs
-- [x] `Cerneala.UI.Motion.Core.MotionComposition`
-
-### UI/Motion/Core/MotionConflictResolver.cs
-- [x] `Cerneala.UI.Motion.Core.MotionConflictResolver`
-
-### UI/Motion/Core/MotionFrame.cs
-- [x] `Cerneala.UI.Motion.Core.MotionFrame`
-
-### UI/Motion/Core/MotionFrameCoordinator.cs
-- [x] `Cerneala.UI.Motion.Core.MotionFrameCoordinator`
-
-### UI/Motion/Core/MotionFrameResult.cs
-- [x] `Cerneala.UI.Motion.Core.MotionFrameResult`
-
-### UI/Motion/Core/MotionGraph.cs
-- [x] `Cerneala.UI.Motion.Core.MotionGraph`
-
-### UI/Motion/Core/MotionGroup.cs
-- [x] `Cerneala.UI.Motion.Core.MotionGroup`
-
-### UI/Motion/Core/MotionGroupHandle.cs
-- [x] `Cerneala.UI.Motion.Core.MotionGroupHandle`
-
-### UI/Motion/Core/MotionHandle.cs
-- [x] `Cerneala.UI.Motion.Core.MotionHandle`
-- [x] `Cerneala.UI.Motion.Core.MotionCompletedEventArgs`
-
-### UI/Motion/Core/MotionNode.cs
-- [x] `Cerneala.UI.Motion.Core.MotionNode`
-- [x] `Cerneala.UI.Motion.Core.MotionNodeTickResult`
-
-### UI/Motion/Core/MotionSequence.cs
-- [x] `Cerneala.UI.Motion.Core.MotionSequence`
-
-### UI/Motion/Core/MotionStagger.cs
-- [x] `Cerneala.UI.Motion.Core.MotionStagger`
-
-### UI/Motion/Core/MotionStartOptions.cs
-- [x] `Cerneala.UI.Motion.Core.MotionStartOptions`
-
-### UI/Motion/Core/MotionSystem.cs
-- [x] `Cerneala.UI.Motion.Core.MotionSystem`
-
-### UI/Motion/Core/MotionThreadGuard.cs
-- [x] `Cerneala.UI.Motion.Core.MotionThreadGuard`
-
-### UI/Motion/Core/MotionTimeline.cs
-- [x] `Cerneala.UI.Motion.Core.MotionTimeline`
-
-### UI/Motion/Core/MotionTimelineRegistry.cs
-- [x] `Cerneala.UI.Motion.Core.MotionTimelineRegistry`
-
-### UI/Motion/Core/MotionValue.cs
-- [x] `Cerneala.UI.Motion.Core.MotionValue`
-
-### UI/Motion/Core/MotionValue{T}.cs
-- [x] `Cerneala.UI.Motion.Core.MotionValue<T>`
-- [x] `Cerneala.UI.Motion.Core.MotionValue<T>.ValueNode`
-- [x] `Cerneala.UI.Motion.Core.MotionValue<T>.Subscription`
-- [x] `Cerneala.UI.Motion.Core.MotionValueChanged<T>`
-
-### UI/Motion/Core/ReducedMotionPolicy.cs
-- [x] `Cerneala.UI.Motion.Core.ReducedMotionPolicy`
-
-### UI/Motion/Core/SystemMotionClock.cs
-- [x] `Cerneala.UI.Motion.Core.SystemMotionClock`
-
-### UI/Motion/Diagnostics/MotionDiagnostics.cs
-- [x] `Cerneala.UI.Motion.Diagnostics.MotionDiagnostics`
-
-### UI/Motion/Diagnostics/MotionGraphSnapshot.cs
-- [x] `Cerneala.UI.Motion.Diagnostics.MotionGraphSnapshot`
-
-### UI/Motion/Diagnostics/MotionTrace.cs
-- [x] `Cerneala.UI.Motion.Diagnostics.MotionTrace`
-
-### UI/Motion/Diagnostics/MotionTraceEvent.cs
-- [x] `Cerneala.UI.Motion.Diagnostics.MotionTraceEvent`
-
-### UI/Motion/Input/DragMotionController.cs
-- [x] `Cerneala.UI.Motion.Input.DragMotionController`
-
-### UI/Motion/Input/GestureMotionController.cs
-- [x] `Cerneala.UI.Motion.Input.GestureMotionController`
-
-### UI/Motion/Input/MotionRange.cs
-- [x] `Cerneala.UI.Motion.Input.MotionRange`
-
-### UI/Motion/Input/ScrollMotionBinding.cs
-- [x] `Cerneala.UI.Motion.Input.ScrollMotionBinding<T>`
-
-### UI/Motion/Input/ScrollTimeline.cs
-- [x] `Cerneala.UI.Motion.Input.ScrollTimeline`
-- [x] `Cerneala.UI.Motion.Input.ScrollTimelineProgress`
-
-### UI/Motion/Input/VelocityTracker.cs
-- [x] `Cerneala.UI.Motion.Input.VelocityTracker`
-
-### UI/Motion/Interpolation/ColorMixer.cs
-- [x] `Cerneala.UI.Motion.Interpolation.ColorMixer`
-
-### UI/Motion/Interpolation/DoubleMixer.cs
-- [x] `Cerneala.UI.Motion.Interpolation.DoubleMixer`
-
-### UI/Motion/Interpolation/DrawPointMixer.cs
-- [x] `Cerneala.UI.Motion.Interpolation.DrawPointMixer`
-
-### UI/Motion/Interpolation/DrawRectMixer.cs
-- [x] `Cerneala.UI.Motion.Interpolation.DrawRectMixer`
-
-### UI/Motion/Interpolation/DrawSizeMixer.cs
-- [x] `Cerneala.UI.Motion.Interpolation.DrawSizeMixer`
-
-### UI/Motion/Interpolation/FloatMixer.cs
-- [x] `Cerneala.UI.Motion.Interpolation.FloatMixer`
-
-### UI/Motion/Interpolation/ThicknessMixer.cs
-- [x] `Cerneala.UI.Motion.Interpolation.ThicknessMixer`
-
-### UI/Motion/Interpolation/TransformMixer.cs
-- [x] `Cerneala.UI.Motion.Interpolation.TransformMixer`
-- [x] `Cerneala.UI.Motion.Interpolation.TransformComponents`
-
-### UI/Motion/Interpolation/ValueMixer.cs
-- [x] `Cerneala.UI.Motion.Interpolation.ValueMixer<T>`
-
-### UI/Motion/Interpolation/ValueMixerRegistry.cs
-- [x] `Cerneala.UI.Motion.Interpolation.ValueMixerRegistry`
-
-### UI/Motion/Layout/LayoutMotionBinding.cs
-- [x] `Cerneala.UI.Motion.Layout.LayoutMotionBinding`
-
-### UI/Motion/Layout/LayoutMotionCoordinator.cs
-- [x] `Cerneala.UI.Motion.Layout.LayoutMotionCoordinator`
-
-### UI/Motion/Layout/LayoutMotionId.cs
-- [x] `Cerneala.UI.Motion.Layout.LayoutMotionId`
-
-### UI/Motion/Layout/LayoutMotionOptions.cs
-- [x] `Cerneala.UI.Motion.Layout.LayoutMotionOptions`
-
-### UI/Motion/Layout/LayoutSnapshot.cs
-- [x] `Cerneala.UI.Motion.Layout.LayoutSnapshot`
-
-### UI/Motion/MotionAnimationBuilder.cs
-- [x] `Cerneala.UI.Motion.MotionAnimationBuilder<T>`
-- [x] `Cerneala.UI.Motion.MotionPropertyShortcut<T>`
-
-### UI/Motion/MotionDefaults.cs
-- [x] `Cerneala.UI.Motion.MotionDefaults`
-
-### UI/Motion/MotionElementFacade.cs
-- [x] `Cerneala.UI.Motion.MotionElementFacade`
-
-### UI/Motion/MotionExtensions.cs
-- [x] `Cerneala.UI.Motion.MotionExtensions`
-
-### UI/Motion/MotionStateBuilder.cs
-- [x] `Cerneala.UI.Motion.MotionStateBuilder`
-
-### UI/Motion/Presence/PresenceCoordinator.cs
-- [x] `Cerneala.UI.Motion.Presence.PresenceCoordinator`
-
-### UI/Motion/Presence/PresenceHandle.cs
-- [x] `Cerneala.UI.Motion.Presence.PresenceHandle`
-
-### UI/Motion/Presence/PresenceOptions.cs
-- [x] `Cerneala.UI.Motion.Presence.PresenceOptions`
-
-### UI/Motion/Properties/AnimatablePropertyRegistry.cs
-- [x] `Cerneala.UI.Motion.Properties.AnimatablePropertyRegistry`
-
-### UI/Motion/Properties/MotionPropertyBinding.cs
-- [x] `Cerneala.UI.Motion.Properties.MotionPropertyBinding`
-
-### UI/Motion/Properties/MotionPropertyBinding{T}.cs
-- [x] `Cerneala.UI.Motion.Properties.MotionPropertyBinding<T>`
-- [x] `Cerneala.UI.Motion.Properties.MotionPropertyBinding<T>.BindingNode`
-
-### UI/Motion/Properties/MotionPropertyInvalidationClassifier.cs
-- [x] `Cerneala.UI.Motion.Properties.MotionPropertyInvalidationClassifier`
-
-### UI/Motion/Properties/MotionPropertyKey.cs
-- [x] `Cerneala.UI.Motion.Properties.MotionPropertyKey`
-
-### UI/Motion/Properties/MotionPropertyOptions.cs
-- [x] `Cerneala.UI.Motion.Properties.MotionPropertyOptions`
-
-### UI/Motion/Properties/MotionPropertyStartOptions.cs
-- [x] `Cerneala.UI.Motion.Properties.MotionPropertyStartOptions`
-
-### UI/Motion/Properties/MotionPropertyStore.cs
-- [x] `Cerneala.UI.Motion.Properties.MotionPropertyStore`
-- [x] `Cerneala.UI.Motion.Properties.MotionPropertyStore.PendingWrite`
-- [x] `Cerneala.UI.Motion.Properties.MotionPropertyFlushResult`
-
-### UI/Motion/Specs/CubicBezierEasing.cs
-- [x] `Cerneala.UI.Motion.Specs.CubicBezierEasing`
-
-### UI/Motion/Specs/DecaySpec.cs
-- [x] `Cerneala.UI.Motion.Specs.DecaySpec<T>`
-- [x] `Cerneala.UI.Motion.Specs.DecaySpec<T>.DecaySampler`
-
-### UI/Motion/Specs/Easings.cs
-- [x] `Cerneala.UI.Motion.Specs.Easings`
-- [x] `Cerneala.UI.Motion.Specs.Easings.LinearEasing`
-
-### UI/Motion/Specs/KeyframesSpec.cs
-- [x] `Cerneala.UI.Motion.Specs.KeyframesSpec<T>`
-- [x] `Cerneala.UI.Motion.Specs.KeyframesSpec<T>.KeyframesSampler`
-- [x] `Cerneala.UI.Motion.Specs.MotionKeyframe<T>`
-
-### UI/Motion/Specs/Motion.cs
-- [x] `Cerneala.UI.Motion.Specs.Motion`
-- [x] `Cerneala.UI.Motion.Specs.Motion.UntypedTweenSpec`
-- [x] `Cerneala.UI.Motion.Specs.Motion.UntypedSpringSpec`
-
-### UI/Motion/Specs/MotionSampler.cs
-- [x] `Cerneala.UI.Motion.Specs.MotionSampler`
-- [x] `Cerneala.UI.Motion.Specs.MotionSampler<T>`
-
-### UI/Motion/Specs/MotionSpec.cs
-- [x] `Cerneala.UI.Motion.Specs.MotionSpec`
-
-### UI/Motion/Specs/MotionSpecContext.cs
-- [x] `Cerneala.UI.Motion.Specs.MotionSpecContext`
-
-### UI/Motion/Specs/MotionSpec{T}.cs
-- [x] `Cerneala.UI.Motion.Specs.MotionSpec<T>`
-
-### UI/Motion/Specs/MotionVelocity.cs
-- [x] `Cerneala.UI.Motion.Specs.MotionVelocity<T>`
-
-### UI/Motion/Specs/PingPongSpec.cs
-- [x] `Cerneala.UI.Motion.Specs.PingPongSpec<T>`
-- [x] `Cerneala.UI.Motion.Specs.PingPongSpec<T>.Sampler`
-
-### UI/Motion/Specs/RepeatSpec.cs
-- [x] `Cerneala.UI.Motion.Specs.RepeatSpec<T>`
-- [x] `Cerneala.UI.Motion.Specs.RepeatSpec<T>.StaticSampler`
-- [x] `Cerneala.UI.Motion.Specs.RepeatSpec<T>.Sampler`
-
-### UI/Motion/Specs/SpringSpec.cs
-- [x] `Cerneala.UI.Motion.Specs.SpringSpec<T>`
-- [x] `Cerneala.UI.Motion.Specs.SpringSpec<T>.VectorSpringSampler`
-
-### UI/Motion/Specs/StepEasing.cs
-- [x] `Cerneala.UI.Motion.Specs.StepEasing`
-
-### UI/Motion/Specs/TweenSpec.cs
-- [x] `Cerneala.UI.Motion.Specs.TweenSpec<T>`
-- [x] `Cerneala.UI.Motion.Specs.TweenSpec<T>.TweenSampler`
-
-### UI/Motion/States/MotionStateRule.cs
-- [x] `Cerneala.UI.Motion.States.MotionStateRule`
-
-### UI/Motion/States/MotionTokens.cs
-- [x] `Cerneala.UI.Motion.States.MotionTokens`
-
-### UI/Motion/States/MotionVisualStateController.cs
-- [x] `Cerneala.UI.Motion.States.MotionVisualStateController`
-
-### UI/Motion/States/MotionVisualStateSnapshot.cs
-- [x] `Cerneala.UI.Motion.States.MotionVisualStateSnapshot`
-
-### UI/Motion/States/ThemeMotionTokens.cs
-- [x] `Cerneala.UI.Motion.States.ThemeMotionTokens`
-
-### UI/Motion/Transactions/MotionTransaction.cs
-- [x] `Cerneala.UI.Motion.Transactions.MotionTransaction`
-
-### UI/Motion/Transactions/MotionTransactionContext.cs
-- [x] `Cerneala.UI.Motion.Transactions.MotionTransactionContext`
-- [x] `Cerneala.UI.Motion.Transactions.MotionTransactionContext.UntypedMotionSpecAdapter<T>`
-
-### UI/Motion/Transactions/MotionTransactionOptions.cs
-- [x] `Cerneala.UI.Motion.Transactions.MotionTransactionOptions`
-
-### UI/Motion/Transactions/MotionTransactionScope.cs
-- [x] `Cerneala.UI.Motion.Transactions.MotionTransactionScope`
-
-### UI/Rendering/TimeSensitiveRenderInvalidator.cs
-- [x] `Cerneala.UI.Rendering.TimeSensitiveRenderInvalidator`
-
-### UI/Resources/ImageResourceCache.cs
-- [x] `Cerneala.UI.Resources.ImageResourceCache`
-
-### UI/Text/TextCaretLayout.cs
-- [x] `Cerneala.UI.Text.TextCaretLayout`
-
-### UI/Text/TextLineMetrics.cs
-- [x] `Cerneala.UI.Text.TextLineMetrics`
-
-### UI/Theming/DefaultTheme.cs
-- [x] `Cerneala.UI.Theming.DefaultTheme`
-
-### UI/Theming/Theme.cs
-- [x] `Cerneala.UI.Theming.Theme`
-- [x] `Cerneala.UI.Theming.Theme.EntryKey`
-
-### UI/Theming/ThemeKey{T}.cs
-- [x] `Cerneala.UI.Theming.ThemeKey<T>`
-
-### UI/Theming/ThemePalette.cs
-- [x] `Cerneala.UI.Theming.ThemePalette`
-
-### UI/Theming/ThemeProvider.cs
-- [x] `Cerneala.UI.Theming.ThemeProvider`
-- [x] `Cerneala.UI.Theming.ThemeChangedEventArgs`
-
-### UI/Theming/ThemeResource.cs
-- [x] `Cerneala.UI.Theming.ThemeResource<T>`
-

@@ -24,7 +24,7 @@
 - Modify: `UI/Hosting/UiHost.cs`
   - Commit root commands during `Update(...)`.
   - Keep `Draw(...)` as submission-only.
-- Modify: `UI/Drawing/IDrawingBackend.cs`
+- Modify: `Drawing/IDrawingBackend.cs`
   - Document that backends must treat submitted commands as read-only.
 - Modify: `tests/Cerneala.Tests/UI/Rendering/DrawCommandListBuilderTests.cs`
   - Update builder tests to prepare local caches before composing.
@@ -281,7 +281,7 @@ git commit -m "fix: make root command composition pure"
 
 **Files:**
 - Modify: `UI/Rendering/RetainedRenderer.cs`
-- Modify: `UI/Drawing/IDrawingBackend.cs`
+- Modify: `Drawing/IDrawingBackend.cs`
 - Modify: `tests/Cerneala.Tests/UI/Rendering/RetainedRendererTests.cs`
 - Create: `tests/Cerneala.Tests/UI/Rendering/RetainedRendererDrawPurityTests.cs`
 
@@ -445,7 +445,7 @@ public sealed class RetainedRenderer
 
 - [ ] **Step 4: Document backend read-only contract**
 
-Replace `UI/Drawing/IDrawingBackend.cs` with:
+Replace `Drawing/IDrawingBackend.cs` with:
 
 ```csharp
 namespace Cerneala.Drawing;
@@ -519,7 +519,7 @@ Expected: all filtered tests pass.
 - [ ] **Step 7: Commit explicit retained renderer contract**
 
 ```powershell
-git add UI\Rendering\RetainedRenderer.cs UI\Drawing\IDrawingBackend.cs tests\Cerneala.Tests\UI\Rendering\RetainedRendererTests.cs tests\Cerneala.Tests\UI\Rendering\RetainedRendererDrawPurityTests.cs
+git add UI\Rendering\RetainedRenderer.cs Drawing\\IDrawingBackend.cs tests\Cerneala.Tests\UI\Rendering\RetainedRendererTests.cs tests\Cerneala.Tests\UI\Rendering\RetainedRendererDrawPurityTests.cs
 git commit -m "fix: make retained renderer commit explicit"
 ```
 

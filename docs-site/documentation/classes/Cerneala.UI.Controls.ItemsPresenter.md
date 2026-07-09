@@ -129,9 +129,9 @@ Virtualization is driven by `VirtualizationContext`. The current realization win
 ## See Also
 
 - `Cerneala.UI.Controls.ItemsControl`
-- `Cerneala.UI.Controls.ItemContainerGenerator`
-- `Cerneala.UI.Controls.ItemsPanelTemplate`
-- `Cerneala.UI.Controls.DataTemplate`
+- `Cerneala.UI.Controls.Items.ItemContainerGenerator`
+- `Cerneala.UI.Controls.Items.ItemsPanelTemplate`
+- `Cerneala.UI.Controls.Templates.DataTemplate`
 - `Cerneala.UI.Layout.Panels.VirtualizingStackPanel`
 - `Cerneala.UI.Layout.Virtualization.VirtualizationContext`
 - `Cerneala.UI.Layout.Virtualization.RealizationWindow`

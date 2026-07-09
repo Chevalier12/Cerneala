@@ -88,7 +88,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
-using PanelOrientation = Cerneala.UI.Layout.Panels.Orientation;
+using PanelOrientation = Cerneala.UI.Layout.Orientation;
 
 namespace Cerneala.Tests.UI.Layout;
 

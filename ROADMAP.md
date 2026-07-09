@@ -6,7 +6,7 @@ Goal: build a WPF-inspired UI framework on top of the existing drawing and input
 
 This is not a promise to clone every WPF feature exactly. It is the planned project map. If scope changes, update this file first.
 
-Before implementing or changing anything from this roadmap, read `architecture.md`. It explains the existing `UI/Drawing` and `UI/Input` architecture, including which planned WPF-style classes would duplicate existing primitives if implemented blindly.
+Before implementing or changing anything from this roadmap, read `architecture.md`. It explains the existing `Drawing` and `UI/Input` architecture, including which planned WPF-style classes would duplicate existing primitives if implemented blindly.
 
 Legend:
 
@@ -20,27 +20,27 @@ These files already exist and are the base that future WPF-style layers must bui
 
 ### Drawing
 
-- [x] `UI/Drawing/DrawArgument.cs`
-- [x] `UI/Drawing/DrawColor.cs`
-- [x] `UI/Drawing/DrawCommand.cs`
-- [x] `UI/Drawing/DrawCommandKind.cs`
-- [x] `UI/Drawing/DrawCommandList.cs`
-- [x] `UI/Drawing/DrawingContext.cs`
-- [x] `UI/Drawing/DrawPoint.cs`
-- [x] `UI/Drawing/DrawRect.cs`
-- [x] `UI/Drawing/DrawTextRun.cs`
-- [x] `UI/Drawing/IDrawFont.cs`
-- [x] `UI/Drawing/IDrawImage.cs`
-- [x] `UI/Drawing/IDrawingBackend.cs`
-- [x] `UI/Drawing/IFontSource.cs`
-- [x] `UI/Drawing/MonoGame/MonoGameDrawingBackend.cs`
-- [x] `UI/Drawing/MonoGame/MonoGameImage.cs`
-- [x] `UI/Drawing/Text/RasterizedText.cs`
-- [x] `UI/Drawing/Text/SkiaFont.cs`
-- [x] `UI/Drawing/Text/SkiaTextRasterizer.cs`
-- [x] `UI/Drawing/Text/SkiaTextShaper.cs`
-- [x] `UI/Drawing/Text/SystemFontSource.cs`
-- [x] `UI/Drawing/Text/TextShapeResult.cs`
+- [x] `Drawing/DrawArgument.cs`
+- [x] `Drawing/DrawColor.cs`
+- [x] `Drawing/DrawCommand.cs`
+- [x] `Drawing/DrawCommandKind.cs`
+- [x] `Drawing/DrawCommandList.cs`
+- [x] `Drawing/DrawingContext.cs`
+- [x] `Drawing/DrawPoint.cs`
+- [x] `Drawing/DrawRect.cs`
+- [x] `Drawing/DrawTextRun.cs`
+- [x] `Drawing/IDrawFont.cs`
+- [x] `Drawing/IDrawImage.cs`
+- [x] `Drawing/IDrawingBackend.cs`
+- [x] `Drawing/IFontSource.cs`
+- [x] `Drawing/MonoGame/MonoGameDrawingBackend.cs`
+- [x] `Drawing/MonoGame/MonoGameImage.cs`
+- [x] `Drawing/Text/RasterizedText.cs`
+- [x] `Drawing/Text/SkiaFont.cs`
+- [x] `Drawing/Text/SkiaTextRasterizer.cs`
+- [x] `Drawing/Text/SkiaTextShaper.cs`
+- [x] `Drawing/Text/SystemFontSource.cs`
+- [x] `Drawing/Text/TextShapeResult.cs`
 
 ### Input
 
@@ -304,13 +304,13 @@ This is the layer real controls inherit from.
 - [ ] `UI/Controls/ItemsControl.cs`
 - [ ] `UI/Controls/HeaderedItemsControl.cs`
 - [ ] `UI/Controls/UserControl.cs`
-- [ ] `UI/Controls/ControlTemplate.cs`
-- [ ] `UI/Controls/ItemsPanelTemplate.cs`
-- [ ] `UI/Controls/DataTemplate.cs`
+- [ ] `UI/Controls/Templates/ControlTemplate.cs`
+- [ ] `UI/Controls/Items/ItemsPanelTemplate.cs`
+- [ ] `UI/Controls/Templates/DataTemplate.cs`
 - [ ] `UI/Controls/HierarchicalDataTemplate.cs`
 - [ ] `UI/Controls/TemplateBinding.cs`
 - [ ] `UI/Controls/TemplateBindingExpression.cs`
-- [ ] `UI/Controls/TemplatePartAttribute.cs`
+- [ ] `UI/Controls/Templates/TemplatePartAttribute.cs`
 - [ ] `UI/Controls/TemplateVisualStateAttribute.cs`
 
 Tests:
@@ -566,8 +566,8 @@ Tests:
 
 Items are a big chunk. Do not start this before layout, templates, and basic controls are stable.
 
-- [ ] `UI/Controls/ItemCollection.cs`
-- [ ] `UI/Controls/ItemContainerGenerator.cs`
+- [ ] `UI/Controls/Items/ItemCollection.cs`
+- [ ] `UI/Controls/Items/ItemContainerGenerator.cs`
 - [ ] `UI/Controls/ItemsPresenter.cs`
 - [ ] `UI/Controls/Primitives/Selector.cs`
 - [ ] `UI/Controls/SelectionChangedEventArgs.cs`

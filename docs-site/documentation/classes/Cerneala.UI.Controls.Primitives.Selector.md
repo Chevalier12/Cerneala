@@ -86,6 +86,6 @@ During item container preparation, `Selector` installs a left-button `MouseUp` h
 ## See also
 
 - `Cerneala.UI.Controls.ItemsControl`
-- `Cerneala.UI.Controls.SelectionModel`
+- `Cerneala.UI.Controls.Selection.SelectionModel`
 - `Cerneala.UI.Controls.ListBox`
 - `Cerneala.UI.Controls.ISelectableItemContainer`

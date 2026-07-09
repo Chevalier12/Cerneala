@@ -81,5 +81,5 @@ Cerneala UI default aspect registration, token resolution, button templating, an
 - `Cerneala.UI.Aspect.AspectRegistry`
 - `Cerneala.UI.Aspect.AspectEnvironment`
 - `Cerneala.UI.Aspect.DefaultAspectTokens`
-- `Cerneala.UI.Controls.ButtonTemplates`
-- `Cerneala.UI.Controls.ButtonTokens`
+- `Cerneala.UI.Controls.Buttons.ButtonTemplates`
+- `Cerneala.UI.Controls.Buttons.ButtonTokens`

@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Media`
 
 Assembly/Project: `Cerneala`
 
-Source: `Cerneala.UI/Media/SolidColorBrush.cs` (repository path: `UI/Media/SolidColorBrush.cs`)
+Source: `UI/Media/SolidColorBrush.cs`
 
 Represents a brush that paints with a single `DrawColor`.
 

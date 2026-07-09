@@ -94,4 +94,4 @@ UI area: retained controls, component templates, named template parts.
 - `UI/Controls/Templates/ComponentTemplateContext.cs`
 - `UI/Controls/Templates/ComponentTemplateInstance.cs`
 - `UI/Controls/Templates/ComponentTemplate.cs`
-- `UI/Controls/TemplatePartAttribute.cs`
+- `UI/Controls/Templates/TemplatePartAttribute.cs`

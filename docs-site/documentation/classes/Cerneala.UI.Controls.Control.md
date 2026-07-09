@@ -148,7 +148,7 @@ Project: `Cerneala`
 ## See also
 
 - `UI/Controls/Control.cs`
-- `UI/Controls/ControlTemplate.cs`
-- `UI/Controls/ControlTemplate{TControl}.cs`
+- `UI/Controls/Templates/ControlTemplate.cs`
+- `UI/Controls/Templates/ControlTemplate{TControl}.cs`
 - `UI/Controls/Templates/ComponentTemplate.cs`
 - `UI/Elements/UIElement.cs`

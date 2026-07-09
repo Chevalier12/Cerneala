@@ -529,7 +529,7 @@ public interface IEasing
 - [x] Add `UI/Motion/Interpolation/ColorMixer.cs`.
 - [x] Add `UI/Motion/Interpolation/ThicknessMixer.cs`.
 - [x] Add `UI/Motion/Interpolation/DrawPointMixer.cs`.
-- [x] Add `UI/Drawing/DrawSize.cs`.
+- [x] Add `Drawing/DrawSize.cs`.
 - [x] Add `UI/Motion/Interpolation/DrawSizeMixer.cs`.
 - [x] Add `UI/Motion/Interpolation/DrawRectMixer.cs`.
 - [x] Add `UI/Motion/Interpolation/TransformMixer.cs`.

@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing.MonoGame`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Drawing/MonoGame/MonoGameImage.cs`
+Source: `Drawing/MonoGame/MonoGameImage.cs`
 
 Wraps a MonoGame `Texture2D` so it can be used as a Cerneala drawing image.
 
