@@ -330,6 +330,89 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void AspectTypeMismatchReportsDiagnostic()
+    {
+        const string markup = """
+            <Resources>
+              <Aspect Name="KickerText" Type="TextBlock">
+                @default
+                {
+                  FontSize = 12;
+                }
+              </Aspect>
+            </Resources>
+            <Button Aspect="$KickerText" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("AspectMismatch.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "AspectMismatch.cui.xml");
+        Assert.Contains("Button.Aspect", diagnostic.GetMessage());
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void DuplicateUnnamedAspectForTypeReportsDiagnostic()
+    {
+        const string markup = """
+            <Resources>
+              <Aspect Type="TextBlock">
+                @default { FontSize = 12; }
+              </Aspect>
+              <Aspect Type="TextBlock">
+                @default { FontSize = 14; }
+              </Aspect>
+            </Resources>
+            <TextBlock />
+            """;
+
+        GeneratorRunResult result = RunGenerator("DuplicateDefaultAspect.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "DuplicateDefaultAspect.cui.xml");
+        Assert.Contains("TextBlock", diagnostic.GetMessage());
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void UnsupportedAspectPropertyReportsDiagnostic()
+    {
+        const string markup = """
+            <Resources>
+              <Aspect Type="TextBlock">
+                @default
+                {
+                  Width = 100;
+                }
+              </Aspect>
+            </Resources>
+            <TextBlock />
+            """;
+
+        GeneratorRunResult result = RunGenerator("UnsupportedAspectProperty.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "UnsupportedAspectProperty.cui.xml");
+        Assert.Contains("TextBlock.Width", diagnostic.GetMessage());
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void NestedResourcesReportsDiagnostic()
+    {
+        const string markup = """
+            <Resources>
+              <Resources />
+            </Resources>
+            <TextBlock />
+            """;
+
+        GeneratorRunResult result = RunGenerator("NestedResources.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "NestedResources.cui.xml");
+        Assert.Contains("Nested Resources", diagnostic.GetMessage());
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
     public void MultipleUiRootsReportMalformedMarkupDiagnostic()
     {
         const string markup = """
