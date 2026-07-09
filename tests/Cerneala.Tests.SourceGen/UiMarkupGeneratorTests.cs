@@ -294,6 +294,42 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void ElementNameRegistersGeneratedVariableSymbol()
+    {
+        const string markup = """
+            <TextBlock Name="KickerLabel" Text="HELLO" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("NamedElement.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("global::Cerneala.UI.Controls.TextBlock KickerLabel = new();", generatedSource);
+        Assert.Contains("KickerLabel.Text = \"HELLO\";", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void DuplicateNameAcrossResourceAndElementReportsDiagnostic()
+    {
+        const string markup = """
+            <Resources>
+              <SolidColorBrush Name="Duplicate" Color="#FF5D73" />
+            </Resources>
+            <TextBlock Name="Duplicate" Text="HELLO" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("DuplicateName.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "DuplicateName.cui.xml");
+        Assert.Contains("Duplicate", diagnostic.GetMessage());
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
     public void MultipleUiRootsReportMalformedMarkupDiagnostic()
     {
         const string markup = """

@@ -752,8 +752,23 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
 
         public string EmitElement(XElement element)
         {
-            string variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
-            nextId++;
+            string? requestedName = element.Attribute("Name")?.Value;
+            string variable;
+            if (string.IsNullOrWhiteSpace(requestedName))
+            {
+                variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
+                nextId++;
+            }
+            else
+            {
+                string symbolName = requestedName!.Trim();
+                variable = CreateIdentifier(symbolName);
+                if (!AddSymbol(symbolName, NamedSymbolKind.Element, variable, element))
+                {
+                    variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
+                    nextId++;
+                }
+            }
 
             string? typeName = ResolveElementType(element.Name.LocalName);
 
