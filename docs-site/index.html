@@ -774,40 +774,40 @@ footer{
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">Frame pipeline</p>
-      <h2>One frame, six stages.</h2>
-      <p>Cerneala's frame pipeline moves input into pixels through retained-mode stages WPF developers will recognize — reworked to run inside a real-time loop without pretending to be WPF compatibility.</p>
+      <h2>One frame, retained stages.</h2>
+      <p>Cerneala moves input into pixels through a retained scheduler: input can dirty the tree, properties and aspects settle first, measure and arrange update layout, render caches refresh only where needed, and the backend submits the committed command stream.</p>
     </div>
 
     <div class="pipeline__row">
       <div class="pipeline__stage pipeline__stage--in">
         <div class="pipeline__badge">IN</div>
         <div class="pipeline__name">Input</div>
-        <p class="pipeline__desc">Pointer and keyboard input route through hit testing, focus, commands, and routed events shaped for a retained tree.</p>
+        <p class="pipeline__desc">Pointer, keyboard, and text input dispatch through hit testing, capture, focus, commands, navigation, and routed events.</p>
       </div>
       <div class="pipeline__stage pipeline__stage--st">
-        <div class="pipeline__badge">ST</div>
-        <div class="pipeline__name">State</div>
-        <p class="pipeline__desc"><code>UiProperty&lt;T&gt;</code> carries typed state, metadata, defaults, and invalidation behavior.</p>
+        <div class="pipeline__badge">AS</div>
+        <div class="pipeline__name">Props &amp; Aspects</div>
+        <p class="pipeline__desc"><code>UiProperty&lt;T&gt;</code>, inherited values, command state, and aspect rules settle before layout work is taken.</p>
       </div>
       <div class="pipeline__stage pipeline__stage--ly">
-        <div class="pipeline__badge">LY</div>
-        <div class="pipeline__name">Layout</div>
-        <p class="pipeline__desc">Measure and arrange run through retained layout invalidation instead of rebuilding UI every draw.</p>
+        <div class="pipeline__badge">ME</div>
+        <div class="pipeline__name">Measure</div>
+        <p class="pipeline__desc">Dirty measure queues run deterministic snapshots so available sizes and desired sizes update without rebuilding the tree.</p>
       </div>
       <div class="pipeline__stage pipeline__stage--mo">
-        <div class="pipeline__badge">MO</div>
-        <div class="pipeline__name">Motion</div>
-        <p class="pipeline__desc">Tweens, springs, keyframes, layout motion, and presence transitions evaluate against the runtime frame clock.</p>
+        <div class="pipeline__badge">AR</div>
+        <div class="pipeline__name">Arrange + Motion</div>
+        <p class="pipeline__desc">Arrange writes final bounds while motion hooks sample around layout and render for transitions, presence, and reduced-motion policy.</p>
       </div>
       <div class="pipeline__stage pipeline__stage--rn">
-        <div class="pipeline__badge">RN</div>
-        <div class="pipeline__name">Render</div>
-        <p class="pipeline__desc">Dirty elements emit drawing commands while retained caches keep stable UI from doing unnecessary work.</p>
+        <div class="pipeline__badge">RC</div>
+        <div class="pipeline__name">Render Cache</div>
+        <p class="pipeline__desc">Render invalidations refresh element caches, rebuild root commands when stale, then update hit-test routes for the next input pass.</p>
       </div>
       <div class="pipeline__stage pipeline__stage--mg">
-        <div class="pipeline__badge">MG</div>
-        <div class="pipeline__name">MonoGame</div>
-        <p class="pipeline__desc">The MonoGame adapter consumes Cerneala's drawing command stream inside the host's draw phase.</p>
+        <div class="pipeline__badge">BE</div>
+        <div class="pipeline__name">Backend</div>
+        <p class="pipeline__desc">The host submits the committed drawing commands to an <code>IDrawingBackend</code>; the included adapter renders them through MonoGame.</p>
       </div>
     </div>
   </div>
