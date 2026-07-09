@@ -180,6 +180,60 @@ h1{
   overflow:auto;
   padding:12px;
 }
+.class-group{
+  margin-bottom:6px;
+}
+.class-group__toggle{
+  width:100%;
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border:1px solid transparent;
+  border-radius:var(--radius-sm);
+  background:rgba(255,255,255,.018);
+  color:var(--paper);
+  cursor:pointer;
+  padding:9px 10px;
+  font:700 .72rem/1.25 var(--mono);
+  letter-spacing:.06em;
+  text-align:left;
+  text-transform:uppercase;
+}
+.class-group__toggle:hover{
+  color:var(--cyan);
+  border-color:var(--line);
+  background:rgba(77,240,255,.045);
+}
+.class-group__name{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.class-group__meta{
+  color:var(--slate-dim);
+  font-size:.68rem;
+  white-space:nowrap;
+}
+.class-group__chevron{
+  color:var(--cyan);
+  transform:rotate(-90deg);
+  transition:transform .16s ease;
+}
+.class-group.is-open .class-group__chevron{
+  transform:rotate(0deg);
+}
+.class-group__items{
+  display:none;
+  padding:5px 0 8px 9px;
+  margin-left:8px;
+  border-left:1px solid var(--line);
+}
+.class-group.is-open .class-group__items{
+  display:block;
+}
 .class-item{
   width:100%;
   display:block;
@@ -436,7 +490,8 @@ h1{
 const state = {
   docs: [],
   filtered: [],
-  active: null
+  active: null,
+  expanded: new Set()
 };
 
 const listEl = document.getElementById('class-list');
@@ -689,6 +744,36 @@ function renderMarkdown(markdown) {
   return html.join('\n');
 }
 
+function enrichDoc(doc) {
+  const parts = doc.name.split('.');
+  const shortName = parts.pop() || doc.name;
+  const namespaceParts = parts[0] === 'Cerneala' ? parts.slice(1) : parts;
+  const category = namespaceParts.length ? namespaceParts.join('.') : 'Core';
+  return {
+    ...doc,
+    category,
+    shortName,
+    searchText: (doc.name + ' ' + category + ' ' + shortName).toLowerCase()
+  };
+}
+
+function groupDocs(docs) {
+  const groups = new Map();
+  docs.forEach(doc => {
+    if (!groups.has(doc.category)) {
+      groups.set(doc.category, []);
+    }
+    groups.get(doc.category).push(doc);
+  });
+
+  return Array.from(groups.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([name, docsInGroup]) => ({
+      name,
+      docs: docsInGroup.sort((left, right) => left.shortName.localeCompare(right.shortName))
+    }));
+}
+
 function renderList() {
   listEl.innerHTML = '';
   if (!state.filtered.length) {
@@ -697,14 +782,47 @@ function renderList() {
   }
 
   const fragment = document.createDocumentFragment();
-  state.filtered.forEach(doc => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'class-item' + (state.active && state.active.file === doc.file ? ' is-active' : '');
-    button.textContent = doc.name;
-    button.setAttribute('role', 'option');
-    button.addEventListener('click', () => selectDoc(doc, true));
-    fragment.appendChild(button);
+  const query = searchEl.value.trim().toLowerCase();
+  const groups = groupDocs(state.filtered);
+
+  groups.forEach(group => {
+    const isActiveGroup = state.active && state.active.category === group.name;
+    const isOpen = Boolean(query) || state.expanded.has(group.name) || isActiveGroup;
+    const wrapper = document.createElement('section');
+    wrapper.className = 'class-group' + (isOpen ? ' is-open' : '');
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'class-group__toggle';
+    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    toggle.innerHTML =
+      '<span class="class-group__chevron">▾</span>' +
+      '<span class="class-group__name">' + escapeHtml(group.name) + '</span>' +
+      '<span class="class-group__meta">' + group.docs.length + '</span>';
+    toggle.addEventListener('click', () => {
+      if (state.expanded.has(group.name)) {
+        state.expanded.delete(group.name);
+      } else {
+        state.expanded.add(group.name);
+      }
+      renderList();
+    });
+    wrapper.appendChild(toggle);
+
+    const items = document.createElement('div');
+    items.className = 'class-group__items';
+    group.docs.forEach(doc => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'class-item' + (state.active && state.active.file === doc.file ? ' is-active' : '');
+      button.textContent = doc.shortName;
+      button.title = doc.name;
+      button.setAttribute('role', 'option');
+      button.addEventListener('click', () => selectDoc(doc, true));
+      items.appendChild(button);
+    });
+    wrapper.appendChild(items);
+    fragment.appendChild(wrapper);
   });
   listEl.appendChild(fragment);
 }
@@ -712,13 +830,14 @@ function renderList() {
 function filterDocs() {
   const query = searchEl.value.trim().toLowerCase();
   state.filtered = query
-    ? state.docs.filter(doc => doc.name.toLowerCase().includes(query))
+    ? state.docs.filter(doc => doc.category.toLowerCase().includes(query) || doc.searchText.includes(query))
     : state.docs.slice();
   renderList();
 }
 
 async function selectDoc(doc, updateHash) {
   state.active = doc;
+  state.expanded.add(doc.category);
   renderList();
   filenameEl.textContent = doc.name + '.md';
   contentEl.innerHTML = '<div class="loading">Loading ' + escapeHtml(doc.name) + '...</div>';
@@ -741,14 +860,14 @@ async function init() {
   try {
     const response = await fetch('documentation/manifest.json');
     if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
-    state.docs = await response.json();
+    state.docs = (await response.json()).map(enrichDoc);
     state.filtered = state.docs.slice();
     countEl.textContent = state.docs.length.toString();
-    renderList();
 
     const hashName = decodeURIComponent(location.hash.slice(1));
     const initial = state.docs.find(doc => doc.name === hashName) || state.docs[0];
     if (initial) selectDoc(initial, false);
+    else renderList();
   } catch (error) {
     contentEl.innerHTML = '<div class="loading">Could not load documentation index: ' + escapeHtml(error.message) + '</div>';
   }
