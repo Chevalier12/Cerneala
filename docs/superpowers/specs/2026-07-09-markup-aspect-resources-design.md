@@ -27,6 +27,9 @@ Aspect resources are declared inside a top-level `Resources` element.
 
 ```xml
 <Resources>
+  <SolidColorBrush Key="TextColor" Color="#1E293B" />
+  <SolidColorBrush Key="PulseColor" Color="#FF5D73" />
+
   <Aspect Type="TextBlock">
     @default
     {
@@ -53,6 +56,10 @@ Aspect resources are declared inside a top-level `Resources` element.
 `Aspect Type="TextBlock"` without a `Key` defines the implicit default aspect for every `TextBlock` in the document.
 
 `Aspect Key="KickerText" Type="TextBlock"` defines a named aspect resource. It is not applied automatically. Elements opt into it with `Aspect="$KickerText"`.
+
+`SolidColorBrush Key="PulseColor"` defines a reusable brush resource. Property values inside aspect declaration bodies can reference it with `$PulseColor`.
+
+`Aspect="$KickerText"` resolves only against named `Aspect` resources. Declaration values such as `Foreground = $PulseColor;` resolve only against non-aspect resources. The same `$` prefix is intentionally context-sensitive.
 
 ## Cascade
 
@@ -85,11 +92,14 @@ The generator reports an error when:
 - An `Aspect` resource is missing `Type`.
 - A named aspect has an empty `Key`.
 - Two keyless aspects target the same `Type` in the same document.
-- Two named aspects have the same `Key` in the same document.
+- Two keyed resources have the same `Key` in the same document.
 - An element references an unknown aspect key.
 - An element references an aspect whose `Type` does not match the element type.
+- An aspect declaration references an unknown non-aspect resource key.
+- An aspect declaration references a resource that cannot be assigned or coerced to the target property type.
 - An aspect declaration assigns an unsupported property for its target type.
 - An aspect declaration value cannot be parsed using the same typed rules as element attributes.
+- A `SolidColorBrush` resource has an invalid or missing `Color`.
 
 Type mismatch example:
 
@@ -115,7 +125,7 @@ The first implementation should support document-level resources. Scoped/nested 
 For document-level resources:
 
 - Keyless type defaults apply to all matching elements in the document.
-- Named aspect keys are unique within the document.
+- Keyed resource names are unique within the document, across both named aspects and non-aspect resources.
 - Named aspect references use `$KeyName`.
 - Nested `Resources` declarations are rejected with a clear diagnostic in the first implementation.
 
@@ -131,7 +141,22 @@ The generator should parse resources before emitting elements. For each element:
 
 The generated code should continue to use public typed properties directly where possible, matching the current generator style.
 
-## Resource Values
+## Resource Declarations
+
+The first implementation supports `SolidColorBrush` resources:
+
+```xml
+<SolidColorBrush Key="PulseColor" Color="#FF5D73" />
+```
+
+`Color` accepts hex color syntax:
+
+- `#RRGGBB`, where alpha defaults to `FF`.
+- `#AARRGGBB`, where alpha is explicit.
+
+The generated representation should use the existing `Cerneala.UI.Media.SolidColorBrush` type.
+
+## Aspect Declaration Values
 
 String literals use quotes:
 
@@ -146,15 +171,17 @@ Numbers use invariant culture:
 FontSize = 12;
 ```
 
-Token references use `$Name`:
+Resource references use `$Name`:
 
 ```text
 Foreground = $PulseColor;
 ```
 
-Token references are typed by the property they are assigned to. For example, `Foreground = $PulseColor` targets `Control.ForegroundProperty`, so the generator emits a `DrawColor` aspect token reference equivalent to `AspectRef.To(AspectToken.Color("PulseColor"))`.
+Resource references are resolved by declaration context. For example, `Foreground = $PulseColor` targets `Control.ForegroundProperty`, whose runtime type is `DrawColor`. If `PulseColor` is a `SolidColorBrush`, the generator uses its solid color value for `DrawColor` properties.
 
-If a token reference is used for a property type that has no supported token factory, the generator reports a diagnostic. Token references never silently become strings.
+For a `Brush` property, the same reference would resolve to the `SolidColorBrush` resource itself. For a `DrawColor` property, only resources with a solid color are accepted. A gradient brush or incompatible resource used for a `DrawColor` property is a generator error.
+
+Resource references never silently become strings.
 
 ## Tests
 
@@ -164,9 +191,14 @@ Add focused source generator tests for:
 - A named aspect applying after the type default.
 - Local attributes overriding named aspect values.
 - Unknown aspect key diagnostic.
+- Unknown non-aspect resource key diagnostic.
 - Aspect type mismatch diagnostic.
 - Duplicate default aspect diagnostic.
-- Duplicate named aspect diagnostic.
+- Duplicate keyed resource diagnostic.
 - Unsupported property inside an aspect diagnostic.
-- Token reference emission for a color property.
+- `SolidColorBrush` resource declaration.
+- Invalid `SolidColorBrush.Color` diagnostic.
+- Resource reference from an aspect declaration to a `SolidColorBrush`.
+- Solid brush resource coerced to `DrawColor` for `Control.Foreground`.
+- Incompatible resource reference diagnostic.
 - Nested `Resources` rejected diagnostic.

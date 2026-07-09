@@ -25,56 +25,58 @@ Generated from `.`.
 |   |   |-- retained-frame-loop.md
 |   |   +-- ui-layer-boundaries.md
 |   |-- superpowers/
-|   |   +-- plans/
-|   |       |-- 2026-07-03-fix-retained-render-frame-contract.md
-|   |       |-- 2026-07-03-fix-tree-mutation-invalidation.md
-|   |       |-- 2026-07-03-integrate-style-phase.md
-|   |       |-- 2026-07-04-cache-input-route-hit-test.md
-|   |       |-- 2026-07-05-authoring-preview-completion-gate.md
-|   |       |-- 2026-07-05-clarify-layout-scheduler-contract-and-diagnostics.md
-|   |       |-- 2026-07-05-clarify-package-boundary-dependencies.md
-|   |       |-- 2026-07-05-clarify-text-services-mvp.md
-|   |       |-- 2026-07-05-complete-textblock-layout-contract.md
-|   |       |-- 2026-07-05-consolidate-button-content-composition.md
-|   |       |-- 2026-07-05-core-preview-completion-gate.md
-|   |       |-- 2026-07-05-create-retained-ui-mvp-vertical-slice.md
-|   |       |-- 2026-07-05-default-theme-and-style-vertical-slice.md
-|   |       |-- 2026-07-05-fix-focus-visibility-semantics.md
-|   |       |-- 2026-07-05-fix-viewport-and-pre-input-frame-contract.md
-|   |       |-- 2026-07-05-freeze-later-experimental-scope.md
-|   |       |-- 2026-07-05-implement-inherited-property-tree-propagation.md
-|   |       |-- 2026-07-05-items-scroll-data-vertical-slice.md
-|   |       |-- 2026-07-05-next-authoring-preview-plan-index.md
-|   |       |-- 2026-07-05-next-core-completion-plan-index.md
-|   |       |-- 2026-07-05-next-core-preview-plan-index.md
-|   |       |-- 2026-07-05-observable-items-source-and-recycling-stability.md
-|   |       |-- 2026-07-05-retained-command-state-refresh.md
-|   |       |-- 2026-07-05-retained-semantics-tree-core-contract.md
-|   |       |-- 2026-07-05-root-owned-resource-invalidation.md
-|   |       |-- 2026-07-05-template-content-presenter-state-contract.md
-|   |       |-- 2026-07-05-textbox-editing-viewport-and-caret-contract.md
-|   |       |-- 2026-07-05-typed-binding-lifetime-and-two-way-text.md
-|   |       |-- 2026-07-05-wire-keyboard-control-activation.md
-|   |       |-- 2026-07-05-wire-minimal-retained-input-bindings.md
-|   |       |-- 2026-07-06-add-preview-api-scope-guardrails.md
-|   |       |-- 2026-07-06-add-retained-stress-budget-tests.md
-|   |       |-- 2026-07-06-cache-content-resources-and-textures-lifetime.md
-|   |       |-- 2026-07-06-close-retained-lifecycle-subscription-leaks.md
-|   |       |-- 2026-07-06-create-developer-preview-docs-and-sample-gate.md
-|   |       |-- 2026-07-06-developer-preview-completion-gate.md
-|   |       |-- 2026-07-06-harden-layout-authoring-mutation-contracts.md
-|   |       |-- 2026-07-06-harden-monogame-render-backend-state.md
-|   |       |-- 2026-07-06-next-developer-preview-hardening-plan-index.md
-|   |       |-- 2026-07-06-next-runtime-preview-plan-index.md
-|   |       |-- 2026-07-06-normalize-viewport-scale-pointer-and-render-coordinates.md
-|   |       |-- 2026-07-06-runtime-diagnostics-and-playground-polish.md
-|   |       |-- 2026-07-06-runtime-preview-completion-gate.md
-|   |       |-- 2026-07-06-textbox-caret-blink-hit-testing.md
-|   |       |-- 2026-07-06-wire-platform-services-cursor-and-clipboard.md
-|   |       |-- 2026-07-06-wire-tab-focus-navigation-contract.md
-|   |       |-- 2026-07-07-modern-motion-system.md
-|   |       |-- 2026-07-08-modern-aspect-template-system.md
-|   |       +-- developer-preview-smoke-failure-fix-plan.md
+|   |   |-- plans/
+|   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
+|   |   |   |-- 2026-07-03-fix-tree-mutation-invalidation.md
+|   |   |   |-- 2026-07-03-integrate-style-phase.md
+|   |   |   |-- 2026-07-04-cache-input-route-hit-test.md
+|   |   |   |-- 2026-07-05-authoring-preview-completion-gate.md
+|   |   |   |-- 2026-07-05-clarify-layout-scheduler-contract-and-diagnostics.md
+|   |   |   |-- 2026-07-05-clarify-package-boundary-dependencies.md
+|   |   |   |-- 2026-07-05-clarify-text-services-mvp.md
+|   |   |   |-- 2026-07-05-complete-textblock-layout-contract.md
+|   |   |   |-- 2026-07-05-consolidate-button-content-composition.md
+|   |   |   |-- 2026-07-05-core-preview-completion-gate.md
+|   |   |   |-- 2026-07-05-create-retained-ui-mvp-vertical-slice.md
+|   |   |   |-- 2026-07-05-default-theme-and-style-vertical-slice.md
+|   |   |   |-- 2026-07-05-fix-focus-visibility-semantics.md
+|   |   |   |-- 2026-07-05-fix-viewport-and-pre-input-frame-contract.md
+|   |   |   |-- 2026-07-05-freeze-later-experimental-scope.md
+|   |   |   |-- 2026-07-05-implement-inherited-property-tree-propagation.md
+|   |   |   |-- 2026-07-05-items-scroll-data-vertical-slice.md
+|   |   |   |-- 2026-07-05-next-authoring-preview-plan-index.md
+|   |   |   |-- 2026-07-05-next-core-completion-plan-index.md
+|   |   |   |-- 2026-07-05-next-core-preview-plan-index.md
+|   |   |   |-- 2026-07-05-observable-items-source-and-recycling-stability.md
+|   |   |   |-- 2026-07-05-retained-command-state-refresh.md
+|   |   |   |-- 2026-07-05-retained-semantics-tree-core-contract.md
+|   |   |   |-- 2026-07-05-root-owned-resource-invalidation.md
+|   |   |   |-- 2026-07-05-template-content-presenter-state-contract.md
+|   |   |   |-- 2026-07-05-textbox-editing-viewport-and-caret-contract.md
+|   |   |   |-- 2026-07-05-typed-binding-lifetime-and-two-way-text.md
+|   |   |   |-- 2026-07-05-wire-keyboard-control-activation.md
+|   |   |   |-- 2026-07-05-wire-minimal-retained-input-bindings.md
+|   |   |   |-- 2026-07-06-add-preview-api-scope-guardrails.md
+|   |   |   |-- 2026-07-06-add-retained-stress-budget-tests.md
+|   |   |   |-- 2026-07-06-cache-content-resources-and-textures-lifetime.md
+|   |   |   |-- 2026-07-06-close-retained-lifecycle-subscription-leaks.md
+|   |   |   |-- 2026-07-06-create-developer-preview-docs-and-sample-gate.md
+|   |   |   |-- 2026-07-06-developer-preview-completion-gate.md
+|   |   |   |-- 2026-07-06-harden-layout-authoring-mutation-contracts.md
+|   |   |   |-- 2026-07-06-harden-monogame-render-backend-state.md
+|   |   |   |-- 2026-07-06-next-developer-preview-hardening-plan-index.md
+|   |   |   |-- 2026-07-06-next-runtime-preview-plan-index.md
+|   |   |   |-- 2026-07-06-normalize-viewport-scale-pointer-and-render-coordinates.md
+|   |   |   |-- 2026-07-06-runtime-diagnostics-and-playground-polish.md
+|   |   |   |-- 2026-07-06-runtime-preview-completion-gate.md
+|   |   |   |-- 2026-07-06-textbox-caret-blink-hit-testing.md
+|   |   |   |-- 2026-07-06-wire-platform-services-cursor-and-clipboard.md
+|   |   |   |-- 2026-07-06-wire-tab-focus-navigation-contract.md
+|   |   |   |-- 2026-07-07-modern-motion-system.md
+|   |   |   |-- 2026-07-08-modern-aspect-template-system.md
+|   |   |   +-- developer-preview-smoke-failure-fix-plan.md
+|   |   +-- specs/
+|   |       +-- 2026-07-09-markup-aspect-resources-design.md
 |   |-- architecture-v2.md
 |   |-- aspect-system.md
 |   |-- developer-preview-checklist.md
