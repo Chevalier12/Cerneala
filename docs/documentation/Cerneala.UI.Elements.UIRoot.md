@@ -1,0 +1,136 @@
+# UIRoot Class
+
+## Definition
+Namespace: `Cerneala.UI.Elements`
+
+Assembly/Project: `Cerneala`
+
+Source: `UI/Elements/UIRoot.cs`
+
+Represents the retained UI tree root and owns the viewport state, frame scheduler, rendering, input, resource, aspect, theme, motion, and semantics services for the tree.
+
+```csharp
+public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
+```
+
+Inheritance:
+`object` -> `UiObject` -> `UIElement` -> `UIRoot`
+
+Implements:
+`IElementHost`, `IInvalidationSink`
+
+## Examples
+
+The following example creates a root for a viewport, attaches a visual child, and processes a retained UI frame.
+
+```csharp
+using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
+
+UIRoot root = new(viewportWidth: 1280, viewportHeight: 720, scale: 1);
+UIElement content = new();
+
+root.VisualChildren.Add(content);
+content.Invalidate(InvalidationFlags.Render, "Initial render");
+
+FrameStats stats = root.ProcessFrame();
+```
+
+The following example wires root-level services commonly used by a hosted application.
+
+```csharp
+using Cerneala.UI.Elements;
+using Cerneala.UI.Resources;
+using Cerneala.UI.Theming;
+
+UIRoot root = new(800, 600);
+ResourceStore resources = new();
+
+root.SetThemeProvider(new ThemeProvider(DefaultTheme.Create()));
+root.SetResourceProvider(resources);
+```
+
+## Remarks
+
+`UIRoot` is the owner object for a retained Cerneala UI tree. The constructor initializes the root services, registers the default aspect package, marks the root as a layout boundary, and attaches the root element to itself through the element lifecycle.
+
+Children are attached by adding them to the inherited `VisualChildren` or `LogicalChildren` collections. Attached subtrees receive root ownership and element IDs through `ElementIds`; removing a subtree detaches it and releases its IDs.
+
+The root viewport is stored in `ViewportWidth`, `ViewportHeight`, and the root-level `Scale` property. `SetViewport` updates those values and increments `TreeVersion`. The root `Scale` property hides `UIElement.Scale`; on `UIRoot`, it represents viewport scale rather than the inherited render scale UI property.
+
+Invalidation requests are recorded in `Trace`, expanded through `DirtyPropagation`, and queued into the root-owned layout, inherited property, aspect, render, and hit-test queues. Render invalidation clears the retained render root, hit-test invalidation clears the input cache, and semantics invalidation marks the cached semantics tree dirty.
+
+`ProcessFrame` runs scheduled frame work through `Scheduler`. If the scheduler has work or `Motion` has active motion, the frame is processed with the root motion frame coordinator.
+
+`GetSemanticsTree` caches the generated `SemanticsTree` until semantics become dirty or `TreeVersion` changes.
+
+## Constructors
+
+| Name | Description |
+| --- | --- |
+| `UIRoot(float viewportWidth = 0, float viewportHeight = 0, float scale = 1, IMotionClock? motionClock = null, ReducedMotionPolicy? reducedMotion = null)` | Initializes a root with viewport dimensions, viewport scale, optional motion clock, and optional reduced-motion policy. |
+
+## Properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `AspectProcessor` | `AspectProcessor` | Processes aspect rules for elements in the root tree. |
+| `AspectQueue` | `AspectQueue` | Queues elements that need aspect processing. |
+| `AspectRegistry` | `AspectRegistry` | Stores aspect packages for the root; the default aspect package is registered during construction. |
+| `CommandStateQueue` | `CommandStateQueue` | Queues elements whose command state must be refreshed. |
+| `ElementIds` | `ElementIdProvider` | Provides stable element IDs for attached elements. |
+| `HitTestQueue` | `HitTestQueue` | Queues hit-test cache work. |
+| `ImageLoader` | `IImageLoader?` | Gets the image loader assigned by `SetImageLoader` or `SetImageResourceCache`. |
+| `ImageResourceCache` | `ImageResourceCache?` | Gets the image cache assigned by `SetImageLoader` or `SetImageResourceCache`. |
+| `InheritedPropertyPropagator` | `InheritedPropertyPropagator` | Propagates inherited UI property values through the tree. |
+| `InheritedPropertyQueue` | `InheritedPropertyQueue` | Queues inherited property propagation work. |
+| `InputCache` | `ElementInputCache` | Stores and invalidates input route and hit-test cache state for the root tree. |
+| `LayoutManager` | `LayoutManager` | Creates and runs layout phase processors for the root. |
+| `LayoutQueue` | `LayoutQueue` | Queues measure and arrange work. |
+| `Motion` | `MotionSystem` | Coordinates motion values and motion frames for the root. |
+| `PlatformServices` | `IPlatformServices` | Gets the platform services assigned by `SetPlatformServices`, or the empty platform services object when none are assigned. |
+| `RenderCounters` | `RenderCounters` | Tracks render counters for retained rendering. |
+| `RenderQueue` | `RenderQueue` | Queues render cache work. |
+| `RenderQueueProcessor` | `RenderQueueProcessor` | Processes render queue entries into the retained render cache. |
+| `ResourceDependencyTracker` | `ResourceDependencyTracker` | Tracks resource dependencies and maps resource changes to invalidation effects. |
+| `ResourceProvider` | `IResourceProvider?` | Gets the resource provider assigned by `SetResourceProvider`. |
+| `RetainedRenderCache` | `RetainedRenderCache` | Stores retained render data for the tree. |
+| `RetainedRenderer` | `RetainedRenderer` | Renders retained draw command lists from the root render cache. |
+| `Scale` | `float` | Gets the root viewport scale. This property hides `UIElement.Scale`. |
+| `Scheduler` | `UiFrameScheduler` | Coordinates retained frame phases for queued root work. |
+| `ThemeProvider` | `ThemeProvider?` | Gets the current theme provider assigned by `SetThemeProvider`. |
+| `Trace` | `InvalidationTrace` | Records invalidation requests and propagation activity for diagnostics. |
+| `TreeVersion` | `int` | Gets the root tree version. It changes when the tree or viewport changes. |
+| `ViewportHeight` | `float` | Gets the viewport height assigned at construction or by `SetViewport`. |
+| `ViewportWidth` | `float` | Gets the viewport width assigned at construction or by `SetViewport`. |
+
+## Methods
+
+| Name | Return Type | Description |
+| --- | --- | --- |
+| `GetSemanticsTree()` | `SemanticsTree` | Builds or returns the cached semantics tree for the root. |
+| `Invalidate(InvalidationRequest request)` | `void` | Records and propagates an invalidation request through the root queues. Throws if `request` is `null`. |
+| `ProcessFrame(FramePhaseProcessors? processors = null, FrameBudget budget = default, FrameStats? stats = null, MotionFrameReason motionReason = MotionFrameReason.Scheduled)` | `FrameStats` | Processes one retained UI frame and returns the frame statistics object used for the frame. |
+| `SetImageLoader(IImageLoader? loader)` | `void` | Sets the image loader and creates a matching `ImageResourceCache`; clears the old cache when replaced. |
+| `SetImageResourceCache(IImageLoader? loader, ImageResourceCache? cache)` | `void` | Sets the image loader and image cache pair, clears the old cache when the cache changes, and invalidates resource/render state. |
+| `SetPlatformServices(IPlatformServices? services)` | `void` | Sets platform services, falling back to empty services for `null`, and syncs reduced-motion mode when available. |
+| `SetResourceProvider(IResourceProvider? provider)` | `void` | Sets the root resource provider, updates observable resource-change subscriptions, and invalidates root resource state. |
+| `SetThemeProvider(ThemeProvider? provider)` | `void` | Sets the theme provider, updates theme-change subscription, and invalidates aspect state for the subtree. |
+| `SetViewport(float width, float height, float scale)` | `void` | Updates viewport width, height, and root scale, then increments `TreeVersion`. |
+
+## Explicit Interface Implementations
+
+| Name | Description |
+| --- | --- |
+| `IElementHost.Root` | Returns this `UIRoot` instance. |
+
+## Applies to
+
+Cerneala retained UI runtime.
+
+## See Also
+
+- `UI/Elements/UIRoot.cs`
+- `UI/Elements/UIElement.cs`
+- `UI/Hosting/UiHost.cs`
+- `UI/Invalidation/UiFrameScheduler.cs`
