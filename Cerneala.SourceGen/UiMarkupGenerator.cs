@@ -877,6 +877,17 @@ public sealed class UiMarkupGenerator : IIncrementalGenerator
 
         private GeneratedExpression? ResolveReferenceValue(string elementName, string propertyName, string referenceName, MarkupValueKind targetKind, XObject source)
         {
+            if (!symbols.TryGetValue(referenceName, out NamedSymbol? symbol))
+            {
+                Report(InvalidPropertyValue, source, elementName, propertyName, "$" + referenceName);
+                return null;
+            }
+
+            if (targetKind == MarkupValueKind.DrawColor && symbol.Source is SolidColorBrushResource brush)
+            {
+                return new GeneratedExpression(brush.ColorExpression, MarkupValueKind.DrawColor);
+            }
+
             Report(InvalidPropertyValue, source, elementName, propertyName, "$" + referenceName);
             return null;
         }

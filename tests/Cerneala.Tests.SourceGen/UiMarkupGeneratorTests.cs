@@ -242,6 +242,58 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void AspectCanReferenceSolidColorBrushForDrawColorProperty()
+    {
+        const string markup = """
+            <Resources>
+              <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
+              <Aspect Name="KickerText" Type="TextBlock">
+                @default
+                {
+                  Foreground = $PulseColor;
+                }
+              </Aspect>
+            </Resources>
+            <TextBlock Aspect="$KickerText" Text="HELLO" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("AspectBrushReference.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains(".Foreground = new global::Cerneala.Drawing.DrawColor(255, 93, 115);", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        TextBlock root = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.AspectBrushReferenceFactory"));
+        Assert.Equal(new Cerneala.Drawing.DrawColor(255, 93, 115), root.Foreground);
+    }
+
+    [Fact]
+    public void UnknownNameReferenceReportsDiagnostic()
+    {
+        const string markup = """
+            <Resources>
+              <Aspect Name="KickerText" Type="TextBlock">
+                @default
+                {
+                  Foreground = $MissingColor;
+                }
+              </Aspect>
+            </Resources>
+            <TextBlock Aspect="$KickerText" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("UnknownReference.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "UnknownReference.cui.xml");
+        Assert.Contains("MissingColor", diagnostic.GetMessage());
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
     public void MultipleUiRootsReportMalformedMarkupDiagnostic()
     {
         const string markup = """
