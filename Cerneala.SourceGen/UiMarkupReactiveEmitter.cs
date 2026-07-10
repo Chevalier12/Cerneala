@@ -512,7 +512,7 @@ public sealed partial class UiMarkupGenerator
 
         private static bool SupportsOrdering(ObservationEmission observation)
         {
-            if (observation.MarkupKind is MarkupValueKind.Float or MarkupValueKind.PositiveFloat)
+            if (observation.MarkupKind is MarkupValueKind.Float or MarkupValueKind.NonNegativeFloat or MarkupValueKind.PositiveFloat)
             {
                 return true;
             }
@@ -543,9 +543,12 @@ public sealed partial class UiMarkupGenerator
             {
                 MarkupValueKind.String => "string",
                 MarkupValueKind.Bool => "bool",
-                MarkupValueKind.Float or MarkupValueKind.PositiveFloat => "float",
+                MarkupValueKind.Float or MarkupValueKind.NonNegativeFloat or MarkupValueKind.PositiveFloat => "float",
                 MarkupValueKind.Thickness or MarkupValueKind.NonNegativeThickness => "global::Cerneala.UI.Layout.Thickness",
                 MarkupValueKind.DrawColor => "global::Cerneala.Drawing.DrawColor",
+                MarkupValueKind.WindowState => "global::Cerneala.UI.Controls.WindowState",
+                MarkupValueKind.ResizeMode => "global::Cerneala.UI.Controls.ResizeMode",
+                MarkupValueKind.WindowStartupLocation => "global::Cerneala.UI.Controls.WindowStartupLocation",
                 _ => "object"
             };
         }

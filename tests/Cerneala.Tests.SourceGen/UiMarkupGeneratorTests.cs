@@ -1472,6 +1472,200 @@ public sealed class UiMarkupGeneratorTests
         Assert.Empty(rootResult.GeneratedSources);
     }
 
+    [Fact]
+    public void PairedTypedWindowBuildsContentPropertiesNamesAndEvents()
+    {
+        const string inputSource = """
+            using System;
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+
+            public sealed class MainWindowViewModel { }
+
+            public partial class MainWindow : Window<MainWindowViewModel>
+            {
+                public int SourceInitializationCount { get; private set; }
+                private void OnSourceInitialized(object? sender, EventArgs args) => SourceInitializationCount++;
+            }
+            """;
+        const string markup = """
+            <Window Title="Cerneala"
+                    Width="1100"
+                    Height="720"
+                    MinWidth="640"
+                    MinHeight="480"
+                    WindowState="Normal"
+                    ResizeMode="CanResize"
+                    WindowStartupLocation="CenterScreen"
+                    Topmost="False"
+                    ShowInTaskbar="True"
+                    SourceInitialized="OnSourceInitialized">
+              @when WindowState
+              {
+                @if value == Normal { Title = "Normal state"; }
+              }
+              <StackPanel>
+                <Button Name="SaveButton" Content="Save" />
+              </StackPanel>
+            </Window>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/MainWindow.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("public MainWindow(global::TestInput.Views.MainWindowViewModel viewModel)", generatedSource);
+        Assert.DoesNotContain("public MainWindow()", generatedSource);
+        Assert.Contains("this.SourceInitialized += this.OnSourceInitialized;", generatedSource);
+        Assert.Contains("private global::Cerneala.UI.Controls.Button SaveButton", generatedSource);
+        Assert.DoesNotContain("MainWindowFactory", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type viewModelType = assembly.GetType("TestInput.Views.MainWindowViewModel", throwOnError: true)!;
+        Type windowType = assembly.GetType("TestInput.Views.MainWindow", throwOnError: true)!;
+        object viewModel = Activator.CreateInstance(viewModelType)!;
+        Window window = Assert.IsAssignableFrom<Window>(Activator.CreateInstance(windowType, viewModel));
+        Assert.Same(viewModel, window.DataContext);
+        Assert.Equal("Normal state", window.Title);
+        window.WindowState = WindowState.Maximized;
+        Assert.Equal("Cerneala", window.Title);
+        Assert.Equal(1100, window.Width);
+        Assert.Equal(720, window.Height);
+        StackPanel panel = Assert.IsType<StackPanel>(window.Content);
+        Button button = Assert.IsType<Button>(panel.VisualChildren[0]);
+        object namedButton = windowType.GetProperty("SaveButton", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window)!;
+        Assert.Same(button, namedButton);
+    }
+
+    [Fact]
+    public void PairedWindowRejectsWrongRootConstructorAndConditionalRoot()
+    {
+        const string validSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class MainWindow : Window { }
+            """;
+        GeneratorRunResult wrongRoot = RunPairedGenerator(
+            "Views/MainWindow.cui.xml",
+            "<UserControl />",
+            validSource,
+            out _);
+        Assert.Contains(wrongRoot.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI010");
+
+        const string constructorSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class DialogWindow : Window
+            {
+                public DialogWindow() { }
+            }
+            """;
+        GeneratorRunResult constructor = RunPairedGenerator(
+            "Views/DialogWindow.cui.xml",
+            "<Window />",
+            constructorSource,
+            out _);
+        Assert.Contains(constructor.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI010");
+
+        GeneratorRunResult conditionalRoot = RunPairedGenerator(
+            "Views/MainWindow.cui.xml",
+            "<Window>@when IsEnabled { @if value == True { <Button /> } }</Window>",
+            validSource,
+            out _);
+        Assert.Contains(conditionalRoot.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI010");
+    }
+
+    [Fact]
+    public void ExecutableMainWindowEmitsAutomaticEntryPointOrHostedDescriptor()
+    {
+        const string noEntryPoint = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class MainWindow : Window { }
+            """;
+        GeneratorRunResult standalone = RunPairedGenerator(
+            "Views/MainWindow.cui.xml",
+            "<Window Title=\"Standalone\" />",
+            noEntryPoint,
+            out Compilation standaloneCompilation,
+            OutputKind.WindowsApplication);
+        string standaloneSource = SingleGeneratedSource(standalone);
+        Assert.Contains("[global::System.STAThreadAttribute]", standaloneSource);
+        Assert.Contains("GeneratedWindowApplication.Run(CreateDescriptor())", standaloneSource);
+        using MemoryStream standaloneStream = new();
+        EmitResult standaloneEmit = standaloneCompilation.Emit(standaloneStream);
+        Assert.True(standaloneEmit.Success, string.Join(Environment.NewLine, standaloneEmit.Diagnostics));
+
+        const string existingEntryPoint = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class MainWindow : Window { }
+            public static class Program { public static void Main() { } }
+            """;
+        GeneratorRunResult hosted = RunPairedGenerator(
+            "Views/MainWindow.cui.xml",
+            "<Window Title=\"Hosted\" />",
+            existingEntryPoint,
+            out Compilation hostedCompilation,
+            OutputKind.ConsoleApplication);
+        string hostedSource = SingleGeneratedSource(hosted);
+        Assert.Contains("[global::System.Runtime.CompilerServices.ModuleInitializerAttribute]", hostedSource);
+        Assert.Contains("GeneratedWindowApplication.RegisterStartup(CreateDescriptor())", hostedSource);
+        using MemoryStream hostedStream = new();
+        EmitResult hostedEmit = hostedCompilation.Emit(hostedStream);
+        Assert.True(hostedEmit.Success, string.Join(Environment.NewLine, hostedEmit.Diagnostics));
+    }
+
+    [Fact]
+    public void GeneratedStartupRegistersViewModelDependenciesAndCallsAppHookLast()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            using Microsoft.Extensions.DependencyInjection;
+            namespace TestInput.Views;
+
+            public interface IClock { }
+            public sealed class Clock : IClock { }
+            public sealed class MainWindowViewModel
+            {
+                public MainWindowViewModel(IClock clock) { }
+            }
+            public partial class MainWindow : Window<MainWindowViewModel> { }
+            public static class App
+            {
+                public static void ConfigureServices(IServiceCollection services)
+                    => services.AddSingleton<IClock, Clock>();
+            }
+            public static class Program { public static void Main() { } }
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/MainWindow.cui.xml",
+            "<Window />",
+            inputSource,
+            out Compilation compilation,
+            OutputKind.ConsoleApplication);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("AddTransient<global::TestInput.Views.MainWindowViewModel>", generatedSource);
+        Assert.Contains("global::TestInput.Views.App.ConfigureServices(services);", generatedSource);
+        Assert.True(
+            generatedSource.IndexOf("AddTransient<global::TestInput.Views.MainWindow>", StringComparison.Ordinal) <
+            generatedSource.IndexOf("App.ConfigureServices(services)", StringComparison.Ordinal));
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
     private static GeneratorRunResult RunGenerator(string fileName, string markup, out Compilation outputCompilation)
     {
         return RunGenerator(new[] { new MarkupFile(fileName, markup) }, out outputCompilation);
@@ -1490,13 +1684,15 @@ public sealed class UiMarkupGeneratorTests
         string fileName,
         string markup,
         string inputSource,
-        out Compilation outputCompilation)
+        out Compilation outputCompilation,
+        OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary)
     {
         return RunGenerator(
             new[] { new MarkupFile(fileName, markup) },
             out outputCompilation,
             inputSource,
-            fileName + ".cs");
+            fileName + ".cs",
+            outputKind);
     }
 
     private static GeneratorRunResult RunGenerator(params MarkupFile[] files)
@@ -1513,7 +1709,8 @@ public sealed class UiMarkupGeneratorTests
         MarkupFile[] files,
         out Compilation outputCompilation,
         string inputSource,
-        string inputPath = "")
+        string inputPath = "",
+        OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary)
     {
         SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
             inputSource,
@@ -1524,7 +1721,7 @@ public sealed class UiMarkupGeneratorTests
             "GeneratorTests",
             new[] { syntaxTree },
             References(),
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(outputKind));
 
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             new ISourceGenerator[] { new UiMarkupGenerator().AsSourceGenerator() },

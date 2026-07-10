@@ -29,6 +29,7 @@ public sealed class NamespaceBoundaryTests
         [
             Path.Combine(uiRoot, "Drawing"),
             Path.Combine(uiRoot, "Hosting", "MonoGame"),
+            Path.Combine(uiRoot, "Hosting", "Windows"),
             Path.Combine(uiRoot, "Input", "MonoGame"),
             Path.Combine(uiRoot, "Resources", "MonoGame")
         ];

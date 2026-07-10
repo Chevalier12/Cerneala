@@ -20,7 +20,8 @@ Generated from `.`.
 |   |-- UiMarkupDirectiveParser.cs
 |   |-- UiMarkupGenerator.cs
 |   |-- UiMarkupReactiveEmitter.cs
-|   +-- UiMarkupUserControlGenerator.cs
+|   |-- UiMarkupUserControlGenerator.cs
+|   +-- UiMarkupWindowGenerator.cs
 |-- docs/
 |   |-- bug-reports/
 |   |-- diagrams/
@@ -822,6 +823,9 @@ Generated from `.`.
 |   |   |-- MonoGameDrawingBackend.cs
 |   |   |-- MonoGameDrawMapper.cs
 |   |   +-- MonoGameImage.cs
+|   |-- Skia/
+|   |   |-- SkiaDrawImage.cs
+|   |   +-- SkiaDrawingBackend.cs
 |   |-- Text/
 |   |   |-- RasterizedText.cs
 |   |   |-- SkiaFont.cs
@@ -965,6 +969,7 @@ Generated from `.`.
 |   |   |   |-- DrawCommandListTests.cs
 |   |   |   |-- DrawingContextTests.cs
 |   |   |   |-- DrawingResourceTests.cs
+|   |   |   |-- SkiaDrawingBackendTests.cs
 |   |   |   +-- TextPipelineTests.cs
 |   |   |-- Input/
 |   |   |   |-- ActionCommandTests.cs
@@ -1098,7 +1103,9 @@ Generated from `.`.
 |   |   |   |   |-- UiHostTests.cs
 |   |   |   |   |-- UiHostViewportFrameContractTests.cs
 |   |   |   |   |-- UiViewportScaleContractTests.cs
-|   |   |   |   +-- UiViewportTests.cs
+|   |   |   |   |-- UiViewportTests.cs
+|   |   |   |   |-- Win32WindowPlatformTests.cs
+|   |   |   |   +-- WindowRuntimeTests.cs
 |   |   |   |-- Input/
 |   |   |   |   |-- ElementInputCacheInvalidationTests.cs
 |   |   |   |   |-- HitTestCacheInvalidationTests.cs
@@ -1192,6 +1199,7 @@ Generated from `.`.
 |   |   |   |   +-- TextRenderDependencyTests.cs
 |   |   |   |-- Resources/
 |   |   |   |   |-- DetachedResourceDependencyCleanupTests.cs
+|   |   |   |   |-- ElementResourceDictionaryTests.cs
 |   |   |   |   |-- FontResourceInvalidationTests.cs
 |   |   |   |   |-- HostResourceInvalidationIntegrationTests.cs
 |   |   |   |   |-- ImageResourceCacheTests.cs
@@ -1422,6 +1430,7 @@ Generated from `.`.
 |   |   |-- PopupRoot.cs
 |   |   |-- ProgressBar.cs
 |   |   |-- RadioButton.cs
+|   |   |-- ResizeMode.cs
 |   |   |-- ScrollBarVisibility.cs
 |   |   |-- ScrollChangedEventArgs.cs
 |   |   |-- ScrollContentPresenter.cs
@@ -1435,7 +1444,11 @@ Generated from `.`.
 |   |   |-- TextBoxBase.cs
 |   |   |-- TextChangedEventArgs.cs
 |   |   |-- ToolTip.cs
-|   |   +-- UserControl.cs
+|   |   |-- UserControl.cs
+|   |   |-- Window.cs
+|   |   |-- WindowClosingEventArgs.cs
+|   |   |-- WindowStartupLocation.cs
+|   |   +-- WindowState.cs
 |   |-- Core/
 |   |   |-- CoerceValue.cs
 |   |   |-- IUiPropertyOwner.cs
@@ -1510,6 +1523,14 @@ Generated from `.`.
 |   |   |   |-- MonoGameContentServices.cs
 |   |   |   |-- MonoGameUiHost.cs
 |   |   |   +-- MonoGameUiHostOptions.cs
+|   |   |-- Windows/
+|   |   |   |-- GeneratedWindowApplication.cs
+|   |   |   |-- IWindowPlatform.cs
+|   |   |   |-- SkiaImageLoader.cs
+|   |   |   |-- Win32.cs
+|   |   |   |-- Win32InputSource.cs
+|   |   |   |-- Win32WindowPlatform.cs
+|   |   |   +-- WindowApplicationRuntime.cs
 |   |   |-- IUiBackend.cs
 |   |   |-- IUiClock.cs
 |   |   |-- UiCoordinateMapper.cs
@@ -1655,6 +1676,7 @@ Generated from `.`.
 |   |   |-- DesignTimeOnlyAttribute.cs
 |   |   |-- GeneratedMarkupConditions.cs
 |   |   |-- GeneratedUiFactory.cs
+|   |   |-- MarkupAspectResource.cs
 |   |   |-- MarkupDiagnostic.cs
 |   |   |-- MarkupLoadOptions.cs
 |   |   |-- MarkupResult{T}.cs
@@ -1848,6 +1870,7 @@ Generated from `.`.
 |   |   |-- IResourceProvider.cs
 |   |   |-- ResourceChangedEventArgs.cs
 |   |   |-- ResourceDependencyTracker.cs
+|   |   |-- ResourceDictionary.cs
 |   |   |-- ResourceId{T}.cs
 |   |   +-- ResourceStore.cs
 |   |-- Text/

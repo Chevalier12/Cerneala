@@ -20,12 +20,14 @@ public sealed partial class UiMarkupGenerator
             INamedTypeSymbol typeSymbol,
             SyntaxTree syntaxTree,
             int lookupPosition,
-            INamedTypeSymbol? viewModelType)
+            INamedTypeSymbol? viewModelType,
+            bool isWindow = false)
         {
             TypeSymbol = typeSymbol;
             SyntaxTree = syntaxTree;
             LookupPosition = lookupPosition;
             ViewModelType = viewModelType;
+            IsWindow = isWindow;
         }
 
         public INamedTypeSymbol TypeSymbol { get; }
@@ -35,6 +37,8 @@ public sealed partial class UiMarkupGenerator
         public int LookupPosition { get; }
 
         public INamedTypeSymbol? ViewModelType { get; }
+
+        public bool IsWindow { get; }
     }
 
     private readonly struct UserControlPairResolution
@@ -452,6 +456,7 @@ public sealed partial class UiMarkupGenerator
 
             SemanticModel model = compilation.GetSemanticModel(userControlPair.SyntaxTree);
             INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
+            INamedTypeSymbol? windowType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Window");
             if (uiElementType is null)
             {
                 return null;
@@ -463,6 +468,7 @@ public sealed partial class UiMarkupGenerator
                 .Where(type => type.TypeKind == TypeKind.Class && !type.IsAbstract)
                 .Where(type => !SymbolEqualityComparer.Default.Equals(type, userControlPair.TypeSymbol))
                 .Where(type => IsOrDerivesFrom(type, uiElementType))
+                .Where(type => windowType is null || !IsOrDerivesFrom(type, windowType))
                 .Where(type => compilation.IsSymbolAccessibleWithin(type, userControlPair.TypeSymbol))
                 .Where(HasAccessibleParameterlessConstructor)
                 .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default)

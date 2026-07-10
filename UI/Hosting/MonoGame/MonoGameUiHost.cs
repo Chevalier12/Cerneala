@@ -5,6 +5,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Input.MonoGame;
 using Cerneala.UI.Resources.MonoGame;
+using Cerneala.UI.Hosting.Windows;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Cerneala.UI.Hosting.MonoGame;
@@ -54,12 +55,14 @@ public sealed class MonoGameUiHost : IDisposable
 
     public UiFrame Update(UiViewport viewport, TimeSpan elapsedTime)
     {
+        GeneratedWindowApplication.PumpHosted(elapsedTime);
         InputSource.CoordinateScale = viewport.Scale;
         return host.Update(viewport, elapsedTime);
     }
 
     public UiFrame Update(InputFrame inputFrame, UiViewport viewport, TimeSpan elapsedTime)
     {
+        GeneratedWindowApplication.PumpHosted(elapsedTime);
         return host.Update(inputFrame, viewport, elapsedTime);
     }
 
@@ -91,6 +94,7 @@ public sealed class MonoGameUiHost : IDisposable
 
         drawingBackend.Dispose();
         ContentServices.Dispose();
+        GeneratedWindowApplication.StopHosted();
         disposed = true;
     }
 

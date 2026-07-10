@@ -91,6 +91,22 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true);
 
+    private static readonly DiagnosticDescriptor InvalidWindow = new(
+        "CERNEALAUI010",
+        "Invalid Window declaration",
+        "Window markup file '{0}' is invalid: {1}",
+        "Cerneala.UiMarkup",
+        DiagnosticSeverity.Error,
+        true);
+
+    private static readonly DiagnosticDescriptor InvalidWindowStartup = new(
+        "CERNEALAUI011",
+        "Invalid Window application startup",
+        "Generated Window startup is invalid: {0}",
+        "Cerneala.UiMarkup",
+        DiagnosticSeverity.Error,
+        true);
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         IncrementalValuesProvider<MarkupSource> markupFiles = context.AdditionalTextsProvider
@@ -112,8 +128,32 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
     private static void GenerateFiles(SourceProductionContext context, ImmutableArray<MarkupSource> files, Compilation compilation)
     {
         string[] classNames = AssignClassNames(files);
+        WindowPairResolution[] windowPairs = files
+            .Select(file => ResolveWindowPair(context, file, compilation))
+            .ToArray();
+        int mainWindowCount = windowPairs.Count(resolution => resolution.Pair?.TypeSymbol.Name == "MainWindow");
+        if (mainWindowCount > 1 && compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                InvalidWindowStartup,
+                Location.None,
+                "An executable project may contain only one paired Window class named 'MainWindow'."));
+        }
+
         for (int i = 0; i < files.Length; i++)
         {
+            WindowPairResolution windowPair = windowPairs[i];
+            if (windowPair.HasCompanion)
+            {
+                if (windowPair.Pair is not null)
+                {
+                    bool generateStartup = mainWindowCount == 1 && windowPair.Pair.TypeSymbol.Name == "MainWindow";
+                    GenerateWindowFile(context, files[i], classNames[i], compilation, windowPair.Pair, generateStartup);
+                }
+
+                continue;
+            }
+
             UserControlPairResolution pair = ResolveUserControlPair(context, files[i], compilation);
             if (pair.HasCompanion)
             {
@@ -554,10 +594,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             String,
             Bool,
             Float,
+            NonNegativeFloat,
             PositiveFloat,
             Thickness,
             NonNegativeThickness,
-            DrawColor
+            DrawColor,
+            WindowState,
+            ResizeMode,
+            WindowStartupLocation
         }
 
         private enum NamedSymbolKind
@@ -762,7 +806,21 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             new("FontFamily", IsControlElement, MarkupValueKind.String, "global::Cerneala.UI.Controls.Control.FontFamilyProperty"),
             new("FontSize", IsControlElement, MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Control.FontSizeProperty"),
             new("IsMouseOver", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsPointerOverProperty", assignable: false),
-            new("IsPointerOver", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsPointerOverProperty", assignable: false)
+            new("IsPointerOver", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsPointerOverProperty", assignable: false),
+            new("Title", element => element == "Window", MarkupValueKind.String, "global::Cerneala.UI.Controls.Window.TitleProperty"),
+            new("Width", element => element == "Window", MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Window.WidthProperty"),
+            new("Height", element => element == "Window", MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Window.HeightProperty"),
+            new("MinWidth", element => element == "Window", MarkupValueKind.NonNegativeFloat, "global::Cerneala.UI.Controls.Window.MinWidthProperty"),
+            new("MinHeight", element => element == "Window", MarkupValueKind.NonNegativeFloat, "global::Cerneala.UI.Controls.Window.MinHeightProperty"),
+            new("MaxWidth", element => element == "Window", MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Window.MaxWidthProperty"),
+            new("MaxHeight", element => element == "Window", MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Window.MaxHeightProperty"),
+            new("Left", element => element == "Window", MarkupValueKind.Float, "global::Cerneala.UI.Controls.Window.LeftProperty"),
+            new("Top", element => element == "Window", MarkupValueKind.Float, "global::Cerneala.UI.Controls.Window.TopProperty"),
+            new("WindowState", element => element == "Window", MarkupValueKind.WindowState, "global::Cerneala.UI.Controls.Window.WindowStateProperty"),
+            new("ResizeMode", element => element == "Window", MarkupValueKind.ResizeMode, "global::Cerneala.UI.Controls.Window.ResizeModeProperty"),
+            new("WindowStartupLocation", element => element == "Window", MarkupValueKind.WindowStartupLocation, "global::Cerneala.UI.Controls.Window.WindowStartupLocationProperty"),
+            new("Topmost", element => element == "Window", MarkupValueKind.Bool, "global::Cerneala.UI.Controls.Window.TopmostProperty"),
+            new("ShowInTaskbar", element => element == "Window", MarkupValueKind.Bool, "global::Cerneala.UI.Controls.Window.ShowInTaskbarProperty")
         ];
 
         private void ReadResources()
@@ -1422,10 +1480,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 MarkupValueKind.String when !string.IsNullOrWhiteSpace(value) => Literal(value),
                 MarkupValueKind.Bool => Bool(elementName, propertyName, attribute),
                 MarkupValueKind.Float => Float(elementName, propertyName, attribute),
+                MarkupValueKind.NonNegativeFloat => NonNegativeFloat(elementName, propertyName, attribute),
                 MarkupValueKind.PositiveFloat => PositiveFloat(elementName, propertyName, attribute),
                 MarkupValueKind.Thickness => Thickness(elementName, propertyName, attribute),
                 MarkupValueKind.NonNegativeThickness => NonNegativeThickness(elementName, propertyName, attribute),
                 MarkupValueKind.DrawColor => Color(elementName, propertyName, attribute),
+                MarkupValueKind.WindowState => EnumValue(elementName, propertyName, attribute, "global::Cerneala.UI.Controls.WindowState", "Normal", "Minimized", "Maximized"),
+                MarkupValueKind.ResizeMode => EnumValue(elementName, propertyName, attribute, "global::Cerneala.UI.Controls.ResizeMode", "NoResize", "CanMinimize", "CanResize"),
+                MarkupValueKind.WindowStartupLocation => EnumValue(elementName, propertyName, attribute, "global::Cerneala.UI.Controls.WindowStartupLocation", "Manual", "CenterScreen", "CenterOwner"),
                 _ => null
             };
 
@@ -1493,7 +1555,32 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private static bool IsControlElement(string elementName)
         {
-            return elementName is "Border" or "Button" or "TextBlock" or "UserControl";
+            return elementName is "Border" or "Button" or "TextBlock" or "UserControl" or "Window";
+        }
+
+        private string? NonNegativeFloat(string elementName, string propertyName, XAttribute attribute)
+        {
+            string? code = Float(elementName, propertyName, attribute);
+            if (code is null || !float.TryParse(attribute.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) || value < 0)
+            {
+                return code is null ? null : Invalid(attribute, elementName, propertyName, attribute.Value);
+            }
+
+            return code;
+        }
+
+        private string? EnumValue(
+            string elementName,
+            string propertyName,
+            XAttribute attribute,
+            string typeCode,
+            params string[] names)
+        {
+            string value = attribute.Value.Trim();
+            string? name = names.FirstOrDefault(candidate => string.Equals(candidate, value, StringComparison.OrdinalIgnoreCase));
+            return name is null
+                ? Invalid(attribute, elementName, propertyName, attribute.Value)
+                : typeCode + "." + name;
         }
 
         private static string Literal(string value)
