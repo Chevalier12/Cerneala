@@ -58,6 +58,8 @@ internal static class Win32
     public const int IDC_ARROW = 32512;
     public const int SM_CXSCREEN = 0;
     public const int SM_CYSCREEN = 1;
+    public const int ERROR_ACCESS_DENIED = 5;
+    public static readonly nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     public delegate nint WndProc(nint hwnd, uint message, nuint wParam, nint lParam);
@@ -205,6 +207,17 @@ internal static class Win32
 
     [DllImport("user32.dll")]
     public static extern uint GetDpiForWindow(nint hwnd);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetProcessDpiAwarenessContext(nint value);
+
+    [DllImport("user32.dll")]
+    public static extern nint GetThreadDpiAwarenessContext();
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool AreDpiAwarenessContextsEqual(nint first, nint second);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

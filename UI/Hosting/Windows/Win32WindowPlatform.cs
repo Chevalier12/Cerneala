@@ -28,6 +28,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             throw new PlatformNotSupportedException("Win32WindowPlatform is available only on Windows.");
         }
 
+        WindowsDpiAwareness.EnsurePerMonitorV2();
         EnsureWindowClass();
         this.graphicsSessionFactory = graphicsSessionFactory ?? throw new ArgumentNullException(nameof(graphicsSessionFactory));
     }

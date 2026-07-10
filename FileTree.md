@@ -1478,6 +1478,7 @@ Generated from `.`.
 |   |   |   |-- Win32InputSource.cs
 |   |   |   |-- Win32WindowPlatform.cs
 |   |   |   |-- WindowApplicationRuntime.cs
+|   |   |   |-- WindowsDpiAwareness.cs
 |   |   |   +-- WindowsDxWindowGraphicsSession.cs
 |   |   |-- IUiBackend.cs
 |   |   |-- IUiClock.cs
