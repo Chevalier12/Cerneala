@@ -2,11 +2,17 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls;
 
 public class ToolTip : Control
 {
+    public static readonly RoutedEvent OpenedEvent = RoutedEventRegistry.Register(nameof(Opened), typeof(ToolTip), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
+    public static readonly RoutedEvent ClosedEvent = RoutedEventRegistry.Register(nameof(Closed), typeof(ToolTip), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
+
+    public event RoutedEventHandler Opened { add => AddHandler(OpenedEvent, value); remove => RemoveHandler(OpenedEvent, value); }
+    public event RoutedEventHandler Closed { add => AddHandler(ClosedEvent, value); remove => RemoveHandler(ClosedEvent, value); }
     private readonly PopupRoot popupRoot = new();
     private object? content;
     private bool popupAttached;
@@ -87,6 +93,7 @@ public class ToolTip : Control
         if (ReferenceEquals(args.Property, IsOpenProperty))
         {
             RefreshPopupRoot();
+            RaiseEvent(new RoutedEventArgs(IsOpen ? OpenedEvent : ClosedEvent, this));
         }
     }
 

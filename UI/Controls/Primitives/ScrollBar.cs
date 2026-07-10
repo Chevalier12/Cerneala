@@ -4,11 +4,15 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls.Primitives;
 
 public class ScrollBar : RangeBase
 {
+    public static readonly RoutedEvent ScrollEvent = RoutedEventRegistry.Register(nameof(Scroll), typeof(ScrollBar), RoutingStrategy.Bubble, typeof(ScrollEventArgs));
+
+    public event EventHandler<ScrollEventArgs> Scroll { add => AddTypedHandler(ScrollEvent, value); remove => RemoveTypedHandler(ScrollEvent, value); }
     private readonly Track track;
     private bool ownsTrack;
     private bool syncingTrack;
@@ -145,6 +149,7 @@ public class ScrollBar : RangeBase
         }
 
         Value = track.Value;
+        RaiseEvent(new ScrollEventArgs(ScrollEvent, this, ScrollEventType.ThumbTrack, Value));
     }
 
     private void AddTrack()

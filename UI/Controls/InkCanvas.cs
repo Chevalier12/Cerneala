@@ -16,6 +16,8 @@ public sealed class InkCanvas : Layout.Panels.Canvas
 
     public StrokeCollection Strokes { get; } = new();
 
+    public event EventHandler<InkCanvasStrokeCollectedEventArgs>? StrokeCollected;
+
     public void ApplyStylus(StylusInputPoint point)
     {
         ApplyPoint(point.Action switch
@@ -60,6 +62,7 @@ public sealed class InkCanvas : Layout.Panels.Canvas
         if (action == InkInputAction.Up)
         {
             activeStrokes.Remove(key);
+            StrokeCollected?.Invoke(this, new InkCanvasStrokeCollectedEventArgs(activeStroke));
         }
     }
 

@@ -40,9 +40,9 @@ public sealed class ElementInputRouteBuilder
             map.Add(element, id, nearestIncludedParentId);
             parentForDescendants = id;
 
-            foreach ((RoutedEvent routedEvent, RoutedEventHandler handler) in element.Handlers.EnumerateHandlers())
+            foreach ((RoutedEvent routedEvent, RoutedEventHandler handler, bool handledEventsToo) in element.Handlers.EnumerateHandlers())
             {
-                map.InputTree.AddHandler(id, routedEvent, handler);
+                map.InputTree.AddHandler(id, routedEvent, handler, handledEventsToo);
             }
         }
 

@@ -1,9 +1,17 @@
 using Cerneala.UI.Core;
+using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls.Primitives;
 
 public class RangeBase : Control
 {
+    public static readonly RoutedEvent ValueChangedEvent = RoutedEventRegistry.Register(nameof(ValueChanged), typeof(RangeBase), RoutingStrategy.Bubble, typeof(RoutedPropertyChangedEventArgs<float>));
+
+    public event EventHandler<RoutedPropertyChangedEventArgs<float>> ValueChanged
+    {
+        add => AddTypedHandler(ValueChangedEvent, value);
+        remove => RemoveTypedHandler(ValueChangedEvent, value);
+    }
     public static readonly UiProperty<float> MinimumProperty = UiProperty<float>.Register(
         nameof(Minimum),
         typeof(RangeBase),
@@ -83,7 +91,10 @@ public class RangeBase : Control
             if (coercedValue != Value)
             {
                 Value = coercedValue;
+                return;
             }
+
+            RaiseEvent(new RoutedPropertyChangedEventArgs<float>(ValueChangedEvent, this, (float)args.OldValue!, Value));
         }
 
         if (ReferenceEquals(args.Property, MinimumProperty) && Maximum < Minimum)

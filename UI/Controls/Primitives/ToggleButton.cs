@@ -5,10 +5,11 @@ namespace Cerneala.UI.Controls.Primitives;
 
 public class ToggleButton : Button
 {
-    public ToggleButton()
-    {
-        Handlers.AddHandler(InputEvents.MouseUpEvent, OnMouseUp);
-    }
+    public static readonly RoutedEvent CheckedEvent = RoutedEventRegistry.Register(nameof(Checked), typeof(ToggleButton), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
+    public static readonly RoutedEvent UncheckedEvent = RoutedEventRegistry.Register(nameof(Unchecked), typeof(ToggleButton), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
+
+    public event RoutedEventHandler Checked { add => AddHandler(CheckedEvent, value); remove => RemoveHandler(CheckedEvent, value); }
+    public event RoutedEventHandler Unchecked { add => AddHandler(UncheckedEvent, value); remove => RemoveHandler(UncheckedEvent, value); }
 
     public static readonly UiProperty<bool> IsCheckedProperty = UiProperty<bool>.Register(
         nameof(IsChecked),
@@ -26,11 +27,10 @@ public class ToggleButton : Button
         IsChecked = !IsChecked;
     }
 
-    private void OnMouseUp(UiElementId source, RoutedEventArgs args)
+    protected override void OnClick()
     {
-        if (args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 })
-        {
-            OnToggle();
-        }
+        OnToggle();
+        RaiseEvent(new RoutedEventArgs(IsChecked ? CheckedEvent : UncheckedEvent, this));
+        base.OnClick();
     }
 }

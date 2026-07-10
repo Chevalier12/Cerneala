@@ -18,6 +18,16 @@ public class Selector : ItemsControl
         selectionModel.SelectionChanged += OnSelectionChanged;
     }
 
+    public static readonly RoutedEvent SelectionChangedEvent = RoutedEventRegistry.Register(nameof(SelectionChanged), typeof(Selector), RoutingStrategy.Bubble, typeof(SelectionChangedEventArgs));
+    public static readonly RoutedEvent SelectedEvent = RoutedEventRegistry.Register("Selected", typeof(Selector), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
+    public static readonly RoutedEvent UnselectedEvent = RoutedEventRegistry.Register("Unselected", typeof(Selector), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
+
+    public event EventHandler<SelectionChangedEventArgs> SelectionChanged
+    {
+        add => AddTypedHandler(SelectionChangedEvent, value);
+        remove => RemoveTypedHandler(SelectionChangedEvent, value);
+    }
+
     public static readonly UiProperty<int> SelectedIndexProperty = UiProperty<int>.Register(
         nameof(SelectedIndex),
         typeof(Selector),
@@ -82,9 +92,17 @@ public class Selector : ItemsControl
 
     private void OnSelectionChanged(object? sender, SelectionChangedEventArgs args)
     {
+        object? removed = args.Change.OldIndex >= 0 && args.Change.OldIndex < Items.Count ? Items[args.Change.OldIndex] : null;
+        object? added = args.Change.NewIndex >= 0 && args.Change.NewIndex < Items.Count ? Items[args.Change.NewIndex] : null;
         SetValue(SelectedIndexProperty, args.Change.NewIndex);
         InvalidateContainer(args.Change.OldIndex);
         InvalidateContainer(args.Change.NewIndex);
+        RaiseEvent(new SelectionChangedEventArgs(
+            SelectionChangedEvent,
+            this,
+            args.Change,
+            removed is null ? [] : [removed],
+            added is null ? [] : [added]));
     }
 
     private void InvalidateContainer(int index)

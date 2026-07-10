@@ -1,11 +1,18 @@
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Input;
+using Cerneala.UI.Controls.Primitives;
 
 namespace Cerneala.UI.Controls;
 
 public class TabItem : ContentControl, ISelectableItemContainer
 {
+    public static readonly RoutedEvent SelectedEvent = Selector.SelectedEvent.AddOwner(typeof(TabItem));
+    public static readonly RoutedEvent UnselectedEvent = Selector.UnselectedEvent.AddOwner(typeof(TabItem));
+
+    public event RoutedEventHandler Selected { add => AddHandler(SelectedEvent, value); remove => RemoveHandler(SelectedEvent, value); }
+    public event RoutedEventHandler Unselected { add => AddHandler(UnselectedEvent, value); remove => RemoveHandler(UnselectedEvent, value); }
     public static readonly UiProperty<bool> IsSelectedProperty = UiProperty<bool>.Register(
         nameof(IsSelected),
         typeof(TabItem),
@@ -95,6 +102,13 @@ public class TabItem : ContentControl, ISelectableItemContainer
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
+        if (ReferenceEquals(args.Property, IsSelectedProperty))
+        {
+            base.OnPropertyChanged(args);
+            RaiseEvent(new RoutedEventArgs(IsSelected ? SelectedEvent : UnselectedEvent, this));
+            return;
+        }
+
         if (!ReferenceEquals(args.Property, TemplateProperty))
         {
             base.OnPropertyChanged(args);

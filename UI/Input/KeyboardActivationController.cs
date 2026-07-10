@@ -50,6 +50,7 @@ internal sealed class KeyboardActivationController
 
         if (FindValidAncestor<IInputCommandSource>(result.Target, routeMap) is IInputCommandSource commandSource)
         {
+            (commandSource as IInputActivatable)?.Activate();
             commandSource.ExecuteCommand(commandRouter, routeMap);
         }
     }
@@ -101,6 +102,7 @@ internal sealed class KeyboardActivationController
             return;
         }
 
+        (commandSource as IInputActivatable)?.Activate();
         commandSource.ExecuteCommand(commandRouter, routeMap);
     }
 

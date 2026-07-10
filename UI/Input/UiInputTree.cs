@@ -2,10 +2,12 @@ namespace Cerneala.UI.Input;
 
 public delegate void RoutedEventHandler(UiElementId sender, RoutedEventArgs args);
 
+internal readonly record struct InputRoutedEventHandlerRegistration(RoutedEventHandler Handler, bool HandledEventsToo);
+
 public sealed class UiInputTree
 {
     private readonly Dictionary<UiElementId, UiInputElement> elements = [];
-    private readonly Dictionary<(UiElementId ElementId, RoutedEvent RoutedEvent), List<RoutedEventHandler>> handlers = [];
+    private readonly Dictionary<(UiElementId ElementId, RoutedEvent RoutedEvent), List<InputRoutedEventHandlerRegistration>> handlers = [];
 
     public void Add(UiElementId id, UiElementId? parentId, bool isEnabled = true)
     {
@@ -20,7 +22,7 @@ public sealed class UiInputTree
         }
     }
 
-    public void AddHandler(UiElementId id, RoutedEvent routedEvent, RoutedEventHandler handler)
+    public void AddHandler(UiElementId id, RoutedEvent routedEvent, RoutedEventHandler handler, bool handledEventsToo = false)
     {
         ArgumentNullException.ThrowIfNull(routedEvent);
         ArgumentNullException.ThrowIfNull(handler);
@@ -31,13 +33,13 @@ public sealed class UiInputTree
         }
 
         (UiElementId, RoutedEvent) key = (id, routedEvent);
-        if (!handlers.TryGetValue(key, out List<RoutedEventHandler>? registeredHandlers))
+        if (!handlers.TryGetValue(key, out List<InputRoutedEventHandlerRegistration>? registeredHandlers))
         {
             registeredHandlers = [];
             handlers.Add(key, registeredHandlers);
         }
 
-        registeredHandlers.Add(handler);
+        registeredHandlers.Add(new InputRoutedEventHandlerRegistration(handler, handledEventsToo));
     }
 
     public IReadOnlyList<UiElementId> GetRouteToRoot(UiElementId targetId)
@@ -67,7 +69,19 @@ public sealed class UiInputTree
             return [];
         }
 
-        return handlers.TryGetValue((id, routedEvent), out List<RoutedEventHandler>? registeredHandlers)
+        return handlers.TryGetValue((id, routedEvent), out List<InputRoutedEventHandlerRegistration>? registeredHandlers)
+            ? registeredHandlers.Select(item => item.Handler).ToArray()
+            : [];
+    }
+
+    internal IReadOnlyList<InputRoutedEventHandlerRegistration> GetHandlerRegistrations(UiElementId id, RoutedEvent routedEvent)
+    {
+        if (!elements[id].IsEnabled)
+        {
+            return [];
+        }
+
+        return handlers.TryGetValue((id, routedEvent), out List<InputRoutedEventHandlerRegistration>? registeredHandlers)
             ? registeredHandlers.ToArray()
             : [];
     }

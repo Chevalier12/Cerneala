@@ -10,7 +10,7 @@ using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Elements;
 
-public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderableElement
+public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderableElement
 {
     public static readonly UiProperty<object?> DataContextProperty = UiProperty<object?>.Register(
         nameof(DataContext),
@@ -180,6 +180,10 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
 
     public bool IsAttached => Root is not null;
 
+    public bool IsLoaded => IsAttached;
+
+    public bool IsInitialized => isInitialized;
+
     public UiElementId? ElementId { get; private set; }
 
     public ElementHandlerStore Handlers { get; }
@@ -220,6 +224,7 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     private bool hasPendingRenderScopeInvalidation;
     private bool hasPendingRenderContentInvalidation;
     private readonly List<IElementLifecycleBehavior> lifecycleBehaviors = [];
+    private bool isInitialized;
 
     internal LayoutSize? LastMeasureAvailableSize { get; set; }
 
@@ -367,6 +372,12 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
         set => SetValue(IsPointerOverProperty, value);
     }
 
+    public bool IsMouseDirectlyOver
+    {
+        get => IsPointerOver;
+        set => IsPointerOver = value;
+    }
+
     public bool IsKeyboardFocused
     {
         get => GetValue(IsKeyboardFocusedProperty);
@@ -420,16 +431,23 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
     {
         Root = root ?? throw new ArgumentNullException(nameof(root));
         ElementId = id;
+        if (!isInitialized)
+        {
+            isInitialized = true;
+            Initialized?.Invoke(this, EventArgs.Empty);
+        }
         OnAttached();
         foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
         {
             behavior.Attach();
         }
         Root?.Motion.Presence.MarkAttached(this);
+        RaiseEvent(new RoutedEventArgs(LoadedEvent, this));
     }
 
     internal void DetachFromRoot()
     {
+        RaiseEvent(new RoutedEventArgs(UnloadedEvent, this));
         Root?.Motion.Presence.MarkDetached(this);
         foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
         {
@@ -559,10 +577,12 @@ public class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderable
             return false;
         }
 
+        LayoutRect previousBounds = ArrangedBounds;
         ArrangedBounds = arrangedBounds;
         IncrementRenderVersion();
         Root?.RetainedRenderCache.InvalidateRoot();
         Root?.RenderQueue.Enqueue(this);
+        RaiseEvent(new SizeChangedEventArgs(SizeChangedEvent, this, previousBounds.Size, arrangedBounds.Size));
         return true;
     }
 

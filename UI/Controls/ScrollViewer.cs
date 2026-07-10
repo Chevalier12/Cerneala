@@ -10,6 +10,9 @@ namespace Cerneala.UI.Controls;
 
 public class ScrollViewer : Control
 {
+    public static readonly RoutedEvent ScrollChangedEvent = RoutedEventRegistry.Register(nameof(ScrollChanged), typeof(ScrollViewer), RoutingStrategy.Bubble, typeof(ScrollChangedEventArgs));
+
+    public event EventHandler<ScrollChangedEventArgs> ScrollChanged { add => AddTypedHandler(ScrollChangedEvent, value); remove => RemoveTypedHandler(ScrollChangedEvent, value); }
     private const float ScrollBarThickness = 12;
     private const float WheelScrollAmount = 48;
     private readonly ScrollContentPresenter presenter;
@@ -248,7 +251,10 @@ public class ScrollViewer : Control
             return;
         }
 
+        float oldHorizontal = ReferenceEquals(args.Property, ScrollContentPresenter.HorizontalOffsetProperty) ? (float)args.OldValue! : presenter.HorizontalOffset;
+        float oldVertical = ReferenceEquals(args.Property, ScrollContentPresenter.VerticalOffsetProperty) ? (float)args.OldValue! : presenter.VerticalOffset;
         UpdateScrollBarState();
+        RaiseEvent(new ScrollChangedEventArgs(ScrollChangedEvent, this, oldHorizontal, oldVertical, presenter.HorizontalOffset, presenter.VerticalOffset));
     }
 
     private void UpdateScrollBarState()

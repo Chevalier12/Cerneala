@@ -7,6 +7,9 @@ namespace Cerneala.UI.Controls.Primitives;
 
 public class Thumb : Control, IPointerDragSource
 {
+    public static readonly RoutedEvent DragStartedEvent = RoutedEventRegistry.Register(nameof(DragStarted), typeof(Thumb), RoutingStrategy.Bubble, typeof(DragStartedEventArgs));
+    public static readonly RoutedEvent DragDeltaEvent = RoutedEventRegistry.Register(nameof(DragDelta), typeof(Thumb), RoutingStrategy.Bubble, typeof(DragDeltaEventArgs));
+    public static readonly RoutedEvent DragCompletedEvent = RoutedEventRegistry.Register(nameof(DragCompleted), typeof(Thumb), RoutingStrategy.Bubble, typeof(DragCompletedEventArgs));
     private bool isDragging;
     private int lastX;
     private int lastY;
@@ -21,11 +24,11 @@ public class Thumb : Control, IPointerDragSource
         Handlers.AddHandler(InputEvents.LostMouseCaptureEvent, (_, _) => CancelDrag());
     }
 
-    public event EventHandler<DragStartedEventArgs>? DragStarted;
+    public event EventHandler<DragStartedEventArgs> DragStarted { add => AddTypedHandler(DragStartedEvent, value); remove => RemoveTypedHandler(DragStartedEvent, value); }
 
-    public event EventHandler<DragDeltaEventArgs>? DragDelta;
+    public event EventHandler<DragDeltaEventArgs> DragDelta { add => AddTypedHandler(DragDeltaEvent, value); remove => RemoveTypedHandler(DragDeltaEvent, value); }
 
-    public event EventHandler<DragCompletedEventArgs>? DragCompleted;
+    public event EventHandler<DragCompletedEventArgs> DragCompleted { add => AddTypedHandler(DragCompletedEvent, value); remove => RemoveTypedHandler(DragCompletedEvent, value); }
 
     public bool IsDragging => isDragging;
 
@@ -56,7 +59,7 @@ public class Thumb : Control, IPointerDragSource
         TotalHorizontalChange = 0;
         TotalVerticalChange = 0;
         captureManager.Capture(this, routeMap);
-        DragStarted?.Invoke(this, new DragStartedEventArgs(args.X, args.Y));
+        RaiseEvent(new DragStartedEventArgs(DragStartedEvent, this, args.X, args.Y));
         args.Handled = true;
         return true;
     }
@@ -82,7 +85,7 @@ public class Thumb : Control, IPointerDragSource
         lastY = args.Y;
         if (LastHorizontalChange != 0 || LastVerticalChange != 0)
         {
-            DragDelta?.Invoke(this, new DragDeltaEventArgs(LastHorizontalChange, LastVerticalChange, TotalHorizontalChange, TotalVerticalChange));
+            RaiseEvent(new DragDeltaEventArgs(DragDeltaEvent, this, LastHorizontalChange, LastVerticalChange, TotalHorizontalChange, TotalVerticalChange));
         }
 
         args.Handled = true;
@@ -107,7 +110,7 @@ public class Thumb : Control, IPointerDragSource
         UpdateDrag(args);
         isDragging = false;
         captureManager.Release(routeMap);
-        DragCompleted?.Invoke(this, new DragCompletedEventArgs(TotalHorizontalChange, TotalVerticalChange, false));
+        RaiseEvent(new DragCompletedEventArgs(DragCompletedEvent, this, TotalHorizontalChange, TotalVerticalChange, false));
         args.Handled = true;
         return true;
     }
@@ -125,7 +128,7 @@ public class Thumb : Control, IPointerDragSource
         }
 
         isDragging = false;
-        DragCompleted?.Invoke(this, new DragCompletedEventArgs(TotalHorizontalChange, TotalVerticalChange, true));
+        RaiseEvent(new DragCompletedEventArgs(DragCompletedEvent, this, TotalHorizontalChange, TotalVerticalChange, true));
     }
 
     protected override void OnDetached()

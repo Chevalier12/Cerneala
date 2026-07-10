@@ -15,6 +15,8 @@ namespace Cerneala.UI.Controls;
 
 public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
 {
+    public static readonly RoutedEvent TextChangedEvent = RoutedEventRegistry.Register(nameof(TextChanged), typeof(TextBoxBase), RoutingStrategy.Bubble, typeof(TextChangedEventArgs));
+    public static readonly RoutedEvent SelectionChangedEvent = RoutedEventRegistry.Register(nameof(SelectionChanged), typeof(TextBoxBase), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
     private static readonly TimeSpan CaretBlinkPeriod = TimeSpan.FromMilliseconds(1000);
     private static readonly TimeSpan CaretBlinkVisibleDuration = TimeSpan.FromMilliseconds(500);
     private readonly TextEditor editor;
@@ -30,6 +32,10 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
     private bool caretBlinkVisible = true;
     private bool isMouseSelecting;
     private int mouseSelectionAnchor;
+    private TextSelection lastReportedSelection;
+
+    public event EventHandler<TextChangedEventArgs> TextChanged { add => AddTypedHandler(TextChangedEvent, value); remove => RemoveTypedHandler(TextChangedEvent, value); }
+    public event RoutedEventHandler SelectionChanged { add => AddHandler(SelectionChangedEvent, value); remove => RemoveHandler(SelectionChangedEvent, value); }
 
     public static readonly UiProperty<string> TextProperty = UiProperty<string>.Register(
         nameof(Text),
@@ -171,6 +177,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
     public void Select(int anchor, int active)
     {
         editor.Select(anchor, active);
+        RaiseSelectionChangedIfNeeded();
         EnsureCaretVisible();
         Invalidate(InvalidationFlags.Render, "TextBox selection changed");
     }
@@ -178,6 +185,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
     public void MoveCaret(int position, bool extendSelection = false)
     {
         editor.MoveCaret(position, extendSelection);
+        RaiseSelectionChangedIfNeeded();
         EnsureCaretVisible();
         ResetCaretBlink();
         Invalidate(InvalidationFlags.Render, "TextBox caret changed");
@@ -218,6 +226,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         editor.UndoRedo.Clear();
         EnsureCaretVisible();
         InvalidateTextMetrics("TextBox text changed");
+        RaiseSelectionChangedIfNeeded();
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -245,6 +254,12 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
             editor.SetText(Text);
             editor.UndoRedo.Clear();
             EnsureCaretVisible();
+        }
+
+        if (ReferenceEquals(args.Property, TextProperty))
+        {
+            RaiseEvent(new TextChangedEventArgs(TextChangedEvent, this, (string)args.OldValue!, Text));
+            RaiseSelectionChangedIfNeeded();
         }
 
         if (ReferenceEquals(args.Property, IsKeyboardFocusedProperty) && IsKeyboardFocused)
@@ -513,6 +528,18 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         EnsureCaretVisible();
         ResetCaretBlink();
         InvalidateTextMetrics(reason);
+        RaiseSelectionChangedIfNeeded();
+    }
+
+    private void RaiseSelectionChangedIfNeeded()
+    {
+        if (lastReportedSelection == Selection)
+        {
+            return;
+        }
+
+        lastReportedSelection = Selection;
+        RaiseEvent(new RoutedEventArgs(SelectionChangedEvent, this));
     }
 
     private void DrawSelection(RenderContext context, DrawRect? bounds)

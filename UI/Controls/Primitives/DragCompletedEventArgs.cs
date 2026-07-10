@@ -1,8 +1,18 @@
 namespace Cerneala.UI.Controls.Primitives;
 
-public sealed class DragCompletedEventArgs : EventArgs
+using Cerneala.UI.Input;
+
+public sealed class DragCompletedEventArgs : RoutedEventArgs
 {
     public DragCompletedEventArgs(float horizontalChange, float verticalChange, bool canceled)
+    {
+        HorizontalChange = horizontalChange;
+        VerticalChange = verticalChange;
+        Canceled = canceled;
+    }
+
+    public DragCompletedEventArgs(RoutedEvent routedEvent, object source, float horizontalChange, float verticalChange, bool canceled)
+        : base(routedEvent, source)
     {
         HorizontalChange = horizontalChange;
         VerticalChange = verticalChange;

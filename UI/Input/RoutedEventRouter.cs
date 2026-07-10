@@ -8,10 +8,8 @@ public static class RoutedEventRouter
         ArgumentNullException.ThrowIfNull(bubbleArgs);
 
         Raise(tree, targetId, previewArgs);
-        if (!previewArgs.Handled)
-        {
-            Raise(tree, targetId, bubbleArgs);
-        }
+        bubbleArgs.Handled |= previewArgs.Handled;
+        Raise(tree, targetId, bubbleArgs);
     }
 
     public static void Raise(UiInputTree tree, UiElementId targetId, RoutedEventArgs args)
@@ -30,18 +28,12 @@ public static class RoutedEventRouter
 
         foreach (UiElementId elementId in route)
         {
-            if (args.Handled)
-            {
-                return;
-            }
-
             args.Source = elementId;
-            foreach (RoutedEventHandler handler in tree.GetHandlers(elementId, args.RoutedEvent))
+            foreach (InputRoutedEventHandlerRegistration registration in tree.GetHandlerRegistrations(elementId, args.RoutedEvent))
             {
-                handler(elementId, args);
-                if (args.Handled)
+                if (!args.Handled || registration.HandledEventsToo)
                 {
-                    return;
+                    registration.Handler(elementId, args);
                 }
             }
         }

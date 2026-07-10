@@ -4,7 +4,7 @@ namespace Cerneala.UI.Elements;
 
 public sealed class ElementHandlerStore
 {
-    private readonly Dictionary<RoutedEvent, List<RoutedEventHandler>> handlers = [];
+    private readonly Dictionary<RoutedEvent, List<RoutedEventHandlerRegistration>> handlers = [];
     private readonly UIElement owner;
 
     internal ElementHandlerStore(UIElement owner)
@@ -12,18 +12,18 @@ public sealed class ElementHandlerStore
         this.owner = owner ?? throw new ArgumentNullException(nameof(owner));
     }
 
-    public void AddHandler(RoutedEvent routedEvent, RoutedEventHandler handler)
+    public void AddHandler(RoutedEvent routedEvent, RoutedEventHandler handler, bool handledEventsToo = false)
     {
         ArgumentNullException.ThrowIfNull(routedEvent);
         ArgumentNullException.ThrowIfNull(handler);
 
-        if (!handlers.TryGetValue(routedEvent, out List<RoutedEventHandler>? registeredHandlers))
+        if (!handlers.TryGetValue(routedEvent, out List<RoutedEventHandlerRegistration>? registeredHandlers))
         {
             registeredHandlers = [];
             handlers.Add(routedEvent, registeredHandlers);
         }
 
-        registeredHandlers.Add(handler);
+        registeredHandlers.Add(new RoutedEventHandlerRegistration(handler, handledEventsToo));
         InvalidateRoute("Input handler added");
     }
 
@@ -32,16 +32,19 @@ public sealed class ElementHandlerStore
         ArgumentNullException.ThrowIfNull(routedEvent);
         ArgumentNullException.ThrowIfNull(handler);
 
-        if (!handlers.TryGetValue(routedEvent, out List<RoutedEventHandler>? registeredHandlers))
+        if (!handlers.TryGetValue(routedEvent, out List<RoutedEventHandlerRegistration>? registeredHandlers))
         {
             return false;
         }
 
-        bool removed = registeredHandlers.Remove(handler);
+        int index = registeredHandlers.FindIndex(item => item.Handler == handler);
+        bool removed = index >= 0;
         if (!removed)
         {
             return false;
         }
+
+        registeredHandlers.RemoveAt(index);
 
         if (registeredHandlers.Count == 0)
         {
@@ -56,20 +59,27 @@ public sealed class ElementHandlerStore
     {
         ArgumentNullException.ThrowIfNull(routedEvent);
 
-        return handlers.TryGetValue(routedEvent, out List<RoutedEventHandler>? registeredHandlers)
-            ? registeredHandlers.ToArray()
+        return handlers.TryGetValue(routedEvent, out List<RoutedEventHandlerRegistration>? registeredHandlers)
+            ? registeredHandlers.Select(item => item.Handler).ToArray()
             : [];
     }
 
-    public IEnumerable<(RoutedEvent RoutedEvent, RoutedEventHandler Handler)> EnumerateHandlers()
+    public IEnumerable<(RoutedEvent RoutedEvent, RoutedEventHandler Handler, bool HandledEventsToo)> EnumerateHandlers()
     {
-        foreach ((RoutedEvent routedEvent, List<RoutedEventHandler> registeredHandlers) in handlers)
+        foreach ((RoutedEvent routedEvent, List<RoutedEventHandlerRegistration> registeredHandlers) in handlers)
         {
-            foreach (RoutedEventHandler handler in registeredHandlers)
+            foreach (RoutedEventHandlerRegistration registration in registeredHandlers)
             {
-                yield return (routedEvent, handler);
+                yield return (routedEvent, registration.Handler, registration.HandledEventsToo);
             }
         }
+    }
+
+    internal IReadOnlyList<RoutedEventHandlerRegistration> GetRegistrations(RoutedEvent routedEvent)
+    {
+        return handlers.TryGetValue(routedEvent, out List<RoutedEventHandlerRegistration>? registeredHandlers)
+            ? registeredHandlers.ToArray()
+            : [];
     }
 
     private void InvalidateRoute(string reason)
@@ -82,3 +92,5 @@ public sealed class ElementHandlerStore
         owner.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.HitTest, reason);
     }
 }
+
+internal readonly record struct RoutedEventHandlerRegistration(RoutedEventHandler Handler, bool HandledEventsToo);

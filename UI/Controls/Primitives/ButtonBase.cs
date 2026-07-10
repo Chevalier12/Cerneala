@@ -4,7 +4,7 @@ using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls.Primitives;
 
-public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, ICommandStateSource
+public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, ICommandStateSource, IInputActivatable
 {
     private IObservableCommand? observableCommand;
 
@@ -28,7 +28,12 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
         Focusable = true;
         IsTabStop = true;
         Cursor = Cerneala.UI.Input.Cursor.Hand;
+        AddHandler(MouseUpEvent, OnMouseUp);
     }
+
+    public static readonly RoutedEvent ClickEvent = RoutedEventRegistry.Register(nameof(Click), typeof(ButtonBase), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
+
+    public event RoutedEventHandler Click { add => AddHandler(ClickEvent, value); remove => RemoveHandler(ClickEvent, value); }
 
     public bool IsPressed
     {
@@ -46,6 +51,16 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
     {
         get => GetValue(CommandParameterProperty);
         set => SetValue(CommandParameterProperty, value);
+    }
+
+    protected virtual void OnClick()
+    {
+        RaiseEvent(new RoutedEventArgs(ClickEvent, this));
+    }
+
+    void IInputActivatable.Activate()
+    {
+        OnClick();
     }
 
     public bool CanExecuteCommand(CommandRouter router, ElementInputRouteMap routeMap)
@@ -169,5 +184,13 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
     private void OnCanExecuteChanged(object? sender, EventArgs args)
     {
         QueueCommandStateRefresh();
+    }
+
+    private void OnMouseUp(UiElementId _, RoutedEventArgs args)
+    {
+        if (args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 })
+        {
+            OnClick();
+        }
     }
 }
