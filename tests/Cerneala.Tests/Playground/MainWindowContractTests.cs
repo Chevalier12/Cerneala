@@ -72,16 +72,16 @@ public sealed class MainWindowContractTests
         root.VisualChildren.Add(window);
         (_, _, _, StackPanel actions) = FindReactiveElements(window);
 
-        Assert.Equal(7, actions.VisualChildren.Count);
+        Assert.Equal(8, actions.VisualChildren.Count);
 
         viewModel.ShowAdvanced = true;
-        Button first = Assert.IsType<Button>(actions.VisualChildren[7]);
+        Button first = Assert.IsType<Button>(actions.VisualChildren[8]);
 
         viewModel.ShowAdvanced = false;
-        Assert.Equal(7, actions.VisualChildren.Count);
+        Assert.Equal(8, actions.VisualChildren.Count);
 
         viewModel.ShowAdvanced = true;
-        Assert.Same(first, actions.VisualChildren[7]);
+        Assert.Same(first, actions.VisualChildren[8]);
     }
 
     [Fact]

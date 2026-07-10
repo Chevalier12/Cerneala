@@ -235,6 +235,28 @@ internal sealed class WindowApplicationRuntime : IDisposable
         }
     }
 
+    public void SaveScreenshot(Window window, string path)
+    {
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(window);
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        WindowContext context = RequireContext(window);
+        if (context.PlatformWindow.GraphicsSession is not IWindowScreenshotSource screenshotSource)
+        {
+            throw new NotSupportedException("The active Window graphics backend does not support screenshots.");
+        }
+
+        string fullPath = Path.GetFullPath(path);
+        string? directory = Path.GetDirectoryName(fullPath);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        using FileStream output = File.Create(fullPath);
+        screenshotSource.SavePng(output);
+    }
+
     public void PumpOnce(TimeSpan elapsedTime)
     {
         VerifyAccess();

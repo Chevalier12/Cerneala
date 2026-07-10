@@ -53,6 +53,11 @@ internal interface IWindowGraphicsSession : IDisposable
     void Present();
 }
 
+internal interface IWindowScreenshotSource
+{
+    void SavePng(Stream output);
+}
+
 internal interface IWindowGraphicsSessionFactory
 {
     IWindowGraphicsSession Create(nint windowHandle, int pixelWidth, int pixelHeight, float coordinateScale);

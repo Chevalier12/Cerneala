@@ -241,6 +241,8 @@
                         }
                     </TextBlock>
 
+                    <Button Name="OpenTextOracleButton" Content="Open Cerneala text oracle" Click="OnOpenTextOracleClick" />
+
                     @when $DataContext.ShowAdvanced
                     {
                         @if value == True

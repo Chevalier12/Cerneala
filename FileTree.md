@@ -844,6 +844,11 @@ Generated from `.`.
 |   +-- IFontSource.cs
 |-- Generated/
 |-- Playground/
+|   |-- AvaloniaOracle/
+|   |   |-- App.cs
+|   |   |-- AvaloniaOracle.csproj
+|   |   |-- MainWindow.cs
+|   |   +-- Program.cs
 |   +-- Cerneala.Playground/
 |       |-- Cerneala.Playground.csproj
 |       |-- MainWindow.cui.xml

@@ -25,6 +25,10 @@ public partial class MainWindow : Window<MainWindowViewModel>
     private void OnLoaded(UiElementId sender, RoutedEventArgs args)
     {
         LifecycleText.Text = $"Loaded: score={ViewModel.Score}, user={ViewModel.UserName}";
+        if (string.Equals(Environment.GetEnvironmentVariable("CERNEALA_OPEN_TEXT_ORACLE"), "1", StringComparison.Ordinal))
+        {
+            ShowTextOracleWindow();
+        }
     }
 
     private void OnUnloaded(UiElementId sender, RoutedEventArgs args)
@@ -143,6 +147,54 @@ public partial class MainWindow : Window<MainWindowViewModel>
 
             window.Show();
         }
+    }
+
+    private void OnOpenTextOracleClick(UiElementId sender, RoutedEventArgs args)
+    {
+        ShowTextOracleWindow();
+    }
+
+    private void ShowTextOracleWindow()
+    {
+        string screenshotPath = Path.GetFullPath(Path.Combine("artifacts", "visual-oracles", "cerneala-text.png"));
+        Window window = new()
+        {
+            Title = "Cerneala text oracle",
+            Width = 320,
+            Height = 160,
+            MinWidth = 320,
+            MinHeight = 160,
+            MaxWidth = 320,
+            MaxHeight = 160,
+            Left = Left + 96,
+            Top = Top + 96,
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            ResizeMode = ResizeMode.NoResize,
+            Owner = this,
+            Background = DrawColor.White,
+            BorderColor = DrawColor.Transparent,
+            BorderThickness = Cerneala.UI.Layout.Thickness.Zero,
+            Padding = Cerneala.UI.Layout.Thickness.Zero,
+            Content = new TextBlock
+            {
+                Text = "Hello world!",
+                FontFamily = "Arial",
+                FontSize = 16,
+                Foreground = DrawColor.Black,
+                HorizontalAlignment = Cerneala.UI.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Cerneala.UI.Layout.VerticalAlignment.Center
+            }
+        };
+
+        EventHandler? capture = null;
+        capture = (_, _) =>
+        {
+            window.ContentRendered -= capture;
+            window.SaveScreenshot(screenshotPath);
+        };
+        window.ContentRendered += capture;
+
+        window.Show();
     }
 
     private void OnAdvancedClick(UiElementId sender, RoutedEventArgs args)

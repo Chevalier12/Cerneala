@@ -279,6 +279,11 @@ public class Window : ContentControl
         (runtimeOwner ?? WindowApplicationRuntime.CurrentOrDefault).Activate(this);
     }
 
+    public void SaveScreenshot(string path)
+    {
+        (runtimeOwner ?? WindowApplicationRuntime.CurrentOrDefault).SaveScreenshot(this, path);
+    }
+
     public void Close()
     {
         (runtimeOwner ?? WindowApplicationRuntime.CurrentOrDefault).Close(this, force: false);

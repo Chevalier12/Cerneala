@@ -17,7 +17,7 @@ internal sealed class WindowsDxWindowGraphicsSessionFactory : IWindowGraphicsSes
     }
 }
 
-internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession
+internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, IWindowScreenshotSource
 {
     private readonly nint windowHandle;
     private readonly GraphicsDevice graphicsDevice;
@@ -189,6 +189,29 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession
                 presentationParameters.BackBufferHeight,
                 exception);
         }
+    }
+
+    public void SavePng(Stream output)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        ArgumentNullException.ThrowIfNull(output);
+        if (!output.CanWrite)
+        {
+            throw new ArgumentException("The screenshot stream must be writable.", nameof(output));
+        }
+
+        if (frameBegun)
+        {
+            throw new InvalidOperationException("A screenshot cannot be captured while a frame is being drawn.");
+        }
+
+        int width = presentationParameters.BackBufferWidth;
+        int height = presentationParameters.BackBufferHeight;
+        Color[] pixels = new Color[width * height];
+        graphicsDevice.GetBackBufferData(pixels);
+        using Texture2D bitmap = new(graphicsDevice, width, height, false, SurfaceFormat.Color);
+        bitmap.SetData(pixels);
+        bitmap.SaveAsPng(output, width, height);
     }
 
     public void Dispose()
