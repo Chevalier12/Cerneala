@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
@@ -293,9 +294,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         try
         {
             List<XElement> elements = [];
+            string markup = StripXmlDeclarationPreservingPositions(file.Text ?? string.Empty);
+            char comparatorPlaceholder = FindDirectiveComparatorPlaceholder(markup);
+            markup = ProtectDirectiveComparators(markup, comparatorPlaceholder);
             XDocument fragment = XDocument.Parse(
-                FragmentWrapperStart + StripXmlDeclarationPreservingPositions(file.Text ?? string.Empty) + FragmentWrapperEnd,
+                FragmentWrapperStart + markup + FragmentWrapperEnd,
                 LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace);
+            RestoreDirectiveComparators(fragment, comparatorPlaceholder);
 
             foreach (XNode node in fragment.Root!.Nodes())
             {
@@ -317,41 +322,65 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 }
             }
 
-            XElement? resources = null;
-            List<XElement> roots = [];
-            foreach (XElement element in elements)
+            XElement? topLevelResources = elements.FirstOrDefault(element => element.Name.LocalName == "Resources");
+            if (topLevelResources is not null)
             {
-                if (element.Name.LocalName == "Resources")
-                {
-                    if (resources is not null)
-                    {
-                        return InvalidShape(file, element, "Only one top-level Resources element is allowed.");
-                    }
-
-                    resources = element;
-                    continue;
-                }
-
-                roots.Add(element);
+                return InvalidShape(
+                    file,
+                    topLevelResources,
+                    "Top-level Resources is not supported; declare resources through <RootType.Resources> on a UI element.");
             }
 
-            if (roots.Count != 1)
+            if (elements.Count != 1)
             {
                 return new ParsedDocument(
                     null,
                     Diagnostic.Create(
                         MalformedMarkup,
-                        CreateLocation(file, roots.FirstOrDefault() ?? resources ?? new XElement("Missing")),
+                        CreateLocation(file, elements.FirstOrDefault() ?? new XElement("Missing")),
                         Path.GetFileName(file.Path),
                         "Markup must contain exactly one UI root element."));
             }
 
-            return new ParsedDocument(new MarkupDocument(resources, roots[0]), null);
+            return new ParsedDocument(new MarkupDocument(elements[0]), null);
         }
         catch (XmlException ex)
         {
             return new ParsedDocument(null, Diagnostic.Create(MalformedMarkup, CreateLocation(file, ex.LineNumber, ex.LinePosition), Path.GetFileName(file.Path), ex.Message));
         }
+    }
+
+    private static string ProtectDirectiveComparators(string markup, char placeholder)
+    {
+        return Regex.Replace(
+            markup,
+            "(@if\\s+value\\s*)<",
+            match => match.Groups[1].Value + placeholder,
+            RegexOptions.CultureInvariant);
+    }
+
+    private static void RestoreDirectiveComparators(XDocument document, char placeholder)
+    {
+        foreach (XText text in document.DescendantNodes().OfType<XText>())
+        {
+            if (text.Value.IndexOf(placeholder) >= 0)
+            {
+                text.Value = text.Value.Replace(placeholder, '<');
+            }
+        }
+    }
+
+    private static char FindDirectiveComparatorPlaceholder(string markup)
+    {
+        for (char candidate = '\uE000'; candidate <= '\uF8FF'; candidate++)
+        {
+            if (markup.IndexOf(candidate) < 0)
+            {
+                return candidate;
+            }
+        }
+
+        throw new XmlException("Markup exhausts the private-use characters reserved for directive parsing.");
     }
 
     private static ParsedDocument InvalidShape(MarkupSource file, object locationSource, string message)
@@ -455,13 +484,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
     private sealed class MarkupDocument
     {
-        public MarkupDocument(XElement? resources, XElement root)
+        public MarkupDocument(XElement root)
         {
-            Resources = resources;
             Root = root;
         }
-
-        public XElement? Resources { get; }
 
         public XElement Root { get; }
     }
@@ -508,8 +534,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             currentPostLines = PostLines;
 
             ReadResources();
-            reactiveDocument = namedAspects.Values.Any(aspect => aspect.Conditions.Count > 0) ||
-                defaultAspectsByTarget.Values.Any(aspect => aspect.Conditions.Count > 0) ||
+            reactiveDocument = allAspects.Any(aspect => aspect.Conditions.Count > 0) ||
                 document.Root.DescendantsAndSelf().Any(element =>
                     GetDirectiveContent(element, allowAssignments: false, allowElements: true).HasDirectives);
         }
@@ -666,6 +691,22 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public XObject Source { get; }
         }
 
+        private sealed class ResourceScope
+        {
+            public ResourceScope(XElement owner)
+            {
+                Owner = owner;
+            }
+
+            public XElement Owner { get; }
+
+            public Dictionary<string, NamedSymbol> NamedResources { get; } = new(StringComparer.Ordinal);
+
+            public Dictionary<string, AspectResource> DefaultAspectsByTarget { get; } = new(StringComparer.Ordinal);
+
+            public List<object> RuntimeResources { get; } = [];
+        }
+
         private readonly struct DrawColorLiteral
         {
             public DrawColorLiteral(byte r, byte g, byte b, byte a)
@@ -693,9 +734,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         private readonly Dictionary<string, NamedSymbol> symbols = new(StringComparer.Ordinal);
-        private readonly Dictionary<string, SolidColorBrushResource> solidColorBrushes = new(StringComparer.Ordinal);
-        private readonly Dictionary<string, AspectResource> namedAspects = new(StringComparer.Ordinal);
-        private readonly Dictionary<string, AspectResource> defaultAspectsByTarget = new(StringComparer.Ordinal);
+        private readonly Dictionary<XElement, ResourceScope> resourceScopes = new();
+        private readonly Dictionary<XElement, ResourceScope> resourcePropertyScopes = new();
+        private readonly List<AspectResource> allAspects = [];
         private readonly Dictionary<XElement, DirectiveParseResult> directiveContent = new();
         private readonly Dictionary<string, INamedTypeSymbol> resolvedElementTypes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, IReadOnlyList<NamedElementMember>> conditionalFactoryMembers = new(StringComparer.Ordinal);
@@ -704,6 +745,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private List<string> currentLines;
         private List<string> currentPostLines;
         private int nextReactiveId;
+        private int nextResourceId;
 
         private static readonly PropertySpec[] PropertySpecs =
         [
@@ -725,36 +767,89 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private void ReadResources()
         {
-            if (document.Resources is null)
+            XElement[] owners = document.Root.DescendantsAndSelf().ToArray();
+            foreach (XElement owner in owners)
             {
-                return;
-            }
+                string expectedName = owner.Name.LocalName + ".Resources";
+                XElement[] resourceProperties = owner.Elements()
+                    .Where(element => element.Name.LocalName.EndsWith(".Resources", StringComparison.Ordinal))
+                    .ToArray();
+                XElement[] matching = resourceProperties
+                    .Where(element => string.Equals(element.Name.LocalName, expectedName, StringComparison.Ordinal))
+                    .ToArray();
 
-            foreach (XElement resource in document.Resources.Elements())
-            {
-                switch (resource.Name.LocalName)
+                foreach (XElement invalid in resourceProperties.Where(element => !matching.Contains(element)))
                 {
-                    case "SolidColorBrush":
-                        ReadSolidColorBrush(resource);
-                        break;
-                    case "Aspect":
-                        ReadAspect(resource);
-                        break;
-                    case "Resources":
-                        Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Nested Resources declarations are not supported.");
-                        break;
-                    default:
-                        Report(UnsupportedElement, resource, resource.Name.LocalName);
-                        break;
+                    Report(
+                        InvalidDocumentShape,
+                        invalid,
+                        Path.GetFileName(file.Path),
+                        "Resource property element '" + invalid.Name.LocalName + "' must match its owner tag '" + expectedName + "'.");
+                    invalid.Remove();
                 }
+
+                if (matching.Length > 1)
+                {
+                    Report(
+                        InvalidDocumentShape,
+                        matching[1],
+                        Path.GetFileName(file.Path),
+                        "Element '" + owner.Name.LocalName + "' may declare only one Resources property element.");
+                    foreach (XElement duplicate in matching.Skip(1))
+                    {
+                        duplicate.Remove();
+                    }
+                }
+
+                if (matching.Length == 0)
+                {
+                    continue;
+                }
+
+                XElement resources = matching[0];
+                if (resources.HasAttributes || resources.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+                {
+                    Report(
+                        InvalidDocumentShape,
+                        resources,
+                        Path.GetFileName(file.Path),
+                        "A Resources property element accepts only resource declarations.");
+                }
+
+                ResourceScope scope = new(owner);
+                resourceScopes.Add(owner, scope);
+                resourcePropertyScopes.Add(resources, scope);
+                foreach (XElement resource in resources.Elements())
+                {
+                    switch (resource.Name.LocalName)
+                    {
+                        case "SolidColorBrush":
+                            ReadSolidColorBrush(scope, resource);
+                            break;
+                        case "Aspect":
+                            ReadAspect(scope, resource);
+                            break;
+                        default:
+                            Report(UnsupportedElement, resource, resource.Name.LocalName);
+                            break;
+                    }
+                }
+
+                resources.Remove();
             }
         }
 
-        private void ReadSolidColorBrush(XElement resource)
+        private void ReadSolidColorBrush(ResourceScope scope, XElement resource)
         {
             string? name = RequiredName(resource);
             if (name is null)
             {
+                return;
+            }
+
+            if (scope.NamedResources.ContainsKey(name))
+            {
+                Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate resource Name '" + name + "' in the same scope.");
                 return;
             }
 
@@ -765,18 +860,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            string variable = CreateIdentifier(name);
+            string variable = CreateIdentifier(name) + "Resource" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+            nextResourceId++;
             SolidColorBrushResource brush = new(name, variable, color.ToExpression(), color, resource);
-            if (!AddSymbol(name, NamedSymbolKind.SolidColorBrush, brush, resource))
-            {
-                return;
-            }
-
-            solidColorBrushes[name] = brush;
+            scope.NamedResources.Add(name, new NamedSymbol(name, NamedSymbolKind.SolidColorBrush, brush));
+            scope.RuntimeResources.Add(brush);
             currentLines.Add("global::Cerneala.UI.Media.SolidColorBrush " + variable + " = new(" + brush.ColorExpression + ");");
         }
 
-        private void ReadAspect(XElement resource)
+        private void ReadAspect(ResourceScope scope, XElement resource)
         {
             string targetName = resource.Attribute("Target")?.Value ?? string.Empty;
             if (string.IsNullOrWhiteSpace(targetName))
@@ -840,24 +932,28 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             AspectResource aspect = new(string.IsNullOrWhiteSpace(name) ? null : name, targetName, assignments, conditions, resource);
+            allAspects.Add(aspect);
             if (aspect.Name is null)
             {
-                if (defaultAspectsByTarget.ContainsKey(targetName))
+                if (scope.DefaultAspectsByTarget.ContainsKey(targetName))
                 {
-                    Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate unnamed Aspect for target '" + targetName + "'.");
+                    Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate unnamed Aspect for target '" + targetName + "' in the same resource scope.");
                     return;
                 }
 
-                defaultAspectsByTarget.Add(targetName, aspect);
+                scope.DefaultAspectsByTarget.Add(targetName, aspect);
+                scope.RuntimeResources.Add(aspect);
                 return;
             }
 
-            if (!AddSymbol(aspect.Name, NamedSymbolKind.Aspect, aspect, resource))
+            if (scope.NamedResources.ContainsKey(aspect.Name))
             {
+                Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate resource Name '" + aspect.Name + "' in the same scope.");
                 return;
             }
 
-            namedAspects.Add(aspect.Name, aspect);
+            scope.NamedResources.Add(aspect.Name, new NamedSymbol(aspect.Name, NamedSymbolKind.Aspect, aspect));
+            scope.RuntimeResources.Add(aspect);
         }
 
         private static AspectPropertyAssignment ToAspectAssignment(DirectiveAssignmentNode assignment)
@@ -1015,6 +1111,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             currentLines.Add(typeName + " " + variable + " = new();");
+            EmitRuntimeResources(element, variable);
             if (!string.IsNullOrWhiteSpace(requestedName) && userControlPair is not null)
             {
                 RegisterNamedElement(requestedName!.Trim(), variable, typeName, element);
@@ -1060,6 +1157,33 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return variable;
         }
 
+        private void EmitRuntimeResources(XElement owner, string ownerVariable)
+        {
+            if (!resourceScopes.TryGetValue(owner, out ResourceScope? scope))
+            {
+                return;
+            }
+
+            foreach (object resource in scope.RuntimeResources)
+            {
+                switch (resource)
+                {
+                    case SolidColorBrushResource brush:
+                        currentLines.Add(ownerVariable + ".Resources[" + Literal(brush.Name) + "] = " + brush.Variable + ";");
+                        break;
+                    case AspectResource aspect:
+                        string targetType = ResolveElementType(aspect.TargetName)!;
+                        string key = aspect.Name is null ? "typeof(" + targetType + ")" : Literal(aspect.Name);
+                        string properties = string.Join(", ", aspect.Assignments.Select(assignment => Literal(assignment.PropertyName)));
+                        currentLines.Add(
+                            ownerVariable + ".Resources[" + key + "] = new global::Cerneala.UI.Markup.MarkupAspectResource(" +
+                            (aspect.Name is null ? "null" : Literal(aspect.Name)) + ", typeof(" + targetType + "), new string[] { " +
+                            properties + " }, " + (aspect.Conditions.Count > 0 ? "true" : "false") + ");");
+                        break;
+                }
+            }
+        }
+
         private string? ResolveElementType(string elementName)
         {
             string? metadataName = elementName switch
@@ -1089,7 +1213,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             string elementName = element.Name.LocalName;
             List<AspectResource> resolved = [];
-            if (defaultAspectsByTarget.TryGetValue(elementName, out AspectResource? defaultAspect))
+            if (TryResolveDefaultAspect(element, elementName, out AspectResource defaultAspect))
             {
                 resolved.Add(defaultAspect);
             }
@@ -1106,7 +1230,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return resolved;
             }
 
-            if (!namedAspects.TryGetValue(referenceName, out AspectResource? namedAspect))
+            if (!TryResolveResource(aspectAttribute, referenceName, out NamedSymbol symbol) ||
+                symbol.Source is not AspectResource namedAspect)
             {
                 Report(InvalidPropertyValue, aspectAttribute, elementName, "Aspect", aspectAttribute.Value);
                 return resolved;
@@ -1177,7 +1302,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private GeneratedExpression? ResolveReferenceValue(string elementName, string propertyName, string referenceName, MarkupValueKind targetKind, XObject source)
         {
-            if (!symbols.TryGetValue(referenceName, out NamedSymbol? symbol))
+            if (!TryResolveResource(source, referenceName, out NamedSymbol symbol))
             {
                 Report(InvalidPropertyValue, source, elementName, propertyName, "$" + referenceName);
                 return null;
@@ -1190,6 +1315,70 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             Report(InvalidPropertyValue, source, elementName, propertyName, "$" + referenceName);
             return null;
+        }
+
+        private bool TryResolveDefaultAspect(XObject source, string targetName, out AspectResource aspect)
+        {
+            foreach (ResourceScope scope in EnumerateResourceScopes(source))
+            {
+                if (scope.DefaultAspectsByTarget.TryGetValue(targetName, out aspect))
+                {
+                    return true;
+                }
+            }
+
+            aspect = null!;
+            return false;
+        }
+
+        private bool TryResolveResource(XObject source, string name, out NamedSymbol symbol)
+        {
+            foreach (ResourceScope scope in EnumerateResourceScopes(source))
+            {
+                if (scope.NamedResources.TryGetValue(name, out symbol))
+                {
+                    return true;
+                }
+            }
+
+            symbol = null!;
+            return false;
+        }
+
+        private bool TryResolveObjectSymbol(XObject source, string name, out NamedSymbol symbol)
+        {
+            if (symbols.TryGetValue(name, out symbol))
+            {
+                return true;
+            }
+
+            return TryResolveResource(source, name, out symbol);
+        }
+
+        private IEnumerable<ResourceScope> EnumerateResourceScopes(XObject source)
+        {
+            XElement? current = source switch
+            {
+                XElement element => element,
+                _ => source.Parent
+            };
+
+            while (current is not null)
+            {
+                if (resourcePropertyScopes.TryGetValue(current, out ResourceScope? declarationScope))
+                {
+                    yield return declarationScope;
+                    current = declarationScope.Owner.Parent;
+                    continue;
+                }
+
+                if (resourceScopes.TryGetValue(current, out ResourceScope? scope))
+                {
+                    yield return scope;
+                }
+
+                current = current.Parent;
+            }
         }
 
         private void EmitProperty(XElement element, string variable, XAttribute attribute)

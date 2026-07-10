@@ -222,7 +222,7 @@ public sealed partial class UiMarkupGenerator
             if (expression.StartsWith("$", StringComparison.Ordinal))
             {
                 string referenceName = expression.Substring(1);
-                if (!symbols.TryGetValue(referenceName, out NamedSymbol? symbol))
+                if (!TryResolveObjectSymbol(source, referenceName, out NamedSymbol symbol))
                 {
                     Report(InvalidBindingSource, source, expression, "Unknown local reference.");
                     return null;
@@ -370,7 +370,7 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 string referenceName = operand.Substring(1);
-                if (!symbols.TryGetValue(referenceName, out NamedSymbol? symbol))
+                if (!TryResolveObjectSymbol(source, referenceName, out NamedSymbol symbol))
                 {
                     Report(InvalidBindingSource, source, operand, "Unknown local reference.");
                     return null;

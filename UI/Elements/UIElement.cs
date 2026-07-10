@@ -7,6 +7,7 @@ using Cerneala.UI.Media;
 using Cerneala.UI.Motion.Layout;
 using Cerneala.UI.Motion.Presence;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Elements;
 
@@ -166,6 +167,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         Handlers = new ElementHandlerStore(this);
         CommandBindings = new CommandBindingCollection(this);
         Bindings = new BindingSubscriptionCollection();
+        Resources = new ResourceDictionary();
+        Resources.ResourceChanged += OnElementResourceChanged;
     }
 
     public UIElement? LogicalParent { get; private set; }
@@ -191,6 +194,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     public CommandBindingCollection CommandBindings { get; }
 
     public BindingSubscriptionCollection Bindings { get; }
+
+    public ResourceDictionary Resources { get; }
 
     public InputBindingCollection InputBindings { get; } = new();
 
@@ -414,8 +419,83 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         set => SetValue(CursorProperty, value);
     }
 
+    public bool TryFindResource(object key, out object? resource)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        for (UIElement? current = this; current is not null; current = current.LogicalParent ?? current.VisualParent)
+        {
+            if (current.Resources.TryGetValue(key, out resource))
+            {
+                return true;
+            }
+        }
+
+        resource = null;
+        return false;
+    }
+
+    public object? FindResource(object key)
+    {
+        return TryFindResource(key, out object? resource)
+            ? resource
+            : throw new KeyNotFoundException($"Resource '{key}' was not found in the element tree.");
+    }
+
+    public bool TryFindResource<T>(object key, out T resource)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        for (UIElement? current = this; current is not null; current = current.LogicalParent ?? current.VisualParent)
+        {
+            if (current.Resources.TryGetResource(key, out resource))
+            {
+                return true;
+            }
+
+            if (current.Resources.ContainsKey(key))
+            {
+                resource = default!;
+                return false;
+            }
+        }
+
+        if (key is string text && Root?.ResourceProvider is IResourceProvider provider)
+        {
+            ResourceId<T> id = new(text);
+            if (provider.TryGetResource(id, out resource))
+            {
+                Root.ResourceDependencyTracker.RecordDependency(this, id);
+                return true;
+            }
+        }
+
+        resource = default!;
+        return false;
+    }
+
+    public bool TryFindResource<T>(ResourceId<T> id, out T resource)
+    {
+        return TryFindResource(id.Key, out resource);
+    }
+
+    public T FindResource<T>(object key)
+    {
+        return TryFindResource(key, out T resource)
+            ? resource
+            : throw new KeyNotFoundException($"Resource '{key}' with type '{typeof(T).FullName}' was not found in the element tree or root provider.");
+    }
+
+    public T FindResource<T>(ResourceId<T> id)
+    {
+        return FindResource<T>(id.Key);
+    }
+
     internal bool HasAttachedParent =>
         (LogicalParent?.Root is not null) || (VisualParent?.Root is not null);
+
+    private void OnElementResourceChanged(object? sender, ResourceChangedEventArgs args)
+    {
+        Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
+    }
 
     internal void SetLogicalParent(UIElement? parent)
     {

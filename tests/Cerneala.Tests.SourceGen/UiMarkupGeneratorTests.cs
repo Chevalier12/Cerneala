@@ -6,6 +6,8 @@ using System.Text;
 using Cerneala.SourceGen;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Media;
+using Cerneala.UI.Markup;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
@@ -111,13 +113,14 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void ResourcesCanPrecedeSingleUiRootWithoutEmittingResourceElement()
+    public void ElementResourcesDoNotEmitVisualChildren()
     {
         const string markup = """
-            <Resources>
-              <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
-            </Resources>
-            <TextBlock Text="Hello" />
+            <TextBlock Text="Hello">
+              <TextBlock.Resources>
+                <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("ResourceFragment.cui.xml", markup, out Compilation compilation);
@@ -134,10 +137,55 @@ public sealed class UiMarkupGeneratorTests
 
         TextBlock root = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.ResourceFragmentFactory"));
         Assert.Equal("Hello", root.Text);
+        SolidColorBrush brush = root.FindResource<SolidColorBrush>("PulseColor");
+        Assert.Same(brush, root.Resources["PulseColor"]);
+        Assert.Equal(new Cerneala.Drawing.DrawColor(255, 93, 115), brush.Color);
     }
 
     [Fact]
-    public void SolidColorBrushResourceEmitsNamedBrushVariable()
+    public void GeneratedResourcesAreStoredOnTheirActualOwnerAndFollowRuntimeLookup()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="Accent" Color="#FFFF0000" />
+              </StackPanel.Resources>
+              <Border>
+                <Border.Resources>
+                  <SolidColorBrush Name="Accent" Color="#FF00FF00" />
+                  <Aspect Name="Card" Target="Border">
+                    @default { Background = $Accent; }
+                  </Aspect>
+                </Border.Resources>
+                <TextBlock Text="Inner" />
+              </Border>
+              <TextBlock Text="Outer" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("RuntimeResources.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.RuntimeResourcesFactory"));
+        Border border = Assert.IsType<Border>(panel.VisualChildren[0]);
+        TextBlock inner = Assert.IsType<TextBlock>(border.Child);
+        TextBlock outer = Assert.IsType<TextBlock>(panel.VisualChildren[1]);
+
+        Assert.Equal(new Cerneala.Drawing.DrawColor(0, 255, 0), inner.FindResource<SolidColorBrush>("Accent").Color);
+        Assert.Equal(new Cerneala.Drawing.DrawColor(255, 0, 0), outer.FindResource<SolidColorBrush>("Accent").Color);
+        MarkupAspectResource aspect = border.FindResource<MarkupAspectResource>("Card");
+        Assert.Equal(typeof(Border), aspect.TargetType);
+        Assert.Equal(new[] { "Background" }, aspect.DefaultPropertyNames);
+        Assert.Single(panel.Resources);
+        Assert.Equal(2, border.Resources.Count);
+    }
+
+    [Fact]
+    public void TopLevelResourcesReportsMigrationDiagnostic()
     {
         const string markup = """
             <Resources>
@@ -146,11 +194,118 @@ public sealed class UiMarkupGeneratorTests
             <TextBlock Text="Hello" />
             """;
 
+        GeneratorRunResult result = RunGenerator("TopLevelResources.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "TopLevelResources.cui.xml");
+        Assert.Contains("<RootType.Resources>", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void LiteralRelationalComparatorsCompileInsideXmlText()
+    {
+        const string markup = """
+            <StackPanel>
+              <TextBlock FontSize="12">
+                @when FontSize { @if value < 13 { Text = "lt"; } }
+              </TextBlock>
+              <TextBlock FontSize="12">
+                @when FontSize { @if value <= 12 { Text = "lte"; } }
+              </TextBlock>
+              <TextBlock FontSize="12">
+                @when FontSize { @if value > 11 { Text = "gt"; } }
+              </TextBlock>
+              <TextBlock FontSize="12">
+                @when FontSize { @if value >= 12 { Text = "gte"; } }
+              </TextBlock>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("KeywordComparators.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.KeywordComparatorsFactory"));
+        Assert.Equal(new[] { "lt", "lte", "gt", "gte" }, panel.VisualChildren.Cast<TextBlock>().Select(text => text.Text));
+    }
+
+    [Fact]
+    public void NearestElementResourceScopeShadowsAncestorResources()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="Accent" Color="#FFFF0000" />
+                <Aspect Name="Label" Target="TextBlock">
+                  @default { Foreground = $Accent; }
+                </Aspect>
+              </StackPanel.Resources>
+
+              <TextBlock Aspect="$Label" Text="Outer" />
+              <Border>
+                <Border.Resources>
+                  <SolidColorBrush Name="Accent" Color="#FF00FF00" />
+                  <Aspect Name="Label" Target="TextBlock">
+                    @default { Foreground = $Accent; }
+                  </Aspect>
+                </Border.Resources>
+                <TextBlock Aspect="$Label" Text="Inner" />
+              </Border>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("ScopedResources.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.ScopedResourcesFactory"));
+        TextBlock outer = Assert.IsType<TextBlock>(panel.VisualChildren[0]);
+        Border border = Assert.IsType<Border>(panel.VisualChildren[1]);
+        TextBlock inner = Assert.IsType<TextBlock>(border.Child);
+        Assert.Equal(new Cerneala.Drawing.DrawColor(255, 0, 0), outer.Foreground);
+        Assert.Equal(new Cerneala.Drawing.DrawColor(0, 255, 0), inner.Foreground);
+    }
+
+    [Fact]
+    public void ResourcePropertyElementMustMatchItsOwnerTag()
+    {
+        const string markup = """
+            <StackPanel>
+              <Border.Resources>
+                <SolidColorBrush Name="Accent" Color="#FFFF0000" />
+              </Border.Resources>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("WrongResourceOwner.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "WrongResourceOwner.cui.xml");
+        Assert.Contains("StackPanel.Resources", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void SolidColorBrushResourceEmitsNamedBrushVariable()
+    {
+        const string markup = """
+            <TextBlock Text="Hello">
+              <TextBlock.Resources>
+                <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
+              </TextBlock.Resources>
+            </TextBlock>
+            """;
+
         GeneratorRunResult result = RunGenerator("BrushResource.cui.xml", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.Contains("global::Cerneala.UI.Media.SolidColorBrush PulseColor = new(new global::Cerneala.Drawing.DrawColor(255, 93, 115));", generatedSource);
+        Assert.Contains("global::Cerneala.UI.Media.SolidColorBrush PulseColorResource0 = new(new global::Cerneala.Drawing.DrawColor(255, 93, 115));", generatedSource);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
@@ -161,10 +316,11 @@ public sealed class UiMarkupGeneratorTests
     public void InvalidSolidColorBrushColorReportsDiagnostic()
     {
         const string markup = """
-            <Resources>
-              <SolidColorBrush Name="PulseColor" Color="#NOPE" />
-            </Resources>
-            <TextBlock Text="Hello" />
+            <TextBlock Text="Hello">
+              <TextBlock.Resources>
+                <SolidColorBrush Name="PulseColor" Color="#NOPE" />
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("BadBrush.cui.xml", markup, out _);
@@ -178,12 +334,13 @@ public sealed class UiMarkupGeneratorTests
     public void AspectTypeAttributeIsNotAcceptedAsTarget()
     {
         const string markup = """
-            <Resources>
-              <Aspect Type="TextBlock">
-                @default { FontSize = 12; }
-              </Aspect>
-            </Resources>
-            <TextBlock />
+            <TextBlock>
+              <TextBlock.Resources>
+                <Aspect Type="TextBlock">
+                  @default { FontSize = 12; }
+                </Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("LegacyAspectType.cui.xml", markup, out _);
@@ -197,16 +354,16 @@ public sealed class UiMarkupGeneratorTests
     public void UnnamedAspectAppliesToEveryMatchingElement()
     {
         const string markup = """
-            <Resources>
-              <Aspect Target="TextBlock">
-                @default
-                {
-                  FontFamily = "Consolas";
-                  FontSize = 12;
-                }
-              </Aspect>
-            </Resources>
             <StackPanel>
+              <StackPanel.Resources>
+                <Aspect Target="TextBlock">
+                  @default
+                  {
+                    FontFamily = "Consolas";
+                    FontSize = 12;
+                  }
+                </Aspect>
+              </StackPanel.Resources>
               <TextBlock Text="One" />
               <TextBlock Text="Two" />
             </StackPanel>
@@ -228,23 +385,24 @@ public sealed class UiMarkupGeneratorTests
     public void NamedAspectAppliesAfterUnnamedDefault()
     {
         const string markup = """
-            <Resources>
-              <Aspect Target="TextBlock">
-                @default
-                {
-                  FontSize = 14;
-                  Foreground = Black;
-                }
-              </Aspect>
-              <Aspect Name="KickerText" Target="TextBlock">
-                @default
-                {
-                  FontSize = 12;
-                  Margin = "0,0,0,12";
-                }
-              </Aspect>
-            </Resources>
-            <TextBlock Aspect="$KickerText" Text="HELLO" />
+            <TextBlock Aspect="$KickerText" Text="HELLO">
+              <TextBlock.Resources>
+                <Aspect Target="TextBlock">
+                  @default
+                  {
+                    FontSize = 14;
+                    Foreground = Black;
+                  }
+                </Aspect>
+                <Aspect Name="KickerText" Target="TextBlock">
+                  @default
+                  {
+                    FontSize = 12;
+                    Margin = "0,0,0,12";
+                  }
+                </Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("NamedAspect.cui.xml", markup, out Compilation compilation);
@@ -264,16 +422,17 @@ public sealed class UiMarkupGeneratorTests
     public void AspectCanReferenceSolidColorBrushForDrawColorProperty()
     {
         const string markup = """
-            <Resources>
-              <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
-              <Aspect Name="KickerText" Target="TextBlock">
-                @default
-                {
-                  Foreground = $PulseColor;
-                }
-              </Aspect>
-            </Resources>
-            <TextBlock Aspect="$KickerText" Text="HELLO" />
+            <TextBlock Aspect="$KickerText" Text="HELLO">
+              <TextBlock.Resources>
+                <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
+                <Aspect Name="KickerText" Target="TextBlock">
+                  @default
+                  {
+                    Foreground = $PulseColor;
+                  }
+                </Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("AspectBrushReference.cui.xml", markup, out Compilation compilation);
@@ -294,15 +453,16 @@ public sealed class UiMarkupGeneratorTests
     public void UnknownNameReferenceReportsDiagnostic()
     {
         const string markup = """
-            <Resources>
-              <Aspect Name="KickerText" Target="TextBlock">
-                @default
-                {
-                  Foreground = $MissingColor;
-                }
-              </Aspect>
-            </Resources>
-            <TextBlock Aspect="$KickerText" />
+            <TextBlock Aspect="$KickerText">
+              <TextBlock.Resources>
+                <Aspect Name="KickerText" Target="TextBlock">
+                  @default
+                  {
+                    Foreground = $MissingColor;
+                  }
+                </Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("UnknownReference.cui.xml", markup, out _);
@@ -332,13 +492,15 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void DuplicateNameAcrossResourceAndElementReportsDiagnostic()
+    public void DuplicateResourceNameInSameScopeReportsDiagnostic()
     {
         const string markup = """
-            <Resources>
-              <SolidColorBrush Name="Duplicate" Color="#FF5D73" />
-            </Resources>
-            <TextBlock Name="Duplicate" Text="HELLO" />
+            <TextBlock Text="HELLO">
+              <TextBlock.Resources>
+                <SolidColorBrush Name="Duplicate" Color="#FF5D73" />
+                <SolidColorBrush Name="Duplicate" Color="#FFFFFFFF" />
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("DuplicateName.cui.xml", markup, out _);
@@ -352,15 +514,16 @@ public sealed class UiMarkupGeneratorTests
     public void AspectTargetMismatchReportsDiagnostic()
     {
         const string markup = """
-            <Resources>
-              <Aspect Name="KickerText" Target="TextBlock">
-                @default
-                {
-                  FontSize = 12;
-                }
-              </Aspect>
-            </Resources>
-            <Button Aspect="$KickerText" />
+            <Button Aspect="$KickerText">
+              <Button.Resources>
+                <Aspect Name="KickerText" Target="TextBlock">
+                  @default
+                  {
+                    FontSize = 12;
+                  }
+                </Aspect>
+              </Button.Resources>
+            </Button>
             """;
 
         GeneratorRunResult result = RunGenerator("AspectMismatch.cui.xml", markup, out _);
@@ -374,15 +537,16 @@ public sealed class UiMarkupGeneratorTests
     public void DuplicateUnnamedAspectForTargetReportsDiagnostic()
     {
         const string markup = """
-            <Resources>
-              <Aspect Target="TextBlock">
-                @default { FontSize = 12; }
-              </Aspect>
-              <Aspect Target="TextBlock">
-                @default { FontSize = 14; }
-              </Aspect>
-            </Resources>
-            <TextBlock />
+            <TextBlock>
+              <TextBlock.Resources>
+                <Aspect Target="TextBlock">
+                  @default { FontSize = 12; }
+                </Aspect>
+                <Aspect Target="TextBlock">
+                  @default { FontSize = 14; }
+                </Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("DuplicateDefaultAspect.cui.xml", markup, out _);
@@ -396,15 +560,16 @@ public sealed class UiMarkupGeneratorTests
     public void UnsupportedAspectPropertyReportsDiagnostic()
     {
         const string markup = """
-            <Resources>
-              <Aspect Target="TextBlock">
-                @default
-                {
-                  Width = 100;
-                }
-              </Aspect>
-            </Resources>
-            <TextBlock />
+            <TextBlock>
+              <TextBlock.Resources>
+                <Aspect Target="TextBlock">
+                  @default
+                  {
+                    Width = 100;
+                  }
+                </Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("UnsupportedAspectProperty.cui.xml", markup, out _);
@@ -415,19 +580,20 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void NestedResourcesReportsDiagnostic()
+    public void UnsupportedResourceDeclarationReportsDiagnostic()
     {
         const string markup = """
-            <Resources>
-              <Resources />
-            </Resources>
-            <TextBlock />
+            <TextBlock>
+              <TextBlock.Resources>
+                <Resources />
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("NestedResources.cui.xml", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "NestedResources.cui.xml");
-        Assert.Contains("Nested Resources", diagnostic.GetMessage());
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI002", "NestedResources.cui.xml");
+        Assert.Contains("Resources", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
 
@@ -450,16 +616,18 @@ public sealed class UiMarkupGeneratorTests
     public void FragmentDiagnosticsPreserveElementLineInformation()
     {
         const string markup = """
-            <Resources>
-              <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
-            </Resources>
-            <TextBlock Width="12" />
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
+              </StackPanel.Resources>
+              <TextBlock Width="12" />
+            </StackPanel>
             """;
 
         GeneratorRunResult result = RunGenerator("FragmentDiagnosticLocation.cui.xml", markup, out _);
 
         Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "FragmentDiagnosticLocation.cui.xml");
-        Assert.Equal(3, diagnostic.Location.GetLineSpan().StartLinePosition.Line);
+        Assert.Equal(4, diagnostic.Location.GetLineSpan().StartLinePosition.Line);
         Assert.Empty(result.GeneratedSources);
     }
 
@@ -478,10 +646,11 @@ public sealed class UiMarkupGeneratorTests
     {
         const string markup = """
             <?xml version="1.0"?>
-            <Resources>
-              <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
-            </Resources>
-            <TextBlock Text="Hello" />
+            <TextBlock Text="Hello">
+              <TextBlock.Resources>
+                <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
+              </TextBlock.Resources>
+            </TextBlock>
             """;
 
         GeneratorRunResult result = RunGenerator("XmlDeclarationFragment.cui.xml", markup, out Compilation compilation);
@@ -1034,16 +1203,17 @@ public sealed class UiMarkupGeneratorTests
     public void ConditionalAspectFallsBackWhenConditionStopsMatching()
     {
         const string markup = """
-            <Resources>
-              <Aspect Name="Hover" Target="Border">
-                @default { Background = Black; }
-                @when IsMouseOver
-                {
-                  @if value == True { Background = White; }
-                }
-              </Aspect>
-            </Resources>
-            <Border Aspect="$Hover" />
+            <Border Aspect="$Hover">
+              <Border.Resources>
+                <Aspect Name="Hover" Target="Border">
+                  @default { Background = Black; }
+                  @when IsMouseOver
+                  {
+                    @if value == True { Background = White; }
+                  }
+                </Aspect>
+              </Border.Resources>
+            </Border>
             """;
 
         GeneratorRunResult result = RunGenerator("ReactiveAspect.cui.xml", markup, out Compilation compilation);

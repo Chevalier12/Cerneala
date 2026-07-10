@@ -1,4 +1,16 @@
-<Resources>
+<UserControl
+    Initialized="OnInitialized"
+    Loaded="OnLoaded"
+    Unloaded="OnUnloaded"
+    DataContextChanged="OnDataContextChanged"
+    Background="12,16,24"
+    BorderColor="82,96,113"
+    BorderThickness="1"
+    Padding="16"
+    Margin="0"
+    IsEnabled="True"
+    IsVisible="True">
+    <UserControl.Resources>
     <SolidColorBrush Name="AccentBrush" Color="#FFFF5D73" />
     <SolidColorBrush Name="PanelBrush" Color="#FF1E2633" />
     <SolidColorBrush Name="PanelEdgeBrush" Color="#FF526071" />
@@ -31,20 +43,7 @@
             }
         }
     </Aspect>
-</Resources>
-
-<UserControl
-    Initialized="OnInitialized"
-    Loaded="OnLoaded"
-    Unloaded="OnUnloaded"
-    DataContextChanged="OnDataContextChanged"
-    Background="12,16,24"
-    BorderColor="82,96,113"
-    BorderThickness="1"
-    Padding="16"
-    Margin="0"
-    IsEnabled="True"
-    IsVisible="True">
+    </UserControl.Resources>
 
     @when $DataContext.IsReady
     {
@@ -79,6 +78,16 @@
             MouseEnter="OnBadgeMouseEnter" />
 
         <Border Name="FeatureCard" Aspect="$InteractiveCard" Margin="0,0,0,8">
+            <Border.Resources>
+                <SolidColorBrush Name="AccentBrush" Color="#FF00D4AA" />
+                <Aspect Name="LocalStatusLabel" Target="TextBlock">
+                    @default
+                    {
+                        Foreground = $AccentBrush;
+                    }
+                </Aspect>
+            </Border.Resources>
+
             @when $CustomBadge
             {
                 @if value != $AccentBrush
@@ -102,7 +111,7 @@
             }
 
             <StackPanel>
-                <TextBlock Name="StatusText" Text="Mode: Idle">
+                <TextBlock Name="StatusText" Aspect="$LocalStatusLabel" Text="Mode: Idle">
                     @when $DataContext.Mode
                     {
                         @if value == Idle { Text = "Mode: Idle"; }
@@ -115,11 +124,11 @@
                     <TextBlock Name="ScoreBandText" Text="Score: zero" IsVisible="True">
                         @when $DataContext.Score
                         {
-                            @if value &lt; 0 { Text = "Score: negative"; }
-                            @if value &lt;= 3 { Text = "Score: low"; }
+                            @if value < 0 { Text = "Score: negative"; }
+                            @if value <= 3 { Text = "Score: low"; }
                             @if value != 0 { IsVisible = True; }
-                            @if value &gt; 3 { Text = "Score: medium"; }
-                            @if value &gt;= 10 { Text = "Score: high"; }
+                            @if value > 3 { Text = "Score: medium"; }
+                            @if value >= 10 { Text = "Score: high"; }
                             @if value == $DataContext.TargetScore { Text = "Score reached the target"; }
                         }
                     </TextBlock>
@@ -129,7 +138,7 @@
                         {
                             @if value == "Ada" { Text = "User: Ada"; }
                             @if value != "Ada" { Text = "User: not Ada"; }
-                            @if value &lt; "M" { Foreground = $AccentBrush; }
+                            @if value < "M" { Foreground = $AccentBrush; }
                         }
                     </TextBlock>
 

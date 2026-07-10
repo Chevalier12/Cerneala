@@ -358,6 +358,7 @@ public sealed partial class UiMarkupGenerator
 
         public string? EmitUserControlRoot(XElement root)
         {
+            EmitRuntimeResources(root, "this");
             DirectiveParseResult parsed = GetDirectiveContent(root, allowAssignments: false, allowElements: true);
             if (parsed.Error is not null)
             {
