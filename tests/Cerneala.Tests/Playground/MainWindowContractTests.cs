@@ -27,9 +27,14 @@ public sealed class MainWindowContractTests
         Border chrome = Assert.IsType<Border>(openWindowsButton.ComponentTemplateInstance!.Root);
         Assert.Same(chrome, openWindowsButton.ComponentTemplateInstance.Parts["OpenWindowsChrome"]);
         Assert.Equal(openWindowsButton.Background, chrome.Background);
-        Assert.Equal(
-            "Open 3 test windows",
-            Assert.IsType<ContentPresenter>(chrome.Child).Content);
+        ContentPresenter presenter = Assert.IsType<ContentPresenter>(chrome.Child);
+        Assert.Equal("Open 3 test windows", presenter.Content);
+        Assert.Equal(openWindowsButton.Foreground, presenter.Foreground);
+        Assert.Equal(openWindowsButton.Foreground, Assert.IsType<TextBlock>(presenter.PresentedChild).Foreground);
+        TextBlock templatePartStatus = Assert.IsType<TextBlock>(actions.VisualChildren[6]);
+        Assert.Equal("Template part access: live + reactive", templatePartStatus.Text);
+        chrome.IsEnabled = false;
+        Assert.Equal("Template part access: observed disabled state", templatePartStatus.Text);
     }
 
     [Fact]
@@ -67,16 +72,16 @@ public sealed class MainWindowContractTests
         root.VisualChildren.Add(window);
         (_, _, _, StackPanel actions) = FindReactiveElements(window);
 
-        Assert.Equal(6, actions.VisualChildren.Count);
+        Assert.Equal(7, actions.VisualChildren.Count);
 
         viewModel.ShowAdvanced = true;
-        Button first = Assert.IsType<Button>(actions.VisualChildren[6]);
+        Button first = Assert.IsType<Button>(actions.VisualChildren[7]);
 
         viewModel.ShowAdvanced = false;
-        Assert.Equal(6, actions.VisualChildren.Count);
+        Assert.Equal(7, actions.VisualChildren.Count);
 
         viewModel.ShowAdvanced = true;
-        Assert.Same(first, actions.VisualChildren[6]);
+        Assert.Same(first, actions.VisualChildren[7]);
     }
 
     [Fact]

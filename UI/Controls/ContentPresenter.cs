@@ -118,6 +118,15 @@ public class ContentPresenter : Control
             presentationDirty = true;
             RefreshPresentedChild();
         }
+
+        if (generatedTextChild &&
+            presentedChild is TextBlock textBlock &&
+            (ReferenceEquals(args.Property, ForegroundProperty) ||
+             ReferenceEquals(args.Property, FontFamilyProperty) ||
+             ReferenceEquals(args.Property, FontSizeProperty)))
+        {
+            ApplyGeneratedTextAspect(textBlock);
+        }
     }
 
     private void RefreshPresentedChild()

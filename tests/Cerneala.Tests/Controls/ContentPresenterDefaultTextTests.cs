@@ -1,3 +1,4 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
@@ -6,6 +7,18 @@ namespace Cerneala.Tests.Controls;
 
 public sealed class ContentPresenterDefaultTextTests
 {
+    [Fact]
+    public void ForegroundChangedAfterStringContentUpdatesGeneratedTextBlock()
+    {
+        ContentPresenter presenter = new() { Content = "Open 3 test windows" };
+        TextBlock textBlock = Assert.IsType<TextBlock>(presenter.PresentedChild);
+
+        presenter.Foreground = DrawColor.White;
+
+        Assert.Equal(DrawColor.White, presenter.Foreground);
+        Assert.Equal(DrawColor.White, textBlock.Foreground);
+    }
+
     [Fact]
     public void ContentPresenterCreatesTextBlockForStringContentWithoutTemplate()
     {

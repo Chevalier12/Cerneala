@@ -82,7 +82,7 @@
     <StackPanel Name="RootPanel" Margin="8">
         <TextBlock
             Name="TitleText"
-            Text="Window + source generator: tot ce merge acum"
+            Text="Cerneala source generator showcase"
             FontFamily="Consolas"
             FontSize="22"
             Foreground="255,93,115"
@@ -200,7 +200,7 @@
                         Name="OpenWindowsButton"
                         Content="Open 3 test windows"
                         Background="Transparent"
-                        Foreground="White"
+                        Foreground="Black"
                         BorderColor="82,96,113"
                         BorderThickness="1"
                         Padding="10,6,10,6"
@@ -221,11 +221,25 @@
 
                                 <ContentPresenter
                                     Content="$owner.Content"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center" />
+                                    HorizontalAlignment="Left"
+                                    Foreground="$owner.Foreground"
+                                    VerticalAlignment="Center">
+                                @when $owner.IsMouseOver
+                                {
+                                    Foreground = White;
+                                }
+                                </ContentPresenter>
                             </Border>
                         }
                     </Button>
+
+                    <TextBlock Name="TemplatePartStatus" Text="Template part access: unavailable" Margin="0,4,0,4">
+                        @when $OpenWindowsButton.parts.$OpenWindowsChrome.IsEnabled
+                        {
+                            @if value == True { Text = "Template part access: live + reactive"; }
+                            @if value == False { Text = "Template part access: observed disabled state"; }
+                        }
+                    </TextBlock>
 
                     @when $DataContext.ShowAdvanced
                     {
