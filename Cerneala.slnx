@@ -3,6 +3,7 @@
     <Project Path="Playground/Cerneala.Playground/Cerneala.Playground.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Cerneala.WindowsDxSmoke/Cerneala.WindowsDxSmoke.csproj" />
     <Project Path="tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj" />
     <Project Path="tests/Cerneala.Tests/Cerneala.Tests.csproj" />
   </Folder>

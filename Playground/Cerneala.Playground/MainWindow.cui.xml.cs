@@ -10,6 +10,8 @@ namespace Cerneala.Playground;
 
 public partial class MainWindow : Window<MainWindowViewModel>
 {
+    private int openedWindowBatch;
+
     private void OnSourceInitialized(object? sender, EventArgs args)
     {
         LifecycleText.Text = "SourceInitialized: HWND-ul nativ exista";
@@ -106,6 +108,41 @@ public partial class MainWindow : Window<MainWindowViewModel>
         WindowState = WindowState == WindowState.Normal
             ? WindowState.Maximized
             : WindowState.Normal;
+    }
+
+    private void OnOpenWindowsClick(UiElementId sender, RoutedEventArgs args)
+    {
+        int batch = ++openedWindowBatch;
+        for (int index = 1; index <= 3; index++)
+        {
+            Window window = new()
+            {
+                Title = $"Test window {batch}.{index}",
+                Width = 480,
+                Height = 300,
+                MinWidth = 320,
+                MinHeight = 200,
+                Left = Left + (index * 48),
+                Top = Top + (index * 48),
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                Owner = this,
+                Background = new DrawColor(20, 28, 38),
+                BorderColor = new DrawColor(82, 96, 113),
+                BorderThickness = new Cerneala.UI.Layout.Thickness(1),
+                Padding = new Cerneala.UI.Layout.Thickness(20),
+                Content = new TextBlock
+                {
+                    Text = $"Fereastra {index} din setul {batch}",
+                    FontFamily = "Segoe UI",
+                    FontSize = 20,
+                    Foreground = new DrawColor(245, 245, 245),
+                    Background = new DrawColor(30, 38, 51),
+                    Padding = new Cerneala.UI.Layout.Thickness(16)
+                }
+            };
+
+            window.Show();
+        }
     }
 
     private void OnAdvancedClick(UiElementId sender, RoutedEventArgs args)

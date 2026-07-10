@@ -8,10 +8,6 @@ namespace Cerneala.UI.Hosting.Windows;
 
 internal interface IWindowPlatform : IDisposable
 {
-    IImageLoader? ImageLoader { get; }
-
-    ImageResourceCache? ImageResourceCache { get; }
-
     IPlatformWindow CreateWindow(Window window, IWindowPlatformCallbacks callbacks);
 
     void PumpEvents();
@@ -25,7 +21,7 @@ internal interface IPlatformWindow : IDisposable
 
     IInputSource InputSource { get; }
 
-    IDrawingBackend DrawingBackend { get; }
+    IWindowGraphicsSession GraphicsSession { get; }
 
     void ApplyProperties(Window window);
 
@@ -40,8 +36,26 @@ internal interface IPlatformWindow : IDisposable
     void Activate();
 
     void Destroy();
+}
+
+internal interface IWindowGraphicsSession : IDisposable
+{
+    IDrawingBackend DrawingBackend { get; }
+
+    IImageLoader? ImageLoader { get; }
+
+    ImageResourceCache? ImageResourceCache { get; }
+
+    void Resize(int pixelWidth, int pixelHeight, float coordinateScale);
+
+    void BeginFrame(DrawColor clearColor);
 
     void Present();
+}
+
+internal interface IWindowGraphicsSessionFactory
+{
+    IWindowGraphicsSession Create(nint windowHandle, int pixelWidth, int pixelHeight, float coordinateScale);
 }
 
 internal interface IWindowPlatformCallbacks

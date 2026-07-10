@@ -22,10 +22,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         _textRasterizer = textRasterizer;
     }
 
-    public static RasterizerState ScissorRasterizerState { get; } = new()
-    {
-        ScissorTestEnable = true
-    };
+    public static RasterizerState ScissorRasterizerState => new() { ScissorTestEnable = true };
 
     public float CoordinateScale
     {
@@ -209,6 +206,11 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         if (command.Image is not MonoGameImage image)
         {
             throw new InvalidOperationException("DrawImage requires a MonoGameImage when using MonoGameDrawingBackend.");
+        }
+
+        if (!ReferenceEquals(image.Texture.GraphicsDevice, _spriteBatch.GraphicsDevice))
+        {
+            throw new InvalidOperationException("A MonoGameImage can only be drawn by the GraphicsDevice that created it.");
         }
 
         _spriteBatch.Draw(image.Texture, Mapper.MapRectangle(command.Rect), ToColor(command.Color));

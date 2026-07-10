@@ -196,6 +196,7 @@
                     <Button Name="ReplaceContextButton" Content="Replace the entire DataContext" Click="OnReplaceContextClick" />
                     <Button Name="PinStatusButton" Content="Set Local value over markup" Click="OnPinStatusClick" />
                     <Button Name="WindowStateButton" Content="Toggle native WindowState" Click="OnToggleWindowStateClick" />
+                    <Button Name="OpenWindowsButton" Content="Open 3 test windows" Click="OnOpenWindowsClick" />
 
                     @when $DataContext.ShowAdvanced
                     {

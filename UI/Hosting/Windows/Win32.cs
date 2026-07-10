@@ -20,6 +20,7 @@ internal static class Win32
     public const int SW_SHOW = 5;
     public const int SW_SHOWMINIMIZED = 2;
     public const int SW_SHOWMAXIMIZED = 3;
+    public const int SW_RESTORE = 9;
     public const uint SWP_NOZORDER = 0x0004;
     public const uint SWP_NOACTIVATE = 0x0010;
     public const uint SWP_FRAMECHANGED = 0x0020;
@@ -35,6 +36,7 @@ internal static class Win32
     public const uint WM_GETMINMAXINFO = 0x0024;
     public const uint WM_PAINT = 0x000F;
     public const uint WM_DPICHANGED = 0x02E0;
+    public const uint WM_SYSCOMMAND = 0x0112;
     public const uint WM_MOUSEMOVE = 0x0200;
     public const uint WM_LBUTTONDOWN = 0x0201;
     public const uint WM_LBUTTONUP = 0x0202;
@@ -49,13 +51,13 @@ internal static class Win32
     public const uint WM_SYSKEYDOWN = 0x0104;
     public const uint WM_SYSKEYUP = 0x0105;
     public const nuint WA_INACTIVE = 0;
+    public const nuint SC_MAXIMIZE = 0xF030;
+    public const nuint SC_MASK = 0xFFF0;
     public const uint PM_REMOVE = 0x0001;
     public const int COLOR_WINDOW = 5;
     public const int IDC_ARROW = 32512;
     public const int SM_CXSCREEN = 0;
     public const int SM_CYSCREEN = 1;
-    public const uint DIB_RGB_COLORS = 0;
-    public const uint SRCCOPY = 0x00CC0020;
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     public delegate nint WndProc(nint hwnd, uint message, nuint wParam, nint lParam);
@@ -140,46 +142,6 @@ internal static class Win32
         [MarshalAs(UnmanagedType.Bool)] public bool fRestore;
         [MarshalAs(UnmanagedType.Bool)] public bool fIncUpdate;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)] public byte[] rgbReserved;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct BITMAPINFOHEADER
-    {
-        public uint biSize;
-        public int biWidth;
-        public int biHeight;
-        public ushort biPlanes;
-        public ushort biBitCount;
-        public uint biCompression;
-        public uint biSizeImage;
-        public int biXPelsPerMeter;
-        public int biYPelsPerMeter;
-        public uint biClrUsed;
-        public uint biClrImportant;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct BITMAPINFO
-    {
-        public BITMAPINFOHEADER bmiHeader;
-        public uint bmiColors;
-
-        public static BITMAPINFO ForTopDownBgra(int width, int height)
-        {
-            return new BITMAPINFO
-            {
-                bmiHeader = new BITMAPINFOHEADER
-                {
-                    biSize = (uint)Marshal.SizeOf<BITMAPINFOHEADER>(),
-                    biWidth = width,
-                    biHeight = -height,
-                    biPlanes = 1,
-                    biBitCount = 32,
-                    biCompression = 0,
-                    biSizeImage = (uint)(width * height * 4)
-                }
-            };
-        }
     }
 
     [DllImport("user32.dll", EntryPoint = "RegisterClassExW", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -275,15 +237,6 @@ internal static class Win32
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool EndPaint(nint hwnd, in PAINTSTRUCT paint);
-
-    [DllImport("user32.dll")]
-    public static extern nint GetDC(nint hwnd);
-
-    [DllImport("user32.dll")]
-    public static extern int ReleaseDC(nint hwnd, nint deviceContext);
-
-    [DllImport("gdi32.dll")]
-    public static extern int StretchDIBits(nint deviceContext, int xDest, int yDest, int destWidth, int destHeight, int xSource, int ySource, int sourceWidth, int sourceHeight, nint bits, in BITMAPINFO bitmapInfo, uint usage, uint rasterOperation);
 
     [DllImport("kernel32.dll", EntryPoint = "GetModuleHandleW", CharSet = CharSet.Unicode)]
     public static extern nint GetModuleHandle(string? moduleName);

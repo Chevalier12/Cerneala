@@ -6,7 +6,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build playground",
-      "program": "${workspaceFolder}/Playground/Cerneala.Playground/bin/Debug/net8.0/Cerneala.Playground.dll",
+      "program": "${workspaceFolder}/Playground/Cerneala.Playground/bin/Debug/net8.0-windows/Cerneala.Playground.dll",
       "args": [],
       "cwd": "${workspaceFolder}/Playground/Cerneala.Playground",
       "console": "internalConsole",

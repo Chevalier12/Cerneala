@@ -76,7 +76,9 @@ public sealed class MonoGameUiHostBoundaryTests
         string source = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "UI", "Hosting", "MonoGame", "MonoGameUiHost.cs"));
 
         Assert.Contains("sortMode: SpriteSortMode.Immediate", source, StringComparison.Ordinal);
-        Assert.Contains("rasterizerState: MonoGameDrawingBackend.ScissorRasterizerState", source, StringComparison.Ordinal);
+        Assert.Contains("rasterizerState = MonoGameDrawingBackend.ScissorRasterizerState", source, StringComparison.Ordinal);
+        Assert.Contains("rasterizerState: rasterizerState", source, StringComparison.Ordinal);
+        Assert.Contains("rasterizerState.Dispose();", source, StringComparison.Ordinal);
     }
 
     private static string FindRepositoryRoot()

@@ -9,6 +9,11 @@
         "build",
         "${workspaceFolder}/Playground/Cerneala.Playground/Cerneala.Playground.csproj"
       ],
+      "options": {
+        "env": {
+          "MSBuildEnableWorkloadResolver": "false"
+        }
+      },
       "problemMatcher": "$msCompile",
       "group": {
         "kind": "build",

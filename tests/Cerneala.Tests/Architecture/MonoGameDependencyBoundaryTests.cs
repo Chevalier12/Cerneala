@@ -36,6 +36,7 @@ public sealed class MonoGameDependencyBoundaryTests
         string[] allowedRoots =
         [
             Path.Combine(root, "UI", "Hosting", "MonoGame"),
+            Path.Combine(root, "UI", "Hosting", "Windows"),
             Path.Combine(root, "UI", "Input", "MonoGame"),
             Path.Combine(root, "Drawing", "MonoGame"),
             Path.Combine(root, "UI", "Resources", "MonoGame"),
@@ -62,6 +63,20 @@ public sealed class MonoGameDependencyBoundaryTests
             Assert.True(
                 allowedRoots.Any(allowedRoot => IsUnder(file, allowedRoot)) || Path.GetFileName(file) == "GameBootstrap.cs",
                 $"{Path.GetRelativePath(root, file)} references MonoGame framework APIs outside known adapter or consumer code.");
+        }
+    }
+
+    [Fact]
+    public void WindowHostingCannotUseTheGeneralSkiaRenderer()
+    {
+        string root = FindRepositoryRoot();
+        string windowHostingRoot = Path.Combine(root, "UI", "Hosting", "Windows");
+
+        foreach (string file in Directory.EnumerateFiles(windowHostingRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+            Assert.DoesNotContain("SkiaDrawingBackend", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("SkiaDrawImage", text, StringComparison.Ordinal);
         }
     }
 

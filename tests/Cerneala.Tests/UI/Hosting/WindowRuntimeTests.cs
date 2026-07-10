@@ -45,10 +45,86 @@ public sealed class WindowRuntimeTests : IDisposable
         window.Hide();
         Assert.False(window.IsShown);
         Assert.True(window.IsLoaded);
+        Assert.Equal(0, platform.Windows[0].Session.DisposeCount);
 
         window.Show();
         Assert.True(window.IsShown);
         Assert.Single(events, value => value == "rendered");
+    }
+
+    [Fact]
+    public void EachWindowUsesAndDisposesItsOwnGraphicsSession()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window first = new();
+        Window second = new();
+
+        first.Show();
+        second.Show();
+
+        Assert.NotSame(platform.Windows[0].Session, platform.Windows[1].Session);
+        Assert.Equal(1, platform.Windows[0].Session.BeginFrameCount);
+        Assert.Equal(1, platform.Windows[0].Session.PresentCount);
+        Assert.Equal(1, platform.Windows[1].Session.BeginFrameCount);
+        Assert.Equal(1, platform.Windows[1].Session.PresentCount);
+
+        first.Close();
+
+        Assert.Equal(1, platform.Windows[0].Session.DisposeCount);
+        Assert.Equal(0, platform.Windows[1].Session.DisposeCount);
+        runtimePump(second);
+        Assert.Equal(2, platform.Windows[1].Session.PresentCount);
+
+        static void runtimePump(Window window)
+        {
+            window.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "test");
+            WindowApplicationRuntime.Current!.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+    }
+
+    [Fact]
+    public void NativeBoundsNotificationsDoNotEchoPropertiesBackToThePlatform()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window window = new() { Width = 800, Height = 600 };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        int appliedBeforeNotification = nativeWindow.ApplyPropertiesCount;
+        UiViewport nativeViewport = new(620, 440, 1.25f);
+        int locationChangedCount = 0;
+        int stateChangedCount = 0;
+        window.LocationChanged += (_, _) => locationChangedCount++;
+        window.StateChanged += (_, _) => stateChangedCount++;
+
+        nativeWindow.ReportBounds(nativeViewport, 120, 75, WindowState.Maximized);
+
+        Assert.Equal(120, window.Left);
+        Assert.Equal(75, window.Top);
+        Assert.Equal(WindowState.Maximized, window.WindowState);
+        Assert.Equal(nativeViewport, nativeWindow.Viewport);
+        Assert.Equal(appliedBeforeNotification, nativeWindow.ApplyPropertiesCount);
+        Assert.Equal(2, locationChangedCount);
+        Assert.Equal(1, stateChangedCount);
+
+        window.Title = "Updated after native notification";
+        Assert.Equal(appliedBeforeNotification + 1, nativeWindow.ApplyPropertiesCount);
+    }
+
+    [Fact]
+    public void VisualPropertyChangesDoNotReapplyNativeWindowGeometry()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window window = new();
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        int appliedBeforeVisualChange = nativeWindow.ApplyPropertiesCount;
+
+        window.Background = new DrawColor(10, 20, 30);
+
+        Assert.Equal(appliedBeforeVisualChange, nativeWindow.ApplyPropertiesCount);
     }
 
     [Fact]
@@ -166,10 +242,6 @@ public sealed class WindowRuntimeTests : IDisposable
 
     private sealed class FakeWindowPlatform : IWindowPlatform
     {
-        public IImageLoader? ImageLoader => null;
-
-        public ImageResourceCache? ImageResourceCache => null;
-
         public List<FakePlatformWindow> Windows { get; } = [];
 
         public int PumpCount { get; private set; }
@@ -213,17 +285,28 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public IInputSource InputSource { get; } = new EmptyInputSource();
 
-        public FakeDrawingBackend Backend { get; } = new();
+        public FakeGraphicsSession Session { get; } = new();
 
-        IDrawingBackend IPlatformWindow.DrawingBackend => Backend;
+        public FakeDrawingBackend Backend => Session.Backend;
+
+        public IWindowGraphicsSession GraphicsSession => Session;
 
         public bool Enabled { get; private set; } = true;
 
         public bool Destroyed { get; private set; }
 
+        public int ApplyPropertiesCount { get; private set; }
+
         public void ApplyProperties(Window source)
         {
+            ApplyPropertiesCount++;
             Viewport = new UiViewport(source.Width, source.Height);
+        }
+
+        public void ReportBounds(UiViewport viewport, float left, float top, WindowState state)
+        {
+            Viewport = viewport;
+            callbacks.BoundsChanged(viewport, left, top, state);
         }
 
         public void SetOwner(IPlatformWindow? owner)
@@ -253,12 +336,9 @@ public sealed class WindowRuntimeTests : IDisposable
             Destroyed = true;
         }
 
-        public void Present()
-        {
-        }
-
         public void Dispose()
         {
+            Session.Dispose();
         }
     }
 
@@ -282,6 +362,50 @@ public sealed class WindowRuntimeTests : IDisposable
         public void Render(DrawCommandList commands)
         {
             RenderCount++;
+        }
+    }
+
+    private sealed class FakeGraphicsSession : IWindowGraphicsSession
+    {
+        private bool disposed;
+
+        public FakeDrawingBackend Backend { get; } = new();
+
+        public IDrawingBackend DrawingBackend => Backend;
+
+        public IImageLoader? ImageLoader => null;
+
+        public ImageResourceCache? ImageResourceCache => null;
+
+        public int BeginFrameCount { get; private set; }
+
+        public int PresentCount { get; private set; }
+
+        public int DisposeCount { get; private set; }
+
+        public void Resize(int pixelWidth, int pixelHeight, float coordinateScale)
+        {
+        }
+
+        public void BeginFrame(DrawColor clearColor)
+        {
+            BeginFrameCount++;
+        }
+
+        public void Present()
+        {
+            PresentCount++;
+        }
+
+        public void Dispose()
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            DisposeCount++;
+            disposed = true;
         }
     }
 }

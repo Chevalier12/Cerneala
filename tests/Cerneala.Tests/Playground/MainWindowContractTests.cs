@@ -20,6 +20,9 @@ public sealed class MainWindowContractTests
         Assert.Equal(1180, window.Width);
         Assert.Equal(900, window.Height);
         Assert.IsType<StackPanel>(window.Content);
+        (_, _, _, StackPanel actions) = FindReactiveElements(window);
+        Button openWindowsButton = Assert.IsType<Button>(actions.VisualChildren[5]);
+        Assert.Equal("Open 3 test windows", openWindowsButton.Content);
     }
 
     [Fact]
@@ -57,16 +60,16 @@ public sealed class MainWindowContractTests
         root.VisualChildren.Add(window);
         (_, _, _, StackPanel actions) = FindReactiveElements(window);
 
-        Assert.Equal(5, actions.VisualChildren.Count);
+        Assert.Equal(6, actions.VisualChildren.Count);
 
         viewModel.ShowAdvanced = true;
-        Button first = Assert.IsType<Button>(actions.VisualChildren[5]);
+        Button first = Assert.IsType<Button>(actions.VisualChildren[6]);
 
         viewModel.ShowAdvanced = false;
-        Assert.Equal(5, actions.VisualChildren.Count);
+        Assert.Equal(6, actions.VisualChildren.Count);
 
         viewModel.ShowAdvanced = true;
-        Assert.Same(first, actions.VisualChildren[5]);
+        Assert.Same(first, actions.VisualChildren[6]);
     }
 
     [Fact]

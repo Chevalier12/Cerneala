@@ -14,6 +14,7 @@ public sealed class MonoGameUiHost : IDisposable
 {
     private readonly SpriteBatch spriteBatch;
     private readonly MonoGameDrawingBackend drawingBackend;
+    private readonly RasterizerState rasterizerState;
     private readonly MonoGameUiBackend backend;
     private readonly UiHost host;
     private bool disposed;
@@ -27,6 +28,7 @@ public sealed class MonoGameUiHost : IDisposable
             textRasterizer: options.TextRasterizer,
             imageLoader: options.ImageLoader ?? new MonoGameImageLoader(spriteBatch.GraphicsDevice));
         drawingBackend = new MonoGameDrawingBackend(spriteBatch, options.WhitePixel, ContentServices.TextRasterizer);
+        rasterizerState = MonoGameDrawingBackend.ScissorRasterizerState;
         backend = new MonoGameUiBackend(InputSource, drawingBackend);
         host = new UiHost(new UiHostOptions
         {
@@ -74,7 +76,7 @@ public sealed class MonoGameUiHost : IDisposable
     public void Draw()
     {
         drawingBackend.CoordinateScale = host.Viewport.Scale;
-        spriteBatch.Begin(sortMode: SpriteSortMode.Immediate, rasterizerState: MonoGameDrawingBackend.ScissorRasterizerState);
+        spriteBatch.Begin(sortMode: SpriteSortMode.Immediate, rasterizerState: rasterizerState);
         try
         {
             host.Draw(drawingBackend);
@@ -93,6 +95,7 @@ public sealed class MonoGameUiHost : IDisposable
         }
 
         drawingBackend.Dispose();
+        rasterizerState.Dispose();
         ContentServices.Dispose();
         GeneratedWindowApplication.StopHosted();
         disposed = true;

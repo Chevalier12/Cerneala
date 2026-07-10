@@ -29,6 +29,8 @@ Generated from `.`.
 |   |   |-- cerneala-drawing-flowchart.svg
 |   |   |-- retained-frame-loop.md
 |   |   +-- ui-layer-boundaries.md
+|   |-- plans/
+|   |   +-- 2026-07-10-window-windowsdx-migration.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -825,8 +827,6 @@ Generated from `.`.
 |   |   |-- MonoGameDrawMapper.cs
 |   |   +-- MonoGameImage.cs
 |   |-- Skia/
-|   |   |-- SkiaDrawImage.cs
-|   |   +-- SkiaDrawingBackend.cs
 |   |-- Text/
 |   |   |-- RasterizedText.cs
 |   |   |-- SkiaFont.cs
@@ -940,7 +940,6 @@ Generated from `.`.
 |   |   |   |-- DrawCommandListTests.cs
 |   |   |   |-- DrawingContextTests.cs
 |   |   |   |-- DrawingResourceTests.cs
-|   |   |   |-- SkiaDrawingBackendTests.cs
 |   |   |   +-- TextPipelineTests.cs
 |   |   |-- Input/
 |   |   |   |-- ActionCommandTests.cs
@@ -1059,7 +1058,8 @@ Generated from `.`.
 |   |   |   |   |-- UiViewportScaleContractTests.cs
 |   |   |   |   |-- UiViewportTests.cs
 |   |   |   |   |-- Win32WindowPlatformTests.cs
-|   |   |   |   +-- WindowRuntimeTests.cs
+|   |   |   |   |-- WindowRuntimeTests.cs
+|   |   |   |   +-- WindowsDxProcessSmokeTests.cs
 |   |   |   |-- Input/
 |   |   |   |   |-- ElementInputCacheInvalidationTests.cs
 |   |   |   |   |-- HitTestCacheInvalidationTests.cs
@@ -1182,9 +1182,12 @@ Generated from `.`.
 |   |   |-- Cerneala.Tests.csproj
 |   |   |-- GameBootstrapTests.cs
 |   |   +-- GlobalUsings.cs
-|   +-- Cerneala.Tests.SourceGen/
-|       |-- Cerneala.Tests.SourceGen.csproj
-|       +-- UiMarkupGeneratorTests.cs
+|   |-- Cerneala.Tests.SourceGen/
+|   |   |-- Cerneala.Tests.SourceGen.csproj
+|   |   +-- UiMarkupGeneratorTests.cs
+|   +-- Cerneala.WindowsDxSmoke/
+|       |-- Cerneala.WindowsDxSmoke.csproj
+|       +-- WindowsDxSmokeApplication.cs
 |-- Tools/
 |   |-- RoslynRepoIndexer/
 |   |   |-- src/
@@ -1480,11 +1483,11 @@ Generated from `.`.
 |   |   |-- Windows/
 |   |   |   |-- GeneratedWindowApplication.cs
 |   |   |   |-- IWindowPlatform.cs
-|   |   |   |-- SkiaImageLoader.cs
 |   |   |   |-- Win32.cs
 |   |   |   |-- Win32InputSource.cs
 |   |   |   |-- Win32WindowPlatform.cs
-|   |   |   +-- WindowApplicationRuntime.cs
+|   |   |   |-- WindowApplicationRuntime.cs
+|   |   |   +-- WindowsDxWindowGraphicsSession.cs
 |   |   |-- IUiBackend.cs
 |   |   |-- IUiClock.cs
 |   |   |-- UiCoordinateMapper.cs
@@ -1870,6 +1873,7 @@ Generated from `.`.
 |-- ClassChecklist.md
 |-- ConceptualIdeas.md
 |-- GameBootstrap.cs
+|-- global.json
 |-- mcp.md
 |-- ROADMAP.md
 |-- ROADMAPv2_AUDIT.md

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -8,9 +8,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
-    <ProjectReference Include="..\..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**" />
   </ItemGroup>
 </Project>

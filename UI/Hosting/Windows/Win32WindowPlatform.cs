@@ -1,11 +1,8 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
-using Cerneala.Drawing;
-using Cerneala.Drawing.Skia;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
-using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Hosting.Windows;
 
@@ -16,11 +13,15 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
     private static readonly Dictionary<nint, Win32PlatformWindow> Windows = [];
     private static readonly Win32.WndProc WindowProcedure = WndProc;
     private static ushort classAtom;
-    private readonly SkiaImageLoader imageLoader = new();
-    private readonly ImageResourceCache imageResourceCache;
+    private readonly IWindowGraphicsSessionFactory graphicsSessionFactory;
     private bool disposed;
 
     public Win32WindowPlatform()
+        : this(new WindowsDxWindowGraphicsSessionFactory())
+    {
+    }
+
+    internal Win32WindowPlatform(IWindowGraphicsSessionFactory graphicsSessionFactory)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -28,12 +29,8 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         }
 
         EnsureWindowClass();
-        imageResourceCache = new ImageResourceCache(imageLoader);
+        this.graphicsSessionFactory = graphicsSessionFactory ?? throw new ArgumentNullException(nameof(graphicsSessionFactory));
     }
-
-    public IImageLoader ImageLoader => imageLoader;
-
-    public ImageResourceCache ImageResourceCache => imageResourceCache;
 
     public IPlatformWindow CreateWindow(Window window, IWindowPlatformCallbacks callbacks)
     {
@@ -41,7 +38,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         ArgumentNullException.ThrowIfNull(window);
         ArgumentNullException.ThrowIfNull(callbacks);
 
-        Win32PlatformWindow created = new(window, callbacks);
+        Win32PlatformWindow created = new(window, callbacks, graphicsSessionFactory);
         Windows.Add(created.Handle, created);
         return created;
     }
@@ -63,7 +60,6 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             return;
         }
 
-        imageResourceCache.Dispose();
         disposed = true;
     }
 
@@ -114,7 +110,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         private readonly IWindowPlatformCallbacks callbacks;
         private readonly Window window;
         private readonly Win32InputSource inputSource = new();
-        private readonly SkiaDrawingBackend drawingBackend;
+        private readonly IWindowGraphicsSession graphicsSession;
         private bool destroyed;
         private bool visible;
         private bool initialPlacementApplied;
@@ -122,8 +118,15 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         private uint extendedStyle;
         private UiViewport viewport;
         private WindowState desiredState;
+        private int graphicsPixelWidth;
+        private int graphicsPixelHeight;
+        private float graphicsScale;
+        private bool applyingMaximizeCommand;
 
-        public Win32PlatformWindow(Window window, IWindowPlatformCallbacks callbacks)
+        public Win32PlatformWindow(
+            Window window,
+            IWindowPlatformCallbacks callbacks,
+            IWindowGraphicsSessionFactory graphicsSessionFactory)
         {
             this.window = window;
             this.callbacks = callbacks;
@@ -157,7 +160,22 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             inputSource.CoordinateScale = scale;
             Win32.GetClientRect(Handle, out Win32.RECT clientRect);
             viewport = UiViewport.FromPhysicalPixels(clientRect.Width, clientRect.Height, scale);
-            drawingBackend = new SkiaDrawingBackend(clientRect.Width, clientRect.Height, scale);
+            try
+            {
+                graphicsSession = graphicsSessionFactory.Create(
+                    Handle,
+                    Math.Max(1, clientRect.Width),
+                    Math.Max(1, clientRect.Height),
+                    scale);
+                graphicsPixelWidth = Math.Max(1, clientRect.Width);
+                graphicsPixelHeight = Math.Max(1, clientRect.Height);
+                graphicsScale = scale;
+            }
+            catch
+            {
+                Win32.DestroyWindow(Handle);
+                throw;
+            }
         }
 
         public nint Handle { get; }
@@ -166,7 +184,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
 
         public IInputSource InputSource => inputSource;
 
-        public IDrawingBackend DrawingBackend => drawingBackend;
+        public IWindowGraphicsSession GraphicsSession => graphicsSession;
 
         public void ApplyProperties(Window window)
         {
@@ -176,7 +194,8 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             }
 
             Win32.SetWindowText(Handle, window.Title);
-            desiredState = window.WindowState;
+            WindowState requestedState = window.WindowState;
+            desiredState = requestedState;
             uint nextStyle = StyleFor(window.ResizeMode);
             uint nextExtendedStyle = ExtendedStyleFor(window);
             if (style != nextStyle)
@@ -209,7 +228,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             initialPlacementApplied = true;
             if (visible)
             {
-                Win32.ShowWindow(Handle, ShowCommand(window.WindowState));
+                Win32.ShowWindow(Handle, ShowCommand(requestedState));
             }
         }
 
@@ -253,28 +272,10 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             Win32.DestroyWindow(Handle);
         }
 
-        public void Present()
-        {
-            if (destroyed)
-            {
-                return;
-            }
-
-            nint deviceContext = Win32.GetDC(Handle);
-            try
-            {
-                Present(deviceContext);
-            }
-            finally
-            {
-                Win32.ReleaseDC(Handle, deviceContext);
-            }
-        }
-
         public void Dispose()
         {
             Destroy();
-            drawingBackend.Dispose();
+            graphicsSession.Dispose();
         }
 
         public nint ProcessMessage(uint message, nuint wParam, nint lParam)
@@ -294,6 +295,16 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                     ResizeSurface();
                     ReportBounds();
                     return 0;
+                case Win32.WM_SYSCOMMAND when (wParam & Win32.SC_MASK) == Win32.SC_MAXIMIZE:
+                    applyingMaximizeCommand = true;
+                    try
+                    {
+                        return Win32.DefWindowProc(Handle, message, wParam, lParam);
+                    }
+                    finally
+                    {
+                        applyingMaximizeCommand = false;
+                    }
                 case Win32.WM_GETMINMAXINFO:
                     ApplyMinMaxInfo(lParam);
                     return 0;
@@ -360,7 +371,16 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             float scale = Math.Max(1, Win32.GetDpiForWindow(Handle)) / 96f;
             inputSource.CoordinateScale = scale;
             viewport = UiViewport.FromPhysicalPixels(rect.Width, rect.Height, scale);
-            drawingBackend.Resize(rect.Width, rect.Height, scale);
+            if (rect.Width > 0 &&
+                rect.Height > 0 &&
+                (rect.Width != graphicsPixelWidth || rect.Height != graphicsPixelHeight || scale != graphicsScale))
+            {
+                graphicsSession.Resize(rect.Width, rect.Height, scale);
+                graphicsPixelWidth = rect.Width;
+                graphicsPixelHeight = rect.Height;
+                graphicsScale = scale;
+            }
+
             callbacks.RenderRequested();
         }
 
@@ -368,7 +388,14 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         {
             Win32.GetWindowRect(Handle, out Win32.RECT rect);
             float scale = inputSource.CoordinateScale;
-            callbacks.BoundsChanged(viewport, rect.Left / scale, rect.Top / scale, NativeState());
+            WindowState state = NativeState();
+            float left = state == WindowState.Normal || !float.IsFinite(window.Left)
+                ? rect.Left / scale
+                : window.Left;
+            float top = state == WindowState.Normal || !float.IsFinite(window.Top)
+                ? rect.Top / scale
+                : window.Top;
+            callbacks.BoundsChanged(viewport, left, top, state);
         }
 
         private void ApplyDpiChange(nuint wParam, nint lParam)
@@ -406,6 +433,13 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                 info.ptMaxTrackSize = new Win32.POINT(maxWidth, maxHeight);
             }
 
+            if (applyingMaximizeCommand || desiredState == WindowState.Maximized)
+            {
+                info.ptMaxTrackSize = new Win32.POINT(
+                    Math.Max(info.ptMaxTrackSize.X, info.ptMaxSize.X),
+                    Math.Max(info.ptMaxTrackSize.Y, info.ptMaxSize.Y));
+            }
+
             Marshal.StructureToPtr(info, lParam, fDeleteOld: false);
         }
 
@@ -425,7 +459,6 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             Win32.BeginPaint(Handle, out Win32.PAINTSTRUCT paint);
             try
             {
-                Present(paint.hdc);
             }
             finally
             {
@@ -433,25 +466,6 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             }
 
             callbacks.RenderRequested();
-        }
-
-        private void Present(nint deviceContext)
-        {
-            Win32.BITMAPINFO info = Win32.BITMAPINFO.ForTopDownBgra(drawingBackend.PixelWidth, drawingBackend.PixelHeight);
-            Win32.StretchDIBits(
-                deviceContext,
-                0,
-                0,
-                drawingBackend.PixelWidth,
-                drawingBackend.PixelHeight,
-                0,
-                0,
-                drawingBackend.PixelWidth,
-                drawingBackend.PixelHeight,
-                drawingBackend.Pixels,
-                in info,
-                Win32.DIB_RGB_COLORS,
-                Win32.SRCCOPY);
         }
 
         private (int X, int Y) ResolvePosition(Window window, int outerWidth, int outerHeight, float scale)
@@ -514,8 +528,13 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             return window.ShowInTaskbar ? Win32.WS_EX_APPWINDOW : Win32.WS_EX_TOOLWINDOW;
         }
 
-        private static int ShowCommand(WindowState state)
+        private int ShowCommand(WindowState state)
         {
+            if (state == WindowState.Normal && (Win32.IsIconic(Handle) || Win32.IsZoomed(Handle)))
+            {
+                return Win32.SW_RESTORE;
+            }
+
             return state switch
             {
                 WindowState.Minimized => Win32.SW_SHOWMINIMIZED,

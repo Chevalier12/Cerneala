@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Platform;
@@ -240,7 +241,10 @@ internal sealed class WindowApplicationRuntime : IDisposable
         platform.PumpEvents();
         foreach (WindowContext context in contexts.Values.ToArray())
         {
-            if (context.Window.IsShown && (context.RenderRequested || context.Root.Scheduler.HasWork || context.Root.Motion.HasActiveMotion))
+            if (context.Window.IsShown &&
+                context.PlatformWindow.Viewport.Width > 0 &&
+                context.PlatformWindow.Viewport.Height > 0 &&
+                (context.RenderRequested || context.Root.Scheduler.HasWork || context.Root.Motion.HasActiveMotion))
             {
                 Render(context, elapsedTime);
             }
@@ -317,7 +321,9 @@ internal sealed class WindowApplicationRuntime : IDisposable
         root.SetThemeProvider(themeProvider);
         root.SetResourceProvider(resourceProvider);
         root.SetPlatformServices(platformServices);
-        root.SetImageResourceCache(platform.ImageLoader, platform.ImageResourceCache);
+        root.SetImageResourceCache(
+            platformWindow.GraphicsSession.ImageLoader,
+            platformWindow.GraphicsSession.ImageResourceCache);
         UiHost host = new(new UiHostOptions
         {
             Root = root,
@@ -349,8 +355,16 @@ internal sealed class WindowApplicationRuntime : IDisposable
     {
         context.RenderRequested = false;
         context.Host.Update(context.PlatformWindow.InputSource.GetFrame(), context.PlatformWindow.Viewport, elapsedTime);
-        context.Host.Draw(context.PlatformWindow.DrawingBackend);
-        context.PlatformWindow.Present();
+        IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
+        graphicsSession.BeginFrame(DrawColor.White);
+        try
+        {
+            context.Host.Draw(graphicsSession.DrawingBackend);
+        }
+        finally
+        {
+            graphicsSession.Present();
+        }
         if (!context.ContentRendered)
         {
             context.ContentRendered = true;
@@ -440,9 +454,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
         {
             WindowContext context = Context ?? throw new InvalidOperationException("Window callback arrived before host initialization.");
             context.OverrideViewport = viewport;
-            window.Left = left;
-            window.Top = top;
-            window.WindowState = state;
+            window.SetPlatformBounds(left, top, state);
             context.RenderRequested = true;
         }
 

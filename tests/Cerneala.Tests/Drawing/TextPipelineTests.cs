@@ -72,6 +72,18 @@ public sealed class TextPipelineTests
     }
 
     [Fact]
+    public void TextRasterizerResolvesBackendAgnosticFontsByFamily()
+    {
+        DrawTextRun textRun = new(new ContractFont("Arial", 16), "Cerneala", 16);
+        SkiaTextRasterizer rasterizer = new();
+
+        RasterizedText result = rasterizer.Rasterize(textRun, DrawColor.Black);
+
+        Assert.True(result.ShapeResult.GlyphCount > 0);
+        Assert.Contains(result.RgbaPixels, value => value != 0);
+    }
+
+    [Fact]
     public void TextRasterizerUsesTextRunSize()
     {
         SystemFontSource fonts = new();
@@ -275,4 +287,6 @@ public sealed class TextPipelineTests
 
         return -1;
     }
+
+    private sealed record ContractFont(string FamilyName, float Size) : IDrawFont;
 }

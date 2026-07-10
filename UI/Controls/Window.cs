@@ -80,6 +80,7 @@ public class Window : ContentControl
     private bool? dialogResult;
     private TaskCompletionSource<bool?>? dialogCompletion;
     private WindowApplicationRuntime? runtimeOwner;
+    private UiProperty? platformOriginatedProperty;
 
     public event EventHandler? SourceInitialized;
 
@@ -299,6 +300,12 @@ public class Window : ContentControl
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
+        bool originatedFromPlatform = ReferenceEquals(platformOriginatedProperty, args.Property);
+        if (originatedFromPlatform)
+        {
+            platformOriginatedProperty = null;
+        }
+
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, WindowStateProperty))
         {
@@ -309,7 +316,10 @@ public class Window : ContentControl
             LocationChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        runtimeOwner?.ApplyProperties(this);
+        if (!originatedFromPlatform && IsNativeWindowProperty(args.Property))
+        {
+            runtimeOwner?.ApplyProperties(this);
+        }
     }
 
     internal bool RaiseClosing()
@@ -359,6 +369,13 @@ public class Window : ContentControl
         }
     }
 
+    internal void SetPlatformBounds(float left, float top, WindowState state)
+    {
+        SetPlatformValue(LeftProperty, left);
+        SetPlatformValue(TopProperty, top);
+        SetPlatformValue(WindowStateProperty, state);
+    }
+
     internal void MarkSourceInitialized()
     {
         SourceInitialized?.Invoke(this, EventArgs.Empty);
@@ -398,6 +415,38 @@ public class Window : ContentControl
     private static bool IsValidPosition(float value)
     {
         return float.IsFinite(value) || float.IsNaN(value);
+    }
+
+    private static bool IsNativeWindowProperty(UiProperty property)
+    {
+        return ReferenceEquals(property, TitleProperty) ||
+            ReferenceEquals(property, WidthProperty) ||
+            ReferenceEquals(property, HeightProperty) ||
+            ReferenceEquals(property, MinWidthProperty) ||
+            ReferenceEquals(property, MinHeightProperty) ||
+            ReferenceEquals(property, MaxWidthProperty) ||
+            ReferenceEquals(property, MaxHeightProperty) ||
+            ReferenceEquals(property, LeftProperty) ||
+            ReferenceEquals(property, TopProperty) ||
+            ReferenceEquals(property, WindowStateProperty) ||
+            ReferenceEquals(property, ResizeModeProperty) ||
+            ReferenceEquals(property, WindowStartupLocationProperty) ||
+            ReferenceEquals(property, TopmostProperty) ||
+            ReferenceEquals(property, ShowInTaskbarProperty);
+    }
+
+    private void SetPlatformValue<T>(UiProperty<T> property, T value)
+    {
+        UiProperty? previousOrigin = platformOriginatedProperty;
+        platformOriginatedProperty = property;
+        try
+        {
+            SetValue(property, value);
+        }
+        finally
+        {
+            platformOriginatedProperty = previousOrigin;
+        }
     }
 
     private void ValidateOwner(Window? value)

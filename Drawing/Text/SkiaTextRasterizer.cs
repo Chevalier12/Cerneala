@@ -21,11 +21,27 @@ public sealed class SkiaTextRasterizer
     {
         ArgumentNullException.ThrowIfNull(textRun);
 
-        if (textRun.Font is not SkiaFont font)
+        if (textRun.Font is SkiaFont font)
         {
-            throw new InvalidOperationException("SkiaTextRasterizer requires a SkiaFont.");
+            return RasterizeCore(textRun, color, font);
         }
 
+        SKTypeface? matchedTypeface = SKFontManager.Default.MatchFamily(textRun.Font.FamilyName);
+        if (matchedTypeface is null)
+        {
+            SkiaFont fallbackFont = new(SKTypeface.Default, textRun.Font.FamilyName, textRun.Size);
+            return RasterizeCore(new DrawTextRun(fallbackFont, textRun.Text, textRun.Size), color, fallbackFont);
+        }
+
+        using (matchedTypeface)
+        {
+            SkiaFont resolvedFont = new(matchedTypeface, textRun.Font.FamilyName, textRun.Size);
+            return RasterizeCore(new DrawTextRun(resolvedFont, textRun.Text, textRun.Size), color, resolvedFont);
+        }
+    }
+
+    private RasterizedText RasterizeCore(DrawTextRun textRun, DrawColor color, SkiaFont font)
+    {
         TextShapeResult shapeResult = _textShaper.Shape(textRun);
 
         if (shapeResult.GlyphCount == 0)
