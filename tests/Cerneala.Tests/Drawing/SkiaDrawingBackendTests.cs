@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Skia;
 using Cerneala.Drawing.Text;
+using Cerneala.UI.Controls;
 using SkiaSharp;
 
 namespace Cerneala.Tests.Drawing;
@@ -52,6 +53,24 @@ public sealed class SkiaDrawingBackendTests
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => backend.Render(commands));
 
         Assert.Contains("SkiaDrawImage", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RendersBackendNeutralFontsProducedByControls()
+    {
+        using SkiaDrawingBackend backend = new(64, 32, 1);
+        ControlTextFont font = new("Segoe UI", 14);
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.DrawText(
+            new DrawTextRun(font, "Window text", 14),
+            new DrawPoint(0, 0),
+            DrawColor.Black));
+
+        backend.Render(commands);
+
+        byte[] pixels = new byte[backend.RowBytes * backend.PixelHeight];
+        Marshal.Copy(backend.Pixels, pixels, 0, pixels.Length);
+        Assert.Contains(pixels, value => value != 255);
     }
 
     private sealed class ForeignImage : IDrawImage

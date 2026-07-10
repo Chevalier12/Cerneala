@@ -16,6 +16,7 @@ Generated from `.`.
 |           +-- state/
 |               +-- server-stopped
 |-- Cerneala.SourceGen/
+|   |-- Generated/
 |   |-- Cerneala.SourceGen.csproj
 |   |-- UiMarkupDirectiveParser.cs
 |   |-- UiMarkupGenerator.cs
@@ -849,47 +850,17 @@ Generated from `.`.
 |   |-- IDrawImage.cs
 |   |-- IDrawingBackend.cs
 |   +-- IFontSource.cs
+|-- Generated/
 |-- Playground/
 |   +-- Cerneala.Playground/
-|       |-- .config/
-|       |   +-- dotnet-tools.json
-|       |-- Content/
-|       |   |-- Content.mgcb
-|       |   +-- PreviewImage.png
-|       |-- Samples/
-|       |   |-- UserControlShowcase/
-|       |   |   |-- MainWindow.cui.xml
-|       |   |   |-- MainWindow.cui.xml.cs
-|       |   |   +-- MainWindow.limitations.md
-|       |   |-- AspectMotionSample.cs
-|       |   |-- AuthoringAppSample.cs
-|       |   |-- DiagnosticsSample.cs
-|       |   |-- GettingStartedSample.cs
-|       |   |-- InvalidationStatsOverlay.cs
-|       |   |-- LayoutMotionSample.cs
-|       |   |-- LayoutSample.cs
-|       |   |-- ModernAspectSample.cs
-|       |   |-- MotionSample.cs
-|       |   |-- PlaygroundText.cs
-|       |   |-- PresenceMotionSample.cs
-|       |   |-- RetainedAppSample.cs
-|       |   |-- RetainedButtonSample.cs
-|       |   |-- RuntimePreviewSample.cs
-|       |   |-- SampleSelector.cs
-|       |   |-- ScrollMotionSample.cs
-|       |   +-- TextSample.cs
-|       |-- app.manifest
 |       |-- Cerneala.Playground.csproj
-|       |-- Game1.cs
-|       |-- Icon.bmp
-|       |-- Icon.ico
-|       +-- Program.cs
+|       |-- MainWindow.cui.xml
+|       +-- MainWindow.cui.xml.cs
 |-- Properties/
 |   +-- AssemblyInfo.cs
 |-- tests/
 |   |-- Cerneala.Tests/
 |   |   |-- Architecture/
-|   |   |   |-- DeveloperPreviewCompletionTests.cs
 |   |   |   |-- DeveloperPreviewScopeTests.cs
 |   |   |   |-- ModernAspectArchitectureTests.cs
 |   |   |   |-- MonoGameDependencyBoundaryTests.cs
@@ -1006,18 +977,7 @@ Generated from `.`.
 |   |   |   +-- TouchInputBridgeTests.cs
 |   |   |-- Playground/
 |   |   |   |-- Samples/
-|   |   |   |   |-- AspectMotionSampleTests.cs
-|   |   |   |   |-- AuthoringAppSampleContractTests.cs
-|   |   |   |   |-- GettingStartedSampleContractTests.cs
-|   |   |   |   |-- ModernAspectSampleTests.cs
-|   |   |   |   |-- PlaygroundSampleTests.cs
-|   |   |   |   |-- RuntimePreviewIntegrationTests.cs
-|   |   |   |   |-- RuntimePreviewSampleContractTests.cs
-|   |   |   |   +-- UserControlMarkupSampleTests.cs
-|   |   |   |-- Game1SourceTests.cs
-|   |   |   |-- PlaygroundGameLoopSmokeTests.cs
-|   |   |   |-- RetainedAppAspectContractTests.cs
-|   |   |   +-- RetainedAppSampleContractTests.cs
+|   |   |   +-- MainWindowContractTests.cs
 |   |   |-- UI/
 |   |   |   |-- Accessibility/
 |   |   |   |   |-- AccessibilityPlatformTests.cs
@@ -1081,9 +1041,6 @@ Generated from `.`.
 |   |   |   |   |-- UIElementTreeTests.cs
 |   |   |   |   +-- UIRootTests.cs
 |   |   |   |-- Hosting/
-|   |   |   |   |-- AuthoringPreviewContractTests.cs
-|   |   |   |   |-- CorePreviewContractTests.cs
-|   |   |   |   |-- DeveloperPreviewContractTests.cs
 |   |   |   |   |-- FakeDrawingBackend.cs
 |   |   |   |   |-- FakeInputSource.cs
 |   |   |   |   |-- FakeUiClock.cs
@@ -1091,10 +1048,7 @@ Generated from `.`.
 |   |   |   |   |-- MonoGameContentServicesLifetimeTests.cs
 |   |   |   |   |-- MonoGameUiHostBoundaryTests.cs
 |   |   |   |   |-- ObservableListAuthoringSliceTests.cs
-|   |   |   |   |-- RetainedListScrollVerticalSliceTests.cs
 |   |   |   |   |-- RetainedStressBudgetTests.cs
-|   |   |   |   |-- RetainedVerticalSliceTests.cs
-|   |   |   |   |-- RuntimePreviewContractTests.cs
 |   |   |   |   |-- TabNavigationFrameContractTests.cs
 |   |   |   |   |-- UiHostFrameContractTests.cs
 |   |   |   |   |-- UiHostFrameStatsIntegrityTests.cs

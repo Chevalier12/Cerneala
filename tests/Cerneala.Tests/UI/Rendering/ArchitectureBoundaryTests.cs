@@ -562,7 +562,6 @@ public sealed class ArchitectureBoundaryTests
             "UI/Diagnostics/AspectTrace.cs",
             "UI/Diagnostics/DebugOverlay.cs",
             "UI/Diagnostics/DebugAdorner.cs",
-            "Playground/Cerneala.Playground/Samples/DiagnosticsSample.cs",
             "tests/Cerneala.Tests/UI/Diagnostics/FrameDiagnosticsTests.cs",
             "tests/Cerneala.Tests/UI/Diagnostics/DirtyTreeDumperTests.cs",
             "tests/Cerneala.Tests/UI/Diagnostics/ElementTreeDumperTests.cs",

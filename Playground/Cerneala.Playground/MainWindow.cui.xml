@@ -1,8 +1,30 @@
-<UserControl
+<Window
+    Title="Cerneala generator playground"
+    Width="1180"
+    Height="900"
+    MinWidth="760"
+    MinHeight="620"
+    MaxWidth="1800"
+    MaxHeight="1200"
+    Left="80"
+    Top="60"
+    WindowState="Normal"
+    ResizeMode="CanResize"
+    WindowStartupLocation="Manual"
+    Topmost="False"
+    ShowInTaskbar="True"
+    SourceInitialized="OnSourceInitialized"
     Initialized="OnInitialized"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded"
     DataContextChanged="OnDataContextChanged"
+    Activated="OnActivated"
+    Deactivated="OnDeactivated"
+    Closing="OnClosing"
+    Closed="OnClosed"
+    StateChanged="OnStateChanged"
+    LocationChanged="OnLocationChanged"
+    ContentRendered="OnContentRendered"
     Background="12,16,24"
     BorderColor="82,96,113"
     BorderThickness="1"
@@ -10,66 +32,68 @@
     Margin="0"
     IsEnabled="True"
     IsVisible="True">
-    <UserControl.Resources>
-    <SolidColorBrush Name="AccentBrush" Color="#FFFF5D73" />
-    <SolidColorBrush Name="PanelBrush" Color="#FF1E2633" />
-    <SolidColorBrush Name="PanelEdgeBrush" Color="#FF526071" />
-    <SolidColorBrush Name="HoverBrush" Color="#FF283548" />
+    <Window.Resources>
+        <SolidColorBrush Name="AccentBrush" Color="#FFFF5D73" />
+        <SolidColorBrush Name="PanelBrush" Color="#FF1E2633" />
+        <SolidColorBrush Name="PanelEdgeBrush" Color="#FF526071" />
+        <SolidColorBrush Name="HoverBrush" Color="#FF283548" />
 
-    <Aspect Target="TextBlock">
-        @default
-        {
-            FontFamily = "Segoe UI";
-            FontSize = 14;
-            Foreground = White;
-        }
-    </Aspect>
-
-    <Aspect Name="InteractiveCard" Target="Border">
-        @default
-        {
-            Background = $PanelBrush;
-            BorderColor = $PanelEdgeBrush;
-            BorderThickness = 1;
-            Padding = 12;
-        }
-
-        @when IsMouseOver
-        {
-            @if value == True
+        <Aspect Target="TextBlock">
+            @default
             {
-                Background = $HoverBrush;
-                BorderColor = $AccentBrush;
+                FontFamily = "Segoe UI";
+                FontSize = 14;
+                Foreground = White;
             }
-        }
-    </Aspect>
-    </UserControl.Resources>
+        </Aspect>
+
+        <Aspect Name="InteractiveCard" Target="Border">
+            @default
+            {
+                Background = $PanelBrush;
+                BorderColor = $PanelEdgeBrush;
+                BorderThickness = 1;
+                Padding = 12;
+            }
+
+            @when IsMouseOver
+            {
+                @if value == True
+                {
+                    Background = $HoverBrush;
+                    BorderColor = $AccentBrush;
+                }
+            }
+        </Aspect>
+    </Window.Resources>
+
+    @when WindowState
+    {
+        @if value == Normal { BorderColor = $PanelEdgeBrush; }
+        @if value == Maximized { BorderColor = $AccentBrush; }
+    }
 
     @when $DataContext.IsReady
     {
-        @if value == True
-        {
-            BorderColor = $AccentBrush;
-        }
-        @if value == False
-        {
-            BorderColor = $PanelEdgeBrush;
-        }
+        @if value == True { Background = "20,28,38"; }
+        @if value == False { Background = "12,16,24"; }
     }
 
     <StackPanel Name="RootPanel" Margin="8">
         <TextBlock
             Name="TitleText"
-            Text="UserControl generator showcase"
+            Text="Window + source generator: tot ce merge acum"
             FontFamily="Consolas"
             FontSize="22"
             Foreground="255,93,115"
             Background="30,38,51"
             Margin="0,0,0,8" />
 
-        <TextBlock Name="LifecycleText" Margin="0,0,0,8">
+        <TextBlock Name="LifecycleText" Margin="0,0,0,4">
             Lifecycle handlers have not run yet.
         </TextBlock>
+
+        <TextBlock Name="WindowEventText" Text="Window event: waiting" Margin="0,0,0,8" />
 
         <ShowcaseBadge
             Name="CustomBadge"
@@ -90,10 +114,7 @@
 
             @when $CustomBadge
             {
-                @if value != $AccentBrush
-                {
-                    Padding = 16;
-                }
+                @if value != $AccentBrush { Padding = 16; }
             }
 
             @when $DataContext.IsReady
@@ -102,10 +123,7 @@
                 {
                     @when IsPointerOver
                     {
-                        @if value == True
-                        {
-                            BorderColor = $AccentBrush;
-                        }
+                        @if value == True { BorderColor = $AccentBrush; }
                     }
                 }
             }
@@ -120,7 +138,7 @@
                     }
                 </TextBlock>
 
-                <Panel Name="ComparisonPanel" Margin="0,8,0,8">
+                <StackPanel Name="ComparisonPanel" Margin="0,8,0,8">
                     <TextBlock Name="ScoreBandText" Text="Score: zero" IsVisible="True">
                         @when $DataContext.Score
                         {
@@ -129,7 +147,7 @@
                             @if value != 0 { IsVisible = True; }
                             @if value > 3 { Text = "Score: medium"; }
                             @if value >= 10 { Text = "Score: high"; }
-                            @if value == $DataContext.TargetScore { Text = "Score reached the target"; }
+                            @if value == $DataContext.TargetScore { Text = "Score reached target"; }
                         }
                     </TextBlock>
 
@@ -139,6 +157,7 @@
                             @if value == "Ada" { Text = "User: Ada"; }
                             @if value != "Ada" { Text = "User: not Ada"; }
                             @if value < "M" { Foreground = $AccentBrush; }
+                            @if value >= "M" { Foreground = White; }
                         }
                     </TextBlock>
 
@@ -155,12 +174,12 @@
                             @if value == False { Text = "Details: unhealthy"; }
                         }
                     </TextBlock>
-                </Panel>
+                </StackPanel>
 
                 <StackPanel Name="ActionPanel">
                     <Button
                         Name="PrimaryButton"
-                        Content="Increment and toggle advanced"
+                        Content="Increment score + toggle conditional child"
                         Background="255,93,115"
                         Foreground="Black"
                         BorderColor="White"
@@ -170,11 +189,13 @@
                         Click="OnPrimaryClick"
                         IsEnabledChanged="OnPrimaryEnabledChanged" />
 
-                    <Button Name="SecondaryButton" Click="OnSecondaryClick">
-                        Replace nested DataContext object
+                    <Button Name="ReplaceDetailsButton" Click="OnReplaceDetailsClick">
+                        Replace nested observable DataContext object
                     </Button>
 
-                    <Button Name="PinStatusButton" Content="Pin local status" Click="OnPinStatusClick" />
+                    <Button Name="ReplaceContextButton" Content="Replace the entire DataContext" Click="OnReplaceContextClick" />
+                    <Button Name="PinStatusButton" Content="Set Local value over markup" Click="OnPinStatusClick" />
+                    <Button Name="WindowStateButton" Content="Toggle native WindowState" Click="OnToggleWindowStateClick" />
 
                     @when $DataContext.ShowAdvanced
                     {
@@ -182,7 +203,7 @@
                         {
                             <Button
                                 Name="AdvancedButton"
-                                Content="Complete workflow"
+                                Content="Conditional cached child: complete workflow"
                                 Click="OnAdvancedClick" />
                         }
                     }
@@ -190,4 +211,4 @@
             </StackPanel>
         </Border>
     </StackPanel>
-</UserControl>
+</Window>

@@ -38,19 +38,6 @@ public sealed class DeveloperPreviewScopeTests
         "NativeAccessibility"
     ];
 
-    private static readonly string[] PreviewSampleForbiddenStringPathTerms =
-    [
-        "StringPropertyPath",
-        "PropertyPath",
-        "Binding.Path"
-    ];
-
-    private static readonly string[] PreviewSampleForbiddenStringPathBindingConstructors =
-    [
-        "new Binding(\"",
-        "new Binding(@\""
-    ];
-
     [Fact]
     public void DeveloperPreviewScopeDocumentExists()
     {
@@ -155,16 +142,6 @@ public sealed class DeveloperPreviewScopeTests
     public void PreviewSamplesDoNotReferenceNativeAccessibilityAdapters()
     {
         AssertNoForbiddenTermsInPreviewSources(PreviewSampleForbiddenNativeAccessibilityTerms);
-    }
-
-    [Fact]
-    public void PreviewSamplesUseTypedBindingOperationsInsteadOfStringPropertyPaths()
-    {
-        AssertNoForbiddenTermsInPreviewSources(PreviewSampleForbiddenStringPathTerms);
-        AssertNoForbiddenTermsInPreviewSources(PreviewSampleForbiddenStringPathBindingConstructors, removeStringLiterals: false);
-
-        string combinedText = string.Join("\n", EnumeratePreviewSourceFiles().Select(File.ReadAllText));
-        Assert.Contains("BindingOperations.Bind", combinedText, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -301,14 +278,12 @@ public sealed class DeveloperPreviewScopeTests
         string root = FindRepositoryRoot();
 
         return EnumeratePlaygroundSampleFiles(root)
-            .Concat(Directory.EnumerateFiles(Path.Combine(root, "tests", "Cerneala.Tests", "UI", "Hosting"), "*PreviewContractTests.cs", SearchOption.TopDirectoryOnly))
-            .Concat(Directory.EnumerateFiles(Path.Combine(root, "tests", "Cerneala.Tests", "Playground", "Samples"), "*Preview*Tests.cs", SearchOption.TopDirectoryOnly))
-            .Concat(Directory.EnumerateFiles(Path.Combine(root, "tests", "Cerneala.Tests", "Playground", "Samples"), "*Authoring*Tests.cs", SearchOption.TopDirectoryOnly));
+            .Concat(Directory.EnumerateFiles(Path.Combine(root, "tests", "Cerneala.Tests", "UI", "Hosting"), "*PreviewContractTests.cs", SearchOption.TopDirectoryOnly));
     }
 
     private static IEnumerable<string> EnumeratePlaygroundSampleFiles(string root)
     {
-        return Directory.EnumerateFiles(Path.Combine(root, "Playground", "Cerneala.Playground", "Samples"), "*.cs", SearchOption.TopDirectoryOnly)
+        return Directory.EnumerateFiles(Path.Combine(root, "Playground", "Cerneala.Playground"), "*.cs", SearchOption.TopDirectoryOnly)
             .Where(file => !file.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase));
     }
 

@@ -7,6 +7,7 @@ internal sealed class SkiaDrawingBackend : IDrawingBackend, IDisposable
 {
     private SKBitmap bitmap;
     private SKCanvas canvas;
+    private readonly Dictionary<string, SKTypeface> fallbackTypefaces = new(StringComparer.OrdinalIgnoreCase);
     private float coordinateScale;
     private bool disposed;
     private int clipDepth;
@@ -71,6 +72,12 @@ internal sealed class SkiaDrawingBackend : IDrawingBackend, IDisposable
 
         canvas.Dispose();
         bitmap.Dispose();
+        foreach (SKTypeface typeface in fallbackTypefaces.Values)
+        {
+            typeface.Dispose();
+        }
+
+        fallbackTypefaces.Clear();
         disposed = true;
     }
 
@@ -124,12 +131,13 @@ internal sealed class SkiaDrawingBackend : IDrawingBackend, IDisposable
 
     private void DrawText(DrawCommand command, SKPaint paint)
     {
-        if (command.TextRun?.Font is not SkiaFont font)
-        {
-            throw new InvalidOperationException("SkiaDrawingBackend requires SkiaFont for text commands.");
-        }
+        IDrawFont font = command.TextRun?.Font
+            ?? throw new InvalidOperationException("DrawText commands require a font.");
+        SKTypeface typeface = font is SkiaFont skiaFont
+            ? skiaFont.Typeface
+            : ResolveFallbackTypeface(font.FamilyName);
 
-        using SKFont skFont = new(font.Typeface, command.TextRun.Size);
+        using SKFont skFont = new(typeface, command.TextRun.Size);
         canvas.DrawText(
             command.TextRun.Text,
             command.Position.X,
@@ -137,6 +145,18 @@ internal sealed class SkiaDrawingBackend : IDrawingBackend, IDisposable
             SKTextAlign.Left,
             skFont,
             paint);
+    }
+
+    private SKTypeface ResolveFallbackTypeface(string familyName)
+    {
+        if (fallbackTypefaces.TryGetValue(familyName, out SKTypeface? typeface))
+        {
+            return typeface;
+        }
+
+        typeface = SKTypeface.FromFamilyName(familyName) ?? SKTypeface.Default;
+        fallbackTypefaces.Add(familyName, typeface);
+        return typeface;
     }
 
     private void DrawImage(DrawCommand command, SKPaint paint)

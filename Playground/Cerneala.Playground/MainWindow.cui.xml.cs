@@ -1,37 +1,72 @@
-#nullable enable
-
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
-using Cerneala.Playground.Samples;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Cerneala.Playground.Samples.UserControlShowcase;
+namespace Cerneala.Playground;
 
-public partial class MainWindow : UserControl<MainWindowViewModel>
+public partial class MainWindow : Window<MainWindowViewModel>
 {
+    private void OnSourceInitialized(object? sender, EventArgs args)
+    {
+        LifecycleText.Text = "SourceInitialized: HWND-ul nativ exista";
+    }
+
     private void OnInitialized(object? sender, EventArgs args)
     {
-        LifecycleText.Text = "Lifecycle: Initialized";
+        LifecycleText.Text = "Initialized: arborele este compus";
     }
 
     private void OnLoaded(UiElementId sender, RoutedEventArgs args)
     {
-        LifecycleText.Text = $"Lifecycle: Loaded, score={ViewModel.Score}";
+        LifecycleText.Text = $"Loaded: score={ViewModel.Score}, user={ViewModel.UserName}";
     }
 
     private void OnUnloaded(UiElementId sender, RoutedEventArgs args)
     {
-        LifecycleText.Text = "Lifecycle: Unloaded";
+        LifecycleText.Text = "Unloaded";
     }
 
     private void OnDataContextChanged(object? sender, UiPropertyChangedEventArgs args)
     {
-        LifecycleText.Text = $"DataContext changed: {args.NewValue?.GetType().Name ?? "null"}";
+        LifecycleText.Text = $"DataContextChanged: {args.NewValue?.GetType().Name ?? "null"}";
+    }
+
+    private void OnActivated(object? sender, EventArgs args)
+    {
+        WindowEventText.Text = "Window event: Activated";
+    }
+
+    private void OnDeactivated(object? sender, EventArgs args)
+    {
+        WindowEventText.Text = "Window event: Deactivated";
+    }
+
+    private void OnClosing(object? sender, WindowClosingEventArgs args)
+    {
+        WindowEventText.Text = "Window event: Closing";
+    }
+
+    private void OnClosed(object? sender, EventArgs args)
+    {
+    }
+
+    private void OnStateChanged(object? sender, EventArgs args)
+    {
+        WindowEventText.Text = $"Window event: StateChanged -> {WindowState}";
+    }
+
+    private void OnLocationChanged(object? sender, EventArgs args)
+    {
+        WindowEventText.Text = $"Window event: LocationChanged -> {Left:0}, {Top:0}";
+    }
+
+    private void OnContentRendered(object? sender, EventArgs args)
+    {
+        WindowEventText.Text = "Window event: ContentRendered";
     }
 
     private void OnPrimaryClick(UiElementId sender, RoutedEventArgs args)
@@ -43,18 +78,34 @@ public partial class MainWindow : UserControl<MainWindowViewModel>
             : ShowcaseMode.Running;
     }
 
-    private void OnSecondaryClick(UiElementId sender, RoutedEventArgs args)
+    private void OnReplaceDetailsClick(UiElementId sender, RoutedEventArgs args)
     {
         ViewModel.Details = ViewModel.Details is null
-            ? new ShowcaseDetails(isHealthy: true)
+            ? new ShowcaseDetails(true)
             : new ShowcaseDetails(!ViewModel.Details.IsHealthy);
         ViewModel.UserName = ViewModel.UserName == "Ada" ? "Zoe" : "Ada";
         ViewModel.TargetScore += 2;
     }
 
+    private void OnReplaceContextClick(UiElementId sender, RoutedEventArgs args)
+    {
+        DataContext = new MainWindowViewModel(new ShowcaseSeed(
+            "Lin",
+            score: 1,
+            targetScore: 6,
+            new ShowcaseDetails(false)));
+    }
+
     private void OnPinStatusClick(UiElementId sender, RoutedEventArgs args)
     {
-        StatusText.Text = "Pinned from code-behind; Local beats MarkupConditional";
+        StatusText.Text = "Valoare Local din code-behind: bate MarkupConditional";
+    }
+
+    private void OnToggleWindowStateClick(UiElementId sender, RoutedEventArgs args)
+    {
+        WindowState = WindowState == WindowState.Normal
+            ? WindowState.Maximized
+            : WindowState.Normal;
     }
 
     private void OnAdvancedClick(UiElementId sender, RoutedEventArgs args)
@@ -70,36 +121,39 @@ public partial class MainWindow : UserControl<MainWindowViewModel>
 
     private void OnPrimaryEnabledChanged(object? sender, UiPropertyChangedEventArgs args)
     {
-        LifecycleText.Text = $"Primary IsEnabled changed to {args.NewValue}";
+        LifecycleText.Text = $"PrimaryButton.IsEnabledChanged: {args.NewValue}";
     }
 }
 
-public sealed class ShowcaseBadge : TextBlock
+public static class App
 {
-    public ShowcaseBadge()
+    public static void ConfigureServices(IServiceCollection services)
     {
-        Text = "Custom tag resolved from the code-behind namespace";
-        FontFamily = "Consolas";
-        FontSize = 12;
-        Foreground = DrawColor.Black;
-        Background = new DrawColor(255, 214, 102);
-        Padding = new Cerneala.UI.Layout.Thickness(8, 4, 8, 4);
-    }
-}
-
-public sealed class UserControlMarkupSample : IPlaygroundSample
-{
-    public string Name => "Markup UserControl";
-
-    public Cerneala.UI.Elements.UIElement Build()
-    {
-        MainWindowViewModel viewModel = new(
-            userName: "Ada",
+        services.AddSingleton(new ShowcaseSeed(
+            "Ada",
             score: 2,
             targetScore: 10,
-            details: new ShowcaseDetails(isHealthy: true));
-        return new MainWindow(viewModel);
+            new ShowcaseDetails(true)));
     }
+}
+
+public sealed class ShowcaseSeed
+{
+    public ShowcaseSeed(string userName, int score, int targetScore, ShowcaseDetails? details)
+    {
+        UserName = userName;
+        Score = score;
+        TargetScore = targetScore;
+        Details = details;
+    }
+
+    public string UserName { get; }
+
+    public int Score { get; }
+
+    public int TargetScore { get; }
+
+    public ShowcaseDetails? Details { get; }
 }
 
 public sealed class MainWindowViewModel : INotifyPropertyChanged
@@ -112,12 +166,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private ShowcaseMode mode;
     private ShowcaseDetails? details;
 
-    public MainWindowViewModel(string userName, int score, int targetScore, ShowcaseDetails? details)
+    public MainWindowViewModel(ShowcaseSeed seed)
     {
-        this.userName = userName;
-        this.score = score;
-        this.targetScore = targetScore;
-        this.details = details;
+        userName = seed.UserName;
+        score = seed.Score;
+        targetScore = seed.TargetScore;
+        details = seed.Details;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -200,6 +254,19 @@ public sealed class ShowcaseDetails : INotifyPropertyChanged
             isHealthy = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsHealthy)));
         }
+    }
+}
+
+public sealed class ShowcaseBadge : TextBlock
+{
+    public ShowcaseBadge()
+    {
+        Text = "Custom tag rezolvat semantic din namespace-ul code-behind";
+        FontFamily = "Consolas";
+        FontSize = 12;
+        Foreground = DrawColor.Black;
+        Background = new DrawColor(255, 214, 102);
+        Padding = new Cerneala.UI.Layout.Thickness(8, 4, 8, 4);
     }
 }
 
