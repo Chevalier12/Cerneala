@@ -1093,6 +1093,215 @@ public sealed class UiMarkupGeneratorTests
         Assert.Empty(result.GeneratedSources);
     }
 
+    [Fact]
+    public void PairedTypedUserControlEmitsConstructorsNamesEventsAndNoFactory()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Input;
+            namespace TestInput.Views;
+
+            public sealed class MainWindowViewModel
+            {
+                public int SaveCount { get; private set; }
+                public void Save() => SaveCount++;
+            }
+
+            public partial class MainWindow : UserControl<MainWindowViewModel>
+            {
+                private void OnSave(UiElementId sender, RoutedEventArgs args) => ViewModel.Save();
+            }
+            """;
+        const string markup = """
+            <UserControl>
+              <StackPanel>
+                <Button Name="SaveButton" Content="Save" Click="OnSave" />
+              </StackPanel>
+            </UserControl>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/MainWindow.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("public MainWindow()", generatedSource);
+        Assert.Contains("public MainWindow(global::TestInput.Views.MainWindowViewModel viewModel)", generatedSource);
+        Assert.Contains("private global::Cerneala.UI.Controls.Button SaveButton", generatedSource);
+        Assert.Contains("SaveButton.Click += this.OnSave;", generatedSource);
+        Assert.DoesNotContain("MainWindowFactory", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type viewModelType = assembly.GetType("TestInput.Views.MainWindowViewModel", throwOnError: true)!;
+        Type windowType = assembly.GetType("TestInput.Views.MainWindow", throwOnError: true)!;
+        object viewModel = Activator.CreateInstance(viewModelType)!;
+        UserControl window = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(windowType, viewModel));
+        Assert.Same(viewModel, window.DataContext);
+        StackPanel panel = Assert.IsType<StackPanel>(window.ComponentTemplateInstance!.Root);
+        Button button = Assert.IsType<Button>(panel.VisualChildren[0]);
+        object namedButton = windowType.GetProperty("SaveButton", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window)!;
+        Assert.Same(button, namedButton);
+
+        button.RaiseEvent(new Cerneala.UI.Input.RoutedEventArgs(
+            Cerneala.UI.Controls.Primitives.ButtonBase.ClickEvent,
+            button));
+        Assert.Equal(1, viewModelType.GetProperty("SaveCount")!.GetValue(viewModel));
+
+        UserControl withoutContext = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(windowType));
+        Assert.Null(withoutContext.DataContext);
+        Assert.NotNull(withoutContext.ComponentTemplateInstance);
+    }
+
+    [Fact]
+    public void ConditionalNameIsNullableWhileBranchIsInactiveAndReusesCachedInstance()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class ConditionalView : UserControl { }
+            """;
+        const string markup = """
+            <UserControl>
+              <StackPanel>
+                @when IsEnabled
+                {
+                  @if value == True { <Button Name="ConditionalButton" Content="Save" /> }
+                }
+              </StackPanel>
+            </UserControl>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/ConditionalView.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type viewType = assembly.GetType("TestInput.Views.ConditionalView", throwOnError: true)!;
+        UserControl view = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(viewType));
+        StackPanel panel = Assert.IsType<StackPanel>(view.ComponentTemplateInstance!.Root);
+        PropertyInfo member = viewType.GetProperty("ConditionalButton", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        object first = member.GetValue(view)!;
+        Assert.Single(panel.VisualChildren);
+
+        panel.IsEnabled = false;
+        Assert.Null(member.GetValue(view));
+        Assert.Empty(panel.VisualChildren);
+
+        panel.IsEnabled = true;
+        Assert.Same(first, member.GetValue(view));
+        Assert.Same(first, panel.VisualChildren[0]);
+
+        UIRoot root = new();
+        root.VisualChildren.Add(view);
+        root.VisualChildren.Remove(view);
+        Assert.Null(member.GetValue(view));
+
+        root.VisualChildren.Add(view);
+        Assert.Same(first, member.GetValue(view));
+        Assert.Same(first, panel.VisualChildren[0]);
+    }
+
+    [Fact]
+    public void PairedMarkupResolvesCustomControlThroughCompanionUsingScope()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            using TestInput.Components;
+
+            namespace TestInput.Components
+            {
+                public class ProfileCard : UserControl { }
+            }
+
+            namespace TestInput.Views
+            {
+                public partial class MainView : UserControl { }
+            }
+            """;
+        const string markup = """
+            <UserControl>
+              <ProfileCard />
+            </UserControl>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/MainView.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("global::TestInput.Components.ProfileCard", SingleGeneratedSource(result));
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void PairedMarkupRejectsUserConstructorMissingHandlerAndConditionalRoot()
+    {
+        const string constructorSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class BadView : UserControl
+            {
+                public BadView() { }
+            }
+            """;
+        GeneratorRunResult constructorResult = RunPairedGenerator(
+            "Views/BadView.cui.xml",
+            "<UserControl />",
+            constructorSource,
+            out _);
+        Assert.Contains(constructorResult.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI008");
+        Assert.Empty(constructorResult.GeneratedSources);
+
+        const string handlerSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class EventView : UserControl { }
+            """;
+        GeneratorRunResult handlerResult = RunPairedGenerator(
+            "Views/EventView.cui.xml",
+            "<UserControl><Button Click=\"Missing\" /></UserControl>",
+            handlerSource,
+            out _);
+        Assert.Contains(handlerResult.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI009");
+        Assert.Empty(handlerResult.GeneratedSources);
+
+        const string rootSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class RootView : UserControl { }
+            """;
+        const string conditionalRoot = """
+            <UserControl>
+              @when IsEnabled { @if value == True { <Button /> } }
+            </UserControl>
+            """;
+        GeneratorRunResult rootResult = RunPairedGenerator(
+            "Views/RootView.cui.xml",
+            conditionalRoot,
+            rootSource,
+            out _);
+        Assert.Contains(rootResult.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI008");
+        Assert.Empty(rootResult.GeneratedSources);
+    }
+
     private static GeneratorRunResult RunGenerator(string fileName, string markup, out Compilation outputCompilation)
     {
         return RunGenerator(new[] { new MarkupFile(fileName, markup) }, out outputCompilation);
@@ -1107,6 +1316,19 @@ public sealed class UiMarkupGeneratorTests
         return RunGenerator(new[] { new MarkupFile(fileName, markup) }, out outputCompilation, inputSource);
     }
 
+    private static GeneratorRunResult RunPairedGenerator(
+        string fileName,
+        string markup,
+        string inputSource,
+        out Compilation outputCompilation)
+    {
+        return RunGenerator(
+            new[] { new MarkupFile(fileName, markup) },
+            out outputCompilation,
+            inputSource,
+            fileName + ".cs");
+    }
+
     private static GeneratorRunResult RunGenerator(params MarkupFile[] files)
     {
         return RunGenerator(files, out _);
@@ -1117,11 +1339,16 @@ public sealed class UiMarkupGeneratorTests
         return RunGenerator(files, out outputCompilation, "namespace TestInput { public static class Anchor { } }");
     }
 
-    private static GeneratorRunResult RunGenerator(MarkupFile[] files, out Compilation outputCompilation, string inputSource)
+    private static GeneratorRunResult RunGenerator(
+        MarkupFile[] files,
+        out Compilation outputCompilation,
+        string inputSource,
+        string inputPath = "")
     {
         SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
             inputSource,
-            CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest));
+            CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest),
+            path: inputPath);
 
         CSharpCompilation compilation = CSharpCompilation.Create(
             "GeneratorTests",

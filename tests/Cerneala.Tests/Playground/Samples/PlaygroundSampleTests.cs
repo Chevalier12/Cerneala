@@ -61,6 +61,7 @@ public sealed class PlaygroundSampleTests
                 "Presence",
                 "Scroll Motion",
                 "Modern Aspect",
+                "Markup UserControl",
                 "Aspect Motion"
             },
             selector.Samples.Select(sample => sample.Name));

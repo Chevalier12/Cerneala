@@ -74,6 +74,22 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true);
 
+    private static readonly DiagnosticDescriptor InvalidUserControl = new(
+        "CERNEALAUI008",
+        "Invalid UserControl declaration",
+        "UserControl markup file '{0}' is invalid: {1}",
+        "Cerneala.UiMarkup",
+        DiagnosticSeverity.Error,
+        true);
+
+    private static readonly DiagnosticDescriptor InvalidEventHandler = new(
+        "CERNEALAUI009",
+        "Invalid markup event handler",
+        "Event handler '{0}' for '{1}.{2}' is invalid: {3}",
+        "Cerneala.UiMarkup",
+        DiagnosticSeverity.Error,
+        true);
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         IncrementalValuesProvider<MarkupSource> markupFiles = context.AdditionalTextsProvider
@@ -97,6 +113,17 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         string[] classNames = AssignClassNames(files);
         for (int i = 0; i < files.Length; i++)
         {
+            UserControlPairResolution pair = ResolveUserControlPair(context, files[i], compilation);
+            if (pair.HasCompanion)
+            {
+                if (pair.Pair is not null)
+                {
+                    GenerateUserControlFile(context, files[i], classNames[i], compilation, pair.Pair);
+                }
+
+                continue;
+            }
+
             GenerateFile(context, files[i], classNames[i], compilation);
         }
     }
@@ -459,6 +486,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly MarkupDocument document;
         private readonly Compilation compilation;
         private readonly INamedTypeSymbol? dataType;
+        private readonly UserControlPair? userControlPair;
         private readonly bool reactiveDocument;
         private int nextId;
 
@@ -467,13 +495,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             MarkupSource file,
             MarkupDocument document,
             Compilation compilation,
-            INamedTypeSymbol? dataType)
+            INamedTypeSymbol? dataType,
+            UserControlPair? userControlPair = null)
         {
             this.context = context;
             this.file = file;
             this.document = document;
             this.compilation = compilation;
             this.dataType = dataType;
+            this.userControlPair = userControlPair;
             currentLines = Lines;
             currentPostLines = PostLines;
 
@@ -491,6 +521,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         public string? DataTypeCode => dataType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
         public bool HasErrors { get; private set; }
+
+        public IReadOnlyList<NamedElementMember> NamedElementMembers => namedElementMembers;
 
         private enum MarkupValueKind
         {
@@ -665,6 +697,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly Dictionary<string, AspectResource> namedAspects = new(StringComparer.Ordinal);
         private readonly Dictionary<string, AspectResource> defaultAspectsByTarget = new(StringComparer.Ordinal);
         private readonly Dictionary<XElement, DirectiveParseResult> directiveContent = new();
+        private readonly Dictionary<string, INamedTypeSymbol> resolvedElementTypes = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, IReadOnlyList<NamedElementMember>> conditionalFactoryMembers = new(StringComparer.Ordinal);
+        private readonly Stack<List<NamedElementMember>> conditionalMemberScopes = new();
+        private readonly List<NamedElementMember> namedElementMembers = [];
         private List<string> currentLines;
         private List<string> currentPostLines;
         private int nextReactiveId;
@@ -962,7 +998,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             {
                 string symbolName = requestedName!.Trim();
                 variable = CreateIdentifier(symbolName);
-                if (!AddSymbol(symbolName, NamedSymbolKind.Element, variable, element))
+                string referenceCode = userControlPair is null ? variable : "this." + variable;
+                if (!AddSymbol(symbolName, NamedSymbolKind.Element, referenceCode, element))
                 {
                     variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
                     nextId++;
@@ -978,6 +1015,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             currentLines.Add(typeName + " " + variable + " = new();");
+            if (!string.IsNullOrWhiteSpace(requestedName) && userControlPair is not null)
+            {
+                RegisterNamedElement(requestedName!.Trim(), variable, typeName, element);
+            }
             DirectiveParseResult parsedContent = GetDirectiveContent(element, allowAssignments: false, allowElements: true);
             if (parsedContent.Error is not null)
             {
@@ -989,6 +1030,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             ApplyAspects(element, variable, aspects);
             foreach (XAttribute attribute in element.Attributes().Where(attribute => !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name" and not "DataType"))
             {
+                if (TryEmitEventAttribute(element, variable, attribute))
+                {
+                    continue;
+                }
+
                 EmitProperty(element, variable, attribute);
             }
 
@@ -1014,17 +1060,29 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return variable;
         }
 
-        private static string? ResolveElementType(string elementName)
+        private string? ResolveElementType(string elementName)
         {
-            return elementName switch
+            string? metadataName = elementName switch
             {
-                "Panel" => "global::Cerneala.UI.Controls.Panel",
-                "StackPanel" => "global::Cerneala.UI.Controls.StackPanel",
-                "Border" => "global::Cerneala.UI.Controls.Border",
-                "Button" => "global::Cerneala.UI.Controls.Button",
-                "TextBlock" => "global::Cerneala.UI.Controls.TextBlock",
+                "Panel" => "Cerneala.UI.Controls.Panel",
+                "StackPanel" => "Cerneala.UI.Controls.StackPanel",
+                "Border" => "Cerneala.UI.Controls.Border",
+                "Button" => "Cerneala.UI.Controls.Button",
+                "TextBlock" => "Cerneala.UI.Controls.TextBlock",
+                "UserControl" => "Cerneala.UI.Controls.UserControl",
                 _ => null
             };
+
+            INamedTypeSymbol? type = metadataName is null
+                ? ResolveCustomElementType(elementName)
+                : compilation.GetTypeByMetadataName(metadataName);
+            if (type is null)
+            {
+                return null;
+            }
+
+            resolvedElementTypes[elementName] = type;
+            return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
 
         private IReadOnlyList<AspectResource> ResolveAspects(XElement element)
@@ -1246,7 +1304,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private static bool IsControlElement(string elementName)
         {
-            return elementName is "Border" or "Button" or "TextBlock";
+            return elementName is "Border" or "Button" or "TextBlock" or "UserControl";
         }
 
         private static string Literal(string value)

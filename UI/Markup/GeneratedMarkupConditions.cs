@@ -41,12 +41,25 @@ public sealed class MarkupConditionalValue
 public sealed class MarkupConditionalContent
 {
     private readonly Func<IReadOnlyList<UIElement>> factory;
+    private readonly Action? activated;
+    private readonly Action? deactivated;
     private IReadOnlyList<UIElement>? cached;
 
     public MarkupConditionalContent(int order, Func<IReadOnlyList<UIElement>> factory)
+        : this(order, factory, null, null)
+    {
+    }
+
+    public MarkupConditionalContent(
+        int order,
+        Func<IReadOnlyList<UIElement>> factory,
+        Action? activated,
+        Action? deactivated)
     {
         Order = order;
         this.factory = factory ?? throw new ArgumentNullException(nameof(factory));
+        this.activated = activated;
+        this.deactivated = deactivated;
     }
 
     public int Order { get; }
@@ -54,6 +67,16 @@ public sealed class MarkupConditionalContent
     internal IReadOnlyList<UIElement> GetChildren()
     {
         return cached ??= factory() ?? throw new InvalidOperationException("Conditional markup factory returned null.");
+    }
+
+    internal void Activate()
+    {
+        activated?.Invoke();
+    }
+
+    internal void Deactivate()
+    {
+        deactivated?.Invoke();
     }
 }
 
@@ -370,6 +393,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
     private readonly IReadOnlyList<MarkupObservation> observations;
     private readonly IReadOnlyList<MarkupConditionRule> rules;
     private readonly List<MarkupConditionalValue> appliedValues = [];
+    private readonly List<MarkupConditionalContent> activeContent = [];
     private bool started;
     private bool disposed;
     private bool evaluating;
@@ -388,6 +412,18 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
 
     public void Attach()
     {
+        if (started)
+        {
+            foreach (MarkupObservation observation in observations)
+            {
+                observation.Stop();
+                observation.Start();
+            }
+
+            Evaluate();
+            return;
+        }
+
         Start();
     }
 
@@ -438,6 +474,13 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
             observation.Changed -= OnObservationChanged;
             observation.Stop();
         }
+
+        foreach (MarkupConditionalContent content in activeContent)
+        {
+            content.Deactivate();
+        }
+
+        activeContent.Clear();
     }
 
     private void OnObservationChanged(object? sender, EventArgs args)
@@ -549,6 +592,19 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
             default:
                 throw new InvalidOperationException($"Element '{owner.GetType().Name}' does not accept conditional child content.");
         }
+
+        foreach (MarkupConditionalContent previous in activeContent.Where(item => !content.Contains(item)).ToArray())
+        {
+            previous.Deactivate();
+        }
+
+        foreach (MarkupConditionalContent current in content.Where(item => !activeContent.Contains(item)))
+        {
+            current.Activate();
+        }
+
+        activeContent.Clear();
+        activeContent.AddRange(content);
     }
 
     private static void Reconcile(UIElementCollection collection, IReadOnlyList<UIElement> desired)

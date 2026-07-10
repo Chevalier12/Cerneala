@@ -182,7 +182,9 @@ public sealed class ObservableListTests
         Assert.Equal(["aa", "b"], list.ToArray());
         Assert.Contains("b", list);
         Assert.Equal(0, list.IndexOf("aa"));
-        Assert.Equal([null, "aa", "b"], copy);
+        Assert.Null(copy[0]);
+        Assert.Equal("aa", copy[1]);
+        Assert.Equal("b", copy[2]);
         Assert.True(list.Remove("aa"));
         Assert.False(list.Remove("missing"));
         Assert.Equal(["b"], list.ToArray());

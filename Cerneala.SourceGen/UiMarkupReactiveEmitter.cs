@@ -597,7 +597,7 @@ public sealed partial class UiMarkupGenerator
                 else if (rule.Elements.Count > 0)
                 {
                     string factoryName = EmitConditionalFactory(rule.Elements);
-                    contentCode = "new global::Cerneala.UI.Markup.MarkupConditionalContent(" + rule.Order + ", " + factoryName + ")";
+                    contentCode = EmitConditionalContentExpression(rule.Order, factoryName);
                 }
 
                 ruleExpressions.Add(
@@ -623,8 +623,10 @@ public sealed partial class UiMarkupGenerator
             List<string> variables = [];
             List<string> previousLines = currentLines;
             List<string> previousPostLines = currentPostLines;
+            List<NamedElementMember> conditionalMembers = [];
             currentLines = functionLines;
             currentPostLines = functionPostLines;
+            conditionalMemberScopes.Push(conditionalMembers);
             try
             {
                 foreach (DirectiveElementNode element in elements)
@@ -634,9 +636,12 @@ public sealed partial class UiMarkupGenerator
             }
             finally
             {
+                conditionalMemberScopes.Pop();
                 currentLines = previousLines;
                 currentPostLines = previousPostLines;
             }
+
+            conditionalFactoryMembers[factoryName] = conditionalMembers;
 
             currentPostLines.Add("global::System.Collections.Generic.IReadOnlyList<global::Cerneala.UI.Elements.UIElement> " + factoryName + "()");
             currentPostLines.Add("{");

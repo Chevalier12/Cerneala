@@ -19,7 +19,8 @@ Generated from `.`.
 |   |-- Cerneala.SourceGen.csproj
 |   |-- UiMarkupDirectiveParser.cs
 |   |-- UiMarkupGenerator.cs
-|   +-- UiMarkupReactiveEmitter.cs
+|   |-- UiMarkupReactiveEmitter.cs
+|   +-- UiMarkupUserControlGenerator.cs
 |-- docs/
 |   |-- bug-reports/
 |   |-- diagrams/
@@ -87,7 +88,8 @@ Generated from `.`.
 |   |-- getting-started.md
 |   |-- motion-api.md
 |   |-- motion-diagnostics.md
-|   +-- motion-system.md
+|   |-- motion-system.md
+|   +-- wpf-event-coverage.md
 |-- docs-site/
 |   |-- documentation/
 |   |   |-- classes/
@@ -851,6 +853,10 @@ Generated from `.`.
 |       |   |-- Content.mgcb
 |       |   +-- PreviewImage.png
 |       |-- Samples/
+|       |   |-- UserControlShowcase/
+|       |   |   |-- MainWindow.cui.xml
+|       |   |   |-- MainWindow.cui.xml.cs
+|       |   |   +-- MainWindow.limitations.md
 |       |   |-- AspectMotionSample.cs
 |       |   |-- AuthoringAppSample.cs
 |       |   |-- DiagnosticsSample.cs
@@ -944,7 +950,9 @@ Generated from `.`.
 |   |   |   |-- TextBoxTests.cs
 |   |   |   |-- TextBoxTwoWayBindingTests.cs
 |   |   |   |-- ToggleButtonTests.cs
-|   |   |   +-- ToolTipTests.cs
+|   |   |   |-- ToolTipTests.cs
+|   |   |   |-- UserControlTests.cs
+|   |   |   +-- WpfEventSurfaceTests.cs
 |   |   |-- Docs/
 |   |   |   |-- AspectDocsTests.cs
 |   |   |   +-- GettingStartedDocsTests.cs
@@ -999,7 +1007,8 @@ Generated from `.`.
 |   |   |   |   |-- ModernAspectSampleTests.cs
 |   |   |   |   |-- PlaygroundSampleTests.cs
 |   |   |   |   |-- RuntimePreviewIntegrationTests.cs
-|   |   |   |   +-- RuntimePreviewSampleContractTests.cs
+|   |   |   |   |-- RuntimePreviewSampleContractTests.cs
+|   |   |   |   +-- UserControlMarkupSampleTests.cs
 |   |   |   |-- Game1SourceTests.cs
 |   |   |   |-- PlaygroundGameLoopSmokeTests.cs
 |   |   |   |-- RetainedAppAspectContractTests.cs
@@ -1349,6 +1358,7 @@ Generated from `.`.
 |   |   |   |-- DragStartedEventArgs.cs
 |   |   |   |-- RangeBase.cs
 |   |   |   |-- ScrollBar.cs
+|   |   |   |-- ScrollEventArgs.cs
 |   |   |   |-- Selector.cs
 |   |   |   |-- Thumb.cs
 |   |   |   |-- ToggleButton.cs
@@ -1400,6 +1410,7 @@ Generated from `.`.
 |   |   |-- Decorator.cs
 |   |   |-- Image.cs
 |   |   |-- InkCanvas.cs
+|   |   |-- InkCanvasEventArgs.cs
 |   |   |-- IScrollInfo.cs
 |   |   |-- ItemsControl.cs
 |   |   |-- ItemsPresenter.cs
@@ -1412,6 +1423,7 @@ Generated from `.`.
 |   |   |-- ProgressBar.cs
 |   |   |-- RadioButton.cs
 |   |   |-- ScrollBarVisibility.cs
+|   |   |-- ScrollChangedEventArgs.cs
 |   |   |-- ScrollContentPresenter.cs
 |   |   |-- ScrollViewer.cs
 |   |   |-- Slider.cs
@@ -1421,7 +1433,9 @@ Generated from `.`.
 |   |   |-- TextBlock.cs
 |   |   |-- TextBox.cs
 |   |   |-- TextBoxBase.cs
-|   |   +-- ToolTip.cs
+|   |   |-- TextChangedEventArgs.cs
+|   |   |-- ToolTip.cs
+|   |   +-- UserControl.cs
 |   |-- Core/
 |   |   |-- CoerceValue.cs
 |   |   |-- IUiPropertyOwner.cs
@@ -1486,6 +1500,8 @@ Generated from `.`.
 |   |   |-- IElementLifecycleBehavior.cs
 |   |   |-- InheritedPropertyPropagator.cs
 |   |   |-- UIElement.cs
+|   |   |-- UIElement.Events.cs
+|   |   |-- UIElement.InputEvents.cs
 |   |   |-- UIElementCollection.cs
 |   |   |-- UIElementVisibility.cs
 |   |   +-- UIRoot.cs
@@ -1537,6 +1553,7 @@ Generated from `.`.
 |   |   |-- HoverTracker.cs
 |   |   |-- ICommand.cs
 |   |   |-- ICommandStateSource.cs
+|   |   |-- IInputActivatable.cs
 |   |   |-- IInputCommandSource.cs
 |   |   |-- IInputPressable.cs
 |   |   |-- IInputSource.cs
@@ -1573,6 +1590,7 @@ Generated from `.`.
 |   |   |-- RoutedEventArgs.cs
 |   |   |-- RoutedEventRegistry.cs
 |   |   |-- RoutedEventRouter.cs
+|   |   |-- RoutedPropertyChangedEventArgs.cs
 |   |   |-- RoutingStrategy.cs
 |   |   |-- StylusEventArgs.cs
 |   |   |-- StylusInputAction.cs

@@ -1,0 +1,184 @@
+<Resources>
+    <SolidColorBrush Name="AccentBrush" Color="#FFFF5D73" />
+    <SolidColorBrush Name="PanelBrush" Color="#FF1E2633" />
+    <SolidColorBrush Name="PanelEdgeBrush" Color="#FF526071" />
+    <SolidColorBrush Name="HoverBrush" Color="#FF283548" />
+
+    <Aspect Target="TextBlock">
+        @default
+        {
+            FontFamily = "Segoe UI";
+            FontSize = 14;
+            Foreground = White;
+        }
+    </Aspect>
+
+    <Aspect Name="InteractiveCard" Target="Border">
+        @default
+        {
+            Background = $PanelBrush;
+            BorderColor = $PanelEdgeBrush;
+            BorderThickness = 1;
+            Padding = 12;
+        }
+
+        @when IsMouseOver
+        {
+            @if value == True
+            {
+                Background = $HoverBrush;
+                BorderColor = $AccentBrush;
+            }
+        }
+    </Aspect>
+</Resources>
+
+<UserControl
+    Initialized="OnInitialized"
+    Loaded="OnLoaded"
+    Unloaded="OnUnloaded"
+    DataContextChanged="OnDataContextChanged"
+    Background="12,16,24"
+    BorderColor="82,96,113"
+    BorderThickness="1"
+    Padding="16"
+    Margin="0"
+    IsEnabled="True"
+    IsVisible="True">
+
+    @when $DataContext.IsReady
+    {
+        @if value == True
+        {
+            BorderColor = $AccentBrush;
+        }
+        @if value == False
+        {
+            BorderColor = $PanelEdgeBrush;
+        }
+    }
+
+    <StackPanel Name="RootPanel" Margin="8">
+        <TextBlock
+            Name="TitleText"
+            Text="UserControl generator showcase"
+            FontFamily="Consolas"
+            FontSize="22"
+            Foreground="255,93,115"
+            Background="30,38,51"
+            Margin="0,0,0,8" />
+
+        <TextBlock Name="LifecycleText" Margin="0,0,0,8">
+            Lifecycle handlers have not run yet.
+        </TextBlock>
+
+        <ShowcaseBadge
+            Name="CustomBadge"
+            Margin="0,0,0,8"
+            IsEnabled="True"
+            MouseEnter="OnBadgeMouseEnter" />
+
+        <Border Name="FeatureCard" Aspect="$InteractiveCard" Margin="0,0,0,8">
+            @when $CustomBadge
+            {
+                @if value != $AccentBrush
+                {
+                    Padding = 16;
+                }
+            }
+
+            @when $DataContext.IsReady
+            {
+                @if value == True
+                {
+                    @when IsPointerOver
+                    {
+                        @if value == True
+                        {
+                            BorderColor = $AccentBrush;
+                        }
+                    }
+                }
+            }
+
+            <StackPanel>
+                <TextBlock Name="StatusText" Text="Mode: Idle">
+                    @when $DataContext.Mode
+                    {
+                        @if value == Idle { Text = "Mode: Idle"; }
+                        @if value == Running { Text = "Mode: Running"; }
+                        @if value == Complete { Text = "Mode: Complete"; }
+                    }
+                </TextBlock>
+
+                <Panel Name="ComparisonPanel" Margin="0,8,0,8">
+                    <TextBlock Name="ScoreBandText" Text="Score: zero" IsVisible="True">
+                        @when $DataContext.Score
+                        {
+                            @if value &lt; 0 { Text = "Score: negative"; }
+                            @if value &lt;= 3 { Text = "Score: low"; }
+                            @if value != 0 { IsVisible = True; }
+                            @if value &gt; 3 { Text = "Score: medium"; }
+                            @if value &gt;= 10 { Text = "Score: high"; }
+                            @if value == $DataContext.TargetScore { Text = "Score reached the target"; }
+                        }
+                    </TextBlock>
+
+                    <TextBlock Name="UserNameText" Text="User: unknown">
+                        @when $DataContext.UserName
+                        {
+                            @if value == "Ada" { Text = "User: Ada"; }
+                            @if value != "Ada" { Text = "User: not Ada"; }
+                            @if value &lt; "M" { Foreground = $AccentBrush; }
+                        }
+                    </TextBlock>
+
+                    <TextBlock Name="DetailsText" Text="Details: unavailable">
+                        @when $DataContext.Details
+                        {
+                            @if value == Null { Text = "Details: null"; }
+                            @if value != Null { Text = "Details: object available"; }
+                        }
+
+                        @when $DataContext.Details.IsHealthy
+                        {
+                            @if value == True { Text = "Details: healthy"; }
+                            @if value == False { Text = "Details: unhealthy"; }
+                        }
+                    </TextBlock>
+                </Panel>
+
+                <StackPanel Name="ActionPanel">
+                    <Button
+                        Name="PrimaryButton"
+                        Content="Increment and toggle advanced"
+                        Background="255,93,115"
+                        Foreground="Black"
+                        BorderColor="White"
+                        BorderThickness="1"
+                        Padding="10,6,10,6"
+                        Margin="0,0,0,4"
+                        Click="OnPrimaryClick"
+                        IsEnabledChanged="OnPrimaryEnabledChanged" />
+
+                    <Button Name="SecondaryButton" Click="OnSecondaryClick">
+                        Replace nested DataContext object
+                    </Button>
+
+                    <Button Name="PinStatusButton" Content="Pin local status" Click="OnPinStatusClick" />
+
+                    @when $DataContext.ShowAdvanced
+                    {
+                        @if value == True
+                        {
+                            <Button
+                                Name="AdvancedButton"
+                                Content="Complete workflow"
+                                Click="OnAdvancedClick" />
+                        }
+                    }
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

@@ -31,5 +31,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
+    <ProjectReference Include="..\..\Cerneala.SourceGen\Cerneala.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**" />
   </ItemGroup>
 </Project>

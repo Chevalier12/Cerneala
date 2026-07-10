@@ -11,6 +11,7 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
+using Cerneala.Playground.Samples.UserControlShowcase;
 using GridLength = Cerneala.UI.Layout.Panels.GridLength;
 using LayoutGrid = Cerneala.UI.Layout.Panels.Grid;
 using PanelOrientation = Cerneala.UI.Layout.Orientation;
@@ -71,6 +72,7 @@ public sealed class SampleSelector
             new PresenceMotionSample(resourceProvider, fontResourceId),
             new ScrollMotionSample(resourceProvider, fontResourceId),
             new ModernAspectSample(resourceProvider, fontResourceId),
+            new UserControlMarkupSample(),
             new AspectMotionSample(resourceProvider, fontResourceId)
         }, resourceProvider, fontResourceId);
     }
