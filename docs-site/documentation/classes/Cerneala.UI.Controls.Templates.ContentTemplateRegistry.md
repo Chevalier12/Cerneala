@@ -67,7 +67,7 @@ ContentPresenter presenter = new()
 ```
 
 ## Remarks
-`ContentTemplateRegistry` is used by the modern content-template pipeline. `ContentPresenter.LocalTemplateRegistry` asks the registry to resolve a `ContentTemplate` when no classic `ContentTemplate` and no direct `ModernContentTemplate` are set. `ItemsControl.ContentTemplateRegistry` supplies the registry assigned to generated item presenters.
+`ContentTemplateRegistry` is used by the content-template pipeline. `ContentPresenter.LocalTemplateRegistry` asks the registry to resolve a `ContentTemplate` when no explicit `ContentTemplate` is set. `ItemsControl.ContentTemplateRegistry` supplies the registry assigned to generated item presenters.
 
 Registering a template appends it with a registration order, clears the resolve cache, and increments `Version`. Unregistering removes the exact same template instance by reference, clears the cache, increments `Version`, and returns whether a template was removed.
 

@@ -60,12 +60,12 @@ public sealed class ScrollBarTests
     {
         ScrollBar scrollBar = new();
         UIElement root = new();
-        scrollBar.Template = new ControlTemplate<ScrollBar>(_ => root);
+        scrollBar.ComponentTemplate = new ComponentTemplate<ScrollBar>("test", _ => root);
 
         scrollBar.Measure(new MeasureContext(new LayoutSize(100, 100)));
         scrollBar.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
-        Assert.Same(root, scrollBar.TemplateInstance!.Root);
+        Assert.Same(root, scrollBar.ComponentTemplateInstance!.Root);
         Assert.DoesNotContain(scrollBar.Track, scrollBar.VisualChildren);
     }
 

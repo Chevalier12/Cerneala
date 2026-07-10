@@ -13,12 +13,12 @@ public sealed class TemplatedButtonStateContractTests
         Button button = new()
         {
             Content = "Save",
-            Template = Cerneala.UI.Theming.DefaultTheme.CreateButtonTemplate()
+            ComponentTemplate = Cerneala.UI.Theming.DefaultTheme.CreateButtonTemplate()
         };
 
         button.Measure(new MeasureContext(new LayoutSize(200, 40)));
 
-        Assert.IsType<Border>(button.TemplateInstance!.Root);
+        Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public sealed class TemplatedButtonStateContractTests
         button.Padding = new Thickness(3);
 
         button.Measure(new MeasureContext(new LayoutSize(200, 40)));
-        Border border = Assert.IsType<Border>(button.TemplateInstance!.Root);
+        Border border = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
 
         Assert.Equal(button.Background, border.Background);
         Assert.Equal(button.BorderColor, border.BorderColor);
@@ -55,7 +55,7 @@ public sealed class TemplatedButtonStateContractTests
         return new Button
         {
             Content = content,
-            Template = Cerneala.UI.Theming.DefaultTheme.CreateButtonTemplate()
+            ComponentTemplate = Cerneala.UI.Theming.DefaultTheme.CreateButtonTemplate()
         };
     }
 

@@ -82,7 +82,7 @@ The factory receives a `ComponentTemplateContext<TControl>`. When `CreateInstanc
 
 The factory may return `null`. The created `ComponentTemplateInstance` still carries the context's recorded template bindings, token bindings, slot map, and part map. Those bindings are attached later when the instance is attached to the owner.
 
-When assigned to `Control.ComponentTemplate`, the template is applied by `Control.ApplyTemplate()`. Component templates take precedence over the classic `Control.Template` property. Reapplying the same component template keeps the existing generated root; replacing it detaches the previous `ComponentTemplateInstance` before attaching the new one.
+When assigned to `Control.ComponentTemplate`, the template is applied by `Control.ApplyTemplate()`. Reapplying the same component template keeps the existing generated root; replacing it detaches the previous `ComponentTemplateInstance` before attaching the new one.
 
 ## Constructors
 

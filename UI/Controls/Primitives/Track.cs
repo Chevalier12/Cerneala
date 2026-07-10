@@ -193,7 +193,7 @@ public class Track : Control
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
-        bool templateChanged = ReferenceEquals(args.Property, TemplateProperty);
+        bool templateChanged = ReferenceEquals(args.Property, ComponentTemplateProperty);
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, MinimumProperty) || ReferenceEquals(args.Property, MaximumProperty))
         {
@@ -217,7 +217,7 @@ public class Track : Control
 
         if (templateChanged)
         {
-            if (Template is null)
+            if (ComponentTemplate is null)
             {
                 AddThumb();
             }

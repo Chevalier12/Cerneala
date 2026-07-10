@@ -20,12 +20,12 @@ public sealed class ContentPresenterTests
     }
 
     [Fact]
-    public void DataTemplateCreatesPresentedChildForNonElementContent()
+    public void ContentTemplateCreatesPresentedChildForNonElementContent()
     {
         ContentPresenter presenter = new()
         {
             Content = "hello",
-            ContentTemplate = new DataTemplate<string>(_ => new FixedElement(new LayoutSize(10, 5)))
+            ContentTemplate = new ContentTemplate<string>("test", key: null, priority: 0, _ => new FixedElement(new LayoutSize(10, 5)))
         };
 
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
@@ -42,7 +42,7 @@ public sealed class ContentPresenterTests
         ContentPresenter presenter = new()
         {
             Content = content,
-            ContentTemplate = new DataTemplate<UIElement>(_ => new FixedElement(new LayoutSize(10, 5)))
+            ContentTemplate = new ContentTemplate<UIElement>("test", key: null, priority: 0, _ => new FixedElement(new LayoutSize(10, 5)))
         };
 
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
@@ -70,13 +70,13 @@ public sealed class ContentPresenterTests
     }
 
     [Fact]
-    public void DataTemplateOutputIsRetainedAcrossMeasurePasses()
+    public void ContentTemplateOutputIsRetainedAcrossMeasurePasses()
     {
         int created = 0;
         ContentPresenter presenter = new()
         {
             Content = "hello",
-            ContentTemplate = new DataTemplate<string>(_ =>
+            ContentTemplate = new ContentTemplate<string>("test", key: null, priority: 0, _ =>
             {
                 created++;
                 return new FixedElement(new LayoutSize(10, 5));
@@ -99,7 +99,7 @@ public sealed class ContentPresenterTests
         ContentPresenter presenter = new()
         {
             Content = oldContent,
-            ContentTemplate = new DataTemplate<EqualContent>(value => new ContentElement(value))
+            ContentTemplate = new ContentTemplate<EqualContent>("test", key: null, priority: 0, context => new ContentElement(context.Data!))
         };
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
         ContentElement oldChild = Assert.IsType<ContentElement>(presenter.PresentedChild);

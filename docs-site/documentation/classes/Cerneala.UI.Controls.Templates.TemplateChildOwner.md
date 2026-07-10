@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Controls.Templates`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Controls/Templates/TemplateInstance.cs`
+Source: `UI/Controls/Templates/ComponentTemplateInstance.cs`
 
 Provides the `Cerneala.UI.Controls.Templates.TemplateChildOwner` API surface.
 

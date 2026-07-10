@@ -25,10 +25,10 @@ public class ContentPresenter : Control
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
             ContentReferenceEqualityComparer));
 
-    public static readonly UiProperty<DataTemplate?> ContentTemplateProperty = UiProperty<DataTemplate?>.Register(
+    public static readonly UiProperty<ContentTemplate?> ContentTemplateProperty = UiProperty<ContentTemplate?>.Register(
         nameof(ContentTemplate),
         typeof(ContentPresenter),
-        new UiPropertyMetadata<DataTemplate?>(
+        new UiPropertyMetadata<ContentTemplate?>(
             null,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
@@ -37,18 +37,13 @@ public class ContentPresenter : Control
         typeof(ContentPresenter),
         new UiPropertyMetadata<string?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<ContentTemplate?> ModernContentTemplateProperty = UiProperty<ContentTemplate?>.Register(
-        nameof(ModernContentTemplate),
-        typeof(ContentPresenter),
-        new UiPropertyMetadata<ContentTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
-
     public object? Content
     {
         get => GetValue(ContentProperty);
         set => SetValue(ContentProperty, value);
     }
 
-    public DataTemplate? ContentTemplate
+    public ContentTemplate? ContentTemplate
     {
         get => GetValue(ContentTemplateProperty);
         set => SetValue(ContentTemplateProperty, value);
@@ -58,12 +53,6 @@ public class ContentPresenter : Control
     {
         get => GetValue(ContentTemplateKeyProperty);
         set => SetValue(ContentTemplateKeyProperty, value);
-    }
-
-    public ContentTemplate? ModernContentTemplate
-    {
-        get => GetValue(ModernContentTemplateProperty);
-        set => SetValue(ModernContentTemplateProperty, value);
     }
 
     public ContentTemplateRegistry? LocalTemplateRegistry
@@ -124,8 +113,7 @@ public class ContentPresenter : Control
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, ContentProperty) ||
             ReferenceEquals(args.Property, ContentTemplateProperty) ||
-            ReferenceEquals(args.Property, ContentTemplateKeyProperty) ||
-            ReferenceEquals(args.Property, ModernContentTemplateProperty))
+            ReferenceEquals(args.Property, ContentTemplateKeyProperty))
         {
             presentationDirty = true;
             RefreshPresentedChild();
@@ -163,18 +151,11 @@ public class ContentPresenter : Control
     private UIElement? CreatePresentedChild()
     {
         object? content = Content;
-        DataTemplate? template = ContentTemplate;
+        ContentTemplate? template = ContentTemplate;
         if (template is not null)
         {
             generatedTextChild = false;
-            return template.CreateElement(content);
-        }
-
-        ContentTemplate? modernTemplate = ModernContentTemplate;
-        if (modernTemplate is not null)
-        {
-            generatedTextChild = false;
-            return modernTemplate.Create(new ContentTemplateContext(content, this, index: ContentIndex));
+            return template.Create(new ContentTemplateContext(content, this, index: ContentIndex));
         }
 
         ContentTemplateRegistry? registry = LocalTemplateRegistry;

@@ -72,7 +72,7 @@ Each data item is wrapped in a `ListBoxItem` container. If an item is already a 
 | `Items` | `ItemCollection` | Inherited from `ItemsControl`. Gets the local item collection used when `ItemsSource` is not set. |
 | `ItemsSource` | `IEnumerable?` | Inherited from `ItemsControl`. Gets or sets an external item source. |
 | `ItemCount` | `int` | Inherited from `ItemsControl`. Gets the count from the observable item source, `ItemsSource`, or `Items`. |
-| `ItemTemplate` | `DataTemplate?` | Inherited from `ItemsControl`. Gets or sets the template used to display non-container items. |
+| `ItemTemplate` | `ContentTemplate?` | Inherited from `ItemsControl`. Gets or sets the template used to display non-container items. |
 | `ItemTemplateKey` | `string?` | Inherited from `ItemsControl`. Gets or sets the template key used by content presentation. |
 | `ContentTemplateRegistry` | `ContentTemplateRegistry` | Inherited from `ItemsControl`. Gets or sets the registry used to resolve content templates. |
 | `ItemsPanel` | `ItemsPanelTemplate?` | Inherited from `ItemsControl`. Gets or sets the panel template used by the items presenter. `ListBox` initializes it to a `StackPanel` template. |

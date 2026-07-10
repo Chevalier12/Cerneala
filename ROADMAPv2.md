@@ -593,7 +593,7 @@ This phase creates the smallest useful control set. Controls should be retained,
 - [x] `UI/Controls/Button.cs` — button chrome and MVP string rendering; content ownership is inherited from `ContentControl`.
 - [x] `UI/Controls/Primitives/ToggleButton.cs` — checkable button primitive with explicit click toggle semantics.
 - [x] `UI/Controls/CheckBox.cs` — checkable content control rendered through retained drawing commands.
-- [x] `UI/Controls/Templates/ControlTemplate.cs` — code-first control templates.
+- [x] `UI/Controls/Templates/ComponentTemplate.cs` — code-first component templates.
 - [x] `UI/Controls/Templates/TemplatePartAttribute.cs` — diagnostic template part metadata.
 - [x] `UI/Controls/ControlTextFont.cs` — minimal backend-neutral font handle for MVP text commands.
 - [x] `UI/Text/TextMeasureResult.cs` — minimal text measurement result for `TextBlock`.
@@ -782,24 +782,23 @@ Acceptance checklist:
 
 This phase enables reusable controls without forcing every control to hand-code rendering. Templates should be code-first and strongly typed first; optional markup can come later.
 
-- [x] `UI/Controls/Templates/ControlTemplate.cs`
-- [x] `UI/Controls/Templates/ControlTemplate{TControl}.cs`
-- [x] `UI/Controls/Templates/TemplateContext.cs`
-- [x] `UI/Controls/Templates/TemplateInstance.cs`
+- [x] `UI/Controls/Templates/ComponentTemplate.cs`
+- [x] `UI/Controls/Templates/ComponentTemplateContext.cs`
+- [x] `UI/Controls/Templates/ComponentTemplateInstance.cs`
 - [x] `UI/Controls/Templates/TemplateBinding{T}.cs`
 - [x] `UI/Controls/Templates/TemplatePartAttribute.cs` — diagnostic only; no hidden runtime magic required.
 - [x] `UI/Controls/Items/ItemsPanelTemplate.cs`
-- [x] `UI/Controls/Templates/DataTemplate.cs`
-- [x] `UI/Controls/Templates/DataTemplate{T}.cs`
+- [x] `UI/Controls/Templates/ContentTemplate.cs`
+- [x] `UI/Controls/Templates/ContentTemplateContext.cs`
 - [x] `UI/Controls/ContentPresenter.cs`
 - [x] `UI/Controls/ItemsPresenter.cs`
 
 Tests:
 
-- [x] `tests/Cerneala.Tests/Controls/ControlTemplateTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ComponentTemplateLifecycleTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/TemplateBindingTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/ContentPresenterTests.cs`
-- [x] `tests/Cerneala.Tests/Controls/DataTemplateTests.cs`
+- [x] `tests/Cerneala.Tests/Controls/ContentTemplateTests.cs`
 - [x] `tests/Cerneala.Tests/Controls/ItemsPanelTemplateTests.cs`
 
 Acceptance checklist:
@@ -1268,7 +1267,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [x] Style/value precedence order is `local > animation > style visual state > style base > inherited > default`.
 - [x] Templates are code-first until a markup layer exists.
 - [x] Typed binding APIs are enough for Core before adding string property paths.
-- [x] Keep WPF template names where useful: `ControlTemplate`, `DataTemplate`, and `ItemsPanelTemplate`.
+- [x] Use the modern `ComponentTemplate`, `ContentTemplate`, and `ItemsPanelTemplate` APIs consistently.
 
 ### Platform and packages
 

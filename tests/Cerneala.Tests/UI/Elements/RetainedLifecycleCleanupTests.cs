@@ -64,10 +64,10 @@ public sealed class RetainedLifecycleCleanupTests
         Button button = new();
         TextBlock firstChild = new();
         TextBlock secondChild = new();
-        button.Template = new ControlTemplate<Button>(_ => firstChild);
+        button.ComponentTemplate = new ComponentTemplate<Button>("first", _ => firstChild);
         button.ApplyTemplate();
 
-        button.Template = new ControlTemplate<Button>(_ => secondChild);
+        button.ComponentTemplate = new ComponentTemplate<Button>("second", _ => secondChild);
         button.ApplyTemplate();
 
         Assert.Null(firstChild.VisualParent);

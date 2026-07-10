@@ -10,7 +10,7 @@ using Cerneala.UI.Theming;
 
 namespace Cerneala.Tests.Controls;
 
-public sealed class ControlTemplateTests
+public sealed class ComponentTemplateLifecycleTests
 {
     [Fact]
     public void TypedTemplateReceivesOwnerContextAndAttachesRetainedRoot()
@@ -18,16 +18,16 @@ public sealed class ControlTemplateTests
         Button button = new();
         Button? contextOwner = null;
         UIElement child = new();
-        ControlTemplate<Button> template = new(context =>
+        ComponentTemplate<Button> template = new("test", context =>
         {
             contextOwner = context.Owner;
             return child;
         });
 
-        button.Template = template;
+        button.ComponentTemplate = template;
 
         Assert.Same(button, contextOwner);
-        Assert.Same(child, button.TemplateInstance!.Root);
+        Assert.Same(child, button.ComponentTemplateInstance!.Root);
         Assert.Same(button, child.LogicalParent);
         Assert.Same(button, child.VisualParent);
         Assert.Contains(child, button.LogicalChildren);
@@ -37,9 +37,12 @@ public sealed class ControlTemplateTests
     [Fact]
     public void TypedTemplateRejectsIncompatibleOwner()
     {
-        ControlTemplate<Button> template = new(_ => new UIElement());
+        ComponentTemplate<Button> template = new("test", _ => new UIElement());
 
-        Assert.Throws<InvalidOperationException>(() => template.CreateInstance(new ContentControl()));
+        ContentControl incompatibleOwner = new();
+        Assert.Throws<InvalidOperationException>(() => template.CreateInstance(
+            incompatibleOwner,
+            new ComponentTemplateContext(incompatibleOwner, new Cerneala.UI.Aspect.AspectEnvironment("test"))));
     }
 
     [Fact]
@@ -50,7 +53,7 @@ public sealed class ControlTemplateTests
         ContentPresenter? presenter = null;
         button.Content = child;
 
-        button.Template = new ControlTemplate<Button>(context =>
+        button.ComponentTemplate = new ComponentTemplate<Button>("test", context =>
         {
             presenter = new ContentPresenter { Content = context.Owner.Content };
             return presenter;
@@ -71,19 +74,19 @@ public sealed class ControlTemplateTests
     {
         Control control = new();
         int created = 0;
-        ControlTemplate<Control> template = new(_ =>
+        ComponentTemplate<Control> template = new("test", _ =>
         {
             created++;
             return new UIElement();
         });
-        control.Template = template;
-        UIElement root = control.TemplateInstance!.Root!;
+        control.ComponentTemplate = template;
+        UIElement root = control.ComponentTemplateInstance!.Root!;
 
         control.ApplyTemplate();
         control.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
         Assert.Equal(1, created);
-        Assert.Same(root, control.TemplateInstance!.Root);
+        Assert.Same(root, control.ComponentTemplateInstance!.Root);
     }
 
     [Fact]
@@ -92,9 +95,9 @@ public sealed class ControlTemplateTests
         Control control = new();
         UIElement oldRoot = new();
         UIElement newRoot = new();
-        control.Template = new ControlTemplate<Control>(_ => oldRoot);
+        control.ComponentTemplate = new ComponentTemplate<Control>("old", _ => oldRoot);
 
-        control.Template = new ControlTemplate<Control>(_ => newRoot);
+        control.ComponentTemplate = new ComponentTemplate<Control>("new", _ => newRoot);
 
         Assert.Null(oldRoot.LogicalParent);
         Assert.Null(oldRoot.VisualParent);
@@ -107,15 +110,15 @@ public sealed class ControlTemplateTests
     {
         Control control = new();
         RejectingBindingTarget child = new();
-        ControlTemplate<Control> template = new(context =>
+        ComponentTemplate<Control> template = new("test", context =>
         {
             context.Bind(Control.FontSizeProperty, child, RejectingBindingTarget.MinimumFontSizeProperty);
             return child;
         });
 
-        Assert.Throws<ArgumentException>(() => control.Template = template);
+        Assert.Throws<ArgumentException>(() => control.ComponentTemplate = template);
 
-        Assert.Null(control.TemplateInstance);
+        Assert.Null(control.ComponentTemplateInstance);
         Assert.Null(child.LogicalParent);
         Assert.Null(child.VisualParent);
         Assert.DoesNotContain(child, control.LogicalChildren);
@@ -127,7 +130,7 @@ public sealed class ControlTemplateTests
     {
         Control control = new()
         {
-            Template = new ControlTemplate<Control>(_ => new UIElement())
+            ComponentTemplate = new ComponentTemplate<Control>("test", _ => new UIElement())
         };
         TemplatePartAttribute.Register<PartedControl>("PART_Content", typeof(ContentPresenter));
 
@@ -136,7 +139,7 @@ public sealed class ControlTemplateTests
         TemplatePartAttribute part = Assert.Single(parts);
         Assert.Equal("PART_Content", part.Name);
         Assert.Equal(typeof(ContentPresenter), part.Type);
-        Assert.NotNull(control.TemplateInstance);
+        Assert.NotNull(control.ComponentTemplateInstance);
     }
 
     [Fact]
@@ -145,14 +148,14 @@ public sealed class ControlTemplateTests
         UIRoot root = new(40, 20);
         Control control = new();
         root.VisualChildren.Add(control);
-        ControlTemplate<Control> template = new(_ => new UIElement());
+        ComponentTemplate<Control> template = new("test", _ => new UIElement());
 
-        control.Template = template;
+        control.ComponentTemplate = template;
         int measureCount = root.LayoutQueue.MeasureCount;
         int arrangeCount = root.LayoutQueue.ArrangeCount;
         int renderCount = root.RenderQueue.Count;
         int hitTestCount = root.HitTestQueue.Count;
-        control.Template = template;
+        control.ComponentTemplate = template;
 
         Assert.Contains(control, root.LayoutQueue.SnapshotMeasure());
         Assert.Contains(control, root.LayoutQueue.SnapshotArrange());
@@ -172,7 +175,7 @@ public sealed class ControlTemplateTests
         root.VisualChildren.Add(control);
         LifecycleElement child = new();
 
-        control.Template = new ControlTemplate<Control>(_ => child);
+        control.ComponentTemplate = new ComponentTemplate<Control>("test", _ => child);
         UiElementId id = child.ElementId!.Value;
         control.ApplyTemplate();
 
@@ -187,12 +190,12 @@ public sealed class ControlTemplateTests
         UIRoot root = new(40, 20);
         Control control = new()
         {
-            Template = new ControlTemplate<Control>(_ => new RenderableElement(DrawColor.White))
+            ComponentTemplate = new ComponentTemplate<Control>("test", _ => new RenderableElement(DrawColor.White))
         };
         root.VisualChildren.Add(control);
         control.Measure(new MeasureContext(new LayoutSize(100, 100)));
         control.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 20)));
-        RenderableElement child = Assert.IsType<RenderableElement>(control.TemplateInstance!.Root);
+        RenderableElement child = Assert.IsType<RenderableElement>(control.ComponentTemplateInstance!.Root);
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();
 

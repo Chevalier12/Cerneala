@@ -31,10 +31,10 @@ public class ItemsControl : Control
         VisualChildren.Add(itemsPresenter);
     }
 
-    public static readonly UiProperty<DataTemplate?> ItemTemplateProperty = UiProperty<DataTemplate?>.Register(
+    public static readonly UiProperty<ContentTemplate?> ItemTemplateProperty = UiProperty<ContentTemplate?>.Register(
         nameof(ItemTemplate),
         typeof(ItemsControl),
-        new UiPropertyMetadata<DataTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<ContentTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
     public static readonly UiProperty<ItemsPanelTemplate?> ItemsPanelProperty = UiProperty<ItemsPanelTemplate?>.Register(
         nameof(ItemsPanel),
@@ -67,7 +67,7 @@ public class ItemsControl : Control
 
     public int ItemCount => observableItemsSource?.Count ?? ItemsSource?.Cast<object?>().Count() ?? Items.Count;
 
-    public DataTemplate? ItemTemplate
+    public ContentTemplate? ItemTemplate
     {
         get => GetValue(ItemTemplateProperty);
         set => SetValue(ItemTemplateProperty, value);

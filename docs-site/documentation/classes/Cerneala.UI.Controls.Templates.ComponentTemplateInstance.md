@@ -80,7 +80,7 @@ The `Root` property exposes the factory result, which may be `null`. `Slots` and
 
 `Dispose()` detaches the instance once and prevents later attachment. Calling `Attach(Control)` after disposal throws `ObjectDisposedException`. Calling `Attach(Control)` while the instance is already attached throws `InvalidOperationException`.
 
-`Control.ApplyTemplate()` stores the currently attached component instance in `Control.ComponentTemplateInstance`. Component templates take precedence over classic `Control.Template`; replacing the component template detaches the old `ComponentTemplateInstance` before attaching the new one.
+`Control.ApplyTemplate()` stores the currently attached component instance in `Control.ComponentTemplateInstance`; replacing the component template detaches the old `ComponentTemplateInstance` before attaching the new one.
 
 ## Constructors
 

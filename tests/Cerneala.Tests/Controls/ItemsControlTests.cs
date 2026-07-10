@@ -22,11 +22,11 @@ public sealed class ItemsControlTests
     }
 
     [Fact]
-    public void ItemsControlUsesDataTemplateAndItemsPanel()
+    public void ItemsControlUsesContentTemplateAndItemsPanel()
     {
         ItemsControl control = new()
         {
-            ItemTemplate = new DataTemplate<string>(value => new FixedElement(value, new LayoutSize(10, 5))),
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context => new FixedElement(context.Data!, new LayoutSize(10, 5))),
             ItemsPanel = new ItemsPanelTemplate(() => new Cerneala.UI.Controls.Panel())
         };
         control.SetItems(new[] { "a", "b" });
@@ -45,7 +45,7 @@ public sealed class ItemsControlTests
         UIElement item = new();
         ItemsControl control = new()
         {
-            ItemTemplate = new DataTemplate<UIElement>(_ => new FixedElement("templated", new LayoutSize(10, 5))),
+            ItemTemplate = new ContentTemplate<UIElement>("test", key: null, priority: 0, _ => new FixedElement("templated", new LayoutSize(10, 5))),
             ItemsPanel = new ItemsPanelTemplate(() => new Cerneala.UI.Controls.Panel())
         };
         control.SetItems(new[] { item });

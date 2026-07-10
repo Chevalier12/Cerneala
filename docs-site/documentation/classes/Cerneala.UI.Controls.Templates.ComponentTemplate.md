@@ -17,7 +17,7 @@ Inheritance:
 `object` -> `ComponentTemplate`
 
 Derived:
-`ComponentTemplate<TControl>`, `ControlTemplateAdapter`
+`ComponentTemplate<TControl>`
 
 ## Examples
 Create a typed component template and apply it to a button:
@@ -66,11 +66,9 @@ ComponentTemplateInstance instance = template.CreateInstance(button, context);
 
 The usual public implementation is `ComponentTemplate<TControl>`. It sets `OwnerType` to `typeof(TControl)`, invokes a `Func<ComponentTemplateContext<TControl>, UIElement?>` factory, and returns a `ComponentTemplateInstance` containing the generated root plus the bindings, token bindings, slots, and required parts collected by the context.
 
-`Control.ApplyTemplate()` prefers `Control.ComponentTemplate` over the classic `Control.Template`. Applying a component template detaches any existing classic template instance, creates a `ComponentTemplateContext` from the control's current aspect state, variants, and theme environment, attaches the resulting component instance, and stores it in `Control.ComponentTemplateInstance`. Reapplying the same template instance is stable and does not recreate the generated root.
+`Control.ApplyTemplate()` creates a `ComponentTemplateContext` from the control's current aspect state, variants, and theme environment, attaches the resulting component instance, and stores it in `Control.ComponentTemplateInstance`. Reapplying the same template instance is stable and does not recreate the generated root.
 
-`ControlTemplateAdapter` is a bridge from a classic `ControlTemplate` into the component template pipeline. It preserves the legacy root and bindings but creates empty component slot and part maps.
-
-The base constructor and `CreateInstanceCore` override point are `private protected`, so external consumers normally use `ComponentTemplate<TControl>` or adapter types provided by the `Cerneala` assembly instead of deriving from `ComponentTemplate` outside the assembly.
+The base constructor and `CreateInstanceCore` override point are `private protected`, so external consumers normally use `ComponentTemplate<TControl>` instead of deriving from `ComponentTemplate` outside the assembly.
 
 ## Constructors
 This class does not expose public constructors.
@@ -102,6 +100,5 @@ UI area: retained controls, modern component templates, aspect-aware templating.
 - `UI/Controls/Templates/ComponentTemplate.cs`
 - `UI/Controls/Templates/ComponentTemplateContext.cs`
 - `UI/Controls/Templates/ComponentTemplateInstance.cs`
-- `UI/Controls/Templates/ControlTemplateAdapter.cs`
 - `UI/Controls/Control.cs`
 - `UI/Controls/Buttons/ButtonTemplates.cs`

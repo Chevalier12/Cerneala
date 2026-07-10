@@ -18,12 +18,12 @@ public sealed class ItemsPanelTemplateTests
     }
 
     [Fact]
-    public void ItemsPresenterMaterializesItemsThroughDataTemplate()
+    public void ItemsPresenterMaterializesItemsThroughContentTemplate()
     {
         ItemsPresenter presenter = new()
         {
             Items = new[] { "one", "two" },
-            ItemTemplate = new DataTemplate<string>(value => new ItemElement(value))
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context => new ItemElement(context.Data!))
         };
 
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
@@ -41,7 +41,7 @@ public sealed class ItemsPanelTemplateTests
         ItemsPresenter presenter = new()
         {
             Items = new[] { "old" },
-            ItemTemplate = new DataTemplate<string>(value => new ItemElement(value))
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context => new ItemElement(context.Data!))
         };
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
         UIElement oldChild = presenter.PanelRoot!.VisualChildren[0];
@@ -82,10 +82,10 @@ public sealed class ItemsPanelTemplateTests
         ItemsPresenter presenter = new()
         {
             Items = new[] { "one" },
-            ItemTemplate = new DataTemplate<string>(value =>
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context =>
             {
                 created++;
-                return new ItemElement(value);
+                return new ItemElement(context.Data!);
             })
         };
 
@@ -103,7 +103,7 @@ public sealed class ItemsPanelTemplateTests
         ItemsPresenter presenter = new()
         {
             Items = new[] { "zero", "one", "two", "three", "four" },
-            ItemTemplate = new DataTemplate<string>(value => new ItemElement(value)),
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context => new ItemElement(context.Data!)),
             ItemsPanel = new ItemsPanelTemplate(() => new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()),
             VirtualizationContext = new VirtualizationContext(5, 10, 20, 20)
         };

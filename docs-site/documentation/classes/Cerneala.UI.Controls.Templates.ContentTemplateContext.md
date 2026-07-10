@@ -29,7 +29,7 @@ using Cerneala.UI.Controls.Templates;
 ContentPresenter presenter = new()
 {
     Content = "Saved",
-    ModernContentTemplate = new ContentTemplate(
+    ContentTemplate = new ContentTemplate(
         "Status.Text",
         dataType: typeof(string),
         key: null,
@@ -63,7 +63,7 @@ ContentTemplate<string> template = new(
 ## Remarks
 `ContentTemplateContext` is the non-generic context object passed to `ContentTemplate.Create(ContentTemplateContext)` and to the factory supplied to the non-generic `ContentTemplate` constructor. It is an immutable data holder; it does not resolve templates, attach children, or perform layout.
 
-`ContentPresenter` creates this context when it invokes either `ModernContentTemplate` or a template resolved from `LocalTemplateRegistry`. In that path, `Data` is the presenter content, `Presenter` is the presenter that is creating the child, and `Index` is copied from `ContentPresenter.ContentIndex`. Item presenters prepared by `ItemsControl` use that index so item templates can know their realized item position.
+`ContentPresenter` creates this context when it invokes either `ContentTemplate` or a template resolved from `LocalTemplateRegistry`. In that path, `Data` is the presenter content, `Presenter` is the presenter that is creating the child, and `Index` is copied from `ContentPresenter.ContentIndex`. Item presenters prepared by `ItemsControl` use that index so item templates can know their realized item position.
 
 When no `AspectEnvironment` is supplied, the constructor creates a new environment named `content-template`. When no `AspectVariantSet` is supplied, `Variants` is `AspectVariantSet.Empty`. `Index` defaults to `-1`, which is the same default used by `ContentPresenter` before an item container assigns an index. `Owner` is optional and is not assigned by the current `ContentPresenter` creation path.
 

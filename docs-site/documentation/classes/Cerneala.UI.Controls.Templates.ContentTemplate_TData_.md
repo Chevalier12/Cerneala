@@ -73,7 +73,7 @@ ContentTemplate<UserCard> template = new(
 
 `ContentTemplate<TData>` is the typed public wrapper over `ContentTemplate`. Its constructor passes `typeof(TData)` to the base class, so registry matching uses the same type assignability rules as `ContentTemplate.CanApply(ContentTemplateMatchContext)`: the template can apply when the content value is non-null and `typeof(TData).IsInstanceOfType(context.Data)` returns `true`.
 
-The factory receives a `ContentTemplateContext<TData>`, which copies the untyped content template context and exposes `Data` as `TData?`. When the supplied untyped context does not contain a `TData` value, the typed `Data` property is `default`. Normal registry resolution calls `CanApply` before `Create`, but direct calls through `ContentPresenter.ModernContentTemplate` invoke `Create` without resolving through a registry.
+The factory receives a `ContentTemplateContext<TData>`, which copies the untyped content template context and exposes `Data` as `TData?`. When the supplied untyped context does not contain a `TData` value, the typed `Data` property is `default`. Normal registry resolution calls `CanApply` before `Create`, but direct calls through `ContentPresenter.ContentTemplate` invoke `Create` without resolving through a registry.
 
 Keys are matched with ordinal string comparison. A keyed template does not match an unkeyed request, and an unkeyed template does not match a keyed request. When a `ContentTemplateRegistry` resolves multiple matches, keyed matches, predicate templates, higher priority, nearer data types, and registration order determine the winner.
 

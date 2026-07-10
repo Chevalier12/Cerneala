@@ -74,15 +74,34 @@ public sealed class ModernAspectArchitectureTests
     }
 
     [Fact]
-    public void ProductionCodeDoesNotReferenceControlTemplateAdapterAfterMigration()
+    public void RemovedTemplateTypesStayRemoved()
     {
-        AssertNoProductionReferencesOutsideOwnFile("ControlTemplateAdapter", "ControlTemplateAdapter.cs");
+        string[] removedTypeNames =
+        [
+            "Control" + "Template",
+            "Data" + "Template",
+            "Template" + "Context",
+            "Template" + "Instance",
+            "Control" + "TemplateAdapter",
+            "Data" + "TemplateAdapter"
+        ];
+        Type[] templateTypes = typeof(Control).Assembly.GetTypes()
+            .Where(type => type.Namespace?.StartsWith("Cerneala.UI.Controls.Templates", StringComparison.Ordinal) == true)
+            .ToArray();
+
+        foreach (string removedTypeName in removedTypeNames)
+        {
+            Assert.DoesNotContain(templateTypes, type => string.Equals(type.Name.Split('`')[0], removedTypeName, StringComparison.Ordinal));
+        }
+
     }
 
     [Fact]
-    public void ProductionCodeDoesNotReferenceDataTemplateAdapterAfterMigration()
+    public void RemovedTemplateMembersStayRemoved()
     {
-        AssertNoProductionReferencesOutsideOwnFile("DataTemplateAdapter", "DataTemplateAdapter.cs");
+        Assert.Null(typeof(Control).GetProperty("Template"));
+        Assert.Null(typeof(Control).GetProperty("Template" + "Instance"));
+        Assert.Null(typeof(ContentPresenter).GetProperty("Modern" + "ContentTemplate"));
     }
 
     [Fact]
@@ -101,16 +120,6 @@ public sealed class ModernAspectArchitectureTests
             .ToArray();
 
         Assert.DoesNotContain(declaredMembers, member => member.GetCustomAttribute<ObsoleteAttribute>() is not null);
-    }
-
-    private static void AssertNoProductionReferencesOutsideOwnFile(string symbolName, string ownFileName)
-    {
-        string[] references = FindProductionReferences(symbolName)
-            .Where(path => !string.Equals(Path.GetFileName(path), ownFileName, StringComparison.Ordinal))
-            .Order(StringComparer.Ordinal)
-            .ToArray();
-
-        Assert.Empty(references);
     }
 
     private static void AssertNoProductionReferences(string symbolName)

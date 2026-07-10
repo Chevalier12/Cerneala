@@ -17,17 +17,6 @@ public class Control : UIElement
 
     public event RoutedEventHandler PreviewMouseDoubleClick { add => AddHandler(PreviewMouseDoubleClickEvent, value); remove => RemoveHandler(PreviewMouseDoubleClickEvent, value); }
     public event RoutedEventHandler MouseDoubleClick { add => AddHandler(MouseDoubleClickEvent, value); remove => RemoveHandler(MouseDoubleClickEvent, value); }
-    public static readonly UiProperty<ControlTemplate?> TemplateProperty = UiProperty<ControlTemplate?>.Register(
-        nameof(Template),
-        typeof(Control),
-        new UiPropertyMetadata<ControlTemplate?>(
-            null,
-            UiPropertyOptions.AffectsMeasure |
-            UiPropertyOptions.AffectsArrange |
-            UiPropertyOptions.AffectsRender |
-            UiPropertyOptions.AffectsHitTest |
-            UiPropertyOptions.AffectsInputVisual));
-
     public static readonly UiProperty<ComponentTemplate?> ComponentTemplateProperty = UiProperty<ComponentTemplate?>.Register(
         nameof(ComponentTemplate),
         typeof(Control),
@@ -125,14 +114,6 @@ public class Control : UIElement
         set => SetValue(FontSizeProperty, value);
     }
 
-    public ControlTemplate? Template
-    {
-        get => GetValue(TemplateProperty);
-        set => SetValue(TemplateProperty, value);
-    }
-
-    public TemplateInstance? TemplateInstance { get; private set; }
-
     public ComponentTemplate? ComponentTemplate
     {
         get => GetValue(ComponentTemplateProperty);
@@ -155,7 +136,7 @@ public class Control : UIElement
 
     public ComponentTemplateInstance? ComponentTemplateInstance { get; private set; }
 
-    protected UIElement? TemplateChild => ComponentTemplateInstance?.Root ?? TemplateInstance?.Root;
+    protected UIElement? TemplateChild => ComponentTemplateInstance?.Root;
 
     protected Thickness Insets => new(
         Padding.Left + BorderThickness.Left,
@@ -165,34 +146,8 @@ public class Control : UIElement
 
     public void ApplyTemplate()
     {
-        ComponentTemplate? componentTemplate = ComponentTemplate;
-        if (componentTemplate is not null)
-        {
-            if (ComponentTemplateInstance is not null && ReferenceEquals(ComponentTemplateInstanceTemplate, componentTemplate))
-            {
-                return;
-            }
-
-            TemplateInstance?.Detach();
-            TemplateInstance = null;
-            TemplateInstanceTemplate = null;
-            ComponentTemplateInstance?.Detach();
-            ComponentTemplateInstance = null;
-            ComponentTemplateInstanceTemplate = null;
-
-            AspectEnvironment environment = Root?.ThemeProvider is null
-                ? new AspectEnvironment("template")
-                : ThemeTokenBridge.CreateEnvironment(Root.ThemeProvider.Theme);
-            ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
-            ComponentTemplateInstance componentInstance = componentTemplate.CreateInstance(this, context);
-            componentInstance.Attach(this);
-            ComponentTemplateInstance = componentInstance;
-            ComponentTemplateInstanceTemplate = componentTemplate;
-            return;
-        }
-
-        ControlTemplate? template = Template;
-        if (TemplateInstance is not null && ReferenceEquals(TemplateInstanceTemplate, template))
+        ComponentTemplate? template = ComponentTemplate;
+        if (ComponentTemplateInstance is not null && ReferenceEquals(ComponentTemplateInstanceTemplate, template))
         {
             return;
         }
@@ -200,19 +155,20 @@ public class Control : UIElement
         ComponentTemplateInstance?.Detach();
         ComponentTemplateInstance = null;
         ComponentTemplateInstanceTemplate = null;
-        TemplateInstance?.Detach();
-        TemplateInstance = null;
-        TemplateInstanceTemplate = null;
 
         if (template is null)
         {
             return;
         }
 
-        TemplateInstance instance = template.CreateInstance(this);
+        AspectEnvironment environment = Root?.ThemeProvider is null
+            ? new AspectEnvironment("template")
+            : ThemeTokenBridge.CreateEnvironment(Root.ThemeProvider.Theme);
+        ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
+        ComponentTemplateInstance instance = template.CreateInstance(this, context);
         instance.Attach(this);
-        TemplateInstance = instance;
-        TemplateInstanceTemplate = template;
+        ComponentTemplateInstance = instance;
+        ComponentTemplateInstanceTemplate = template;
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -231,17 +187,11 @@ public class Control : UIElement
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
-        if (ReferenceEquals(args.Property, TemplateProperty))
-        {
-            ApplyTemplate();
-        }
-        else if (ReferenceEquals(args.Property, ComponentTemplateProperty))
+        if (ReferenceEquals(args.Property, ComponentTemplateProperty))
         {
             ApplyTemplate();
         }
     }
-
-    private ControlTemplate? TemplateInstanceTemplate { get; set; }
 
     private ComponentTemplate? ComponentTemplateInstanceTemplate { get; set; }
 

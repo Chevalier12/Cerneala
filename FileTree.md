@@ -296,18 +296,9 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Templates.ContentTemplateRegistry.CacheKey.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.ContentTemplateRegistry.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.ContentTemplateRegistry.RegisteredTemplate.md
-|   |   |   |-- Cerneala.UI.Controls.Templates.ControlTemplate_TControl_.md
-|   |   |   |-- Cerneala.UI.Controls.Templates.ControlTemplate.md
-|   |   |   |-- Cerneala.UI.Controls.Templates.ControlTemplateAdapter.md
-|   |   |   |-- Cerneala.UI.Controls.Templates.DataTemplate_T_.md
-|   |   |   |-- Cerneala.UI.Controls.Templates.DataTemplate.md
-|   |   |   |-- Cerneala.UI.Controls.Templates.DataTemplateAdapter.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.TemplateBinding_T_.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.TemplateBinding.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.TemplateChildOwner.md
-|   |   |   |-- Cerneala.UI.Controls.Templates.TemplateContext_TControl_.md
-|   |   |   |-- Cerneala.UI.Controls.Templates.TemplateContext.md
-|   |   |   |-- Cerneala.UI.Controls.Templates.TemplateInstance.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.TemplatePartAttribute.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.TemplatePartMap.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.TemplateRecycleKey.md
@@ -886,13 +877,14 @@ Generated from `.`.
 |   |   |   |-- CanvasTests.cs
 |   |   |   |-- CheckBoxTests.cs
 |   |   |   |-- ComboBoxTests.cs
+|   |   |   |-- ComponentTemplateLifecycleTests.cs
 |   |   |   |-- ContentControlTests.cs
 |   |   |   |-- ContentPresenterDefaultTextTests.cs
 |   |   |   |-- ContentPresenterTests.cs
-|   |   |   |-- ControlTemplateTests.cs
+|   |   |   |-- ContentTemplateTests.cs
 |   |   |   |-- ControlTests.cs
-|   |   |   |-- DataTemplateTests.cs
 |   |   |   |-- DecoratorTests.cs
+|   |   |   |-- ElementAspectTests.cs
 |   |   |   |-- ImageTests.cs
 |   |   |   |-- InkCanvasTests.cs
 |   |   |   |-- ItemContainerGeneratorTests.cs
@@ -1299,6 +1291,7 @@ Generated from `.`.
 |   |   |-- ContentTemplateBuilder.cs
 |   |   |-- DefaultAspectPackage.cs
 |   |   |-- DefaultAspectTokens.cs
+|   |   |-- ElementAspect.cs
 |   |   |-- RejectedAspectDeclaration.cs
 |   |   |-- ResolvedAspect.cs
 |   |   |-- ResolvedAspectValue.cs
@@ -1348,15 +1341,7 @@ Generated from `.`.
 |   |   |   |-- ContentTemplateDefinition.cs
 |   |   |   |-- ContentTemplateMatchContext.cs
 |   |   |   |-- ContentTemplateRegistry.cs
-|   |   |   |-- ControlTemplate.cs
-|   |   |   |-- ControlTemplate{TControl}.cs
-|   |   |   |-- ControlTemplateAdapter.cs
-|   |   |   |-- DataTemplate.cs
-|   |   |   |-- DataTemplate{T}.cs
-|   |   |   |-- DataTemplateAdapter.cs
 |   |   |   |-- TemplateBinding{T}.cs
-|   |   |   |-- TemplateContext.cs
-|   |   |   |-- TemplateInstance.cs
 |   |   |   |-- TemplatePartAttribute.cs
 |   |   |   |-- TemplatePartMap.cs
 |   |   |   |-- TemplateRecycleKey.cs
@@ -1637,6 +1622,7 @@ Generated from `.`.
 |   |   |-- MarkupDiagnostic.cs
 |   |   |-- MarkupLoadOptions.cs
 |   |   |-- MarkupResult{T}.cs
+|   |   |-- MarkupValueConstraintAttribute.cs
 |   |   |-- UiFactory.cs
 |   |   |-- UiMarkupAttribute.cs
 |   |   |-- UiMarkupChildContent.cs

@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 
@@ -11,7 +12,7 @@ public sealed class TemplateBindingTests
     {
         Button button = new() { Background = DrawColor.White };
         Border? border = null;
-        button.Template = new ControlTemplate<Button>(context =>
+        button.ComponentTemplate = new ComponentTemplate<Button>("test", context =>
         {
             border = new Border();
             context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty);
@@ -27,7 +28,7 @@ public sealed class TemplateBindingTests
     {
         Button button = new() { Background = DrawColor.White };
         Border? border = null;
-        button.Template = new ControlTemplate<Button>(context =>
+        button.ComponentTemplate = new ComponentTemplate<Button>("test", context =>
         {
             border = new Border();
             context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty);
@@ -44,7 +45,7 @@ public sealed class TemplateBindingTests
     {
         Button button = new() { Background = DrawColor.White };
         Border? border = null;
-        button.Template = new ControlTemplate<Button>(context =>
+        button.ComponentTemplate = new ComponentTemplate<Button>("test", context =>
         {
             border = new Border();
             context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty);
@@ -61,14 +62,14 @@ public sealed class TemplateBindingTests
     {
         Button button = new() { Background = DrawColor.White };
         Border? oldBorder = null;
-        button.Template = new ControlTemplate<Button>(context =>
+        button.ComponentTemplate = new ComponentTemplate<Button>("old", context =>
         {
             oldBorder = new Border();
             context.Bind(Control.BackgroundProperty, oldBorder, Control.BackgroundProperty);
             return oldBorder;
         });
 
-        button.Template = new ControlTemplate<Button>(_ => new Border());
+        button.ComponentTemplate = new ComponentTemplate<Button>("new", _ => new Border());
         button.Background = DrawColor.Black;
 
         Assert.Equal(DrawColor.White, oldBorder!.Background);
@@ -81,9 +82,13 @@ public sealed class TemplateBindingTests
     {
         Button button = new();
         Border border = new();
-        TemplateContext<Button> context = new(button);
+        ComponentTemplateContext<Button> context = new(button, new AspectEnvironment("test"));
 
-        Assert.Throws<ArgumentException>(() => context.Bind(Control.BackgroundProperty, border, Control.FontSizeProperty));
+        Assert.Throws<ArgumentException>(() => context.Bind(
+            Control.BackgroundProperty,
+            border,
+            Control.FontSizeProperty,
+            UiPropertyValueSource.TemplateBinding));
     }
 
     [Fact]
@@ -100,14 +105,14 @@ public sealed class TemplateBindingTests
         Button button = new();
         Border? border = null;
         button.SetValue(sourceProperty, 42);
-        ControlTemplate<Button> template = new(context =>
+        ComponentTemplate<Button> template = new("test", context =>
         {
             border = new Border();
             context.Bind(sourceProperty, border, targetKey.Property);
             return border;
         });
 
-        Exception exception = Assert.ThrowsAny<Exception>(() => button.Template = template);
+        Exception exception = Assert.ThrowsAny<Exception>(() => button.ComponentTemplate = template);
 
         Assert.NotNull(border);
         Assert.Null(border.LogicalParent);
@@ -125,14 +130,14 @@ public sealed class TemplateBindingTests
         Button button = new();
         Border? border = null;
         button.SetValue(sourceProperty, -1);
-        ControlTemplate<Button> template = new(context =>
+        ComponentTemplate<Button> template = new("test", context =>
         {
             border = new Border();
             context.Bind(sourceProperty, border, Control.FontSizeProperty);
             return border;
         });
 
-        Assert.Throws<ArgumentException>(() => button.Template = template);
+        Assert.Throws<ArgumentException>(() => button.ComponentTemplate = template);
 
         Assert.NotNull(border);
         Assert.Null(border.LogicalParent);

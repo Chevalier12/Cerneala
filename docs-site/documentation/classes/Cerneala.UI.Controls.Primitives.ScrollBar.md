@@ -63,7 +63,7 @@ The constructor creates one fallback `Track`, subscribes to its `ValueChanged` e
 
 The scroll bar keeps its track synchronized with `Minimum`, `Maximum`, `Value`, `SmallChange`, `LargeChange`, `ViewportSize`, and `Orientation`. When the track value changes, for example through thumb dragging or track input handled by `Track`, the scroll bar copies `Track.Value` back into `Value`.
 
-Setting the inherited `Template` property removes the fallback track from the scroll bar logical and visual children and lets the base template path handle layout. Clearing `Template` adds the fallback track back. The `Track` property still returns the same track instance.
+Setting the inherited `ComponentTemplate` property removes the fallback track from the scroll bar logical and visual children and lets the base template path handle layout. Clearing `ComponentTemplate` adds the fallback track back. The `Track` property still returns the same track instance.
 
 The default renderer fills the scroll bar background when no template child is present. The fallback renderer does not draw the border itself; the owned `Track` handles its own background and border rendering.
 
@@ -71,7 +71,7 @@ The default renderer fills the scroll bar background when no template child is p
 
 | Name | Description |
 | --- | --- |
-| `ScrollBar()` | Initializes a new `ScrollBar`, creates its fallback `Track`, subscribes to track value changes, adds the track as a child while no classic template is applied, and assigns default background, border color, border thickness, orientation, and viewport size values. |
+| `ScrollBar()` | Initializes a new `ScrollBar`, creates its fallback `Track`, subscribes to track value changes, adds the track as a child while no template is applied, and assigns default background, border color, border thickness, orientation, and viewport size values. |
 
 ## Fields
 
@@ -105,7 +105,7 @@ The default renderer fills the scroll bar background when no template child is p
 | `ValueProperty` | `UiProperty<float>` | `RangeBase` | Identifies the `Value` property. Default is `0`; values must be finite and are coerced to the active range. |
 | `SmallChangeProperty` | `UiProperty<float>` | `RangeBase` | Identifies the `SmallChange` property. Default is `0.1`; values must be finite and non-negative. |
 | `LargeChangeProperty` | `UiProperty<float>` | `RangeBase` | Identifies the `LargeChange` property. Default is `1`; values must be finite and non-negative. |
-| `TemplateProperty` | `UiProperty<ControlTemplate?>` | `Control` | Identifies the classic control template property. `ScrollBar` removes or restores its fallback track when this property changes. |
+| `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | `Control` | Identifies the control template property. `ScrollBar` removes or restores its fallback track when this property changes. |
 
 ## Relevant Inherited Properties
 
@@ -119,7 +119,7 @@ The default renderer fills the scroll bar background when no template child is p
 | `Background` | `DrawColor` | `Control` | Gets or sets the fallback scroll bar background fill. The constructor sets it to `DrawColor(235, 235, 235)`. |
 | `BorderColor` | `DrawColor` | `Control` | Gets or sets the inherited border color. The constructor sets it to `DrawColor(130, 130, 130)`. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the inherited border thickness. The constructor sets it to `new Thickness(1)`. |
-| `Template` | `ControlTemplate?` | `Control` | Gets or sets the classic control template. When present, the fallback track is removed from the scroll bar child collections. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. When present, the fallback track is removed from the scroll bar child collections. |
 
 ## Property Information
 

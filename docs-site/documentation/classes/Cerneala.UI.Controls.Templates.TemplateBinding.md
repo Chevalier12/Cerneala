@@ -28,7 +28,7 @@ Bind a generated `Border` background to the templated `Button` background from i
 Button button = new()
 {
     Background = DrawColor.White,
-    Template = new ControlTemplate<Button>(context =>
+    ComponentTemplate = new ComponentTemplate<Button>("Button.Binding", context =>
     {
         Border border = new();
         context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty);
@@ -54,7 +54,7 @@ binding.Attach(owner);
 
 ## Remarks
 
-`TemplateBinding` is used by the template system to keep generated children synchronized with properties on the control that owns the template. `TemplateContext.Bind` creates these bindings while a `ControlTemplate<TControl>` builds its visual tree, and `TemplateInstance.Attach` attaches each recorded binding to the template owner.
+`TemplateBinding` is used by the template system to keep generated children synchronized with properties on the control that owns the template. `ComponentTemplateContext.Bind` creates these bindings while a `ComponentTemplate<TControl>` builds its visual tree, and `ComponentTemplateInstance.Attach` attaches each recorded binding to the template owner.
 
 When attached, a binding immediately copies the current source property value from the owner to the target property on the generated child. It also subscribes to the owner's `PropertyChanged` event and updates the target again when the same source property changes.
 
@@ -106,8 +106,8 @@ Cerneala retained UI control templates.
 
 ## See Also
 
-- `TemplateContext`
-- `TemplateInstance`
-- `ControlTemplate<TControl>`
+- `ComponentTemplateContext`
+- `ComponentTemplateInstance`
+- `ComponentTemplate<TControl>`
 - `UiProperty<T>`
 - `UiPropertyValueSource`

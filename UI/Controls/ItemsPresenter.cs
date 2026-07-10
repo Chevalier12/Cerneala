@@ -24,10 +24,10 @@ public class ItemsPresenter : Control
             null,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<DataTemplate?> ItemTemplateProperty = UiProperty<DataTemplate?>.Register(
+    public static readonly UiProperty<ContentTemplate?> ItemTemplateProperty = UiProperty<ContentTemplate?>.Register(
         nameof(ItemTemplate),
         typeof(ItemsPresenter),
-        new UiPropertyMetadata<DataTemplate?>(
+        new UiPropertyMetadata<ContentTemplate?>(
             null,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
@@ -44,7 +44,7 @@ public class ItemsPresenter : Control
         set => SetValue(ItemsProperty, value);
     }
 
-    public DataTemplate? ItemTemplate
+    public ContentTemplate? ItemTemplate
     {
         get => GetValue(ItemTemplateProperty);
         set => SetValue(ItemTemplateProperty, value);
@@ -318,7 +318,7 @@ public class ItemsPresenter : Control
                 }
             }
 
-            UIElement? child = item as UIElement ?? ItemTemplate?.CreateElement(item);
+            UIElement? child = item as UIElement ?? ItemTemplate?.Create(new ContentTemplateContext(item, index: index));
             if (child is not null)
             {
                 yield return child;

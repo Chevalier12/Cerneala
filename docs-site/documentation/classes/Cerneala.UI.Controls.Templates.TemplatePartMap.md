@@ -60,8 +60,6 @@ Part names are matched with `StringComparer.Ordinal`, so lookups are case-sensit
 
 `Register` requires a non-empty, non-whitespace name and a non-null `UIElement`. The indexer returns the element for an existing name and uses the underlying dictionary lookup, so a missing name throws `KeyNotFoundException`.
 
-`ControlTemplateAdapter` creates an empty `TemplatePartMap` when adapting classic `ControlTemplate` instances into the component template pipeline.
-
 ## Constructors
 | Name | Description |
 | --- | --- |

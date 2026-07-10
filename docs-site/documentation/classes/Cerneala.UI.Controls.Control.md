@@ -37,7 +37,7 @@ Control control = new()
 };
 ```
 
-Apply a classic control template:
+Apply a control template:
 
 ```csharp
 using Cerneala.Drawing;
@@ -47,7 +47,7 @@ using Cerneala.UI.Layout;
 
 Control control = new()
 {
-    Template = new ControlTemplate<Control>(context =>
+    ComponentTemplate = new ComponentTemplate<Control>("Control.Default", context =>
     {
         Border border = new()
         {
@@ -65,18 +65,18 @@ Control control = new()
 };
 
 control.ApplyTemplate();
-TemplateInstance? instance = control.TemplateInstance;
+ComponentTemplateInstance? instance = control.ComponentTemplateInstance;
 ```
 
 ## Remarks
 
 `Control` is the common base for controls that need shared chrome, text styling, template support, and aspect variants. It does not render fallback chrome by itself; derived controls or template roots use properties such as `Background`, `BorderColor`, `BorderThickness`, `Padding`, `Foreground`, `FontFamily`, and `FontSize`.
 
-`Template` stores a classic `ControlTemplate`. `ComponentTemplate` stores the newer component template type and takes precedence when both template properties are set. `ApplyTemplate()` creates the matching template instance, attaches it to the control, and detaches the previous classic or component template instance when the active template changes. If `ComponentTemplate` is not `null`, the classic `Template` path is skipped.
+`ComponentTemplate` stores the control's only template type. `ApplyTemplate()` creates and attaches the matching `ComponentTemplateInstance`, or detaches the current instance when the property is cleared. Reapplying the same template keeps the existing instance and generated root.
 
-Layout is delegated to the active template child. During measure and arrange, `Control` calls `ApplyTemplate()` and then measures or arranges `ComponentTemplateInstance.Root` or `TemplateInstance.Root`; if no template child exists, measurement returns `LayoutSize.Zero`.
+Layout is delegated to the active template child. During measure and arrange, `Control` calls `ApplyTemplate()` and then measures or arranges `ComponentTemplateInstance.Root`; if no template child exists, measurement returns `LayoutSize.Zero`.
 
-Template and component-template changes affect measure, arrange, render, hit testing, and input visuals. `Background` and `BorderColor` affect render and input visuals. `Foreground` is inherited and affects render. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
+Component-template changes affect measure, arrange, render, hit testing, and input visuals. `Background` and `BorderColor` affect render and input visuals. `Foreground` is inherited and affects render. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
 
 `Padding` and `BorderThickness` reject negative, `NaN`, and infinite side values. `FontFamily` rejects `null`, empty, and whitespace-only values. `FontSize` must be finite and greater than zero.
 
@@ -92,7 +92,6 @@ Template and component-template changes affect measure, arrange, render, hit tes
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `TemplateProperty` | `UiProperty<ControlTemplate?>` | Identifies the `Template` UI property. Defaults to `null`; affects measure, arrange, render, hit testing, and input visuals. |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | Identifies the `ComponentTemplate` UI property. Defaults to `null`; affects measure, arrange, render, hit testing, and input visuals. |
 | `BackgroundProperty` | `UiProperty<DrawColor>` | Identifies the `Background` UI property. Defaults to `DrawColor.Transparent`; affects render and input visuals. |
 | `ForegroundProperty` | `UiProperty<DrawColor>` | Identifies the inherited `Foreground` UI property. Defaults to `DrawColor.Black`; affects render. |
@@ -113,9 +112,7 @@ Template and component-template changes affect measure, arrange, render, hit tes
 | `Padding` | `Thickness` | Gets or sets the padding inside the border. Values must be finite and non-negative. |
 | `FontFamily` | `string` | Gets or sets the inherited font family. The value cannot be empty or whitespace-only. |
 | `FontSize` | `float` | Gets or sets the inherited font size. The value must be finite and greater than zero. |
-| `Template` | `ControlTemplate?` | Gets or sets the classic control template. Used when `ComponentTemplate` is `null`. |
-| `TemplateInstance` | `TemplateInstance?` | Gets the active classic template instance after `ApplyTemplate()` creates one. |
-| `ComponentTemplate` | `ComponentTemplate?` | Gets or sets the component template. Takes precedence over `Template`. |
+| `ComponentTemplate` | `ComponentTemplate?` | Gets or sets the component template. |
 | `ComponentTemplateInstance` | `ComponentTemplateInstance?` | Gets the active component template instance after `ApplyTemplate()` creates one. |
 | `AspectVariants` | `AspectVariantSet` | Gets the current aspect variant values passed to component templates. |
 
@@ -123,14 +120,14 @@ Template and component-template changes affect measure, arrange, render, hit tes
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `ApplyTemplate()` | `void` | Creates, reuses, or detaches template instances so the active instance matches `ComponentTemplate` or `Template`. |
+| `ApplyTemplate()` | `void` | Creates, reuses, or detaches the component template instance so it matches `ComponentTemplate`. |
 | `SetAspectVariant<TControl, TValue>(AspectVariantKey<TControl, TValue> key, TValue value)` | `void` | Sets an aspect variant value and invalidates aspect/render state when the variant set changes. |
 
 ## Protected Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `TemplateChild` | `UIElement?` | Gets the root element from the active component template instance or classic template instance. |
+| `TemplateChild` | `UIElement?` | Gets the root element from the active component template instance or template instance. |
 | `Insets` | `Thickness` | Gets the combined `Padding` and `BorderThickness` values for each side. |
 
 ## Protected Methods
@@ -139,7 +136,7 @@ Template and component-template changes affect measure, arrange, render, hit tes
 | --- | --- | --- |
 | `MeasureCore(MeasureContext context)` | `LayoutSize` | Applies the current template and measures the active template child, or returns `LayoutSize.Zero` when no template child exists. |
 | `ArrangeCore(ArrangeContext context)` | `LayoutRect` | Applies the current template, arranges the active template child, and returns `context.FinalRect`. |
-| `OnPropertyChanged(UiPropertyChangedEventArgs args)` | `void` | Applies templates when `Template` or `ComponentTemplate` changes, after the base property-change handling runs. |
+| `OnPropertyChanged(UiPropertyChangedEventArgs args)` | `void` | Applies the template when `ComponentTemplate` changes, after the base property-change handling runs. |
 
 ## Applies to
 
@@ -148,7 +145,5 @@ Project: `Cerneala`
 ## See also
 
 - `UI/Controls/Control.cs`
-- `UI/Controls/Templates/ControlTemplate.cs`
-- `UI/Controls/Templates/ControlTemplate{TControl}.cs`
 - `UI/Controls/Templates/ComponentTemplate.cs`
 - `UI/Elements/UIElement.cs`

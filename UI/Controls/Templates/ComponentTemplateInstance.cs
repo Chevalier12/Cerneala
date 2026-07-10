@@ -98,3 +98,27 @@ public sealed class ComponentTemplateInstance : IDisposable
         disposed = true;
     }
 }
+
+internal static class TemplateChildOwner
+{
+    public static void Attach(Control owner, UIElement child)
+    {
+        ContentControl.ValidateCanOwnChild(owner, child);
+        owner.LogicalChildren.Add(child);
+        try
+        {
+            owner.VisualChildren.Add(child);
+        }
+        catch
+        {
+            owner.LogicalChildren.Remove(child);
+            throw;
+        }
+    }
+
+    public static void Detach(Control owner, UIElement child)
+    {
+        owner.VisualChildren.Remove(child);
+        owner.LogicalChildren.Remove(child);
+    }
+}

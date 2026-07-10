@@ -34,7 +34,6 @@ public sealed class TemplateRecyclePool
         {
             presenter.Content = null;
             presenter.ContentTemplate = null;
-            presenter.ModernContentTemplate = null;
             presenter.ContentTemplateKey = null;
             presenter.ContentIndex = -1;
         }

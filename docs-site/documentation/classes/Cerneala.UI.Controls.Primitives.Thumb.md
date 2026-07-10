@@ -126,7 +126,7 @@ Without a template child, the fallback layout reports a desired size of `10 x 10
 | `BorderColor` | `DrawColor` | `Control` | Gets or sets the fallback border color rendered by the thumb. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the fallback border thickness used by the thumb renderer. |
 | `IsEnabled` | `bool` | `UIElement` | Controls whether `BeginDrag` can start a drag. |
-| `Template` | `ControlTemplate?` | `Control` | Gets or sets the classic control template inherited by the thumb. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template inherited by the thumb. |
 | `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template inherited by the thumb. |
 
 ## Applies to

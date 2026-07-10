@@ -27,7 +27,11 @@ private sealed record EqualContent(string Value);
 ContentPresenter presenter = new()
 {
     Content = new EqualContent("same"),
-    ContentTemplate = new DataTemplate<EqualContent>(value => new TextBlock { Text = value.Value })
+    ContentTemplate = new ContentTemplate<EqualContent>(
+        "EqualContent",
+        key: null,
+        priority: 0,
+        context => new TextBlock { Text = context.Data!.Value })
 };
 
 presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));

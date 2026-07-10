@@ -17,7 +17,7 @@ Inheritance:
 `object` -> `ContentTemplate`
 
 Derived:
-`ContentTemplate<TData>`, `DataTemplateAdapter`
+`ContentTemplate<TData>`
 
 ## Examples
 Register a template and resolve it for matching content:
@@ -78,7 +78,7 @@ public sealed record MessageViewModel(string Title, bool IsImportant);
 
 `ContentTemplateRegistry` orders matching templates by keyed match, predicate presence, priority, data-type specificity, and registration order. The registry disables its cache while any registered template has a predicate because predicate results can depend on the full match context.
 
-`ContentPresenter.ModernContentTemplate` can apply a single modern template directly. `ContentPresenter.LocalTemplateRegistry` resolves templates from a registry when no classic `ContentTemplate` and no direct modern template are set. When no modern template resolves, the presenter falls back to existing content-presenter behavior such as returning an existing `UIElement`, generating a `TextBlock` for string content, or producing no child.
+`ContentPresenter.ContentTemplate` can apply a template directly. When no explicit template is set, `ContentPresenter.LocalTemplateRegistry` can resolve one from a registry. If neither path produces a template, the presenter falls back to hosting an existing `UIElement`, generating a `TextBlock` for string content, or producing no child.
 
 For typed factories, prefer `ContentTemplate<TData>`. It sets `DataType` to `typeof(TData)` and wraps the untyped context in `ContentTemplateContext<TData>`.
 

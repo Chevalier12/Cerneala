@@ -30,7 +30,7 @@ using Cerneala.UI.Elements;
 ItemsControl control = new()
 {
     ItemsSource = new[] { "one", "two" },
-    ItemTemplate = new DataTemplate<string>(_ => new UIElement()),
+    ItemTemplate = new ContentTemplate<string>("Item", key: null, priority: 0, _ => new UIElement()),
     ItemsPanel = new ItemsPanelTemplate(() => new Panel())
 };
 ```
@@ -76,7 +76,7 @@ Virtualization can be driven either by assigning a `VirtualizationContext` with 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `ItemTemplateProperty` | `UiProperty<DataTemplate?>` | Identifies the `ItemTemplate` UI property. Default value is null. Affects measure and render. |
+| `ItemTemplateProperty` | `UiProperty<ContentTemplate?>` | Identifies the `ItemTemplate` UI property. Default value is null. Affects measure and render. |
 | `ItemsPanelProperty` | `UiProperty<ItemsPanelTemplate?>` | Identifies the `ItemsPanel` UI property. Default value is null. Affects measure and render. |
 | `ItemTemplateKeyProperty` | `UiProperty<string?>` | Identifies the `ItemTemplateKey` UI property. Default value is null. Affects measure and render. |
 | `ItemsSourceProperty` | `UiProperty<IEnumerable?>` | Identifies the `ItemsSource` UI property. Default value is null. Affects measure, arrange, render, hit testing, and semantics. |
@@ -90,7 +90,7 @@ Virtualization can be driven either by assigning a `VirtualizationContext` with 
 | `ItemsPresenter` | `ItemsPresenter` | Presenter owned by this control and used to build the item panel. |
 | `ItemsSource` | `IEnumerable?` | External item source. When non-null, it takes precedence over `Items`. |
 | `ItemCount` | `int` | Number of items from the observable source, `ItemsSource`, or `Items`, in that order. |
-| `ItemTemplate` | `DataTemplate?` | Template used to create displayed content for each item. |
+| `ItemTemplate` | `ContentTemplate?` | Template used to create displayed content for each item. |
 | `ItemTemplateKey` | `string?` | Optional key passed to `ContentPresenter` for registry-based template resolution. |
 | `ContentTemplateRegistry` | `ContentTemplateRegistry` | Registry assigned to generated `ContentPresenter` containers for content template lookup. Cannot be set to null. |
 | `ItemsPanel` | `ItemsPanelTemplate?` | Template used by the presenter to create the layout panel for item containers. |

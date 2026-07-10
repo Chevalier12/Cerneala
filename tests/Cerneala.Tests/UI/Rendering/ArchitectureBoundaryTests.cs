@@ -130,17 +130,16 @@ public sealed class ArchitectureBoundaryTests
         string controlsRoot = FindRepositoryPath("UI", "Controls");
         string[] templateFiles =
         [
-            Path.Combine("Templates", "ControlTemplate.cs"),
-            Path.Combine("Templates", "ControlTemplate{TControl}.cs"),
-            Path.Combine("Templates", "TemplateContext.cs"),
-            Path.Combine("Templates", "TemplateInstance.cs"),
+            Path.Combine("Templates", "ComponentTemplate.cs"),
+            Path.Combine("Templates", "ComponentTemplateContext.cs"),
+            Path.Combine("Templates", "ComponentTemplateInstance.cs"),
             Path.Combine("Templates", "TemplateBinding{T}.cs"),
             Path.Combine("Templates", "TemplatePartAttribute.cs"),
             "ContentPresenter.cs",
             "ItemsPresenter.cs",
             Path.Combine("Items", "ItemsPanelTemplate.cs"),
-            Path.Combine("Templates", "DataTemplate.cs"),
-            Path.Combine("Templates", "DataTemplate{T}.cs")
+            Path.Combine("Templates", "ContentTemplate.cs"),
+            Path.Combine("Templates", "ContentTemplateContext.cs")
         ];
         string[] forbiddenTerms =
         [

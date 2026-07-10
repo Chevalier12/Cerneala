@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Theming/DefaultTheme.cs`
 
-Provides built-in theme keys, creates the default theme values, and creates the default classic button template.
+Provides built-in theme keys, creates the default theme values, and creates the default button template.
 
 ```csharp
 public static class DefaultTheme
@@ -31,7 +31,7 @@ DrawColor background = theme.Get(DefaultTheme.BackgroundKey);
 DrawColor accent = theme.Get(DefaultTheme.AccentKey);
 ```
 
-Assign the default classic button template:
+Assign the default button template:
 
 ```csharp
 using Cerneala.UI.Controls;
@@ -40,7 +40,7 @@ using Cerneala.UI.Theming;
 Button button = new()
 {
     Content = "Save",
-    Template = DefaultTheme.CreateButtonTemplate()
+    ComponentTemplate = DefaultTheme.CreateButtonTemplate()
 };
 ```
 
@@ -60,7 +60,7 @@ The default palette uses these color values:
 
 `PaletteKey` stores the full `ThemePalette`. The individual color keys are also set from that palette so callers can read either the complete palette or one typed color value.
 
-`CreateButtonTemplate()` creates a classic `ControlTemplate<Button>` with a `Border` root and a nested `ContentPresenter`. The template binds the button's background, border color, border thickness, padding, content, foreground, font family, and font size into those template elements.
+`CreateButtonTemplate()` creates a `ComponentTemplate<Button>` with a `Border` root and a nested `ContentPresenter`. The template binds the button's background, border color, border thickness, padding, content, foreground, font family, and font size into those template elements.
 
 `ThemeTokenBridge.CreateEnvironment` projects the default color keys into aspect tokens when a theme is converted to an `AspectEnvironment`.
 
@@ -80,11 +80,11 @@ The default palette uses these color values:
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Create()` | `Theme` | Creates the built-in theme named `Default`, including palette, individual color values, and default theme motion tokens. |
-| `CreateButtonTemplate()` | `ControlTemplate<Button>` | Creates a classic button template whose root is a `Border` containing a `ContentPresenter` bound to button chrome, content, foreground, and font properties. |
+| `CreateButtonTemplate()` | `ComponentTemplate<Button>` | Creates a button template whose root is a `Border` containing a `ContentPresenter` bound to button chrome, content, foreground, and font properties. |
 
 ## Applies to
 
-Cerneala UI theming, default palette values, theme-to-aspect projection, and classic button templates.
+Cerneala UI theming, default palette values, theme-to-aspect projection, and button templates.
 
 ## See also
 

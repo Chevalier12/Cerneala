@@ -63,8 +63,6 @@ Slots are keyed by `AspectSlot`. Slot equality uses the slot name, owner type, a
 
 `Register` requires a non-null slot and a non-null `UIElement`. The indexer returns the element for an existing slot and uses the underlying dictionary lookup, so a missing slot throws `KeyNotFoundException`.
 
-`ControlTemplateAdapter` creates an empty `TemplateSlotMap` when adapting classic `ControlTemplate` instances into the component template pipeline.
-
 ## Constructors
 | Name | Description |
 | --- | --- |

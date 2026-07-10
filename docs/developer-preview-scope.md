@@ -35,7 +35,7 @@ These areas may have prototype files or tests, but they are unsupported for Deve
 
 ## Naming Stance
 
-Cerneala keeps WPF-like names where they improve developer ergonomics: `ControlTemplate`, `DataTemplate`, `ItemsPanelTemplate`, routed events, commands, and familiar control names. These names are not a compatibility promise. The Developer Preview is code-first, retained, strongly typed, and does not define XAML as the core authoring model.
+Cerneala keeps familiar names where they improve developer ergonomics: `ComponentTemplate`, `ContentTemplate`, `ItemsPanelTemplate`, routed events, commands, and familiar control names. These names are not a compatibility promise. The Developer Preview is code-first, retained, strongly typed, and does not define XAML as the core authoring model.
 
 String-path binding as core hot path is unsupported. Preview samples must use typed `BindingOperations`, observable values/lists, or explicit property adapters instead.
 

@@ -30,7 +30,7 @@ ContentPresenter presenter = new()
 };
 ```
 
-Create a presented element from data with a `DataTemplate`:
+Create a presented element from data with a `ContentTemplate`:
 
 ```csharp
 using Cerneala.UI.Controls;
@@ -38,7 +38,11 @@ using Cerneala.UI.Controls;
 ContentPresenter presenter = new()
 {
     Content = "Ada",
-    ContentTemplate = new DataTemplate<string>(name => new TextBlock { Text = name })
+    ContentTemplate = new ContentTemplate<string>(
+        "NameText",
+        key: null,
+        priority: 0,
+        context => new TextBlock { Text = context.Data ?? string.Empty })
 };
 ```
 
@@ -71,14 +75,13 @@ Content is resolved in this order:
 
 | Step | Behavior |
 | --- | --- |
-| `ContentTemplate` | If set, creates the presented child with `DataTemplate.CreateElement(Content)`. |
-| `ModernContentTemplate` | If set, creates the child with a `ContentTemplateContext` containing `Content`, this presenter, and `ContentIndex`. |
+| `ContentTemplate` | If set, creates the child with a `ContentTemplateContext` containing `Content`, this presenter, and `ContentIndex`. |
 | `LocalTemplateRegistry` | If set and a template resolves for `Content` and `ContentTemplateKey`, creates the child from that template. |
 | `UIElement` content | Hosts the element directly. The element must not already have a logical or visual parent. |
 | `string` content | Creates or reuses a generated `TextBlock` and copies the presenter's `FontFamily`, `FontSize`, `Foreground`, `ResourceProvider`, and `FontResourceId`. |
 | Other content | Produces no child unless a template handles the content first. |
 
-Changing `Content`, `ContentTemplate`, `ContentTemplateKey`, or `ModernContentTemplate` marks the presentation dirty and refreshes the child. `Content` uses reference equality for change detection, so two different object instances that compare equal still rematerialize the presented child. Generated text content is special: when the presenter already owns a generated `TextBlock`, string changes update and reuse that `TextBlock`.
+Changing `Content`, `ContentTemplate`, or `ContentTemplateKey` marks the presentation dirty and refreshes the child. `Content` uses reference equality for change detection, so two different object instances that compare equal still rematerialize the presented child. Generated text content is special: when the presenter already owns a generated `TextBlock`, string changes update and reuse that `TextBlock`.
 
 `LocalTemplateRegistry` is not a UI property. Assigning it refreshes the presented child and invalidates measure, arrange, and render. `ContentIndex` marks the presentation dirty and is supplied to modern template creation contexts; it does not itself perform layout invalidation.
 
@@ -93,18 +96,16 @@ Changing `Content`, `ContentTemplate`, `ContentTemplateKey`, or `ModernContentTe
 | Name | Type | Description |
 | --- | --- | --- |
 | `ContentProperty` | `UiProperty<object?>` | Identifies the `Content` UI property. The default value is `null`; metadata affects measure and render and uses reference equality. |
-| `ContentTemplateProperty` | `UiProperty<DataTemplate?>` | Identifies the `ContentTemplate` UI property. The default value is `null`; metadata affects measure and render. |
+| `ContentTemplateProperty` | `UiProperty<ContentTemplate?>` | Identifies the `ContentTemplate` UI property. The default value is `null`; metadata affects measure and render. |
 | `ContentTemplateKeyProperty` | `UiProperty<string?>` | Identifies the `ContentTemplateKey` UI property. The default value is `null`; metadata affects measure and render. |
-| `ModernContentTemplateProperty` | `UiProperty<ContentTemplate?>` | Identifies the `ModernContentTemplate` UI property. The default value is `null`; metadata affects measure and render. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `Content` | `object?` | Gets or sets the value to present. UI elements can be hosted directly; strings can be presented as generated `TextBlock` instances; other values require a template to produce a child. |
-| `ContentTemplate` | `DataTemplate?` | Gets or sets the data template used before all other presentation paths. |
+| `ContentTemplate` | `ContentTemplate?` | Gets or sets the explicit content template used before registry and fallback presentation paths. |
 | `ContentTemplateKey` | `string?` | Gets or sets the key requested from `LocalTemplateRegistry`. |
-| `ModernContentTemplate` | `ContentTemplate?` | Gets or sets the modern content template used after `ContentTemplate` and before `LocalTemplateRegistry`. |
 | `LocalTemplateRegistry` | `ContentTemplateRegistry?` | Gets or sets the local registry used to resolve a `ContentTemplate` for the current content and key. |
 | `FontResourceId` | `ResourceId<FontResource>?` | Gets or sets the font resource copied to generated `TextBlock` children. |
 | `ResourceProvider` | `IResourceProvider?` | Gets or sets the resource provider copied to generated `TextBlock` children. |
@@ -126,7 +127,7 @@ Changing `Content`, `ContentTemplate`, `ContentTemplateKey`, or `ModernContentTe
 ## See Also
 
 - `Cerneala.UI.Controls.ContentControl`
-- `Cerneala.UI.Controls.Templates.DataTemplate`
+- `Cerneala.UI.Controls.Templates.ContentTemplate`
 - `Cerneala.UI.Controls.Templates.ContentTemplate`
 - `Cerneala.UI.Controls.Templates.ContentTemplateRegistry`
 - `Cerneala.UI.Controls.TextBlock`

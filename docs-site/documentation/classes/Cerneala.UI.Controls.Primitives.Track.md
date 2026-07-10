@@ -60,7 +60,7 @@ track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 20)));
 
 ## Remarks
 
-`Track` owns a single `Thumb` created by its constructor. While no classic `Template` is applied, that thumb is kept in the track logical and visual children and is measured and arranged by the fallback layout path. Setting `Template` removes the fallback thumb from the child collections; clearing `Template` adds the same thumb instance back.
+`Track` owns a single `Thumb` created by its constructor. While no `ComponentTemplate` is applied, that thumb is kept in the track logical and visual children and is measured and arranged by the fallback layout path. Setting `ComponentTemplate` removes the fallback thumb from the child collections; clearing `ComponentTemplate` adds the same thumb instance back.
 
 `Minimum`, `Maximum`, and `Value` accept only finite floating-point values. `ViewportSize`, `SmallChange`, and `LargeChange` accept only finite, non-negative values. `Value` is coerced into the active `Minimum..Maximum` range. If an endpoint change would invert the range, the other endpoint is moved to preserve an ordered range, then `Value` is coerced again.
 
@@ -158,7 +158,7 @@ Without a template child, the fallback renderer fills the track bounds with `Bac
 | `Background` | `DrawColor` | `Control` | Gets or sets the fallback fill color rendered by the track. The constructor sets it to `DrawColor(225, 225, 225)`. |
 | `BorderColor` | `DrawColor` | `Control` | Gets or sets the fallback border color rendered by the track. The constructor sets it to `DrawColor(120, 120, 120)`. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the fallback border thickness. The constructor sets it to `new Thickness(1)`. |
-| `Template` | `ControlTemplate?` | `Control` | Gets or sets the classic control template. When present, the fallback thumb is removed from track child collections. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. When present, the fallback thumb is removed from track child collections. |
 
 ## Applies to
 

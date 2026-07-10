@@ -2,7 +2,7 @@
 
 This file is the long-term memory for the project.
 
-Goal: build a WPF-inspired UI framework on top of the existing drawing and input foundations. Names should stay familiar to WPF developers where that helps: `DependencyObject`, `UIElement`, `FrameworkElement`, `Control`, `Panel`, `Canvas`, `Button`, `TextBox`, `ItemsControl`, `Style`, `ControlTemplate`, etc.
+Goal: build a WPF-inspired UI framework on top of the existing drawing and input foundations. Names should stay familiar where that helps: `DependencyObject`, `UIElement`, `FrameworkElement`, `Control`, `Panel`, `Canvas`, `Button`, `TextBox`, `ItemsControl`, `Style`, `ComponentTemplate`, etc.
 
 This is not a promise to clone every WPF feature exactly. It is the planned project map. If scope changes, update this file first.
 
@@ -304,9 +304,9 @@ This is the layer real controls inherit from.
 - [ ] `UI/Controls/ItemsControl.cs`
 - [ ] `UI/Controls/HeaderedItemsControl.cs`
 - [ ] `UI/Controls/UserControl.cs`
-- [ ] `UI/Controls/Templates/ControlTemplate.cs`
+- [ ] `UI/Controls/Templates/ComponentTemplate.cs`
 - [ ] `UI/Controls/Items/ItemsPanelTemplate.cs`
-- [ ] `UI/Controls/Templates/DataTemplate.cs`
+- [ ] `UI/Controls/Templates/ContentTemplate.cs`
 - [ ] `UI/Controls/HierarchicalDataTemplate.cs`
 - [ ] `UI/Controls/TemplateBinding.cs`
 - [ ] `UI/Controls/TemplateBindingExpression.cs`
@@ -319,8 +319,8 @@ Tests:
 - [ ] `tests/Cerneala.Tests/Controls/ContentControlTests.cs`
 - [ ] `tests/Cerneala.Tests/Controls/UserControlTests.cs`
 - [ ] `tests/Cerneala.Tests/Controls/ItemsControlTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/ControlTemplateTests.cs`
-- [ ] `tests/Cerneala.Tests/Controls/DataTemplateTests.cs`
+- [ ] `tests/Cerneala.Tests/Controls/ComponentTemplateLifecycleTests.cs`
+- [ ] `tests/Cerneala.Tests/Controls/ContentTemplateTests.cs`
 
 ## 9. Styling And Resources
 

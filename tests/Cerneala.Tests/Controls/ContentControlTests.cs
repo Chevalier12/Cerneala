@@ -65,7 +65,7 @@ public sealed class ContentControlTests
         ContentPresenter? presenter = null;
         control.Content = child;
 
-        control.Template = new ControlTemplate<ContentControl>(context =>
+        control.ComponentTemplate = new ComponentTemplate<ContentControl>("test", context =>
         {
             presenter = new ContentPresenter { Content = context.Owner.Content };
             return presenter;

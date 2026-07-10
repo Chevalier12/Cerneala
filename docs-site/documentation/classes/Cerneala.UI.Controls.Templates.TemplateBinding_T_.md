@@ -31,7 +31,7 @@ using Cerneala.UI.Controls;
 Button button = new() { Background = DrawColor.White };
 Border? border = null;
 
-button.Template = new ControlTemplate<Button>(context =>
+button.ComponentTemplate = new ComponentTemplate<Button>("Button.Binding", context =>
 {
     border = new Border();
     TemplateBinding<DrawColor> binding = context.Bind(
@@ -81,7 +81,7 @@ Target framework: `.NET 8`
 
 ## See Also
 - `TemplateBinding`
-- `TemplateContext`
-- `ControlTemplate<TControl>`
+- `ComponentTemplateContext`
+- `ComponentTemplate<TControl>`
 - `UiProperty<T>`
 - `UiPropertyValueSource`

@@ -995,36 +995,6 @@
     "source": "UI/Controls/Templates/ContentTemplateRegistry.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.Templates.ControlTemplate",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.ControlTemplate.md",
-    "source": "UI/Controls/Templates/ControlTemplate.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Templates.ControlTemplate_TControl_",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.ControlTemplate_TControl_.md",
-    "source": "UI/Controls/Templates/ControlTemplate{TControl}.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Templates.ControlTemplateAdapter",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.ControlTemplateAdapter.md",
-    "source": "UI/Controls/Templates/ControlTemplateAdapter.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Templates.DataTemplate",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.DataTemplate.md",
-    "source": "UI/Controls/Templates/DataTemplate.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Templates.DataTemplate_T_",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.DataTemplate_T_.md",
-    "source": "UI/Controls/Templates/DataTemplate{T}.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Templates.DataTemplateAdapter",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.DataTemplateAdapter.md",
-    "source": "UI/Controls/Templates/DataTemplateAdapter.cs"
-  },
-  {
     "name": "Cerneala.UI.Controls.Templates.TemplateBinding",
     "file": "documentation/classes/Cerneala.UI.Controls.Templates.TemplateBinding.md",
     "source": "UI/Controls/Templates/TemplateBinding{T}.cs"
@@ -1037,22 +1007,7 @@
   {
     "name": "Cerneala.UI.Controls.Templates.TemplateChildOwner",
     "file": "documentation/classes/Cerneala.UI.Controls.Templates.TemplateChildOwner.md",
-    "source": "UI/Controls/Templates/TemplateInstance.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Templates.TemplateContext",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.TemplateContext.md",
-    "source": "UI/Controls/Templates/TemplateContext.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Templates.TemplateContext_TControl_",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.TemplateContext_TControl_.md",
-    "source": "UI/Controls/Templates/TemplateContext.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Templates.TemplateInstance",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.TemplateInstance.md",
-    "source": "UI/Controls/Templates/TemplateInstance.cs"
+    "source": "UI/Controls/Templates/ComponentTemplateInstance.cs"
   },
   {
     "name": "Cerneala.UI.Controls.Templates.TemplatePartAttribute",

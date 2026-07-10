@@ -41,7 +41,7 @@ Console.WriteLine($"{contentPart.Name}: {contentPart.Type.Name}");
 
 `TemplatePartAttribute` is metadata attached to control classes. It records the expected part name and the expected element type for a control template part.
 
-The attribute is diagnostic metadata only. The class stores and retrieves metadata; it does not validate an applied `ControlTemplate`, create template elements, or enforce that a part exists at runtime.
+The attribute is diagnostic metadata only. The class stores and retrieves metadata; it does not validate an applied `ComponentTemplate`, create template elements, or enforce that a part exists at runtime.
 
 Multiple template parts can be declared on the same control type. Because the attribute is inherited and `GetParts` reads with inheritance enabled, metadata declared on base control classes is available when querying derived control types.
 
@@ -81,5 +81,5 @@ The constructor requires a non-empty, non-whitespace part name and a non-null pa
 ## See also
 
 - `Control`
-- `ControlTemplate`
+- `ComponentTemplate`
 - `ContentPresenter`

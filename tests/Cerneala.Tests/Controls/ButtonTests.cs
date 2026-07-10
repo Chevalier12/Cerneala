@@ -50,7 +50,7 @@ public sealed class ButtonTests
     {
         Button button = new();
         ContentPresenter? presenter = null;
-        button.Template = new ControlTemplate<Button>(context =>
+        button.ComponentTemplate = new ComponentTemplate<Button>("test", context =>
         {
             presenter = new ContentPresenter();
             context.Bind(ContentControl.ContentProperty, presenter, ContentPresenter.ContentProperty);

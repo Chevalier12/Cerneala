@@ -51,7 +51,7 @@ string? templateKey = reused.ContentTemplateKey;
 
 Each key owns a last-in, first-out stack. `Release(TemplateRecycleKey, UIElement)` stores an element in the stack for the supplied key. `Rent(TemplateRecycleKey)` removes and returns the most recently released element for that key, or returns `null` when the key has no available element.
 
-Before storing an element, `Release` resets `ContentPresenter` instances by clearing `Content`, `ContentTemplate`, `ModernContentTemplate`, and `ContentTemplateKey`, and by setting `ContentIndex` to `-1`. Other `UIElement` types are stored without additional reset behavior.
+Before storing an element, `Release` resets `ContentPresenter` instances by clearing `Content`, `ContentTemplate`, `ContentTemplate`, and `ContentTemplateKey`, and by setting `ContentIndex` to `-1`. Other `UIElement` types are stored without additional reset behavior.
 
 The pool does not verify that `key.ContainerType` matches the runtime type of the released element. Callers are responsible for using stable keys that match the element category they intend to recycle.
 

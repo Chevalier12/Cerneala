@@ -34,9 +34,9 @@ public static class DefaultTheme
             .Set(ThemeMotionTokens.Key, ThemeMotionTokens.CreateDefault());
     }
 
-    public static ControlTemplate<Button> CreateButtonTemplate()
+    public static ComponentTemplate<Button> CreateButtonTemplate()
     {
-        return new ControlTemplate<Button>(context =>
+        return new ComponentTemplate<Button>("Button.Default", context =>
         {
             ContentPresenter presenter = new();
             Border border = new() { Child = presenter };

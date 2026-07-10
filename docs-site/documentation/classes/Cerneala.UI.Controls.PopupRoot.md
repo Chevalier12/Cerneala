@@ -64,8 +64,8 @@ Use the inherited `Content` property to assign the popup payload. Because `Popup
 | Name | Type | Declared By | Description |
 | --- | --- | --- | --- |
 | `Content` | `object?` | `ContentControl` | Gets or sets the popup content value. `UIElement` content may become a logical and visual child when the root is untemplated. |
-| `Template` | `ControlTemplate?` | `Control` | Gets or sets the classic control template used by inherited layout behavior. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template, which takes precedence over `Template`. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template used by inherited layout behavior. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template, which takes precedence over `ComponentTemplate`. |
 | `Padding` | `Thickness` | `Control` | Gets or sets inherited padding used by `ContentControl` layout insets. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets inherited border thickness used by `ContentControl` layout insets. |
 

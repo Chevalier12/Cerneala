@@ -57,7 +57,7 @@ Button button = new()
 
 `Button` builds on `ButtonBase`, so it is focusable, participates in tab navigation, uses a hand cursor, exposes pressed state, and can execute `ICommand` or `RoutedCommand` instances through the retained input pipeline.
 
-The button does not declare its own content property. It uses `ContentControl.ContentProperty`, so element content follows the content-control ownership rules. While the classic `Template` property is `null`, `UIElement` content is added as logical and visual content. When the button has no `Template` or `ComponentTemplate`, `UIElement` content is measured and arranged inside `Padding + BorderThickness`; string content is measured by `TextMeasurer` and rendered by `TextRenderer`.
+The button does not declare its own content property. It uses `ContentControl.ContentProperty`, so element content follows the content-control ownership rules. While the `ComponentTemplate` property is `null`, `UIElement` content is added as logical and visual content. When the button has no `ComponentTemplate` or `ComponentTemplate`, `UIElement` content is measured and arranged inside `Padding + BorderThickness`; string content is measured by `TextMeasurer` and rendered by `TextRenderer`.
 
 Fallback rendering draws the resolved background, then the border, then non-empty string content. If `Background` has an explicit value, that value is used. Otherwise fallback state colors are used for disabled, pressed, pointer-over, and keyboard-focused states before falling back to the default background.
 
@@ -84,7 +84,7 @@ When a template or component template supplies a template child, layout is deleg
 
 | Name | Type | Declared by | Description |
 | --- | --- | --- | --- |
-| `Content` | `object?` | `ContentControl` | Gets or sets the button content. `UIElement` content is owned as logical and visual content while the classic `Template` property is `null`. |
+| `Content` | `object?` | `ContentControl` | Gets or sets the button content. `UIElement` content is owned as logical and visual content while the `ComponentTemplate` property is `null`. |
 | `Command` | `ICommand?` | `ButtonBase` | Gets or sets the command executed by pointer or keyboard activation. |
 | `CommandParameter` | `object?` | `ButtonBase` | Gets or sets the parameter passed to `Command`. |
 | `IsPressed` | `bool` | `ButtonBase` | Gets or sets the pressed visual/input state. |
@@ -95,9 +95,9 @@ When a template or component template supplies a template child, layout is deleg
 | `Padding` | `Thickness` | `Control` | Gets or sets the padding around fallback content. |
 | `FontFamily` | `string` | `Control` | Gets or sets the inherited font family used to create the fallback text aspect. |
 | `FontSize` | `float` | `Control` | Gets or sets the inherited font size used to create the fallback text aspect. |
-| `Template` | `ControlTemplate?` | `Control` | Gets or sets the classic control template. When present, the template child handles layout and rendering. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template. When present, it takes precedence over `Template`. |
-| `TemplateInstance` | `TemplateInstance?` | `Control` | Gets the active classic template instance, when one has been applied. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. When present, the template child handles layout and rendering. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template. When present, it takes precedence over `ComponentTemplate`. |
+| `ComponentTemplateInstance` | `ComponentTemplateInstance?` | `Control` | Gets the active template instance, when one has been applied. |
 | `ComponentTemplateInstance` | `ComponentTemplateInstance?` | `Control` | Gets the active component template instance, when one has been applied. |
 | `AspectVariants` | `AspectVariantSet` | `Control` | Gets the active aspect variant values used by component templates. |
 
@@ -114,7 +114,7 @@ When a template or component template supplies a template child, layout is deleg
 | `BorderColorProperty` | `UiProperty<DrawColor>` | `Control` | Identifies the `BorderColor` UI property. |
 | `BorderThicknessProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `BorderThickness` UI property. |
 | `PaddingProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `Padding` UI property. |
-| `TemplateProperty` | `UiProperty<ControlTemplate?>` | `Control` | Identifies the `Template` UI property. |
+| `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | `Control` | Identifies the `ComponentTemplate` UI property. |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | `Control` | Identifies the `ComponentTemplate` UI property. |
 
 ## Important Inherited Methods

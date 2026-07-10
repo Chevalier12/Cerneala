@@ -58,7 +58,7 @@ public class Slider : RangeBase
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
-        bool templateChanged = ReferenceEquals(args.Property, TemplateProperty);
+        bool templateChanged = ReferenceEquals(args.Property, ComponentTemplateProperty);
         base.OnPropertyChanged(args);
         if (!syncingTrack &&
             (ReferenceEquals(args.Property, MinimumProperty) ||
@@ -73,7 +73,7 @@ public class Slider : RangeBase
 
         if (templateChanged)
         {
-            if (Template is null)
+            if (ComponentTemplate is null)
             {
                 AddTrack();
             }

@@ -92,7 +92,7 @@ public sealed class ItemsControlRetainedInvalidationTests
         itemsControl = new ItemsControl
         {
             ItemsPanel = new ItemsPanelTemplate(() => new Cerneala.UI.Layout.Panels.StackPanel()),
-            ItemTemplate = new DataTemplate<string>(text => new FixedElement(text))
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context => new FixedElement(context.Data!))
         };
         itemsControl.SetItems(new[] { "one", "two" });
         root.VisualChildren.Add(itemsControl);

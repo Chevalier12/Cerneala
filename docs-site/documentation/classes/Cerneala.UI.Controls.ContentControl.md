@@ -48,7 +48,7 @@ ContentControl host = new()
     Content = "Play"
 };
 
-host.Template = new ControlTemplate<ContentControl>(context =>
+host.ComponentTemplate = new ComponentTemplate<ContentControl>("ContentHost", context =>
 {
     return new ContentPresenter
     {
@@ -58,9 +58,9 @@ host.Template = new ControlTemplate<ContentControl>(context =>
 ```
 
 ## Remarks
-`ContentControl` stores content in the `Content` UI property. The value can be any `object`; when the value is a `UIElement` and the control has no `Template`, the element is added to the control's logical and visual child collections.
+`ContentControl` stores content in the `Content` UI property. The value can be any `object`; when the value is a `UIElement` and the control has no `ComponentTemplate`, the element is added to the control's logical and visual child collections.
 
-When `Template` is set, `ContentControl` releases any directly owned content element from its subtree. A template can then decide how to present the content, commonly by binding or assigning it to a `ContentPresenter`.
+When `ComponentTemplate` is set, `ContentControl` releases any directly owned content element from its subtree. A template can then decide how to present the content, commonly by binding or assigning it to a `ContentPresenter`.
 
 Changing `Content` affects measure, render, and semantics. For `UIElement` content, replacement uses reference-oriented equality so two distinct elements are treated as different even if their `Equals` implementations return `true`. For non-element content, the default object equality comparer is used.
 
@@ -104,5 +104,5 @@ UI area: retained controls, layout, templating, and content presentation.
 ## See Also
 - `Control`
 - `ContentPresenter`
-- `ControlTemplate`
+- `ComponentTemplate`
 - `UIElement`

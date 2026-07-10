@@ -602,6 +602,7 @@ Excluded RoslynRepoIndexer class-like types: 0
 ### UI/Controls/Templates/ComponentTemplateInstance.cs
 
 - [x] `Cerneala.UI.Controls.Templates.ComponentTemplateInstance` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Controls.Templates.TemplateChildOwner` - class, internal, static
 
 ### UI/Controls/Templates/ContentTemplate.cs
 
@@ -627,44 +628,10 @@ Excluded RoslynRepoIndexer class-like types: 0
 - [x] `Cerneala.UI.Controls.Templates.ContentTemplateRegistry.RegisteredTemplate` - record, private, sealed, line 99
 - [x] `Cerneala.UI.Controls.Templates.ContentTemplateRegistry.CacheKey` - record, private, sealed, line 101
 
-### UI/Controls/Templates/ControlTemplate.cs
-
-- [x] `Cerneala.UI.Controls.Templates.ControlTemplate` - class, public, abstract, line 5
-
-### UI/Controls/Templates/ControlTemplate{TControl}.cs
-
-- [x] `Cerneala.UI.Controls.Templates.ControlTemplate<TControl>` - class, public, sealed, line 5
-
-### UI/Controls/Templates/ControlTemplateAdapter.cs
-
-- [x] `Cerneala.UI.Controls.Templates.ControlTemplateAdapter` - class, public, sealed, line 6
-
-### UI/Controls/Templates/DataTemplate.cs
-
-- [x] `Cerneala.UI.Controls.Templates.DataTemplate` - class, public, abstract, line 5
-
-### UI/Controls/Templates/DataTemplate{T}.cs
-
-- [x] `Cerneala.UI.Controls.Templates.DataTemplate<T>` - class, public, sealed, line 5
-
-### UI/Controls/Templates/DataTemplateAdapter.cs
-
-- [x] `Cerneala.UI.Controls.Templates.DataTemplateAdapter` - class, public, sealed, line 5
-
 ### UI/Controls/Templates/TemplateBinding{T}.cs
 
 - [x] `Cerneala.UI.Controls.Templates.TemplateBinding` - class, public, abstract, line 6
 - [x] `Cerneala.UI.Controls.Templates.TemplateBinding<T>` - class, public, sealed, line 72
-
-### UI/Controls/Templates/TemplateContext.cs
-
-- [x] `Cerneala.UI.Controls.Templates.TemplateContext` - class, public, line 7
-- [x] `Cerneala.UI.Controls.Templates.TemplateContext<TControl>` - class, public, sealed, line 35
-
-### UI/Controls/Templates/TemplateInstance.cs
-
-- [x] `Cerneala.UI.Controls.Templates.TemplateInstance` - class, public, sealed, line 5
-- [x] `Cerneala.UI.Controls.Templates.TemplateChildOwner` - class, internal, static, line 84
 
 ### UI/Controls/Templates/TemplatePartAttribute.cs
 

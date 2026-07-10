@@ -25,7 +25,7 @@ public sealed class ItemsContentTemplateIntegrationTests
     {
         TestItemsControl items = new();
         items.ContentTemplateRegistry.Register(new ContentTemplate<string>("string", key: null, priority: 0, _ => new FixedElement()));
-        items.ItemTemplate = new DataTemplate<string>(_ => new ExplicitElement());
+        items.ItemTemplate = new ContentTemplate<string>("explicit", key: null, priority: 0, _ => new ExplicitElement());
         ContentPresenter presenter = (ContentPresenter)items.CreateContainer(0, "hello");
 
         items.PrepareContainer(presenter, 0, "hello");

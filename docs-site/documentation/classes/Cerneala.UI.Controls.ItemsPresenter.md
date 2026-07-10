@@ -28,7 +28,7 @@ using Cerneala.UI.Layout;
 ItemsPresenter presenter = new()
 {
     Items = new[] { "one", "two" },
-    ItemTemplate = new DataTemplate<string>(value => new RowElement(value))
+    ItemTemplate = new ContentTemplate<string>("Row", key: null, priority: 0, context => new RowElement(context.Data!))
 };
 
 presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
@@ -52,7 +52,7 @@ using Cerneala.UI.Layout.Virtualization;
 ItemsPresenter presenter = new()
 {
     Items = new[] { "zero", "one", "two", "three", "four" },
-    ItemTemplate = new DataTemplate<string>(value => new TextBlock { Text = value }),
+    ItemTemplate = new ContentTemplate<string>("Text", key: null, priority: 0, context => new TextBlock { Text = context.Data ?? string.Empty }),
     ItemsPanel = new ItemsPanelTemplate(() => new VirtualizingStackPanel()),
     VirtualizationContext = new VirtualizationContext(
         ItemCount: 5,
@@ -91,7 +91,7 @@ Virtualization is driven by `VirtualizationContext`. The current realization win
 | Name | Type | Description |
 | --- | --- | --- |
 | `ItemsProperty` | `UiProperty<IEnumerable?>` | Identifies the `Items` UI property. The default value is `null`; metadata affects measure and render. |
-| `ItemTemplateProperty` | `UiProperty<DataTemplate?>` | Identifies the `ItemTemplate` UI property. The default value is `null`; metadata affects measure and render. |
+| `ItemTemplateProperty` | `UiProperty<ContentTemplate?>` | Identifies the `ItemTemplate` UI property. The default value is `null`; metadata affects measure and render. |
 | `ItemsPanelProperty` | `UiProperty<ItemsPanelTemplate?>` | Identifies the `ItemsPanel` UI property. The default value is `null`; metadata affects measure and render. |
 
 ## Properties
@@ -99,7 +99,7 @@ Virtualization is driven by `VirtualizationContext`. The current realization win
 | Name | Type | Description |
 | --- | --- | --- |
 | `Items` | `IEnumerable?` | Gets or sets the standalone item sequence to materialize when `ItemsOwner` is not set. |
-| `ItemTemplate` | `DataTemplate?` | Gets or sets the template used to create child elements for non-`UIElement` standalone items. |
+| `ItemTemplate` | `ContentTemplate?` | Gets or sets the template used to create child elements for non-`UIElement` standalone items. |
 | `ItemsPanel` | `ItemsPanelTemplate?` | Gets or sets the panel template used for the presenter's panel root. Overrides the owner panel template when `ItemsOwner` is set. |
 | `PanelRoot` | `Panel?` | Gets the current panel root as `Cerneala.UI.Controls.Panel`, or `null` when the root is another layout panel type. |
 | `LayoutPanelRoot` | `Cerneala.UI.Layout.Panels.Panel?` | Gets the current underlying layout panel root, including custom panel types. |
@@ -131,7 +131,7 @@ Virtualization is driven by `VirtualizationContext`. The current realization win
 - `Cerneala.UI.Controls.ItemsControl`
 - `Cerneala.UI.Controls.Items.ItemContainerGenerator`
 - `Cerneala.UI.Controls.Items.ItemsPanelTemplate`
-- `Cerneala.UI.Controls.Templates.DataTemplate`
+- `Cerneala.UI.Controls.Templates.ContentTemplate`
 - `Cerneala.UI.Layout.Panels.VirtualizingStackPanel`
 - `Cerneala.UI.Layout.Virtualization.VirtualizationContext`
 - `Cerneala.UI.Layout.Virtualization.RealizationWindow`
