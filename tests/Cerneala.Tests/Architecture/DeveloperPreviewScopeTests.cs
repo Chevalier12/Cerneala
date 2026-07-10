@@ -66,7 +66,9 @@ public sealed class DeveloperPreviewScopeTests
             "MonoGame runtime adapter",
             "Platform services seams for cursor/clipboard/etc.",
             "Platform-neutral semantics tree",
-            "Diagnostics and preview samples"
+            "Diagnostics and preview samples",
+            "Typed `.cui.xml` source generation",
+            "modern `@template` on Control-derived elements"
         ];
 
         AssertContainsAll(scope, requiredTerms);
@@ -81,7 +83,7 @@ public sealed class DeveloperPreviewScopeTests
             "Package split",
             "Native accessibility adapters",
             "Full IME/multiline/rich text",
-            "Markup/sourcegen expansion",
+            "Markup/sourcegen syntax beyond the documented `.cui.xml` grammar",
             "String-path binding as core hot path",
             "Advanced rendering/effects/path rendering/render targets",
             "Animation/storyboard expansion",

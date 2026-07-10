@@ -6,6 +6,7 @@ public sealed class ComponentTemplateInstance : IDisposable
 {
     private readonly List<TemplateBinding> bindings;
     private readonly List<TemplateTokenBinding> tokenBindings;
+    private readonly List<IDisposable> lifetimes;
     private Control? owner;
     private bool disposed;
 
@@ -14,11 +15,13 @@ public sealed class ComponentTemplateInstance : IDisposable
         IEnumerable<TemplateBinding>? bindings,
         IEnumerable<TemplateTokenBinding>? tokenBindings,
         TemplateSlotMap slots,
-        TemplatePartMap parts)
+        TemplatePartMap parts,
+        IEnumerable<IDisposable>? lifetimes = null)
     {
         Root = root;
         this.bindings = bindings?.ToList() ?? [];
         this.tokenBindings = tokenBindings?.ToList() ?? [];
+        this.lifetimes = lifetimes?.ToList() ?? [];
         Slots = slots;
         Parts = parts;
     }
@@ -95,6 +98,11 @@ public sealed class ComponentTemplateInstance : IDisposable
         }
 
         Detach();
+        foreach (IDisposable lifetime in lifetimes)
+        {
+            lifetime.Dispose();
+        }
+
         disposed = true;
     }
 }

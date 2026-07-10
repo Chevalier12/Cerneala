@@ -106,6 +106,38 @@ public sealed class ComponentTemplateLifecycleTests
     }
 
     [Fact]
+    public void ReplacingTemplateDisposesRegisteredTemplateLifetimes()
+    {
+        Control control = new();
+        TrackingDisposable lifetime = new();
+        control.ComponentTemplate = new ComponentTemplate<Control>("old", context =>
+        {
+            context.RegisterLifetime(lifetime);
+            return new UIElement();
+        });
+
+        control.ComponentTemplate = new ComponentTemplate<Control>("new", _ => new UIElement());
+
+        Assert.Equal(1, lifetime.DisposeCount);
+    }
+
+    [Fact]
+    public void FailedTemplateFactoryDisposesRegisteredTemplateLifetimes()
+    {
+        Control control = new();
+        TrackingDisposable lifetime = new();
+        ComponentTemplate<Control> template = new("broken", context =>
+        {
+            context.RegisterLifetime(lifetime);
+            throw new InvalidOperationException("broken");
+        });
+
+        Assert.Throws<InvalidOperationException>(() => control.ComponentTemplate = template);
+
+        Assert.Equal(1, lifetime.DisposeCount);
+    }
+
+    [Fact]
     public void FailedTemplateAttachDetachesGeneratedRoot()
     {
         Control control = new();
@@ -222,6 +254,16 @@ public sealed class ComponentTemplateLifecycleTests
         protected override void OnAttached()
         {
             AttachedCount++;
+        }
+    }
+
+    private sealed class TrackingDisposable : IDisposable
+    {
+        public int DisposeCount { get; private set; }
+
+        public void Dispose()
+        {
+            DisposeCount++;
         }
     }
 

@@ -39,25 +39,26 @@ public sealed class GettingStartedDocsTests
     }
 
     [Fact]
-    public void GettingStartedDocumentShowsCodeFirstPathWithoutMarkupOrXaml()
+    public void GettingStartedDocumentShowsCodeFirstAndGeneratedMarkupPaths()
     {
         string text = ReadGettingStarted();
 
         Assert.Contains("code-first", text, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("<Window", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("<Window", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(".cui.xml", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("@template", text, StringComparison.Ordinal);
         Assert.DoesNotContain("x:Class", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("new Binding(\"", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("Use markup", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Use XAML", text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public void GettingStartedDocumentMentionsDeferredScopeForMarkupPackageSplitAndFullIme()
+    public void GettingStartedDocumentMentionsDeferredScopeForArbitraryXamlPackageSplitAndFullIme()
     {
         string text = ReadGettingStarted();
 
         Assert.Contains("deferred", text, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("markup", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("arbitrary XAML compatibility", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("package split", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("full IME", text, StringComparison.OrdinalIgnoreCase);
     }

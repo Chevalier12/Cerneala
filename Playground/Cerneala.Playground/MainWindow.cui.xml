@@ -196,7 +196,36 @@
                     <Button Name="ReplaceContextButton" Content="Replace the entire DataContext" Click="OnReplaceContextClick" />
                     <Button Name="PinStatusButton" Content="Set Local value over markup" Click="OnPinStatusClick" />
                     <Button Name="WindowStateButton" Content="Toggle native WindowState" Click="OnToggleWindowStateClick" />
-                    <Button Name="OpenWindowsButton" Content="Open 3 test windows" Click="OnOpenWindowsClick" />
+                    <Button
+                        Name="OpenWindowsButton"
+                        Content="Open 3 test windows"
+                        Background="Transparent"
+                        Foreground="White"
+                        BorderColor="82,96,113"
+                        BorderThickness="1"
+                        Padding="10,6,10,6"
+                        Click="OnOpenWindowsClick">
+                        @template
+                        {
+                            <Border
+                                Name="OpenWindowsChrome"
+                                Background="$owner.Background"
+                                BorderColor="$owner.BorderColor"
+                                BorderThickness="$owner.BorderThickness"
+                                Padding="$owner.Padding">
+                                @when $owner.IsMouseOver
+                                {
+                                    Background = $HoverBrush;
+                                    BorderColor = $AccentBrush;
+                                }
+
+                                <ContentPresenter
+                                    Content="$owner.Content"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                            </Border>
+                        }
+                    </Button>
 
                     @when $DataContext.ShowAdvanced
                     {

@@ -55,7 +55,19 @@ public sealed class ComponentTemplate<TControl> : ComponentTemplate
         ComponentTemplateContext<TControl> typed = context is ComponentTemplateContext<TControl> typedContext
             ? typedContext
             : new ComponentTemplateContext<TControl>((TControl)owner, context.Environment, context.States, context.Variants);
-        UIElement? root = factory(typed);
-        return new ComponentTemplateInstance(root, typed.Bindings, typed.TokenBindings, typed.Slots, typed.Parts);
+        try
+        {
+            UIElement? root = factory(typed);
+            return new ComponentTemplateInstance(root, typed.Bindings, typed.TokenBindings, typed.Slots, typed.Parts, typed.Lifetimes);
+        }
+        catch
+        {
+            foreach (IDisposable lifetime in typed.Lifetimes)
+            {
+                lifetime.Dispose();
+            }
+
+            throw;
+        }
     }
 }

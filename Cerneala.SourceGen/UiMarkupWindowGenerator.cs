@@ -428,7 +428,9 @@ public sealed partial class UiMarkupGenerator
         public string? EmitWindowRoot(XElement root)
         {
             EmitRuntimeResources(root, "this");
-            DirectiveParseResult parsed = GetDirectiveContent(root, allowAssignments: false, allowElements: true);
+            DirectiveParseResult parsed = GetDirectiveContent(
+                root,
+                DirectiveContentKind.Elements | DirectiveContentKind.Templates);
             if (parsed.Error is not null)
             {
                 Report(InvalidDirective, parsed.ErrorSource ?? root, Path.GetFileName(file.Path), parsed.Error);
@@ -456,6 +458,20 @@ public sealed partial class UiMarkupGenerator
 
             IReadOnlyList<AspectResource> aspects = ResolveAspects(root);
             ApplyAspects(root, "this", aspects);
+            DirectiveTemplateNode[] templates = parsed.Nodes.OfType<DirectiveTemplateNode>().ToArray();
+            if (templates.Length > 1)
+            {
+                Report(
+                    InvalidComponentTemplate,
+                    templates[1].Source,
+                    Path.GetFileName(file.Path),
+                    "A Window may declare only one @template block.");
+            }
+            else if (templates.Length == 1)
+            {
+                EmitDirectTemplate(root, "this", templates[0], ownerIsRoot: true);
+            }
+
             foreach (XAttribute attribute in root.Attributes().Where(attribute =>
                 !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name" and not "DataType"))
             {
@@ -482,6 +498,8 @@ public sealed partial class UiMarkupGenerator
                         CollectWhen(plan, directiveWhen, "true", "global::Cerneala.UI.Core.UiPropertyValueSource.MarkupConditional");
                         break;
                     case DirectiveElementNode _:
+                        break;
+                    case DirectiveTemplateNode _:
                         break;
                     case DirectiveDefaultNode defaults:
                         Report(InvalidDirective, defaults.Source, Path.GetFileName(file.Path), "@default is valid only inside Aspect resources.");

@@ -107,6 +107,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true);
 
+    private static readonly DiagnosticDescriptor InvalidComponentTemplate = new(
+        "CERNEALAUI012",
+        "Invalid component template declaration",
+        "Component template in '{0}' is invalid: {1}",
+        "Cerneala.UiMarkup",
+        DiagnosticSeverity.Error,
+        true);
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         IncrementalValuesProvider<MarkupSource> markupFiles = context.AdditionalTextsProvider
@@ -577,7 +585,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             ReadInlineAspects();
             reactiveDocument = allAspects.Any(aspect => aspect.Conditions.Count > 0) ||
                 document.Root.DescendantsAndSelf().Any(element =>
-                    GetDirectiveContent(element, allowAssignments: false, allowElements: true).HasDirectives);
+                    GetDirectiveContent(element, DirectiveContentKind.Elements | DirectiveContentKind.Templates).HasDirectives);
+            EmitAspectTemplates();
         }
 
         public List<string> Lines { get; } = new();
@@ -703,6 +712,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string targetName,
                 IReadOnlyList<AspectPropertyAssignment> assignments,
                 IReadOnlyList<DirectiveWhenNode> conditions,
+                DirectiveTemplateNode? template,
                 XElement source,
                 bool isInline = false)
             {
@@ -710,6 +720,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 TargetName = targetName;
                 Assignments = assignments;
                 Conditions = conditions;
+                Template = template;
                 Source = source;
                 IsInline = isInline;
             }
@@ -722,11 +733,63 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public IReadOnlyList<DirectiveWhenNode> Conditions { get; }
 
+            public DirectiveTemplateNode? Template { get; }
+
             public XElement Source { get; }
 
             public bool IsInline { get; }
 
             public string? RuntimeVariable { get; set; }
+
+            public string? TemplateVariable { get; set; }
+        }
+
+        private sealed class NamedElementReference
+        {
+            public NamedElementReference(string code, XElement element)
+            {
+                Code = code;
+                Element = element;
+            }
+
+            public string Code { get; }
+
+            public XElement Element { get; }
+        }
+
+        private sealed class TemplateEmissionContext
+        {
+            public TemplateEmissionContext(
+                string contextVariable,
+                string ownerVariable,
+                string ownerElementName,
+                INamedTypeSymbol ownerType,
+                bool ownerIsRoot,
+                bool registerParts)
+            {
+                ContextVariable = contextVariable;
+                OwnerVariable = ownerVariable;
+                OwnerElementName = ownerElementName;
+                OwnerType = ownerType;
+                OwnerIsRoot = ownerIsRoot;
+                RegisterParts = registerParts;
+            }
+
+            public string ContextVariable { get; }
+
+            public string OwnerVariable { get; }
+
+            public string OwnerElementName { get; }
+
+            public INamedTypeSymbol OwnerType { get; }
+
+            public bool OwnerIsRoot { get; }
+
+            public bool RegisterParts { get; }
+
+            public HashSet<string> PartNames { get; } = new(StringComparer.Ordinal);
+
+            public Dictionary<string, XElement> Parts { get; } = new(StringComparer.Ordinal);
         }
 
         private sealed class AspectPropertyAssignment
@@ -800,11 +863,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly Dictionary<string, PropertySpec> resolvedProperties = new(StringComparer.Ordinal);
         private readonly Dictionary<string, IReadOnlyList<NamedElementMember>> conditionalFactoryMembers = new(StringComparer.Ordinal);
         private readonly Stack<List<NamedElementMember>> conditionalMemberScopes = new();
+        private readonly Stack<TemplateEmissionContext> templateEmissionContexts = new();
+        private readonly Dictionary<DirectiveTemplateNode, IReadOnlyDictionary<string, XElement>> templateParts = new();
         private readonly List<NamedElementMember> namedElementMembers = [];
         private List<string> currentLines;
         private List<string> currentPostLines;
         private int nextReactiveId;
         private int nextResourceId;
+        private int nextTemplateId;
 
         private void ReadResources()
         {
@@ -919,19 +985,40 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             targetName = targetName.Trim();
-            if (ResolveElementType(targetName) is null)
+            if (ResolveAspectTargetType(targetName) is null)
             {
                 Report(UnsupportedElement, resource, targetName);
                 return;
             }
 
-            if (!TryParseAspectBody(resource, out List<AspectPropertyAssignment> assignments, out List<DirectiveWhenNode> conditions))
+            if (!TryParseAspectBody(
+                resource,
+                out List<AspectPropertyAssignment> assignments,
+                out List<DirectiveWhenNode> conditions,
+                out DirectiveTemplateNode? template))
             {
                 return;
             }
 
             string? name = resource.Attribute("Name")?.Value;
-            AspectResource aspect = new(string.IsNullOrWhiteSpace(name) ? null : name, targetName, assignments, conditions, resource);
+            string? trimmedName = string.IsNullOrWhiteSpace(name) ? null : name!.Trim();
+            if (trimmedName is not null && IsReservedTemplateReference(trimmedName))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    (XObject?)resource.Attribute("Name") ?? resource,
+                    Path.GetFileName(file.Path),
+                    "Resource Name '" + trimmedName + "' is reserved by component templates.");
+                return;
+            }
+
+            AspectResource aspect = new(
+                trimmedName,
+                targetName,
+                assignments,
+                conditions,
+                template,
+                resource);
             allAspects.Add(aspect);
             if (aspect.Name is null)
             {
@@ -1025,9 +1112,20 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         "An inline Aspect property element does not accept attributes.");
                 }
 
-                if (TryParseAspectBody(inline, out List<AspectPropertyAssignment> assignments, out List<DirectiveWhenNode> conditions))
+                if (TryParseAspectBody(
+                    inline,
+                    out List<AspectPropertyAssignment> assignments,
+                    out List<DirectiveWhenNode> conditions,
+                    out DirectiveTemplateNode? template))
                 {
-                    AspectResource aspect = new(null, owner.Name.LocalName, assignments, conditions, inline, isInline: true);
+                    AspectResource aspect = new(
+                        null,
+                        owner.Name.LocalName,
+                        assignments,
+                        conditions,
+                        template,
+                        inline,
+                        isInline: true);
                     inlineAspects.Add(owner, aspect);
                     allAspects.Add(aspect);
                 }
@@ -1039,11 +1137,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private bool TryParseAspectBody(
             XElement source,
             out List<AspectPropertyAssignment> assignments,
-            out List<DirectiveWhenNode> conditions)
+            out List<DirectiveWhenNode> conditions,
+            out DirectiveTemplateNode? template)
         {
             assignments = [];
             conditions = [];
-            DirectiveParseResult parsed = ParseDirectiveContent(source, allowAssignments: true, allowElements: false);
+            template = null;
+            DirectiveParseResult parsed = ParseDirectiveContent(
+                source,
+                DirectiveContentKind.Assignments | DirectiveContentKind.Templates);
             if (parsed.Error is not null)
             {
                 Report(InvalidDirective, parsed.ErrorSource ?? source, Path.GetFileName(file.Path), parsed.Error);
@@ -1075,9 +1177,23 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     conditions.Add(when);
                 }
+                else if (node is DirectiveTemplateNode declaredTemplate)
+                {
+                    if (template is not null)
+                    {
+                        Report(
+                            InvalidComponentTemplate,
+                            declaredTemplate.Source,
+                            Path.GetFileName(file.Path),
+                            "An Aspect may declare only one @template block.");
+                        return false;
+                    }
+
+                    template = declaredTemplate;
+                }
                 else
                 {
-                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default and @when blocks.");
+                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default, @when and @template blocks.");
                     return false;
                 }
             }
@@ -1171,11 +1287,32 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return null;
             }
 
+            name = name!.Trim();
+            if (IsReservedTemplateReference(name))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    (XObject?)element.Attribute("Name") ?? element,
+                    Path.GetFileName(file.Path),
+                    "Resource Name '" + name + "' is reserved by component templates.");
+                return null;
+            }
+
             return name;
         }
 
         private bool AddSymbol(string name, NamedSymbolKind kind, object source, XElement location)
         {
+            if (IsReservedTemplateReference(name))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    (XObject?)location.Attribute("Name") ?? location,
+                    Path.GetFileName(file.Path),
+                    "Name '" + name + "' is reserved by component templates.");
+                return false;
+            }
+
             if (symbols.ContainsKey(name))
             {
                 Report(InvalidDocumentShape, location, Path.GetFileName(file.Path), "Duplicate Name '" + name + "'.");
@@ -1184,6 +1321,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             symbols.Add(name, new NamedSymbol(name, kind, source));
             return true;
+        }
+
+        private static bool IsReservedTemplateReference(string name)
+        {
+            return string.Equals(name, "owner", StringComparison.Ordinal) ||
+                string.Equals(name, "self", StringComparison.Ordinal);
         }
 
         private static DrawColorLiteral? ParseHexColor(string value)
@@ -1223,11 +1366,149 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return null;
         }
 
+        private void EmitAspectTemplates()
+        {
+            foreach (AspectResource aspect in allAspects.Where(candidate => candidate.Template is not null))
+            {
+                INamedTypeSymbol? ownerType = ResolveAspectTargetTypeSymbol(aspect.TargetName);
+                if (!IsControlType(ownerType))
+                {
+                    Report(
+                        InvalidComponentTemplate,
+                        aspect.Template!.Source,
+                        Path.GetFileName(file.Path),
+                        "@template may be declared only for a type derived from Control; '" + aspect.TargetName + "' is not a Control.");
+                    continue;
+                }
+
+                string variable = "aspectTemplate" + nextTemplateId.ToString(CultureInfo.InvariantCulture);
+                nextTemplateId++;
+                aspect.TemplateVariable = variable;
+                EmitComponentTemplate(
+                    "global::Cerneala.UI.Controls.Templates.ComponentTemplate<" +
+                        ownerType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "> " + variable,
+                    aspect.TargetName,
+                    ownerType,
+                    ownerIsRoot: false,
+                    aspect.Template!,
+                    registerParts: true);
+            }
+        }
+
+        private void EmitDirectTemplate(
+            XElement owner,
+            string ownerVariable,
+            DirectiveTemplateNode template,
+            bool ownerIsRoot)
+        {
+            INamedTypeSymbol? ownerType = ResolvePropertyOwnerType(owner.Name.LocalName, ownerIsRoot);
+            if (!IsControlType(ownerType))
+            {
+                Report(
+                    InvalidComponentTemplate,
+                    template.Source,
+                    Path.GetFileName(file.Path),
+                    "@template may be declared only on an element derived from Control; '" + owner.Name.LocalName + "' is not a Control.");
+                return;
+            }
+
+            EmitComponentTemplate(
+                ownerVariable + ".ComponentTemplate",
+                owner.Name.LocalName,
+                ownerType!,
+                ownerIsRoot,
+                template,
+                registerParts: true);
+        }
+
+        private void EmitComponentTemplate(
+            string assignmentTarget,
+            string ownerElementName,
+            INamedTypeSymbol ownerType,
+            bool ownerIsRoot,
+            DirectiveTemplateNode template,
+            bool registerParts)
+        {
+            int templateId = nextTemplateId++;
+            string contextVariable = "templateContext" + templateId.ToString(CultureInfo.InvariantCulture);
+            List<string> factoryLines = [];
+            List<string> factoryPostLines = [];
+            string rootVariable = string.Empty;
+            TemplateEmissionContext emissionContext = new(
+                contextVariable,
+                contextVariable + ".Owner",
+                ownerElementName,
+                ownerType,
+                ownerIsRoot,
+                registerParts);
+
+            WithEmissionBuffers(factoryLines, factoryPostLines, () =>
+            {
+                templateEmissionContexts.Push(emissionContext);
+                try
+                {
+                    rootVariable = EmitElement(template.Root);
+                }
+                finally
+                {
+                    templateEmissionContexts.Pop();
+                }
+            });
+
+            templateParts[template] = new Dictionary<string, XElement>(emissionContext.Parts, StringComparer.Ordinal);
+
+            string typeCode = ownerType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string generatedName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Path)) +
+                "." + ownerElementName + ".Template." + templateId.ToString(CultureInfo.InvariantCulture);
+            currentLines.Add(assignmentTarget + " = new global::Cerneala.UI.Controls.Templates.ComponentTemplate<" + typeCode + ">(");
+            currentLines.Add("    " + Literal(generatedName) + ",");
+            currentLines.Add("    " + contextVariable + " =>");
+            currentLines.Add("    {");
+            foreach (string line in factoryLines)
+            {
+                currentLines.Add("        " + line);
+            }
+
+            foreach (string line in factoryPostLines)
+            {
+                currentLines.Add("        " + line);
+            }
+
+            currentLines.Add("        return " + rootVariable + ";");
+            currentLines.Add("    });");
+        }
+
+        private void WithEmissionBuffers(List<string> lines, List<string> postLines, Action action)
+        {
+            List<string> previousLines = currentLines;
+            List<string> previousPostLines = currentPostLines;
+            currentLines = lines;
+            currentPostLines = postLines;
+            try
+            {
+                action();
+            }
+            finally
+            {
+                currentLines = previousLines;
+                currentPostLines = previousPostLines;
+            }
+        }
+
+        private bool IsControlType(INamedTypeSymbol? type)
+        {
+            INamedTypeSymbol? controlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Control");
+            return type is not null && controlType is not null && IsOrDerivesFrom(type, controlType);
+        }
+
         public string EmitElement(XElement element)
         {
             string? requestedName = element.Attribute("Name")?.Value;
             string variable;
-            if (string.IsNullOrWhiteSpace(requestedName))
+            TemplateEmissionContext? templateContext = templateEmissionContexts.Count == 0
+                ? null
+                : templateEmissionContexts.Peek();
+            if (string.IsNullOrWhiteSpace(requestedName) || templateContext?.RegisterParts == true)
             {
                 variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
                 nextId++;
@@ -1237,7 +1518,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string symbolName = requestedName!.Trim();
                 variable = CreateIdentifier(symbolName);
                 string referenceCode = userControlPair is null ? variable : "this." + variable;
-                if (!AddSymbol(symbolName, NamedSymbolKind.Element, referenceCode, element))
+                if (!AddSymbol(symbolName, NamedSymbolKind.Element, new NamedElementReference(referenceCode, element), element))
                 {
                     variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
                     nextId++;
@@ -1254,11 +1535,38 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             currentLines.Add(typeName + " " + variable + " = new();");
             EmitRuntimeResources(element, variable);
-            if (!string.IsNullOrWhiteSpace(requestedName) && userControlPair is not null)
+            if (!string.IsNullOrWhiteSpace(requestedName) && templateContext?.RegisterParts == true)
+            {
+                string partName = requestedName!.Trim();
+                if (IsReservedTemplateReference(partName))
+                {
+                    Report(
+                        InvalidComponentTemplate,
+                        (XObject?)element.Attribute("Name") ?? element,
+                        Path.GetFileName(file.Path),
+                        "Template part Name '" + partName + "' is reserved.");
+                }
+                else if (!templateContext.PartNames.Add(partName))
+                {
+                    Report(
+                        InvalidComponentTemplate,
+                        (XObject?)element.Attribute("Name") ?? element,
+                        Path.GetFileName(file.Path),
+                        "Duplicate template part Name '" + partName + "'.");
+                }
+                else
+                {
+                    templateContext.Parts.Add(partName, element);
+                    currentLines.Add(templateContext.ContextVariable + ".RequirePart(" + Literal(partName) + ", " + variable + ");");
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(requestedName) && userControlPair is not null)
             {
                 RegisterNamedElement(requestedName!.Trim(), variable, typeName, element);
             }
-            DirectiveParseResult parsedContent = GetDirectiveContent(element, allowAssignments: false, allowElements: true);
+            DirectiveParseResult parsedContent = GetDirectiveContent(
+                element,
+                DirectiveContentKind.Elements | DirectiveContentKind.Templates);
             if (parsedContent.Error is not null)
             {
                 Report(InvalidDirective, parsedContent.ErrorSource ?? element, Path.GetFileName(file.Path), parsedContent.Error);
@@ -1267,6 +1575,20 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             IReadOnlyList<AspectResource> aspects = ResolveAspects(element);
             ApplyAspects(element, variable, aspects);
+            DirectiveTemplateNode[] templates = parsedContent.Nodes.OfType<DirectiveTemplateNode>().ToArray();
+            if (templates.Length > 1)
+            {
+                Report(
+                    InvalidComponentTemplate,
+                    templates[1].Source,
+                    Path.GetFileName(file.Path),
+                    "An element may declare only one @template block.");
+            }
+            else if (templates.Length == 1)
+            {
+                EmitDirectTemplate(element, variable, templates[0], ReferenceEquals(element, document.Root));
+            }
+
             foreach (XAttribute attribute in element.Attributes().Where(attribute => !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name" and not "DataType"))
             {
                 if (TryEmitEventAttribute(element, variable, attribute))
@@ -1283,16 +1605,26 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
             else
             {
-                string? directText = ReadDirectText(element);
-                if (directText is not null)
+                foreach (DirectiveNode node in parsedContent.Nodes)
                 {
-                    EmitTextContent(element, variable, directText);
-                }
-
-                foreach (XElement child in element.Elements())
-                {
-                    string childVariable = EmitElement(child);
-                    EmitChild(element, variable, childVariable);
+                    switch (node)
+                    {
+                        case DirectiveTextNode text:
+                            EmitTextContent(element, variable, text.Text);
+                            break;
+                        case DirectiveElementNode child:
+                            string childVariable = EmitElement(child.Element);
+                            EmitChild(element, variable, childVariable);
+                            break;
+                        case DirectiveTemplateNode _:
+                            break;
+                        case DirectiveDefaultNode defaults:
+                            Report(InvalidDirective, defaults.Source, Path.GetFileName(file.Path), "@default is valid only inside Aspect resources.");
+                            break;
+                        case DirectiveAssignmentNode assignment:
+                            Report(InvalidDirective, assignment.Source, Path.GetFileName(file.Path), "Property assignments must be inside an @if block.");
+                            break;
+                    }
                 }
             }
 
@@ -1314,9 +1646,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         currentLines.Add(ownerVariable + ".Resources[" + Literal(brush.Name) + "] = " + brush.Variable + ";");
                         break;
                     case AspectResource aspect:
-                        string targetType = ResolveElementType(aspect.TargetName)!;
+                        string targetType = ResolveAspectTargetType(aspect.TargetName)!;
                         string key = aspect.Name is null ? "typeof(" + targetType + ")" : Literal(aspect.Name);
-                        string properties = string.Join(", ", aspect.Assignments.Select(assignment => Literal(assignment.PropertyName)));
+                        IEnumerable<string> propertyNames = aspect.Assignments.Select(assignment => assignment.PropertyName);
+                        if (aspect.Template is not null)
+                        {
+                            propertyNames = propertyNames.Concat(new[] { "ComponentTemplate" });
+                        }
+
+                        string properties = string.Join(", ", propertyNames.Select(Literal));
                         currentLines.Add(
                             ownerVariable + ".Resources[" + key + "] = new global::Cerneala.UI.Markup.MarkupAspectResource(" +
                             (aspect.Name is null ? "null" : Literal(aspect.Name)) + ", typeof(" + targetType + "), new string[] { " +
@@ -1336,6 +1674,25 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             resolvedElementTypes[elementName] = type;
             return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        }
+
+        private string? ResolveAspectTargetType(string targetName)
+        {
+            return ResolveAspectTargetTypeSymbol(targetName)?
+                .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        }
+
+        private INamedTypeSymbol? ResolveAspectTargetTypeSymbol(string targetName)
+        {
+            INamedTypeSymbol? type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls." + targetName);
+            INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
+            if (type is not null && type.TypeKind == TypeKind.Class && !type.IsAbstract &&
+                uiElementType is not null && IsOrDerivesFrom(type, uiElementType))
+            {
+                return type;
+            }
+
+            return ResolveElementTypeSymbol(targetName);
         }
 
         private INamedTypeSymbol? ResolveElementTypeSymbol(string elementName)
@@ -1444,6 +1801,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             string elementName = element.Name.LocalName;
             List<string> values = [];
+            if (aspect.TemplateVariable is not null)
+            {
+                values.Add(
+                    "new global::Cerneala.UI.Aspect.ElementAspectValue(" +
+                    "global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " + aspect.TemplateVariable + ")");
+            }
+
             foreach (AspectPropertyAssignment assignment in aspect.Assignments)
             {
                 PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, ReferenceEquals(element, document.Root));
@@ -1492,6 +1856,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private void EmitAspectAssignments(XElement element, string variable, AspectResource aspect)
         {
             string elementName = element.Name.LocalName;
+            if (aspect.TemplateVariable is not null)
+            {
+                currentLines.Add(reactiveDocument
+                    ? variable + ".SetValue(global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " +
+                        aspect.TemplateVariable + ", global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase);"
+                    : variable + ".ComponentTemplate = " + aspect.TemplateVariable + ";");
+            }
+
             foreach (AspectPropertyAssignment assignment in aspect.Assignments)
             {
                 PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, ReferenceEquals(element, document.Root));
@@ -1609,13 +1981,98 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             string elementName = element.Name.LocalName;
             string propertyName = attribute.Name.LocalName;
             string value = attribute.Value;
+            string trimmedValue = value.Trim();
 
             PropertySpec? spec = FindPropertySpec(elementName, propertyName, ReferenceEquals(element, document.Root));
-            if (spec is null || !spec.Assignable)
+            if (spec is null)
             {
                 if (!HasErrors)
                 {
                     Report(UnsupportedProperty, attribute, elementName, propertyName);
+                }
+
+                return;
+            }
+
+            if (!spec.Assignable)
+            {
+                if (templateEmissionContexts.Count > 0 && trimmedValue.StartsWith("$owner.", StringComparison.Ordinal))
+                {
+                    Report(
+                        InvalidComponentTemplate,
+                        attribute,
+                        Path.GetFileName(file.Path),
+                        "Template binding target '" + elementName + "." + propertyName + "' is read-only.");
+                }
+                else if (!HasErrors)
+                {
+                    Report(UnsupportedProperty, attribute, elementName, propertyName);
+                }
+
+                return;
+            }
+
+            if (templateEmissionContexts.Count > 0 && trimmedValue.StartsWith("$owner.", StringComparison.Ordinal))
+            {
+                TemplateEmissionContext templateContext = templateEmissionContexts.Peek();
+                string sourcePropertyName = trimmedValue.Substring("$owner.".Length);
+                if (sourcePropertyName.Length == 0 || sourcePropertyName.IndexOf('.') >= 0)
+                {
+                    Report(InvalidBindingSource, attribute, trimmedValue, "$owner requires exactly one UI property name.");
+                    return;
+                }
+
+                PropertySpec? sourceSpec = FindPropertySpec(templateContext.OwnerType, sourcePropertyName);
+                if (sourceSpec is null)
+                {
+                    Report(
+                        InvalidBindingSource,
+                        attribute,
+                        trimmedValue,
+                        "No supported UI property with this name exists on the template owner.");
+                    return;
+                }
+
+                if (!SymbolEqualityComparer.Default.Equals(sourceSpec.ValueType, spec.ValueType))
+                {
+                    Report(
+                        InvalidComponentTemplate,
+                        attribute,
+                        Path.GetFileName(file.Path),
+                        "Template binding '" + trimmedValue + "' has type '" + sourceSpec.ValueType.ToDisplayString() +
+                        "', but '" + elementName + "." + propertyName + "' expects '" + spec.ValueType.ToDisplayString() + "'.");
+                    return;
+                }
+
+                currentLines.Add(
+                    templateContext.ContextVariable + ".Bind(" + sourceSpec.PropertyCode + ", " + variable + ", " + spec.PropertyCode + ");");
+                return;
+            }
+
+            if (templateEmissionContexts.Count > 0 && trimmedValue.StartsWith("$self.", StringComparison.Ordinal))
+            {
+                Report(
+                    InvalidBindingSource,
+                    attribute,
+                    trimmedValue,
+                    "$self is supported by reactive directives; a property cannot bind to itself.");
+                return;
+            }
+
+            if (templateEmissionContexts.Count > 0 && trimmedValue.StartsWith("$", StringComparison.Ordinal))
+            {
+                GeneratedExpression? resourceExpression = ResolveReferenceValue(
+                    elementName,
+                    propertyName,
+                    trimmedValue.Substring(1),
+                    spec.ValueKind,
+                    attribute);
+                if (resourceExpression is not null)
+                {
+                    currentLines.Add(reactiveDocument
+                        ? variable + ".SetValue(" + spec.PropertyCode + ", " + resourceExpression.Code +
+                            ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
+                        : variable + "." + spec.Name + " = " + resourceExpression.Code + ";");
                 }
 
                 return;
@@ -1647,8 +2104,24 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             INamedTypeSymbol? elementType = ResolvePropertyOwnerType(elementName, isRoot);
+            if (elementType is null)
+            {
+                return null;
+            }
+
+            resolved = FindPropertySpec(elementType, propertyName);
+            if (resolved is not null)
+            {
+                resolvedProperties.Add(cacheKey, resolved);
+            }
+
+            return resolved;
+        }
+
+        private PropertySpec? FindPropertySpec(INamedTypeSymbol elementType, string propertyName)
+        {
             INamedTypeSymbol? uiPropertyType = compilation.GetTypeByMetadataName("Cerneala.UI.Core.UiProperty`1");
-            if (elementType is null || uiPropertyType is null)
+            if (uiPropertyType is null)
             {
                 return null;
             }
@@ -1668,14 +2141,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             MarkupValueKind kind = GetMarkupValueKind(valueType, clrProperty);
             bool assignable = clrProperty.SetMethod is not null && IsAccessibleFromGeneratedCode(clrProperty.SetMethod);
-            resolved = new PropertySpec(
+            return new PropertySpec(
                 propertyName,
                 kind,
                 propertyField.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "." + propertyField.Name,
                 valueType,
                 assignable);
-            resolvedProperties.Add(cacheKey, resolved);
-            return resolved;
         }
 
         private IPropertySymbol? FindClrProperty(INamedTypeSymbol elementType, string propertyName)

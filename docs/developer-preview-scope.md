@@ -19,13 +19,15 @@ This document defines the supported Cerneala Developer Preview surface. It is a 
 - Platform services seams for cursor/clipboard/etc.
 - Platform-neutral semantics tree
 - Diagnostics and preview samples
+- Typed `.cui.xml` source generation for paired Window/UserControl and documented fragments
+- Markup resources, Aspects, reactive `@when`, and modern `@template` on Control-derived elements
 
 ## Deferred And Frozen Surface
 
 - Package split
 - Native accessibility adapters
 - Full IME/multiline/rich text
-- Markup/sourcegen expansion
+- Markup/sourcegen syntax beyond the documented `.cui.xml` grammar
 - String-path binding as core hot path
 - Advanced rendering/effects/path rendering/render targets
 - Animation/storyboard expansion
@@ -35,7 +37,9 @@ These areas may have prototype files or tests, but they are unsupported for Deve
 
 ## Naming Stance
 
-Cerneala keeps familiar names where they improve developer ergonomics: `ComponentTemplate`, `ContentTemplate`, `ItemsPanelTemplate`, routed events, commands, and familiar control names. These names are not a compatibility promise. The Developer Preview is code-first, retained, strongly typed, and does not define XAML as the core authoring model.
+Cerneala keeps familiar names where they improve developer ergonomics: `ComponentTemplate`, `ContentTemplate`, `ItemsPanelTemplate`, routed events, commands, and familiar control names. These names are not a compatibility promise. The Developer Preview is retained and strongly typed. It supports both code-first construction and the documented compile-time `.cui.xml` path, but does not claim general XAML compatibility or runtime XAML interpretation.
+
+Generated `@template` declarations compile to `ComponentTemplate<TControl>`. They support owner bindings, lexical resources, template parts, nested controls, and reactive branches. They do not support templates on non-Control elements, implicit content projection, template merging, binding converters, two-way template bindings, or dynamic template switching from `@when`.
 
 String-path binding as core hot path is unsupported. Preview samples must use typed `BindingOperations`, observable values/lists, or explicit property adapters instead.
 

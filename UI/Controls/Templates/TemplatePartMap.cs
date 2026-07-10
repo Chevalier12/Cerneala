@@ -8,6 +8,11 @@ public sealed class TemplatePartMap
 
     public UIElement this[string name] => parts[name];
 
+    public bool TryGetValue(string name, out UIElement? element)
+    {
+        return parts.TryGetValue(name, out element);
+    }
+
     public void Register(string name, UIElement element)
     {
         if (string.IsNullOrWhiteSpace(name))

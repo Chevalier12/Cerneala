@@ -10,6 +10,7 @@ public class ComponentTemplateContext
     private readonly TemplatePartMap parts = new();
     private readonly List<TemplateBinding> bindings = [];
     private readonly List<TemplateTokenBinding> tokenBindings = [];
+    private readonly List<IDisposable> lifetimes = [];
 
     public ComponentTemplateContext(
         Control owner,
@@ -34,6 +35,8 @@ public class ComponentTemplateContext
     public IReadOnlyList<TemplateBinding> Bindings => bindings;
 
     public IReadOnlyList<TemplateTokenBinding> TokenBindings => tokenBindings;
+
+    internal IReadOnlyList<IDisposable> Lifetimes => lifetimes;
 
     public TemplateSlotMap Slots => slots;
 
@@ -77,6 +80,11 @@ public class ComponentTemplateContext
     public void BindToken<T>(AspectToken<T> token, UIElement target, UiProperty<T> targetProperty)
     {
         tokenBindings.Add(new TemplateTokenBinding<T>(token, target, targetProperty, Environment));
+    }
+
+    public void RegisterLifetime(IDisposable lifetime)
+    {
+        lifetimes.Add(lifetime ?? throw new ArgumentNullException(nameof(lifetime)));
     }
 }
 

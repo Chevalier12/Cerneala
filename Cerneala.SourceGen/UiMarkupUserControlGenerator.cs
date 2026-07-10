@@ -239,7 +239,7 @@ public sealed partial class UiMarkupGenerator
             .Append(typeCode)
             .Append("> __CernealaGeneratedTemplate = new(")
             .Append(LiteralForGeneratedCode(pair.TypeSymbol.Name))
-            .AppendLine(", static context => context.Owner.__CernealaCreateContent());");
+            .AppendLine(", static context => context.Owner.__CernealaCreateContent(context));");
         source.AppendLine();
         source.Append("    public ").Append(pair.TypeSymbol.Name).AppendLine("()");
         source.AppendLine("    {");
@@ -264,7 +264,10 @@ public sealed partial class UiMarkupGenerator
         source.AppendLine("        ApplyTemplate();");
         source.AppendLine("    }");
         source.AppendLine();
-        source.AppendLine("    private global::Cerneala.UI.Elements.UIElement? __CernealaCreateContent()");
+        source.Append("    private global::Cerneala.UI.Elements.UIElement? __CernealaCreateContent(")
+            .Append("global::Cerneala.UI.Controls.Templates.ComponentTemplateContext<")
+            .Append(typeCode)
+            .AppendLine("> templateContext)");
         source.AppendLine("    {");
         foreach (string line in scope.Lines)
         {
@@ -363,7 +366,9 @@ public sealed partial class UiMarkupGenerator
         public string? EmitUserControlRoot(XElement root)
         {
             EmitRuntimeResources(root, "this");
-            DirectiveParseResult parsed = GetDirectiveContent(root, allowAssignments: false, allowElements: true);
+            DirectiveParseResult parsed = GetDirectiveContent(
+                root,
+                DirectiveContentKind.Elements | DirectiveContentKind.Templates);
             if (parsed.Error is not null)
             {
                 Report(InvalidDirective, parsed.ErrorSource ?? root, Path.GetFileName(file.Path), parsed.Error);
@@ -371,6 +376,27 @@ public sealed partial class UiMarkupGenerator
             }
 
             List<DirectiveElementNode> directElements = parsed.Nodes.OfType<DirectiveElementNode>().ToList();
+            DirectiveTemplateNode[] templates = parsed.Nodes.OfType<DirectiveTemplateNode>().ToArray();
+            if (templates.Length > 1)
+            {
+                Report(
+                    InvalidComponentTemplate,
+                    templates[1].Source,
+                    Path.GetFileName(file.Path),
+                    "A paired UserControl may declare only one @template block.");
+                return null;
+            }
+
+            if (templates.Length == 1 && directElements.Count > 0)
+            {
+                Report(
+                    InvalidComponentTemplate,
+                    templates[0].Source,
+                    Path.GetFileName(file.Path),
+                    "A paired UserControl cannot combine a root @template with a direct visual child.");
+                return null;
+            }
+
             if (directElements.Count > 1)
             {
                 Report(InvalidUserControl, root, Path.GetFileName(file.Path), "The <UserControl> wrapper accepts at most one direct visual child.");
@@ -418,6 +444,8 @@ public sealed partial class UiMarkupGenerator
                         break;
                     case DirectiveElementNode _:
                         break;
+                    case DirectiveTemplateNode _:
+                        break;
                     case DirectiveDefaultNode defaults:
                         Report(InvalidDirective, defaults.Source, Path.GetFileName(file.Path), "@default is valid only inside Aspect resources.");
                         break;
@@ -431,11 +459,38 @@ public sealed partial class UiMarkupGenerator
             }
 
             EmitReactivePlan(plan, controlsContent: false);
+            if (templates.Length == 1)
+            {
+                TemplateEmissionContext templateContext = new(
+                    "templateContext",
+                    "templateContext.Owner",
+                    root.Name.LocalName,
+                    userControlPair!.TypeSymbol,
+                    ownerIsRoot: true,
+                    registerParts: false);
+                templateEmissionContexts.Push(templateContext);
+                try
+                {
+                    return EmitElement(templates[0].Root);
+                }
+                finally
+                {
+                    templateEmissionContexts.Pop();
+                }
+            }
+
             return directElements.Count == 0 ? null : EmitElement(directElements[0].Element);
         }
 
         private static bool ContainsElement(DirectiveWhenNode when)
         {
+            if (when.BooleanBody is not null &&
+                (when.BooleanBody.OfType<DirectiveElementNode>().Any() ||
+                 when.BooleanBody.OfType<DirectiveWhenNode>().Any(ContainsElement)))
+            {
+                return true;
+            }
+
             foreach (DirectiveIfNode branch in when.Branches)
             {
                 if (branch.Body.OfType<DirectiveElementNode>().Any() || branch.Body.OfType<DirectiveWhenNode>().Any(ContainsElement))

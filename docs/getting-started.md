@@ -43,6 +43,31 @@ ListBox list = new()
 };
 ```
 
+## Build A Generated Window In Markup
+
+Paired `.cui.xml` Window and UserControl files are a supported generated authoring path. The generator resolves controls and UI properties semantically through Roslyn, validates event handlers against the companion code-behind, and emits typed C#.
+
+```xml
+<Window Title="Sample" Width="800" Height="600">
+    <Button Content="Run">
+        @template
+        {
+            <Border Background="$owner.Background"
+                    Padding="$owner.Padding">
+                @when $owner.IsMouseOver
+                {
+                    Background = "#252B36";
+                }
+
+                <ContentPresenter Content="$owner.Content" />
+            </Border>
+        }
+    </Button>
+</Window>
+```
+
+`@template` maps to `ComponentTemplate<TControl>` and therefore works only on types derived from `Control`. A `StackPanel` can be the visual root inside a template, but cannot declare its own template.
+
 ## Use ActionCommand And Command State
 
 ```csharp
@@ -82,4 +107,4 @@ Use targeted tests to protect no-work frames, Tab focus navigation, command stat
 
 ## What Not To Use Yet
 
-These surfaces are deferred for Developer Preview: markup, XAML, source generation as the app authoring path, string-path binding, package split, native accessibility completion, full IME, and advanced rendering claims. Prefer the supported code-first path until those items graduate.
+These surfaces remain deferred for Developer Preview: arbitrary XAML compatibility, runtime markup parsing, string-path binding as the core hot path, package split, native accessibility completion, full IME, and advanced rendering claims. Use only the documented `.cui.xml` grammar; unsupported XAML syntax is not interpreted dynamically.

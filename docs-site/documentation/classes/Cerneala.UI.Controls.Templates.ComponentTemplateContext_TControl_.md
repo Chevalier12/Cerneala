@@ -81,7 +81,7 @@ ComponentTemplate<Button> template = new("Button.Modern", context =>
 
 ## Remarks
 
-`ComponentTemplateContext<TControl>` is the typed counterpart of `ComponentTemplateContext`. It keeps the base context's environment, state set, variant set, slot map, part map, template bindings, and token bindings, but hides the base `Owner` property with a strongly typed `TControl` owner.
+`ComponentTemplateContext<TControl>` is the typed counterpart of `ComponentTemplateContext`. It keeps the base context's environment, state set, variant set, slot map, part map, template bindings, token bindings, and registered lifetimes, but hides the base `Owner` property with a strongly typed `TControl` owner.
 
 `ComponentTemplate<TControl>` supplies this context to its factory. If the public creation path receives a non-generic `ComponentTemplateContext`, the template creates a typed context from the same owner, `Environment`, `States`, and `Variants` before invoking the factory.
 
@@ -118,6 +118,7 @@ Use the typed context when template construction needs members on a specific con
 | `Bind(UiProperty sourceProperty, UIElement target, UiProperty targetProperty, UiPropertyValueSource targetSource)` | `void` | `ComponentTemplateContext` | Records a non-generic owner property binding to a generated target element property. |
 | `Bind<T>(UiProperty<T> sourceProperty, UIElement target, UiProperty<T> targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)` | `void` | `ComponentTemplateContext` | Records a typed owner property binding to a generated target element property. |
 | `BindToken<T>(AspectToken<T> token, UIElement target, UiProperty<T> targetProperty)` | `void` | `ComponentTemplateContext` | Records an aspect token binding from the context environment to a generated target element property. |
+| `RegisterLifetime(IDisposable lifetime)` | `void` | `ComponentTemplateContext` | Transfers a disposable subscription or controller to the resulting component template instance. |
 
 ## Exceptions
 

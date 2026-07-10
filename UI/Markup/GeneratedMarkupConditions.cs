@@ -126,6 +126,11 @@ public static class GeneratedMarkup
         return new UiPropertyObservation(source, property);
     }
 
+    public static MarkupObservation ObserveTemplatePartProperty(Control owner, string partName, UiProperty property)
+    {
+        return new TemplatePartPropertyObservation(owner, partName, property);
+    }
+
     public static MarkupObservation ObserveObject(Func<object?> getter)
     {
         return new ObjectObservation(getter);
@@ -191,6 +196,77 @@ public static class GeneratedMarkup
 
             Value = args.NewValue;
             RaiseChanged();
+        }
+    }
+
+    private sealed class TemplatePartPropertyObservation : MarkupObservation
+    {
+        private readonly Control owner;
+        private readonly string partName;
+        private readonly UiProperty property;
+        private UiObject? part;
+        private bool started;
+
+        public TemplatePartPropertyObservation(Control owner, string partName, UiProperty property)
+        {
+            this.owner = owner ?? throw new ArgumentNullException(nameof(owner));
+            this.partName = string.IsNullOrWhiteSpace(partName) ? throw new ArgumentException("A template part name is required.", nameof(partName)) : partName;
+            this.property = property ?? throw new ArgumentNullException(nameof(property));
+            Reconnect();
+        }
+
+        internal override void Start()
+        {
+            if (started) return;
+            started = true;
+            owner.PropertyChanged += OnOwnerPropertyChanged;
+            Reconnect();
+        }
+
+        internal override void Stop()
+        {
+            if (!started) return;
+            started = false;
+            owner.PropertyChanged -= OnOwnerPropertyChanged;
+            DisconnectPart();
+        }
+
+        private void OnOwnerPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
+        {
+            if (ReferenceEquals(args.Property, Control.ComponentTemplateProperty)) ReconnectAndRaise();
+        }
+
+        private void OnPartPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
+        {
+            if (!ReferenceEquals(args.Property, property)) return;
+            Value = args.NewValue;
+            RaiseChanged();
+        }
+
+        private void ReconnectAndRaise()
+        {
+            Reconnect();
+            RaiseChanged();
+        }
+
+        private void Reconnect()
+        {
+            DisconnectPart();
+            owner.ApplyTemplate();
+            if (owner.ComponentTemplateInstance is null || !owner.ComponentTemplateInstance.Parts.TryGetValue(partName, out UIElement? resolved))
+            {
+                throw new InvalidOperationException($"Component template part '{partName}' was not materialized.");
+            }
+
+            part = resolved!;
+            Value = part.GetValue(property);
+            if (started) part.PropertyChanged += OnPartPropertyChanged;
+        }
+
+        private void DisconnectPart()
+        {
+            if (part is not null) part.PropertyChanged -= OnPartPropertyChanged;
+            part = null;
         }
     }
 

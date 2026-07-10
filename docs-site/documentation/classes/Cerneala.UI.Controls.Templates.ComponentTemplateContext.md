@@ -72,13 +72,13 @@ context.BindToken(paddingToken, root, Control.PaddingProperty);
 ## Remarks
 `ComponentTemplateContext` is the mutable build-time context used by `ComponentTemplate<TControl>`. The template factory records information on the context, and the template pipeline copies `Bindings`, `TokenBindings`, `Slots`, and `Parts` into the returned `ComponentTemplateInstance`.
 
-The context does not attach bindings, token bindings, slots, or parts by itself. `ComponentTemplateInstance.Attach(Control)` attaches the recorded template bindings to the owner, applies token bindings from the captured `AspectEnvironment`, and attaches the generated root as a template child.
+The context does not attach bindings, token bindings, slots, parts, or registered lifetimes by itself. `ComponentTemplateInstance.Attach(Control)` attaches the recorded template bindings to the owner, applies token bindings from the captured `AspectEnvironment`, and attaches the generated root as a template child. `ComponentTemplateInstance.Dispose()` disposes the lifetimes registered while the factory ran.
 
 `Owner` and `Environment` are required constructor arguments. When `states` or `variants` are omitted, they default to `AspectStateSet.Empty` and `AspectVariantSet.Empty`.
 
 Use `RegisterSlot` to expose generated child elements through aspect slots, and use `RequirePart` for named template parts that must be present. `RequirePart` registers the supplied element and returns it, but throws an `InvalidOperationException` with the part name when the supplied element is `null`.
 
-`Bind` records a `TemplateBinding` from an owner property to a generated target element property. The typed overload defaults the target value source to `UiPropertyValueSource.TemplateBinding`; the non-generic overload requires the caller to choose the target source. `BindToken` records a `TemplateTokenBinding<T>` that reads from `Environment` and writes the value to the target property when the component template instance is attached.
+`Bind` records a `TemplateBinding` from an owner property to a generated target element property. The typed overload defaults the target value source to `UiPropertyValueSource.TemplateBinding`; the non-generic overload requires the caller to choose the target source. `BindToken` records a `TemplateTokenBinding<T>` that reads from `Environment` and writes the value to the target property when the component template instance is attached. `RegisterLifetime` transfers an `IDisposable` subscription or controller to the resulting template instance so template replacement cleans it up deterministically.
 
 Use `ComponentTemplateContext<TControl>` when a component template factory needs a strongly typed `Owner`. The non-generic context is the shared base used by the component template creation pipeline.
 
@@ -107,6 +107,7 @@ Use `ComponentTemplateContext<TControl>` when a component template factory needs
 | `Bind(UiProperty sourceProperty, UIElement target, UiProperty targetProperty, UiPropertyValueSource targetSource)` | `void` | Records a non-generic owner-to-target template binding with the specified target value source. |
 | `Bind<T>(UiProperty<T> sourceProperty, UIElement target, UiProperty<T> targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)` | `void` | Records a typed owner-to-target template binding. |
 | `BindToken<T>(AspectToken<T> token, UIElement target, UiProperty<T> targetProperty)` | `void` | Records a token binding that applies a value from `Environment` to the target property when attached. |
+| `RegisterLifetime(IDisposable lifetime)` | `void` | Transfers a disposable subscription or controller to the resulting component template instance. |
 
 ## Exceptions
 | Member | Exception | Condition |
@@ -120,6 +121,7 @@ Use `ComponentTemplateContext<TControl>` when a component template factory needs
 | `Bind<T>(UiProperty<T>, UIElement, UiProperty<T>, UiPropertyValueSource)` | `ArgumentNullException` | `sourceProperty`, `target`, or `targetProperty` is `null`. |
 | `Bind<T>(UiProperty<T>, UIElement, UiProperty<T>, UiPropertyValueSource)` | `ArgumentException` | Source and target property value types do not match, or the target property is read-only. |
 | `BindToken<T>(AspectToken<T>, UIElement, UiProperty<T>)` | `ArgumentNullException` | `token`, `target`, or `targetProperty` is `null`. |
+| `RegisterLifetime(IDisposable)` | `ArgumentNullException` | `lifetime` is `null`. |
 
 ## Applies To
 Project: `Cerneala`

@@ -78,15 +78,15 @@ The `Root` property exposes the factory result, which may be `null`. `Slots` and
 
 `Detach()` is idempotent when the instance has no owner. When attached, it detaches token bindings first, detaches regular template bindings, removes `Root` from the owner, and clears the owner reference.
 
-`Dispose()` detaches the instance once and prevents later attachment. Calling `Attach(Control)` after disposal throws `ObjectDisposedException`. Calling `Attach(Control)` while the instance is already attached throws `InvalidOperationException`.
+`Dispose()` detaches the instance, disposes every lifetime registered through `ComponentTemplateContext.RegisterLifetime`, and prevents later attachment. Calling `Attach(Control)` after disposal throws `ObjectDisposedException`. Calling `Attach(Control)` while the instance is already attached throws `InvalidOperationException`.
 
-`Control.ApplyTemplate()` stores the currently attached component instance in `Control.ComponentTemplateInstance`; replacing the component template detaches the old `ComponentTemplateInstance` before attaching the new one.
+`Control.ApplyTemplate()` stores the currently attached component instance in `Control.ComponentTemplateInstance`; replacing the component template disposes the old `ComponentTemplateInstance` before attaching the new one.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `ComponentTemplateInstance(UIElement? root, IEnumerable<TemplateBinding>? bindings, IEnumerable<TemplateTokenBinding>? tokenBindings, TemplateSlotMap slots, TemplatePartMap parts)` | Initializes a component template instance with an optional root, optional template bindings, optional token bindings, and the slot and part maps captured from the template context. Binding sequences are copied into the instance. |
+| `ComponentTemplateInstance(UIElement? root, IEnumerable<TemplateBinding>? bindings, IEnumerable<TemplateTokenBinding>? tokenBindings, TemplateSlotMap slots, TemplatePartMap parts, IEnumerable<IDisposable>? lifetimes = null)` | Initializes a component template instance with an optional root, bindings, token bindings, slot and part maps, and optional owned lifetimes captured from the template context. Sequences are copied into the instance. |
 
 ## Properties
 
@@ -102,7 +102,7 @@ The `Root` property exposes the factory result, which may be `null`. `Slots` and
 | --- | --- | --- |
 | `Attach(Control templateOwner)` | `void` | Attaches the root, template bindings, and token bindings to `templateOwner`. |
 | `Detach()` | `void` | Detaches token bindings, template bindings, and the root from the current owner, if any. |
-| `Dispose()` | `void` | Detaches the instance and prevents future attachment. |
+| `Dispose()` | `void` | Detaches the instance, disposes its registered lifetimes, and prevents future attachment. |
 
 ## Exceptions
 

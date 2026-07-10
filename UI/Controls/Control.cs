@@ -152,7 +152,7 @@ public class Control : UIElement
             return;
         }
 
-        ComponentTemplateInstance?.Detach();
+        ComponentTemplateInstance?.Dispose();
         ComponentTemplateInstance = null;
         ComponentTemplateInstanceTemplate = null;
 
@@ -166,7 +166,16 @@ public class Control : UIElement
             : ThemeTokenBridge.CreateEnvironment(Root.ThemeProvider.Theme);
         ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
         ComponentTemplateInstance instance = template.CreateInstance(this, context);
-        instance.Attach(this);
+        try
+        {
+            instance.Attach(this);
+        }
+        catch
+        {
+            instance.Dispose();
+            throw;
+        }
+
         ComponentTemplateInstance = instance;
         ComponentTemplateInstanceTemplate = template;
     }

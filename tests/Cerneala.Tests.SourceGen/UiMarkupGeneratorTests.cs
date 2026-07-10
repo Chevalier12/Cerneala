@@ -19,6 +19,59 @@ namespace Cerneala.Tests.SourceGen;
 public sealed class UiMarkupGeneratorTests
 {
     [Fact]
+    public void TemplatePartPathEmitsReactivePartObservation()
+    {
+        const string markup = """
+            <StackPanel>
+              <Button Name="Host">
+                @template
+                {
+                  <Border Name="Chrome" IsEnabled="True" />
+                }
+              </Button>
+              <TextBlock Text="pending">
+                @when $Host.parts.$Chrome.IsEnabled
+                {
+                  @if value == True
+                  {
+                    Text = "matched";
+                  }
+                }
+              </TextBlock>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("part-path.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string generatedSource = SingleGeneratedSource(result);
+        Assert.Contains("ObserveTemplatePartProperty(Host, \"Chrome\"", generatedSource);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.PartPathFactory"));
+        Button host = Assert.IsType<Button>(panel.VisualChildren[0]);
+        TextBlock status = Assert.IsType<TextBlock>(panel.VisualChildren[1]);
+        Assert.Equal("matched", status.Text);
+
+        Border chrome = Assert.IsType<Border>(host.ComponentTemplateInstance!.Parts["Chrome"]);
+        chrome.IsEnabled = false;
+        Assert.Equal("pending", status.Text);
+
+        host.ComponentTemplate = new Cerneala.UI.Controls.Templates.ComponentTemplate<Button>(
+            "replacement",
+            context =>
+            {
+                Border replacement = new() { IsEnabled = false };
+                context.RequirePart("Chrome", replacement);
+                return replacement;
+            });
+        Border replacementChrome = Assert.IsType<Border>(host.ComponentTemplateInstance!.Parts["Chrome"]);
+        replacementChrome.IsEnabled = true;
+        Assert.Equal("matched", status.Text);
+    }
+
+    [Fact]
     public void SupportedMarkupEmitsCompilableFactory()
     {
         const string markup = """
@@ -348,6 +401,454 @@ public sealed class UiMarkupGeneratorTests
         Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "LegacyAspectType.cui.xml");
         Assert.Contains("Aspect.Target", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void ControlCanDeclareInlineComponentTemplateWithOwnerBindingsAndParts()
+    {
+        const string markup = """
+            <Button Content="Close" Background="Black">
+              @template
+              {
+                <Border Name="Bd" Background="$owner.Background">
+                  <ContentPresenter Content="$owner.Content" />
+                </Border>
+              }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("InlineTemplate.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("ComponentTemplate<global::Cerneala.UI.Controls.Button>", generatedSource);
+        Assert.Contains(".Bind(global::Cerneala.UI.Controls.Control.BackgroundProperty", generatedSource);
+        Assert.Contains(".Bind(global::Cerneala.UI.Controls.ContentControl.ContentProperty", generatedSource);
+        Assert.Contains(".RequirePart(\"Bd\"", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.InlineTemplateFactory"));
+        Assert.Equal("Close", button.Content);
+        button.ApplyTemplate();
+        Border border = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
+        Assert.Same(border, button.ComponentTemplateInstance.Parts["Bd"]);
+        Assert.Equal(button.Background, border.Background);
+        ContentPresenter presenter = Assert.IsType<ContentPresenter>(border.Child);
+        Assert.Equal("Close", presenter.Content);
+
+        button.Background = Cerneala.Drawing.DrawColor.White;
+        button.Content = "Changed";
+        Assert.Equal(Cerneala.Drawing.DrawColor.White, border.Background);
+        Assert.Equal("Changed", presenter.Content);
+    }
+
+    [Fact]
+    public void InlineTemplateBooleanShorthandRestoresOwnerBindingWhenFalse()
+    {
+        const string markup = """
+            <Button Background="Black" IsEnabled="False">
+              @template
+              {
+                <Border Background="$owner.Background">
+                  @when $owner.IsEnabled
+                  {
+                    Background = "White";
+                  }
+                </Border>
+              }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("TemplateBoolean.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplateBooleanFactory"));
+        button.ApplyTemplate();
+        Border border = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+
+        button.IsEnabled = true;
+        Assert.Equal(Cerneala.Drawing.DrawColor.White, border.Background);
+        button.IsEnabled = false;
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+    }
+
+    [Fact]
+    public void InlineTemplateWhenSupportsMultipleIfBranches()
+    {
+        const string markup = """
+            <Button IsEnabled="True">
+              @template
+              {
+                <Border>
+                  @when $owner.IsEnabled
+                  {
+                    @if value == True { Background = "White"; }
+                    @if value == False { Background = "Black"; }
+                  }
+                </Border>
+              }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("TemplateBranches.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplateBranchesFactory"));
+        button.ApplyTemplate();
+        Border border = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
+        Assert.Equal(Cerneala.Drawing.DrawColor.White, border.Background);
+        button.IsEnabled = false;
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+    }
+
+    [Fact]
+    public void InlineTemplateBooleanShorthandCanCreateConditionalChildren()
+    {
+        const string markup = """
+            <Button IsEnabled="False">
+              @template
+              {
+                <StackPanel>
+                  @when $owner.IsEnabled
+                  {
+                    <TextBlock Text="Enabled" />
+                  }
+                </StackPanel>
+              }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("TemplateConditionalChild.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplateConditionalChildFactory"));
+        button.ApplyTemplate();
+        StackPanel panel = Assert.IsType<StackPanel>(button.ComponentTemplateInstance!.Root);
+        Assert.Empty(panel.VisualChildren);
+        button.IsEnabled = true;
+        Assert.Equal("Enabled", Assert.IsType<TextBlock>(Assert.Single(panel.VisualChildren)).Text);
+        button.IsEnabled = false;
+        Assert.Empty(panel.VisualChildren);
+    }
+
+    [Fact]
+    public void AspectCanProvideComponentTemplateWithoutChangingNameTargetContract()
+    {
+        const string markup = """
+            <Button Aspect="$GhostButton" Content="Ghost">
+              <Button.Resources>
+                <Aspect Name="GhostButton" Target="Button">
+                  @default { Background = "Black"; }
+                  @template
+                  {
+                    <Border Background="$owner.Background">
+                      <ContentPresenter Content="$owner.Content" />
+                    </Border>
+                  }
+                </Aspect>
+              </Button.Resources>
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("AspectTemplate.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.AspectTemplateFactory"));
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, button.Background);
+        Assert.Contains("ComponentTemplate", button.FindResource<MarkupAspectResource>("GhostButton").DefaultPropertyNames);
+        button.ApplyTemplate();
+        Border border = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
+        Assert.IsType<ContentPresenter>(border.Child);
+    }
+
+    [Fact]
+    public void DirectTemplateOverridesAspectTemplateWithoutDroppingAspectDefaults()
+    {
+        const string markup = """
+            <Button Background="White" IsEnabled="False">
+              <Button.Resources>
+                <Aspect Target="Button">
+                  @default { Foreground = "White"; }
+                  @when IsEnabled
+                  {
+                    @if value == False { Foreground = "Black"; }
+                  }
+                  @template { <TextBlock Text="Aspect" /> }
+                </Aspect>
+              </Button.Resources>
+              @template { <TextBlock Text="Direct" /> }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("TemplatePrecedence.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplatePrecedenceFactory"));
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, button.Foreground);
+        button.ApplyTemplate();
+        TextBlock root = Assert.IsType<TextBlock>(button.ComponentTemplateInstance!.Root);
+        Assert.Equal("Direct", root.Text);
+    }
+
+    [Fact]
+    public void TemplateOnNonControlReportsDedicatedDiagnostic()
+    {
+        const string markup = """
+            <StackPanel>
+              @template { <Border /> }
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("PanelTemplate.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI012", "PanelTemplate.cui.xml");
+        Assert.Contains("Control", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void InlineTemplateKeepsOrdinaryVisualContentAndNestedTemplatesIndependent()
+    {
+        const string markup = """
+            <Button>
+              @template
+              {
+                <Border>
+                  <ContentPresenter Content="$owner.Content" />
+                </Border>
+              }
+              <Button Content="Nested">
+                @template { <TextBlock Text="Inner template" /> }
+              </Button>
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("NestedTemplates.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Button outer = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.NestedTemplatesFactory"));
+        Button inner = Assert.IsType<Button>(outer.Content);
+        outer.ApplyTemplate();
+        Border outerRoot = Assert.IsType<Border>(outer.ComponentTemplateInstance!.Root);
+        Assert.Same(inner, Assert.IsType<ContentPresenter>(outerRoot.Child).Content);
+
+        inner.ApplyTemplate();
+        TextBlock innerRoot = Assert.IsType<TextBlock>(inner.ComponentTemplateInstance!.Root);
+        Assert.Equal("Inner template", innerRoot.Text);
+    }
+
+    [Fact]
+    public void TemplateExpressionsDistinguishOwnerSelfAndLexicalResources()
+    {
+        const string markup = """
+            <Button IsEnabled="True">
+              <Button.Resources>
+                <SolidColorBrush Name="Accent" Color="#FF123456" />
+              </Button.Resources>
+              @template
+              {
+                <StackPanel>
+                  <Border Name="OwnerPart" IsEnabled="False">
+                    @when IsEnabled { Background = $Accent; }
+                  </Border>
+                  <Border Name="SelfPart" IsEnabled="False">
+                    @when $self.IsEnabled { Background = "White"; }
+                  </Border>
+                </StackPanel>
+              }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("TemplateScopes.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplateScopesFactory"));
+        button.ApplyTemplate();
+        Border ownerPart = Assert.IsType<Border>(button.ComponentTemplateInstance!.Parts["OwnerPart"]);
+        Border selfPart = Assert.IsType<Border>(button.ComponentTemplateInstance.Parts["SelfPart"]);
+        Assert.Equal(new Cerneala.Drawing.DrawColor(18, 52, 86), ownerPart.Background);
+        Assert.Equal(Cerneala.Drawing.DrawColor.Transparent, selfPart.Background);
+
+        selfPart.IsEnabled = true;
+        Assert.Equal(Cerneala.Drawing.DrawColor.White, selfPart.Background);
+        button.IsEnabled = false;
+        Assert.Equal(Cerneala.Drawing.DrawColor.Transparent, ownerPart.Background);
+    }
+
+    [Fact]
+    public void InlineAspectCanProvideTemplateAndNamedAspectWinsOverDefaultTemplate()
+    {
+        const string inlineMarkup = """
+            <Button>
+              <Button.Aspect>
+                @template { <TextBlock Text="Inline" /> }
+              </Button.Aspect>
+            </Button>
+            """;
+        GeneratorRunResult inline = RunGenerator("InlineAspectTemplate.cui.xml", inlineMarkup, out Compilation inlineCompilation);
+        Assert.DoesNotContain(inline.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream inlineStream = new();
+        Assert.True(inlineCompilation.Emit(inlineStream).Success);
+        Button inlineButton = Assert.IsType<Button>(InvokeCreate(inlineStream, "Cerneala.GeneratedUi.InlineAspectTemplateFactory"));
+        inlineButton.ApplyTemplate();
+        Assert.Equal("Inline", Assert.IsType<TextBlock>(inlineButton.ComponentTemplateInstance!.Root).Text);
+
+        const string namedMarkup = """
+            <Button Aspect="$Named">
+              <Button.Resources>
+                <Aspect Target="Button">@template { <TextBlock Text="Default" /> }</Aspect>
+                <Aspect Name="Named" Target="Button">@template { <TextBlock Text="Named" /> }</Aspect>
+              </Button.Resources>
+            </Button>
+            """;
+        GeneratorRunResult named = RunGenerator("NamedAspectTemplate.cui.xml", namedMarkup, out Compilation namedCompilation);
+        Assert.DoesNotContain(named.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream namedStream = new();
+        Assert.True(namedCompilation.Emit(namedStream).Success);
+        Button namedButton = Assert.IsType<Button>(InvokeCreate(namedStream, "Cerneala.GeneratedUi.NamedAspectTemplateFactory"));
+        namedButton.ApplyTemplate();
+        Assert.Equal("Named", Assert.IsType<TextBlock>(namedButton.ComponentTemplateInstance!.Root).Text);
+    }
+
+    [Fact]
+    public void SharedAspectTemplateCreatesIndependentPartsForEveryControl()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect Target="Button">
+                  @template { <Border Name="Chrome" /> }
+                </Aspect>
+              </StackPanel.Resources>
+              <Button Content="One" />
+              <Button Content="Two" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("TemplatePartIsolation.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplatePartIsolationFactory"));
+        Button first = Assert.IsType<Button>(panel.VisualChildren[0]);
+        Button second = Assert.IsType<Button>(panel.VisualChildren[1]);
+        Assert.Same(first.ComponentTemplate, second.ComponentTemplate);
+        first.ApplyTemplate();
+        second.ApplyTemplate();
+
+        Assert.NotSame(first.ComponentTemplateInstance, second.ComponentTemplateInstance);
+        Assert.NotSame(first.ComponentTemplateInstance!.Parts["Chrome"], second.ComponentTemplateInstance!.Parts["Chrome"]);
+        Assert.NotSame(first.ComponentTemplateInstance.Root, second.ComponentTemplateInstance.Root);
+    }
+
+    [Fact]
+    public void DirectTemplateWinsOverInlineAspectTemplate()
+    {
+        const string markup = """
+            <Button>
+              <Button.Aspect>
+                @default { Foreground = "White"; }
+                @template { <TextBlock Text="Inline Aspect" /> }
+              </Button.Aspect>
+              @template { <TextBlock Text="Direct" /> }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("InlineAspectPrecedence.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        Assert.True(compilation.Emit(stream).Success);
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.InlineAspectPrecedenceFactory"));
+        Assert.Equal(Cerneala.Drawing.DrawColor.White, button.Foreground);
+        button.ApplyTemplate();
+        Assert.Equal("Direct", Assert.IsType<TextBlock>(button.ComponentTemplateInstance!.Root).Text);
+    }
+
+    [Theory]
+    [InlineData("<Button>@template { }</Button>", "CERNEALAUI006", "exactly one")]
+    [InlineData("<Button>@template { raw text }</Button>", "CERNEALAUI006", "exactly one")]
+    [InlineData("<Button>@template { <Border /><TextBlock /> }</Button>", "CERNEALAUI006", "exactly one")]
+    [InlineData("<Button>@template { <Border /> } @template { <TextBlock /> }</Button>", "CERNEALAUI012", "only one")]
+    [InlineData("<Button>@when IsEnabled { @if value == True { @template { <Border /> } } }</Button>", "CERNEALAUI006", "not allowed")]
+    [InlineData("<Button>@template { <Border Name=\"Part\"><Button Name=\"Part\" /></Border> }</Button>", "CERNEALAUI012", "Duplicate")]
+    [InlineData("<Button>@template { <Border Background=\"$owner.FontSize\" /> }</Button>", "CERNEALAUI012", "type")]
+    [InlineData("<Button>@template { <Border>@when $owner.Unknown { Background = \"White\"; }</Border> }</Button>", "CERNEALAUI007", "template owner")]
+    [InlineData("<Button>@template { <Border>@when $self.Unknown { Background = \"White\"; }</Border> }</Button>", "CERNEALAUI007", "template element")]
+    [InlineData("<Button>@template { <Border>@when $owner.FontSize { Background = \"White\"; }</Border> }</Button>", "CERNEALAUI007", "Boolean")]
+    [InlineData("<StackPanel><StackPanel.Resources><Aspect Target=\"StackPanel\">@template { <Border /> }</Aspect></StackPanel.Resources></StackPanel>", "CERNEALAUI012", "not a Control")]
+    [InlineData("<Button><Button.Resources><SolidColorBrush Name=\"owner\" Color=\"#FF000000\" /></Button.Resources></Button>", "CERNEALAUI005", "reserved")]
+    public void InvalidTemplateShapesReportFocusedDiagnostics(string markup, string diagnosticId, string message)
+    {
+        GeneratorRunResult result = RunGenerator("InvalidTemplate.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, diagnosticId, "InvalidTemplate.cui.xml");
+        Assert.Contains(message, diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void ReplacingGeneratedTemplateDetachesOldReactiveObservations()
+    {
+        const string markup = """
+            <Button IsEnabled="True">
+              @template
+              {
+                <Border>
+                  @when $owner.IsEnabled { Background = "White"; }
+                </Border>
+              }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("TemplateLifecycle.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        Assert.True(compilation.Emit(stream).Success);
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplateLifecycleFactory"));
+        button.ApplyTemplate();
+        Border oldRoot = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
+        Assert.Equal(Cerneala.Drawing.DrawColor.White, oldRoot.Background);
+
+        button.ComponentTemplate = new Cerneala.UI.Controls.Templates.ComponentTemplate<Button>("replacement", _ => new Border());
+        Assert.Equal(Cerneala.Drawing.DrawColor.Transparent, oldRoot.Background);
+        button.IsEnabled = false;
+        Assert.Equal(Cerneala.Drawing.DrawColor.Transparent, oldRoot.Background);
+        Assert.NotSame(oldRoot, button.ComponentTemplateInstance!.Root);
     }
 
     [Fact]
@@ -1330,6 +1831,199 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void PairedUserControlRootTemplateUsesGeneratedTemplateContextAndPreservesNamedMembers()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class TemplateView : UserControl { }
+            """;
+        const string markup = """
+            <UserControl Background="Black">
+              @template
+              {
+                <Border Background="$owner.Background">
+                  <Button Name="ActionButton" Content="Action" />
+                </Border>
+              }
+            </UserControl>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/TemplateView.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("__CernealaCreateContent(context)", generatedSource);
+        Assert.Contains("private global::Cerneala.UI.Controls.Button ActionButton", generatedSource);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type type = assembly.GetType("TestInput.Views.TemplateView", throwOnError: true)!;
+        UserControl view = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(type));
+        Border root = Assert.IsType<Border>(view.ComponentTemplateInstance!.Root);
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, root.Background);
+        object named = type.GetProperty("ActionButton", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(view)!;
+        Assert.Same(root.Child, named);
+    }
+
+    [Fact]
+    public void PairedUserControlRootTemplateConflictsWithDirectVisualChild()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class InvalidTemplateView : UserControl { }
+            """;
+        const string markup = """
+            <UserControl>
+              @template { <Border /> }
+              <TextBlock Text="Second root" />
+            </UserControl>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/InvalidTemplateView.cui.xml",
+            markup,
+            inputSource,
+            out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI012", "Views/InvalidTemplateView.cui.xml");
+        Assert.Contains("direct visual child", diagnostic.GetMessage(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SemanticCustomControlCanDeclareInlineTemplate()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public sealed class FancyButton : Button { }
+            public partial class CustomTemplateView : UserControl { }
+            """;
+        const string markup = """
+            <UserControl>
+              <FancyButton Content="Fancy">
+                @template
+                {
+                  <ContentPresenter Content="$owner.Content" />
+                }
+              </FancyButton>
+            </UserControl>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/CustomTemplateView.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("ComponentTemplate<global::TestInput.Views.FancyButton>", generatedSource);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type type = assembly.GetType("TestInput.Views.CustomTemplateView", throwOnError: true)!;
+        UserControl view = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(type));
+        Button button = Assert.IsAssignableFrom<Button>(view.ComponentTemplateInstance!.Root);
+        button.ApplyTemplate();
+        Assert.Equal("Fancy", Assert.IsType<ContentPresenter>(button.ComponentTemplateInstance!.Root).Content);
+    }
+
+    [Fact]
+    public void NestedInlineTemplateCanWireCodeBehindEventsWithoutLeakingPartMembers()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Input;
+            namespace TestInput.Views;
+            public partial class EventTemplateView : UserControl
+            {
+                public int ClickCount { get; private set; }
+                private void OnInnerClick(UiElementId sender, RoutedEventArgs args) => ClickCount++;
+            }
+            """;
+        const string markup = """
+            <UserControl>
+              <Button Content="Outer">
+                @template
+                {
+                  <Button Name="InnerPart" Content="Inner" Click="OnInnerClick" />
+                }
+              </Button>
+            </UserControl>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/EventTemplateView.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains(".RequirePart(\"InnerPart\"", generatedSource);
+        Assert.DoesNotContain("private global::Cerneala.UI.Controls.Button InnerPart", generatedSource);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type type = assembly.GetType("TestInput.Views.EventTemplateView", throwOnError: true)!;
+        UserControl view = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(type));
+        Button outer = Assert.IsType<Button>(view.ComponentTemplateInstance!.Root);
+        outer.ApplyTemplate();
+        Button inner = Assert.IsType<Button>(outer.ComponentTemplateInstance!.Parts["InnerPart"]);
+        inner.RaiseEvent(new Cerneala.UI.Input.RoutedEventArgs(
+            Cerneala.UI.Controls.Primitives.ButtonBase.ClickEvent,
+            inner));
+        Assert.Equal(1, type.GetProperty("ClickCount")!.GetValue(view));
+    }
+
+    [Fact]
+    public void TemplateBindingToReadOnlyCustomPropertyReportsFocusedDiagnostic()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Core;
+            namespace TestInput.Views;
+            public sealed class ReadOnlyPart : Border
+            {
+                public static readonly UiProperty<float> MirrorFontSizeProperty = UiProperty<float>.Register(
+                    nameof(MirrorFontSize),
+                    typeof(ReadOnlyPart),
+                    new UiPropertyMetadata<float>(0));
+                public float MirrorFontSize => GetValue(MirrorFontSizeProperty);
+            }
+            public partial class ReadOnlyTemplateView : UserControl { }
+            """;
+        const string markup = """
+            <UserControl>
+              <Button>
+                @template { <ReadOnlyPart MirrorFontSize="$owner.FontSize" /> }
+              </Button>
+            </UserControl>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/ReadOnlyTemplateView.cui.xml",
+            markup,
+            inputSource,
+            out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI012", "Views/ReadOnlyTemplateView.cui.xml");
+        Assert.Contains("read-only", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void ConditionalNameIsNullableWhileBranchIsInactiveAndReusesCachedInstance()
     {
         const string inputSource = """
@@ -1657,6 +2351,84 @@ public sealed class UiMarkupGeneratorTests
         Button button = Assert.IsType<Button>(panel.VisualChildren[0]);
         object namedButton = windowType.GetProperty("SaveButton", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window)!;
         Assert.Same(button, namedButton);
+    }
+
+    [Fact]
+    public void PairedWindowCanCombineLocalTemplateWithOrdinaryContent()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class TemplateWindow : Window { }
+            """;
+        const string markup = """
+            <Window Background="Black">
+              @template
+              {
+                <Border Name="Chrome" Background="$owner.Background" />
+              }
+              <StackPanel>
+                <TextBlock Text="Window content" />
+              </StackPanel>
+            </Window>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/TemplateWindow.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type type = assembly.GetType("TestInput.Views.TemplateWindow", throwOnError: true)!;
+        Window window = Assert.IsAssignableFrom<Window>(Activator.CreateInstance(type));
+        StackPanel content = Assert.IsType<StackPanel>(window.Content);
+        Assert.Equal("Window content", Assert.IsType<TextBlock>(content.VisualChildren[0]).Text);
+        Border chrome = Assert.IsType<Border>(window.ComponentTemplateInstance!.Root);
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, chrome.Background);
+        Assert.Same(chrome, window.ComponentTemplateInstance.Parts["Chrome"]);
+    }
+
+    [Fact]
+    public void WindowAspectCanProvideComponentTemplate()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class AspectWindow : Window { }
+            """;
+        const string markup = """
+            <Window Background="Black">
+              <Window.Resources>
+                <Aspect Target="Window">
+                  @template { <Border Name="AspectChrome" Background="$owner.Background" /> }
+                </Aspect>
+              </Window.Resources>
+            </Window>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/AspectWindow.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type type = assembly.GetType("TestInput.Views.AspectWindow", throwOnError: true)!;
+        Window window = Assert.IsAssignableFrom<Window>(Activator.CreateInstance(type));
+        Border chrome = Assert.IsType<Border>(window.ComponentTemplateInstance!.Root);
+        Assert.Equal(Cerneala.Drawing.DrawColor.Black, chrome.Background);
+        Assert.Same(chrome, window.ComponentTemplateInstance.Parts["AspectChrome"]);
     }
 
     [Fact]

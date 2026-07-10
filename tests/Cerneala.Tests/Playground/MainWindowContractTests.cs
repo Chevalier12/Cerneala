@@ -23,6 +23,13 @@ public sealed class MainWindowContractTests
         (_, _, _, StackPanel actions) = FindReactiveElements(window);
         Button openWindowsButton = Assert.IsType<Button>(actions.VisualChildren[5]);
         Assert.Equal("Open 3 test windows", openWindowsButton.Content);
+        openWindowsButton.ApplyTemplate();
+        Border chrome = Assert.IsType<Border>(openWindowsButton.ComponentTemplateInstance!.Root);
+        Assert.Same(chrome, openWindowsButton.ComponentTemplateInstance.Parts["OpenWindowsChrome"]);
+        Assert.Equal(openWindowsButton.Background, chrome.Background);
+        Assert.Equal(
+            "Open 3 test windows",
+            Assert.IsType<ContentPresenter>(chrome.Child).Content);
     }
 
     [Fact]

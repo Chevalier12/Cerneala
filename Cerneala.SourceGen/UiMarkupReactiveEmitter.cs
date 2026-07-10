@@ -13,11 +13,16 @@ public sealed partial class UiMarkupGenerator
     {
         private sealed class ReactivePlan
         {
-            public ReactivePlan(string ownerVariable, string elementName, bool isRoot = false)
+            public ReactivePlan(
+                string ownerVariable,
+                string elementName,
+                bool isRoot = false,
+                TemplateEmissionContext? templateContext = null)
             {
                 OwnerVariable = ownerVariable;
                 ElementName = elementName;
                 IsRoot = isRoot;
+                TemplateContext = templateContext;
             }
 
             public string OwnerVariable { get; }
@@ -25,6 +30,8 @@ public sealed partial class UiMarkupGenerator
             public string ElementName { get; }
 
             public bool IsRoot { get; }
+
+            public TemplateEmissionContext? TemplateContext { get; }
 
             public List<string> ObservationLines { get; } = [];
 
@@ -93,11 +100,11 @@ public sealed partial class UiMarkupGenerator
             public string? ValueGuard { get; }
         }
 
-        private DirectiveParseResult GetDirectiveContent(XElement element, bool allowAssignments, bool allowElements)
+        private DirectiveParseResult GetDirectiveContent(XElement element, DirectiveContentKind allowedContent)
         {
             if (!directiveContent.TryGetValue(element, out DirectiveParseResult? parsed))
             {
-                parsed = ParseDirectiveContent(element, allowAssignments, allowElements);
+                parsed = ParseDirectiveContent(element, allowedContent);
                 directiveContent.Add(element, parsed);
             }
 
@@ -110,7 +117,11 @@ public sealed partial class UiMarkupGenerator
             DirectiveParseResult parsed,
             IReadOnlyList<AspectResource> aspects)
         {
-            ReactivePlan plan = new(variable, element.Name.LocalName, ReferenceEquals(element, document.Root));
+            ReactivePlan plan = new(
+                variable,
+                element.Name.LocalName,
+                ReferenceEquals(element, document.Root),
+                templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek());
             foreach (AspectResource aspect in aspects)
             {
                 string valueSource = aspect.IsInline
@@ -164,6 +175,8 @@ public sealed partial class UiMarkupGenerator
                             plan.Rules.Add(staticRule);
                             break;
                         }
+                    case DirectiveTemplateNode _:
+                        break;
                     case DirectiveAssignmentNode assignment:
                         Report(InvalidDirective, assignment.Source, Path.GetFileName(file.Path), "Property assignments must be inside an @if block.");
                         break;
@@ -197,6 +210,32 @@ public sealed partial class UiMarkupGenerator
                 return;
             }
 
+            if (when.BooleanBody is not null)
+            {
+                if (observation.ValueType is null ||
+                    UnwrapNullable(observation.ValueType).SpecialType != SpecialType.System_Boolean)
+                {
+                    Report(
+                        InvalidBindingSource,
+                        when.Source,
+                        when.SourceExpression,
+                        "The shorthand @when body requires a Boolean source.");
+                    return;
+                }
+
+                string booleanPredicate = observation.ValueCode;
+                if (observation.ValueGuard is not null)
+                {
+                    booleanPredicate = observation.ValueGuard + " && " + booleanPredicate;
+                }
+
+                string predicate = inheritedPredicate == "true"
+                    ? booleanPredicate
+                    : "(" + inheritedPredicate + ") && (" + booleanPredicate + ")";
+                CollectRuleBody(plan, when.BooleanBody, predicate, valueSource);
+                return;
+            }
+
             foreach (DirectiveIfNode branch in when.Branches)
             {
                 string? comparison = EmitComparison(plan, observation, branch.Comparator, branch.Operand, branch.Source);
@@ -206,27 +245,36 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 string predicate = inheritedPredicate == "true" ? comparison : "(" + inheritedPredicate + ") && (" + comparison + ")";
-                List<DirectiveAssignmentNode> assignments = branch.Body.OfType<DirectiveAssignmentNode>().ToList();
-                List<DirectiveElementNode> elements = branch.Body.OfType<DirectiveElementNode>().ToList();
-                if (assignments.Count > 0 || elements.Count > 0)
-                {
-                    plan.Rules.Add(new ReactiveRule(plan.NextOrder++, predicate, assignments, elements, valueSource));
-                }
+                CollectRuleBody(plan, branch.Body, predicate, valueSource);
+            }
+        }
 
-                foreach (DirectiveWhenNode nested in branch.Body.OfType<DirectiveWhenNode>())
-                {
-                    CollectWhen(plan, nested, predicate, valueSource);
-                }
+        private void CollectRuleBody(
+            ReactivePlan plan,
+            IReadOnlyList<DirectiveNode> body,
+            string predicate,
+            string valueSource)
+        {
+            List<DirectiveAssignmentNode> assignments = body.OfType<DirectiveAssignmentNode>().ToList();
+            List<DirectiveElementNode> elements = body.OfType<DirectiveElementNode>().ToList();
+            if (assignments.Count > 0 || elements.Count > 0)
+            {
+                plan.Rules.Add(new ReactiveRule(plan.NextOrder++, predicate, assignments, elements, valueSource));
+            }
 
-                foreach (DirectiveDefaultNode invalid in branch.Body.OfType<DirectiveDefaultNode>())
-                {
-                    Report(InvalidDirective, invalid.Source, Path.GetFileName(file.Path), "@default cannot appear inside @if.");
-                }
+            foreach (DirectiveWhenNode nested in body.OfType<DirectiveWhenNode>())
+            {
+                CollectWhen(plan, nested, predicate, valueSource);
+            }
 
-                foreach (DirectiveTextNode text in branch.Body.OfType<DirectiveTextNode>())
-                {
-                    Report(InvalidDirective, text.Source, Path.GetFileName(file.Path), "Raw text is not supported inside @if; use a property assignment or XML element.");
-                }
+            foreach (DirectiveDefaultNode invalid in body.OfType<DirectiveDefaultNode>())
+            {
+                Report(InvalidDirective, invalid.Source, Path.GetFileName(file.Path), "@default cannot appear inside @when or @if.");
+            }
+
+            foreach (DirectiveTextNode text in body.OfType<DirectiveTextNode>())
+            {
+                Report(InvalidDirective, text.Source, Path.GetFileName(file.Path), "Raw text is not supported inside @when or @if; use a property assignment or XML element.");
             }
         }
 
@@ -237,6 +285,63 @@ public sealed partial class UiMarkupGenerator
             if (expression.StartsWith("$DataContext", StringComparison.Ordinal))
             {
                 return EmitDataObservation(plan, name, expression, source);
+            }
+
+            if (expression.Contains(".parts.", StringComparison.Ordinal))
+            {
+                return EmitTemplatePartObservation(plan, name, expression, source);
+            }
+
+            if (expression.StartsWith("$owner.", StringComparison.Ordinal))
+            {
+                if (plan.TemplateContext is null)
+                {
+                    Report(InvalidBindingSource, source, expression, "$owner is available only inside @template.");
+                    return null;
+                }
+
+                string propertyName = expression.Substring("$owner.".Length);
+                PropertySpec? ownerSpec = propertyName.IndexOf('.') < 0
+                    ? FindPropertySpec(plan.TemplateContext.OwnerType, propertyName)
+                    : null;
+                if (ownerSpec is null)
+                {
+                    Report(InvalidBindingSource, source, expression, "No supported UI property with this name exists on the template owner.");
+                    return null;
+                }
+
+                plan.ObservationLines.Add(
+                    "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                    " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" +
+                    plan.TemplateContext.OwnerVariable + ", " + ownerSpec.PropertyCode + ");");
+                plan.ObservationNames.Add(name);
+                return new ObservationEmission(name, "(" + ownerSpec.ValueTypeCode + ")" + name + ".Value!", null, ownerSpec.ValueType);
+            }
+
+            if (expression.StartsWith("$self.", StringComparison.Ordinal))
+            {
+                if (plan.TemplateContext is null)
+                {
+                    Report(InvalidBindingSource, source, expression, "$self is available only inside @template.");
+                    return null;
+                }
+
+                string propertyName = expression.Substring("$self.".Length);
+                PropertySpec? selfSpec = propertyName.IndexOf('.') < 0
+                    ? FindPropertySpec(plan.ElementName, propertyName, plan.IsRoot)
+                    : null;
+                if (selfSpec is null)
+                {
+                    Report(InvalidBindingSource, source, expression, "No supported UI property with this name exists on the current template element.");
+                    return null;
+                }
+
+                plan.ObservationLines.Add(
+                    "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                    " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" +
+                    plan.OwnerVariable + ", " + selfSpec.PropertyCode + ");");
+                plan.ObservationNames.Add(name);
+                return new ObservationEmission(name, "(" + selfSpec.ValueTypeCode + ")" + name + ".Value!", null, selfSpec.ValueType);
             }
 
             if (expression.StartsWith("$", StringComparison.Ordinal))
@@ -250,6 +355,7 @@ public sealed partial class UiMarkupGenerator
 
                 string? objectCode = symbol.Source switch
                 {
+                    NamedElementReference element => element.Code,
                     string variable => variable,
                     SolidColorBrushResource brush => brush.Variable,
                     _ => null
@@ -267,16 +373,97 @@ public sealed partial class UiMarkupGenerator
                 return new ObservationEmission(name, name + ".Value", null, compilation.GetSpecialType(SpecialType.System_Object));
             }
 
-            PropertySpec? spec = FindPropertySpec(plan.ElementName, expression, plan.IsRoot);
+            PropertySpec? spec;
+            string observationOwner;
+            if (plan.TemplateContext is not null)
+            {
+                spec = FindPropertySpec(plan.TemplateContext.OwnerType, expression);
+                observationOwner = plan.TemplateContext.OwnerVariable;
+            }
+            else
+            {
+                spec = FindPropertySpec(plan.ElementName, expression, plan.IsRoot);
+                observationOwner = plan.OwnerVariable;
+            }
+
             if (spec is null)
             {
-                Report(InvalidBindingSource, source, expression, "No supported UI property with this name exists on the current element.");
+                Report(
+                    InvalidBindingSource,
+                    source,
+                    expression,
+                    plan.TemplateContext is null
+                        ? "No supported UI property with this name exists on the current element."
+                        : "No supported UI property with this name exists on the template owner.");
                 return null;
             }
 
             plan.ObservationLines.Add(
                 "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + plan.OwnerVariable + ", " + spec.PropertyCode + ");");
+                " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + observationOwner + ", " + spec.PropertyCode + ");");
+            plan.ObservationNames.Add(name);
+            return new ObservationEmission(name, "(" + spec.ValueTypeCode + ")" + name + ".Value!", null, spec.ValueType);
+        }
+
+        private ObservationEmission? EmitTemplatePartObservation(ReactivePlan plan, string name, string expression, XObject source)
+        {
+            string[] segments = expression.Split('.');
+            if (segments.Length != 4 || !segments[0].StartsWith("$", StringComparison.Ordinal) ||
+                segments[0].Length == 1 || segments[1] != "parts" ||
+                !segments[2].StartsWith("$", StringComparison.Ordinal) || segments[2].Length == 1 ||
+                segments[3].Length == 0)
+            {
+                Report(InvalidBindingSource, source, expression, "Template parts use $control.parts.$part.Property; 'parts' is lowercase.");
+                return null;
+            }
+
+            string ownerName = segments[0].Substring(1);
+            string partName = segments[2].Substring(1);
+            if (!TryResolveObjectSymbol(source, ownerName, out NamedSymbol symbol) ||
+                symbol.Kind != NamedSymbolKind.Element || symbol.Source is not NamedElementReference owner)
+            {
+                Report(InvalidBindingSource, source, expression, "Unknown named control.");
+                return null;
+            }
+
+            INamedTypeSymbol? ownerType = ResolvePropertyOwnerType(owner.Element.Name.LocalName, ReferenceEquals(owner.Element, document.Root));
+            if (!IsControlType(ownerType))
+            {
+                Report(InvalidBindingSource, source, expression, "Template parts can be accessed only on a Control.");
+                return null;
+            }
+
+            DirectiveParseResult content = GetDirectiveContent(owner.Element, DirectiveContentKind.Elements | DirectiveContentKind.Templates);
+            DirectiveTemplateNode? template = content.Nodes.OfType<DirectiveTemplateNode>().SingleOrDefault();
+            if (template is null)
+            {
+                template = ResolveAspects(owner.Element).Select(aspect => aspect.Template).LastOrDefault(candidate => candidate is not null);
+            }
+
+            if (template is null || !templateParts.TryGetValue(template, out IReadOnlyDictionary<string, XElement>? parts))
+            {
+                Report(InvalidBindingSource, source, expression, "The named control does not declare a component template.");
+                return null;
+            }
+
+            if (!parts.TryGetValue(partName, out XElement? part))
+            {
+                Report(InvalidBindingSource, source, expression, "The component template has no part named '" + partName + "'.");
+                return null;
+            }
+
+            INamedTypeSymbol? partType = ResolveElementTypeSymbol(part.Name.LocalName);
+            PropertySpec? spec = partType is null ? null : FindPropertySpec(partType, segments[3]);
+            if (spec is null)
+            {
+                Report(InvalidBindingSource, source, expression, "No supported UI property with this name exists on the template part.");
+                return null;
+            }
+
+            plan.ObservationLines.Add(
+                "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveTemplatePartProperty(" + owner.Code + ", " +
+                Literal(partName) + ", " + spec.PropertyCode + ");");
             plan.ObservationNames.Add(name);
             return new ObservationEmission(name, "(" + spec.ValueTypeCode + ")" + name + ".Value!", null, spec.ValueType);
         }
@@ -348,11 +535,13 @@ public sealed partial class UiMarkupGenerator
                 return observation.Name + ".Value " + comparator + " null";
             }
 
-            if (operand.StartsWith("$DataContext", StringComparison.Ordinal))
+            if (operand.StartsWith("$DataContext", StringComparison.Ordinal) || operand.Contains(".parts.", StringComparison.Ordinal))
             {
                 string operandName = "observation" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
                 nextReactiveId++;
-                ObservationEmission? operandObservation = EmitDataObservation(plan, operandName, operand, source);
+                ObservationEmission? operandObservation = operand.Contains(".parts.", StringComparison.Ordinal)
+                    ? EmitTemplatePartObservation(plan, operandName, operand, source)
+                    : EmitDataObservation(plan, operandName, operand, source);
                 if (operandObservation is null)
                 {
                     return null;
@@ -361,7 +550,7 @@ public sealed partial class UiMarkupGenerator
                 if (observation.ValueType is null || operandObservation.ValueType is null ||
                     !SymbolEqualityComparer.Default.Equals(observation.ValueType, operandObservation.ValueType))
                 {
-                    Report(InvalidBindingSource, source, operand, "Both DataContext expressions must have the same type.");
+                    Report(InvalidBindingSource, source, operand, "Both expressions must have the same type.");
                     return null;
                 }
 
@@ -605,9 +794,12 @@ public sealed partial class UiMarkupGenerator
                 ? "global::System.Array.Empty<global::Cerneala.UI.Markup.MarkupObservation>()"
                 : "new global::Cerneala.UI.Markup.MarkupObservation[] { " +
                     string.Join(", ", plan.ObservationNames) + " }";
-            currentPostLines.Add(
+            string attachExpression =
                 "global::Cerneala.UI.Markup.GeneratedMarkup.AttachConditions(" + plan.OwnerVariable + ", " + observations +
-                ", new global::Cerneala.UI.Markup.MarkupConditionRule[] { " + string.Join(", ", ruleExpressions) + " });");
+                ", new global::Cerneala.UI.Markup.MarkupConditionRule[] { " + string.Join(", ", ruleExpressions) + " })";
+            currentPostLines.Add(plan.TemplateContext is null
+                ? attachExpression + ";"
+                : plan.TemplateContext.ContextVariable + ".RegisterLifetime(" + attachExpression + ");");
         }
 
         private string EmitConditionalFactory(IReadOnlyList<DirectiveElementNode> elements)
@@ -617,25 +809,22 @@ public sealed partial class UiMarkupGenerator
             List<string> functionLines = [];
             List<string> functionPostLines = [];
             List<string> variables = [];
-            List<string> previousLines = currentLines;
-            List<string> previousPostLines = currentPostLines;
             List<NamedElementMember> conditionalMembers = [];
-            currentLines = functionLines;
-            currentPostLines = functionPostLines;
-            conditionalMemberScopes.Push(conditionalMembers);
-            try
+            WithEmissionBuffers(functionLines, functionPostLines, () =>
             {
-                foreach (DirectiveElementNode element in elements)
+                conditionalMemberScopes.Push(conditionalMembers);
+                try
                 {
-                    variables.Add(EmitElement(element.Element));
+                    foreach (DirectiveElementNode element in elements)
+                    {
+                        variables.Add(EmitElement(element.Element));
+                    }
                 }
-            }
-            finally
-            {
-                conditionalMemberScopes.Pop();
-                currentLines = previousLines;
-                currentPostLines = previousPostLines;
-            }
+                finally
+                {
+                    conditionalMemberScopes.Pop();
+                }
+            });
 
             conditionalFactoryMembers[factoryName] = conditionalMembers;
 

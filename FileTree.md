@@ -30,6 +30,7 @@ Generated from `.`.
 |   |   |-- retained-frame-loop.md
 |   |   +-- ui-layer-boundaries.md
 |   |-- plans/
+|   |   |-- 2026-07-10-inline-component-template-markup.md
 |   |   +-- 2026-07-10-window-windowsdx-migration.md
 |   |-- superpowers/
 |   |   |-- plans/

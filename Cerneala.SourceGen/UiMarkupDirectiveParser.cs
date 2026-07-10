@@ -8,6 +8,15 @@ namespace Cerneala.SourceGen;
 
 public sealed partial class UiMarkupGenerator
 {
+    [Flags]
+    private enum DirectiveContentKind
+    {
+        None = 0,
+        Assignments = 1,
+        Elements = 2,
+        Templates = 4
+    }
+
     private abstract class DirectiveNode
     {
         protected DirectiveNode(XObject source)
@@ -61,17 +70,34 @@ public sealed partial class UiMarkupGenerator
         public IReadOnlyList<DirectiveNode> Body { get; }
     }
 
+    private sealed class DirectiveTemplateNode : DirectiveNode
+    {
+        public DirectiveTemplateNode(XElement root, XObject source) : base(source)
+        {
+            Root = root;
+        }
+
+        public XElement Root { get; }
+    }
+
     private sealed class DirectiveWhenNode : DirectiveNode
     {
-        public DirectiveWhenNode(string sourceExpression, IReadOnlyList<DirectiveIfNode> branches, XObject source) : base(source)
+        public DirectiveWhenNode(
+            string sourceExpression,
+            IReadOnlyList<DirectiveIfNode> branches,
+            IReadOnlyList<DirectiveNode>? booleanBody,
+            XObject source) : base(source)
         {
             SourceExpression = sourceExpression;
             Branches = branches;
+            BooleanBody = booleanBody;
         }
 
         public string SourceExpression { get; }
 
         public IReadOnlyList<DirectiveIfNode> Branches { get; }
+
+        public IReadOnlyList<DirectiveNode>? BooleanBody { get; }
     }
 
     private sealed class DirectiveIfNode : DirectiveNode
@@ -113,12 +139,12 @@ public sealed partial class UiMarkupGenerator
         }
     }
 
-    private static DirectiveParseResult ParseDirectiveContent(XElement element, bool allowAssignments, bool allowElements)
+    private static DirectiveParseResult ParseDirectiveContent(XElement element, DirectiveContentKind allowedContent)
     {
         DirectiveCursor cursor = new(element.Nodes());
         try
         {
-            IReadOnlyList<DirectiveNode> nodes = cursor.ParseNodes(stopAtClosingBrace: false, allowAssignments, allowElements);
+            IReadOnlyList<DirectiveNode> nodes = cursor.ParseNodes(stopAtClosingBrace: false, allowedContent);
             return new DirectiveParseResult(nodes, null, null);
         }
         catch (DirectiveParseException ex)
@@ -143,7 +169,7 @@ public sealed partial class UiMarkupGenerator
             }).ToArray();
         }
 
-        public IReadOnlyList<DirectiveNode> ParseNodes(bool stopAtClosingBrace, bool allowAssignments, bool allowElements)
+        public IReadOnlyList<DirectiveNode> ParseNodes(bool stopAtClosingBrace, DirectiveContentKind allowedContent)
         {
             List<DirectiveNode> nodes = [];
             while (true)
@@ -163,7 +189,7 @@ public sealed partial class UiMarkupGenerator
                 {
                     XObject source = CurrentSource;
                     AdvanceSegment();
-                    if (!allowElements)
+                    if (!Allows(allowedContent, DirectiveContentKind.Elements))
                     {
                         throw new DirectiveParseException("XML controls are not allowed in this directive context.", source);
                     }
@@ -185,13 +211,24 @@ public sealed partial class UiMarkupGenerator
 
                 if (StartsWith("@when"))
                 {
-                    nodes.Add(ParseWhen(allowAssignments, allowElements));
+                    nodes.Add(ParseWhen(allowedContent));
                     continue;
                 }
 
                 if (StartsWith("@default"))
                 {
-                    nodes.Add(ParseDefault(allowAssignments, allowElements));
+                    nodes.Add(ParseDefault(allowedContent));
+                    continue;
+                }
+
+                if (StartsWith("@template"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.Templates))
+                    {
+                        throw Error("@template is not allowed in this directive context.");
+                    }
+
+                    nodes.Add(ParseTemplate());
                     continue;
                 }
 
@@ -206,7 +243,7 @@ public sealed partial class UiMarkupGenerator
                     throw Error("Unsupported directive '" + directive + "'.");
                 }
 
-                if (allowAssignments && LooksLikeAssignment())
+                if (Allows(allowedContent, DirectiveContentKind.Assignments) && LooksLikeAssignment())
                 {
                     nodes.Add(ParseAssignment());
                     continue;
@@ -220,7 +257,7 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private DirectiveWhenNode ParseWhen(bool allowAssignments, bool allowElements)
+        private DirectiveWhenNode ParseWhen(DirectiveContentKind allowedContent)
         {
             XObject source = CurrentSource;
             Consume("@when");
@@ -228,6 +265,20 @@ public sealed partial class UiMarkupGenerator
             if (sourceExpression.Length == 0 || sourceExpression.Any(char.IsWhiteSpace))
             {
                 throw new DirectiveParseException("@when requires exactly one source expression.", source);
+            }
+
+            SkipWhitespace();
+            if (!StartsWith("@if"))
+            {
+                DirectiveContentKind booleanContent =
+                    (allowedContent | DirectiveContentKind.Assignments) & ~DirectiveContentKind.Templates;
+                IReadOnlyList<DirectiveNode> booleanBody = ParseNodes(stopAtClosingBrace: true, booleanContent);
+                if (booleanBody.Count == 0)
+                {
+                    throw new DirectiveParseException("@when requires a boolean body or at least one @if block.", source);
+                }
+
+                return new DirectiveWhenNode(sourceExpression, [], booleanBody, source);
             }
 
             List<DirectiveIfNode> branches = [];
@@ -252,7 +303,9 @@ public sealed partial class UiMarkupGenerator
 
                 // Assignments are valid inside @if even though bare assignments are
                 // intentionally rejected at the surrounding XML element level.
-                branches.Add(ParseIf(allowAssignments: true, allowElements));
+                DirectiveContentKind branchContent =
+                    (allowedContent | DirectiveContentKind.Assignments) & ~DirectiveContentKind.Templates;
+                branches.Add(ParseIf(branchContent));
             }
 
             if (branches.Count == 0)
@@ -260,10 +313,10 @@ public sealed partial class UiMarkupGenerator
                 throw new DirectiveParseException("@when requires at least one @if block.", source);
             }
 
-            return new DirectiveWhenNode(sourceExpression, branches, source);
+            return new DirectiveWhenNode(sourceExpression, branches, null, source);
         }
 
-        private DirectiveIfNode ParseIf(bool allowAssignments, bool allowElements)
+        private DirectiveIfNode ParseIf(DirectiveContentKind allowedContent)
         {
             XObject source = CurrentSource;
             Consume("@if");
@@ -288,11 +341,11 @@ public sealed partial class UiMarkupGenerator
                 throw new DirectiveParseException("@if requires a comparison operand.", source);
             }
 
-            IReadOnlyList<DirectiveNode> body = ParseNodes(stopAtClosingBrace: true, allowAssignments, allowElements);
+            IReadOnlyList<DirectiveNode> body = ParseNodes(stopAtClosingBrace: true, allowedContent);
             return new DirectiveIfNode(comparator, operand, body, source);
         }
 
-        private DirectiveDefaultNode ParseDefault(bool allowAssignments, bool allowElements)
+        private DirectiveDefaultNode ParseDefault(DirectiveContentKind allowedContent)
         {
             XObject source = CurrentSource;
             Consume("@default");
@@ -302,7 +355,31 @@ public sealed partial class UiMarkupGenerator
                 throw new DirectiveParseException("@default must be followed by a block.", source);
             }
 
-            return new DirectiveDefaultNode(ParseNodes(stopAtClosingBrace: true, allowAssignments, allowElements), source);
+            return new DirectiveDefaultNode(
+                ParseNodes(stopAtClosingBrace: true, allowedContent & ~DirectiveContentKind.Templates),
+                source);
+        }
+
+        private DirectiveTemplateNode ParseTemplate()
+        {
+            XObject source = CurrentSource;
+            Consume("@template");
+            SkipWhitespace();
+            if (Read() != '{')
+            {
+                throw new DirectiveParseException("@template must be followed by a block.", source);
+            }
+
+            IReadOnlyList<DirectiveNode> body = ParseNodes(
+                stopAtClosingBrace: true,
+                DirectiveContentKind.Elements);
+            DirectiveElementNode[] roots = body.OfType<DirectiveElementNode>().ToArray();
+            if (roots.Length != 1 || body.Count != 1)
+            {
+                throw new DirectiveParseException("@template requires exactly one XML root element.", source);
+            }
+
+            return new DirectiveTemplateNode(roots[0].Element, source);
         }
 
         private DirectiveAssignmentNode ParseAssignment()
@@ -395,6 +472,11 @@ public sealed partial class UiMarkupGenerator
             {
                 Restore(saved);
             }
+        }
+
+        private static bool Allows(DirectiveContentKind allowed, DirectiveContentKind value)
+        {
+            return (allowed & value) == value;
         }
 
         private string ReadHeaderUntilBrace()
