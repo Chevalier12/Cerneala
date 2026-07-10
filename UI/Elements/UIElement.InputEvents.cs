@@ -5,6 +5,8 @@ namespace Cerneala.UI.Elements;
 
 public partial class UIElement
 {
+    public static readonly UiProperty<bool> IsMouseOverProperty = IsPointerOverProperty;
+
     public static readonly UiProperty<bool> IsMouseDirectlyOverProperty = IsPointerOverProperty;
 
     public static readonly RoutedEvent QueryCursorEvent = InputEvents.QueryCursorEvent.AddOwner(typeof(UIElement));

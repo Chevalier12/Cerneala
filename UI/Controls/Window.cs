@@ -1,5 +1,6 @@
 using Cerneala.UI.Core;
 using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Markup;
 
 namespace Cerneala.UI.Controls;
 
@@ -104,18 +105,21 @@ public class Window : ContentControl
         set => SetValue(TitleProperty, value);
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.Positive)]
     public float Width
     {
         get => GetValue(WidthProperty);
         set => SetValue(WidthProperty, value);
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.Positive)]
     public float Height
     {
         get => GetValue(HeightProperty);
         set => SetValue(HeightProperty, value);
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
     public float MinWidth
     {
         get => GetValue(MinWidthProperty);
@@ -130,6 +134,7 @@ public class Window : ContentControl
         }
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
     public float MinHeight
     {
         get => GetValue(MinHeightProperty);
@@ -144,6 +149,7 @@ public class Window : ContentControl
         }
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.Positive)]
     public float MaxWidth
     {
         get => GetValue(MaxWidthProperty);
@@ -158,6 +164,7 @@ public class Window : ContentControl
         }
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.Positive)]
     public float MaxHeight
     {
         get => GetValue(MaxHeightProperty);

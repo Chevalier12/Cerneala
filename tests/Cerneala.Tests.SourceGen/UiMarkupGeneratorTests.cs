@@ -1390,11 +1390,24 @@ public sealed class UiMarkupGeneratorTests
     {
         const string inputSource = """
             using Cerneala.UI.Controls;
+            using Cerneala.UI.Core;
             using TestInput.Components;
 
             namespace TestInput.Components
             {
-                public class ProfileCard : UserControl { }
+                public class ProfileCard : UserControl
+                {
+                    public static readonly UiProperty<int> ScoreProperty = UiProperty<int>.Register(
+                        nameof(Score),
+                        typeof(ProfileCard),
+                        new UiPropertyMetadata<int>(0));
+
+                    public int Score
+                    {
+                        get => GetValue(ScoreProperty);
+                        set => SetValue(ScoreProperty, value);
+                    }
+                }
             }
 
             namespace TestInput.Views
@@ -1404,7 +1417,7 @@ public sealed class UiMarkupGeneratorTests
             """;
         const string markup = """
             <UserControl>
-              <ProfileCard />
+              <ProfileCard Score="7" />
             </UserControl>
             """;
 
@@ -1416,9 +1429,110 @@ public sealed class UiMarkupGeneratorTests
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Contains("global::TestInput.Components.ProfileCard", SingleGeneratedSource(result));
+        Assert.Contains(".Score = 7;", SingleGeneratedSource(result));
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void SemanticDiscoveryResolvesBuiltInInheritedAndEnumProperties()
+    {
+        const string markup = """
+            <StackPanel>
+              <Slider Minimum="1" Maximum="10" Value="4" SmallChange="0.5" Orientation="Vertical" />
+              <TextBox Text="hello" CaretColor="18,52,86" />
+              <CheckBox IsChecked="True" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("SemanticControls.cui.xml", markup, out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.SemanticControlsFactory"));
+        Slider slider = Assert.IsType<Slider>(panel.VisualChildren[0]);
+        Assert.Equal(1, slider.Minimum);
+        Assert.Equal(10, slider.Maximum);
+        Assert.Equal(4, slider.Value);
+        Assert.Equal(0.5f, slider.SmallChange);
+        Assert.Equal(Cerneala.UI.Layout.Orientation.Vertical, slider.Orientation);
+
+        TextBox textBox = Assert.IsType<TextBox>(panel.VisualChildren[1]);
+        Assert.Equal("hello", textBox.Text);
+        Assert.Equal(new Cerneala.Drawing.DrawColor(0x12, 0x34, 0x56), textBox.CaretColor);
+
+        CheckBox checkBox = Assert.IsType<CheckBox>(panel.VisualChildren[2]);
+        Assert.True(checkBox.IsChecked);
+    }
+
+    [Fact]
+    public void InlineAspectPropertyAppliesToAnyControlWithoutResourceReference()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Aspect>
+                @default {
+                  Margin = 8;
+                }
+                @when IsMouseOver {
+                  @if value == True { Margin = 12; }
+                }
+              </StackPanel.Aspect>
+              <Button>
+                <Button.Aspect>
+                  @default { Foreground = White; }
+                </Button.Aspect>
+              </Button>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("InlineAspect.cui.xml", markup, out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.InlineAspectFactory"));
+        Assert.NotNull(panel.Aspect);
+        Assert.True(panel.Aspect.IsConditional);
+        Assert.Equal(new[] { "Margin" }, panel.Aspect.DefaultValues.Select(value => value.Property.Name));
+        Assert.Equal(new Cerneala.UI.Layout.Thickness(8), panel.Margin);
+        Assert.Single(panel.VisualChildren);
+
+        Button button = Assert.IsType<Button>(panel.VisualChildren[0]);
+        Assert.NotNull(button.Aspect);
+        Assert.Equal(Cerneala.Drawing.DrawColor.White, button.Foreground);
+
+        panel.IsPointerOver = true;
+        Assert.Equal(new Cerneala.UI.Layout.Thickness(12), panel.Margin);
+        panel.IsPointerOver = false;
+        Assert.Equal(new Cerneala.UI.Layout.Thickness(8), panel.Margin);
+
+        panel.Aspect = null;
+        panel.IsPointerOver = true;
+        Assert.Equal(Cerneala.UI.Layout.Thickness.Zero, panel.Margin);
+    }
+
+    [Fact]
+    public void InlineAspectRejectsAttributeCombination()
+    {
+        const string markup = """
+            <StackPanel Aspect="$Shared">
+              <StackPanel.Aspect>
+                @default { Background = Black; }
+              </StackPanel.Aspect>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("ConflictingAspect.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "ConflictingAspect.cui.xml");
+        Assert.Contains("cannot combine", diagnostic.GetMessage(), StringComparison.Ordinal);
     }
 
     [Fact]

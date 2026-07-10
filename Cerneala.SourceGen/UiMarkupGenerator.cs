@@ -574,6 +574,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             currentPostLines = PostLines;
 
             ReadResources();
+            ReadInlineAspects();
             reactiveDocument = allAspects.Any(aspect => aspect.Conditions.Count > 0) ||
                 document.Root.DescendantsAndSelf().Any(element =>
                     GetDirectiveContent(element, allowAssignments: false, allowElements: true).HasDirectives);
@@ -594,14 +595,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             String,
             Bool,
             Float,
+            Integer,
+            Double,
+            Decimal,
             NonNegativeFloat,
             PositiveFloat,
             Thickness,
             NonNegativeThickness,
             DrawColor,
-            WindowState,
-            ResizeMode,
-            WindowStartupLocation
+            Enum,
+            Unsupported
         }
 
         private enum NamedSymbolKind
@@ -615,25 +618,29 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             public PropertySpec(
                 string name,
-                Func<string, bool> appliesToElement,
                 MarkupValueKind valueKind,
                 string propertyCode,
+                ITypeSymbol valueType,
                 bool assignable = true)
             {
                 Name = name;
-                AppliesToElement = appliesToElement;
                 ValueKind = valueKind;
                 PropertyCode = propertyCode;
+                ValueType = valueType;
                 Assignable = assignable;
             }
 
             public string Name { get; }
 
-            public Func<string, bool> AppliesToElement { get; }
-
             public MarkupValueKind ValueKind { get; }
 
             public string PropertyCode { get; }
+
+            public ITypeSymbol ValueType { get; }
+
+            public string ValueTypeCode => ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+            public ITypeSymbol LiteralType => UnwrapNullable(ValueType);
 
             public bool Assignable { get; }
         }
@@ -696,13 +703,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string targetName,
                 IReadOnlyList<AspectPropertyAssignment> assignments,
                 IReadOnlyList<DirectiveWhenNode> conditions,
-                XElement source)
+                XElement source,
+                bool isInline = false)
             {
                 Name = name;
                 TargetName = targetName;
                 Assignments = assignments;
                 Conditions = conditions;
                 Source = source;
+                IsInline = isInline;
             }
 
             public string? Name { get; }
@@ -714,6 +723,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public IReadOnlyList<DirectiveWhenNode> Conditions { get; }
 
             public XElement Source { get; }
+
+            public bool IsInline { get; }
+
+            public string? RuntimeVariable { get; set; }
         }
 
         private sealed class AspectPropertyAssignment
@@ -780,9 +793,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly Dictionary<string, NamedSymbol> symbols = new(StringComparer.Ordinal);
         private readonly Dictionary<XElement, ResourceScope> resourceScopes = new();
         private readonly Dictionary<XElement, ResourceScope> resourcePropertyScopes = new();
+        private readonly Dictionary<XElement, AspectResource> inlineAspects = new();
         private readonly List<AspectResource> allAspects = [];
         private readonly Dictionary<XElement, DirectiveParseResult> directiveContent = new();
         private readonly Dictionary<string, INamedTypeSymbol> resolvedElementTypes = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, PropertySpec> resolvedProperties = new(StringComparer.Ordinal);
         private readonly Dictionary<string, IReadOnlyList<NamedElementMember>> conditionalFactoryMembers = new(StringComparer.Ordinal);
         private readonly Stack<List<NamedElementMember>> conditionalMemberScopes = new();
         private readonly List<NamedElementMember> namedElementMembers = [];
@@ -790,38 +805,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private List<string> currentPostLines;
         private int nextReactiveId;
         private int nextResourceId;
-
-        private static readonly PropertySpec[] PropertySpecs =
-        [
-            new("Text", element => element == "TextBlock", MarkupValueKind.String, "global::Cerneala.UI.Controls.TextBlock.TextProperty"),
-            new("Content", element => element == "Button", MarkupValueKind.String, "global::Cerneala.UI.Controls.ContentControl.ContentProperty"),
-            new("IsEnabled", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsEnabledProperty"),
-            new("IsVisible", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsVisibleProperty"),
-            new("Margin", _ => true, MarkupValueKind.Thickness, "global::Cerneala.UI.Elements.UIElement.MarginProperty"),
-            new("Background", IsControlElement, MarkupValueKind.DrawColor, "global::Cerneala.UI.Controls.Control.BackgroundProperty"),
-            new("Foreground", IsControlElement, MarkupValueKind.DrawColor, "global::Cerneala.UI.Controls.Control.ForegroundProperty"),
-            new("BorderColor", IsControlElement, MarkupValueKind.DrawColor, "global::Cerneala.UI.Controls.Control.BorderColorProperty"),
-            new("BorderThickness", IsControlElement, MarkupValueKind.NonNegativeThickness, "global::Cerneala.UI.Controls.Control.BorderThicknessProperty"),
-            new("Padding", IsControlElement, MarkupValueKind.NonNegativeThickness, "global::Cerneala.UI.Controls.Control.PaddingProperty"),
-            new("FontFamily", IsControlElement, MarkupValueKind.String, "global::Cerneala.UI.Controls.Control.FontFamilyProperty"),
-            new("FontSize", IsControlElement, MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Control.FontSizeProperty"),
-            new("IsMouseOver", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsPointerOverProperty", assignable: false),
-            new("IsPointerOver", _ => true, MarkupValueKind.Bool, "global::Cerneala.UI.Elements.UIElement.IsPointerOverProperty", assignable: false),
-            new("Title", element => element == "Window", MarkupValueKind.String, "global::Cerneala.UI.Controls.Window.TitleProperty"),
-            new("Width", element => element == "Window", MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Window.WidthProperty"),
-            new("Height", element => element == "Window", MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Window.HeightProperty"),
-            new("MinWidth", element => element == "Window", MarkupValueKind.NonNegativeFloat, "global::Cerneala.UI.Controls.Window.MinWidthProperty"),
-            new("MinHeight", element => element == "Window", MarkupValueKind.NonNegativeFloat, "global::Cerneala.UI.Controls.Window.MinHeightProperty"),
-            new("MaxWidth", element => element == "Window", MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Window.MaxWidthProperty"),
-            new("MaxHeight", element => element == "Window", MarkupValueKind.PositiveFloat, "global::Cerneala.UI.Controls.Window.MaxHeightProperty"),
-            new("Left", element => element == "Window", MarkupValueKind.Float, "global::Cerneala.UI.Controls.Window.LeftProperty"),
-            new("Top", element => element == "Window", MarkupValueKind.Float, "global::Cerneala.UI.Controls.Window.TopProperty"),
-            new("WindowState", element => element == "Window", MarkupValueKind.WindowState, "global::Cerneala.UI.Controls.Window.WindowStateProperty"),
-            new("ResizeMode", element => element == "Window", MarkupValueKind.ResizeMode, "global::Cerneala.UI.Controls.Window.ResizeModeProperty"),
-            new("WindowStartupLocation", element => element == "Window", MarkupValueKind.WindowStartupLocation, "global::Cerneala.UI.Controls.Window.WindowStartupLocationProperty"),
-            new("Topmost", element => element == "Window", MarkupValueKind.Bool, "global::Cerneala.UI.Controls.Window.TopmostProperty"),
-            new("ShowInTaskbar", element => element == "Window", MarkupValueKind.Bool, "global::Cerneala.UI.Controls.Window.ShowInTaskbarProperty")
-        ];
 
         private void ReadResources()
         {
@@ -942,53 +925,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
+            if (!TryParseAspectBody(resource, out List<AspectPropertyAssignment> assignments, out List<DirectiveWhenNode> conditions))
+            {
+                return;
+            }
+
             string? name = resource.Attribute("Name")?.Value;
-            DirectiveParseResult parsed = ParseDirectiveContent(resource, allowAssignments: true, allowElements: false);
-            if (parsed.Error is not null)
-            {
-                Report(InvalidDirective, parsed.ErrorSource ?? resource, Path.GetFileName(file.Path), parsed.Error);
-                return;
-            }
-
-            List<AspectPropertyAssignment> assignments = [];
-            List<DirectiveWhenNode> conditions = [];
-            foreach (DirectiveNode node in parsed.Nodes)
-            {
-                if (node is DirectiveDefaultNode defaults)
-                {
-                    foreach (DirectiveNode child in defaults.Body)
-                    {
-                        if (child is DirectiveAssignmentNode assignment)
-                        {
-                            assignments.Add(ToAspectAssignment(assignment));
-                        }
-                        else if (child is DirectiveWhenNode nestedWhen)
-                        {
-                            conditions.Add(nestedWhen);
-                        }
-                        else
-                        {
-                            Report(InvalidDirective, child.Source, Path.GetFileName(file.Path), "@default may contain only property assignments or @when blocks.");
-                            return;
-                        }
-                    }
-                }
-                else if (node is DirectiveWhenNode when)
-                {
-                    conditions.Add(when);
-                }
-                else
-                {
-                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default and @when blocks.");
-                    return;
-                }
-            }
-
-            if (HasErrors)
-            {
-                return;
-            }
-
             AspectResource aspect = new(string.IsNullOrWhiteSpace(name) ? null : name, targetName, assignments, conditions, resource);
             allAspects.Add(aspect);
             if (aspect.Name is null)
@@ -1012,6 +954,148 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             scope.NamedResources.Add(aspect.Name, new NamedSymbol(aspect.Name, NamedSymbolKind.Aspect, aspect));
             scope.RuntimeResources.Add(aspect);
+        }
+
+        private void ReadInlineAspects()
+        {
+            XElement[] owners = document.Root.DescendantsAndSelf().ToArray();
+            INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
+            foreach (XElement owner in owners.Where(element => !element.Name.LocalName.EndsWith(".Aspect", StringComparison.Ordinal)))
+            {
+                string expectedName = owner.Name.LocalName + ".Aspect";
+                XElement[] propertyElements = owner.Elements()
+                    .Where(element => element.Name.LocalName.EndsWith(".Aspect", StringComparison.Ordinal))
+                    .ToArray();
+                XElement[] matching = propertyElements
+                    .Where(element => string.Equals(element.Name.LocalName, expectedName, StringComparison.Ordinal))
+                    .ToArray();
+
+                foreach (XElement invalid in propertyElements.Where(element => !matching.Contains(element)))
+                {
+                    Report(
+                        InvalidDocumentShape,
+                        invalid,
+                        Path.GetFileName(file.Path),
+                        "Aspect property element '" + invalid.Name.LocalName + "' must match its owner tag '" + expectedName + "'.");
+                    invalid.Remove();
+                }
+
+                if (matching.Length > 1)
+                {
+                    Report(
+                        InvalidDocumentShape,
+                        matching[1],
+                        Path.GetFileName(file.Path),
+                        "Element '" + owner.Name.LocalName + "' may declare only one Aspect property element.");
+                    foreach (XElement duplicate in matching.Skip(1))
+                    {
+                        duplicate.Remove();
+                    }
+                }
+
+                if (matching.Length == 0)
+                {
+                    continue;
+                }
+
+                XElement inline = matching[0];
+                if (owner.Attribute("Aspect") is XAttribute aspectAttribute)
+                {
+                    Report(
+                        InvalidDocumentShape,
+                        aspectAttribute,
+                        Path.GetFileName(file.Path),
+                        "Element '" + owner.Name.LocalName + "' cannot combine an Aspect attribute with an inline Aspect property element.");
+                }
+
+                INamedTypeSymbol? ownerType = ResolvePropertyOwnerType(owner.Name.LocalName, ReferenceEquals(owner, document.Root));
+                if (uiElementType is null || ownerType is null || !IsOrDerivesFrom(ownerType, uiElementType))
+                {
+                    Report(UnsupportedProperty, inline, owner.Name.LocalName, "Aspect");
+                    inline.Remove();
+                    continue;
+                }
+
+                if (inline.HasAttributes)
+                {
+                    Report(
+                        InvalidDocumentShape,
+                        inline,
+                        Path.GetFileName(file.Path),
+                        "An inline Aspect property element does not accept attributes.");
+                }
+
+                if (TryParseAspectBody(inline, out List<AspectPropertyAssignment> assignments, out List<DirectiveWhenNode> conditions))
+                {
+                    AspectResource aspect = new(null, owner.Name.LocalName, assignments, conditions, inline, isInline: true);
+                    inlineAspects.Add(owner, aspect);
+                    allAspects.Add(aspect);
+                }
+
+                inline.Remove();
+            }
+        }
+
+        private bool TryParseAspectBody(
+            XElement source,
+            out List<AspectPropertyAssignment> assignments,
+            out List<DirectiveWhenNode> conditions)
+        {
+            assignments = [];
+            conditions = [];
+            DirectiveParseResult parsed = ParseDirectiveContent(source, allowAssignments: true, allowElements: false);
+            if (parsed.Error is not null)
+            {
+                Report(InvalidDirective, parsed.ErrorSource ?? source, Path.GetFileName(file.Path), parsed.Error);
+                return false;
+            }
+
+            foreach (DirectiveNode node in parsed.Nodes)
+            {
+                if (node is DirectiveDefaultNode defaults)
+                {
+                    foreach (DirectiveNode child in defaults.Body)
+                    {
+                        if (child is DirectiveAssignmentNode assignment)
+                        {
+                            assignments.Add(ToAspectAssignment(assignment));
+                        }
+                        else if (child is DirectiveWhenNode nestedWhen)
+                        {
+                            conditions.Add(nestedWhen);
+                        }
+                        else
+                        {
+                            Report(InvalidDirective, child.Source, Path.GetFileName(file.Path), "@default may contain only property assignments or @when blocks.");
+                            return false;
+                        }
+                    }
+                }
+                else if (node is DirectiveWhenNode when)
+                {
+                    conditions.Add(when);
+                }
+                else
+                {
+                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default and @when blocks.");
+                    return false;
+                }
+            }
+
+            IGrouping<string, AspectPropertyAssignment>? duplicate = assignments
+                .GroupBy(assignment => assignment.PropertyName, StringComparer.Ordinal)
+                .FirstOrDefault(group => group.Count() > 1);
+            if (duplicate is not null)
+            {
+                Report(
+                    InvalidDocumentShape,
+                    duplicate.Skip(1).First().Source,
+                    Path.GetFileName(file.Path),
+                    "Aspect assigns property '" + duplicate.Key + "' more than once in @default.");
+                return false;
+            }
+
+            return !HasErrors;
         }
 
         private static AspectPropertyAssignment ToAspectAssignment(DirectiveAssignmentNode assignment)
@@ -1244,20 +1328,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private string? ResolveElementType(string elementName)
         {
-            string? metadataName = elementName switch
-            {
-                "Panel" => "Cerneala.UI.Controls.Panel",
-                "StackPanel" => "Cerneala.UI.Controls.StackPanel",
-                "Border" => "Cerneala.UI.Controls.Border",
-                "Button" => "Cerneala.UI.Controls.Button",
-                "TextBlock" => "Cerneala.UI.Controls.TextBlock",
-                "UserControl" => "Cerneala.UI.Controls.UserControl",
-                _ => null
-            };
-
-            INamedTypeSymbol? type = metadataName is null
-                ? ResolveCustomElementType(elementName)
-                : compilation.GetTypeByMetadataName(metadataName);
+            INamedTypeSymbol? type = ResolveElementTypeSymbol(elementName);
             if (type is null)
             {
                 return null;
@@ -1267,6 +1338,49 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
 
+        private INamedTypeSymbol? ResolveElementTypeSymbol(string elementName)
+        {
+            if (resolvedElementTypes.TryGetValue(elementName, out INamedTypeSymbol? resolved))
+            {
+                return resolved;
+            }
+
+            INamedTypeSymbol? type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls." + elementName);
+            INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
+            INamedTypeSymbol? windowType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Window");
+            if (type is null || type.TypeKind != TypeKind.Class || type.IsAbstract ||
+                uiElementType is null || !IsOrDerivesFrom(type, uiElementType) ||
+                (windowType is not null && IsOrDerivesFrom(type, windowType)))
+            {
+                type = ResolveCustomElementType(elementName);
+            }
+
+            if (type is not null)
+            {
+                resolvedElementTypes[elementName] = type;
+            }
+
+            return type;
+        }
+
+        private INamedTypeSymbol? ResolvePropertyOwnerType(string elementName, bool isRoot)
+        {
+            if (isRoot && string.Equals(document.Root.Name.LocalName, elementName, StringComparison.Ordinal))
+            {
+                if (userControlPair is not null)
+                {
+                    return userControlPair.TypeSymbol;
+                }
+
+                if (elementName is "Window" or "UserControl")
+                {
+                    return compilation.GetTypeByMetadataName("Cerneala.UI.Controls." + elementName);
+                }
+            }
+
+            return ResolveElementTypeSymbol(elementName);
+        }
+
         private IReadOnlyList<AspectResource> ResolveAspects(XElement element)
         {
             string elementName = element.Name.LocalName;
@@ -1274,6 +1388,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             if (TryResolveDefaultAspect(element, elementName, out AspectResource defaultAspect))
             {
                 resolved.Add(defaultAspect);
+            }
+
+            if (inlineAspects.TryGetValue(element, out AspectResource? inlineAspect))
+            {
+                resolved.Add(inlineAspect);
+                return resolved;
             }
 
             XAttribute? aspectAttribute = element.Attribute("Aspect");
@@ -1309,8 +1429,52 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             foreach (AspectResource aspect in aspects)
             {
-                EmitAspectAssignments(element.Name.LocalName, variable, aspect);
+                if (aspect.IsInline)
+                {
+                    EmitInlineAspect(element, variable, aspect);
+                }
+                else
+                {
+                    EmitAspectAssignments(element, variable, aspect);
+                }
             }
+        }
+
+        private void EmitInlineAspect(XElement element, string variable, AspectResource aspect)
+        {
+            string elementName = element.Name.LocalName;
+            List<string> values = [];
+            foreach (AspectPropertyAssignment assignment in aspect.Assignments)
+            {
+                PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, ReferenceEquals(element, document.Root));
+                if (spec is null || !spec.Assignable)
+                {
+                    Report(UnsupportedProperty, assignment.Source, elementName, assignment.PropertyName);
+                    return;
+                }
+
+                GeneratedExpression? expression = assignment.IsReference
+                    ? ResolveReferenceValue(elementName, assignment.PropertyName, assignment.RawValue, spec.ValueKind, assignment.Source)
+                    : ParseAspectLiteralValue(elementName, assignment.PropertyName, assignment.RawValue, spec, assignment.Source);
+                if (expression is null)
+                {
+                    return;
+                }
+
+                values.Add(
+                    "new global::Cerneala.UI.Aspect.ElementAspectValue(" + spec.PropertyCode + ", " + expression.Code + ")");
+            }
+
+            string valuesCode = values.Count == 0
+                ? "global::System.Array.Empty<global::Cerneala.UI.Aspect.ElementAspectValue>()"
+                : "new global::Cerneala.UI.Aspect.ElementAspectValue[] { " + string.Join(", ", values) + " }";
+            string aspectVariable = "inlineAspect" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+            nextResourceId++;
+            aspect.RuntimeVariable = aspectVariable;
+            currentLines.Add(
+                "global::Cerneala.UI.Aspect.ElementAspect " + aspectVariable +
+                " = new(" + valuesCode + ", " + (aspect.Conditions.Count > 0 ? "true" : "false") + ");");
+            currentLines.Add(variable + ".Aspect = " + aspectVariable + ";");
         }
 
         private string ReadReferenceName(string elementName, string propertyName, XAttribute attribute)
@@ -1325,11 +1489,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return value.Substring(1);
         }
 
-        private void EmitAspectAssignments(string elementName, string variable, AspectResource aspect)
+        private void EmitAspectAssignments(XElement element, string variable, AspectResource aspect)
         {
+            string elementName = element.Name.LocalName;
             foreach (AspectPropertyAssignment assignment in aspect.Assignments)
             {
-                PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName);
+                PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, ReferenceEquals(element, document.Root));
                 if (spec is null)
                 {
                     Report(UnsupportedProperty, assignment.Source, elementName, assignment.PropertyName);
@@ -1338,7 +1503,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
                 GeneratedExpression? expression = assignment.IsReference
                     ? ResolveReferenceValue(elementName, assignment.PropertyName, assignment.RawValue, spec.ValueKind, assignment.Source)
-                    : ParseAspectLiteralValue(elementName, assignment.PropertyName, assignment.RawValue, spec.ValueKind, assignment.Source);
+                    : ParseAspectLiteralValue(elementName, assignment.PropertyName, assignment.RawValue, spec, assignment.Source);
 
                 if (expression is null)
                 {
@@ -1352,10 +1517,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private GeneratedExpression? ParseAspectLiteralValue(string elementName, string propertyName, string value, MarkupValueKind kind, XObject source)
+        private GeneratedExpression? ParseAspectLiteralValue(string elementName, string propertyName, string value, PropertySpec spec, XObject source)
         {
             XAttribute synthetic = new(propertyName, value);
-            return ParseLiteralValue(elementName, propertyName, synthetic, value, kind);
+            return ParseLiteralValue(elementName, propertyName, synthetic, value, spec);
         }
 
         private GeneratedExpression? ResolveReferenceValue(string elementName, string propertyName, string referenceName, MarkupValueKind targetKind, XObject source)
@@ -1445,7 +1610,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             string propertyName = attribute.Name.LocalName;
             string value = attribute.Value;
 
-            PropertySpec? spec = FindPropertySpec(elementName, propertyName);
+            PropertySpec? spec = FindPropertySpec(elementName, propertyName, ReferenceEquals(element, document.Root));
             if (spec is null || !spec.Assignable)
             {
                 if (!HasErrors)
@@ -1456,7 +1621,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            GeneratedExpression? expression = ParseLiteralValue(elementName, propertyName, attribute, value, spec.ValueKind);
+            GeneratedExpression? expression = ParseLiteralValue(elementName, propertyName, attribute, value, spec);
             if (expression is null)
             {
                 return;
@@ -1468,32 +1633,163 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : variable + "." + spec.Name + " = " + expression.Code + ";");
         }
 
-        private static PropertySpec? FindPropertySpec(string elementName, string propertyName)
+        private PropertySpec? FindPropertySpec(string elementName, string propertyName)
         {
-            return PropertySpecs.FirstOrDefault(spec => spec.Name == propertyName && spec.AppliesToElement(elementName));
+            return FindPropertySpec(elementName, propertyName, isRoot: false);
         }
 
-        private GeneratedExpression? ParseLiteralValue(string elementName, string propertyName, XAttribute attribute, string value, MarkupValueKind kind)
+        private PropertySpec? FindPropertySpec(string elementName, string propertyName, bool isRoot)
         {
+            string cacheKey = (isRoot ? "root\0" : "element\0") + elementName + "\0" + propertyName;
+            if (resolvedProperties.TryGetValue(cacheKey, out PropertySpec? resolved))
+            {
+                return resolved;
+            }
+
+            INamedTypeSymbol? elementType = ResolvePropertyOwnerType(elementName, isRoot);
+            INamedTypeSymbol? uiPropertyType = compilation.GetTypeByMetadataName("Cerneala.UI.Core.UiProperty`1");
+            if (elementType is null || uiPropertyType is null)
+            {
+                return null;
+            }
+
+            IPropertySymbol? clrProperty = FindClrProperty(elementType, propertyName);
+            IFieldSymbol? propertyField = FindUiPropertyField(elementType, propertyName + "Property", uiPropertyType);
+            if (clrProperty is null || propertyField?.Type is not INamedTypeSymbol fieldType)
+            {
+                return null;
+            }
+
+            ITypeSymbol valueType = fieldType.TypeArguments[0];
+            if (!SymbolEqualityComparer.Default.Equals(clrProperty.Type, valueType))
+            {
+                return null;
+            }
+
+            MarkupValueKind kind = GetMarkupValueKind(valueType, clrProperty);
+            bool assignable = clrProperty.SetMethod is not null && IsAccessibleFromGeneratedCode(clrProperty.SetMethod);
+            resolved = new PropertySpec(
+                propertyName,
+                kind,
+                propertyField.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "." + propertyField.Name,
+                valueType,
+                assignable);
+            resolvedProperties.Add(cacheKey, resolved);
+            return resolved;
+        }
+
+        private IPropertySymbol? FindClrProperty(INamedTypeSymbol elementType, string propertyName)
+        {
+            for (INamedTypeSymbol? current = elementType; current is not null; current = current.BaseType)
+            {
+                IPropertySymbol? property = current.GetMembers(propertyName)
+                    .OfType<IPropertySymbol>()
+                    .FirstOrDefault(candidate => !candidate.IsStatic && candidate.GetMethod is not null &&
+                        IsAccessibleFromGeneratedCode(candidate.GetMethod));
+                if (property is not null)
+                {
+                    return property;
+                }
+            }
+
+            return null;
+        }
+
+        private IFieldSymbol? FindUiPropertyField(INamedTypeSymbol elementType, string fieldName, INamedTypeSymbol uiPropertyType)
+        {
+            for (INamedTypeSymbol? current = elementType; current is not null; current = current.BaseType)
+            {
+                IFieldSymbol? field = current.GetMembers(fieldName)
+                    .OfType<IFieldSymbol>()
+                    .FirstOrDefault(candidate => candidate.IsStatic && candidate.Type is INamedTypeSymbol fieldType &&
+                        SymbolEqualityComparer.Default.Equals(fieldType.OriginalDefinition, uiPropertyType) &&
+                        IsAccessibleFromGeneratedCode(candidate));
+                if (field is not null)
+                {
+                    return field;
+                }
+            }
+
+            return null;
+        }
+
+        private bool IsAccessibleFromGeneratedCode(ISymbol symbol)
+        {
+            if (userControlPair is not null)
+            {
+                return compilation.IsSymbolAccessibleWithin(symbol, userControlPair.TypeSymbol);
+            }
+
+            if (symbol.DeclaredAccessibility == Accessibility.Public)
+            {
+                return true;
+            }
+
+            bool sameAssembly = SymbolEqualityComparer.Default.Equals(symbol.ContainingAssembly, compilation.Assembly);
+            return sameAssembly && symbol.DeclaredAccessibility is Accessibility.Internal or Accessibility.ProtectedOrInternal;
+        }
+
+        private static MarkupValueKind GetMarkupValueKind(ITypeSymbol valueType, IPropertySymbol property)
+        {
+            valueType = UnwrapNullable(valueType);
+            string constraint = property.GetAttributes()
+                .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == "Cerneala.UI.Markup.MarkupValueConstraintAttribute")?
+                .ConstructorArguments.FirstOrDefault().Value?.ToString() ?? string.Empty;
+            string typeName = valueType.ToDisplayString();
+            if (typeName == "Cerneala.UI.Layout.Thickness")
+            {
+                return constraint == "1" ? MarkupValueKind.NonNegativeThickness : MarkupValueKind.Thickness;
+            }
+
+            if (typeName == "Cerneala.Drawing.DrawColor")
+            {
+                return MarkupValueKind.DrawColor;
+            }
+
+            if (valueType.TypeKind == TypeKind.Enum)
+            {
+                return MarkupValueKind.Enum;
+            }
+
+            return valueType.SpecialType switch
+            {
+                SpecialType.System_String or SpecialType.System_Object => MarkupValueKind.String,
+                SpecialType.System_Boolean => MarkupValueKind.Bool,
+                SpecialType.System_Single when constraint == "1" => MarkupValueKind.NonNegativeFloat,
+                SpecialType.System_Single when constraint == "2" => MarkupValueKind.PositiveFloat,
+                SpecialType.System_Single => MarkupValueKind.Float,
+                SpecialType.System_Double => MarkupValueKind.Double,
+                SpecialType.System_Decimal => MarkupValueKind.Decimal,
+                SpecialType.System_Byte or SpecialType.System_SByte or SpecialType.System_Int16 or
+                    SpecialType.System_UInt16 or SpecialType.System_Int32 or SpecialType.System_UInt32 or
+                    SpecialType.System_Int64 or SpecialType.System_UInt64 => MarkupValueKind.Integer,
+                _ => MarkupValueKind.Unsupported
+            };
+        }
+
+        private GeneratedExpression? ParseLiteralValue(string elementName, string propertyName, XAttribute attribute, string value, PropertySpec spec)
+        {
+            MarkupValueKind kind = spec.ValueKind;
             string? code = kind switch
             {
                 MarkupValueKind.String when !string.IsNullOrWhiteSpace(value) => Literal(value),
                 MarkupValueKind.Bool => Bool(elementName, propertyName, attribute),
                 MarkupValueKind.Float => Float(elementName, propertyName, attribute),
+                MarkupValueKind.Integer => Integer(elementName, propertyName, attribute, spec.LiteralType.SpecialType),
+                MarkupValueKind.Double => Double(elementName, propertyName, attribute),
+                MarkupValueKind.Decimal => Decimal(elementName, propertyName, attribute),
                 MarkupValueKind.NonNegativeFloat => NonNegativeFloat(elementName, propertyName, attribute),
                 MarkupValueKind.PositiveFloat => PositiveFloat(elementName, propertyName, attribute),
                 MarkupValueKind.Thickness => Thickness(elementName, propertyName, attribute),
                 MarkupValueKind.NonNegativeThickness => NonNegativeThickness(elementName, propertyName, attribute),
                 MarkupValueKind.DrawColor => Color(elementName, propertyName, attribute),
-                MarkupValueKind.WindowState => EnumValue(elementName, propertyName, attribute, "global::Cerneala.UI.Controls.WindowState", "Normal", "Minimized", "Maximized"),
-                MarkupValueKind.ResizeMode => EnumValue(elementName, propertyName, attribute, "global::Cerneala.UI.Controls.ResizeMode", "NoResize", "CanMinimize", "CanResize"),
-                MarkupValueKind.WindowStartupLocation => EnumValue(elementName, propertyName, attribute, "global::Cerneala.UI.Controls.WindowStartupLocation", "Manual", "CenterScreen", "CenterOwner"),
+                MarkupValueKind.Enum => EnumValue(elementName, propertyName, attribute, spec.LiteralType),
                 _ => null
             };
 
             if (code is null)
             {
-                if (kind == MarkupValueKind.String)
+                if (kind is MarkupValueKind.String or MarkupValueKind.Unsupported)
                 {
                     Report(InvalidPropertyValue, attribute, elementName, propertyName, value);
                 }
@@ -1553,11 +1849,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
         }
 
-        private static bool IsControlElement(string elementName)
-        {
-            return elementName is "Border" or "Button" or "TextBlock" or "UserControl" or "Window";
-        }
-
         private string? NonNegativeFloat(string elementName, string propertyName, XAttribute attribute)
         {
             string? code = Float(elementName, propertyName, attribute);
@@ -1573,14 +1864,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             string elementName,
             string propertyName,
             XAttribute attribute,
-            string typeCode,
-            params string[] names)
+            ITypeSymbol enumType)
         {
             string value = attribute.Value.Trim();
-            string? name = names.FirstOrDefault(candidate => string.Equals(candidate, value, StringComparison.OrdinalIgnoreCase));
-            return name is null
+            IFieldSymbol? member = enumType.GetMembers()
+                .OfType<IFieldSymbol>()
+                .FirstOrDefault(candidate => candidate.HasConstantValue &&
+                    string.Equals(candidate.Name, value, StringComparison.OrdinalIgnoreCase));
+            return member is null
                 ? Invalid(attribute, elementName, propertyName, attribute.Value)
-                : typeCode + "." + name;
+                : enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "." + member.Name;
         }
 
         private static string Literal(string value)
@@ -1623,6 +1916,41 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 !float.IsInfinity(parsed)
                 ? parsed.ToString("R", CultureInfo.InvariantCulture) + "f"
                 : Invalid(attribute, elementName, propertyName, value);
+        }
+
+        private string? Integer(string elementName, string propertyName, XAttribute attribute, SpecialType type)
+        {
+            string value = attribute.Value.Trim();
+            bool valid = type switch
+            {
+                SpecialType.System_Byte => byte.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_SByte => sbyte.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_Int16 => short.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_UInt16 => ushort.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_Int32 => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_UInt32 => uint.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_Int64 => long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_UInt64 => ulong.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                _ => false
+            };
+            return valid ? value : Invalid(attribute, elementName, propertyName, attribute.Value);
+        }
+
+        private string? Double(string elementName, string propertyName, XAttribute attribute)
+        {
+            string value = attribute.Value.Trim();
+            return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed) &&
+                !double.IsNaN(parsed) && !double.IsInfinity(parsed)
+                ? parsed.ToString("R", CultureInfo.InvariantCulture) + "d"
+                : Invalid(attribute, elementName, propertyName, attribute.Value);
+        }
+
+        private string? Decimal(string elementName, string propertyName, XAttribute attribute)
+        {
+            string value = attribute.Value.Trim();
+            return decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal parsed)
+                ? parsed.ToString(CultureInfo.InvariantCulture) + "m"
+                : Invalid(attribute, elementName, propertyName, attribute.Value);
         }
 
         private string? PositiveFloat(string elementName, string propertyName, XAttribute attribute)

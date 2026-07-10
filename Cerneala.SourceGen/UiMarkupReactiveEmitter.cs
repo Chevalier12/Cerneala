@@ -13,15 +13,18 @@ public sealed partial class UiMarkupGenerator
     {
         private sealed class ReactivePlan
         {
-            public ReactivePlan(string ownerVariable, string elementName)
+            public ReactivePlan(string ownerVariable, string elementName, bool isRoot = false)
             {
                 OwnerVariable = ownerVariable;
                 ElementName = elementName;
+                IsRoot = isRoot;
             }
 
             public string OwnerVariable { get; }
 
             public string ElementName { get; }
+
+            public bool IsRoot { get; }
 
             public List<string> ObservationLines { get; } = [];
 
@@ -107,12 +110,29 @@ public sealed partial class UiMarkupGenerator
             DirectiveParseResult parsed,
             IReadOnlyList<AspectResource> aspects)
         {
-            ReactivePlan plan = new(variable, element.Name.LocalName);
+            ReactivePlan plan = new(variable, element.Name.LocalName, ReferenceEquals(element, document.Root));
             foreach (AspectResource aspect in aspects)
             {
+                string valueSource = aspect.IsInline
+                    ? "global::Cerneala.UI.Core.UiPropertyValueSource.LocalAspectConditional"
+                    : "global::Cerneala.UI.Core.UiPropertyValueSource.AspectVisualState";
+                string inheritedPredicate = "true";
+                if (aspect.IsInline && aspect.Conditions.Count > 0)
+                {
+                    string observationName = "observation" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
+                    nextReactiveId++;
+                    plan.ObservationLines.Add(
+                        "global::Cerneala.UI.Markup.MarkupObservation " + observationName +
+                        " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + plan.OwnerVariable +
+                        ", global::Cerneala.UI.Elements.UIElement.AspectProperty);");
+                    plan.ObservationNames.Add(observationName);
+                    inheritedPredicate =
+                        "global::System.Object.ReferenceEquals(" + plan.OwnerVariable + ".Aspect, " + aspect.RuntimeVariable + ")";
+                }
+
                 foreach (DirectiveWhenNode when in aspect.Conditions)
                 {
-                    CollectWhen(plan, when, "true", "global::Cerneala.UI.Core.UiPropertyValueSource.AspectVisualState");
+                    CollectWhen(plan, when, inheritedPredicate, valueSource);
                 }
             }
 
@@ -247,7 +267,7 @@ public sealed partial class UiMarkupGenerator
                 return new ObservationEmission(name, name + ".Value", null, compilation.GetSpecialType(SpecialType.System_Object));
             }
 
-            PropertySpec? spec = FindPropertySpec(plan.ElementName, expression);
+            PropertySpec? spec = FindPropertySpec(plan.ElementName, expression, plan.IsRoot);
             if (spec is null)
             {
                 Report(InvalidBindingSource, source, expression, "No supported UI property with this name exists on the current element.");
@@ -258,7 +278,7 @@ public sealed partial class UiMarkupGenerator
                 "global::Cerneala.UI.Markup.MarkupObservation " + name +
                 " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + plan.OwnerVariable + ", " + spec.PropertyCode + ");");
             plan.ObservationNames.Add(name);
-            return new ObservationEmission(name, "(" + TypeCode(spec.ValueKind) + ")" + name + ".Value!", spec.ValueKind, null);
+            return new ObservationEmission(name, "(" + spec.ValueTypeCode + ")" + name + ".Value!", null, spec.ValueType);
         }
 
         private ObservationEmission? EmitDataObservation(ReactivePlan plan, string name, string expression, XObject source)
@@ -391,19 +411,8 @@ public sealed partial class UiMarkupGenerator
                 return observation.ValueCode + " " + comparator + " (object?)" + objectCode;
             }
 
-            string? operandCode;
-            bool isString;
-            if (observation.MarkupKind is MarkupValueKind kind)
-            {
-                GeneratedExpression? generated = ParseDirectiveValue(null, "value", operand, kind, source);
-                operandCode = generated?.Code;
-                isString = kind == MarkupValueKind.String;
-            }
-            else
-            {
-                operandCode = ParseSymbolLiteral(observation.ValueType!, operand, source);
-                isString = observation.ValueType?.SpecialType == SpecialType.System_String;
-            }
+            string? operandCode = ParseSymbolLiteral(observation.ValueType!, operand, source);
+            bool isString = observation.ValueType?.SpecialType == SpecialType.System_String;
 
             if (operandCode is null)
             {
@@ -444,13 +453,13 @@ public sealed partial class UiMarkupGenerator
             string? planElementName,
             string propertyName,
             string rawValue,
-            MarkupValueKind kind,
+            PropertySpec spec,
             XObject source)
         {
             string value = rawValue.Trim();
             if (value.StartsWith("$", StringComparison.Ordinal))
             {
-                return ResolveReferenceValue(planElementName ?? "value", propertyName, value.Substring(1), kind, source);
+                return ResolveReferenceValue(planElementName ?? "value", propertyName, value.Substring(1), spec.ValueKind, source);
             }
 
             if (value.Length >= 2 && value[0] == '"' && value[value.Length - 1] == '"')
@@ -459,7 +468,7 @@ public sealed partial class UiMarkupGenerator
             }
 
             XAttribute synthetic = new(propertyName, value);
-            return ParseLiteralValue(planElementName ?? "value", propertyName, synthetic, value, kind);
+            return ParseLiteralValue(planElementName ?? "value", propertyName, synthetic, value, spec);
         }
 
         private string? ParseSymbolLiteral(ITypeSymbol type, string rawValue, XObject source)
@@ -537,22 +546,6 @@ public sealed partial class UiMarkupGenerator
                 SpecialType.System_Decimal;
         }
 
-        private static string TypeCode(MarkupValueKind kind)
-        {
-            return kind switch
-            {
-                MarkupValueKind.String => "string",
-                MarkupValueKind.Bool => "bool",
-                MarkupValueKind.Float or MarkupValueKind.NonNegativeFloat or MarkupValueKind.PositiveFloat => "float",
-                MarkupValueKind.Thickness or MarkupValueKind.NonNegativeThickness => "global::Cerneala.UI.Layout.Thickness",
-                MarkupValueKind.DrawColor => "global::Cerneala.Drawing.DrawColor",
-                MarkupValueKind.WindowState => "global::Cerneala.UI.Controls.WindowState",
-                MarkupValueKind.ResizeMode => "global::Cerneala.UI.Controls.ResizeMode",
-                MarkupValueKind.WindowStartupLocation => "global::Cerneala.UI.Controls.WindowStartupLocation",
-                _ => "object"
-            };
-        }
-
         private void EmitReactivePlan(ReactivePlan plan, bool controlsContent)
         {
             if (plan.Rules.Count == 0)
@@ -571,14 +564,14 @@ public sealed partial class UiMarkupGenerator
                 List<string> values = [];
                 foreach (DirectiveAssignmentNode assignment in rule.Assignments)
                 {
-                    PropertySpec? spec = FindPropertySpec(plan.ElementName, assignment.PropertyName);
+                    PropertySpec? spec = FindPropertySpec(plan.ElementName, assignment.PropertyName, plan.IsRoot);
                     if (spec is null || !spec.Assignable)
                     {
                         Report(UnsupportedProperty, assignment.Source, plan.ElementName, assignment.PropertyName);
                         continue;
                     }
 
-                    GeneratedExpression? expression = ParseDirectiveValue(plan.ElementName, assignment.PropertyName, assignment.Value, spec.ValueKind, assignment.Source);
+                    GeneratedExpression? expression = ParseDirectiveValue(plan.ElementName, assignment.PropertyName, assignment.Value, spec, assignment.Source);
                     if (expression is null)
                     {
                         continue;

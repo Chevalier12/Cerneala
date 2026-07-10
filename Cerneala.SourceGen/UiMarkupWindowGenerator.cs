@@ -465,7 +465,7 @@ public sealed partial class UiMarkupGenerator
                 }
             }
 
-            ReactivePlan plan = new("this", "Window");
+            ReactivePlan plan = new("this", "Window", isRoot: true);
             foreach (AspectResource aspect in aspects)
             {
                 foreach (DirectiveWhenNode when in aspect.Conditions)

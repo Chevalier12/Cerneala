@@ -168,7 +168,8 @@ public partial class UIElement
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
-        if (ReferenceEquals(args.Property, DataContextProperty)) DataContextChanged?.Invoke(this, args);
+        if (ReferenceEquals(args.Property, AspectProperty)) ApplyLocalAspect(Aspect);
+        else if (ReferenceEquals(args.Property, DataContextProperty)) DataContextChanged?.Invoke(this, args);
         else if (ReferenceEquals(args.Property, IsEnabledProperty)) IsEnabledChanged?.Invoke(this, args);
         else if (ReferenceEquals(args.Property, IsVisibleProperty) || ReferenceEquals(args.Property, VisibilityProperty)) IsVisibleChanged?.Invoke(this, args);
         else if (ReferenceEquals(args.Property, FocusableProperty)) FocusableChanged?.Invoke(this, args);

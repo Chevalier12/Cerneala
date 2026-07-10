@@ -6,6 +6,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Input;
+using Cerneala.UI.Markup;
 
 namespace Cerneala.UI.Controls;
 
@@ -97,12 +98,14 @@ public class Control : UIElement
         set => SetValue(BorderColorProperty, value);
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
     public Thickness BorderThickness
     {
         get => GetValue(BorderThicknessProperty);
         set => SetValue(BorderThicknessProperty, value);
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
     public Thickness Padding
     {
         get => GetValue(PaddingProperty);
@@ -115,6 +118,7 @@ public class Control : UIElement
         set => SetValue(FontFamilyProperty, value);
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.Positive)]
     public float FontSize
     {
         get => GetValue(FontSizeProperty);

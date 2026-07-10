@@ -63,6 +63,9 @@ public sealed class ModernAspectArchitectureTests
     public void AspectValueSourcesHaveDocumentedPrecedence()
     {
         Assert.True(UiPropertyValueSource.Local > UiPropertyValueSource.Animation);
+        Assert.True(UiPropertyValueSource.Animation > UiPropertyValueSource.LocalAspectConditional);
+        Assert.True(UiPropertyValueSource.LocalAspectConditional > UiPropertyValueSource.LocalAspectBase);
+        Assert.True(UiPropertyValueSource.LocalAspectBase > UiPropertyValueSource.AspectVisualState);
         Assert.True(UiPropertyValueSource.Animation > UiPropertyValueSource.AspectVisualState);
         Assert.True(UiPropertyValueSource.AspectVisualState > UiPropertyValueSource.AspectBase);
         Assert.True(UiPropertyValueSource.AspectBase > UiPropertyValueSource.TemplateBinding);

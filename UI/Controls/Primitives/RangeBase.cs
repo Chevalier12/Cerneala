@@ -1,5 +1,6 @@
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
+using Cerneala.UI.Markup;
 
 namespace Cerneala.UI.Controls.Primitives;
 
@@ -65,12 +66,14 @@ public class RangeBase : Control
         set => SetValue(ValueProperty, value);
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
     public float SmallChange
     {
         get => GetValue(SmallChangeProperty);
         set => SetValue(SmallChangeProperty, value);
     }
 
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
     public float LargeChange
     {
         get => GetValue(LargeChangeProperty);

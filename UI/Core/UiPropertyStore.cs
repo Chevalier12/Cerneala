@@ -8,6 +8,8 @@ public sealed class UiPropertyStore
         UiPropertyValueSource.Animation,
         UiPropertyValueSource.MarkupConditional,
         UiPropertyValueSource.MarkupBase,
+        UiPropertyValueSource.LocalAspectConditional,
+        UiPropertyValueSource.LocalAspectBase,
         UiPropertyValueSource.AspectVisualState,
         UiPropertyValueSource.AspectBase,
         UiPropertyValueSource.TemplateBinding,

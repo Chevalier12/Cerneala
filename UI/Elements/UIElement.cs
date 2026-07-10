@@ -1,3 +1,4 @@
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Core;
 using Cerneala.UI.Data;
 using Cerneala.UI.Input;
@@ -13,10 +14,17 @@ namespace Cerneala.UI.Elements;
 
 public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderableElement
 {
+    private readonly HashSet<UiProperty> appliedLocalAspectProperties = new(ReferenceEqualityComparer.Instance);
+
     public static readonly UiProperty<object?> DataContextProperty = UiProperty<object?>.Register(
         nameof(DataContext),
         typeof(UIElement),
         new UiPropertyMetadata<object?>(null, UiPropertyOptions.Inherits | UiPropertyOptions.AffectsAspect));
+
+    public static readonly UiProperty<ElementAspect?> AspectProperty = UiProperty<ElementAspect?>.Register(
+        nameof(Aspect),
+        typeof(UIElement),
+        new UiPropertyMetadata<ElementAspect?>(null, UiPropertyOptions.AffectsAspect));
 
     public static readonly UiProperty<bool> IsEnabledProperty = UiProperty<bool>.Register(
         nameof(IsEnabled),
@@ -245,6 +253,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         set => SetValue(DataContextProperty, value);
     }
 
+    public ElementAspect? Aspect
+    {
+        get => GetValue(AspectProperty);
+        set => SetValue(AspectProperty, value);
+    }
+
     public bool IsEnabled
     {
         get => GetValue(IsEnabledProperty);
@@ -375,6 +389,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         get => GetValue(IsPointerOverProperty);
         set => SetValue(IsPointerOverProperty, value);
+    }
+
+    public bool IsMouseOver
+    {
+        get => IsPointerOver;
     }
 
     public bool IsMouseDirectlyOver
@@ -863,6 +882,37 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         if (flags != InvalidationFlags.None)
         {
             Invalidate(new InvalidationRequest(this, flags, "Property changed", args.Property));
+        }
+    }
+
+    private void ApplyLocalAspect(ElementAspect? aspect)
+    {
+        foreach (UiProperty property in appliedLocalAspectProperties)
+        {
+            ClearValueUntyped(property, UiPropertyValueSource.LocalAspectBase);
+        }
+
+        appliedLocalAspectProperties.Clear();
+        if (aspect is null)
+        {
+            return;
+        }
+
+        foreach (ElementAspectValue value in aspect.DefaultValues)
+        {
+            if (ReferenceEquals(value.Property, AspectProperty))
+            {
+                throw new InvalidOperationException("A local aspect cannot assign UIElement.AspectProperty.");
+            }
+
+            if (!value.Property.OwnerType.IsAssignableFrom(GetType()))
+            {
+                throw new InvalidOperationException(
+                    $"UI property '{value.Property.DiagnosticName}' cannot be applied to element '{GetType().FullName}'.");
+            }
+
+            SetValueUntyped(value.Property, value.Value, UiPropertyValueSource.LocalAspectBase);
+            appliedLocalAspectProperties.Add(value.Property);
         }
     }
 
