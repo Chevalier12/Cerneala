@@ -23,6 +23,11 @@ public sealed class MotionPropertyBindingTests
         Assert.True(background.IsSafeForImplicitAnimation);
         Assert.True(background.InvalidationCategory.HasFlag(MotionPropertyInvalidationCategory.Render));
 
+        Assert.True(registry.TryGet(Control.ForegroundProperty, out MotionPropertyOptions? foreground));
+        Assert.Equal(typeof(Cerneala.UI.Motion.Interpolation.BrushMixer), foreground.MixerType);
+        Assert.True(foreground.IsSafeForImplicitAnimation);
+        Assert.True(foreground.InvalidationCategory.HasFlag(MotionPropertyInvalidationCategory.Render));
+
         Assert.True(registry.TryGet(Control.BorderBrushProperty, out MotionPropertyOptions? borderBrush));
         Assert.True(borderBrush.IsSafeForImplicitAnimation);
 

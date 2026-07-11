@@ -27,7 +27,7 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 
 UIRoot root = new();
-Control parent = new() { Foreground = Color.White };
+Control parent = new() { Foreground = new SolidColorBrush(Color.White) };
 TextBlock child = new() { Text = "child" };
 
 parent.VisualChildren.Add(child);

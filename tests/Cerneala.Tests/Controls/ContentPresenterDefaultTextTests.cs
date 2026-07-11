@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls;
 
@@ -13,10 +14,11 @@ public sealed class ContentPresenterDefaultTextTests
         ContentPresenter presenter = new() { Content = "Open 3 test windows" };
         TextBlock textBlock = Assert.IsType<TextBlock>(presenter.PresentedChild);
 
-        presenter.Foreground = Color.White;
+        SolidColorBrush foreground = new(Color.White);
+        presenter.Foreground = foreground;
 
-        Assert.Equal(Color.White, presenter.Foreground);
-        Assert.Equal(Color.White, textBlock.Foreground);
+        Assert.Same(foreground, presenter.Foreground);
+        Assert.Same(foreground, textBlock.Foreground);
     }
 
     [Fact]

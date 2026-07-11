@@ -22,7 +22,10 @@ Render text and receive the measurement result:
 
 ```csharp
 using Cerneala.Drawing;
+using Cerneala.UI.Media;
 using Cerneala.UI.Text;
+
+TextAspect aspect = new("Default", 16, foreground: new SolidColorBrush(Color.Black));
 
 TextRenderer renderer = TextRenderer.Default;
 
@@ -31,15 +34,14 @@ TextMeasureResult result = renderer.Render(
     "Hello",
     aspect,
     availableWidth: 200,
-    position: new DrawPoint(0, 0),
-    color: Color.Black);
+    position: new DrawPoint(0, 0));
 ```
 
 ## Remarks
 
 `TextRenderer` uses a `TextMeasurer` to measure the supplied text before drawing. Empty text returns the measurement without drawing.
 
-For non-empty text, `Render` resolves the font from the `TextAspect`, measures line height with `TextLineMetrics`, and draws each measured line at an offset from the supplied position. The method throws `ArgumentNullException` when `drawingContext` or `text` is `null`.
+For non-empty text with a non-null `TextAspect.Foreground`, `Render` resolves the font, measures line height with `TextLineMetrics`, and draws each measured line with the complete brush. Solid, gradient, image, drawing, and visual brushes are preserved in the recorded command. A brush change does not alter the text layout key. The method throws `ArgumentNullException` when `drawingContext` or `text` is `null`.
 
 ## Constructors
 
@@ -58,7 +60,7 @@ For non-empty text, `Render` resolves the font from the `TextAspect`, measures l
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Render(DrawingContext drawingContext, string text, TextAspect aspect, float availableWidth, DrawPoint position, Color color)` | `TextMeasureResult` | Measures text, draws each line when non-empty, and returns the measurement. |
+| `Render(DrawingContext drawingContext, string text, TextAspect aspect, float availableWidth, DrawPoint position)` | `TextMeasureResult` | Measures text, draws each line when text and `aspect.Foreground` are present, and returns the measurement. |
 
 ## Applies To
 

@@ -61,7 +61,7 @@ AspectPackage package = AspectPackage.Create("App")
     .Tokens(tokens =>
     {
         tokens.Set(ButtonTokens.Background, new SolidColorBrush(new Color(24, 24, 27)));
-        tokens.Set(ButtonTokens.Foreground, Color.White);
+        tokens.Set(ButtonTokens.Foreground, new SolidColorBrush(Color.White));
         tokens.Set(ButtonTokens.Padding, new Thickness(12, 6, 12, 6));
     })
     .Build();
@@ -82,7 +82,7 @@ The token names use the `button.*` prefix, such as `button.background`, `button.
 | Name | Type | Token Name | Default Value |
 | --- | --- | --- | --- |
 | `Background` | `AspectToken<Brush?>` | `button.background` | `new SolidColorBrush(new Color(255, 255, 255))` |
-| `Foreground` | `AspectToken<Color>` | `button.foreground` | `new Color(28, 35, 48)` |
+| `Foreground` | `AspectToken<Brush?>` | `button.foreground` | `new SolidColorBrush(new Color(28, 35, 48))` |
 | `BorderBrush` | `AspectToken<Brush?>` | `button.border` | `new SolidColorBrush(new Color(148, 163, 184))` |
 | `HoverBackground` | `AspectToken<Brush?>` | `button.hover-background` | `new SolidColorBrush(new Color(37, 99, 235))` |
 | `PressedBackground` | `AspectToken<Brush?>` | `button.pressed-background` | `new SolidColorBrush(new Color(148, 163, 184))` |

@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls;
 
@@ -14,7 +15,7 @@ public sealed class ElementAspectTests
         ElementAspect first = new(
             [new ElementAspectValue(Control.BackgroundProperty, new Cerneala.UI.Media.SolidColorBrush(Color.White))]);
         ElementAspect second = new(
-            [new ElementAspectValue(Control.ForegroundProperty, Color.Transparent)]);
+            [new ElementAspectValue(Control.ForegroundProperty, new SolidColorBrush(Color.Transparent))]);
 
         button.Aspect = first;
 
@@ -25,13 +26,13 @@ public sealed class ElementAspectTests
         button.Aspect = second;
 
         Assert.Null(button.Background);
-        Assert.Equal(Color.Transparent, button.Foreground);
+        Assert.Equal(new SolidColorBrush(Color.Transparent), button.Foreground);
         Assert.Equal(UiPropertyValueSource.LocalAspectBase, button.GetValueSource(Control.ForegroundProperty));
 
         button.Aspect = null;
 
         Assert.Null(button.Aspect);
-        Assert.Equal(Color.Black, button.Foreground);
+        Assert.Equal(new SolidColorBrush(Color.Black), button.Foreground);
     }
 
     [Fact]

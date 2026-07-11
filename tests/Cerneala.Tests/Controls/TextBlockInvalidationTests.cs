@@ -51,7 +51,7 @@ public sealed class TextBlockInvalidationTests
         string identity = textBlock.RenderDependencies.TextLayoutIdentity;
         textBlock.DirtyState.ClearAll();
 
-        textBlock.Foreground = Color.White;
+        textBlock.Foreground = new Cerneala.UI.Media.SolidColorBrush(Color.White);
 
         Assert.False(textBlock.DirtyState.Has(InvalidationFlags.Measure));
         Assert.True(textBlock.DirtyState.Has(InvalidationFlags.Render));
@@ -70,7 +70,7 @@ public sealed class TextBlockInvalidationTests
         };
 
         textBlock.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        textBlock.Foreground = Color.White;
+        textBlock.Foreground = new Cerneala.UI.Media.SolidColorBrush(Color.White);
         textBlock.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
         Assert.Equal(1, cache.Misses);

@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Text;
 
@@ -25,14 +26,14 @@ public class TextRenderer
         string text,
         TextAspect aspect,
         float availableWidth,
-        DrawPoint position,
-        Color color)
+        DrawPoint position)
     {
         ArgumentNullException.ThrowIfNull(drawingContext);
         ArgumentNullException.ThrowIfNull(text);
 
         TextMeasureResult measurement = textMeasurer.Measure(text, aspect, availableWidth);
-        if (text.Length == 0)
+        Brush? foreground = aspect.Foreground;
+        if (text.Length == 0 || foreground is null)
         {
             return measurement;
         }
@@ -44,7 +45,7 @@ public class TextRenderer
         {
             TextLine line = measurement.Lines[i];
             DrawPoint linePosition = new(position.X, position.Y + (i * lineHeight) + baseline);
-            drawingContext.DrawText(aspect.ToDrawTextRun(font, line.Text), linePosition, color);
+            drawingContext.DrawText(aspect.ToDrawTextRun(font, line.Text), linePosition, foreground);
         }
 
         return measurement;

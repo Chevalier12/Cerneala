@@ -101,8 +101,8 @@ public sealed class DrawingResourceTests
         DrawTextRun firstRun = new(new SkiaFont(SkiaSharp.SKTypeface.Default, "Same", 16), "Cerneala", 16);
         DrawTextRun secondRun = new(new SkiaFont(SkiaSharp.SKTypeface.FromFamilyName("Times New Roman"), "Same", 16), "Cerneala", 16);
 
-        object firstKey = fromMethod.Invoke(null, [firstRun, Color.White, 1f, default(DrawPoint)])!;
-        object secondKey = fromMethod.Invoke(null, [secondRun, Color.White, 1f, default(DrawPoint)])!;
+        object firstKey = fromMethod.Invoke(null, [firstRun, 1f, default(DrawPoint)])!;
+        object secondKey = fromMethod.Invoke(null, [secondRun, 1f, default(DrawPoint)])!;
 
         Assert.NotEqual(firstKey, secondKey);
     }

@@ -26,11 +26,7 @@ public sealed class ImageTests
     {
         UIRoot root = new();
         FakeImage source = new(32, 16);
-        Image image = new()
-        {
-            Source = source,
-            Foreground = Color.White
-        };
+        Image image = new() { Source = source };
         root.VisualChildren.Add(image);
         root.ProcessFrame();
         image.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 20)));
@@ -43,6 +39,7 @@ public sealed class ImageTests
         Assert.Equal(DrawCommandKind.DrawImage, commands[0].Kind);
         Assert.Same(source, commands[0].Image);
         Assert.Equal(new DrawRect(1, 4.5f, 30, 15), commands[0].Rect);
+        Assert.Equal(Color.White, commands[0].Color);
     }
 
     [Fact]
@@ -50,11 +47,7 @@ public sealed class ImageTests
     {
         UIRoot root = new();
         FakeImage source = new(512, 512);
-        Image image = new()
-        {
-            Source = source,
-            Foreground = Color.White
-        };
+        Image image = new() { Source = source };
         root.VisualChildren.Add(image);
         root.ProcessFrame();
         image.Arrange(new ArrangeContext(new LayoutRect(10, 20, 300, 100)));

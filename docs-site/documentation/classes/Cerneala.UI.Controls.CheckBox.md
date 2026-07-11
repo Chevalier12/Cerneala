@@ -27,7 +27,7 @@ CheckBox checkBox = new()
     Content = "Agree",
     IsChecked = true,
     FontSize = 10,
-    Foreground = Color.Black
+    Foreground = new SolidColorBrush(Color.Black)
 };
 ```
 

@@ -4,6 +4,7 @@ using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Media;
 using CernealaColor = Cerneala.Drawing.Color;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
@@ -51,12 +52,14 @@ internal static class WindowsDxSmokeApplication
             RenderAndCheck(thirdSession, new Color(55, 95, 175));
             VerifyPerDeviceImages(firstSession, secondSession);
             RenderTextAndCheck(secondSession);
+            RenderBrushTextAndCheck(secondSession);
 
             firstSession.Resize(192, 128, 1.25f);
             secondSession.Resize(224, 144, 1.5f);
             RenderAndCheck(firstSession, new Color(35, 90, 210));
             RenderAndCheck(secondSession, new Color(220, 150, 30));
             RenderTextAndCheck(secondSession);
+            RenderBrushTextAndCheck(secondSession);
 
             first.Dispose();
             RenderAndCheck(secondSession, new Color(120, 45, 190));
@@ -161,6 +164,72 @@ internal static class WindowsDxSmokeApplication
         XnaColor[] pixels = new XnaColor[width * height];
         session.GraphicsDevice.GetBackBufferData(pixels);
         Assert(pixels.Any(pixel => pixel.R < 240 || pixel.G < 240 || pixel.B < 240), "Skia/HarfBuzz text texture was not visible.");
+    }
+
+    private static void RenderBrushTextAndCheck(WindowsDxWindowGraphicsSession session)
+    {
+        VerifyTextBrush(
+            session,
+            new SolidColorBrush(Color.Black),
+            "solid",
+            pixels => pixels.Any(pixel => pixel.R < 80 && pixel.G < 80 && pixel.B < 80));
+
+        VerifyTextBrush(
+            session,
+            new LinearGradientBrush(
+                new DrawPoint(0, 0),
+                new DrawPoint(180, 0),
+                [new GradientStop(0, new Color(230, 30, 40)), new GradientStop(1, new Color(30, 70, 230))]),
+            "linear gradient",
+            HasWarmAndCoolPixels);
+
+        VerifyTextBrush(
+            session,
+            new RadialGradientBrush(
+                new DrawPoint(90, 14),
+                90,
+                24,
+                [new GradientStop(0, new Color(230, 30, 40)), new GradientStop(1, new Color(30, 70, 230))]),
+            "radial gradient",
+            HasWarmAndCoolPixels);
+
+        using MonoGameImage image = new(new Microsoft.Xna.Framework.Graphics.Texture2D(session.GraphicsDevice, 2, 1));
+        image.Texture.SetData([new XnaColor(230, 30, 40), new XnaColor(30, 70, 230)]);
+        VerifyTextBrush(
+            session,
+            new ImageBrush(image, DrawBrushStretch.Fill),
+            "image",
+            HasWarmAndCoolPixels);
+    }
+
+    private static void VerifyTextBrush(
+        WindowsDxWindowGraphicsSession session,
+        IDrawBrush brush,
+        string description,
+        Func<XnaColor[], bool> verify)
+    {
+        SkiaFont font = (SkiaFont)new SystemFontSource().LoadFont("Arial", 28);
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.DrawText(
+            new DrawTextRun(font, "MMMMMMMM", 28),
+            new DrawPoint(20, 64),
+            brush));
+        session.BeginFrame(Color.White);
+        session.DrawingBackend.Render(commands);
+        session.Present();
+
+        int width = session.GraphicsDevice.PresentationParameters.BackBufferWidth;
+        int height = session.GraphicsDevice.PresentationParameters.BackBufferHeight;
+        XnaColor[] pixels = new XnaColor[width * height];
+        session.GraphicsDevice.GetBackBufferData(pixels);
+        Assert(verify(pixels), $"The {description} text brush did not produce the expected glyph pixels.");
+    }
+
+    private static bool HasWarmAndCoolPixels(XnaColor[] pixels)
+    {
+        bool warm = pixels.Any(pixel => pixel.R > pixel.B + 20 && pixel.G < 220);
+        bool cool = pixels.Any(pixel => pixel.B > pixel.R + 20 && pixel.G < 220);
+        return warm && cool;
     }
 
     private static XnaColor ReadCenterPixel(WindowsDxWindowGraphicsSession session)

@@ -3,6 +3,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.UI.Core;
 
@@ -12,14 +13,15 @@ public sealed class InheritedPropertyTreePropagationTests
     public void ParentForegroundPropagatesToDescendantDuringFrame()
     {
         UIRoot root = new();
-        Control parent = new() { Foreground = Color.White };
+        SolidColorBrush foreground = new(Color.White);
+        Control parent = new() { Foreground = foreground };
         TextBlock child = new() { Text = "child" };
         parent.VisualChildren.Add(child);
         root.VisualChildren.Add(parent);
 
         root.ProcessFrame();
 
-        Assert.Equal(Color.White, child.Foreground);
+        Assert.Same(foreground, child.Foreground);
         Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.ForegroundProperty));
     }
 
@@ -42,17 +44,18 @@ public sealed class InheritedPropertyTreePropagationTests
     public void ChangingInheritedParentValueInvalidatesDescendantRender()
     {
         UIRoot root = new();
-        Control parent = new() { Foreground = Color.Black };
+        Control parent = new() { Foreground = new SolidColorBrush(Color.Black) };
         TextBlock child = new() { Text = "child" };
         parent.VisualChildren.Add(child);
         root.VisualChildren.Add(parent);
         root.ProcessFrame();
         child.DirtyState.Clear(InvalidationFlags.Render);
 
-        parent.Foreground = Color.White;
+        SolidColorBrush foreground = new(Color.White);
+        parent.Foreground = foreground;
         FrameStats stats = root.ProcessFrame();
 
-        Assert.Equal(Color.White, child.Foreground);
+        Assert.Same(foreground, child.Foreground);
         Assert.True(stats.InheritedElements > 0);
         Assert.True(child.RenderVersion > 0);
     }
@@ -95,8 +98,9 @@ public sealed class InheritedPropertyTreePropagationTests
     public void ReparentedSubtreeReceivesNewParentInheritedValues()
     {
         UIRoot root = new();
-        Control firstParent = new() { Foreground = Color.White };
-        Control secondParent = new() { Foreground = Color.Black };
+        Control firstParent = new() { Foreground = new SolidColorBrush(Color.White) };
+        SolidColorBrush secondForeground = new(Color.Black);
+        Control secondParent = new() { Foreground = secondForeground };
         TextBlock child = new();
         firstParent.VisualChildren.Add(child);
         root.VisualChildren.Add(firstParent);
@@ -107,7 +111,7 @@ public sealed class InheritedPropertyTreePropagationTests
         secondParent.VisualChildren.Add(child);
         root.ProcessFrame();
 
-        Assert.Equal(Color.Black, child.Foreground);
+        Assert.Same(secondForeground, child.Foreground);
         Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.ForegroundProperty));
     }
 

@@ -34,10 +34,10 @@ public class Control : UIElement
         typeof(Control),
         new UiPropertyMetadata<Brush?>(null, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
 
-    public static readonly UiProperty<Color> ForegroundProperty = UiProperty<Color>.Register(
+    public static readonly UiProperty<Brush?> ForegroundProperty = UiProperty<Brush?>.Register(
         nameof(Foreground),
         typeof(Control),
-        new UiPropertyMetadata<Color>(Color.Black, UiPropertyOptions.Inherits | UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<Brush?>(new SolidColorBrush(Color.Black), UiPropertyOptions.Inherits | UiPropertyOptions.AffectsRender));
 
     public static readonly UiProperty<Brush?> BorderBrushProperty = UiProperty<Brush?>.Register(
         nameof(BorderBrush),
@@ -76,7 +76,7 @@ public class Control : UIElement
         set => SetValue(BackgroundProperty, value);
     }
 
-    public Color Foreground
+    public Brush? Foreground
     {
         get => GetValue(ForegroundProperty);
         set => SetValue(ForegroundProperty, value);

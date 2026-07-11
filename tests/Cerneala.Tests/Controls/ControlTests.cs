@@ -14,7 +14,7 @@ public sealed class ControlTests
         Control control = new();
 
         Assert.Null(control.Background);
-        Assert.Equal(Color.Black, control.Foreground);
+        Assert.Equal(new SolidColorBrush(Color.Black), control.Foreground);
         Assert.Null(control.BorderBrush);
         Assert.Equal(Thickness.Zero, control.BorderThickness);
         Assert.Equal(Thickness.Zero, control.Padding);
@@ -31,6 +31,15 @@ public sealed class ControlTests
         Assert.Null(Control.BorderBrushProperty.Metadata.DefaultValue);
         Assert.Null(typeof(Control).GetProperty("BorderColor"));
         Assert.Null(typeof(Control).GetField("BorderColorProperty"));
+    }
+
+    [Fact]
+    public void ForegroundApiUsesNullableInheritedBrushWithoutLegacyColorAlias()
+    {
+        Assert.Equal(typeof(Brush), Control.ForegroundProperty.ValueType);
+        Assert.Equal(new SolidColorBrush(Color.Black), Control.ForegroundProperty.Metadata.DefaultValue);
+        Assert.Null(typeof(Control).GetProperty("ForegroundColor"));
+        Assert.Null(typeof(Control).GetField("ForegroundColorProperty"));
     }
 
     [Fact]
@@ -62,7 +71,7 @@ public sealed class ControlTests
     {
         Control control = new();
 
-        control.Foreground = Color.White;
+        control.Foreground = new SolidColorBrush(Color.White);
 
         Assert.True(control.DirtyState.Has(InvalidationFlags.Render));
         Assert.False(control.DirtyState.Has(InvalidationFlags.InputVisual));

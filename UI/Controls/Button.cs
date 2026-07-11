@@ -104,7 +104,7 @@ public class Button : ButtonBase
         {
             LayoutRect contentBounds = ContentControl.Deflate(context.Bounds, Insets);
             DrawPoint point = new(contentBounds.X, contentBounds.Y);
-            TextRenderer.Render(context.DrawingContext, text, CreateTextAspect(), contentBounds.Width, point, Foreground);
+            TextRenderer.Render(context.DrawingContext, text, CreateTextAspect(), contentBounds.Width, point);
         }
     }
 
@@ -117,7 +117,7 @@ public class Button : ButtonBase
 
     private TextAspect CreateTextAspect()
     {
-        return new TextAspect(FontFamily, FontSize, color: Foreground);
+        return new TextAspect(FontFamily, FontSize, foreground: Foreground);
     }
 
     private Brush? ResolveBackground()

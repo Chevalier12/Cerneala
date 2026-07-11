@@ -26,7 +26,7 @@ public sealed class CheckBoxTests
         {
             Content = "Agree",
             IsChecked = true,
-            Foreground = Color.Black
+            Foreground = new Cerneala.UI.Media.SolidColorBrush(Color.Black)
         };
         checkBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 80, 20)));
         root.VisualChildren.Add(checkBox);

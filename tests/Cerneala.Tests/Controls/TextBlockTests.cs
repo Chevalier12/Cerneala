@@ -70,7 +70,7 @@ public sealed class TextBlockTests
         TextBlock textBlock = new()
         {
             Text = "Hello",
-            Foreground = Color.White
+            Foreground = new Cerneala.UI.Media.SolidColorBrush(Color.White)
         };
         root.VisualChildren.Add(textBlock);
         root.ProcessFrame();
@@ -119,7 +119,7 @@ public sealed class TextBlockTests
     {
         TextBlock textBlock = new();
 
-        textBlock.Foreground = Color.White;
+        textBlock.Foreground = new Cerneala.UI.Media.SolidColorBrush(Color.White);
 
         Assert.False(textBlock.DirtyState.Has(InvalidationFlags.Measure));
         Assert.True(textBlock.DirtyState.Has(InvalidationFlags.Render));

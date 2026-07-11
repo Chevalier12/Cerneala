@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Media;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Text;
@@ -13,7 +14,7 @@ public readonly record struct TextAspect
         TextWrapping wrapping = TextWrapping.NoWrap,
         TextTrimming trimming = TextTrimming.None,
         float scale = 1,
-        Color? color = null,
+        Brush? foreground = null,
         ResourceId<FontResource>? fontResourceId = null)
     {
         if (string.IsNullOrWhiteSpace(fontFamily))
@@ -36,7 +37,7 @@ public readonly record struct TextAspect
 
         FontFamily = fontFamily;
         FontSize = fontSize;
-        Color = color ?? Color.Black;
+        Foreground = foreground;
         FontResourceId = fontResourceId;
         Wrapping = wrapping;
         Trimming = trimming;
@@ -47,7 +48,7 @@ public readonly record struct TextAspect
 
     public float FontSize { get; }
 
-    public Color Color { get; }
+    public Brush? Foreground { get; }
 
     public ResourceId<FontResource>? FontResourceId { get; }
 

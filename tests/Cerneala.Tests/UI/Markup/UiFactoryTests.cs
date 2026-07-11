@@ -163,6 +163,34 @@ public sealed class UiFactoryTests
     }
 
     [Fact]
+    public void CreateParsesForegroundShorthandResourceAndPropertyElement()
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+        TextBlock shorthand = Assert.IsType<TextBlock>(factory.Create(Read("<TextBlock Foreground=\"Tomato\" />")).Value);
+        TextBlock resource = Assert.IsType<TextBlock>(factory.Create(Read("""
+            <TextBlock Foreground="$Fill">
+              <TextBlock.Resources>
+                <ImageBrush Name="Fill" Source="fill.png" />
+              </TextBlock.Resources>
+            </TextBlock>
+            """)).Value);
+        TextBlock property = Assert.IsType<TextBlock>(factory.Create(Read("""
+            <TextBlock>
+              <TextBlock.Foreground>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="10,0">
+                  <GradientStop Offset="0" Color="White" />
+                  <GradientStop Offset="1" Color="Black" />
+                </LinearGradientBrush>
+              </TextBlock.Foreground>
+            </TextBlock>
+            """)).Value);
+
+        Assert.Equal(Color.Tomato, Assert.IsType<SolidColorBrush>(shorthand.Foreground).Color);
+        Assert.IsType<ImageBrush>(resource.Foreground);
+        Assert.IsType<LinearGradientBrush>(property.Foreground);
+    }
+
+    [Fact]
     public void CreateUsesTypedPropertyCoercion()
     {
         UiMarkupDocument document = Read("<TextBlock />");

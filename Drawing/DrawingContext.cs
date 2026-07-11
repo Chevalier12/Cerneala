@@ -64,6 +64,11 @@ public sealed class DrawingContext
         _commands.Add(DrawCommand.DrawText(textRun, position, color));
     }
 
+    public void DrawText(DrawTextRun textRun, DrawPoint position, IDrawBrush brush)
+    {
+        _commands.Add(DrawCommand.DrawText(textRun, position, brush));
+    }
+
     public void DrawImage(IDrawImage image, DrawRect destination, Color color)
     {
         _commands.Add(DrawCommand.DrawImage(image, destination, color));

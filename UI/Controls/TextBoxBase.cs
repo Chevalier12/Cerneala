@@ -5,6 +5,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
@@ -305,7 +306,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         if (DisplayText.Length > 0 && selectionBounds is DrawRect selectedTextClip)
         {
             context.DrawingContext.PushClip(selectedTextClip);
-            DrawText(context, content, Color.White);
+            DrawText(context, content, new SolidColorBrush(Color.White));
             context.DrawingContext.PopClip();
         }
 
@@ -564,15 +565,14 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         return new DrawRect(x, content.Y, right - x, MathF.Max(1, content.Height));
     }
 
-    private void DrawText(RenderContext context, LayoutRect content, Color color)
+    private void DrawText(RenderContext context, LayoutRect content, Brush? foreground)
     {
         GetTextRenderer().Render(
             context.DrawingContext,
             DisplayText,
-            CreateTextAspect(color),
+            CreateTextAspect(foreground),
             content.Width + horizontalTextOffset,
-            new DrawPoint(content.X - horizontalTextOffset, content.Y),
-            color);
+            new DrawPoint(content.X - horizontalTextOffset, content.Y));
     }
 
     private void DrawCaret(RenderContext context, LayoutRect content)
@@ -736,9 +736,9 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         return CreateTextAspect(Foreground);
     }
 
-    private TextAspect CreateTextAspect(Color color)
+    private TextAspect CreateTextAspect(Brush? foreground)
     {
-        return new TextAspect(FontFamily, FontSize, color: color, fontResourceId: FontResourceId);
+        return new TextAspect(FontFamily, FontSize, foreground: foreground, fontResourceId: FontResourceId);
     }
 
     private TextMeasurer GetTextMeasurer()

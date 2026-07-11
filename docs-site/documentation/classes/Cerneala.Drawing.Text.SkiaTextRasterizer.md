@@ -41,6 +41,8 @@ byte[] pixels = rasterized.RgbaPixels;
 
 `Rasterize` first delegates shaping to the configured `SkiaTextShaper`. The shaped glyph identifiers and positions are then packed into an `SKTextBlob`, drawn into an `SKBitmap` with antialiasing enabled, and returned as a `RasterizedText` instance.
 
+`RasterizeMask` renders the same shaped glyph coverage in white with premultiplied alpha. Backends cache this color-independent mask so changing a text brush does not reshape or rerasterize the glyph geometry.
+
 The generated bitmap uses `SKColorType.Rgba8888` and premultiplied alpha. The method creates at least a `1` by `1` result, including for text that produces no glyphs. For glyph content, the rasterizer computes bitmap dimensions from the text blob bounds, trims fully transparent columns from the left edge when possible, and records the adjusted drawing origin in `RasterizedText.OriginOffset`.
 
 The `Color` argument is converted directly to an `SKColor` using its red, green, blue, and alpha components.
@@ -55,6 +57,7 @@ The `Color` argument is converted directly to an `SKColor` using its red, green,
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Rasterize(DrawTextRun textRun, Color color)` | `RasterizedText` | Shapes and rasterizes `textRun` into an RGBA pixel buffer using the supplied text color. |
+| `RasterizeMask(DrawTextRun textRun)` | `RasterizedText` | Shapes and rasterizes a color-independent glyph coverage mask. |
 
 ## Exceptions
 | Exception | Condition |

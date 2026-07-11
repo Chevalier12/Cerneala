@@ -29,7 +29,7 @@ TextBlock label = new()
     Text = "Ready",
     FontFamily = "Default",
     FontSize = 18,
-    Foreground = Color.White,
+    Foreground = new SolidColorBrush(Color.White),
     TextWrapping = TextWrapping.NoWrap
 };
 

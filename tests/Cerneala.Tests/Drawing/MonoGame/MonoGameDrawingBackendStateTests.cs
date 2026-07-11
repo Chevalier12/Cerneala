@@ -155,11 +155,13 @@ public sealed class MonoGameDrawingBackendStateTests
         object redTexture = RuntimeHelpers.GetUninitializedObject(typeof(Texture2D));
         object greenTexture = RuntimeHelpers.GetUninitializedObject(typeof(Texture2D));
         object blueTexture = RuntimeHelpers.GetUninitializedObject(typeof(Texture2D));
+        object maskTexture = RuntimeHelpers.GetUninitializedObject(typeof(Texture2D));
         object value = Activator.CreateInstance(
             valueType,
             redTexture,
             greenTexture,
             blueTexture,
+            maskTexture,
             default(DrawPoint))!;
 
         cache.Add(key, value);

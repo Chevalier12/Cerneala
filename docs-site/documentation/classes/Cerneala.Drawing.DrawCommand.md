@@ -58,7 +58,9 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | --- | --- | --- |
 | `Kind` | `DrawCommandKind` | Identifies the command operation. |
 | `Rect` | `DrawRect` | Rectangle or destination bounds used by rectangle, ellipse, image, and clip commands. |
-| `Color` | `Color` | Color associated with fill, stroke, text, or image drawing. |
+| `Color` | `Color` | Color associated with color-based fill, stroke, text, or image drawing. |
+| `Brush` | `IDrawBrush?` | Brush associated with brush-based primitives or text. |
+| `BrushOpacity` | `float` | Additional command opacity composed with the brush opacity. |
 | `Thickness` | `float` | Stroke thickness for stroke commands. |
 | `Text` | `string?` | Text copied from the `DrawTextRun` for text commands. |
 | `TextRun` | `DrawTextRun?` | Full text run for text commands. |
@@ -77,6 +79,7 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `DrawEllipse(DrawRect bounds, Color color, float thickness)` | `DrawCommand` | Creates a `DrawEllipse` command and validates `thickness`. |
 | `DrawLine(DrawPoint start, DrawPoint end, Color color, float thickness)` | `DrawCommand` | Creates a `DrawLine` command, validates both points against the pixel range, and validates `thickness`. |
 | `DrawText(DrawTextRun textRun, DrawPoint position, Color color)` | `DrawCommand` | Creates a `DrawText` command with `Text`, `TextRun`, `Font`, `Position`, and `Color` populated. |
+| `DrawText(DrawTextRun textRun, DrawPoint position, IDrawBrush brush, float opacity = 1)` | `DrawCommand` | Creates a brush-based text command. The backend applies the brush through the glyph mask. |
 | `DrawImage(IDrawImage image, DrawRect destination, Color color)` | `DrawCommand` | Creates a `DrawImage` command with `Image`, destination `Rect`, and `Color` populated. |
 | `PushClip(DrawRect rect)` | `DrawCommand` | Creates a `PushClip` command for the supplied clipping rectangle. |
 | `PopClip()` | `DrawCommand` | Creates a `PopClip` command. |
@@ -89,7 +92,9 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `DrawEllipse` | `ArgumentOutOfRangeException` | `thickness` is zero, negative, non-finite, or above the valid pixel-size range. |
 | `DrawLine` | `ArgumentOutOfRangeException` | `start` or `end` has a coordinate outside the valid pixel range, or `thickness` is invalid. |
 | `DrawText` | `ArgumentNullException` | `textRun` is null. |
+| `DrawText` | `ArgumentNullException` | `brush` is null for the brush overload. |
 | `DrawText` | `ArgumentOutOfRangeException` | `position` has a coordinate outside the valid pixel range. |
+| `DrawText` | `ArgumentOutOfRangeException` | `opacity` is non-finite or outside `0` through `1`. |
 | `DrawImage` | `ArgumentNullException` | `image` is null. |
 
 ## Applies To

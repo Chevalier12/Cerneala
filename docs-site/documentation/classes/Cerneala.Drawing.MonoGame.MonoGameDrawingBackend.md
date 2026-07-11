@@ -77,9 +77,13 @@ through the current scale. Invalid scale values are rejected by
 `UiCoordinateMapper.ValidateScale`.
 
 Text rendering requires a `SkiaTextRasterizer` supplied to the constructor. If
-no rasterizer is provided, text draw commands are ignored. Rasterized text
-textures are cached by text, font, size, and color, then disposed when the
-backend is disposed.
+no rasterizer is provided, text draw commands are ignored. Color-independent
+glyph masks are cached by text, font, size, DPI scale, and subpixel phase.
+Solid brushes tint the cached subpixel masks directly. Gradient, image,
+drawing, and visual brushes are rendered into a device-local texture and
+multiplied by the grayscale glyph mask. All text and brush textures are scoped
+to the backend's `GraphicsDevice` and cleared on scale changes, device reset,
+or disposal.
 
 Image commands must use `MonoGameImage`. Passing another `IDrawImage`
 implementation to `DrawCommand.DrawImage` and rendering it with this backend
@@ -115,7 +119,7 @@ throws `InvalidOperationException`.
 | `DrawEllipse` | Draws an approximated ellipse ring with line segments. Empty or negative-size mapped bounds are ignored. |
 | `DrawLine` | Draws a rotated `whitePixel` segment between the mapped start and end points. A zero-length line draws a square at the start point. |
 | `DrawImage` | Draws a `MonoGameImage.Texture` into the mapped destination rectangle with the command color as tint. |
-| `DrawText` | Rasterizes and caches text through `SkiaTextRasterizer` when one is available, then draws the cached texture at the mapped text position. |
+| `DrawText` | Reuses cached glyph masks, then applies a solid, gradient, image, drawing, or visual brush at the mapped text position. |
 | `PushClip` | Pushes the mapped rectangle onto the clip stack and assigns the intersected clip to `GraphicsDevice.ScissorRectangle`. |
 | `PopClip` | Pops the clip stack and assigns the resulting clip to `GraphicsDevice.ScissorRectangle`. |
 

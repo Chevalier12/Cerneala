@@ -7,6 +7,7 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Text;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls;
 
@@ -77,8 +78,8 @@ public sealed class TextBoxEditingVisualContractTests
 
         DrawCommand[] commands = Render(textBox).ToArray();
         int selectionIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.FillRectangle && command.Color == SelectionColor);
-        int normalTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == Color.Black);
-        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == Color.White);
+        int normalTextIndex = Array.FindIndex(commands, command => HasSolidTextBrush(command, Color.Black));
+        int selectedTextIndex = Array.FindIndex(commands, command => HasSolidTextBrush(command, Color.White));
 
         Assert.True(normalTextIndex < selectionIndex);
         Assert.True(selectionIndex < selectedTextIndex);
@@ -95,8 +96,8 @@ public sealed class TextBoxEditingVisualContractTests
             .ToArray();
 
         Assert.Equal(2, textCommands.Length);
-        Assert.Equal(Color.Black, textCommands[0].Color);
-        Assert.Equal(Color.White, textCommands[1].Color);
+        Assert.True(HasSolidTextBrush(textCommands[0], Color.Black));
+        Assert.True(HasSolidTextBrush(textCommands[1], Color.White));
     }
 
     [Fact]
@@ -106,9 +107,9 @@ public sealed class TextBoxEditingVisualContractTests
         textBox.Select(1, 3);
 
         DrawCommand[] commands = Render(textBox).ToArray();
-        int normalTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == Color.Black);
+        int normalTextIndex = Array.FindIndex(commands, command => HasSolidTextBrush(command, Color.Black));
         int selectionIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.FillRectangle && command.Color == textBox.SelectionBackground);
-        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == Color.White);
+        int selectedTextIndex = Array.FindIndex(commands, command => HasSolidTextBrush(command, Color.White));
 
         Assert.True(normalTextIndex < selectionIndex);
         Assert.True(selectionIndex < selectedTextIndex);
@@ -123,9 +124,9 @@ public sealed class TextBoxEditingVisualContractTests
         DrawCommand[] commands = Render(textBox).ToArray();
         DrawCommand selectedText = Render(textBox)
             .Where(command => command.Kind == DrawCommandKind.DrawText)
-            .Single(command => command.Color == Color.White);
+            .Single(command => HasSolidTextBrush(command, Color.White));
         int clipIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.PushClip);
-        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == Color.White);
+        int selectedTextIndex = Array.FindIndex(commands, command => HasSolidTextBrush(command, Color.White));
 
         Assert.Equal("abcd", selectedText.Text);
         Assert.True(clipIndex < selectedTextIndex);
@@ -272,7 +273,7 @@ public sealed class TextBoxEditingVisualContractTests
 
     private static TextAspect CreateTextAspect(TextBox textBox)
     {
-        return new TextAspect(textBox.FontFamily, textBox.FontSize, color: textBox.Foreground, fontResourceId: textBox.FontResourceId);
+        return new TextAspect(textBox.FontFamily, textBox.FontSize, foreground: textBox.Foreground, fontResourceId: textBox.FontResourceId);
     }
 
     private static float ContentX(TextBox textBox)
@@ -305,5 +306,12 @@ public sealed class TextBoxEditingVisualContractTests
             RenderLayer.Default,
             new RenderCounters()));
         return commands;
+    }
+
+    private static bool HasSolidTextBrush(DrawCommand command, Color color)
+    {
+        return command.Kind == DrawCommandKind.DrawText &&
+            command.Brush is SolidColorBrush brush &&
+            brush.Color == color;
     }
 }

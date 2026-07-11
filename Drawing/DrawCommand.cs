@@ -125,6 +125,19 @@ public readonly record struct DrawCommand
         return new DrawCommand(DrawCommandKind.DrawText, default, color, 0, textRun.Text, textRun, position, default, null, textRun.Font, null, 1);
     }
 
+    public static DrawCommand DrawText(DrawTextRun textRun, DrawPoint position, IDrawBrush brush, float opacity = 1)
+    {
+        ArgumentNullException.ThrowIfNull(textRun);
+        ThrowIfPointOutsidePixelRange(position, nameof(position));
+        ArgumentNullException.ThrowIfNull(brush);
+        if (!float.IsFinite(opacity) || opacity < 0 || opacity > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(opacity));
+        }
+
+        return new DrawCommand(DrawCommandKind.DrawText, default, default, 0, textRun.Text, textRun, position, default, null, textRun.Font, brush, opacity);
+    }
+
     public static DrawCommand DrawImage(IDrawImage image, DrawRect destination, Color color)
     {
         ArgumentNullException.ThrowIfNull(image);

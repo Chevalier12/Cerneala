@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Text;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.UI.Text;
 
@@ -14,15 +15,14 @@ public sealed class TextRendererWrapContractTests
         TextMeasurer measurer = new(FontResolver.Default, LineBreakService.Default, cache);
         TextRenderer renderer = new(FontResolver.Default, measurer);
         DrawCommandList commands = new();
-        TextAspect aspect = new("Default", 16, TextWrapping.Wrap);
+        TextAspect aspect = new("Default", 16, TextWrapping.Wrap, foreground: new SolidColorBrush(Color.White));
 
         TextMeasureResult measurement = renderer.Render(
             new DrawingContext(commands),
             "ABCD",
             aspect,
             16,
-            new DrawPoint(4, 6),
-            Color.White);
+            new DrawPoint(4, 6));
 
         Assert.Equal(measurement.LineCount, commands.Count);
         Assert.True(commands.Count > 1);
@@ -45,7 +45,7 @@ public sealed class TextRendererWrapContractTests
         TextMeasurer measurer = new(resolver, LineBreakService.Default, cache);
         TextRenderer renderer = new(resolver, measurer);
         DrawCommandList commands = new();
-        TextAspect aspect = new("Default", fontSize, TextWrapping.Wrap, fontResourceId: id);
+        TextAspect aspect = new("Default", fontSize, TextWrapping.Wrap, foreground: new SolidColorBrush(Color.White), fontResourceId: id);
         Assert.True(TextShaper.Default.TryMeasureLineHeight(new DrawTextRun(font, "Ag", fontSize), out float expected));
 
         renderer.Render(
@@ -53,8 +53,7 @@ public sealed class TextRendererWrapContractTests
             "ABCD",
             aspect,
             14,
-            new DrawPoint(4, 6),
-            Color.White);
+            new DrawPoint(4, 6));
 
         Assert.True(commands.Count >= 2, "Expected wrapping to produce at least two draw commands.");
         float lineAdvance = commands[1].Position.Y - commands[0].Position.Y;
@@ -67,10 +66,10 @@ public sealed class TextRendererWrapContractTests
         TextLayoutCache cache = new();
         TextMeasurer measurer = new(FontResolver.Default, LineBreakService.Default, cache);
         TextRenderer renderer = new(FontResolver.Default, measurer);
-        TextAspect aspect = new("Default", 16, TextWrapping.Wrap);
+        TextAspect aspect = new("Default", 16, TextWrapping.Wrap, foreground: new SolidColorBrush(Color.White));
 
-        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", aspect, 16, default, Color.White);
-        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", aspect, 16, default, Color.White);
+        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", aspect, 16, default);
+        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", aspect, 16, default);
 
         Assert.Equal(1, cache.Misses);
         Assert.Equal(1, cache.Hits);

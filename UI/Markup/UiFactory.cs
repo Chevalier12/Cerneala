@@ -200,7 +200,7 @@ public sealed class UiFactory
         }
 
         string propertyName = childNode.Name[prefix.Length..];
-        if (propertyName is not ("Background" or "BorderBrush"))
+        if (propertyName is not ("Background" or "Foreground" or "BorderBrush"))
         {
             return false;
         }
@@ -226,6 +226,10 @@ public sealed class UiFactory
         if (propertyName == "Background")
         {
             control.Background = result.Value;
+        }
+        else if (propertyName == "Foreground")
+        {
+            control.Foreground = result.Value;
         }
         else
         {

@@ -2066,12 +2066,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private static bool IsBrushPropertyElement(XElement owner, XElement child)
+        private bool IsBrushPropertyElement(XElement owner, XElement child)
         {
             return GetBrushPropertyName(owner, child) is not null;
         }
 
-        private static string? GetBrushPropertyName(XElement owner, XElement child)
+        private string? GetBrushPropertyName(XElement owner, XElement child)
         {
             string prefix = owner.Name.LocalName + ".";
             if (!child.Name.LocalName.StartsWith(prefix, StringComparison.Ordinal))
@@ -2080,7 +2080,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             string propertyName = child.Name.LocalName.Substring(prefix.Length);
-            return propertyName is "Background" or "BorderBrush" ? propertyName : null;
+            PropertySpec? property = FindPropertySpec(
+                owner.Name.LocalName,
+                propertyName,
+                isRoot: ReferenceEquals(owner, document.Root));
+            return property?.ValueKind == MarkupValueKind.Brush && property.Assignable ? propertyName : null;
         }
 
         private void EmitRuntimeResources(XElement owner, string ownerVariable)

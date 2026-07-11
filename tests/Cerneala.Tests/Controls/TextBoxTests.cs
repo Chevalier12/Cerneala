@@ -293,7 +293,7 @@ public sealed class TextBoxTests
 
     private static TextAspect CreateTextAspect(TextBox textBox)
     {
-        return new TextAspect(textBox.FontFamily, textBox.FontSize, color: textBox.Foreground, fontResourceId: textBox.FontResourceId);
+        return new TextAspect(textBox.FontFamily, textBox.FontSize, foreground: textBox.Foreground, fontResourceId: textBox.FontResourceId);
     }
 
     private static float ContentX(TextBox textBox)

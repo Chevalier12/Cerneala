@@ -33,8 +33,9 @@ Generated from `.`.
 |   |-- plans/
 |   |   |-- 2026-07-10-inline-component-template-markup.md
 |   |   |-- 2026-07-10-window-windowsdx-migration.md
-|   |   |-- 2026-07-11-borderbrush-brush-migration.md
-|   |   +-- 2026-07-11-brush-types-and-rendering.md
+|   |   |-- 2026-07-11-background-and-borderbrush-brush-migration.md
+|   |   |-- 2026-07-11-brush-types-and-rendering.md
+|   |   +-- 2026-07-11-foreground-brush-migration.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -218,6 +219,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.DataAspectCondition_TData_.md
 |   |   |   |-- Cerneala.UI.Aspect.DataAspectCondition_TData_TValue_.md
 |   |   |   |-- Cerneala.UI.Aspect.DefaultAspectPackage.md
+|   |   |   |-- Cerneala.UI.Aspect.DefaultAspectTokens.Brush.md
 |   |   |   |-- Cerneala.UI.Aspect.DefaultAspectTokens.Color.md
 |   |   |   |-- Cerneala.UI.Aspect.DefaultAspectTokens.md
 |   |   |   |-- Cerneala.UI.Aspect.DefaultAspectTokens.Motion.md
@@ -250,6 +252,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.ContentControl.md
 |   |   |   |-- Cerneala.UI.Controls.ContentPresenter.md
 |   |   |   |-- Cerneala.UI.Controls.ContentPresenter.ReferenceContentEqualityComparer.md
+|   |   |   |-- Cerneala.UI.Controls.Control.Background.md
 |   |   |   |-- Cerneala.UI.Controls.Control.BorderBrush.md
 |   |   |   |-- Cerneala.UI.Controls.Control.md
 |   |   |   |-- Cerneala.UI.Controls.ControlTextFont.md

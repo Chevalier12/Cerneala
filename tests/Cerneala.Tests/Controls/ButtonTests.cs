@@ -80,7 +80,7 @@ public sealed class ButtonTests
         {
             Content = "Go",
             Background = new Cerneala.UI.Media.SolidColorBrush(Color.White),
-            Foreground = Color.Black
+            Foreground = new Cerneala.UI.Media.SolidColorBrush(Color.Black)
         };
         root.VisualChildren.Add(button);
         button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 20)));

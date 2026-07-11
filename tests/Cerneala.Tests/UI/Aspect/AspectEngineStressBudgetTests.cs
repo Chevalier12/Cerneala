@@ -64,7 +64,7 @@ public sealed class AspectEngineStressBudgetTests
             "text.selected",
             AspectLayer.App,
             new AspectTarget(typeof(TextBlock), conditions: [AspectCondition.State(AspectState.Selected)]),
-            [new AspectDeclaration(Control.ForegroundProperty, AspectValue<Color>.Literal(Color.Black))],
+            [new AspectDeclaration(Control.ForegroundProperty, AspectValue<Cerneala.UI.Media.Brush?>.Literal(new Cerneala.UI.Media.SolidColorBrush(Color.Black)))],
             2);
         AspectCatalog catalog = new AspectRegistry()
             .Register(AspectPackage.Create("stress").Components(components =>

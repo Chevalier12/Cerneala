@@ -58,7 +58,8 @@ Clip commands are recorded in order. `PushClip` adds a rectangular clip command,
 | `FillEllipse(DrawRect, Color)` | `void` | Appends a `FillEllipse` command for the specified bounds and color. |
 | `DrawEllipse(DrawRect, Color, float)` | `void` | Appends a `DrawEllipse` stroke command with the specified bounds, color, and positive thickness. |
 | `DrawLine(DrawPoint, DrawPoint, Color, float)` | `void` | Appends a `DrawLine` command from `start` to `end` with the specified color and positive thickness. |
-| `DrawText(DrawTextRun, DrawPoint, Color)` | `void` | Appends a `DrawText` command for the text run at the specified position and color. |
+| `DrawText(DrawTextRun, DrawPoint, Color)` | `void` | Appends a compatibility `DrawText` command for the text run at the specified position and color. |
+| `DrawText(DrawTextRun, DrawPoint, IDrawBrush)` | `void` | Appends a `DrawText` command that applies the complete brush through the glyph coverage mask. |
 | `DrawImage(IDrawImage, DrawRect, Color)` | `void` | Appends a `DrawImage` command for the image, destination rectangle, and tint color. |
 | `PushClip(DrawRect)` | `void` | Appends a `PushClip` command for the specified clip rectangle. |
 | `PopClip()` | `void` | Appends a `PopClip` command. |

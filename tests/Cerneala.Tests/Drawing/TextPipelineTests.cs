@@ -86,6 +86,25 @@ public sealed class TextPipelineTests
     }
 
     [Fact]
+    public void TextRasterizerMaskIsColorIndependentGlyphCoverage()
+    {
+        SystemFontSource fonts = new();
+        DrawTextRun textRun = new(fonts.LoadFont("Arial", 16), "Cerneala", 16);
+        SkiaTextRasterizer rasterizer = new();
+
+        RasterizedText mask = rasterizer.RasterizeMask(textRun);
+        RasterizedText white = rasterizer.Rasterize(textRun, Color.White);
+
+        Assert.Equal(white.ShapeResult.Text, mask.ShapeResult.Text);
+        Assert.Equal(white.ShapeResult.GlyphCount, mask.ShapeResult.GlyphCount);
+        Assert.Equal(white.ShapeResult.AdvanceWidth, mask.ShapeResult.AdvanceWidth);
+        Assert.Equal(white.ShapeResult.GlyphIds, mask.ShapeResult.GlyphIds);
+        Assert.Equal(white.ShapeResult.GlyphPositions, mask.ShapeResult.GlyphPositions);
+        Assert.Equal(white.OriginOffset, mask.OriginOffset);
+        Assert.Equal(white.RgbaPixels, mask.RgbaPixels);
+    }
+
+    [Fact]
     public void TextRasterizerPreservesIndependentRgbSubpixelCoverageUnderDpiTransform()
     {
         SystemFontSource fonts = new();

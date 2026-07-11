@@ -46,6 +46,7 @@ public static class DefaultAspectPackage
         tokens.Set(DefaultAspectTokens.Brush.Background, new SolidColorBrush(new Color(248, 250, 252)));
         tokens.Set(DefaultAspectTokens.Brush.Surface, new SolidColorBrush(new Color(255, 255, 255)));
         tokens.Set(DefaultAspectTokens.Brush.Border, new SolidColorBrush(new Color(148, 163, 184)));
+        tokens.Set(DefaultAspectTokens.Brush.Foreground, new SolidColorBrush(new Color(28, 35, 48)));
         tokens.Set(DefaultAspectTokens.Typography.FontFamily, "Default");
         tokens.Set(DefaultAspectTokens.Typography.FontSize, 16f);
         tokens.Set(DefaultAspectTokens.Spacing.ControlPadding, new Thickness(8));
@@ -53,7 +54,7 @@ public static class DefaultAspectPackage
         tokens.Set(DefaultAspectTokens.Motion.Fast, new TweenSpec<float>(TimeSpan.FromMilliseconds(120)));
         tokens.Set(DefaultAspectTokens.Motion.Normal, new TweenSpec<float>(TimeSpan.FromMilliseconds(200)));
         tokens.Set(ButtonTokens.Background, new SolidColorBrush(new Color(255, 255, 255)));
-        tokens.Set(ButtonTokens.Foreground, new Color(28, 35, 48));
+        tokens.Set(ButtonTokens.Foreground, new SolidColorBrush(new Color(28, 35, 48)));
         tokens.Set(ButtonTokens.BorderBrush, new SolidColorBrush(new Color(148, 163, 184)));
         tokens.Set(ButtonTokens.HoverBackground, new SolidColorBrush(new Color(37, 99, 235)));
         tokens.Set(ButtonTokens.PressedBackground, new SolidColorBrush(new Color(148, 163, 184)));
@@ -71,6 +72,7 @@ public static class DefaultAspectPackage
         environment.Set(DefaultAspectTokens.Brush.Background, new SolidColorBrush(new Color(248, 250, 252)));
         environment.Set(DefaultAspectTokens.Brush.Surface, new SolidColorBrush(new Color(255, 255, 255)));
         environment.Set(DefaultAspectTokens.Brush.Border, new SolidColorBrush(new Color(148, 163, 184)));
+        environment.Set(DefaultAspectTokens.Brush.Foreground, new SolidColorBrush(new Color(28, 35, 48)));
         environment.Set(DefaultAspectTokens.Typography.FontFamily, "Default");
         environment.Set(DefaultAspectTokens.Typography.FontSize, 16f);
         environment.Set(DefaultAspectTokens.Spacing.ControlPadding, new Thickness(8));
@@ -78,7 +80,7 @@ public static class DefaultAspectPackage
         environment.Set(DefaultAspectTokens.Motion.Fast, new TweenSpec<float>(TimeSpan.FromMilliseconds(120)));
         environment.Set(DefaultAspectTokens.Motion.Normal, new TweenSpec<float>(TimeSpan.FromMilliseconds(200)));
         environment.Set(ButtonTokens.Background, new SolidColorBrush(new Color(255, 255, 255)));
-        environment.Set(ButtonTokens.Foreground, new Color(28, 35, 48));
+        environment.Set(ButtonTokens.Foreground, new SolidColorBrush(new Color(28, 35, 48)));
         environment.Set(ButtonTokens.BorderBrush, new SolidColorBrush(new Color(148, 163, 184)));
         environment.Set(ButtonTokens.HoverBackground, new SolidColorBrush(new Color(37, 99, 235)));
         environment.Set(ButtonTokens.PressedBackground, new SolidColorBrush(new Color(148, 163, 184)));

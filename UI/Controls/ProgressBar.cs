@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Controls;
 
@@ -10,7 +11,7 @@ public class ProgressBar : RangeBase
     public ProgressBar()
     {
         Background = new Cerneala.UI.Media.SolidColorBrush(new Color(230, 230, 230));
-        Foreground = new Color(65, 135, 230);
+        Foreground = new SolidColorBrush(new Color(65, 135, 230));
         BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(120, 120, 120));
         BorderThickness = new Thickness(1);
     }
@@ -31,9 +32,9 @@ public class ProgressBar : RangeBase
         }
 
         float fillWidth = rect.Width * MathF.Min(MathF.Max(ValueRatio, 0), 1);
-        if (Foreground.A != 0 && fillWidth > 0 && rect.Height > 0)
+        if (Foreground is { } foreground && fillWidth > 0 && rect.Height > 0)
         {
-            context.DrawingContext.FillRectangle(new DrawRect(rect.X, rect.Y, fillWidth, rect.Height), Foreground);
+            context.DrawingContext.FillRectangle(new DrawRect(rect.X, rect.Y, fillWidth, rect.Height), foreground);
         }
 
         float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Top), MathF.Max(BorderThickness.Right, BorderThickness.Bottom));

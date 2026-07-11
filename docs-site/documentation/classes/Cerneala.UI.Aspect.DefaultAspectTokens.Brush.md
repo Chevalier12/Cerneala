@@ -25,7 +25,7 @@ AspectDeclaration declaration = new(
 
 ## Remarks
 
-The tokens carry nullable `Brush` values, so packages can supply solid, gradient, image, drawing, or visual brushes. `DefaultAspectPackage` supplies solid brushes for all three built-in values.
+The tokens carry nullable `Brush` values, so packages can supply solid, gradient, image, drawing, or visual brushes. `DefaultAspectPackage` supplies solid brushes for all four built-in values.
 
 ## Fields
 
@@ -34,6 +34,7 @@ The tokens carry nullable `Brush` values, so packages can supply solid, gradient
 | `Background` | `AspectToken<Brush?>` | `brush.background` | `new SolidColorBrush(new Color(248, 250, 252))` |
 | `Surface` | `AspectToken<Brush?>` | `brush.surface` | `new SolidColorBrush(new Color(255, 255, 255))` |
 | `Border` | `AspectToken<Brush?>` | `brush.border` | `new SolidColorBrush(new Color(148, 163, 184))` |
+| `Foreground` | `AspectToken<Brush?>` | `brush.foreground` | `new SolidColorBrush(new Color(28, 35, 48))` |
 
 ## Applies to
 

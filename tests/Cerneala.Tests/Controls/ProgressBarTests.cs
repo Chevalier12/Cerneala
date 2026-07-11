@@ -17,7 +17,7 @@ public sealed class ProgressBarTests
             Minimum = 0,
             Maximum = 100,
             Value = 25,
-            Foreground = Color.White
+            Foreground = new Cerneala.UI.Media.SolidColorBrush(Color.White)
         };
         root.VisualChildren.Add(progress);
         root.ProcessFrame();

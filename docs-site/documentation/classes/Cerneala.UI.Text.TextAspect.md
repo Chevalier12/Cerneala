@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Text/TextAspect.cs`
 
-Describes the font, sizing, wrapping, trimming, scale, color, and optional font resource used by Cerneala text services.
+Describes the font, sizing, wrapping, trimming, scale, foreground brush, and optional font resource used by Cerneala text services.
 
 ```csharp
 public readonly record struct TextAspect
@@ -22,13 +22,14 @@ Create a text aspect for wrapped text and convert it to a draw text run after re
 
 ```csharp
 using Cerneala.Drawing;
+using Cerneala.UI.Media;
 using Cerneala.UI.Text;
 
 TextAspect aspect = new(
     fontFamily: "Arial",
     fontSize: 16,
     wrapping: TextWrapping.Wrap,
-    color: Color.Black);
+    foreground: new SolidColorBrush(Color.Black));
 
 ResolvedTextFont font = FontResolver.Default.Resolve(aspect);
 DrawTextRun run = aspect.ToDrawTextRun(font, "Hello");
@@ -38,7 +39,7 @@ DrawTextRun run = aspect.ToDrawTextRun(font, "Hello");
 
 `TextAspect` is an immutable value passed through text measurement, layout, caret, and rendering services. `TextMeasurer` uses it when building a `TextLayoutKey`, `FontResolver` uses it to resolve either `FontResourceId` or `FontFamily` plus the effective size, and `TextRenderer` uses it when drawing each measured line.
 
-The constructor requires a non-empty font family, positive finite `fontSize`, positive finite `scale`, supported `TextWrapping` and `TextTrimming` values, and an effective text size no greater than `16384`. If `color` is omitted, `Color` is set to `Color.Black`.
+The constructor requires a non-empty font family, positive finite `fontSize`, positive finite `scale`, supported `TextWrapping` and `TextTrimming` values, and an effective text size no greater than `16384`. `Foreground` may be `null`; measurement and shaping remain independent of the brush, while `TextRenderer` skips drawing when no foreground is supplied.
 
 `ToDrawTextRun` requires a non-null `ResolvedTextFont` and non-null text. The resulting `DrawTextRun` uses the resolved draw font, the supplied text, and `FontSize * Scale` as its size.
 
@@ -46,7 +47,7 @@ The constructor requires a non-empty font family, positive finite `fontSize`, po
 
 | Signature | Description |
 | --- | --- |
-| `TextAspect(string fontFamily, float fontSize, TextWrapping wrapping = TextWrapping.NoWrap, TextTrimming trimming = TextTrimming.None, float scale = 1, Color? color = null, ResourceId<FontResource>? fontResourceId = null)` | Initializes an immutable text aspect and validates font, size, scale, wrapping, trimming, and effective size values. |
+| `TextAspect(string fontFamily, float fontSize, TextWrapping wrapping = TextWrapping.NoWrap, TextTrimming trimming = TextTrimming.None, float scale = 1, Brush? foreground = null, ResourceId<FontResource>? fontResourceId = null)` | Initializes an immutable text aspect and validates font, size, scale, wrapping, trimming, and effective size values. |
 
 ## Properties
 
@@ -54,7 +55,7 @@ The constructor requires a non-empty font family, positive finite `fontSize`, po
 | --- | --- | --- |
 | `FontFamily` | `string` | Gets the fallback or family name used when no font resource id is supplied. |
 | `FontSize` | `float` | Gets the base font size before `Scale` is applied. |
-| `Color` | `Color` | Gets the text color stored in the aspect. Defaults to `Color.Black`. |
+| `Foreground` | `Brush?` | Gets the brush used by `TextRenderer`. The brush is excluded from text layout cache keys. |
 | `FontResourceId` | `ResourceId<FontResource>?` | Gets the optional font resource id resolved by `FontResolver` before falling back to `FontFamily`. |
 | `Wrapping` | `TextWrapping` | Gets the wrapping mode used by measurement and line breaking. |
 | `Trimming` | `TextTrimming` | Gets the trimming mode included in layout cache keys. |

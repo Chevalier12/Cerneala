@@ -47,7 +47,7 @@ public static class UiMarkupSchema
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(UIElement.IsVisible), (element, value) => element.IsVisible = ParseBool(value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(UIElement.Margin), (element, value) => element.Margin = ParseThickness(value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.Background), (element, value) => ((Control)element).Background = ParseBrush((Control)element, value)))
-            .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.Foreground), (element, value) => ((Control)element).Foreground = ParseColor(value)))
+            .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.Foreground), (element, value) => ((Control)element).Foreground = ParseBrush((Control)element, value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.BorderBrush), (element, value) => ((Control)element).BorderBrush = ParseBrush((Control)element, value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.BorderThickness), (element, value) => ((Control)element).BorderThickness = ParseThickness(value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.Padding), (element, value) => ((Control)element).Padding = ParseThickness(value)))

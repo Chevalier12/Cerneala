@@ -3,6 +3,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Text;
 
@@ -107,7 +108,7 @@ public sealed class ButtonContentArchitectureTests
         Button button = new()
         {
             Content = "Go",
-            Foreground = Color.White,
+            Foreground = new SolidColorBrush(Color.White),
             TextRenderer = renderer
         };
         DrawCommandList commands = new();
@@ -153,8 +154,7 @@ public sealed class ButtonContentArchitectureTests
             string text,
             TextAspect aspect,
             float availableWidth,
-            DrawPoint position,
-            Color color)
+            DrawPoint position)
         {
             Calls++;
             LastText = text;

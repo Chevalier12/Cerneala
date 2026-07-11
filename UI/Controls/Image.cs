@@ -97,7 +97,7 @@ public class Image : Control
             return;
         }
 
-        context.DrawingContext.DrawImage(source, CalculateDestinationRect(source, context.Bounds), Foreground);
+        context.DrawingContext.DrawImage(source, CalculateDestinationRect(source, context.Bounds), Color.White);
     }
 
     private IDrawImage? ResolveSource()

@@ -30,7 +30,7 @@ ProgressBar progress = new()
     Minimum = 0,
     Maximum = 100,
     Value = 25,
-    Foreground = Color.White
+    Foreground = new SolidColorBrush(Color.White)
 };
 
 float ratio = progress.ValueRatio; // 0.25f

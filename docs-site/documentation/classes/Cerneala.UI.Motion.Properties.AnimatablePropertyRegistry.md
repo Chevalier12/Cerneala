@@ -62,9 +62,9 @@ registry.Register(
 
 `AnimatablePropertyRegistry` is created by `MotionSystem` and exposed through `MotionSystem.AnimatableProperties`. It is the allow-list used by motion transactions and property-motion plumbing to decide which `UiProperty` instances have animation metadata.
 
-The constructor registers the built-in motion-aware properties for controls and elements. `Background` and `BorderBrush` use `BrushMixer`; color properties use `ColorMixer`; thickness properties use `ThicknessMixer`; opacity, transform parts, and scalar transform properties use `FloatMixer` or `TransformMixer`. The default specs are short tweens ranging from 120 to 180 milliseconds.
+The constructor registers the built-in motion-aware properties for controls and elements. `Background`, `Foreground`, and `BorderBrush` use `BrushMixer`; color properties use `ColorMixer`; thickness properties use `ThicknessMixer`; opacity, transform parts, and scalar transform properties use `FloatMixer` or `TransformMixer`. The default specs are short tweens ranging from 120 to 180 milliseconds.
 
-Built-in properties marked safe for implicit animation include background and border brushes, opacity, render transform, translation, scale, rotation, and skew properties. Layout-affecting thickness properties such as border thickness, padding, and margin are registered but are not marked safe for implicit animation.
+Built-in properties marked safe for implicit animation include background, foreground, and border brushes, opacity, render transform, translation, scale, rotation, and skew properties. Layout-affecting thickness properties such as border thickness, padding, and margin are registered but are not marked safe for implicit animation.
 
 `Register` replaces any existing entry for the same `UiProperty`. `TryGet` returns `false` for unregistered properties, while `Get` throws an `InvalidOperationException` that includes the property's diagnostic name.
 

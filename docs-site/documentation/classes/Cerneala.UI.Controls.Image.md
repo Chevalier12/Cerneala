@@ -66,7 +66,7 @@ private sealed class PreviewImage(int width, int height) : IDrawImage
 
 When `UseIntrinsicSize` is `true`, measuring returns the resolved image width and height. When it is `false`, measuring returns `LayoutSize.Zero`, while rendering can still draw into the arranged bounds. Source changes and intrinsic-size mode changes invalidate measure and render as appropriate.
 
-Rendering skips null sources and non-positive render bounds. For a valid source, the rendered destination rectangle is centered inside the arranged bounds and scaled uniformly with `MathF.Min`, so the original aspect ratio is preserved instead of stretched. The inherited `Foreground` color is passed to the drawing context when drawing the image.
+Rendering skips null sources and non-positive render bounds. For a valid source, the rendered destination rectangle is centered inside the arranged bounds and scaled uniformly with `MathF.Min`, so the original aspect ratio is preserved instead of stretched. Images are drawn with an opaque white tint; `Foreground` is reserved for foreground content such as text and no longer tints image pixels.
 
 Resource-backed images participate in resource render dependencies. If a `ResourceDependencyTracker` is available locally or through the root, the control records dependency effects; intrinsic-size mode decides whether resource changes affect both measure and render or render only. If an `ImageResource` is path-backed and no root image cache or loader is available, resolving that resource can throw from `ImageResource.Resolve`.
 

@@ -161,8 +161,7 @@ public class TextBlock : Control
             Text,
             aspect,
             context.Bounds.Width,
-            new DrawPoint(context.Bounds.X, context.Bounds.Y),
-            Foreground);
+            new DrawPoint(context.Bounds.X, context.Bounds.Y));
 
         if (lastMeasurement is null || lastMeasurement.CacheKey != measurement.CacheKey)
         {
@@ -178,7 +177,7 @@ public class TextBlock : Control
             FontSize,
             wrapping: TextWrapping,
             trimming: TextTrimming,
-            color: Foreground,
+            foreground: Foreground,
             fontResourceId: FontResourceId);
     }
 

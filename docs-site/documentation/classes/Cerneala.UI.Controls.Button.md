@@ -110,7 +110,7 @@ When a template or component template supplies a template child, layout is deleg
 | `CommandParameterProperty` | `UiProperty<object?>` | `ButtonBase` | Identifies the `CommandParameter` UI property. |
 | `IsPressedProperty` | `UiProperty<bool>` | `ButtonBase` | Identifies the `IsPressed` UI property. |
 | `BackgroundProperty` | `UiProperty<Brush?>` | `Control` | Identifies the `Background` UI property. |
-| `ForegroundProperty` | `UiProperty<Color>` | `Control` | Identifies the inherited `Foreground` UI property. |
+| `ForegroundProperty` | `UiProperty<Brush?>` | `Control` | Identifies the inherited `Foreground` UI property. |
 | `BorderBrushProperty` | `UiProperty<Brush?>` | `Control` | Identifies the `BorderBrush` UI property. |
 | `BorderThicknessProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `BorderThickness` UI property. |
 | `PaddingProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `Padding` UI property. |

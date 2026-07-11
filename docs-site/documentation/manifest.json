@@ -675,6 +675,11 @@
     "source": "UI/Controls/Control.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.Control.Foreground",
+    "file": "documentation/classes/Cerneala.UI.Controls.Control.Foreground.md",
+    "source": "UI/Controls/Control.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Control.BorderBrush",
     "file": "documentation/classes/Cerneala.UI.Controls.Control.BorderBrush.md",
     "source": "UI/Controls/Control.cs"

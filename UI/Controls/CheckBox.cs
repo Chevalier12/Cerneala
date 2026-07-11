@@ -14,7 +14,7 @@ public class CheckBox : ToggleButton
     public CheckBox()
     {
         BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(100, 110, 125));
-        Foreground = new Color(35, 45, 60);
+        Foreground = new SolidColorBrush(new Color(35, 45, 60));
         Background = null;
     }
 
@@ -37,7 +37,7 @@ public class CheckBox : ToggleButton
         float boxY = context.Bounds.Y + insets.Top + MathF.Max(0, (context.Bounds.Height - insets.Top - insets.Bottom - BoxSize) / 2);
         DrawRect box = new(boxX, boxY, BoxSize, BoxSize);
 
-        Brush? boxFill = IsChecked ? new SolidColorBrush(Foreground) : Background;
+        Brush? boxFill = IsChecked ? Foreground : Background;
         if (boxFill is not null)
         {
             context.DrawingContext.FillRectangle(box, boxFill);
@@ -54,10 +54,10 @@ public class CheckBox : ToggleButton
             context.DrawingContext.FillRectangle(mark, Color.White);
         }
 
-        if (Content is string text && !string.IsNullOrEmpty(text))
+        if (Content is string text && !string.IsNullOrEmpty(text) && Foreground is { } foreground)
         {
             DrawPoint point = new(box.X + BoxSize + ContentGap, context.Bounds.Y + insets.Top);
-            context.DrawingContext.DrawText(new DrawTextRun(new ControlTextFont(FontFamily, FontSize), text, FontSize), point, Foreground);
+            context.DrawingContext.DrawText(new DrawTextRun(new ControlTextFont(FontFamily, FontSize), text, FontSize), point, foreground);
         }
     }
 }

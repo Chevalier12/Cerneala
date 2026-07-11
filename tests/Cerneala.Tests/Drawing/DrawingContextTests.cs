@@ -118,6 +118,25 @@ public sealed class DrawingContextTests
         Assert.Equal(new DrawPoint(5, 6), commands[0].Position);
     }
 
+    [Fact]
+    public void DrawTextRecordsCompositeBrushWithoutFlatteningIt()
+    {
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        DrawTextRun textRun = new(new FakeDrawFont(), "Cerneala", 16);
+        LinearGradientBrush brush = new(
+            new DrawPoint(0, 0),
+            new DrawPoint(100, 0),
+            [new GradientStop(0, Color.Tomato), new GradientStop(1, Color.AliceBlue)]);
+
+        drawing.DrawText(textRun, new DrawPoint(5, 6), brush);
+
+        Assert.Single(commands);
+        Assert.Same(brush, commands[0].Brush);
+        Assert.Equal(1, commands[0].BrushOpacity);
+        Assert.Equal(default, commands[0].Color);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]

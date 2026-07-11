@@ -29,7 +29,7 @@ using Cerneala.UI.Media;
 Control control = new()
 {
     Background = new SolidColorBrush(Color.White),
-    Foreground = Color.Black,
+    Foreground = new SolidColorBrush(Color.Black),
     BorderBrush = new SolidColorBrush(Color.Black),
     BorderThickness = new Thickness(1),
     Padding = new Thickness(8),
@@ -78,7 +78,7 @@ ComponentTemplateInstance? instance = control.ComponentTemplateInstance;
 
 Layout is delegated to the active template child. During measure and arrange, `Control` calls `ApplyTemplate()` and then measures or arranges `ComponentTemplateInstance.Root`; if no template child exists, measurement returns `LayoutSize.Zero`.
 
-Component-template changes affect measure, arrange, render, hit testing, and input visuals. `Background` and `BorderBrush` affect render and input visuals. Both accept solid, gradient, image, drawing, and visual brushes; `null` suppresses the corresponding fill or border. `Foreground` is inherited and affects render. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
+Component-template changes affect measure, arrange, render, hit testing, and input visuals. `Background` and `BorderBrush` affect render and input visuals. `Foreground` accepts the same solid, gradient, image, drawing, and visual brushes, is inherited, and affects render. A `null` foreground suppresses text drawing. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
 
 `Padding` and `BorderThickness` reject negative, `NaN`, and infinite side values. `FontFamily` rejects `null`, empty, and whitespace-only values. `FontSize` must be finite and greater than zero.
 
@@ -96,7 +96,7 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | --- | --- | --- |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | Identifies the `ComponentTemplate` UI property. Defaults to `null`; affects measure, arrange, render, hit testing, and input visuals. |
 | `BackgroundProperty` | `UiProperty<Brush?>` | Identifies the `Background` UI property. Defaults to `null`; affects render and input visuals. |
-| `ForegroundProperty` | `UiProperty<Color>` | Identifies the inherited `Foreground` UI property. Defaults to `Color.Black`; affects render. |
+| `ForegroundProperty` | `UiProperty<Brush?>` | Identifies the inherited `Foreground` UI property. Defaults to `new SolidColorBrush(Color.Black)`; affects render. |
 | `BorderBrushProperty` | `UiProperty<Brush?>` | Identifies the `BorderBrush` UI property. Defaults to `null`; affects render and input visuals. |
 | `BorderThicknessProperty` | `UiProperty<Thickness>` | Identifies the `BorderThickness` UI property. Defaults to `Thickness.Zero`; affects measure and render; each side must be finite and non-negative. |
 | `PaddingProperty` | `UiProperty<Thickness>` | Identifies the `Padding` UI property. Defaults to `Thickness.Zero`; affects measure and render; each side must be finite and non-negative. |
@@ -108,7 +108,7 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | Name | Type | Description |
 | --- | --- | --- |
 | `Background` | `Brush?` | Gets or sets the control background brush. `null` draws no background. |
-| `Foreground` | `Color` | Gets or sets the inherited foreground color used by derived controls or templates. |
+| `Foreground` | `Brush?` | Gets or sets the inherited foreground brush used by text and derived controls. `null` suppresses foreground drawing. |
 | `BorderBrush` | `Brush?` | Gets or sets the control border brush. `null` draws no border. |
 | `BorderThickness` | `Thickness` | Gets or sets the border thickness. Values must be finite and non-negative. |
 | `Padding` | `Thickness` | Gets or sets the padding inside the border. Values must be finite and non-negative. |
@@ -142,16 +142,18 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 
 ## Migration
 
-`Background` and `BorderBrush` no longer accept `Color`, and there is no `BorderColor` compatibility alias. Wrap solid colors explicitly:
+`Background`, `BorderBrush`, and `Foreground` no longer accept `Color`. There are no `BorderColor` or `ForegroundColor` compatibility aliases. Wrap solid colors explicitly:
 
 ```csharp
 // Before
 control.Background = Color.White;
 control.BorderColor = Color.Red;
+control.Foreground = Color.Black;
 
 // After
 control.Background = new SolidColorBrush(Color.White);
 control.BorderBrush = new SolidColorBrush(Color.Red);
+control.Foreground = new SolidColorBrush(Color.Black);
 ```
 
 ## Applies to

@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Theming;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Aspect;
 
@@ -20,6 +21,10 @@ public static class ThemeTokenBridge
         Project(theme, environment, DefaultTheme.SurfaceKey);
         Project(theme, environment, DefaultTheme.BorderKey);
         Project(theme, environment, DefaultTheme.AccentKey);
+        if (theme.TryGet(DefaultTheme.ForegroundKey, out Color foreground))
+        {
+            environment.Set(DefaultAspectTokens.Brush.Foreground, new SolidColorBrush(foreground));
+        }
         return environment;
     }
 

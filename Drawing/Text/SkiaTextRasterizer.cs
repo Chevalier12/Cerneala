@@ -24,6 +24,20 @@ public sealed class SkiaTextRasterizer
         return WithResolvedFont(textRun, (resolvedRun, font) => RasterizeCore(resolvedRun, color, font));
     }
 
+    public RasterizedText RasterizeMask(DrawTextRun textRun)
+    {
+        ArgumentNullException.ThrowIfNull(textRun);
+        return WithResolvedFont(textRun, (resolvedRun, font) => RasterizeCore(resolvedRun, Color.White, font));
+    }
+
+    internal RasterizedText[] RasterizeSubpixelMask(
+        DrawTextRun textRun,
+        float coordinateScale,
+        DrawPoint position)
+    {
+        return RasterizeSubpixel(textRun, Color.White, coordinateScale, position);
+    }
+
     internal RasterizedText[] RasterizeSubpixel(
         DrawTextRun textRun,
         Color color,

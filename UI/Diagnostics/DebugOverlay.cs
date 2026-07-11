@@ -16,7 +16,7 @@ public sealed class DebugOverlay
         textBlock = new TextBlock
         {
             Text = string.Empty,
-            Foreground = Color.White,
+            Foreground = new Cerneala.UI.Media.SolidColorBrush(Color.White),
             FontSize = 13,
             ResourceProvider = resourceProvider,
             FontResourceId = fontResourceId

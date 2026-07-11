@@ -29,6 +29,8 @@ public static class DefaultAspectTokens
             AspectToken.Create<global::Cerneala.UI.Media.Brush?>("brush.surface");
         public static readonly AspectToken<global::Cerneala.UI.Media.Brush?> Border =
             AspectToken.Create<global::Cerneala.UI.Media.Brush?>("brush.border");
+        public static readonly AspectToken<global::Cerneala.UI.Media.Brush?> Foreground =
+            AspectToken.Create<global::Cerneala.UI.Media.Brush?>("brush.foreground");
     }
 
     public static class Spacing

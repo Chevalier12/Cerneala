@@ -97,6 +97,7 @@ The default package uses several of these tokens directly: button rules use `Bru
 | `Brush.Background` | `AspectToken<Brush?>` | `brush.background` | `new SolidColorBrush(new Color(248, 250, 252))` |
 | `Brush.Surface` | `AspectToken<Brush?>` | `brush.surface` | `new SolidColorBrush(new Color(255, 255, 255))` |
 | `Brush.Border` | `AspectToken<Brush?>` | `brush.border` | `new SolidColorBrush(new Color(148, 163, 184))` |
+| `Brush.Foreground` | `AspectToken<Brush?>` | `brush.foreground` | `new SolidColorBrush(new Color(28, 35, 48))` |
 
 ### Typography
 
