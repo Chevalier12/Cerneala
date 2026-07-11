@@ -5,9 +5,9 @@
     "source": "Drawing/DrawArgument.cs"
   },
   {
-    "name": "Cerneala.Drawing.DrawColor",
-    "file": "documentation/classes/Cerneala.Drawing.DrawColor.md",
-    "source": "Drawing/DrawColor.cs"
+    "name": "Cerneala.Drawing.Color",
+    "file": "documentation/classes/Cerneala.Drawing.Color.md",
+    "source": "Drawing/Color.cs"
   },
   {
     "name": "Cerneala.Drawing.DrawCommand",

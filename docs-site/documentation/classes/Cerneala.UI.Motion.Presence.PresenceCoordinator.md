@@ -33,7 +33,7 @@ UIRoot root = new(100, 100);
 Canvas parent = new();
 Rectangle child = new()
 {
-    Fill = new SolidColorBrush(DrawColor.White),
+    Fill = new SolidColorBrush(Color.White),
     Geometry = new RectangleGeometry(new DrawRect(0, 0, 20, 20)),
     Presence = PresenceOptions.FadeAndScale(
         Motion.Tween<float>(TimeSpan.FromMilliseconds(120)),

@@ -29,8 +29,8 @@ RadialGradientBrush brush = new(
     40,
     24,
     [
-        new GradientStop(0f, DrawColor.White),
-        new GradientStop(1f, DrawColor.Black)
+        new GradientStop(0f, Color.White),
+        new GradientStop(1f, Color.Black)
     ]);
 ```
 
@@ -40,7 +40,7 @@ RadialGradientBrush brush = new(
 
 The constructor orders the supplied stops by `GradientStop.Offset` before exposing them through `Stops`. The stop collection must contain at least one item. Passing `null` for `stops` throws `ArgumentNullException`; passing an empty sequence throws `ArgumentException`.
 
-Because `RadialGradientBrush` derives from `Brush` and does not override `SolidColor`, its inherited `SolidColor` property returns `null`. Consumers that require a concrete `DrawColor` should treat this brush as a non-solid brush.
+Because `RadialGradientBrush` derives from `Brush` and does not override `SolidColor`, its inherited `SolidColor` property returns `null`. Consumers that require a concrete `Color` should treat this brush as a non-solid brush.
 
 Equality compares `Center`, `RadiusX`, `RadiusY`, and the ordered stop sequence. Hash codes are computed from the same values, so two radial gradients with the same stops in a different input order compare equal after construction.
 
@@ -58,7 +58,7 @@ Equality compares `Center`, `RadiusX`, `RadiusY`, and the ordered stop sequence.
 | `RadiusX` | `float` | Gets the horizontal radius of the radial gradient. |
 | `RadiusY` | `float` | Gets the vertical radius of the radial gradient. |
 | `Stops` | `IReadOnlyList<GradientStop>` | Gets the gradient stops ordered by `GradientStop.Offset`. |
-| `SolidColor` | `DrawColor?` | Inherited from `Brush`; returns `null` for `RadialGradientBrush`. |
+| `SolidColor` | `Color?` | Inherited from `Brush`; returns `null` for `RadialGradientBrush`. |
 
 ## Methods
 
@@ -86,4 +86,4 @@ Cerneala UI media gradient brushes and retained rendering APIs.
 - `Cerneala.UI.Media.GradientStop`
 - `Cerneala.UI.Media.LinearGradientBrush`
 - `Cerneala.Drawing.DrawPoint`
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`

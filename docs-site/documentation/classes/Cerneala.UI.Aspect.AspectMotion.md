@@ -27,7 +27,7 @@ using Cerneala.UI.Controls;
 
 AspectDeclaration declaration = new(
     Control.BorderColorProperty,
-    AspectValue<DrawColor>.Literal(new DrawColor(99, 102, 241)),
+    AspectValue<Color>.Literal(new Color(99, 102, 241)),
     new AspectMotion(Control.BorderColorProperty, "motion.fast", AspectMotionSource.State));
 ```
 
@@ -45,11 +45,11 @@ AspectRuleSet hoverRule = new(
     [
         new AspectDeclaration(
             Control.BackgroundProperty,
-            AspectValue<DrawColor>.Literal(new DrawColor(238, 242, 255)),
+            AspectValue<Color>.Literal(new Color(238, 242, 255)),
             new AspectMotion(Control.BackgroundProperty, "motion.normal")),
         new AspectDeclaration(
             Control.BorderColorProperty,
-            AspectValue<DrawColor>.Literal(new DrawColor(99, 102, 241)),
+            AspectValue<Color>.Literal(new Color(99, 102, 241)),
             new AspectMotion(Control.BorderColorProperty, "motion.normal"))
     ],
     declarationOrder: 0);

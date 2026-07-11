@@ -31,10 +31,10 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 
 AspectEnvironment environment = new("root");
-environment.Set(accent, DrawColor.White);
+environment.Set(accent, Color.White);
 
 AspectResolutionContext context = new(new Button(), environment);
 object? resolved = accent.Ref().Resolve(context);

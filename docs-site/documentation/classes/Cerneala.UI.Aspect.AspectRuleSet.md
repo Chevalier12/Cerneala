@@ -27,7 +27,7 @@ using Cerneala.UI.Controls;
 
 AspectDeclaration declaration = new(
     Control.BackgroundProperty,
-    AspectValue<DrawColor>.Literal(DrawColor.Black));
+    AspectValue<Color>.Literal(Color.Black));
 
 AspectRuleSet rule = new(
     "button-background",
@@ -46,8 +46,8 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 
 Button button = new();
-AspectDeclaration first = new(Control.BackgroundProperty, AspectValue<DrawColor>.Literal(DrawColor.White));
-AspectDeclaration second = new(Control.BackgroundProperty, AspectValue<DrawColor>.Literal(DrawColor.Black));
+AspectDeclaration first = new(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.White));
+AspectDeclaration second = new(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.Black));
 
 AspectRuleSet themeRule = new("theme", AspectLayer.Theme, new AspectTarget(typeof(Button)), [first], 10);
 AspectRuleSet appRule = new("app", AspectLayer.App, new AspectTarget(typeof(Button)), [second], 1);

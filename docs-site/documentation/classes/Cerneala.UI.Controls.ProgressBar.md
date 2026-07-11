@@ -30,7 +30,7 @@ ProgressBar progress = new()
     Minimum = 0,
     Maximum = 100,
     Value = 25,
-    Foreground = DrawColor.White
+    Foreground = Color.White
 };
 
 float ratio = progress.ValueRatio; // 0.25f
@@ -40,7 +40,7 @@ float ratio = progress.ValueRatio; // 0.25f
 
 `ProgressBar` is a retained UI control built on `RangeBase`. It uses the inherited `Minimum`, `Maximum`, and `Value` properties to compute `ValueRatio`, then renders the foreground fill across that fraction of its arranged width.
 
-The constructor assigns visual defaults for the progress track: `Background` is `DrawColor(230, 230, 230)`, `Foreground` is `DrawColor(65, 135, 230)`, `BorderColor` is `DrawColor(120, 120, 120)`, and `BorderThickness` is `new Thickness(1)`.
+The constructor assigns visual defaults for the progress track: `Background` is `Color(230, 230, 230)`, `Foreground` is `Color(65, 135, 230)`, `BorderColor` is `Color(120, 120, 120)`, and `BorderThickness` is `new Thickness(1)`.
 
 The control measures to `100 x 12` before margin and parent layout constraints are applied. Rendering fills the background first, fills the progress foreground second, and draws the border last. The rendered fill width clamps `ValueRatio` to the `0..1` range before multiplying by the arranged width.
 
@@ -77,9 +77,9 @@ The control measures to `100 x 12` before margin and parent layout constraints a
 | `Value` | `float` | `RangeBase` | Gets or sets the current progress value. The value is coerced into the current range. |
 | `SmallChange` | `float` | `RangeBase` | Gets or sets the small range increment. It is inherited from `RangeBase`; `ProgressBar` does not use it during rendering. |
 | `LargeChange` | `float` | `RangeBase` | Gets or sets the large range increment. It is inherited from `RangeBase`; `ProgressBar` does not use it during rendering. |
-| `Background` | `DrawColor` | `Control` | Gets or sets the track fill color. The `ProgressBar` constructor sets it to `DrawColor(230, 230, 230)`. |
-| `Foreground` | `DrawColor` | `Control` | Gets or sets the progress fill color. The `ProgressBar` constructor sets it to `DrawColor(65, 135, 230)`. |
-| `BorderColor` | `DrawColor` | `Control` | Gets or sets the outline color. The `ProgressBar` constructor sets it to `DrawColor(120, 120, 120)`. |
+| `Background` | `Color` | `Control` | Gets or sets the track fill color. The `ProgressBar` constructor sets it to `Color(230, 230, 230)`. |
+| `Foreground` | `Color` | `Control` | Gets or sets the progress fill color. The `ProgressBar` constructor sets it to `Color(65, 135, 230)`. |
+| `BorderColor` | `Color` | `Control` | Gets or sets the outline color. The `ProgressBar` constructor sets it to `Color(120, 120, 120)`. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the source thickness for the rendered outline. The `ProgressBar` constructor sets it to `new Thickness(1)`. |
 
 ## Rendering Behavior
@@ -107,4 +107,4 @@ Cerneala retained UI controls and layout/rendering infrastructure.
 - `Cerneala.UI.Controls.Primitives.RangeBase`
 - `Cerneala.UI.Controls.Control`
 - `Cerneala.UI.Layout.Thickness`
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`

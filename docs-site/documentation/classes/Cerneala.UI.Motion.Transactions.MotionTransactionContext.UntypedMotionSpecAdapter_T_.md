@@ -43,11 +43,11 @@ UIRoot root = new();
 Control control = new();
 root.VisualChildren.Add(control);
 
-control.SetValue(Control.BackgroundProperty, DrawColor.Black, UiPropertyValueSource.AspectBase);
+control.SetValue(Control.BackgroundProperty, Color.Black, UiPropertyValueSource.AspectBase);
 
 using (root.Motion.BeginTransaction(Motion.Tween(TimeSpan.FromMilliseconds(150))))
 {
-    control.SetValue(Control.BackgroundProperty, DrawColor.White, UiPropertyValueSource.AspectBase);
+    control.SetValue(Control.BackgroundProperty, Color.White, UiPropertyValueSource.AspectBase);
 }
 ```
 

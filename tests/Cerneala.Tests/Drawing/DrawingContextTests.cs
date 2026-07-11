@@ -48,9 +48,9 @@ public sealed class DrawingContextTests
     }
 
     [Fact]
-    public void DrawColorCreatesOpaqueColorByDefault()
+    public void ColorCreatesOpaqueColorByDefault()
     {
-        DrawColor color = new(1, 2, 3);
+        Color color = new(1, 2, 3);
 
         Assert.Equal(1, color.R);
         Assert.Equal(2, color.G);
@@ -74,12 +74,12 @@ public sealed class DrawingContextTests
         DrawCommandList commands = new();
         DrawingContext drawing = new(commands);
 
-        drawing.FillRectangle(new DrawRect(1, 2, 3, 4), DrawColor.White);
+        drawing.FillRectangle(new DrawRect(1, 2, 3, 4), Color.White);
 
         Assert.Single(commands);
         Assert.Equal(DrawCommandKind.FillRectangle, commands[0].Kind);
         Assert.Equal(new DrawRect(1, 2, 3, 4), commands[0].Rect);
-        Assert.Equal(DrawColor.White, commands[0].Color);
+        Assert.Equal(Color.White, commands[0].Color);
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public sealed class DrawingContextTests
         FakeDrawFont font = new();
         DrawTextRun textRun = new(font, "Cerneala", 16);
 
-        drawing.DrawText(textRun, new DrawPoint(5, 6), DrawColor.Black);
+        drawing.DrawText(textRun, new DrawPoint(5, 6), Color.Black);
 
         Assert.Single(commands);
         Assert.Equal(DrawCommandKind.DrawText, commands[0].Kind);
@@ -119,7 +119,7 @@ public sealed class DrawingContextTests
         DrawingContext drawing = new(commands);
         FakeDrawImage image = new();
 
-        drawing.DrawImage(image, new DrawRect(10, 20, 30, 40), DrawColor.White);
+        drawing.DrawImage(image, new DrawRect(10, 20, 30, 40), Color.White);
 
         Assert.Single(commands);
         Assert.Equal(DrawCommandKind.DrawImage, commands[0].Kind);
@@ -140,7 +140,7 @@ public sealed class DrawingContextTests
         DrawingContext drawing = new(commands);
 
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => drawing.DrawRectangle(new DrawRect(0, 0, 10, 10), DrawColor.White, thickness));
+            () => drawing.DrawRectangle(new DrawRect(0, 0, 10, 10), Color.White, thickness));
     }
 
     [Fact]

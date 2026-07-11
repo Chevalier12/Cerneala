@@ -8,7 +8,7 @@ public sealed class TextRenderDependencyTests
     [Fact]
     public void TextLayoutIdentityParticipatesInCacheStaleness()
     {
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         ElementRenderCache cache = new();
         cache.Ensure(element, new RenderCounters(), forceRebuild: true);
 
@@ -20,7 +20,7 @@ public sealed class TextRenderDependencyTests
     [Fact]
     public void UnchangedTextLayoutIdentityAllowsCacheReuse()
     {
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         element.ChangeDependencies(RenderDependency.None.WithTextLayoutIdentity("text:same"));
         ElementRenderCache cache = new();
         RenderCounters counters = new();
@@ -35,7 +35,7 @@ public sealed class TextRenderDependencyTests
     [Fact]
     public void ForegroundOnlyRenderVersionCanInvalidateWithoutChangingTextIdentity()
     {
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         element.ChangeDependencies(RenderDependency.None.WithTextLayoutIdentity("text:same"));
         ElementRenderCache cache = new();
         cache.Ensure(element, new RenderCounters(), forceRebuild: true);

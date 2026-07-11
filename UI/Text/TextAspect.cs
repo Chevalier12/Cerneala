@@ -13,7 +13,7 @@ public readonly record struct TextAspect
         TextWrapping wrapping = TextWrapping.NoWrap,
         TextTrimming trimming = TextTrimming.None,
         float scale = 1,
-        DrawColor? color = null,
+        Color? color = null,
         ResourceId<FontResource>? fontResourceId = null)
     {
         if (string.IsNullOrWhiteSpace(fontFamily))
@@ -36,7 +36,7 @@ public readonly record struct TextAspect
 
         FontFamily = fontFamily;
         FontSize = fontSize;
-        Color = color ?? DrawColor.Black;
+        Color = color ?? Color.Black;
         FontResourceId = fontResourceId;
         Wrapping = wrapping;
         Trimming = trimming;
@@ -47,7 +47,7 @@ public readonly record struct TextAspect
 
     public float FontSize { get; }
 
-    public DrawColor Color { get; }
+    public Color Color { get; }
 
     public ResourceId<FontResource>? FontResourceId { get; }
 

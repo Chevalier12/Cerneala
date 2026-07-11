@@ -8,11 +8,11 @@ public static class DefaultAspectTokens
 {
     public static class Color
     {
-        public static readonly AspectToken<DrawColor> Background = AspectToken.Color("color.background");
-        public static readonly AspectToken<DrawColor> Foreground = AspectToken.Color("color.foreground");
-        public static readonly AspectToken<DrawColor> Surface = AspectToken.Color("color.surface");
-        public static readonly AspectToken<DrawColor> Border = AspectToken.Color("color.border");
-        public static readonly AspectToken<DrawColor> Accent = AspectToken.Color("color.accent");
+        public static readonly AspectToken<global::Cerneala.Drawing.Color> Background = AspectToken.Color("color.background");
+        public static readonly AspectToken<global::Cerneala.Drawing.Color> Foreground = AspectToken.Color("color.foreground");
+        public static readonly AspectToken<global::Cerneala.Drawing.Color> Surface = AspectToken.Color("color.surface");
+        public static readonly AspectToken<global::Cerneala.Drawing.Color> Border = AspectToken.Color("color.border");
+        public static readonly AspectToken<global::Cerneala.Drawing.Color> Accent = AspectToken.Color("color.accent");
     }
 
     public static class Typography

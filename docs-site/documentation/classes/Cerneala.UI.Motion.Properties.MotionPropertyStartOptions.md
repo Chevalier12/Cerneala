@@ -33,15 +33,15 @@ UIRoot root = new();
 Control control = new();
 root.VisualChildren.Add(control);
 
-MotionValue<DrawColor> value =
+MotionValue<Color> value =
     root.Motion.Graph.CreateValue(control.Background);
 
-using MotionPropertyBinding<DrawColor> binding =
+using MotionPropertyBinding<Color> binding =
     new(root.Motion, control, Control.BackgroundProperty, value);
 
 MotionHandle handle = binding.AnimateTo(
-    DrawColor.White,
-    Motion.Tween<DrawColor>(TimeSpan.FromMilliseconds(100)),
+    Color.White,
+    Motion.Tween<Color>(TimeSpan.FromMilliseconds(100)),
     MotionPropertyStartOptions.Default);
 ```
 
@@ -49,8 +49,8 @@ Hold the completed animated value and pass a debug name to the underlying motion
 
 ```csharp
 binding.AnimateTo(
-    DrawColor.White,
-    Motion.Tween<DrawColor>(TimeSpan.FromMilliseconds(100)),
+    Color.White,
+    Motion.Tween<Color>(TimeSpan.FromMilliseconds(100)),
     new MotionPropertyStartOptions
     {
         RetargetMode = RetargetMode.PreserveProgress,

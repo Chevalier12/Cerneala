@@ -34,7 +34,7 @@ public sealed class SwatchElement : UIElement
             context.Bounds.Width,
             context.Bounds.Height);
 
-        context.DrawingContext.FillRectangle(rect, new DrawColor(40, 120, 200));
+        context.DrawingContext.FillRectangle(rect, new Color(40, 120, 200));
     }
 }
 ```

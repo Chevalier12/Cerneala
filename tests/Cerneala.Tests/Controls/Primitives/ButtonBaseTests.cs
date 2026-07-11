@@ -11,12 +11,12 @@ public sealed class ButtonBaseTests
     {
         ButtonBase button = new()
         {
-            Background = DrawColor.White,
+            Background = Color.White,
             Padding = new Cerneala.UI.Layout.Thickness(2)
         };
 
         Assert.IsAssignableFrom<Control>(button);
-        Assert.Equal(DrawColor.White, button.Background);
+        Assert.Equal(Color.White, button.Background);
         Assert.Equal(new Cerneala.UI.Layout.Thickness(2), button.Padding);
     }
 }

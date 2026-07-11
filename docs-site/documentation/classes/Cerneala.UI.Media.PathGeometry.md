@@ -54,7 +54,7 @@ PathShape path = new()
         new DrawPoint(40, 0),
         new DrawPoint(40, 24)
     ]),
-    Stroke = new SolidColorBrush(DrawColor.Black),
+    Stroke = new SolidColorBrush(Color.Black),
     StrokeThickness = 2
 };
 ```

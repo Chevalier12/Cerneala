@@ -39,8 +39,8 @@ using MonoGameDrawingBackend backend = new(spriteBatch, whitePixel);
 
 DrawCommandList commands = new();
 commands.Add(DrawCommand.PushClip(new DrawRect(0, 0, 200, 120)));
-commands.Add(DrawCommand.FillRectangle(new DrawRect(10, 10, 80, 40), new DrawColor(32, 120, 220, 255)));
-commands.Add(DrawCommand.DrawRectangle(new DrawRect(10, 10, 80, 40), new DrawColor(255, 255, 255, 255), 2));
+commands.Add(DrawCommand.FillRectangle(new DrawRect(10, 10, 80, 40), new Color(32, 120, 220, 255)));
+commands.Add(DrawCommand.DrawRectangle(new DrawRect(10, 10, 80, 40), new Color(255, 255, 255, 255), 2));
 commands.Add(DrawCommand.PopClip());
 
 spriteBatch.Begin(

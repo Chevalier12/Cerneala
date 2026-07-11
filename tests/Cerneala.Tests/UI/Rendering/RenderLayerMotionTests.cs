@@ -11,7 +11,7 @@ public sealed class RenderLayerMotionTests
     [Fact]
     public void ElementOpacityAppliesToRenderedCommands()
     {
-        RenderingTestElement element = new(new DrawColor(20, 40, 60, 200))
+        RenderingTestElement element = new(new Color(20, 40, 60, 200))
         {
             Opacity = 0.5f
         };
@@ -19,13 +19,13 @@ public sealed class RenderLayerMotionTests
 
         new DrawCommandListBuilder().Build(element, cache, new RenderCounters());
 
-        Assert.Equal(new DrawColor(20, 40, 60, 100), cache.RootCommands[0].Color);
+        Assert.Equal(new Color(20, 40, 60, 100), cache.RootCommands[0].Color);
     }
 
     [Fact]
     public void ElementRenderTransformAffectsDrawCommands()
     {
-        RenderingTestElement element = new(DrawColor.White)
+        RenderingTestElement element = new(Color.White)
         {
             RenderTransform = new Transform(Matrix3x2.CreateTranslation(10, 20))
         };
@@ -39,7 +39,7 @@ public sealed class RenderLayerMotionTests
     [Fact]
     public void RenderTransformOriginChangesPivotDeterministically()
     {
-        RenderingTestElement element = new(DrawColor.White)
+        RenderingTestElement element = new(Color.White)
         {
             Scale = 2,
             RenderTransformOrigin = new LayoutPoint(0.5f, 0.5f)
@@ -55,7 +55,7 @@ public sealed class RenderLayerMotionTests
     public void RenderOnlyMotionInvalidatesRootWithoutRebuildingLocalCommands()
     {
         UIRoot root = new();
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         root.VisualChildren.Add(element);
         root.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render | Cerneala.UI.Invalidation.InvalidationFlags.Subtree, "initial");
         root.ProcessFrame();

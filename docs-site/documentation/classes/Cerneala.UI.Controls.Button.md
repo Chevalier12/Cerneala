@@ -29,8 +29,8 @@ Button button = new()
 {
     Content = "Save",
     Padding = new Thickness(8, 4, 8, 4),
-    Background = DrawColor.White,
-    BorderColor = DrawColor.Black,
+    Background = Color.White,
+    BorderColor = Color.Black,
     BorderThickness = new Thickness(1)
 };
 
@@ -88,9 +88,9 @@ When a template or component template supplies a template child, layout is deleg
 | `Command` | `ICommand?` | `ButtonBase` | Gets or sets the command executed by pointer or keyboard activation. |
 | `CommandParameter` | `object?` | `ButtonBase` | Gets or sets the parameter passed to `Command`. |
 | `IsPressed` | `bool` | `ButtonBase` | Gets or sets the pressed visual/input state. |
-| `Background` | `DrawColor` | `Control` | Gets or sets the background color. An explicit value overrides fallback state colors. |
-| `Foreground` | `DrawColor` | `Control` | Gets or sets the foreground color used by fallback text rendering. |
-| `BorderColor` | `DrawColor` | `Control` | Gets or sets the fallback border color. |
+| `Background` | `Color` | `Control` | Gets or sets the background color. An explicit value overrides fallback state colors. |
+| `Foreground` | `Color` | `Control` | Gets or sets the foreground color used by fallback text rendering. |
+| `BorderColor` | `Color` | `Control` | Gets or sets the fallback border color. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the fallback border thickness and contributes to content insets. |
 | `Padding` | `Thickness` | `Control` | Gets or sets the padding around fallback content. |
 | `FontFamily` | `string` | `Control` | Gets or sets the inherited font family used to create the fallback text aspect. |
@@ -109,9 +109,9 @@ When a template or component template supplies a template child, layout is deleg
 | `CommandProperty` | `UiProperty<ICommand?>` | `ButtonBase` | Identifies the `Command` UI property. |
 | `CommandParameterProperty` | `UiProperty<object?>` | `ButtonBase` | Identifies the `CommandParameter` UI property. |
 | `IsPressedProperty` | `UiProperty<bool>` | `ButtonBase` | Identifies the `IsPressed` UI property. |
-| `BackgroundProperty` | `UiProperty<DrawColor>` | `Control` | Identifies the `Background` UI property. |
-| `ForegroundProperty` | `UiProperty<DrawColor>` | `Control` | Identifies the inherited `Foreground` UI property. |
-| `BorderColorProperty` | `UiProperty<DrawColor>` | `Control` | Identifies the `BorderColor` UI property. |
+| `BackgroundProperty` | `UiProperty<Color>` | `Control` | Identifies the `Background` UI property. |
+| `ForegroundProperty` | `UiProperty<Color>` | `Control` | Identifies the inherited `Foreground` UI property. |
+| `BorderColorProperty` | `UiProperty<Color>` | `Control` | Identifies the `BorderColor` UI property. |
 | `BorderThicknessProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `BorderThickness` UI property. |
 | `PaddingProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `Padding` UI property. |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | `Control` | Identifies the `ComponentTemplate` UI property. |

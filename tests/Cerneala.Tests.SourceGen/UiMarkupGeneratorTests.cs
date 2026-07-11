@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Cerneala.Drawing;
 using Cerneala.SourceGen;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
@@ -117,10 +118,10 @@ public sealed class UiMarkupGeneratorTests
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.Contains("public static partial class TypedViewFactory", generatedSource);
-        Assert.Contains(".BorderColor = global::Cerneala.Drawing.DrawColor.White;", generatedSource);
+        Assert.Contains(".BorderColor = global::Cerneala.Drawing.Color.White;", generatedSource);
         Assert.Contains(".BorderThickness = new global::Cerneala.UI.Layout.Thickness(1f);", generatedSource);
         Assert.Contains(".Padding = new global::Cerneala.UI.Layout.Thickness(4f);", generatedSource);
-        Assert.Contains(".Foreground = new global::Cerneala.Drawing.DrawColor(0, 0, 0);", generatedSource);
+        Assert.Contains(".Foreground = new global::Cerneala.Drawing.Color(0, 0, 0);", generatedSource);
         Assert.DoesNotContain("UiMarkupReader", generatedSource);
         Assert.DoesNotContain("UiMarkupParser", generatedSource);
         Assert.DoesNotContain("UiMarkupSerializer", generatedSource);
@@ -139,6 +140,33 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void SourceGeneratorEmitsAllNamedColorsThroughColorApi()
+    {
+        const string markup = """
+            <Border Background="AliceBlue" BorderColor="YellowGreen">
+              <TextBlock Text="Named" Foreground="Tomato" />
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("NamedColors.cui.xml", markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("global::Cerneala.Drawing.Color.AliceBlue", generatedSource);
+        Assert.Contains("global::Cerneala.Drawing.Color.YellowGreen", generatedSource);
+        Assert.Contains("global::Cerneala.Drawing.Color.Tomato", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.NamedColorsFactory"));
+        Assert.Equal(Color.AliceBlue, border.Background);
+        Assert.Equal(Color.YellowGreen, border.BorderColor);
+        Assert.Equal(Color.Tomato, Assert.IsType<TextBlock>(border.Child).Foreground);
+    }
+
+    [Fact]
     public void RefactoredPropertySpecsPreserveExistingDirectAssignments()
     {
         const string markup = """
@@ -151,13 +179,13 @@ public sealed class UiMarkupGeneratorTests
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.Contains(".Background = global::Cerneala.Drawing.DrawColor.White;", generatedSource);
-        Assert.Contains(".BorderColor = new global::Cerneala.Drawing.DrawColor(0, 1, 2, 3);", generatedSource);
+        Assert.Contains(".Background = global::Cerneala.Drawing.Color.White;", generatedSource);
+        Assert.Contains(".BorderColor = new global::Cerneala.Drawing.Color(0, 1, 2, 3);", generatedSource);
         Assert.Contains(".BorderThickness = new global::Cerneala.UI.Layout.Thickness(1f);", generatedSource);
         Assert.Contains(".Padding = new global::Cerneala.UI.Layout.Thickness(2f);", generatedSource);
         Assert.Contains(".FontFamily = \"Consolas\";", generatedSource);
         Assert.Contains(".FontSize = 12f;", generatedSource);
-        Assert.Contains(".Foreground = global::Cerneala.Drawing.DrawColor.Black;", generatedSource);
+        Assert.Contains(".Foreground = global::Cerneala.Drawing.Color.Black;", generatedSource);
         Assert.Contains(".Margin = new global::Cerneala.UI.Layout.Thickness(1f, 2f, 3f, 4f);", generatedSource);
 
         using MemoryStream stream = new();
@@ -192,7 +220,7 @@ public sealed class UiMarkupGeneratorTests
         Assert.Equal("Hello", root.Text);
         SolidColorBrush brush = root.FindResource<SolidColorBrush>("PulseColor");
         Assert.Same(brush, root.Resources["PulseColor"]);
-        Assert.Equal(new Cerneala.Drawing.DrawColor(255, 93, 115), brush.Color);
+        Assert.Equal(new Cerneala.Drawing.Color(255, 93, 115), brush.Color);
     }
 
     [Fact]
@@ -228,8 +256,8 @@ public sealed class UiMarkupGeneratorTests
         TextBlock inner = Assert.IsType<TextBlock>(border.Child);
         TextBlock outer = Assert.IsType<TextBlock>(panel.VisualChildren[1]);
 
-        Assert.Equal(new Cerneala.Drawing.DrawColor(0, 255, 0), inner.FindResource<SolidColorBrush>("Accent").Color);
-        Assert.Equal(new Cerneala.Drawing.DrawColor(255, 0, 0), outer.FindResource<SolidColorBrush>("Accent").Color);
+        Assert.Equal(new Cerneala.Drawing.Color(0, 255, 0), inner.FindResource<SolidColorBrush>("Accent").Color);
+        Assert.Equal(new Cerneala.Drawing.Color(255, 0, 0), outer.FindResource<SolidColorBrush>("Accent").Color);
         MarkupAspectResource aspect = border.FindResource<MarkupAspectResource>("Card");
         Assert.Equal(typeof(Border), aspect.TargetType);
         Assert.Equal(new[] { "Background" }, aspect.DefaultPropertyNames);
@@ -321,8 +349,8 @@ public sealed class UiMarkupGeneratorTests
         TextBlock outer = Assert.IsType<TextBlock>(panel.VisualChildren[0]);
         Border border = Assert.IsType<Border>(panel.VisualChildren[1]);
         TextBlock inner = Assert.IsType<TextBlock>(border.Child);
-        Assert.Equal(new Cerneala.Drawing.DrawColor(255, 0, 0), outer.Foreground);
-        Assert.Equal(new Cerneala.Drawing.DrawColor(0, 255, 0), inner.Foreground);
+        Assert.Equal(new Cerneala.Drawing.Color(255, 0, 0), outer.Foreground);
+        Assert.Equal(new Cerneala.Drawing.Color(0, 255, 0), inner.Foreground);
     }
 
     [Fact]
@@ -358,7 +386,7 @@ public sealed class UiMarkupGeneratorTests
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.Contains("global::Cerneala.UI.Media.SolidColorBrush PulseColorResource0 = new(new global::Cerneala.Drawing.DrawColor(255, 93, 115));", generatedSource);
+        Assert.Contains("global::Cerneala.UI.Media.SolidColorBrush PulseColorResource0 = new(new global::Cerneala.Drawing.Color(255, 93, 115));", generatedSource);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
@@ -439,9 +467,9 @@ public sealed class UiMarkupGeneratorTests
         ContentPresenter presenter = Assert.IsType<ContentPresenter>(border.Child);
         Assert.Equal("Close", presenter.Content);
 
-        button.Background = Cerneala.Drawing.DrawColor.White;
+        button.Background = Cerneala.Drawing.Color.White;
         button.Content = "Changed";
-        Assert.Equal(Cerneala.Drawing.DrawColor.White, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.White, border.Background);
         Assert.Equal("Changed", presenter.Content);
     }
 
@@ -472,12 +500,12 @@ public sealed class UiMarkupGeneratorTests
         Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplateBooleanFactory"));
         button.ApplyTemplate();
         Border border = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, border.Background);
 
         button.IsEnabled = true;
-        Assert.Equal(Cerneala.Drawing.DrawColor.White, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.White, border.Background);
         button.IsEnabled = false;
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, border.Background);
     }
 
     [Fact]
@@ -508,9 +536,9 @@ public sealed class UiMarkupGeneratorTests
         Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplateBranchesFactory"));
         button.ApplyTemplate();
         Border border = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
-        Assert.Equal(Cerneala.Drawing.DrawColor.White, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.White, border.Background);
         button.IsEnabled = false;
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, border.Background);
     }
 
     [Fact]
@@ -573,7 +601,7 @@ public sealed class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.AspectTemplateFactory"));
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, button.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, button.Background);
         Assert.Contains("ComponentTemplate", button.FindResource<MarkupAspectResource>("GhostButton").DefaultPropertyNames);
         button.ApplyTemplate();
         Border border = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
@@ -607,7 +635,7 @@ public sealed class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplatePrecedenceFactory"));
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, button.Foreground);
+        Assert.Equal(Cerneala.Drawing.Color.Black, button.Foreground);
         button.ApplyTemplate();
         TextBlock root = Assert.IsType<TextBlock>(button.ComponentTemplateInstance!.Root);
         Assert.Equal("Direct", root.Text);
@@ -697,13 +725,13 @@ public sealed class UiMarkupGeneratorTests
         button.ApplyTemplate();
         Border ownerPart = Assert.IsType<Border>(button.ComponentTemplateInstance!.Parts["OwnerPart"]);
         Border selfPart = Assert.IsType<Border>(button.ComponentTemplateInstance.Parts["SelfPart"]);
-        Assert.Equal(new Cerneala.Drawing.DrawColor(18, 52, 86), ownerPart.Background);
-        Assert.Equal(Cerneala.Drawing.DrawColor.Transparent, selfPart.Background);
+        Assert.Equal(new Cerneala.Drawing.Color(18, 52, 86), ownerPart.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Transparent, selfPart.Background);
 
         selfPart.IsEnabled = true;
-        Assert.Equal(Cerneala.Drawing.DrawColor.White, selfPart.Background);
+        Assert.Equal(Cerneala.Drawing.Color.White, selfPart.Background);
         button.IsEnabled = false;
-        Assert.Equal(Cerneala.Drawing.DrawColor.Transparent, ownerPart.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Transparent, ownerPart.Background);
     }
 
     [Fact]
@@ -793,7 +821,7 @@ public sealed class UiMarkupGeneratorTests
         Assert.True(compilation.Emit(stream).Success);
 
         Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.InlineAspectPrecedenceFactory"));
-        Assert.Equal(Cerneala.Drawing.DrawColor.White, button.Foreground);
+        Assert.Equal(Cerneala.Drawing.Color.White, button.Foreground);
         button.ApplyTemplate();
         Assert.Equal("Direct", Assert.IsType<TextBlock>(button.ComponentTemplateInstance!.Root).Text);
     }
@@ -842,12 +870,12 @@ public sealed class UiMarkupGeneratorTests
         Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplateLifecycleFactory"));
         button.ApplyTemplate();
         Border oldRoot = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
-        Assert.Equal(Cerneala.Drawing.DrawColor.White, oldRoot.Background);
+        Assert.Equal(Cerneala.Drawing.Color.White, oldRoot.Background);
 
         button.ComponentTemplate = new Cerneala.UI.Controls.Templates.ComponentTemplate<Button>("replacement", _ => new Border());
-        Assert.Equal(Cerneala.Drawing.DrawColor.Transparent, oldRoot.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Transparent, oldRoot.Background);
         button.IsEnabled = false;
-        Assert.Equal(Cerneala.Drawing.DrawColor.Transparent, oldRoot.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Transparent, oldRoot.Background);
         Assert.NotSame(oldRoot, button.ComponentTemplateInstance!.Root);
     }
 
@@ -920,7 +948,7 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void AspectCanReferenceSolidColorBrushForDrawColorProperty()
+    public void AspectCanReferenceSolidColorBrushForColorProperty()
     {
         const string markup = """
             <TextBlock Aspect="$KickerText" Text="HELLO">
@@ -940,14 +968,14 @@ public sealed class UiMarkupGeneratorTests
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.Contains(".Foreground = new global::Cerneala.Drawing.DrawColor(255, 93, 115);", generatedSource);
+        Assert.Contains(".Foreground = new global::Cerneala.Drawing.Color(255, 93, 115);", generatedSource);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         TextBlock root = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.AspectBrushReferenceFactory"));
-        Assert.Equal(new Cerneala.Drawing.DrawColor(255, 93, 115), root.Foreground);
+        Assert.Equal(new Cerneala.Drawing.Color(255, 93, 115), root.Foreground);
     }
 
     [Fact]
@@ -1292,13 +1320,13 @@ public sealed class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.ReactiveBorderFactory"));
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, border.Background);
 
         border.IsPointerOver = true;
-        Assert.Equal(Cerneala.Drawing.DrawColor.White, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.White, border.Background);
 
         border.IsPointerOver = false;
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, border.Background);
     }
 
     [Fact]
@@ -1658,7 +1686,7 @@ public sealed class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.LocalWinsFactory"));
-        Cerneala.Drawing.DrawColor local = new(12, 34, 56);
+        Cerneala.Drawing.Color local = new(12, 34, 56);
         border.Background = local;
         border.IsPointerOver = true;
         Assert.Equal(local, border.Background);
@@ -1725,11 +1753,11 @@ public sealed class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.ReactiveAspectFactory"));
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, border.Background);
         border.IsPointerOver = true;
-        Assert.Equal(Cerneala.Drawing.DrawColor.White, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.White, border.Background);
         border.IsPointerOver = false;
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, border.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, border.Background);
     }
 
     [Fact]
@@ -1867,7 +1895,7 @@ public sealed class UiMarkupGeneratorTests
         Type type = assembly.GetType("TestInput.Views.TemplateView", throwOnError: true)!;
         UserControl view = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(type));
         Border root = Assert.IsType<Border>(view.ComponentTemplateInstance!.Root);
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, root.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, root.Background);
         object named = type.GetProperty("ActionButton", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(view)!;
         Assert.Same(root.Child, named);
     }
@@ -2157,7 +2185,7 @@ public sealed class UiMarkupGeneratorTests
 
         TextBox textBox = Assert.IsType<TextBox>(panel.VisualChildren[1]);
         Assert.Equal("hello", textBox.Text);
-        Assert.Equal(new Cerneala.Drawing.DrawColor(0x12, 0x34, 0x56), textBox.CaretColor);
+        Assert.Equal(new Cerneala.Drawing.Color(0x12, 0x34, 0x56), textBox.CaretColor);
 
         CheckBox checkBox = Assert.IsType<CheckBox>(panel.VisualChildren[2]);
         Assert.True(checkBox.IsChecked);
@@ -2200,7 +2228,7 @@ public sealed class UiMarkupGeneratorTests
 
         Button button = Assert.IsType<Button>(panel.VisualChildren[0]);
         Assert.NotNull(button.Aspect);
-        Assert.Equal(Cerneala.Drawing.DrawColor.White, button.Foreground);
+        Assert.Equal(Cerneala.Drawing.Color.White, button.Foreground);
 
         panel.IsPointerOver = true;
         Assert.Equal(new Cerneala.UI.Layout.Thickness(12), panel.Margin);
@@ -2390,7 +2418,7 @@ public sealed class UiMarkupGeneratorTests
         StackPanel content = Assert.IsType<StackPanel>(window.Content);
         Assert.Equal("Window content", Assert.IsType<TextBlock>(content.VisualChildren[0]).Text);
         Border chrome = Assert.IsType<Border>(window.ComponentTemplateInstance!.Root);
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, chrome.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, chrome.Background);
         Assert.Same(chrome, window.ComponentTemplateInstance.Parts["Chrome"]);
     }
 
@@ -2427,7 +2455,7 @@ public sealed class UiMarkupGeneratorTests
         Type type = assembly.GetType("TestInput.Views.AspectWindow", throwOnError: true)!;
         Window window = Assert.IsAssignableFrom<Window>(Activator.CreateInstance(type));
         Border chrome = Assert.IsType<Border>(window.ComponentTemplateInstance!.Root);
-        Assert.Equal(Cerneala.Drawing.DrawColor.Black, chrome.Background);
+        Assert.Equal(Cerneala.Drawing.Color.Black, chrome.Background);
         Assert.Same(chrome, window.ComponentTemplateInstance.Parts["AspectChrome"]);
     }
 

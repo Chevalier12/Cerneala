@@ -32,7 +32,7 @@ AspectRuleSet focusedContentForeground = new(
         typeof(ContentPresenter),
         ButtonSlots.Content,
         [AspectCondition.State(AspectState.Focus)]),
-    [new AspectDeclaration(Control.ForegroundProperty, AspectValue<DrawColor>.Literal(DrawColor.White))],
+    [new AspectDeclaration(Control.ForegroundProperty, AspectValue<Color>.Literal(Color.White))],
     declarationOrder: 0);
 ```
 

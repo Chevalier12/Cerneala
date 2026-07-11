@@ -17,8 +17,8 @@ public sealed class ShapeTests
         UIRoot root = new();
         RectangleShape rectangle = new()
         {
-            Fill = new SolidColorBrush(DrawColor.White),
-            Stroke = new SolidColorBrush(DrawColor.Black),
+            Fill = new SolidColorBrush(Color.White),
+            Stroke = new SolidColorBrush(Color.Black),
             StrokeThickness = 2
         };
         root.VisualChildren.Add(rectangle);
@@ -41,8 +41,8 @@ public sealed class ShapeTests
         UIRoot root = new();
         Ellipse ellipse = new()
         {
-            Fill = new SolidColorBrush(DrawColor.White),
-            Stroke = new SolidColorBrush(DrawColor.Black),
+            Fill = new SolidColorBrush(Color.White),
+            Stroke = new SolidColorBrush(Color.Black),
             StrokeThickness = 3
         };
         root.VisualChildren.Add(ellipse);
@@ -65,7 +65,7 @@ public sealed class ShapeTests
         UIRoot root = new();
         RectangleShape rectangle = new()
         {
-            Fill = new SolidColorBrush(DrawColor.White),
+            Fill = new SolidColorBrush(Color.White),
             RenderTransform = new Transform(Matrix3x2.CreateTranslation(10, 20))
         };
         root.VisualChildren.Add(rectangle);
@@ -88,7 +88,7 @@ public sealed class ShapeTests
         PathShape path = new()
         {
             Data = new PathGeometry([new DrawPoint(0, 0), new DrawPoint(10, 0), new DrawPoint(10, 10)]),
-            Stroke = new SolidColorBrush(DrawColor.Black),
+            Stroke = new SolidColorBrush(Color.Black),
             StrokeThickness = 2
         };
         root.VisualChildren.Add(path);
@@ -110,7 +110,7 @@ public sealed class ShapeTests
     {
         RectangleShape rectangle = new();
 
-        rectangle.Fill = new SolidColorBrush(DrawColor.White);
+        rectangle.Fill = new SolidColorBrush(Color.White);
 
         Assert.True(rectangle.DirtyState.Has(InvalidationFlags.Render));
     }
@@ -121,7 +121,7 @@ public sealed class ShapeTests
         RectangleShape rectangle = new()
         {
             Geometry = new RectangleGeometry(new DrawRect(0, 0, 30, 20)),
-            Stroke = new SolidColorBrush(DrawColor.Black),
+            Stroke = new SolidColorBrush(Color.Black),
             StrokeThickness = 2
         };
 

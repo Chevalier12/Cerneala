@@ -4,7 +4,7 @@ namespace Cerneala.UI.Media;
 
 public readonly record struct ShadowEffect
 {
-    public ShadowEffect(DrawPoint offset, float blurRadius, DrawColor color)
+    public ShadowEffect(DrawPoint offset, float blurRadius, Color color)
     {
         if (!float.IsFinite(blurRadius) || blurRadius < 0)
         {
@@ -20,5 +20,5 @@ public readonly record struct ShadowEffect
 
     public float BlurRadius { get; }
 
-    public DrawColor Color { get; }
+    public Color Color { get; }
 }

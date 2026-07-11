@@ -17,12 +17,12 @@ public sealed class MotionTransactionTests
         UIRoot root = new(motionClock: clock);
         Control control = new();
         root.VisualChildren.Add(control);
-        control.SetValue(Control.BackgroundProperty, DrawColor.Black, UiPropertyValueSource.AspectBase);
+        control.SetValue(Control.BackgroundProperty, Color.Black, UiPropertyValueSource.AspectBase);
         root.ProcessFrame();
 
         using (root.Motion.BeginTransaction(MotionFactory.Tween(TimeSpan.FromMilliseconds(100))))
         {
-            control.SetValue(Control.BackgroundProperty, DrawColor.White, UiPropertyValueSource.AspectBase);
+            control.SetValue(Control.BackgroundProperty, Color.White, UiPropertyValueSource.AspectBase);
         }
 
         root.ProcessFrame();
@@ -30,8 +30,8 @@ public sealed class MotionTransactionTests
         root.ProcessFrame();
 
         Assert.Equal(UiPropertyValueSource.Animation, control.GetValueSource(Control.BackgroundProperty));
-        Assert.NotEqual(DrawColor.Black, control.Background);
-        Assert.NotEqual(DrawColor.White, control.Background);
+        Assert.NotEqual(Color.Black, control.Background);
+        Assert.NotEqual(Color.White, control.Background);
     }
 
     [Fact]
@@ -57,19 +57,19 @@ public sealed class MotionTransactionTests
         UIRoot root = new(motionClock: clock);
         Control control = new();
         root.VisualChildren.Add(control);
-        control.SetValue(Control.BackgroundProperty, DrawColor.Black, UiPropertyValueSource.AspectBase);
+        control.SetValue(Control.BackgroundProperty, Color.Black, UiPropertyValueSource.AspectBase);
 
         using (root.Motion.BeginTransaction(MotionFactory.Tween(TimeSpan.FromMilliseconds(1000))))
         using (root.Motion.BeginTransaction(MotionFactory.Tween(TimeSpan.FromMilliseconds(10))))
         {
-            control.SetValue(Control.BackgroundProperty, DrawColor.White, UiPropertyValueSource.AspectBase);
+            control.SetValue(Control.BackgroundProperty, Color.White, UiPropertyValueSource.AspectBase);
         }
 
         root.ProcessFrame();
         clock.Advance(TimeSpan.FromMilliseconds(10));
         root.ProcessFrame();
 
-        Assert.Equal(DrawColor.White, control.GetValue(Control.BackgroundProperty));
+        Assert.Equal(Color.White, control.GetValue(Control.BackgroundProperty));
         Assert.Equal(UiPropertyValueSource.AspectBase, control.GetValueSource(Control.BackgroundProperty));
     }
 
@@ -111,16 +111,16 @@ public sealed class MotionTransactionTests
         UIRoot root = new();
         Control control = new();
         root.VisualChildren.Add(control);
-        control.SetValue(Control.BackgroundProperty, DrawColor.Black, UiPropertyValueSource.AspectBase);
+        control.SetValue(Control.BackgroundProperty, Color.Black, UiPropertyValueSource.AspectBase);
 
         using (root.Motion.Disable())
         {
-            control.SetValue(Control.BackgroundProperty, DrawColor.White, UiPropertyValueSource.AspectBase);
+            control.SetValue(Control.BackgroundProperty, Color.White, UiPropertyValueSource.AspectBase);
         }
 
         root.ProcessFrame();
 
-        Assert.Equal(DrawColor.White, control.Background);
+        Assert.Equal(Color.White, control.Background);
         Assert.Equal(UiPropertyValueSource.AspectBase, control.GetValueSource(Control.BackgroundProperty));
         Assert.Equal(0, root.Motion.Properties.BindingCount);
     }
@@ -134,7 +134,7 @@ public sealed class MotionTransactionTests
 
         using (root.Motion.BeginTransaction(MotionFactory.Tween(TimeSpan.FromMilliseconds(100))))
         {
-            control.SetValue(Control.BackgroundProperty, DrawColor.White, UiPropertyValueSource.Animation);
+            control.SetValue(Control.BackgroundProperty, Color.White, UiPropertyValueSource.Animation);
         }
 
         Assert.Equal(0, root.Motion.Properties.BindingCount);

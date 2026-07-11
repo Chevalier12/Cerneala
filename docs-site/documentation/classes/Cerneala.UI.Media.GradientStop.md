@@ -28,8 +28,8 @@ LinearGradientBrush brush = new(
     new DrawPoint(0, 0),
     new DrawPoint(100, 0),
     [
-        new GradientStop(0f, DrawColor.White),
-        new GradientStop(1f, DrawColor.Black)
+        new GradientStop(0f, Color.White),
+        new GradientStop(1f, Color.Black)
     ]);
 ```
 
@@ -46,14 +46,14 @@ Gradient brushes order their exposed stop collections by `Offset`, so callers do
 
 | Name | Description |
 | --- | --- |
-| `GradientStop(float offset, DrawColor color)` | Initializes a gradient stop with a normalized offset and color. Throws `ArgumentOutOfRangeException` when `offset` is not finite or is outside `0` to `1`. |
+| `GradientStop(float offset, Color color)` | Initializes a gradient stop with a normalized offset and color. Throws `ArgumentOutOfRangeException` when `offset` is not finite or is outside `0` to `1`. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `Offset` | `float` | Gets the normalized gradient position. Valid values are finite numbers from `0` through `1`. |
-| `Color` | `DrawColor` | Gets the color applied at `Offset`. |
+| `Color` | `Color` | Gets the color applied at `Offset`. |
 
 ## Methods
 
@@ -79,4 +79,4 @@ Cerneala UI media gradient brushes.
 
 - `Cerneala.UI.Media.LinearGradientBrush`
 - `Cerneala.UI.Media.RadialGradientBrush`
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`

@@ -45,15 +45,15 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsSemantics,
             coerceValue: (_, value) => value ?? string.Empty));
 
-    public static readonly UiProperty<DrawColor> CaretColorProperty = UiProperty<DrawColor>.Register(
+    public static readonly UiProperty<Color> CaretColorProperty = UiProperty<Color>.Register(
         nameof(CaretColor),
         typeof(TextBoxBase),
-        new UiPropertyMetadata<DrawColor>(DrawColor.Black, UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<Color>(Color.Black, UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<DrawColor> SelectionBackgroundProperty = UiProperty<DrawColor>.Register(
+    public static readonly UiProperty<Color> SelectionBackgroundProperty = UiProperty<Color>.Register(
         nameof(SelectionBackground),
         typeof(TextBoxBase),
-        new UiPropertyMetadata<DrawColor>(new DrawColor(0, 120, 215), UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<Color>(new Color(0, 120, 215), UiPropertyOptions.AffectsRender));
 
     protected TextBoxBase()
     {
@@ -62,8 +62,8 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         IsTabStop = true;
         Padding = new Thickness(4, 2, 4, 2);
         BorderThickness = new Thickness(1);
-        BorderColor = new DrawColor(120, 130, 145);
-        Background = DrawColor.White;
+        BorderColor = new Color(120, 130, 145);
+        Background = Color.White;
         Cursor = Cerneala.UI.Input.Cursor.IBeam;
         Handlers.AddHandler(InputEvents.TextInputEvent, OnRoutedTextInput);
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnRoutedKeyDown);
@@ -84,13 +84,13 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
 
     public TextCaret Caret => editor.Caret;
 
-    public DrawColor CaretColor
+    public Color CaretColor
     {
         get => GetValue(CaretColorProperty);
         set => SetValue(CaretColorProperty, value);
     }
 
-    public DrawColor SelectionBackground
+    public Color SelectionBackground
     {
         get => GetValue(SelectionBackgroundProperty);
         set => SetValue(SelectionBackgroundProperty, value);
@@ -305,7 +305,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         if (DisplayText.Length > 0 && selectionBounds is DrawRect selectedTextClip)
         {
             context.DrawingContext.PushClip(selectedTextClip);
-            DrawText(context, content, DrawColor.White);
+            DrawText(context, content, Color.White);
             context.DrawingContext.PopClip();
         }
 
@@ -564,7 +564,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         return new DrawRect(x, content.Y, right - x, MathF.Max(1, content.Height));
     }
 
-    private void DrawText(RenderContext context, LayoutRect content, DrawColor color)
+    private void DrawText(RenderContext context, LayoutRect content, Color color)
     {
         GetTextRenderer().Render(
             context.DrawingContext,
@@ -736,7 +736,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         return CreateTextAspect(Foreground);
     }
 
-    private TextAspect CreateTextAspect(DrawColor color)
+    private TextAspect CreateTextAspect(Color color)
     {
         return new TextAspect(FontFamily, FontSize, color: color, fontResourceId: FontResourceId);
     }

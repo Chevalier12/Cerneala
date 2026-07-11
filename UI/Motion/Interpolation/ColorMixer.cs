@@ -2,9 +2,9 @@ using Cerneala.Drawing;
 
 namespace Cerneala.UI.Motion.Interpolation;
 
-public sealed class ColorMixer : ValueMixer<DrawColor>
+public sealed class ColorMixer : ValueMixer<Color>
 {
-    public override DrawColor Mix(DrawColor from, DrawColor to, float progress)
+    public override Color Mix(Color from, Color to, float progress)
     {
         if (progress <= 0)
         {
@@ -16,14 +16,14 @@ public sealed class ColorMixer : ValueMixer<DrawColor>
             return to;
         }
 
-        return new DrawColor(
+        return new Color(
             MixChannel(from.R, to.R, progress),
             MixChannel(from.G, to.G, progress),
             MixChannel(from.B, to.B, progress),
             MixChannel(from.A, to.A, progress));
     }
 
-    public override bool EqualsWithinTolerance(DrawColor left, DrawColor right, float tolerance)
+    public override bool EqualsWithinTolerance(Color left, Color right, float tolerance)
     {
         ThrowIfNegativeTolerance(tolerance);
         return Math.Abs(left.R - right.R) <= tolerance

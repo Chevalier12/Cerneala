@@ -57,7 +57,7 @@ float trackValue = scrollBar.Track.Value; // 80
 
 `ScrollBar` derives from `RangeBase`, so `Minimum`, `Maximum`, `Value`, `SmallChange`, and `LargeChange` use the inherited range validation and coercion rules. `Value` is coerced into the active `Minimum..Maximum` range, and non-finite range values are rejected by the inherited UI properties.
 
-The constructor creates one fallback `Track`, subscribes to its `ValueChanged` event, adds it as both a logical and visual child, and sets default visuals: `Background` is `DrawColor(235, 235, 235)`, `BorderColor` is `DrawColor(130, 130, 130)`, and `BorderThickness` is `new Thickness(1)`.
+The constructor creates one fallback `Track`, subscribes to its `ValueChanged` event, adds it as both a logical and visual child, and sets default visuals: `Background` is `Color(235, 235, 235)`, `BorderColor` is `Color(130, 130, 130)`, and `BorderThickness` is `new Thickness(1)`.
 
 `Orientation` defaults to `Orientation.Vertical`. When no template child is present, measuring a horizontal scroll bar returns a width of at least `32` and a height of `12`; measuring a vertical scroll bar returns a width of `12` and a height of at least `32`. Arrange gives the fallback track the scroll bar final rectangle.
 
@@ -116,8 +116,8 @@ The default renderer fills the scroll bar background when no template child is p
 | `Value` | `float` | `RangeBase` | Gets or sets the current scroll bar value. The value is coerced into the current range and synchronized to `Track.Value`. |
 | `SmallChange` | `float` | `RangeBase` | Gets or sets the small range increment synchronized to `Track.SmallChange`. |
 | `LargeChange` | `float` | `RangeBase` | Gets or sets the large range increment synchronized to `Track.LargeChange`. |
-| `Background` | `DrawColor` | `Control` | Gets or sets the fallback scroll bar background fill. The constructor sets it to `DrawColor(235, 235, 235)`. |
-| `BorderColor` | `DrawColor` | `Control` | Gets or sets the inherited border color. The constructor sets it to `DrawColor(130, 130, 130)`. |
+| `Background` | `Color` | `Control` | Gets or sets the fallback scroll bar background fill. The constructor sets it to `Color(235, 235, 235)`. |
+| `BorderColor` | `Color` | `Control` | Gets or sets the inherited border color. The constructor sets it to `Color(130, 130, 130)`. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the inherited border thickness. The constructor sets it to `new Thickness(1)`. |
 | `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. When present, the fallback track is removed from the scroll bar child collections. |
 

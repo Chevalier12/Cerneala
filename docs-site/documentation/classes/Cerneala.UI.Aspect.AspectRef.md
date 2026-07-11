@@ -22,7 +22,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 
 AspectDeclaration declaration = new(
     Control.BackgroundProperty,
@@ -36,10 +36,10 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 
-AspectToken<DrawColor> surface = AspectToken.Color("card.surface");
+AspectToken<Color> surface = AspectToken.Color("card.surface");
 
 AspectPackage package = AspectPackage.Create("Cards")
-    .Tokens(tokens => tokens.Set(surface, DrawColor.White))
+    .Tokens(tokens => tokens.Set(surface, Color.White))
     .Components(components => components.AddRule(new AspectRuleSet(
         "card.surface",
         AspectLayer.App,

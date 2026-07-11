@@ -30,10 +30,10 @@ Create a typed color key, store a value in a theme, and retrieve it with the sam
 using Cerneala.Drawing;
 using Cerneala.UI.Theming;
 
-ThemeKey<DrawColor> accentKey = new("Accent");
-Theme theme = new Theme("Editor").Set(accentKey, DrawColor.White);
+ThemeKey<Color> accentKey = new("Accent");
+Theme theme = new Theme("Editor").Set(accentKey, Color.White);
 
-DrawColor accent = theme.Get(accentKey);
+Color accent = theme.Get(accentKey);
 ```
 
 Keys with the same text but different value types are separate theme entries:
@@ -42,14 +42,14 @@ Keys with the same text but different value types are separate theme entries:
 using Cerneala.Drawing;
 using Cerneala.UI.Theming;
 
-ThemeKey<DrawColor> colorKey = new("Accent");
+ThemeKey<Color> colorKey = new("Accent");
 ThemeKey<string> labelKey = new("Accent");
 
 Theme theme = new Theme()
-    .Set(colorKey, DrawColor.White)
+    .Set(colorKey, Color.White)
     .Set(labelKey, "Primary accent");
 
-DrawColor accent = theme.Get(colorKey);
+Color accent = theme.Get(colorKey);
 string label = theme.Get(labelKey);
 ```
 

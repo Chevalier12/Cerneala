@@ -125,8 +125,8 @@ public sealed class AspectRuleSetTests
     [Fact]
     public void LayerOrderWinsBeforeDeclarationOrder()
     {
-        AspectDeclaration theme = Declaration(DrawColor.White);
-        AspectDeclaration app = Declaration(DrawColor.Black);
+        AspectDeclaration theme = Declaration(Color.White);
+        AspectDeclaration app = Declaration(Color.Black);
         AspectMatchContext context = Context(new Button());
         AspectRuleSet first = Rule("theme", AspectLayer.Theme, theme, declarationOrder: 10);
         AspectRuleSet second = Rule("app", AspectLayer.App, app, declarationOrder: 1);
@@ -139,8 +139,8 @@ public sealed class AspectRuleSetTests
     [Fact]
     public void HigherSpecificityWinsWithinSameLayer()
     {
-        AspectDeclaration baseDeclaration = Declaration(DrawColor.White);
-        AspectDeclaration stateDeclaration = Declaration(DrawColor.Black);
+        AspectDeclaration baseDeclaration = Declaration(Color.White);
+        AspectDeclaration stateDeclaration = Declaration(Color.Black);
         AspectMatchContext context = Context(new Button(), states: AspectStateSet.Empty.Add(AspectState.Hover));
         AspectRuleSet baseRule = Rule("base", AspectLayer.App, baseDeclaration, declarationOrder: 2);
         AspectRuleSet stateRule = new(
@@ -158,8 +158,8 @@ public sealed class AspectRuleSetTests
     [Fact]
     public void LaterDeclarationWinsForEqualLayerAndSpecificity()
     {
-        AspectDeclaration firstDeclaration = Declaration(DrawColor.White);
-        AspectDeclaration secondDeclaration = Declaration(DrawColor.Black);
+        AspectDeclaration firstDeclaration = Declaration(Color.White);
+        AspectDeclaration secondDeclaration = Declaration(Color.Black);
         AspectMatchContext context = Context(new Button());
         AspectRuleSet first = Rule("first", AspectLayer.App, firstDeclaration, declarationOrder: 1);
         AspectRuleSet second = Rule("second", AspectLayer.App, secondDeclaration, declarationOrder: 2);
@@ -196,9 +196,9 @@ public sealed class AspectRuleSetTests
             declarationOrder);
     }
 
-    private static AspectDeclaration Declaration(DrawColor color)
+    private static AspectDeclaration Declaration(Color color)
     {
-        return new AspectDeclaration(Control.BackgroundProperty, AspectValue<DrawColor>.Literal(color));
+        return new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(color));
     }
 
     private sealed record UserCard(bool IsImportant);

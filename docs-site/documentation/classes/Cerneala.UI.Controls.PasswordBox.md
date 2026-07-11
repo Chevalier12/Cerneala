@@ -82,8 +82,8 @@ Setting `Password` to `null` stores `string.Empty`.
 | `Editor` | `TextEditor` | `TextBoxBase` | Gets the text editor that owns document, caret, selection, and undo/redo state. |
 | `Selection` | `TextSelection` | `TextBoxBase` | Gets the current text selection. |
 | `Caret` | `TextCaret` | `TextBoxBase` | Gets the current caret state. |
-| `CaretColor` | `DrawColor` | `TextBoxBase` | Gets or sets the rendered caret color. Defaults to `DrawColor.Black`. |
-| `SelectionBackground` | `DrawColor` | `TextBoxBase` | Gets or sets the selection highlight color. Defaults to `new DrawColor(0, 120, 215)`. |
+| `CaretColor` | `Color` | `TextBoxBase` | Gets or sets the rendered caret color. Defaults to `Color.Black`. |
+| `SelectionBackground` | `Color` | `TextBoxBase` | Gets or sets the selection highlight color. Defaults to `new Color(0, 120, 215)`. |
 | `TextMeasurer` | `TextMeasurer` | `TextBoxBase` | Gets or sets the text measurer used for layout. Rejects `null`; changing it invalidates text metrics. |
 | `TextRenderer` | `TextRenderer` | `TextBoxBase` | Gets or sets the text renderer used for fallback text rendering. Rejects `null`; changing it invalidates render. |
 | `FontResourceId` | `ResourceId<FontResource>?` | `TextBoxBase` | Gets or sets an optional font resource used when resolving text metrics and rendering. |

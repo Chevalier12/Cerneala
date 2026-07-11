@@ -8,13 +8,13 @@ namespace Cerneala.UI.Diagnostics;
 
 public sealed class DebugAdorner : Decorator
 {
-    public static readonly Cerneala.UI.Core.UiProperty<DrawColor> AdornerColorProperty =
-        Cerneala.UI.Core.UiProperty<DrawColor>.Register(
+    public static readonly Cerneala.UI.Core.UiProperty<Color> AdornerColorProperty =
+        Cerneala.UI.Core.UiProperty<Color>.Register(
             nameof(AdornerColor),
             typeof(DebugAdorner),
-            new Cerneala.UI.Core.UiPropertyMetadata<DrawColor>(new DrawColor(255, 64, 64), Cerneala.UI.Core.UiPropertyOptions.AffectsRender));
+            new Cerneala.UI.Core.UiPropertyMetadata<Color>(new Color(255, 64, 64), Cerneala.UI.Core.UiPropertyOptions.AffectsRender));
 
-    public DrawColor AdornerColor
+    public Color AdornerColor
     {
         get => GetValue(AdornerColorProperty);
         set => SetValue(AdornerColorProperty, value);

@@ -19,7 +19,7 @@ public sealed class ModernAspectArchitectureTests
         root.ProcessFrame();
 
         Assert.Contains(root.AspectRegistry.Packages, package => package.Name == "Default");
-        Assert.Equal(new DrawColor(255, 255, 255), button.Background);
+        Assert.Equal(new Color(255, 255, 255), button.Background);
     }
 
     [Fact]

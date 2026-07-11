@@ -27,7 +27,7 @@ Bind a generated `Border` background to the templated `Button` background from i
 ```csharp
 Button button = new()
 {
-    Background = DrawColor.White,
+    Background = Color.White,
     ComponentTemplate = new ComponentTemplate<Button>("Button.Binding", context =>
     {
         Border border = new();

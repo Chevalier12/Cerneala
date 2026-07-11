@@ -48,7 +48,7 @@ This section records what the repository already provides. Future work should bu
 
 - [x] `architecture.md` documents the drawing/input boundaries.
 - [x] `Drawing/DrawArgument.cs`
-- [x] `Drawing/DrawColor.cs`
+- [x] `Drawing/Color.cs`
 - [x] `Drawing/DrawCommand.cs`
 - [x] `Drawing/DrawCommandKind.cs`
 - [x] `Drawing/DrawCommandList.cs`
@@ -445,7 +445,7 @@ Acceptance checklist:
 - [x] A child render change does not regenerate unrelated sibling local command lists.
 - [x] Render order is deterministic and matches retained tree order.
 - [x] Clip commands are balanced even when a subtree renders no visible commands.
-- [x] Current primitive drawing uses existing `DrawRect`, `DrawPoint`, `DrawColor`, `DrawTextRun`, and `IDrawImage`.
+- [x] Current primitive drawing uses existing `DrawRect`, `DrawPoint`, `Color`, `DrawTextRun`, and `IDrawImage`.
 
 ## 7. [MVP] Game-loop host integration
 
@@ -601,9 +601,9 @@ This phase creates the smallest useful control set. Controls should be retained,
 
 Common control properties:
 
-- [x] `Control.BackgroundProperty` — MVP can use `DrawColor`; richer brushes wait for Core rendering features.
-- [x] `Control.ForegroundProperty` — MVP can use `DrawColor`.
-- [x] `Control.BorderColorProperty` — MVP can use `DrawColor`.
+- [x] `Control.BackgroundProperty` — MVP can use `Color`; richer brushes wait for Core rendering features.
+- [x] `Control.ForegroundProperty` — MVP can use `Color`.
+- [x] `Control.BorderColorProperty` — MVP can use `Color`.
 - [x] `Control.BorderThicknessProperty` — `Thickness`.
 - [x] `Control.PaddingProperty` — `Thickness`.
 - [x] `Control.FontFamilyProperty` — string or typed font reference backed by `IFontSource`.
@@ -1021,8 +1021,8 @@ New media concepts must translate into `DrawCommand` extensions or clear backend
 
 - [x] `Drawing/DrawCommandKind.cs` — add new command kinds only with tests and backend support.
 - [x] `Drawing/DrawingContext.cs` — add methods only when corresponding command kinds exist.
-- [x] `UI/Media/Brush.cs` — introduce when more than solid `DrawColor` is needed.
-- [x] `UI/Media/SolidColorBrush.cs` — may remain a thin wrapper over `DrawColor` only if it participates in styling/resource identity.
+- [x] `UI/Media/Brush.cs` — introduce when more than solid `Color` is needed.
+- [x] `UI/Media/SolidColorBrush.cs` — may remain a thin wrapper over `Color` only if it participates in styling/resource identity.
 - [~] `UI/Media/LinearGradientBrush.cs` — type exists; frozen until gradient draw commands and backend rendering exist.
 - [~] `UI/Media/RadialGradientBrush.cs` — type exists; frozen until gradient draw commands and backend rendering exist.
 - [x] `UI/Media/Pen.cs`
@@ -1053,7 +1053,7 @@ Tests:
 
 Acceptance checklist:
 
-- [~] Every new media abstraction has a responsibility not already covered by `DrawColor`, `DrawRect`, `DrawPoint`, `DrawTextRun`, or `IDrawImage`; descriptor-only abstractions remain experimental.
+- [~] Every new media abstraction has a responsibility not already covered by `Color`, `DrawRect`, `DrawPoint`, `DrawTextRun`, or `IDrawImage`; descriptor-only abstractions remain experimental.
 - [ ] Every advanced drawing command has backend tests or adapter coverage before being marked implemented.
 - [x] Controls do not reference Skia, HarfBuzz, MonoGame, `SpriteBatch`, or `Texture2D`.
 - [ ] Full project tests pass for the backend-supported advanced media scenario before this phase is scenario-complete.
@@ -1242,7 +1242,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 
 - [x] Public base name is `UIElement` for familiarity and accuracy.
 - [x] `Control` belongs in `UI/Controls/Control.cs` with namespace `Cerneala.UI.Controls`; core element types live separately in `Cerneala.UI.Elements`.
-- [x] MVP color properties use existing `DrawColor` directly. Introduce a higher-level color type only when style/media requirements justify it.
+- [x] MVP color properties use existing `Color` directly. Introduce a higher-level color type only when style/media requirements justify it.
 - [x] Layout uses `float` for MonoGame/drawing alignment and fewer render-boundary conversions.
 - [x] Layout geometry uses `LayoutSize`, `LayoutPoint`, and `LayoutRect` to avoid duplicate meaning with existing drawing primitives.
 

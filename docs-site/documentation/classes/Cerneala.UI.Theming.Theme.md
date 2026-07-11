@@ -24,15 +24,15 @@ Create a named theme, store a typed color value, and read it back:
 using Cerneala.Drawing;
 using Cerneala.UI.Theming;
 
-ThemeKey<DrawColor> accentKey = new("Accent");
-Theme theme = new Theme("Editor").Set(accentKey, DrawColor.White);
+ThemeKey<Color> accentKey = new("Accent");
+Theme theme = new Theme("Editor").Set(accentKey, Color.White);
 
-if (theme.TryGet(accentKey, out DrawColor accent))
+if (theme.TryGet(accentKey, out Color accent))
 {
     Console.WriteLine(accent);
 }
 
-DrawColor requiredAccent = theme.Get(accentKey);
+Color requiredAccent = theme.Get(accentKey);
 ```
 
 ## Remarks

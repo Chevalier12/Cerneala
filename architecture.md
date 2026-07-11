@@ -59,7 +59,7 @@ The input core separates raw frame state from routed UI dispatch. `InputFrame` s
 Production drawing files:
 
 - `Drawing/DrawArgument.cs`
-- `Drawing/DrawColor.cs`
+- `Drawing/Color.cs`
 - `Drawing/DrawCommand.cs`
 - `Drawing/DrawCommandKind.cs`
 - `Drawing/DrawCommandList.cs`
@@ -182,7 +182,7 @@ Files:
 - `DrawCommandKind.cs`
 - `DrawRect.cs`
 - `DrawPoint.cs`
-- `DrawColor.cs`
+- `Color.cs`
 - `DrawTextRun.cs`
 - `IDrawFont.cs`
 - `IDrawImage.cs`
@@ -271,10 +271,10 @@ Constructor behavior:
 
 Methods:
 
-- `FillRectangle(DrawRect rect, DrawColor color)`
-- `DrawRectangle(DrawRect rect, DrawColor color, float thickness)`
-- `DrawText(DrawTextRun textRun, DrawPoint position, DrawColor color)`
-- `DrawImage(IDrawImage image, DrawRect destination, DrawColor color)`
+- `FillRectangle(DrawRect rect, Color color)`
+- `DrawRectangle(DrawRect rect, Color color, float thickness)`
+- `DrawText(DrawTextRun textRun, DrawPoint position, Color color)`
+- `DrawImage(IDrawImage image, DrawRect destination, Color color)`
 - `PushClip(DrawRect rect)`
 - `PopClip()`
 
@@ -340,10 +340,10 @@ It stores all possible command payload fields:
 
 It has a private constructor and public static factories:
 
-- `FillRectangle(DrawRect rect, DrawColor color)`
-- `DrawRectangle(DrawRect rect, DrawColor color, float thickness)`
-- `DrawText(DrawTextRun textRun, DrawPoint position, DrawColor color)`
-- `DrawImage(IDrawImage image, DrawRect destination, DrawColor color)`
+- `FillRectangle(DrawRect rect, Color color)`
+- `DrawRectangle(DrawRect rect, Color color, float thickness)`
+- `DrawText(DrawTextRun textRun, DrawPoint position, Color color)`
+- `DrawImage(IDrawImage image, DrawRect destination, Color color)`
 - `PushClip(DrawRect rect)`
 - `PopClip()`
 
@@ -434,13 +434,13 @@ Tests prove:
 
 - `NaN` and positive infinity are rejected.
 
-### `DrawColor`
+### `Color`
 
 File:
 
-- `Drawing/DrawColor.cs`
+- `Drawing/Color.cs`
 
-`DrawColor` is a `readonly record struct` with:
+`Color` is a `readonly record struct` with:
 
 - `R`
 - `G`
@@ -455,9 +455,9 @@ Default alpha:
 
 Static colors:
 
-- `Transparent`
-- `White`
-- `Black`
+- the complete WPF named-color catalog (`Transparent`, `AliceBlue`, `Tomato`, `YellowGreen`, and the remaining standard names)
+- `FromRgb` and `FromArgb` factories
+- `TryParse` for named colors, hex values, and RGB/RGBA channel lists
 
 Tests prove:
 
@@ -716,7 +716,7 @@ File:
 
 - `Drawing/Text/SkiaTextRasterizer.cs`
 
-`SkiaTextRasterizer` turns a `DrawTextRun` and `DrawColor` into rasterized RGBA pixels.
+`SkiaTextRasterizer` turns a `DrawTextRun` and `Color` into rasterized RGBA pixels.
 
 Dependencies:
 
@@ -732,7 +732,7 @@ Behavior:
 - shapes text first;
 - for empty shaped text, returns a transparent `1x1` `RasterizedText`;
 - creates an `SKFont` using `SkiaFont.Typeface` and `DrawTextRun.Size`;
-- creates an antialiased `SKPaint` with converted `DrawColor`;
+- creates an antialiased `SKPaint` with converted `Color`;
 - creates an `SKTextBlob` from glyph ids and positions;
 - uses text blob bounds to determine raster bitmap width and height;
 - uses `Ceiling(bounds.Width)` and `Ceiling(bounds.Height)`, minimum `1`;
@@ -741,7 +741,7 @@ Behavior:
 
 Color conversion:
 
-- `DrawColor(R,G,B,A)` becomes `SKColor(R,G,B,A)`.
+- `Color(R,G,B,A)` becomes `SKColor(R,G,B,A)`.
 
 Tests prove:
 
@@ -901,7 +901,7 @@ Dispatch map:
 `FillRectangle`:
 
 - converts `DrawRect` to MonoGame `Rectangle`;
-- converts `DrawColor` to MonoGame `Color`;
+- converts `Color` to MonoGame `Color`;
 - draws `_whitePixel` stretched into the rectangle.
 
 ### Rectangle Stroke
@@ -950,13 +950,13 @@ Text color is baked into the rasterized texture. The final sprite draw uses whit
 Private key:
 
 ```csharp
-TextTextureKey(string Text, IDrawFont Font, float FontSize, DrawColor Color)
+TextTextureKey(string Text, IDrawFont Font, float FontSize, Color Color)
 ```
 
 Key source:
 
 ```csharp
-TextTextureKey.From(DrawTextRun textRun, DrawColor color)
+TextTextureKey.From(DrawTextRun textRun, Color color)
 ```
 
 The cache distinguishes:
@@ -1002,7 +1002,7 @@ Important behavior:
 
 - rounds `X`, `Y`, `Width`, `Height` with `MathF.Round`.
 
-`DrawColor` -> MonoGame `Color`:
+`Color` -> MonoGame `Color`:
 
 - maps `R`, `G`, `B`, `A` directly.
 
@@ -1030,7 +1030,7 @@ The tests currently enforce these contracts:
 
 - `DrawRect` exposes edges and rejects invalid/overflowing values.
 - `DrawPoint` rejects non-finite values.
-- `DrawColor` defaults alpha to opaque.
+- `Color` defaults alpha to opaque.
 - `DrawingContext` records fill, text, image, and clip commands.
 - `DrawRectangle` rejects invalid thickness.
 - `DrawTextRun` rejects invalid sizes.
@@ -2015,7 +2015,7 @@ These roadmap ideas overlap heavily with existing drawing primitives:
 
 - `UI/Controls/Point.cs` overlaps with `DrawPoint`.
 - `UI/Controls/Rect.cs` overlaps with `DrawRect`.
-- `UI/Media/Color.cs` overlaps with `DrawColor`.
+- `UI/Media/Color.cs` overlaps with `Color`.
 - `UI/Media/GlyphRun.cs` overlaps partly with `TextShapeResult`.
 - `UI/FormattedText.cs` and `UI/Text/TextFormatter.cs` overlap partly with `DrawTextRun`, `SkiaTextShaper`, and `SkiaTextRasterizer`.
 - `UI/Media/BitmapSource.cs` overlaps partly with `IDrawImage` if it only exposes width and height.
@@ -2038,7 +2038,7 @@ WPF-style API layer:
   UIElement, Shape, Brush, Color, ImageSource, TextBlock
 
 Drawing command layer:
-  DrawingContext, DrawCommandList, DrawCommand, DrawRect, DrawColor
+  DrawingContext, DrawCommandList, DrawCommand, DrawRect, Color
 
 Backend layer:
   MonoGameDrawingBackend, MonoGameImage, SpriteBatch
@@ -2050,7 +2050,7 @@ The WPF-style layer may translate its richer concepts into drawing commands. The
 
 - Do not call `SpriteBatch` outside a backend.
 - Do not call Skia or HarfBuzz from controls.
-- Do not add WPF-style classes that only duplicate `DrawPoint`, `DrawRect`, or `DrawColor`.
+- Do not add WPF-style classes that only duplicate `DrawPoint`, `DrawRect`, or `Color`.
 - Do not make `DrawingContext` own layout or control state.
 - Do not make `DrawCommandList` a visual tree.
 - Do not add backend-specific types to `DrawCommand`.
@@ -2073,7 +2073,7 @@ Do not leave two identical geometry systems without a reason.
 
 ### Duplicate Color
 
-`DrawColor` is already enough for immediate RGBA drawing. A future WPF-style `Color` is only useful if it becomes the public media color model and `DrawColor` becomes an internal/backend command color or conversion target.
+`Color` is already enough for immediate RGBA drawing. A future WPF-style `Color` is only useful if it becomes the public media color model and `Color` becomes an internal/backend command color or conversion target.
 
 ### Text API Layering
 

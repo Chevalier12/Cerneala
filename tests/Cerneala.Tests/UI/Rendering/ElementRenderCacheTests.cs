@@ -9,7 +9,7 @@ public sealed class ElementRenderCacheTests
     [Fact]
     public void DirtyElementCacheRebuildsLocalCommands()
     {
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         ElementRenderCache cache = new();
         RenderCounters counters = new();
 
@@ -26,7 +26,7 @@ public sealed class ElementRenderCacheTests
     [Fact]
     public void UnchangedElementCacheIsReused()
     {
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         ElementRenderCache cache = new();
         RenderCounters counters = new();
         cache.Ensure(element, counters, forceRebuild: true);
@@ -41,7 +41,7 @@ public sealed class ElementRenderCacheTests
     [Fact]
     public void DependencyChangeMakesCacheStale()
     {
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         ElementRenderCache cache = new();
         RenderCounters counters = new();
         cache.Ensure(element, counters, forceRebuild: true);
@@ -54,8 +54,8 @@ public sealed class ElementRenderCacheTests
     [Fact]
     public void CacheBuiltForOneElementIsStaleForAnotherElementWithMatchingVersion()
     {
-        RenderingTestElement first = new(DrawColor.White);
-        RenderingTestElement second = new(DrawColor.Black);
+        RenderingTestElement first = new(Color.White);
+        RenderingTestElement second = new(Color.Black);
         ElementRenderCache cache = new();
         cache.Ensure(first, new RenderCounters(), forceRebuild: true);
 
@@ -66,7 +66,7 @@ public sealed class ElementRenderCacheTests
     [Fact]
     public void RebuildStoresContentBounds()
     {
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         element.Arrange(new ArrangeContext(new LayoutRect(2, 3, 20, 10)));
         ElementRenderCache cache = new();
 
@@ -78,8 +78,8 @@ public sealed class ElementRenderCacheTests
     [Fact]
     public void FailedRebuildInvalidatesPreviouslyValidCache()
     {
-        RenderingTestElement first = new(DrawColor.White);
-        RenderingTestElement failing = new(DrawColor.White, throwOnRender: true);
+        RenderingTestElement first = new(Color.White);
+        RenderingTestElement failing = new(Color.White, throwOnRender: true);
         ElementRenderCache cache = new();
         cache.Ensure(first, new RenderCounters(), forceRebuild: true);
 

@@ -25,8 +25,8 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Theming;
 
-ThemeKey<DrawColor> accentKey = DefaultTheme.AccentKey;
-AspectToken<DrawColor> accentToken = ThemeTokenBridge.ToToken(accentKey);
+ThemeKey<Color> accentKey = DefaultTheme.AccentKey;
+AspectToken<Color> accentToken = ThemeTokenBridge.ToToken(accentKey);
 
 // accentToken.Name is "theme.Accent".
 ```
@@ -41,7 +41,7 @@ using Cerneala.UI.Theming;
 Theme theme = DefaultTheme.Create();
 AspectEnvironment environment = ThemeTokenBridge.CreateEnvironment(theme);
 
-if (environment.TryGet(ThemeTokenBridge.ToToken(DefaultTheme.BackgroundKey), out DrawColor background))
+if (environment.TryGet(ThemeTokenBridge.ToToken(DefaultTheme.BackgroundKey), out Color background))
 {
     // Use the theme background color in aspect resolution or template binding.
 }

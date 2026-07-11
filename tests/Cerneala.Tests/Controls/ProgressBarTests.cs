@@ -17,7 +17,7 @@ public sealed class ProgressBarTests
             Minimum = 0,
             Maximum = 100,
             Value = 25,
-            Foreground = DrawColor.White
+            Foreground = Color.White
         };
         root.VisualChildren.Add(progress);
         root.ProcessFrame();

@@ -4,7 +4,7 @@ namespace Cerneala.UI.Media;
 
 public abstract record Brush
 {
-    public virtual DrawColor? SolidColor => null;
+    public virtual Color? SolidColor => null;
 }
 
 internal static class GradientStopCollection

@@ -136,7 +136,7 @@ CaretColorProperty: AffectsRender
 SelectionBackgroundProperty: AffectsRender
 ```
 
-Keep `DrawColor` for now; do not introduce brush infrastructure.
+Keep `Color` for now; do not introduce brush infrastructure.
 
 - [ ] **Step 2: Render selection before text**
 

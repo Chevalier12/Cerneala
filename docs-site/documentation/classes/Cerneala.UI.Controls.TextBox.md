@@ -53,7 +53,7 @@ using IDisposable binding = BindingOperations.BindTwoWay(
 
 `TextBox` does not declare additional members or override `TextBoxBase` behavior. It is the concrete plain-text editing control for the retained UI layer. Use it when the stored `Text` value should also be the rendered and accessibility-exposed value.
 
-The inherited constructor path makes the control focusable, includes it in tab navigation, sets default text-box chrome, and uses the I-beam cursor. The inherited defaults include `Padding = new Thickness(4, 2, 4, 2)`, `BorderThickness = new Thickness(1)`, `BorderColor = new DrawColor(120, 130, 145)`, `Background = DrawColor.White`, `CaretColor = DrawColor.Black`, and `SelectionBackground = new DrawColor(0, 120, 215)`.
+The inherited constructor path makes the control focusable, includes it in tab navigation, sets default text-box chrome, and uses the I-beam cursor. The inherited defaults include `Padding = new Thickness(4, 2, 4, 2)`, `BorderThickness = new Thickness(1)`, `BorderColor = new Color(120, 130, 145)`, `Background = Color.White`, `CaretColor = Color.Black`, and `SelectionBackground = new Color(0, 120, 215)`.
 
 Text input is normalized before insertion: `null`, empty input, and control characters do not insert text. Programmatic `Text` assignments also normalize `null` to `string.Empty`. Editing operations keep the inherited `TextEditor`, `TextSelection`, and `TextCaret` state synchronized with the `Text` UI property.
 
@@ -78,8 +78,8 @@ This class does not declare public fields.
 | Name | Type | Declared by | Description |
 | --- | --- | --- | --- |
 | `TextProperty` | `UiProperty<string>` | `TextBoxBase` | Identifies the `Text` UI property. Defaults to `string.Empty`, coerces `null` to empty text, and affects measure, render, and semantics. |
-| `CaretColorProperty` | `UiProperty<DrawColor>` | `TextBoxBase` | Identifies the `CaretColor` UI property. Defaults to `DrawColor.Black` and affects render. |
-| `SelectionBackgroundProperty` | `UiProperty<DrawColor>` | `TextBoxBase` | Identifies the `SelectionBackground` UI property. Defaults to `new DrawColor(0, 120, 215)` and affects render. |
+| `CaretColorProperty` | `UiProperty<Color>` | `TextBoxBase` | Identifies the `CaretColor` UI property. Defaults to `Color.Black` and affects render. |
+| `SelectionBackgroundProperty` | `UiProperty<Color>` | `TextBoxBase` | Identifies the `SelectionBackground` UI property. Defaults to `new Color(0, 120, 215)` and affects render. |
 
 ## Properties
 
@@ -93,8 +93,8 @@ This class does not declare public properties.
 | `Text` | `string` | `TextBoxBase` | Gets or sets the editable and rendered text. Setting `null` stores `string.Empty`. |
 | `Selection` | `TextSelection` | `TextBoxBase` | Gets the current text selection. |
 | `Caret` | `TextCaret` | `TextBoxBase` | Gets the current caret state. |
-| `CaretColor` | `DrawColor` | `TextBoxBase` | Gets or sets the rendered caret color. |
-| `SelectionBackground` | `DrawColor` | `TextBoxBase` | Gets or sets the selection highlight color. |
+| `CaretColor` | `Color` | `TextBoxBase` | Gets or sets the rendered caret color. |
+| `SelectionBackground` | `Color` | `TextBoxBase` | Gets or sets the selection highlight color. |
 | `TextMeasurer` | `TextMeasurer` | `TextBoxBase` | Gets or sets the text measurer used when no resource-backed font path is active. Setting `null` throws `ArgumentNullException`; changing it invalidates text metrics. |
 | `TextRenderer` | `TextRenderer` | `TextBoxBase` | Gets or sets the text renderer used when no resource-backed font path is active. Setting `null` throws `ArgumentNullException`; changing it invalidates render. |
 | `FontResourceId` | `ResourceId<FontResource>?` | `TextBoxBase` | Gets or sets the optional font resource used for text metrics and rendering. |
@@ -124,8 +124,8 @@ This class does not declare public events.
 | Property | Identifier field | Default value | Metadata/options |
 | --- | --- | --- | --- |
 | `Text` | `TextProperty` | `string.Empty` | `UiPropertyOptions.AffectsMeasure`, `UiPropertyOptions.AffectsRender`, `UiPropertyOptions.AffectsSemantics`; coerces `null` to `string.Empty`. |
-| `CaretColor` | `CaretColorProperty` | `DrawColor.Black` | `UiPropertyOptions.AffectsRender`. |
-| `SelectionBackground` | `SelectionBackgroundProperty` | `new DrawColor(0, 120, 215)` | `UiPropertyOptions.AffectsRender`. |
+| `CaretColor` | `CaretColorProperty` | `Color.Black` | `UiPropertyOptions.AffectsRender`. |
+| `SelectionBackground` | `SelectionBackgroundProperty` | `new Color(0, 120, 215)` | `UiPropertyOptions.AffectsRender`. |
 
 ## Applies to
 

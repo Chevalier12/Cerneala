@@ -99,7 +99,7 @@ Generated from `.`.
 |   |-- documentation/
 |   |   |-- classes/
 |   |   |   |-- Cerneala.Drawing.DrawArgument.md
-|   |   |   |-- Cerneala.Drawing.DrawColor.md
+|   |   |   |-- Cerneala.Drawing.Color.md
 |   |   |   |-- Cerneala.Drawing.DrawCommand.md
 |   |   |   |-- Cerneala.Drawing.DrawCommandKind.md
 |   |   |   |-- Cerneala.Drawing.DrawCommandList.md
@@ -830,7 +830,7 @@ Generated from `.`.
 |   |   |-- TextShaper.cs
 |   |   +-- TextShapeResult.cs
 |   |-- DrawArgument.cs
-|   |-- DrawColor.cs
+|   |-- Color.cs
 |   |-- DrawCommand.cs
 |   |-- DrawCommandKind.cs
 |   |-- DrawCommandList.cs

@@ -8,7 +8,7 @@ namespace Cerneala.Tests.Controls;
 
 public sealed class TextBoxCaretBlinkTests
 {
-    private static readonly DrawColor CaretColor = new(12, 220, 80);
+    private static readonly Color CaretColor = new(12, 220, 80);
 
     [Fact]
     public void FocusedCaretIsVisibleAtBlinkStart()

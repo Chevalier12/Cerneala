@@ -21,7 +21,7 @@ public sealed class PresenceCoordinatorTests
         Canvas parent = new();
         Rectangle child = new()
         {
-            Fill = new SolidColorBrush(DrawColor.White),
+            Fill = new SolidColorBrush(Color.White),
             Geometry = new RectangleGeometry(new DrawRect(0, 0, 20, 20)),
             Presence = PresenceOptions.FadeAndScale(
                 MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
@@ -148,7 +148,7 @@ public sealed class PresenceCoordinatorTests
         Canvas parent = new();
         Rectangle child = new()
         {
-            Fill = new SolidColorBrush(DrawColor.White),
+            Fill = new SolidColorBrush(Color.White),
             Geometry = new RectangleGeometry(new DrawRect(0, 0, 20, 20)),
             Presence = PresenceOptions.FadeAndScale(
                 MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),

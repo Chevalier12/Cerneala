@@ -28,7 +28,7 @@ using Cerneala.UI.Controls;
 Button button = new();
 AspectDeclaration declaration = new(
     Control.BackgroundProperty,
-    AspectValue<DrawColor>.Literal(DrawColor.White),
+    AspectValue<Color>.Literal(Color.White),
     diagnosticName: "button background");
 
 AspectCatalog catalog = new AspectRegistry()
@@ -47,7 +47,7 @@ ResolvedAspect resolved = new AspectEngine()
     .Resolve(button, catalog, new AspectEnvironment("example"));
 
 ResolvedAspectValue value = resolved.Values[Control.BackgroundProperty];
-DrawColor background = (DrawColor)value.Value!;
+Color background = (Color)value.Value!;
 AspectDeclaration source = value.SourceDeclaration;
 ```
 

@@ -37,7 +37,7 @@ MotionTransactionOptions options = new(
 
 using (root.Motion.BeginTransaction(options))
 {
-    control.Background = DrawColor.White;
+    control.Background = Color.White;
 }
 ```
 

@@ -131,7 +131,7 @@ Suggested API:
 public static StyleSheet CreateStyleSheet()
 ```
 
-Include base and visual-state rules for `Button` using typed setters and `ThemeResource<DrawColor>`.
+Include base and visual-state rules for `Button` using typed setters and `ThemeResource<Color>`.
 
 - [ ] **Step 3: Preserve local precedence**
 

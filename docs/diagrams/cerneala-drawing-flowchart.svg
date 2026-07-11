@@ -84,7 +84,7 @@
   <rect class="neutral" x="610" y="1025" width="420" height="320" rx="18" />
   <text class="box-title" x="645" y="1080">Core Types</text>
   <text class="box-text" x="645" y="1125">DrawRect, DrawPoint</text>
-  <text class="box-text" x="645" y="1160">DrawColor</text>
+  <text class="box-text" x="645" y="1160">Color</text>
   <text class="box-text" x="645" y="1195">DrawTextRun</text>
   <text class="box-text" x="645" y="1230">IDrawImage, IDrawFont</text>
   <text class="box-text" x="645" y="1265">IDrawingBackend</text>

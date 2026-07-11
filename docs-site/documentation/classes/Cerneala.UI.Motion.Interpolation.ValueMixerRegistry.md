@@ -62,7 +62,7 @@ Registration is type-based. `Register<T>` stores the supplied `ValueMixer<T>` un
 
 `TryResolve` methods return `false` when the registry has no mixer for the requested type. `Resolve` methods throw an `InvalidOperationException` instead. The overloads that accept `propertyName` include that property name in the exception message when it is not null or whitespace, which helps diagnose missing mixers for motion-driven UI properties.
 
-`RegisterBuiltIns` registers mixers for `float`, `double`, `DrawColor`, `Thickness`, `DrawPoint`, `DrawSize`, `DrawRect`, and `Transform`.
+`RegisterBuiltIns` registers mixers for `float`, `double`, `Color`, `Thickness`, `DrawPoint`, `DrawSize`, `DrawRect`, and `Transform`.
 
 ## Constructors
 

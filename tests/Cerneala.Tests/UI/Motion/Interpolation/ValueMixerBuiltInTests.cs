@@ -13,7 +13,7 @@ public sealed class ValueMixerBuiltInTests
     {
         AssertEndpoints(new FloatMixer(), 1.5f, 9.5f);
         AssertEndpoints(new DoubleMixer(), 1.5d, 9.5d);
-        AssertEndpoints(new ColorMixer(), new DrawColor(1, 2, 3, 4), new DrawColor(250, 251, 252, 253));
+        AssertEndpoints(new ColorMixer(), new Color(1, 2, 3, 4), new Color(250, 251, 252, 253));
         AssertEndpoints(new ThicknessMixer(), new Thickness(1, 2, 3, 4), new Thickness(5, 6, 7, 8));
         AssertEndpoints(new DrawPointMixer(), new DrawPoint(1, 2), new DrawPoint(5, 6));
         AssertEndpoints(new DrawSizeMixer(), new DrawSize(1, 2), new DrawSize(5, 6));
@@ -45,9 +45,9 @@ public sealed class ValueMixerBuiltInTests
     {
         ColorMixer mixer = new();
 
-        DrawColor mixed = mixer.Mix(new DrawColor(0, 10, 20, 0), new DrawColor(100, 110, 120, 200), 0.5f);
+        Color mixed = mixer.Mix(new Color(0, 10, 20, 0), new Color(100, 110, 120, 200), 0.5f);
 
-        Assert.Equal(new DrawColor(50, 60, 70, 100), mixed);
+        Assert.Equal(new Color(50, 60, 70, 100), mixed);
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public sealed class ValueMixerBuiltInTests
 
         Assert.IsType<FloatMixer>(root.Motion.Mixers.Resolve<float>());
         Assert.IsType<DoubleMixer>(root.Motion.Mixers.Resolve<double>());
-        Assert.IsType<ColorMixer>(root.Motion.Mixers.Resolve<DrawColor>());
+        Assert.IsType<ColorMixer>(root.Motion.Mixers.Resolve<Color>());
         Assert.IsType<ThicknessMixer>(root.Motion.Mixers.Resolve<Thickness>());
         Assert.IsType<DrawPointMixer>(root.Motion.Mixers.Resolve<DrawPoint>());
         Assert.IsType<DrawSizeMixer>(root.Motion.Mixers.Resolve<DrawSize>());

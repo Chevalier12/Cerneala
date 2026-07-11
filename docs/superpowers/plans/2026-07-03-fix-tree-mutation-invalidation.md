@@ -322,7 +322,7 @@ public sealed class UiHostLateTreeMutationTests
         protected override void OnRender(RenderContext context)
         {
             RenderCount++;
-            context.DrawingContext.FillRectangle(new DrawRect(context.Bounds.X, context.Bounds.Y, 1, 1), DrawColor.White);
+            context.DrawingContext.FillRectangle(new DrawRect(context.Bounds.X, context.Bounds.Y, 1, 1), Color.White);
         }
     }
 }

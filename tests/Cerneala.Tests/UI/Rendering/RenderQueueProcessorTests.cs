@@ -13,7 +13,7 @@ public sealed class RenderQueueProcessorTests
     public void QueuedRenderWorkRebuildsElementCacheDuringFrame()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         root.ProcessFrame();
         int renderCountAfterInitialFrame = child.RenderCount;
@@ -30,7 +30,7 @@ public sealed class RenderQueueProcessorTests
     public void FailedRenderProcessingKeepsDirtyFlagsAndQueuedWork()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White, throwOnRender: true);
+        RenderingTestElement child = new(Color.White, throwOnRender: true);
         root.VisualChildren.Add(child);
         child.Invalidate(InvalidationFlags.Render, "test");
 
@@ -44,7 +44,7 @@ public sealed class RenderQueueProcessorTests
     public void RenderOnlyInvalidationDoesNotRunMeasureOrArrange()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         root.ProcessFrame();
 
@@ -60,7 +60,7 @@ public sealed class RenderQueueProcessorTests
     public void ScopeOnlyInvalidationDoesNotSkipStaleLayoutCache()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         root.ProcessFrame();
         int renderCountAfterInitialFrame = child.RenderCount;

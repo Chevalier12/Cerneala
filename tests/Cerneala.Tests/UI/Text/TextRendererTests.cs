@@ -18,7 +18,7 @@ public sealed class TextRendererTests
             new TextAspect("Default", 16),
             100,
             new DrawPoint(2, 3),
-            DrawColor.White);
+            Color.White);
 
         Assert.Single(commands);
         Assert.Equal(DrawCommandKind.DrawText, commands[0].Kind);
@@ -32,7 +32,7 @@ public sealed class TextRendererTests
             new TextAspect("Default", 16),
             100,
             new DrawPoint(0, 0),
-            DrawColor.Black).CacheKey);
+            Color.Black).CacheKey);
     }
 
     [Fact]
@@ -42,8 +42,8 @@ public sealed class TextRendererTests
         TextMeasurer measurer = new(FontResolver.Default, LineBreakService.Default, cache);
         TextRenderer renderer = new(FontResolver.Default, measurer);
 
-        renderer.Render(new DrawingContext(new DrawCommandList()), "Hello", new TextAspect("Default", 16), 100, default, DrawColor.Black);
-        renderer.Render(new DrawingContext(new DrawCommandList()), "Hello", new TextAspect("Default", 16), 100, default, DrawColor.White);
+        renderer.Render(new DrawingContext(new DrawCommandList()), "Hello", new TextAspect("Default", 16), 100, default, Color.Black);
+        renderer.Render(new DrawingContext(new DrawCommandList()), "Hello", new TextAspect("Default", 16), 100, default, Color.White);
 
         Assert.Equal(1, cache.Misses);
         Assert.Equal(1, cache.Hits);
@@ -61,7 +61,7 @@ public sealed class TextRendererTests
             new TextAspect("Default", 16),
             100,
             default,
-            DrawColor.White);
+            Color.White);
 
         Assert.Empty(commands);
         Assert.Equal(0, result.Size.Width);
@@ -81,7 +81,7 @@ public sealed class TextRendererTests
             new TextAspect("Serif", 12, scale: 2),
             100,
             default,
-            DrawColor.White);
+            Color.White);
 
         Assert.Single(commands);
         Assert.Equal("Serif", commands[0].TextRun!.Font.FamilyName);
@@ -89,13 +89,13 @@ public sealed class TextRendererTests
     }
 
     [Fact]
-    public void RenderUsesRequestedDrawColor()
+    public void RenderUsesRequestedColor()
     {
         TextRenderer renderer = new();
         DrawCommandList commands = new();
         DrawingContext drawingContext = new(commands);
-        DrawColor styleColor = new(12, 34, 56);
-        DrawColor requestedColor = new(98, 76, 54);
+        Color styleColor = new(12, 34, 56);
+        Color requestedColor = new(98, 76, 54);
 
         renderer.Render(
             drawingContext,

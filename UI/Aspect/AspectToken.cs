@@ -26,9 +26,9 @@ public abstract class AspectToken : IEquatable<AspectToken>
         return new AspectToken<T>(name);
     }
 
-    public static AspectToken<DrawColor> Color(string name)
+    public static AspectToken<Color> Color(string name)
     {
-        return Create<DrawColor>(name);
+        return Create<Color>(name);
     }
 
     public static AspectToken<Thickness> Thickness(string name)

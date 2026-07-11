@@ -4,7 +4,7 @@ namespace Cerneala.UI.Media;
 
 public readonly record struct GradientStop
 {
-    public GradientStop(float offset, DrawColor color)
+    public GradientStop(float offset, Color color)
     {
         if (!float.IsFinite(offset) || offset < 0 || offset > 1)
         {
@@ -17,5 +17,5 @@ public readonly record struct GradientStop
 
     public float Offset { get; }
 
-    public DrawColor Color { get; }
+    public Color Color { get; }
 }

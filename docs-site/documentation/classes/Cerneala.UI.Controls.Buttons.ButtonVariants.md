@@ -46,8 +46,8 @@ AspectRuleSet dangerRule = new(
         typeof(Button),
         conditions: [AspectCondition.Variant(ButtonVariants.Kind, ButtonKind.Danger)]),
     [
-        new AspectDeclaration(Control.BackgroundProperty, AspectValue<DrawColor>.Literal(new DrawColor(220, 38, 38))),
-        new AspectDeclaration(Control.ForegroundProperty, AspectValue<DrawColor>.Literal(DrawColor.White))
+        new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(new Color(220, 38, 38))),
+        new AspectDeclaration(Control.ForegroundProperty, AspectValue<Color>.Literal(Color.White))
     ],
     priority: 0);
 ```

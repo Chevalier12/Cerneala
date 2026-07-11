@@ -28,7 +28,7 @@ using Cerneala.UI.Media;
 ShadowEffect shadow = new(
     new DrawPoint(4, 6),
     blurRadius: 12,
-    color: new DrawColor(0, 0, 0, 128));
+    color: new Color(0, 0, 0, 128));
 
 Rectangle rectangle = new()
 {
@@ -50,7 +50,7 @@ Because the type is a `readonly record struct`, instances are immutable value ty
 
 | Name | Description |
 | --- | --- |
-| `ShadowEffect(DrawPoint offset, float blurRadius, DrawColor color)` | Initializes a shadow effect. Throws `ArgumentOutOfRangeException` when `blurRadius` is not finite or is negative. |
+| `ShadowEffect(DrawPoint offset, float blurRadius, Color color)` | Initializes a shadow effect. Throws `ArgumentOutOfRangeException` when `blurRadius` is not finite or is negative. |
 
 ## Properties
 
@@ -58,7 +58,7 @@ Because the type is a `readonly record struct`, instances are immutable value ty
 | --- | --- | --- |
 | `Offset` | `DrawPoint` | Gets the offset applied to the shadow. |
 | `BlurRadius` | `float` | Gets the finite, non-negative blur radius. |
-| `Color` | `DrawColor` | Gets the shadow color. |
+| `Color` | `Color` | Gets the shadow color. |
 
 ## Methods
 
@@ -84,4 +84,4 @@ Cerneala UI media values and shape rendering APIs.
 
 - `Cerneala.UI.Controls.Shapes.Shape`
 - `Cerneala.Drawing.DrawPoint`
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`

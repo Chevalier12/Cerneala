@@ -192,9 +192,9 @@ References use `$Name`:
 Foreground = $PulseColor;
 ```
 
-References are resolved by declaration context. For example, `Foreground = $PulseColor` targets `Control.ForegroundProperty`, whose runtime type is `DrawColor`. If `PulseColor` is a named `SolidColorBrush`, the generator uses its solid color value for `DrawColor` properties.
+References are resolved by declaration context. For example, `Foreground = $PulseColor` targets `Control.ForegroundProperty`, whose runtime type is `Color`. If `PulseColor` is a named `SolidColorBrush`, the generator uses its solid color value for `Color` properties.
 
-For a `Brush` property, the same reference would resolve to the `SolidColorBrush` resource itself. For a `DrawColor` property, only resources with a solid color are accepted. A gradient brush or incompatible resource used for a `DrawColor` property is a generator error.
+For a `Brush` property, the same reference would resolve to the `SolidColorBrush` resource itself. For a `Color` property, only resources with a solid color are accepted. A gradient brush or incompatible resource used for a `Color` property is a generator error.
 
 Named element references use the same `$Name` syntax, but only contexts that accept an element reference may consume them. A reference never silently becomes a string.
 
@@ -217,6 +217,6 @@ Add focused source generator tests for:
 - `SolidColorBrush` resource declaration.
 - Invalid `SolidColorBrush.Color` diagnostic.
 - Resource reference from an aspect declaration to a `SolidColorBrush`.
-- Solid brush resource coerced to `DrawColor` for `Control.Foreground`.
+- Solid brush resource coerced to `Color` for `Control.Foreground`.
 - Incompatible resource reference diagnostic.
 - Nested `Resources` rejected diagnostic.

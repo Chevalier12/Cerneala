@@ -10,7 +10,7 @@ public sealed class ResourceRenderDependencyTests
     [Fact]
     public void ResourceIdentityParticipatesInCacheStaleness()
     {
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         ElementRenderCache cache = new();
         cache.Ensure(element, new RenderCounters(), forceRebuild: true);
 
@@ -22,7 +22,7 @@ public sealed class ResourceRenderDependencyTests
     [Fact]
     public void UnchangedResourceDependencyAllowsCacheReuse()
     {
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         element.ChangeDependencies(RenderDependency.None.WithResourceIdentity("resource:logo").WithResourceVersion(1));
         ElementRenderCache cache = new();
         RenderCounters counters = new();
@@ -53,7 +53,7 @@ public sealed class ResourceRenderDependencyTests
         ResourceId<string> first = new("First");
         ResourceId<string> second = new("Second");
         UIRoot root = new();
-        RenderingTestElement element = new(DrawColor.White);
+        RenderingTestElement element = new(Color.White);
         root.VisualChildren.Add(element);
         tracker.RecordDependency(element, first);
         tracker.RecordDependency(element, second);

@@ -30,7 +30,7 @@ SystemFontSource fonts = new();
 IDrawFont font = fonts.LoadFont("Arial", 16);
 
 DrawTextRun textRun = new(font, "Cerneala", 16);
-drawing.DrawText(textRun, new DrawPoint(12, 24), DrawColor.Black);
+drawing.DrawText(textRun, new DrawPoint(12, 24), Color.Black);
 ```
 
 ## Remarks

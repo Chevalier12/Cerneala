@@ -120,8 +120,8 @@ public abstract class Shape : Control
 
     protected virtual void RenderGeometry(RenderContext context, Geometry geometry)
     {
-        DrawColor fill = Fill?.SolidColor ?? DrawColor.Transparent;
-        DrawColor stroke = Stroke?.SolidColor ?? DrawColor.Transparent;
+        Color fill = Fill?.SolidColor ?? Color.Transparent;
+        Color stroke = Stroke?.SolidColor ?? Color.Transparent;
         float thickness = StrokeThickness;
 
         switch (geometry)
@@ -184,7 +184,7 @@ public abstract class Shape : Control
         return new DrawRect(rect.X, rect.Y, MathF.Max(0, rect.Width), MathF.Max(0, rect.Height));
     }
 
-    private void DrawPathStroke(RenderContext context, PathGeometry path, DrawColor color, float thickness)
+    private void DrawPathStroke(RenderContext context, PathGeometry path, Color color, float thickness)
     {
         for (int i = 1; i < path.Points.Count; i++)
         {
@@ -194,12 +194,12 @@ public abstract class Shape : Control
         }
     }
 
-    private DrawColor ApplyOpacity(DrawColor color)
+    private Color ApplyOpacity(Color color)
     {
-        return new DrawColor(color.R, color.G, color.B, (byte)Math.Clamp((int)MathF.Round(color.A * Opacity), 0, 255));
+        return new Color(color.R, color.G, color.B, (byte)Math.Clamp((int)MathF.Round(color.A * Opacity), 0, 255));
     }
 
-    private static bool HasVisibleColor(DrawColor color)
+    private static bool HasVisibleColor(Color color)
     {
         return color.A > 0;
     }

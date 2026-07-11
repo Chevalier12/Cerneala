@@ -25,9 +25,9 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 
-AspectToken<DrawColor> accentToken = AspectToken.Color("app.accent");
+AspectToken<Color> accentToken = AspectToken.Color("app.accent");
 AspectEnvironment environment = new("root");
-environment.Set(accentToken, DrawColor.White);
+environment.Set(accentToken, Color.White);
 
 AspectResolutionContext context = new(new Button(), environment);
 

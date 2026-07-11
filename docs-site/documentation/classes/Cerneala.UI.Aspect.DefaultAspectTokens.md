@@ -40,9 +40,9 @@ using Cerneala.UI.Aspect;
 
 AspectEnvironment environment = DefaultAspectPackage.CreateEnvironment();
 
-if (environment.TryGet(DefaultAspectTokens.Color.Accent, out DrawColor accent))
+if (environment.TryGet(DefaultAspectTokens.Color.Accent, out Color accent))
 {
-    // accent is the default accent color, DrawColor(37, 99, 235).
+    // accent is the default accent color, Color(37, 99, 235).
 }
 ```
 
@@ -53,7 +53,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 
 AspectPackage package = AspectPackage.Create("App")
-    .Tokens(tokens => tokens.Set(DefaultAspectTokens.Color.Accent, new DrawColor(79, 70, 229)))
+    .Tokens(tokens => tokens.Set(DefaultAspectTokens.Color.Accent, new Color(79, 70, 229)))
     .Build();
 ```
 
@@ -71,7 +71,7 @@ The default package uses several of these tokens directly: button rules use `Str
 
 | Name | Description |
 | --- | --- |
-| `Color` | Groups semantic color tokens backed by `DrawColor` values. |
+| `Color` | Groups semantic color tokens backed by `Color` values. |
 | `Typography` | Groups text styling tokens for font family and font size. |
 | `Spacing` | Groups spacing tokens backed by `Thickness` values. |
 | `Stroke` | Groups border and stroke sizing tokens backed by `Thickness` values. |
@@ -83,11 +83,11 @@ The default package uses several of these tokens directly: button rules use `Str
 
 | Name | Type | Token Name | Default Value |
 | --- | --- | --- | --- |
-| `Color.Background` | `AspectToken<DrawColor>` | `color.background` | `new DrawColor(248, 250, 252)` |
-| `Color.Foreground` | `AspectToken<DrawColor>` | `color.foreground` | `new DrawColor(28, 35, 48)` |
-| `Color.Surface` | `AspectToken<DrawColor>` | `color.surface` | `new DrawColor(255, 255, 255)` |
-| `Color.Border` | `AspectToken<DrawColor>` | `color.border` | `new DrawColor(148, 163, 184)` |
-| `Color.Accent` | `AspectToken<DrawColor>` | `color.accent` | `new DrawColor(37, 99, 235)` |
+| `Color.Background` | `AspectToken<Color>` | `color.background` | `new Color(248, 250, 252)` |
+| `Color.Foreground` | `AspectToken<Color>` | `color.foreground` | `new Color(28, 35, 48)` |
+| `Color.Surface` | `AspectToken<Color>` | `color.surface` | `new Color(255, 255, 255)` |
+| `Color.Border` | `AspectToken<Color>` | `color.border` | `new Color(148, 163, 184)` |
+| `Color.Accent` | `AspectToken<Color>` | `color.accent` | `new Color(37, 99, 235)` |
 
 ### Typography
 

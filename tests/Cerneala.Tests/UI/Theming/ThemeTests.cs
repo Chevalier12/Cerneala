@@ -8,19 +8,19 @@ public sealed class ThemeTests
     [Fact]
     public void ThemeResolvesTypedValues()
     {
-        ThemeKey<DrawColor> key = new("Accent");
-        Theme theme = new Theme("Test").Set(key, DrawColor.White);
+        ThemeKey<Color> key = new("Accent");
+        Theme theme = new Theme("Test").Set(key, Color.White);
 
-        Assert.True(theme.TryGet(key, out DrawColor value));
-        Assert.Equal(DrawColor.White, value);
-        Assert.Equal(DrawColor.White, theme.Get(key));
+        Assert.True(theme.TryGet(key, out Color value));
+        Assert.Equal(Color.White, value);
+        Assert.Equal(Color.White, theme.Get(key));
     }
 
     [Fact]
     public void MissingThemeValueFailsClearly()
     {
         Theme theme = new();
-        ThemeKey<DrawColor> key = new("Missing");
+        ThemeKey<Color> key = new("Missing");
 
         Assert.Throws<KeyNotFoundException>(() => theme.Get(key));
     }

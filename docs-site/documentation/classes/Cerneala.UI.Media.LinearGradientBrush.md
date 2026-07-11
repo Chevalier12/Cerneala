@@ -28,8 +28,8 @@ LinearGradientBrush brush = new(
     new DrawPoint(0, 0),
     new DrawPoint(200, 0),
     [
-        new GradientStop(0f, DrawColor.White),
-        new GradientStop(1f, DrawColor.Black)
+        new GradientStop(0f, Color.White),
+        new GradientStop(1f, Color.Black)
     ]);
 ```
 
@@ -39,7 +39,7 @@ LinearGradientBrush brush = new(
 
 The constructor orders the supplied stops by `GradientStop.Offset` before exposing them through `Stops`. The stop collection must contain at least one item. Passing `null` for `stops` throws `ArgumentNullException`; passing an empty sequence throws `ArgumentException`.
 
-Because `LinearGradientBrush` derives from `Brush` and does not override `SolidColor`, its inherited `SolidColor` property returns `null`. Consumers that require a concrete `DrawColor` should treat this brush as a non-solid brush.
+Because `LinearGradientBrush` derives from `Brush` and does not override `SolidColor`, its inherited `SolidColor` property returns `null`. Consumers that require a concrete `Color` should treat this brush as a non-solid brush.
 
 Equality compares `StartPoint`, `EndPoint`, and the ordered stop sequence. Hash codes are computed from the same values.
 
@@ -56,7 +56,7 @@ Equality compares `StartPoint`, `EndPoint`, and the ordered stop sequence. Hash 
 | `StartPoint` | `DrawPoint` | Gets the start point of the gradient line. |
 | `EndPoint` | `DrawPoint` | Gets the end point of the gradient line. |
 | `Stops` | `IReadOnlyList<GradientStop>` | Gets the gradient stops ordered by `GradientStop.Offset`. |
-| `SolidColor` | `DrawColor?` | Inherited from `Brush`; returns `null` for `LinearGradientBrush`. |
+| `SolidColor` | `Color?` | Inherited from `Brush`; returns `null` for `LinearGradientBrush`. |
 
 ## Methods
 
@@ -84,4 +84,4 @@ Cerneala UI media gradient brushes and retained rendering APIs.
 - `Cerneala.UI.Media.GradientStop`
 - `Cerneala.UI.Media.RadialGradientBrush`
 - `Cerneala.Drawing.DrawPoint`
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`

@@ -27,8 +27,8 @@ using Cerneala.UI.Theming;
 Theme theme = DefaultTheme.Create();
 ThemePalette palette = theme.Get(DefaultTheme.PaletteKey);
 
-DrawColor background = theme.Get(DefaultTheme.BackgroundKey);
-DrawColor accent = theme.Get(DefaultTheme.AccentKey);
+Color background = theme.Get(DefaultTheme.BackgroundKey);
+Color accent = theme.Get(DefaultTheme.AccentKey);
 ```
 
 Assign the default button template:
@@ -52,11 +52,11 @@ The default palette uses these color values:
 
 | Theme key | Value |
 | --- | --- |
-| `BackgroundKey` | `DrawColor(248, 250, 252)` |
-| `ForegroundKey` | `DrawColor(28, 35, 48)` |
-| `SurfaceKey` | `DrawColor(255, 255, 255)` |
-| `BorderKey` | `DrawColor(148, 163, 184)` |
-| `AccentKey` | `DrawColor(37, 99, 235)` |
+| `BackgroundKey` | `Color(248, 250, 252)` |
+| `ForegroundKey` | `Color(28, 35, 48)` |
+| `SurfaceKey` | `Color(255, 255, 255)` |
+| `BorderKey` | `Color(148, 163, 184)` |
+| `AccentKey` | `Color(37, 99, 235)` |
 
 `PaletteKey` stores the full `ThemePalette`. The individual color keys are also set from that palette so callers can read either the complete palette or one typed color value.
 
@@ -69,11 +69,11 @@ The default palette uses these color values:
 | Name | Type | Description |
 | --- | --- | --- |
 | `PaletteKey` | `ThemeKey<ThemePalette>` | Identifies the complete default theme palette. |
-| `BackgroundKey` | `ThemeKey<DrawColor>` | Identifies the default background color. |
-| `ForegroundKey` | `ThemeKey<DrawColor>` | Identifies the default foreground color. |
-| `SurfaceKey` | `ThemeKey<DrawColor>` | Identifies the default surface color. |
-| `BorderKey` | `ThemeKey<DrawColor>` | Identifies the default border color. |
-| `AccentKey` | `ThemeKey<DrawColor>` | Identifies the default accent color. |
+| `BackgroundKey` | `ThemeKey<Color>` | Identifies the default background color. |
+| `ForegroundKey` | `ThemeKey<Color>` | Identifies the default foreground color. |
+| `SurfaceKey` | `ThemeKey<Color>` | Identifies the default surface color. |
+| `BorderKey` | `ThemeKey<Color>` | Identifies the default border color. |
+| `AccentKey` | `ThemeKey<Color>` | Identifies the default accent color. |
 
 ## Methods
 

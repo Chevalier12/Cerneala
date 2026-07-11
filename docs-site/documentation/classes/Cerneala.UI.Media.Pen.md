@@ -26,7 +26,7 @@ using Cerneala.UI.Controls.Shapes;
 using Cerneala.UI.Media;
 
 Pen outline = new(
-    new SolidColorBrush(DrawColor.Black),
+    new SolidColorBrush(Color.Black),
     thickness: 2);
 
 Rectangle rectangle = new()

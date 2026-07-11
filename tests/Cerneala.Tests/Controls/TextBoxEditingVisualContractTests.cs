@@ -12,8 +12,8 @@ namespace Cerneala.Tests.Controls;
 
 public sealed class TextBoxEditingVisualContractTests
 {
-    private static readonly DrawColor CaretColor = new(250, 10, 20);
-    private static readonly DrawColor SelectionColor = new(20, 120, 250);
+    private static readonly Color CaretColor = new(250, 10, 20);
+    private static readonly Color SelectionColor = new(20, 120, 250);
 
     [Fact]
     public void FocusedTextBoxRendersCaretCommand()
@@ -77,8 +77,8 @@ public sealed class TextBoxEditingVisualContractTests
 
         DrawCommand[] commands = Render(textBox).ToArray();
         int selectionIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.FillRectangle && command.Color == SelectionColor);
-        int normalTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == DrawColor.Black);
-        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == DrawColor.White);
+        int normalTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == Color.Black);
+        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == Color.White);
 
         Assert.True(normalTextIndex < selectionIndex);
         Assert.True(selectionIndex < selectedTextIndex);
@@ -95,8 +95,8 @@ public sealed class TextBoxEditingVisualContractTests
             .ToArray();
 
         Assert.Equal(2, textCommands.Length);
-        Assert.Equal(DrawColor.Black, textCommands[0].Color);
-        Assert.Equal(DrawColor.White, textCommands[1].Color);
+        Assert.Equal(Color.Black, textCommands[0].Color);
+        Assert.Equal(Color.White, textCommands[1].Color);
     }
 
     [Fact]
@@ -106,9 +106,9 @@ public sealed class TextBoxEditingVisualContractTests
         textBox.Select(1, 3);
 
         DrawCommand[] commands = Render(textBox).ToArray();
-        int normalTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == DrawColor.Black);
+        int normalTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == Color.Black);
         int selectionIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.FillRectangle && command.Color == textBox.SelectionBackground);
-        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == DrawColor.White);
+        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == Color.White);
 
         Assert.True(normalTextIndex < selectionIndex);
         Assert.True(selectionIndex < selectedTextIndex);
@@ -123,9 +123,9 @@ public sealed class TextBoxEditingVisualContractTests
         DrawCommand[] commands = Render(textBox).ToArray();
         DrawCommand selectedText = Render(textBox)
             .Where(command => command.Kind == DrawCommandKind.DrawText)
-            .Single(command => command.Color == DrawColor.White);
+            .Single(command => command.Color == Color.White);
         int clipIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.PushClip);
-        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == DrawColor.White);
+        int selectedTextIndex = Array.FindIndex(commands, command => command.Kind == DrawCommandKind.DrawText && command.Color == Color.White);
 
         Assert.Equal("abcd", selectedText.Text);
         Assert.True(clipIndex < selectedTextIndex);
@@ -136,7 +136,7 @@ public sealed class TextBoxEditingVisualContractTests
     {
         TextBox textBox = new();
 
-        Assert.Equal(new DrawColor(0, 120, 215), textBox.SelectionBackground);
+        Assert.Equal(new Color(0, 120, 215), textBox.SelectionBackground);
     }
 
     [Fact]

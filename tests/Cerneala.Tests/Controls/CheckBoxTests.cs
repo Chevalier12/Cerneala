@@ -26,7 +26,7 @@ public sealed class CheckBoxTests
         {
             Content = "Agree",
             IsChecked = true,
-            Foreground = DrawColor.Black
+            Foreground = Color.Black
         };
         checkBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 80, 20)));
         root.VisualChildren.Add(checkBox);
@@ -35,7 +35,7 @@ public sealed class CheckBoxTests
 
         DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
-        Assert.Contains(commands, command => command.Kind == DrawCommandKind.FillRectangle && command.Color == DrawColor.White);
+        Assert.Contains(commands, command => command.Kind == DrawCommandKind.FillRectangle && command.Color == Color.White);
         Assert.Contains(commands, command => command.Kind == DrawCommandKind.DrawText);
     }
 }

@@ -11,7 +11,7 @@ public sealed class DrawCommandListPoolTests
     {
         DrawCommandListPool pool = new();
         DrawCommandList commands = pool.Rent();
-        commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 1, 1), DrawColor.White));
+        commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 1, 1), Color.White));
 
         pool.Return(commands);
         DrawCommandList reused = pool.Rent();

@@ -12,7 +12,7 @@ public sealed class RetainedRendererTests
     public void RenderBuildsRootCommandListFromLocalCaches()
     {
         UIRoot root = new();
-        root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
+        root.VisualChildren.Add(new RenderingTestElement(Color.White));
 
         PrepareSubtree(root);
         DrawCommandList commands = root.RetainedRenderer.Commit(root);
@@ -25,8 +25,8 @@ public sealed class RetainedRendererTests
     public void ChildRenderChangeDoesNotRebuildUnrelatedSiblingLocalCommands()
     {
         UIRoot root = new();
-        RenderingTestElement first = new(DrawColor.White);
-        RenderingTestElement second = new(DrawColor.Black);
+        RenderingTestElement first = new(Color.White);
+        RenderingTestElement second = new(Color.Black);
         root.VisualChildren.Add(first);
         root.VisualChildren.Add(second);
         root.ProcessFrame();
@@ -47,7 +47,7 @@ public sealed class RetainedRendererTests
     public void HiddenElementDoesNotEmitVisibleCommands()
     {
         UIRoot root = new();
-        root.VisualChildren.Add(new RenderingTestElement(DrawColor.White)
+        root.VisualChildren.Add(new RenderingTestElement(Color.White)
         {
             Visibility = Visibility.Hidden
         });
@@ -62,7 +62,7 @@ public sealed class RetainedRendererTests
     public void RenderUsesUpdatedArrangedBoundsAfterAttachedElementMoves()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         root.ProcessFrame();
         PrepareSubtree(root);
@@ -81,7 +81,7 @@ public sealed class RetainedRendererTests
     public void SubmitPassesCommittedRootCommandsByReference()
     {
         UIRoot root = new();
-        root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
+        root.VisualChildren.Add(new RenderingTestElement(Color.White));
         PrepareSubtree(root);
         DrawCommandList committed = root.RetainedRenderer.Commit(root);
         CapturingDrawingBackend backend = new();

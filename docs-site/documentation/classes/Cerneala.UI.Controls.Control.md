@@ -27,9 +27,9 @@ using Cerneala.UI.Layout;
 
 Control control = new()
 {
-    Background = DrawColor.White,
-    Foreground = DrawColor.Black,
-    BorderColor = DrawColor.Black,
+    Background = Color.White,
+    Foreground = Color.Black,
+    BorderColor = Color.Black,
     BorderThickness = new Thickness(1),
     Padding = new Thickness(8),
     FontFamily = "Default",
@@ -60,8 +60,8 @@ Control control = new()
 
         return border;
     }),
-    Background = DrawColor.White,
-    BorderColor = DrawColor.Black
+    Background = Color.White,
+    BorderColor = Color.Black
 };
 
 control.ApplyTemplate();
@@ -93,9 +93,9 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | Name | Type | Description |
 | --- | --- | --- |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | Identifies the `ComponentTemplate` UI property. Defaults to `null`; affects measure, arrange, render, hit testing, and input visuals. |
-| `BackgroundProperty` | `UiProperty<DrawColor>` | Identifies the `Background` UI property. Defaults to `DrawColor.Transparent`; affects render and input visuals. |
-| `ForegroundProperty` | `UiProperty<DrawColor>` | Identifies the inherited `Foreground` UI property. Defaults to `DrawColor.Black`; affects render. |
-| `BorderColorProperty` | `UiProperty<DrawColor>` | Identifies the `BorderColor` UI property. Defaults to `DrawColor.Transparent`; affects render and input visuals. |
+| `BackgroundProperty` | `UiProperty<Color>` | Identifies the `Background` UI property. Defaults to `Color.Transparent`; affects render and input visuals. |
+| `ForegroundProperty` | `UiProperty<Color>` | Identifies the inherited `Foreground` UI property. Defaults to `Color.Black`; affects render. |
+| `BorderColorProperty` | `UiProperty<Color>` | Identifies the `BorderColor` UI property. Defaults to `Color.Transparent`; affects render and input visuals. |
 | `BorderThicknessProperty` | `UiProperty<Thickness>` | Identifies the `BorderThickness` UI property. Defaults to `Thickness.Zero`; affects measure and render; each side must be finite and non-negative. |
 | `PaddingProperty` | `UiProperty<Thickness>` | Identifies the `Padding` UI property. Defaults to `Thickness.Zero`; affects measure and render; each side must be finite and non-negative. |
 | `FontFamilyProperty` | `UiProperty<string>` | Identifies the inherited `FontFamily` UI property. Defaults to `"Default"`; affects measure and render; rejects empty or whitespace-only values. |
@@ -105,9 +105,9 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Background` | `DrawColor` | Gets or sets the control background color. |
-| `Foreground` | `DrawColor` | Gets or sets the inherited foreground color used by derived controls or templates. |
-| `BorderColor` | `DrawColor` | Gets or sets the control border color. |
+| `Background` | `Color` | Gets or sets the control background color. |
+| `Foreground` | `Color` | Gets or sets the inherited foreground color used by derived controls or templates. |
+| `BorderColor` | `Color` | Gets or sets the control border color. |
 | `BorderThickness` | `Thickness` | Gets or sets the border thickness. Values must be finite and non-negative. |
 | `Padding` | `Thickness` | Gets or sets the padding inside the border. Values must be finite and non-negative. |
 | `FontFamily` | `string` | Gets or sets the inherited font family. The value cannot be empty or whitespace-only. |

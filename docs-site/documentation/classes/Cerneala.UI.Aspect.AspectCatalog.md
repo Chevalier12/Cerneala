@@ -24,11 +24,11 @@ Build a catalog from registered packages and read a token default:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 
-AspectToken<DrawColor> accentToken = AspectToken.Color("app.accent");
+AspectToken<Color> accentToken = AspectToken.Color("app.accent");
 
 AspectCatalog catalog = new AspectRegistry()
     .Register(AspectPackage.Create("App")
-        .Tokens(tokens => tokens.Set(accentToken, DrawColor.White)))
+        .Tokens(tokens => tokens.Set(accentToken, Color.White)))
     .BuildCatalog();
 
 if (catalog.TryGetTokenDefault(accentToken, out AspectValue value))

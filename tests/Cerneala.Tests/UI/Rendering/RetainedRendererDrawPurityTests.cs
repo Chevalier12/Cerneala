@@ -21,7 +21,7 @@ public sealed class RetainedRendererDrawPurityTests
     public void CommitBuildsRootCommandsFromPreparedLocalCaches()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         PrepareSubtree(root);
         int renderCountAfterPrepare = child.RenderCount;
@@ -37,7 +37,7 @@ public sealed class RetainedRendererDrawPurityTests
     public void SubmitUsesCommittedCommandListWithoutCopying()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         PrepareSubtree(root);
         DrawCommandList committed = root.RetainedRenderer.Commit(root);

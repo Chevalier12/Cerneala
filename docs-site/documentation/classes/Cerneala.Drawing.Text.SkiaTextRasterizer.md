@@ -29,7 +29,7 @@ IDrawFont font = fonts.LoadFont("Arial", 16);
 DrawTextRun textRun = new(font, "Cerneala", 16);
 SkiaTextRasterizer rasterizer = new();
 
-RasterizedText rasterized = rasterizer.Rasterize(textRun, DrawColor.Black);
+RasterizedText rasterized = rasterizer.Rasterize(textRun, Color.Black);
 
 int width = rasterized.Width;
 int height = rasterized.Height;
@@ -43,7 +43,7 @@ byte[] pixels = rasterized.RgbaPixels;
 
 The generated bitmap uses `SKColorType.Rgba8888` and premultiplied alpha. The method creates at least a `1` by `1` result, including for text that produces no glyphs. For glyph content, the rasterizer computes bitmap dimensions from the text blob bounds, trims fully transparent columns from the left edge when possible, and records the adjusted drawing origin in `RasterizedText.OriginOffset`.
 
-The `DrawColor` argument is converted directly to an `SKColor` using its red, green, blue, and alpha components.
+The `Color` argument is converted directly to an `SKColor` using its red, green, blue, and alpha components.
 
 ## Constructors
 | Name | Description |
@@ -54,7 +54,7 @@ The `DrawColor` argument is converted directly to an `SKColor` using its red, gr
 ## Methods
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Rasterize(DrawTextRun textRun, DrawColor color)` | `RasterizedText` | Shapes and rasterizes `textRun` into an RGBA pixel buffer using the supplied text color. |
+| `Rasterize(DrawTextRun textRun, Color color)` | `RasterizedText` | Shapes and rasterizes `textRun` into an RGBA pixel buffer using the supplied text color. |
 
 ## Exceptions
 | Exception | Condition |

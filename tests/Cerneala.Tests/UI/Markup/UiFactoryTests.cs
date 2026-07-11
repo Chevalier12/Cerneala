@@ -117,24 +117,24 @@ public sealed class UiFactoryTests
         root.ProcessFrame();
         root.RetainedRenderer.Commit(root);
 
-        border.Background = DrawColor.Black;
+        border.Background = Color.Black;
         root.ProcessFrame();
         DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Single(commands);
-        Assert.Equal(DrawColor.Black, commands[0].Color);
+        Assert.Equal(Color.Black, commands[0].Color);
     }
 
     [Fact]
     public void GeneratedFactoryCreatesRetainedTree()
     {
-        GeneratedUiFactory factory = new((Func<UIElement>)(() => new Border { Background = DrawColor.White }));
+        GeneratedUiFactory factory = new((Func<UIElement>)(() => new Border { Background = Color.White }));
 
         MarkupResult<UIElement> result = factory.Create();
 
         Assert.False(result.HasErrors);
         Border border = Assert.IsType<Border>(result.Value);
-        Assert.Equal(DrawColor.White, border.Background);
+        Assert.Equal(Color.White, border.Background);
     }
 
     [Fact]

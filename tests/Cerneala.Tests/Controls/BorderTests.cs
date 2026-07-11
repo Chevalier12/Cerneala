@@ -30,8 +30,8 @@ public sealed class BorderTests
     {
         Border border = new()
         {
-            Background = DrawColor.White,
-            BorderColor = DrawColor.Black,
+            Background = Color.White,
+            BorderColor = Color.Black,
             BorderThickness = new Thickness(2)
         };
         UIRoot root = new();

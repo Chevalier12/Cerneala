@@ -5,7 +5,7 @@ public readonly record struct DrawCommand
     private DrawCommand(
         DrawCommandKind kind,
         DrawRect rect,
-        DrawColor color,
+        Color color,
         float thickness,
         string? text,
         DrawTextRun? textRun,
@@ -30,7 +30,7 @@ public readonly record struct DrawCommand
 
     public DrawRect Rect { get; }
 
-    public DrawColor Color { get; }
+    public Color Color { get; }
 
     public float Thickness { get; }
 
@@ -46,31 +46,31 @@ public readonly record struct DrawCommand
 
     public IDrawFont? Font { get; }
 
-    public static DrawCommand FillRectangle(DrawRect rect, DrawColor color)
+    public static DrawCommand FillRectangle(DrawRect rect, Color color)
     {
         return new DrawCommand(DrawCommandKind.FillRectangle, rect, color, 0, null, null, default, default, null, null);
     }
 
-    public static DrawCommand DrawRectangle(DrawRect rect, DrawColor color, float thickness)
+    public static DrawCommand DrawRectangle(DrawRect rect, Color color, float thickness)
     {
         DrawArgument.ThrowIfNotValidPixelSize(thickness, nameof(thickness));
 
         return new DrawCommand(DrawCommandKind.DrawRectangle, rect, color, thickness, null, null, default, default, null, null);
     }
 
-    public static DrawCommand FillEllipse(DrawRect bounds, DrawColor color)
+    public static DrawCommand FillEllipse(DrawRect bounds, Color color)
     {
         return new DrawCommand(DrawCommandKind.FillEllipse, bounds, color, 0, null, null, default, default, null, null);
     }
 
-    public static DrawCommand DrawEllipse(DrawRect bounds, DrawColor color, float thickness)
+    public static DrawCommand DrawEllipse(DrawRect bounds, Color color, float thickness)
     {
         DrawArgument.ThrowIfNotValidPixelSize(thickness, nameof(thickness));
 
         return new DrawCommand(DrawCommandKind.DrawEllipse, bounds, color, thickness, null, null, default, default, null, null);
     }
 
-    public static DrawCommand DrawLine(DrawPoint start, DrawPoint end, DrawColor color, float thickness)
+    public static DrawCommand DrawLine(DrawPoint start, DrawPoint end, Color color, float thickness)
     {
         ThrowIfPointOutsidePixelRange(start, nameof(start));
         ThrowIfPointOutsidePixelRange(end, nameof(end));
@@ -79,7 +79,7 @@ public readonly record struct DrawCommand
         return new DrawCommand(DrawCommandKind.DrawLine, default, color, thickness, null, null, start, end, null, null);
     }
 
-    public static DrawCommand DrawText(DrawTextRun textRun, DrawPoint position, DrawColor color)
+    public static DrawCommand DrawText(DrawTextRun textRun, DrawPoint position, Color color)
     {
         ArgumentNullException.ThrowIfNull(textRun);
         ThrowIfPointOutsidePixelRange(position, nameof(position));
@@ -87,7 +87,7 @@ public readonly record struct DrawCommand
         return new DrawCommand(DrawCommandKind.DrawText, default, color, 0, textRun.Text, textRun, position, default, null, textRun.Font);
     }
 
-    public static DrawCommand DrawImage(IDrawImage image, DrawRect destination, DrawColor color)
+    public static DrawCommand DrawImage(IDrawImage image, DrawRect destination, Color color)
     {
         ArgumentNullException.ThrowIfNull(image);
 

@@ -23,7 +23,7 @@ using Cerneala.UI.Rendering;
 DrawCommandListPool pool = new(maxRetained: 4);
 
 DrawCommandList commands = pool.Rent();
-commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 16, 16), DrawColor.White));
+commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 16, 16), Color.White));
 
 pool.Return(commands);
 

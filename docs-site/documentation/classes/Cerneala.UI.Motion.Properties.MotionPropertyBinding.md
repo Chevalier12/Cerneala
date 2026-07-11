@@ -37,7 +37,7 @@ UIRoot root = new();
 Control control = new();
 root.VisualChildren.Add(control);
 
-MotionPropertyBinding<DrawColor> typedBinding =
+MotionPropertyBinding<Color> typedBinding =
     root.Motion.Properties.GetOrCreateBinding(
         root.Motion,
         control,

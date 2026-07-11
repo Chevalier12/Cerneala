@@ -27,7 +27,7 @@ CheckBox checkBox = new()
     Content = "Agree",
     IsChecked = true,
     FontSize = 10,
-    Foreground = DrawColor.Black
+    Foreground = Color.Black
 };
 ```
 
@@ -35,7 +35,7 @@ CheckBox checkBox = new()
 
 `CheckBox` derives its toggle behavior from `ToggleButton`. A left mouse button release with a click count greater than zero toggles `IsChecked`.
 
-The constructor sets checkbox-specific colors: `BorderColor` to `new DrawColor(100, 110, 125)`, `Foreground` to `new DrawColor(35, 45, 60)`, and `Background` to `DrawColor.Transparent`.
+The constructor sets checkbox-specific colors: `BorderColor` to `new Color(100, 110, 125)`, `Foreground` to `new Color(35, 45, 60)`, and `Background` to `Color.Transparent`.
 
 During measurement, the control always reserves a 14 by 14 layout box for the checkbox mark. Non-empty string content is measured as `text.Length * FontSize * 0.5f` wide by `FontSize` high, with a 6 pixel gap between the box and text. Padding and border thickness are included through the inherited `Insets` calculation.
 

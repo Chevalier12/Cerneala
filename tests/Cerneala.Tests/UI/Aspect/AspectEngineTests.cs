@@ -13,12 +13,12 @@ public sealed class AspectEngineTests
     public void EngineAppliesResolvedAspectValuesToElement()
     {
         Button button = new();
-        AspectCatalog catalog = CatalogWith(Rule("base", Declaration(DrawColor.White)));
+        AspectCatalog catalog = CatalogWith(Rule("base", Declaration(Color.White)));
 
         AspectApplicationResult result = new AspectEngine().Apply(button, catalog, new AspectEnvironment("test"));
 
         Assert.True(result.Applied);
-        Assert.Equal(DrawColor.White, button.Background);
+        Assert.Equal(Color.White, button.Background);
         Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
     }
 
@@ -27,11 +27,11 @@ public sealed class AspectEngineTests
     {
         Button button = new();
         AspectEngine engine = new();
-        engine.Apply(button, CatalogWith(Rule("base", Declaration(DrawColor.White))), new AspectEnvironment("test"));
+        engine.Apply(button, CatalogWith(Rule("base", Declaration(Color.White))), new AspectEnvironment("test"));
 
         engine.Apply(button, EmptyCatalog(), new AspectEnvironment("test"));
 
-        Assert.Equal(DrawColor.Transparent, button.Background);
+        Assert.Equal(Color.Transparent, button.Background);
         Assert.Equal(UiPropertyValueSource.Default, button.GetValueSource(Control.BackgroundProperty));
     }
 
@@ -40,7 +40,7 @@ public sealed class AspectEngineTests
     {
         Button button = new();
         AspectEngine engine = new();
-        AspectCatalog catalog = CatalogWith(Rule("base", Declaration(DrawColor.White)));
+        AspectCatalog catalog = CatalogWith(Rule("base", Declaration(Color.White)));
         AspectEnvironment environment = new("test");
 
         engine.Apply(button, catalog, environment);
@@ -52,19 +52,19 @@ public sealed class AspectEngineTests
     [Fact]
     public void EngineReappliesWhenTokenDependencyChanges()
     {
-        AspectToken<DrawColor> token = AspectToken.Color("app.background");
+        AspectToken<Color> token = AspectToken.Color("app.background");
         Button button = new();
         AspectEnvironment environment = new("test");
-        environment.Set(token, DrawColor.White);
+        environment.Set(token, Color.White);
         AspectEngine engine = new();
         AspectCatalog catalog = CatalogWith(Rule("token", new AspectDeclaration(Control.BackgroundProperty, token.Ref())));
 
         engine.Apply(button, catalog, environment);
-        environment.Set(token, DrawColor.Black);
+        environment.Set(token, Color.Black);
         AspectApplicationResult second = engine.Apply(button, catalog, environment);
 
         Assert.True(second.Applied);
-        Assert.Equal(DrawColor.Black, button.Background);
+        Assert.Equal(Color.Black, button.Background);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public sealed class AspectEngineTests
             "hover",
             AspectLayer.App,
             new AspectTarget(typeof(Button), conditions: [AspectCondition.State(AspectState.Hover)]),
-            [Declaration(DrawColor.Black)],
+            [Declaration(Color.Black)],
             0));
 
         engine.Apply(button, catalog, new AspectEnvironment("test"));
@@ -84,7 +84,7 @@ public sealed class AspectEngineTests
         AspectApplicationResult second = engine.Apply(button, catalog, new AspectEnvironment("test"));
 
         Assert.True(second.Applied);
-        Assert.Equal(DrawColor.Black, button.Background);
+        Assert.Equal(Color.Black, button.Background);
     }
 
     [Fact]
@@ -97,14 +97,14 @@ public sealed class AspectEngineTests
             "primary",
             AspectLayer.App,
             new AspectTarget(typeof(Button), conditions: [AspectCondition.Variant(key, ButtonKind.Primary)]),
-            [Declaration(DrawColor.Black)],
+            [Declaration(Color.Black)],
             0));
 
         engine.Apply(button, catalog, new AspectEnvironment("test"), variants: AspectVariantSet.Empty.Set(key, ButtonKind.Neutral));
         AspectApplicationResult second = engine.Apply(button, catalog, new AspectEnvironment("test"), variants: AspectVariantSet.Empty.Set(key, ButtonKind.Primary));
 
         Assert.True(second.Applied);
-        Assert.Equal(DrawColor.Black, button.Background);
+        Assert.Equal(Color.Black, button.Background);
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public sealed class AspectEngineTests
             "pressed",
             AspectLayer.App,
             new AspectTarget(typeof(Button), conditions: [AspectCondition.Property(ButtonBase.IsPressedProperty).Is(true)]),
-            [Declaration(DrawColor.Black)],
+            [Declaration(Color.Black)],
             0));
 
         engine.Apply(button, catalog, new AspectEnvironment("test"));
@@ -124,7 +124,7 @@ public sealed class AspectEngineTests
         AspectApplicationResult second = engine.Apply(button, catalog, new AspectEnvironment("test"));
 
         Assert.True(second.Applied);
-        Assert.Equal(DrawColor.Black, button.Background);
+        Assert.Equal(Color.Black, button.Background);
     }
 
     [Fact]
@@ -139,14 +139,14 @@ public sealed class AspectEngineTests
             [
                 AspectCondition.Data<UserCard>("important", user => user.IsImportant, AspectDataDependency.Named("user"))
             ]),
-            [Declaration(DrawColor.Black)],
+            [Declaration(Color.Black)],
             0));
 
         engine.Apply(button, catalog, new AspectEnvironment("test"), dataContext: new AspectDataContext(new UserCard(false)));
         AspectApplicationResult second = engine.Apply(button, catalog, new AspectEnvironment("test"), dataContext: new AspectDataContext(new UserCard(true)));
 
         Assert.True(second.Applied);
-        Assert.Equal(DrawColor.Black, button.Background);
+        Assert.Equal(Color.Black, button.Background);
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public sealed class AspectEngineTests
     {
         Button button = new();
         AspectEngine engine = new();
-        AspectCatalog catalog = CatalogWith(Rule("base", Declaration(DrawColor.White)));
+        AspectCatalog catalog = CatalogWith(Rule("base", Declaration(Color.White)));
 
         engine.Apply(button, catalog, new AspectEnvironment("test"), dataContext: new AspectDataContext(new UserCard(false)));
         AspectApplicationResult second = engine.Apply(button, catalog, new AspectEnvironment("test"), dataContext: new AspectDataContext(new UserCard(true)));
@@ -166,8 +166,8 @@ public sealed class AspectEngineTests
     public void EngineReportsWinnerAndRejectedDeclarations()
     {
         Button button = new();
-        AspectDeclaration loser = Declaration(DrawColor.White);
-        AspectDeclaration winner = Declaration(DrawColor.Black);
+        AspectDeclaration loser = Declaration(Color.White);
+        AspectDeclaration winner = Declaration(Color.Black);
         AspectCatalog catalog = CatalogWith(Rule("first", loser, order: 0), Rule("second", winner, order: 1));
 
         ResolvedAspect resolved = new AspectEngine().Resolve(button, catalog, new AspectEnvironment("test"));
@@ -207,9 +207,9 @@ public sealed class AspectEngineTests
         return new AspectRuleSet(name, AspectLayer.App, new AspectTarget(typeof(Button)), [declaration], order);
     }
 
-    private static AspectDeclaration Declaration(DrawColor color)
+    private static AspectDeclaration Declaration(Color color)
     {
-        return new AspectDeclaration(Control.BackgroundProperty, AspectValue<DrawColor>.Literal(color));
+        return new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(color));
     }
 
     private sealed record UserCard(bool IsImportant);

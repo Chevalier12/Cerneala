@@ -25,12 +25,12 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Layout;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 AspectToken<Thickness> padding = AspectToken.Thickness("app.padding");
 
 AspectPackage package = AspectPackage.Create("App")
     .Tokens(tokens => tokens
-        .Set(accent, new DrawColor(37, 99, 235))
+        .Set(accent, new Color(37, 99, 235))
         .Set(padding, new Thickness(8)));
 ```
 
@@ -40,11 +40,11 @@ Register the package and read the default through the built catalog:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 
 AspectCatalog catalog = new AspectRegistry()
     .Register(AspectPackage.Create("App")
-        .Tokens(tokens => tokens.Set(accent, DrawColor.White)))
+        .Tokens(tokens => tokens.Set(accent, Color.White)))
     .BuildCatalog();
 
 bool found = catalog.TryGetTokenDefault(accent, out AspectValue? defaultValue);

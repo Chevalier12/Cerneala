@@ -166,7 +166,7 @@ public sealed class LayoutManagerTests
     public void ScrollOffsetDoesNotRebuildContentLocalRenderCache()
     {
         UIRoot root = new(100, 100);
-        RenderableFixedElement content = new(new LayoutSize(80, 300), DrawColor.White);
+        RenderableFixedElement content = new(new LayoutSize(80, 300), Color.White);
         Cerneala.UI.Controls.ScrollViewer viewer = new()
         {
             Content = content,
@@ -271,7 +271,7 @@ public sealed class LayoutManagerTests
         }
     }
 
-    private sealed class RenderableFixedElement(LayoutSize size, DrawColor color) : UIElement
+    private sealed class RenderableFixedElement(LayoutSize size, Color color) : UIElement
     {
         public int RenderCount { get; private set; }
 

@@ -158,8 +158,8 @@ public sealed class Win32WindowPlatformTests
         Assert.True(IsWindow(child.Handle));
 
         DrawCommandList commands = new();
-        commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 32, 32), new DrawColor(20, 40, 60)));
-        owner.GraphicsSession.BeginFrame(DrawColor.White);
+        commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 32, 32), new Color(20, 40, 60)));
+        owner.GraphicsSession.BeginFrame(Color.White);
         owner.GraphicsSession.DrawingBackend.Render(commands);
         owner.Show();
         owner.GraphicsSession.Present();
@@ -248,7 +248,7 @@ public sealed class Win32WindowPlatformTests
             ResizeCount++;
         }
 
-        public void BeginFrame(DrawColor clearColor) { }
+        public void BeginFrame(Color clearColor) { }
 
         public void Present() { }
 

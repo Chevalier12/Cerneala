@@ -22,7 +22,7 @@ public sealed class TextRendererWrapContractTests
             aspect,
             16,
             new DrawPoint(4, 6),
-            DrawColor.White);
+            Color.White);
 
         Assert.Equal(measurement.LineCount, commands.Count);
         Assert.True(commands.Count > 1);
@@ -54,7 +54,7 @@ public sealed class TextRendererWrapContractTests
             aspect,
             14,
             new DrawPoint(4, 6),
-            DrawColor.White);
+            Color.White);
 
         Assert.True(commands.Count >= 2, "Expected wrapping to produce at least two draw commands.");
         float lineAdvance = commands[1].Position.Y - commands[0].Position.Y;
@@ -69,8 +69,8 @@ public sealed class TextRendererWrapContractTests
         TextRenderer renderer = new(FontResolver.Default, measurer);
         TextAspect aspect = new("Default", 16, TextWrapping.Wrap);
 
-        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", aspect, 16, default, DrawColor.White);
-        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", aspect, 16, default, DrawColor.White);
+        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", aspect, 16, default, Color.White);
+        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", aspect, 16, default, Color.White);
 
         Assert.Equal(1, cache.Misses);
         Assert.Equal(1, cache.Hits);

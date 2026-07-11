@@ -32,7 +32,7 @@ TextMeasureResult result = renderer.Render(
     aspect,
     availableWidth: 200,
     position: new DrawPoint(0, 0),
-    color: DrawColor.Black);
+    color: Color.Black);
 ```
 
 ## Remarks
@@ -58,7 +58,7 @@ For non-empty text, `Render` resolves the font from the `TextAspect`, measures l
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Render(DrawingContext drawingContext, string text, TextAspect aspect, float availableWidth, DrawPoint position, DrawColor color)` | `TextMeasureResult` | Measures text, draws each line when non-empty, and returns the measurement. |
+| `Render(DrawingContext drawingContext, string text, TextAspect aspect, float availableWidth, DrawPoint position, Color color)` | `TextMeasureResult` | Measures text, draws each line when non-empty, and returns the measurement. |
 
 ## Applies To
 

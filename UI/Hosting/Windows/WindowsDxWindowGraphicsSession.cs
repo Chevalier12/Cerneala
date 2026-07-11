@@ -6,6 +6,8 @@ using Cerneala.UI.Resources;
 using Cerneala.UI.Resources.MonoGame;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using CernealaColor = Cerneala.Drawing.Color;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.UI.Hosting.Windows;
 
@@ -58,7 +60,7 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
                 presentationParameters);
             createdSpriteBatch = new SpriteBatch(createdDevice);
             createdWhitePixel = new Texture2D(createdDevice, 1, 1);
-            createdWhitePixel.SetData([Color.White]);
+            createdWhitePixel.SetData([XnaColor.White]);
             createdRasterizerState = MonoGameDrawingBackend.ScissorRasterizerState;
             createdBackend = new MonoGameDrawingBackend(createdSpriteBatch, createdWhitePixel, new SkiaTextRasterizer())
             {
@@ -135,7 +137,7 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
         }
     }
 
-    public void BeginFrame(DrawColor clearColor)
+    public void BeginFrame(CernealaColor clearColor)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         if (frameBegun)
@@ -150,7 +152,7 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             }
         }
 
-        graphicsDevice.Clear(new Color(clearColor.R, clearColor.G, clearColor.B, clearColor.A));
+        graphicsDevice.Clear(new XnaColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A));
         drawingBackend.CoordinateScale = coordinateScale;
         spriteBatch.Begin(
             sortMode: SpriteSortMode.Immediate,
@@ -207,7 +209,7 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
 
         int width = presentationParameters.BackBufferWidth;
         int height = presentationParameters.BackBufferHeight;
-        Color[] pixels = new Color[width * height];
+        XnaColor[] pixels = new XnaColor[width * height];
         graphicsDevice.GetBackBufferData(pixels);
         using Texture2D bitmap = new(graphicsDevice, width, height, false, SurfaceFormat.Color);
         bitmap.SetData(pixels);

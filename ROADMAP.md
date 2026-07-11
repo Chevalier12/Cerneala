@@ -21,7 +21,7 @@ These files already exist and are the base that future WPF-style layers must bui
 ### Drawing
 
 - [x] `Drawing/DrawArgument.cs`
-- [x] `Drawing/DrawColor.cs`
+- [x] `Drawing/Color.cs`
 - [x] `Drawing/DrawCommand.cs`
 - [x] `Drawing/DrawCommandKind.cs`
 - [x] `Drawing/DrawCommandList.cs`

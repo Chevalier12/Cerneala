@@ -16,7 +16,7 @@ public sealed class DebugOverlay
         textBlock = new TextBlock
         {
             Text = string.Empty,
-            Foreground = DrawColor.White,
+            Foreground = Color.White,
             FontSize = 13,
             ResourceProvider = resourceProvider,
             FontResourceId = fontResourceId
@@ -25,8 +25,8 @@ public sealed class DebugOverlay
         Root = new Border
         {
             Padding = new Thickness(8),
-            Background = new DrawColor(18, 24, 32, 230),
-            BorderColor = new DrawColor(92, 107, 128),
+            Background = new Color(18, 24, 32, 230),
+            BorderColor = new Color(92, 107, 128),
             BorderThickness = new Thickness(1),
             Child = textBlock
         };

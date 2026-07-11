@@ -28,7 +28,7 @@ using Cerneala.UI.Markup;
 
 GeneratedUiFactory factory = new((Func<UIElement>)(() => new Border
 {
-    Background = DrawColor.White
+    Background = Color.White
 }));
 
 MarkupResult<UIElement> result = factory.Create();

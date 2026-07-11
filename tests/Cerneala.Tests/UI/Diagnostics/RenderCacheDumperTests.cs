@@ -12,7 +12,7 @@ public sealed class RenderCacheDumperTests
     public void DumpIncludesRootAndElementCacheState()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         child.Invalidate(InvalidationFlags.Render, "render");
 

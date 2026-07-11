@@ -16,7 +16,7 @@ root.AspectRegistry.Register(AppAspectPackage.Create());
 Tokens are typed values:
 
 ```csharp
-public static readonly AspectToken<DrawColor> Accent =
+public static readonly AspectToken<Color> Accent =
     AspectToken.Color("app.accent");
 ```
 

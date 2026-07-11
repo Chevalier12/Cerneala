@@ -26,7 +26,7 @@ public class TextRenderer
         TextAspect aspect,
         float availableWidth,
         DrawPoint position,
-        DrawColor color)
+        Color color)
     {
         ArgumentNullException.ThrowIfNull(drawingContext);
         ArgumentNullException.ThrowIfNull(text);

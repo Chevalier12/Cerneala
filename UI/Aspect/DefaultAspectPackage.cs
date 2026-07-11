@@ -37,44 +37,44 @@ public static class DefaultAspectPackage
 
     private static void AddTokens(AspectTokenBuilder tokens)
     {
-        tokens.Set(DefaultAspectTokens.Color.Background, new DrawColor(248, 250, 252));
-        tokens.Set(DefaultAspectTokens.Color.Foreground, new DrawColor(28, 35, 48));
-        tokens.Set(DefaultAspectTokens.Color.Surface, new DrawColor(255, 255, 255));
-        tokens.Set(DefaultAspectTokens.Color.Border, new DrawColor(148, 163, 184));
-        tokens.Set(DefaultAspectTokens.Color.Accent, new DrawColor(37, 99, 235));
+        tokens.Set(DefaultAspectTokens.Color.Background, new Color(248, 250, 252));
+        tokens.Set(DefaultAspectTokens.Color.Foreground, new Color(28, 35, 48));
+        tokens.Set(DefaultAspectTokens.Color.Surface, new Color(255, 255, 255));
+        tokens.Set(DefaultAspectTokens.Color.Border, new Color(148, 163, 184));
+        tokens.Set(DefaultAspectTokens.Color.Accent, new Color(37, 99, 235));
         tokens.Set(DefaultAspectTokens.Typography.FontFamily, "Default");
         tokens.Set(DefaultAspectTokens.Typography.FontSize, 16f);
         tokens.Set(DefaultAspectTokens.Spacing.ControlPadding, new Thickness(8));
         tokens.Set(DefaultAspectTokens.Stroke.ControlBorderThickness, new Thickness(1));
         tokens.Set(DefaultAspectTokens.Motion.Fast, new TweenSpec<float>(TimeSpan.FromMilliseconds(120)));
         tokens.Set(DefaultAspectTokens.Motion.Normal, new TweenSpec<float>(TimeSpan.FromMilliseconds(200)));
-        tokens.Set(ButtonTokens.Background, new DrawColor(255, 255, 255));
-        tokens.Set(ButtonTokens.Foreground, new DrawColor(28, 35, 48));
-        tokens.Set(ButtonTokens.BorderColor, new DrawColor(148, 163, 184));
-        tokens.Set(ButtonTokens.HoverBackground, new DrawColor(37, 99, 235));
-        tokens.Set(ButtonTokens.PressedBackground, new DrawColor(148, 163, 184));
+        tokens.Set(ButtonTokens.Background, new Color(255, 255, 255));
+        tokens.Set(ButtonTokens.Foreground, new Color(28, 35, 48));
+        tokens.Set(ButtonTokens.BorderColor, new Color(148, 163, 184));
+        tokens.Set(ButtonTokens.HoverBackground, new Color(37, 99, 235));
+        tokens.Set(ButtonTokens.PressedBackground, new Color(148, 163, 184));
         tokens.Set(ButtonTokens.DisabledOpacity, 0.5f);
         tokens.Set(ButtonTokens.Padding, new Thickness(8));
     }
 
     private static void SetTokens(AspectEnvironment environment)
     {
-        environment.Set(DefaultAspectTokens.Color.Background, new DrawColor(248, 250, 252));
-        environment.Set(DefaultAspectTokens.Color.Foreground, new DrawColor(28, 35, 48));
-        environment.Set(DefaultAspectTokens.Color.Surface, new DrawColor(255, 255, 255));
-        environment.Set(DefaultAspectTokens.Color.Border, new DrawColor(148, 163, 184));
-        environment.Set(DefaultAspectTokens.Color.Accent, new DrawColor(37, 99, 235));
+        environment.Set(DefaultAspectTokens.Color.Background, new Color(248, 250, 252));
+        environment.Set(DefaultAspectTokens.Color.Foreground, new Color(28, 35, 48));
+        environment.Set(DefaultAspectTokens.Color.Surface, new Color(255, 255, 255));
+        environment.Set(DefaultAspectTokens.Color.Border, new Color(148, 163, 184));
+        environment.Set(DefaultAspectTokens.Color.Accent, new Color(37, 99, 235));
         environment.Set(DefaultAspectTokens.Typography.FontFamily, "Default");
         environment.Set(DefaultAspectTokens.Typography.FontSize, 16f);
         environment.Set(DefaultAspectTokens.Spacing.ControlPadding, new Thickness(8));
         environment.Set(DefaultAspectTokens.Stroke.ControlBorderThickness, new Thickness(1));
         environment.Set(DefaultAspectTokens.Motion.Fast, new TweenSpec<float>(TimeSpan.FromMilliseconds(120)));
         environment.Set(DefaultAspectTokens.Motion.Normal, new TweenSpec<float>(TimeSpan.FromMilliseconds(200)));
-        environment.Set(ButtonTokens.Background, new DrawColor(255, 255, 255));
-        environment.Set(ButtonTokens.Foreground, new DrawColor(28, 35, 48));
-        environment.Set(ButtonTokens.BorderColor, new DrawColor(148, 163, 184));
-        environment.Set(ButtonTokens.HoverBackground, new DrawColor(37, 99, 235));
-        environment.Set(ButtonTokens.PressedBackground, new DrawColor(148, 163, 184));
+        environment.Set(ButtonTokens.Background, new Color(255, 255, 255));
+        environment.Set(ButtonTokens.Foreground, new Color(28, 35, 48));
+        environment.Set(ButtonTokens.BorderColor, new Color(148, 163, 184));
+        environment.Set(ButtonTokens.HoverBackground, new Color(37, 99, 235));
+        environment.Set(ButtonTokens.PressedBackground, new Color(148, 163, 184));
         environment.Set(ButtonTokens.DisabledOpacity, 0.5f);
         environment.Set(ButtonTokens.Padding, new Thickness(8));
     }

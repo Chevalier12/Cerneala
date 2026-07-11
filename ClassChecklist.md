@@ -17,9 +17,9 @@ Excluded RoslynRepoIndexer class-like types: 0
 
 - [x] `Cerneala.Drawing.DrawArgument` - class, internal, static, line 3
 
-### Drawing/DrawColor.cs
+### Drawing/Color.cs
 
-- [x] `Cerneala.Drawing.DrawColor` - record, public, sealed, line 3
+- [x] `Cerneala.Drawing.Color` - record, public, sealed, line 3
 
 ### Drawing/DrawCommand.cs
 

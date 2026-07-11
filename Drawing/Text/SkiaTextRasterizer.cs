@@ -17,7 +17,7 @@ public sealed class SkiaTextRasterizer
         _textShaper = textShaper ?? throw new ArgumentNullException(nameof(textShaper));
     }
 
-    public RasterizedText Rasterize(DrawTextRun textRun, DrawColor color)
+    public RasterizedText Rasterize(DrawTextRun textRun, Color color)
     {
         ArgumentNullException.ThrowIfNull(textRun);
 
@@ -26,7 +26,7 @@ public sealed class SkiaTextRasterizer
 
     internal RasterizedText[] RasterizeSubpixel(
         DrawTextRun textRun,
-        DrawColor color,
+        Color color,
         float coordinateScale,
         DrawPoint position)
     {
@@ -71,7 +71,7 @@ public sealed class SkiaTextRasterizer
         }
     }
 
-    private RasterizedText RasterizeCore(DrawTextRun textRun, DrawColor color, SkiaFont font)
+    private RasterizedText RasterizeCore(DrawTextRun textRun, Color color, SkiaFont font)
     {
         TextShapeResult shapeResult = _textShaper.Shape(textRun);
 
@@ -109,7 +109,7 @@ public sealed class SkiaTextRasterizer
 
     private RasterizedText[] RasterizeSubpixelCore(
         DrawTextRun textRun,
-        DrawColor color,
+        Color color,
         SkiaFont font,
         float coordinateScale,
         DrawPoint position)
@@ -170,7 +170,7 @@ public sealed class SkiaTextRasterizer
         ];
     }
 
-    private static byte[][] CreateSubpixelLayers(byte[] bgraPixels, DrawColor color)
+    private static byte[][] CreateSubpixelLayers(byte[] bgraPixels, Color color)
     {
         byte[][] layers =
         [
@@ -207,7 +207,7 @@ public sealed class SkiaTextRasterizer
         return (byte)(((left * right) + 127) / 255);
     }
 
-    private static SKColor ToColor(DrawColor color)
+    private static SKColor ToColor(Color color)
     {
         return new SKColor(color.R, color.G, color.B, color.A);
     }

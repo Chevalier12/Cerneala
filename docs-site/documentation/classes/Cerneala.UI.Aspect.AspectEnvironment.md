@@ -24,12 +24,12 @@ Create an environment, set a token value, and read it back:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 
-AspectToken<DrawColor> accentToken = AspectToken.Color("app.accent");
+AspectToken<Color> accentToken = AspectToken.Color("app.accent");
 AspectEnvironment environment = new("app");
 
-environment.Set(accentToken, DrawColor.White);
+environment.Set(accentToken, Color.White);
 
-if (environment.TryGet(accentToken, out DrawColor accent))
+if (environment.TryGet(accentToken, out Color accent))
 {
     // Use accent.
 }
@@ -41,15 +41,15 @@ Use a child scope to override only selected tokens:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 
-AspectToken<DrawColor> accentToken = AspectToken.Color("app.accent");
+AspectToken<Color> accentToken = AspectToken.Color("app.accent");
 AspectEnvironment root = new("root");
-root.Set(accentToken, DrawColor.White);
+root.Set(accentToken, Color.White);
 
 AspectEnvironment child = root.CreateChildScope("button");
-child.Set(accentToken, DrawColor.Black);
+child.Set(accentToken, Color.Black);
 
-child.TryGet(accentToken, out DrawColor childAccent); // DrawColor.Black
-root.TryGet(accentToken, out DrawColor rootAccent);   // DrawColor.White
+child.TryGet(accentToken, out Color childAccent); // Color.Black
+root.TryGet(accentToken, out Color rootAccent);   // Color.White
 ```
 
 ## Remarks

@@ -4,7 +4,8 @@ using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
-using Microsoft.Xna.Framework;
+using CernealaColor = Cerneala.Drawing.Color;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.WindowsDxSmoke;
 
@@ -45,22 +46,22 @@ internal static class WindowsDxSmokeApplication
             Assert(firstSession.WindowHandle != secondSession.WindowHandle, "Windows shared an HWND.");
             Assert(secondSession.WindowHandle != thirdSession.WindowHandle, "Windows shared an HWND.");
 
-            RenderAndCheck(firstSession, new DrawColor(210, 35, 45));
-            RenderAndCheck(secondSession, new DrawColor(30, 150, 80));
-            RenderAndCheck(thirdSession, new DrawColor(55, 95, 175));
+            RenderAndCheck(firstSession, new Color(210, 35, 45));
+            RenderAndCheck(secondSession, new Color(30, 150, 80));
+            RenderAndCheck(thirdSession, new Color(55, 95, 175));
             VerifyPerDeviceImages(firstSession, secondSession);
             RenderTextAndCheck(secondSession);
 
             firstSession.Resize(192, 128, 1.25f);
             secondSession.Resize(224, 144, 1.5f);
-            RenderAndCheck(firstSession, new DrawColor(35, 90, 210));
-            RenderAndCheck(secondSession, new DrawColor(220, 150, 30));
+            RenderAndCheck(firstSession, new Color(35, 90, 210));
+            RenderAndCheck(secondSession, new Color(220, 150, 30));
             RenderTextAndCheck(secondSession);
 
             first.Dispose();
-            RenderAndCheck(secondSession, new DrawColor(120, 45, 190));
+            RenderAndCheck(secondSession, new Color(120, 45, 190));
             second.Dispose();
-            RenderAndCheck(thirdSession, new DrawColor(20, 170, 180));
+            RenderAndCheck(thirdSession, new Color(20, 170, 180));
             third.Dispose();
             platform.PumpEvents();
             return 0;
@@ -78,7 +79,7 @@ internal static class WindowsDxSmokeApplication
             ?? throw new InvalidOperationException("Window did not receive a WindowsDX graphics session.");
     }
 
-    private static void RenderAndCheck(WindowsDxWindowGraphicsSession session, DrawColor color)
+    private static void RenderAndCheck(WindowsDxWindowGraphicsSession session, CernealaColor color)
     {
         int width = session.GraphicsDevice.PresentationParameters.BackBufferWidth;
         int height = session.GraphicsDevice.PresentationParameters.BackBufferHeight;
@@ -87,13 +88,13 @@ internal static class WindowsDxSmokeApplication
             new DrawRect(0, 0, width, height),
             color));
 
-        session.BeginFrame(DrawColor.Black);
+        session.BeginFrame(Color.Black);
         session.DrawingBackend.Render(commands);
         session.Present();
 
-        Color[] pixels = new Color[width * height];
+        XnaColor[] pixels = new XnaColor[width * height];
         session.GraphicsDevice.GetBackBufferData(pixels);
-        Color actual = pixels[((height / 2) * width) + (width / 2)];
+        XnaColor actual = pixels[((height / 2) * width) + (width / 2)];
         Assert(
             Math.Abs(actual.R - color.R) <= 2 &&
             Math.Abs(actual.G - color.G) <= 2 &&
@@ -119,8 +120,8 @@ internal static class WindowsDxSmokeApplication
             Assert(ReferenceEquals(secondImage.Texture.GraphicsDevice, secondSession.GraphicsDevice), "Second image used the wrong device.");
 
             DrawCommandList foreignImageCommands = new();
-            foreignImageCommands.Add(DrawCommand.DrawImage(firstImage, new DrawRect(0, 0, 8, 8), DrawColor.White));
-            secondSession.BeginFrame(DrawColor.Black);
+            foreignImageCommands.Add(DrawCommand.DrawImage(firstImage, new DrawRect(0, 0, 8, 8), Color.White));
+            secondSession.BeginFrame(Color.Black);
             InvalidOperationException foreignImageError = ExpectInvalidOperation(
                 () => secondSession.DrawingBackend.Render(foreignImageCommands));
             Assert(foreignImageError.Message.Contains("GraphicsDevice", StringComparison.Ordinal), "Cross-device image failure was not descriptive.");
@@ -129,13 +130,13 @@ internal static class WindowsDxSmokeApplication
             int width = firstSession.GraphicsDevice.PresentationParameters.BackBufferWidth;
             int height = firstSession.GraphicsDevice.PresentationParameters.BackBufferHeight;
             DrawCommandList commands = new();
-            commands.Add(DrawCommand.DrawImage(firstImage, new DrawRect(0, 0, width, height), DrawColor.White));
-            firstSession.BeginFrame(DrawColor.Black);
+            commands.Add(DrawCommand.DrawImage(firstImage, new DrawRect(0, 0, width, height), Color.White));
+            firstSession.BeginFrame(Color.Black);
             firstSession.DrawingBackend.Render(commands);
             firstSession.Present();
 
-            Color center = ReadCenterPixel(firstSession);
-            Assert(center != Color.Black, "Path-backed image did not reach the first window backbuffer.");
+            XnaColor center = ReadCenterPixel(firstSession);
+            Assert(center != XnaColor.Black, "Path-backed image did not reach the first window backbuffer.");
         }
         finally
         {
@@ -150,23 +151,23 @@ internal static class WindowsDxSmokeApplication
         commands.Add(DrawCommand.DrawText(
             new DrawTextRun(font, "Cerneala", 24),
             new DrawPoint(12, 12),
-            DrawColor.Black));
-        session.BeginFrame(DrawColor.White);
+            Color.Black));
+        session.BeginFrame(Color.White);
         session.DrawingBackend.Render(commands);
         session.Present();
 
         int width = session.GraphicsDevice.PresentationParameters.BackBufferWidth;
         int height = session.GraphicsDevice.PresentationParameters.BackBufferHeight;
-        Color[] pixels = new Color[width * height];
+        XnaColor[] pixels = new XnaColor[width * height];
         session.GraphicsDevice.GetBackBufferData(pixels);
         Assert(pixels.Any(pixel => pixel.R < 240 || pixel.G < 240 || pixel.B < 240), "Skia/HarfBuzz text texture was not visible.");
     }
 
-    private static Color ReadCenterPixel(WindowsDxWindowGraphicsSession session)
+    private static XnaColor ReadCenterPixel(WindowsDxWindowGraphicsSession session)
     {
         int width = session.GraphicsDevice.PresentationParameters.BackBufferWidth;
         int height = session.GraphicsDevice.PresentationParameters.BackBufferHeight;
-        Color[] pixels = new Color[width * height];
+        XnaColor[] pixels = new XnaColor[width * height];
         session.GraphicsDevice.GetBackBufferData(pixels);
         return pixels[((height / 2) * width) + (width / 2)];
     }

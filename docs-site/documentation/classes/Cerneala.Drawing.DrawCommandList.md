@@ -28,11 +28,11 @@ DrawCommandList commands = new();
 
 commands.Add(DrawCommand.FillRectangle(
     new DrawRect(0, 0, 100, 40),
-    DrawColor.White));
+    Color.White));
 
 commands.Add(DrawCommand.DrawRectangle(
     new DrawRect(0, 0, 100, 40),
-    DrawColor.Black,
+    Color.Black,
     thickness: 1));
 
 DrawCommand first = commands[0];

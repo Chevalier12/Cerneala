@@ -24,11 +24,11 @@ Create a definition directly when the token and default value are already availa
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 
 var definition = new AspectTokenDefinition(
     accent,
-    AspectValue<DrawColor>.Literal(DrawColor.White));
+    AspectValue<Color>.Literal(Color.White));
 ```
 
 Most package code creates token definitions through `AspectTokenBuilder.Set<T>`:
@@ -37,10 +37,10 @@ Most package code creates token definitions through `AspectTokenBuilder.Set<T>`:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 
 AspectPackage package = AspectPackage.Create("App")
-    .Tokens(tokens => tokens.Set(accent, DrawColor.White))
+    .Tokens(tokens => tokens.Set(accent, Color.White))
     .Build();
 ```
 
@@ -48,7 +48,7 @@ AspectPackage package = AspectPackage.Create("App")
 
 `AspectTokenDefinition` is the catalog input for package-level token defaults. `AspectPackage.Tokens` stores these definitions, and `AspectCatalog.FromPackages` copies each `Token` and `DefaultValue` pair into the catalog default map.
 
-The constructor requires both arguments to be non-null and requires `token.ValueType` to match `defaultValue.ValueType`. This keeps a token such as `AspectToken<DrawColor>` from being registered with an `AspectValue` whose runtime value type is something else.
+The constructor requires both arguments to be non-null and requires `token.ValueType` to match `defaultValue.ValueType`. This keeps a token such as `AspectToken<Color>` from being registered with an `AspectValue` whose runtime value type is something else.
 
 When multiple packages contribute the same token identity, catalog creation stores the later default value for that token. If packages use the same token name with different value types, `AspectCatalog` throws an `InvalidOperationException` while building the catalog.
 

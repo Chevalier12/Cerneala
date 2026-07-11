@@ -38,7 +38,7 @@ using Cerneala.UI.Theming;
 
 ThemeProvider provider = new(DefaultTheme.Create());
 
-DrawColor accent = provider.Get(DefaultTheme.AccentKey);
+Color accent = provider.Get(DefaultTheme.AccentKey);
 
 provider.ThemeChanged += (_, args) =>
 {
@@ -47,7 +47,7 @@ provider.ThemeChanged += (_, args) =>
 };
 
 provider.Theme = new Theme("High contrast")
-    .Set(DefaultTheme.AccentKey, DrawColor.White);
+    .Set(DefaultTheme.AccentKey, Color.White);
 ```
 
 ## Remarks

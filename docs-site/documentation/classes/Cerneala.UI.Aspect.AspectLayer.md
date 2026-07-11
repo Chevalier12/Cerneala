@@ -32,7 +32,7 @@ AspectRuleSet rule = new(
     "button.primary",
     AspectLayer.App,
     new AspectTarget(typeof(Button)),
-    [new AspectDeclaration(Control.BackgroundProperty, AspectValue<DrawColor>.Literal(DrawColor.Black))],
+    [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.Black))],
     declarationOrder: 0);
 ```
 

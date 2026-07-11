@@ -28,10 +28,10 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 
 AspectPackage package = AspectPackage.Create("App")
-    .Tokens(tokens => tokens.Set(accent, DrawColor.White));
+    .Tokens(tokens => tokens.Set(accent, Color.White));
 
 AspectCatalog catalog = new AspectRegistry()
     .Register(package)

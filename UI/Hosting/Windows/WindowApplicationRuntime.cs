@@ -378,7 +378,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
         context.RenderRequested = false;
         context.Host.Update(context.PlatformWindow.InputSource.GetFrame(), context.PlatformWindow.Viewport, elapsedTime);
         IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
-        graphicsSession.BeginFrame(DrawColor.White);
+        graphicsSession.BeginFrame(Color.White);
         try
         {
             context.Host.Draw(graphicsSession.DrawingBackend);

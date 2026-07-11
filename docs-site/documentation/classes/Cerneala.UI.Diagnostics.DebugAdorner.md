@@ -24,7 +24,7 @@ using Cerneala.UI.Layout;
 
 DebugAdorner adorner = new()
 {
-    AdornerColor = new DrawColor(255, 64, 64),
+    AdornerColor = new Color(255, 64, 64),
     Child = new Border
     {
         Padding = new Thickness(10),
@@ -51,13 +51,13 @@ Changing `AdornerColor` affects render invalidation because `AdornerColorPropert
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `AdornerColorProperty` | `UiProperty<DrawColor>` | Identifies the `AdornerColor` UI property. The default value is `new DrawColor(255, 64, 64)`, and the property affects rendering. |
+| `AdornerColorProperty` | `UiProperty<Color>` | Identifies the `AdornerColor` UI property. The default value is `new Color(255, 64, 64)`, and the property affects rendering. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `AdornerColor` | `DrawColor` | Gets or sets the rectangle stroke color used by the adorner. |
+| `AdornerColor` | `Color` | Gets or sets the rectangle stroke color used by the adorner. |
 | `Child` | `UIElement?` | Inherited from `Decorator`. Gets or sets the single child element hosted by the adorner. |
 
 ## Protected Overrides
@@ -71,8 +71,8 @@ Changing `AdornerColor` affects render invalidation because `AdornerColorPropert
 | Item | Value |
 | --- | --- |
 | Identifier field | `AdornerColorProperty` |
-| Property type | `DrawColor` |
-| Default value | `new DrawColor(255, 64, 64)` |
+| Property type | `Color` |
+| Default value | `new Color(255, 64, 64)` |
 | Metadata/options | `UiPropertyOptions.AffectsRender` |
 
 ## Applies to
@@ -83,4 +83,4 @@ Cerneala retained UI diagnostics.
 
 - `Cerneala.UI.Controls.Decorator`
 - `Cerneala.UI.Diagnostics.DebugOverlay`
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`

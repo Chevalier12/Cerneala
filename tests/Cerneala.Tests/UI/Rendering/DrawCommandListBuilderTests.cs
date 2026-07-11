@@ -10,42 +10,42 @@ public sealed class DrawCommandListBuilderTests
     [Fact]
     public void ParentLocalCommandsAppearBeforeChildCommands()
     {
-        RenderingTestElement parent = new(new DrawColor(1, 0, 0));
-        RenderingTestElement child = new(new DrawColor(2, 0, 0));
+        RenderingTestElement parent = new(new Color(1, 0, 0));
+        RenderingTestElement child = new(new Color(2, 0, 0));
         parent.VisualChildren.Add(child);
         RetainedRenderCache cache = PreparedCache(parent);
 
         new DrawCommandListBuilder().Build(parent, cache, new RenderCounters());
 
-        Assert.Equal(new DrawColor(1, 0, 0), cache.RootCommands[0].Color);
-        Assert.Equal(new DrawColor(2, 0, 0), cache.RootCommands[1].Color);
+        Assert.Equal(new Color(1, 0, 0), cache.RootCommands[0].Color);
+        Assert.Equal(new Color(2, 0, 0), cache.RootCommands[1].Color);
     }
 
     [Fact]
     public void SiblingsRenderInVisualChildOrder()
     {
         UIElement root = new();
-        RenderingTestElement first = new(new DrawColor(1, 0, 0));
-        RenderingTestElement second = new(new DrawColor(2, 0, 0));
+        RenderingTestElement first = new(new Color(1, 0, 0));
+        RenderingTestElement second = new(new Color(2, 0, 0));
         root.VisualChildren.Add(first);
         root.VisualChildren.Add(second);
         RetainedRenderCache cache = PreparedCache(root);
 
         new DrawCommandListBuilder().Build(root, cache, new RenderCounters());
 
-        Assert.Equal(new DrawColor(1, 0, 0), cache.RootCommands[0].Color);
-        Assert.Equal(new DrawColor(2, 0, 0), cache.RootCommands[1].Color);
+        Assert.Equal(new Color(1, 0, 0), cache.RootCommands[0].Color);
+        Assert.Equal(new Color(2, 0, 0), cache.RootCommands[1].Color);
     }
 
     [Fact]
     public void CollapsedSubtreeDoesNotEmitCommands()
     {
         UIElement root = new();
-        RenderingTestElement child = new(DrawColor.White)
+        RenderingTestElement child = new(Color.White)
         {
             Visibility = Visibility.Collapsed
         };
-        child.VisualChildren.Add(new RenderingTestElement(DrawColor.Black));
+        child.VisualChildren.Add(new RenderingTestElement(Color.Black));
         root.VisualChildren.Add(child);
         RetainedRenderCache cache = PreparedCache(root);
 
@@ -71,7 +71,7 @@ public sealed class DrawCommandListBuilderTests
     [Fact]
     public void ClipCommandsWrapVisibleSubtree()
     {
-        RenderingTestElement root = new(DrawColor.White);
+        RenderingTestElement root = new(Color.White);
         ClipNode.SetClip(root, new LayoutRect(0, 0, 10, 10));
         RetainedRenderCache cache = PreparedCache(root);
 

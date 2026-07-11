@@ -28,8 +28,8 @@ using Cerneala.Drawing;
 
 DrawRect bounds = new(10, 20, 120, 40);
 
-context.DrawingContext.FillRectangle(bounds, DrawColor.White);
-context.DrawingContext.DrawRectangle(bounds, DrawColor.Black, thickness: 1);
+context.DrawingContext.FillRectangle(bounds, Color.White);
+context.DrawingContext.DrawRectangle(bounds, Color.Black, thickness: 1);
 ```
 
 Use the derived edges when calculating adjacent drawing bounds:
@@ -80,4 +80,4 @@ Because `DrawRect` is a readonly record struct, its values are immutable after c
 
 - `Cerneala.Drawing.DrawingContext`
 - `Cerneala.Drawing.DrawCommand`
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`

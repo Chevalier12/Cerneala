@@ -52,19 +52,19 @@ public sealed class AspectEngineStressBudgetTests
             "button.base",
             AspectLayer.App,
             new AspectTarget(typeof(Button)),
-            [new AspectDeclaration(Control.BackgroundProperty, AspectValue<DrawColor>.Literal(DrawColor.White))],
+            [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.White))],
             0);
         AspectRuleSet hoverRule = new(
             "button.hover",
             AspectLayer.App,
             new AspectTarget(typeof(Button), conditions: [AspectCondition.State(AspectState.Hover)]),
-            [new AspectDeclaration(Control.BorderColorProperty, AspectValue<DrawColor>.Literal(DrawColor.Black))],
+            [new AspectDeclaration(Control.BorderColorProperty, AspectValue<Color>.Literal(Color.Black))],
             1);
         AspectRuleSet textRule = new(
             "text.selected",
             AspectLayer.App,
             new AspectTarget(typeof(TextBlock), conditions: [AspectCondition.State(AspectState.Selected)]),
-            [new AspectDeclaration(Control.ForegroundProperty, AspectValue<DrawColor>.Literal(DrawColor.Black))],
+            [new AspectDeclaration(Control.ForegroundProperty, AspectValue<Color>.Literal(Color.Black))],
             2);
         AspectCatalog catalog = new AspectRegistry()
             .Register(AspectPackage.Create("stress").Components(components =>

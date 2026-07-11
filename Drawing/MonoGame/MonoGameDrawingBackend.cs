@@ -2,6 +2,8 @@ using Cerneala.Drawing.Text;
 using Cerneala.UI.Hosting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using CernealaColor = Cerneala.Drawing.Color;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.Drawing.MonoGame;
 
@@ -108,16 +110,16 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         }
     }
 
-    private void FillRectangle(DrawRect rect, DrawColor color)
+    private void FillRectangle(DrawRect rect, CernealaColor color)
     {
         _spriteBatch.Draw(_whitePixel, Mapper.MapRectangle(rect), ToColor(color));
     }
 
-    private void DrawRectangle(DrawRect rect, DrawColor color, float thickness)
+    private void DrawRectangle(DrawRect rect, CernealaColor color, float thickness)
     {
         int lineThickness = Mapper.MapThickness(thickness);
         Rectangle bounds = Mapper.MapRectangle(rect);
-        Color monoGameColor = ToColor(color);
+        XnaColor monoGameColor = ToColor(color);
 
         _spriteBatch.Draw(_whitePixel, new Rectangle(bounds.Left, bounds.Top, bounds.Width, lineThickness), monoGameColor);
         _spriteBatch.Draw(_whitePixel, new Rectangle(bounds.Left, bounds.Bottom - lineThickness, bounds.Width, lineThickness), monoGameColor);
@@ -125,7 +127,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         _spriteBatch.Draw(_whitePixel, new Rectangle(bounds.Right - lineThickness, bounds.Top, lineThickness, bounds.Height), monoGameColor);
     }
 
-    private void FillEllipse(DrawRect rect, DrawColor color)
+    private void FillEllipse(DrawRect rect, CernealaColor color)
     {
         Rectangle bounds = Mapper.MapRectangle(rect);
         if (bounds.Width <= 0 || bounds.Height <= 0)
@@ -133,7 +135,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             return;
         }
 
-        Color monoGameColor = ToColor(color);
+        XnaColor monoGameColor = ToColor(color);
         float radiusX = bounds.Width / 2f;
         float radiusY = bounds.Height / 2f;
         float centerY = bounds.Top + radiusY;
@@ -149,7 +151,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         }
     }
 
-    private void DrawEllipse(DrawRect rect, DrawColor color, float thickness)
+    private void DrawEllipse(DrawRect rect, CernealaColor color, float thickness)
     {
         int lineThickness = Mapper.MapThickness(thickness);
         Rectangle bounds = Mapper.MapRectangle(rect);
@@ -161,7 +163,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         DrawEllipseRing(bounds, ToColor(color), lineThickness);
     }
 
-    private void DrawEllipseRing(Rectangle bounds, Color color, int thickness)
+    private void DrawEllipseRing(Rectangle bounds, XnaColor color, int thickness)
     {
         float radiusX = bounds.Width / 2f;
         float radiusY = bounds.Height / 2f;
@@ -179,12 +181,12 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         }
     }
 
-    private void DrawLine(DrawPoint start, DrawPoint end, DrawColor color, float thickness)
+    private void DrawLine(DrawPoint start, DrawPoint end, CernealaColor color, float thickness)
     {
         DrawLine(Mapper.MapVector(start), Mapper.MapVector(end), ToColor(color), Mapper.MapThickness(thickness));
     }
 
-    private void DrawLine(Vector2 start, Vector2 end, Color color, int thickness)
+    private void DrawLine(Vector2 start, Vector2 end, XnaColor color, int thickness)
     {
         Vector2 delta = end - start;
         float length = delta.Length();
@@ -272,7 +274,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
     private void DrawTextLayer(Texture2D texture, Vector2 origin, BlendState blendState)
     {
         _spriteBatch.GraphicsDevice.BlendState = blendState;
-        _spriteBatch.Draw(texture, origin, Color.White);
+        _spriteBatch.Draw(texture, origin, XnaColor.White);
     }
 
     private void PushClip(DrawRect rect)
@@ -375,22 +377,22 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         }
     }
 
-    private static Color ToColor(DrawColor color)
+    private static XnaColor ToColor(CernealaColor color)
     {
-        return new Color(color.R, color.G, color.B, color.A);
+        return new XnaColor(color.R, color.G, color.B, color.A);
     }
 
     private readonly record struct TextTextureKey(
         string Text,
         IDrawFont Font,
         float FontSize,
-        DrawColor Color,
+        CernealaColor Color,
         float CoordinateScale,
         DrawPoint PixelPhase)
     {
         public static TextTextureKey From(
             DrawTextRun textRun,
-            DrawColor color,
+            CernealaColor color,
             float coordinateScale,
             DrawPoint pixelPhase)
         {

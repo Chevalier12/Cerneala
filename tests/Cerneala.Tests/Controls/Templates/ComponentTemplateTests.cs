@@ -11,21 +11,21 @@ public sealed class ComponentTemplateTests
     [Fact]
     public void TypedComponentTemplateReceivesOwnerStateVariantsAndTokens()
     {
-        AspectToken<DrawColor> token = AspectToken.Color("button.background");
+        AspectToken<Color> token = AspectToken.Color("button.background");
         AspectEnvironment environment = new("template");
-        environment.Set(token, DrawColor.White);
+        environment.Set(token, Color.White);
         Button button = new();
-        DrawColor observed = DrawColor.Transparent;
+        Color observed = Color.Transparent;
 
         ComponentTemplate<Button> template = new("modern", context =>
         {
-            observed = (DrawColor)token.Ref().Resolve(new AspectResolutionContext(context.Owner, context.Environment, context.States, context.Variants))!;
+            observed = (Color)token.Ref().Resolve(new AspectResolutionContext(context.Owner, context.Environment, context.States, context.Variants))!;
             return new Border();
         });
 
         template.CreateInstance(button, new ComponentTemplateContext(button, environment, AspectStateSet.Empty.Add(AspectState.Hover), AspectVariantSet.Empty));
 
-        Assert.Equal(DrawColor.White, observed);
+        Assert.Equal(Color.White, observed);
     }
 
     [Fact]

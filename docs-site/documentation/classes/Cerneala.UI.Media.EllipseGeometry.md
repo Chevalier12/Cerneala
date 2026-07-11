@@ -43,8 +43,8 @@ using Cerneala.UI.Media;
 Ellipse ellipse = new()
 {
     Geometry = new EllipseGeometry(new DrawRect(0, 0, 64, 64)),
-    Fill = new SolidColorBrush(DrawColor.White),
-    Stroke = new SolidColorBrush(DrawColor.Black),
+    Fill = new SolidColorBrush(Color.White),
+    Stroke = new SolidColorBrush(Color.Black),
     StrokeThickness = 2
 };
 ```

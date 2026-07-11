@@ -18,8 +18,8 @@ public class Thumb : Control, IPointerDragSource
 
     public Thumb()
     {
-        Background = new DrawColor(180, 180, 180);
-        BorderColor = new DrawColor(80, 80, 80);
+        Background = new Color(180, 180, 180);
+        BorderColor = new Color(80, 80, 80);
         BorderThickness = new Thickness(1);
         Handlers.AddHandler(InputEvents.LostMouseCaptureEvent, (_, _) => CancelDrag());
     }

@@ -132,8 +132,8 @@ public partial class MainWindow : Window<MainWindowViewModel>
                 Top = Top + (index * 48),
                 WindowStartupLocation = WindowStartupLocation.Manual,
                 Owner = this,
-                Background = new DrawColor(20, 28, 38),
-                BorderColor = new DrawColor(82, 96, 113),
+                Background = new Color(20, 28, 38),
+                BorderColor = new Color(82, 96, 113),
                 BorderThickness = new Cerneala.UI.Layout.Thickness(1),
                 Padding = new Cerneala.UI.Layout.Thickness(20),
                 Content = new TextBlock
@@ -141,8 +141,8 @@ public partial class MainWindow : Window<MainWindowViewModel>
                     Text = $"Fereastra {index} din setul {batch}",
                     FontFamily = "Segoe UI",
                     FontSize = 20,
-                    Foreground = new DrawColor(245, 245, 245),
-                    Background = new DrawColor(30, 38, 51),
+                    Foreground = new Color(245, 245, 245),
+                    Background = new Color(30, 38, 51),
                     Padding = new Cerneala.UI.Layout.Thickness(16)
                 }
             };
@@ -175,8 +175,8 @@ public partial class MainWindow : Window<MainWindowViewModel>
             WindowStartupLocation = WindowStartupLocation.Manual,
             ResizeMode = ResizeMode.NoResize,
             Owner = this,
-            Background = DrawColor.White,
-            BorderColor = DrawColor.Transparent,
+            Background = Color.White,
+            BorderColor = Color.Transparent,
             BorderThickness = Cerneala.UI.Layout.Thickness.Zero,
             Padding = Cerneala.UI.Layout.Thickness.Zero,
             Content = new TextBlock
@@ -184,7 +184,7 @@ public partial class MainWindow : Window<MainWindowViewModel>
                 Text = "Hello world!",
                 FontFamily = fontFamily,
                 FontSize = 16,
-                Foreground = DrawColor.Black,
+                Foreground = Color.Black,
                 HorizontalAlignment = Cerneala.UI.Layout.HorizontalAlignment.Center,
                 VerticalAlignment = Cerneala.UI.Layout.VerticalAlignment.Center
             }
@@ -387,8 +387,8 @@ public sealed class ShowcaseBadge : TextBlock
         Text = "Custom tag rezolvat semantic din namespace-ul code-behind";
         FontFamily = "Consolas";
         FontSize = 12;
-        Foreground = DrawColor.Black;
-        Background = new DrawColor(255, 214, 102);
+        Foreground = Color.Black;
+        Background = new Color(255, 214, 102);
         Padding = new Cerneala.UI.Layout.Thickness(8, 4, 8, 4);
     }
 }

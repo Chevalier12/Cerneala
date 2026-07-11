@@ -79,8 +79,8 @@ public sealed class ButtonTests
         Button button = new()
         {
             Content = "Go",
-            Background = DrawColor.White,
-            Foreground = DrawColor.Black
+            Background = Color.White,
+            Foreground = Color.Black
         };
         root.VisualChildren.Add(button);
         button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 20)));

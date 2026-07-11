@@ -36,15 +36,15 @@ UIRoot root = new();
 Control control = new();
 root.VisualChildren.Add(control);
 
-MotionValue<DrawColor> value =
+MotionValue<Color> value =
     root.Motion.Graph.CreateValue(control.Background);
 
-using MotionPropertyBinding<DrawColor> binding =
+using MotionPropertyBinding<Color> binding =
     new(root.Motion, control, Control.BackgroundProperty, value);
 
 MotionHandle handle = binding.AnimateTo(
-    DrawColor.White,
-    Motion.Tween<DrawColor>(TimeSpan.FromMilliseconds(100)));
+    Color.White,
+    Motion.Tween<Color>(TimeSpan.FromMilliseconds(100)));
 
 root.ProcessFrame();
 ```
@@ -53,8 +53,8 @@ Hold the final animated value instead of restoring the base property value:
 
 ```csharp
 binding.AnimateTo(
-    DrawColor.White,
-    Motion.Tween<DrawColor>(TimeSpan.FromMilliseconds(100)),
+    Color.White,
+    Motion.Tween<Color>(TimeSpan.FromMilliseconds(100)),
     new MotionPropertyStartOptions { HoldOnComplete = true });
 ```
 

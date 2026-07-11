@@ -51,8 +51,8 @@ root.VisualChildren.Add(control);
 
 MotionHandle handle = control.Motion()
     .Animate(Control.BackgroundProperty)
-    .To(DrawColor.White)
-    .With(Motion.Tween<DrawColor>(TimeSpan.FromMilliseconds(150)));
+    .To(Color.White)
+    .With(Motion.Tween<Color>(TimeSpan.FromMilliseconds(150)));
 ```
 
 ## Remarks

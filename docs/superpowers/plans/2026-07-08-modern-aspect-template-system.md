@@ -70,17 +70,17 @@ The implementation should converge on this conceptual authoring shape:
 ```csharp
 public static class AppAspect
 {
-    public static readonly AspectToken<DrawColor> Surface = AspectToken.Color("app.surface");
-    public static readonly AspectToken<DrawColor> Text = AspectToken.Color("app.text");
-    public static readonly AspectToken<DrawColor> Accent = AspectToken.Color("app.accent");
+    public static readonly AspectToken<Color> Surface = AspectToken.Color("app.surface");
+    public static readonly AspectToken<Color> Text = AspectToken.Color("app.text");
+    public static readonly AspectToken<Color> Accent = AspectToken.Color("app.accent");
 
     public static AspectPackage Create()
     {
         return AspectPackage.Create("App")
             .Tokens(tokens => tokens
-                .Set(Surface, new DrawColor(255, 255, 255))
-                .Set(Text, new DrawColor(28, 35, 48))
-                .Set(Accent, new DrawColor(37, 99, 235)))
+                .Set(Surface, new Color(255, 255, 255))
+                .Set(Text, new Color(28, 35, 48))
+                .Set(Accent, new Color(37, 99, 235)))
             .Components(components => components
                 .For<Button>(button => button
                     .Slot(ButtonSlots.Root)

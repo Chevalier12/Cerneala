@@ -7,10 +7,10 @@ namespace Cerneala.Tests.UI.Rendering;
 
 internal sealed class RenderingTestElement : UIElement
 {
-    private readonly DrawColor color;
+    private readonly Color color;
     private readonly bool throwOnRender;
 
-    public RenderingTestElement(DrawColor color, bool throwOnRender = false)
+    public RenderingTestElement(Color color, bool throwOnRender = false)
     {
         this.color = color;
         this.throwOnRender = throwOnRender;

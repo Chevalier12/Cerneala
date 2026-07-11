@@ -11,7 +11,7 @@ public sealed class RetainedRenderCacheTests
     public void RootCacheVersionChangesWhenRootCommandsAreBuilt()
     {
         UIRoot root = new();
-        root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
+        root.VisualChildren.Add(new RenderingTestElement(Color.White));
         int initialVersion = root.RetainedRenderCache.Version;
 
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
@@ -26,7 +26,7 @@ public sealed class RetainedRenderCacheTests
     public void CachedRootCommandListIsReusedAcrossUnchangedDrawFrames()
     {
         UIRoot root = new();
-        root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
+        root.VisualChildren.Add(new RenderingTestElement(Color.White));
 
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();
@@ -45,7 +45,7 @@ public sealed class RetainedRenderCacheTests
         root.ProcessFrame();
         root.RetainedRenderer.Commit(root);
 
-        root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
+        root.VisualChildren.Add(new RenderingTestElement(Color.White));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();
         DrawCommandList commands = root.RetainedRenderer.Commit(root);

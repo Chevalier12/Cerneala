@@ -842,7 +842,7 @@ element.Motion()
     .Animate(Control.BackgroundProperty)
     .From(current)
     .To(target)
-    .With(Motion.Tween<DrawColor>(TimeSpan.FromMilliseconds(160), Easings.Standard));
+    .With(Motion.Tween<Color>(TimeSpan.FromMilliseconds(160), Easings.Standard));
 ```
 
 - [x] Shortcuts:

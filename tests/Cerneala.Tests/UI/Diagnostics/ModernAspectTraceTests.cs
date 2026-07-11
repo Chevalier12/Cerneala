@@ -12,7 +12,7 @@ public sealed class ModernAspectTraceTests
     {
         Button button = new();
         AspectEngine engine = new();
-        AspectCatalog catalog = CatalogWith("App", Rule("button", AspectLayer.App, Declaration(DrawColor.White)));
+        AspectCatalog catalog = CatalogWith("App", Rule("button", AspectLayer.App, Declaration(Color.White)));
 
         engine.Apply(button, catalog, new AspectEnvironment("test"));
 
@@ -29,8 +29,8 @@ public sealed class ModernAspectTraceTests
         AspectEngine engine = new();
         AspectCatalog catalog = CatalogWith(
             "App",
-            Rule("first", AspectLayer.App, Declaration(DrawColor.White), order: 0),
-            Rule("second", AspectLayer.App, Declaration(DrawColor.Black), order: 1));
+            Rule("first", AspectLayer.App, Declaration(Color.White), order: 0),
+            Rule("second", AspectLayer.App, Declaration(Color.Black), order: 1));
 
         engine.Apply(button, catalog, new AspectEnvironment("test"));
 
@@ -41,9 +41,9 @@ public sealed class ModernAspectTraceTests
     [Fact]
     public void TraceShowsTokenResolutionChain()
     {
-        AspectToken<DrawColor> token = AspectToken.Color("app.accent");
+        AspectToken<Color> token = AspectToken.Color("app.accent");
         AspectEnvironment environment = new("scope");
-        environment.Set(token, DrawColor.White);
+        environment.Set(token, Color.White);
         Button button = new();
         AspectEngine engine = new();
         AspectCatalog catalog = CatalogWith("App", Rule("token", AspectLayer.App, new AspectDeclaration(Control.BackgroundProperty, token.Ref())));
@@ -65,7 +65,7 @@ public sealed class ModernAspectTraceTests
             "variant",
             AspectLayer.App,
             new AspectTarget(typeof(Button), AspectSlot.Root<Button>(), [AspectCondition.Variant(key, ButtonKind.Primary)]),
-            [Declaration(DrawColor.White)],
+            [Declaration(Color.White)],
             0));
 
         engine.Apply(
@@ -97,9 +97,9 @@ public sealed class ModernAspectTraceTests
         return new AspectRuleSet(name, layer, new AspectTarget(typeof(Button)), [declaration], order);
     }
 
-    private static AspectDeclaration Declaration(DrawColor color)
+    private static AspectDeclaration Declaration(Color color)
     {
-        return new AspectDeclaration(Control.BackgroundProperty, AspectValue<DrawColor>.Literal(color));
+        return new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(color));
     }
 
     private enum ButtonKind

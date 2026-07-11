@@ -60,10 +60,10 @@ But the tree does not automatically set that source. This means `UiPropertyOptio
 Target behavior:
 
 ```csharp
-parent.Foreground = DrawColor.White;
+parent.Foreground = Color.White;
 root.ProcessFrame();
 
-Assert.Equal(DrawColor.White, child.GetValue(Control.ForegroundProperty));
+Assert.Equal(Color.White, child.GetValue(Control.ForegroundProperty));
 Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.ForegroundProperty));
 ```
 
@@ -103,14 +103,14 @@ public sealed class InheritedPropertyTreePropagationTests
     public void ParentForegroundPropagatesToDescendantDuringFrame()
     {
         UIRoot root = new();
-        Control parent = new() { Foreground = DrawColor.White };
+        Control parent = new() { Foreground = Color.White };
         TextBlock child = new() { Text = "child" };
         parent.VisualChildren.Add(child);
         root.VisualChildren.Add(parent);
 
         root.ProcessFrame();
 
-        Assert.Equal(DrawColor.White, child.Foreground);
+        Assert.Equal(Color.White, child.Foreground);
         Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.ForegroundProperty));
     }
 
@@ -133,17 +133,17 @@ public sealed class InheritedPropertyTreePropagationTests
     public void ChangingInheritedParentValueInvalidatesDescendantRender()
     {
         UIRoot root = new();
-        Control parent = new() { Foreground = DrawColor.Black };
+        Control parent = new() { Foreground = Color.Black };
         TextBlock child = new() { Text = "child" };
         parent.VisualChildren.Add(child);
         root.VisualChildren.Add(parent);
         root.ProcessFrame();
         child.DirtyState.Clear(Cerneala.UI.Invalidation.InvalidationFlags.Render);
 
-        parent.Foreground = DrawColor.White;
+        parent.Foreground = Color.White;
         var stats = root.ProcessFrame();
 
-        Assert.Equal(DrawColor.White, child.Foreground);
+        Assert.Equal(Color.White, child.Foreground);
         Assert.True(stats.InheritedElements > 0);
         Assert.True(child.RenderVersion > 0);
     }
@@ -465,8 +465,8 @@ Change `ForegroundProperty`, `FontFamilyProperty`, and `FontSizeProperty` metada
 Example:
 
 ```csharp
-new UiPropertyMetadata<DrawColor>(
-    DrawColor.Black,
+new UiPropertyMetadata<Color>(
+    Color.Black,
     UiPropertyOptions.Inherits | UiPropertyOptions.AffectsRender)
 ```
 

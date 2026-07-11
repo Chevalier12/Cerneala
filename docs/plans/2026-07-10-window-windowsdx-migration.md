@@ -127,7 +127,7 @@ internal interface IWindowGraphicsSession : IDisposable
     ImageResourceCache ImageResourceCache { get; }
 
     void Resize(int pixelWidth, int pixelHeight, float coordinateScale);
-    void BeginFrame(DrawColor clearColor);
+    void BeginFrame(Color clearColor);
     void Present();
 }
 ```

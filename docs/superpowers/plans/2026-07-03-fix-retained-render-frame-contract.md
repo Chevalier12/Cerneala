@@ -91,7 +91,7 @@ public sealed class RenderBackdoorContractTests
     public void BuilderThrowsWhenVisibleLocalCacheWasNeverBuilt()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         RetainedRenderCache cache = new();
 
@@ -106,7 +106,7 @@ public sealed class RenderBackdoorContractTests
     public void BuilderThrowsWhenVisibleLocalCacheIsStale()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         RetainedRenderCache cache = new();
         RenderCounters counters = new();
@@ -127,7 +127,7 @@ public sealed class RenderBackdoorContractTests
     public void BuilderComposesPreparedLocalCachesWithoutRenderingElements()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         RetainedRenderCache cache = new();
         RenderCounters counters = new();
@@ -313,7 +313,7 @@ public sealed class RetainedRendererDrawPurityTests
     public void CommitBuildsRootCommandsFromPreparedLocalCaches()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         PrepareSubtree(root);
         int renderCountAfterPrepare = child.RenderCount;
@@ -329,7 +329,7 @@ public sealed class RetainedRendererDrawPurityTests
     public void SubmitUsesCommittedCommandListWithoutCopying()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         PrepareSubtree(root);
         DrawCommandList committed = root.RetainedRenderer.Commit(root);
@@ -482,7 +482,7 @@ Replace `BackendCannotMutateCachedRootCommandsDuringSubmit` with this test:
 public void SubmitPassesCommittedRootCommandsByReference()
 {
     UIRoot root = new();
-    root.VisualChildren.Add(new RenderingTestElement(DrawColor.White));
+    root.VisualChildren.Add(new RenderingTestElement(Color.White));
     root.ProcessFrame();
     DrawCommandList committed = root.RetainedRenderer.Commit(root);
     CapturingDrawingBackend backend = new();
@@ -606,7 +606,7 @@ public sealed class UiHostFrameStatsIntegrityTests
         protected override void OnRender(RenderContext context)
         {
             RenderCount++;
-            context.DrawingContext.FillRectangle(new DrawRect(context.Bounds.X, context.Bounds.Y, 1, 1), DrawColor.White);
+            context.DrawingContext.FillRectangle(new DrawRect(context.Bounds.X, context.Bounds.Y, 1, 1), Color.White);
         }
     }
 }

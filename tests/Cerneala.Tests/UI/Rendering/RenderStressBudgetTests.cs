@@ -23,11 +23,11 @@ public sealed class RenderStressBudgetTests
 
         provider.Theme = new Theme("Changed")
             .Set(DefaultTheme.PaletteKey, DefaultTheme.Create().Get(DefaultTheme.PaletteKey))
-            .Set(DefaultTheme.BackgroundKey, new DrawColor(10, 20, 30))
-            .Set(DefaultTheme.ForegroundKey, new DrawColor(40, 50, 60))
-            .Set(DefaultTheme.SurfaceKey, new DrawColor(70, 80, 90))
-            .Set(DefaultTheme.BorderKey, new DrawColor(100, 110, 120))
-            .Set(DefaultTheme.AccentKey, new DrawColor(130, 140, 150));
+            .Set(DefaultTheme.BackgroundKey, new Color(10, 20, 30))
+            .Set(DefaultTheme.ForegroundKey, new Color(40, 50, 60))
+            .Set(DefaultTheme.SurfaceKey, new Color(70, 80, 90))
+            .Set(DefaultTheme.BorderKey, new Color(100, 110, 120))
+            .Set(DefaultTheme.AccentKey, new Color(130, 140, 150));
 
         FrameStats stats = root.ProcessFrame();
 

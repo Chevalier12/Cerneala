@@ -8,9 +8,9 @@ public sealed class BrushTests
     [Fact]
     public void SolidColorBrushExposesSolidColor()
     {
-        SolidColorBrush brush = new(DrawColor.White);
+        SolidColorBrush brush = new(Color.White);
 
-        Assert.Equal(DrawColor.White, brush.SolidColor);
+        Assert.Equal(Color.White, brush.SolidColor);
     }
 
     [Fact]
@@ -19,7 +19,7 @@ public sealed class BrushTests
         LinearGradientBrush brush = new(
             new DrawPoint(0, 0),
             new DrawPoint(10, 0),
-            [new GradientStop(1, DrawColor.Black), new GradientStop(0, DrawColor.White)]);
+            [new GradientStop(1, Color.Black), new GradientStop(0, Color.White)]);
 
         Assert.Equal([0, 1], brush.Stops.Select(stop => stop.Offset).ToArray());
     }
@@ -30,14 +30,14 @@ public sealed class BrushTests
         LinearGradientBrush brush = new(
             new DrawPoint(0, 0),
             new DrawPoint(10, 0),
-            [new GradientStop(0, DrawColor.White)]);
+            [new GradientStop(0, Color.White)]);
 
         if (brush.Stops is GradientStop[] exposedStops)
         {
-            exposedStops[0] = new GradientStop(0, DrawColor.Black);
+            exposedStops[0] = new GradientStop(0, Color.Black);
         }
 
-        Assert.Equal(DrawColor.White, brush.Stops[0].Color);
+        Assert.Equal(Color.White, brush.Stops[0].Color);
     }
 
     [Fact]
@@ -46,11 +46,11 @@ public sealed class BrushTests
         LinearGradientBrush first = new(
             new DrawPoint(0, 0),
             new DrawPoint(10, 0),
-            [new GradientStop(0, DrawColor.White), new GradientStop(1, DrawColor.Black)]);
+            [new GradientStop(0, Color.White), new GradientStop(1, Color.Black)]);
         LinearGradientBrush second = new(
             new DrawPoint(0, 0),
             new DrawPoint(10, 0),
-            [new GradientStop(1, DrawColor.Black), new GradientStop(0, DrawColor.White)]);
+            [new GradientStop(1, Color.Black), new GradientStop(0, Color.White)]);
 
         Assert.Equal(first, second);
         Assert.Equal(first.GetHashCode(), second.GetHashCode());
@@ -63,12 +63,12 @@ public sealed class BrushTests
             new DrawPoint(5, 5),
             10,
             20,
-            [new GradientStop(0, DrawColor.White), new GradientStop(1, DrawColor.Black)]);
+            [new GradientStop(0, Color.White), new GradientStop(1, Color.Black)]);
         RadialGradientBrush second = new(
             new DrawPoint(5, 5),
             10,
             20,
-            [new GradientStop(1, DrawColor.Black), new GradientStop(0, DrawColor.White)]);
+            [new GradientStop(1, Color.Black), new GradientStop(0, Color.White)]);
 
         Assert.Equal(first, second);
         Assert.Equal(first.GetHashCode(), second.GetHashCode());
@@ -77,8 +77,8 @@ public sealed class BrushTests
     [Fact]
     public void GradientStopRejectsInvalidOffset()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new GradientStop(-0.1f, DrawColor.Black));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new GradientStop(1.1f, DrawColor.Black));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GradientStop(-0.1f, Color.Black));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GradientStop(1.1f, Color.Black));
     }
 
     [Theory]
@@ -89,9 +89,9 @@ public sealed class BrushTests
     public void RadialGradientBrushRejectsInvalidRadii(float radius)
     {
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => new RadialGradientBrush(new DrawPoint(0, 0), radius, 1, [new GradientStop(0, DrawColor.White)]));
+            () => new RadialGradientBrush(new DrawPoint(0, 0), radius, 1, [new GradientStop(0, Color.White)]));
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => new RadialGradientBrush(new DrawPoint(0, 0), 1, radius, [new GradientStop(0, DrawColor.White)]));
+            () => new RadialGradientBrush(new DrawPoint(0, 0), 1, radius, [new GradientStop(0, Color.White)]));
     }
 
     [Theory]
@@ -100,6 +100,6 @@ public sealed class BrushTests
     [InlineData(float.PositiveInfinity)]
     public void PenRejectsInvalidThickness(float thickness)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Pen(new SolidColorBrush(DrawColor.Black), thickness));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Pen(new SolidColorBrush(Color.Black), thickness));
     }
 }

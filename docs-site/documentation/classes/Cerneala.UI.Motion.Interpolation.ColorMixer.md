@@ -7,17 +7,17 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Motion/Interpolation/ColorMixer.cs`
 
-Interpolates `DrawColor` values for Cerneala motion animations.
+Interpolates `Color` values for Cerneala motion animations.
 
 ```csharp
-public sealed class ColorMixer : ValueMixer<DrawColor>
+public sealed class ColorMixer : ValueMixer<Color>
 ```
 
 Inheritance:
-`Object` -> `ValueMixer<DrawColor>` -> `ColorMixer`
+`Object` -> `ValueMixer<Color>` -> `ColorMixer`
 
 Implements:
-`IValueMixer` through `ValueMixer<DrawColor>`
+`IValueMixer` through `ValueMixer<Color>`
 
 ## Examples
 
@@ -27,11 +27,11 @@ using Cerneala.UI.Motion.Interpolation;
 
 ColorMixer mixer = new();
 
-DrawColor start = new(0, 10, 20, 0);
-DrawColor end = new(100, 110, 120, 200);
+Color start = new(0, 10, 20, 0);
+Color end = new(100, 110, 120, 200);
 
-DrawColor halfway = mixer.Mix(start, end, 0.5f);
-// halfway is DrawColor(50, 60, 70, 100).
+Color halfway = mixer.Mix(start, end, 0.5f);
+// halfway is Color(50, 60, 70, 100).
 ```
 
 ```csharp
@@ -41,8 +41,8 @@ using Cerneala.UI.Motion.Interpolation;
 ValueMixerRegistry registry = new();
 registry.RegisterBuiltIns();
 
-ValueMixer<DrawColor> mixer = registry.Resolve<DrawColor>();
-DrawColor value = mixer.Mix(DrawColor.Black, DrawColor.White, 0.25f);
+ValueMixer<Color> mixer = registry.Resolve<Color>();
+Color value = mixer.Mix(Color.Black, Color.White, 0.25f);
 ```
 
 ## Remarks
@@ -51,9 +51,9 @@ DrawColor value = mixer.Mix(DrawColor.Black, DrawColor.White, 0.25f);
 
 For intermediate progress values, each channel is linearly interpolated, rounded with `MidpointRounding.AwayFromZero`, and clamped to the valid byte range. Alpha is treated the same way as the color channels.
 
-The built-in `ValueMixerRegistry` registers `ColorMixer` for `DrawColor`. The motion property registry uses it for color properties such as `Control.BackgroundProperty` and `Control.BorderColorProperty`.
+The built-in `ValueMixerRegistry` registers `ColorMixer` for `Color`. The motion property registry uses it for color properties such as `Control.BackgroundProperty` and `Control.BorderColorProperty`.
 
-`ColorMixer` keeps the default `ValueMixer<DrawColor>` vector behavior, so `SupportsVectorOperations` is `false` and vector methods such as `Add`, `Subtract`, `Scale`, and `Magnitude` throw `InvalidOperationException`.
+`ColorMixer` keeps the default `ValueMixer<Color>` vector behavior, so `SupportsVectorOperations` is `false` and vector methods such as `Add`, `Subtract`, `Scale`, and `Magnitude` throw `InvalidOperationException`.
 
 ## Constructors
 
@@ -65,29 +65,29 @@ The built-in `ValueMixerRegistry` registers `ColorMixer` for `DrawColor`. The mo
 
 | Name | Description |
 | --- | --- |
-| `ValueType` | Gets `typeof(DrawColor)`. Inherited from `ValueMixer<DrawColor>`. |
-| `SupportsVectorOperations` | Gets `false`; color mixing does not expose vector operations. Inherited from `ValueMixer<DrawColor>`. |
+| `ValueType` | Gets `typeof(Color)`. Inherited from `ValueMixer<Color>`. |
+| `SupportsVectorOperations` | Gets `false`; color mixing does not expose vector operations. Inherited from `ValueMixer<Color>`. |
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
-| `Mix(DrawColor, DrawColor, float)` | Returns an interpolated `DrawColor`, preserving exact endpoints for progress outside or at the `0` to `1` range. |
-| `EqualsWithinTolerance(DrawColor, DrawColor, float)` | Returns `true` when every RGBA channel differs by no more than the supplied finite, non-negative tolerance. |
-| `MixUntyped(object?, object?, float)` | Casts the inputs to `DrawColor` and delegates to `Mix`. Inherited from `ValueMixer<DrawColor>`. |
-| `EqualsWithinToleranceUntyped(object?, object?, float)` | Casts the inputs to `DrawColor` and delegates to `EqualsWithinTolerance`. Inherited from `ValueMixer<DrawColor>`. |
-| `Add(DrawColor, DrawColor)` | Throws `InvalidOperationException` because vector operations are not supported. Inherited from `ValueMixer<DrawColor>`. |
-| `Subtract(DrawColor, DrawColor)` | Throws `InvalidOperationException` because vector operations are not supported. Inherited from `ValueMixer<DrawColor>`. |
-| `Scale(DrawColor, float)` | Throws `InvalidOperationException` because vector operations are not supported. Inherited from `ValueMixer<DrawColor>`. |
-| `Magnitude(DrawColor)` | Throws `InvalidOperationException` because vector operations are not supported. Inherited from `ValueMixer<DrawColor>`. |
+| `Mix(Color, Color, float)` | Returns an interpolated `Color`, preserving exact endpoints for progress outside or at the `0` to `1` range. |
+| `EqualsWithinTolerance(Color, Color, float)` | Returns `true` when every RGBA channel differs by no more than the supplied finite, non-negative tolerance. |
+| `MixUntyped(object?, object?, float)` | Casts the inputs to `Color` and delegates to `Mix`. Inherited from `ValueMixer<Color>`. |
+| `EqualsWithinToleranceUntyped(object?, object?, float)` | Casts the inputs to `Color` and delegates to `EqualsWithinTolerance`. Inherited from `ValueMixer<Color>`. |
+| `Add(Color, Color)` | Throws `InvalidOperationException` because vector operations are not supported. Inherited from `ValueMixer<Color>`. |
+| `Subtract(Color, Color)` | Throws `InvalidOperationException` because vector operations are not supported. Inherited from `ValueMixer<Color>`. |
+| `Scale(Color, float)` | Throws `InvalidOperationException` because vector operations are not supported. Inherited from `ValueMixer<Color>`. |
+| `Magnitude(Color)` | Throws `InvalidOperationException` because vector operations are not supported. Inherited from `ValueMixer<Color>`. |
 
 ## Applies to
 
-Cerneala UI motion interpolation for `DrawColor` values.
+Cerneala UI motion interpolation for `Color` values.
 
 ## See also
 
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`
 - `Cerneala.UI.Motion.Interpolation.ValueMixer<T>`
 - `Cerneala.UI.Motion.Interpolation.ValueMixerRegistry`
 - `Cerneala.UI.Motion.Properties.AnimatablePropertyRegistry`

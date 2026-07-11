@@ -36,8 +36,8 @@ public sealed class TemplatedButtonStateContractTests
     public void TemplatedButtonBindsChromePropertiesToBorder()
     {
         Button button = TemplatedButton("Save");
-        button.Background = new DrawColor(1, 2, 3);
-        button.BorderColor = new DrawColor(4, 5, 6);
+        button.Background = new Color(1, 2, 3);
+        button.BorderColor = new Color(4, 5, 6);
         button.BorderThickness = new Thickness(2);
         button.Padding = new Thickness(3);
 

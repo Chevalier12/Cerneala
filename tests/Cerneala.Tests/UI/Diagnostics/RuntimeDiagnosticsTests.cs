@@ -221,7 +221,7 @@ public sealed class RuntimeDiagnosticsTests
     private static UIRoot RootWithCommittedRenderCache(out RenderingTestElement child)
     {
         UIRoot root = new(100, 100);
-        child = new RenderingTestElement(DrawColor.White);
+        child = new RenderingTestElement(Color.White);
         root.VisualChildren.Add(child);
         child.Invalidate(InvalidationFlags.Render, "render");
 

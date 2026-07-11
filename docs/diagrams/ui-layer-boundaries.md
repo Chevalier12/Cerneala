@@ -33,7 +33,7 @@ This diagram shows where each layer is allowed to depend.
 │ DrawCommandList               │  │ InputFrame                 │
 │ DrawCommand                   │  │ RoutedEvent metadata       │
 │ DrawRect / DrawPoint          │  │ RoutedEventArgs            │
-│ DrawColor                     │  │ command primitives         │
+│ Color                     │  │ command primitives         │
 │ IDrawingBackend               │  │ MonoGameInputMapper        │
 └───────────────────────────────┘  └────────────────────────────┘
                  │                              │

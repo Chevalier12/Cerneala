@@ -49,8 +49,8 @@ public sealed class AnimatablePropertyRegistry
         MotionSpec colorSpec = MotionFactory.Tween(TimeSpan.FromMilliseconds(160));
         MotionSpec thicknessSpec = MotionFactory.Tween(TimeSpan.FromMilliseconds(180));
 
-        Register(Control.BackgroundProperty, Options<DrawColor, ColorMixer>(Control.BackgroundProperty, colorSpec, isSafeForImplicitAnimation: true));
-        Register(Control.BorderColorProperty, Options<DrawColor, ColorMixer>(Control.BorderColorProperty, colorSpec, isSafeForImplicitAnimation: true));
+        Register(Control.BackgroundProperty, Options<Color, ColorMixer>(Control.BackgroundProperty, colorSpec, isSafeForImplicitAnimation: true));
+        Register(Control.BorderColorProperty, Options<Color, ColorMixer>(Control.BorderColorProperty, colorSpec, isSafeForImplicitAnimation: true));
         Register(Control.BorderThicknessProperty, Options<Thickness, ThicknessMixer>(Control.BorderThicknessProperty, thicknessSpec, isSafeForImplicitAnimation: false));
         Register(Control.PaddingProperty, Options<Thickness, ThicknessMixer>(Control.PaddingProperty, thicknessSpec, isSafeForImplicitAnimation: false));
         Register(UIElement.MarginProperty, Options<Thickness, ThicknessMixer>(UIElement.MarginProperty, thicknessSpec, isSafeForImplicitAnimation: false));

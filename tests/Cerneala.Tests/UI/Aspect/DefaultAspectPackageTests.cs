@@ -46,8 +46,8 @@ public sealed class DefaultAspectPackageTests
         engine.Apply(button, catalog, environment);
         engine.Apply(border, catalog, environment);
 
-        Assert.Equal(new DrawColor(255, 255, 255), button.Background);
-        Assert.Equal(new DrawColor(255, 255, 255), border.Background);
+        Assert.Equal(new Color(255, 255, 255), button.Background);
+        Assert.Equal(new Color(255, 255, 255), border.Background);
     }
 
     [Fact]

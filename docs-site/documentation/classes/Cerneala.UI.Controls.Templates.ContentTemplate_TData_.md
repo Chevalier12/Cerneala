@@ -41,7 +41,7 @@ registry.Register(new ContentTemplate<string>(
     context => new Border
     {
         Padding = new Thickness(8),
-        BorderColor = new DrawColor(148, 163, 184),
+        BorderColor = new Color(148, 163, 184),
         BorderThickness = new Thickness(1),
         Child = new TextBlock { Text = context.Data ?? string.Empty }
     }));

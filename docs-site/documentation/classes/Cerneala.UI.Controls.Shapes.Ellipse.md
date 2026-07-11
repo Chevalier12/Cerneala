@@ -27,8 +27,8 @@ using Cerneala.UI.Media;
 
 Ellipse ellipse = new()
 {
-    Fill = new SolidColorBrush(DrawColor.White),
-    Stroke = new SolidColorBrush(DrawColor.Black),
+    Fill = new SolidColorBrush(Color.White),
+    Stroke = new SolidColorBrush(Color.Black),
     StrokeThickness = 3
 };
 ```

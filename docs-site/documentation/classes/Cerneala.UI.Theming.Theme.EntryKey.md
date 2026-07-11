@@ -21,8 +21,8 @@ Containing type:
 `Theme.Set<T>` stores entries by converting a typed theme key into an `EntryKey`:
 
 ```csharp
-ThemeKey<DrawColor> accentKey = new("Accent");
-Theme theme = new Theme("Editor").Set(accentKey, DrawColor.White);
+ThemeKey<Color> accentKey = new("Accent");
+Theme theme = new Theme("Editor").Set(accentKey, Color.White);
 ```
 
 Internally, the stored key is equivalent to:

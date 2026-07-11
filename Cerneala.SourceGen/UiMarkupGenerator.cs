@@ -19,6 +19,151 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
     private const string FragmentWrapperStart = "<__CernealaFragment>";
     private const string FragmentWrapperEnd = "</__CernealaFragment>";
 
+    private static readonly Dictionary<string, string> NamedColorNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Transparent"] = "Transparent",
+        ["AliceBlue"] = "AliceBlue",
+        ["AntiqueWhite"] = "AntiqueWhite",
+        ["Aqua"] = "Aqua",
+        ["Aquamarine"] = "Aquamarine",
+        ["Azure"] = "Azure",
+        ["Beige"] = "Beige",
+        ["Bisque"] = "Bisque",
+        ["Black"] = "Black",
+        ["BlanchedAlmond"] = "BlanchedAlmond",
+        ["Blue"] = "Blue",
+        ["BlueViolet"] = "BlueViolet",
+        ["Brown"] = "Brown",
+        ["BurlyWood"] = "BurlyWood",
+        ["CadetBlue"] = "CadetBlue",
+        ["Chartreuse"] = "Chartreuse",
+        ["Chocolate"] = "Chocolate",
+        ["Coral"] = "Coral",
+        ["CornflowerBlue"] = "CornflowerBlue",
+        ["Cornsilk"] = "Cornsilk",
+        ["Crimson"] = "Crimson",
+        ["Cyan"] = "Cyan",
+        ["DarkBlue"] = "DarkBlue",
+        ["DarkCyan"] = "DarkCyan",
+        ["DarkGoldenrod"] = "DarkGoldenrod",
+        ["DarkGray"] = "DarkGray",
+        ["DarkGreen"] = "DarkGreen",
+        ["DarkKhaki"] = "DarkKhaki",
+        ["DarkMagenta"] = "DarkMagenta",
+        ["DarkOliveGreen"] = "DarkOliveGreen",
+        ["DarkOrange"] = "DarkOrange",
+        ["DarkOrchid"] = "DarkOrchid",
+        ["DarkRed"] = "DarkRed",
+        ["DarkSalmon"] = "DarkSalmon",
+        ["DarkSeaGreen"] = "DarkSeaGreen",
+        ["DarkSlateBlue"] = "DarkSlateBlue",
+        ["DarkSlateGray"] = "DarkSlateGray",
+        ["DarkTurquoise"] = "DarkTurquoise",
+        ["DarkViolet"] = "DarkViolet",
+        ["DeepPink"] = "DeepPink",
+        ["DeepSkyBlue"] = "DeepSkyBlue",
+        ["DimGray"] = "DimGray",
+        ["DodgerBlue"] = "DodgerBlue",
+        ["Firebrick"] = "Firebrick",
+        ["FloralWhite"] = "FloralWhite",
+        ["ForestGreen"] = "ForestGreen",
+        ["Fuchsia"] = "Fuchsia",
+        ["Gainsboro"] = "Gainsboro",
+        ["GhostWhite"] = "GhostWhite",
+        ["Gold"] = "Gold",
+        ["Goldenrod"] = "Goldenrod",
+        ["Gray"] = "Gray",
+        ["Green"] = "Green",
+        ["GreenYellow"] = "GreenYellow",
+        ["Honeydew"] = "Honeydew",
+        ["HotPink"] = "HotPink",
+        ["IndianRed"] = "IndianRed",
+        ["Indigo"] = "Indigo",
+        ["Ivory"] = "Ivory",
+        ["Khaki"] = "Khaki",
+        ["Lavender"] = "Lavender",
+        ["LavenderBlush"] = "LavenderBlush",
+        ["LawnGreen"] = "LawnGreen",
+        ["LemonChiffon"] = "LemonChiffon",
+        ["LightBlue"] = "LightBlue",
+        ["LightCoral"] = "LightCoral",
+        ["LightCyan"] = "LightCyan",
+        ["LightGoldenrodYellow"] = "LightGoldenrodYellow",
+        ["LightGray"] = "LightGray",
+        ["LightGreen"] = "LightGreen",
+        ["LightPink"] = "LightPink",
+        ["LightSalmon"] = "LightSalmon",
+        ["LightSeaGreen"] = "LightSeaGreen",
+        ["LightSkyBlue"] = "LightSkyBlue",
+        ["LightSlateGray"] = "LightSlateGray",
+        ["LightSteelBlue"] = "LightSteelBlue",
+        ["LightYellow"] = "LightYellow",
+        ["Lime"] = "Lime",
+        ["LimeGreen"] = "LimeGreen",
+        ["Linen"] = "Linen",
+        ["Magenta"] = "Magenta",
+        ["Maroon"] = "Maroon",
+        ["MediumAquamarine"] = "MediumAquamarine",
+        ["MediumBlue"] = "MediumBlue",
+        ["MediumOrchid"] = "MediumOrchid",
+        ["MediumPurple"] = "MediumPurple",
+        ["MediumSeaGreen"] = "MediumSeaGreen",
+        ["MediumSlateBlue"] = "MediumSlateBlue",
+        ["MediumSpringGreen"] = "MediumSpringGreen",
+        ["MediumTurquoise"] = "MediumTurquoise",
+        ["MediumVioletRed"] = "MediumVioletRed",
+        ["MidnightBlue"] = "MidnightBlue",
+        ["MintCream"] = "MintCream",
+        ["MistyRose"] = "MistyRose",
+        ["Moccasin"] = "Moccasin",
+        ["NavajoWhite"] = "NavajoWhite",
+        ["Navy"] = "Navy",
+        ["OldLace"] = "OldLace",
+        ["Olive"] = "Olive",
+        ["OliveDrab"] = "OliveDrab",
+        ["Orange"] = "Orange",
+        ["OrangeRed"] = "OrangeRed",
+        ["Orchid"] = "Orchid",
+        ["PaleGoldenrod"] = "PaleGoldenrod",
+        ["PaleGreen"] = "PaleGreen",
+        ["PaleTurquoise"] = "PaleTurquoise",
+        ["PaleVioletRed"] = "PaleVioletRed",
+        ["PapayaWhip"] = "PapayaWhip",
+        ["PeachPuff"] = "PeachPuff",
+        ["Peru"] = "Peru",
+        ["Pink"] = "Pink",
+        ["Plum"] = "Plum",
+        ["PowderBlue"] = "PowderBlue",
+        ["Purple"] = "Purple",
+        ["Red"] = "Red",
+        ["RosyBrown"] = "RosyBrown",
+        ["RoyalBlue"] = "RoyalBlue",
+        ["SaddleBrown"] = "SaddleBrown",
+        ["Salmon"] = "Salmon",
+        ["SandyBrown"] = "SandyBrown",
+        ["SeaGreen"] = "SeaGreen",
+        ["SeaShell"] = "SeaShell",
+        ["Sienna"] = "Sienna",
+        ["Silver"] = "Silver",
+        ["SkyBlue"] = "SkyBlue",
+        ["SlateBlue"] = "SlateBlue",
+        ["SlateGray"] = "SlateGray",
+        ["Snow"] = "Snow",
+        ["SpringGreen"] = "SpringGreen",
+        ["SteelBlue"] = "SteelBlue",
+        ["Tan"] = "Tan",
+        ["Teal"] = "Teal",
+        ["Thistle"] = "Thistle",
+        ["Tomato"] = "Tomato",
+        ["Turquoise"] = "Turquoise",
+        ["Violet"] = "Violet",
+        ["Wheat"] = "Wheat",
+        ["White"] = "White",
+        ["WhiteSmoke"] = "WhiteSmoke",
+        ["Yellow"] = "Yellow",
+        ["YellowGreen"] = "YellowGreen",
+    };
+
     private static readonly DiagnosticDescriptor MalformedMarkup = new(
         "CERNEALAUI001",
         "Malformed UI markup",
@@ -611,7 +756,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             PositiveFloat,
             Thickness,
             NonNegativeThickness,
-            DrawColor,
+            Color,
             Enum,
             Unsupported
         }
@@ -685,7 +830,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private sealed class SolidColorBrushResource
         {
-            public SolidColorBrushResource(string name, string variable, string colorExpression, DrawColorLiteral color, XElement source)
+            public SolidColorBrushResource(string name, string variable, string colorExpression, ColorLiteral color, XElement source)
             {
                 Name = name;
                 Variable = variable;
@@ -700,7 +845,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public string ColorExpression { get; }
 
-            public DrawColorLiteral Color { get; }
+            public ColorLiteral Color { get; }
 
             public XElement Source { get; }
         }
@@ -827,9 +972,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public List<object> RuntimeResources { get; } = [];
         }
 
-        private readonly struct DrawColorLiteral
+        private readonly struct ColorLiteral
         {
-            public DrawColorLiteral(byte r, byte g, byte b, byte a)
+            public ColorLiteral(byte r, byte g, byte b, byte a)
             {
                 R = r;
                 G = g;
@@ -848,8 +993,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public string ToExpression()
             {
                 return A == 255
-                    ? "new global::Cerneala.Drawing.DrawColor(" + R + ", " + G + ", " + B + ")"
-                    : "new global::Cerneala.Drawing.DrawColor(" + R + ", " + G + ", " + B + ", " + A + ")";
+                    ? "new global::Cerneala.Drawing.Color(" + R + ", " + G + ", " + B + ")"
+                    : "new global::Cerneala.Drawing.Color(" + R + ", " + G + ", " + B + ", " + A + ")";
             }
         }
 
@@ -961,7 +1106,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             XAttribute? colorAttribute = resource.Attribute("Color");
-            if (colorAttribute is null || ParseHexColor(colorAttribute.Value) is not DrawColorLiteral color)
+            if (colorAttribute is null || ParseHexColor(colorAttribute.Value) is not ColorLiteral color)
             {
                 Report(InvalidPropertyValue, (object?)colorAttribute ?? resource, "SolidColorBrush", "Color", colorAttribute?.Value ?? string.Empty);
                 return;
@@ -1329,7 +1474,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string.Equals(name, "self", StringComparison.Ordinal);
         }
 
-        private static DrawColorLiteral? ParseHexColor(string value)
+        private static ColorLiteral? ParseHexColor(string value)
         {
             if (value.Length != 7 && value.Length != 9)
             {
@@ -1351,7 +1496,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 TryByte(value.Substring(3, 2), out byte g) &&
                 TryByte(value.Substring(5, 2), out byte b))
             {
-                return new DrawColorLiteral(r, g, b, 255);
+                return new ColorLiteral(r, g, b, 255);
             }
 
             if (value.Length == 9 &&
@@ -1360,7 +1505,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 TryByte(value.Substring(5, 2), out byte gg) &&
                 TryByte(value.Substring(7, 2), out byte bb))
             {
-                return new DrawColorLiteral(rr, gg, bb, a);
+                return new ColorLiteral(rr, gg, bb, a);
             }
 
             return null;
@@ -1903,9 +2048,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return null;
             }
 
-            if (targetKind == MarkupValueKind.DrawColor && symbol.Source is SolidColorBrushResource brush)
+            if (targetKind == MarkupValueKind.Color && symbol.Source is SolidColorBrushResource brush)
             {
-                return new GeneratedExpression(brush.ColorExpression, MarkupValueKind.DrawColor);
+                return new GeneratedExpression(brush.ColorExpression, MarkupValueKind.Color);
             }
 
             Report(InvalidPropertyValue, source, elementName, propertyName, "$" + referenceName);
@@ -2212,9 +2357,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return constraint == "1" ? MarkupValueKind.NonNegativeThickness : MarkupValueKind.Thickness;
             }
 
-            if (typeName == "Cerneala.Drawing.DrawColor")
+            if (typeName == "Cerneala.Drawing.Color")
             {
-                return MarkupValueKind.DrawColor;
+                return MarkupValueKind.Color;
             }
 
             if (valueType.TypeKind == TypeKind.Enum)
@@ -2253,7 +2398,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 MarkupValueKind.PositiveFloat => PositiveFloat(elementName, propertyName, attribute),
                 MarkupValueKind.Thickness => Thickness(elementName, propertyName, attribute),
                 MarkupValueKind.NonNegativeThickness => NonNegativeThickness(elementName, propertyName, attribute),
-                MarkupValueKind.DrawColor => Color(elementName, propertyName, attribute),
+                MarkupValueKind.Color => Color(elementName, propertyName, attribute),
                 MarkupValueKind.Enum => EnumValue(elementName, propertyName, attribute, spec.LiteralType),
                 _ => null
             };
@@ -2519,19 +2664,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private string? Color(string elementName, string propertyName, XAttribute attribute)
         {
             string value = attribute.Value;
-            if (string.Equals(value, "Transparent", StringComparison.OrdinalIgnoreCase))
+            if (NamedColorNames.TryGetValue(value, out string? namedColor))
             {
-                return "global::Cerneala.Drawing.DrawColor.Transparent";
+                return "global::Cerneala.Drawing.Color." + namedColor;
             }
 
-            if (string.Equals(value, "White", StringComparison.OrdinalIgnoreCase))
+            if (ParseHexColor(value) is ColorLiteral hexColor)
             {
-                return "global::Cerneala.Drawing.DrawColor.White";
-            }
-
-            if (string.Equals(value, "Black", StringComparison.OrdinalIgnoreCase))
-            {
-                return "global::Cerneala.Drawing.DrawColor.Black";
+                return hexColor.ToExpression();
             }
 
             string[] parts = value.Split(',').Select(part => part.Trim()).ToArray();
@@ -2542,7 +2682,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 (parts.Length == 3 || byte.TryParse(parts[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out _)))
             {
                 string alpha = parts.Length == 4 ? ", " + parts[3] : string.Empty;
-                return "new global::Cerneala.Drawing.DrawColor(" + r + ", " + g + ", " + b + alpha + ")";
+                return "new global::Cerneala.Drawing.Color(" + r + ", " + g + ", " + b + alpha + ")";
             }
 
             return Invalid(attribute, elementName, propertyName, value);

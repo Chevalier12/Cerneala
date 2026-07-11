@@ -13,10 +13,10 @@ public sealed class ContentPresenterDefaultTextTests
         ContentPresenter presenter = new() { Content = "Open 3 test windows" };
         TextBlock textBlock = Assert.IsType<TextBlock>(presenter.PresentedChild);
 
-        presenter.Foreground = DrawColor.White;
+        presenter.Foreground = Color.White;
 
-        Assert.Equal(DrawColor.White, presenter.Foreground);
-        Assert.Equal(DrawColor.White, textBlock.Foreground);
+        Assert.Equal(Color.White, presenter.Foreground);
+        Assert.Equal(Color.White, textBlock.Foreground);
     }
 
     [Fact]

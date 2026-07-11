@@ -75,7 +75,7 @@ using IDisposable binding = BindingOperations.BindTwoWay(
 
 `TextBoxBase` is abstract. Use `TextBox` for plain editable text, or derive a specialized control when the stored `Text` and rendered text should differ. `PasswordBox` does this by overriding the protected `DisplayText` property and rendering a repeated mask character while keeping the inherited text editor state.
 
-The constructor configures the control as focusable and tab-stop enabled, assigns default text-box chrome, and uses the I-beam cursor. The default visual values include `Padding = new Thickness(4, 2, 4, 2)`, `BorderThickness = new Thickness(1)`, `BorderColor = new DrawColor(120, 130, 145)`, `Background = DrawColor.White`, `CaretColor = DrawColor.Black`, and `SelectionBackground = new DrawColor(0, 120, 215)`.
+The constructor configures the control as focusable and tab-stop enabled, assigns default text-box chrome, and uses the I-beam cursor. The default visual values include `Padding = new Thickness(4, 2, 4, 2)`, `BorderThickness = new Thickness(1)`, `BorderColor = new Color(120, 130, 145)`, `Background = Color.White`, `CaretColor = Color.Black`, and `SelectionBackground = new Color(0, 120, 215)`.
 
 The `Text` UI property defaults to `string.Empty`, coerces `null` to `string.Empty`, and affects measure, render, and semantics. Programmatic `Text` changes synchronize the internal `TextEditor`, clear undo/redo state, keep the caret visible, and invalidate text metrics.
 
@@ -100,8 +100,8 @@ Accessibility peers for `TextBoxBase` controls use `TextBoxAutomationPeer`, whic
 | Name | Type | Description |
 | --- | --- | --- |
 | `TextProperty` | `UiProperty<string>` | Identifies the `Text` UI property. Defaults to `string.Empty`, coerces `null` to empty text, and affects measure, render, and semantics. |
-| `CaretColorProperty` | `UiProperty<DrawColor>` | Identifies the `CaretColor` UI property. Defaults to `DrawColor.Black` and affects render. |
-| `SelectionBackgroundProperty` | `UiProperty<DrawColor>` | Identifies the `SelectionBackground` UI property. Defaults to `new DrawColor(0, 120, 215)` and affects render. |
+| `CaretColorProperty` | `UiProperty<Color>` | Identifies the `CaretColor` UI property. Defaults to `Color.Black` and affects render. |
+| `SelectionBackgroundProperty` | `UiProperty<Color>` | Identifies the `SelectionBackground` UI property. Defaults to `new Color(0, 120, 215)` and affects render. |
 
 ## Properties
 
@@ -111,8 +111,8 @@ Accessibility peers for `TextBoxBase` controls use `TextBoxAutomationPeer`, whic
 | `Text` | `string` | Gets or sets the editable text. Setting `null` stores `string.Empty`; setting a new value synchronizes the editor and clears undo/redo history. |
 | `Selection` | `TextSelection` | Gets the current editor selection. |
 | `Caret` | `TextCaret` | Gets the current caret state. |
-| `CaretColor` | `DrawColor` | Gets or sets the rendered caret color. |
-| `SelectionBackground` | `DrawColor` | Gets or sets the selection highlight color. |
+| `CaretColor` | `Color` | Gets or sets the rendered caret color. |
+| `SelectionBackground` | `Color` | Gets or sets the selection highlight color. |
 | `TextMeasurer` | `TextMeasurer` | Gets or sets the text measurer used when no resource-backed font path is active. Setting `null` throws `ArgumentNullException`; changing the instance invalidates text metrics. |
 | `TextRenderer` | `TextRenderer` | Gets or sets the text renderer used when no resource-backed font path is active. Setting `null` throws `ArgumentNullException`; changing the instance invalidates render. |
 | `FontResourceId` | `ResourceId<FontResource>?` | Gets or sets the optional font resource used for text metrics and rendering. |
@@ -154,8 +154,8 @@ This class does not declare public events.
 | Property | Identifier field | Default value | Metadata/options |
 | --- | --- | --- | --- |
 | `Text` | `TextProperty` | `string.Empty` | `UiPropertyOptions.AffectsMeasure`, `UiPropertyOptions.AffectsRender`, `UiPropertyOptions.AffectsSemantics`; coerces `null` to `string.Empty`. |
-| `CaretColor` | `CaretColorProperty` | `DrawColor.Black` | `UiPropertyOptions.AffectsRender`. |
-| `SelectionBackground` | `SelectionBackgroundProperty` | `new DrawColor(0, 120, 215)` | `UiPropertyOptions.AffectsRender`. |
+| `CaretColor` | `CaretColorProperty` | `Color.Black` | `UiPropertyOptions.AffectsRender`. |
+| `SelectionBackground` | `SelectionBackgroundProperty` | `new Color(0, 120, 215)` | `UiPropertyOptions.AffectsRender`. |
 
 ## Applies to
 

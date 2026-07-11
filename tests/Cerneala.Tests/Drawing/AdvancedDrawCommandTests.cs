@@ -11,8 +11,8 @@ public sealed class AdvancedDrawCommandTests
         DrawingContext drawing = new(commands);
         DrawRect bounds = new(1, 2, 30, 20);
 
-        drawing.FillEllipse(bounds, DrawColor.White);
-        drawing.DrawEllipse(bounds, DrawColor.Black, 2);
+        drawing.FillEllipse(bounds, Color.White);
+        drawing.DrawEllipse(bounds, Color.Black, 2);
 
         Assert.Equal(2, commands.Count);
         Assert.Equal(DrawCommandKind.FillEllipse, commands[0].Kind);
@@ -27,13 +27,13 @@ public sealed class AdvancedDrawCommandTests
         DrawCommandList commands = new();
         DrawingContext drawing = new(commands);
 
-        drawing.DrawLine(new DrawPoint(1, 2), new DrawPoint(3, 4), DrawColor.Black, 2);
+        drawing.DrawLine(new DrawPoint(1, 2), new DrawPoint(3, 4), Color.Black, 2);
 
         DrawCommand command = Assert.Single(commands);
         Assert.Equal(DrawCommandKind.DrawLine, command.Kind);
         Assert.Equal(new DrawPoint(1, 2), command.Position);
         Assert.Equal(new DrawPoint(3, 4), command.EndPoint);
-        Assert.Equal(DrawColor.Black, command.Color);
+        Assert.Equal(Color.Black, command.Color);
         Assert.Equal(2, command.Thickness);
     }
 
@@ -45,9 +45,9 @@ public sealed class AdvancedDrawCommandTests
     public void AdvancedStrokeCommandsRejectInvalidThickness(float thickness)
     {
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => DrawCommand.DrawEllipse(new DrawRect(0, 0, 10, 10), DrawColor.Black, thickness));
+            () => DrawCommand.DrawEllipse(new DrawRect(0, 0, 10, 10), Color.Black, thickness));
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => DrawCommand.DrawLine(new DrawPoint(0, 0), new DrawPoint(10, 10), DrawColor.Black, thickness));
+            () => DrawCommand.DrawLine(new DrawPoint(0, 0), new DrawPoint(10, 10), Color.Black, thickness));
     }
 
     [Theory]
@@ -58,7 +58,7 @@ public sealed class AdvancedDrawCommandTests
     public void DrawLineRejectsPointsOutsidePixelRange(float startX, float startY, float endX, float endY)
     {
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => DrawCommand.DrawLine(new DrawPoint(startX, startY), new DrawPoint(endX, endY), DrawColor.Black, 1));
+            () => DrawCommand.DrawLine(new DrawPoint(startX, startY), new DrawPoint(endX, endY), Color.Black, 1));
     }
 
     [Theory]
@@ -69,7 +69,7 @@ public sealed class AdvancedDrawCommandTests
         DrawTextRun textRun = new(new TestFont(), "Hello", 12);
 
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => DrawCommand.DrawText(textRun, new DrawPoint(x, y), DrawColor.Black));
+            () => DrawCommand.DrawText(textRun, new DrawPoint(x, y), Color.Black));
     }
 
     [Fact]

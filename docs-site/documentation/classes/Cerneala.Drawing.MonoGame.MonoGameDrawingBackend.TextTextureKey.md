@@ -14,7 +14,7 @@ private readonly record struct TextTextureKey(
     string Text,
     IDrawFont Font,
     float FontSize,
-    DrawColor Color)
+    Color Color)
 ```
 
 Containing type:
@@ -31,13 +31,13 @@ TextTextureKey key = TextTextureKey.From(mappedTextRun, command.Color);
 
 `TextTextureKey` is an implementation detail of `MonoGameDrawingBackend`. It groups the text content, draw font, mapped font size, and draw color so rendered text textures can be reused from the backend's text texture cache.
 
-`From` builds the key from a `DrawTextRun` and a `DrawColor`. The backend uses that key before rasterizing text; when the key is already present, the cached `Texture2D` is reused.
+`From` builds the key from a `DrawTextRun` and a `Color`. The backend uses that key before rasterizing text; when the key is already present, the cached `Texture2D` is reused.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `TextTextureKey(string, IDrawFont, float, DrawColor)` | Initializes a text texture cache key. |
+| `TextTextureKey(string, IDrawFont, float, Color)` | Initializes a text texture cache key. |
 
 ## Properties
 
@@ -52,7 +52,7 @@ TextTextureKey key = TextTextureKey.From(mappedTextRun, command.Color);
 
 | Name | Description |
 | --- | --- |
-| `From(DrawTextRun, DrawColor)` | Creates a cache key from a text run and draw color. |
+| `From(DrawTextRun, Color)` | Creates a cache key from a text run and draw color. |
 
 ## Applies to
 

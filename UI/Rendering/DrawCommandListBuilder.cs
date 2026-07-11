@@ -236,13 +236,13 @@ public sealed class DrawCommandListBuilder
         return new DrawRect(minX, minY, maxX - minX, maxY - minY);
     }
 
-    private static DrawColor ApplyOpacity(DrawColor color, float opacity)
+    private static Color ApplyOpacity(Color color, float opacity)
     {
         if (opacity >= 1)
         {
             return color;
         }
 
-        return new DrawColor(color.R, color.G, color.B, (byte)Math.Clamp((int)MathF.Round(color.A * opacity), 0, 255));
+        return new Color(color.R, color.G, color.B, (byte)Math.Clamp((int)MathF.Round(color.A * opacity), 0, 255));
     }
 }

@@ -36,7 +36,7 @@ root.VisualChildren.Add(control);
 
 using (root.Motion.BeginTransaction(MotionFactory.Tween(TimeSpan.FromMilliseconds(100))))
 {
-    control.SetValue(Control.BackgroundProperty, DrawColor.White);
+    control.SetValue(Control.BackgroundProperty, Color.White);
 }
 ```
 

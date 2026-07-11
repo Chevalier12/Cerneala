@@ -170,7 +170,7 @@ with:
 Replace the section 22 acceptance checklist:
 
 ```markdown
-- [x] Every new media abstraction has a responsibility not already covered by `DrawColor`, `DrawRect`, `DrawPoint`, `DrawTextRun`, or `IDrawImage`.
+- [x] Every new media abstraction has a responsibility not already covered by `Color`, `DrawRect`, `DrawPoint`, `DrawTextRun`, or `IDrawImage`.
 - [x] Every new drawing command has backend tests or adapter coverage.
 - [x] Controls do not reference Skia, HarfBuzz, MonoGame, `SpriteBatch`, or `Texture2D`.
 - [x] Full project tests pass for this phase.
@@ -179,7 +179,7 @@ Replace the section 22 acceptance checklist:
 with:
 
 ```markdown
-- [~] Every new media abstraction has a responsibility not already covered by `DrawColor`, `DrawRect`, `DrawPoint`, `DrawTextRun`, or `IDrawImage`; descriptor-only abstractions remain experimental.
+- [~] Every new media abstraction has a responsibility not already covered by `Color`, `DrawRect`, `DrawPoint`, `DrawTextRun`, or `IDrawImage`; descriptor-only abstractions remain experimental.
 - [ ] Every advanced drawing command has backend tests or adapter coverage before being marked implemented.
 - [x] Controls do not reference Skia, HarfBuzz, MonoGame, `SpriteBatch`, or `Texture2D`.
 - [ ] Full project tests pass for the backend-supported advanced media scenario before this phase is scenario-complete.

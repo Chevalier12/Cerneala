@@ -28,12 +28,12 @@ using Cerneala.Drawing;
 
 DrawCommand fill = DrawCommand.FillRectangle(
     new DrawRect(0, 0, 120, 48),
-    DrawColor.White);
+    Color.White);
 
 DrawCommand line = DrawCommand.DrawLine(
     new DrawPoint(0, 0),
     new DrawPoint(120, 48),
-    DrawColor.Black,
+    Color.Black,
     thickness: 2);
 
 if (line.Kind == DrawCommandKind.DrawLine)
@@ -58,7 +58,7 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | --- | --- | --- |
 | `Kind` | `DrawCommandKind` | Identifies the command operation. |
 | `Rect` | `DrawRect` | Rectangle or destination bounds used by rectangle, ellipse, image, and clip commands. |
-| `Color` | `DrawColor` | Color associated with fill, stroke, text, or image drawing. |
+| `Color` | `Color` | Color associated with fill, stroke, text, or image drawing. |
 | `Thickness` | `float` | Stroke thickness for stroke commands. |
 | `Text` | `string?` | Text copied from the `DrawTextRun` for text commands. |
 | `TextRun` | `DrawTextRun?` | Full text run for text commands. |
@@ -71,13 +71,13 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 
 | Name | Returns | Description |
 | --- | --- | --- |
-| `FillRectangle(DrawRect rect, DrawColor color)` | `DrawCommand` | Creates a `FillRectangle` command with `Rect` and `Color` populated. |
-| `DrawRectangle(DrawRect rect, DrawColor color, float thickness)` | `DrawCommand` | Creates a `DrawRectangle` command and validates `thickness`. |
-| `FillEllipse(DrawRect bounds, DrawColor color)` | `DrawCommand` | Creates a `FillEllipse` command with `Rect` and `Color` populated. |
-| `DrawEllipse(DrawRect bounds, DrawColor color, float thickness)` | `DrawCommand` | Creates a `DrawEllipse` command and validates `thickness`. |
-| `DrawLine(DrawPoint start, DrawPoint end, DrawColor color, float thickness)` | `DrawCommand` | Creates a `DrawLine` command, validates both points against the pixel range, and validates `thickness`. |
-| `DrawText(DrawTextRun textRun, DrawPoint position, DrawColor color)` | `DrawCommand` | Creates a `DrawText` command with `Text`, `TextRun`, `Font`, `Position`, and `Color` populated. |
-| `DrawImage(IDrawImage image, DrawRect destination, DrawColor color)` | `DrawCommand` | Creates a `DrawImage` command with `Image`, destination `Rect`, and `Color` populated. |
+| `FillRectangle(DrawRect rect, Color color)` | `DrawCommand` | Creates a `FillRectangle` command with `Rect` and `Color` populated. |
+| `DrawRectangle(DrawRect rect, Color color, float thickness)` | `DrawCommand` | Creates a `DrawRectangle` command and validates `thickness`. |
+| `FillEllipse(DrawRect bounds, Color color)` | `DrawCommand` | Creates a `FillEllipse` command with `Rect` and `Color` populated. |
+| `DrawEllipse(DrawRect bounds, Color color, float thickness)` | `DrawCommand` | Creates a `DrawEllipse` command and validates `thickness`. |
+| `DrawLine(DrawPoint start, DrawPoint end, Color color, float thickness)` | `DrawCommand` | Creates a `DrawLine` command, validates both points against the pixel range, and validates `thickness`. |
+| `DrawText(DrawTextRun textRun, DrawPoint position, Color color)` | `DrawCommand` | Creates a `DrawText` command with `Text`, `TextRun`, `Font`, `Position`, and `Color` populated. |
+| `DrawImage(IDrawImage image, DrawRect destination, Color color)` | `DrawCommand` | Creates a `DrawImage` command with `Image`, destination `Rect`, and `Color` populated. |
 | `PushClip(DrawRect rect)` | `DrawCommand` | Creates a `PushClip` command for the supplied clipping rectangle. |
 | `PopClip()` | `DrawCommand` | Creates a `PopClip` command. |
 

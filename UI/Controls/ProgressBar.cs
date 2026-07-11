@@ -9,9 +9,9 @@ public class ProgressBar : RangeBase
 {
     public ProgressBar()
     {
-        Background = new DrawColor(230, 230, 230);
-        Foreground = new DrawColor(65, 135, 230);
-        BorderColor = new DrawColor(120, 120, 120);
+        Background = new Color(230, 230, 230);
+        Foreground = new Color(65, 135, 230);
+        BorderColor = new Color(120, 120, 120);
         BorderThickness = new Thickness(1);
     }
 

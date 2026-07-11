@@ -12,9 +12,9 @@ public sealed class ControlTests
     {
         Control control = new();
 
-        Assert.Equal(DrawColor.Transparent, control.Background);
-        Assert.Equal(DrawColor.Black, control.Foreground);
-        Assert.Equal(DrawColor.Transparent, control.BorderColor);
+        Assert.Equal(Color.Transparent, control.Background);
+        Assert.Equal(Color.Black, control.Foreground);
+        Assert.Equal(Color.Transparent, control.BorderColor);
         Assert.Equal(Thickness.Zero, control.BorderThickness);
         Assert.Equal(Thickness.Zero, control.Padding);
         Assert.Equal("Default", control.FontFamily);
@@ -26,7 +26,7 @@ public sealed class ControlTests
     {
         Control control = new();
 
-        control.Background = DrawColor.White;
+        control.Background = Color.White;
 
         Assert.True(control.DirtyState.Has(InvalidationFlags.Render));
         Assert.True(control.DirtyState.Has(InvalidationFlags.InputVisual));
@@ -38,7 +38,7 @@ public sealed class ControlTests
     {
         Control control = new();
 
-        control.Foreground = DrawColor.White;
+        control.Foreground = Color.White;
 
         Assert.True(control.DirtyState.Has(InvalidationFlags.Render));
         Assert.False(control.DirtyState.Has(InvalidationFlags.InputVisual));

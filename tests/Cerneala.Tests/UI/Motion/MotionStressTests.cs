@@ -126,7 +126,7 @@ public sealed class MotionStressTests
         {
             Rectangle element = new()
             {
-                Fill = new SolidColorBrush(DrawColor.White),
+                Fill = new SolidColorBrush(Color.White),
                 Geometry = new RectangleGeometry(new DrawRect(0, 0, 10, 10)),
                 Presence = PresenceOptions.FadeAndScale(
                     MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),

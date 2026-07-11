@@ -12,9 +12,9 @@ public class CheckBox : ToggleButton
 
     public CheckBox()
     {
-        BorderColor = new DrawColor(100, 110, 125);
-        Foreground = new DrawColor(35, 45, 60);
-        Background = DrawColor.Transparent;
+        BorderColor = new Color(100, 110, 125);
+        Foreground = new Color(35, 45, 60);
+        Background = Color.Transparent;
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -36,7 +36,7 @@ public class CheckBox : ToggleButton
         float boxY = context.Bounds.Y + insets.Top + MathF.Max(0, (context.Bounds.Height - insets.Top - insets.Bottom - BoxSize) / 2);
         DrawRect box = new(boxX, boxY, BoxSize, BoxSize);
 
-        DrawColor boxFill = IsChecked ? Foreground : Background;
+        Color boxFill = IsChecked ? Foreground : Background;
         if (boxFill.A != 0)
         {
             context.DrawingContext.FillRectangle(box, boxFill);
@@ -47,7 +47,7 @@ public class CheckBox : ToggleButton
         if (IsChecked)
         {
             DrawRect mark = new(box.X + 3, box.Y + 3, box.Width - 6, box.Height - 6);
-            context.DrawingContext.FillRectangle(mark, DrawColor.White);
+            context.DrawingContext.FillRectangle(mark, Color.White);
         }
 
         if (Content is string text && !string.IsNullOrEmpty(text))

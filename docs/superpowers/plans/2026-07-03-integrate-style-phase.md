@@ -142,13 +142,13 @@ public sealed class StyleSchedulerIntegrationTests
         UIRoot root = new(100, 100);
         Button button = new();
         StyleSheet sheet = new StyleSheet().Add(new StyleRule(StyleSelector.ForType<Button>())
-            .Add(new Setter<DrawColor>(Control.BackgroundProperty, DrawColor.White)));
+            .Add(new Setter<Color>(Control.BackgroundProperty, Color.White)));
         root.SetStyleSheet(sheet);
         root.VisualChildren.Add(button);
 
         FrameStats stats = root.ProcessFrame();
 
-        Assert.Equal(DrawColor.White, button.Background);
+        Assert.Equal(Color.White, button.Background);
         Assert.True(stats.StyledElements > 0);
         Assert.True(stats.RenderedElements > 0);
         Assert.False(button.DirtyState.Has(InvalidationFlags.Style));
@@ -163,7 +163,7 @@ public sealed class StyleSchedulerIntegrationTests
         StyleSheet sheet = new StyleSheet().Add(new StyleRule(
                 StyleSelector.ForType<Button>(),
                 new VisualStateRule(PseudoClass.Hover))
-            .Add(new Setter<DrawColor>(Control.BackgroundProperty, DrawColor.Black)));
+            .Add(new Setter<Color>(Control.BackgroundProperty, Color.Black)));
         root.SetStyleSheet(sheet);
         root.VisualChildren.Add(button);
         root.ProcessFrame();
@@ -174,7 +174,7 @@ public sealed class StyleSchedulerIntegrationTests
 
         FrameStats stats = root.ProcessFrame();
 
-        Assert.Equal(DrawColor.Black, button.Background);
+        Assert.Equal(Color.Black, button.Background);
         Assert.True(stats.StyledElements > 0);
         Assert.True(stats.RenderedElements > 0);
         Assert.False(button.DirtyState.Has(InvalidationFlags.Style));
@@ -183,24 +183,24 @@ public sealed class StyleSchedulerIntegrationTests
     [Fact]
     public void ThemeChangeQueuesStyleForAttachedTree()
     {
-        ThemeKey<DrawColor> key = new("Accent");
-        ThemeProvider provider = new(new Theme().Set(key, DrawColor.White));
+        ThemeKey<Color> key = new("Accent");
+        ThemeProvider provider = new(new Theme().Set(key, Color.White));
         UIRoot root = new(100, 100);
         Button button = new();
         StyleSheet sheet = new StyleSheet().Add(new StyleRule(StyleSelector.ForType<Button>())
-            .Add(new Setter<DrawColor>(Control.BackgroundProperty, new ThemeResource<DrawColor>(key))));
+            .Add(new Setter<Color>(Control.BackgroundProperty, new ThemeResource<Color>(key))));
         root.SetThemeProvider(provider);
         root.SetStyleSheet(sheet);
         root.VisualChildren.Add(button);
         root.ProcessFrame();
 
-        provider.Theme = new Theme().Set(key, DrawColor.Black);
+        provider.Theme = new Theme().Set(key, Color.Black);
 
         Assert.Contains(button, root.StyleQueue.Snapshot());
 
         FrameStats stats = root.ProcessFrame();
 
-        Assert.Equal(DrawColor.Black, button.Background);
+        Assert.Equal(Color.Black, button.Background);
         Assert.True(stats.StyledElements > 0);
         Assert.True(stats.RenderedElements > 0);
     }

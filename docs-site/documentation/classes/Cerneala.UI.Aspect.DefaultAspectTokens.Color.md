@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Aspect/DefaultAspectTokens.cs`
 
-Provides the built-in `DrawColor` aspect tokens used by Cerneala UI default styling.
+Provides the built-in `Color` aspect tokens used by Cerneala UI default styling.
 
 ```csharp
 public static class DefaultAspectTokens
@@ -29,9 +29,9 @@ using Cerneala.UI.Aspect;
 
 AspectEnvironment environment = DefaultAspectPackage.CreateEnvironment();
 
-if (environment.TryGet(DefaultAspectTokens.Color.Accent, out DrawColor accent))
+if (environment.TryGet(DefaultAspectTokens.Color.Accent, out Color accent))
 {
-    // accent is DrawColor(37, 99, 235).
+    // accent is Color(37, 99, 235).
 }
 ```
 
@@ -48,7 +48,7 @@ AspectDeclaration declaration = new(
 
 ## Remarks
 
-`DefaultAspectTokens.Color` groups the framework's built-in color tokens. Each field is an `AspectToken<DrawColor>` created with `AspectToken.Color(string)`, so the token value type is `DrawColor`.
+`DefaultAspectTokens.Color` groups the framework's built-in color tokens. Each field is an `AspectToken<Color>` created with `AspectToken.Color(string)`, so the token value type is `Color`.
 
 The class defines token identities only. Default values are assigned by `DefaultAspectPackage.Create()` when building the package token set and by `DefaultAspectPackage.CreateEnvironment()` when creating an `AspectEnvironment`.
 
@@ -56,11 +56,11 @@ The default package sets these values:
 
 | Token | Token name | Default value |
 | --- | --- | --- |
-| `Background` | `color.background` | `new DrawColor(248, 250, 252)` |
-| `Foreground` | `color.foreground` | `new DrawColor(28, 35, 48)` |
-| `Surface` | `color.surface` | `new DrawColor(255, 255, 255)` |
-| `Border` | `color.border` | `new DrawColor(148, 163, 184)` |
-| `Accent` | `color.accent` | `new DrawColor(37, 99, 235)` |
+| `Background` | `color.background` | `new Color(248, 250, 252)` |
+| `Foreground` | `color.foreground` | `new Color(28, 35, 48)` |
+| `Surface` | `color.surface` | `new Color(255, 255, 255)` |
+| `Border` | `color.border` | `new Color(148, 163, 184)` |
+| `Accent` | `color.accent` | `new Color(37, 99, 235)` |
 
 In the default package rules, `DefaultAspectTokens.Color.Surface` is used for `Border` background values and `DefaultAspectTokens.Color.Border` is used for `Border` border color values.
 
@@ -68,11 +68,11 @@ In the default package rules, `DefaultAspectTokens.Color.Surface` is used for `B
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Background` | `AspectToken<DrawColor>` | Identifies the `color.background` token for general background color values. |
-| `Foreground` | `AspectToken<DrawColor>` | Identifies the `color.foreground` token for general foreground color values. |
-| `Surface` | `AspectToken<DrawColor>` | Identifies the `color.surface` token for surface color values. |
-| `Border` | `AspectToken<DrawColor>` | Identifies the `color.border` token for border color values. |
-| `Accent` | `AspectToken<DrawColor>` | Identifies the `color.accent` token for accent color values. |
+| `Background` | `AspectToken<Color>` | Identifies the `color.background` token for general background color values. |
+| `Foreground` | `AspectToken<Color>` | Identifies the `color.foreground` token for general foreground color values. |
+| `Surface` | `AspectToken<Color>` | Identifies the `color.surface` token for surface color values. |
+| `Border` | `AspectToken<Color>` | Identifies the `color.border` token for border color values. |
+| `Accent` | `AspectToken<Color>` | Identifies the `color.accent` token for accent color values. |
 
 ## Applies to
 
@@ -85,4 +85,4 @@ Cerneala UI default aspect packages, aspect environments, token references, and 
 - `Cerneala.UI.Aspect.AspectToken`
 - `Cerneala.UI.Aspect.AspectToken<T>`
 - `Cerneala.UI.Aspect.AspectEnvironment`
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`

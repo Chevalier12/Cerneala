@@ -32,15 +32,15 @@ UIRoot root = new();
 Control control = new();
 root.VisualChildren.Add(control);
 
-MotionPropertyBinding<DrawColor> binding =
+MotionPropertyBinding<Color> binding =
     root.Motion.Properties.GetOrCreateBinding(
         root.Motion,
         control,
         Control.BackgroundProperty);
 
 binding.AnimateTo(
-    DrawColor.White,
-    Motion.Tween<DrawColor>(TimeSpan.FromMilliseconds(100)));
+    Color.White,
+    Motion.Tween<Color>(TimeSpan.FromMilliseconds(100)));
 
 root.ProcessFrame();
 ```

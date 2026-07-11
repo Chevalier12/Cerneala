@@ -107,7 +107,7 @@ public sealed class ButtonContentArchitectureTests
         Button button = new()
         {
             Content = "Go",
-            Foreground = DrawColor.White,
+            Foreground = Color.White,
             TextRenderer = renderer
         };
         DrawCommandList commands = new();
@@ -154,7 +154,7 @@ public sealed class ButtonContentArchitectureTests
             TextAspect aspect,
             float availableWidth,
             DrawPoint position,
-            DrawColor color)
+            Color color)
         {
             Calls++;
             LastText = text;

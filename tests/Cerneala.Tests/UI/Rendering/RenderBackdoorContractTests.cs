@@ -10,7 +10,7 @@ public sealed class RenderBackdoorContractTests
     public void BuilderThrowsWhenVisibleLocalCacheWasNeverBuilt()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         RetainedRenderCache cache = new();
 
@@ -25,7 +25,7 @@ public sealed class RenderBackdoorContractTests
     public void BuilderThrowsWhenVisibleLocalCacheIsStale()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         RetainedRenderCache cache = new();
         RenderCounters counters = new();
@@ -46,7 +46,7 @@ public sealed class RenderBackdoorContractTests
     public void BuilderComposesPreparedLocalCachesWithoutRenderingElements()
     {
         UIRoot root = new();
-        RenderingTestElement child = new(DrawColor.White);
+        RenderingTestElement child = new(Color.White);
         root.VisualChildren.Add(child);
         RetainedRenderCache cache = new();
         RenderCounters counters = new();

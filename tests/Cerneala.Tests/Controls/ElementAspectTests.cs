@@ -12,26 +12,26 @@ public sealed class ElementAspectTests
     {
         Button button = new();
         ElementAspect first = new(
-            [new ElementAspectValue(Control.BackgroundProperty, DrawColor.White)]);
+            [new ElementAspectValue(Control.BackgroundProperty, Color.White)]);
         ElementAspect second = new(
-            [new ElementAspectValue(Control.ForegroundProperty, DrawColor.Transparent)]);
+            [new ElementAspectValue(Control.ForegroundProperty, Color.Transparent)]);
 
         button.Aspect = first;
 
         Assert.Same(first, button.Aspect);
-        Assert.Equal(DrawColor.White, button.Background);
+        Assert.Equal(Color.White, button.Background);
         Assert.Equal(UiPropertyValueSource.LocalAspectBase, button.GetValueSource(Control.BackgroundProperty));
 
         button.Aspect = second;
 
-        Assert.Equal(DrawColor.Transparent, button.Background);
-        Assert.Equal(DrawColor.Transparent, button.Foreground);
+        Assert.Equal(Color.Transparent, button.Background);
+        Assert.Equal(Color.Transparent, button.Foreground);
         Assert.Equal(UiPropertyValueSource.LocalAspectBase, button.GetValueSource(Control.ForegroundProperty));
 
         button.Aspect = null;
 
         Assert.Null(button.Aspect);
-        Assert.Equal(DrawColor.Black, button.Foreground);
+        Assert.Equal(Color.Black, button.Foreground);
     }
 
     [Fact]
@@ -39,8 +39,8 @@ public sealed class ElementAspectTests
     {
         Assert.Throws<ArgumentException>(() => new ElementAspect(
         [
-            new ElementAspectValue(Control.BackgroundProperty, DrawColor.Black),
-            new ElementAspectValue(Control.BackgroundProperty, DrawColor.White)
+            new ElementAspectValue(Control.BackgroundProperty, Color.Black),
+            new ElementAspectValue(Control.BackgroundProperty, Color.White)
         ]));
     }
 }

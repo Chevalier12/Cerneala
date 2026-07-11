@@ -30,7 +30,7 @@ AspectRuleSet rule = new AspectRuleSetBuilder(
         AspectLayer.App,
         new AspectTarget(typeof(Button)),
         declarationOrder: 0)
-    .Set(Control.BackgroundProperty, AspectValue<DrawColor>.Literal(DrawColor.White))
+    .Set(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.White))
     .Build();
 ```
 
@@ -48,7 +48,7 @@ AspectRuleSet rule = new AspectRuleSetBuilder(
         declarationOrder: 1)
     .Set(
         Control.ForegroundProperty,
-        AspectValue<DrawColor>.Literal(DrawColor.Black),
+        AspectValue<Color>.Literal(Color.Black),
         diagnosticName: "Button foreground")
     .Build();
 ```

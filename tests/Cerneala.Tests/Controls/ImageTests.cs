@@ -29,7 +29,7 @@ public sealed class ImageTests
         Image image = new()
         {
             Source = source,
-            Foreground = DrawColor.White
+            Foreground = Color.White
         };
         root.VisualChildren.Add(image);
         root.ProcessFrame();
@@ -53,7 +53,7 @@ public sealed class ImageTests
         Image image = new()
         {
             Source = source,
-            Foreground = DrawColor.White
+            Foreground = Color.White
         };
         root.VisualChildren.Add(image);
         root.ProcessFrame();

@@ -26,11 +26,11 @@ using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 ComponentTemplateDefinition buttonTemplate = new("App.Button", typeof(Button), ButtonTemplates.Modern);
 
 AspectPackage package = AspectPackage.Create("App")
-    .Tokens(tokens => tokens.Set(accent, new DrawColor(37, 99, 235)))
+    .Tokens(tokens => tokens.Set(accent, new Color(37, 99, 235)))
     .Components(components => components.AddTemplate(buttonTemplate));
 
 AspectCatalog catalog = new AspectRegistry()

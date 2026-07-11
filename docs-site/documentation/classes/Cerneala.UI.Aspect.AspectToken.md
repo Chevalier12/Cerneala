@@ -31,7 +31,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Layout;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 AspectToken<Thickness> padding = AspectToken.Thickness("app.padding");
 AspectToken<string> fontFamily = AspectToken.String("app.font-family");
 AspectToken<float> opacity = AspectToken.Float("app.opacity");
@@ -43,10 +43,10 @@ Use token identity when registering a default value:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 
 AspectPackage package = AspectPackage.Create("App")
-    .Tokens(tokens => tokens.Set(accent, DrawColor.White))
+    .Tokens(tokens => tokens.Set(accent, Color.White))
     .Build();
 ```
 
@@ -74,7 +74,7 @@ Token equality uses ordinal name comparison and exact `ValueType` equality. Two 
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Create<T>(string name)` | `AspectToken<T>` | Creates a typed token with the supplied non-empty name and `typeof(T)` as its value type. |
-| `Color(string name)` | `AspectToken<DrawColor>` | Creates a `DrawColor` token. |
+| `Color(string name)` | `AspectToken<Color>` | Creates a `Color` token. |
 | `Thickness(string name)` | `AspectToken<Thickness>` | Creates a `Thickness` token. |
 | `Float(string name)` | `AspectToken<float>` | Creates a `float` token. |
 | `String(string name)` | `AspectToken<string>` | Creates a `string` token. |

@@ -25,9 +25,9 @@ using Cerneala.Drawing;
 using Cerneala.UI.Theming;
 
 ThemeProvider provider = new(DefaultTheme.Create());
-ThemeResource<DrawColor> accentResource = new(DefaultTheme.AccentKey);
+ThemeResource<Color> accentResource = new(DefaultTheme.AccentKey);
 
-DrawColor accent = accentResource.Resolve(provider);
+Color accent = accentResource.Resolve(provider);
 ```
 
 Use a custom typed key:

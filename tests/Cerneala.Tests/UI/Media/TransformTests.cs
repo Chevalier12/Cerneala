@@ -56,6 +56,6 @@ public sealed class TransformTests
     [InlineData(float.PositiveInfinity)]
     public void ShadowEffectRejectsInvalidBlur(float blur)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ShadowEffect(new DrawPoint(0, 0), blur, DrawColor.Black));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ShadowEffect(new DrawPoint(0, 0), blur, Color.Black));
     }
 }

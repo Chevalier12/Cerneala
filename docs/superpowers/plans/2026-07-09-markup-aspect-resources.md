@@ -21,7 +21,7 @@
 - Modify: `tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTests.cs`
   - Add focused failing tests first for each behavior.
   - Reuse existing `RunGenerator`, `SingleGeneratedSource`, `InvokeCreate`, and `AssertDiagnostic`.
-  - Add `using Cerneala.Drawing;` only if runtime assertions need direct `DrawColor` equality.
+  - Add `using Cerneala.Drawing;` only if runtime assertions need direct `Color` equality.
 - Modify: `FileTree.md`
   - Regenerate after source/test edits using `.\Tools\scripts\New-FileTree.ps1`.
 - Reference only: `docs/superpowers/specs/2026-07-09-markup-aspect-resources-design.md`
@@ -34,8 +34,8 @@
 - `Name` is the only reference identity. `Key` is not supported in markup.
 - `$Name` references resolve through one document-level namespace shared by elements and resources.
 - `Aspect="$KickerText"` accepts only named `Aspect` resources.
-- `Foreground = $PulseColor;` accepts a named resource that can produce a `DrawColor`.
-- `SolidColorBrush` resources emit `global::Cerneala.UI.Media.SolidColorBrush` instances and can be coerced to `DrawColor` through their constructor color when assigned to `DrawColor` properties.
+- `Foreground = $PulseColor;` accepts a named resource that can produce a `Color`.
+- `SolidColorBrush` resources emit `global::Cerneala.UI.Media.SolidColorBrush` instances and can be coerced to `Color` through their constructor color when assigned to `Color` properties.
 - Run RoslynIndexer after each production or test edit:
 
 ```text
@@ -266,13 +266,13 @@ public void RefactoredPropertySpecsPreserveExistingDirectAssignments()
     string generatedSource = SingleGeneratedSource(result);
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-    Assert.Contains(".Background = global::Cerneala.Drawing.DrawColor.White;", generatedSource);
-    Assert.Contains(".BorderColor = new global::Cerneala.Drawing.DrawColor(0, 1, 2, 3);", generatedSource);
+    Assert.Contains(".Background = global::Cerneala.Drawing.Color.White;", generatedSource);
+    Assert.Contains(".BorderColor = new global::Cerneala.Drawing.Color(0, 1, 2, 3);", generatedSource);
     Assert.Contains(".BorderThickness = new global::Cerneala.UI.Layout.Thickness(1f);", generatedSource);
     Assert.Contains(".Padding = new global::Cerneala.UI.Layout.Thickness(2f);", generatedSource);
     Assert.Contains(".FontFamily = \"Consolas\";", generatedSource);
     Assert.Contains(".FontSize = 12f;", generatedSource);
-    Assert.Contains(".Foreground = global::Cerneala.Drawing.DrawColor.Black;", generatedSource);
+    Assert.Contains(".Foreground = global::Cerneala.Drawing.Color.Black;", generatedSource);
     Assert.Contains(".Margin = new global::Cerneala.UI.Layout.Thickness(1f, 2f, 3f, 4f);", generatedSource);
 
     using MemoryStream stream = new();
@@ -304,7 +304,7 @@ private enum MarkupValueKind
     PositiveFloat,
     Thickness,
     NonNegativeThickness,
-    DrawColor
+    Color
 }
 
 private sealed record PropertySpec(
@@ -321,9 +321,9 @@ private static readonly PropertySpec[] PropertySpecs =
     new("IsEnabled", _ => true, MarkupValueKind.Bool),
     new("IsVisible", _ => true, MarkupValueKind.Bool),
     new("Margin", _ => true, MarkupValueKind.Thickness),
-    new("Background", IsControlElement, MarkupValueKind.DrawColor),
-    new("Foreground", IsControlElement, MarkupValueKind.DrawColor),
-    new("BorderColor", IsControlElement, MarkupValueKind.DrawColor),
+    new("Background", IsControlElement, MarkupValueKind.Color),
+    new("Foreground", IsControlElement, MarkupValueKind.Color),
+    new("BorderColor", IsControlElement, MarkupValueKind.Color),
     new("BorderThickness", IsControlElement, MarkupValueKind.NonNegativeThickness),
     new("Padding", IsControlElement, MarkupValueKind.NonNegativeThickness),
     new("FontFamily", IsControlElement, MarkupValueKind.String),
@@ -378,7 +378,7 @@ private GeneratedExpression? ParseLiteralValue(string elementName, string proper
         MarkupValueKind.PositiveFloat => PositiveFloat(elementName, propertyName, attribute),
         MarkupValueKind.Thickness => Thickness(elementName, propertyName, attribute),
         MarkupValueKind.NonNegativeThickness => NonNegativeThickness(elementName, propertyName, attribute),
-        MarkupValueKind.DrawColor => Color(elementName, propertyName, attribute),
+        MarkupValueKind.Color => Color(elementName, propertyName, attribute),
         _ => null
     };
 
@@ -442,7 +442,7 @@ public void SolidColorBrushResourceEmitsNamedBrushVariable()
     string generatedSource = SingleGeneratedSource(result);
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-    Assert.Contains("global::Cerneala.UI.Media.SolidColorBrush PulseColor = new(new global::Cerneala.Drawing.DrawColor(255, 93, 115));", generatedSource);
+    Assert.Contains("global::Cerneala.UI.Media.SolidColorBrush PulseColor = new(new global::Cerneala.Drawing.Color(255, 93, 115));", generatedSource);
 
     using MemoryStream stream = new();
     EmitResult emit = compilation.Emit(stream);
@@ -491,15 +491,15 @@ private enum NamedSymbolKind
 
 private sealed record NamedSymbol(string Name, NamedSymbolKind Kind, object Source);
 
-private sealed record SolidColorBrushResource(string Name, string Variable, string ColorExpression, DrawColorLiteral Color, XElement Source);
+private sealed record SolidColorBrushResource(string Name, string Variable, string ColorExpression, ColorLiteral Color, XElement Source);
 
-private readonly record struct DrawColorLiteral(byte R, byte G, byte B, byte A)
+private readonly record struct ColorLiteral(byte R, byte G, byte B, byte A)
 {
     public string ToExpression()
     {
         return A == 255
-            ? "new global::Cerneala.Drawing.DrawColor(" + R + ", " + G + ", " + B + ")"
-            : "new global::Cerneala.Drawing.DrawColor(" + R + ", " + G + ", " + B + ", " + A + ")";
+            ? "new global::Cerneala.Drawing.Color(" + R + ", " + G + ", " + B + ")"
+            : "new global::Cerneala.Drawing.Color(" + R + ", " + G + ", " + B + ", " + A + ")";
     }
 }
 ```
@@ -561,7 +561,7 @@ private void ReadSolidColorBrush(XElement resource)
     }
 
     XAttribute? colorAttribute = resource.Attribute("Color");
-    if (colorAttribute is null || ParseHexColor(colorAttribute.Value) is not DrawColorLiteral color)
+    if (colorAttribute is null || ParseHexColor(colorAttribute.Value) is not ColorLiteral color)
     {
         Report(InvalidPropertyValue, colorAttribute ?? resource, "SolidColorBrush", "Color", colorAttribute?.Value ?? string.Empty);
         return;
@@ -610,7 +610,7 @@ private bool AddSymbol(string name, NamedSymbolKind kind, object source, XElemen
 Add hex parser:
 
 ```csharp
-private static DrawColorLiteral? ParseHexColor(string value)
+private static ColorLiteral? ParseHexColor(string value)
 {
     if (value.Length != 7 && value.Length != 9)
     {
@@ -632,7 +632,7 @@ private static DrawColorLiteral? ParseHexColor(string value)
         TryByte(value.Substring(3, 2), out byte g) &&
         TryByte(value.Substring(5, 2), out byte b))
     {
-        return new DrawColorLiteral(r, g, b, 255);
+        return new ColorLiteral(r, g, b, 255);
     }
 
     if (value.Length == 9 &&
@@ -641,7 +641,7 @@ private static DrawColorLiteral? ParseHexColor(string value)
         TryByte(value.Substring(5, 2), out byte gg) &&
         TryByte(value.Substring(7, 2), out byte bb))
     {
-        return new DrawColorLiteral(rr, gg, bb, a);
+        return new ColorLiteral(rr, gg, bb, a);
     }
 
     return null;
@@ -1054,7 +1054,7 @@ Add:
 
 ```csharp
 [Fact]
-public void AspectCanReferenceSolidColorBrushForDrawColorProperty()
+public void AspectCanReferenceSolidColorBrushForColorProperty()
 {
     const string markup = """
         <Resources>
@@ -1073,14 +1073,14 @@ public void AspectCanReferenceSolidColorBrushForDrawColorProperty()
     string generatedSource = SingleGeneratedSource(result);
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-    Assert.Contains(".Foreground = new global::Cerneala.Drawing.DrawColor(255, 93, 115);", generatedSource);
+    Assert.Contains(".Foreground = new global::Cerneala.Drawing.Color(255, 93, 115);", generatedSource);
 
     using MemoryStream stream = new();
     EmitResult emit = compilation.Emit(stream);
     Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
     TextBlock root = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.AspectBrushReferenceFactory"));
-    Assert.Equal(new Cerneala.Drawing.DrawColor(255, 93, 115), root.Foreground);
+    Assert.Equal(new Cerneala.Drawing.Color(255, 93, 115), root.Foreground);
 }
 
 [Fact]
@@ -1106,14 +1106,14 @@ public void UnknownNameReferenceReportsDiagnostic()
 }
 ```
 
-Add `using Cerneala.Drawing;` only if the test uses unqualified `DrawColor`; the snippet above uses fully qualified `Cerneala.Drawing.DrawColor`.
+Add `using Cerneala.Drawing;` only if the test uses unqualified `Color`; the snippet above uses fully qualified `Cerneala.Drawing.Color`.
 
 - [ ] **Step 2: Run tests and confirm they fail**
 
 Run:
 
 ```powershell
-dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --filter "FullyQualifiedName~AspectCanReferenceSolidColorBrushForDrawColorProperty|FullyQualifiedName~UnknownNameReferenceReportsDiagnostic"
+dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --filter "FullyQualifiedName~AspectCanReferenceSolidColorBrushForColorProperty|FullyQualifiedName~UnknownNameReferenceReportsDiagnostic"
 ```
 
 Expected: FAIL because `ResolveReferenceValue` is not implemented.
@@ -1131,9 +1131,9 @@ private GeneratedExpression? ResolveReferenceValue(string elementName, string pr
         return null;
     }
 
-    if (targetKind == MarkupValueKind.DrawColor && symbol.Source is SolidColorBrushResource brush)
+    if (targetKind == MarkupValueKind.Color && symbol.Source is SolidColorBrushResource brush)
     {
-        return new GeneratedExpression(brush.ColorExpression, MarkupValueKind.DrawColor);
+        return new GeneratedExpression(brush.ColorExpression, MarkupValueKind.Color);
     }
 
     Report(InvalidPropertyValue, source, elementName, propertyName, "$" + referenceName);

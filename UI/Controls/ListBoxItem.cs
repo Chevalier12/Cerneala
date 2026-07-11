@@ -40,7 +40,7 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
 
     protected override void OnRender(RenderContext context)
     {
-        DrawColor color = IsSelected ? new DrawColor(80, 130, 220) : Background;
+        Color color = IsSelected ? new Color(80, 130, 220) : Background;
         DrawRect rect = Border.ToDrawRect(context.Bounds);
         if (color.A != 0 && rect.Width > 0 && rect.Height > 0)
         {

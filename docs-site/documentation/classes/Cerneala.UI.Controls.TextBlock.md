@@ -29,7 +29,7 @@ TextBlock label = new()
     Text = "Ready",
     FontFamily = "Default",
     FontSize = 18,
-    Foreground = DrawColor.White,
+    Foreground = Color.White,
     TextWrapping = TextWrapping.NoWrap
 };
 
@@ -81,7 +81,7 @@ Changing text, wrapping, font resource, resource provider, or text measurer inva
 | --- | --- | --- |
 | `FontFamily` | `Control` | Inherited text font family. Defaults to `"Default"`, inherits through the UI property system, and affects measure and render. |
 | `FontSize` | `Control` | Inherited text size. Defaults to `16`, must be positive and finite, and affects measure and render. |
-| `Foreground` | `Control` | Inherited text color. Defaults to `DrawColor.Black`, inherits through the UI property system, and affects render. |
+| `Foreground` | `Control` | Inherited text color. Defaults to `Color.Black`, inherits through the UI property system, and affects render. |
 
 ## Methods
 

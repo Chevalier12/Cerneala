@@ -28,20 +28,20 @@ public class Control : UIElement
             UiPropertyOptions.AffectsHitTest |
             UiPropertyOptions.AffectsInputVisual));
 
-    public static readonly UiProperty<DrawColor> BackgroundProperty = UiProperty<DrawColor>.Register(
+    public static readonly UiProperty<Color> BackgroundProperty = UiProperty<Color>.Register(
         nameof(Background),
         typeof(Control),
-        new UiPropertyMetadata<DrawColor>(DrawColor.Transparent, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<Color>(Color.Transparent, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
 
-    public static readonly UiProperty<DrawColor> ForegroundProperty = UiProperty<DrawColor>.Register(
+    public static readonly UiProperty<Color> ForegroundProperty = UiProperty<Color>.Register(
         nameof(Foreground),
         typeof(Control),
-        new UiPropertyMetadata<DrawColor>(DrawColor.Black, UiPropertyOptions.Inherits | UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<Color>(Color.Black, UiPropertyOptions.Inherits | UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<DrawColor> BorderColorProperty = UiProperty<DrawColor>.Register(
+    public static readonly UiProperty<Color> BorderColorProperty = UiProperty<Color>.Register(
         nameof(BorderColor),
         typeof(Control),
-        new UiPropertyMetadata<DrawColor>(DrawColor.Transparent, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<Color>(Color.Transparent, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
 
     public static readonly UiProperty<Thickness> BorderThicknessProperty = UiProperty<Thickness>.Register(
         nameof(BorderThickness),
@@ -69,19 +69,19 @@ public class Control : UIElement
             UiPropertyOptions.Inherits | UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
             validateValue: value => value > 0 && float.IsFinite(value)));
 
-    public DrawColor Background
+    public Color Background
     {
         get => GetValue(BackgroundProperty);
         set => SetValue(BackgroundProperty, value);
     }
 
-    public DrawColor Foreground
+    public Color Foreground
     {
         get => GetValue(ForegroundProperty);
         set => SetValue(ForegroundProperty, value);
     }
 
-    public DrawColor BorderColor
+    public Color BorderColor
     {
         get => GetValue(BorderColorProperty);
         set => SetValue(BorderColorProperty, value);

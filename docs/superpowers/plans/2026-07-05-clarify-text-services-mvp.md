@@ -207,7 +207,7 @@ public sealed class TextRendererWrapContractTests
             style,
             16,
             new DrawPoint(4, 6),
-            DrawColor.White);
+            Color.White);
 
         Assert.Equal(2, measurement.LineCount);
         Assert.Collection(
@@ -229,8 +229,8 @@ public sealed class TextRendererWrapContractTests
         TextRenderer renderer = new(FontResolver.Default, measurer);
         TextRunStyle style = new("Default", 16, TextWrapping.Wrap);
 
-        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", style, 16, default, DrawColor.White);
-        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", style, 16, default, DrawColor.White);
+        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", style, 16, default, Color.White);
+        renderer.Render(new DrawingContext(new DrawCommandList()), "ABCD", style, 16, default, Color.White);
 
         Assert.Equal(1, cache.Misses);
         Assert.Equal(1, cache.Hits);
@@ -384,7 +384,7 @@ public sealed class ButtonContentArchitectureTests
         Button button = new()
         {
             Content = "Go",
-            Foreground = DrawColor.White,
+            Foreground = Color.White,
             TextRenderer = renderer
         };
         DrawCommandList commands = new();
@@ -431,7 +431,7 @@ public sealed class ButtonContentArchitectureTests
             TextRunStyle style,
             float availableWidth,
             DrawPoint position,
-            DrawColor color)
+            Color color)
         {
             Calls++;
             LastText = text;

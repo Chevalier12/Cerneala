@@ -52,7 +52,7 @@ listBox.SelectedIndex = 1;
 
 The class implements `ISelectableItemContainer` through the public `ItemIndex`, `Item`, and `IsSelected` properties. These values are used by item container generation and selector logic to associate the realized container with its source item and current selection state.
 
-`IsSelected` is backed by `IsSelectedProperty`. Its metadata affects render, input visuals, and aspect processing. When selected, `OnRender` fills the item bounds with `DrawColor(80, 130, 220)`. When not selected, it uses the inherited `Background` color. Rendering is skipped when the chosen color is transparent or the render rectangle has no positive width or height.
+`IsSelected` is backed by `IsSelectedProperty`. Its metadata affects render, input visuals, and aspect processing. When selected, `OnRender` fills the item bounds with `Color(80, 130, 220)`. When not selected, it uses the inherited `Background` color. Rendering is skipped when the chosen color is transparent or the render rectangle has no positive width or height.
 
 Because `ListBoxItem` derives from `ContentControl`, it also supports the inherited `Content` property and content-hosting behavior.
 

@@ -9,20 +9,20 @@ namespace Cerneala.UI.Theming;
 public static class DefaultTheme
 {
     public static readonly ThemeKey<ThemePalette> PaletteKey = new("Palette");
-    public static readonly ThemeKey<DrawColor> BackgroundKey = new("Background");
-    public static readonly ThemeKey<DrawColor> ForegroundKey = new("Foreground");
-    public static readonly ThemeKey<DrawColor> SurfaceKey = new("Surface");
-    public static readonly ThemeKey<DrawColor> BorderKey = new("Border");
-    public static readonly ThemeKey<DrawColor> AccentKey = new("Accent");
+    public static readonly ThemeKey<Color> BackgroundKey = new("Background");
+    public static readonly ThemeKey<Color> ForegroundKey = new("Foreground");
+    public static readonly ThemeKey<Color> SurfaceKey = new("Surface");
+    public static readonly ThemeKey<Color> BorderKey = new("Border");
+    public static readonly ThemeKey<Color> AccentKey = new("Accent");
 
     public static Theme Create()
     {
         ThemePalette palette = new(
-            new DrawColor(248, 250, 252),
-            new DrawColor(28, 35, 48),
-            new DrawColor(255, 255, 255),
-            new DrawColor(148, 163, 184),
-            new DrawColor(37, 99, 235));
+            new Color(248, 250, 252),
+            new Color(28, 35, 48),
+            new Color(255, 255, 255),
+            new Color(148, 163, 184),
+            new Color(37, 99, 235));
 
         return new Theme("Default")
             .Set(PaletteKey, palette)

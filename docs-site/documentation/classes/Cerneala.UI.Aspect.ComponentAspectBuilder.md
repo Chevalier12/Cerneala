@@ -43,7 +43,7 @@ AspectRuleSet rule = new(
     "button.base",
     AspectLayer.App,
     new AspectTarget(typeof(Button)),
-    [new AspectDeclaration(Control.BackgroundProperty, AspectValue<DrawColor>.Literal(DrawColor.White))],
+    [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.White))],
     declarationOrder: 0);
 
 AspectPackage package = AspectPackage.Create("App")

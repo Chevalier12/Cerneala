@@ -29,7 +29,7 @@ using Cerneala.Drawing;
 DrawPoint start = new(12, 24);
 DrawPoint end = new(start.X + 20, start.Y);
 
-DrawCommand command = DrawCommand.DrawLine(start, end, DrawColor.Black, thickness: 1);
+DrawCommand command = DrawCommand.DrawLine(start, end, Color.Black, thickness: 1);
 ```
 
 Use component values to derive another point:

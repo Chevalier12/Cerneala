@@ -5,11 +5,11 @@ namespace Cerneala.UI.Theming;
 public sealed class ThemePalette
 {
     public ThemePalette(
-        DrawColor background,
-        DrawColor foreground,
-        DrawColor surface,
-        DrawColor border,
-        DrawColor accent)
+        Color background,
+        Color foreground,
+        Color surface,
+        Color border,
+        Color accent)
     {
         Background = background;
         Foreground = foreground;
@@ -18,13 +18,13 @@ public sealed class ThemePalette
         Accent = accent;
     }
 
-    public DrawColor Background { get; }
+    public Color Background { get; }
 
-    public DrawColor Foreground { get; }
+    public Color Foreground { get; }
 
-    public DrawColor Surface { get; }
+    public Color Surface { get; }
 
-    public DrawColor Border { get; }
+    public Color Border { get; }
 
-    public DrawColor Accent { get; }
+    public Color Accent { get; }
 }

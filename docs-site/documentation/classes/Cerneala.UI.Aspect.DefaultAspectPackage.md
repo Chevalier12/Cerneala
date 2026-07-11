@@ -43,9 +43,9 @@ using Cerneala.UI.Aspect;
 
 AspectEnvironment environment = DefaultAspectPackage.CreateEnvironment();
 
-if (environment.TryGet(DefaultAspectTokens.Color.Accent, out DrawColor accent))
+if (environment.TryGet(DefaultAspectTokens.Color.Accent, out Color accent))
 {
-    // accent is DrawColor(37, 99, 235).
+    // accent is Color(37, 99, 235).
 }
 ```
 

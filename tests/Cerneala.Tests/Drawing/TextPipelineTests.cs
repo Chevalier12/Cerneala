@@ -76,7 +76,7 @@ public sealed class TextPipelineTests
         DrawTextRun textRun = new(fonts.LoadFont("Arial", 16), "Cerneala", 16);
         SkiaTextRasterizer rasterizer = new();
 
-        RasterizedText result = rasterizer.Rasterize(textRun, DrawColor.White);
+        RasterizedText result = rasterizer.Rasterize(textRun, Color.White);
 
         Assert.True(result.Width > 0);
         Assert.True(result.Height > 0);
@@ -94,7 +94,7 @@ public sealed class TextPipelineTests
 
         RasterizedText[] layers = rasterizer.RasterizeSubpixel(
             textRun,
-            DrawColor.Black,
+            Color.Black,
             coordinateScale: 1.25f,
             position: new DrawPoint(118.4f, 84.4f));
 
@@ -111,7 +111,7 @@ public sealed class TextPipelineTests
         DrawTextRun textRun = new(new ContractFont("Arial", 16), "Cerneala", 16);
         SkiaTextRasterizer rasterizer = new();
 
-        RasterizedText result = rasterizer.Rasterize(textRun, DrawColor.Black);
+        RasterizedText result = rasterizer.Rasterize(textRun, Color.Black);
 
         Assert.True(result.ShapeResult.GlyphCount > 0);
         Assert.Contains(result.RgbaPixels, value => value != 0);
@@ -124,8 +124,8 @@ public sealed class TextPipelineTests
         IDrawFont font = fonts.LoadFont("Arial", 16);
         SkiaTextRasterizer rasterizer = new();
 
-        RasterizedText small = rasterizer.Rasterize(new DrawTextRun(font, "MMMMMMMM", 16), DrawColor.White);
-        RasterizedText large = rasterizer.Rasterize(new DrawTextRun(font, "MMMMMMMM", 32), DrawColor.White);
+        RasterizedText small = rasterizer.Rasterize(new DrawTextRun(font, "MMMMMMMM", 16), Color.White);
+        RasterizedText large = rasterizer.Rasterize(new DrawTextRun(font, "MMMMMMMM", 32), Color.White);
 
         Assert.True(large.Width > small.Width);
         Assert.True(large.Height > small.Height);
@@ -138,7 +138,7 @@ public sealed class TextPipelineTests
         IDrawFont font = fonts.LoadFont("Arial", 16);
         SkiaTextRasterizer rasterizer = new();
 
-        RasterizedText result = rasterizer.Rasterize(new DrawTextRun(font, "hahahehe", 16), DrawColor.White);
+        RasterizedText result = rasterizer.Rasterize(new DrawTextRun(font, "hahahehe", 16), Color.White);
 
         Assert.True(result.ShapeResult.AdvanceWidth < result.Width);
         Assert.True(result.OriginOffset.X >= 0);
@@ -151,7 +151,7 @@ public sealed class TextPipelineTests
         IDrawFont font = fonts.LoadFont("Arial", 16);
         SkiaTextRasterizer rasterizer = new();
 
-        RasterizedText result = rasterizer.Rasterize(new DrawTextRun(font, "a", 16), DrawColor.White);
+        RasterizedText result = rasterizer.Rasterize(new DrawTextRun(font, "a", 16), Color.White);
 
         Assert.Equal(0, FirstInkX(result));
     }
@@ -163,7 +163,7 @@ public sealed class TextPipelineTests
         DrawTextRun textRun = new(fonts.LoadFont("Arial", 16), string.Empty, 16);
         SkiaTextRasterizer rasterizer = new();
 
-        RasterizedText result = rasterizer.Rasterize(textRun, DrawColor.White);
+        RasterizedText result = rasterizer.Rasterize(textRun, Color.White);
 
         Assert.Equal(1, result.Width);
         Assert.Equal(1, result.Height);
@@ -180,7 +180,7 @@ public sealed class TextPipelineTests
 
         for (int i = 0; i < 100; i++)
         {
-            RasterizedText result = rasterizer.Rasterize(new DrawTextRun(font, $"Cerneala {i}", 16), DrawColor.White);
+            RasterizedText result = rasterizer.Rasterize(new DrawTextRun(font, $"Cerneala {i}", 16), Color.White);
 
             Assert.True(result.ShapeResult.GlyphCount > 0);
             Assert.NotEmpty(result.RgbaPixels);

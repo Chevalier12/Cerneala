@@ -27,8 +27,8 @@ using Cerneala.UI.Layout;
 
 Border panel = new()
 {
-    Background = DrawColor.White,
-    BorderColor = DrawColor.Black,
+    Background = Color.White,
+    BorderColor = Color.Black,
     BorderThickness = new Thickness(2),
     Padding = new Thickness(8),
     Child = new TextBlock { Text = "Ready" }
@@ -56,8 +56,8 @@ During rendering, `Border` fills its arranged bounds with `Background` when the 
 | Name | Type | Declared By | Description |
 | --- | --- | --- | --- |
 | `Child` | `UIElement?` | `Decorator` | Gets or sets the single logical and visual child. Changing it invalidates measure and render. |
-| `Background` | `DrawColor` | `Control` | Fill color for the arranged bounds. Default is `DrawColor.Transparent`; changes affect render and input visual invalidation. |
-| `BorderColor` | `DrawColor` | `Control` | Stroke color for the rectangle border. Default is `DrawColor.Transparent`; changes affect render and input visual invalidation. |
+| `Background` | `Color` | `Control` | Fill color for the arranged bounds. Default is `Color.Transparent`; changes affect render and input visual invalidation. |
+| `BorderColor` | `Color` | `Control` | Stroke color for the rectangle border. Default is `Color.Transparent`; changes affect render and input visual invalidation. |
 | `BorderThickness` | `Thickness` | `Control` | Border inset used for layout and stroke width source used for rendering. Default is `Thickness.Zero`; values must be finite and non-negative. |
 | `Padding` | `Thickness` | `Control` | Extra inset between the border and child. Default is `Thickness.Zero`; values must be finite and non-negative. |
 
@@ -93,4 +93,4 @@ Cerneala retained UI controls and layout/rendering infrastructure.
 - `Cerneala.UI.Controls.Control`
 - `Cerneala.UI.Controls.TextBlock`
 - `Cerneala.UI.Layout.Thickness`
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`

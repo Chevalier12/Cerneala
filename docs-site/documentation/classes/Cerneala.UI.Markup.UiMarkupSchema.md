@@ -65,7 +65,7 @@ The schema also registers these shared element/control properties for every buil
 
 `Button.Content` and `TextBlock.Text` are registered as element-specific properties. Text content is accepted only when the element registration has a matching content property registration.
 
-Color values accept `Transparent`, `White`, or `Black`, using case-insensitive matching against `DrawColor` names. Numeric color values must be three or four comma-separated bytes: red, green, blue, and optional alpha. When alpha is omitted, the schema uses `255`.
+Color values accept `Transparent`, `White`, or `Black`, using case-insensitive matching against `Color` names. Numeric color values must be three or four comma-separated bytes: red, green, blue, and optional alpha. When alpha is omitted, the schema uses `255`.
 
 Thickness values must use either one value, which creates uniform thickness, or four comma-separated values: left, top, right, and bottom. Floating-point values use `CultureInfo.InvariantCulture`.
 

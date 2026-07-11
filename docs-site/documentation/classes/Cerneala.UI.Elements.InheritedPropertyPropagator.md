@@ -27,7 +27,7 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 
 UIRoot root = new();
-Control parent = new() { Foreground = DrawColor.White };
+Control parent = new() { Foreground = Color.White };
 TextBlock child = new() { Text = "child" };
 
 parent.VisualChildren.Add(child);
@@ -35,7 +35,7 @@ root.VisualChildren.Add(parent);
 
 int changed = root.InheritedPropertyPropagator.PropagateFrom(root);
 
-DrawColor foreground = child.Foreground;
+Color foreground = child.Foreground;
 UiPropertyValueSource source = child.GetValueSource(Control.ForegroundProperty);
 ```
 

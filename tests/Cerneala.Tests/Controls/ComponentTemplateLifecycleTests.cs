@@ -222,7 +222,7 @@ public sealed class ComponentTemplateLifecycleTests
         UIRoot root = new(40, 20);
         Control control = new()
         {
-            ComponentTemplate = new ComponentTemplate<Control>("test", _ => new RenderableElement(DrawColor.White))
+            ComponentTemplate = new ComponentTemplate<Control>("test", _ => new RenderableElement(Color.White))
         };
         root.VisualChildren.Add(control);
         control.Measure(new MeasureContext(new LayoutSize(100, 100)));
@@ -285,7 +285,7 @@ public sealed class ComponentTemplateLifecycleTests
     {
     }
 
-    private sealed class RenderableElement(DrawColor color) : UIElement
+    private sealed class RenderableElement(Color color) : UIElement
     {
         protected override LayoutSize MeasureCore(MeasureContext context)
         {

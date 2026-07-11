@@ -20,8 +20,8 @@ public class Track : Control
         thumb = new Thumb();
         thumb.DragDelta += OnThumbDragDelta;
         AddThumb();
-        Background = new DrawColor(225, 225, 225);
-        BorderColor = new DrawColor(120, 120, 120);
+        Background = new Color(225, 225, 225);
+        BorderColor = new Color(120, 120, 120);
         BorderThickness = new Thickness(1);
         SmallChange = 0.1f;
         LargeChange = 1;

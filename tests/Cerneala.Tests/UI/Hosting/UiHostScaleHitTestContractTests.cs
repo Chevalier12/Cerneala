@@ -122,7 +122,7 @@ public sealed class UiHostScaleHitTestContractTests
 
         protected override void OnRender(RenderContext context)
         {
-            context.DrawingContext.FillRectangle(new DrawRect(context.Bounds.X, context.Bounds.Y, 1, 1), DrawColor.White);
+            context.DrawingContext.FillRectangle(new DrawRect(context.Bounds.X, context.Bounds.Y, 1, 1), Color.White);
         }
     }
 

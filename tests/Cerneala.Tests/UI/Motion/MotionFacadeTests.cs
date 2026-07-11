@@ -20,8 +20,8 @@ public sealed class MotionFacadeTests
 
         control.Motion()
             .Animate(Control.BackgroundProperty)
-            .To(DrawColor.White)
-            .With(MotionFactory.Tween<DrawColor>(TimeSpan.FromMilliseconds(100)));
+            .To(Color.White)
+            .With(MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
 
         Assert.Equal(1, root.Motion.Properties.BindingCount);
     }
@@ -33,8 +33,8 @@ public sealed class MotionFacadeTests
         Control control = new();
         root.VisualChildren.Add(control);
 
-        control.Motion().Animate(Control.BackgroundProperty).To(DrawColor.White).With(MotionFactory.Tween<DrawColor>(TimeSpan.FromMilliseconds(100)));
-        control.Motion().Animate(Control.BackgroundProperty).To(DrawColor.Black).With(MotionFactory.Tween<DrawColor>(TimeSpan.FromMilliseconds(100)));
+        control.Motion().Animate(Control.BackgroundProperty).To(Color.White).With(MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+        control.Motion().Animate(Control.BackgroundProperty).To(Color.Black).With(MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
 
         Assert.Equal(1, root.Motion.Properties.BindingCount);
     }

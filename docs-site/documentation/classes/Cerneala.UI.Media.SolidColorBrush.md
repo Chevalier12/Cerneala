@@ -7,10 +7,10 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Media/SolidColorBrush.cs`
 
-Represents a brush that paints with a single `DrawColor`.
+Represents a brush that paints with a single `Color`.
 
 ```csharp
-public sealed record SolidColorBrush(DrawColor Color) : Brush
+public sealed record SolidColorBrush(Color Color) : Brush
 ```
 
 Inheritance:
@@ -24,14 +24,14 @@ Create a solid brush and read the resolved solid color through the base `Brush` 
 using Cerneala.Drawing;
 using Cerneala.UI.Media;
 
-SolidColorBrush brush = new(DrawColor.White);
+SolidColorBrush brush = new(Color.White);
 
-DrawColor? color = brush.SolidColor;
+Color? color = brush.SolidColor;
 ```
 
 ## Remarks
 
-`SolidColorBrush` is the concrete `Brush` implementation for a uniform color. Its primary constructor stores the supplied `DrawColor` in the `Color` property, and its `SolidColor` override returns that same value.
+`SolidColorBrush` is the concrete `Brush` implementation for a uniform color. Its primary constructor stores the supplied `Color` in the `Color` property, and its `SolidColor` override returns that same value.
 
 Because this type is a sealed record, equality and hashing use record value semantics. Two `SolidColorBrush` instances with the same `Color` compare as equal.
 
@@ -39,20 +39,20 @@ Because this type is a sealed record, equality and hashing use record value sema
 
 | Name | Description |
 | --- | --- |
-| `SolidColorBrush(DrawColor Color)` | Initializes a brush that paints with the specified `DrawColor`. |
+| `SolidColorBrush(Color Color)` | Initializes a brush that paints with the specified `Color`. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Color` | `DrawColor` | Gets the color supplied to the primary constructor. |
-| `SolidColor` | `DrawColor?` | Gets `Color`, exposing the brush as a solid color through the base `Brush` contract. |
+| `Color` | `Color` | Gets the color supplied to the primary constructor. |
+| `SolidColor` | `Color?` | Gets `Color`, exposing the brush as a solid color through the base `Brush` contract. |
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
-| `Deconstruct(out DrawColor Color)` | Deconstructs the record into its `Color` component. |
+| `Deconstruct(out Color Color)` | Deconstructs the record into its `Color` component. |
 
 ## Applies to
 
@@ -61,4 +61,4 @@ Because this type is a sealed record, equality and hashing use record value sema
 ## See also
 
 - `Cerneala.UI.Media.Brush`
-- `Cerneala.Drawing.DrawColor`
+- `Cerneala.Drawing.Color`

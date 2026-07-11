@@ -86,7 +86,7 @@ public class Button : ButtonBase
             return;
         }
 
-        DrawColor background = ResolveBackground();
+        Color background = ResolveBackground();
         DrawRect rect = Border.ToDrawRect(context.Bounds);
         if (background.A != 0 && rect.Width > 0 && rect.Height > 0)
         {
@@ -119,7 +119,7 @@ public class Button : ButtonBase
         return new TextAspect(FontFamily, FontSize, color: Foreground);
     }
 
-    private DrawColor ResolveBackground()
+    private Color ResolveBackground()
     {
         if (GetValueSource(BackgroundProperty) != UiPropertyValueSource.Default)
         {
@@ -128,17 +128,17 @@ public class Button : ButtonBase
 
         if (!IsEnabled)
         {
-            return new DrawColor(160, 160, 160);
+            return new Color(160, 160, 160);
         }
 
         if (IsPressed)
         {
-            return new DrawColor(120, 120, 120);
+            return new Color(120, 120, 120);
         }
 
         if (IsPointerOver || IsKeyboardFocused)
         {
-            return new DrawColor(220, 220, 220);
+            return new Color(220, 220, 220);
         }
 
         return Background;

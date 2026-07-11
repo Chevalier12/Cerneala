@@ -9,10 +9,10 @@ public sealed class AspectTokenTests
     [Fact]
     public void TypedTokenCarriesNameAndValueType()
     {
-        AspectToken<DrawColor> token = AspectToken.Color("app.surface");
+        AspectToken<Color> token = AspectToken.Color("app.surface");
 
         Assert.Equal("app.surface", token.Name);
-        Assert.Equal(typeof(DrawColor), token.ValueType);
+        Assert.Equal(typeof(Color), token.ValueType);
     }
 
     [Fact]
@@ -35,20 +35,20 @@ public sealed class AspectTokenTests
     [Fact]
     public void TokenReferenceResolvesThroughAspectEnvironment()
     {
-        AspectToken<DrawColor> token = AspectToken.Color("app.accent");
+        AspectToken<Color> token = AspectToken.Color("app.accent");
         AspectEnvironment environment = new("root");
-        environment.Set(token, DrawColor.White);
+        environment.Set(token, Color.White);
         AspectResolutionContext context = new(new Button(), environment);
 
         object? value = token.Ref().Resolve(context);
 
-        Assert.Equal(DrawColor.White, value);
+        Assert.Equal(Color.White, value);
     }
 
     [Fact]
     public void MissingTokenProducesDiagnosticFailureInsteadOfInvalidCast()
     {
-        AspectToken<DrawColor> token = AspectToken.Color("app.missing");
+        AspectToken<Color> token = AspectToken.Color("app.missing");
         AspectResolutionContext context = new(new Button(), new AspectEnvironment("root"));
 
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => token.Ref().Resolve(context));

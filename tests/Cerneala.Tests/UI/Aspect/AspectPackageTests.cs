@@ -10,12 +10,12 @@ public sealed class AspectPackageTests
     [Fact]
     public void PackageContainsNamedTokensComponentsAndTemplates()
     {
-        AspectToken<DrawColor> token = AspectToken.Color("app.accent");
+        AspectToken<Color> token = AspectToken.Color("app.accent");
         ComponentTemplateDefinition componentTemplate = new("button.modern", typeof(Button), template: null);
         ContentTemplateDefinition contentTemplate = new("string", typeof(string), key: null, template: null);
 
         AspectPackage package = AspectPackage.Create("App")
-            .Tokens(tokens => tokens.Set(token, DrawColor.White))
+            .Tokens(tokens => tokens.Set(token, Color.White))
             .Components(components => components.AddTemplate(componentTemplate))
             .Content(content => content.Add(contentTemplate));
 
@@ -28,20 +28,20 @@ public sealed class AspectPackageTests
     [Fact]
     public void RegistryCombinesPackagesInRegistrationOrder()
     {
-        AspectToken<DrawColor> firstToken = AspectToken.Color("first");
-        AspectToken<DrawColor> secondToken = AspectToken.Color("second");
+        AspectToken<Color> firstToken = AspectToken.Color("first");
+        AspectToken<Color> secondToken = AspectToken.Color("second");
         AspectRegistry registry = new();
 
-        registry.Register(AspectPackage.Create("First").Tokens(tokens => tokens.Set(firstToken, DrawColor.White)));
-        registry.Register(AspectPackage.Create("Second").Tokens(tokens => tokens.Set(secondToken, DrawColor.Black)));
+        registry.Register(AspectPackage.Create("First").Tokens(tokens => tokens.Set(firstToken, Color.White)));
+        registry.Register(AspectPackage.Create("Second").Tokens(tokens => tokens.Set(secondToken, Color.Black)));
 
         AspectCatalog catalog = registry.BuildCatalog();
 
         Assert.Equal(["First", "Second"], catalog.PackageDiagnostics.Select(package => package.Name));
         Assert.True(catalog.TryGetTokenDefault(firstToken, out AspectValue? first));
         Assert.True(catalog.TryGetTokenDefault(secondToken, out AspectValue? second));
-        Assert.Equal(DrawColor.White, first.Resolve(new AspectResolutionContext(new Button(), new AspectEnvironment("test"))));
-        Assert.Equal(DrawColor.Black, second.Resolve(new AspectResolutionContext(new Button(), new AspectEnvironment("test"))));
+        Assert.Equal(Color.White, first.Resolve(new AspectResolutionContext(new Button(), new AspectEnvironment("test"))));
+        Assert.Equal(Color.Black, second.Resolve(new AspectResolutionContext(new Button(), new AspectEnvironment("test"))));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public sealed class AspectPackageTests
     public void DuplicateTokenWithDifferentValueTypeThrows()
     {
         AspectRegistry registry = new();
-        registry.Register(AspectPackage.Create("Colors").Tokens(tokens => tokens.Set(AspectToken.Color("app.value"), DrawColor.White)));
+        registry.Register(AspectPackage.Create("Colors").Tokens(tokens => tokens.Set(AspectToken.Color("app.value"), Color.White)));
         registry.Register(AspectPackage.Create("Text").Tokens(tokens => tokens.Set(AspectToken.String("app.value"), "white")));
 
         Assert.Throws<InvalidOperationException>(() => registry.BuildCatalog());

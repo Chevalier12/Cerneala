@@ -12,14 +12,14 @@ public sealed class InheritedPropertyTreePropagationTests
     public void ParentForegroundPropagatesToDescendantDuringFrame()
     {
         UIRoot root = new();
-        Control parent = new() { Foreground = DrawColor.White };
+        Control parent = new() { Foreground = Color.White };
         TextBlock child = new() { Text = "child" };
         parent.VisualChildren.Add(child);
         root.VisualChildren.Add(parent);
 
         root.ProcessFrame();
 
-        Assert.Equal(DrawColor.White, child.Foreground);
+        Assert.Equal(Color.White, child.Foreground);
         Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.ForegroundProperty));
     }
 
@@ -42,17 +42,17 @@ public sealed class InheritedPropertyTreePropagationTests
     public void ChangingInheritedParentValueInvalidatesDescendantRender()
     {
         UIRoot root = new();
-        Control parent = new() { Foreground = DrawColor.Black };
+        Control parent = new() { Foreground = Color.Black };
         TextBlock child = new() { Text = "child" };
         parent.VisualChildren.Add(child);
         root.VisualChildren.Add(parent);
         root.ProcessFrame();
         child.DirtyState.Clear(InvalidationFlags.Render);
 
-        parent.Foreground = DrawColor.White;
+        parent.Foreground = Color.White;
         FrameStats stats = root.ProcessFrame();
 
-        Assert.Equal(DrawColor.White, child.Foreground);
+        Assert.Equal(Color.White, child.Foreground);
         Assert.True(stats.InheritedElements > 0);
         Assert.True(child.RenderVersion > 0);
     }
@@ -95,8 +95,8 @@ public sealed class InheritedPropertyTreePropagationTests
     public void ReparentedSubtreeReceivesNewParentInheritedValues()
     {
         UIRoot root = new();
-        Control firstParent = new() { Foreground = DrawColor.White };
-        Control secondParent = new() { Foreground = DrawColor.Black };
+        Control firstParent = new() { Foreground = Color.White };
+        Control secondParent = new() { Foreground = Color.Black };
         TextBlock child = new();
         firstParent.VisualChildren.Add(child);
         root.VisualChildren.Add(firstParent);
@@ -107,7 +107,7 @@ public sealed class InheritedPropertyTreePropagationTests
         secondParent.VisualChildren.Add(child);
         root.ProcessFrame();
 
-        Assert.Equal(DrawColor.Black, child.Foreground);
+        Assert.Equal(Color.Black, child.Foreground);
         Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.ForegroundProperty));
     }
 
@@ -115,14 +115,14 @@ public sealed class InheritedPropertyTreePropagationTests
     public void VisualContainerPropertiesDoNotInherit()
     {
         UIRoot root = new();
-        Control parent = new() { Background = DrawColor.White };
+        Control parent = new() { Background = Color.White };
         Control child = new();
         parent.VisualChildren.Add(child);
         root.VisualChildren.Add(parent);
 
         root.ProcessFrame();
 
-        Assert.Equal(DrawColor.Transparent, child.Background);
+        Assert.Equal(Color.Transparent, child.Background);
         Assert.Equal(UiPropertyValueSource.Default, child.GetValueSource(Control.BackgroundProperty));
     }
 }

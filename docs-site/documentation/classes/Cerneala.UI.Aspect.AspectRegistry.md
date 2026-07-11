@@ -24,11 +24,11 @@ Register packages and build a catalog:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 
-AspectToken<DrawColor> accent = AspectToken.Color("app.accent");
+AspectToken<Color> accent = AspectToken.Color("app.accent");
 
 AspectCatalog catalog = new AspectRegistry()
     .Register(AspectPackage.Create("App")
-        .Tokens(tokens => tokens.Set(accent, DrawColor.White)))
+        .Tokens(tokens => tokens.Set(accent, Color.White)))
     .BuildCatalog();
 ```
 

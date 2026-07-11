@@ -85,36 +85,10 @@ public static class UiMarkupSchema
         };
     }
 
-    private static DrawColor ParseColor(string value)
+    private static Color ParseColor(string value)
     {
-        if (string.Equals(value, nameof(DrawColor.Transparent), StringComparison.OrdinalIgnoreCase))
-        {
-            return DrawColor.Transparent;
-        }
-
-        if (string.Equals(value, nameof(DrawColor.White), StringComparison.OrdinalIgnoreCase))
-        {
-            return DrawColor.White;
-        }
-
-        if (string.Equals(value, nameof(DrawColor.Black), StringComparison.OrdinalIgnoreCase))
-        {
-            return DrawColor.Black;
-        }
-
-        string[] parts = value.Split(',', StringSplitOptions.TrimEntries);
-        if (parts.Length is not (3 or 4))
-        {
-            throw new FormatException("DrawColor must use a named color or three/four comma-separated byte values.");
-        }
-
-        return new DrawColor(ParseByte(parts[0]), ParseByte(parts[1]), ParseByte(parts[2]), parts.Length == 4 ? ParseByte(parts[3]) : (byte)255);
-    }
-
-    private static byte ParseByte(string value)
-    {
-        return byte.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out byte parsed)
+        return Color.TryParse(value, out Color parsed)
             ? parsed
-            : throw new FormatException($"'{value}' is not a valid byte value.");
+            : throw new FormatException($"'{value}' is not a valid color. Use a WPF named color, #RRGGBB, #AARRGGBB, or RGB/RGBA byte values.");
     }
 }
