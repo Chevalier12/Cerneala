@@ -28,6 +28,20 @@ public sealed class TextPipelineTests
         Assert.Equal(result.GlyphCount, result.GlyphPositions.Length);
     }
 
+    [Theory]
+    [InlineData("Calibri", 13.765625f)]
+    [InlineData("Consolas", 13.25f)]
+    public void TextShaperUsesOpenTypeHorizontalMetricsForBaseline(string familyName, float expectedBaseline)
+    {
+        IDrawFont font = new SystemFontSource().LoadFont(familyName, 16);
+        DrawTextRun textRun = new(font, "Hello world!", 16);
+
+        bool measured = TextShaper.Default.TryMeasureBaseline(textRun, out float baseline);
+
+        Assert.True(measured);
+        Assert.Equal(expectedBaseline, baseline);
+    }
+
     [Fact]
     public void DrawTextRunRejectsSizeThatCannotBeShaped()
     {

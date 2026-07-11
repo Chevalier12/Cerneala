@@ -31,8 +31,7 @@ public sealed class TextShaper
             return false;
         }
 
-        using SkiaSharp.SKFont font = SkiaTextRendering.CreateFont((SkiaFont)textRun.Font, textRun.Size);
-        lineHeight = SkiaTextRendering.MeasureLine(font).LineHeight;
+        lineHeight = SkiaTextRendering.MeasureLine((SkiaFont)textRun.Font, textRun.Size).LineHeight;
         return true;
     }
 
@@ -46,8 +45,7 @@ public sealed class TextShaper
             return false;
         }
 
-        using SkiaSharp.SKFont font = SkiaTextRendering.CreateFont(skiaFont, textRun.Size);
-        baseline = SkiaTextRendering.MeasureLine(font).Baseline;
+        baseline = SkiaTextRendering.MeasureLine(skiaFont, textRun.Size).Baseline;
         return true;
     }
 
@@ -61,8 +59,7 @@ public sealed class TextShaper
             return false;
         }
 
-        using SkiaSharp.SKFont skiaFont = SkiaTextRendering.CreateFont(font, textRun.Size);
-        metrics = new TextCaretVerticalMetrics(0, SkiaTextRendering.MeasureLine(skiaFont).LineHeight);
+        metrics = new TextCaretVerticalMetrics(0, SkiaTextRendering.MeasureLine(font, textRun.Size).LineHeight);
         return true;
     }
 }
