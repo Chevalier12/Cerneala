@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Drawing;
 
@@ -80,6 +81,23 @@ public sealed class DrawingContextTests
         Assert.Equal(DrawCommandKind.FillRectangle, commands[0].Kind);
         Assert.Equal(new DrawRect(1, 2, 3, 4), commands[0].Rect);
         Assert.Equal(Color.White, commands[0].Color);
+    }
+
+    [Fact]
+    public void FillRectangleRecordsBrushWithoutFlatteningIt()
+    {
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        LinearGradientBrush brush = new(
+            new DrawPoint(0, 0),
+            new DrawPoint(10, 0),
+            [new GradientStop(0, Color.White), new GradientStop(1, Color.Black)]);
+
+        drawing.FillRectangle(new DrawRect(1, 2, 3, 4), brush);
+
+        Assert.Same(brush, commands[0].Brush);
+        Assert.Equal(1, commands[0].BrushOpacity);
+        Assert.Equal(default, commands[0].Color);
     }
 
     [Fact]

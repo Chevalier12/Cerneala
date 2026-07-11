@@ -94,7 +94,7 @@ public abstract class Shape : Control
             return LayoutSize.Zero;
         }
 
-        float strokePadding = Stroke?.SolidColor is null ? 0 : StrokeThickness;
+        float strokePadding = Stroke is null ? 0 : StrokeThickness;
         return new LayoutSize(
             geometry.Bounds.Width + strokePadding,
             geometry.Bounds.Height + strokePadding);
@@ -120,44 +120,44 @@ public abstract class Shape : Control
 
     protected virtual void RenderGeometry(RenderContext context, Geometry geometry)
     {
-        Color fill = Fill?.SolidColor ?? Color.Transparent;
-        Color stroke = Stroke?.SolidColor ?? Color.Transparent;
+        Brush? fill = Fill;
+        Brush? stroke = Stroke;
         float thickness = StrokeThickness;
 
         switch (geometry)
         {
             case RectangleGeometry rectangle:
                 DrawRect rectangleBounds = TransformBounds(rectangle.Bounds);
-                if (HasVisibleColor(fill) && rectangleBounds.Width > 0 && rectangleBounds.Height > 0)
+                if (HasVisibleBrush(fill) && rectangleBounds.Width > 0 && rectangleBounds.Height > 0)
                 {
-                    context.DrawingContext.FillRectangle(rectangleBounds, ApplyOpacity(fill));
+                    context.DrawingContext.FillRectangle(rectangleBounds, fill!);
                 }
 
-                if (HasVisibleColor(stroke) && thickness > 0 && rectangleBounds.Width > 0 && rectangleBounds.Height > 0)
+                if (HasVisibleBrush(stroke) && thickness > 0 && rectangleBounds.Width > 0 && rectangleBounds.Height > 0)
                 {
-                    context.DrawingContext.DrawRectangle(rectangleBounds, ApplyOpacity(stroke), thickness);
+                    context.DrawingContext.DrawRectangle(rectangleBounds, stroke!, thickness);
                 }
 
                 break;
 
             case EllipseGeometry ellipse:
                 DrawRect ellipseBounds = TransformBounds(ellipse.Bounds);
-                if (HasVisibleColor(fill) && ellipseBounds.Width > 0 && ellipseBounds.Height > 0)
+                if (HasVisibleBrush(fill) && ellipseBounds.Width > 0 && ellipseBounds.Height > 0)
                 {
-                    context.DrawingContext.FillEllipse(ellipseBounds, ApplyOpacity(fill));
+                    context.DrawingContext.FillEllipse(ellipseBounds, fill!);
                 }
 
-                if (HasVisibleColor(stroke) && thickness > 0 && ellipseBounds.Width > 0 && ellipseBounds.Height > 0)
+                if (HasVisibleBrush(stroke) && thickness > 0 && ellipseBounds.Width > 0 && ellipseBounds.Height > 0)
                 {
-                    context.DrawingContext.DrawEllipse(ellipseBounds, ApplyOpacity(stroke), thickness);
+                    context.DrawingContext.DrawEllipse(ellipseBounds, stroke!, thickness);
                 }
 
                 break;
 
             case PathGeometry path:
-                if (HasVisibleColor(stroke) && thickness > 0)
+                if (HasVisibleBrush(stroke) && thickness > 0)
                 {
-                    DrawPathStroke(context, path, ApplyOpacity(stroke), thickness);
+                    DrawPathStroke(context, path, stroke!, thickness);
                 }
 
                 break;
@@ -184,24 +184,19 @@ public abstract class Shape : Control
         return new DrawRect(rect.X, rect.Y, MathF.Max(0, rect.Width), MathF.Max(0, rect.Height));
     }
 
-    private void DrawPathStroke(RenderContext context, PathGeometry path, Color color, float thickness)
+    private void DrawPathStroke(RenderContext context, PathGeometry path, Brush brush, float thickness)
     {
         for (int i = 1; i < path.Points.Count; i++)
         {
             DrawPoint start = RenderTransform.Apply(path.Points[i - 1]);
             DrawPoint end = RenderTransform.Apply(path.Points[i]);
-            context.DrawingContext.DrawLine(start, end, color, thickness);
+            context.DrawingContext.DrawLine(start, end, brush, thickness);
         }
     }
 
-    private Color ApplyOpacity(Color color)
+    private static bool HasVisibleBrush(Brush? brush)
     {
-        return new Color(color.R, color.G, color.B, (byte)Math.Clamp((int)MathF.Round(color.A * Opacity), 0, 255));
-    }
-
-    private static bool HasVisibleColor(Color color)
-    {
-        return color.A > 0;
+        return brush is not null && brush.Opacity > 0 && (brush.SolidColor?.A ?? 255) > 0;
     }
 
     private static bool IsValidStrokeThickness(float value)

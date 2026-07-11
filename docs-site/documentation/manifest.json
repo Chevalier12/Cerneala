@@ -3548,5 +3548,255 @@
     "name": "Cerneala.UI.Theming.ThemeResource_T_",
     "file": "documentation/classes/Cerneala.UI.Theming.ThemeResource_T_.md",
     "source": "UI/Theming/ThemeResource.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawBrushAlignmentX",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBrushAlignmentX.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawBrushAlignmentY",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBrushAlignmentY.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawBrushKind",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBrushKind.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawBrushStretch",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBrushStretch.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawGradientStop",
+    "file": "documentation/classes/Cerneala.Drawing.DrawGradientStop.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawingDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.DrawingDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTileMode",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTileMode.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.IDrawBrush",
+    "file": "documentation/classes/Cerneala.Drawing.IDrawBrush.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.ImageDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.ImageDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.LinearGradientDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.LinearGradientDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.RadialGradientDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.RadialGradientDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.SolidDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.SolidDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.TileDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.TileDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.VisualDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.VisualDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.UI.Aspect.ElementAspect",
+    "file": "documentation/classes/Cerneala.UI.Aspect.ElementAspect.md",
+    "source": "UI/Aspect/ElementAspect.cs"
+  },
+  {
+    "name": "Cerneala.UI.Aspect.ElementAspectValue",
+    "file": "documentation/classes/Cerneala.UI.Aspect.ElementAspectValue.md",
+    "source": "UI/Aspect/ElementAspect.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.InkCanvasStrokeCollectedEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.InkCanvasStrokeCollectedEventArgs.md",
+    "source": "UI/Controls/InkCanvasEventArgs.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Primitives.ScrollEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.ScrollEventArgs.md",
+    "source": "UI/Controls/Primitives/ScrollEventArgs.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Primitives.ScrollEventType",
+    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.ScrollEventType.md",
+    "source": "UI/Controls/Primitives/ScrollEventArgs.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.ResizeMode",
+    "file": "documentation/classes/Cerneala.UI.Controls.ResizeMode.md",
+    "source": "UI/Controls/ResizeMode.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.ScrollChangedEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.ScrollChangedEventArgs.md",
+    "source": "UI/Controls/ScrollChangedEventArgs.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TextChangedEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.TextChangedEventArgs.md",
+    "source": "UI/Controls/TextChangedEventArgs.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.UserControl_TViewModel_",
+    "file": "documentation/classes/Cerneala.UI.Controls.UserControl_TViewModel_.md",
+    "source": "UI/Controls/UserControl.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.UserControl",
+    "file": "documentation/classes/Cerneala.UI.Controls.UserControl.md",
+    "source": "UI/Controls/UserControl.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Window_TViewModel_",
+    "file": "documentation/classes/Cerneala.UI.Controls.Window_TViewModel_.md",
+    "source": "UI/Controls/Window.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Window",
+    "file": "documentation/classes/Cerneala.UI.Controls.Window.md",
+    "source": "UI/Controls/Window.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.WindowClosingEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.WindowClosingEventArgs.md",
+    "source": "UI/Controls/WindowClosingEventArgs.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.WindowStartupLocation",
+    "file": "documentation/classes/Cerneala.UI.Controls.WindowStartupLocation.md",
+    "source": "UI/Controls/WindowStartupLocation.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.WindowState",
+    "file": "documentation/classes/Cerneala.UI.Controls.WindowState.md",
+    "source": "UI/Controls/WindowState.cs"
+  },
+  {
+    "name": "Cerneala.UI.Elements.SizeChangedEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Elements.SizeChangedEventArgs.md",
+    "source": "UI/Elements/UIElement.Events.cs"
+  },
+  {
+    "name": "Cerneala.UI.Hosting.Windows.GeneratedWindowApplication",
+    "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.md",
+    "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
+  },
+  {
+    "name": "Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor",
+    "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor.md",
+    "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
+  },
+  {
+    "name": "Cerneala.UI.Input.IInputActivatable",
+    "file": "documentation/classes/Cerneala.UI.Input.IInputActivatable.md",
+    "source": "UI/Input/IInputActivatable.cs"
+  },
+  {
+    "name": "Cerneala.UI.Input.RoutedPropertyChangedEventArgs_T_",
+    "file": "documentation/classes/Cerneala.UI.Input.RoutedPropertyChangedEventArgs_T_.md",
+    "source": "UI/Input/RoutedPropertyChangedEventArgs.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.BrushMarkupReader",
+    "file": "documentation/classes/Cerneala.UI.Markup.BrushMarkupReader.md",
+    "source": "UI/Markup/BrushMarkupReader.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.GeneratedMarkup",
+    "file": "documentation/classes/Cerneala.UI.Markup.GeneratedMarkup.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupAspectResource",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupAspectResource.md",
+    "source": "UI/Markup/MarkupAspectResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupConditionalContent",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupConditionalContent.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupConditionalValue",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupConditionalValue.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupConditionRule",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupConditionRule.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupDataPathSegment",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupDataPathSegment.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupObservation",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupObservation.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupValueConstraint",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupValueConstraint.md",
+    "source": "UI/Markup/MarkupValueConstraintAttribute.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupValueConstraintAttribute",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupValueConstraintAttribute.md",
+    "source": "UI/Markup/MarkupValueConstraintAttribute.cs"
+  },
+  {
+    "name": "Cerneala.UI.Media.DrawingBrush",
+    "file": "documentation/classes/Cerneala.UI.Media.DrawingBrush.md",
+    "source": "UI/Media/DrawingBrush.cs"
+  },
+  {
+    "name": "Cerneala.UI.Media.ImageBrush",
+    "file": "documentation/classes/Cerneala.UI.Media.ImageBrush.md",
+    "source": "UI/Media/ImageBrush.cs"
+  },
+  {
+    "name": "Cerneala.UI.Media.TileBrush",
+    "file": "documentation/classes/Cerneala.UI.Media.TileBrush.md",
+    "source": "UI/Media/TileBrush.cs"
+  },
+  {
+    "name": "Cerneala.UI.Media.VisualBrush",
+    "file": "documentation/classes/Cerneala.UI.Media.VisualBrush.md",
+    "source": "UI/Media/VisualBrush.cs"
+  },
+  {
+    "name": "Cerneala.UI.Resources.ResourceDictionary",
+    "file": "documentation/classes/Cerneala.UI.Resources.ResourceDictionary.md",
+    "source": "UI/Resources/ResourceDictionary.cs"
   }
 ]

@@ -13,6 +13,51 @@ public sealed class BrushTests
         Assert.Equal(Color.White, brush.SolidColor);
     }
 
+    [Theory]
+    [InlineData(-0.1f)]
+    [InlineData(1.1f)]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    public void BrushRejectsInvalidOpacity(float opacity)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new SolidColorBrush(Color.White, opacity));
+    }
+
+    [Fact]
+    public void CompositeBrushesExposeKindAndNoSolidShortcut()
+    {
+        LinearGradientBrush brush = new(
+            new DrawPoint(0, 0),
+            new DrawPoint(10, 0),
+            [new GradientStop(0, Color.White), new GradientStop(1, Color.Black)],
+            0.5f);
+
+        Assert.Equal(DrawBrushKind.LinearGradient, brush.Kind);
+        Assert.Null(brush.SolidColor);
+        Assert.Equal(0.5f, brush.Opacity);
+    }
+
+    [Fact]
+    public void DrawingBrushCopiesCommandsAndUsesStructuralEquality()
+    {
+        DrawCommand[] commands = [DrawCommand.FillRectangle(new DrawRect(0, 0, 10, 10), Color.White)];
+        DrawingBrush first = new(commands, new DrawRect(0, 0, 10, 10));
+        DrawingBrush second = new(commands.ToArray(), new DrawRect(0, 0, 10, 10));
+
+        commands[0] = DrawCommand.FillRectangle(new DrawRect(0, 0, 10, 10), Color.Black);
+
+        Assert.Equal(first, second);
+        Assert.Equal(Color.White, first.Commands[0].Color);
+    }
+
+    [Fact]
+    public void TileBrushRejectsInvalidViewport()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ImageBrush(
+            (IDrawImage?)null,
+            viewport: new DrawRect(0, 0, 0, 10)));
+    }
+
     [Fact]
     public void LinearGradientBrushOrdersStops()
     {
@@ -79,6 +124,15 @@ public sealed class BrushTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new GradientStop(-0.1f, Color.Black));
         Assert.Throws<ArgumentOutOfRangeException>(() => new GradientStop(1.1f, Color.Black));
+    }
+
+    [Fact]
+    public void LinearGradientRejectsInvalidCoordinates()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new LinearGradientBrush(
+            new DrawPoint(float.NaN, 0),
+            new DrawPoint(1, 0),
+            [new GradientStop(0, Color.White)]));
     }
 
     [Theory]

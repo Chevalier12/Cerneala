@@ -2,9 +2,27 @@ using Cerneala.Drawing;
 
 namespace Cerneala.UI.Media;
 
-public abstract record Brush
+public abstract record Brush : IDrawBrush
 {
+    protected Brush(float opacity = 1)
+    {
+        if (!float.IsFinite(opacity) || opacity < 0 || opacity > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(opacity), "Brush opacity must be between 0 and 1.");
+        }
+
+        Opacity = opacity;
+    }
+
+    public abstract DrawBrushKind Kind { get; }
+
+    public float Opacity { get; }
+
     public virtual Color? SolidColor => null;
+
+    DrawBrushDescriptor IDrawBrush.CreateDescriptor() => CreateDescriptor();
+
+    protected abstract DrawBrushDescriptor CreateDescriptor();
 }
 
 internal static class GradientStopCollection
@@ -20,6 +38,11 @@ internal static class GradientStopCollection
         }
 
         return Array.AsReadOnly(orderedStops);
+    }
+
+    public static IReadOnlyList<DrawGradientStop> ToDrawStops(IReadOnlyList<GradientStop> stops)
+    {
+        return Array.AsReadOnly(stops.Select(stop => new DrawGradientStop(stop.Offset, stop.Color)).ToArray());
     }
 
     public static bool SequenceEquals(IReadOnlyList<GradientStop> left, IReadOnlyList<GradientStop> right)

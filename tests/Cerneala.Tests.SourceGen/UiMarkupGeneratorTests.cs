@@ -224,6 +224,47 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void CompositeBrushResourcesAreTypedAndAssignedWithoutColorFlattening()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <LinearGradientBrush Name="Linear" StartPoint="0,0" EndPoint="10,0" Opacity="0.5">
+                  <GradientStop Offset="0" Color="#FFFFFFFF" />
+                  <GradientStop Offset="1" Color="#FF000000" />
+                </LinearGradientBrush>
+                <RadialGradientBrush Name="Radial" Center="5,5" RadiusX="5" RadiusY="5">
+                  <GradientStop Offset="0" Color="White" />
+                  <GradientStop Offset="1" Color="Black" />
+                </RadialGradientBrush>
+                <DrawingBrush Name="Drawing" ContentBounds="0,0,10,10">
+                  <FillRectangle Rect="0,0,10,10" Color="White" />
+                </DrawingBrush>
+                <ImageBrush Name="Image" Source="accent.png" Stretch="Uniform" TileMode="FlipX" />
+              </StackPanel.Resources>
+              <Rectangle Fill="$Linear" Stroke="$Radial" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("CompositeBrushes.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string generatedSource = SingleGeneratedSource(result);
+        Assert.Contains("global::Cerneala.UI.Media.LinearGradientBrush", generatedSource);
+        Assert.Contains(".Fill = LinearResource", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel root = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.CompositeBrushesFactory"));
+        Cerneala.UI.Controls.Shapes.Rectangle shape = Assert.IsType<Cerneala.UI.Controls.Shapes.Rectangle>(root.VisualChildren[0]);
+        Assert.IsType<LinearGradientBrush>(shape.Fill);
+        Assert.IsType<RadialGradientBrush>(shape.Stroke);
+        Assert.IsType<DrawingBrush>(root.Resources["Drawing"]);
+        Assert.IsType<ImageBrush>(root.Resources["Image"]);
+    }
+
+    [Fact]
     public void GeneratedResourcesAreStoredOnTheirActualOwnerAndFollowRuntimeLookup()
     {
         const string markup = """

@@ -757,6 +757,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             Thickness,
             NonNegativeThickness,
             Color,
+            Brush,
             Enum,
             Unsupported
         }
@@ -764,7 +765,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private enum NamedSymbolKind
         {
             Element,
-            SolidColorBrush,
+            Brush,
             Aspect
         }
 
@@ -828,14 +829,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public object Source { get; }
         }
 
-        private sealed class SolidColorBrushResource
+        private sealed class BrushResource
         {
-            public SolidColorBrushResource(string name, string variable, string colorExpression, ColorLiteral color, XElement source)
+            public BrushResource(string name, string variable, string expression, XElement source, string? colorExpression = null)
             {
                 Name = name;
                 Variable = variable;
+                Expression = expression;
                 ColorExpression = colorExpression;
-                Color = color;
                 Source = source;
             }
 
@@ -843,9 +844,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public string Variable { get; }
 
-            public string ColorExpression { get; }
+            public string Expression { get; }
 
-            public ColorLiteral Color { get; }
+            public string? ColorExpression { get; }
 
             public XElement Source { get; }
         }
@@ -1076,7 +1077,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     switch (resource.Name.LocalName)
                     {
                         case "SolidColorBrush":
-                            ReadSolidColorBrush(scope, resource);
+                        case "LinearGradientBrush":
+                        case "RadialGradientBrush":
+                        case "ImageBrush":
+                        case "DrawingBrush":
+                            ReadBrush(scope, resource);
+                            break;
+                        case "VisualBrush":
+                            Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "VisualBrush is runtime-only because its source is a live element.");
                             break;
                         case "Aspect":
                             ReadAspect(scope, resource);
@@ -1091,7 +1099,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private void ReadSolidColorBrush(ResourceScope scope, XElement resource)
+        private void ReadBrush(ResourceScope scope, XElement resource)
         {
             string? name = RequiredName(resource);
             if (name is null)
@@ -1105,19 +1113,245 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            XAttribute? colorAttribute = resource.Attribute("Color");
-            if (colorAttribute is null || ParseHexColor(colorAttribute.Value) is not ColorLiteral color)
+            string? expression = resource.Name.LocalName switch
             {
-                Report(InvalidPropertyValue, (object?)colorAttribute ?? resource, "SolidColorBrush", "Color", colorAttribute?.Value ?? string.Empty);
+                "SolidColorBrush" => BuildSolidColorBrushExpression(resource, out _),
+                "LinearGradientBrush" => BuildLinearGradientBrushExpression(resource),
+                "RadialGradientBrush" => BuildRadialGradientBrushExpression(resource),
+                "ImageBrush" => BuildImageBrushExpression(resource),
+                "DrawingBrush" => BuildDrawingBrushExpression(resource),
+                _ => null
+            };
+            if (expression is null)
+            {
                 return;
             }
 
+            _ = BuildSolidColorBrushExpression(resource, out string? colorExpression);
+
             string variable = CreateIdentifier(name) + "Resource" + nextResourceId.ToString(CultureInfo.InvariantCulture);
             nextResourceId++;
-            SolidColorBrushResource brush = new(name, variable, color.ToExpression(), color, resource);
-            scope.NamedResources.Add(name, new NamedSymbol(name, NamedSymbolKind.SolidColorBrush, brush));
+            BrushResource brush = new(name, variable, expression, resource, colorExpression);
+            scope.NamedResources.Add(name, new NamedSymbol(name, NamedSymbolKind.Brush, brush));
             scope.RuntimeResources.Add(brush);
-            currentLines.Add("global::Cerneala.UI.Media.SolidColorBrush " + variable + " = new(" + brush.ColorExpression + ");");
+            string brushType = "global::Cerneala.UI.Media." + resource.Name.LocalName;
+            string initializer = brush.Expression.StartsWith("new " + brushType, StringComparison.Ordinal)
+                ? "new" + brush.Expression.Substring(("new " + brushType).Length)
+                : brush.Expression;
+            currentLines.Add(brushType + " " + variable + " = " + initializer + ";");
+        }
+
+        private string? BuildSolidColorBrushExpression(XElement resource, out string? colorExpression)
+        {
+            colorExpression = ParseBrushColor(resource.Attribute("Color"));
+            if (colorExpression is null)
+            {
+                if (resource.Name.LocalName == "SolidColorBrush")
+                {
+                    Report(InvalidPropertyValue, (object?)resource.Attribute("Color") ?? resource, "SolidColorBrush", "Color", resource.Attribute("Color")?.Value ?? string.Empty);
+                }
+
+                return null;
+            }
+
+            if (resource.Attribute("Opacity") is null)
+            {
+                return "new global::Cerneala.UI.Media.SolidColorBrush(" + colorExpression + ")";
+            }
+
+            string? opacity = ParseBrushFloat(resource, "Opacity", 1, value => value >= 0 && value <= 1);
+            return opacity is null ? null : "new global::Cerneala.UI.Media.SolidColorBrush(" + colorExpression + ", " + opacity + ")";
+        }
+
+        private string? BuildLinearGradientBrushExpression(XElement resource)
+        {
+            string? start = ParseBrushPoint(resource, "StartPoint");
+            string? end = ParseBrushPoint(resource, "EndPoint");
+            string? stops = ParseGradientStops(resource);
+            string? opacity = ParseBrushFloat(resource, "Opacity", 1, value => value >= 0 && value <= 1);
+            return start is null || end is null || stops is null || opacity is null
+                ? null
+                : "new global::Cerneala.UI.Media.LinearGradientBrush(" + start + ", " + end + ", " + stops + ", " + opacity + ")";
+        }
+
+        private string? BuildRadialGradientBrushExpression(XElement resource)
+        {
+            string? center = ParseBrushPoint(resource, "Center");
+            string? radiusX = ParseBrushFloat(resource, "RadiusX", 0, value => value > 0);
+            string? radiusY = ParseBrushFloat(resource, "RadiusY", 0, value => value > 0);
+            string? stops = ParseGradientStops(resource);
+            string? opacity = ParseBrushFloat(resource, "Opacity", 1, value => value >= 0 && value <= 1);
+            return center is null || radiusX is null || radiusY is null || stops is null || opacity is null
+                ? null
+                : "new global::Cerneala.UI.Media.RadialGradientBrush(" + center + ", " + radiusX + ", " + radiusY + ", " + stops + ", " + opacity + ")";
+        }
+
+        private string? BuildImageBrushExpression(XElement resource)
+        {
+            string source = resource.Attribute("Source")?.Value.Trim() ?? string.Empty;
+            if (source.Length == 0)
+            {
+                Report(InvalidPropertyValue, resource, "ImageBrush", "Source", source);
+                return null;
+            }
+
+            string? tileArguments = ParseTileArguments(resource);
+            return tileArguments is null
+                ? null
+                : "new global::Cerneala.UI.Media.ImageBrush(" + Literal(source) + ", " + tileArguments + ")";
+        }
+
+        private string? BuildDrawingBrushExpression(XElement resource)
+        {
+            string? bounds = ParseBrushRect(resource, "ContentBounds");
+            if (bounds is null)
+            {
+                return null;
+            }
+
+            List<string> commands = [];
+            foreach (XElement child in resource.Elements())
+            {
+                string? rect = ParseBrushRect(child, "Rect");
+                string? color = ParseBrushColor(child.Attribute("Color"));
+                if (rect is null || color is null || child.Name.LocalName is not ("FillRectangle" or "FillEllipse"))
+                {
+                    Report(UnsupportedElement, child, child.Name.LocalName);
+                    return null;
+                }
+
+                commands.Add("global::Cerneala.Drawing.DrawCommand." + child.Name.LocalName + "(" + rect + ", " + color + ")");
+            }
+
+            if (commands.Count == 0)
+            {
+                Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "DrawingBrush requires at least one drawing command.");
+                return null;
+            }
+
+            string? tileArguments = ParseTileArguments(resource);
+            return tileArguments is null
+                ? null
+                : "new global::Cerneala.UI.Media.DrawingBrush(new global::Cerneala.Drawing.DrawCommand[] { " +
+                    string.Join(", ", commands) + " }, " + bounds + ", " + tileArguments + ")";
+        }
+
+        private string? ParseGradientStops(XElement resource)
+        {
+            List<string> stops = [];
+            foreach (XElement stop in resource.Elements().Where(element => element.Name.LocalName == "GradientStop"))
+            {
+                string? offset = ParseBrushFloat(stop, "Offset", float.NaN, value => value >= 0 && value <= 1);
+                string? color = ParseBrushColor(stop.Attribute("Color"));
+                if (offset is null || color is null)
+                {
+                    Report(InvalidPropertyValue, stop, resource.Name.LocalName, "GradientStop", stop.ToString(SaveOptions.DisableFormatting));
+                    return null;
+                }
+
+                stops.Add("new global::Cerneala.UI.Media.GradientStop(" + offset + ", " + color + ")");
+            }
+
+            if (stops.Count == 0)
+            {
+                Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), resource.Name.LocalName + " requires at least one GradientStop child.");
+                return null;
+            }
+
+            return "new global::Cerneala.UI.Media.GradientStop[] { " + string.Join(", ", stops) + " }";
+        }
+
+        private string? ParseTileArguments(XElement resource)
+        {
+            string stretch = resource.Attribute("Stretch")?.Value.Trim() ?? "Fill";
+            string alignmentX = resource.Attribute("AlignmentX")?.Value.Trim() ?? "Center";
+            string alignmentY = resource.Attribute("AlignmentY")?.Value.Trim() ?? "Center";
+            string tileMode = resource.Attribute("TileMode")?.Value.Trim() ?? "None";
+            string? viewport = resource.Attribute("Viewport") is null ? "null" : ParseBrushRect(resource, "Viewport");
+            string? viewbox = resource.Attribute("Viewbox") is null ? "null" : ParseBrushRect(resource, "Viewbox");
+            string? opacity = ParseBrushFloat(resource, "Opacity", 1, value => value >= 0 && value <= 1);
+            if (!new[] { "None", "Fill", "Uniform", "UniformToFill" }.Contains(stretch) ||
+                !new[] { "Left", "Center", "Right" }.Contains(alignmentX) ||
+                !new[] { "Top", "Center", "Bottom" }.Contains(alignmentY) ||
+                !new[] { "None", "Tile", "FlipX", "FlipY", "FlipXY" }.Contains(tileMode) ||
+                viewport is null || viewbox is null || opacity is null)
+            {
+                Report(InvalidPropertyValue, resource, resource.Name.LocalName, "Tile", resource.ToString(SaveOptions.DisableFormatting));
+                return null;
+            }
+
+            return "global::Cerneala.Drawing.DrawBrushStretch." + stretch + ", global::Cerneala.Drawing.DrawBrushAlignmentX." + alignmentX +
+                ", global::Cerneala.Drawing.DrawBrushAlignmentY." + alignmentY + ", " + viewport + ", " + viewbox +
+                ", global::Cerneala.Drawing.DrawTileMode." + tileMode + ", " + opacity;
+        }
+
+        private string? ParseBrushPoint(XElement element, string attributeName)
+        {
+            string[] parts = (element.Attribute(attributeName)?.Value ?? string.Empty).Split(',').Select(value => value.Trim()).ToArray();
+            if (parts.Length != 2 || !TryParseFiniteFloat(parts[0], out string? x) || !TryParseFiniteFloat(parts[1], out string? y))
+            {
+                Report(InvalidPropertyValue, (object?)element.Attribute(attributeName) ?? element, element.Name.LocalName, attributeName, element.Attribute(attributeName)?.Value ?? string.Empty);
+                return null;
+            }
+
+            return "new global::Cerneala.Drawing.DrawPoint(" + x + ", " + y + ")";
+        }
+
+        private string? ParseBrushRect(XElement element, string attributeName)
+        {
+            string[] parts = (element.Attribute(attributeName)?.Value ?? string.Empty).Split(',').Select(value => value.Trim()).ToArray();
+            if (parts.Length != 4 || parts.Any(part => !float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) || float.IsNaN(value) || float.IsInfinity(value)))
+            {
+                Report(InvalidPropertyValue, (object?)element.Attribute(attributeName) ?? element, element.Name.LocalName, attributeName, element.Attribute(attributeName)?.Value ?? string.Empty);
+                return null;
+            }
+
+            return "new global::Cerneala.Drawing.DrawRect(" + string.Join(", ", parts.Select(part => float.Parse(part, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f")) + ")";
+        }
+
+        private string? ParseBrushFloat(XElement element, string attributeName, float defaultValue, Func<float, bool> validate)
+        {
+            XAttribute? attribute = element.Attribute(attributeName);
+            if (attribute is null && !float.IsNaN(defaultValue) && !float.IsInfinity(defaultValue))
+            {
+                return defaultValue.ToString("R", CultureInfo.InvariantCulture) + "f";
+            }
+
+            if (attribute is null || !float.TryParse(attribute.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) || float.IsNaN(value) || float.IsInfinity(value) || !validate(value))
+            {
+                Report(InvalidPropertyValue, (object?)attribute ?? element, element.Name.LocalName, attributeName, attribute?.Value ?? string.Empty);
+                return null;
+            }
+
+            return value.ToString("R", CultureInfo.InvariantCulture) + "f";
+        }
+
+        private static bool TryParseFiniteFloat(string value, out string? expression)
+        {
+            if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed) && !float.IsNaN(parsed) && !float.IsInfinity(parsed))
+            {
+                expression = parsed.ToString("R", CultureInfo.InvariantCulture) + "f";
+                return true;
+            }
+
+            expression = null;
+            return false;
+        }
+
+        private static string? ParseBrushColor(XAttribute? attribute)
+        {
+            if (attribute is null)
+            {
+                return null;
+            }
+
+            string value = attribute.Value.Trim();
+            if (NamedColorNames.TryGetValue(value, out string? named))
+            {
+                return "global::Cerneala.Drawing.Color." + named;
+            }
+
+            return ParseHexColor(value) is ColorLiteral color ? color.ToExpression() : null;
         }
 
         private void ReadAspect(ResourceScope scope, XElement resource)
@@ -1787,7 +2021,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             {
                 switch (resource)
                 {
-                    case SolidColorBrushResource brush:
+                    case BrushResource brush:
                         currentLines.Add(ownerVariable + ".Resources[" + Literal(brush.Name) + "] = " + brush.Variable + ";");
                         break;
                     case AspectResource aspect:
@@ -1850,6 +2084,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             INamedTypeSymbol? type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls." + elementName);
             INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
             INamedTypeSymbol? windowType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Window");
+            if (type is null)
+            {
+                type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Shapes." + elementName);
+            }
+
             if (type is null || type.TypeKind != TypeKind.Class || type.IsAbstract ||
                 uiElementType is null || !IsOrDerivesFrom(type, uiElementType) ||
                 (windowType is not null && IsOrDerivesFrom(type, windowType)))
@@ -2048,7 +2287,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return null;
             }
 
-            if (targetKind == MarkupValueKind.Color && symbol.Source is SolidColorBrushResource brush)
+            if (targetKind == MarkupValueKind.Brush && symbol.Source is BrushResource brushResource)
+            {
+                return new GeneratedExpression(brushResource.Variable, MarkupValueKind.Brush);
+            }
+
+            if (targetKind == MarkupValueKind.Color && symbol.Source is BrushResource brush && brush.ColorExpression is not null)
             {
                 return new GeneratedExpression(brush.ColorExpression, MarkupValueKind.Color);
             }
@@ -2204,7 +2448,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            if (templateEmissionContexts.Count > 0 && trimmedValue.StartsWith("$", StringComparison.Ordinal))
+            if (trimmedValue.StartsWith("$", StringComparison.Ordinal))
             {
                 GeneratedExpression? resourceExpression = ResolveReferenceValue(
                     elementName,
@@ -2360,6 +2604,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             if (typeName == "Cerneala.Drawing.Color")
             {
                 return MarkupValueKind.Color;
+            }
+
+            if (valueType.Name == "Brush" && valueType.ContainingNamespace.ToDisplayString() == "Cerneala.UI.Media")
+            {
+                return MarkupValueKind.Brush;
             }
 
             if (valueType.TypeKind == TypeKind.Enum)

@@ -357,7 +357,7 @@ public sealed partial class UiMarkupGenerator
                 {
                     NamedElementReference element => element.Code,
                     string variable => variable,
-                    SolidColorBrushResource brush => brush.Variable,
+                    BrushResource brush => brush.Variable,
                     _ => null
                 };
                 if (objectCode is null)
@@ -588,7 +588,7 @@ public sealed partial class UiMarkupGenerator
                 string? objectCode = symbol.Source switch
                 {
                     string variable => variable,
-                    SolidColorBrushResource brush => brush.Variable,
+                    BrushResource brush => brush.Variable,
                     _ => null
                 };
                 if (objectCode is null)

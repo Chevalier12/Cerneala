@@ -2,66 +2,34 @@
 
 ## Definition
 Namespace: `Cerneala.UI.Media`
-
 Assembly/Project: `Cerneala`
-
 Source: `UI/Media/Brush.cs`
 
-Provides the abstract base record for media brushes used by retained UI drawing APIs.
+Semantic base record for all Cerneala brush values.
 
 ```csharp
-public abstract record Brush
+public abstract record Brush : IDrawBrush
 ```
 
-Inheritance:
-`object` -> `Brush`
-
-Derived:
-`SolidColorBrush`, `LinearGradientBrush`, `RadialGradientBrush`
-
 ## Examples
-
-Use a `Brush` value through a shape fill:
-
 ```csharp
-using Cerneala.Drawing;
-using Cerneala.UI.Controls.Shapes;
-using Cerneala.UI.Media;
-
-Brush fill = new SolidColorBrush(new Color(64, 128, 255));
-
-Rectangle rectangle = new()
-{
-    Fill = fill,
-    Stroke = new SolidColorBrush(Color.Black),
-    StrokeThickness = 2
-};
-
-Color? solidColor = fill.SolidColor;
+Brush brush = new SolidColorBrush(Color.White, opacity: 0.5f);
 ```
 
 ## Remarks
-
-`Brush` is the shared base type for solid and gradient brush records. It exposes `SolidColor` as an optional solid-color representation. The base implementation returns `null`; `SolidColorBrush` overrides it to return its `Color`.
-
-Consumers can use `SolidColor` when they need a concrete `Color`. For example, shape rendering and measuring paths that inspect `Fill` or `Stroke` through `SolidColor` treat brushes that return `null` as having no solid color. Gradient brush types inherit the base `null` value unless they provide their own override.
-
-`Brush` does not define validation, color interpolation, or rendering behavior by itself. Those behaviors belong to concrete brush types and to the rendering code that consumes them.
+Brushes are immutable. Opacity is validated in the inclusive range `0..1`. `SolidColor` is a fast-path shortcut and returns `null` for gradients, images, drawings, and visuals.
 
 ## Properties
+| Name | Description |
+| --- | --- |
+| `Kind` | Semantic brush kind. |
+| `Opacity` | Brush opacity. |
+| `SolidColor` | Solid color shortcut, or `null`. |
 
-| Name | Type | Description |
-| --- | --- | --- |
-| `SolidColor` | `Color?` | Gets the brush as a solid color when available; the base implementation returns `null`. |
+## Explicit Interface Implementations
+| Name | Description |
+| --- | --- |
+| `IDrawBrush.CreateDescriptor()` | Creates the backend descriptor for this brush. |
 
-## Applies To
-
-Cerneala retained UI media and rendering APIs.
-
-## See Also
-
-- `Cerneala.UI.Media.SolidColorBrush`
-- `Cerneala.UI.Media.LinearGradientBrush`
-- `Cerneala.UI.Media.RadialGradientBrush`
-- `Cerneala.UI.Controls.Shapes.Shape`
-- `Cerneala.Drawing.Color`
+## Applies to
+All UI shape and drawing APIs that accept a `Brush`.

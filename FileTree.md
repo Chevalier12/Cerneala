@@ -29,9 +29,12 @@ Generated from `.`.
 |   |   |-- cerneala-drawing-flowchart.svg
 |   |   |-- retained-frame-loop.md
 |   |   +-- ui-layer-boundaries.md
+|   |-- documentation/
 |   |-- plans/
 |   |   |-- 2026-07-10-inline-component-template-markup.md
-|   |   +-- 2026-07-10-window-windowsdx-migration.md
+|   |   |-- 2026-07-10-window-windowsdx-migration.md
+|   |   |-- 2026-07-11-borderbrush-brush-migration.md
+|   |   +-- 2026-07-11-brush-types-and-rendering.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -100,24 +103,37 @@ Generated from `.`.
 |   |   |-- classes/
 |   |   |   |-- Cerneala.Drawing.Color.md
 |   |   |   |-- Cerneala.Drawing.DrawArgument.md
+|   |   |   |-- Cerneala.Drawing.DrawBrushAlignmentX.md
+|   |   |   |-- Cerneala.Drawing.DrawBrushAlignmentY.md
+|   |   |   |-- Cerneala.Drawing.DrawBrushDescriptor.md
+|   |   |   |-- Cerneala.Drawing.DrawBrushKind.md
+|   |   |   |-- Cerneala.Drawing.DrawBrushStretch.md
 |   |   |   |-- Cerneala.Drawing.DrawCommand.md
 |   |   |   |-- Cerneala.Drawing.DrawCommandKind.md
 |   |   |   |-- Cerneala.Drawing.DrawCommandList.md
+|   |   |   |-- Cerneala.Drawing.DrawGradientStop.md
 |   |   |   |-- Cerneala.Drawing.DrawingContext.md
+|   |   |   |-- Cerneala.Drawing.DrawingDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.DrawPoint.md
 |   |   |   |-- Cerneala.Drawing.DrawRect.md
 |   |   |   |-- Cerneala.Drawing.DrawSize.md
 |   |   |   |-- Cerneala.Drawing.DrawTextRun.md
+|   |   |   |-- Cerneala.Drawing.DrawTileMode.md
+|   |   |   |-- Cerneala.Drawing.IDrawBrush.md
 |   |   |   |-- Cerneala.Drawing.IDrawFont.md
 |   |   |   |-- Cerneala.Drawing.IDrawImage.md
 |   |   |   |-- Cerneala.Drawing.IDrawingBackend.md
 |   |   |   |-- Cerneala.Drawing.IFontSource.md
+|   |   |   |-- Cerneala.Drawing.ImageDrawBrushDescriptor.md
+|   |   |   |-- Cerneala.Drawing.LinearGradientDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameClipStack.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTexture.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTextureKey.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawMapper.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameImage.md
+|   |   |   |-- Cerneala.Drawing.RadialGradientDrawBrushDescriptor.md
+|   |   |   |-- Cerneala.Drawing.SolidDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.Text.RasterizedText.md
 |   |   |   |-- Cerneala.Drawing.Text.SkiaFont.md
 |   |   |   |-- Cerneala.Drawing.Text.SkiaTextRasterizer.md
@@ -126,6 +142,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.Text.TextCaretVerticalMetrics.md
 |   |   |   |-- Cerneala.Drawing.Text.TextShaper.md
 |   |   |   |-- Cerneala.Drawing.Text.TextShapeResult.md
+|   |   |   |-- Cerneala.Drawing.TileDrawBrushDescriptor.md
+|   |   |   |-- Cerneala.Drawing.VisualDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.GameBootstrap.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.GenerationScope.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.MarkupSource.md
@@ -206,6 +224,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.DefaultAspectTokens.Spacing.md
 |   |   |   |-- Cerneala.UI.Aspect.DefaultAspectTokens.Stroke.md
 |   |   |   |-- Cerneala.UI.Aspect.DefaultAspectTokens.Typography.md
+|   |   |   |-- Cerneala.UI.Aspect.ElementAspect.md
+|   |   |   |-- Cerneala.UI.Aspect.ElementAspectValue.md
 |   |   |   |-- Cerneala.UI.Aspect.NotAspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.PredicateAspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.PropertyAspectCondition_TValue_.md
@@ -239,6 +259,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.InkInputKey.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.InkInputKind.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.md
+|   |   |   |-- Cerneala.UI.Controls.InkCanvasStrokeCollectedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.IScrollInfo.md
 |   |   |   |-- Cerneala.UI.Controls.ISelectableItemContainer.md
 |   |   |   |-- Cerneala.UI.Controls.Items.ItemCollection.md
@@ -260,6 +281,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Primitives.DragStartedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.RangeBase.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.ScrollBar.md
+|   |   |   |-- Cerneala.UI.Controls.Primitives.ScrollEventArgs.md
+|   |   |   |-- Cerneala.UI.Controls.Primitives.ScrollEventType.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.Selector.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.Selector.SelectorClickHandlerRegistration.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.Thumb.md
@@ -267,7 +290,9 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Primitives.Track.md
 |   |   |   |-- Cerneala.UI.Controls.ProgressBar.md
 |   |   |   |-- Cerneala.UI.Controls.RadioButton.md
+|   |   |   |-- Cerneala.UI.Controls.ResizeMode.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollBarVisibility.md
+|   |   |   |-- Cerneala.UI.Controls.ScrollChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollContentPresenter.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollViewer.md
 |   |   |   |-- Cerneala.UI.Controls.Selection.SelectionChangedEventArgs.md
@@ -310,7 +335,15 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.TextBlock.md
 |   |   |   |-- Cerneala.UI.Controls.TextBox.md
 |   |   |   |-- Cerneala.UI.Controls.TextBoxBase.md
+|   |   |   |-- Cerneala.UI.Controls.TextChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.ToolTip.md
+|   |   |   |-- Cerneala.UI.Controls.UserControl_TViewModel_.md
+|   |   |   |-- Cerneala.UI.Controls.UserControl.md
+|   |   |   |-- Cerneala.UI.Controls.Window_TViewModel_.md
+|   |   |   |-- Cerneala.UI.Controls.Window.md
+|   |   |   |-- Cerneala.UI.Controls.WindowClosingEventArgs.md
+|   |   |   |-- Cerneala.UI.Controls.WindowStartupLocation.md
+|   |   |   |-- Cerneala.UI.Controls.WindowState.md
 |   |   |   |-- Cerneala.UI.Core.CoerceValue_T_.md
 |   |   |   |-- Cerneala.UI.Core.IUiPropertyOwner.md
 |   |   |   |-- Cerneala.UI.Core.UiObject.md
@@ -389,6 +422,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Elements.IElementChildHost.md
 |   |   |   |-- Cerneala.UI.Elements.IElementHost.md
 |   |   |   |-- Cerneala.UI.Elements.InheritedPropertyPropagator.md
+|   |   |   |-- Cerneala.UI.Elements.SizeChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Elements.UIElement.md
 |   |   |   |-- Cerneala.UI.Elements.UIElementCollection.md
 |   |   |   |-- Cerneala.UI.Elements.UIElementVisibility.md
@@ -405,6 +439,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Hosting.UiHost.md
 |   |   |   |-- Cerneala.UI.Hosting.UiHostOptions.md
 |   |   |   |-- Cerneala.UI.Hosting.UiViewport.md
+|   |   |   |-- Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.md
+|   |   |   |-- Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor.md
 |   |   |   |-- Cerneala.UI.Ink.Stroke.md
 |   |   |   |-- Cerneala.UI.Ink.StrokeCollection.md
 |   |   |   |-- Cerneala.UI.Ink.StrokeCollectionChangedEventArgs.md
@@ -443,6 +479,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Input.HoverTracker.md
 |   |   |   |-- Cerneala.UI.Input.ICommand.md
 |   |   |   |-- Cerneala.UI.Input.ICommandStateSource.md
+|   |   |   |-- Cerneala.UI.Input.IInputActivatable.md
 |   |   |   |-- Cerneala.UI.Input.IInputCommandSource.md
 |   |   |   |-- Cerneala.UI.Input.IInputPressable.md
 |   |   |   |-- Cerneala.UI.Input.IInputSource.md
@@ -490,6 +527,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Input.RoutedEventHandler.md
 |   |   |   |-- Cerneala.UI.Input.RoutedEventRegistry.md
 |   |   |   |-- Cerneala.UI.Input.RoutedEventRouter.md
+|   |   |   |-- Cerneala.UI.Input.RoutedPropertyChangedEventArgs_T_.md
 |   |   |   |-- Cerneala.UI.Input.RoutingStrategy.md
 |   |   |   |-- Cerneala.UI.Input.StylusEventArgs.md
 |   |   |   |-- Cerneala.UI.Input.StylusInputAction.md
@@ -554,13 +592,23 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Layout.Virtualization.RealizationWindow.md
 |   |   |   |-- Cerneala.UI.Layout.Virtualization.VirtualizationContext.md
 |   |   |   |-- Cerneala.UI.Layout.Visibility.md
+|   |   |   |-- Cerneala.UI.Markup.BrushMarkupReader.md
 |   |   |   |-- Cerneala.UI.Markup.ContentPropertyAttribute.md
 |   |   |   |-- Cerneala.UI.Markup.DesignTimeOnlyAttribute.md
+|   |   |   |-- Cerneala.UI.Markup.GeneratedMarkup.md
 |   |   |   |-- Cerneala.UI.Markup.GeneratedUiFactory.md
+|   |   |   |-- Cerneala.UI.Markup.MarkupAspectResource.md
+|   |   |   |-- Cerneala.UI.Markup.MarkupConditionalContent.md
+|   |   |   |-- Cerneala.UI.Markup.MarkupConditionalValue.md
+|   |   |   |-- Cerneala.UI.Markup.MarkupConditionRule.md
+|   |   |   |-- Cerneala.UI.Markup.MarkupDataPathSegment.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupDiagnostic.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupDiagnosticSeverity.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupLoadOptions.md
+|   |   |   |-- Cerneala.UI.Markup.MarkupObservation.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupResult_T_.md
+|   |   |   |-- Cerneala.UI.Markup.MarkupValueConstraint.md
+|   |   |   |-- Cerneala.UI.Markup.MarkupValueConstraintAttribute.md
 |   |   |   |-- Cerneala.UI.Markup.UiFactory.md
 |   |   |   |-- Cerneala.UI.Markup.UiMarkupAttribute.md
 |   |   |   |-- Cerneala.UI.Markup.UiMarkupChildContent.md
@@ -576,9 +624,11 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Markup.UiMarkupWriter.md
 |   |   |   |-- Cerneala.UI.Media.BitmapImage.md
 |   |   |   |-- Cerneala.UI.Media.Brush.md
+|   |   |   |-- Cerneala.UI.Media.DrawingBrush.md
 |   |   |   |-- Cerneala.UI.Media.EllipseGeometry.md
 |   |   |   |-- Cerneala.UI.Media.Geometry.md
 |   |   |   |-- Cerneala.UI.Media.GradientStop.md
+|   |   |   |-- Cerneala.UI.Media.ImageBrush.md
 |   |   |   |-- Cerneala.UI.Media.ImageSource.md
 |   |   |   |-- Cerneala.UI.Media.LinearGradientBrush.md
 |   |   |   |-- Cerneala.UI.Media.Matrix3x2.md
@@ -590,7 +640,9 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Media.RenderTargetImage.md
 |   |   |   |-- Cerneala.UI.Media.ShadowEffect.md
 |   |   |   |-- Cerneala.UI.Media.SolidColorBrush.md
+|   |   |   |-- Cerneala.UI.Media.TileBrush.md
 |   |   |   |-- Cerneala.UI.Media.Transform.md
+|   |   |   |-- Cerneala.UI.Media.VisualBrush.md
 |   |   |   |-- Cerneala.UI.Motion.Core.DerivedMotionValue_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Core.DerivedMotionValue_T_.Subscription.md
 |   |   |   |-- Cerneala.UI.Motion.Core.IMotionClock.md
@@ -768,6 +820,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Resources.ResourceDependencyTracker.ResourceDependency.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceDependencyTracker.ResourceKey.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceDependencyTracker.ResourceProviderReferenceEqualityComparer.md
+|   |   |   |-- Cerneala.UI.Resources.ResourceDictionary.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceId_T_.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceStore.Entry.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceStore.md
@@ -840,6 +893,7 @@ Generated from `.`.
 |   |-- DrawRect.cs
 |   |-- DrawSize.cs
 |   |-- DrawTextRun.cs
+|   |-- IDrawBrush.cs
 |   |-- IDrawFont.cs
 |   |-- IDrawImage.cs
 |   |-- IDrawingBackend.cs
@@ -933,6 +987,7 @@ Generated from `.`.
 |   |   |   +-- GettingStartedDocsTests.cs
 |   |   |-- Drawing/
 |   |   |   |-- MonoGame/
+|   |   |   |   |-- BrushRenderingTests.cs
 |   |   |   |   |-- MonoGameClipStackTests.cs
 |   |   |   |   |-- MonoGameDrawingBackendStateTests.cs
 |   |   |   |   +-- MonoGameDrawMapperTests.cs
@@ -1092,6 +1147,7 @@ Generated from `.`.
 |   |   |   |   |-- VisibilityCombinationTests.cs
 |   |   |   |   +-- VisibilityTests.cs
 |   |   |   |-- Markup/
+|   |   |   |   |-- BrushMarkupReaderTests.cs
 |   |   |   |   |-- MarkupDiagnosticTests.cs
 |   |   |   |   |-- UiFactoryTests.cs
 |   |   |   |   |-- UiMarkupReaderTests.cs
@@ -1624,6 +1680,7 @@ Generated from `.`.
 |   |   |-- Thickness.cs
 |   |   +-- Visibility.cs
 |   |-- Markup/
+|   |   |-- BrushMarkupReader.cs
 |   |   |-- ContentPropertyAttribute.cs
 |   |   |-- DesignTimeOnlyAttribute.cs
 |   |   |-- GeneratedMarkupConditions.cs
@@ -1649,9 +1706,11 @@ Generated from `.`.
 |   |-- Media/
 |   |   |-- BitmapImage.cs
 |   |   |-- Brush.cs
+|   |   |-- DrawingBrush.cs
 |   |   |-- EllipseGeometry.cs
 |   |   |-- Geometry.cs
 |   |   |-- GradientStop.cs
+|   |   |-- ImageBrush.cs
 |   |   |-- ImageSource.cs
 |   |   |-- LinearGradientBrush.cs
 |   |   |-- Matrix3x2.cs
@@ -1663,7 +1722,9 @@ Generated from `.`.
 |   |   |-- RenderTargetImage.cs
 |   |   |-- ShadowEffect.cs
 |   |   |-- SolidColorBrush.cs
-|   |   +-- Transform.cs
+|   |   |-- TileBrush.cs
+|   |   |-- Transform.cs
+|   |   +-- VisualBrush.cs
 |   |-- Motion/
 |   |   |-- Core/
 |   |   |   |-- DerivedMotionValue{T}.cs

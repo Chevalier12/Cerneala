@@ -20,6 +20,13 @@
 - Before editing a C# file, prefer `roslyn_read` to read the full file. Use `roslyn_pread` only for targeted partial reads.
 - RoslynIndexer is read/search/index only. Do not add or expect shell execution or write-file capabilities through MCP.
 
+## API Documentation (MANDATORY)
+
+- The single source of truth for API documentation is `docs-site/documentation/classes/`.
+- Keep the documentation in sync with every public API change so it does not become stale. Update the corresponding class/member page in the same change, and keep `docs-site/documentation/manifest.json` in sync when pages are added or renamed.
+- Put API documentation only in `docs-site/documentation/classes/`; do not add API documentation under `docs/documentation/`.
+- Create and update API documentation with the [`writing-api-documentation`](C:\Users\Shadow\.codex\skills\writing-api-documentation\SKILL.md) skill.
+
 ## Local Tooling
 
 - `csi` is available as a local C# scripting/REPL command via the globally installed `dotnet-csi` tool. Use it for small C# experiments when a focused script is faster than adding throwaway project code.
