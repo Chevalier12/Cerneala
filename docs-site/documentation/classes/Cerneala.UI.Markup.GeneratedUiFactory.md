@@ -25,10 +25,11 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Markup;
+using Cerneala.UI.Media;
 
 GeneratedUiFactory factory = new((Func<UIElement>)(() => new Border
 {
-    Background = Color.White
+    Background = new SolidColorBrush(Color.White)
 }));
 
 MarkupResult<UIElement> result = factory.Create();

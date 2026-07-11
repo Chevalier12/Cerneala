@@ -27,12 +27,13 @@ Create a rule in the application layer:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectRuleSet rule = new(
     "button.primary",
     AspectLayer.App,
     new AspectTarget(typeof(Button)),
-    [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.Black))],
+    [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(new SolidColorBrush(Color.Black)))],
     declarationOrder: 0);
 ```
 

@@ -250,6 +250,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.ContentControl.md
 |   |   |   |-- Cerneala.UI.Controls.ContentPresenter.md
 |   |   |   |-- Cerneala.UI.Controls.ContentPresenter.ReferenceContentEqualityComparer.md
+|   |   |   |-- Cerneala.UI.Controls.Control.BorderBrush.md
 |   |   |   |-- Cerneala.UI.Controls.Control.md
 |   |   |   |-- Cerneala.UI.Controls.ControlTextFont.md
 |   |   |   |-- Cerneala.UI.Controls.Decorator.md
@@ -695,6 +696,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.Input.ScrollTimeline.md
 |   |   |   |-- Cerneala.UI.Motion.Input.ScrollTimelineProgress.md
 |   |   |   |-- Cerneala.UI.Motion.Input.VelocityTracker.md
+|   |   |   |-- Cerneala.UI.Motion.Interpolation.BrushMixer.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.ColorMixer.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.DoubleMixer.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.DrawPointMixer.md
@@ -1772,6 +1774,7 @@ Generated from `.`.
 |   |   |   |-- ScrollTimeline.cs
 |   |   |   +-- VelocityTracker.cs
 |   |   |-- Interpolation/
+|   |   |   |-- BrushMixer.cs
 |   |   |   |-- ColorMixer.cs
 |   |   |   |-- DoubleMixer.cs
 |   |   |   |-- DrawPointMixer.cs

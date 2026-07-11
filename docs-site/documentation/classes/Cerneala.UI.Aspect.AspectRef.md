@@ -21,8 +21,9 @@ Reference an aspect token from an aspect declaration:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
-AspectToken<Color> accent = AspectToken.Color("app.accent");
+AspectToken<Brush?> accent = AspectToken.Create<Brush?>("app.accent-brush");
 
 AspectDeclaration declaration = new(
     Control.BackgroundProperty,
@@ -35,11 +36,12 @@ Use the reference in a rule while defining the token default in the same package
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
-AspectToken<Color> surface = AspectToken.Color("card.surface");
+AspectToken<Brush?> surface = AspectToken.Create<Brush?>("card.surface");
 
 AspectPackage package = AspectPackage.Create("Cards")
-    .Tokens(tokens => tokens.Set(surface, Color.White))
+    .Tokens(tokens => tokens.Set(surface, new SolidColorBrush(Color.White)))
     .Components(components => components.AddRule(new AspectRuleSet(
         "card.surface",
         AspectLayer.App,

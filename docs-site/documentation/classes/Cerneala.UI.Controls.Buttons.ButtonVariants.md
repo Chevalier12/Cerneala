@@ -38,6 +38,7 @@ Use button variants in aspect rules:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectRuleSet dangerRule = new(
     "app.button.danger",
@@ -46,7 +47,7 @@ AspectRuleSet dangerRule = new(
         typeof(Button),
         conditions: [AspectCondition.Variant(ButtonVariants.Kind, ButtonKind.Danger)]),
     [
-        new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(new Color(220, 38, 38))),
+        new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(new SolidColorBrush(new Color(220, 38, 38)))),
         new AspectDeclaration(Control.ForegroundProperty, AspectValue<Color>.Literal(Color.White))
     ],
     priority: 0);

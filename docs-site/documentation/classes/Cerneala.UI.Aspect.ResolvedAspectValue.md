@@ -24,11 +24,12 @@ Read the winning resolved value for a property after resolving a catalog:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 Button button = new();
 AspectDeclaration declaration = new(
     Control.BackgroundProperty,
-    AspectValue<Color>.Literal(Color.White),
+    AspectValue<Brush?>.Literal(new SolidColorBrush(Color.White)),
     diagnosticName: "button background");
 
 AspectCatalog catalog = new AspectRegistry()
@@ -47,7 +48,7 @@ ResolvedAspect resolved = new AspectEngine()
     .Resolve(button, catalog, new AspectEnvironment("example"));
 
 ResolvedAspectValue value = resolved.Values[Control.BackgroundProperty];
-Color background = (Color)value.Value!;
+Brush? background = (Brush?)value.Value;
 AspectDeclaration source = value.SourceDeclaration;
 ```
 

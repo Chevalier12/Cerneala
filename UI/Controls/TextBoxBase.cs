@@ -62,8 +62,8 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         IsTabStop = true;
         Padding = new Thickness(4, 2, 4, 2);
         BorderThickness = new Thickness(1);
-        BorderBrush = new Color(120, 130, 145);
-        Background = Color.White;
+        BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(120, 130, 145));
+        Background = new Cerneala.UI.Media.SolidColorBrush(Color.White);
         Cursor = Cerneala.UI.Input.Cursor.IBeam;
         Handlers.AddHandler(InputEvents.TextInputEvent, OnRoutedTextInput);
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnRoutedKeyDown);
@@ -271,15 +271,15 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
     protected override void OnRender(RenderContext context)
     {
         DrawRect rect = Border.ToDrawRect(context.Bounds);
-        if (Background.A != 0 && rect.Width > 0 && rect.Height > 0)
+        if (Background is { } background && rect.Width > 0 && rect.Height > 0)
         {
-            context.DrawingContext.FillRectangle(rect, Background);
+            context.DrawingContext.FillRectangle(rect, background);
         }
 
         float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Top), MathF.Max(BorderThickness.Right, BorderThickness.Bottom));
-        if (BorderBrush.A != 0 && thickness > 0 && rect.Width > 0 && rect.Height > 0)
+        if (BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)
         {
-            context.DrawingContext.DrawRectangle(rect, BorderBrush, thickness);
+            context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
         }
 
         LayoutRect content = ContentControl.Deflate(context.Bounds, Insets);

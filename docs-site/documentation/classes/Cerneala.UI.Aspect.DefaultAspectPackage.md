@@ -58,9 +58,9 @@ The package contributes default token definitions, a `Button.Modern` component t
 | Rule | Target | Declarations |
 | --- | --- | --- |
 | `button.base` | `Button` | Sets `Control.BackgroundProperty`, `Control.ForegroundProperty`, `Control.BorderBrushProperty`, `Control.BorderThicknessProperty`, and `Control.PaddingProperty` from button/default tokens. |
-| `border.base` | `Border` | Sets `Control.BackgroundProperty` from `DefaultAspectTokens.Color.Surface` and `Control.BorderBrushProperty` from `DefaultAspectTokens.Color.Border`. |
+| `border.base` | `Border` | Sets `Control.BackgroundProperty` from `DefaultAspectTokens.Brush.Surface` and `Control.BorderBrushProperty` from `DefaultAspectTokens.Brush.Border`. |
 
-The default token values include neutral surface colors, a blue accent color, `Default` typography, 8-unit control padding, 1-unit control border thickness, fast and normal tween motion specs, and button-specific background, foreground, border, hover, pressed, disabled opacity, and padding tokens.
+The default token values include neutral surface brushes, semantic colors, a blue accent color, `Default` typography, 8-unit control padding, 1-unit control border thickness, fast and normal tween motion specs, and button-specific background, foreground, border, hover, pressed, disabled opacity, and padding tokens.
 
 `CreateEnvironment()` does not register rules or templates. It only prepares token values for lookup during aspect resolution. Register the package through `AspectRegistry` and pass the environment to `AspectEngine` or related processing code when both default rules/templates and default token values are needed.
 

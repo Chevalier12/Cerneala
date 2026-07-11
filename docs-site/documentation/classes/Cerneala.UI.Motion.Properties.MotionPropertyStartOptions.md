@@ -28,20 +28,21 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Properties;
 using Cerneala.UI.Motion.Specs;
+using Cerneala.UI.Media;
 
 UIRoot root = new();
 Control control = new();
 root.VisualChildren.Add(control);
 
-MotionValue<Color> value =
+MotionValue<Brush?> value =
     root.Motion.Graph.CreateValue(control.Background);
 
-using MotionPropertyBinding<Color> binding =
+using MotionPropertyBinding<Brush?> binding =
     new(root.Motion, control, Control.BackgroundProperty, value);
 
 MotionHandle handle = binding.AnimateTo(
-    Color.White,
-    Motion.Tween<Color>(TimeSpan.FromMilliseconds(100)),
+    new SolidColorBrush(Color.White),
+    Motion.Tween<Brush?>(TimeSpan.FromMilliseconds(100)),
     MotionPropertyStartOptions.Default);
 ```
 
@@ -49,8 +50,8 @@ Hold the completed animated value and pass a debug name to the underlying motion
 
 ```csharp
 binding.AnimateTo(
-    Color.White,
-    Motion.Tween<Color>(TimeSpan.FromMilliseconds(100)),
+    new SolidColorBrush(Color.White),
+    Motion.Tween<Brush?>(TimeSpan.FromMilliseconds(100)),
     new MotionPropertyStartOptions
     {
         RetargetMode = RetargetMode.PreserveProgress,

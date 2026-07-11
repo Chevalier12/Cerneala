@@ -4,6 +4,7 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion;
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Media;
 using Cerneala.Tests.UI.Motion.Core;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
@@ -20,8 +21,8 @@ public sealed class MotionFacadeTests
 
         control.Motion()
             .Animate(Control.BackgroundProperty)
-            .To(Color.White)
-            .With(MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+            .To(new SolidColorBrush(Color.White))
+            .With(MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
 
         Assert.Equal(1, root.Motion.Properties.BindingCount);
     }
@@ -33,8 +34,8 @@ public sealed class MotionFacadeTests
         Control control = new();
         root.VisualChildren.Add(control);
 
-        control.Motion().Animate(Control.BackgroundProperty).To(Color.White).With(MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
-        control.Motion().Animate(Control.BackgroundProperty).To(Color.Black).With(MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+        control.Motion().Animate(Control.BackgroundProperty).To(new SolidColorBrush(Color.White)).With(MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
+        control.Motion().Animate(Control.BackgroundProperty).To(new SolidColorBrush(Color.Black)).With(MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
 
         Assert.Equal(1, root.Motion.Properties.BindingCount);
     }

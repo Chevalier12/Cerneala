@@ -4,6 +4,7 @@ using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Text;
 
@@ -86,17 +87,17 @@ public class Button : ButtonBase
             return;
         }
 
-        Color background = ResolveBackground();
+        Brush? background = ResolveBackground();
         DrawRect rect = Border.ToDrawRect(context.Bounds);
-        if (background.A != 0 && rect.Width > 0 && rect.Height > 0)
+        if (background is not null && rect.Width > 0 && rect.Height > 0)
         {
             context.DrawingContext.FillRectangle(rect, background);
         }
 
         float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Top), MathF.Max(BorderThickness.Right, BorderThickness.Bottom));
-        if (BorderBrush.A != 0 && thickness > 0 && rect.Width > 0 && rect.Height > 0)
+        if (BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)
         {
-            context.DrawingContext.DrawRectangle(rect, BorderBrush, thickness);
+            context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
         }
 
         if (Content is string text && !string.IsNullOrEmpty(text))
@@ -119,7 +120,7 @@ public class Button : ButtonBase
         return new TextAspect(FontFamily, FontSize, color: Foreground);
     }
 
-    private Color ResolveBackground()
+    private Brush? ResolveBackground()
     {
         if (GetValueSource(BackgroundProperty) != UiPropertyValueSource.Default)
         {
@@ -128,17 +129,17 @@ public class Button : ButtonBase
 
         if (!IsEnabled)
         {
-            return new Color(160, 160, 160);
+            return new SolidColorBrush(new Color(160, 160, 160));
         }
 
         if (IsPressed)
         {
-            return new Color(120, 120, 120);
+            return new SolidColorBrush(new Color(120, 120, 120));
         }
 
         if (IsPointerOver || IsKeyboardFocused)
         {
-            return new Color(220, 220, 220);
+            return new SolidColorBrush(new Color(220, 220, 220));
         }
 
         return Background;

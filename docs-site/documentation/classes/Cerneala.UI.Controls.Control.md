@@ -24,12 +24,13 @@ Create a control and configure its common visual properties:
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 Control control = new()
 {
-    Background = Color.White,
+    Background = new SolidColorBrush(Color.White),
     Foreground = Color.Black,
-    BorderBrush = Color.Black,
+    BorderBrush = new SolidColorBrush(Color.Black),
     BorderThickness = new Thickness(1),
     Padding = new Thickness(8),
     FontFamily = "Default",
@@ -44,6 +45,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 Control control = new()
 {
@@ -60,8 +62,8 @@ Control control = new()
 
         return border;
     }),
-    Background = Color.White,
-    BorderBrush = Color.Black
+    Background = new SolidColorBrush(Color.White),
+    BorderBrush = new SolidColorBrush(Color.Black)
 };
 
 control.ApplyTemplate();
@@ -76,7 +78,7 @@ ComponentTemplateInstance? instance = control.ComponentTemplateInstance;
 
 Layout is delegated to the active template child. During measure and arrange, `Control` calls `ApplyTemplate()` and then measures or arranges `ComponentTemplateInstance.Root`; if no template child exists, measurement returns `LayoutSize.Zero`.
 
-Component-template changes affect measure, arrange, render, hit testing, and input visuals. `Background` and `BorderBrush` affect render and input visuals. `Foreground` is inherited and affects render. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
+Component-template changes affect measure, arrange, render, hit testing, and input visuals. `Background` and `BorderBrush` affect render and input visuals. Both accept solid, gradient, image, drawing, and visual brushes; `null` suppresses the corresponding fill or border. `Foreground` is inherited and affects render. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
 
 `Padding` and `BorderThickness` reject negative, `NaN`, and infinite side values. `FontFamily` rejects `null`, empty, and whitespace-only values. `FontSize` must be finite and greater than zero.
 
@@ -93,9 +95,9 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | Name | Type | Description |
 | --- | --- | --- |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | Identifies the `ComponentTemplate` UI property. Defaults to `null`; affects measure, arrange, render, hit testing, and input visuals. |
-| `BackgroundProperty` | `UiProperty<Color>` | Identifies the `Background` UI property. Defaults to `Color.Transparent`; affects render and input visuals. |
+| `BackgroundProperty` | `UiProperty<Brush?>` | Identifies the `Background` UI property. Defaults to `null`; affects render and input visuals. |
 | `ForegroundProperty` | `UiProperty<Color>` | Identifies the inherited `Foreground` UI property. Defaults to `Color.Black`; affects render. |
-| `BorderBrushProperty` | `UiProperty<Color>` | Identifies the `BorderBrush` UI property. Defaults to `Color.Transparent`; affects render and input visuals. |
+| `BorderBrushProperty` | `UiProperty<Brush?>` | Identifies the `BorderBrush` UI property. Defaults to `null`; affects render and input visuals. |
 | `BorderThicknessProperty` | `UiProperty<Thickness>` | Identifies the `BorderThickness` UI property. Defaults to `Thickness.Zero`; affects measure and render; each side must be finite and non-negative. |
 | `PaddingProperty` | `UiProperty<Thickness>` | Identifies the `Padding` UI property. Defaults to `Thickness.Zero`; affects measure and render; each side must be finite and non-negative. |
 | `FontFamilyProperty` | `UiProperty<string>` | Identifies the inherited `FontFamily` UI property. Defaults to `"Default"`; affects measure and render; rejects empty or whitespace-only values. |
@@ -105,9 +107,9 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Background` | `Color` | Gets or sets the control background color. |
+| `Background` | `Brush?` | Gets or sets the control background brush. `null` draws no background. |
 | `Foreground` | `Color` | Gets or sets the inherited foreground color used by derived controls or templates. |
-| `BorderBrush` | `Color` | Gets or sets the control border color. |
+| `BorderBrush` | `Brush?` | Gets or sets the control border brush. `null` draws no border. |
 | `BorderThickness` | `Thickness` | Gets or sets the border thickness. Values must be finite and non-negative. |
 | `Padding` | `Thickness` | Gets or sets the padding inside the border. Values must be finite and non-negative. |
 | `FontFamily` | `string` | Gets or sets the inherited font family. The value cannot be empty or whitespace-only. |
@@ -137,6 +139,20 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | `MeasureCore(MeasureContext context)` | `LayoutSize` | Applies the current template and measures the active template child, or returns `LayoutSize.Zero` when no template child exists. |
 | `ArrangeCore(ArrangeContext context)` | `LayoutRect` | Applies the current template, arranges the active template child, and returns `context.FinalRect`. |
 | `OnPropertyChanged(UiPropertyChangedEventArgs args)` | `void` | Applies the template when `ComponentTemplate` changes, after the base property-change handling runs. |
+
+## Migration
+
+`Background` and `BorderBrush` no longer accept `Color`, and there is no `BorderColor` compatibility alias. Wrap solid colors explicitly:
+
+```csharp
+// Before
+control.Background = Color.White;
+control.BorderColor = Color.Red;
+
+// After
+control.Background = new SolidColorBrush(Color.White);
+control.BorderBrush = new SolidColorBrush(Color.Red);
+```
 
 ## Applies to
 

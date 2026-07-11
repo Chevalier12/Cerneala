@@ -4,6 +4,7 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Input;
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Controls;
 
@@ -40,11 +41,11 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
 
     protected override void OnRender(RenderContext context)
     {
-        Color color = IsSelected ? new Color(80, 130, 220) : Background;
+        Brush? background = IsSelected ? new SolidColorBrush(new Color(80, 130, 220)) : Background;
         DrawRect rect = Border.ToDrawRect(context.Bounds);
-        if (color.A != 0 && rect.Width > 0 && rect.Height > 0)
+        if (background is not null && rect.Width > 0 && rect.Height > 0)
         {
-            context.DrawingContext.FillRectangle(rect, color);
+            context.DrawingContext.FillRectangle(rect, background);
         }
     }
 }

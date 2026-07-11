@@ -27,8 +27,8 @@ using Cerneala.UI.Layout;
 
 Border panel = new()
 {
-    Background = Color.White,
-    BorderBrush = Color.Black,
+    Background = new Cerneala.UI.Media.SolidColorBrush(Color.White),
+    BorderBrush = new Cerneala.UI.Media.SolidColorBrush(Color.Black),
     BorderThickness = new Thickness(2),
     Padding = new Thickness(8),
     Child = new TextBlock { Text = "Ready" }
@@ -41,7 +41,7 @@ The child is measured and arranged inside the combined `Padding` and `BorderThic
 
 `Border` is a retained UI control for framing one child. Layout behavior comes from `Decorator`: `Child` is measured with the available size deflated by `Padding + BorderThickness`, then arranged inside the same insets.
 
-During rendering, `Border` fills its arranged bounds with `Background` when the color is not transparent, then draws a rectangle stroke with `BorderBrush` when the color is not transparent and the effective stroke thickness is greater than zero. The rendered stroke thickness is the maximum of `BorderThickness.Left`, `Top`, `Right`, and `Bottom`; side-specific border thickness affects layout insets, but rendering uses one uniform stroke width.
+During rendering, `Border` fills its arranged bounds with `Background` when the brush is not `null`, then draws a rectangle stroke with `BorderBrush` when that brush is not `null` and the effective stroke thickness is greater than zero. The rendered stroke thickness is the maximum of `BorderThickness.Left`, `Top`, `Right`, and `Bottom`; side-specific border thickness affects layout insets, but rendering uses one uniform stroke width.
 
 `Background`, `BorderBrush`, `BorderThickness`, and `Padding` are inherited from `Control`. `Border` declares no additional public properties of its own.
 
@@ -56,8 +56,8 @@ During rendering, `Border` fills its arranged bounds with `Background` when the 
 | Name | Type | Declared By | Description |
 | --- | --- | --- | --- |
 | `Child` | `UIElement?` | `Decorator` | Gets or sets the single logical and visual child. Changing it invalidates measure and render. |
-| `Background` | `Color` | `Control` | Fill color for the arranged bounds. Default is `Color.Transparent`; changes affect render and input visual invalidation. |
-| `BorderBrush` | `Color` | `Control` | Stroke color for the rectangle border. Default is `Color.Transparent`; changes affect render and input visual invalidation. |
+| `Background` | `Brush?` | `Control` | Brush for the arranged-bounds fill. Default is `null`; changes affect render and input visual invalidation. |
+| `BorderBrush` | `Brush?` | `Control` | Brush for the rectangle border. Default is `null`; changes affect render and input visual invalidation. |
 | `BorderThickness` | `Thickness` | `Control` | Border inset used for layout and stroke width source used for rendering. Default is `Thickness.Zero`; values must be finite and non-negative. |
 | `Padding` | `Thickness` | `Control` | Extra inset between the border and child. Default is `Thickness.Zero`; values must be finite and non-negative. |
 
@@ -71,8 +71,8 @@ During rendering, `Border` fills its arranged bounds with `Background` when the 
 
 | Condition | Result |
 | --- | --- |
-| `Background.A != 0` and arranged width/height are positive | Emits a filled rectangle command for the arranged bounds. |
-| `BorderBrush.A != 0`, effective thickness is positive, and arranged width/height are positive | Emits a rectangle stroke command for the arranged bounds. |
+| `Background != null` and arranged width/height are positive | Emits a filled rectangle command for the arranged bounds. |
+| `BorderBrush != null`, effective thickness is positive, and arranged width/height are positive | Emits a rectangle stroke command for the arranged bounds. |
 | Arranged width or height is zero or negative | Clamps drawing size to zero and emits no background or stroke command. |
 
 ## Layout Behavior

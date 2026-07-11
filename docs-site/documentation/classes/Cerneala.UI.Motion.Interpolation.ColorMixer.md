@@ -51,7 +51,7 @@ Color value = mixer.Mix(Color.Black, Color.White, 0.25f);
 
 For intermediate progress values, each channel is linearly interpolated, rounded with `MidpointRounding.AwayFromZero`, and clamped to the valid byte range. Alpha is treated the same way as the color channels.
 
-The built-in `ValueMixerRegistry` registers `ColorMixer` for `Color`. The motion property registry uses it for color properties such as `Control.BackgroundProperty` and `Control.BorderBrushProperty`.
+The built-in `ValueMixerRegistry` registers `ColorMixer` for `Color`. Brush-valued control properties such as `Control.BackgroundProperty` and `Control.BorderBrushProperty` use `BrushMixer`, which delegates solid-brush color interpolation to `ColorMixer`.
 
 `ColorMixer` keeps the default `ValueMixer<Color>` vector behavior, so `SupportsVectorOperations` is `false` and vector methods such as `Add`, `Subtract`, `Scale`, and `Magnitude` throw `InvalidOperationException`.
 

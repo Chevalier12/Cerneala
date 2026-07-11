@@ -1,9 +1,11 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls;
 
@@ -53,6 +55,24 @@ public sealed class ScrollBarTests
 
         Assert.Equal(Orientation.Vertical, vertical.Track.Orientation);
         Assert.Equal(Orientation.Horizontal, horizontal.Track.Orientation);
+    }
+
+    [Fact]
+    public void ScrollBarRendersItsConfiguredBorderBrush()
+    {
+        LinearGradientBrush brush = new(
+            new DrawPoint(0, 0),
+            new DrawPoint(20, 0),
+            [new GradientStop(0, Color.White), new GradientStop(1, Color.Black)]);
+        ScrollBar scrollBar = new() { BorderBrush = brush };
+        UIRoot root = new(20, 40);
+        scrollBar.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 40)));
+        root.VisualChildren.Add(scrollBar);
+        root.ProcessFrame();
+
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.Contains(commands, command => command.Kind == DrawCommandKind.DrawRectangle && ReferenceEquals(command.Brush, brush));
     }
 
     [Fact]

@@ -29,8 +29,8 @@ Button button = new()
 {
     Content = "Save",
     Padding = new Thickness(8, 4, 8, 4),
-    Background = Color.White,
-    BorderBrush = Color.Black,
+    Background = new Cerneala.UI.Media.SolidColorBrush(Color.White),
+    BorderBrush = new Cerneala.UI.Media.SolidColorBrush(Color.Black),
     BorderThickness = new Thickness(1)
 };
 
@@ -59,7 +59,7 @@ Button button = new()
 
 The button does not declare its own content property. It uses `ContentControl.ContentProperty`, so element content follows the content-control ownership rules. While the `ComponentTemplate` property is `null`, `UIElement` content is added as logical and visual content. When the button has no `ComponentTemplate` or `ComponentTemplate`, `UIElement` content is measured and arranged inside `Padding + BorderThickness`; string content is measured by `TextMeasurer` and rendered by `TextRenderer`.
 
-Fallback rendering draws the resolved background, then the border, then non-empty string content. If `Background` has an explicit value, that value is used. Otherwise fallback state colors are used for disabled, pressed, pointer-over, and keyboard-focused states before falling back to the default background.
+Fallback rendering draws the resolved background brush, then the border, then non-empty string content. If `Background` has an explicit value, that brush is used. Otherwise fallback state colors are wrapped in solid brushes for disabled, pressed, pointer-over, and keyboard-focused states before falling back to the default background.
 
 When a template or component template supplies a template child, layout is delegated to the base template path and `Button` skips its fallback rendering. Template-based buttons commonly bind `Content`, `Background`, `BorderBrush`, `BorderThickness`, and `Padding` into the template root or presenter.
 
@@ -88,9 +88,9 @@ When a template or component template supplies a template child, layout is deleg
 | `Command` | `ICommand?` | `ButtonBase` | Gets or sets the command executed by pointer or keyboard activation. |
 | `CommandParameter` | `object?` | `ButtonBase` | Gets or sets the parameter passed to `Command`. |
 | `IsPressed` | `bool` | `ButtonBase` | Gets or sets the pressed visual/input state. |
-| `Background` | `Color` | `Control` | Gets or sets the background color. An explicit value overrides fallback state colors. |
+| `Background` | `Brush?` | `Control` | Gets or sets the background brush. An explicit value overrides fallback state brushes. |
 | `Foreground` | `Color` | `Control` | Gets or sets the foreground color used by fallback text rendering. |
-| `BorderBrush` | `Color` | `Control` | Gets or sets the fallback border color. |
+| `BorderBrush` | `Brush?` | `Control` | Gets or sets the fallback border brush. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the fallback border thickness and contributes to content insets. |
 | `Padding` | `Thickness` | `Control` | Gets or sets the padding around fallback content. |
 | `FontFamily` | `string` | `Control` | Gets or sets the inherited font family used to create the fallback text aspect. |
@@ -109,9 +109,9 @@ When a template or component template supplies a template child, layout is deleg
 | `CommandProperty` | `UiProperty<ICommand?>` | `ButtonBase` | Identifies the `Command` UI property. |
 | `CommandParameterProperty` | `UiProperty<object?>` | `ButtonBase` | Identifies the `CommandParameter` UI property. |
 | `IsPressedProperty` | `UiProperty<bool>` | `ButtonBase` | Identifies the `IsPressed` UI property. |
-| `BackgroundProperty` | `UiProperty<Color>` | `Control` | Identifies the `Background` UI property. |
+| `BackgroundProperty` | `UiProperty<Brush?>` | `Control` | Identifies the `Background` UI property. |
 | `ForegroundProperty` | `UiProperty<Color>` | `Control` | Identifies the inherited `Foreground` UI property. |
-| `BorderBrushProperty` | `UiProperty<Color>` | `Control` | Identifies the `BorderBrush` UI property. |
+| `BorderBrushProperty` | `UiProperty<Brush?>` | `Control` | Identifies the `BorderBrush` UI property. |
 | `BorderThicknessProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `BorderThickness` UI property. |
 | `PaddingProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `Padding` UI property. |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | `Control` | Identifies the `ComponentTemplate` UI property. |

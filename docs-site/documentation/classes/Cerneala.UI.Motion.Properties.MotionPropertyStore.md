@@ -27,20 +27,21 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.Properties;
 using Cerneala.UI.Motion.Specs;
+using Cerneala.UI.Media;
 
 UIRoot root = new();
 Control control = new();
 root.VisualChildren.Add(control);
 
-MotionPropertyBinding<Color> binding =
+MotionPropertyBinding<Brush?> binding =
     root.Motion.Properties.GetOrCreateBinding(
         root.Motion,
         control,
         Control.BackgroundProperty);
 
 binding.AnimateTo(
-    Color.White,
-    Motion.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+    new SolidColorBrush(Color.White),
+    Motion.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
 
 root.ProcessFrame();
 ```

@@ -24,10 +24,11 @@ Attach motion metadata to an aspect declaration:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectDeclaration declaration = new(
     Control.BorderBrushProperty,
-    AspectValue<Color>.Literal(new Color(99, 102, 241)),
+    AspectValue<Brush?>.Literal(new SolidColorBrush(new Color(99, 102, 241))),
     new AspectMotion(Control.BorderBrushProperty, "motion.fast", AspectMotionSource.State));
 ```
 
@@ -37,6 +38,7 @@ Use the same motion token for multiple declarations in a rule:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectRuleSet hoverRule = new(
     "card hover",
@@ -45,11 +47,11 @@ AspectRuleSet hoverRule = new(
     [
         new AspectDeclaration(
             Control.BackgroundProperty,
-            AspectValue<Color>.Literal(new Color(238, 242, 255)),
+            AspectValue<Brush?>.Literal(new SolidColorBrush(new Color(238, 242, 255))),
             new AspectMotion(Control.BackgroundProperty, "motion.normal")),
         new AspectDeclaration(
             Control.BorderBrushProperty,
-            AspectValue<Color>.Literal(new Color(99, 102, 241)),
+            AspectValue<Brush?>.Literal(new SolidColorBrush(new Color(99, 102, 241))),
             new AspectMotion(Control.BorderBrushProperty, "motion.normal"))
     ],
     declarationOrder: 0);

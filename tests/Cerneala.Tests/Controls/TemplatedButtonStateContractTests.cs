@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls;
 
@@ -36,8 +37,8 @@ public sealed class TemplatedButtonStateContractTests
     public void TemplatedButtonBindsChromePropertiesToBorder()
     {
         Button button = TemplatedButton("Save");
-        button.Background = new Color(1, 2, 3);
-        button.BorderBrush = new Color(4, 5, 6);
+        button.Background = new SolidColorBrush(new Color(1, 2, 3));
+        button.BorderBrush = new SolidColorBrush(new Color(4, 5, 6));
         button.BorderThickness = new Thickness(2);
         button.Padding = new Thickness(3);
 

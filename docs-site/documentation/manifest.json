@@ -515,6 +515,11 @@
     "source": "UI/Aspect/DefaultAspectTokens.cs"
   },
   {
+    "name": "Cerneala.UI.Aspect.DefaultAspectTokens.Brush",
+    "file": "documentation/classes/Cerneala.UI.Aspect.DefaultAspectTokens.Brush.md",
+    "source": "UI/Aspect/DefaultAspectTokens.cs"
+  },
+  {
     "name": "Cerneala.UI.Aspect.DefaultAspectTokens.Color",
     "file": "documentation/classes/Cerneala.UI.Aspect.DefaultAspectTokens.Color.md",
     "source": "UI/Aspect/DefaultAspectTokens.cs"
@@ -662,6 +667,16 @@
   {
     "name": "Cerneala.UI.Controls.Control",
     "file": "documentation/classes/Cerneala.UI.Controls.Control.md",
+    "source": "UI/Controls/Control.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Control.Background",
+    "file": "documentation/classes/Cerneala.UI.Controls.Control.Background.md",
+    "source": "UI/Controls/Control.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Control.BorderBrush",
+    "file": "documentation/classes/Cerneala.UI.Controls.Control.BorderBrush.md",
     "source": "UI/Controls/Control.cs"
   },
   {
@@ -2788,6 +2803,11 @@
     "name": "Cerneala.UI.Motion.Interpolation.ValueMixerRegistry",
     "file": "documentation/classes/Cerneala.UI.Motion.Interpolation.ValueMixerRegistry.md",
     "source": "UI/Motion/Interpolation/ValueMixerRegistry.cs"
+  },
+  {
+    "name": "Cerneala.UI.Motion.Interpolation.BrushMixer",
+    "file": "documentation/classes/Cerneala.UI.Motion.Interpolation.BrushMixer.md",
+    "source": "UI/Motion/Interpolation/BrushMixer.cs"
   },
   {
     "name": "Cerneala.UI.Motion.Layout.LayoutMotionBinding",

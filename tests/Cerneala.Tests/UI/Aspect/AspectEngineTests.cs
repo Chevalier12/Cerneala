@@ -18,7 +18,7 @@ public sealed class AspectEngineTests
         AspectApplicationResult result = new AspectEngine().Apply(button, catalog, new AspectEnvironment("test"));
 
         Assert.True(result.Applied);
-        Assert.Equal(Color.White, button.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.White), button.Background);
         Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
     }
 
@@ -31,7 +31,7 @@ public sealed class AspectEngineTests
 
         engine.Apply(button, EmptyCatalog(), new AspectEnvironment("test"));
 
-        Assert.Equal(Color.Transparent, button.Background);
+        Assert.Null(button.Background);
         Assert.Equal(UiPropertyValueSource.Default, button.GetValueSource(Control.BackgroundProperty));
     }
 
@@ -52,19 +52,19 @@ public sealed class AspectEngineTests
     [Fact]
     public void EngineReappliesWhenTokenDependencyChanges()
     {
-        AspectToken<Color> token = AspectToken.Color("app.background");
+        AspectToken<Cerneala.UI.Media.Brush?> token = AspectToken.Create<Cerneala.UI.Media.Brush?>("app.background");
         Button button = new();
         AspectEnvironment environment = new("test");
-        environment.Set(token, Color.White);
+        environment.Set(token, new Cerneala.UI.Media.SolidColorBrush(Color.White));
         AspectEngine engine = new();
         AspectCatalog catalog = CatalogWith(Rule("token", new AspectDeclaration(Control.BackgroundProperty, token.Ref())));
 
         engine.Apply(button, catalog, environment);
-        environment.Set(token, Color.Black);
+        environment.Set(token, new Cerneala.UI.Media.SolidColorBrush(Color.Black));
         AspectApplicationResult second = engine.Apply(button, catalog, environment);
 
         Assert.True(second.Applied);
-        Assert.Equal(Color.Black, button.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.Black), button.Background);
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public sealed class AspectEngineTests
         AspectApplicationResult second = engine.Apply(button, catalog, new AspectEnvironment("test"));
 
         Assert.True(second.Applied);
-        Assert.Equal(Color.Black, button.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.Black), button.Background);
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public sealed class AspectEngineTests
         AspectApplicationResult second = engine.Apply(button, catalog, new AspectEnvironment("test"), variants: AspectVariantSet.Empty.Set(key, ButtonKind.Primary));
 
         Assert.True(second.Applied);
-        Assert.Equal(Color.Black, button.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.Black), button.Background);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public sealed class AspectEngineTests
         AspectApplicationResult second = engine.Apply(button, catalog, new AspectEnvironment("test"));
 
         Assert.True(second.Applied);
-        Assert.Equal(Color.Black, button.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.Black), button.Background);
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public sealed class AspectEngineTests
         AspectApplicationResult second = engine.Apply(button, catalog, new AspectEnvironment("test"), dataContext: new AspectDataContext(new UserCard(true)));
 
         Assert.True(second.Applied);
-        Assert.Equal(Color.Black, button.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.Black), button.Background);
     }
 
     [Fact]
@@ -209,7 +209,9 @@ public sealed class AspectEngineTests
 
     private static AspectDeclaration Declaration(Color color)
     {
-        return new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(color));
+        return new AspectDeclaration(
+            Control.BackgroundProperty,
+            AspectValue<Cerneala.UI.Media.Brush?>.Literal(new Cerneala.UI.Media.SolidColorBrush(color)));
     }
 
     private sealed record UserCard(bool IsImportant);

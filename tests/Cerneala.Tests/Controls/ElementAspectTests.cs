@@ -12,19 +12,19 @@ public sealed class ElementAspectTests
     {
         Button button = new();
         ElementAspect first = new(
-            [new ElementAspectValue(Control.BackgroundProperty, Color.White)]);
+            [new ElementAspectValue(Control.BackgroundProperty, new Cerneala.UI.Media.SolidColorBrush(Color.White))]);
         ElementAspect second = new(
             [new ElementAspectValue(Control.ForegroundProperty, Color.Transparent)]);
 
         button.Aspect = first;
 
         Assert.Same(first, button.Aspect);
-        Assert.Equal(Color.White, button.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.White), button.Background);
         Assert.Equal(UiPropertyValueSource.LocalAspectBase, button.GetValueSource(Control.BackgroundProperty));
 
         button.Aspect = second;
 
-        Assert.Equal(Color.Transparent, button.Background);
+        Assert.Null(button.Background);
         Assert.Equal(Color.Transparent, button.Foreground);
         Assert.Equal(UiPropertyValueSource.LocalAspectBase, button.GetValueSource(Control.ForegroundProperty));
 
@@ -39,8 +39,8 @@ public sealed class ElementAspectTests
     {
         Assert.Throws<ArgumentException>(() => new ElementAspect(
         [
-            new ElementAspectValue(Control.BackgroundProperty, Color.Black),
-            new ElementAspectValue(Control.BackgroundProperty, Color.White)
+            new ElementAspectValue(Control.BackgroundProperty, new Cerneala.UI.Media.SolidColorBrush(Color.Black)),
+            new ElementAspectValue(Control.BackgroundProperty, new Cerneala.UI.Media.SolidColorBrush(Color.White))
         ]));
     }
 }

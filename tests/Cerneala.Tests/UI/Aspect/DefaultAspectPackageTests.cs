@@ -13,6 +13,7 @@ public sealed class DefaultAspectPackageTests
 
         Assert.True(catalog.TryGetTokenDefault(DefaultAspectTokens.Color.Background, out _));
         Assert.True(catalog.TryGetTokenDefault(DefaultAspectTokens.Color.Foreground, out _));
+        Assert.True(catalog.TryGetTokenDefault(DefaultAspectTokens.Brush.Background, out _));
         Assert.True(catalog.TryGetTokenDefault(DefaultAspectTokens.Spacing.ControlPadding, out _));
     }
 
@@ -46,8 +47,8 @@ public sealed class DefaultAspectPackageTests
         engine.Apply(button, catalog, environment);
         engine.Apply(border, catalog, environment);
 
-        Assert.Equal(new Color(255, 255, 255), button.Background);
-        Assert.Equal(new Color(255, 255, 255), border.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(new Color(255, 255, 255)), button.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(new Color(255, 255, 255)), border.Background);
     }
 
     [Fact]

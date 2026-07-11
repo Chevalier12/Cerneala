@@ -3,6 +3,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Cerneala.UI.Motion.Specs;
 
 namespace Cerneala.UI.Aspect;
@@ -23,8 +24,8 @@ public static class DefaultAspectPackage
                     new AspectDeclaration(Control.BorderThicknessProperty, DefaultAspectTokens.Stroke.ControlBorderThickness.Ref()),
                     new AspectDeclaration(Control.PaddingProperty, ButtonTokens.Padding.Ref())));
                 components.AddRule(Rule("border.base", typeof(Border),
-                    new AspectDeclaration(Control.BackgroundProperty, DefaultAspectTokens.Color.Surface.Ref()),
-                    new AspectDeclaration(Control.BorderBrushProperty, DefaultAspectTokens.Color.Border.Ref())));
+                    new AspectDeclaration(Control.BackgroundProperty, DefaultAspectTokens.Brush.Surface.Ref()),
+                    new AspectDeclaration(Control.BorderBrushProperty, DefaultAspectTokens.Brush.Border.Ref())));
             });
     }
 
@@ -42,17 +43,20 @@ public static class DefaultAspectPackage
         tokens.Set(DefaultAspectTokens.Color.Surface, new Color(255, 255, 255));
         tokens.Set(DefaultAspectTokens.Color.Border, new Color(148, 163, 184));
         tokens.Set(DefaultAspectTokens.Color.Accent, new Color(37, 99, 235));
+        tokens.Set(DefaultAspectTokens.Brush.Background, new SolidColorBrush(new Color(248, 250, 252)));
+        tokens.Set(DefaultAspectTokens.Brush.Surface, new SolidColorBrush(new Color(255, 255, 255)));
+        tokens.Set(DefaultAspectTokens.Brush.Border, new SolidColorBrush(new Color(148, 163, 184)));
         tokens.Set(DefaultAspectTokens.Typography.FontFamily, "Default");
         tokens.Set(DefaultAspectTokens.Typography.FontSize, 16f);
         tokens.Set(DefaultAspectTokens.Spacing.ControlPadding, new Thickness(8));
         tokens.Set(DefaultAspectTokens.Stroke.ControlBorderThickness, new Thickness(1));
         tokens.Set(DefaultAspectTokens.Motion.Fast, new TweenSpec<float>(TimeSpan.FromMilliseconds(120)));
         tokens.Set(DefaultAspectTokens.Motion.Normal, new TweenSpec<float>(TimeSpan.FromMilliseconds(200)));
-        tokens.Set(ButtonTokens.Background, new Color(255, 255, 255));
+        tokens.Set(ButtonTokens.Background, new SolidColorBrush(new Color(255, 255, 255)));
         tokens.Set(ButtonTokens.Foreground, new Color(28, 35, 48));
-        tokens.Set(ButtonTokens.BorderBrush, new Color(148, 163, 184));
-        tokens.Set(ButtonTokens.HoverBackground, new Color(37, 99, 235));
-        tokens.Set(ButtonTokens.PressedBackground, new Color(148, 163, 184));
+        tokens.Set(ButtonTokens.BorderBrush, new SolidColorBrush(new Color(148, 163, 184)));
+        tokens.Set(ButtonTokens.HoverBackground, new SolidColorBrush(new Color(37, 99, 235)));
+        tokens.Set(ButtonTokens.PressedBackground, new SolidColorBrush(new Color(148, 163, 184)));
         tokens.Set(ButtonTokens.DisabledOpacity, 0.5f);
         tokens.Set(ButtonTokens.Padding, new Thickness(8));
     }
@@ -64,17 +68,20 @@ public static class DefaultAspectPackage
         environment.Set(DefaultAspectTokens.Color.Surface, new Color(255, 255, 255));
         environment.Set(DefaultAspectTokens.Color.Border, new Color(148, 163, 184));
         environment.Set(DefaultAspectTokens.Color.Accent, new Color(37, 99, 235));
+        environment.Set(DefaultAspectTokens.Brush.Background, new SolidColorBrush(new Color(248, 250, 252)));
+        environment.Set(DefaultAspectTokens.Brush.Surface, new SolidColorBrush(new Color(255, 255, 255)));
+        environment.Set(DefaultAspectTokens.Brush.Border, new SolidColorBrush(new Color(148, 163, 184)));
         environment.Set(DefaultAspectTokens.Typography.FontFamily, "Default");
         environment.Set(DefaultAspectTokens.Typography.FontSize, 16f);
         environment.Set(DefaultAspectTokens.Spacing.ControlPadding, new Thickness(8));
         environment.Set(DefaultAspectTokens.Stroke.ControlBorderThickness, new Thickness(1));
         environment.Set(DefaultAspectTokens.Motion.Fast, new TweenSpec<float>(TimeSpan.FromMilliseconds(120)));
         environment.Set(DefaultAspectTokens.Motion.Normal, new TweenSpec<float>(TimeSpan.FromMilliseconds(200)));
-        environment.Set(ButtonTokens.Background, new Color(255, 255, 255));
+        environment.Set(ButtonTokens.Background, new SolidColorBrush(new Color(255, 255, 255)));
         environment.Set(ButtonTokens.Foreground, new Color(28, 35, 48));
-        environment.Set(ButtonTokens.BorderBrush, new Color(148, 163, 184));
-        environment.Set(ButtonTokens.HoverBackground, new Color(37, 99, 235));
-        environment.Set(ButtonTokens.PressedBackground, new Color(148, 163, 184));
+        environment.Set(ButtonTokens.BorderBrush, new SolidColorBrush(new Color(148, 163, 184)));
+        environment.Set(ButtonTokens.HoverBackground, new SolidColorBrush(new Color(37, 99, 235)));
+        environment.Set(ButtonTokens.PressedBackground, new SolidColorBrush(new Color(148, 163, 184)));
         environment.Set(ButtonTokens.DisabledOpacity, 0.5f);
         environment.Set(ButtonTokens.Padding, new Thickness(8));
     }

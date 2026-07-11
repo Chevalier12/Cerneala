@@ -21,6 +21,16 @@ public static class DefaultAspectTokens
         public static readonly AspectToken<float> FontSize = AspectToken.Float("typography.font-size");
     }
 
+    public static class Brush
+    {
+        public static readonly AspectToken<global::Cerneala.UI.Media.Brush?> Background =
+            AspectToken.Create<global::Cerneala.UI.Media.Brush?>("brush.background");
+        public static readonly AspectToken<global::Cerneala.UI.Media.Brush?> Surface =
+            AspectToken.Create<global::Cerneala.UI.Media.Brush?>("brush.surface");
+        public static readonly AspectToken<global::Cerneala.UI.Media.Brush?> Border =
+            AspectToken.Create<global::Cerneala.UI.Media.Brush?>("brush.border");
+    }
+
     public static class Spacing
     {
         public static readonly AspectToken<Thickness> ControlPadding = AspectToken.Thickness("spacing.control-padding");

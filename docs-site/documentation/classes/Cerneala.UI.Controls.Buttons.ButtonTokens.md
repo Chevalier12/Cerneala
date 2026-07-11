@@ -38,12 +38,13 @@ Read a button token value from the default environment:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectEnvironment environment = DefaultAspectPackage.CreateEnvironment();
 
-if (environment.TryGet(ButtonTokens.HoverBackground, out Color hoverBackground))
+if (environment.TryGet(ButtonTokens.HoverBackground, out Brush? hoverBackground))
 {
-    // hoverBackground is the default hover background, Color(37, 99, 235).
+    // hoverBackground is a SolidColorBrush with color Color(37, 99, 235).
 }
 ```
 
@@ -54,11 +55,12 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 AspectPackage package = AspectPackage.Create("App")
     .Tokens(tokens =>
     {
-        tokens.Set(ButtonTokens.Background, new Color(24, 24, 27));
+        tokens.Set(ButtonTokens.Background, new SolidColorBrush(new Color(24, 24, 27)));
         tokens.Set(ButtonTokens.Foreground, Color.White);
         tokens.Set(ButtonTokens.Padding, new Thickness(12, 6, 12, 6));
     })
@@ -67,7 +69,7 @@ AspectPackage package = AspectPackage.Create("App")
 
 ## Remarks
 
-`ButtonTokens` is a static catalog of strongly typed `AspectToken<T>` instances for button-specific colors, opacity, and padding. The class defines token identities only; values are supplied by an `AspectPackage`, an `AspectEnvironment`, or another token source.
+`ButtonTokens` is a static catalog of strongly typed `AspectToken<T>` instances for button-specific brushes, colors, opacity, and padding. The class defines token identities only; values are supplied by an `AspectPackage`, an `AspectEnvironment`, or another token source.
 
 `DefaultAspectPackage.Create()` registers default values for these tokens. `DefaultAspectPackage.CreateEnvironment()` creates a matching environment named `default` and sets the same values for runtime aspect resolution.
 
@@ -79,11 +81,11 @@ The token names use the `button.*` prefix, such as `button.background`, `button.
 
 | Name | Type | Token Name | Default Value |
 | --- | --- | --- | --- |
-| `Background` | `AspectToken<Color>` | `button.background` | `new Color(255, 255, 255)` |
+| `Background` | `AspectToken<Brush?>` | `button.background` | `new SolidColorBrush(new Color(255, 255, 255))` |
 | `Foreground` | `AspectToken<Color>` | `button.foreground` | `new Color(28, 35, 48)` |
-| `BorderBrush` | `AspectToken<Color>` | `button.border` | `new Color(148, 163, 184)` |
-| `HoverBackground` | `AspectToken<Color>` | `button.hover-background` | `new Color(37, 99, 235)` |
-| `PressedBackground` | `AspectToken<Color>` | `button.pressed-background` | `new Color(148, 163, 184)` |
+| `BorderBrush` | `AspectToken<Brush?>` | `button.border` | `new SolidColorBrush(new Color(148, 163, 184))` |
+| `HoverBackground` | `AspectToken<Brush?>` | `button.hover-background` | `new SolidColorBrush(new Color(37, 99, 235))` |
+| `PressedBackground` | `AspectToken<Brush?>` | `button.pressed-background` | `new SolidColorBrush(new Color(148, 163, 184))` |
 | `DisabledOpacity` | `AspectToken<float>` | `button.disabled-opacity` | `0.5f` |
 | `Padding` | `AspectToken<Thickness>` | `button.padding` | `new Thickness(8)` |
 

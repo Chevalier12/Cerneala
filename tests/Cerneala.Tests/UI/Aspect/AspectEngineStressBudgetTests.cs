@@ -42,7 +42,7 @@ public sealed class AspectEngineStressBudgetTests
 
         Assert.Contains(ButtonTokens.Background, buttonDependencies.Tokens);
         Assert.DoesNotContain(DefaultAspectTokens.Color.Surface, buttonDependencies.Tokens);
-        Assert.Contains(DefaultAspectTokens.Color.Surface, borderDependencies.Tokens);
+        Assert.Contains(DefaultAspectTokens.Brush.Surface, borderDependencies.Tokens);
     }
 
     [Fact]
@@ -52,13 +52,13 @@ public sealed class AspectEngineStressBudgetTests
             "button.base",
             AspectLayer.App,
             new AspectTarget(typeof(Button)),
-            [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.White))],
+            [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Cerneala.UI.Media.Brush?>.Literal(new Cerneala.UI.Media.SolidColorBrush(Color.White)))],
             0);
         AspectRuleSet hoverRule = new(
             "button.hover",
             AspectLayer.App,
             new AspectTarget(typeof(Button), conditions: [AspectCondition.State(AspectState.Hover)]),
-            [new AspectDeclaration(Control.BorderBrushProperty, AspectValue<Color>.Literal(Color.Black))],
+            [new AspectDeclaration(Control.BorderBrushProperty, AspectValue<Cerneala.UI.Media.Brush?>.Literal(new Cerneala.UI.Media.SolidColorBrush(Color.Black)))],
             1);
         AspectRuleSet textRule = new(
             "text.selected",

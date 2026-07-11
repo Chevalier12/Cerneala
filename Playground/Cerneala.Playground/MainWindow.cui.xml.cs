@@ -132,8 +132,8 @@ public partial class MainWindow : Window<MainWindowViewModel>
                 Top = Top + (index * 48),
                 WindowStartupLocation = WindowStartupLocation.Manual,
                 Owner = this,
-                Background = new Color(20, 28, 38),
-                BorderBrush = new Color(82, 96, 113),
+                Background = new Cerneala.UI.Media.SolidColorBrush(new Color(20, 28, 38)),
+                BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(82, 96, 113)),
                 BorderThickness = new Cerneala.UI.Layout.Thickness(1),
                 Padding = new Cerneala.UI.Layout.Thickness(20),
                 Content = new TextBlock
@@ -142,7 +142,7 @@ public partial class MainWindow : Window<MainWindowViewModel>
                     FontFamily = "Segoe UI",
                     FontSize = 20,
                     Foreground = new Color(245, 245, 245),
-                    Background = new Color(30, 38, 51),
+                        Background = new Cerneala.UI.Media.SolidColorBrush(new Color(30, 38, 51)),
                     Padding = new Cerneala.UI.Layout.Thickness(16)
                 }
             };
@@ -175,8 +175,8 @@ public partial class MainWindow : Window<MainWindowViewModel>
             WindowStartupLocation = WindowStartupLocation.Manual,
             ResizeMode = ResizeMode.NoResize,
             Owner = this,
-            Background = Color.White,
-            BorderBrush = Color.Transparent,
+            Background = new Cerneala.UI.Media.SolidColorBrush(Color.White),
+            BorderBrush = new Cerneala.UI.Media.SolidColorBrush(Color.Transparent),
             BorderThickness = Cerneala.UI.Layout.Thickness.Zero,
             Padding = Cerneala.UI.Layout.Thickness.Zero,
             Content = new TextBlock
@@ -388,7 +388,7 @@ public sealed class ShowcaseBadge : TextBlock
         FontFamily = "Consolas";
         FontSize = 12;
         Foreground = Color.Black;
-        Background = new Color(255, 214, 102);
+            Background = new Cerneala.UI.Media.SolidColorBrush(new Color(255, 214, 102));
         Padding = new Cerneala.UI.Layout.Thickness(8, 4, 8, 4);
     }
 }

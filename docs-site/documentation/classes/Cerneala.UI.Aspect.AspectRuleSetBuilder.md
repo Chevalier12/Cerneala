@@ -24,13 +24,14 @@ Create a rule set for `Button` controls and add a literal property declaration:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectRuleSet rule = new AspectRuleSetBuilder(
         "button.background",
         AspectLayer.App,
         new AspectTarget(typeof(Button)),
         declarationOrder: 0)
-    .Set(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.White))
+    .Set(Control.BackgroundProperty, AspectValue<Brush?>.Literal(new SolidColorBrush(Color.White)))
     .Build();
 ```
 

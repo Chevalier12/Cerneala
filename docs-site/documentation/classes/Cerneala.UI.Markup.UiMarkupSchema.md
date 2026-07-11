@@ -55,9 +55,9 @@ The schema also registers these shared element/control properties for every buil
 | `IsEnabled` | `UIElement` | `bool.TryParse`; invalid values throw `FormatException`. |
 | `IsVisible` | `UIElement` | `bool.TryParse`; invalid values throw `FormatException`. |
 | `Margin` | `UIElement` | One float, or four comma-separated floats, parsed with invariant culture. |
-| `Background` | `Control` | Named color or comma-separated byte color. |
+| `Background` | `Control` | Color shorthand converted to `SolidColorBrush`, a brush resource, or a composite brush property element. |
 | `Foreground` | `Control` | Named color or comma-separated byte color. |
-| `BorderBrush` | `Control` | Named color or comma-separated byte color. |
+| `BorderBrush` | `Control` | Named, hexadecimal, or comma-separated color converted to `SolidColorBrush`. |
 | `BorderThickness` | `Control` | One float, or four comma-separated floats, parsed with invariant culture. |
 | `Padding` | `Control` | One float, or four comma-separated floats, parsed with invariant culture. |
 | `FontFamily` | `Control` | Raw string value. |

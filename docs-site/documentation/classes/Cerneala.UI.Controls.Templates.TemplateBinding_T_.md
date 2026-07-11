@@ -27,14 +27,15 @@ The common path is to create a binding from a template context. The binding is a
 ```csharp
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
-Button button = new() { Background = Color.White };
+Button button = new() { Background = new SolidColorBrush(Color.White) };
 Border? border = null;
 
 button.ComponentTemplate = new ComponentTemplate<Button>("Button.Binding", context =>
 {
     border = new Border();
-    TemplateBinding<Color> binding = context.Bind(
+    TemplateBinding<Brush?> binding = context.Bind(
         Control.BackgroundProperty,
         border,
         Control.BackgroundProperty);
@@ -42,10 +43,10 @@ button.ComponentTemplate = new ComponentTemplate<Button>("Button.Binding", conte
     return border;
 });
 
-button.Background = Color.Black;
+button.Background = new SolidColorBrush(Color.Black);
 
 // The generated border follows the owner control value while attached.
-Color currentBackground = border!.Background;
+Brush? currentBackground = border!.Background;
 ```
 
 ## Remarks

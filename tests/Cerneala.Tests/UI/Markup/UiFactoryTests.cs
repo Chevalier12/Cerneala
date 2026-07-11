@@ -4,6 +4,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Markup;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.UI.Markup;
 
@@ -92,6 +93,76 @@ public sealed class UiFactoryTests
     }
 
     [Fact]
+    public void CreateParsesShortAndCompositeBorderBrushValues()
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+
+        Border solid = Assert.IsType<Border>(factory.Create(Read("<Border BorderBrush=\"Tomato\" />")).Value);
+        Border gradient = Assert.IsType<Border>(factory.Create(Read("""
+            <Border>
+              <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="10,0">
+                  <GradientStop Offset="0" Color="White" />
+                  <GradientStop Offset="1" Color="Black" />
+                </LinearGradientBrush>
+              </Border.BorderBrush>
+            </Border>
+            """)).Value);
+
+        Assert.Equal(Color.Tomato, Assert.IsType<SolidColorBrush>(solid.BorderBrush).Color);
+        Assert.IsType<LinearGradientBrush>(gradient.BorderBrush);
+    }
+
+    [Fact]
+    public void CreateResolvesBorderBrushResourceOnItsOwner()
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+        MarkupResult<UIElement> result = factory.Create(Read("""
+            <Border BorderBrush="$Accent">
+              <Border.Resources>
+                <RadialGradientBrush Name="Accent" Center="5,5" RadiusX="5" RadiusY="5">
+                  <GradientStop Offset="0" Color="White" />
+                  <GradientStop Offset="1" Color="Black" />
+                </RadialGradientBrush>
+              </Border.Resources>
+            </Border>
+            """));
+
+        Assert.False(result.HasErrors);
+        Border border = Assert.IsType<Border>(result.Value);
+        Assert.IsType<RadialGradientBrush>(border.BorderBrush);
+        Assert.Same(border.BorderBrush, border.Resources["Accent"]);
+    }
+
+    [Fact]
+    public void CreateParsesBackgroundShorthandResourceAndPropertyElement()
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+        Border shorthand = Assert.IsType<Border>(factory.Create(Read("<Border Background=\"Tomato\" />")).Value);
+        Border resource = Assert.IsType<Border>(factory.Create(Read("""
+            <Border Background="$Fill">
+              <Border.Resources>
+                <ImageBrush Name="Fill" Source="fill.png" />
+              </Border.Resources>
+            </Border>
+            """)).Value);
+        Border property = Assert.IsType<Border>(factory.Create(Read("""
+            <Border>
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="10,0">
+                  <GradientStop Offset="0" Color="White" />
+                  <GradientStop Offset="1" Color="Black" />
+                </LinearGradientBrush>
+              </Border.Background>
+            </Border>
+            """)).Value);
+
+        Assert.Equal(Color.Tomato, Assert.IsType<SolidColorBrush>(shorthand.Background).Color);
+        Assert.IsType<ImageBrush>(resource.Background);
+        Assert.IsType<LinearGradientBrush>(property.Background);
+    }
+
+    [Fact]
     public void CreateUsesTypedPropertyCoercion()
     {
         UiMarkupDocument document = Read("<TextBlock />");
@@ -117,24 +188,24 @@ public sealed class UiFactoryTests
         root.ProcessFrame();
         root.RetainedRenderer.Commit(root);
 
-        border.Background = Color.Black;
+        border.Background = new SolidColorBrush(Color.Black);
         root.ProcessFrame();
         DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
         Assert.Single(commands);
-        Assert.Equal(Color.Black, commands[0].Color);
+        Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(commands[0].Brush).Color);
     }
 
     [Fact]
     public void GeneratedFactoryCreatesRetainedTree()
     {
-        GeneratedUiFactory factory = new((Func<UIElement>)(() => new Border { Background = Color.White }));
+        GeneratedUiFactory factory = new((Func<UIElement>)(() => new Border { Background = new SolidColorBrush(Color.White) }));
 
         MarkupResult<UIElement> result = factory.Create();
 
         Assert.False(result.HasErrors);
         Border border = Assert.IsType<Border>(result.Value);
-        Assert.Equal(Color.White, border.Background);
+        Assert.Equal(new SolidColorBrush(Color.White), border.Background);
     }
 
     [Fact]

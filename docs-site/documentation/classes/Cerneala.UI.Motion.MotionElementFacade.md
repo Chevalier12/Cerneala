@@ -25,6 +25,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Motion;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Specs;
+using Cerneala.UI.Media;
 
 UIRoot root = new();
 UIElement element = new();
@@ -51,8 +52,8 @@ root.VisualChildren.Add(control);
 
 MotionHandle handle = control.Motion()
     .Animate(Control.BackgroundProperty)
-    .To(Color.White)
-    .With(Motion.Tween<Color>(TimeSpan.FromMilliseconds(150)));
+    .To(new SolidColorBrush(Color.White))
+    .With(Motion.Tween<Brush?>(TimeSpan.FromMilliseconds(150)));
 ```
 
 ## Remarks

@@ -25,9 +25,12 @@ Inheritance:
 Bind a generated `Border` background to the templated `Button` background from inside a control template:
 
 ```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Media;
+
 Button button = new()
 {
-    Background = Color.White,
+    Background = new SolidColorBrush(Color.White),
     ComponentTemplate = new ComponentTemplate<Button>("Button.Binding", context =>
     {
         Border border = new();

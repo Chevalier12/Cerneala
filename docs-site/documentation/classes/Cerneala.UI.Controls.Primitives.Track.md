@@ -68,7 +68,7 @@ The fallback layout is orientation-aware. A horizontal track reports a desired s
 
 Dragging the thumb updates `Value` from the pointer delta, using horizontal movement for horizontal tracks and vertical movement for vertical tracks. `ValueChanged` is raised when the stored value actually changes. A left mouse down on the track outside the thumb compares the clicked position with the current value and applies `DecreaseLarge` or `IncreaseLarge`; the input event is marked handled only when this changes the value.
 
-Without a template child, the fallback renderer fills the track bounds with `Background` and draws a border using the maximum side of `BorderThickness`. The constructor initializes `Background` to `Color(225, 225, 225)`, `BorderBrush` to `Color(120, 120, 120)`, `BorderThickness` to `new Thickness(1)`, `SmallChange` to `0.1f`, and `LargeChange` to `1`.
+Without a template child, the fallback renderer fills the track bounds with `Background` and draws a border using the maximum side of `BorderThickness`. The constructor initializes `Background` to `new SolidColorBrush(new Color(225, 225, 225))`, `BorderBrush` to `new SolidColorBrush(new Color(120, 120, 120))`, `BorderThickness` to `new Thickness(1)`, `SmallChange` to `0.1f`, and `LargeChange` to `1`.
 
 `Slider` and `ScrollBar` use `Track` as their owned range interaction primitive and synchronize their range state into it.
 
@@ -155,8 +155,8 @@ Without a template child, the fallback renderer fills the track bounds with `Bac
 
 | Name | Type | Declared by | Description |
 | --- | --- | --- | --- |
-| `Background` | `Color` | `Control` | Gets or sets the fallback fill color rendered by the track. The constructor sets it to `Color(225, 225, 225)`. |
-| `BorderBrush` | `Color` | `Control` | Gets or sets the fallback border color rendered by the track. The constructor sets it to `Color(120, 120, 120)`. |
+| `Background` | `Brush?` | `Control` | Gets or sets the fallback fill brush rendered by the track. The constructor sets a solid brush with color `Color(225, 225, 225)`. |
+| `BorderBrush` | `Brush?` | `Control` | Gets or sets the fallback border brush rendered by the track. The constructor sets a solid brush with color `Color(120, 120, 120)`. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the fallback border thickness. The constructor sets it to `new Thickness(1)`. |
 | `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. When present, the fallback thumb is removed from track child collections. |
 

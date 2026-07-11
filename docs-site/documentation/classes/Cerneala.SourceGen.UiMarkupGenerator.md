@@ -85,9 +85,9 @@ Supported attributes:
 | `IsEnabled` | Any supported element | Requires a Boolean value. |
 | `IsVisible` | Any supported element | Requires a Boolean value. |
 | `Margin` | Any supported element | Requires one float or four comma-separated floats. |
-| `Background` | `Border`, `Button`, `TextBlock` | Requires a supported color value. |
+| `Background` | `Border`, `Button`, `TextBlock` | Accepts a color shorthand converted to `SolidColorBrush`, a brush resource, or a composite brush property element. |
 | `Foreground` | `Border`, `Button`, `TextBlock` | Requires a supported color value. |
-| `BorderBrush` | `Border`, `Button`, `TextBlock` | Requires a supported color value. |
+| `BorderBrush` | `Border`, `Button`, `TextBlock` | Accepts a color shorthand converted to `SolidColorBrush`, a brush resource, or a composite brush property element. |
 | `BorderThickness` | `Border`, `Button`, `TextBlock` | Requires one non-negative float or four comma-separated non-negative floats. |
 | `Padding` | `Border`, `Button`, `TextBlock` | Requires one non-negative float or four comma-separated non-negative floats. |
 | `FontFamily` | `Border`, `Button`, `TextBlock` | Requires a non-whitespace string. |

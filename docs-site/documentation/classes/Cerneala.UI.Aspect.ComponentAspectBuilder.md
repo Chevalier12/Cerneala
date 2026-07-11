@@ -38,12 +38,13 @@ Add aspect rules to a package:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectRuleSet rule = new(
     "button.base",
     AspectLayer.App,
     new AspectTarget(typeof(Button)),
-    [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.White))],
+    [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(new SolidColorBrush(Color.White)))],
     declarationOrder: 0);
 
 AspectPackage package = AspectPackage.Create("App")

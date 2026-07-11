@@ -25,8 +25,8 @@ public sealed class DebugOverlay
         Root = new Border
         {
             Padding = new Thickness(8),
-            Background = new Color(18, 24, 32, 230),
-            BorderBrush = new Color(92, 107, 128),
+            Background = new Cerneala.UI.Media.SolidColorBrush(new Color(18, 24, 32, 230)),
+            BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(92, 107, 128)),
             BorderThickness = new Thickness(1),
             Child = textBlock
         };

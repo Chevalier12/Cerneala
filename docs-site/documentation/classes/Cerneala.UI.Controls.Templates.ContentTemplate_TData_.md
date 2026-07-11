@@ -41,7 +41,7 @@ registry.Register(new ContentTemplate<string>(
     context => new Border
     {
         Padding = new Thickness(8),
-        BorderBrush = new Color(148, 163, 184),
+BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(148, 163, 184)),
         BorderThickness = new Thickness(1),
         Child = new TextBlock { Text = context.Data ?? string.Empty }
     }));

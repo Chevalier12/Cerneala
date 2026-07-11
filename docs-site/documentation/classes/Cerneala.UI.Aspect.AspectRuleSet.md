@@ -24,10 +24,11 @@ Create a rule set that assigns a background value to `Button` controls:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectDeclaration declaration = new(
     Control.BackgroundProperty,
-    AspectValue<Color>.Literal(Color.Black));
+    AspectValue<Brush?>.Literal(new SolidColorBrush(Color.Black)));
 
 AspectRuleSet rule = new(
     "button-background",
@@ -44,10 +45,11 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
+using Cerneala.UI.Media;
 
 Button button = new();
-AspectDeclaration first = new(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.White));
-AspectDeclaration second = new(Control.BackgroundProperty, AspectValue<Color>.Literal(Color.Black));
+AspectDeclaration first = new(Control.BackgroundProperty, AspectValue<Brush?>.Literal(new SolidColorBrush(Color.White)));
+AspectDeclaration second = new(Control.BackgroundProperty, AspectValue<Brush?>.Literal(new SolidColorBrush(Color.Black)));
 
 AspectRuleSet themeRule = new("theme", AspectLayer.Theme, new AspectTarget(typeof(Button)), [first], 10);
 AspectRuleSet appRule = new("app", AspectLayer.App, new AspectTarget(typeof(Button)), [second], 1);

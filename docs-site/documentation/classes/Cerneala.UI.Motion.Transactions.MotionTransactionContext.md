@@ -28,17 +28,18 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Media;
 using Cerneala.UI.Motion.Specs;
 
 UIRoot root = new();
 Control control = new();
 root.VisualChildren.Add(control);
 
-control.SetValue(Control.BackgroundProperty, Color.Black, UiPropertyValueSource.AspectBase);
+control.SetValue(Control.BackgroundProperty, new SolidColorBrush(Color.Black), UiPropertyValueSource.AspectBase);
 
 using (root.Motion.Transactions.Begin(Motion.Tween(TimeSpan.FromMilliseconds(150))))
 {
-    control.SetValue(Control.BackgroundProperty, Color.White, UiPropertyValueSource.AspectBase);
+    control.SetValue(Control.BackgroundProperty, new SolidColorBrush(Color.White), UiPropertyValueSource.AspectBase);
 }
 ```
 
@@ -49,6 +50,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Media;
 
 UIRoot root = new();
 Control control = new();
@@ -56,7 +58,7 @@ root.VisualChildren.Add(control);
 
 using (root.Motion.Transactions.Disable())
 {
-    control.SetValue(Control.BackgroundProperty, Color.White, UiPropertyValueSource.AspectBase);
+    control.SetValue(Control.BackgroundProperty, new SolidColorBrush(Color.White), UiPropertyValueSource.AspectBase);
 }
 ```
 

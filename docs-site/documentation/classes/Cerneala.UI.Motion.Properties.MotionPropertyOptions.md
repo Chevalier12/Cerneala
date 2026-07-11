@@ -49,7 +49,7 @@ AnimatablePropertyRegistry registry = new();
 registry.Register(
     Control.BackgroundProperty,
     new MotionPropertyOptions(
-        typeof(ColorMixer),
+        typeof(BrushMixer),
         Motion.Tween(TimeSpan.FromMilliseconds(160)),
         MotionPropertyInvalidationClassifier.Classify(Control.BackgroundProperty),
         isSafeForImplicitAnimation: true));

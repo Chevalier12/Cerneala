@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Controls;
 
@@ -12,9 +13,9 @@ public class CheckBox : ToggleButton
 
     public CheckBox()
     {
-        BorderBrush = new Color(100, 110, 125);
+        BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(100, 110, 125));
         Foreground = new Color(35, 45, 60);
-        Background = Color.Transparent;
+        Background = null;
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -36,13 +37,16 @@ public class CheckBox : ToggleButton
         float boxY = context.Bounds.Y + insets.Top + MathF.Max(0, (context.Bounds.Height - insets.Top - insets.Bottom - BoxSize) / 2);
         DrawRect box = new(boxX, boxY, BoxSize, BoxSize);
 
-        Color boxFill = IsChecked ? Foreground : Background;
-        if (boxFill.A != 0)
+        Brush? boxFill = IsChecked ? new SolidColorBrush(Foreground) : Background;
+        if (boxFill is not null)
         {
             context.DrawingContext.FillRectangle(box, boxFill);
         }
 
-        context.DrawingContext.DrawRectangle(box, BorderBrush, 1);
+        if (BorderBrush is { } borderBrush)
+        {
+            context.DrawingContext.DrawRectangle(box, borderBrush, 1);
+        }
 
         if (IsChecked)
         {

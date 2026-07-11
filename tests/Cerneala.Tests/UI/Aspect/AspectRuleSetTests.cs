@@ -198,7 +198,9 @@ public sealed class AspectRuleSetTests
 
     private static AspectDeclaration Declaration(Color color)
     {
-        return new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(color));
+        return new AspectDeclaration(
+            Control.BackgroundProperty,
+            AspectValue<Cerneala.UI.Media.Brush?>.Literal(new Cerneala.UI.Media.SolidColorBrush(color)));
     }
 
     private sealed record UserCard(bool IsImportant);

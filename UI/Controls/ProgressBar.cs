@@ -9,9 +9,9 @@ public class ProgressBar : RangeBase
 {
     public ProgressBar()
     {
-        Background = new Color(230, 230, 230);
+        Background = new Cerneala.UI.Media.SolidColorBrush(new Color(230, 230, 230));
         Foreground = new Color(65, 135, 230);
-        BorderBrush = new Color(120, 120, 120);
+        BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(120, 120, 120));
         BorderThickness = new Thickness(1);
     }
 
@@ -25,9 +25,9 @@ public class ProgressBar : RangeBase
     protected override void OnRender(RenderContext context)
     {
         DrawRect rect = Border.ToDrawRect(context.Bounds);
-        if (Background.A != 0 && rect.Width > 0 && rect.Height > 0)
+        if (Background is { } background && rect.Width > 0 && rect.Height > 0)
         {
-            context.DrawingContext.FillRectangle(rect, Background);
+            context.DrawingContext.FillRectangle(rect, background);
         }
 
         float fillWidth = rect.Width * MathF.Min(MathF.Max(ValueRatio, 0), 1);
@@ -37,9 +37,9 @@ public class ProgressBar : RangeBase
         }
 
         float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Top), MathF.Max(BorderThickness.Right, BorderThickness.Bottom));
-        if (BorderBrush.A != 0 && thickness > 0 && rect.Width > 0 && rect.Height > 0)
+        if (BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)
         {
-            context.DrawingContext.DrawRectangle(rect, BorderBrush, thickness);
+            context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
         }
     }
 }

@@ -122,7 +122,7 @@ public sealed class WindowRuntimeTests : IDisposable
         FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
         int appliedBeforeVisualChange = nativeWindow.ApplyPropertiesCount;
 
-        window.Background = new Color(10, 20, 30);
+        window.Background = new Cerneala.UI.Media.SolidColorBrush(new Color(10, 20, 30));
 
         Assert.Equal(appliedBeforeVisualChange, nativeWindow.ApplyPropertiesCount);
     }

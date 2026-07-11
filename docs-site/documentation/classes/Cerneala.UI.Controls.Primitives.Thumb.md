@@ -53,8 +53,8 @@ using Cerneala.UI.Layout;
 
 Thumb thumb = new()
 {
-    Background = new Color(210, 210, 210),
-    BorderBrush = new Color(70, 70, 70),
+    Background = new SolidColorBrush(new Color(210, 210, 210)),
+BorderBrush = new SolidColorBrush(new Color(70, 70, 70)),
     BorderThickness = new Thickness(1)
 };
 
@@ -70,7 +70,7 @@ During an active drag, `UpdateDrag` computes `LastHorizontalChange` and `LastVer
 
 Completing a left-button drag performs a final update, clears `IsDragging`, releases capture through the supplied route map, raises `DragCompleted` with `Canceled` set to `false`, and marks the mouse-up event as handled. `CancelDrag` clears the drag state and raises `DragCompleted` with `Canceled` set to `true`. The constructor also registers a lost-mouse-capture handler that cancels the active drag, and detaching the thumb cancels any active drag before base detachment runs.
 
-Without a template child, the fallback layout reports a desired size of `10 x 10`. Fallback rendering fills the arranged bounds with `Background` when it is visible, then draws a border using the maximum side of `BorderThickness` when `BorderBrush` is visible. The constructor initializes `Background` to `new Color(180, 180, 180)`, `BorderBrush` to `new Color(80, 80, 80)`, and `BorderThickness` to `new Thickness(1)`.
+Without a template child, the fallback layout reports a desired size of `10 x 10`. Fallback rendering fills the arranged bounds with `Background` when it is not `null`, then draws a border using the maximum side of `BorderThickness` when `BorderBrush` is not `null`. The constructor initializes `Background` to `new SolidColorBrush(new Color(180, 180, 180))`, `BorderBrush` to `new SolidColorBrush(new Color(80, 80, 80))`, and `BorderThickness` to `new Thickness(1)`.
 
 `BeginDrag`, `CompleteDrag`, `BeginPointerDrag`, and `CompletePointerDrag` require non-null `PointerCaptureManager`, `ElementInputRouteMap`, and `MouseButtonEventArgs` arguments. `UpdateDrag` and `UpdatePointerDrag` require a non-null `MouseEventArgs` argument.
 
@@ -122,8 +122,8 @@ Without a template child, the fallback layout reports a desired size of `10 x 10
 
 | Name | Type | Declared by | Description |
 | --- | --- | --- | --- |
-| `Background` | `Color` | `Control` | Gets or sets the fallback fill color rendered by the thumb. |
-| `BorderBrush` | `Color` | `Control` | Gets or sets the fallback border color rendered by the thumb. |
+| `Background` | `Brush?` | `Control` | Gets or sets the fallback fill brush rendered by the thumb. |
+| `BorderBrush` | `Brush?` | `Control` | Gets or sets the fallback border brush rendered by the thumb. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the fallback border thickness used by the thumb renderer. |
 | `IsEnabled` | `bool` | `UIElement` | Controls whether `BeginDrag` can start a drag. |
 | `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template inherited by the thumb. |

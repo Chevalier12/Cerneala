@@ -1978,6 +1978,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 EmitProperty(element, variable, attribute);
             }
 
+            EmitBrushPropertyElement(element, variable);
+
             if (parsedContent.HasDirectives || aspects.Any(aspect => aspect.Conditions.Count > 0))
             {
                 EmitReactiveContent(element, variable, parsedContent, aspects);
@@ -1992,6 +1994,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                             EmitTextContent(element, variable, text.Text);
                             break;
                         case DirectiveElementNode child:
+                            if (IsBrushPropertyElement(element, child.Element))
+                            {
+                                break;
+                            }
+
                             string childVariable = EmitElement(child.Element);
                             EmitChild(element, variable, childVariable);
                             break;
@@ -2008,6 +2015,72 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             return variable;
+        }
+
+        private void EmitBrushPropertyElement(XElement owner, string ownerVariable)
+        {
+            foreach (IGrouping<string, XElement> propertyGroup in owner.Elements()
+                .Select(child => new { Element = child, PropertyName = GetBrushPropertyName(owner, child) })
+                .Where(item => item.PropertyName is not null)
+                .GroupBy(item => item.PropertyName!, item => item.Element, StringComparer.Ordinal))
+            {
+                string propertyName = propertyGroup.Key;
+                XElement[] propertyElements = propertyGroup.ToArray();
+                if (propertyElements.Length > 1 || owner.Attribute(propertyName) is not null)
+                {
+                    Report(InvalidDocumentShape, propertyElements[0], Path.GetFileName(file.Path),
+                        owner.Name.LocalName + "." + propertyName + " may be assigned only once.");
+                    continue;
+                }
+
+                XElement propertyElement = propertyElements[0];
+                XElement[] brushes = propertyElement.Elements().ToArray();
+                if (brushes.Length != 1)
+                {
+                    Report(InvalidDocumentShape, propertyElement, Path.GetFileName(file.Path),
+                        propertyElement.Name.LocalName + " requires exactly one brush child.");
+                    continue;
+                }
+
+                XElement brush = brushes[0];
+                string? expression = brush.Name.LocalName switch
+                {
+                    "SolidColorBrush" => BuildSolidColorBrushExpression(brush, out _),
+                    "LinearGradientBrush" => BuildLinearGradientBrushExpression(brush),
+                    "RadialGradientBrush" => BuildRadialGradientBrushExpression(brush),
+                    "ImageBrush" => BuildImageBrushExpression(brush),
+                    "DrawingBrush" => BuildDrawingBrushExpression(brush),
+                    _ => null
+                };
+                if (expression is null)
+                {
+                    if (brush.Name.LocalName is not ("SolidColorBrush" or "LinearGradientBrush" or "RadialGradientBrush" or "ImageBrush" or "DrawingBrush"))
+                    {
+                        Report(UnsupportedElement, brush, brush.Name.LocalName);
+                    }
+
+                    continue;
+                }
+
+                currentLines.Add(ownerVariable + "." + propertyName + " = " + expression + ";");
+            }
+        }
+
+        private static bool IsBrushPropertyElement(XElement owner, XElement child)
+        {
+            return GetBrushPropertyName(owner, child) is not null;
+        }
+
+        private static string? GetBrushPropertyName(XElement owner, XElement child)
+        {
+            string prefix = owner.Name.LocalName + ".";
+            if (!child.Name.LocalName.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            string propertyName = child.Name.LocalName.Substring(prefix.Length);
+            return propertyName is "Background" or "BorderBrush" ? propertyName : null;
         }
 
         private void EmitRuntimeResources(XElement owner, string ownerVariable)
@@ -2648,6 +2721,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 MarkupValueKind.Thickness => Thickness(elementName, propertyName, attribute),
                 MarkupValueKind.NonNegativeThickness => NonNegativeThickness(elementName, propertyName, attribute),
                 MarkupValueKind.Color => Color(elementName, propertyName, attribute),
+                MarkupValueKind.Brush => Brush(elementName, propertyName, attribute),
                 MarkupValueKind.Enum => EnumValue(elementName, propertyName, attribute, spec.LiteralType),
                 _ => null
             };
@@ -2935,6 +3009,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             return Invalid(attribute, elementName, propertyName, value);
+        }
+
+        private string? Brush(string elementName, string propertyName, XAttribute attribute)
+        {
+            string? color = Color(elementName, propertyName, attribute);
+            return color is null ? null : "new global::Cerneala.UI.Media.SolidColorBrush(" + color + ")";
         }
 
         private string? Invalid(XAttribute attribute, string elementName, string propertyName, string value)

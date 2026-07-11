@@ -41,9 +41,9 @@ public sealed class ModernAspectTraceTests
     [Fact]
     public void TraceShowsTokenResolutionChain()
     {
-        AspectToken<Color> token = AspectToken.Color("app.accent");
+        AspectToken<Cerneala.UI.Media.Brush?> token = AspectToken.Create<Cerneala.UI.Media.Brush?>("app.accent");
         AspectEnvironment environment = new("scope");
-        environment.Set(token, Color.White);
+        environment.Set(token, new Cerneala.UI.Media.SolidColorBrush(Color.White));
         Button button = new();
         AspectEngine engine = new();
         AspectCatalog catalog = CatalogWith("App", Rule("token", AspectLayer.App, new AspectDeclaration(Control.BackgroundProperty, token.Ref())));
@@ -99,7 +99,9 @@ public sealed class ModernAspectTraceTests
 
     private static AspectDeclaration Declaration(Color color)
     {
-        return new AspectDeclaration(Control.BackgroundProperty, AspectValue<Color>.Literal(color));
+        return new AspectDeclaration(
+            Control.BackgroundProperty,
+            AspectValue<Cerneala.UI.Media.Brush?>.Literal(new Cerneala.UI.Media.SolidColorBrush(color)));
     }
 
     private enum ButtonKind

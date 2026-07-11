@@ -24,6 +24,7 @@ Create a package with a token default, a component template, and a content templ
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 using Cerneala.UI.Controls.Templates;
 
 AspectToken<Color> accentToken = AspectToken.Color("app.accent");
@@ -51,7 +52,7 @@ AspectPackage package = AspectPackage.Create("App")
         [
             new AspectDeclaration(
                 Control.BackgroundProperty,
-                AspectValue<Color>.Literal(Color.White))
+                AspectValue<Brush?>.Literal(new SolidColorBrush(Color.White)))
         ],
         declarationOrder: 0)));
 

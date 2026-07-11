@@ -24,10 +24,11 @@ Create a literal declaration for a control property:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectDeclaration declaration = new(
     Control.BackgroundProperty,
-    AspectValue<Color>.Literal(Color.White),
+    AspectValue<Brush?>.Literal(new SolidColorBrush(Color.White)),
     diagnosticName: "button background");
 ```
 
@@ -37,6 +38,7 @@ Use a declaration in a rule set:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectRuleSet rule = new(
     "button surface",
@@ -45,7 +47,7 @@ AspectRuleSet rule = new(
     [
         new AspectDeclaration(
             Control.BackgroundProperty,
-            AspectValue<Color>.Literal(Color.White))
+            AspectValue<Brush?>.Literal(new SolidColorBrush(Color.White)))
     ],
     declarationOrder: 0);
 ```

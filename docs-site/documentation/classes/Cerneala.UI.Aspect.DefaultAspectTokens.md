@@ -28,7 +28,7 @@ AspectRuleSet borderRule = new(
     "app.border",
     AspectLayer.App,
     new AspectTarget(typeof(Border)),
-    [new AspectDeclaration(Control.BorderBrushProperty, DefaultAspectTokens.Color.Border.Ref())],
+    [new AspectDeclaration(Control.BorderBrushProperty, DefaultAspectTokens.Brush.Border.Ref())],
     priority: 0);
 ```
 
@@ -63,15 +63,16 @@ AspectPackage package = AspectPackage.Create("App")
 
 `DefaultAspectPackage.Create()` registers default values for these tokens in the built-in package. `DefaultAspectPackage.CreateEnvironment()` creates an environment named `default` and sets matching values for runtime resolution.
 
-The token names are stable semantic names such as `color.background`, `spacing.control-padding`, and `motion.normal`. Rules can refer to the tokens through `AspectToken<T>.Ref()` so the final value is read from the active `AspectEnvironment` during aspect resolution.
+The token names are stable semantic names such as `color.background`, `brush.background`, `brush.border`, `spacing.control-padding`, and `motion.normal`. Rules can refer to the tokens through `AspectToken<T>.Ref()` so the final value is read from the active `AspectEnvironment` during aspect resolution.
 
-The default package uses several of these tokens directly: button rules use `Stroke.ControlBorderThickness`, border rules use `Color.Surface` and `Color.Border`, and the default environment provides values for all tokens listed below.
+The default package uses several of these tokens directly: button rules use `Brush.Background` and `Stroke.ControlBorderThickness`, border rules use `Brush.Surface` and `Brush.Border`, and the default environment provides values for all tokens listed below.
 
 ## Nested Classes
 
 | Name | Description |
 | --- | --- |
 | `Color` | Groups semantic color tokens backed by `Color` values. |
+| `Brush` | Groups semantic brush tokens used by control chrome. |
 | `Typography` | Groups text styling tokens for font family and font size. |
 | `Spacing` | Groups spacing tokens backed by `Thickness` values. |
 | `Stroke` | Groups border and stroke sizing tokens backed by `Thickness` values. |
@@ -88,6 +89,14 @@ The default package uses several of these tokens directly: button rules use `Str
 | `Color.Surface` | `AspectToken<Color>` | `color.surface` | `new Color(255, 255, 255)` |
 | `Color.Border` | `AspectToken<Color>` | `color.border` | `new Color(148, 163, 184)` |
 | `Color.Accent` | `AspectToken<Color>` | `color.accent` | `new Color(37, 99, 235)` |
+
+### Brush
+
+| Name | Type | Token Name | Default Value |
+| --- | --- | --- | --- |
+| `Brush.Background` | `AspectToken<Brush?>` | `brush.background` | `new SolidColorBrush(new Color(248, 250, 252))` |
+| `Brush.Surface` | `AspectToken<Brush?>` | `brush.surface` | `new SolidColorBrush(new Color(255, 255, 255))` |
+| `Brush.Border` | `AspectToken<Brush?>` | `brush.border` | `new SolidColorBrush(new Color(148, 163, 184))` |
 
 ### Typography
 

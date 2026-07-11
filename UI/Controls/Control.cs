@@ -7,6 +7,7 @@ using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Input;
 using Cerneala.UI.Markup;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Controls;
 
@@ -28,20 +29,20 @@ public class Control : UIElement
             UiPropertyOptions.AffectsHitTest |
             UiPropertyOptions.AffectsInputVisual));
 
-    public static readonly UiProperty<Color> BackgroundProperty = UiProperty<Color>.Register(
+    public static readonly UiProperty<Brush?> BackgroundProperty = UiProperty<Brush?>.Register(
         nameof(Background),
         typeof(Control),
-        new UiPropertyMetadata<Color>(Color.Transparent, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<Brush?>(null, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
 
     public static readonly UiProperty<Color> ForegroundProperty = UiProperty<Color>.Register(
         nameof(Foreground),
         typeof(Control),
         new UiPropertyMetadata<Color>(Color.Black, UiPropertyOptions.Inherits | UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<Color> BorderBrushProperty = UiProperty<Color>.Register(
+    public static readonly UiProperty<Brush?> BorderBrushProperty = UiProperty<Brush?>.Register(
         nameof(BorderBrush),
         typeof(Control),
-        new UiPropertyMetadata<Color>(Color.Transparent, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<Brush?>(null, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
 
     public static readonly UiProperty<Thickness> BorderThicknessProperty = UiProperty<Thickness>.Register(
         nameof(BorderThickness),
@@ -69,7 +70,7 @@ public class Control : UIElement
             UiPropertyOptions.Inherits | UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
             validateValue: value => value > 0 && float.IsFinite(value)));
 
-    public Color Background
+    public Brush? Background
     {
         get => GetValue(BackgroundProperty);
         set => SetValue(BackgroundProperty, value);
@@ -81,7 +82,7 @@ public class Control : UIElement
         set => SetValue(ForegroundProperty, value);
     }
 
-    public Color BorderBrush
+    public Brush? BorderBrush
     {
         get => GetValue(BorderBrushProperty);
         set => SetValue(BorderBrushProperty, value);

@@ -115,14 +115,14 @@ public sealed class InheritedPropertyTreePropagationTests
     public void VisualContainerPropertiesDoNotInherit()
     {
         UIRoot root = new();
-        Control parent = new() { Background = Color.White };
+        Control parent = new() { Background = new Cerneala.UI.Media.SolidColorBrush(Color.White) };
         Control child = new();
         parent.VisualChildren.Add(child);
         root.VisualChildren.Add(parent);
 
         root.ProcessFrame();
 
-        Assert.Equal(Color.Transparent, child.Background);
+        Assert.Null(child.Background);
         Assert.Equal(UiPropertyValueSource.Default, child.GetValueSource(Control.BackgroundProperty));
     }
 }

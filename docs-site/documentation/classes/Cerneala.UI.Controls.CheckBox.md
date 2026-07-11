@@ -35,7 +35,7 @@ CheckBox checkBox = new()
 
 `CheckBox` derives its toggle behavior from `ToggleButton`. A left mouse button release with a click count greater than zero toggles `IsChecked`.
 
-The constructor sets checkbox-specific colors: `BorderBrush` to `new Color(100, 110, 125)`, `Foreground` to `new Color(35, 45, 60)`, and `Background` to `Color.Transparent`.
+The constructor sets checkbox-specific visuals: `BorderBrush` to `new SolidColorBrush(new Color(100, 110, 125))`, `Foreground` to `new Color(35, 45, 60)`, and `Background` to `null`.
 
 During measurement, the control always reserves a 14 by 14 layout box for the checkbox mark. Non-empty string content is measured as `text.Length * FontSize * 0.5f` wide by `FontSize` high, with a 6 pixel gap between the box and text. Padding and border thickness are included through the inherited `Insets` calculation.
 
@@ -45,7 +45,7 @@ During rendering, the checkbox box is drawn at the left side of the arranged bou
 
 | Name | Description |
 | --- | --- |
-| `CheckBox()` | Initializes a checkbox with default border, foreground, and transparent background colors. |
+| `CheckBox()` | Initializes a checkbox with a default border brush, foreground color, and `null` background brush. |
 
 ## Key Inherited Members
 
@@ -55,8 +55,8 @@ During rendering, the checkbox box is drawn at the left side of the arranged bou
 | `IsCheckedProperty` | `ToggleButton` | Identifies the `IsChecked` UI property. |
 | `Content` | `ContentControl` | Gets or sets the checkbox content. Non-empty string content is measured and rendered directly by `CheckBox`. |
 | `Foreground` | `Control` | Gets or sets the color used for checked box fill and text rendering. |
-| `Background` | `Control` | Gets or sets the unchecked box fill color. |
-| `BorderBrush` | `Control` | Gets or sets the checkbox outline color. |
+| `Background` | `Control` | Gets or sets the unchecked box fill brush. |
+| `BorderBrush` | `Control` | Gets or sets the checkbox outline brush. |
 | `FontFamily` | `Control` | Gets or sets the font family used for string content. |
 | `FontSize` | `Control` | Gets or sets the font size used for string content and string measurement. |
 | `Command` | `ButtonBase` | Gets or sets the command associated with the inherited button behavior. |

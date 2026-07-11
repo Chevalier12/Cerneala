@@ -5,6 +5,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Media;
 using Cerneala.Tests.UI.Motion.Core;
 using Cerneala.UI.Motion.Properties;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
@@ -52,16 +53,16 @@ public sealed class MotionPropertyBindingTests
         UIRoot root = new(motionClock: clock);
         Control control = new();
         root.VisualChildren.Add(control);
-        MotionValue<Color> value = root.Motion.Graph.CreateValue(Color.Black);
-        using MotionPropertyBinding<Color> binding = new(root.Motion, control, Control.BackgroundProperty, value);
+        MotionValue<Brush?> value = root.Motion.Graph.CreateValue<Brush?>(new SolidColorBrush(Color.Black));
+        using MotionPropertyBinding<Brush?> binding = new(root.Motion, control, Control.BackgroundProperty, value);
 
-        binding.AnimateTo(Color.White, MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+        binding.AnimateTo(new SolidColorBrush(Color.White), MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
         root.ProcessFrame();
         clock.Advance(TimeSpan.FromMilliseconds(50));
         root.ProcessFrame();
 
         Assert.Equal(UiPropertyValueSource.Animation, control.GetValueSource(Control.BackgroundProperty));
-        Assert.NotEqual(Color.Black, control.Background);
+        Assert.NotEqual(new SolidColorBrush(Color.Black), control.Background);
     }
 
     [Fact]
@@ -71,17 +72,17 @@ public sealed class MotionPropertyBindingTests
         UIRoot root = new(motionClock: clock);
         Control control = new();
         root.VisualChildren.Add(control);
-        control.SetValue(Control.BackgroundProperty, Color.Black, UiPropertyValueSource.AspectBase);
-        MotionValue<Color> value = root.Motion.Graph.CreateValue(control.Background);
-        using MotionPropertyBinding<Color> binding = new(root.Motion, control, Control.BackgroundProperty, value);
+        control.SetValue(Control.BackgroundProperty, new SolidColorBrush(Color.Black), UiPropertyValueSource.AspectBase);
+        MotionValue<Brush?> value = root.Motion.Graph.CreateValue(control.Background);
+        using MotionPropertyBinding<Brush?> binding = new(root.Motion, control, Control.BackgroundProperty, value);
 
-        binding.AnimateTo(Color.White, MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(1)));
+        binding.AnimateTo(new SolidColorBrush(Color.White), MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(1)));
         root.ProcessFrame();
         clock.Advance(TimeSpan.FromMilliseconds(1));
         root.ProcessFrame();
 
         Assert.Equal(UiPropertyValueSource.AspectBase, control.GetValueSource(Control.BackgroundProperty));
-        Assert.Equal(Color.Black, control.Background);
+        Assert.Equal(new SolidColorBrush(Color.Black), control.Background);
     }
 
     [Fact]
@@ -90,16 +91,16 @@ public sealed class MotionPropertyBindingTests
         UIRoot root = new(reducedMotion: new ReducedMotionPolicy(ReducedMotionMode.Reduce));
         Control control = new();
         root.VisualChildren.Add(control);
-        control.SetValue(Control.BackgroundProperty, Color.Black, UiPropertyValueSource.AspectBase);
-        MotionValue<Color> value = root.Motion.Graph.CreateValue(control.Background);
-        using MotionPropertyBinding<Color> binding = new(root.Motion, control, Control.BackgroundProperty, value);
+        control.SetValue(Control.BackgroundProperty, new SolidColorBrush(Color.Black), UiPropertyValueSource.AspectBase);
+        MotionValue<Brush?> value = root.Motion.Graph.CreateValue(control.Background);
+        using MotionPropertyBinding<Brush?> binding = new(root.Motion, control, Control.BackgroundProperty, value);
 
-        MotionHandle handle = binding.AnimateTo(Color.White, MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+        MotionHandle handle = binding.AnimateTo(new SolidColorBrush(Color.White), MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
         root.ProcessFrame();
 
         Assert.True(handle.IsCompleted);
         Assert.Equal(UiPropertyValueSource.AspectBase, control.GetValueSource(Control.BackgroundProperty));
-        Assert.Equal(Color.Black, control.Background);
+        Assert.Equal(new SolidColorBrush(Color.Black), control.Background);
     }
 
     [Fact]
@@ -109,10 +110,10 @@ public sealed class MotionPropertyBindingTests
         UIRoot valueRoot = new();
         Control control = new();
         targetRoot.VisualChildren.Add(control);
-        MotionValue<Color> foreignValue = valueRoot.Motion.Graph.CreateValue(Color.Black);
+        MotionValue<Brush?> foreignValue = valueRoot.Motion.Graph.CreateValue<Brush?>(new SolidColorBrush(Color.Black));
 
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
-            new MotionPropertyBinding<Color>(targetRoot.Motion, control, Control.BackgroundProperty, foreignValue));
+            new MotionPropertyBinding<Brush?>(targetRoot.Motion, control, Control.BackgroundProperty, foreignValue));
 
         Assert.Contains("same MotionSystem", exception.Message, StringComparison.Ordinal);
     }
@@ -124,11 +125,11 @@ public sealed class MotionPropertyBindingTests
         UIRoot root = new(motionClock: clock);
         Control control = new();
         root.VisualChildren.Add(control);
-        control.SetValue(Control.BackgroundProperty, Color.Black, UiPropertyValueSource.AspectBase);
-        MotionValue<Color> value = root.Motion.Graph.CreateValue(control.Background);
-        using MotionPropertyBinding<Color> binding = new(root.Motion, control, Control.BackgroundProperty, value);
+        control.SetValue(Control.BackgroundProperty, new SolidColorBrush(Color.Black), UiPropertyValueSource.AspectBase);
+        MotionValue<Brush?> value = root.Motion.Graph.CreateValue(control.Background);
+        using MotionPropertyBinding<Brush?> binding = new(root.Motion, control, Control.BackgroundProperty, value);
 
-        binding.AnimateTo(Color.White, MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+        binding.AnimateTo(new SolidColorBrush(Color.White), MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
         root.ProcessFrame();
         clock.Advance(TimeSpan.FromMilliseconds(50));
         root.ProcessFrame();
@@ -137,7 +138,7 @@ public sealed class MotionPropertyBindingTests
         root.ProcessFrame();
 
         Assert.Equal(UiPropertyValueSource.AspectBase, control.GetValueSource(Control.BackgroundProperty));
-        Assert.Equal(Color.Black, control.Background);
+        Assert.Equal(new SolidColorBrush(Color.Black), control.Background);
     }
 
     [Fact]
@@ -147,22 +148,22 @@ public sealed class MotionPropertyBindingTests
         UIRoot root = new(motionClock: clock);
         Control control = new();
         root.VisualChildren.Add(control);
-        MotionValue<Color> value = root.Motion.Graph.CreateValue(Color.Black);
-        using MotionPropertyBinding<Color> binding = new(root.Motion, control, Control.BackgroundProperty, value);
+        MotionValue<Brush?> value = root.Motion.Graph.CreateValue<Brush?>(new SolidColorBrush(Color.Black));
+        using MotionPropertyBinding<Brush?> binding = new(root.Motion, control, Control.BackgroundProperty, value);
 
-        binding.AnimateTo(Color.White, MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+        binding.AnimateTo(new SolidColorBrush(Color.White), MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
         root.ProcessFrame();
-        control.Background = Color.Black;
+        control.Background = new SolidColorBrush(Color.Black);
         clock.Advance(TimeSpan.FromMilliseconds(50));
         root.ProcessFrame();
 
         Assert.Equal(UiPropertyValueSource.Local, control.GetValueSource(Control.BackgroundProperty));
-        Assert.Equal(Color.Black, control.Background);
+        Assert.Equal(new SolidColorBrush(Color.Black), control.Background);
 
         control.ClearValue(Control.BackgroundProperty);
 
         Assert.Equal(UiPropertyValueSource.Animation, control.GetValueSource(Control.BackgroundProperty));
-        Assert.NotEqual(Color.Black, control.Background);
+        Assert.NotEqual(new SolidColorBrush(Color.Black), control.Background);
     }
 
     [Fact]
@@ -172,12 +173,12 @@ public sealed class MotionPropertyBindingTests
         UIRoot root = new(motionClock: clock);
         Control control = new();
         root.VisualChildren.Add(control);
-        control.SetValue(Control.BackgroundProperty, Color.Black, UiPropertyValueSource.AspectBase);
+        control.SetValue(Control.BackgroundProperty, new SolidColorBrush(Color.Black), UiPropertyValueSource.AspectBase);
         root.ProcessFrame();
-        MotionValue<Color> value = root.Motion.Graph.CreateValue(Color.Black);
-        using MotionPropertyBinding<Color> binding = new(root.Motion, control, Control.BackgroundProperty, value);
+        MotionValue<Brush?> value = root.Motion.Graph.CreateValue<Brush?>(new SolidColorBrush(Color.Black));
+        using MotionPropertyBinding<Brush?> binding = new(root.Motion, control, Control.BackgroundProperty, value);
 
-        binding.AnimateTo(Color.Black, MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+        binding.AnimateTo(new SolidColorBrush(Color.Black), MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
         root.ProcessFrame();
         clock.Advance(TimeSpan.FromMilliseconds(16));
         FrameStats stats = root.ProcessFrame();
@@ -195,10 +196,10 @@ public sealed class MotionPropertyBindingTests
         Control control = new();
         root.VisualChildren.Add(control);
         root.ProcessFrame();
-        MotionValue<Color> value = root.Motion.Graph.CreateValue(Color.Black);
-        using MotionPropertyBinding<Color> binding = new(root.Motion, control, Control.BackgroundProperty, value);
+        MotionValue<Brush?> value = root.Motion.Graph.CreateValue<Brush?>(new SolidColorBrush(Color.Black));
+        using MotionPropertyBinding<Brush?> binding = new(root.Motion, control, Control.BackgroundProperty, value);
 
-        binding.AnimateTo(Color.White, MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+        binding.AnimateTo(new SolidColorBrush(Color.White), MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
         root.ProcessFrame();
         clock.Advance(TimeSpan.FromMilliseconds(50));
         FrameStats stats = root.ProcessFrame();
@@ -239,10 +240,10 @@ public sealed class MotionPropertyBindingTests
         UIRoot root = new(motionClock: clock);
         Control control = new();
         root.VisualChildren.Add(control);
-        MotionValue<Color> value = root.Motion.Graph.CreateValue(Color.Black);
-        using MotionPropertyBinding<Color> binding = new(root.Motion, control, Control.BackgroundProperty, value);
+        MotionValue<Brush?> value = root.Motion.Graph.CreateValue<Brush?>(new SolidColorBrush(Color.Black));
+        using MotionPropertyBinding<Brush?> binding = new(root.Motion, control, Control.BackgroundProperty, value);
 
-        MotionHandle handle = binding.AnimateTo(Color.White, MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(100)));
+        MotionHandle handle = binding.AnimateTo(new SolidColorBrush(Color.White), MotionFactory.Tween<Brush?>(TimeSpan.FromMilliseconds(100)));
         root.ProcessFrame();
         root.VisualChildren.Remove(control);
         clock.Advance(TimeSpan.FromMilliseconds(16));

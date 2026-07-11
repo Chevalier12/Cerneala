@@ -35,15 +35,15 @@ if (environment.TryGet(DefaultAspectTokens.Color.Accent, out Color accent))
 }
 ```
 
-Use a default color token as an aspect value reference:
+Use a default color token as an aspect value reference for a color-valued property:
 
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 
 AspectDeclaration declaration = new(
-    Control.BackgroundProperty,
-    DefaultAspectTokens.Color.Surface.Ref());
+    Control.ForegroundProperty,
+    DefaultAspectTokens.Color.Foreground.Ref());
 ```
 
 ## Remarks
@@ -62,7 +62,7 @@ The default package sets these values:
 | `Border` | `color.border` | `new Color(148, 163, 184)` |
 | `Accent` | `color.accent` | `new Color(37, 99, 235)` |
 
-In the default package rules, `DefaultAspectTokens.Color.Surface` is used for `Border` background values and `DefaultAspectTokens.Color.Border` is used for `Border` border color values.
+The color tokens remain available for semantic color consumers. Control chrome rules use the matching tokens from `DefaultAspectTokens.Brush`, so composite brushes can flow into `Background` and `BorderBrush` without conversion.
 
 ## Fields
 

@@ -1,4 +1,6 @@
 using Cerneala.UI.Elements;
+using Cerneala.UI.Controls;
+using System.Xml.Linq;
 
 namespace Cerneala.UI.Markup;
 
@@ -51,6 +53,7 @@ public sealed class UiFactory
             return null;
         }
 
+        ApplyResources(element, node, diagnostics);
         ApplyAttributes(registration, element, node, diagnostics, options);
         ApplyTextContent(registration, element, node, diagnostics, options);
         ApplyChildren(registration, element, node, diagnostics, options);
@@ -112,6 +115,16 @@ public sealed class UiFactory
     {
         foreach (UiMarkupNode childNode in node.Children)
         {
+            if (IsResourcePropertyElement(node, childNode))
+            {
+                continue;
+            }
+
+            if (TryApplyBrushPropertyElement(element, node, childNode, diagnostics))
+            {
+                continue;
+            }
+
             UIElement? child = CreateNode(childNode, diagnostics, options);
             if (child is null)
             {
@@ -133,6 +146,112 @@ public sealed class UiFactory
                 diagnostics.Add(MarkupDiagnostic.Error("MARKUP026", $"Could not add child '{childNode.Name}' to '{node.Name}': {ex.Message}", childNode.Line, childNode.Column));
             }
         }
+    }
+
+    private static void ApplyResources(UIElement element, UiMarkupNode ownerNode, List<MarkupDiagnostic> diagnostics)
+    {
+        UiMarkupNode[] resourceElements = ownerNode.Children.Where(child => IsResourcePropertyElement(ownerNode, child)).ToArray();
+        if (resourceElements.Length == 0)
+        {
+            return;
+        }
+
+        if (resourceElements.Length > 1)
+        {
+            diagnostics.Add(MarkupDiagnostic.Error("MARKUP029", $"Element '{ownerNode.Name}' may declare only one Resources property element."));
+            return;
+        }
+
+        foreach (UiMarkupNode resourceNode in resourceElements[0].Children)
+        {
+            string? name = resourceNode.Attributes.FirstOrDefault(attribute => attribute.Name == "Name")?.Value;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                diagnostics.Add(MarkupDiagnostic.Error("MARKUP029", $"Brush resource '{resourceNode.Name}' requires a Name."));
+                continue;
+            }
+
+            MarkupResult<Cerneala.UI.Media.Brush> result = new BrushMarkupReader().Read(ToXElement(resourceNode).ToString(SaveOptions.DisableFormatting));
+            if (result.Value is null)
+            {
+                diagnostics.AddRange(result.Diagnostics);
+                continue;
+            }
+
+            element.Resources[name] = result.Value;
+        }
+    }
+
+    private static bool IsResourcePropertyElement(UiMarkupNode ownerNode, UiMarkupNode childNode)
+    {
+        return string.Equals(childNode.Name, ownerNode.Name + ".Resources", StringComparison.Ordinal);
+    }
+
+    private static bool TryApplyBrushPropertyElement(
+        UIElement element,
+        UiMarkupNode ownerNode,
+        UiMarkupNode childNode,
+        List<MarkupDiagnostic> diagnostics)
+    {
+        string prefix = ownerNode.Name + ".";
+        if (!childNode.Name.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        string propertyName = childNode.Name[prefix.Length..];
+        if (propertyName is not ("Background" or "BorderBrush"))
+        {
+            return false;
+        }
+
+        if (element is not Control control || childNode.Children.Count != 1)
+        {
+            diagnostics.Add(MarkupDiagnostic.Error(
+                "MARKUP028",
+                $"Property element '{childNode.Name}' requires exactly one brush child on a Control.",
+                childNode.Line,
+                childNode.Column));
+            return true;
+        }
+
+        XElement brushElement = ToXElement(childNode.Children[0]);
+        MarkupResult<Cerneala.UI.Media.Brush> result = new BrushMarkupReader().Read(brushElement.ToString(SaveOptions.DisableFormatting));
+        if (result.Value is null)
+        {
+            diagnostics.AddRange(result.Diagnostics);
+            return true;
+        }
+
+        if (propertyName == "Background")
+        {
+            control.Background = result.Value;
+        }
+        else
+        {
+            control.BorderBrush = result.Value;
+        }
+
+        return true;
+    }
+
+    private static XElement ToXElement(UiMarkupNode node)
+    {
+        XElement element = new(node.Name, node.Attributes.Select(attribute => new XAttribute(attribute.Name, attribute.Value)));
+        foreach (UiMarkupContent content in node.Content)
+        {
+            switch (content)
+            {
+                case UiMarkupTextContent text:
+                    element.Add(new XText(text.Text));
+                    break;
+                case UiMarkupChildContent child:
+                    element.Add(ToXElement(child.Node));
+                    break;
+            }
+        }
+
+        return element;
     }
 
     private static void TrySetProperty(

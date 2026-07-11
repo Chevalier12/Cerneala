@@ -10,7 +10,7 @@ public sealed class TemplateBindingTests
     [Fact]
     public void BindingCopiesOwnerValueToGeneratedChild()
     {
-        Button button = new() { Background = Color.White };
+        Button button = new() { Background = new Cerneala.UI.Media.SolidColorBrush(Color.White) };
         Border? border = null;
         button.ComponentTemplate = new ComponentTemplate<Button>("test", context =>
         {
@@ -19,14 +19,14 @@ public sealed class TemplateBindingTests
             return border;
         });
 
-        Assert.Equal(Color.White, border!.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.White), border!.Background);
         Assert.Equal(UiPropertyValueSource.TemplateBinding, border.GetValueSource(Control.BackgroundProperty));
     }
 
     [Fact]
     public void BindingFollowsOwnerPropertyChanges()
     {
-        Button button = new() { Background = Color.White };
+        Button button = new() { Background = new Cerneala.UI.Media.SolidColorBrush(Color.White) };
         Border? border = null;
         button.ComponentTemplate = new ComponentTemplate<Button>("test", context =>
         {
@@ -35,15 +35,15 @@ public sealed class TemplateBindingTests
             return border;
         });
 
-        button.Background = Color.Black;
+        button.Background = new Cerneala.UI.Media.SolidColorBrush(Color.Black);
 
-        Assert.Equal(Color.Black, border!.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.Black), border!.Background);
     }
 
     [Fact]
     public void BindingValueSurvivesAspectValueBeingCleared()
     {
-        Button button = new() { Background = Color.White };
+        Button button = new() { Background = new Cerneala.UI.Media.SolidColorBrush(Color.White) };
         Border? border = null;
         button.ComponentTemplate = new ComponentTemplate<Button>("test", context =>
         {
@@ -51,16 +51,16 @@ public sealed class TemplateBindingTests
             context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty);
             return border;
         });
-        border!.SetValue(Control.BackgroundProperty, Color.Black, UiPropertyValueSource.AspectBase);
+        border!.SetValue(Control.BackgroundProperty, new Cerneala.UI.Media.SolidColorBrush(Color.Black), UiPropertyValueSource.AspectBase);
         border.ClearValue(Control.BackgroundProperty, UiPropertyValueSource.AspectBase);
 
-        Assert.Equal(Color.White, border.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.White), border.Background);
     }
 
     [Fact]
     public void BindingDetachesWhenTemplateInstanceIsDetached()
     {
-        Button button = new() { Background = Color.White };
+        Button button = new() { Background = new Cerneala.UI.Media.SolidColorBrush(Color.White) };
         Border? oldBorder = null;
         button.ComponentTemplate = new ComponentTemplate<Button>("old", context =>
         {
@@ -70,9 +70,9 @@ public sealed class TemplateBindingTests
         });
 
         button.ComponentTemplate = new ComponentTemplate<Button>("new", _ => new Border());
-        button.Background = Color.Black;
+        button.Background = new Cerneala.UI.Media.SolidColorBrush(Color.Black);
 
-        Assert.Equal(Color.White, oldBorder!.Background);
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.White), oldBorder!.Background);
         Assert.Null(oldBorder.LogicalParent);
         Assert.Null(oldBorder.VisualParent);
     }

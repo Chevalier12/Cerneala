@@ -25,6 +25,7 @@ Start a transaction with an explicit options object:
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Media;
 using Cerneala.UI.Motion.Transactions;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
@@ -37,7 +38,7 @@ MotionTransactionOptions options = new(
 
 using (root.Motion.BeginTransaction(options))
 {
-    control.Background = Color.White;
+    control.Background = new SolidColorBrush(Color.White);
 }
 ```
 

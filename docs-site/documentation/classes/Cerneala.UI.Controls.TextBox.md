@@ -53,7 +53,7 @@ using IDisposable binding = BindingOperations.BindTwoWay(
 
 `TextBox` does not declare additional members or override `TextBoxBase` behavior. It is the concrete plain-text editing control for the retained UI layer. Use it when the stored `Text` value should also be the rendered and accessibility-exposed value.
 
-The inherited constructor path makes the control focusable, includes it in tab navigation, sets default text-box chrome, and uses the I-beam cursor. The inherited defaults include `Padding = new Thickness(4, 2, 4, 2)`, `BorderThickness = new Thickness(1)`, `BorderBrush = new Color(120, 130, 145)`, `Background = Color.White`, `CaretColor = Color.Black`, and `SelectionBackground = new Color(0, 120, 215)`.
+The inherited constructor path makes the control focusable, includes it in tab navigation, sets default text-box chrome, and uses the I-beam cursor. The inherited defaults include `Padding = new Thickness(4, 2, 4, 2)`, `BorderThickness = new Thickness(1)`, `BorderBrush = new SolidColorBrush(new Color(120, 130, 145))`, `Background = new SolidColorBrush(Color.White)`, `CaretColor = Color.Black`, and `SelectionBackground = new Color(0, 120, 215)`.
 
 Text input is normalized before insertion: `null`, empty input, and control characters do not insert text. Programmatic `Text` assignments also normalize `null` to `string.Empty`. Editing operations keep the inherited `TextEditor`, `TextSelection`, and `TextCaret` state synchronized with the `Text` UI property.
 

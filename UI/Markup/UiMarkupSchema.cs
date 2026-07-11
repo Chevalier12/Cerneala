@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Markup;
 
@@ -45,9 +46,9 @@ public static class UiMarkupSchema
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(UIElement.IsEnabled), (element, value) => element.IsEnabled = ParseBool(value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(UIElement.IsVisible), (element, value) => element.IsVisible = ParseBool(value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(UIElement.Margin), (element, value) => element.Margin = ParseThickness(value)))
-            .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.Background), (element, value) => ((Control)element).Background = ParseColor(value)))
+            .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.Background), (element, value) => ((Control)element).Background = ParseBrush((Control)element, value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.Foreground), (element, value) => ((Control)element).Foreground = ParseColor(value)))
-            .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.BorderBrush), (element, value) => ((Control)element).BorderBrush = ParseColor(value)))
+            .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.BorderBrush), (element, value) => ((Control)element).BorderBrush = ParseBrush((Control)element, value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.BorderThickness), (element, value) => ((Control)element).BorderThickness = ParseThickness(value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.Padding), (element, value) => ((Control)element).Padding = ParseThickness(value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.FontFamily), (element, value) => ((Control)element).FontFamily = value))
@@ -90,5 +91,15 @@ public static class UiMarkupSchema
         return Color.TryParse(value, out Color parsed)
             ? parsed
             : throw new FormatException($"'{value}' is not a valid color. Use a WPF named color, #RRGGBB, #AARRGGBB, or RGB/RGBA byte values.");
+    }
+
+    private static Brush ParseBrush(Control element, string value)
+    {
+        if (value.StartsWith('$') && value.Length > 1)
+        {
+            return element.FindResource<Brush>(value[1..]);
+        }
+
+        return new SolidColorBrush(ParseColor(value));
     }
 }

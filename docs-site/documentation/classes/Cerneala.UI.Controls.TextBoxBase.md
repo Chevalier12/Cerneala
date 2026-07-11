@@ -75,7 +75,7 @@ using IDisposable binding = BindingOperations.BindTwoWay(
 
 `TextBoxBase` is abstract. Use `TextBox` for plain editable text, or derive a specialized control when the stored `Text` and rendered text should differ. `PasswordBox` does this by overriding the protected `DisplayText` property and rendering a repeated mask character while keeping the inherited text editor state.
 
-The constructor configures the control as focusable and tab-stop enabled, assigns default text-box chrome, and uses the I-beam cursor. The default visual values include `Padding = new Thickness(4, 2, 4, 2)`, `BorderThickness = new Thickness(1)`, `BorderBrush = new Color(120, 130, 145)`, `Background = Color.White`, `CaretColor = Color.Black`, and `SelectionBackground = new Color(0, 120, 215)`.
+The constructor configures the control as focusable and tab-stop enabled, assigns default text-box chrome, and uses the I-beam cursor. The default visual values include `Padding = new Thickness(4, 2, 4, 2)`, `BorderThickness = new Thickness(1)`, `BorderBrush = new SolidColorBrush(new Color(120, 130, 145))`, `Background = new SolidColorBrush(Color.White)`, `CaretColor = Color.Black`, and `SelectionBackground = new Color(0, 120, 215)`.
 
 The `Text` UI property defaults to `string.Empty`, coerces `null` to `string.Empty`, and affects measure, render, and semantics. Programmatic `Text` changes synchronize the internal `TextEditor`, clear undo/redo state, keep the caret visible, and invalidate text metrics.
 

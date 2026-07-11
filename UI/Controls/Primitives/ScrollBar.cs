@@ -22,8 +22,8 @@ public class ScrollBar : RangeBase
         track = new Track();
         track.ValueChanged += OnTrackValueChanged;
         AddTrack();
-        Background = new Color(235, 235, 235);
-        BorderBrush = new Color(130, 130, 130);
+        Background = new Cerneala.UI.Media.SolidColorBrush(new Color(235, 235, 235));
+        BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(130, 130, 130));
         BorderThickness = new Thickness(1);
         ViewportSize = 0;
         SyncTrack();
@@ -87,9 +87,15 @@ public class ScrollBar : RangeBase
         }
 
         DrawRect rect = Border.ToDrawRect(context.Bounds);
-        if (Background.A != 0 && rect.Width > 0 && rect.Height > 0)
+        if (Background is { } background && rect.Width > 0 && rect.Height > 0)
         {
-            context.DrawingContext.FillRectangle(rect, Background);
+            context.DrawingContext.FillRectangle(rect, background);
+        }
+
+        float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Right), MathF.Max(BorderThickness.Top, BorderThickness.Bottom));
+        if (BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)
+        {
+            context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
         }
     }
 

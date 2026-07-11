@@ -32,12 +32,13 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.Properties;
+using Cerneala.UI.Media;
 
 UIRoot root = new();
 Control control = new();
 root.VisualChildren.Add(control);
 
-MotionPropertyBinding<Color> typedBinding =
+MotionPropertyBinding<Brush?> typedBinding =
     root.Motion.Properties.GetOrCreateBinding(
         root.Motion,
         control,
