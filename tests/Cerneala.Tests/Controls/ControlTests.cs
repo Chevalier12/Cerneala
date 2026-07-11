@@ -14,7 +14,7 @@ public sealed class ControlTests
 
         Assert.Equal(Color.Transparent, control.Background);
         Assert.Equal(Color.Black, control.Foreground);
-        Assert.Equal(Color.Transparent, control.BorderColor);
+        Assert.Equal(Color.Transparent, control.BorderBrush);
         Assert.Equal(Thickness.Zero, control.BorderThickness);
         Assert.Equal(Thickness.Zero, control.Padding);
         Assert.Equal("Default", control.FontFamily);

@@ -39,7 +39,7 @@
   - Enqueue inherited-property work when a subtree is attached or reparented.
 - Modify: `UI/Controls/Control.cs`
   - Add `UiPropertyOptions.Inherits` to `ForegroundProperty`, `FontFamilyProperty`, and `FontSizeProperty`.
-  - Do not make `Background`, `BorderColor`, `Padding`, or `BorderThickness` inherit.
+  - Do not make `Background`, `BorderBrush`, `Padding`, or `BorderThickness` inherit.
 - Create: `tests/Cerneala.Tests/UI/Core/InheritedPropertyTreePropagationTests.cs`
   - Prove automatic tree propagation and precedence.
 - Modify: `tests/Cerneala.Tests/UI/Invalidation/UiFrameSchedulerTests.cs`
@@ -481,7 +481,7 @@ UiPropertyOptions.Inherits | UiPropertyOptions.AffectsMeasure | UiPropertyOption
 Do not add inheritance to:
 
 - `Background`
-- `BorderColor`
+- `BorderBrush`
 - `BorderThickness`
 - `Padding`
 - `Template`

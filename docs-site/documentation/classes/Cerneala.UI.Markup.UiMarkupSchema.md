@@ -57,7 +57,7 @@ The schema also registers these shared element/control properties for every buil
 | `Margin` | `UIElement` | One float, or four comma-separated floats, parsed with invariant culture. |
 | `Background` | `Control` | Named color or comma-separated byte color. |
 | `Foreground` | `Control` | Named color or comma-separated byte color. |
-| `BorderColor` | `Control` | Named color or comma-separated byte color. |
+| `BorderBrush` | `Control` | Named color or comma-separated byte color. |
 | `BorderThickness` | `Control` | One float, or four comma-separated floats, parsed with invariant culture. |
 | `Padding` | `Control` | One float, or four comma-separated floats, parsed with invariant culture. |
 | `FontFamily` | `Control` | Raw string value. |

@@ -90,7 +90,7 @@ public static class AppAspect
                     .Variant(ButtonVariants.Primary, s => s
                         .Set(Control.BackgroundProperty, AspectRef.To(Accent)))
                     .State(AspectState.Hover, s => s
-                        .Set(Control.BorderColorProperty, AspectRef.To(Accent)))
+                        .Set(Control.BorderBrushProperty, AspectRef.To(Accent)))
                     .When(AspectCondition.Property(ToggleButton.IsCheckedProperty).Is(true), s => s
                         .Set(Control.BorderThicknessProperty, new Thickness(2)))
                     .When(AspectCondition.All(
@@ -99,7 +99,7 @@ public static class AppAspect
                             "important user card",
                             model => model.IsImportant,
                             AspectDataDependency.Property<UserCardModel, bool>(nameof(UserCardModel.IsImportant)))), s => s
-                        .Set(Control.BorderColorProperty, AspectRef.To(Accent)))
+                        .Set(Control.BorderBrushProperty, AspectRef.To(Accent)))
                     .Template(ButtonTemplates.Modern)));
     }
 }
@@ -734,7 +734,7 @@ internal readonly record struct AspectCascadeKey(
   - [x] Component tokens:
     - [x] `ButtonTokens.Background`.
     - [x] `ButtonTokens.Foreground`.
-    - [x] `ButtonTokens.BorderColor`.
+    - [x] `ButtonTokens.BorderBrush`.
     - [x] `ButtonTokens.HoverBackground`.
     - [x] `ButtonTokens.PressedBackground`.
     - [x] `ButtonTokens.DisabledOpacity`.

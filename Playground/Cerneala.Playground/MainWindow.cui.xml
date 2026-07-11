@@ -26,7 +26,7 @@
     LocationChanged="OnLocationChanged"
     ContentRendered="OnContentRendered"
     Background="12,16,24"
-    BorderColor="82,96,113"
+    BorderBrush="82,96,113"
     BorderThickness="1"
     Padding="16"
     Margin="0"
@@ -51,7 +51,7 @@
             @default
             {
                 Background = $PanelBrush;
-                BorderColor = $PanelEdgeBrush;
+                BorderBrush = $PanelEdgeBrush;
                 BorderThickness = 1;
                 Padding = 12;
             }
@@ -61,7 +61,7 @@
                 @if value == True
                 {
                     Background = $HoverBrush;
-                    BorderColor = $AccentBrush;
+                    BorderBrush = $AccentBrush;
                 }
             }
         </Aspect>
@@ -69,8 +69,8 @@
 
     @when WindowState
     {
-        @if value == Normal { BorderColor = $PanelEdgeBrush; }
-        @if value == Maximized { BorderColor = $AccentBrush; }
+        @if value == Normal { BorderBrush = $PanelEdgeBrush; }
+        @if value == Maximized { BorderBrush = $AccentBrush; }
     }
 
     @when $DataContext.IsReady
@@ -123,7 +123,7 @@
                 {
                     @when IsPointerOver
                     {
-                        @if value == True { BorderColor = $AccentBrush; }
+                        @if value == True { BorderBrush = $AccentBrush; }
                     }
                 }
             }
@@ -182,7 +182,7 @@
                         Content="Increment score + toggle conditional child"
                         Background="255,93,115"
                         Foreground="Black"
-                        BorderColor="White"
+                        BorderBrush="White"
                         BorderThickness="1"
                         Padding="10,6,10,6"
                         Margin="0,0,0,4"
@@ -201,7 +201,7 @@
                         Content="Open 3 test windows"
                         Background="Transparent"
                         Foreground="Black"
-                        BorderColor="82,96,113"
+                        BorderBrush="82,96,113"
                         BorderThickness="1"
                         Padding="10,6,10,6"
                         Click="OnOpenWindowsClick">
@@ -210,13 +210,13 @@
                             <Border
                                 Name="OpenWindowsChrome"
                                 Background="$owner.Background"
-                                BorderColor="$owner.BorderColor"
+                                BorderBrush="$owner.BorderBrush"
                                 BorderThickness="$owner.BorderThickness"
                                 Padding="$owner.Padding">
                                 @when $owner.IsMouseOver
                                 {
                                     Background = $HoverBrush;
-                                    BorderColor = $AccentBrush;
+                                    BorderBrush = $AccentBrush;
                                 }
 
                                 <ContentPresenter

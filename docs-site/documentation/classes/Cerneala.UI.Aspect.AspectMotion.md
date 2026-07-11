@@ -26,9 +26,9 @@ using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 
 AspectDeclaration declaration = new(
-    Control.BorderColorProperty,
+    Control.BorderBrushProperty,
     AspectValue<Color>.Literal(new Color(99, 102, 241)),
-    new AspectMotion(Control.BorderColorProperty, "motion.fast", AspectMotionSource.State));
+    new AspectMotion(Control.BorderBrushProperty, "motion.fast", AspectMotionSource.State));
 ```
 
 Use the same motion token for multiple declarations in a rule:
@@ -48,9 +48,9 @@ AspectRuleSet hoverRule = new(
             AspectValue<Color>.Literal(new Color(238, 242, 255)),
             new AspectMotion(Control.BackgroundProperty, "motion.normal")),
         new AspectDeclaration(
-            Control.BorderColorProperty,
+            Control.BorderBrushProperty,
             AspectValue<Color>.Literal(new Color(99, 102, 241)),
-            new AspectMotion(Control.BorderColorProperty, "motion.normal"))
+            new AspectMotion(Control.BorderBrushProperty, "motion.normal"))
     ],
     declarationOrder: 0);
 ```

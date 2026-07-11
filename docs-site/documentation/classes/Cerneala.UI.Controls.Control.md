@@ -29,7 +29,7 @@ Control control = new()
 {
     Background = Color.White,
     Foreground = Color.Black,
-    BorderColor = Color.Black,
+    BorderBrush = Color.Black,
     BorderThickness = new Thickness(1),
     Padding = new Thickness(8),
     FontFamily = "Default",
@@ -56,12 +56,12 @@ Control control = new()
         };
 
         context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty);
-        context.Bind(Control.BorderColorProperty, border, Control.BorderColorProperty);
+        context.Bind(Control.BorderBrushProperty, border, Control.BorderBrushProperty);
 
         return border;
     }),
     Background = Color.White,
-    BorderColor = Color.Black
+    BorderBrush = Color.Black
 };
 
 control.ApplyTemplate();
@@ -70,13 +70,13 @@ ComponentTemplateInstance? instance = control.ComponentTemplateInstance;
 
 ## Remarks
 
-`Control` is the common base for controls that need shared chrome, text styling, template support, and aspect variants. It does not render fallback chrome by itself; derived controls or template roots use properties such as `Background`, `BorderColor`, `BorderThickness`, `Padding`, `Foreground`, `FontFamily`, and `FontSize`.
+`Control` is the common base for controls that need shared chrome, text styling, template support, and aspect variants. It does not render fallback chrome by itself; derived controls or template roots use properties such as `Background`, `BorderBrush`, `BorderThickness`, `Padding`, `Foreground`, `FontFamily`, and `FontSize`.
 
 `ComponentTemplate` stores the control's only template type. `ApplyTemplate()` creates and attaches the matching `ComponentTemplateInstance`, or detaches the current instance when the property is cleared. Reapplying the same template keeps the existing instance and generated root.
 
 Layout is delegated to the active template child. During measure and arrange, `Control` calls `ApplyTemplate()` and then measures or arranges `ComponentTemplateInstance.Root`; if no template child exists, measurement returns `LayoutSize.Zero`.
 
-Component-template changes affect measure, arrange, render, hit testing, and input visuals. `Background` and `BorderColor` affect render and input visuals. `Foreground` is inherited and affects render. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
+Component-template changes affect measure, arrange, render, hit testing, and input visuals. `Background` and `BorderBrush` affect render and input visuals. `Foreground` is inherited and affects render. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
 
 `Padding` and `BorderThickness` reject negative, `NaN`, and infinite side values. `FontFamily` rejects `null`, empty, and whitespace-only values. `FontSize` must be finite and greater than zero.
 
@@ -95,7 +95,7 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | Identifies the `ComponentTemplate` UI property. Defaults to `null`; affects measure, arrange, render, hit testing, and input visuals. |
 | `BackgroundProperty` | `UiProperty<Color>` | Identifies the `Background` UI property. Defaults to `Color.Transparent`; affects render and input visuals. |
 | `ForegroundProperty` | `UiProperty<Color>` | Identifies the inherited `Foreground` UI property. Defaults to `Color.Black`; affects render. |
-| `BorderColorProperty` | `UiProperty<Color>` | Identifies the `BorderColor` UI property. Defaults to `Color.Transparent`; affects render and input visuals. |
+| `BorderBrushProperty` | `UiProperty<Color>` | Identifies the `BorderBrush` UI property. Defaults to `Color.Transparent`; affects render and input visuals. |
 | `BorderThicknessProperty` | `UiProperty<Thickness>` | Identifies the `BorderThickness` UI property. Defaults to `Thickness.Zero`; affects measure and render; each side must be finite and non-negative. |
 | `PaddingProperty` | `UiProperty<Thickness>` | Identifies the `Padding` UI property. Defaults to `Thickness.Zero`; affects measure and render; each side must be finite and non-negative. |
 | `FontFamilyProperty` | `UiProperty<string>` | Identifies the inherited `FontFamily` UI property. Defaults to `"Default"`; affects measure and render; rejects empty or whitespace-only values. |
@@ -107,7 +107,7 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | --- | --- | --- |
 | `Background` | `Color` | Gets or sets the control background color. |
 | `Foreground` | `Color` | Gets or sets the inherited foreground color used by derived controls or templates. |
-| `BorderColor` | `Color` | Gets or sets the control border color. |
+| `BorderBrush` | `Color` | Gets or sets the control border color. |
 | `BorderThickness` | `Thickness` | Gets or sets the border thickness. Values must be finite and non-negative. |
 | `Padding` | `Thickness` | Gets or sets the padding inside the border. Values must be finite and non-negative. |
 | `FontFamily` | `string` | Gets or sets the inherited font family. The value cannot be empty or whitespace-only. |

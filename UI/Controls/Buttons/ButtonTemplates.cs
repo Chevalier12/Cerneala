@@ -17,7 +17,7 @@ public static class ButtonTemplates
         context.RegisterSlot(ButtonSlots.Content, presenter);
         context.RequirePart("PART_Content", presenter);
         context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty, UiPropertyValueSource.Local);
-        context.Bind(Control.BorderColorProperty, border, Control.BorderColorProperty, UiPropertyValueSource.Local);
+        context.Bind(Control.BorderBrushProperty, border, Control.BorderBrushProperty, UiPropertyValueSource.Local);
         context.Bind(Control.BorderThicknessProperty, border, Control.BorderThicknessProperty, UiPropertyValueSource.Local);
         context.Bind(Control.PaddingProperty, border, Control.PaddingProperty, UiPropertyValueSource.Local);
         context.Bind(ContentControl.ContentProperty, presenter, ContentPresenter.ContentProperty);

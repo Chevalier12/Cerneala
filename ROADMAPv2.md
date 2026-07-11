@@ -603,7 +603,7 @@ Common control properties:
 
 - [x] `Control.BackgroundProperty` — MVP can use `Color`; richer brushes wait for Core rendering features.
 - [x] `Control.ForegroundProperty` — MVP can use `Color`.
-- [x] `Control.BorderColorProperty` — MVP can use `Color`.
+- [x] `Control.BorderBrushProperty` — MVP can use `Color`.
 - [x] `Control.BorderThicknessProperty` — `Thickness`.
 - [x] `Control.PaddingProperty` — `Thickness`.
 - [x] `Control.FontFamilyProperty` — string or typed font reference backed by `IFontSource`.

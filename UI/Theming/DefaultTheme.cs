@@ -42,7 +42,7 @@ public static class DefaultTheme
             Border border = new() { Child = presenter };
 
             context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty);
-            context.Bind(Control.BorderColorProperty, border, Control.BorderColorProperty);
+            context.Bind(Control.BorderBrushProperty, border, Control.BorderBrushProperty);
             context.Bind(Control.BorderThicknessProperty, border, Control.BorderThicknessProperty);
             context.Bind(Control.PaddingProperty, border, Control.PaddingProperty);
             context.Bind(ContentControl.ContentProperty, presenter, ContentPresenter.ContentProperty);

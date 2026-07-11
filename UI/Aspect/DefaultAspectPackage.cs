@@ -19,12 +19,12 @@ public static class DefaultAspectPackage
                 components.AddRule(Rule("button.base", typeof(Button),
                     new AspectDeclaration(Control.BackgroundProperty, ButtonTokens.Background.Ref()),
                     new AspectDeclaration(Control.ForegroundProperty, ButtonTokens.Foreground.Ref()),
-                    new AspectDeclaration(Control.BorderColorProperty, ButtonTokens.BorderColor.Ref()),
+                    new AspectDeclaration(Control.BorderBrushProperty, ButtonTokens.BorderBrush.Ref()),
                     new AspectDeclaration(Control.BorderThicknessProperty, DefaultAspectTokens.Stroke.ControlBorderThickness.Ref()),
                     new AspectDeclaration(Control.PaddingProperty, ButtonTokens.Padding.Ref())));
                 components.AddRule(Rule("border.base", typeof(Border),
                     new AspectDeclaration(Control.BackgroundProperty, DefaultAspectTokens.Color.Surface.Ref()),
-                    new AspectDeclaration(Control.BorderColorProperty, DefaultAspectTokens.Color.Border.Ref())));
+                    new AspectDeclaration(Control.BorderBrushProperty, DefaultAspectTokens.Color.Border.Ref())));
             });
     }
 
@@ -50,7 +50,7 @@ public static class DefaultAspectPackage
         tokens.Set(DefaultAspectTokens.Motion.Normal, new TweenSpec<float>(TimeSpan.FromMilliseconds(200)));
         tokens.Set(ButtonTokens.Background, new Color(255, 255, 255));
         tokens.Set(ButtonTokens.Foreground, new Color(28, 35, 48));
-        tokens.Set(ButtonTokens.BorderColor, new Color(148, 163, 184));
+        tokens.Set(ButtonTokens.BorderBrush, new Color(148, 163, 184));
         tokens.Set(ButtonTokens.HoverBackground, new Color(37, 99, 235));
         tokens.Set(ButtonTokens.PressedBackground, new Color(148, 163, 184));
         tokens.Set(ButtonTokens.DisabledOpacity, 0.5f);
@@ -72,7 +72,7 @@ public static class DefaultAspectPackage
         environment.Set(DefaultAspectTokens.Motion.Normal, new TweenSpec<float>(TimeSpan.FromMilliseconds(200)));
         environment.Set(ButtonTokens.Background, new Color(255, 255, 255));
         environment.Set(ButtonTokens.Foreground, new Color(28, 35, 48));
-        environment.Set(ButtonTokens.BorderColor, new Color(148, 163, 184));
+        environment.Set(ButtonTokens.BorderBrush, new Color(148, 163, 184));
         environment.Set(ButtonTokens.HoverBackground, new Color(37, 99, 235));
         environment.Set(ButtonTokens.PressedBackground, new Color(148, 163, 184));
         environment.Set(ButtonTokens.DisabledOpacity, 0.5f);

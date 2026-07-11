@@ -12,7 +12,7 @@ public class CheckBox : ToggleButton
 
     public CheckBox()
     {
-        BorderColor = new Color(100, 110, 125);
+        BorderBrush = new Color(100, 110, 125);
         Foreground = new Color(35, 45, 60);
         Background = Color.Transparent;
     }
@@ -42,7 +42,7 @@ public class CheckBox : ToggleButton
             context.DrawingContext.FillRectangle(box, boxFill);
         }
 
-        context.DrawingContext.DrawRectangle(box, BorderColor, 1);
+        context.DrawingContext.DrawRectangle(box, BorderBrush, 1);
 
         if (IsChecked)
         {

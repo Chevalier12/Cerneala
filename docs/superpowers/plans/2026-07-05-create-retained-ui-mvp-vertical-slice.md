@@ -177,7 +177,7 @@ public sealed class RetainedAppSample : IPlaygroundSample
             Content = text.Create("Run retained command", 14, new Color(15, 23, 42)),
             Padding = new Thickness(12, 8, 12, 8),
             Background = new Color(248, 250, 252),
-            BorderColor = new Color(100, 116, 139),
+            BorderBrush = new Color(100, 116, 139),
             BorderThickness = new Thickness(1),
             Command = new ActionCommand(_ =>
             {
@@ -211,7 +211,7 @@ public sealed class RetainedAppSample : IPlaygroundSample
             Margin = new Thickness(0, 16, 0, 0),
             Padding = new Thickness(14),
             Background = new Color(241, 245, 249),
-            BorderColor = new Color(148, 163, 184),
+            BorderBrush = new Color(148, 163, 184),
             BorderThickness = new Thickness(1),
             Child = content
         };
@@ -230,7 +230,7 @@ public sealed class RetainedAppSample : IPlaygroundSample
             Margin = new Thickness(0, 12, 0, 0),
             Padding = new Thickness(14),
             Background = new Color(255, 255, 255),
-            BorderColor = new Color(203, 213, 225),
+            BorderBrush = new Color(203, 213, 225),
             BorderThickness = new Thickness(1),
             Child = list
         };

@@ -37,7 +37,7 @@ public sealed class TemplatedButtonStateContractTests
     {
         Button button = TemplatedButton("Save");
         button.Background = new Color(1, 2, 3);
-        button.BorderColor = new Color(4, 5, 6);
+        button.BorderBrush = new Color(4, 5, 6);
         button.BorderThickness = new Thickness(2);
         button.Padding = new Thickness(3);
 
@@ -45,7 +45,7 @@ public sealed class TemplatedButtonStateContractTests
         Border border = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
 
         Assert.Equal(button.Background, border.Background);
-        Assert.Equal(button.BorderColor, border.BorderColor);
+        Assert.Equal(button.BorderBrush, border.BorderBrush);
         Assert.Equal(button.BorderThickness, border.BorderThickness);
         Assert.Equal(button.Padding, border.Padding);
     }

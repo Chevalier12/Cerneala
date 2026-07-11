@@ -734,7 +734,7 @@ public sealed class MotionPropertyBinding<T> : IDisposable
 
 - [x] Register built-in animatable properties:
   - [x] `Control.BackgroundProperty`
-  - [x] `Control.BorderBrushProperty` (implemented as existing `Control.BorderColorProperty`; no `BorderBrushProperty` exists)
+  - [x] `Control.BorderBrushProperty` (implemented as existing `Control.BorderBrushProperty`; no `BorderBrushProperty` exists)
   - [x] `Control.BorderThicknessProperty`
   - [x] common width/height/margin/padding if present. (`Margin`/`Padding` registered; width/height do not exist)
   - [x] `UIElement.RenderTransformProperty` after Phase 7.

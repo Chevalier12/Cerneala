@@ -19,7 +19,7 @@ public class Thumb : Control, IPointerDragSource
     public Thumb()
     {
         Background = new Color(180, 180, 180);
-        BorderColor = new Color(80, 80, 80);
+        BorderBrush = new Color(80, 80, 80);
         BorderThickness = new Thickness(1);
         Handlers.AddHandler(InputEvents.LostMouseCaptureEvent, (_, _) => CancelDrag());
     }
@@ -151,9 +151,9 @@ public class Thumb : Control, IPointerDragSource
         }
 
         float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Top), MathF.Max(BorderThickness.Right, BorderThickness.Bottom));
-        if (BorderColor.A != 0 && thickness > 0 && rect.Width > 0 && rect.Height > 0)
+        if (BorderBrush.A != 0 && thickness > 0 && rect.Width > 0 && rect.Height > 0)
         {
-            context.DrawingContext.DrawRectangle(rect, BorderColor, thickness);
+            context.DrawingContext.DrawRectangle(rect, BorderBrush, thickness);
         }
     }
 }

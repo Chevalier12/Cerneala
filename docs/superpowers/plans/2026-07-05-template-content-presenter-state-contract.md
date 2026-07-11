@@ -40,7 +40,7 @@ Target behavior:
 - `ContentPresenter` can display string content with a generated retained `TextBlock`.
 - Generated text presenter participates in inheritance/style/resource behavior.
 - Templated `Button` uses one template root and does not run fallback `OnRender` chrome.
-- Template bindings propagate button `Background`, `Foreground`, `BorderColor`, `BorderThickness`, `Padding`, and `Content` to template children.
+- Template bindings propagate button `Background`, `Foreground`, `BorderBrush`, `BorderThickness`, `Padding`, and `Content` to template children.
 - Hover/pressed/focus/disabled style changes update the templated button through retained style/render work.
 - Unchanged frames do not recreate template/content children.
 
@@ -169,7 +169,7 @@ Border
 Use `TemplateContext<Button>.Bind(...)` for:
 
 - `Control.BackgroundProperty` -> `Border.BackgroundProperty`
-- `Control.BorderColorProperty` -> `Border.BorderColorProperty`
+- `Control.BorderBrushProperty` -> `Border.BorderBrushProperty`
 - `Control.BorderThicknessProperty` -> `Border.BorderThicknessProperty`
 - `Control.PaddingProperty` -> `Border.PaddingProperty`
 - `ContentControl.ContentProperty` -> `ContentPresenter.ContentProperty`

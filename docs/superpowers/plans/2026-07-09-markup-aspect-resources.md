@@ -257,7 +257,7 @@ Add this test to lock the current direct-property behavior before refactoring:
 public void RefactoredPropertySpecsPreserveExistingDirectAssignments()
 {
     const string markup = """
-        <Border Background="White" BorderColor="0, 1, 2, 3" BorderThickness="1" Padding="2">
+        <Border Background="White" BorderBrush="0, 1, 2, 3" BorderThickness="1" Padding="2">
           <TextBlock Text="Typed" FontFamily="Consolas" FontSize="12" Foreground="Black" Margin="1,2,3,4" />
         </Border>
         """;
@@ -267,7 +267,7 @@ public void RefactoredPropertySpecsPreserveExistingDirectAssignments()
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
     Assert.Contains(".Background = global::Cerneala.Drawing.Color.White;", generatedSource);
-    Assert.Contains(".BorderColor = new global::Cerneala.Drawing.Color(0, 1, 2, 3);", generatedSource);
+    Assert.Contains(".BorderBrush = new global::Cerneala.Drawing.Color(0, 1, 2, 3);", generatedSource);
     Assert.Contains(".BorderThickness = new global::Cerneala.UI.Layout.Thickness(1f);", generatedSource);
     Assert.Contains(".Padding = new global::Cerneala.UI.Layout.Thickness(2f);", generatedSource);
     Assert.Contains(".FontFamily = \"Consolas\";", generatedSource);
@@ -323,7 +323,7 @@ private static readonly PropertySpec[] PropertySpecs =
     new("Margin", _ => true, MarkupValueKind.Thickness),
     new("Background", IsControlElement, MarkupValueKind.Color),
     new("Foreground", IsControlElement, MarkupValueKind.Color),
-    new("BorderColor", IsControlElement, MarkupValueKind.Color),
+    new("BorderBrush", IsControlElement, MarkupValueKind.Color),
     new("BorderThickness", IsControlElement, MarkupValueKind.NonNegativeThickness),
     new("Padding", IsControlElement, MarkupValueKind.NonNegativeThickness),
     new("FontFamily", IsControlElement, MarkupValueKind.String),

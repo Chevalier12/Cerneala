@@ -28,7 +28,7 @@ AspectRuleSet borderRule = new(
     "app.border",
     AspectLayer.App,
     new AspectTarget(typeof(Border)),
-    [new AspectDeclaration(Control.BorderColorProperty, DefaultAspectTokens.Color.Border.Ref())],
+    [new AspectDeclaration(Control.BorderBrushProperty, DefaultAspectTokens.Color.Border.Ref())],
     priority: 0);
 ```
 

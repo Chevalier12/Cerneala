@@ -133,7 +133,7 @@ public partial class MainWindow : Window<MainWindowViewModel>
                 WindowStartupLocation = WindowStartupLocation.Manual,
                 Owner = this,
                 Background = new Color(20, 28, 38),
-                BorderColor = new Color(82, 96, 113),
+                BorderBrush = new Color(82, 96, 113),
                 BorderThickness = new Cerneala.UI.Layout.Thickness(1),
                 Padding = new Cerneala.UI.Layout.Thickness(20),
                 Content = new TextBlock
@@ -176,7 +176,7 @@ public partial class MainWindow : Window<MainWindowViewModel>
             ResizeMode = ResizeMode.NoResize,
             Owner = this,
             Background = Color.White,
-            BorderColor = Color.Transparent,
+            BorderBrush = Color.Transparent,
             BorderThickness = Cerneala.UI.Layout.Thickness.Zero,
             Padding = Cerneala.UI.Layout.Thickness.Zero,
             Content = new TextBlock

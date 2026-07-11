@@ -98,8 +98,8 @@ Generated from `.`.
 |-- docs-site/
 |   |-- documentation/
 |   |   |-- classes/
-|   |   |   |-- Cerneala.Drawing.DrawArgument.md
 |   |   |   |-- Cerneala.Drawing.Color.md
+|   |   |   |-- Cerneala.Drawing.DrawArgument.md
 |   |   |   |-- Cerneala.Drawing.DrawCommand.md
 |   |   |   |-- Cerneala.Drawing.DrawCommandKind.md
 |   |   |   |-- Cerneala.Drawing.DrawCommandList.md
@@ -820,6 +820,7 @@ Generated from `.`.
 |   |   +-- MonoGameImage.cs
 |   |-- Skia/
 |   |-- Text/
+|   |   |-- OpenTypeFontData.cs
 |   |   |-- RasterizedText.cs
 |   |   |-- SkiaFont.cs
 |   |   |-- SkiaTextRasterizer.cs
@@ -829,8 +830,8 @@ Generated from `.`.
 |   |   |-- TextCaretVerticalMetrics.cs
 |   |   |-- TextShaper.cs
 |   |   +-- TextShapeResult.cs
-|   |-- DrawArgument.cs
 |   |-- Color.cs
+|   |-- DrawArgument.cs
 |   |-- DrawCommand.cs
 |   |-- DrawCommandKind.cs
 |   |-- DrawCommandList.cs
@@ -936,6 +937,7 @@ Generated from `.`.
 |   |   |   |   |-- MonoGameDrawingBackendStateTests.cs
 |   |   |   |   +-- MonoGameDrawMapperTests.cs
 |   |   |   |-- AdvancedDrawCommandTests.cs
+|   |   |   |-- ColorTests.cs
 |   |   |   |-- DrawCommandListTests.cs
 |   |   |   |-- DrawingContextTests.cs
 |   |   |   |-- DrawingResourceTests.cs

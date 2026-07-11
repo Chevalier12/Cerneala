@@ -30,7 +30,7 @@ Button button = new()
     Content = "Save",
     Padding = new Thickness(8, 4, 8, 4),
     Background = Color.White,
-    BorderColor = Color.Black,
+    BorderBrush = Color.Black,
     BorderThickness = new Thickness(1)
 };
 
@@ -61,7 +61,7 @@ The button does not declare its own content property. It uses `ContentControl.Co
 
 Fallback rendering draws the resolved background, then the border, then non-empty string content. If `Background` has an explicit value, that value is used. Otherwise fallback state colors are used for disabled, pressed, pointer-over, and keyboard-focused states before falling back to the default background.
 
-When a template or component template supplies a template child, layout is delegated to the base template path and `Button` skips its fallback rendering. Template-based buttons commonly bind `Content`, `Background`, `BorderColor`, `BorderThickness`, and `Padding` into the template root or presenter.
+When a template or component template supplies a template child, layout is delegated to the base template path and `Button` skips its fallback rendering. Template-based buttons commonly bind `Content`, `Background`, `BorderBrush`, `BorderThickness`, and `Padding` into the template root or presenter.
 
 `TextMeasurer` and `TextRenderer` default to `TextMeasurer.Default` and `TextRenderer.Default`. Assigning `null` to either property throws `ArgumentNullException`. Changing `TextMeasurer` invalidates measure and render; changing `TextRenderer` invalidates render.
 
@@ -90,7 +90,7 @@ When a template or component template supplies a template child, layout is deleg
 | `IsPressed` | `bool` | `ButtonBase` | Gets or sets the pressed visual/input state. |
 | `Background` | `Color` | `Control` | Gets or sets the background color. An explicit value overrides fallback state colors. |
 | `Foreground` | `Color` | `Control` | Gets or sets the foreground color used by fallback text rendering. |
-| `BorderColor` | `Color` | `Control` | Gets or sets the fallback border color. |
+| `BorderBrush` | `Color` | `Control` | Gets or sets the fallback border color. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the fallback border thickness and contributes to content insets. |
 | `Padding` | `Thickness` | `Control` | Gets or sets the padding around fallback content. |
 | `FontFamily` | `string` | `Control` | Gets or sets the inherited font family used to create the fallback text aspect. |
@@ -111,7 +111,7 @@ When a template or component template supplies a template child, layout is deleg
 | `IsPressedProperty` | `UiProperty<bool>` | `ButtonBase` | Identifies the `IsPressed` UI property. |
 | `BackgroundProperty` | `UiProperty<Color>` | `Control` | Identifies the `Background` UI property. |
 | `ForegroundProperty` | `UiProperty<Color>` | `Control` | Identifies the inherited `Foreground` UI property. |
-| `BorderColorProperty` | `UiProperty<Color>` | `Control` | Identifies the `BorderColor` UI property. |
+| `BorderBrushProperty` | `UiProperty<Color>` | `Control` | Identifies the `BorderBrush` UI property. |
 | `BorderThicknessProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `BorderThickness` UI property. |
 | `PaddingProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `Padding` UI property. |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | `Control` | Identifies the `ComponentTemplate` UI property. |

@@ -71,7 +71,7 @@ AspectPackage package = AspectPackage.Create("App")
 
 `DefaultAspectPackage.Create()` registers default values for these tokens. `DefaultAspectPackage.CreateEnvironment()` creates a matching environment named `default` and sets the same values for runtime aspect resolution.
 
-The default button aspect rule resolves `Background`, `Foreground`, `BorderColor`, and `Padding` into `Control` properties through `AspectToken<T>.Ref()`. `HoverBackground`, `PressedBackground`, and `DisabledOpacity` are available as named button state tokens in the default token set.
+The default button aspect rule resolves `Background`, `Foreground`, `BorderBrush`, and `Padding` into `Control` properties through `AspectToken<T>.Ref()`. `HoverBackground`, `PressedBackground`, and `DisabledOpacity` are available as named button state tokens in the default token set.
 
 The token names use the `button.*` prefix, such as `button.background`, `button.hover-background`, and `button.disabled-opacity`.
 
@@ -81,7 +81,7 @@ The token names use the `button.*` prefix, such as `button.background`, `button.
 | --- | --- | --- | --- |
 | `Background` | `AspectToken<Color>` | `button.background` | `new Color(255, 255, 255)` |
 | `Foreground` | `AspectToken<Color>` | `button.foreground` | `new Color(28, 35, 48)` |
-| `BorderColor` | `AspectToken<Color>` | `button.border` | `new Color(148, 163, 184)` |
+| `BorderBrush` | `AspectToken<Color>` | `button.border` | `new Color(148, 163, 184)` |
 | `HoverBackground` | `AspectToken<Color>` | `button.hover-background` | `new Color(37, 99, 235)` |
 | `PressedBackground` | `AspectToken<Color>` | `button.pressed-background` | `new Color(148, 163, 184)` |
 | `DisabledOpacity` | `AspectToken<float>` | `button.disabled-opacity` | `0.5f` |

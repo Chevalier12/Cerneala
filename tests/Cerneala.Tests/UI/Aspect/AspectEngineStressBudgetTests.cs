@@ -58,7 +58,7 @@ public sealed class AspectEngineStressBudgetTests
             "button.hover",
             AspectLayer.App,
             new AspectTarget(typeof(Button), conditions: [AspectCondition.State(AspectState.Hover)]),
-            [new AspectDeclaration(Control.BorderColorProperty, AspectValue<Color>.Literal(Color.Black))],
+            [new AspectDeclaration(Control.BorderBrushProperty, AspectValue<Color>.Literal(Color.Black))],
             1);
         AspectRuleSet textRule = new(
             "text.selected",

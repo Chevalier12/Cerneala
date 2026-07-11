@@ -21,7 +21,7 @@ public class Track : Control
         thumb.DragDelta += OnThumbDragDelta;
         AddThumb();
         Background = new Color(225, 225, 225);
-        BorderColor = new Color(120, 120, 120);
+        BorderBrush = new Color(120, 120, 120);
         BorderThickness = new Thickness(1);
         SmallChange = 0.1f;
         LargeChange = 1;
@@ -185,9 +185,9 @@ public class Track : Control
         }
 
         float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Top), MathF.Max(BorderThickness.Right, BorderThickness.Bottom));
-        if (BorderColor.A != 0 && thickness > 0 && rect.Width > 0 && rect.Height > 0)
+        if (BorderBrush.A != 0 && thickness > 0 && rect.Width > 0 && rect.Height > 0)
         {
-            context.DrawingContext.DrawRectangle(rect, BorderColor, thickness);
+            context.DrawingContext.DrawRectangle(rect, BorderBrush, thickness);
         }
     }
 

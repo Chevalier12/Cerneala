@@ -87,7 +87,7 @@ Supported attributes:
 | `Margin` | Any supported element | Requires one float or four comma-separated floats. |
 | `Background` | `Border`, `Button`, `TextBlock` | Requires a supported color value. |
 | `Foreground` | `Border`, `Button`, `TextBlock` | Requires a supported color value. |
-| `BorderColor` | `Border`, `Button`, `TextBlock` | Requires a supported color value. |
+| `BorderBrush` | `Border`, `Button`, `TextBlock` | Requires a supported color value. |
 | `BorderThickness` | `Border`, `Button`, `TextBlock` | Requires one non-negative float or four comma-separated non-negative floats. |
 | `Padding` | `Border`, `Button`, `TextBlock` | Requires one non-negative float or four comma-separated non-negative floats. |
 | `FontFamily` | `Border`, `Button`, `TextBlock` | Requires a non-whitespace string. |

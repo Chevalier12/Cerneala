@@ -26,7 +26,7 @@ public sealed class DebugOverlay
         {
             Padding = new Thickness(8),
             Background = new Color(18, 24, 32, 230),
-            BorderColor = new Color(92, 107, 128),
+            BorderBrush = new Color(92, 107, 128),
             BorderThickness = new Thickness(1),
             Child = textBlock
         };

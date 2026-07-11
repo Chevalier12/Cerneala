@@ -38,8 +38,8 @@ public class Control : UIElement
         typeof(Control),
         new UiPropertyMetadata<Color>(Color.Black, UiPropertyOptions.Inherits | UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<Color> BorderColorProperty = UiProperty<Color>.Register(
-        nameof(BorderColor),
+    public static readonly UiProperty<Color> BorderBrushProperty = UiProperty<Color>.Register(
+        nameof(BorderBrush),
         typeof(Control),
         new UiPropertyMetadata<Color>(Color.Transparent, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
 
@@ -81,10 +81,10 @@ public class Control : UIElement
         set => SetValue(ForegroundProperty, value);
     }
 
-    public Color BorderColor
+    public Color BorderBrush
     {
-        get => GetValue(BorderColorProperty);
-        set => SetValue(BorderColorProperty, value);
+        get => GetValue(BorderBrushProperty);
+        set => SetValue(BorderBrushProperty, value);
     }
 
     [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]

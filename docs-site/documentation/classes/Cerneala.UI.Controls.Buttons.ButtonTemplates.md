@@ -55,7 +55,7 @@ AspectPackage package = AspectPackage.Create("App")
 
 `Modern` creates a `Border` root and a nested `ContentPresenter`. The content presenter receives the owning button's `ResourceProvider` and `FontResourceId`, then the template records `ButtonSlots.Root` for the border and `ButtonSlots.Content` for the content presenter. It also registers the content presenter as the required `PART_Content` template part.
 
-The template binds `Background`, `BorderColor`, `BorderThickness`, and `Padding` from the owner button to the border with local target value source. It binds `ContentControl.Content` from the button to `ContentPresenter.Content`, and binds the button `Foreground` to the content presenter. These bindings let aspect rules and local button values drive the visual tree created by the component template.
+The template binds `Background`, `BorderBrush`, `BorderThickness`, and `Padding` from the owner button to the border with local target value source. It binds `ContentControl.Content` from the button to `ContentPresenter.Content`, and binds the button `Foreground` to the content presenter. These bindings let aspect rules and local button values drive the visual tree created by the component template.
 
 `DefaultAspectPackage.Create()` registers this template as `Button.Modern`. The playground modern-aspect sample also registers the same template and demonstrates targeting `ButtonSlots.Content` from aspect rules.
 

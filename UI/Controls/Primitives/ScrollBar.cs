@@ -23,7 +23,7 @@ public class ScrollBar : RangeBase
         track.ValueChanged += OnTrackValueChanged;
         AddTrack();
         Background = new Color(235, 235, 235);
-        BorderColor = new Color(130, 130, 130);
+        BorderBrush = new Color(130, 130, 130);
         BorderThickness = new Thickness(1);
         ViewportSize = 0;
         SyncTrack();

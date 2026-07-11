@@ -154,7 +154,7 @@ public sealed class DeveloperPreviewScopeTests
         [
             "Background",
             "Foreground",
-            "BorderColor",
+            "BorderBrush",
             "BorderThickness",
             "Template"
         ];

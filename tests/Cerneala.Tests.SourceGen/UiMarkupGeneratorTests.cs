@@ -109,7 +109,7 @@ public sealed class UiMarkupGeneratorTests
     public void GeneratedSourceUsesPublicTypedPropertiesWithoutRuntimeMarkupParser()
     {
         const string markup = """
-            <Border BorderColor="white" BorderThickness="1" Padding="4">
+            <Border BorderBrush="white" BorderThickness="1" Padding="4">
               <TextBlock Text="Typed" Foreground="0, 0, 0" />
             </Border>
             """;
@@ -118,7 +118,7 @@ public sealed class UiMarkupGeneratorTests
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.Contains("public static partial class TypedViewFactory", generatedSource);
-        Assert.Contains(".BorderColor = global::Cerneala.Drawing.Color.White;", generatedSource);
+        Assert.Contains(".BorderBrush = global::Cerneala.Drawing.Color.White;", generatedSource);
         Assert.Contains(".BorderThickness = new global::Cerneala.UI.Layout.Thickness(1f);", generatedSource);
         Assert.Contains(".Padding = new global::Cerneala.UI.Layout.Thickness(4f);", generatedSource);
         Assert.Contains(".Foreground = new global::Cerneala.Drawing.Color(0, 0, 0);", generatedSource);
@@ -143,7 +143,7 @@ public sealed class UiMarkupGeneratorTests
     public void SourceGeneratorEmitsAllNamedColorsThroughColorApi()
     {
         const string markup = """
-            <Border Background="AliceBlue" BorderColor="YellowGreen">
+            <Border Background="AliceBlue" BorderBrush="YellowGreen">
               <TextBlock Text="Named" Foreground="Tomato" />
             </Border>
             """;
@@ -162,7 +162,7 @@ public sealed class UiMarkupGeneratorTests
 
         Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.NamedColorsFactory"));
         Assert.Equal(Color.AliceBlue, border.Background);
-        Assert.Equal(Color.YellowGreen, border.BorderColor);
+        Assert.Equal(Color.YellowGreen, border.BorderBrush);
         Assert.Equal(Color.Tomato, Assert.IsType<TextBlock>(border.Child).Foreground);
     }
 
@@ -170,7 +170,7 @@ public sealed class UiMarkupGeneratorTests
     public void RefactoredPropertySpecsPreserveExistingDirectAssignments()
     {
         const string markup = """
-            <Border Background="White" BorderColor="0, 1, 2, 3" BorderThickness="1" Padding="2">
+            <Border Background="White" BorderBrush="0, 1, 2, 3" BorderThickness="1" Padding="2">
               <TextBlock Text="Typed" FontFamily="Consolas" FontSize="12" Foreground="Black" Margin="1,2,3,4" />
             </Border>
             """;
@@ -180,7 +180,7 @@ public sealed class UiMarkupGeneratorTests
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Contains(".Background = global::Cerneala.Drawing.Color.White;", generatedSource);
-        Assert.Contains(".BorderColor = new global::Cerneala.Drawing.Color(0, 1, 2, 3);", generatedSource);
+        Assert.Contains(".BorderBrush = new global::Cerneala.Drawing.Color(0, 1, 2, 3);", generatedSource);
         Assert.Contains(".BorderThickness = new global::Cerneala.UI.Layout.Thickness(1f);", generatedSource);
         Assert.Contains(".Padding = new global::Cerneala.UI.Layout.Thickness(2f);", generatedSource);
         Assert.Contains(".FontFamily = \"Consolas\";", generatedSource);
