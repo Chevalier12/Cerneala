@@ -11,6 +11,9 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
     private readonly Dictionary<TextTextureKey, TextTexture> _textTextureCache = new();
     private readonly Texture2D _whitePixel;
     private readonly SkiaTextRasterizer? _textRasterizer;
+    private readonly BlendState redTextBlendState;
+    private readonly BlendState greenTextBlendState;
+    private readonly BlendState blueTextBlendState;
     private float coordinateScale = 1;
     private bool disposed;
     private MonoGameClipStack? clipStack;
@@ -20,6 +23,9 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         _spriteBatch = spriteBatch ?? throw new ArgumentNullException(nameof(spriteBatch));
         _whitePixel = whitePixel ?? throw new ArgumentNullException(nameof(whitePixel));
         _textRasterizer = textRasterizer;
+        redTextBlendState = CreateTextBlendState(ColorWriteChannels.Red);
+        greenTextBlendState = CreateTextBlendState(ColorWriteChannels.Green);
+        blueTextBlendState = CreateTextBlendState(ColorWriteChannels.Blue);
     }
 
     public static RasterizerState ScissorRasterizerState => new() { ScissorTestEnable = true };
@@ -223,21 +229,50 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             return;
         }
 
-        MonoGameDrawMapper mapper = Mapper;
-        DrawTextRun mappedTextRun = mapper.MapTextRun(command.TextRun);
-        TextTextureKey key = TextTextureKey.From(mappedTextRun, command.Color);
+        DrawPoint pixelPhase = GetPixelPhase(command.Position, coordinateScale);
+        TextTextureKey key = TextTextureKey.From(command.TextRun, command.Color, coordinateScale, pixelPhase);
 
         if (!_textTextureCache.TryGetValue(key, out TextTexture cachedText))
         {
-            RasterizedText text = _textRasterizer.Rasterize(mappedTextRun, command.Color);
-            Texture2D texture = new(_spriteBatch.GraphicsDevice, text.Width, text.Height);
-            texture.SetData(text.RgbaPixels);
-            cachedText = new TextTexture(texture, text.OriginOffset);
+            RasterizedText[] layers = _textRasterizer.RasterizeSubpixel(
+                command.TextRun,
+                command.Color,
+                coordinateScale,
+                command.Position);
+            cachedText = new TextTexture(
+                CreateTexture(layers[0]),
+                CreateTexture(layers[1]),
+                CreateTexture(layers[2]),
+                layers[0].OriginOffset);
             _textTextureCache.Add(key, cachedText);
         }
 
         Vector2 origin = MapTextTexturePosition(command.Position, cachedText.OriginOffset, coordinateScale);
-        _spriteBatch.Draw(cachedText.Texture, origin, Color.White);
+        GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
+        BlendState previousBlendState = graphicsDevice.BlendState;
+        try
+        {
+            DrawTextLayer(cachedText.RedTexture, origin, redTextBlendState);
+            DrawTextLayer(cachedText.GreenTexture, origin, greenTextBlendState);
+            DrawTextLayer(cachedText.BlueTexture, origin, blueTextBlendState);
+        }
+        finally
+        {
+            graphicsDevice.BlendState = previousBlendState;
+        }
+    }
+
+    private Texture2D CreateTexture(RasterizedText text)
+    {
+        Texture2D texture = new(_spriteBatch.GraphicsDevice, text.Width, text.Height);
+        texture.SetData(text.RgbaPixels);
+        return texture;
+    }
+
+    private void DrawTextLayer(Texture2D texture, Vector2 origin, BlendState blendState)
+    {
+        _spriteBatch.GraphicsDevice.BlendState = blendState;
+        _spriteBatch.Draw(texture, origin, Color.White);
     }
 
     private void PushClip(DrawRect rect)
@@ -265,10 +300,15 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 
         foreach (TextTexture text in _textTextureCache.Values)
         {
-            text.Texture.Dispose();
+            text.RedTexture.Dispose();
+            text.GreenTexture.Dispose();
+            text.BlueTexture.Dispose();
         }
 
         _textTextureCache.Clear();
+        redTextBlendState?.Dispose();
+        greenTextBlendState?.Dispose();
+        blueTextBlendState?.Dispose();
         disposed = true;
     }
 
@@ -280,8 +320,29 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 
     private static Vector2 MapTextTexturePosition(DrawPoint position, DrawPoint originOffset, float coordinateScale)
     {
-        _ = originOffset;
-        return new MonoGameDrawMapper(coordinateScale).MapVector(position);
+        Vector2 mapped = new MonoGameDrawMapper(coordinateScale).MapVector(position);
+        return new Vector2(
+            MathF.Round(mapped.X + originOffset.X),
+            MathF.Round(mapped.Y + originOffset.Y));
+    }
+
+    private static DrawPoint GetPixelPhase(DrawPoint position, float coordinateScale)
+    {
+        float x = position.X * coordinateScale;
+        float y = position.Y * coordinateScale;
+        return new DrawPoint(x - MathF.Floor(x), y - MathF.Floor(y));
+    }
+
+    private static BlendState CreateTextBlendState(ColorWriteChannels channels)
+    {
+        return new BlendState
+        {
+            ColorSourceBlend = Blend.One,
+            ColorDestinationBlend = Blend.InverseSourceAlpha,
+            AlphaSourceBlend = Blend.One,
+            AlphaDestinationBlend = Blend.InverseSourceAlpha,
+            ColorWriteChannels = channels
+        };
     }
 
     private static Vector2 MapTextTexturePositionForDiagnostics(DrawPoint position, DrawPoint originOffset, float coordinateScale)
@@ -323,13 +384,29 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         string Text,
         IDrawFont Font,
         float FontSize,
-        DrawColor Color)
+        DrawColor Color,
+        float CoordinateScale,
+        DrawPoint PixelPhase)
     {
-        public static TextTextureKey From(DrawTextRun textRun, DrawColor color)
+        public static TextTextureKey From(
+            DrawTextRun textRun,
+            DrawColor color,
+            float coordinateScale,
+            DrawPoint pixelPhase)
         {
-            return new TextTextureKey(textRun.Text, textRun.Font, textRun.Size, color);
+            return new TextTextureKey(
+                textRun.Text,
+                textRun.Font,
+                textRun.Size,
+                color,
+                coordinateScale,
+                pixelPhase);
         }
     }
 
-    private readonly record struct TextTexture(Texture2D Texture, DrawPoint OriginOffset);
+    private readonly record struct TextTexture(
+        Texture2D RedTexture,
+        Texture2D GreenTexture,
+        Texture2D BlueTexture,
+        DrawPoint OriginOffset);
 }

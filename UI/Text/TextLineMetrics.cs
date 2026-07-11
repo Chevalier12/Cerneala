@@ -15,4 +15,12 @@ internal static class TextLineMetrics
 
         return aspect.FontSize * aspect.Scale;
     }
+
+    public static float MeasureBaseline(TextAspect aspect, ResolvedTextFont font)
+    {
+        ArgumentNullException.ThrowIfNull(font);
+        return TextShaper.Default.TryMeasureBaseline(aspect.ToDrawTextRun(font, "Ag"), out float baseline)
+            ? baseline
+            : aspect.FontSize * aspect.Scale;
+    }
 }

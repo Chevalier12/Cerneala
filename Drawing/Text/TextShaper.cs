@@ -31,10 +31,23 @@ public sealed class TextShaper
             return false;
         }
 
-        RasterizedText rasterizedText = new SkiaTextRasterizer(skiaTextShaper).Rasterize(
-            new DrawTextRun(textRun.Font, "Ag", textRun.Size),
-            DrawColor.White);
-        lineHeight = rasterizedText.Height;
+        using SkiaSharp.SKFont font = SkiaTextRendering.CreateFont((SkiaFont)textRun.Font, textRun.Size);
+        lineHeight = SkiaTextRendering.MeasureLine(font).LineHeight;
+        return true;
+    }
+
+    public bool TryMeasureBaseline(DrawTextRun textRun, out float baseline)
+    {
+        ArgumentNullException.ThrowIfNull(textRun);
+
+        if (textRun.Font is not SkiaFont skiaFont)
+        {
+            baseline = 0;
+            return false;
+        }
+
+        using SkiaSharp.SKFont font = SkiaTextRendering.CreateFont(skiaFont, textRun.Size);
+        baseline = SkiaTextRendering.MeasureLine(font).Baseline;
         return true;
     }
 
@@ -48,10 +61,8 @@ public sealed class TextShaper
             return false;
         }
 
-        RasterizedText rasterizedText = new SkiaTextRasterizer(skiaTextShaper).Rasterize(
-            new DrawTextRun(font, "Ag", textRun.Size),
-            DrawColor.White);
-        metrics = new TextCaretVerticalMetrics(0, rasterizedText.Height);
+        using SkiaSharp.SKFont skiaFont = SkiaTextRendering.CreateFont(font, textRun.Size);
+        metrics = new TextCaretVerticalMetrics(0, SkiaTextRendering.MeasureLine(skiaFont).LineHeight);
         return true;
     }
 }

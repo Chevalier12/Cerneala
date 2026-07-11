@@ -42,6 +42,16 @@ public sealed class LayoutPrimitiveTests
     }
 
     [Fact]
+    public void LayoutRoundingUsesPhysicalPixelStepsAtDpiScale()
+    {
+        LayoutRounding rounding = LayoutRounding.ForScale(1.25f);
+
+        Assert.Equal(84, rounding.Round(new LayoutSize(83.5859375f, 18.3984375f)).Width);
+        Assert.Equal(118.4f, rounding.Round(118));
+        Assert.Equal(70.4f, rounding.Round(70.8f));
+    }
+
+    [Fact]
     public void VisibilityHasThreeStates()
     {
         Assert.Contains(Visibility.Visible, Enum.GetValues<Visibility>());

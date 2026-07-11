@@ -21,7 +21,7 @@ public sealed class FontResolverTests
     }
 
     [Fact]
-    public void ResolveUsesDeterministicFallbackWithoutGlobalLookup()
+    public void ResolveUsesSystemFontSourceByDefault()
     {
         FontResolver resolver = new();
 
@@ -30,6 +30,7 @@ public sealed class FontResolverTests
         Assert.Equal("Default", font.Font.FamilyName);
         Assert.Equal(16, font.Font.Size);
         Assert.Equal("Default:16", font.Identity);
+        Assert.IsType<Cerneala.Drawing.Text.SkiaFont>(font.Font);
     }
 
     [Fact]

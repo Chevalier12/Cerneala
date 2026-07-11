@@ -1,4 +1,6 @@
 using System.Globalization;
+using Cerneala.Drawing;
+using Cerneala.Drawing.Text;
 
 namespace Cerneala.UI.Text;
 
@@ -6,10 +8,15 @@ public sealed class LineBreakService
 {
     public static LineBreakService Default { get; } = new();
 
-    public IReadOnlyList<TextLine> BreakLines(string text, TextAspect aspect, float availableWidth)
+    public IReadOnlyList<TextLine> BreakLines(
+        string text,
+        TextAspect aspect,
+        ResolvedTextFont font,
+        float availableWidth)
     {
         ArgumentNullException.ThrowIfNull(text);
-        float charWidth = GetCharacterWidth(aspect);
+        ArgumentNullException.ThrowIfNull(font);
+        float Measure(string value) => MeasureTextWidth(value, aspect, font);
         if (text.Length == 0)
         {
             return [new TextLine(string.Empty, 0)];
@@ -20,21 +27,25 @@ public sealed class LineBreakService
         {
             if (aspect.Wrapping == TextWrapping.NoWrap || float.IsPositiveInfinity(availableWidth) || availableWidth <= 0)
             {
-                AddLine(paragraph, 0, paragraph.Length, charWidth, lines);
+                AddLine(paragraph, 0, paragraph.Length, Measure, lines);
                 continue;
             }
 
-            WrapParagraph(paragraph, availableWidth, charWidth, lines);
+            WrapParagraph(paragraph, availableWidth, Measure, lines);
         }
 
         return lines;
     }
 
-    private static void WrapParagraph(string paragraph, float availableWidth, float charWidth, List<TextLine> lines)
+    private static void WrapParagraph(
+        string paragraph,
+        float availableWidth,
+        Func<string, float> measure,
+        List<TextLine> lines)
     {
         if (paragraph.Length == 0)
         {
-            AddLine(paragraph, 0, 0, charWidth, lines);
+            AddLine(paragraph, 0, 0, measure, lines);
             return;
         }
 
@@ -51,23 +62,23 @@ public sealed class LineBreakService
             for (int i = currentIndex; i < elements.Length; i++)
             {
                 int elementEnd = elements[i].End;
-                float width = MeasureTextWidth(paragraph.AsSpan(lineStart, elementEnd - lineStart), charWidth);
+                float width = measure(paragraph.Substring(lineStart, elementEnd - lineStart));
                 if (width > availableWidth)
                 {
                     if (lastBreakIndex >= currentIndex && lastBreakMeasureEnd > lineStart)
                     {
-                        AddLine(paragraph, lineStart, lastBreakMeasureEnd - lineStart, charWidth, lines);
+                        AddLine(paragraph, lineStart, lastBreakMeasureEnd - lineStart, measure, lines);
                         currentIndex = SkipLeadingBreakWhitespace(elements, IndexAtOrAfter(elements, lastBreakWrapEnd));
                     }
                     else if (i > currentIndex)
                     {
                         int fallbackEnd = elements[i - 1].End;
-                        AddLine(paragraph, lineStart, fallbackEnd - lineStart, charWidth, lines);
+                        AddLine(paragraph, lineStart, fallbackEnd - lineStart, measure, lines);
                         currentIndex = i;
                     }
                     else
                     {
-                        AddLine(paragraph, elements[i].Start, elements[i].End - elements[i].Start, charWidth, lines);
+                        AddLine(paragraph, elements[i].Start, elements[i].End - elements[i].Start, measure, lines);
                         currentIndex = i + 1;
                     }
 
@@ -87,7 +98,7 @@ public sealed class LineBreakService
 
             if (!emitted)
             {
-                AddLine(paragraph, lineStart, TrimTrailingBreakWhitespace(paragraph, lineStart, paragraph.Length) - lineStart, charWidth, lines);
+                AddLine(paragraph, lineStart, TrimTrailingBreakWhitespace(paragraph, lineStart, paragraph.Length) - lineStart, measure, lines);
                 break;
             }
         }
@@ -121,6 +132,16 @@ public sealed class LineBreakService
         return MeasureTextWidth(text, GetCharacterWidth(aspect));
     }
 
+    public float MeasureTextWidth(string text, TextAspect aspect, ResolvedTextFont font)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ArgumentNullException.ThrowIfNull(font);
+        DrawTextRun run = aspect.ToDrawTextRun(font, text);
+        return TextShaper.Default.TryShape(run, out TextShapeResult shape)
+            ? shape.AdvanceWidth
+            : MeasureTextWidth(text, GetCharacterWidth(aspect));
+    }
+
     private static float GetCharacterWidth(TextAspect aspect)
     {
         return aspect.FontSize * aspect.Scale * 0.5f;
@@ -131,15 +152,10 @@ public sealed class LineBreakService
         return text.Length * charWidth;
     }
 
-    private static float MeasureTextWidth(ReadOnlySpan<char> text, float charWidth)
-    {
-        return text.Length * charWidth;
-    }
-
-    private static void AddLine(string text, int start, int length, float charWidth, List<TextLine> lines)
+    private static void AddLine(string text, int start, int length, Func<string, float> measure, List<TextLine> lines)
     {
         string line = text.Substring(start, length);
-        lines.Add(new TextLine(line, MeasureTextWidth(line, charWidth)));
+        lines.Add(new TextLine(line, measure(line)));
     }
 
     private static TextElement[] CreateTextElements(string text)

@@ -36,7 +36,7 @@ public class TextMeasurer
         {
             return layoutCache.GetOrAdd(key, _ =>
             {
-                IReadOnlyList<TextLine> lines = lineBreakService.BreakLines(text, aspect, wrappingWidth);
+                IReadOnlyList<TextLine> lines = lineBreakService.BreakLines(text, aspect, font, wrappingWidth);
                 float width = lines.Count == 0 ? 0 : lines.Max(line => line.Width);
                 float lineHeight = TextLineMetrics.MeasureLineHeight(aspect, font);
                 float height = lineHeight * Math.Max(1, lines.Count);

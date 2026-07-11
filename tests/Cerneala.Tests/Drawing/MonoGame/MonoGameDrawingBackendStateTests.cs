@@ -55,14 +55,14 @@ public sealed class MonoGameDrawingBackendStateTests
     }
 
     [Fact]
-    public void TextTextureOriginKeepsDrawTextTopLeftPosition()
+    public void TextTextureOriginMapsBaselineToTightTextureOrigin()
     {
         Vector2 origin = InvokeTextTexturePositionDiagnostics(
             new DrawPoint(20, 30),
             new DrawPoint(-10.5f, -16.25f),
             coordinateScale: 1);
 
-        Assert.Equal(new Vector2(20, 30), origin);
+        Assert.Equal(new Vector2(10, 14), origin);
     }
 
     [Fact]
@@ -152,8 +152,15 @@ public sealed class MonoGameDrawingBackendStateTests
         Type keyType = cacheField.FieldType.GetGenericArguments()[0];
         Type valueType = cacheField.FieldType.GetGenericArguments()[1];
         object key = Activator.CreateInstance(keyType)!;
-        object texture = RuntimeHelpers.GetUninitializedObject(typeof(Texture2D));
-        object value = Activator.CreateInstance(valueType, texture, default(DrawPoint))!;
+        object redTexture = RuntimeHelpers.GetUninitializedObject(typeof(Texture2D));
+        object greenTexture = RuntimeHelpers.GetUninitializedObject(typeof(Texture2D));
+        object blueTexture = RuntimeHelpers.GetUninitializedObject(typeof(Texture2D));
+        object value = Activator.CreateInstance(
+            valueType,
+            redTexture,
+            greenTexture,
+            blueTexture,
+            default(DrawPoint))!;
 
         cache.Add(key, value);
         return cache;

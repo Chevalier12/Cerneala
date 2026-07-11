@@ -72,6 +72,26 @@ public sealed class TextPipelineTests
     }
 
     [Fact]
+    public void TextRasterizerPreservesIndependentRgbSubpixelCoverageUnderDpiTransform()
+    {
+        SystemFontSource fonts = new();
+        DrawTextRun textRun = new(fonts.LoadFont("Arial", 16), "Hello world!", 16);
+        SkiaTextRasterizer rasterizer = new();
+
+        RasterizedText[] layers = rasterizer.RasterizeSubpixel(
+            textRun,
+            DrawColor.Black,
+            coordinateScale: 1.25f,
+            position: new DrawPoint(118.4f, 84.4f));
+
+        Assert.Equal(3, layers.Length);
+        Assert.Equal(layers[0].Width, layers[1].Width);
+        Assert.Equal(layers[0].Height, layers[2].Height);
+        Assert.True(HasDifferentAlphaCoverage(layers[0], layers[1]));
+        Assert.True(HasDifferentAlphaCoverage(layers[1], layers[2]));
+    }
+
+    [Fact]
     public void TextRasterizerResolvesBackendAgnosticFontsByFamily()
     {
         DrawTextRun textRun = new(new ContractFont("Arial", 16), "Cerneala", 16);
@@ -286,6 +306,21 @@ public sealed class TextPipelineTests
         }
 
         return -1;
+    }
+
+    private static bool HasDifferentAlphaCoverage(RasterizedText left, RasterizedText right)
+    {
+        byte[] leftPixels = left.RgbaPixels;
+        byte[] rightPixels = right.RgbaPixels;
+        for (int index = 3; index < leftPixels.Length; index += 4)
+        {
+            if (leftPixels[index] != rightPixels[index])
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private sealed record ContractFont(string FamilyName, float Size) : IDrawFont;

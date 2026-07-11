@@ -8,6 +8,7 @@ internal static class Program
     public static void Main(string[] args)
     {
         App.ScreenshotPath = ReadScreenshotPath(args);
+        App.FontFamily = ReadOption(args, "--font") ?? "Arial";
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
@@ -19,12 +20,15 @@ internal static class Program
     }
 
     private static string? ReadScreenshotPath(string[] args)
+        => ReadOption(args, "--screenshot") is { } path ? Path.GetFullPath(path) : null;
+
+    private static string? ReadOption(string[] args, string option)
     {
         for (int index = 0; index < args.Length - 1; index++)
         {
-            if (string.Equals(args[index], "--screenshot", StringComparison.Ordinal))
+            if (string.Equals(args[index], option, StringComparison.Ordinal))
             {
-                return Path.GetFullPath(args[index + 1]);
+                return args[index + 1];
             }
         }
 

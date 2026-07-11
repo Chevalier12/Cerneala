@@ -39,10 +39,11 @@ public class TextRenderer
 
         ResolvedTextFont font = fontResolver.Resolve(aspect);
         float lineHeight = TextLineMetrics.MeasureLineHeight(aspect, font);
+        float baseline = TextLineMetrics.MeasureBaseline(aspect, font);
         for (int i = 0; i < measurement.Lines.Count; i++)
         {
             TextLine line = measurement.Lines[i];
-            DrawPoint linePosition = new(position.X, position.Y + (i * lineHeight));
+            DrawPoint linePosition = new(position.X, position.Y + (i * lineHeight) + baseline);
             drawingContext.DrawText(aspect.ToDrawTextRun(font, line.Text), linePosition, color);
         }
 

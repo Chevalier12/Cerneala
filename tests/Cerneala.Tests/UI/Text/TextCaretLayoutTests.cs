@@ -1,4 +1,5 @@
 using Cerneala.Drawing.Text;
+using Cerneala.Drawing;
 using Cerneala.UI.Text;
 
 namespace Cerneala.Tests.UI.Text;
@@ -94,12 +95,12 @@ public sealed class TextCaretLayoutTests
     }
 
     [Fact]
-    public void GetCaretLineHeightUsesRasterizedLineBoundsWhenAvailable()
+    public void GetCaretLineHeightUsesFontMetricsWhenAvailable()
     {
         TextCaretLayout layout = TextCaretLayout.Default;
         FontResolver resolver = new(new SystemFontSource());
         ResolvedTextFont font = resolver.Resolve(TextAspect);
-        float expected = new SkiaTextRasterizer().Rasterize(TextAspect.ToDrawTextRun(font, "Ag"), Cerneala.Drawing.DrawColor.White).Height;
+        Assert.True(TextShaper.Default.TryMeasureLineHeight(TextAspect.ToDrawTextRun(font, "Ag"), out float expected));
 
         float height = layout.GetCaretLineHeight(TextAspect, resolver);
 
@@ -111,25 +112,23 @@ public sealed class TextCaretLayoutTests
     {
         TextCaretLayout layout = TextCaretLayout.Default;
 
-        float height = layout.GetCaretLineHeight(TextAspect, FontResolver.Default);
+        float height = layout.GetCaretLineHeight(TextAspect, ApproximateResolver());
 
         Assert.Equal(TextAspect.FontSize * TextAspect.Scale, height);
     }
 
     [Fact]
-    public void GetCaretVerticalMetricsSpansRasterizedLineBoundsWhenAvailable()
+    public void GetCaretVerticalMetricsUseFontLineMetricsWhenAvailable()
     {
         TextCaretLayout layout = TextCaretLayout.Default;
         FontResolver resolver = new(new SystemFontSource());
         ResolvedTextFont font = resolver.Resolve(TextAspect);
-        RasterizedText rasterizedLine = new SkiaTextRasterizer().Rasterize(
-            TextAspect.ToDrawTextRun(font, "Ag"),
-            Cerneala.Drawing.DrawColor.White);
+        Assert.True(TextShaper.Default.TryMeasureLineHeight(TextAspect.ToDrawTextRun(font, "Ag"), out float expected));
 
         TextCaretVerticalMetrics metrics = layout.GetCaretVerticalMetrics(TextAspect, resolver);
 
         Assert.Equal(0, metrics.OffsetY);
-        Assert.Equal(rasterizedLine.Height, metrics.Height, precision: 2);
+        Assert.Equal(expected, metrics.Height, precision: 2);
     }
 
     [Fact]
@@ -137,7 +136,7 @@ public sealed class TextCaretLayoutTests
     {
         TextCaretLayout layout = TextCaretLayout.Default;
 
-        TextCaretVerticalMetrics metrics = layout.GetCaretVerticalMetrics(TextAspect, FontResolver.Default);
+        TextCaretVerticalMetrics metrics = layout.GetCaretVerticalMetrics(TextAspect, ApproximateResolver());
 
         Assert.Equal(0, metrics.OffsetY);
         Assert.Equal(TextAspect.FontSize * TextAspect.Scale, metrics.Height);
@@ -148,11 +147,21 @@ public sealed class TextCaretLayoutTests
     {
         TextCaretLayout layout = TextCaretLayout.Default;
 
-        float x = layout.GetCaretX("abcd", 2, TextAspect, FontResolver.Default);
-        int index = layout.GetCaretIndexAtX("abcd", x + 1, TextAspect, FontResolver.Default);
+        FontResolver resolver = ApproximateResolver();
+        float x = layout.GetCaretX("abcd", 2, TextAspect, resolver);
+        int index = layout.GetCaretIndexAtX("abcd", x + 1, TextAspect, resolver);
 
         Assert.True(x > 0);
         Assert.Equal(2, index);
     }
+
+    private static FontResolver ApproximateResolver() => new(new ApproximateFontSource());
+
+    private sealed class ApproximateFontSource : IFontSource
+    {
+        public IDrawFont LoadFont(string familyName, float size) => new ApproximateFont(familyName, size);
+    }
+
+    private sealed record ApproximateFont(string FamilyName, float Size) : IDrawFont;
 
 }

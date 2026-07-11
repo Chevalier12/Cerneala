@@ -25,12 +25,14 @@ public sealed class SkiaTextShaper
         using Blob blob = CreatePinnedBlob(ReadFontData(font));
         using Face face = new(blob, 0);
         using HarfBuzzFont harfBuzzFont = new(face);
-        int scale = Math.Max(1, (int)MathF.Round(textRun.Size * 64));
-        harfBuzzFont.SetScale(scale, scale);
+        int unitsPerEm = Math.Max(1, face.UnitsPerEm);
+        harfBuzzFont.SetScale(unitsPerEm, unitsPerEm);
+        harfBuzzFont.SetFunctionsOpenType();
         harfBuzzFont.Shape(buffer);
 
         ushort[] glyphIds = GetGlyphIds(buffer);
-        DrawPoint[] glyphPositions = GetGlyphPositions(buffer, out float advanceWidth);
+        double textScale = textRun.Size / unitsPerEm;
+        DrawPoint[] glyphPositions = GetGlyphPositions(buffer, textScale, out float advanceWidth);
         return new TextShapeResult(
             textRun.Text,
             buffer.Length,
@@ -53,7 +55,10 @@ public sealed class SkiaTextShaper
         return glyphIds;
     }
 
-    private static DrawPoint[] GetGlyphPositions(HarfBuzzBuffer buffer, out float advanceWidth)
+    private static DrawPoint[] GetGlyphPositions(
+        HarfBuzzBuffer buffer,
+        double textScale,
+        out float advanceWidth)
     {
         ReadOnlySpan<GlyphPosition> glyphPositions = buffer.GetGlyphPositionSpan();
         DrawPoint[] positions = new DrawPoint[glyphPositions.Length];
@@ -63,9 +68,11 @@ public sealed class SkiaTextShaper
         for (int i = 0; i < glyphPositions.Length; i++)
         {
             GlyphPosition glyphPosition = glyphPositions[i];
-            positions[i] = new DrawPoint(x + ToPixels(glyphPosition.XOffset), y - ToPixels(glyphPosition.YOffset));
-            x += ToPixels(glyphPosition.XAdvance);
-            y -= ToPixels(glyphPosition.YAdvance);
+            positions[i] = new DrawPoint(
+                x + ToPixels(glyphPosition.XOffset, textScale),
+                y - ToPixels(glyphPosition.YOffset, textScale));
+            x += ToPixels(glyphPosition.XAdvance, textScale);
+            y -= ToPixels(glyphPosition.YAdvance, textScale);
         }
 
         advanceWidth = x;
@@ -134,8 +141,8 @@ public sealed class SkiaTextShaper
         });
     }
 
-    private static float ToPixels(int harfBuzzValue)
+    private static float ToPixels(int harfBuzzValue, double textScale)
     {
-        return harfBuzzValue / 64f;
+        return (float)(harfBuzzValue * textScale);
     }
 }

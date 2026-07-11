@@ -1,9 +1,11 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
+using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
+using Cerneala.UI.Text;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cerneala.Playground;
@@ -156,7 +158,9 @@ public partial class MainWindow : Window<MainWindowViewModel>
 
     private void ShowTextOracleWindow()
     {
-        string screenshotPath = Path.GetFullPath(Path.Combine("artifacts", "visual-oracles", "cerneala-text.png"));
+        string fontFamily = Environment.GetEnvironmentVariable("CERNEALA_TEXT_ORACLE_FONT") ?? "Arial";
+        string screenshotName = Environment.GetEnvironmentVariable("CERNEALA_TEXT_ORACLE_SCREENSHOT") ?? "cerneala-text.png";
+        string screenshotPath = Path.GetFullPath(Path.Combine("artifacts", "visual-oracles", screenshotName));
         Window window = new()
         {
             Title = "Cerneala text oracle",
@@ -178,7 +182,7 @@ public partial class MainWindow : Window<MainWindowViewModel>
             Content = new TextBlock
             {
                 Text = "Hello world!",
-                FontFamily = "Arial",
+                FontFamily = fontFamily,
                 FontSize = 16,
                 Foreground = DrawColor.Black,
                 HorizontalAlignment = Cerneala.UI.Layout.HorizontalAlignment.Center,
@@ -191,6 +195,36 @@ public partial class MainWindow : Window<MainWindowViewModel>
         {
             window.ContentRendered -= capture;
             window.SaveScreenshot(screenshotPath);
+            IDrawFont font = new SystemFontSource().LoadFont(fontFamily, 16);
+            DrawTextRun run = new(font, "Hello world!", 16);
+            using SkiaSharp.SKFont skiaFont = new(((SkiaFont)font).Typeface, 16)
+            {
+                LinearMetrics = true,
+                Hinting = SkiaSharp.SKFontHinting.Full,
+                Subpixel = true,
+                Edging = SkiaSharp.SKFontEdging.SubpixelAntialias,
+                BaselineSnap = true
+            };
+            SkiaSharp.SKFontMetrics skiaMetrics = skiaFont.Metrics;
+            TextShaper.Default.TryMeasureLineHeight(run, out float lineHeight);
+            TextShaper.Default.TryMeasureBaseline(run, out float baseline);
+            TextMeasureResult measurement = TextMeasurer.Default.Measure(
+                "Hello world!",
+                new TextAspect(fontFamily, 16),
+                float.PositiveInfinity);
+            TextBlock textBlock = (TextBlock)window.Content!;
+            File.WriteAllLines(Path.ChangeExtension(screenshotPath, ".metrics.txt"),
+            [
+                $"Bounds={textBlock.ArrangedBounds}",
+                $"DesiredSize={textBlock.DesiredSize}",
+                $"Measure.Width={measurement.Size.Width:R}",
+                $"Measure.Height={measurement.Size.Height:R}",
+                $"LineHeight={lineHeight:R}",
+                $"Baseline={baseline:R}",
+                $"Skia.Ascent={skiaMetrics.Ascent:R}",
+                $"Skia.Descent={skiaMetrics.Descent:R}",
+                $"Skia.Leading={skiaMetrics.Leading:R}"
+            ]);
         };
         window.ContentRendered += capture;
 

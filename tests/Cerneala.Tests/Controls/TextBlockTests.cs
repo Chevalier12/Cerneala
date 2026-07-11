@@ -18,9 +18,12 @@ public sealed class TextBlockTests
             FontSize = 20
         };
 
-        LayoutSize desired = textBlock.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        LayoutSize first = textBlock.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        LayoutSize second = textBlock.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
-        Assert.Equal(new LayoutSize(50, 20), desired);
+        Assert.Equal(first, second);
+        Assert.True(first.Width > 0);
+        Assert.True(first.Height >= textBlock.FontSize);
     }
 
     [Fact]
@@ -80,7 +83,8 @@ public sealed class TextBlockTests
         Assert.Single(commands);
         Assert.Equal(DrawCommandKind.DrawText, commands[0].Kind);
         Assert.Equal("Hello", commands[0].Text);
-        Assert.Equal(new DrawPoint(2, 3), commands[0].Position);
+        Assert.Equal(2, commands[0].Position.X);
+        Assert.True(commands[0].Position.Y > 3);
     }
 
     [Fact]
@@ -105,7 +109,9 @@ public sealed class TextBlockTests
         textBlock.SetValue(TextBlock.TextProperty, null!);
 
         Assert.Equal(string.Empty, textBlock.Text);
-        Assert.Equal(new LayoutSize(0, 16), textBlock.Measure(new MeasureContext(new LayoutSize(100, 100))));
+        LayoutSize desired = textBlock.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        Assert.Equal(0, desired.Width);
+        Assert.True(desired.Height >= textBlock.FontSize);
     }
 
     [Fact]

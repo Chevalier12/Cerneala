@@ -89,7 +89,7 @@ public sealed class TextBlockLayoutContractTests
     }
 
     [Fact]
-    public void TextBlockMeasureReservesRasterizedLineHeightForSystemFonts()
+    public void TextBlockMeasureUsesFontLineHeightForSystemFonts()
     {
         const float fontSize = 14;
         ResourceStore store = new();
@@ -103,15 +103,35 @@ public sealed class TextBlockLayoutContractTests
             FontResourceId = id,
             ResourceProvider = store
         };
-        RasterizedText rasterizedLine = new SkiaTextRasterizer().Rasterize(
-            new DrawTextRun(font, "Ag", fontSize),
-            DrawColor.White);
+        Assert.True(TextShaper.Default.TryMeasureLineHeight(new DrawTextRun(font, "Ag", fontSize), out float expected));
 
         LayoutSize measured = textBlock.Measure(new MeasureContext(new LayoutSize(500, 100)));
 
-        Assert.True(
-            measured.Height >= rasterizedLine.Height,
-            $"Expected TextBlock to reserve at least the rasterized line height {rasterizedLine.Height}, but measured {measured.Height}.");
+        Assert.Equal(expected, measured.Height, precision: 3);
+    }
+
+    [Fact]
+    public void TextBlockMeasureUsesShapedAdvanceWidthForSystemFonts()
+    {
+        const string text = "Hello world!";
+        const float fontSize = 16;
+        ResourceStore store = new();
+        ResourceId<FontResource> id = new("Body");
+        IDrawFont font = new SystemFontSource().LoadFont("Arial", fontSize);
+        store.SetResource(id, new FontResource(font));
+        TextBlock textBlock = new()
+        {
+            Text = text,
+            FontFamily = "Arial",
+            FontSize = fontSize,
+            FontResourceId = id,
+            ResourceProvider = store
+        };
+        float shapedAdvance = new SkiaTextShaper().Shape(new DrawTextRun(font, text, fontSize)).AdvanceWidth;
+
+        LayoutSize measured = textBlock.Measure(new MeasureContext(new LayoutSize(500, 100)));
+
+        Assert.Equal(shapedAdvance, measured.Width, precision: 3);
     }
 
     [Fact]

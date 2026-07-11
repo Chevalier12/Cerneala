@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.Text;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Text;
@@ -9,6 +10,7 @@ public sealed class FontResolver
     private readonly IResourceProvider? resourceProvider;
 
     public FontResolver()
+        : this(new SystemFontSource())
     {
     }
 

@@ -8,11 +8,13 @@ public sealed class App : Application
 {
     internal static string? ScreenshotPath { get; set; }
 
+    internal static string FontFamily { get; set; } = "Arial";
+
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            MainWindow window = new();
+            MainWindow window = new(FontFamily);
             desktop.MainWindow = window;
 
             if (ScreenshotPath is not null)

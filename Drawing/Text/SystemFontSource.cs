@@ -1,10 +1,13 @@
 using Cerneala.Drawing;
 using SkiaSharp;
+using System.Collections.Concurrent;
 
 namespace Cerneala.Drawing.Text;
 
 public sealed class SystemFontSource : IFontSource
 {
+    private static readonly ConcurrentDictionary<string, SKTypeface> Typefaces = new(StringComparer.OrdinalIgnoreCase);
+
     public IDrawFont LoadFont(string familyName, float size)
     {
         ArgumentNullException.ThrowIfNull(familyName);
@@ -15,7 +18,9 @@ public sealed class SystemFontSource : IFontSource
 
         DrawArgument.ThrowIfNotValidTextSize(size, nameof(size));
 
-        SKTypeface typeface = SKFontManager.Default.MatchFamily(familyName) ?? SKTypeface.Default;
+        SKTypeface typeface = Typefaces.GetOrAdd(
+            familyName,
+            static name => SKFontManager.Default.MatchFamily(name) ?? SKTypeface.Default);
         return new SkiaFont(typeface, familyName, size);
     }
 }

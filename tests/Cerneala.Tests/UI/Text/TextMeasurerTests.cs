@@ -12,7 +12,7 @@ public sealed class TextMeasurerTests
         TextMeasureResult result = measurer.Measure(string.Empty, new TextAspect("Default", 16), 100);
 
         Assert.Equal(0, result.Size.Width);
-        Assert.Equal(16, result.Size.Height);
+        Assert.True(result.Size.Height >= 16);
         Assert.Equal(1, result.LineCount);
     }
 

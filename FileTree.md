@@ -823,6 +823,7 @@ Generated from `.`.
 |   |   |-- RasterizedText.cs
 |   |   |-- SkiaFont.cs
 |   |   |-- SkiaTextRasterizer.cs
+|   |   |-- SkiaTextRendering.cs
 |   |   |-- SkiaTextShaper.cs
 |   |   |-- SystemFontSource.cs
 |   |   |-- TextCaretVerticalMetrics.cs

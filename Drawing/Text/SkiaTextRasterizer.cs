@@ -21,22 +21,53 @@ public sealed class SkiaTextRasterizer
     {
         ArgumentNullException.ThrowIfNull(textRun);
 
+        return WithResolvedFont(textRun, (resolvedRun, font) => RasterizeCore(resolvedRun, color, font));
+    }
+
+    internal RasterizedText[] RasterizeSubpixel(
+        DrawTextRun textRun,
+        DrawColor color,
+        float coordinateScale,
+        DrawPoint position)
+    {
+        ArgumentNullException.ThrowIfNull(textRun);
+        if (!float.IsFinite(coordinateScale) || coordinateScale <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(coordinateScale));
+        }
+
+        if (!float.IsFinite(position.X) || !float.IsFinite(position.Y))
+        {
+            throw new ArgumentOutOfRangeException(nameof(position));
+        }
+
+        return WithResolvedFont(
+            textRun,
+            (resolvedRun, font) => RasterizeSubpixelCore(resolvedRun, color, font, coordinateScale, position));
+    }
+
+    private static TResult WithResolvedFont<TResult>(
+        DrawTextRun textRun,
+        Func<DrawTextRun, SkiaFont, TResult> rasterize)
+    {
+        ArgumentNullException.ThrowIfNull(rasterize);
+
         if (textRun.Font is SkiaFont font)
         {
-            return RasterizeCore(textRun, color, font);
+            return rasterize(textRun, font);
         }
 
         SKTypeface? matchedTypeface = SKFontManager.Default.MatchFamily(textRun.Font.FamilyName);
         if (matchedTypeface is null)
         {
             SkiaFont fallbackFont = new(SKTypeface.Default, textRun.Font.FamilyName, textRun.Size);
-            return RasterizeCore(new DrawTextRun(fallbackFont, textRun.Text, textRun.Size), color, fallbackFont);
+            return rasterize(new DrawTextRun(fallbackFont, textRun.Text, textRun.Size), fallbackFont);
         }
 
         using (matchedTypeface)
         {
             SkiaFont resolvedFont = new(matchedTypeface, textRun.Font.FamilyName, textRun.Size);
-            return RasterizeCore(new DrawTextRun(resolvedFont, textRun.Text, textRun.Size), color, resolvedFont);
+            return rasterize(new DrawTextRun(resolvedFont, textRun.Text, textRun.Size), resolvedFont);
         }
     }
 
@@ -49,7 +80,7 @@ public sealed class SkiaTextRasterizer
             return new RasterizedText(1, 1, new byte[4], shapeResult);
         }
 
-        using SKFont skFont = new(font.Typeface, textRun.Size);
+        using SKFont skFont = SkiaTextRendering.CreateFont(font, textRun.Size);
         using SKPaint paint = new()
         {
             Color = ToColor(color),
@@ -74,6 +105,106 @@ public sealed class SkiaTextRasterizer
             pixels,
             shapeResult,
             new DrawPoint(bounds.Left + trimmedLeftColumns, bounds.Top));
+    }
+
+    private RasterizedText[] RasterizeSubpixelCore(
+        DrawTextRun textRun,
+        DrawColor color,
+        SkiaFont font,
+        float coordinateScale,
+        DrawPoint position)
+    {
+        TextShapeResult shapeResult = _textShaper.Shape(textRun);
+        if (shapeResult.GlyphCount == 0)
+        {
+            RasterizedText empty = new(1, 1, new byte[4], shapeResult);
+            return [empty, empty, empty];
+        }
+
+        using SKFont skFont = SkiaTextRendering.CreateFont(font, textRun.Size);
+        using SKPaint paint = new()
+        {
+            Color = SKColors.Black,
+            IsAntialias = true
+        };
+        using SKTextBlob textBlob = CreateTextBlob(skFont, shapeResult);
+
+        SKRect bounds = textBlob.Bounds;
+        float mappedBaselineX = position.X * coordinateScale;
+        float mappedBaselineY = position.Y * coordinateScale;
+        float phaseX = mappedBaselineX - MathF.Floor(mappedBaselineX);
+        float phaseY = mappedBaselineY - MathF.Floor(mappedBaselineY);
+        float localBaselineX = phaseX + 1 - MathF.Floor(phaseX + (bounds.Left * coordinateScale));
+        float localBaselineY = phaseY + 1 - MathF.Floor(phaseY + (bounds.Top * coordinateScale));
+        int width = Math.Max(1, (int)MathF.Ceiling(localBaselineX + (bounds.Right * coordinateScale)) + 1);
+        int height = Math.Max(1, (int)MathF.Ceiling(localBaselineY + (bounds.Bottom * coordinateScale)) + 1);
+        int globalPixelLeft = (int)MathF.Floor(mappedBaselineX + (bounds.Left * coordinateScale)) - 1;
+        int globalPixelTop = (int)MathF.Floor(mappedBaselineY + (bounds.Top * coordinateScale)) - 1;
+
+        SKImageInfo imageInfo = new(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+        using SKSurfaceProperties properties = new(SKPixelGeometry.RgbHorizontal);
+        using SKSurface surface = SKSurface.Create(imageInfo, properties)
+            ?? throw new InvalidOperationException("Could not create the subpixel text surface.");
+
+        surface.Canvas.Clear(SKColors.White);
+        surface.Canvas.Scale(coordinateScale);
+        surface.Canvas.DrawText(
+            textBlob,
+            localBaselineX / coordinateScale,
+            localBaselineY / coordinateScale,
+            paint);
+
+        using SKImage image = surface.Snapshot();
+        using SKPixmap pixmap = image.PeekPixels();
+        byte[] bgraPixels = pixmap.GetPixelSpan().ToArray();
+        byte[][] layers = CreateSubpixelLayers(bgraPixels, color);
+        DrawPoint originOffset = new(
+            globalPixelLeft - mappedBaselineX,
+            globalPixelTop - mappedBaselineY);
+
+        return
+        [
+            new RasterizedText(width, height, layers[0], shapeResult, originOffset),
+            new RasterizedText(width, height, layers[1], shapeResult, originOffset),
+            new RasterizedText(width, height, layers[2], shapeResult, originOffset)
+        ];
+    }
+
+    private static byte[][] CreateSubpixelLayers(byte[] bgraPixels, DrawColor color)
+    {
+        byte[][] layers =
+        [
+            new byte[bgraPixels.Length],
+            new byte[bgraPixels.Length],
+            new byte[bgraPixels.Length]
+        ];
+
+        for (int index = 0; index < bgraPixels.Length; index += 4)
+        {
+            WriteLayerPixel(layers[0], index, channel: 0, 255 - bgraPixels[index + 2], color.R, color.A);
+            WriteLayerPixel(layers[1], index, channel: 1, 255 - bgraPixels[index + 1], color.G, color.A);
+            WriteLayerPixel(layers[2], index, channel: 2, 255 - bgraPixels[index], color.B, color.A);
+        }
+
+        return layers;
+    }
+
+    private static void WriteLayerPixel(
+        byte[] pixels,
+        int index,
+        int channel,
+        int coverage,
+        byte foreground,
+        byte opacity)
+    {
+        byte effectiveCoverage = MultiplyByte(coverage, opacity);
+        pixels[index + channel] = MultiplyByte(foreground, effectiveCoverage);
+        pixels[index + 3] = effectiveCoverage;
+    }
+
+    private static byte MultiplyByte(int left, int right)
+    {
+        return (byte)(((left * right) + 127) / 255);
     }
 
     private static SKColor ToColor(DrawColor color)

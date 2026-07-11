@@ -39,7 +39,7 @@ public sealed class LayoutManager
             element.LastMeasureAvailableSize = null;
         }
 
-        LayoutSize desired = element.Measure(new MeasureContext(availableSize));
+        LayoutSize desired = element.Measure(new MeasureContext(availableSize, LayoutRounding.ForScale(root.Scale)));
         element.LastMeasureAvailableSize = availableSize;
         element.LastMeasureLayoutVersion = element.LayoutVersion;
         return new LayoutResult(desired, element.ArrangedBounds, false, false, false);
@@ -62,7 +62,7 @@ public sealed class LayoutManager
         }
 
         LayoutRect previous = element.ArrangedBounds;
-        LayoutRect arranged = element.Arrange(new ArrangeContext(finalRect));
+        LayoutRect arranged = element.Arrange(new ArrangeContext(finalRect, LayoutRounding.ForScale(root.Scale)));
         element.LastArrangeFinalRect = finalRect;
         element.LastArrangeLayoutVersion = element.LayoutVersion;
         PruneTranslatedDescendantRenderWork(element);
