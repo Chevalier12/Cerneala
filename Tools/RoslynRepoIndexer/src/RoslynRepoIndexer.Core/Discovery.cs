@@ -185,6 +185,24 @@ public static class RepositoryDiscovery
             return new List<string>();
         }
 
+        return TryRunGit(repoRoot, out var output, "ls-files", "-co", "--exclude-standard")
+            ? output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList()
+            : new List<string>();
+    }
+
+    private static string RunGit(string repoRoot, params string[] arguments)
+    {
+        if (!TryRunGit(repoRoot, out var output, arguments))
+        {
+            throw new InvalidOperationException("Git state query failed.");
+        }
+
+        return output;
+    }
+
+    private static bool TryRunGit(string repoRoot, out string output, params string[] arguments)
+    {
+        output = string.Empty;
         try
         {
             using var process = Process.Start(new ProcessStartInfo("git")
@@ -192,47 +210,40 @@ public static class RepositoryDiscovery
                 WorkingDirectory = repoRoot,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
-            }.WithArguments("ls-files", "-co", "--exclude-standard"));
+            }.WithArguments(arguments));
             if (process is null)
             {
-                return new List<string>();
+                return false;
             }
 
-            var output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit(3000);
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            try
+            {
+                process.WaitForExitAsync(timeout.Token).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+                process.Kill(entireProcessTree: true);
+                process.WaitForExit();
+                Task.WhenAll(outputTask, errorTask).GetAwaiter().GetResult();
+                return false;
+            }
+
+            Task.WhenAll(outputTask, errorTask).GetAwaiter().GetResult();
             if (process.ExitCode != 0)
             {
-                return new List<string>();
+                return false;
             }
 
-            return output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            output = outputTask.Result;
+            return true;
         }
         catch
         {
-            return new List<string>();
+            return false;
         }
-    }
-
-    private static string RunGit(string repoRoot, params string[] arguments)
-    {
-        using var process = Process.Start(new ProcessStartInfo("git")
-        {
-            WorkingDirectory = repoRoot,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true
-        }.WithArguments(arguments));
-        if (process is null)
-        {
-            throw new InvalidOperationException("Failed to start git.");
-        }
-
-        var output = process.StandardOutput.ReadToEnd();
-        if (!process.WaitForExit(3000) || process.ExitCode != 0)
-        {
-            throw new InvalidOperationException("Git state query failed.");
-        }
-
-        return output;
     }
 
     private static string ReadGitHead(string repoRoot)

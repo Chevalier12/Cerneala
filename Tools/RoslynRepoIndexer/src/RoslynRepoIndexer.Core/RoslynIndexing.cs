@@ -1200,12 +1200,9 @@ public sealed class IndexBuilder
 
     private static IEnumerable<string> EnumerateWorkspaceTriggerFiles(string repoRoot, IndexerConfig config)
     {
-        return Directory.EnumerateFiles(repoRoot, "*", SearchOption.AllDirectories)
-            .Where(path =>
-            {
-                var relative = RepositoryDiscovery.NormalizeRelative(Path.GetRelativePath(repoRoot, path));
-                return !RepositoryDiscovery.IsExcluded(relative, config) && IsWorkspaceTriggerFile(path);
-            });
+        return RepositoryDiscovery.EnumerateCandidateFilesFromFileSystem(repoRoot, config)
+            .Select(file => file.FullPath)
+            .Where(IsWorkspaceTriggerFile);
     }
 
     private static bool IsWorkspaceTriggerFile(string path)
