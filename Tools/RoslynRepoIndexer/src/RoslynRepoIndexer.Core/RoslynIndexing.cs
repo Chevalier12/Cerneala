@@ -253,9 +253,7 @@ public sealed class ReferenceCollector
             var referenced = IndexBuilder.ReferencedSymbol(semanticModel, node, CancellationToken.None);
             if (referenced is null
                 || SymbolEqualityComparer.Default.Equals(referenced, declared)
-                || (!localSymbolIds.TryGetValue(referenced, out var symbolId)
-                    && (SymbolEqualityComparer.Default.Equals(referenced, referenced.OriginalDefinition)
-                        || !localSymbolIds.TryGetValue(referenced.OriginalDefinition, out symbolId!))))
+                || !IndexBuilder.TryResolveReferencedSymbolId(localSymbolIds, referenced, projectId, relativePath, out var symbolId))
             {
                 continue;
             }
@@ -1021,7 +1019,7 @@ public sealed class IndexBuilder
             if (referenced is not null
                 && compilation is not null
                 && !SymbolEqualityComparer.Default.Equals(referenced, declared)
-                && TryGetLocalSymbolId(localSymbolIds, referenced, out var symbolId))
+                && TryResolveReferencedSymbolId(localSymbolIds, referenced, projectId, relative, out var symbolId))
             {
                 var sourceSpan = node.GetLocation().SourceSpan;
                 if (seenReferences.Add($"{symbolId}|{documentId}|{sourceSpan.Start}|{sourceSpan.Length}"))
@@ -1531,6 +1529,29 @@ public sealed class IndexBuilder
            || (!SymbolEqualityComparer.Default.Equals(symbol, symbol.OriginalDefinition)
                && localSymbolIds.TryGetValue(symbol.OriginalDefinition, out symbolId!));
 
+    internal static bool TryResolveReferencedSymbolId(
+        Dictionary<ISymbol, string> localSymbolIds,
+        ISymbol symbol,
+        string? projectId,
+        string relativePath,
+        out string symbolId)
+    {
+        if (TryGetLocalSymbolId(localSymbolIds, symbol, out symbolId))
+        {
+            return true;
+        }
+
+        if (!symbol.Locations.Any(location => location.IsInSource)
+            || symbol.Kind is SymbolKind.Local or SymbolKind.Parameter or SymbolKind.TypeParameter)
+        {
+            symbolId = string.Empty;
+            return false;
+        }
+
+        symbolId = SymbolIdProvider.CreateIdentity(symbol.OriginalDefinition, projectId, relativePath, CancellationToken.None).SymbolId;
+        return true;
+    }
+
     private static string ReferenceKind(SyntaxNode node, ISymbol? symbol)
     {
         if (node is InvocationExpressionSyntax
@@ -1707,10 +1728,7 @@ public sealed class ExactReferenceService
     public async Task<IReadOnlyList<SearchResult>> FindExactAsync(string repoRoot, string symbolIdOrQuery, int timeoutSeconds, CancellationToken cancellationToken = default)
     {
         var snapshot = IndexStore.Read(repoRoot);
-        var candidates = snapshot.Symbols
-            .Where(s => string.Equals(s.SymbolId, symbolIdOrQuery, StringComparison.Ordinal) || s.Name.Contains(symbolIdOrQuery, StringComparison.OrdinalIgnoreCase) || s.FullyQualifiedName.Contains(symbolIdOrQuery, StringComparison.OrdinalIgnoreCase))
-            .Take(2)
-            .ToArray();
+        var candidates = ResolveExactReferenceCandidates(snapshot, symbolIdOrQuery);
         if (candidates.Length != 1)
         {
             return Array.Empty<SearchResult>();
@@ -1761,12 +1779,35 @@ public sealed class ExactReferenceService
                 var relative = RepositoryDiscovery.NormalizeRelative(Path.GetRelativePath(repoRoot, location.Document.FilePath!));
                 return new SearchResult(relative, span.Line + 1, span.Character + 1, span.Line + 1, span.Character + 1 + candidate.Name.Length, "reference", 1000, "exact Roslyn reference", snippets.ReadSnippet(relative, span.Line + 1), candidate.SymbolId, candidate.Name, candidate.FullyQualifiedName.Contains('.') ? candidate.FullyQualifiedName[..candidate.FullyQualifiedName.LastIndexOf('.')] : null, candidate.FullyQualifiedName, "exact", location.Document.Project.Name);
             })
+            .GroupBy(result => $"{result.Path}|{result.Line}|{result.Column}", StringComparer.Ordinal)
+            .Select(group => group.First())
             .OrderBy(r => r.Path, StringComparer.Ordinal)
             .ThenBy(r => r.Line)
             .ThenBy(r => r.Column)
             .ToArray();
         IndexStore.WriteExactReferenceCache(repoRoot, cacheKey, snapshot.Manifest.UpdatedUtc, results);
         return results;
+    }
+
+    private static SymbolEntry[] ResolveExactReferenceCandidates(IndexSnapshot snapshot, string query)
+    {
+        foreach (var predicate in new Func<SymbolEntry, bool>[]
+                 {
+                     symbol => string.Equals(symbol.SymbolId, query, StringComparison.Ordinal),
+                     symbol => string.Equals(symbol.FullyQualifiedName, query, StringComparison.OrdinalIgnoreCase),
+                     symbol => string.Equals(symbol.Name, query, StringComparison.OrdinalIgnoreCase),
+                     symbol => symbol.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                               || symbol.FullyQualifiedName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                 })
+        {
+            var candidates = snapshot.Symbols.Where(predicate).Take(2).ToArray();
+            if (candidates.Length > 0)
+            {
+                return candidates;
+            }
+        }
+
+        return Array.Empty<SymbolEntry>();
     }
 }
 

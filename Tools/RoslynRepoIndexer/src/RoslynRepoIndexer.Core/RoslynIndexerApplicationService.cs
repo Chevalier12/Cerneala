@@ -322,14 +322,17 @@ public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationS
                     return Failure<object>(2, "--timeout must be a non-negative number of seconds.", command, query, root.RootPath, stopwatch);
                 }
 
-                results = await new ExactReferenceService().FindExactAsync(root.RootPath, query, timeoutSeconds, cancellationToken).ConfigureAwait(false);
+                var resolvedQuery = candidates.FirstOrDefault()?.SymbolId ?? query;
+                results = (await new ExactReferenceService().FindExactAsync(root.RootPath, resolvedQuery, timeoutSeconds, cancellationToken).ConfigureAwait(false))
+                    .Take(PositiveOrDefault(request.Limit, 50))
+                    .ToArray();
             }
             else
             {
-                var symbol = candidates.FirstOrDefault();
-                var requestQuery = symbol?.Name ?? query;
+                var requestQuery = candidates.FirstOrDefault()?.SymbolId ?? query;
                 var snippets = new SnippetReader(root.RootPath);
-                results = new SearchService(queryIndex, (path, line) => snippets.ReadSnippet(path, line)).Search(new SearchRequest(requestQuery, SearchMode.Reference, PositiveOrDefault(request.Limit, 50)));
+                results = new SearchService(queryIndex, (path, line) => snippets.ReadSnippet(path, line))
+                    .Search(new SearchRequest(requestQuery, SearchMode.Reference, PositiveOrDefault(request.Limit, 50)));
             }
 
             return CommandResponse.Success<object>(results, null, command, query, root.RootPath, stopwatch.ElapsedMilliseconds, TryIndexUpdatedUtc(root.RootPath), includeResultsAlias: true);

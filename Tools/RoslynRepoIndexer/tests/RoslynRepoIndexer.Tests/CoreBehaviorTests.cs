@@ -132,6 +132,77 @@ public sealed class CoreBehaviorTests
     }
 
     [Fact]
+    public void SearchService_exact_type_name_suppresses_local_symbol_noise()
+    {
+        var snapshot = new IndexSnapshot(
+            IndexManifest.CreateNew("C:/repo", "cfg", "workspace"),
+            new[] { Doc("d1", "TextBox.cs", "App"), Doc("d2", "TextBoxTests.cs", "App.Tests") },
+            new[]
+            {
+                Sym("T:App.TextBox", "class", "TextBox", "App.TextBox", "TextBox.cs", "App"),
+                Sym("local:textBox", "local", "textBox", "textBox", "TextBoxTests.cs", "App.Tests")
+            },
+            Array.Empty<ReferenceEntry>(),
+            Array.Empty<TokenPosting>());
+
+        var results = new SearchService(snapshot, (_, _) => string.Empty)
+            .Search(new SearchRequest("TextBox", SearchMode.Symbol, 50, IncludeTests: true));
+
+        Assert.Collection(results, result => Assert.Equal("T:App.TextBox", result.SymbolId));
+    }
+
+    [Fact]
+    public void SearchService_reference_mode_resolves_symbol_id_exactly()
+    {
+        const string symbolId = "T:App.TextBox";
+        var snapshot = new IndexSnapshot(
+            IndexManifest.CreateNew("C:/repo", "cfg", "workspace"),
+            new[] { Doc("d1", "TextBox.cs", "App"), Doc("d2", "Usage.cs", "App") },
+            new[]
+            {
+                Sym(symbolId, "class", "TextBox", "App.TextBox", "TextBox.cs", "App"),
+                Sym("T:App.Unrelated", "class", "Unrelated", "App.Unrelated", "Unrelated.cs", "App")
+            },
+            new[]
+            {
+                new ReferenceEntry("r1", symbolId, "d2", "pid-App", "TextBox", "Usage.cs", 3, 5, 3, 12, 20, 7, "App", "type-use"),
+                new ReferenceEntry("r2", "T:App.Unrelated", "d2", "pid-App", "Unrelated", "Usage.cs", 4, 5, 4, 14, 30, 9, "App", "type-use")
+            },
+            Array.Empty<TokenPosting>());
+
+        var results = new SearchService(snapshot, (_, _) => string.Empty)
+            .Search(new SearchRequest(symbolId, SearchMode.Reference, 50));
+
+        Assert.Collection(results, result =>
+        {
+            Assert.Equal(symbolId, result.SymbolId);
+            Assert.Equal("Usage.cs", result.Path);
+        });
+    }
+
+    [Fact]
+    public void ReferenceCollector_links_symbols_declared_in_another_document()
+    {
+        var declarationTree = CSharpSyntaxTree.ParseText("namespace App; public sealed class TextBox { }");
+        var usageTree = CSharpSyntaxTree.ParseText("namespace App; public sealed class Usage { public TextBox Value { get; } = new(); }");
+        var compilation = CSharpCompilation.Create(
+            "App",
+            new[] { declarationTree, usageTree },
+            new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) });
+        var semanticModel = compilation.GetSemanticModel(usageTree);
+
+        var references = new ReferenceCollector().Collect(
+            usageTree.GetRoot(),
+            semanticModel,
+            "usage-document",
+            "app-project",
+            "Usage.cs",
+            "App");
+
+        Assert.Contains(references, reference => reference.SymbolId == "T:App.TextBox");
+    }
+
+    [Fact]
     public void SearchService_boosts_results_from_context_project_or_file()
     {
         var snapshot = new IndexSnapshot(

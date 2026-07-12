@@ -100,6 +100,7 @@ public sealed class SearchService
         var scoreStopwatch = System.Diagnostics.Stopwatch.StartNew();
         var parsed = QueryParser.Parse(request.Query);
         var query = string.Join(' ', parsed.Terms.Concat(parsed.Phrases)).Trim();
+        var referenceQuery = symbolsById.ContainsKey(request.Query) ? request.Query : query;
         var contextProjects = ResolveContextProjects(request);
         var relatedContextProjects = ResolveRelatedContextProjects(contextProjects);
         var results = new List<SearchResult>();
@@ -135,7 +136,7 @@ public sealed class SearchService
 
         if (mode is SearchMode.Reference || mode is SearchMode.All && exactSymbolLookup)
         {
-            results.AddRange(SearchReferences(query, request).Take(Math.Max(100, request.Limit * 4)));
+            results.AddRange(SearchReferences(referenceQuery, request).Take(Math.Max(100, request.Limit * 4)));
         }
 
         return Finish(results, request, parsed, contextProjects, relatedContextProjects, searchLoadMs, scoreStopwatch, IsTimedOut(request, scoreStopwatch));
@@ -288,7 +289,13 @@ public sealed class SearchService
     private IEnumerable<SearchResult> SearchSymbols(string query, SearchRequest request)
     {
         var kinds = SplitKinds(request.Kind);
-        foreach (var symbol in CandidateSymbols(query))
+        var candidates = CandidateSymbols(query).ToArray();
+        var exactNamedTypes = candidates
+            .Where(symbol => IsNamedTypeKind(symbol.Kind)
+                             && string.Equals(symbol.Name, query, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        var source = exactNamedTypes.Length > 0 ? exactNamedTypes : candidates;
+        foreach (var symbol in source)
         {
             if (kinds.Count > 0 && !kinds.Contains(symbol.Kind))
             {
@@ -440,6 +447,11 @@ public sealed class SearchService
 
     private IEnumerable<SearchResult> SearchReferences(string query, SearchRequest request)
     {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            yield break;
+        }
+
         var emitted = new HashSet<string>(StringComparer.Ordinal);
         foreach (var symbol in CandidateSymbols(query))
         {
@@ -512,6 +524,11 @@ public sealed class SearchService
             return Array.Empty<SymbolEntry>();
         }
 
+        if (symbolsById.TryGetValue(query, out var exactSymbol))
+        {
+            return new[] { exactSymbol };
+        }
+
         var lowerQuery = query.ToLowerInvariant();
         var candidates = new Dictionary<string, SymbolEntry>(StringComparer.Ordinal);
         if (symbolsByLowerName.TryGetValue(lowerQuery, out var byName))
@@ -556,6 +573,9 @@ public sealed class SearchService
             .Select(candidate => candidate.Symbol)
             .ToArray();
     }
+
+    private static bool IsNamedTypeKind(string kind)
+        => kind is "class" or "struct" or "interface" or "enum" or "delegate" or "record";
 
     private static bool IsAcronymCandidate(string name, string query)
         => query.Length <= 12 && query.All(character => char.IsLetterOrDigit(character)) && name.Count(char.IsUpper) == query.Length;
