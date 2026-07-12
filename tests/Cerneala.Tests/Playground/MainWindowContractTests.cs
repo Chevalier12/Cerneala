@@ -17,8 +17,8 @@ public sealed class MainWindowContractTests
 
         Assert.Same(viewModel, window.DataContext);
         Assert.Equal("Cerneala generator playground", window.Title);
-        Assert.Equal(1180, window.Width);
-        Assert.Equal(900, window.Height);
+        Assert.Equal(1280, window.Width);
+        Assert.Equal(980, window.Height);
         Assert.IsType<StackPanel>(window.Content);
         (_, _, _, StackPanel actions) = FindReactiveElements(window);
         Button openWindowsButton = Assert.IsType<Button>(actions.VisualChildren[5]);
@@ -141,7 +141,7 @@ public sealed class MainWindowContractTests
         StackPanel comparisons = Assert.IsType<StackPanel>(cardContent.VisualChildren[1]);
         TextBlock score = Assert.IsType<TextBlock>(comparisons.VisualChildren[0]);
         TextBlock details = Assert.IsType<TextBlock>(comparisons.VisualChildren[2]);
-        StackPanel actions = Assert.IsType<StackPanel>(cardContent.VisualChildren[2]);
+        StackPanel actions = Assert.IsType<StackPanel>(cardContent.VisualChildren[4]);
         return (status, score, details, actions);
     }
 }

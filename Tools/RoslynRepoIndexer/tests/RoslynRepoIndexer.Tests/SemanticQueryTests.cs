@@ -1,34 +1,9 @@
-using Ri.Mcp;
 using RoslynRepoIndexer.Core;
 
 namespace RoslynRepoIndexer.Tests;
 
 public sealed class SemanticQueryTests
 {
-    [Fact]
-    public async Task Batch_reuses_one_generation_and_resolves_symbol_and_file_dependencies()
-    {
-        using var repo = TestRepo.Create();
-        Directory.CreateDirectory(Path.Combine(repo.Root, ".git"));
-        File.WriteAllText(Path.Combine(repo.Root, "Widget.cs"), "public class Widget { public void Run() { } }");
-        IndexStore.Write(repo.Root, Snapshot(repo.Root));
-        var tools = new RoslynMcpTools();
-        var request = new RoslynBatchRequest(repo.Root, new[]
-        {
-            new RoslynBatchOperation("definition", "goto", Query: "Widget", Limit: 1),
-            new RoslynBatchOperation("details", "inspect", SymbolFrom: "definition:0", Include: new[] { InspectInclude.Members }),
-            new RoslynBatchOperation("shape", "outline", FileFrom: "definition:0", Depth: 3)
-        });
-
-        var result = await tools.BatchAsync(request);
-        var batch = Assert.IsType<RoslynBatchResult>(result.Data);
-
-        Assert.True(result.Success);
-        Assert.Equal(3, batch.Operations.Count);
-        Assert.All(batch.Operations, operation => Assert.True(operation.Success, operation.Error?.Message));
-        Assert.Equal(IndexStore.ReadManifest(repo.Root).GenerationId, batch.GenerationId);
-    }
-
     [Fact]
     public async Task Roslyn_indexing_persists_invocation_hierarchy_and_override_edges()
     {

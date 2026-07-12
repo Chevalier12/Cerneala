@@ -868,41 +868,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Theming.ThemePalette.md
 |   |   |   |-- Cerneala.UI.Theming.ThemeProvider.md
 |   |   |   |-- Cerneala.UI.Theming.ThemeResource_T_.md
-|   |   |   |-- Ri.Mcp.ContinuationTokenCodec.md
-|   |   |   |-- Ri.Mcp.ContinuationTokenException.md
-|   |   |   |-- Ri.Mcp.RepositoryBinding.md
-|   |   |   |-- Ri.Mcp.RoslynBatchFailureMode.md
-|   |   |   |-- Ri.Mcp.RoslynBatchOperation.md
-|   |   |   |-- Ri.Mcp.RoslynBatchOperationResult.md
-|   |   |   |-- Ri.Mcp.RoslynBatchRequest.md
-|   |   |   |-- Ri.Mcp.RoslynBatchResult.md
-|   |   |   |-- Ri.Mcp.RoslynCallGraphRequest.md
-|   |   |   |-- Ri.Mcp.RoslynCapabilities.md
-|   |   |   |-- Ri.Mcp.RoslynChangesRequest.md
-|   |   |   |-- Ri.Mcp.RoslynContextRequest.md
-|   |   |   |-- Ri.Mcp.RoslynGotoRequest.md
-|   |   |   |-- Ri.Mcp.RoslynImpactRequest.md
-|   |   |   |-- Ri.Mcp.RoslynIndexRequest.md
-|   |   |   |-- Ri.Mcp.RoslynInspectRequest.md
-|   |   |   |-- Ri.Mcp.RoslynMcpCacheInfo.md
-|   |   |   |-- Ri.Mcp.RoslynMcpError.md
-|   |   |   |-- Ri.Mcp.RoslynMcpToolCatalog.md
-|   |   |   |-- Ri.Mcp.RoslynMcpToolDefinition.md
-|   |   |   |-- Ri.Mcp.RoslynMcpToolResult.md
-|   |   |   |-- Ri.Mcp.RoslynMcpTools.md
-|   |   |   |-- Ri.Mcp.RoslynOutlineRequest.md
-|   |   |   |-- Ri.Mcp.RoslynPReadRequest.md
-|   |   |   |-- Ri.Mcp.RoslynProfileFileSize.md
-|   |   |   |-- Ri.Mcp.RoslynProfileRequest.md
-|   |   |   |-- Ri.Mcp.RoslynProfileResult.md
-|   |   |   |-- Ri.Mcp.RoslynProfileTerm.md
-|   |   |   |-- Ri.Mcp.RoslynReadRequest.md
-|   |   |   |-- Ri.Mcp.RoslynRefsRequest.md
-|   |   |   |-- Ri.Mcp.RoslynRepoRequest.md
-|   |   |   |-- Ri.Mcp.RoslynResponseProfile.md
-|   |   |   |-- Ri.Mcp.RoslynSearchRequest.md
-|   |   |   |-- Ri.Mcp.RoslynSuggestRequest.md
-|   |   |   |-- Ri.Mcp.RoslynTestsForRequest.md
 |   |   |   |-- RoslynRepoIndexer.Core.CallGraphDirection.md
 |   |   |   |-- RoslynRepoIndexer.Core.CallGraphEdge.md
 |   |   |   |-- RoslynRepoIndexer.Core.CallGraphNode.md
@@ -952,7 +917,6 @@ Generated from `.`.
 |   |   |   |-- RoslynRepoIndexer.Core.PathCommandRequest.md
 |   |   |   |-- RoslynRepoIndexer.Core.ProjectEntry.md
 |   |   |   |-- RoslynRepoIndexer.Core.QueryIndex.md
-|   |   |   |-- RoslynRepoIndexer.Core.QuerySuggestion.md
 |   |   |   |-- RoslynRepoIndexer.Core.ReferenceCollector.md
 |   |   |   |-- RoslynRepoIndexer.Core.ReferenceEntry.md
 |   |   |   |-- RoslynRepoIndexer.Core.RefsCommandRequest.md
@@ -981,10 +945,6 @@ Generated from `.`.
 |   |   |   |-- RoslynRepoIndexer.Core.SemanticQueryService.md
 |   |   |   |-- RoslynRepoIndexer.Core.SourceSpanSummary.md
 |   |   |   |-- RoslynRepoIndexer.Core.StatusSummary.md
-|   |   |   |-- RoslynRepoIndexer.Core.SuggestCommandRequest.md
-|   |   |   |-- RoslynRepoIndexer.Core.SuggestExecutedResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.SuggestExecutionResponse.md
-|   |   |   |-- RoslynRepoIndexer.Core.SuggestionService.md
 |   |   |   |-- RoslynRepoIndexer.Core.SymbolCollector.md
 |   |   |   |-- RoslynRepoIndexer.Core.SymbolEntry.md
 |   |   |   |-- RoslynRepoIndexer.Core.SymbolIdProvider.md
@@ -1392,14 +1352,8 @@ Generated from `.`.
 |   |   |   |-- baseline-2026-07-12.json
 |   |   |   +-- README.md
 |   |   |-- src/
-|   |   |   |-- Ri.Mcp/
-|   |   |   |   |-- ContinuationTokenCodec.cs
-|   |   |   |   |-- Program.cs
-|   |   |   |   |-- Ri.Mcp.csproj
-|   |   |   |   |-- RoslynMcpContracts.cs
-|   |   |   |   |-- RoslynMcpToolCatalog.cs
-|   |   |   |   +-- RoslynMcpTools.cs
 |   |   |   |-- RoslynRepoIndexer.Cli/
+|   |   |   |   |-- CliQueryDaemon.cs
 |   |   |   |   |-- Program.cs
 |   |   |   |   +-- RoslynRepoIndexer.Cli.csproj
 |   |   |   +-- RoslynRepoIndexer.Core/
@@ -1425,17 +1379,14 @@ Generated from `.`.
 |   |   |       |-- AssemblyInfo.cs
 |   |   |       |-- BinaryStorageTests.cs
 |   |   |       |-- CliBehaviorTests.cs
-|   |   |       |-- ContinuationTokenTests.cs
 |   |   |       |-- CoreBehaviorTests.cs
 |   |   |       |-- CrossPlatformCompatibilityTests.cs
 |   |   |       |-- FileReadCliTests.cs
 |   |   |       |-- IntegrationCliTests.cs
 |   |   |       |-- JsonContractSnapshotTests.cs
 |   |   |       |-- LinkedGeneratedIndexingTests.cs
-|   |   |       |-- McpBehaviorTests.cs
 |   |   |       |-- PerformanceSmokeTests.cs
 |   |   |       |-- RepositorySessionTests.cs
-|   |   |       |-- RoslynMcpTests.cs
 |   |   |       |-- RoslynRepoIndexer.Tests.csproj
 |   |   |       |-- RoslynSymbolIntegrationTests.cs
 |   |   |       |-- SearchScorerTests.cs
@@ -2087,7 +2038,6 @@ Generated from `.`.
 |-- ConceptualIdeas.md
 |-- GameBootstrap.cs
 |-- global.json
-|-- mcp.md
 |-- ROADMAP.md
 |-- ROADMAPv2_AUDIT.md
 |-- ROADMAPv2.md

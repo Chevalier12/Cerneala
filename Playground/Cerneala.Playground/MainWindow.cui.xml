@@ -1,11 +1,11 @@
 <Window
     Title="Cerneala generator playground"
-    Width="1180"
-    Height="900"
+    Width="1280"
+    Height="980"
     MinWidth="760"
     MinHeight="620"
-    MaxWidth="1800"
-    MaxHeight="1200"
+    MaxWidth="1920"
+    MaxHeight="1400"
     Left="80"
     Top="60"
     WindowState="Normal"
@@ -37,6 +37,21 @@
         <SolidColorBrush Name="PanelBrush" Color="#FF1E2633" />
         <SolidColorBrush Name="PanelEdgeBrush" Color="#FF526071" />
         <SolidColorBrush Name="HoverBrush" Color="#FF283548" />
+        <LinearGradientBrush Name="SpectrumBrush" StartPoint="0,0" EndPoint="520,0" Opacity="1">
+            <GradientStop Offset="0" Color="Tomato" />
+            <GradientStop Offset="0.5" Color="#FFFFD166" />
+            <GradientStop Offset="1" Color="#FF00D4AA" />
+        </LinearGradientBrush>
+        <RadialGradientBrush Name="SpotlightBrush" Center="60,30" RadiusX="60" RadiusY="30">
+            <GradientStop Offset="0" Color="#FFFFFFFF" />
+            <GradientStop Offset="1" Color="#FF526071" />
+        </RadialGradientBrush>
+        <DrawingBrush Name="CheckerBrush" ContentBounds="0,0,24,24">
+            <FillRectangle Rect="0,0,24,24" Color="#FF283548" />
+            <FillRectangle Rect="0,0,12,12" Color="#FF00D4AA" />
+            <FillRectangle Rect="12,12,12,12" Color="#FFFF5D73" />
+        </DrawingBrush>
+        <ImageBrush Name="DeferredImageBrush" Source="accent.png" Stretch="Uniform" TileMode="FlipX" />
 
         <Aspect Target="TextBlock">
             @default
@@ -67,6 +82,26 @@
         </Aspect>
     </Window.Resources>
 
+    @template
+    {
+        <Border
+            Name="WindowChrome"
+            Background="20,24,31"
+            BorderBrush="$owner.BorderBrush"
+            BorderThickness="$owner.BorderThickness"
+            Padding="$owner.Padding">
+            @when $self.IsMouseOver
+            {
+                @if value == True { BorderBrush = $AccentBrush; }
+            }
+
+            <ContentPresenter
+                Content="$owner.Content"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch" />
+        </Border>
+    }
+
     @when WindowState
     {
         @if value == Normal { BorderBrush = $PanelEdgeBrush; }
@@ -85,9 +120,17 @@
             Text="Cerneala source generator showcase"
             FontFamily="Consolas"
             FontSize="22"
-            Foreground="255,93,115"
             Background="30,38,51"
-            Margin="0,0,0,8" />
+            Padding="8,4,8,4"
+            Margin="0,0,0,8">
+            <TextBlock.Foreground>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="520,0">
+                    <GradientStop Offset="0" Color="Tomato" />
+                    <GradientStop Offset="0.5" Color="#FFFFD166" />
+                    <GradientStop Offset="1" Color="#FF00D4AA" />
+                </LinearGradientBrush>
+            </TextBlock.Foreground>
+        </TextBlock>
 
         <TextBlock Name="LifecycleText" Margin="0,0,0,4">
             Lifecycle handlers have not run yet.
@@ -101,7 +144,11 @@
             IsEnabled="True"
             MouseEnter="OnBadgeMouseEnter" />
 
-        <Border Name="FeatureCard" Aspect="$InteractiveCard" Margin="0,0,0,8">
+        <Border
+            Name="FeatureCard"
+            Aspect="$InteractiveCard"
+            Background="30,38,51"
+            Margin="0,0,0,8">
             <Border.Resources>
                 <SolidColorBrush Name="AccentBrush" Color="#FF00D4AA" />
                 <Aspect Name="LocalStatusLabel" Target="TextBlock">
@@ -174,6 +221,64 @@
                             @if value == False { Text = "Details: unhealthy"; }
                         }
                     </TextBlock>
+                </StackPanel>
+
+                <StackPanel Name="BrushShowcase" Orientation="Horizontal" Margin="0,0,0,8">
+                    <Border
+                        Background="$SpectrumBrush"
+                        BorderBrush="$SpotlightBrush"
+                        BorderThickness="2"
+                        Padding="48,12,48,12"
+                        Margin="0,0,8,0">
+                        <TextBlock Text="Linear + radial" Foreground="Black" />
+                    </Border>
+                    <Border
+                        Background="$CheckerBrush"
+                        BorderBrush="$AccentBrush"
+                        BorderThickness="1"
+                        Padding="32,12,32,12"
+                        Margin="0,0,8,0">
+                        <TextBlock Text="DrawingBrush" Foreground="White" />
+                    </Border>
+                    <Border Background="$SpotlightBrush" Padding="24,12,24,12">
+                        <TextBlock Text="Radial" Foreground="Black" />
+                    </Border>
+                    <TextBlock
+                        Text="resources: solid + linear + radial + drawing + deferred image"
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        VerticalAlignment="Center"
+                        Margin="12,0,0,0" />
+                </StackPanel>
+
+                <StackPanel Name="SemanticControlsPanel" Orientation="Horizontal" Margin="0,0,0,8">
+                    <StackPanel.Aspect>
+                        @default
+                        {
+                            Margin = 2;
+                        }
+                        @when IsMouseOver
+                        {
+                            @if value == True { Margin = 6; }
+                        }
+                    </StackPanel.Aspect>
+
+                    <Slider
+                        Name="SemanticSlider"
+                        Minimum="0"
+                        Maximum="100"
+                        Value="68"
+                        SmallChange="1"
+                        Orientation="Horizontal"
+                        Margin="8" />
+                    <TextBox
+                        Name="SemanticTextBox"
+                        Text="Editable semantic TextBox"
+                        CaretColor="18,52,86"
+                        Margin="8" />
+                    <CheckBox Foreground="White" Content="Boolean property" IsChecked="True" Margin="8" />
+                    <RadioButton Content="Enum + inherited props" IsChecked="False" Margin="8" />
+                    <ProgressBar Minimum="0" Maximum="100" Value="68" Margin="8" />
                 </StackPanel>
 
                 <StackPanel Name="ActionPanel">

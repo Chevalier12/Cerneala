@@ -10,15 +10,15 @@
 
 ## Repository Search and Indexing (MANDATORY)
 
-- Codex must use RoslynIndexer as the default and primary search/navigation tool for this repository.
-- Use RoslynIndexer tools for search, status, read, partial read, go-to-definition, references, suggestions, doctor, and indexing whenever they can answer the task.
-- Do not use `rg`, `grep`, shell directory scans, IDE search, or other search/navigation tools unless RoslynIndexer cannot help with that specific scenario.
-- Valid exceptions include missing MCP availability, RoslynIndexer failure, non-indexable files, binary/generated artifacts where RoslynIndexer has no useful coverage, or troubleshooting RoslynIndexer itself.
+- Codex must use the RoslynIndexer CLI as the default and primary search/navigation tool for this repository.
+- Invoke it with `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- <command>` from the repository root.
+- Use the CLI for indexing, status, search, read, partial read, go-to-definition, references, symbols, and doctor whenever it can answer the task.
+- Do not use `rg`, `grep`, shell directory scans, IDE search, or other search/navigation tools unless the RoslynIndexer CLI cannot answer that specific scenario.
+- Valid exceptions include CLI failure, non-indexable files, binary/generated artifacts where RoslynIndexer has no useful coverage, or troubleshooting RoslynIndexer itself.
 - Before inspecting or reasoning about repository structure, run `.\Tools\scripts\New-FileTree.ps1` from the repository root, then read `FileTree.md` first.
-- After every code or project-file modification, re-index `Cerneala.slnx` with RoslynIndexer so Codex stays current.
-- For Codex/MCP indexing, prefer C#-only indexing unless the task explicitly needs non-C# text search.
-- Before editing a C# file, prefer `roslyn_read` to read the full file. Use `roslyn_pread` only for targeted partial reads.
-- RoslynIndexer is read/search/index only. Do not add or expect shell execution or write-file capabilities through MCP.
+- After every code or project-file modification, re-index with `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json` so Codex stays current.
+- Before editing a C# file, use `ri read <filePath>` through the CLI to read the full file. Use `ri pread` only for targeted partial reads after the full context is known.
+- RoslynIndexer is read/search/index only. Do not expect shell execution or write-file capabilities from it.
 
 ## API Documentation (MANDATORY)
 

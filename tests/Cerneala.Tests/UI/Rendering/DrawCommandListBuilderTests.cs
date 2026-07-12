@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.Tests.UI.Rendering;
@@ -82,6 +83,21 @@ public sealed class DrawCommandListBuilderTests
         Assert.Equal(DrawCommandKind.PopClip, cache.RootCommands[2].Kind);
     }
 
+    [Fact]
+    public void BrushTextCommandPreservesBrushDuringRootComposition()
+    {
+        SolidColorBrush foreground = new(Color.White);
+        BrushTextRenderingElement root = new(foreground);
+        RetainedRenderCache cache = PreparedCache(root);
+
+        new DrawCommandListBuilder().Build(root, cache, new RenderCounters());
+
+        DrawCommand command = Assert.Single(cache.RootCommands);
+        Assert.Equal(DrawCommandKind.DrawText, command.Kind);
+        Assert.Same(foreground, command.Brush);
+        Assert.Equal(1, command.BrushOpacity);
+    }
+
     private static RetainedRenderCache PreparedCache(UIElement root)
     {
         RetainedRenderCache cache = new();
@@ -97,5 +113,21 @@ public sealed class DrawCommandListBuilderTests
         {
             PrepareSubtree(child, cache, counters);
         }
+    }
+
+    private sealed class BrushTextRenderingElement(IDrawBrush foreground) : UIElement
+    {
+        protected override void OnRender(RenderContext context)
+        {
+            DrawTextRun textRun = new(new TestFont(), "Visible text", 12);
+            context.DrawingContext.DrawText(textRun, new DrawPoint(3, 4), foreground);
+        }
+    }
+
+    private sealed class TestFont : IDrawFont
+    {
+        public string FamilyName => "Test";
+
+        public float Size => 12;
     }
 }

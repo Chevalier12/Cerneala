@@ -1,6 +1,6 @@
 # Roslyn Repo Indexer
 
-`ri` is a local Roslyn indexer optimized for AI agents. The MCP server keeps an immutable query index in memory per repository, while the CLI remains available for diagnostics and scripting. The tool uses no network service, telemetry, embeddings, database, or shell execution through MCP. Persistent files are confined to `.roslyn-index/`.
+`ri` is a local Roslyn indexer optimized for AI agents. The CLI uses repository-scoped background sessions to reuse immutable query indexes across invocations. The tool uses no network service, telemetry, embeddings, or database. Persistent files are confined to `.roslyn-index/`.
 
 ## Build and test
 
@@ -50,64 +50,6 @@ dotnet run -c Release --project Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cl
 
 Query commands (`search`, `refs`, `goto`, `symbols`, and `status`) automatically reuse a repository-scoped background session for ten minutes, so separate CLI invocations do not reload the same index. The session runs from a shadow copy and does not lock build outputs. Set `RI_DISABLE_DAEMON=1` for isolated scripts and tests.
 
-## MCP server
-
-`Ri.Mcp` uses stdio transport and can be bound to its startup repository:
-
-```toml
-[mcp_servers.roslyn-indexer]
-command = "dotnet"
-args = ["run", "-c", "Release", "--project", "Tools/RoslynRepoIndexer/src/Ri.Mcp", "--"]
-cwd = "C:/path/to/repo"
-```
-
-`repoRoot` may be omitted for a repo-bound server. Explicit roots outside that binding are rejected. MCP indexing defaults to C# only unless `includeNonCSharpText: true` is supplied.
-
-Available tools:
-
-```text
-roslyn_capabilities  roslyn_doctor   roslyn_index    roslyn_status
-roslyn_search        roslyn_read     roslyn_pread    roslyn_goto
-roslyn_refs          roslyn_outline  roslyn_inspect  roslyn_context
-roslyn_callgraph     roslyn_impact   roslyn_tests_for
-roslyn_batch         roslyn_changes  roslyn_profile
-```
-
-The compound tools are index-only: they do not open Roslyn on the query path. `roslyn_refs` opens a workspace only when exact references are explicitly requested.
-
-## MCP contract
-
-Every response uses one compact envelope and does not duplicate `data` as `results`:
-
-```json
-{
-  "success": true,
-  "tool": "roslyn_goto",
-  "repoRoot": "C:/repo",
-  "generationId": "20260712...",
-  "elapsedMs": 4,
-  "cache": { "sessionHit": true, "generationReloaded": false },
-  "truncated": false,
-  "continuationToken": null,
-  "data": []
-}
-```
-
-Schemas are tool-specific, reject additional properties, use bounded numeric and string inputs, and expose exact enums. Errors contain stable `code`, `message`, `retryable`, and `suggestedAction` fields. Potentially large results expose deterministic truncation and signed continuation tokens bound to repository, tool, query, and generation. A token from another generation is rejected rather than returning a mixed page.
-
-Profiles are `compact` (MCP default), `standard`, and `diagnostic`. Compound commands enforce their applicable `maxResults`, `maxChars`, `maxNodes`, `depth`, and timeout budgets. `roslyn_batch` validates all dependencies before execution and captures one generation for the complete operation graph.
-
-## Command intent
-
-- `outline`: structure of a file, namespace, or type without reading the complete file.
-- `inspect`: strict symbol resolution plus selected source and relationships in one call.
-- `context`: relevance-ranked source and dependency package within a character budget.
-- `callgraph`: bounded invocation graph with cycle protection.
-- `impact`: demonstrable references, callers, hierarchy, projects, and tests with reasons.
-- `tests_for`: deterministic candidate ranking with explainable evidence; it never runs tests.
-- `changes`: semantic generation diff or structural local Git diff without network access.
-- `profile`: local session, load, query, segment-size, and posting diagnostics.
-
 ## Configuration
 
 If `.roslyn-index.json` exists at the repository root, `ri index` reads it automatically.
@@ -128,7 +70,7 @@ Default exclusions cover `.git`, build outputs, IDE state, packages, `.roslyn-in
 
 ## Benchmarks
 
-The benchmark project contains deterministic small (10 files), medium (100 files), and Cerneala-like corpora. It separates cold storage load plus lookup construction, warm search, 20 persistent MCP calls, and no-op indexing.
+The benchmark project contains deterministic small (10 files), medium (100 files), and Cerneala-like corpora. It separates cold storage load plus lookup construction, warm search, 20 persistent application-service calls, and no-op indexing.
 
 ```powershell
 dotnet run -c Release --project Tools/RoslynRepoIndexer/benchmarks/RoslynRepoIndexer.Benchmarks -- --job short
@@ -145,8 +87,7 @@ Measured on Cerneala (910 C# documents, 24,861 symbols) on 2026-07-12:
 | Warm exact search | about 0.06 ms |
 | Warm broad search | about 4.4-6.6 ms |
 | No-op incremental | about 78 ms (budget: 100 ms) |
-| 20 persistent MCP calls | about 117-276 ms total |
-| 10,000 queries | stable retained memory, under 4 MB growth in the stress gate |
+| 20 persistent application-service calls | about 117-276 ms total |
 | Full cold C# index | about 15-17 s; the initial 12 s target remains profiler work, not an acceptance gate |
 
 Performance thresholds that depend on hardware live in benchmark jobs. Functional tests prove the important invariants: no workspace on no-op, unchanged segment reuse, differential full/incremental equivalence, stable generation capture, bounded output, and corruption recovery.

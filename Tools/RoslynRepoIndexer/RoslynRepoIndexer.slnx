@@ -1,6 +1,5 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Ri.Mcp/Ri.Mcp.csproj" />
     <Project Path="src/RoslynRepoIndexer.Cli/RoslynRepoIndexer.Cli.csproj" />
     <Project Path="src/RoslynRepoIndexer.Core/RoslynRepoIndexer.Core.csproj" />
   </Folder>

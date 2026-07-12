@@ -1,5 +1,4 @@
 using RoslynRepoIndexer.Core;
-using Ri.Mcp;
 
 namespace RoslynRepoIndexer.Tests;
 
@@ -60,32 +59,6 @@ public sealed class RepositorySessionTests
         Assert.Equal(2, session.Metrics.ReloadCount);
     }
 
-    [Fact]
-    [Trait("Category", "Stress")]
-    public async Task Ten_thousand_persistent_mcp_queries_do_not_retain_per_query_memory()
-    {
-        using var repo = TestRepo.Create();
-        Directory.CreateDirectory(Path.Combine(repo.Root, ".git"));
-        IndexStore.Write(repo.Root, SearchableSnapshot(repo.Root));
-        var registry = new RepositorySessionRegistry();
-        var tools = new RoslynMcpTools(registry, new RepositoryBinding(repo.Root), new ContinuationTokenCodec());
-        var request = new RoslynSearchRequest(RepoRoot: repo.Root, Query: "Target", Limit: 10);
-
-        for (var index = 0; index < 100; index++) _ = await tools.SearchAsync(request);
-        ForceFullCollection();
-        var baseline = GC.GetTotalMemory(forceFullCollection: true);
-
-        for (var index = 0; index < 10_000; index++)
-        {
-            var response = await tools.SearchAsync(request);
-            Assert.True(response.Success, string.Join("; ", response.Errors.Select(error => error.Code + ": " + error.Message)));
-        }
-
-        ForceFullCollection();
-        var retained = GC.GetTotalMemory(forceFullCollection: true) - baseline;
-        Assert.True(retained < 4 * 1024 * 1024, $"Persistent query loop retained {retained:N0} bytes.");
-    }
-
     private static IndexSnapshot Snapshot(string root, string id)
         => new(
             IndexManifest.CreateNew(root, "config", "workspace") with
@@ -101,22 +74,4 @@ public sealed class RepositorySessionTests
             Array.Empty<ReferenceEntry>(),
             Array.Empty<TokenPosting>());
 
-    private static IndexSnapshot SearchableSnapshot(string root)
-    {
-        var document = new DocumentEntry("doc", null, "Target.cs", "Tests", "C#", true, false, false, 1, DateTimeOffset.UtcNow, "hash", "decl", 1);
-        var symbol = new SymbolEntry("symbol", "doc", null, "class", "Target", "Target", "Tests.Target", "Tests", "class Target", "public", Array.Empty<string>(), "Target.cs", 1, 1, 1, 7, 0, 6, true, false, Array.Empty<string>(), null, "Tests", null);
-        return new IndexSnapshot(
-            IndexManifest.CreateNew(root, "config", "workspace") with { DocumentCount = 1, SymbolCount = 1 },
-            new[] { document },
-            new[] { symbol },
-            Array.Empty<ReferenceEntry>(),
-            new[] { new TokenPosting("target", "Target.cs", 1, 1, "symbol", "symbol-name", "Tests", "doc") });
-    }
-
-    private static void ForceFullCollection()
-    {
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
-    }
 }

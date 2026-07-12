@@ -1,5 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using Ri.Mcp;
 using RoslynRepoIndexer.Core;
 
 namespace RoslynRepoIndexer.Benchmarks;
@@ -10,7 +9,7 @@ public class QueryBenchmarks
     private QueryIndex queryIndex = null!;
     private SearchService search = null!;
     private RepositoryIndexSession session = null!;
-    private RoslynMcpTools mcp = null!;
+    private RoslynIndexerApplicationService application = null!;
     private string repoRoot = null!;
 
     [Params("UIElement", "InvalidateMeasure", "render cache")]
@@ -23,8 +22,7 @@ public class QueryBenchmarks
         queryIndex = new QueryIndex(IndexStore.Read(repoRoot));
         search = new SearchService(queryIndex, (_, _) => string.Empty);
         session = new RepositoryIndexSession(repoRoot);
-        var app = new RoslynIndexerApplicationService(repoRoot, _ => session.GetQueryIndex());
-        mcp = new RoslynMcpTools(app);
+        application = new RoslynIndexerApplicationService(repoRoot, _ => session.GetQueryIndex());
     }
 
     [Benchmark(Baseline = true)]
@@ -32,12 +30,12 @@ public class QueryBenchmarks
         => search.Search(new SearchRequest(Query, SearchMode.All, 20));
 
     [Benchmark]
-    public async Task TwentyPersistentMcpCalls()
+    public void TwentyPersistentApplicationServiceCalls()
     {
         for (var index = 0; index < 20; index++)
         {
-            var result = await mcp.SearchAsync(new RoslynSearchRequest(RepoRoot: repoRoot, Query: Query, Limit: 20)).ConfigureAwait(false);
-            if (!result.Success) throw new InvalidOperationException("MCP search failed during benchmark.");
+            var result = application.Search(new SearchCommandRequest(Query, Limit: 20));
+            if (!result.Success) throw new InvalidOperationException("Application-service search failed during benchmark.");
         }
     }
 
