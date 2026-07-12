@@ -65,6 +65,25 @@ public sealed class UiHost
 
     public UiFrame Update(InputFrame inputFrame, UiViewport? viewport = null, TimeSpan? elapsedTime = null)
     {
+        return UpdateCore(inputFrame, viewport, elapsedTime, advanceRenderTime: true);
+    }
+
+    internal void AdvanceRenderTime(TimeSpan elapsedTime)
+    {
+        TimeSensitiveRenderInvalidator.Invalidate(RequireRoot(), elapsedTime);
+    }
+
+    internal UiFrame UpdateAfterRenderTimeAdvance(InputFrame inputFrame, UiViewport viewport, TimeSpan elapsedTime)
+    {
+        return UpdateCore(inputFrame, viewport, elapsedTime, advanceRenderTime: false);
+    }
+
+    private UiFrame UpdateCore(
+        InputFrame inputFrame,
+        UiViewport? viewport,
+        TimeSpan? elapsedTime,
+        bool advanceRenderTime)
+    {
         ArgumentNullException.ThrowIfNull(inputFrame);
 
         UIRoot currentRoot = RequireRoot();
@@ -72,7 +91,10 @@ public sealed class UiHost
         TimeSpan frameTime = elapsedTime ?? Clock?.GetElapsedTime() ?? TimeSpan.Zero;
         ApplyViewportIfChanged(currentRoot, currentViewport);
         PrimeInitialFrame(currentRoot);
-        TimeSensitiveRenderInvalidator.Invalidate(currentRoot, frameTime);
+        if (advanceRenderTime)
+        {
+            TimeSensitiveRenderInvalidator.Invalidate(currentRoot, frameTime);
+        }
 
         FrameStats stats = new();
         if (currentRoot.Scheduler.HasWork)

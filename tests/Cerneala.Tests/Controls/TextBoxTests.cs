@@ -172,6 +172,30 @@ public sealed class TextBoxTests
     }
 
     [Fact]
+    public void MouseReleaseOutsideTextBoxEndsCapturedSelectionDrag()
+    {
+        UIRoot root = RootWithTextBox("iiiiWWWW", 220, out TextBox textBox);
+        ElementInputBridge bridge = new();
+        float startX = ContentX(textBox) + CaretX(textBox, 1);
+        float outsideX = textBox.ArrangedBounds.X + textBox.ArrangedBounds.Width + 20;
+
+        bridge.Dispatch(root, PointerFrame(startX, 10, pressed: true));
+        Assert.Same(textBox, bridge.PointerCaptureManager.CapturedElement);
+
+        bridge.Dispatch(root, PointerFrame(startX, 10, outsideX, 10, previousDown: true, currentDown: true));
+        Assert.Same(textBox, bridge.PointerCaptureManager.CapturedElement);
+
+        bridge.Dispatch(root, PointerFrame(outsideX, 10, outsideX, 10, previousDown: true));
+
+        TextSelection selectionAfterRelease = textBox.Selection;
+        Assert.False(bridge.PointerCaptureManager.HasCapture);
+
+        bridge.Dispatch(root, PointerFrame(outsideX, 10, startX, 10));
+
+        Assert.Equal(selectionAfterRelease, textBox.Selection);
+    }
+
+    [Fact]
     public void ShiftRightExtendsSelectionFromCaret()
     {
         UIRoot root = RootWithFocusedTextBox("abcd", out TextBox textBox, out ElementInputBridge bridge);

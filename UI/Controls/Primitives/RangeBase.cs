@@ -112,7 +112,11 @@ public class RangeBase : Control
 
         if (ReferenceEquals(args.Property, MinimumProperty) || ReferenceEquals(args.Property, MaximumProperty))
         {
-            Value = CoerceToRange(Value);
+            float coercedValue = CoerceToRange(Value);
+            if (coercedValue != Value)
+            {
+                Value = coercedValue;
+            }
         }
     }
 

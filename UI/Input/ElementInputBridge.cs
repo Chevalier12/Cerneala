@@ -108,9 +108,22 @@ public sealed class ElementInputBridge
                     focusManager.Focus(focusTarget, routeMap);
                 }
 
-                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseDownEvent, InputEvents.MouseDownEvent, button, 1);
-                handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: true, clickCount: 1);
-                if (!handled)
+                _ = RaiseMousePair(
+                    routeMap,
+                    pointerTarget,
+                    InputEvents.PreviewMouseDownEvent,
+                    InputEvents.MouseDownEvent,
+                    button,
+                    1,
+                    out bool previewHandled);
+                _ = RaiseMouseButtonSpecificPair(
+                    routeMap,
+                    pointerTarget,
+                    button,
+                    isDown: true,
+                    clickCount: 1,
+                    out bool buttonPreviewHandled);
+                if (!previewHandled && !buttonPreviewHandled)
                 {
                     BeginPointerDrag(routeMap, pointerTarget, button);
                 }
@@ -261,8 +274,21 @@ public sealed class ElementInputBridge
         InputMouseButton button,
         int clickCount)
     {
+        return RaiseMousePair(routeMap, target, previewEvent, bubbleEvent, button, clickCount, out _);
+    }
+
+    private static bool RaiseMousePair(
+        ElementInputRouteMap routeMap,
+        HitTestResult? target,
+        RoutedEvent previewEvent,
+        RoutedEvent bubbleEvent,
+        InputMouseButton button,
+        int clickCount,
+        out bool previewHandled)
+    {
         if (target is null)
         {
+            previewHandled = false;
             return false;
         }
 
@@ -275,10 +301,22 @@ public sealed class ElementInputBridge
             target.ElementId,
             previewArgs,
             bubbleArgs);
+        previewHandled = previewArgs.Handled;
         return previewArgs.Handled || bubbleArgs.Handled;
     }
 
     private static bool RaiseMouseButtonSpecificPair(ElementInputRouteMap routeMap, HitTestResult? target, InputMouseButton button, bool isDown, int clickCount)
+    {
+        return RaiseMouseButtonSpecificPair(routeMap, target, button, isDown, clickCount, out _);
+    }
+
+    private static bool RaiseMouseButtonSpecificPair(
+        ElementInputRouteMap routeMap,
+        HitTestResult? target,
+        InputMouseButton button,
+        bool isDown,
+        int clickCount,
+        out bool previewHandled)
     {
         (RoutedEvent Preview, RoutedEvent Bubble)? pair = (button, isDown) switch
         {
@@ -289,7 +327,13 @@ public sealed class ElementInputBridge
             _ => null
         };
 
-        return pair is { } events && RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount);
+        if (pair is not { } events)
+        {
+            previewHandled = false;
+            return false;
+        }
+
+        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, out previewHandled);
     }
 
     private static bool RaiseDirectMousePairAlongRoute(
@@ -300,8 +344,21 @@ public sealed class ElementInputBridge
         InputMouseButton button,
         int clickCount)
     {
+        return RaiseDirectMousePairAlongRoute(routeMap, target, previewEvent, bubbleEvent, button, clickCount, out _);
+    }
+
+    private static bool RaiseDirectMousePairAlongRoute(
+        ElementInputRouteMap routeMap,
+        HitTestResult? target,
+        RoutedEvent previewEvent,
+        RoutedEvent bubbleEvent,
+        InputMouseButton button,
+        int clickCount,
+        out bool previewHandled)
+    {
         if (target is null)
         {
+            previewHandled = false;
             return false;
         }
 
@@ -317,6 +374,7 @@ public sealed class ElementInputBridge
             handled |= args.Handled;
         }
 
+        previewHandled = handled;
         foreach (UiElementId elementId in route)
         {
             MouseButtonEventArgs args = new(bubbleEvent, target.ElementId, button, x, y, clickCount) { Handled = handled };

@@ -728,7 +728,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             for (int x = 0; x < width; x++)
             {
                 float logicalX = rect.X + (((x + 0.5f) / width) * logicalWidth);
-                pixels[(y * width) + x] = Sample(descriptor, new DrawPoint(logicalX, logicalY));
+                pixels[(y * width) + x] = SampleInBounds(descriptor, rect, new DrawPoint(logicalX, logicalY));
             }
         }
 
@@ -1169,6 +1169,21 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
     {
         ArgumentNullException.ThrowIfNull(brush);
         return ApplyOpacity(Sample(brush.CreateDescriptor(), point), commandOpacity);
+    }
+
+    internal static CernealaColor SampleBrushInBoundsForDiagnostics(
+        IDrawBrush brush,
+        DrawRect bounds,
+        DrawPoint point,
+        float commandOpacity = 1)
+    {
+        ArgumentNullException.ThrowIfNull(brush);
+        return ApplyOpacity(SampleInBounds(brush.CreateDescriptor(), bounds, point), commandOpacity);
+    }
+
+    private static CernealaColor SampleInBounds(DrawBrushDescriptor descriptor, DrawRect bounds, DrawPoint point)
+    {
+        return Sample(descriptor, new DrawPoint(point.X - bounds.X, point.Y - bounds.Y));
     }
 
     private static CernealaColor SampleLinear(LinearGradientDrawBrushDescriptor gradient, DrawPoint point)

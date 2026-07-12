@@ -84,6 +84,27 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void CaretBlinkSchedulesAWindowFrameWithoutAnExternalRenderRequest()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox textBox = new()
+        {
+            Text = "blink",
+            IsKeyboardFocused = true
+        };
+        Window window = new() { Content = textBox };
+
+        window.Show();
+        FakeGraphicsSession session = Assert.Single(platform.Windows).Session;
+        Assert.Equal(1, session.PresentCount);
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(500));
+
+        Assert.Equal(2, session.PresentCount);
+    }
+
+    [Fact]
     public void NativeBoundsNotificationsDoNotEchoPropertiesBackToThePlatform()
     {
         FakeWindowPlatform platform = new();

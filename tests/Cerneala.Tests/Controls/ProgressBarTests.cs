@@ -1,5 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
@@ -30,5 +32,18 @@ public sealed class ProgressBarTests
         Assert.Equal(DrawCommandKind.FillRectangle, commands[1].Kind);
         Assert.Equal(new DrawRect(0, 0, 20, 10), commands[1].Rect);
         Assert.Equal(0.25f, progress.ValueRatio);
+    }
+
+    [Fact]
+    public void MarkupValueRemainsEffectiveAfterRangeIsConfigured()
+    {
+        ProgressBar progress = new();
+
+        progress.SetValue(RangeBase.MinimumProperty, 0f, UiPropertyValueSource.MarkupBase);
+        progress.SetValue(RangeBase.MaximumProperty, 100f, UiPropertyValueSource.MarkupBase);
+        progress.SetValue(RangeBase.ValueProperty, 68f, UiPropertyValueSource.MarkupBase);
+
+        Assert.Equal(68f, progress.Value);
+        Assert.Equal(0.68f, progress.ValueRatio);
     }
 }

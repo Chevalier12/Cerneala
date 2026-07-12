@@ -35,6 +35,24 @@ public sealed class BrushRenderingTests
     }
 
     [Fact]
+    public void RadialGradientSamplingUsesPaintBoundsLocalCoordinates()
+    {
+        RadialGradientBrush brush = new(
+            new DrawPoint(5, 5),
+            5,
+            5,
+            [new GradientStop(0, Color.White), new GradientStop(1, Color.Black)]);
+        DrawRect bounds = new(100, 200, 10, 10);
+
+        Color sampled = MonoGameDrawingBackend.SampleBrushInBoundsForDiagnostics(
+            brush,
+            bounds,
+            new DrawPoint(105, 205));
+
+        Assert.Equal(Color.White, sampled);
+    }
+
+    [Fact]
     public void DegenerateLinearGradientUsesLastStop()
     {
         LinearGradientBrush brush = new(

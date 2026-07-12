@@ -14,7 +14,7 @@ using System.Text;
 
 namespace Cerneala.UI.Controls;
 
-public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
+public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement, IPointerDragSource
 {
     public static readonly RoutedEvent TextChangedEvent = RoutedEventRegistry.Register(nameof(TextChanged), typeof(TextBoxBase), RoutingStrategy.Bubble, typeof(TextChangedEventArgs));
     public static readonly RoutedEvent SelectionChangedEvent = RoutedEventRegistry.Register(nameof(SelectionChanged), typeof(TextBoxBase), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
@@ -69,8 +69,7 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
         Handlers.AddHandler(InputEvents.TextInputEvent, OnRoutedTextInput);
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnRoutedKeyDown);
         Handlers.AddHandler(InputEvents.MouseDownEvent, OnRoutedMouseDown);
-        Handlers.AddHandler(InputEvents.MouseMoveEvent, OnRoutedMouseMove);
-        Handlers.AddHandler(InputEvents.MouseUpEvent, OnRoutedMouseUp);
+        Handlers.AddHandler(InputEvents.LostMouseCaptureEvent, (_, _) => CancelMouseSelection());
     }
 
     public TextEditor Editor => editor;
@@ -358,49 +357,78 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
 
     private void OnRoutedMouseDown(UiElementId sender, RoutedEventArgs args)
     {
-        if (args is not MouseButtonEventArgs mouseArgs || mouseArgs.Handled || mouseArgs.ChangedButton != InputMouseButton.Left)
+        if (args is MouseButtonEventArgs mouseArgs && mouseArgs.ChangedButton == InputMouseButton.Left)
         {
-            return;
+            mouseArgs.Handled = true;
+        }
+    }
+
+    bool IPointerDragSource.BeginPointerDrag(
+        PointerCaptureManager captureManager,
+        ElementInputRouteMap routeMap,
+        MouseButtonEventArgs args)
+    {
+        ArgumentNullException.ThrowIfNull(captureManager);
+        ArgumentNullException.ThrowIfNull(routeMap);
+        ArgumentNullException.ThrowIfNull(args);
+        if (!IsEnabled || args.ChangedButton != InputMouseButton.Left)
+        {
+            return false;
         }
 
         LayoutRect content = ContentControl.Deflate(ArrangedBounds, Insets);
-        int index = GetCaretIndexAtMouseX(mouseArgs.X, content);
+        int index = GetCaretIndexAtMouseX(args.X, content);
         isMouseSelecting = true;
         mouseSelectionAnchor = index;
         MoveCaret(index);
-        mouseArgs.Handled = true;
+        captureManager.Capture(this, routeMap);
+        args.Handled = true;
+        return true;
     }
 
-    private void OnRoutedMouseMove(UiElementId sender, RoutedEventArgs args)
+    bool IPointerDragSource.UpdatePointerDrag(MouseEventArgs args)
     {
-        if (!isMouseSelecting || args is not MouseEventArgs mouseArgs || mouseArgs.Handled)
+        ArgumentNullException.ThrowIfNull(args);
+        if (!isMouseSelecting)
         {
-            return;
+            return false;
         }
 
         LayoutRect content = ContentControl.Deflate(ArrangedBounds, Insets);
-        int index = GetCaretIndexAtMouseX(mouseArgs.X, content);
+        int index = GetCaretIndexAtMouseX(args.X, content);
         Select(mouseSelectionAnchor, index);
         ResetCaretBlink();
-        mouseArgs.Handled = true;
+        args.Handled = true;
+        return true;
     }
 
-    private void OnRoutedMouseUp(UiElementId sender, RoutedEventArgs args)
+    bool IPointerDragSource.CompletePointerDrag(
+        PointerCaptureManager captureManager,
+        ElementInputRouteMap routeMap,
+        MouseButtonEventArgs args)
     {
+        ArgumentNullException.ThrowIfNull(captureManager);
+        ArgumentNullException.ThrowIfNull(routeMap);
+        ArgumentNullException.ThrowIfNull(args);
         if (!isMouseSelecting ||
-            args is not MouseButtonEventArgs mouseArgs ||
-            mouseArgs.Handled ||
-            mouseArgs.ChangedButton != InputMouseButton.Left)
+            args.ChangedButton != InputMouseButton.Left)
         {
-            return;
+            return false;
         }
 
         LayoutRect content = ContentControl.Deflate(ArrangedBounds, Insets);
-        int index = GetCaretIndexAtMouseX(mouseArgs.X, content);
+        int index = GetCaretIndexAtMouseX(args.X, content);
         Select(mouseSelectionAnchor, index);
         ResetCaretBlink();
         isMouseSelecting = false;
-        mouseArgs.Handled = true;
+        captureManager.Release(routeMap);
+        args.Handled = true;
+        return true;
+    }
+
+    private void CancelMouseSelection()
+    {
+        isMouseSelecting = false;
     }
 
     private bool HandleClipboardShortcut(InputKey key)
@@ -562,7 +590,8 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
             return null;
         }
 
-        return new DrawRect(x, content.Y, right - x, MathF.Max(1, content.Height));
+        DrawRect verticalBounds = GetCaretVerticalBounds(content);
+        return new DrawRect(x, verticalBounds.Y, right - x, verticalBounds.Height);
     }
 
     private void DrawText(RenderContext context, LayoutRect content, Brush? foreground)
@@ -579,9 +608,10 @@ public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
     {
         float x = content.X + GetCaretTextX(Caret.Position) - horizontalTextOffset;
         x = Math.Clamp(x, content.X, content.X + content.Width);
+        float caretWidth = 1 / (Root?.Scale ?? 1);
         DrawRect verticalBounds = GetCaretVerticalBounds(content);
         context.DrawingContext.FillRectangle(
-            new DrawRect(x, verticalBounds.Y, 1, verticalBounds.Height),
+            new DrawRect(x, verticalBounds.Y, caretWidth, verticalBounds.Height),
             CaretColor);
     }
 

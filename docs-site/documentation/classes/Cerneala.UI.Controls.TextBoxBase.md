@@ -10,7 +10,7 @@ Source: `UI/Controls/TextBoxBase.cs`
 Provides the shared retained text-editing, caret, selection, clipboard, layout, and rendering behavior for text-entry controls.
 
 ```csharp
-public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement
+public abstract class TextBoxBase : Control, ITimeSensitiveRenderElement, IPointerDragSource
 ```
 
 Inheritance:
@@ -20,7 +20,7 @@ Derived:
 `TextBox`, `PasswordBox`
 
 Implements:
-`ITimeSensitiveRenderElement`
+`ITimeSensitiveRenderElement`, `IPointerDragSource`
 
 ## Examples
 
@@ -81,7 +81,7 @@ The `Text` UI property defaults to `string.Empty`, coerces `null` to `string.Emp
 
 `ReceiveTextInput` removes control characters before inserting text. Empty, `null`, or control-only input does not change the document. Keyboard handling supports backspace, delete, home, end, left, right, Shift-based selection extension, and Ctrl+A/C/X/V clipboard shortcuts when a platform clipboard is available from the root platform services.
 
-Pointer input moves the caret to the closest text position on left mouse down and extends selection while dragging. When the caret moves outside the arranged content width, an internal horizontal offset scrolls the rendered text so the caret remains visible.
+Pointer input moves the caret to the closest text position on left mouse down and extends selection while dragging. The control captures the pointer for the duration of a selection drag, so movement and button release remain routed to the text box outside its arranged bounds. Releasing the button or losing pointer capture ends the drag. When the caret moves outside the arranged content width, an internal horizontal offset scrolls the rendered text so the caret remains visible.
 
 Rendering draws the background and border, clips the text area, renders `DisplayText`, paints the selection background, redraws selected text in white inside the selection clip, and renders a blinking caret while the control is keyboard-focused, enabled, render-visible, and `CaretColor` is not transparent.
 
@@ -144,6 +144,14 @@ Accessibility peers for `TextBoxBase` controls use `TextBoxAutomationPeer`, whic
 | `ArrangeCore(ArrangeContext context)` | `LayoutRect` | Returns the final arrange rectangle. |
 | `OnPropertyChanged(UiPropertyChangedEventArgs args)` | `void` | Synchronizes the editor when `Text` changes externally and resets caret blink when keyboard focus is gained. |
 | `OnRender(RenderContext context)` | `void` | Renders chrome, text, selection, selected-text foreground, clipping, and caret. |
+
+## Explicit Interface Implementations
+
+| Name | Description |
+| --- | --- |
+| `IPointerDragSource.BeginPointerDrag(...)` | Starts a left-button selection drag, moves the caret to the pointer position, and captures the pointer. |
+| `IPointerDragSource.UpdatePointerDrag(...)` | Extends the selection to the current captured pointer position. |
+| `IPointerDragSource.CompletePointerDrag(...)` | Applies the final selection position, releases pointer capture, and ends the drag. |
 
 ## Events
 

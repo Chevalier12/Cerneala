@@ -1,6 +1,8 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
@@ -28,6 +30,32 @@ public sealed class TextBoxEditingVisualContractTests
 
         Assert.True(caret.Rect.Height > 0);
         Assert.True(caret.Rect.Width > 0);
+    }
+
+    [Theory]
+    [InlineData(1.25f)]
+    [InlineData(1.5f)]
+    public void CaretRemainsOnePhysicalPixelWideAtEveryTextPosition(float scale)
+    {
+        UIRoot root = new(240, 80, scale);
+        TextBox textBox = new()
+        {
+            Text = "Editable semantic TextBox",
+            IsKeyboardFocused = true,
+            CaretColor = CaretColor
+        };
+        root.VisualChildren.Add(textBox);
+        textBox.Measure(new MeasureContext(new LayoutSize(220, 40)));
+        textBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 220, 32)));
+        MonoGameDrawMapper mapper = new(scale);
+
+        for (int position = 0; position <= textBox.Text.Length; position++)
+        {
+            textBox.MoveCaret(position);
+            DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+
+            Assert.Equal(1, mapper.MapRectangle(caret.Rect).Width);
+        }
     }
 
     [Fact]
@@ -83,6 +111,24 @@ public sealed class TextBoxEditingVisualContractTests
 
         Assert.True(normalTextIndex < selectionIndex);
         Assert.True(selectionIndex < selectedTextIndex);
+    }
+
+    [Fact]
+    public void SelectionHighlightUsesTextLineVerticalBounds()
+    {
+        TextBox textBox = ArrangedSystemFontTextBox("abcd", width: 160, fontSize: 16);
+        textBox.SelectionBackground = SelectionColor;
+        textBox.Select(1, 3);
+
+        DrawCommand highlight = Render(textBox).Single(
+            command => command.Kind == DrawCommandKind.FillRectangle && command.Color == SelectionColor);
+        TextCaretVerticalMetrics expectedMetrics = TextCaretLayout.Default.GetCaretVerticalMetrics(
+            CreateTextAspect(textBox),
+            new FontResolver(textBox.ResourceProvider!));
+
+        Assert.Equal(ContentY(textBox) + expectedMetrics.OffsetY, highlight.Rect.Y, precision: 2);
+        Assert.Equal(expectedMetrics.Height, highlight.Rect.Height, precision: 2);
+        Assert.True(highlight.Rect.Height < ContentHeight(textBox));
     }
 
     [Fact]

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Theming;
@@ -263,12 +264,17 @@ internal sealed class WindowApplicationRuntime : IDisposable
         platform.PumpEvents();
         foreach (WindowContext context in contexts.Values.ToArray())
         {
-            if (context.Window.IsShown &&
-                context.PlatformWindow.Viewport.Width > 0 &&
-                context.PlatformWindow.Viewport.Height > 0 &&
-                (context.RenderRequested || context.Root.Scheduler.HasWork || context.Root.Motion.HasActiveMotion))
+            if (!context.Window.IsShown ||
+                context.PlatformWindow.Viewport.Width <= 0 ||
+                context.PlatformWindow.Viewport.Height <= 0)
             {
-                Render(context, elapsedTime);
+                continue;
+            }
+
+            context.Host.AdvanceRenderTime(elapsedTime);
+            if (context.RenderRequested || context.Root.Scheduler.HasWork || context.Root.Motion.HasActiveMotion)
+            {
+                Render(context, elapsedTime, renderTimeAlreadyAdvanced: true);
             }
         }
     }
@@ -373,10 +379,18 @@ internal sealed class WindowApplicationRuntime : IDisposable
         return context;
     }
 
-    private void Render(WindowContext context, TimeSpan elapsedTime)
+    private void Render(WindowContext context, TimeSpan elapsedTime, bool renderTimeAlreadyAdvanced = false)
     {
         context.RenderRequested = false;
-        context.Host.Update(context.PlatformWindow.InputSource.GetFrame(), context.PlatformWindow.Viewport, elapsedTime);
+        InputFrame inputFrame = context.PlatformWindow.InputSource.GetFrame();
+        if (renderTimeAlreadyAdvanced)
+        {
+            context.Host.UpdateAfterRenderTimeAdvance(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
+        }
+        else
+        {
+            context.Host.Update(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
+        }
         IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
         graphicsSession.BeginFrame(Color.White);
         try
