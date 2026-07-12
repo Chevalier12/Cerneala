@@ -17,6 +17,7 @@ public sealed class CliBehaviorTests
 
         Assert.Equal(0, help.ExitCode);
         Assert.Contains("ri index", help.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("ri suggest", help.Stdout, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(0, version.ExitCode);
         Assert.Contains("0.1.0", version.Stdout, StringComparison.Ordinal);
     }
@@ -40,33 +41,21 @@ public sealed class CliBehaviorTests
     }
 
     [Fact]
+    public async Task Removed_suggest_command_returns_unknown_command()
+    {
+        var result = await RunCliAsync("suggest", "anything");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Contains("Unknown command", result.Stderr, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Search_without_query_returns_exit_code_2()
     {
         var result = await RunCliAsync("search");
 
         Assert.Equal(2, result.ExitCode);
         Assert.Contains("Missing search query", result.Stderr, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task Suggest_without_question_returns_exit_code_1()
-    {
-        var result = await RunCliAsync("suggest");
-
-        Assert.Equal(1, result.ExitCode);
-        Assert.Contains("Missing question", result.Stderr, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task Suggest_with_question_without_index_returns_exit_code_3()
-    {
-        using var repo = TestRepo.Create();
-        File.WriteAllText(Path.Combine(repo.Root, "Repo.sln"), string.Empty);
-
-        var result = await RunCliAsync(new[] { "suggest", "where", "is", "CustomerService" }, repo.Root);
-
-        Assert.Equal(3, result.ExitCode);
-        Assert.Contains("Index is missing", result.Stderr, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -461,6 +450,7 @@ public sealed class CliBehaviorTests
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
+        psi.Environment["RI_DISABLE_DAEMON"] = "1";
         psi.ArgumentList.Add(cliDll);
         foreach (var arg in args)
         {

@@ -13,7 +13,6 @@ public sealed record IndexerConfig
     public long MaxTextFileBytes { get; init; } = 1_048_576;
     public int MaxDegreeOfParallelism { get; init; } = Math.Min(Environment.ProcessorCount, 8);
     public int SearchResultLimit { get; init; } = 50;
-    public int SuggestionLimit { get; init; } = 5;
     public int ExactRefsTimeoutSeconds { get; init; } = 30;
     public IReadOnlyList<string> ExcludeDirectories { get; init; } = DefaultExcludeDirectories;
     public IReadOnlyList<string> ExcludeFileSuffixes { get; init; } = DefaultExcludeFileSuffixes;
@@ -36,7 +35,7 @@ public static class ConfigLoader
     private static readonly HashSet<string> KnownProperties = new(StringComparer.OrdinalIgnoreCase)
     {
         "solution", "includeGenerated", "includeNonCSharpText", "maxTextFileBytes", "maxDegreeOfParallelism",
-        "searchResultLimit", "suggestionLimit", "exactRefsTimeoutSeconds", "excludeDirectories", "excludeFileSuffixes"
+        "searchResultLimit", "exactRefsTimeoutSeconds", "excludeDirectories", "excludeFileSuffixes"
     };
 
     public static ConfigLoadResult Load(string repoRoot, string? explicitPath)
@@ -76,12 +75,6 @@ public static class ConfigLoader
             {
                 warnings.Add("Invalid searchResultLimit; using default.");
                 config = config with { SearchResultLimit = IndexerConfig.Default.SearchResultLimit };
-            }
-
-            if (config.SuggestionLimit <= 0)
-            {
-                warnings.Add("Invalid suggestionLimit; using default.");
-                config = config with { SuggestionLimit = IndexerConfig.Default.SuggestionLimit };
             }
 
             return new ConfigLoadResult(config, warnings);

@@ -49,7 +49,6 @@ public sealed class RoslynMcpTests
             "roslyn_batch",
             "roslyn_changes",
             "roslyn_profile",
-            "roslyn_suggest",
             "roslyn_capabilities"
         }, tools.Select(tool => tool.Name));
         Assert.Contains("prefer", tools.Single(tool => tool.Name == "roslyn_read").Description, StringComparison.OrdinalIgnoreCase);
@@ -92,7 +91,6 @@ public sealed class RoslynMcpTests
             await tools.SearchAsync(new RoslynSearchRequest(repo.Root, "anything")),
             await tools.GotoAsync(new RoslynGotoRequest(repo.Root, "anything")),
             await tools.RefsAsync(new RoslynRefsRequest(repo.Root, "anything")),
-            await tools.SuggestAsync(new RoslynSuggestRequest(repo.Root, "where is anything?")),
             await tools.DoctorAsync(new RoslynRepoRequest(repo.Root))
         };
 
@@ -122,7 +120,6 @@ public sealed class RoslynMcpTests
         await tools.PReadAsync(new RoslynPReadRequest("C:/repo", "src/Foo.cs", StartLine: 1, EndLine: 2));
         await tools.GotoAsync(new RoslynGotoRequest("C:/repo", "Customer"));
         await tools.RefsAsync(new RoslynRefsRequest("C:/repo", "Customer"));
-        await tools.SuggestAsync(new RoslynSuggestRequest("C:/repo", "where is Customer?"));
 
         Assert.Equal(new[]
         {
@@ -133,22 +130,8 @@ public sealed class RoslynMcpTests
             "read",
             "pread",
             "goto",
-            "refs",
-            "suggest"
+            "refs"
         }, app.Calls);
-    }
-
-    [Fact]
-    public async Task Suggest_returns_structured_operations_without_cli_command_strings()
-    {
-        var result = await new RoslynMcpTools(new RecordingApplicationService())
-            .SuggestAsync(new RoslynSuggestRequest("C:/repo", "where is Customer?"));
-        using var json = JsonDocument.Parse(JsonSerializer.Serialize(result, JsonOptions.Default));
-        var suggestion = json.RootElement.GetProperty("data")[0];
-
-        Assert.Equal("search", suggestion.GetProperty("operation").GetString());
-        Assert.Equal("Customer", suggestion.GetProperty("input").GetProperty("query").GetString());
-        Assert.False(suggestion.TryGetProperty("command", out _));
     }
 
     [Fact]
@@ -227,12 +210,6 @@ public sealed class RoslynMcpTests
         {
             calls.Add("refs");
             return Task.FromResult(CommandResponse.Success<object>(Array.Empty<SearchResult>(), null, "refs", request.Query, "C:/repo", 1, null, true));
-        }
-
-        public CommandResponse<object> Suggest(SuggestCommandRequest request)
-        {
-            calls.Add("suggest");
-            return CommandResponse.Success<object>(new[] { new QuerySuggestion("ri search Customer", "Customer", "all", 0.9, "symbol", "mixed") }, null, "suggest", request.Question, "C:/repo", 1, null, true);
         }
 
         private static CommandResponse<IReadOnlyList<SearchResult>> EmptySearch(string command, string? query)

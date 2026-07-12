@@ -24,7 +24,6 @@ public static class RoslynMcpToolCatalog
         Tool("roslyn_batch", "Execute a validated bounded operation graph against one immutable index generation.", ["operations"], "repoRoot", "operations", "failureMode", "maxChars", "timeoutMs"),
         Tool("roslyn_changes", "Return bounded semantic changes between generations or structural Git changes.", [], "repoRoot", "comparison", "baseId", "targetId", "maxResults"),
         Tool("roslyn_profile", "Return local generation, session, timing, table-size, and posting diagnostics.", [], "repoRoot", "topTerms"),
-        Tool("roslyn_suggest", "Create deterministic index-backed query suggestions from a natural-language question.", ["question"], "repoRoot", "question", "limit", "executeTop"),
         Tool("roslyn_capabilities", "Return server, contract, repository binding, command, and limit capabilities.", [], "repoRoot")
     ];
 

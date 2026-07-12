@@ -30,7 +30,6 @@ public sealed class McpBehaviorTests
                 "roslyn_batch",
                 "roslyn_changes",
                 "roslyn_profile",
-                "roslyn_suggest",
                 "roslyn_capabilities"
             },
             names);
@@ -129,7 +128,6 @@ public sealed class McpBehaviorTests
     [InlineData("roslyn_pread")]
     [InlineData("roslyn_goto")]
     [InlineData("roslyn_refs")]
-    [InlineData("roslyn_suggest")]
     public void Every_mcp_tool_declares_input_schema(string toolName)
     {
         var tool = RoslynMcpToolCatalog.Tools.Single(tool => tool.Name == toolName);

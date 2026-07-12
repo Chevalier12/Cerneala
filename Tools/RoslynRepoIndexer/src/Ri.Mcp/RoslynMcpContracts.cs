@@ -99,12 +99,6 @@ public sealed record RoslynRefsRequest(
     RoslynResponseProfile Profile = RoslynResponseProfile.Compact,
     string? ContinuationToken = null);
 
-public sealed record RoslynSuggestRequest(
-    string? RepoRoot = null,
-    string Question = "",
-    int Limit = 5,
-    int ExecuteTop = 0);
-
 public sealed record RoslynOutlineRequest(
     string? RepoRoot = null,
     string Target = "",

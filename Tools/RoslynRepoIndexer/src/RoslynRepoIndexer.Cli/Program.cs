@@ -5,7 +5,26 @@ return await CliApp.RunAsync(args).ConfigureAwait(false);
 
 internal static class CliApp
 {
+    internal static RepositorySessionRegistry? ServerSessions { get; set; }
+
     public static async Task<int> RunAsync(string[] args)
+    {
+        if (await CliQueryDaemon.TryHandleServerModeAsync(args).ConfigureAwait(false) is { } serverExitCode)
+        {
+            return serverExitCode;
+        }
+
+        if (await CliQueryDaemon.TryProxyAsync(args).ConfigureAwait(false) is { } proxy)
+        {
+            Console.Out.Write(proxy.StandardOutput);
+            Console.Error.Write(proxy.StandardError);
+            return proxy.ExitCode;
+        }
+
+        return await RunLocalAsync(args).ConfigureAwait(false);
+    }
+
+    internal static async Task<int> RunLocalAsync(string[] args)
     {
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         try
@@ -36,7 +55,6 @@ internal static class CliApp
                 "read" => Read(rest, command, stopwatch),
                 "pread" => PRead(rest, command, stopwatch),
                 "search" => Search(rest, command, stopwatch),
-                "suggest" => Suggest(rest, command, stopwatch),
                 "refs" => await Refs(rest, command, stopwatch).ConfigureAwait(false),
                 "goto" => Goto(rest, command, stopwatch),
                 "symbols" => Symbols(rest, command, stopwatch),
@@ -76,7 +94,7 @@ internal static class CliApp
             return error;
         }
 
-        var response = await new RoslynIndexerApplicationService().IndexAsync(new IndexCommandRequest(
+        var response = await CreateService().IndexAsync(new IndexCommandRequest(
             options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory(),
             options.Flag("force"),
             options.Value("include-generated") is not null || options.Flag("include-generated"),
@@ -126,7 +144,7 @@ internal static class CliApp
             return Error(2, "--timeout must be a non-negative number of milliseconds.", options.Json, command, query, null, stopwatch);
         }
 
-        var response = new RoslynIndexerApplicationService().Search(new SearchCommandRequest(
+        var response = CreateService().Search(new SearchCommandRequest(
             query,
             ParseMode(options.Value("mode") ?? "all"),
             ParseInt(options.Value("limit"), 50),
@@ -138,24 +156,6 @@ internal static class CliApp
             options.Value("from-project"),
             timeoutMs));
         return OutputResponse(response, options.Json, "No results.");
-    }
-
-    private static int Suggest(string[] args, string command, System.Diagnostics.Stopwatch stopwatch)
-    {
-        var options = Args.Parse(args);
-        if (RejectUnknownOptions(options, command, stopwatch, "limit", "execute-top", "json") is { } error)
-        {
-            return error;
-        }
-
-        var question = string.Join(' ', options.Positionals);
-        if (string.IsNullOrWhiteSpace(question))
-        {
-            return Error(1, "Missing question.", options.Json, command, null, null, stopwatch);
-        }
-
-        var response = new RoslynIndexerApplicationService().Suggest(new SuggestCommandRequest(question, ParseInt(options.Value("limit"), 5), ParseInt(options.Value("execute-top"), 0)));
-        return OutputResponse(response, options.Json, "No suggestions.");
     }
 
     private static async Task<int> Refs(string[] args, string command, System.Diagnostics.Stopwatch stopwatch)
@@ -177,7 +177,7 @@ internal static class CliApp
             return Error(2, "--timeout must be a non-negative number of seconds.", options.Json, command, query, null, stopwatch);
         }
 
-        var response = await new RoslynIndexerApplicationService().RefsAsync(new RefsCommandRequest(
+        var response = await CreateService().RefsAsync(new RefsCommandRequest(
             string.Join(' ', options.Positionals),
             options.Value("symbol-id"),
             options.Flag("exact"),
@@ -200,7 +200,7 @@ internal static class CliApp
             return Error(2, "Missing symbol query.", options.Json, command, null, null, stopwatch);
         }
 
-        var response = new RoslynIndexerApplicationService().Goto(new SymbolQueryCommandRequest(query, options.Value("kind"), ParseInt(options.Value("limit"), 20)));
+        var response = CreateService().Goto(new SymbolQueryCommandRequest(query, options.Value("kind"), ParseInt(options.Value("limit"), 20)));
         return OutputResponse(response, options.Json, "No declarations.");
     }
 
@@ -248,7 +248,7 @@ internal static class CliApp
             return error;
         }
 
-        var response = await new RoslynIndexerApplicationService().DoctorAsync(new PathCommandRequest(options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory(), options.Value("config"), options.Flag("deep"))).ConfigureAwait(false);
+        var response = await CreateService().DoctorAsync(new PathCommandRequest(options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory(), options.Value("config"), options.Flag("deep"))).ConfigureAwait(false);
         return OutputResponse(response, options.Json, string.Empty);
     }
 
@@ -260,7 +260,7 @@ internal static class CliApp
             return error;
         }
 
-        var response = new RoslynIndexerApplicationService().Status(new PathCommandRequest(options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory()));
+        var response = CreateService().Status(new PathCommandRequest(options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory()));
         return OutputResponse(response, options.Json, string.Empty);
     }
 
@@ -302,7 +302,7 @@ internal static class CliApp
             return Error(2, "--max-text-file-bytes must be a positive number of bytes.", options.Json, command, null, null, stopwatch);
         }
 
-        var response = new RoslynIndexerApplicationService().Read(new FileReadCommandRequest(options.Positionals[0], options.Value("config"), maxTextFileBytes));
+        var response = CreateService().Read(new FileReadCommandRequest(options.Positionals[0], options.Value("config"), maxTextFileBytes));
         if (response.Success && response.Data is { } result)
         {
             if (options.Json)
@@ -376,7 +376,7 @@ internal static class CliApp
             request = new PartialFileReadCommandRequest(options.Positionals[0], null, null, targetLine, context, options.Value("config"), maxTextFileBytes);
         }
 
-        var response = new RoslynIndexerApplicationService().PartialRead(request);
+        var response = CreateService().PartialRead(request);
         if (response.Success && response.Data is { } result)
         {
             if (options.Json)
@@ -657,6 +657,11 @@ internal static class CliApp
     private static bool Has(IEnumerable<string> args, string name)
         => args.Contains(name, StringComparer.OrdinalIgnoreCase);
 
+    private static RoslynIndexerApplicationService CreateService()
+        => ServerSessions is null
+            ? new RoslynIndexerApplicationService()
+            : new RoslynIndexerApplicationService(queryIndexLoader: repoRoot => ServerSessions.Get(repoRoot).GetQueryIndex());
+
     private static void Output<T>(
         T data,
         bool json,
@@ -829,13 +834,6 @@ internal static class CliApp
         }
     }
 
-    private sealed record SuggestExecutionResponse(
-        IReadOnlyList<QuerySuggestion> Suggestions,
-        IReadOnlyList<SuggestExecutedResult> ExecutedResults);
-
-    private sealed record SuggestExecutedResult(
-        QuerySuggestion Suggestion,
-        IReadOnlyList<SearchResult> Results);
 }
 
 internal sealed class Args
@@ -892,7 +890,6 @@ internal static class Help
           ri read <filePath> [--json]
           ri pread <filePath> (--range <startLine>:<endLine> | --around <line> [--context <lineCount>]) [--json]
           ri search <query> [--mode all|symbol|text|file|reference] [--json]
-          ri suggest <question> [--json]
           ri refs <symbol> [--exact] [--json]
           ri goto <symbol> [--json]
           ri symbols [--prefix text] [--contains text] [--json]
@@ -909,7 +906,6 @@ internal static class Help
             "read" => "ri read <filePath> --json --max-text-file-bytes <bytes>",
             "pread" => "ri pread <filePath> --range <startLine>:<endLine> --json\nri pread <filePath> --around <line> --context <lineCount> --json",
             "search" => "ri search <query> --mode all|symbol|text|file|reference --kind <kinds> --path <text> --from-file <path> --from-project <name> --limit <n> --json",
-            "suggest" => "ri suggest <question> --limit <n> --execute-top <n> --json",
             "refs" => "ri refs <symbol> --symbol-id <id> --exact --timeout <seconds> --json",
             "goto" => "ri goto <symbol> --limit <n> --json",
             "symbols" => "ri symbols --prefix <prefix> --contains <text> --kind <kinds> --limit <n> --json",

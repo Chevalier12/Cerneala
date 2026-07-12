@@ -330,26 +330,6 @@ public sealed class RoslynMcpTools
         }
     }
 
-    [McpServerTool(Name = "roslyn_suggest", ReadOnly = true, UseStructuredContent = true)]
-    [Description("Create deterministic index-backed query suggestions from a natural-language question.")]
-    public Task<RoslynMcpToolResult<object>> SuggestAsync(RoslynSuggestRequest request)
-    {
-        var repoRoot = ResolveRepoRoot(request.RepoRoot);
-        var app = CreateService(repoRoot);
-        var response = app.Suggest(new SuggestCommandRequest(request.Question, request.Limit, request.ExecuteTop));
-        var data = response.Data switch
-        {
-            IReadOnlyList<QuerySuggestion> suggestions => suggestions.Select(ToSuggestedOperation).ToArray(),
-            SuggestExecutionResponse execution => new
-            {
-                suggestions = execution.Suggestions.Select(ToSuggestedOperation).ToArray(),
-                execution.ExecutedResults
-            },
-            _ => response.Data
-        };
-        return Task.FromResult(ToToolResult("roslyn_suggest", response with { Data = data }));
-    }
-
     [McpServerTool(Name = "roslyn_capabilities", ReadOnly = true, UseStructuredContent = true)]
     [Description("Return server, contract, repository binding, command, and limit capabilities.")]
     public Task<RoslynMcpToolResult<RoslynCapabilities>> CapabilitiesAsync(RoslynRepoRequest request)
@@ -524,16 +504,6 @@ public sealed class RoslynMcpTools
 
     private static SearchMode ParseMode(string mode)
         => Enum.TryParse<SearchMode>(mode, ignoreCase: true, out var parsed) ? parsed : SearchMode.All;
-
-    private static object ToSuggestedOperation(QuerySuggestion suggestion)
-        => new
-        {
-            operation = "search",
-            input = new { query = suggestion.Query, mode = suggestion.Mode },
-            suggestion.Confidence,
-            suggestion.Reason,
-            suggestion.ExpectedResultKind
-        };
 
     private void RecordSessionQuery(string repoRoot, long? elapsedMs)
     {

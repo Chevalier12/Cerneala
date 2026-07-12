@@ -7,7 +7,7 @@ namespace RoslynRepoIndexer.Tests;
 public sealed class IntegrationCliTests
 {
     [Fact]
-    public async Task Index_search_goto_suggest_and_status_work_on_minimal_csharp_project()
+    public async Task Index_search_goto_and_status_work_on_minimal_csharp_project()
     {
         using var repo = TestRepo.Create();
         await CreateProjectAsync(repo.Root);
@@ -16,58 +16,15 @@ public sealed class IntegrationCliTests
         var status = await RunCliAsync(new[] { "status", "--json" }, repo.Root);
         var search = await RunCliAsync(new[] { "search", "CustomerService", "--mode", "symbol", "--json" }, repo.Root);
         var gotoResult = await RunCliAsync(new[] { "goto", "GetCustomerAsync", "--json" }, repo.Root);
-        var suggest = await RunCliAsync(new[] { "suggest", "unde este definit CustomerService?", "--json" }, repo.Root);
 
         Assert.Equal(0, index.ExitCode);
         Assert.Equal(0, status.ExitCode);
         Assert.Equal(0, search.ExitCode);
         Assert.Equal(0, gotoResult.ExitCode);
-        Assert.Equal(0, suggest.ExitCode);
         Assert.Contains("CustomerService", search.Stdout, StringComparison.Ordinal);
         Assert.Contains("GetCustomerAsync", gotoResult.Stdout, StringComparison.Ordinal);
-        Assert.Contains("ri goto", suggest.Stdout, StringComparison.Ordinal);
         using var statusJson = JsonDocument.Parse(status.Stdout);
         Assert.Equal("valid", statusJson.RootElement.GetProperty("data").GetProperty("status").GetString());
-    }
-
-    [Fact]
-    public async Task Suggest_execute_top_attaches_index_based_results_without_running_exact_refs()
-    {
-        using var repo = TestRepo.Create();
-        await CreateProjectAsync(repo.Root);
-
-        var index = await RunCliAsync(new[] { "index", ".", "--json" }, repo.Root);
-        var suggestionsOnly = await RunCliAsync(new[] { "suggest", "cine foloseste GetCustomerAsync?", "--limit", "2", "--json" }, repo.Root);
-        var executedJson = await RunCliAsync(new[] { "suggest", "cine foloseste GetCustomerAsync?", "--limit", "2", "--execute-top", "2", "--json" }, repo.Root);
-        var executedHuman = await RunCliAsync(new[] { "suggest", "cine foloseste GetCustomerAsync?", "--limit", "2", "--execute-top", "2" }, repo.Root);
-
-        AssertCliSuccess(index);
-        AssertCliSuccess(suggestionsOnly);
-        AssertCliSuccess(executedJson);
-        AssertCliSuccess(executedHuman);
-
-        using var suggestionsOnlyJson = JsonDocument.Parse(suggestionsOnly.Stdout);
-        Assert.False(suggestionsOnlyJson.RootElement.TryGetProperty("executedResults", out _));
-        Assert.Equal(JsonValueKind.Array, suggestionsOnlyJson.RootElement.GetProperty("data").ValueKind);
-
-        using var executed = JsonDocument.Parse(executedJson.Stdout);
-        var data = executed.RootElement.GetProperty("data");
-        Assert.Equal(JsonValueKind.Object, data.ValueKind);
-        var suggestions = data.GetProperty("suggestions").EnumerateArray().ToArray();
-        var executedResults = data.GetProperty("executedResults").EnumerateArray().ToArray();
-
-        Assert.Equal(2, suggestions.Length);
-        Assert.Equal(2, executedResults.Length);
-        Assert.Equal("ri refs GetCustomerAsync", suggestions[0].GetProperty("command").GetString());
-        Assert.Equal("ri refs GetCustomerAsync", executedResults[0].GetProperty("suggestion").GetProperty("command").GetString());
-        Assert.Equal("reference", executedResults[0].GetProperty("suggestion").GetProperty("mode").GetString());
-        Assert.NotEmpty(executedResults[0].GetProperty("results").EnumerateArray());
-        Assert.All(executedResults, result => Assert.NotEmpty(result.GetProperty("results").EnumerateArray()));
-        Assert.False(Directory.Exists(IndexStore.GetExactReferenceCacheDirectory(repo.Root)));
-
-        Assert.Contains("executedResults", executedHuman.Stdout, StringComparison.Ordinal);
-        Assert.Contains("ri refs GetCustomerAsync", executedHuman.Stdout, StringComparison.Ordinal);
-        Assert.True(string.IsNullOrWhiteSpace(executedHuman.Stderr), executedHuman.Stderr);
     }
 
     [Fact]
@@ -1188,6 +1145,7 @@ public sealed class IntegrationCliTests
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
+        psi.Environment["RI_DISABLE_DAEMON"] = "1";
         psi.ArgumentList.Add("run");
         psi.ArgumentList.Add("--project");
         psi.ArgumentList.Add(project);

@@ -14,7 +14,7 @@ public sealed class PerformanceSmokeTests
     {
         var program = File.ReadAllText(Path.Combine(TestPaths.RepositoryRoot, "Tools", "RoslynRepoIndexer", "src", "RoslynRepoIndexer.Cli", "Program.cs"));
 
-        foreach (var methodName in new[] { "Search", "Suggest", "Goto", "Symbols", "Status" })
+        foreach (var methodName in new[] { "Search", "Goto", "Symbols", "Status" })
         {
             var body = ExtractMethodBody(program, methodName);
 
@@ -56,7 +56,6 @@ public sealed class PerformanceSmokeTests
         var commands = new[]
         {
             new[] { "search", "CustomerService", "--json" },
-            new[] { "suggest", "unde este definit CustomerService?", "--json" },
             new[] { "refs", "CustomerService", "--json" },
             new[] { "goto", "CustomerService", "--json" },
             new[] { "symbols", "--contains", "CustomerService", "--json" },
@@ -219,6 +218,7 @@ public sealed class PerformanceSmokeTests
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
+        psi.Environment["RI_DISABLE_DAEMON"] = "1";
         psi.ArgumentList.Add(cliDll);
         foreach (var arg in args)
         {

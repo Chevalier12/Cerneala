@@ -3990,11 +3990,6 @@
     "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Ri.Mcp.RoslynSuggestRequest",
-    "file": "documentation/classes/Ri.Mcp.RoslynSuggestRequest.md",
-    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
-  },
-  {
     "name": "Ri.Mcp.RoslynTestsForRequest",
     "file": "documentation/classes/Ri.Mcp.RoslynTestsForRequest.md",
     "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
@@ -4245,11 +4240,6 @@
     "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RepositorySessions.cs"
   },
   {
-    "name": "RoslynRepoIndexer.Core.QuerySuggestion",
-    "file": "documentation/classes/RoslynRepoIndexer.Core.QuerySuggestion.md",
-    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
-  },
-  {
     "name": "RoslynRepoIndexer.Core.ReferenceCollector",
     "file": "documentation/classes/RoslynRepoIndexer.Core.ReferenceCollector.md",
     "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
@@ -4388,26 +4378,6 @@
     "name": "RoslynRepoIndexer.Core.StatusSummary",
     "file": "documentation/classes/RoslynRepoIndexer.Core.StatusSummary.md",
     "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
-  },
-  {
-    "name": "RoslynRepoIndexer.Core.SuggestCommandRequest",
-    "file": "documentation/classes/RoslynRepoIndexer.Core.SuggestCommandRequest.md",
-    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
-  },
-  {
-    "name": "RoslynRepoIndexer.Core.SuggestExecutedResult",
-    "file": "documentation/classes/RoslynRepoIndexer.Core.SuggestExecutedResult.md",
-    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
-  },
-  {
-    "name": "RoslynRepoIndexer.Core.SuggestExecutionResponse",
-    "file": "documentation/classes/RoslynRepoIndexer.Core.SuggestExecutionResponse.md",
-    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
-  },
-  {
-    "name": "RoslynRepoIndexer.Core.SuggestionService",
-    "file": "documentation/classes/RoslynRepoIndexer.Core.SuggestionService.md",
-    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Search.cs"
   },
   {
     "name": "RoslynRepoIndexer.Core.SymbolCollector",

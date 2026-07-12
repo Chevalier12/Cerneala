@@ -203,6 +203,36 @@ public sealed class CoreBehaviorTests
     }
 
     [Fact]
+    public void SymbolCollector_qualifies_member_names_with_their_containing_type()
+    {
+        var tree = CSharpSyntaxTree.ParseText("namespace App; public sealed class TextBox { public void ReceiveTextInput(string text) { } }");
+        var compilation = CSharpCompilation.Create(
+            "App",
+            new[] { tree },
+            new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) });
+
+        var symbols = new SymbolCollector().Collect(tree.GetRoot(), compilation.GetSemanticModel(tree), "document", "project", "TextBox.cs", "App");
+
+        Assert.Contains(symbols, symbol => symbol.Kind == "method" && symbol.FullyQualifiedName == "App.TextBox.ReceiveTextInput(string)");
+    }
+
+    [Fact]
+    public void ReferenceCollector_emits_one_reference_for_an_invocation_name()
+    {
+        var tree = CSharpSyntaxTree.ParseText("namespace App; public sealed class Service { public void Run() { this.Run(); } }");
+        var compilation = CSharpCompilation.Create(
+            "App",
+            new[] { tree },
+            new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) });
+
+        var references = new ReferenceCollector().Collect(tree.GetRoot(), compilation.GetSemanticModel(tree), "document", "project", "Service.cs", "App")
+            .Where(reference => reference.ReferencedName == "Run")
+            .ToArray();
+
+        Assert.Collection(references, reference => Assert.Equal("invocation", reference.ReferenceKind));
+    }
+
+    [Fact]
     public void SearchService_boosts_results_from_context_project_or_file()
     {
         var snapshot = new IndexSnapshot(
@@ -230,163 +260,6 @@ public sealed class CoreBehaviorTests
         Assert.Contains("context-boost", fromProject[0].MatchReason, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("src/Tests/CustomerService.cs", fromFile[0].Path);
         Assert.Contains("context-boost", fromFile[0].MatchReason, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Theory]
-    [InlineData("unde este definit CustomerService?", "ri goto")]
-    [InlineData("cine foloseste GetCustomerAsync?", "ri refs")]
-    [InlineData("unde se valideaza tokenul JWT?", "ri search")]
-    public void SuggestionService_maps_simple_intents_deterministically(string question, string expectedCommand)
-    {
-        var snapshot = new IndexSnapshot(
-            IndexManifest.CreateNew("C:/repo", "cfg", "workspace"),
-            Array.Empty<DocumentEntry>(),
-            new[] { Sym("s1", "class", "CustomerService", "My.App.CustomerService", "src/CustomerService.cs", "P") },
-            Array.Empty<ReferenceEntry>(),
-            Array.Empty<TokenPosting>());
-
-        var suggestions = new SuggestionService(snapshot).Suggest(question, 5);
-
-        Assert.StartsWith(expectedCommand, suggestions[0].Command, StringComparison.Ordinal);
-        Assert.Equal(suggestions.OrderByDescending(s => s.Confidence).ThenBy(s => s.Command, StringComparer.Ordinal).Select(s => s.Command), suggestions.Select(s => s.Command));
-    }
-
-    [Fact]
-    public void SuggestionService_prefers_reference_intent_when_used_is_explicit()
-    {
-        var snapshot = new IndexSnapshot(
-            IndexManifest.CreateNew("C:/repo", "cfg", "workspace"),
-            Array.Empty<DocumentEntry>(),
-            new[] { Sym("s1", "method", "GetCustomerAsync", "My.App.CustomerService.GetCustomerAsync(string)", "src/CustomerService.cs", "P") },
-            Array.Empty<ReferenceEntry>(),
-            Array.Empty<TokenPosting>());
-
-        var suggestions = new SuggestionService(snapshot).Suggest("where is GetCustomerAsync used?", 5);
-
-        Assert.StartsWith("ri refs", suggestions[0].Command, StringComparison.Ordinal);
-        Assert.Equal("GetCustomerAsync", suggestions[0].Query);
-    }
-
-    [Fact]
-    public void SuggestionService_expands_synonyms_for_broad_code_search()
-    {
-        var snapshot = new IndexSnapshot(
-            IndexManifest.CreateNew("C:/repo", "cfg", "workspace"),
-            Array.Empty<DocumentEntry>(),
-            Array.Empty<SymbolEntry>(),
-            Array.Empty<ReferenceEntry>(),
-            Array.Empty<TokenPosting>());
-
-        var suggestions = new SuggestionService(snapshot).Suggest("unde se valideaza tokenul JWT?", 5);
-        var search = suggestions.First(s => s.Command.StartsWith("ri search", StringComparison.Ordinal));
-
-        Assert.Contains("auth", search.Query, StringComparison.Ordinal);
-        Assert.Contains("jwt", search.Query, StringComparison.Ordinal);
-        Assert.Contains("validator", search.Query, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void SuggestionService_preserves_quoted_phrases_as_priority_terms_and_code_like_identifiers()
-    {
-        var snapshot = new IndexSnapshot(
-            IndexManifest.CreateNew("C:/repo", "cfg", "workspace"),
-            Array.Empty<DocumentEntry>(),
-            new[] { Sym("s1", "method", "GetCustomerAsync", "My.App.CustomerService.GetCustomerAsync(string)", "src/CustomerService.cs", "P") },
-            Array.Empty<ReferenceEntry>(),
-            Array.Empty<TokenPosting>());
-
-        var suggestions = new SuggestionService(snapshot).Suggest("""where is "Customer Service" handled by My.App.CustomerService.GetCustomerAsync and order_item-id?""", 5);
-        var search = suggestions.First(s => s.Command.StartsWith("ri search", StringComparison.Ordinal));
-
-        Assert.StartsWith("Customer Service", search.Query, StringComparison.Ordinal);
-        Assert.Contains("My.App.CustomerService.GetCustomerAsync", search.Query, StringComparison.Ordinal);
-        Assert.Contains("order_item-id", search.Query, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void SuggestionService_generates_three_to_five_concrete_suggestions()
-    {
-        var snapshot = new IndexSnapshot(
-            IndexManifest.CreateNew("C:/repo", "cfg", "workspace"),
-            Array.Empty<DocumentEntry>(),
-            new[] { Sym("s1", "class", "CustomerService", "My.App.CustomerService", "src/CustomerService.cs", "P") },
-            Array.Empty<ReferenceEntry>(),
-            Array.Empty<TokenPosting>());
-
-        var suggestions = new SuggestionService(snapshot).Suggest("how is CustomerService validation persisted?", 5);
-
-        Assert.InRange(suggestions.Count, 3, 5);
-        Assert.All(suggestions, suggestion => Assert.StartsWith("ri ", suggestion.Command, StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public void SuggestionService_removes_romanian_and_english_stopwords()
-    {
-        var snapshot = new IndexSnapshot(
-            IndexManifest.CreateNew("C:/repo", "cfg", "workspace"),
-            Array.Empty<DocumentEntry>(),
-            new[] { Sym("s1", "class", "CustomerService", "My.App.CustomerService", "src/CustomerService.cs", "P") },
-            Array.Empty<ReferenceEntry>(),
-            Array.Empty<TokenPosting>());
-
-        var suggestions = new SuggestionService(snapshot).Suggest("unde care cum cine este sunt se face găsește find where how what who is are the a an to of CustomerService", 5);
-        var search = suggestions.First(s => s.Command.StartsWith("ri search", StringComparison.Ordinal));
-        var queryTerms = Tokenizer.NormalizeTerms(search.Query).ToHashSet(StringComparer.Ordinal);
-
-        foreach (var stopword in new[] { "unde", "care", "cum", "cine", "este", "sunt", "se", "face", "găsește", "find", "where", "how", "what", "who", "is", "are", "the", "a", "an", "to", "of" })
-        {
-            Assert.DoesNotContain(stopword, queryTerms);
-        }
-
-        Assert.Contains("customerservice", queryTerms);
-    }
-
-    [Theory]
-    [InlineData("settings", new[] { "config", "settings", "options" })]
-    [InlineData("DbContext", new[] { "db", "database", "repository", "context", "dbcontext" })]
-    [InlineData("controller", new[] { "endpoint", "controller", "route", "api" })]
-    [InlineData("json", new[] { "serialize", "json", "deserialize" })]
-    [InlineData("persist", new[] { "save", "persist", "store", "insert", "update" })]
-    public void SuggestionService_expands_remaining_deterministic_synonym_groups(string question, string[] expectedTerms)
-    {
-        var snapshot = new IndexSnapshot(
-            IndexManifest.CreateNew("C:/repo", "cfg", "workspace"),
-            Array.Empty<DocumentEntry>(),
-            Array.Empty<SymbolEntry>(),
-            Array.Empty<ReferenceEntry>(),
-            Array.Empty<TokenPosting>());
-
-        var suggestions = new SuggestionService(snapshot).Suggest(question, 5);
-        var search = suggestions.First(s => s.Command.StartsWith("ri search", StringComparison.Ordinal));
-
-        foreach (var term in expectedTerms)
-        {
-            Assert.Contains(term, search.Query, StringComparison.OrdinalIgnoreCase);
-        }
-    }
-
-    [Theory]
-    [InlineData("where are app options configured?", "configuration", "--path config")]
-    [InlineData("which controller exposes the customer route?", "endpoint", "--path Controllers")]
-    [InlineData("where is the auth fixture tested?", "test", "--include-tests")]
-    [InlineData("where is customer validation implemented?", "validation", "--path Validators")]
-    [InlineData("where is json serialization configured?", "serialization", "--mode text")]
-    [InlineData("where is customer persistence saved?", "persistence", "--path Repositories")]
-    public void SuggestionService_prioritizes_specialized_boosts_over_generic_search(string question, string expectedKind, string expectedCommandPart)
-    {
-        var snapshot = new IndexSnapshot(
-            IndexManifest.CreateNew("C:/repo", "cfg", "workspace"),
-            Array.Empty<DocumentEntry>(),
-            Enumerable.Range(0, 20)
-                .Select(i => Sym($"s{i}", "class", $"Type{i}", $"My.App.Type{i}", $"src/Type{i}.cs", "P"))
-                .ToArray(),
-            Array.Empty<ReferenceEntry>(),
-            Array.Empty<TokenPosting>());
-
-        var suggestions = new SuggestionService(snapshot).Suggest(question, 5);
-
-        Assert.Equal(expectedKind, suggestions[0].ExpectedResultKind);
-        Assert.Contains(expectedCommandPart, suggestions[0].Command, StringComparison.Ordinal);
     }
 
     private static DocumentEntry Doc(string id, string path, string? project)

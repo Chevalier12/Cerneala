@@ -152,14 +152,6 @@ public sealed record RepositoryPartialFileReadResult(
     int? TargetLine = null,
     int? Context = null);
 
-public sealed record QuerySuggestion(
-    string Command,
-    string Query,
-    string Mode,
-    double Confidence,
-    string Reason,
-    string ExpectedResultKind);
-
 public sealed record IndexDiagnostics(IReadOnlyList<string> Warnings, IReadOnlyList<string> Errors);
 
 public sealed record IndexTimingSummary(

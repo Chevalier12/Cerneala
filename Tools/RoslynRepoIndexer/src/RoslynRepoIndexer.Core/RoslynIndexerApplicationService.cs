@@ -10,7 +10,6 @@ public interface IRoslynIndexerApplicationService
     CommandResponse<RepositoryPartialFileReadResult> PartialRead(PartialFileReadCommandRequest request);
     CommandResponse<IReadOnlyList<SearchResult>> Goto(SymbolQueryCommandRequest request);
     Task<CommandResponse<object>> RefsAsync(RefsCommandRequest request, CancellationToken cancellationToken = default);
-    CommandResponse<object> Suggest(SuggestCommandRequest request);
 }
 
 public sealed record PathCommandRequest(string? Path = null, string? ConfigPath = null, bool Deep = false);
@@ -61,19 +60,6 @@ public sealed record RefsCommandRequest(
     bool Exact = false,
     int? TimeoutSeconds = null,
     int Limit = 50);
-
-public sealed record SuggestCommandRequest(
-    string? Question,
-    int Limit = 5,
-    int ExecuteTop = 0);
-
-public sealed record SuggestExecutionResponse(
-    IReadOnlyList<QuerySuggestion> Suggestions,
-    IReadOnlyList<SuggestExecutedResult> ExecutedResults);
-
-public sealed record SuggestExecutedResult(
-    QuerySuggestion Suggestion,
-    IReadOnlyList<SearchResult> Results);
 
 public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationService
 {
@@ -340,47 +326,6 @@ public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationS
         catch (Exception ex) when (IsKnownFailure(ex, out var exitCode))
         {
             return Failure<object>(exitCode, ErrorMessage(ex), command, query, null, stopwatch);
-        }
-    }
-
-    public CommandResponse<object> Suggest(SuggestCommandRequest request)
-    {
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        const string command = "suggest";
-        var question = request.Question?.Trim();
-        if (string.IsNullOrWhiteSpace(question))
-        {
-            return Failure<object>(1, "Missing question.", command, null, null, stopwatch);
-        }
-
-        try
-        {
-            var root = RepositoryDiscovery.FindRoot(workingDirectory);
-            if (!IndexStore.Exists(root.RootPath))
-            {
-                return Failure<object>(3, "Index is missing. Run 'ri index' first.", command, question, root.RootPath, stopwatch);
-            }
-
-            var queryIndex = LoadQueryIndex(root.RootPath);
-            var snapshot = queryIndex.Snapshot;
-            var suggestions = new SuggestionService(snapshot).Suggest(question, PositiveOrDefault(request.Limit, 5));
-            object data = suggestions;
-            if (request.ExecuteTop > 0)
-            {
-                var snippets = new SnippetReader(root.RootPath);
-                var search = new SearchService(queryIndex, (path, line) => snippets.ReadSnippet(path, line));
-                data = new SuggestExecutionResponse(
-                    suggestions,
-                    suggestions.Take(request.ExecuteTop)
-                        .Select(s => new SuggestExecutedResult(s, search.Search(new SearchRequest(s.Query, ParseMode(s.Mode), 10))))
-                        .ToArray());
-            }
-
-            return CommandResponse.Success(data, null, command, question, root.RootPath, stopwatch.ElapsedMilliseconds, IndexUpdatedUtc(snapshot), includeResultsAlias: true);
-        }
-        catch (Exception ex) when (IsKnownFailure(ex, out var exitCode))
-        {
-            return Failure<object>(exitCode, ErrorMessage(ex), command, question, null, stopwatch);
         }
     }
 

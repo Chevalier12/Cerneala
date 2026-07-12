@@ -203,7 +203,7 @@ public sealed class SymbolIdProvider
             '|',
             "semantic",
             IndexBuilder.MapKind(symbol),
-            IndexBuilder.DisplayName(symbol, SymbolDisplayFormat.FullyQualifiedFormat),
+            IndexBuilder.DisplayName(symbol, IndexBuilder.FullyQualifiedSymbolFormat),
             IndexBuilder.DisplayName(symbol, SymbolDisplayFormat.CSharpErrorMessageFormat),
             IndexBuilder.AccessibilityName(symbol),
             string.Join(',', IndexBuilder.Modifiers(symbol).OrderBy(modifier => modifier, StringComparer.Ordinal)));
@@ -387,8 +387,6 @@ public sealed class IndexBuilder
 
     internal static IEnumerable<SyntaxNode> ReferenceCandidateNodes(SyntaxNode root)
         => root.DescendantNodesAndSelf().Where(static node => node is SimpleNameSyntax
-            or InvocationExpressionSyntax
-            or ObjectCreationExpressionSyntax
             or ImplicitObjectCreationExpressionSyntax
             or BinaryExpressionSyntax
             or AssignmentExpressionSyntax
@@ -1279,7 +1277,7 @@ public sealed class IndexBuilder
             ? constructor.ContainingType.Name
             : symbol.Name.Length == 0 ? symbol.Kind.ToString() : symbol.Name;
         var identity = RoslynRepoIndexer.Core.SymbolIdProvider.CreateIdentity(symbol, projectId, relativePath, cancellationToken: default);
-        var fqn = DisplayName(symbol, SymbolDisplayFormat.FullyQualifiedFormat);
+        var fqn = DisplayName(symbol, FullyQualifiedSymbolFormat);
         var signature = DisplayName(symbol, SymbolDisplayFormat.CSharpErrorMessageFormat);
         var baseTypeIds = symbol is INamedTypeSymbol { BaseType: { } baseType }
             ? new[] { RelatedSymbolId(baseType, projectId, relativePath) }
@@ -1555,7 +1553,8 @@ public sealed class IndexBuilder
     private static string ReferenceKind(SyntaxNode node, ISymbol? symbol)
     {
         if (node is InvocationExpressionSyntax
-            || node.Parent is InvocationExpressionSyntax invocationExpression && ContainsNode(invocationExpression.Expression, node))
+            || node.Ancestors().OfType<InvocationExpressionSyntax>()
+                .Any(invocationExpression => ContainsNode(invocationExpression.Expression, node)))
         {
             return "invocation";
         }
@@ -1678,7 +1677,7 @@ public sealed class IndexBuilder
 
     private static string DeclarationHashInput(ISymbol symbol)
     {
-        var fqn = DisplayName(symbol, SymbolDisplayFormat.FullyQualifiedFormat);
+        var fqn = DisplayName(symbol, FullyQualifiedSymbolFormat);
         var signature = DisplayName(symbol, SymbolDisplayFormat.CSharpErrorMessageFormat);
         var modifiers = string.Join(',', Modifiers(symbol).OrderBy(modifier => modifier, StringComparer.Ordinal));
         return string.Join('|', MapKind(symbol), fqn, signature, AccessibilityName(symbol), modifiers);
@@ -1686,6 +1685,13 @@ public sealed class IndexBuilder
 
     internal static string DisplayName(ISymbol symbol, SymbolDisplayFormat format)
         => symbol.ToDisplayString(format).Replace("global::", string.Empty, StringComparison.Ordinal);
+
+    internal static readonly SymbolDisplayFormat FullyQualifiedSymbolFormat = SymbolDisplayFormat.FullyQualifiedFormat
+        .WithMemberOptions(SymbolDisplayFormat.FullyQualifiedFormat.MemberOptions
+                           | SymbolDisplayMemberOptions.IncludeContainingType
+                           | SymbolDisplayMemberOptions.IncludeParameters)
+        .WithParameterOptions(SymbolDisplayFormat.FullyQualifiedFormat.ParameterOptions
+                              | SymbolDisplayParameterOptions.IncludeType);
 
     private static string StableId(string value)
         => ConfigLoader.HashText(value)[..16];

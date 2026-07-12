@@ -29,7 +29,6 @@ This API is part of the local, deterministic index or MCP contract. It performs 
 | `RefsAsync(RefsCommandRequest request, CancellationToken cancellationToken)` | `Task<CommandResponse<object>>` | Executes the `RefsAsync` operation. |
 | `Search(SearchCommandRequest request)` | `CommandResponse<IReadOnlyList<SearchResult>>` | Executes the `Search` operation. |
 | `Status(PathCommandRequest request)` | `CommandResponse<StatusSummary>` | Executes the `Status` operation. |
-| `Suggest(SuggestCommandRequest request)` | `CommandResponse<object>` | Executes the `Suggest` operation. |
 
 ## Applies to
 

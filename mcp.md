@@ -92,15 +92,6 @@
   - Calls the same logic as `ri refs --json`.
   - Uses approximate indexed references by default.
   - Uses Roslyn exact reference search only when `exact` is true.
-
-- [ ] Expose MCP tool `roslyn_suggest`.
-  - Inputs:
-    - `repoRoot?: string`
-    - `question: string`
-    - `maxSuggestions?: number`
-  - Calls the same logic as `ri suggest --json`.
-  - Returns deterministic suggested search/goto/refs/read commands for AI agents.
-
 ## MCP output contracts
 
 - [ ] Every MCP tool must return structured JSON-compatible output.

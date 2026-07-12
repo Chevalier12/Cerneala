@@ -46,7 +46,6 @@ This API is part of the local, deterministic index or MCP contract. It performs 
 | `RefsAsync(RoslynRefsRequest request, CancellationToken cancellationToken)` | `Task<RoslynMcpToolResult<object>>` | Executes the `RefsAsync` operation. |
 | `SearchAsync(RoslynSearchRequest request)` | `Task<RoslynMcpToolResult<IReadOnlyList<SearchResult>>>` | Executes the `SearchAsync` operation. |
 | `StatusAsync(RoslynRepoRequest request)` | `Task<RoslynMcpToolResult<StatusSummary>>` | Executes the `StatusAsync` operation. |
-| `SuggestAsync(RoslynSuggestRequest request)` | `Task<RoslynMcpToolResult<object>>` | Executes the `SuggestAsync` operation. |
 | `TestsForAsync(RoslynTestsForRequest request)` | `Task<RoslynMcpToolResult<object>>` | Executes the `TestsForAsync` operation. |
 
 ## Applies to

@@ -47,6 +47,6 @@ internal static class Help
           roslyn_doctor, roslyn_index, roslyn_status, roslyn_search, roslyn_read, roslyn_pread,
           roslyn_goto, roslyn_refs, roslyn_outline, roslyn_inspect, roslyn_context,
           roslyn_callgraph, roslyn_impact, roslyn_tests_for, roslyn_batch, roslyn_changes, roslyn_profile,
-          roslyn_suggest, roslyn_capabilities
+          roslyn_capabilities
         """;
 }

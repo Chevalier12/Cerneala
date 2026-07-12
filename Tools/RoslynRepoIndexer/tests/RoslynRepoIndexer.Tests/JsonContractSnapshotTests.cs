@@ -133,16 +133,7 @@ public sealed class JsonContractSnapshotTests
                 repoRoot: "C:/repo",
                 elapsedMs: 9,
                 indexUpdatedUtc: null,
-                includeResultsAlias: false), JsonOptions.Default),
-            JsonSerializer.SerializeToElement(CommandResponse.Success(
-                new[] { new QuerySuggestion("ri search \"jwt auth\"", "jwt auth", "all", 0.9, "deterministic token search", "mixed") },
-                warnings: Array.Empty<string>(),
-                command: "ri suggest \"jwt\" --json",
-                query: "jwt",
-                repoRoot: "C:/repo",
-                elapsedMs: 5,
-                indexUpdatedUtc: FixedUpdatedUtc,
-                includeResultsAlias: true), JsonOptions.Default)
+                includeResultsAlias: false), JsonOptions.Default)
         };
 
         foreach (var response in responses)
@@ -172,9 +163,6 @@ public sealed class JsonContractSnapshotTests
         var doctorCheck = responses[2].GetProperty("data").GetProperty("checks")[0];
         AssertObjectProperties(doctorCheck, "name", "status", "severity", "message", "details");
 
-        var suggestion = responses[3].GetProperty("data")[0];
-        AssertObjectProperties(suggestion, "command", "query", "mode", "confidence", "reason", "expectedResultKind");
-        Assert.Equal(responses[3].GetProperty("data").GetRawText(), responses[3].GetProperty("results").GetRawText());
     }
 
     private static SearchResult SearchResultFixture()

@@ -48,6 +48,8 @@ dotnet run -c Release --project Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cl
 
 `doctor` is quick by default and does not open `MSBuildWorkspace`; `--deep` explicitly validates workspace loading. The CLI can be packed as a .NET tool with command name `ri`.
 
+Query commands (`search`, `refs`, `goto`, `symbols`, and `status`) automatically reuse a repository-scoped background session for ten minutes, so separate CLI invocations do not reload the same index. The session runs from a shadow copy and does not lock build outputs. Set `RI_DISABLE_DAEMON=1` for isolated scripts and tests.
+
 ## MCP server
 
 `Ri.Mcp` uses stdio transport and can be bound to its startup repository:
@@ -68,7 +70,7 @@ roslyn_capabilities  roslyn_doctor   roslyn_index    roslyn_status
 roslyn_search        roslyn_read     roslyn_pread    roslyn_goto
 roslyn_refs          roslyn_outline  roslyn_inspect  roslyn_context
 roslyn_callgraph     roslyn_impact   roslyn_tests_for
-roslyn_batch         roslyn_changes  roslyn_profile  roslyn_suggest
+roslyn_batch         roslyn_changes  roslyn_profile
 ```
 
 The compound tools are index-only: they do not open Roslyn on the query path. `roslyn_refs` opens a workspace only when exact references are explicitly requested.
@@ -105,7 +107,6 @@ Profiles are `compact` (MCP default), `standard`, and `diagnostic`. Compound com
 - `tests_for`: deterministic candidate ranking with explainable evidence; it never runs tests.
 - `changes`: semantic generation diff or structural local Git diff without network access.
 - `profile`: local session, load, query, segment-size, and posting diagnostics.
-- `suggest`: deterministic structured MCP operations rather than CLI command strings.
 
 ## Configuration
 
@@ -119,7 +120,6 @@ If `.roslyn-index.json` exists at the repository root, `ri index` reads it autom
   "maxTextFileBytes": 1048576,
   "maxDegreeOfParallelism": 8,
   "searchResultLimit": 50,
-  "suggestionLimit": 5,
   "exactRefsTimeoutSeconds": 30
 }
 ```
