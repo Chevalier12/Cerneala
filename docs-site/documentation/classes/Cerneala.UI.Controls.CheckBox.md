@@ -7,11 +7,14 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/CheckBox.cs`
 
-Represents a toggleable checkbox control with a fixed check box glyph and optional content.
+Represents a toggleable checkbox control composed by a component template with an optional content value.
 
 ```csharp
 public class CheckBox : ToggleButton
 ```
+
+Attributes:
+`TemplatePart("PART_CheckMark", typeof(Cerneala.UI.Controls.Shapes.Path))`
 
 Inheritance:
 `object` -> `UiObject` -> `UIElement` -> `Control` -> `ContentControl` -> `ButtonBase` -> `Button` -> `ToggleButton` -> `CheckBox`
@@ -35,17 +38,27 @@ CheckBox checkBox = new()
 
 `CheckBox` derives its toggle behavior from `ToggleButton`. A left mouse button release with a click count greater than zero toggles `IsChecked`.
 
-The constructor sets checkbox-specific visuals: `BorderBrush` to `new SolidColorBrush(new Color(100, 110, 125))`, `Foreground` to `new Color(35, 45, 60)`, and `Background` to `null`.
+The constructor installs the default component template, a one-pixel border thickness, and a default border brush at the `AspectBase` value source. Markup and local values can override these defaults.
 
-During measurement, the control always reserves a 14 by 14 layout box for the checkbox mark. Non-empty string content is measured as `text.Length * FontSize * 0.5f` wide by `FontSize` high, with a 6 pixel gap between the box and text. Padding and border thickness are included through the inherited `Insets` calculation.
+The default template contains a bordered indicator, the required `PART_CheckMark` path, and a `ContentPresenter`. The presenter is separated from the indicator by a six-pixel margin. `Background` colors the complete checkbox surface, while `BorderBrush` and `BorderThickness` style the indicator box. `Padding`, `Foreground`, `FontFamily`, `FontSize`, and `Content` are bound into the content portion of the template.
 
-During rendering, the checkbox box is drawn at the left side of the arranged bounds and vertically centered inside the inset area. When `IsChecked` is `true`, the box fill uses `Foreground` and an inner white mark is drawn. When `IsChecked` is `false`, the box fill uses `Background`. Non-empty string content is drawn to the right of the box using `FontFamily`, `FontSize`, and `Foreground`.
+`PART_CheckMark` must be a `Cerneala.UI.Controls.Shapes.Path`. The control changes its visibility to `Visible` when `IsChecked` is `true` and to `Hidden` otherwise. During arrangement, its geometry is scaled uniformly to fit its arranged bounds with a 1.5-pixel inset and is centered on both axes. The default indicator measures to a square and is vertically centered beside the content.
+
+The default path uses a one-pixel black stroke and a compact three-point `PathGeometry`. Its stroke is owned by the template and is not bound to `Foreground`, so a custom template can choose the check-mark brush independently from the text color.
+
+A custom component template must provide `PART_CheckMark` with the required type. Named elements declared inside generated `@template` markup are registered as template parts.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `CheckBox()` | Initializes a checkbox with a default border brush, foreground color, and `null` background brush. |
+| `CheckBox()` | Initializes a checkbox with its default component template, border brush, and one-pixel indicator border. |
+
+## Template Parts
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `PART_CheckMark` | `Cerneala.UI.Controls.Shapes.Path` | Required path whose visibility reflects `IsChecked` and whose stroke represents the check mark. |
 
 ## Key Inherited Members
 
@@ -53,10 +66,11 @@ During rendering, the checkbox box is drawn at the left side of the arranged bou
 | --- | --- | --- |
 | `IsChecked` | `ToggleButton` | Gets or sets whether the checkbox is checked. Defaults to `false`; affects render and input visual state. |
 | `IsCheckedProperty` | `ToggleButton` | Identifies the `IsChecked` UI property. |
-| `Content` | `ContentControl` | Gets or sets the checkbox content. Non-empty string content is measured and rendered directly by `CheckBox`. |
-| `Foreground` | `Control` | Gets or sets the color used for checked box fill and text rendering. |
-| `Background` | `Control` | Gets or sets the unchecked box fill brush. |
-| `BorderBrush` | `Control` | Gets or sets the checkbox outline brush. |
+| `Content` | `ContentControl` | Gets or sets the content presented by the default template. |
+| `ComponentTemplate` | `Control` | Gets or sets the component template. The default template provides `PART_CheckMark`. |
+| `Foreground` | `Control` | Gets or sets the brush used by the presented text. It does not change `PART_CheckMark`. |
+| `Background` | `Control` | Gets or sets the background brush for the complete checkbox surface. |
+| `BorderBrush` | `Control` | Gets or sets the indicator border brush. |
 | `FontFamily` | `Control` | Gets or sets the font family used for string content. |
 | `FontSize` | `Control` | Gets or sets the font size used for string content and string measurement. |
 | `Command` | `ButtonBase` | Gets or sets the command associated with the inherited button behavior. |
@@ -66,8 +80,9 @@ During rendering, the checkbox box is drawn at the left side of the arranged bou
 
 | Name | Description |
 | --- | --- |
-| `MeasureCore(MeasureContext)` | Measures the checkbox box, optional content, and inherited insets. |
-| `OnRender(RenderContext)` | Draws the checkbox box, checked mark, border, and non-empty string content. |
+| `MeasureCore(MeasureContext)` | Applies and measures the component template. |
+| `ArrangeCore(ArrangeContext)` | Arranges the template, uniformly scales `PART_CheckMark`, and centers its geometry. |
+| `OnPropertyChanged(UiPropertyChangedEventArgs)` | Synchronizes `PART_CheckMark` when `IsChecked` changes. |
 
 ## Applies To
 

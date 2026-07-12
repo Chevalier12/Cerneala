@@ -276,7 +276,7 @@
                         Text="Editable semantic TextBox"
                         CaretColor="18,52,86"
                         Margin="8" />
-                    <CheckBox Foreground="White" Content="Boolean property" IsChecked="True" Margin="8" />
+                    <CheckBox Foreground="White" Background="Transparent" Content="Boolean property" IsChecked="True" Margin="8" />
                     <RadioButton Content="Enum + inherited props" IsChecked="False" Margin="8" />
                     <ProgressBar Minimum="0" Maximum="100" Value="68" Margin="8" />
                 </StackPanel>

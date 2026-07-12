@@ -7,6 +7,7 @@ public enum DrawCommandKind
     FillEllipse,
     DrawEllipse,
     DrawLine,
+    FillPath,
     DrawText,
     DrawImage,
     PushClip,

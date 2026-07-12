@@ -2715,6 +2715,11 @@
     "source": "UI/Media/SolidColorBrush.cs"
   },
   {
+    "name": "Cerneala.UI.Media.SvgGeometry",
+    "file": "documentation/classes/Cerneala.UI.Media.SvgGeometry.md",
+    "source": "UI/Media/SvgGeometry.cs"
+  },
+  {
     "name": "Cerneala.UI.Media.TileBrush",
     "file": "documentation/classes/Cerneala.UI.Media.TileBrush.md",
     "source": "UI/Media/TileBrush.cs"

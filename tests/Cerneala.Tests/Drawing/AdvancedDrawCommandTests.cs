@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Drawing;
 
@@ -35,6 +36,25 @@ public sealed class AdvancedDrawCommandTests
         Assert.Equal(new DrawPoint(3, 4), command.EndPoint);
         Assert.Equal(Color.Black, command.Color);
         Assert.Equal(2, command.Thickness);
+    }
+
+    [Fact]
+    public void DrawingContextRecordsFilledSvgPathCommand()
+    {
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        DrawRect viewBox = new(0, 0, 72, 72);
+        DrawRect destination = new(4, 5, 144, 144);
+        SolidColorBrush brush = new(Color.Black);
+
+        drawing.FillPath("M0 0L72 72Z", viewBox, destination, brush);
+
+        DrawCommand command = Assert.Single(commands);
+        Assert.Equal(DrawCommandKind.FillPath, command.Kind);
+        Assert.Equal("M0 0L72 72Z", command.PathData);
+        Assert.Equal(viewBox, command.SourceRect);
+        Assert.Equal(destination, command.Rect);
+        Assert.Same(brush, command.Brush);
     }
 
     [Theory]
@@ -80,6 +100,11 @@ public sealed class AdvancedDrawCommandTests
         Assert.Contains("case DrawCommandKind.FillEllipse:", backendText, StringComparison.Ordinal);
         Assert.Contains("case DrawCommandKind.DrawEllipse:", backendText, StringComparison.Ordinal);
         Assert.Contains("case DrawCommandKind.DrawLine:", backendText, StringComparison.Ordinal);
+        Assert.Contains("case DrawCommandKind.FillPath:", backendText, StringComparison.Ordinal);
+        Assert.Contains("DrawUserIndexedPrimitives", backendText, StringComparison.Ordinal);
+        Assert.DoesNotContain("SKPath", backendText, StringComparison.Ordinal);
+        Assert.DoesNotContain("SKCanvas", backendText, StringComparison.Ordinal);
+        Assert.DoesNotContain("SKBitmap", backendText, StringComparison.Ordinal);
     }
 
     private static string FindRepositoryPath(params string[] segments)

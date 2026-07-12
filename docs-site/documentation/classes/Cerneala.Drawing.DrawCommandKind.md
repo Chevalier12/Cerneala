@@ -15,7 +15,22 @@ public sealed enum DrawCommandKind
 
 ## Remarks
 
-This page is generated from the repository API index so the documentation surface stays aligned with the source tree.
+`FillPath` identifies a command whose SVG path data is mapped from `DrawCommand.SourceRect` into `DrawCommand.Rect` and filled with `DrawCommand.Brush`.
+
+## Values
+
+| Name | Description |
+| --- | --- |
+| `FillRectangle` | Fills a rectangle. |
+| `DrawRectangle` | Strokes a rectangle. |
+| `FillEllipse` | Fills an ellipse. |
+| `DrawEllipse` | Strokes an ellipse. |
+| `DrawLine` | Draws a line segment. |
+| `FillPath` | Fills SVG path data within destination bounds. |
+| `DrawText` | Draws a text run. |
+| `DrawImage` | Draws an image. |
+| `PushClip` | Pushes a rectangular clip. |
+| `PopClip` | Removes the current clip. |
 
 ## Applies to
 

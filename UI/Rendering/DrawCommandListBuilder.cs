@@ -165,6 +165,12 @@ public sealed class DrawCommandListBuilder
                 Translate(command.EndPoint, offsetX, offsetY),
                 command.Color,
                 command.Thickness),
+            DrawCommandKind.FillPath => DrawCommand.FillPath(
+                command.PathData!,
+                command.SourceRect,
+                Translate(command.Rect, offsetX, offsetY),
+                command.Brush!,
+                command.BrushOpacity),
             DrawCommandKind.DrawText when command.Brush is not null => DrawCommand.DrawText(
                 command.TextRun!,
                 Translate(command.Position, offsetX, offsetY),
@@ -211,6 +217,12 @@ public sealed class DrawCommandListBuilder
                 transform.Transform(command.EndPoint),
                 ApplyOpacity(command.Color, opacity),
                 command.Thickness),
+            DrawCommandKind.FillPath => DrawCommand.FillPath(
+                command.PathData!,
+                command.SourceRect,
+                Transform(command.Rect, transform),
+                command.Brush!,
+                command.BrushOpacity * opacity),
             DrawCommandKind.DrawText when command.Brush is not null => DrawCommand.DrawText(
                 command.TextRun!,
                 transform.Transform(command.Position),

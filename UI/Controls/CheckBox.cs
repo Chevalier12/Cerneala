@@ -1,63 +1,94 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Core;
 using Cerneala.UI.Layout;
-using Cerneala.UI.Rendering;
 using Cerneala.UI.Media;
+using CheckMarkPath = Cerneala.UI.Controls.Shapes.Path;
 
 namespace Cerneala.UI.Controls;
 
+[TemplatePart("PART_CheckMark", typeof(CheckMarkPath))]
 public class CheckBox : ToggleButton
 {
-    private const float BoxSize = 14;
-    private const float ContentGap = 6;
+    private const float CheckMarkInset = 1.5f;
+    private static readonly Brush DefaultBorderBrush = new SolidColorBrush(new Color(100, 110, 125));
 
     public CheckBox()
     {
-        BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(100, 110, 125));
-        Foreground = new SolidColorBrush(new Color(35, 45, 60));
-        Background = null;
+        SetValue(ComponentTemplateProperty, CheckBoxTemplates.Default, UiPropertyValueSource.AspectBase);
+        SetValue(BorderBrushProperty, DefaultBorderBrush, UiPropertyValueSource.AspectBase);
+        SetValue(BorderThicknessProperty, new Thickness(1), UiPropertyValueSource.AspectBase);
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
-        LayoutSize contentSize = Content is string text && !string.IsNullOrEmpty(text)
-            ? new LayoutSize(text.Length * FontSize * 0.5f, FontSize)
-            : base.MeasureCore(context);
-
-        float width = BoxSize + (contentSize.Width > 0 ? ContentGap + contentSize.Width : 0);
-        float height = MathF.Max(BoxSize, contentSize.Height);
-        Thickness insets = Insets;
-        return new LayoutSize(width + insets.Left + insets.Right, height + insets.Top + insets.Bottom);
+        ApplyTemplate();
+        SynchronizeCheckMark();
+        return base.MeasureCore(context);
     }
 
-    protected override void OnRender(RenderContext context)
+    protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
-        Thickness insets = Insets;
-        float boxX = context.Bounds.X + insets.Left;
-        float boxY = context.Bounds.Y + insets.Top + MathF.Max(0, (context.Bounds.Height - insets.Top - insets.Bottom - BoxSize) / 2);
-        DrawRect box = new(boxX, boxY, BoxSize, BoxSize);
+        LayoutRect arranged = base.ArrangeCore(context);
+        SynchronizeCheckMark();
+        StretchAndCenterCheckMark();
+        return arranged;
+    }
 
-        Brush? boxFill = IsChecked ? Foreground : Background;
-        if (boxFill is not null)
+    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+    {
+        base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, IsCheckedProperty))
         {
-            context.DrawingContext.FillRectangle(box, boxFill);
+            SynchronizeCheckMark();
+        }
+    }
+
+    private void SynchronizeCheckMark()
+    {
+        if (TryGetCheckMark(out CheckMarkPath checkMark))
+        {
+            checkMark.Visibility = IsChecked ? Visibility.Visible : Visibility.Hidden;
+        }
+    }
+
+    private void StretchAndCenterCheckMark()
+    {
+        if (!TryGetCheckMark(out CheckMarkPath checkMark) ||
+            checkMark.Data is not { } geometry)
+        {
+            return;
         }
 
-        if (BorderBrush is { } borderBrush)
+        LayoutRect bounds = checkMark.ArrangedBounds;
+        float availableWidth = MathF.Max(0, bounds.Width - (CheckMarkInset * 2));
+        float availableHeight = MathF.Max(0, bounds.Height - (CheckMarkInset * 2));
+        if (geometry.Bounds.Width <= 0 || geometry.Bounds.Height <= 0 || availableWidth <= 0 || availableHeight <= 0)
         {
-            context.DrawingContext.DrawRectangle(box, borderBrush, 1);
+            return;
         }
 
-        if (IsChecked)
+        float scale = MathF.Min(
+            availableWidth / geometry.Bounds.Width,
+            availableHeight / geometry.Bounds.Height);
+        float scaledWidth = geometry.Bounds.Width * scale;
+        float scaledHeight = geometry.Bounds.Height * scale;
+        float x = bounds.X + ((bounds.Width - scaledWidth) / 2) - (geometry.Bounds.X * scale);
+        float y = bounds.Y + ((bounds.Height - scaledHeight) / 2) - (geometry.Bounds.Y * scale);
+        checkMark.RenderTransform = new Transform(new Matrix3x2(scale, 0, 0, scale, x, y));
+    }
+
+    private bool TryGetCheckMark(out CheckMarkPath checkMark)
+    {
+        if (ComponentTemplateInstance?.Parts.TryGetValue("PART_CheckMark", out UI.Elements.UIElement? element) == true &&
+            element is CheckMarkPath path)
         {
-            DrawRect mark = new(box.X + 3, box.Y + 3, box.Width - 6, box.Height - 6);
-            context.DrawingContext.FillRectangle(mark, Color.White);
+            checkMark = path;
+            return true;
         }
 
-        if (Content is string text && !string.IsNullOrEmpty(text) && Foreground is { } foreground)
-        {
-            DrawPoint point = new(box.X + BoxSize + ContentGap, context.Bounds.Y + insets.Top);
-            context.DrawingContext.DrawText(new DrawTextRun(new ControlTextFont(FontFamily, FontSize), text, FontSize), point, foreground);
-        }
+        checkMark = null!;
+        return false;
     }
 }

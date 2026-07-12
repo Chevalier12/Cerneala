@@ -106,6 +106,31 @@ public sealed class ShapeTests
     }
 
     [Fact]
+    public void PathShapeStretchesSvgGeometryIntoArrangedBounds()
+    {
+        UIRoot root = new();
+        SolidColorBrush fill = new(Color.Black);
+        PathShape path = new()
+        {
+            Geometry = new SvgGeometry("M0 0L72 72Z", new DrawRect(0, 0, 72, 72)),
+            Fill = fill
+        };
+        root.VisualChildren.Add(path);
+        root.ProcessFrame();
+        path.Arrange(new ArrangeContext(new LayoutRect(3, 4, 144, 96)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        DrawCommand command = Assert.Single(root.RetainedRenderer.Commit(root));
+
+        Assert.Equal(DrawCommandKind.FillPath, command.Kind);
+        Assert.Equal(new DrawRect(3, 4, 144, 96), command.Rect);
+        Assert.Equal(new DrawRect(0, 0, 72, 72), command.SourceRect);
+        Assert.Equal("M0 0L72 72Z", command.PathData);
+        Assert.Same(fill, command.Brush);
+    }
+
+    [Fact]
     public void ShapePropertyChangeInvalidatesRender()
     {
         RectangleShape rectangle = new();

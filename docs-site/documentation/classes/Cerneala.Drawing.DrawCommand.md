@@ -68,6 +68,8 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `EndPoint` | `DrawPoint` | End point for line commands. |
 | `Image` | `IDrawImage?` | Image payload for image commands. |
 | `Font` | `IDrawFont?` | Font copied from the `DrawTextRun` for text commands. |
+| `PathData` | `string?` | SVG path-data payload for `FillPath` commands. |
+| `SourceRect` | `DrawRect` | Source view box used to map SVG coordinates into `Rect`. |
 
 ## Methods
 
@@ -78,6 +80,7 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `FillEllipse(DrawRect bounds, Color color)` | `DrawCommand` | Creates a `FillEllipse` command with `Rect` and `Color` populated. |
 | `DrawEllipse(DrawRect bounds, Color color, float thickness)` | `DrawCommand` | Creates a `DrawEllipse` command and validates `thickness`. |
 | `DrawLine(DrawPoint start, DrawPoint end, Color color, float thickness)` | `DrawCommand` | Creates a `DrawLine` command, validates both points against the pixel range, and validates `thickness`. |
+| `FillPath(string pathData, DrawRect sourceBounds, DrawRect destination, IDrawBrush brush, float opacity = 1)` | `DrawCommand` | Creates a filled SVG path command that stretches `sourceBounds` into `destination`. |
 | `DrawText(DrawTextRun textRun, DrawPoint position, Color color)` | `DrawCommand` | Creates a `DrawText` command with `Text`, `TextRun`, `Font`, `Position`, and `Color` populated. |
 | `DrawText(DrawTextRun textRun, DrawPoint position, IDrawBrush brush, float opacity = 1)` | `DrawCommand` | Creates a brush-based text command. The backend applies the brush through the glyph mask. |
 | `DrawImage(IDrawImage image, DrawRect destination, Color color)` | `DrawCommand` | Creates a `DrawImage` command with `Image`, destination `Rect`, and `Color` populated. |
@@ -91,6 +94,9 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `DrawRectangle` | `ArgumentOutOfRangeException` | `thickness` is zero, negative, non-finite, or above the valid pixel-size range. |
 | `DrawEllipse` | `ArgumentOutOfRangeException` | `thickness` is zero, negative, non-finite, or above the valid pixel-size range. |
 | `DrawLine` | `ArgumentOutOfRangeException` | `start` or `end` has a coordinate outside the valid pixel range, or `thickness` is invalid. |
+| `FillPath` | `ArgumentException` | `pathData` is null, empty, or whitespace. |
+| `FillPath` | `ArgumentNullException` | `brush` is null. |
+| `FillPath` | `ArgumentOutOfRangeException` | `sourceBounds` has a non-positive width or height, or `opacity` is outside `0` through `1`. |
 | `DrawText` | `ArgumentNullException` | `textRun` is null. |
 | `DrawText` | `ArgumentNullException` | `brush` is null for the brush overload. |
 | `DrawText` | `ArgumentOutOfRangeException` | `position` has a coordinate outside the valid pixel range. |

@@ -59,6 +59,11 @@ public sealed class DrawingContext
         _commands.Add(DrawCommand.DrawLine(start, end, brush, thickness));
     }
 
+    public void FillPath(string pathData, DrawRect sourceBounds, DrawRect destination, IDrawBrush brush)
+    {
+        _commands.Add(DrawCommand.FillPath(pathData, sourceBounds, destination, brush));
+    }
+
     public void DrawText(DrawTextRun textRun, DrawPoint position, Color color)
     {
         _commands.Add(DrawCommand.DrawText(textRun, position, color));

@@ -12,5 +12,6 @@
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**" />
+    <Content Include="..\Assets\fxemoji.svg" Link="fxemoji.svg" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

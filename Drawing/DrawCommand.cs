@@ -14,7 +14,9 @@ public readonly record struct DrawCommand
         IDrawImage? image,
         IDrawFont? font,
         IDrawBrush? brush,
-        float brushOpacity)
+        float brushOpacity,
+        string? pathData = null,
+        DrawRect sourceRect = default)
     {
         Kind = kind;
         Rect = rect;
@@ -28,6 +30,8 @@ public readonly record struct DrawCommand
         Font = font;
         Brush = brush;
         BrushOpacity = brushOpacity;
+        PathData = pathData;
+        SourceRect = sourceRect;
     }
 
     public DrawCommandKind Kind { get; }
@@ -53,6 +57,10 @@ public readonly record struct DrawCommand
     public IDrawBrush? Brush { get; }
 
     public float BrushOpacity { get; }
+
+    public string? PathData { get; }
+
+    public DrawRect SourceRect { get; }
 
     public static DrawCommand FillRectangle(DrawRect rect, Color color)
     {
@@ -115,6 +123,22 @@ public readonly record struct DrawCommand
         ThrowIfPointOutsidePixelRange(end, nameof(end));
         DrawArgument.ThrowIfNotValidPixelSize(thickness, nameof(thickness));
         return CreateBrushCommand(DrawCommandKind.DrawLine, default, start, end, brush, thickness, opacity);
+    }
+
+    public static DrawCommand FillPath(string pathData, DrawRect sourceBounds, DrawRect destination, IDrawBrush brush, float opacity = 1)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(pathData);
+        ArgumentNullException.ThrowIfNull(brush);
+        if (sourceBounds.Width <= 0 || sourceBounds.Height <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sourceBounds));
+        }
+        if (!float.IsFinite(opacity) || opacity < 0 || opacity > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(opacity));
+        }
+
+        return new DrawCommand(DrawCommandKind.FillPath, destination, default, 0, null, null, default, default, null, null, brush, opacity, pathData, sourceBounds);
     }
 
     public static DrawCommand DrawText(DrawTextRun textRun, DrawPoint position, Color color)

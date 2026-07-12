@@ -54,10 +54,7 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
         try
         {
             presentationParameters = CreatePresentationParameters(windowHandle, pixelWidth, pixelHeight);
-            createdDevice = new GraphicsDevice(
-                GraphicsAdapter.DefaultAdapter,
-                GraphicsProfile.HiDef,
-                presentationParameters);
+            createdDevice = CreateGraphicsDevice(presentationParameters);
             createdSpriteBatch = new SpriteBatch(createdDevice);
             createdWhitePixel = new Texture2D(createdDevice, 1, 1);
             createdWhitePixel.SetData([XnaColor.White]);
@@ -265,9 +262,31 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             BackBufferHeight = height,
             BackBufferFormat = SurfaceFormat.Color,
             DepthStencilFormat = DepthFormat.None,
+            MultiSampleCount = 8,
             IsFullScreen = false,
             PresentationInterval = PresentInterval.One
         };
+    }
+
+    private static GraphicsDevice CreateGraphicsDevice(PresentationParameters parameters)
+    {
+        foreach (int sampleCount in new[] { 8, 4, 2, 0 })
+        {
+            parameters.MultiSampleCount = sampleCount;
+            try
+            {
+                return new GraphicsDevice(
+                    GraphicsAdapter.DefaultAdapter,
+                    GraphicsProfile.HiDef,
+                    parameters);
+            }
+            catch when (sampleCount > 0)
+            {
+                // Fall back to the next supported MSAA level.
+            }
+        }
+
+        throw new InvalidOperationException("Could not create a MonoGame graphics device.");
     }
 
     private static InvalidOperationException CreateGraphicsException(

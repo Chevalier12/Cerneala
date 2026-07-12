@@ -61,7 +61,7 @@ finally
 
 `MonoGameDrawingBackend` maps Cerneala drawing commands to MonoGame drawing
 operations. It supports filled and stroked rectangles, filled and stroked
-ellipses, lines, images, text, and push/pop clip commands.
+ellipses, lines, filled SVG paths, images, text, and push/pop clip commands.
 
 The backend treats the submitted command list as read-only while rendering. It
 does not call `SpriteBatch.Begin` or `SpriteBatch.End`; callers own the
@@ -76,6 +76,9 @@ coordinates. Rectangles, vectors, line thickness, and text size are mapped
 through the current scale. Invalid scale values are rejected by
 `UiCoordinateMapper.ValidateScale`.
 
+Line strokes are centered on the segment axis. This keeps connected segments
+aligned at shared points and centers the square produced for a zero-length line.
+
 Text rendering requires a `SkiaTextRasterizer` supplied to the constructor. If
 no rasterizer is provided, text draw commands are ignored. Color-independent
 glyph masks are cached by text, font, size, DPI scale, and subpixel phase.
@@ -84,6 +87,13 @@ drawing, and visual brushes are rendered into a device-local texture and
 multiplied by the grayscale glyph mask. All text and brush textures are scoped
 to the backend's `GraphicsDevice` and cleared on scale changes, device reset,
 or disposal.
+
+Filled SVG paths are parsed and flattened into contours, tessellated into a
+triangle mesh, and submitted directly through `GraphicsDevice` with
+`DrawUserIndexedPrimitives`. Meshes are cached by SVG data, source view box,
+destination size, subpixel phase, color, and opacity. The WindowsDX host uses
+the highest available MSAA level up to 8 samples for edge antialiasing. SVG
+path fills currently require a solid brush. Skia is not used for path geometry.
 
 Image commands must use `MonoGameImage`. Passing another `IDrawImage`
 implementation to `DrawCommand.DrawImage` and rendering it with this backend
@@ -117,7 +127,8 @@ throws `InvalidOperationException`.
 | `DrawRectangle` | Draws four filled edges using the mapped rectangle and mapped thickness. |
 | `FillEllipse` | Draws horizontal spans inside the mapped ellipse bounds. Empty or negative-size mapped bounds are ignored. |
 | `DrawEllipse` | Draws an approximated ellipse ring with line segments. Empty or negative-size mapped bounds are ignored. |
-| `DrawLine` | Draws a rotated `whitePixel` segment between the mapped start and end points. A zero-length line draws a square at the start point. |
+| `DrawLine` | Draws a rotated `whitePixel` segment centered on the mapped start and end points. A zero-length line draws a centered square at the start point. |
+| `FillPath` | Parses and tessellates SVG path data, stretches its source view box into the destination rectangle, and draws the resulting triangles with a solid brush. |
 | `DrawImage` | Draws a `MonoGameImage.Texture` into the mapped destination rectangle with the command color as tint. |
 | `DrawText` | Reuses cached glyph masks, then applies a solid, gradient, image, drawing, or visual brush at the mapped text position. |
 | `PushClip` | Pushes the mapped rectangle onto the clip stack and assigns the intersected clip to `GraphicsDevice.ScissorRectangle`. |
@@ -132,6 +143,7 @@ throws `InvalidOperationException`.
 | `Render` | `ArgumentNullException` | `commands` is `null`. |
 | `Render` | `ObjectDisposedException` | The backend has already been disposed. |
 | `Render` | `InvalidOperationException` | A command kind is unsupported, or a `DrawImage` command contains an image that is not `MonoGameImage`. |
+| `Render` | `NotSupportedException` | A `FillPath` command uses a non-solid brush. |
 
 ## Applies To
 

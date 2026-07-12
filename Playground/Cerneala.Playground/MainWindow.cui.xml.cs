@@ -5,6 +5,7 @@ using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
+using Cerneala.UI.Resources;
 using Cerneala.UI.Text;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -30,6 +31,11 @@ public partial class MainWindow : Window<MainWindowViewModel>
         if (string.Equals(Environment.GetEnvironmentVariable("CERNEALA_OPEN_TEXT_ORACLE"), "1", StringComparison.Ordinal))
         {
             ShowTextOracleWindow();
+        }
+
+        if (string.Equals(Environment.GetEnvironmentVariable("CERNEALA_OPEN_SVG_ORACLE"), "1", StringComparison.Ordinal))
+        {
+            ShowSvgOracleWindow();
         }
     }
 
@@ -228,6 +234,27 @@ public partial class MainWindow : Window<MainWindowViewModel>
         };
         window.ContentRendered += capture;
 
+        window.Show();
+    }
+
+    private void ShowSvgOracleWindow()
+    {
+        string svgPath = Path.Combine(AppContext.BaseDirectory, "fxemoji.svg");
+        string screenshotName = Environment.GetEnvironmentVariable("CERNEALA_SVG_ORACLE_SCREENSHOT") ?? "cerneala-fxemoji.png";
+        string screenshotPath = Path.GetFullPath(Path.Combine("artifacts", "visual-oracles", screenshotName));
+        SvgWindow window = new(svgPath)
+        {
+            Left = Left + 96,
+            Top = Top + 96
+        };
+
+        EventHandler? capture = null;
+        capture = (_, _) =>
+        {
+            window.ContentRendered -= capture;
+            window.SaveScreenshot(screenshotPath);
+        };
+        window.ContentRendered += capture;
         window.Show();
     }
 

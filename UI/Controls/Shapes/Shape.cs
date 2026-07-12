@@ -126,6 +126,14 @@ public abstract class Shape : Control
 
         switch (geometry)
         {
+            case SvgGeometry svgPath:
+                DrawRect destination = ToDrawRect(context.Bounds);
+                if (HasVisibleBrush(fill) && destination.Width > 0 && destination.Height > 0)
+                {
+                    context.DrawingContext.FillPath(svgPath.Data, svgPath.Bounds, destination, fill!);
+                }
+                break;
+
             case RectangleGeometry rectangle:
                 DrawRect rectangleBounds = TransformBounds(rectangle.Bounds);
                 if (HasVisibleBrush(fill) && rectangleBounds.Width > 0 && rectangleBounds.Height > 0)

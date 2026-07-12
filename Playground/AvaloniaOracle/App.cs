@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 
@@ -10,11 +11,13 @@ public sealed class App : Application
 
     internal static string FontFamily { get; set; } = "Arial";
 
+    internal static bool ShowSvg { get; set; }
+
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            MainWindow window = new(FontFamily);
+            Window window = ShowSvg ? new SvgWindow() : new MainWindow(FontFamily);
             desktop.MainWindow = window;
 
             if (ScreenshotPath is not null)
@@ -24,7 +27,14 @@ public sealed class App : Application
                     Dispatcher.UIThread.Post(
                         () =>
                         {
-                            window.SaveScreenshot(ScreenshotPath);
+                            if (window is SvgWindow svgWindow)
+                            {
+                                svgWindow.SaveScreenshot(ScreenshotPath);
+                            }
+                            else
+                            {
+                                ((MainWindow)window).SaveScreenshot(ScreenshotPath);
+                            }
                             desktop.Shutdown();
                         },
                         DispatcherPriority.Background);

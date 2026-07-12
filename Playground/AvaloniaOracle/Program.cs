@@ -9,6 +9,7 @@ internal static class Program
     {
         App.ScreenshotPath = ReadScreenshotPath(args);
         App.FontFamily = ReadOption(args, "--font") ?? "Arial";
+        App.ShowSvg = args.Contains("--svg", StringComparer.Ordinal);
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 

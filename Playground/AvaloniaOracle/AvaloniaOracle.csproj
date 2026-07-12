@@ -8,5 +8,6 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" Version="12.0.5" />
+    <Content Include="..\Assets\fxemoji.svg" Link="fxemoji.svg" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
