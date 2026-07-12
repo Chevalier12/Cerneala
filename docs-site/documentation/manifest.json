@@ -1,13 +1,38 @@
 [
   {
+    "name": "Cerneala.Drawing.Color",
+    "file": "documentation/classes/Cerneala.Drawing.Color.md",
+    "source": "Drawing/Color.cs"
+  },
+  {
     "name": "Cerneala.Drawing.DrawArgument",
     "file": "documentation/classes/Cerneala.Drawing.DrawArgument.md",
     "source": "Drawing/DrawArgument.cs"
   },
   {
-    "name": "Cerneala.Drawing.Color",
-    "file": "documentation/classes/Cerneala.Drawing.Color.md",
-    "source": "Drawing/Color.cs"
+    "name": "Cerneala.Drawing.DrawBrushAlignmentX",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBrushAlignmentX.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawBrushAlignmentY",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBrushAlignmentY.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawBrushKind",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBrushKind.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawBrushStretch",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBrushStretch.md",
+    "source": "Drawing/IDrawBrush.cs"
   },
   {
     "name": "Cerneala.Drawing.DrawCommand",
@@ -25,9 +50,19 @@
     "source": "Drawing/DrawCommandList.cs"
   },
   {
+    "name": "Cerneala.Drawing.DrawGradientStop",
+    "file": "documentation/classes/Cerneala.Drawing.DrawGradientStop.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
     "name": "Cerneala.Drawing.DrawingContext",
     "file": "documentation/classes/Cerneala.Drawing.DrawingContext.md",
     "source": "Drawing/DrawingContext.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawingDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.DrawingDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
   },
   {
     "name": "Cerneala.Drawing.DrawPoint",
@@ -50,6 +85,16 @@
     "source": "Drawing/DrawTextRun.cs"
   },
   {
+    "name": "Cerneala.Drawing.DrawTileMode",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTileMode.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.IDrawBrush",
+    "file": "documentation/classes/Cerneala.Drawing.IDrawBrush.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
     "name": "Cerneala.Drawing.IDrawFont",
     "file": "documentation/classes/Cerneala.Drawing.IDrawFont.md",
     "source": "Drawing/IDrawFont.cs"
@@ -68,6 +113,16 @@
     "name": "Cerneala.Drawing.IFontSource",
     "file": "documentation/classes/Cerneala.Drawing.IFontSource.md",
     "source": "Drawing/IFontSource.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.ImageDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.ImageDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.LinearGradientDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.LinearGradientDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
   },
   {
     "name": "Cerneala.Drawing.MonoGame.MonoGameClipStack",
@@ -98,6 +153,16 @@
     "name": "Cerneala.Drawing.MonoGame.MonoGameImage",
     "file": "documentation/classes/Cerneala.Drawing.MonoGame.MonoGameImage.md",
     "source": "Drawing/MonoGame/MonoGameImage.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.RadialGradientDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.RadialGradientDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.SolidDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.SolidDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
   },
   {
     "name": "Cerneala.Drawing.Text.RasterizedText",
@@ -138,6 +203,16 @@
     "name": "Cerneala.Drawing.Text.TextShapeResult",
     "file": "documentation/classes/Cerneala.Drawing.Text.TextShapeResult.md",
     "source": "Drawing/Text/TextShapeResult.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.TileDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.TileDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.VisualDrawBrushDescriptor",
+    "file": "documentation/classes/Cerneala.Drawing.VisualDrawBrushDescriptor.md",
+    "source": "Drawing/IDrawBrush.cs"
   },
   {
     "name": "Cerneala.GameBootstrap",
@@ -545,6 +620,16 @@
     "source": "UI/Aspect/DefaultAspectTokens.cs"
   },
   {
+    "name": "Cerneala.UI.Aspect.ElementAspect",
+    "file": "documentation/classes/Cerneala.UI.Aspect.ElementAspect.md",
+    "source": "UI/Aspect/ElementAspect.cs"
+  },
+  {
+    "name": "Cerneala.UI.Aspect.ElementAspectValue",
+    "file": "documentation/classes/Cerneala.UI.Aspect.ElementAspectValue.md",
+    "source": "UI/Aspect/ElementAspect.cs"
+  },
+  {
     "name": "Cerneala.UI.Aspect.NotAspectCondition",
     "file": "documentation/classes/Cerneala.UI.Aspect.NotAspectCondition.md",
     "source": "UI/Aspect/AspectConditionNode.cs"
@@ -675,13 +760,13 @@
     "source": "UI/Controls/Control.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.Control.Foreground",
-    "file": "documentation/classes/Cerneala.UI.Controls.Control.Foreground.md",
+    "name": "Cerneala.UI.Controls.Control.BorderBrush",
+    "file": "documentation/classes/Cerneala.UI.Controls.Control.BorderBrush.md",
     "source": "UI/Controls/Control.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.Control.BorderBrush",
-    "file": "documentation/classes/Cerneala.UI.Controls.Control.BorderBrush.md",
+    "name": "Cerneala.UI.Controls.Control.Foreground",
+    "file": "documentation/classes/Cerneala.UI.Controls.Control.Foreground.md",
     "source": "UI/Controls/Control.cs"
   },
   {
@@ -723,6 +808,11 @@
     "name": "Cerneala.UI.Controls.InkCanvas.InkInputKind",
     "file": "documentation/classes/Cerneala.UI.Controls.InkCanvas.InkInputKind.md",
     "source": "UI/Controls/InkCanvas.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.InkCanvasStrokeCollectedEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.InkCanvasStrokeCollectedEventArgs.md",
+    "source": "UI/Controls/InkCanvasEventArgs.cs"
   },
   {
     "name": "Cerneala.UI.Controls.IScrollInfo",
@@ -830,6 +920,16 @@
     "source": "UI/Controls/Primitives/ScrollBar.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.Primitives.ScrollEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.ScrollEventArgs.md",
+    "source": "UI/Controls/Primitives/ScrollEventArgs.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Primitives.ScrollEventType",
+    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.ScrollEventType.md",
+    "source": "UI/Controls/Primitives/ScrollEventArgs.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Primitives.Selector",
     "file": "documentation/classes/Cerneala.UI.Controls.Primitives.Selector.md",
     "source": "UI/Controls/Primitives/Selector.cs"
@@ -865,9 +965,19 @@
     "source": "UI/Controls/RadioButton.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.ResizeMode",
+    "file": "documentation/classes/Cerneala.UI.Controls.ResizeMode.md",
+    "source": "UI/Controls/ResizeMode.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ScrollBarVisibility",
     "file": "documentation/classes/Cerneala.UI.Controls.ScrollBarVisibility.md",
     "source": "UI/Controls/ScrollBarVisibility.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.ScrollChangedEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.ScrollChangedEventArgs.md",
+    "source": "UI/Controls/ScrollChangedEventArgs.cs"
   },
   {
     "name": "Cerneala.UI.Controls.ScrollContentPresenter",
@@ -1080,9 +1190,49 @@
     "source": "UI/Controls/TextBoxBase.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.TextChangedEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.TextChangedEventArgs.md",
+    "source": "UI/Controls/TextChangedEventArgs.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ToolTip",
     "file": "documentation/classes/Cerneala.UI.Controls.ToolTip.md",
     "source": "UI/Controls/ToolTip.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.UserControl",
+    "file": "documentation/classes/Cerneala.UI.Controls.UserControl.md",
+    "source": "UI/Controls/UserControl.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.UserControl_TViewModel_",
+    "file": "documentation/classes/Cerneala.UI.Controls.UserControl_TViewModel_.md",
+    "source": "UI/Controls/UserControl.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Window",
+    "file": "documentation/classes/Cerneala.UI.Controls.Window.md",
+    "source": "UI/Controls/Window.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Window_TViewModel_",
+    "file": "documentation/classes/Cerneala.UI.Controls.Window_TViewModel_.md",
+    "source": "UI/Controls/Window.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.WindowClosingEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.WindowClosingEventArgs.md",
+    "source": "UI/Controls/WindowClosingEventArgs.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.WindowStartupLocation",
+    "file": "documentation/classes/Cerneala.UI.Controls.WindowStartupLocation.md",
+    "source": "UI/Controls/WindowStartupLocation.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.WindowState",
+    "file": "documentation/classes/Cerneala.UI.Controls.WindowState.md",
+    "source": "UI/Controls/WindowState.cs"
   },
   {
     "name": "Cerneala.UI.Core.CoerceValue_T_",
@@ -1475,6 +1625,11 @@
     "source": "UI/Elements/InheritedPropertyPropagator.cs"
   },
   {
+    "name": "Cerneala.UI.Elements.SizeChangedEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Elements.SizeChangedEventArgs.md",
+    "source": "UI/Elements/UIElement.Events.cs"
+  },
+  {
     "name": "Cerneala.UI.Elements.UIElement",
     "file": "documentation/classes/Cerneala.UI.Elements.UIElement.md",
     "source": "UI/Elements/UIElement.cs"
@@ -1553,6 +1708,16 @@
     "name": "Cerneala.UI.Hosting.UiViewport",
     "file": "documentation/classes/Cerneala.UI.Hosting.UiViewport.md",
     "source": "UI/Hosting/UiViewport.cs"
+  },
+  {
+    "name": "Cerneala.UI.Hosting.Windows.GeneratedWindowApplication",
+    "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.md",
+    "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
+  },
+  {
+    "name": "Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor",
+    "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor.md",
+    "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
   },
   {
     "name": "Cerneala.UI.Ink.Stroke",
@@ -1743,6 +1908,11 @@
     "name": "Cerneala.UI.Input.ICommandStateSource",
     "file": "documentation/classes/Cerneala.UI.Input.ICommandStateSource.md",
     "source": "UI/Input/ICommandStateSource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Input.IInputActivatable",
+    "file": "documentation/classes/Cerneala.UI.Input.IInputActivatable.md",
+    "source": "UI/Input/IInputActivatable.cs"
   },
   {
     "name": "Cerneala.UI.Input.IInputCommandSource",
@@ -1978,6 +2148,11 @@
     "name": "Cerneala.UI.Input.RoutedEventRouter",
     "file": "documentation/classes/Cerneala.UI.Input.RoutedEventRouter.md",
     "source": "UI/Input/RoutedEventRouter.cs"
+  },
+  {
+    "name": "Cerneala.UI.Input.RoutedPropertyChangedEventArgs_T_",
+    "file": "documentation/classes/Cerneala.UI.Input.RoutedPropertyChangedEventArgs_T_.md",
+    "source": "UI/Input/RoutedPropertyChangedEventArgs.cs"
   },
   {
     "name": "Cerneala.UI.Input.RoutingStrategy",
@@ -2300,6 +2475,11 @@
     "source": "UI/Layout/Visibility.cs"
   },
   {
+    "name": "Cerneala.UI.Markup.BrushMarkupReader",
+    "file": "documentation/classes/Cerneala.UI.Markup.BrushMarkupReader.md",
+    "source": "UI/Markup/BrushMarkupReader.cs"
+  },
+  {
     "name": "Cerneala.UI.Markup.ContentPropertyAttribute",
     "file": "documentation/classes/Cerneala.UI.Markup.ContentPropertyAttribute.md",
     "source": "UI/Markup/ContentPropertyAttribute.cs"
@@ -2310,9 +2490,39 @@
     "source": "UI/Markup/DesignTimeOnlyAttribute.cs"
   },
   {
+    "name": "Cerneala.UI.Markup.GeneratedMarkup",
+    "file": "documentation/classes/Cerneala.UI.Markup.GeneratedMarkup.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
     "name": "Cerneala.UI.Markup.GeneratedUiFactory",
     "file": "documentation/classes/Cerneala.UI.Markup.GeneratedUiFactory.md",
     "source": "UI/Markup/GeneratedUiFactory.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupAspectResource",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupAspectResource.md",
+    "source": "UI/Markup/MarkupAspectResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupConditionalContent",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupConditionalContent.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupConditionalValue",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupConditionalValue.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupConditionRule",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupConditionRule.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupDataPathSegment",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupDataPathSegment.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
   },
   {
     "name": "Cerneala.UI.Markup.MarkupDiagnostic",
@@ -2330,9 +2540,24 @@
     "source": "UI/Markup/MarkupLoadOptions.cs"
   },
   {
+    "name": "Cerneala.UI.Markup.MarkupObservation",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupObservation.md",
+    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+  },
+  {
     "name": "Cerneala.UI.Markup.MarkupResult_T_",
     "file": "documentation/classes/Cerneala.UI.Markup.MarkupResult_T_.md",
     "source": "UI/Markup/MarkupResult{T}.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupValueConstraint",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupValueConstraint.md",
+    "source": "UI/Markup/MarkupValueConstraintAttribute.cs"
+  },
+  {
+    "name": "Cerneala.UI.Markup.MarkupValueConstraintAttribute",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupValueConstraintAttribute.md",
+    "source": "UI/Markup/MarkupValueConstraintAttribute.cs"
   },
   {
     "name": "Cerneala.UI.Markup.UiFactory",
@@ -2410,6 +2635,11 @@
     "source": "UI/Media/Brush.cs"
   },
   {
+    "name": "Cerneala.UI.Media.DrawingBrush",
+    "file": "documentation/classes/Cerneala.UI.Media.DrawingBrush.md",
+    "source": "UI/Media/DrawingBrush.cs"
+  },
+  {
     "name": "Cerneala.UI.Media.EllipseGeometry",
     "file": "documentation/classes/Cerneala.UI.Media.EllipseGeometry.md",
     "source": "UI/Media/EllipseGeometry.cs"
@@ -2423,6 +2653,11 @@
     "name": "Cerneala.UI.Media.GradientStop",
     "file": "documentation/classes/Cerneala.UI.Media.GradientStop.md",
     "source": "UI/Media/GradientStop.cs"
+  },
+  {
+    "name": "Cerneala.UI.Media.ImageBrush",
+    "file": "documentation/classes/Cerneala.UI.Media.ImageBrush.md",
+    "source": "UI/Media/ImageBrush.cs"
   },
   {
     "name": "Cerneala.UI.Media.ImageSource",
@@ -2480,9 +2715,19 @@
     "source": "UI/Media/SolidColorBrush.cs"
   },
   {
+    "name": "Cerneala.UI.Media.TileBrush",
+    "file": "documentation/classes/Cerneala.UI.Media.TileBrush.md",
+    "source": "UI/Media/TileBrush.cs"
+  },
+  {
     "name": "Cerneala.UI.Media.Transform",
     "file": "documentation/classes/Cerneala.UI.Media.Transform.md",
     "source": "UI/Media/Transform.cs"
+  },
+  {
+    "name": "Cerneala.UI.Media.VisualBrush",
+    "file": "documentation/classes/Cerneala.UI.Media.VisualBrush.md",
+    "source": "UI/Media/VisualBrush.cs"
   },
   {
     "name": "Cerneala.UI.Motion.Core.DerivedMotionValue_T_",
@@ -2745,6 +2990,11 @@
     "source": "UI/Motion/Input/VelocityTracker.cs"
   },
   {
+    "name": "Cerneala.UI.Motion.Interpolation.BrushMixer",
+    "file": "documentation/classes/Cerneala.UI.Motion.Interpolation.BrushMixer.md",
+    "source": "UI/Motion/Interpolation/BrushMixer.cs"
+  },
+  {
     "name": "Cerneala.UI.Motion.Interpolation.ColorMixer",
     "file": "documentation/classes/Cerneala.UI.Motion.Interpolation.ColorMixer.md",
     "source": "UI/Motion/Interpolation/ColorMixer.cs"
@@ -2808,11 +3058,6 @@
     "name": "Cerneala.UI.Motion.Interpolation.ValueMixerRegistry",
     "file": "documentation/classes/Cerneala.UI.Motion.Interpolation.ValueMixerRegistry.md",
     "source": "UI/Motion/Interpolation/ValueMixerRegistry.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Interpolation.BrushMixer",
-    "file": "documentation/classes/Cerneala.UI.Motion.Interpolation.BrushMixer.md",
-    "source": "UI/Motion/Interpolation/BrushMixer.cs"
   },
   {
     "name": "Cerneala.UI.Motion.Layout.LayoutMotionBinding",
@@ -3375,6 +3620,11 @@
     "source": "UI/Resources/ResourceDependencyTracker.cs"
   },
   {
+    "name": "Cerneala.UI.Resources.ResourceDictionary",
+    "file": "documentation/classes/Cerneala.UI.Resources.ResourceDictionary.md",
+    "source": "UI/Resources/ResourceDictionary.cs"
+  },
+  {
     "name": "Cerneala.UI.Resources.ResourceId_T_",
     "file": "documentation/classes/Cerneala.UI.Resources.ResourceId_T_.md",
     "source": "UI/Resources/ResourceId{T}.cs"
@@ -3575,253 +3825,653 @@
     "source": "UI/Theming/ThemeResource.cs"
   },
   {
-    "name": "Cerneala.Drawing.DrawBrushAlignmentX",
-    "file": "documentation/classes/Cerneala.Drawing.DrawBrushAlignmentX.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.ContinuationTokenCodec",
+    "file": "documentation/classes/Ri.Mcp.ContinuationTokenCodec.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/ContinuationTokenCodec.cs"
   },
   {
-    "name": "Cerneala.Drawing.DrawBrushAlignmentY",
-    "file": "documentation/classes/Cerneala.Drawing.DrawBrushAlignmentY.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.ContinuationTokenException",
+    "file": "documentation/classes/Ri.Mcp.ContinuationTokenException.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/ContinuationTokenCodec.cs"
   },
   {
-    "name": "Cerneala.Drawing.DrawBrushDescriptor",
-    "file": "documentation/classes/Cerneala.Drawing.DrawBrushDescriptor.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RepositoryBinding",
+    "file": "documentation/classes/Ri.Mcp.RepositoryBinding.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpTools.cs"
   },
   {
-    "name": "Cerneala.Drawing.DrawBrushKind",
-    "file": "documentation/classes/Cerneala.Drawing.DrawBrushKind.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynBatchFailureMode",
+    "file": "documentation/classes/Ri.Mcp.RoslynBatchFailureMode.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.DrawBrushStretch",
-    "file": "documentation/classes/Cerneala.Drawing.DrawBrushStretch.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynBatchOperation",
+    "file": "documentation/classes/Ri.Mcp.RoslynBatchOperation.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.DrawGradientStop",
-    "file": "documentation/classes/Cerneala.Drawing.DrawGradientStop.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynBatchOperationResult",
+    "file": "documentation/classes/Ri.Mcp.RoslynBatchOperationResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.DrawingDrawBrushDescriptor",
-    "file": "documentation/classes/Cerneala.Drawing.DrawingDrawBrushDescriptor.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynBatchRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynBatchRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.DrawTileMode",
-    "file": "documentation/classes/Cerneala.Drawing.DrawTileMode.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynBatchResult",
+    "file": "documentation/classes/Ri.Mcp.RoslynBatchResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.IDrawBrush",
-    "file": "documentation/classes/Cerneala.Drawing.IDrawBrush.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynCallGraphRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynCallGraphRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.ImageDrawBrushDescriptor",
-    "file": "documentation/classes/Cerneala.Drawing.ImageDrawBrushDescriptor.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynCapabilities",
+    "file": "documentation/classes/Ri.Mcp.RoslynCapabilities.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.LinearGradientDrawBrushDescriptor",
-    "file": "documentation/classes/Cerneala.Drawing.LinearGradientDrawBrushDescriptor.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynChangesRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynChangesRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.RadialGradientDrawBrushDescriptor",
-    "file": "documentation/classes/Cerneala.Drawing.RadialGradientDrawBrushDescriptor.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynContextRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynContextRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.SolidDrawBrushDescriptor",
-    "file": "documentation/classes/Cerneala.Drawing.SolidDrawBrushDescriptor.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynGotoRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynGotoRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.TileDrawBrushDescriptor",
-    "file": "documentation/classes/Cerneala.Drawing.TileDrawBrushDescriptor.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynImpactRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynImpactRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.Drawing.VisualDrawBrushDescriptor",
-    "file": "documentation/classes/Cerneala.Drawing.VisualDrawBrushDescriptor.md",
-    "source": "Drawing/IDrawBrush.cs"
+    "name": "Ri.Mcp.RoslynIndexRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynIndexRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.ElementAspect",
-    "file": "documentation/classes/Cerneala.UI.Aspect.ElementAspect.md",
-    "source": "UI/Aspect/ElementAspect.cs"
+    "name": "Ri.Mcp.RoslynInspectRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynInspectRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.ElementAspectValue",
-    "file": "documentation/classes/Cerneala.UI.Aspect.ElementAspectValue.md",
-    "source": "UI/Aspect/ElementAspect.cs"
+    "name": "Ri.Mcp.RoslynMcpCacheInfo",
+    "file": "documentation/classes/Ri.Mcp.RoslynMcpCacheInfo.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.InkCanvasStrokeCollectedEventArgs",
-    "file": "documentation/classes/Cerneala.UI.Controls.InkCanvasStrokeCollectedEventArgs.md",
-    "source": "UI/Controls/InkCanvasEventArgs.cs"
+    "name": "Ri.Mcp.RoslynMcpError",
+    "file": "documentation/classes/Ri.Mcp.RoslynMcpError.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.Primitives.ScrollEventArgs",
-    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.ScrollEventArgs.md",
-    "source": "UI/Controls/Primitives/ScrollEventArgs.cs"
+    "name": "Ri.Mcp.RoslynMcpToolCatalog",
+    "file": "documentation/classes/Ri.Mcp.RoslynMcpToolCatalog.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpToolCatalog.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.Primitives.ScrollEventType",
-    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.ScrollEventType.md",
-    "source": "UI/Controls/Primitives/ScrollEventArgs.cs"
+    "name": "Ri.Mcp.RoslynMcpToolDefinition",
+    "file": "documentation/classes/Ri.Mcp.RoslynMcpToolDefinition.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.ResizeMode",
-    "file": "documentation/classes/Cerneala.UI.Controls.ResizeMode.md",
-    "source": "UI/Controls/ResizeMode.cs"
+    "name": "Ri.Mcp.RoslynMcpToolResult",
+    "file": "documentation/classes/Ri.Mcp.RoslynMcpToolResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.ScrollChangedEventArgs",
-    "file": "documentation/classes/Cerneala.UI.Controls.ScrollChangedEventArgs.md",
-    "source": "UI/Controls/ScrollChangedEventArgs.cs"
+    "name": "Ri.Mcp.RoslynMcpTools",
+    "file": "documentation/classes/Ri.Mcp.RoslynMcpTools.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpTools.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.TextChangedEventArgs",
-    "file": "documentation/classes/Cerneala.UI.Controls.TextChangedEventArgs.md",
-    "source": "UI/Controls/TextChangedEventArgs.cs"
+    "name": "Ri.Mcp.RoslynOutlineRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynOutlineRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.UserControl_TViewModel_",
-    "file": "documentation/classes/Cerneala.UI.Controls.UserControl_TViewModel_.md",
-    "source": "UI/Controls/UserControl.cs"
+    "name": "Ri.Mcp.RoslynPReadRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynPReadRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.UserControl",
-    "file": "documentation/classes/Cerneala.UI.Controls.UserControl.md",
-    "source": "UI/Controls/UserControl.cs"
+    "name": "Ri.Mcp.RoslynProfileFileSize",
+    "file": "documentation/classes/Ri.Mcp.RoslynProfileFileSize.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.Window_TViewModel_",
-    "file": "documentation/classes/Cerneala.UI.Controls.Window_TViewModel_.md",
-    "source": "UI/Controls/Window.cs"
+    "name": "Ri.Mcp.RoslynProfileRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynProfileRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.Window",
-    "file": "documentation/classes/Cerneala.UI.Controls.Window.md",
-    "source": "UI/Controls/Window.cs"
+    "name": "Ri.Mcp.RoslynProfileResult",
+    "file": "documentation/classes/Ri.Mcp.RoslynProfileResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.WindowClosingEventArgs",
-    "file": "documentation/classes/Cerneala.UI.Controls.WindowClosingEventArgs.md",
-    "source": "UI/Controls/WindowClosingEventArgs.cs"
+    "name": "Ri.Mcp.RoslynProfileTerm",
+    "file": "documentation/classes/Ri.Mcp.RoslynProfileTerm.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.WindowStartupLocation",
-    "file": "documentation/classes/Cerneala.UI.Controls.WindowStartupLocation.md",
-    "source": "UI/Controls/WindowStartupLocation.cs"
+    "name": "Ri.Mcp.RoslynReadRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynReadRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.WindowState",
-    "file": "documentation/classes/Cerneala.UI.Controls.WindowState.md",
-    "source": "UI/Controls/WindowState.cs"
+    "name": "Ri.Mcp.RoslynRefsRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynRefsRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Elements.SizeChangedEventArgs",
-    "file": "documentation/classes/Cerneala.UI.Elements.SizeChangedEventArgs.md",
-    "source": "UI/Elements/UIElement.Events.cs"
+    "name": "Ri.Mcp.RoslynRepoRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynRepoRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Hosting.Windows.GeneratedWindowApplication",
-    "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.md",
-    "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
+    "name": "Ri.Mcp.RoslynResponseProfile",
+    "file": "documentation/classes/Ri.Mcp.RoslynResponseProfile.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor",
-    "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor.md",
-    "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
+    "name": "Ri.Mcp.RoslynSearchRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynSearchRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Input.IInputActivatable",
-    "file": "documentation/classes/Cerneala.UI.Input.IInputActivatable.md",
-    "source": "UI/Input/IInputActivatable.cs"
+    "name": "Ri.Mcp.RoslynSuggestRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynSuggestRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Input.RoutedPropertyChangedEventArgs_T_",
-    "file": "documentation/classes/Cerneala.UI.Input.RoutedPropertyChangedEventArgs_T_.md",
-    "source": "UI/Input/RoutedPropertyChangedEventArgs.cs"
+    "name": "Ri.Mcp.RoslynTestsForRequest",
+    "file": "documentation/classes/Ri.Mcp.RoslynTestsForRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/Ri.Mcp/RoslynMcpContracts.cs"
   },
   {
-    "name": "Cerneala.UI.Markup.BrushMarkupReader",
-    "file": "documentation/classes/Cerneala.UI.Markup.BrushMarkupReader.md",
-    "source": "UI/Markup/BrushMarkupReader.cs"
+    "name": "RoslynRepoIndexer.Core.CallGraphDirection",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.CallGraphDirection.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
   },
   {
-    "name": "Cerneala.UI.Markup.GeneratedMarkup",
-    "file": "documentation/classes/Cerneala.UI.Markup.GeneratedMarkup.md",
-    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+    "name": "RoslynRepoIndexer.Core.CallGraphEdge",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.CallGraphEdge.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
   },
   {
-    "name": "Cerneala.UI.Markup.MarkupAspectResource",
-    "file": "documentation/classes/Cerneala.UI.Markup.MarkupAspectResource.md",
-    "source": "UI/Markup/MarkupAspectResource.cs"
+    "name": "RoslynRepoIndexer.Core.CallGraphNode",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.CallGraphNode.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
   },
   {
-    "name": "Cerneala.UI.Markup.MarkupConditionalContent",
-    "file": "documentation/classes/Cerneala.UI.Markup.MarkupConditionalContent.md",
-    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+    "name": "RoslynRepoIndexer.Core.CallGraphResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.CallGraphResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
   },
   {
-    "name": "Cerneala.UI.Markup.MarkupConditionalValue",
-    "file": "documentation/classes/Cerneala.UI.Markup.MarkupConditionalValue.md",
-    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+    "name": "RoslynRepoIndexer.Core.CandidateFile",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.CandidateFile.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
   },
   {
-    "name": "Cerneala.UI.Markup.MarkupConditionRule",
-    "file": "documentation/classes/Cerneala.UI.Markup.MarkupConditionRule.md",
-    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+    "name": "RoslynRepoIndexer.Core.ChangeComparison",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ChangeComparison.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticChanges.cs"
   },
   {
-    "name": "Cerneala.UI.Markup.MarkupDataPathSegment",
-    "file": "documentation/classes/Cerneala.UI.Markup.MarkupDataPathSegment.md",
-    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+    "name": "RoslynRepoIndexer.Core.ChangedFile",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ChangedFile.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticChanges.cs"
   },
   {
-    "name": "Cerneala.UI.Markup.MarkupObservation",
-    "file": "documentation/classes/Cerneala.UI.Markup.MarkupObservation.md",
-    "source": "UI/Markup/GeneratedMarkupConditions.cs"
+    "name": "RoslynRepoIndexer.Core.ChangedSymbol",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ChangedSymbol.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticChanges.cs"
   },
   {
-    "name": "Cerneala.UI.Markup.MarkupValueConstraint",
-    "file": "documentation/classes/Cerneala.UI.Markup.MarkupValueConstraint.md",
-    "source": "UI/Markup/MarkupValueConstraintAttribute.cs"
+    "name": "RoslynRepoIndexer.Core.CommandResponse",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.CommandResponse.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
   },
   {
-    "name": "Cerneala.UI.Markup.MarkupValueConstraintAttribute",
-    "file": "documentation/classes/Cerneala.UI.Markup.MarkupValueConstraintAttribute.md",
-    "source": "UI/Markup/MarkupValueConstraintAttribute.cs"
+    "name": "RoslynRepoIndexer.Core.CommandResponse<T>",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.CommandResponse_T_.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
   },
   {
-    "name": "Cerneala.UI.Media.DrawingBrush",
-    "file": "documentation/classes/Cerneala.UI.Media.DrawingBrush.md",
-    "source": "UI/Media/DrawingBrush.cs"
+    "name": "RoslynRepoIndexer.Core.ConfigLoadResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ConfigLoadResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
   },
   {
-    "name": "Cerneala.UI.Media.ImageBrush",
-    "file": "documentation/classes/Cerneala.UI.Media.ImageBrush.md",
-    "source": "UI/Media/ImageBrush.cs"
+    "name": "RoslynRepoIndexer.Core.ContextResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ContextResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
   },
   {
-    "name": "Cerneala.UI.Media.TileBrush",
-    "file": "documentation/classes/Cerneala.UI.Media.TileBrush.md",
-    "source": "UI/Media/TileBrush.cs"
+    "name": "RoslynRepoIndexer.Core.DiagnosticsCollector",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.DiagnosticsCollector.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
   },
   {
-    "name": "Cerneala.UI.Media.VisualBrush",
-    "file": "documentation/classes/Cerneala.UI.Media.VisualBrush.md",
-    "source": "UI/Media/VisualBrush.cs"
+    "name": "RoslynRepoIndexer.Core.DoctorCheck",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.DoctorCheck.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
   },
   {
-    "name": "Cerneala.UI.Resources.ResourceDictionary",
-    "file": "documentation/classes/Cerneala.UI.Resources.ResourceDictionary.md",
-    "source": "UI/Resources/ResourceDictionary.cs"
+    "name": "RoslynRepoIndexer.Core.DoctorService",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.DoctorService.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.DoctorSummary",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.DoctorSummary.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.DocumentEntry",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.DocumentEntry.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.DocumentState",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.DocumentState.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.ExactReferenceService",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ExactReferenceService.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.FileReadCommandRequest",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.FileReadCommandRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.HumanOutputWriter",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.HumanOutputWriter.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.ImpactLink",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ImpactLink.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.ImpactResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ImpactResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexBuilder",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexBuilder.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexCommandRequest",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexCommandRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexDiagnostics",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexDiagnostics.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexGenerationStamp",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexGenerationStamp.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RepositorySessions.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexManifest",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexManifest.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexReader",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexReader.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexSnapshot",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexSnapshot.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexStatus",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexStatus.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexStore",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexStore.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/IndexStore.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexSummary",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexSummary.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexTimingSummary",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexTimingSummary.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IndexUnavailableException",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IndexUnavailableException.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/IndexStore.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.InspectInclude",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.InspectInclude.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.InspectResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.InspectResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.IRoslynIndexerApplicationService",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.IRoslynIndexerApplicationService.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.JsonOutputWriter",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.JsonOutputWriter.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.LoadedWorkspace",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.LoadedWorkspace.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.MSBuildRegistration",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.MSBuildRegistration.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.NoCSharpDocumentsException",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.NoCSharpDocumentsException.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.OutlineItem",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.OutlineItem.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.OutlineResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.OutlineResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.ParsedQuery",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ParsedQuery.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.PartialFileReadCommandRequest",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.PartialFileReadCommandRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.PathCommandRequest",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.PathCommandRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.ProjectEntry",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ProjectEntry.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.QueryIndex",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.QueryIndex.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RepositorySessions.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.QuerySuggestion",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.QuerySuggestion.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.ReferenceCollector",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ReferenceCollector.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.ReferenceEntry",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.ReferenceEntry.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RefsCommandRequest",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RefsCommandRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RepositoryFileReadException",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RepositoryFileReadException.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RepositoryFileReadResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RepositoryFileReadResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RepositoryIndexSession",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RepositoryIndexSession.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RepositorySessions.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RepositoryPartialFileReadResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RepositoryPartialFileReadResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RepositoryRoot",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RepositoryRoot.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RepositoryRootKind",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RepositoryRootKind.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RepositorySessionMetrics",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RepositorySessionMetrics.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RepositorySessions.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RepositorySessionRegistry",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RepositorySessionRegistry.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RepositorySessions.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RepositoryWorkspaceSession",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RepositoryWorkspaceSession.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RepositorySessions.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.RoslynIndexerApplicationService",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.RoslynIndexerApplicationService.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SearchCommandRequest",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SearchCommandRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SearchExecution",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SearchExecution.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SearchMode",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SearchMode.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SearchRequest",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SearchRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SearchResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SearchResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SearchScore",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SearchScore.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Search.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SearchScorer",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SearchScorer.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Search.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SearchService",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SearchService.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Search.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SegmentPersistenceSummary",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SegmentPersistenceSummary.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SegmentedIndexCodec.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SemanticChangeKind",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SemanticChangeKind.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticChanges.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SemanticChangeService",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SemanticChangeService.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticChanges.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SemanticChangesResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SemanticChangesResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticChanges.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SemanticQueryService",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SemanticQueryService.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SourceSpanSummary",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SourceSpanSummary.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.StatusSummary",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.StatusSummary.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SuggestCommandRequest",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SuggestCommandRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SuggestExecutedResult",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SuggestExecutedResult.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SuggestExecutionResponse",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SuggestExecutionResponse.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SuggestionService",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SuggestionService.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Search.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SymbolCollector",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SymbolCollector.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SymbolEntry",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SymbolEntry.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SymbolIdProvider",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SymbolIdProvider.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SymbolQueryCommandRequest",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SymbolQueryCommandRequest.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexerApplicationService.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SymbolQueryException",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SymbolQueryException.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.SymbolSummary",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.SymbolSummary.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.TestCandidate",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.TestCandidate.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.TextIndexer",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.TextIndexer.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.TokenPosting",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.TokenPosting.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.TokenValue",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.TokenValue.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.WorkspaceInput",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.WorkspaceInput.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.WorkspaceLoader",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.WorkspaceLoader.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs"
+  },
+  {
+    "name": "RoslynRepoIndexer.Core.WorkspaceLoadingException",
+    "file": "documentation/classes/RoslynRepoIndexer.Core.WorkspaceLoadingException.md",
+    "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/Models.cs"
   }
 ]

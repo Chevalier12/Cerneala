@@ -33,12 +33,16 @@ public sealed class JsonContractSnapshotTests
 
         AssertObjectProperties(root,
             "schemaVersion",
+            "generationId",
             "toolVersion",
+            "storageFormat",
             "repoRoot",
             "createdUtc",
             "updatedUtc",
             "configHash",
             "workspaceInputsHash",
+            "discoveryFingerprint",
+            "repositoryStateFingerprint",
             "workspaceInputs",
             "documentsByRelativePath",
             "documentCount",
@@ -46,6 +50,10 @@ public sealed class JsonContractSnapshotTests
             "referenceCount",
             "tokenCount",
             "warningCount",
+            "segmentCount",
+            "segmentsWritten",
+            "segmentsReused",
+            "segmentBytes",
             "recentWarnings",
             "timings");
         Assert.Equal(IndexManifest.CurrentSchemaVersion, root.GetProperty("schemaVersion").GetInt32());

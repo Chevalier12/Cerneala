@@ -7,6 +7,25 @@ namespace RoslynRepoIndexer.Tests;
 public sealed class RoslynMcpTests
 {
     [Fact]
+    public async Task Profile_reports_generation_session_files_and_top_terms()
+    {
+        using var repo = TestRepo.Create();
+        var document = new DocumentEntry("doc", null, "Widget.cs", null, "C#", true, false, false, 1, DateTimeOffset.UtcNow, "hash", "decl", 1);
+        var token = new TokenPosting("widget", "Widget.cs", 1, 1, "text", "text", null, "doc");
+        var snapshot = new IndexSnapshot(IndexManifest.CreateNew(repo.Root, "config", "workspace") with { DocumentCount = 1, TokenCount = 1 }, new[] { document }, Array.Empty<SymbolEntry>(), Array.Empty<ReferenceEntry>(), new[] { token });
+        IndexStore.Write(repo.Root, snapshot);
+        var tools = new RoslynMcpTools(new RepositorySessionRegistry(), new RepositoryBinding(repo.Root), new ContinuationTokenCodec());
+
+        var result = await tools.ProfileAsync(new RoslynProfileRequest(repo.Root));
+
+        Assert.True(result.Success);
+        Assert.Equal(snapshot.Manifest.GenerationId, result.Data?.GenerationId);
+        Assert.Contains(result.Data!.Files, file => file.Name == "segments.json");
+        Assert.Equal("widget", result.Data.TopTerms.Single().Term);
+        Assert.Equal(1, result.Data.Session.ReloadCount);
+    }
+
+    [Fact]
     public void Tool_catalog_is_deterministic_and_documents_reading_guidance()
     {
         var tools = RoslynMcpToolCatalog.Tools;
@@ -21,7 +40,17 @@ public sealed class RoslynMcpTests
             "roslyn_pread",
             "roslyn_goto",
             "roslyn_refs",
-            "roslyn_suggest"
+            "roslyn_outline",
+            "roslyn_inspect",
+            "roslyn_context",
+            "roslyn_callgraph",
+            "roslyn_impact",
+            "roslyn_tests_for",
+            "roslyn_batch",
+            "roslyn_changes",
+            "roslyn_profile",
+            "roslyn_suggest",
+            "roslyn_capabilities"
         }, tools.Select(tool => tool.Name));
         Assert.Contains("prefer", tools.Single(tool => tool.Name == "roslyn_read").Description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("before editing", tools.Single(tool => tool.Name == "roslyn_read").Description, StringComparison.OrdinalIgnoreCase);
@@ -44,7 +73,7 @@ public sealed class RoslynMcpTests
         Assert.Equal(repo.Root, result.RepoRoot);
         Assert.NotNull(result.Warnings);
         Assert.NotNull(result.Errors);
-        Assert.Contains("outside", result.Errors[0], StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("outside", result.Errors[0].Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -107,6 +136,19 @@ public sealed class RoslynMcpTests
             "refs",
             "suggest"
         }, app.Calls);
+    }
+
+    [Fact]
+    public async Task Suggest_returns_structured_operations_without_cli_command_strings()
+    {
+        var result = await new RoslynMcpTools(new RecordingApplicationService())
+            .SuggestAsync(new RoslynSuggestRequest("C:/repo", "where is Customer?"));
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(result, JsonOptions.Default));
+        var suggestion = json.RootElement.GetProperty("data")[0];
+
+        Assert.Equal("search", suggestion.GetProperty("operation").GetString());
+        Assert.Equal("Customer", suggestion.GetProperty("input").GetProperty("query").GetString());
+        Assert.False(suggestion.TryGetProperty("command", out _));
     }
 
     [Fact]
@@ -190,7 +232,7 @@ public sealed class RoslynMcpTests
         public CommandResponse<object> Suggest(SuggestCommandRequest request)
         {
             calls.Add("suggest");
-            return CommandResponse.Success<object>(Array.Empty<QuerySuggestion>(), null, "suggest", request.Question, "C:/repo", 1, null, true);
+            return CommandResponse.Success<object>(new[] { new QuerySuggestion("ri search Customer", "Customer", "all", 0.9, "symbol", "mixed") }, null, "suggest", request.Question, "C:/repo", 1, null, true);
         }
 
         private static CommandResponse<IReadOnlyList<SearchResult>> EmptySearch(string command, string? query)

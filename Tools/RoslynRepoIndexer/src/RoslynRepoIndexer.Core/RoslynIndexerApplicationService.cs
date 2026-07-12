@@ -13,7 +13,7 @@ public interface IRoslynIndexerApplicationService
     CommandResponse<object> Suggest(SuggestCommandRequest request);
 }
 
-public sealed record PathCommandRequest(string? Path = null, string? ConfigPath = null);
+public sealed record PathCommandRequest(string? Path = null, string? ConfigPath = null, bool Deep = false);
 
 public sealed record IndexCommandRequest(
     string? Path = null,
@@ -78,9 +78,15 @@ public sealed record SuggestExecutedResult(
 public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationService
 {
     private readonly string workingDirectory;
+    private readonly Func<string, QueryIndex>? queryIndexLoader;
+    private readonly IndexBuilder indexBuilder;
 
-    public RoslynIndexerApplicationService(string? workingDirectory = null)
-        => this.workingDirectory = string.IsNullOrWhiteSpace(workingDirectory) ? Directory.GetCurrentDirectory() : workingDirectory;
+    public RoslynIndexerApplicationService(string? workingDirectory = null, Func<string, QueryIndex>? queryIndexLoader = null, IndexBuilder? indexBuilder = null)
+    {
+        this.workingDirectory = string.IsNullOrWhiteSpace(workingDirectory) ? Directory.GetCurrentDirectory() : workingDirectory;
+        this.queryIndexLoader = queryIndexLoader;
+        this.indexBuilder = indexBuilder ?? new IndexBuilder();
+    }
 
     public async Task<CommandResponse<IndexSummary>> IndexAsync(IndexCommandRequest request, CancellationToken cancellationToken = default)
     {
@@ -92,7 +98,7 @@ public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationS
             var root = RepositoryDiscovery.FindRoot(path);
             var configLoad = ConfigLoader.Load(root.RootPath, request.ConfigPath);
             var config = ApplyIndexOptions(configLoad.Config, request);
-            var summary = await new IndexBuilder().BuildAsync(path, request.Force, config, cancellationToken).ConfigureAwait(false);
+            var summary = await indexBuilder.BuildAsync(path, request.Force, config, cancellationToken).ConfigureAwait(false);
             return CommandResponse.Success(summary, configLoad.Warnings, command, null, summary.RepoRoot, stopwatch.ElapsedMilliseconds, DateTimeOffset.UtcNow, includeResultsAlias: false);
         }
         catch (Exception ex) when (IsKnownFailure(ex, out var exitCode))
@@ -110,7 +116,7 @@ public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationS
             var path = ResolveInputPath(request.Path);
             var root = RepositoryDiscovery.FindRoot(path);
             var config = ConfigLoader.Load(root.RootPath, request.ConfigPath).Config;
-            var summary = await new DoctorService().RunAsync(path, config, cancellationToken).ConfigureAwait(false);
+            var summary = await new DoctorService().RunAsync(path, config, request.Deep, cancellationToken).ConfigureAwait(false);
             return CommandResponse.Success(summary, null, command, null, root.RootPath, stopwatch.ElapsedMilliseconds, TryIndexUpdatedUtc(root.RootPath), includeResultsAlias: false);
         }
         catch (Exception ex) when (IsKnownFailure(ex, out var exitCode))
@@ -155,14 +161,16 @@ public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationS
             }
 
             var searchLoadStopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var snapshot = IndexStore.Read(root.RootPath);
+            var queryIndex = LoadQueryIndex(root.RootPath);
+            var snapshot = queryIndex.Snapshot;
             searchLoadStopwatch.Stop();
             if (request.TimeoutMs is < 0)
             {
                 return Failure<IReadOnlyList<SearchResult>>(2, "--timeout must be a non-negative number of milliseconds.", command, query, root.RootPath, stopwatch);
             }
 
-            var execution = new SearchService(snapshot, new SnippetReader(root.RootPath)).SearchDetailed(
+            var snippets = new SnippetReader(root.RootPath);
+            var execution = new SearchService(queryIndex, (path, line) => snippets.ReadSnippet(path, line)).SearchDetailed(
                 new SearchRequest(query, request.Mode, PositiveOrDefault(request.Limit, 50), request.Kind, request.Path, request.Project, request.IncludeTests, request.FromFile, request.FromProject, request.TimeoutMs),
                 searchLoadStopwatch.ElapsedMilliseconds);
             var warnings = execution.TimedOut
@@ -265,8 +273,10 @@ public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationS
                 return Failure<IReadOnlyList<SearchResult>>(3, "Index is missing. Run 'ri index' first.", command, query, root.RootPath, stopwatch);
             }
 
-            var snapshot = IndexStore.Read(root.RootPath);
-            var results = new SearchService(snapshot, new SnippetReader(root.RootPath)).Search(new SearchRequest(query, SearchMode.Symbol, PositiveOrDefault(request.Limit, 20), request.Kind));
+            var queryIndex = LoadQueryIndex(root.RootPath);
+            var snapshot = queryIndex.Snapshot;
+            var snippets = new SnippetReader(root.RootPath);
+            var results = new SearchService(queryIndex, (path, line) => snippets.ReadSnippet(path, line)).Search(new SearchRequest(query, SearchMode.Symbol, PositiveOrDefault(request.Limit, 20), request.Kind));
             return CommandResponse.Success<IReadOnlyList<SearchResult>>(results, null, command, query, root.RootPath, stopwatch.ElapsedMilliseconds, IndexUpdatedUtc(snapshot), includeResultsAlias: true);
         }
         catch (Exception ex) when (IsKnownFailure(ex, out var exitCode))
@@ -293,7 +303,8 @@ public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationS
                 return Failure<object>(3, "Index is missing. Run 'ri index' first.", command, query, root.RootPath, stopwatch);
             }
 
-            var snapshot = IndexStore.Read(root.RootPath);
+            var queryIndex = LoadQueryIndex(root.RootPath);
+            var snapshot = queryIndex.Snapshot;
             var candidates = FindSymbolCandidates(snapshot, query);
             if (candidates.Length > 1 && request.SymbolId is null)
             {
@@ -317,7 +328,8 @@ public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationS
             {
                 var symbol = candidates.FirstOrDefault();
                 var requestQuery = symbol?.Name ?? query;
-                results = new SearchService(snapshot, new SnippetReader(root.RootPath)).Search(new SearchRequest(requestQuery, SearchMode.Reference, PositiveOrDefault(request.Limit, 50)));
+                var snippets = new SnippetReader(root.RootPath);
+                results = new SearchService(queryIndex, (path, line) => snippets.ReadSnippet(path, line)).Search(new SearchRequest(requestQuery, SearchMode.Reference, PositiveOrDefault(request.Limit, 50)));
             }
 
             return CommandResponse.Success<object>(results, null, command, query, root.RootPath, stopwatch.ElapsedMilliseconds, TryIndexUpdatedUtc(root.RootPath), includeResultsAlias: true);
@@ -346,12 +358,14 @@ public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationS
                 return Failure<object>(3, "Index is missing. Run 'ri index' first.", command, question, root.RootPath, stopwatch);
             }
 
-            var snapshot = IndexStore.Read(root.RootPath);
+            var queryIndex = LoadQueryIndex(root.RootPath);
+            var snapshot = queryIndex.Snapshot;
             var suggestions = new SuggestionService(snapshot).Suggest(question, PositiveOrDefault(request.Limit, 5));
             object data = suggestions;
             if (request.ExecuteTop > 0)
             {
-                var search = new SearchService(snapshot, new SnippetReader(root.RootPath));
+                var snippets = new SnippetReader(root.RootPath);
+                var search = new SearchService(queryIndex, (path, line) => snippets.ReadSnippet(path, line));
                 data = new SuggestExecutionResponse(
                     suggestions,
                     suggestions.Take(request.ExecuteTop)
@@ -452,6 +466,9 @@ public sealed class RoslynIndexerApplicationService : IRoslynIndexerApplicationS
 
     private static DateTimeOffset? IndexUpdatedUtc(IndexSnapshot snapshot)
         => snapshot.Manifest.UpdatedUtc;
+
+    private QueryIndex LoadQueryIndex(string repoRoot)
+        => queryIndexLoader?.Invoke(repoRoot) ?? new QueryIndex(IndexStore.Read(repoRoot));
 
     private static DateTimeOffset? TryIndexUpdatedUtc(string repoRoot)
     {

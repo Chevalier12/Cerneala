@@ -4,6 +4,51 @@ namespace RoslynRepoIndexer.Core;
 
 public static class RepositoryDiscovery
 {
+    public static string? TryComputeGitStateFingerprint(string repoRoot)
+    {
+        if (!Directory.Exists(Path.Combine(repoRoot, ".git")))
+        {
+            return null;
+        }
+
+        try
+        {
+            var head = ReadGitHead(repoRoot);
+            var status = RunGit(repoRoot, "-c", "core.quotepath=false", "status", "--porcelain=v1", "--untracked-files=all");
+            if (string.IsNullOrWhiteSpace(head))
+            {
+                return null;
+            }
+
+            var entries = new List<string> { "HEAD|" + head };
+            foreach (var line in status.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var path = line.Length > 3 ? line[3..] : string.Empty;
+                var renameSeparator = path.IndexOf(" -> ", StringComparison.Ordinal);
+                if (renameSeparator >= 0)
+                {
+                    path = path[(renameSeparator + 4)..];
+                }
+
+                path = NormalizeRelative(path.Trim('"'));
+                var fullPath = Path.Combine(repoRoot, path);
+                var state = "deleted";
+                if (File.Exists(fullPath))
+                {
+                    var info = new FileInfo(fullPath);
+                    state = $"{info.Length}|{info.LastWriteTimeUtc.Ticks}";
+                }
+                entries.Add(line[..Math.Min(2, line.Length)] + "|" + path + "|" + state);
+            }
+
+            return ConfigLoader.HashText(string.Join('\n', entries.OrderBy(entry => entry, StringComparer.Ordinal)));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public static RepositoryRoot FindRoot(string? startPath)
     {
         var current = new DirectoryInfo(Path.GetFullPath(startPath ?? Directory.GetCurrentDirectory()));
@@ -48,9 +93,71 @@ public static class RepositoryDiscovery
             .Where(relative => !IsExcluded(relative, config))
             .Select(relative => new { Relative = relative, Full = Path.Combine(repoRoot, relative) })
             .Where(file => File.Exists(file.Full))
-            .Select(file => new CandidateFile(file.Full, file.Relative, new FileInfo(file.Full).Length))
+            .Select(file =>
+            {
+                var info = new FileInfo(file.Full);
+                return new CandidateFile(file.Full, file.Relative, info.Length, info.LastWriteTimeUtc);
+            })
             .OrderBy(file => file.RelativePath, StringComparer.Ordinal)
             .ToArray();
+    }
+
+    public static IReadOnlyList<CandidateFile> EnumerateCandidateFilesFromFileSystem(string repoRoot, IndexerConfig config)
+    {
+        var files = new List<CandidateFile>();
+        var pending = new Stack<string>();
+        pending.Push(repoRoot);
+        while (pending.Count > 0)
+        {
+            var directory = pending.Pop();
+            foreach (var child in Directory.EnumerateDirectories(directory))
+            {
+                var info = new DirectoryInfo(child);
+                if ((info.Attributes & FileAttributes.ReparsePoint) != 0
+                    || config.ExcludeDirectories.Any(excluded => string.Equals(info.Name, excluded, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)))
+                {
+                    continue;
+                }
+
+                pending.Push(child);
+            }
+
+            foreach (var path in Directory.EnumerateFiles(directory))
+            {
+                var relative = NormalizeRelative(Path.GetRelativePath(repoRoot, path));
+                if (IsExcluded(relative, config))
+                {
+                    continue;
+                }
+
+                if (!config.IncludeNonCSharpText && !IsCSharpOrWorkspaceTrigger(path))
+                {
+                    continue;
+                }
+
+                var info = new FileInfo(path);
+                files.Add(new CandidateFile(path, relative, info.Length, info.LastWriteTimeUtc));
+            }
+        }
+
+        return files.OrderBy(file => file.RelativePath, StringComparer.Ordinal).ToArray();
+    }
+
+    private static bool IsCSharpOrWorkspaceTrigger(string path)
+    {
+        var extension = Path.GetExtension(path);
+        var fileName = Path.GetFileName(path);
+        return extension.Equals(".cs", StringComparison.OrdinalIgnoreCase)
+               || extension.Equals(".sln", StringComparison.OrdinalIgnoreCase)
+               || extension.Equals(".slnx", StringComparison.OrdinalIgnoreCase)
+               || extension.Equals(".csproj", StringComparison.OrdinalIgnoreCase)
+               || extension.Equals(".props", StringComparison.OrdinalIgnoreCase)
+               || extension.Equals(".targets", StringComparison.OrdinalIgnoreCase)
+               || fileName.Equals("global.json", StringComparison.OrdinalIgnoreCase)
+               || fileName.Equals("NuGet.config", StringComparison.OrdinalIgnoreCase)
+               || fileName.Equals("Directory.Build.props", StringComparison.OrdinalIgnoreCase)
+               || fileName.Equals("Directory.Build.targets", StringComparison.OrdinalIgnoreCase)
+               || fileName.Equals("Directory.Packages.props", StringComparison.OrdinalIgnoreCase);
     }
 
     public static bool IsExcluded(string relativePath, IndexerConfig config)
@@ -104,6 +211,75 @@ public static class RepositoryDiscovery
         {
             return new List<string>();
         }
+    }
+
+    private static string RunGit(string repoRoot, params string[] arguments)
+    {
+        using var process = Process.Start(new ProcessStartInfo("git")
+        {
+            WorkingDirectory = repoRoot,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        }.WithArguments(arguments));
+        if (process is null)
+        {
+            throw new InvalidOperationException("Failed to start git.");
+        }
+
+        var output = process.StandardOutput.ReadToEnd();
+        if (!process.WaitForExit(3000) || process.ExitCode != 0)
+        {
+            throw new InvalidOperationException("Git state query failed.");
+        }
+
+        return output;
+    }
+
+    private static string ReadGitHead(string repoRoot)
+    {
+        var gitPath = Path.Combine(repoRoot, ".git");
+        var gitDirectory = Directory.Exists(gitPath)
+            ? gitPath
+            : ResolveGitDirectory(repoRoot, gitPath);
+        var headPath = Path.Combine(gitDirectory, "HEAD");
+        var head = File.ReadAllText(headPath).Trim();
+        if (!head.StartsWith("ref: ", StringComparison.Ordinal))
+        {
+            return head;
+        }
+
+        var reference = head[5..];
+        var looseReferencePath = Path.Combine(gitDirectory, reference.Replace('/', Path.DirectorySeparatorChar));
+        if (File.Exists(looseReferencePath))
+        {
+            return File.ReadAllText(looseReferencePath).Trim();
+        }
+
+        var packedRefsPath = Path.Combine(gitDirectory, "packed-refs");
+        if (File.Exists(packedRefsPath))
+        {
+            foreach (var line in File.ReadLines(packedRefsPath))
+            {
+                if (!line.StartsWith('#') && line.EndsWith(" " + reference, StringComparison.Ordinal))
+                {
+                    return line[..line.IndexOf(' ')];
+                }
+            }
+        }
+
+        return head;
+    }
+
+    private static string ResolveGitDirectory(string repoRoot, string gitFilePath)
+    {
+        var content = File.ReadAllText(gitFilePath).Trim();
+        const string prefix = "gitdir: ";
+        if (!content.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Invalid .git file.");
+        }
+
+        return Path.GetFullPath(Path.Combine(repoRoot, content[prefix.Length..]));
     }
 }
 

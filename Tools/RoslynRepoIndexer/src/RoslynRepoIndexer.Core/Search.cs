@@ -62,6 +62,7 @@ public sealed class SearchService
     private readonly IReadOnlyDictionary<string, SymbolEntry> symbolsById;
     private readonly IReadOnlyDictionary<string, IReadOnlyList<SymbolEntry>> symbolsByLowerName;
     private readonly IReadOnlyDictionary<string, IReadOnlyList<SymbolEntry>> symbolsByLowerFullyQualifiedName;
+    private readonly IReadOnlyDictionary<string, IReadOnlyList<SymbolEntry>> symbolsByTerm;
     private readonly IReadOnlyDictionary<string, IReadOnlyList<TokenPosting>> tokenToPostings;
     private readonly IReadOnlyDictionary<string, IReadOnlyList<ReferenceEntry>> referencesBySymbolId;
     private readonly IReadOnlyDictionary<string, DocumentEntry> documentsById;
@@ -73,30 +74,22 @@ public sealed class SearchService
     }
 
     public SearchService(IndexSnapshot snapshot, Func<string, int, string> readSnippet)
+        : this(new QueryIndex(snapshot), readSnippet)
     {
-        this.snapshot = snapshot;
+    }
+
+    public SearchService(QueryIndex queryIndex, Func<string, int, string> readSnippet)
+    {
+        snapshot = queryIndex.Snapshot;
         this.readSnippet = readSnippet;
-        symbolsById = snapshot.Symbols
-            .GroupBy(symbol => symbol.SymbolId, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
-        symbolsByLowerName = snapshot.Symbols
-            .GroupBy(symbol => symbol.Name.ToLowerInvariant(), StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => (IReadOnlyList<SymbolEntry>)group.ToArray(), StringComparer.Ordinal);
-        symbolsByLowerFullyQualifiedName = snapshot.Symbols
-            .GroupBy(symbol => symbol.FullyQualifiedName.ToLowerInvariant(), StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => (IReadOnlyList<SymbolEntry>)group.ToArray(), StringComparer.Ordinal);
-        tokenToPostings = snapshot.Tokens
-            .GroupBy(token => token.Token, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => (IReadOnlyList<TokenPosting>)group.ToArray(), StringComparer.Ordinal);
-        referencesBySymbolId = snapshot.References
-            .GroupBy(reference => reference.SymbolId, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => (IReadOnlyList<ReferenceEntry>)group.ToArray(), StringComparer.Ordinal);
-        documentsById = snapshot.Documents
-            .GroupBy(document => document.DocumentId, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
-        documentsByPath = snapshot.Documents
-            .GroupBy(document => document.RelativePath, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        symbolsById = queryIndex.SymbolsById;
+        symbolsByLowerName = queryIndex.SymbolsByLowerName;
+        symbolsByLowerFullyQualifiedName = queryIndex.SymbolsByLowerFullyQualifiedName;
+        symbolsByTerm = queryIndex.SymbolsByTerm;
+        tokenToPostings = queryIndex.TokenToPostings;
+        referencesBySymbolId = queryIndex.ReferencesBySymbolId;
+        documentsById = queryIndex.DocumentsById;
+        documentsByPath = queryIndex.DocumentsByPath;
     }
 
     public IReadOnlyList<SearchResult> Search(SearchRequest request)
@@ -111,6 +104,7 @@ public sealed class SearchService
         var relatedContextProjects = ResolveRelatedContextProjects(contextProjects);
         var results = new List<SearchResult>();
         var mode = request.Mode;
+        var exactSymbolLookup = HasExactSymbolCandidate(query);
 
         if (mode is SearchMode.All or SearchMode.Symbol)
         {
@@ -121,7 +115,7 @@ public sealed class SearchService
             }
         }
 
-        if (mode is SearchMode.All or SearchMode.Text)
+        if (mode is SearchMode.Text || mode is SearchMode.All && !exactSymbolLookup)
         {
             results.AddRange(SearchText(parsed, request));
             if (IsTimedOut(request, scoreStopwatch))
@@ -130,7 +124,7 @@ public sealed class SearchService
             }
         }
 
-        if (mode is SearchMode.All or SearchMode.File)
+        if (mode is SearchMode.File || mode is SearchMode.All && !exactSymbolLookup)
         {
             results.AddRange(SearchFiles(query, request));
             if (IsTimedOut(request, scoreStopwatch))
@@ -139,9 +133,9 @@ public sealed class SearchService
             }
         }
 
-        if (mode is SearchMode.All or SearchMode.Reference)
+        if (mode is SearchMode.Reference || mode is SearchMode.All && exactSymbolLookup)
         {
-            results.AddRange(SearchReferences(query, request));
+            results.AddRange(SearchReferences(query, request).Take(Math.Max(100, request.Limit * 4)));
         }
 
         return Finish(results, request, parsed, contextProjects, relatedContextProjects, searchLoadMs, scoreStopwatch, IsTimedOut(request, scoreStopwatch));
@@ -536,12 +530,41 @@ public sealed class SearchService
             }
         }
 
-        IEnumerable<SymbolEntry> source = candidates.Count > 0 ? candidates.Values : snapshot.Symbols;
+        if (candidates.Count == 0)
+        {
+            var termGroups = Tokenizer.NormalizeTerms(query)
+                .Distinct(StringComparer.Ordinal)
+                .Select(term => symbolsByTerm.TryGetValue(term, out var symbols) ? symbols : Array.Empty<SymbolEntry>())
+                .ToArray();
+            if (termGroups.Length > 0 && termGroups.All(group => group.Count > 0))
+            {
+                var commonIds = termGroups[0].Select(symbol => symbol.SymbolId).ToHashSet(StringComparer.Ordinal);
+                foreach (var group in termGroups.Skip(1)) commonIds.IntersectWith(group.Select(symbol => symbol.SymbolId));
+                foreach (var symbol in termGroups[0].Where(symbol => commonIds.Contains(symbol.SymbolId))) candidates.TryAdd(symbol.SymbolId, symbol);
+            }
+        }
+
+        IEnumerable<SymbolEntry> source = candidates.Count > 0
+            ? candidates.Values
+            : snapshot.Symbols.Where(symbol =>
+                symbol.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                symbol.FullyQualifiedName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                IsAcronymCandidate(symbol.Name, query));
         return source
             .Select(symbol => new { Symbol = symbol, Match = SearchScorer.ScoreSymbolMatch(symbol.FullyQualifiedName, symbol.Name, query) })
             .Where(candidate => candidate.Match.Score > 0)
             .Select(candidate => candidate.Symbol)
             .ToArray();
+    }
+
+    private static bool IsAcronymCandidate(string name, string query)
+        => query.Length <= 12 && query.All(character => char.IsLetterOrDigit(character)) && name.Count(char.IsUpper) == query.Length;
+
+    private bool HasExactSymbolCandidate(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return false;
+        var lowerQuery = query.ToLowerInvariant();
+        return symbolsByLowerName.ContainsKey(lowerQuery) || symbolsByLowerFullyQualifiedName.ContainsKey(lowerQuery);
     }
 
     private static HashSet<string> SplitKinds(string? kinds)

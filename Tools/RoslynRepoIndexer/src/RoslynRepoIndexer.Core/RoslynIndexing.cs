@@ -6,6 +6,7 @@ using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.MSBuild;
 
@@ -246,7 +247,7 @@ public sealed class ReferenceCollector
 
         var references = new List<ReferenceEntry>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var node in root.DescendantNodesAndSelf())
+        foreach (var node in IndexBuilder.ReferenceCandidateNodes(root))
         {
             var declared = IndexBuilder.IsDeclarationSyntax(node) ? semanticModel.GetDeclaredSymbol(node) : null;
             var referenced = IndexBuilder.ReferencedSymbol(semanticModel, node, CancellationToken.None);
@@ -262,7 +263,17 @@ public sealed class ReferenceCollector
             var sourceSpan = node.GetLocation().SourceSpan;
             if (seen.Add($"{symbolId}|{documentId}|{sourceSpan.Start}|{sourceSpan.Length}"))
             {
-                references.Add(IndexBuilder.ToReferenceEntry(referenced, symbolId, node.GetLocation(), documentId, projectId, relativePath, projectName, node));
+                references.Add(IndexBuilder.ToReferenceEntry(
+                    referenced,
+                    symbolId,
+                    node.GetLocation(),
+                    documentId,
+                    projectId,
+                    relativePath,
+                    projectName,
+                    node,
+                    IndexBuilder.FindContainingSymbolId(node, semanticModel, localSymbolIds, CancellationToken.None),
+                    IndexBuilder.IsInvocationReference(node)));
             }
         }
 
@@ -318,6 +329,11 @@ public sealed class HumanOutputWriter
 
 public sealed class IndexBuilder
 {
+    private readonly RepositoryWorkspaceSession? workspaceSession;
+
+    public IndexBuilder(RepositoryWorkspaceSession? workspaceSession = null)
+        => this.workspaceSession = workspaceSession;
+
     public static MSBuildWorkspace CreateWorkspace()
     {
         var workspace = MSBuildWorkspace.Create();
@@ -334,7 +350,10 @@ public sealed class IndexBuilder
     {
         foreach (var reference in project.AnalyzerReferences.ToArray())
         {
-            project = project.RemoveAnalyzerReference(reference);
+            if (HasNoSourceGenerators(reference))
+            {
+                project = project.RemoveAnalyzerReference(reference);
+            }
         }
 
         return project;
@@ -346,12 +365,39 @@ public sealed class IndexBuilder
         {
             foreach (var reference in project.AnalyzerReferences.ToArray())
             {
-                solution = solution.RemoveAnalyzerReference(project.Id, reference);
+                if (HasNoSourceGenerators(reference))
+                {
+                    solution = solution.RemoveAnalyzerReference(project.Id, reference);
+                }
             }
         }
 
         return solution;
     }
+
+    private static bool HasNoSourceGenerators(AnalyzerReference reference)
+    {
+        try
+        {
+            return reference.GetGenerators(LanguageNames.CSharp).IsDefaultOrEmpty;
+        }
+        catch (Exception ex) when (ex is IOException or BadImageFormatException or InvalidOperationException)
+        {
+            return true;
+        }
+    }
+
+    internal static IEnumerable<SyntaxNode> ReferenceCandidateNodes(SyntaxNode root)
+        => root.DescendantNodesAndSelf().Where(static node => node is SimpleNameSyntax
+            or InvocationExpressionSyntax
+            or ObjectCreationExpressionSyntax
+            or ImplicitObjectCreationExpressionSyntax
+            or BinaryExpressionSyntax
+            or AssignmentExpressionSyntax
+            or PrefixUnaryExpressionSyntax
+            or PostfixUnaryExpressionSyntax
+            or CastExpressionSyntax
+            or ElementAccessExpressionSyntax);
 
     public async Task<IndexSummary> BuildAsync(string startPath, bool force, IndexerConfig config, CancellationToken cancellationToken = default)
     {
@@ -360,12 +406,31 @@ public sealed class IndexBuilder
         var root = RepositoryDiscovery.FindRoot(startPath);
         var repoRoot = root.RootPath;
         var diagnostics = new DiagnosticsCollector();
+        var configHash = ConfigLoader.ComputeHash(config);
+        var repositoryStateFingerprint = RepositoryDiscovery.TryComputeGitStateFingerprint(repoRoot);
+        if (!force && repositoryStateFingerprint is not null
+                   && TryCreateRepositoryNoOpSummary(repoRoot, configHash, repositoryStateFingerprint, stopwatch, discoveryStopwatch, out var repositoryNoOpSummary))
+        {
+            return repositoryNoOpSummary;
+        }
+
+        var discoveryFingerprint = ComputeDiscoveryFingerprint(repoRoot, config);
+        if (!force && repositoryStateFingerprint is null
+                   && TryCreateDiscoveryNoOpSummary(repoRoot, configHash, discoveryFingerprint, stopwatch, discoveryStopwatch, out repositoryNoOpSummary))
+        {
+            return repositoryNoOpSummary;
+        }
+
         var workspaceInputs = WorkspaceDiscovery.Discover(repoRoot, config);
         var workspaceHash = ComputeWorkspaceInputsHash(repoRoot, config, workspaceInputs);
-        var configHash = ConfigLoader.ComputeHash(config);
         if (workspaceInputs.Count == 0)
         {
             throw new WorkspaceLoadingException("No workspace inputs could be discovered. Check configured solution/project path.");
+        }
+
+        if (!force && TryCreateNoOpSummary(repoRoot, configHash, workspaceHash, discoveryFingerprint, stopwatch, discoveryStopwatch, out var noOpSummary))
+        {
+            return noOpSummary;
         }
 
         var oldSnapshot = LoadReusableSnapshot(repoRoot, force, configHash, workspaceHash);
@@ -377,9 +442,9 @@ public sealed class IndexBuilder
         long textIndexMs = 0;
 
         MSBuildRegistration.RegisterDefaults();
-        using var workspace = IndexBuilder.CreateWorkspace();
+        using var workspace = workspaceSession is null ? IndexBuilder.CreateWorkspace() : null;
 #pragma warning disable CS0618
-        workspace.WorkspaceFailed += (_, e) => diagnostics.Warn(e.Diagnostic.Message);
+        if (workspace is not null) workspace.WorkspaceFailed += (_, e) => diagnostics.Warn(e.Diagnostic.Message);
 #pragma warning restore CS0618
 
         var documents = new List<DocumentEntry>();
@@ -387,6 +452,7 @@ public sealed class IndexBuilder
         var references = new List<ReferenceEntry>();
         var tokens = new List<TokenPosting>();
         var projects = new List<ProjectEntry>();
+        var dirtyDocumentIds = new HashSet<string>(StringComparer.Ordinal);
         var fullTextIndexedPaths = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var input in workspaceInputs)
@@ -396,28 +462,36 @@ public sealed class IndexBuilder
                 if (input.Kind.Equals("csproj", StringComparison.OrdinalIgnoreCase))
                 {
                     var workspaceLoadStart = Stopwatch.GetTimestamp();
-                    var project = await workspace.OpenProjectAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false);
-                    project = RemoveAnalyzerReferences(project);
+                    var project = workspaceSession is null
+                        ? RemoveAnalyzerReferences(await workspace!.OpenProjectAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false))
+                        : (await workspaceSession.LoadSolutionAsync(input, cancellationToken).ConfigureAwait(false)).Projects.Single(project => string.Equals(Path.GetFullPath(project.FilePath!), Path.GetFullPath(input.Path), StringComparison.OrdinalIgnoreCase));
                     workspaceLoadMs += (long)Stopwatch.GetElapsedTime(workspaceLoadStart).TotalMilliseconds;
                     var semanticDirtyPlan = await CreateSemanticDirtyPlanAsync(repoRoot, new[] { project }, config, oldSnapshot, cancellationToken).ConfigureAwait(false);
                     var semanticIndexStart = Stopwatch.GetTimestamp();
-                    await IndexProjectAsync(repoRoot, project, config, oldSnapshot, semanticDirtyPlan, documents, symbols, references, tokens, projects, stats, fullTextIndexedPaths, cancellationToken).ConfigureAwait(false);
+                    var projectBatch = await IndexProjectIsolatedAsync(repoRoot, project, config, oldSnapshot, semanticDirtyPlan, fullTextIndexedPaths, cancellationToken).ConfigureAwait(false);
+                    MergeProjectBatch(projectBatch, documents, symbols, references, tokens, projects, stats, dirtyDocumentIds);
                     semanticIndexMs += (long)Stopwatch.GetElapsedTime(semanticIndexStart).TotalMilliseconds;
                 }
                 else
                 {
                     var workspaceLoadStart = Stopwatch.GetTimestamp();
-                    var solution = await workspace.OpenSolutionAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false);
-                    solution = RemoveAnalyzerReferences(solution);
+                    var solution = workspaceSession is null
+                        ? RemoveAnalyzerReferences(await workspace!.OpenSolutionAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false))
+                        : await workspaceSession.LoadSolutionAsync(input, cancellationToken).ConfigureAwait(false);
                     workspaceLoadMs += (long)Stopwatch.GetElapsedTime(workspaceLoadStart).TotalMilliseconds;
                     var csharpProjects = solution.Projects.Where(p => p.Language == LanguageNames.CSharp).OrderBy(p => p.Name, StringComparer.Ordinal).ToArray();
                     var semanticDirtyPlan = await CreateSemanticDirtyPlanAsync(repoRoot, csharpProjects, config, oldSnapshot, cancellationToken).ConfigureAwait(false);
-                    foreach (var project in csharpProjects)
+                    var semanticIndexStart = Stopwatch.GetTimestamp();
+                    var projectParallelism = Math.Max(1, Math.Min(csharpProjects.Length, Math.Max(1, Math.Min(config.MaxDegreeOfParallelism, 4))));
+                    var perProjectConfig = config with { MaxDegreeOfParallelism = Math.Max(1, config.MaxDegreeOfParallelism / projectParallelism) };
+                    var projectTasks = csharpProjects.Select(project =>
+                        IndexProjectIsolatedAsync(repoRoot, project, perProjectConfig, oldSnapshot, semanticDirtyPlan, fullTextIndexedPaths, cancellationToken));
+                    var projectBatches = await Task.WhenAll(projectTasks).ConfigureAwait(false);
+                    foreach (var projectBatch in projectBatches)
                     {
-                        var semanticIndexStart = Stopwatch.GetTimestamp();
-                        await IndexProjectAsync(repoRoot, project, config, oldSnapshot, semanticDirtyPlan, documents, symbols, references, tokens, projects, stats, fullTextIndexedPaths, cancellationToken).ConfigureAwait(false);
-                        semanticIndexMs += (long)Stopwatch.GetElapsedTime(semanticIndexStart).TotalMilliseconds;
+                        MergeProjectBatch(projectBatch, documents, symbols, references, tokens, projects, stats, dirtyDocumentIds);
                     }
+                    semanticIndexMs += (long)Stopwatch.GetElapsedTime(semanticIndexStart).TotalMilliseconds;
                 }
             }
             catch (Exception ex) when (ex is InvalidOperationException or IOException or NotSupportedException)
@@ -457,6 +531,8 @@ public sealed class IndexBuilder
         var manifest = IndexManifest.CreateNew(repoRoot, configHash, workspaceHash) with
         {
             WorkspaceInputs = ToPersistedWorkspaceInputs(repoRoot, workspaceInputs),
+            DiscoveryFingerprint = discoveryFingerprint,
+            RepositoryStateFingerprint = repositoryStateFingerprint ?? string.Empty,
             DocumentsByRelativePath = states,
             DocumentCount = documents.Count,
             SymbolCount = symbols.Count,
@@ -474,7 +550,9 @@ public sealed class IndexBuilder
             references.OrderBy(r => r.Path, StringComparer.Ordinal).ThenBy(r => r.Line).ThenBy(r => r.Column).ThenBy(r => r.SymbolId, StringComparer.Ordinal).ToArray(),
             tokens.OrderBy(t => t.Token, StringComparer.Ordinal).ThenBy(t => t.Path, StringComparer.Ordinal).ThenBy(t => t.Line).ThenBy(t => t.Column).ToArray());
 
-        var timings = IndexStore.Write(repoRoot, snapshot);
+        var timings = oldSnapshot is null
+            ? IndexStore.Write(repoRoot, snapshot)
+            : IndexStore.WriteIncremental(repoRoot, snapshot, dirtyDocumentIds);
         stopwatch.Stop();
         return new IndexSummary(
             repoRoot,
@@ -490,6 +568,125 @@ public sealed class IndexBuilder
             deletedDocuments,
             stats.UnchangedDocuments,
             timings);
+    }
+
+    private static bool TryCreateRepositoryNoOpSummary(
+        string repoRoot,
+        string configHash,
+        string repositoryStateFingerprint,
+        Stopwatch stopwatch,
+        Stopwatch discoveryStopwatch,
+        out IndexSummary summary)
+    {
+        summary = default!;
+        if (!TryReadCompatibleManifest(repoRoot, configHash, out var manifest)
+            || !string.Equals(manifest.RepositoryStateFingerprint, repositoryStateFingerprint, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        discoveryStopwatch.Stop();
+        stopwatch.Stop();
+        var timings = new IndexTimingSummary(discoveryStopwatch.ElapsedMilliseconds, 0, 0, 0, 0, stopwatch.ElapsedMilliseconds);
+        summary = NoOpSummary(repoRoot, manifest, stopwatch.Elapsed, timings);
+        return true;
+    }
+
+    private static bool TryCreateDiscoveryNoOpSummary(
+        string repoRoot,
+        string configHash,
+        string discoveryFingerprint,
+        Stopwatch stopwatch,
+        Stopwatch discoveryStopwatch,
+        out IndexSummary summary)
+    {
+        summary = default!;
+        if (!TryReadCompatibleManifest(repoRoot, configHash, out var manifest))
+        {
+            return false;
+        }
+
+        if (!string.Equals(manifest.DiscoveryFingerprint, discoveryFingerprint, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        discoveryStopwatch.Stop();
+        stopwatch.Stop();
+        var timings = new IndexTimingSummary(discoveryStopwatch.ElapsedMilliseconds, 0, 0, 0, 0, stopwatch.ElapsedMilliseconds);
+        summary = NoOpSummary(repoRoot, manifest, stopwatch.Elapsed, timings);
+        return true;
+    }
+
+    private static bool TryReadCompatibleManifest(string repoRoot, string configHash, out IndexManifest manifest)
+    {
+        manifest = default!;
+        if (!IndexStore.Exists(repoRoot))
+        {
+            return false;
+        }
+
+        try
+        {
+            manifest = IndexStore.ReadFastManifest(repoRoot);
+            return manifest.SchemaVersion == IndexManifest.CurrentSchemaVersion
+                   && string.Equals(manifest.ConfigHash, configHash, StringComparison.Ordinal);
+        }
+        catch (Exception ex) when (ex is IndexUnavailableException or IOException or InvalidDataException)
+        {
+            return false;
+        }
+    }
+
+    private static bool TryCreateNoOpSummary(
+        string repoRoot,
+        string configHash,
+        string workspaceHash,
+        string discoveryFingerprint,
+        Stopwatch stopwatch,
+        Stopwatch discoveryStopwatch,
+        out IndexSummary summary)
+    {
+        summary = default!;
+        if (!TryReadCompatibleManifest(repoRoot, configHash, out var manifest))
+        {
+            return false;
+        }
+
+        if (!string.Equals(manifest.WorkspaceInputsHash, workspaceHash, StringComparison.Ordinal)
+            || !string.Equals(manifest.DiscoveryFingerprint, discoveryFingerprint, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        discoveryStopwatch.Stop();
+        stopwatch.Stop();
+        var timings = new IndexTimingSummary(discoveryStopwatch.ElapsedMilliseconds, 0, 0, 0, 0, stopwatch.ElapsedMilliseconds);
+        summary = NoOpSummary(repoRoot, manifest, stopwatch.Elapsed, timings);
+        return true;
+    }
+
+    private static IndexSummary NoOpSummary(string repoRoot, IndexManifest manifest, TimeSpan duration, IndexTimingSummary timings)
+        => new(
+            repoRoot,
+            manifest.DocumentCount,
+            manifest.SymbolCount,
+            manifest.ReferenceCount,
+            manifest.TokenCount,
+            manifest.WarningCount,
+            duration,
+            FullRebuild: false,
+            Incremental: true,
+            DirtyDocuments: 0,
+            DeletedDocuments: 0,
+            UnchangedDocuments: manifest.DocumentCount,
+            timings);
+
+    private static string ComputeDiscoveryFingerprint(string repoRoot, IndexerConfig config)
+    {
+        var entries = RepositoryDiscovery.EnumerateCandidateFilesFromFileSystem(repoRoot, config)
+            .Select(file => $"{file.RelativePath}|{file.Length}|{file.LastWriteUtc.Ticks}");
+        return ConfigLoader.HashText(string.Join('\n', entries));
     }
 
     private static async Task<SemanticDirtyPlan> CreateSemanticDirtyPlanAsync(
@@ -605,6 +802,7 @@ public sealed class IndexBuilder
         List<TokenPosting> tokens,
         List<ProjectEntry> projects,
         IndexRunStats stats,
+        HashSet<string> dirtyDocumentIds,
         HashSet<string> fullTextIndexedPaths,
         CancellationToken cancellationToken)
     {
@@ -644,6 +842,10 @@ public sealed class IndexBuilder
             tokens.AddRange(batch.Tokens);
             stats.DirtyDocuments += batch.DirtyDocuments;
             stats.UnchangedDocuments += batch.UnchangedDocuments;
+            if (batch.DirtyDocuments > 0)
+            {
+                dirtyDocumentIds.UnionWith(batch.Documents.Select(document => document.DocumentId));
+            }
         }
 
         if (!config.IncludeGenerated)
@@ -812,7 +1014,7 @@ public sealed class IndexBuilder
         }
 
         var seenReferences = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var node in root.DescendantNodesAndSelf())
+        foreach (var node in ReferenceCandidateNodes(root))
         {
             var declared = IsDeclarationSyntax(node) ? semanticModel.GetDeclaredSymbol(node, cancellationToken) : null;
             var referenced = ReferencedSymbol(semanticModel, node, cancellationToken);
@@ -824,7 +1026,17 @@ public sealed class IndexBuilder
                 var sourceSpan = node.GetLocation().SourceSpan;
                 if (seenReferences.Add($"{symbolId}|{documentId}|{sourceSpan.Start}|{sourceSpan.Length}"))
                 {
-                    references.Add(ToReferenceEntry(referenced, symbolId, node.GetLocation(), documentId, projectId, relative, projectName, node));
+                    references.Add(ToReferenceEntry(
+                        referenced,
+                        symbolId,
+                        node.GetLocation(),
+                        documentId,
+                        projectId,
+                        relative,
+                        projectName,
+                        node,
+                        FindContainingSymbolId(node, semanticModel, localSymbolIds, cancellationToken),
+                        IsInvocationReference(node)));
                 }
             }
         }
@@ -1074,6 +1286,19 @@ public sealed class IndexBuilder
         var identity = RoslynRepoIndexer.Core.SymbolIdProvider.CreateIdentity(symbol, projectId, relativePath, cancellationToken: default);
         var fqn = DisplayName(symbol, SymbolDisplayFormat.FullyQualifiedFormat);
         var signature = DisplayName(symbol, SymbolDisplayFormat.CSharpErrorMessageFormat);
+        var baseTypeIds = symbol is INamedTypeSymbol { BaseType: { } baseType }
+            ? new[] { RelatedSymbolId(baseType, projectId, relativePath) }
+            : Array.Empty<string>();
+        var interfaceTypeIds = symbol is INamedTypeSymbol namedType
+            ? namedType.Interfaces.Select(type => RelatedSymbolId(type, projectId, relativePath)).Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToArray()
+            : Array.Empty<string>();
+        var overridden = symbol switch
+        {
+            IMethodSymbol { OverriddenMethod: { } method } => RelatedSymbolId(method, projectId, relativePath),
+            IPropertySymbol { OverriddenProperty: { } property } => RelatedSymbolId(property, projectId, relativePath),
+            IEventSymbol { OverriddenEvent: { } @event } => RelatedSymbolId(@event, projectId, relativePath),
+            _ => null
+        };
         return new SymbolEntry(
             identity.SymbolId,
             documentId,
@@ -1098,10 +1323,53 @@ public sealed class IndexBuilder
             ParameterTypes(symbol),
             ReturnType(symbol),
             projectName,
-            identity.SymbolKey);
+            identity.SymbolKey,
+            baseTypeIds,
+            interfaceTypeIds,
+            overridden);
     }
 
-    public static ReferenceEntry ToReferenceEntry(ISymbol symbol, string symbolId, Location location, string documentId, string? projectId, string relativePath, string? projectName, SyntaxNode node)
+    private static async Task<ProjectIndexBatch> IndexProjectIsolatedAsync(
+        string repoRoot,
+        Project project,
+        IndexerConfig config,
+        IndexSnapshot? oldSnapshot,
+        SemanticDirtyPlan semanticDirtyPlan,
+        HashSet<string> fullTextIndexedPaths,
+        CancellationToken cancellationToken)
+    {
+        var documents = new List<DocumentEntry>();
+        var symbols = new List<SymbolEntry>();
+        var references = new List<ReferenceEntry>();
+        var tokens = new List<TokenPosting>();
+        var projects = new List<ProjectEntry>();
+        var stats = new IndexRunStats();
+        var dirtyDocumentIds = new HashSet<string>(StringComparer.Ordinal);
+        await IndexProjectAsync(repoRoot, project, config, oldSnapshot, semanticDirtyPlan, documents, symbols, references, tokens, projects, stats, dirtyDocumentIds, fullTextIndexedPaths, cancellationToken).ConfigureAwait(false);
+        return new ProjectIndexBatch(documents, symbols, references, tokens, projects, stats.DirtyDocuments, stats.UnchangedDocuments, dirtyDocumentIds);
+    }
+
+    private static void MergeProjectBatch(
+        ProjectIndexBatch batch,
+        List<DocumentEntry> documents,
+        List<SymbolEntry> symbols,
+        List<ReferenceEntry> references,
+        List<TokenPosting> tokens,
+        List<ProjectEntry> projects,
+        IndexRunStats stats,
+        HashSet<string> dirtyDocumentIds)
+    {
+        documents.AddRange(batch.Documents);
+        symbols.AddRange(batch.Symbols);
+        references.AddRange(batch.References);
+        tokens.AddRange(batch.Tokens);
+        projects.AddRange(batch.Projects);
+        stats.DirtyDocuments += batch.DirtyDocuments;
+        stats.UnchangedDocuments += batch.UnchangedDocuments;
+        dirtyDocumentIds.UnionWith(batch.DirtyDocumentIds);
+    }
+
+    public static ReferenceEntry ToReferenceEntry(ISymbol symbol, string symbolId, Location location, string documentId, string? projectId, string relativePath, string? projectName, SyntaxNode node, string? containingSymbolId = null, bool isInvocation = false)
     {
         var lineSpan = location.GetLineSpan();
         var span = lineSpan.StartLinePosition;
@@ -1121,8 +1389,34 @@ public sealed class IndexBuilder
             sourceSpan.Start,
             sourceSpan.Length,
             projectName,
-            ReferenceKind(node, symbol));
+            ReferenceKind(node, symbol),
+            containingSymbolId,
+            isInvocation);
     }
+
+    internal static string? FindContainingSymbolId(
+        SyntaxNode node,
+        SemanticModel semanticModel,
+        Dictionary<ISymbol, string> localSymbolIds,
+        CancellationToken cancellationToken)
+    {
+        foreach (var ancestor in node.AncestorsAndSelf().Where(IsDeclarationSyntax))
+        {
+            var declared = semanticModel.GetDeclaredSymbol(ancestor, cancellationToken);
+            if (declared is not null && TryGetLocalSymbolId(localSymbolIds, declared, out var symbolId))
+            {
+                return symbolId;
+            }
+        }
+
+        return null;
+    }
+
+    internal static bool IsInvocationReference(SyntaxNode node)
+        => node.AncestorsAndSelf().Any(ancestor => ancestor is InvocationExpressionSyntax or ObjectCreationExpressionSyntax or ImplicitObjectCreationExpressionSyntax);
+
+    private static string RelatedSymbolId(ISymbol symbol, string? projectId, string relativePath)
+        => SymbolIdProvider.CreateIdentity(symbol.OriginalDefinition, projectId, relativePath, CancellationToken.None).SymbolId;
 
     public static bool IsIndexableDeclaration(ISymbol symbol)
         => symbol.Kind is SymbolKind.NamedType or SymbolKind.Method or SymbolKind.Property or SymbolKind.Field or SymbolKind.Event or SymbolKind.Parameter or SymbolKind.Local or SymbolKind.TypeParameter or SymbolKind.Namespace;
@@ -1394,6 +1688,16 @@ public sealed class IndexBuilder
         int DirtyDocuments,
         int UnchangedDocuments);
 
+    private sealed record ProjectIndexBatch(
+        IReadOnlyList<DocumentEntry> Documents,
+        IReadOnlyList<SymbolEntry> Symbols,
+        IReadOnlyList<ReferenceEntry> References,
+        IReadOnlyList<TokenPosting> Tokens,
+        IReadOnlyList<ProjectEntry> Projects,
+        int DirtyDocuments,
+        int UnchangedDocuments,
+        IReadOnlySet<string> DirtyDocumentIds);
+
     private sealed record SemanticDirtyPlan(bool ForceAllCSharpDocuments, HashSet<string> ProjectNames)
     {
         public static SemanticDirtyPlan Empty { get; } = new(false, new HashSet<string>(StringComparer.Ordinal));
@@ -1471,7 +1775,7 @@ public sealed class ExactReferenceService
 
 public sealed class DoctorService
 {
-    public async Task<DoctorSummary> RunAsync(string startPath, IndexerConfig config, CancellationToken cancellationToken = default)
+    public async Task<DoctorSummary> RunAsync(string startPath, IndexerConfig config, bool deep = false, CancellationToken cancellationToken = default)
     {
         var root = RepositoryDiscovery.FindRoot(startPath);
         var checks = new List<DoctorCheck>
@@ -1492,7 +1796,7 @@ public sealed class DoctorService
             checks.Add(new DoctorCheck("msbuild-locator", "fail", "error", ex.Message));
         }
 
-        if (inputs.Count > 0)
+        if (deep && inputs.Count > 0)
         {
             using var workspace = IndexBuilder.CreateWorkspace();
             var warnings = new List<string>();
@@ -1517,6 +1821,10 @@ public sealed class DoctorService
             {
                 checks.Add(new DoctorCheck("workspace-load", "fail", "warning", ex.Message));
             }
+        }
+        else if (!deep)
+        {
+            checks.Add(new DoctorCheck("workspace-load", "skipped", "info", "Quick mode does not open MSBuildWorkspace."));
         }
 
         var status = IndexStore.GetStatus(root.RootPath);

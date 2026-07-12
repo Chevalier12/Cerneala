@@ -35,7 +35,8 @@ Generated from `.`.
 |   |   |-- 2026-07-10-window-windowsdx-migration.md
 |   |   |-- 2026-07-11-background-and-borderbrush-brush-migration.md
 |   |   |-- 2026-07-11-brush-types-and-rendering.md
-|   |   +-- 2026-07-11-foreground-brush-migration.md
+|   |   |-- 2026-07-11-foreground-brush-migration.md
+|   |   +-- 2026-07-12-roslyn-indexer-agent-performance-upgrades.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -254,6 +255,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.ContentPresenter.ReferenceContentEqualityComparer.md
 |   |   |   |-- Cerneala.UI.Controls.Control.Background.md
 |   |   |   |-- Cerneala.UI.Controls.Control.BorderBrush.md
+|   |   |   |-- Cerneala.UI.Controls.Control.Foreground.md
 |   |   |   |-- Cerneala.UI.Controls.Control.md
 |   |   |   |-- Cerneala.UI.Controls.ControlTextFont.md
 |   |   |   |-- Cerneala.UI.Controls.Decorator.md
@@ -865,7 +867,137 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Theming.ThemeKey_T_.md
 |   |   |   |-- Cerneala.UI.Theming.ThemePalette.md
 |   |   |   |-- Cerneala.UI.Theming.ThemeProvider.md
-|   |   |   +-- Cerneala.UI.Theming.ThemeResource_T_.md
+|   |   |   |-- Cerneala.UI.Theming.ThemeResource_T_.md
+|   |   |   |-- Ri.Mcp.ContinuationTokenCodec.md
+|   |   |   |-- Ri.Mcp.ContinuationTokenException.md
+|   |   |   |-- Ri.Mcp.RepositoryBinding.md
+|   |   |   |-- Ri.Mcp.RoslynBatchFailureMode.md
+|   |   |   |-- Ri.Mcp.RoslynBatchOperation.md
+|   |   |   |-- Ri.Mcp.RoslynBatchOperationResult.md
+|   |   |   |-- Ri.Mcp.RoslynBatchRequest.md
+|   |   |   |-- Ri.Mcp.RoslynBatchResult.md
+|   |   |   |-- Ri.Mcp.RoslynCallGraphRequest.md
+|   |   |   |-- Ri.Mcp.RoslynCapabilities.md
+|   |   |   |-- Ri.Mcp.RoslynChangesRequest.md
+|   |   |   |-- Ri.Mcp.RoslynContextRequest.md
+|   |   |   |-- Ri.Mcp.RoslynGotoRequest.md
+|   |   |   |-- Ri.Mcp.RoslynImpactRequest.md
+|   |   |   |-- Ri.Mcp.RoslynIndexRequest.md
+|   |   |   |-- Ri.Mcp.RoslynInspectRequest.md
+|   |   |   |-- Ri.Mcp.RoslynMcpCacheInfo.md
+|   |   |   |-- Ri.Mcp.RoslynMcpError.md
+|   |   |   |-- Ri.Mcp.RoslynMcpToolCatalog.md
+|   |   |   |-- Ri.Mcp.RoslynMcpToolDefinition.md
+|   |   |   |-- Ri.Mcp.RoslynMcpToolResult.md
+|   |   |   |-- Ri.Mcp.RoslynMcpTools.md
+|   |   |   |-- Ri.Mcp.RoslynOutlineRequest.md
+|   |   |   |-- Ri.Mcp.RoslynPReadRequest.md
+|   |   |   |-- Ri.Mcp.RoslynProfileFileSize.md
+|   |   |   |-- Ri.Mcp.RoslynProfileRequest.md
+|   |   |   |-- Ri.Mcp.RoslynProfileResult.md
+|   |   |   |-- Ri.Mcp.RoslynProfileTerm.md
+|   |   |   |-- Ri.Mcp.RoslynReadRequest.md
+|   |   |   |-- Ri.Mcp.RoslynRefsRequest.md
+|   |   |   |-- Ri.Mcp.RoslynRepoRequest.md
+|   |   |   |-- Ri.Mcp.RoslynResponseProfile.md
+|   |   |   |-- Ri.Mcp.RoslynSearchRequest.md
+|   |   |   |-- Ri.Mcp.RoslynSuggestRequest.md
+|   |   |   |-- Ri.Mcp.RoslynTestsForRequest.md
+|   |   |   |-- RoslynRepoIndexer.Core.CallGraphDirection.md
+|   |   |   |-- RoslynRepoIndexer.Core.CallGraphEdge.md
+|   |   |   |-- RoslynRepoIndexer.Core.CallGraphNode.md
+|   |   |   |-- RoslynRepoIndexer.Core.CallGraphResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.CandidateFile.md
+|   |   |   |-- RoslynRepoIndexer.Core.ChangeComparison.md
+|   |   |   |-- RoslynRepoIndexer.Core.ChangedFile.md
+|   |   |   |-- RoslynRepoIndexer.Core.ChangedSymbol.md
+|   |   |   |-- RoslynRepoIndexer.Core.CommandResponse_T_.md
+|   |   |   |-- RoslynRepoIndexer.Core.CommandResponse.md
+|   |   |   |-- RoslynRepoIndexer.Core.ConfigLoadResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.ContextResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.DiagnosticsCollector.md
+|   |   |   |-- RoslynRepoIndexer.Core.DoctorCheck.md
+|   |   |   |-- RoslynRepoIndexer.Core.DoctorService.md
+|   |   |   |-- RoslynRepoIndexer.Core.DoctorSummary.md
+|   |   |   |-- RoslynRepoIndexer.Core.DocumentEntry.md
+|   |   |   |-- RoslynRepoIndexer.Core.DocumentState.md
+|   |   |   |-- RoslynRepoIndexer.Core.ExactReferenceService.md
+|   |   |   |-- RoslynRepoIndexer.Core.FileReadCommandRequest.md
+|   |   |   |-- RoslynRepoIndexer.Core.HumanOutputWriter.md
+|   |   |   |-- RoslynRepoIndexer.Core.ImpactLink.md
+|   |   |   |-- RoslynRepoIndexer.Core.ImpactResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexBuilder.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexCommandRequest.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexDiagnostics.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexGenerationStamp.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexManifest.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexReader.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexSnapshot.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexStatus.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexStore.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexSummary.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexTimingSummary.md
+|   |   |   |-- RoslynRepoIndexer.Core.IndexUnavailableException.md
+|   |   |   |-- RoslynRepoIndexer.Core.InspectInclude.md
+|   |   |   |-- RoslynRepoIndexer.Core.InspectResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.IRoslynIndexerApplicationService.md
+|   |   |   |-- RoslynRepoIndexer.Core.JsonOutputWriter.md
+|   |   |   |-- RoslynRepoIndexer.Core.LoadedWorkspace.md
+|   |   |   |-- RoslynRepoIndexer.Core.MSBuildRegistration.md
+|   |   |   |-- RoslynRepoIndexer.Core.NoCSharpDocumentsException.md
+|   |   |   |-- RoslynRepoIndexer.Core.OutlineItem.md
+|   |   |   |-- RoslynRepoIndexer.Core.OutlineResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.ParsedQuery.md
+|   |   |   |-- RoslynRepoIndexer.Core.PartialFileReadCommandRequest.md
+|   |   |   |-- RoslynRepoIndexer.Core.PathCommandRequest.md
+|   |   |   |-- RoslynRepoIndexer.Core.ProjectEntry.md
+|   |   |   |-- RoslynRepoIndexer.Core.QueryIndex.md
+|   |   |   |-- RoslynRepoIndexer.Core.QuerySuggestion.md
+|   |   |   |-- RoslynRepoIndexer.Core.ReferenceCollector.md
+|   |   |   |-- RoslynRepoIndexer.Core.ReferenceEntry.md
+|   |   |   |-- RoslynRepoIndexer.Core.RefsCommandRequest.md
+|   |   |   |-- RoslynRepoIndexer.Core.RepositoryFileReadException.md
+|   |   |   |-- RoslynRepoIndexer.Core.RepositoryFileReadResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.RepositoryIndexSession.md
+|   |   |   |-- RoslynRepoIndexer.Core.RepositoryPartialFileReadResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.RepositoryRoot.md
+|   |   |   |-- RoslynRepoIndexer.Core.RepositoryRootKind.md
+|   |   |   |-- RoslynRepoIndexer.Core.RepositorySessionMetrics.md
+|   |   |   |-- RoslynRepoIndexer.Core.RepositorySessionRegistry.md
+|   |   |   |-- RoslynRepoIndexer.Core.RepositoryWorkspaceSession.md
+|   |   |   |-- RoslynRepoIndexer.Core.RoslynIndexerApplicationService.md
+|   |   |   |-- RoslynRepoIndexer.Core.SearchCommandRequest.md
+|   |   |   |-- RoslynRepoIndexer.Core.SearchExecution.md
+|   |   |   |-- RoslynRepoIndexer.Core.SearchMode.md
+|   |   |   |-- RoslynRepoIndexer.Core.SearchRequest.md
+|   |   |   |-- RoslynRepoIndexer.Core.SearchResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.SearchScore.md
+|   |   |   |-- RoslynRepoIndexer.Core.SearchScorer.md
+|   |   |   |-- RoslynRepoIndexer.Core.SearchService.md
+|   |   |   |-- RoslynRepoIndexer.Core.SegmentPersistenceSummary.md
+|   |   |   |-- RoslynRepoIndexer.Core.SemanticChangeKind.md
+|   |   |   |-- RoslynRepoIndexer.Core.SemanticChangeService.md
+|   |   |   |-- RoslynRepoIndexer.Core.SemanticChangesResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.SemanticQueryService.md
+|   |   |   |-- RoslynRepoIndexer.Core.SourceSpanSummary.md
+|   |   |   |-- RoslynRepoIndexer.Core.StatusSummary.md
+|   |   |   |-- RoslynRepoIndexer.Core.SuggestCommandRequest.md
+|   |   |   |-- RoslynRepoIndexer.Core.SuggestExecutedResult.md
+|   |   |   |-- RoslynRepoIndexer.Core.SuggestExecutionResponse.md
+|   |   |   |-- RoslynRepoIndexer.Core.SuggestionService.md
+|   |   |   |-- RoslynRepoIndexer.Core.SymbolCollector.md
+|   |   |   |-- RoslynRepoIndexer.Core.SymbolEntry.md
+|   |   |   |-- RoslynRepoIndexer.Core.SymbolIdProvider.md
+|   |   |   |-- RoslynRepoIndexer.Core.SymbolQueryCommandRequest.md
+|   |   |   |-- RoslynRepoIndexer.Core.SymbolQueryException.md
+|   |   |   |-- RoslynRepoIndexer.Core.SymbolSummary.md
+|   |   |   |-- RoslynRepoIndexer.Core.TestCandidate.md
+|   |   |   |-- RoslynRepoIndexer.Core.TextIndexer.md
+|   |   |   |-- RoslynRepoIndexer.Core.TokenPosting.md
+|   |   |   |-- RoslynRepoIndexer.Core.TokenValue.md
+|   |   |   |-- RoslynRepoIndexer.Core.WorkspaceInput.md
+|   |   |   |-- RoslynRepoIndexer.Core.WorkspaceLoader.md
+|   |   |   +-- RoslynRepoIndexer.Core.WorkspaceLoadingException.md
 |   |   +-- manifest.json
 |   |-- .nojekyll
 |   |-- documentation.html
@@ -1252,8 +1384,16 @@ Generated from `.`.
 |       +-- WindowsDxSmokeApplication.cs
 |-- Tools/
 |   |-- RoslynRepoIndexer/
+|   |   |-- benchmarks/
+|   |   |   |-- RoslynRepoIndexer.Benchmarks/
+|   |   |   |   |-- IndexerBenchmarks.cs
+|   |   |   |   |-- Program.cs
+|   |   |   |   +-- RoslynRepoIndexer.Benchmarks.csproj
+|   |   |   |-- baseline-2026-07-12.json
+|   |   |   +-- README.md
 |   |   |-- src/
 |   |   |   |-- Ri.Mcp/
+|   |   |   |   |-- ContinuationTokenCodec.cs
 |   |   |   |   |-- Program.cs
 |   |   |   |   |-- Ri.Mcp.csproj
 |   |   |   |   |-- RoslynMcpContracts.cs
@@ -1263,22 +1403,29 @@ Generated from `.`.
 |   |   |   |   |-- Program.cs
 |   |   |   |   +-- RoslynRepoIndexer.Cli.csproj
 |   |   |   +-- RoslynRepoIndexer.Core/
+|   |   |       |-- BinaryIndexCodec.cs
 |   |   |       |-- Configuration.cs
 |   |   |       |-- Discovery.cs
 |   |   |       |-- IndexStore.cs
 |   |   |       |-- Models.cs
 |   |   |       |-- RepositoryFileReader.cs
+|   |   |       |-- RepositorySessions.cs
 |   |   |       |-- RoslynIndexerApplicationService.cs
 |   |   |       |-- RoslynIndexing.cs
 |   |   |       |-- RoslynRepoIndexer.Core.csproj
 |   |   |       |-- Search.cs
+|   |   |       |-- SegmentedIndexCodec.cs
+|   |   |       |-- SemanticChanges.cs
+|   |   |       |-- SemanticQueries.cs
 |   |   |       +-- TextUtilities.cs
 |   |   |-- tests/
 |   |   |   +-- RoslynRepoIndexer.Tests/
 |   |   |       |-- ApplicationServiceTests.cs
 |   |   |       |-- ArchitectureWrapperTests.cs
 |   |   |       |-- AssemblyInfo.cs
+|   |   |       |-- BinaryStorageTests.cs
 |   |   |       |-- CliBehaviorTests.cs
+|   |   |       |-- ContinuationTokenTests.cs
 |   |   |       |-- CoreBehaviorTests.cs
 |   |   |       |-- CrossPlatformCompatibilityTests.cs
 |   |   |       |-- FileReadCliTests.cs
@@ -1287,10 +1434,13 @@ Generated from `.`.
 |   |   |       |-- LinkedGeneratedIndexingTests.cs
 |   |   |       |-- McpBehaviorTests.cs
 |   |   |       |-- PerformanceSmokeTests.cs
+|   |   |       |-- RepositorySessionTests.cs
 |   |   |       |-- RoslynMcpTests.cs
 |   |   |       |-- RoslynRepoIndexer.Tests.csproj
 |   |   |       |-- RoslynSymbolIntegrationTests.cs
 |   |   |       |-- SearchScorerTests.cs
+|   |   |       |-- SemanticChangesTests.cs
+|   |   |       |-- SemanticQueryTests.cs
 |   |   |       +-- TextIndexingTests.cs
 |   |   |-- README.md
 |   |   |-- RoslynRepoIndexer.sln

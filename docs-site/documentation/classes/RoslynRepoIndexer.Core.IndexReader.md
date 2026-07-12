@@ -1,0 +1,34 @@
+# IndexReader Class
+
+## Definition
+Namespace: `RoslynRepoIndexer.Core`
+
+Assembly/Project: `RoslynRepoIndexer.Core`
+
+Source: `Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynIndexing.cs`
+
+Represents the public IndexReader contract used by Roslyn Repo Indexer.
+
+```csharp
+public sealed class IndexReader
+```
+
+## Remarks
+
+This API is part of the local, deterministic index or MCP contract. It performs no network access. Inputs and outputs are scoped to the selected repository and current immutable index generation where applicable.
+
+## Constructors
+
+| Signature | Description |
+| --- | --- |
+| `IndexReader()` | Initializes a new instance. |
+
+## Methods
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `Read(string repoRoot)` | `IndexSnapshot` | Executes the `Read` operation. |
+
+## Applies to
+
+Roslyn Repo Indexer schema 6 and MCP contract version 2.

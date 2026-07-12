@@ -711,15 +711,43 @@ public sealed class RoslynSymbolIntegrationTests
 
     private static IEnumerable<JsonElement> ReadJsonLines(string path)
     {
-        foreach (var line in File.ReadLines(path))
+        if (File.Exists(path))
         {
-            using var document = JsonDocument.Parse(line);
-            yield return document.RootElement.Clone();
+            foreach (var line in File.ReadLines(path).Where(line => !string.IsNullOrWhiteSpace(line)))
+            {
+                using var document = JsonDocument.Parse(line);
+                yield return document.RootElement.Clone();
+            }
+            yield break;
+        }
+
+        var repoRoot = FindRepositoryRootFromIndexPath(path);
+        var snapshot = IndexStore.Read(repoRoot);
+        IEnumerable<object> rows = Path.GetFileName(path) switch
+        {
+            "documents.jsonl" => snapshot.Documents.Cast<object>(),
+            "symbols.jsonl" => snapshot.Symbols.Cast<object>(),
+            "references.jsonl" => snapshot.References.Cast<object>(),
+            "tokens.jsonl" => snapshot.Tokens.Cast<object>(),
+            _ => throw new InvalidOperationException($"Unknown index table '{Path.GetFileName(path)}'.")
+        };
+        foreach (var row in rows)
+        {
+            yield return JsonSerializer.SerializeToElement(row, JsonOptions.Default);
         }
     }
 
     private static string IndexFile(string root, string fileName)
-        => Path.Combine(root, ".roslyn-index", "v1", fileName);
+        => Path.Combine(IndexStore.GetVersionDirectory(root), fileName);
+
+    private static string FindRepositoryRootFromIndexPath(string path)
+    {
+        for (var directory = Directory.GetParent(path); directory is not null; directory = directory.Parent)
+        {
+            if (directory.Name == IndexStore.IndexDirectoryName && directory.Parent is not null) return directory.Parent.FullName;
+        }
+        throw new InvalidOperationException("Missing repository root.");
+    }
 
     private static string ExpectedStableId(string symbolId, string documentId, int spanStart, int spanLength)
     {

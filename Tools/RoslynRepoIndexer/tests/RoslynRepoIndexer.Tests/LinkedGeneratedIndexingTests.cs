@@ -88,7 +88,11 @@ public sealed class LinkedGeneratedIndexingTests
         var defaultDocuments = ReadJsonLines(IndexFile(repo.Root, "documents.jsonl")).ToArray();
         Assert.DoesNotContain(defaultDocuments, document => document.GetProperty("relativePath").GetString() == "generated/GeneratedCustomer.g.cs");
 
-        await new IndexBuilder().BuildAsync(repo.Root, force: true, config with { IncludeGenerated = true });
+        var generatedSummary = await new IndexBuilder().BuildAsync(repo.Root, force: true, config with { IncludeGenerated = true });
+        var generatedSnapshot = IndexStore.Read(repo.Root);
+
+        Assert.Equal(generatedSummary.Documents, generatedSnapshot.Documents.Count);
+        Assert.True(generatedSummary.Documents > defaultDocuments.Length);
 
         var generatedDocuments = ReadJsonLines(IndexFile(repo.Root, "documents.jsonl"))
             .Where(document => document.GetProperty("relativePath").GetString() == "generated/GeneratedCustomer.g.cs")
@@ -282,13 +286,41 @@ public sealed class LinkedGeneratedIndexingTests
 
     private static IEnumerable<JsonElement> ReadJsonLines(string path)
     {
-        foreach (var line in File.ReadLines(path))
+        if (File.Exists(path))
         {
-            using var document = JsonDocument.Parse(line);
-            yield return document.RootElement.Clone();
+            foreach (var line in File.ReadLines(path).Where(line => !string.IsNullOrWhiteSpace(line)))
+            {
+                using var document = JsonDocument.Parse(line);
+                yield return document.RootElement.Clone();
+            }
+            yield break;
+        }
+
+        var repoRoot = FindRepositoryRootFromIndexPath(path);
+        var snapshot = IndexStore.Read(repoRoot);
+        IEnumerable<object> rows = Path.GetFileName(path) switch
+        {
+            "documents.jsonl" => snapshot.Documents.Cast<object>(),
+            "symbols.jsonl" => snapshot.Symbols.Cast<object>(),
+            "references.jsonl" => snapshot.References.Cast<object>(),
+            "tokens.jsonl" => snapshot.Tokens.Cast<object>(),
+            _ => throw new InvalidOperationException($"Unknown index table '{Path.GetFileName(path)}'.")
+        };
+        foreach (var row in rows)
+        {
+            yield return JsonSerializer.SerializeToElement(row, JsonOptions.Default);
         }
     }
 
     private static string IndexFile(string root, string fileName)
-        => Path.Combine(root, ".roslyn-index", "v1", fileName);
+        => Path.Combine(IndexStore.GetVersionDirectory(root), fileName);
+
+    private static string FindRepositoryRootFromIndexPath(string path)
+    {
+        for (var directory = Directory.GetParent(path); directory is not null; directory = directory.Parent)
+        {
+            if (directory.Name == IndexStore.IndexDirectoryName && directory.Parent is not null) return directory.Parent.FullName;
+        }
+        throw new InvalidOperationException("Missing repository root.");
+    }
 }

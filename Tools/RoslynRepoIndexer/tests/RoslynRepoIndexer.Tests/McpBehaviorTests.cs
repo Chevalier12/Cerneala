@@ -21,7 +21,17 @@ public sealed class McpBehaviorTests
                 "roslyn_pread",
                 "roslyn_goto",
                 "roslyn_refs",
-                "roslyn_suggest"
+                "roslyn_outline",
+                "roslyn_inspect",
+                "roslyn_context",
+                "roslyn_callgraph",
+                "roslyn_impact",
+                "roslyn_tests_for",
+                "roslyn_batch",
+                "roslyn_changes",
+                "roslyn_profile",
+                "roslyn_suggest",
+                "roslyn_capabilities"
             },
             names);
     }
@@ -45,7 +55,7 @@ public sealed class McpBehaviorTests
 
         Assert.False(result.Success);
         Assert.Equal("roslyn_search", result.Tool);
-        Assert.Contains("query", result.Errors.Single(), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("query", result.Errors.Single().Message, StringComparison.OrdinalIgnoreCase);
         Assert.NotNull(result.Warnings);
     }
 
@@ -65,7 +75,7 @@ public sealed class McpBehaviorTests
             Assert.False(result.Success);
             Assert.Equal("roslyn_read", result.Tool);
             Assert.Equal(repo.Root, result.RepoRoot);
-            Assert.Contains("outside the repository root", result.Errors.Single(), StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("outside the repository root", result.Errors.Single().Message, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {

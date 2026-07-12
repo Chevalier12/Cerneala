@@ -7,7 +7,7 @@ public enum SearchMode { All, Symbol, Text, File, Reference }
 public enum IndexStatus { Missing, Valid, Stale, Corrupt, SchemaIncompatible }
 
 public sealed record RepositoryRoot(string RootPath, RepositoryRootKind Kind);
-public sealed record CandidateFile(string FullPath, string RelativePath, long Length);
+public sealed record CandidateFile(string FullPath, string RelativePath, long Length, DateTime LastWriteUtc = default);
 public sealed record ConfigLoadResult(IndexerConfig Config, IReadOnlyList<string> Warnings);
 public sealed record WorkspaceInput(string Path, string Kind);
 public sealed record TokenValue(string Value, int Line, int Column);
@@ -67,7 +67,14 @@ public sealed record SymbolEntry(
     IReadOnlyList<string> ParameterTypes,
     string? ReturnType,
     string? ProjectName,
-    string? SymbolKey);
+    string? SymbolKey,
+    IReadOnlyList<string>? BaseTypeIds = null,
+    IReadOnlyList<string>? InterfaceTypeIds = null,
+    string? OverriddenSymbolId = null)
+{
+    public IReadOnlyList<string> BaseTypeIds { get; init; } = BaseTypeIds ?? Array.Empty<string>();
+    public IReadOnlyList<string> InterfaceTypeIds { get; init; } = InterfaceTypeIds ?? Array.Empty<string>();
+}
 
 public sealed record ReferenceEntry(
     string ReferenceId,
@@ -83,7 +90,9 @@ public sealed record ReferenceEntry(
     int SpanStart,
     int SpanLength,
     string? ProjectName,
-    string ReferenceKind);
+    string ReferenceKind,
+    string? ContainingSymbolId = null,
+    bool IsInvocation = false);
 
 public sealed record TokenPosting(string Token, string Path, int Line, int Column, string Field, string Weight, string? ProjectName, string? DocumentId = null);
 
@@ -170,15 +179,19 @@ public sealed record IndexSnapshot(
 
 public sealed record IndexManifest
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 6;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
+    public string GenerationId { get; init; } = string.Empty;
     public string ToolVersion { get; init; } = "0.1.0";
+    public string StorageFormat { get; init; } = "segmented-binary-v1";
     public string RepoRoot { get; init; } = string.Empty;
     public DateTimeOffset CreatedUtc { get; init; }
     public DateTimeOffset UpdatedUtc { get; init; }
     public string ConfigHash { get; init; } = string.Empty;
     public string WorkspaceInputsHash { get; init; } = string.Empty;
+    public string DiscoveryFingerprint { get; init; } = string.Empty;
+    public string RepositoryStateFingerprint { get; init; } = string.Empty;
     public IReadOnlyList<WorkspaceInput> WorkspaceInputs { get; init; } = Array.Empty<WorkspaceInput>();
     public IReadOnlyDictionary<string, DocumentState> DocumentsByRelativePath { get; init; } = new Dictionary<string, DocumentState>(StringComparer.Ordinal);
     public int DocumentCount { get; init; }
@@ -186,6 +199,10 @@ public sealed record IndexManifest
     public int ReferenceCount { get; init; }
     public int TokenCount { get; init; }
     public int WarningCount { get; init; }
+    public int SegmentCount { get; init; }
+    public int SegmentsWritten { get; init; }
+    public int SegmentsReused { get; init; }
+    public long SegmentBytes { get; init; }
     public IReadOnlyList<string> RecentWarnings { get; init; } = Array.Empty<string>();
     public IndexTimingSummary Timings { get; init; } = new(0, 0, 0, 0, 0, 0);
 
@@ -194,6 +211,7 @@ public sealed record IndexManifest
         var now = DateTimeOffset.UtcNow;
         return new IndexManifest
         {
+            GenerationId = Guid.NewGuid().ToString("N"),
             RepoRoot = repoRoot,
             CreatedUtc = now,
             UpdatedUtc = now,
@@ -312,6 +330,8 @@ public sealed record StatusSummary(IndexStatus Status, string? RepoRoot, int Sch
         IndexStatus.SchemaIncompatible => "schema-incompatible",
         _ => Status.ToString().ToLowerInvariant()
     };
+    public string SessionState { get; init; } = "not-loaded";
+    public string WorkspaceState { get; init; } = "not-loaded";
 }
 public sealed record DoctorCheck(string Name, string Status, string Severity, string Message, IReadOnlyDictionary<string, string>? Details = null)
 {

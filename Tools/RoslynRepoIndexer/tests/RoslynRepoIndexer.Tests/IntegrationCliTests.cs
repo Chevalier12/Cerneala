@@ -63,7 +63,7 @@ public sealed class IntegrationCliTests
         Assert.Equal("reference", executedResults[0].GetProperty("suggestion").GetProperty("mode").GetString());
         Assert.NotEmpty(executedResults[0].GetProperty("results").EnumerateArray());
         Assert.All(executedResults, result => Assert.NotEmpty(result.GetProperty("results").EnumerateArray()));
-        Assert.False(Directory.Exists(Path.Combine(repo.Root, ".roslyn-index", "v1", "exact-refs-cache")));
+        Assert.False(Directory.Exists(IndexStore.GetExactReferenceCacheDirectory(repo.Root)));
 
         Assert.Contains("executedResults", executedHuman.Stdout, StringComparison.Ordinal);
         Assert.Contains("ri refs GetCustomerAsync", executedHuman.Stdout, StringComparison.Ordinal);
@@ -77,7 +77,12 @@ public sealed class IntegrationCliTests
         await CreateProjectAsync(repo.Root);
 
         var first = await RunCliAsync(new[] { "index", ".", "--json" }, repo.Root);
+        var indexFiles = Directory.GetFiles(IndexStore.GetVersionDirectory(repo.Root));
+        var writeTimesBeforeNoOp = indexFiles.ToDictionary(path => path, File.GetLastWriteTimeUtc, StringComparer.Ordinal);
         var second = await RunCliAsync(new[] { "index", ".", "--json" }, repo.Root);
+        var writeTimesAfterNoOp = indexFiles.ToDictionary(path => path, File.GetLastWriteTimeUtc, StringComparer.Ordinal);
+        var segmentFilesBeforeBodyChange = Directory.GetFiles(Path.Combine(IndexStore.GetIndexDirectory(repo.Root), "segments"), "*.bin")
+            .ToHashSet(StringComparer.Ordinal);
         await File.WriteAllTextAsync(Path.Combine(repo.Root, "CustomerService.cs"), """
             namespace My.App.Services;
 
@@ -90,6 +95,9 @@ public sealed class IntegrationCliTests
             }
             """);
         var bodyOnly = await RunCliAsync(new[] { "index", ".", "--json" }, repo.Root);
+        var bodyOnlyManifest = IndexStore.ReadManifest(repo.Root);
+        var segmentFilesAfterBodyChange = Directory.GetFiles(Path.Combine(IndexStore.GetIndexDirectory(repo.Root), "segments"), "*.bin")
+            .ToHashSet(StringComparer.Ordinal);
         File.Delete(Path.Combine(repo.Root, "CustomerService.cs"));
         var deleted = await RunCliAsync(new[] { "index", ".", "--json" }, repo.Root);
         var searchDeleted = await RunCliAsync(new[] { "search", "CustomerService", "--json" }, repo.Root);
@@ -105,7 +113,12 @@ public sealed class IntegrationCliTests
         Assert.False(secondJson.RootElement.GetProperty("data").GetProperty("fullRebuild").GetBoolean());
         Assert.True(secondJson.RootElement.GetProperty("data").GetProperty("incremental").GetBoolean());
         Assert.Equal(0, secondJson.RootElement.GetProperty("data").GetProperty("dirtyDocuments").GetInt32());
+        Assert.Equal(0, secondJson.RootElement.GetProperty("data").GetProperty("timings").GetProperty("workspaceLoadMs").GetInt64());
+        Assert.Equal(writeTimesBeforeNoOp, writeTimesAfterNoOp);
         Assert.Equal(1, bodyOnlyJson.RootElement.GetProperty("data").GetProperty("dirtyDocuments").GetInt32());
+        Assert.Equal(1, bodyOnlyManifest.SegmentsWritten);
+        Assert.True(bodyOnlyManifest.SegmentsReused >= 1);
+        Assert.Single(segmentFilesAfterBodyChange.Except(segmentFilesBeforeBodyChange));
         Assert.Equal(1, deletedJson.RootElement.GetProperty("data").GetProperty("deletedDocuments").GetInt32());
         using var searchDeletedJson = JsonDocument.Parse(searchDeleted.Stdout);
         Assert.Empty(searchDeletedJson.RootElement.GetProperty("data").EnumerateArray());
@@ -149,6 +162,52 @@ public sealed class IntegrationCliTests
         Assert.NotEqual(bodyOnlyHash, renamedHash);
         Assert.Equal(1, bodyOnly.DirtyDocuments);
         Assert.True(bodyOnly.UnchangedDocuments >= 1);
+    }
+
+    [Fact]
+    public async Task Persistent_workspace_body_update_matches_a_full_rebuild_and_avoids_workspace_reload()
+    {
+        using var repo = TestRepo.Create();
+        await CreateDeclarationHashProjectAsync(repo.Root);
+        using var workspaceSession = new RepositoryWorkspaceSession();
+        var builder = new IndexBuilder(workspaceSession);
+
+        var first = await builder.BuildAsync(repo.Root, force: true, IndexerConfig.Default);
+        await File.WriteAllTextAsync(Path.Combine(repo.Root, "HashSubject.cs"), DeclarationHashSubjectSource("""
+                return "persistent-body";
+            """));
+        var incremental = await builder.BuildAsync(repo.Root, force: false, IndexerConfig.Default);
+        var incrementalSnapshot = IndexStore.Read(repo.Root);
+
+        await new IndexBuilder().BuildAsync(repo.Root, force: true, IndexerConfig.Default);
+        var fullSnapshot = IndexStore.Read(repo.Root);
+
+        Assert.Equal(1, incremental.DirtyDocuments);
+        Assert.True(incremental.Timings.WorkspaceLoadMs < first.Timings.WorkspaceLoadMs);
+        Assert.Equal(CanonicalRows(incrementalSnapshot), CanonicalRows(fullSnapshot));
+    }
+
+    [Fact]
+    public async Task Persistent_workspace_reloads_when_globbed_source_files_are_added_or_deleted()
+    {
+        using var repo = TestRepo.Create();
+        await CreateDeclarationHashProjectAsync(repo.Root);
+        using var workspaceSession = new RepositoryWorkspaceSession();
+        var builder = new IndexBuilder(workspaceSession);
+        var addedPath = Path.Combine(repo.Root, "AddedLater.cs");
+
+        var first = await builder.BuildAsync(repo.Root, force: true, IndexerConfig.Default);
+        await File.WriteAllTextAsync(addedPath, "namespace Hashing.Sample; public sealed class AddedLater { }");
+        var added = await builder.BuildAsync(repo.Root, force: false, IndexerConfig.Default);
+        var addedSnapshot = IndexStore.Read(repo.Root);
+        File.Delete(addedPath);
+        var deleted = await builder.BuildAsync(repo.Root, force: false, IndexerConfig.Default);
+        var deletedSnapshot = IndexStore.Read(repo.Root);
+
+        Assert.Equal(first.Documents + 1, added.Documents);
+        Assert.Contains(addedSnapshot.Documents, document => document.RelativePath == "AddedLater.cs");
+        Assert.Equal(first.Documents, deleted.Documents);
+        Assert.DoesNotContain(deletedSnapshot.Documents, document => document.RelativePath == "AddedLater.cs");
     }
 
     public static IEnumerable<object[]> SemanticRebuildTriggerFiles()
@@ -424,7 +483,7 @@ public sealed class IntegrationCliTests
 
         using var tokenJson = JsonDocument.Parse(separateTokens.Stdout);
         Assert.Contains(tokenJson.RootElement.GetProperty("data").EnumerateArray(), result =>
-            result.GetProperty("fullyQualifiedName").GetString() == "My.Namespace.CustomerService");
+            result.TryGetProperty("fullyQualifiedName", out var fullyQualifiedName) && fullyQualifiedName.GetString() == "My.Namespace.CustomerService");
 
         using var phraseJson = JsonDocument.Parse(phrase.Stdout);
         var phraseResults = phraseJson.RootElement.GetProperty("data").EnumerateArray().ToArray();
@@ -742,7 +801,7 @@ public sealed class IntegrationCliTests
         Assert.Equal(0, cached.ExitCode);
         Assert.Equal(5, invalidated.ExitCode);
 
-        Assert.True(Directory.Exists(Path.Combine(repo.Root, ".roslyn-index", "v1", "exact-refs-cache")));
+        Assert.True(Directory.Exists(IndexStore.GetExactReferenceCacheDirectory(repo.Root)));
         using var firstJson = JsonDocument.Parse(first.Stdout);
         using var cachedJson = JsonDocument.Parse(cached.Stdout);
         Assert.NotEmpty(firstJson.RootElement.GetProperty("data").EnumerateArray());
@@ -1109,10 +1168,16 @@ public sealed class IntegrationCliTests
             """;
 
     private static string ReadDeclarationHash(string root, string relativePath)
-        => ReadJsonLines(IndexFile(root, "documents.jsonl"))
-            .Single(d => d.GetProperty("relativePath").GetString() == relativePath)
-            .GetProperty("declarationHash")
-            .GetString()!;
+        => IndexStore.Read(root).Documents.Single(document => document.RelativePath == relativePath).DeclarationHash;
+
+    private static string CanonicalRows(IndexSnapshot snapshot)
+        => JsonSerializer.Serialize(new
+        {
+            Documents = snapshot.Documents.OrderBy(row => row.DocumentId, StringComparer.Ordinal),
+            Symbols = snapshot.Symbols.OrderBy(row => row.SymbolId, StringComparer.Ordinal).ThenBy(row => row.DocumentId, StringComparer.Ordinal).ThenBy(row => row.SpanStart),
+            References = snapshot.References.OrderBy(row => row.ReferenceId, StringComparer.Ordinal),
+            Tokens = snapshot.Tokens.OrderBy(row => row.Token, StringComparer.Ordinal).ThenBy(row => row.DocumentId, StringComparer.Ordinal).ThenBy(row => row.Line).ThenBy(row => row.Column)
+        }, JsonOptions.Compact);
 
     private static async Task<CliResult> RunCliAsync(string[] args, string workingDirectory)
     {
@@ -1141,15 +1206,43 @@ public sealed class IntegrationCliTests
 
     private static IEnumerable<JsonElement> ReadJsonLines(string path)
     {
-        foreach (var line in File.ReadLines(path))
+        if (File.Exists(path))
         {
-            using var document = JsonDocument.Parse(line);
-            yield return document.RootElement.Clone();
+            foreach (var line in File.ReadLines(path).Where(line => !string.IsNullOrWhiteSpace(line)))
+            {
+                using var document = JsonDocument.Parse(line);
+                yield return document.RootElement.Clone();
+            }
+            yield break;
+        }
+
+        var repoRoot = FindRepositoryRootFromIndexPath(path);
+        var snapshot = IndexStore.Read(repoRoot);
+        IEnumerable<object> rows = Path.GetFileName(path) switch
+        {
+            "documents.jsonl" => snapshot.Documents.Cast<object>(),
+            "symbols.jsonl" => snapshot.Symbols.Cast<object>(),
+            "references.jsonl" => snapshot.References.Cast<object>(),
+            "tokens.jsonl" => snapshot.Tokens.Cast<object>(),
+            _ => throw new InvalidOperationException($"Unknown index table '{Path.GetFileName(path)}'.")
+        };
+        foreach (var row in rows)
+        {
+            yield return JsonSerializer.SerializeToElement(row, JsonOptions.Default);
         }
     }
 
     private static string IndexFile(string root, string fileName)
-        => Path.Combine(root, ".roslyn-index", "v1", fileName);
+        => Path.Combine(IndexStore.GetVersionDirectory(root), fileName);
+
+    private static string FindRepositoryRootFromIndexPath(string path)
+    {
+        for (var directory = Directory.GetParent(path); directory is not null; directory = directory.Parent)
+        {
+            if (directory.Name == IndexStore.IndexDirectoryName && directory.Parent is not null) return directory.Parent.FullName;
+        }
+        throw new InvalidOperationException("Missing repository root.");
+    }
 
     private static async Task ChangeIndexUpdatedUtcAsync(string root, DateTimeOffset updatedUtc)
     {

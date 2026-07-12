@@ -1,218 +1,115 @@
 # Roslyn Repo Indexer
 
-`ri` is a local .NET tool that builds a repository search index with Roslyn semantic data for C# and a small custom inverted text index for other text files. It writes only under `.roslyn-index/` in the repository root. It does not use AI, embeddings, vector databases, HTTP calls, telemetry, cloud APIs, Lucene, ElasticSearch, SQLite FTS, or any external search service.
+`ri` is a local Roslyn indexer optimized for AI agents. The MCP server keeps an immutable query index in memory per repository, while the CLI remains available for diagnostics and scripting. The tool uses no network service, telemetry, embeddings, database, or shell execution through MCP. Persistent files are confined to `.roslyn-index/`.
 
-## Build and Test
+## Build and test
 
-```bash
-dotnet build tools/RoslynRepoIndexer/RoslynRepoIndexer.sln
-dotnet test tools/RoslynRepoIndexer/RoslynRepoIndexer.sln
+```powershell
+dotnet build Tools/RoslynRepoIndexer/RoslynRepoIndexer.slnx -c Release
+dotnet test Tools/RoslynRepoIndexer/RoslynRepoIndexer.slnx -c Release
 ```
 
-## Usage
+## Architecture
 
-```bash
-dotnet run --project tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- index .
-dotnet run --project tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- status .
-dotnet run --project tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- doctor .
-dotnet run --project tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- search CustomerService
-dotnet run --project tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- suggest "unde se validează tokenul JWT?"
-dotnet run --project tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- refs CustomerService --exact
+- `RepositorySessionRegistry` owns a bounded LRU set of repository sessions.
+- `RepositoryIndexSession` loads one generation, builds `QueryIndex` once, performs single-flight reloads, and atomically publishes the replacement.
+- Every query captures one immutable generation. Concurrent queries never mix rows from two generations.
+- `RepositoryWorkspaceSession` reuses an `MSBuildWorkspace` for incremental indexing and reloads it when project shape, globbed source files, or workspace inputs change.
+- The no-op path checks repository/config/workspace fingerprints before opening Roslyn and never rewrites the generation pointer.
+
+## Storage
+
+Schema 6 uses content-addressed binary document segments:
+
+```text
+.roslyn-index/
+  current.json
+  state.json
+  generations/<generation-id>/
+    manifest.json
+    segments.json
+  segments/<sha256>.bin
 ```
 
-The CLI can also be packed or installed as a .NET tool because `RoslynRepoIndexer.Cli` sets `PackAsTool=true` and `ToolCommandName=ri`.
+Each segment owns its document rows, symbols, references, and token postings. Its envelope contains magic, schema version, lengths, raw checksum, payload checksum, and a content-addressed filename. Segment payloads use a local string table and compact typed rows. Incremental publish writes only dirty segments, validates the new generation, atomically replaces `current.json`, and retains the previous valid generation for recovery. Corrupt or truncated current generations fall back to the previous valid generation.
 
-## MCP Server for Codex
+Only `current.json` selects the active generation. Orphan temporary generations are never served. The storage reader validates paths, descriptor metadata, lengths, checksums, schema, and content hashes before returning rows.
 
-`Ri.Mcp` exposes the same local Roslyn indexer services over MCP using stdio transport. It is repo-bound and only exposes read, search, status, doctor, index, goto, refs, and suggest tools. It does not expose shell execution or file-write tools.
+## CLI
 
-For Codex/MCP indexing, `includeNonCSharpText` defaults to `false` when omitted. Pass `includeNonCSharpText: true` explicitly only when non-C# text indexing is needed; it can dominate index time on large repositories.
-
-Build it:
-
-```bash
-dotnet build tools/RoslynRepoIndexer/src/Ri.Mcp/Ri.Mcp.csproj
+```powershell
+dotnet run -c Release --project Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- index .
+dotnet run -c Release --project Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- status .
+dotnet run -c Release --project Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- doctor .
+dotnet run -c Release --project Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- doctor . --deep
+dotnet run -c Release --project Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- search UIElement
+dotnet run -c Release --project Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- refs UIElement
 ```
 
-Run metadata commands:
+`doctor` is quick by default and does not open `MSBuildWorkspace`; `--deep` explicitly validates workspace loading. The CLI can be packed as a .NET tool with command name `ri`.
 
-```bash
-dotnet run --project tools/RoslynRepoIndexer/src/Ri.Mcp -- --help
-dotnet run --project tools/RoslynRepoIndexer/src/Ri.Mcp -- --version
-```
+## MCP server
 
-Example Codex MCP config:
+`Ri.Mcp` uses stdio transport and can be bound to its startup repository:
 
 ```toml
 [mcp_servers.roslyn-indexer]
 command = "dotnet"
-args = ["run", "--project", "tools/RoslynRepoIndexer/src/Ri.Mcp", "--"]
-cwd = "C:/path/to/your/repo"
+args = ["run", "-c", "Release", "--project", "Tools/RoslynRepoIndexer/src/Ri.Mcp", "--"]
+cwd = "C:/path/to/repo"
 ```
 
-Available tools are registered in deterministic order:
+`repoRoot` may be omitted for a repo-bound server. Explicit roots outside that binding are rejected. MCP indexing defaults to C# only unless `includeNonCSharpText: true` is supplied.
+
+Available tools:
 
 ```text
-roslyn_doctor
-roslyn_index
-roslyn_status
-roslyn_search
-roslyn_read
-roslyn_pread
-roslyn_goto
-roslyn_refs
-roslyn_suggest
+roslyn_capabilities  roslyn_doctor   roslyn_index    roslyn_status
+roslyn_search        roslyn_read     roslyn_pread    roslyn_goto
+roslyn_refs          roslyn_outline  roslyn_inspect  roslyn_context
+roslyn_callgraph     roslyn_impact   roslyn_tests_for
+roslyn_batch         roslyn_changes  roslyn_profile  roslyn_suggest
 ```
 
-Prefer `roslyn_read` before editing so the model sees the full file. Use `roslyn_pread` only for targeted partial reads after the relevant file and range are already known.
+The compound tools are index-only: they do not open Roslyn on the query path. `roslyn_refs` opens a workspace only when exact references are explicitly requested.
 
-## JSON Examples
+## MCP contract
 
-Search:
+Every response uses one compact envelope and does not duplicate `data` as `results`:
 
 ```json
 {
   "success": true,
-  "exitCode": 0,
-  "command": "search",
-  "query": "CustomerService",
+  "tool": "roslyn_goto",
   "repoRoot": "C:/repo",
-  "elapsedMs": 12,
-  "indexUpdatedUtc": "2026-07-04T00:00:00+00:00",
-  "data": [
-    {
-      "path": "src/CustomerService.cs",
-      "filePath": "src/CustomerService.cs",
-      "line": 3,
-      "column": 21,
-      "startLine": 3,
-      "startColumn": 21,
-      "endLine": 3,
-      "endColumn": 42,
-      "kind": "class",
-      "score": 800,
-      "matchReason": "symbol match: My.App.CustomerService",
-      "symbolId": "abc123",
-      "symbolName": "CustomerService",
-      "fullyQualifiedName": "My.App.CustomerService",
-      "projectName": "My.App",
-      "snippet": "public sealed class CustomerService"
-    }
-  ],
-  "results": [
-    {
-      "path": "src/CustomerService.cs",
-      "filePath": "src/CustomerService.cs",
-      "line": 3,
-      "column": 21,
-      "startLine": 3,
-      "startColumn": 21,
-      "endLine": 3,
-      "endColumn": 42,
-      "kind": "class",
-      "score": 800,
-      "matchReason": "symbol match: My.App.CustomerService",
-      "symbolId": "abc123",
-      "symbolName": "CustomerService",
-      "fullyQualifiedName": "My.App.CustomerService",
-      "projectName": "My.App",
-      "snippet": "public sealed class CustomerService"
-    }
-  ],
-  "warnings": [],
-  "errors": []
-}
-```
-
-Suggest:
-
-```json
-{
-  "success": true,
-  "exitCode": 0,
-  "command": "suggest",
-  "query": "unde se validează tokenul JWT?",
-  "repoRoot": "C:/repo",
+  "generationId": "20260712...",
   "elapsedMs": 4,
-  "data": [
-    {
-      "command": "ri search \"jwt token validate validation validator\"",
-      "query": "jwt token validate validation validator",
-      "mode": "all",
-      "confidence": 0.7,
-      "reason": "deterministic token search",
-      "expectedResultKind": "mixed"
-    }
-  ],
-  "results": [
-    {
-      "command": "ri search \"jwt token validate validation validator\"",
-      "query": "jwt token validate validation validator",
-      "mode": "all",
-      "confidence": 0.7,
-      "reason": "deterministic token search",
-      "expectedResultKind": "mixed"
-    }
-  ],
-  "warnings": [],
-  "errors": []
+  "cache": { "sessionHit": true, "generationReloaded": false },
+  "truncated": false,
+  "continuationToken": null,
+  "data": []
 }
 ```
 
-Status:
+Schemas are tool-specific, reject additional properties, use bounded numeric and string inputs, and expose exact enums. Errors contain stable `code`, `message`, `retryable`, and `suggestedAction` fields. Potentially large results expose deterministic truncation and signed continuation tokens bound to repository, tool, query, and generation. A token from another generation is rejected rather than returning a mixed page.
 
-```json
-{
-  "success": true,
-  "exitCode": 0,
-  "command": "status",
-  "repoRoot": "C:/repo",
-  "elapsedMs": 2,
-  "data": {
-    "status": "valid",
-    "indexState": "valid",
-    "schemaVersion": 3,
-    "documents": 42,
-    "symbols": 120,
-    "references": 300,
-    "tokens": 5000,
-    "dirtyFiles": 0,
-    "warnings": []
-  },
-  "warnings": [],
-  "errors": []
-}
-```
+Profiles are `compact` (MCP default), `standard`, and `diagnostic`. Compound commands enforce their applicable `maxResults`, `maxChars`, `maxNodes`, `depth`, and timeout budgets. `roslyn_batch` validates all dependencies before execution and captures one generation for the complete operation graph.
 
-Doctor:
+## Command intent
 
-```json
-{
-  "success": true,
-  "exitCode": 0,
-  "command": "doctor",
-  "repoRoot": "C:/repo",
-  "elapsedMs": 25,
-  "data": {
-    "repoRoot": "C:/repo",
-    "checks": [
-      {
-        "name": "repo-root",
-        "status": "pass",
-        "severity": "info",
-        "message": "C:/repo",
-        "details": {}
-      }
-    ]
-  },
-  "warnings": [],
-  "errors": []
-}
-```
+- `outline`: structure of a file, namespace, or type without reading the complete file.
+- `inspect`: strict symbol resolution plus selected source and relationships in one call.
+- `context`: relevance-ranked source and dependency package within a character budget.
+- `callgraph`: bounded invocation graph with cycle protection.
+- `impact`: demonstrable references, callers, hierarchy, projects, and tests with reasons.
+- `tests_for`: deterministic candidate ranking with explainable evidence; it never runs tests.
+- `changes`: semantic generation diff or structural local Git diff without network access.
+- `profile`: local session, load, query, segment-size, and posting diagnostics.
+- `suggest`: deterministic structured MCP operations rather than CLI command strings.
 
 ## Configuration
 
-If `.roslyn-index.json` exists in the repo root, `ri index` reads it automatically.
+If `.roslyn-index.json` exists at the repository root, `ri index` reads it automatically.
 
 ```json
 {
@@ -220,49 +117,44 @@ If `.roslyn-index.json` exists in the repo root, `ri index` reads it automatical
   "includeGenerated": false,
   "includeNonCSharpText": true,
   "maxTextFileBytes": 1048576,
-  "maxDegreeOfParallelism": 4,
+  "maxDegreeOfParallelism": 8,
   "searchResultLimit": 50,
   "suggestionLimit": 5,
-  "exactRefsTimeoutSeconds": 30,
-  "excludeDirectories": [".git", "bin", "obj", ".vs", ".idea", ".vscode", "node_modules", ".roslyn-index", "TestResults", "artifacts", "packages"],
-  "excludeFileSuffixes": [".dll", ".exe", ".pdb", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".pdf", ".zip", ".7z", ".tar", ".gz"]
+  "exactRefsTimeoutSeconds": 30
 }
 ```
 
-There is no `.riignore`; exclusions live in `.roslyn-index.json` so the config stays explicit and serializable.
+Default exclusions cover `.git`, build outputs, IDE state, packages, `.roslyn-index`, test results, and common binary suffixes. There is no `.riignore`; configuration stays explicit and serializable.
 
-## Performance Budgets
+## Benchmarks
 
-Repository size classes used for smoke testing and planning:
+The benchmark project contains deterministic small (10 files), medium (100 files), and Cerneala-like corpora. It separates cold storage load plus lookup construction, warm search, 20 persistent MCP calls, and no-op indexing.
 
-- `small`: fewer than 500 files.
-- `medium`: 500 to 5,000 files.
-- `large`: 5,000 to 25,000 files.
+```powershell
+dotnet run -c Release --project Tools/RoslynRepoIndexer/benchmarks/RoslynRepoIndexer.Benchmarks -- --job short
+```
 
-Daily-use budgets are intentionally relaxed so normal tests do not become flaky:
+Set `RI_BENCH_REPO` to benchmark another indexed repository. Results go under `Tools/RoslynRepoIndexer/benchmarks/artifacts/`; the checked-in baseline is `benchmarks/baseline-2026-07-12.json`.
 
-- Cold index: complete without out-of-memory on small and medium repositories.
-- Warm incremental index with no changes: report `dirtyDocuments = 0` and avoid semantic reprocessing.
-- Warm incremental index after one file change: reprocess only the changed document when declaration shape is unchanged.
-- `ri search`: target under 1 second on small/medium repositories after the index is warm.
-- `ri goto`: target under 1 second on small/medium repositories after the index is warm.
-- `ri suggest`: target under 1 second on small/medium repositories after the index is warm.
-- Approximate `ri refs`: target under 1 second because it uses indexed references and does not start MSBuild/Roslyn.
-- Exact `ri refs --exact`: use Roslyn on demand and respect `exactRefsTimeoutSeconds` or `--timeout`.
-- Memory: keep indexing bounded by processing projects/documents sequentially or with limited configured parallelism; smoke tests should catch out-of-memory behavior rather than enforce a fragile byte threshold.
+Measured on Cerneala (910 C# documents, 24,861 symbols) on 2026-07-12:
 
-## Exit Codes
+| Budget or measurement | Result |
+|---|---:|
+| Binary index size | about 13 MB (budget: 50 MB) |
+| First buffered load plus lookup build | about 420 ms (budget: 500 ms) |
+| Warm exact search | about 0.06 ms |
+| Warm broad search | about 4.4-6.6 ms |
+| No-op incremental | about 78 ms (budget: 100 ms) |
+| 20 persistent MCP calls | about 117-276 ms total |
+| 10,000 queries | stable retained memory, under 4 MB growth in the stress gate |
+| Full cold C# index | about 15-17 s; the initial 12 s target remains profiler work, not an acceptance gate |
+
+Performance thresholds that depend on hardware live in benchmark jobs. Functional tests prove the important invariants: no workspace on no-op, unchanged segment reuse, differential full/incremental equivalence, stable generation capture, bounded output, and corruption recovery.
+
+## Exit codes
 
 - `0`: success
-- `1`: user/input error
+- `1`: invalid user input
 - `2`: invalid command or arguments
-- `3`: index missing, corrupt, unavailable, or schema-incompatible
+- `3`: missing, corrupt, unavailable, or schema-incompatible index
 - `4`: unexpected internal error
-- `5`: timeout or cancellation
-
-## Troubleshooting
-
-- Run `ri doctor . --json` to inspect repo root detection, workspace inputs, MSBuild registration, workspace loading, excludes, and index status.
-- If search says the index is missing, run `ri index .`.
-- If MSBuild cannot be detected, ensure `dotnet --list-sdks` returns an SDK folder containing `MSBuild.dll`.
-- Generated files are excluded by default; pass `--include-generated` to index them.

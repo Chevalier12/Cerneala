@@ -11,7 +11,7 @@ public sealed record IndexerConfig
     public bool IncludeGenerated { get; init; } = false;
     public bool IncludeNonCSharpText { get; init; } = true;
     public long MaxTextFileBytes { get; init; } = 1_048_576;
-    public int MaxDegreeOfParallelism { get; init; } = Math.Min(Environment.ProcessorCount, 4);
+    public int MaxDegreeOfParallelism { get; init; } = Math.Min(Environment.ProcessorCount, 8);
     public int SearchResultLimit { get; init; } = 50;
     public int SuggestionLimit { get; init; } = 5;
     public int ExactRefsTimeoutSeconds { get; init; } = 30;

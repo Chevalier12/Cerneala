@@ -1,0 +1,16 @@
+{
+  "capturedUtc": "2026-07-12T00:00:00Z",
+  "corpus": "Cerneala C#-only",
+  "documents": 910,
+  "symbols": 24861,
+  "references": 53048,
+  "tokenPostings": 452324,
+  "coldIndexMs": 17700,
+  "noOpIncrementalMs": 15100,
+  "oneShotSearchMs": {
+    "min": 2100,
+    "max": 2600
+  },
+  "indexBytes": 135266304,
+  "notes": "Reproducible comparison artifact copied from the accepted implementation plan baseline; hardware-sensitive budgets are benchmark gates, not unit-test assertions."
+}

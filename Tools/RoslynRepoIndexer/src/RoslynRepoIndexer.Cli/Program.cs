@@ -243,12 +243,12 @@ internal static class CliApp
     private static async Task<int> Doctor(string[] args, string command, System.Diagnostics.Stopwatch stopwatch)
     {
         var options = Args.Parse(args);
-        if (RejectUnknownOptions(options, command, stopwatch, "config", "json") is { } error)
+        if (RejectUnknownOptions(options, command, stopwatch, "config", "deep", "json") is { } error)
         {
             return error;
         }
 
-        var response = await new RoslynIndexerApplicationService().DoctorAsync(new PathCommandRequest(options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory(), options.Value("config"))).ConfigureAwait(false);
+        var response = await new RoslynIndexerApplicationService().DoctorAsync(new PathCommandRequest(options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory(), options.Value("config"), options.Flag("deep"))).ConfigureAwait(false);
         return OutputResponse(response, options.Json, string.Empty);
     }
 

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using RoslynRepoIndexer.Core;
 
 namespace RoslynRepoIndexer.Tests;
 
@@ -180,7 +181,7 @@ public sealed class CliBehaviorTests
         await CreateMinimalProjectAsync(repo.Root);
 
         var index = await RunCliAsync(new[] { "index", ".", "--json" }, repo.Root);
-        File.Delete(Path.Combine(repo.Root, ".roslyn-index", "v1", "documents.jsonl"));
+        File.Delete(Path.Combine(IndexStore.GetVersionDirectory(repo.Root), "segments.json"));
         var missingFile = await RunCliAsync(new[] { "status", "--json" }, repo.Root);
 
         Assert.Equal(0, index.ExitCode);
@@ -188,17 +189,19 @@ public sealed class CliBehaviorTests
         using (var json = JsonDocument.Parse(missingFile.Stdout))
         {
             Assert.Equal("corrupt", json.RootElement.GetProperty("data").GetProperty("indexState").GetString());
-            Assert.Contains("documents.jsonl", json.RootElement.GetProperty("data").GetProperty("warnings")[0].GetString(), StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("segments.json", json.RootElement.GetProperty("data").GetProperty("warnings")[0].GetString(), StringComparison.OrdinalIgnoreCase);
         }
 
-        await RunCliAsync(new[] { "index", ".", "--json" }, repo.Root);
-        await File.WriteAllTextAsync(Path.Combine(repo.Root, ".roslyn-index", "v1", "tokens.jsonl"), "{not valid json");
+        var rebuilt = await RunCliAsync(new[] { "index", ".", "--json" }, repo.Root);
+        Assert.Equal(0, rebuilt.ExitCode);
+        var corruptSegment = Directory.GetFiles(Path.Combine(IndexStore.GetIndexDirectory(repo.Root), "segments"), "*.bin").First();
+        await File.WriteAllTextAsync(corruptSegment, "not valid binary");
         var invalidJson = await RunCliAsync(new[] { "status", "--json" }, repo.Root);
 
         Assert.Equal(0, invalidJson.ExitCode);
         using var invalidJsonDoc = JsonDocument.Parse(invalidJson.Stdout);
         Assert.Equal("corrupt", invalidJsonDoc.RootElement.GetProperty("data").GetProperty("indexState").GetString());
-        Assert.Contains("tokens.jsonl", invalidJsonDoc.RootElement.GetProperty("data").GetProperty("warnings")[0].GetString(), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Segment", invalidJsonDoc.RootElement.GetProperty("data").GetProperty("warnings")[0].GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -208,7 +211,7 @@ public sealed class CliBehaviorTests
         await CreateMinimalProjectAsync(repo.Root);
 
         var index = await RunCliAsync(new[] { "index", ".", "--json" }, repo.Root);
-        File.Delete(Path.Combine(repo.Root, ".roslyn-index", "v1", "symbols.jsonl"));
+        File.Delete(Path.Combine(IndexStore.GetVersionDirectory(repo.Root), "segments.json"));
         var missingFile = await RunCliAsync(new[] { "search", "CustomerService", "--json" }, repo.Root);
 
         Assert.Equal(0, index.ExitCode);
@@ -222,7 +225,8 @@ public sealed class CliBehaviorTests
         }
 
         await RunCliAsync(new[] { "index", ".", "--json" }, repo.Root);
-        await File.WriteAllTextAsync(Path.Combine(repo.Root, ".roslyn-index", "v1", "references.jsonl"), "{not valid json");
+        var corruptReferenceSegment = Directory.GetFiles(Path.Combine(IndexStore.GetIndexDirectory(repo.Root), "segments"), "*.bin").First();
+        await File.WriteAllTextAsync(corruptReferenceSegment, "not valid binary");
         var corruptFile = await RunCliAsync(new[] { "search", "CustomerService", "--json" }, repo.Root);
 
         Assert.Equal(3, corruptFile.ExitCode);
