@@ -9,18 +9,14 @@ namespace Cerneala.UI.Controls;
 
 internal static class CheckBoxTemplates
 {
+    internal const string DefaultCheckMarkData = "M88.04,30.319L75.124,17.401c-0.454-0.453-1.067-0.709-1.71-0.709c-0.642,0-1.256,0.256-1.709,0.709L37.392,51.714l-9.094-9.093c-0.945-0.944-2.474-0.944-3.419,0L11.96,55.539c-0.453,0.453-0.709,1.068-0.709,1.709c0,0.641,0.256,1.256,0.709,1.71L35.607,82.6c0.453,0.453,1.067,0.708,1.709,0.708c0.029,0,0.055-0.016,0.083-0.016c0.024,0,0.05,0.014,0.075,0.014c0.621,0,1.236-0.236,1.709-0.708L88.04,33.738C88.985,32.794,88.985,31.264,88.04,30.319z";
+
     public static readonly ComponentTemplate<CheckBox> Default = new("CheckBox.Default", context =>
     {
         CheckMarkPath checkMark = new()
         {
-            Data = new PathGeometry(
-            [
-                new DrawPoint(0, 4),
-                new DrawPoint(2.5f, 6.5f),
-                new DrawPoint(8, 0)
-            ]),
-            Stroke = new SolidColorBrush(Color.Black),
-            StrokeThickness = 1,
+            Geometry = new SvgGeometry(DefaultCheckMarkData, new DrawRect(0, 0, 100, 100)),
+            Fill = new SolidColorBrush(Color.Black),
             Visibility = Visibility.Hidden
         };
         SquareBorder indicator = new()
@@ -51,10 +47,12 @@ internal static class CheckBoxTemplates
 
     private sealed class SquareBorder : Border
     {
+        private const float DefaultSide = 12;
+
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
-            LayoutSize measured = base.MeasureCore(context);
-            float side = MathF.Max(measured.Width, measured.Height);
+            _ = base.MeasureCore(context);
+            float side = MathF.Min(DefaultSide, MathF.Min(context.AvailableSize.Width, context.AvailableSize.Height));
             return new LayoutSize(side, side);
         }
     }

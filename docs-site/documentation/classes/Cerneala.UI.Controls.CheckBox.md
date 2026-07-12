@@ -42,9 +42,9 @@ The constructor installs the default component template, a one-pixel border thic
 
 The default template contains a bordered indicator, the required `PART_CheckMark` path, and a `ContentPresenter`. The presenter is separated from the indicator by a six-pixel margin. `Background` colors the complete checkbox surface, while `BorderBrush` and `BorderThickness` style the indicator box. `Padding`, `Foreground`, `FontFamily`, `FontSize`, and `Content` are bound into the content portion of the template.
 
-`PART_CheckMark` must be a `Cerneala.UI.Controls.Shapes.Path`. The control changes its visibility to `Visible` when `IsChecked` is `true` and to `Hidden` otherwise. During arrangement, its geometry is scaled uniformly to fit its arranged bounds with a 1.5-pixel inset and is centered on both axes. The default indicator measures to a square and is vertically centered beside the content.
+`PART_CheckMark` must be a `Cerneala.UI.Controls.Shapes.Path`. The control changes its visibility to `Visible` when `IsChecked` is `true` and to `Hidden` otherwise. A custom `PathGeometry` assigned through `Data` is scaled uniformly to fit its arranged bounds with a 1.5-pixel inset and is centered on both axes. The default indicator measures to a square and is vertically centered beside the content.
 
-The default path uses a one-pixel black stroke and a compact three-point `PathGeometry`. Its stroke is owned by the template and is not bound to `Foreground`, so a custom template can choose the check-mark brush independently from the text color.
+The default path uses a black-filled `SvgGeometry` with a `0,0,100,100` source view box. Its `Fill` is owned by the template and is not bound to `Foreground`, so a custom template can choose the check-mark brush independently from the text color.
 
 A custom component template must provide `PART_CheckMark` with the required type. Named elements declared inside generated `@template` markup are registered as template parts.
 
@@ -58,7 +58,7 @@ A custom component template must provide `PART_CheckMark` with the required type
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `PART_CheckMark` | `Cerneala.UI.Controls.Shapes.Path` | Required path whose visibility reflects `IsChecked` and whose stroke represents the check mark. |
+| `PART_CheckMark` | `Cerneala.UI.Controls.Shapes.Path` | Required path whose visibility reflects `IsChecked`; templates control the check-mark color through its `Fill`. |
 
 ## Key Inherited Members
 

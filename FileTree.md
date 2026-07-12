@@ -646,6 +646,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Media.RenderTargetImage.md
 |   |   |   |-- Cerneala.UI.Media.ShadowEffect.md
 |   |   |   |-- Cerneala.UI.Media.SolidColorBrush.md
+|   |   |   |-- Cerneala.UI.Media.SvgGeometry.md
 |   |   |   |-- Cerneala.UI.Media.TileBrush.md
 |   |   |   |-- Cerneala.UI.Media.Transform.md
 |   |   |   |-- Cerneala.UI.Media.VisualBrush.md
@@ -967,7 +968,10 @@ Generated from `.`.
 |   |   |-- MonoGameClipStack.cs
 |   |   |-- MonoGameDrawingBackend.cs
 |   |   |-- MonoGameDrawMapper.cs
-|   |   +-- MonoGameImage.cs
+|   |   |-- MonoGameImage.cs
+|   |   +-- MonoGamePathMeshBuilder.cs
+|   |-- Paths/
+|   |   +-- SvgPathFlattener.cs
 |   |-- Skia/
 |   |-- Text/
 |   |   |-- OpenTypeFontData.cs
@@ -997,15 +1001,19 @@ Generated from `.`.
 |   +-- IFontSource.cs
 |-- Generated/
 |-- Playground/
+|   |-- Assets/
+|   |   +-- fxemoji.svg
 |   |-- AvaloniaOracle/
 |   |   |-- App.cs
 |   |   |-- AvaloniaOracle.csproj
 |   |   |-- MainWindow.cs
-|   |   +-- Program.cs
+|   |   |-- Program.cs
+|   |   +-- SvgWindow.cs
 |   +-- Cerneala.Playground/
 |       |-- Cerneala.Playground.csproj
 |       |-- MainWindow.cui.xml
-|       +-- MainWindow.cui.xml.cs
+|       |-- MainWindow.cui.xml.cs
+|       +-- SvgWindow.cs
 |-- Properties/
 |   +-- AssemblyInfo.cs
 |-- tests/
@@ -1088,6 +1096,8 @@ Generated from `.`.
 |   |   |   |   |-- MonoGameClipStackTests.cs
 |   |   |   |   |-- MonoGameDrawingBackendStateTests.cs
 |   |   |   |   +-- MonoGameDrawMapperTests.cs
+|   |   |   |-- Paths/
+|   |   |   |   +-- SvgPathFlattenerTests.cs
 |   |   |   |-- AdvancedDrawCommandTests.cs
 |   |   |   |-- ColorTests.cs
 |   |   |   |-- DrawCommandListTests.cs
@@ -1523,6 +1533,7 @@ Generated from `.`.
 |   |   |-- Button.cs
 |   |   |-- Canvas.cs
 |   |   |-- CheckBox.cs
+|   |   |-- CheckBoxTemplates.cs
 |   |   |-- ComboBox.cs
 |   |   |-- ContentControl.cs
 |   |   |-- ContentPresenter.cs
@@ -1828,6 +1839,7 @@ Generated from `.`.
 |   |   |-- RenderTargetImage.cs
 |   |   |-- ShadowEffect.cs
 |   |   |-- SolidColorBrush.cs
+|   |   |-- SvgGeometry.cs
 |   |   |-- TileBrush.cs
 |   |   |-- Transform.cs
 |   |   +-- VisualBrush.cs

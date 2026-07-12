@@ -71,12 +71,12 @@ public sealed class CheckBoxTests
         float indicatorCenterY = indicator.ArrangedBounds.Y + (indicator.ArrangedBounds.Height / 2);
         Assert.InRange(MathF.Abs(checkBoxCenterY - indicatorCenterY), 0, 0.5f);
         Assert.Contains(commands, command => command.Kind == DrawCommandKind.FillRectangle && ReferenceEquals(command.Brush, background));
-        Assert.Equal(2, commands.Count(command => command.Kind == DrawCommandKind.DrawLine && ReferenceEquals(command.Brush, checkMark.Stroke)));
-        Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(checkMark.Stroke).Color);
-        Assert.NotSame(foreground, checkMark.Stroke);
+        Assert.Single(commands, command => command.Kind == DrawCommandKind.FillPath && ReferenceEquals(command.Brush, checkMark.Fill));
+        Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(checkMark.Fill).Color);
+        Assert.NotSame(foreground, checkMark.Fill);
         Assert.All(
-            commands.Where(command => command.Kind == DrawCommandKind.DrawLine),
-            command => Assert.True(command.Position.X > 0));
+            commands.Where(command => command.Kind == DrawCommandKind.FillPath),
+            command => Assert.True(command.Rect.X > 0));
         Assert.Contains(commands, command => command.Kind == DrawCommandKind.DrawText && ReferenceEquals(command.Brush, foreground));
     }
 
@@ -90,6 +90,10 @@ public sealed class CheckBoxTests
         ComponentTemplateInstance instance = Assert.IsType<ComponentTemplateInstance>(checkBox.ComponentTemplateInstance);
         Assert.True(instance.Parts.TryGetValue("PART_CheckMark", out UIElement? element));
         CheckMarkPath checkMark = Assert.IsType<CheckMarkPath>(element);
+        SvgGeometry geometry = Assert.IsType<SvgGeometry>(checkMark.Geometry);
+        Assert.Equal(CheckBoxTemplates.DefaultCheckMarkData, geometry.Data);
+        Assert.Equal(new DrawRect(0, 0, 100, 100), geometry.Bounds);
+        Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(checkMark.Fill).Color);
         Assert.Equal(Visibility.Hidden, checkMark.Visibility);
 
         ((IInputActivatable)checkBox).Activate();
