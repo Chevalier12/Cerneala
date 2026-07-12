@@ -53,6 +53,7 @@ internal static class WindowsDxSmokeApplication
             VerifyPerDeviceImages(firstSession, secondSession);
             RenderTextAndCheck(secondSession);
             RenderBrushTextAndCheck(secondSession);
+            RenderOffscreenBrushWithoutDiscardingBackBuffer(secondSession);
 
             firstSession.Resize(192, 128, 1.25f);
             secondSession.Resize(224, 144, 1.5f);
@@ -60,6 +61,7 @@ internal static class WindowsDxSmokeApplication
             RenderAndCheck(secondSession, new Color(220, 150, 30));
             RenderTextAndCheck(secondSession);
             RenderBrushTextAndCheck(secondSession);
+            RenderOffscreenBrushWithoutDiscardingBackBuffer(secondSession);
 
             first.Dispose();
             RenderAndCheck(secondSession, new Color(120, 45, 190));
@@ -200,6 +202,29 @@ internal static class WindowsDxSmokeApplication
             new ImageBrush(image, DrawBrushStretch.Fill),
             "image",
             HasWarmAndCoolPixels);
+    }
+
+    private static void RenderOffscreenBrushWithoutDiscardingBackBuffer(WindowsDxWindowGraphicsSession session)
+    {
+        int width = session.GraphicsDevice.PresentationParameters.BackBufferWidth;
+        int height = session.GraphicsDevice.PresentationParameters.BackBufferHeight;
+        DrawingBrush drawingBrush = new(
+            [DrawCommand.FillRectangle(new DrawRect(0, 0, 16, 16), Color.White)],
+            new DrawRect(0, 0, 16, 16));
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, width, height), new Color(24, 40, 72)));
+        commands.Add(DrawCommand.FillRectangle(new DrawRect(width / 2f, height / 2f, 16, 16), drawingBrush));
+
+        session.BeginFrame(Color.Black);
+        session.DrawingBackend.Render(commands);
+        session.Present();
+
+        XnaColor[] pixels = new XnaColor[width * height];
+        session.GraphicsDevice.GetBackBufferData(pixels);
+        XnaColor corner = pixels[0];
+        Assert(
+            Math.Abs(corner.R - 24) <= 2 && Math.Abs(corner.G - 40) <= 2 && Math.Abs(corner.B - 72) <= 2,
+            $"Offscreen brush generation discarded earlier backbuffer content. Received {corner}.");
     }
 
     private static void VerifyTextBrush(

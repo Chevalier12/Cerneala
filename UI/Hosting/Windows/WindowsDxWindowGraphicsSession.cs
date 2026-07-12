@@ -264,7 +264,8 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             DepthStencilFormat = DepthFormat.None,
             MultiSampleCount = 8,
             IsFullScreen = false,
-            PresentationInterval = PresentInterval.One
+            PresentationInterval = PresentInterval.One,
+            RenderTargetUsage = RenderTargetUsage.PreserveContents
         };
     }
 
