@@ -35,6 +35,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         Scale = scale;
         ElementIds = new ElementIdProvider();
         Trace = new InvalidationTrace();
+        QueueOrderIndex = new ElementQueueOrderIndex(this);
         LayoutQueue = new LayoutQueue(this);
         InheritedPropertyQueue = new InheritedPropertyQueue(this);
         CommandStateQueue = new CommandStateQueue(this);
@@ -67,6 +68,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public new float Scale { get; private set; }
 
     public int TreeVersion { get; private set; }
+
+    internal ElementQueueOrderIndex QueueOrderIndex { get; }
 
     internal int ViewportVersion { get; private set; }
 
@@ -243,6 +246,17 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         TreeVersion++;
         semanticsDirty = true;
         RetainedRenderCache.InvalidateRoot();
+    }
+
+    internal void RemovePendingWork(UIElement element)
+    {
+        LayoutQueue.RemoveMeasure(element);
+        LayoutQueue.RemoveArrange(element);
+        InheritedPropertyQueue.Remove(element);
+        CommandStateQueue.Remove(element);
+        AspectQueue.Remove(element);
+        RenderQueue.Remove(element);
+        HitTestQueue.Remove(element);
     }
 
     public override void Invalidate(InvalidationRequest request)

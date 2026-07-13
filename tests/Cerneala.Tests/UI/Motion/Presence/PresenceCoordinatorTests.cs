@@ -60,6 +60,8 @@ public sealed class PresenceCoordinatorTests
         Assert.True(child.IsAttached);
         Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
         Assert.True(root.Motion.HasActiveMotion);
+        root.RenderQueue.Enqueue(child);
+        Assert.Contains(child, root.RenderQueue.Snapshot());
     }
 
     [Fact]

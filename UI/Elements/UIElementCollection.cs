@@ -101,6 +101,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         UIElement child = children[oldIndex];
         children.RemoveAt(oldIndex);
         children.Insert(newIndex, child);
+        owner.Root?.IncrementTreeVersion();
         InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Added);
     }
 

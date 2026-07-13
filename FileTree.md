@@ -15,6 +15,14 @@ Generated from `.`.
 |           |   +-- visual-direction.html
 |           +-- state/
 |               +-- server-stopped
+|-- benchmarks/
+|   +-- Cerneala.Benchmarks/
+|       |-- results/
+|       |   +-- 2026-07-13-queue-engine-2.md
+|       |-- Cerneala.Benchmarks.csproj
+|       |-- Program.cs
+|       |-- QueueEngineBenchmarks.cs
+|       +-- README.md
 |-- Cerneala.SourceGen/
 |   |-- Generated/
 |   |-- Cerneala.SourceGen.csproj
@@ -36,7 +44,8 @@ Generated from `.`.
 |   |   |-- 2026-07-11-background-and-borderbrush-brush-migration.md
 |   |   |-- 2026-07-11-brush-types-and-rendering.md
 |   |   |-- 2026-07-11-foreground-brush-migration.md
-|   |   +-- 2026-07-12-roslyn-indexer-agent-performance-upgrades.md
+|   |   |-- 2026-07-12-roslyn-indexer-agent-performance-upgrades.md
+|   |   +-- 2026-07-13-queue-engine-2.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -555,8 +564,9 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Invalidation.CommandStateQueue.md
 |   |   |   |-- Cerneala.UI.Invalidation.DirtyPropagation.md
 |   |   |   |-- Cerneala.UI.Invalidation.DirtyState.md
-|   |   |   |-- Cerneala.UI.Invalidation.ElementQueueOrder.ElementOrder.md
-|   |   |   |-- Cerneala.UI.Invalidation.ElementQueueOrder.md
+|   |   |   |-- Cerneala.UI.Invalidation.ElementQueueOrderIndex.md
+|   |   |   |-- Cerneala.UI.Invalidation.ElementQueueUnit.md
+|   |   |   |-- Cerneala.UI.Invalidation.ElementWorkQueue_TMetadata_.md
 |   |   |   |-- Cerneala.UI.Invalidation.FrameBudget.md
 |   |   |   |-- Cerneala.UI.Invalidation.FramePhase.md
 |   |   |   |-- Cerneala.UI.Invalidation.FramePhaseProcessors.md
@@ -1232,11 +1242,15 @@ Generated from `.`.
 |   |   |   |   |-- DetachedQueuedElementTests.cs
 |   |   |   |   |-- DirtyPropagationTests.cs
 |   |   |   |   |-- DirtyStateTests.cs
+|   |   |   |   |-- ElementQueueContractTests.cs
+|   |   |   |   |-- ElementQueueOrderIndexTests.cs
+|   |   |   |   |-- ElementWorkQueueTests.cs
 |   |   |   |   |-- FrameSchedulerStabilityTests.cs
 |   |   |   |   |-- FrameStatsTests.cs
 |   |   |   |   |-- HitTestQueueTests.cs
 |   |   |   |   |-- InvalidationFlagsTests.cs
 |   |   |   |   |-- LayoutQueueTests.cs
+|   |   |   |   |-- QueueSchedulerContractTests.cs
 |   |   |   |   |-- RenderQueueTests.cs
 |   |   |   |   |-- RetainedNoWorkFrameTests.cs
 |   |   |   |   +-- UiFrameSchedulerTests.cs
@@ -1756,7 +1770,8 @@ Generated from `.`.
 |   |   |-- CommandStateQueue.cs
 |   |   |-- DirtyPropagation.cs
 |   |   |-- DirtyState.cs
-|   |   |-- ElementQueueOrder.cs
+|   |   |-- ElementQueueOrderIndex.cs
+|   |   |-- ElementWorkQueue.cs
 |   |   |-- FrameBudget.cs
 |   |   |-- FramePhase.cs
 |   |   |-- FramePhaseProcessors.cs

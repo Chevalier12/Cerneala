@@ -45,11 +45,11 @@ foreach (UIElement element in root.AspectQueue.Snapshot())
 
 The queue deduplicates elements by reference. Calling `Enqueue` repeatedly with the same `UIElement` instance keeps one pending entry while preserving the first enqueue position used for ordering fallback.
 
-`Snapshot` removes queued elements whose `Root` is no longer the owning root, then returns the remaining elements in visual tree pre-order. Queued elements that still belong to the root but are not found in that traversal are returned after traversed elements and keep their relative enqueue order.
+`Snapshot` defensively removes queued elements whose `Root` is no longer the owning root, then returns the remaining elements in visual tree pre-order. It uses the root's shared `ElementQueueOrderIndex`, so the visual tree is indexed once per `TreeVersion` and the snapshot sorts only queued entries. Presence-exiting elements that still belong to the root remain after traversed elements in relative enqueue order.
 
 Taking a snapshot does not clear valid work. `UiFrameScheduler` consumes aspect work during the `FramePhase.Aspect` phase by taking a snapshot, removing each element before processing it, clearing the `InvalidationFlags.Aspect` dirty flag after successful processing, and re-enqueueing the element if processing throws.
 
-`HasWork` calls `Snapshot()`, so checking it can also prune stale entries. `Count` returns the current backing set count without taking a sorted snapshot.
+`HasWork` and `Count` read the queue dictionary directly. They do not allocate, prune entries, walk the tree, or sort a snapshot. Normal lifecycle detach removes pending entries actively; `Snapshot` keeps defensive pruning for stale entries that bypassed that lifecycle path.
 
 `ItemsPresenter` can process inherited and aspect work for realized item subtrees during measure and remove those elements from the root aspect queue after processing them.
 
@@ -63,8 +63,8 @@ Taking a snapshot does not clear valid work. `UiFrameScheduler` consumes aspect 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Count` | `int` | Gets the number of unique elements currently tracked by the queue. |
-| `HasWork` | `bool` | Gets whether `Snapshot()` contains at least one valid queued element after stale entries are pruned. |
+| `Count` | `int` | Gets the number of unique elements currently tracked by the queue without building a snapshot. |
+| `HasWork` | `bool` | Gets whether the queue currently tracks at least one entry without allocation or tree traversal. |
 
 ## Methods
 
@@ -72,7 +72,7 @@ Taking a snapshot does not clear valid work. `UiFrameScheduler` consumes aspect 
 | --- | --- | --- |
 | `Enqueue(UIElement element)` | `void` | Adds `element` to the queue if the same reference is not already queued. Throws `ArgumentNullException` when `element` is `null`. |
 | `Snapshot()` | `IReadOnlyList<UIElement>` | Prunes elements outside the owning root and returns queued elements in aspect processing order. |
-| `Remove(UIElement element)` | `void` | Removes `element` from the queue and from the preserved insertion-order list, when present. |
+| `Remove(UIElement element)` | `void` | Removes the reference-identical entry from the queue when present. |
 
 ## Applies to
 

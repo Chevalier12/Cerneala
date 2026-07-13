@@ -4,44 +4,34 @@ namespace Cerneala.UI.Invalidation;
 
 public sealed class HitTestQueue
 {
-    private readonly UIRoot root;
-    private readonly HashSet<UIElement> elements = new(ReferenceEqualityComparer.Instance);
-    private readonly List<UIElement> order = [];
+    private readonly ElementWorkQueue<ElementQueueUnit> work;
 
     public HitTestQueue(UIRoot root)
     {
-        this.root = root ?? throw new ArgumentNullException(nameof(root));
+        work = new ElementWorkQueue<ElementQueueUnit>(root ?? throw new ArgumentNullException(nameof(root)));
     }
 
-    public int Count => elements.Count;
+    public int Count => work.Count;
 
-    public bool HasWork => Snapshot().Count > 0;
+    public bool HasWork => work.HasWork;
 
     public void Enqueue(UIElement element)
     {
-        ArgumentNullException.ThrowIfNull(element);
-        if (elements.Add(element))
-        {
-            order.Add(element);
-        }
+        work.Enqueue(element, ElementQueueUnit.Value);
     }
 
     internal bool Contains(UIElement element)
     {
-        return elements.Contains(element);
+        return work.Contains(element);
     }
 
     public IReadOnlyList<UIElement> Snapshot()
     {
-        ElementQueueOrder.RemoveElementsOutsideRoot(root, elements, order);
-        return ElementQueueOrder.Sort(root, order.Where(elements.Contains));
+        return work.Snapshot();
     }
 
     public void Remove(UIElement element)
     {
-        if (elements.Remove(element))
-        {
-            order.RemoveAll(candidate => ReferenceEquals(candidate, element));
-        }
+        work.Remove(element);
     }
 }

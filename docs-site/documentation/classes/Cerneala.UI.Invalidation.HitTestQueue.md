@@ -45,9 +45,9 @@ if (pendingHitTests.Count > 0)
 
 The queue deduplicates elements by reference. Calling `Enqueue` multiple times with the same `UIElement` keeps only one pending entry.
 
-`Snapshot` removes queued elements that are no longer inside the owning root, then returns the remaining elements sorted by `ElementQueueOrder`. Taking a snapshot does not clear valid queued elements; the frame scheduler removes each element before processing it and re-enqueues it if processing throws.
+`Snapshot` defensively removes queued elements that are no longer inside the owning root, then returns the remaining elements in visual tree pre-order. It reuses the root's `ElementQueueOrderIndex`, rebuilt only when `TreeVersion` changes, and sorts only queued entries. Taking a snapshot does not clear valid queued elements; the frame scheduler removes each element before processing it and re-enqueues it if processing throws.
 
-`HasWork` calls `Snapshot`, so checking it can also prune detached elements from the queue.
+`HasWork` and `Count` read the queue dictionary directly without allocation, pruning, tree traversal, or sorting. Lifecycle detach removes pending work actively; snapshot pruning remains as a defensive fallback.
 
 ## Constructors
 
@@ -59,8 +59,8 @@ The queue deduplicates elements by reference. Calling `Enqueue` multiple times w
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Count` | `int` | Gets the number of elements currently tracked by the internal set. |
-| `HasWork` | `bool` | Gets whether `Snapshot()` contains at least one queued element after pruning detached entries. |
+| `Count` | `int` | Gets the number of elements currently tracked by the queue without building a snapshot. |
+| `HasWork` | `bool` | Gets whether the queue currently tracks hit-test work without allocation or tree traversal. |
 
 ## Methods
 
@@ -68,7 +68,7 @@ The queue deduplicates elements by reference. Calling `Enqueue` multiple times w
 | --- | --- | --- |
 | `Enqueue(UIElement element)` | `void` | Adds an element to the queue if it is not already queued. Throws `ArgumentNullException` when `element` is `null`. |
 | `Snapshot()` | `IReadOnlyList<UIElement>` | Removes entries outside the owning root and returns the queued elements in frame processing order. |
-| `Remove(UIElement element)` | `void` | Removes the element from the queue and from the preserved insertion order, when present. |
+| `Remove(UIElement element)` | `void` | Removes the reference-identical entry from the queue when present. |
 
 ## Applies to
 

@@ -54,11 +54,11 @@ root.SetResourceProvider(resources);
 
 `UIRoot` is the owner object for a retained Cerneala UI tree. The constructor initializes the root services, registers the default aspect package, marks the root as a layout boundary, and attaches the root element to itself through the element lifecycle.
 
-Children are attached by adding them to the inherited `VisualChildren` or `LogicalChildren` collections. Attached subtrees receive root ownership and element IDs through `ElementIds`; removing a subtree detaches it and releases its IDs.
+Children are attached by adding them to the inherited `VisualChildren` or `LogicalChildren` collections. Attached subtrees receive root ownership and element IDs through `ElementIds`; removing a subtree detaches it, releases its IDs, and removes its pending work from every root-owned queue.
 
-The root viewport is stored in `ViewportWidth`, `ViewportHeight`, and the root-level `Scale` property. `SetViewport` updates those values and increments `TreeVersion`. The root `Scale` property hides `UIElement.Scale`; on `UIRoot`, it represents viewport scale rather than the inherited render scale UI property.
+The root viewport is stored in `ViewportWidth`, `ViewportHeight`, and the root-level `Scale` property. `SetViewport` updates those values and increments `TreeVersion`. Adding, removing, or moving attached children also increments `TreeVersion`, which invalidates cached visual queue order and semantics. The root `Scale` property hides `UIElement.Scale`; on `UIRoot`, it represents viewport scale rather than the inherited render scale UI property.
 
-Invalidation requests are recorded in `Trace`, expanded through `DirtyPropagation`, and queued into the root-owned layout, inherited property, aspect, render, and hit-test queues. Render invalidation clears the retained render root, hit-test invalidation clears the input cache, and semantics invalidation marks the cached semantics tree dirty.
+Invalidation requests are recorded in `Trace`, expanded through `DirtyPropagation`, and queued into the root-owned layout, inherited property, command-state, aspect, render, and hit-test queues. Queue snapshots share one visual preorder index per `TreeVersion`, while idle `HasWork` checks read queue counts without tree traversal. Render invalidation clears the retained render root, hit-test invalidation clears the input cache, and semantics invalidation marks the cached semantics tree dirty.
 
 `ProcessFrame` runs scheduled frame work through `Scheduler`. If the scheduler has work or `Motion` has active motion, the frame is processed with the root motion frame coordinator.
 

@@ -10,16 +10,19 @@
     <Compile Remove="docs\**" />
     <Compile Remove="Cerneala.SourceGen\**" />
     <Compile Remove="Playground\**" />
+    <Compile Remove="benchmarks\**" />
     <Compile Remove="Tools\**" />
     <Compile Remove="tests\**" />
     <EmbeddedResource Remove="docs\**" />
     <EmbeddedResource Remove="Cerneala.SourceGen\**" />
     <EmbeddedResource Remove="Playground\**" />
+    <EmbeddedResource Remove="benchmarks\**" />
     <EmbeddedResource Remove="Tools\**" />
     <EmbeddedResource Remove="tests\**" />
     <None Remove="docs\**" />
     <None Remove="Cerneala.SourceGen\**" />
     <None Remove="Playground\**" />
+    <None Remove="benchmarks\**" />
     <None Remove="Tools\**" />
     <None Remove="tests\**" />
   </ItemGroup>

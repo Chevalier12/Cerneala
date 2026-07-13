@@ -39,9 +39,9 @@ foreach (UIElement element in queue.Snapshot())
 
 Each element is stored once by reference. Calling `Enqueue` repeatedly with the same `UIElement` reference does not create duplicate work.
 
-`Snapshot` removes queued elements whose `Root` is no longer the queue root, then returns the remaining elements in visual-tree preorder using `ElementChildRole.Visual`. Elements that still belong to the root but are not found by that traversal are placed after traversed elements and keep their relative enqueue order.
+`Snapshot` defensively removes queued elements whose `Root` is no longer the queue root, then returns the remaining elements in visual-tree preorder. It reuses the root's `ElementQueueOrderIndex`, rebuilt only when `TreeVersion` changes, and sorts only queued entries. Presence-exiting elements that still belong to the root but have left `VisualChildren` remain after traversed elements in relative enqueue order so exit rendering can finish.
 
-`HasWork` is based on `Snapshot()`, so checking it can also prune elements that no longer belong to the root. `Count` returns the current number of tracked elements without taking a sorted snapshot.
+`HasWork` and `Count` read the queue dictionary directly without allocating, pruning, walking the tree, or sorting. Lifecycle detach removes pending work actively; snapshot pruning remains as a defensive fallback.
 
 During frame processing, `UiFrameScheduler` removes each snapshotted element before invoking render-cache processors. If processing throws, the scheduler re-enqueues that element.
 
@@ -56,7 +56,7 @@ During frame processing, `UiFrameScheduler` removes each snapshotted element bef
 | Name | Type | Description |
 | --- | --- | --- |
 | `Count` | `int` | Gets the number of unique elements currently tracked by the queue. |
-| `HasWork` | `bool` | Gets whether the queue has at least one valid element after taking a snapshot. |
+| `HasWork` | `bool` | Gets whether the queue currently tracks render work without allocation or tree traversal. |
 
 ## Methods
 

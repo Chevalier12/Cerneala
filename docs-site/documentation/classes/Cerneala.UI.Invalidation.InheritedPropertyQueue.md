@@ -45,11 +45,11 @@ foreach (UIElement element in root.InheritedPropertyQueue.Snapshot())
 
 The queue deduplicates elements by reference. Calling `Enqueue` repeatedly with the same `UIElement` instance keeps one pending entry while preserving the first enqueue position used as the fallback ordering.
 
-`Snapshot` removes queued elements whose `Root` is no longer the owning root, then returns the remaining elements in visual tree pre-order. Queued elements that still belong to the root but are not found in that traversal are returned after traversed elements and keep their relative enqueue order.
+`Snapshot` defensively removes queued elements whose `Root` is no longer the owning root, then returns the remaining elements in visual tree pre-order. It reuses the root's `ElementQueueOrderIndex`, rebuilt only when `TreeVersion` changes, and sorts only queued entries. Presence-exiting elements outside the current traversal remain after traversed elements in relative enqueue order.
 
 Taking a snapshot does not clear valid work. `UiFrameScheduler` consumes inherited-property work during the `FramePhase.InheritedProperties` phase by taking a snapshot, removing each element before processing it, clearing `InvalidationFlags.Inherited` after successful processing, and re-enqueueing the element if processing throws.
 
-`UiFrameScheduler` runs inherited-property processing before aspect processing and again after aspect processing, so inherited values dirtied by earlier phases can be propagated before layout and rendering continue. `HasWork` calls `Snapshot()`, so checking it can also prune stale entries. `Count` returns the current backing set count without taking a sorted snapshot.
+`UiFrameScheduler` runs inherited-property processing before aspect processing and again after aspect processing, so inherited values dirtied by earlier phases can be propagated before layout and rendering continue. `HasWork` and `Count` read the queue dictionary directly without allocating, pruning, walking the tree, or sorting. Lifecycle detach removes pending work actively; snapshot pruning remains as a defensive fallback.
 
 ## Constructors
 
@@ -61,8 +61,8 @@ Taking a snapshot does not clear valid work. `UiFrameScheduler` consumes inherit
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Count` | `int` | Gets the number of unique elements currently tracked by the queue. |
-| `HasWork` | `bool` | Gets whether `Snapshot()` contains at least one valid queued element after stale entries are pruned. |
+| `Count` | `int` | Gets the number of unique elements currently tracked by the queue without building a snapshot. |
+| `HasWork` | `bool` | Gets whether the queue currently tracks inherited-property work without allocation or tree traversal. |
 
 ## Methods
 
@@ -70,7 +70,7 @@ Taking a snapshot does not clear valid work. `UiFrameScheduler` consumes inherit
 | --- | --- | --- |
 | `Enqueue(UIElement element)` | `void` | Adds `element` to the queue if the same reference is not already queued. Throws `ArgumentNullException` when `element` is `null`. |
 | `Snapshot()` | `IReadOnlyList<UIElement>` | Prunes elements outside the owning root and returns queued elements in inherited-property processing order. |
-| `Remove(UIElement element)` | `void` | Removes `element` from the queue and from the preserved insertion-order list, when present. |
+| `Remove(UIElement element)` | `void` | Removes the reference-identical entry from the queue when present. |
 
 ## Applies to
 

@@ -2260,14 +2260,19 @@
     "source": "UI/Invalidation/DirtyState.cs"
   },
   {
-    "name": "Cerneala.UI.Invalidation.ElementQueueOrder",
-    "file": "documentation/classes/Cerneala.UI.Invalidation.ElementQueueOrder.md",
-    "source": "UI/Invalidation/ElementQueueOrder.cs"
+    "name": "Cerneala.UI.Invalidation.ElementQueueOrderIndex",
+    "file": "documentation/classes/Cerneala.UI.Invalidation.ElementQueueOrderIndex.md",
+    "source": "UI/Invalidation/ElementQueueOrderIndex.cs"
   },
   {
-    "name": "Cerneala.UI.Invalidation.ElementQueueOrder.ElementOrder",
-    "file": "documentation/classes/Cerneala.UI.Invalidation.ElementQueueOrder.ElementOrder.md",
-    "source": "UI/Invalidation/ElementQueueOrder.cs"
+    "name": "Cerneala.UI.Invalidation.ElementQueueUnit",
+    "file": "documentation/classes/Cerneala.UI.Invalidation.ElementQueueUnit.md",
+    "source": "UI/Invalidation/ElementWorkQueue.cs"
+  },
+  {
+    "name": "Cerneala.UI.Invalidation.ElementWorkQueue_TMetadata_",
+    "file": "documentation/classes/Cerneala.UI.Invalidation.ElementWorkQueue_TMetadata_.md",
+    "source": "UI/Invalidation/ElementWorkQueue.cs"
   },
   {
     "name": "Cerneala.UI.Invalidation.FrameBudget",

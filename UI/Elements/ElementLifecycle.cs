@@ -60,6 +60,7 @@ public static class ElementLifecycle
         root.ElementIds.Release(element);
         root.ResourceDependencyTracker.RemoveOwner(element);
         element.DetachFromRoot();
+        root.RemovePendingWork(element);
         root.AspectProcessor.Clear(element);
     }
 }

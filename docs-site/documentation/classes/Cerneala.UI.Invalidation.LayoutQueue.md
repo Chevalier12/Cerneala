@@ -44,13 +44,13 @@ foreach (UIElement element in arrangeSnapshot)
 ```
 
 ## Remarks
-`LayoutQueue` stores measure and arrange work separately. Each phase uses reference identity for de-duplication, so enqueueing the same `UIElement` instance more than once leaves one queued entry for that phase.
+`LayoutQueue` stores measure and arrange work in separate `ElementWorkQueue<LayoutQueueEntryKind>` instances. Each phase uses reference identity for de-duplication, so enqueueing the same `UIElement` instance more than once leaves one queued entry for that phase. Duplicate internal requests promote metadata with `Direct` above `Required` above `Propagated`; lower-priority requests cannot demote existing work.
 
-Snapshots remove queued elements that no longer belong to the queue's root and return the remaining elements in visual tree pre-order. If two queued elements are not found in that traversal, their relative enqueue order is preserved after the in-tree elements.
+Snapshots defensively remove queued elements that no longer belong to the queue's root and return the remaining elements in visual tree pre-order. They reuse the root's `ElementQueueOrderIndex`, rebuilt only when `TreeVersion` changes, and sort only queued entries. The internal incremental-measure snapshot reverses that order for bottom-up processing.
 
 `UIRoot` creates its own `LayoutQueue` and exposes it through `UIRoot.LayoutQueue`. The frame scheduler consumes the queue by taking a phase snapshot, removing each processed element, and re-enqueueing the element if phase processing throws.
 
-`HasWork` calls the snapshot methods, so checking it can also prune stale entries that have moved outside the root. `MeasureCount` and `ArrangeCount` return the current backing set counts directly.
+`HasWork`, `MeasureCount`, and `ArrangeCount` read their queue dictionaries directly without allocating, pruning, walking the tree, or sorting. Lifecycle detach removes pending measure and arrange work actively; snapshot pruning remains as a defensive fallback.
 
 ## Constructors
 | Name | Description |
@@ -62,7 +62,7 @@ Snapshots remove queued elements that no longer belong to the queue's root and r
 | --- | --- | --- |
 | `MeasureCount` | `int` | Gets the number of elements currently held in the measure queue. |
 | `ArrangeCount` | `int` | Gets the number of elements currently held in the arrange queue. |
-| `HasWork` | `bool` | Gets whether either phase has snapshot-visible work after stale entries are pruned. |
+| `HasWork` | `bool` | Gets whether either phase currently tracks work without allocation or tree traversal. |
 
 ## Methods
 | Name | Return Type | Description |
@@ -71,8 +71,8 @@ Snapshots remove queued elements that no longer belong to the queue's root and r
 | `EnqueueArrange(UIElement element)` | `void` | Adds `element` to the arrange queue if it is not already queued by reference. Throws `ArgumentNullException` when `element` is `null`. |
 | `SnapshotMeasure()` | `IReadOnlyList<UIElement>` | Prunes measure entries outside the root and returns a visual-tree-ordered snapshot of measure work. |
 | `SnapshotArrange()` | `IReadOnlyList<UIElement>` | Prunes arrange entries outside the root and returns a visual-tree-ordered snapshot of arrange work. |
-| `RemoveMeasure(UIElement element)` | `void` | Removes `element` from the measure queue and its insertion-order tracking list when present. |
-| `RemoveArrange(UIElement element)` | `void` | Removes `element` from the arrange queue and its insertion-order tracking list when present. |
+| `RemoveMeasure(UIElement element)` | `void` | Removes the reference-identical entry from the measure queue when present. |
+| `RemoveArrange(UIElement element)` | `void` | Removes the reference-identical entry from the arrange queue when present. |
 
 ## Applies To
 `Cerneala` retained UI invalidation and frame scheduling.

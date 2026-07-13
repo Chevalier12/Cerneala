@@ -28,7 +28,7 @@ ElementLifecycle.DetachSubtree(root, child);
 
 `DetachSubtree` walks the visual subtree and then the logical subtree in post-order. It tracks detached elements by reference so an element reached through both roles is cleaned up once.
 
-Detaching releases the element id, removes resource dependency ownership, detaches the element from the root, and clears aspect processor state for the element.
+Detaching releases the element id, removes resource dependency ownership, detaches the element from the root, removes pending measure, arrange, inherited-property, command-state, aspect, render, and hit-test work, and clears aspect processor state for the element. Pending work is removed after detach callbacks complete, so work enqueued by a callback for the departing element is removed as well.
 
 ## Methods
 
