@@ -68,6 +68,37 @@ Paired `.cui.xml` Window and UserControl files are a supported generated authori
 
 `@template` maps to `ComponentTemplate<TControl>` and therefore works only on types derived from `Control`. A `StackPanel` can be the visual root inside a template, but cannot declare its own template.
 
+## Compose Reactive Markup Conditions
+
+`@when` sources and `@if` comparisons can be combined with the lowercase `and` and `or` operators. Comparisons bind tighter than `and`, and `and` binds tighter than `or`. Parentheses override that precedence.
+
+```xml
+<Border Background="Black">
+    @when IsEnabled and (IsMouseOver or IsKeyboardFocusWithin)
+    {
+        Background = "White";
+    }
+</Border>
+```
+
+A simple `@when` may observe any supported type and expose it as `value` inside `@if`. Every source leaf in a compound `@when` must be Boolean; for its nested `@if` blocks, `value` is the Boolean result of the complete `@when` expression.
+
+```xml
+<TextBlock DataType="SampleViewModel" Text="Outside">
+    @when $DataContext.Temperature
+    {
+        @if value >= $DataContext.Minimum and value <= $DataContext.Maximum
+        {
+            Text = "Inside";
+        }
+    }
+</TextBlock>
+```
+
+Generated predicates use normal C# short-circuit evaluation, but the generator discovers and observes every source written in the expression. A source in a branch that is currently skipped still stays current and can trigger reevaluation. Nullable or incomplete data paths are guarded at the leaf that uses them, so another branch of an `or` expression can still become true.
+
+The logical grammar intentionally stops here: it does not accept `not`, `&&`, `||`, or arbitrary C# expressions. The words `and` and `or` are operators only as complete tokens, not when they occur inside a member name or quoted string.
+
 ## Use ActionCommand And Command State
 
 ```csharp

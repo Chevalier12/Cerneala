@@ -109,7 +109,12 @@
                         Text="Alege ceva din stanga"
                         FontFamily="Segoe UI Semibold"
                         FontSize="24"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center">
+                        @when IsEnabled and (IsMouseOver or IsKeyboardFocusWithin)
+                        {
+                            Foreground = $AccentBrush;
+                        }
+                    </TextBlock>
                     <TextBlock
                         Name="EmptyStateDescription"
                         Text="Showcase-urile separate vor deveni vizibile in grid-ul asta."

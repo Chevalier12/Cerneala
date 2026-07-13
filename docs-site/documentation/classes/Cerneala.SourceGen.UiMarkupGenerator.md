@@ -57,6 +57,31 @@ Generated factories contain:
 
 The generated factory class name is based on the markup file name without the `.cui.xml` suffix, converted to a valid identifier and suffixed with `Factory`. Duplicate base names are disambiguated with the parent directory name, then with a stable FNV-1a hash if needed.
 
+Reactive directive expressions support the lowercase `and` and `or` operators plus parentheses. Their precedence is `comparison` before `and` before `or`; parentheses override the default order.
+
+```xml
+<TextBlock Text="Idle">
+  @when IsEnabled and (IsMouseOver or IsKeyboardFocusWithin)
+  {
+    Text = "Active";
+  }
+</TextBlock>
+```
+
+An `@if` expression may combine typed comparisons and reactive operands:
+
+```xml
+@when $DataContext.Value
+{
+  @if value >= $DataContext.Minimum and value <= $DataContext.Maximum
+  {
+    Text = "In range";
+  }
+}
+```
+
+Evaluation short-circuits, while every syntactic source is still observed. Compound `@when` expressions require Boolean source leaves, and `value` inside their `@if` blocks is the Boolean result of the complete expression. The directive language does not accept `not`, `&&`, `||`, or arbitrary C# expressions. This is a source-generator language change only and does not add or modify a public runtime API.
+
 Supported root and child elements:
 
 | Markup element | Generated type |

@@ -1079,8 +1079,8 @@ public sealed class UiMarkupGeneratorTests
             <Button IsEnabled="True">
               @template
               {
-                <Border>
-                  @when $owner.IsEnabled { Background = "White"; }
+                <Border IsEnabled="True">
+                  @when $owner.IsEnabled and $self.IsEnabled { Background = "White"; }
                 </Border>
               }
             </Button>
@@ -1099,8 +1099,52 @@ public sealed class UiMarkupGeneratorTests
         button.ComponentTemplate = new Cerneala.UI.Controls.Templates.ComponentTemplate<Button>("replacement", _ => new Border());
         Assert.Null(oldRoot.Background);
         button.IsEnabled = false;
+        oldRoot.IsEnabled = false;
         Assert.Null(oldRoot.Background);
         Assert.NotSame(oldRoot, button.ComponentTemplateInstance!.Root);
+    }
+
+    [Fact]
+    public void LogicalConditionalContentSurvivesRepeatedTemplateAttachDetachCycles()
+    {
+        const string markup = """
+            <Button IsEnabled="True">
+              @template
+              {
+                <StackPanel IsEnabled="True">
+                  @when $owner.IsEnabled and $self.IsEnabled
+                  {
+                    <TextBlock Text="Attached" />
+                  }
+                </StackPanel>
+              }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("LogicalAttachDetach.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        Assert.True(compilation.Emit(stream).Success);
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.LogicalAttachDetachFactory"));
+        Cerneala.UI.Controls.Templates.ComponentTemplate? generatedTemplate = button.ComponentTemplate;
+        Assert.NotNull(generatedTemplate);
+
+        for (int cycle = 0; cycle < 3; cycle++)
+        {
+            button.IsEnabled = true;
+            button.ComponentTemplate = generatedTemplate;
+            StackPanel generatedRoot = Assert.IsType<StackPanel>(button.ComponentTemplateInstance!.Root);
+            Assert.Single(generatedRoot.VisualChildren);
+
+            button.ComponentTemplate = new Cerneala.UI.Controls.Templates.ComponentTemplate<Button>(
+                "replacement-" + cycle,
+                _ => new Border());
+            int detachedCount = generatedRoot.VisualChildren.Count;
+            button.IsEnabled = false;
+            generatedRoot.IsEnabled = false;
+            Assert.Equal(detachedCount, generatedRoot.VisualChildren.Count);
+        }
     }
 
     [Fact]
@@ -1913,6 +1957,342 @@ public sealed class UiMarkupGeneratorTests
         Assert.Equal(new[] { "F", "T", "T", "T", "F", "F" }, panel.VisualChildren.Cast<TextBlock>().Select(child => child.Text));
         viewModelType.GetProperty("Value")!.SetValue(viewModel, 15);
         Assert.Equal(new[] { "F", "T", "F", "F", "T", "T" }, panel.VisualChildren.Cast<TextBlock>().Select(child => child.Text));
+    }
+
+    [Fact]
+    public void LogicalWhenSupportsAndOrPrecedenceParenthesesAndMultilineWhitespace()
+    {
+        const string markup = """
+            <StackPanel>
+              <TextBlock Text="Precedence" IsEnabled="False" IsVisible="False">
+                @when IsEnabled or
+                      IsMouseOver   and   IsVisible
+                {
+                  Text = "Matched";
+                }
+              </TextBlock>
+              <TextBlock Text="Grouped" IsEnabled="False" IsVisible="False">
+                @when ( IsEnabled or IsMouseOver ) and IsVisible
+                {
+                  Text = "Matched";
+                }
+              </TextBlock>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("LogicalPrecedence.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.LogicalPrecedenceFactory"));
+        TextBlock precedence = Assert.IsType<TextBlock>(panel.VisualChildren[0]);
+        TextBlock grouped = Assert.IsType<TextBlock>(panel.VisualChildren[1]);
+
+        precedence.IsEnabled = true;
+        grouped.IsEnabled = true;
+        Assert.Equal("Matched", precedence.Text);
+        Assert.Equal("Grouped", grouped.Text);
+
+        grouped.IsVisible = true;
+        Assert.Equal("Matched", grouped.Text);
+        precedence.IsEnabled = false;
+        precedence.IsPointerOver = true;
+        Assert.Equal("Precedence", precedence.Text);
+        precedence.IsVisible = true;
+        Assert.Equal("Matched", precedence.Text);
+    }
+
+    [Fact]
+    public void LogicalWhenObservesShortCircuitedBranchesAndRestoresBaseValue()
+    {
+        const string markup = """
+            <TextBlock Text="Base" IsEnabled="True">
+              @when IsEnabled or IsMouseOver
+              {
+                Text = "Active";
+              }
+            </TextBlock>
+            """;
+
+        GeneratorRunResult result = RunGenerator("ShortCircuit.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        Assert.True(compilation.Emit(stream).Success);
+        TextBlock text = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.ShortCircuitFactory"));
+        Assert.Equal("Active", text.Text);
+
+        text.IsPointerOver = true;
+        text.IsEnabled = false;
+        Assert.Equal("Active", text.Text);
+        text.IsPointerOver = false;
+        Assert.Equal("Base", text.Text);
+        text.IsEnabled = true;
+        Assert.Equal("Active", text.Text);
+    }
+
+    [Fact]
+    public void LogicalIfRangesObserveEveryTypedOperand()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+            namespace TestInput;
+            public sealed class RangeViewModel : INotifyPropertyChanged
+            {
+                private int value = 15;
+                private int min = 10;
+                private int max = 20;
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public int Value { get => value; set { this.value = value; Changed(nameof(Value)); } }
+                public int Min { get => min; set { min = value; Changed(nameof(Min)); } }
+                public int Max { get => max; set { max = value; Changed(nameof(Max)); } }
+                private void Changed(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            }
+            """;
+        const string markup = """
+            <TextBlock DataType="TestInput.RangeViewModel" Text="Outside">
+              @when $DataContext.Value
+              {
+                @if (value >= $DataContext.Min and value <= $DataContext.Max)
+                {
+                  Text = "Inside";
+                }
+              }
+            </TextBlock>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput("LogicalRange.cui.xml", markup, inputSource, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        Assert.True(compilation.Emit(stream).Success);
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type type = assembly.GetType("TestInput.RangeViewModel", throwOnError: true)!;
+        object viewModel = Activator.CreateInstance(type)!;
+        MethodInfo create = assembly.GetType("Cerneala.GeneratedUi.LogicalRangeFactory", throwOnError: true)!
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(candidate => candidate.Name == "Create" && candidate.GetParameters().Length == 1);
+        TextBlock text = Assert.IsType<TextBlock>(create.Invoke(null, new[] { viewModel }));
+        Assert.Equal("Inside", text.Text);
+
+        type.GetProperty("Min")!.SetValue(viewModel, 16);
+        Assert.Equal("Outside", text.Text);
+        type.GetProperty("Value")!.SetValue(viewModel, 18);
+        Assert.Equal("Inside", text.Text);
+        type.GetProperty("Max")!.SetValue(viewModel, 17);
+        Assert.Equal("Outside", text.Text);
+    }
+
+    [Fact]
+    public void LogicalWhenCombinesElementDataContextOwnerSelfAndTemplatePartSources()
+    {
+        const string markup = """
+            <StackPanel DataType="Cerneala.UI.Elements.UIElement">
+              <TextBlock Text="Off" IsEnabled="True">
+                @when IsEnabled and $DataContext.IsEnabled { Text = "On"; }
+              </TextBlock>
+              <Button Name="Host" IsEnabled="False">
+                @template
+                {
+                  <Border Name="Chrome" IsEnabled="True" Background="Black">
+                    @when $owner.IsEnabled and $self.IsEnabled { Background = "White"; }
+                  </Border>
+                }
+              </Button>
+              <TextBlock Text="Part off" IsEnabled="True">
+                @when $Host.parts.$Chrome.IsEnabled and IsEnabled { Text = "Part on"; }
+              </TextBlock>
+            </StackPanel>
+            """;
+
+        UIElement context = new() { IsEnabled = false };
+        GeneratorRunResult result = RunGenerator("LogicalSources.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("RegisterLifetime", SingleGeneratedSource(result));
+
+        using MemoryStream stream = new();
+        Assert.True(compilation.Emit(stream).Success);
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.LogicalSourcesFactory", context));
+        TextBlock dataText = Assert.IsType<TextBlock>(panel.VisualChildren[0]);
+        Button host = Assert.IsType<Button>(panel.VisualChildren[1]);
+        TextBlock partText = Assert.IsType<TextBlock>(panel.VisualChildren[2]);
+        Border chrome = Assert.IsType<Border>(host.ComponentTemplateInstance!.Parts["Chrome"]);
+
+        Assert.Equal("Off", dataText.Text);
+        context.IsEnabled = true;
+        Assert.Equal("On", dataText.Text);
+        Assert.Equal("Part on", partText.Text);
+        host.IsEnabled = true;
+        AssertSolidBackground(Cerneala.Drawing.Color.White, chrome);
+        chrome.IsEnabled = false;
+        AssertSolidBackground(Cerneala.Drawing.Color.Black, chrome);
+        Assert.Equal("Part off", partText.Text);
+    }
+
+    [Fact]
+    public void LogicalOrUsesPerLeafNullableGuards()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+            namespace TestInput;
+            public sealed class NullableRoot : INotifyPropertyChanged
+            {
+                private NullableChild? child;
+                private bool fallback = true;
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public NullableChild? Child { get => child; set { child = value; Changed(nameof(Child)); } }
+                public bool Fallback { get => fallback; set { fallback = value; Changed(nameof(Fallback)); } }
+                private void Changed(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            }
+            public sealed class NullableChild : INotifyPropertyChanged
+            {
+                private bool active;
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public bool Active { get => active; set { active = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Active))); } }
+            }
+            """;
+        const string markup = """
+            <TextBlock DataType="TestInput.NullableRoot" Text="Off">
+              @when $DataContext.Child.Active or $DataContext.Fallback { Text = "On"; }
+            </TextBlock>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput("NullableOr.cui.xml", markup, inputSource, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        Assert.True(compilation.Emit(stream).Success);
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type rootType = assembly.GetType("TestInput.NullableRoot", throwOnError: true)!;
+        Type childType = assembly.GetType("TestInput.NullableChild", throwOnError: true)!;
+        object root = Activator.CreateInstance(rootType)!;
+        MethodInfo create = assembly.GetType("Cerneala.GeneratedUi.NullableOrFactory", throwOnError: true)!
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(candidate => candidate.Name == "Create" && candidate.GetParameters().Length == 1);
+        TextBlock text = Assert.IsType<TextBlock>(create.Invoke(null, new[] { root }));
+        Assert.Equal("On", text.Text);
+
+        rootType.GetProperty("Fallback")!.SetValue(root, false);
+        Assert.Equal("Off", text.Text);
+        object child = Activator.CreateInstance(childType)!;
+        childType.GetProperty("Active")!.SetValue(child, true);
+        rootType.GetProperty("Child")!.SetValue(root, child);
+        Assert.Equal("On", text.Text);
+    }
+
+    [Fact]
+    public void LogicalConditionalChildrenReactivateAndDetachSubscriptions()
+    {
+        const string markup = """
+            <StackPanel DataType="Cerneala.UI.Elements.UIElement">
+              <StackPanel IsEnabled="False">
+                @when IsEnabled or $DataContext.IsEnabled
+                {
+                  <TextBlock Text="Conditional" />
+                }
+              </StackPanel>
+            </StackPanel>
+            """;
+
+        UIElement context = new() { IsEnabled = false };
+        GeneratorRunResult result = RunGenerator("LogicalLifecycle.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        Assert.True(compilation.Emit(stream).Success);
+        StackPanel root = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.LogicalLifecycleFactory", context));
+        StackPanel conditionalHost = Assert.IsType<StackPanel>(root.VisualChildren[0]);
+        Assert.Empty(conditionalHost.VisualChildren);
+
+        context.IsEnabled = true;
+        TextBlock cached = Assert.IsType<TextBlock>(Assert.Single(conditionalHost.VisualChildren));
+        context.IsEnabled = false;
+        Assert.Empty(conditionalHost.VisualChildren);
+        conditionalHost.IsEnabled = true;
+        Assert.Same(cached, Assert.Single(conditionalHost.VisualChildren));
+    }
+
+    [Fact]
+    public void LogicalExpressionsDeduplicateSourcesAndKeepKeywordsInsideAtoms()
+    {
+        const string inputSource = """
+            namespace TestInput;
+            public sealed class KeywordViewModel
+            {
+                public bool IsAndroidReady { get; set; } = true;
+                public string Label { get; set; } = "salt and pepper or sugar";
+            }
+            """;
+        const string markup = """
+            <TextBlock DataType="TestInput.KeywordViewModel" Text="Off">
+              @when $DataContext.IsAndroidReady and $DataContext.IsAndroidReady
+              {
+                @if value == True and $DataContext.Label == "salt and pepper or sugar"
+                {
+                  Text = "On";
+                }
+              }
+            </TextBlock>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput("KeywordAtoms.cui.xml", markup, inputSource, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string generatedSource = SingleGeneratedSource(result);
+        Assert.Equal(2, Count(generatedSource, "ObserveDataPath("));
+        Assert.Contains("&&", generatedSource);
+        Assert.DoesNotContain("observation0Value", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        object viewModel = Activator.CreateInstance(assembly.GetType("TestInput.KeywordViewModel", throwOnError: true)!)!;
+        MethodInfo create = assembly.GetType("Cerneala.GeneratedUi.KeywordAtomsFactory", throwOnError: true)!
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(candidate => candidate.Name == "Create" && candidate.GetParameters().Length == 1);
+        Assert.Equal("On", Assert.IsType<TextBlock>(create.Invoke(null, new[] { viewModel })).Text);
+    }
+
+    [Theory]
+    [InlineData("<TextBlock>@when { Text = \"x\"; }</TextBlock>", "empty")]
+    [InlineData("<TextBlock>@when IsEnabled IsMouseOver { Text = \"x\"; }</TextBlock>", "operator")]
+    [InlineData("<TextBlock>@when IsEnabled and { Text = \"x\"; }</TextBlock>", "operand")]
+    [InlineData("<TextBlock>@when (IsEnabled or IsMouseOver { Text = \"x\"; }</TextBlock>", "closing")]
+    [InlineData("<TextBlock>@when IsEnabled) { Text = \"x\"; }</TextBlock>", "parenthesis")]
+    [InlineData("<TextBlock>@when FontSize and IsEnabled { Text = \"x\"; }</TextBlock>", "Boolean")]
+    [InlineData("<TextBlock>@when FontSize { @if value == \"large\" { Text = \"x\"; } }</TextBlock>", "type")]
+    public void InvalidLogicalExpressionsReportFocusedDiagnostics(string markup, string message)
+    {
+        GeneratorRunResult result = RunGenerator("InvalidLogical.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = Assert.Single(result.Diagnostics, item =>
+            item.Id is "CERNEALAUI006" or "CERNEALAUI007");
+        Assert.Contains(message, diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void LogicalExpressionDiagnosticsPointAtTheFailingToken()
+    {
+        const string markup = """
+            <TextBlock>
+              @when IsEnabled and
+                    FontSize
+              {
+                Text = "x";
+              }
+            </TextBlock>
+            """;
+
+        GeneratorRunResult result = RunGenerator("LogicalLocation.cui.xml", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI007", "LogicalLocation.cui.xml");
+        FileLinePositionSpan span = diagnostic.Location.GetLineSpan();
+        Assert.Equal(2, span.StartLinePosition.Line);
+        Assert.Equal(8, span.StartLinePosition.Character);
     }
 
     [Fact]

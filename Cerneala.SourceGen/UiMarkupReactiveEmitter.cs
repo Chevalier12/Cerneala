@@ -37,6 +37,8 @@ public sealed partial class UiMarkupGenerator
 
             public List<string> ObservationNames { get; } = [];
 
+            public Dictionary<string, ObservationEmission> Observations { get; } = new(StringComparer.Ordinal);
+
             public List<ReactiveRule> Rules { get; } = [];
 
             public int NextOrder { get; set; }
@@ -80,13 +82,15 @@ public sealed partial class UiMarkupGenerator
                 string valueCode,
                 MarkupValueKind? markupKind,
                 ITypeSymbol? valueType,
-                string? valueGuard = null)
+                string? valueGuard = null,
+                string? rawValueCode = null)
             {
                 Name = name;
                 ValueCode = valueCode;
                 MarkupKind = markupKind;
                 ValueType = valueType;
                 ValueGuard = valueGuard;
+                RawValueCode = rawValueCode ?? name + ".Value";
             }
 
             public string Name { get; }
@@ -96,6 +100,35 @@ public sealed partial class UiMarkupGenerator
             public MarkupValueKind? MarkupKind { get; }
 
             public ITypeSymbol? ValueType { get; }
+
+            public string? ValueGuard { get; }
+
+            public string RawValueCode { get; }
+        }
+
+        private sealed class BoundDirectiveExpression
+        {
+            public BoundDirectiveExpression(
+                string code,
+                string rawValueCode,
+                ITypeSymbol type,
+                MarkupValueKind? markupKind = null,
+                string? valueGuard = null)
+            {
+                Code = code;
+                RawValueCode = rawValueCode;
+                Type = type;
+                MarkupKind = markupKind;
+                ValueGuard = valueGuard;
+            }
+
+            public string Code { get; }
+
+            public string RawValueCode { get; }
+
+            public ITypeSymbol Type { get; }
+
+            public MarkupValueKind? MarkupKind { get; }
 
             public string? ValueGuard { get; }
         }
@@ -209,49 +242,325 @@ public sealed partial class UiMarkupGenerator
 
         private void CollectWhen(ReactivePlan plan, DirectiveWhenNode when, string inheritedPredicate, string valueSource)
         {
-            ObservationEmission? observation = EmitObservation(plan, when.SourceExpression, when.Source);
-            if (observation is null)
+            if (!IsWhenExpression(when.Expression))
+            {
+                Report(
+                    InvalidBindingSource,
+                    when.Expression.Location,
+                    DescribeExpression(when.Expression),
+                    "@when accepts source expressions combined only with 'and', 'or' and parentheses.");
+                return;
+            }
+
+            BoundDirectiveExpression? whenExpression = BindDirectiveExpression(plan, when.Expression, null);
+            if (whenExpression is null)
             {
                 return;
             }
 
             if (when.BooleanBody is not null)
             {
-                if (observation.ValueType is null ||
-                    UnwrapNullable(observation.ValueType).SpecialType != SpecialType.System_Boolean)
+                string? booleanPredicate = RequireBooleanPredicate(whenExpression, when.Expression.Location, DescribeExpression(when.Expression));
+                if (booleanPredicate is null)
                 {
-                    Report(
-                        InvalidBindingSource,
-                        when.Source,
-                        when.SourceExpression,
-                        "The shorthand @when body requires a Boolean source.");
                     return;
                 }
 
-                string booleanPredicate = observation.ValueCode;
-                if (observation.ValueGuard is not null)
-                {
-                    booleanPredicate = observation.ValueGuard + " && " + booleanPredicate;
-                }
-
-                string predicate = inheritedPredicate == "true"
-                    ? booleanPredicate
-                    : "(" + inheritedPredicate + ") && (" + booleanPredicate + ")";
+                string predicate = CombinePredicates(inheritedPredicate, booleanPredicate);
                 CollectRuleBody(plan, when.BooleanBody, predicate, valueSource);
                 return;
             }
 
             foreach (DirectiveIfNode branch in when.Branches)
             {
-                string? comparison = EmitComparison(plan, observation, branch.Comparator, branch.Operand, branch.Source);
+                if (!IsIfExpression(branch.Expression))
+                {
+                    Report(
+                        InvalidBindingSource,
+                        branch.Expression.Location,
+                        DescribeExpression(branch.Expression),
+                        "@if requires a comparison or comparisons combined with 'and' and 'or'.");
+                    continue;
+                }
+
+                BoundDirectiveExpression? branchExpression = BindDirectiveExpression(plan, branch.Expression, whenExpression);
+                if (branchExpression is null)
+                {
+                    continue;
+                }
+
+                string? comparison = RequireBooleanPredicate(
+                    branchExpression,
+                    branch.Expression.Location,
+                    DescribeExpression(branch.Expression));
                 if (comparison is null)
                 {
                     continue;
                 }
 
-                string predicate = inheritedPredicate == "true" ? comparison : "(" + inheritedPredicate + ") && (" + comparison + ")";
+                string predicate = CombinePredicates(inheritedPredicate, comparison);
                 CollectRuleBody(plan, branch.Body, predicate, valueSource);
             }
+        }
+
+        private BoundDirectiveExpression? BindDirectiveExpression(
+            ReactivePlan plan,
+            DirectiveExpression expression,
+            BoundDirectiveExpression? valueExpression)
+        {
+            switch (expression)
+            {
+                case DirectiveSourceExpression source:
+                    {
+                        ObservationEmission? observation = EmitObservation(plan, source.Text, source.Location.Source, source.Location);
+                        return observation is null
+                            ? null
+                            : new BoundDirectiveExpression(
+                                observation.ValueCode,
+                                observation.RawValueCode,
+                                observation.ValueType!,
+                                observation.MarkupKind,
+                                observation.ValueGuard);
+                    }
+                case DirectiveValueExpression value:
+                    if (valueExpression is null)
+                    {
+                        Report(InvalidBindingSource, value.Location, "value", "'value' is available only inside @if.");
+                    }
+
+                    return valueExpression;
+                case DirectiveLiteralExpression literal:
+                    Report(
+                        InvalidBindingSource,
+                        literal.Location,
+                        literal.Text,
+                        "A literal must be used as a comparison operand.");
+                    return null;
+                case DirectiveGroupExpression group:
+                    return BindDirectiveExpression(plan, group.Inner, valueExpression);
+                case DirectiveComparisonExpression comparison:
+                    return BindComparison(plan, comparison, valueExpression);
+                case DirectiveLogicalExpression logical:
+                    return BindLogicalExpression(plan, logical, valueExpression);
+                default:
+                    throw new InvalidOperationException("Unsupported directive expression node.");
+            }
+        }
+
+        private BoundDirectiveExpression? BindLogicalExpression(
+            ReactivePlan plan,
+            DirectiveLogicalExpression logical,
+            BoundDirectiveExpression? valueExpression)
+        {
+            BoundDirectiveExpression? left = BindDirectiveExpression(plan, logical.Left, valueExpression);
+            BoundDirectiveExpression? right = BindDirectiveExpression(plan, logical.Right, valueExpression);
+            if (left is null || right is null)
+            {
+                return null;
+            }
+
+            string? leftPredicate = RequireBooleanPredicate(left, logical.Left.Location, DescribeExpression(logical.Left));
+            string? rightPredicate = RequireBooleanPredicate(right, logical.Right.Location, DescribeExpression(logical.Right));
+            if (leftPredicate is null || rightPredicate is null)
+            {
+                return null;
+            }
+
+            string logicalOperator = logical.Operator == DirectiveLogicalOperator.And ? "&&" : "||";
+            string code = "(" + leftPredicate + " " + logicalOperator + " " + rightPredicate + ")";
+            return new BoundDirectiveExpression(
+                code,
+                code,
+                compilation.GetSpecialType(SpecialType.System_Boolean));
+        }
+
+        private BoundDirectiveExpression? BindComparison(
+            ReactivePlan plan,
+            DirectiveComparisonExpression comparison,
+            BoundDirectiveExpression? valueExpression)
+        {
+            BoundDirectiveExpression? left = BindDirectiveExpression(plan, comparison.Left, valueExpression);
+            if (left is null)
+            {
+                return null;
+            }
+
+            if (comparison.Right is DirectiveLiteralExpression literal)
+            {
+                return BindLiteralComparison(left, comparison.Comparator, literal.Text, comparison.Location);
+            }
+
+            if (comparison.Right is DirectiveSourceExpression enumMember &&
+                left.Type.TypeKind == TypeKind.Enum &&
+                !enumMember.Text.StartsWith("$", StringComparison.Ordinal))
+            {
+                return BindLiteralComparison(left, comparison.Comparator, enumMember.Text, enumMember.Location);
+            }
+
+            BoundDirectiveExpression? right = BindDirectiveExpression(plan, comparison.Right, valueExpression);
+            if (right is null)
+            {
+                return null;
+            }
+
+            if (!SymbolEqualityComparer.Default.Equals(UnwrapNullable(left.Type), UnwrapNullable(right.Type)))
+            {
+                Report(
+                    InvalidBindingSource,
+                    comparison.Right.Location,
+                    DescribeExpression(comparison.Right),
+                    "Both expressions must have the same type.");
+                return null;
+            }
+
+            if ((comparison.Comparator is "<" or "<=" or ">" or ">=") && !SupportsOrdering(left))
+            {
+                Report(
+                    InvalidBindingSource,
+                    comparison.Location,
+                    comparison.Comparator,
+                    "The observed value type does not support ordering comparisons.");
+                return null;
+            }
+
+            string comparisonCode = left.Type.SpecialType == SpecialType.System_String &&
+                comparison.Comparator is "<" or "<=" or ">" or ">="
+                ? "global::System.String.CompareOrdinal(" + left.Code + ", " + right.Code + ") " + comparison.Comparator + " 0"
+                : left.Code + " " + comparison.Comparator + " " + right.Code;
+            return BooleanExpression(GuardComparison(left, right, comparisonCode));
+        }
+
+        private BoundDirectiveExpression? BindLiteralComparison(
+            BoundDirectiveExpression left,
+            string comparator,
+            string operand,
+            DirectiveExpressionLocation location)
+        {
+            if (string.Equals(operand, "Null", StringComparison.OrdinalIgnoreCase))
+            {
+                if (comparator is not "==" and not "!=")
+                {
+                    Report(InvalidBindingSource, location, operand, "Null supports only == and !=.");
+                    return null;
+                }
+
+                return BooleanExpression("(" + left.RawValueCode + " " + comparator + " null)");
+            }
+
+            string? operandCode = ParseSymbolLiteral(left.Type, operand, location);
+            if (operandCode is null)
+            {
+                return null;
+            }
+
+            if ((comparator is "<" or "<=" or ">" or ">=") && !SupportsOrdering(left))
+            {
+                Report(
+                    InvalidBindingSource,
+                    location,
+                    comparator,
+                    "The observed value type does not support ordering comparisons.");
+                return null;
+            }
+
+            string comparisonCode = left.Type.SpecialType == SpecialType.System_String &&
+                comparator is "<" or "<=" or ">" or ">="
+                ? "global::System.String.CompareOrdinal(" + left.Code + ", " + operandCode + ") " + comparator + " 0"
+                : left.Code + " " + comparator + " " + operandCode;
+            return BooleanExpression(GuardComparison(left, null, comparisonCode));
+        }
+
+        private BoundDirectiveExpression BooleanExpression(string code)
+        {
+            return new BoundDirectiveExpression(
+                code,
+                code,
+                compilation.GetSpecialType(SpecialType.System_Boolean));
+        }
+
+        private string? RequireBooleanPredicate(
+            BoundDirectiveExpression expression,
+            object location,
+            string display)
+        {
+            if (UnwrapNullable(expression.Type).SpecialType != SpecialType.System_Boolean)
+            {
+                Report(InvalidBindingSource, location, display, "Logical expression leaves must be Boolean.");
+                return null;
+            }
+
+            return expression.ValueGuard is null
+                ? "(" + expression.Code + ")"
+                : "((" + expression.ValueGuard + ") && (" + expression.Code + "))";
+        }
+
+        private static string GuardComparison(
+            BoundDirectiveExpression left,
+            BoundDirectiveExpression? right,
+            string comparison)
+        {
+            List<string> terms = [];
+            if (left.ValueGuard is not null)
+            {
+                terms.Add("(" + left.ValueGuard + ")");
+            }
+
+            if (right?.ValueGuard is not null)
+            {
+                terms.Add("(" + right.ValueGuard + ")");
+            }
+
+            terms.Add("(" + comparison + ")");
+            return "(" + string.Join(" && ", terms) + ")";
+        }
+
+        private static string CombinePredicates(string inheritedPredicate, string predicate)
+        {
+            return inheritedPredicate == "true"
+                ? "(" + predicate + ")"
+                : "((" + inheritedPredicate + ") && (" + predicate + "))";
+        }
+
+        private static bool IsWhenExpression(DirectiveExpression expression)
+        {
+            return expression switch
+            {
+                DirectiveSourceExpression => true,
+                DirectiveGroupExpression group => IsWhenExpression(group.Inner),
+                DirectiveLogicalExpression logical =>
+                    IsWhenExpression(logical.Left) && IsWhenExpression(logical.Right),
+                _ => false
+            };
+        }
+
+        private static bool IsIfExpression(DirectiveExpression expression)
+        {
+            return expression switch
+            {
+                DirectiveComparisonExpression => true,
+                DirectiveGroupExpression group => IsIfExpression(group.Inner),
+                DirectiveLogicalExpression logical =>
+                    IsIfExpression(logical.Left) && IsIfExpression(logical.Right),
+                _ => false
+            };
+        }
+
+        private static string DescribeExpression(DirectiveExpression expression)
+        {
+            return expression switch
+            {
+                DirectiveSourceExpression source => source.Text,
+                DirectiveValueExpression => "value",
+                DirectiveLiteralExpression literal => literal.Text,
+                DirectiveComparisonExpression comparison =>
+                    DescribeExpression(comparison.Left) + " " + comparison.Comparator + " " + DescribeExpression(comparison.Right),
+                DirectiveLogicalExpression logical =>
+                    DescribeExpression(logical.Left) +
+                    (logical.Operator == DirectiveLogicalOperator.And ? " and " : " or ") +
+                    DescribeExpression(logical.Right),
+                DirectiveGroupExpression group => "(" + DescribeExpression(group.Inner) + ")",
+                _ => "expression"
+            };
         }
 
         private void CollectRuleBody(
@@ -283,25 +592,50 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private ObservationEmission? EmitObservation(ReactivePlan plan, string expression, XObject source)
+        private ObservationEmission? EmitObservation(
+            ReactivePlan plan,
+            string expression,
+            XObject source,
+            object diagnosticSource)
         {
+            if (plan.Observations.TryGetValue(expression, out ObservationEmission? existing))
+            {
+                return existing;
+            }
+
             string name = "observation" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
             nextReactiveId++;
+            ObservationEmission? emission = EmitObservationCore(plan, name, expression, source, diagnosticSource);
+            if (emission is not null)
+            {
+                plan.Observations.Add(expression, emission);
+            }
+
+            return emission;
+        }
+
+        private ObservationEmission? EmitObservationCore(
+            ReactivePlan plan,
+            string name,
+            string expression,
+            XObject source,
+            object diagnosticSource)
+        {
             if (expression.StartsWith("$DataContext", StringComparison.Ordinal))
             {
-                return EmitDataObservation(plan, name, expression, source);
+                return EmitDataObservation(plan, name, expression, source, diagnosticSource);
             }
 
             if (expression.Contains(".parts.", StringComparison.Ordinal))
             {
-                return EmitTemplatePartObservation(plan, name, expression, source);
+                return EmitTemplatePartObservation(plan, name, expression, source, diagnosticSource);
             }
 
             if (expression.StartsWith("$owner.", StringComparison.Ordinal))
             {
                 if (plan.TemplateContext is null)
                 {
-                    Report(InvalidBindingSource, source, expression, "$owner is available only inside @template.");
+                    Report(InvalidBindingSource, diagnosticSource, expression, "$owner is available only inside @template.");
                     return null;
                 }
 
@@ -311,7 +645,7 @@ public sealed partial class UiMarkupGenerator
                     : null;
                 if (ownerSpec is null)
                 {
-                    Report(InvalidBindingSource, source, expression, "No supported UI property with this name exists on the template owner.");
+                    Report(InvalidBindingSource, diagnosticSource, expression, "No supported UI property with this name exists on the template owner.");
                     return null;
                 }
 
@@ -327,7 +661,7 @@ public sealed partial class UiMarkupGenerator
             {
                 if (plan.TemplateContext is null)
                 {
-                    Report(InvalidBindingSource, source, expression, "$self is available only inside @template.");
+                    Report(InvalidBindingSource, diagnosticSource, expression, "$self is available only inside @template.");
                     return null;
                 }
 
@@ -337,7 +671,7 @@ public sealed partial class UiMarkupGenerator
                     : null;
                 if (selfSpec is null)
                 {
-                    Report(InvalidBindingSource, source, expression, "No supported UI property with this name exists on the current template element.");
+                    Report(InvalidBindingSource, diagnosticSource, expression, "No supported UI property with this name exists on the current template element.");
                     return null;
                 }
 
@@ -354,7 +688,7 @@ public sealed partial class UiMarkupGenerator
                 string referenceName = expression.Substring(1);
                 if (!TryResolveObjectSymbol(source, referenceName, out NamedSymbol symbol))
                 {
-                    Report(InvalidBindingSource, source, expression, "Unknown local reference.");
+                    Report(InvalidBindingSource, diagnosticSource, expression, "Unknown local reference.");
                     return null;
                 }
 
@@ -367,7 +701,7 @@ public sealed partial class UiMarkupGenerator
                 };
                 if (objectCode is null)
                 {
-                    Report(InvalidBindingSource, source, expression, "The referenced symbol is not an observable object.");
+                    Report(InvalidBindingSource, diagnosticSource, expression, "The referenced symbol is not an observable object.");
                     return null;
                 }
 
@@ -395,7 +729,7 @@ public sealed partial class UiMarkupGenerator
             {
                 Report(
                     InvalidBindingSource,
-                    source,
+                    diagnosticSource,
                     expression,
                     plan.TemplateContext is null
                         ? "No supported UI property with this name exists on the current element."
@@ -410,7 +744,12 @@ public sealed partial class UiMarkupGenerator
             return new ObservationEmission(name, "(" + spec.ValueTypeCode + ")" + name + ".Value!", null, spec.ValueType);
         }
 
-        private ObservationEmission? EmitTemplatePartObservation(ReactivePlan plan, string name, string expression, XObject source)
+        private ObservationEmission? EmitTemplatePartObservation(
+            ReactivePlan plan,
+            string name,
+            string expression,
+            XObject source,
+            object diagnosticSource)
         {
             string[] segments = expression.Split('.');
             if (segments.Length != 4 || !segments[0].StartsWith("$", StringComparison.Ordinal) ||
@@ -418,7 +757,7 @@ public sealed partial class UiMarkupGenerator
                 !segments[2].StartsWith("$", StringComparison.Ordinal) || segments[2].Length == 1 ||
                 segments[3].Length == 0)
             {
-                Report(InvalidBindingSource, source, expression, "Template parts use $control.parts.$part.Property; 'parts' is lowercase.");
+                Report(InvalidBindingSource, diagnosticSource, expression, "Template parts use $control.parts.$part.Property; 'parts' is lowercase.");
                 return null;
             }
 
@@ -427,14 +766,14 @@ public sealed partial class UiMarkupGenerator
             if (!TryResolveObjectSymbol(source, ownerName, out NamedSymbol symbol) ||
                 symbol.Kind != NamedSymbolKind.Element || symbol.Source is not NamedElementReference owner)
             {
-                Report(InvalidBindingSource, source, expression, "Unknown named control.");
+                Report(InvalidBindingSource, diagnosticSource, expression, "Unknown named control.");
                 return null;
             }
 
             INamedTypeSymbol? ownerType = ResolvePropertyOwnerType(owner.Element.Name.LocalName, ReferenceEquals(owner.Element, document.Root));
             if (!IsControlType(ownerType))
             {
-                Report(InvalidBindingSource, source, expression, "Template parts can be accessed only on a Control.");
+                Report(InvalidBindingSource, diagnosticSource, expression, "Template parts can be accessed only on a Control.");
                 return null;
             }
 
@@ -447,13 +786,13 @@ public sealed partial class UiMarkupGenerator
 
             if (template is null || !templateParts.TryGetValue(template, out IReadOnlyDictionary<string, XElement>? parts))
             {
-                Report(InvalidBindingSource, source, expression, "The named control does not declare a component template.");
+                Report(InvalidBindingSource, diagnosticSource, expression, "The named control does not declare a component template.");
                 return null;
             }
 
             if (!parts.TryGetValue(partName, out XElement? part))
             {
-                Report(InvalidBindingSource, source, expression, "The component template has no part named '" + partName + "'.");
+                Report(InvalidBindingSource, diagnosticSource, expression, "The component template has no part named '" + partName + "'.");
                 return null;
             }
 
@@ -461,7 +800,7 @@ public sealed partial class UiMarkupGenerator
             PropertySpec? spec = partType is null ? null : FindPropertySpec(partType, segments[3]);
             if (spec is null)
             {
-                Report(InvalidBindingSource, source, expression, "No supported UI property with this name exists on the template part.");
+                Report(InvalidBindingSource, diagnosticSource, expression, "No supported UI property with this name exists on the template part.");
                 return null;
             }
 
@@ -473,11 +812,16 @@ public sealed partial class UiMarkupGenerator
             return new ObservationEmission(name, "(" + spec.ValueTypeCode + ")" + name + ".Value!", null, spec.ValueType);
         }
 
-        private ObservationEmission? EmitDataObservation(ReactivePlan plan, string name, string expression, XObject source)
+        private ObservationEmission? EmitDataObservation(
+            ReactivePlan plan,
+            string name,
+            string expression,
+            XObject source,
+            object diagnosticSource)
         {
             if (dataType is null)
             {
-                Report(InvalidBindingSource, source, expression, "DataType is required on the root element.");
+                Report(InvalidBindingSource, diagnosticSource, expression, "DataType is required on the root element.");
                 return null;
             }
 
@@ -495,7 +839,7 @@ public sealed partial class UiMarkupGenerator
                         candidate.GetMethod.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal);
                 if (property is null)
                 {
-                    Report(InvalidBindingSource, source, expression, "Public property '" + propertyName + "' was not found on '" + currentType.ToDisplayString() + "'.");
+                    Report(InvalidBindingSource, diagnosticSource, expression, "Public property '" + propertyName + "' was not found on '" + currentType.ToDisplayString() + "'.");
                     return null;
                 }
 
@@ -513,126 +857,12 @@ public sealed partial class UiMarkupGenerator
             plan.ObservationNames.Add(name);
             ITypeSymbol comparisonType = UnwrapNullable(currentType);
             string typeCode = comparisonType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            string capturedValue = name + "Value";
             return new ObservationEmission(
                 name,
-                capturedValue,
+                "(" + typeCode + ")" + name + ".Value!",
                 null,
                 comparisonType,
-                name + ".Value is " + typeCode + " " + capturedValue);
-        }
-
-        private string? EmitComparison(
-            ReactivePlan plan,
-            ObservationEmission observation,
-            string comparator,
-            string operand,
-            XObject source)
-        {
-            if (string.Equals(operand, "Null", StringComparison.OrdinalIgnoreCase))
-            {
-                if (comparator is not "==" and not "!=")
-                {
-                    Report(InvalidBindingSource, source, operand, "Null supports only == and !=.");
-                    return null;
-                }
-
-                return observation.Name + ".Value " + comparator + " null";
-            }
-
-            if (operand.StartsWith("$DataContext", StringComparison.Ordinal) || operand.Contains(".parts.", StringComparison.Ordinal))
-            {
-                string operandName = "observation" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
-                nextReactiveId++;
-                ObservationEmission? operandObservation = operand.Contains(".parts.", StringComparison.Ordinal)
-                    ? EmitTemplatePartObservation(plan, operandName, operand, source)
-                    : EmitDataObservation(plan, operandName, operand, source);
-                if (operandObservation is null)
-                {
-                    return null;
-                }
-
-                if (observation.ValueType is null || operandObservation.ValueType is null ||
-                    !SymbolEqualityComparer.Default.Equals(observation.ValueType, operandObservation.ValueType))
-                {
-                    Report(InvalidBindingSource, source, operand, "Both expressions must have the same type.");
-                    return null;
-                }
-
-                if ((comparator is "<" or "<=" or ">" or ">=") && !SupportsOrdering(observation))
-                {
-                    Report(InvalidBindingSource, source, comparator, "The observed value type does not support ordering comparisons.");
-                    return null;
-                }
-
-                string comparison = observation.ValueType.SpecialType == SpecialType.System_String &&
-                    comparator is "<" or "<=" or ">" or ">="
-                    ? "global::System.String.CompareOrdinal(" + observation.ValueCode + ", " + operandObservation.ValueCode + ") " + comparator + " 0"
-                    : observation.ValueCode + " " + comparator + " " + operandObservation.ValueCode;
-                string left = observation.ValueGuard ?? "true";
-                string right = operandObservation.ValueGuard ?? "true";
-                return left + " && " + right + " && " + comparison;
-            }
-
-            if (operand.StartsWith("$", StringComparison.Ordinal) &&
-                observation.ValueType?.SpecialType == SpecialType.System_Object)
-            {
-                if (comparator is not "==" and not "!=")
-                {
-                    Report(InvalidBindingSource, source, comparator, "Object references support only == and !=.");
-                    return null;
-                }
-
-                string referenceName = operand.Substring(1);
-                if (!TryResolveObjectSymbol(source, referenceName, out NamedSymbol symbol))
-                {
-                    Report(InvalidBindingSource, source, operand, "Unknown local reference.");
-                    return null;
-                }
-
-                string? objectCode = symbol.Source switch
-                {
-                    string variable => variable,
-                    BrushResource brush => brush.Variable,
-                    _ => null
-                };
-                if (objectCode is null)
-                {
-                    Report(InvalidBindingSource, source, operand, "The referenced symbol is not an object value.");
-                    return null;
-                }
-
-                return observation.ValueCode + " " + comparator + " (object?)" + objectCode;
-            }
-
-            string? operandCode = ParseSymbolLiteral(observation.ValueType!, operand, source);
-            bool isString = observation.ValueType?.SpecialType == SpecialType.System_String;
-
-            if (operandCode is null)
-            {
-                return null;
-            }
-
-            if (isString && comparator is "<" or "<=" or ">" or ">=")
-            {
-                string comparison = "global::System.String.CompareOrdinal(" + observation.ValueCode + ", " + operandCode + ")";
-                return GuardComparison(observation, comparison + " " + comparator + " 0");
-            }
-
-            if ((comparator is "<" or "<=" or ">" or ">=") && !SupportsOrdering(observation))
-            {
-                Report(InvalidBindingSource, source, comparator, "The observed value type does not support ordering comparisons.");
-                return null;
-            }
-
-            return GuardComparison(observation, observation.ValueCode + " " + comparator + " " + operandCode);
-        }
-
-        private static string GuardComparison(ObservationEmission observation, string comparison)
-        {
-            return observation.ValueGuard is null
-                ? comparison
-                : observation.ValueGuard + " && " + comparison;
+                name + ".Value is " + typeCode);
         }
 
         private static ITypeSymbol UnwrapNullable(ITypeSymbol type)
@@ -665,7 +895,7 @@ public sealed partial class UiMarkupGenerator
             return ParseLiteralValue(planElementName ?? "value", propertyName, synthetic, value, spec);
         }
 
-        private string? ParseSymbolLiteral(ITypeSymbol type, string rawValue, XObject source)
+        private string? ParseSymbolLiteral(ITypeSymbol type, string rawValue, object source)
         {
             string value = rawValue.Trim();
             if (type.SpecialType == SpecialType.System_String)
@@ -713,15 +943,14 @@ public sealed partial class UiMarkupGenerator
             };
         }
 
-        private static bool SupportsOrdering(ObservationEmission observation)
+        private static bool SupportsOrdering(BoundDirectiveExpression expression)
         {
-            if (observation.MarkupKind is MarkupValueKind.Float or MarkupValueKind.NonNegativeFloat or MarkupValueKind.PositiveFloat)
+            if (expression.MarkupKind is MarkupValueKind.Float or MarkupValueKind.NonNegativeFloat or MarkupValueKind.PositiveFloat)
             {
                 return true;
             }
 
-            return observation.ValueType is not null &&
-                (IsNumeric(observation.ValueType) || observation.ValueType.SpecialType == SpecialType.System_String);
+            return IsNumeric(expression.Type) || expression.Type.SpecialType == SpecialType.System_String;
         }
 
         private static bool IsNumeric(ITypeSymbol type)

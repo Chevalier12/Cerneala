@@ -45,6 +45,7 @@ Generated from `.`.
 |   |   |-- 2026-07-11-brush-types-and-rendering.md
 |   |   |-- 2026-07-11-foreground-brush-migration.md
 |   |   |-- 2026-07-12-roslyn-indexer-agent-performance-upgrades.md
+|   |   |-- 2026-07-13-markup-logical-expressions.md
 |   |   +-- 2026-07-13-queue-engine-2.md
 |   |-- superpowers/
 |   |   |-- plans/
@@ -979,6 +980,7 @@ Generated from `.`.
 |   |-- maintainers.css
 |   |-- maintainers.html
 |   |-- maintainers.js
+|   |-- readability.css
 |   |-- roadmap.css
 |   |-- roadmap.html
 |   |-- roadmap.js

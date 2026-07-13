@@ -545,11 +545,53 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
     private static string ProtectDirectiveComparators(string markup, char placeholder)
     {
-        return Regex.Replace(
-            markup,
-            "(@if\\s+value\\s*)<",
-            match => match.Groups[1].Value + placeholder,
-            RegexOptions.CultureInvariant);
+        char[] protectedMarkup = markup.ToCharArray();
+        for (int index = 0; index <= markup.Length - 3; index++)
+        {
+            if (!markup.AsSpan(index).StartsWith("@if".AsSpan(), StringComparison.Ordinal) ||
+                index + 3 >= markup.Length || !char.IsWhiteSpace(markup[index + 3]) ||
+                index > 0 && !char.IsWhiteSpace(markup[index - 1]) && markup[index - 1] is not '>' and not '{' and not '}')
+            {
+                continue;
+            }
+
+            bool quoted = false;
+            bool escaped = false;
+            for (int headerIndex = index + 3; headerIndex < markup.Length; headerIndex++)
+            {
+                char character = markup[headerIndex];
+                if (escaped)
+                {
+                    escaped = false;
+                    continue;
+                }
+
+                if (character == '\\' && quoted)
+                {
+                    escaped = true;
+                    continue;
+                }
+
+                if (character == '"')
+                {
+                    quoted = !quoted;
+                    continue;
+                }
+
+                if (character == '{' && !quoted)
+                {
+                    index = headerIndex;
+                    break;
+                }
+
+                if (character == '<' && !quoted)
+                {
+                    protectedMarkup[headerIndex] = placeholder;
+                }
+            }
+        }
+
+        return new string(protectedMarkup);
     }
 
     private static void RestoreDirectiveComparators(XDocument document, char placeholder)
@@ -3189,12 +3231,54 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
     private static Location CreateLocation(MarkupSource file, object locationSource)
     {
+        if (locationSource is DirectiveExpressionLocation expressionLocation)
+        {
+            return CreateLocation(file, expressionLocation);
+        }
+
         if (locationSource is XObject xmlObject)
         {
             return CreateLocation(file, xmlObject);
         }
 
         return Location.Create(file.Path, TextSpan.FromBounds(0, 0), new LinePositionSpan(new LinePosition(0, 0), new LinePosition(0, 0)));
+    }
+
+    private static Location CreateLocation(MarkupSource file, DirectiveExpressionLocation location)
+    {
+        if (location.Source is not IXmlLineInfo lineInfo || !lineInfo.HasLineInfo())
+        {
+            return CreateLocation(file, location.Source);
+        }
+
+        int line = lineInfo.LineNumber;
+        int column = lineInfo.LinePosition;
+        string text = (location.Source as XText)?.Value ?? string.Empty;
+        int length = Math.Min(location.Offset, text.Length);
+        for (int index = 0; index < length; index++)
+        {
+            if (text[index] == '\r')
+            {
+                if (index + 1 < length && text[index + 1] == '\n')
+                {
+                    index++;
+                }
+
+                line++;
+                column = 1;
+            }
+            else if (text[index] == '\n')
+            {
+                line++;
+                column = 1;
+            }
+            else
+            {
+                column++;
+            }
+        }
+
+        return CreateLocation(file, line, column);
     }
 
     private static Location CreateLocation(MarkupSource file, XObject xmlObject)
