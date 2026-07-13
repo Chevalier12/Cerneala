@@ -1,147 +1,83 @@
 using Cerneala.Playground;
 using Cerneala.UI.Controls;
-using Cerneala.UI.Elements;
-using Cerneala.UI.Layout;
-using Microsoft.Extensions.DependencyInjection;
+using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Input;
+using Grid = Cerneala.UI.Layout.Panels.Grid;
 
 namespace Cerneala.Tests.Playground;
 
 public sealed class MainWindowContractTests
 {
     [Fact]
-    public void GeneratedWindow_ComposesMarkupAndUsesTypedDataContext()
+    public void GeneratedWindowBuildsHeaderNavigationAndShowcaseHost()
     {
-        MainWindowViewModel viewModel = CreateViewModel();
+        MainWindow window = new();
 
-        MainWindow window = new(viewModel);
+        Assert.Equal("Cerneala Playground", window.Title);
+        Assert.Equal(800, window.Width);
+        Assert.Equal(600, window.Height);
 
-        Assert.Same(viewModel, window.DataContext);
-        Assert.Equal("Cerneala generator playground", window.Title);
-        Assert.Equal(1280, window.Width);
-        Assert.Equal(980, window.Height);
-        Assert.IsType<StackPanel>(window.Content);
-        (_, _, _, StackPanel actions) = FindReactiveElements(window);
-        Button openWindowsButton = Assert.IsType<Button>(actions.VisualChildren[5]);
-        Assert.Equal("Open 3 test windows", openWindowsButton.Content);
-        openWindowsButton.ApplyTemplate();
-        Border chrome = Assert.IsType<Border>(openWindowsButton.ComponentTemplateInstance!.Root);
-        Assert.Same(chrome, openWindowsButton.ComponentTemplateInstance.Parts["OpenWindowsChrome"]);
-        Assert.Equal(openWindowsButton.Background, chrome.Background);
-        ContentPresenter presenter = Assert.IsType<ContentPresenter>(chrome.Child);
-        Assert.Equal("Open 3 test windows", presenter.Content);
-        Assert.Equal(openWindowsButton.Foreground, presenter.Foreground);
-        Assert.Equal(openWindowsButton.Foreground, Assert.IsType<TextBlock>(presenter.PresentedChild).Foreground);
-        TextBlock templatePartStatus = Assert.IsType<TextBlock>(actions.VisualChildren[6]);
-        Assert.Equal("Template part access: live + reactive", templatePartStatus.Text);
-        chrome.IsEnabled = false;
-        Assert.Equal("Template part access: observed disabled state", templatePartStatus.Text);
+        Grid root = Assert.IsType<Grid>(window.Content);
+        Assert.Equal(2, root.RowDefinitions.Count);
+        Border header = Assert.IsType<Border>(root.VisualChildren[0]);
+        Grid body = Assert.IsType<Grid>(root.VisualChildren[1]);
+        Assert.IsType<Grid>(header.Child);
+        Assert.Equal(2, body.ColumnDefinitions.Count);
+
+        Border navigationBorder = Assert.IsType<Border>(body.VisualChildren[0]);
+        ShowcaseNavigation navigation = Assert.IsType<ShowcaseNavigation>(navigationBorder.Child);
+        StackPanel navigationItems = navigation.NavigationPanel;
+        Grid showcaseHost = Assert.IsType<Grid>(body.VisualChildren[1]);
+
+        Assert.Equal(0, Grid.GetColumn(navigationBorder));
+        Assert.Equal(1, Grid.GetColumn(showcaseHost));
+        Assert.True(navigationItems.VisualChildren.OfType<Button>().Count() >= 40);
+        Assert.Contains(navigationItems.VisualChildren.OfType<TextBlock>(), item => item.Text == "CONTROALE");
+        Assert.Contains(navigationItems.VisualChildren.OfType<TextBlock>(), item => item.Text == "LAYOUT");
+        Assert.Contains(navigationItems.VisualChildren.OfType<TextBlock>(), item => item.Text == "ASPECT");
+        Assert.Contains(navigationItems.VisualChildren.OfType<TextBlock>(), item => item.Text == "MOTION");
+        Assert.Contains(navigationItems.VisualChildren.OfType<TextBlock>(), item => item.Text == "SISTEME");
     }
 
     [Fact]
-    public void DataContextChanges_ReevaluateTypedNestedAndEnumConditions()
+    public void NavigationClickSelectsTheFutureShowcaseSlot()
     {
-        MainWindowViewModel viewModel = CreateViewModel();
-        MainWindow window = new(viewModel);
-        UIRoot root = new();
-        root.VisualChildren.Add(window);
-        (TextBlock status, TextBlock score, TextBlock details, _) = FindReactiveElements(window);
+        MainWindow window = new();
+        Grid root = Assert.IsType<Grid>(window.Content);
+        Border header = Assert.IsType<Border>(root.VisualChildren[0]);
+        Grid headerGrid = Assert.IsType<Grid>(header.Child);
+        TextBlock selectedShowcase = headerGrid.VisualChildren.OfType<TextBlock>()
+            .Single(item => item.Text == "Selecteaza un showcase");
 
-        Assert.Equal("Mode: Idle", status.Text);
-        Assert.Equal("Score: low", score.Text);
-        Assert.Equal("Details: healthy", details.Text);
+        Grid body = Assert.IsType<Grid>(root.VisualChildren[1]);
+        Border navigationBorder = Assert.IsType<Border>(body.VisualChildren[0]);
+        ShowcaseNavigation navigation = Assert.IsType<ShowcaseNavigation>(navigationBorder.Child);
+        StackPanel navigationItems = navigation.NavigationPanel;
+        Button layoutMotion = navigationItems.VisualChildren.OfType<Button>()
+            .Single(button => Equals(button.Content, "Layout motion"));
 
-        viewModel.Mode = ShowcaseMode.Running;
-        viewModel.Score = 10;
-        viewModel.Details!.IsHealthy = false;
+        layoutMotion.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, layoutMotion));
 
-        Assert.Equal("Mode: Running", status.Text);
-        Assert.Equal("Score reached target", score.Text);
-        Assert.Equal("Details: unhealthy", details.Text);
-
-        viewModel.Details = null;
-
-        Assert.Equal("Details: null", details.Text);
+        Grid showcaseHost = Assert.IsType<Grid>(body.VisualChildren[1]);
+        StackPanel emptyState = Assert.IsType<StackPanel>(Assert.Single(showcaseHost.VisualChildren));
+        TextBlock[] emptyStateText = emptyState.VisualChildren.OfType<TextBlock>().ToArray();
+        Assert.Equal("Layout motion", selectedShowcase.Text);
+        Assert.Equal("Layout motion", emptyStateText[0].Text);
+        Assert.Contains("montat aici", emptyStateText[1].Text, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void ConditionalChild_IsCreatedLazilyAndReusedAfterReactivation()
+    public void DiagnosticsHeaderStartsReadyForTheFirstRenderedFrame()
     {
-        MainWindowViewModel viewModel = CreateViewModel();
-        MainWindow window = new(viewModel);
-        UIRoot root = new();
-        root.VisualChildren.Add(window);
-        (_, _, _, StackPanel actions) = FindReactiveElements(window);
+        MainWindow window = new();
+        Grid root = Assert.IsType<Grid>(window.Content);
+        Border header = Assert.IsType<Border>(root.VisualChildren[0]);
+        Grid headerGrid = Assert.IsType<Grid>(header.Child);
 
-        Assert.Equal(8, actions.VisualChildren.Count);
+        TextBlock diagnostics = headerGrid.VisualChildren.OfType<TextBlock>()
+            .Single(item => item.Text == "Astept primul frame...");
 
-        viewModel.ShowAdvanced = true;
-        Button first = Assert.IsType<Button>(actions.VisualChildren[8]);
-
-        viewModel.ShowAdvanced = false;
-        Assert.Equal(8, actions.VisualChildren.Count);
-
-        viewModel.ShowAdvanced = true;
-        Assert.Same(first, actions.VisualChildren[8]);
-    }
-
-    [Fact]
-    public void ComparisonRows_AreArrangedWithoutOverlapping()
-    {
-        MainWindow window = new(CreateViewModel());
-        UIRoot root = new();
-        root.VisualChildren.Add(window);
-        window.Measure(new MeasureContext(new LayoutSize(900, 700)));
-        window.Arrange(new ArrangeContext(new LayoutRect(0, 0, 900, 700)));
-
-        StackPanel rootPanel = Assert.IsType<StackPanel>(window.Content);
-        Border card = Assert.IsType<Border>(rootPanel.VisualChildren[4]);
-        StackPanel cardContent = Assert.IsType<StackPanel>(card.Child);
-        UIElement comparisons = cardContent.VisualChildren[1];
-        UIElement[] rows = comparisons.VisualChildren.ToArray();
-
-        Assert.Collection(
-            rows.Zip(rows.Skip(1)),
-            pair => Assert.True(
-                pair.First.ArrangedBounds.Y + pair.First.ArrangedBounds.Height <= pair.Second.ArrangedBounds.Y,
-                $"'{((TextBlock)pair.First).Text}' overlaps '{((TextBlock)pair.Second).Text}'."),
-            pair => Assert.True(
-                pair.First.ArrangedBounds.Y + pair.First.ArrangedBounds.Height <= pair.Second.ArrangedBounds.Y,
-                $"'{((TextBlock)pair.First).Text}' overlaps '{((TextBlock)pair.Second).Text}'."));
-    }
-
-    [Fact]
-    public void AppHook_RegistersTheSeedUsedByDependencyInjection()
-    {
-        ServiceCollection services = new();
-        App.ConfigureServices(services);
-
-        using ServiceProvider provider = services.BuildServiceProvider();
-        ShowcaseSeed seed = provider.GetRequiredService<ShowcaseSeed>();
-
-        Assert.Equal("Ada", seed.UserName);
-        Assert.Equal(2, seed.Score);
-        Assert.Equal(10, seed.TargetScore);
-    }
-
-    private static MainWindowViewModel CreateViewModel()
-    {
-        return new MainWindowViewModel(new ShowcaseSeed(
-            "Ada",
-            score: 2,
-            targetScore: 10,
-            new ShowcaseDetails(true)));
-    }
-
-    private static (TextBlock Status, TextBlock Score, TextBlock Details, StackPanel Actions) FindReactiveElements(MainWindow window)
-    {
-        StackPanel root = Assert.IsType<StackPanel>(window.Content);
-        Border card = Assert.IsType<Border>(root.VisualChildren[4]);
-        StackPanel cardContent = Assert.IsType<StackPanel>(card.Child);
-        TextBlock status = Assert.IsType<TextBlock>(cardContent.VisualChildren[0]);
-        StackPanel comparisons = Assert.IsType<StackPanel>(cardContent.VisualChildren[1]);
-        TextBlock score = Assert.IsType<TextBlock>(comparisons.VisualChildren[0]);
-        TextBlock details = Assert.IsType<TextBlock>(comparisons.VisualChildren[2]);
-        StackPanel actions = Assert.IsType<StackPanel>(cardContent.VisualChildren[4]);
-        return (status, score, details, actions);
+        Assert.Equal("Consolas", diagnostics.FontFamily);
+        Assert.Null(window.LastFrame);
     }
 }

@@ -53,6 +53,24 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void PresentedFrameUpdatesWindowDiagnosticsBeforeRaisingFrameRendered()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Diagnostics" } };
+        List<UiFrame> observedFrames = [];
+        window.FrameRendered += (_, _) => observedFrames.Add(Assert.IsType<UiFrame>(window.LastFrame));
+
+        window.Show();
+        window.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "test frame");
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal(2, observedFrames.Count);
+        Assert.Same(window.LastFrame, observedFrames[^1]);
+        Assert.Equal(TimeSpan.FromMilliseconds(16), window.LastFrame!.ElapsedTime);
+    }
+
+    [Fact]
     public void EachWindowUsesAndDisposesItsOwnGraphicsSession()
     {
         FakeWindowPlatform platform = new();

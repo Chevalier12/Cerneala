@@ -1,4 +1,5 @@
 using Cerneala.UI.Core;
+using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Markup;
 
@@ -98,6 +99,8 @@ public class Window : ContentControl
     public event EventHandler? LocationChanged;
 
     public event EventHandler? ContentRendered;
+
+    public event EventHandler? FrameRendered;
 
     public string Title
     {
@@ -264,6 +267,8 @@ public class Window : ContentControl
 
     public bool IsClosed { get; private set; }
 
+    public UiFrame? LastFrame { get; private set; }
+
     public void Show()
     {
         (runtimeOwner ?? WindowApplicationRuntime.CurrentOrDefault).Show(this, modal: false);
@@ -396,6 +401,12 @@ public class Window : ContentControl
     internal void MarkContentRendered()
     {
         ContentRendered?.Invoke(this, EventArgs.Empty);
+    }
+
+    internal void MarkFrameRendered(UiFrame frame)
+    {
+        LastFrame = frame ?? throw new ArgumentNullException(nameof(frame));
+        FrameRendered?.Invoke(this, EventArgs.Empty);
     }
 
     internal void MarkClosed()

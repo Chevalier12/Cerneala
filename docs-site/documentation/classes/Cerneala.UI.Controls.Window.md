@@ -25,6 +25,8 @@ var window = new Window
 ## Remarks
 Window dimensions and constraints participate in measure; native state and resize settings are translated by the Windows hosting backend. Closing can be cancelled through the closing event args.
 
+`LastFrame` is assigned immediately after a frame is presented. The `FrameRendered` event is then raised on the window's UI thread, allowing diagnostic UI to inspect the completed frame without reaching into the hosting runtime.
+
 ## Properties
 | Name | Description |
 | --- | --- |
@@ -35,6 +37,12 @@ Window dimensions and constraints participate in measure; native state and resiz
 | `WindowState` | Normal, minimized, or maximized state. |
 | `ResizeMode` | Native resize policy. |
 | `WindowStartupLocation` | Initial placement policy. |
+| `LastFrame` | Most recently presented `UiFrame`, or `null` before the first frame. |
+
+## Events
+| Name | Description |
+| --- | --- |
+| `FrameRendered` | Raised after each frame is presented and `LastFrame` has been updated. |
 
 ## Applies to
 Windows desktop hosting.

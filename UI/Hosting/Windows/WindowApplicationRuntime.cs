@@ -392,13 +392,14 @@ internal sealed class WindowApplicationRuntime : IDisposable
         try
         {
             InputFrame inputFrame = context.PlatformWindow.InputSource.GetFrame();
+            UiFrame frame;
             if (renderTimeAlreadyAdvanced)
             {
-                context.Host.UpdateAfterRenderTimeAdvance(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
+                frame = context.Host.UpdateAfterRenderTimeAdvance(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
             }
             else
             {
-                context.Host.Update(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
+                frame = context.Host.Update(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
             }
 
             IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
@@ -411,6 +412,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
             {
                 graphicsSession.Present();
             }
+
+            context.Window.MarkFrameRendered(frame);
 
             if (!context.ContentRendered)
             {
