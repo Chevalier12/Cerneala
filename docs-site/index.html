@@ -545,7 +545,7 @@ footer{
         <p class="eyebrow">Retained-mode UI · for MonoGame · C#</p>
         <h1 class="hero__h1">Cerneala UI</h1>
         <p class="hero__sub">Modern WPF instincts, rebuilt for the MonoGame game loop.</p>
-        <p class="hero__body">Cerneala brings retained layout, typed properties, templated controls, routed input, and real theming into a real-time frame loop. No XAML. Not a drop-in replacement. A UI tree that thinks in frames.</p>
+        <p class="hero__body">Cerneala brings retained layout, typed properties, templated controls, routed input, and real theming into a real-time frame loop. Idle scheduler checks stay allocation-free, visual order is shared, and only pending work is sorted. No XAML. Not a drop-in replacement.</p>
         <div class="hero__ctas">
           <a class="btn btn--solid" href="https://github.com/Chevalier12/Cerneala">View on GitHub</a>
           <a class="btn btn--ghost" href="documentation.html">Read the Docs</a>
@@ -555,7 +555,7 @@ footer{
 
     <div class="hero__console">
       <span class="console__cursor">›</span>
-      <span>frame 4821 — layout pass · dirty nodes tracked · retained command cache replayed</span>
+      <span>scheduler — idle checks 0 B · visual order shared · pending entries sorted</span>
     </div>
 
   </div>
@@ -565,9 +565,9 @@ footer{
 <div class="ticker" aria-hidden="true">
   <div class="ticker__track">
     <span>Retained UI Tree</span><span>Typed Properties</span><span>Templated Controls</span><span>Motion System</span>
-    <span>Render Caching</span><span>Routed Input</span><span>Aspect Tokens</span><span>Frame Diagnostics</span>
+    <span>Render Caching</span><span>Routed Input</span><span>Aspect Tokens</span><span>Allocation-free Idle Checks</span><span>Frame Diagnostics</span>
     <span>Retained UI Tree</span><span>Typed Properties</span><span>Templated Controls</span><span>Motion System</span>
-    <span>Render Caching</span><span>Routed Input</span><span>Aspect Tokens</span><span>Frame Diagnostics</span>
+    <span>Render Caching</span><span>Routed Input</span><span>Aspect Tokens</span><span>Allocation-free Idle Checks</span><span>Frame Diagnostics</span>
   </div>
 </div>
 
@@ -629,7 +629,7 @@ footer{
       <svg class="feature-tile__icon accent-lime" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 21 8l-9 5-9-5 9-5Z"/><path d="M3 12l9 5 9-5"/><path d="M3 16l9 5 9-5"/></svg>
       <span class="feature-tile__tag accent-lime">Cache</span>
       <h3>Render Caching</h3>
-      <p>Invalidation-driven redraw. Only dirty subtrees repaint — static panels are cached as draw commands and replayed, not re-issued every frame.</p>
+      <p>Invalidations deduplicate by element, reuse visual order per tree version, and sort only pending work before dirty render caches refresh.</p>
     </div>
 
     <div class="feature-tile">
@@ -655,7 +655,7 @@ footer{
     <div class="section-head">
       <p class="eyebrow">Frame pipeline</p>
       <h2>One frame, retained stages.</h2>
-      <p>Cerneala moves input into pixels through a retained scheduler: input can dirty the tree, properties and aspects settle first, measure and arrange update layout, render caches refresh only where needed, and the backend submits the committed command stream.</p>
+      <p>Cerneala moves input into pixels through a retained scheduler: input can dirty the tree, queued properties and aspects settle first, measure and arrange update layout, render caches refresh only where needed, and the backend submits the committed command stream.</p>
     </div>
 
     <div class="pipeline__row">
@@ -672,7 +672,7 @@ footer{
       <div class="pipeline__stage pipeline__stage--ly">
         <div class="pipeline__badge">ME</div>
         <div class="pipeline__name">Measure</div>
-        <p class="pipeline__desc">Dirty measure queues run deterministic snapshots so available sizes and desired sizes update without rebuilding the tree.</p>
+        <p class="pipeline__desc">Dirty measure work snapshots only pending entries against a shared visual-order index, without rebuilding order per queue.</p>
       </div>
       <div class="pipeline__stage pipeline__stage--mo">
         <div class="pipeline__badge">AR</div>
@@ -781,6 +781,10 @@ footer{
         <div class="diag__row">
           <span class="diag__key">Invalidation trace</span>
           <span class="diag__val" style="color:var(--paper);">request -> queue -> phase</span>
+        </div>
+        <div class="diag__row">
+          <span class="diag__key">Work queues</span>
+          <span class="diag__val accent-lime">idle 0 B · sort Q only</span>
         </div>
         <div class="diag__row">
           <span class="diag__key">Render cache</span>
