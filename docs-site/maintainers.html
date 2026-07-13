@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="How Cerneala is maintained: open source and commercial support, AI-native contribution workflows, model policy, bug fixes, feature plans, and pull request gates.">
+<meta name="description" content="How Cerneala is maintained: support, model policy, Codex planning, implementation and bug-fixing skills, and pull request gates.">
 <title>Cerneala UI Maintainers</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -214,121 +214,130 @@
     </div>
   </section>
 
-  <section class="contribute-section" id="contribute">
-    <header class="section-head section-head--light">
+  <section class="workflow-skills" id="workflow-skills">
+    <header class="section-head">
       <div>
-        <span class="section-code">AI-native contribution protocol</span>
-        <h2>Bring a reproduction or an intent. Let the agent do the excavation.</h2>
+        <span class="section-code">Codex workflow skills</span>
+        <h2>Discuss it. Plan it. Then finish the damn thing.</h2>
       </div>
-      <p><code>AGENTS.md</code> and RoslynIndexer already live in the repository. Do not modify them. A capable agent will discover and use them automatically.</p>
+      <p>Cerneala keeps these two Codex skills under <code>.codex/skills/</code> for the handoff between a resolved engineering discussion and verified implementation. Codex can load the workflow directly from the repository that owns it.</p>
     </header>
 
-    <div class="tooling-lock">
-      <div><span>DO NOT MODIFY</span><strong>AGENTS.md</strong><p>Repository rules, architecture discipline, navigation requirements, documentation policy, and local tooling behavior.</p></div>
-      <div><span>DO NOT MODIFY</span><strong>RoslynIndexer</strong><p>The primary semantic navigation layer for symbols, definitions, references, reads, repository search, and reindexing.</p></div>
-      <div><span>USE FOR EXPERIMENTS</span><strong>CSI</strong><p>Small, disposable C# experiments that expose runtime state before a fix and prove the reproduction disappears afterward.</p></div>
+    <div class="skill-pipeline" aria-label="Planning and implementation skill workflow">
+      <article class="skill-card skill-card--plan">
+        <header><span>STEP 01 / FREEZE THE PLAN</span><strong>Planning</strong></header>
+        <div class="skill-card__body">
+          <code class="skill-command">$cerneala-checklist-plan</code>
+          <h3>CernealaChecklistPlan</h3>
+          <p>Use it after the requirements, behavior, architecture, and open questions have already been discussed. It turns that context into one or more implementation-ready Markdown plans under <code>docs/plans/</code>.</p>
+          <ul>
+            <li>Creates staged <code>[ ]</code> checklists with explicit gates</li>
+            <li>Records dependencies, tests, documentation, and acceptance criteria</li>
+            <li>Plans the work without quietly starting the implementation</li>
+          </ul>
+        </div>
+      </article>
+
+      <div class="skill-connector" aria-hidden="true"><span></span><strong>HAND OFF</strong><span></span></div>
+
+      <article class="skill-card skill-card--implement">
+        <header><span>STEP 02 / EXECUTE THE PLAN</span><strong>Implementation</strong></header>
+        <div class="skill-card__body">
+          <code class="skill-command">$cerneala-implement-plan</code>
+          <h3>CernealaImplementPlan</h3>
+          <p>Give it the plan name and it creates a persistent <code>/goal</code>, audits the remaining checklist, and implements the work end to end in coherent, verifiable batches.</p>
+          <ul>
+            <li>Checks <code>[x]</code> only after a batch is implemented and verified</li>
+            <li>Keeps code, tests, API documentation, and the source plan synchronized</li>
+            <li>Completes the goal only after every applicable item and gate is done</li>
+          </ul>
+        </div>
+      </article>
     </div>
 
-    <div class="workflow-tabs" role="tablist" aria-label="Contribution workflows">
-      <button class="is-active" id="bug-tab" type="button" role="tab" aria-selected="true" aria-controls="bug-workflow" data-workflow-tab="bug">Fix a bug</button>
-      <button id="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-workflow" data-workflow-tab="feature">Implement a feature</button>
+    <div class="skill-location">
+      <span>DISCOVERY PATH</span>
+      <code>.codex/skills/cerneala-checklist-plan/</code>
+      <code>.codex/skills/cerneala-implement-plan/</code>
     </div>
 
-    <div class="workflow-panel is-active" id="bug-workflow" role="tabpanel" aria-labelledby="bug-tab" data-workflow-panel="bug">
-      <div class="workflow-intro">
-        <span>BUG PROTOCOL</span>
-        <h3>Reproduce. Observe. Fail red. Fix. Reproduce again.</h3>
-        <p>Do not begin with a theory about the implementation. Begin with the user-visible failure and enough telemetry for GPT-5.6 to find the actual contract violation.</p>
-      </div>
-
-      <ol class="workflow-steps workflow-steps--bug">
-        <li><span class="step-orb">01</span><div><strong>Discover and reproduce</strong><p>Reduce the bug to the smallest reliable sequence. Record the custom view, exact actions, expected behavior, actual behavior, frequency, and environment.</p><em>Bonus points: include the frame-stats TextBlock used by the Playground.</em></div></li>
-        <li><span class="step-orb">02</span><div><strong>Give GPT-5.6 the scenario</strong><p>Tell it where the bug appears, what your custom view contains, what you did, what happened, and precisely what pisses you off about it.</p></div></li>
-        <li><span class="step-orb">03</span><div><strong>Reproduce with CSI first</strong><p>Require a focused temporary <code>.csx</code> experiment. The agent should inspect all relevant state transitions, use a short timeout, clean up the script, and kill any suspicious stuck CSI process.</p></div></li>
-        <li><span class="step-orb">04</span><div><strong>Create a RED test</strong><p>Encode the failure before modifying production behavior. The test must fail for the observed reason, not because the test harness is broken.</p></div></li>
-        <li><span class="step-orb">05</span><div><strong>Implement the smallest correct fix</strong><p>Respect existing ownership and architecture boundaries. Fix the violated contract without unrelated refactors, speculative abstractions, or compatibility theater.</p></div></li>
-        <li><span class="step-orb">06</span><div><strong>Retest with CSI</strong><p>Run the same focused experiment again. Confirm the original reproduction is gone and inspect the state that previously exposed the bug.</p></div></li>
-        <li><span class="step-orb">07</span><div><strong>Test the real scenario manually</strong><p>Open the affected view or Playground scenario and perform the original interaction yourself. Inspect the visual result, input, layout, diagnostics, and frame stats for anything obviously fucked.</p></div></li>
-        <li><span class="step-orb">08</span><div><strong>Run the full test suite until GREEN</strong><p>The model always runs the entire suite, not merely the focused tests. If your change broke another contract, it must tell you exactly what regressed. Tell it to fix the regression and rerun everything.</p><em>A green full suite is mandatory. No exceptions.</em></div></li>
-        <li><span class="step-orb">09</span><div><strong>Commit, push, open the PR</strong><p>Include the reproduction, red-test evidence, implementation summary, CSI retest, manual test, and full green-suite result. The maintainer reviews from there.</p></div></li>
-      </ol>
+    <div class="skill-prompts">
+      <article class="prompt-template">
+        <header><div><span>READY-TO-USE PROMPT</span><strong>Create the plan</strong></div><button type="button" data-copy-target="plan-skill-prompt">Copy prompt</button></header>
+        <pre id="plan-skill-prompt"><code>Use $cerneala-checklist-plan to turn our completed discussion into implementation-ready Cerneala checklist plans under docs/plans/. Do not implement the code yet.</code></pre>
+      </article>
 
       <article class="prompt-template">
-        <header><div><span>READY-TO-ADAPT PROMPT</span><strong>Bug investigation</strong></div><button type="button" data-copy-target="bug-prompt">Copy prompt</button></header>
-        <pre id="bug-prompt"><code>I found a bug in Cerneala.
+        <header><div><span>READY-TO-USE PROMPT</span><strong>Implement the plan</strong></div><button type="button" data-copy-target="implement-skill-prompt">Copy prompt</button></header>
+        <pre id="implement-skill-prompt"><code>Use $cerneala-implement-plan to implement &lt;plan-name&gt; end to end. Create a persistent /goal and check off each item only as its batch is completed and verified.</code></pre>
+      </article>
+    </div>
+  </section>
+
+  <section class="bugfix-skill-section" id="contribute">
+    <header class="section-head section-head--light">
+      <div>
+        <span class="section-code">Evidence-first bug fixing</span>
+        <h2>One bug skill. No theory-first cowboy bullshit.</h2>
+      </div>
+      <p><code>CernealaFixBug</code> carries the old bug-fix protocol as an executable Codex workflow: reproduce the actual failure, prove it red, make the smallest correct change, and verify the same scenario again.</p>
+    </header>
+
+    <div class="bugfix-skill-layout">
+      <article class="bugfix-skill-card">
+        <header><span>CODEX SKILL</span><strong>Bug investigation and repair</strong></header>
+        <div>
+          <code class="skill-command">$cerneala-fix-bug</code>
+          <h3>CernealaFixBug</h3>
+          <p>Give the skill the user-visible failure, expected result, reproduction steps, and whatever diagnostics you have. It drives the fix from evidence instead of treating the first plausible theory like holy scripture.</p>
+          <ul>
+            <li>Uses RoslynIndexer and the repository rules for every investigation</li>
+            <li>Prefers a focused CSI experiment for observable runtime state</li>
+            <li>Requires a RED regression test before production changes</li>
+            <li>Retests the automated reproduction and finishes with the full green suite</li>
+          </ul>
+        </div>
+      </article>
+
+      <ol class="bugfix-loop" aria-label="CernealaFixBug verification loop">
+        <li><span>01</span><div><strong>Reproduce</strong><p>Reduce the report to a deterministic failing scenario and capture the relevant state.</p></div></li>
+        <li><span>02</span><div><strong>Prove RED</strong><p>Add a focused regression test that fails for the observed contract violation.</p></div></li>
+        <li><span>03</span><div><strong>Fix narrowly</strong><p>Change the owning implementation without speculative rewrites or unrelated cleanup.</p></div></li>
+        <li><span>04</span><div><strong>Verify automatically</strong><p>Repeat the automated reproduction, then run focused tests and the complete repository suite.</p></div></li>
+      </ol>
+    </div>
+
+    <div class="bugfix-install-path">
+      <span>CODEX SKILL PATH</span>
+      <code>.codex/skills/cerneala-fix-bug/</code>
+      <strong>Repository skill, versioned with Cerneala</strong>
+    </div>
+
+    <article class="prompt-template bugfix-prompt">
+      <header><div><span>READY-TO-ADAPT PROMPT</span><strong>Fix a Cerneala bug</strong></div><button type="button" data-copy-target="bugfix-skill-prompt">Copy prompt</button></header>
+      <pre id="bugfix-skill-prompt"><code>Use $cerneala-fix-bug to investigate and fix this Cerneala bug end to end.
 
 Location / custom view:
-[describe the view and relevant controls]
+[describe the affected scenario]
 
 Reproduction:
 1. [exact action]
 2. [exact action]
-3. [failure]
+3. [observed failure]
 
 Expected:
 [what should happen]
 
 Actual:
-[what happens and why it is a problem]
+[what happens instead]
 
 Diagnostics:
-[frame stats, traces, exceptions, screenshots, or none]
+[exceptions, traces, screenshots, frame stats, or none]
 
-Follow the repository AGENTS.md and use RoslynIndexer as instructed. Do not modify AGENTS.md or RoslynIndexer.
+Reproduce the failure before editing production code, add a focused RED regression test, implement the smallest architecture-correct fix, repeat the automated reproduction, and run the complete repository test suite until GREEN.
 
-Before editing production code:
-1. Use a temporary CSI .csx experiment to reproduce the bug and inspect the relevant runtime state. Use a short timeout and clean it up afterward.
-2. Add a focused RED test that fails for the observed reason.
-3. Implement the smallest architecture-correct fix.
-4. Run the same CSI reproduction again and confirm the bug is gone.
-5. Manually test the original scenario in the affected view or Playground. Inspect behavior, visuals, input, layout, diagnostics, and frame stats for regressions.
-6. Run focused tests and then the entire repository test suite. The full suite must be GREEN.
-7. If the full suite reveals that my change broke another contract, explain the regression, fix it, and rerun the complete suite until green.
-8. Keep public API documentation synchronized when applicable.
-
-Do not prepare the PR while any test is failing. When complete, prepare a focused commit and PR summary with reproduction evidence, the red test, the fix, CSI verification, manual validation, and the full green-suite result.</code></pre>
-      </article>
-    </div>
-
-    <div class="workflow-panel" id="feature-workflow" role="tabpanel" aria-labelledby="feature-tab" data-workflow-panel="feature" hidden>
-      <div class="workflow-intro">
-        <span>IMPLEMENTATION PROTOCOL</span>
-        <h3>Discuss intent. Freeze a staged plan. Execute the checklist.</h3>
-        <p>Large implementation work begins as a conversation, not a blind code dump. Once intent and boundaries are clear, the plan becomes persistent project memory.</p>
-      </div>
-
-      <ol class="workflow-steps workflow-steps--feature">
-        <li><span class="step-orb">01</span><div><strong>Discuss the implementation</strong><p>Explain the scenario, desired API, developer experience, constraints, non-goals, integration points, and what success looks like. Let the agent challenge unclear assumptions.</p></div></li>
-        <li><span class="step-orb">02</span><div><strong>Create a new staged plan file</strong><p>Require a dedicated plan under <code>docs/plans/</code>. It must be split into coherent phases and use checklist items that are checked as work is completed.</p></div></li>
-        <li><span class="step-orb">03</span><div><strong>Implement phase by phase</strong><p>Follow repository patterns, keep scope tight, reindex after code changes, test each contract, update API docs with public surface changes, and mark the plan honestly.</p></div></li>
-        <li><span class="step-orb">04</span><div><strong>Manually test the complete scenario</strong><p>Use the real Playground or affected application path. Exercise the implementation like a developer would, inspect visuals and interaction, and check diagnostics and frame stats for collateral damage.</p></div></li>
-        <li><span class="step-orb">05</span><div><strong>Run the full test suite until GREEN</strong><p>The agent always runs every repository test. If your implementation broke existing behavior, it reports the regression. Tell it to fix the damage and run the complete suite again.</p><em>A green full suite is mandatory. No exceptions.</em></div></li>
-        <li><span class="step-orb">06</span><div><strong>Commit, push, open the PR</strong><p>Link the plan, summarize architecture and public behavior, list tests and manual validation, include the full green-suite result, call out limitations, and hand the focused change to the maintainer.</p></div></li>
-      </ol>
-
-      <article class="prompt-template">
-        <header><div><span>READY-TO-ADAPT PROMPT</span><strong>Feature implementation</strong></div><button type="button" data-copy-target="feature-prompt">Copy prompt</button></header>
-        <pre id="feature-prompt"><code>I want to implement the following Cerneala capability:
-
-[describe the user scenario and desired behavior]
-
-Constraints:
-[architecture, API, compatibility, performance, or tooling constraints]
-
-Non-goals:
-[what this implementation must not expand into]
-
-First, discuss the implementation with me. Inspect the current repository contracts, surface uncertainties, and propose the simplest coherent architecture. Do not edit code until the intent is clear.
-
-Then create a new dated plan file under docs/plans/. Split it into ordered phases with Markdown checklist items and explicit acceptance criteria. Keep the checklist updated as each item is completed.
-
-Follow AGENTS.md and use RoslynIndexer. Do not modify AGENTS.md or RoslynIndexer. Implement the plan end to end, reindex after code or project changes, add focused tests, synchronize public API documentation, and manually test the real Playground or application scenario.
-
-Then run the entire repository test suite. The full suite must be GREEN. If my implementation broke an existing contract, explain what regressed, fix it, and rerun the complete suite until every test passes.
-
-Do not prepare the PR while any test is failing. At the end, prepare a focused commit and PR summary linking the plan, implementation, focused tests, manual verification, full green-suite result, and known limitations.</code></pre>
-      </article>
-    </div>
+Do not claim that you manually tested the real application scenario. Give me the exact steps and expected result so I can perform that validation myself.</code></pre>
+    </article>
   </section>
 
   <section class="review-gate" id="review-gate">
@@ -341,15 +350,15 @@ Do not prepare the PR while any test is failing. At the end, prepare a focused c
 
     <div class="green-suite-gate">
       <span>NON-NEGOTIABLE RELEASE GATE</span>
-      <strong>Manual scenario tested. Full repository suite GREEN.</strong>
-      <p>If the model reports that your change broke something, the next instruction is "fix it and rerun the full suite," not "open the PR anyway." Red means stop.</p>
+      <strong>User scenario confirmed. Automated repository suite GREEN.</strong>
+      <p>The agent owns automated evidence. The user owns the real application check. If either side is still red or unconfirmed, the PR is not ready.</p>
     </div>
 
     <div class="review-grid">
       <div><span>01</span><strong>Focused scope</strong><p>No unrelated cleanup, accidental metadata churn, or wholesale rewrite because the agent became artistically inspired.</p></div>
       <div><span>02</span><strong>Reproduction or plan</strong><p>Bug PRs carry a reliable reproduction. Feature PRs carry the staged checklist that governed the work.</p></div>
       <div><span>03</span><strong>Full green suite</strong><p>A bug began red. New behavior has contract tests. Every repository test passes after the final implementation.</p></div>
-      <div><span>04</span><strong>Manual runtime proof</strong><p>The actual view or Playground scenario was exercised manually, with visuals, input, diagnostics, and frame stats inspected.</p></div>
+      <div><span>04</span><strong>User runtime confirmation</strong><p>The user exercised the actual view or Playground scenario and reported the result. The agent must not fabricate this evidence.</p></div>
       <div><span>05</span><strong>Current docs</strong><p>Public APIs and developer-facing contracts are documented in the repository source of truth.</p></div>
       <div><span>06</span><strong>Honest handoff</strong><p>Known gaps and uncertainty are stated plainly. The maintainer should not need archaeology to discover what remains.</p></div>
     </div>

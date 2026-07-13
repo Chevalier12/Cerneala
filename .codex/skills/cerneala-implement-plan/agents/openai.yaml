@@ -1,0 +1,4 @@
+interface:
+  display_name: "CernealaImplementPlan"
+  short_description: "Implementeaza integral planuri Cerneala"
+  default_prompt: "Use $cerneala-implement-plan to implement the named Cerneala checklist plan end-to-end and check off each verified batch."

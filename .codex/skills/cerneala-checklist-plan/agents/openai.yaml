@@ -1,0 +1,4 @@
+interface:
+  display_name: "CernealaChecklistPlan"
+  short_description: "Transforma discutiile in planuri Cerneala"
+  default_prompt: "Use $cerneala-checklist-plan to transform our completed discussion into implementation-ready Cerneala checklist plans."
