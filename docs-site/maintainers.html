@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="How Cerneala is maintained: open source and commercial support, AI-native contribution workflows, model policy, bug fixes, feature plans, and pull request gates.">
+<title>Cerneala UI Maintainers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="maintainers.css">
+</head>
+<body>
+<div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="nav__brand" href="index.html">
+    <svg class="nav__mark" viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="13" fill="none" stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="1.5 4"/>
+      <circle cx="16" cy="7" r="2.4" fill="none" stroke="var(--cyan)" stroke-width="1.6"/>
+      <circle cx="24" cy="21" r="2.4" fill="none" stroke="var(--pink)" stroke-width="1.6"/>
+      <circle cx="8" cy="21" r="2.4" fill="none" stroke="var(--lime)" stroke-width="1.6"/>
+      <circle cx="16" cy="16" r="2.2" fill="var(--cyan)"/>
+    </svg>
+    <span>Cerneala <em>UI</em></span>
+  </a>
+  <nav class="nav__links" aria-label="Site navigation">
+    <a href="index.html">Overview</a>
+    <a href="documentation.html">API Reference</a>
+    <a href="wpf-compendium.html">WPF Compendium</a>
+    <a href="roadmap.html">Roadmap</a>
+    <a class="is-active" href="maintainers.html">Maintainers</a>
+    <a href="about.html">About Me</a>
+  </nav>
+  <a class="nav__github" href="https://github.com/Chevalier12/Cerneala">GitHub</a>
+</header>
+
+<main>
+  <section class="maintainer-hero">
+    <div class="maintainer-hero__copy">
+      <span class="section-code">Maintainer operations manual</span>
+      <h1>Open source.<br><span>Machine-assisted.</span><br>Human-directed.</h1>
+      <p>Cerneala is free to inspect, use, modify, and improve in public. Maintainer time is finite. Developers who need faster bug-fix attention or custom implementation work can pay for a priority lane.</p>
+      <div class="hero-actions">
+        <a class="button button--solid" href="#contribute">Contribute with AI</a>
+        <a class="button button--ghost" href="#support">Support options</a>
+      </div>
+    </div>
+
+    <div class="maintainer-console" aria-label="Repository maintenance status">
+      <header><i></i><i></i><i></i><strong>maintainer://cerneala</strong><span>LIVE POLICY</span></header>
+      <div class="console-body">
+        <p><span>&gt;</span> repository.mode</p>
+        <strong>OPEN_SOURCE</strong>
+        <p><span>&gt;</span> execution.model</p>
+        <strong>AI_NATIVE + HUMAN_REVIEW</strong>
+        <p><span>&gt;</span> preferred.engineering_model</p>
+        <strong class="console-cyan">OPENAI_GPT_5_6_OR_NEWER</strong>
+        <p><span>&gt;</span> contributor.rule</p>
+        <strong class="console-lime">USE_THE_REPO_TOOLING</strong>
+        <p><span>&gt;</span> forbidden.mutations</p>
+        <strong class="console-red">AGENTS_MD / ROSLYN_INDEXER</strong>
+      </div>
+      <footer><span>INDEX</span><strong>RoslynIndexer</strong><span>EXPERIMENT</span><strong>CSI</strong><span>GATE</span><strong>GREEN SUITE</strong></footer>
+    </div>
+  </section>
+
+  <section class="support-section" id="support">
+    <header class="section-head">
+      <div>
+        <span class="section-code">Open code, finite attention</span>
+        <h2>Source access is free. Priority is a service.</h2>
+      </div>
+      <p>Commercial support does not create a private, better Cerneala. It purchases scheduled maintainer attention for the problem that matters to your project.</p>
+    </header>
+
+    <div class="support-lanes">
+      <article class="support-lane support-lane--community">
+        <header><span>COMMUNITY LANE</span><strong>Open source</strong></header>
+        <div class="support-price"><span>Cost</span><strong>Free</strong></div>
+        <ul>
+          <li>Public source and documentation</li>
+          <li>Issues, discussions, and pull requests</li>
+          <li>Community-driven diagnosis and fixes</li>
+          <li>Maintainer review as time permits</li>
+        </ul>
+        <p>No guaranteed response window. A good reproduction, a red test, CSI evidence, and a narrow PR move dramatically faster than "button weird, please fix."</p>
+        <a href="https://github.com/Chevalier12/Cerneala/issues">Open an issue</a>
+      </article>
+
+      <div class="lane-divider" aria-hidden="true"><span></span><strong>OR</strong><span></span></div>
+
+      <article class="support-lane support-lane--priority">
+        <header><span>PRIORITY LANE</span><strong>Paid support</strong></header>
+        <div class="support-price"><span>Cost</span><strong>Scoped directly</strong></div>
+        <ul>
+          <li>Faster triage and attention for blocking bugs</li>
+          <li>Prioritized fixes against an agreed reproduction</li>
+          <li>Custom controls, integrations, or framework capabilities</li>
+          <li>Implementation reviewed against Cerneala architecture</li>
+        </ul>
+        <p>You are paying for focused maintainer time, not permission to bypass tests, architecture, documentation, or the public quality bar.</p>
+        <a href="https://github.com/Chevalier12">Contact the maintainer</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="lineage-section" id="lineage">
+    <header class="section-head section-head--light">
+      <div>
+        <span class="section-code">Repository lineage</span>
+        <h2>This codebase was built with AI. Maintain it the same way.</h2>
+      </div>
+      <p>Do not try to hold the entire repository in your human working memory. That is not a test of intelligence. It is an inefficient way to misunderstand a large, fast-evolving system.</p>
+    </header>
+
+    <div class="lineage-track">
+      <article class="lineage-node lineage-node--legacy">
+        <div class="lineage-orb"><span>5.5</span></div>
+        <div>
+          <span class="lineage-state">Project origin</span>
+          <h3>GPT-5.5 started the build</h3>
+          <p>It established a large part of the initial surface and also made several architectural and implementation mistakes. Historical contribution acknowledged. New engineering work not approved.</p>
+        </div>
+      </article>
+
+      <div class="lineage-link" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <article class="lineage-node lineage-node--current">
+        <div class="lineage-orb"><span>5.6</span><small>SOL</small></div>
+        <div>
+          <span class="lineage-state">Current baseline</span>
+          <h3>GPT-5.6 repaired and extended it</h3>
+          <p>Sol corrected substantial parts of the earlier work, implemented major systems properly, strengthened repository navigation and tests, and became the minimum trusted OpenAI engineering baseline.</p>
+        </div>
+      </article>
+
+      <div class="lineage-link" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <article class="lineage-node lineage-node--future">
+        <div class="lineage-orb"><span>+</span></div>
+        <div>
+          <span class="lineage-state">Forward policy</span>
+          <h3>Better models inherit the repo</h3>
+          <p>OpenAI 5.6 or newer is approved. Anthropic Fable-tier models or newer peers are approved. The standard rises with capable models instead of preserving nostalgia for weaker ones.</p>
+        </div>
+      </article>
+    </div>
+
+    <div class="human-memory-warning">
+      <span>PRIME DIRECTIVE</span>
+      <strong>Do not raw-dog this repository with your unaided human brain.</strong>
+      <p>Cerneala has the surface area of a repository that would normally require 40+ developers. Its maintainer is one person. Trying to understand every subsystem at once is not diligence; it is a fast route to losing your mind. Give a capable agent the exact scenario, let it load the local context, read the repository instructions, navigate through RoslynIndexer, run focused experiments, create tests, and show you evidence. Your job is intent, judgment, review, and deeply understanding the slice you are actually changing.</p>
+    </div>
+
+    <div class="repo-entry-paths">
+      <header>
+        <div><span>CHOOSE YOUR ENTRY POINT</span><h3>Understand the repository without making it a personality test.</h3></div>
+        <p>There is no sacred way to learn Cerneala. Read the implementation, ask a capable AI to translate it into simple language, or work through the enormous documentation surface. Mix all three if that is faster. The choice is yours.</p>
+      </header>
+
+      <div class="repo-entry-grid">
+        <article>
+          <span class="entry-orb" aria-hidden="true">&lt;/&gt;</span>
+          <small>PATH 01</small>
+          <h4>Read the code</h4>
+          <p>Follow the exact subsystem you care about through RoslynIndexer. Read definitions, references, tests, and the surrounding contracts instead of scanning random folders until your eyes file for divorce.</p>
+          <a href="https://github.com/Chevalier12/Cerneala">Browse the source</a>
+        </article>
+
+        <article class="repo-entry-path--ai">
+          <span class="entry-orb" aria-hidden="true">AI</span>
+          <small>PATH 02</small>
+          <h4>Ask AI directly</h4>
+          <p>Ask what happens, why it exists, and which contracts matter. Request a simple explanation grounded in current files, symbols, tests, and runtime flow. Then inspect the cited evidence instead of trusting confident vapor.</p>
+          <code>Explain simply how this subsystem works. Show me the relevant source and tests.</code>
+        </article>
+
+        <article>
+          <span class="entry-orb" aria-hidden="true">DOC</span>
+          <small>PATH 03</small>
+          <h4>Read the gigantic docs</h4>
+          <p>Use the API reference, architecture notes, WPF Compendium, roadmap, plans, diagrams, and system guides. The documentation is deliberately massive because the framework is deliberately massive.</p>
+          <div class="entry-links"><a href="documentation.html">API reference</a><a href="wpf-compendium.html">WPF Compendium</a></div>
+        </article>
+      </div>
+
+      <footer><span>THE RULE</span><strong>Choose the fastest path to real understanding. Current source and green tests settle disagreements.</strong></footer>
+    </div>
+  </section>
+
+  <section class="model-policy" id="model-policy">
+    <header class="section-head">
+      <div>
+        <span class="section-code">Intentionally opinionated</span>
+        <h2>Model policy. Yes, the maintainer will notice.</h2>
+      </div>
+      <p>This is a repository contribution policy, not a universal leaderboard. Core engineering requires models that can sustain architecture, tool discipline, long context, testing, and precise changes across a large C# codebase.</p>
+    </header>
+
+    <div class="model-matrix">
+      <div class="model-row model-row--head"><span>Provider / model</span><span>Core engineering</span><span>Visual work</span><span>Maintainer verdict</span></div>
+      <div class="model-row model-row--approved"><span><strong>OpenAI GPT-5.6+</strong><small>5.6 is the baseline</small></span><span><i></i>Approved</span><span><i></i>Approved</span><span>Preferred for repository work</span></div>
+      <div class="model-row model-row--approved"><span><strong>Anthropic Fable tier+</strong><small>Fable or a newer peer</small></span><span><i></i>Approved</span><span><i></i>Approved</span><span>Tolerated for engineering</span></div>
+      <div class="model-row model-row--rejected"><span><strong>Anthropic Opus</strong><small>Yes, specifically</small></span><span><i></i>Rejected</span><span><i></i>Allowed</span><span>Too unreliable here. Stupid as hell for this repo.</span></div>
+      <div class="model-row model-row--rejected"><span><strong>Older OpenAI models</strong><small>Including historical 5.5</small></span><span><i></i>Rejected</span><span><i></i>Case by case</span><span>History, not the current quality floor</span></div>
+      <div class="model-row model-row--visual"><span><strong>Anthropic visual work</strong><small>CSS, composition, visual direction</small></span><span><i></i>Not the lane</span><span><i></i>Approved</span><span>Often stronger than OpenAI visually</span></div>
+    </div>
+
+    <div class="model-policy__footer">
+      <span>Detection policy</span>
+      <strong>If you use an unapproved Anthropic model for core engineering, the maintainer expects its fingerprints to show up in the diff.</strong>
+    </div>
+  </section>
+
+  <section class="contribute-section" id="contribute">
+    <header class="section-head section-head--light">
+      <div>
+        <span class="section-code">AI-native contribution protocol</span>
+        <h2>Bring a reproduction or an intent. Let the agent do the excavation.</h2>
+      </div>
+      <p><code>AGENTS.md</code> and RoslynIndexer already live in the repository. Do not modify them. A capable agent will discover and use them automatically.</p>
+    </header>
+
+    <div class="tooling-lock">
+      <div><span>DO NOT MODIFY</span><strong>AGENTS.md</strong><p>Repository rules, architecture discipline, navigation requirements, documentation policy, and local tooling behavior.</p></div>
+      <div><span>DO NOT MODIFY</span><strong>RoslynIndexer</strong><p>The primary semantic navigation layer for symbols, definitions, references, reads, repository search, and reindexing.</p></div>
+      <div><span>USE FOR EXPERIMENTS</span><strong>CSI</strong><p>Small, disposable C# experiments that expose runtime state before a fix and prove the reproduction disappears afterward.</p></div>
+    </div>
+
+    <div class="workflow-tabs" role="tablist" aria-label="Contribution workflows">
+      <button class="is-active" id="bug-tab" type="button" role="tab" aria-selected="true" aria-controls="bug-workflow" data-workflow-tab="bug">Fix a bug</button>
+      <button id="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-workflow" data-workflow-tab="feature">Implement a feature</button>
+    </div>
+
+    <div class="workflow-panel is-active" id="bug-workflow" role="tabpanel" aria-labelledby="bug-tab" data-workflow-panel="bug">
+      <div class="workflow-intro">
+        <span>BUG PROTOCOL</span>
+        <h3>Reproduce. Observe. Fail red. Fix. Reproduce again.</h3>
+        <p>Do not begin with a theory about the implementation. Begin with the user-visible failure and enough telemetry for GPT-5.6 to find the actual contract violation.</p>
+      </div>
+
+      <ol class="workflow-steps workflow-steps--bug">
+        <li><span class="step-orb">01</span><div><strong>Discover and reproduce</strong><p>Reduce the bug to the smallest reliable sequence. Record the custom view, exact actions, expected behavior, actual behavior, frequency, and environment.</p><em>Bonus points: include the frame-stats TextBlock used by the Playground.</em></div></li>
+        <li><span class="step-orb">02</span><div><strong>Give GPT-5.6 the scenario</strong><p>Tell it where the bug appears, what your custom view contains, what you did, what happened, and precisely what pisses you off about it.</p></div></li>
+        <li><span class="step-orb">03</span><div><strong>Reproduce with CSI first</strong><p>Require a focused temporary <code>.csx</code> experiment. The agent should inspect all relevant state transitions, use a short timeout, clean up the script, and kill any suspicious stuck CSI process.</p></div></li>
+        <li><span class="step-orb">04</span><div><strong>Create a RED test</strong><p>Encode the failure before modifying production behavior. The test must fail for the observed reason, not because the test harness is broken.</p></div></li>
+        <li><span class="step-orb">05</span><div><strong>Implement the smallest correct fix</strong><p>Respect existing ownership and architecture boundaries. Fix the violated contract without unrelated refactors, speculative abstractions, or compatibility theater.</p></div></li>
+        <li><span class="step-orb">06</span><div><strong>Retest with CSI</strong><p>Run the same focused experiment again. Confirm the original reproduction is gone and inspect the state that previously exposed the bug.</p></div></li>
+        <li><span class="step-orb">07</span><div><strong>Test the real scenario manually</strong><p>Open the affected view or Playground scenario and perform the original interaction yourself. Inspect the visual result, input, layout, diagnostics, and frame stats for anything obviously fucked.</p></div></li>
+        <li><span class="step-orb">08</span><div><strong>Run the full test suite until GREEN</strong><p>The model always runs the entire suite, not merely the focused tests. If your change broke another contract, it must tell you exactly what regressed. Tell it to fix the regression and rerun everything.</p><em>A green full suite is mandatory. No exceptions.</em></div></li>
+        <li><span class="step-orb">09</span><div><strong>Commit, push, open the PR</strong><p>Include the reproduction, red-test evidence, implementation summary, CSI retest, manual test, and full green-suite result. The maintainer reviews from there.</p></div></li>
+      </ol>
+
+      <article class="prompt-template">
+        <header><div><span>READY-TO-ADAPT PROMPT</span><strong>Bug investigation</strong></div><button type="button" data-copy-target="bug-prompt">Copy prompt</button></header>
+        <pre id="bug-prompt"><code>I found a bug in Cerneala.
+
+Location / custom view:
+[describe the view and relevant controls]
+
+Reproduction:
+1. [exact action]
+2. [exact action]
+3. [failure]
+
+Expected:
+[what should happen]
+
+Actual:
+[what happens and why it is a problem]
+
+Diagnostics:
+[frame stats, traces, exceptions, screenshots, or none]
+
+Follow the repository AGENTS.md and use RoslynIndexer as instructed. Do not modify AGENTS.md or RoslynIndexer.
+
+Before editing production code:
+1. Use a temporary CSI .csx experiment to reproduce the bug and inspect the relevant runtime state. Use a short timeout and clean it up afterward.
+2. Add a focused RED test that fails for the observed reason.
+3. Implement the smallest architecture-correct fix.
+4. Run the same CSI reproduction again and confirm the bug is gone.
+5. Manually test the original scenario in the affected view or Playground. Inspect behavior, visuals, input, layout, diagnostics, and frame stats for regressions.
+6. Run focused tests and then the entire repository test suite. The full suite must be GREEN.
+7. If the full suite reveals that my change broke another contract, explain the regression, fix it, and rerun the complete suite until green.
+8. Keep public API documentation synchronized when applicable.
+
+Do not prepare the PR while any test is failing. When complete, prepare a focused commit and PR summary with reproduction evidence, the red test, the fix, CSI verification, manual validation, and the full green-suite result.</code></pre>
+      </article>
+    </div>
+
+    <div class="workflow-panel" id="feature-workflow" role="tabpanel" aria-labelledby="feature-tab" data-workflow-panel="feature" hidden>
+      <div class="workflow-intro">
+        <span>IMPLEMENTATION PROTOCOL</span>
+        <h3>Discuss intent. Freeze a staged plan. Execute the checklist.</h3>
+        <p>Large implementation work begins as a conversation, not a blind code dump. Once intent and boundaries are clear, the plan becomes persistent project memory.</p>
+      </div>
+
+      <ol class="workflow-steps workflow-steps--feature">
+        <li><span class="step-orb">01</span><div><strong>Discuss the implementation</strong><p>Explain the scenario, desired API, developer experience, constraints, non-goals, integration points, and what success looks like. Let the agent challenge unclear assumptions.</p></div></li>
+        <li><span class="step-orb">02</span><div><strong>Create a new staged plan file</strong><p>Require a dedicated plan under <code>docs/plans/</code>. It must be split into coherent phases and use checklist items that are checked as work is completed.</p></div></li>
+        <li><span class="step-orb">03</span><div><strong>Implement phase by phase</strong><p>Follow repository patterns, keep scope tight, reindex after code changes, test each contract, update API docs with public surface changes, and mark the plan honestly.</p></div></li>
+        <li><span class="step-orb">04</span><div><strong>Manually test the complete scenario</strong><p>Use the real Playground or affected application path. Exercise the implementation like a developer would, inspect visuals and interaction, and check diagnostics and frame stats for collateral damage.</p></div></li>
+        <li><span class="step-orb">05</span><div><strong>Run the full test suite until GREEN</strong><p>The agent always runs every repository test. If your implementation broke existing behavior, it reports the regression. Tell it to fix the damage and run the complete suite again.</p><em>A green full suite is mandatory. No exceptions.</em></div></li>
+        <li><span class="step-orb">06</span><div><strong>Commit, push, open the PR</strong><p>Link the plan, summarize architecture and public behavior, list tests and manual validation, include the full green-suite result, call out limitations, and hand the focused change to the maintainer.</p></div></li>
+      </ol>
+
+      <article class="prompt-template">
+        <header><div><span>READY-TO-ADAPT PROMPT</span><strong>Feature implementation</strong></div><button type="button" data-copy-target="feature-prompt">Copy prompt</button></header>
+        <pre id="feature-prompt"><code>I want to implement the following Cerneala capability:
+
+[describe the user scenario and desired behavior]
+
+Constraints:
+[architecture, API, compatibility, performance, or tooling constraints]
+
+Non-goals:
+[what this implementation must not expand into]
+
+First, discuss the implementation with me. Inspect the current repository contracts, surface uncertainties, and propose the simplest coherent architecture. Do not edit code until the intent is clear.
+
+Then create a new dated plan file under docs/plans/. Split it into ordered phases with Markdown checklist items and explicit acceptance criteria. Keep the checklist updated as each item is completed.
+
+Follow AGENTS.md and use RoslynIndexer. Do not modify AGENTS.md or RoslynIndexer. Implement the plan end to end, reindex after code or project changes, add focused tests, synchronize public API documentation, and manually test the real Playground or application scenario.
+
+Then run the entire repository test suite. The full suite must be GREEN. If my implementation broke an existing contract, explain what regressed, fix it, and rerun the complete suite until every test passes.
+
+Do not prepare the PR while any test is failing. At the end, prepare a focused commit and PR summary linking the plan, implementation, focused tests, manual verification, full green-suite result, and known limitations.</code></pre>
+      </article>
+    </div>
+  </section>
+
+  <section class="review-gate" id="review-gate">
+    <header class="section-head">
+      <div>
+        <span class="section-code">Before maintainer review</span>
+        <h2>The PR should arrive with evidence, not optimism.</h2>
+      </div>
+    </header>
+
+    <div class="green-suite-gate">
+      <span>NON-NEGOTIABLE RELEASE GATE</span>
+      <strong>Manual scenario tested. Full repository suite GREEN.</strong>
+      <p>If the model reports that your change broke something, the next instruction is "fix it and rerun the full suite," not "open the PR anyway." Red means stop.</p>
+    </div>
+
+    <div class="review-grid">
+      <div><span>01</span><strong>Focused scope</strong><p>No unrelated cleanup, accidental metadata churn, or wholesale rewrite because the agent became artistically inspired.</p></div>
+      <div><span>02</span><strong>Reproduction or plan</strong><p>Bug PRs carry a reliable reproduction. Feature PRs carry the staged checklist that governed the work.</p></div>
+      <div><span>03</span><strong>Full green suite</strong><p>A bug began red. New behavior has contract tests. Every repository test passes after the final implementation.</p></div>
+      <div><span>04</span><strong>Manual runtime proof</strong><p>The actual view or Playground scenario was exercised manually, with visuals, input, diagnostics, and frame stats inspected.</p></div>
+      <div><span>05</span><strong>Current docs</strong><p>Public APIs and developer-facing contracts are documented in the repository source of truth.</p></div>
+      <div><span>06</span><strong>Honest handoff</strong><p>Known gaps and uncertainty are stated plainly. The maintainer should not need archaeology to discover what remains.</p></div>
+    </div>
+
+    <div class="review-footer">
+      <div><span>FINAL OPERATION</span><strong>commit -&gt; push -&gt; pull request -&gt; maintainer review</strong></div>
+      <a href="https://github.com/Chevalier12/Cerneala/pulls">View pull requests</a>
+    </div>
+  </section>
+</main>
+
+<script src="maintainers.js"></script>
+</body>
+</html>

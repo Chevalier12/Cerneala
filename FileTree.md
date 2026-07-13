@@ -971,9 +971,20 @@ Generated from `.`.
 |   |   |   +-- RoslynRepoIndexer.Core.WorkspaceLoadingException.md
 |   |   +-- manifest.json
 |   |-- .nojekyll
+|   |-- about.css
+|   |-- about.html
 |   |-- documentation.css
 |   |-- documentation.html
-|   +-- index.html
+|   |-- index.html
+|   |-- maintainers.css
+|   |-- maintainers.html
+|   |-- maintainers.js
+|   |-- roadmap.css
+|   |-- roadmap.html
+|   |-- roadmap.js
+|   |-- wpf-compendium.css
+|   |-- wpf-compendium.html
+|   +-- wpf-compendium.js
 |-- Drawing/
 |   |-- MonoGame/
 |   |   |-- MonoGameClipStack.cs

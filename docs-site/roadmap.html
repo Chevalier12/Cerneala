@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="The living Cerneala UI roadmap: shipped retained foundations, planned render surfaces, missing WPF controls, and deliberate non-goals.">
+<title>Cerneala UI Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="roadmap.css">
+</head>
+<body>
+<div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="nav__brand" href="index.html">
+    <svg class="nav__mark" viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="13" fill="none" stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="1.5 4"/>
+      <circle cx="16" cy="7" r="2.4" fill="none" stroke="var(--cyan)" stroke-width="1.6"/>
+      <circle cx="24" cy="21" r="2.4" fill="none" stroke="var(--pink)" stroke-width="1.6"/>
+      <circle cx="8" cy="21" r="2.4" fill="none" stroke="var(--lime)" stroke-width="1.6"/>
+      <circle cx="16" cy="16" r="2.2" fill="var(--cyan)"/>
+    </svg>
+    <span>Cerneala <em>UI</em></span>
+  </a>
+  <nav class="nav__links" aria-label="Site navigation">
+    <a href="index.html">Overview</a>
+    <a href="documentation.html">API Reference</a>
+    <a href="wpf-compendium.html">WPF Compendium</a>
+    <a class="is-active" href="roadmap.html">Roadmap</a>
+    <a href="maintainers.html">Maintainers</a>
+    <a href="about.html">About Me</a>
+  </nav>
+  <a class="nav__github" href="https://github.com/Chevalier12/Cerneala">GitHub</a>
+</header>
+
+<main>
+  <section class="roadmap-hero">
+    <div class="roadmap-hero__copy">
+      <span class="section-code">Living implementation sequence</span>
+      <h1>Build the frame.<br><span>Then put UI inside the world.</span></h1>
+      <p>Cerneala already has the retained engine. The next work turns that foundation into broader control coverage, production platform contracts, and render surfaces that can carry real layout and interaction into 2D and 3D scenes.</p>
+    </div>
+    <div class="roadmap-hero__telemetry" aria-label="Roadmap status summary">
+      <div><span>Snapshot</span><strong>7/13/2026</strong></div>
+      <div><span>Completed arcs</span><strong>02</strong></div>
+      <div><span>Active arcs</span><strong>02</strong></div>
+      <div><span>Next arcs</span><strong>08</strong></div>
+      <p>This is direction, not a release promise. Order can change when tests, backend constraints, or actual game scenarios prove that the pretty plan was full of shit.</p>
+    </div>
+  </section>
+
+  <section class="trajectory" id="trajectory">
+    <header class="section-head">
+      <div>
+        <span class="section-code">System trajectory</span>
+        <h2>Twelve connected arcs. One coherent dependency chain.</h2>
+      </div>
+      <div class="roadmap-legend" aria-label="Roadmap status legend">
+        <span class="legend-item legend-item--done"><i></i>Shipped</span>
+        <span class="legend-item legend-item--active"><i></i>Building</span>
+        <span class="legend-item legend-item--planned"><i></i>Planned</span>
+        <span class="legend-item legend-item--rejected"><i></i>Rejected</span>
+      </div>
+    </header>
+
+    <div class="roadmap-map" id="roadmap-map">
+      <svg class="roadmap-map__connections" id="roadmap-connections" aria-hidden="true"></svg>
+
+      <article class="roadmap-node roadmap-node--done" data-roadmap-node data-state="done" data-slot="01">
+        <div class="roadmap-node__orb"><span class="orb-check" aria-hidden="true"></span><small>01</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Shipped foundation</span>
+          <h3>Retained frame engine</h3>
+          <p>Typed properties, retained trees, invalidation queues, measure and arrange, render caches, routed input, focus, commands, resources, diagnostics, and the idle-frame contract.</p>
+          <div class="node-tags"><span>UiProperty&lt;T&gt;</span><span>UiFrameScheduler</span><span>IDrawingBackend</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--done" data-roadmap-node data-state="done" data-slot="02">
+        <div class="roadmap-node__orb"><span class="orb-check" aria-hidden="true"></span><small>02</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Shipped authoring</span>
+          <h3>Components, Aspects and motion</h3>
+          <p>Typed <code>.cui.xml</code> generation, code-behind, templates, resources, reactive branches, Aspect packages, token resolution, state-first motion, layout motion, presence, and reduced-motion policy.</p>
+          <div class="node-tags"><span>.cui.xml</span><span>AspectPackage</span><span>MotionSpec&lt;T&gt;</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--active" data-roadmap-node data-state="active" data-slot="03">
+        <div class="roadmap-node__orb"><span class="orb-pulse" aria-hidden="true"></span><small>03</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Building now</span>
+          <h3>Preview hardening</h3>
+          <p>Close the gap between an impressive repository and a dependable framework: public contracts, samples, docs, diagnostics truthfulness, performance budgets, stress cases, and boring reliability.</p>
+          <div class="node-tags"><span>contracts</span><span>benchmarks</span><span>docs</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--active" data-roadmap-node data-state="active" data-slot="04">
+        <div class="roadmap-node__orb"><span class="orb-pulse" aria-hidden="true"></span><small>04</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Building foundations</span>
+          <h3>Platform-complete interaction</h3>
+          <p>Native accessibility adapters, production IME and multiline editing, clipboard breadth, touch, stylus, drag/drop, manipulation, cursor fidelity, DPI behavior, and backend-proven rendering paths.</p>
+          <div class="node-tags"><span>IME</span><span>accessibility</span><span>advanced input</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--planned roadmap-node--surface" data-roadmap-node data-state="planned" data-slot="05">
+        <div class="roadmap-node__orb"><span class="orb-axis orb-axis--2d" aria-hidden="true"><i></i><i></i></span><small>05</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Planned surface</span>
+          <h3>RenderSurface2D</h3>
+          <p>A retained control that hosts controls and layout inside a drawable 2D region. It enables diegetic HUDs, world panels, tactical screens, minimaps, custom scene rendering, and coordinate-correct input.</p>
+          <div class="node-tags"><span>layout host</span><span>SpriteBatch</span><span>event + RAW</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--planned roadmap-node--surface" data-roadmap-node data-state="planned" data-slot="06">
+        <div class="roadmap-node__orb"><span class="orb-axis orb-axis--3d" aria-hidden="true"><i></i><i></i><i></i></span><small>06</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Planned surface</span>
+          <h3>RenderSurface3D</h3>
+          <p>A retained UI island projected into 3D space or a render target. Controls still measure, arrange, focus, route events, and animate while ray-mapped input makes the panel part of the game world.</p>
+          <div class="node-tags"><span>diegetic UI</span><span>ray input</span><span>event + RAW</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--planned" data-roadmap-node data-state="planned" data-slot="07">
+        <div class="roadmap-node__orb"><span class="orb-index">07</span><small>07</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Planned control wave</span>
+          <h3>Layout and everyday controls</h3>
+          <p>Fill the most painful WPF gaps first: DockPanel, WrapPanel, UniformGrid, GridSplitter, Viewbox, Expander, GroupBox, RepeatButton, Popup, menus, toolbars, and status surfaces.</p>
+          <div class="node-tags"><span>layout</span><span>shell UI</span><span>popup lifecycle</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--planned" data-roadmap-node data-state="planned" data-slot="08">
+        <div class="roadmap-node__orb"><span class="orb-index">08</span><small>08</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Planned control wave</span>
+          <h3>Data, hierarchy and navigation</h3>
+          <p>TreeView, ListView and GridView, DataGrid, Calendar, DatePicker, navigation primitives, richer item containers, selection contracts, editing, recycling, and keyboard behavior.</p>
+          <div class="node-tags"><span>hierarchy</span><span>tables</span><span>navigation</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--planned" data-roadmap-node data-state="planned" data-slot="09">
+        <div class="roadmap-node__orb"><span class="orb-index">09</span><small>09</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Planned capability wave</span>
+          <h3>Rich text, documents and media</h3>
+          <p>RichTextBox, document viewers, flow content, media playback and ink presentation only after text, input, resource lifetime, backend isolation, and accessibility contracts can support them honestly.</p>
+          <div class="node-tags"><span>documents</span><span>media</span><span>ink</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--planned" data-roadmap-node data-state="planned" data-slot="10">
+        <div class="roadmap-node__orb"><span class="orb-index">10</span><small>10</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Planned tooling wave</span>
+          <h3>Authoring feedback loop</h3>
+          <p>Faster incremental generation, richer diagnostics, schema completion, visual tree inspection, live frame telemetry, template and Aspect tracing, sample galleries, and tooling that does not pretend to be Blend.</p>
+          <div class="node-tags"><span>sourcegen</span><span>inspectors</span><span>gallery</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--planned" data-roadmap-node data-state="planned" data-slot="11">
+        <div class="roadmap-node__orb"><span class="orb-index">11</span><small>11</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Planned distribution wave</span>
+          <h3>Package and backend boundaries</h3>
+          <p>Split only when proven useful: stable core contracts, MonoGame adapter packages, platform services, backend conformance, versioning rules, upgrade notes, and a package story that does not infect UI core with game types.</p>
+          <div class="node-tags"><span>packages</span><span>adapters</span><span>compatibility</span></div>
+        </div>
+      </article>
+
+      <article class="roadmap-node roadmap-node--planned" data-roadmap-node data-state="planned" data-slot="12">
+        <div class="roadmap-node__orb"><span class="orb-index">12</span><small>12</small></div>
+        <div class="roadmap-node__body">
+          <span class="roadmap-node__state">Release gate</span>
+          <h3>Production confidence</h3>
+          <p>Stable documented contracts, migration policy, representative games, deterministic tests, accessible platform paths, performance envelopes, upgrade discipline, and no bullshit hidden behind a version number.</p>
+          <div class="node-tags"><span>stability</span><span>games</span><span>support policy</span></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="surface-contract" id="render-surfaces">
+    <header class="section-head section-head--light">
+      <div>
+        <span class="section-code">World-space UI contract</span>
+        <h2>Render surfaces are UI hosts, not decorative canvases.</h2>
+      </div>
+      <p>The API names below are directional, not frozen. The invariant is the important part: real retained children and layout, explicit graphics access, isolated render state, and input transformed back into the surface coordinate system.</p>
+    </header>
+
+    <div class="surface-stage">
+      <article class="surface-spec surface-spec--2d">
+        <header>
+          <span class="surface-glyph surface-glyph--2d" aria-hidden="true"><i></i><i></i></span>
+          <div><small>Plane / render target / world quad</small><h3>RenderSurface2D</h3></div>
+        </header>
+        <p>Host a Grid, StackPanel, Canvas, templated controls, focus scopes, motion, and routed input inside a 2D scene region. Use the surface as a normal retained element around custom game rendering.</p>
+        <ul>
+          <li>Nested controls participate in measure and arrange.</li>
+          <li>Pointer coordinates map through viewport, scale, camera, and surface transforms.</li>
+          <li>Surface content can be cached or redrawn on invalidation.</li>
+          <li>Render state is restored before Cerneala continues drawing.</li>
+        </ul>
+      </article>
+
+      <div class="surface-bridge" aria-hidden="true"><span></span><i></i><span></span></div>
+
+      <article class="surface-spec surface-spec--3d">
+        <header>
+          <span class="surface-glyph surface-glyph--3d" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div><small>Mesh / material / projected target</small><h3>RenderSurface3D</h3></div>
+        </header>
+        <p>Render a complete retained subtree into world space, then keep control semantics intact. A cockpit screen, terminal, map table, weapon display, or in-world editor remains a real UI tree instead of a texture with fake buttons.</p>
+        <ul>
+          <li>Ray hits map into local layout coordinates.</li>
+          <li>Focus, capture, routed events, and accessibility remain root-owned.</li>
+          <li>Occlusion and camera policy stay explicit game decisions.</li>
+          <li>Render-target lifetime follows the surface and graphics device.</li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="render-modes">
+      <article>
+        <span class="mode-index">MODE A</span>
+        <h3>Surface-specific event</h3>
+        <p>The safe default. Subscribe to a render event and receive a scoped frame with the surface bounds, transforms, timing, graphics device, and an already prepared <code>SpriteBatch</code>.</p>
+        <pre><code><span class="tok-name">surface</span>.<span class="tok-prop">Render</span> += (_, frame) =&gt;
+{
+    frame.<span class="tok-type">SpriteBatch</span>.Draw(
+        radarTexture,
+        frame.<span class="tok-prop">Bounds</span>,
+        Color.White);
+};</code></pre>
+      </article>
+      <article class="render-mode--raw">
+        <span class="mode-index">MODE B</span>
+        <h3>Direct RAW access</h3>
+        <p>The escape hatch. Take explicit responsibility for the graphics device, targets, effects, batches, depth, rasterizer and blend state. Cerneala fences the operation, then restores its own pipeline.</p>
+        <pre><code><span class="tok-name">surface</span>.<span class="tok-prop">RenderMode</span> = RenderMode.<span class="tok-warn">Raw</span>;
+<span class="tok-name">surface</span>.<span class="tok-prop">RenderRaw</span> += (_, raw) =&gt;
+{
+    raw.<span class="tok-type">GraphicsDevice</span>.SetRenderTarget(target);
+    DrawTheWildStuff(raw);
+};</code></pre>
+      </article>
+    </div>
+    <p class="api-caveat">Illustrative API only. Final names wait for architecture, device-loss, state-isolation, nested-root, input-projection, and no-work-frame tests.</p>
+  </section>
+
+  <section class="control-inventory" id="control-inventory">
+    <header class="section-head">
+      <div>
+        <span class="section-code">WPF control debt</span>
+        <h2>Everything still missing, with an actual verdict.</h2>
+      </div>
+      <p>This ledger follows Microsoft's WPF control categories, then adds the supporting control types developers actually touch. "Missing" does not automatically mean "worth cloning." Familiar names are useful; inherited desktop baggage is not sacred.</p>
+    </header>
+
+    <div class="inventory-toolbar">
+      <div class="inventory-filters" role="group" aria-label="Filter missing controls">
+        <button class="is-active" type="button" data-control-filter="all">All</button>
+        <button type="button" data-control-filter="planned">Planned</button>
+        <button type="button" data-control-filter="evaluate">Evaluate</button>
+        <button type="button" data-control-filter="rejected">Not planned</button>
+      </div>
+      <a href="https://learn.microsoft.com/dotnet/desktop/wpf/controls/controls-by-category">Microsoft WPF catalog</a>
+    </div>
+
+    <div class="inventory-grid" id="inventory-grid">
+      <article class="control-family" data-control-state="planned">
+        <header><span>01 / Layout</span><strong>Planned</strong></header>
+        <h3>Missing layout and shell controls</h3>
+        <div class="control-tags"><span>BulletDecorator</span><span>DockPanel</span><span>Expander</span><span>GridSplitter</span><span>GroupBox</span><span>ResizeGrip</span><span>Separator</span><span>UniformGrid</span><span>Viewbox</span><span>WrapPanel</span></div>
+        <p>High leverage and broadly useful. Implement after contracts and tests are written for layout invalidation, shared size behavior, focus, templates, and overflow.</p>
+      </article>
+
+      <article class="control-family" data-control-state="planned">
+        <header><span>02 / Buttons and feedback</span><strong>Planned</strong></header>
+        <h3>Everyday interaction gaps</h3>
+        <div class="control-tags"><span>RepeatButton</span><span>AccessText</span><span>Popup</span><span>StatusBar</span><span>StatusBarItem</span></div>
+        <p>Popup comes with positioning, focus, dismissal, capture, clipping, and nested-window behavior. It is not just a Border with delusions of grandeur.</p>
+      </article>
+
+      <article class="control-family" data-control-state="planned">
+        <header><span>03 / Data display</span><strong>Planned</strong></header>
+        <h3>Hierarchy and dense data</h3>
+        <div class="control-tags"><span>DataGrid</span><span>DataGridCell</span><span>DataGridColumnHeader</span><span>DataGridRow</span><span>DataGridRowHeader</span><span>GridView</span><span>GridViewColumnHeader</span><span>ListView</span><span>ListViewItem</span><span>TreeView</span><span>TreeViewItem</span></div>
+        <p>These depend on mature virtualization, recycling, hierarchical item generation, editing, selection, keyboard navigation, column sizing, and accessible semantics.</p>
+      </article>
+
+      <article class="control-family" data-control-state="planned">
+        <header><span>04 / Date and menus</span><strong>Planned</strong></header>
+        <h3>Desktop application staples</h3>
+        <div class="control-tags"><span>Calendar</span><span>CalendarButton</span><span>CalendarDayButton</span><span>DatePicker</span><span>DatePickerTextBox</span><span>ContextMenu</span><span>Menu</span><span>MenuItem</span><span>ToolBar</span><span>ToolBarPanel</span><span>ToolBarOverflowPanel</span><span>ToolBarTray</span></div>
+        <p>Menu and date families arrive as complete keyboard, focus, popup, template, command, and accessibility stories rather than screenshot-only shells.</p>
+      </article>
+
+      <article class="control-family" data-control-state="evaluate">
+        <header><span>05 / Navigation</span><strong>Evaluate</strong></header>
+        <h3>Navigation is useful; WPF journaling may not be</h3>
+        <div class="control-tags"><span>Frame</span><span>Hyperlink</span><span>Page</span><span>NavigationWindow</span></div>
+        <p>A game UI needs navigation and history, but Cerneala should not blindly import URI navigation, desktop lifetime, journal ownership, and browser-shaped assumptions.</p>
+      </article>
+
+      <article class="control-family" data-control-state="evaluate">
+        <header><span>06 / Dialogs</span><strong>Evaluate</strong></header>
+        <h3>Platform services before control cosplay</h3>
+        <div class="control-tags"><span>OpenFileDialog</span><span>PrintDialog</span><span>SaveFileDialog</span></div>
+        <p>File dialog seams already belong behind platform services. Printing only enters the plan after a real product scenario justifies a document and pagination stack.</p>
+      </article>
+
+      <article class="control-family" data-control-state="evaluate">
+        <header><span>07 / Documents and input</span><strong>Evaluate</strong></header>
+        <h3>Rich text is an engine, not one control</h3>
+        <div class="control-tags"><span>DocumentViewer</span><span>FlowDocumentPageViewer</span><span>FlowDocumentReader</span><span>FlowDocumentScrollViewer</span><span>RichTextBox</span><span>StickyNoteControl</span></div>
+        <p>These wait for multiline editing, shaping, selection, clipboard commands, pagination, accessibility, embedded elements, undo, and input method completeness.</p>
+      </article>
+
+      <article class="control-family" data-control-state="evaluate">
+        <header><span>08 / Media and ink</span><strong>Evaluate</strong></header>
+        <h3>Backend capability decides the shape</h3>
+        <div class="control-tags"><span>InkPresenter</span><span>MediaElement</span><span>SoundPlayerAction</span></div>
+        <p><code>InkCanvas</code> exists as a prototype, but full WPF ink behavior does not. Media playback and presentation need backend-neutral lifetime, timing, device-loss, codec, and resource contracts.</p>
+      </article>
+
+      <article class="control-family" data-control-state="evaluate">
+        <header><span>09 / Specialist desktop UI</span><strong>Evaluate</strong></header>
+        <h3>Useful only when a real game or tool asks</h3>
+        <div class="control-tags"><span>Ribbon</span><span>RibbonApplicationMenu</span><span>RibbonGallery</span><span>RibbonTab</span><span>WebBrowser</span><span>WindowsFormsHost</span></div>
+        <p>These do not earn roadmap priority merely because WPF shipped them. Cerneala may provide native alternatives, adapters, or nothing at all.</p>
+      </article>
+
+      <article class="control-family control-family--rejected" data-control-state="rejected">
+        <header><span>10 / Deliberate non-goal</span><strong>Not planned</strong></header>
+        <h3>Adorner, AdornerLayer, AdornerDecorator</h3>
+        <blockquote>Adorners are shit.</blockquote>
+        <p>More technically: they introduce an opinionated second visual channel with awkward ownership, hit testing, clipping, transforms, lifetime, and composition rules. Cerneala will prefer explicit overlay roots, popup layers, template parts, diagnostics overlays, and render surfaces. No migration plan. No apology tour.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="release-gates" id="release-gates">
+    <header class="section-head section-head--compact">
+      <div>
+        <span class="section-code">Definition of progress</span>
+        <h2>A circle turns green only when the boring parts pass.</h2>
+      </div>
+    </header>
+    <div class="gate-grid">
+      <div><span>01</span><strong>Architecture</strong><p>Backend-neutral core, explicit ownership, no duplicate subsystem, and a contract that survives more than the first demo.</p></div>
+      <div><span>02</span><strong>Behavior</strong><p>Keyboard, pointer, focus, routed events, layout, templates, invalidation, accessibility, and failure paths all agree.</p></div>
+      <div><span>03</span><strong>Performance</strong><p>Idle frames stay idle, hot paths allocate predictably, caches invalidate correctly, and large trees have measured budgets.</p></div>
+      <div><span>04</span><strong>Proof</strong><p>Focused unit tests, integration tests, visual validation, a real sample, current API docs, and an honest limitations section.</p></div>
+    </div>
+    <div class="roadmap-footer">
+      <p><strong>Source of truth:</strong> current repository contracts beat this page whenever they disagree.</p>
+      <div><a href="wpf-compendium.html">Read the WPF Compendium</a><a href="documentation.html">Inspect the API Reference</a></div>
+    </div>
+  </section>
+</main>
+
+<script src="roadmap.js"></script>
+</body>
+</html>

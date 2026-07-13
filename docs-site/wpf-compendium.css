@@ -1448,6 +1448,12 @@ section {
   }
 }
 
+@media (max-width: 1040px) {
+  .nav__links {
+    display: none;
+  }
+}
+
 @media (max-width: 900px) {
   body {
     overflow: hidden;
@@ -1456,10 +1462,6 @@ section {
   .nav {
     grid-template-columns: 1fr auto;
     padding: 0 16px;
-  }
-
-  .nav__links {
-    display: none;
   }
 
   .compendium-shell {
