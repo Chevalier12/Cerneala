@@ -33,14 +33,14 @@ public sealed class DirtyPropagation
         }
 
         InvalidationFlags propagated = effective & ~InvalidationFlags.Subtree;
-        MarkAndQueue(request.Target, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, request.Reason);
+        MarkAndQueue(request.Target, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, request.Reason, false);
 
         if (effective.HasFlag(InvalidationFlags.Measure))
         {
             foreach (UIElement ancestor in ElementTreeWalker.Ancestors(request.Target, ElementChildRole.Visual))
             {
                 InvalidationFlags ancestorFlags = InvalidationFlags.Measure | InvalidationFlags.Arrange;
-                MarkAndQueue(ancestor, ancestorFlags, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, "Measure ancestor propagation");
+                MarkAndQueue(ancestor, ancestorFlags, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, "Measure ancestor propagation", true);
                 if (ancestor.IsLayoutBoundary)
                 {
                     break;
@@ -52,7 +52,7 @@ public sealed class DirtyPropagation
         {
             foreach (UIElement descendant in ElementTreeWalker.Descendants(request.Target, ElementChildRole.Visual))
             {
-                MarkAndQueue(descendant, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, "Subtree propagation");
+                MarkAndQueue(descendant, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, "Subtree propagation", false);
             }
         }
     }
@@ -121,7 +121,8 @@ public sealed class DirtyPropagation
         RenderQueue renderQueue,
         HitTestQueue hitTestQueue,
         InvalidationTrace trace,
-        string reason)
+        string reason,
+        bool isPropagatedLayout)
     {
         if (flags == InvalidationFlags.None)
         {
@@ -133,13 +134,17 @@ public sealed class DirtyPropagation
 
         if (flags.HasFlag(InvalidationFlags.Measure))
         {
-            layoutQueue.EnqueueMeasure(element);
+            layoutQueue.EnqueueMeasure(
+                element,
+                isPropagatedLayout ? LayoutQueueEntryKind.Propagated : LayoutQueueEntryKind.Direct);
             trace.RecordQueue(element, InvalidationFlags.Measure, reason);
         }
 
         if (flags.HasFlag(InvalidationFlags.Arrange))
         {
-            layoutQueue.EnqueueArrange(element);
+            layoutQueue.EnqueueArrange(
+                element,
+                isPropagatedLayout ? LayoutQueueEntryKind.Propagated : LayoutQueueEntryKind.Direct);
             trace.RecordQueue(element, InvalidationFlags.Arrange, reason);
         }
 

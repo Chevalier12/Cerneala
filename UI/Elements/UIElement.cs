@@ -243,6 +243,18 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal int LastMeasureLayoutVersion { get; set; } = -1;
 
+    internal int LastMeasureViewportVersion { get; set; } = -1;
+
+    private LayoutSize? previousMeasureAvailableSize;
+    private LayoutSize previousMeasureDesiredSize;
+    private int previousMeasureLayoutVersion = -1;
+    private LayoutSize? olderMeasureAvailableSize;
+    private LayoutSize olderMeasureDesiredSize;
+    private int olderMeasureLayoutVersion = -1;
+    private LayoutSize? oldestMeasureAvailableSize;
+    private LayoutSize oldestMeasureDesiredSize;
+    private int oldestMeasureLayoutVersion = -1;
+
     internal LayoutRect? LastArrangeFinalRect { get; set; }
 
     internal int LastArrangeLayoutVersion { get; set; } = -1;
@@ -604,32 +616,81 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     public LayoutSize Measure(MeasureContext context)
     {
-        Root?.CountMeasureCall();
-        if (LastMeasureAvailableSize == context.AvailableSize &&
-            LastMeasureLayoutVersion == LayoutVersion)
+        if (TryUseCachedMeasure(context.AvailableSize, out LayoutSize cached))
         {
-            return DesiredSize;
+            return cached;
         }
 
+        Root?.CountMeasureCall();
         LayoutSize desired = !UIElementVisibility.ParticipatesInLayout(this)
             ? LayoutSize.Zero
             : MeasureWithMargin(context);
         desired = context.Rounding.Round(desired);
+        PreserveCurrentMeasureCache();
         SetDesiredSize(desired);
         LastMeasureAvailableSize = context.AvailableSize;
         LastMeasureLayoutVersion = LayoutVersion;
+        LastMeasureViewportVersion = Root?.ViewportVersion ?? -1;
         return desired;
+    }
+
+    internal bool TryUseCachedMeasure(LayoutSize availableSize, out LayoutSize desiredSize)
+    {
+        if (LastMeasureAvailableSize == availableSize &&
+            LastMeasureLayoutVersion == LayoutVersion)
+        {
+            desiredSize = DesiredSize;
+            return true;
+        }
+
+        if (TryUsePreviousMeasureCache(
+            availableSize,
+            ref previousMeasureAvailableSize,
+            ref previousMeasureDesiredSize,
+            ref previousMeasureLayoutVersion,
+            out desiredSize) ||
+            TryUsePreviousMeasureCache(
+                availableSize,
+                ref olderMeasureAvailableSize,
+                ref olderMeasureDesiredSize,
+                ref olderMeasureLayoutVersion,
+                out desiredSize) ||
+            TryUsePreviousMeasureCache(
+                availableSize,
+                ref oldestMeasureAvailableSize,
+                ref oldestMeasureDesiredSize,
+                ref oldestMeasureLayoutVersion,
+                out desiredSize))
+        {
+            return true;
+        }
+
+        desiredSize = default;
+        return false;
+    }
+
+    internal void InvalidateMeasureCache()
+    {
+        LastMeasureAvailableSize = null;
+        LastMeasureLayoutVersion = -1;
+        LastMeasureViewportVersion = -1;
+        previousMeasureAvailableSize = null;
+        previousMeasureLayoutVersion = -1;
+        olderMeasureAvailableSize = null;
+        olderMeasureLayoutVersion = -1;
+        oldestMeasureAvailableSize = null;
+        oldestMeasureLayoutVersion = -1;
     }
 
     public LayoutRect Arrange(ArrangeContext context)
     {
-        Root?.CountArrangeCall();
         if (LastArrangeFinalRect == context.FinalRect &&
             LastArrangeLayoutVersion == LayoutVersion)
         {
             return ArrangedBounds;
         }
 
+        Root?.CountArrangeCall();
         LayoutRect finalRect = !UIElementVisibility.ParticipatesInLayout(this)
             ? context.FinalRect
             : ApplyMarginAndAlignment(context.FinalRect);
@@ -768,6 +829,53 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         return new LayoutSize(
             contentDesiredSize.Width + margin.Horizontal,
             contentDesiredSize.Height + margin.Vertical).ClampNonNegative();
+    }
+
+    private void PreserveCurrentMeasureCache()
+    {
+        if (LastMeasureAvailableSize is null || LastMeasureLayoutVersion != LayoutVersion)
+        {
+            return;
+        }
+
+        oldestMeasureAvailableSize = olderMeasureAvailableSize;
+        oldestMeasureLayoutVersion = olderMeasureLayoutVersion;
+        oldestMeasureDesiredSize = olderMeasureDesiredSize;
+        olderMeasureAvailableSize = previousMeasureAvailableSize;
+        olderMeasureLayoutVersion = previousMeasureLayoutVersion;
+        olderMeasureDesiredSize = previousMeasureDesiredSize;
+        previousMeasureAvailableSize = LastMeasureAvailableSize;
+        previousMeasureLayoutVersion = LastMeasureLayoutVersion;
+        previousMeasureDesiredSize = DesiredSize;
+    }
+
+    private bool TryUsePreviousMeasureCache(
+        LayoutSize availableSize,
+        ref LayoutSize? cachedAvailableSize,
+        ref LayoutSize cachedDesiredSize,
+        ref int cachedLayoutVersion,
+        out LayoutSize desiredSize)
+    {
+        if (cachedAvailableSize != availableSize || cachedLayoutVersion != LayoutVersion)
+        {
+            desiredSize = default;
+            return false;
+        }
+
+        LayoutSize? currentAvailableSize = LastMeasureAvailableSize;
+        int currentLayoutVersion = LastMeasureLayoutVersion;
+        LayoutSize currentDesiredSize = DesiredSize;
+
+        LastMeasureAvailableSize = cachedAvailableSize;
+        LastMeasureLayoutVersion = cachedLayoutVersion;
+        LastMeasureViewportVersion = Root?.ViewportVersion ?? -1;
+        SetDesiredSize(cachedDesiredSize);
+
+        cachedAvailableSize = currentAvailableSize;
+        cachedLayoutVersion = currentLayoutVersion;
+        cachedDesiredSize = currentDesiredSize;
+        desiredSize = DesiredSize;
+        return true;
     }
 
     private LayoutRect ApplyMarginAndAlignment(LayoutRect finalRect)

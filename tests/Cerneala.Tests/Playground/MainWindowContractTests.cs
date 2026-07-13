@@ -2,6 +2,7 @@ using Cerneala.Playground;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Input;
+using Cerneala.UI.Elements;
 using Grid = Cerneala.UI.Layout.Panels.Grid;
 
 namespace Cerneala.Tests.Playground;
@@ -79,5 +80,48 @@ public sealed class MainWindowContractTests
 
         Assert.Equal("Consolas", diagnostics.FontFamily);
         Assert.Null(window.LastFrame);
+    }
+
+    [Fact]
+    public void WrappedDiagnosticsUpdateDoesNotRemeasureTheWholeWindow()
+    {
+        UIRoot root = new(800, 600);
+        MainWindow window = new();
+        root.LogicalChildren.Add(window);
+        root.VisualChildren.Add(window);
+        while (root.Scheduler.HasWork)
+        {
+            root.ProcessFrame();
+        }
+
+        TextBlock diagnostics = Descendants(root)
+            .OfType<TextBlock>()
+            .Single(element => element.Text == "Astept primul frame...");
+        Assert.Equal(Cerneala.UI.Text.TextWrapping.Wrap, diagnostics.TextWrapping);
+
+        diagnostics.Text = DiagnosticsText(1);
+        root.ProcessFrame();
+        diagnostics.Text = DiagnosticsText(2);
+
+        Cerneala.UI.Invalidation.FrameStats stats = root.ProcessFrame();
+
+        Assert.Equal(1, stats.MeasureCalls);
+    }
+
+    private static IEnumerable<UIElement> Descendants(UIElement element)
+    {
+        foreach (UIElement child in element.VisualChildren)
+        {
+            yield return child;
+            foreach (UIElement descendant in Descendants(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    private static string DiagnosticsText(int frame)
+    {
+        return $"{frame}.54 ms | frame queuedMeasure=6, queuedArrange=8, measureCalls=568, arrangeCalls=17, renderCache=5, hitTest=0, reusedCaches=0, noWork=0, motion=0, sampled=0, motionValues=0, motionWrites=0, completed=0, motionRender=0, motionLayout=0, reduced=0, hasWork=True";
     }
 }

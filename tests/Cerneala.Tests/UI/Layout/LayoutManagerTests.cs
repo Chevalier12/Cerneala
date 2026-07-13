@@ -51,6 +51,28 @@ public sealed class LayoutManagerTests
     }
 
     [Fact]
+    public void MeasureCacheRetainsFourRecentConstraints()
+    {
+        UIRoot root = new(100, 100);
+        CountingElement child = new(new LayoutSize(20, 10));
+
+        root.LayoutManager.Measure(child, new LayoutSize(100, 100));
+        root.LayoutManager.Measure(child, new LayoutSize(40, 100));
+        root.LayoutManager.Measure(child, new LayoutSize(60, 100));
+        root.LayoutManager.Measure(child, new LayoutSize(80, 100));
+        LayoutResult firstConstraint = root.LayoutManager.Measure(child, new LayoutSize(100, 100));
+        LayoutResult secondConstraint = root.LayoutManager.Measure(child, new LayoutSize(40, 100));
+        LayoutResult thirdConstraint = root.LayoutManager.Measure(child, new LayoutSize(60, 100));
+        LayoutResult fourthConstraint = root.LayoutManager.Measure(child, new LayoutSize(80, 100));
+
+        Assert.True(firstConstraint.UsedMeasureCache);
+        Assert.True(secondConstraint.UsedMeasureCache);
+        Assert.True(thirdConstraint.UsedMeasureCache);
+        Assert.True(fourthConstraint.UsedMeasureCache);
+        Assert.Equal(4, child.MeasureCount);
+    }
+
+    [Fact]
     public void DirtyMeasureBypassesParentMeasureCacheWhenChildLayoutChanges()
     {
         UIRoot root = new(100, 100);
@@ -68,6 +90,46 @@ public sealed class LayoutManagerTests
         Assert.Equal(new LayoutSize(27, 7), parent.DesiredSize);
         Assert.Equal(2, parent.MeasureCount);
         Assert.True(child.MeasureCount >= 2);
+    }
+
+    [Fact]
+    public void StableChildDesiredSizeDoesNotRemeasureAncestors()
+    {
+        UIRoot root = new(100, 100);
+        MeasuringParent parent = new();
+        ResizableElement child = new(new LayoutSize(10, 5));
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        parent.Invalidate(InvalidationFlags.Measure, "initial measure");
+        root.ProcessFrame();
+        int parentMeasureCount = parent.MeasureCount;
+        int childMeasureCount = child.MeasureCount;
+
+        child.Invalidate(InvalidationFlags.Measure, "same desired size");
+        FrameStats stats = root.ProcessFrame();
+
+        Assert.Equal(parentMeasureCount, parent.MeasureCount);
+        Assert.Equal(childMeasureCount + 1, child.MeasureCount);
+        Assert.Equal(1, stats.MeasuredElements);
+    }
+
+    [Fact]
+    public void DirectParentInvalidationIsNotPrunedByStableChildMeasure()
+    {
+        UIRoot root = new(100, 100);
+        MeasuringParent parent = new();
+        ResizableElement child = new(new LayoutSize(10, 5));
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        parent.Invalidate(InvalidationFlags.Measure, "initial measure");
+        root.ProcessFrame();
+        int parentMeasureCount = parent.MeasureCount;
+
+        child.Invalidate(InvalidationFlags.Measure, "same desired size");
+        parent.Invalidate(InvalidationFlags.Measure, "independent parent change");
+        root.ProcessFrame();
+
+        Assert.Equal(parentMeasureCount + 1, parent.MeasureCount);
     }
 
     [Fact]

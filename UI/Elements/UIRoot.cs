@@ -68,6 +68,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public int TreeVersion { get; private set; }
 
+    internal int ViewportVersion { get; private set; }
+
     public ElementIdProvider ElementIds { get; }
 
     public InvalidationTrace Trace { get; }
@@ -173,6 +175,11 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public void SetViewport(float width, float height, float scale)
     {
+        if (ViewportWidth != width || ViewportHeight != height || Scale != scale)
+        {
+            ViewportVersion++;
+        }
+
         ViewportWidth = width;
         ViewportHeight = height;
         Scale = scale;
@@ -318,6 +325,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
             },
             Aspect = AspectProcessor.Process,
             Measure = layoutProcessors.Measure,
+            IncrementalMeasure = layoutProcessors.IncrementalMeasure,
             Arrange = layoutProcessors.Arrange,
             RenderCache = RenderQueueProcessor.Process,
             HitTest = _ => InputCache.EnsureCurrent(this)

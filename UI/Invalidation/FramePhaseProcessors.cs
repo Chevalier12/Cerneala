@@ -20,6 +20,21 @@ public sealed class FramePhaseProcessors
 
     public Action<UIElement>? HitTest { get; init; }
 
+    internal Func<UIElement, bool>? IncrementalMeasure { get; init; }
+
+    internal bool SupportsIncrementalMeasure => IncrementalMeasure is not null;
+
+    internal bool ProcessMeasure(UIElement element)
+    {
+        if (IncrementalMeasure is not null)
+        {
+            return IncrementalMeasure(element);
+        }
+
+        Measure?.Invoke(element);
+        return true;
+    }
+
     internal void Process(FramePhase phase, UIElement element)
     {
         switch (phase)

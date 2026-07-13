@@ -28,6 +28,18 @@ public sealed class TextPipelineTests
         Assert.Equal(result.GlyphCount, result.GlyphPositions.Length);
     }
 
+    [Fact]
+    public void OpenTypeFontDataIsReusedForTheSameTypeface()
+    {
+        SkiaFont font = Assert.IsType<SkiaFont>(new SystemFontSource().LoadFont("Arial", 16));
+
+        OpenTypeFontData first = OpenTypeFontData.Read(font);
+        OpenTypeFontData second = OpenTypeFontData.Read(font);
+
+        Assert.Same(first.Bytes, second.Bytes);
+        Assert.Equal(first.FaceIndex, second.FaceIndex);
+    }
+
     [Theory]
     [InlineData("Calibri", 13.765625f)]
     [InlineData("Consolas", 13.25f)]

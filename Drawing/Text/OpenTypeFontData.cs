@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using HarfBuzzSharp;
 using SkiaSharp;
@@ -6,9 +7,20 @@ namespace Cerneala.Drawing.Text;
 
 internal readonly record struct OpenTypeFontData(byte[] Bytes, uint FaceIndex)
 {
+    private static readonly ConditionalWeakTable<SKTypeface, Lazy<OpenTypeFontData>> Cache = new();
+
     public static OpenTypeFontData Read(SkiaFont font)
     {
-        using SKStreamAsset stream = font.Typeface.OpenStream(out int faceIndex);
+        return Cache.GetValue(
+            font.Typeface,
+            static typeface => new Lazy<OpenTypeFontData>(
+                () => ReadTypeface(typeface),
+                LazyThreadSafetyMode.ExecutionAndPublication)).Value;
+    }
+
+    private static OpenTypeFontData ReadTypeface(SKTypeface typeface)
+    {
+        using SKStreamAsset stream = typeface.OpenStream(out int faceIndex);
         byte[] bytes = new byte[stream.Length];
         int read = stream.Read(bytes, bytes.Length);
         if (read != bytes.Length)

@@ -193,49 +193,84 @@ public sealed class UiFrameScheduler
 
     private void ProcessMeasure(FramePhaseProcessors processors, FrameStats stats)
     {
-        IReadOnlyList<Elements.UIElement> snapshot = layoutQueue.SnapshotMeasure();
+        IReadOnlyList<Elements.UIElement> snapshot = processors.SupportsIncrementalMeasure
+            ? layoutQueue.SnapshotMeasureIncremental()
+            : layoutQueue.SnapshotMeasure();
+        int processed = 0;
         foreach (Elements.UIElement element in snapshot)
         {
+            LayoutQueueEntryKind kind = layoutQueue.GetMeasureKind(element);
             layoutQueue.RemoveMeasure(element);
+
+            if (processors.SupportsIncrementalMeasure && kind == LayoutQueueEntryKind.Propagated)
+            {
+                InvalidationFlags skipped = ClearProcessedFlags(element, InvalidationFlags.Measure);
+                trace.RecordClear(element, skipped);
+                continue;
+            }
+
+            bool desiredSizeChanged;
             try
             {
-                processors.Process(FramePhase.Measure, element);
+                desiredSizeChanged = processors.ProcessMeasure(element);
             }
             catch
             {
-                layoutQueue.EnqueueMeasure(element);
+                layoutQueue.EnqueueMeasure(element, kind);
                 throw;
             }
 
             stats.Count(FramePhase.Measure);
+            processed++;
             trace.RecordPhase(FramePhase.Measure, element, InvalidationFlags.Measure);
             if (!layoutQueue.ContainsMeasure(element))
             {
                 InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Measure);
                 trace.RecordClear(element, cleared);
             }
+
+            if (processors.SupportsIncrementalMeasure &&
+                desiredSizeChanged &&
+                !element.IsLayoutBoundary &&
+                element.VisualParent is Elements.UIElement parent)
+            {
+                parent.DirtyState.Mark(InvalidationFlags.Measure | InvalidationFlags.Arrange);
+                layoutQueue.RequireMeasure(parent);
+                layoutQueue.RequireArrange(parent);
+            }
         }
 
-        trace.RecordPhaseSummary(FramePhase.Measure, snapshot.Count);
+        trace.RecordPhaseSummary(FramePhase.Measure, processed);
     }
 
     private void ProcessArrange(FramePhaseProcessors processors, FrameStats stats)
     {
         IReadOnlyList<Elements.UIElement> snapshot = layoutQueue.SnapshotArrange();
+        int processed = 0;
         foreach (Elements.UIElement element in snapshot)
         {
+            LayoutQueueEntryKind kind = layoutQueue.GetArrangeKind(element);
             layoutQueue.RemoveArrange(element);
+
+            if (processors.SupportsIncrementalMeasure && kind == LayoutQueueEntryKind.Propagated)
+            {
+                InvalidationFlags skipped = ClearProcessedFlags(element, InvalidationFlags.Arrange);
+                trace.RecordClear(element, skipped);
+                continue;
+            }
+
             try
             {
                 processors.Process(FramePhase.Arrange, element);
             }
             catch
             {
-                layoutQueue.EnqueueArrange(element);
+                layoutQueue.EnqueueArrange(element, kind);
                 throw;
             }
 
             stats.Count(FramePhase.Arrange);
+            processed++;
             trace.RecordPhase(FramePhase.Arrange, element, InvalidationFlags.Arrange);
             if (!layoutQueue.ContainsArrange(element))
             {
@@ -244,7 +279,7 @@ public sealed class UiFrameScheduler
             }
         }
 
-        trace.RecordPhaseSummary(FramePhase.Arrange, snapshot.Count);
+        trace.RecordPhaseSummary(FramePhase.Arrange, processed);
     }
 
     private void ProcessRender(FramePhaseProcessors processors, FrameStats stats)

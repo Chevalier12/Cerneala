@@ -19,6 +19,7 @@ public sealed class LayoutManager
         return new FramePhaseProcessors
         {
             Measure = element => Measure(element, GetAvailableSize(element)),
+            IncrementalMeasure = MeasureForFrame,
             Arrange = element => Arrange(element, GetFinalRect(element))
         };
     }
@@ -27,21 +28,20 @@ public sealed class LayoutManager
     {
         ArgumentNullException.ThrowIfNull(element);
         bool isDirtyMeasure = element.DirtyState.Has(InvalidationFlags.Measure);
-        if (!isDirtyMeasure &&
-            element.LastMeasureAvailableSize == availableSize &&
-            element.LastMeasureLayoutVersion == element.LayoutVersion)
+        if (!isDirtyMeasure && element.TryUseCachedMeasure(availableSize, out LayoutSize cachedDesiredSize))
         {
-            return new LayoutResult(element.DesiredSize, element.ArrangedBounds, true, false, false);
+            return new LayoutResult(cachedDesiredSize, element.ArrangedBounds, true, false, false);
         }
 
         if (isDirtyMeasure)
         {
-            element.LastMeasureAvailableSize = null;
+            element.InvalidateMeasureCache();
         }
 
         LayoutSize desired = element.Measure(new MeasureContext(availableSize, LayoutRounding.ForScale(root.Scale)));
         element.LastMeasureAvailableSize = availableSize;
         element.LastMeasureLayoutVersion = element.LayoutVersion;
+        element.LastMeasureViewportVersion = root.ViewportVersion;
         return new LayoutResult(desired, element.ArrangedBounds, false, false, false);
     }
 
@@ -116,6 +116,12 @@ public sealed class LayoutManager
             return new LayoutSize(root.ViewportWidth, root.ViewportHeight);
         }
 
+        if (element.LastMeasureAvailableSize is LayoutSize previousAvailableSize &&
+            element.LastMeasureViewportVersion == root.ViewportVersion)
+        {
+            return previousAvailableSize;
+        }
+
         UIElement? parent = element.VisualParent;
         if (parent is UIRoot)
         {
@@ -128,6 +134,13 @@ public sealed class LayoutManager
         }
 
         return new LayoutSize(root.ViewportWidth, root.ViewportHeight);
+    }
+
+    private bool MeasureForFrame(UIElement element)
+    {
+        LayoutSize previousDesiredSize = element.DesiredSize;
+        Measure(element, GetAvailableSize(element));
+        return element.DesiredSize != previousDesiredSize;
     }
 
     private LayoutRect GetFinalRect(UIElement element)

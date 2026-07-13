@@ -54,54 +54,88 @@ public sealed class LineBreakService
         while (currentIndex < elements.Length)
         {
             int lineStart = elements[currentIndex].Start;
-            int lastBreakIndex = -1;
-            int lastBreakMeasureEnd = lineStart;
-            int lastBreakWrapEnd = lineStart;
-            bool emitted = false;
+            int lastFittingIndex = FindLastFittingElementIndex(
+                paragraph,
+                elements,
+                currentIndex,
+                availableWidth,
+                measure);
 
-            for (int i = currentIndex; i < elements.Length; i++)
+            if (lastFittingIndex == elements.Length - 1)
             {
-                int elementEnd = elements[i].End;
-                float width = measure(paragraph.Substring(lineStart, elementEnd - lineStart));
-                if (width > availableWidth)
-                {
-                    if (lastBreakIndex >= currentIndex && lastBreakMeasureEnd > lineStart)
-                    {
-                        AddLine(paragraph, lineStart, lastBreakMeasureEnd - lineStart, measure, lines);
-                        currentIndex = SkipLeadingBreakWhitespace(elements, IndexAtOrAfter(elements, lastBreakWrapEnd));
-                    }
-                    else if (i > currentIndex)
-                    {
-                        int fallbackEnd = elements[i - 1].End;
-                        AddLine(paragraph, lineStart, fallbackEnd - lineStart, measure, lines);
-                        currentIndex = i;
-                    }
-                    else
-                    {
-                        AddLine(paragraph, elements[i].Start, elements[i].End - elements[i].Start, measure, lines);
-                        currentIndex = i + 1;
-                    }
-
-                    emitted = true;
-                    break;
-                }
-
-                if (IsBreakOpportunityAfter(elements[i].Text))
-                {
-                    lastBreakIndex = i;
-                    lastBreakMeasureEnd = IsBreakWhitespace(elements[i].Text)
-                        ? TrimTrailingBreakWhitespace(paragraph, lineStart, elementEnd)
-                        : elementEnd;
-                    lastBreakWrapEnd = elementEnd;
-                }
-            }
-
-            if (!emitted)
-            {
-                AddLine(paragraph, lineStart, TrimTrailingBreakWhitespace(paragraph, lineStart, paragraph.Length) - lineStart, measure, lines);
+                int trimmedEnd = TrimTrailingBreakWhitespace(paragraph, lineStart, paragraph.Length);
+                AddLine(paragraph, lineStart, trimmedEnd - lineStart, measure, lines);
                 break;
             }
+
+            int breakIndex = -1;
+            int breakMeasureEnd = lineStart;
+            for (int i = lastFittingIndex; i >= currentIndex; i--)
+            {
+                if (!IsBreakOpportunityAfter(elements[i].Text))
+                {
+                    continue;
+                }
+
+                int measureEnd = IsBreakWhitespace(elements[i].Text)
+                    ? TrimTrailingBreakWhitespace(paragraph, lineStart, elements[i].End)
+                    : elements[i].End;
+                if (measureEnd > lineStart)
+                {
+                    breakIndex = i;
+                    breakMeasureEnd = measureEnd;
+                    break;
+                }
+            }
+
+            if (breakIndex >= currentIndex)
+            {
+                AddLine(paragraph, lineStart, breakMeasureEnd - lineStart, measure, lines);
+                currentIndex = SkipLeadingBreakWhitespace(elements, breakIndex + 1);
+            }
+            else if (lastFittingIndex >= currentIndex)
+            {
+                int fallbackEnd = elements[lastFittingIndex].End;
+                AddLine(paragraph, lineStart, fallbackEnd - lineStart, measure, lines);
+                currentIndex = lastFittingIndex + 1;
+            }
+            else
+            {
+                TextElement first = elements[currentIndex];
+                AddLine(paragraph, first.Start, first.End - first.Start, measure, lines);
+                currentIndex++;
+            }
         }
+    }
+
+    private static int FindLastFittingElementIndex(
+        string paragraph,
+        TextElement[] elements,
+        int startIndex,
+        float availableWidth,
+        Func<string, float> measure)
+    {
+        int lineStart = elements[startIndex].Start;
+        int low = startIndex;
+        int high = elements.Length - 1;
+        int lastFittingIndex = startIndex - 1;
+        while (low <= high)
+        {
+            int middle = low + ((high - low) / 2);
+            int end = elements[middle].End;
+            float width = measure(paragraph.Substring(lineStart, end - lineStart));
+            if (width <= availableWidth)
+            {
+                lastFittingIndex = middle;
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle - 1;
+            }
+        }
+
+        return lastFittingIndex;
     }
 
     private static IEnumerable<string> EnumerateParagraphs(string text)
@@ -195,17 +229,6 @@ public sealed class LineBreakService
     private static int SkipLeadingBreakWhitespace(TextElement[] elements, int index)
     {
         while (index < elements.Length && IsBreakWhitespace(elements[index].Text))
-        {
-            index++;
-        }
-
-        return index;
-    }
-
-    private static int IndexAtOrAfter(TextElement[] elements, int position)
-    {
-        int index = 0;
-        while (index < elements.Length && elements[index].End <= position)
         {
             index++;
         }

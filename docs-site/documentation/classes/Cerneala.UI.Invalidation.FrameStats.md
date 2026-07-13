@@ -39,7 +39,7 @@ The example records one queued measure element, two actual measure calls, and on
 
 The `Count(FramePhase)` method maps scheduler phases to the matching element counters. It increments counters for `InheritedProperties`, `CommandState`, `Aspect`, `Measure`, `Arrange`, `RenderCache`, and `HitTest`. The current implementation does not change any counter for `Input` or `Idle`.
 
-Queued layout counters are separate from actual layout-call counters. `MeasuredElements` and `ArrangedElements` count elements processed from the scheduler queues, while `MeasureCalls` and `ArrangeCalls` are incremented separately by `CountMeasureCall()` and `CountArrangeCall()`.
+Queued layout counters are separate from actual layout-pass counters. `MeasuredElements` and `ArrangedElements` count elements processed from the scheduler queues, while `MeasureCalls` and `ArrangeCalls` count recursive layout work performed after the element cache checks. Cache hits are not counted as layout passes.
 
 `CountNoWorkFrame()` increments `NoWorkFrames` and also records one reused cache through `CountReusedCache()`. A no-work frame by itself does not make `HasWork` return `true`. `HasWork` also ignores `ReusedCaches`, `MeasureCalls`, and `ArrangeCalls`; it reports true for retained phase counters and motion counters that represent frame work.
 
@@ -60,8 +60,8 @@ Motion counters are accumulated from `MotionFrameResult` by `CountMotion(MotionF
 | `AspectElements` | `int` | Gets the number of elements processed for aspect resolution. |
 | `MeasuredElements` | `int` | Gets the number of elements processed from the measure queue. |
 | `ArrangedElements` | `int` | Gets the number of elements processed from the arrange queue. |
-| `MeasureCalls` | `int` | Gets the number of actual measure calls recorded during the frame. |
-| `ArrangeCalls` | `int` | Gets the number of actual arrange calls recorded during the frame. |
+| `MeasureCalls` | `int` | Gets the number of non-cached measure passes recorded during the frame. |
+| `ArrangeCalls` | `int` | Gets the number of non-cached arrange passes recorded during the frame. |
 | `RenderedElements` | `int` | Gets the number of elements processed for render-cache work. |
 | `HitTestElements` | `int` | Gets the number of elements processed for hit-test cache work. |
 | `ReusedCaches` | `int` | Gets the number of cache reuse events recorded for the frame. |
