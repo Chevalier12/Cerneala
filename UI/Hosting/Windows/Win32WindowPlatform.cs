@@ -309,6 +309,8 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                 case Win32.WM_GETMINMAXINFO:
                     ApplyMinMaxInfo(lParam);
                     return 0;
+                case Win32.WM_NCHITTEST when window.ResizeMode == ResizeMode.CanResizeWithGrip:
+                    return HitTestResizeGrip(message, wParam, lParam);
                 case Win32.WM_DPICHANGED:
                     ApplyDpiChange(wParam, lParam);
                     return 0;
@@ -442,6 +444,27 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             }
 
             Marshal.StructureToPtr(info, lParam, fDeleteOld: false);
+        }
+
+        private nint HitTestResizeGrip(uint message, nuint wParam, nint lParam)
+        {
+            nint nativeResult = Win32.DefWindowProc(Handle, message, wParam, lParam);
+            if (nativeResult != Win32.HTCLIENT || NativeState() != WindowState.Normal)
+            {
+                return nativeResult;
+            }
+
+            Win32.POINT point = new(SignedLowWord(lParam), SignedHighWord(lParam));
+            if (!Win32.ScreenToClient(Handle, ref point) || !Win32.GetClientRect(Handle, out Win32.RECT client))
+            {
+                return nativeResult;
+            }
+
+            int gripWidth = Win32.GetSystemMetrics(Win32.SM_CXVSCROLL);
+            int gripHeight = Win32.GetSystemMetrics(Win32.SM_CYHSCROLL);
+            return point.X >= client.Right - gripWidth && point.Y >= client.Bottom - gripHeight
+                ? Win32.HTBOTTOMRIGHT
+                : nativeResult;
         }
 
         private (int Width, int Height) OuterSize(float logicalWidth, float logicalHeight, float scale)

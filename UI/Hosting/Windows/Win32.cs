@@ -34,6 +34,7 @@ internal static class Win32
     public const uint WM_MOVE = 0x0003;
     public const uint WM_SIZE = 0x0005;
     public const uint WM_GETMINMAXINFO = 0x0024;
+    public const uint WM_NCHITTEST = 0x0084;
     public const uint WM_PAINT = 0x000F;
     public const uint WM_DPICHANGED = 0x02E0;
     public const uint WM_SYSCOMMAND = 0x0112;
@@ -58,6 +59,10 @@ internal static class Win32
     public const int IDC_ARROW = 32512;
     public const int SM_CXSCREEN = 0;
     public const int SM_CYSCREEN = 1;
+    public const int SM_CXVSCROLL = 2;
+    public const int SM_CYHSCROLL = 3;
+    public const int HTCLIENT = 1;
+    public const int HTBOTTOMRIGHT = 17;
     public const int ERROR_ACCESS_DENIED = 5;
     public static readonly nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
 
@@ -82,7 +87,7 @@ internal static class Win32
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public readonly struct POINT
+    public struct POINT
     {
         public POINT(int x, int y)
         {
@@ -90,8 +95,8 @@ internal static class Win32
             Y = y;
         }
 
-        public readonly int X;
-        public readonly int Y;
+        public int X;
+        public int Y;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -196,6 +201,10 @@ internal static class Win32
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool GetWindowRect(nint hwnd, out RECT rect);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool ScreenToClient(nint hwnd, ref POINT point);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

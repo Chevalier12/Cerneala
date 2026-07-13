@@ -17,6 +17,7 @@ public sealed class TemplateTokenBinding<T> : TemplateTokenBinding
     private readonly UIElement target;
     private readonly UiProperty<T> targetProperty;
     private readonly AspectEnvironment environment;
+    private bool attached;
 
     public TemplateTokenBinding(AspectToken<T> token, UIElement target, UiProperty<T> targetProperty, AspectEnvironment environment)
     {
@@ -28,14 +29,45 @@ public sealed class TemplateTokenBinding<T> : TemplateTokenBinding
 
     public override void Attach()
     {
-        if (environment.TryGet(token, out T value))
+        if (attached)
         {
-            target.SetValue(targetProperty, value, UiPropertyValueSource.TemplateBinding);
+            return;
         }
+
+        attached = true;
+        environment.TokenChanged += OnTokenChanged;
+        UpdateTarget();
     }
 
     public override void Detach()
     {
+        if (!attached)
+        {
+            return;
+        }
+
+        attached = false;
+        environment.TokenChanged -= OnTokenChanged;
         target.ClearValue(targetProperty, UiPropertyValueSource.TemplateBinding);
+    }
+
+    private void OnTokenChanged(AspectToken changedToken)
+    {
+        if (Equals(changedToken, token))
+        {
+            UpdateTarget();
+        }
+    }
+
+    private void UpdateTarget()
+    {
+        if (environment.TryGet(token, out T value))
+        {
+            target.SetValue(targetProperty, value, UiPropertyValueSource.TemplateBinding);
+        }
+        else
+        {
+            target.ClearValue(targetProperty, UiPropertyValueSource.TemplateBinding);
+        }
     }
 }

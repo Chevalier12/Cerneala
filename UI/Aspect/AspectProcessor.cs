@@ -1,4 +1,5 @@
 using Cerneala.UI.Elements;
+using Cerneala.UI.Theming;
 
 namespace Cerneala.UI.Aspect;
 
@@ -6,8 +7,9 @@ public sealed class AspectProcessor
 {
     private readonly UIRoot root;
     private readonly AspectEngine engine = new();
-    private readonly AspectEnvironment environment = DefaultAspectPackage.CreateEnvironment();
+    private readonly AspectEnvironment environment = new("runtime");
     private int synchronizedCatalogVersion = -1;
+    private Theme? synchronizedTheme;
 
     public AspectProcessor(UIRoot root)
     {
@@ -16,15 +18,25 @@ public sealed class AspectProcessor
 
     public AspectEngine Engine => engine;
 
+    internal AspectEnvironment Environment
+    {
+        get
+        {
+            SynchronizeEnvironment(root.AspectRegistry.BuildCatalog());
+            return environment;
+        }
+    }
+
     public void Process(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
         AspectCatalog catalog = root.AspectRegistry.BuildCatalog();
-        SynchronizeTokenDefaults(catalog);
+        SynchronizeEnvironment(catalog);
         AspectVariantSet variants = element is Cerneala.UI.Controls.Control control
             ? control.AspectVariants
             : AspectVariantSet.Empty;
-        engine.Apply(element, catalog, environment, root.ThemeProvider, variants);
+        AspectDataContext dataContext = new(element.DataContext, owner: element);
+        engine.Apply(element, catalog, environment, root.ThemeProvider, variants, dataContext);
     }
 
     public void Clear(UIElement element)
@@ -32,24 +44,33 @@ public sealed class AspectProcessor
         engine.Clear(element);
     }
 
-    private void SynchronizeTokenDefaults(AspectCatalog catalog)
+    private void SynchronizeEnvironment(AspectCatalog catalog)
     {
-        if (synchronizedCatalogVersion == catalog.Version)
+        Theme? theme = root.ThemeProvider?.Theme;
+        if (synchronizedCatalogVersion == catalog.Version && ReferenceEquals(synchronizedTheme, theme))
         {
             return;
         }
 
+        AspectEnvironment next = new("runtime.next");
         foreach ((AspectToken token, AspectValue defaultValue) in catalog.TokenDefaults)
         {
             object? resolved = defaultValue.Resolve(new AspectResolutionContext(
                 root,
-                environment,
+                next,
                 AspectStateSet.Empty,
                 AspectVariantSet.Empty,
                 root.ThemeProvider));
-            environment.Set(token, resolved);
+            next.Set(token, resolved);
         }
 
+        if (theme is not null)
+        {
+            ThemeTokenBridge.Apply(theme, next);
+        }
+
+        environment.ReplaceWith(next);
         synchronizedCatalogVersion = catalog.Version;
+        synchronizedTheme = theme;
     }
 }

@@ -7,14 +7,13 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Aspect/AspectInvalidation.cs`
 
-Provides a small tracking facade that applies a fixed `AspectCatalog` and `AspectEnvironment` to `UIElement` instances through an `AspectEngine`.
+Tracks `UIElement` instances and reapplies a fixed aspect catalog when their aspect dependencies or token values change.
 
 ```csharp
-public sealed class AspectInvalidation
+public sealed class AspectInvalidation : IDisposable
 ```
 
-Inheritance:
-`object` -> `AspectInvalidation`
+Implements: `IDisposable`
 
 ## Examples
 
@@ -30,7 +29,7 @@ AspectCatalog catalog = new AspectRegistry()
 
 AspectEnvironment environment = DefaultAspectPackage.CreateEnvironment();
 AspectEngine engine = new();
-AspectInvalidation invalidation = new(engine, catalog, environment);
+using AspectInvalidation invalidation = new(engine, catalog, environment);
 
 Button button = new();
 AspectApplicationResult result = invalidation.Track(button);
@@ -43,9 +42,11 @@ if (result.Applied)
 
 ## Remarks
 
-`AspectInvalidation` stores the `AspectEngine`, `AspectCatalog`, and `AspectEnvironment` supplied to its constructor. Calling `Track` delegates directly to `AspectEngine.Apply(element, catalog, environment)`, so the element is resolved and updated with aspect-base values using those fixed dependencies.
+`AspectInvalidation` stores the `AspectEngine`, `AspectCatalog`, and `AspectEnvironment` supplied to its constructor. `Track` subscribes to the element's property changes, performs the initial application, and retains the element until `Untrack` or `Dispose` is called. Property changes marked with `AffectsAspect`, and properties recorded by the resolved aspect dependency set, cause the element to be recomputed.
 
-This class does not build catalogs, synchronize token defaults, pass a theme provider, pass aspect variants, or manage a data context. Root-level processing that needs those inputs is handled by `AspectProcessor`. Use `AspectInvalidation` when code already owns the engine, catalog, and environment that should be reused for repeated tracking calls.
+Changes to environment tokens recompute only tracked elements whose resolved declarations depend on the changed token. Aspect data conditions receive the tracked element's current `DataContext`. `Recompute` forces an application without changing tracking state. `Untrack` removes subscriptions and clears the element's applied aspect state; `Dispose` removes all subscriptions and rejects later tracking or recompute calls.
+
+This class does not build catalogs, synchronize token defaults, or pass aspect variants. Root-level processing that needs the root registry, theme bridge, and control variants is handled by `AspectProcessor`.
 
 The constructor throws `ArgumentNullException` when `engine`, `catalog`, or `environment` is `null`. `Track` relies on `AspectEngine.Apply` for element validation, so a `null` element also results in `ArgumentNullException`.
 
@@ -59,7 +60,10 @@ The constructor throws `ArgumentNullException` when `engine`, `catalog`, or `env
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Track(UIElement element)` | `AspectApplicationResult` | Applies the stored catalog and environment to `element` through the stored `AspectEngine` and returns the engine result. |
+| `Track(UIElement element)` | `AspectApplicationResult` | Starts tracking `element`, applies the stored catalog and environment, and returns the engine result. Repeated calls recompute without duplicate subscriptions. |
+| `Recompute(UIElement element)` | `AspectApplicationResult` | Reapplies the stored catalog and environment without changing tracking membership. |
+| `Untrack(UIElement element)` | `bool` | Stops tracking the element, clears its engine-applied aspect state, and returns whether it was tracked. |
+| `Dispose()` | `void` | Detaches environment and element subscriptions. Repeated calls are safe. |
 
 ## Applies to
 

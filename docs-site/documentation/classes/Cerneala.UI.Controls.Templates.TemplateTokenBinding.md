@@ -67,17 +67,17 @@ ComponentTemplate<Button> template = new("Button.Padding", context =>
 ## Remarks
 `TemplateTokenBinding` is the non-generic base used by component template instances to store token bindings with different value types in one collection. `ComponentTemplateContext.BindToken<T>` creates the concrete `TemplateTokenBinding<T>` implementation and adds it to `ComponentTemplateContext.TokenBindings`.
 
-The concrete binding captures an `AspectToken<T>`, a target `UIElement`, a typed target `UiProperty<T>`, and an `AspectEnvironment`. When `Attach()` runs, it calls `AspectEnvironment.TryGet<T>`. If the token resolves successfully, the value is written to the target property with `UiPropertyValueSource.TemplateBinding`. If the token is missing or resolves to an incompatible value, no target value is written.
+The concrete binding captures an `AspectToken<T>`, a target `UIElement`, a typed target `UiProperty<T>`, and an `AspectEnvironment`. When `Attach()` runs, it subscribes to that environment and immediately resolves the token. A compatible value is written with `UiPropertyValueSource.TemplateBinding`; a missing or incompatible value clears that value source.
 
 `Detach()` clears the target property value that was written through `UiPropertyValueSource.TemplateBinding`. Component template instances call token binding `Attach()` after regular template bindings during `ComponentTemplateInstance.Attach(Control)`, and call token binding `Detach()` before regular template bindings during `ComponentTemplateInstance.Detach()`.
 
-This type does not listen for later `AspectEnvironment` changes. It applies the environment value available at attach time.
+While attached, later changes to the captured token are applied immediately. Changes to unrelated tokens are ignored. `Detach()` removes the subscription before clearing the target, so later environment mutations cannot update a detached template child.
 
 ## Methods
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Attach()` | `void` | Applies the token value from the captured aspect environment to the target property when the token can be resolved. |
-| `Detach()` | `void` | Clears the target property value written through the template-binding value source. |
+| `Attach()` | `void` | Subscribes to the environment and synchronizes the current token value to the target. Repeated calls are safe. |
+| `Detach()` | `void` | Removes the environment subscription and clears the target property's template-binding value source. Repeated calls are safe. |
 
 ## Applies To
 Project: `Cerneala`

@@ -129,4 +129,28 @@ public sealed class ComponentTemplateTests
 
         Assert.Equal(new Thickness(8), border.Padding);
     }
+
+    [Fact]
+    public void TokenBindingRemainsLiveUntilTemplateInstanceIsDetached()
+    {
+        AspectToken<Thickness> token = AspectToken.Thickness("button.padding");
+        AspectEnvironment environment = new("template");
+        environment.Set(token, new Thickness(8));
+        Button button = new();
+        Border border = new();
+        ComponentTemplate<Button> template = new("modern", context =>
+        {
+            context.BindToken(token, border, Control.PaddingProperty);
+            return border;
+        });
+        ComponentTemplateInstance instance = template.CreateInstance(button, new ComponentTemplateContext(button, environment));
+        instance.Attach(button);
+
+        environment.Set(token, new Thickness(16));
+        Assert.Equal(new Thickness(16), border.Padding);
+
+        instance.Detach();
+        environment.Set(token, new Thickness(24));
+        Assert.Equal(Thickness.Zero, border.Padding);
+    }
 }

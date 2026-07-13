@@ -53,7 +53,9 @@ root.AspectProcessor.Clear(button);
 
 `AspectProcessor` is created by `UIRoot` and exposed through `UIRoot.AspectProcessor`. The root also wires `AspectProcessor.Process` into the aspect phase of its `UiFrameScheduler`, so normal frame processing uses this class rather than calling `AspectEngine` directly.
 
-Each `Process` call builds an `AspectCatalog` from the root's `AspectRegistry`, synchronizes catalog token defaults into the processor's default `AspectEnvironment` when the catalog version changes, and then calls `AspectEngine.Apply`. The engine receives the target element, current catalog, synchronized environment, root theme provider, and the element's `AspectVariantSet` when the element is a `Control`; non-control elements are processed with `AspectVariantSet.Empty`.
+Each `Process` call builds an `AspectCatalog` from the root's `AspectRegistry`. When the catalog or active `Theme` changes, the processor rebuilds the effective token values from catalog defaults, overlays the semantic colors and brushes projected by `ThemeTokenBridge`, and publishes the changes through its stable runtime environment. Component-template token bindings share that environment and therefore observe the same updates.
+
+The engine receives the target element, current catalog, synchronized environment, root theme provider, and the element's `AspectVariantSet` when the element is a `Control`; non-control elements are processed with `AspectVariantSet.Empty`. It also receives an `AspectDataContext` built from the element's current `DataContext`, so `AspectCondition.Data` works on the root frame-processing path.
 
 `Clear` delegates to `AspectEngine.Clear`. Element lifecycle cleanup calls this during detach, which removes previously applied aspect-base values and clears the engine's tracked diagnostics and dependencies for that element.
 

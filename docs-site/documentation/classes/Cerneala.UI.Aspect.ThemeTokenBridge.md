@@ -53,16 +53,16 @@ if (environment.TryGet(ThemeTokenBridge.ToToken(DefaultTheme.BackgroundKey), out
 
 `ToToken<T>` preserves the theme key value type and creates an `AspectToken<T>` named with the `theme.` prefix followed by `ThemeKey<T>.Key`. For example, `DefaultTheme.AccentKey` maps to `theme.Accent`.
 
-`CreateEnvironment` creates an environment named after `Theme.Name`, or `theme` when the theme is unnamed. It projects the default color theme keys: `BackgroundKey`, `ForegroundKey`, `SurfaceKey`, `BorderKey`, and `AccentKey`. Values are added only when the source theme contains a compatible value for that key.
+`CreateEnvironment` creates an environment named after `Theme.Name`, or `theme` when the theme is unnamed. It projects `BackgroundKey`, `ForegroundKey`, `SurfaceKey`, `BorderKey`, and `AccentKey` into their `theme.*` tokens and the matching `DefaultAspectTokens.Color` entries. Background, foreground, surface, and border colors are also converted to `SolidColorBrush` values for the corresponding semantic brush tokens.
 
-`Control.ApplyTemplate` uses this bridge when a control has a root theme provider, passing the resulting environment into `ComponentTemplateContext`.
+Default button tokens are derived from the same palette: surface supplies the normal background, foreground supplies text, border supplies border and pressed background, and accent supplies hover background. Root aspect processing applies this projection over package defaults whenever the active theme changes. Controls and their template token bindings consume the processor's shared runtime environment, so both aspect declarations and templates observe the same palette.
 
 ## Methods
 
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `ToToken<T>(ThemeKey<T> key)` | `AspectToken<T>` | Creates a typed aspect token named `theme.` plus the theme key text. |
-| `CreateEnvironment(Theme theme)` | `AspectEnvironment` | Creates a new aspect environment from the supplied theme and projects the default color theme values into it. Throws `ArgumentNullException` when `theme` is `null`. |
+| `CreateEnvironment(Theme theme)` | `AspectEnvironment` | Creates a new aspect environment containing typed theme tokens plus the corresponding semantic color, brush, and default button tokens. Throws `ArgumentNullException` when `theme` is `null`. |
 
 ## Applies to
 

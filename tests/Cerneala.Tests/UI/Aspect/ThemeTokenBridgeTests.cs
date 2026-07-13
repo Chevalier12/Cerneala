@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
+using Cerneala.UI.Media;
 using Cerneala.UI.Theming;
 
 namespace Cerneala.Tests.UI.Aspect;
@@ -34,5 +35,23 @@ public sealed class ThemeTokenBridgeTests
         Assert.Equal(theme.Get(DefaultTheme.SurfaceKey), surface);
         Assert.Equal(theme.Get(DefaultTheme.BorderKey), border);
         Assert.Equal(theme.Get(DefaultTheme.AccentKey), accent);
+    }
+
+    [Fact]
+    public void ThemeColorsAreProjectedIntoEverySemanticBrushToken()
+    {
+        Theme theme = DefaultTheme.Create();
+        AspectEnvironment environment = ThemeTokenBridge.CreateEnvironment(theme);
+
+        AssertBrush(environment, DefaultAspectTokens.Brush.Background, theme.Get(DefaultTheme.BackgroundKey));
+        AssertBrush(environment, DefaultAspectTokens.Brush.Foreground, theme.Get(DefaultTheme.ForegroundKey));
+        AssertBrush(environment, DefaultAspectTokens.Brush.Surface, theme.Get(DefaultTheme.SurfaceKey));
+        AssertBrush(environment, DefaultAspectTokens.Brush.Border, theme.Get(DefaultTheme.BorderKey));
+    }
+
+    private static void AssertBrush(AspectEnvironment environment, AspectToken<Brush?> token, Color expected)
+    {
+        Assert.True(environment.TryGet(token, out Brush? brush));
+        Assert.Equal(expected, Assert.IsType<SolidColorBrush>(brush).Color);
     }
 }

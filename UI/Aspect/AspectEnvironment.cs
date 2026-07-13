@@ -20,11 +20,14 @@ public sealed class AspectEnvironment
 
     public int Version { get; private set; }
 
+    internal event Action<AspectToken>? TokenChanged;
+
     public void Set<T>(AspectToken<T> token, T value)
     {
         ArgumentNullException.ThrowIfNull(token);
         values[token] = value;
         Version++;
+        TokenChanged?.Invoke(token);
     }
 
     public void Set(AspectToken token, object? value)
@@ -39,6 +42,7 @@ public sealed class AspectEnvironment
 
         values[token] = value;
         Version++;
+        TokenChanged?.Invoke(token);
     }
 
     public bool TryGet<T>(AspectToken<T> token, out T value)
@@ -75,5 +79,29 @@ public sealed class AspectEnvironment
     public AspectEnvironment CreateChildScope(string name)
     {
         return new AspectEnvironment(name, this);
+    }
+
+    internal void ReplaceWith(AspectEnvironment source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        AspectToken[] changedTokens = values.Keys
+            .Union(source.values.Keys)
+            .Where(token =>
+                !values.TryGetValue(token, out object? current) ||
+                !source.values.TryGetValue(token, out object? next) ||
+                !Equals(current, next))
+            .ToArray();
+
+        values.Clear();
+        foreach ((AspectToken token, object? value) in source.values)
+        {
+            values[token] = value;
+        }
+
+        Version++;
+        foreach (AspectToken token in changedTokens)
+        {
+            TokenChanged?.Invoke(token);
+        }
     }
 }

@@ -162,9 +162,7 @@ public class Control : UIElement
             return;
         }
 
-        AspectEnvironment environment = Root?.ThemeProvider is null
-            ? new AspectEnvironment("template")
-            : ThemeTokenBridge.CreateEnvironment(Root.ThemeProvider.Theme);
+        AspectEnvironment environment = Root?.AspectProcessor.Environment ?? new AspectEnvironment("template");
         ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
         ComponentTemplateInstance instance = template.CreateInstance(this, context);
         try

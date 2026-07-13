@@ -12,6 +12,9 @@ namespace Cerneala.Tests.UI.Hosting;
 
 public sealed class Win32WindowPlatformTests
 {
+    private const uint WmNcHitTest = 0x0084;
+    private const int HtBottomRight = 17;
+
     [Fact]
     public void NativeMaximizeCoversTheMonitorWorkArea()
     {
@@ -188,6 +191,30 @@ public sealed class Win32WindowPlatformTests
         Assert.False(IsWindow(owner.Handle));
     }
 
+    [Fact]
+    public void CanResizeWithGripExposesBottomRightClientResizeHitTarget()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using Win32WindowPlatform platform = new(new RecordingGraphicsFactory());
+        Window source = new() { Title = "Resize grip", ResizeMode = ResizeMode.CanResizeWithGrip };
+        using IPlatformWindow window = platform.CreateWindow(source, new CallbackSink());
+        Assert.True(GetClientRect(window.Handle, out NativeRect client));
+        NativePoint point = new(client.Right - 1, client.Bottom - 1);
+        Assert.True(ClientToScreen(window.Handle, ref point));
+
+        nint gripResult = SendMessage(window.Handle, WmNcHitTest, 0, PackCoordinates(point.X, point.Y));
+        Assert.Equal((nint)HtBottomRight, gripResult);
+
+        source.ResizeMode = ResizeMode.CanResize;
+        window.ApplyProperties(source);
+        nint normalResult = SendMessage(window.Handle, WmNcHitTest, 0, PackCoordinates(point.X, point.Y));
+        Assert.NotEqual((nint)HtBottomRight, normalResult);
+    }
+
     private sealed class CallbackSink : IWindowPlatformCallbacks
     {
         public void RequestClose() { }
@@ -291,6 +318,14 @@ public sealed class Win32WindowPlatformTests
     private static extern bool GetWindowRect(nint window, out NativeRect rect);
 
     [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetClientRect(nint window, out NativeRect rect);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ClientToScreen(nint window, ref NativePoint point);
+
+    [DllImport("user32.dll")]
     private static extern nint MonitorFromWindow(nint window, uint flags);
 
     [DllImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
@@ -312,6 +347,13 @@ public sealed class Win32WindowPlatformTests
         public int Top;
         public int Right;
         public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativePoint(int x, int y)
+    {
+        public int X = x;
+        public int Y = y;
     }
 
     [StructLayout(LayoutKind.Sequential)]

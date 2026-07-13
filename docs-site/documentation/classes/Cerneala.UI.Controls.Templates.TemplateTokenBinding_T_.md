@@ -59,11 +59,11 @@ Thickness appliedPadding = border.Padding;
 
 `TemplateTokenBinding<T>` stores an `AspectToken<T>`, a target `UIElement`, a target `UiProperty<T>`, and the `AspectEnvironment` used for lookup. The constructor rejects `null` values for all four inputs.
 
-Calling `Attach()` asks the environment for the token value by using `AspectEnvironment.TryGet<T>`. When the environment contains a matching value, the binding writes that value to the target property with `UiPropertyValueSource.TemplateBinding`. When the token is not present, or the stored value is not compatible with `T`, `Attach()` leaves the target unchanged.
+Calling `Attach()` subscribes to the environment and asks for the token value by using `AspectEnvironment.TryGet<T>`. When the environment contains a matching value, the binding writes that value to the target property with `UiPropertyValueSource.TemplateBinding`. When the token is absent or incompatible, the binding clears that value source. Repeated calls do not create duplicate subscriptions.
 
 Calling `Detach()` clears the target property value stored at `UiPropertyValueSource.TemplateBinding`. Component template instances detach token bindings before regular template bindings.
 
-The binding performs a one-time lookup during `Attach()`. It does not subscribe to later `AspectEnvironment` changes.
+While attached, the binding refreshes the target whenever its token changes and ignores unrelated token changes. `Detach()` removes this subscription, so later environment mutations leave the detached target unchanged.
 
 ## Constructors
 
@@ -75,8 +75,8 @@ The binding performs a one-time lookup during `Attach()`. It does not subscribe 
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Attach()` | `void` | Looks up the token value in the environment and, when found, sets the target property through the template-binding value source. |
-| `Detach()` | `void` | Clears the target property's template-binding value source. |
+| `Attach()` | `void` | Subscribes to the environment and synchronizes the token value through the template-binding value source. |
+| `Detach()` | `void` | Removes the environment subscription and clears the target property's template-binding value source. |
 
 ## Applies To
 

@@ -1157,6 +1157,7 @@ Generated from `.`.
 |   |   |   |   |-- AspectPackageTests.cs
 |   |   |   |   |-- AspectRootRegistryTests.cs
 |   |   |   |   |-- AspectRuleSetTests.cs
+|   |   |   |   |-- AspectRuntimeMigrationTests.cs
 |   |   |   |   |-- AspectSlotTests.cs
 |   |   |   |   |-- AspectStateSetTests.cs
 |   |   |   |   |-- AspectTokenTests.cs
