@@ -72,4 +72,9 @@ internal interface IWindowPlatformCallbacks
     void BoundsChanged(UiViewport viewport, float left, float top, WindowState state);
 
     void RenderRequested();
+
+    void RenderImmediately()
+    {
+        RenderRequested();
+    }
 }

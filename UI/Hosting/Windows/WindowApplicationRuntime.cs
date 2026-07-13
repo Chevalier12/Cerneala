@@ -381,30 +381,46 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
     private void Render(WindowContext context, TimeSpan elapsedTime, bool renderTimeAlreadyAdvanced = false)
     {
+        if (context.IsRendering)
+        {
+            context.RenderRequested = true;
+            return;
+        }
+
+        context.IsRendering = true;
         context.RenderRequested = false;
-        InputFrame inputFrame = context.PlatformWindow.InputSource.GetFrame();
-        if (renderTimeAlreadyAdvanced)
-        {
-            context.Host.UpdateAfterRenderTimeAdvance(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
-        }
-        else
-        {
-            context.Host.Update(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
-        }
-        IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
-        graphicsSession.BeginFrame(Color.White);
         try
         {
-            context.Host.Draw(graphicsSession.DrawingBackend);
+            InputFrame inputFrame = context.PlatformWindow.InputSource.GetFrame();
+            if (renderTimeAlreadyAdvanced)
+            {
+                context.Host.UpdateAfterRenderTimeAdvance(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
+            }
+            else
+            {
+                context.Host.Update(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
+            }
+
+            IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
+            graphicsSession.BeginFrame(Color.White);
+            try
+            {
+                context.Host.Draw(graphicsSession.DrawingBackend);
+            }
+            finally
+            {
+                graphicsSession.Present();
+            }
+
+            if (!context.ContentRendered)
+            {
+                context.ContentRendered = true;
+                context.Window.MarkContentRendered();
+            }
         }
         finally
         {
-            graphicsSession.Present();
-        }
-        if (!context.ContentRendered)
-        {
-            context.ContentRendered = true;
-            context.Window.MarkContentRendered();
+            context.IsRendering = false;
         }
     }
 
@@ -501,6 +517,19 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 Context.RenderRequested = true;
             }
         }
+
+        public void RenderImmediately()
+        {
+            if (Context is not { } context ||
+                !context.Window.IsShown ||
+                context.PlatformWindow.Viewport.Width <= 0 ||
+                context.PlatformWindow.Viewport.Height <= 0)
+            {
+                return;
+            }
+
+            runtime.Render(context, TimeSpan.Zero);
+        }
     }
 
     private sealed class WindowContext : IDisposable
@@ -526,6 +555,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
         public bool ContentRendered { get; set; }
 
         public bool RenderRequested { get; set; } = true;
+
+        public bool IsRendering { get; set; }
 
         public int ModalDisableCount { get; set; }
 

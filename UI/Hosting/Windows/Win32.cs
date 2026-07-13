@@ -35,6 +35,7 @@ internal static class Win32
     public const uint WM_SIZE = 0x0005;
     public const uint WM_GETMINMAXINFO = 0x0024;
     public const uint WM_NCHITTEST = 0x0084;
+    public const uint WM_ERASEBKGND = 0x0014;
     public const uint WM_PAINT = 0x000F;
     public const uint WM_DPICHANGED = 0x02E0;
     public const uint WM_SYSCOMMAND = 0x0112;
@@ -51,6 +52,8 @@ internal static class Win32
     public const uint WM_CHAR = 0x0102;
     public const uint WM_SYSKEYDOWN = 0x0104;
     public const uint WM_SYSKEYUP = 0x0105;
+    public const uint WM_ENTERSIZEMOVE = 0x0231;
+    public const uint WM_EXITSIZEMOVE = 0x0232;
     public const nuint WA_INACTIVE = 0;
     public const nuint SC_MAXIMIZE = 0xF030;
     public const nuint SC_MASK = 0xFFF0;

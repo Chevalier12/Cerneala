@@ -95,7 +95,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                 lpfnWndProc = Marshal.GetFunctionPointerForDelegate(WindowProcedure),
                 hInstance = Win32.GetModuleHandle(null),
                 hCursor = Win32.LoadCursor(0, Win32.IDC_ARROW),
-                hbrBackground = (nint)(Win32.COLOR_WINDOW + 1),
+                hbrBackground = 0,
                 lpszClassName = WindowClassName
             };
             classAtom = Win32.RegisterClassEx(in windowClass);
@@ -123,6 +123,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         private int graphicsPixelHeight;
         private float graphicsScale;
         private bool applyingMaximizeCommand;
+        private bool isInSizeMove;
 
         public Win32PlatformWindow(
             Window window,
@@ -291,10 +292,27 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                     return 0;
                 case Win32.WM_MOVE:
                     ReportBounds();
+                    if (isInSizeMove)
+                    {
+                        callbacks.RenderImmediately();
+                    }
+
                     return 0;
                 case Win32.WM_SIZE:
                     ResizeSurface();
                     ReportBounds();
+                    if (isInSizeMove)
+                    {
+                        callbacks.RenderImmediately();
+                    }
+
+                    return 0;
+                case Win32.WM_ENTERSIZEMOVE:
+                    isInSizeMove = true;
+                    return 0;
+                case Win32.WM_EXITSIZEMOVE:
+                    isInSizeMove = false;
+                    callbacks.RenderImmediately();
                     return 0;
                 case Win32.WM_SYSCOMMAND when (wParam & Win32.SC_MASK) == Win32.SC_MAXIMIZE:
                     applyingMaximizeCommand = true;
@@ -314,6 +332,8 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                 case Win32.WM_DPICHANGED:
                     ApplyDpiChange(wParam, lParam);
                     return 0;
+                case Win32.WM_ERASEBKGND:
+                    return 1;
                 case Win32.WM_PAINT:
                     Paint();
                     return 0;

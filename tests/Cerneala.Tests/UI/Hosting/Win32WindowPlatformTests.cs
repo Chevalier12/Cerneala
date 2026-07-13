@@ -13,7 +13,10 @@ namespace Cerneala.Tests.UI.Hosting;
 public sealed class Win32WindowPlatformTests
 {
     private const uint WmNcHitTest = 0x0084;
+    private const uint WmEnterSizeMove = 0x0231;
+    private const uint WmExitSizeMove = 0x0232;
     private const int HtBottomRight = 17;
+    private const int GclpBackground = -10;
 
     [Fact]
     public void NativeMaximizeCoversTheMonitorWorkArea()
@@ -215,6 +218,60 @@ public sealed class Win32WindowPlatformTests
         Assert.NotEqual((nint)HtBottomRight, normalResult);
     }
 
+    [Fact]
+    public void InteractiveResizePresentsBeforeNativeSizeMoveEnds()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RecordingGraphicsFactory factory = new();
+        using WindowApplicationRuntime runtime = new(new Win32WindowPlatform(factory));
+        Window source = new() { Title = "Live resize", Width = 320, Height = 200 };
+        runtime.StartMainWindow(source);
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        RecordingGraphicsSession session = Assert.Single(factory.Sessions);
+        int presentedBeforeResize = session.PresentCount;
+        Assert.Equal(0, GetClassLongPtr(factory.WindowHandle, GclpBackground));
+
+        SendMessage(factory.WindowHandle, WmEnterSizeMove, 0, 0);
+        source.Width = 420;
+
+        Assert.True(session.PresentCount > presentedBeforeResize);
+        SendMessage(factory.WindowHandle, WmExitSizeMove, 0, 0);
+    }
+
+    [Fact]
+    public void InteractiveMovePresentsBeforeNativeSizeMoveEnds()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RecordingGraphicsFactory factory = new();
+        using WindowApplicationRuntime runtime = new(new Win32WindowPlatform(factory));
+        Window source = new()
+        {
+            Title = "Live move",
+            Width = 320,
+            Height = 200,
+            Left = 50,
+            Top = 50
+        };
+        runtime.StartMainWindow(source);
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        RecordingGraphicsSession session = Assert.Single(factory.Sessions);
+        int presentedBeforeMove = session.PresentCount;
+
+        SendMessage(factory.WindowHandle, WmEnterSizeMove, 0, 0);
+        source.Left = 120;
+
+        Assert.True(session.PresentCount > presentedBeforeMove);
+        SendMessage(factory.WindowHandle, WmExitSizeMove, 0, 0);
+    }
+
     private sealed class CallbackSink : IWindowPlatformCallbacks
     {
         public void RequestClose() { }
@@ -268,6 +325,8 @@ public sealed class Win32WindowPlatformTests
 
         public int DisposeCount { get; private set; }
 
+        public int PresentCount { get; private set; }
+
         public void Resize(int pixelWidth, int pixelHeight, float coordinateScale)
         {
             PixelWidth = pixelWidth;
@@ -277,7 +336,10 @@ public sealed class Win32WindowPlatformTests
 
         public void BeginFrame(Color clearColor) { }
 
-        public void Present() { }
+        public void Present()
+        {
+            PresentCount++;
+        }
 
         public void Dispose()
         {
@@ -301,6 +363,9 @@ public sealed class Win32WindowPlatformTests
 
     [DllImport("user32.dll")]
     private static extern nint GetWindow(nint window, uint command);
+
+    [DllImport("user32.dll", EntryPoint = "GetClassLongPtrW")]
+    private static extern nint GetClassLongPtr(nint window, int index);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
