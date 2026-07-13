@@ -1,0 +1,5 @@
+/* Secondary pages are denser than the landing page. Match the comfortable
+   reading scale users otherwise get by zooming those pages to 110%. */
+html {
+  font-size: 110%;
+}
