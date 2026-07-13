@@ -338,8 +338,11 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                     Paint();
                     return 0;
                 case Win32.WM_MOUSEMOVE:
-                    inputSource.MovePointer(SignedLowWord(lParam), SignedHighWord(lParam));
-                    callbacks.RenderRequested();
+                    if (inputSource.MovePointer(SignedLowWord(lParam), SignedHighWord(lParam)))
+                    {
+                        callbacks.RenderRequested();
+                    }
+
                     return 0;
                 case Win32.WM_LBUTTONDOWN:
                     inputSource.SetButton(InputMouseButton.Left, true);

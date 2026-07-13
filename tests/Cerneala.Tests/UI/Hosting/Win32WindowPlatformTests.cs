@@ -195,6 +195,24 @@ public sealed class Win32WindowPlatformTests
     }
 
     [Fact]
+    public void DuplicateMouseMoveDoesNotRequestAnotherFrame()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using Win32WindowPlatform platform = new(new RecordingGraphicsFactory());
+        CallbackSink callbacks = new();
+        using IPlatformWindow window = platform.CreateWindow(new Window { Title = "Mouse move coalescing" }, callbacks);
+
+        SendMessage(window.Handle, Win32.WM_MOUSEMOVE, 0, PackCoordinates(0, 0));
+        SendMessage(window.Handle, Win32.WM_MOUSEMOVE, 0, PackCoordinates(0, 0));
+
+        Assert.Equal(1, callbacks.RenderRequestCount);
+    }
+
+    [Fact]
     public void CanResizeWithGripExposesBottomRightClientResizeHitTarget()
     {
         if (!OperatingSystem.IsWindows())
@@ -274,13 +292,18 @@ public sealed class Win32WindowPlatformTests
 
     private sealed class CallbackSink : IWindowPlatformCallbacks
     {
+        public int RenderRequestCount { get; private set; }
+
         public void RequestClose() { }
 
         public void ActivationChanged(bool active) { }
 
         public void BoundsChanged(UiViewport viewport, float left, float top, WindowState state) { }
 
-        public void RenderRequested() { }
+        public void RenderRequested()
+        {
+            RenderRequestCount++;
+        }
     }
 
     private sealed class RecordingGraphicsFactory : IWindowGraphicsSessionFactory

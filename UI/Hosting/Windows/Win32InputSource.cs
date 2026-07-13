@@ -9,6 +9,7 @@ internal sealed class Win32InputSource : IInputSource
     private KeyboardSnapshot previousKeyboard = KeyboardSnapshot.Empty;
     private readonly HashSet<InputKey> downKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
+    private bool hasPointerPosition;
 
     public float CoordinateScale { get; set; } = 1;
 
@@ -22,9 +23,18 @@ internal sealed class Win32InputSource : IInputSource
         return frame;
     }
 
-    public void MovePointer(int x, int y)
+    public bool MovePointer(int x, int y)
     {
-        currentPointer = currentPointer.WithPosition(x / CoordinateScale, y / CoordinateScale);
+        float logicalX = x / CoordinateScale;
+        float logicalY = y / CoordinateScale;
+        if (hasPointerPosition && currentPointer.X == logicalX && currentPointer.Y == logicalY)
+        {
+            return false;
+        }
+
+        currentPointer = currentPointer.WithPosition(logicalX, logicalY);
+        hasPointerPosition = true;
+        return true;
     }
 
     public void SetButton(InputMouseButton button, bool down)
