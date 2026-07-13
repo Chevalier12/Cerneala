@@ -1970,6 +1970,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             foreach (XAttribute attribute in element.Attributes().Where(attribute => !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name" and not "DataType"))
             {
+                if (TryEmitGridAttachedProperty(variable, attribute))
+                {
+                    continue;
+                }
+
                 if (TryEmitEventAttribute(element, variable, attribute))
                 {
                     continue;
@@ -1979,6 +1984,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             EmitBrushPropertyElement(element, variable);
+            EmitGridDefinitionElements(element, variable);
 
             if (parsedContent.HasDirectives || aspects.Any(aspect => aspect.Conditions.Count > 0))
             {
@@ -1994,7 +2000,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                             EmitTextContent(element, variable, text.Text);
                             break;
                         case DirectiveElementNode child:
-                            if (IsBrushPropertyElement(element, child.Element))
+                            if (IsNonContentPropertyElement(element, child.Element))
                             {
                                 break;
                             }
@@ -2015,6 +2021,147 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             return variable;
+        }
+
+        private bool TryEmitGridAttachedProperty(string variable, XAttribute attribute)
+        {
+            string method = attribute.Name.LocalName switch
+            {
+                "Grid.Row" => "SetRow",
+                "Grid.Column" => "SetColumn",
+                "Grid.RowSpan" => "SetRowSpan",
+                "Grid.ColumnSpan" => "SetColumnSpan",
+                _ => string.Empty
+            };
+            if (method.Length == 0)
+            {
+                return false;
+            }
+
+            bool isSpan = method.EndsWith("Span", StringComparison.Ordinal);
+            if (!int.TryParse(attribute.Value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int value) ||
+                (isSpan ? value <= 0 : value < 0))
+            {
+                Report(InvalidPropertyValue, attribute, "Grid", attribute.Name.LocalName.Substring("Grid.".Length), attribute.Value);
+                return true;
+            }
+
+            currentLines.Add(
+                "global::Cerneala.UI.Layout.Panels.Grid." + method + "(" + variable + ", " +
+                value.ToString(CultureInfo.InvariantCulture) + ");");
+            return true;
+        }
+
+        private void EmitGridDefinitionElements(XElement owner, string ownerVariable)
+        {
+            if (owner.Name.LocalName != "Grid")
+            {
+                return;
+            }
+
+            EmitGridDefinitions(owner, ownerVariable, "ColumnDefinitions", "ColumnDefinition", "Width");
+            EmitGridDefinitions(owner, ownerVariable, "RowDefinitions", "RowDefinition", "Height");
+        }
+
+        private void EmitGridDefinitions(
+            XElement owner,
+            string ownerVariable,
+            string collectionName,
+            string definitionName,
+            string lengthPropertyName)
+        {
+            string propertyElementName = "Grid." + collectionName;
+            XElement[] propertyElements = owner.Elements(propertyElementName).ToArray();
+            if (propertyElements.Length > 1)
+            {
+                Report(
+                    InvalidDocumentShape,
+                    propertyElements[1],
+                    Path.GetFileName(file.Path),
+                    propertyElementName + " may be declared only once.");
+                return;
+            }
+
+            if (propertyElements.Length == 0)
+            {
+                return;
+            }
+
+            XElement propertyElement = propertyElements[0];
+            if (propertyElement.Attributes().Any(attribute => !attribute.IsNamespaceDeclaration) ||
+                propertyElement.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    propertyElement,
+                    Path.GetFileName(file.Path),
+                    propertyElementName + " accepts only " + definitionName + " children.");
+                return;
+            }
+
+            foreach (XElement definition in propertyElement.Elements())
+            {
+                if (definition.Name.LocalName != definitionName || definition.Elements().Any() ||
+                    definition.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)) ||
+                    definition.Attributes().Any(attribute =>
+                        !attribute.IsNamespaceDeclaration && attribute.Name.LocalName != lengthPropertyName))
+                {
+                    Report(
+                        InvalidDocumentShape,
+                        definition,
+                        Path.GetFileName(file.Path),
+                        propertyElementName + " accepts only empty " + definitionName + " children with an optional " +
+                        lengthPropertyName + " attribute.");
+                    continue;
+                }
+
+                XAttribute? lengthAttribute = definition.Attribute(lengthPropertyName);
+                string? length = lengthAttribute is null
+                    ? "global::Cerneala.UI.Layout.Panels.GridLength.Star"
+                    : ParseGridLength(definitionName, lengthPropertyName, lengthAttribute);
+                if (length is not null)
+                {
+                    currentLines.Add(
+                        ownerVariable + "." + collectionName + ".Add(new global::Cerneala.UI.Layout.Panels." +
+                        definitionName + "(" + length + "));"
+                    );
+                }
+            }
+        }
+
+        private string? ParseGridLength(string definitionName, string propertyName, XAttribute attribute)
+        {
+            string value = attribute.Value.Trim();
+            if (string.Equals(value, "Auto", StringComparison.OrdinalIgnoreCase))
+            {
+                return "global::Cerneala.UI.Layout.Panels.GridLength.Auto";
+            }
+
+            bool star = value.EndsWith("*", StringComparison.Ordinal);
+            string numeric = star ? value.Substring(0, value.Length - 1).Trim() : value;
+            if (star && numeric.Length == 0)
+            {
+                return "global::Cerneala.UI.Layout.Panels.GridLength.Star";
+            }
+
+            if (!float.TryParse(numeric, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed) ||
+                parsed < 0 || float.IsNaN(parsed) || float.IsInfinity(parsed))
+            {
+                Report(InvalidPropertyValue, attribute, definitionName, propertyName, attribute.Value);
+                return null;
+            }
+
+            string literal = parsed.ToString("R", CultureInfo.InvariantCulture) + "f";
+            return star
+                ? "global::Cerneala.UI.Layout.Panels.GridLength.Stars(" + literal + ")"
+                : "global::Cerneala.UI.Layout.Panels.GridLength.Pixels(" + literal + ")";
+        }
+
+        private bool IsNonContentPropertyElement(XElement owner, XElement child)
+        {
+            return IsBrushPropertyElement(owner, child) ||
+                (owner.Name.LocalName == "Grid" &&
+                    child.Name.LocalName is "Grid.ColumnDefinitions" or "Grid.RowDefinitions");
         }
 
         private void EmitBrushPropertyElement(XElement owner, string ownerVariable)
@@ -2164,6 +2311,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             if (type is null)
             {
                 type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Shapes." + elementName);
+            }
+
+            if (type is null)
+            {
+                type = compilation.GetTypeByMetadataName("Cerneala.UI.Layout.Panels." + elementName);
             }
 
             if (type is null || type.TypeKind != TypeKind.Class || type.IsAbstract ||
@@ -2771,6 +2923,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             {
                 case "Panel":
                 case "StackPanel":
+                case "Grid":
                     currentLines.Add(parentVariable + ".LogicalChildren.Add(" + childVariable + ");");
                     currentLines.Add(parentVariable + ".VisualChildren.Add(" + childVariable + ");");
                     break;

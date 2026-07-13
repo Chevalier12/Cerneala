@@ -4,6 +4,10 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Motion.States;
+using Cerneala.UI.Theming;
+using Cerneala.Tests.UI.Motion.Core;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.UI.Aspect;
 
@@ -184,6 +188,116 @@ public sealed class AspectEngineTests
         Assert.NotNull(root.AspectProcessor);
     }
 
+    [Fact]
+    public void EngineAnimatesStateAspectMotionInBothDirections()
+    {
+        const string tokenName = "aspect.hover";
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Button button = new();
+        root.VisualChildren.Add(button);
+        ThemeProvider themeProvider = MotionTheme(tokenName);
+        AspectEngine engine = new();
+        AspectCatalog catalog = CatalogWith(
+            Rule("base", Declaration(Color.White)),
+            new AspectRuleSet(
+                "hover",
+                AspectLayer.Runtime,
+                new AspectTarget(typeof(Button), conditions: [AspectCondition.State(AspectState.Hover)]),
+                [Declaration(Color.Black, new AspectMotion(Control.BackgroundProperty, tokenName, AspectMotionSource.State))],
+                1));
+
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+        button.IsPointerOver = true;
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+
+        TickHalfway(root, clock);
+        AssertIntermediateBackground(button, Color.White, Color.Black);
+
+        clock.Advance(TimeSpan.FromMilliseconds(60));
+        root.Motion.Tick();
+        button.IsPointerOver = false;
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+
+        TickHalfway(root, clock);
+        AssertIntermediateBackground(button, Color.Black, Color.White);
+    }
+
+    [Fact]
+    public void EngineDoesNotAnimateWhenMotionSourceMaskDoesNotMatch()
+    {
+        const string tokenName = "aspect.variant-only";
+        UIRoot root = new();
+        Button button = new();
+        root.VisualChildren.Add(button);
+        ThemeProvider themeProvider = MotionTheme(tokenName);
+        AspectEngine engine = new();
+        AspectCatalog catalog = CatalogWith(
+            Rule("base", Declaration(Color.White)),
+            new AspectRuleSet(
+                "hover",
+                AspectLayer.Runtime,
+                new AspectTarget(typeof(Button), conditions: [AspectCondition.State(AspectState.Hover)]),
+                [Declaration(Color.Black, new AspectMotion(Control.BackgroundProperty, tokenName, AspectMotionSource.Variant))],
+                1));
+
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+        button.IsPointerOver = true;
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.Black), button.Background);
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(0, root.Motion.Properties.BindingCount);
+    }
+
+    [Fact]
+    public void EngineClassifiesBaseStateVariantAndDataMotionSources()
+    {
+        AspectEngine engine = new();
+        AspectEnvironment environment = new("test");
+        Button button = new() { IsPointerOver = true };
+        AspectVariantKey<Button, ButtonKind> key = AspectVariantKey.For<Button, ButtonKind>("kind");
+
+        ResolvedAspect baseAspect = engine.Resolve(button, CatalogWith(Rule("base", Declaration(Color.White))), environment);
+        ResolvedAspect stateAspect = engine.Resolve(
+            button,
+            CatalogWith(new AspectRuleSet(
+                "state",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button), conditions: [AspectCondition.State(AspectState.Hover)]),
+                [Declaration(Color.White)],
+                0)),
+            environment);
+        ResolvedAspect variantAspect = engine.Resolve(
+            button,
+            CatalogWith(new AspectRuleSet(
+                "variant",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button), conditions: [AspectCondition.Variant(key, ButtonKind.Primary)]),
+                [Declaration(Color.White)],
+                0)),
+            environment,
+            variants: AspectVariantSet.Empty.Set(key, ButtonKind.Primary));
+        ResolvedAspect dataAspect = engine.Resolve(
+            button,
+            CatalogWith(new AspectRuleSet(
+                "data",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button), conditions:
+                [
+                    AspectCondition.Data<UserCard>("important", user => user.IsImportant, AspectDataDependency.Named("user"))
+                ]),
+                [Declaration(Color.White)],
+                0)),
+            environment,
+            dataContext: new AspectDataContext(new UserCard(true)));
+
+        Assert.Equal(AspectMotionSource.Base, baseAspect.Values[Control.BackgroundProperty].MotionSource);
+        Assert.Equal(AspectMotionSource.State, stateAspect.Values[Control.BackgroundProperty].MotionSource);
+        Assert.Equal(AspectMotionSource.Variant, variantAspect.Values[Control.BackgroundProperty].MotionSource);
+        Assert.Equal(AspectMotionSource.Data, dataAspect.Values[Control.BackgroundProperty].MotionSource);
+    }
+
     private static AspectCatalog EmptyCatalog()
     {
         return new AspectRegistry().BuildCatalog();
@@ -207,11 +321,34 @@ public sealed class AspectEngineTests
         return new AspectRuleSet(name, AspectLayer.App, new AspectTarget(typeof(Button)), [declaration], order);
     }
 
-    private static AspectDeclaration Declaration(Color color)
+    private static AspectDeclaration Declaration(Color color, AspectMotion? motion = null)
     {
         return new AspectDeclaration(
             Control.BackgroundProperty,
-            AspectValue<Cerneala.UI.Media.Brush?>.Literal(new Cerneala.UI.Media.SolidColorBrush(color)));
+            AspectValue<Cerneala.UI.Media.Brush?>.Literal(new Cerneala.UI.Media.SolidColorBrush(color)),
+            motion);
+    }
+
+    private static ThemeProvider MotionTheme(string tokenName)
+    {
+        MotionTokens tokens = new MotionTokens().Set(
+            tokenName,
+            MotionFactory.Tween(TimeSpan.FromMilliseconds(100)));
+        return new ThemeProvider(new Theme("test").Set(ThemeMotionTokens.Key, tokens));
+    }
+
+    private static void TickHalfway(UIRoot root, ManualMotionClock clock)
+    {
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.Motion.Tick();
+    }
+
+    private static void AssertIntermediateBackground(Button button, Color from, Color to)
+    {
+        Assert.Equal(UiPropertyValueSource.Animation, button.GetValueSource(Control.BackgroundProperty));
+        Assert.NotEqual(new Cerneala.UI.Media.SolidColorBrush(from), button.Background);
+        Assert.NotEqual(new Cerneala.UI.Media.SolidColorBrush(to), button.Background);
     }
 
     private sealed record UserCard(bool IsImportant);

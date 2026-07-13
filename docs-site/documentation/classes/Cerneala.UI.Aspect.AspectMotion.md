@@ -59,13 +59,15 @@ AspectRuleSet hoverRule = new(
 
 ## Remarks
 
-`AspectMotion` identifies the `UiProperty` whose aspect value carries motion metadata, the token name used to look up or correlate a motion definition, and the sources that are allowed to contribute that motion.
+`AspectMotion` identifies the `UiProperty` whose aspect value should transition, the theme motion token used for that transition, and the aspect source categories for which the transition is enabled.
 
-The class is metadata only. `AspectDeclaration` stores an optional `AspectMotion`, and `AspectEngine.Resolve` copies that metadata into the winning `ResolvedAspectValue`. `AspectMotion` does not start animations or resolve a `MotionSpec` by itself.
+When `AspectEngine.Apply` changes an attached element, it resolves `TokenName` through `ThemeMotionTokens` on the supplied `ThemeProvider` and applies the property mutation inside a Motion transaction. The property must be registered as animatable. Without an attached root or a theme provider, the value is applied immediately.
+
+The winning declaration controls motion when a rule becomes active. When a conditional declaration stops winning, its motion metadata controls the transition back to the newly resolved value or to the property's lower-precedence value. This gives state rules symmetric enter and exit transitions without duplicating motion metadata on the base declaration.
 
 The constructor requires a non-null `UiProperty` and a non-empty, non-whitespace token name. The `Source` value defaults to `AspectMotionSource.All`, which combines base, state, variant, and data aspect sources.
 
-`AspectMotionSource` is a `[Flags]` enum, so sources can be combined when a motion token should apply to more than one aspect source category.
+`AspectMotionSource` is a `[Flags]` enum, so sources can be combined when a motion token should apply to more than one aspect source category. UI-property and predicate conditions are state-driven and therefore use the `State` category.
 
 ## Constructors
 

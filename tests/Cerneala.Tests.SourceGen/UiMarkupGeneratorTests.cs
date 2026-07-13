@@ -7,6 +7,7 @@ using Cerneala.Drawing;
 using Cerneala.SourceGen;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
 using Cerneala.UI.Markup;
 using Microsoft.CodeAnalysis;
@@ -14,11 +15,117 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
 using Xunit;
+using Grid = Cerneala.UI.Layout.Panels.Grid;
+using GridLength = Cerneala.UI.Layout.Panels.GridLength;
 
 namespace Cerneala.Tests.SourceGen;
 
 public sealed class UiMarkupGeneratorTests
 {
+    [Fact]
+    public void GridMarkupEmitsDefinitionsPlacementsSpansAndLayout()
+    {
+        const string markup = """
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="120" />
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+              <TextBlock Text="first" Grid.Row="0" Grid.Column="0" />
+              <TextBlock Text="second" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" />
+            </Grid>
+            """;
+
+        GeneratorRunResult result = RunGenerator("GridView.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string generatedSource = SingleGeneratedSource(result);
+        Assert.Contains("GridLength.Auto", generatedSource);
+        Assert.Contains("GridLength.Stars(2f)", generatedSource);
+        Assert.Contains("GridLength.Pixels(120f)", generatedSource);
+        Assert.Contains("Grid.SetColumnSpan", generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Grid grid = Assert.IsType<Grid>(InvokeCreate(stream, "Cerneala.GeneratedUi.GridViewFactory"));
+        Assert.Equal(GridLength.Auto, grid.ColumnDefinitions[0].Width);
+        Assert.Equal(GridLength.Stars(2), grid.ColumnDefinitions[1].Width);
+        Assert.Equal(GridLength.Pixels(120), grid.ColumnDefinitions[2].Width);
+        Assert.Equal(GridLength.Star, grid.RowDefinitions[0].Height);
+        Assert.Equal(GridLength.Auto, grid.RowDefinitions[1].Height);
+        TextBlock first = Assert.IsType<TextBlock>(grid.VisualChildren[0]);
+        TextBlock second = Assert.IsType<TextBlock>(grid.VisualChildren[1]);
+        Assert.Equal(0, Grid.GetRow(first));
+        Assert.Equal(0, Grid.GetColumn(first));
+        Assert.Equal(1, Grid.GetRow(second));
+        Assert.Equal(1, Grid.GetColumn(second));
+        Assert.Equal(2, Grid.GetColumnSpan(second));
+
+        grid.Measure(new MeasureContext(new LayoutSize(600, 300)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 600, 300)));
+        Assert.Equal(120, grid.ColumnDefinitions[2].Width.Value);
+        Assert.True(second.ArrangedBounds.Width > 120);
+    }
+
+    [Fact]
+    public void GridMarkupWorksInsideTemplatesWithConditionalChildren()
+    {
+        const string markup = """
+            <Button IsEnabled="True">
+              @template
+              {
+                <Grid Name="Chrome">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="static" Grid.Column="0" />
+                  @when $owner.IsEnabled
+                  {
+                    @if value == True { <TextBlock Text="conditional" Grid.Column="1" /> }
+                  }
+                </Grid>
+              }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("GridTemplate.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.GridTemplateFactory"));
+        Grid grid = Assert.IsType<Grid>(button.ComponentTemplateInstance!.Root);
+        Assert.Equal(2, grid.ColumnDefinitions.Count);
+        Assert.Equal(2, grid.VisualChildren.Count);
+        Assert.Equal(1, Grid.GetColumn(grid.VisualChildren[1]));
+
+        button.IsEnabled = false;
+        Assert.Single(grid.VisualChildren);
+        button.IsEnabled = true;
+        Assert.Equal(2, grid.VisualChildren.Count);
+    }
+
+    [Theory]
+    [InlineData("<Grid><Grid.ColumnDefinitions><ColumnDefinition Width=\"-1\" /></Grid.ColumnDefinitions></Grid>")]
+    [InlineData("<Grid><TextBlock Grid.Row=\"-1\" /></Grid>")]
+    [InlineData("<Grid><TextBlock Grid.ColumnSpan=\"0\" /></Grid>")]
+    public void InvalidGridMarkupReportsPropertyValueDiagnostic(string markup)
+    {
+        GeneratorRunResult result = RunGenerator("InvalidGrid.cui.xml", markup, out _);
+
+        AssertDiagnostic(result, "CERNEALAUI004", "InvalidGrid.cui.xml");
+        Assert.Empty(result.GeneratedSources);
+    }
+
     [Fact]
     public void TemplatePartPathEmitsReactivePartObservation()
     {
@@ -1382,7 +1489,7 @@ public sealed class UiMarkupGeneratorTests
     [Fact]
     public void UnsupportedElementReportsDiagnostic()
     {
-        GeneratorRunResult result = RunGenerator("Unsupported.cui.xml", "<Grid />", out _);
+        GeneratorRunResult result = RunGenerator("Unsupported.cui.xml", "<BogusWidget />", out _);
 
         AssertDiagnostic(result, "CERNEALAUI002", "Unsupported.cui.xml");
         Assert.Empty(result.GeneratedSources);

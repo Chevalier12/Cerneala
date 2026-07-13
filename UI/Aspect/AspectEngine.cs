@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Motion.States;
 using Cerneala.UI.Theming;
 
 namespace Cerneala.UI.Aspect;
@@ -25,8 +26,9 @@ public sealed class AspectEngine
         ArgumentNullException.ThrowIfNull(element);
         ResolvedAspect resolved = Resolve(element, catalog, environment, themeProvider, variants, dataContext, slotPath);
         AspectEngineElementState state = states.GetOrCreateValue(element);
-        bool changed = ApplyResolved(element, state.LastResolved, resolved);
+        bool changed = ApplyResolved(element, state.LastResolved, resolved, themeProvider);
         state.LastResolved = resolved;
+        state.LastThemeProvider = themeProvider;
         state.Diagnostics = BuildDiagnostics(resolved, environment, counters.Snapshot());
         invalidationGraph.Track(element, resolved.Dependencies);
         return new AspectApplicationResult(changed, resolved);
@@ -75,13 +77,20 @@ public sealed class AspectEngine
             counters.RulesMatched++;
             matchedRules.Add(rule);
             AspectCascadeKey cascadeKey = new(rule.Layer.Order, rule.Target.Specificity, rule.DeclarationOrder);
+            AspectMotionSource motionSource = GetMotionSource(conditionResults);
             foreach (AspectDeclaration declaration in rule.Declarations)
             {
                 counters.DeclarationsResolved++;
                 counters.TokenLookups += declaration.Value.Dependencies.Count;
                 object? value = declaration.Value.Resolve(resolutionContext);
                 tokenDependencies.AddRange(declaration.Value.Dependencies);
-                ResolvedAspectValue resolvedValue = new(declaration.Property, value, declaration, cascadeKey, declaration.Motion);
+                ResolvedAspectValue resolvedValue = new(
+                    declaration.Property,
+                    value,
+                    declaration,
+                    cascadeKey,
+                    declaration.Motion,
+                    motionSource);
                 if (!winners.TryGetValue(declaration.Property, out ResolvedAspectValue? current))
                 {
                     winners[declaration.Property] = resolvedValue;
@@ -179,24 +188,38 @@ public sealed class AspectEngine
             return;
         }
 
-        foreach (UiProperty property in state.LastResolved.Values.Keys)
+        foreach ((UiProperty property, ResolvedAspectValue resolvedValue) in state.LastResolved.Values)
         {
-            element.ClearValueUntyped(property, UiPropertyValueSource.AspectBase);
+            ApplyMutation(
+                element,
+                resolvedValue,
+                state.LastThemeProvider,
+                () => element.ClearValueUntyped(property, UiPropertyValueSource.AspectBase));
         }
 
         state.LastResolved = null;
+        state.LastThemeProvider = null;
         state.Diagnostics = new AspectDiagnostics.Snapshot();
         invalidationGraph.Untrack(element);
     }
 
-    private static bool ApplyResolved(UIElement element, ResolvedAspect? previous, ResolvedAspect next)
+    private static bool ApplyResolved(
+        UIElement element,
+        ResolvedAspect? previous,
+        ResolvedAspect next,
+        ThemeProvider? themeProvider)
     {
         bool changed = false;
         foreach (UiProperty property in previous?.Values.Keys ?? [])
         {
             if (!next.Values.ContainsKey(property))
             {
-                element.ClearValueUntyped(property, UiPropertyValueSource.AspectBase);
+                ResolvedAspectValue previousValue = previous!.Values[property];
+                ApplyMutation(
+                    element,
+                    previousValue,
+                    themeProvider,
+                    () => element.ClearValueUntyped(property, UiPropertyValueSource.AspectBase));
                 changed = true;
             }
         }
@@ -207,12 +230,78 @@ public sealed class AspectEngine
             if (element.GetValueSource(property) != UiPropertyValueSource.AspectBase ||
                 !property.AreEqualUntyped(oldSourceValue, resolvedValue.Value))
             {
-                element.SetValueUntyped(property, resolvedValue.Value, UiPropertyValueSource.AspectBase);
+                ResolvedAspectValue? previousValue = null;
+                previous?.Values.TryGetValue(property, out previousValue);
+                ResolvedAspectValue? motionValue = GetMotionValue(resolvedValue, previousValue);
+                ApplyMutation(
+                    element,
+                    motionValue,
+                    themeProvider,
+                    () => element.SetValueUntyped(property, resolvedValue.Value, UiPropertyValueSource.AspectBase));
                 changed = true;
             }
         }
 
         return changed;
+    }
+
+    private static AspectMotionSource GetMotionSource(IReadOnlyList<AspectConditionResult> conditionResults)
+    {
+        AspectMotionSource source = AspectMotionSource.None;
+        foreach (AspectConditionDependency dependency in conditionResults.SelectMany(result => result.Dependencies))
+        {
+            source |= dependency.Kind switch
+            {
+                AspectConditionDependencyKind.State => AspectMotionSource.State,
+                AspectConditionDependencyKind.UiProperty => AspectMotionSource.State,
+                AspectConditionDependencyKind.Predicate => AspectMotionSource.State,
+                AspectConditionDependencyKind.Variant => AspectMotionSource.Variant,
+                AspectConditionDependencyKind.DataContext => AspectMotionSource.Data,
+                _ => AspectMotionSource.None
+            };
+        }
+
+        return source == AspectMotionSource.None ? AspectMotionSource.Base : source;
+    }
+
+    private static ResolvedAspectValue? GetMotionValue(
+        ResolvedAspectValue next,
+        ResolvedAspectValue? previous)
+    {
+        if (HasApplicableMotion(next))
+        {
+            return next;
+        }
+
+        return previous is not null && HasApplicableMotion(previous) ? previous : null;
+    }
+
+    private static bool HasApplicableMotion(ResolvedAspectValue value)
+    {
+        return value.Motion is not null &&
+            ReferenceEquals(value.Motion.Property, value.Property) &&
+            (value.Motion.Source & value.MotionSource) != AspectMotionSource.None;
+    }
+
+    private static void ApplyMutation(
+        UIElement element,
+        ResolvedAspectValue? motionValue,
+        ThemeProvider? themeProvider,
+        Action mutation)
+    {
+        if (motionValue?.Motion is not { } motion ||
+            element.Root is null ||
+            themeProvider is null ||
+            !HasApplicableMotion(motionValue))
+        {
+            mutation();
+            return;
+        }
+
+        using (element.Root.Motion.BeginTransaction(ThemeMotionTokens.Resolve(themeProvider, motion.TokenName)))
+        {
+            mutation();
+        }
     }
 }
 

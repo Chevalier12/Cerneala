@@ -162,6 +162,11 @@ public sealed partial class UiMarkupGenerator
                         break;
                     case DirectiveElementNode child:
                         {
+                            if (IsNonContentPropertyElement(element, child.Element))
+                            {
+                                break;
+                            }
+
                             string childVariable = EmitElement(child.Element);
                             ReactiveRule staticRule = new(
                                 plan.NextOrder++,
