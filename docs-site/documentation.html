@@ -433,6 +433,7 @@ h1{
   .markdown{padding:26px 20px 38px;}
 }
 </style>
+<link rel="stylesheet" href="documentation.css">
 </head>
 <body>
 <header class="nav">
@@ -461,28 +462,70 @@ h1{
 </header>
 
 <main class="docs-shell">
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar__head">
-      <p class="eyebrow">API surface</p>
-      <h1>Documentation</h1>
-      <p class="sidebar__meta"><span id="doc-count">0</span> class docs indexed</p>
-      <div class="search-box">
-        <input id="search" type="search" placeholder="Search classes..." autocomplete="off">
+      <div class="sidebar__identity">
+        <p class="eyebrow">Reference browser</p>
+        <button class="sidebar__close" id="sidebar-close" type="button" aria-label="Close navigation">×</button>
       </div>
+      <h1>API Reference</h1>
+      <div class="sidebar__stats">
+        <span><strong id="doc-count">0</strong> documented types</span>
+        <span><strong id="group-count">0</strong> namespaces</span>
+      </div>
+      <div class="search-box">
+        <span class="search-box__icon" aria-hidden="true">⌕</span>
+        <input id="search" type="search" placeholder="Type or namespace..." autocomplete="off" aria-label="Search documented types">
+        <kbd>/</kbd>
+      </div>
+      <p class="search-status" id="search-status" aria-live="polite">Browse the complete public surface.</p>
     </div>
     <div id="class-list" class="class-list" role="listbox" aria-label="Documented classes"></div>
   </aside>
+  <button class="sidebar-scrim" id="sidebar-scrim" type="button" aria-label="Close navigation"></button>
 
   <section class="doc-view">
-    <article class="doc-card">
-      <div class="doc-titlebar">
-        <div class="doc-dots"><span></span><span></span><span></span></div>
-        <div id="doc-filename" class="doc-filename">Select a class</div>
+    <header class="doc-toolbar">
+      <button class="doc-toolbar__menu" id="sidebar-open" type="button" aria-label="Open API navigation" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <div class="breadcrumbs" aria-label="Current document">
+        <span>API</span>
+        <span id="breadcrumb-category">Reference</span>
+        <strong id="breadcrumb-name">Select a type</strong>
       </div>
-      <div id="doc-content" class="markdown">
-        <div class="loading">Loading documentation index...</div>
+      <div class="doc-toolbar__actions">
+        <button class="tool-button" id="copy-link" type="button" title="Copy link to this type">Copy link</button>
+        <button class="tool-button tool-button--icon" id="previous-doc" type="button" title="Previous type" aria-label="Previous type">←</button>
+        <button class="tool-button tool-button--icon" id="next-doc" type="button" title="Next type" aria-label="Next type">→</button>
       </div>
-    </article>
+    </header>
+
+    <div class="doc-workspace">
+      <article class="doc-card">
+        <div class="doc-titlebar">
+          <span class="doc-file-icon" aria-hidden="true">CS</span>
+          <div>
+            <span class="doc-titlebar__label">Reference document</span>
+            <div id="doc-filename" class="doc-filename">Select a class</div>
+          </div>
+        </div>
+        <div id="doc-content" class="markdown">
+          <div class="loading">Loading documentation index...</div>
+        </div>
+        <nav class="doc-pager" aria-label="Adjacent API documents">
+          <button id="pager-previous" type="button"><span>Previous</span><strong>—</strong></button>
+          <button id="pager-next" type="button"><span>Next</span><strong>—</strong></button>
+        </nav>
+      </article>
+
+      <aside class="doc-toc" aria-label="On this page">
+        <span class="doc-toc__label">On this page</span>
+        <nav id="doc-toc-list"></nav>
+        <div class="doc-toc__footer">
+          <span>Source of truth</span>
+          <strong>docs-site/documentation/classes</strong>
+        </div>
+      </aside>
+    </div>
   </section>
 </main>
 
@@ -499,6 +542,21 @@ const searchEl = document.getElementById('search');
 const contentEl = document.getElementById('doc-content');
 const filenameEl = document.getElementById('doc-filename');
 const countEl = document.getElementById('doc-count');
+const groupCountEl = document.getElementById('group-count');
+const searchStatusEl = document.getElementById('search-status');
+const breadcrumbCategoryEl = document.getElementById('breadcrumb-category');
+const breadcrumbNameEl = document.getElementById('breadcrumb-name');
+const tocListEl = document.getElementById('doc-toc-list');
+const docViewEl = document.querySelector('.doc-view');
+const copyLinkEl = document.getElementById('copy-link');
+const previousDocEl = document.getElementById('previous-doc');
+const nextDocEl = document.getElementById('next-doc');
+const pagerPreviousEl = document.getElementById('pager-previous');
+const pagerNextEl = document.getElementById('pager-next');
+const sidebarOpenEl = document.getElementById('sidebar-open');
+const sidebarCloseEl = document.getElementById('sidebar-close');
+const sidebarScrimEl = document.getElementById('sidebar-scrim');
+let tocObserver = null;
 
 function escapeHtml(value) {
   return value
@@ -536,6 +594,34 @@ const csharpKeywords = new Set([
 
 function span(className, value) {
   return '<span class="' + className + '">' + escapeHtml(value) + '</span>';
+}
+
+function setSidebarOpen(isOpen) {
+  document.body.classList.toggle('is-sidebar-open', isOpen);
+  sidebarOpenEl.setAttribute('aria-expanded', String(isOpen));
+}
+
+async function copyText(value, button) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(value);
+    } else {
+      const input = document.createElement('textarea');
+      input.value = value;
+      input.style.position = 'fixed';
+      input.style.opacity = '0';
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      input.remove();
+    }
+    const original = button.textContent;
+    button.textContent = 'Copied';
+    window.setTimeout(() => { button.textContent = original; }, 1400);
+  } catch {
+    button.textContent = 'Copy failed';
+    window.setTimeout(() => { button.textContent = 'Copy'; }, 1400);
+  }
 }
 
 function highlightCSharp(code) {
@@ -744,6 +830,98 @@ function renderMarkdown(markdown) {
   return html.join('\n');
 }
 
+function buildTableOfContents() {
+  if (tocObserver) {
+    tocObserver.disconnect();
+    tocObserver = null;
+  }
+
+  const headings = Array.from(contentEl.querySelectorAll('h2, h3'));
+  tocListEl.innerHTML = '';
+  if (!headings.length) {
+    tocListEl.innerHTML = '<span class="empty-state">No sections in this document.</span>';
+    return;
+  }
+
+  const usedIds = new Set();
+  headings.forEach((heading, index) => {
+    let id = heading.textContent
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'section-' + (index + 1);
+    const baseId = id;
+    let suffix = 2;
+    while (usedIds.has(id)) id = baseId + '-' + suffix++;
+    usedIds.add(id);
+    heading.id = id;
+
+    const link = document.createElement('a');
+    link.href = '#' + id;
+    link.textContent = heading.textContent;
+    link.dataset.depth = heading.tagName.slice(1);
+    link.addEventListener('click', event => {
+      event.preventDefault();
+      heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    tocListEl.appendChild(link);
+  });
+
+  tocListEl.querySelector('a')?.classList.add('is-active');
+
+  if (!('IntersectionObserver' in window)) return;
+  tocObserver = new IntersectionObserver(entries => {
+    const visible = entries
+      .filter(entry => entry.isIntersecting)
+      .sort((left, right) => left.boundingClientRect.top - right.boundingClientRect.top)[0];
+    if (!visible) return;
+    tocListEl.querySelectorAll('a').forEach(link => {
+      link.classList.toggle('is-active', link.getAttribute('href') === '#' + visible.target.id);
+    });
+  }, { root: docViewEl, rootMargin: '-70px 0px -70% 0px', threshold: 0 });
+  headings.forEach(heading => tocObserver.observe(heading));
+}
+
+function enhanceCodeBlocks() {
+  contentEl.querySelectorAll('pre').forEach(pre => {
+    const code = pre.querySelector('code');
+    if (!code) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'code-copy';
+    button.textContent = 'Copy';
+    button.addEventListener('click', () => copyText(code.textContent, button));
+    pre.appendChild(button);
+  });
+}
+
+function updateDocumentNavigation(doc) {
+  const index = state.docs.findIndex(item => item.file === doc.file);
+  const previous = index > 0 ? state.docs[index - 1] : null;
+  const next = index >= 0 && index < state.docs.length - 1 ? state.docs[index + 1] : null;
+
+  breadcrumbCategoryEl.textContent = doc.category;
+  breadcrumbNameEl.textContent = doc.shortName;
+  document.title = doc.shortName + ' — Cerneala API';
+
+  previousDocEl.disabled = !previous;
+  nextDocEl.disabled = !next;
+  pagerPreviousEl.disabled = !previous;
+  pagerNextEl.disabled = !next;
+  pagerPreviousEl.querySelector('strong').textContent = previous ? previous.shortName : 'Start of reference';
+  pagerNextEl.querySelector('strong').textContent = next ? next.shortName : 'End of reference';
+
+  previousDocEl.onclick = previous ? () => selectDoc(previous, true) : null;
+  nextDocEl.onclick = next ? () => selectDoc(next, true) : null;
+  pagerPreviousEl.onclick = previous ? () => selectDoc(previous, true) : null;
+  pagerNextEl.onclick = next ? () => selectDoc(next, true) : null;
+}
+
+function enhanceDocument(doc) {
+  enhanceCodeBlocks();
+  buildTableOfContents();
+  updateDocumentNavigation(doc);
+}
+
 function enrichDoc(doc) {
   const parts = doc.name.split('.');
   const sourceCategory = categoryFromSource(doc.source);
@@ -833,6 +1011,7 @@ function renderList() {
       button.textContent = doc.shortName;
       button.title = doc.name;
       button.setAttribute('role', 'option');
+      button.setAttribute('aria-selected', state.active && state.active.file === doc.file ? 'true' : 'false');
       button.addEventListener('click', () => selectDoc(doc, true));
       items.appendChild(button);
     });
@@ -847,6 +1026,9 @@ function filterDocs() {
   state.filtered = query
     ? state.docs.filter(doc => doc.category.toLowerCase().includes(query) || doc.searchText.includes(query))
     : state.docs.slice();
+  searchStatusEl.textContent = query
+    ? state.filtered.length + ' matching type' + (state.filtered.length === 1 ? '.' : 's.')
+    : 'Browse the complete public surface.';
   renderList();
 }
 
@@ -856,6 +1038,10 @@ async function selectDoc(doc, updateHash) {
   renderList();
   filenameEl.textContent = doc.name + '.md';
   contentEl.innerHTML = '<div class="loading">Loading ' + escapeHtml(doc.name) + '...</div>';
+  tocListEl.innerHTML = '';
+  updateDocumentNavigation(doc);
+  docViewEl.scrollTo({ top: 0, behavior: 'auto' });
+  if (window.matchMedia('(max-width: 900px)').matches) setSidebarOpen(false);
 
   if (updateHash) {
     history.replaceState(null, '', '#' + encodeURIComponent(doc.name));
@@ -866,6 +1052,7 @@ async function selectDoc(doc, updateHash) {
     if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
     const markdown = await response.text();
     contentEl.innerHTML = renderMarkdown(markdown);
+    enhanceDocument(doc);
   } catch (error) {
     contentEl.innerHTML = '<div class="loading">Could not load this markdown file: ' + escapeHtml(error.message) + '</div>';
   }
@@ -878,6 +1065,7 @@ async function init() {
     state.docs = (await response.json()).map(enrichDoc);
     state.filtered = state.docs.slice();
     countEl.textContent = state.docs.length.toString();
+    groupCountEl.textContent = groupDocs(state.docs).length.toString();
 
     const hashName = decodeURIComponent(location.hash.slice(1));
     const initial = state.docs.find(doc => doc.name === hashName) || state.docs[0];
@@ -889,6 +1077,26 @@ async function init() {
 }
 
 searchEl.addEventListener('input', filterDocs);
+sidebarOpenEl.addEventListener('click', () => setSidebarOpen(true));
+sidebarCloseEl.addEventListener('click', () => setSidebarOpen(false));
+sidebarScrimEl.addEventListener('click', () => setSidebarOpen(false));
+copyLinkEl.addEventListener('click', () => copyText(location.href, copyLinkEl));
+document.addEventListener('keydown', event => {
+  const isTyping = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement;
+  if (event.key === '/' && !isTyping) {
+    event.preventDefault();
+    searchEl.focus();
+    searchEl.select();
+  }
+  if (event.key === 'Escape') {
+    if (document.body.classList.contains('is-sidebar-open')) {
+      setSidebarOpen(false);
+    } else if (document.activeElement === searchEl && searchEl.value) {
+      searchEl.value = '';
+      filterDocs();
+    }
+  }
+});
 init();
 </script>
 </body>
