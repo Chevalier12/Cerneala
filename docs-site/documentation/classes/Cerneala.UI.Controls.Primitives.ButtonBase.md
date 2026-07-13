@@ -8,17 +8,17 @@ Source: `UI/Controls/Primitives/ButtonBase.cs`
 Provides the shared content, pressed-state, focus, cursor, and command behavior for button-like controls.
 
 ```csharp
-public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, ICommandStateSource
+public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, ICommandStateSource, IInputActivatable
 ```
 
 Inheritance:  
 `object` -> `UiObject` -> `UIElement` -> `Control` -> `ContentControl` -> `ButtonBase`
 
 Derived:  
-`Button`
+`Button`, `RepeatButton`, `ToggleButton`
 
 Implements:  
-`IInputPressable`, `IInputCommandSource`, `ICommandStateSource`
+`IInputPressable`, `IInputCommandSource`, `ICommandStateSource`, `IInputActivatable`
 
 ## Examples
 
@@ -49,6 +49,8 @@ Command execution supports both direct `ICommand` instances and `RoutedCommand` 
 `ExecuteCommand` returns `false` without executing when the button is disabled, has no command, or the command cannot execute. `RefreshCommandState` synchronizes `IsEnabled` with command availability. A button with no command is considered enabled by command-state refresh; a button with a command is enabled only when that command can execute.
 
 When attached, `ButtonBase` subscribes to `IObservableCommand.CanExecuteChanged` for observable commands and queues command-state refreshes when the command or command parameter changes. It unsubscribes when detached.
+
+The protected `ShouldClickOnMouseUp` property defaults to `true`, preserving release activation for normal buttons. Derived controls can override it when pointer activation occurs earlier; `RepeatButton` returns `false` so release does not add a final click.
 
 ## Constructors
 
@@ -88,6 +90,12 @@ When attached, `ButtonBase` subscribes to `IObservableCommand.CanExecuteChanged`
 | `OnDetached()` | Unsubscribes from observable command changes before detaching. |
 | `OnPropertyChanged(UiPropertyChangedEventArgs args)` | Queues command-state refreshes when `Command` or `CommandParameter` changes, and updates observable-command subscriptions when `Command` changes. |
 
+## Protected Properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `ShouldClickOnMouseUp` | `bool` | Gets whether a valid left mouse-up raises `Click`. The default is `true`. |
+
 ## Property Information
 
 | Property | Identifier Field | Default Value | Metadata/Options |
@@ -103,6 +111,7 @@ Project: `Cerneala`
 ## See also
 
 - `Cerneala.UI.Controls.Button`
+- `Cerneala.UI.Controls.Primitives.RepeatButton`
 - `Cerneala.UI.Controls.ContentControl`
 - `Cerneala.UI.Input.ICommand`
 - `Cerneala.UI.Input.RoutedCommand`

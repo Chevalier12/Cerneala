@@ -4,7 +4,6 @@ Generated from `.`.
 
 ```text
 ./
-|-- .agents/
 |-- .github/
 |   +-- workflows/
 |       +-- pages.yml
@@ -46,7 +45,9 @@ Generated from `.`.
 |   |   |-- 2026-07-11-foreground-brush-migration.md
 |   |   |-- 2026-07-12-roslyn-indexer-agent-performance-upgrades.md
 |   |   |-- 2026-07-13-markup-logical-expressions.md
-|   |   +-- 2026-07-13-queue-engine-2.md
+|   |   |-- 2026-07-13-queue-engine-2.md
+|   |   |-- 2026-07-13-repeat-button.md
+|   |   +-- 2026-07-13-scrollviewer-template-parts.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -296,6 +297,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Primitives.DragDeltaEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.DragStartedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.RangeBase.md
+|   |   |   |-- Cerneala.UI.Controls.Primitives.RepeatButton.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.ScrollBar.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.ScrollEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.ScrollEventType.md
@@ -1054,6 +1056,7 @@ Generated from `.`.
 |   |   |   |   |-- ButtonBaseCommandTests.cs
 |   |   |   |   |-- ButtonBaseTests.cs
 |   |   |   |   |-- RangeBaseTests.cs
+|   |   |   |   |-- RepeatButtonTests.cs
 |   |   |   |   |-- SelectorTests.cs
 |   |   |   |   |-- ThumbTests.cs
 |   |   |   |   +-- TrackTests.cs
@@ -1525,6 +1528,7 @@ Generated from `.`.
 |   |   |   |-- DragDeltaEventArgs.cs
 |   |   |   |-- DragStartedEventArgs.cs
 |   |   |   |-- RangeBase.cs
+|   |   |   |-- RepeatButton.cs
 |   |   |   |-- ScrollBar.cs
 |   |   |   |-- ScrollEventArgs.cs
 |   |   |   |-- Selector.cs
@@ -1758,6 +1762,7 @@ Generated from `.`.
 |   |   |-- PointerCaptureManager.cs
 |   |   |-- PointerSnapshot.cs
 |   |   |-- PressedStateTracker.cs
+|   |   |-- RepeatButtonController.cs
 |   |   |-- RetainedInputBindingProcessor.cs
 |   |   |-- RoutedCommand.cs
 |   |   |-- RoutedCommandContext.cs

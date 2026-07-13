@@ -28,7 +28,7 @@ ElementInputBridge inputBridge = new();
 
 void ProcessInput(UIRoot root, InputFrame inputFrame)
 {
-    inputBridge.Dispatch(root, inputFrame);
+    inputBridge.Dispatch(root, inputFrame, TimeSpan.FromMilliseconds(16));
 }
 ```
 
@@ -50,6 +50,8 @@ ElementInputBridge inputBridge = new(
 `ElementInputBridge` is the top-level dispatcher that turns one `InputFrame` into retained UI input behavior. It refreshes the root input route map, hit-tests the current pointer position, applies pointer capture overrides, then routes pointer, keyboard, command activation, keyboard navigation, keyboard activation, and text input events.
 
 Pointer dispatch updates hover state when the pointer moves, raises preview and bubbling mouse move, wheel, down, and up event pairs, tracks pressed visual state, tracks click counts, starts and completes pointer drags for `IPointerDragSource` ancestors, and executes `IInputCommandSource` commands after unhandled left-button clicks.
+
+The `frameTime` overload treats its `TimeSpan` argument as the elapsed delta for the current input frame. The value must be non-negative. Time-dependent input behavior such as `RepeatButton` consumes that same delta once per host update. The compatibility overload without `frameTime` delegates with `TimeSpan.Zero`.
 
 Keyboard dispatch is delegated to `FocusManager`, `RetainedInputBindingProcessor`, `KeyboardNavigationController`, and `KeyboardActivationController`. Text input events are delegated to `TextInputBridge`.
 
@@ -75,7 +77,8 @@ The constructor creates default collaborator instances when no service is suppli
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Dispatch(UIRoot, InputFrame)` | `void` | Dispatches one input frame into the retained UI root. Throws if `root` or `inputFrame` is `null`. |
+| `Dispatch(UIRoot, InputFrame)` | `void` | Dispatches one input frame with a neutral `TimeSpan.Zero` delta. Throws if `root` or `inputFrame` is `null`. |
+| `Dispatch(UIRoot, InputFrame, TimeSpan frameTime)` | `void` | Dispatches one input frame using `frameTime` as the elapsed delta. Throws for null arguments or a negative delta. |
 
 ## Applies to
 
@@ -88,3 +91,4 @@ The constructor creates default collaborator instances when no service is suppli
 - `Cerneala.UI.Input.PointerCaptureManager`
 - `Cerneala.UI.Input.CommandRouter`
 - `Cerneala.UI.Input.TextInputBridge`
+- `Cerneala.UI.Controls.Primitives.RepeatButton`

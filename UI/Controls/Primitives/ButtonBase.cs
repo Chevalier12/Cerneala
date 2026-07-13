@@ -58,6 +58,10 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
         RaiseEvent(new RoutedEventArgs(ClickEvent, this));
     }
 
+    protected virtual bool ShouldClickOnMouseUp => true;
+
+    internal override bool ActivatesOnPointerRelease => ShouldClickOnMouseUp;
+
     void IInputActivatable.Activate()
     {
         OnClick();
@@ -188,7 +192,8 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
 
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
-        if (args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 })
+        if (ShouldClickOnMouseUp &&
+            args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 })
         {
             OnClick();
         }

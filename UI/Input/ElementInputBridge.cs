@@ -14,6 +14,7 @@ public sealed class ElementInputBridge
     private readonly RetainedInputBindingProcessor retainedInputBindingProcessor;
     private readonly KeyboardNavigationController keyboardNavigationController;
     private readonly KeyboardActivationController keyboardActivationController;
+    private readonly RepeatButtonController repeatButtonController;
     private readonly TextInputBridge textInputBridge;
     private bool hasLastPointerPosition;
     private float lastPointerX;
@@ -39,6 +40,7 @@ public sealed class ElementInputBridge
         retainedInputBindingProcessor = new RetainedInputBindingProcessor();
         keyboardNavigationController = new KeyboardNavigationController();
         keyboardActivationController = new KeyboardActivationController();
+        repeatButtonController = new RepeatButtonController();
         this.textInputBridge = textInputBridge ?? new TextInputBridge();
     }
 
@@ -54,14 +56,23 @@ public sealed class ElementInputBridge
 
     public void Dispatch(UIRoot root, InputFrame inputFrame)
     {
+        Dispatch(root, inputFrame, TimeSpan.Zero);
+    }
+
+    public void Dispatch(UIRoot root, InputFrame inputFrame, TimeSpan frameTime)
+    {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(inputFrame);
+        if (frameTime < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(frameTime));
+        }
 
         ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         HitTestResult? hitTarget = hitTestService.HitTest(root, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
         HitTestResult? pointerTarget = pointerCaptureManager.OverrideTarget(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
 
-        DispatchPointer(inputFrame, routeMap, hitTarget, pointerTarget);
+        DispatchPointer(root, inputFrame, frameTime, routeMap, hitTarget, pointerTarget);
         IReadOnlyList<KeyboardDispatchResult> keyboardResults = focusManager.DispatchKeyboardWithResults(inputFrame, routeMap);
         IReadOnlyList<KeyboardDispatchResult> activationResults = retainedInputBindingProcessor.Process(keyboardResults, inputFrame, commandRouter, routeMap);
         keyboardNavigationController.Process(activationResults, inputFrame, root, focusManager, routeMap);
@@ -69,7 +80,13 @@ public sealed class ElementInputBridge
         textInputBridge.Dispatch(inputFrame.TextInputEvents, focusManager, routeMap);
     }
 
-    private void DispatchPointer(InputFrame inputFrame, ElementInputRouteMap routeMap, HitTestResult? hitTarget, HitTestResult? pointerTarget)
+    private void DispatchPointer(
+        UIRoot root,
+        InputFrame inputFrame,
+        TimeSpan frameTime,
+        ElementInputRouteMap routeMap,
+        HitTestResult? hitTarget,
+        HitTestResult? pointerTarget)
     {
         bool moved = !hasLastPointerPosition ||
             inputFrame.Pointer.X != lastPointerX ||
@@ -108,7 +125,7 @@ public sealed class ElementInputBridge
                     focusManager.Focus(focusTarget, routeMap);
                 }
 
-                _ = RaiseMousePair(
+                bool handled = RaiseMousePair(
                     routeMap,
                     pointerTarget,
                     InputEvents.PreviewMouseDownEvent,
@@ -116,7 +133,7 @@ public sealed class ElementInputBridge
                     button,
                     1,
                     out bool previewHandled);
-                _ = RaiseMouseButtonSpecificPair(
+                handled |= RaiseMouseButtonSpecificPair(
                     routeMap,
                     pointerTarget,
                     button,
@@ -127,10 +144,33 @@ public sealed class ElementInputBridge
                 {
                     BeginPointerDrag(routeMap, pointerTarget, button);
                 }
+
+                if (button == InputMouseButton.Left)
+                {
+                    if (!handled)
+                    {
+                        repeatButtonController.Begin(
+                            root,
+                            routeMap,
+                            hitTarget?.Element,
+                            pointerTarget?.Element,
+                            commandRouter,
+                            pressedStateTracker);
+                    }
+                    else
+                    {
+                        repeatButtonController.Clear();
+                    }
+                }
             }
 
             if (inputFrame.Pointer.IsReleased(button))
             {
+                if (button == InputMouseButton.Left)
+                {
+                    repeatButtonController.Cancel(pressedStateTracker);
+                }
+
                 int clickCount = clickTracker.Release(ResolveClickTarget(hitTarget?.Element));
                 bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount);
                 handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount);
@@ -147,6 +187,15 @@ public sealed class ElementInputBridge
                 pressedStateTracker.Release();
             }
         }
+
+        repeatButtonController.Update(
+            root,
+            routeMap,
+            hitTarget?.Element,
+            inputFrame.Pointer.IsDown(InputMouseButton.Left),
+            frameTime,
+            commandRouter,
+            pressedStateTracker);
 
         hasLastPointerPosition = true;
         lastPointerX = inputFrame.Pointer.X;
@@ -170,6 +219,7 @@ public sealed class ElementInputBridge
 
         UIElement? commandElement = FindAncestor<IInputCommandSource>(clickTarget.Element);
         if (commandElement is not IInputCommandSource commandSource ||
+            !commandElement.ActivatesOnPointerRelease ||
             (!ReferenceEquals(routedTarget.Element, clickTarget.Element) &&
             !ReferenceEquals(routedTarget.Element, commandElement)))
         {

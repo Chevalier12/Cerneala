@@ -227,6 +227,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal bool IsPresenceExiting { get; private set; }
 
+    internal virtual bool ActivatesOnPointerRelease => true;
+
+    internal virtual TimeSpan? PointerRepeatDelay => null;
+
+    internal virtual TimeSpan PointerRepeatInterval => TimeSpan.Zero;
+
     public float PresenceOpacity { get; private set; } = 1;
 
     public float PresenceScale { get; private set; } = 1;

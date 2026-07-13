@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
@@ -31,6 +32,14 @@ public static class UiMarkupSchema
                     (element, child) => ((Button)element).Content = child,
                     nameof(Button.Content))
                 .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Button.Content), (element, value) => ((Button)element).Content = value))))
+            .Register(WithControlProperties(new UiMarkupElementRegistration(
+                    "RepeatButton",
+                    () => new RepeatButton(),
+                    (element, child) => ((RepeatButton)element).Content = child,
+                    nameof(RepeatButton.Content))
+                .RegisterProperty(new UiMarkupPropertyRegistration(nameof(RepeatButton.Content), (element, value) => ((RepeatButton)element).Content = value))
+                .RegisterProperty(new UiMarkupPropertyRegistration(nameof(RepeatButton.Delay), (element, value) => ((RepeatButton)element).Delay = ParseInt(value)))
+                .RegisterProperty(new UiMarkupPropertyRegistration(nameof(RepeatButton.Interval), (element, value) => ((RepeatButton)element).Interval = ParseInt(value)))))
             .Register(WithControlProperties(new UiMarkupElementRegistration(
                     "TextBlock",
                     () => new TextBlock(),
@@ -73,6 +82,13 @@ public static class UiMarkupSchema
         return float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float parsed)
             ? parsed
             : throw new FormatException($"'{value}' is not a valid Single value.");
+    }
+
+    private static int ParseInt(string value)
+    {
+        return int.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int parsed)
+            ? parsed
+            : throw new FormatException($"'{value}' is not a valid Int32 value.");
     }
 
     private static Thickness ParseThickness(string value)

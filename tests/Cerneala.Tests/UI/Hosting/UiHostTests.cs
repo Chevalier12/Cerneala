@@ -1,7 +1,9 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
+using Cerneala.UI.Layout;
 
 namespace Cerneala.Tests.UI.Hosting;
 
@@ -123,6 +125,47 @@ public sealed class UiHostTests
 
         Assert.Same(nextRoot, host.Root);
         Assert.True(frame.Stats.HasWork);
+    }
+
+    [Fact]
+    public void UpdatePassesExplicitElapsedTimeToRepeatInputOnce()
+    {
+        UIRoot root = new(100, 100);
+        RepeatButton button = new() { Delay = 10 };
+        button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        root.VisualChildren.Add(button);
+        int clickCount = 0;
+        button.Click += (_, _) => clickCount++;
+        UiHost host = new(new UiHostOptions
+        {
+            Root = root,
+            Viewport = new UiViewport(100, 100)
+        });
+
+        host.Update(PointerFrame(previousDown: false, currentDown: true), elapsedTime: TimeSpan.Zero);
+        host.Update(PointerFrame(previousDown: true, currentDown: true), elapsedTime: TimeSpan.FromMilliseconds(9));
+        Assert.Equal(1, clickCount);
+
+        host.Update(PointerFrame(previousDown: true, currentDown: true), elapsedTime: TimeSpan.FromMilliseconds(1));
+
+        Assert.Equal(2, clickCount);
+    }
+
+    private static InputFrame PointerFrame(bool previousDown, bool currentDown)
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(10, 10);
+        PointerSnapshot current = PointerSnapshot.Empty.WithPosition(10, 10);
+        if (previousDown)
+        {
+            previous = previous.WithButton(InputMouseButton.Left, true);
+        }
+
+        if (currentDown)
+        {
+            current = current.WithButton(InputMouseButton.Left, true);
+        }
+
+        return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
     }
 
     private sealed class BackendInputSource : IUiBackend

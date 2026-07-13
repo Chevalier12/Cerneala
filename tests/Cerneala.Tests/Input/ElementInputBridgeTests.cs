@@ -205,6 +205,65 @@ public sealed class ElementInputBridgeTests
     }
 
     [Fact]
+    public void ButtonRaisesClickOnlyOnValidLeftButtonRelease()
+    {
+        UIRoot root = new(100, 100);
+        ButtonBase button = ArrangedButton(0, 0, 40, 40);
+        root.VisualChildren.Add(button);
+        int clickCount = 0;
+        button.Click += (_, _) => clickCount++;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+
+        Assert.Equal(0, clickCount);
+        Assert.True(button.IsPressed);
+
+        bridge.Dispatch(root, PointerFrame(10, 10, 10, 10, previousDown: true));
+
+        Assert.Equal(1, clickCount);
+        Assert.False(button.IsPressed);
+    }
+
+    [Fact]
+    public void ButtonCommandExecutesExactlyOnceForOneClick()
+    {
+        UIRoot root = new(100, 100);
+        ButtonBase button = ArrangedButton(0, 0, 40, 40);
+        root.VisualChildren.Add(button);
+        int executionCount = 0;
+        button.Command = new ActionCommand(_ => executionCount++);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, 10, 10, previousDown: true));
+
+        Assert.Equal(1, executionCount);
+    }
+
+    [Fact]
+    public void ReleaseAfterDetachClearsPressedStateWithoutClickOrCommand()
+    {
+        UIRoot root = new(100, 100);
+        ButtonBase button = ArrangedButton(0, 0, 40, 40);
+        root.VisualChildren.Add(button);
+        int clickCount = 0;
+        int executionCount = 0;
+        button.Click += (_, _) => clickCount++;
+        button.Command = new ActionCommand(_ => executionCount++);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+        root.VisualChildren.Remove(button);
+        bridge.Dispatch(root, PointerFrame(10, 10, 10, 10, previousDown: true));
+
+        Assert.False(button.IsPressed);
+        Assert.Null(bridge.PressedStateTracker.PressedElement);
+        Assert.Equal(0, clickCount);
+        Assert.Equal(0, executionCount);
+    }
+
+    [Fact]
     public void HostUpdateDispatchesInputBeforeScheduler()
     {
         UIRoot root = RootWithChild(out UIElement child);

@@ -102,7 +102,7 @@ public sealed class UiHost
             currentRoot.ProcessFrame(stats: stats, motionReason: MotionFrameReason.Scheduled);
         }
 
-        InputBridge.Dispatch(currentRoot, inputFrame);
+        InputBridge.Dispatch(currentRoot, inputFrame, frameTime);
 
         if (currentRoot.Scheduler.HasWork || (currentRoot.Motion.HasActiveMotion && stats.MotionFrames == 0))
         {
