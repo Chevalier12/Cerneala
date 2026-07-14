@@ -62,7 +62,7 @@
     </nav>
     <div class="chapter-rail__status">
       <span>Snapshot</span>
-      <strong>7/13/2026</strong>
+      <strong>7/14/2026</strong>
       <small>Staleness risk: high</small>
     </div>
   </aside>
@@ -79,12 +79,12 @@
         <p class="snapshot__lead">A dense translation manual for developers arriving with WPF instincts and needing to know exactly which instincts transfer, which names merely look familiar, and where Cerneala deliberately becomes a different machine.</p>
       </div>
       <div class="stale-warning">
-        <div class="stale-warning__flag">Generated 7/13/2026</div>
+        <div class="stale-warning__flag">Updated 7/14/2026</div>
         <p>This page may already be stale. Cerneala is under daily construction; its API surface, markup grammar, hosts, behavior, limitations, and architecture can evolve substantially. Treat this as a dated field report, not a compatibility contract. Verify claims against the current source and API reference before shipping.</p>
       </div>
       <div class="snapshot__metrics" aria-label="Repository snapshot metrics">
-        <div><strong id="api-count">857</strong><span>API documents</span></div>
-        <div><strong id="namespace-count">48</strong><span>source groups</span></div>
+        <div><strong id="api-count">859</strong><span>API documents</span></div>
+        <div><strong id="namespace-count">49</strong><span>source groups</span></div>
         <div><strong>8 + idle</strong><span>frame phases</span></div>
         <div><strong>2</strong><span>hosting paths</span></div>
         <div><strong>0</strong><span>compatibility promises</span></div>
@@ -99,7 +99,7 @@
       <div class="thesis-grid">
         <div class="thesis-statement">
           <p>Cerneala borrows the productive mental models of WPF: retained objects, typed properties, logical and visual ownership, measure/arrange, routed events, commands, templated controls, resources, and data-driven UI.</p>
-          <p>It does <strong>not</strong> reproduce the WPF runtime. It replaces Dispatcher-led desktop composition with an explicit frame host, dirty queues, render-command caches, backend submission, typed authoring, and a root-owned motion system.</p>
+          <p>It does <strong>not</strong> reproduce the WPF runtime. It replaces Dispatcher-led desktop composition with an explicit frame host, a bounded root-owned Relay, dirty queues, render-command caches, backend submission, compiled typed authoring, and a root-owned motion system.</p>
         </div>
         <div class="contract-box">
           <span>Compatibility stance</span>
@@ -122,7 +122,7 @@
     <section class="chapter" id="runtime">
       <header class="chapter__head">
         <span class="chapter__number">02</span>
-        <div><span class="section-code">Runtime model</span><h2>The dispatcher is not the frame loop.</h2></div>
+        <div><span class="section-code">Runtime model</span><h2>The Relay is useful. It is still not WPF's Dispatcher.</h2></div>
       </header>
       <div class="runtime-compare">
         <div class="runtime-column runtime-column--wpf">
@@ -142,7 +142,7 @@
           <div class="runtime-column__title"><span>Cerneala</span><strong>Explicit retained frame contract</strong></div>
           <div class="flow-node">Native window or game host</div>
           <i></i>
-          <div class="flow-node">InputFrame + UiHost.Update</div>
+          <div class="flow-node">UiRelay snapshot + InputFrame</div>
           <i></i>
           <div class="flow-node">Ordered dirty phase snapshots</div>
           <i></i>
@@ -152,12 +152,12 @@
         </div>
       </div>
       <div class="invariant-band">
+        <div><span>Relay drain</span><strong>FIFO bounded snapshot</strong></div>
         <div><span>Unchanged update</span><strong>No retained work</strong></div>
         <div><span>Repeated draw</span><strong>No scheduler mutation</strong></div>
-        <div><span>Queue query</span><strong>O(1) HasWork</strong></div>
-        <div><span>Visual ordering</span><strong>Shared per TreeVersion</strong></div>
+        <div><span>Idle queries</span><strong>Allocation-free</strong></div>
       </div>
-      <p class="chapter-note">The important translation is not <code>DispatcherTimer</code> to another timer. It is event-loop assumptions to a deterministic update/draw contract. WPF schedules UI work for a desktop dispatcher; Cerneala lets the host advance retained state explicitly.</p>
+      <p class="chapter-note">The important translation is not <code>Dispatcher</code> to a class with a different hat. <code>UiRelay</code> accepts cross-thread work and async continuations, but the host drains a bounded FIFO snapshot before scheduler and input work. WPF pumps a desktop dispatcher; Cerneala advances retained state explicitly inside Update.</p>
     </section>
 
     <section class="chapter" id="authoring">
@@ -180,10 +180,12 @@
         </article>
         <article class="code-file code-file--cui">
           <header><span>Cerneala</span><strong>MainWindow.cui.xml</strong></header>
-          <pre><code><span class="tok-tag">&lt;Window</span> <span class="tok-prop">Title</span>=<span class="tok-str">"Sample"</span>
+          <pre><code><span class="tok-tag">&lt;Window</span> <span class="tok-prop">DataType</span>=<span class="tok-str">"EditorViewModel"</span>
+        <span class="tok-prop">Title</span>=<span class="tok-str">"Sample"</span>
         <span class="tok-prop">Width</span>=<span class="tok-str">"800"</span> <span class="tok-prop">Height</span>=<span class="tok-str">"600"</span><span class="tok-tag">&gt;</span>
   <span class="tok-tag">&lt;StackPanel&gt;</span>
-    <span class="tok-tag">&lt;TextBox</span> <span class="tok-prop">Name</span>=<span class="tok-str">"Entry"</span> <span class="tok-tag">/&gt;</span>
+    <span class="tok-tag">&lt;TextBox</span> <span class="tok-prop">Text</span>=<span class="tok-str">"$DataContext.Name:TwoWay"</span> <span class="tok-tag">/&gt;</span>
+    <span class="tok-tag">&lt;TextBlock</span> <span class="tok-prop">Text</span>=<span class="tok-str">"Hello, $DataContext.Name"</span> <span class="tok-tag">/&gt;</span>
     <span class="tok-tag">&lt;Button</span> <span class="tok-prop">Name</span>=<span class="tok-str">"SaveButton"</span>
             <span class="tok-prop">Click</span>=<span class="tok-str">"OnSave"</span><span class="tok-tag">&gt;</span>Save<span class="tok-tag">&lt;/Button&gt;</span>
   <span class="tok-tag">&lt;/StackPanel&gt;</span>
@@ -194,7 +196,7 @@
         <div class="translation-row translation-row--head"><span>WPF expectation</span><span>Cerneala reality</span><span>Verdict</span></div>
         <div class="translation-row"><span>XAML maps markup to CLR objects and may compile to BAML.</span><span><code>.cui.xml</code> is an AdditionalFile consumed by a Roslyn source generator that emits typed partial C#.</span><span class="status status--different">Different</span></div>
         <div class="translation-row"><span><code>.xaml.cs</code> supplies code-behind.</span><span>A matching <code>.cui.xml.cs</code> partial class supplies behavior and validated handlers.</span><span class="status status--close">Close</span></div>
-        <div class="translation-row"><span>Markup extensions, arbitrary namespaces, runtime loading, and the broad XAML language.</span><span>Only the documented Cerneala grammar: elements, properties, events, resources, Aspects, <code>@when</code>, and <code>@template</code>.</span><span class="status status--partial">Constrained</span></div>
+        <div class="translation-row"><span>Markup extensions, arbitrary namespaces, runtime loading, and the broad XAML language.</span><span>Only the documented Cerneala grammar: elements, properties, events, resources, Aspects, logical <code>@when</code>/<code>@if</code>, templates, and source-generated bindings/interpolation.</span><span class="status status--partial">Constrained</span></div>
         <div class="translation-row"><span>Visual Studio XAML designer and mature design-time metadata.</span><span>No WPF designer compatibility or general design surface is promised.</span><span class="status status--absent">Absent</span></div>
       </div>
     </section>
@@ -265,12 +267,12 @@
     <section class="chapter" id="data">
       <header class="chapter__head">
         <span class="chapter__number">06</span>
-        <div><span class="section-code">Data and commands</span><h2>Prefer typed hot paths over reflective strings.</h2></div>
+        <div><span class="section-code">Data and commands</span><h2>Paths in markup. Types in generated code.</h2></div>
       </header>
       <div class="api-map">
         <div><span>WPF</span><span>Cerneala</span><span>Translation note</span></div>
-        <div><code>Binding</code> + <code>PropertyPath</code></div><div><code>Binding&lt;T&gt;</code>, <code>BindingOperations</code>, <code>PropertyAdapter</code></div><div>Typed one-way/two-way bindings are the preview path. String paths exist but are not the core hot path.</div>
-        <div><code>INotifyPropertyChanged</code></div><div><code>ObservableValue&lt;T&gt;</code></div><div>Use explicit typed observables when predictable subscription lifetime matters.</div>
+        <div><code>Binding</code> + <code>PropertyPath</code></div><div>Generated <code>$DataContext</code>/<code>$element</code>/<code>$self</code> paths, plus <code>Binding&lt;T&gt;</code> and <code>BindingOperations</code></div><div>Roslyn resolves markup paths and emits typed access, observation, interpolation, and OneWay/TwoWay wiring. No runtime reflection path parser sits in the frame loop.</div>
+        <div><code>INotifyPropertyChanged</code></div><div>Generated CLR observation + <code>ObservableValue&lt;T&gt;</code></div><div>Attached CLR notifications can arrive off-thread; one coalesced Relay refresh reads the latest complete path and mutates UI on the root thread.</div>
         <div><code>INotifyCollectionChanged</code></div><div><code>ObservableList&lt;T&gt;</code>, <code>IObservableList&lt;T&gt;</code></div><div>Drives retained items and list mutation paths.</div>
         <div><code>IValueConverter</code></div><div><code>IValueConverter&lt;TIn,TOut&gt;</code></div><div>Generic conversion replaces object-heavy conversion at the primary API boundary.</div>
         <div><code>CollectionViewSource</code></div><div><code>CollectionView&lt;T&gt;</code>, <code>SortDescription&lt;T&gt;</code></div><div>A smaller typed view surface; do not assume WPF grouping, currency, or live shaping parity.</div>
@@ -368,7 +370,7 @@
         <article class="control-ledger__present">
           <header><span>Present in the documented surface</span><strong>Core retained controls</strong></header>
           <div class="control-tags">
-            <span>Window</span><span>UserControl</span><span>Control</span><span>ContentControl</span><span>ContentPresenter</span><span>Border</span><span>Button</span><span>ToggleButton</span><span>CheckBox</span><span>RadioButton</span><span>TextBlock</span><span>TextBox</span><span>PasswordBox</span><span>ItemsControl</span><span>ListBox</span><span>ComboBox</span><span>TabControl</span><span>ScrollViewer</span><span>ScrollBar</span><span>Slider</span><span>ProgressBar</span><span>ToolTip</span><span>Image</span><span>InkCanvas</span><span>Grid</span><span>StackPanel</span><span>Canvas</span><span>VirtualizingStackPanel</span><span>Rectangle</span><span>Ellipse</span><span>Path</span>
+            <span>Window</span><span>UserControl</span><span>Control</span><span>ContentControl</span><span>ContentPresenter</span><span>Border</span><span>Button</span><span>RepeatButton</span><span>ToggleButton</span><span>CheckBox</span><span>RadioButton</span><span>TextBlock</span><span>TextBox</span><span>PasswordBox</span><span>ItemsControl</span><span>ListBox</span><span>ComboBox</span><span>TabControl</span><span>ScrollViewer</span><span>ScrollBar</span><span>Slider</span><span>ProgressBar</span><span>ToolTip</span><span>Image</span><span>InkCanvas</span><span>Grid</span><span>StackPanel</span><span>Canvas</span><span>VirtualizingStackPanel</span><span>Rectangle</span><span>Ellipse</span><span>Path</span>
           </div>
         </article>
         <article class="control-ledger__absent">
@@ -406,7 +408,7 @@
         <li><span>02</span><div><strong>Choose the host before porting views.</strong><p>Decide between generated native windows and MonoGame integration. That choice owns startup, input collection, viewport/DPI, update, and draw.</p></div></li>
         <li><span>03</span><div><strong>Rebuild the retained root once.</strong><p>Create the tree once; mutate state afterward. Do not rebuild controls every draw call like an immediate-mode UI.</p></div></li>
         <li><span>04</span><div><strong>Translate dependency properties deliberately.</strong><p>Map invalidation and inheritance to <code>UiPropertyMetadata&lt;T&gt;</code>. Re-evaluate precedence assumptions instead of copying flags mechanically.</p></div></li>
-        <li><span>05</span><div><strong>Replace reflective binding hot paths.</strong><p>Prefer typed observable values, lists, adapters, converters, and <code>BindingOperations</code>.</p></div></li>
+        <li><span>05</span><div><strong>Translate bindings into compiled paths.</strong><p>Use typed <code>$DataContext</code>, named-element, self, and template-part paths in markup; use observable values, lists, adapters, converters, and <code>BindingOperations</code> for programmatic composition.</p></div></li>
         <li><span>06</span><div><strong>Re-model styles as Aspect packages.</strong><p>Extract semantic tokens, variants, states, slots, component templates, and content templates. Do not recreate selector soup.</p></div></li>
         <li><span>07</span><div><strong>Move storyboards to state-first motion.</strong><p>Define target state, then choose specs, channels, layout FLIP, presence, transactions, and reduced-motion behavior.</p></div></li>
         <li><span>08</span><div><strong>Audit unsupported control families.</strong><p>Replace or build missing navigation, documents, menus, data grids, rich text, media, and specialized desktop controls explicitly.</p></div></li>
@@ -447,7 +449,7 @@
         <div><span class="section-code">Sources and limits</span><h2>What this snapshot can and cannot prove.</h2></div>
       </header>
       <div class="source-grid">
-        <article><span>Repository evidence</span><h3>Cerneala source and dated documentation</h3><p>The comparison was assembled from the public API manifest, current source tree, Developer Preview scope, event coverage audit, authoring docs, Aspect docs, motion docs, scheduler plan, and architecture notes available on 7/13/2026.</p><a href="documentation.html">Open the API reference</a></article>
+        <article><span>Repository evidence</span><h3>Cerneala source and dated documentation</h3><p>The comparison was refreshed from the public API manifest, current source tree, Developer Preview scope, event coverage audit, compiled-binding docs, Relay docs and benchmarks, Aspect docs, motion docs, scheduler plans, and architecture notes available on 7/14/2026.</p><a href="documentation.html">Open the API reference</a></article>
         <article><span>WPF reference</span><h3>Microsoft Learn</h3><p>WPF claims are grounded in Microsoft's official overview and architecture documentation.</p><a href="https://learn.microsoft.com/dotnet/desktop/wpf/overview/">WPF overview</a><a href="https://learn.microsoft.com/dotnet/desktop/wpf/advanced/wpf-architecture">WPF architecture</a><a href="https://learn.microsoft.com/dotnet/desktop/wpf/properties/dependency-properties-overview">Dependency properties</a><a href="https://learn.microsoft.com/dotnet/desktop/wpf/events/routed-events-overview">Routed events</a></article>
         <article><span>Interpretation boundary</span><h3>Names are not contracts</h3><p>This is a conceptual and API migration map, not a conformance test. A listed type can be experimental, narrower than WPF, or intentionally governed by different invariants.</p><a href="https://github.com/Chevalier12/Cerneala">Inspect current source</a></article>
       </div>

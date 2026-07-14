@@ -399,7 +399,7 @@ section.bordered{border-top:1px solid var(--line);}
 
 /* ============================= PIPELINE ============================= */
 .pipeline__row{
-  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;position:relative;margin-top:34px;
+  display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;position:relative;margin-top:34px;
 }
 .pipeline__row::before{
   content:"";position:absolute;top:28px;left:7%;right:7%;height:1px;
@@ -424,6 +424,7 @@ section.bordered{border-top:1px solid var(--line);}
   margin-top:8px;color:var(--slate);font-size:.78rem;line-height:1.55;max-width:166px;
 }
 .pipeline__stage--in .pipeline__badge{border-color:var(--cyan);color:var(--cyan);}
+.pipeline__stage--rl .pipeline__badge{border-color:var(--pink);color:var(--pink);}
 .pipeline__stage--st .pipeline__badge{border-color:var(--lime);color:var(--lime);}
 .pipeline__stage--ly .pipeline__badge{border-color:var(--orange);color:var(--orange);}
 .pipeline__stage--mo .pipeline__badge{border-color:var(--pink);color:var(--pink);}
@@ -803,7 +804,7 @@ footer{
 
     <div class="hero__console">
       <span class="console__cursor">›</span>
-      <span id="hero-status">root committed · command stream ready · backend-neutral draw</span>
+      <span id="hero-status">relay drained · root committed · command stream ready · backend-neutral draw</span>
     </div>
 
   </div>
@@ -812,9 +813,9 @@ footer{
 
 <div class="ticker" aria-hidden="true">
   <div class="ticker__track">
-    <span>Compiled Markup</span><span>Retained UI Tree</span><span>Typed Properties + Binding</span><span>Aspect Resources</span><span>Layout + Virtualization</span>
+    <span>Compiled Markup</span><span>Generated Data Binding</span><span>Retained UI Tree</span><span>UI-thread Relay</span><span>Aspect Resources</span><span>Layout + Virtualization</span>
     <span>Routed Input</span><span>Frame-coordinated Motion</span><span>Dirty Scheduler</span><span>Abstract Drawing Commands</span><span>Native Windows Host</span>
-    <span>Compiled Markup</span><span>Retained UI Tree</span><span>Typed Properties + Binding</span><span>Aspect Resources</span><span>Layout + Virtualization</span>
+    <span>Compiled Markup</span><span>Generated Data Binding</span><span>Retained UI Tree</span><span>UI-thread Relay</span><span>Aspect Resources</span><span>Layout + Virtualization</span>
     <span>Routed Input</span><span>Frame-coordinated Motion</span><span>Dirty Scheduler</span><span>Abstract Drawing Commands</span><span>Native Windows Host</span>
   </div>
 </div>
@@ -826,13 +827,13 @@ footer{
       <div class="section-head">
         <p class="eyebrow">Framework surface</p>
         <h2>The whole UI stack, from source file to submitted frame.</h2>
-        <p>Cerneala owns the load-bearing layers: compiled authoring, retained state, layout and input, motion, dirty scheduling, cached drawing, native hosting, and diagnostics. Controls are the visible part, not the entire damn framework.</p>
+        <p>Cerneala owns the load-bearing layers: compiled authoring and bindings, retained state, bounded cross-thread marshaling, layout and input, motion, dirty scheduling, cached drawing, native hosting, and diagnostics. Controls are the visible part, not the entire damn framework.</p>
       </div>
 
       <div class="surface__stack" aria-label="Framework layers">
         <div class="surface__layer surface__layer--author">
           <span>Author</span>
-          <strong>.cui.xml + partial C#</strong>
+          <strong>.cui.xml + generated bindings + partial C#</strong>
         </div>
         <div class="surface__layer surface__layer--model">
           <span>Model</span>
@@ -840,7 +841,7 @@ footer{
         </div>
         <div class="surface__layer surface__layer--frame">
           <span>Frame</span>
-          <strong>Input + layout + motion</strong>
+          <strong>Relay + input + layout + motion</strong>
         </div>
         <div class="surface__layer surface__layer--output">
           <span>Output</span>
@@ -862,8 +863,8 @@ footer{
         <path d="m13 15-3 3 3 3m6-6 3 3-3 3m-2-8-2 10"/>
       </svg>
       <h3>Compiled Markup</h3>
-      <p><code>.cui.xml</code> additional files compile into partial windows and controls with named elements, event hooks, resources, aspects, templates, and generated startup. Behavior stays in matching C#.</p>
-      <div class="feature-tile__api">.cui.xml · UiMarkupGenerator · partial classes</div>
+      <p><code>.cui.xml</code> additional files compile into partial windows and controls with named elements, event hooks, resources, aspects, templates, logical conditions, and typed OneWay/TwoWay data bindings. Behavior stays in matching C#.</p>
+      <div class="feature-tile__api">.cui.xml · UiMarkupGenerator · $DataContext · partial classes</div>
     </div>
 
     <div class="feature-tile feature-tile--pink">
@@ -878,8 +879,8 @@ footer{
         <circle class="icon-solid" cx="27.5" cy="16" r="1.5"/>
       </svg>
       <h3>Typed Properties &amp; Binding</h3>
-      <p><code>UiProperty&lt;T&gt;</code> carries defaults, validation, coercion, precedence, inheritance, and invalidation metadata. <code>Binding&lt;T&gt;</code> and observable values connect model changes without giving up strong types.</p>
-      <div class="feature-tile__api">UiProperty&lt;T&gt; · Binding&lt;T&gt; · ObservableValue&lt;T&gt;</div>
+      <p><code>UiProperty&lt;T&gt;</code> carries defaults, validation, coercion, precedence, inheritance, and invalidation metadata. Generated paths, <code>Binding&lt;T&gt;</code>, and observable values connect model changes without runtime reflection in the hot path.</p>
+      <div class="feature-tile__api">UiProperty&lt;T&gt; · BindingOperations · INotifyPropertyChanged</div>
     </div>
 
     <div class="feature-tile feature-tile--lime">
@@ -911,8 +912,8 @@ footer{
         <path d="M8 16h10m-10 5h7m7-7v10"/>
       </svg>
       <h3>Controls &amp; Text Editing</h3>
-      <p>Window, Button, TextBox, ListBox, ScrollViewer, ComboBox, TabControl, Slider, and the supporting content/items primitives share templates, focus, selection, and text infrastructure.</p>
-      <div class="feature-tile__api">Window · ItemsControl · TextBoxBase · ContentControl</div>
+      <p>Window, Button, RepeatButton, TextBox, ListBox, ScrollViewer, ComboBox, TabControl, Slider, and the supporting content/items primitives share templates, focus, selection, commands, and text infrastructure.</p>
+      <div class="feature-tile__api">Window · RepeatButton · ItemsControl · TextBoxBase</div>
     </div>
 
     <div class="feature-tile feature-tile--cyan">
@@ -945,7 +946,7 @@ footer{
         <circle class="icon-solid" cx="19" cy="16" r="1.7"/>
       </svg>
       <h3>Routed Input &amp; Semantics</h3>
-      <p>Pointer, keyboard, text, touch, and stylus input feed hit testing, capture, focus, commands, navigation, gestures, and tunneled/bubbled events. A semantics tree exposes the accessible structure.</p>
+      <p>Pointer, keyboard, and text feed hit testing, capture, focus, commands, navigation, and tunneled/bubbled events. Touch, stylus, manipulation, and drag surfaces remain platform-gated prototypes; a semantics tree exists while native accessibility adapters remain later work.</p>
       <div class="feature-tile__api">ElementInputBridge · RoutedEvent · SemanticsTree</div>
     </div>
 
@@ -980,9 +981,9 @@ footer{
         <path d="m19.5 10.5 3 .7.7-3"/>
         <path d="m21.5 18.5 2 2 4-4"/>
       </svg>
-      <h3>Dirty Scheduler &amp; Caches</h3>
-      <p>Deduplicated queues reuse one visual-order index, sort only pending work, skip redundant propagated layout, refresh retained caches independently, and keep idle checks allocation-free.</p>
-      <div class="feature-tile__api">UiFrameScheduler · RetainedRenderCache · InputCache</div>
+      <h3>Relay, Scheduler &amp; Caches</h3>
+      <p>A root-owned MPSC Relay drains bounded FIFO snapshots before retained work. Off-thread binding, command, resource, collection, and theme notifications coalesce onto the UI thread; deduplicated phase queues and idle checks stay allocation-conscious.</p>
+      <div class="feature-tile__api">UiRelay · UiFrameScheduler · RetainedRenderCache</div>
     </div>
 
     <div class="feature-tile feature-tile--cyan">
@@ -1010,7 +1011,7 @@ footer{
     <div class="section-head">
       <p class="eyebrow">Frame pipeline</p>
       <h2>One host frame. Dirty work only.</h2>
-      <p>A host frame can settle scheduled work before input, dispatch that input, then run a second retained pass only when the tree becomes dirty. State settles before layout, caches refresh independently, and drawing submits the committed command stream.</p>
+      <p>A host frame first drains one bounded Relay snapshot, can settle existing scheduled work before input, dispatches that input, then runs a second retained pass only when the tree becomes dirty. State settles before layout, caches refresh independently, and drawing submits the committed command stream.</p>
     </div>
 
     <div class="pipeline__motion" aria-label="Motion frame hooks">
@@ -1028,6 +1029,13 @@ footer{
     </div>
 
     <div class="pipeline__row">
+      <div class="pipeline__stage pipeline__stage--rl">
+        <div class="pipeline__badge">RL</div>
+        <div class="pipeline__copy">
+          <div class="pipeline__name">Relay</div>
+          <p class="pipeline__desc">Cross-thread posts, invocations, and async continuations drain as a bounded FIFO snapshot on the root UI thread.</p>
+        </div>
+      </div>
       <div class="pipeline__stage pipeline__stage--in">
         <div class="pipeline__badge">IN</div>
         <div class="pipeline__copy">
@@ -1081,7 +1089,7 @@ footer{
 
     <div class="pipeline__idle">
       <strong>Idle fast path</strong>
-      <span>With no queued work or active motion, the host records a no-work frame and reuses the committed root list without building queue snapshots or sort state.</span>
+      <span>With no Relay, scheduler, or active-motion work, the host records a no-work frame and reuses the committed root list without building phase snapshots or sort state.</span>
     </div>
   </div>
 </section>
@@ -1257,8 +1265,8 @@ footer{
           <span class="diag__val" style="color:var(--paper);">request -> queue -> phase</span>
         </div>
         <div class="diag__row">
-          <span class="diag__key">Work queues</span>
-          <span class="diag__val accent-lime">idle 0 B · sort Q only</span>
+          <span class="diag__key">Relay + work queues</span>
+          <span class="diag__val accent-lime">pending=0 · Relay idle=0 B</span>
         </div>
         <div class="diag__row">
           <span class="diag__key">Render cache</span>
@@ -1352,7 +1360,7 @@ footer{
   var heroViewCopy = {
     runtime: {
       meta: 'NATIVE WINDOWS · MONOGAME HOST · IDRAWINGBACKEND',
-      status: 'root committed · command stream ready · backend-neutral draw'
+      status: 'relay drained · root committed · command stream ready · backend-neutral draw'
     },
     tree: {
       meta: 'RETAINED NODES · TYPED STATE · LOGICAL + VISUAL',

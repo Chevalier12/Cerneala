@@ -44,7 +44,7 @@
       <p>Cerneala already has the retained engine. The next work turns that foundation into broader control coverage, production platform contracts, and render surfaces that can carry real layout and interaction into 2D and 3D scenes.</p>
     </div>
     <div class="roadmap-hero__telemetry" aria-label="Roadmap status summary">
-      <div><span>Snapshot</span><strong>7/13/2026</strong></div>
+      <div><span>Snapshot</span><strong>7/14/2026</strong></div>
       <div><span>Completed arcs</span><strong>02</strong></div>
       <div><span>Active arcs</span><strong>02</strong></div>
       <div><span>Next arcs</span><strong>08</strong></div>
@@ -74,8 +74,8 @@
         <div class="roadmap-node__body">
           <span class="roadmap-node__state">Shipped foundation</span>
           <h3>Retained frame engine</h3>
-          <p>Typed properties, retained trees, invalidation queues, measure and arrange, render caches, routed input, focus, commands, resources, diagnostics, and the idle-frame contract.</p>
-          <div class="node-tags"><span>UiProperty&lt;T&gt;</span><span>UiFrameScheduler</span><span>IDrawingBackend</span></div>
+          <p>Typed properties, retained trees, a root-owned UI Relay, invalidation queues, measure and arrange, render caches, routed input, focus, commands, resources, diagnostics, and the idle-frame contract.</p>
+          <div class="node-tags"><span>UiProperty&lt;T&gt;</span><span>UiRelay</span><span>UiFrameScheduler</span></div>
         </div>
       </article>
 
@@ -84,8 +84,8 @@
         <div class="roadmap-node__body">
           <span class="roadmap-node__state">Shipped authoring</span>
           <h3>Components, Aspects and motion</h3>
-          <p>Typed <code>.cui.xml</code> generation, code-behind, templates, resources, reactive branches, Aspect packages, token resolution, state-first motion, layout motion, presence, and reduced-motion policy.</p>
-          <div class="node-tags"><span>.cui.xml</span><span>AspectPackage</span><span>MotionSpec&lt;T&gt;</span></div>
+          <p>Typed <code>.cui.xml</code> generation, code-behind, source-generated OneWay/TwoWay bindings and interpolation, logical reactive branches, templates, resources, Aspect packages, token resolution, and state-first motion.</p>
+          <div class="node-tags"><span>compiled bindings</span><span>AspectPackage</span><span>MotionSpec&lt;T&gt;</span></div>
         </div>
       </article>
 
@@ -94,8 +94,8 @@
         <div class="roadmap-node__body">
           <span class="roadmap-node__state">Building now</span>
           <h3>Preview hardening</h3>
-          <p>Close the gap between an impressive repository and a dependable framework: public contracts, samples, docs, diagnostics truthfulness, performance budgets, stress cases, and boring reliability.</p>
-          <div class="node-tags"><span>contracts</span><span>benchmarks</span><span>docs</span></div>
+          <p>Close the gap between an impressive repository and a dependable framework: public contracts, samples, docs, diagnostics truthfulness, measured queue/Relay budgets, concurrent stress cases, and boring reliability.</p>
+          <div class="node-tags"><span>contracts</span><span>stress + benchmarks</span><span>docs</span></div>
         </div>
       </article>
 
@@ -134,7 +134,7 @@
         <div class="roadmap-node__body">
           <span class="roadmap-node__state">Planned control wave</span>
           <h3>Layout and everyday controls</h3>
-          <p>Fill the most painful WPF gaps first: DockPanel, WrapPanel, UniformGrid, GridSplitter, Viewbox, Expander, GroupBox, RepeatButton, Popup, menus, toolbars, and status surfaces.</p>
+          <p>Fill the most painful WPF gaps first: DockPanel, WrapPanel, UniformGrid, GridSplitter, Viewbox, Expander, GroupBox, Popup, menus, toolbars, and status surfaces. RepeatButton has already moved into the shipped primitive set.</p>
           <div class="node-tags"><span>layout</span><span>shell UI</span><span>popup lifecycle</span></div>
         </div>
       </article>
@@ -290,8 +290,8 @@
       <article class="control-family" data-control-state="planned">
         <header><span>02 / Buttons and feedback</span><strong>Planned</strong></header>
         <h3>Everyday interaction gaps</h3>
-        <div class="control-tags"><span>RepeatButton</span><span>AccessText</span><span>Popup</span><span>StatusBar</span><span>StatusBarItem</span></div>
-        <p>Popup comes with positioning, focus, dismissal, capture, clipping, and nested-window behavior. It is not just a Border with delusions of grandeur.</p>
+        <div class="control-tags"><span>AccessText</span><span>Popup</span><span>StatusBar</span><span>StatusBarItem</span></div>
+        <p><code>RepeatButton</code> now ships with Delay/Interval timing, capture-aware press-and-hold input, command execution, and ScrollBar template integration. Popup remains planned because positioning, focus, dismissal, capture, clipping, and nested-window behavior are not just a Border with delusions of grandeur.</p>
       </article>
 
       <article class="control-family" data-control-state="planned">
