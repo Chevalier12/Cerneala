@@ -4,6 +4,7 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;
 using DirectionPath = Cerneala.UI.Controls.Shapes.Path;
+using DirectionShape = Cerneala.UI.Controls.Shapes.Shape;
 
 namespace Cerneala.UI.Controls.Primitives;
 
@@ -33,9 +34,13 @@ internal sealed class ScrollBarLayoutPanel : Cerneala.UI.Layout.Panels.Panel
         this.increaseButton = increaseButton;
         decreaseButton.Content = decreaseGlyph;
         increaseButton.Content = increaseGlyph;
+        decreaseButton.PropertyChanged += OnDirectionButtonPropertyChanged;
+        increaseButton.PropertyChanged += OnDirectionButtonPropertyChanged;
         VisualChildren.Add(decreaseButton);
         VisualChildren.Add(track);
         VisualChildren.Add(increaseButton);
+        SyncGlyphFill(decreaseButton, decreaseGlyph);
+        SyncGlyphFill(increaseButton, increaseGlyph);
         UpdateGlyphs();
     }
 
@@ -123,12 +128,36 @@ internal sealed class ScrollBarLayoutPanel : Cerneala.UI.Layout.Panels.Panel
         increaseGlyph.Geometry = Orientation == Orientation.Horizontal ? RightGlyphGeometry : DownGlyphGeometry;
     }
 
+    private void OnDirectionButtonPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
+    {
+        if (!ReferenceEquals(args.Property, Control.ForegroundProperty))
+        {
+            return;
+        }
+
+        if (ReferenceEquals(sender, decreaseButton))
+        {
+            SyncGlyphFill(decreaseButton, decreaseGlyph);
+        }
+        else if (ReferenceEquals(sender, increaseButton))
+        {
+            SyncGlyphFill(increaseButton, increaseGlyph);
+        }
+    }
+
+    private static void SyncGlyphFill(RepeatButton button, DirectionPath glyph)
+    {
+        glyph.SetValue(
+            DirectionShape.FillProperty,
+            button.Foreground,
+            UiPropertyValueSource.TemplateBinding);
+    }
+
     private static DirectionPath CreateDirectionGlyph()
     {
         return new DirectionPath
         {
-            Geometry = UpGlyphGeometry,
-            Fill = new SolidColorBrush(Color.Black)
+            Geometry = UpGlyphGeometry
         };
     }
 }

@@ -1,6 +1,8 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Controls.Shapes;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -165,6 +167,27 @@ public sealed class ScrollBarTests
             .ToArray();
         Assert.Equal(2, glyphCommands.Length);
         Assert.NotEqual(glyphCommands[0].PathData, glyphCommands[1].PathData);
+    }
+
+    [Fact]
+    public void DirectionGlyphFillTracksButtonForegroundAndAllowsLocalOverride()
+    {
+        ScrollBar scrollBar = new();
+        RepeatButton decrease = Part<RepeatButton>(scrollBar, "PART_DecreaseButton");
+        DirectionPath glyph = Assert.IsType<DirectionPath>(decrease.Content);
+        SolidColorBrush foreground = new(new Color(20, 80, 160));
+
+        decrease.Foreground = foreground;
+
+        Assert.Same(foreground, glyph.Fill);
+        Assert.Equal(UiPropertyValueSource.TemplateBinding, glyph.GetValueSource(Shape.FillProperty));
+
+        SolidColorBrush localFill = new(new Color(180, 40, 70));
+        glyph.Fill = localFill;
+        decrease.Foreground = new SolidColorBrush(Color.White);
+
+        Assert.Same(localFill, glyph.Fill);
+        Assert.Equal(UiPropertyValueSource.Local, glyph.GetValueSource(Shape.FillProperty));
     }
 
     [Theory]
