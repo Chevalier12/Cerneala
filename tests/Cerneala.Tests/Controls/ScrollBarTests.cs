@@ -6,6 +6,7 @@ using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;
+using DirectionPath = Cerneala.UI.Controls.Shapes.Path;
 
 namespace Cerneala.Tests.Controls;
 
@@ -120,8 +121,17 @@ public sealed class ScrollBarTests
         scrollBar.Arrange(new ArrangeContext(new LayoutRect(0, 0, 12, 100)));
         Assert.True(decrease.ArrangedBounds.Y < scrollBar.Track.ArrangedBounds.Y);
         Assert.True(scrollBar.Track.ArrangedBounds.Y < increase.ArrangedBounds.Y);
-        Assert.Equal("^", decrease.Content);
-        Assert.Equal("v", increase.Content);
+        DirectionPath up = Assert.IsType<DirectionPath>(decrease.Content);
+        DirectionPath down = Assert.IsType<DirectionPath>(increase.Content);
+        SvgGeometry upGeometry = Assert.IsType<SvgGeometry>(up.Geometry);
+        SvgGeometry downGeometry = Assert.IsType<SvgGeometry>(down.Geometry);
+        Assert.NotSame(upGeometry, downGeometry);
+        Assert.Equal(
+            "M 384,871.92523 346.53984,908.36226 223.99999,789.16924 101.46016,908.36226 64,871.92523 l 37.42566,-36.40349 0.0344,0.0335 L 224,716.36226 l 122.53983,119.19302 0.0344,-0.0335 37.42568,36.4035 z",
+            upGeometry.Data);
+        Assert.NotEqual(upGeometry.Data, downGeometry.Data);
+        Assert.Equal(new DrawRect(0, 604.36224f, 448, 448), upGeometry.Bounds);
+        Assert.Equal(upGeometry.Bounds, downGeometry.Bounds);
 
         ComponentTemplateInstance instance = scrollBar.ComponentTemplateInstance!;
         scrollBar.Orientation = Orientation.Horizontal;
@@ -131,8 +141,30 @@ public sealed class ScrollBarTests
         Assert.Same(instance, scrollBar.ComponentTemplateInstance);
         Assert.True(decrease.ArrangedBounds.X < scrollBar.Track.ArrangedBounds.X);
         Assert.True(scrollBar.Track.ArrangedBounds.X < increase.ArrangedBounds.X);
-        Assert.Equal("<", decrease.Content);
-        Assert.Equal(">", increase.Content);
+        Assert.Same(up, decrease.Content);
+        Assert.Same(down, increase.Content);
+        SvgGeometry leftGeometry = Assert.IsType<SvgGeometry>(up.Geometry);
+        SvgGeometry rightGeometry = Assert.IsType<SvgGeometry>(down.Geometry);
+        Assert.NotEqual(leftGeometry.Data, rightGeometry.Data);
+        Assert.NotEqual(upGeometry.Data, leftGeometry.Data);
+        Assert.NotEqual(downGeometry.Data, rightGeometry.Data);
+    }
+
+    [Fact]
+    public void VerticalDirectionButtonsRenderOppositeChevronPaths()
+    {
+        UIRoot root = new(12, 100);
+        ScrollBar scrollBar = new() { Orientation = Orientation.Vertical };
+        root.VisualChildren.Add(scrollBar);
+
+        root.ProcessFrame();
+
+        DrawCommand[] glyphCommands = root.RetainedRenderer
+            .Commit(root)
+            .Where(command => command.Kind == DrawCommandKind.FillPath)
+            .ToArray();
+        Assert.Equal(2, glyphCommands.Length);
+        Assert.NotEqual(glyphCommands[0].PathData, glyphCommands[1].PathData);
     }
 
     [Theory]
@@ -157,16 +189,16 @@ public sealed class ScrollBarTests
         RepeatButton up = Part<RepeatButton>(vertical, "PART_DecreaseButton");
         RepeatButton down = Part<RepeatButton>(vertical, "PART_IncreaseButton");
 
-        Assert.Equal("<", left.Content);
-        Assert.Equal(">", right.Content);
-        Assert.Equal("^", up.Content);
-        Assert.Equal("v", down.Content);
+        DirectionPath leftGlyph = Assert.IsType<DirectionPath>(left.Content);
+        DirectionPath rightGlyph = Assert.IsType<DirectionPath>(right.Content);
+        DirectionPath upGlyph = Assert.IsType<DirectionPath>(up.Content);
+        DirectionPath downGlyph = Assert.IsType<DirectionPath>(down.Content);
         Assert.True(left.ArrangedBounds.Width > 0 && left.ArrangedBounds.Height > 0);
         Assert.True(up.ArrangedBounds.Width > 0 && up.ArrangedBounds.Height > 0);
-        Assert.Same(left, HitCenter(root, left));
-        Assert.Same(right, HitCenter(root, right));
-        Assert.Same(up, HitCenter(root, up));
-        Assert.Same(down, HitCenter(root, down));
+        Assert.Same(leftGlyph, HitCenter(root, left));
+        Assert.Same(rightGlyph, HitCenter(root, right));
+        Assert.Same(upGlyph, HitCenter(root, up));
+        Assert.Same(downGlyph, HitCenter(root, down));
     }
 
     [Fact]
@@ -357,4 +389,5 @@ public sealed class ScrollBarTests
         scrollBar.ApplyTemplate();
         return Assert.IsType<TElement>(scrollBar.ComponentTemplateInstance!.Parts[name]);
     }
+
 }
