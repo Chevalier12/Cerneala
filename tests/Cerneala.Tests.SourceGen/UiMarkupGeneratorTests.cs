@@ -20,7 +20,7 @@ using GridLength = Cerneala.UI.Layout.Panels.GridLength;
 
 namespace Cerneala.Tests.SourceGen;
 
-public sealed class UiMarkupGeneratorTests
+public sealed partial class UiMarkupGeneratorTests
 {
     [Fact]
     public void GridMarkupEmitsDefinitionsPlacementsSpansAndLayout()

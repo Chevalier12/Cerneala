@@ -14,9 +14,20 @@ public sealed class MarkupDataPathSegment
         Getter = getter ?? throw new ArgumentNullException(nameof(getter));
     }
 
+    public MarkupDataPathSegment(
+        string propertyName,
+        Func<object?, object?> getter,
+        Action<object?, object?> setter)
+        : this(propertyName, getter)
+    {
+        Setter = setter ?? throw new ArgumentNullException(nameof(setter));
+    }
+
     public string PropertyName { get; }
 
     internal Func<object?, object?> Getter { get; }
+
+    internal Action<object?, object?>? Setter { get; }
 }
 
 public sealed class MarkupConditionalValue
@@ -29,6 +40,17 @@ public sealed class MarkupConditionalValue
         Source = source;
     }
 
+    internal MarkupConditionalValue(
+        UiObject target,
+        UiProperty property,
+        IMarkupConditionalValueProvider provider)
+    {
+        Target = target ?? throw new ArgumentNullException(nameof(target));
+        Property = property ?? throw new ArgumentNullException(nameof(property));
+        Provider = provider ?? throw new ArgumentNullException(nameof(provider));
+        Source = UiPropertyValueSource.MarkupConditional;
+    }
+
     internal UiObject Target { get; }
 
     internal UiProperty Property { get; }
@@ -36,6 +58,8 @@ public sealed class MarkupConditionalValue
     internal object? Value { get; }
 
     internal UiPropertyValueSource Source { get; }
+
+    internal IMarkupConditionalValueProvider? Provider { get; }
 }
 
 public sealed class MarkupConditionalContent
@@ -109,9 +133,39 @@ public abstract class MarkupObservation
 
     public object? Value { get; protected set; }
 
+    internal bool IsResolved { get; private set; }
+
+    internal virtual bool IsWritable => false;
+
+    internal virtual bool CanWrite => IsResolved && IsWritable;
+
+    internal Func<bool>? CallbackGuard { get; set; }
+
     internal abstract void Start();
 
     internal abstract void Stop();
+
+    internal virtual bool TryWrite(object? value)
+    {
+        return false;
+    }
+
+    protected void SetResolvedValue(object? value)
+    {
+        Value = value;
+        IsResolved = true;
+    }
+
+    protected void SetUnresolved()
+    {
+        Value = null;
+        IsResolved = false;
+    }
+
+    protected bool ShouldProcessCallback()
+    {
+        return CallbackGuard?.Invoke() ?? true;
+    }
 
     protected void RaiseChanged()
     {
@@ -119,7 +173,7 @@ public abstract class MarkupObservation
     }
 }
 
-public static class GeneratedMarkup
+public static partial class GeneratedMarkup
 {
     public static MarkupObservation ObserveProperty(UiObject source, UiProperty property)
     {
@@ -161,8 +215,10 @@ public static class GeneratedMarkup
         {
             this.source = source ?? throw new ArgumentNullException(nameof(source));
             this.property = property ?? throw new ArgumentNullException(nameof(property));
-            Value = source.GetValue(property);
+            SetResolvedValue(source.GetValue(property));
         }
+
+        internal override bool IsWritable => !property.IsReadOnly;
 
         internal override void Start()
         {
@@ -172,7 +228,7 @@ public static class GeneratedMarkup
             }
 
             started = true;
-            Value = source.GetValue(property);
+            SetResolvedValue(source.GetValue(property));
             source.PropertyChanged += OnPropertyChanged;
         }
 
@@ -187,6 +243,17 @@ public static class GeneratedMarkup
             source.PropertyChanged -= OnPropertyChanged;
         }
 
+        internal override bool TryWrite(object? value)
+        {
+            if (!CanWrite)
+            {
+                return false;
+            }
+
+            source.SetValueUntyped(property, value, UiPropertyValueSource.Local);
+            return true;
+        }
+
         private void OnPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
         {
             if (!ReferenceEquals(args.Property, property))
@@ -194,7 +261,12 @@ public static class GeneratedMarkup
                 return;
             }
 
-            Value = args.NewValue;
+            if (!ShouldProcessCallback())
+            {
+                return;
+            }
+
+            SetResolvedValue(args.NewValue);
             RaiseChanged();
         }
     }
@@ -215,6 +287,10 @@ public static class GeneratedMarkup
             Reconnect();
         }
 
+        internal override bool IsWritable => !property.IsReadOnly;
+
+        internal override bool CanWrite => base.CanWrite && part is not null;
+
         internal override void Start()
         {
             if (started) return;
@@ -231,15 +307,31 @@ public static class GeneratedMarkup
             DisconnectPart();
         }
 
+        internal override bool TryWrite(object? value)
+        {
+            if (!CanWrite)
+            {
+                return false;
+            }
+
+            part!.SetValueUntyped(property, value, UiPropertyValueSource.Local);
+            return true;
+        }
+
         private void OnOwnerPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
         {
-            if (ReferenceEquals(args.Property, Control.ComponentTemplateProperty)) ReconnectAndRaise();
+            if (!ReferenceEquals(args.Property, Control.ComponentTemplateProperty) || !ShouldProcessCallback())
+            {
+                return;
+            }
+
+            ReconnectAndRaise();
         }
 
         private void OnPartPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
         {
-            if (!ReferenceEquals(args.Property, property)) return;
-            Value = args.NewValue;
+            if (!ReferenceEquals(args.Property, property) || !ShouldProcessCallback()) return;
+            SetResolvedValue(args.NewValue);
             RaiseChanged();
         }
 
@@ -255,11 +347,12 @@ public static class GeneratedMarkup
             owner.ApplyTemplate();
             if (owner.ComponentTemplateInstance is null || !owner.ComponentTemplateInstance.Parts.TryGetValue(partName, out UIElement? resolved))
             {
-                throw new InvalidOperationException($"Component template part '{partName}' was not materialized.");
+                SetUnresolved();
+                return;
             }
 
             part = resolved!;
-            Value = part.GetValue(property);
+            SetResolvedValue(part.GetValue(property));
             if (started) part.PropertyChanged += OnPartPropertyChanged;
         }
 
@@ -279,7 +372,7 @@ public static class GeneratedMarkup
         public ObjectObservation(Func<object?> getter)
         {
             this.getter = getter ?? throw new ArgumentNullException(nameof(getter));
-            Value = getter();
+            SetResolvedValue(getter());
         }
 
         internal override void Start()
@@ -290,7 +383,7 @@ public static class GeneratedMarkup
             }
 
             started = true;
-            Value = getter();
+            SetResolvedValue(getter());
             unsubscribe = Subscribe(Value, null, Refresh);
         }
 
@@ -303,7 +396,12 @@ public static class GeneratedMarkup
 
         private void Refresh()
         {
-            Value = getter();
+            if (!ShouldProcessCallback())
+            {
+                return;
+            }
+
+            SetResolvedValue(getter());
             RaiseChanged();
         }
     }
@@ -314,6 +412,8 @@ public static class GeneratedMarkup
         private readonly IReadOnlyList<MarkupDataPathSegment> segments;
         private readonly List<Action> unsubscribeContext = [];
         private readonly List<Action> unsubscribePath = [];
+        private object? terminalOwner;
+        private MarkupDataPathSegment? terminalSegment;
         private bool started;
 
         public DataPathObservation(UIElement owner, IReadOnlyList<MarkupDataPathSegment> segments)
@@ -344,11 +444,36 @@ public static class GeneratedMarkup
             started = false;
             ClearContextSubscriptions();
             ClearPathSubscriptions();
+            terminalOwner = null;
+            terminalSegment = null;
+        }
+
+        internal override bool IsWritable => segments.Count > 0 && segments[^1].Setter is not null;
+
+        internal override bool CanWrite => base.CanWrite && terminalOwner is not null;
+
+        internal override bool TryWrite(object? value)
+        {
+            if (!CanWrite)
+            {
+                return false;
+            }
+
+            terminalSegment!.Setter!(terminalOwner, value);
+            return true;
         }
 
         private void OnContextPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
         {
-            if (ReferenceEquals(args.Property, UIElement.DataContextProperty))
+            if (ReferenceEquals(args.Property, UIElement.DataContextProperty) && ShouldProcessCallback())
+            {
+                Rebuild(raiseChanged: true);
+            }
+        }
+
+        private void OnPathPropertyChanged()
+        {
+            if (ShouldProcessCallback())
             {
                 Rebuild(raiseChanged: true);
             }
@@ -358,24 +483,47 @@ public static class GeneratedMarkup
         {
             ClearContextSubscriptions();
             ClearPathSubscriptions();
+            terminalOwner = null;
+            terminalSegment = null;
             object? current = ResolveDataContext();
-            foreach (MarkupDataPathSegment segment in segments)
+            bool resolved = current is not null;
+            for (int index = 0; index < segments.Count; index++)
             {
                 if (current is null)
                 {
+                    resolved = false;
                     break;
                 }
 
-                Action? unsubscribe = Subscribe(current, segment.PropertyName, () => Rebuild(raiseChanged: true));
-                if (unsubscribe is not null)
+                MarkupDataPathSegment segment = segments[index];
+                if (started)
                 {
-                    unsubscribePath.Add(unsubscribe);
+                    Action? unsubscribe = Subscribe(current, segment.PropertyName, OnPathPropertyChanged);
+                    if (unsubscribe is not null)
+                    {
+                        unsubscribePath.Add(unsubscribe);
+                    }
+                }
+
+                bool terminal = index == segments.Count - 1;
+                if (terminal)
+                {
+                    terminalOwner = current;
+                    terminalSegment = segment;
                 }
 
                 current = segment.Getter(current);
             }
 
-            Value = current;
+            if (resolved)
+            {
+                SetResolvedValue(current);
+            }
+            else
+            {
+                SetUnresolved();
+            }
+
             if (raiseChanged)
             {
                 RaiseChanged();
@@ -390,8 +538,11 @@ public static class GeneratedMarkup
             while (current is not null && visited.Add(current))
             {
                 UIElement observed = current;
-                observed.PropertyChanged += OnContextPropertyChanged;
-                unsubscribeContext.Add(() => observed.PropertyChanged -= OnContextPropertyChanged);
+                if (started)
+                {
+                    observed.PropertyChanged += OnContextPropertyChanged;
+                    unsubscribeContext.Add(() => observed.PropertyChanged -= OnContextPropertyChanged);
+                }
 
                 UiPropertyValueSource source = observed.GetValueSource(UIElement.DataContextProperty);
                 if (source is not UiPropertyValueSource.Default and not UiPropertyValueSource.Inherited)
@@ -518,6 +669,15 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         disposed = true;
         Stop();
         ClearAppliedValues();
+        foreach (IMarkupConditionalValueProvider provider in rules
+            .SelectMany(rule => rule.Values)
+            .Select(value => value.Provider)
+            .Where(provider => provider is not null)
+            .Cast<IMarkupConditionalValueProvider>()
+            .Distinct())
+        {
+            provider.Dispose();
+        }
     }
 
     private void Start()
@@ -549,6 +709,12 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         {
             observation.Changed -= OnObservationChanged;
             observation.Stop();
+        }
+
+        foreach (MarkupConditionalValue value in appliedValues.Where(value => value.Provider is not null).ToArray())
+        {
+            value.Provider!.Deactivate();
+            appliedValues.Remove(value);
         }
 
         foreach (MarkupConditionalContent content in activeContent)
@@ -614,9 +780,28 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
             }
         }
 
+        foreach (MarkupConditionalValue previous in appliedValues.ToArray())
+        {
+            MarkupConditionalValue? replacement = desired.FirstOrDefault(candidate => SameSlot(previous, candidate));
+            if (replacement is null || !ReferenceEquals(previous, replacement))
+            {
+                previous.Provider?.Deactivate();
+            }
+        }
+
         foreach (MarkupConditionalValue value in desired)
         {
-            value.Target.SetValueUntyped(value.Property, value.Value, value.Source);
+            if (value.Provider is not null)
+            {
+                if (!appliedValues.Contains(value))
+                {
+                    value.Provider.Activate();
+                }
+            }
+            else
+            {
+                value.Target.SetValueUntyped(value.Property, value.Value, value.Source);
+            }
         }
 
         foreach (MarkupConditionalValue value in appliedValues.Where(old => !desired.Any(candidate => SameSlot(old, candidate))).ToArray())
@@ -722,7 +907,14 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
     {
         foreach (MarkupConditionalValue value in appliedValues)
         {
-            value.Target.ClearValueUntyped(value.Property, value.Source);
+            if (value.Provider is not null)
+            {
+                value.Provider.Dispose();
+            }
+            else
+            {
+                value.Target.ClearValueUntyped(value.Property, value.Source);
+            }
         }
 
         appliedValues.Clear();

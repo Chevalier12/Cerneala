@@ -1,6 +1,6 @@
 ---
 name: cerneala-implement-plan
-description: Implement a named Cerneala Markdown checklist plan end-to-end under a persistent `/goal`, using exactly one plan stage per batch and mandatorily checking off that stage immediately after it is implemented and verified. Use when the user says to implement a plan completely, continue an existing checklist plan, execute a named plan end-to-end, or check off stages as batches finish. This skill modifies code, tests, documentation, and the source plan until every applicable item and gate is complete.
+description: Implement a named Cerneala Markdown checklist plan end-to-end under a persistent `/goal`, optimizing for throughput while using exactly one plan stage per batch and mandatorily checking off that stage immediately after verification. Use when the user says to implement a plan completely, continue an existing checklist plan, execute a named plan end-to-end, or check off stages as batches finish. This skill minimizes redundant searches, edits, test runs, and status narration while modifying code, tests, documentation, and the source plan until every applicable item and gate is complete.
 ---
 
 # Cerneala Implement Plan
@@ -49,19 +49,40 @@ One batch is exactly one numbered/named implementation stage from the source pla
 - Do not start the next stage merely because one task in the current stage is green. Finish the entire stage and its gate first.
 - If repository policy requires collateral work to keep the current stage valid, such as synchronizing public API documentation with a public API change, include only that mandatory collateral in the current batch. Do not otherwise advance or check a later stage early.
 - If a stage is already implemented in repository state but unchecked, its batch is an audit-and-verification batch: prove every item and gate, then check it off.
-- At batch start, name the stage and enumerate the exact unchecked items and gate conditions to close.
+- At batch start, name the stage and enumerate the exact unchecked items and gate conditions to close in one concise update.
 - In `update_plan`, keep only the current stage `in_progress`; later stages remain `pending`.
 - If the current stage cannot be completed, stop on that stage. Leave its unfinished items unchecked and do not jump ahead to easier work from another stage.
 
 The source plan remains the durable ledger. Repository exploration may inspect future stages for dependency awareness, but implementation, tests, and edits must stay inside the active stage boundary.
 
+## Throughput-First Execution (MANDATORY)
+
+Optimize end-to-end elapsed time and tool round-trips after correctness, repository policy, and stage boundaries are satisfied. Throughput means less redundant work, never weaker gates.
+
+Default shape for each stage: one consolidated audit pass, one implementation pass, one verification ladder, and one mandatory checklist checkpoint.
+
+- Build one work map for the active stage, then execute it continuously. Do not rediscover scope before every task.
+- Batch independent reads, status checks, and non-Roslyn tool calls when the tool surface supports safe parallel execution.
+- Keep RoslynRepoIndexer primary, but do not launch multiple RoslynIndexer CLI processes concurrently; its query daemon can contend on shadow-copy files. Prefer a small number of broad, sequential queries over many tiny searches.
+- Read the full contents only of C# files that are likely to be edited, as required by repository policy. Use targeted `ri pread`, symbols, and references for already-understood supporting files instead of rereading them repeatedly.
+- Consolidate related manual edits into the fewest coherent `apply_patch` calls. In particular, finish all intended changes to one C# or project file before triggering the mandatory reindex whenever practical.
+- Implement the complete stage before entering its verification ladder, except where the plan explicitly requires RED/GREEN test-first sequencing.
+- Choose the verification ladder once: compile or narrow test during development, required stage tests at the gate, and the full suite only when the stage or final audit requires it.
+- Treat a successful verification as valid until a later change touches code, project configuration, generated inputs, or another surface that can affect it. Documentation and checklist-only edits do not invalidate compiled test evidence.
+- After a successful build of the current code state, use `--no-build` and `--no-restore` for compatible follow-up test commands. Never use them after code or project changes that have not been built.
+- Do not rerun a green command merely for reassurance. Reuse current-state evidence and record it at the stage checkpoint.
+- For an already-implemented stage, audit all items and gates in one pass, run the minimum sufficient proof once, and checkpoint the stage.
+- Send commentary only at stage start, stage completion, or when a real failure/blocker changes the execution path. Do not narrate individual searches, patches, or passing micro-tests.
+- Do not add speculative tests, experiments, abstractions, or documentation audits beyond what closes a real checklist item or gate.
+
 ## Execute a Batch
 
 ### 1. Revalidate scope
 
+- Perform one consolidated scope pass for the whole active stage.
 - Read every C# file before editing it with `ri read <filePath>`.
 - Use `ri pread` only after full context is known.
-- Inspect definitions, references, tests, and public docs affected by the batch.
+- Inspect only the definitions, references, tests, and public docs plausibly affected by the batch.
 - Preserve user changes and unrelated dirty worktree changes.
 - Do not expand into non-goals or unrelated cleanup.
 - Surface unrelated smells separately without fixing them.
@@ -87,6 +108,8 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - Run the narrowest tests that prove the batch behavior.
 - Run related regression tests named by the plan.
 - Run formatting, build, source-generator, API-diff, visual, benchmark, or full-suite verification when required by the batch.
+- Run each required verification once in the latest relevant code state. If it passes and no relevant implementation input changes afterward, reuse that result at the gate and final audit.
+- When a narrow test fails, fix and rerun that failing subset first. Do not repeatedly pay for the full suite while diagnosing a local failure.
 - Investigate failures instead of checking the task and writing "probably unrelated" like an optimistic arsonist.
 - Never mark a task complete only because code was written. It must satisfy its stated verification.
 
@@ -131,6 +154,7 @@ Interpret checklist states strictly:
 ## Failure and Resume Rules
 
 - If a test fails, keep affected tasks unchecked and fix the failure inside the current stage before moving on.
+- Retry a transient tooling failure once with the narrowest corrective action. If it repeats, diagnose that tool directly instead of restarting unrelated verification.
 - If the plan conflicts with current architecture, stop only that batch, record the contradiction, and ask the user before changing the approved design.
 - If an external or user decision blocks progress, keep the goal active while meaningful work remains elsewhere.
 - Mark the goal `blocked` only under the goal tool's repeated-blocker rules, never merely because the work is difficult or large.
@@ -145,13 +169,13 @@ Before completing the goal:
 - Confirm every applicable task and gate is `[x]`.
 - Confirm conditional and non-goal items have explicit resolutions.
 - Confirm all prerequisite plans required by this plan are complete.
-- Run the plan's final targeted verification.
-- Run `dotnet test Cerneala.slnx` unless the plan explicitly defines a different final suite.
-- Run final API documentation and manifest checks for public API changes.
+- Run the plan's final targeted verification once after the last relevant implementation change, or reuse an identical current-state run already completed by the final stage.
+- Run `dotnet test Cerneala.slnx` once in the final code state unless the plan explicitly defines a different final suite. Do not repeat it if it already passed after the last code or project-file change.
+- Run final API documentation and manifest checks for public API changes, or reuse results produced after the last relevant API/doc change.
 - Run `git diff --check` across all files changed for the goal.
 - Review `git diff` for accidental scope, stale debug code, generated churn, and unchecked required work.
 - Update plan status to `finalizat`.
-- Reindex the final repository state when code or project files changed.
+- Reindex the final repository state when code or project files changed. Reuse the latest zero-warning index if no code or project file changed afterward.
 - Call `update_goal(status: "complete")`.
 - Report the completed batches, verification results, plan path, and final token usage returned by the goal tool.
 
@@ -160,5 +184,5 @@ Do not complete the goal while required work remains. Near-zero budget, a long d
 ## Invocation Example
 
 ```text
-$cerneala-implement-plan Implementeaza planul 2026-07-13-repeat-button end-to-end. Bifeaza tot ce termini dupa fiecare batch verificat.
+$cerneala-implement-plan Implementeaza planul 2026-07-13-repeat-button end-to-end. Pastreaza un batch per etapa, bifeaza etapa dupa verificare si optimizeaza pentru throughput fara verificari redundante.
 ```

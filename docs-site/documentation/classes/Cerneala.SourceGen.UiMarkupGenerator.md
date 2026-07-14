@@ -82,6 +82,62 @@ An `@if` expression may combine typed comparisons and reactive operands:
 
 Evaluation short-circuits, while every syntactic source is still observed. Compound `@when` expressions require Boolean source leaves, and `value` inside their `@if` blocks is the Boolean result of the complete expression. The directive language does not accept `not`, `&&`, `||`, or arbitrary C# expressions. This is a source-generator language change only and does not add or modify a public runtime API.
 
+### Source-Generated Data Bindings
+
+Property attributes accept a typed source path with an optional final mode:
+
+```text
+source-path[:OneWay|TwoWay]
+```
+
+`OneWay` is the default. Supported sources are `$DataContext.Path`,
+`$element.Property`, `$self.Property`,
+`$control.parts.$part.Property`, and `$owner.Property` inside a component
+template. The generator resolves every segment and endpoint through Roslyn and
+emits typed access; it does not evaluate string property paths or use reflection
+at runtime.
+
+```xml
+<StackPanel DataType="EditorViewModel">
+  <TextBlock Text="$DataContext.Name" />
+  <TextBlock Text="User: $DataContext.Name, count: $DataContext.Count" />
+  <TextBox Text="$DataContext.Name:TwoWay" />
+</StackPanel>
+```
+
+`$DataContext` paths require a root `DataType`, except on paired generic
+`Window<TViewModel>` and `UserControl<TViewModel>` documents, which infer the
+type. Every CLR owner along a reactive path must implement
+`INotifyPropertyChanged`. UI-property sources use Cerneala property change
+notifications instead.
+
+A `OneWay` binding to a string target converts the source with the current
+culture and maps `null` to an empty string. String attributes and quoted
+directive strings may interpolate multiple paths; interpolation is always
+`OneWay`, rejects fragment modes, deduplicates repeated paths, and uses `\$` as
+the literal-dollar escape.
+
+Directive assignment bindings are written unquoted and end with `;`:
+
+```text
+Text = $DataContext.Name;
+Text = $DataContext.Name:TwoWay;
+Text = "Hello, $DataContext.Name";
+```
+
+Only the provider selected by the winning conditional rule remains active.
+Reactive condition sources themselves are read-only and reject mode suffixes.
+All syntactic leaves stay observed even though generated Boolean evaluation
+short-circuits.
+
+Bindings stop on detach and refresh on reattach. Bindings created by a
+component-template factory are disposed with the template instance. Source
+notifications consumed by a binding must be raised on the binding's captured
+UI/update thread; the runtime fails fast instead of implicitly marshaling them.
+
+See `docs/markup-data-bindings.md` for the complete grammar, name-scope rules,
+null and cascade behavior, diagnostics, and unsupported features.
+
 Supported root and child elements:
 
 | Markup element | Generated type |
@@ -130,6 +186,7 @@ The generator reports diagnostics instead of emitting source when markup cannot 
 | `CERNEALAUI002` | The markup contains an unsupported element. |
 | `CERNEALAUI003` | The markup contains an unsupported property, text content, or child relationship. |
 | `CERNEALAUI004` | The markup contains an invalid value for a supported property. |
+| `CERNEALAUI007` | A binding or reactive source has invalid syntax, scope, mode, type, accessibility, observability, or writability. |
 
 Diagnostics are created with locations from XML line information when it is available.
 
@@ -153,3 +210,5 @@ Cerneala source generation project targeting `netstandard2.0`.
 
 - `Cerneala.SourceGen.UiMarkupGenerator.GenerationScope`
 - `Cerneala.UI.Markup.GeneratedUiFactory`
+- `Cerneala.UI.Markup.GeneratedMarkup`
+- `docs/markup-data-bindings.md`

@@ -47,7 +47,9 @@ Generated from `.`.
 |   |   |-- 2026-07-13-markup-logical-expressions.md
 |   |   |-- 2026-07-13-queue-engine-2.md
 |   |   |-- 2026-07-13-repeat-button.md
-|   |   +-- 2026-07-13-scrollviewer-template-parts.md
+|   |   |-- 2026-07-13-scrollviewer-template-parts.md
+|   |   |-- 2026-07-14-markup-data-bindings.md
+|   |   +-- 2026-07-14-relay-auto-marshaling.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md

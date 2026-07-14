@@ -598,271 +598,121 @@ public sealed partial class UiMarkupGenerator
             XObject source,
             object diagnosticSource)
         {
-            if (plan.Observations.TryGetValue(expression, out ObservationEmission? existing))
+            BindingResolutionContext resolutionContext = new(
+                plan.OwnerVariable,
+                plan.ElementName,
+                plan.IsRoot,
+                plan.TemplateContext);
+            BindingSourceDescriptor? descriptor = ResolveBindingSource(
+                resolutionContext,
+                expression,
+                source,
+                diagnosticSource);
+            if (descriptor is null)
+            {
+                return null;
+            }
+
+            if (plan.Observations.TryGetValue(descriptor.CanonicalExpression, out ObservationEmission? existing))
             {
                 return existing;
             }
 
             string name = "observation" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
             nextReactiveId++;
-            ObservationEmission? emission = EmitObservationCore(plan, name, expression, source, diagnosticSource);
-            if (emission is not null)
-            {
-                plan.Observations.Add(expression, emission);
-            }
+            ObservationEmission emission = EmitObservationDescriptor(
+                plan.ObservationLines,
+                plan.ObservationNames,
+                name,
+                descriptor);
+            plan.Observations.Add(descriptor.CanonicalExpression, emission);
 
             return emission;
         }
 
-        private ObservationEmission? EmitObservationCore(
-            ReactivePlan plan,
+        private ObservationEmission EmitObservationDescriptor(
+            ICollection<string> observationLines,
+            ICollection<string>? observationNames,
             string name,
-            string expression,
-            XObject source,
-            object diagnosticSource)
+            BindingSourceDescriptor descriptor)
         {
-            if (expression.StartsWith("$DataContext", StringComparison.Ordinal))
+            switch (descriptor.Kind)
             {
-                return EmitDataObservation(plan, name, expression, source, diagnosticSource);
-            }
-
-            if (expression.Contains(".parts.", StringComparison.Ordinal))
-            {
-                return EmitTemplatePartObservation(plan, name, expression, source, diagnosticSource);
-            }
-
-            if (expression.StartsWith("$owner.", StringComparison.Ordinal))
-            {
-                if (plan.TemplateContext is null)
+                case BindingSourceKind.DataPath:
                 {
-                    Report(InvalidBindingSource, diagnosticSource, expression, "$owner is available only inside @template.");
-                    return null;
+                    List<string> segments = [];
+                    for (int index = 0; index < descriptor.DataSegments.Count; index++)
+                    {
+                        DataPathSegmentDescriptor segment = descriptor.DataSegments[index];
+                        string ownerType = segment.OwnerType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        string propertyType = segment.Property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        string setter = index == descriptor.DataSegments.Count - 1 && descriptor.CanWrite
+                            ? ", (owner, value) => ((" + ownerType + ")owner!)." + segment.Property.Name +
+                                " = (" + propertyType + ")value!"
+                            : string.Empty;
+                        segments.Add(
+                            "new global::Cerneala.UI.Markup.MarkupDataPathSegment(" + Literal(segment.Property.Name) +
+                            ", value => ((" + ownerType + ")value!)." + segment.Property.Name + setter + ")");
+                    }
+
+                    observationLines.Add(
+                        "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                        " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveDataPath(" + descriptor.OwnerCode +
+                        (segments.Count == 0 ? ")" : ", " + string.Join(", ", segments) + ")") + ";");
+
+                    ITypeSymbol comparisonType = UnwrapNullable(descriptor.ValueType);
+                    string typeCode = comparisonType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    observationNames?.Add(name);
+                    return new ObservationEmission(
+                        name,
+                        "(" + typeCode + ")" + name + ".Value!",
+                        null,
+                        comparisonType,
+                        name + ".Value is " + typeCode);
                 }
-
-                string propertyName = expression.Substring("$owner.".Length);
-                PropertySpec? ownerSpec = propertyName.IndexOf('.') < 0
-                    ? FindPropertySpec(plan.TemplateContext.OwnerType, propertyName)
-                    : null;
-                if (ownerSpec is null)
+                case BindingSourceKind.UiProperty:
                 {
-                    Report(InvalidBindingSource, diagnosticSource, expression, "No supported UI property with this name exists on the template owner.");
-                    return null;
+                    PropertySpec spec = descriptor.Property!;
+                    observationLines.Add(
+                        "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                        " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + descriptor.OwnerCode +
+                        ", " + spec.PropertyCode + ");");
+                    observationNames?.Add(name);
+                    return new ObservationEmission(
+                        name,
+                        "(" + spec.ValueTypeCode + ")" + name + ".Value!",
+                        spec.ValueKind,
+                        spec.ValueType);
                 }
-
-                plan.ObservationLines.Add(
-                    "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                    " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" +
-                    plan.TemplateContext.OwnerVariable + ", " + ownerSpec.PropertyCode + ");");
-                plan.ObservationNames.Add(name);
-                return new ObservationEmission(name, "(" + ownerSpec.ValueTypeCode + ")" + name + ".Value!", null, ownerSpec.ValueType);
-            }
-
-            if (expression.StartsWith("$self.", StringComparison.Ordinal))
-            {
-                if (plan.TemplateContext is null)
+                case BindingSourceKind.TemplatePartProperty:
                 {
-                    Report(InvalidBindingSource, diagnosticSource, expression, "$self is available only inside @template.");
-                    return null;
+                    PropertySpec spec = descriptor.Property!;
+                    observationLines.Add(
+                        "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                        " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveTemplatePartProperty(" + descriptor.OwnerCode +
+                        ", " + Literal(descriptor.PartName!) + ", " + spec.PropertyCode + ");");
+                    observationNames?.Add(name);
+                    return new ObservationEmission(
+                        name,
+                        "(" + spec.ValueTypeCode + ")" + name + ".Value!",
+                        spec.ValueKind,
+                        spec.ValueType);
                 }
-
-                string propertyName = expression.Substring("$self.".Length);
-                PropertySpec? selfSpec = propertyName.IndexOf('.') < 0
-                    ? FindPropertySpec(plan.ElementName, propertyName, plan.IsRoot)
-                    : null;
-                if (selfSpec is null)
+                case BindingSourceKind.Object:
                 {
-                    Report(InvalidBindingSource, diagnosticSource, expression, "No supported UI property with this name exists on the current template element.");
-                    return null;
+                    observationLines.Add(
+                        "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                        " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveObject(() => (object?)" + descriptor.OwnerCode + ");");
+                    observationNames?.Add(name);
+                    return new ObservationEmission(
+                        name,
+                        name + ".Value",
+                        null,
+                        compilation.GetSpecialType(SpecialType.System_Object));
                 }
-
-                plan.ObservationLines.Add(
-                    "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                    " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" +
-                    plan.OwnerVariable + ", " + selfSpec.PropertyCode + ");");
-                plan.ObservationNames.Add(name);
-                return new ObservationEmission(name, "(" + selfSpec.ValueTypeCode + ")" + name + ".Value!", null, selfSpec.ValueType);
+                default:
+                    throw new InvalidOperationException("Unsupported binding source descriptor.");
             }
-
-            if (expression.StartsWith("$", StringComparison.Ordinal))
-            {
-                string referenceName = expression.Substring(1);
-                if (!TryResolveObjectSymbol(source, referenceName, out NamedSymbol symbol))
-                {
-                    Report(InvalidBindingSource, diagnosticSource, expression, "Unknown local reference.");
-                    return null;
-                }
-
-                string? objectCode = symbol.Source switch
-                {
-                    NamedElementReference element => element.Code,
-                    string variable => variable,
-                    BrushResource brush => brush.Variable,
-                    _ => null
-                };
-                if (objectCode is null)
-                {
-                    Report(InvalidBindingSource, diagnosticSource, expression, "The referenced symbol is not an observable object.");
-                    return null;
-                }
-
-                plan.ObservationLines.Add(
-                    "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                    " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveObject(() => (object?)" + objectCode + ");");
-                plan.ObservationNames.Add(name);
-                return new ObservationEmission(name, name + ".Value", null, compilation.GetSpecialType(SpecialType.System_Object));
-            }
-
-            PropertySpec? spec;
-            string observationOwner;
-            if (plan.TemplateContext is not null)
-            {
-                spec = FindPropertySpec(plan.TemplateContext.OwnerType, expression);
-                observationOwner = plan.TemplateContext.OwnerVariable;
-            }
-            else
-            {
-                spec = FindPropertySpec(plan.ElementName, expression, plan.IsRoot);
-                observationOwner = plan.OwnerVariable;
-            }
-
-            if (spec is null)
-            {
-                Report(
-                    InvalidBindingSource,
-                    diagnosticSource,
-                    expression,
-                    plan.TemplateContext is null
-                        ? "No supported UI property with this name exists on the current element."
-                        : "No supported UI property with this name exists on the template owner.");
-                return null;
-            }
-
-            plan.ObservationLines.Add(
-                "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + observationOwner + ", " + spec.PropertyCode + ");");
-            plan.ObservationNames.Add(name);
-            return new ObservationEmission(name, "(" + spec.ValueTypeCode + ")" + name + ".Value!", null, spec.ValueType);
-        }
-
-        private ObservationEmission? EmitTemplatePartObservation(
-            ReactivePlan plan,
-            string name,
-            string expression,
-            XObject source,
-            object diagnosticSource)
-        {
-            string[] segments = expression.Split('.');
-            if (segments.Length != 4 || !segments[0].StartsWith("$", StringComparison.Ordinal) ||
-                segments[0].Length == 1 || segments[1] != "parts" ||
-                !segments[2].StartsWith("$", StringComparison.Ordinal) || segments[2].Length == 1 ||
-                segments[3].Length == 0)
-            {
-                Report(InvalidBindingSource, diagnosticSource, expression, "Template parts use $control.parts.$part.Property; 'parts' is lowercase.");
-                return null;
-            }
-
-            string ownerName = segments[0].Substring(1);
-            string partName = segments[2].Substring(1);
-            if (!TryResolveObjectSymbol(source, ownerName, out NamedSymbol symbol) ||
-                symbol.Kind != NamedSymbolKind.Element || symbol.Source is not NamedElementReference owner)
-            {
-                Report(InvalidBindingSource, diagnosticSource, expression, "Unknown named control.");
-                return null;
-            }
-
-            INamedTypeSymbol? ownerType = ResolvePropertyOwnerType(owner.Element.Name.LocalName, ReferenceEquals(owner.Element, document.Root));
-            if (!IsControlType(ownerType))
-            {
-                Report(InvalidBindingSource, diagnosticSource, expression, "Template parts can be accessed only on a Control.");
-                return null;
-            }
-
-            DirectiveParseResult content = GetDirectiveContent(owner.Element, DirectiveContentKind.Elements | DirectiveContentKind.Templates);
-            DirectiveTemplateNode? template = content.Nodes.OfType<DirectiveTemplateNode>().SingleOrDefault();
-            if (template is null)
-            {
-                template = ResolveAspects(owner.Element).Select(aspect => aspect.Template).LastOrDefault(candidate => candidate is not null);
-            }
-
-            if (template is null || !templateParts.TryGetValue(template, out IReadOnlyDictionary<string, XElement>? parts))
-            {
-                Report(InvalidBindingSource, diagnosticSource, expression, "The named control does not declare a component template.");
-                return null;
-            }
-
-            if (!parts.TryGetValue(partName, out XElement? part))
-            {
-                Report(InvalidBindingSource, diagnosticSource, expression, "The component template has no part named '" + partName + "'.");
-                return null;
-            }
-
-            INamedTypeSymbol? partType = ResolveElementTypeSymbol(part.Name.LocalName);
-            PropertySpec? spec = partType is null ? null : FindPropertySpec(partType, segments[3]);
-            if (spec is null)
-            {
-                Report(InvalidBindingSource, diagnosticSource, expression, "No supported UI property with this name exists on the template part.");
-                return null;
-            }
-
-            plan.ObservationLines.Add(
-                "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveTemplatePartProperty(" + owner.Code + ", " +
-                Literal(partName) + ", " + spec.PropertyCode + ");");
-            plan.ObservationNames.Add(name);
-            return new ObservationEmission(name, "(" + spec.ValueTypeCode + ")" + name + ".Value!", null, spec.ValueType);
-        }
-
-        private ObservationEmission? EmitDataObservation(
-            ReactivePlan plan,
-            string name,
-            string expression,
-            XObject source,
-            object diagnosticSource)
-        {
-            if (dataType is null)
-            {
-                Report(InvalidBindingSource, diagnosticSource, expression, "DataType is required on the root element.");
-                return null;
-            }
-
-            string suffix = expression.Substring("$DataContext".Length);
-            string[] names = suffix.Length == 0
-                ? []
-                : suffix.TrimStart('.').Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-            ITypeSymbol currentType = dataType;
-            List<string> segments = [];
-            foreach (string propertyName in names)
-            {
-                IPropertySymbol? property = currentType.GetMembers(propertyName)
-                    .OfType<IPropertySymbol>()
-                    .FirstOrDefault(candidate => !candidate.IsStatic && candidate.GetMethod is not null &&
-                        candidate.GetMethod.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal);
-                if (property is null)
-                {
-                    Report(InvalidBindingSource, diagnosticSource, expression, "Public property '" + propertyName + "' was not found on '" + currentType.ToDisplayString() + "'.");
-                    return null;
-                }
-
-                string ownerType = currentType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                segments.Add(
-                    "new global::Cerneala.UI.Markup.MarkupDataPathSegment(" + Literal(propertyName) +
-                    ", value => ((" + ownerType + ")value!)." + propertyName + ")");
-                currentType = property.Type;
-            }
-
-            plan.ObservationLines.Add(
-                "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveDataPath(" + plan.OwnerVariable +
-                (segments.Count == 0 ? ")" : ", " + string.Join(", ", segments) + ")") + ";");
-            plan.ObservationNames.Add(name);
-            ITypeSymbol comparisonType = UnwrapNullable(currentType);
-            string typeCode = comparisonType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            return new ObservationEmission(
-                name,
-                "(" + typeCode + ")" + name + ".Value!",
-                null,
-                comparisonType,
-                name + ".Value is " + typeCode);
         }
 
         private static ITypeSymbol UnwrapNullable(ITypeSymbol type)
@@ -889,6 +739,11 @@ public sealed partial class UiMarkupGenerator
             if (value.Length >= 2 && value[0] == '"' && value[value.Length - 1] == '"')
             {
                 value = value.Substring(1, value.Length - 2);
+            }
+
+            if (spec.ValueType.SpecialType == SpecialType.System_String)
+            {
+                value = UnescapeMarkupDollar(value);
             }
 
             XAttribute synthetic = new(propertyName, value);
@@ -991,6 +846,43 @@ public sealed partial class UiMarkupGenerator
                     if (spec is null || !spec.Assignable)
                     {
                         Report(UnsupportedProperty, assignment.Source, plan.ElementName, assignment.PropertyName);
+                        continue;
+                    }
+
+                    ParsedMarkupValue? parsedMarkup = ParseMarkupBindingValue(
+                        assignment.Value,
+                        assignment: true,
+                        stringTarget: spec.ValueType.SpecialType == SpecialType.System_String,
+                        assignment.ValueLocation);
+                    if (parsedMarkup?.Kind == ParsedMarkupValueKind.Invalid)
+                    {
+                        continue;
+                    }
+
+                    if (parsedMarkup is not null)
+                    {
+                        BindingResolutionContext bindingContext = new(
+                            plan.OwnerVariable,
+                            plan.ElementName,
+                            plan.IsRoot,
+                            plan.TemplateContext,
+                            validateClrObservability: true);
+                        ResolvedMarkupValue? resolvedMarkup = ResolveMarkupValue(
+                            bindingContext,
+                            spec,
+                            parsedMarkup,
+                            assignment.Source,
+                            assignment.ValueLocation);
+                        if (resolvedMarkup is null)
+                        {
+                            continue;
+                        }
+
+                        values.Add(EmitConditionalMarkupBinding(
+                            bindingContext,
+                            spec,
+                            resolvedMarkup,
+                            plan.ElementName + "." + assignment.PropertyName + " <- " + assignment.Value));
                         continue;
                     }
 

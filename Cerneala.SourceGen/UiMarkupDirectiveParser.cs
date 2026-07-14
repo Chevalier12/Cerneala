@@ -50,15 +50,22 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class DirectiveAssignmentNode : DirectiveNode
     {
-        public DirectiveAssignmentNode(string propertyName, string value, XObject source) : base(source)
+        public DirectiveAssignmentNode(
+            string propertyName,
+            string value,
+            XObject source,
+            DirectiveExpressionLocation valueLocation) : base(source)
         {
             PropertyName = propertyName;
             Value = value;
+            ValueLocation = valueLocation;
         }
 
         public string PropertyName { get; }
 
         public string Value { get; }
+
+        public DirectiveExpressionLocation ValueLocation { get; }
     }
 
     private sealed class DirectiveDefaultNode : DirectiveNode
@@ -477,6 +484,9 @@ public sealed partial class UiMarkupGenerator
                 throw new DirectiveParseException("Property assignment requires '='.", source);
             }
 
+            SkipWhitespace();
+            XObject valueSource = CurrentSource;
+            int valueOffset = characterIndex;
             StringBuilder value = new();
             bool quoted = false;
             bool escaped = false;
@@ -512,7 +522,11 @@ public sealed partial class UiMarkupGenerator
                         throw new DirectiveParseException("Property assignment requires a value.", source);
                     }
 
-                    return new DirectiveAssignmentNode(propertyName, rawValue, source);
+                    return new DirectiveAssignmentNode(
+                        propertyName,
+                        rawValue,
+                        source,
+                        new DirectiveExpressionLocation(valueSource, valueOffset));
                 }
 
                 value.Append(character);

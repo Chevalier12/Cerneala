@@ -99,6 +99,26 @@ Generated predicates use normal C# short-circuit evaluation, but the generator d
 
 The logical grammar intentionally stops here: it does not accept `not`, `&&`, `||`, or arbitrary C# expressions. The words `and` and `or` are operators only as complete tokens, not when they occur inside a member name or quoted string.
 
+## Bind Markup To Typed Sources
+
+Markup attributes support source-generated `OneWay` and `TwoWay` bindings,
+named UI property sources, `$self`, template parts, and reactive string
+interpolation. `OneWay` is implicit, while `$DataContext` paths require a root
+`DataType` or a paired generic `Window<TViewModel>` / `UserControl<TViewModel>`.
+
+```xml
+<StackPanel DataType="EditorViewModel">
+    <TextBlock Text="User: $DataContext.Name, count: $DataContext.Count" />
+    <TextBox Text="$DataContext.Name:TwoWay" />
+</StackPanel>
+```
+
+CLR owners on a reactive data path implement `INotifyPropertyChanged`, and
+notifications consumed by a binding are raised on the UI/update thread. See
+[Markup Data Bindings](markup-data-bindings.md) for the complete grammar,
+conditional assignment rules, string conversion, lifecycle, null handling,
+diagnostics, and deliberate limits.
+
 ## Use ActionCommand And Command State
 
 ```csharp

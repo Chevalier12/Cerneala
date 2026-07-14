@@ -17,7 +17,12 @@ var value = new MarkupConditionalValue(element, OpacityProperty, 0.5f, UiPropert
 ```
 
 ## Remarks
-This is infrastructure for generated markup condition controllers. Target, property, value, and source are consumed internally when the rule becomes active.
+This is infrastructure for generated markup condition controllers. Target,
+property, value, and source are consumed internally when the rule becomes
+active. Instances returned by `GeneratedMarkup.CreateConditionalPropertyBinding`
+or `GeneratedMarkup.CreateConditionalInterpolatedStringBinding` instead carry a
+reactive provider. The condition controller activates only the provider that
+wins a target property slot and deactivates it when another rule wins.
 
 ## Constructors
 | Name | Description |

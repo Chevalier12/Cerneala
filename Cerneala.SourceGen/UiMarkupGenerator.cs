@@ -2702,6 +2702,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
+            ParsedMarkupValue? parsedMarkup = ParseMarkupBindingValue(
+                value,
+                assignment: false,
+                stringTarget: spec.ValueType.SpecialType == SpecialType.System_String,
+                attribute);
+            if (parsedMarkup?.Kind == ParsedMarkupValueKind.Invalid)
+            {
+                return;
+            }
+
             if (!spec.Assignable)
             {
                 if (templateEmissionContexts.Count > 0 && trimmedValue.StartsWith("$owner.", StringComparison.Ordinal))
@@ -2712,6 +2722,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         Path.GetFileName(file.Path),
                         "Template binding target '" + elementName + "." + propertyName + "' is read-only.");
                 }
+                else if (parsedMarkup is not null)
+                {
+                    Report(
+                        InvalidBindingSource,
+                        attribute,
+                        parsedMarkup.Binding?.Path ?? trimmedValue,
+                        "The target UI property is read-only.");
+                }
                 else if (!HasErrors)
                 {
                     Report(UnsupportedProperty, attribute, elementName, propertyName);
@@ -2720,50 +2738,66 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            if (templateEmissionContexts.Count > 0 && trimmedValue.StartsWith("$owner.", StringComparison.Ordinal))
+            if (parsedMarkup is not null)
             {
-                TemplateEmissionContext templateContext = templateEmissionContexts.Peek();
-                string sourcePropertyName = trimmedValue.Substring("$owner.".Length);
-                if (sourcePropertyName.Length == 0 || sourcePropertyName.IndexOf('.') >= 0)
-                {
-                    Report(InvalidBindingSource, attribute, trimmedValue, "$owner requires exactly one UI property name.");
-                    return;
-                }
+                BindingResolutionContext bindingContext = CreateBindingResolutionContext(
+                    variable,
+                    elementName,
+                    ReferenceEquals(element, document.Root));
 
-                PropertySpec? sourceSpec = FindPropertySpec(templateContext.OwnerType, sourcePropertyName);
-                if (sourceSpec is null)
+                MarkupBindingToken? direct = parsedMarkup.Binding;
+                if (direct is not null && direct.Path.StartsWith("$owner.", StringComparison.Ordinal))
                 {
-                    Report(
-                        InvalidBindingSource,
+                    BindingSourceDescriptor? sourceDescriptor = ResolveBindingSource(
+                        bindingContext,
+                        direct.Path,
                         attribute,
-                        trimmedValue,
-                        "No supported UI property with this name exists on the template owner.");
+                        attribute);
+                    if (sourceDescriptor is null)
+                    {
+                        return;
+                    }
+
+                    if (direct.Mode == MarkupBindingMode.TwoWay)
+                    {
+                        Report(InvalidBindingSource, attribute, trimmedValue, "$owner template bindings support OneWay only.");
+                        return;
+                    }
+
+                    if (!SymbolEqualityComparer.Default.Equals(sourceDescriptor.ValueType, spec.ValueType))
+                    {
+                        Report(
+                            InvalidComponentTemplate,
+                            attribute,
+                            Path.GetFileName(file.Path),
+                            "Template binding '" + trimmedValue + "' has type '" + sourceDescriptor.ValueType.ToDisplayString() +
+                            "', but '" + elementName + "." + propertyName + "' expects '" + spec.ValueType.ToDisplayString() + "'.");
+                        return;
+                    }
+
+                    TemplateEmissionContext templateContext = templateEmissionContexts.Peek();
+                    currentLines.Add(
+                        templateContext.ContextVariable + ".Bind(" + sourceDescriptor.Property!.PropertyCode + ", " +
+                        variable + ", " + spec.PropertyCode + ");");
                     return;
                 }
 
-                if (!SymbolEqualityComparer.Default.Equals(sourceSpec.ValueType, spec.ValueType))
-                {
-                    Report(
-                        InvalidComponentTemplate,
-                        attribute,
-                        Path.GetFileName(file.Path),
-                        "Template binding '" + trimmedValue + "' has type '" + sourceSpec.ValueType.ToDisplayString() +
-                        "', but '" + elementName + "." + propertyName + "' expects '" + spec.ValueType.ToDisplayString() + "'.");
-                    return;
-                }
-
-                currentLines.Add(
-                    templateContext.ContextVariable + ".Bind(" + sourceSpec.PropertyCode + ", " + variable + ", " + spec.PropertyCode + ");");
-                return;
-            }
-
-            if (templateEmissionContexts.Count > 0 && trimmedValue.StartsWith("$self.", StringComparison.Ordinal))
-            {
-                Report(
-                    InvalidBindingSource,
+                ResolvedMarkupValue? resolvedMarkup = ResolveMarkupValue(
+                    bindingContext,
+                    spec,
+                    parsedMarkup,
                     attribute,
-                    trimmedValue,
-                    "$self is supported by reactive directives; a property cannot bind to itself.");
+                    attribute);
+                if (resolvedMarkup is null)
+                {
+                    return;
+                }
+
+                EmitMarkupBinding(
+                    bindingContext,
+                    spec,
+                    resolvedMarkup,
+                    elementName + "." + propertyName + " <- " + trimmedValue);
                 return;
             }
 
@@ -2786,7 +2820,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            GeneratedExpression? expression = ParseLiteralValue(elementName, propertyName, attribute, value, spec);
+            string literalValue = spec.ValueType.SpecialType == SpecialType.System_String
+                ? UnescapeMarkupDollar(value)
+                : value;
+            GeneratedExpression? expression = ParseLiteralValue(elementName, propertyName, attribute, literalValue, spec);
             if (expression is null)
             {
                 return;
