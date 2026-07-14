@@ -23,57 +23,103 @@ Generated from `.`.
 |   |   |-- QueueEngineBenchmarks.cs
 |   |   |-- README.md
 |   |   +-- UiRelayBenchmarks.cs
+|   |-- Cerneala.WpfDispatcherBenchmarks/
+|   |   |-- Cerneala.WpfDispatcherBenchmarks.csproj
+|   |   |-- DispatcherComparisonBenchmarks.cs
+|   |   |-- DispatcherComparisonSmoke.cs
+|   |   |-- DispatcherHarnesses.cs
+|   |   |-- Program.cs
+|   |   +-- README.md
 |   +-- results/
-|       +-- 2026-07-14-relay/
-|           |-- binding/
-|           |   |-- results/
-|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-default.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.csv
-|           |   |   +-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.html
-|           |   +-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-20260714-194331.log
-|           |-- drain/
-|           |   |-- results/
-|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-default.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.csv
-|           |   |   +-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.html
-|           |   +-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-20260714-194125.log
+|       |-- 2026-07-14-relay/
+|       |   |-- binding/
+|       |   |   |-- results/
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.csv
+|       |   |   |   +-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.html
+|       |   |   +-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-20260714-194331.log
+|       |   |-- drain/
+|       |   |   |-- results/
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.csv
+|       |   |   |   +-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.html
+|       |   |   +-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-20260714-194125.log
+|       |   |-- final/
+|       |   |   |-- results/
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.csv
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.html
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.csv
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.html
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.csv
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.html
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.csv
+|       |   |   |   +-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.html
+|       |   |   |-- BenchmarkRun-20260714-195303.log
+|       |   |   +-- BenchmarkRun-20260714-200131.log
+|       |   |-- producers/
+|       |   |   |-- results/
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.csv
+|       |   |   |   +-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.html
+|       |   |   +-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-20260714-194305.log
+|       |   |-- scheduling/
+|       |   |   |-- results/
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.csv
+|       |   |   |   +-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.html
+|       |   |   +-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-20260714-194107.log
+|       |   |-- BenchmarkRun-20260714-192927.log
+|       |   +-- README.md
+|       +-- 2026-07-14-wpf-dispatcher-comparison/
 |           |-- final/
 |           |   |-- results/
-|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-default.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.csv
-|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.html
-|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-default.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.csv
-|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.html
-|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-default.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.csv
-|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.html
-|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-default.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.csv
-|           |   |   +-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.html
-|           |   |-- BenchmarkRun-20260714-195303.log
-|           |   +-- BenchmarkRun-20260714-200131.log
-|           |-- producers/
-|           |   |-- results/
-|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-default.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.csv
-|           |   |   +-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.html
-|           |   +-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-20260714-194305.log
-|           |-- scheduling/
-|           |   |-- results/
-|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-default.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.csv
-|           |   |   +-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.html
-|           |   +-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-20260714-194107.log
-|           |-- BenchmarkRun-20260714-192927.log
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-default.md
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-github.md
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.csv
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.html
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-default.md
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-github.md
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.csv
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.html
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-default.md
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-github.md
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.csv
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.html
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-default.md
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-github.md
+|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.csv
+|           |   |   +-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.html
+|           |   +-- BenchmarkRun-20260714-211746.log
+|           |-- results/
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-default.md
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-github.md
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.csv
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.html
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-default.md
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-github.md
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.csv
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.html
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-default.md
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-github.md
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.csv
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.html
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-default.md
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-github.md
+|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.csv
+|           |   +-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.html
+|           |-- BenchmarkRun-20260714-211614.log
 |           +-- README.md
 |-- Cerneala.SourceGen/
 |   |-- Cerneala.SourceGen.csproj
@@ -1032,6 +1078,9 @@ Generated from `.`.
 |   |-- .nojekyll
 |   |-- about.css
 |   |-- about.html
+|   |-- benchmarks.css
+|   |-- benchmarks.html
+|   |-- benchmarks.js
 |   |-- documentation.css
 |   |-- documentation.html
 |   |-- index.html

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Every checked-in Cerneala benchmark: Queue Engine 2.0, UiRelay, binding coalescing, and the controlled WPF Dispatcher comparison.">
+<title>Cerneala UI Benchmarks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="benchmarks.css">
+<link rel="stylesheet" href="readability.css">
+</head>
+<body>
+<div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="nav__brand" href="index.html">
+    <svg class="nav__mark" viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="13" fill="none" stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="1.5 4"/>
+      <circle cx="16" cy="7" r="2.4" fill="none" stroke="var(--cyan)" stroke-width="1.6"/>
+      <circle cx="24" cy="21" r="2.4" fill="none" stroke="var(--pink)" stroke-width="1.6"/>
+      <circle cx="8" cy="21" r="2.4" fill="none" stroke="var(--lime)" stroke-width="1.6"/>
+      <circle cx="16" cy="16" r="2.2" fill="var(--cyan)"/>
+    </svg>
+    <span>Cerneala <em>UI</em></span>
+  </a>
+  <nav class="nav__links" aria-label="Site navigation">
+    <a href="index.html">Overview</a>
+    <a href="documentation.html">API Reference</a>
+    <a href="wpf-compendium.html">WPF Compendium</a>
+    <a href="roadmap.html">Roadmap</a>
+    <a class="is-active" href="benchmarks.html">Benchmarks</a>
+    <a href="maintainers.html">Maintainers</a>
+    <a href="about.html">About Me</a>
+  </nav>
+  <a class="nav__github" href="https://github.com/Chevalier12/Cerneala">GitHub</a>
+</header>
+
+<main>
+  <section class="benchmark-hero" id="top">
+    <div class="benchmark-hero__copy">
+      <span class="section-code">Measured on source, archived in the repository</span>
+      <h1>Benchmarks</h1>
+      <p>Every checked-in performance result in Cerneala, kept with its hardware, runtime, allocations, raw reports, and the caveats required to read the numbers without lying to yourself.</p>
+      <div class="hero-links">
+        <a class="hero-link hero-link--primary" href="#wpf-duel">WPF Dispatcher duel</a>
+        <a class="hero-link" href="#queue-engine">Queue Engine 2.0</a>
+        <a class="hero-link" href="#relay">UiRelay baseline</a>
+      </div>
+    </div>
+    <aside class="benchmark-hero__signal" aria-label="Headline benchmark results">
+      <div class="signal-head"><span>Latest controlled comparison</span><strong>7/14/2026</strong></div>
+      <div class="signal-plot">
+        <div class="signal-row"><span>WPF drain 1,024</span><i style="--signal:100%;"></i><strong>9,361.66 &micro;s</strong></div>
+        <div class="signal-row signal-row--cui"><span>Cerneala drain 1,024</span><i style="--signal:1.02%;"></i><strong>95.74 &micro;s</strong></div>
+      </div>
+      <div class="signal-result"><span>Same-machine speedup</span><strong>97.78x</strong><small>Independent verification run</small></div>
+    </aside>
+  </section>
+
+  <div class="headline-strip">
+    <div><span>Suites</span><strong>03</strong><small>Queue, Relay, WPF comparison</small></div>
+    <div><span>WPF verification</span><strong>02</strong><small>Complete independent runs</small></div>
+    <div><span>Relay idle</span><strong>0 B</strong><small>Warmed structural path</small></div>
+    <div><span>Queue idle</span><strong>5.216 ns</strong><small>10,000-node tree</small></div>
+  </div>
+
+  <nav class="suite-index" aria-label="Benchmark suites">
+    <a href="#wpf-duel"><span>01</span><strong>WPF Dispatcher</strong><small>Controlled head-to-head</small></a>
+    <a href="#relay"><span>02</span><strong>UiRelay</strong><small>Scheduling, drain, producers, binding</small></a>
+    <a href="#queue-engine"><span>03</span><strong>Queue Engine 2.0</strong><small>Before and after the rewrite</small></a>
+    <a href="#methodology"><span>04</span><strong>Methodology</strong><small>Environment and interpretation limits</small></a>
+  </nav>
+
+  <section class="benchmark-section benchmark-section--duel" id="wpf-duel">
+    <header class="section-head">
+      <div><span class="section-code">01 / Controlled comparison</span><h2>UiRelay versus WPF Dispatcher</h2></div>
+      <p>Both implementations own a dedicated STA thread in the same BenchmarkDotNet process. WPF is the baseline. Lower is better.</p>
+    </header>
+
+    <div class="duel-summary">
+      <div><span>Single enqueue</span><strong>7.74x</strong><small>faster in verification run</small></div>
+      <div><span>10k / 8 producers</span><strong>4.11x</strong><small>faster under contention</small></div>
+      <div><span>Drain 1,024</span><strong>97.78x</strong><small>faster controlled batch</small></div>
+      <div><span>Drain allocation</span><strong>2,567x</strong><small>less managed memory</small></div>
+    </div>
+
+    <div class="duel-toolbar">
+      <div>
+        <span>Independent verification run</span>
+        <strong>Relative cost, WPF normalized to 100%</strong>
+      </div>
+      <div class="segment-control" role="group" aria-label="Comparison metric">
+        <button class="is-active" type="button" data-duel-mode="time" aria-pressed="true">Time</button>
+        <button type="button" data-duel-mode="allocation" aria-pressed="false">Allocation</button>
+      </div>
+    </div>
+
+    <div class="duel-chart" id="duel-chart">
+      <article class="duel-row" data-time-wpf="19.820 us" data-time-cui="2.560 us" data-time-share="12.92" data-allocation-wpf="544 B" data-allocation-cui="64 B" data-allocation-share="11.76">
+        <header><span>Queue one callback</span><strong>WPF <code>BeginInvoke</code> / Cerneala <code>Post</code></strong></header>
+        <div class="duel-track duel-track--wpf"><span>WPF</span><i></i><strong data-wpf-value>19.820 us</strong></div>
+        <div class="duel-track duel-track--cui"><span>CUI</span><i></i><strong data-cui-value>2.560 us</strong></div>
+      </article>
+      <article class="duel-row" data-time-wpf="19.040 us" data-time-cui="3.540 us" data-time-share="18.59" data-allocation-wpf="544 B" data-allocation-cui="168 B" data-allocation-share="30.88">
+        <header><span>Queue with a returned task</span><strong>WPF / Cerneala <code>InvokeAsync</code></strong></header>
+        <div class="duel-track duel-track--wpf"><span>WPF</span><i></i><strong data-wpf-value>19.040 us</strong></div>
+        <div class="duel-track duel-track--cui"><span>CUI</span><i></i><strong data-cui-value>3.540 us</strong></div>
+      </article>
+      <article class="duel-row" data-time-wpf="80.24 us" data-time-cui="33.72 us" data-time-share="42.02" data-allocation-wpf="1,392 B" data-allocation-cui="144 B" data-allocation-share="10.34">
+        <header><span>Drain 1 callback</span><strong>Controlled owner-thread batch</strong></header>
+        <div class="duel-track duel-track--wpf"><span>WPF</span><i></i><strong data-wpf-value>80.24 us</strong></div>
+        <div class="duel-track duel-track--cui"><span>CUI</span><i></i><strong data-cui-value>33.72 us</strong></div>
+      </article>
+      <article class="duel-row" data-time-wpf="745.48 us" data-time-cui="42.73 us" data-time-share="5.73" data-allocation-wpf="37,008 B" data-allocation-cui="144 B" data-allocation-share="0.39">
+        <header><span>Drain 100 callbacks</span><strong>Controlled owner-thread batch</strong></header>
+        <div class="duel-track duel-track--wpf"><span>WPF</span><i></i><strong data-wpf-value>745.48 us</strong></div>
+        <div class="duel-track duel-track--cui"><span>CUI</span><i></i><strong data-cui-value>42.73 us</strong></div>
+      </article>
+      <article class="duel-row" data-time-wpf="9,361.66 us" data-time-cui="95.74 us" data-time-share="1.02" data-allocation-wpf="369,648 B" data-allocation-cui="144 B" data-allocation-share="0.04">
+        <header><span>Drain 1,024 callbacks</span><strong>Controlled owner-thread batch</strong></header>
+        <div class="duel-track duel-track--wpf"><span>WPF</span><i></i><strong data-wpf-value>9,361.66 us</strong></div>
+        <div class="duel-track duel-track--cui"><span>CUI</span><i></i><strong data-cui-value>95.74 us</strong></div>
+      </article>
+    </div>
+
+    <div class="table-block">
+      <header><div><span>Verification run</span><h3>10,000 enqueues with concurrent producers</h3></div><p>Normalized per enqueue. <code>Parallel.For</code> orchestration is included.</p></header>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Producers</th><th scope="col">WPF</th><th scope="col">Cerneala</th><th scope="col">Speedup</th><th scope="col">WPF alloc.</th><th scope="col">Cerneala alloc.</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">1</th><td>354.16 ns</td><td class="value-good">19.99 ns</td><td class="value-strong">17.72x</td><td>360 B</td><td class="value-good">90 B</td></tr>
+            <tr><th scope="row">2</th><td>302.20 ns</td><td class="value-good">49.15 ns</td><td class="value-strong">6.15x</td><td>360 B</td><td class="value-good">91 B</td></tr>
+            <tr><th scope="row">4</th><td>321.63 ns</td><td class="value-good">73.73 ns</td><td class="value-strong">4.36x</td><td>360 B</td><td class="value-good">91 B</td></tr>
+            <tr><th scope="row">8</th><td>331.55 ns</td><td class="value-good">80.76 ns</td><td class="value-strong">4.11x</td><td>360 B</td><td class="value-good">91 B</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="run-comparison">
+      <div><span>First run</span><strong>5.94x</strong><small>single enqueue</small></div>
+      <div><span>Verification</span><strong>7.74x</strong><small>single enqueue</small></div>
+      <div><span>First run</span><strong>78.23x</strong><small>drain 1,024</small></div>
+      <div><span>Verification</span><strong>97.78x</strong><small>drain 1,024</small></div>
+      <p>Timing varies because the fixed-size jobs are shorter than BenchmarkDotNet's recommended 100 ms iteration. Allocation counts were identical across both complete runs.</p>
+    </div>
+
+    <div class="table-pair">
+      <div class="table-block">
+        <header><div><span>First complete run</span><h3>Scheduling and controlled drain</h3></div><p>Exact archived means before the independent verification run.</p></header>
+        <div class="table-scroll"><table>
+          <thead><tr><th scope="col">Workload</th><th scope="col">WPF</th><th scope="col">Cerneala</th><th scope="col">Speedup</th><th scope="col">WPF alloc.</th><th scope="col">Cerneala alloc.</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Single enqueue</th><td>21.020 &micro;s</td><td class="value-good">3.540 &micro;s</td><td>5.94x</td><td>544 B</td><td class="value-good">64 B</td></tr>
+            <tr><th scope="row">InvokeAsync</th><td>18.575 &micro;s</td><td class="value-good">3.520 &micro;s</td><td>5.28x</td><td>544 B</td><td class="value-good">168 B</td></tr>
+            <tr><th scope="row">Drain 1</th><td>80.96 &micro;s</td><td class="value-good">56.65 &micro;s</td><td>1.43x</td><td>1,392 B</td><td class="value-good">120 B</td></tr>
+            <tr><th scope="row">Drain 100</th><td>875.14 &micro;s</td><td class="value-good">43.74 &micro;s</td><td>20.01x</td><td>37,008 B</td><td class="value-good">144 B</td></tr>
+            <tr><th scope="row">Drain 1,024</th><td>7,562.65 &micro;s</td><td class="value-good">96.68 &micro;s</td><td>78.23x</td><td>369,648 B</td><td class="value-good">144 B</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="table-block">
+        <header><div><span>First complete run</span><h3>10,000 concurrent enqueues</h3></div><p>Exact normalized means and allocations from the first archive.</p></header>
+        <div class="table-scroll"><table>
+          <thead><tr><th scope="col">Producers</th><th scope="col">WPF</th><th scope="col">Cerneala</th><th scope="col">Speedup</th><th scope="col">WPF alloc.</th><th scope="col">Cerneala alloc.</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">1</th><td>319.59 ns</td><td class="value-good">22.62 ns</td><td>14.13x</td><td>360 B</td><td class="value-good">90 B</td></tr>
+            <tr><th scope="row">2</th><td>245.58 ns</td><td class="value-good">48.59 ns</td><td>5.05x</td><td>360 B</td><td class="value-good">91 B</td></tr>
+            <tr><th scope="row">4</th><td>279.06 ns</td><td class="value-good">69.60 ns</td><td>4.01x</td><td>360 B</td><td class="value-good">91 B</td></tr>
+            <tr><th scope="row">8</th><td>363.92 ns</td><td class="value-good">81.05 ns</td><td>4.49x</td><td>360 B</td><td class="value-good">91 B</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="source-links">
+      <a href="https://github.com/Chevalier12/Cerneala/tree/master/benchmarks/results/2026-07-14-wpf-dispatcher-comparison">Raw WPF comparison reports</a>
+      <a href="https://github.com/Chevalier12/Cerneala/tree/master/benchmarks/Cerneala.WpfDispatcherBenchmarks">Benchmark source project</a>
+    </div>
+  </section>
+
+  <section class="benchmark-section benchmark-section--relay" id="relay">
+    <header class="section-head">
+      <div><span class="section-code">02 / Relay baseline</span><h2>UiRelay scheduling and coalescing</h2></div>
+      <p>The first checked-in Relay baseline covers scheduling, bounded frame drain, multi-producer enqueue, and worker-thread binding bursts.</p>
+    </header>
+
+    <div class="relay-overview">
+      <article><span>Post</span><strong>1.920 &micro;s</strong><small>64 B / accepted operation</small></article>
+      <article><span>InvokeAsync</span><strong>2.640 &micro;s</strong><small>168 B / accepted operation</small></article>
+      <article><span>Drain 1,024</span><strong>56.575 &micro;s</strong><small>120 B / frame</small></article>
+      <article><span>8 producers</span><strong>12.93 M/s</strong><small>77.34 ns / post</small></article>
+      <article><span>Binding burst</span><strong>1 refresh</strong><small>from 10,000 notifications</small></article>
+    </div>
+
+    <div class="table-pair">
+      <div class="table-block">
+        <header><div><span>Frame drain</span><h3>Bounded at 1,024 callbacks</h3></div><p>The 2,048 case leaves exactly 1,024 pending for the next frame.</p></header>
+        <div class="table-scroll"><table>
+          <thead><tr><th scope="col">Queued</th><th scope="col">Mean/frame</th><th scope="col">Allocated</th><th scope="col">Throughput</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">0</th><td>5.780 &micro;s</td><td>920 B</td><td>n/a</td></tr>
+            <tr><th scope="row">1</th><td>4.875 &micro;s</td><td>120 B</td><td>0.21 M/s</td></tr>
+            <tr><th scope="row">100</th><td>11.560 &micro;s</td><td>120 B</td><td>8.65 M/s</td></tr>
+            <tr><th scope="row">1,024</th><td>56.575 &micro;s</td><td>120 B</td><td>18.10 M/s</td></tr>
+            <tr><th scope="row">2,048</th><td>75.700 &micro;s</td><td>120 B</td><td>13.53 M/s</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="table-block">
+        <header><div><span>Concurrent enqueue</span><h3>10,000 posts</h3></div><p>Normalized per accepted post; producer orchestration included.</p></header>
+        <div class="table-scroll"><table>
+          <thead><tr><th scope="col">Producers</th><th scope="col">Mean/post</th><th scope="col">Allocated</th><th scope="col">Throughput</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">1</th><td>21.97 ns</td><td>90 B</td><td>45.52 M/s</td></tr>
+            <tr><th scope="row">2</th><td>52.12 ns</td><td>91 B</td><td>19.19 M/s</td></tr>
+            <tr><th scope="row">4</th><td>70.68 ns</td><td>91 B</td><td>14.15 M/s</td></tr>
+            <tr><th scope="row">8</th><td>77.34 ns</td><td>91 B</td><td>12.93 M/s</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="table-block">
+      <header><div><span>Binding coalescing</span><h3>10,000 worker-thread notifications</h3></div><p>Worker creation is included; both workloads drain one coalesced UI refresh.</p></header>
+      <div class="table-scroll"><table>
+        <thead><tr><th scope="col">Workload</th><th scope="col">Mean/notification</th><th scope="col">Allocated</th><th scope="col">Throughput</th><th scope="col">Pending UI refreshes</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Simple source</th><td>95.83 ns</td><td>81 B</td><td>10.43 M/s</td><td class="value-strong">1</td></tr>
+          <tr><th scope="row">Two-source interpolation</th><td>109.69 ns</td><td>82 B</td><td>9.12 M/s</td><td class="value-strong">1</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="verification-band">
+      <header><span>Independent final pass</span><strong>Allocations stayed unchanged</strong></header>
+      <div class="table-scroll"><table>
+        <thead><tr><th scope="col">Workload</th><th scope="col">Initial</th><th scope="col">Final</th><th scope="col">Allocation</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Post</th><td>1.920 &micro;s</td><td>2.420 &micro;s</td><td>64 B</td></tr>
+          <tr><th scope="row">InvokeAsync</th><td>2.640 &micro;s</td><td>2.940 &micro;s</td><td>168 B</td></tr>
+          <tr><th scope="row">Drain 100</th><td>11.560 &micro;s</td><td>11.725 &micro;s</td><td>120 B/frame</td></tr>
+          <tr><th scope="row">Drain 1,024</th><td>56.575 &micro;s</td><td>71.500 &micro;s</td><td>120 B/frame</td></tr>
+          <tr><th scope="row">Simple binding</th><td>95.83 ns</td><td>111.1 ns</td><td>81 B</td></tr>
+          <tr><th scope="row">Interpolation</th><td>109.69 ns</td><td>445.5 ns</td><td>82 B</td></tr>
+        </tbody>
+      </table></div>
+      <p>The final interpolation timing contains a large outlier. Structural allocation and exact-once stress tests remain the correctness gates. MemoryDiagnoser observed zero Gen0 collections throughout the measured suite.</p>
+    </div>
+
+    <div class="source-links"><a href="https://github.com/Chevalier12/Cerneala/tree/master/benchmarks/results/2026-07-14-relay">Raw UiRelay reports</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/UiRelayBenchmarks.cs">Benchmark source</a></div>
+  </section>
+
+  <section class="benchmark-section benchmark-section--queue" id="queue-engine">
+    <header class="section-head">
+      <div><span class="section-code">03 / Before and after</span><h2>Queue Engine 2.0</h2></div>
+      <p>The rewrite replaced tree-scanning idle checks and per-queue visual-order rebuilds with direct counts, one shared order index, and sparse queue snapshots.</p>
+    </header>
+
+    <div class="queue-headline">
+      <div><span>10,000-node idle query</span><strong>8,775.06 &micro;s</strong><i></i><strong class="value-good">5.216 ns</strong></div>
+      <div><span>Ten repeated idle queries</span><strong>87.28 ms / 141 MB</strong><i></i><strong class="value-good">43.63 ns / 0 B</strong></div>
+      <div><span>10,000-entry drain</span><strong>243,190.28 &micro;s</strong><i></i><strong class="value-good">3,566.80 &micro;s</strong></div>
+    </div>
+
+    <div class="table-block">
+      <header><div><span>Idle HasWork</span><h3>Tree size disappears from the hot path</h3></div><p>Final queries use direct queue counts after warmup.</p></header>
+      <div class="table-scroll"><table>
+        <thead><tr><th scope="col">Tree nodes</th><th scope="col">Baseline mean</th><th scope="col">Final mean</th><th scope="col">Baseline allocation</th><th scope="col">Final allocation</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">100</th><td>43.69 &micro;s</td><td class="value-good">5.168 ns</td><td>152.16 KB</td><td class="value-good">0 B</td></tr>
+          <tr><th scope="row">1,000</th><td>454.01 &micro;s</td><td class="value-good">5.193 ns</td><td>1,470.30 KB</td><td class="value-good">0 B</td></tr>
+          <tr><th scope="row">10,000</th><td>8,775.06 &micro;s</td><td class="value-good">5.216 ns</td><td>14,101.72 KB</td><td class="value-good">0 B</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="table-block">
+      <header><div><span>Sparse snapshots</span><h3>Cost follows queued work, not tree size</h3></div><p>All cases use a 10,000-node tree after the shared index exists.</p></header>
+      <div class="table-scroll"><table>
+        <thead><tr><th scope="col">Queued</th><th scope="col">Baseline mean</th><th scope="col">Final mean</th><th scope="col">Baseline allocation</th><th scope="col">Final allocation</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">1</th><td>1,257.86 &micro;s</td><td class="value-good">7.288 &micro;s</td><td>2,014.93 KB</td><td class="value-good">112 B</td></tr>
+          <tr><th scope="row">100</th><td>1,318.51 &micro;s</td><td class="value-good">10.965 &micro;s</td><td>2,022.04 KB</td><td class="value-good">3,280 B</td></tr>
+          <tr><th scope="row">1,000</th><td>1,515.51 &micro;s</td><td class="value-good">51.989 &micro;s</td><td>2,074.84 KB</td><td class="value-good">32,080 B</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="table-pair">
+      <div class="table-block">
+        <header><div><span>Shared order</span><h3>Three successive snapshots</h3></div><p>100 scheduled elements per queue.</p></header>
+        <div class="table-scroll"><table>
+          <thead><tr><th scope="col">Nodes</th><th scope="col">Baseline</th><th scope="col">Final</th><th scope="col">Base alloc.</th><th scope="col">Final alloc.</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">1,000</th><td>212.8 &micro;s</td><td class="value-good">11.25 &micro;s</td><td>652.57 KB</td><td class="value-good">9.61 KB</td></tr>
+            <tr><th scope="row">10,000</th><td>3,907.8 &micro;s</td><td class="value-good">31.57 &micro;s</td><td>6,066.16 KB</td><td class="value-good">9.61 KB</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="table-block">
+        <header><div><span>Legacy versus current</span><h3>Drain comparison</h3></div><p>The embedded legacy path uses HashSet + List + RemoveAll.</p></header>
+        <div class="table-scroll"><table>
+          <thead><tr><th scope="col">Entries</th><th scope="col">Legacy</th><th scope="col">Current</th><th scope="col">Ratio</th><th scope="col">Legacy alloc.</th><th scope="col">Current alloc.</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">100</th><td>121.72 &micro;s</td><td class="value-good">32.00 &micro;s</td><td>0.26</td><td>37.69 KB</td><td class="value-good">3.23 KB</td></tr>
+            <tr><th scope="row">1,000</th><td>3,132.85 &micro;s</td><td class="value-good">348.95 &micro;s</td><td>0.11</td><td>356.14 KB</td><td class="value-good">31.36 KB</td></tr>
+            <tr><th scope="row">10,000</th><td>243,190.28 &micro;s</td><td class="value-good">3,566.80 &micro;s</td><td>0.01</td><td>3,710.18 KB</td><td class="value-good">312.61 KB</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="table-block">
+      <header><div><span>Index rebuild and detach</span><h3>Explicit structural costs</h3></div><p>Rebuild visits the tree once per version; detach scales with the removed subtree.</p></header>
+      <div class="table-scroll"><table>
+        <thead><tr><th scope="col">Scenario</th><th scope="col">Size</th><th scope="col">Mean</th><th scope="col">Allocation</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Rebuild + 100 snapshot</th><td>1,000 nodes</td><td>317.8 &micro;s</td><td>212.51 KB</td></tr>
+          <tr><th scope="row">Rebuild + 100 snapshot</th><td>10,000 nodes</td><td>3,435.1 &micro;s</td><td>2,016.99 KB</td></tr>
+          <tr><th scope="row">Detach scheduled subtree</th><td>10 nodes</td><td>29.10 &micro;s</td><td>6.35 KB</td></tr>
+          <tr><th scope="row">Detach scheduled subtree</th><td>100 nodes</td><td>132.30 &micro;s</td><td>45.70 KB</td></tr>
+          <tr><th scope="row">Detach scheduled subtree</th><td>1,000 nodes</td><td>1,388.42 &micro;s</td><td>438.87 KB</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="gate-ledger">
+      <header><span>Functional gates</span><strong>Performance claims backed by structural tests</strong></header>
+      <ul>
+        <li><span>01</span><p><code>HasWork</code> performs zero visual traversals and allocates zero bytes after warmup.</p></li>
+        <li><span>02</span><p>One <code>TreeVersion</code> produces at most one shared index build across queue wrappers.</p></li>
+        <li><span>03</span><p><code>Remove</code> uses direct dictionary removal; no drain contains <code>List.RemoveAll</code>.</p></li>
+        <li><span>04</span><p>A snapshot sorts only queued, attached elements.</p></li>
+        <li><span>05</span><p>Active detach removes every detached element from all root queues.</p></li>
+        <li><span>06</span><p>The wrapped-diagnostics regression uses exactly one useful <code>Measure</code> call.</p></li>
+      </ul>
+      <div><span>Baseline suite</span><strong>1,763 passing</strong><small>38.57 s</small><span>Final suite</span><strong>1,786 passing</strong><small>21.95 s</small></div>
+    </div>
+
+    <div class="source-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-07-13-queue-engine-2.md">Archived Queue Engine report</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/QueueEngineBenchmarks.cs">Benchmark source</a></div>
+  </section>
+
+  <section class="methodology" id="methodology">
+    <header class="section-head">
+      <div><span class="section-code">04 / Read the fine print</span><h2>Environment and interpretation</h2></div>
+      <p>These numbers are repository evidence, not a universal hardware-independent promise.</p>
+    </header>
+    <div class="environment-grid">
+      <div><span>OS</span><strong>Windows 11 25H2</strong><small>10.0.26200.8655</small></div>
+      <div><span>CPU</span><strong>AMD EPYC 9354</strong><small>3.25 GHz, 4C / 8T exposed</small></div>
+      <div><span>Runtime</span><strong>.NET 8.0.27</strong><small>x64 RyuJIT x86-64-v4</small></div>
+      <div><span>SDK</span><strong>10.0.300</strong><small>Release configuration</small></div>
+      <div><span>Harness</span><strong>BenchmarkDotNet 0.15.8</strong><small>Concurrent workstation GC</small></div>
+      <div><span>Short job</span><strong>1 / 2 / 5</strong><small>launch / warmup / measured</small></div>
+    </div>
+    <div class="interpretation-grid">
+      <article><span>Comparable</span><h3>Same machine, same runtime</h3><p>Every before/after or WPF/Cerneala pairing was captured under the same exposed hardware, runtime, build configuration, and benchmark job.</p></article>
+      <article><span>Structural truth</span><h3>Tests guard the invariants</h3><p>Zero-allocation idle paths, exact-once dispatch, bounded backlog, tree traversal counts, and detach cleanup are asserted separately from timing noise.</p></article>
+      <article><span>Boundary</span><h3>Small system, focused contract</h3><p>Relay wins a deliberately narrow queue-and-frame workload. WPF Dispatcher still provides priorities, timers, message integration, nested loops, and decades of compatibility semantics.</p></article>
+      <article><span>Noise policy</span><h3>Ratios are ranges</h3><p>Short fixed-size iterations produce broad confidence intervals. Repeat on equivalent hardware before calling a small timing delta a regression.</p></article>
+    </div>
+    <footer class="benchmark-footer">
+      <p><strong>Last archive refresh:</strong> July 14, 2026. New checked-in benchmark families belong on this page.</p>
+      <div><a href="roadmap.html">Roadmap</a><a href="documentation.html">API Reference</a><a href="https://github.com/Chevalier12/Cerneala/tree/master/benchmarks">All benchmark sources</a></div>
+    </footer>
+  </section>
+</main>
+
+<script src="benchmarks.js"></script>
+</body>
+</html>

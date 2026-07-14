@@ -1,4 +1,8 @@
-# Queue Engine Benchmarks
+# Cerneala Benchmarks
+
+The primary suite covers Queue Engine and Relay internals. The separate WPF
+project under `../Cerneala.WpfDispatcherBenchmarks/` compares the overlapping
+Relay and WPF Dispatcher queueing contracts on dedicated STA threads.
 
 Run the complete Queue Engine benchmark suite from the repository root:
 
