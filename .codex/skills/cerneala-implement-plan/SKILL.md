@@ -1,6 +1,6 @@
 ---
 name: cerneala-implement-plan
-description: Implement a named Cerneala Markdown checklist plan end-to-end under a persistent `/goal`, executing the remaining work in coherent batches and marking `[x]` only after each batch is implemented and verified. Use when the user says to implement a plan completely, continue an existing checklist plan, execute a named plan end-to-end, or check off tasks as batches finish. This skill modifies code, tests, documentation, and the source plan until every applicable item and gate is complete.
+description: Implement a named Cerneala Markdown checklist plan end-to-end under a persistent `/goal`, using exactly one plan stage per batch and mandatorily checking off that stage immediately after it is implemented and verified. Use when the user says to implement a plan completely, continue an existing checklist plan, execute a named plan end-to-end, or check off stages as batches finish. This skill modifies code, tests, documentation, and the source plan until every applicable item and gate is complete.
 ---
 
 # Cerneala Implement Plan
@@ -37,17 +37,23 @@ The user's invocation of this skill is explicit authorization to create the goal
 - Inspect the current code and tests before trusting old baseline descriptions. The repository may have moved on while the plan sat there collecting dust.
 - Confirm prerequisite plans are complete before starting a dependent plan. If they are not complete, execute them first only when the requested plan explicitly makes them a dependency; otherwise ask the user.
 
-## Build Batches
+## Stage-Atomic Batches (MANDATORY)
 
-Treat a batch as the smallest coherent group that can be implemented and verified without leaving the repository in a deliberately broken state.
+One batch is exactly one numbered/named implementation stage from the source plan. This is a hard execution boundary, not a preference.
 
-- Default to one plan stage per batch.
-- Split a large stage when it contains independently verifiable foundations and integrations.
-- Combine tiny adjacent stages only when their intermediate state would not compile or cannot be tested meaningfully.
-- Preserve dependency order from the plan.
-- At the beginning of a batch, identify the exact unchecked items and gate conditions it intends to close.
-- Use `update_plan` for the current execution outline when several steps are involved, but keep the Markdown checklist as the source of truth.
-- Continue to the next batch automatically after verification unless the user pauses or redirects the work.
+- Select the first incomplete stage whose dependencies are complete.
+- Work only on that stage's unchecked tasks, tests, verification, and gate conditions.
+- Do not split one stage across multiple batches.
+- Do not combine adjacent stages, even when they are small.
+- Do not interleave work from later stages while the current stage is open.
+- Do not start the next stage merely because one task in the current stage is green. Finish the entire stage and its gate first.
+- If repository policy requires collateral work to keep the current stage valid, such as synchronizing public API documentation with a public API change, include only that mandatory collateral in the current batch. Do not otherwise advance or check a later stage early.
+- If a stage is already implemented in repository state but unchecked, its batch is an audit-and-verification batch: prove every item and gate, then check it off.
+- At batch start, name the stage and enumerate the exact unchecked items and gate conditions to close.
+- In `update_plan`, keep only the current stage `in_progress`; later stages remain `pending`.
+- If the current stage cannot be completed, stop on that stage. Leave its unfinished items unchecked and do not jump ahead to easier work from another stage.
+
+The source plan remains the durable ledger. Repository exploration may inspect future stages for dependency awareness, but implementation, tests, and edits must stay inside the active stage boundary.
 
 ## Execute a Batch
 
@@ -72,9 +78,9 @@ Treat a batch as the smallest coherent group that can be implemented and verifie
 dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json
 ```
 
-- If a public API changes, update `docs-site/documentation/classes/` in the same batch using `writing-api-documentation`.
+- If a public API changes, update `docs-site/documentation/classes/` in the same batch using `writing-api-documentation`; treat this as mandatory current-stage collateral, not permission to implement the later documentation stage.
 - Update `docs-site/documentation/manifest.json` when API pages are added or renamed.
-- Do not postpone required tests or docs to a fictional cleanup batch unless the source plan explicitly orders them later.
+- Complete every implementation and test task belonging to the active stage before moving to its gate.
 
 ### 3. Verify
 
@@ -84,25 +90,29 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - Investigate failures instead of checking the task and writing "probably unrelated" like an optimistic arsonist.
 - Never mark a task complete only because code was written. It must satisfy its stated verification.
 
-### 4. Update the checklist immediately
+### 4. Commit the stage checkpoint immediately (MANDATORY)
 
-After the batch passes:
+After the entire active stage passes, checklist synchronization is a blocking part of the batch. Do not run any implementation command for the next stage until all steps below are complete:
 
 - Edit the source plan with `apply_patch`.
-- Change `[ ]` to `[x]` only for items implemented and verified by this batch.
-- Mark a gate `[x]` only when every condition under that gate is proven.
+- Change `[ ]` to `[x]` for every active-stage item implemented and verified by this batch.
+- Mark every active-stage gate `[x]` only when all of its conditions are proven.
 - For a conditional task that was evaluated and correctly found unnecessary, mark it `[x]` and append a short reason such as `(Nu a fost necesar: ...)`.
 - Leave blocked or unfinished work unchecked.
+- Never check tasks from another stage as part of the current stage checkpoint, except to preserve checkmarks that already existed.
 - Do not rewrite historical checked items unless repository evidence proves they are false.
 - Change plan status to `in progres` after the first completed batch when the plan tracks status.
 - Change status to `finalizat` only after all applicable tasks, gates, documentation, and final verification are complete.
 - Run `git diff --check` for the files touched by the batch.
-- Re-read the updated checklist section to confirm no item was checked accidentally.
+- Re-read the entire updated stage section and confirm all completed items and gates are checked, unfinished items remain unchecked, and no neighboring stage changed accidentally.
+- Send the stage-completion commentary update before beginning the next batch.
+
+Checking off the finished stage is mandatory. A stage is not a completed batch until the source plan has been patched and re-read.
 
 ### 5. Report and continue
 
-- Send a short commentary update naming the completed batch, verification run, and newly checked items.
-- Continue with the next unchecked batch in the same turn when feasible.
+- Send a short commentary update naming the completed stage, verification run, and newly checked items/gates.
+- Only after that checkpoint, select the next incomplete stage as a new batch and continue in the same turn when feasible.
 - Do not stop merely because one stage is green; the goal is end-to-end completion.
 
 ## Checklist Semantics
@@ -120,11 +130,11 @@ Interpret checklist states strictly:
 
 ## Failure and Resume Rules
 
-- If a test fails, keep affected tasks unchecked and fix the failure before moving on.
+- If a test fails, keep affected tasks unchecked and fix the failure inside the current stage before moving on.
 - If the plan conflicts with current architecture, stop only that batch, record the contradiction, and ask the user before changing the approved design.
 - If an external or user decision blocks progress, keep the goal active while meaningful work remains elsewhere.
 - Mark the goal `blocked` only under the goal tool's repeated-blocker rules, never merely because the work is difficult or large.
-- After interruption or context compaction, call `get_goal`, read the plan, inspect unchecked items, and resume from the first incomplete dependency.
+- After interruption or context compaction, call `get_goal`, read the plan, inspect unchecked items, and resume from the first incomplete stage. Do not resume isolated tasks from later stages.
 - Treat the plan file and repository state as authoritative, not memory of an older turn.
 
 ## Final Completion Audit
