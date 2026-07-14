@@ -56,7 +56,9 @@ provider.Theme = new Theme("High contrast")
 
 `Get<T>` and `TryGet<T>` delegate to the current `Theme`. `Get<T>` propagates the theme lookup failure when the key is missing, while `TryGet<T>` returns `false` and assigns the default value for `T`.
 
-`UIRoot.SetThemeProvider` subscribes to `ThemeChanged`. When the provider raises the event, the root invalidates aspect state for the subtree so controls and templates can resolve theme-backed aspect values again.
+`UIRoot.SetThemeProvider` subscribes to `ThemeChanged`. UI-thread notifications invalidate aspect state immediately. Off-thread bursts are coalesced into one pending Relay callback per root, and aspect processing reads the provider's current theme on the UI thread. Replacing the provider invalidates callbacks queued by the old subscription.
+
+`ThemeProvider` does not make `Theme` or application state generally thread-safe. A producer that replaces the theme off-thread must publish a coherent `Theme` instance before raising the notification.
 
 ## Constructors
 

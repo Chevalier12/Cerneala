@@ -1,4 +1,5 @@
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Invalidation;
 
@@ -42,6 +43,20 @@ public sealed class FrameStats
 
     public int MotionSkippedByReducedMotion { get; private set; }
 
+    public int RelaySnapshotCallbacks { get; private set; }
+
+    public int RelayDequeuedCallbacks { get; private set; }
+
+    public int RelayExecutedCallbacks { get; private set; }
+
+    public int RelayCanceledCallbacks { get; private set; }
+
+    public int RelayFaultedCallbacks { get; private set; }
+
+    public int RelayDeferredCallbacks { get; private set; }
+
+    public int RelayBacklog { get; private set; }
+
     public bool HasWork =>
         InheritedElements > 0 ||
         CommandStateElements > 0 ||
@@ -57,7 +72,8 @@ public sealed class FrameStats
         MotionCompleted > 0 ||
         MotionRenderInvalidations > 0 ||
         MotionLayoutInvalidations > 0 ||
-        MotionSkippedByReducedMotion > 0;
+        MotionSkippedByReducedMotion > 0 ||
+        RelayDequeuedCallbacks > 0;
 
     public void Count(FramePhase phase)
     {
@@ -118,5 +134,16 @@ public sealed class FrameStats
         MotionRenderInvalidations += result.MotionRenderInvalidations;
         MotionLayoutInvalidations += result.MotionLayoutInvalidations;
         MotionSkippedByReducedMotion += result.MotionSkippedByReducedMotion;
+    }
+
+    internal void CountRelay(UiRelayDrainResult result)
+    {
+        RelaySnapshotCallbacks += result.SnapshotCount;
+        RelayDequeuedCallbacks += result.Dequeued;
+        RelayExecutedCallbacks += result.Executed;
+        RelayCanceledCallbacks += result.Canceled;
+        RelayFaultedCallbacks += result.Faulted;
+        RelayDeferredCallbacks += result.Deferred;
+        RelayBacklog = result.Backlog;
     }
 }

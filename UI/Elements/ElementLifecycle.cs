@@ -6,6 +6,8 @@ public static class ElementLifecycle
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(element);
+        root.Relay.VerifyAccess();
+        ValidateSubtreeAttachment(root, element);
 
         foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Logical))
         {
@@ -22,6 +24,7 @@ public static class ElementLifecycle
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(element);
+        root.Relay.VerifyAccess();
 
         HashSet<UIElement> detached = new(ReferenceEqualityComparer.Instance);
         foreach (UIElement current in ElementTreeWalker.PostOrder(element, ElementChildRole.Visual))
@@ -32,6 +35,26 @@ public static class ElementLifecycle
         foreach (UIElement current in ElementTreeWalker.PostOrder(element, ElementChildRole.Logical))
         {
             DetachSingle(root, current, detached);
+        }
+    }
+
+    internal static void ValidateSubtreeAttachment(UIRoot root, UIElement element)
+    {
+        HashSet<UIElement> validated = new(ReferenceEqualityComparer.Instance);
+        foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Logical)
+            .Concat(ElementTreeWalker.PreOrder(element, ElementChildRole.Visual)))
+        {
+            if (!validated.Add(current) || ReferenceEquals(current.Root, root))
+            {
+                continue;
+            }
+
+            if (current.Root is not null)
+            {
+                throw new InvalidOperationException("Element is already attached to a different root.");
+            }
+
+            current.ValidateLifecycleRoot(root);
         }
     }
 

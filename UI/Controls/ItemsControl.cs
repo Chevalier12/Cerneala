@@ -288,6 +288,7 @@ public class ItemsControl : Control
 
     private void OnItemsChanged(object? sender, EventArgs args)
     {
+        VerifyCollectionNotificationAccess("ItemCollection");
         if (ItemsSource is not null)
         {
             return;
@@ -334,8 +335,20 @@ public class ItemsControl : Control
 
     private void OnObservableItemsSourceChanged(object? sender, ObservableListChangedEventArgs args)
     {
+        VerifyCollectionNotificationAccess("ObservableList");
+
         itemsPresenter.MarkItemsDirty();
         InvalidateItems("Observable items source changed");
+    }
+
+    private void VerifyCollectionNotificationAccess(string collectionName)
+    {
+        if (Root is UIRoot root && !root.Relay.CheckAccess())
+        {
+            throw new InvalidOperationException(
+                $"{collectionName} changes observed by an attached ItemsControl must run on the owning UI thread. " +
+                "Use await root.Relay.InvokeAsync(() => items.Add(item)).");
+        }
     }
 }
 

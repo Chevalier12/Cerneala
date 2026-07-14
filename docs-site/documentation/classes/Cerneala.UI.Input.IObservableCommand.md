@@ -7,15 +7,23 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Input/IObservableCommand.cs`
 
-Provides the `Cerneala.UI.Input.IObservableCommand` API surface.
+Extends `ICommand` with a notification that asks attached command controls to re-query executable state.
 
 ```csharp
-public abstract interface IObservableCommand
+public interface IObservableCommand : ICommand
 ```
 
 ## Remarks
 
-This page is generated from the repository API index so the documentation surface stays aligned with the source tree.
+`CanExecuteChanged` is a state notification rather than a delta. Attached `ButtonBase` controls process it immediately on the UI thread and coalesce off-thread bursts through their root Relay. The command's `CanExecute` method is not called on the producer thread.
+
+Controls unsubscribe when detached or when their command changes, and queued callbacks from an inactive subscription do not update the control.
+
+## Events
+
+| Name | Description |
+| --- | --- |
+| `CanExecuteChanged` | Requests that active command sources re-query `CanExecute`. The event may be raised from a worker thread when the consumer supports Relay dispatch. |
 
 ## Applies to
 

@@ -77,6 +77,8 @@ effectiveValue = meter.GetValue(MeterObject.CountProperty); // 2
 
 ## Remarks
 
+Derived objects can enforce mutation affinity before their property store is read or changed. Attached `UIElement` instances use this hook to reject typed and untyped `SetValue` and `ClearValue` calls from any thread other than the owning root's Relay thread; plain `UiObject` instances retain their existing unrestricted behavior.
+
 `UiObject` is the base for objects that participate in Cerneala's UI property system. It stores values in a private `UiPropertyStore` and resolves an effective value from multiple `UiPropertyValueSource` layers.
 
 Effective values are resolved in this order, from highest to lowest priority: `Local`, `Animation`, `AspectVisualState`, `AspectBase`, `TemplateBinding`, and `Inherited`. When no stored value exists for a property, `GetValue` returns the property's metadata default value and `GetValueSource` returns `Default`.

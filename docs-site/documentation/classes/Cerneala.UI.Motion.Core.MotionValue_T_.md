@@ -24,7 +24,7 @@ Create a value, observe changes, animate it, then tick the owning graph:
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Specs;
 
-MotionGraph graph = new(new MotionThreadGuard(Environment.CurrentManagedThreadId));
+MotionGraph graph = new();
 MotionValue<double> opacity = graph.CreateValue(0d);
 
 using IDisposable subscription = opacity.Subscribe(change =>
@@ -84,7 +84,7 @@ Starting a new animation cancels the previous active handle with `MotionCancelBe
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `AnimateTo` | `ArgumentNullException` | `spec` is `null`. |
-| `AnimateTo`, `JumpTo` | `InvalidOperationException` | The current thread is not accepted by the owning graph's `MotionThreadGuard`. |
+| `AnimateTo`, `JumpTo` | `InvalidOperationException` | The current thread is not the thread that created the owning standalone graph, or the UI thread that owns its root. |
 | `Subscribe` | `ArgumentNullException` | `listener` is `null`. |
 
 ## Applies to

@@ -24,6 +24,8 @@ ElementLifecycle.DetachSubtree(root, child);
 
 ## Remarks
 
+`AttachSubtree` and `DetachSubtree` verify the supplied root's Relay before traversing or changing lifecycle state. Calls from another thread throw `InvalidOperationException` without partially attaching or detaching the subtree.
+
 `AttachSubtree` walks the logical subtree first, then the visual subtree, and attaches each element to the supplied root. Elements already attached to that same root are skipped. Attaching an element that already belongs to a different root throws `InvalidOperationException`.
 
 `DetachSubtree` walks the visual subtree and then the logical subtree in post-order. It tracks detached elements by reference so an element reached through both roles is cleaned up once.

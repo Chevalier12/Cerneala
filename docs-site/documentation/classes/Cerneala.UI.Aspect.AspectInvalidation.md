@@ -42,6 +42,8 @@ if (result.Applied)
 
 ## Remarks
 
+Tracking, recomputation, untracking, and disposal use the associated engine's thread authority. A cross-thread call throws `InvalidOperationException` before subscriptions, tracked-element state, or applied values are changed.
+
 `AspectInvalidation` stores the `AspectEngine`, `AspectCatalog`, and `AspectEnvironment` supplied to its constructor. `Track` subscribes to the element's property changes, performs the initial application, and retains the element until `Untrack` or `Dispose` is called. Property changes marked with `AffectsAspect`, and properties recorded by the resolved aspect dependency set, cause the element to be recomputed.
 
 Changes to environment tokens recompute only tracked elements whose resolved declarations depend on the changed token. Aspect data conditions receive the tracked element's current `DataContext`. `Recompute` forces an application without changing tracking state. `Untrack` removes subscriptions and clears the element's applied aspect state; `Dispose` removes all subscriptions and rejects later tracking or recompute calls.

@@ -1,11 +1,19 @@
+using Cerneala.UI.Relay;
+
 namespace Cerneala.UI.Aspect;
 
 public sealed class AspectEnvironment
 {
     private readonly Dictionary<AspectToken, object?> values = [];
     private readonly AspectEnvironment? parent;
+    private readonly IUiThreadAccess threadAccess;
 
     public AspectEnvironment(string name, AspectEnvironment? parent = null)
+        : this(parent?.threadAccess ?? new CapturedUiThreadAccess(), name, parent)
+    {
+    }
+
+    internal AspectEnvironment(IUiThreadAccess threadAccess, string name, AspectEnvironment? parent = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -13,6 +21,7 @@ public sealed class AspectEnvironment
         }
 
         Name = name;
+        this.threadAccess = threadAccess ?? throw new ArgumentNullException(nameof(threadAccess));
         this.parent = parent;
     }
 
@@ -24,6 +33,7 @@ public sealed class AspectEnvironment
 
     public void Set<T>(AspectToken<T> token, T value)
     {
+        threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(token);
         values[token] = value;
         Version++;
@@ -32,6 +42,7 @@ public sealed class AspectEnvironment
 
     public void Set(AspectToken token, object? value)
     {
+        threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(token);
         if (value is not null && !token.ValueType.IsInstanceOfType(value))
         {
@@ -78,11 +89,13 @@ public sealed class AspectEnvironment
 
     public AspectEnvironment CreateChildScope(string name)
     {
-        return new AspectEnvironment(name, this);
+        threadAccess.VerifyAccess();
+        return new AspectEnvironment(threadAccess, name, this);
     }
 
     internal void ReplaceWith(AspectEnvironment source)
     {
+        threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(source);
         AspectToken[] changedTokens = values.Keys
             .Union(source.values.Keys)

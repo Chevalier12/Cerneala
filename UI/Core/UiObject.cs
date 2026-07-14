@@ -8,6 +8,10 @@ public class UiObject
 
     protected virtual UiPropertyMutationObserver? MutationObserver => null;
 
+    protected virtual void VerifyMutationAccess()
+    {
+    }
+
     public T GetValue<T>(UiProperty<T> property)
     {
         ArgumentNullException.ThrowIfNull(property);
@@ -72,6 +76,8 @@ public class UiObject
             throw new InvalidOperationException($"UI property '{property.DiagnosticName}' is read-only.");
         }
 
+        VerifyMutationAccess();
+
         T oldValue = GetValue(property);
         UiPropertyValueSource oldSource = GetValueSource(property);
         object? oldSourceValue = GetSourceValue(property, source);
@@ -97,6 +103,8 @@ public class UiObject
         {
             throw new InvalidOperationException($"UI property '{property.DiagnosticName}' is read-only.");
         }
+
+        VerifyMutationAccess();
 
         object? oldValue = GetValue(property);
         UiPropertyValueSource oldSource = GetValueSource(property);
@@ -126,6 +134,8 @@ public class UiObject
             throw new InvalidOperationException($"UI property '{property.DiagnosticName}' is read-only.");
         }
 
+        VerifyMutationAccess();
+
         object? oldValue = GetValue(property);
         UiPropertyValueSource oldSource = GetValueSource(property);
         object? oldSourceValue = GetSourceValue(property, source);
@@ -151,6 +161,7 @@ public class UiObject
 
     private T SetValueCore<T>(UiProperty<T> property, T value, UiPropertyValueSource source)
     {
+        VerifyMutationAccess();
         T oldValue = GetValue(property);
         UiPropertyValueSource oldSource = GetValueSource(property);
         object? oldSourceValue = GetSourceValue(property, source);

@@ -639,77 +639,77 @@ public sealed partial class UiMarkupGenerator
             switch (descriptor.Kind)
             {
                 case BindingSourceKind.DataPath:
-                {
-                    List<string> segments = [];
-                    for (int index = 0; index < descriptor.DataSegments.Count; index++)
                     {
-                        DataPathSegmentDescriptor segment = descriptor.DataSegments[index];
-                        string ownerType = segment.OwnerType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        string propertyType = segment.Property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        string setter = index == descriptor.DataSegments.Count - 1 && descriptor.CanWrite
-                            ? ", (owner, value) => ((" + ownerType + ")owner!)." + segment.Property.Name +
-                                " = (" + propertyType + ")value!"
-                            : string.Empty;
-                        segments.Add(
-                            "new global::Cerneala.UI.Markup.MarkupDataPathSegment(" + Literal(segment.Property.Name) +
-                            ", value => ((" + ownerType + ")value!)." + segment.Property.Name + setter + ")");
+                        List<string> segments = [];
+                        for (int index = 0; index < descriptor.DataSegments.Count; index++)
+                        {
+                            DataPathSegmentDescriptor segment = descriptor.DataSegments[index];
+                            string ownerType = segment.OwnerType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                            string propertyType = segment.Property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                            string setter = index == descriptor.DataSegments.Count - 1 && descriptor.CanWrite
+                                ? ", (owner, value) => ((" + ownerType + ")owner!)." + segment.Property.Name +
+                                    " = (" + propertyType + ")value!"
+                                : string.Empty;
+                            segments.Add(
+                                "new global::Cerneala.UI.Markup.MarkupDataPathSegment(" + Literal(segment.Property.Name) +
+                                ", value => ((" + ownerType + ")value!)." + segment.Property.Name + setter + ")");
+                        }
+
+                        observationLines.Add(
+                            "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                            " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveDataPath(" + descriptor.OwnerCode +
+                            (segments.Count == 0 ? ")" : ", " + string.Join(", ", segments) + ")") + ";");
+
+                        ITypeSymbol comparisonType = UnwrapNullable(descriptor.ValueType);
+                        string typeCode = comparisonType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        observationNames?.Add(name);
+                        return new ObservationEmission(
+                            name,
+                            "(" + typeCode + ")" + name + ".Value!",
+                            null,
+                            comparisonType,
+                            name + ".Value is " + typeCode);
                     }
-
-                    observationLines.Add(
-                        "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                        " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveDataPath(" + descriptor.OwnerCode +
-                        (segments.Count == 0 ? ")" : ", " + string.Join(", ", segments) + ")") + ";");
-
-                    ITypeSymbol comparisonType = UnwrapNullable(descriptor.ValueType);
-                    string typeCode = comparisonType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                    observationNames?.Add(name);
-                    return new ObservationEmission(
-                        name,
-                        "(" + typeCode + ")" + name + ".Value!",
-                        null,
-                        comparisonType,
-                        name + ".Value is " + typeCode);
-                }
                 case BindingSourceKind.UiProperty:
-                {
-                    PropertySpec spec = descriptor.Property!;
-                    observationLines.Add(
-                        "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                        " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + descriptor.OwnerCode +
-                        ", " + spec.PropertyCode + ");");
-                    observationNames?.Add(name);
-                    return new ObservationEmission(
-                        name,
-                        "(" + spec.ValueTypeCode + ")" + name + ".Value!",
-                        spec.ValueKind,
-                        spec.ValueType);
-                }
+                    {
+                        PropertySpec spec = descriptor.Property!;
+                        observationLines.Add(
+                            "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                            " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + descriptor.OwnerCode +
+                            ", " + spec.PropertyCode + ");");
+                        observationNames?.Add(name);
+                        return new ObservationEmission(
+                            name,
+                            "(" + spec.ValueTypeCode + ")" + name + ".Value!",
+                            spec.ValueKind,
+                            spec.ValueType);
+                    }
                 case BindingSourceKind.TemplatePartProperty:
-                {
-                    PropertySpec spec = descriptor.Property!;
-                    observationLines.Add(
-                        "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                        " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveTemplatePartProperty(" + descriptor.OwnerCode +
-                        ", " + Literal(descriptor.PartName!) + ", " + spec.PropertyCode + ");");
-                    observationNames?.Add(name);
-                    return new ObservationEmission(
-                        name,
-                        "(" + spec.ValueTypeCode + ")" + name + ".Value!",
-                        spec.ValueKind,
-                        spec.ValueType);
-                }
+                    {
+                        PropertySpec spec = descriptor.Property!;
+                        observationLines.Add(
+                            "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                            " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveTemplatePartProperty(" + descriptor.OwnerCode +
+                            ", " + Literal(descriptor.PartName!) + ", " + spec.PropertyCode + ");");
+                        observationNames?.Add(name);
+                        return new ObservationEmission(
+                            name,
+                            "(" + spec.ValueTypeCode + ")" + name + ".Value!",
+                            spec.ValueKind,
+                            spec.ValueType);
+                    }
                 case BindingSourceKind.Object:
-                {
-                    observationLines.Add(
-                        "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                        " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveObject(() => (object?)" + descriptor.OwnerCode + ");");
-                    observationNames?.Add(name);
-                    return new ObservationEmission(
-                        name,
-                        name + ".Value",
-                        null,
-                        compilation.GetSpecialType(SpecialType.System_Object));
-                }
+                    {
+                        observationLines.Add(
+                            "global::Cerneala.UI.Markup.MarkupObservation " + name +
+                            " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveObject(() => (object?)" + descriptor.OwnerCode + ");");
+                        observationNames?.Add(name);
+                        return new ObservationEmission(
+                            name,
+                            name + ".Value",
+                            null,
+                            compilation.GetSpecialType(SpecialType.System_Object));
+                    }
                 default:
                     throw new InvalidOperationException("Unsupported binding source descriptor.");
             }

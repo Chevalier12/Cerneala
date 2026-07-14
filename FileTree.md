@@ -15,28 +15,79 @@ Generated from `.`.
 |           +-- state/
 |               +-- server-stopped
 |-- benchmarks/
-|   +-- Cerneala.Benchmarks/
-|       |-- results/
-|       |   +-- 2026-07-13-queue-engine-2.md
-|       |-- Cerneala.Benchmarks.csproj
-|       |-- Program.cs
-|       |-- QueueEngineBenchmarks.cs
-|       +-- README.md
+|   |-- Cerneala.Benchmarks/
+|   |   |-- results/
+|   |   |   +-- 2026-07-13-queue-engine-2.md
+|   |   |-- Cerneala.Benchmarks.csproj
+|   |   |-- Program.cs
+|   |   |-- QueueEngineBenchmarks.cs
+|   |   |-- README.md
+|   |   +-- UiRelayBenchmarks.cs
+|   +-- results/
+|       +-- 2026-07-14-relay/
+|           |-- binding/
+|           |   |-- results/
+|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-default.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.csv
+|           |   |   +-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.html
+|           |   +-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-20260714-194331.log
+|           |-- drain/
+|           |   |-- results/
+|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-default.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.csv
+|           |   |   +-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.html
+|           |   +-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-20260714-194125.log
+|           |-- final/
+|           |   |-- results/
+|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-default.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.csv
+|           |   |   |-- Cerneala.Benchmarks.UiRelayBindingBenchmarks-report.html
+|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-default.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.csv
+|           |   |   |-- Cerneala.Benchmarks.UiRelayDrainBenchmarks-report.html
+|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-default.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.csv
+|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.html
+|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-default.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.csv
+|           |   |   +-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.html
+|           |   |-- BenchmarkRun-20260714-195303.log
+|           |   +-- BenchmarkRun-20260714-200131.log
+|           |-- producers/
+|           |   |-- results/
+|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-default.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.csv
+|           |   |   +-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.html
+|           |   +-- Cerneala.Benchmarks.UiRelayProducerBenchmarks-20260714-194305.log
+|           |-- scheduling/
+|           |   |-- results/
+|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-default.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.csv
+|           |   |   +-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-report.html
+|           |   +-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-20260714-194107.log
+|           |-- BenchmarkRun-20260714-192927.log
+|           +-- README.md
 |-- Cerneala.SourceGen/
-|   |-- Generated/
 |   |-- Cerneala.SourceGen.csproj
+|   |-- UiMarkupBindingResolver.cs
 |   |-- UiMarkupDirectiveParser.cs
 |   |-- UiMarkupGenerator.cs
 |   |-- UiMarkupReactiveEmitter.cs
 |   |-- UiMarkupUserControlGenerator.cs
 |   +-- UiMarkupWindowGenerator.cs
 |-- docs/
-|   |-- bug-reports/
 |   |-- diagrams/
 |   |   |-- cerneala-drawing-flowchart.svg
 |   |   |-- retained-frame-loop.md
 |   |   +-- ui-layer-boundaries.md
-|   |-- documentation/
 |   |-- plans/
 |   |   |-- 2026-07-10-inline-component-template-markup.md
 |   |   |-- 2026-07-10-window-windowsdx-migration.md
@@ -49,6 +100,7 @@ Generated from `.`.
 |   |   |-- 2026-07-13-repeat-button.md
 |   |   |-- 2026-07-13-scrollviewer-template-parts.md
 |   |   |-- 2026-07-14-markup-data-bindings.md
+|   |   |-- 2026-07-14-relay-auto-marshaling-implementation-notes.md
 |   |   +-- 2026-07-14-relay-auto-marshaling.md
 |   |-- superpowers/
 |   |   |-- plans/
@@ -109,6 +161,7 @@ Generated from `.`.
 |   |-- developer-preview-checklist.md
 |   |-- developer-preview-scope.md
 |   |-- getting-started.md
+|   |-- markup-data-bindings.md
 |   |-- motion-api.md
 |   |-- motion-diagnostics.md
 |   |-- motion-system.md
@@ -693,7 +746,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionStagger.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionStartOptions.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionSystem.md
-|   |   |   |-- Cerneala.UI.Motion.Core.MotionThreadGuard.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionTimeline.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionTimelineRegistry.md
 |   |   |   |-- Cerneala.UI.Motion.Core.MotionValue_T_.md
@@ -814,6 +866,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Platform.IPlatformServices.md
 |   |   |   |-- Cerneala.UI.Platform.ITextInputPlatform.md
 |   |   |   |-- Cerneala.UI.Platform.PlatformServices.md
+|   |   |   |-- Cerneala.UI.Relay.UiRelay.md
+|   |   |   |-- Cerneala.UI.Relay.UiRelayOptions.md
 |   |   |   |-- Cerneala.UI.Rendering.ClipNode.ClipBox.md
 |   |   |   |-- Cerneala.UI.Rendering.ClipNode.md
 |   |   |   |-- Cerneala.UI.Rendering.DrawCommandListBuilder.md
@@ -1000,7 +1054,6 @@ Generated from `.`.
 |   |   +-- MonoGamePathMeshBuilder.cs
 |   |-- Paths/
 |   |   +-- SvgPathFlattener.cs
-|   |-- Skia/
 |   |-- Text/
 |   |   |-- OpenTypeFontData.cs
 |   |   |-- RasterizedText.cs
@@ -1027,7 +1080,6 @@ Generated from `.`.
 |   |-- IDrawImage.cs
 |   |-- IDrawingBackend.cs
 |   +-- IFontSource.cs
-|-- Generated/
 |-- Playground/
 |   |-- Assets/
 |   |   +-- fxemoji.svg
@@ -1167,7 +1219,6 @@ Generated from `.`.
 |   |   |   |-- TextInputBridgeTests.cs
 |   |   |   +-- TouchInputBridgeTests.cs
 |   |   |-- Playground/
-|   |   |   |-- Samples/
 |   |   |   +-- MainWindowContractTests.cs
 |   |   |-- UI/
 |   |   |   |-- Accessibility/
@@ -1179,7 +1230,6 @@ Generated from `.`.
 |   |   |   |   |-- SemanticsStressBudgetTests.cs
 |   |   |   |   |-- SemanticsTreeTests.cs
 |   |   |   |   +-- TextBoxSemanticsTests.cs
-|   |   |   |-- Animation/
 |   |   |   |-- Aspect/
 |   |   |   |   |-- AspectEngineStressBudgetTests.cs
 |   |   |   |   |-- AspectEngineTests.cs
@@ -1206,6 +1256,7 @@ Generated from `.`.
 |   |   |   |   |-- UiPropertyStoreTests.cs
 |   |   |   |   +-- UiPropertyTests.cs
 |   |   |   |-- Data/
+|   |   |   |   |-- BindingRelayTests.cs
 |   |   |   |   |-- CollectionViewTests.cs
 |   |   |   |   |-- ObservableListTests.cs
 |   |   |   |   |-- ObservableValueTests.cs
@@ -1289,6 +1340,8 @@ Generated from `.`.
 |   |   |   |   +-- VisibilityTests.cs
 |   |   |   |-- Markup/
 |   |   |   |   |-- BrushMarkupReaderTests.cs
+|   |   |   |   |-- GeneratedMarkupBindingTests.cs
+|   |   |   |   |-- GeneratedMarkupObservationTests.cs
 |   |   |   |   |-- MarkupDiagnosticTests.cs
 |   |   |   |   |-- UiFactoryTests.cs
 |   |   |   |   |-- UiMarkupReaderTests.cs
@@ -1321,7 +1374,6 @@ Generated from `.`.
 |   |   |   |   |-- Specs/
 |   |   |   |   |   |-- EasingTests.cs
 |   |   |   |   |   +-- MotionSpecTests.cs
-|   |   |   |   |-- States/
 |   |   |   |   |-- Transactions/
 |   |   |   |   |   +-- MotionTransactionTests.cs
 |   |   |   |   |-- MotionAllocationTests.cs
@@ -1332,6 +1384,14 @@ Generated from `.`.
 |   |   |   |   |-- PlatformBoundaryTests.cs
 |   |   |   |   |-- ServiceRegistrationTests.cs
 |   |   |   |   +-- UiHostPlatformServicesIntegrationTests.cs
+|   |   |   |-- Relay/
+|   |   |   |   |-- FirstPartyRelayIntegrationTests.cs
+|   |   |   |   |-- RelayStageZeroTests.cs
+|   |   |   |   |-- UiRelayCoreTests.cs
+|   |   |   |   |-- UiRelayHostingIntegrationTests.cs
+|   |   |   |   |-- UiRelayStressAndAllocationTests.cs
+|   |   |   |   |-- UiRelaySynchronizationContextTests.cs
+|   |   |   |   +-- UiThreadAffinityTests.cs
 |   |   |   |-- Rendering/
 |   |   |   |   |-- ArchitectureBoundaryTests.cs
 |   |   |   |   |-- DrawCommandListBuilderTests.cs
@@ -1382,10 +1442,16 @@ Generated from `.`.
 |   |   +-- GlobalUsings.cs
 |   |-- Cerneala.Tests.SourceGen/
 |   |   |-- Cerneala.Tests.SourceGen.csproj
+|   |   |-- UiMarkupGeneratorBindingStageFiveTests.cs
+|   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
+|   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
+|   |   |-- UiMarkupGeneratorBindingStageZeroTests.cs
 |   |   +-- UiMarkupGeneratorTests.cs
 |   +-- Cerneala.WindowsDxSmoke/
 |       |-- Cerneala.WindowsDxSmoke.csproj
 |       +-- WindowsDxSmokeApplication.cs
+|-- tmp/
+|   +-- svg-preview/
 |-- Tools/
 |   |-- RoslynRepoIndexer/
 |   |   |-- benchmarks/
@@ -1842,6 +1908,7 @@ Generated from `.`.
 |   |   |-- BrushMarkupReader.cs
 |   |   |-- ContentPropertyAttribute.cs
 |   |   |-- DesignTimeOnlyAttribute.cs
+|   |   |-- GeneratedMarkupBindings.cs
 |   |   |-- GeneratedMarkupConditions.cs
 |   |   |-- GeneratedUiFactory.cs
 |   |   |-- MarkupAspectResource.cs
@@ -1910,7 +1977,6 @@ Generated from `.`.
 |   |   |   |-- MotionStagger.cs
 |   |   |   |-- MotionStartOptions.cs
 |   |   |   |-- MotionSystem.cs
-|   |   |   |-- MotionThreadGuard.cs
 |   |   |   |-- MotionTimeline.cs
 |   |   |   |-- MotionTimelineRegistry.cs
 |   |   |   |-- MotionValue.cs
@@ -2019,6 +2085,14 @@ Generated from `.`.
 |   |   |-- IPlatformServices.cs
 |   |   |-- ITextInputPlatform.cs
 |   |   +-- PlatformServices.cs
+|   |-- Relay/
+|   |   |-- CapturedUiThreadAccess.cs
+|   |   |-- IUiThreadAccess.cs
+|   |   |-- UiRelay.cs
+|   |   |-- UiRelayDrainResult.cs
+|   |   |-- UiRelayOptions.cs
+|   |   |-- UiRelayRefreshDispatcher.cs
+|   |   +-- UiRelaySynchronizationContext.cs
 |   |-- Rendering/
 |   |   |-- ClipNode.cs
 |   |   |-- DrawCommandListBuilder.cs
@@ -2083,6 +2157,7 @@ Generated from `.`.
 |       |-- ThemeProvider.cs
 |       +-- ThemeResource.cs
 |-- .gitignore
+|-- .roslyn-index.json
 |-- AGENTS.md
 |-- architecture.md
 |-- AUDIT_FIX_PLAN.md

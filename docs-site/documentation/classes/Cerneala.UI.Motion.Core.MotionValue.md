@@ -26,7 +26,7 @@ Create a derived value from two graph-owned motion values:
 ```csharp
 using Cerneala.UI.Motion.Core;
 
-MotionGraph graph = new(new MotionThreadGuard(Environment.CurrentManagedThreadId));
+MotionGraph graph = new();
 MotionValue<double> x = graph.CreateValue(2d);
 MotionValue<double> y = graph.CreateValue(3d);
 

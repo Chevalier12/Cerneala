@@ -27,7 +27,7 @@ public sealed class MotionTransactionContext : UiPropertyMutationObserver, IDisp
 
     public MotionTransactionScope Begin(MotionTransactionOptions options)
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         MotionTransaction transaction = new(options);
         stack.Push(transaction);
         return new MotionTransactionScope(this, transaction);
@@ -40,7 +40,7 @@ public sealed class MotionTransactionContext : UiPropertyMutationObserver, IDisp
 
     internal void Pop(MotionTransaction transaction)
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         if (stack.Count == 0)
         {
             return;

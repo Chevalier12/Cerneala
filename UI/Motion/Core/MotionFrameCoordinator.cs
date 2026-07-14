@@ -16,7 +16,7 @@ public sealed class MotionFrameCoordinator
 
     public MotionFrameResult BeginFrame(MotionFrameReason reason)
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         currentReason = reason;
         sampledThisFrame = false;
         motion.Diagnostics.BeginFrame();
@@ -29,7 +29,7 @@ public sealed class MotionFrameCoordinator
 
     public MotionFrameResult BeforeLayout()
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         motion.Diagnostics.RecordPhase(MotionFramePhase.BeforeLayout);
         motion.Diagnostics.CaptureBeforeLayoutSnapshots();
         motion.Layout.CaptureFirstSnapshots();
@@ -44,7 +44,7 @@ public sealed class MotionFrameCoordinator
 
     public MotionFrameResult AfterLayout()
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         motion.Diagnostics.RecordPhase(MotionFramePhase.AfterLayout);
         motion.Diagnostics.CaptureAfterLayoutSnapshots();
         motion.Layout.CaptureLastSnapshotsAndStartCorrections();
@@ -53,7 +53,7 @@ public sealed class MotionFrameCoordinator
 
     public MotionFrameResult BeforeRender()
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         motion.Diagnostics.RecordPhase(MotionFramePhase.BeforeRender);
         if (sampledThisFrame)
         {
@@ -66,7 +66,7 @@ public sealed class MotionFrameCoordinator
 
     public MotionFrameResult EndFrame()
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         motion.Diagnostics.RecordPhase(MotionFramePhase.AfterRender);
         return MotionFrameResult.Empty(new MotionFrame(default, default, 0, currentReason, MotionFramePhase.AfterRender));
     }

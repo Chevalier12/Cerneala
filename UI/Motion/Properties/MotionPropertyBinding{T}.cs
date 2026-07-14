@@ -47,7 +47,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
     public MotionHandle AnimateTo(T to, MotionSpec<T> spec, MotionPropertyStartOptions? options = null)
     {
         ThrowIfDisposed();
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         ArgumentNullException.ThrowIfNull(spec);
 
         MotionPropertyStartOptions effectiveOptions = options ?? MotionPropertyStartOptions.Default;
@@ -84,7 +84,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
             return;
         }
 
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         activeHandle?.Cancel(MotionCancelBehavior.KeepCurrent);
         activeHandle = null;
         completedNaturally = false;

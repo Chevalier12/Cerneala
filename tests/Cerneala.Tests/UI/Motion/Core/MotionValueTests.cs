@@ -555,7 +555,7 @@ public sealed class MotionValueTests
     {
         private int frameIndex;
 
-        public MotionGraph Graph { get; } = new(new MotionThreadGuard(Environment.CurrentManagedThreadId));
+        public MotionGraph Graph { get; } = new();
 
         public MotionFrameResult Tick(TimeSpan delta)
         {

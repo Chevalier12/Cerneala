@@ -6,6 +6,7 @@ using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
+using Cerneala.UI.Relay;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Theming;
@@ -16,7 +17,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 {
     private ThemeProvider? themeProvider;
     private ThemeChangedSubscription? themeChangedSubscription;
-    private IObservableResourceProvider? observableResourceProvider;
+    private ResourceChangedSubscription? resourceChangedSubscription;
     private FrameStats? activeFrameStats;
     private readonly SemanticsProvider semanticsProvider = new();
     private SemanticsTree? cachedSemanticsTree;
@@ -28,8 +29,10 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         float viewportHeight = 0,
         float scale = 1,
         IMotionClock? motionClock = null,
-        ReducedMotionPolicy? reducedMotion = null)
+        ReducedMotionPolicy? reducedMotion = null,
+        UiRelayOptions? relayOptions = null)
     {
+        Relay = new UiRelay(relayOptions);
         ViewportWidth = viewportWidth;
         ViewportHeight = viewportHeight;
         Scale = scale;
@@ -50,7 +53,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         RetainedRenderer = new RetainedRenderer(RetainedRenderCache, new DrawCommandListBuilder(), RenderCounters);
         InheritedPropertyPropagator = new InheritedPropertyPropagator();
         ResourceDependencyTracker = new ResourceDependencyTracker();
-        AspectRegistry = new AspectRegistry(InvalidateAspectRegistryChange);
+        AspectRegistry = new AspectRegistry(Relay, InvalidateAspectRegistryChange);
         AspectRegistry.Register(DefaultAspectPackage.Create(), notify: false);
         AspectProcessor = new AspectProcessor(this);
         Scheduler = new UiFrameScheduler(LayoutQueue, InheritedPropertyQueue, CommandStateQueue, AspectQueue, RenderQueue, HitTestQueue, Trace);
@@ -115,6 +118,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public UiFrameScheduler Scheduler { get; }
 
+    public UiRelay Relay { get; }
+
     public MotionSystem Motion { get; }
 
     public ThemeProvider? ThemeProvider => themeProvider;
@@ -125,21 +130,19 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public void SetResourceProvider(IResourceProvider? provider)
     {
+        Relay.VerifyAccess();
         if (ReferenceEquals(ResourceProvider, provider))
         {
             return;
         }
 
-        if (observableResourceProvider is not null)
-        {
-            observableResourceProvider.ResourceChanged -= OnResourceChanged;
-        }
+        resourceChangedSubscription?.Dispose();
+        resourceChangedSubscription = null;
 
         ResourceProvider = provider;
-        observableResourceProvider = provider as IObservableResourceProvider;
-        if (observableResourceProvider is not null)
+        if (provider is IObservableResourceProvider observableProvider)
         {
-            observableResourceProvider.ResourceChanged += OnResourceChanged;
+            resourceChangedSubscription = new ResourceChangedSubscription(this, observableProvider);
         }
 
         Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Root resource provider changed");
@@ -147,6 +150,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public void SetPlatformServices(IPlatformServices? services)
     {
+        Relay.VerifyAccess();
         PlatformServices = services ?? Cerneala.UI.Platform.PlatformServices.Empty;
         if (PlatformServices.ReducedMotion is not null)
         {
@@ -161,6 +165,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public void SetImageResourceCache(IImageLoader? loader, ImageResourceCache? cache)
     {
+        Relay.VerifyAccess();
         if (ReferenceEquals(ImageLoader, loader) && ReferenceEquals(ImageResourceCache, cache))
         {
             return;
@@ -178,6 +183,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public void SetViewport(float width, float height, float scale)
     {
+        Relay.VerifyAccess();
         if (ViewportWidth != width || ViewportHeight != height || Scale != scale)
         {
             ViewportVersion++;
@@ -191,6 +197,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public void SetThemeProvider(ThemeProvider? provider)
     {
+        Relay.VerifyAccess();
         if (ReferenceEquals(themeProvider, provider))
         {
             return;
@@ -218,7 +225,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         Invalidate(InvalidationFlags.Aspect | InvalidationFlags.Subtree, "Aspect registry changed");
     }
 
-    private void OnResourceChanged(object? sender, ResourceChangedEventArgs args)
+    private void ApplyResourceChange(ResourceChangedEventArgs args)
     {
         foreach (ResourceDependencyChange change in ResourceDependencyTracker.NotifyResourceChanged(args))
         {
@@ -262,6 +269,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public override void Invalidate(InvalidationRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+        Relay.VerifyAccess();
         Trace.RecordRequest(request);
         InvalidationFlags effective = DirtyPropagation.Default.GetEffectiveFlags(request);
         if (effective.HasFlag(InvalidationFlags.Semantics))
@@ -302,6 +310,44 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         MotionFrameReason motionReason = MotionFrameReason.Scheduled)
     {
         FrameStats frameStats = stats ?? new FrameStats();
+        using UpdateScope updateScope = BeginUpdate(frameStats);
+        if (!Scheduler.HasWork && !Motion.HasActiveMotion && frameStats.HasWork)
+        {
+            return frameStats;
+        }
+
+        return ProcessFrameCore(processors, budget, frameStats, motionReason);
+    }
+
+    internal UpdateScope BeginUpdate(FrameStats stats)
+    {
+        ArgumentNullException.ThrowIfNull(stats);
+        Relay.VerifyAccess();
+        UiRelaySynchronizationContext.Scope contextScope = Relay.EnterSynchronizationContext();
+        try
+        {
+            UiRelayDrainResult relayResult = Relay.Drain(out AggregateException? postException);
+            stats.CountRelay(relayResult);
+            if (postException is not null)
+            {
+                throw postException;
+            }
+
+            return new UpdateScope(contextScope);
+        }
+        catch
+        {
+            contextScope.Dispose();
+            throw;
+        }
+    }
+
+    internal FrameStats ProcessFrameCore(
+        FramePhaseProcessors? processors,
+        FrameBudget budget,
+        FrameStats frameStats,
+        MotionFrameReason motionReason)
+    {
         activeFrameStats = frameStats;
         try
         {
@@ -311,6 +357,21 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         finally
         {
             activeFrameStats = null;
+        }
+    }
+
+    internal readonly struct UpdateScope : IDisposable
+    {
+        private readonly UiRelaySynchronizationContext.Scope contextScope;
+
+        internal UpdateScope(UiRelaySynchronizationContext.Scope contextScope)
+        {
+            this.contextScope = contextScope;
+        }
+
+        public void Dispose()
+        {
+            contextScope.Dispose();
         }
     }
 
@@ -366,12 +427,19 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     {
         private readonly WeakReference<UIRoot> rootReference;
         private readonly ThemeProvider provider;
+        private readonly UiRelayRefreshDispatcher refreshDispatcher;
+        private Func<bool>? callbackGuard;
         private bool disposed;
 
         public ThemeChangedSubscription(UIRoot root, ThemeProvider provider)
         {
             rootReference = new WeakReference<UIRoot>(root);
             this.provider = provider;
+            refreshDispatcher = new UiRelayRefreshDispatcher(
+                ResolveRelay,
+                ApplyChange,
+                "theme change");
+            callbackGuard = refreshDispatcher.Activate();
             provider.ThemeChanged += OnThemeChanged;
         }
 
@@ -383,6 +451,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
             }
 
             provider.ThemeChanged -= OnThemeChanged;
+            refreshDispatcher.Deactivate();
+            callbackGuard = null;
             disposed = true;
         }
 
@@ -390,11 +460,91 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         {
             if (rootReference.TryGetTarget(out UIRoot? root))
             {
-                root.InvalidateThemeChange();
+                if (callbackGuard?.Invoke() == true)
+                {
+                    root.InvalidateThemeChange();
+                }
+
                 return;
             }
 
             Dispose();
+        }
+
+        private UiRelay? ResolveRelay()
+        {
+            return rootReference.TryGetTarget(out UIRoot? root) ? root.Relay : null;
+        }
+
+        private void ApplyChange()
+        {
+            if (!disposed && rootReference.TryGetTarget(out UIRoot? root))
+            {
+                root.InvalidateThemeChange();
+            }
+        }
+    }
+
+    private sealed class ResourceChangedSubscription : IDisposable
+    {
+        private readonly WeakReference<UIRoot> rootReference;
+        private readonly WeakReference<ResourceChangedSubscription> selfReference;
+        private readonly IObservableResourceProvider provider;
+        private int disposed;
+
+        public ResourceChangedSubscription(UIRoot root, IObservableResourceProvider provider)
+        {
+            rootReference = new WeakReference<UIRoot>(root);
+            selfReference = new WeakReference<ResourceChangedSubscription>(this);
+            this.provider = provider;
+            provider.ResourceChanged += OnResourceChanged;
+        }
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref disposed, 1) != 0)
+            {
+                return;
+            }
+
+            provider.ResourceChanged -= OnResourceChanged;
+        }
+
+        private void OnResourceChanged(object? sender, ResourceChangedEventArgs args)
+        {
+            if (Volatile.Read(ref disposed) != 0)
+            {
+                return;
+            }
+
+            if (!rootReference.TryGetTarget(out UIRoot? root))
+            {
+                Dispose();
+                return;
+            }
+
+            if (root.Relay.CheckAccess())
+            {
+                ApplyChange(args);
+                return;
+            }
+
+            WeakReference<ResourceChangedSubscription> weak = selfReference;
+            root.Relay.Post(() =>
+            {
+                if (weak.TryGetTarget(out ResourceChangedSubscription? subscription))
+                {
+                    subscription.ApplyChange(args);
+                }
+            });
+        }
+
+        private void ApplyChange(ResourceChangedEventArgs args)
+        {
+            if (Volatile.Read(ref disposed) == 0 && rootReference.TryGetTarget(out UIRoot? root))
+            {
+                root.ApplyResourceChange(args);
+            }
         }
     }
 }

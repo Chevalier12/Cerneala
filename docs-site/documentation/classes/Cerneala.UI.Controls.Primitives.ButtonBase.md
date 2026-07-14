@@ -48,7 +48,7 @@ Command execution supports both direct `ICommand` instances and `RoutedCommand` 
 
 `ExecuteCommand` returns `false` without executing when the button is disabled, has no command, or the command cannot execute. `RefreshCommandState` synchronizes `IsEnabled` with command availability. A button with no command is considered enabled by command-state refresh; a button with a command is enabled only when that command can execute.
 
-When attached, `ButtonBase` subscribes to `IObservableCommand.CanExecuteChanged` for observable commands and queues command-state refreshes when the command or command parameter changes. It unsubscribes when detached.
+When attached, `ButtonBase` subscribes to `IObservableCommand.CanExecuteChanged`. Notifications raised on the UI thread refresh synchronously; off-thread bursts are coalesced into one pending Relay callback per attached button. The callback re-queries the current command on the UI thread. Replacing the command or detaching the button unsubscribes the old source and makes already queued callbacks harmless.
 
 The protected `ShouldClickOnMouseUp` property defaults to `true`, preserving release activation for normal buttons. Derived controls can override it when pointer activation occurs earlier; `RepeatButton` returns `false` so release does not add a final click.
 

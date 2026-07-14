@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Ink;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
@@ -11,7 +12,7 @@ public sealed class InkCanvas : Layout.Panels.Canvas
 
     public InkCanvas()
     {
-        Strokes.Changed += (_, _) => Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "Ink strokes changed");
+        Strokes.Changed += OnStrokesChanged;
     }
 
     public StrokeCollection Strokes { get; } = new();
@@ -20,6 +21,7 @@ public sealed class InkCanvas : Layout.Panels.Canvas
 
     public void ApplyStylus(StylusInputPoint point)
     {
+        Root?.Relay.VerifyAccess();
         ApplyPoint(point.Action switch
         {
             StylusInputAction.Down => InkInputAction.Down,
@@ -31,6 +33,7 @@ public sealed class InkCanvas : Layout.Panels.Canvas
 
     public void ApplyTouch(TouchInputPoint point)
     {
+        Root?.Relay.VerifyAccess();
         ApplyPoint(point.Action switch
         {
             TouchInputAction.Down => InkInputAction.Down,
@@ -64,6 +67,18 @@ public sealed class InkCanvas : Layout.Panels.Canvas
             activeStrokes.Remove(key);
             StrokeCollected?.Invoke(this, new InkCanvasStrokeCollectedEventArgs(activeStroke));
         }
+    }
+
+    private void OnStrokesChanged(object? sender, StrokeCollectionChangedEventArgs args)
+    {
+        if (Root is UIRoot root && !root.Relay.CheckAccess())
+        {
+            throw new InvalidOperationException(
+                "StrokeCollection changes observed by an attached InkCanvas must run on the owning UI thread. " +
+                "Use await root.Relay.InvokeAsync(() => canvas.Strokes.Add(stroke)).");
+        }
+
+        Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "Ink strokes changed");
     }
 
     private readonly record struct InkInputKey(InkInputKind Kind, int Id);

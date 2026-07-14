@@ -1,0 +1,415 @@
+// Validating benchmarks:
+// ***** BenchmarkRunner: Start   *****
+// ***** Found 4 benchmark(s) in total *****
+// ***** Building 1 exe(s) in Parallel: Start   *****
+// start dotnet  restore --nodeReuse:false /p:UseSharedCompilation=false /p:Deterministic=true /p:Optimize=true /p:ArtifactsPath="C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1/" /p:OutDir="C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\bin\Release\net8.0-Windows7.0/" /p:OutputPath="C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\bin\Release\net8.0-Windows7.0/" /p:PublishDir="C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\publish/" in C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1
+// command took 2.01 sec and exited with 0
+// start dotnet  build -c Release --no-restore --nodeReuse:false /p:UseSharedCompilation=false /p:Deterministic=true /p:Optimize=true /p:ArtifactsPath="C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1/" /p:OutDir="C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\bin\Release\net8.0-Windows7.0/" /p:OutputPath="C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\bin\Release\net8.0-Windows7.0/" /p:PublishDir="C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\publish/" --output "C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\bin\Release\net8.0-Windows7.0/" in C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1
+// command took 13.17 sec and exited with 0
+// ***** Done, took 00:00:15 (15.35 sec)   *****
+// Found 4 benchmarks:
+//   UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=1]
+//   UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=2]
+//   UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=4]
+//   UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=8]
+
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=1]
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet Cerneala.Benchmarks-Job-BKNAKG-1.dll --anonymousPipes 2348 2684 --benchmarkName "Cerneala.Benchmarks.UiRelayProducerBenchmarks.EnqueueTenThousand(ProducerCount: 1)" --job "InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2" --benchmarkId 0 in C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\bin\Release\net8.0-Windows7.0
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX512 IFMA+VBMI,AVX512 F+BW+CD+DQ+VL,AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2)
+
+OverheadJitting  1: 10000 op, 176900.00 ns, 17.6900 ns/op
+WorkloadJitting  1: 10000 op, 12939600.00 ns, 1.2940 us/op
+
+OverheadWarmup   1: 10000 op, 400.00 ns, 0.0400 ns/op
+OverheadWarmup   2: 10000 op, 400.00 ns, 0.0400 ns/op
+OverheadWarmup   3: 10000 op, 400.00 ns, 0.0400 ns/op
+OverheadWarmup   4: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadWarmup   5: 10000 op, 400.00 ns, 0.0400 ns/op
+
+OverheadActual   1: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   2: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   3: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   4: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   5: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   6: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   7: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   8: 10000 op, 400.00 ns, 0.0400 ns/op
+OverheadActual   9: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual  10: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  11: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  12: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  13: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  14: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  15: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  16: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  17: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  18: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual  19: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  20: 10000 op, 200.00 ns, 0.0200 ns/op
+
+WorkloadWarmup   1: 10000 op, 290100.00 ns, 29.0100 ns/op
+WorkloadWarmup   2: 10000 op, 194900.00 ns, 19.4900 ns/op
+
+// BeforeActualRun
+WorkloadActual   1: 10000 op, 223600.00 ns, 22.3600 ns/op
+WorkloadActual   2: 10000 op, 272600.00 ns, 27.2600 ns/op
+WorkloadActual   3: 10000 op, 237800.00 ns, 23.7800 ns/op
+WorkloadActual   4: 10000 op, 231000.00 ns, 23.1000 ns/op
+WorkloadActual   5: 10000 op, 187500.00 ns, 18.7500 ns/op
+
+// AfterActualRun
+WorkloadResult   1: 10000 op, 223350.00 ns, 22.3350 ns/op
+WorkloadResult   2: 10000 op, 237550.00 ns, 23.7550 ns/op
+WorkloadResult   3: 10000 op, 230750.00 ns, 23.0750 ns/op
+WorkloadResult   4: 10000 op, 187250.00 ns, 18.7250 ns/op
+// GC:  0 0 0 904928 10000
+// Threading:  2 0 10000
+
+// AfterAll
+// Benchmark Process 7932 has exited with code 0.
+
+Mean = 21.973 ns, StdErr = 1.121 ns (5.10%), N = 4, StdDev = 2.241 ns
+Min = 18.725 ns, Q1 = 21.432 ns, Median = 22.705 ns, Q3 = 23.245 ns, Max = 23.755 ns
+IQR = 1.812 ns, LowerFence = 18.714 ns, UpperFence = 25.964 ns
+ConfidenceInterval = [7.489 ns; 36.456 ns] (CI 99.9%), Margin = 14.483 ns (65.92% of Mean)
+Skewness = -0.6, Kurtosis = 1.22, MValue = 2
+
+// ** Remained 3 (75.0%) benchmark(s) to run. Estimated finish 2026-07-14 19:43 (0h 0m from now) **
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=2]
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet Cerneala.Benchmarks-Job-BKNAKG-1.dll --anonymousPipes 3200 3120 --benchmarkName "Cerneala.Benchmarks.UiRelayProducerBenchmarks.EnqueueTenThousand(ProducerCount: 2)" --job "InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2" --benchmarkId 1 in C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\bin\Release\net8.0-Windows7.0
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX512 IFMA+VBMI,AVX512 F+BW+CD+DQ+VL,AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2)
+
+OverheadJitting  1: 10000 op, 126800.00 ns, 12.6800 ns/op
+WorkloadJitting  1: 10000 op, 10336500.00 ns, 1.0337 us/op
+
+OverheadWarmup   1: 10000 op, 400.00 ns, 0.0400 ns/op
+OverheadWarmup   2: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadWarmup   3: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadWarmup   4: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadWarmup   5: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadWarmup   6: 10000 op, 200.00 ns, 0.0200 ns/op
+
+OverheadActual   1: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   2: 10000 op, 400.00 ns, 0.0400 ns/op
+OverheadActual   3: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   4: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   5: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   6: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   7: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   8: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   9: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  10: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  11: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  12: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  13: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  14: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  15: 10000 op, 200.00 ns, 0.0200 ns/op
+
+WorkloadWarmup   1: 10000 op, 675700.00 ns, 67.5700 ns/op
+WorkloadWarmup   2: 10000 op, 348100.00 ns, 34.8100 ns/op
+
+// BeforeActualRun
+WorkloadActual   1: 10000 op, 519400.00 ns, 51.9400 ns/op
+WorkloadActual   2: 10000 op, 572300.00 ns, 57.2300 ns/op
+WorkloadActual   3: 10000 op, 344000.00 ns, 34.4000 ns/op
+WorkloadActual   4: 10000 op, 615500.00 ns, 61.5500 ns/op
+WorkloadActual   5: 10000 op, 556000.00 ns, 55.6000 ns/op
+
+// AfterActualRun
+WorkloadResult   1: 10000 op, 519200.00 ns, 51.9200 ns/op
+WorkloadResult   2: 10000 op, 572100.00 ns, 57.2100 ns/op
+WorkloadResult   3: 10000 op, 343800.00 ns, 34.3800 ns/op
+WorkloadResult   4: 10000 op, 615300.00 ns, 61.5300 ns/op
+WorkloadResult   5: 10000 op, 555800.00 ns, 55.5800 ns/op
+// GC:  0 0 0 905144 10000
+// Threading:  3 0 10000
+
+// AfterAll
+// Benchmark Process 13916 has exited with code 0.
+
+Mean = 52.124 ns, StdErr = 4.697 ns (9.01%), N = 5, StdDev = 10.502 ns
+Min = 34.380 ns, Q1 = 51.920 ns, Median = 55.580 ns, Q3 = 57.210 ns, Max = 61.530 ns
+IQR = 5.290 ns, LowerFence = 43.985 ns, UpperFence = 65.145 ns
+ConfidenceInterval = [11.684 ns; 92.564 ns] (CI 99.9%), Margin = 40.440 ns (77.58% of Mean)
+Skewness = -0.79, Kurtosis = 1.77, MValue = 2
+
+// ** Remained 2 (50.0%) benchmark(s) to run. Estimated finish 2026-07-14 19:43 (0h 0m from now) **
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=4]
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet Cerneala.Benchmarks-Job-BKNAKG-1.dll --anonymousPipes 2388 1360 --benchmarkName "Cerneala.Benchmarks.UiRelayProducerBenchmarks.EnqueueTenThousand(ProducerCount: 4)" --job "InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2" --benchmarkId 2 in C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\bin\Release\net8.0-Windows7.0
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX512 IFMA+VBMI,AVX512 F+BW+CD+DQ+VL,AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2)
+
+OverheadJitting  1: 10000 op, 122800.00 ns, 12.2800 ns/op
+WorkloadJitting  1: 10000 op, 7229400.00 ns, 722.9400 ns/op
+
+OverheadWarmup   1: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadWarmup   2: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadWarmup   3: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadWarmup   4: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadWarmup   5: 10000 op, 300.00 ns, 0.0300 ns/op
+
+OverheadActual   1: 10000 op, 400.00 ns, 0.0400 ns/op
+OverheadActual   2: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   3: 10000 op, 700.00 ns, 0.0700 ns/op
+OverheadActual   4: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   5: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   6: 10000 op, 400.00 ns, 0.0400 ns/op
+OverheadActual   7: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   8: 10000 op, 500.00 ns, 0.0500 ns/op
+OverheadActual   9: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  10: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  11: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual  12: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  13: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  14: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  15: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  16: 10000 op, 100.00 ns, 0.0100 ns/op
+OverheadActual  17: 10000 op, 100.00 ns, 0.0100 ns/op
+OverheadActual  18: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  19: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  20: 10000 op, 100.00 ns, 0.0100 ns/op
+
+WorkloadWarmup   1: 10000 op, 1375900.00 ns, 137.5900 ns/op
+WorkloadWarmup   2: 10000 op, 771700.00 ns, 77.1700 ns/op
+
+// BeforeActualRun
+WorkloadActual   1: 10000 op, 742100.00 ns, 74.2100 ns/op
+WorkloadActual   2: 10000 op, 794200.00 ns, 79.4200 ns/op
+WorkloadActual   3: 10000 op, 609100.00 ns, 60.9100 ns/op
+WorkloadActual   4: 10000 op, 706000.00 ns, 70.6000 ns/op
+WorkloadActual   5: 10000 op, 683700.00 ns, 68.3700 ns/op
+
+// AfterActualRun
+WorkloadResult   1: 10000 op, 741900.00 ns, 74.1900 ns/op
+WorkloadResult   2: 10000 op, 794000.00 ns, 79.4000 ns/op
+WorkloadResult   3: 10000 op, 608900.00 ns, 60.8900 ns/op
+WorkloadResult   4: 10000 op, 705800.00 ns, 70.5800 ns/op
+WorkloadResult   5: 10000 op, 683500.00 ns, 68.3500 ns/op
+// GC:  0 0 0 905640 10000
+// Threading:  5 2 10000
+
+// AfterAll
+// Benchmark Process 9536 has exited with code 0.
+
+Mean = 70.682 ns, StdErr = 3.079 ns (4.36%), N = 5, StdDev = 6.886 ns
+Min = 60.890 ns, Q1 = 68.350 ns, Median = 70.580 ns, Q3 = 74.190 ns, Max = 79.400 ns
+IQR = 5.840 ns, LowerFence = 59.590 ns, UpperFence = 82.950 ns
+ConfidenceInterval = [44.168 ns; 97.196 ns] (CI 99.9%), Margin = 26.514 ns (37.51% of Mean)
+Skewness = -0.15, Kurtosis = 1.35, MValue = 2
+
+// ** Remained 1 (25.0%) benchmark(s) to run. Estimated finish 2026-07-14 19:43 (0h 0m from now) **
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=8]
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet Cerneala.Benchmarks-Job-BKNAKG-1.dll --anonymousPipes 1488 1200 --benchmarkName "Cerneala.Benchmarks.UiRelayProducerBenchmarks.EnqueueTenThousand(ProducerCount: 8)" --job "InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2" --benchmarkId 3 in C:\Users\Shadow\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks-Job-BKNAKG-1\bin\Release\net8.0-Windows7.0
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX512 IFMA+VBMI,AVX512 F+BW+CD+DQ+VL,AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2)
+
+OverheadJitting  1: 10000 op, 120500.00 ns, 12.0500 ns/op
+WorkloadJitting  1: 10000 op, 8450100.00 ns, 845.0100 ns/op
+
+OverheadWarmup   1: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadWarmup   2: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadWarmup   3: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadWarmup   4: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadWarmup   5: 10000 op, 200.00 ns, 0.0200 ns/op
+
+OverheadActual   1: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   2: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   3: 10000 op, 100.00 ns, 0.0100 ns/op
+OverheadActual   4: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   5: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   6: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   7: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual   8: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual   9: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  10: 10000 op, 100.00 ns, 0.0100 ns/op
+OverheadActual  11: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual  12: 10000 op, 100.00 ns, 0.0100 ns/op
+OverheadActual  13: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  14: 10000 op, 100.00 ns, 0.0100 ns/op
+OverheadActual  15: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  16: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  17: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  18: 10000 op, 300.00 ns, 0.0300 ns/op
+OverheadActual  19: 10000 op, 200.00 ns, 0.0200 ns/op
+OverheadActual  20: 10000 op, 200.00 ns, 0.0200 ns/op
+
+WorkloadWarmup   1: 10000 op, 1642400.00 ns, 164.2400 ns/op
+WorkloadWarmup   2: 10000 op, 777200.00 ns, 77.7200 ns/op
+
+// BeforeActualRun
+WorkloadActual   1: 10000 op, 807300.00 ns, 80.7300 ns/op
+WorkloadActual   2: 10000 op, 785200.00 ns, 78.5200 ns/op
+WorkloadActual   3: 10000 op, 734800.00 ns, 73.4800 ns/op
+WorkloadActual   4: 10000 op, 766000.00 ns, 76.6000 ns/op
+WorkloadActual   5: 10000 op, 774800.00 ns, 77.4800 ns/op
+
+// AfterActualRun
+WorkloadResult   1: 10000 op, 807100.00 ns, 80.7100 ns/op
+WorkloadResult   2: 10000 op, 785000.00 ns, 78.5000 ns/op
+WorkloadResult   3: 10000 op, 734600.00 ns, 73.4600 ns/op
+WorkloadResult   4: 10000 op, 765800.00 ns, 76.5800 ns/op
+WorkloadResult   5: 10000 op, 774600.00 ns, 77.4600 ns/op
+// GC:  0 0 0 906408 10000
+// Threading:  8 6 10000
+
+// AfterAll
+// Benchmark Process 20808 has exited with code 0.
+
+Mean = 77.342 ns, StdErr = 1.191 ns (1.54%), N = 5, StdDev = 2.662 ns
+Min = 73.460 ns, Q1 = 76.580 ns, Median = 77.460 ns, Q3 = 78.500 ns, Max = 80.710 ns
+IQR = 1.920 ns, LowerFence = 73.700 ns, UpperFence = 81.380 ns
+ConfidenceInterval = [67.091 ns; 87.593 ns] (CI 99.9%), Margin = 10.251 ns (13.25% of Mean)
+Skewness = -0.2, Kurtosis = 1.43, MValue = 2
+
+// ** Remained 0 (0.0%) benchmark(s) to run. Estimated finish 2026-07-14 19:43 (0h 0m from now) **
+Successfully reverted power plan (GUID: 381b4222-f694-41f0-9685-ff5bb260df2e FriendlyName: Balanced)
+// ***** BenchmarkRunner: Finish  *****
+
+// * Export *
+  benchmarks\results\2026-07-14-relay\producers\results\Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.csv
+  benchmarks\results\2026-07-14-relay\producers\results\Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-github.md
+  benchmarks\results\2026-07-14-relay\producers\results\Cerneala.Benchmarks.UiRelayProducerBenchmarks-report.html
+  benchmarks\results\2026-07-14-relay\producers\results\Cerneala.Benchmarks.UiRelayProducerBenchmarks-report-default.md
+
+// * Detailed results *
+UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=1]
+Runtime = .NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4; GC = Concurrent Workstation
+Mean = 21.973 ns, StdErr = 1.121 ns (5.10%), N = 4, StdDev = 2.241 ns
+Min = 18.725 ns, Q1 = 21.432 ns, Median = 22.705 ns, Q3 = 23.245 ns, Max = 23.755 ns
+IQR = 1.812 ns, LowerFence = 18.714 ns, UpperFence = 25.964 ns
+ConfidenceInterval = [7.489 ns; 36.456 ns] (CI 99.9%), Margin = 14.483 ns (65.92% of Mean)
+Skewness = -0.6, Kurtosis = 1.22, MValue = 2
+-------------------- Histogram --------------------
+[16.872 ns ; 21.192 ns) | @
+[21.192 ns ; 25.608 ns) | @@@
+---------------------------------------------------
+
+UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=2]
+Runtime = .NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4; GC = Concurrent Workstation
+Mean = 52.124 ns, StdErr = 4.697 ns (9.01%), N = 5, StdDev = 10.502 ns
+Min = 34.380 ns, Q1 = 51.920 ns, Median = 55.580 ns, Q3 = 57.210 ns, Max = 61.530 ns
+IQR = 5.290 ns, LowerFence = 43.985 ns, UpperFence = 65.145 ns
+ConfidenceInterval = [11.684 ns; 92.564 ns] (CI 99.9%), Margin = 40.440 ns (77.58% of Mean)
+Skewness = -0.79, Kurtosis = 1.77, MValue = 2
+-------------------- Histogram --------------------
+[26.319 ns ; 42.441 ns) | @
+[42.441 ns ; 48.664 ns) | 
+[48.664 ns ; 64.786 ns) | @@@@
+---------------------------------------------------
+
+UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=4]
+Runtime = .NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4; GC = Concurrent Workstation
+Mean = 70.682 ns, StdErr = 3.079 ns (4.36%), N = 5, StdDev = 6.886 ns
+Min = 60.890 ns, Q1 = 68.350 ns, Median = 70.580 ns, Q3 = 74.190 ns, Max = 79.400 ns
+IQR = 5.840 ns, LowerFence = 59.590 ns, UpperFence = 82.950 ns
+ConfidenceInterval = [44.168 ns; 97.196 ns] (CI 99.9%), Margin = 26.514 ns (37.51% of Mean)
+Skewness = -0.15, Kurtosis = 1.35, MValue = 2
+-------------------- Histogram --------------------
+[55.605 ns ; 65.985 ns) | @
+[65.985 ns ; 76.555 ns) | @@@
+[76.555 ns ; 84.685 ns) | @
+---------------------------------------------------
+
+UiRelayProducerBenchmarks.EnqueueTenThousand: Job-BKNAKG(InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2) [ProducerCount=8]
+Runtime = .NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4; GC = Concurrent Workstation
+Mean = 77.342 ns, StdErr = 1.191 ns (1.54%), N = 5, StdDev = 2.662 ns
+Min = 73.460 ns, Q1 = 76.580 ns, Median = 77.460 ns, Q3 = 78.500 ns, Max = 80.710 ns
+IQR = 1.920 ns, LowerFence = 73.700 ns, UpperFence = 81.380 ns
+ConfidenceInterval = [67.091 ns; 87.593 ns] (CI 99.9%), Margin = 10.251 ns (13.25% of Mean)
+Skewness = -0.2, Kurtosis = 1.43, MValue = 2
+-------------------- Histogram --------------------
+[71.416 ns ; 75.496 ns) | @
+[75.496 ns ; 79.583 ns) | @@@
+[79.583 ns ; 82.753 ns) | @
+---------------------------------------------------
+
+// * Summary *
+
+BenchmarkDotNet v0.15.8, Windows 11 (10.0.26200.8655/25H2/2025Update/HudsonValley2)
+AMD EPYC 9354 3.25GHz, 1 CPU, 8 logical and 4 physical cores
+.NET SDK 10.0.300
+  [Host]     : .NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4
+  Job-BKNAKG : .NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4
+
+InvocationCount=1  IterationCount=5  LaunchCount=1  
+UnrollFactor=1  WarmupCount=2  
+
+| Method             | ProducerCount | Mean     | Error    | StdDev    | Allocated |
+|------------------- |-------------- |---------:|---------:|----------:|----------:|
+| EnqueueTenThousand | 1             | 21.97 ns | 14.48 ns |  2.241 ns |      90 B |
+| EnqueueTenThousand | 2             | 52.12 ns | 40.44 ns | 10.502 ns |      91 B |
+| EnqueueTenThousand | 4             | 70.68 ns | 26.51 ns |  6.886 ns |      91 B |
+| EnqueueTenThousand | 8             | 77.34 ns | 10.25 ns |  2.662 ns |      91 B |
+
+// * Warnings *
+MinIterationTime
+  UiRelayProducerBenchmarks.EnqueueTenThousand: InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2 -> The minimum observed iteration time is 187.5μs which is very small. It's recommended to increase it to at least 100ms using more operations.
+  UiRelayProducerBenchmarks.EnqueueTenThousand: InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2 -> The minimum observed iteration time is 344μs which is very small. It's recommended to increase it to at least 100ms using more operations.
+  UiRelayProducerBenchmarks.EnqueueTenThousand: InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2 -> The minimum observed iteration time is 609.1μs which is very small. It's recommended to increase it to at least 100ms using more operations.
+  UiRelayProducerBenchmarks.EnqueueTenThousand: InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2 -> The minimum observed iteration time is 734.8μs which is very small. It's recommended to increase it to at least 100ms using more operations.
+
+// * Hints *
+Outliers
+  UiRelayProducerBenchmarks.EnqueueTenThousand: InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2 -> 1 outlier  was  removed, 2 outliers were detected (18.75 ns, 27.26 ns)
+  UiRelayProducerBenchmarks.EnqueueTenThousand: InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2 -> 1 outlier  was  detected (34.40 ns)
+  UiRelayProducerBenchmarks.EnqueueTenThousand: InvocationCount=1, IterationCount=5, LaunchCount=1, UnrollFactor=1, WarmupCount=2 -> 1 outlier  was  detected (73.48 ns)
+
+// * Legends *
+  ProducerCount : Value of the 'ProducerCount' parameter
+  Mean          : Arithmetic mean of all measurements
+  Error         : Half of 99.9% confidence interval
+  StdDev        : Standard deviation of all measurements
+  Allocated     : Allocated memory per single operation (managed only, inclusive, 1KB = 1024B)
+  1 ns          : 1 Nanosecond (0.000000001 sec)
+
+// * Diagnostic Output - MemoryDiagnoser *
+
+
+// ***** BenchmarkRunner: End *****
+Run time: 00:00:02 (2.2 sec), executed benchmarks: 4
+
+Global total time: 00:00:18 (18.02 sec), executed benchmarks: 4
+// * Artifacts cleanup *
+Artifacts cleanup is finished

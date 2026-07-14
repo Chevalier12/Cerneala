@@ -51,6 +51,8 @@ root.AspectProcessor.Clear(button);
 
 ## Remarks
 
+The processor is root-owned. `Process`, `Clear`, and environment synchronization verify `UIRoot.Relay` before reading or mutating retained Aspect state.
+
 `AspectProcessor` is created by `UIRoot` and exposed through `UIRoot.AspectProcessor`. The root also wires `AspectProcessor.Process` into the aspect phase of its `UiFrameScheduler`, so normal frame processing uses this class rather than calling `AspectEngine` directly.
 
 Each `Process` call builds an `AspectCatalog` from the root's `AspectRegistry`. When the catalog or active `Theme` changes, the processor rebuilds the effective token values from catalog defaults, overlays the semantic colors and brushes projected by `ThemeTokenBridge`, and publishes the changes through its stable runtime environment. Component-template token bindings share that environment and therefore observe the same updates.

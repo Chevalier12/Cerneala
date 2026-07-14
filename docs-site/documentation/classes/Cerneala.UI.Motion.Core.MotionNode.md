@@ -23,7 +23,7 @@ Create a node that completes after one graph tick:
 ```csharp
 using Cerneala.UI.Motion.Core;
 
-MotionGraph graph = new(new MotionThreadGuard(Environment.CurrentManagedThreadId));
+MotionGraph graph = new();
 OneShotNode node = new();
 
 graph.Register(node);

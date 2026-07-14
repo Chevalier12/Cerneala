@@ -1,0 +1,9 @@
+{
+  "solution": "Cerneala.slnx",
+  "includeGenerated": false,
+  "includeNonCSharpText": true,
+  "maxTextFileBytes": 2097152,
+  "maxDegreeOfParallelism": 8,
+  "searchResultLimit": 50,
+  "exactRefsTimeoutSeconds": 30
+}

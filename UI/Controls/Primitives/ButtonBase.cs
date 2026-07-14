@@ -1,12 +1,15 @@
 using Cerneala.UI.Core;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
+using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Controls.Primitives;
 
 public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, ICommandStateSource, IInputActivatable
 {
     private IObservableCommand? observableCommand;
+    private readonly UiRelayRefreshDispatcher commandStateRefreshDispatcher;
+    private Func<bool>? commandStateCallbackGuard;
 
     public static readonly UiProperty<bool> IsPressedProperty = UiProperty<bool>.Register(
         nameof(IsPressed),
@@ -25,6 +28,10 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
 
     public ButtonBase()
     {
+        commandStateRefreshDispatcher = new UiRelayRefreshDispatcher(
+            () => Root?.Relay,
+            QueueCommandStateRefresh,
+            "command state");
         Focusable = true;
         IsTabStop = true;
         Cursor = Cerneala.UI.Input.Cursor.Hand;
@@ -124,6 +131,7 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
     protected override void OnAttached()
     {
         base.OnAttached();
+        commandStateCallbackGuard = commandStateRefreshDispatcher.Activate();
         SubscribeObservableCommand(Command);
         QueueCommandStateRefresh();
     }
@@ -131,6 +139,8 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
     protected override void OnDetached()
     {
         UnsubscribeObservableCommand();
+        commandStateRefreshDispatcher.Deactivate();
+        commandStateCallbackGuard = null;
         base.OnDetached();
     }
 
@@ -187,7 +197,10 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
 
     private void OnCanExecuteChanged(object? sender, EventArgs args)
     {
-        QueueCommandStateRefresh();
+        if (ReferenceEquals(sender, observableCommand) && commandStateCallbackGuard?.Invoke() == true)
+        {
+            QueueCommandStateRefresh();
+        }
     }
 
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)

@@ -2,11 +2,17 @@
 
 ## What Cerneala Is
 
-Cerneala is a retained, code-first UI layer. The Developer Preview path is C# objects, retained invalidation, typed bindings, commands, aspect packages, and a host that you update and draw every frame.
+Cerneala is a retained, code-first UI layer. The Developer Preview path is C# objects, retained invalidation, typed bindings, commands, aspect packages, motion, Relay dispatch, and a host that you update and draw every frame.
+
+| Subsystem | Role |
+| --- | --- |
+| Aspect | Resolves style, theme, variants, and templates. |
+| Motion | Owns storyboards, animated values, and frame sampling. |
+| Relay | Moves callback execution from producer threads to the UI thread owned by a root. |
 
 ## Retained Update/Draw Contract
 
-Create the UI once, mutate state, then call `UiHost.Update(...)` every frame and `UiHost.Draw(...)` every frame. The first update should do retained work. An unchanged second update should be a no-work frame, and repeated draws should preserve draw-purity by not advancing scheduler work or retained render cache state.
+Create the UI once, mutate state, then call `UiHost.Update(...)` every frame and `UiHost.Draw(...)` every frame. Each update drains one stable Relay snapshot before retained scheduling and input. The first update should do retained work. An unchanged second update should be a no-work frame, and repeated draws should preserve draw-purity by not advancing Relay, scheduler work, or retained render cache state.
 
 ## Create A Root
 
@@ -113,11 +119,39 @@ interpolation. `OneWay` is implicit, while `$DataContext` paths require a root
 </StackPanel>
 ```
 
-CLR owners on a reactive data path implement `INotifyPropertyChanged`, and
-notifications consumed by a binding are raised on the UI/update thread. See
+CLR owners on a reactive data path implement `INotifyPropertyChanged`.
+Notifications already raised on the UI thread update synchronously; worker-thread
+notifications are coalesced and reevaluated through the attached root's Relay.
+See
 [Markup Data Bindings](markup-data-bindings.md) for the complete grammar,
 conditional assignment rules, string conversion, lifecycle, null handling,
 diagnostics, and deliberate limits.
+
+## Dispatch Work From A Worker Thread
+
+Every `UIRoot` owns one `UiRelay`. The Relay moves execution to the root's UI
+thread; it does not make the view model or mutable data thread-safe.
+
+```csharp
+CancellationToken cancellationToken = cancellation.Token;
+
+await root.Relay.InvokeAsync(
+    () => items.Add("Loaded"),
+    cancellationToken);
+
+int visibleCount = await root.Relay.InvokeAsync(() => items.Count);
+```
+
+Use `Post` only for fire-and-forget work whose failure may be surfaced by the
+next update. Prefer `InvokeAsync` when the caller needs completion, a result,
+cancellation, or an exception. Do not synchronously wait for Relay work on the
+owner thread: the root must be pumped by `Update` or `ProcessFrame` before queued
+work can run.
+
+Direct mutation of an attached `UIElement`, Aspect, Motion, or a mutable
+`ObservableList<T>` remains UI-thread-only. Post the complete mutation rather
+than changing the object on a worker and trying to marshal its notification
+afterward.
 
 ## Use ActionCommand And Command State
 

@@ -239,11 +239,14 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     protected override UiPropertyMutationObserver? MutationObserver => Root?.Motion.Transactions;
 
+    protected override void VerifyMutationAccess() => Root?.Relay.VerifyAccess();
+
     private bool hasPendingCommandStateRefresh;
     private bool hasPendingRenderScopeInvalidation;
     private bool hasPendingRenderContentInvalidation;
     private readonly List<IElementLifecycleBehavior> lifecycleBehaviors = [];
     private bool isInitialized;
+    private int attachmentGeneration;
 
     internal LayoutSize? LastMeasureAvailableSize { get; set; }
 
@@ -531,7 +534,30 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     private void OnElementResourceChanged(object? sender, ResourceChangedEventArgs args)
     {
-        Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
+        UIRoot? root = Root;
+        if (root is null)
+        {
+            Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
+            return;
+        }
+
+        if (root.Relay.CheckAccess())
+        {
+            Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
+            return;
+        }
+
+        WeakReference<UIElement> element = new(this);
+        int generation = Volatile.Read(ref attachmentGeneration);
+        root.Relay.Post(() =>
+        {
+            if (element.TryGetTarget(out UIElement? target) &&
+                ReferenceEquals(target.Root, root) &&
+                Volatile.Read(ref target.attachmentGeneration) == generation)
+            {
+                target.Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
+            }
+        });
     }
 
     internal void SetLogicalParent(UIElement? parent)
@@ -548,6 +574,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         Root = root ?? throw new ArgumentNullException(nameof(root));
         ElementId = id;
+        attachmentGeneration++;
         if (!isInitialized)
         {
             isInitialized = true;
@@ -562,8 +589,17 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         RaiseEvent(new RoutedEventArgs(LoadedEvent, this));
     }
 
+    internal void ValidateLifecycleRoot(UIRoot root)
+    {
+        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+        {
+            behavior.ValidateRoot(root);
+        }
+    }
+
     internal void DetachFromRoot()
     {
+        attachmentGeneration++;
         RaiseEvent(new RoutedEventArgs(UnloadedEvent, this));
         Root?.Motion.Presence.MarkDetached(this);
         foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
@@ -593,6 +629,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         ArgumentNullException.ThrowIfNull(behavior);
         lifecycleBehaviors.Add(behavior);
+    }
+
+    internal void RemoveLifecycleBehavior(IElementLifecycleBehavior behavior)
+    {
+        ArgumentNullException.ThrowIfNull(behavior);
+        lifecycleBehaviors.Remove(behavior);
     }
 
     public void QueueCommandStateRefresh()

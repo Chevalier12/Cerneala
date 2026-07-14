@@ -1,16 +1,25 @@
 using Cerneala.UI.Motion.Interpolation;
+using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Motion.Core;
 
 public sealed class ManualMotionTimeline : MotionTimeline
 {
-    private readonly MotionGraph graph = new(new MotionThreadGuard(Environment.CurrentManagedThreadId), CreateMixers(), ReducedMotionPolicy.Default);
+    private readonly IUiThreadAccess threadAccess;
+    private readonly MotionGraph graph;
     private float progress;
+
+    public ManualMotionTimeline()
+    {
+        threadAccess = new CapturedUiThreadAccess();
+        graph = new MotionGraph(threadAccess, CreateMixers(), ReducedMotionPolicy.Default);
+    }
 
     public override float Progress => progress;
 
     public void SetProgress(float progress)
     {
+        threadAccess.VerifyAccess();
         this.progress = Math.Clamp(progress, 0, 1);
     }
 

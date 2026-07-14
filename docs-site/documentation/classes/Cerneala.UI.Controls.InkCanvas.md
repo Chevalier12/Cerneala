@@ -54,6 +54,8 @@ canvas.ApplyTouch(new TouchInputPoint(2, 12, 12, TouchInputAction.Up));
 
 The `Strokes` collection is created by the control and exposed as a read-only property. Mutating the collection through `StrokeCollection.Add` or `StrokeCollection.Remove` raises `StrokeCollection.Changed`; `InkCanvas` listens to that event and invalidates measure and render.
 
+Ink state is UI-owned. When the canvas is attached, `ApplyStylus`, `ApplyTouch`, and observed `Strokes` mutations must run on the root's owner thread. An off-thread collection notification throws before `InkCanvas` invalidates retained state. Use `await root.Relay.InvokeAsync(() => canvas.Strokes.Add(stroke), cancellationToken)` for a worker-produced stroke.
+
 `ApplyStylus` and `ApplyTouch` translate input actions into stroke mutations. A `Down` action creates a new `Stroke`, adds the first point, stores it under the input kind and pointer ID, and adds it to `Strokes`. `Move` and `Up` add points only when a matching active stroke already exists. `Up` also removes the active stroke tracking entry after adding the final point.
 
 Stylus actions other than `Down`, `Move`, and `Up` are treated as move actions by `ApplyStylus`. If no active stroke exists for that stylus ID, the point is ignored. `ApplyTouch` accepts the three current `TouchInputAction` values: `Down`, `Move`, and `Up`.
@@ -71,8 +73,8 @@ Stylus actions other than `Down`, `Move`, and `Up` are treated as move actions b
 ## Methods
 | Name | Description |
 | --- | --- |
-| `ApplyStylus(StylusInputPoint point)` | Applies a stylus input point to the active stylus stroke for `point.Id`, creating, extending, or finishing a stroke based on `point.Action`. |
-| `ApplyTouch(TouchInputPoint point)` | Applies a touch input point to the active touch stroke for `point.Id`, creating, extending, or finishing a stroke based on `point.Action`. |
+| `ApplyStylus(StylusInputPoint point)` | Applies a stylus input point on the owning UI thread, creating, extending, or finishing a stroke based on `point.Action`. |
+| `ApplyTouch(TouchInputPoint point)` | Applies a touch input point on the owning UI thread, creating, extending, or finishing a stroke based on `point.Action`. |
 
 ## Applies to
 Cerneala UI controls in the `Cerneala` project.

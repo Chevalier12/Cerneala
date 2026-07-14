@@ -33,9 +33,27 @@ items.Move(0, 1);
 items.ReplaceWith(["A", "B"]);
 ```
 
+When the list is displayed by an attached `ItemsControl`, marshal the complete mutation to the owning root. Cancellation that wins before the Relay callback runs leaves the list unchanged.
+
+```csharp
+using Cerneala.UI.Data;
+using Cerneala.UI.Elements;
+
+static Task AddItemAsync(
+    UIRoot root,
+    ObservableList<string> items,
+    string item,
+    CancellationToken cancellationToken)
+{
+    return root.Relay.InvokeAsync(() => items.Add(item), cancellationToken);
+}
+```
+
 ## Remarks
 
 `ObservableList<T>` wraps an internal `List<T>` and emits `ObservableListChangedEventArgs<T>` for mutations. It also implements the untyped `IObservableList` event by translating typed payloads to `object?` collections.
+
+The list is not thread-safe and its incremental notifications are not auto-marshaled. When an attached `ItemsControl` observes the list, mutations must execute on that control's root thread through `Relay.InvokeAsync`. An off-thread notification throws before the control processes the change, but the list mutation itself has already occurred; dispatch the mutation rather than trying to dispatch only the event.
 
 Setting an item by index raises a `Replace` notification only when the new value is not equal to the old value according to `EqualityComparer<T>.Default`.
 

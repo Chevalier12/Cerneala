@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Invalidation`
 Assembly/Project: `Cerneala`  
 Source: `UI/Invalidation/FrameStats.cs`
 
-Collects per-frame counters for retained UI invalidation, layout, rendering, hit testing, cache reuse, and motion work.
+Collects per-frame counters for Relay dispatch, retained UI invalidation, layout, rendering, hit testing, cache reuse, and motion work.
 
 ```csharp
 public sealed class FrameStats
@@ -41,7 +41,9 @@ The `Count(FramePhase)` method maps scheduler phases to the matching element cou
 
 Queued layout counters are separate from actual layout-pass counters. `MeasuredElements` and `ArrangedElements` count elements processed from the scheduler queues, while `MeasureCalls` and `ArrangeCalls` count recursive layout work performed after the element cache checks. Cache hits are not counted as layout passes.
 
-`CountNoWorkFrame()` increments `NoWorkFrames` and also records one reused cache through `CountReusedCache()`. A no-work frame by itself does not make `HasWork` return `true`. `HasWork` also ignores `ReusedCaches`, `MeasureCalls`, and `ArrangeCalls`; it reports true for retained phase counters and motion counters that represent frame work.
+`CountNoWorkFrame()` increments `NoWorkFrames` and also records one reused cache through `CountReusedCache()`. A no-work frame by itself does not make `HasWork` return `true`. `HasWork` also ignores `ReusedCaches`, `MeasureCalls`, and `ArrangeCalls`; it reports true for retained phase counters, motion counters, or dequeued Relay callbacks that represent frame work.
+
+Relay counters describe the one stable queue snapshot drained at the update gate. `RelayBacklog` records work still pending after that drain, including callbacks deferred by the numeric budget or posted during the drain.
 
 Motion counters are accumulated from `MotionFrameResult` by `CountMotion(MotionFrameResult result)`.
 
@@ -74,7 +76,14 @@ Motion counters are accumulated from `MotionFrameResult` by `CountMotion(MotionF
 | `MotionRenderInvalidations` | `int` | Gets the accumulated number of render invalidations produced by motion. |
 | `MotionLayoutInvalidations` | `int` | Gets the accumulated number of layout invalidations produced by motion. |
 | `MotionSkippedByReducedMotion` | `int` | Gets the accumulated number of motion entries skipped because of reduced-motion behavior. |
-| `HasWork` | `bool` | Gets a value indicating whether retained phase counters or motion counters recorded frame work. |
+| `RelaySnapshotCallbacks` | `int` | Gets the number of Relay callbacks visible in the drained snapshot. |
+| `RelayDequeuedCallbacks` | `int` | Gets the number of Relay callbacks removed from the queue during the update. |
+| `RelayExecutedCallbacks` | `int` | Gets the number of Relay callbacks that began execution. |
+| `RelayCanceledCallbacks` | `int` | Gets the number of dequeued Relay callbacks canceled before execution. |
+| `RelayFaultedCallbacks` | `int` | Gets the number of Relay callbacks that faulted while executing. |
+| `RelayDeferredCallbacks` | `int` | Gets the number of callbacks still pending after the drained snapshot. |
+| `RelayBacklog` | `int` | Gets the Relay pending count observed after the drain. |
+| `HasWork` | `bool` | Gets a value indicating whether Relay dispatch, retained phases, or motion recorded frame work. |
 
 ## Methods
 
@@ -98,3 +107,4 @@ Cerneala retained UI invalidation, frame scheduling, diagnostics, hosting, and m
 - `UI/Hosting/UiHost.cs`
 - `UI/Diagnostics/FrameDiagnostics.cs`
 - `UI/Motion/Core/MotionFrameResult.cs`
+- `UI/Relay/UiRelay.cs`

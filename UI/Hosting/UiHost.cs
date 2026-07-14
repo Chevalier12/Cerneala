@@ -4,6 +4,7 @@ using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
+using Cerneala.UI.Relay;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Hosting;
@@ -29,12 +30,15 @@ public sealed class UiHost
 
         if (root is not null)
         {
+            root.Relay.VerifyAccess();
             root.SetPlatformServices(platformServices);
             ApplyViewport(root, viewport);
         }
     }
 
     public UIRoot? Root => root;
+
+    public UiRelay? Relay => root?.Relay;
 
     public IInputSource? InputSource { get; set; }
 
@@ -50,7 +54,10 @@ public sealed class UiHost
 
     public void SetRoot(UIRoot newRoot)
     {
-        root = newRoot ?? throw new ArgumentNullException(nameof(newRoot));
+        ArgumentNullException.ThrowIfNull(newRoot);
+        root?.Relay.VerifyAccess();
+        newRoot.Relay.VerifyAccess();
+        root = newRoot;
         needsInitialFrame = true;
         root.SetPlatformServices(platformServices);
         ApplyViewport(root, viewport);
@@ -58,7 +65,8 @@ public sealed class UiHost
 
     public UiFrame Update(UiViewport? viewport = null, TimeSpan? elapsedTime = null)
     {
-        _ = RequireRoot();
+        UIRoot currentRoot = RequireRoot();
+        currentRoot.Relay.VerifyAccess();
         IInputSource inputSource = InputSource ?? Backend?.InputSource ?? throw new InvalidOperationException("UiHost requires an input source for Update without an explicit input frame.");
         return Update(inputSource.GetFrame(), viewport, elapsedTime);
     }
@@ -70,7 +78,9 @@ public sealed class UiHost
 
     internal void AdvanceRenderTime(TimeSpan elapsedTime)
     {
-        TimeSensitiveRenderInvalidator.Invalidate(RequireRoot(), elapsedTime);
+        UIRoot currentRoot = RequireRoot();
+        currentRoot.Relay.VerifyAccess();
+        TimeSensitiveRenderInvalidator.Invalidate(currentRoot, elapsedTime);
     }
 
     internal UiFrame UpdateAfterRenderTimeAdvance(InputFrame inputFrame, UiViewport viewport, TimeSpan elapsedTime)
@@ -87,41 +97,46 @@ public sealed class UiHost
         ArgumentNullException.ThrowIfNull(inputFrame);
 
         UIRoot currentRoot = RequireRoot();
+        currentRoot.Relay.VerifyAccess();
         UiViewport currentViewport = viewport ?? this.viewport;
         TimeSpan frameTime = elapsedTime ?? Clock?.GetElapsedTime() ?? TimeSpan.Zero;
-        ApplyViewportIfChanged(currentRoot, currentViewport);
-        PrimeInitialFrame(currentRoot);
-        if (advanceRenderTime)
-        {
-            TimeSensitiveRenderInvalidator.Invalidate(currentRoot, frameTime);
-        }
-
         FrameStats stats = new();
-        if (currentRoot.Scheduler.HasWork)
+        using (currentRoot.BeginUpdate(stats))
         {
-            currentRoot.ProcessFrame(stats: stats, motionReason: MotionFrameReason.Scheduled);
-        }
+            ApplyViewportIfChanged(currentRoot, currentViewport);
+            PrimeInitialFrame(currentRoot);
+            if (advanceRenderTime)
+            {
+                TimeSensitiveRenderInvalidator.Invalidate(currentRoot, frameTime);
+            }
 
-        InputBridge.Dispatch(currentRoot, inputFrame, frameTime);
+            if (currentRoot.Scheduler.HasWork)
+            {
+                currentRoot.ProcessFrameCore(null, default, stats, MotionFrameReason.Scheduled);
+            }
 
-        if (currentRoot.Scheduler.HasWork || (currentRoot.Motion.HasActiveMotion && stats.MotionFrames == 0))
-        {
-            currentRoot.ProcessFrame(stats: stats, motionReason: MotionFrameReason.Input);
-        }
-        else if (!stats.HasWork)
-        {
-            stats.CountNoWorkFrame();
-        }
+            InputBridge.Dispatch(currentRoot, inputFrame, frameTime);
 
-        currentRoot.RetainedRenderer.Commit(currentRoot);
-        PublishCursor(currentRoot, inputFrame);
-        LastFrame = new UiFrame(frameTime, this.viewport, inputFrame, stats);
-        return LastFrame;
+            if (currentRoot.Scheduler.HasWork || (currentRoot.Motion.HasActiveMotion && stats.MotionFrames == 0))
+            {
+                currentRoot.ProcessFrameCore(null, default, stats, MotionFrameReason.Input);
+            }
+            else if (!stats.HasWork)
+            {
+                stats.CountNoWorkFrame();
+            }
+
+            currentRoot.RetainedRenderer.Commit(currentRoot);
+            PublishCursor(currentRoot, inputFrame);
+            LastFrame = new UiFrame(frameTime, this.viewport, inputFrame, stats);
+            return LastFrame;
+        }
     }
 
     public void Draw()
     {
-        _ = RequireRoot();
+        UIRoot currentRoot = RequireRoot();
+        currentRoot.Relay.VerifyAccess();
         IDrawingBackend backend = Backend?.DrawingBackend ?? throw new InvalidOperationException("UiHost requires a drawing backend for Draw without an explicit backend.");
         Draw(backend);
     }
@@ -131,6 +146,7 @@ public sealed class UiHost
         ArgumentNullException.ThrowIfNull(backend);
 
         UIRoot currentRoot = RequireRoot();
+        currentRoot.Relay.VerifyAccess();
         currentRoot.RetainedRenderer.Submit(currentRoot, backend);
     }
 

@@ -28,7 +28,7 @@ public sealed class LayoutMotionCoordinator
 
     internal void CaptureFirstSnapshots()
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         firstSnapshots.Clear();
         if (!motion.Root.LayoutQueue.HasWork ||
             motion.ReducedMotion.Mode == ReducedMotionMode.DisableNonEssential)
@@ -53,7 +53,7 @@ public sealed class LayoutMotionCoordinator
 
     internal void CaptureLastSnapshotsAndStartCorrections()
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         if (firstSnapshots.Count == 0)
         {
             return;

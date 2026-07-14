@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-20260714-194115</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.8, Windows 11 (10.0.26200.8655/25H2/2025Update/HudsonValley2)
+AMD EPYC 9354 3.25GHz, 1 CPU, 8 logical and 4 physical cores
+.NET SDK 10.0.300
+  [Host]     : .NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4
+  Job-BKNAKG : .NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4
+</code></pre>
+<pre><code>InvocationCount=1  IterationCount=5  LaunchCount=1  
+UnrollFactor=1  WarmupCount=2  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Ratio</th><th>RatioSD</th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>Post</td><td>1.920 &mu;s</td><td>0.8348 &mu;s</td><td>0.2168 &mu;s</td><td>1.01</td><td>0.15</td><td>64 B</td><td>1.00</td>
+</tr><tr><td>InvokeAsync</td><td>2.640 &mu;s</td><td>1.4561 &mu;s</td><td>0.3782 &mu;s</td><td>1.39</td><td>0.24</td><td>168 B</td><td>2.62</td>
+</tr></tbody></table>
+</body>
+</html>

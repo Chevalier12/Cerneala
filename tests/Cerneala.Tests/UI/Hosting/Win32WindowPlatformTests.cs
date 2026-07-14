@@ -17,6 +17,8 @@ public sealed class Win32WindowPlatformTests
     private const uint WmExitSizeMove = 0x0232;
     private const int HtBottomRight = 17;
     private const int GclpBackground = -10;
+    private const int GclpIcon = -14;
+    private const int GclpIconSmall = -34;
 
     [Fact]
     public void NativeMaximizeCoversTheMonitorWorkArea()
@@ -192,6 +194,23 @@ public sealed class Win32WindowPlatformTests
         owner.Destroy();
         Assert.False(IsWindow(child.Handle));
         Assert.False(IsWindow(owner.Handle));
+    }
+
+    [Fact]
+    public void NativeWindowsExposeApplicationIcons()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using Win32WindowPlatform platform = new(new RecordingGraphicsFactory());
+        using IPlatformWindow window = platform.CreateWindow(
+            new Window { Title = "Application icon" },
+            new CallbackSink());
+
+        Assert.NotEqual(0, GetClassLongPtr(window.Handle, GclpIcon));
+        Assert.NotEqual(0, GetClassLongPtr(window.Handle, GclpIconSmall));
     }
 
     [Fact]

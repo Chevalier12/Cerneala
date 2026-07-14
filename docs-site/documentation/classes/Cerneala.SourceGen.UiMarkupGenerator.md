@@ -111,6 +111,13 @@ type. Every CLR owner along a reactive path must implement
 `INotifyPropertyChanged`. UI-property sources use Cerneala property change
 notifications instead.
 
+CLR `INotifyPropertyChanged` notifications may arrive from worker threads once
+the generated target is attached. The runtime coalesces them per generated
+binding or condition controller and reevaluates the complete typed path on the
+target root's Relay; no path getter or target property is touched on the worker.
+Direct `UiObject.PropertyChanged` notifications remain UI-thread-only because
+attached Cerneala property mutations enforce root affinity before raising them.
+
 A `OneWay` binding to a string target converts the source with the current
 culture and maps `null` to an empty string. String attributes and quoted
 directive strings may interpolate multiple paths; interpolation is always

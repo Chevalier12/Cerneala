@@ -29,12 +29,12 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
     public void Insert(int index, UIElement child)
     {
         ArgumentNullException.ThrowIfNull(child);
+        owner.Root?.Relay.VerifyAccess();
+        child.Root?.Relay.VerifyAccess();
         if ((uint)index > (uint)children.Count)
         {
             throw new ArgumentOutOfRangeException(nameof(index));
         }
-
-        owner.Root?.Motion.Presence.TryCancelExitForAdd(owner, child);
 
         if (ReferenceEquals(owner, child))
         {
@@ -67,6 +67,13 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
             throw new InvalidOperationException("Element cannot be added under a different root.");
         }
 
+        if (owner.Root is not null)
+        {
+            ElementLifecycle.ValidateSubtreeAttachment(owner.Root, child);
+        }
+
+        owner.Root?.Motion.Presence.TryCancelExitForAdd(owner, child);
+
         children.Insert(index, child);
         SetParent(child, owner);
 
@@ -83,6 +90,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
     public void Move(int oldIndex, int newIndex)
     {
+        owner.Root?.Relay.VerifyAccess();
         if ((uint)oldIndex >= (uint)children.Count)
         {
             throw new ArgumentOutOfRangeException(nameof(oldIndex));
@@ -108,6 +116,8 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
     public bool Remove(UIElement child)
     {
         ArgumentNullException.ThrowIfNull(child);
+        owner.Root?.Relay.VerifyAccess();
+        child.Root?.Relay.VerifyAccess();
 
         int index = IndexOfReference(child);
         if (index < 0)

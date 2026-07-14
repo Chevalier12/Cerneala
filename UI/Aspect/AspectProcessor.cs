@@ -6,14 +6,16 @@ namespace Cerneala.UI.Aspect;
 public sealed class AspectProcessor
 {
     private readonly UIRoot root;
-    private readonly AspectEngine engine = new();
-    private readonly AspectEnvironment environment = new("runtime");
+    private readonly AspectEngine engine;
+    private readonly AspectEnvironment environment;
     private int synchronizedCatalogVersion = -1;
     private Theme? synchronizedTheme;
 
     public AspectProcessor(UIRoot root)
     {
         this.root = root ?? throw new ArgumentNullException(nameof(root));
+        engine = new AspectEngine(root.Relay);
+        environment = new AspectEnvironment(root.Relay, "runtime");
     }
 
     public AspectEngine Engine => engine;
@@ -22,6 +24,7 @@ public sealed class AspectProcessor
     {
         get
         {
+            root.Relay.VerifyAccess();
             SynchronizeEnvironment(root.AspectRegistry.BuildCatalog());
             return environment;
         }
@@ -29,6 +32,7 @@ public sealed class AspectProcessor
 
     public void Process(UIElement element)
     {
+        root.Relay.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
         AspectCatalog catalog = root.AspectRegistry.BuildCatalog();
         SynchronizeEnvironment(catalog);
@@ -41,6 +45,7 @@ public sealed class AspectProcessor
 
     public void Clear(UIElement element)
     {
+        root.Relay.VerifyAccess();
         engine.Clear(element);
     }
 
@@ -52,7 +57,7 @@ public sealed class AspectProcessor
             return;
         }
 
-        AspectEnvironment next = new("runtime.next");
+        AspectEnvironment next = new(root.Relay, "runtime.next");
         foreach ((AspectToken token, AspectValue defaultValue) in catalog.TokenDefaults)
         {
             object? resolved = defaultValue.Resolve(new AspectResolutionContext(

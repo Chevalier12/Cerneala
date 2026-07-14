@@ -1,4 +1,5 @@
 using Cerneala.UI.Core;
+using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Data;
 
@@ -12,12 +13,30 @@ public static class BindingOperations
         return Bind(target, targetProperty, source, BindingMode.OneWay);
     }
 
+    public static UiPropertyBinding<T> BindOneWay<T>(
+        UiObject target,
+        UiProperty<T> targetProperty,
+        ObservableValue<T> source,
+        UiRelay relay)
+    {
+        return Bind(target, targetProperty, source, BindingMode.OneWay, relay);
+    }
+
     public static UiPropertyBinding<T> BindTwoWay<T>(
         UiObject target,
         UiProperty<T> targetProperty,
         ObservableValue<T> source)
     {
         return Bind(target, targetProperty, source, BindingMode.TwoWay);
+    }
+
+    public static UiPropertyBinding<T> BindTwoWay<T>(
+        UiObject target,
+        UiProperty<T> targetProperty,
+        ObservableValue<T> source,
+        UiRelay relay)
+    {
+        return Bind(target, targetProperty, source, BindingMode.TwoWay, relay);
     }
 
     public static UiPropertyBinding<T> Bind<T>(
@@ -36,5 +55,25 @@ public static class BindingOperations
         }
 
         return new UiPropertyBinding<T>(target, targetProperty, source, mode);
+    }
+
+    public static UiPropertyBinding<T> Bind<T>(
+        UiObject target,
+        UiProperty<T> targetProperty,
+        ObservableValue<T> source,
+        BindingMode mode,
+        UiRelay relay)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(targetProperty);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(relay);
+
+        if (targetProperty.IsReadOnly)
+        {
+            throw new InvalidOperationException($"UI property '{targetProperty.DiagnosticName}' is read-only.");
+        }
+
+        return new UiPropertyBinding<T>(target, targetProperty, source, mode, relay);
     }
 }

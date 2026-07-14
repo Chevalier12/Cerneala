@@ -15,6 +15,7 @@ public sealed class AspectInvalidation : IDisposable
     public AspectInvalidation(AspectEngine engine, AspectCatalog catalog, AspectEnvironment environment)
     {
         this.engine = engine ?? throw new ArgumentNullException(nameof(engine));
+        engine.VerifyAccess();
         this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         this.environment = environment ?? throw new ArgumentNullException(nameof(environment));
         environment.TokenChanged += OnEnvironmentTokenChanged;
@@ -22,6 +23,7 @@ public sealed class AspectInvalidation : IDisposable
 
     public AspectApplicationResult Track(UIElement element)
     {
+        engine.VerifyAccess();
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(element);
         if (trackedElements.Add(element))
@@ -34,6 +36,7 @@ public sealed class AspectInvalidation : IDisposable
 
     public AspectApplicationResult Recompute(UIElement element)
     {
+        engine.VerifyAccess();
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(element);
         return Apply(element);
@@ -41,6 +44,7 @@ public sealed class AspectInvalidation : IDisposable
 
     public bool Untrack(UIElement element)
     {
+        engine.VerifyAccess();
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(element);
         if (!trackedElements.Remove(element))
@@ -55,6 +59,7 @@ public sealed class AspectInvalidation : IDisposable
 
     public void Dispose()
     {
+        engine.VerifyAccess();
         if (disposed)
         {
             return;

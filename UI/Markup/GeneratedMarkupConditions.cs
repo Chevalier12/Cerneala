@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Markup;
 
@@ -145,6 +146,8 @@ public abstract class MarkupObservation
 
     internal abstract void Stop();
 
+    internal abstract void RefreshValue();
+
     internal virtual bool TryWrite(object? value)
     {
         return false;
@@ -243,6 +246,11 @@ public static partial class GeneratedMarkup
             source.PropertyChanged -= OnPropertyChanged;
         }
 
+        internal override void RefreshValue()
+        {
+            SetResolvedValue(source.GetValue(property));
+        }
+
         internal override bool TryWrite(object? value)
         {
             if (!CanWrite)
@@ -305,6 +313,11 @@ public static partial class GeneratedMarkup
             started = false;
             owner.PropertyChanged -= OnOwnerPropertyChanged;
             DisconnectPart();
+        }
+
+        internal override void RefreshValue()
+        {
+            Reconnect();
         }
 
         internal override bool TryWrite(object? value)
@@ -394,6 +407,11 @@ public static partial class GeneratedMarkup
             unsubscribe = null;
         }
 
+        internal override void RefreshValue()
+        {
+            SetResolvedValue(getter());
+        }
+
         private void Refresh()
         {
             if (!ShouldProcessCallback())
@@ -446,6 +464,11 @@ public static partial class GeneratedMarkup
             ClearPathSubscriptions();
             terminalOwner = null;
             terminalSegment = null;
+        }
+
+        internal override void RefreshValue()
+        {
+            Rebuild(raiseChanged: false);
         }
 
         internal override bool IsWritable => segments.Count > 0 && segments[^1].Setter is not null;
@@ -625,6 +648,8 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
     private bool disposed;
     private bool evaluating;
     private bool reevaluate;
+    private Func<bool>? callbackGuard;
+    private readonly UiRelayRefreshDispatcher refreshDispatcher;
 
     public MarkupConditionController(
         UIElement owner,
@@ -634,6 +659,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         this.owner = owner ?? throw new ArgumentNullException(nameof(owner));
         this.observations = observations?.ToArray() ?? throw new ArgumentNullException(nameof(observations));
         this.rules = rules?.OrderBy(rule => rule.Order).ToArray() ?? throw new ArgumentNullException(nameof(rules));
+        refreshDispatcher = new UiRelayRefreshDispatcher(() => owner.Root?.Relay, RefreshFromRelay, "markup condition");
         Start();
     }
 
@@ -641,14 +667,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
     {
         if (started)
         {
-            foreach (MarkupObservation observation in observations)
-            {
-                observation.Stop();
-                observation.Start();
-            }
-
-            Evaluate();
-            return;
+            Stop();
         }
 
         Start();
@@ -678,6 +697,8 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         {
             provider.Dispose();
         }
+
+        owner.RemoveLifecycleBehavior(this);
     }
 
     private void Start()
@@ -688,8 +709,10 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         }
 
         started = true;
+        callbackGuard = refreshDispatcher.Activate();
         foreach (MarkupObservation observation in observations)
         {
+            observation.CallbackGuard = callbackGuard;
             observation.Changed += OnObservationChanged;
             observation.Start();
         }
@@ -705,11 +728,19 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         }
 
         started = false;
+        refreshDispatcher.Deactivate();
         foreach (MarkupObservation observation in observations)
         {
             observation.Changed -= OnObservationChanged;
+            if (ReferenceEquals(observation.CallbackGuard, callbackGuard))
+            {
+                observation.CallbackGuard = null;
+            }
+
             observation.Stop();
         }
+
+        callbackGuard = null;
 
         foreach (MarkupConditionalValue value in appliedValues.Where(value => value.Provider is not null).ToArray())
         {
@@ -727,6 +758,21 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
 
     private void OnObservationChanged(object? sender, EventArgs args)
     {
+        Evaluate();
+    }
+
+    private void RefreshFromRelay()
+    {
+        if (!started || disposed)
+        {
+            return;
+        }
+
+        foreach (MarkupObservation observation in observations)
+        {
+            observation.RefreshValue();
+        }
+
         Evaluate();
     }
 
@@ -795,7 +841,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
             {
                 if (!appliedValues.Contains(value))
                 {
-                    value.Provider.Activate();
+                    value.Provider.Activate(owner);
                 }
             }
             else

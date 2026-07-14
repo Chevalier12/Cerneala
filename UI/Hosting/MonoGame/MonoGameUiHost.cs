@@ -6,6 +6,7 @@ using Cerneala.UI.Input;
 using Cerneala.UI.Input.MonoGame;
 using Cerneala.UI.Resources.MonoGame;
 using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Relay;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Cerneala.UI.Hosting.MonoGame;
@@ -47,6 +48,8 @@ public sealed class MonoGameUiHost : IDisposable
 
     public UIRoot? Root => host.Root;
 
+    public UiRelay? Relay => host.Relay;
+
     public UiFrame? LastFrame => host.LastFrame;
 
     public void SetRoot(UIRoot root)
@@ -57,6 +60,7 @@ public sealed class MonoGameUiHost : IDisposable
 
     public UiFrame Update(UiViewport viewport, TimeSpan elapsedTime)
     {
+        RequireRelay().VerifyAccess();
         GeneratedWindowApplication.PumpHosted(elapsedTime);
         InputSource.CoordinateScale = viewport.Scale;
         return host.Update(viewport, elapsedTime);
@@ -64,6 +68,7 @@ public sealed class MonoGameUiHost : IDisposable
 
     public UiFrame Update(InputFrame inputFrame, UiViewport viewport, TimeSpan elapsedTime)
     {
+        RequireRelay().VerifyAccess();
         GeneratedWindowApplication.PumpHosted(elapsedTime);
         return host.Update(inputFrame, viewport, elapsedTime);
     }
@@ -75,6 +80,7 @@ public sealed class MonoGameUiHost : IDisposable
 
     public void Draw()
     {
+        RequireRelay().VerifyAccess();
         drawingBackend.CoordinateScale = host.Viewport.Scale;
         spriteBatch.Begin(sortMode: SpriteSortMode.Immediate, rasterizerState: rasterizerState);
         try
@@ -104,6 +110,11 @@ public sealed class MonoGameUiHost : IDisposable
     private void AttachContentServices(UIRoot? root)
     {
         root?.SetImageResourceCache(ContentServices.ImageLoader, ContentServices.ImageResourceCache);
+    }
+
+    private UiRelay RequireRelay()
+    {
+        return Relay ?? throw new InvalidOperationException("MonoGameUiHost requires a retained root.");
     }
 
     private sealed class MonoGameUiBackend : IUiBackend

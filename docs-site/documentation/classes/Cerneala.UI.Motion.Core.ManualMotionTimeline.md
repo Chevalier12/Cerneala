@@ -38,7 +38,7 @@ float current = value.Current; // 0.75f
 
 The timeline owns an internal `MotionGraph` configured with built-in value mixers and `ReducedMotionPolicy.Default`. `CreateValue<T>` creates a `MotionValue<T>` from that graph. Setting timeline progress does not automatically write to created values; caller code decides how the timeline's normalized progress maps to motion values.
 
-The internal graph is created with a `MotionThreadGuard` for the constructing managed thread. APIs that mutate graph-owned values must be used from that same thread.
+The timeline captures the constructing managed thread internally. `SetProgress`, `CreateValue<T>`, and graph-owned value mutations must be used from that same thread.
 
 ## Constructors
 
@@ -58,6 +58,12 @@ The internal graph is created with a `MotionThreadGuard` for the constructing ma
 | --- | --- | --- |
 | `SetProgress(float progress)` | `void` | Sets `Progress` after clamping `progress` to the range `0` through `1`. |
 | `CreateValue<T>(T initial)` | `MotionValue<T>` | Creates a motion value on the timeline's internal graph with the supplied initial value. |
+
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `SetProgress`, `CreateValue<T>` | `InvalidOperationException` | The current thread is not the thread that constructed the timeline. |
 
 ## Applies to
 

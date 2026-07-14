@@ -31,8 +31,7 @@ Create a manual frame and pass it to a motion graph tick:
 ```csharp
 using Cerneala.UI.Motion.Core;
 
-MotionThreadGuard guard = new(Environment.CurrentManagedThreadId);
-MotionGraph graph = new(guard);
+MotionGraph graph = new();
 
 MotionFrame frame = new(
     Now: TimeSpan.FromMilliseconds(16),

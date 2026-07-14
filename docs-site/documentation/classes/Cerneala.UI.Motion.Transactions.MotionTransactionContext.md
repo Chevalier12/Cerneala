@@ -74,7 +74,7 @@ The context ignores mutations when it is disposed, when no transaction is active
 
 For an eligible mutation, the context resolves a value mixer for the property type, creates or reuses a `MotionPropertyBinding<T>`, jumps the binding value to the old effective value, and animates it to the new effective value. Untyped specs are adapted to the property type through an internal adapter before sampling.
 
-`Begin`, `Disable`, and internal scope popping verify motion thread affinity through `MotionThreadGuard`. Use the context from the UI thread captured by the owning `MotionSystem`.
+`Begin`, `Disable`, and internal scope popping verify access through the owning root's Relay. Use the context from the UI thread that owns the `UIRoot`.
 
 ## Constructors
 

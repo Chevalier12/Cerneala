@@ -24,7 +24,7 @@ Create a graph-owned value, start a tween, and tick the graph manually:
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Specs;
 
-MotionGraph graph = new(new MotionThreadGuard(Environment.CurrentManagedThreadId));
+MotionGraph graph = new();
 MotionValue<double> opacity = graph.CreateValue(0d);
 
 opacity.AnimateTo(1d, Motion.Tween<double>(TimeSpan.FromMilliseconds(150)));
@@ -44,9 +44,9 @@ double currentOpacity = opacity.Current;
 
 `MotionGraph` is the low-level owner for active `MotionNode` instances. Higher-level APIs such as `MotionSystem` keep a graph instance and use it to sample active motion values during each motion frame.
 
-All public mutation and sampling APIs verify access through the supplied `MotionThreadGuard`. Create and mutate the graph on its owning UI thread; cross-thread animation requests must be marshaled through the platform UI dispatcher before they call graph APIs.
+Standalone constructors capture the calling thread internally. Root-owned graphs instead use the owning `UIRoot.Relay`, so motion and retained UI state share one owner-thread authority. Cross-thread animation requests must be marshaled through that Relay before they call graph APIs.
 
-`CreateValue<T>` returns a `MotionValue<T>` bound to this graph. If no mixer is supplied, the graph resolves one from its `ValueMixerRegistry`; the one-argument constructor creates a registry and registers the built-in mixers.
+`CreateValue<T>` returns a `MotionValue<T>` bound to this graph. If no mixer is supplied, the graph resolves one from its `ValueMixerRegistry`; the parameterless constructor creates a registry and registers the built-in mixers.
 
 `Register` and `Unregister` are safe to call while the graph is ticking. During a tick, adds and removes are queued, then applied after sampling completes. Re-registering an already registered or pending node is ignored, and unregistering a node that is not registered is also ignored.
 
@@ -56,8 +56,8 @@ All public mutation and sampling APIs verify access through the supplied `Motion
 
 | Name | Description |
 | --- | --- |
-| `MotionGraph(MotionThreadGuard threadGuard)` | Initializes a graph with built-in value mixers, `ReducedMotionPolicy.Default`, and no diagnostics recorder. |
-| `MotionGraph(MotionThreadGuard threadGuard, ValueMixerRegistry mixers, ReducedMotionPolicy reducedMotion, MotionDiagnostics? diagnostics = null)` | Initializes a graph with explicit mixer registry, reduced-motion policy, and optional diagnostics recorder. |
+| `MotionGraph()` | Initializes a standalone graph with built-in value mixers, `ReducedMotionPolicy.Default`, no diagnostics recorder, and affinity to the calling thread. |
+| `MotionGraph(ValueMixerRegistry mixers, ReducedMotionPolicy reducedMotion, MotionDiagnostics? diagnostics = null)` | Initializes a standalone graph with explicit services and affinity to the calling thread. |
 
 ## Properties
 
@@ -79,9 +79,8 @@ All public mutation and sampling APIs verify access through the supplied `Motion
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `MotionGraph(MotionThreadGuard)` | `ArgumentNullException` | `threadGuard` is `null`. |
-| `MotionGraph(MotionThreadGuard, ValueMixerRegistry, ReducedMotionPolicy, MotionDiagnostics?)` | `ArgumentNullException` | `threadGuard`, `mixers`, or `reducedMotion` is `null`. |
-| `CreateValue<T>`, `Tick`, `Register`, `Unregister` | `InvalidOperationException` | The current thread is not the owner accepted by the graph's `MotionThreadGuard`. |
+| `MotionGraph(ValueMixerRegistry, ReducedMotionPolicy, MotionDiagnostics?)` | `ArgumentNullException` | `mixers` or `reducedMotion` is `null`. |
+| `CreateValue<T>`, `Tick`, `Register`, `Unregister` | `InvalidOperationException` | The current thread is not the captured standalone owner or the UI thread accepted by the owning root's Relay. |
 | `CreateValue<T>` | Mixer resolution exception from `ValueMixerRegistry` | No mixer is supplied and the registry cannot resolve a mixer for `T`. |
 | `Register`, `Unregister` | `ArgumentNullException` | `node` is `null`. |
 

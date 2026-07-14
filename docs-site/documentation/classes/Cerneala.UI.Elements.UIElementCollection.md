@@ -31,6 +31,8 @@ bool removed = parent.VisualChildren.Remove(child);
 
 ## Remarks
 
+When the owner or child is attached, `Add`, `Insert`, `Move`, and `Remove` verify the relevant root Relay before changing parents, collection storage, tree versions, motion state, or invalidation queues. Cross-thread tree changes throw `InvalidOperationException`; post the mutation to `UIRoot.Relay` instead.
+
 `UIElementCollection` is used for logical and visual child roles. It validates tree invariants before adding a child: an element cannot be added to itself, ancestors cannot be re-added as children, duplicate children are rejected, and reparenting requires explicit removal from the current parent first.
 
 When the owner is attached to a root, adding a child attaches the child's subtree and increments the root tree version. Removing a child detaches the subtree when it no longer has an attached parent, releases lifecycle state through `ElementLifecycle`, removes pending queue work, and increments the root tree version.

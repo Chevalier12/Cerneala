@@ -53,6 +53,8 @@ Setting an indexed item or calling `ReplaceWith` does not raise `Changed` when t
 
 `ReplaceWith(null)` replaces the collection with an empty sequence. The class does not implement `INotifyCollectionChanged`; consumers observe changes through the `Changed` event.
 
+`ItemCollection` is not thread-safe. When it belongs to an attached `ItemsControl`, mutations are UI-owned and an off-thread `Changed` notification is rejected before retained item processing. Marshal the complete mutation with `await root.Relay.InvokeAsync(() => control.Items.Add(item), cancellationToken)`.
+
 ## Constructors
 
 | Name | Description |

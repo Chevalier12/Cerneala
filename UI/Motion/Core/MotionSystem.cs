@@ -7,6 +7,7 @@ using Cerneala.UI.Motion.Properties;
 using Cerneala.UI.Motion.Specs;
 using Cerneala.UI.Motion.States;
 using Cerneala.UI.Motion.Transactions;
+using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Motion.Core;
 
@@ -20,6 +21,7 @@ public sealed class MotionSystem
     private TimeSpan? previousTimestamp;
     private int frameIndex;
     private bool wasActiveLastTick;
+    private TimeSpan maxDelta = TimeSpan.FromMilliseconds(100);
 
     /// <summary>
     /// Creates the root-owned motion system and captures thread affinity immediately.
@@ -31,7 +33,6 @@ public sealed class MotionSystem
         Root = root ?? throw new ArgumentNullException(nameof(root));
         this.clock = clock ?? throw new ArgumentNullException(nameof(clock));
         ReducedMotion = reducedMotion ?? throw new ArgumentNullException(nameof(reducedMotion));
-        ThreadGuard = new MotionThreadGuard(Environment.CurrentManagedThreadId);
         Timelines = new MotionTimelineRegistry();
         Diagnostics = new MotionDiagnostics();
         Tokens = new MotionTokens();
@@ -39,7 +40,7 @@ public sealed class MotionSystem
         Mixers.RegisterBuiltIns();
         Properties = new MotionPropertyStore();
         AnimatableProperties = new AnimatablePropertyRegistry();
-        Graph = new MotionGraph(ThreadGuard, Mixers, ReducedMotion, Diagnostics);
+        Graph = new MotionGraph(root.Relay, Mixers, ReducedMotion, Diagnostics);
         Layout = new LayoutMotionCoordinator(this);
         Presence = new PresenceCoordinator(this);
         Transactions = new MotionTransactionContext(this);
@@ -47,8 +48,6 @@ public sealed class MotionSystem
     }
 
     public UIRoot Root { get; }
-
-    public MotionThreadGuard ThreadGuard { get; }
 
     public ReducedMotionPolicy ReducedMotion { get; }
 
@@ -74,7 +73,15 @@ public sealed class MotionSystem
 
     public PresenceCoordinator Presence { get; }
 
-    public TimeSpan MaxDelta { get; set; } = TimeSpan.FromMilliseconds(100);
+    public TimeSpan MaxDelta
+    {
+        get => maxDelta;
+        set
+        {
+            VerifyAccess();
+            maxDelta = value;
+        }
+    }
 
     public bool HasActiveMotion => Graph.HasActiveMotion || Properties.HasPendingWrites;
 
@@ -97,7 +104,7 @@ public sealed class MotionSystem
         MotionFrameReason reason = MotionFrameReason.Scheduled,
         MotionFramePhase phase = MotionFramePhase.BeforeRender)
     {
-        ThreadGuard.VerifyAccess();
+        VerifyAccess();
         TimeSpan now = clock.Now;
         MotionFrame idleFrame = new(now, TimeSpan.Zero, frameIndex, reason, phase);
         if (!Graph.HasActiveMotion && !Properties.HasPendingWrites)
@@ -144,4 +151,6 @@ public sealed class MotionSystem
 
         return result;
     }
+
+    internal void VerifyAccess() => Root.Relay.VerifyAccess();
 }

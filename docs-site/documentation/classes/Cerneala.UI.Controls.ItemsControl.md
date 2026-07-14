@@ -58,6 +58,8 @@ Items can come from two places:
 
 If `ItemsSource` implements `IObservableList`, `ItemsControl` subscribes to its `Changed` event while attached, invalidates generated items when the source changes, and unsubscribes when detached or when a different source replaces it.
 
+Incremental collection changes are UI-thread-only. An attached control rejects an off-thread `IObservableList.Changed` notification before it touches the presenter, retained queues, or UI properties. Marshal the complete mutation with `await root.Relay.InvokeAsync(() => items.Add(item), cancellationToken)`; the collection event itself is intentionally not auto-marshaled because the underlying mutable list is not thread-safe.
+
 Item container generation is handled by `ItemContainerGenerator`. By default, non-`UIElement` items are wrapped in `ContentPresenter`. `UIElement` items are reused as their own containers unless `ItemTemplate` is set, in which case a `ContentPresenter` is used so the template can create the displayed child.
 
 Changing `ItemTemplate`, `ItemTemplateKey`, `ItemsPanel`, `ItemsSource`, or `ContentTemplateRegistry` clears realized containers, marks presenter items dirty, and invalidates item-related layout/render state. `ItemsSourceProperty` also affects arrange, hit testing, and semantics.

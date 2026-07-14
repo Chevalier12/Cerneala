@@ -88,15 +88,24 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                 return;
             }
 
+            nint instance = Win32.GetModuleHandle(null);
+            nint applicationIcon = Win32.LoadIcon(instance, Win32.IDI_APPLICATION);
+            if (applicationIcon == 0)
+            {
+                applicationIcon = Win32.LoadIcon(0, Win32.IDI_APPLICATION);
+            }
+
             Win32.WNDCLASSEX windowClass = new()
             {
                 cbSize = (uint)Marshal.SizeOf<Win32.WNDCLASSEX>(),
                 style = Win32.CS_HREDRAW | Win32.CS_VREDRAW | Win32.CS_OWNDC,
                 lpfnWndProc = Marshal.GetFunctionPointerForDelegate(WindowProcedure),
-                hInstance = Win32.GetModuleHandle(null),
+                hInstance = instance,
+                hIcon = applicationIcon,
                 hCursor = Win32.LoadCursor(0, Win32.IDC_ARROW),
                 hbrBackground = 0,
-                lpszClassName = WindowClassName
+                lpszClassName = WindowClassName,
+                hIconSm = applicationIcon
             };
             classAtom = Win32.RegisterClassEx(in windowClass);
             if (classAtom == 0)

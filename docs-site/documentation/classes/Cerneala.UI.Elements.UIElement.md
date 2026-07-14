@@ -51,6 +51,8 @@ LayoutRect arranged = element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20
 ```
 
 ## Remarks
+
+An attached element's property mutations are UI-thread-affine and use `Root.Relay` as their authority. Off-thread typed or untyped property sets and clears throw `InvalidOperationException` before changing the value, value source, dirty state, or retained queues. Detached elements remain freely configurable and adopt the root's authority when attached.
 `UIElement` owns two child collections: `LogicalChildren` and `VisualChildren`. The corresponding `LogicalParent` and `VisualParent` properties are set by the element tree infrastructure. When an element is attached to a `UIRoot`, `Root`, `ElementId`, and `IsAttached` describe that retained-tree attachment.
 
 Most element settings are registered `UiProperty<T>` values. Setting properties such as `Margin`, `Visibility`, `Opacity`, focus state, or transform values flows through `UiObject.SetValue`, raises property notifications, and calls `OnPropertyInvalidated` with the metadata options from the registered property.

@@ -45,6 +45,8 @@ registry.Register(AspectPackage.Create("App"));
 
 ## Remarks
 
+Standalone registries capture their constructing thread. The registry exposed by `UIRoot` instead uses that root's Relay, so `Register` and `Unregister` throw `InvalidOperationException` before changing packages or `Version` when called from another thread.
+
 `AspectRegistry` is the mutable package list that precedes `AspectCatalog`. `Register` appends an `AspectPackage`, rejects duplicate package names using ordinal string comparison, increments `Version`, and invokes the constructor callback when `notify` is `true`. `Unregister` removes a package by name, increments `Version`, and invokes the callback only when a package is actually removed.
 
 `BuildCatalog()` creates an `AspectCatalog` from the current package order and current `Version`. The registry does not cache catalogs; callers that process aspects can compare catalog versions to decide whether token defaults need to be synchronized.

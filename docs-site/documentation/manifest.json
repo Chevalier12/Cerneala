@@ -2885,11 +2885,6 @@
     "source": "UI/Motion/Core/MotionSystem.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Core.MotionThreadGuard",
-    "file": "documentation/classes/Cerneala.UI.Motion.Core.MotionThreadGuard.md",
-    "source": "UI/Motion/Core/MotionThreadGuard.cs"
-  },
-  {
     "name": "Cerneala.UI.Motion.Core.MotionTimeline",
     "file": "documentation/classes/Cerneala.UI.Motion.Core.MotionTimeline.md",
     "source": "UI/Motion/Core/MotionTimeline.cs"
@@ -3488,6 +3483,16 @@
     "name": "Cerneala.UI.Platform.PlatformServices",
     "file": "documentation/classes/Cerneala.UI.Platform.PlatformServices.md",
     "source": "UI/Platform/PlatformServices.cs"
+  },
+  {
+    "name": "Cerneala.UI.Relay.UiRelay",
+    "file": "documentation/classes/Cerneala.UI.Relay.UiRelay.md",
+    "source": "UI/Relay/UiRelay.cs"
+  },
+  {
+    "name": "Cerneala.UI.Relay.UiRelayOptions",
+    "file": "documentation/classes/Cerneala.UI.Relay.UiRelayOptions.md",
+    "source": "UI/Relay/UiRelayOptions.cs"
   },
   {
     "name": "Cerneala.UI.Rendering.ClipNode",

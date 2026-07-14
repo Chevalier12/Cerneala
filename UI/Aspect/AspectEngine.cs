@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.States;
+using Cerneala.UI.Relay;
 using Cerneala.UI.Theming;
 
 namespace Cerneala.UI.Aspect;
@@ -11,6 +12,17 @@ public sealed class AspectEngine
     private readonly ConditionalWeakTable<UIElement, AspectEngineElementState> states = new();
     private readonly AspectInvalidationGraph invalidationGraph = new();
     private readonly AspectEngineCounters counters = new();
+    private readonly IUiThreadAccess threadAccess;
+
+    public AspectEngine()
+        : this(new CapturedUiThreadAccess())
+    {
+    }
+
+    internal AspectEngine(IUiThreadAccess threadAccess)
+    {
+        this.threadAccess = threadAccess ?? throw new ArgumentNullException(nameof(threadAccess));
+    }
 
     public AspectEngineCounters Counters => counters;
 
@@ -23,6 +35,7 @@ public sealed class AspectEngine
         AspectDataContext? dataContext = null,
         AspectSlotPath? slotPath = null)
     {
+        threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
         ResolvedAspect resolved = Resolve(element, catalog, environment, themeProvider, variants, dataContext, slotPath);
         AspectEngineElementState state = states.GetOrCreateValue(element);
@@ -43,6 +56,7 @@ public sealed class AspectEngine
         AspectDataContext? dataContext = null,
         AspectSlotPath? slotPath = null)
     {
+        threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(environment);
@@ -166,6 +180,7 @@ public sealed class AspectEngine
 
     public AspectDiagnostics.Snapshot GetDiagnostics(UIElement element)
     {
+        threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
         return states.TryGetValue(element, out AspectEngineElementState? state)
             ? state.Diagnostics
@@ -174,6 +189,7 @@ public sealed class AspectEngine
 
     public AspectDependencySet GetDependencies(UIElement element)
     {
+        threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
         return invalidationGraph.TryGetDependencies(element, out AspectDependencySet dependencySet)
             ? dependencySet
@@ -182,6 +198,7 @@ public sealed class AspectEngine
 
     public void Clear(UIElement element)
     {
+        threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
         if (!states.TryGetValue(element, out AspectEngineElementState? state) || state.LastResolved is null)
         {
@@ -202,6 +219,8 @@ public sealed class AspectEngine
         state.Diagnostics = new AspectDiagnostics.Snapshot();
         invalidationGraph.Untrack(element);
     }
+
+    internal void VerifyAccess() => threadAccess.VerifyAccess();
 
     private static bool ApplyResolved(
         UIElement element,

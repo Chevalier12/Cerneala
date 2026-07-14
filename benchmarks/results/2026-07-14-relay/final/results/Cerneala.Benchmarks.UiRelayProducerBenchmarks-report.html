@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>Cerneala.Benchmarks.UiRelayProducerBenchmarks-20260714-200153</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.8, Windows 11 (10.0.26200.8655/25H2/2025Update/HudsonValley2)
+AMD EPYC 9354 3.25GHz, 1 CPU, 8 logical and 4 physical cores
+.NET SDK 10.0.300
+  [Host]     : .NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4
+  Job-BKNAKG : .NET 8.0.27 (8.0.27, 8.0.2726.22922), X64 RyuJIT x86-64-v4
+</code></pre>
+<pre><code>InvocationCount=1  IterationCount=5  LaunchCount=1  
+UnrollFactor=1  WarmupCount=2  
+</code></pre>
+
+<table>
+<thead><tr><th>Method      </th><th>ProducerCount</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>EnqueueTenThousand</td><td>1</td><td>17.47 ns</td><td>9.019 ns</td><td>2.342 ns</td><td>90 B</td>
+</tr><tr><td>EnqueueTenThousand</td><td>2</td><td>46.00 ns</td><td>35.799 ns</td><td>9.297 ns</td><td>91 B</td>
+</tr><tr><td>EnqueueTenThousand</td><td>4</td><td>71.70 ns</td><td>21.197 ns</td><td>5.505 ns</td><td>91 B</td>
+</tr><tr><td>EnqueueTenThousand</td><td>8</td><td>76.52 ns</td><td>38.950 ns</td><td>6.028 ns</td><td>91 B</td>
+</tr></tbody></table>
+</body>
+</html>

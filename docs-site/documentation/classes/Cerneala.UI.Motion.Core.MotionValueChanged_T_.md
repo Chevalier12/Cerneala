@@ -31,7 +31,7 @@ Inheritance:
 ```csharp
 using Cerneala.UI.Motion.Core;
 
-MotionGraph graph = new(new MotionThreadGuard(Environment.CurrentManagedThreadId));
+MotionGraph graph = new();
 MotionValue<double> opacity = graph.CreateValue(0d);
 
 using IDisposable subscription = opacity.Subscribe(change =>

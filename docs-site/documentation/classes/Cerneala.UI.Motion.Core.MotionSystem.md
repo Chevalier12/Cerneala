@@ -54,7 +54,7 @@ using (root.Motion.BeginTransaction(Motion.Tween(TimeSpan.FromMilliseconds(150))
 
 `MotionSystem` is created by `UIRoot` and is available through `UIRoot.Motion`. It composes the main motion subsystems used by the retained UI runtime: `MotionGraph`, `MotionFrameCoordinator`, `MotionPropertyStore`, `MotionTransactionContext`, `LayoutMotionCoordinator`, `PresenceCoordinator`, diagnostics, tokens, mixers, and animatable-property registration.
 
-The constructor captures thread affinity immediately by creating a `MotionThreadGuard` for the current managed thread. Public APIs that mutate or sample motion, such as `Tick` and transaction creation, verify that access through the guard. Create the owning root on the UI thread and marshal cross-thread motion requests through the platform UI dispatcher before calling motion APIs.
+The system delegates thread affinity to `UIRoot.Relay`; it does not own a second thread guard. Public APIs that mutate or sample motion, such as `Tick`, transaction creation, and the `MaxDelta` setter, verify the same owner thread used by the retained UI tree. Marshal cross-thread motion requests through the root Relay before calling motion APIs.
 
 `Tick` samples active graph motion and flushes staged property writes. When there is no active graph work and no pending property writes, it returns an empty `MotionFrameResult`, resets the previous timestamp, and does not increment the frame index. The first active tick after an idle period uses a zero delta. Subsequent active ticks use the clock delta clamped to `MaxDelta`; negative clock deltas are treated as zero.
 
@@ -66,7 +66,7 @@ The frame result combines graph counters with property flush counters. `NeedsAno
 
 | Name | Description |
 | --- | --- |
-| `MotionSystem(UIRoot root, IMotionClock clock, ReducedMotionPolicy reducedMotion)` | Initializes a root-owned motion system, captures UI-thread affinity, registers built-in value mixers, and creates the graph, frame coordinator, diagnostics, property store, transactions, layout, and presence coordinators. |
+| `MotionSystem(UIRoot root, IMotionClock clock, ReducedMotionPolicy reducedMotion)` | Initializes a root-owned motion system using the root Relay's UI-thread affinity, registers built-in value mixers, and creates the motion services. |
 
 ## Fields
 
@@ -81,7 +81,6 @@ The frame result combines graph counters with property flush counters. `NeedsAno
 | Name | Type | Description |
 | --- | --- | --- |
 | `Root` | `UIRoot` | Gets the root that owns this motion system. |
-| `ThreadGuard` | `MotionThreadGuard` | Gets the guard used to enforce motion thread affinity. |
 | `ReducedMotion` | `ReducedMotionPolicy` | Gets the reduced-motion policy used by the graph and related motion services. |
 | `Graph` | `MotionGraph` | Gets the graph that owns active motion nodes and graph-bound motion values. |
 | `Timelines` | `MotionTimelineRegistry` | Gets the registry for named or shared motion timelines. |
@@ -123,7 +122,7 @@ public MotionFrameResult Tick(
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `MotionSystem(UIRoot, IMotionClock, ReducedMotionPolicy)` | `ArgumentNullException` | `root`, `clock`, or `reducedMotion` is `null`. |
-| `BeginTransaction(MotionSpec)`, `BeginTransaction(MotionTransactionOptions)`, `Disable()`, `Tick(...)` | `InvalidOperationException` | The current thread is not the thread captured by `ThreadGuard`. |
+| `BeginTransaction(MotionSpec)`, `BeginTransaction(MotionTransactionOptions)`, `Disable()`, `Tick(...)`, `MaxDelta` setter | `InvalidOperationException` | The current thread is not accepted by the owning root's Relay. |
 
 ## Applies to
 

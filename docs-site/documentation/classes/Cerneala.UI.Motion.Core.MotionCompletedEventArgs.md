@@ -22,7 +22,7 @@ Inheritance:
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Specs;
 
-MotionGraph graph = new(new MotionThreadGuard(Environment.CurrentManagedThreadId));
+MotionGraph graph = new();
 MotionValue<double> opacity = graph.CreateValue(0d);
 
 MotionHandle handle = opacity.AnimateTo(

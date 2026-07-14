@@ -2,6 +2,7 @@ using System.Globalization;
 using Cerneala.UI.Core;
 using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Markup;
 
@@ -21,6 +22,7 @@ public static partial class GeneratedMarkup
         ArgumentNullException.ThrowIfNull(projection);
 
         MarkupPropertyBindingController<T> controller = new(
+            owner,
             target,
             targetProperty,
             [observation],
@@ -47,6 +49,7 @@ public static partial class GeneratedMarkup
         ArgumentNullException.ThrowIfNull(compose);
 
         MarkupPropertyBindingController<string> controller = new(
+            owner,
             target,
             targetProperty,
             observations,
@@ -73,6 +76,7 @@ public static partial class GeneratedMarkup
         ArgumentNullException.ThrowIfNull(projection);
 
         MarkupPropertyBindingController<T> controller = new(
+            null,
             target,
             targetProperty,
             [observation],
@@ -95,6 +99,7 @@ public static partial class GeneratedMarkup
         ArgumentNullException.ThrowIfNull(compose);
 
         MarkupPropertyBindingController<string> controller = new(
+            null,
             target,
             targetProperty,
             observations,
@@ -115,13 +120,14 @@ public static partial class GeneratedMarkup
 
 internal interface IMarkupConditionalValueProvider : IDisposable
 {
-    void Activate();
+    void Activate(UIElement owner);
 
     void Deactivate();
 }
 
 internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLifecycleBehavior, IMarkupConditionalValueProvider
 {
+    private UIElement? lifecycleOwner;
     private readonly UiObject target;
     private readonly UiProperty<T> targetProperty;
     private readonly IReadOnlyList<MarkupObservation> observations;
@@ -134,13 +140,14 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
     private EventHandler? observationChangedHandler;
     private EventHandler<UiPropertyChangedEventArgs>? targetChangedHandler;
     private Func<bool>? callbackGuard;
-    private int? uiThreadId;
+    private readonly UiRelayRefreshDispatcher refreshDispatcher;
     private int activationVersion;
     private bool active;
     private bool updatingTarget;
     private bool updatingSource;
 
     public MarkupPropertyBindingController(
+        UIElement? lifecycleOwner,
         UiObject target,
         UiProperty<T> targetProperty,
         IReadOnlyList<MarkupObservation> observations,
@@ -151,6 +158,7 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
         UiPropertyValueSource targetSource,
         string description)
     {
+        this.lifecycleOwner = lifecycleOwner;
         this.target = target ?? throw new ArgumentNullException(nameof(target));
         this.targetProperty = targetProperty ?? throw new ArgumentNullException(nameof(targetProperty));
         this.observations = observations?.Distinct().ToArray() ?? throw new ArgumentNullException(nameof(observations));
@@ -162,6 +170,7 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
         this.description = string.IsNullOrWhiteSpace(description)
             ? targetProperty.DiagnosticName
             : description;
+        refreshDispatcher = new UiRelayRefreshDispatcher(ResolveRelay, RefreshFromRelay, this.description);
 
         if (this.observations.Count == 0)
         {
@@ -204,8 +213,15 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
         DeactivateCore(clearOwnedValue: false);
     }
 
-    public void Activate()
+    public void Activate(UIElement owner)
     {
+        ArgumentNullException.ThrowIfNull(owner);
+        if (lifecycleOwner is not null && !ReferenceEquals(lifecycleOwner, owner))
+        {
+            throw new InvalidOperationException($"Markup binding '{description}' cannot change its lifecycle owner.");
+        }
+
+        lifecycleOwner = owner;
         ActivateCore();
     }
 
@@ -217,6 +233,7 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
     protected override void DisposeCore()
     {
         DeactivateCore(clearOwnedValue: true);
+        lifecycleOwner?.RemoveLifecycleBehavior(this);
     }
 
     private void ActivateCore()
@@ -226,15 +243,14 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
             return;
         }
 
-        CaptureOrVerifyUiThread();
         active = true;
         int version = ++activationVersion;
-        callbackGuard = () => CanProcessObservationCallback(version);
-        observationChangedHandler = (_, _) => OnObservationChanged(version);
-        targetChangedHandler = (_, args) => OnTargetPropertyChanged(version, args);
 
         try
         {
+            callbackGuard = refreshDispatcher.Activate();
+            observationChangedHandler = (_, _) => OnObservationChanged(version);
+            targetChangedHandler = (_, args) => OnTargetPropertyChanged(version, args);
             foreach (MarkupObservation observation in observations)
             {
                 observation.CallbackGuard = callbackGuard;
@@ -285,23 +301,13 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
             observationChangedHandler = null;
             targetChangedHandler = null;
             callbackGuard = null;
+            refreshDispatcher.Deactivate();
         }
 
         if (clearOwnedValue)
         {
             ClearOwnedValue();
         }
-    }
-
-    private bool CanProcessObservationCallback(int version)
-    {
-        if (!active || version != activationVersion || IsDisposed)
-        {
-            return false;
-        }
-
-        VerifyUiThread("source notification");
-        return true;
     }
 
     private void OnObservationChanged(int version)
@@ -311,7 +317,6 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
             return;
         }
 
-        VerifyUiThread("source notification");
         RefreshTarget();
     }
 
@@ -324,7 +329,6 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
             return;
         }
 
-        VerifyUiThread("target notification");
         updatingSource = true;
         try
         {
@@ -345,7 +349,6 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
             return;
         }
 
-        VerifyUiThread("target refresh");
         if (!canRead())
         {
             ClearOwnedValue();
@@ -377,28 +380,31 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
         }
     }
 
-    private void CaptureOrVerifyUiThread()
+    private void RefreshFromRelay()
     {
-        int currentThreadId = Environment.CurrentManagedThreadId;
-        if (uiThreadId is null)
+        if (!active || IsDisposed)
         {
-            uiThreadId = currentThreadId;
             return;
         }
 
-        VerifyUiThread("activation");
+        foreach (MarkupObservation observation in observations)
+        {
+            observation.RefreshValue();
+        }
+
+        RefreshTarget();
     }
 
-    private void VerifyUiThread(string operation)
+    private UiRelay? ResolveRelay()
     {
-        int currentThreadId = Environment.CurrentManagedThreadId;
-        if (uiThreadId == currentThreadId)
+        UiRelay? ownerRelay = lifecycleOwner?.Root?.Relay;
+        UiRelay? targetRelay = (target as UIElement)?.Root?.Relay;
+        if (ownerRelay is not null && targetRelay is not null && !ReferenceEquals(ownerRelay, targetRelay))
         {
-            return;
+            throw new InvalidOperationException(
+                $"Markup binding '{description}' cannot span UI roots with different Relay instances.");
         }
 
-        throw new InvalidOperationException(
-            $"Markup binding '{description}' cannot process {operation} on thread {currentThreadId}; " +
-            $"its UI thread is {uiThreadId}. Raise PropertyChanged on the UI thread.");
+        return ownerRelay ?? targetRelay;
     }
 }

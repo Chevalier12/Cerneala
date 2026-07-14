@@ -317,11 +317,31 @@ Disposal and repeated activation/deactivation are idempotent.
 
 ## Threading
 
-A markup binding captures the thread on which it first activates. Any consumed
-`PropertyChanged` notification must be raised on that same UI/update thread.
-An off-thread notification fails immediately before reading the source or
-writing the target. The binding layer does not ignore, queue, or marshal that
-notification automatically.
+A markup binding uses the Relay owned by the target's attached `UIRoot`.
+Notifications already raised on that UI thread keep the synchronous fast path.
+For a CLR `INotifyPropertyChanged` notification raised on a worker thread, the
+handler filters the property name but does not evaluate the path or touch the
+target. It requests one coalesced Relay refresh for the active binding.
+
+The refresh runs on the UI thread, reads the current state of the complete path,
+and reconnects changed intermediate objects. A burst can therefore collapse to
+one pending refresh while still displaying the latest coherently published
+state. Detach, reattach, conditional-provider replacement, template replacement,
+and disposal invalidate callbacks from older activation generations.
+
+This auto-marshaling applies to CLR notifications consumed by an attached
+binding; it does not make the source object thread-safe. The view model must
+publish state so it can be read coherently later on the UI thread. A direct
+mutation of an attached `UiObject` or `UIElement` has already changed UI state
+before its notification exists and is rejected off-thread instead of being
+marshaled after the fact.
+
+Mutable collections are not made concurrent. An `ObservableList<T>` mutation
+observed by an attached control must run on the UI thread, for example with
+`await root.Relay.InvokeAsync(() => items.Add(item))`. Programmatic bindings on
+generic or unattached targets can use the explicit-Relay overloads on
+`BindingOperations`; without an attached or explicit Relay, an off-thread
+notification fails with an actionable diagnostic.
 
 ## Limits
 
@@ -338,3 +358,4 @@ produce source-generator diagnostics.
 - [Aspect System](aspect-system.md)
 - [GeneratedMarkup API](../docs-site/documentation/classes/Cerneala.UI.Markup.GeneratedMarkup.md)
 - [UiMarkupGenerator API](../docs-site/documentation/classes/Cerneala.SourceGen.UiMarkupGenerator.md)
+- [UiRelay API](../docs-site/documentation/classes/Cerneala.UI.Relay.UiRelay.md)

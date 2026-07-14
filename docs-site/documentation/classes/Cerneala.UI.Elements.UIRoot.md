@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Elements/UIRoot.cs`
 
-Represents the retained UI tree root and owns the viewport state, frame scheduler, rendering, input, resource, aspect, theme, motion, and semantics services for the tree.
+Represents the retained UI tree root and owns the viewport state, UI-thread Relay, frame scheduler, rendering, input, resource, aspect, theme, motion, and semantics services for the tree.
 
 ```csharp
 public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
@@ -41,9 +41,13 @@ The following example wires root-level services commonly used by a hosted applic
 ```csharp
 using Cerneala.UI.Elements;
 using Cerneala.UI.Resources;
+using Cerneala.UI.Relay;
 using Cerneala.UI.Theming;
 
-UIRoot root = new(800, 600);
+UIRoot root = new(
+    800,
+    600,
+    relayOptions: new UiRelayOptions { MaxCallbacksPerUpdate = 256 });
 ResourceStore resources = new();
 
 root.SetThemeProvider(new ThemeProvider(DefaultTheme.Create()));
@@ -52,7 +56,11 @@ root.SetResourceProvider(resources);
 
 ## Remarks
 
-`UIRoot` is the owner object for a retained Cerneala UI tree. The constructor initializes the root services, registers the default aspect package, marks the root as a layout boundary, and attaches the root element to itself through the element lifecycle.
+Root-owned mutable operations share `Relay` as their owner-thread authority. Resource, platform-service, image-cache, viewport, theme, and invalidation methods reject off-thread calls before changing retained state. Use `Relay.Post` or `Relay.InvokeAsync` to request those mutations from a worker thread.
+
+Notifications from an assigned `ThemeProvider` and `IObservableResourceProvider` are the deliberate exceptions because they describe external source changes rather than direct root mutations. UI-thread notifications retain their synchronous behavior. Off-thread theme bursts are coalesced into one aspect refresh that reads the current theme on the UI thread. Off-thread resource notifications are posted individually and retain FIFO order so resource deltas are not collapsed. Replacing either provider invalidates callbacks queued by the old subscription.
+
+`UIRoot` is the owner object for a retained Cerneala UI tree. The constructor captures its calling thread as the owner of `Relay`, initializes the other root services, registers the default aspect package, marks the root as a layout boundary, and attaches the root element to itself through the element lifecycle.
 
 Children are attached by adding them to the inherited `VisualChildren` or `LogicalChildren` collections. Attached subtrees receive root ownership and element IDs through `ElementIds`; removing a subtree detaches it, releases its IDs, and removes its pending work from every root-owned queue.
 
@@ -60,7 +68,7 @@ The root viewport is stored in `ViewportWidth`, `ViewportHeight`, and the root-l
 
 Invalidation requests are recorded in `Trace`, expanded through `DirtyPropagation`, and queued into the root-owned layout, inherited property, command-state, aspect, render, and hit-test queues. Queue snapshots share one visual preorder index per `TreeVersion`, while idle `HasWork` checks read queue counts without tree traversal. Render invalidation clears the retained render root, hit-test invalidation clears the input cache, and semantics invalidation marks the cached semantics tree dirty.
 
-`ProcessFrame` runs scheduled frame work through `Scheduler`. If the scheduler has work or `Motion` has active motion, the frame is processed with the root motion frame coordinator.
+`ProcessFrame` verifies Relay access, drains one stable Relay snapshot, and then runs scheduled frame work through `Scheduler`. Relay invalidations participate in that same frame; callbacks posted during the drain remain queued for the next call. If the scheduler has work or `Motion` has active motion, the frame is processed with the root motion frame coordinator.
 
 `GetSemanticsTree` caches the generated `SemanticsTree` until semantics become dirty or `TreeVersion` changes.
 
@@ -68,7 +76,7 @@ Invalidation requests are recorded in `Trace`, expanded through `DirtyPropagatio
 
 | Name | Description |
 | --- | --- |
-| `UIRoot(float viewportWidth = 0, float viewportHeight = 0, float scale = 1, IMotionClock? motionClock = null, ReducedMotionPolicy? reducedMotion = null)` | Initializes a root with viewport dimensions, viewport scale, optional motion clock, and optional reduced-motion policy. |
+| `UIRoot(float viewportWidth = 0, float viewportHeight = 0, float scale = 1, IMotionClock? motionClock = null, ReducedMotionPolicy? reducedMotion = null, UiRelayOptions? relayOptions = null)` | Initializes a root with viewport dimensions, viewport scale, optional motion configuration, and optional Relay callback-budget configuration. |
 
 ## Properties
 
@@ -89,6 +97,7 @@ Invalidation requests are recorded in `Trace`, expanded through `DirtyPropagatio
 | `LayoutQueue` | `LayoutQueue` | Queues measure and arrange work. |
 | `Motion` | `MotionSystem` | Coordinates motion values and motion frames for the root. |
 | `PlatformServices` | `IPlatformServices` | Gets the platform services assigned by `SetPlatformServices`, or the empty platform services object when none are assigned. |
+| `Relay` | `UiRelay` | Gets the root-owned queue used to marshal callbacks to the UI thread captured during construction. |
 | `RenderCounters` | `RenderCounters` | Tracks render counters for retained rendering. |
 | `RenderQueue` | `RenderQueue` | Queues render cache work. |
 | `RenderQueueProcessor` | `RenderQueueProcessor` | Processes render queue entries into the retained render cache. |
@@ -110,12 +119,12 @@ Invalidation requests are recorded in `Trace`, expanded through `DirtyPropagatio
 | --- | --- | --- |
 | `GetSemanticsTree()` | `SemanticsTree` | Builds or returns the cached semantics tree for the root. |
 | `Invalidate(InvalidationRequest request)` | `void` | Records and propagates an invalidation request through the root queues. Throws if `request` is `null`. |
-| `ProcessFrame(FramePhaseProcessors? processors = null, FrameBudget budget = default, FrameStats? stats = null, MotionFrameReason motionReason = MotionFrameReason.Scheduled)` | `FrameStats` | Processes one retained UI frame and returns the frame statistics object used for the frame. |
+| `ProcessFrame(FramePhaseProcessors? processors = null, FrameBudget budget = default, FrameStats? stats = null, MotionFrameReason motionReason = MotionFrameReason.Scheduled)` | `FrameStats` | Drains one Relay snapshot, processes one retained UI frame on the owning thread, and returns the statistics object used for the frame. |
 | `SetImageLoader(IImageLoader? loader)` | `void` | Sets the image loader and creates a matching `ImageResourceCache`; clears the old cache when replaced. |
 | `SetImageResourceCache(IImageLoader? loader, ImageResourceCache? cache)` | `void` | Sets the image loader and image cache pair, clears the old cache when the cache changes, and invalidates resource/render state. |
 | `SetPlatformServices(IPlatformServices? services)` | `void` | Sets platform services, falling back to empty services for `null`, and syncs reduced-motion mode when available. |
-| `SetResourceProvider(IResourceProvider? provider)` | `void` | Sets the root resource provider, updates observable resource-change subscriptions, and invalidates root resource state. |
-| `SetThemeProvider(ThemeProvider? provider)` | `void` | Sets the theme provider, updates theme-change subscription, and invalidates aspect state for the subtree. |
+| `SetResourceProvider(IResourceProvider? provider)` | `void` | Sets the root resource provider, updates observable resource-change subscriptions, and invalidates root resource state. Off-thread resource deltas are dispatched FIFO through `Relay`. |
+| `SetThemeProvider(ThemeProvider? provider)` | `void` | Sets the theme provider, updates theme-change subscription, and invalidates aspect state for the subtree. Off-thread theme bursts are coalesced through `Relay`. |
 | `SetViewport(float width, float height, float scale)` | `void` | Updates viewport width, height, and root scale, then increments `TreeVersion`. |
 
 ## Explicit Interface Implementations
@@ -134,3 +143,4 @@ Cerneala retained UI runtime.
 - `UI/Elements/UIElement.cs`
 - `UI/Hosting/UiHost.cs`
 - `UI/Invalidation/UiFrameScheduler.cs`
+- `UI/Relay/UiRelay.cs`

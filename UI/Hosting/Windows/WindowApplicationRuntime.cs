@@ -273,6 +273,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
             context.Host.AdvanceRenderTime(elapsedTime);
             if (context.RenderRequested ||
+                context.Root.Relay.HasPendingWork ||
                 context.Root.Scheduler.HasWork ||
                 context.Root.Motion.HasActiveMotion ||
                 context.Host.InputBridge.HasActivePointerRepeat)
@@ -349,6 +350,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
         WindowCallbacks callbacks = new(this, window);
         IPlatformWindow platformWindow = platform.CreateWindow(window, callbacks);
         UIRoot root = new(platformWindow.Viewport.Width, platformWindow.Viewport.Height, platformWindow.Viewport.Scale);
+        root.Relay.VerifyAccess();
         root.SetThemeProvider(themeProvider);
         root.SetResourceProvider(resourceProvider);
         root.SetPlatformServices(platformServices);

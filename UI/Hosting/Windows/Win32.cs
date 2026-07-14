@@ -59,6 +59,7 @@ internal static class Win32
     public const nuint SC_MASK = 0xFFF0;
     public const uint PM_REMOVE = 0x0001;
     public const int COLOR_WINDOW = 5;
+    public const int IDI_APPLICATION = 32512;
     public const int IDC_ARROW = 32512;
     public const int SM_CXSCREEN = 0;
     public const int SM_CYSCREEN = 1;
@@ -255,6 +256,9 @@ internal static class Win32
 
     [DllImport("user32.dll", EntryPoint = "LoadCursorW")]
     public static extern nint LoadCursor(nint instance, int cursorName);
+
+    [DllImport("user32.dll", EntryPoint = "LoadIconW")]
+    public static extern nint LoadIcon(nint instance, int iconName);
 
     [DllImport("user32.dll")]
     public static extern nint BeginPaint(nint hwnd, out PAINTSTRUCT paint);

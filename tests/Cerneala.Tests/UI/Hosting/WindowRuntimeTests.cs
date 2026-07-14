@@ -151,6 +151,25 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void PendingRelayWorkWakesAnOtherwiseIdleStandaloneWindow()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new();
+        window.Show();
+        FakeGraphicsSession session = Assert.Single(platform.Windows).Session;
+        int framesBefore = session.PresentCount;
+        int executions = 0;
+        window.Root!.Relay.Post(() => executions++);
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal(1, executions);
+        Assert.Equal(framesBefore + 1, session.PresentCount);
+        Assert.Equal(1, window.LastFrame!.Stats.RelayExecutedCallbacks);
+    }
+
+    [Fact]
     public void NativeBoundsNotificationsDoNotEchoPropertiesBackToThePlatform()
     {
         FakeWindowPlatform platform = new();

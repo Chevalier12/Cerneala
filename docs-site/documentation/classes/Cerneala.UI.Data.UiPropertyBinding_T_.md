@@ -53,11 +53,13 @@ editor.Text = "Grace";
 
 ## Remarks
 
-`UiPropertyBinding<T>` subscribes to `ObservableValue<T>.ValueChanged` and writes source changes to the target UI property while the binding is not disposed. Construction also writes the current source value to the target immediately.
+`UiPropertyBinding<T>` subscribes to `ObservableValue<T>.ValueChanged` and writes source changes to the target UI property while the binding is active. Construction also writes the current source value to the target immediately.
+
+Source notifications already raised on the UI thread remain synchronous. For an attached `UIElement`, worker-thread notifications are coalesced through `UIRoot.Relay`; the source's current value is read only when the Relay callback runs. Detach invalidates queued callbacks, and reattach performs a complete refresh with a new activation generation.
 
 When `Mode` is `BindingMode.TwoWay`, the binding also listens to `UiObject.PropertyChanged` on the target. If the changed property is the bound `UiProperty<T>`, the new target value is cast to `T` and written back to the source with `ObservableValue<T>.SetValue`.
 
-The binding guards source-to-target and target-to-source updates with an internal update flag, so a write triggered by one side is not immediately echoed back by the other side. Disposing the binding removes the source subscription and, for two-way bindings, the target property subscription.
+The binding guards source-to-target and target-to-source updates with an internal update flag, so a write triggered by one side is not immediately echoed back by the other side. A worker-thread echo is scheduled before that guard is considered, so a later source value is not lost. Disposing the binding removes subscriptions and makes queued callbacks no-ops.
 
 The target property must be writable. If the constructor fails while applying the initial source value, the binding removes any subscriptions it already added before rethrowing the exception.
 
@@ -86,6 +88,7 @@ The target property must be writable. If the constructor fails while applying th
 | --- | --- | --- |
 | `UiPropertyBinding(...)` | `ArgumentNullException` | `target`, `targetProperty`, or `source` is `null`. |
 | `UiPropertyBinding(...)` | `InvalidOperationException` | `targetProperty.IsReadOnly` is `true`. |
+| Source notification | `InvalidOperationException` | The notification is raised off-thread and neither an attached target Relay nor an explicit Relay is available. |
 | `UiPropertyBinding(...)` | Any exception from the target property pipeline | The initial write to the target fails, such as when validation rejects the source value. |
 
 ## Applies to

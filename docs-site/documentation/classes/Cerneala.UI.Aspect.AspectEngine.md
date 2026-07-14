@@ -57,6 +57,8 @@ ResolvedAspect resolved = new AspectEngine()
 
 ## Remarks
 
+Standalone engines capture their constructing thread. Root-owned engines use `UIRoot.Relay`; resolution, application, diagnostics state, dependency tracking, and clearing must occur on that owner thread and reject cross-thread calls before changing engine or element state.
+
 `AspectEngine` is the low-level resolver and applier behind `AspectProcessor`. Most root-level UI processing goes through `AspectProcessor`, which owns an `AspectEngine`, builds catalogs from the root registry, synchronizes token defaults, and passes control variants and the root theme provider.
 
 `Resolve` evaluates each `AspectRuleSet` in the catalog against an `AspectMatchContext` built from the target element, element state, optional variants, optional data context, optional slot path, and the current environment version. Matching declarations are resolved through an `AspectResolutionContext`. When multiple declarations target the same `UiProperty`, the engine keeps the declaration with the strongest cascade key, based on layer order, specificity, and declaration order. Rejected declarations are stored in the returned `ResolvedAspect`.

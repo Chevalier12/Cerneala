@@ -20,6 +20,8 @@ SolidColorBrush accent = element.FindResource<SolidColorBrush>("Accent");
 ## Remarks
 Keys cannot be `null`. Replacing or removing a resource increments the dictionary version and raises `ResourceChanged`; typed `ResourceId<T>` access preserves the requested resource type for dependency tracking.
 
+For a dictionary owned by an attached `UIElement`, UI-thread notifications invalidate synchronously and off-thread notifications are posted to the element root's Relay in FIFO order. `ResourceDictionary` itself wraps a normal `Dictionary` and is not a concurrent collection; callers must not mutate and read it concurrently.
+
 ## Properties
 | Name | Description |
 | --- | --- |

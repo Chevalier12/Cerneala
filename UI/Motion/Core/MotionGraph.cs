@@ -1,6 +1,7 @@
 using Cerneala.UI.Motion.Diagnostics;
 using Cerneala.UI.Motion.Interpolation;
 using Cerneala.UI.Motion.Specs;
+using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Motion.Core;
 
@@ -10,7 +11,7 @@ namespace Cerneala.UI.Motion.Core;
 /// </summary>
 public sealed class MotionGraph
 {
-    private readonly MotionThreadGuard threadGuard;
+    private readonly IUiThreadAccess threadAccess;
     private readonly ValueMixerRegistry mixers;
     private readonly ReducedMotionPolicy reducedMotion;
     private readonly MotionDiagnostics? diagnostics;
@@ -19,18 +20,26 @@ public sealed class MotionGraph
     private readonly List<MotionNode> pendingRemoves = [];
     private bool isTicking;
 
-    public MotionGraph(MotionThreadGuard threadGuard)
-        : this(threadGuard, CreateDefaultMixers(), ReducedMotionPolicy.Default, diagnostics: null)
+    public MotionGraph()
+        : this(new CapturedUiThreadAccess(), CreateDefaultMixers(), ReducedMotionPolicy.Default, diagnostics: null)
     {
     }
 
     public MotionGraph(
-        MotionThreadGuard threadGuard,
+        ValueMixerRegistry mixers,
+        ReducedMotionPolicy reducedMotion,
+        MotionDiagnostics? diagnostics = null)
+        : this(new CapturedUiThreadAccess(), mixers, reducedMotion, diagnostics)
+    {
+    }
+
+    internal MotionGraph(
+        IUiThreadAccess threadAccess,
         ValueMixerRegistry mixers,
         ReducedMotionPolicy reducedMotion,
         MotionDiagnostics? diagnostics = null)
     {
-        this.threadGuard = threadGuard ?? throw new ArgumentNullException(nameof(threadGuard));
+        this.threadAccess = threadAccess ?? throw new ArgumentNullException(nameof(threadAccess));
         this.mixers = mixers ?? throw new ArgumentNullException(nameof(mixers));
         this.reducedMotion = reducedMotion ?? throw new ArgumentNullException(nameof(reducedMotion));
         this.diagnostics = diagnostics;
@@ -44,13 +53,13 @@ public sealed class MotionGraph
 
     public MotionValue<T> CreateValue<T>(T initial, ValueMixer<T>? mixer = null)
     {
-        threadGuard.VerifyAccess();
+        threadAccess.VerifyAccess();
         return new MotionValue<T>(this, mixer ?? mixers.Resolve<T>(), initial);
     }
 
     public MotionFrameResult Tick(MotionFrame frame)
     {
-        threadGuard.VerifyAccess();
+        threadAccess.VerifyAccess();
         ApplyPendingChanges();
         if (nodes.Count == 0)
         {
@@ -113,7 +122,7 @@ public sealed class MotionGraph
 
     public void Register(MotionNode node)
     {
-        threadGuard.VerifyAccess();
+        threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(node);
         if (isTicking)
         {
@@ -137,7 +146,7 @@ public sealed class MotionGraph
 
     public void Unregister(MotionNode node)
     {
-        threadGuard.VerifyAccess();
+        threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(node);
         if (isTicking)
         {
@@ -160,7 +169,7 @@ public sealed class MotionGraph
 
     internal void VerifyAccess()
     {
-        threadGuard.VerifyAccess();
+        threadAccess.VerifyAccess();
     }
 
     private void ApplyPendingChanges()

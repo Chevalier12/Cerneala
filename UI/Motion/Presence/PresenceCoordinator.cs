@@ -36,7 +36,7 @@ public sealed class PresenceCoordinator
 
     internal bool TryBeginExit(UIElement owner, UIElement element)
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(element);
 
@@ -82,7 +82,7 @@ public sealed class PresenceCoordinator
 
     internal bool TryCancelExitForAdd(UIElement newOwner, UIElement element)
     {
-        motion.ThreadGuard.VerifyAccess();
+        motion.VerifyAccess();
         ArgumentNullException.ThrowIfNull(newOwner);
         ArgumentNullException.ThrowIfNull(element);
         if (!exits.Remove(element, out PresenceHandle? handle))

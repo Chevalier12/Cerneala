@@ -168,13 +168,11 @@ assignment-urilor din directive.
   observa prin `UiObject.PropertyChanged`, iar fiecare owner CLR dintr-o cale
   `$DataContext` trebuie sa implementeze `INotifyPropertyChanged`; altfel
   generatorul emite diagnostic actionabil.
-- Contractul de threading al acestui plan este strict: binding-ul se activeaza
-  pe thread-ul `Update`/UI, iar orice `PropertyChanged` consumat de el trebuie
-  ridicat pe acelasi thread. O notificare off-thread este detectata inainte de
-  citirea sau scrierea tintei si produce o eroare fail-fast clara, cu informatii
-  despre binding si thread-uri; nu este ignorata, nu este executata off-thread
-  si nu este pusa automat intr-o coada. Auto-marshaling-ul apartine unui plan de
-  infrastructura separat: `docs/plans/2026-07-14-relay-auto-marshaling.md`.
+- Contractul de threading strict initial a fost extins de
+  `docs/plans/2026-07-14-relay-auto-marshaling.md`: un `INotifyPropertyChanged`
+  CLR atasat poate notifica off-thread, iar controllerul coalesce-uieste si
+  reevalueaza calea completa pe `UIRoot.Relay`, fara citiri pe worker.
+  `UiObject.PropertyChanged` si mutatiile UI directe raman strict UI-thread.
 
 ## 3. Baseline si problema actuala
 
@@ -666,10 +664,10 @@ binding si controllerul runtime.
 - [x] Adauga activarea/dezactivarea idempotenta a controllerului, cu refresh
   imediat la fiecare reactivare si ignorarea callback-urilor intarziate de la
   o activare veche.
-- [x] Captureaza/verifica thread-ul `Update`/UI la activarea controllerului si
-  respinge sincron orice callback `PropertyChanged` primit de pe alt thread,
-  inainte de evaluarea caii ori mutarea tintei; nu introduce coada sau marshal
-  implicit in acest plan.
+- [x] Captureaza thread-ul `Update`/UI la activarea controllerului. Implementarea
+  initiala fail-fast a fost inlocuita ulterior cu coalescing pe `UIRoot.Relay`
+  pentru `INotifyPropertyChanged`; callback-ul worker nu evalueaza calea si nu
+  muta tinta.
 - [x] Extinde assignment-ul conditional cu un furnizor reactiv, pastrand
   `MarkupConditionController` drept unicul owner al slotului
   `MarkupConditional` si activand cel mult un furnizor per proprietate tinta.
@@ -1026,9 +1024,9 @@ de reconectare si disposal. Nu adauga convertere sau multi-binding ca sa
   din directive, fara observatii sau diagnostice false de binding.
 - [x] Nicio cale `$DataContext` cu owner CLR neobservabil nu compileaza ca un
   binding aparent reactiv; diagnosticul cere `INotifyPropertyChanged`.
-- [x] Orice notificare `PropertyChanged` off-thread este respinsa determinist
-  inainte de accesarea UI-ului, cu eroare actionabila; nicio actualizare nu este
-  executata sau pusa implicit in coada de binding.
+- [x] Orice notificare CLR `PropertyChanged` off-thread este coalesced si
+  reevaluata pe Relay inainte de accesarea UI-ului; fara Relay rezolvabil,
+  binding-ul programatic ramane fail-fast cu diagnostic actionabil.
 - [x] Cai incomplete, terminale nullable, detach/reattach si disposal au
   comportament determinist si testat.
 - [x] Binding-ul de markup este suprascris/restaurat corect de

@@ -57,6 +57,8 @@ IReadOnlyList<ResourceDependencyChange> changes = tracker.NotifyResourceChanged(
 
 `Track` subscribes once to an `IObservableResourceProvider` and forwards provider `ResourceChanged` events to `NotifyResourceChanged`. When a resource changes, the tracker updates that resource version, removes detached owners from the affected dependency set, increments dependency versions for remaining owners, and returns `ResourceDependencyChange` records.
 
+`Track` is a synchronous standalone tracker API; it does not invalidate UI or marshal notifications. Keep the provider and tracker on one thread. Root resource invalidation uses the root's provider subscription instead, dispatching deltas FIFO through `UIRoot.Relay` before it calls `NotifyResourceChanged` and queues retained invalidation.
+
 Owners are compared by reference identity. `RemoveOwner` removes one owner from all dependency sets and clears its stored dependency version.
 
 ## Methods
