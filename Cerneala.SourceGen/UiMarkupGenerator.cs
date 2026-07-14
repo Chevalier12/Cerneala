@@ -1975,6 +1975,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         Path.GetFileName(file.Path),
                         "Duplicate template part Name '" + partName + "'.");
                 }
+                else if (!ValidateDeclaredTemplatePartType(templateContext, partName, element))
+                {
+                    templateContext.PartNames.Remove(partName);
+                }
                 else
                 {
                     templateContext.Parts.Add(partName, element);
@@ -2063,6 +2067,45 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             return variable;
+        }
+
+        private bool ValidateDeclaredTemplatePartType(
+            TemplateEmissionContext templateContext,
+            string partName,
+            XElement element)
+        {
+            const string templatePartAttributeName = "Cerneala.UI.Controls.Templates.TemplatePartAttribute";
+            for (INamedTypeSymbol? current = templateContext.OwnerType; current is not null; current = current.BaseType)
+            {
+                foreach (AttributeData attribute in current.GetAttributes())
+                {
+                    if (attribute.AttributeClass?.ToDisplayString() != templatePartAttributeName ||
+                        attribute.ConstructorArguments.Length != 2 ||
+                        attribute.ConstructorArguments[0].Value is not string declaredName ||
+                        !string.Equals(declaredName, partName, StringComparison.Ordinal) ||
+                        attribute.ConstructorArguments[1].Value is not INamedTypeSymbol expectedType)
+                    {
+                        continue;
+                    }
+
+                    INamedTypeSymbol? actualType = ResolveElementTypeSymbol(element.Name.LocalName);
+                    if (actualType is null || IsOrDerivesFrom(actualType, expectedType))
+                    {
+                        return true;
+                    }
+
+                    Report(
+                        InvalidComponentTemplate,
+                        (XObject?)element.Attribute("Name") ?? element,
+                        Path.GetFileName(file.Path),
+                        "Template part Name '" + partName + "' on '" + templateContext.OwnerElementName +
+                        "' expects type '" + expectedType.ToDisplayString() + "', but element '" +
+                        element.Name.LocalName + "' has type '" + actualType.ToDisplayString() + "'.");
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private bool TryEmitGridAttachedProperty(string variable, XAttribute attribute)
@@ -2350,6 +2393,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             INamedTypeSymbol? type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls." + elementName);
             INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
             INamedTypeSymbol? windowType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Window");
+            if (type is null)
+            {
+                type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Primitives." + elementName);
+            }
+
             if (type is null)
             {
                 type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Shapes." + elementName);

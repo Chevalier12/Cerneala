@@ -272,7 +272,10 @@ internal sealed class WindowApplicationRuntime : IDisposable
             }
 
             context.Host.AdvanceRenderTime(elapsedTime);
-            if (context.RenderRequested || context.Root.Scheduler.HasWork || context.Root.Motion.HasActiveMotion)
+            if (context.RenderRequested ||
+                context.Root.Scheduler.HasWork ||
+                context.Root.Motion.HasActiveMotion ||
+                context.Host.InputBridge.HasActivePointerRepeat)
             {
                 Render(context, elapsedTime, renderTimeAlreadyAdvanced: true);
             }

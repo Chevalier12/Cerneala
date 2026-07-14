@@ -90,6 +90,19 @@ public sealed class ComponentTemplateLifecycleTests
     }
 
     [Fact]
+    public void ApplyingSameTemplateDoesNotRepeatTemplatePartHook()
+    {
+        PartAwareControl control = new();
+        ComponentTemplate<PartAwareControl> template = PartTemplate(new ContentPresenter());
+
+        control.ComponentTemplate = template;
+        control.ApplyTemplate();
+
+        Assert.Equal(1, control.AttachedCount);
+        Assert.Equal(0, control.DetachedCount);
+    }
+
+    [Fact]
     public void ReplacingTemplateDetachesOldRootAndAttachesNewRoot()
     {
         Control control = new();
@@ -119,6 +132,113 @@ public sealed class ComponentTemplateLifecycleTests
         control.ComponentTemplate = new ComponentTemplate<Control>("new", _ => new UIElement());
 
         Assert.Equal(1, lifetime.DisposeCount);
+    }
+
+    [Fact]
+    public void ReplacingTemplateDetachesHandlersFromOldPart()
+    {
+        PartAwareControl control = new();
+        ContentPresenter oldPart = new();
+        ContentPresenter newPart = new();
+        control.ComponentTemplate = PartTemplate(oldPart);
+
+        control.ComponentTemplate = PartTemplate(newPart);
+        oldPart.Visibility = Visibility.Hidden;
+        newPart.Visibility = Visibility.Hidden;
+
+        Assert.Equal(1, control.PartChanges);
+        Assert.Same(newPart, control.ActivePart);
+        Assert.Equal(2, control.AttachedCount);
+        Assert.Equal(1, control.DetachedCount);
+    }
+
+    [Fact]
+    public void ClearingTemplateInvokesDetachHookAndClearsActivePart()
+    {
+        PartAwareControl control = new()
+        {
+            ComponentTemplate = PartTemplate(new ContentPresenter())
+        };
+
+        control.ComponentTemplate = null;
+
+        Assert.Null(control.ActivePart);
+        Assert.Null(control.ComponentTemplateInstance);
+        Assert.Equal(1, control.DetachedCount);
+    }
+
+    [Fact]
+    public void MissingRequiredPartFailsDuringTemplateApplication()
+    {
+        PartAwareControl control = new();
+
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(() =>
+            control.ComponentTemplate = new ComponentTemplate<PartAwareControl>("missing", _ => new UIElement()));
+
+        Assert.Contains("PART_Content", error.Message);
+        Assert.Contains(typeof(ContentPresenter).FullName!, error.Message);
+        Assert.Null(control.ComponentTemplateInstance);
+        Assert.Empty(control.VisualChildren);
+    }
+
+    [Fact]
+    public void WrongRequiredPartTypeFailsDuringTemplateApplication()
+    {
+        PartAwareControl control = new();
+        UIElement root = new();
+
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(() =>
+            control.ComponentTemplate = new ComponentTemplate<PartAwareControl>("wrong", context =>
+            {
+                context.RequirePart("PART_Content", root);
+                return root;
+            }));
+
+        Assert.Contains("PART_Content", error.Message);
+        Assert.Contains(typeof(ContentPresenter).FullName!, error.Message);
+        Assert.Contains(typeof(UIElement).FullName!, error.Message);
+        Assert.Null(root.VisualParent);
+        Assert.Null(control.ComponentTemplateInstance);
+    }
+
+    [Fact]
+    public void OptionalPartAllowsAbsenceButRejectsWrongType()
+    {
+        OptionalPartControl control = new()
+        {
+            ComponentTemplate = new ComponentTemplate<OptionalPartControl>("missing", _ => new UIElement())
+        };
+        Assert.Null(control.ActivePart);
+
+        UIElement wrongPart = new();
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(() =>
+            control.ComponentTemplate = new ComponentTemplate<OptionalPartControl>("wrong", context =>
+            {
+                context.RequirePart("PART_Optional", wrongPart);
+                return wrongPart;
+            }));
+
+        Assert.Contains("PART_Optional", error.Message);
+        Assert.Contains(typeof(ContentPresenter).FullName!, error.Message);
+    }
+
+    [Fact]
+    public void DuplicatePartRegistrationFailsDuringTemplateCreation()
+    {
+        Control control = new();
+        UIElement root = new();
+        ComponentTemplate<Control> template = new("duplicate", context =>
+        {
+            context.RequirePart("PART_Content", root);
+            context.RequirePart("PART_Content", root);
+            return root;
+        });
+
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(() => control.ComponentTemplate = template);
+
+        Assert.Contains("PART_Content", error.Message);
+        Assert.Contains("more than once", error.Message);
+        Assert.Null(control.ComponentTemplateInstance);
     }
 
     [Fact]
@@ -283,6 +403,62 @@ public sealed class ComponentTemplateLifecycleTests
 
     private sealed class PartedControl : Control
     {
+    }
+
+    private sealed class PartAwareControl : Control
+    {
+        public ContentPresenter? ActivePart { get; private set; }
+
+        public int AttachedCount { get; private set; }
+
+        public int DetachedCount { get; private set; }
+
+        public int PartChanges { get; private set; }
+
+        protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
+        {
+            if (ActivePart is not null)
+            {
+                ActivePart.PropertyChanged -= OnPartPropertyChanged;
+                ActivePart = null;
+                DetachedCount++;
+            }
+
+            if (instance is null)
+            {
+                return;
+            }
+
+            ActivePart = GetRequiredTemplatePart<ContentPresenter>("PART_Content");
+            ActivePart.PropertyChanged += OnPartPropertyChanged;
+            AttachedCount++;
+        }
+
+        private void OnPartPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
+        {
+            PartChanges++;
+        }
+    }
+
+    private sealed class OptionalPartControl : Control
+    {
+        public ContentPresenter? ActivePart { get; private set; }
+
+        protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
+        {
+            ActivePart = instance is null
+                ? null
+                : GetOptionalTemplatePart<ContentPresenter>("PART_Optional");
+        }
+    }
+
+    private static ComponentTemplate<PartAwareControl> PartTemplate(ContentPresenter part)
+    {
+        return new ComponentTemplate<PartAwareControl>("part", context =>
+        {
+            context.RequirePart("PART_Content", part);
+            return part;
+        });
     }
 
     private sealed class RenderableElement(Color color) : UIElement

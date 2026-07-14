@@ -148,14 +148,26 @@ public class Control : UIElement
     public void ApplyTemplate()
     {
         ComponentTemplate? template = ComponentTemplate;
-        if (ComponentTemplateInstance is not null && ReferenceEquals(ComponentTemplateInstanceTemplate, template))
+        if (ReferenceEquals(ComponentTemplateInstanceTemplate, template) &&
+            (template is null || ComponentTemplateInstance is not null))
         {
             return;
         }
 
-        ComponentTemplateInstance?.Dispose();
+        ComponentTemplateInstance? previousInstance = ComponentTemplateInstance;
         ComponentTemplateInstance = null;
         ComponentTemplateInstanceTemplate = null;
+        if (previousInstance is not null)
+        {
+            try
+            {
+                OnTemplateApplied(null);
+            }
+            finally
+            {
+                previousInstance.Dispose();
+            }
+        }
 
         if (template is null)
         {
@@ -168,15 +180,60 @@ public class Control : UIElement
         try
         {
             instance.Attach(this);
+            ResolvingTemplateInstance = instance;
+            OnTemplateApplied(instance);
+            ComponentTemplateInstance = instance;
+            ComponentTemplateInstanceTemplate = template;
         }
         catch
         {
-            instance.Dispose();
+            try
+            {
+                OnTemplateApplied(null);
+            }
+            finally
+            {
+                ResolvingTemplateInstance = null;
+                instance.Dispose();
+            }
+
             throw;
         }
+        finally
+        {
+            ResolvingTemplateInstance = null;
+        }
+    }
 
-        ComponentTemplateInstance = instance;
-        ComponentTemplateInstanceTemplate = template;
+    protected virtual void OnTemplateApplied(ComponentTemplateInstance? instance)
+    {
+    }
+
+    protected TElement GetRequiredTemplatePart<TElement>(string name)
+        where TElement : UIElement
+    {
+        UIElement? element = GetTemplatePart(name);
+        if (element is null)
+        {
+            throw new InvalidOperationException(
+                $"Required template part '{name}' of type '{typeof(TElement).FullName}' was not provided for '{GetType().FullName}'.");
+        }
+
+        return element as TElement ?? throw new InvalidOperationException(
+            $"Template part '{name}' for '{GetType().FullName}' must be of type '{typeof(TElement).FullName}', but was '{element.GetType().FullName}'.");
+    }
+
+    protected TElement? GetOptionalTemplatePart<TElement>(string name)
+        where TElement : UIElement
+    {
+        UIElement? element = GetTemplatePart(name);
+        if (element is null)
+        {
+            return null;
+        }
+
+        return element as TElement ?? throw new InvalidOperationException(
+            $"Template part '{name}' for '{GetType().FullName}' must be of type '{typeof(TElement).FullName}', but was '{element.GetType().FullName}'.");
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -202,6 +259,19 @@ public class Control : UIElement
     }
 
     private ComponentTemplate? ComponentTemplateInstanceTemplate { get; set; }
+
+    private ComponentTemplateInstance? ResolvingTemplateInstance { get; set; }
+
+    private UIElement? GetTemplatePart(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Template part name cannot be empty.", nameof(name));
+        }
+
+        ComponentTemplateInstance? instance = ResolvingTemplateInstance ?? ComponentTemplateInstance;
+        return instance?.Parts.TryGetValue(name, out UIElement? element) == true ? element : null;
+    }
 
     private static bool IsValidThickness(Thickness value)
     {

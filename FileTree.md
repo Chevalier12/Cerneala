@@ -1530,11 +1530,15 @@ Generated from `.`.
 |   |   |   |-- RangeBase.cs
 |   |   |   |-- RepeatButton.cs
 |   |   |   |-- ScrollBar.cs
+|   |   |   |-- ScrollBarLayoutPanel.cs
+|   |   |   |-- ScrollBarTemplates.cs
 |   |   |   |-- ScrollEventArgs.cs
 |   |   |   |-- Selector.cs
 |   |   |   |-- Thumb.cs
 |   |   |   |-- ToggleButton.cs
-|   |   |   +-- Track.cs
+|   |   |   |-- Track.cs
+|   |   |   |-- TrackLayoutPanel.cs
+|   |   |   +-- TrackTemplates.cs
 |   |   |-- Selection/
 |   |   |   |-- SelectionChangedEventArgs.cs
 |   |   |   |-- SelectionChangeResult.cs
@@ -1592,6 +1596,7 @@ Generated from `.`.
 |   |   |-- ScrollChangedEventArgs.cs
 |   |   |-- ScrollContentPresenter.cs
 |   |   |-- ScrollViewer.cs
+|   |   |-- ScrollViewerTemplates.cs
 |   |   |-- Slider.cs
 |   |   |-- StackPanel.cs
 |   |   |-- TabControl.cs

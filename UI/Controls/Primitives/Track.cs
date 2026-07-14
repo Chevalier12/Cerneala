@@ -1,31 +1,28 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
-using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
-using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls.Primitives;
 
+[TemplatePart("PART_Thumb", typeof(Thumb))]
 public class Track : Control
 {
-    private readonly Thumb thumb;
-    private bool ownsThumb;
-    private bool updatingFromThumb;
+    private Thumb? thumb;
+    private TrackValueChangeReason valueChangeReason;
 
     public Track()
     {
-        thumb = new Thumb();
-        thumb.DragDelta += OnThumbDragDelta;
-        AddThumb();
         Background = new Cerneala.UI.Media.SolidColorBrush(new Color(225, 225, 225));
         BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(120, 120, 120));
         BorderThickness = new Thickness(1);
         SmallChange = 0.1f;
         LargeChange = 1;
         Handlers.AddHandler(InputEvents.MouseDownEvent, OnMouseDown);
+        SetValue(ComponentTemplateProperty, TrackTemplates.Default, UiPropertyValueSource.AspectBase);
     }
 
     public static readonly UiProperty<float> MinimumProperty = UiProperty<float>.Register(
@@ -69,7 +66,16 @@ public class Track : Control
 
     public event EventHandler? ValueChanged;
 
-    public Thumb Thumb => thumb;
+    internal event EventHandler<TrackValueChangedEventArgs>? ValueChangedWithReason;
+
+    public Thumb Thumb
+    {
+        get
+        {
+            ApplyTemplate();
+            return thumb ?? throw new InvalidOperationException("Track template did not provide the required part 'PART_Thumb'.");
+        }
+    }
 
     public float Minimum
     {
@@ -117,22 +123,22 @@ public class Track : Control
 
     public void DecreaseLarge()
     {
-        Value -= LargeChange;
+        ChangeValue(Value - LargeChange, TrackValueChangeReason.LargeDecrement);
     }
 
     public void IncreaseLarge()
     {
-        Value += LargeChange;
+        ChangeValue(Value + LargeChange, TrackValueChangeReason.LargeIncrement);
     }
 
     public void DecreaseSmall()
     {
-        Value -= SmallChange;
+        ChangeValue(Value - SmallChange, TrackValueChangeReason.SmallDecrement);
     }
 
     public void IncreaseSmall()
     {
-        Value += SmallChange;
+        ChangeValue(Value + SmallChange, TrackValueChangeReason.SmallIncrement);
     }
 
     public float ValueFromPoint(float x, float y)
@@ -149,51 +155,40 @@ public class Track : Control
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
-        if (TemplateChild is not null)
-        {
-            return base.MeasureCore(context);
-        }
-
-        thumb.Measure(new MeasureContext(context.AvailableSize, context.Rounding));
-        return Orientation == Orientation.Horizontal
-            ? new LayoutSize(32, MathF.Max(10, thumb.DesiredSize.Height))
-            : new LayoutSize(MathF.Max(10, thumb.DesiredSize.Width), 32);
+        ApplyTemplate();
+        return base.MeasureCore(context);
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
-        if (TemplateChild is not null)
+        LayoutRect arranged = base.ArrangeCore(context);
+        if (thumb is not null)
         {
-            return base.ArrangeCore(context);
+            ArrangeThumb(thumb, context);
         }
 
-        ArrangeThumb(context);
-        return context.FinalRect;
+        return arranged;
     }
 
-    protected override void OnRender(RenderContext context)
+    protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
     {
-        if (TemplateChild is not null)
+        if (thumb is not null)
+        {
+            thumb.DragDelta -= OnThumbDragDelta;
+            thumb = null;
+        }
+
+        if (instance is null)
         {
             return;
         }
 
-        DrawRect rect = Border.ToDrawRect(context.Bounds);
-        if (Background is { } background && rect.Width > 0 && rect.Height > 0)
-        {
-            context.DrawingContext.FillRectangle(rect, background);
-        }
-
-        float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Top), MathF.Max(BorderThickness.Right, BorderThickness.Bottom));
-        if (BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)
-        {
-            context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
-        }
+        thumb = GetRequiredTemplatePart<Thumb>("PART_Thumb");
+        thumb.DragDelta += OnThumbDragDelta;
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
-        bool templateChanged = ReferenceEquals(args.Property, ComponentTemplateProperty);
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, MinimumProperty) || ReferenceEquals(args.Property, MaximumProperty))
         {
@@ -210,27 +205,25 @@ public class Track : Control
             Value = RangeBase.Clamp(Value, Minimum, Maximum);
         }
 
-        if (ReferenceEquals(args.Property, ValueProperty) && !updatingFromThumb)
+        if (ReferenceEquals(args.Property, ValueProperty))
         {
             ValueChanged?.Invoke(this, EventArgs.Empty);
+            ValueChangedWithReason?.Invoke(
+                this,
+                new TrackValueChangedEventArgs((float)args.OldValue!, Value, valueChangeReason));
         }
 
-        if (templateChanged)
+        if (ReferenceEquals(args.Property, ComponentTemplateProperty) &&
+            ComponentTemplate is null &&
+            GetSourceValue(ComponentTemplateProperty, UiPropertyValueSource.AspectBase) is ComponentTemplate)
         {
-            if (ComponentTemplate is null)
-            {
-                AddThumb();
-            }
-            else
-            {
-                RemoveThumb();
-            }
+            ClearValue(ComponentTemplateProperty);
         }
     }
 
     private float Range => MathF.Max(0, Maximum - Minimum);
 
-    private void ArrangeThumb(ArrangeContext context)
+    private void ArrangeThumb(Thumb activeThumb, ArrangeContext context)
     {
         float length = GetTrackLength(context.FinalRect);
         float thumbLength = GetThumbLength(length);
@@ -239,7 +232,7 @@ public class Track : Control
         LayoutRect thumbRect = Orientation == Orientation.Horizontal
             ? new LayoutRect(context.FinalRect.X + offset, context.FinalRect.Y, thumbLength, context.FinalRect.Height)
             : new LayoutRect(context.FinalRect.X, context.FinalRect.Y + offset, context.FinalRect.Width, thumbLength);
-        thumb.Arrange(new ArrangeContext(thumbRect, context.Rounding));
+        activeThumb.Arrange(new ArrangeContext(thumbRect, context.Rounding));
     }
 
     private float GetValueRatio(float value)
@@ -279,27 +272,14 @@ public class Track : Control
         }
 
         float pixelDelta = Orientation == Orientation.Horizontal ? args.HorizontalChange : args.VerticalChange;
-        float oldValue = Value;
-        updatingFromThumb = true;
-        try
-        {
-            Value += (pixelDelta / travel) * Range;
-        }
-        finally
-        {
-            updatingFromThumb = false;
-        }
-
-        if (oldValue != Value)
-        {
-            ValueChanged?.Invoke(this, EventArgs.Empty);
-        }
+        ChangeValue(Value + ((pixelDelta / travel) * Range), TrackValueChangeReason.ThumbTrack);
     }
 
     private void OnMouseDown(UiElementId source, RoutedEventArgs args)
     {
         if (args is not MouseButtonEventArgs mouseArgs ||
             mouseArgs.ChangedButton != InputMouseButton.Left ||
+            thumb is null ||
             Contains(thumb.ArrangedBounds, mouseArgs.X, mouseArgs.Y))
         {
             return;
@@ -319,28 +299,18 @@ public class Track : Control
         args.Handled = oldValue != Value;
     }
 
-    private void AddThumb()
+    private void ChangeValue(float newValue, TrackValueChangeReason reason)
     {
-        if (ownsThumb)
+        TrackValueChangeReason previousReason = valueChangeReason;
+        valueChangeReason = reason;
+        try
         {
-            return;
+            Value = newValue;
         }
-
-        LogicalChildren.Add(thumb);
-        VisualChildren.Add(thumb);
-        ownsThumb = true;
-    }
-
-    private void RemoveThumb()
-    {
-        if (!ownsThumb)
+        finally
         {
-            return;
+            valueChangeReason = previousReason;
         }
-
-        VisualChildren.Remove(thumb);
-        LogicalChildren.Remove(thumb);
-        ownsThumb = false;
     }
 
     private static float CoerceValue(UiObject owner, float value)
@@ -361,4 +331,26 @@ public class Track : Control
             x < rect.X + rect.Width &&
             y < rect.Y + rect.Height;
     }
+}
+
+internal enum TrackValueChangeReason
+{
+    Programmatic,
+    SmallDecrement,
+    SmallIncrement,
+    LargeDecrement,
+    LargeIncrement,
+    ThumbTrack
+}
+
+internal sealed class TrackValueChangedEventArgs(
+    float oldValue,
+    float newValue,
+    TrackValueChangeReason reason) : EventArgs
+{
+    public float OldValue { get; } = oldValue;
+
+    public float NewValue { get; } = newValue;
+
+    public TrackValueChangeReason Reason { get; } = reason;
 }

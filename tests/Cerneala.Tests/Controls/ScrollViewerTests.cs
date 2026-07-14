@@ -1,4 +1,6 @@
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
@@ -101,6 +103,128 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void TemplatePartsBecomeTheActiveScrollViewerParts()
+    {
+        ScrollContentPresenter presenter = new();
+        ScrollBar horizontal = new() { Orientation = Orientation.Horizontal };
+        ScrollBar vertical = new() { Orientation = Orientation.Vertical };
+        StackPanel root = new();
+        root.VisualChildren.Add(presenter);
+        root.VisualChildren.Add(horizontal);
+        root.VisualChildren.Add(vertical);
+        ScrollViewer viewer = new()
+        {
+            ComponentTemplate = new ComponentTemplate<ScrollViewer>("custom", context =>
+            {
+                context.RequirePart("PART_ScrollContentPresenter", presenter);
+                context.RequirePart("PART_HorizontalScrollBar", horizontal);
+                context.RequirePart("PART_VerticalScrollBar", vertical);
+                return root;
+            })
+        };
+
+        Assert.Same(presenter, viewer.Presenter);
+        Assert.Same(horizontal, viewer.HorizontalScrollBar);
+        Assert.Same(vertical, viewer.VerticalScrollBar);
+    }
+
+    [Fact]
+    public void DefaultTemplatePartsAreAvailableBeforeMeasure()
+    {
+        ScrollViewer viewer = new();
+
+        Assert.NotNull(viewer.Presenter);
+        Assert.NotNull(viewer.HorizontalScrollBar);
+        Assert.NotNull(viewer.VerticalScrollBar);
+        Assert.Same(viewer.Presenter, viewer.ScrollInfo);
+    }
+
+    [Fact]
+    public void CustomTemplateKeepsContentOffsetsAndScrollBarValuesSynchronized()
+    {
+        ScrollContentPresenter presenter = new();
+        ScrollBar horizontal = new();
+        ScrollBar vertical = new();
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(200, 300)),
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            ComponentTemplate = ViewerTemplate("custom", presenter, horizontal, vertical)
+        };
+
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        vertical.Value = 40;
+        horizontal.Value = 30;
+
+        Assert.Equal(40, presenter.VerticalOffset);
+        Assert.Equal(30, presenter.HorizontalOffset);
+        Assert.Same(viewer.Content, presenter.Content);
+    }
+
+    [Fact]
+    public void OldViewerPartsStopSynchronizingAfterTemplateSwap()
+    {
+        ScrollViewer viewer = new() { Content = new FixedElement(new LayoutSize(200, 300)) };
+        ScrollContentPresenter oldPresenter = viewer.Presenter;
+        ScrollBar oldVertical = viewer.VerticalScrollBar;
+        ScrollContentPresenter newPresenter = new();
+        ScrollBar newHorizontal = new();
+        ScrollBar newVertical = new();
+
+        viewer.ComponentTemplate = ViewerTemplate("new", newPresenter, newHorizontal, newVertical);
+        oldPresenter.SetVerticalOffset(50);
+        oldVertical.Value = 50;
+
+        Assert.Same(newPresenter, viewer.Presenter);
+        Assert.Same(viewer.Content, newPresenter.Content);
+        Assert.Equal(0, newPresenter.VerticalOffset);
+        Assert.Equal(0, newVertical.Value);
+    }
+
+    [Fact]
+    public void ClearingCustomViewerTemplateRestoresDefaultParts()
+    {
+        ScrollContentPresenter customPresenter = new();
+        ScrollViewer viewer = new()
+        {
+            ComponentTemplate = ViewerTemplate("custom", customPresenter, new ScrollBar(), new ScrollBar())
+        };
+
+        viewer.ComponentTemplate = null;
+
+        Assert.NotSame(customPresenter, viewer.Presenter);
+        Assert.NotNull(viewer.ComponentTemplate);
+    }
+
+    [Fact]
+    public void ViewerTemplateWithWrongPartTypeFailsEarly()
+    {
+        ScrollViewer viewer = new();
+        ScrollContentPresenter presenter = new();
+        UIElement wrongHorizontal = new();
+        ScrollBar vertical = new();
+        StackPanel root = new();
+        root.VisualChildren.Add(presenter);
+        root.VisualChildren.Add(wrongHorizontal);
+        root.VisualChildren.Add(vertical);
+
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(() =>
+            viewer.ComponentTemplate = new ComponentTemplate<ScrollViewer>("wrong", context =>
+            {
+                context.RequirePart("PART_ScrollContentPresenter", presenter);
+                context.RequirePart("PART_HorizontalScrollBar", wrongHorizontal);
+                context.RequirePart("PART_VerticalScrollBar", vertical);
+                return root;
+            }));
+
+        Assert.Contains("PART_HorizontalScrollBar", error.Message);
+        Assert.Contains(typeof(ScrollBar).FullName!, error.Message);
+        Assert.Null(root.VisualParent);
+    }
+
+    [Fact]
     public void DisablingVerticalScrollingCoercesExistingOffsetToZero()
     {
         ScrollViewer viewer = new()
@@ -136,6 +260,26 @@ public sealed class ScrollViewerTests
         Assert.True(viewer.IsVerticalScrollBarVisible);
         Assert.False(viewer.IsHorizontalScrollBarVisible);
         Assert.Equal(Visibility.Hidden, viewer.HorizontalScrollBar.Visibility);
+    }
+
+    [Fact]
+    public void HiddenAndVisiblePoliciesReserveTemplateGridSpace()
+    {
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(20, 20)),
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(new LayoutRect(0, 0, 88, 88), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 88, 88, 12), viewer.HorizontalScrollBar.ArrangedBounds);
+        Assert.Equal(new LayoutRect(88, 0, 12, 88), viewer.VerticalScrollBar.ArrangedBounds);
+        Assert.Equal(Visibility.Hidden, viewer.HorizontalScrollBar.Visibility);
+        Assert.Equal(Visibility.Visible, viewer.VerticalScrollBar.Visibility);
     }
 
     [Fact]
@@ -326,11 +470,183 @@ public sealed class ScrollViewerTests
         Assert.Equal(1, second.NoWorkFrames);
     }
 
+    [Fact]
+    public void HoldingDirectionButtonScrollsViewerByVisibleLineSteps()
+    {
+        UIRoot root = new(100, 100);
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(80, 400)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+        root.VisualChildren.Add(viewer);
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        RepeatButton increase = Assert.IsType<RepeatButton>(
+            viewer.VerticalScrollBar.ComponentTemplateInstance!.Parts["PART_IncreaseButton"]);
+        float x = increase.ArrangedBounds.X + (increase.ArrangedBounds.Width / 2);
+        float y = increase.ArrangedBounds.Y + (increase.ArrangedBounds.Height / 2);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true), TimeSpan.Zero);
+
+        Assert.Equal(48, viewer.Presenter.VerticalOffset);
+
+        bridge.Dispatch(
+            root,
+            PointerFrame(x, y, x, y, previousDown: true, currentDown: true),
+            TimeSpan.FromMilliseconds(increase.Delay));
+
+        Assert.Equal(96, viewer.Presenter.VerticalOffset);
+    }
+
+    [Fact]
+    public void DetachingViewerCancelsDirectionButtonRepeat()
+    {
+        UIRoot root = new(100, 100);
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(80, 400)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+        root.VisualChildren.Add(viewer);
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        viewer.Presenter.SetVerticalOffset(100);
+        RepeatButton decrease = Assert.IsType<RepeatButton>(
+            viewer.VerticalScrollBar.ComponentTemplateInstance!.Parts["PART_DecreaseButton"]);
+        float x = decrease.ArrangedBounds.X + (decrease.ArrangedBounds.Width / 2);
+        float y = decrease.ArrangedBounds.Y + (decrease.ArrangedBounds.Height / 2);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true), TimeSpan.Zero);
+        float valueAfterPress = viewer.VerticalScrollBar.Value;
+        Assert.True(decrease.IsPressed);
+        Assert.True(valueAfterPress < 100);
+        root.VisualChildren.Remove(viewer);
+        bridge.Dispatch(
+            root,
+            PointerFrame(x, y, x, y, previousDown: true, currentDown: true),
+            TimeSpan.FromMilliseconds(decrease.Delay));
+
+        Assert.Equal(valueAfterPress, viewer.VerticalScrollBar.Value);
+        Assert.False(decrease.IsPressed);
+    }
+
+    [Fact]
+    public void ChangingContentDuringDirectionButtonRepeatKeepsActivePartsSynchronized()
+    {
+        UIRoot root = new(100, 100);
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(80, 400)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+        root.VisualChildren.Add(viewer);
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        viewer.Presenter.SetVerticalOffset(100);
+        RepeatButton decrease = Assert.IsType<RepeatButton>(
+            viewer.VerticalScrollBar.ComponentTemplateInstance!.Parts["PART_DecreaseButton"]);
+        float x = decrease.ArrangedBounds.X + (decrease.ArrangedBounds.Width / 2);
+        float y = decrease.ArrangedBounds.Y + (decrease.ArrangedBounds.Height / 2);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true), TimeSpan.Zero);
+        float valueAfterPress = viewer.VerticalScrollBar.Value;
+        UIElement replacement = new FixedElement(new LayoutSize(80, 600));
+        viewer.Content = replacement;
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        bridge.Dispatch(
+            root,
+            PointerFrame(x, y, x, y, previousDown: true, currentDown: true),
+            TimeSpan.FromMilliseconds(decrease.Delay));
+
+        Assert.Same(replacement, viewer.Presenter.Content);
+        Assert.Equal(valueAfterPress - viewer.VerticalScrollBar.SmallChange, viewer.VerticalScrollBar.Value);
+    }
+
+    [Fact]
+    public void ViewerCanReattachToAnotherRootAfterTemplateLayout()
+    {
+        UIRoot first = new(100, 100);
+        UIRoot second = new(120, 80);
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(200, 300)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        first.VisualChildren.Add(viewer);
+        first.ProcessFrame();
+
+        first.VisualChildren.Remove(viewer);
+        second.VisualChildren.Add(viewer);
+        second.ProcessFrame();
+
+        Assert.Same(second, viewer.Root);
+        Assert.Same(second, viewer.Presenter.Root);
+        Assert.Equal(new LayoutRect(0, 0, 108, 80), viewer.Presenter.ArrangedBounds);
+    }
+
     private static InputFrame PointerWheelFrame(float x, float y, int delta)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);
         PointerSnapshot current = PointerSnapshot.Empty.WithPosition(x, y).WithWheelValue(delta);
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    private static InputFrame PointerFrame(
+        float previousX,
+        float previousY,
+        float currentX,
+        float currentY,
+        bool previousDown = false,
+        bool currentDown = false)
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(previousX, previousY);
+        PointerSnapshot current = PointerSnapshot.Empty.WithPosition(currentX, currentY);
+        if (previousDown)
+        {
+            previous = previous.WithButton(InputMouseButton.Left, true);
+        }
+
+        if (currentDown)
+        {
+            current = current.WithButton(InputMouseButton.Left, true);
+        }
+
+        return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    private static InputFrame PointerFrame(float x, float y, bool currentDown = false)
+    {
+        return PointerFrame(x, y, x, y, currentDown: currentDown);
+    }
+
+    private static ComponentTemplate<ScrollViewer> ViewerTemplate(
+        string name,
+        ScrollContentPresenter presenter,
+        ScrollBar horizontal,
+        ScrollBar vertical)
+    {
+        return new ComponentTemplate<ScrollViewer>(name, context =>
+        {
+            Cerneala.UI.Layout.Panels.Grid root = new();
+            root.ColumnDefinitions.Add(new Cerneala.UI.Layout.Panels.ColumnDefinition(Cerneala.UI.Layout.Panels.GridLength.Star));
+            root.ColumnDefinitions.Add(new Cerneala.UI.Layout.Panels.ColumnDefinition(Cerneala.UI.Layout.Panels.GridLength.Auto));
+            root.RowDefinitions.Add(new Cerneala.UI.Layout.Panels.RowDefinition(Cerneala.UI.Layout.Panels.GridLength.Star));
+            root.RowDefinitions.Add(new Cerneala.UI.Layout.Panels.RowDefinition(Cerneala.UI.Layout.Panels.GridLength.Auto));
+            Cerneala.UI.Layout.Panels.Grid.SetColumn(vertical, 1);
+            Cerneala.UI.Layout.Panels.Grid.SetRow(horizontal, 1);
+            root.VisualChildren.Add(presenter);
+            root.VisualChildren.Add(vertical);
+            root.VisualChildren.Add(horizontal);
+            context.RequirePart("PART_ScrollContentPresenter", presenter);
+            context.RequirePart("PART_HorizontalScrollBar", horizontal);
+            context.RequirePart("PART_VerticalScrollBar", vertical);
+            return root;
+        });
     }
 
     private sealed class FixedElement(LayoutSize size) : UIElement

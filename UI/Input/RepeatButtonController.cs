@@ -9,6 +9,8 @@ internal sealed class RepeatButtonController
     private TimeSpan remainingUntilRepeat;
     private bool startedThisFrame;
 
+    public bool IsActive => source is not null;
+
     public void Begin(
         UIRoot root,
         ElementInputRouteMap routeMap,

@@ -87,12 +87,16 @@ public class Grid : Panel
 
             child.Measure(new MeasureContext(context.AvailableSize, context.Rounding));
             GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
-            if (placement.ColumnSpan == 1 && columns[placement.Column].IsAuto)
+            if (placement.ColumnSpan == 1 &&
+                (columns[placement.Column].IsAuto ||
+                 (columns[placement.Column].IsStar && float.IsPositiveInfinity(context.AvailableSize.Width))))
             {
                 columnSizes[placement.Column] = MathF.Max(columnSizes[placement.Column], child.DesiredSize.Width);
             }
 
-            if (placement.RowSpan == 1 && rows[placement.Row].IsAuto)
+            if (placement.RowSpan == 1 &&
+                (rows[placement.Row].IsAuto ||
+                 (rows[placement.Row].IsStar && float.IsPositiveInfinity(context.AvailableSize.Height))))
             {
                 rowSizes[placement.Row] = MathF.Max(rowSizes[placement.Row], child.DesiredSize.Height);
             }

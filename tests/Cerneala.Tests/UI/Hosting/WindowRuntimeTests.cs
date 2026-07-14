@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Input;
@@ -120,6 +121,33 @@ public sealed class WindowRuntimeTests : IDisposable
         runtime.PumpOnce(TimeSpan.FromMilliseconds(500));
 
         Assert.Equal(2, session.PresentCount);
+    }
+
+    [Fact]
+    public void HeldRepeatButtonSchedulesFramesWithoutExternalRenderRequests()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        RepeatButton repeatButton = new() { Content = "Hold" };
+        int clickCount = 0;
+        repeatButton.Click += (_, _) => clickCount++;
+        Window window = new() { Content = repeatButton };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        float x = repeatButton.ArrangedBounds.X + (repeatButton.ArrangedBounds.Width / 2);
+        float y = repeatButton.ArrangedBounds.Y + (repeatButton.ArrangedBounds.Height / 2);
+        nativeWindow.Input.MovePointer(x, y);
+        nativeWindow.Input.SetButton(InputMouseButton.Left, true);
+        nativeWindow.RequestRender();
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        int framesAfterPress = nativeWindow.Session.PresentCount;
+
+        Assert.Equal(1, clickCount);
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(repeatButton.Delay));
+
+        Assert.Equal(2, clickCount);
+        Assert.Equal(framesAfterPress + 1, nativeWindow.Session.PresentCount);
     }
 
     [Fact]
@@ -322,7 +350,9 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public UiViewport Viewport { get; private set; } = new(800, 600);
 
-        public IInputSource InputSource { get; } = new EmptyInputSource();
+        public MutableInputSource Input { get; } = new();
+
+        public IInputSource InputSource => Input;
 
         public FakeGraphicsSession Session { get; } = new();
 
@@ -346,6 +376,11 @@ public sealed class WindowRuntimeTests : IDisposable
         {
             Viewport = viewport;
             callbacks.BoundsChanged(viewport, left, top, state);
+        }
+
+        public void RequestRender()
+        {
+            callbacks.RenderRequested();
         }
 
         public void SetOwner(IPlatformWindow? owner)
@@ -381,16 +416,31 @@ public sealed class WindowRuntimeTests : IDisposable
         }
     }
 
-    private sealed class EmptyInputSource : IInputSource
+    private sealed class MutableInputSource : IInputSource
     {
+        private PointerSnapshot previousPointer = PointerSnapshot.Empty;
+        private PointerSnapshot currentPointer = PointerSnapshot.Empty;
+
         public InputFrame GetFrame()
         {
-            return new InputFrame(
-                PointerSnapshot.Empty,
-                PointerSnapshot.Empty,
+            InputFrame frame = new(
+                previousPointer,
+                currentPointer,
                 KeyboardSnapshot.Empty,
                 KeyboardSnapshot.Empty,
                 []);
+            previousPointer = currentPointer;
+            return frame;
+        }
+
+        public void MovePointer(float x, float y)
+        {
+            currentPointer = currentPointer.WithPosition(x, y);
+        }
+
+        public void SetButton(InputMouseButton button, bool down)
+        {
+            currentPointer = currentPointer.WithButton(button, down);
         }
     }
 

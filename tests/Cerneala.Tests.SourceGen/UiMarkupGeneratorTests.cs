@@ -1051,6 +1051,38 @@ public sealed class UiMarkupGeneratorTests
     }
 
     [Theory]
+    [InlineData(
+        "ScrollViewerParts.cui.xml",
+        "<ScrollViewer>@template { <StackPanel><ScrollContentPresenter Name=\"PART_ScrollContentPresenter\" /><ScrollBar Name=\"PART_HorizontalScrollBar\" /><ScrollBar Name=\"PART_VerticalScrollBar\" /></StackPanel> }</ScrollViewer>",
+        "PART_ScrollContentPresenter,PART_HorizontalScrollBar,PART_VerticalScrollBar")]
+    [InlineData(
+        "ScrollBarParts.cui.xml",
+        "<ScrollBar>@template { <StackPanel><RepeatButton Name=\"PART_DecreaseButton\" /><Track Name=\"PART_Track\" /><RepeatButton Name=\"PART_IncreaseButton\" /></StackPanel> }</ScrollBar>",
+        "PART_DecreaseButton,PART_Track,PART_IncreaseButton")]
+    [InlineData(
+        "TrackParts.cui.xml",
+        "<Track>@template { <Thumb Name=\"PART_Thumb\" /> }</Track>",
+        "PART_Thumb")]
+    public void GeneratedScrollingTemplatesRegisterDeclaredPartNames(
+        string fileName,
+        string markup,
+        string expectedPartNames)
+    {
+        GeneratorRunResult result = RunGenerator(fileName, markup, out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        foreach (string partName in expectedPartNames.Split(','))
+        {
+            Assert.Contains(".RequirePart(\"" + partName + "\"", generatedSource, StringComparison.Ordinal);
+        }
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Theory]
     [InlineData("<Button>@template { }</Button>", "CERNEALAUI006", "exactly one")]
     [InlineData("<Button>@template { raw text }</Button>", "CERNEALAUI006", "exactly one")]
     [InlineData("<Button>@template { <Border /><TextBlock /> }</Button>", "CERNEALAUI006", "exactly one")]
@@ -1058,6 +1090,7 @@ public sealed class UiMarkupGeneratorTests
     [InlineData("<Button>@when IsEnabled { @if value == True { @template { <Border /> } } }</Button>", "CERNEALAUI006", "not allowed")]
     [InlineData("<Button>@template { <Border Name=\"Part\"><Button Name=\"Part\" /></Border> }</Button>", "CERNEALAUI012", "Duplicate")]
     [InlineData("<Button>@template { <Border Background=\"$owner.FontSize\" /> }</Button>", "CERNEALAUI012", "type")]
+    [InlineData("<Track>@template { <Border Name=\"PART_Thumb\" /> }</Track>", "CERNEALAUI012", "PART_Thumb")]
     [InlineData("<Button>@template { <Border>@when $owner.Unknown { Background = \"White\"; }</Border> }</Button>", "CERNEALAUI007", "template owner")]
     [InlineData("<Button>@template { <Border>@when $self.Unknown { Background = \"White\"; }</Border> }</Button>", "CERNEALAUI007", "template element")]
     [InlineData("<Button>@template { <Border>@when $owner.FontSize { Background = \"White\"; }</Border> }</Button>", "CERNEALAUI007", "Boolean")]

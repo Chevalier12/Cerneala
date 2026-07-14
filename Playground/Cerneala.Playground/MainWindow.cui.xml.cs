@@ -1,13 +1,24 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Diagnostics;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
+using ColumnDefinition = Cerneala.UI.Layout.Panels.ColumnDefinition;
+using Grid = Cerneala.UI.Layout.Panels.Grid;
+using GridLength = Cerneala.UI.Layout.Panels.GridLength;
+using RowDefinition = Cerneala.UI.Layout.Panels.RowDefinition;
 
 namespace Cerneala.Playground;
 
 public partial class MainWindow : Window
 {
+    private static readonly SolidColorBrush ShowcaseCellBrush = new(new Color(31, 39, 47));
+    private static readonly SolidColorBrush ShowcaseAlternateCellBrush = new(new Color(23, 76, 66));
+    private static readonly SolidColorBrush ShowcaseBorderBrush = new(new Color(52, 60, 70));
+    private static readonly SolidColorBrush ShowcaseTextBrush = new(new Color(242, 244, 245));
+
     private void OnFrameRendered(object? sender, EventArgs args)
     {
         if (LastFrame is null)
@@ -22,8 +33,73 @@ public partial class MainWindow : Window
     private void OnShowcaseSelected(object? sender, ShowcaseSelectedEventArgs args)
     {
         SelectedShowcaseText.Text = args.ShowcaseName;
+        if (args.ShowcaseName == "ScrollViewer")
+        {
+            MountShowcase(CreateScrollViewerShowcase());
+            return;
+        }
+
         EmptyStateTitle.Text = args.ShowcaseName;
         EmptyStateDescription.Text = "View-ul separat pentru acest showcase va fi montat aici.";
+        MountShowcase(EmptyState);
+    }
+
+    private void MountShowcase(UIElement showcase)
+    {
+        while (ShowcaseHost.VisualChildren.Count > 0)
+        {
+            ShowcaseHost.VisualChildren.Remove(ShowcaseHost.VisualChildren[0]);
+        }
+
+        while (ShowcaseHost.LogicalChildren.Count > 0)
+        {
+            ShowcaseHost.LogicalChildren.Remove(ShowcaseHost.LogicalChildren[0]);
+        }
+
+        ShowcaseHost.VisualChildren.Add(showcase);
+    }
+
+    private static ScrollViewer CreateScrollViewerShowcase()
+    {
+        const int columnCount = 8;
+        const int rowCount = 20;
+        Grid content = new();
+        for (int column = 0; column < columnCount; column++)
+        {
+            content.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(132)));
+        }
+
+        for (int row = 0; row < rowCount; row++)
+        {
+            content.RowDefinitions.Add(new RowDefinition(GridLength.Pixels(48)));
+            for (int column = 0; column < columnCount; column++)
+            {
+                TextBlock cell = new()
+                {
+                    Text = $"R{row + 1:00}  C{column + 1:00}",
+                    FontFamily = "Consolas",
+                    FontSize = 13,
+                    Foreground = ShowcaseTextBrush,
+                    Background = (row + column) % 3 == 0
+                        ? ShowcaseAlternateCellBrush
+                        : ShowcaseCellBrush,
+                    BorderBrush = ShowcaseBorderBrush,
+                    BorderThickness = new Thickness(0, 0, 1, 1),
+                    Padding = new Thickness(12, 14, 12, 10)
+                };
+                Grid.SetRow(cell, row);
+                Grid.SetColumn(cell, column);
+                content.VisualChildren.Add(cell);
+            }
+        }
+
+        return new ScrollViewer
+        {
+            Content = content,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Visible,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible,
+            Margin = new Thickness(24)
+        };
     }
 }
 

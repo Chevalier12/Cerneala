@@ -10,6 +10,7 @@ Source: `UI/Controls/Primitives/Track.cs`
 Represents a retained range track that positions and drags a `Thumb` over a finite numeric range.
 
 ```csharp
+[TemplatePart("PART_Thumb", typeof(Thumb))]
 public class Track : Control
 ```
 
@@ -60,15 +61,15 @@ track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 20)));
 
 ## Remarks
 
-`Track` owns a single `Thumb` created by its constructor. While no `ComponentTemplate` is applied, that thumb is kept in the track logical and visual children and is measured and arranged by the fallback layout path. Setting `ComponentTemplate` removes the fallback thumb from the child collections; clearing `ComponentTemplate` adds the same thumb instance back.
+`Track` requires a `Thumb` named `PART_Thumb` in its active component template. The default template supplies that part through an internal layout panel. `Thumb` always returns the part from the active template rather than a parallel fallback instance. Replacing the template unsubscribes the old thumb before subscribing to the new one. Assigning `null` to `ComponentTemplate` clears the local override and restores the default template.
 
 `Minimum`, `Maximum`, and `Value` accept only finite floating-point values. `ViewportSize`, `SmallChange`, and `LargeChange` accept only finite, non-negative values. `Value` is coerced into the active `Minimum..Maximum` range. If an endpoint change would invert the range, the other endpoint is moved to preserve an ordered range, then `Value` is coerced again.
 
-The fallback layout is orientation-aware. A horizontal track reports a desired size of `32` by at least the thumb desired height or `10`; a vertical track reports at least the thumb desired width or `10` by `32`. The thumb travels along the arranged width or height. Without a viewport size, thumb length is `MathF.Min(trackLength, 10)`. With a positive `ViewportSize`, thumb length is proportional to `ViewportSize / (Range + ViewportSize)`, clamped to at least `10` and at most the full track length. If the range is zero, the thumb fills the full track length.
+The default template layout is orientation-aware. A horizontal track reports a desired size of at least `32` by the thumb height or `10`; a vertical track reports the thumb width or `10` by at least `32`. The track control remains the single owner of value geometry and arranges the active thumb along the arranged width or height. Without a viewport size, thumb length is `MathF.Min(trackLength, 10)`. With a positive `ViewportSize`, thumb length is proportional to `ViewportSize / (Range + ViewportSize)`, clamped to at least `10` and at most the full track length. If the range is zero, the thumb fills the full track length.
 
 Dragging the thumb updates `Value` from the pointer delta, using horizontal movement for horizontal tracks and vertical movement for vertical tracks. `ValueChanged` is raised when the stored value actually changes. A left mouse down on the track outside the thumb compares the clicked position with the current value and applies `DecreaseLarge` or `IncreaseLarge`; the input event is marked handled only when this changes the value.
 
-Without a template child, the fallback renderer fills the track bounds with `Background` and draws a border using the maximum side of `BorderThickness`. The constructor initializes `Background` to `new SolidColorBrush(new Color(225, 225, 225))`, `BorderBrush` to `new SolidColorBrush(new Color(120, 120, 120))`, `BorderThickness` to `new Thickness(1)`, `SmallChange` to `0.1f`, and `LargeChange` to `1`.
+The default template binds `Background`, `BorderBrush`, and `BorderThickness` to its border root. The constructor initializes `Background` to `new SolidColorBrush(new Color(225, 225, 225))`, `BorderBrush` to `new SolidColorBrush(new Color(120, 120, 120))`, `BorderThickness` to `new Thickness(1)`, `SmallChange` to `0.1f`, and `LargeChange` to `1`.
 
 `Slider` and `ScrollBar` use `Track` as their owned range interaction primitive and synchronize their range state into it.
 
@@ -76,7 +77,7 @@ Without a template child, the fallback renderer fills the track bounds with `Bac
 
 | Name | Description |
 | --- | --- |
-| `Track()` | Initializes a new `Track`, creates its thumb, subscribes to thumb drag changes, adds the thumb as a fallback child, sets default visuals and change increments, and registers left-mouse-down handling. |
+| `Track()` | Initializes the default visuals and change increments, registers left-mouse-down handling, and applies the default component template containing `PART_Thumb`. |
 
 ## Fields
 
@@ -94,7 +95,7 @@ Without a template child, the fallback renderer fills the track bounds with `Bac
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Thumb` | `Thumb` | Gets the thumb created and managed by the track. |
+| `Thumb` | `Thumb` | Gets the `PART_Thumb` instance from the active component template. The getter applies the template before returning. |
 | `Minimum` | `float` | Gets or sets the lower bound for `Value`. If set above `Maximum`, `Maximum` is raised to match it. |
 | `Maximum` | `float` | Gets or sets the upper bound for `Value`. If set below `Minimum`, `Minimum` is lowered to match it. |
 | `Value` | `float` | Gets or sets the current range value. The value is coerced into `Minimum..Maximum`. |
@@ -146,19 +147,19 @@ Without a template child, the fallback renderer fills the track bounds with `Bac
 
 | Condition | Result |
 | --- | --- |
-| `TemplateChild` is `null` during measure and `Orientation` is `Horizontal` | Measures `Thumb` and returns `new LayoutSize(32, MathF.Max(10, Thumb.DesiredSize.Height))`. |
-| `TemplateChild` is `null` during measure and `Orientation` is `Vertical` | Measures `Thumb` and returns `new LayoutSize(MathF.Max(10, Thumb.DesiredSize.Width), 32)`. |
-| `TemplateChild` is `null` during arrange | Arranges `Thumb` at the offset implied by `ValueRatio` and the computed thumb length. |
-| `TemplateChild` is not `null` | Uses the base `Control` template layout path and does not run fallback rendering. |
+| Default template and `Orientation.Horizontal` | The internal panel reports at least `32` width and at least the active thumb height or `10`. |
+| Default template and `Orientation.Vertical` | The internal panel reports at least the active thumb width or `10` and at least `32` height. |
+| Any valid template | `Track` arranges the active `PART_Thumb` at the offset implied by `ValueRatio` and the computed thumb length. |
+| Track length is less than the minimum thumb length | The thumb is clamped to the track length and has zero travel. |
 
 ## Relevant Inherited Properties
 
 | Name | Type | Declared by | Description |
 | --- | --- | --- | --- |
-| `Background` | `Brush?` | `Control` | Gets or sets the fallback fill brush rendered by the track. The constructor sets a solid brush with color `Color(225, 225, 225)`. |
-| `BorderBrush` | `Brush?` | `Control` | Gets or sets the fallback border brush rendered by the track. The constructor sets a solid brush with color `Color(120, 120, 120)`. |
-| `BorderThickness` | `Thickness` | `Control` | Gets or sets the fallback border thickness. The constructor sets it to `new Thickness(1)`. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. When present, the fallback thumb is removed from track child collections. |
+| `Background` | `Brush?` | `Control` | Gets or sets the fill brush bound to the default template root. The constructor sets a solid brush with color `Color(225, 225, 225)`. |
+| `BorderBrush` | `Brush?` | `Control` | Gets or sets the border brush bound to the default template root. The constructor sets a solid brush with color `Color(120, 120, 120)`. |
+| `BorderThickness` | `Thickness` | `Control` | Gets or sets the border thickness bound to the default template root. The constructor sets it to `new Thickness(1)`. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. Valid templates must register `PART_Thumb` as a `Thumb`; assigning `null` restores the default template. |
 
 ## Applies to
 

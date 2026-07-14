@@ -1,32 +1,32 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
-using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
-using Cerneala.UI.Rendering;
-using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls.Primitives;
 
+[TemplatePart("PART_Track", typeof(Track))]
+[TemplatePart("PART_DecreaseButton", typeof(RepeatButton))]
+[TemplatePart("PART_IncreaseButton", typeof(RepeatButton))]
 public class ScrollBar : RangeBase
 {
     public static readonly RoutedEvent ScrollEvent = RoutedEventRegistry.Register(nameof(Scroll), typeof(ScrollBar), RoutingStrategy.Bubble, typeof(ScrollEventArgs));
 
     public event EventHandler<ScrollEventArgs> Scroll { add => AddTypedHandler(ScrollEvent, value); remove => RemoveTypedHandler(ScrollEvent, value); }
-    private readonly Track track;
-    private bool ownsTrack;
+    private Track? track;
+    private RepeatButton? decreaseButton;
+    private RepeatButton? increaseButton;
     private bool syncingTrack;
 
     public ScrollBar()
     {
-        track = new Track();
-        track.ValueChanged += OnTrackValueChanged;
-        AddTrack();
         Background = new Cerneala.UI.Media.SolidColorBrush(new Color(235, 235, 235));
         BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(130, 130, 130));
         BorderThickness = new Thickness(1);
         ViewportSize = 0;
-        SyncTrack();
+        SetValue(ComponentTemplateProperty, ScrollBarTemplates.Default, UiPropertyValueSource.AspectBase);
     }
 
     public static readonly UiProperty<Orientation> OrientationProperty = UiProperty<Orientation>.Register(
@@ -51,57 +51,76 @@ public class ScrollBar : RangeBase
         set => SetValue(ViewportSizeProperty, value);
     }
 
-    public Track Track => track;
+    public Track Track
+    {
+        get
+        {
+            ApplyTemplate();
+            return track ?? throw new InvalidOperationException("ScrollBar template did not provide the required part 'PART_Track'.");
+        }
+    }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
-        if (TemplateChild is not null)
-        {
-            return base.MeasureCore(context);
-        }
-
+        ApplyTemplate();
         SyncTrack();
-        track.Measure(new MeasureContext(context.AvailableSize, context.Rounding));
-        return Orientation == Orientation.Horizontal
-            ? new LayoutSize(MathF.Max(32, track.DesiredSize.Width), 12)
-            : new LayoutSize(12, MathF.Max(32, track.DesiredSize.Height));
+        return base.MeasureCore(context);
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
-        if (TemplateChild is not null)
-        {
-            return base.ArrangeCore(context);
-        }
-
         SyncTrack();
-        track.Arrange(context);
-        return context.FinalRect;
+        return base.ArrangeCore(context);
     }
 
-    protected override void OnRender(RenderContext context)
+    protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
     {
-        if (TemplateChild is not null)
+        if (track is not null)
+        {
+            track.ValueChangedWithReason -= OnTrackValueChanged;
+        }
+
+        if (decreaseButton is not null)
+        {
+            decreaseButton.Click -= OnDecreaseClick;
+        }
+
+        if (increaseButton is not null)
+        {
+            increaseButton.Click -= OnIncreaseClick;
+        }
+
+        track = null;
+        decreaseButton = null;
+        increaseButton = null;
+        if (instance is null)
         {
             return;
         }
 
-        DrawRect rect = Border.ToDrawRect(context.Bounds);
-        if (Background is { } background && rect.Width > 0 && rect.Height > 0)
+        Track nextTrack = GetRequiredTemplatePart<Track>("PART_Track");
+        RepeatButton? nextDecreaseButton = GetOptionalTemplatePart<RepeatButton>("PART_DecreaseButton");
+        RepeatButton? nextIncreaseButton = GetOptionalTemplatePart<RepeatButton>("PART_IncreaseButton");
+
+        track = nextTrack;
+        decreaseButton = nextDecreaseButton;
+        increaseButton = nextIncreaseButton;
+        track.ValueChangedWithReason += OnTrackValueChanged;
+        if (decreaseButton is not null)
         {
-            context.DrawingContext.FillRectangle(rect, background);
+            decreaseButton.Click += OnDecreaseClick;
         }
 
-        float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Right), MathF.Max(BorderThickness.Top, BorderThickness.Bottom));
-        if (BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)
+        if (increaseButton is not null)
         {
-            context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
+            increaseButton.Click += OnIncreaseClick;
         }
+
+        SyncTrack();
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
-        bool templateChanged = ReferenceEquals(args.Property, ComponentTemplateProperty);
         base.OnPropertyChanged(args);
         if (!syncingTrack &&
             (ReferenceEquals(args.Property, MinimumProperty) ||
@@ -115,21 +134,21 @@ public class ScrollBar : RangeBase
             SyncTrack();
         }
 
-        if (templateChanged)
+        if (ReferenceEquals(args.Property, ComponentTemplateProperty) &&
+            ComponentTemplate is null &&
+            GetSourceValue(ComponentTemplateProperty, UiPropertyValueSource.AspectBase) is ComponentTemplate)
         {
-            if (ComponentTemplate is null)
-            {
-                AddTrack();
-            }
-            else
-            {
-                RemoveTrack();
-            }
+            ClearValue(ComponentTemplateProperty);
         }
     }
 
     private void SyncTrack()
     {
+        if (track is null)
+        {
+            return;
+        }
+
         syncingTrack = true;
         try
         {
@@ -147,38 +166,44 @@ public class ScrollBar : RangeBase
         }
     }
 
-    private void OnTrackValueChanged(object? sender, EventArgs args)
+    private void OnTrackValueChanged(object? sender, TrackValueChangedEventArgs args)
     {
-        if (syncingTrack)
+        if (syncingTrack || !ReferenceEquals(sender, track))
         {
             return;
         }
 
-        Value = track.Value;
-        RaiseEvent(new ScrollEventArgs(ScrollEvent, this, ScrollEventType.ThumbTrack, Value));
+        Value = args.NewValue;
+        if (TryMapScrollEventType(args.Reason, out ScrollEventType scrollEventType))
+        {
+            RaiseEvent(new ScrollEventArgs(ScrollEvent, this, scrollEventType, Value));
+        }
     }
 
-    private void AddTrack()
+    private void OnDecreaseClick(UiElementId source, RoutedEventArgs args)
     {
-        if (ownsTrack)
-        {
-            return;
-        }
-
-        LogicalChildren.Add(track);
-        VisualChildren.Add(track);
-        ownsTrack = true;
+        track?.DecreaseSmall();
+        args.Handled = true;
     }
 
-    private void RemoveTrack()
+    private void OnIncreaseClick(UiElementId source, RoutedEventArgs args)
     {
-        if (!ownsTrack)
-        {
-            return;
-        }
+        track?.IncreaseSmall();
+        args.Handled = true;
+    }
 
-        VisualChildren.Remove(track);
-        LogicalChildren.Remove(track);
-        ownsTrack = false;
+    private static bool TryMapScrollEventType(TrackValueChangeReason reason, out ScrollEventType eventType)
+    {
+        eventType = reason switch
+        {
+            TrackValueChangeReason.SmallDecrement => ScrollEventType.SmallDecrement,
+            TrackValueChangeReason.SmallIncrement => ScrollEventType.SmallIncrement,
+            TrackValueChangeReason.LargeDecrement => ScrollEventType.LargeDecrement,
+            TrackValueChangeReason.LargeIncrement => ScrollEventType.LargeIncrement,
+            TrackValueChangeReason.ThumbTrack => ScrollEventType.ThumbTrack,
+            _ => default
+        };
+
+        return reason != TrackValueChangeReason.Programmatic;
     }
 }

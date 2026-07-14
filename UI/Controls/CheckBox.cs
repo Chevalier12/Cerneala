@@ -13,6 +13,7 @@ public class CheckBox : ToggleButton
 {
     private const float CheckMarkInset = 1.5f;
     private static readonly Brush DefaultBorderBrush = new SolidColorBrush(new Color(100, 110, 125));
+    private CheckMarkPath? checkMark;
 
     public CheckBox()
     {
@@ -34,6 +35,14 @@ public class CheckBox : ToggleButton
         SynchronizeCheckMark();
         StretchAndCenterCheckMark();
         return arranged;
+    }
+
+    protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
+    {
+        checkMark = instance is null
+            ? null
+            : GetOptionalTemplatePart<CheckMarkPath>("PART_CheckMark");
+        SynchronizeCheckMark();
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
@@ -81,8 +90,7 @@ public class CheckBox : ToggleButton
 
     private bool TryGetCheckMark(out CheckMarkPath checkMark)
     {
-        if (ComponentTemplateInstance?.Parts.TryGetValue("PART_CheckMark", out UI.Elements.UIElement? element) == true &&
-            element is CheckMarkPath path)
+        if (this.checkMark is { } path)
         {
             checkMark = path;
             return true;

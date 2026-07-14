@@ -54,6 +54,8 @@ public sealed class ElementInputBridge
 
     public CommandRouter CommandRouter => commandRouter;
 
+    internal bool HasActivePointerRepeat => repeatButtonController.IsActive;
+
     public void Dispatch(UIRoot root, InputFrame inputFrame)
     {
         Dispatch(root, inputFrame, TimeSpan.Zero);

@@ -74,7 +74,9 @@ ComponentTemplateInstance? instance = control.ComponentTemplateInstance;
 
 `Control` is the common base for controls that need shared chrome, text styling, template support, and aspect variants. It does not render fallback chrome by itself; derived controls or template roots use properties such as `Background`, `BorderBrush`, `BorderThickness`, `Padding`, `Foreground`, `FontFamily`, and `FontSize`.
 
-`ComponentTemplate` stores the control's only template type. `ApplyTemplate()` creates and attaches the matching `ComponentTemplateInstance`, or detaches the current instance when the property is cleared. Reapplying the same template keeps the existing instance and generated root.
+`ComponentTemplate` stores the control's only template type. `ApplyTemplate()` creates and attaches the matching `ComponentTemplateInstance`, or detaches the current instance when the property is cleared. Reapplying the same template keeps the existing instance and generated root. Template replacement first notifies the derived control to unsubscribe from its old parts, disposes the old instance, attaches and validates the new parts, and only then publishes the new instance. A failed part hook disposes the new instance and leaves no partially attached template root.
+
+Derived templated controls override `OnTemplateApplied(ComponentTemplateInstance?)` to release old part subscriptions and resolve the new parts. `GetRequiredTemplatePart<TElement>` fails immediately when a named part is absent or has the wrong type. `GetOptionalTemplatePart<TElement>` permits an absent part but still rejects a registered part of the wrong type. Both error forms identify the part name and expected type.
 
 Layout is delegated to the active template child. During measure and arrange, `Control` calls `ApplyTemplate()` and then measures or arranges `ComponentTemplateInstance.Root`; if no template child exists, measurement returns `LayoutSize.Zero`.
 
@@ -138,6 +140,9 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | --- | --- | --- |
 | `MeasureCore(MeasureContext context)` | `LayoutSize` | Applies the current template and measures the active template child, or returns `LayoutSize.Zero` when no template child exists. |
 | `ArrangeCore(ArrangeContext context)` | `LayoutRect` | Applies the current template, arranges the active template child, and returns `context.FinalRect`. |
+| `OnTemplateApplied(ComponentTemplateInstance? instance)` | `void` | Releases old template-part state when `instance` is `null`, or connects validated parts from the newly attached instance. |
+| `GetRequiredTemplatePart<TElement>(string name)` | `TElement` | Returns a required named part and throws `InvalidOperationException` when it is absent or has the wrong type. |
+| `GetOptionalTemplatePart<TElement>(string name)` | `TElement?` | Returns an optional named part, `null` when absent, and throws `InvalidOperationException` when present with the wrong type. |
 | `OnPropertyChanged(UiPropertyChangedEventArgs args)` | `void` | Applies the template when `ComponentTemplate` changes, after the base property-change handling runs. |
 
 ## Migration

@@ -20,6 +20,10 @@ public sealed class TemplatePartMap
             throw new ArgumentException("Template part name cannot be empty.", nameof(name));
         }
 
-        parts[name] = element ?? throw new ArgumentNullException(nameof(element));
+        ArgumentNullException.ThrowIfNull(element);
+        if (!parts.TryAdd(name, element))
+        {
+            throw new InvalidOperationException($"Template part '{name}' was registered more than once.");
+        }
     }
 }
