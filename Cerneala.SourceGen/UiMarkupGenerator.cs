@@ -798,6 +798,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             PositiveFloat,
             Thickness,
             NonNegativeThickness,
+            LayoutPoint,
             Color,
             Brush,
             Enum,
@@ -832,6 +833,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public MarkupValueKind ValueKind { get; }
 
             public string PropertyCode { get; }
+
+            public bool IsUiProperty => PropertyCode.Length > 0;
 
             public ITypeSymbol ValueType { get; }
 
@@ -2489,9 +2492,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             foreach (AspectResource aspect in aspects)
             {
-                if (aspect.IsInline)
+                if (IsLocalAspect(aspect))
                 {
-                    EmitInlineAspect(element, variable, aspect);
+                    EmitLocalAspect(element, variable, aspect);
                 }
                 else
                 {
@@ -2500,7 +2503,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private void EmitInlineAspect(XElement element, string variable, AspectResource aspect)
+        private static bool IsLocalAspect(AspectResource aspect) => aspect.IsInline || aspect.Name is not null;
+
+        private void EmitLocalAspect(XElement element, string variable, AspectResource aspect)
         {
             string elementName = element.Name.LocalName;
             List<string> values = [];
@@ -2535,7 +2540,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             string valuesCode = values.Count == 0
                 ? "global::System.Array.Empty<global::Cerneala.UI.Aspect.ElementAspectValue>()"
                 : "new global::Cerneala.UI.Aspect.ElementAspectValue[] { " + string.Join(", ", values) + " }";
-            string aspectVariable = "inlineAspect" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+            string aspectVariable = "localAspect" + nextResourceId.ToString(CultureInfo.InvariantCulture);
             nextResourceId++;
             aspect.RuntimeVariable = aspectVariable;
             currentLines.Add(
@@ -2561,10 +2566,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             string elementName = element.Name.LocalName;
             if (aspect.TemplateVariable is not null)
             {
-                currentLines.Add(reactiveDocument
-                    ? variable + ".SetValue(global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " +
-                        aspect.TemplateVariable + ", global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase);"
-                    : variable + ".ComponentTemplate = " + aspect.TemplateVariable + ";");
+                currentLines.Add(
+                    variable + ".SetValue(global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " +
+                    aspect.TemplateVariable + ", global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase);");
             }
 
             foreach (AspectPropertyAssignment assignment in aspect.Assignments)
@@ -2585,7 +2589,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     return;
                 }
 
-                currentLines.Add(reactiveDocument
+                currentLines.Add(spec.IsUiProperty
                     ? variable + ".SetValue(" + spec.PropertyCode + ", " + expression.Code +
                         ", global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase);"
                     : variable + "." + spec.Name + " = " + expression.Code + ";");
@@ -2691,7 +2695,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             string value = attribute.Value;
             string trimmedValue = value.Trim();
 
-            PropertySpec? spec = FindPropertySpec(elementName, propertyName, ReferenceEquals(element, document.Root));
+            bool isRoot = ReferenceEquals(element, document.Root);
+            PropertySpec? spec = FindPropertySpec(elementName, propertyName, isRoot)
+                ?? FindClrPropertySpec(elementName, propertyName, isRoot);
             if (spec is null)
             {
                 if (!HasErrors)
@@ -2740,6 +2746,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             if (parsedMarkup is not null)
             {
+                if (!spec.IsUiProperty)
+                {
+                    Report(
+                        InvalidBindingSource,
+                        attribute,
+                        trimmedValue,
+                        "Bindings require a UiProperty-backed target; ordinary CLR properties support literal and resource values only.");
+                    return;
+                }
+
                 BindingResolutionContext bindingContext = CreateBindingResolutionContext(
                     variable,
                     elementName,
@@ -2811,7 +2827,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     attribute);
                 if (resourceExpression is not null)
                 {
-                    currentLines.Add(reactiveDocument
+                    currentLines.Add(reactiveDocument && spec.IsUiProperty
                         ? variable + ".SetValue(" + spec.PropertyCode + ", " + resourceExpression.Code +
                             ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
                         : variable + "." + spec.Name + " = " + resourceExpression.Code + ";");
@@ -2829,7 +2845,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            currentLines.Add(reactiveDocument
+            currentLines.Add(reactiveDocument && spec.IsUiProperty
                 ? variable + ".SetValue(" + spec.PropertyCode + ", " + expression.Code +
                     ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
                 : variable + "." + spec.Name + " = " + expression.Code + ";");
@@ -2892,6 +2908,22 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 propertyField.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "." + propertyField.Name,
                 valueType,
                 assignable);
+        }
+
+        private PropertySpec? FindClrPropertySpec(string elementName, string propertyName, bool isRoot)
+        {
+            INamedTypeSymbol? elementType = ResolvePropertyOwnerType(elementName, isRoot);
+            IPropertySymbol? property = elementType is null ? null : FindClrProperty(elementType, propertyName);
+            if (property?.SetMethod is null || !IsAccessibleFromGeneratedCode(property.SetMethod))
+            {
+                return null;
+            }
+
+            return new PropertySpec(
+                propertyName,
+                GetMarkupValueKind(property.Type, property),
+                string.Empty,
+                property.Type);
         }
 
         private IPropertySymbol? FindClrProperty(INamedTypeSymbol elementType, string propertyName)
@@ -2957,6 +2989,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return constraint == "1" ? MarkupValueKind.NonNegativeThickness : MarkupValueKind.Thickness;
             }
 
+            if (typeName == "Cerneala.UI.Layout.LayoutPoint")
+            {
+                return MarkupValueKind.LayoutPoint;
+            }
+
             if (typeName == "Cerneala.Drawing.Color")
             {
                 return MarkupValueKind.Color;
@@ -3003,6 +3040,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 MarkupValueKind.PositiveFloat => PositiveFloat(elementName, propertyName, attribute),
                 MarkupValueKind.Thickness => Thickness(elementName, propertyName, attribute),
                 MarkupValueKind.NonNegativeThickness => NonNegativeThickness(elementName, propertyName, attribute),
+                MarkupValueKind.LayoutPoint => LayoutPoint(elementName, propertyName, attribute),
                 MarkupValueKind.Color => Color(elementName, propertyName, attribute),
                 MarkupValueKind.Brush => Brush(elementName, propertyName, attribute),
                 MarkupValueKind.Enum => EnumValue(elementName, propertyName, attribute, spec.LiteralType),
@@ -3046,24 +3084,31 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private void EmitChild(XElement parent, string parentVariable, string childVariable)
         {
-            switch (parent.Name.LocalName)
+            INamedTypeSymbol? parentType = ResolveElementTypeSymbol(parent.Name.LocalName);
+            INamedTypeSymbol? panelType = compilation.GetTypeByMetadataName("Cerneala.UI.Layout.Panels.Panel");
+            INamedTypeSymbol? decoratorType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Decorator");
+            INamedTypeSymbol? contentControlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ContentControl");
+
+            if (parentType is not null && panelType is not null && IsOrDerivesFrom(parentType, panelType))
             {
-                case "Panel":
-                case "StackPanel":
-                case "Grid":
-                    currentLines.Add(parentVariable + ".LogicalChildren.Add(" + childVariable + ");");
-                    currentLines.Add(parentVariable + ".VisualChildren.Add(" + childVariable + ");");
-                    break;
-                case "Border":
-                    currentLines.Add(parentVariable + ".Child = " + childVariable + ";");
-                    break;
-                case "Button":
-                    currentLines.Add(parentVariable + ".Content = " + childVariable + ";");
-                    break;
-                default:
-                    Report(UnsupportedProperty, parent, parent.Name.LocalName, "#child");
-                    break;
+                currentLines.Add(parentVariable + ".LogicalChildren.Add(" + childVariable + ");");
+                currentLines.Add(parentVariable + ".VisualChildren.Add(" + childVariable + ");");
+                return;
             }
+
+            if (parentType is not null && decoratorType is not null && IsOrDerivesFrom(parentType, decoratorType))
+            {
+                currentLines.Add(parentVariable + ".Child = " + childVariable + ";");
+                return;
+            }
+
+            if (parentType is not null && contentControlType is not null && IsOrDerivesFrom(parentType, contentControlType))
+            {
+                currentLines.Add(parentVariable + ".Content = " + childVariable + ";");
+                return;
+            }
+
+            Report(UnsupportedProperty, parent, parent.Name.LocalName, "#child");
         }
 
         private static string? ReadDirectText(XElement element)
@@ -3247,6 +3292,22 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             return Invalid(attribute, elementName, propertyName, value);
+        }
+
+        private string? LayoutPoint(string elementName, string propertyName, XAttribute attribute)
+        {
+            string value = attribute.Value;
+            string[] parts = value.Split(',').Select(part => part.Trim()).ToArray();
+            if (parts.Length != 2)
+            {
+                return Invalid(attribute, elementName, propertyName, value);
+            }
+
+            string? x = FloatPart(elementName, propertyName, attribute, parts[0]);
+            string? y = FloatPart(elementName, propertyName, attribute, parts[1]);
+            return x is not null && y is not null
+                ? "new global::Cerneala.UI.Layout.LayoutPoint(" + x + ", " + y + ")"
+                : null;
         }
 
         private string? FloatPart(string elementName, string propertyName, XAttribute attribute, string value)

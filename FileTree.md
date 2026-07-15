@@ -129,6 +129,18 @@ Generated from `.`.
 |   |-- UiMarkupReactiveEmitter.cs
 |   |-- UiMarkupUserControlGenerator.cs
 |   +-- UiMarkupWindowGenerator.cs
+|-- CernealaPresentation/
+|   |-- BrandMark.cui.xml
+|   |-- BrandMark.cui.xml.cs
+|   |-- CernealaPresentation.csproj
+|   |-- MainWindow.cui.xml
+|   |-- MainWindow.cui.xml.cs
+|   |-- MotionLabWindow.cui.xml
+|   |-- MotionLabWindow.cui.xml.cs
+|   |-- PresentationWindow.Automation.cs
+|   |-- PresentationWindow.cui.xml
+|   |-- PresentationWindow.cui.xml.cs
+|   +-- SvgImage.cs
 |-- docs/
 |   |-- diagrams/
 |   |   |-- cerneala-drawing-flowchart.svg
@@ -147,7 +159,14 @@ Generated from `.`.
 |   |   |-- 2026-07-13-scrollviewer-template-parts.md
 |   |   |-- 2026-07-14-markup-data-bindings.md
 |   |   |-- 2026-07-14-relay-auto-marshaling-implementation-notes.md
-|   |   +-- 2026-07-14-relay-auto-marshaling.md
+|   |   |-- 2026-07-14-relay-auto-marshaling.md
+|   |   |-- 2026-07-15-motion-markup-composition-and-clips.md
+|   |   |-- 2026-07-15-motion-markup-foundation.md
+|   |   |-- 2026-07-15-motion-markup-integration-and-hardening.md
+|   |   |-- 2026-07-15-motion-markup-plan-index.md
+|   |   |-- 2026-07-15-motion-markup-presence-and-layout.md
+|   |   |-- 2026-07-15-motion-markup-scroll-and-input.md
+|   |   +-- 2026-07-15-motion-markup-timelines-and-specs.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -210,9 +229,22 @@ Generated from `.`.
 |   |-- markup-data-bindings.md
 |   |-- motion-api.md
 |   |-- motion-diagnostics.md
+|   |-- motion-markup-syntax-proposal.md
 |   |-- motion-system.md
 |   +-- wpf-event-coverage.md
 |-- docs-site/
+|   |-- assets/
+|   |   |-- mascot-concepts/
+|   |   |   |-- cerneala-mascot-01-ink-drop-violet.png
+|   |   |   |-- cerneala-mascot-01-ink-drop.png
+|   |   |   |-- cerneala-mascot-02-nib-knight-violet.png
+|   |   |   |-- cerneala-mascot-02-nib-knight.png
+|   |   |   |-- cerneala-mascot-03-window-bot-violet.png
+|   |   |   |-- cerneala-mascot-03-window-bot.png
+|   |   |   |-- cerneala-mascot-04-void-orbit-violet.png
+|   |   |   +-- cerneala-mascot-04-void-orbit.png
+|   |   |-- cerneala-mascot-void-suction-well.png
+|   |   +-- cerneala-mascot-void-suction-well.svg
 |   |-- documentation/
 |   |   |-- classes/
 |   |   |   |-- Cerneala.Drawing.Color.md
@@ -1131,18 +1163,24 @@ Generated from `.`.
 |   +-- IFontSource.cs
 |-- Playground/
 |   |-- Assets/
+|   |   |-- cerneala-playground.ico
 |   |   +-- fxemoji.svg
 |   |-- AvaloniaOracle/
 |   |   |-- App.cs
 |   |   |-- AvaloniaOracle.csproj
 |   |   |-- MainWindow.cs
+|   |   |-- MotionLabHeaderWindow.cs
 |   |   |-- Program.cs
 |   |   +-- SvgWindow.cs
-|   +-- Cerneala.Playground/
-|       |-- Cerneala.Playground.csproj
+|   |-- Cerneala.Playground/
+|   |   |-- Cerneala.Playground.csproj
+|   |   |-- MainWindow.cui.xml
+|   |   |-- MainWindow.cui.xml.cs
+|   |   +-- SvgWindow.cs
+|   +-- CernealaOracle/
+|       |-- CernealaOracle.csproj
 |       |-- MainWindow.cui.xml
-|       |-- MainWindow.cui.xml.cs
-|       +-- SvgWindow.cs
+|       +-- MainWindow.cui.xml.cs
 |-- Properties/
 |   +-- AssemblyInfo.cs
 |-- tests/
@@ -1216,6 +1254,7 @@ Generated from `.`.
 |   |   |   |-- ToggleButtonTests.cs
 |   |   |   |-- ToolTipTests.cs
 |   |   |   |-- UserControlTests.cs
+|   |   |   |-- WindowRenderingTests.cs
 |   |   |   +-- WpfEventSurfaceTests.cs
 |   |   |-- Docs/
 |   |   |   |-- AspectDocsTests.cs
@@ -1500,7 +1539,12 @@ Generated from `.`.
 |       |-- Cerneala.WindowsDxSmoke.csproj
 |       +-- WindowsDxSmokeApplication.cs
 |-- tmp/
-|   +-- svg-preview/
+|   +-- imagegen/
+|       +-- cerneala-mascots/
+|           |-- variant-01-chroma.png
+|           |-- variant-02-chroma.png
+|           |-- variant-03-chroma.png
+|           +-- variant-04-chroma.png
 |-- Tools/
 |   |-- RoslynRepoIndexer/
 |   |   |-- benchmarks/

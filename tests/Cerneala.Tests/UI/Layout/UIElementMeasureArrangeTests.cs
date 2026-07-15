@@ -47,6 +47,24 @@ public sealed class UIElementMeasureArrangeTests
     }
 
     [Fact]
+    public void ExplicitSizeParticipatesInMeasureAndAlignment()
+    {
+        UIElement element = new()
+        {
+            Width = 40,
+            Height = 20,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Bottom
+        };
+
+        LayoutSize desired = element.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        LayoutRect arranged = element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(new LayoutSize(40, 20), desired);
+        Assert.Equal(new LayoutRect(30, 80, 40, 20), arranged);
+    }
+
+    [Fact]
     public void LayoutVersionChangesForLayoutAffectingProperty()
     {
         UIElement element = new();

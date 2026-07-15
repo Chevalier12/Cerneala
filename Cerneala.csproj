@@ -10,18 +10,21 @@
     <Compile Remove="docs\**" />
     <Compile Remove="Cerneala.SourceGen\**" />
     <Compile Remove="Playground\**" />
+    <Compile Remove="CernealaPresentation\**" />
     <Compile Remove="benchmarks\**" />
     <Compile Remove="Tools\**" />
     <Compile Remove="tests\**" />
     <EmbeddedResource Remove="docs\**" />
     <EmbeddedResource Remove="Cerneala.SourceGen\**" />
     <EmbeddedResource Remove="Playground\**" />
+    <EmbeddedResource Remove="CernealaPresentation\**" />
     <EmbeddedResource Remove="benchmarks\**" />
     <EmbeddedResource Remove="Tools\**" />
     <EmbeddedResource Remove="tests\**" />
     <None Remove="docs\**" />
     <None Remove="Cerneala.SourceGen\**" />
     <None Remove="Playground\**" />
+    <None Remove="CernealaPresentation\**" />
     <None Remove="benchmarks\**" />
     <None Remove="Tools\**" />
     <None Remove="tests\**" />
@@ -37,7 +40,7 @@
 
   <ItemGroup>
     <ProjectReference Include="Cerneala.SourceGen\Cerneala.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**;Cerneala.SourceGen\**;docs\**;Playground\**;Tools\**;tests\**" />
+    <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**;Cerneala.SourceGen\**;CernealaPresentation\**;docs\**;Playground\**;Tools\**;tests\**" />
   </ItemGroup>
 
 </Project>

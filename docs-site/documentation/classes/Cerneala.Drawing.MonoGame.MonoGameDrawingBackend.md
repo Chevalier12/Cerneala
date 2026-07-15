@@ -80,13 +80,18 @@ Line strokes are centered on the segment axis. This keeps connected segments
 aligned at shared points and centers the square produced for a zero-length line.
 
 Text rendering requires a `SkiaTextRasterizer` supplied to the constructor. If
-no rasterizer is provided, text draw commands are ignored. Color-independent
-glyph masks are cached by text, font, size, DPI scale, and subpixel phase.
+no rasterizer is provided, text draw commands are ignored. For solid text,
+Skia generates foreground-aware LCD masks so its gamma and contrast correction
+is preserved when the masks are composited by MonoGame. Glyph masks are cached
+by text, font, size, DPI scale, subpixel phase, and rasterization color.
 Solid brushes tint the cached subpixel masks directly. Gradient, image,
 drawing, and visual brushes are rendered into a device-local texture and
 multiplied by the grayscale glyph mask. All text and brush textures are scoped
-to the backend's `GraphicsDevice` and cleared on scale changes, device reset,
-or disposal.
+to the backend's `GraphicsDevice`. Equivalent `SkiaFont` wrappers share entries
+when they use the same Skia typeface. At the end of each render, entries not
+used by that frame are disposed and evicted so changing text and animated
+subpixel positions cannot grow the GPU cache without bound. The complete cache
+is also cleared on scale changes, device reset, or disposal.
 
 Filled SVG paths are parsed and flattened into contours, tessellated into a
 triangle mesh, and submitted directly through `GraphicsDevice` with

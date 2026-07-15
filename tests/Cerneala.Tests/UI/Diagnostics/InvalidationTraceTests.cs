@@ -51,4 +51,22 @@ public sealed class InvalidationTraceTests
 
         Assert.Equal(elementId, requestEntry.ElementId);
     }
+
+    [Fact]
+    public void EnabledTraceRetainsOnlyTheNewestEntriesUpToItsCapacity()
+    {
+        InvalidationTrace trace = new(isEnabled: true, capacity: 3);
+        UIElement element = new();
+
+        for (int index = 0; index < 5; index++)
+        {
+            trace.RecordRequest(new InvalidationRequest(
+                element,
+                InvalidationFlags.Render,
+                $"request-{index}"));
+        }
+
+        Assert.Equal(3, trace.Entries.Count);
+        Assert.Equal(["request-2", "request-3", "request-4"], trace.Entries.Select(entry => entry.Reason));
+    }
 }

@@ -57,7 +57,7 @@ int retainedEntryCount = trace.Entries.Count; // 0
 
 `InvalidationTrace` is an in-memory diagnostic collector. A normal `UIRoot` constructs an enabled trace and passes it to `UiFrameScheduler`; `UIRoot.Invalidate` records the original `InvalidationRequest`, then `DirtyPropagation` records propagation and queue events, and the scheduler records phase, phase-summary, and clear events while processing frame work.
 
-Entries are appended in recording order and exposed through `Entries`. The collection surface is read-only, but the trace keeps retaining entries for the lifetime of the trace instance; the class does not expose a clear or capacity API.
+Entries are exposed through `Entries` in recording order. The trace retains at most `Capacity` entries and discards the oldest quarter of the buffer when it reaches that limit, preventing long-running UI roots from accumulating an unbounded diagnostic history. The default capacity is `DefaultCapacity` (`4096`).
 
 Disabled traces keep `IsEnabled` set to `false` and ignore all record calls. `RecordRequest` still validates that its `request` argument is not null before checking `IsEnabled`.
 
@@ -67,15 +67,17 @@ Each entry stores both the `UIElement` reference and the element id string avail
 
 | Name | Description |
 | --- | --- |
-| `InvalidationTrace(bool isEnabled = true)` | Creates a trace. The optional `isEnabled` value controls whether record calls append entries. |
+| `InvalidationTrace(bool isEnabled = true, int capacity = DefaultCapacity)` | Creates a trace with optional recording and retention capacity. Throws `ArgumentOutOfRangeException` when `capacity` is zero or negative. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `Disabled` | `InvalidationTrace` | Static disabled trace instance created with `isEnabled: false`. |
+| `DefaultCapacity` | `int` | Default maximum retained-entry capacity (`4096`). |
 | `IsEnabled` | `bool` | Gets whether record calls append entries. |
-| `Entries` | `IReadOnlyList<InvalidationTraceEntry>` | Gets the retained trace entries in append order. |
+| `Capacity` | `int` | Gets the configured maximum retained-entry count. |
+| `Entries` | `IReadOnlyList<InvalidationTraceEntry>` | Gets the currently retained trace entries in recording order. |
 
 ## Methods
 

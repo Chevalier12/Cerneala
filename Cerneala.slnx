@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Playground/">
     <Project Path="Playground/AvaloniaOracle/AvaloniaOracle.csproj" />
+    <Project Path="Playground/CernealaOracle/CernealaOracle.csproj" />
     <Project Path="Playground/Cerneala.Playground/Cerneala.Playground.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
@@ -14,4 +15,5 @@
   </Folder>
   <Project Path="Cerneala.csproj" />
   <Project Path="Cerneala.SourceGen/Cerneala.SourceGen.csproj" />
+  <Project Path="CernealaPresentation/CernealaPresentation.csproj" />
 </Solution>

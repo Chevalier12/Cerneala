@@ -242,7 +242,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
         ArgumentNullException.ThrowIfNull(window);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         WindowContext context = RequireContext(window);
-        if (context.PlatformWindow.GraphicsSession is not IWindowScreenshotSource screenshotSource)
+        IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
+        if (graphicsSession is not IWindowScreenshotSource screenshotSource)
         {
             throw new NotSupportedException("The active Window graphics backend does not support screenshots.");
         }
@@ -255,7 +256,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
         }
 
         using FileStream output = File.Create(fullPath);
-        screenshotSource.SavePng(output);
+        screenshotSource.RenderPng(output, Color.White, context.Host.Draw);
     }
 
     public void PumpOnce(TimeSpan elapsedTime)
@@ -272,6 +273,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
             }
 
             context.Host.AdvanceRenderTime(elapsedTime);
+            if (!IsLiveContext(context))
+            {
+                continue;
+            }
+
             if (context.RenderRequested ||
                 context.Root.Relay.HasPendingWork ||
                 context.Root.Scheduler.HasWork ||
@@ -407,6 +413,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 frame = context.Host.Update(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
             }
 
+            if (!IsLiveContext(context))
+            {
+                return;
+            }
+
             IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
             graphicsSession.BeginFrame(Color.White);
             try
@@ -418,12 +429,15 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 graphicsSession.Present();
             }
 
-            context.Window.MarkFrameRendered(frame);
-
-            if (!context.ContentRendered)
+            using (context.Root.Relay.EnterSynchronizationContext())
             {
-                context.ContentRendered = true;
-                context.Window.MarkContentRendered();
+                context.Window.MarkFrameRendered(frame);
+
+                if (!context.ContentRendered)
+                {
+                    context.ContentRendered = true;
+                    context.Window.MarkContentRendered();
+                }
             }
         }
         finally
@@ -438,6 +452,13 @@ internal sealed class WindowApplicationRuntime : IDisposable
         return contexts.TryGetValue(window, out WindowContext? context)
             ? context
             : throw new InvalidOperationException("The Window has not been shown.");
+    }
+
+    private bool IsLiveContext(WindowContext context)
+    {
+        return !context.Window.IsClosed &&
+            contexts.TryGetValue(context.Window, out WindowContext? currentContext) &&
+            ReferenceEquals(currentContext, context);
     }
 
     private void SetOwnerEnabled(Window? owner, bool enabled)

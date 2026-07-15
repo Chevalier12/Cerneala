@@ -23,7 +23,7 @@ Cache a text measurement result:
 ```csharp
 using Cerneala.UI.Text;
 
-TextLayoutCache cache = new();
+TextLayoutCache cache = new(capacity: 512);
 TextLayoutKey key = CreateLayoutKey();
 
 TextMeasureResult result = cache.GetOrAdd(
@@ -35,14 +35,23 @@ bool contains = cache.Contains(key);
 
 ## Remarks
 
-`TextLayoutCache` stores `TextMeasureResult` instances by `TextLayoutKey`. `GetOrAdd` increments `Hits` when a cached result is found and `Misses` when the factory is used.
+`TextLayoutCache` stores `TextMeasureResult` instances by `TextLayoutKey`. Storage is bounded by `Capacity`; once full, adding a layout evicts the least recently used entry. A cache hit refreshes that entry's recency. The default capacity is `DefaultCapacity` (`512`). `GetOrAdd` increments `Hits` when a cached result is found and `Misses` when the factory is used.
 
 The factory argument to `GetOrAdd` must be non-null. `Clear` removes all cached results and resets hit and miss counters to zero.
+
+## Constructors
+
+| Name | Description |
+| --- | --- |
+| `TextLayoutCache(int capacity = DefaultCapacity)` | Creates a bounded cache. Throws `ArgumentOutOfRangeException` when `capacity` is zero or negative. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
+| `DefaultCapacity` | `int` | Default cache capacity (`512`). |
+| `Capacity` | `int` | Gets the maximum number of retained layouts. |
+| `Count` | `int` | Gets the number of currently retained layouts. |
 | `Hits` | `int` | Gets the number of cache hits. |
 | `Misses` | `int` | Gets the number of cache misses. |
 

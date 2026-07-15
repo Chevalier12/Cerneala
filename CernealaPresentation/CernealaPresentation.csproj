@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ApplicationIcon>..\Playground\Assets\cerneala-playground.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cerneala.csproj" />
+    <ProjectReference Include="..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <PackageReference Include="SkiaSharp" Version="4.148.0" />
+    <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**" />
+    <Content Include="..\docs-site\assets\cerneala-mascot-void-suction-well.svg"
+             Link="Assets\cerneala-mascot-void-suction-well.svg"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\docs-site\assets\cerneala-mascot-void-suction-well.png"
+             Link="Assets\cerneala-mascot-void-suction-well.png"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

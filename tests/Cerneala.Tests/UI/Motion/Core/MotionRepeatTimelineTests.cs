@@ -34,6 +34,29 @@ public sealed class MotionRepeatTimelineTests
     }
 
     [Fact]
+    public void EvenCyclePingPongMotionValueCompletesAtStart()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        MotionValue<float> value = root.Motion.Graph.CreateValue(0f);
+        MotionHandle handle = value.AnimateTo(
+            10,
+            new PingPongSpec<float>(
+                MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear),
+                cycles: 2));
+
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.Motion.Tick();
+
+        Assert.True(handle.IsCompleted);
+        Assert.Equal(0, value.Current);
+        Assert.Equal(0, value.Target);
+    }
+
+    [Fact]
     public void InfiniteAnimationKeepsRequestingFramesUntilCanceled()
     {
         ManualMotionClock clock = new();

@@ -145,8 +145,8 @@ public sealed class MotionValue<T> : MotionValue
         velocity = TryGetVelocity(expectedSampler);
         if (expectedSampler.IsComplete)
         {
-            T completionTarget = target;
-            int changed = mixer.EqualsWithinTolerance(current, completionTarget, 0) ? 0 : 1;
+            T completionValue = expectedSampler.Current;
+            int changed = mixer.EqualsWithinTolerance(current, completionValue, 0) ? 0 : 1;
             completed = FinishNaturalCompletion(expectedHandle, expectedSampler);
             return changed;
         }
@@ -271,13 +271,14 @@ public sealed class MotionValue<T> : MotionValue
 
     private bool FinishNaturalCompletion(MotionHandle? expectedHandle, MotionSampler<T>? expectedSampler)
     {
-        T completionTarget = target;
+        T completionValue = expectedSampler is null ? target : expectedSampler.Current;
         if (!TryDetachActiveMotion(expectedHandle, expectedSampler, out MotionHandle? finishingHandle))
         {
             return false;
         }
 
-        ApplySample(completionTarget);
+        target = completionValue;
+        ApplySample(completionValue);
         graph.Diagnostics?.Record(MotionTraceEventKind.MotionCompleted);
         finishingHandle?.FinishCompleted(fireEvent: true);
         return sampler is null && activeHandle is null;

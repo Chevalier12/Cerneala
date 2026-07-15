@@ -23,14 +23,21 @@ public static class MotionGroup
 
         foreach (MotionHandle child in children)
         {
-            child.Completed += (_, _) =>
+            int terminalStateObserved = 0;
+            void ObserveTerminalState()
             {
-                remaining--;
-                if (remaining == 0)
+                if (Interlocked.Exchange(ref terminalStateObserved, 1) == 0 &&
+                    Interlocked.Decrement(ref remaining) == 0)
                 {
                     group.Complete();
                 }
-            };
+            }
+
+            child.Completed += (_, _) => ObserveTerminalState();
+            if (child.IsCompleted || child.IsCanceled)
+            {
+                ObserveTerminalState();
+            }
         }
 
         return group;

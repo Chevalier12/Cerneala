@@ -54,7 +54,7 @@ bool completed = handle.IsCompleted;
 
 `MotionValue<T>` instances are created by `MotionGraph.CreateValue<T>`. The constructor is internal, so callers receive values from the graph rather than constructing them directly. The value stores the current value, target value, animation start value, active sampler, optional velocity, and the active `MotionHandle`.
 
-`AnimateTo` verifies access through the owning graph, creates a sampler from the supplied `MotionSpec<T>`, records the new target, and registers an internal motion node with the graph while the animation is active. When the sampler completes naturally, the value applies the final target, records completion diagnostics when diagnostics are configured, finishes the handle as completed, and unregisters its node.
+`AnimateTo` verifies access through the owning graph, creates a sampler from the supplied `MotionSpec<T>`, records the requested target, and registers an internal motion node with the graph while the animation is active. When the sampler completes naturally, the value applies the sampler's final `Current` value, updates `Target` to that completed value, records completion diagnostics when diagnostics are configured, finishes the handle as completed, and unregisters its node. This preserves specifications whose natural endpoint can differ from the originally requested target, such as an even-cycle `PingPongSpec<T>`.
 
 Starting a new animation cancels the previous active handle with `MotionCancelBehavior.KeepCurrent`. When `MotionStartOptions.RetargetMode` is `RetargetMode.PreserveProgress`, the previous elapsed animation time is reused with the new sampler when the active motion can be detached safely; otherwise the operation falls back to a restart.
 
@@ -67,7 +67,7 @@ Starting a new animation cancels the previous active handle with `MotionCancelBe
 | Name | Type | Description |
 | --- | --- | --- |
 | `Current` | `T` | Gets the currently applied value. |
-| `Target` | `T` | Gets the value the current motion is targeting, or the last value supplied to `JumpTo`. |
+| `Target` | `T` | Gets the value the active motion is targeting. After natural completion, gets the sampler's completed value; after `JumpTo`, gets the supplied value. |
 | `IsAnimating` | `bool` | Gets whether the value has an active sampler and active handle. |
 | `Velocity` | `MotionVelocity<T>?` | Gets the most recently sampled velocity when the active sampler provides one; otherwise `null`. |
 

@@ -4,6 +4,7 @@ using Cerneala.UI.Data;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Markup;
 using Cerneala.UI.Media;
 using Cerneala.UI.Motion.Layout;
 using Cerneala.UI.Motion.Presence;
@@ -40,6 +41,16 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         nameof(Margin),
         typeof(UIElement),
         new UiPropertyMetadata<Thickness>(Thickness.Zero, UiPropertyOptions.AffectsMeasure));
+
+    public static readonly UiProperty<float> WidthProperty = UiProperty<float>.Register(
+        nameof(Width),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(float.NaN, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange, validateValue: IsValidDimension));
+
+    public static readonly UiProperty<float> HeightProperty = UiProperty<float>.Register(
+        nameof(Height),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(float.NaN, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange, validateValue: IsValidDimension));
 
     public static readonly UiProperty<HorizontalAlignment> HorizontalAlignmentProperty = UiProperty<HorizontalAlignment>.Register(
         nameof(HorizontalAlignment),
@@ -296,6 +307,20 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         get => GetValue(MarginProperty);
         set => SetValue(MarginProperty, value);
+    }
+
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
+    public float Width
+    {
+        get => GetValue(WidthProperty);
+        set => SetValue(WidthProperty, value);
+    }
+
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
+    public float Height
+    {
+        get => GetValue(HeightProperty);
+        set => SetValue(HeightProperty, value);
     }
 
     public HorizontalAlignment HorizontalAlignment
@@ -873,7 +898,15 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         Thickness margin = Margin;
         LayoutSize contentAvailableSize = Deflate(context.AvailableSize, margin);
-        LayoutSize contentDesiredSize = MeasureCore(new MeasureContext(contentAvailableSize, context.Rounding)).ClampNonNegative();
+        bool hasWidth = !float.IsNaN(Width);
+        bool hasHeight = !float.IsNaN(Height);
+        LayoutSize constrainedSize = new(
+            hasWidth ? MathF.Min(contentAvailableSize.Width, Width) : contentAvailableSize.Width,
+            hasHeight ? MathF.Min(contentAvailableSize.Height, Height) : contentAvailableSize.Height);
+        LayoutSize measuredSize = MeasureCore(new MeasureContext(constrainedSize, context.Rounding)).ClampNonNegative();
+        LayoutSize contentDesiredSize = new(
+            hasWidth ? Width : measuredSize.Width,
+            hasHeight ? Height : measuredSize.Height);
         return new LayoutSize(
             contentDesiredSize.Width + margin.Horizontal,
             contentDesiredSize.Height + margin.Vertical).ClampNonNegative();
@@ -947,10 +980,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     private LayoutRect ApplyAlignment(LayoutRect finalRect, LayoutSize desiredSize)
     {
-        float width = HorizontalAlignment == HorizontalAlignment.Stretch
+        bool hasWidth = !float.IsNaN(Width);
+        bool hasHeight = !float.IsNaN(Height);
+        float width = HorizontalAlignment == HorizontalAlignment.Stretch && !hasWidth
             ? finalRect.Width
             : Math.Min(desiredSize.Width, finalRect.Width);
-        float height = VerticalAlignment == VerticalAlignment.Stretch
+        float height = VerticalAlignment == VerticalAlignment.Stretch && !hasHeight
             ? finalRect.Height
             : Math.Min(desiredSize.Height, finalRect.Height);
 
@@ -958,6 +993,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         {
             HorizontalAlignment.Center => finalRect.X + ((finalRect.Width - width) / 2),
             HorizontalAlignment.Right => finalRect.X + finalRect.Width - width,
+            HorizontalAlignment.Stretch when hasWidth => finalRect.X + ((finalRect.Width - width) / 2),
             _ => finalRect.X
         };
 
@@ -965,6 +1001,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         {
             VerticalAlignment.Center => finalRect.Y + ((finalRect.Height - height) / 2),
             VerticalAlignment.Bottom => finalRect.Y + finalRect.Height - height,
+            VerticalAlignment.Stretch when hasHeight => finalRect.Y + ((finalRect.Height - height) / 2),
             _ => finalRect.Y
         };
 
@@ -1126,6 +1163,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             point.X <= 1 &&
             point.Y >= 0 &&
             point.Y <= 1;
+    }
+
+    private static bool IsValidDimension(float value)
+    {
+        return float.IsNaN(value) || (float.IsFinite(value) && value >= 0);
     }
 
     private static bool IsValidLayoutMotionId(LayoutMotionId? id)

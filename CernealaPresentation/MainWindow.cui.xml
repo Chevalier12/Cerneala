@@ -1,0 +1,252 @@
+<Window
+    Title="Cerneala Orientation"
+    Width="1180"
+    Height="760"
+    MinWidth="980"
+    MinHeight="680"
+    WindowStartupLocation="CenterScreen"
+    ContentRendered="OnContentRendered"
+    Background="#FF080A0D"
+    BorderBrush="#FF2A2E38"
+    BorderThickness="1"
+    Padding="0">
+    <Window.Resources>
+        <SolidColorBrush Name="InkBrush" Color="#FF080A0D" />
+        <SolidColorBrush Name="PanelBrush" Color="#FF111318" />
+        <SolidColorBrush Name="PanelAltBrush" Color="#FF0D1014" />
+        <SolidColorBrush Name="RaisedBrush" Color="#FF171A20" />
+        <SolidColorBrush Name="LineBrush" Color="#FF2A2E38" />
+        <SolidColorBrush Name="LineStrongBrush" Color="#FF454B58" />
+        <SolidColorBrush Name="PaperBrush" Color="#FFF2F3F6" />
+        <SolidColorBrush Name="SlateBrush" Color="#FF8A93A6" />
+        <SolidColorBrush Name="SlateDimBrush" Color="#FF555E6E" />
+        <SolidColorBrush Name="CyanBrush" Color="#FF4DF0FF" />
+        <SolidColorBrush Name="CyanWashBrush" Color="#FF10282D" />
+        <SolidColorBrush Name="LimeBrush" Color="#FFC6FF3D" />
+        <SolidColorBrush Name="PinkBrush" Color="#FFFF3EA5" />
+        <SolidColorBrush Name="TransparentBrush" Color="#00000000" />
+
+        <Aspect Target="TextBlock">
+            @default
+            {
+                FontFamily = "Segoe UI Variable Text";
+                FontSize = 14;
+                Foreground = $PaperBrush;
+            }
+        </Aspect>
+
+        <Aspect Name="PrimaryButton" Target="Button">
+            @default
+            {
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 11;
+                Background = $RaisedBrush;
+                Foreground = $PaperBrush;
+                BorderBrush = $LineStrongBrush;
+                BorderThickness = "1";
+                Padding = "22,13,22,13";
+            }
+            @when IsMouseOver
+            {
+                Background = $LimeBrush;
+                Foreground = $InkBrush;
+                BorderBrush = $LimeBrush;
+            }
+            @when IsKeyboardFocusWithin
+            {
+                BorderBrush = $CyanBrush;
+                BorderThickness = "2";
+            }
+        </Aspect>
+    </Window.Resources>
+
+    <Grid ClipToBounds="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="68" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="58" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="$PanelAltBrush" BorderBrush="$LineBrush" BorderThickness="0,0,0,1" Padding="34,0,34,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <BrandMark />
+                    <TextBlock Text="/" FontFamily="Cascadia Mono" FontSize="12" Foreground="$SlateDimBrush" Margin="16,0,14,0" />
+                    <TextBlock Text="OPENING SEQUENCE" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="FRAME 0001" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateBrush" Margin="0,0,18,0" />
+                    <TextBlock Text="SYSTEM AWAKE" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$LimeBrush" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="42,34,42,34">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.15*" />
+                <ColumnDefinition Width="0.85*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0" Margin="8,0,42,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="128" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Name="HeroKicker" Grid.Row="0" Orientation="Horizontal" Opacity="0" TranslateX="-18">
+                    <Border Width="34" Height="3" Background="$PinkBrush" Margin="0,0,12,0" />
+                    <TextBlock Text="CERNEALA / RETAINED UI FOR C#" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$PinkBrush" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <TextBlock
+                    Name="HeroTitle"
+                    Grid.Row="1"
+                    Text="THE INTERFACE&#10;REMEMBERS."
+                    FontFamily="Bahnschrift SemiBold"
+                    FontSize="54"
+                    Foreground="$PaperBrush"
+                    Margin="0,18,0,0"
+                    Opacity="0"
+                    TranslateY="22" />
+
+                <Grid Grid.Row="2" Margin="0,18,0,0">
+                    <TextBlock
+                        Name="MessageLine"
+                        Text="The tree is waking up."
+                        FontFamily="Bahnschrift"
+                        FontSize="24"
+                        Foreground="$PaperBrush"
+                        VerticalAlignment="Top"
+                        Opacity="0"
+                        TranslateY="12" />
+                    <TextBlock
+                        Name="SequenceLabel"
+                        Text="BOOT / RETAIN / SETTLE / DRAW"
+                        FontFamily="Cascadia Mono SemiBold"
+                        FontSize="10"
+                        Foreground="$CyanBrush"
+                        VerticalAlignment="Bottom"
+                        Opacity="0" />
+                </Grid>
+
+                <TextBlock
+                    Name="HeroDescription"
+                    Grid.Row="3"
+                    Text="A guided descent into a native UI framework that keeps its tree, tracks dirty work, and draws only what changed."
+                    FontSize="15"
+                    Foreground="$SlateBrush"
+                    TextWrapping="Wrap"
+                    Margin="0,16,48,0"
+                    Opacity="0"
+                    TranslateY="10" />
+
+                <StackPanel Name="HeroFacts" Grid.Row="4" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,28,0,0" Opacity="0">
+                    <Border BorderBrush="$LineBrush" BorderThickness="1,0,0,0" Padding="14,0,24,0">
+                        <StackPanel><TextBlock Text="01" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" /><TextBlock Text="BUILD-TIME MARKUP" FontFamily="Cascadia Mono" FontSize="9" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel>
+                    </Border>
+                    <Border BorderBrush="$LineBrush" BorderThickness="1,0,0,0" Padding="14,0,24,0">
+                        <StackPanel><TextBlock Text="02" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$PinkBrush" /><TextBlock Text="TYPED STATE" FontFamily="Cascadia Mono" FontSize="9" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel>
+                    </Border>
+                    <Border BorderBrush="$LineBrush" BorderThickness="1,0,0,0" Padding="14,0,0,0">
+                        <StackPanel><TextBlock Text="03" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$LimeBrush" /><TextBlock Text="DIRTY WORK ONLY" FontFamily="Cascadia Mono" FontSize="9" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,26,0,0">
+                    <Button
+                        Name="ContinueButton"
+                        Aspect="$PrimaryButton"
+                        Content="CONTINUE  /  ENTER FRAME"
+                        Click="OnContinue"
+                        IsEnabled="False"
+                        Opacity="0"
+                        TranslateY="12" />
+                    <TextBlock Text="07 CHAPTERS  /  ~4 MIN" FontFamily="Cascadia Mono" FontSize="9" Foreground="$SlateDimBrush" VerticalAlignment="Center" Margin="16,0,0,0" />
+                </StackPanel>
+            </Grid>
+
+            <Border
+                Name="VisualStage"
+                Grid.Column="1"
+                Background="$PanelAltBrush"
+                BorderBrush="$LineStrongBrush"
+                BorderThickness="1"
+                Opacity="0"
+                TranslateX="32">
+                <Grid ClipToBounds="True">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="4" />
+                        <RowDefinition Height="48" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="62" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="1.4*" /><ColumnDefinition Width="0.45*" /><ColumnDefinition Width="0.7*" /></Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="$CyanBrush" />
+                        <Border Grid.Column="1" Background="$PinkBrush" />
+                        <Border Grid.Column="2" Background="$LimeBrush" />
+                    </Grid>
+
+                    <Border Grid.Row="1" BorderBrush="$LineBrush" BorderThickness="0,0,0,1" Padding="18,0,18,0">
+                        <Grid>
+                            <TextBlock Text="SUBJECT / VOID_SUCTION_WELL" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$SlateBrush" VerticalAlignment="Center" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="LIVE" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$CyanBrush" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="2" ClipToBounds="True">
+                        <Border Width="520" Height="1" Background="$LineBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.72" />
+                        <Border Width="1" Height="420" Background="$LineBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.72" />
+                        <TextBlock Name="StageIndex" Text="01" FontFamily="Bahnschrift SemiBold" FontSize="112" Foreground="$LineBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-12,18,0" Opacity="0" />
+                        <Border Name="ScanLine" Height="1" Background="$CyanBrush" VerticalAlignment="Center" Margin="22,0,22,0" Opacity="0" TranslateY="-126" />
+                        <SvgImage
+                            Name="MascotImage"
+                            DisplaySize="360"
+                            UseIntrinsicSize="False"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Opacity="0"
+                            Scale="0.7"
+                            TranslateY="22" />
+                        <Border Background="$CyanWashBrush" BorderBrush="$CyanBrush" BorderThickness="2,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Padding="11,8,12,8" Margin="18,0,0,18">
+                            <TextBlock Text="RETAINED / ACTIVE" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$CyanBrush" />
+                        </Border>
+                    </Grid>
+
+                    <Border Grid.Row="3" Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Padding="18,0,18,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center"><TextBlock Text="HOST" FontFamily="Cascadia Mono" FontSize="8" Foreground="$SlateDimBrush" /><TextBlock Text="NATIVE WIN" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$PaperBrush" Margin="0,4,0,0" /></StackPanel>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="BACKEND" FontFamily="Cascadia Mono" FontSize="8" Foreground="$SlateDimBrush" /><TextBlock Text="MONOGAME" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$PaperBrush" Margin="0,4,0,0" /></StackPanel>
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="STATUS" FontFamily="Cascadia Mono" FontSize="8" Foreground="$SlateDimBrush" /><TextBlock Text="STABLE" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$LimeBrush" Margin="0,4,0,0" /></StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2" Background="$PanelAltBrush" BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Padding="34,0,34,0">
+            <Grid>
+                <TextBlock Text="CERNEALA / ORIENTATION BUILD 001" FontFamily="Cascadia Mono" FontSize="9" Foreground="$SlateDimBrush" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="FRAME" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$SlateBrush" Margin="0,0,10,0" />
+                    <Border Width="42" Height="3" Background="$CyanBrush" Margin="0,0,5,0" />
+                    <Border Width="42" Height="3" Background="$PinkBrush" Margin="0,0,5,0" />
+                    <Border Width="42" Height="3" Background="$LimeBrush" />
+                </StackPanel>
+                <TextBlock Text="C# / WINDOWS / GPU" FontFamily="Cascadia Mono" FontSize="9" Foreground="$SlateDimBrush" HorizontalAlignment="Right" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

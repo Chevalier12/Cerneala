@@ -1,0 +1,20 @@
+<UserControl>
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <SvgImage
+            DisplaySize="32"
+            Margin="0,0,10,0" />
+        <TextBlock
+            Text="CERNEALA"
+            FontFamily="Bahnschrift SemiBold"
+            FontSize="18"
+            Foreground="#FFEDEFF3"
+            VerticalAlignment="Center" />
+        <TextBlock
+            Text=" UI"
+            FontFamily="Cascadia Mono SemiBold"
+            FontSize="12"
+            Foreground="#FF4DF0FF"
+            VerticalAlignment="Center"
+            Margin="5,1,0,0" />
+    </StackPanel>
+</UserControl>

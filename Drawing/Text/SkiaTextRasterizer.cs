@@ -138,7 +138,7 @@ public sealed class SkiaTextRasterizer
         using SKFont skFont = SkiaTextRendering.CreateFont(font, textRun.Size);
         using SKPaint paint = new()
         {
-            Color = SKColors.Black,
+            Color = new SKColor(color.R, color.G, color.B, 255),
             IsAntialias = true
         };
         using SKTextBlob textBlob = CreateTextBlob(skFont, shapeResult);
@@ -157,21 +157,25 @@ public sealed class SkiaTextRasterizer
 
         SKImageInfo imageInfo = new(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
         using SKSurfaceProperties properties = new(SKPixelGeometry.RgbHorizontal);
-        using SKSurface surface = SKSurface.Create(imageInfo, properties)
-            ?? throw new InvalidOperationException("Could not create the subpixel text surface.");
-
-        surface.Canvas.Clear(SKColors.White);
-        surface.Canvas.Scale(coordinateScale);
-        surface.Canvas.DrawText(
+        byte[] whiteReference = RasterizeSubpixelReference(
+            imageInfo,
+            properties,
             textBlob,
-            localBaselineX / coordinateScale,
-            localBaselineY / coordinateScale,
-            paint);
-
-        using SKImage image = surface.Snapshot();
-        using SKPixmap pixmap = image.PeekPixels();
-        byte[] bgraPixels = pixmap.GetPixelSpan().ToArray();
-        byte[][] layers = CreateSubpixelLayers(bgraPixels, color);
+            paint,
+            coordinateScale,
+            localBaselineX,
+            localBaselineY,
+            SKColors.White);
+        byte[] blackReference = RasterizeSubpixelReference(
+            imageInfo,
+            properties,
+            textBlob,
+            paint,
+            coordinateScale,
+            localBaselineX,
+            localBaselineY,
+            SKColors.Black);
+        byte[][] layers = CreateSubpixelLayers(whiteReference, blackReference, color);
         DrawPoint originOffset = new(
             globalPixelLeft - mappedBaselineX,
             globalPixelTop - mappedBaselineY);
@@ -184,23 +188,55 @@ public sealed class SkiaTextRasterizer
         ];
     }
 
-    private static byte[][] CreateSubpixelLayers(byte[] bgraPixels, Color color)
+    private static byte[] RasterizeSubpixelReference(
+        SKImageInfo imageInfo,
+        SKSurfaceProperties properties,
+        SKTextBlob textBlob,
+        SKPaint paint,
+        float coordinateScale,
+        float localBaselineX,
+        float localBaselineY,
+        SKColor background)
+    {
+        using SKSurface surface = SKSurface.Create(imageInfo, properties)
+            ?? throw new InvalidOperationException("Could not create the subpixel text surface.");
+        surface.Canvas.Clear(background);
+        surface.Canvas.Scale(coordinateScale);
+        surface.Canvas.DrawText(
+            textBlob,
+            localBaselineX / coordinateScale,
+            localBaselineY / coordinateScale,
+            paint);
+
+        using SKImage image = surface.Snapshot();
+        using SKPixmap pixmap = image.PeekPixels();
+        return pixmap.GetPixelSpan().ToArray();
+    }
+
+    private static byte[][] CreateSubpixelLayers(byte[] whiteReference, byte[] blackReference, Color color)
     {
         byte[][] layers =
         [
-            new byte[bgraPixels.Length],
-            new byte[bgraPixels.Length],
-            new byte[bgraPixels.Length]
+            new byte[whiteReference.Length],
+            new byte[whiteReference.Length],
+            new byte[whiteReference.Length]
         ];
 
-        for (int index = 0; index < bgraPixels.Length; index += 4)
+        for (int index = 0; index < whiteReference.Length; index += 4)
         {
-            WriteLayerPixel(layers[0], index, channel: 0, 255 - bgraPixels[index + 2], color.R, color.A);
-            WriteLayerPixel(layers[1], index, channel: 1, 255 - bgraPixels[index + 1], color.G, color.A);
-            WriteLayerPixel(layers[2], index, channel: 2, 255 - bgraPixels[index], color.B, color.A);
+            WriteLayerPixel(layers[0], index, channel: 0, RecoverCoverage(whiteReference[index + 2], blackReference[index + 2], color.R), 255, color.A);
+            WriteLayerPixel(layers[1], index, channel: 1, RecoverCoverage(whiteReference[index + 1], blackReference[index + 1], color.G), 255, color.A);
+            WriteLayerPixel(layers[2], index, channel: 2, RecoverCoverage(whiteReference[index], blackReference[index], color.B), 255, color.A);
         }
 
         return layers;
+    }
+
+    private static int RecoverCoverage(byte overWhite, byte overBlack, byte foreground)
+    {
+        return foreground >= 128
+            ? Math.Clamp(((overBlack * 255) + (foreground / 2)) / foreground, 0, 255)
+            : Math.Clamp((((255 - overWhite) * 255) + ((255 - foreground) / 2)) / (255 - foreground), 0, 255);
     }
 
     private static void WriteLayerPixel(

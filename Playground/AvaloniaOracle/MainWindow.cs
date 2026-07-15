@@ -7,9 +7,10 @@ namespace AvaloniaOracle;
 
 public sealed class MainWindow : Window
 {
+    private readonly Border canvas;
     private readonly TextBlock textBlock;
 
-    public MainWindow(string fontFamily)
+    public MainWindow(string text, string fontFamily, double fontSize, bool semiBold)
     {
         Title = "Avalonia text oracle";
         Width = 320;
@@ -17,14 +18,20 @@ public sealed class MainWindow : Window
         Background = Brushes.White;
         textBlock = new TextBlock
         {
-            Text = "Hello world!",
+            Text = text,
             FontFamily = new FontFamily(fontFamily),
-            FontSize = 16,
+            FontSize = fontSize,
+            FontWeight = semiBold ? FontWeight.SemiBold : FontWeight.Normal,
             Foreground = Brushes.Black,
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
         };
-        Content = textBlock;
+        canvas = new Border
+        {
+            Background = Brushes.White,
+            Child = textBlock
+        };
+        Content = canvas;
     }
 
     public void SaveScreenshot(string path)
@@ -33,7 +40,7 @@ public sealed class MainWindow : Window
 
         PixelSize pixelSize = PixelSize.FromSize(Bounds.Size, RenderScaling);
         using RenderTargetBitmap bitmap = new(pixelSize, new Vector(96 * RenderScaling, 96 * RenderScaling));
-        bitmap.Render(this);
+        bitmap.Render(canvas);
 
         string fullPath = Path.GetFullPath(path);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
@@ -44,6 +51,10 @@ public sealed class MainWindow : Window
         var line = layout.TextLines[0];
         File.WriteAllLines(metricsPath,
         [
+            $"Text={textBlock.Text}",
+            $"FontFamily={textBlock.FontFamily}",
+            $"FontSize={textBlock.FontSize:R}",
+            $"FontWeight={textBlock.FontWeight}",
             $"Bounds={textBlock.Bounds}",
             $"DesiredSize={textBlock.DesiredSize}",
             $"Layout.Width={layout.Width:R}",

@@ -1,0 +1,576 @@
+<Window
+    Title="Cerneala / Inside the Frame"
+    Width="1320"
+    Height="860"
+    MinWidth="1080"
+    MinHeight="720"
+    WindowStartupLocation="CenterScreen"
+    ContentRendered="OnContentRendered"
+    FrameRendered="OnFrameRendered"
+    Background="#FF0A0B0E"
+    BorderBrush="#FF2A2E38"
+    BorderThickness="1"
+    Padding="0">
+    <Window.Resources>
+        <SolidColorBrush Name="InkBrush" Color="#FF0A0B0E" />
+        <SolidColorBrush Name="PanelBrush" Color="#FF14161B" />
+        <SolidColorBrush Name="PanelAltBrush" Color="#FF101217" />
+        <SolidColorBrush Name="RaisedBrush" Color="#FF191C22" />
+        <SolidColorBrush Name="LineBrush" Color="#FF2A2E38" />
+        <SolidColorBrush Name="LineStrongBrush" Color="#FF424754" />
+        <SolidColorBrush Name="PaperBrush" Color="#FFEDEFF3" />
+        <SolidColorBrush Name="SlateBrush" Color="#FF8A93A6" />
+        <SolidColorBrush Name="SlateDimBrush" Color="#FF565E6E" />
+        <SolidColorBrush Name="CyanBrush" Color="#FF4DF0FF" />
+        <SolidColorBrush Name="CyanWashBrush" Color="#FF10282D" />
+        <SolidColorBrush Name="PinkBrush" Color="#FFFF3EA5" />
+        <SolidColorBrush Name="PinkWashBrush" Color="#FF2C1323" />
+        <SolidColorBrush Name="LimeBrush" Color="#FFC6FF3D" />
+        <SolidColorBrush Name="LimeWashBrush" Color="#FF202914" />
+        <SolidColorBrush Name="OrangeBrush" Color="#FFFF8A3D" />
+        <SolidColorBrush Name="OrangeWashBrush" Color="#FF2C1D14" />
+        <SolidColorBrush Name="TransparentBrush" Color="#00000000" />
+
+        <Aspect Target="TextBlock">
+            @default
+            {
+                FontFamily = "Segoe UI Variable Text";
+                FontSize = 14;
+                Foreground = $PaperBrush;
+            }
+        </Aspect>
+
+        <Aspect Name="NavButton" Target="ToggleButton">
+            @default
+            {
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 12;
+                Background = $TransparentBrush;
+                Foreground = $SlateBrush;
+                BorderBrush = $TransparentBrush;
+                BorderThickness = "0";
+                Padding = "18,10,12,10";
+            }
+            @when IsChecked
+            {
+                Background = $CyanWashBrush;
+                Foreground = $PaperBrush;
+                BorderBrush = $LimeBrush;
+            }
+            @template
+            {
+                <Grid ClipToBounds="True">
+                    <Border Background="$owner.Background" Padding="$owner.Padding">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                            <Grid>
+                                <ContentPresenter
+                                    Content="$owner.Content"
+                                    FontFamily="$owner.FontFamily"
+                                    FontSize="$owner.FontSize"
+                                    Foreground="$owner.Foreground"
+                                    Margin="0,0,0,5"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center" />
+                                <ContentPresenter
+                                    Name="PART_HoverText"
+                                    Content="$owner.Content"
+                                    FontFamily="$owner.FontFamily"
+                                    FontSize="$owner.FontSize"
+                                    Foreground="$PaperBrush"
+                                    Opacity="0"
+                                    Margin="0,0,0,5"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center" />
+                                <Border
+                                    Name="PART_HoverLine"
+                                    Height="1"
+                                    Background="$CyanBrush"
+                                    ScaleX="0"
+                                    RenderTransformOrigin="0,0.5"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Bottom" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <Border
+                        Width="3"
+                        Height="18"
+                        Background="$owner.BorderBrush"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center" />
+                </Grid>
+            }
+        </Aspect>
+
+        <Aspect Name="GhostButton" Target="Button">
+            @default
+            {
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 12;
+                Background = $TransparentBrush;
+                Foreground = $PaperBrush;
+                BorderBrush = $LineStrongBrush;
+                BorderThickness = "1";
+                Padding = "18,11,18,11";
+            }
+            @when IsMouseOver
+            {
+                Background = $CyanWashBrush;
+                Foreground = $CyanBrush;
+                BorderBrush = $CyanBrush;
+            }
+        </Aspect>
+
+        <Aspect Name="LimeButton" Target="Button">
+            @default
+            {
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 12;
+                Background = $LimeBrush;
+                Foreground = $InkBrush;
+                BorderBrush = $LimeBrush;
+                BorderThickness = "1";
+                Padding = "20,12,20,12";
+            }
+            @when IsMouseOver
+            {
+                Background = $CyanBrush;
+                BorderBrush = $CyanBrush;
+            }
+        </Aspect>
+
+        <Aspect Name="MotionReactorBackdrop" Target="Control">
+            @template
+            {
+                <Grid ClipToBounds="True">
+                    <Grid Width="620" Height="380" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="1*" /><RowDefinition Height="1*" /><RowDefinition Height="1*" /><RowDefinition Height="1*" />
+                            <RowDefinition Height="1*" /><RowDefinition Height="1*" /><RowDefinition Height="1*" /><RowDefinition Height="1*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Row="0" Grid.Column="0" Width="1" Height="1" Background="$SlateBrush" Opacity="0.45" />
+                        <Border Grid.Row="5" Grid.Column="1" Width="2" Height="2" Background="$SlateBrush" Opacity="0.55" />
+                        <Border Grid.Row="2" Grid.Column="2" Width="1" Height="1" Background="$SlateBrush" Opacity="0.5" />
+                        <Border Grid.Row="7" Grid.Column="2" Width="1" Height="1" Background="$SlateBrush" Opacity="0.35" />
+                        <Border Grid.Row="0" Grid.Column="3" Width="2" Height="2" Background="$SlateBrush" Opacity="0.55" />
+                        <Border Grid.Row="4" Grid.Column="4" Width="1" Height="1" Background="$SlateBrush" Opacity="0.45" />
+                        <Border Grid.Row="2" Grid.Column="4" Width="1" Height="1" Background="$SlateBrush" Opacity="0.4" />
+                        <Border Grid.Row="6" Grid.Column="5" Width="2" Height="2" Background="$SlateBrush" Opacity="0.55" />
+                        <Border Grid.Row="1" Grid.Column="6" Width="1" Height="1" Background="$SlateBrush" Opacity="0.45" />
+                        <Border Grid.Row="5" Grid.Column="6" Width="1" Height="1" Background="$SlateBrush" Opacity="0.4" />
+                        <Border Grid.Row="3" Grid.Column="7" Width="2" Height="2" Background="$SlateBrush" Opacity="0.6" />
+                        <Border Grid.Row="7" Grid.Column="7" Width="1" Height="1" Background="$SlateBrush" Opacity="0.35" />
+                        <Border Grid.Row="0" Grid.Column="8" Width="1" Height="1" Background="$SlateBrush" Opacity="0.45" />
+                        <Border Grid.Row="4" Grid.Column="8" Width="2" Height="2" Background="$SlateBrush" Opacity="0.55" />
+                        <Border Grid.Row="2" Grid.Column="9" Width="1" Height="1" Background="$SlateBrush" Opacity="0.4" />
+                        <Border Grid.Row="6" Grid.Column="9" Width="1" Height="1" Background="$SlateBrush" Opacity="0.45" />
+                        <Border Grid.Row="1" Grid.Column="10" Width="2" Height="2" Background="$SlateBrush" Opacity="0.6" />
+                        <Border Grid.Row="5" Grid.Column="11" Width="1" Height="1" Background="$SlateBrush" Opacity="0.4" />
+                        <Border Grid.Row="3" Grid.Column="0" Width="1" Height="1" Background="$SlateBrush" Opacity="0.45" />
+                        <Border Grid.Row="1" Grid.Column="1" Width="1" Height="1" Background="$SlateBrush" Opacity="0.4" />
+                        <Border Grid.Row="4" Grid.Column="3" Width="2" Height="2" Background="$SlateBrush" Opacity="0.55" />
+                        <Border Grid.Row="7" Grid.Column="4" Width="1" Height="1" Background="$SlateBrush" Opacity="0.35" />
+                        <Border Grid.Row="3" Grid.Column="5" Width="1" Height="1" Background="$SlateBrush" Opacity="0.45" />
+                        <Border Grid.Row="0" Grid.Column="7" Width="1" Height="1" Background="$SlateBrush" Opacity="0.45" />
+                        <Border Grid.Row="6" Grid.Column="8" Width="1" Height="1" Background="$SlateBrush" Opacity="0.4" />
+                        <Border Grid.Row="4" Grid.Column="10" Width="2" Height="2" Background="$SlateBrush" Opacity="0.55" />
+                        <Border Grid.Row="7" Grid.Column="11" Width="1" Height="1" Background="$SlateBrush" Opacity="0.35" />
+                    </Grid>
+
+                    <Border Height="1" Background="$LineBrush" Margin="28,0,28,0" VerticalAlignment="Center" />
+                    <Border Width="1" Background="$LineBrush" Margin="0,22,0,22" HorizontalAlignment="Center" />
+
+                    <Ellipse Width="470" Height="292" Stroke="$LineStrongBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Ellipse Width="360" Height="218" Stroke="$LineBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Ellipse Width="232" Height="232" Stroke="$LineBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Ellipse Width="156" Height="156" Stroke="$CyanBrush" StrokeThickness="1" Opacity="0.82" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                    <Grid Width="470" Height="292" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Border Width="5" Height="5" Background="$CyanBrush" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                        <Border Width="5" Height="5" Background="$PinkBrush" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        <Border Width="5" Height="5" Background="$LimeBrush" HorizontalAlignment="Center" VerticalAlignment="Top" />
+                        <Border Width="5" Height="5" Background="$SlateBrush" Opacity="0.55" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+                    </Grid>
+                </Grid>
+            }
+        </Aspect>
+
+        <Aspect Name="ShootingStar" Target="Control">
+            @default
+            {
+                Width = 72;
+                Height = 32;
+                Opacity = 0;
+            }
+            @template
+            {
+                <Grid ClipToBounds="True">
+                    <Border Width="2" Height="2" Background="$owner.Background" Opacity="0.18" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="2,2,0,0" />
+                    <Border Width="3" Height="2" Background="$owner.Background" Opacity="0.24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="11,6,0,0" />
+                    <Border Width="4" Height="2" Background="$owner.Background" Opacity="0.32" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,10,0,0" />
+                    <Border Width="6" Height="2" Background="$owner.Background" Opacity="0.44" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="29,14,0,0" />
+                    <Border Width="9" Height="2" Background="$owner.Background" Opacity="0.58" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="38,18,0,0" />
+                    <Border Width="12" Height="3" Background="$owner.Background" Opacity="0.76" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="47,22,0,0" />
+                    <Ellipse Width="8" Height="8" Fill="$owner.Background" Stroke="$PaperBrush" StrokeThickness="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,2,1" />
+                </Grid>
+            }
+        </Aspect>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="68" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="66" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="$PanelAltBrush" BorderBrush="$LineBrush" BorderThickness="0,0,0,1" Padding="26,0,26,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <BrandMark Grid.Column="0" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="/" FontFamily="Cascadia Mono" FontSize="13" Foreground="$SlateDimBrush" Margin="0,0,12,0" />
+                    <TextBlock Name="HeaderChapterText" Text="WELCOME" FontFamily="Cascadia Mono SemiBold" FontSize="12" Foreground="$CyanBrush" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="LIVE RETAINED TREE" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateBrush" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="$PanelAltBrush" BorderBrush="$LineBrush" BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="THE TOUR" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$SlateDimBrush" Margin="20,22,0,12" />
+                    <StackPanel Grid.Row="1">
+                            <ToggleButton Name="NavWelcome" Aspect="$NavButton" Content="01  WELCOME" Click="OnWelcome" />
+                            <ToggleButton Name="NavRetained" Aspect="$NavButton" Content="02  RETAINED MODEL" Click="OnRetained" />
+                            <ToggleButton Name="NavMarkup" Aspect="$NavButton" Content="03  MARKUP" Click="OnMarkup" />
+                            <ToggleButton Name="NavAspect" Aspect="$NavButton" Content="04  ASPECT" Click="OnAspect" />
+                            <ToggleButton Name="NavMotion" Aspect="$NavButton" Content="05  MOTION" Click="OnMotion" />
+                            <ToggleButton Name="NavPipeline" Aspect="$NavButton" Content="06  FRAME PIPELINE" Click="OnPipeline" />
+                            <ToggleButton Name="NavDiagnostics" Aspect="$NavButton" Content="07  DIAGNOSTICS" Click="OnDiagnostics" />
+                    </StackPanel>
+                    <Border Grid.Row="2" BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Padding="20,16,16,18">
+                        <StackPanel>
+                            <TextBlock Text="FRAME CONTRACT" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$PinkBrush" />
+                            <TextBlock Text="Drain. Settle. Layout. Cache. Commit." FontSize="12" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,7,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1" ClipToBounds="True">
+                <!-- 01 / WELCOME -->
+                <Grid Name="PageWelcome">
+                    <StackPanel Margin="46,38,46,42">
+                        <TextBlock Text="01 / ORIENTATION" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$CyanBrush" />
+                        <TextBlock Text="UI that thinks in frames." FontFamily="Bahnschrift SemiBold" FontSize="52" Foreground="$PaperBrush" Margin="0,12,0,0" />
+                        <TextBlock Text="Cerneala is a retained C# UI framework shaped for MonoGame: typed properties, logical and visual trees, templated controls, dirty queues, native Windows hosting, and backend-neutral drawing." FontSize="17" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,16,80,0" />
+
+                        <Grid Margin="0,34,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.15*" />
+                                <ColumnDefinition Width="0.85*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="$PanelBrush" BorderBrush="$LineStrongBrush" BorderThickness="1" Padding="24" Margin="0,0,14,0">
+                                <StackPanel>
+                                    <TextBlock Text="THE MENTAL MODEL" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$PinkBrush" />
+                                    <TextBlock Text="Describe the tree. Mutate typed state. Let the frame scheduler do only the work that became dirty." FontFamily="Bahnschrift" FontSize="23" Foreground="$PaperBrush" TextWrapping="Wrap" Margin="0,14,0,0" />
+                                    <Border Background="$PanelAltBrush" BorderBrush="$LineBrush" BorderThickness="1" Padding="16" Margin="0,22,0,0">
+                                        <TextBlock Text="input  ->  state  ->  measure  ->  arrange  ->  cache  ->  draw" FontFamily="Cascadia Mono" FontSize="12" Foreground="$LimeBrush" TextWrapping="Wrap" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                                <Border Background="$CyanWashBrush" BorderBrush="$CyanBrush" BorderThickness="2,0,0,0" Padding="18,14,18,14" Margin="0,0,0,10">
+                                    <StackPanel><TextBlock Text="RETAINED" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$CyanBrush" /><TextBlock Text="The tree survives every frame." FontSize="13" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel>
+                                </Border>
+                                <Border Background="$LimeWashBrush" BorderBrush="$LimeBrush" BorderThickness="2,0,0,0" Padding="18,14,18,14" Margin="0,0,0,10">
+                                    <StackPanel><TextBlock Text="TYPED" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$LimeBrush" /><TextBlock Text="Properties carry contracts and effects." FontSize="13" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel>
+                                </Border>
+                                <Border Background="$PinkWashBrush" BorderBrush="$PinkBrush" BorderThickness="2,0,0,0" Padding="18,14,18,14">
+                                    <StackPanel><TextBlock Text="OBSERVABLE" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$PinkBrush" /><TextBlock Text="Diagnostics explain what changed." FontSize="13" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 02 / RETAINED MODEL -->
+                <Grid Name="PageRetained" Visibility="Collapsed">
+                    <StackPanel Margin="46,38,46,42">
+                        <TextBlock Text="02 / RETAINED MODEL" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$PinkBrush" />
+                        <TextBlock Text="The interface remembers." FontFamily="Bahnschrift SemiBold" FontSize="45" Margin="0,12,0,0" />
+                        <TextBlock Text="Cerneala keeps a logical tree for ownership and inherited state, plus a visual tree for layout, rendering, input, and generated template parts." FontSize="16" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,14,80,0" />
+                        <Grid Margin="0,30,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="1.1*" /><ColumnDefinition Width="0.9*" /></Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="$PanelAltBrush" BorderBrush="$LineStrongBrush" BorderThickness="1" Padding="22" Margin="0,0,14,0">
+                                <StackPanel>
+                                    <TextBlock Text="LIVE ELEMENT TREE" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" />
+                                    <Border Background="$CyanWashBrush" BorderBrush="$CyanBrush" BorderThickness="2,0,0,0" Padding="14,11,14,11" Margin="0,16,0,0"><TextBlock Text="Window  #MainWindow" FontFamily="Cascadia Mono" FontSize="12" /></Border>
+                                    <Border Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="2,0,0,0" Padding="14,11,14,11" Margin="22,7,0,0"><TextBlock Text="Grid  #AppShell" FontFamily="Cascadia Mono" FontSize="12" /></Border>
+                                    <Border Background="$PinkWashBrush" BorderBrush="$PinkBrush" BorderThickness="2,0,0,0" Padding="14,11,14,11" Margin="44,7,0,0"><TextBlock Text="Button  #NextChapter" FontFamily="Cascadia Mono" FontSize="12" /></Border>
+                                    <Border Background="$LimeWashBrush" BorderBrush="$LimeBrush" BorderThickness="2,0,0,0" Padding="14,11,14,11" Margin="44,7,0,0"><TextBlock Text="ContentPresenter  @template" FontFamily="Cascadia Mono" FontSize="12" /></Border>
+                                    <TextBlock Text="Named elements remain typed. Template parts remain inspectable. Input routes reuse this structure." FontSize="13" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,18,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                                <Border Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="1" Padding="20" Margin="0,0,0,12"><StackPanel><TextBlock Text="DIRTY BY CONTRACT" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$OrangeBrush" /><TextBlock Text="Property metadata tells the scheduler whether measure, arrange, render, inheritance, or hit testing must run." FontSize="14" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,10,0,0" /></StackPanel></Border>
+                                <Border Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="1" Padding="20" Margin="0,0,0,12"><StackPanel><TextBlock Text="CACHED BY DEFAULT" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$LimeBrush" /><TextBlock Text="Unchanged retained command lists and shared visual order are reused instead of rebuilt for sport." FontSize="14" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,10,0,0" /></StackPanel></Border>
+                                <Border Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="1" Padding="20"><StackPanel><TextBlock Text="ROUTED INPUT" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$PinkBrush" /><TextBlock Text="Pointer and keyboard events tunnel to the target, then bubble back through the retained route." FontSize="14" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,10,0,0" /></StackPanel></Border>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 03 / MARKUP -->
+                <Grid Name="PageMarkup" Visibility="Collapsed">
+                    <StackPanel Margin="46,38,46,42">
+                        <TextBlock Text="03 / BUILD-TIME MARKUP" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$LimeBrush" />
+                        <TextBlock Text="Describe the tree. Keep behavior in C#." FontFamily="Bahnschrift SemiBold" FontSize="42" Margin="0,12,0,0" />
+                        <TextBlock Text="Every .cui.xml file is an additional file consumed by the incremental generator. Named elements and event hooks become compiled, typed C# with no runtime XML parser in the frame loop." FontSize="16" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,14,80,0" />
+                        <Grid Margin="0,28,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /></Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="$PanelAltBrush" BorderBrush="$LineStrongBrush" BorderThickness="1" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <Border Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="0,0,0,1" Padding="16,11,16,11"><Grid><TextBlock Text="MainWindow.cui.xml" FontFamily="Cascadia Mono SemiBold" FontSize="11" /><TextBlock Text="MARKUP" FontFamily="Cascadia Mono" FontSize="9" Foreground="$CyanBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                    <TextBlock Padding="18" FontFamily="Cascadia Mono" FontSize="11" Foreground="$SlateBrush" TextWrapping="Wrap" Text="&lt;Window Title=&quot;Cerneala&quot;&gt;&#10;  &lt;Window.Resources&gt;&#10;    &lt;Aspect Target=&quot;Button&quot;&gt;&#10;      @when IsMouseOver&#10;      {&#10;        Background = $Cyan;&#10;      }&#10;    &lt;/Aspect&gt;&#10;  &lt;/Window.Resources&gt;&#10;&#10;  &lt;Button Name=&quot;Launch&quot;&#10;          Content=&quot;Launch&quot;&#10;          Click=&quot;OnLaunch&quot; /&gt;&#10;&lt;/Window&gt;" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" Background="$PanelAltBrush" BorderBrush="$LineStrongBrush" BorderThickness="1" Margin="8,0,0,0">
+                                <StackPanel>
+                                    <Border Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="0,0,0,1" Padding="16,11,16,11"><Grid><TextBlock Text="MainWindow.cui.xml.cs" FontFamily="Cascadia Mono SemiBold" FontSize="11" /><TextBlock Text="BEHAVIOR" FontFamily="Cascadia Mono" FontSize="9" Foreground="$PinkBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                    <TextBlock Padding="18" FontFamily="Cascadia Mono" FontSize="11" Foreground="$SlateBrush" TextWrapping="Wrap" Text="public partial class MainWindow : Window&#10;{&#10;  private void OnLaunch(&#10;    UiElementId sender,&#10;    RoutedEventArgs args)&#10;  {&#10;    Launch.Motion()&#10;      .Scale.To(&#10;        1.08f,&#10;        Motion.Spring&lt;float&gt;());&#10;  }&#10;}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <Grid Margin="0,20,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /></Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" BorderBrush="$CyanBrush" BorderThickness="0,2,0,0" Padding="16"><StackPanel><TextBlock Text="01  ADDITIONAL FILE" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" /><TextBlock Text="MSBuild feeds markup to the generator." FontSize="12" Foreground="$SlateBrush" Margin="0,7,0,0" /></StackPanel></Border>
+                            <Border Grid.Column="1" BorderBrush="$PinkBrush" BorderThickness="0,2,0,0" Padding="16"><StackPanel><TextBlock Text="02  PAIR" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$PinkBrush" /><TextBlock Text="Markup and partial class meet at build time." FontSize="12" Foreground="$SlateBrush" Margin="0,7,0,0" /></StackPanel></Border>
+                            <Border Grid.Column="2" BorderBrush="$LimeBrush" BorderThickness="0,2,0,0" Padding="16"><StackPanel><TextBlock Text="03  COMPILE" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$LimeBrush" /><TextBlock Text="Typed names, events, resources, and aspects." FontSize="12" Foreground="$SlateBrush" Margin="0,7,0,0" /></StackPanel></Border>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 04 / ASPECT -->
+                <Grid Name="PageAspect" Visibility="Collapsed">
+                    <StackPanel Margin="46,38,46,42">
+                        <TextBlock Text="04 / ASPECT" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$OrangeBrush" />
+                        <TextBlock Text="A typed design system, not a bag of CSS tricks." FontFamily="Bahnschrift SemiBold" FontSize="42" Margin="0,12,0,0" />
+                        <TextBlock Text="Aspect owns semantic tokens, component rules, templates, slots, variants, state conditions, cascade resolution, and diagnostics. It stays typed from declaration to application." FontSize="16" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,14,80,0" />
+                        <Grid Margin="0,28,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="0.8*" /><ColumnDefinition Width="1.2*" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,14,0">
+                                <TextBlock Text="SEMANTIC TOKENS" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$SlateDimBrush" Margin="0,0,0,10" />
+                                <Border Background="$CyanWashBrush" BorderBrush="$CyanBrush" BorderThickness="8,0,0,0" Padding="16,13,16,13" Margin="0,0,0,8"><Grid><TextBlock Text="accent.primary" FontFamily="Cascadia Mono" FontSize="11" /><TextBlock Text="#4DF0FF" FontFamily="Cascadia Mono" FontSize="10" Foreground="$CyanBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                <Border Background="$PinkWashBrush" BorderBrush="$PinkBrush" BorderThickness="8,0,0,0" Padding="16,13,16,13" Margin="0,0,0,8"><Grid><TextBlock Text="state.focus" FontFamily="Cascadia Mono" FontSize="11" /><TextBlock Text="#FF3EA5" FontFamily="Cascadia Mono" FontSize="10" Foreground="$PinkBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                <Border Background="$LimeWashBrush" BorderBrush="$LimeBrush" BorderThickness="8,0,0,0" Padding="16,13,16,13" Margin="0,0,0,8"><Grid><TextBlock Text="action.primary" FontFamily="Cascadia Mono" FontSize="11" /><TextBlock Text="#C6FF3D" FontFamily="Cascadia Mono" FontSize="10" Foreground="$LimeBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                <Border Background="$OrangeWashBrush" BorderBrush="$OrangeBrush" BorderThickness="8,0,0,0" Padding="16,13,16,13"><Grid><TextBlock Text="signal.dirty" FontFamily="Cascadia Mono" FontSize="11" /><TextBlock Text="#FF8A3D" FontFamily="Cascadia Mono" FontSize="10" Foreground="$OrangeBrush" HorizontalAlignment="Right" /></Grid></Border>
+                            </StackPanel>
+                            <Border Grid.Column="1" Background="$PanelBrush" BorderBrush="$LineStrongBrush" BorderThickness="1" Padding="24" Margin="14,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="CASCADE TRACE" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" />
+                                    <TextBlock Text="Button#Continue" FontFamily="Bahnschrift SemiBold" FontSize="25" Margin="0,12,0,0" />
+                                    <Border BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Margin="0,18,0,0" Padding="0,13,0,0"><Grid><TextBlock Text="TYPE DEFAULT" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateDimBrush" /><TextBlock Text="accepted" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                    <Border BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Margin="0,13,0,0" Padding="0,13,0,0"><Grid><TextBlock Text="NAMED ASPECT / PrimaryButton" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateDimBrush" /><TextBlock Text="wins" FontFamily="Cascadia Mono" FontSize="10" Foreground="$LimeBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                    <Border BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Margin="0,13,0,0" Padding="0,13,0,0"><Grid><TextBlock Text="STATE / hover" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateDimBrush" /><TextBlock Text="active" FontFamily="Cascadia Mono" FontSize="10" Foreground="$PinkBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                    <Border BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Margin="0,13,0,0" Padding="0,13,0,0"><Grid><TextBlock Text="LOCAL ATTRIBUTE" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateDimBrush" /><TextBlock Text="highest" FontFamily="Cascadia Mono" FontSize="10" Foreground="$CyanBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                    <TextBlock Text="Every winner has an origin, specificity, layer, and token trace. No haunted styling séance required." FontSize="13" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,20,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 05 / MOTION -->
+                <Grid Name="PageMotion" Visibility="Collapsed">
+                    <Grid Margin="40,28,40,30">
+                        <Grid.RowDefinitions><RowDefinition Height="102" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <StackPanel VerticalAlignment="Top">
+                                <TextBlock Text="05 / MOTION" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$PinkBrush" />
+                                <TextBlock Text="Motion is time, made visible." FontFamily="Bahnschrift SemiBold" FontSize="40" Margin="0,8,0,0" />
+                                <TextBlock Text="A single frame clock turns intent into trajectories, interruption, presence, and rest." FontSize="14" Foreground="$SlateBrush" Margin="0,7,0,0" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <StackPanel Margin="0,0,18,0">
+                                    <TextBlock Name="MotionClockText" Text="T + 00:00.000" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" HorizontalAlignment="Right" />
+                                    <TextBlock Name="MotionStatusText" Text="READY / GRAPH IDLE" FontFamily="Cascadia Mono" FontSize="9" Foreground="$SlateBrush" HorizontalAlignment="Right" Margin="0,6,0,0" />
+                                </StackPanel>
+                                <Button Aspect="$LimeButton" Content="IGNITE  ->" Click="OnReplayMotion" Padding="20,11,20,11" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Grid.Row="1" Background="$PanelAltBrush" BorderBrush="$LineStrongBrush" BorderThickness="1">
+                            <Grid ClipToBounds="True">
+                                <Grid.RowDefinitions><RowDefinition Height="48" /><RowDefinition Height="*" /><RowDefinition Height="62" /></Grid.RowDefinitions>
+
+                                <Border Grid.Row="0" Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="0,0,0,1" Padding="22,0,22,0">
+                                    <Grid>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="TEMPORAL REACTOR / LIVE COMPOSITION" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$PaperBrush" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <TextBlock Text="REDUCED MOTION" FontFamily="Cascadia Mono" FontSize="8" Foreground="$SlateDimBrush" Margin="0,0,8,0" />
+                                            <TextBlock Text="POLICY / FULL" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$LimeBrush" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="292" /></Grid.ColumnDefinitions>
+
+                                    <Grid Grid.Column="0" ClipToBounds="True">
+                                        <Control Aspect="$MotionReactorBackdrop" />
+
+                                        <Control Name="MotionStarA" Aspect="$ShootingStar" Background="$PaperBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="52,34,0,0" />
+                                        <Control Name="MotionStarB" Aspect="$ShootingStar" Background="$CyanBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="186,18,0,0" />
+                                        <Control Name="MotionStarC" Aspect="$ShootingStar" Background="$PinkBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="408,50,0,0" />
+                                        <Control Name="MotionStarD" Aspect="$ShootingStar" Background="$LimeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="590,12,0,0" />
+
+                                        <TextBlock Text="ORBITAL FIELD / 04" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$SlateDimBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="22,18,0,0" />
+                                        <TextBlock Name="MotionFieldReadout" Text="FIELD LOCKED" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$LimeBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,18,22,0" />
+
+                                        <Ellipse Name="MotionCoreHalo" Width="168" Height="168" Stroke="$CyanBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.18" />
+                                        <Ellipse Name="MotionCoreRing" Width="112" Height="112" Stroke="$PaperBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.42" />
+                                        <Ellipse Name="MotionCore" Width="70" Height="70" Fill="$CyanWashBrush" Stroke="$CyanBrush" StrokeThickness="3" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Ellipse Width="20" Height="20" Fill="$PaperBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                                        <Ellipse Name="MotionOrbTween" Width="22" Height="22" Fill="$CyanBrush" Stroke="$PaperBrush" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Ellipse Name="MotionOrbSpring" Width="18" Height="18" Fill="$PinkBrush" Stroke="$PaperBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Ellipse Name="MotionOrbPresence" Width="16" Height="16" Fill="$LimeBrush" Stroke="$PaperBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,148,0,0">
+                                            <TextBlock Text="FRAME CLOCK" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$SlateDimBrush" HorizontalAlignment="Center" />
+                                            <TextBlock Name="MotionReactorState" Text="STANDBY" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$PaperBrush" HorizontalAlignment="Center" Margin="0,5,0,0" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Border Grid.Column="1" Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="1,0,0,0" Padding="22,20,22,18">
+                                        <Grid>
+                                            <Grid.RowDefinitions><RowDefinition Height="20" /><RowDefinition Height="72" /><RowDefinition Height="*" /><RowDefinition Height="54" /></Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0" Text="SEQUENCE / THREE ACTS" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$PinkBrush" />
+                                            <Grid Grid.Row="1" Margin="0,10,0,0">
+                                                <TextBlock Name="MotionPhaseIndex" Text="00" FontFamily="Bahnschrift SemiBold" FontSize="52" Foreground="$PaperBrush" />
+                                                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <TextBlock Text="TRANSACTION" FontFamily="Cascadia Mono" FontSize="8" Foreground="$SlateDimBrush" HorizontalAlignment="Right" />
+                                                    <TextBlock Name="MotionTransactionText" Text="COMMITTED" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$LimeBrush" HorizontalAlignment="Right" Margin="0,5,0,0" />
+                                                </StackPanel>
+                                            </Grid>
+                                            <StackPanel Grid.Row="2" Margin="0,14,0,0">
+                                                <Border Name="MotionActIgnition" BorderBrush="$CyanBrush" BorderThickness="3,0,0,0" Padding="15,9,0,9" Opacity="0.38">
+                                                    <StackPanel><TextBlock Text="01 / IGNITION" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$CyanBrush" /><TextBlock Text="A spring wakes the shared clock." FontSize="11" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel>
+                                                </Border>
+                                                <Border Name="MotionActOrbit" BorderBrush="$PinkBrush" BorderThickness="3,0,0,0" Padding="15,9,0,9" Margin="0,6,0,0" Opacity="0.38">
+                                                    <StackPanel><TextBlock Text="02 / TRAJECTORY" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$PinkBrush" /><TextBlock Text="Keyframes bend values through space." FontSize="11" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel>
+                                                </Border>
+                                                <Border Name="MotionActCommit" BorderBrush="$LimeBrush" BorderThickness="3,0,0,0" Padding="15,9,0,9" Margin="0,6,0,0" Opacity="0.38">
+                                                    <StackPanel><TextBlock Text="03 / COMMIT" FontFamily="Cascadia Mono SemiBold" FontSize="9" Foreground="$LimeBrush" /><TextBlock Text="Every channel settles in one frame." FontSize="11" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Grid.Row="3" Text="Replay is interruptible. New intent cancels and redirects the active graph without leaking nodes." FontSize="11" Foreground="$SlateBrush" TextWrapping="Wrap" />
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+
+                                <Border Grid.Row="2" Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Padding="22,0,22,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /></Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center"><TextBlock Text="TWEEN / CYAN" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$CyanBrush" /><TextBlock Text="Deterministic keyframed orbit" FontSize="10" Foreground="$SlateBrush" Margin="0,4,0,0" /></StackPanel>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="SPRING / PINK" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$PinkBrush" /><TextBlock Text="Overshoot with retained velocity" FontSize="10" Foreground="$SlateBrush" Margin="0,4,0,0" /></StackPanel>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="PRESENCE / LIME" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$LimeBrush" /><TextBlock Text="Enter, settle, and remain" FontSize="10" Foreground="$SlateBrush" Margin="0,4,0,0" /></StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+
+                <!-- 06 / PIPELINE -->
+                <Grid Name="PagePipeline" Visibility="Collapsed">
+                    <StackPanel Margin="46,38,46,42">
+                        <TextBlock Text="06 / FRAME PIPELINE" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$CyanBrush" />
+                        <TextBlock Text="One host frame. Dirty work only." FontFamily="Bahnschrift SemiBold" FontSize="45" Margin="0,12,0,0" />
+                        <TextBlock Text="Relay drains a bounded FIFO snapshot, input dispatches, state settles, layout runs only where required, caches refresh independently, and the committed command stream reaches the backend." FontSize="16" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,14,80,0" />
+                        <Grid Margin="0,28,0,0">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /><ColumnDefinition Width="1*" /></Grid.ColumnDefinitions>
+                            <Border Name="PipelineRelay" Grid.Row="0" Grid.Column="0" Background="$PinkWashBrush" BorderBrush="$PinkBrush" BorderThickness="1" Padding="17" Margin="0,0,7,7"><StackPanel><TextBlock Text="RL" FontFamily="Cascadia Mono SemiBold" FontSize="20" Foreground="$PinkBrush" /><TextBlock Text="RELAY" FontFamily="Cascadia Mono SemiBold" FontSize="10" Margin="0,9,0,0" /><TextBlock Text="Cross-thread work drains." FontSize="12" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel></Border>
+                            <Border Name="PipelineInput" Grid.Row="0" Grid.Column="1" Background="$CyanWashBrush" BorderBrush="$CyanBrush" BorderThickness="1" Padding="17" Margin="7,0,7,7"><StackPanel><TextBlock Text="IN" FontFamily="Cascadia Mono SemiBold" FontSize="20" Foreground="$CyanBrush" /><TextBlock Text="INPUT" FontFamily="Cascadia Mono SemiBold" FontSize="10" Margin="0,9,0,0" /><TextBlock Text="Routes and commands." FontSize="12" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel></Border>
+                            <Border Name="PipelineState" Grid.Row="0" Grid.Column="2" Background="$LimeWashBrush" BorderBrush="$LimeBrush" BorderThickness="1" Padding="17" Margin="7,0,7,7"><StackPanel><TextBlock Text="ST" FontFamily="Cascadia Mono SemiBold" FontSize="20" Foreground="$LimeBrush" /><TextBlock Text="STATE" FontFamily="Cascadia Mono SemiBold" FontSize="10" Margin="0,9,0,0" /><TextBlock Text="Aspects and inheritance." FontSize="12" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel></Border>
+                            <Border Name="PipelineMeasure" Grid.Row="0" Grid.Column="3" Background="$OrangeWashBrush" BorderBrush="$OrangeBrush" BorderThickness="1" Padding="17" Margin="7,0,0,7"><StackPanel><TextBlock Text="ME" FontFamily="Cascadia Mono SemiBold" FontSize="20" Foreground="$OrangeBrush" /><TextBlock Text="MEASURE" FontFamily="Cascadia Mono SemiBold" FontSize="10" Margin="0,9,0,0" /><TextBlock Text="Desired size resolves." FontSize="12" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel></Border>
+                            <Border Name="PipelineArrange" Grid.Row="1" Grid.Column="0" Background="$OrangeWashBrush" BorderBrush="$OrangeBrush" BorderThickness="1" Padding="17" Margin="0,7,7,0"><StackPanel><TextBlock Text="AR" FontFamily="Cascadia Mono SemiBold" FontSize="20" Foreground="$OrangeBrush" /><TextBlock Text="ARRANGE" FontFamily="Cascadia Mono SemiBold" FontSize="10" Margin="0,9,0,0" /><TextBlock Text="Final bounds commit." FontSize="12" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel></Border>
+                            <Border Name="PipelineCache" Grid.Row="1" Grid.Column="1" Background="$PinkWashBrush" BorderBrush="$PinkBrush" BorderThickness="1" Padding="17" Margin="7,7,7,0"><StackPanel><TextBlock Text="RC" FontFamily="Cascadia Mono SemiBold" FontSize="20" Foreground="$PinkBrush" /><TextBlock Text="RENDER CACHE" FontFamily="Cascadia Mono SemiBold" FontSize="10" Margin="0,9,0,0" /><TextBlock Text="Dirty entries refresh." FontSize="12" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel></Border>
+                            <Border Name="PipelineHit" Grid.Row="1" Grid.Column="2" Background="$CyanWashBrush" BorderBrush="$CyanBrush" BorderThickness="1" Padding="17" Margin="7,7,7,0"><StackPanel><TextBlock Text="HT" FontFamily="Cascadia Mono SemiBold" FontSize="20" Foreground="$CyanBrush" /><TextBlock Text="HIT TEST" FontFamily="Cascadia Mono SemiBold" FontSize="10" Margin="0,9,0,0" /><TextBlock Text="Routes become current." FontSize="12" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel></Border>
+                            <Border Name="PipelineBackend" Grid.Row="1" Grid.Column="3" Background="$LimeWashBrush" BorderBrush="$LimeBrush" BorderThickness="1" Padding="17" Margin="7,7,0,0"><StackPanel><TextBlock Text="BE" FontFamily="Cascadia Mono SemiBold" FontSize="20" Foreground="$LimeBrush" /><TextBlock Text="BACKEND" FontFamily="Cascadia Mono SemiBold" FontSize="10" Margin="0,9,0,0" /><TextBlock Text="Command stream draws." FontSize="12" Foreground="$SlateBrush" Margin="0,5,0,0" /></StackPanel></Border>
+                        </Grid>
+                        <Button Aspect="$LimeButton" Content="RUN ONE FRAME" Click="OnRunPipeline" HorizontalAlignment="Left" Margin="0,22,0,0" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- 07 / DIAGNOSTICS -->
+                <Grid Name="PageDiagnostics" Visibility="Collapsed">
+                    <StackPanel Margin="46,38,46,42">
+                        <TextBlock Text="07 / DIAGNOSTICS" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$LimeBrush" />
+                        <TextBlock Text="See inside the frame." FontFamily="Bahnschrift SemiBold" FontSize="45" Margin="0,12,0,0" />
+                        <TextBlock Text="Frame snapshots, invalidation traces, dirty-tree dumps, layout captures, routed-event routes, render-cache diagnostics, motion traces, and runtime probes make the retained engine legible." FontSize="16" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,14,80,0" />
+                        <Grid Margin="0,28,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="1.2*" /><ColumnDefinition Width="0.8*" /></Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="$PanelAltBrush" BorderBrush="$LineStrongBrush" BorderThickness="1" Padding="22" Margin="0,0,14,0">
+                                <StackPanel>
+                                    <Grid><TextBlock Text="LIVE FRAME SNAPSHOT" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" /><TextBlock Text="SAMPLING" FontFamily="Cascadia Mono" FontSize="9" Foreground="$LimeBrush" HorizontalAlignment="Right" /></Grid>
+                                    <Border BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Margin="0,16,0,0" Padding="0,13,0,0"><Grid><TextBlock Text="FRAME TIME" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateDimBrush" /><TextBlock Name="DiagFrameTime" Text="0.00 ms" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$CyanBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                    <Border BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Margin="0,13,0,0" Padding="0,13,0,0"><Grid><TextBlock Text="MEASURE / ARRANGE" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateDimBrush" /><TextBlock Name="DiagLayout" Text="0 / 0" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$OrangeBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                    <Border BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Margin="0,13,0,0" Padding="0,13,0,0"><Grid><TextBlock Text="RENDER / HIT TEST" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateDimBrush" /><TextBlock Name="DiagRender" Text="0 / 0" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$PinkBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                    <Border BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Margin="0,13,0,0" Padding="0,13,0,0"><Grid><TextBlock Text="PIPELINE" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateDimBrush" /><TextBlock Name="DiagSummary" Text="waiting for frame" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateBrush" HorizontalAlignment="Right" /></Grid></Border>
+                                </StackPanel>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                                <Border Background="$CyanWashBrush" BorderBrush="$CyanBrush" BorderThickness="1" Padding="18" Margin="0,0,0,12"><StackPanel><TextBlock Text="THIS APP IS THE DEMO" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" /><TextBlock Text="Every page you saw is Cerneala markup, Aspect resources, retained layout, native hosting, and Motion running together." FontSize="13" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,9,0,0" /></StackPanel></Border>
+                                <Button Aspect="$LimeButton" Content="OPEN MOTION LAB" Click="OnOpenMotionLab" HorizontalAlignment="Stretch" />
+                                <TextBlock Text="You have reached the end of the guided tour. The lab opens a second native Cerneala Window with interactive controls." FontSize="12" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,13,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <Border Grid.Row="2" Background="$PanelAltBrush" BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Padding="26,0,26,0">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="250" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <TextBlock Name="ChapterCounter" Grid.Column="0" Text="CHAPTER 01 / 07" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$SlateBrush" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border Width="42" Height="3" Background="$CyanBrush" Margin="0,0,5,0" />
+                    <Border Width="42" Height="3" Background="$PinkBrush" Margin="0,0,5,0" />
+                    <Border Width="42" Height="3" Background="$LimeBrush" Margin="0,0,5,0" />
+                    <Border Width="42" Height="3" Background="$OrangeBrush" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Name="PreviousButton" Aspect="$GhostButton" Content="&lt;-  PREVIOUS" Click="OnPrevious" IsEnabled="False" Margin="0,0,10,0" />
+                    <Button Name="NextButton" Aspect="$LimeButton" Content="NEXT  ->" Click="OnNext" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

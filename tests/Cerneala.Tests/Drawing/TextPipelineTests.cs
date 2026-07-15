@@ -137,6 +137,29 @@ public sealed class TextPipelineTests
     }
 
     [Fact]
+    public void SubpixelCoverageUsesTheForegroundColorForSkiaGammaCorrection()
+    {
+        SystemFontSource fonts = new();
+        DrawTextRun textRun = new(fonts.LoadFont("Cascadia Mono", 10), "MOTION LAB / SECOND NATIVE WINDOW", 10);
+        SkiaTextRasterizer rasterizer = new();
+
+        RasterizedText[] black = rasterizer.RasterizeSubpixel(
+            textRun,
+            Color.Black,
+            coordinateScale: 1,
+            position: new DrawPoint(601, 38));
+        RasterizedText[] slate = rasterizer.RasterizeSubpixel(
+            textRun,
+            new Color(138, 147, 166),
+            coordinateScale: 1,
+            position: new DrawPoint(601, 38));
+
+        Assert.True(HasDifferentAlphaCoverage(black[0], slate[0]));
+        Assert.True(HasDifferentAlphaCoverage(black[1], slate[1]));
+        Assert.True(HasDifferentAlphaCoverage(black[2], slate[2]));
+    }
+
+    [Fact]
     public void TextRasterizerResolvesBackendAgnosticFontsByFamily()
     {
         DrawTextRun textRun = new(new ContractFont("Arial", 16), "Cerneala", 16);

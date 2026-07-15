@@ -157,11 +157,11 @@ public sealed partial class UiMarkupGenerator
                 templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek());
             foreach (AspectResource aspect in aspects)
             {
-                string valueSource = aspect.IsInline
+                string valueSource = IsLocalAspect(aspect)
                     ? "global::Cerneala.UI.Core.UiPropertyValueSource.LocalAspectConditional"
                     : "global::Cerneala.UI.Core.UiPropertyValueSource.AspectVisualState";
                 string inheritedPredicate = "true";
-                if (aspect.IsInline && aspect.Conditions.Count > 0)
+                if (IsLocalAspect(aspect) && aspect.Conditions.Count > 0)
                 {
                     string observationName = "observation" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
                     nextReactiveId++;

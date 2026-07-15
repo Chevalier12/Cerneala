@@ -45,16 +45,16 @@ public sealed class AspectRuntimeMigrationTests
         ThemeProvider provider = new(CreateTheme(firstSurface));
         UIRoot root = new();
         root.SetThemeProvider(provider);
-        Border border = new();
-        root.VisualChildren.Add(border);
+        Button button = new();
+        root.VisualChildren.Add(button);
 
-        root.AspectProcessor.Process(border);
-        Assert.Equal(firstSurface, Assert.IsType<SolidColorBrush>(border.Background).Color);
+        root.AspectProcessor.Process(button);
+        Assert.Equal(firstSurface, Assert.IsType<SolidColorBrush>(button.Background).Color);
 
         provider.Theme = CreateTheme(secondSurface);
-        root.AspectProcessor.Process(border);
+        root.AspectProcessor.Process(button);
 
-        Assert.Equal(secondSurface, Assert.IsType<SolidColorBrush>(border.Background).Color);
+        Assert.Equal(secondSurface, Assert.IsType<SolidColorBrush>(button.Background).Color);
     }
 
     [Fact]

@@ -42,7 +42,8 @@ public sealed class AspectEngineStressBudgetTests
 
         Assert.Contains(ButtonTokens.Background, buttonDependencies.Tokens);
         Assert.DoesNotContain(DefaultAspectTokens.Color.Surface, buttonDependencies.Tokens);
-        Assert.Contains(DefaultAspectTokens.Brush.Surface, borderDependencies.Tokens);
+        Assert.DoesNotContain(DefaultAspectTokens.Brush.Surface, borderDependencies.Tokens);
+        Assert.Contains(DefaultAspectTokens.Brush.Border, borderDependencies.Tokens);
     }
 
     [Fact]

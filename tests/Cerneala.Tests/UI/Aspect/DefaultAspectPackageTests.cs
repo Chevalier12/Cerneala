@@ -36,7 +36,7 @@ public sealed class DefaultAspectPackageTests
     }
 
     [Fact]
-    public void DefaultPackageAspectsTextBlockBorderAndButton()
+    public void DefaultPackageStylesButtonsButLeavesStructuralBordersTransparent()
     {
         AspectCatalog catalog = new AspectRegistry().Register(DefaultAspectPackage.Create()).BuildCatalog();
         AspectEngine engine = new();
@@ -48,7 +48,7 @@ public sealed class DefaultAspectPackageTests
         engine.Apply(border, catalog, environment);
 
         Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(new Color(255, 255, 255)), button.Background);
-        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(new Color(255, 255, 255)), border.Background);
+        Assert.Null(border.Background);
     }
 
     [Fact]

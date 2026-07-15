@@ -31,7 +31,7 @@ IDrawFont font = fontSource.LoadFont("Arial", 16);
 ## Remarks
 `SystemFontSource` is the default `IFontSource` used by `MonoGameContentServices` when no custom font source is supplied.
 
-`LoadFont` resolves the requested family name through `SKFontManager.Default.MatchFamily`. If the system font manager does not return a matching typeface, the implementation falls back to `SKTypeface.Default` and still creates a `SkiaFont` with the requested family name and size.
+`LoadFont` first resolves the requested family name through `SKFontManager.Default.MatchFamily`. It also accepts common named-weight suffixes such as `SemiBold`, `ExtraBold`, and `Light`; for example, `Cascadia Mono SemiBold` resolves the `Cascadia Mono` family at weight 600. If neither the exact name nor a named-weight form resolves, the implementation falls back to `SKTypeface.Default` and still creates a `SkiaFont` with the requested family name and size.
 
 The type does not expose caching or lifetime management. Each successful `LoadFont` call creates and returns a new `SkiaFont` instance.
 
@@ -58,7 +58,7 @@ Parameters:
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `familyName` | `string` | The system font family name to resolve. |
+| `familyName` | `string` | The system font family name, optionally followed by a supported named-weight suffix such as `SemiBold`, to resolve. |
 | `size` | `float` | The text size. Must be positive, finite, and no greater than `16384`. |
 
 Return value:

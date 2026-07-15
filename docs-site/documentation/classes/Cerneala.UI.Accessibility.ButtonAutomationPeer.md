@@ -32,6 +32,7 @@ SemanticsRole role = peer.Role; // SemanticsRole.Button
 string? name = peer.Name; // "Save"
 IReadOnlyDictionary<SemanticsProperty, object?> properties = peer.GetProperties();
 bool isEnabled = (bool)properties[SemanticsProperty.IsEnabled]!;
+bool invoked = peer.Invoke(); // false because the button is disabled
 ```
 
 An explicit accessible name takes precedence over the button content.
@@ -55,6 +56,8 @@ The peer always reports `SemanticsRole.Button`. Its `Name` first uses `Accessibl
 
 Inherited `AutomationPeer` behavior still applies. `GetProperties()` returns the owner's enabled and keyboard focus state, and `CreateNode(IReadOnlyList<SemanticsNode> children)` builds a `SemanticsNode` using the owner element id, the effective role, the resolved name, peer properties, and the supplied child nodes.
 
+`Invoke()` activates the button through the same input activation contract used by pointer and keyboard input. It returns `false` without raising `Click` when the button is disabled.
+
 ## Constructors
 
 | Name | Description |
@@ -67,6 +70,12 @@ Inherited `AutomationPeer` behavior still applies. `GetProperties()` returns the
 | --- | --- | --- |
 | `Role` | `SemanticsRole` | Gets `SemanticsRole.Button`. |
 | `Name` | `string?` | Gets the explicit accessible name for the button, or text derived from the button content. |
+
+## Methods
+
+| Name | Return Type | Description |
+| --- | --- | --- |
+| `Invoke()` | `bool` | Activates the enabled button and returns `true`; returns `false` when the button is disabled. |
 
 ## Inherited Properties
 

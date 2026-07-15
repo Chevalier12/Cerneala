@@ -55,7 +55,7 @@ internal interface IWindowGraphicsSession : IDisposable
 
 internal interface IWindowScreenshotSource
 {
-    void SavePng(Stream output);
+    void RenderPng(Stream output, Color clearColor, Action<IDrawingBackend> draw);
 }
 
 internal interface IWindowGraphicsSessionFactory

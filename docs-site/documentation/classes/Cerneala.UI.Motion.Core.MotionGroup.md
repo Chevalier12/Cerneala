@@ -38,9 +38,9 @@ group.Cancel();
 
 ## Remarks
 
-`MotionGroup` currently exposes parallel grouping. `Parallel` creates a `MotionGroupHandle` that completes after every supplied `MotionHandle` raises `Completed`. A group with no children completes immediately.
+`MotionGroup` currently exposes parallel grouping. `Parallel` creates a `MotionGroupHandle` that completes after every supplied `MotionHandle` reaches a terminal state. Handles that completed or were canceled before the group was created are counted immediately. A group with no children completes immediately.
 
-Canceling the returned group handle calls `Cancel()` on each child handle. Child cancellation does not complete the group, because `MotionHandle.Completed` subscribers are invoked only for handlers attached before a handle reaches a terminal state, and the group listens for the child completion event.
+Canceling the returned group handle calls `Cancel()` on each child handle and leaves the group in the canceled state. Independently canceling a child counts that child as terminal while the group continues waiting for its other children.
 
 `Parallel` validates that the `children` array itself is not `null`. Individual child entries are not prevalidated; a `null` entry will fail when the method tries to attach or cancel child handles.
 

@@ -213,6 +213,23 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void ExplicitElementSizeMarkupEmitsAndRuns()
+    {
+        const string markup = "<TextBlock Width=\"40\" Height=\"20\" />";
+
+        GeneratorRunResult result = RunGenerator("ExplicitSize.cui.xml", markup, out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        UIElement element = InvokeCreate(stream, "Cerneala.GeneratedUi.ExplicitSizeFactory");
+        Assert.Equal(40, element.Width);
+        Assert.Equal(20, element.Height);
+    }
+
+    [Fact]
     public void GeneratedSourceUsesPublicTypedPropertiesWithoutRuntimeMarkupParser()
     {
         const string markup = """
@@ -487,6 +504,56 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(new[] { "Background" }, aspect.DefaultPropertyNames);
         Assert.Single(panel.Resources);
         Assert.Equal(2, border.Resources.Count);
+    }
+
+    [Fact]
+    public void ReferencedNamedAspectRemainsLocalAfterThemeProcessing()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="Ink" Color="#FF0A0B0E" />
+                <SolidColorBrush Name="Lime" Color="#FFC6FF3D" />
+                <SolidColorBrush Name="Cyan" Color="#FF00E8FF" />
+                <Aspect Name="PrimaryButton" Target="Button">
+                  @default
+                  {
+                    Background = $Lime;
+                    Foreground = $Ink;
+                    BorderBrush = $Lime;
+                  }
+                  @when IsMouseOver
+                  {
+                    Background = $Cyan;
+                  }
+                </Aspect>
+              </StackPanel.Resources>
+              <Button Aspect="$PrimaryButton" Content="Continue" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("NamedLocalAspect.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.NamedLocalAspectFactory"));
+        Button button = Assert.IsType<Button>(panel.VisualChildren[0]);
+        UIRoot root = new();
+        root.VisualChildren.Add(panel);
+        root.ProcessFrame();
+
+        Assert.NotNull(button.Aspect);
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.LocalAspectBase, button.GetValueSource(Control.BackgroundProperty));
+        AssertSolidBackground(new Color(198, 255, 61), button);
+        Assert.Equal(new Color(10, 11, 14), Assert.IsType<SolidColorBrush>(button.Foreground).Color);
+
+        button.IsPointerOver = true;
+
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.LocalAspectConditional, button.GetValueSource(Control.BackgroundProperty));
+        AssertSolidBackground(new Color(0, 232, 255), button);
     }
 
     [Fact]
@@ -1200,15 +1267,18 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator("DefaultTextAspect.cui.xml", markup, out Compilation compilation);
-        string generatedSource = SingleGeneratedSource(result);
-
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.Equal(2, Count(generatedSource, ".FontFamily = \"Consolas\";"));
-        Assert.Equal(2, Count(generatedSource, ".FontSize = 12f;"));
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.DefaultTextAspectFactory"));
+        Assert.All(panel.VisualChildren.Cast<TextBlock>(), text =>
+        {
+            Assert.Equal("Consolas", text.FontFamily);
+            Assert.Equal(12, text.FontSize);
+        });
     }
 
     [Fact]
@@ -1236,16 +1306,34 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator("NamedAspect.cui.xml", markup, out Compilation compilation);
-        string generatedSource = SingleGeneratedSource(result);
-
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.True(generatedSource.IndexOf(".FontSize = 14f;", StringComparison.Ordinal) < generatedSource.IndexOf(".FontSize = 12f;", StringComparison.Ordinal));
-        Assert.True(generatedSource.IndexOf(".FontSize = 12f;", StringComparison.Ordinal) < generatedSource.IndexOf(".Text = \"HELLO\";", StringComparison.Ordinal));
-        Assert.Contains(".Margin = new global::Cerneala.UI.Layout.Thickness(0f, 0f, 0f, 12f);", generatedSource);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        TextBlock text = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.NamedAspectFactory"));
+        Assert.Equal(12, text.FontSize);
+        Assert.Equal(new Thickness(0, 0, 0, 12), text.Margin);
+        Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(text.Foreground).Color);
+    }
+
+    [Fact]
+    public void LayoutPointPropertyParsesFromMarkup()
+    {
+        const string markup = """
+            <Border RenderTransformOrigin="0,0.5" />
+            """;
+
+        GeneratorRunResult result = RunGenerator("LayoutPoint.cui.xml", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.LayoutPointFactory"));
+        Assert.Equal(new LayoutPoint(0, 0.5f), border.RenderTransformOrigin);
     }
 
     [Fact]
@@ -1266,10 +1354,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator("AspectBrushReference.cui.xml", markup, out Compilation compilation);
-        string generatedSource = SingleGeneratedSource(result);
-
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.Contains(".Foreground =", generatedSource);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
@@ -1420,7 +1505,7 @@ public sealed partial class UiMarkupGeneratorTests
                 <Aspect Target="TextBlock">
                   @default
                   {
-                    Width = 100;
+                    Bogus = 100;
                   }
                 </Aspect>
               </TextBlock.Resources>
@@ -1430,7 +1515,7 @@ public sealed partial class UiMarkupGeneratorTests
         GeneratorRunResult result = RunGenerator("UnsupportedAspectProperty.cui.xml", markup, out _);
 
         Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "UnsupportedAspectProperty.cui.xml");
-        Assert.Contains("TextBlock.Width", diagnostic.GetMessage());
+        Assert.Contains("TextBlock.Bogus", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
 
@@ -1475,7 +1560,7 @@ public sealed partial class UiMarkupGeneratorTests
               <StackPanel.Resources>
                 <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
               </StackPanel.Resources>
-              <TextBlock Width="12" />
+              <TextBlock Bogus="12" />
             </StackPanel>
             """;
 
@@ -1489,7 +1574,7 @@ public sealed partial class UiMarkupGeneratorTests
     [Fact]
     public void FirstLineFragmentDiagnosticsUseOriginalMarkupColumn()
     {
-        GeneratorRunResult result = RunGenerator("FirstLineDiagnosticLocation.cui.xml", "<TextBlock Width=\"12\" />", out _);
+        GeneratorRunResult result = RunGenerator("FirstLineDiagnosticLocation.cui.xml", "<TextBlock Bogus=\"12\" />", out _);
 
         Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "FirstLineDiagnosticLocation.cui.xml");
         Assert.Equal(11, diagnostic.Location.GetLineSpan().StartLinePosition.Character);
@@ -1575,7 +1660,7 @@ public sealed partial class UiMarkupGeneratorTests
     [Fact]
     public void UnsupportedPropertyReportsDiagnostic()
     {
-        GeneratorRunResult result = RunGenerator("UnsupportedProperty.cui.xml", "<TextBlock Width=\"12\" />", out _);
+        GeneratorRunResult result = RunGenerator("UnsupportedProperty.cui.xml", "<TextBlock Bogus=\"12\" />", out _);
 
         AssertDiagnostic(result, "CERNEALAUI003", "UnsupportedProperty.cui.xml");
         Assert.Empty(result.GeneratedSources);
@@ -2817,6 +2902,48 @@ public sealed partial class UiMarkupGeneratorTests
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void PairedMarkupSupportsCustomClrPropertiesAndInheritedContentContract()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+
+            namespace TestInput.Views;
+
+            public sealed class GaugeBorder : Border
+            {
+                public float TrackLength { get; set; }
+            }
+
+            public partial class MainWindow : Window { }
+            """;
+        const string markup = """
+            <Window>
+              <GaugeBorder TrackLength="42">
+                <TextBlock Text="custom content" />
+              </GaugeBorder>
+            </Window>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/MainWindow.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type windowType = assembly.GetType("TestInput.Views.MainWindow", throwOnError: true)!;
+        Window window = Assert.IsAssignableFrom<Window>(Activator.CreateInstance(windowType));
+        Border border = Assert.IsAssignableFrom<Border>(window.Content);
+        Assert.Equal(42f, (float)border.GetType().GetProperty("TrackLength")!.GetValue(border)!);
+        Assert.Equal("custom content", Assert.IsType<TextBlock>(border.Child).Text);
     }
 
     [Fact]

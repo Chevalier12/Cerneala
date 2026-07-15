@@ -20,6 +20,19 @@ public sealed class MotionGroupTests
     }
 
     [Fact]
+    public void ParallelCountsChildrenThatCompletedBeforeComposition()
+    {
+        MotionHandle completed = FakeHandle();
+        MotionHandle active = FakeHandle();
+        completed.FinishCompleted(fireEvent: true);
+
+        MotionGroupHandle group = MotionGroup.Parallel(completed, active);
+        active.FinishCompleted(fireEvent: true);
+
+        Assert.True(group.IsCompleted);
+    }
+
+    [Fact]
     public void SequenceStartsNextChildOnlyAfterPreviousCompletion()
     {
         MotionHandle first = FakeHandle();

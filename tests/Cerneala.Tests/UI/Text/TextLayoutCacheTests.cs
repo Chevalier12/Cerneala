@@ -37,6 +37,25 @@ public sealed class TextLayoutCacheTests
         Assert.NotEqual(first, second);
     }
 
+    [Fact]
+    public void CacheEvictsTheLeastRecentlyUsedLayoutAtCapacity()
+    {
+        TextLayoutCache cache = new(capacity: 2);
+        TextLayoutKey first = new("first", "Default:16", 16, TextWrapping.NoWrap, float.PositiveInfinity, TextTrimming.None, 1);
+        TextLayoutKey second = first with { Text = "second" };
+        TextLayoutKey third = first with { Text = "third" };
+
+        cache.GetOrAdd(first, CreateResult);
+        cache.GetOrAdd(second, CreateResult);
+        cache.GetOrAdd(first, CreateResult);
+        cache.GetOrAdd(third, CreateResult);
+
+        Assert.Equal(2, cache.Count);
+        Assert.True(cache.Contains(first));
+        Assert.False(cache.Contains(second));
+        Assert.True(cache.Contains(third));
+    }
+
     private static TextMeasureResult CreateResult(TextLayoutKey key)
     {
         return new TextMeasureResult(new LayoutSize(10, 16), 1, key, key.FontIdentity, [new TextLine(key.Text, 10)]);

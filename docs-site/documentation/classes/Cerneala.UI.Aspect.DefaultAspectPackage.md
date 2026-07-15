@@ -58,7 +58,7 @@ The package contributes default token definitions, a `Button.Modern` component t
 | Rule | Target | Declarations |
 | --- | --- | --- |
 | `button.base` | `Button` | Sets `Control.BackgroundProperty`, `Control.ForegroundProperty`, `Control.BorderBrushProperty`, `Control.BorderThicknessProperty`, and `Control.PaddingProperty` from button/default tokens. |
-| `border.base` | `Border` | Sets `Control.BackgroundProperty` from `DefaultAspectTokens.Brush.Surface` and `Control.BorderBrushProperty` from `DefaultAspectTokens.Brush.Border`. |
+| `border.base` | `Border` | Leaves the background transparent and sets `Control.BorderBrushProperty` from `DefaultAspectTokens.Brush.Border`, so structural borders do not become opaque surfaces implicitly. |
 
 The default token values include neutral surface brushes, semantic colors, a blue accent color, `Default` typography, 8-unit control padding, 1-unit control border thickness, fast and normal tween motion specs, and button-specific background, foreground, border, hover, pressed, disabled opacity, and padding tokens.
 

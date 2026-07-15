@@ -54,6 +54,25 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void RenderLifecycleCallbacksRunInsideTheWindowRelaySynchronizationContext()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window window = new();
+        SynchronizationContext? frameContext = null;
+        SynchronizationContext? contentContext = null;
+        window.FrameRendered += (_, _) => frameContext = SynchronizationContext.Current;
+        window.ContentRendered += (_, _) => contentContext = SynchronizationContext.Current;
+
+        window.Show();
+
+        Assert.NotNull(frameContext);
+        Assert.NotNull(contentContext);
+        Assert.Equal("UiRelaySynchronizationContext", frameContext.GetType().Name);
+        Assert.Same(frameContext, contentContext);
+    }
+
+    [Fact]
     public void PresentedFrameUpdatesWindowDiagnosticsBeforeRaisingFrameRendered()
     {
         FakeWindowPlatform platform = new();
@@ -167,6 +186,49 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.Equal(1, executions);
         Assert.Equal(framesBefore + 1, session.PresentCount);
         Assert.Equal(1, window.LastFrame!.Stats.RelayExecutedCallbacks);
+    }
+
+    [Fact]
+    public void SaveScreenshotDrawsACompleteCurrentFrameWithoutReplacingThePresentedBackBuffer()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Current frame" } };
+        window.Show();
+        FakeGraphicsSession session = Assert.Single(platform.Windows).Session;
+        string path = Path.Combine(Path.GetTempPath(), $"cerneala-screenshot-{Guid.NewGuid():N}.png");
+
+        try
+        {
+            window.SaveScreenshot(path);
+
+            Assert.Equal(1, session.BeginFrameCount);
+            Assert.Equal(2, session.Backend.RenderCount);
+            Assert.Equal(1, session.PresentCount);
+            Assert.Equal(1, session.SavePngCount);
+            Assert.Equal(2, session.RenderCountAtSave);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void RelayCallbackCanCloseWindowWithoutRenderingItsDisposedGraphicsSession()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new();
+        window.Show();
+        FakeGraphicsSession session = Assert.Single(platform.Windows).Session;
+        window.Root!.Relay.Post(window.Close);
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(window.IsClosed);
+        Assert.Equal(1, session.BeginFrameCount);
+        Assert.Equal(1, session.DisposeCount);
     }
 
     [Fact]
@@ -473,7 +535,7 @@ public sealed class WindowRuntimeTests : IDisposable
         }
     }
 
-    private sealed class FakeGraphicsSession : IWindowGraphicsSession
+    private sealed class FakeGraphicsSession : IWindowGraphicsSession, IWindowScreenshotSource
     {
         private bool disposed;
 
@@ -491,18 +553,31 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public int DisposeCount { get; private set; }
 
+        public int SavePngCount { get; private set; }
+
+        public int RenderCountAtSave { get; private set; }
+
         public void Resize(int pixelWidth, int pixelHeight, float coordinateScale)
         {
         }
 
         public void BeginFrame(Color clearColor)
         {
+            ObjectDisposedException.ThrowIf(disposed, this);
             BeginFrameCount++;
         }
 
         public void Present()
         {
             PresentCount++;
+        }
+
+        public void RenderPng(Stream output, Color clearColor, Action<IDrawingBackend> draw)
+        {
+            SavePngCount++;
+            draw(Backend);
+            RenderCountAtSave = Backend.RenderCount;
+            output.WriteByte(0);
         }
 
         public void Dispose()

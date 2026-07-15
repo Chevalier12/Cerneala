@@ -41,6 +41,8 @@ sealed class FixedElement : UIElement
 
 var element = new FixedElement
 {
+    Width = 80,
+    Height = 30,
     Margin = new Thickness(4),
     HorizontalAlignment = HorizontalAlignment.Center,
     Opacity = 0.75f
@@ -57,13 +59,13 @@ An attached element's property mutations are UI-thread-affine and use `Root.Rela
 
 Most element settings are registered `UiProperty<T>` values. Setting properties such as `Margin`, `Visibility`, `Opacity`, focus state, or transform values flows through `UiObject.SetValue`, raises property notifications, and calls `OnPropertyInvalidated` with the metadata options from the registered property.
 
-Layout uses `Measure` and `Arrange`. `Measure` caches the last available size and layout version; `Arrange` caches the last final rectangle and layout version. Elements that do not participate in layout return zero desired size and zero arranged size. Otherwise, `Measure` applies `Margin` around `MeasureCore`, and `Arrange` applies `Margin`, `HorizontalAlignment`, and `VerticalAlignment` before calling `ArrangeCore`.
+Layout uses `Measure` and `Arrange`. `Measure` caches the last available size and layout version; `Arrange` caches the last final rectangle and layout version. Elements that do not participate in layout return zero desired size and zero arranged size. Otherwise, `Measure` constrains `MeasureCore` with explicit `Width` and `Height` values when present, substitutes those values into the desired size, and then applies `Margin`. `Arrange` applies `Margin`, the explicit dimensions, `HorizontalAlignment`, and `VerticalAlignment` before calling `ArrangeCore`. An unset dimension is represented by `float.NaN` and continues to use content measurement or stretch behavior.
 
 Rendering calls `Render`, which null-checks the `RenderContext` and delegates to `OnRender`. Render-scope properties such as `RenderTransform`, `Opacity`, translation, scale, rotation, skew, and `ClipToBounds` update `RenderScopeVersion`; render content dependencies can be updated by derived classes with `SetRenderDependencies`.
 
 Invalidation is routed to the attached `UIRoot` when available. Detached elements mark their local `DirtyState`; measure invalidation also propagates to visual ancestors until a layout boundary is reached.
 
-Value validation is enforced by property metadata. `RenderTransform` cannot be `null`; `RenderTransformOrigin` must be normalized from `0` to `1`; `Opacity` must be finite and between `0` and `1`; transform scalar values must be finite; `TabIndex` must be non-negative; and `LayoutMotionId` must be either `null` or non-blank.
+Value validation is enforced by property metadata. `Width` and `Height` accept `float.NaN` for automatic sizing or a finite non-negative value; `RenderTransform` cannot be `null`; `RenderTransformOrigin` must be normalized from `0` to `1`; `Opacity` must be finite and between `0` and `1`; transform scalar values must be finite; `TabIndex` must be non-negative; and `LayoutMotionId` must be either `null` or non-blank.
 
 ## Constructors
 | Name | Description |
@@ -76,6 +78,8 @@ Value validation is enforced by property metadata. `RenderTransform` cannot be `
 | `IsEnabledProperty` | Property identifier for `IsEnabled`; defaults to `true` and affects hit testing, input visual state, aspect matching, and semantics. |
 | `IsVisibleProperty` | Property identifier for `IsVisible`; defaults to `true` and affects render, hit testing, and semantics. |
 | `MarginProperty` | Property identifier for `Margin`; defaults to `Thickness.Zero` and affects measure. |
+| `WidthProperty` | Property identifier for `Width`; defaults to `float.NaN`, affects measure and arrange, and accepts automatic sizing or a finite non-negative value. |
+| `HeightProperty` | Property identifier for `Height`; defaults to `float.NaN`, affects measure and arrange, and accepts automatic sizing or a finite non-negative value. |
 | `HorizontalAlignmentProperty` | Property identifier for `HorizontalAlignment`; defaults to `HorizontalAlignment.Stretch` and affects arrange. |
 | `VerticalAlignmentProperty` | Property identifier for `VerticalAlignment`; defaults to `VerticalAlignment.Stretch` and affects arrange. |
 | `VisibilityProperty` | Property identifier for `Visibility`; defaults to `Visibility.Visible` and affects measure, arrange, render, hit testing, and semantics. |
@@ -129,6 +133,8 @@ Value validation is enforced by property metadata. `RenderTransform` cannot be `
 | `IsEnabled` | `bool` | Enables or disables element participation in input-related state; defaults to `true`. |
 | `IsVisible` | `bool` | Boolean visibility flag; defaults to `true`. |
 | `Margin` | `Thickness` | Space included around the measured and arranged content; defaults to `Thickness.Zero`. |
+| `Width` | `float` | Explicit content width, or `float.NaN` for automatic sizing; defaults to `float.NaN`. |
+| `Height` | `float` | Explicit content height, or `float.NaN` for automatic sizing; defaults to `float.NaN`. |
 | `HorizontalAlignment` | `HorizontalAlignment` | Horizontal placement inside the arranged content rectangle; defaults to `Stretch`. |
 | `VerticalAlignment` | `VerticalAlignment` | Vertical placement inside the arranged content rectangle; defaults to `Stretch`. |
 | `Visibility` | `Visibility` | Layout/render/hit-test visibility mode; defaults to `Visible`. |

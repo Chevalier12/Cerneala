@@ -2,6 +2,7 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Markup;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls;
 
@@ -12,12 +13,12 @@ public class Window : ContentControl
         typeof(Window),
         new UiPropertyMetadata<string>(string.Empty, UiPropertyOptions.None, validateValue: value => value is not null));
 
-    public static readonly UiProperty<float> WidthProperty = UiProperty<float>.Register(
+    public new static readonly UiProperty<float> WidthProperty = UiProperty<float>.Register(
         nameof(Width),
         typeof(Window),
         new UiPropertyMetadata<float>(800, UiPropertyOptions.AffectsMeasure, validateValue: IsValidPositiveDimension));
 
-    public static readonly UiProperty<float> HeightProperty = UiProperty<float>.Register(
+    public new static readonly UiProperty<float> HeightProperty = UiProperty<float>.Register(
         nameof(Height),
         typeof(Window),
         new UiPropertyMetadata<float>(600, UiPropertyOptions.AffectsMeasure, validateValue: IsValidPositiveDimension));
@@ -109,14 +110,14 @@ public class Window : ContentControl
     }
 
     [MarkupValueConstraint(MarkupValueConstraint.Positive)]
-    public float Width
+    public new float Width
     {
         get => GetValue(WidthProperty);
         set => SetValue(WidthProperty, value);
     }
 
     [MarkupValueConstraint(MarkupValueConstraint.Positive)]
-    public float Height
+    public new float Height
     {
         get => GetValue(HeightProperty);
         set => SetValue(HeightProperty, value);
@@ -337,6 +338,11 @@ public class Window : ContentControl
         {
             runtimeOwner?.ApplyProperties(this);
         }
+    }
+
+    protected override void OnRender(RenderContext context)
+    {
+        Border.RenderBox(this, context);
     }
 
     internal bool RaiseClosing()

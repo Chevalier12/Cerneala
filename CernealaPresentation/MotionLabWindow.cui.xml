@@ -1,0 +1,76 @@
+<Window
+    Title="Cerneala Motion Lab"
+    Width="900"
+    Height="610"
+    MinWidth="820"
+    MinHeight="560"
+    WindowStartupLocation="CenterOwner"
+    ContentRendered="OnContentRendered"
+    Background="#FF0A0B0E"
+    BorderBrush="#FF424754"
+    BorderThickness="1"
+    Padding="0">
+    <Window.Resources>
+        <SolidColorBrush Name="InkBrush" Color="#FF0A0B0E" />
+        <SolidColorBrush Name="PanelBrush" Color="#FF14161B" />
+        <SolidColorBrush Name="PanelAltBrush" Color="#FF101217" />
+        <SolidColorBrush Name="LineBrush" Color="#FF2A2E38" />
+        <SolidColorBrush Name="LineStrongBrush" Color="#FF424754" />
+        <SolidColorBrush Name="PaperBrush" Color="#FFEDEFF3" />
+        <SolidColorBrush Name="SlateBrush" Color="#FF8A93A6" />
+        <SolidColorBrush Name="CyanBrush" Color="#FF4DF0FF" />
+        <SolidColorBrush Name="CyanWashBrush" Color="#FF10282D" />
+        <SolidColorBrush Name="PinkBrush" Color="#FFFF3EA5" />
+        <SolidColorBrush Name="LimeBrush" Color="#FFC6FF3D" />
+        <SolidColorBrush Name="TransparentBrush" Color="#00000000" />
+        <Aspect Target="TextBlock">@default { FontFamily = "Segoe UI Variable Text"; FontSize = 14; Foreground = $PaperBrush; }</Aspect>
+        <Aspect Name="LabButton" Target="Button">
+            @default { FontFamily = "Cascadia Mono SemiBold"; FontSize = 11; Background = $LimeBrush; Foreground = $InkBrush; BorderBrush = $LimeBrush; BorderThickness = "1"; Padding = "18,11,18,11"; }
+            @when IsMouseOver { Background = $CyanBrush; BorderBrush = $CyanBrush; }
+        </Aspect>
+        <Aspect Name="CloseButton" Target="Button">
+            @default { FontFamily = "Cascadia Mono SemiBold"; FontSize = 11; Background = $TransparentBrush; Foreground = $PaperBrush; BorderBrush = $LineStrongBrush; BorderThickness = "1"; Padding = "16,10,16,10"; }
+            @when IsMouseOver { Background = $CyanWashBrush; Foreground = $CyanBrush; BorderBrush = $CyanBrush; }
+        </Aspect>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="68" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <Border Grid.Row="0" Background="$PanelAltBrush" BorderBrush="$LineBrush" BorderThickness="0,0,0,1" Padding="24,0,24,0">
+            <Grid>
+                <BrandMark VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="MOTION LAB / SECOND NATIVE WINDOW" FontFamily="Cascadia Mono" FontSize="10" Foreground="$SlateBrush" Margin="0,0,14,0" VerticalAlignment="Center" />
+                    <Button Aspect="$CloseButton" Content="CLOSE" Click="OnClose" />
+                </StackPanel>
+            </Grid>
+        </Border>
+        <Grid Grid.Row="1" Margin="32">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="250" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,26,0">
+                <TextBlock Text="INTERACTIVE SPEC" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$PinkBrush" />
+                <TextBlock Text="Tune the spring." FontFamily="Bahnschrift SemiBold" FontSize="31" Margin="0,10,0,0" />
+                <TextBlock Text="The same property binding retargets cleanly while the motion graph owns sampling and conflict resolution." FontSize="13" Foreground="$SlateBrush" TextWrapping="Wrap" Margin="0,10,0,20" />
+                <TextBlock Text="STIFFNESS" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" />
+                <Slider Name="StiffnessSlider" Minimum="180" Maximum="900" Value="520" Margin="0,10,0,18" />
+                <TextBlock Text="DAMPING" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" />
+                <Slider Name="DampingSlider" Minimum="14" Maximum="70" Value="38" Margin="0,10,0,18" />
+                <CheckBox Name="TweenModeCheck" Content="Use deterministic tween" Foreground="$SlateBrush" Margin="0,0,0,18" />
+                <Button Aspect="$LabButton" Content="RUN SPEC" Click="OnRun" HorizontalAlignment="Stretch" />
+            </StackPanel>
+            <Border Grid.Column="1" Background="$PanelAltBrush" BorderBrush="$LineStrongBrush" BorderThickness="1" Padding="24">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <Grid Grid.Row="0"><TextBlock Text="PROPERTY / TranslateX" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" /><TextBlock Name="LabStatus" Text="READY" FontFamily="Cascadia Mono" FontSize="10" Foreground="$LimeBrush" HorizontalAlignment="Right" /></Grid>
+                    <Grid Grid.Row="1" ClipToBounds="True" Margin="0,20,0,20">
+                        <Border Height="1" Background="$LineBrush" VerticalAlignment="Center" />
+                        <Border Width="1" Background="$LineBrush" HorizontalAlignment="Left" Margin="70,0,0,0" />
+                        <Border Width="1" Background="$LineBrush" HorizontalAlignment="Right" Margin="0,0,70,0" />
+                        <Border Name="LabTarget" Width="62" Height="62" Background="$PinkBrush" BorderBrush="$CyanBrush" BorderThickness="4" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                    </Grid>
+                    <Border Grid.Row="2" Background="$PanelBrush" BorderBrush="$LineBrush" BorderThickness="1" Padding="14"><TextBlock Name="LabReadout" Text="spring(stiffness: 520, damping: 38)" FontFamily="Cascadia Mono" FontSize="11" Foreground="$SlateBrush" /></Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

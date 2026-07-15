@@ -58,6 +58,17 @@ public sealed class DrawingResourceTests
         Assert.Equal(16, font.Size);
     }
 
+    [Fact]
+    public void SystemFontSourceResolvesNamedFontWeightInsteadOfFallingBack()
+    {
+        SystemFontSource fonts = new();
+
+        SkiaFont font = Assert.IsType<SkiaFont>(fonts.LoadFont("Arial Bold", 10));
+
+        Assert.Equal("Arial", font.Typeface.FamilyName);
+        Assert.Equal(700, font.Typeface.FontWeight);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -105,5 +116,19 @@ public sealed class DrawingResourceTests
         object secondKey = fromMethod.Invoke(null, [secondRun, 1f, default(DrawPoint)])!;
 
         Assert.NotEqual(firstKey, secondKey);
+    }
+
+    [Fact]
+    public void MonoGameTextTextureKeyReusesEquivalentSkiaTypefaceWrappers()
+    {
+        Type keyType = typeof(MonoGameDrawingBackend).GetNestedType("TextTextureKey", System.Reflection.BindingFlags.NonPublic)!;
+        System.Reflection.MethodInfo fromMethod = keyType.GetMethod("From")!;
+        DrawTextRun firstRun = new(new SkiaFont(SkiaSharp.SKTypeface.Default, "Same", 16), "CONTINUE  ->", 16);
+        DrawTextRun secondRun = new(new SkiaFont(SkiaSharp.SKTypeface.Default, "Same", 16), "CONTINUE  ->", 16);
+
+        object firstKey = fromMethod.Invoke(null, [firstRun, 1f, default(DrawPoint)])!;
+        object secondKey = fromMethod.Invoke(null, [secondRun, 1f, default(DrawPoint)])!;
+
+        Assert.Equal(firstKey, secondKey);
     }
 }

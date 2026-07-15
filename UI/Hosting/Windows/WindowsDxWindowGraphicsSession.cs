@@ -190,10 +190,11 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
         }
     }
 
-    public void SavePng(Stream output)
+    public void RenderPng(Stream output, CernealaColor clearColor, Action<IDrawingBackend> draw)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(draw);
         if (!output.CanWrite)
         {
             throw new ArgumentException("The screenshot stream must be writable.", nameof(output));
@@ -201,16 +202,69 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
 
         if (frameBegun)
         {
-            throw new InvalidOperationException("A screenshot cannot be captured while a frame is being drawn.");
+            throw new InvalidOperationException("A screenshot cannot be rendered while an on-screen frame is active.");
         }
 
         int width = presentationParameters.BackBufferWidth;
         int height = presentationParameters.BackBufferHeight;
-        XnaColor[] pixels = new XnaColor[width * height];
-        graphicsDevice.GetBackBufferData(pixels);
-        using Texture2D bitmap = new(graphicsDevice, width, height, false, SurfaceFormat.Color);
-        bitmap.SetData(pixels);
-        bitmap.SaveAsPng(output, width, height);
+        RenderTargetBinding[] previousTargets = graphicsDevice.GetRenderTargets();
+        using RenderTarget2D target = new(
+            graphicsDevice,
+            width,
+            height,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.DiscardContents);
+        using SpriteBatch captureSpriteBatch = new(graphicsDevice);
+        using MonoGameDrawingBackend captureBackend = new(captureSpriteBatch, whitePixel, new SkiaTextRasterizer())
+        {
+            CoordinateScale = coordinateScale
+        };
+        bool targetsRestored = false;
+
+        try
+        {
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Clear(new XnaColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A));
+            captureSpriteBatch.Begin(
+                sortMode: SpriteSortMode.Immediate,
+                blendState: BlendState.AlphaBlend,
+                samplerState: SamplerState.LinearClamp,
+                depthStencilState: DepthStencilState.None,
+                rasterizerState: rasterizerState);
+            try
+            {
+                draw(captureBackend);
+            }
+            finally
+            {
+                captureSpriteBatch.End();
+            }
+
+            RestoreRenderTargets();
+            targetsRestored = true;
+            target.SaveAsPng(output, width, height);
+        }
+        finally
+        {
+            if (!targetsRestored)
+            {
+                RestoreRenderTargets();
+            }
+        }
+
+        void RestoreRenderTargets()
+        {
+            if (previousTargets.Length == 0)
+            {
+                graphicsDevice.SetRenderTarget(null);
+                return;
+            }
+
+            graphicsDevice.SetRenderTargets(previousTargets);
+        }
     }
 
     public void Dispose()

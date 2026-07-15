@@ -93,6 +93,42 @@ public sealed class MonoGameDrawingBackendStateTests
         Assert.Equal(0, backend.TextTextureCacheCount);
     }
 
+    [Fact]
+    public void CompletingFrameEvictsTextTexturesNotUsedByThatFrame()
+    {
+        MonoGameDrawingBackend backend = CreateBackendShell();
+        IDictionary cache = CreateTextTextureCache();
+        object staleKey = AddTextTexture(cache, "old phase");
+        object activeKey = AddTextTexture(cache, "current phase");
+        SetTextTextureCache(backend, cache);
+        MarkTextTextureActive(backend, activeKey);
+
+        InvokeTextTextureCachePrune(backend);
+
+        Assert.Equal(1, backend.TextTextureCacheCount);
+        Assert.False(cache.Contains(staleKey));
+        Assert.True(cache.Contains(activeKey));
+        backend.Dispose();
+    }
+
+    [Fact]
+    public void TextTextureKeySeparatesForegroundColorsWithDifferentGammaMasks()
+    {
+        Type keyType = TextTextureCacheField().FieldType.GetGenericArguments()[0];
+        MethodInfo fromMethod = keyType.GetMethod(
+            "FromWithRasterizationColor",
+            BindingFlags.Static | BindingFlags.Public,
+            binder: null,
+            types: [typeof(DrawTextRun), typeof(float), typeof(DrawPoint), typeof(Cerneala.Drawing.Color)],
+            modifiers: null)!;
+        DrawTextRun textRun = new(new TestFont("Cascadia Mono", 10), "MOTION LAB", 10);
+
+        object black = fromMethod.Invoke(null, [textRun, 1f, default(DrawPoint), Cerneala.Drawing.Color.Black])!;
+        object slate = fromMethod.Invoke(null, [textRun, 1f, default(DrawPoint), new Cerneala.Drawing.Color(138, 147, 166)])!;
+
+        Assert.NotEqual(black, slate);
+    }
+
     private static MonoGameDrawingBackend CreateBackendShell()
     {
         MonoGameDrawingBackend backend = (MonoGameDrawingBackend)RuntimeHelpers.GetUninitializedObject(typeof(MonoGameDrawingBackend));
@@ -168,6 +204,45 @@ public sealed class MonoGameDrawingBackendStateTests
         return cache;
     }
 
+    private static object AddTextTexture(IDictionary cache, string text)
+    {
+        Type keyType = cache.GetType().GetGenericArguments()[0];
+        MethodInfo fromMethod = keyType.GetMethod(
+            "From",
+            BindingFlags.Static | BindingFlags.Public,
+            binder: null,
+            types: [typeof(DrawTextRun), typeof(float), typeof(DrawPoint)],
+            modifiers: null)!;
+        DrawTextRun textRun = new(new TestFont("Arial", 16), text, 16);
+        object key = fromMethod.Invoke(null, [textRun, 1f, default(DrawPoint)])!;
+        Type valueType = cache.GetType().GetGenericArguments()[1];
+        object value = Activator.CreateInstance(
+            valueType,
+            RuntimeHelpers.GetUninitializedObject(typeof(Texture2D)),
+            RuntimeHelpers.GetUninitializedObject(typeof(Texture2D)),
+            RuntimeHelpers.GetUninitializedObject(typeof(Texture2D)),
+            RuntimeHelpers.GetUninitializedObject(typeof(Texture2D)),
+            default(DrawPoint))!;
+        cache.Add(key, value);
+        return key;
+    }
+
+    private static void MarkTextTextureActive(MonoGameDrawingBackend backend, object key)
+    {
+        FieldInfo? field = typeof(MonoGameDrawingBackend).GetField("activeTextTextureKeys", NonPublicInstance);
+        Assert.True(field is not null, "Expected the backend to track text textures used by the current frame.");
+        object activeKeys = Activator.CreateInstance(field!.FieldType)!;
+        field.SetValue(backend, activeKeys);
+        activeKeys.GetType().GetMethod("Add")!.Invoke(activeKeys, [key]);
+    }
+
+    private static void InvokeTextTextureCachePrune(MonoGameDrawingBackend backend)
+    {
+        MethodInfo? method = typeof(MonoGameDrawingBackend).GetMethod("PruneInactiveTextTextureCaches", NonPublicInstance);
+        Assert.True(method is not null, "Expected the backend to evict text textures unused by the current frame.");
+        method!.Invoke(backend, null);
+    }
+
     private static void SetTextTextureCache(MonoGameDrawingBackend backend, IDictionary cache)
     {
         TextTextureCacheField().SetValue(backend, cache);
@@ -179,4 +254,6 @@ public sealed class MonoGameDrawingBackendStateTests
         Assert.True(field is not null, "Expected MonoGameDrawingBackend to keep an internal text texture cache.");
         return field!;
     }
+
+    private sealed record TestFont(string FamilyName, float Size) : IDrawFont;
 }

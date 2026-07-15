@@ -24,7 +24,6 @@ public static class DefaultAspectPackage
                     new AspectDeclaration(Control.BorderThicknessProperty, DefaultAspectTokens.Stroke.ControlBorderThickness.Ref()),
                     new AspectDeclaration(Control.PaddingProperty, ButtonTokens.Padding.Ref())));
                 components.AddRule(Rule("border.base", typeof(Border),
-                    new AspectDeclaration(Control.BackgroundProperty, DefaultAspectTokens.Brush.Surface.Ref()),
                     new AspectDeclaration(Control.BorderBrushProperty, DefaultAspectTokens.Brush.Border.Ref())));
             });
     }

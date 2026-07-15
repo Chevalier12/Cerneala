@@ -6,16 +6,22 @@ namespace Cerneala.UI.Diagnostics;
 
 public sealed class InvalidationTrace
 {
+    public const int DefaultCapacity = 4096;
+
     private readonly List<InvalidationTraceEntry> entries = [];
 
     public static InvalidationTrace Disabled { get; } = new(false);
 
-    public InvalidationTrace(bool isEnabled = true)
+    public InvalidationTrace(bool isEnabled = true, int capacity = DefaultCapacity)
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity);
         IsEnabled = isEnabled;
+        Capacity = capacity;
     }
 
     public bool IsEnabled { get; }
+
+    public int Capacity { get; }
 
     public IReadOnlyList<InvalidationTraceEntry> Entries => entries;
 
@@ -27,7 +33,7 @@ public sealed class InvalidationTrace
             return;
         }
 
-        entries.Add(new InvalidationTraceEntry(
+        Add(new InvalidationTraceEntry(
             InvalidationTraceEventKind.Request,
             request.Target,
             GetElementId(request.Target),
@@ -59,7 +65,7 @@ public sealed class InvalidationTrace
             return;
         }
 
-        entries.Add(new InvalidationTraceEntry(
+        Add(new InvalidationTraceEntry(
             InvalidationTraceEventKind.PhaseSummary,
             null,
             null,
@@ -86,7 +92,17 @@ public sealed class InvalidationTrace
             return;
         }
 
-        entries.Add(new InvalidationTraceEntry(kind, element, GetElementId(element), flags, phase, reason, null));
+        Add(new InvalidationTraceEntry(kind, element, GetElementId(element), flags, phase, reason, null));
+    }
+
+    private void Add(InvalidationTraceEntry entry)
+    {
+        if (entries.Count == Capacity)
+        {
+            entries.RemoveRange(0, Math.Max(1, Capacity / 4));
+        }
+
+        entries.Add(entry);
     }
 
     private static string? GetElementId(UIElement? element)

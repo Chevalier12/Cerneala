@@ -1,0 +1,57 @@
+<Window
+    Title="Cerneala text oracle"
+    Width="320"
+    Height="160"
+    MinWidth="1"
+    MinHeight="1"
+    WindowStartupLocation="CenterScreen"
+    FrameRendered="OnFrameRendered"
+    Background="#FFFFFFFF"
+    BorderThickness="0"
+    Padding="0">
+    <Grid>
+        <Border Name="DefaultCanvas" Background="#FFFFFFFF">
+            <TextBlock
+                Name="OracleText"
+                Text="Hello world!"
+                FontFamily="Cascadia Mono"
+                FontSize="16"
+                Foreground="#FF000000"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center" />
+        </Border>
+        <Border
+            Name="MotionLabCanvas"
+            Visibility="Collapsed"
+            Background="#FF101217"
+            BorderBrush="#FF2A2E38"
+            BorderThickness="0,0,0,1"
+            Padding="24,0,24,0">
+            <Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock
+                        Name="MotionLabText"
+                        Text="MOTION LAB / SECOND NATIVE WINDOW"
+                        FontFamily="Cascadia Mono"
+                        FontSize="10"
+                        Foreground="#FF8A93A6"
+                        Margin="0,0,14,0"
+                        VerticalAlignment="Center" />
+                    <Border
+                        Background="#00000000"
+                        BorderBrush="#FF424754"
+                        BorderThickness="1"
+                        Padding="16,10,16,10">
+                        <TextBlock
+                            Text="CLOSE"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="11"
+                            Foreground="#FFEDEFF3"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
