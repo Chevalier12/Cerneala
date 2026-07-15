@@ -73,6 +73,8 @@ public sealed partial class UiMarkupGenerator
             public string ValueSource { get; }
 
             public string? StaticContentExpression { get; set; }
+
+            public IReadOnlyList<string> Activations { get; set; } = [];
         }
 
         private sealed class ObservationEmission
@@ -571,9 +573,17 @@ public sealed partial class UiMarkupGenerator
         {
             List<DirectiveAssignmentNode> assignments = body.OfType<DirectiveAssignmentNode>().ToList();
             List<DirectiveElementNode> elements = body.OfType<DirectiveElementNode>().ToList();
-            if (assignments.Count > 0 || elements.Count > 0)
+            List<string> activations = body
+                .OfType<MotionAnimateNode>()
+                .Where(motionExecutionNames.ContainsKey)
+                .Select(animation => motionExecutionNames[animation])
+                .ToList();
+            if (assignments.Count > 0 || elements.Count > 0 || activations.Count > 0)
             {
-                plan.Rules.Add(new ReactiveRule(plan.NextOrder++, predicate, assignments, elements, valueSource));
+                plan.Rules.Add(new ReactiveRule(plan.NextOrder++, predicate, assignments, elements, valueSource)
+                {
+                    Activations = activations
+                });
             }
 
             foreach (DirectiveWhenNode nested in body.OfType<DirectiveWhenNode>())
@@ -913,7 +923,10 @@ public sealed partial class UiMarkupGenerator
 
                 ruleExpressions.Add(
                     "new global::Cerneala.UI.Markup.MarkupConditionRule(" + rule.Order + ", () => " + rule.Predicate +
-                    ", " + valuesCode + ", " + contentCode + ")");
+                    ", " + valuesCode + ", " + contentCode +
+                    (rule.Activations.Count == 0
+                        ? ")"
+                        : ", () => { " + string.Join(" ", rule.Activations.Select(name => name + "();")) + " })"));
             }
 
             string observations = plan.ObservationLines.Count == 0

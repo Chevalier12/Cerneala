@@ -15,7 +15,9 @@ public sealed partial class UiMarkupGenerator
         None = 0,
         Assignments = 1,
         Elements = 2,
-        Templates = 4
+        Templates = 4,
+        MotionTriggers = 8,
+        MotionExecutions = 16
     }
 
     private abstract class DirectiveNode
@@ -246,7 +248,7 @@ public sealed partial class UiMarkupGenerator
 
         private static bool ContainsDirective(DirectiveNode node)
         {
-            return node is DirectiveWhenNode or DirectiveDefaultNode;
+            return node is DirectiveWhenNode or DirectiveDefaultNode or DirectiveOnNode;
         }
     }
 
@@ -343,6 +345,33 @@ public sealed partial class UiMarkupGenerator
                     continue;
                 }
 
+                if (StartsWith("@on"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionTriggers))
+                    {
+                        throw Error("@on is allowed only directly inside an Aspect body.");
+                    }
+
+                    nodes.Add(ParseOn());
+                    continue;
+                }
+
+                if (StartsWith("@animate"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
+                    {
+                        throw Error("@animate is allowed only inside an Aspect @when, @if or @on block.");
+                    }
+
+                    nodes.Add(ParseAnimate());
+                    continue;
+                }
+
+                if (StartsWith("@from") || StartsWith("@to"))
+                {
+                    throw Error("@from and @to are allowed only directly inside an @animate block.");
+                }
+
                 if (StartsWith("@if"))
                 {
                     throw Error("@if must be declared directly inside an @when block.");
@@ -351,6 +380,11 @@ public sealed partial class UiMarkupGenerator
                 if (Peek() == '@')
                 {
                     string directive = ReadWord();
+                    if (IsMotionDirective(directive))
+                    {
+                        throw Error(directive + " is allowed only inside an Aspect body.");
+                    }
+
                     throw Error("Unsupported directive '" + directive + "'.");
                 }
 
@@ -378,7 +412,8 @@ public sealed partial class UiMarkupGenerator
             if (!StartsWith("@if"))
             {
                 DirectiveContentKind booleanContent =
-                    (allowedContent | DirectiveContentKind.Assignments) & ~DirectiveContentKind.Templates;
+                    (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions) &
+                    ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers);
                 IReadOnlyList<DirectiveNode> booleanBody = ParseNodes(stopAtClosingBrace: true, booleanContent);
                 if (booleanBody.Count == 0)
                 {
@@ -411,7 +446,8 @@ public sealed partial class UiMarkupGenerator
                 // Assignments are valid inside @if even though bare assignments are
                 // intentionally rejected at the surrounding XML element level.
                 DirectiveContentKind branchContent =
-                    (allowedContent | DirectiveContentKind.Assignments) & ~DirectiveContentKind.Templates;
+                    (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions) &
+                    ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers);
                 branches.Add(ParseIf(branchContent));
             }
 
@@ -435,6 +471,156 @@ public sealed partial class UiMarkupGenerator
         private static DirectiveExpression ParseExpression(DirectiveHeader header)
         {
             return new DirectiveExpressionParser(header).Parse();
+        }
+
+        private DirectiveOnNode ParseOn()
+        {
+            XObject source = CurrentSource;
+            Consume("@on");
+            DirectiveHeader header = ReadHeaderUntilBrace();
+            string eventName = header.Text.Trim();
+            if (!IsIdentifier(eventName))
+            {
+                throw new DirectiveParseException("@on requires one event name.", new DirectiveExpressionLocation(header.Source, header.Offset));
+            }
+
+            IReadOnlyList<DirectiveNode> nodes = ParseNodes(
+                stopAtClosingBrace: true,
+                DirectiveContentKind.MotionExecutions);
+            if (nodes.Count == 0 || nodes.Any(node => node is not MotionExecutionNode))
+            {
+                throw new DirectiveParseException("@on requires one or more Motion execution bodies.", source);
+            }
+
+            return new DirectiveOnNode(eventName, nodes.Cast<MotionExecutionNode>().ToArray(), source);
+        }
+
+        private MotionAnimateNode ParseAnimate()
+        {
+            XObject source = CurrentSource;
+            Consume("@animate");
+            DirectiveHeader header = ReadHeaderUntilBrace();
+            MotionSpecSyntax? defaultSpec = ParseAnimateSpec(header);
+            List<MotionOptionSyntax> options = [];
+            IReadOnlyList<MotionAssignmentSyntax>? from = null;
+            IReadOnlyList<MotionAssignmentSyntax>? to = null;
+
+            while (true)
+            {
+                SkipWhitespace();
+                if (AtEnd)
+                {
+                    throw new DirectiveParseException("Missing closing '}' for @animate.", source);
+                }
+
+                if (CurrentElement is not null)
+                {
+                    throw new DirectiveParseException("XML controls are not allowed in Motion execution bodies.", CurrentSource);
+                }
+
+                if (Peek() == '}')
+                {
+                    Read();
+                    break;
+                }
+
+                if (StartsWith("@from"))
+                {
+                    if (from is not null)
+                    {
+                        throw Error("@animate may contain only one @from block.");
+                    }
+
+                    from = ParseMotionAssignmentBlock("@from");
+                    continue;
+                }
+
+                if (StartsWith("@to"))
+                {
+                    if (to is not null)
+                    {
+                        throw Error("@animate may contain only one @to block.");
+                    }
+
+                    to = ParseMotionAssignmentBlock("@to");
+                    continue;
+                }
+
+                if (Peek() == '@')
+                {
+                    string directive = ReadWord();
+                    throw Error("Unsupported directive '" + directive + "' inside @animate.");
+                }
+
+                DirectiveAssignmentNode option = ParseAssignment();
+                options.Add(new MotionOptionSyntax(
+                    option.PropertyName,
+                    ParseMotionValue(option.Value, option.ValueLocation),
+                    option.ValueLocation));
+            }
+
+            if (to is null)
+            {
+                throw new DirectiveParseException("@animate requires an @to block.", source);
+            }
+
+            return new MotionAnimateNode(defaultSpec, options, from ?? [], to, source);
+        }
+
+        private IReadOnlyList<MotionAssignmentSyntax> ParseMotionAssignmentBlock(string directive)
+        {
+            Consume(directive);
+            SkipWhitespace();
+            XObject source = CurrentSource;
+            if (AtEnd || CurrentElement is not null || Read() != '{')
+            {
+                throw new DirectiveParseException(directive + " must be followed by a block.", source);
+            }
+
+            List<MotionAssignmentSyntax> assignments = [];
+            while (true)
+            {
+                SkipWhitespace();
+                if (AtEnd)
+                {
+                    throw new DirectiveParseException("Missing closing '}' for " + directive + ".", source);
+                }
+
+                if (CurrentElement is not null)
+                {
+                    throw new DirectiveParseException("XML controls are not allowed in Motion assignment blocks.", CurrentSource);
+                }
+
+                if (Peek() == '}')
+                {
+                    Read();
+                    if (assignments.Count == 0)
+                    {
+                        throw new DirectiveParseException(directive + " requires at least one property assignment.", source);
+                    }
+
+                    return assignments;
+                }
+
+                XObject assignmentSource = CurrentSource;
+                int assignmentOffset = characterIndex;
+                string target = ReadMotionTarget();
+                SkipWhitespace();
+                if (target.Length == 0 || AtEnd || CurrentElement is not null || Read() != '=')
+                {
+                    throw new DirectiveParseException("Motion property assignment requires '='.", assignmentSource);
+                }
+
+                SkipWhitespace();
+                DirectiveExpressionLocation valueLocation = new(CurrentSource, characterIndex);
+                string statement = ReadMotionStatement();
+                SplitMotionValueAndSpec(statement, valueLocation, out string valueText, out MotionSpecSyntax? spec);
+                assignments.Add(new MotionAssignmentSyntax(
+                    target,
+                    ParseMotionValue(valueText, valueLocation),
+                    spec,
+                    new DirectiveExpressionLocation(assignmentSource, assignmentOffset)));
+            }
         }
 
         private DirectiveDefaultNode ParseDefault(DirectiveContentKind allowedContent)
@@ -532,6 +718,11 @@ public sealed partial class UiMarkupGenerator
                 value.Append(character);
             }
 
+            if (quoted)
+            {
+                throw new DirectiveParseException("String literal is missing its closing quote.", valueSource);
+            }
+
             throw new DirectiveParseException("Property assignment must end with ';'.", source);
         }
 
@@ -571,6 +762,424 @@ public sealed partial class UiMarkupGenerator
             {
                 Restore(saved);
             }
+        }
+
+        private MotionSpecSyntax? ParseAnimateSpec(DirectiveHeader header)
+        {
+            string text = header.Text.Trim();
+            if (text.Length == 0)
+            {
+                return null;
+            }
+
+            if (!text.StartsWith("with", StringComparison.Ordinal) ||
+                (text.Length > 4 && !char.IsWhiteSpace(text[4])))
+            {
+                throw new DirectiveParseException(
+                    "@animate accepts only an optional 'with' Motion spec before its block.",
+                    new DirectiveExpressionLocation(header.Source, header.Offset));
+            }
+
+            string spec = text.Substring(4).Trim();
+            int specOffset = header.Text.IndexOf(spec, StringComparison.Ordinal);
+            return ParseMotionSpec(
+                spec,
+                new DirectiveExpressionLocation(header.Source, header.Offset + Math.Max(0, specOffset)));
+        }
+
+        private string ReadMotionTarget()
+        {
+            StringBuilder builder = new();
+            while (!AtEnd && CurrentElement is null)
+            {
+                char character = Peek();
+                if (char.IsLetterOrDigit(character) || character is '_' or '$' or '.')
+                {
+                    builder.Append(Read());
+                    continue;
+                }
+
+                break;
+            }
+
+            string target = builder.ToString();
+            if (IsIdentifier(target))
+            {
+                return target;
+            }
+
+            string[] parts = target.Split('.');
+            if (parts.Length == 3 &&
+                string.Equals(parts[0], "$part", StringComparison.Ordinal) &&
+                IsIdentifier(parts[1]) &&
+                IsIdentifier(parts[2]))
+            {
+                return target;
+            }
+
+            throw Error("Motion target must be a property name or '$part.Name.Property'.");
+        }
+
+        private string ReadMotionStatement()
+        {
+            XObject source = CurrentSource;
+            StringBuilder builder = new();
+            int parentheses = 0;
+            bool quoted = false;
+            bool escaped = false;
+            while (!AtEnd && CurrentElement is null)
+            {
+                char character = Read();
+                if (escaped)
+                {
+                    builder.Append(character);
+                    escaped = false;
+                    continue;
+                }
+
+                if (character == '\\' && quoted)
+                {
+                    builder.Append(character);
+                    escaped = true;
+                    continue;
+                }
+
+                if (character == '"')
+                {
+                    quoted = !quoted;
+                    builder.Append(character);
+                    continue;
+                }
+
+                if (!quoted && character == '(')
+                {
+                    parentheses++;
+                }
+                else if (!quoted && character == ')')
+                {
+                    parentheses--;
+                    if (parentheses < 0)
+                    {
+                        throw new DirectiveParseException("Unexpected closing parenthesis ')' in Motion assignment.", source);
+                    }
+                }
+
+                if (character == ';' && !quoted && parentheses == 0)
+                {
+                    string statement = builder.ToString().Trim();
+                    if (statement.Length == 0)
+                    {
+                        throw new DirectiveParseException("Motion property assignment requires a value.", source);
+                    }
+
+                    return statement;
+                }
+
+                if (character is '{' or '}' && !quoted && parentheses == 0)
+                {
+                    throw new DirectiveParseException("Motion property assignment must end with ';'.", source);
+                }
+
+                builder.Append(character);
+            }
+
+            if (quoted)
+            {
+                throw new DirectiveParseException("String literal is missing its closing quote.", source);
+            }
+
+            if (parentheses != 0)
+            {
+                throw new DirectiveParseException("Motion expression has unbalanced parentheses.", source);
+            }
+
+            throw new DirectiveParseException("Motion property assignment must end with ';'.", source);
+        }
+
+        private static void SplitMotionValueAndSpec(
+            string statement,
+            DirectiveExpressionLocation location,
+            out string value,
+            out MotionSpecSyntax? spec)
+        {
+            int with = FindTopLevelKeyword(statement, "with");
+            if (with < 0)
+            {
+                value = statement.Trim();
+                spec = null;
+                return;
+            }
+
+            value = statement.Substring(0, with).Trim();
+            string specText = statement.Substring(with + 4).Trim();
+            if (value.Length == 0 || specText.Length == 0)
+            {
+                throw new DirectiveParseException("A per-property 'with' requires both a value and a Motion spec.", location);
+            }
+
+            spec = ParseMotionSpec(
+                specText,
+                new DirectiveExpressionLocation(location.Source, location.Offset + with + 4));
+        }
+
+        private static MotionValueSyntax ParseMotionValue(string text, DirectiveExpressionLocation location)
+        {
+            text = text.Trim();
+            if (text.Length == 0)
+            {
+                throw new DirectiveParseException("Motion value is empty.", location);
+            }
+
+            int question = FindTopLevelCharacter(text, '?');
+            if (question >= 0)
+            {
+                int colon = FindTopLevelCharacter(text, ':', question + 1);
+                if (colon < 0)
+                {
+                    throw new DirectiveParseException("Conditional Motion value requires ':'.", location);
+                }
+
+                string conditionText = text.Substring(0, question).Trim();
+                string trueText = text.Substring(question + 1, colon - question - 1).Trim();
+                string falseText = text.Substring(colon + 1).Trim();
+                DirectiveExpression condition = ParseExpression(new DirectiveHeader(conditionText, location.Source, location.Offset));
+                return new MotionConditionalValueSyntax(
+                    condition,
+                    ParseMotionValue(trueText, new DirectiveExpressionLocation(location.Source, location.Offset + question + 1)),
+                    ParseMotionValue(falseText, new DirectiveExpressionLocation(location.Source, location.Offset + colon + 1)),
+                    location);
+            }
+
+            if (string.Equals(text, "current", StringComparison.Ordinal))
+            {
+                return new MotionCurrentValueSyntax(location);
+            }
+
+            if (text[0] == '"')
+            {
+                if (text.Length < 2 || text[text.Length - 1] != '"')
+                {
+                    throw new DirectiveParseException("String literal is missing its closing quote.", location);
+                }
+
+                return new MotionAtomValueSyntax(text, location);
+            }
+
+            if (text.IndexOfAny([';', '{', '}']) >= 0 ||
+                (text.Contains('(') || text.Contains(')')))
+            {
+                throw new DirectiveParseException("Motion values do not accept arbitrary expressions.", location);
+            }
+
+            return new MotionAtomValueSyntax(text, location);
+        }
+
+        private static MotionSpecSyntax ParseMotionSpec(string text, DirectiveExpressionLocation location)
+        {
+            text = text.Trim();
+            if (text.Length == 0)
+            {
+                throw new DirectiveParseException("Motion spec is empty.", location);
+            }
+
+            if (text[0] == '$')
+            {
+                string name = text.Substring(1);
+                if (!IsIdentifier(name))
+                {
+                    throw new DirectiveParseException("Motion resource reference must be '$Name'.", location);
+                }
+
+                return new MotionResourceSpecSyntax(name, location);
+            }
+
+            int open = text.IndexOf('(');
+            if (open <= 0 || text[text.Length - 1] != ')')
+            {
+                throw new DirectiveParseException("Motion spec must be a resource reference or Tween(...)/Spring(...).", location);
+            }
+
+            string kind = text.Substring(0, open).Trim();
+            if (kind is not "Tween" and not "Spring")
+            {
+                throw new DirectiveParseException("Unsupported inline Motion spec '" + kind + "'.", location);
+            }
+
+            string argumentsText = text.Substring(open + 1, text.Length - open - 2);
+            IReadOnlyList<SplitPart> parts = SplitTopLevel(argumentsText, ',');
+            if (parts.Count == 0 || parts.Any(part => part.Text.Trim().Length == 0))
+            {
+                throw new DirectiveParseException(kind + " requires arguments.", location);
+            }
+
+            List<MotionSpecArgumentSyntax> arguments = [];
+            foreach (SplitPart part in parts)
+            {
+                string argument = part.Text.Trim();
+                DirectiveExpressionLocation argumentLocation = new(location.Source, location.Offset + open + 1 + part.Offset);
+                MotionDurationSyntax? duration = TryParseDuration(argument, argumentLocation);
+                if (argument.EndsWith("ms", StringComparison.Ordinal) || argument.EndsWith("s", StringComparison.Ordinal))
+                {
+                    if (duration is null)
+                    {
+                        throw new DirectiveParseException("Invalid Motion duration '" + argument + "'. Use a number followed by ms or s.", argumentLocation);
+                    }
+                }
+
+                if (argument.IndexOfAny(['{', '}', ';']) >= 0)
+                {
+                    throw new DirectiveParseException("Invalid token in inline Motion spec.", argumentLocation);
+                }
+
+                arguments.Add(new MotionSpecArgumentSyntax(argument, duration, argumentLocation));
+            }
+
+            if (kind == "Tween")
+            {
+                if (arguments.Count is < 1 or > 2 || arguments[0].Duration is null)
+                {
+                    throw new DirectiveParseException("Tween requires Tween(duration, easing?) with an ms or s duration.", location);
+                }
+
+                if (arguments.Count == 2 && !IsIdentifier(arguments[1].Text))
+                {
+                    throw new DirectiveParseException("Tween easing must be a named easing.", arguments[1].Location);
+                }
+            }
+
+            return new MotionInlineSpecSyntax(kind, arguments, location);
+        }
+
+        private static MotionDurationSyntax? TryParseDuration(string text, DirectiveExpressionLocation location)
+        {
+            string unit;
+            string number;
+            if (text.EndsWith("ms", StringComparison.Ordinal))
+            {
+                unit = "ms";
+                number = text.Substring(0, text.Length - 2);
+            }
+            else if (text.EndsWith("s", StringComparison.Ordinal))
+            {
+                unit = "s";
+                number = text.Substring(0, text.Length - 1);
+            }
+            else
+            {
+                return null;
+            }
+
+            return decimal.TryParse(number, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal value) && value >= 0
+                ? new MotionDurationSyntax(value, unit, location)
+                : null;
+        }
+
+        private static int FindTopLevelKeyword(string text, string keyword)
+        {
+            int parentheses = 0;
+            bool quoted = false;
+            for (int index = 0; index <= text.Length - keyword.Length; index++)
+            {
+                char character = text[index];
+                if (character == '"' && (index == 0 || text[index - 1] != '\\'))
+                {
+                    quoted = !quoted;
+                }
+                else if (!quoted && character == '(')
+                {
+                    parentheses++;
+                }
+                else if (!quoted && character == ')')
+                {
+                    parentheses--;
+                }
+
+                if (!quoted && parentheses == 0 &&
+                    string.CompareOrdinal(text, index, keyword, 0, keyword.Length) == 0 &&
+                    (index == 0 || char.IsWhiteSpace(text[index - 1])) &&
+                    (index + keyword.Length == text.Length || char.IsWhiteSpace(text[index + keyword.Length])))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        private static int FindTopLevelCharacter(string text, char expected, int start = 0)
+        {
+            int parentheses = 0;
+            bool quoted = false;
+            for (int index = 0; index < text.Length; index++)
+            {
+                char character = text[index];
+                if (character == '"' && (index == 0 || text[index - 1] != '\\'))
+                {
+                    quoted = !quoted;
+                }
+                else if (!quoted && character == '(')
+                {
+                    parentheses++;
+                }
+                else if (!quoted && character == ')')
+                {
+                    parentheses--;
+                }
+                else if (index >= start && !quoted && parentheses == 0 && character == expected)
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        private static IReadOnlyList<SplitPart> SplitTopLevel(string text, char separator)
+        {
+            List<SplitPart> parts = [];
+            int start = 0;
+            int parentheses = 0;
+            bool quoted = false;
+            for (int index = 0; index < text.Length; index++)
+            {
+                char character = text[index];
+                if (character == '"' && (index == 0 || text[index - 1] != '\\'))
+                {
+                    quoted = !quoted;
+                }
+                else if (!quoted && character == '(')
+                {
+                    parentheses++;
+                }
+                else if (!quoted && character == ')')
+                {
+                    parentheses--;
+                }
+                else if (!quoted && parentheses == 0 && character == separator)
+                {
+                    parts.Add(new SplitPart(text.Substring(start, index - start), start));
+                    start = index + 1;
+                }
+            }
+
+            if (text.Length > 0)
+            {
+                parts.Add(new SplitPart(text.Substring(start), start));
+            }
+
+            return parts;
+        }
+
+        private static bool IsIdentifier(string text)
+        {
+            return text.Length > 0 &&
+                (char.IsLetter(text[0]) || text[0] == '_') &&
+                text.Skip(1).All(character => char.IsLetterOrDigit(character) || character == '_');
+        }
+
+        private static bool IsMotionDirective(string directive)
+        {
+            return directive is "@animate" or "@from" or "@to" or "@on";
         }
 
         private static bool Allows(DirectiveContentKind allowed, DirectiveContentKind value)
@@ -1053,6 +1662,19 @@ public sealed partial class UiMarkupGenerator
             public int Segment { get; }
 
             public int Character { get; }
+        }
+
+        private readonly struct SplitPart
+        {
+            public SplitPart(string text, int offset)
+            {
+                Text = text;
+                Offset = offset;
+            }
+
+            public string Text { get; }
+
+            public int Offset { get; }
         }
     }
 

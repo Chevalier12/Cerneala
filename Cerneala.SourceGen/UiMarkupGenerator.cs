@@ -809,7 +809,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             Element,
             Brush,
-            Aspect
+            Aspect,
+            MotionSpec
         }
 
         private sealed class PropertySpec
@@ -903,6 +904,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string targetName,
                 IReadOnlyList<AspectPropertyAssignment> assignments,
                 IReadOnlyList<DirectiveWhenNode> conditions,
+                IReadOnlyList<DirectiveOnNode> eventTriggers,
                 DirectiveTemplateNode? template,
                 XElement source,
                 bool isInline = false)
@@ -911,6 +913,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 TargetName = targetName;
                 Assignments = assignments;
                 Conditions = conditions;
+                EventTriggers = eventTriggers;
                 Template = template;
                 Source = source;
                 IsInline = isInline;
@@ -923,6 +926,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public IReadOnlyList<AspectPropertyAssignment> Assignments { get; }
 
             public IReadOnlyList<DirectiveWhenNode> Conditions { get; }
+
+            public IReadOnlyList<DirectiveOnNode> EventTriggers { get; }
 
             public DirectiveTemplateNode? Template { get; }
 
@@ -1133,6 +1138,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                             break;
                         case "Aspect":
                             ReadAspect(scope, resource);
+                            break;
+                        case "Tween":
+                        case "Spring":
+                            ReadMotionSpecResource(scope, resource);
                             break;
                         default:
                             Report(UnsupportedElement, resource, resource.Name.LocalName);
@@ -1401,7 +1410,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private void ReadAspect(ResourceScope scope, XElement resource)
         {
-            string targetName = resource.Attribute("Target")?.Value ?? string.Empty;
+            XAttribute? targetAttribute = resource.Attribute("TargetType") ?? resource.Attribute("Target");
+            string targetName = targetAttribute?.Value ?? string.Empty;
             if (string.IsNullOrWhiteSpace(targetName))
             {
                 Report(InvalidPropertyValue, resource, "Aspect", "Target", targetName);
@@ -1419,6 +1429,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 resource,
                 out List<AspectPropertyAssignment> assignments,
                 out List<DirectiveWhenNode> conditions,
+                out List<DirectiveOnNode> eventTriggers,
                 out DirectiveTemplateNode? template))
             {
                 return;
@@ -1441,6 +1452,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 targetName,
                 assignments,
                 conditions,
+                eventTriggers,
                 template,
                 resource);
             allAspects.Add(aspect);
@@ -1536,10 +1548,31 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         "An inline Aspect property element does not accept attributes.");
                 }
 
+                XElement aspectBody = inline;
+                XElement[] inlineDeclarations = inline.Elements()
+                    .Where(element => element.Name.LocalName == "Aspect")
+                    .ToArray();
+                if (inlineDeclarations.Length == 1 &&
+                    inline.Nodes().All(node => node is XElement element
+                        ? ReferenceEquals(element, inlineDeclarations[0])
+                        : node is XText text && string.IsNullOrWhiteSpace(text.Value)))
+                {
+                    aspectBody = inlineDeclarations[0];
+                    if (aspectBody.HasAttributes)
+                    {
+                        Report(
+                            InvalidDocumentShape,
+                            aspectBody,
+                            Path.GetFileName(file.Path),
+                            "An inline Aspect declaration does not accept attributes.");
+                    }
+                }
+
                 if (TryParseAspectBody(
-                    inline,
+                    aspectBody,
                     out List<AspectPropertyAssignment> assignments,
                     out List<DirectiveWhenNode> conditions,
+                    out List<DirectiveOnNode> eventTriggers,
                     out DirectiveTemplateNode? template))
                 {
                     AspectResource aspect = new(
@@ -1547,8 +1580,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         owner.Name.LocalName,
                         assignments,
                         conditions,
+                        eventTriggers,
                         template,
-                        inline,
+                        aspectBody,
                         isInline: true);
                     inlineAspects.Add(owner, aspect);
                     allAspects.Add(aspect);
@@ -1562,14 +1596,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             XElement source,
             out List<AspectPropertyAssignment> assignments,
             out List<DirectiveWhenNode> conditions,
+            out List<DirectiveOnNode> eventTriggers,
             out DirectiveTemplateNode? template)
         {
             assignments = [];
             conditions = [];
+            eventTriggers = [];
             template = null;
             DirectiveParseResult parsed = ParseDirectiveContent(
                 source,
-                DirectiveContentKind.Assignments | DirectiveContentKind.Templates);
+                DirectiveContentKind.Assignments | DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers);
             if (parsed.Error is not null)
             {
                 Report(InvalidDirective, parsed.ErrorSource ?? source, Path.GetFileName(file.Path), parsed.Error);
@@ -1601,6 +1637,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     conditions.Add(when);
                 }
+                else if (node is DirectiveOnNode on)
+                {
+                    eventTriggers.Add(on);
+                }
                 else if (node is DirectiveTemplateNode declaredTemplate)
                 {
                     if (template is not null)
@@ -1617,7 +1657,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 }
                 else
                 {
-                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default, @when and @template blocks.");
+                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default, @when, @on and @template blocks.");
                     return false;
                 }
             }
@@ -2375,7 +2415,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private INamedTypeSymbol? ResolveAspectTargetTypeSymbol(string targetName)
         {
-            INamedTypeSymbol? type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls." + targetName);
+            string metadataName = targetName.StartsWith("global::", StringComparison.Ordinal)
+                ? targetName.Substring("global::".Length)
+                : targetName;
+            INamedTypeSymbol? type = metadataName.Contains('.')
+                ? compilation.GetTypeByMetadataName(metadataName)
+                : compilation.GetTypeByMetadataName("Cerneala.UI.Controls." + metadataName);
             INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
             if (type is not null && type.TypeKind == TypeKind.Class && !type.IsAbstract &&
                 uiElementType is not null && IsOrDerivesFrom(type, uiElementType))
@@ -2478,7 +2523,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return resolved;
             }
 
-            if (!string.Equals(namedAspect.TargetName, elementName, StringComparison.Ordinal))
+            INamedTypeSymbol? namedTargetType = ResolveAspectTargetTypeSymbol(namedAspect.TargetName);
+            INamedTypeSymbol? appliedElementType = ResolvePropertyOwnerType(elementName, ReferenceEquals(element, document.Root));
+            if (namedTargetType is null || appliedElementType is null || !IsOrDerivesFrom(appliedElementType, namedTargetType))
             {
                 Report(InvalidPropertyValue, aspectAttribute, elementName, "Aspect", aspectAttribute.Value);
                 return resolved;
@@ -2492,6 +2539,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             foreach (AspectResource aspect in aspects)
             {
+                if (!ResolveMotionAspect(element, aspect))
+                {
+                    continue;
+                }
+
                 if (IsLocalAspect(aspect))
                 {
                     EmitLocalAspect(element, variable, aspect);
@@ -2500,6 +2552,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     EmitAspectAssignments(element, variable, aspect);
                 }
+
+                EmitMotionActivations(element, variable, aspect);
             }
         }
 

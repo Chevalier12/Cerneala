@@ -112,11 +112,24 @@ public sealed class MarkupConditionRule
         Func<bool> predicate,
         IReadOnlyList<MarkupConditionalValue>? values = null,
         MarkupConditionalContent? content = null)
+        : this(order, predicate, values, content, null, null)
+    {
+    }
+
+    public MarkupConditionRule(
+        int order,
+        Func<bool> predicate,
+        IReadOnlyList<MarkupConditionalValue>? values,
+        MarkupConditionalContent? content,
+        Action? activated,
+        Action? deactivated = null)
     {
         Order = order;
         Predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
         Values = values ?? Array.Empty<MarkupConditionalValue>();
         Content = content;
+        Activated = activated;
+        Deactivated = deactivated;
     }
 
     public int Order { get; }
@@ -126,6 +139,10 @@ public sealed class MarkupConditionRule
     internal IReadOnlyList<MarkupConditionalValue> Values { get; }
 
     internal MarkupConditionalContent? Content { get; }
+
+    internal Action? Activated { get; }
+
+    internal Action? Deactivated { get; }
 }
 
 public abstract class MarkupObservation
@@ -644,6 +661,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
     private readonly IReadOnlyList<MarkupConditionRule> rules;
     private readonly List<MarkupConditionalValue> appliedValues = [];
     private readonly List<MarkupConditionalContent> activeContent = [];
+    private readonly List<MarkupConditionRule> activeRules = [];
     private bool started;
     private bool disposed;
     private bool evaluating;
@@ -754,6 +772,12 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         }
 
         activeContent.Clear();
+        foreach (MarkupConditionRule rule in activeRules)
+        {
+            rule.Deactivated?.Invoke();
+        }
+
+        activeRules.Clear();
     }
 
     private void OnObservationChanged(object? sender, EventArgs args)
@@ -798,6 +822,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
                 IReadOnlyList<MarkupConditionRule> active = rules.Where(rule => rule.Predicate()).ToArray();
                 ApplyValues(active);
                 ApplyContent(active);
+                ApplyActivations(active);
             }
             while (reevaluate);
         }
@@ -805,6 +830,27 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         {
             evaluating = false;
         }
+    }
+
+    private void ApplyActivations(IReadOnlyList<MarkupConditionRule> active)
+    {
+        if (!owner.IsAttached)
+        {
+            return;
+        }
+
+        foreach (MarkupConditionRule previous in activeRules.Where(rule => !active.Contains(rule)).ToArray())
+        {
+            previous.Deactivated?.Invoke();
+        }
+
+        foreach (MarkupConditionRule current in active.Where(rule => !activeRules.Contains(rule)))
+        {
+            current.Activated?.Invoke();
+        }
+
+        activeRules.Clear();
+        activeRules.AddRange(active);
     }
 
     private void ApplyValues(IReadOnlyList<MarkupConditionRule> active)

@@ -126,6 +126,8 @@ Generated from `.`.
 |   |-- UiMarkupBindingResolver.cs
 |   |-- UiMarkupDirectiveParser.cs
 |   |-- UiMarkupGenerator.cs
+|   |-- UiMarkupMotionResolver.cs
+|   |-- UiMarkupMotionSyntax.cs
 |   |-- UiMarkupReactiveEmitter.cs
 |   |-- UiMarkupUserControlGenerator.cs
 |   +-- UiMarkupWindowGenerator.cs
@@ -1429,6 +1431,7 @@ Generated from `.`.
 |   |   |   |-- Markup/
 |   |   |   |   |-- BrushMarkupReaderTests.cs
 |   |   |   |   |-- GeneratedMarkupBindingTests.cs
+|   |   |   |   |-- GeneratedMarkupMotionTests.cs
 |   |   |   |   |-- GeneratedMarkupObservationTests.cs
 |   |   |   |   |-- MarkupDiagnosticTests.cs
 |   |   |   |   |-- UiFactoryTests.cs
@@ -1534,6 +1537,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorMotionTests.cs
 |   |   +-- UiMarkupGeneratorTests.cs
 |   +-- Cerneala.WindowsDxSmoke/
 |       |-- Cerneala.WindowsDxSmoke.csproj
@@ -2003,6 +2007,7 @@ Generated from `.`.
 |   |   |-- DesignTimeOnlyAttribute.cs
 |   |   |-- GeneratedMarkupBindings.cs
 |   |   |-- GeneratedMarkupConditions.cs
+|   |   |-- GeneratedMarkupMotion.cs
 |   |   |-- GeneratedUiFactory.cs
 |   |   |-- MarkupAspectResource.cs
 |   |   |-- MarkupDiagnostic.cs

@@ -35,7 +35,13 @@ public sealed class MotionAnimationBuilder<T>
 
     public MotionHandle With(MotionSpec<T> spec)
     {
+        return With(spec, new MotionPropertyStartOptions { HoldOnComplete = true });
+    }
+
+    public MotionHandle With(MotionSpec<T> spec, MotionPropertyStartOptions options)
+    {
         ArgumentNullException.ThrowIfNull(spec);
+        ArgumentNullException.ThrowIfNull(options);
         MotionSystem motion = facade.ResolveMotion();
         MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, facade.Element, property);
         if (hasFrom)
@@ -43,7 +49,7 @@ public sealed class MotionAnimationBuilder<T>
             binding.Value.JumpTo(from);
         }
 
-        return binding.AnimateTo(to, spec, new MotionPropertyStartOptions { HoldOnComplete = true });
+        return binding.AnimateTo(to, spec, options);
     }
 
     public void Bind(ScrollMotionBinding<T> binding)

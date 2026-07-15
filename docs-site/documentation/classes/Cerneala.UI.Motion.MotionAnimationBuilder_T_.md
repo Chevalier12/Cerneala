@@ -26,6 +26,7 @@ using System;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion;
+using Cerneala.UI.Motion.Properties;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 UIElement target = new();
@@ -40,6 +41,33 @@ MotionHandle handle = target.Motion()
     .From(currentOpacity)
     .To(0.35f)
     .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(180)));
+```
+
+Supply property-start options when the caller needs a non-default retarget policy, completion behavior, or diagnostic name:
+
+```csharp
+using System;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Motion;
+using Cerneala.UI.Motion.Properties;
+using Cerneala.UI.Motion.Specs;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
+
+UIRoot root = new();
+UIElement target = new();
+root.VisualChildren.Add(target);
+
+MotionPropertyStartOptions options = new()
+{
+    RetargetMode = RetargetMode.PreserveProgress,
+    HoldOnComplete = false,
+    DebugName = "Navigation/Reveal"
+};
+
+target.Motion()
+    .Animate(UIElement.OpacityProperty)
+    .To(1f)
+    .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(180)), options);
 ```
 
 Bind scroll progress to a transform property:
@@ -69,7 +97,7 @@ progressBar.Motion()
 
 `From` sets an explicit starting value. When `With` is later called, the underlying `MotionPropertyBinding<T>` first jumps its `MotionValue<T>` to that value. If `From` is not called, the binding starts from the current motion value maintained for the element/property pair.
 
-`To` stores the target value. `With` resolves the element's `MotionSystem`, gets or creates a reusable property binding for the element and property, and starts `MotionPropertyBinding<T>.AnimateTo` with `HoldOnComplete = true`. The returned `MotionHandle` can be canceled, completed, disposed, or observed for completion.
+`To` stores the target value. `With` resolves the element's `MotionSystem`, gets or creates a reusable property binding for the element and property, and starts `MotionPropertyBinding<T>.AnimateTo`. The one-parameter overload preserves the builder default of `HoldOnComplete = true`. The overload that accepts `MotionPropertyStartOptions` forwards its `RetargetMode`, `HoldOnComplete`, and `DebugName` values to that binding without duplicating binding behavior. The returned `MotionHandle` can be canceled, completed, disposed, or observed for completion.
 
 The element must be attached to a `UIRoot`, or be a `UIRoot` itself, before `With` can start the animation. The selected property type must also have a registered value mixer compatible with the supplied `MotionSpec<T>`.
 
@@ -82,6 +110,7 @@ The element must be attached to a `UIRoot`, or be a `UIRoot` itself, before `Wit
 | `From(T value)` | `MotionAnimationBuilder<T>` | Sets an explicit starting value for the next `With` call and returns the same builder. |
 | `To(T value)` | `MotionAnimationBuilder<T>` | Sets the target value for the next `With` call and returns the same builder. |
 | `With(MotionSpec<T> spec)` | `MotionHandle` | Starts the property animation with the supplied motion specification and returns the active handle. |
+| `With(MotionSpec<T> spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts the property animation with explicit retarget, completion-hold, and diagnostic-name options. |
 | `Bind(ScrollMotionBinding<T> binding)` | `void` | Binds a scroll-linked value source to the target element property. |
 
 ## Exceptions
@@ -90,6 +119,8 @@ The element must be attached to a `UIRoot`, or be a `UIRoot` itself, before `Wit
 | --- | --- | --- |
 | `With(MotionSpec<T>)` | `ArgumentNullException` | `spec` is `null`. |
 | `With(MotionSpec<T>)` | `InvalidOperationException` | The element is not attached to a `UIRoot`, or no compatible mixer exists for the property value type. |
+| `With(MotionSpec<T>, MotionPropertyStartOptions)` | `ArgumentNullException` | `spec` or `options` is `null`. |
+| `With(MotionSpec<T>, MotionPropertyStartOptions)` | `InvalidOperationException` | The element is not attached to a `UIRoot`, or no compatible mixer exists for the property value type. |
 | `Bind(ScrollMotionBinding<T>)` | `ArgumentNullException` | `binding` is `null`. |
 | `Bind(ScrollMotionBinding<T>)` | `InvalidOperationException` | The scroll binding rejects the target property, such as a layout-affecting property without `AllowLayout()`, or the binding type is not supported by the current scroll binding implementation. |
 
