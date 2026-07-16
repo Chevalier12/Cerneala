@@ -1544,6 +1544,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorMotionHandleTests.cs
 |   |   |-- UiMarkupGeneratorMotionParameterTests.cs
 |   |   |-- UiMarkupGeneratorMotionTests.cs
+|   |   |-- UiMarkupGeneratorMotionTimelineTests.cs
 |   |   +-- UiMarkupGeneratorTests.cs
 |   +-- Cerneala.WindowsDxSmoke/
 |       |-- Cerneala.WindowsDxSmoke.csproj

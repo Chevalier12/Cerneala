@@ -8,6 +8,7 @@ using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Media;
 using Cerneala.Tests.UI.Motion.Core;
 using Cerneala.UI.Motion.Properties;
+using Cerneala.UI.Motion.Specs;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.UI.Motion.Properties;
@@ -88,6 +89,59 @@ public sealed class MotionPropertyBindingTests
 
         Assert.Equal(UiPropertyValueSource.AspectBase, control.GetValueSource(Control.BackgroundProperty));
         Assert.Equal(new SolidColorBrush(Color.Black), control.Background);
+    }
+
+    [Fact]
+    public void KeyframeHoldSamplingDoesNotOverrideHoldOnCompletePersistence()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Control control = new();
+        root.VisualChildren.Add(control);
+        control.SetValue(UIElement.OpacityProperty, 0.25f, UiPropertyValueSource.AspectBase);
+        MotionValue<float> value = root.Motion.Graph.CreateValue(control.Opacity);
+        using MotionPropertyBinding<float> binding = new(root.Motion, control, UIElement.OpacityProperty, value);
+        KeyframesSpec<float> spec = MotionFactory.Keyframes(
+            new MotionKeyframe<float>(0, 0.25f, Hold: true),
+            new MotionKeyframe<float>(1, 1)).WithDuration(TimeSpan.FromMilliseconds(100));
+
+        binding.AnimateTo(1, spec, new MotionPropertyStartOptions { HoldOnComplete = false });
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+
+        Assert.Equal(0.25f, control.Opacity);
+        Assert.Equal(UiPropertyValueSource.Animation, control.GetValueSource(UIElement.OpacityProperty));
+
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+
+        Assert.Equal(0.25f, control.Opacity);
+        Assert.Equal(UiPropertyValueSource.AspectBase, control.GetValueSource(UIElement.OpacityProperty));
+    }
+
+    [Theory]
+    [InlineData(2, 0f)]
+    [InlineData(3, 1f)]
+    public void PingPongPropertyBindingCompletesAtParityEndpoint(int cycles, float expected)
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Control control = new();
+        root.VisualChildren.Add(control);
+        MotionValue<float> value = root.Motion.Graph.CreateValue(0f);
+        using MotionPropertyBinding<float> binding = new(root.Motion, control, UIElement.OpacityProperty, value);
+
+        binding.AnimateTo(
+            1,
+            new PingPongSpec<float>(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(10)), cycles),
+            new MotionPropertyStartOptions { HoldOnComplete = true });
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(10 * cycles));
+        root.ProcessFrame();
+
+        Assert.Equal(expected, control.Opacity);
+        Assert.Equal(UiPropertyValueSource.Animation, control.GetValueSource(UIElement.OpacityProperty));
     }
 
     [Fact]

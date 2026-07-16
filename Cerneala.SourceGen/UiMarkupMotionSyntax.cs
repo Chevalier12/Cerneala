@@ -59,6 +59,57 @@ public sealed partial class UiMarkupGenerator
         public IReadOnlyList<MotionAssignmentSyntax> To { get; }
     }
 
+    private sealed class MotionKeyframesNode : MotionExecutionNode
+    {
+        public MotionKeyframesNode(
+            MotionDurationSyntax duration,
+            IReadOnlyList<MotionKeyframeSegmentSyntax> segments,
+            XObject source) : base(source)
+        {
+            Duration = duration;
+            Segments = segments;
+        }
+
+        public MotionDurationSyntax Duration { get; }
+
+        public IReadOnlyList<MotionKeyframeSegmentSyntax> Segments { get; }
+    }
+
+    private sealed class MotionStaggerNode : MotionExecutionNode
+    {
+        public MotionStaggerNode(string targetPart, MotionDurationSyntax each, MotionAnimateNode animation, XObject source) : base(source)
+        {
+            TargetPart = targetPart;
+            Each = each;
+            Animation = animation;
+        }
+
+        public string TargetPart { get; }
+
+        public MotionDurationSyntax Each { get; }
+
+        public MotionAnimateNode Animation { get; }
+    }
+
+    private sealed class MotionKeyframeSegmentSyntax
+    {
+        public MotionKeyframeSegmentSyntax(float start, float end, bool hold, MotionAnimateNode animation)
+        {
+            Start = start;
+            End = end;
+            Hold = hold;
+            Animation = animation;
+        }
+
+        public float Start { get; }
+
+        public float End { get; }
+
+        public bool Hold { get; }
+
+        public MotionAnimateNode Animation { get; }
+    }
+
     private enum MotionCompositionKind
     {
         Parallel,

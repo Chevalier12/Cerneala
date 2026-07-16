@@ -131,13 +131,17 @@ public sealed partial class UiMarkupGenerator
                 IReadOnlyList<ResolvedMotionProperty> properties,
                 string executionName,
                 string factoryName,
-                MotionClipInvocationContext? parameters)
+                MotionClipInvocationContext? parameters,
+                MotionStaggerNode? stagger = null,
+                XElement? staggerTarget = null)
             {
                 Syntax = syntax;
                 Properties = properties;
                 ExecutionName = executionName;
                 FactoryName = factoryName;
                 Parameters = parameters;
+                Stagger = stagger;
+                StaggerTarget = staggerTarget;
             }
 
             public MotionAnimateNode Syntax { get; }
@@ -149,6 +153,10 @@ public sealed partial class UiMarkupGenerator
             public string FactoryName { get; }
 
             public MotionClipInvocationContext? Parameters { get; }
+
+            public MotionStaggerNode? Stagger { get; }
+
+            public XElement? StaggerTarget { get; }
         }
 
         private sealed class ResolvedMotionComposition
@@ -208,13 +216,15 @@ public sealed partial class UiMarkupGenerator
                 MotionAssignmentSyntax? source,
                 XElement targetElement,
                 PropertySpec property,
-                string? specVariable)
+                string? specVariable,
+                ResolvedMotionKeyframesSpec? keyframes = null)
             {
                 Destination = destination;
                 Source = source;
                 TargetElement = targetElement;
                 Property = property;
                 SpecVariable = specVariable;
+                Keyframes = keyframes;
             }
 
             public MotionAssignmentSyntax Destination { get; }
@@ -226,6 +236,40 @@ public sealed partial class UiMarkupGenerator
             public PropertySpec Property { get; }
 
             public string? SpecVariable { get; }
+
+            public ResolvedMotionKeyframesSpec? Keyframes { get; }
+        }
+
+        private sealed class ResolvedMotionKeyframesSpec
+        {
+            public ResolvedMotionKeyframesSpec(MotionDurationSyntax duration, IReadOnlyList<ResolvedMotionKeyframe> frames)
+            {
+                Duration = duration;
+                Frames = frames;
+            }
+
+            public MotionDurationSyntax Duration { get; }
+
+            public IReadOnlyList<ResolvedMotionKeyframe> Frames { get; }
+        }
+
+        private sealed class ResolvedMotionKeyframe
+        {
+            public ResolvedMotionKeyframe(float offset, MotionValueSyntax value, string easingCode, bool hold = false)
+            {
+                Offset = offset;
+                Value = value;
+                EasingCode = easingCode;
+                Hold = hold;
+            }
+
+            public float Offset { get; }
+
+            public MotionValueSyntax Value { get; }
+
+            public string EasingCode { get; }
+
+            public bool Hold { get; }
         }
 
         private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionAspect> resolvedMotionAspects = new();
@@ -267,6 +311,23 @@ public sealed partial class UiMarkupGenerator
 
                 arguments.Add(durationCode);
                 arguments.Add("global::Cerneala.UI.Motion.Specs.Easings." + easing);
+
+                string delay = resource.Attribute("Delay")?.Value.Trim() ?? "0ms";
+                if (!TryBuildNonNegativeDurationExpression(delay, out string delayCode))
+                {
+                    Report(InvalidPropertyValue, (object?)resource.Attribute("Delay") ?? resource, "Tween", "Delay", delay);
+                    return;
+                }
+
+                string fillMode = resource.Attribute("FillMode")?.Value.Trim() ?? "Both";
+                if (fillMode is not ("None" or "Backwards" or "Forwards" or "Both"))
+                {
+                    Report(InvalidPropertyValue, (object?)resource.Attribute("FillMode") ?? resource, "Tween", "FillMode", fillMode);
+                    return;
+                }
+
+                arguments.Add(delayCode);
+                arguments.Add("global::Cerneala.UI.Motion.Specs.FillMode." + fillMode);
             }
             else
             {
@@ -288,6 +349,32 @@ public sealed partial class UiMarkupGenerator
 
                     arguments.Add(value.ToString("R", CultureInfo.InvariantCulture) + "f");
                 }
+
+                foreach ((string attributeName, float defaultValue) in new[]
+                {
+                    ("RestSpeed", 0.01f),
+                    ("RestDelta", 0.01f)
+                })
+                {
+                    string text = resource.Attribute(attributeName)?.Value.Trim() ?? defaultValue.ToString("R", CultureInfo.InvariantCulture);
+                    if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) ||
+                        float.IsNaN(value) || float.IsInfinity(value) || value < 0)
+                    {
+                        Report(InvalidPropertyValue, (object?)resource.Attribute(attributeName) ?? resource, "Spring", attributeName, text);
+                        return;
+                    }
+
+                    arguments.Add(value.ToString("R", CultureInfo.InvariantCulture) + "f");
+                }
+
+                string velocityMode = resource.Attribute("VelocityMode")?.Value.Trim() ?? "Preserve";
+                if (velocityMode is not ("Preserve" or "Reset"))
+                {
+                    Report(InvalidPropertyValue, (object?)resource.Attribute("VelocityMode") ?? resource, "Spring", "VelocityMode", velocityMode);
+                    return;
+                }
+
+                arguments.Add("global::Cerneala.UI.Motion.Specs.SpringVelocityMode." + velocityMode);
             }
 
             MotionSpecResource spec = new(name, resource.Name.LocalName, arguments, resource);
@@ -595,6 +682,27 @@ public sealed partial class UiMarkupGenerator
                 return true;
             }
 
+            if (execution is MotionKeyframesNode keyframes)
+            {
+                return TryResolveMotionKeyframes(
+                    applicationElement,
+                    aspect,
+                    keyframes,
+                    animations,
+                    parameters);
+            }
+
+            if (execution is MotionStaggerNode stagger)
+            {
+                if (!TryResolveMotionStagger(applicationElement, aspect, stagger, parameters, out ResolvedMotionAnimation? resolved))
+                {
+                    return false;
+                }
+
+                animations.Add(resolved!);
+                return true;
+            }
+
             if (execution is MotionRunNode run)
             {
                 if (!TryResolveResource(run.Source, run.ClipName, out NamedSymbol symbol) ||
@@ -668,6 +776,279 @@ public sealed partial class UiMarkupGenerator
                 composition.Children.Select(child => motionExecutionFactoryNames[child]).ToArray(),
                 executionName,
                 factoryName));
+            return true;
+        }
+
+        private bool TryResolveMotionStagger(
+            XElement applicationElement,
+            AspectResource aspect,
+            MotionStaggerNode stagger,
+            MotionClipInvocationContext? parameters,
+            out ResolvedMotionAnimation? resolved)
+        {
+            resolved = null;
+            XElement? collectionElement = applicationElement.DescendantsAndSelf()
+                .FirstOrDefault(element => string.Equals(element.Attribute("Name")?.Value, stagger.TargetPart, StringComparison.Ordinal));
+            if (collectionElement is null && aspect.Template is not null &&
+                templateParts.TryGetValue(aspect.Template, out IReadOnlyDictionary<string, XElement>? declaredParts))
+            {
+                declaredParts.TryGetValue(stagger.TargetPart, out collectionElement);
+            }
+
+            if (collectionElement is null)
+            {
+                Report(InvalidDirective, stagger.Source, Path.GetFileName(file.Path), "Stagger target part '" + stagger.TargetPart + "' is not available at this application site.");
+                return false;
+            }
+
+            MotionAnimateNode animation = stagger.Animation;
+            if (!ValidateMotionOptions(animation.Options, parameters) || !IsTweenMotionSpec(animation.DefaultSpec))
+            {
+                Report(InvalidDirective, animation.Source, Path.GetFileName(file.Path), "@stagger supports exactly one Tween-based @animate.");
+                return false;
+            }
+
+            INamedTypeSymbol? itemType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
+            if (itemType is null)
+            {
+                Report(InvalidDirective, stagger.Source, Path.GetFileName(file.Path), "Stagger item type UIElement could not be resolved.");
+                return false;
+            }
+
+            Dictionary<string, MotionAssignmentSyntax> sources = animation.From
+                .GroupBy(item => item.Target, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+            List<ResolvedMotionProperty> properties = [];
+            foreach (MotionAssignmentSyntax destination in animation.To)
+            {
+                if (destination.Target.StartsWith("$part.", StringComparison.Ordinal) || destination.Spec is not null && !IsTweenMotionSpec(destination.Spec))
+                {
+                    Report(InvalidDirective, destination.Location, Path.GetFileName(file.Path), "Stagger assignments must target the current item and use Tween specs.");
+                    return false;
+                }
+
+                PropertySpec? property = FindPropertySpec(itemType, destination.Target);
+                if (property is null || !property.Assignable || !HasBuiltInMixer(property.ValueType))
+                {
+                    Report(InvalidDirective, destination.Location, Path.GetFileName(file.Path), "Stagger property '" + destination.Target + "' is not animatable on UIElement.");
+                    return false;
+                }
+
+                MotionAssignmentSyntax? source = sources.TryGetValue(destination.Target, out MotionAssignmentSyntax? matched) ? matched : null;
+                if (!ValidateMotionValue(destination.Value, property, destination.Target, parameters) ||
+                    source is not null && !ValidateMotionValue(source.Value, property, source.Target, parameters))
+                {
+                    return false;
+                }
+
+                MotionSpecSyntax spec = destination.Spec ?? animation.DefaultSpec!;
+                if (!TryResolveMotionSpec(applicationElement, spec, property, destination.Target, parameters, out string? specVariable))
+                {
+                    return false;
+                }
+
+                properties.Add(new ResolvedMotionProperty(destination, source, collectionElement, property, specVariable));
+            }
+
+            (string executionName, string factoryName) = CreateMotionExecutionNames();
+            motionExecutionFactoryNames[stagger] = factoryName;
+            resolved = new ResolvedMotionAnimation(animation, properties, executionName, factoryName, parameters, stagger, collectionElement);
+            return true;
+        }
+
+        private bool IsTweenMotionSpec(MotionSpecSyntax? syntax)
+        {
+            if (syntax is MotionInlineSpecSyntax inline)
+            {
+                return inline.Kind == "Tween";
+            }
+
+            return syntax is MotionResourceSpecSyntax resourceReference &&
+                TryResolveResource(resourceReference.Location.Source, resourceReference.Name, out NamedSymbol symbol) &&
+                symbol.Source is MotionSpecResource { Kind: "Tween" };
+        }
+
+        private bool TryResolveMotionKeyframes(
+            XElement applicationElement,
+            AspectResource aspect,
+            MotionKeyframesNode timeline,
+            ICollection<ResolvedMotionAnimation> animations,
+            MotionClipInvocationContext? parameters)
+        {
+            List<(MotionKeyframeSegmentSyntax Segment, MotionAssignmentSyntax Source, MotionAssignmentSyntax Destination)> assignments = [];
+            foreach (MotionKeyframeSegmentSyntax segment in timeline.Segments)
+            {
+                MotionAnimateNode animation = segment.Animation;
+                if (animation.Options.Count > 0)
+                {
+                    Report(InvalidDirective, animation.Options[0].Location, Path.GetFileName(file.Path), "Ranged @animate options are not supported; keyframe persistence belongs to the timeline execution.");
+                    return false;
+                }
+
+                if (animation.From.Count == 0)
+                {
+                    Report(InvalidDirective, animation.Source, Path.GetFileName(file.Path), "Ranged @animate requires an explicit @from block.");
+                    return false;
+                }
+
+                Dictionary<string, MotionAssignmentSyntax> sources = animation.From
+                    .GroupBy(item => item.Target, StringComparer.Ordinal)
+                    .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+                if (sources.Count != animation.From.Count || animation.To.GroupBy(item => item.Target, StringComparer.Ordinal).Any(group => group.Count() > 1))
+                {
+                    Report(InvalidDirective, animation.Source, Path.GetFileName(file.Path), "Ranged @animate contains a duplicate target.");
+                    return false;
+                }
+
+                foreach (MotionAssignmentSyntax destination in animation.To)
+                {
+                    if (!sources.TryGetValue(destination.Target, out MotionAssignmentSyntax? source))
+                    {
+                        Report(InvalidDirective, destination.Location, Path.GetFileName(file.Path), "Every ranged @animate target requires matching @from and @to assignments.");
+                        return false;
+                    }
+
+                    if (destination.Spec is not null)
+                    {
+                        Report(InvalidDirective, destination.Spec.Location, Path.GetFileName(file.Path), "Keyframe easing belongs on the ranged @animate header, not a property assignment.");
+                        return false;
+                    }
+
+                    assignments.Add((segment, source, destination));
+                }
+            }
+
+            List<ResolvedMotionProperty> properties = [];
+            foreach (IGrouping<string, (MotionKeyframeSegmentSyntax Segment, MotionAssignmentSyntax Source, MotionAssignmentSyntax Destination)> group in
+                assignments.GroupBy(item => item.Destination.Target, StringComparer.Ordinal))
+            {
+                var ordered = group.OrderBy(item => item.Segment.Start).ThenBy(item => item.Segment.End).ToArray();
+                for (int index = 1; index < ordered.Length; index++)
+                {
+                    if (ordered[index].Segment.Start < ordered[index - 1].Segment.End)
+                    {
+                        Report(InvalidDirective, ordered[index].Destination.Location, Path.GetFileName(file.Path), "Keyframe ranges for property '" + group.Key + "' overlap.");
+                        return false;
+                    }
+                }
+
+                if (!TryResolveMotionTarget(applicationElement, aspect, ordered[0].Destination, out XElement? targetElement, out PropertySpec? property) ||
+                    !property!.Assignable || !HasBuiltInMixer(property.ValueType))
+                {
+                    if (property is not null && (!property.Assignable || !HasBuiltInMixer(property.ValueType)))
+                    {
+                        Report(InvalidDirective, ordered[0].Destination.Location, Path.GetFileName(file.Path), "Motion property '" + group.Key + "' is not animatable.");
+                    }
+
+                    return false;
+                }
+
+                List<ResolvedMotionKeyframe> frames = [];
+                MotionValueSyntax? previousValue = null;
+                foreach (var item in ordered)
+                {
+                    if (!ValidateMotionValue(item.Source.Value, property, group.Key, parameters) ||
+                        !ValidateMotionValue(item.Destination.Value, property, group.Key, parameters) ||
+                        item.Source.Value is MotionCurrentValueSyntax || item.Destination.Value is MotionCurrentValueSyntax)
+                    {
+                        if (item.Source.Value is MotionCurrentValueSyntax || item.Destination.Value is MotionCurrentValueSyntax)
+                        {
+                            Report(InvalidDirective, item.Source.Location, Path.GetFileName(file.Path), "Keyframe values must be deterministic; 'current' is not allowed.");
+                        }
+
+                        return false;
+                    }
+
+                    if (!TryResolveKeyframeEasing(item.Segment.Animation.DefaultSpec, out string easingCode))
+                    {
+                        return false;
+                    }
+
+                    if (frames.Count == 0 && item.Segment.Start > 0)
+                    {
+                        frames.Add(new ResolvedMotionKeyframe(0, item.Source.Value, "global::Cerneala.UI.Motion.Specs.Easings.Linear"));
+                    }
+                    else if (frames.Count > 0 && item.Segment.Start > frames[frames.Count - 1].Offset)
+                    {
+                        frames.Add(new ResolvedMotionKeyframe(item.Segment.Start, previousValue!, "global::Cerneala.UI.Motion.Specs.Easings.Linear"));
+                    }
+
+                    frames.Add(new ResolvedMotionKeyframe(item.Segment.Start, item.Source.Value, easingCode, item.Segment.Hold));
+                    frames.Add(new ResolvedMotionKeyframe(item.Segment.End, item.Destination.Value, "global::Cerneala.UI.Motion.Specs.Easings.Linear"));
+                    previousValue = item.Destination.Value;
+                }
+
+                if (frames[frames.Count - 1].Offset < 1)
+                {
+                    frames.Add(new ResolvedMotionKeyframe(1, previousValue!, "global::Cerneala.UI.Motion.Specs.Easings.Linear"));
+                }
+
+                properties.Add(new ResolvedMotionProperty(
+                    ordered[ordered.Length - 1].Destination,
+                    ordered[0].Source,
+                    targetElement!,
+                    property,
+                    null,
+                    new ResolvedMotionKeyframesSpec(timeline.Duration, frames)));
+            }
+
+            MotionAnimateNode synthetic = new(
+                null,
+                [],
+                properties.Select(item => item.Source!).ToArray(),
+                properties.Select(item => item.Destination).ToArray(),
+                timeline.Source);
+            (string executionName, string factoryName) = CreateMotionExecutionNames();
+            motionExecutionFactoryNames[timeline] = factoryName;
+            animations.Add(new ResolvedMotionAnimation(synthetic, properties, executionName, factoryName, parameters));
+            return true;
+        }
+
+        private bool TryResolveKeyframeEasing(MotionSpecSyntax? syntax, out string easingCode)
+        {
+            easingCode = "global::Cerneala.UI.Motion.Specs.Easings.Linear";
+            if (syntax is null)
+            {
+                return true;
+            }
+
+            string? easing = null;
+            if (syntax is MotionParameterSpecSyntax named)
+            {
+                easing = named.Name;
+            }
+            else if (syntax is MotionResourceSpecSyntax resourceReference &&
+                TryResolveResource(resourceReference.Location.Source, resourceReference.Name, out NamedSymbol symbol) &&
+                symbol.Source is MotionSpecResource resource && resource.Kind == "Tween")
+            {
+                easingCode = resource.Arguments[1];
+                return true;
+            }
+            else if (syntax is MotionInlineSpecSyntax inline && inline.Kind == "Tween")
+            {
+                easing = inline.Arguments.Count == 2 ? inline.Arguments[1].Text : "Standard";
+            }
+            else if (syntax is MotionInlineSpecSyntax step && step.Kind == "Step")
+            {
+                string position = step.Arguments.Count == 2 ? step.Arguments[1].Text : "JumpEnd";
+                easingCode = "new global::Cerneala.UI.Motion.Specs.StepEasing(" + step.Arguments[0].Text +
+                    ", global::Cerneala.UI.Motion.Specs.StepPosition." + position + ")";
+                return true;
+            }
+            else
+            {
+                string kind = syntax is MotionInlineSpecSyntax rejected ? rejected.Kind : "resource";
+                Report(InvalidDirective, syntax.Location, Path.GetFileName(file.Path), kind + " is not supported inside @keyframes; use a Tween easing.");
+                return false;
+            }
+
+            if (!IsKnownEasing(easing!))
+            {
+                Report(InvalidDirective, syntax.Location, Path.GetFileName(file.Path), "Unknown keyframe easing '" + easing + "'.");
+                return false;
+            }
+
+            easingCode = "global::Cerneala.UI.Motion.Specs.Easings." + easing;
             return true;
         }
 
@@ -927,6 +1308,12 @@ public sealed partial class UiMarkupGenerator
 
             foreach (ResolvedMotionAnimation animation in resolved.Animations)
             {
+                if (animation.Stagger is not null)
+                {
+                    EmitMotionStaggerActivation(animation, sessionName);
+                    continue;
+                }
+
                 List<string> starts = [];
                 foreach (ResolvedMotionProperty property in animation.Properties)
                 {
@@ -943,6 +1330,21 @@ public sealed partial class UiMarkupGenerator
                         ? "default(" + typeCode + ")!"
                         : EmitMotionValue(property.Destination.Value, property.Property, targetCode, animation.Parameters);
                     string specCode = property.SpecVariable ?? "null";
+                    if (property.Keyframes is not null)
+                    {
+                        specCode = "motionKeyframesSpec" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
+                        nextReactiveId++;
+                        string framesCode = string.Join(", ", property.Keyframes.Frames.Select(frame =>
+                            "new global::Cerneala.UI.Motion.Specs.MotionKeyframe<" + typeCode + ">(" +
+                            frame.Offset.ToString("R", CultureInfo.InvariantCulture) + "f, " +
+                            EmitMotionValue(frame.Value, property.Property, targetCode, animation.Parameters) + ", " +
+                            frame.EasingCode + ", " + (frame.Hold ? "true" : "false") + ")"));
+                        currentPostLines.Add(
+                            "global::Cerneala.UI.Motion.Specs.MotionSpec<" + typeCode + "> " + specCode +
+                            " = new global::Cerneala.UI.Motion.Specs.KeyframesSpec<" + typeCode + ">(" +
+                            "new global::Cerneala.UI.Motion.Specs.MotionKeyframe<" + typeCode + ">[] { " + framesCode + " }, " +
+                            BuildDurationExpression(property.Keyframes.Duration) + ");");
+                    }
                     string optionsCode = EmitMotionOptions(animation.Syntax.Options, animation.Parameters);
                     starts.Add(
                         "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
@@ -1011,6 +1413,62 @@ public sealed partial class UiMarkupGenerator
                     ", () => " + variable + "." + trigger.EventSymbol.Name + " += " + handlerName +
                     ", () => " + variable + "." + trigger.EventSymbol.Name + " -= " + handlerName + ");");
             }
+        }
+
+        private void EmitMotionStaggerActivation(ResolvedMotionAnimation animation, string sessionName)
+        {
+            string suffix = nextReactiveId.ToString(CultureInfo.InvariantCulture);
+            nextReactiveId++;
+            string snapshotName = "motionStaggerItems" + suffix;
+            string staggerName = "motionStagger" + suffix;
+            string factoriesName = "motionStaggerFactories" + suffix;
+            string indexName = "motionStaggerIndex" + suffix;
+            string itemName = "motionStaggerItem" + suffix;
+            string delayName = "motionStaggerDelay" + suffix;
+            string collectionName = CreateIdentifier(animation.StaggerTarget!.Attribute("Name")!.Value);
+            List<string> starts = [];
+
+            foreach (ResolvedMotionProperty property in animation.Properties)
+            {
+                string typeCode = property.Property.ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                bool hasFrom = property.Source is not null && property.Source.Value is not MotionCurrentValueSyntax;
+                string fromCode = hasFrom
+                    ? EmitMotionValue(property.Source!.Value, property.Property, itemName, animation.Parameters)
+                    : "default(" + typeCode + ")!";
+                bool toCurrent = property.Destination.Value is MotionCurrentValueSyntax;
+                string toCode = toCurrent
+                    ? "default(" + typeCode + ")!"
+                    : EmitMotionValue(property.Destination.Value, property.Property, itemName, animation.Parameters);
+                string tweenCode = "((global::Cerneala.UI.Motion.Specs.TweenSpec<" + typeCode + ">)" + property.SpecVariable + ")";
+                string delayedSpecCode = tweenCode + ".WithDelay(" + tweenCode + ".Delay + " + delayName + ")";
+                string optionsCode = EmitMotionOptions(animation.Syntax.Options, animation.Parameters);
+                string start =
+                    "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
+                    itemName + ", " + property.Property.PropertyCode + ", " +
+                    (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
+                    (toCurrent ? "true" : "false") + ", " + toCode + ", " + delayedSpecCode + ", " + optionsCode + ")";
+                starts.Add("() => global::Cerneala.UI.Markup.MarkupMotionExecution.From(" + start + ")");
+            }
+
+            string factoryBody =
+                "() => { " +
+                "global::System.Collections.Generic.List<global::Cerneala.UI.Elements.UIElement> " + snapshotName +
+                " = new global::System.Collections.Generic.List<global::Cerneala.UI.Elements.UIElement>(" + collectionName + ".VisualChildren); " +
+                "global::Cerneala.UI.Motion.Core.MotionStagger " + staggerName +
+                " = new global::Cerneala.UI.Motion.Core.MotionStagger(" + BuildDurationExpression(animation.Stagger!.Each) + "); " +
+                "global::System.Collections.Generic.List<global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution>> " + factoriesName +
+                " = new global::System.Collections.Generic.List<global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution>>(" + snapshotName + ".Count); " +
+                "for (int " + indexName + " = 0; " + indexName + " < " + snapshotName + ".Count; " + indexName + "++) { " +
+                "global::Cerneala.UI.Elements.UIElement " + itemName + " = " + snapshotName + "[" + indexName + "]; " +
+                "global::System.TimeSpan " + delayName + " = " + staggerName + ".GetDelay(" + indexName + "); " +
+                factoriesName + ".Add(() => global::Cerneala.UI.Markup.MarkupMotionExecution.Parallel(" + string.Join(", ", starts) + ")); } " +
+                "return global::Cerneala.UI.Markup.MarkupMotionExecution.Parallel(" + factoriesName + ".ToArray()); }";
+            currentPostLines.Add(
+                "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + animation.FactoryName + " = " + factoryBody + ";");
+            currentPostLines.Add(
+                "global::System.Action " + animation.ExecutionName +
+                " = () => global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionExecution(" + sessionName +
+                ", " + animation.FactoryName + ");");
         }
 
         private string EmitMotionValue(
@@ -1340,7 +1798,10 @@ public sealed partial class UiMarkupGenerator
             }
 
             string typeCode = property.ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            string expression = "new global::Cerneala.UI.Motion.Specs." + kind + "Spec<" + typeCode + ">(" + string.Join(", ", arguments) + ")";
+            string expression = kind is "Repeat" or "PingPong"
+                ? "new global::Cerneala.UI.Motion.Specs." + kind + "Spec<" + typeCode + ">(" +
+                    "new global::Cerneala.UI.Motion.Specs.TweenSpec<" + typeCode + ">(" + arguments[0] + ", " + arguments[1] + "), " + arguments[2] + ")"
+                : "new global::Cerneala.UI.Motion.Specs." + kind + "Spec<" + typeCode + ">(" + string.Join(", ", arguments) + ")";
             string key = typeCode + "|" + expression;
             if (!specializedMotionSpecs.TryGetValue(key, out variable))
             {
@@ -1368,6 +1829,24 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 result.Add("global::Cerneala.UI.Motion.Specs.Easings." + easing);
+            }
+            else if (inline.Kind is "Repeat" or "PingPong")
+            {
+                MotionInlineSpecSyntax inner = (MotionInlineSpecSyntax)DirectiveCursor.ParseMotionSpec(
+                    inline.Arguments[0].Text,
+                    inline.Arguments[0].Location);
+                MotionDurationSyntax duration = inner.Arguments[0].Duration!;
+                string easing = inner.Arguments.Count == 2 ? inner.Arguments[1].Text : "Standard";
+                if (!IsKnownEasing(easing))
+                {
+                    Report(InvalidDirective, inner.Location, Path.GetFileName(file.Path), "Unknown easing '" + easing + "'.");
+                    arguments = [];
+                    return false;
+                }
+
+                result.Add(BuildDurationExpression(duration));
+                result.Add("global::Cerneala.UI.Motion.Specs.Easings." + easing);
+                result.Add(inline.Arguments[1].Text == "forever" ? "null" : inline.Arguments[1].Text);
             }
             else
             {
@@ -1398,6 +1877,16 @@ public sealed partial class UiMarkupGenerator
 
         private static bool TryBuildDurationExpression(string text, out string expression)
         {
+            return TryBuildDurationExpression(text, allowZero: false, out expression);
+        }
+
+        private static bool TryBuildNonNegativeDurationExpression(string text, out string expression)
+        {
+            return TryBuildDurationExpression(text, allowZero: true, out expression);
+        }
+
+        private static bool TryBuildDurationExpression(string text, bool allowZero, out string expression)
+        {
             expression = string.Empty;
             string unit;
             string number;
@@ -1417,7 +1906,7 @@ public sealed partial class UiMarkupGenerator
             }
 
             if (!double.TryParse(number, NumberStyles.Float, CultureInfo.InvariantCulture, out double value) ||
-                double.IsNaN(value) || double.IsInfinity(value) || value <= 0)
+                double.IsNaN(value) || double.IsInfinity(value) || (allowZero ? value < 0 : value <= 0))
             {
                 return false;
             }

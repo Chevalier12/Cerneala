@@ -338,6 +338,86 @@ public sealed class MotionSpecTests
     }
 
     [Fact]
+    public void KeyframesRetainSyntheticBoundaryValueAcrossGap()
+    {
+        KeyframesSpec<float> spec = MotionFactory.Keyframes(
+            new MotionKeyframe<float>(0, 0),
+            new MotionKeyframe<float>(0.25f, 10),
+            new MotionKeyframe<float>(0.75f, 10),
+            new MotionKeyframe<float>(1, 20));
+        MotionSampler<float> sampler = spec.CreateSampler(0, 20, new FloatMixer(), Context());
+
+        sampler.Advance(TimeSpan.FromMilliseconds(250));
+        Assert.Equal(10, sampler.Current);
+        sampler.Advance(TimeSpan.FromMilliseconds(250));
+        Assert.Equal(10, sampler.Current);
+        sampler.Advance(TimeSpan.FromMilliseconds(250));
+        Assert.Equal(10, sampler.Current);
+    }
+
+    [Fact]
+    public void KeyframesDuplicateOffsetsJumpImmediatelyAfterSharedBoundary()
+    {
+        KeyframesSpec<float> spec = MotionFactory.Keyframes(
+            new MotionKeyframe<float>(0, 0),
+            new MotionKeyframe<float>(0.5f, 10),
+            new MotionKeyframe<float>(0.5f, 20),
+            new MotionKeyframe<float>(1, 30));
+        MotionSampler<float> sampler = spec.CreateSampler(0, 30, new FloatMixer(), Context());
+
+        sampler.Advance(TimeSpan.FromMilliseconds(500));
+        Assert.Equal(10, sampler.Current);
+        sampler.Advance(TimeSpan.FromTicks(1));
+        Assert.True(sampler.Current >= 20);
+    }
+
+    [Fact]
+    public void KeyframesHoldKeepsStartValueUntilSegmentEnd()
+    {
+        KeyframesSpec<float> spec = MotionFactory.Keyframes(
+            new MotionKeyframe<float>(0, 4, Hold: true),
+            new MotionKeyframe<float>(1, 12));
+        MotionSampler<float> sampler = spec.CreateSampler(4, 12, new FloatMixer(), Context());
+
+        sampler.Advance(TimeSpan.FromMilliseconds(999));
+        Assert.Equal(4, sampler.Current);
+        sampler.Advance(TimeSpan.FromMilliseconds(1));
+        Assert.Equal(12, sampler.Current);
+        Assert.True(sampler.IsComplete);
+    }
+
+    [Theory]
+    [InlineData(StepPosition.JumpStart, 0.25f)]
+    [InlineData(StepPosition.JumpEnd, 0f)]
+    [InlineData(StepPosition.JumpBoth, 0.2f)]
+    [InlineData(StepPosition.JumpNone, 0f)]
+    public void KeyframesApplyStepEasingAtSegmentStart(StepPosition position, float expected)
+    {
+        KeyframesSpec<float> spec = MotionFactory.Keyframes(
+            new MotionKeyframe<float>(0, 0, new StepEasing(4, position)),
+            new MotionKeyframe<float>(1, 1));
+        MotionSampler<float> sampler = spec.CreateSampler(0, 1, new FloatMixer(), Context());
+
+        sampler.Advance(TimeSpan.FromTicks(1));
+
+        Assert.Equal(expected, sampler.Current, precision: 3);
+    }
+
+    [Fact]
+    public void KeyframesOvershootCompletesAtFinalFrameValue()
+    {
+        KeyframesSpec<float> spec = MotionFactory.Keyframes(
+            new MotionKeyframe<float>(0, -5),
+            new MotionKeyframe<float>(1, 25));
+        MotionSampler<float> sampler = spec.CreateSampler(100, 200, new FloatMixer(), Context());
+
+        sampler.Advance(spec.Duration + TimeSpan.FromSeconds(1));
+
+        Assert.Equal(25, sampler.Current);
+        Assert.True(sampler.IsComplete);
+    }
+
+    [Fact]
     public void UntypedMotionFactoryPreservesInnerExceptionStackTrace()
     {
         MotionSpec spec = MotionFactory.Tween(TimeSpan.FromMilliseconds(100));

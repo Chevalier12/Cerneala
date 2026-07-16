@@ -369,6 +369,28 @@ public sealed partial class UiMarkupGenerator
                     continue;
                 }
 
+                if (StartsWith("@keyframes"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
+                    {
+                        throw Error("@keyframes is allowed only inside an Aspect execution body.");
+                    }
+
+                    nodes.Add(ParseKeyframes());
+                    continue;
+                }
+
+                if (StartsWith("@stagger"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
+                    {
+                        throw Error("@stagger is allowed only inside an Aspect execution body.");
+                    }
+
+                    nodes.Add(ParseStagger());
+                    continue;
+                }
+
                 if (StartsWith("@parallel"))
                 {
                     if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
@@ -723,7 +745,22 @@ public sealed partial class UiMarkupGenerator
             XObject source = CurrentSource;
             Consume("@animate");
             DirectiveHeader header = ReadHeaderUntilBrace();
+            if (string.Equals(header.Text.Trim(), "hold", StringComparison.Ordinal))
+            {
+                throw new DirectiveParseException("hold and Step(...) are allowed only inside @keyframes.", source);
+            }
+
             MotionSpecSyntax? defaultSpec = ParseAnimateSpec(header);
+            if (defaultSpec is MotionInlineSpecSyntax inline && inline.Kind == "Step")
+            {
+                throw new DirectiveParseException("hold and Step(...) are allowed only inside @keyframes.", source);
+            }
+
+            return ParseAnimateBody(source, defaultSpec);
+        }
+
+        private MotionAnimateNode ParseAnimateBody(XObject source, MotionSpecSyntax? defaultSpec)
+        {
             List<MotionOptionSyntax> options = [];
             IReadOnlyList<MotionAssignmentSyntax>? from = null;
             IReadOnlyList<MotionAssignmentSyntax>? to = null;
@@ -788,6 +825,176 @@ public sealed partial class UiMarkupGenerator
             }
 
             return new MotionAnimateNode(defaultSpec, options, from ?? [], to, source);
+        }
+
+        private MotionKeyframesNode ParseKeyframes()
+        {
+            XObject source = CurrentSource;
+            Consume("@keyframes");
+            DirectiveHeader header = ReadHeaderUntilBrace();
+            string text = header.Text.Trim();
+            if (!text.StartsWith("duration", StringComparison.Ordinal) ||
+                (text.Length > 8 && !char.IsWhiteSpace(text[8])))
+            {
+                throw new DirectiveParseException(
+                    "@keyframes requires 'duration <positive duration>'.",
+                    new DirectiveExpressionLocation(header.Source, header.Offset));
+            }
+
+            string durationText = text.Substring(8).Trim();
+            MotionDurationSyntax? duration = TryParseDuration(
+                durationText,
+                new DirectiveExpressionLocation(header.Source, header.Offset + header.Text.IndexOf(durationText, StringComparison.Ordinal)));
+            if (duration is null || duration.Value <= 0)
+            {
+                throw new DirectiveParseException("@keyframes duration must be positive.", source);
+            }
+
+            List<MotionKeyframeSegmentSyntax> segments = [];
+            while (true)
+            {
+                SkipWhitespace();
+                if (AtEnd)
+                {
+                    throw new DirectiveParseException("Missing closing '}' for @keyframes.", source);
+                }
+
+                if (Peek() == '}')
+                {
+                    Read();
+                    break;
+                }
+
+                if (!StartsWith("@animate"))
+                {
+                    throw Error("@keyframes accepts only ranged @animate children; nested groups are not allowed.");
+                }
+
+                XObject animationSource = CurrentSource;
+                Consume("@animate");
+                DirectiveHeader animationHeader = ReadHeaderUntilBrace();
+                ParseKeyframeRangeHeader(animationHeader, out float start, out float end, out bool hold, out MotionSpecSyntax? spec);
+                segments.Add(new MotionKeyframeSegmentSyntax(start, end, hold, ParseAnimateBody(animationSource, spec)));
+            }
+
+            if (segments.Count == 0)
+            {
+                throw new DirectiveParseException("@keyframes requires at least one ranged @animate child.", source);
+            }
+
+            return new MotionKeyframesNode(duration, segments, source);
+        }
+
+        private MotionStaggerNode ParseStagger()
+        {
+            XObject source = CurrentSource;
+            Consume("@stagger");
+            DirectiveHeader header = ReadHeaderUntilBrace();
+            string[] parts = header.Text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 4 || parts[0] != "target" || parts[2] != "each" ||
+                !parts[1].StartsWith("$part.", StringComparison.Ordinal) || !IsIdentifier(parts[1].Substring(6)))
+            {
+                throw new DirectiveParseException("@stagger requires 'target $part.Name each <duration>'.", source);
+            }
+
+            MotionDurationSyntax? each = TryParseDuration(parts[3], new DirectiveExpressionLocation(header.Source, header.Offset));
+            if (each is null || each.Value < 0)
+            {
+                throw new DirectiveParseException("@stagger each duration must be non-negative.", source);
+            }
+
+            SkipWhitespace();
+            if (!StartsWith("@animate"))
+            {
+                throw new DirectiveParseException("@stagger requires exactly one Tween @animate child.", source);
+            }
+
+            XObject animationSource = CurrentSource;
+            Consume("@animate");
+            DirectiveHeader animationHeader = ReadHeaderUntilBrace();
+            MotionSpecSyntax? spec = ParseAnimateSpec(animationHeader);
+            if (spec is not MotionResourceSpecSyntax && spec is not MotionInlineSpecSyntax { Kind: "Tween" })
+            {
+                throw new DirectiveParseException("@stagger requires exactly one Tween @animate child.", animationSource);
+            }
+
+            MotionAnimateNode animation = ParseAnimateBody(animationSource, spec);
+            SkipWhitespace();
+            if (AtEnd || Peek() != '}')
+            {
+                throw new DirectiveParseException("@stagger requires exactly one Tween @animate child.", source);
+            }
+
+            Read();
+            return new MotionStaggerNode(parts[1].Substring(6), each, animation, source);
+        }
+
+        private static void ParseKeyframeRangeHeader(
+            DirectiveHeader header,
+            out float start,
+            out float end,
+            out bool hold,
+            out MotionSpecSyntax? spec)
+        {
+            string text = header.Text.Trim();
+            int with = FindTopLevelKeyword(text, "with");
+            string rangeAndHold = (with < 0 ? text : text.Substring(0, with)).Trim();
+            string[] headerParts = rangeAndHold.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            hold = headerParts.Length == 2 && string.Equals(headerParts[1], "hold", StringComparison.Ordinal);
+            if (headerParts.Length is < 1 or > 2 || headerParts.Length == 2 && !hold)
+            {
+                throw new DirectiveParseException("Ranged @animate accepts only an optional 'hold' before 'with'.", header.Source);
+            }
+
+            string range = headerParts[0];
+            string[] bounds = range.Split(new[] { ".." }, StringSplitOptions.None);
+            if (bounds.Length != 2 || !TryParsePercentage(bounds[0], out start) || !TryParsePercentage(bounds[1], out end))
+            {
+                throw new DirectiveParseException(
+                    "Ranged @animate requires 'start%..end%'.",
+                    new DirectiveExpressionLocation(header.Source, header.Offset));
+            }
+
+            if (start < 0 || end > 1)
+            {
+                throw new DirectiveParseException("Keyframe range must be contained in 0%..100%.", header.Source);
+            }
+
+            if (start > end)
+            {
+                throw new DirectiveParseException("Keyframe range must be ordered.", header.Source);
+            }
+
+            if (start == end)
+            {
+                throw new DirectiveParseException("Keyframe range must be non-empty.", header.Source);
+            }
+
+            if (with < 0)
+            {
+                spec = null;
+                return;
+            }
+
+            string specText = text.Substring(with + 4).Trim();
+            spec = ParseMotionSpec(
+                specText,
+                new DirectiveExpressionLocation(header.Source, header.Offset + with + 4));
+        }
+
+        private static bool TryParsePercentage(string text, out float value)
+        {
+            text = text.Trim();
+            if (!text.EndsWith("%", StringComparison.Ordinal) ||
+                !float.TryParse(text.Substring(0, text.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out float percentage) ||
+                float.IsNaN(percentage) || float.IsInfinity(percentage))
+            {
+                value = 0;
+                return false;
+            }
+
+            value = percentage / 100f;
+            return true;
         }
 
         private IReadOnlyList<MotionAssignmentSyntax> ParseMotionAssignmentBlock(string directive)
@@ -1230,7 +1437,7 @@ public sealed partial class UiMarkupGenerator
             }
 
             string kind = text.Substring(0, open).Trim();
-            if (kind is not "Tween" and not "Spring")
+            if (kind is not "Tween" and not "Spring" and not "Step" and not "Repeat" and not "PingPong")
             {
                 throw new DirectiveParseException("Unsupported inline Motion spec '" + kind + "'.", location);
             }
@@ -1264,6 +1471,22 @@ public sealed partial class UiMarkupGenerator
                 arguments.Add(new MotionSpecArgumentSyntax(argument, duration, argumentLocation));
             }
 
+            if (kind is "Repeat" or "PingPong")
+            {
+                if (arguments.Count != 2 ||
+                    !IsInlineTweenSpec(arguments[0]))
+                {
+                    throw new DirectiveParseException(kind + " requires Tween(...) as its first argument.", location);
+                }
+
+                bool validCount = kind == "Repeat" && arguments[1].Text == "forever" ||
+                    int.TryParse(arguments[1].Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int count) && count > 0;
+                if (!validCount || kind == "PingPong" && arguments[1].Text == "forever")
+                {
+                    throw new DirectiveParseException(kind + " requires a positive finite count" + (kind == "Repeat" ? " or forever" : string.Empty) + ".", arguments[1].Location);
+                }
+            }
+
             if (kind == "Tween")
             {
                 if (arguments.Count is < 1 or > 2 || arguments[0].Duration is null)
@@ -1276,8 +1499,31 @@ public sealed partial class UiMarkupGenerator
                     throw new DirectiveParseException("Tween easing must be a named easing.", arguments[1].Location);
                 }
             }
+            else if (kind == "Step")
+            {
+                if (arguments.Count is < 1 or > 2 ||
+                    !int.TryParse(arguments[0].Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int steps) ||
+                    steps <= 0 ||
+                    arguments.Count == 2 && arguments[1].Text is not "JumpStart" and not "JumpEnd" and not "JumpBoth" and not "JumpNone" ||
+                    arguments.Count == 2 && arguments[1].Text == "JumpNone" && steps < 2)
+                {
+                    throw new DirectiveParseException("Step requires a positive count and optional JumpStart, JumpEnd, JumpBoth or JumpNone.", location);
+                }
+            }
 
             return new MotionInlineSpecSyntax(kind, arguments, location);
+        }
+
+        private static bool IsInlineTweenSpec(MotionSpecArgumentSyntax argument)
+        {
+            try
+            {
+                return ParseMotionSpec(argument.Text, argument.Location) is MotionInlineSpecSyntax { Kind: "Tween" };
+            }
+            catch (DirectiveParseException)
+            {
+                return false;
+            }
         }
 
         private static MotionDurationSyntax? TryParseDuration(string text, DirectiveExpressionLocation location)
@@ -1410,7 +1656,7 @@ public sealed partial class UiMarkupGenerator
         private static bool IsMotionDirective(string directive)
         {
             return directive is "@animate" or "@parallel" or "@sequence" or "@run" or "@cancel" or
-                "@handle" or "@parameter" or "@from" or "@to" or "@on";
+                "@keyframes" or "@stagger" or "@handle" or "@parameter" or "@from" or "@to" or "@on";
         }
 
         private static bool Allows(DirectiveContentKind allowed, DirectiveContentKind value)
