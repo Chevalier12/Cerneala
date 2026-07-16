@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="How Cerneala is maintained: support, model policy, Codex planning, implementation and bug-fixing skills, and pull request gates.">
-<title>Cerneala UI Maintainers</title>
+<meta name="description" content="How to contribute to Cerneala: ownership, support, model policy, Codex planning, implementation and bug-fixing skills, and pull request gates.">
+<title>Contributors - Cerneala UI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="maintainers.css">
+<link rel="stylesheet" href="contributors.css">
 <link rel="stylesheet" href="readability.css">
 </head>
 <body>
@@ -31,7 +31,7 @@
     <a href="wpf-compendium.html">WPF Compendium</a>
     <a href="roadmap.html">Roadmap</a>
     <a href="benchmarks.html">Benchmarks</a>
-    <a class="is-active" href="maintainers.html">Maintainers</a>
+    <a class="is-active" href="contributors.html">Contributors</a>
     <a href="about.html">About Me</a>
   </nav>
   <a class="nav__github" href="https://github.com/Chevalier12/Cerneala">GitHub</a>
@@ -40,9 +40,13 @@
 <main>
   <section class="maintainer-hero">
     <div class="maintainer-hero__copy">
-      <span class="section-code">Maintainer operations manual</span>
+      <span class="section-code">Contributor operations manual</span>
       <h1>Open source.<br><span>Machine-assisted.</span><br>Human-directed.</h1>
       <p>Cerneala is free to inspect, use, modify, and improve in public. Maintainer time is finite. Developers who need faster bug-fix attention or custom implementation work can pay for a priority lane.</p>
+      <div class="owner-strip" aria-label="Project ownership">
+        <span>OWNER &amp; SOLE MAINTAINER</span>
+        <a href="https://github.com/Chevalier12">Chevalier12</a>
+      </div>
       <div class="hero-actions">
         <a class="button button--solid" href="#contribute">Contribute with AI</a>
         <a class="button button--ghost" href="#support">Support options</a>
@@ -252,6 +256,10 @@
             <li>Keeps code, tests, API documentation, and the source plan synchronized</li>
             <li>Completes the goal only after every applicable item and gate is done</li>
           </ul>
+          <dl class="skill-metrics" aria-label="Observed implementation skill estimates">
+            <div><dt>GPT-5.6 Sol Medium / High</dt><dd>~45 min to ~2 hours per plan</dd></div>
+            <div><dt>Codex $100 plan</dt><dd>~10-15% of weekly usage per plan</dd></div>
+          </dl>
         </div>
       </article>
     </div>
@@ -297,6 +305,10 @@
             <li>Requires a RED regression test before production changes</li>
             <li>Retests the automated reproduction and finishes with the full green suite</li>
           </ul>
+          <dl class="skill-metrics skill-metrics--bugfix" aria-label="Observed bug-fix skill estimates">
+            <div><dt>Typical duration</dt><dd>~20-30 minutes per bug fix</dd></div>
+            <div><dt>Codex $100 plan</dt><dd>~5% of weekly usage per bug fix</dd></div>
+          </dl>
         </div>
       </article>
 
@@ -371,6 +383,6 @@ Do not claim that you manually tested the real application scenario. Give me the
   </section>
 </main>
 
-<script src="maintainers.js"></script>
+<script src="contributors.js"></script>
 </body>
 </html>

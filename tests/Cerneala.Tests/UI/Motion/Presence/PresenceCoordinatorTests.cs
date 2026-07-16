@@ -14,6 +14,40 @@ namespace Cerneala.Tests.UI.Motion.Presence;
 public sealed class PresenceCoordinatorTests
 {
     [Fact]
+    public void RepeatedAttachDetachDoesNotAccumulateEnterMotion()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        Canvas parent = new();
+        Rectangle child = CreateChild();
+        root.VisualChildren.Add(parent);
+
+        for (int cycle = 0; cycle < 100; cycle++)
+        {
+            parent.VisualChildren.Add(child);
+            Assert.Equal(2, root.Motion.Graph.ActiveNodeCount);
+
+            child.Presence = null;
+            Assert.True(parent.VisualChildren.Remove(child));
+            Assert.Equal(0, root.Motion.Graph.ActiveNodeCount);
+            child.Presence = CreatePresenceOptions();
+        }
+    }
+
+    [Fact]
+    public void ExitHandoffReplacesActiveEnterMotion()
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, Canvas parent, Rectangle child) = CreateScenario(clock);
+
+        Assert.Equal(2, root.Motion.Graph.ActiveNodeCount);
+        Assert.True(parent.VisualChildren.Remove(child));
+
+        Assert.Equal(2, root.Motion.Graph.ActiveNodeCount);
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+    }
+
+    [Fact]
     public void EnterAppliesInitialVisualStateAndAnimatesToPresent()
     {
         ManualMotionClock clock = new();
@@ -148,16 +182,26 @@ public sealed class PresenceCoordinatorTests
     {
         UIRoot root = new(100, 100, motionClock: clock);
         Canvas parent = new();
-        Rectangle child = new()
-        {
-            Fill = new SolidColorBrush(Color.White),
-            Geometry = new RectangleGeometry(new DrawRect(0, 0, 20, 20)),
-            Presence = PresenceOptions.FadeAndScale(
-                MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
-                MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)))
-        };
+        Rectangle child = CreateChild();
         root.VisualChildren.Add(parent);
         parent.VisualChildren.Add(child);
         return (root, parent, child);
+    }
+
+    private static Rectangle CreateChild()
+    {
+        return new Rectangle
+        {
+            Fill = new SolidColorBrush(Color.White),
+            Geometry = new RectangleGeometry(new DrawRect(0, 0, 20, 20)),
+            Presence = CreatePresenceOptions()
+        };
+    }
+
+    private static PresenceOptions CreatePresenceOptions()
+    {
+        return PresenceOptions.FadeAndScale(
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
     }
 }

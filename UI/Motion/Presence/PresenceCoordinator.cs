@@ -6,6 +6,7 @@ namespace Cerneala.UI.Motion.Presence;
 public sealed class PresenceCoordinator
 {
     private readonly MotionSystem motion;
+    private readonly Dictionary<UIElement, EnterAnimation> enters = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<UIElement, PresenceHandle> exits = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<UIElement, PresenceState> states = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<UIElement, List<UIElement>> exitingByOwner = new(ReferenceEqualityComparer.Instance);
@@ -51,6 +52,7 @@ public sealed class PresenceCoordinator
             return true;
         }
 
+        CancelEnter(element);
         PresenceHandle handle = new(owner, element, CompleteExit);
         exits[element] = handle;
         if (!exitingByOwner.TryGetValue(owner, out List<UIElement>? exitingChildren))
@@ -76,6 +78,10 @@ public sealed class PresenceCoordinator
                 handle.CompleteRemoval();
             }
         };
+        if (handle.OpacityHandle.IsCompleted)
+        {
+            handle.CompleteRemoval();
+        }
 
         return true;
     }
@@ -103,6 +109,7 @@ public sealed class PresenceCoordinator
     internal void MarkAttached(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
+        CancelEnter(element);
         PresenceOptions? options = element.Presence;
         if (options is null)
         {
@@ -119,17 +126,24 @@ public sealed class PresenceCoordinator
 
         MotionValue<float> opacity = motion.Graph.CreateValue(element.PresenceOpacity);
         MotionValue<float> scale = motion.Graph.CreateValue(element.PresenceScale);
-        _ = opacity.Subscribe(change => element.SetPresenceVisual(change.NewValue, element.PresenceScale));
-        _ = scale.Subscribe(change => element.SetPresenceVisual(element.PresenceOpacity, change.NewValue));
-        opacity.AnimateTo(1, options.Enter);
-        scale.AnimateTo(1, options.Enter);
+        EnterAnimation animation = new();
+        animation.AddSubscription(opacity.Subscribe(change => element.SetPresenceVisual(change.NewValue, element.PresenceScale)));
+        animation.AddSubscription(scale.Subscribe(change => element.SetPresenceVisual(element.PresenceOpacity, change.NewValue)));
+        enters[element] = animation;
+        animation.OpacityHandle = opacity.AnimateTo(1, options.Enter);
+        animation.ScaleHandle = scale.AnimateTo(1, options.Enter);
+        animation.OpacityHandle.Completed += (_, _) => CompleteEnter(element, animation);
+        animation.ScaleHandle.Completed += (_, _) => CompleteEnter(element, animation);
+        CompleteEnter(element, animation);
     }
 
     internal void MarkDetached(UIElement element)
     {
+        CancelEnter(element);
         if (exits.Remove(element, out PresenceHandle? handle))
         {
             RemoveFromOwner(handle.Owner, element);
+            handle.Cancel();
         }
 
         element.SetPresenceExiting(false);
@@ -148,7 +162,30 @@ public sealed class PresenceCoordinator
         element.SetPresenceExiting(false);
         element.SetPresenceVisual(1, 1);
         handle.RemoveElement(motion.Root);
+        handle.Cancel();
         states[element] = PresenceState.Detached;
+    }
+
+    private void CompleteEnter(UIElement element, EnterAnimation animation)
+    {
+        if (animation.OpacityHandle?.IsActive == true || animation.ScaleHandle?.IsActive == true)
+        {
+            return;
+        }
+
+        if (enters.TryGetValue(element, out EnterAnimation? current) && ReferenceEquals(current, animation))
+        {
+            enters.Remove(element);
+            animation.Dispose();
+        }
+    }
+
+    private void CancelEnter(UIElement element)
+    {
+        if (enters.Remove(element, out EnterAnimation? animation))
+        {
+            animation.Dispose();
+        }
     }
 
     private void RemoveFromOwner(UIElement owner, UIElement element)
@@ -162,6 +199,32 @@ public sealed class PresenceCoordinator
         if (children.Count == 0)
         {
             exitingByOwner.Remove(owner);
+        }
+    }
+
+    private sealed class EnterAnimation : IDisposable
+    {
+        private readonly List<IDisposable> subscriptions = [];
+
+        public MotionHandle? OpacityHandle { get; set; }
+
+        public MotionHandle? ScaleHandle { get; set; }
+
+        public void AddSubscription(IDisposable subscription)
+        {
+            subscriptions.Add(subscription);
+        }
+
+        public void Dispose()
+        {
+            OpacityHandle?.Cancel(MotionCancelBehavior.KeepCurrent);
+            ScaleHandle?.Cancel(MotionCancelBehavior.KeepCurrent);
+            foreach (IDisposable subscription in subscriptions)
+            {
+                subscription.Dispose();
+            }
+
+            subscriptions.Clear();
         }
     }
 }

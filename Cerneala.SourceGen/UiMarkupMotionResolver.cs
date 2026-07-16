@@ -209,6 +209,35 @@ public sealed partial class UiMarkupGenerator
             public IReadOnlyList<string> ExecutionNames { get; }
         }
 
+        private sealed class ResolvedMotionPresence
+        {
+            public ResolvedMotionPresence(string enterSpec, string exitSpec, bool excludeInputWhileExiting)
+            {
+                EnterSpec = enterSpec;
+                ExitSpec = exitSpec;
+                ExcludeInputWhileExiting = excludeInputWhileExiting;
+            }
+
+            public string EnterSpec { get; }
+
+            public string ExitSpec { get; }
+
+            public bool ExcludeInputWhileExiting { get; }
+        }
+
+        private sealed class ResolvedMotionLayout
+        {
+            public ResolvedMotionLayout(string idExpression, string spec)
+            {
+                IdExpression = idExpression;
+                Spec = spec;
+            }
+
+            public string IdExpression { get; }
+
+            public string Spec { get; }
+        }
+
         private sealed class ResolvedMotionProperty
         {
             public ResolvedMotionProperty(
@@ -273,6 +302,8 @@ public sealed partial class UiMarkupGenerator
         }
 
         private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionAspect> resolvedMotionAspects = new();
+        private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionPresence> resolvedMotionPresences = new();
+        private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionLayout> resolvedMotionLayouts = new();
         private readonly Dictionary<MotionAnimateNode, string> motionExecutionNames = new();
         private readonly Dictionary<MotionExecutionNode, string> motionActionNames = new();
         private readonly Dictionary<MotionExecutionNode, string> motionExecutionFactoryNames = new();
@@ -547,7 +578,7 @@ public sealed partial class UiMarkupGenerator
                 execution is MotionCompositionNode composition && composition.Children.Any(ContainsMotionCancel);
         }
 
-        private bool ResolveMotionAspect(XElement applicationElement, AspectResource aspect)
+        private bool ResolveMotionAspect(XElement applicationElement, string applicationVariable, AspectResource aspect)
         {
             if (resolvedMotionAspects.ContainsKey((aspect, applicationElement)))
             {
@@ -572,6 +603,34 @@ public sealed partial class UiMarkupGenerator
                     Path.GetFileName(file.Path),
                     "Aspect TargetType '" + aspect.TargetName + "' is not assignable from '" + applicationElement.Name.LocalName + "'.");
                 return false;
+            }
+
+            if (aspect.Presence is MotionPresenceNode presence)
+            {
+                ITypeSymbol floatType = compilation.GetSpecialType(SpecialType.System_Single);
+                if (!TryResolveConcreteMotionSpec(presence.Enter, floatType, "Presence enter", out string? enterSpec) ||
+                    !TryResolveConcreteMotionSpec(presence.Exit, floatType, "Presence exit", out string? exitSpec))
+                {
+                    return false;
+                }
+
+                resolvedMotionPresences[(aspect, applicationElement)] = new ResolvedMotionPresence(
+                    enterSpec!,
+                    exitSpec!,
+                    presence.ExcludeInputWhileExiting);
+            }
+
+            if (aspect.Layout is MotionLayoutNode layout)
+            {
+                INamedTypeSymbol? transformType = compilation.GetTypeByMetadataName("Cerneala.UI.Media.Transform");
+                if (transformType is null ||
+                    !TryResolveLayoutId(applicationElement, applicationVariable, layout.Id, out string? idExpression) ||
+                    !TryResolveConcreteMotionSpec(layout.Spec, transformType, "Layout correction", out string? correctionSpec))
+                {
+                    return false;
+                }
+
+                resolvedMotionLayouts[(aspect, applicationElement)] = new ResolvedMotionLayout(idExpression!, correctionSpec!);
             }
 
             List<MotionExecutionNode> syntaxExecutions = [];
@@ -1415,6 +1474,90 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
+        private void EmitMotionPresence(XElement element, string variable, AspectResource aspect)
+        {
+            if (!resolvedMotionPresences.TryGetValue((aspect, element), out ResolvedMotionPresence? presence))
+            {
+                return;
+            }
+
+            currentLines.Add(
+                "if (" + variable + ".IsAttached) throw new global::System.InvalidOperationException(\"@presence must be applied before the element is attached.\");");
+            currentLines.Add(
+                variable + ".Presence = global::Cerneala.UI.Motion.Presence.PresenceOptions.FadeAndScale(" +
+                presence.EnterSpec + ", " + presence.ExitSpec + ", " +
+                (presence.ExcludeInputWhileExiting ? "true" : "false") + ");");
+        }
+
+        private void EmitMotionLayout(XElement element, string variable, AspectResource aspect)
+        {
+            if (!resolvedMotionLayouts.TryGetValue((aspect, element), out ResolvedMotionLayout? layout))
+            {
+                return;
+            }
+
+            currentLines.Add(
+                "if (" + variable + ".IsAttached) throw new global::System.InvalidOperationException(\"@layout must be applied before the element is attached.\");");
+            currentLines.Add(variable + ".LayoutMotionId = " + layout.IdExpression + ";");
+            currentLines.Add(
+                variable + ".LayoutMotion = global::Cerneala.UI.Motion.Layout.LayoutMotionOptions.Spring(" + layout.Spec + ");");
+        }
+
+        private bool TryResolveLayoutId(
+            XElement element,
+            string variable,
+            DirectiveSourceExpression source,
+            out string? expression)
+        {
+            BindingResolutionContext context = new(
+                variable,
+                element.Name.LocalName,
+                ReferenceEquals(element, document.Root),
+                templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek());
+            BindingSourceDescriptor? descriptor = ResolveBindingSource(context, source.Text, source.Location.Source, source.Location);
+            expression = null;
+            if (descriptor is null)
+            {
+                return false;
+            }
+
+            string valueType = descriptor.ValueType.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString();
+            string valueCode;
+            if (descriptor.Kind == BindingSourceKind.DataPath)
+            {
+                valueCode = "((" + DataTypeCode + ")dataContext!)";
+                foreach (DataPathSegmentDescriptor segment in descriptor.DataSegments)
+                {
+                    valueCode += "." + segment.Property.Name;
+                }
+            }
+            else if (descriptor.Kind is BindingSourceKind.UiProperty or BindingSourceKind.TemplatePartProperty)
+            {
+                valueCode = descriptor.OwnerCode + ".GetValue(" + descriptor.Property!.PropertyCode + ")";
+            }
+            else
+            {
+                Report(InvalidBindingSource, source.Location, source.Text, "@layout id requires a String or LayoutMotionId reactive property source.");
+                return false;
+            }
+
+            if (valueType == "string")
+            {
+                expression = "new global::Cerneala.UI.Motion.Layout.LayoutMotionId(" + valueCode +
+                    " ?? throw new global::System.InvalidOperationException(\"@layout id cannot be null.\"))";
+                return true;
+            }
+
+            if (valueType == "Cerneala.UI.Motion.Layout.LayoutMotionId")
+            {
+                expression = valueCode;
+                return true;
+            }
+
+            Report(InvalidBindingSource, source.Location, source.Text, "@layout id must resolve to String or LayoutMotionId.");
+            return false;
+        }
+
         private void EmitMotionStaggerActivation(ResolvedMotionAnimation animation, string sessionName)
         {
             string suffix = nextReactiveId.ToString(CultureInfo.InvariantCulture);
@@ -1767,6 +1910,16 @@ public sealed partial class UiMarkupGenerator
                 return TryResolveMotionSpec(applicationElement, parameter.Spec, property, target, null, out variable);
             }
 
+            return TryResolveConcreteMotionSpec(syntax, property.ValueType, target, out variable);
+        }
+
+        private bool TryResolveConcreteMotionSpec(
+            MotionSpecSyntax syntax,
+            ITypeSymbol valueType,
+            string target,
+            out string? variable)
+        {
+            variable = null;
             string kind;
             IReadOnlyList<string> arguments;
             if (syntax is MotionResourceSpecSyntax resourceReference)
@@ -1791,13 +1944,13 @@ public sealed partial class UiMarkupGenerator
                 }
             }
 
-            if (kind == "Spring" && !HasVectorMixer(property.ValueType))
+            if (kind == "Spring" && !HasVectorMixer(valueType))
             {
                 Report(InvalidDirective, syntax.Location, Path.GetFileName(file.Path), "Spring is not a valid spec type for property '" + target + "' because its mixer has no vector operations.");
                 return false;
             }
 
-            string typeCode = property.ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string typeCode = valueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             string expression = kind is "Repeat" or "PingPong"
                 ? "new global::Cerneala.UI.Motion.Specs." + kind + "Spec<" + typeCode + ">(" +
                     "new global::Cerneala.UI.Motion.Specs.TweenSpec<" + typeCode + ">(" + arguments[0] + ", " + arguments[1] + "), " + arguments[2] + ")"

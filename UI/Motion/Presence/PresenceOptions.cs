@@ -4,10 +4,11 @@ namespace Cerneala.UI.Motion.Presence;
 
 public sealed class PresenceOptions
 {
-    private PresenceOptions(MotionSpec<float> enter, MotionSpec<float> exit)
+    private PresenceOptions(MotionSpec<float> enter, MotionSpec<float> exit, bool excludeInputWhileExiting)
     {
         Enter = enter ?? throw new ArgumentNullException(nameof(enter));
         Exit = exit ?? throw new ArgumentNullException(nameof(exit));
+        ExcludeInputWhileExiting = excludeInputWhileExiting;
     }
 
     public MotionSpec<float> Enter { get; }
@@ -18,6 +19,14 @@ public sealed class PresenceOptions
 
     public static PresenceOptions FadeAndScale(MotionSpec<float> enter, MotionSpec<float> exit)
     {
-        return new PresenceOptions(enter, exit);
+        return FadeAndScale(enter, exit, excludeInputWhileExiting: true);
+    }
+
+    public static PresenceOptions FadeAndScale(
+        MotionSpec<float> enter,
+        MotionSpec<float> exit,
+        bool excludeInputWhileExiting)
+    {
+        return new PresenceOptions(enter, exit, excludeInputWhileExiting);
     }
 }

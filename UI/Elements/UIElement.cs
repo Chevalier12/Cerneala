@@ -610,6 +610,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         {
             behavior.Attach();
         }
+        Root?.Motion.Layout.MarkAttached(this);
         Root?.Motion.Presence.MarkAttached(this);
         RaiseEvent(new RoutedEventArgs(LoadedEvent, this));
     }
@@ -626,6 +627,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         attachmentGeneration++;
         RaiseEvent(new RoutedEventArgs(UnloadedEvent, this));
+        Root?.Motion.Layout.MarkDetached(this);
         Root?.Motion.Presence.MarkDetached(this);
         foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
         {

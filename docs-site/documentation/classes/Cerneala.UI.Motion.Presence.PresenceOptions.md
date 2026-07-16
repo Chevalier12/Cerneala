@@ -30,7 +30,8 @@ Border item = new()
     Padding = new Thickness(12),
     Presence = PresenceOptions.FadeAndScale(
         MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(120)),
-        MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(120)))
+        MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(120)),
+        excludeInputWhileExiting: false)
 };
 ```
 
@@ -39,7 +40,7 @@ Border item = new()
 
 When an attached element with presence options is removed from a visual child collection, the coordinator keeps it attached as an exiting visual child until its exit opacity animation completes. During that exit, opacity animates to `0` and scale animates to `0.95` using `Exit`.
 
-`ExcludeInputWhileExiting` defaults to `true`. With the default value created by `FadeAndScale`, an exiting element remains renderable during the exit animation but is excluded from hit testing.
+`ExcludeInputWhileExiting` defaults to `true`. The three-parameter `FadeAndScale` overload can opt an exiting element back into hit testing while preserving the same coordinator-owned enter and exit lifecycle.
 
 Re-adding an element while it is exiting cancels the exit, clears the exiting input state, restores presence opacity and scale to `1`, and marks the element present again.
 
@@ -54,11 +55,13 @@ Re-adding an element while it is exiting cancels the exit, clears the exiting in
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `FadeAndScale(MotionSpec<float> enter, MotionSpec<float> exit)` | `PresenceOptions` | Creates presence options that use the supplied enter and exit specifications for opacity and scale animation. |
+| `FadeAndScale(MotionSpec<float> enter, MotionSpec<float> exit, bool excludeInputWhileExiting)` | `PresenceOptions` | Creates presence options and explicitly controls whether the exiting element participates in input hit testing. |
 
 ## Exceptions
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `FadeAndScale(MotionSpec<float>, MotionSpec<float>)` | `ArgumentNullException` | `enter` or `exit` is `null`. |
+| `FadeAndScale(MotionSpec<float>, MotionSpec<float>, bool)` | `ArgumentNullException` | `enter` or `exit` is `null`. |
 
 ## Applies to
 Cerneala retained UI presence motion in the `Cerneala` project.

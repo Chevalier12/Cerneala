@@ -12,6 +12,7 @@ public sealed class LayoutMotionCoordinator
     private readonly Dictionary<UIElement, LayoutSnapshot> firstSnapshots = [];
     private readonly Dictionary<LayoutMotionId, LayoutSnapshot> previousSnapshotsById = [];
     private readonly Dictionary<UIElement, LayoutMotionBinding> bindings = [];
+    private readonly HashSet<UIElement> pendingDetached = new(ReferenceEqualityComparer.Instance);
 
     public LayoutMotionCoordinator(MotionSystem motion)
     {
@@ -26,9 +27,23 @@ public sealed class LayoutMotionCoordinator
 
     public int ActiveBindingCount => bindings.Count;
 
+    internal void MarkAttached(UIElement element)
+    {
+        motion.VerifyAccess();
+        pendingDetached.Remove(element);
+    }
+
+    internal void MarkDetached(UIElement element)
+    {
+        motion.VerifyAccess();
+        firstSnapshots.Remove(element);
+        pendingDetached.Add(element);
+    }
+
     internal void CaptureFirstSnapshots()
     {
         motion.VerifyAccess();
+        CleanupDetached();
         firstSnapshots.Clear();
         if (!motion.Root.LayoutQueue.HasWork ||
             motion.ReducedMotion.Mode == ReducedMotionMode.DisableNonEssential)
@@ -48,6 +63,25 @@ public sealed class LayoutMotionCoordinator
                 GetRootVisualBounds(element, includeOwnLayoutCorrection: true),
                 element.VisualParent,
                 element.LayoutMotionId);
+        }
+    }
+
+    private void CleanupDetached()
+    {
+        foreach (UIElement element in pendingDetached.Where(element => !element.IsAttached).ToArray())
+        {
+            pendingDetached.Remove(element);
+            if (element.LayoutMotionId is LayoutMotionId id &&
+                previousSnapshotsById.TryGetValue(id, out LayoutSnapshot previous) &&
+                ReferenceEquals(previous.Element, element))
+            {
+                previousSnapshotsById.Remove(id);
+            }
+
+            if (bindings.Remove(element, out LayoutMotionBinding? binding))
+            {
+                binding.Dispose();
+            }
         }
     }
 

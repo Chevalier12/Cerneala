@@ -35,6 +35,39 @@ public sealed partial class UiMarkupGenerator
         public IReadOnlyList<MotionExecutionNode> Body { get; }
     }
 
+    private sealed class MotionPresenceNode : DirectiveNode
+    {
+        public MotionPresenceNode(
+            MotionSpecSyntax enter,
+            MotionSpecSyntax exit,
+            bool excludeInputWhileExiting,
+            XObject source) : base(source)
+        {
+            Enter = enter;
+            Exit = exit;
+            ExcludeInputWhileExiting = excludeInputWhileExiting;
+        }
+
+        public MotionSpecSyntax Enter { get; }
+
+        public MotionSpecSyntax Exit { get; }
+
+        public bool ExcludeInputWhileExiting { get; }
+    }
+
+    private sealed class MotionLayoutNode : DirectiveNode
+    {
+        public MotionLayoutNode(DirectiveSourceExpression id, MotionSpecSyntax spec, XObject source) : base(source)
+        {
+            Id = id;
+            Spec = spec;
+        }
+
+        public DirectiveSourceExpression Id { get; }
+
+        public MotionSpecSyntax Spec { get; }
+    }
+
     private sealed class MotionAnimateNode : MotionExecutionNode
     {
         public MotionAnimateNode(

@@ -123,18 +123,61 @@ public sealed class LayoutMotionCoordinatorTests
         Assert.Equal(0, binding.CurrentCorrection.Matrix.M32);
     }
 
+    [Fact]
+    public void DetachDisposesActiveLayoutCorrection()
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, UIElement child) = CreateCanvasScenario(clock);
+        root.ProcessFrame();
+        Canvas.SetLeft(child, 40);
+        root.ProcessFrame();
+
+        Assert.Equal(1, root.Motion.Layout.ActiveBindingCount);
+        Assert.True(root.VisualChildren[0].VisualChildren.Remove(child));
+        root.ProcessFrame();
+
+        Assert.Equal(0, root.Motion.Layout.ActiveBindingCount);
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, child.LayoutCorrectionTransform);
+    }
+
+    [Fact]
+    public void SameIdOnDifferentElementsDoesNotCreateSharedElementTransition()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        Canvas canvas = new();
+        FixedElement first = CreateLayoutElement("shared");
+        FixedElement replacement = CreateLayoutElement("shared");
+        Canvas.SetLeft(replacement, 60);
+        root.VisualChildren.Add(canvas);
+        canvas.VisualChildren.Add(first);
+        root.ProcessFrame();
+
+        canvas.VisualChildren.Remove(first);
+        canvas.VisualChildren.Add(replacement);
+        root.ProcessFrame();
+
+        Assert.Null(root.Motion.Layout.GetBinding(replacement));
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, replacement.LayoutCorrectionTransform);
+    }
+
     private static (UIRoot Root, UIElement Child) CreateCanvasScenario(ManualMotionClock clock)
     {
         UIRoot root = new(100, 100, motionClock: clock);
         Canvas canvas = new();
-        FixedElement child = new(new LayoutSize(20, 10))
-        {
-            LayoutMotionId = "card",
-            LayoutMotion = LayoutMotionOptions.Spring(MotionFactory.Tween<Cerneala.UI.Media.Transform>(TimeSpan.FromMilliseconds(100)))
-        };
+        FixedElement child = CreateLayoutElement("card");
         root.VisualChildren.Add(canvas);
         canvas.VisualChildren.Add(child);
         return (root, child);
+    }
+
+    private static FixedElement CreateLayoutElement(string id)
+    {
+        return new FixedElement(new LayoutSize(20, 10))
+        {
+            LayoutMotionId = id,
+            LayoutMotion = LayoutMotionOptions.Spring(MotionFactory.Tween<Cerneala.UI.Media.Transform>(TimeSpan.FromMilliseconds(100)))
+        };
     }
 
     private sealed class FixedElement(LayoutSize desiredSize) : UIElement

@@ -19,7 +19,9 @@ public sealed partial class UiMarkupGenerator
         MotionTriggers = 8,
         MotionExecutions = 16,
         MotionParameters = 32,
-        MotionHandles = 64
+        MotionHandles = 64,
+        MotionPresence = 128,
+        MotionLayout = 256
     }
 
     private abstract class DirectiveNode
@@ -358,6 +360,28 @@ public sealed partial class UiMarkupGenerator
                     continue;
                 }
 
+                if (StartsWith("@presence"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionPresence))
+                    {
+                        throw Error("@presence is allowed only directly inside an Aspect body.");
+                    }
+
+                    nodes.Add(ParsePresence());
+                    continue;
+                }
+
+                if (StartsWith("@layout"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionLayout))
+                    {
+                        throw Error("@layout is allowed only directly inside an Aspect body.");
+                    }
+
+                    nodes.Add(ParseLayout());
+                    continue;
+                }
+
                 if (StartsWith("@animate"))
                 {
                     if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
@@ -503,7 +527,8 @@ public sealed partial class UiMarkupGenerator
             {
                 DirectiveContentKind booleanContent =
                     (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions) &
-                    ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles);
+                    ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles |
+                        DirectiveContentKind.MotionPresence | DirectiveContentKind.MotionLayout);
                 IReadOnlyList<DirectiveNode> booleanBody = ParseNodes(stopAtClosingBrace: true, booleanContent);
                 if (booleanBody.Count == 0)
                 {
@@ -539,7 +564,8 @@ public sealed partial class UiMarkupGenerator
                 // intentionally rejected at the surrounding XML element level.
                 DirectiveContentKind branchContent =
                     (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions) &
-                    ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles);
+                    ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles |
+                        DirectiveContentKind.MotionPresence | DirectiveContentKind.MotionLayout);
                 branches.Add(ParseIf(branchContent));
             }
 
@@ -588,6 +614,121 @@ public sealed partial class UiMarkupGenerator
             ValidateExplicitMotionComposition(nodes, "@on", source);
 
             return new DirectiveOnNode(eventName, nodes.Cast<MotionExecutionNode>().ToArray(), source);
+        }
+
+        private MotionPresenceNode ParsePresence()
+        {
+            XObject source = CurrentSource;
+            Consume("@presence");
+            DirectiveHeader header = ReadHeaderUntilBrace();
+            if (!string.IsNullOrWhiteSpace(header.Text))
+            {
+                throw new DirectiveParseException("@presence does not accept a header or custom endpoints.", new DirectiveExpressionLocation(header.Source, header.Offset));
+            }
+
+            MotionSpecSyntax? enter = null;
+            MotionSpecSyntax? exit = null;
+            bool excludeInputWhileExiting = true;
+            HashSet<string> seen = new(StringComparer.Ordinal);
+            while (true)
+            {
+                SkipWhitespace();
+                if (AtEnd)
+                {
+                    throw new DirectiveParseException("Missing closing '}' for @presence.", source);
+                }
+
+                if (CurrentElement is not null)
+                {
+                    throw new DirectiveParseException("XML controls and custom bodies are not allowed inside @presence.", CurrentSource);
+                }
+
+                if (Peek() == '}')
+                {
+                    Read();
+                    break;
+                }
+
+                if (Peek() == '@')
+                {
+                    throw Error("Custom @enter and @exit bodies are not supported by @presence.");
+                }
+
+                DirectiveAssignmentNode assignment = ParseAssignment();
+                if (!seen.Add(assignment.PropertyName))
+                {
+                    throw new DirectiveParseException("Duplicate @presence field '" + assignment.PropertyName + "'.", assignment.Source);
+                }
+
+                switch (assignment.PropertyName)
+                {
+                    case "enter":
+                        enter = ParseMotionSpec(assignment.Value, assignment.ValueLocation);
+                        break;
+                    case "exit":
+                        exit = ParseMotionSpec(assignment.Value, assignment.ValueLocation);
+                        break;
+                    case "excludeInputWhileExiting":
+                        if (!bool.TryParse(assignment.Value, out excludeInputWhileExiting))
+                        {
+                            throw new DirectiveParseException("@presence field 'excludeInputWhileExiting' requires true or false.", assignment.ValueLocation);
+                        }
+
+                        break;
+                    default:
+                        throw new DirectiveParseException(
+                            "Unsupported @presence field '" + assignment.PropertyName + "'. Custom endpoints and initial mode are not supported.",
+                            assignment.Source);
+                }
+            }
+
+            if (enter is null || exit is null)
+            {
+                throw new DirectiveParseException("@presence requires both enter and exit Motion specs.", source);
+            }
+
+            return new MotionPresenceNode(enter, exit, excludeInputWhileExiting, source);
+        }
+
+        private MotionLayoutNode ParseLayout()
+        {
+            XObject source = CurrentSource;
+            Consume("@layout");
+            SkipWhitespace();
+            int statementOffset = characterIndex;
+            string statement = ReadMotionStatement().Trim();
+            if (!statement.StartsWith("id ", StringComparison.Ordinal))
+            {
+                throw new DirectiveParseException("@layout requires 'id expression with MotionSpec'.", source);
+            }
+
+            string body = statement.Substring(3).Trim();
+            int separator = body.LastIndexOf(" with ", StringComparison.Ordinal);
+            if (separator <= 0 || separator + 6 >= body.Length)
+            {
+                throw new DirectiveParseException("@layout requires 'id expression with MotionSpec'.", source);
+            }
+
+            string idText = body.Substring(0, separator).Trim();
+            string specText = body.Substring(separator + 6).Trim();
+            if (idText.IndexOfAny(new[] { '{', '}', ',' }) >= 0 ||
+                specText.IndexOfAny(new[] { '{', '}' }) >= 0 ||
+                body.IndexOf(" mode ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                body.IndexOf("crossfade", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                body.IndexOf("shared", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                throw new DirectiveParseException("@layout supports only retained-element render correction; modes, crossfade, shared elements and custom sequences are not supported.", source);
+            }
+
+            DirectiveExpressionLocation idLocation = new(source, statementOffset + statement.IndexOf(idText, StringComparison.Ordinal));
+            DirectiveExpression expression = ParseExpression(new DirectiveHeader(idText, source, idLocation.Offset));
+            if (expression is not DirectiveSourceExpression id)
+            {
+                throw new DirectiveParseException("@layout id requires one reactive source expression.", idLocation);
+            }
+
+            DirectiveExpressionLocation specLocation = new(source, statementOffset + statement.LastIndexOf(specText, StringComparison.Ordinal));
+            return new MotionLayoutNode(id, ParseMotionSpec(specText, specLocation), source);
         }
 
         private MotionCompositionNode ParseMotionComposition(string directive, MotionCompositionKind kind)
@@ -1066,7 +1207,8 @@ public sealed partial class UiMarkupGenerator
             return new DirectiveDefaultNode(
                 ParseNodes(
                     stopAtClosingBrace: true,
-                    allowedContent & ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionHandles)),
+                    allowedContent & ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionHandles |
+                        DirectiveContentKind.MotionPresence)),
                 source);
         }
 
@@ -1656,7 +1798,7 @@ public sealed partial class UiMarkupGenerator
         private static bool IsMotionDirective(string directive)
         {
             return directive is "@animate" or "@parallel" or "@sequence" or "@run" or "@cancel" or
-                "@keyframes" or "@stagger" or "@handle" or "@parameter" or "@from" or "@to" or "@on";
+                "@keyframes" or "@stagger" or "@handle" or "@parameter" or "@from" or "@to" or "@on" or "@presence" or "@layout";
         }
 
         private static bool Allows(DirectiveContentKind allowed, DirectiveContentKind value)

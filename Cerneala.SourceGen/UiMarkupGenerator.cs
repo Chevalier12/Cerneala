@@ -906,6 +906,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 IReadOnlyList<AspectPropertyAssignment> assignments,
                 IReadOnlyList<DirectiveWhenNode> conditions,
                 IReadOnlyList<DirectiveOnNode> eventTriggers,
+                MotionPresenceNode? presence,
+                MotionLayoutNode? layout,
                 DirectiveTemplateNode? template,
                 XElement source,
                 bool isInline = false)
@@ -915,6 +917,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 Assignments = assignments;
                 Conditions = conditions;
                 EventTriggers = eventTriggers;
+                Presence = presence;
+                Layout = layout;
                 Template = template;
                 Source = source;
                 IsInline = isInline;
@@ -929,6 +933,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public IReadOnlyList<DirectiveWhenNode> Conditions { get; }
 
             public IReadOnlyList<DirectiveOnNode> EventTriggers { get; }
+
+            public MotionPresenceNode? Presence { get; }
+
+            public MotionLayoutNode? Layout { get; }
 
             public DirectiveTemplateNode? Template { get; }
 
@@ -1434,6 +1442,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 out List<AspectPropertyAssignment> assignments,
                 out List<DirectiveWhenNode> conditions,
                 out List<DirectiveOnNode> eventTriggers,
+                out MotionPresenceNode? presence,
+                out MotionLayoutNode? layout,
                 out DirectiveTemplateNode? template))
             {
                 return;
@@ -1457,6 +1467,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 assignments,
                 conditions,
                 eventTriggers,
+                presence,
+                layout,
                 template,
                 resource);
             allAspects.Add(aspect);
@@ -1577,6 +1589,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     out List<AspectPropertyAssignment> assignments,
                     out List<DirectiveWhenNode> conditions,
                     out List<DirectiveOnNode> eventTriggers,
+                    out MotionPresenceNode? presence,
+                    out MotionLayoutNode? layout,
                     out DirectiveTemplateNode? template))
                 {
                     AspectResource aspect = new(
@@ -1585,6 +1599,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         assignments,
                         conditions,
                         eventTriggers,
+                        presence,
+                        layout,
                         template,
                         aspectBody,
                         isInline: true);
@@ -1601,16 +1617,21 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             out List<AspectPropertyAssignment> assignments,
             out List<DirectiveWhenNode> conditions,
             out List<DirectiveOnNode> eventTriggers,
+            out MotionPresenceNode? presence,
+            out MotionLayoutNode? layout,
             out DirectiveTemplateNode? template)
         {
             assignments = [];
             conditions = [];
             eventTriggers = [];
+            presence = null;
+            layout = null;
             template = null;
             DirectiveParseResult parsed = ParseDirectiveContent(
                 source,
                 DirectiveContentKind.Assignments | DirectiveContentKind.Templates |
-                DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles);
+                DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles |
+                DirectiveContentKind.MotionPresence | DirectiveContentKind.MotionLayout);
             if (parsed.Error is not null)
             {
                 Report(InvalidDirective, parsed.ErrorSource ?? source, Path.GetFileName(file.Path), parsed.Error);
@@ -1663,6 +1684,26 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     eventTriggers.Add(on);
                 }
+                else if (node is MotionPresenceNode declaredPresence)
+                {
+                    if (presence is not null)
+                    {
+                        Report(InvalidDirective, declaredPresence.Source, Path.GetFileName(file.Path), "An Aspect may declare only one @presence block.");
+                        return false;
+                    }
+
+                    presence = declaredPresence;
+                }
+                else if (node is MotionLayoutNode declaredLayout)
+                {
+                    if (layout is not null)
+                    {
+                        Report(InvalidDirective, declaredLayout.Source, Path.GetFileName(file.Path), "An Aspect may declare only one @layout statement.");
+                        return false;
+                    }
+
+                    layout = declaredLayout;
+                }
                 else if (node is DirectiveTemplateNode declaredTemplate)
                 {
                     if (template is not null)
@@ -1679,7 +1720,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 }
                 else
                 {
-                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default, @when, @on and @template blocks.");
+                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default, @when, @on, @presence, @layout and @template blocks.");
                     return false;
                 }
             }
@@ -2626,10 +2667,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             foreach (AspectResource aspect in aspects)
             {
-                if (!ResolveMotionAspect(element, aspect))
+                if (!ResolveMotionAspect(element, variable, aspect))
                 {
                     continue;
                 }
+
+                EmitMotionPresence(element, variable, aspect);
+                EmitMotionLayout(element, variable, aspect);
 
                 if (IsLocalAspect(aspect))
                 {
