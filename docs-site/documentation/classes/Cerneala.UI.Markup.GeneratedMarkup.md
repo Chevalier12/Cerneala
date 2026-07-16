@@ -37,6 +37,9 @@ using Binding binding = GeneratedMarkup.AttachPropertyBinding(
 | `AttachMotionTriggers(UIElement owner, Action attach, Action detach)` | `IDisposable` | Runs direct event-subscription callbacks on attach and their matching unsubscription callbacks on detach. |
 | `AddMotionTrigger(IDisposable session, Action attach, Action detach)` | `void` | Adds direct subscribe/unsubscribe callbacks to a generated motion session. |
 | `StartMotion(IDisposable session, Func<IReadOnlyList<MotionHandle>> start)` | `MotionGroupHandle` | Starts one parallel generated execution and returns a group handle canceled with its session. |
+| `StartMotionExecution(IDisposable session, Func<MarkupMotionExecution> start)` | `MarkupMotionExecution` | Starts and tracks a leaf or composed generated execution in the supplied lifecycle session. |
+| `StartMotionExecution(IDisposable session, string handleName, Func<MarkupMotionExecution> start)` | `MarkupMotionExecution` | Starts an execution in a named session slot, canceling and replacing the previous active execution in that slot. |
+| `CancelMotionExecution(IDisposable session, string handleName)` | `void` | Cancels and clears the active execution in a named session slot; does nothing when the slot is empty. |
 | `StartMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation through the target root's motion system. |
 | `AttachPropertyBinding<T>(UIElement owner, UiObject target, UiProperty<T> targetProperty, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, string description)` | `Binding` | Attaches a typed one-way or two-way binding in the `MarkupBase` value slot. |
 | `AttachInterpolatedStringBinding(UIElement owner, UiObject target, UiProperty<string> targetProperty, IReadOnlyList<MarkupObservation> observations, Func<string> compose, string description)` | `Binding` | Attaches a one-way string composer backed by one or more observations. |
@@ -68,6 +71,16 @@ same cleanup idempotently when disposed. Detach also cancels every execution
 owned by that session and clears its property bindings. Sessions attached to
 other elements are independent.
 
+`StartMotionExecution` accepts the unified generated execution adapter, so
+nested parallel and sequential groups are tracked without treating runtime
+group handles as leaf handles. Cancellation is parameterless and idempotent for
+the composed execution.
+
+Named execution slots are scoped to the motion session created for one Aspect
+application. Replacing a slot cancels its previous execution first. A terminal
+execution removes itself from both session tracking and its slot, while detach
+cancels all remaining slots and releases their references.
+
 `StartMotionProperty<T>` resolves omitted specs from the registered animatable
 property metadata. An explicit `from` value is staged before the animation is
 started, while `toCurrent` captures the binding's current sampled value.
@@ -79,9 +92,9 @@ started, while `toCurrent` captures the binding's current sampled value.
 | Property binding factories | `ArgumentNullException` | A required owner, target, target property, observation, observation collection, or projection delegate is `null`. |
 | Interpolated binding factories | `ArgumentNullException` | A required owner, target, target property, observation collection, or compose delegate is `null`. |
 | Motion session factories | `ArgumentNullException` | A required owner, callback, start delegate, target, property, or options value is `null`. |
-| `AddMotionTrigger`, `StartMotion`, `StartMotionProperty<T>` | `ArgumentException` | The supplied lifetime was not created by `AttachMotionSession`. |
-| `AddMotionTrigger`, `StartMotion`, `StartMotionProperty<T>` | `ObjectDisposedException` | The motion session has already been disposed. |
-| `StartMotion`, `StartMotionProperty<T>` | `InvalidOperationException` | The session owner is detached, the target is not attached to the same root, or the execution returns `null` handles. |
+| `AddMotionTrigger`, `StartMotion`, `StartMotionExecution`, `CancelMotionExecution`, `StartMotionProperty<T>` | `ArgumentException` | The supplied lifetime was not created by `AttachMotionSession`, or a named execution slot is empty or whitespace. |
+| `AddMotionTrigger`, `StartMotion`, `StartMotionExecution`, `CancelMotionExecution`, `StartMotionProperty<T>` | `ObjectDisposedException` | The motion session has already been disposed. |
+| `StartMotion`, `StartMotionExecution`, `StartMotionProperty<T>` | `InvalidOperationException` | The session owner is detached, the target is not attached to the same root, or the execution returns `null`. |
 | Binding factories | `ArgumentException` | The observation collection is empty. |
 | Property binding factories | `InvalidOperationException` | The target property is read-only, or `TwoWay` is requested without a writable observation endpoint. |
 | Property binding factories | `ArgumentOutOfRangeException` | The binding mode is not `OneWay` or `TwoWay`. |
@@ -94,4 +107,5 @@ Source-generated reactive markup.
 - `Cerneala.UI.Markup.MarkupObservation`
 - `Cerneala.UI.Markup.MarkupDataPathSegment`
 - `Cerneala.UI.Markup.MarkupConditionalValue`
+- `Cerneala.UI.Markup.MarkupMotionExecution`
 - `docs/markup-data-bindings.md`

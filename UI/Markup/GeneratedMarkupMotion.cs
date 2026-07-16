@@ -41,6 +41,30 @@ public static partial class GeneratedMarkup
         return GetMotionSession(session).Start(start);
     }
 
+    public static MarkupMotionExecution StartMotionExecution(
+        IDisposable session,
+        Func<MarkupMotionExecution> start)
+    {
+        ArgumentNullException.ThrowIfNull(start);
+        return GetMotionSession(session).StartExecution(start);
+    }
+
+    public static MarkupMotionExecution StartMotionExecution(
+        IDisposable session,
+        string handleName,
+        Func<MarkupMotionExecution> start)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(handleName);
+        ArgumentNullException.ThrowIfNull(start);
+        return GetMotionSession(session).StartExecution(handleName, start);
+    }
+
+    public static void CancelMotionExecution(IDisposable session, string handleName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(handleName);
+        GetMotionSession(session).CancelExecution(handleName);
+    }
+
     public static MotionHandle StartMotionProperty<T>(
         IDisposable session,
         UIElement target,
@@ -76,6 +100,8 @@ public static partial class GeneratedMarkup
         private readonly List<(Action Attach, Action Detach)> triggers = [];
         private readonly HashSet<MotionPropertyBinding> bindings = [];
         private readonly List<MotionGroupHandle> groups = [];
+        private readonly List<MarkupMotionExecution> executions = [];
+        private readonly Dictionary<string, MarkupMotionExecution> executionSlots = new(StringComparer.Ordinal);
         private bool attached;
         private bool disposed;
 
@@ -211,6 +237,70 @@ public static partial class GeneratedMarkup
             return binding.AnimateTo(destination, effectiveSpec, options);
         }
 
+        public MarkupMotionExecution StartExecution(Func<MarkupMotionExecution> start)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            if (!attached || !owner.IsAttached)
+            {
+                throw new InvalidOperationException("Motion sessions can start executions only while their owner is attached.");
+            }
+
+            MarkupMotionExecution execution = start()
+                ?? throw new InvalidOperationException("A Motion execution returned null.");
+            executions.RemoveAll(candidate => candidate.IsCompleted || candidate.IsCanceled);
+            if (!execution.IsCompleted && !execution.IsCanceled)
+            {
+                executions.Add(execution);
+                EventHandler? completed = null;
+                completed = (_, _) =>
+                {
+                    execution.Completed -= completed;
+                    executions.Remove(execution);
+                };
+                execution.Completed += completed;
+            }
+
+            return execution;
+        }
+
+        public MarkupMotionExecution StartExecution(string handleName, Func<MarkupMotionExecution> start)
+        {
+            if (executionSlots.Remove(handleName, out MarkupMotionExecution? previous) &&
+                !previous.IsCompleted && !previous.IsCanceled)
+            {
+                previous.Cancel();
+            }
+
+            MarkupMotionExecution execution = StartExecution(start);
+            if (!execution.IsCompleted && !execution.IsCanceled)
+            {
+                executionSlots.Add(handleName, execution);
+                EventHandler? completed = null;
+                completed = (_, _) =>
+                {
+                    execution.Completed -= completed;
+                    if (executionSlots.TryGetValue(handleName, out MarkupMotionExecution? current) &&
+                        ReferenceEquals(current, execution))
+                    {
+                        executionSlots.Remove(handleName);
+                    }
+                };
+                execution.Completed += completed;
+            }
+
+            return execution;
+        }
+
+        public void CancelExecution(string handleName)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            if (executionSlots.Remove(handleName, out MarkupMotionExecution? execution) &&
+                !execution.IsCompleted && !execution.IsCanceled)
+            {
+                execution.Cancel();
+            }
+        }
+
         private void CancelExecutions()
         {
             foreach (MotionGroupHandle group in groups.Where(group => !group.IsCompleted && !group.IsCanceled))
@@ -219,6 +309,15 @@ public static partial class GeneratedMarkup
             }
 
             groups.Clear();
+            MarkupMotionExecution[] activeExecutions = executions
+                .Where(execution => !execution.IsCompleted && !execution.IsCanceled)
+                .ToArray();
+            executions.Clear();
+            executionSlots.Clear();
+            foreach (MarkupMotionExecution execution in activeExecutions)
+            {
+                execution.Cancel();
+            }
             foreach (MotionPropertyBinding binding in bindings)
             {
                 binding.Clear(MotionClearBehavior.RestoreBase);

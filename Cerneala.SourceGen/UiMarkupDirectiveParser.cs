@@ -17,7 +17,9 @@ public sealed partial class UiMarkupGenerator
         Elements = 2,
         Templates = 4,
         MotionTriggers = 8,
-        MotionExecutions = 16
+        MotionExecutions = 16,
+        MotionParameters = 32,
+        MotionHandles = 64
     }
 
     private abstract class DirectiveNode
@@ -367,6 +369,72 @@ public sealed partial class UiMarkupGenerator
                     continue;
                 }
 
+                if (StartsWith("@parallel"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
+                    {
+                        throw Error("@parallel is allowed only inside an Aspect @when, @if or @on block.");
+                    }
+
+                    nodes.Add(ParseMotionComposition("@parallel", MotionCompositionKind.Parallel));
+                    continue;
+                }
+
+                if (StartsWith("@sequence"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
+                    {
+                        throw Error("@sequence is allowed only inside an Aspect @when, @if or @on block.");
+                    }
+
+                    nodes.Add(ParseMotionComposition("@sequence", MotionCompositionKind.Sequence));
+                    continue;
+                }
+
+                if (StartsWith("@run"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
+                    {
+                        throw Error("@run is allowed only inside an Aspect execution body.");
+                    }
+
+                    nodes.Add(ParseMotionRun());
+                    continue;
+                }
+
+                if (StartsWith("@cancel"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
+                    {
+                        throw Error("@cancel is allowed only inside an Aspect execution body.");
+                    }
+
+                    nodes.Add(ParseMotionCancel());
+                    continue;
+                }
+
+                if (StartsWith("@handle"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionHandles))
+                    {
+                        throw Error("@handle is allowed only directly inside an Aspect body.");
+                    }
+
+                    nodes.Add(ParseMotionHandle());
+                    continue;
+                }
+
+                if (StartsWith("@parameter"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionParameters))
+                    {
+                        throw Error("@parameter is allowed only at the beginning of a MotionClip.");
+                    }
+
+                    nodes.Add(ParseMotionParameter());
+                    continue;
+                }
+
                 if (StartsWith("@from") || StartsWith("@to"))
                 {
                     throw Error("@from and @to are allowed only directly inside an @animate block.");
@@ -413,12 +481,14 @@ public sealed partial class UiMarkupGenerator
             {
                 DirectiveContentKind booleanContent =
                     (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions) &
-                    ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers);
+                    ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles);
                 IReadOnlyList<DirectiveNode> booleanBody = ParseNodes(stopAtClosingBrace: true, booleanContent);
                 if (booleanBody.Count == 0)
                 {
                     throw new DirectiveParseException("@when requires a boolean body or at least one @if block.", source);
                 }
+
+                ValidateExplicitMotionComposition(booleanBody, "@when", source);
 
                 return new DirectiveWhenNode(expression, [], booleanBody, source);
             }
@@ -447,7 +517,7 @@ public sealed partial class UiMarkupGenerator
                 // intentionally rejected at the surrounding XML element level.
                 DirectiveContentKind branchContent =
                     (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions) &
-                    ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers);
+                    ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles);
                 branches.Add(ParseIf(branchContent));
             }
 
@@ -465,6 +535,7 @@ public sealed partial class UiMarkupGenerator
             Consume("@if");
             DirectiveExpression expression = ParseExpression(ReadHeaderUntilBrace());
             IReadOnlyList<DirectiveNode> body = ParseNodes(stopAtClosingBrace: true, allowedContent);
+            ValidateExplicitMotionComposition(body, "@if", source);
             return new DirectiveIfNode(expression, body, source);
         }
 
@@ -489,10 +560,162 @@ public sealed partial class UiMarkupGenerator
                 DirectiveContentKind.MotionExecutions);
             if (nodes.Count == 0 || nodes.Any(node => node is not MotionExecutionNode))
             {
-                throw new DirectiveParseException("@on requires one or more Motion execution bodies.", source);
+                throw new DirectiveParseException("@on requires one Motion execution body.", source);
             }
 
+            ValidateExplicitMotionComposition(nodes, "@on", source);
+
             return new DirectiveOnNode(eventName, nodes.Cast<MotionExecutionNode>().ToArray(), source);
+        }
+
+        private MotionCompositionNode ParseMotionComposition(string directive, MotionCompositionKind kind)
+        {
+            XObject source = CurrentSource;
+            Consume(directive);
+            DirectiveHeader header = ReadHeaderUntilBrace();
+            if (!string.IsNullOrWhiteSpace(header.Text))
+            {
+                throw new DirectiveParseException(directive + " does not accept a header.", new DirectiveExpressionLocation(header.Source, header.Offset));
+            }
+
+            IReadOnlyList<DirectiveNode> nodes = ParseNodes(
+                stopAtClosingBrace: true,
+                DirectiveContentKind.MotionExecutions);
+            if (nodes.Count == 0)
+            {
+                throw new DirectiveParseException(directive + " requires at least one child execution body.", source);
+            }
+
+            if (nodes.Any(node => node is not MotionExecutionNode))
+            {
+                throw new DirectiveParseException(directive + " accepts only Motion execution bodies.", source);
+            }
+
+            if (nodes.Any(node => node is MotionCancelNode))
+            {
+                throw new DirectiveParseException(directive + " cannot contain @cancel.", source);
+            }
+
+            return new MotionCompositionNode(kind, nodes.Cast<MotionExecutionNode>().ToArray(), source);
+        }
+
+        private MotionRunNode ParseMotionRun()
+        {
+            XObject source = CurrentSource;
+            Consume("@run");
+            SkipWhitespace();
+            int statementOffset = characterIndex;
+            string statement = ReadMotionStatement().Trim();
+            string? handleName = null;
+            int handleSeparator = statement.LastIndexOf(" as ", StringComparison.Ordinal);
+            if (handleSeparator >= 0)
+            {
+                handleName = statement.Substring(handleSeparator + 4).Trim();
+                statement = statement.Substring(0, handleSeparator).Trim();
+                if (!IsIdentifier(handleName))
+                {
+                    throw new DirectiveParseException("@run 'as' requires a declared handle name.", source);
+                }
+            }
+
+            if (statement.Length < 2 || statement[0] != '$')
+            {
+                throw new DirectiveParseException("@run requires one MotionClip resource reference such as '$Clip'.", source);
+            }
+
+            int open = statement.IndexOf('(');
+            string clipName = open < 0 ? statement.Substring(1) : statement.Substring(1, open - 1).Trim();
+            if (!IsIdentifier(clipName) ||
+                (open >= 0 && (statement[statement.Length - 1] != ')' || open == statement.Length - 1)))
+            {
+                throw new DirectiveParseException("@run requires '$Clip' followed by optional named arguments.", source);
+            }
+
+            List<MotionRunArgumentSyntax> arguments = [];
+            if (open >= 0)
+            {
+                string argumentsText = statement.Substring(open + 1, statement.Length - open - 2);
+                foreach (SplitPart part in SplitTopLevel(argumentsText, ','))
+                {
+                    string argument = part.Text.Trim();
+                    int equals = FindTopLevelCharacter(argument, '=');
+                    string name = equals < 0 ? string.Empty : argument.Substring(0, equals).Trim();
+                    string value = equals < 0 ? string.Empty : argument.Substring(equals + 1).Trim();
+                    DirectiveExpressionLocation location = new(source, statementOffset + open + 1 + part.Offset);
+                    if (!IsIdentifier(name) || value.Length == 0)
+                    {
+                        throw new DirectiveParseException("@run arguments must use 'Name = value'.", location);
+                    }
+
+                    arguments.Add(new MotionRunArgumentSyntax(name, value, location));
+                }
+            }
+
+            return new MotionRunNode(clipName, arguments, handleName, source);
+        }
+
+        private MotionCancelNode ParseMotionCancel()
+        {
+            XObject source = CurrentSource;
+            Consume("@cancel");
+            SkipWhitespace();
+            string handleName = ReadMotionStatement().Trim();
+            if (!IsIdentifier(handleName))
+            {
+                throw new DirectiveParseException("@cancel requires one declared handle name.", source);
+            }
+
+            return new MotionCancelNode(handleName, source);
+        }
+
+        private MotionHandleNode ParseMotionHandle()
+        {
+            XObject source = CurrentSource;
+            Consume("@handle");
+            SkipWhitespace();
+            string name = ReadMotionStatement().Trim();
+            if (!IsIdentifier(name))
+            {
+                throw new DirectiveParseException("@handle requires one name.", source);
+            }
+
+            return new MotionHandleNode(name, source);
+        }
+
+        private MotionParameterNode ParseMotionParameter()
+        {
+            XObject source = CurrentSource;
+            Consume("@parameter");
+            SkipWhitespace();
+            int statementOffset = characterIndex;
+            string statement = ReadMotionStatement().Trim();
+            int colon = statement.IndexOf(':');
+            int equals = FindTopLevelCharacter(statement, '=');
+            string name = colon < 0 ? string.Empty : statement.Substring(0, colon).Trim();
+            string typeName = colon < 0
+                ? string.Empty
+                : statement.Substring(colon + 1, (equals < 0 ? statement.Length : equals) - colon - 1).Trim();
+            string? defaultValue = equals < 0 ? null : statement.Substring(equals + 1).Trim();
+            DirectiveExpressionLocation location = new(source, statementOffset);
+            if (!IsIdentifier(name) || typeName.Length == 0 || defaultValue is not null && defaultValue.Length == 0)
+            {
+                throw new DirectiveParseException("@parameter requires 'Name: Type' and an optional '= default'.", location);
+            }
+
+            return new MotionParameterNode(name, typeName, defaultValue, location, source);
+        }
+
+        private static void ValidateExplicitMotionComposition(
+            IReadOnlyList<DirectiveNode> nodes,
+            string owner,
+            XObject source)
+        {
+            if (nodes.OfType<MotionExecutionNode>().Skip(1).Any())
+            {
+                throw new DirectiveParseException(
+                    owner + " contains sibling Motion executions; wrap them in @parallel or @sequence.",
+                    source);
+            }
         }
 
         private MotionAnimateNode ParseAnimate()
@@ -634,7 +857,9 @@ public sealed partial class UiMarkupGenerator
             }
 
             return new DirectiveDefaultNode(
-                ParseNodes(stopAtClosingBrace: true, allowedContent & ~DirectiveContentKind.Templates),
+                ParseNodes(
+                    stopAtClosingBrace: true,
+                    allowedContent & ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionHandles)),
                 source);
         }
 
@@ -974,7 +1199,7 @@ public sealed partial class UiMarkupGenerator
             return new MotionAtomValueSyntax(text, location);
         }
 
-        private static MotionSpecSyntax ParseMotionSpec(string text, DirectiveExpressionLocation location)
+        public static MotionSpecSyntax ParseMotionSpec(string text, DirectiveExpressionLocation location)
         {
             text = text.Trim();
             if (text.Length == 0)
@@ -991,6 +1216,11 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 return new MotionResourceSpecSyntax(name, location);
+            }
+
+            if (IsIdentifier(text))
+            {
+                return new MotionParameterSpecSyntax(text, location);
             }
 
             int open = text.IndexOf('(');
@@ -1179,7 +1409,8 @@ public sealed partial class UiMarkupGenerator
 
         private static bool IsMotionDirective(string directive)
         {
-            return directive is "@animate" or "@from" or "@to" or "@on";
+            return directive is "@animate" or "@parallel" or "@sequence" or "@run" or "@cancel" or
+                "@handle" or "@parameter" or "@from" or "@to" or "@on";
         }
 
         private static bool Allows(DirectiveContentKind allowed, DirectiveContentKind value)

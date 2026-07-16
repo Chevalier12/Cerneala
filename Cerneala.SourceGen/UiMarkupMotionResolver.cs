@@ -31,19 +31,97 @@ public sealed partial class UiMarkupGenerator
             public XElement Source { get; }
         }
 
+        private sealed class MotionClipResource
+        {
+            public MotionClipResource(
+                string name,
+                string targetName,
+                IReadOnlyList<MotionParameterNode> parameters,
+                MotionExecutionNode body,
+                XElement source)
+            {
+                Name = name;
+                TargetName = targetName;
+                Parameters = parameters;
+                Body = body;
+                Source = source;
+            }
+
+            public string Name { get; }
+
+            public string TargetName { get; }
+
+            public IReadOnlyList<MotionParameterNode> Parameters { get; }
+
+            public MotionExecutionNode Body { get; }
+
+            public XElement Source { get; }
+        }
+
+        private sealed class ResolvedMotionParameterValue
+        {
+            public ResolvedMotionParameterValue(MotionParameterNode parameter, string rawText, string? valueCode, MotionSpecSyntax? spec)
+            {
+                Parameter = parameter;
+                RawText = rawText;
+                ValueCode = valueCode;
+                Spec = spec;
+            }
+
+            public MotionParameterNode Parameter { get; }
+
+            public string RawText { get; }
+
+            public string? ValueCode { get; }
+
+            public MotionSpecSyntax? Spec { get; }
+        }
+
+        private sealed class MotionClipInvocationContext
+        {
+            public MotionClipInvocationContext(IReadOnlyDictionary<string, ResolvedMotionParameterValue> values)
+            {
+                Values = values;
+            }
+
+            public IReadOnlyDictionary<string, ResolvedMotionParameterValue> Values { get; }
+        }
+
         private sealed class ResolvedMotionAspect
         {
             public ResolvedMotionAspect(
                 IReadOnlyList<ResolvedMotionAnimation> animations,
+                IReadOnlyList<ResolvedMotionComposition> compositions,
+                IReadOnlyList<ResolvedMotionCancelCommand> cancelCommands,
                 IReadOnlyList<ResolvedMotionEventTrigger> eventTriggers)
             {
                 Animations = animations;
+                Compositions = compositions;
+                CancelCommands = cancelCommands;
                 EventTriggers = eventTriggers;
             }
 
             public IReadOnlyList<ResolvedMotionAnimation> Animations { get; }
 
+            public IReadOnlyList<ResolvedMotionComposition> Compositions { get; }
+
+            public IReadOnlyList<ResolvedMotionCancelCommand> CancelCommands { get; }
+
             public IReadOnlyList<ResolvedMotionEventTrigger> EventTriggers { get; }
+        }
+
+        private sealed class ResolvedMotionCancelCommand
+        {
+            public ResolvedMotionCancelCommand(string actionName, string handleName)
+            {
+                ActionName = actionName;
+                HandleName = handleName;
+            }
+
+            public string ActionName { get; }
+
+            public string HandleName { get; }
+
         }
 
         private sealed class ResolvedMotionAnimation
@@ -51,11 +129,15 @@ public sealed partial class UiMarkupGenerator
             public ResolvedMotionAnimation(
                 MotionAnimateNode syntax,
                 IReadOnlyList<ResolvedMotionProperty> properties,
-                string executionName)
+                string executionName,
+                string factoryName,
+                MotionClipInvocationContext? parameters)
             {
                 Syntax = syntax;
                 Properties = properties;
                 ExecutionName = executionName;
+                FactoryName = factoryName;
+                Parameters = parameters;
             }
 
             public MotionAnimateNode Syntax { get; }
@@ -63,6 +145,47 @@ public sealed partial class UiMarkupGenerator
             public IReadOnlyList<ResolvedMotionProperty> Properties { get; }
 
             public string ExecutionName { get; }
+
+            public string FactoryName { get; }
+
+            public MotionClipInvocationContext? Parameters { get; }
+        }
+
+        private sealed class ResolvedMotionComposition
+        {
+            public ResolvedMotionComposition(
+                MotionCompositionNode syntax,
+                IReadOnlyList<string> childFactoryNames,
+                string executionName,
+                string factoryName)
+            {
+                Syntax = syntax;
+                ChildFactoryNames = childFactoryNames;
+                ExecutionName = executionName;
+                FactoryName = factoryName;
+            }
+
+            public ResolvedMotionComposition(
+                string handleName,
+                string childFactoryName,
+                string executionName,
+                string factoryName)
+            {
+                HandleName = handleName;
+                ChildFactoryNames = [childFactoryName];
+                ExecutionName = executionName;
+                FactoryName = factoryName;
+            }
+
+            public MotionCompositionNode? Syntax { get; }
+
+            public string? HandleName { get; }
+
+            public IReadOnlyList<string> ChildFactoryNames { get; }
+
+            public string ExecutionName { get; }
+
+            public string FactoryName { get; }
         }
 
         private sealed class ResolvedMotionEventTrigger
@@ -107,6 +230,8 @@ public sealed partial class UiMarkupGenerator
 
         private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionAspect> resolvedMotionAspects = new();
         private readonly Dictionary<MotionAnimateNode, string> motionExecutionNames = new();
+        private readonly Dictionary<MotionExecutionNode, string> motionActionNames = new();
+        private readonly Dictionary<MotionExecutionNode, string> motionExecutionFactoryNames = new();
         private readonly Dictionary<string, string> specializedMotionSpecs = new(StringComparer.Ordinal);
 
         private void ReadMotionSpecResource(ResourceScope scope, XElement resource)
@@ -169,6 +294,172 @@ public sealed partial class UiMarkupGenerator
             scope.NamedResources.Add(name, new NamedSymbol(name, NamedSymbolKind.MotionSpec, spec));
         }
 
+        private void ReadMotionClip(ResourceScope scope, XElement resource)
+        {
+            string? name = RequiredName(resource);
+            if (name is null)
+            {
+                return;
+            }
+
+            if (scope.NamedResources.ContainsKey(name))
+            {
+                Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "Duplicate resource Name '" + name + "' in the same scope.");
+                return;
+            }
+
+            string targetName = resource.Attribute("TargetType")?.Value.Trim() ?? string.Empty;
+            if (targetName.Length == 0 || ResolveAspectTargetTypeSymbol(targetName) is null)
+            {
+                Report(InvalidPropertyValue, (object?)resource.Attribute("TargetType") ?? resource, "MotionClip", "TargetType", targetName);
+                return;
+            }
+
+            DirectiveParseResult parsed = ParseDirectiveContent(
+                resource,
+                DirectiveContentKind.MotionExecutions | DirectiveContentKind.MotionParameters);
+            if (parsed.Error is not null)
+            {
+                Report(InvalidDirective, parsed.ErrorSource ?? resource, Path.GetFileName(file.Path), parsed.Error);
+                return;
+            }
+
+            List<MotionParameterNode> parameters = [];
+            MotionExecutionNode? body = null;
+            bool bodySeen = false;
+            foreach (DirectiveNode node in parsed.Nodes)
+            {
+                if (node is MotionParameterNode parameter)
+                {
+                    if (bodySeen)
+                    {
+                        Report(InvalidDirective, parameter.Location, Path.GetFileName(file.Path), "@parameter declarations must appear before the MotionClip execution body.");
+                        return;
+                    }
+
+                    if (parameters.Any(existing => existing.Name == parameter.Name))
+                    {
+                        Report(InvalidDirective, parameter.Location, Path.GetFileName(file.Path), "Duplicate MotionClip parameter '" + parameter.Name + "'.");
+                        return;
+                    }
+
+                    if (!TryValidateMotionParameter(parameter))
+                    {
+                        return;
+                    }
+
+                    parameters.Add(parameter);
+                    continue;
+                }
+
+                bodySeen = true;
+                if (node is MotionExecutionNode execution && body is null)
+                {
+                    body = execution;
+                }
+                else
+                {
+                    body = null;
+                    break;
+                }
+            }
+
+            if (body is null)
+            {
+                string forbidden = parsed.Nodes.Any(node => node is DirectiveWhenNode or DirectiveOnNode)
+                    ? "MotionClip cannot contain activation directives such as @when or @on."
+                    : "MotionClip requires exactly one top-level execution body.";
+                Report(InvalidDirective, resource, Path.GetFileName(file.Path), forbidden);
+                return;
+            }
+
+            if (ContainsMotionRun(body))
+            {
+                Report(
+                    InvalidDirective,
+                    body.Source,
+                    Path.GetFileName(file.Path),
+                    "MotionClip cannot contain @run; recursive clip invocation is not allowed.");
+                return;
+            }
+
+            if (ContainsMotionCancel(body))
+            {
+                Report(
+                    InvalidDirective,
+                    body.Source,
+                    Path.GetFileName(file.Path),
+                    "MotionClip cannot contain @cancel; handles belong to an Aspect session.");
+                return;
+            }
+
+            MotionClipResource clip = new(name, targetName, parameters, body, resource);
+            scope.NamedResources.Add(name, new NamedSymbol(name, NamedSymbolKind.MotionClip, clip));
+        }
+
+        private bool TryValidateMotionParameter(MotionParameterNode parameter)
+        {
+            string typeName = NormalizeMotionParameterType(parameter.TypeName);
+            if (!IsMotionValueParameterType(typeName) && !IsMotionSpecParameterType(typeName, out _))
+            {
+                Report(
+                    InvalidDirective,
+                    parameter.Location,
+                    Path.GetFileName(file.Path),
+                    "MotionClip parameter '" + parameter.Name + "' has unsupported type '" + parameter.TypeName + "'.");
+                return false;
+            }
+
+            if (parameter.DefaultValue is null)
+            {
+                return true;
+            }
+
+            return TryCreateMotionParameterValue(parameter, parameter.DefaultValue, parameter.Location, out _);
+        }
+
+        private static string NormalizeMotionParameterType(string typeName)
+        {
+            return typeName.Replace("global::", string.Empty).Replace(" ", string.Empty);
+        }
+
+        private static bool IsMotionValueParameterType(string typeName)
+        {
+            return typeName is "float" or "System.Single" or "double" or "System.Double" or
+                "int" or "System.Int32" or "bool" or "System.Boolean" or "string" or "System.String";
+        }
+
+        private static bool IsMotionSpecParameterType(string typeName, out string valueType)
+        {
+            typeName = NormalizeMotionParameterType(typeName);
+            const string prefix = "Cerneala.UI.Motion.Specs.MotionSpec<";
+            string shortPrefix = "MotionSpec<";
+            string? argument = typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith(">", StringComparison.Ordinal)
+                ? typeName.Substring(prefix.Length, typeName.Length - prefix.Length - 1)
+                : typeName.StartsWith(shortPrefix, StringComparison.Ordinal) && typeName.EndsWith(">", StringComparison.Ordinal)
+                    ? typeName.Substring(shortPrefix.Length, typeName.Length - shortPrefix.Length - 1)
+                    : null;
+            valueType = argument switch
+            {
+                "float" or "System.Single" => "float",
+                "double" or "System.Double" => "double",
+                _ => string.Empty
+            };
+            return valueType.Length > 0;
+        }
+
+        private static bool ContainsMotionRun(MotionExecutionNode execution)
+        {
+            return execution is MotionRunNode ||
+                execution is MotionCompositionNode composition && composition.Children.Any(ContainsMotionRun);
+        }
+
+        private static bool ContainsMotionCancel(MotionExecutionNode execution)
+        {
+            return execution is MotionCancelNode ||
+                execution is MotionCompositionNode composition && composition.Children.Any(ContainsMotionCancel);
+        }
+
         private bool ResolveMotionAspect(XElement applicationElement, AspectResource aspect)
         {
             if (resolvedMotionAspects.ContainsKey((aspect, applicationElement)))
@@ -196,26 +487,26 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
-            List<MotionAnimateNode> syntaxAnimations = [];
+            List<MotionExecutionNode> syntaxExecutions = [];
             foreach (DirectiveWhenNode condition in aspect.Conditions)
             {
-                CollectMotionAnimations(condition, syntaxAnimations);
+                CollectMotionExecutionRoots(condition, syntaxExecutions);
             }
 
             foreach (DirectiveOnNode trigger in aspect.EventTriggers)
             {
-                syntaxAnimations.AddRange(trigger.Body.OfType<MotionAnimateNode>());
+                syntaxExecutions.AddRange(trigger.Body);
             }
 
             List<ResolvedMotionAnimation> animations = [];
-            foreach (MotionAnimateNode animation in syntaxAnimations)
+            List<ResolvedMotionComposition> compositions = [];
+            List<ResolvedMotionCancelCommand> cancelCommands = [];
+            foreach (MotionExecutionNode execution in syntaxExecutions)
             {
-                if (!TryResolveMotionAnimation(applicationElement, aspect, animation, out ResolvedMotionAnimation? resolved))
+                if (!TryResolveMotionExecution(applicationElement, aspect, execution, animations, compositions, cancelCommands))
                 {
                     return false;
                 }
-
-                animations.Add(resolved!);
             }
 
             List<ResolvedMotionEventTrigger> eventTriggers = [];
@@ -233,13 +524,14 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 string[] executionNames = trigger.Body
-                    .OfType<MotionAnimateNode>()
-                    .Select(animation => motionExecutionNames[animation])
+                    .Select(execution => GetMotionExecutionName(execution))
                     .ToArray();
                 eventTriggers.Add(new ResolvedMotionEventTrigger(eventSymbol, executionNames));
             }
 
-            resolvedMotionAspects.Add((aspect, applicationElement), new ResolvedMotionAspect(animations, eventTriggers));
+            resolvedMotionAspects.Add(
+                (aspect, applicationElement),
+                new ResolvedMotionAspect(animations, compositions, cancelCommands, eventTriggers));
             return true;
         }
 
@@ -257,40 +549,295 @@ public sealed partial class UiMarkupGenerator
             return null;
         }
 
-        private static void CollectMotionAnimations(DirectiveWhenNode condition, ICollection<MotionAnimateNode> animations)
+        private static void CollectMotionExecutionRoots(DirectiveWhenNode condition, ICollection<MotionExecutionNode> executions)
         {
             if (condition.BooleanBody is not null)
             {
-                CollectMotionAnimations(condition.BooleanBody, animations);
+                CollectMotionExecutionRoots(condition.BooleanBody, executions);
             }
 
             foreach (DirectiveIfNode branch in condition.Branches)
             {
-                CollectMotionAnimations(branch.Body, animations);
+                CollectMotionExecutionRoots(branch.Body, executions);
             }
         }
 
-        private static void CollectMotionAnimations(IReadOnlyList<DirectiveNode> nodes, ICollection<MotionAnimateNode> animations)
+        private static void CollectMotionExecutionRoots(IReadOnlyList<DirectiveNode> nodes, ICollection<MotionExecutionNode> executions)
         {
-            foreach (MotionAnimateNode animation in nodes.OfType<MotionAnimateNode>())
+            foreach (MotionExecutionNode execution in nodes.OfType<MotionExecutionNode>())
             {
-                animations.Add(animation);
+                executions.Add(execution);
             }
 
             foreach (DirectiveWhenNode nested in nodes.OfType<DirectiveWhenNode>())
             {
-                CollectMotionAnimations(nested, animations);
+                CollectMotionExecutionRoots(nested, executions);
             }
+        }
+
+        private bool TryResolveMotionExecution(
+            XElement applicationElement,
+            AspectResource aspect,
+            MotionExecutionNode execution,
+            ICollection<ResolvedMotionAnimation> animations,
+            ICollection<ResolvedMotionComposition> compositions,
+            ICollection<ResolvedMotionCancelCommand> cancelCommands,
+            MotionClipInvocationContext? parameters = null)
+        {
+            if (execution is MotionAnimateNode animation)
+            {
+                if (!TryResolveMotionAnimation(applicationElement, aspect, animation, parameters, out ResolvedMotionAnimation? resolved))
+                {
+                    return false;
+                }
+
+                animations.Add(resolved!);
+                return true;
+            }
+
+            if (execution is MotionRunNode run)
+            {
+                if (!TryResolveResource(run.Source, run.ClipName, out NamedSymbol symbol) ||
+                    symbol.Source is not MotionClipResource clip)
+                {
+                    Report(InvalidDirective, run.Source, Path.GetFileName(file.Path), "Unknown MotionClip resource '$" + run.ClipName + "'.");
+                    return false;
+                }
+
+                INamedTypeSymbol? applicationType = ResolvePropertyOwnerType(
+                    applicationElement.Name.LocalName,
+                    ReferenceEquals(applicationElement, document.Root));
+                INamedTypeSymbol? clipTargetType = ResolveAspectTargetTypeSymbol(clip.TargetName);
+                if (applicationType is null || clipTargetType is null || !IsOrDerivesFrom(applicationType, clipTargetType))
+                {
+                    Report(
+                        InvalidDirective,
+                        run.Source,
+                        Path.GetFileName(file.Path),
+                        "MotionClip '$" + run.ClipName + "' TargetType '" + clip.TargetName +
+                        "' is not assignable from '" + applicationElement.Name.LocalName + "'.");
+                    return false;
+                }
+
+                if (!TryResolveMotionClipArguments(run, clip, out MotionClipInvocationContext? invocation) ||
+                    !TryResolveMotionExecution(applicationElement, aspect, clip.Body, animations, compositions, cancelCommands, invocation))
+                {
+                    return false;
+                }
+
+                string clipFactoryName = motionExecutionFactoryNames[clip.Body];
+                if (run.HandleName is null)
+                {
+                    motionExecutionFactoryNames[run] = clipFactoryName;
+                }
+                else
+                {
+                    (string runExecutionName, string runFactoryName) = CreateMotionExecutionNames();
+                    motionExecutionFactoryNames[run] = runFactoryName;
+                    compositions.Add(new ResolvedMotionComposition(
+                        run.HandleName,
+                        clipFactoryName,
+                        runExecutionName,
+                        runFactoryName));
+                }
+
+                return true;
+            }
+
+            if (execution is MotionCancelNode cancel)
+            {
+                string actionName = CreateMotionActionName();
+                motionActionNames[cancel] = actionName;
+                cancelCommands.Add(new ResolvedMotionCancelCommand(actionName, cancel.HandleName));
+                return true;
+            }
+
+            MotionCompositionNode composition = (MotionCompositionNode)execution;
+            foreach (MotionExecutionNode child in composition.Children)
+            {
+                if (!TryResolveMotionExecution(applicationElement, aspect, child, animations, compositions, cancelCommands, parameters))
+                {
+                    return false;
+                }
+            }
+
+            (string executionName, string factoryName) = CreateMotionExecutionNames();
+            motionExecutionFactoryNames[composition] = factoryName;
+            compositions.Add(new ResolvedMotionComposition(
+                composition,
+                composition.Children.Select(child => motionExecutionFactoryNames[child]).ToArray(),
+                executionName,
+                factoryName));
+            return true;
+        }
+
+        private bool TryResolveMotionClipArguments(
+            MotionRunNode run,
+            MotionClipResource clip,
+            out MotionClipInvocationContext? context)
+        {
+            context = null;
+            Dictionary<string, MotionRunArgumentSyntax> arguments = new(StringComparer.Ordinal);
+            foreach (MotionRunArgumentSyntax argument in run.Arguments)
+            {
+                if (arguments.ContainsKey(argument.Name))
+                {
+                    Report(InvalidDirective, argument.Location, Path.GetFileName(file.Path), "Duplicate MotionClip argument '" + argument.Name + "'.");
+                    return false;
+                }
+
+                arguments.Add(argument.Name, argument);
+
+                if (!clip.Parameters.Any(parameter => parameter.Name == argument.Name))
+                {
+                    Report(InvalidDirective, argument.Location, Path.GetFileName(file.Path), "Unknown parameter '" + argument.Name + "' for MotionClip '$" + clip.Name + "'.");
+                    return false;
+                }
+            }
+
+            Dictionary<string, ResolvedMotionParameterValue> values = new(StringComparer.Ordinal);
+            foreach (MotionParameterNode parameter in clip.Parameters)
+            {
+                string? rawText;
+                DirectiveExpressionLocation location;
+                if (arguments.TryGetValue(parameter.Name, out MotionRunArgumentSyntax? argument))
+                {
+                    rawText = argument.Value;
+                    location = argument.Location;
+                }
+                else
+                {
+                    rawText = parameter.DefaultValue;
+                    location = parameter.Location;
+                }
+
+                if (rawText is null)
+                {
+                    Report(InvalidDirective, run.Source, Path.GetFileName(file.Path), "MotionClip '$" + clip.Name + "' requires argument '" + parameter.Name + "'.");
+                    return false;
+                }
+
+                if (!TryCreateMotionParameterValue(parameter, rawText, location, out ResolvedMotionParameterValue? value))
+                {
+                    return false;
+                }
+
+                values.Add(parameter.Name, value!);
+            }
+
+            context = new MotionClipInvocationContext(values);
+            return true;
+        }
+
+        private bool TryCreateMotionParameterValue(
+            MotionParameterNode parameter,
+            string rawText,
+            DirectiveExpressionLocation location,
+            out ResolvedMotionParameterValue? value)
+        {
+            value = null;
+            string typeName = NormalizeMotionParameterType(parameter.TypeName);
+            string text = rawText.Trim();
+            string? code = null;
+            MotionSpecSyntax? spec = null;
+
+            if (IsMotionSpecParameterType(typeName, out _))
+            {
+                try
+                {
+                    spec = DirectiveCursor.ParseMotionSpec(text, location);
+                }
+                catch (DirectiveParseException exception)
+                {
+                    Report(InvalidDirective, location, Path.GetFileName(file.Path), "MotionClip parameter '" + parameter.Name + "' requires a Motion spec: " + exception.Message);
+                    return false;
+                }
+
+                if (spec is MotionParameterSpecSyntax)
+                {
+                    Report(InvalidDirective, location, Path.GetFileName(file.Path), "MotionClip argument '" + parameter.Name + "' cannot reference another parameter.");
+                    return false;
+                }
+            }
+            else if (typeName is "float" or "System.Single" &&
+                float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float floatValue) &&
+                !float.IsNaN(floatValue) && !float.IsInfinity(floatValue))
+            {
+                code = floatValue.ToString("R", CultureInfo.InvariantCulture) + "f";
+            }
+            else if (typeName is "double" or "System.Double" &&
+                double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double doubleValue) &&
+                !double.IsNaN(doubleValue) && !double.IsInfinity(doubleValue))
+            {
+                code = doubleValue.ToString("R", CultureInfo.InvariantCulture) + "d";
+            }
+            else if (typeName is "int" or "System.Int32" &&
+                int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int intValue))
+            {
+                code = intValue.ToString(CultureInfo.InvariantCulture);
+            }
+            else if (typeName is "bool" or "System.Boolean" && bool.TryParse(text, out bool boolValue))
+            {
+                code = boolValue ? "true" : "false";
+            }
+            else if (typeName is "string" or "System.String" &&
+                text.Length >= 2 && text[0] == '"' && text[text.Length - 1] == '"')
+            {
+                code = Literal(text.Substring(1, text.Length - 2));
+            }
+            else
+            {
+                Report(
+                    InvalidDirective,
+                    location,
+                    Path.GetFileName(file.Path),
+                    "MotionClip argument '" + parameter.Name + "' is not compatible with type '" + parameter.TypeName + "'.");
+                return false;
+            }
+
+            value = new ResolvedMotionParameterValue(parameter, text, code, spec);
+            return true;
+        }
+
+        private string GetMotionExecutionName(MotionExecutionNode execution)
+        {
+            if (motionActionNames.TryGetValue(execution, out string? actionName))
+            {
+                return actionName;
+            }
+
+            if (execution is MotionAnimateNode animation)
+            {
+                return motionExecutionNames[animation];
+            }
+
+            string factoryName = motionExecutionFactoryNames[execution];
+            return "motionExecution" + factoryName.Substring("motionExecutionFactory".Length);
+        }
+
+        private string CreateMotionActionName()
+        {
+            string name = "motionExecution" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
+            nextReactiveId++;
+            return name;
+        }
+
+        private (string ExecutionName, string FactoryName) CreateMotionExecutionNames()
+        {
+            string suffix = nextReactiveId.ToString(CultureInfo.InvariantCulture);
+            nextReactiveId++;
+            return ("motionExecution" + suffix, "motionExecutionFactory" + suffix);
         }
 
         private bool TryResolveMotionAnimation(
             XElement applicationElement,
             AspectResource aspect,
             MotionAnimateNode animation,
+            MotionClipInvocationContext? parameters,
             out ResolvedMotionAnimation? resolved)
         {
             resolved = null;
-            if (!ValidateMotionOptions(animation.Options))
+            if (!ValidateMotionOptions(animation.Options, parameters))
             {
                 return false;
             }
@@ -339,14 +886,14 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                if (!ValidateMotionValue(destination.Value, property, destination.Target) ||
-                    (source is not null && !ValidateMotionValue(source.Value, property, source.Target)))
+                if (!ValidateMotionValue(destination.Value, property, destination.Target, parameters) ||
+                    (source is not null && !ValidateMotionValue(source.Value, property, source.Target, parameters)))
                 {
                     return false;
                 }
 
                 MotionSpecSyntax? spec = destination.Spec ?? animation.DefaultSpec;
-                if (!TryResolveMotionSpec(applicationElement, spec, property, destination.Target, out string? specVariable))
+                if (!TryResolveMotionSpec(applicationElement, spec, property, destination.Target, parameters, out string? specVariable))
                 {
                     return false;
                 }
@@ -354,10 +901,10 @@ public sealed partial class UiMarkupGenerator
                 properties.Add(new ResolvedMotionProperty(destination, source, targetElement!, property, specVariable));
             }
 
-            string executionName = "motionExecution" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
-            nextReactiveId++;
+            (string executionName, string factoryName) = CreateMotionExecutionNames();
             motionExecutionNames[animation] = executionName;
-            resolved = new ResolvedMotionAnimation(animation, properties, executionName);
+            motionExecutionFactoryNames[animation] = factoryName;
+            resolved = new ResolvedMotionAnimation(animation, properties, executionName, factoryName, parameters);
             return true;
         }
 
@@ -389,14 +936,14 @@ public sealed partial class UiMarkupGenerator
                     string typeCode = property.Property.ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                     bool hasFrom = property.Source is not null && property.Source.Value is not MotionCurrentValueSyntax;
                     string fromCode = hasFrom
-                        ? EmitMotionValue(property.Source!.Value, property.Property, targetCode)
+                        ? EmitMotionValue(property.Source!.Value, property.Property, targetCode, animation.Parameters)
                         : "default(" + typeCode + ")!";
                     bool toCurrent = property.Destination.Value is MotionCurrentValueSyntax;
                     string toCode = toCurrent
                         ? "default(" + typeCode + ")!"
-                        : EmitMotionValue(property.Destination.Value, property.Property, targetCode);
+                        : EmitMotionValue(property.Destination.Value, property.Property, targetCode, animation.Parameters);
                     string specCode = property.SpecVariable ?? "null";
-                    string optionsCode = EmitMotionOptions(animation.Syntax.Options);
+                    string optionsCode = EmitMotionOptions(animation.Syntax.Options, animation.Parameters);
                     starts.Add(
                         "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
                         targetCode + ", " + property.Property.PropertyCode + ", " +
@@ -405,9 +952,46 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 currentPostLines.Add(
+                    "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + animation.FactoryName +
+                    " = () => global::Cerneala.UI.Markup.MarkupMotionExecution.Parallel(" +
+                    string.Join(", ", starts.Select(start => "() => global::Cerneala.UI.Markup.MarkupMotionExecution.From(" + start + ")")) + ");");
+                currentPostLines.Add(
                     "global::System.Action " + animation.ExecutionName +
-                    " = () => global::Cerneala.UI.Markup.GeneratedMarkup.StartMotion(" + sessionName +
-                    ", () => new global::Cerneala.UI.Motion.Core.MotionHandle[] { " + string.Join(", ", starts) + " });");
+                    " = () => global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionExecution(" + sessionName +
+                    ", " + animation.FactoryName + ");");
+            }
+
+            foreach (ResolvedMotionComposition composition in resolved.Compositions)
+            {
+                if (composition.HandleName is null)
+                {
+                    string method = composition.Syntax!.Kind == MotionCompositionKind.Parallel ? "Parallel" : "Sequence";
+                    currentPostLines.Add(
+                        "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + composition.FactoryName +
+                        " = () => global::Cerneala.UI.Markup.MarkupMotionExecution." + method + "(" +
+                        string.Join(", ", composition.ChildFactoryNames) + ");");
+                }
+                else
+                {
+                    currentPostLines.Add(
+                        "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + composition.FactoryName +
+                        " = () => global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionExecution(" + sessionName + ", " +
+                        Literal(composition.HandleName) + ", " + composition.ChildFactoryNames[0] + ");");
+                }
+
+                string startCall = composition.HandleName is null
+                    ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionExecution(" + sessionName +
+                        ", " + composition.FactoryName + ")"
+                    : composition.FactoryName + "()";
+                currentPostLines.Add(
+                    "global::System.Action " + composition.ExecutionName + " = () => " + startCall + ";");
+            }
+
+            foreach (ResolvedMotionCancelCommand command in resolved.CancelCommands)
+            {
+                string call = "global::Cerneala.UI.Markup.GeneratedMarkup.CancelMotionExecution(" +
+                    sessionName + ", " + Literal(command.HandleName) + ")";
+                currentPostLines.Add("global::System.Action " + command.ActionName + " = () => " + call + ";");
             }
 
             foreach (ResolvedMotionEventTrigger trigger in resolved.EventTriggers)
@@ -429,13 +1013,17 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private string EmitMotionValue(MotionValueSyntax value, PropertySpec property, string targetCode)
+        private string EmitMotionValue(
+            MotionValueSyntax value,
+            PropertySpec property,
+            string targetCode,
+            MotionClipInvocationContext? parameters)
         {
             if (value is MotionConditionalValueSyntax conditional)
             {
                 return "(" + EmitMotionCondition(conditional.Condition, targetCode) + " ? " +
-                    EmitMotionValue(conditional.WhenTrue, property, targetCode) + " : " +
-                    EmitMotionValue(conditional.WhenFalse, property, targetCode) + ")";
+                    EmitMotionValue(conditional.WhenTrue, property, targetCode, parameters) + " : " +
+                    EmitMotionValue(conditional.WhenFalse, property, targetCode, parameters) + ")";
             }
 
             if (value is MotionCurrentValueSyntax)
@@ -444,6 +1032,11 @@ public sealed partial class UiMarkupGenerator
             }
 
             MotionAtomValueSyntax atom = (MotionAtomValueSyntax)value;
+            if (parameters is not null && parameters.Values.TryGetValue(atom.Text.Trim(), out ResolvedMotionParameterValue? parameter))
+            {
+                return parameter.ValueCode!;
+            }
+
             GeneratedExpression? expression = ParseDirectiveValue(
                 null,
                 property.Name,
@@ -473,20 +1066,37 @@ public sealed partial class UiMarkupGenerator
             };
         }
 
-        private static string EmitMotionOptions(IReadOnlyList<MotionOptionSyntax> options)
+        private static string EmitMotionOptions(
+            IReadOnlyList<MotionOptionSyntax> options,
+            MotionClipInvocationContext? parameters)
         {
-            string retarget = options.FirstOrDefault(option => option.Name == "retarget")?.Value is MotionAtomValueSyntax retargetValue
-                ? retargetValue.Text
-                : "Restart";
-            string hold = options.FirstOrDefault(option => option.Name == "holdOnComplete")?.Value is MotionAtomValueSyntax holdValue
-                ? holdValue.Text.ToLowerInvariant()
-                : "true";
-            string debugName = options.FirstOrDefault(option => option.Name == "debugName")?.Value is MotionAtomValueSyntax debugValue
-                ? debugValue.Text
-                : "null";
+            string retarget = ResolveMotionOptionValue(options, "retarget", parameters, "Restart", useCode: false);
+            string hold = ResolveMotionOptionValue(options, "holdOnComplete", parameters, "true", useCode: true);
+            string debugName = ResolveMotionOptionValue(options, "debugName", parameters, "null", useCode: true);
             return "new global::Cerneala.UI.Motion.Properties.MotionPropertyStartOptions { RetargetMode = " +
                 "global::Cerneala.UI.Motion.Specs.RetargetMode." + retarget +
                 ", HoldOnComplete = " + hold + ", DebugName = " + debugName + " }";
+        }
+
+        private static string ResolveMotionOptionValue(
+            IReadOnlyList<MotionOptionSyntax> options,
+            string name,
+            MotionClipInvocationContext? parameters,
+            string fallback,
+            bool useCode)
+        {
+            if (options.FirstOrDefault(option => option.Name == name)?.Value is not MotionAtomValueSyntax atom)
+            {
+                return fallback;
+            }
+
+            string text = atom.Text.Trim();
+            if (parameters is not null && parameters.Values.TryGetValue(text, out ResolvedMotionParameterValue? parameter))
+            {
+                return useCode ? parameter.ValueCode! : parameter.RawText.Trim('"');
+            }
+
+            return name == "holdOnComplete" ? text.ToLowerInvariant() : text;
         }
 
         private bool TryResolveMotionTarget(
@@ -543,7 +1153,9 @@ public sealed partial class UiMarkupGenerator
             return true;
         }
 
-        private bool ValidateMotionOptions(IReadOnlyList<MotionOptionSyntax> options)
+        private bool ValidateMotionOptions(
+            IReadOnlyList<MotionOptionSyntax> options,
+            MotionClipInvocationContext? parameters)
         {
             HashSet<string> seen = new(StringComparer.Ordinal);
             foreach (MotionOptionSyntax option in options)
@@ -560,11 +1172,23 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
+                string text = atom.Text.Trim();
+                ResolvedMotionParameterValue? parameter = null;
+                parameters?.Values.TryGetValue(text, out parameter);
+                string parameterType = parameter is null
+                    ? string.Empty
+                    : NormalizeMotionParameterType(parameter.Parameter.TypeName);
                 bool valid = option.Name switch
                 {
-                    "retarget" => atom.Text is "Restart" or "PreserveProgress",
-                    "holdOnComplete" => bool.TryParse(atom.Text, out _),
-                    "debugName" => atom.Text.Length >= 2 && atom.Text[0] == '"' && atom.Text[atom.Text.Length - 1] == '"',
+                    "retarget" => parameter is null
+                        ? text is "Restart" or "PreserveProgress"
+                        : parameterType is "string" or "System.String" && parameter.RawText.Trim('"') is "Restart" or "PreserveProgress",
+                    "holdOnComplete" => parameter is null
+                        ? bool.TryParse(text, out _)
+                        : parameterType is "bool" or "System.Boolean",
+                    "debugName" => parameter is null
+                        ? text.Length >= 2 && text[0] == '"' && text[text.Length - 1] == '"'
+                        : parameterType is "string" or "System.String",
                     _ => false
                 };
                 if (!valid)
@@ -581,7 +1205,11 @@ public sealed partial class UiMarkupGenerator
             return true;
         }
 
-        private bool ValidateMotionValue(MotionValueSyntax value, PropertySpec property, string target)
+        private bool ValidateMotionValue(
+            MotionValueSyntax value,
+            PropertySpec property,
+            string target,
+            MotionClipInvocationContext? parameters)
         {
             if (value is MotionCurrentValueSyntax)
             {
@@ -590,11 +1218,22 @@ public sealed partial class UiMarkupGenerator
 
             if (value is MotionConditionalValueSyntax conditional)
             {
-                return ValidateMotionValue(conditional.WhenTrue, property, target) &&
-                    ValidateMotionValue(conditional.WhenFalse, property, target);
+                return ValidateMotionValue(conditional.WhenTrue, property, target, parameters) &&
+                    ValidateMotionValue(conditional.WhenFalse, property, target, parameters);
             }
 
             string text = ((MotionAtomValueSyntax)value).Text.Trim();
+            if (parameters is not null && parameters.Values.TryGetValue(text, out ResolvedMotionParameterValue? parameter))
+            {
+                bool compatible = IsMotionParameterCompatible(parameter.Parameter.TypeName, property.ValueType);
+                if (!compatible)
+                {
+                    Report(InvalidDirective, value.Location, Path.GetFileName(file.Path), "MotionClip parameter '" + text + "' is not compatible with property type '" + property.ValueType.ToDisplayString() + "'.");
+                }
+
+                return compatible;
+            }
+
             bool valid = property.ValueKind switch
             {
                 MarkupValueKind.Float or MarkupValueKind.NonNegativeFloat or MarkupValueKind.PositiveFloat =>
@@ -614,11 +1253,27 @@ public sealed partial class UiMarkupGenerator
             return valid;
         }
 
+        private static bool IsMotionParameterCompatible(string parameterTypeName, ITypeSymbol propertyType)
+        {
+            string parameterType = NormalizeMotionParameterType(parameterTypeName);
+            string type = propertyType.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString();
+            return parameterType switch
+            {
+                "float" or "System.Single" => type == "float",
+                "double" or "System.Double" => type == "double",
+                "int" or "System.Int32" => type == "int",
+                "bool" or "System.Boolean" => type == "bool",
+                "string" or "System.String" => type == "string",
+                _ => false
+            };
+        }
+
         private bool TryResolveMotionSpec(
             XElement applicationElement,
             MotionSpecSyntax? syntax,
             PropertySpec property,
             string target,
+            MotionClipInvocationContext? parameters,
             out string? variable)
         {
             variable = null;
@@ -631,6 +1286,27 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 return true;
+            }
+
+            if (syntax is MotionParameterSpecSyntax parameterReference)
+            {
+                if (parameters is null ||
+                    !parameters.Values.TryGetValue(parameterReference.Name, out ResolvedMotionParameterValue? parameter) ||
+                    parameter.Spec is null)
+                {
+                    Report(InvalidDirective, parameterReference.Location, Path.GetFileName(file.Path), "Unknown MotionClip spec parameter '" + parameterReference.Name + "'.");
+                    return false;
+                }
+
+                IsMotionSpecParameterType(parameter.Parameter.TypeName, out string parameterValueType);
+                string propertyType = property.ValueType.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString();
+                if (parameterValueType != propertyType)
+                {
+                    Report(InvalidDirective, parameterReference.Location, Path.GetFileName(file.Path), "MotionClip spec parameter '" + parameterReference.Name + "' is not compatible with property type '" + propertyType + "'.");
+                    return false;
+                }
+
+                return TryResolveMotionSpec(applicationElement, parameter.Spec, property, target, null, out variable);
             }
 
             string kind;

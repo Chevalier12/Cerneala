@@ -441,21 +441,24 @@ public sealed partial class UiMarkupGeneratorTests
             """
                   @on Loaded
                   {
-                    @animate with Tween(180ms, EaseOut)
+                    @parallel
                     {
-                      retarget = PreserveProgress;
-                      holdOnComplete = true;
-                      debugName = "Grammar/Event";
-                      @from { Opacity = current; }
-                      @to
+                      @animate with Tween(180ms, EaseOut)
                       {
-                        Opacity = IsMouseOver ? 1 : 0.72;
-                        Scale = 1.04 with Spring(520, 38, 1);
+                        retarget = PreserveProgress;
+                        holdOnComplete = true;
+                        debugName = "Grammar/Event";
+                        @from { Opacity = current; }
+                        @to
+                        {
+                          Opacity = IsMouseOver ? 1 : 0.72;
+                          Scale = 1.04 with Spring(520, 38, 1);
+                        }
                       }
-                    }
-                    @animate with Spring(520, 38, 1)
-                    {
-                      @to { Scale = 1; }
+                      @animate with Spring(520, 38, 1)
+                      {
+                        @to { Scale = 1; }
+                      }
                     }
                   }
             """);

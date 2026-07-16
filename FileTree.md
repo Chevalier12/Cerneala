@@ -759,6 +759,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Markup.MarkupDiagnostic.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupDiagnosticSeverity.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupLoadOptions.md
+|   |   |   |-- Cerneala.UI.Markup.MarkupMotionExecution.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupObservation.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupResult_T_.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupValueConstraint.md
@@ -1434,6 +1435,7 @@ Generated from `.`.
 |   |   |   |   |-- GeneratedMarkupMotionTests.cs
 |   |   |   |   |-- GeneratedMarkupObservationTests.cs
 |   |   |   |   |-- MarkupDiagnosticTests.cs
+|   |   |   |   |-- MarkupMotionExecutionTests.cs
 |   |   |   |   |-- UiFactoryTests.cs
 |   |   |   |   |-- UiMarkupReaderTests.cs
 |   |   |   |   +-- UiMarkupWriterTests.cs
@@ -1537,6 +1539,10 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorMotionClipTests.cs
+|   |   |-- UiMarkupGeneratorMotionCompositionTests.cs
+|   |   |-- UiMarkupGeneratorMotionHandleTests.cs
+|   |   |-- UiMarkupGeneratorMotionParameterTests.cs
 |   |   |-- UiMarkupGeneratorMotionTests.cs
 |   |   +-- UiMarkupGeneratorTests.cs
 |   +-- Cerneala.WindowsDxSmoke/
@@ -2012,6 +2018,7 @@ Generated from `.`.
 |   |   |-- MarkupAspectResource.cs
 |   |   |-- MarkupDiagnostic.cs
 |   |   |-- MarkupLoadOptions.cs
+|   |   |-- MarkupMotionExecution.cs
 |   |   |-- MarkupResult{T}.cs
 |   |   |-- MarkupValueConstraintAttribute.cs
 |   |   |-- UiFactory.cs

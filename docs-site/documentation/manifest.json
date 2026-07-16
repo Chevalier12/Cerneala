@@ -2550,6 +2550,11 @@
     "source": "UI/Markup/MarkupLoadOptions.cs"
   },
   {
+    "name": "Cerneala.UI.Markup.MarkupMotionExecution",
+    "file": "documentation/classes/Cerneala.UI.Markup.MarkupMotionExecution.md",
+    "source": "UI/Markup/MarkupMotionExecution.cs"
+  },
+  {
     "name": "Cerneala.UI.Markup.MarkupObservation",
     "file": "documentation/classes/Cerneala.UI.Markup.MarkupObservation.md",
     "source": "UI/Markup/GeneratedMarkupConditions.cs"

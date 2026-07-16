@@ -574,9 +574,9 @@ public sealed partial class UiMarkupGenerator
             List<DirectiveAssignmentNode> assignments = body.OfType<DirectiveAssignmentNode>().ToList();
             List<DirectiveElementNode> elements = body.OfType<DirectiveElementNode>().ToList();
             List<string> activations = body
-                .OfType<MotionAnimateNode>()
-                .Where(motionExecutionNames.ContainsKey)
-                .Select(animation => motionExecutionNames[animation])
+                .OfType<MotionExecutionNode>()
+                .Where(motionExecutionFactoryNames.ContainsKey)
+                .Select(GetMotionExecutionName)
                 .ToList();
             if (assignments.Count > 0 || elements.Count > 0 || activations.Count > 0)
             {

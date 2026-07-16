@@ -810,7 +810,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             Element,
             Brush,
             Aspect,
-            MotionSpec
+            MotionSpec,
+            MotionClip
         }
 
         private sealed class PropertySpec
@@ -1142,6 +1143,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         case "Tween":
                         case "Spring":
                             ReadMotionSpecResource(scope, resource);
+                            break;
+                        case "MotionClip":
+                            ReadMotionClip(scope, resource);
                             break;
                         default:
                             Report(UnsupportedElement, resource, resource.Name.LocalName);
@@ -1605,15 +1609,33 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             template = null;
             DirectiveParseResult parsed = ParseDirectiveContent(
                 source,
-                DirectiveContentKind.Assignments | DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers);
+                DirectiveContentKind.Assignments | DirectiveContentKind.Templates |
+                DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles);
             if (parsed.Error is not null)
             {
                 Report(InvalidDirective, parsed.ErrorSource ?? source, Path.GetFileName(file.Path), parsed.Error);
                 return false;
             }
 
+            HashSet<string> motionHandles = new(StringComparer.Ordinal);
             foreach (DirectiveNode node in parsed.Nodes)
             {
+                if (node is MotionHandleNode handle)
+                {
+                    if (!motionHandles.Add(handle.Name))
+                    {
+                        Report(InvalidDirective, handle.Source, Path.GetFileName(file.Path), "Duplicate Motion handle '" + handle.Name + "'.");
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (!ValidateMotionHandleUses(node, motionHandles))
+                {
+                    return false;
+                }
+
                 if (node is DirectiveDefaultNode defaults)
                 {
                     foreach (DirectiveNode child in defaults.Body)
@@ -1676,6 +1698,61 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             return !HasErrors;
+        }
+
+        private bool ValidateMotionHandleUses(DirectiveNode node, ISet<string> declaredHandles)
+        {
+            foreach (MotionExecutionNode execution in EnumerateMotionExecutions(node))
+            {
+                string? handleName = execution switch
+                {
+                    MotionRunNode run => run.HandleName,
+                    MotionCancelNode cancel => cancel.HandleName,
+                    _ => null
+                };
+                if (handleName is not null && !declaredHandles.Contains(handleName))
+                {
+                    Report(
+                        InvalidDirective,
+                        execution.Source,
+                        Path.GetFileName(file.Path),
+                        "Motion handle '" + handleName + "' is undeclared or used before its @handle declaration.");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static IEnumerable<MotionExecutionNode> EnumerateMotionExecutions(DirectiveNode node)
+        {
+            if (node is MotionExecutionNode execution)
+            {
+                yield return execution;
+                if (execution is MotionCompositionNode composition)
+                {
+                    foreach (MotionExecutionNode child in composition.Children.SelectMany(EnumerateMotionExecutions))
+                    {
+                        yield return child;
+                    }
+                }
+
+                yield break;
+            }
+
+            IEnumerable<DirectiveNode> children = node switch
+            {
+                DirectiveOnNode on => on.Body,
+                DirectiveWhenNode condition when condition.BooleanBody is not null => condition.BooleanBody,
+                DirectiveWhenNode condition => condition.Branches.SelectMany(branch => branch.Body),
+                DirectiveIfNode branch => branch.Body,
+                DirectiveDefaultNode defaults => defaults.Body,
+                _ => []
+            };
+            foreach (MotionExecutionNode child in children.SelectMany(EnumerateMotionExecutions))
+            {
+                yield return child;
+            }
         }
 
         private static AspectPropertyAssignment ToAspectAssignment(DirectiveAssignmentNode assignment)
@@ -2059,6 +2136,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             foreach (XAttribute attribute in element.Attributes().Where(attribute => !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name" and not "DataType"))
             {
+                if (attribute.Name.LocalName == "MotionClip")
+                {
+                    Report(
+                        InvalidDirective,
+                        attribute,
+                        Path.GetFileName(file.Path),
+                        "MotionClip resources cannot be assigned directly to controls; invoke them with @run inside an Aspect.");
+                    continue;
+                }
+
                 if (TryEmitGridAttachedProperty(variable, attribute))
                 {
                     continue;

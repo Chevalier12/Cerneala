@@ -59,6 +59,105 @@ public sealed partial class UiMarkupGenerator
         public IReadOnlyList<MotionAssignmentSyntax> To { get; }
     }
 
+    private enum MotionCompositionKind
+    {
+        Parallel,
+        Sequence
+    }
+
+    private sealed class MotionCompositionNode : MotionExecutionNode
+    {
+        public MotionCompositionNode(
+            MotionCompositionKind kind,
+            IReadOnlyList<MotionExecutionNode> children,
+            XObject source) : base(source)
+        {
+            Kind = kind;
+            Children = children;
+        }
+
+        public MotionCompositionKind Kind { get; }
+
+        public IReadOnlyList<MotionExecutionNode> Children { get; }
+    }
+
+    private sealed class MotionRunNode : MotionExecutionNode
+    {
+        public MotionRunNode(
+            string clipName,
+            IReadOnlyList<MotionRunArgumentSyntax> arguments,
+            string? handleName,
+            XObject source) : base(source)
+        {
+            ClipName = clipName;
+            Arguments = arguments;
+            HandleName = handleName;
+        }
+
+        public string ClipName { get; }
+
+        public IReadOnlyList<MotionRunArgumentSyntax> Arguments { get; }
+
+        public string? HandleName { get; }
+    }
+
+    private sealed class MotionCancelNode : MotionExecutionNode
+    {
+        public MotionCancelNode(string handleName, XObject source) : base(source)
+        {
+            HandleName = handleName;
+        }
+
+        public string HandleName { get; }
+    }
+
+    private sealed class MotionHandleNode : DirectiveNode
+    {
+        public MotionHandleNode(string name, XObject source) : base(source)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
+    }
+
+    private sealed class MotionRunArgumentSyntax : MotionSyntaxNode
+    {
+        public MotionRunArgumentSyntax(string name, string value, DirectiveExpressionLocation location) : base(location)
+        {
+            Name = name;
+            Value = value;
+        }
+
+        public string Name { get; }
+
+        public string Value { get; }
+    }
+
+    private sealed class MotionParameterNode : DirectiveNode
+    {
+        public MotionParameterNode(
+            string name,
+            string typeName,
+            string? defaultValue,
+            DirectiveExpressionLocation location,
+            XObject source) : base(source)
+        {
+            Name = name;
+            TypeName = typeName;
+            DefaultValue = defaultValue;
+            Location = location;
+        }
+
+        public string Name { get; }
+
+        public string TypeName { get; }
+
+        public string? DefaultValue { get; }
+
+        public DirectiveExpressionLocation Location { get; }
+    }
+
     private sealed class MotionOptionSyntax : MotionSyntaxNode
     {
         public MotionOptionSyntax(string name, MotionValueSyntax value, DirectiveExpressionLocation location) : base(location)
@@ -146,6 +245,16 @@ public sealed partial class UiMarkupGenerator
     private sealed class MotionResourceSpecSyntax : MotionSpecSyntax
     {
         public MotionResourceSpecSyntax(string name, DirectiveExpressionLocation location) : base(location)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
+    }
+
+    private sealed class MotionParameterSpecSyntax : MotionSpecSyntax
+    {
+        public MotionParameterSpecSyntax(string name, DirectiveExpressionLocation location) : base(location)
         {
             Name = name;
         }
