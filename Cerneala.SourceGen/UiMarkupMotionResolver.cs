@@ -493,7 +493,7 @@ public sealed partial class UiMarkupGenerator
                 DirectiveContentKind.MotionExecutions | DirectiveContentKind.MotionParameters);
             if (parsed.Error is not null)
             {
-                Report(InvalidDirective, parsed.ErrorSource ?? resource, Path.GetFileName(file.Path), parsed.Error);
+                ReportMotion(ClassifyMotionParseError(parsed.Error), parsed.ErrorSource ?? resource, parsed.Error);
                 return;
             }
 
@@ -646,16 +646,15 @@ public sealed partial class UiMarkupGenerator
                 ReferenceEquals(applicationElement, document.Root));
             if (targetType is null)
             {
-                Report(InvalidDirective, aspect.Source, Path.GetFileName(file.Path), "Motion TargetType '" + aspect.TargetName + "' could not be resolved.");
+                ReportMotion(MotionDiagnosticKind.Target, aspect.Source, "Motion TargetType '" + aspect.TargetName + "' could not be resolved.");
                 return false;
             }
 
             if (applicationType is null || !IsOrDerivesFrom(applicationType, targetType))
             {
-                Report(
-                    InvalidDirective,
+                ReportMotion(
+                    MotionDiagnosticKind.Target,
                     (object?)applicationElement.Attribute("Aspect") ?? applicationElement,
-                    Path.GetFileName(file.Path),
                     "Aspect TargetType '" + aspect.TargetName + "' is not assignable from '" + applicationElement.Name.LocalName + "'.");
                 return false;
             }
@@ -762,11 +761,18 @@ public sealed partial class UiMarkupGenerator
                 IEventSymbol? eventSymbol = FindMotionEvent(targetType, trigger.EventName);
                 if (eventSymbol is null || !IsAccessibleFromGeneratedCode(eventSymbol))
                 {
-                    Report(
-                        InvalidDirective,
-                        trigger.Source,
-                        Path.GetFileName(file.Path),
-                        "Motion event '" + trigger.EventName + "' was not found or is not accessible on TargetType '" + aspect.TargetName + "'.");
+                    IEventSymbol? concreteEvent = applicationType is null
+                        ? null
+                        : FindMotionEvent(applicationType, trigger.EventName);
+                    string suggestion = concreteEvent is not null && IsAccessibleFromGeneratedCode(concreteEvent)
+                        ? " The event exists on concrete type '" + applicationType!.ToDisplayString() +
+                            "'; use TargetType=\"" + applicationType.ToDisplayString() + "\"."
+                        : string.Empty;
+                    ReportMotion(
+                        MotionDiagnosticKind.Event,
+                        trigger.Location,
+                        "Motion event '" + trigger.EventName + "' was not found or is not accessible on TargetType '" +
+                        aspect.TargetName + "'." + suggestion);
                     return false;
                 }
 
@@ -1534,7 +1540,7 @@ public sealed partial class UiMarkupGenerator
                     string targetCode = ReferenceEquals(property.TargetElement, element)
                         ? variable
                         : CreateIdentifier(property.TargetElement.Attribute("Name")!.Value);
-                    string typeCode = property.Property.ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    string typeCode = GetMotionTypeCode(property.Property.ValueType);
                     bool hasFrom = property.Source is not null && property.Source.Value is not MotionCurrentValueSyntax;
                     string fromCode = hasFrom
                         ? EmitMotionValue(property.Source!.Value, property.Property, targetCode, animation.Parameters)
@@ -1876,7 +1882,7 @@ public sealed partial class UiMarkupGenerator
 
             foreach (ResolvedMotionProperty property in animation.Properties)
             {
-                string typeCode = property.Property.ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string typeCode = GetMotionTypeCode(property.Property.ValueType);
                 bool hasFrom = property.Source is not null && property.Source.Value is not MotionCurrentValueSyntax;
                 string fromCode = hasFrom
                     ? EmitMotionValue(property.Source!.Value, property.Property, itemName, animation.Parameters)
@@ -1932,7 +1938,7 @@ public sealed partial class UiMarkupGenerator
 
             if (value is MotionCurrentValueSyntax)
             {
-                return "default(" + property.ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + ")!";
+                return "default(" + GetMotionTypeCode(property.ValueType) + ")!";
             }
 
             MotionAtomValueSyntax atom = (MotionAtomValueSyntax)value;
@@ -1947,7 +1953,7 @@ public sealed partial class UiMarkupGenerator
                 atom.Text,
                 property,
                 atom.Location.Source);
-            return expression?.Code ?? "default(" + property.ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + ")!";
+            return expression?.Code ?? "default(" + GetMotionTypeCode(property.ValueType) + ")!";
         }
 
         private static string EmitMotionCondition(DirectiveExpression expression, string targetCode)
@@ -2028,7 +2034,7 @@ public sealed partial class UiMarkupGenerator
 
                 if (targetElement is null)
                 {
-                    Report(InvalidDirective, assignment.Location, Path.GetFileName(file.Path), "Motion target part '" + partName + "' is not available at this Aspect application site.");
+                    ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion target part '" + partName + "' is not available at this Aspect application site.");
                     property = null;
                     return false;
                 }
@@ -2042,7 +2048,7 @@ public sealed partial class UiMarkupGenerator
 
             if (targetType is null)
             {
-                Report(InvalidDirective, assignment.Location, Path.GetFileName(file.Path), "Motion target type could not be resolved.");
+                ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion target type could not be resolved.");
                 property = null;
                 return false;
             }
@@ -2050,7 +2056,7 @@ public sealed partial class UiMarkupGenerator
             property = FindPropertySpec(targetType, propertyName);
             if (property is null)
             {
-                Report(InvalidDirective, assignment.Location, Path.GetFileName(file.Path), "Motion property '" + assignment.Target + "' does not exist on target type '" + targetType.Name + "'.");
+                ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion property '" + assignment.Target + "' does not exist on target type '" + targetType.Name + "'.");
                 return false;
             }
 
@@ -2151,7 +2157,7 @@ public sealed partial class UiMarkupGenerator
             };
             if (!valid)
             {
-                Report(InvalidDirective, value.Location, Path.GetFileName(file.Path), "Motion value for property '" + target + "' is not compatible with type '" + property.ValueType.ToDisplayString() + "'.");
+                ReportMotion(MotionDiagnosticKind.Type, value.Location, "Motion value for property '" + target + "' is not compatible with type '" + property.ValueType.ToDisplayString() + "'.");
             }
 
             return valid;
@@ -2230,7 +2236,7 @@ public sealed partial class UiMarkupGenerator
                 if (!TryResolveResource(resourceReference.Location.Source, resourceReference.Name, out NamedSymbol symbol) ||
                     symbol.Source is not MotionSpecResource resource)
                 {
-                    Report(InvalidDirective, resourceReference.Location, Path.GetFileName(file.Path), "Unknown Motion resource '$" + resourceReference.Name + "'.");
+                    ReportMotion(MotionDiagnosticKind.Type, resourceReference.Location, "Unknown Motion resource '$" + resourceReference.Name + "'.");
                     return false;
                 }
 
@@ -2249,11 +2255,11 @@ public sealed partial class UiMarkupGenerator
 
             if (kind == "Spring" && !HasVectorMixer(valueType))
             {
-                Report(InvalidDirective, syntax.Location, Path.GetFileName(file.Path), "Spring is not a valid spec type for property '" + target + "' because its mixer has no vector operations.");
+                ReportMotion(MotionDiagnosticKind.Type, syntax.Location, "Spring is not a valid spec type for property '" + target + "' because its mixer has no vector operations.");
                 return false;
             }
 
-            string typeCode = valueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string typeCode = GetMotionTypeCode(valueType);
             string expression = kind is "Repeat" or "PingPong"
                 ? "new global::Cerneala.UI.Motion.Specs." + kind + "Spec<" + typeCode + ">(" +
                     "new global::Cerneala.UI.Motion.Specs.TweenSpec<" + typeCode + ">(" + arguments[0] + ", " + arguments[1] + "), " + arguments[2] + ")"
@@ -2393,6 +2399,14 @@ public sealed partial class UiMarkupGenerator
                 "Cerneala.Drawing.DrawSize" or
                 "Cerneala.Drawing.DrawRect" or
                 "Cerneala.UI.Media.Transform";
+        }
+
+        private static string GetMotionTypeCode(ITypeSymbol type)
+        {
+            SymbolDisplayFormat format = SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
+                SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions |
+                SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+            return type.ToDisplayString(format);
         }
 
         private static bool HasVectorMixer(ITypeSymbol type)

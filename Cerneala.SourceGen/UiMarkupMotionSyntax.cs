@@ -24,15 +24,22 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class DirectiveOnNode : DirectiveNode
     {
-        public DirectiveOnNode(string eventName, IReadOnlyList<MotionExecutionNode> body, XObject source) : base(source)
+        public DirectiveOnNode(
+            string eventName,
+            IReadOnlyList<MotionExecutionNode> body,
+            DirectiveExpressionLocation location,
+            XObject source) : base(source)
         {
             EventName = eventName;
             Body = body;
+            Location = location;
         }
 
         public string EventName { get; }
 
         public IReadOnlyList<MotionExecutionNode> Body { get; }
+
+        public DirectiveExpressionLocation Location { get; }
     }
 
     private sealed class MotionPresenceNode : DirectiveNode

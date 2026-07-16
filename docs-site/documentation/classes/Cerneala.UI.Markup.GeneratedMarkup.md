@@ -65,6 +65,11 @@ These methods are public so emitted source in consuming assemblies can call
 them. `MarkupPropertyBindingController<T>`, conditional provider activation,
 resolved/unresolved path state, and write-endpoint details remain internal.
 
+Motion markup lowering calls these helpers with statically resolved
+`UiProperty<T>`, event, target, resource, and `MotionSpec<T>` references. The
+generated path does not use reflection, `dynamic`, element lookup by string, or
+per-frame discovery.
+
 Motion sessions do not subscribe a detached owner. They keep at most one active
 subscription set, remove it on detach, recreate it on reattach, and perform the
 same cleanup idempotently when disposed. Detach also cancels every execution
@@ -109,3 +114,4 @@ Source-generated reactive markup.
 - `Cerneala.UI.Markup.MarkupConditionalValue`
 - `Cerneala.UI.Markup.MarkupMotionExecution`
 - `docs/markup-data-bindings.md`
+- `docs/motion-markup-syntax-proposal.md`

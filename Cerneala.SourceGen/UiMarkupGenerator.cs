@@ -260,6 +260,45 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true);
 
+    private static readonly DiagnosticDescriptor MotionSyntaxDiagnostic = new(
+        "CERNEALAUI020", "Invalid Motion markup syntax", "Motion syntax in '{0}' is invalid: {1}",
+        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
+
+    private static readonly DiagnosticDescriptor MotionTargetDiagnostic = new(
+        "CERNEALAUI021", "Invalid Motion target", "Motion target resolution in '{0}' failed: {1}",
+        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
+
+    private static readonly DiagnosticDescriptor MotionEventDiagnostic = new(
+        "CERNEALAUI022", "Invalid Motion event", "Motion event resolution in '{0}' failed: {1}",
+        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
+
+    private static readonly DiagnosticDescriptor MotionTypeDiagnostic = new(
+        "CERNEALAUI023", "Invalid Motion property or spec type", "Motion property/spec typing in '{0}' failed: {1}",
+        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
+
+    private static readonly DiagnosticDescriptor MotionCompositionDiagnostic = new(
+        "CERNEALAUI024", "Invalid Motion composition", "Motion composition in '{0}' is invalid: {1}",
+        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
+
+    private static readonly DiagnosticDescriptor MotionLifecycleDiagnostic = new(
+        "CERNEALAUI025", "Invalid Motion lifecycle directive", "Motion lifecycle directive in '{0}' is invalid: {1}",
+        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
+
+    private static readonly DiagnosticDescriptor MotionCapabilityDiagnostic = new(
+        "CERNEALAUI026", "Unsupported Motion runtime capability", "Motion runtime capability in '{0}' is unsupported: {1}",
+        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
+
+    private enum MotionDiagnosticKind
+    {
+        Syntax,
+        Target,
+        Event,
+        Type,
+        Composition,
+        Lifecycle,
+        Capability
+    }
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         IncrementalValuesProvider<MarkupSource> markupFiles = context.AdditionalTextsProvider
@@ -1665,7 +1704,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 DirectiveContentKind.MotionDrag | DirectiveContentKind.MotionGesture);
             if (parsed.Error is not null)
             {
-                Report(InvalidDirective, parsed.ErrorSource ?? source, Path.GetFileName(file.Path), parsed.Error);
+                ReportMotion(ClassifyMotionParseError(parsed.Error), parsed.ErrorSource ?? source, parsed.Error);
                 return false;
             }
 
@@ -1676,7 +1715,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     if (!motionHandles.Add(handle.Name))
                     {
-                        Report(InvalidDirective, handle.Source, Path.GetFileName(file.Path), "Duplicate Motion handle '" + handle.Name + "'.");
+                        ReportMotion(MotionDiagnosticKind.Composition, handle.Source, "Duplicate Motion handle '" + handle.Name + "'.");
                         return false;
                     }
 
@@ -1719,7 +1758,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     if (presence is not null)
                     {
-                        Report(InvalidDirective, declaredPresence.Source, Path.GetFileName(file.Path), "An Aspect may declare only one @presence block.");
+                        ReportMotion(MotionDiagnosticKind.Lifecycle, declaredPresence.Source, "An Aspect may declare only one @presence block.");
                         return false;
                     }
 
@@ -1729,7 +1768,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     if (layout is not null)
                     {
-                        Report(InvalidDirective, declaredLayout.Source, Path.GetFileName(file.Path), "An Aspect may declare only one @layout statement.");
+                        ReportMotion(MotionDiagnosticKind.Lifecycle, declaredLayout.Source, "An Aspect may declare only one @layout statement.");
                         return false;
                     }
 
@@ -1743,7 +1782,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     if (drag is not null)
                     {
-                        Report(InvalidDirective, declaredDrag.Source, Path.GetFileName(file.Path), "An Aspect may declare only one @drag statement.");
+                        ReportMotion(MotionDiagnosticKind.Lifecycle, declaredDrag.Source, "An Aspect may declare only one @drag statement.");
                         return false;
                     }
 
@@ -1753,7 +1792,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     if (gesturePress is not null)
                     {
-                        Report(InvalidDirective, declaredGesturePress.Source, Path.GetFileName(file.Path), "An Aspect may declare only one @gesture press statement.");
+                        ReportMotion(MotionDiagnosticKind.Lifecycle, declaredGesturePress.Source, "An Aspect may declare only one @gesture press statement.");
                         return false;
                     }
 
@@ -3613,6 +3652,47 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             HasErrors = true;
             context.ReportDiagnostic(Diagnostic.Create(descriptor, CreateLocation(file, locationSource), args));
         }
+
+        private void ReportMotion(MotionDiagnosticKind kind, object locationSource, string message)
+        {
+            DiagnosticDescriptor descriptor = kind switch
+            {
+                MotionDiagnosticKind.Syntax => MotionSyntaxDiagnostic,
+                MotionDiagnosticKind.Target => MotionTargetDiagnostic,
+                MotionDiagnosticKind.Event => MotionEventDiagnostic,
+                MotionDiagnosticKind.Type => MotionTypeDiagnostic,
+                MotionDiagnosticKind.Composition => MotionCompositionDiagnostic,
+                MotionDiagnosticKind.Lifecycle => MotionLifecycleDiagnostic,
+                MotionDiagnosticKind.Capability => MotionCapabilityDiagnostic,
+                _ => MotionSyntaxDiagnostic
+            };
+            Report(descriptor, locationSource, Path.GetFileName(file.Path), message);
+        }
+
+        private static MotionDiagnosticKind ClassifyMotionParseError(string message)
+        {
+            if (message.Contains("@parallel", StringComparison.Ordinal) ||
+                message.Contains("@sequence", StringComparison.Ordinal) ||
+                message.Contains("child execution", StringComparison.Ordinal) ||
+                message.Contains("composition", StringComparison.OrdinalIgnoreCase))
+            {
+                return MotionDiagnosticKind.Composition;
+            }
+
+            if (message.Contains("@presence", StringComparison.Ordinal) ||
+                message.Contains("@layout", StringComparison.Ordinal) ||
+                message.Contains("@scroll", StringComparison.Ordinal) ||
+                message.Contains("@drag", StringComparison.Ordinal) ||
+                message.Contains("@gesture", StringComparison.Ordinal))
+            {
+                return MotionDiagnosticKind.Lifecycle;
+            }
+
+            return message.Contains("Unsupported", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("does not support", StringComparison.OrdinalIgnoreCase)
+                ? MotionDiagnosticKind.Capability
+                : MotionDiagnosticKind.Syntax;
+        }
     }
 
     private static Location CreateLocation(MarkupSource file, object locationSource)
@@ -3664,20 +3744,20 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        return CreateLocation(file, line, column);
+        return CreateLocation(file, line, column, location.Length);
     }
 
     private static Location CreateLocation(MarkupSource file, XObject xmlObject)
     {
         if (xmlObject is IXmlLineInfo lineInfo && lineInfo.HasLineInfo())
         {
-            return CreateLocation(file, lineInfo.LineNumber, lineInfo.LinePosition);
+            return CreateLocation(file, lineInfo.LineNumber, lineInfo.LinePosition, 0);
         }
 
-        return CreateLocation(file, 1, 1);
+        return CreateLocation(file, 1, 1, 0);
     }
 
-    private static Location CreateLocation(MarkupSource file, int oneBasedLine, int oneBasedColumn)
+    private static Location CreateLocation(MarkupSource file, int oneBasedLine, int oneBasedColumn, int length = 0)
     {
         SourceText sourceText = SourceText.From(file.Text ?? string.Empty, Encoding.UTF8);
         int line = Math.Max(0, Math.Min(sourceText.Lines.Count - 1, oneBasedLine - 1));
@@ -3689,7 +3769,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         int column = Math.Max(0, adjustedColumn - 1);
         int start = Math.Min(sourceText.Length, sourceText.Lines[line].Start + column);
-        LinePosition position = sourceText.Lines.GetLinePosition(start);
-        return Location.Create(file.Path, TextSpan.FromBounds(start, start), new LinePositionSpan(position, position));
+        int end = Math.Min(sourceText.Length, start + Math.Max(0, length));
+        TextSpan span = TextSpan.FromBounds(start, end);
+        return Location.Create(file.Path, span, sourceText.Lines.GetLinePositionSpan(span));
     }
 }

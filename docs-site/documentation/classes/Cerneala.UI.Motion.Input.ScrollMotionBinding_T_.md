@@ -74,6 +74,11 @@ Binding is applied through `MotionAnimationBuilder<T>.Bind` or `MotionPropertySh
 
 Call `Dispose` when the binding is detached. Disposal is idempotent, releases the progress subscription, and removes every target listener so later timeline updates cannot write detached elements. A disposed binding cannot be bound again; create a new mapping for a new attachment session.
 
+Generated `@scroll` Aspect behavior owns the binding for one attachment
+lifetime, disposes it on detach, and creates a new mapping on reattach. Markup
+supports only linear `float` ranges and requires `allowLayout = true` for
+layout-affecting properties.
+
 Only `float` bindings are supported by the current implementation. Calling `Current` or processing an update for another generic type throws `InvalidOperationException`.
 
 By default, scroll-linked bindings reject properties classified as layout-affecting by `MotionPropertyInvalidationClassifier`. Call `AllowLayout` before binding when the property intentionally affects measure or arrange.
@@ -111,3 +116,4 @@ Cerneala scroll-linked UI motion input.
 - `Cerneala.UI.Motion.Input.MotionRange`
 - `Cerneala.UI.Motion.MotionAnimationBuilder<T>`
 - `Cerneala.UI.Motion.MotionPropertyShortcut<T>`
+- `docs/motion-markup-syntax-proposal.md`

@@ -12,6 +12,8 @@ public partial class MotionLabWindow : Window
 {
     private bool initialized;
 
+    internal event EventHandler? SpecRequested;
+
     private void OnContentRendered(object? sender, EventArgs args)
     {
         if (initialized)
@@ -20,7 +22,13 @@ public partial class MotionLabWindow : Window
         }
 
         initialized = true;
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_MOTION_LAB_CAPTURE")))
+        {
+            TweenModeCheck.IsChecked = true;
+        }
+
         RunSpec();
+        _ = CaptureIfRequestedAsync();
     }
 
     private void OnRun(UiElementId sender, RoutedEventArgs args) => RunSpec();
@@ -43,22 +51,59 @@ public partial class MotionLabWindow : Window
             LabReadout.Text = $"spring(stiffness: {stiffness:0}, damping: {damping:0})";
         }
 
-        MotionGroupHandle group = MotionGroup.Parallel(
-            LabTarget.Motion().Animate(UIElement.TranslateXProperty).From(0f).To(430f).With(movement),
-            LabTarget.Motion().Animate(UIElement.ScaleProperty).From(0.72f).To(1f).With(MotionSpec.Spring<float>(560, 38)),
-            LabTarget.Motion().Animate(UIElement.OpacityProperty).From(0.35f).To(1f).With(MotionSpec.Tween<float>(TimeSpan.FromMilliseconds(260), Easings.EaseOut)));
-        _ = MarkSettledAsync(group);
+        SpecRequested?.Invoke(this, EventArgs.Empty);
+        MotionHandle movementHandle = LabTarget.Motion()
+            .Animate(UIElement.TranslateXProperty)
+            .From(0f)
+            .To(430f)
+            .With(movement);
+        _ = MarkSettledAsync(movementHandle);
     }
 
-    private async Task MarkSettledAsync(MotionGroupHandle group)
+    private async Task MarkSettledAsync(MotionHandle handle)
     {
         try
         {
-            await group.Completion;
+            await handle.Completion;
             LabStatus.Text = "SETTLED";
         }
         catch (OperationCanceledException)
         {
+        }
+    }
+
+    private async Task CaptureIfRequestedAsync()
+    {
+        string? path = Environment.GetEnvironmentVariable("CERNEALA_MOTION_LAB_CAPTURE");
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        await Task.Delay(500);
+        string fullPath = Path.GetFullPath(path);
+        Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+        TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        EventHandler? handler = null;
+        handler = (_, _) =>
+        {
+            FrameRendered -= handler;
+            SaveScreenshot(fullPath);
+            completion.TrySetResult();
+        };
+
+        FrameRendered += handler;
+        InvalidateRenderTree(this);
+        await completion.Task;
+        Close();
+    }
+
+    private static void InvalidateRenderTree(UIElement element)
+    {
+        element.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "motion lab automation screenshot");
+        foreach (UIElement child in element.VisualChildren)
+        {
+            InvalidateRenderTree(child);
         }
     }
 

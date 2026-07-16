@@ -100,15 +100,18 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class DirectiveExpressionLocation
     {
-        public DirectiveExpressionLocation(XObject source, int offset)
+        public DirectiveExpressionLocation(XObject source, int offset, int length = 1)
         {
             Source = source;
             Offset = offset;
+            Length = length;
         }
 
         public XObject Source { get; }
 
         public int Offset { get; }
+
+        public int Length { get; }
     }
 
     private abstract class DirectiveExpression
@@ -650,7 +653,12 @@ public sealed partial class UiMarkupGenerator
 
             ValidateExplicitMotionComposition(nodes, "@on", source);
 
-            return new DirectiveOnNode(eventName, nodes.Cast<MotionExecutionNode>().ToArray(), source);
+            int eventOffset = header.Text.IndexOf(eventName, StringComparison.Ordinal);
+            return new DirectiveOnNode(
+                eventName,
+                nodes.Cast<MotionExecutionNode>().ToArray(),
+                new DirectiveExpressionLocation(header.Source, header.Offset + Math.Max(0, eventOffset), eventName.Length),
+                source);
         }
 
         private MotionPresenceNode ParsePresence()
@@ -1294,7 +1302,7 @@ public sealed partial class UiMarkupGenerator
             string specText = text.Substring(with + 4).Trim();
             spec = ParseMotionSpec(
                 specText,
-                new DirectiveExpressionLocation(header.Source, header.Offset + with + 4));
+                new DirectiveExpressionLocation(header.Source, header.Offset + with + 4, specText.Length));
         }
 
         private static bool TryParsePercentage(string text, out float value)
@@ -1357,14 +1365,16 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 SkipWhitespace();
-                DirectiveExpressionLocation valueLocation = new(CurrentSource, characterIndex);
+                XObject valueSource = CurrentSource;
+                int valueOffset = characterIndex;
                 string statement = ReadMotionStatement();
+                DirectiveExpressionLocation valueLocation = new(valueSource, valueOffset, Math.Max(1, statement.Length));
                 SplitMotionValueAndSpec(statement, valueLocation, out string valueText, out MotionSpecSyntax? spec);
                 assignments.Add(new MotionAssignmentSyntax(
                     target,
                     ParseMotionValue(valueText, valueLocation),
                     spec,
-                    new DirectiveExpressionLocation(assignmentSource, assignmentOffset)));
+                    new DirectiveExpressionLocation(assignmentSource, assignmentOffset, target.Length)));
             }
         }
 
@@ -1532,7 +1542,7 @@ public sealed partial class UiMarkupGenerator
             int specOffset = header.Text.IndexOf(spec, StringComparison.Ordinal);
             return ParseMotionSpec(
                 spec,
-                new DirectiveExpressionLocation(header.Source, header.Offset + Math.Max(0, specOffset)));
+                new DirectiveExpressionLocation(header.Source, header.Offset + Math.Max(0, specOffset), spec.Length));
         }
 
         private string ReadMotionTarget()
@@ -1667,7 +1677,7 @@ public sealed partial class UiMarkupGenerator
 
             spec = ParseMotionSpec(
                 specText,
-                new DirectiveExpressionLocation(location.Source, location.Offset + with + 4));
+                new DirectiveExpressionLocation(location.Source, location.Offset + with + 4, specText.Length));
         }
 
         private static MotionValueSyntax ParseMotionValue(string text, DirectiveExpressionLocation location)
@@ -1971,8 +1981,7 @@ public sealed partial class UiMarkupGenerator
 
         private static bool IsMotionDirective(string directive)
         {
-            return directive is "@animate" or "@parallel" or "@sequence" or "@run" or "@cancel" or
-                "@keyframes" or "@stagger" or "@handle" or "@parameter" or "@from" or "@to" or "@on" or "@presence" or "@layout" or "@scroll";
+            return MotionMarkupLanguage.IsDirective(directive);
         }
 
         private static bool Allows(DirectiveContentKind allowed, DirectiveContentKind value)
@@ -2297,7 +2306,10 @@ public sealed partial class UiMarkupGenerator
 
             private DirectiveExpressionLocation Location(ExpressionToken token)
             {
-                return new DirectiveExpressionLocation(header.Source, header.Offset + token.Offset);
+                return new DirectiveExpressionLocation(
+                    header.Source,
+                    header.Offset + token.Offset,
+                    Math.Max(1, token.Text.Length));
             }
 
             private DirectiveParseException Error(ExpressionToken token, string message)

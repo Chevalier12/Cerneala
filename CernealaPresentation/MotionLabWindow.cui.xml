@@ -1,4 +1,5 @@
 <Window
+    Aspect="$LabMotion"
     Title="Cerneala Motion Lab"
     Width="900"
     Height="610"
@@ -23,10 +24,50 @@
         <SolidColorBrush Name="PinkBrush" Color="#FFFF3EA5" />
         <SolidColorBrush Name="LimeBrush" Color="#FFC6FF3D" />
         <SolidColorBrush Name="TransparentBrush" Color="#00000000" />
+        <Tween Name="LabHoverTween" Duration="120ms" Easing="EaseOut" />
+        <Tween Name="LabOpacityTween" Duration="260ms" Easing="EaseOut" />
+        <Spring Name="LabScaleSpring" Stiffness="560" Damping="38" Mass="1" />
+        <MotionClip Name="LabPulse" TargetType="Cerneala.Presentation.MotionLabWindow">
+            @parallel
+            {
+                @animate with $LabScaleSpring
+                {
+                    @from { $part.LabTarget.Scale = 0.72; }
+                    @to { $part.LabTarget.Scale = 1; }
+                }
+                @animate with $LabOpacityTween
+                {
+                    @from { $part.LabTarget.Opacity = 0.35; }
+                    @to { $part.LabTarget.Opacity = 1; }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="LabMotion" TargetType="Cerneala.Presentation.MotionLabWindow">
+            @handle Pulse;
+            @on SpecRequested { @run $LabPulse as Pulse; }
+        </Aspect>
         <Aspect Target="TextBlock">@default { FontFamily = "Segoe UI Variable Text"; FontSize = 14; Foreground = $PaperBrush; }</Aspect>
         <Aspect Name="LabButton" Target="Button">
             @default { FontFamily = "Cascadia Mono SemiBold"; FontSize = 11; Background = $LimeBrush; Foreground = $InkBrush; BorderBrush = $LimeBrush; BorderThickness = "1"; Padding = "18,11,18,11"; }
-            @when IsMouseOver { Background = $CyanBrush; BorderBrush = $CyanBrush; }
+            @when IsMouseOver
+            {
+                @if IsMouseOver == true
+                {
+                    @animate with $LabHoverTween
+                    {
+                        @from { Background = current; BorderBrush = current; }
+                        @to { Background = $CyanBrush; BorderBrush = $CyanBrush; }
+                    }
+                }
+                @if IsMouseOver == false
+                {
+                    @animate with $LabHoverTween
+                    {
+                        @from { Background = current; BorderBrush = current; }
+                        @to { Background = $LimeBrush; BorderBrush = $LimeBrush; }
+                    }
+                }
+            }
         </Aspect>
         <Aspect Name="CloseButton" Target="Button">
             @default { FontFamily = "Cascadia Mono SemiBold"; FontSize = 11; Background = $TransparentBrush; Foreground = $PaperBrush; BorderBrush = $LineStrongBrush; BorderThickness = "1"; Padding = "16,10,16,10"; }

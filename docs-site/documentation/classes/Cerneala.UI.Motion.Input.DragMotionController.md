@@ -57,6 +57,11 @@ The controller creates two `MotionValue<float>` instances from the element's cur
 
 Call `Dispose` when the input session detaches. Disposal is idempotent, cancels active settle handles, releases both motion-value subscriptions, and returns `State` to `Idle`. A disposed controller cannot process later begin, move, end, or capture-loss calls; create a new controller after reattachment.
 
+Generated `@drag` Aspect behavior follows that lifecycle automatically. It
+creates one controller after attachment, routes pointer input directly, and
+disposes the controller on detach. The markup form intentionally exposes no
+axis, bounds, resistance, snapping, or Decay-release options.
+
 ## Properties
 
 | Name | Type | Description |
@@ -100,3 +105,4 @@ Target framework: `net8.0`
 - `UI/Motion/Input/VelocityTracker.cs`
 - `UI/Motion/Core/MotionValue{T}.cs`
 - `UI/Motion/Specs/MotionSpec{T}.cs`
+- `docs/motion-markup-syntax-proposal.md`

@@ -54,6 +54,11 @@ The class deliberately exposes no generic `Complete` operation and no
 selectable cancellation behavior. `MotionGroupHandle` does not support those
 leaf-only operations.
 
+Generated Aspect sessions own these executions. Named handle replacement
+cancels the previous execution before storing the next one, and lifecycle
+detach cancels all remaining executions without starting deferred sequence
+children.
+
 ## Exceptions
 | Member | Exception | Condition |
 | --- | --- | --- |
@@ -67,3 +72,4 @@ Source-generated Motion markup execution trees.
 - `Cerneala.UI.Markup.GeneratedMarkup`
 - `Cerneala.UI.Motion.Core.MotionHandle`
 - `Cerneala.UI.Motion.Core.MotionGroupHandle`
+- `docs/motion-markup-syntax-proposal.md`

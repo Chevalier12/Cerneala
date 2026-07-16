@@ -123,6 +123,7 @@ Generated from `.`.
 |           +-- README.md
 |-- Cerneala.SourceGen/
 |   |-- Cerneala.SourceGen.csproj
+|   |-- MotionMarkupLanguage.cs
 |   |-- UiMarkupBindingResolver.cs
 |   |-- UiMarkupDirectiveParser.cs
 |   |-- UiMarkupGenerator.cs
@@ -1436,6 +1437,7 @@ Generated from `.`.
 |   |   |   |   |-- GeneratedMarkupObservationTests.cs
 |   |   |   |   |-- MarkupDiagnosticTests.cs
 |   |   |   |   |-- MarkupMotionExecutionTests.cs
+|   |   |   |   |-- MotionMarkupLifecycleStressTests.cs
 |   |   |   |   |-- UiFactoryTests.cs
 |   |   |   |   |-- UiMarkupReaderTests.cs
 |   |   |   |   +-- UiMarkupWriterTests.cs
@@ -1541,6 +1543,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorBindingStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorMotionClipTests.cs
 |   |   |-- UiMarkupGeneratorMotionCompositionTests.cs
+|   |   |-- UiMarkupGeneratorMotionDiagnosticsTests.cs
 |   |   |-- UiMarkupGeneratorMotionHandleTests.cs
 |   |   |-- UiMarkupGeneratorMotionLayoutTests.cs
 |   |   |-- UiMarkupGeneratorMotionParameterTests.cs
