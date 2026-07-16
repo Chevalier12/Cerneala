@@ -1074,9 +1074,37 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
 
         InvalidationFlags flags = MapInvalidationOptions(options);
+        bool isVisibilityChange = ReferenceEquals(args.Property, VisibilityProperty) &&
+            args.OldValue is Visibility &&
+            args.NewValue is Visibility;
+        Visibility oldVisibility = isVisibilityChange ? (Visibility)args.OldValue! : Visibility.Visible;
+        Visibility newVisibility = isVisibilityChange ? (Visibility)args.NewValue! : Visibility.Visible;
+        bool layoutParticipationChanged = isVisibilityChange &&
+            (oldVisibility == Visibility.Collapsed) != (newVisibility == Visibility.Collapsed);
+        bool expandingFromCollapsed = layoutParticipationChanged &&
+            oldVisibility == Visibility.Collapsed;
+        bool requiresExpandedSubtreeRelayout = expandingFromCollapsed &&
+            (Root is not UIRoot root || !root.Scheduler.IsProcessingLayout);
+        if (requiresExpandedSubtreeRelayout)
+        {
+            foreach (UIElement descendant in ElementTreeWalker.Descendants(this, ElementChildRole.Visual))
+            {
+                descendant.IncrementLayoutVersion();
+            }
+
+            flags |= InvalidationFlags.Subtree;
+        }
+
         if (flags != InvalidationFlags.None)
         {
             Invalidate(new InvalidationRequest(this, flags, "Property changed", args.Property));
+            if (requiresExpandedSubtreeRelayout &&
+                Root is UIRoot layoutRoot &&
+                VisualParent is UIElement parent)
+            {
+                layoutRoot.LayoutQueue.RequireMeasure(parent);
+                layoutRoot.LayoutQueue.RequireArrange(parent);
+            }
         }
     }
 

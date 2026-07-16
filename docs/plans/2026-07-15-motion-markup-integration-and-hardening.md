@@ -25,7 +25,7 @@
 | Constructie publica | Plan proprietar | Test pozitiv | Diagnostic negativ relevant | Rezultat audit |
 | --- | --- | --- | --- | --- |
 | `Tween`, `Spring`, Aspect named/inline, `@when`, `@if`, `@on`, `@animate`, `@from`, `@to`, `current`, `$part`, start options | foundation | `UiMarkupGeneratorMotionTests` | acelasi fixture: missing `@to`, property/type/mixer/resource/context/options/event | implementat |
-| `@parallel`, `@sequence` si nesting | composition-and-clips | `UiMarkupGeneratorMotionCompositionTests` | acelasi fixture: empty groups, siblings fara composition, lifecycle cancel | implementat |
+| `@set`, `@parallel`, `@sequence` si nesting | composition-and-clips | `UiMarkupGeneratorMotionClipTests`, `UiMarkupGeneratorMotionCompositionTests` | valori discrete invalide, empty groups, siblings fara composition, lifecycle cancel | implementat |
 | `MotionClip`, `@run` | composition-and-clips | `UiMarkupGeneratorMotionClipTests` | acelasi fixture: body count/context, missing/wrong target, recursion/direct assignment | implementat |
 | `@parameter` si arguments tipizate | composition-and-clips | `UiMarkupGeneratorMotionParameterTests` | acelasi fixture: duplicate/missing/wrong type/unsupported use | implementat |
 | `@handle`, `as`, `@cancel` | composition-and-clips | `UiMarkupGeneratorMotionHandleTests` | acelasi fixture: undeclared/duplicate/use-before-declaration/clip context | implementat |
@@ -73,7 +73,7 @@ fara suport runtime si nu prezinta niciuna dintre ele ca sintaxa livrata.
 ### Etapa 2 - Dogfood in CernealaPresentation
 
 - [x] Migreaza un behavior mic hover/event la foundation syntax si verifica echivalenta vizuala.
-- [x] Migreaza Motion view/showcase la `Aspect`, `MotionClip`, composition si handles pe masura ce suprafetele devin disponibile, pastrand code-behind numai pentru state/business actions care nu apartin markup-ului.
+- [x] Migreaza Motion view/showcase la `Aspect`, `MotionClip`, `@set`, composition si handles pe masura ce suprafetele devin disponibile; inclusiv replay-ul si starile lui discrete sunt integral in markup, fara orchestration code-behind.
 - [x] Foloseste cel putin un custom event pentru a demonstra static `@on` wiring si un attach/detach cycle real.
 - [x] Foloseste Layout sau Presence numai daca showcase-ul are un caz natural; nu adauga decoratii doar ca sa bifam API-uri. (Nu a fost necesar: Motion Lab nu insereaza/elimina sau reparenteaza elemente.)
 - [x] Ruleaza automatizarea existenta din `PresentationWindow.Automation.cs` si compara screenshots/behavior cu baseline-ul acceptat. (2 cicluri complete, 15 samples, fara eroare; captura Motion Lab 1125x765 a pastrat geometria/paleta si nu are overlap.)
@@ -111,10 +111,10 @@ fara suport runtime si nu prezinta niciuna dintre ele ca sintaxa livrata.
 
 ### Etapa 5 - Verificare finala
 
-- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`. (326 passed, 0 failed, 0 skipped.)
-- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj`. (1.898 passed, 0 failed, 0 skipped.)
-- [x] Ruleaza `dotnet test .\Cerneala.slnx`. (1.898 runtime + 326 sourcegen passed, 0 failed, 0 skipped.)
-- [x] Ruleaza smoke-ul CernealaPresentation si inspectia vizuala/automation a showcase-ului migrat. (2 cicluri, 15 samples, 8 chapters, fara error report; captura Motion Lab 1125x765 inspectata, layout stabil si fara overlap.)
+- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`. (329 passed, 0 failed, 0 skipped.)
+- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj`. (1.899 passed, 0 failed, 0 skipped.)
+- [x] Ruleaza `dotnet test .\Cerneala.slnx`. (1.899 runtime + 329 sourcegen passed, 0 failed, 0 skipped.)
+- [x] Ruleaza smoke-ul CernealaPresentation si inspectia vizuala/automation a showcase-ului migrat. (Ciclul final are 8 samples/8 chapters fara error report; captura Motion in-flight 1650x990 confirma layout stabil, starile discrete generate de `@set` si animatiile active fara overlap.)
 - [x] Ruleaza `git diff --check`, public API diff si RoslynIndexer `doctor/status` dupa indexarea finala. (`diff --check` curat, runtime public API diff gol, indexarea are 0 warnings; `doctor/status` raporteaza asteptat `stale` doar fiindca worktree-ul are fisiere necomise modificate.)
 - [x] Confirma ca nu exista tests skipped noi, warnings noi sau generated source cu reflection/dynamic. (0 skipped, build/test fara warnings; contractul generated source interzice reflection, `dynamic`, string lookup si tick closures.)
 

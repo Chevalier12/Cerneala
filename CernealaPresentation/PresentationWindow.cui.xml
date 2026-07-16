@@ -36,7 +36,18 @@
         <Tween Name="NavHoverOut" Duration="150ms" Easing="EaseIn" />
         <Tween Name="NavTextHover" Duration="150ms" Easing="EaseOut" />
 
-        <MotionClip Name="ReactorReset" TargetType="Cerneala.Presentation.PresentationWindow">
+        <MotionClip Name="ReactorReplay" TargetType="Cerneala.Presentation.PresentationWindow">
+            @sequence
+            {
+            @set
+            {
+                $part.MotionStatusText.Text = "ARMING / 00 NODES";
+                $part.MotionClockText.Text = "T + 00:00.000";
+                $part.MotionTransactionText.Text = "OPEN";
+                $part.MotionPhaseIndex.Text = "00";
+                $part.MotionFieldReadout.Text = "FIELD LOCKED";
+                $part.MotionReactorState.Text = "STANDBY";
+            }
             @parallel
             {
                 @animate with Tween(90ms) { @from { $part.MotionOrbTween.Opacity = current; $part.MotionOrbSpring.Opacity = current; $part.MotionOrbPresence.Opacity = current; } @to { $part.MotionOrbTween.Opacity = 0; $part.MotionOrbSpring.Opacity = 0; $part.MotionOrbPresence.Opacity = 0; } }
@@ -44,9 +55,12 @@
                 @animate with Tween(90ms) { @from { $part.MotionActIgnition.Opacity = current; $part.MotionActOrbit.Opacity = current; $part.MotionActCommit.Opacity = current; } @to { $part.MotionActIgnition.Opacity = 0.38; $part.MotionActOrbit.Opacity = 0.38; $part.MotionActCommit.Opacity = 0.38; } }
                 @animate with Tween(90ms) { @from { $part.MotionCore.Scale = current; $part.MotionCoreHalo.Scale = current; $part.MotionCoreRing.Scale = current; } @to { $part.MotionCore.Scale = 0.72; $part.MotionCoreHalo.Scale = 0.68; $part.MotionCoreRing.Scale = 0.74; } }
             }
-        </MotionClip>
-
-        <MotionClip Name="ReactorIgnition" TargetType="Cerneala.Presentation.PresentationWindow">
+            @set
+            {
+                $part.MotionPhaseIndex.Text = "01";
+                $part.MotionStatusText.Text = "IGNITION / 04 NODES";
+                $part.MotionReactorState.Text = "CLOCK PRIMED";
+            }
             @parallel
             {
                 @animate with Spring(360, 25) { @from { $part.MotionCore.Scale = 0.72; } @to { $part.MotionCore.Scale = 1.08; } }
@@ -55,9 +69,14 @@
                 @animate with Spring(480, 31) { @from { $part.MotionCoreRing.Scale = 0.74; } @to { $part.MotionCoreRing.Scale = 1; } }
                 @animate with Tween(260ms, EaseOut) { @from { $part.MotionActIgnition.Opacity = current; } @to { $part.MotionActIgnition.Opacity = 1; } }
             }
-        </MotionClip>
-
-        <MotionClip Name="ReactorTrajectory" TargetType="Cerneala.Presentation.PresentationWindow">
+            @set
+            {
+                $part.MotionPhaseIndex.Text = "02";
+                $part.MotionClockText.Text = "T + 00:00.620";
+                $part.MotionStatusText.Text = "TRAJECTORIES / 15 NODES";
+                $part.MotionFieldReadout.Text = "FIELD IN MOTION";
+                $part.MotionReactorState.Text = "COMPOSING";
+            }
             @parallel
             {
                 @keyframes duration 1780ms
@@ -86,9 +105,14 @@
                 @animate with Tween(220ms, EaseOut) { @from { $part.MotionStarD.Opacity = 0; } @to { $part.MotionStarD.Opacity = 0.74; } }
                 @animate with Tween(90ms) { @from { $part.MotionActOrbit.Opacity = current; } @to { $part.MotionActOrbit.Opacity = 1; } }
             }
-        </MotionClip>
-
-        <MotionClip Name="ReactorCommit" TargetType="Cerneala.Presentation.PresentationWindow">
+            @set
+            {
+                $part.MotionPhaseIndex.Text = "03";
+                $part.MotionClockText.Text = "T + 00:02.400";
+                $part.MotionStatusText.Text = "COMMITTING / 06 NODES";
+                $part.MotionTransactionText.Text = "COMMITTING";
+                $part.MotionReactorState.Text = "SETTLING";
+            }
             @parallel
             {
                 @animate with Spring(620, 42) { @from { $part.MotionCore.Scale = 1.08; } @to { $part.MotionCore.Scale = 1; } }
@@ -98,6 +122,15 @@
                 @animate with Tween(220ms, EaseIn) { @from { $part.MotionStarB.Opacity = current; } @to { $part.MotionStarB.Opacity = 0; } }
                 @animate with Tween(260ms, EaseIn) { @from { $part.MotionStarC.Opacity = current; } @to { $part.MotionStarC.Opacity = 0; } }
                 @animate with Tween(200ms, EaseIn) { @from { $part.MotionStarD.Opacity = current; } @to { $part.MotionStarD.Opacity = 0; } }
+            }
+            @set
+            {
+                $part.MotionClockText.Text = "T + 00:02.920";
+                $part.MotionStatusText.Text = "SETTLED / GRAPH IDLE";
+                $part.MotionTransactionText.Text = "COMMITTED";
+                $part.MotionFieldReadout.Text = "FIELD STABLE";
+                $part.MotionReactorState.Text = "AT REST";
+            }
             }
         </MotionClip>
 
@@ -123,11 +156,12 @@
         <Aspect Name="PresentationMotion" TargetType="Cerneala.Presentation.PresentationWindow">
             @handle Reactor;
             @handle Pipeline;
-            @on ReactorResetRequested { @run $ReactorReset as Reactor; }
-            @on ReactorIgnitionRequested { @run $ReactorIgnition as Reactor; }
-            @on ReactorTrajectoryRequested { @run $ReactorTrajectory as Reactor; }
-            @on ReactorCommitRequested { @run $ReactorCommit as Reactor; }
-            @on ReactorCancelRequested { @cancel Reactor; }
+            @when $PageMotion.Visibility
+            {
+                @if value == Visible { @run $ReactorReplay as Reactor; }
+                @if value == Collapsed { @cancel Reactor; }
+            }
+            @when $ReplayMotionButton.IsPressed { @run $ReactorReplay as Reactor; }
             @on PipelineRequested { @run $PipelineReplay as Pipeline; }
         </Aspect>
 
@@ -551,7 +585,7 @@
                                     <TextBlock Name="MotionClockText" Text="T + 00:00.000" FontFamily="Cascadia Mono SemiBold" FontSize="10" Foreground="$CyanBrush" HorizontalAlignment="Right" />
                                     <TextBlock Name="MotionStatusText" Text="READY / GRAPH IDLE" FontFamily="Cascadia Mono" FontSize="9" Foreground="$SlateBrush" HorizontalAlignment="Right" Margin="0,6,0,0" />
                                 </StackPanel>
-                                <Button Aspect="$LimeButton" Content="IGNITE  ->" Click="OnReplayMotion" Padding="20,11,20,11" />
+                                <Button Name="ReplayMotionButton" Aspect="$LimeButton" Content="IGNITE  ->" Padding="20,11,20,11" />
                             </StackPanel>
                         </Grid>
 

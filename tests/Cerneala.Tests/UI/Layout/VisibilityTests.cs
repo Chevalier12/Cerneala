@@ -1,6 +1,8 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Layout.Panels;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -80,6 +82,33 @@ public sealed class VisibilityTests
         ElementInputRouteMap routeMap = new ElementInputRouteBuilder().Build(root);
 
         Assert.False(routeMap.TryGetId(child, out _));
+    }
+
+    [Fact]
+    public void ExpandingCollapsedElementInvalidatesDescendantLayoutCaches()
+    {
+        UIRoot root = new(100, 100);
+        Grid host = new();
+        Grid parent = new() { Visibility = Visibility.Collapsed };
+        Grid child = new();
+        FixedElement grandchild = new(new LayoutSize(20, 10));
+        root.VisualChildren.Add(host);
+        host.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        child.VisualChildren.Add(grandchild);
+        root.ProcessFrame();
+        int childLayoutVersion = child.LayoutVersion;
+        int grandchildLayoutVersion = grandchild.LayoutVersion;
+
+        parent.Visibility = Visibility.Visible;
+
+        Assert.True(child.DirtyState.Has(InvalidationFlags.Measure));
+        Assert.True(grandchild.DirtyState.Has(InvalidationFlags.Measure));
+        Assert.True(child.LayoutVersion > childLayoutVersion);
+        Assert.True(grandchild.LayoutVersion > grandchildLayoutVersion);
+        root.ProcessFrame();
+        Assert.True(grandchild.ArrangedBounds.Width > 0);
+        Assert.True(grandchild.ArrangedBounds.Height > 0);
     }
 
     private sealed class FixedElement(LayoutSize size) : UIElement

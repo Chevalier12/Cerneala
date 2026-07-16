@@ -166,6 +166,16 @@ public sealed partial class UiMarkupGenerator
         public IReadOnlyList<MotionAssignmentSyntax> To { get; }
     }
 
+    private sealed class MotionSetNode : MotionExecutionNode
+    {
+        public MotionSetNode(IReadOnlyList<MotionAssignmentSyntax> assignments, XObject source) : base(source)
+        {
+            Assignments = assignments;
+        }
+
+        public IReadOnlyList<MotionAssignmentSyntax> Assignments { get; }
+    }
+
     private sealed class MotionKeyframesNode : MotionExecutionNode
     {
         public MotionKeyframesNode(

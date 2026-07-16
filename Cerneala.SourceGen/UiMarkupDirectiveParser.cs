@@ -433,6 +433,17 @@ public sealed partial class UiMarkupGenerator
                     continue;
                 }
 
+                if (StartsWith("@set"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
+                    {
+                        throw Error("@set is allowed only inside an Aspect execution body.");
+                    }
+
+                    nodes.Add(ParseMotionSet());
+                    continue;
+                }
+
                 if (StartsWith("@keyframes"))
                 {
                     if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
@@ -1080,6 +1091,22 @@ public sealed partial class UiMarkupGenerator
             }
 
             return ParseAnimateBody(source, defaultSpec);
+        }
+
+        private MotionSetNode ParseMotionSet()
+        {
+            XObject source = CurrentSource;
+            IReadOnlyList<MotionAssignmentSyntax> assignments = ParseMotionAssignmentBlock("@set");
+            MotionAssignmentSyntax? invalid = assignments.FirstOrDefault(assignment =>
+                assignment.Spec is not null || assignment.Value is MotionCurrentValueSyntax);
+            if (invalid is not null)
+            {
+                throw new DirectiveParseException(
+                    "@set accepts concrete values without 'current' or a Motion spec.",
+                    invalid.Location);
+            }
+
+            return new MotionSetNode(assignments, source);
         }
 
         private MotionAnimateNode ParseAnimateBody(XObject source, MotionSpecSyntax? defaultSpec)

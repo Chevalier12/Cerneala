@@ -15,6 +15,7 @@ internal static class MotionMarkupLanguage
         "@scroll",
         "@drag",
         "@gesture",
+        "@set",
         "@animate",
         "@keyframes",
         "@stagger",

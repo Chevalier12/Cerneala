@@ -12,6 +12,7 @@ public sealed class UiFrameScheduler
     private readonly RenderQueue renderQueue;
     private readonly HitTestQueue hitTestQueue;
     private readonly InvalidationTrace trace;
+    private int layoutProcessingDepth;
     private const InvalidationFlags ConcreteWorkFlags =
         InvalidationFlags.Inherited |
         InvalidationFlags.Aspect |
@@ -53,6 +54,8 @@ public sealed class UiFrameScheduler
         layoutQueue.HasWork ||
         renderQueue.HasWork ||
         hitTestQueue.HasWork;
+
+    internal bool IsProcessingLayout => layoutProcessingDepth > 0;
 
     public FrameStats ProcessFrame(
         FramePhaseProcessors? processors = null,
@@ -193,6 +196,19 @@ public sealed class UiFrameScheduler
 
     private void ProcessMeasure(FramePhaseProcessors processors, FrameStats stats)
     {
+        layoutProcessingDepth++;
+        try
+        {
+            ProcessMeasureCore(processors, stats);
+        }
+        finally
+        {
+            layoutProcessingDepth--;
+        }
+    }
+
+    private void ProcessMeasureCore(FramePhaseProcessors processors, FrameStats stats)
+    {
         IReadOnlyList<Elements.UIElement> snapshot = processors.SupportsIncrementalMeasure
             ? layoutQueue.SnapshotMeasureIncremental()
             : layoutQueue.SnapshotMeasure();
@@ -244,6 +260,19 @@ public sealed class UiFrameScheduler
     }
 
     private void ProcessArrange(FramePhaseProcessors processors, FrameStats stats)
+    {
+        layoutProcessingDepth++;
+        try
+        {
+            ProcessArrangeCore(processors, stats);
+        }
+        finally
+        {
+            layoutProcessingDepth--;
+        }
+    }
+
+    private void ProcessArrangeCore(FramePhaseProcessors processors, FrameStats stats)
     {
         IReadOnlyList<Elements.UIElement> snapshot = layoutQueue.SnapshotArrange();
         int processed = 0;

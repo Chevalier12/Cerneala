@@ -91,17 +91,21 @@ public sealed partial class UiMarkupGenerator
         {
             public ResolvedMotionAspect(
                 IReadOnlyList<ResolvedMotionAnimation> animations,
+                IReadOnlyList<ResolvedMotionSet> sets,
                 IReadOnlyList<ResolvedMotionComposition> compositions,
                 IReadOnlyList<ResolvedMotionCancelCommand> cancelCommands,
                 IReadOnlyList<ResolvedMotionEventTrigger> eventTriggers)
             {
                 Animations = animations;
+                Sets = sets;
                 Compositions = compositions;
                 CancelCommands = cancelCommands;
                 EventTriggers = eventTriggers;
             }
 
             public IReadOnlyList<ResolvedMotionAnimation> Animations { get; }
+
+            public IReadOnlyList<ResolvedMotionSet> Sets { get; }
 
             public IReadOnlyList<ResolvedMotionComposition> Compositions { get; }
 
@@ -209,6 +213,45 @@ public sealed partial class UiMarkupGenerator
             public MotionStaggerNode? Stagger { get; }
 
             public XElement? StaggerTarget { get; }
+        }
+
+        private sealed class ResolvedMotionSet
+        {
+            public ResolvedMotionSet(
+                IReadOnlyList<ResolvedMotionSetProperty> properties,
+                string executionName,
+                string factoryName,
+                MotionClipInvocationContext? parameters)
+            {
+                Properties = properties;
+                ExecutionName = executionName;
+                FactoryName = factoryName;
+                Parameters = parameters;
+            }
+
+            public IReadOnlyList<ResolvedMotionSetProperty> Properties { get; }
+
+            public string ExecutionName { get; }
+
+            public string FactoryName { get; }
+
+            public MotionClipInvocationContext? Parameters { get; }
+        }
+
+        private sealed class ResolvedMotionSetProperty
+        {
+            public ResolvedMotionSetProperty(MotionAssignmentSyntax syntax, XElement targetElement, PropertySpec property)
+            {
+                Syntax = syntax;
+                TargetElement = targetElement;
+                Property = property;
+            }
+
+            public MotionAssignmentSyntax Syntax { get; }
+
+            public XElement TargetElement { get; }
+
+            public PropertySpec Property { get; }
         }
 
         private sealed class ResolvedMotionComposition
@@ -745,11 +788,12 @@ public sealed partial class UiMarkupGenerator
             }
 
             List<ResolvedMotionAnimation> animations = [];
+            List<ResolvedMotionSet> sets = [];
             List<ResolvedMotionComposition> compositions = [];
             List<ResolvedMotionCancelCommand> cancelCommands = [];
             foreach (MotionExecutionNode execution in syntaxExecutions)
             {
-                if (!TryResolveMotionExecution(applicationElement, aspect, execution, animations, compositions, cancelCommands))
+                if (!TryResolveMotionExecution(applicationElement, aspect, execution, animations, sets, compositions, cancelCommands))
                 {
                     return false;
                 }
@@ -784,7 +828,7 @@ public sealed partial class UiMarkupGenerator
 
             resolvedMotionAspects.Add(
                 (aspect, applicationElement),
-                new ResolvedMotionAspect(animations, compositions, cancelCommands, eventTriggers));
+                new ResolvedMotionAspect(animations, sets, compositions, cancelCommands, eventTriggers));
             return true;
         }
 
@@ -887,6 +931,7 @@ public sealed partial class UiMarkupGenerator
             AspectResource aspect,
             MotionExecutionNode execution,
             ICollection<ResolvedMotionAnimation> animations,
+            ICollection<ResolvedMotionSet> sets,
             ICollection<ResolvedMotionComposition> compositions,
             ICollection<ResolvedMotionCancelCommand> cancelCommands,
             MotionClipInvocationContext? parameters = null)
@@ -899,6 +944,36 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 animations.Add(resolved!);
+                return true;
+            }
+
+            if (execution is MotionSetNode set)
+            {
+                List<ResolvedMotionSetProperty> properties = [];
+                foreach (MotionAssignmentSyntax assignment in set.Assignments)
+                {
+                    if (!TryResolveMotionTarget(applicationElement, aspect, assignment, out XElement? targetElement, out PropertySpec? property))
+                    {
+                        return false;
+                    }
+
+                    if (!property!.Assignable)
+                    {
+                        ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion property '" + assignment.Target + "' is not assignable.");
+                        return false;
+                    }
+
+                    if (!ValidateMotionValue(assignment.Value, property, assignment.Target, parameters))
+                    {
+                        return false;
+                    }
+
+                    properties.Add(new ResolvedMotionSetProperty(assignment, targetElement!, property));
+                }
+
+                (string setExecutionName, string setFactoryName) = CreateMotionExecutionNames();
+                motionExecutionFactoryNames[set] = setFactoryName;
+                sets.Add(new ResolvedMotionSet(properties, setExecutionName, setFactoryName, parameters));
                 return true;
             }
 
@@ -948,7 +1023,7 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 if (!TryResolveMotionClipArguments(run, clip, out MotionClipInvocationContext? invocation) ||
-                    !TryResolveMotionExecution(applicationElement, aspect, clip.Body, animations, compositions, cancelCommands, invocation))
+                    !TryResolveMotionExecution(applicationElement, aspect, clip.Body, animations, sets, compositions, cancelCommands, invocation))
                 {
                     return false;
                 }
@@ -983,7 +1058,7 @@ public sealed partial class UiMarkupGenerator
             MotionCompositionNode composition = (MotionCompositionNode)execution;
             foreach (MotionExecutionNode child in composition.Children)
             {
-                if (!TryResolveMotionExecution(applicationElement, aspect, child, animations, compositions, cancelCommands, parameters))
+                if (!TryResolveMotionExecution(applicationElement, aspect, child, animations, sets, compositions, cancelCommands, parameters))
                 {
                     return false;
                 }
@@ -1581,6 +1656,29 @@ public sealed partial class UiMarkupGenerator
                     "global::System.Action " + animation.ExecutionName +
                     " = () => global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionExecution(" + sessionName +
                     ", " + animation.FactoryName + ");");
+            }
+
+            foreach (ResolvedMotionSet set in resolved.Sets)
+            {
+                List<string> assignments = [];
+                foreach (ResolvedMotionSetProperty property in set.Properties)
+                {
+                    string targetCode = ReferenceEquals(property.TargetElement, element)
+                        ? variable
+                        : CreateIdentifier(property.TargetElement.Attribute("Name")!.Value);
+                    assignments.Add(
+                        targetCode + ".SetValue(" + property.Property.PropertyCode + ", " +
+                        EmitMotionValue(property.Syntax.Value, property.Property, targetCode, set.Parameters) + ");");
+                }
+
+                currentPostLines.Add(
+                    "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + set.FactoryName +
+                    " = () => { " + string.Join(" ", assignments) +
+                    " return global::Cerneala.UI.Markup.MarkupMotionExecution.Parallel(); };");
+                currentPostLines.Add(
+                    "global::System.Action " + set.ExecutionName +
+                    " = () => global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionExecution(" + sessionName +
+                    ", " + set.FactoryName + ");");
             }
 
             foreach (ResolvedMotionComposition composition in resolved.Compositions)

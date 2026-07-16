@@ -6,8 +6,8 @@ the main sections is accepted and statically lowered by `Cerneala.SourceGen`;
 the Deferred Surface section is explicitly not accepted.
 
 The language includes inline and named `Aspect` behavior,
-`Tween`/`Spring` resources, `@when`, `@if`, `@on`, and parallel property starts
-inside `@animate` with optional `@from` and required `@to`. Values support typed
+`Tween`/`Spring` resources, `@when`, `@if`, `@on`, immediate `@set`, and parallel
+property starts inside `@animate` with optional `@from` and required `@to`. Values support typed
 literals, `current`, the existing reactive sources, conditional expressions,
 unqualified properties, and statically resolved `$part` targets. The supported
 start options are `retarget`, `holdOnComplete`, and `debugName`.
@@ -206,6 +206,28 @@ The general event form is:
 ```
 
 ## Parallel and Sequential Composition
+
+`@set` is an immediate execution leaf for discrete state changes that belong to a
+Motion sequence, such as status text or an enum phase. It accepts one or more
+assignable typed properties and completes synchronously, so the next child of an
+`@sequence` starts in the same activation. It does not accept `current` or a Motion
+spec because it performs no interpolation:
+
+```xml
+@sequence
+{
+    @set
+    {
+        $part.Status.Text = "ARMING";
+        $part.Phase.Opacity = 1;
+    }
+
+    @animate with Tween(180ms, EaseOut)
+    {
+        @to { $part.Core.Scale = 1; }
+    }
+}
+```
 
 Properties in one `@animate` block run in parallel:
 
@@ -437,7 +459,7 @@ These declarations lower to `MotionPropertyStartOptions`: `RetargetMode`, `HoldO
 <Grid Aspect="$Entrance" />
 ```
 
-A `MotionClip` must contain exactly one top-level body. That body must be one root execution node: `@animate`, `@sequence`, `@parallel`, `@keyframes`, or the restricted `@stagger` form defined later. Two sibling execution bodies are invalid; authors must express their relationship explicitly through a single composition body. A clip cannot contain activation directives such as `@when` or `@on`, cannot invoke another clip with `@run`, and cannot be assigned directly to a control. `TargetType` gives the generator enough information to validate owner properties and targets at build time.
+A `MotionClip` must contain exactly one top-level body. That body must be one root execution node: `@set`, `@animate`, `@sequence`, `@parallel`, `@keyframes`, or the restricted `@stagger` form defined later. Two sibling execution bodies are invalid; authors must express their relationship explicitly through a single composition body. A clip cannot contain activation directives such as `@when` or `@on`, cannot invoke another clip with `@run`, and cannot be assigned directly to a control. `TargetType` gives the generator enough information to validate owner properties and targets at build time.
 
 This is invalid because the clip has two top-level bodies:
 
@@ -796,7 +818,8 @@ The execution grammar is:
 
 ```text
 execution-body :=
-      @animate
+      @set
+    | @animate
     | @sequence      { execution-body+ }
     | @parallel      { execution-body+ }
     | @keyframes     { ranged-animate+ }

@@ -24,14 +24,8 @@ public partial class PresentationWindow : Window
     private int currentChapter;
     private bool contentReady;
     private bool skipNextDiagnosticsRefresh;
-    private int motionReplayVersion;
     private ToggleButton[] tourNavigation = [];
 
-    internal event EventHandler? ReactorResetRequested;
-    internal event EventHandler? ReactorIgnitionRequested;
-    internal event EventHandler? ReactorTrajectoryRequested;
-    internal event EventHandler? ReactorCommitRequested;
-    internal event EventHandler? ReactorCancelRequested;
     internal event EventHandler? PipelineRequested;
 
     private void OnContentRendered(object? sender, EventArgs args)
@@ -100,12 +94,6 @@ public partial class PresentationWindow : Window
     {
         UIElement[] pages = [PageWelcome, PageRetained, PageMarkup, PageAspect, PageMotion, PagePipeline, PageDiagnostics];
         int nextChapter = Math.Clamp(index, 0, pages.Length - 1);
-        if (currentChapter == 4 && nextChapter != 4)
-        {
-            motionReplayVersion++;
-            ReactorCancelRequested?.Invoke(this, EventArgs.Empty);
-        }
-
         currentChapter = nextChapter;
         for (int i = 0; i < pages.Length; i++)
         {
@@ -119,68 +107,10 @@ public partial class PresentationWindow : Window
         PreviousButton.IsEnabled = currentChapter > 0;
         NextButton.Content = currentChapter == ChapterNames.Length - 1 ? "RESTART TOUR  ->" : "NEXT  ->";
 
-        if (currentChapter == 4)
-        {
-            ReplayMotion();
-        }
-        else if (currentChapter == 5)
+        if (currentChapter == 5)
         {
             RunPipeline();
         }
-    }
-
-    private void OnReplayMotion(UiElementId sender, RoutedEventArgs args) => ReplayMotion();
-
-    private void ReplayMotion()
-    {
-        int version = ++motionReplayVersion;
-        _ = ReplayMotionAsync(version);
-    }
-
-    private async Task ReplayMotionAsync(int version)
-    {
-        MotionStatusText.Text = "ARMING / 00 NODES";
-        MotionClockText.Text = "T + 00:00.000";
-        MotionTransactionText.Text = "OPEN";
-        MotionPhaseIndex.Text = "00";
-        MotionFieldReadout.Text = "FIELD LOCKED";
-        MotionReactorState.Text = "STANDBY";
-        ReactorResetRequested?.Invoke(this, EventArgs.Empty);
-        if (!await ContinueReplayAfterAsync(version, 120)) return;
-
-        MotionPhaseIndex.Text = "01";
-        MotionStatusText.Text = "IGNITION / 04 NODES";
-        MotionReactorState.Text = "CLOCK PRIMED";
-        ReactorIgnitionRequested?.Invoke(this, EventArgs.Empty);
-        if (!await ContinueReplayAfterAsync(version, 650)) return;
-
-        MotionPhaseIndex.Text = "02";
-        MotionClockText.Text = "T + 00:00.620";
-        MotionStatusText.Text = "TRAJECTORIES / 15 NODES";
-        MotionFieldReadout.Text = "FIELD IN MOTION";
-        MotionReactorState.Text = "COMPOSING";
-        ReactorTrajectoryRequested?.Invoke(this, EventArgs.Empty);
-        if (!await ContinueReplayAfterAsync(version, 1_780)) return;
-
-        MotionPhaseIndex.Text = "03";
-        MotionClockText.Text = "T + 00:02.400";
-        MotionStatusText.Text = "COMMITTING / 06 NODES";
-        MotionTransactionText.Text = "COMMITTING";
-        MotionReactorState.Text = "SETTLING";
-        ReactorCommitRequested?.Invoke(this, EventArgs.Empty);
-        if (!await ContinueReplayAfterAsync(version, 600)) return;
-
-        MotionClockText.Text = "T + 00:02.920";
-        MotionStatusText.Text = "SETTLED / GRAPH IDLE";
-        MotionTransactionText.Text = "COMMITTED";
-        MotionFieldReadout.Text = "FIELD STABLE";
-        MotionReactorState.Text = "AT REST";
-    }
-
-    private async Task<bool> ContinueReplayAfterAsync(int version, int delayMilliseconds)
-    {
-        await Task.Delay(delayMilliseconds);
-        return version == motionReplayVersion && currentChapter == 4;
     }
 
     private void OnRunPipeline(UiElementId sender, RoutedEventArgs args) => RunPipeline();

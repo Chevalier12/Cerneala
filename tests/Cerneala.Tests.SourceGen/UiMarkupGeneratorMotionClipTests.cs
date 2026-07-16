@@ -9,6 +9,56 @@ namespace Cerneala.Tests.SourceGen;
 public sealed partial class UiMarkupGeneratorTests
 {
     [Fact]
+    public void MotionSetGeneratesTypedImmediateAssignmentsInsideSequence()
+    {
+        const string markup = """
+            <Border Aspect="$Stateful">
+              <Border.Resources>
+                <MotionClip Name="Replay" TargetType="Border">
+                  @sequence
+                  {
+                    @set { $part.Status.Text = "ARMING"; Opacity = 0.5; }
+                    @animate with Tween(100ms) { @to { Opacity = 1; } }
+                  }
+                </MotionClip>
+                <Aspect Name="Stateful" TargetType="Border">
+                  @on Loaded { @run $Replay; }
+                </Aspect>
+              </Border.Resources>
+              <TextBlock Name="Status" />
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionSet.cui.xml", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Contains("Status.SetValue(global::Cerneala.UI.Controls.TextBlock.TextProperty, \"ARMING\")", generated, StringComparison.Ordinal);
+        Assert.Contains("SetValue(global::Cerneala.UI.Elements.UIElement.OpacityProperty, 0.5f)", generated, StringComparison.Ordinal);
+        Assert.Contains("MarkupMotionExecution.Sequence", generated, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("current")]
+    [InlineData("1 with Tween(100ms)")]
+    public void MotionSetRejectsAnimatedOrImplicitValues(string value)
+    {
+        string markup = $$"""
+            <Border>
+              <Border.Resources>
+                <MotionClip Name="Invalid" TargetType="Border">
+                  @set { Opacity = {{value}}; }
+                </MotionClip>
+              </Border.Resources>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionSetInvalid.cui.xml", markup, out _);
+
+        AssertMotionDiagnostic(result, "concrete values");
+    }
+
+    [Fact]
     public void MotionClipExpandsNestedRecipeAtRunSiteAndResolvesPartsStatically()
     {
         const string markup = """
