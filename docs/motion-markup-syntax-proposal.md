@@ -9,7 +9,7 @@ The language includes inline and named `Aspect` behavior,
 `Tween`/`Spring` resources, `@when`, `@if`, `@on`, immediate `@set`, and parallel
 property starts inside `@animate` with optional `@from` and required `@to`. Values support typed
 literals, `current`, the existing reactive sources, conditional expressions,
-unqualified properties, and statically resolved `$part` targets. The supported
+unqualified properties, and statically resolved `$Name.Property` targets. The supported
 start options are `retarget`, `holdOnComplete`, and `debugName`.
 
 Event subscriptions are emitted as direct `+=`/`-=` operations.
@@ -66,16 +66,16 @@ The language is constrained to markup and generator work over the current Motion
                 {
                     @from
                     {
-                        $part.HoverText.Opacity = 0;
-                        $part.Indicator.ScaleX = 0;
-                        $part.Label.TranslateX = 0;
+                        $HoverText.Opacity = 0;
+                        $Indicator.ScaleX = 0;
+                        $Label.TranslateX = 0;
                     }
 
                     @to
                     {
-                        $part.HoverText.Opacity = 1;
-                        $part.Indicator.ScaleX = 1;
-                        $part.Label.TranslateX = 6 with $Responsive;
+                        $HoverText.Opacity = 1;
+                        $Indicator.ScaleX = 1;
+                        $Label.TranslateX = 6 with $Responsive;
                     }
                 }
             }
@@ -85,9 +85,9 @@ The language is constrained to markup and generator work over the current Motion
                 {
                     @to
                     {
-                        $part.HoverText.Opacity = 0;
-                        $part.Indicator.ScaleX = 0;
-                        $part.Label.TranslateX = 0 with $Responsive;
+                        $HoverText.Opacity = 0;
+                        $Indicator.ScaleX = 0;
+                        $Label.TranslateX = 0 with $Responsive;
                     }
                 }
             }
@@ -218,13 +218,13 @@ spec because it performs no interpolation:
 {
     @set
     {
-        $part.Status.Text = "ARMING";
-        $part.Phase.Opacity = 1;
+        $Status.Text = "ARMING";
+        $Phase.Opacity = 1;
     }
 
     @animate with Tween(180ms, EaseOut)
     {
-        @to { $part.Core.Scale = 1; }
+        @to { $Core.Scale = 1; }
     }
 }
 ```
@@ -264,8 +264,8 @@ Explicit composition supports nested sequential and parallel groups:
 
         @animate with Tween(300ms, EaseOut)
         {
-            @from { $part.Ring.Opacity = 0; }
-            @to   { $part.Ring.Opacity = 1; }
+            @from { $Ring.Opacity = 0; }
+            @to   { $Ring.Opacity = 1; }
         }
     }
 }
@@ -560,7 +560,7 @@ The completed value follows the sampler: an even cycle count finishes at `@from`
 The runtime's `MotionStagger` only calculates `offset * index`. It does not enumerate collections, schedule arbitrary execution graphs, or implement ordering modes. The initial markup form therefore supports a forward snapshot of targets and one Tween-based `@animate`; the generator applies `TweenSpec<T>.WithDelay(stagger.GetDelay(index))` to each item. The unqualified target inside the body is the current collection item.
 
 ```xml
-@stagger target $part.NavigationItems
+@stagger target $NavigationItems
          each 45ms
 {
     @animate with $QuickOut
@@ -648,7 +648,7 @@ The current runtime has no `position`, `size`, or `positionAndSize` modes, no co
 `@scroll` is an Aspect-owned linear mapping over the current `ScrollTimeline` API. The source must be an attached `ScrollViewer`. Vertical or horizontal progress is normalized and clamped over the viewer's entire scrollable extent.
 
 ```xml
-@scroll source $part.Scroller
+@scroll source $Scroller
         axis vertical
 {
     Opacity = 0..1;
@@ -851,7 +851,7 @@ Aspect-only lifecycle and input directives are:
 ## Static Lowering, Ownership, and Diagnostics
 
 Motion markup is resolved at build time against the Aspect `TargetType`, named
-parts, properties, events, resource scopes, and `MotionSpec<T>` types. Generated
+named elements, properties, events, resource scopes, and `MotionSpec<T>` types. Generated
 code uses typed property identifiers and direct event `+=`/`-=` operations. It
 does not use reflection, `dynamic`, per-frame string lookup, or tick-created
 closures.
@@ -867,7 +867,7 @@ restarts a slot by canceling its previous execution before storing the new one;
 | Diagnostic | Category |
 | --- | --- |
 | `CERNEALAUI020` | Directive syntax and grammar |
-| `CERNEALAUI021` | Target, part, or property resolution |
+| `CERNEALAUI021` | Target, named element, or property resolution |
 | `CERNEALAUI022` | Event resolution and concrete `TargetType` suggestions |
 | `CERNEALAUI023` | Property, value, resource, and spec typing |
 | `CERNEALAUI024` | Composition shape |
@@ -891,8 +891,8 @@ Future editor tooling is not implemented by the generator. Its contract is:
 
 - completion filters directives by Aspect, trigger, execution, and clip context;
 - hover reports resolved property, event, target, parameter, and `MotionSpec<T>` types;
-- go-to-definition resolves named Aspects, MotionClips, specs, handles, parameters, and `$part` targets;
-- rename updates statically resolved resource, handle, parameter, and part references;
+- go-to-definition resolves named Aspects, MotionClips, specs, handles, parameters, and `$Name` targets;
+- rename updates statically resolved resource, handle, parameter, and named-element references;
 - quick fixes use diagnostic IDs and exact spans, including concrete `TargetType` suggestions;
 - generated-code preview shows deterministic C# without changing runtime semantics.
 

@@ -129,8 +129,8 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Theory]
     [InlineData("@drag axis x with Spring(520, 38, 1);", "exactly")]
-    [InlineData("@drag source $part.Handle with Spring(520, 38, 1);", "source")]
-    [InlineData("@drag target $part.Target with Spring(520, 38, 1);", "target")]
+    [InlineData("@drag source $Handle with Spring(520, 38, 1);", "source")]
+    [InlineData("@drag target $Target with Spring(520, 38, 1);", "target")]
     [InlineData("@drag with Spring(520, 38, 1) bounds 0..100;", "bounds")]
     [InlineData("@drag with Spring(520, 38, 1) resistance 0.5;", "resistance")]
     [InlineData("@drag with Spring(520, 38, 1) snapping true;", "snapping")]
@@ -255,7 +255,7 @@ public sealed partial class UiMarkupGeneratorTests
             <StackPanel>
               <StackPanel.Resources>
                 <Aspect TargetType="StackPanel">
-                  @scroll source $part.Scroller axis vertical
+                  @scroll source $Scroller axis vertical
                   {
                     Opacity = 0..1;
                     TranslateY = 48..0;
@@ -286,7 +286,7 @@ public sealed partial class UiMarkupGeneratorTests
             <StackPanel>
               <StackPanel.Resources>
                 <Aspect TargetType="StackPanel">
-                  @scroll source $part.Scroller axis horizontal allowLayout = true
+                  @scroll source $Scroller axis horizontal allowLayout = true
                   {
                     Width = 20..80;
                   }
@@ -304,11 +304,11 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Theory]
-    [InlineData("$part.Missing", "Opacity", "0..1", "ScrollViewer")]
-    [InlineData("$part.Source", "IsEnabled", "0..1", "float")]
-    [InlineData("$part.Source", "Opacity", "0px..1px", "float output range")]
-    [InlineData("$part.Source", "Opacity", "0..1 with Linear", "float output range")]
-    [InlineData("$part.Source", "Opacity", "0%..100% => 0..1", "float output range")]
+    [InlineData("$Missing", "Opacity", "0..1", "ScrollViewer")]
+    [InlineData("$Source", "IsEnabled", "0..1", "float")]
+    [InlineData("$Source", "Opacity", "0px..1px", "float output range")]
+    [InlineData("$Source", "Opacity", "0..1 with Linear", "float output range")]
+    [InlineData("$Source", "Opacity", "0%..100% => 0..1", "float output range")]
     public void MotionScrollRejectsUnsupportedSourcesTargetsAndRanges(
         string source,
         string target,
@@ -645,7 +645,7 @@ public sealed partial class UiMarkupGeneratorTests
                 <Aspect Target="StackPanel">
                   @on Loaded
                   {
-                    @stagger target $part.Items each 40ms
+                    @stagger target $Items each 40ms
                     {
                       @animate with Tween(100ms, Linear)
                       {
@@ -676,12 +676,12 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void MotionStaggerRejectsUnavailableCollectionPart()
+    public void MotionStaggerRejectsUnavailableNamedCollection()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionMissingStaggerPart.cui.xml",
+            "MotionMissingStaggerTarget.cui.xml",
             MotionAspectMarkup(
-                "@on Loaded { @stagger target $part.Missing each 40ms { @animate with Tween(100ms) { @to { Opacity = 1; } } } }"),
+                "@on Loaded { @stagger target $Missing each 40ms { @animate with Tween(100ms) { @to { Opacity = 1; } } } }"),
             out _);
 
         AssertMotionDiagnostic(result, "not available");
@@ -757,7 +757,7 @@ public sealed partial class UiMarkupGeneratorTests
             MotionAspectMarkup($$"""
                 @on Loaded
                 {
-                  @stagger target $part.Items each 40ms
+                  @stagger target $Items each 40ms
                   {
                     {{body}}
                   }

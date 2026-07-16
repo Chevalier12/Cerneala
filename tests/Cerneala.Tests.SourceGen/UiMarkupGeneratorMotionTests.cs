@@ -272,15 +272,15 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void MotionMarkupResolvesForwardPartTargetsStatically()
+    public void MotionMarkupResolvesForwardNamedElementTargetsStatically()
     {
         const string markup = """
-            <Border Aspect="$ForwardPartMotion">
+            <Border Aspect="$ForwardNamedMotion">
               <Border.Resources>
-                <Aspect Name="ForwardPartMotion" TargetType="Border">
+                <Aspect Name="ForwardNamedMotion" TargetType="Border">
                   @on Loaded
                   {
-                    @animate { @to { $part.Child.Opacity = 1; } }
+                    @animate { @to { $Child.Opacity = 1; } }
                   }
                 </Aspect>
               </Border.Resources>
@@ -288,26 +288,31 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionForwardPart.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionForwardNamedElement.cui.xml", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
     }
 
     [Fact]
-    public void MotionMarkupReportsMissingPartAtApplicationSite()
+    public void MotionMarkupRejectsPartShorthandForNamedElements()
     {
-        GeneratorRunResult result = RunGenerator(
-            "MotionMissingPart.cui.xml",
-            MotionAspectMarkup(
-                """
-                @on Click
-                {
-                  @animate { @to { $part.Missing.Opacity = 1; } }
-                }
-                """),
-            out _);
+        const string markup = """
+            <Border Aspect="$Motion">
+              <Border.Resources>
+                <Aspect Name="Motion" TargetType="Border">
+                  @on Loaded { @animate { @to { $part.Child.Opacity = 1; } } }
+                </Aspect>
+              </Border.Resources>
+              <Border Name="Child" />
+            </Border>
+            """;
 
-        AssertMotionDiagnostic(result, "Missing");
+        GeneratorRunResult result = RunGenerator("MotionPartShorthand.cui.xml", markup, out _);
+
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Severity == DiagnosticSeverity.Error &&
+                diagnostic.GetMessage().Contains("$part", StringComparison.Ordinal));
     }
 
     [Fact]

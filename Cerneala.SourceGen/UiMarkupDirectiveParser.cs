@@ -794,12 +794,12 @@ public sealed partial class UiMarkupGenerator
             DirectiveHeader header = ReadHeaderUntilBrace();
             Match match = Regex.Match(
                 header.Text,
-                @"^\s*source\s+(\$part\.[A-Za-z_][A-Za-z0-9_]*)\s+axis\s+(vertical|horizontal)(?:\s+allowLayout\s*=\s*(true|false))?\s*$",
+                @"^\s*source\s+(\$[A-Za-z_][A-Za-z0-9_]*)\s+axis\s+(vertical|horizontal)(?:\s+allowLayout\s*=\s*(true|false))?\s*$",
                 RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-            if (!match.Success)
+            if (!match.Success || string.Equals(match.Groups[1].Value, "$part", StringComparison.Ordinal))
             {
                 throw new DirectiveParseException(
-                    "@scroll requires 'source $part.Name axis vertical|horizontal' and optionally 'allowLayout = true'. Pixel ranges, easing, input subranges and keyframes are not supported.",
+                    "@scroll requires 'source $Name axis vertical|horizontal' and optionally 'allowLayout = true'. Pixel ranges, easing, input subranges and keyframes are not supported.",
                     new DirectiveExpressionLocation(header.Source, header.Offset));
             }
 
@@ -1242,9 +1242,10 @@ public sealed partial class UiMarkupGenerator
             DirectiveHeader header = ReadHeaderUntilBrace();
             string[] parts = header.Text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length != 4 || parts[0] != "target" || parts[2] != "each" ||
-                !parts[1].StartsWith("$part.", StringComparison.Ordinal) || !IsIdentifier(parts[1].Substring(6)))
+                parts[1].Length < 2 || parts[1][0] != '$' || !IsIdentifier(parts[1].Substring(1)) ||
+                string.Equals(parts[1], "$part", StringComparison.Ordinal))
             {
-                throw new DirectiveParseException("@stagger requires 'target $part.Name each <duration>'.", source);
+                throw new DirectiveParseException("@stagger requires 'target $Name each <duration>'.", source);
             }
 
             MotionDurationSyntax? each = TryParseDuration(parts[3], new DirectiveExpressionLocation(header.Source, header.Offset));
@@ -1276,7 +1277,7 @@ public sealed partial class UiMarkupGenerator
             }
 
             Read();
-            return new MotionStaggerNode(parts[1].Substring(6), each, animation, source);
+            return new MotionStaggerNode(parts[1].Substring(1), each, animation, source);
         }
 
         private static void ParseKeyframeRangeHeader(
@@ -1594,15 +1595,17 @@ public sealed partial class UiMarkupGenerator
             }
 
             string[] parts = target.Split('.');
-            if (parts.Length == 3 &&
-                string.Equals(parts[0], "$part", StringComparison.Ordinal) &&
-                IsIdentifier(parts[1]) &&
-                IsIdentifier(parts[2]))
+            if (parts.Length == 2 &&
+                parts[0].Length > 1 &&
+                parts[0][0] == '$' &&
+                !string.Equals(parts[0], "$part", StringComparison.Ordinal) &&
+                IsIdentifier(parts[0].Substring(1)) &&
+                IsIdentifier(parts[1]))
             {
                 return target;
             }
 
-            throw Error("Motion target must be a property name or '$part.Name.Property'.");
+            throw Error("Motion target must be a property name or '$Name.Property'. '$part' is reserved for template-part access.");
         }
 
         private string ReadMotionStatement()

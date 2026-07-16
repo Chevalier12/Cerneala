@@ -733,7 +733,7 @@ public sealed partial class UiMarkupGenerator
             List<ResolvedMotionScroll> scrolls = [];
             foreach (MotionScrollNode scroll in aspect.Scrolls)
             {
-                if (!TryResolveMotionScroll(applicationElement, aspect, scroll, out ResolvedMotionScroll? resolvedScroll))
+                if (!TryResolveMotionScroll(applicationElement, scroll, out ResolvedMotionScroll? resolvedScroll))
                 {
                     return false;
                 }
@@ -834,18 +834,11 @@ public sealed partial class UiMarkupGenerator
 
         private bool TryResolveMotionScroll(
             XElement applicationElement,
-            AspectResource aspect,
             MotionScrollNode scroll,
             out ResolvedMotionScroll? resolved)
         {
-            string partName = scroll.SourceReference.Substring("$part.".Length);
-            XElement? sourceElement = applicationElement.DescendantsAndSelf()
-                .FirstOrDefault(element => string.Equals(element.Attribute("Name")?.Value, partName, StringComparison.Ordinal));
-            if (sourceElement is null && aspect.Template is not null &&
-                templateParts.TryGetValue(aspect.Template, out IReadOnlyDictionary<string, XElement>? declaredParts))
-            {
-                declaredParts.TryGetValue(partName, out sourceElement);
-            }
+            string sourceName = scroll.SourceReference.Substring(1);
+            XElement? sourceElement = FindMotionNamedElement(applicationElement, sourceName);
 
             INamedTypeSymbol? sourceType = sourceElement is null
                 ? null
@@ -853,7 +846,7 @@ public sealed partial class UiMarkupGenerator
             INamedTypeSymbol? scrollViewerType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ScrollViewer");
             if (sourceElement is null || sourceType is null || scrollViewerType is null || !IsOrDerivesFrom(sourceType, scrollViewerType))
             {
-                Report(InvalidDirective, scroll.Source, Path.GetFileName(file.Path), "@scroll source '" + scroll.SourceReference + "' must resolve to an attached ScrollViewer part.");
+                Report(InvalidDirective, scroll.Source, Path.GetFileName(file.Path), "@scroll source '" + scroll.SourceReference + "' must resolve to an attached named ScrollViewer.");
                 resolved = null;
                 return false;
             }
@@ -866,7 +859,7 @@ public sealed partial class UiMarkupGenerator
                     new MotionAtomValueSyntax("0", assignment.Location),
                     null,
                     assignment.Location);
-                if (!TryResolveMotionTarget(applicationElement, aspect, target, out XElement? targetElement, out PropertySpec? property))
+                if (!TryResolveMotionTarget(applicationElement, target, out XElement? targetElement, out PropertySpec? property))
                 {
                     resolved = null;
                     return false;
@@ -952,7 +945,7 @@ public sealed partial class UiMarkupGenerator
                 List<ResolvedMotionSetProperty> properties = [];
                 foreach (MotionAssignmentSyntax assignment in set.Assignments)
                 {
-                    if (!TryResolveMotionTarget(applicationElement, aspect, assignment, out XElement? targetElement, out PropertySpec? property))
+                    if (!TryResolveMotionTarget(applicationElement, assignment, out XElement? targetElement, out PropertySpec? property))
                     {
                         return false;
                     }
@@ -1082,17 +1075,11 @@ public sealed partial class UiMarkupGenerator
             out ResolvedMotionAnimation? resolved)
         {
             resolved = null;
-            XElement? collectionElement = applicationElement.DescendantsAndSelf()
-                .FirstOrDefault(element => string.Equals(element.Attribute("Name")?.Value, stagger.TargetPart, StringComparison.Ordinal));
-            if (collectionElement is null && aspect.Template is not null &&
-                templateParts.TryGetValue(aspect.Template, out IReadOnlyDictionary<string, XElement>? declaredParts))
-            {
-                declaredParts.TryGetValue(stagger.TargetPart, out collectionElement);
-            }
+            XElement? collectionElement = FindMotionNamedElement(applicationElement, stagger.TargetName);
 
             if (collectionElement is null)
             {
-                Report(InvalidDirective, stagger.Source, Path.GetFileName(file.Path), "Stagger target part '" + stagger.TargetPart + "' is not available at this application site.");
+                Report(InvalidDirective, stagger.Source, Path.GetFileName(file.Path), "Stagger target named element '" + stagger.TargetName + "' is not available at this application site.");
                 return false;
             }
 
@@ -1116,7 +1103,7 @@ public sealed partial class UiMarkupGenerator
             List<ResolvedMotionProperty> properties = [];
             foreach (MotionAssignmentSyntax destination in animation.To)
             {
-                if (destination.Target.StartsWith("$part.", StringComparison.Ordinal) || destination.Spec is not null && !IsTweenMotionSpec(destination.Spec))
+                if (destination.Target.StartsWith("$", StringComparison.Ordinal) || destination.Spec is not null && !IsTweenMotionSpec(destination.Spec))
                 {
                     Report(InvalidDirective, destination.Location, Path.GetFileName(file.Path), "Stagger assignments must target the current item and use Tween specs.");
                     return false;
@@ -1227,7 +1214,7 @@ public sealed partial class UiMarkupGenerator
                     }
                 }
 
-                if (!TryResolveMotionTarget(applicationElement, aspect, ordered[0].Destination, out XElement? targetElement, out PropertySpec? property) ||
+                if (!TryResolveMotionTarget(applicationElement, ordered[0].Destination, out XElement? targetElement, out PropertySpec? property) ||
                     !property!.Assignable || !HasBuiltInMixer(property.ValueType))
                 {
                     if (property is not null && (!property.Assignable || !HasBuiltInMixer(property.ValueType)))
@@ -1545,7 +1532,7 @@ public sealed partial class UiMarkupGenerator
             foreach (MotionAssignmentSyntax destination in animation.To)
             {
                 MotionAssignmentSyntax? source = animation.From.FirstOrDefault(candidate => candidate.Target == destination.Target);
-                if (!TryResolveMotionTarget(applicationElement, aspect, destination, out XElement? targetElement, out PropertySpec? property))
+                if (!TryResolveMotionTarget(applicationElement, destination, out XElement? targetElement, out PropertySpec? property))
                 {
                     return false;
                 }
@@ -2109,7 +2096,6 @@ public sealed partial class UiMarkupGenerator
 
         private bool TryResolveMotionTarget(
             XElement applicationElement,
-            AspectResource aspect,
             MotionAssignmentSyntax assignment,
             out XElement? targetElement,
             out PropertySpec? property)
@@ -2117,22 +2103,16 @@ public sealed partial class UiMarkupGenerator
             targetElement = applicationElement;
             string propertyName = assignment.Target;
             INamedTypeSymbol? targetType;
-            if (assignment.Target.StartsWith("$part.", StringComparison.Ordinal))
+            if (assignment.Target.StartsWith("$", StringComparison.Ordinal))
             {
                 string[] parts = assignment.Target.Split('.');
-                string partName = parts[1];
-                propertyName = parts[2];
-                targetElement = applicationElement.DescendantsAndSelf()
-                    .FirstOrDefault(element => string.Equals(element.Attribute("Name")?.Value, partName, StringComparison.Ordinal));
-                if (targetElement is null && aspect.Template is not null &&
-                    templateParts.TryGetValue(aspect.Template, out IReadOnlyDictionary<string, XElement>? declaredParts))
-                {
-                    declaredParts.TryGetValue(partName, out targetElement);
-                }
+                string targetName = parts[0].Substring(1);
+                propertyName = parts[1];
+                targetElement = FindMotionNamedElement(applicationElement, targetName);
 
                 if (targetElement is null)
                 {
-                    ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion target part '" + partName + "' is not available at this Aspect application site.");
+                    ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion target named element '" + targetName + "' is not available at this Aspect application site.");
                     property = null;
                     return false;
                 }
@@ -2159,6 +2139,15 @@ public sealed partial class UiMarkupGenerator
             }
 
             return true;
+        }
+
+        private XElement? FindMotionNamedElement(XElement applicationElement, string name)
+        {
+            return applicationElement.DescendantsAndSelf()
+                .FirstOrDefault(element =>
+                    string.Equals(element.Attribute("Name")?.Value?.Trim(), name, StringComparison.Ordinal) &&
+                    !IsResourceElement(element) &&
+                    !IsTemplatePartElement(element));
         }
 
         private bool ValidateMotionOptions(

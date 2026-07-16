@@ -194,14 +194,14 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class MotionStaggerNode : MotionExecutionNode
     {
-        public MotionStaggerNode(string targetPart, MotionDurationSyntax each, MotionAnimateNode animation, XObject source) : base(source)
+        public MotionStaggerNode(string targetName, MotionDurationSyntax each, MotionAnimateNode animation, XObject source) : base(source)
         {
-            TargetPart = targetPart;
+            TargetName = targetName;
             Each = each;
             Animation = animation;
         }
 
-        public string TargetPart { get; }
+        public string TargetName { get; }
 
         public MotionDurationSyntax Each { get; }
 

@@ -17,7 +17,7 @@ public sealed partial class UiMarkupGeneratorTests
                 <MotionClip Name="Replay" TargetType="Border">
                   @sequence
                   {
-                    @set { $part.Status.Text = "ARMING"; Opacity = 0.5; }
+                    @set { $Status.Text = "ARMING"; Opacity = 0.5; }
                     @animate with Tween(100ms) { @to { Opacity = 1; } }
                   }
                 </MotionClip>
@@ -59,7 +59,7 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void MotionClipExpandsNestedRecipeAtRunSiteAndResolvesPartsStatically()
+    public void MotionClipExpandsNestedRecipeAtRunSiteAndResolvesNamedElementsStatically()
     {
         const string markup = """
             <Border Aspect="$Entrance">
@@ -71,7 +71,7 @@ public sealed partial class UiMarkupGeneratorTests
                     @parallel
                     {
                       @animate { @to { Scale = 1; } }
-                      @animate { @to { $part.Ring.Opacity = 1; } }
+                      @animate { @to { $Ring.Opacity = 1; } }
                     }
                   }
                 </MotionClip>
@@ -204,22 +204,22 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void MotionClipReportsMissingPartAtRunSite()
+    public void MotionClipReportsMissingNamedElementAtRunSite()
     {
         const string markup = """
             <Border Aspect="$RunClip">
               <Border.Resources>
-                <MotionClip Name="PartClip" TargetType="Border">
-                  @animate { @to { $part.Missing.Opacity = 1; } }
+                <MotionClip Name="NamedTargetClip" TargetType="Border">
+                  @animate { @to { $Missing.Opacity = 1; } }
                 </MotionClip>
                 <Aspect Name="RunClip" TargetType="Border">
-                  @on Loaded { @run $PartClip; }
+                  @on Loaded { @run $NamedTargetClip; }
                 </Aspect>
               </Border.Resources>
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipMissingPart.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipMissingNamedElement.cui.xml", markup, out _);
 
         AssertMotionDiagnostic(result, "Missing");
     }

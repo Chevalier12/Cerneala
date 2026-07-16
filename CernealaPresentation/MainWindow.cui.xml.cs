@@ -1,5 +1,6 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Accessibility;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 
@@ -9,8 +10,6 @@ public partial class MainWindow : Window
 {
     private bool sequenceStarted;
     private bool isContinuing;
-
-    internal event EventHandler? LoadingSequenceRequested;
 
     private void OnContentRendered(object? sender, EventArgs args)
     {
@@ -30,14 +29,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        _ = StartLoadingSequenceAsync();
+        _ = RunLoadingAutomationAsync();
     }
 
-    private async Task StartLoadingSequenceAsync()
+    private async Task RunLoadingAutomationAsync()
     {
-        LoadingSequenceRequested?.Invoke(this, EventArgs.Empty);
-        await Task.Delay(7_000);
-        ContinueButton.IsEnabled = true;
+        await WaitForContinueButtonAsync();
         await CaptureIfRequestedAsync("CERNEALA_PRESENTATION_LOADING_CAPTURE");
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTOMATION_REPORT")) ||
             string.Equals(
@@ -47,6 +44,30 @@ public partial class MainWindow : Window
         {
             new ButtonAutomationPeer(ContinueButton).Invoke();
         }
+    }
+
+    private Task WaitForContinueButtonAsync()
+    {
+        if (ContinueButton.IsEnabled)
+        {
+            return Task.CompletedTask;
+        }
+
+        TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        EventHandler<UiPropertyChangedEventArgs>? handler = null;
+        handler = (_, _) =>
+        {
+            if (!ContinueButton.IsEnabled)
+            {
+                return;
+            }
+
+            ContinueButton.IsEnabledChanged -= handler;
+            completion.TrySetResult();
+        };
+
+        ContinueButton.IsEnabledChanged += handler;
+        return completion.Task;
     }
 
     private void OnContinue(UiElementId sender, RoutedEventArgs args)

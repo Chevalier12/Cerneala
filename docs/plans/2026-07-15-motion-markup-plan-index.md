@@ -13,7 +13,7 @@ Propunerea este prea mare pentru un singur checklist sanatos. Implementarea este
 
 - Markup-ul este analizat si validat de Roslyn la build; runtime-ul nu cauta proprietati, events sau resources prin reflection.
 - `Aspect` detine activarea, observarea, events si lifecycle-ul. `MotionClip` ramane o reteta generator-owned, fara clasa runtime omonima.
-- Unqualified properties tintesc elementul Aspectului; `$part.Name.Property` este rezolvat static pentru fiecare loc in care Aspectul este aplicat.
+- Unqualified properties tintesc elementul Aspectului; `$Name.Property` este rezolvat static pentru fiecare loc in care Aspectul este aplicat.
 - `@on` se rezolva exclusiv la un `IEventSymbol` de pe `TargetType` sau tipurile sale de baza. Generatorul nu injecteaza cod in metode cu acelasi nume.
 - Toate subscriptions, observations si handles sunt per instanta de Aspect si sunt eliberate la detach/replacement.
 - Generatorul coboara sintaxa la API-urile Motion existente. Cand contractul runtime nu poate sustine lifecycle-ul cerut, se scrie mai intai un test RED si se repara contractul real; nu se mascheaza defectul in cod generat.

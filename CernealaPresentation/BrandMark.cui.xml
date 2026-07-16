@@ -1,5 +1,7 @@
 <UserControl>
-    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+    <StackPanel
+        Orientation="Horizontal"
+        VerticalAlignment="Center">
         <SvgImage
             DisplaySize="32"
             Margin="0,0,10,0" />

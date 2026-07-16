@@ -18,7 +18,7 @@ Motion expune `MotionAnimationBuilder<T>`, `MotionPropertyBinding<T>` si specs t
 - Adaugam un bridge runtime generat in `UI/Markup/GeneratedMarkupMotion.cs`: un behavior per element/Aspect creeaza o sesiune la attach, detaseaza events/observations si anuleaza executions la detach.
 - Resursele `Tween` si `Spring` sunt declaratii generator-known. La fiecare utilizare, resolverul construieste `MotionSpec<T>` pentru tipul proprietatii; nu apare un spec netipizat runtime.
 - Named Aspects sunt expandate si validate la fiecare application site. Compatibilitatea foloseste assignability (`elementType` deriva din `TargetType`), nu egalitate de nume.
-- `$part` este rezolvat static fata de elementele/part-urile vizibile la application site; o aplicare care nu poate satisface toate targets primeste diagnostic.
+- `$Name.Property` este rezolvat static fata de elementele numite vizibile la application site; o aplicare care nu poate satisface toate targets primeste diagnostic.
 
 ## 3. Non-obiective
 
@@ -71,7 +71,7 @@ Motion expune `MotionAnimationBuilder<T>`, `MotionPropertyBinding<T>` si specs t
 ### Etapa 2 - Rezolvare semantica statica
 
 - [x] Rezolva `TargetType` inclusiv custom controls si valideaza aplicarea prin assignability.
-- [x] Rezolva unqualified properties pe target si `$part.Name.Property` per application site, inclusiv forward references si template part metadata disponibile.
+- [x] Rezolva unqualified properties pe target si `$Name.Property` per application site, inclusiv forward references in namescope-ul aplicatiei.
 - [x] Infer type-ul `T`, verifica `UiProperty<T>`, accesibilitatea, read-only si interpolatorul/mixerul compatibil.
 - [x] Specializeaza fiecare resource Tween/Spring la `MotionSpec<T>` la locul utilizarii si deduplica doar constructiile identice din acelasi generated scope.
 - [x] Rezolva `current` la valoarea vizuala Motion curenta, nu la o citire stale a base value.

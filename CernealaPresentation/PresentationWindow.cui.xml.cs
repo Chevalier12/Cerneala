@@ -26,8 +26,6 @@ public partial class PresentationWindow : Window
     private bool skipNextDiagnosticsRefresh;
     private ToggleButton[] tourNavigation = [];
 
-    internal event EventHandler? PipelineRequested;
-
     private void OnContentRendered(object? sender, EventArgs args)
     {
         if (contentReady)
@@ -107,15 +105,7 @@ public partial class PresentationWindow : Window
         PreviousButton.IsEnabled = currentChapter > 0;
         NextButton.Content = currentChapter == ChapterNames.Length - 1 ? "RESTART TOUR  ->" : "NEXT  ->";
 
-        if (currentChapter == 5)
-        {
-            RunPipeline();
-        }
     }
-
-    private void OnRunPipeline(UiElementId sender, RoutedEventArgs args) => RunPipeline();
-
-    private void RunPipeline() => PipelineRequested?.Invoke(this, EventArgs.Empty);
 
     private void OnOpenMotionLab(UiElementId sender, RoutedEventArgs args)
     {
