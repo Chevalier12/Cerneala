@@ -84,514 +84,514 @@
             TargetType="Cerneala.Presentation.PresentationWindow">
             @sequence
             {
-            @set
-            {
-                $MotionStatusText.Text = "ARMING / 00 NODES";
-                $MotionClockText.Text = "T + 00:00.000";
-                $MotionTransactionText.Text = "OPEN";
-                $MotionPhaseIndex.Text = "00";
-                $MotionFieldReadout.Text = "FIELD LOCKED";
-                $MotionReactorState.Text = "STANDBY";
-            }
-            @parallel
-            {
-                @animate with Tween(90ms)
+                @set
                 {
-                    @from
-                    {
-                        $MotionOrbTween.Opacity = current;
-                        $MotionOrbSpring.Opacity = current;
-                        $MotionOrbPresence.Opacity = current;
-                    }
-                    @to
-                    {
-                        $MotionOrbTween.Opacity = 0;
-                        $MotionOrbSpring.Opacity = 0;
-                        $MotionOrbPresence.Opacity = 0;
-                    }
+                    $MotionStatusText.Text = "ARMING / 00 NODES";
+                    $MotionClockText.Text = "T + 00:00.000";
+                    $MotionTransactionText.Text = "OPEN";
+                    $MotionPhaseIndex.Text = "00";
+                    $MotionFieldReadout.Text = "FIELD LOCKED";
+                    $MotionReactorState.Text = "STANDBY";
                 }
-                @animate with Tween(90ms)
+                @parallel
                 {
-                    @from
-                    {
-                        $MotionStarA.Opacity = current;
-                        $MotionStarB.Opacity = current;
-                        $MotionStarC.Opacity = current;
-                        $MotionStarD.Opacity = current;
-                    }
-                    @to
-                    {
-                        $MotionStarA.Opacity = 0;
-                        $MotionStarB.Opacity = 0;
-                        $MotionStarC.Opacity = 0;
-                        $MotionStarD.Opacity = 0;
-                    }
-                }
-                @animate with Tween(90ms)
-                {
-                    @from
-                    {
-                        $MotionActIgnition.Opacity = current;
-                        $MotionActOrbit.Opacity = current;
-                        $MotionActCommit.Opacity = current;
-                    }
-                    @to
-                    {
-                        $MotionActIgnition.Opacity = 0.38;
-                        $MotionActOrbit.Opacity = 0.38;
-                        $MotionActCommit.Opacity = 0.38;
-                    }
-                }
-                @animate with Tween(90ms)
-                {
-                    @from
-                    {
-                        $MotionCore.Scale = current;
-                        $MotionCoreHalo.Scale = current;
-                        $MotionCoreRing.Scale = current;
-                    }
-                    @to
-                    {
-                        $MotionCore.Scale = 0.72;
-                        $MotionCoreHalo.Scale = 0.68;
-                        $MotionCoreRing.Scale = 0.74;
-                    }
-                }
-            }
-            @set
-            {
-                $MotionPhaseIndex.Text = "01";
-                $MotionStatusText.Text = "IGNITION / 04 NODES";
-                $MotionReactorState.Text = "CLOCK PRIMED";
-            }
-            @parallel
-            {
-                @animate with Spring(360, 25)
-                {
-                    @from
-                    {
-                        $MotionCore.Scale = 0.72;
-                    }
-                    @to
-                    {
-                        $MotionCore.Scale = 1.08;
-                    }
-                }
-                @animate with Spring(300, 23)
-                {
-                    @from
-                    {
-                        $MotionCoreHalo.Scale = 0.68;
-                    }
-                    @to
-                    {
-                        $MotionCoreHalo.Scale = 1;
-                    }
-                }
-                @animate with Tween(420ms, EaseOut)
-                {
-                    @from
-                    {
-                        $MotionCoreHalo.Opacity = 0.08;
-                    }
-                    @to
-                    {
-                        $MotionCoreHalo.Opacity = 0.42;
-                    }
-                }
-                @animate with Spring(480, 31)
-                {
-                    @from
-                    {
-                        $MotionCoreRing.Scale = 0.74;
-                    }
-                    @to
-                    {
-                        $MotionCoreRing.Scale = 1;
-                    }
-                }
-                @animate with Tween(260ms, EaseOut)
-                {
-                    @from
-                    {
-                        $MotionActIgnition.Opacity = current;
-                    }
-                    @to
-                    {
-                        $MotionActIgnition.Opacity = 1;
-                    }
-                }
-            }
-            @set
-            {
-                $MotionPhaseIndex.Text = "02";
-                $MotionClockText.Text = "T + 00:00.620";
-                $MotionStatusText.Text = "TRAJECTORIES / 15 NODES";
-                $MotionFieldReadout.Text = "FIELD IN MOTION";
-                $MotionReactorState.Text = "COMPOSING";
-            }
-            @parallel
-            {
-                @keyframes duration 1780ms
-                {
-                    @animate 0%..24% with EaseInOut
+                    @animate with Tween(90ms)
                     {
                         @from
                         {
-                            $MotionOrbTween.TranslateX = -220;
-                            $MotionOrbTween.TranslateY = 0;
+                            $MotionOrbTween.Opacity = current;
+                            $MotionOrbSpring.Opacity = current;
+                            $MotionOrbPresence.Opacity = current;
                         }
                         @to
                         {
-                            $MotionOrbTween.TranslateX = 0;
-                            $MotionOrbTween.TranslateY = -118;
+                            $MotionOrbTween.Opacity = 0;
+                            $MotionOrbSpring.Opacity = 0;
+                            $MotionOrbPresence.Opacity = 0;
                         }
                     }
-                    @animate 24%..50% with EaseInOut
+                    @animate with Tween(90ms)
                     {
                         @from
                         {
-                            $MotionOrbTween.TranslateX = 0;
-                            $MotionOrbTween.TranslateY = -118;
+                            $MotionStarA.Opacity = current;
+                            $MotionStarB.Opacity = current;
+                            $MotionStarC.Opacity = current;
+                            $MotionStarD.Opacity = current;
                         }
                         @to
                         {
-                            $MotionOrbTween.TranslateX = 220;
-                            $MotionOrbTween.TranslateY = 0;
+                            $MotionStarA.Opacity = 0;
+                            $MotionStarB.Opacity = 0;
+                            $MotionStarC.Opacity = 0;
+                            $MotionStarD.Opacity = 0;
                         }
                     }
-                    @animate 50%..76% with EaseInOut
+                    @animate with Tween(90ms)
                     {
                         @from
                         {
-                            $MotionOrbTween.TranslateX = 220;
-                            $MotionOrbTween.TranslateY = 0;
+                            $MotionActIgnition.Opacity = current;
+                            $MotionActOrbit.Opacity = current;
+                            $MotionActCommit.Opacity = current;
                         }
                         @to
                         {
-                            $MotionOrbTween.TranslateX = 0;
-                            $MotionOrbTween.TranslateY = 118;
+                            $MotionActIgnition.Opacity = 0.38;
+                            $MotionActOrbit.Opacity = 0.38;
+                            $MotionActCommit.Opacity = 0.38;
                         }
                     }
-                    @animate 76%..100% with EaseInOut
+                    @animate with Tween(90ms)
                     {
                         @from
                         {
-                            $MotionOrbTween.TranslateX = 0;
-                            $MotionOrbTween.TranslateY = 118;
+                            $MotionCore.Scale = current;
+                            $MotionCoreHalo.Scale = current;
+                            $MotionCoreRing.Scale = current;
                         }
                         @to
                         {
-                            $MotionOrbTween.TranslateX = -180;
-                            $MotionOrbTween.TranslateY = 30;
+                            $MotionCore.Scale = 0.72;
+                            $MotionCoreHalo.Scale = 0.68;
+                            $MotionCoreRing.Scale = 0.74;
                         }
                     }
                 }
-                @animate with Tween(180ms, EaseOut)
+                @set
                 {
-                    @from
+                    $MotionPhaseIndex.Text = "01";
+                    $MotionStatusText.Text = "IGNITION / 04 NODES";
+                    $MotionReactorState.Text = "CLOCK PRIMED";
+                }
+                @parallel
+                {
+                    @animate with Spring(360, 25)
                     {
-                        $MotionOrbTween.Opacity = 0;
+                        @from
+                        {
+                            $MotionCore.Scale = 0.72;
+                        }
+                        @to
+                        {
+                            $MotionCore.Scale = 1.08;
+                        }
                     }
-                    @to
+                    @animate with Spring(300, 23)
                     {
-                        $MotionOrbTween.Opacity = 1;
+                        @from
+                        {
+                            $MotionCoreHalo.Scale = 0.68;
+                        }
+                        @to
+                        {
+                            $MotionCoreHalo.Scale = 1;
+                        }
+                    }
+                    @animate with Tween(420ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionCoreHalo.Opacity = 0.08;
+                        }
+                        @to
+                        {
+                            $MotionCoreHalo.Opacity = 0.42;
+                        }
+                    }
+                    @animate with Spring(480, 31)
+                    {
+                        @from
+                        {
+                            $MotionCoreRing.Scale = 0.74;
+                        }
+                        @to
+                        {
+                            $MotionCoreRing.Scale = 1;
+                        }
+                    }
+                    @animate with Tween(260ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionActIgnition.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionActIgnition.Opacity = 1;
+                        }
                     }
                 }
-                @animate with Spring(310, 19)
+                @set
                 {
-                    @from
+                    $MotionPhaseIndex.Text = "02";
+                    $MotionClockText.Text = "T + 00:00.620";
+                    $MotionStatusText.Text = "TRAJECTORIES / 15 NODES";
+                    $MotionFieldReadout.Text = "FIELD IN MOTION";
+                    $MotionReactorState.Text = "COMPOSING";
+                }
+                @parallel
+                {
+                    @keyframes duration 1780ms
                     {
-                        $MotionOrbSpring.TranslateX = -42;
+                        @animate 0%..24% with EaseInOut
+                        {
+                            @from
+                            {
+                                $MotionOrbTween.TranslateX = -220;
+                                $MotionOrbTween.TranslateY = 0;
+                            }
+                            @to
+                            {
+                                $MotionOrbTween.TranslateX = 0;
+                                $MotionOrbTween.TranslateY = -118;
+                            }
+                        }
+                        @animate 24%..50% with EaseInOut
+                        {
+                            @from
+                            {
+                                $MotionOrbTween.TranslateX = 0;
+                                $MotionOrbTween.TranslateY = -118;
+                            }
+                            @to
+                            {
+                                $MotionOrbTween.TranslateX = 220;
+                                $MotionOrbTween.TranslateY = 0;
+                            }
+                        }
+                        @animate 50%..76% with EaseInOut
+                        {
+                            @from
+                            {
+                                $MotionOrbTween.TranslateX = 220;
+                                $MotionOrbTween.TranslateY = 0;
+                            }
+                            @to
+                            {
+                                $MotionOrbTween.TranslateX = 0;
+                                $MotionOrbTween.TranslateY = 118;
+                            }
+                        }
+                        @animate 76%..100% with EaseInOut
+                        {
+                            @from
+                            {
+                                $MotionOrbTween.TranslateX = 0;
+                                $MotionOrbTween.TranslateY = 118;
+                            }
+                            @to
+                            {
+                                $MotionOrbTween.TranslateX = -180;
+                                $MotionOrbTween.TranslateY = 30;
+                            }
+                        }
                     }
-                    @to
+                    @animate with Tween(180ms, EaseOut)
                     {
-                        $MotionOrbSpring.TranslateX = 166;
+                        @from
+                        {
+                            $MotionOrbTween.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionOrbTween.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(310, 19)
+                    {
+                        @from
+                        {
+                            $MotionOrbSpring.TranslateX = -42;
+                        }
+                        @to
+                        {
+                            $MotionOrbSpring.TranslateX = 166;
+                        }
+                    }
+                    @animate with Spring(420, 24)
+                    {
+                        @from
+                        {
+                            $MotionOrbSpring.TranslateY = 12;
+                        }
+                        @to
+                        {
+                            $MotionOrbSpring.TranslateY = 76;
+                        }
+                    }
+                    @animate with Spring(520, 30)
+                    {
+                        @from
+                        {
+                            $MotionOrbSpring.Scale = 0.35;
+                        }
+                        @to
+                        {
+                            $MotionOrbSpring.Scale = 1;
+                        }
+                    }
+                    @animate with Tween(280ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionOrbSpring.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionOrbSpring.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(560, 36)
+                    {
+                        @from
+                        {
+                            $MotionOrbPresence.TranslateX = 0;
+                        }
+                        @to
+                        {
+                            $MotionOrbPresence.TranslateX = -108;
+                        }
+                    }
+                    @animate with Spring(600, 38)
+                    {
+                        @from
+                        {
+                            $MotionOrbPresence.TranslateY = 0;
+                        }
+                        @to
+                        {
+                            $MotionOrbPresence.TranslateY = -82;
+                        }
+                    }
+                    @animate with Spring(440, 27)
+                    {
+                        @from
+                        {
+                            $MotionOrbPresence.Scale = 0.05;
+                        }
+                        @to
+                        {
+                            $MotionOrbPresence.Scale = 1;
+                        }
+                    }
+                    @animate with Tween(520ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionOrbPresence.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionOrbPresence.Opacity = 1;
+                        }
+                    }
+                    @animate with Tween(920ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarA.TranslateX = -80;
+                            $MotionStarA.TranslateY = -90;
+                        }
+                        @to
+                        {
+                            $MotionStarA.TranslateX = 720;
+                            $MotionStarA.TranslateY = 250;
+                        }
+                    }
+                    @animate with Tween(180ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionStarA.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionStarA.Opacity = 0.72;
+                        }
+                    }
+                    @animate with Tween(1180ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarB.TranslateX = -180;
+                            $MotionStarB.TranslateY = -120;
+                        }
+                        @to
+                        {
+                            $MotionStarB.TranslateX = 640;
+                            $MotionStarB.TranslateY = 280;
+                        }
+                    }
+                    @animate with Tween(240ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionStarB.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionStarB.Opacity = 0.82;
+                        }
+                    }
+                    @animate with Tween(1460ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarC.TranslateX = -280;
+                            $MotionStarC.TranslateY = -100;
+                        }
+                        @to
+                        {
+                            $MotionStarC.TranslateX = 520;
+                            $MotionStarC.TranslateY = 260;
+                        }
+                    }
+                    @animate with Tween(320ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionStarC.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionStarC.Opacity = 0.68;
+                        }
+                    }
+                    @animate with Tween(1020ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarD.TranslateX = -420;
+                            $MotionStarD.TranslateY = -150;
+                        }
+                        @to
+                        {
+                            $MotionStarD.TranslateX = 380;
+                            $MotionStarD.TranslateY = 220;
+                        }
+                    }
+                    @animate with Tween(220ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionStarD.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionStarD.Opacity = 0.74;
+                        }
+                    }
+                    @animate with Tween(90ms)
+                    {
+                        @from
+                        {
+                            $MotionActOrbit.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionActOrbit.Opacity = 1;
+                        }
                     }
                 }
-                @animate with Spring(420, 24)
+                @set
                 {
-                    @from
+                    $MotionPhaseIndex.Text = "03";
+                    $MotionClockText.Text = "T + 00:02.400";
+                    $MotionStatusText.Text = "COMMITTING / 06 NODES";
+                    $MotionTransactionText.Text = "COMMITTING";
+                    $MotionReactorState.Text = "SETTLING";
+                }
+                @parallel
+                {
+                    @animate with Spring(620, 42)
                     {
-                        $MotionOrbSpring.TranslateY = 12;
+                        @from
+                        {
+                            $MotionCore.Scale = 1.08;
+                        }
+                        @to
+                        {
+                            $MotionCore.Scale = 1;
+                        }
                     }
-                    @to
+                    @animate with Tween(520ms, EaseOut)
                     {
-                        $MotionOrbSpring.TranslateY = 76;
+                        @from
+                        {
+                            $MotionCoreHalo.Scale = 1;
+                            $MotionCoreHalo.Opacity = 0.42;
+                        }
+                        @to
+                        {
+                            $MotionCoreHalo.Scale = 1.28;
+                            $MotionCoreHalo.Opacity = 0.14;
+                        }
+                    }
+                    @animate with Tween(260ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionActCommit.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionActCommit.Opacity = 1;
+                        }
+                    }
+                    @animate with Tween(180ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarA.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionStarA.Opacity = 0;
+                        }
+                    }
+                    @animate with Tween(220ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarB.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionStarB.Opacity = 0;
+                        }
+                    }
+                    @animate with Tween(260ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarC.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionStarC.Opacity = 0;
+                        }
+                    }
+                    @animate with Tween(200ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarD.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionStarD.Opacity = 0;
+                        }
                     }
                 }
-                @animate with Spring(520, 30)
+                @set
                 {
-                    @from
-                    {
-                        $MotionOrbSpring.Scale = 0.35;
-                    }
-                    @to
-                    {
-                        $MotionOrbSpring.Scale = 1;
-                    }
+                    $MotionClockText.Text = "T + 00:02.920";
+                    $MotionStatusText.Text = "SETTLED / GRAPH IDLE";
+                    $MotionTransactionText.Text = "COMMITTED";
+                    $MotionFieldReadout.Text = "FIELD STABLE";
+                    $MotionReactorState.Text = "AT REST";
                 }
-                @animate with Tween(280ms, EaseOut)
-                {
-                    @from
-                    {
-                        $MotionOrbSpring.Opacity = 0;
-                    }
-                    @to
-                    {
-                        $MotionOrbSpring.Opacity = 1;
-                    }
-                }
-                @animate with Spring(560, 36)
-                {
-                    @from
-                    {
-                        $MotionOrbPresence.TranslateX = 0;
-                    }
-                    @to
-                    {
-                        $MotionOrbPresence.TranslateX = -108;
-                    }
-                }
-                @animate with Spring(600, 38)
-                {
-                    @from
-                    {
-                        $MotionOrbPresence.TranslateY = 0;
-                    }
-                    @to
-                    {
-                        $MotionOrbPresence.TranslateY = -82;
-                    }
-                }
-                @animate with Spring(440, 27)
-                {
-                    @from
-                    {
-                        $MotionOrbPresence.Scale = 0.05;
-                    }
-                    @to
-                    {
-                        $MotionOrbPresence.Scale = 1;
-                    }
-                }
-                @animate with Tween(520ms, EaseOut)
-                {
-                    @from
-                    {
-                        $MotionOrbPresence.Opacity = 0;
-                    }
-                    @to
-                    {
-                        $MotionOrbPresence.Opacity = 1;
-                    }
-                }
-                @animate with Tween(920ms, EaseIn)
-                {
-                    @from
-                    {
-                        $MotionStarA.TranslateX = -80;
-                        $MotionStarA.TranslateY = -90;
-                    }
-                    @to
-                    {
-                        $MotionStarA.TranslateX = 720;
-                        $MotionStarA.TranslateY = 250;
-                    }
-                }
-                @animate with Tween(180ms, EaseOut)
-                {
-                    @from
-                    {
-                        $MotionStarA.Opacity = 0;
-                    }
-                    @to
-                    {
-                        $MotionStarA.Opacity = 0.72;
-                    }
-                }
-                @animate with Tween(1180ms, EaseIn)
-                {
-                    @from
-                    {
-                        $MotionStarB.TranslateX = -180;
-                        $MotionStarB.TranslateY = -120;
-                    }
-                    @to
-                    {
-                        $MotionStarB.TranslateX = 640;
-                        $MotionStarB.TranslateY = 280;
-                    }
-                }
-                @animate with Tween(240ms, EaseOut)
-                {
-                    @from
-                    {
-                        $MotionStarB.Opacity = 0;
-                    }
-                    @to
-                    {
-                        $MotionStarB.Opacity = 0.82;
-                    }
-                }
-                @animate with Tween(1460ms, EaseIn)
-                {
-                    @from
-                    {
-                        $MotionStarC.TranslateX = -280;
-                        $MotionStarC.TranslateY = -100;
-                    }
-                    @to
-                    {
-                        $MotionStarC.TranslateX = 520;
-                        $MotionStarC.TranslateY = 260;
-                    }
-                }
-                @animate with Tween(320ms, EaseOut)
-                {
-                    @from
-                    {
-                        $MotionStarC.Opacity = 0;
-                    }
-                    @to
-                    {
-                        $MotionStarC.Opacity = 0.68;
-                    }
-                }
-                @animate with Tween(1020ms, EaseIn)
-                {
-                    @from
-                    {
-                        $MotionStarD.TranslateX = -420;
-                        $MotionStarD.TranslateY = -150;
-                    }
-                    @to
-                    {
-                        $MotionStarD.TranslateX = 380;
-                        $MotionStarD.TranslateY = 220;
-                    }
-                }
-                @animate with Tween(220ms, EaseOut)
-                {
-                    @from
-                    {
-                        $MotionStarD.Opacity = 0;
-                    }
-                    @to
-                    {
-                        $MotionStarD.Opacity = 0.74;
-                    }
-                }
-                @animate with Tween(90ms)
-                {
-                    @from
-                    {
-                        $MotionActOrbit.Opacity = current;
-                    }
-                    @to
-                    {
-                        $MotionActOrbit.Opacity = 1;
-                    }
-                }
-            }
-            @set
-            {
-                $MotionPhaseIndex.Text = "03";
-                $MotionClockText.Text = "T + 00:02.400";
-                $MotionStatusText.Text = "COMMITTING / 06 NODES";
-                $MotionTransactionText.Text = "COMMITTING";
-                $MotionReactorState.Text = "SETTLING";
-            }
-            @parallel
-            {
-                @animate with Spring(620, 42)
-                {
-                    @from
-                    {
-                        $MotionCore.Scale = 1.08;
-                    }
-                    @to
-                    {
-                        $MotionCore.Scale = 1;
-                    }
-                }
-                @animate with Tween(520ms, EaseOut)
-                {
-                    @from
-                    {
-                        $MotionCoreHalo.Scale = 1;
-                        $MotionCoreHalo.Opacity = 0.42;
-                    }
-                    @to
-                    {
-                        $MotionCoreHalo.Scale = 1.28;
-                        $MotionCoreHalo.Opacity = 0.14;
-                    }
-                }
-                @animate with Tween(260ms, EaseOut)
-                {
-                    @from
-                    {
-                        $MotionActCommit.Opacity = current;
-                    }
-                    @to
-                    {
-                        $MotionActCommit.Opacity = 1;
-                    }
-                }
-                @animate with Tween(180ms, EaseIn)
-                {
-                    @from
-                    {
-                        $MotionStarA.Opacity = current;
-                    }
-                    @to
-                    {
-                        $MotionStarA.Opacity = 0;
-                    }
-                }
-                @animate with Tween(220ms, EaseIn)
-                {
-                    @from
-                    {
-                        $MotionStarB.Opacity = current;
-                    }
-                    @to
-                    {
-                        $MotionStarB.Opacity = 0;
-                    }
-                }
-                @animate with Tween(260ms, EaseIn)
-                {
-                    @from
-                    {
-                        $MotionStarC.Opacity = current;
-                    }
-                    @to
-                    {
-                        $MotionStarC.Opacity = 0;
-                    }
-                }
-                @animate with Tween(200ms, EaseIn)
-                {
-                    @from
-                    {
-                        $MotionStarD.Opacity = current;
-                    }
-                    @to
-                    {
-                        $MotionStarD.Opacity = 0;
-                    }
-                }
-            }
-            @set
-            {
-                $MotionClockText.Text = "T + 00:02.920";
-                $MotionStatusText.Text = "SETTLED / GRAPH IDLE";
-                $MotionTransactionText.Text = "COMMITTED";
-                $MotionFieldReadout.Text = "FIELD STABLE";
-                $MotionReactorState.Text = "AT REST";
-            }
             }
         </MotionClip>
         <MotionClip
@@ -964,10 +964,12 @@
                             @from
                             {
                                 Background = current;
+                                $self.parts.$PART_HoverLine.ScaleX = current;
                             }
                             @to
                             {
                                 Background = $CyanWashBrush;
+                                $self.parts.$PART_HoverLine.ScaleX = 1;
                             }
                         }
                         @animate with $NavTextHover
@@ -975,10 +977,12 @@
                             @from
                             {
                                 Foreground = current;
+                                $self.parts.$PART_HoverText.Opacity = current;
                             }
                             @to
                             {
                                 Foreground = $PaperBrush;
+                                $self.parts.$PART_HoverText.Opacity = 1;
                             }
                         }
                     }
@@ -992,10 +996,12 @@
                             @from
                             {
                                 Background = current;
+                                $self.parts.$PART_HoverLine.ScaleX = current;
                             }
                             @to
                             {
                                 Background = $TransparentBrush;
+                                $self.parts.$PART_HoverLine.ScaleX = 0;
                             }
                         }
                         @animate with $NavTextHover
@@ -1003,10 +1009,12 @@
                             @from
                             {
                                 Foreground = current;
+                                $self.parts.$PART_HoverText.Opacity = current;
                             }
                             @to
                             {
                                 Foreground = $SlateBrush;
+                                $self.parts.$PART_HoverText.Opacity = 0;
                             }
                         }
                     }
@@ -1015,39 +1023,50 @@
             @template
             {
                 <Grid
-                ClipToBounds="True"><Border
-                    Background="$owner.Background"
-                    Padding="$owner.Padding"><StackPanel
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Left"><Grid><ContentPresenter
-                                Content="$owner.Content"
-                                FontFamily="$owner.FontFamily"
-                                FontSize="$owner.FontSize"
-                                Foreground="$owner.Foreground"
-                                Margin="0,0,0,5"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Center" /><ContentPresenter
-                                Name="PART_HoverText"
-                                Content="$owner.Content"
-                                FontFamily="$owner.FontFamily"
-                                FontSize="$owner.FontSize"
-                                Foreground="$PaperBrush"
-                                Opacity="0"
-                                Margin="0,0,0,5"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Center" /><Border
-                                Name="PART_HoverLine"
-                                Height="1"
-                                Background="$CyanBrush"
-                                ScaleX="0"
-                                RenderTransformOrigin="0,0.5"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Bottom" /></Grid></StackPanel></Border><Border
-                    Width="3"
-                    Height="18"
-                    Background="$owner.BorderBrush"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Center" /></Grid>
+                    ClipToBounds="True">
+                    <Border
+                        Background="$owner.Background"
+                        Padding="$owner.Padding">
+                        <StackPanel
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Left">
+                            <Grid>
+                                <ContentPresenter
+                                    Content="$owner.Content"
+                                    FontFamily="$owner.FontFamily"
+                                    FontSize="$owner.FontSize"
+                                    Foreground="$owner.Foreground"
+                                    Margin="0,0,0,5"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center" />
+                                <ContentPresenter
+                                    Name="PART_HoverText"
+                                    Content="$owner.Content"
+                                    FontFamily="$owner.FontFamily"
+                                    FontSize="$owner.FontSize"
+                                    Foreground="$PaperBrush"
+                                    Opacity="0"
+                                    Margin="0,0,0,5"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center" />
+                                <Border
+                                    Name="PART_HoverLine"
+                                    Height="1"
+                                    Background="$CyanBrush"
+                                    ScaleX="0"
+                                    RenderTransformOrigin="0,0.5"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Bottom" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <Border
+                        Width="3"
+                        Height="18"
+                        Background="$owner.BorderBrush"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center" />
+                </Grid>
             }
         </Aspect>
         <Aspect

@@ -17,7 +17,7 @@ public sealed partial class UiMarkupGeneratorTests
                 <Tween Name="QuickOut" Duration="160ms" Easing="EaseOut" />
                 <MotionClip Name="SlideIn" TargetType="Border">
                   @parameter Distance: float = 24;
-                  @parameter EntranceSpec: MotionSpec&lt;float&gt; = $QuickOut;
+                  @parameter EntranceSpec: MotionSpec[float] = $QuickOut;
                   @parameter Hold: bool = true;
                   @parameter Label: string = "default";
                   @animate with EntranceSpec
@@ -136,12 +136,24 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionClipRejectsSpecParameterWithWrongValueType()
     {
         string markup = MotionClipParameterMarkup(
-            "@parameter Spec: MotionSpec&lt;double&gt; = Tween(100ms); @animate with Spec { @to { TranslateY = 0; } }",
+            "@parameter Spec: MotionSpec[double] = Tween(100ms); @animate with Spec { @to { TranslateY = 0; } }",
             "@run $Parameterized;");
 
         GeneratorRunResult result = RunGenerator("MotionClipWrongSpecType.cui.xml", markup, out _);
 
         AssertContainsMotionDiagnostic(result, "not compatible with property type");
+    }
+
+    [Fact]
+    public void MotionClipRejectsCSharpGenericParameterSyntax()
+    {
+        string markup = MotionClipParameterMarkup(
+            "@parameter Spec: MotionSpec&lt;float&gt; = Tween(100ms); @animate with Spec { @to { Opacity = 1; } }",
+            "@run $Parameterized;");
+
+        GeneratorRunResult result = RunGenerator("MotionClipCSharpGenericSyntax.cui.xml", markup, out _);
+
+        AssertContainsMotionDiagnostic(result, "MotionSpec[float]");
     }
 
     [Fact]

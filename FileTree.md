@@ -122,6 +122,9 @@ Generated from `.`.
 |           |-- BenchmarkRun-20260714-211614.log
 |           +-- README.md
 |-- Cerneala.SourceGen/
+|   |-- tests/
+|   |   +-- CodexPresentationHarness/
+|   |       +-- generated/
 |   |-- Cerneala.SourceGen.csproj
 |   |-- MotionMarkupLanguage.cs
 |   |-- UiMarkupBindingResolver.cs
@@ -133,6 +136,9 @@ Generated from `.`.
 |   |-- UiMarkupUserControlGenerator.cs
 |   +-- UiMarkupWindowGenerator.cs
 |-- CernealaPresentation/
+|   |-- tests/
+|   |   +-- CodexPresentationHarness/
+|   |       +-- generated/
 |   |-- BrandMark.cui.xml
 |   |-- BrandMark.cui.xml.cs
 |   |-- CernealaPresentation.csproj
@@ -1537,6 +1543,7 @@ Generated from `.`.
 |   |   +-- GlobalUsings.cs
 |   |-- Cerneala.Tests.SourceGen/
 |   |   |-- Cerneala.Tests.SourceGen.csproj
+|   |   |-- PresentationMarkupRegressionTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageFiveTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
@@ -1555,6 +1562,7 @@ Generated from `.`.
 |       |-- Cerneala.WindowsDxSmoke.csproj
 |       +-- WindowsDxSmokeApplication.cs
 |-- tmp/
+|   |-- CodexPresentationHarness/
 |   +-- imagegen/
 |       +-- cerneala-mascots/
 |           |-- variant-01-chroma.png

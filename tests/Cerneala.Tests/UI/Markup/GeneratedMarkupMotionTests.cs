@@ -1,5 +1,6 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Markup;
+using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Properties;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
@@ -55,6 +56,7 @@ public sealed class GeneratedMarkupMotionTests
             });
 
         ElementLifecycle.AttachSubtree(root, element);
+        root.ProcessFrame();
         Assert.Equal(0, activations);
         element.IsEnabled = true;
         Assert.Equal(1, activations);
@@ -67,7 +69,48 @@ public sealed class GeneratedMarkupMotionTests
         Assert.Equal(1, activations);
 
         ElementLifecycle.AttachSubtree(root, element);
+        root.ProcessFrame();
         Assert.Equal(2, activations);
+    }
+
+    [Fact]
+    public void InitialConditionMotionCanTargetADescendantAttachedInTheSameSubtree()
+    {
+        UIRoot root = new();
+        Grid owner = new() { IsEnabled = true };
+        UIElement target = new();
+        owner.VisualChildren.Add(target);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        MarkupObservation observation = GeneratedMarkup.ObserveProperty(owner, UIElement.IsEnabledProperty);
+        using IDisposable conditions = GeneratedMarkup.AttachConditions(
+            owner,
+            new[] { observation },
+            new[]
+            {
+                new MarkupConditionRule(
+                    0,
+                    () => (bool)observation.Value!,
+                    null,
+                    null,
+                    () => GeneratedMarkup.StartMotionExecution(
+                        session,
+                        () => MarkupMotionExecution.From(GeneratedMarkup.StartMotionProperty(
+                            session,
+                            target,
+                            UIElement.OpacityProperty,
+                            false,
+                            default,
+                            false,
+                            0.5f,
+                            MotionFactory.Tween<float>(TimeSpan.FromSeconds(1)),
+                            new MotionPropertyStartOptions()))))
+            });
+
+        ElementLifecycle.AttachSubtree(root, owner);
+        root.ProcessFrame();
+
+        Assert.Same(root, target.Root);
+        Assert.True(root.Motion.HasActiveMotion);
     }
 
     [Fact]

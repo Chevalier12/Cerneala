@@ -1595,17 +1595,27 @@ public sealed partial class UiMarkupGenerator
             }
 
             string[] parts = target.Split('.');
-            if (parts.Length == 2 &&
-                parts[0].Length > 1 &&
+            bool hasValidOwner = parts[0].Length > 1 &&
                 parts[0][0] == '$' &&
                 !string.Equals(parts[0], "$part", StringComparison.Ordinal) &&
-                IsIdentifier(parts[0].Substring(1)) &&
-                IsIdentifier(parts[1]))
+                IsIdentifier(parts[0].Substring(1));
+            if (parts.Length == 2 && hasValidOwner && IsIdentifier(parts[1]))
             {
                 return target;
             }
 
-            throw Error("Motion target must be a property name or '$Name.Property'. '$part' is reserved for template-part access.");
+            if (parts.Length == 4 &&
+                hasValidOwner &&
+                parts[1] == "parts" &&
+                parts[2].Length > 1 &&
+                parts[2][0] == '$' &&
+                IsIdentifier(parts[2].Substring(1)) &&
+                IsIdentifier(parts[3]))
+            {
+                return target;
+            }
+
+            throw Error("Motion target must be Property, $self.Property, $owner.Property, $Name.Property, or $control.parts.$part.Property.");
         }
 
         private string ReadMotionStatement()

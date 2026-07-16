@@ -65,7 +65,7 @@ Runtime-ul are `MotionGroup.Parallel(MotionHandle[])`, `MotionSequence.Start(Fun
 - [x] Limiteaza tipurile la valori/specs pe care resolverul le poate valida static; respinge duplicate, defaults incompatibile si parametri nefolosibili.
 - [x] Emite parametri immutable per execution si valideaza named arguments, required arguments si duplicate arguments.
 - [x] Permite parametri in values, specs, counts, ranges si options numai unde tipul rezultat ramane cunoscut.
-- [x] Adauga teste pentru spec parameter `MotionSpec<float>`, numeric parameter, default si diagnostics.
+- [x] Adauga teste pentru spec parameter XML-safe `MotionSpec[float]`, numeric parameter, default si diagnostics.
 - [x] Reindexeaza solutia.
 
 **Gate etapa 3**

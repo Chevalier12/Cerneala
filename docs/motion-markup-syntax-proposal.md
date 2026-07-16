@@ -9,8 +9,27 @@ The language includes inline and named `Aspect` behavior,
 `Tween`/`Spring` resources, `@when`, `@if`, `@on`, immediate `@set`, and parallel
 property starts inside `@animate` with optional `@from` and required `@to`. Values support typed
 literals, `current`, the existing reactive sources, conditional expressions,
-unqualified properties, and statically resolved `$Name.Property` targets. The supported
-start options are `retarget`, `holdOnComplete`, and `debugName`.
+unqualified properties, and statically resolved Motion targets. The supported start
+options are `retarget`, `holdOnComplete`, and `debugName`.
+
+Motion assignments accept these target forms:
+
+```xml
+Opacity = 1;
+$self.Opacity = 1;
+$owner.Opacity = 1;
+$Name.Opacity = 1;
+$self.parts.$PART_Chrome.Opacity = 1;
+$owner.parts.$PART_Chrome.Opacity = 1;
+$Name.parts.$PART_Chrome.Opacity = 1;
+```
+
+An unqualified property and `$self.Property` both target the element to which the
+Aspect is applied. `$owner` is available only while emitting a control template and
+targets that template's owner. The `parts` segment explicitly enters the resolved
+control template's part map; it is not a general-purpose child lookup. Named targets,
+owners, parts, and properties are all validated and emitted statically by the generator,
+without reflection.
 
 Event subscriptions are emitted as direct `+=`/`-=` operations.
 Each applied Aspect owns an independent lifecycle session: detach/dispose
@@ -777,11 +796,13 @@ require a comparable value type.
 ### Parameterized Motion Clips
 
 Parameters keep reusable clips reusable without turning them into behavior or giving them activation rules.
+Generic parameter types use XML-safe square brackets in markup; `MotionSpec[float]`
+is resolved statically to the CLR type `MotionSpec<float>` by the generator.
 
 ```xml
 <MotionClip Name="SlideIn" TargetType="Control">
     @parameter Distance: float = 24;
-    @parameter Entrance: MotionSpec<float> = $QuickOut;
+    @parameter Entrance: MotionSpec[float] = $QuickOut;
 
     @animate with Entrance
     {

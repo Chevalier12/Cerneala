@@ -294,6 +294,64 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void MotionMarkupResolvesSelfOwnerAndTheirTemplatePartsStatically()
+    {
+        const string markup = """
+            <Grid Aspect="$HostMotion">
+              <Grid.Resources>
+                <Aspect Name="HostMotion" Target="Grid">
+                  @on Loaded
+                  {
+                    @set
+                    {
+                      $Target.parts.$Chrome.Opacity = 0.7;
+                    }
+                  }
+                </Aspect>
+                <Aspect Name="TemplateChildMotion" Target="Border">
+                  @on Loaded
+                  {
+                    @animate
+                    {
+                      @to
+                      {
+                        $owner.Opacity = 0.9;
+                        $owner.parts.$Chrome.Opacity = 0.8;
+                      }
+                    }
+                  }
+                </Aspect>
+                <Aspect Name="TemplatedMotion" Target="ToggleButton">
+                  @on Loaded
+                  {
+                    @animate
+                    {
+                      @to
+                      {
+                        $self.Opacity = 1;
+                        $self.parts.$Chrome.ScaleX = 1;
+                      }
+                    }
+                  }
+                  @template
+                  {
+                    <Border Name="Chrome" Aspect="$TemplateChildMotion" />
+                  }
+                </Aspect>
+              </Grid.Resources>
+              <ToggleButton Name="Target" Aspect="$TemplatedMotion" />
+            </Grid>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionSelfOwnerParts.cui.xml", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Contains("ComponentTemplateInstance!.Parts[\"Chrome\"]", generated, StringComparison.Ordinal);
+        Assert.DoesNotContain("Reflection", generated, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void MotionMarkupRejectsPartShorthandForNamedElements()
     {
         const string markup = """

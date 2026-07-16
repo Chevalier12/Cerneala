@@ -64,7 +64,7 @@
         <MotionClip
             Name="LabTravel"
             TargetType="Cerneala.Presentation.MotionLabWindow">
-            @parameter Movement: MotionSpec<float>;
+            @parameter Movement: MotionSpec[float];
             @parameter Readout: string;
             @sequence
             {

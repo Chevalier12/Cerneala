@@ -659,6 +659,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
     private readonly UIElement owner;
     private readonly IReadOnlyList<MarkupObservation> observations;
     private readonly IReadOnlyList<MarkupConditionRule> rules;
+    private readonly bool hasRuleActivations;
     private readonly List<MarkupConditionalValue> appliedValues = [];
     private readonly List<MarkupConditionalContent> activeContent = [];
     private readonly List<MarkupConditionRule> activeRules = [];
@@ -666,6 +667,8 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
     private bool disposed;
     private bool evaluating;
     private bool reevaluate;
+    private bool deferActivations;
+    private int attachmentVersion;
     private Func<bool>? callbackGuard;
     private readonly UiRelayRefreshDispatcher refreshDispatcher;
 
@@ -677,6 +680,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         this.owner = owner ?? throw new ArgumentNullException(nameof(owner));
         this.observations = observations?.ToArray() ?? throw new ArgumentNullException(nameof(observations));
         this.rules = rules?.OrderBy(rule => rule.Order).ToArray() ?? throw new ArgumentNullException(nameof(rules));
+        hasRuleActivations = this.rules.Any(rule => rule.Activated is not null || rule.Deactivated is not null);
         refreshDispatcher = new UiRelayRefreshDispatcher(() => owner.Root?.Relay, RefreshFromRelay, "markup condition");
         Start();
     }
@@ -688,7 +692,22 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
             Stop();
         }
 
+        deferActivations = hasRuleActivations;
         Start();
+        if (!hasRuleActivations)
+        {
+            return;
+        }
+
+        UIRoot? root = owner.Root;
+        if (root is null)
+        {
+            deferActivations = false;
+            return;
+        }
+
+        int version = ++attachmentVersion;
+        root.Relay.Post(() => CompleteInitialActivation(root, version));
     }
 
     public void Detach()
@@ -746,6 +765,8 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         }
 
         started = false;
+        deferActivations = false;
+        attachmentVersion++;
         refreshDispatcher.Deactivate();
         foreach (MarkupObservation observation in observations)
         {
@@ -834,7 +855,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
 
     private void ApplyActivations(IReadOnlyList<MarkupConditionRule> active)
     {
-        if (!owner.IsAttached)
+        if (!owner.IsAttached || deferActivations)
         {
             return;
         }
@@ -851,6 +872,17 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
 
         activeRules.Clear();
         activeRules.AddRange(active);
+    }
+
+    private void CompleteInitialActivation(UIRoot root, int version)
+    {
+        if (!started || disposed || version != attachmentVersion || !ReferenceEquals(owner.Root, root))
+        {
+            return;
+        }
+
+        deferActivations = false;
+        Evaluate();
     }
 
     private void ApplyValues(IReadOnlyList<MarkupConditionRule> active)

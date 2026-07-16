@@ -132,16 +132,16 @@ public sealed partial class UiMarkupGenerator
 
         private sealed class ResolvedMotionScrollProperty
         {
-            public ResolvedMotionScrollProperty(MotionScrollAssignmentSyntax syntax, XElement targetElement, PropertySpec property)
+            public ResolvedMotionScrollProperty(MotionScrollAssignmentSyntax syntax, ResolvedMotionTarget target, PropertySpec property)
             {
                 Syntax = syntax;
-                TargetElement = targetElement;
+                Target = target;
                 Property = property;
             }
 
             public MotionScrollAssignmentSyntax Syntax { get; }
 
-            public XElement TargetElement { get; }
+            public ResolvedMotionTarget Target { get; }
 
             public PropertySpec Property { get; }
         }
@@ -240,16 +240,16 @@ public sealed partial class UiMarkupGenerator
 
         private sealed class ResolvedMotionSetProperty
         {
-            public ResolvedMotionSetProperty(MotionAssignmentSyntax syntax, XElement targetElement, PropertySpec property)
+            public ResolvedMotionSetProperty(MotionAssignmentSyntax syntax, ResolvedMotionTarget target, PropertySpec property)
             {
                 Syntax = syntax;
-                TargetElement = targetElement;
+                Target = target;
                 Property = property;
             }
 
             public MotionAssignmentSyntax Syntax { get; }
 
-            public XElement TargetElement { get; }
+            public ResolvedMotionTarget Target { get; }
 
             public PropertySpec Property { get; }
         }
@@ -338,14 +338,14 @@ public sealed partial class UiMarkupGenerator
             public ResolvedMotionProperty(
                 MotionAssignmentSyntax destination,
                 MotionAssignmentSyntax? source,
-                XElement targetElement,
+                ResolvedMotionTarget target,
                 PropertySpec property,
                 string? specVariable,
                 ResolvedMotionKeyframesSpec? keyframes = null)
             {
                 Destination = destination;
                 Source = source;
-                TargetElement = targetElement;
+                Target = target;
                 Property = property;
                 SpecVariable = specVariable;
                 Keyframes = keyframes;
@@ -355,13 +355,46 @@ public sealed partial class UiMarkupGenerator
 
             public MotionAssignmentSyntax? Source { get; }
 
-            public XElement TargetElement { get; }
+            public ResolvedMotionTarget Target { get; }
 
             public PropertySpec Property { get; }
 
             public string? SpecVariable { get; }
 
             public ResolvedMotionKeyframesSpec? Keyframes { get; }
+        }
+
+        private enum ResolvedMotionTargetKind
+        {
+            Self,
+            Named,
+            Owner,
+            SelfPart,
+            NamedPart,
+            OwnerPart
+        }
+
+        private sealed class ResolvedMotionTarget
+        {
+            public ResolvedMotionTarget(
+                ResolvedMotionTargetKind kind,
+                XElement element,
+                string? ownerName = null,
+                string? partName = null)
+            {
+                Kind = kind;
+                Element = element;
+                OwnerName = ownerName;
+                PartName = partName;
+            }
+
+            public ResolvedMotionTargetKind Kind { get; }
+
+            public XElement Element { get; }
+
+            public string? OwnerName { get; }
+
+            public string? PartName { get; }
         }
 
         private sealed class ResolvedMotionKeyframesSpec
@@ -616,6 +649,16 @@ public sealed partial class UiMarkupGenerator
         private bool TryValidateMotionParameter(MotionParameterNode parameter)
         {
             string typeName = NormalizeMotionParameterType(parameter.TypeName);
+            if (IsCSharpMotionSpecParameterType(typeName, out string csharpValueType))
+            {
+                Report(
+                    InvalidDirective,
+                    parameter.Location,
+                    Path.GetFileName(file.Path),
+                    "MotionClip parameter '" + parameter.Name + "' uses C# generic syntax; use 'MotionSpec[" + csharpValueType + "]' in XML markup.");
+                return false;
+            }
+
             if (!IsMotionValueParameterType(typeName) && !IsMotionSpecParameterType(typeName, out _))
             {
                 Report(
@@ -648,13 +691,31 @@ public sealed partial class UiMarkupGenerator
         private static bool IsMotionSpecParameterType(string typeName, out string valueType)
         {
             typeName = NormalizeMotionParameterType(typeName);
+            const string prefix = "Cerneala.UI.Motion.Specs.MotionSpec[";
+            const string shortPrefix = "MotionSpec[";
+            string? argument = typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith("]", StringComparison.Ordinal)
+                ? typeName.Substring(prefix.Length, typeName.Length - prefix.Length - 1)
+                : typeName.StartsWith(shortPrefix, StringComparison.Ordinal) && typeName.EndsWith("]", StringComparison.Ordinal)
+                    ? typeName.Substring(shortPrefix.Length, typeName.Length - shortPrefix.Length - 1)
+                    : null;
+            return TryNormalizeMotionSpecValueType(argument, out valueType);
+        }
+
+        private static bool IsCSharpMotionSpecParameterType(string typeName, out string valueType)
+        {
+            typeName = NormalizeMotionParameterType(typeName);
             const string prefix = "Cerneala.UI.Motion.Specs.MotionSpec<";
-            string shortPrefix = "MotionSpec<";
+            const string shortPrefix = "MotionSpec<";
             string? argument = typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith(">", StringComparison.Ordinal)
                 ? typeName.Substring(prefix.Length, typeName.Length - prefix.Length - 1)
                 : typeName.StartsWith(shortPrefix, StringComparison.Ordinal) && typeName.EndsWith(">", StringComparison.Ordinal)
                     ? typeName.Substring(shortPrefix.Length, typeName.Length - shortPrefix.Length - 1)
                     : null;
+            return TryNormalizeMotionSpecValueType(argument, out valueType);
+        }
+
+        private static bool TryNormalizeMotionSpecValueType(string? argument, out string valueType)
+        {
             valueType = argument switch
             {
                 "float" or "System.Single" => "float",
@@ -733,7 +794,7 @@ public sealed partial class UiMarkupGenerator
             List<ResolvedMotionScroll> scrolls = [];
             foreach (MotionScrollNode scroll in aspect.Scrolls)
             {
-                if (!TryResolveMotionScroll(applicationElement, scroll, out ResolvedMotionScroll? resolvedScroll))
+                if (!TryResolveMotionScroll(applicationElement, aspect, scroll, out ResolvedMotionScroll? resolvedScroll))
                 {
                     return false;
                 }
@@ -834,6 +895,7 @@ public sealed partial class UiMarkupGenerator
 
         private bool TryResolveMotionScroll(
             XElement applicationElement,
+            AspectResource aspect,
             MotionScrollNode scroll,
             out ResolvedMotionScroll? resolved)
         {
@@ -859,7 +921,7 @@ public sealed partial class UiMarkupGenerator
                     new MotionAtomValueSyntax("0", assignment.Location),
                     null,
                     assignment.Location);
-                if (!TryResolveMotionTarget(applicationElement, target, out XElement? targetElement, out PropertySpec? property))
+                if (!TryResolveMotionTarget(applicationElement, aspect, target, out ResolvedMotionTarget? resolvedTarget, out PropertySpec? property))
                 {
                     resolved = null;
                     return false;
@@ -872,7 +934,7 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                properties.Add(new ResolvedMotionScrollProperty(assignment, targetElement!, property));
+                properties.Add(new ResolvedMotionScrollProperty(assignment, resolvedTarget!, property));
             }
 
             resolved = new ResolvedMotionScroll(scroll, sourceElement, properties);
@@ -945,7 +1007,7 @@ public sealed partial class UiMarkupGenerator
                 List<ResolvedMotionSetProperty> properties = [];
                 foreach (MotionAssignmentSyntax assignment in set.Assignments)
                 {
-                    if (!TryResolveMotionTarget(applicationElement, assignment, out XElement? targetElement, out PropertySpec? property))
+                    if (!TryResolveMotionTarget(applicationElement, aspect, assignment, out ResolvedMotionTarget? target, out PropertySpec? property))
                     {
                         return false;
                     }
@@ -961,7 +1023,7 @@ public sealed partial class UiMarkupGenerator
                         return false;
                     }
 
-                    properties.Add(new ResolvedMotionSetProperty(assignment, targetElement!, property));
+                    properties.Add(new ResolvedMotionSetProperty(assignment, target!, property));
                 }
 
                 (string setExecutionName, string setFactoryName) = CreateMotionExecutionNames();
@@ -1129,7 +1191,8 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                properties.Add(new ResolvedMotionProperty(destination, source, collectionElement, property, specVariable));
+                ResolvedMotionTarget target = new(ResolvedMotionTargetKind.Self, collectionElement);
+                properties.Add(new ResolvedMotionProperty(destination, source, target, property, specVariable));
             }
 
             (string executionName, string factoryName) = CreateMotionExecutionNames();
@@ -1214,7 +1277,7 @@ public sealed partial class UiMarkupGenerator
                     }
                 }
 
-                if (!TryResolveMotionTarget(applicationElement, ordered[0].Destination, out XElement? targetElement, out PropertySpec? property) ||
+                if (!TryResolveMotionTarget(applicationElement, aspect, ordered[0].Destination, out ResolvedMotionTarget? target, out PropertySpec? property) ||
                     !property!.Assignable || !HasBuiltInMixer(property.ValueType))
                 {
                     if (property is not null && (!property.Assignable || !HasBuiltInMixer(property.ValueType)))
@@ -1268,7 +1331,7 @@ public sealed partial class UiMarkupGenerator
                 properties.Add(new ResolvedMotionProperty(
                     ordered[ordered.Length - 1].Destination,
                     ordered[0].Source,
-                    targetElement!,
+                    target!,
                     property,
                     null,
                     new ResolvedMotionKeyframesSpec(timeline.Duration, frames)));
@@ -1532,7 +1595,7 @@ public sealed partial class UiMarkupGenerator
             foreach (MotionAssignmentSyntax destination in animation.To)
             {
                 MotionAssignmentSyntax? source = animation.From.FirstOrDefault(candidate => candidate.Target == destination.Target);
-                if (!TryResolveMotionTarget(applicationElement, destination, out XElement? targetElement, out PropertySpec? property))
+                if (!TryResolveMotionTarget(applicationElement, aspect, destination, out ResolvedMotionTarget? target, out PropertySpec? property))
                 {
                     return false;
                 }
@@ -1561,7 +1624,7 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                properties.Add(new ResolvedMotionProperty(destination, source, targetElement!, property, specVariable));
+                properties.Add(new ResolvedMotionProperty(destination, source, target!, property, specVariable));
             }
 
             (string executionName, string factoryName) = CreateMotionExecutionNames();
@@ -1599,9 +1662,7 @@ public sealed partial class UiMarkupGenerator
                 List<string> starts = [];
                 foreach (ResolvedMotionProperty property in animation.Properties)
                 {
-                    string targetCode = ReferenceEquals(property.TargetElement, element)
-                        ? variable
-                        : CreateIdentifier(property.TargetElement.Attribute("Name")!.Value);
+                    string targetCode = EmitMotionTargetCode(property.Target, variable);
                     string typeCode = GetMotionTypeCode(property.Property.ValueType);
                     bool hasFrom = property.Source is not null && property.Source.Value is not MotionCurrentValueSyntax;
                     string fromCode = hasFrom
@@ -1650,9 +1711,7 @@ public sealed partial class UiMarkupGenerator
                 List<string> assignments = [];
                 foreach (ResolvedMotionSetProperty property in set.Properties)
                 {
-                    string targetCode = ReferenceEquals(property.TargetElement, element)
-                        ? variable
-                        : CreateIdentifier(property.TargetElement.Attribute("Name")!.Value);
+                    string targetCode = EmitMotionTargetCode(property.Target, variable);
                     assignments.Add(
                         targetCode + ".SetValue(" + property.Property.PropertyCode + ", " +
                         EmitMotionValue(property.Syntax.Value, property.Property, targetCode, set.Parameters) + ");");
@@ -1759,9 +1818,7 @@ public sealed partial class UiMarkupGenerator
                         property.Syntax.From.ToString("R", CultureInfo.InvariantCulture) + "f, " +
                         property.Syntax.To.ToString("R", CultureInfo.InvariantCulture) + "f)" +
                         (scroll.Syntax.AllowLayout ? ".AllowLayout()" : string.Empty);
-                    string targetCode = ReferenceEquals(property.TargetElement, element)
-                        ? variable
-                        : CreateIdentifier(property.TargetElement.Attribute("Name")!.Value);
+                    string targetCode = EmitMotionTargetCode(property.Target, variable);
                     attachLines.Add(bindingName + " = " + mapping + ";");
                     attachLines.Add("global::Cerneala.UI.Motion.MotionExtensions.Motion(" + targetCode + ").Animate(" + property.Property.PropertyCode + ").Bind(" + bindingName + ");");
                     detachLines.Add(bindingName + "?.Dispose();");
@@ -2096,32 +2153,89 @@ public sealed partial class UiMarkupGenerator
 
         private bool TryResolveMotionTarget(
             XElement applicationElement,
+            AspectResource aspect,
             MotionAssignmentSyntax assignment,
-            out XElement? targetElement,
+            out ResolvedMotionTarget? target,
             out PropertySpec? property)
         {
-            targetElement = applicationElement;
+            target = null;
             string propertyName = assignment.Target;
-            INamedTypeSymbol? targetType;
+            INamedTypeSymbol? targetType = ResolvePropertyOwnerType(
+                applicationElement.Name.LocalName,
+                ReferenceEquals(applicationElement, document.Root));
+            ResolvedMotionTargetKind targetKind = ResolvedMotionTargetKind.Self;
+            XElement targetElement = applicationElement;
+            string? ownerName = null;
+            string? partName = null;
+
             if (assignment.Target.StartsWith("$", StringComparison.Ordinal))
             {
                 string[] parts = assignment.Target.Split('.');
-                string targetName = parts[0].Substring(1);
-                propertyName = parts[1];
-                targetElement = FindMotionNamedElement(applicationElement, targetName);
+                ownerName = parts[0].Substring(1);
+                bool targetsPart = parts.Length == 4;
+                propertyName = targetsPart ? parts[3] : parts[1];
 
-                if (targetElement is null)
+                if (ownerName == "self")
                 {
-                    ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion target named element '" + targetName + "' is not available at this Aspect application site.");
-                    property = null;
-                    return false;
+                    targetKind = targetsPart ? ResolvedMotionTargetKind.SelfPart : ResolvedMotionTargetKind.Self;
+                }
+                else if (ownerName == "owner")
+                {
+                    if (templateEmissionContexts.Count == 0)
+                    {
+                        ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion target '$owner' is available only inside a component template.");
+                        property = null;
+                        return false;
+                    }
+
+                    TemplateEmissionContext templateContext = templateEmissionContexts.Peek();
+                    targetKind = targetsPart ? ResolvedMotionTargetKind.OwnerPart : ResolvedMotionTargetKind.Owner;
+                    targetType = templateContext.OwnerType;
+                }
+                else
+                {
+                    XElement? namedElement = FindMotionNamedElement(applicationElement, ownerName);
+                    if (namedElement is null)
+                    {
+                        ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion target named element '" + ownerName + "' is not available at this Aspect application site.");
+                        property = null;
+                        return false;
+                    }
+
+                    targetKind = targetsPart ? ResolvedMotionTargetKind.NamedPart : ResolvedMotionTargetKind.Named;
+                    targetElement = namedElement;
+                    targetType = ResolvePropertyOwnerType(namedElement.Name.LocalName, ReferenceEquals(namedElement, document.Root));
                 }
 
-                targetType = ResolvePropertyOwnerType(targetElement.Name.LocalName, ReferenceEquals(targetElement, document.Root));
-            }
-            else
-            {
-                targetType = ResolvePropertyOwnerType(applicationElement.Name.LocalName, ReferenceEquals(applicationElement, document.Root));
+                if (targetsPart)
+                {
+                    if (!IsControlType(targetType))
+                    {
+                        ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion template parts can be targeted only through a Control.");
+                        property = null;
+                        return false;
+                    }
+
+                    partName = parts[2].Substring(1);
+                    XElement? templateRoot = targetKind switch
+                    {
+                        ResolvedMotionTargetKind.SelfPart => ResolveMotionTemplate(applicationElement, aspect)?.Root,
+                        ResolvedMotionTargetKind.OwnerPart => applicationElement.AncestorsAndSelf().LastOrDefault(),
+                        _ => ResolveMotionTemplate(targetElement, null)?.Root
+                    };
+                    XElement[] matchingParts = templateRoot?.DescendantsAndSelf()
+                        .Where(element => string.Equals(element.Attribute("Name")?.Value?.Trim(), partName, StringComparison.Ordinal))
+                        .ToArray() ?? [];
+                    if (matchingParts.Length != 1)
+                    {
+                        ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "The Motion target control template has no unique part named '" + partName + "'.");
+                        property = null;
+                        return false;
+                    }
+
+                    targetElement = matchingParts[0];
+                    targetType = ResolveElementTypeSymbol(targetElement.Name.LocalName);
+                }
             }
 
             if (targetType is null)
@@ -2138,7 +2252,37 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
+            target = new ResolvedMotionTarget(targetKind, targetElement, ownerName, partName);
             return true;
+        }
+
+        private DirectiveTemplateNode? ResolveMotionTemplate(XElement control, AspectResource? preferredAspect)
+        {
+            DirectiveParseResult content = GetDirectiveContent(
+                control,
+                DirectiveContentKind.Elements | DirectiveContentKind.Templates);
+            return content.Nodes.OfType<DirectiveTemplateNode>().SingleOrDefault() ??
+                preferredAspect?.Template ??
+                ResolveAspects(control).Select(candidate => candidate.Template).LastOrDefault(candidate => candidate is not null);
+        }
+
+        private string EmitMotionTargetCode(ResolvedMotionTarget target, string selfVariable)
+        {
+            string ownerCode = target.Kind switch
+            {
+                ResolvedMotionTargetKind.Self or ResolvedMotionTargetKind.SelfPart => selfVariable,
+                ResolvedMotionTargetKind.Named or ResolvedMotionTargetKind.NamedPart => CreateIdentifier(target.OwnerName!),
+                ResolvedMotionTargetKind.Owner or ResolvedMotionTargetKind.OwnerPart => templateEmissionContexts.Peek().OwnerVariable,
+                _ => throw new InvalidOperationException("Unsupported resolved Motion target.")
+            };
+            if (target.Kind is not (ResolvedMotionTargetKind.SelfPart or ResolvedMotionTargetKind.NamedPart or ResolvedMotionTargetKind.OwnerPart))
+            {
+                return ownerCode;
+            }
+
+            INamedTypeSymbol partType = ResolveElementTypeSymbol(target.Element.Name.LocalName)!;
+            string partTypeCode = partType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            return "((" + partTypeCode + ")" + ownerCode + ".ComponentTemplateInstance!.Parts[" + Literal(target.PartName!) + "])";
         }
 
         private XElement? FindMotionNamedElement(XElement applicationElement, string name)
