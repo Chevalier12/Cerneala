@@ -1,4 +1,5 @@
 <Window
+    Aspect="$PresentationMotion"
     Title="Cerneala / Inside the Frame"
     Width="1320"
     Height="860"
@@ -31,6 +32,119 @@
         <SolidColorBrush Name="OrangeWashBrush" Color="#FF2C1D14" />
         <SolidColorBrush Name="TransparentBrush" Color="#00000000" />
 
+        <Tween Name="NavHoverIn" Duration="180ms" Easing="EaseOut" />
+        <Tween Name="NavHoverOut" Duration="150ms" Easing="EaseIn" />
+        <Tween Name="NavTextHover" Duration="150ms" Easing="EaseOut" />
+
+        <MotionClip Name="ReactorReset" TargetType="Cerneala.Presentation.PresentationWindow">
+            @parallel
+            {
+                @animate with Tween(90ms) { @from { $part.MotionOrbTween.Opacity = current; $part.MotionOrbSpring.Opacity = current; $part.MotionOrbPresence.Opacity = current; } @to { $part.MotionOrbTween.Opacity = 0; $part.MotionOrbSpring.Opacity = 0; $part.MotionOrbPresence.Opacity = 0; } }
+                @animate with Tween(90ms) { @from { $part.MotionStarA.Opacity = current; $part.MotionStarB.Opacity = current; $part.MotionStarC.Opacity = current; $part.MotionStarD.Opacity = current; } @to { $part.MotionStarA.Opacity = 0; $part.MotionStarB.Opacity = 0; $part.MotionStarC.Opacity = 0; $part.MotionStarD.Opacity = 0; } }
+                @animate with Tween(90ms) { @from { $part.MotionActIgnition.Opacity = current; $part.MotionActOrbit.Opacity = current; $part.MotionActCommit.Opacity = current; } @to { $part.MotionActIgnition.Opacity = 0.38; $part.MotionActOrbit.Opacity = 0.38; $part.MotionActCommit.Opacity = 0.38; } }
+                @animate with Tween(90ms) { @from { $part.MotionCore.Scale = current; $part.MotionCoreHalo.Scale = current; $part.MotionCoreRing.Scale = current; } @to { $part.MotionCore.Scale = 0.72; $part.MotionCoreHalo.Scale = 0.68; $part.MotionCoreRing.Scale = 0.74; } }
+            }
+        </MotionClip>
+
+        <MotionClip Name="ReactorIgnition" TargetType="Cerneala.Presentation.PresentationWindow">
+            @parallel
+            {
+                @animate with Spring(360, 25) { @from { $part.MotionCore.Scale = 0.72; } @to { $part.MotionCore.Scale = 1.08; } }
+                @animate with Spring(300, 23) { @from { $part.MotionCoreHalo.Scale = 0.68; } @to { $part.MotionCoreHalo.Scale = 1; } }
+                @animate with Tween(420ms, EaseOut) { @from { $part.MotionCoreHalo.Opacity = 0.08; } @to { $part.MotionCoreHalo.Opacity = 0.42; } }
+                @animate with Spring(480, 31) { @from { $part.MotionCoreRing.Scale = 0.74; } @to { $part.MotionCoreRing.Scale = 1; } }
+                @animate with Tween(260ms, EaseOut) { @from { $part.MotionActIgnition.Opacity = current; } @to { $part.MotionActIgnition.Opacity = 1; } }
+            }
+        </MotionClip>
+
+        <MotionClip Name="ReactorTrajectory" TargetType="Cerneala.Presentation.PresentationWindow">
+            @parallel
+            {
+                @keyframes duration 1780ms
+                {
+                    @animate 0%..24% with EaseInOut { @from { $part.MotionOrbTween.TranslateX = -220; $part.MotionOrbTween.TranslateY = 0; } @to { $part.MotionOrbTween.TranslateX = 0; $part.MotionOrbTween.TranslateY = -118; } }
+                    @animate 24%..50% with EaseInOut { @from { $part.MotionOrbTween.TranslateX = 0; $part.MotionOrbTween.TranslateY = -118; } @to { $part.MotionOrbTween.TranslateX = 220; $part.MotionOrbTween.TranslateY = 0; } }
+                    @animate 50%..76% with EaseInOut { @from { $part.MotionOrbTween.TranslateX = 220; $part.MotionOrbTween.TranslateY = 0; } @to { $part.MotionOrbTween.TranslateX = 0; $part.MotionOrbTween.TranslateY = 118; } }
+                    @animate 76%..100% with EaseInOut { @from { $part.MotionOrbTween.TranslateX = 0; $part.MotionOrbTween.TranslateY = 118; } @to { $part.MotionOrbTween.TranslateX = -180; $part.MotionOrbTween.TranslateY = 30; } }
+                }
+                @animate with Tween(180ms, EaseOut) { @from { $part.MotionOrbTween.Opacity = 0; } @to { $part.MotionOrbTween.Opacity = 1; } }
+                @animate with Spring(310, 19) { @from { $part.MotionOrbSpring.TranslateX = -42; } @to { $part.MotionOrbSpring.TranslateX = 166; } }
+                @animate with Spring(420, 24) { @from { $part.MotionOrbSpring.TranslateY = 12; } @to { $part.MotionOrbSpring.TranslateY = 76; } }
+                @animate with Spring(520, 30) { @from { $part.MotionOrbSpring.Scale = 0.35; } @to { $part.MotionOrbSpring.Scale = 1; } }
+                @animate with Tween(280ms, EaseOut) { @from { $part.MotionOrbSpring.Opacity = 0; } @to { $part.MotionOrbSpring.Opacity = 1; } }
+                @animate with Spring(560, 36) { @from { $part.MotionOrbPresence.TranslateX = 0; } @to { $part.MotionOrbPresence.TranslateX = -108; } }
+                @animate with Spring(600, 38) { @from { $part.MotionOrbPresence.TranslateY = 0; } @to { $part.MotionOrbPresence.TranslateY = -82; } }
+                @animate with Spring(440, 27) { @from { $part.MotionOrbPresence.Scale = 0.05; } @to { $part.MotionOrbPresence.Scale = 1; } }
+                @animate with Tween(520ms, EaseOut) { @from { $part.MotionOrbPresence.Opacity = 0; } @to { $part.MotionOrbPresence.Opacity = 1; } }
+                @animate with Tween(920ms, EaseIn) { @from { $part.MotionStarA.TranslateX = -80; $part.MotionStarA.TranslateY = -90; } @to { $part.MotionStarA.TranslateX = 720; $part.MotionStarA.TranslateY = 250; } }
+                @animate with Tween(180ms, EaseOut) { @from { $part.MotionStarA.Opacity = 0; } @to { $part.MotionStarA.Opacity = 0.72; } }
+                @animate with Tween(1180ms, EaseIn) { @from { $part.MotionStarB.TranslateX = -180; $part.MotionStarB.TranslateY = -120; } @to { $part.MotionStarB.TranslateX = 640; $part.MotionStarB.TranslateY = 280; } }
+                @animate with Tween(240ms, EaseOut) { @from { $part.MotionStarB.Opacity = 0; } @to { $part.MotionStarB.Opacity = 0.82; } }
+                @animate with Tween(1460ms, EaseIn) { @from { $part.MotionStarC.TranslateX = -280; $part.MotionStarC.TranslateY = -100; } @to { $part.MotionStarC.TranslateX = 520; $part.MotionStarC.TranslateY = 260; } }
+                @animate with Tween(320ms, EaseOut) { @from { $part.MotionStarC.Opacity = 0; } @to { $part.MotionStarC.Opacity = 0.68; } }
+                @animate with Tween(1020ms, EaseIn) { @from { $part.MotionStarD.TranslateX = -420; $part.MotionStarD.TranslateY = -150; } @to { $part.MotionStarD.TranslateX = 380; $part.MotionStarD.TranslateY = 220; } }
+                @animate with Tween(220ms, EaseOut) { @from { $part.MotionStarD.Opacity = 0; } @to { $part.MotionStarD.Opacity = 0.74; } }
+                @animate with Tween(90ms) { @from { $part.MotionActOrbit.Opacity = current; } @to { $part.MotionActOrbit.Opacity = 1; } }
+            }
+        </MotionClip>
+
+        <MotionClip Name="ReactorCommit" TargetType="Cerneala.Presentation.PresentationWindow">
+            @parallel
+            {
+                @animate with Spring(620, 42) { @from { $part.MotionCore.Scale = 1.08; } @to { $part.MotionCore.Scale = 1; } }
+                @animate with Tween(520ms, EaseOut) { @from { $part.MotionCoreHalo.Scale = 1; $part.MotionCoreHalo.Opacity = 0.42; } @to { $part.MotionCoreHalo.Scale = 1.28; $part.MotionCoreHalo.Opacity = 0.14; } }
+                @animate with Tween(260ms, EaseOut) { @from { $part.MotionActCommit.Opacity = current; } @to { $part.MotionActCommit.Opacity = 1; } }
+                @animate with Tween(180ms, EaseIn) { @from { $part.MotionStarA.Opacity = current; } @to { $part.MotionStarA.Opacity = 0; } }
+                @animate with Tween(220ms, EaseIn) { @from { $part.MotionStarB.Opacity = current; } @to { $part.MotionStarB.Opacity = 0; } }
+                @animate with Tween(260ms, EaseIn) { @from { $part.MotionStarC.Opacity = current; } @to { $part.MotionStarC.Opacity = 0; } }
+                @animate with Tween(200ms, EaseIn) { @from { $part.MotionStarD.Opacity = current; } @to { $part.MotionStarD.Opacity = 0; } }
+            }
+        </MotionClip>
+
+        <MotionClip Name="PipelineReplay" TargetType="Cerneala.Presentation.PresentationWindow">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(80ms) { @from { $part.PipelineRelay.Opacity = current; $part.PipelineInput.Opacity = current; $part.PipelineState.Opacity = current; $part.PipelineMeasure.Opacity = current; $part.PipelineArrange.Opacity = current; $part.PipelineCache.Opacity = current; $part.PipelineHit.Opacity = current; $part.PipelineBackend.Opacity = current; } @to { $part.PipelineRelay.Opacity = 0.24; $part.PipelineInput.Opacity = 0.24; $part.PipelineState.Opacity = 0.24; $part.PipelineMeasure.Opacity = 0.24; $part.PipelineArrange.Opacity = 0.24; $part.PipelineCache.Opacity = 0.24; $part.PipelineHit.Opacity = 0.24; $part.PipelineBackend.Opacity = 0.24; } }
+                    @animate with Tween(80ms) { @from { $part.PipelineRelay.Scale = current; $part.PipelineInput.Scale = current; $part.PipelineState.Scale = current; $part.PipelineMeasure.Scale = current; $part.PipelineArrange.Scale = current; $part.PipelineCache.Scale = current; $part.PipelineHit.Scale = current; $part.PipelineBackend.Scale = current; } @to { $part.PipelineRelay.Scale = 0.94; $part.PipelineInput.Scale = 0.94; $part.PipelineState.Scale = 0.94; $part.PipelineMeasure.Scale = 0.94; $part.PipelineArrange.Scale = 0.94; $part.PipelineCache.Scale = 0.94; $part.PipelineHit.Scale = 0.94; $part.PipelineBackend.Scale = 0.94; } }
+                }
+                @parallel { @animate with Tween(150ms, EaseOut) { @from { $part.PipelineRelay.Opacity = 0.24; } @to { $part.PipelineRelay.Opacity = 1; } } @animate with Spring(700, 45) { @from { $part.PipelineRelay.Scale = 0.94; } @to { $part.PipelineRelay.Scale = 1; } } }
+                @parallel { @animate with Tween(150ms, EaseOut) { @from { $part.PipelineInput.Opacity = 0.24; } @to { $part.PipelineInput.Opacity = 1; } } @animate with Spring(700, 45) { @from { $part.PipelineInput.Scale = 0.94; } @to { $part.PipelineInput.Scale = 1; } } }
+                @parallel { @animate with Tween(150ms, EaseOut) { @from { $part.PipelineState.Opacity = 0.24; } @to { $part.PipelineState.Opacity = 1; } } @animate with Spring(700, 45) { @from { $part.PipelineState.Scale = 0.94; } @to { $part.PipelineState.Scale = 1; } } }
+                @parallel { @animate with Tween(150ms, EaseOut) { @from { $part.PipelineMeasure.Opacity = 0.24; } @to { $part.PipelineMeasure.Opacity = 1; } } @animate with Spring(700, 45) { @from { $part.PipelineMeasure.Scale = 0.94; } @to { $part.PipelineMeasure.Scale = 1; } } }
+                @parallel { @animate with Tween(150ms, EaseOut) { @from { $part.PipelineArrange.Opacity = 0.24; } @to { $part.PipelineArrange.Opacity = 1; } } @animate with Spring(700, 45) { @from { $part.PipelineArrange.Scale = 0.94; } @to { $part.PipelineArrange.Scale = 1; } } }
+                @parallel { @animate with Tween(150ms, EaseOut) { @from { $part.PipelineCache.Opacity = 0.24; } @to { $part.PipelineCache.Opacity = 1; } } @animate with Spring(700, 45) { @from { $part.PipelineCache.Scale = 0.94; } @to { $part.PipelineCache.Scale = 1; } } }
+                @parallel { @animate with Tween(150ms, EaseOut) { @from { $part.PipelineHit.Opacity = 0.24; } @to { $part.PipelineHit.Opacity = 1; } } @animate with Spring(700, 45) { @from { $part.PipelineHit.Scale = 0.94; } @to { $part.PipelineHit.Scale = 1; } } }
+                @parallel { @animate with Tween(150ms, EaseOut) { @from { $part.PipelineBackend.Opacity = 0.24; } @to { $part.PipelineBackend.Opacity = 1; } } @animate with Spring(700, 45) { @from { $part.PipelineBackend.Scale = 0.94; } @to { $part.PipelineBackend.Scale = 1; } } }
+            }
+        </MotionClip>
+
+        <Aspect Name="PresentationMotion" TargetType="Cerneala.Presentation.PresentationWindow">
+            @handle Reactor;
+            @handle Pipeline;
+            @on ReactorResetRequested { @run $ReactorReset as Reactor; }
+            @on ReactorIgnitionRequested { @run $ReactorIgnition as Reactor; }
+            @on ReactorTrajectoryRequested { @run $ReactorTrajectory as Reactor; }
+            @on ReactorCommitRequested { @run $ReactorCommit as Reactor; }
+            @on ReactorCancelRequested { @cancel Reactor; }
+            @on PipelineRequested { @run $PipelineReplay as Pipeline; }
+        </Aspect>
+
+        <Aspect Name="PageReveal" Target="Grid">
+            @when Visibility
+            {
+                @if Visibility == Visible
+                {
+                    @parallel
+                    {
+                        @animate with Tween(360ms, EaseOut) { @from { Opacity = 0.25; } @to { Opacity = 1; } }
+                        @animate with Spring(460, 38) { @from { TranslateY = 18; } @to { TranslateY = 0; } }
+                    }
+                }
+            }
+        </Aspect>
+
         <Aspect Target="TextBlock">
             @default
             {
@@ -56,6 +170,25 @@
                 Background = $CyanWashBrush;
                 Foreground = $PaperBrush;
                 BorderBrush = $LimeBrush;
+            }
+            @when IsMouseOver
+            {
+                @if IsMouseOver == true
+                {
+                    @parallel
+                    {
+                        @animate with $NavHoverIn { @from { Background = current; } @to { Background = $CyanWashBrush; } }
+                        @animate with $NavTextHover { @from { Foreground = current; } @to { Foreground = $PaperBrush; } }
+                    }
+                }
+                @if IsMouseOver == false
+                {
+                    @parallel
+                    {
+                        @animate with $NavHoverOut { @from { Background = current; } @to { Background = $TransparentBrush; } }
+                        @animate with $NavTextHover { @from { Foreground = current; } @to { Foreground = $SlateBrush; } }
+                    }
+                }
             }
             @template
             {
@@ -282,7 +415,7 @@
 
             <Grid Grid.Column="1" ClipToBounds="True">
                 <!-- 01 / WELCOME -->
-                <Grid Name="PageWelcome">
+                <Grid Name="PageWelcome" Aspect="$PageReveal" Visibility="Collapsed">
                     <StackPanel Margin="46,38,46,42">
                         <TextBlock Text="01 / ORIENTATION" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$CyanBrush" />
                         <TextBlock Text="UI that thinks in frames." FontFamily="Bahnschrift SemiBold" FontSize="52" Foreground="$PaperBrush" Margin="0,12,0,0" />
@@ -318,7 +451,7 @@
                 </Grid>
 
                 <!-- 02 / RETAINED MODEL -->
-                <Grid Name="PageRetained" Visibility="Collapsed">
+                <Grid Name="PageRetained" Aspect="$PageReveal" Visibility="Collapsed">
                     <StackPanel Margin="46,38,46,42">
                         <TextBlock Text="02 / RETAINED MODEL" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$PinkBrush" />
                         <TextBlock Text="The interface remembers." FontFamily="Bahnschrift SemiBold" FontSize="45" Margin="0,12,0,0" />
@@ -345,7 +478,7 @@
                 </Grid>
 
                 <!-- 03 / MARKUP -->
-                <Grid Name="PageMarkup" Visibility="Collapsed">
+                <Grid Name="PageMarkup" Aspect="$PageReveal" Visibility="Collapsed">
                     <StackPanel Margin="46,38,46,42">
                         <TextBlock Text="03 / BUILD-TIME MARKUP" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$LimeBrush" />
                         <TextBlock Text="Describe the tree. Keep behavior in C#." FontFamily="Bahnschrift SemiBold" FontSize="42" Margin="0,12,0,0" />
@@ -374,7 +507,7 @@
                 </Grid>
 
                 <!-- 04 / ASPECT -->
-                <Grid Name="PageAspect" Visibility="Collapsed">
+                <Grid Name="PageAspect" Aspect="$PageReveal" Visibility="Collapsed">
                     <StackPanel Margin="46,38,46,42">
                         <TextBlock Text="04 / ASPECT" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$OrangeBrush" />
                         <TextBlock Text="A typed design system, not a bag of CSS tricks." FontFamily="Bahnschrift SemiBold" FontSize="42" Margin="0,12,0,0" />
@@ -403,7 +536,7 @@
                 </Grid>
 
                 <!-- 05 / MOTION -->
-                <Grid Name="PageMotion" Visibility="Collapsed">
+                <Grid Name="PageMotion" Aspect="$PageReveal" Visibility="Collapsed">
                     <Grid Margin="40,28,40,30">
                         <Grid.RowDefinitions><RowDefinition Height="102" /><RowDefinition Height="*" /></Grid.RowDefinitions>
 
@@ -508,7 +641,7 @@
                 </Grid>
 
                 <!-- 06 / PIPELINE -->
-                <Grid Name="PagePipeline" Visibility="Collapsed">
+                <Grid Name="PagePipeline" Aspect="$PageReveal" Visibility="Collapsed">
                     <StackPanel Margin="46,38,46,42">
                         <TextBlock Text="06 / FRAME PIPELINE" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$CyanBrush" />
                         <TextBlock Text="One host frame. Dirty work only." FontFamily="Bahnschrift SemiBold" FontSize="45" Margin="0,12,0,0" />
@@ -530,7 +663,7 @@
                 </Grid>
 
                 <!-- 07 / DIAGNOSTICS -->
-                <Grid Name="PageDiagnostics" Visibility="Collapsed">
+                <Grid Name="PageDiagnostics" Aspect="$PageReveal" Visibility="Collapsed">
                     <StackPanel Margin="46,38,46,42">
                         <TextBlock Text="07 / DIAGNOSTICS" FontFamily="Cascadia Mono SemiBold" FontSize="11" Foreground="$LimeBrush" />
                         <TextBlock Text="See inside the frame." FontFamily="Bahnschrift SemiBold" FontSize="45" Margin="0,12,0,0" />

@@ -27,9 +27,15 @@
         <Tween Name="LabHoverTween" Duration="120ms" Easing="EaseOut" />
         <Tween Name="LabOpacityTween" Duration="260ms" Easing="EaseOut" />
         <Spring Name="LabScaleSpring" Stiffness="560" Damping="38" Mass="1" />
-        <MotionClip Name="LabPulse" TargetType="Cerneala.Presentation.MotionLabWindow">
+        <MotionClip Name="LabTravel" TargetType="Cerneala.Presentation.MotionLabWindow">
+            @parameter Movement: MotionSpec&lt;float&gt;;
             @parallel
             {
+                @animate with Movement
+                {
+                    @from { $part.LabTarget.TranslateX = 0; }
+                    @to { $part.LabTarget.TranslateX = 430; }
+                }
                 @animate with $LabScaleSpring
                 {
                     @from { $part.LabTarget.Scale = 0.72; }
@@ -43,8 +49,17 @@
             }
         </MotionClip>
         <Aspect Name="LabMotion" TargetType="Cerneala.Presentation.MotionLabWindow">
-            @handle Pulse;
-            @on SpecRequested { @run $LabPulse as Pulse; }
+            @handle Movement;
+            @on TweenSpecRequested { @run $LabTravel(Movement = Tween(820ms, Emphasized)) as Movement; }
+            @on SpringLooseRequested { @run $LabTravel(Movement = Spring(280, 20)) as Movement; }
+            @on SpringBalancedRequested { @run $LabTravel(Movement = Spring(280, 38)) as Movement; }
+            @on SpringFirmRequested { @run $LabTravel(Movement = Spring(280, 60)) as Movement; }
+            @on SpringQuickLooseRequested { @run $LabTravel(Movement = Spring(520, 20)) as Movement; }
+            @on SpringQuickBalancedRequested { @run $LabTravel(Movement = Spring(520, 38)) as Movement; }
+            @on SpringQuickFirmRequested { @run $LabTravel(Movement = Spring(520, 60)) as Movement; }
+            @on SpringTightLooseRequested { @run $LabTravel(Movement = Spring(820, 20)) as Movement; }
+            @on SpringTightBalancedRequested { @run $LabTravel(Movement = Spring(820, 38)) as Movement; }
+            @on SpringTightFirmRequested { @run $LabTravel(Movement = Spring(820, 60)) as Movement; }
         </Aspect>
         <Aspect Target="TextBlock">@default { FontFamily = "Segoe UI Variable Text"; FontSize = 14; Foreground = $PaperBrush; }</Aspect>
         <Aspect Name="LabButton" Target="Button">

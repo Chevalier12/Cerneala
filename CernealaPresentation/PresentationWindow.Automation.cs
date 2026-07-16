@@ -38,7 +38,7 @@ public partial class PresentationWindow
         List<AutomationSample> samples = [];
         ButtonAutomationPeer next = new(NextButton);
 
-        await WaitForMotionIdleAsync(TimeSpan.FromSeconds(2));
+        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(2));
         samples.Add(CaptureAutomationSample(0, "baseline"));
         for (int cycle = 1; cycle <= cycles; cycle++)
         {
@@ -52,7 +52,7 @@ public partial class PresentationWindow
                 TimeSpan maximumWait = currentChapter == 5
                     ? TimeSpan.FromSeconds(5)
                     : TimeSpan.FromSeconds(2);
-                await WaitForMotionIdleAsync(maximumWait);
+                await WaitForFrameIdleAsync(maximumWait);
                 samples.Add(CaptureAutomationSample(cycle, ChapterNames[currentChapter]));
             }
         }
@@ -65,15 +65,15 @@ public partial class PresentationWindow
         Close();
     }
 
-    private async Task WaitForMotionIdleAsync(TimeSpan maximumWait)
+    private async Task WaitForFrameIdleAsync(TimeSpan maximumWait)
     {
         Stopwatch timeout = Stopwatch.StartNew();
         int stableChecks = 0;
         while (stableChecks < 4)
         {
             await Task.Delay(25);
-            bool active = Root?.Motion.HasActiveMotion == true;
-            stableChecks = active ? 0 : stableChecks + 1;
+            bool hasWork = LastFrame?.Stats.HasWork != false;
+            stableChecks = hasWork ? 0 : stableChecks + 1;
             if (timeout.Elapsed > maximumWait)
             {
                 return;
@@ -96,7 +96,6 @@ public partial class PresentationWindow
             process.WorkingSet64,
             TextMeasurer.Default.LayoutCache.Count,
             Root?.Trace.Entries.Count ?? 0,
-            Root?.Motion.Graph.ActiveNodeCount ?? 0,
             Root?.RetainedRenderCache.RootCommands.Count ?? 0);
     }
 
@@ -108,6 +107,5 @@ public partial class PresentationWindow
         long WorkingSetBytes,
         int TextLayoutCacheCount,
         int InvalidationTraceCount,
-        int ActiveMotionNodes,
         int RootCommandCount);
 }

@@ -1,4 +1,5 @@
 <Window
+    Aspect="$LoadingMotion"
     Title="Cerneala Orientation"
     Width="1180"
     Height="760"
@@ -25,6 +26,61 @@
         <SolidColorBrush Name="LimeBrush" Color="#FFC6FF3D" />
         <SolidColorBrush Name="PinkBrush" Color="#FFFF3EA5" />
         <SolidColorBrush Name="TransparentBrush" Color="#00000000" />
+
+        <MotionClip Name="LoadingSequence" TargetType="Cerneala.Presentation.MainWindow">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(680ms, EaseOut) { @from { $part.VisualStage.Opacity = current; } @to { $part.VisualStage.Opacity = 1; } }
+                    @animate with Spring(460, 38) { @from { $part.VisualStage.TranslateX = current; } @to { $part.VisualStage.TranslateX = 0; } }
+                    @animate with Tween(420ms, EaseOut) { @from { $part.HeroKicker.Opacity = current; } @to { $part.HeroKicker.Opacity = 1; } }
+                    @animate with Spring(500, 40) { @from { $part.HeroKicker.TranslateX = current; } @to { $part.HeroKicker.TranslateX = 0; } }
+                    @animate with Tween(720ms, EaseOut) { @from { $part.HeroTitle.Opacity = current; } @to { $part.HeroTitle.Opacity = 1; } }
+                    @animate with Spring(430, 34) { @from { $part.HeroTitle.TranslateY = current; } @to { $part.HeroTitle.TranslateY = 0; } }
+                    @animate with Tween(780ms, EaseOut) { @from { $part.HeroDescription.Opacity = current; } @to { $part.HeroDescription.Opacity = 1; } }
+                    @animate with Spring(470, 38) { @from { $part.HeroDescription.TranslateY = current; } @to { $part.HeroDescription.TranslateY = 0; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(620ms, EaseOut) { @from { $part.MascotImage.Opacity = current; } @to { $part.MascotImage.Opacity = 1; } }
+                    @animate with Spring(390, 30) { @from { $part.MascotImage.Scale = current; } @to { $part.MascotImage.Scale = 1; } }
+                    @animate with Spring(420, 32) { @from { $part.MascotImage.TranslateY = current; } @to { $part.MascotImage.TranslateY = 0; } }
+                    @animate with Tween(760ms, EaseOut) { @from { $part.StageIndex.Opacity = current; } @to { $part.StageIndex.Opacity = 0.42; } }
+                    @animate with Tween(240ms, EaseOut) { @from { $part.ScanLine.Opacity = current; } @to { $part.ScanLine.Opacity = 0.7; } }
+                    @animate with Tween(1100ms, EaseInOut) { @from { $part.ScanLine.TranslateY = current; } @to { $part.ScanLine.TranslateY = 126; } }
+                    @animate with Tween(520ms, EaseOut) { @from { $part.SequenceLabel.Opacity = current; } @to { $part.SequenceLabel.Opacity = 1; } }
+                    @animate with Tween(560ms, EaseOut) { @from { $part.MessageWake.Opacity = current; } @to { $part.MessageWake.Opacity = 1; } }
+                    @animate with Spring(430, 34) { @from { $part.MessageWake.TranslateY = current; } @to { $part.MessageWake.TranslateY = 0; } }
+                }
+                @animate with Tween(220ms, EaseIn) { @from { $part.ScanLine.Opacity = current; } @to { $part.ScanLine.Opacity = 0; } }
+                @animate with Tween(780ms) { @from { $part.MessageWake.Opacity = current; } @to { $part.MessageWake.Opacity = 1; } }
+                @animate with Tween(260ms, EaseIn) { @from { $part.MessageWake.Opacity = current; } @to { $part.MessageWake.Opacity = 0; } }
+                @parallel
+                {
+                    @animate with Tween(520ms, EaseOut) { @from { $part.MessagePersist.Opacity = current; } @to { $part.MessagePersist.Opacity = 1; } }
+                    @animate with Spring(460, 36) { @from { $part.MessagePersist.TranslateY = 12; } @to { $part.MessagePersist.TranslateY = 0; } }
+                }
+                @animate with Tween(880ms) { @from { $part.MessagePersist.Opacity = current; } @to { $part.MessagePersist.Opacity = 1; } }
+                @animate with Tween(260ms, EaseIn) { @from { $part.MessagePersist.Opacity = current; } @to { $part.MessagePersist.Opacity = 0; } }
+                @parallel
+                {
+                    @animate with Tween(520ms, EaseOut) { @from { $part.MessageReady.Opacity = current; } @to { $part.MessageReady.Opacity = 1; } }
+                    @animate with Spring(460, 36) { @from { $part.MessageReady.TranslateY = 12; } @to { $part.MessageReady.TranslateY = 0; } }
+                }
+                @animate with Tween(460ms, EaseOut) { @from { $part.HeroFacts.Opacity = current; } @to { $part.HeroFacts.Opacity = 1; } }
+                @parallel
+                {
+                    @animate with Tween(420ms, EaseOut) { @from { $part.ContinueButton.Opacity = current; } @to { $part.ContinueButton.Opacity = 1; } }
+                    @animate with Spring(520, 38) { @from { $part.ContinueButton.TranslateY = current; } @to { $part.ContinueButton.TranslateY = 0; } }
+                }
+            }
+        </MotionClip>
+
+        <Aspect Name="LoadingMotion" TargetType="Cerneala.Presentation.MainWindow">
+            @handle Loading;
+            @on LoadingSequenceRequested { @run $LoadingSequence as Loading; }
+        </Aspect>
 
         <Aspect Target="TextBlock">
             @default
@@ -119,8 +175,26 @@
 
                 <Grid Grid.Row="2" Margin="0,18,0,0">
                     <TextBlock
-                        Name="MessageLine"
+                        Name="MessageWake"
                         Text="The tree is waking up."
+                        FontFamily="Bahnschrift"
+                        FontSize="24"
+                        Foreground="$PaperBrush"
+                        VerticalAlignment="Top"
+                        Opacity="0"
+                        TranslateY="12" />
+                    <TextBlock
+                        Name="MessagePersist"
+                        Text="The tree persists. Only dirty work moves."
+                        FontFamily="Bahnschrift"
+                        FontSize="24"
+                        Foreground="$PaperBrush"
+                        VerticalAlignment="Top"
+                        Opacity="0"
+                        TranslateY="12" />
+                    <TextBlock
+                        Name="MessageReady"
+                        Text="Ready to step inside the frame?"
                         FontFamily="Bahnschrift"
                         FontSize="24"
                         Foreground="$PaperBrush"

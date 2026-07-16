@@ -1,10 +1,6 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
-using Cerneala.UI.Motion;
-using Cerneala.UI.Motion.Core;
-using Cerneala.UI.Motion.Specs;
-using MotionSpec = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Presentation;
 
@@ -12,7 +8,16 @@ public partial class MotionLabWindow : Window
 {
     private bool initialized;
 
-    internal event EventHandler? SpecRequested;
+    internal event EventHandler? TweenSpecRequested;
+    internal event EventHandler? SpringLooseRequested;
+    internal event EventHandler? SpringBalancedRequested;
+    internal event EventHandler? SpringFirmRequested;
+    internal event EventHandler? SpringQuickLooseRequested;
+    internal event EventHandler? SpringQuickBalancedRequested;
+    internal event EventHandler? SpringQuickFirmRequested;
+    internal event EventHandler? SpringTightLooseRequested;
+    internal event EventHandler? SpringTightBalancedRequested;
+    internal event EventHandler? SpringTightFirmRequested;
 
     private void OnContentRendered(object? sender, EventArgs args)
     {
@@ -36,40 +41,41 @@ public partial class MotionLabWindow : Window
     private void RunSpec()
     {
         LabStatus.Text = "SAMPLING";
-
-        MotionSpec<float> movement;
         if (TweenModeCheck.IsChecked == true)
         {
-            movement = MotionSpec.Tween<float>(TimeSpan.FromMilliseconds(820), Easings.Emphasized);
             LabReadout.Text = "tween(duration: 820ms, easing: emphasized)";
-        }
-        else
-        {
-            float stiffness = StiffnessSlider.Value;
-            float damping = DampingSlider.Value;
-            movement = MotionSpec.Spring<float>(stiffness, damping);
-            LabReadout.Text = $"spring(stiffness: {stiffness:0}, damping: {damping:0})";
+            TweenSpecRequested?.Invoke(this, EventArgs.Empty);
+            _ = MarkSettledAsync(900);
+            return;
         }
 
-        SpecRequested?.Invoke(this, EventArgs.Empty);
-        MotionHandle movementHandle = LabTarget.Motion()
-            .Animate(UIElement.TranslateXProperty)
-            .From(0f)
-            .To(430f)
-            .With(movement);
-        _ = MarkSettledAsync(movementHandle);
+        int stiffness = StiffnessSlider.Value < 400 ? 280 : StiffnessSlider.Value < 700 ? 520 : 820;
+        int damping = DampingSlider.Value < 28 ? 20 : DampingSlider.Value < 50 ? 38 : 60;
+        LabReadout.Text = $"spring(stiffness: {stiffness}, damping: {damping})";
+        SelectSpringEvent(stiffness, damping)?.Invoke(this, EventArgs.Empty);
+        _ = MarkSettledAsync(1_400);
     }
 
-    private async Task MarkSettledAsync(MotionHandle handle)
+    private EventHandler? SelectSpringEvent(int stiffness, int damping)
     {
-        try
+        return (stiffness, damping) switch
         {
-            await handle.Completion;
-            LabStatus.Text = "SETTLED";
-        }
-        catch (OperationCanceledException)
-        {
-        }
+            (280, 20) => SpringLooseRequested,
+            (280, 38) => SpringBalancedRequested,
+            (280, 60) => SpringFirmRequested,
+            (520, 20) => SpringQuickLooseRequested,
+            (520, 38) => SpringQuickBalancedRequested,
+            (520, 60) => SpringQuickFirmRequested,
+            (820, 20) => SpringTightLooseRequested,
+            (820, 38) => SpringTightBalancedRequested,
+            _ => SpringTightFirmRequested
+        };
+    }
+
+    private async Task MarkSettledAsync(int delayMilliseconds)
+    {
+        await Task.Delay(delayMilliseconds);
+        LabStatus.Text = "SETTLED";
     }
 
     private async Task CaptureIfRequestedAsync()
