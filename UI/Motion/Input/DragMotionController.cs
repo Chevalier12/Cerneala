@@ -5,7 +5,7 @@ using Cerneala.UI.Motion.Specs;
 
 namespace Cerneala.UI.Motion.Input;
 
-public sealed class DragMotionController
+public sealed class DragMotionController : IDisposable
 {
     private readonly UIElement element;
     private readonly VelocityTracker velocity = new();
@@ -15,6 +15,9 @@ public sealed class DragMotionController
     private float startY;
     private IDisposable? xSubscription;
     private IDisposable? ySubscription;
+    private MotionHandle? xSettleHandle;
+    private MotionHandle? ySettleHandle;
+    private bool disposed;
 
     internal DragMotionController(UIElement element)
     {
@@ -38,6 +41,7 @@ public sealed class DragMotionController
 
     public void Begin(float x, float y, TimeSpan time)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         State = PointerMotionState.Dragging;
         startX = DragX.Current;
         startY = DragY.Current;
@@ -48,6 +52,7 @@ public sealed class DragMotionController
 
     public void Move(float x, float y, TimeSpan time)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         velocity.Add(x, y, time);
         DragX.JumpTo(x - originX);
         DragY.JumpTo(y - originY);
@@ -55,13 +60,16 @@ public sealed class DragMotionController
 
     public void End(MotionSpec<float> settleSpec)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        ArgumentNullException.ThrowIfNull(settleSpec);
         State = PointerMotionState.Settling;
-        DragX.AnimateTo(DragX.Current + (velocity.VelocityX * 0.1f), settleSpec);
-        DragY.AnimateTo(DragY.Current + (velocity.VelocityY * 0.1f), settleSpec);
+        xSettleHandle = DragX.AnimateTo(DragX.Current + (velocity.VelocityX * 0.1f), settleSpec);
+        ySettleHandle = DragY.AnimateTo(DragY.Current + (velocity.VelocityY * 0.1f), settleSpec);
     }
 
     public void PointerCaptureLost(MotionSpec<float> settleSpec)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(settleSpec);
         if (State != PointerMotionState.Dragging)
         {
@@ -69,7 +77,26 @@ public sealed class DragMotionController
         }
 
         State = PointerMotionState.Settling;
-        DragX.AnimateTo(startX, settleSpec);
-        DragY.AnimateTo(startY, settleSpec);
+        xSettleHandle = DragX.AnimateTo(startX, settleSpec);
+        ySettleHandle = DragY.AnimateTo(startY, settleSpec);
+    }
+
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        xSettleHandle?.Dispose();
+        ySettleHandle?.Dispose();
+        xSettleHandle = null;
+        ySettleHandle = null;
+        xSubscription?.Dispose();
+        ySubscription?.Dispose();
+        xSubscription = null;
+        ySubscription = null;
+        State = PointerMotionState.Idle;
     }
 }

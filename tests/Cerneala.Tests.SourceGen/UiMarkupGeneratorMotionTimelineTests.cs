@@ -1,10 +1,336 @@
+using System.IO;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
+using Cerneala.UI.Layout;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Emit;
 using Xunit;
 
 namespace Cerneala.Tests.SourceGen;
 
 public sealed partial class UiMarkupGeneratorTests
 {
+    [Fact]
+    public void MotionGesturePressGeneratesSemanticRoutedAdapterAndCleanup()
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionGesturePress.cui.xml",
+            MotionAspectMarkup("@gesture press with Tween(160ms, EaseOut);"),
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Equal(1, Count(generated, ".MouseLeftButtonDown +="));
+        Assert.Equal(1, Count(generated, ".MouseLeftButtonUp +="));
+        Assert.Equal(1, Count(generated, ".LostMouseCapture +="));
+        Assert.Contains(".PointerPressed(", generated);
+        Assert.Equal(2, Count(generated, ".PointerReleased("));
+        Assert.Contains(".Gestures()", generated);
+        Assert.Contains("?.Dispose()", generated);
+        Assert.DoesNotContain("0.97", generated);
+        Assert.DoesNotContain("$event", generated);
+    }
+
+    [Theory]
+    [InlineData("@gesture pinch with Spring(520, 38, 1);", "pinch")]
+    [InlineData("@gesture rotate with Spring(520, 38, 1);", "rotate")]
+    [InlineData("@gesture press scale 0.9 with Spring(520, 38, 1);", "scale")]
+    [InlineData("@gesture press with Spring(520, 38, 1) scale 0.9;", "endpoints")]
+    [InlineData("@gesture press with Spring(520, 38, 1) from 0.9 to 1;", "endpoints")]
+    public void MotionGesturePressRejectsUnsupportedGesturesAndEndpoints(string declaration, string expectedMessage)
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionInvalidGesture.cui.xml",
+            MotionAspectMarkup(declaration),
+            out _);
+
+        AssertMotionDiagnostic(result, expectedMessage);
+    }
+
+    [Fact]
+    public void MotionGesturePressHandlesReleaseCaptureLossAndDetachWhilePressed()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect Target="Border">@gesture press with Tween(160ms, EaseOut);</Aspect>
+              </StackPanel.Resources>
+              <Border Width="100" Height="100" />
+            </StackPanel>
+            """;
+        GeneratorRunResult result = RunGenerator(
+            "MotionGestureRuntime.cui.xml",
+            markup,
+            out Compilation compilation);
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(System.Environment.NewLine, emit.Diagnostics));
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.MotionGestureRuntimeFactory"));
+        Border element = Assert.IsType<Border>(Assert.Single(panel.VisualChildren));
+        UIRoot root = new(100, 100);
+        ElementInputBridge bridge = new();
+
+        for (int cycle = 0; cycle < 100; cycle++)
+        {
+            panel.Measure(new MeasureContext(new LayoutSize(100, 100)));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+            root.VisualChildren.Add(panel);
+            Assert.Single(element.Handlers.GetHandlers(UIElement.MouseLeftButtonDownEvent));
+            Assert.Single(element.Handlers.GetHandlers(UIElement.MouseLeftButtonUpEvent));
+            Assert.Single(element.Handlers.GetHandlers(UIElement.LostMouseCaptureEvent));
+
+            bridge.Dispatch(root, DragPointerFrame(10, 20, 10, 20));
+            bridge.Dispatch(root, DragPointerFrame(10, 20, 10, 20, currentDown: true));
+            Assert.True(root.Motion.HasActiveMotion);
+            if (cycle == 0)
+            {
+                bridge.Dispatch(root, DragPointerFrame(10, 20, 10, 20, previousDown: true));
+            }
+            else if (cycle == 1)
+            {
+                element.RaiseEvent(new MouseEventArgs(UIElement.LostMouseCaptureEvent, element, 10, 20));
+            }
+
+            root.VisualChildren.Remove(panel);
+            root.ProcessFrame();
+            Assert.False(root.Motion.HasActiveMotion);
+        }
+    }
+
+    [Fact]
+    public void MotionDragGeneratesRoutedInputAdapterWithDeterministicCleanup()
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionDrag.cui.xml",
+            MotionAspectMarkup("@drag with Spring(520, 38, 1);"),
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Equal(1, Count(generated, ".MouseLeftButtonDown +="));
+        Assert.Equal(1, Count(generated, ".MouseMove +="));
+        Assert.Equal(1, Count(generated, ".MouseLeftButtonUp +="));
+        Assert.Equal(1, Count(generated, ".LostMouseCapture +="));
+        Assert.Contains(".MouseLeftButtonDown -=", generated);
+        Assert.Contains(".MouseMove -=", generated);
+        Assert.Contains(".MouseLeftButtonUp -=", generated);
+        Assert.Contains(".LostMouseCapture -=", generated);
+        Assert.Contains(".Begin(mouseArgs.X, mouseArgs.Y", generated);
+        Assert.Contains(".Move(mouseArgs.X, mouseArgs.Y", generated);
+        Assert.Contains(".End(", generated);
+        Assert.Contains(".PointerCaptureLost(", generated);
+        Assert.Contains("MotionExtensions.Motion(", generated);
+        Assert.Contains(".Drag()", generated);
+        Assert.Contains("?.Dispose()", generated);
+        Assert.DoesNotContain("$event", generated);
+    }
+
+    [Theory]
+    [InlineData("@drag axis x with Spring(520, 38, 1);", "exactly")]
+    [InlineData("@drag source $part.Handle with Spring(520, 38, 1);", "source")]
+    [InlineData("@drag target $part.Target with Spring(520, 38, 1);", "target")]
+    [InlineData("@drag with Spring(520, 38, 1) bounds 0..100;", "bounds")]
+    [InlineData("@drag with Spring(520, 38, 1) resistance 0.5;", "resistance")]
+    [InlineData("@drag with Spring(520, 38, 1) snapping true;", "snapping")]
+    [InlineData("@drag with Decay(1200, 0.998);", "Decay")]
+    public void MotionDragRejectsUnsupportedOptionsAndDecay(string declaration, string expectedMessage)
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionInvalidDrag.cui.xml",
+            MotionAspectMarkup(declaration),
+            out _);
+
+        AssertMotionDiagnostic(result, expectedMessage);
+    }
+
+    [Fact]
+    public void MotionDragRejectsDecayResource()
+    {
+        const string markup = """
+            <Border>
+              <Border.Resources>
+                <Decay Name="Release" ValueType="float" InitialVelocity="1200" Deceleration="0.998" />
+                <Aspect TargetType="Border">@drag with $Release;</Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionDecayDrag.cui.xml", markup, out _);
+
+        AssertMotionDiagnostic(result, "Decay");
+    }
+
+    [Fact]
+    public void MotionDragHandlesRoutedInputCaptureLossDetachAndReattach()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect Target="Border">@drag with Spring(520, 38, 1);</Aspect>
+              </StackPanel.Resources>
+              <Border Width="100" Height="100" />
+            </StackPanel>
+            """;
+        GeneratorRunResult result = RunGenerator(
+            "MotionDragRuntime.cui.xml",
+            markup,
+            out Compilation compilation);
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(System.Environment.NewLine, emit.Diagnostics));
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.MotionDragRuntimeFactory"));
+        Border element = Assert.IsType<Border>(Assert.Single(panel.VisualChildren));
+        UIRoot root = new(100, 100);
+        ElementInputBridge bridge = new();
+
+        for (int cycle = 0; cycle < 100; cycle++)
+        {
+            panel.Measure(new MeasureContext(new LayoutSize(100, 100)));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+            root.VisualChildren.Add(panel);
+            Assert.Single(element.Handlers.GetHandlers(UIElement.MouseLeftButtonDownEvent));
+            Assert.Single(element.Handlers.GetHandlers(UIElement.MouseMoveEvent));
+            Assert.Single(element.Handlers.GetHandlers(UIElement.MouseLeftButtonUpEvent));
+            Assert.Single(element.Handlers.GetHandlers(UIElement.LostMouseCaptureEvent));
+            float startX = element.TranslateX;
+            float startY = element.TranslateY;
+            bridge.Dispatch(root, DragPointerFrame(10, 20, 10, 20));
+            bridge.Dispatch(root, DragPointerFrame(10, 20, 10, 20, currentDown: true));
+            bridge.Dispatch(root, DragPointerFrame(10, 20, 25, 45, previousDown: true, currentDown: true));
+            Assert.Equal(startX + 15, element.TranslateX);
+            Assert.Equal(startY + 25, element.TranslateY);
+
+            if (cycle % 2 == 0)
+            {
+                element.RaiseEvent(new MouseEventArgs(UIElement.LostMouseCaptureEvent, element, 25, 45));
+            }
+            else
+            {
+                bridge.Dispatch(root, DragPointerFrame(25, 45, 25, 45, previousDown: true));
+            }
+
+            Assert.True(root.Motion.HasActiveMotion);
+            root.VisualChildren.Remove(panel);
+            root.ProcessFrame();
+            Assert.False(root.Motion.HasActiveMotion);
+
+            float detachedX = element.TranslateX;
+            float detachedY = element.TranslateY;
+            element.RaiseEvent(new MouseEventArgs(UIElement.MouseMoveEvent, element, 100, 100));
+            Assert.Equal(detachedX, element.TranslateX);
+            Assert.Equal(detachedY, element.TranslateY);
+        }
+    }
+
+    private static InputFrame DragPointerFrame(
+        float previousX,
+        float previousY,
+        float currentX,
+        float currentY,
+        bool previousDown = false,
+        bool currentDown = false)
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(previousX, previousY);
+        PointerSnapshot current = PointerSnapshot.Empty.WithPosition(currentX, currentY);
+        if (previousDown)
+        {
+            previous = previous.WithButton(InputMouseButton.Left, true);
+        }
+
+        if (currentDown)
+        {
+            current = current.WithButton(InputMouseButton.Left, true);
+        }
+
+        return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    [Fact]
+    public void MotionScrollGeneratesVerticalEventDrivenBindingWithDeterministicCleanup()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect TargetType="StackPanel">
+                  @scroll source $part.Scroller axis vertical
+                  {
+                    Opacity = 0..1;
+                    TranslateY = 48..0;
+                  }
+                </Aspect>
+              </StackPanel.Resources>
+              <ScrollViewer Name="Scroller" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionScroll.cui.xml", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Equal(1, Count(generated, ".ScrollTimeline()"));
+        Assert.Contains(".Progress.Map(0f, 1f)", generated);
+        Assert.Contains(".Progress.Map(48f, 0f)", generated);
+        Assert.Contains(".ScrollChanged +=", generated);
+        Assert.Contains(".ScrollChanged -=", generated);
+        Assert.Contains("?.Dispose()", generated);
+        Assert.DoesNotContain("RequestFrame", generated);
+    }
+
+    [Fact]
+    public void MotionScrollGeneratesHorizontalProgressAndExplicitLayoutOptIn()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect TargetType="StackPanel">
+                  @scroll source $part.Scroller axis horizontal allowLayout = true
+                  {
+                    Width = 20..80;
+                  }
+                </Aspect>
+              </StackPanel.Resources>
+              <ScrollViewer Name="Scroller" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionHorizontalScroll.cui.xml", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Contains(".HorizontalProgress.Map(20f, 80f).AllowLayout()", generated);
+    }
+
+    [Theory]
+    [InlineData("$part.Missing", "Opacity", "0..1", "ScrollViewer")]
+    [InlineData("$part.Source", "IsEnabled", "0..1", "float")]
+    [InlineData("$part.Source", "Opacity", "0px..1px", "float output range")]
+    [InlineData("$part.Source", "Opacity", "0..1 with Linear", "float output range")]
+    [InlineData("$part.Source", "Opacity", "0%..100% => 0..1", "float output range")]
+    public void MotionScrollRejectsUnsupportedSourcesTargetsAndRanges(
+        string source,
+        string target,
+        string range,
+        string expectedMessage)
+    {
+        string markup = $$"""
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect TargetType="StackPanel">
+                  @scroll source {{source}} axis vertical { {{target}} = {{range}}; }
+                </Aspect>
+              </StackPanel.Resources>
+              <ScrollViewer Name="Source" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionInvalidScroll.cui.xml", markup, out _);
+
+        AssertMotionDiagnostic(result, expectedMessage);
+    }
+
     [Fact]
     public void MotionKeyframesGeneratePerPropertySpecsWithSyntheticGapFrames()
     {

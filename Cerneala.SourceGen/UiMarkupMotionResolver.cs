@@ -110,6 +110,58 @@ public sealed partial class UiMarkupGenerator
             public IReadOnlyList<ResolvedMotionEventTrigger> EventTriggers { get; }
         }
 
+        private sealed class ResolvedMotionScroll
+        {
+            public ResolvedMotionScroll(MotionScrollNode syntax, XElement sourceElement, IReadOnlyList<ResolvedMotionScrollProperty> properties)
+            {
+                Syntax = syntax;
+                SourceElement = sourceElement;
+                Properties = properties;
+            }
+
+            public MotionScrollNode Syntax { get; }
+
+            public XElement SourceElement { get; }
+
+            public IReadOnlyList<ResolvedMotionScrollProperty> Properties { get; }
+        }
+
+        private sealed class ResolvedMotionScrollProperty
+        {
+            public ResolvedMotionScrollProperty(MotionScrollAssignmentSyntax syntax, XElement targetElement, PropertySpec property)
+            {
+                Syntax = syntax;
+                TargetElement = targetElement;
+                Property = property;
+            }
+
+            public MotionScrollAssignmentSyntax Syntax { get; }
+
+            public XElement TargetElement { get; }
+
+            public PropertySpec Property { get; }
+        }
+
+        private sealed class ResolvedMotionDrag
+        {
+            public ResolvedMotionDrag(string releaseSpec)
+            {
+                ReleaseSpec = releaseSpec;
+            }
+
+            public string ReleaseSpec { get; }
+        }
+
+        private sealed class ResolvedMotionGesturePress
+        {
+            public ResolvedMotionGesturePress(string spec)
+            {
+                Spec = spec;
+            }
+
+            public string Spec { get; }
+        }
+
         private sealed class ResolvedMotionCancelCommand
         {
             public ResolvedMotionCancelCommand(string actionName, string handleName)
@@ -304,6 +356,9 @@ public sealed partial class UiMarkupGenerator
         private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionAspect> resolvedMotionAspects = new();
         private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionPresence> resolvedMotionPresences = new();
         private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionLayout> resolvedMotionLayouts = new();
+        private readonly Dictionary<(AspectResource Aspect, XElement Element), IReadOnlyList<ResolvedMotionScroll>> resolvedMotionScrolls = new();
+        private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionDrag> resolvedMotionDrags = new();
+        private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionGesturePress> resolvedMotionGesturePresses = new();
         private readonly Dictionary<MotionAnimateNode, string> motionExecutionNames = new();
         private readonly Dictionary<MotionExecutionNode, string> motionActionNames = new();
         private readonly Dictionary<MotionExecutionNode, string> motionExecutionFactoryNames = new();
@@ -633,6 +688,52 @@ public sealed partial class UiMarkupGenerator
                 resolvedMotionLayouts[(aspect, applicationElement)] = new ResolvedMotionLayout(idExpression!, correctionSpec!);
             }
 
+            List<ResolvedMotionScroll> scrolls = [];
+            foreach (MotionScrollNode scroll in aspect.Scrolls)
+            {
+                if (!TryResolveMotionScroll(applicationElement, aspect, scroll, out ResolvedMotionScroll? resolvedScroll))
+                {
+                    return false;
+                }
+
+                scrolls.Add(resolvedScroll!);
+            }
+
+            if (scrolls.Count > 0)
+            {
+                resolvedMotionScrolls[(aspect, applicationElement)] = scrolls;
+            }
+
+            if (aspect.Drag is MotionDragNode drag)
+            {
+                if (drag.Spec is MotionResourceSpecSyntax resourceSyntax &&
+                    TryResolveResource(resourceSyntax.Location.Source, resourceSyntax.Name, out NamedSymbol dragSpecSymbol) &&
+                    dragSpecSymbol.Source is MotionSpecResource { Kind: "Decay" })
+                {
+                    Report(InvalidDirective, drag.Spec.Location, Path.GetFileName(file.Path), "@drag does not support a Decay release spec.");
+                    return false;
+                }
+
+                ITypeSymbol floatType = compilation.GetSpecialType(SpecialType.System_Single);
+                if (!TryResolveConcreteMotionSpec(drag.Spec, floatType, "Drag release", out string? releaseSpec))
+                {
+                    return false;
+                }
+
+                resolvedMotionDrags[(aspect, applicationElement)] = new ResolvedMotionDrag(releaseSpec!);
+            }
+
+            if (aspect.GesturePress is MotionGesturePressNode gesturePress)
+            {
+                ITypeSymbol floatType = compilation.GetSpecialType(SpecialType.System_Single);
+                if (!TryResolveConcreteMotionSpec(gesturePress.Spec, floatType, "Gesture press", out string? gestureSpec))
+                {
+                    return false;
+                }
+
+                resolvedMotionGesturePresses[(aspect, applicationElement)] = new ResolvedMotionGesturePress(gestureSpec!);
+            }
+
             List<MotionExecutionNode> syntaxExecutions = [];
             foreach (DirectiveWhenNode condition in aspect.Conditions)
             {
@@ -678,6 +779,60 @@ public sealed partial class UiMarkupGenerator
             resolvedMotionAspects.Add(
                 (aspect, applicationElement),
                 new ResolvedMotionAspect(animations, compositions, cancelCommands, eventTriggers));
+            return true;
+        }
+
+        private bool TryResolveMotionScroll(
+            XElement applicationElement,
+            AspectResource aspect,
+            MotionScrollNode scroll,
+            out ResolvedMotionScroll? resolved)
+        {
+            string partName = scroll.SourceReference.Substring("$part.".Length);
+            XElement? sourceElement = applicationElement.DescendantsAndSelf()
+                .FirstOrDefault(element => string.Equals(element.Attribute("Name")?.Value, partName, StringComparison.Ordinal));
+            if (sourceElement is null && aspect.Template is not null &&
+                templateParts.TryGetValue(aspect.Template, out IReadOnlyDictionary<string, XElement>? declaredParts))
+            {
+                declaredParts.TryGetValue(partName, out sourceElement);
+            }
+
+            INamedTypeSymbol? sourceType = sourceElement is null
+                ? null
+                : ResolvePropertyOwnerType(sourceElement.Name.LocalName, ReferenceEquals(sourceElement, document.Root));
+            INamedTypeSymbol? scrollViewerType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ScrollViewer");
+            if (sourceElement is null || sourceType is null || scrollViewerType is null || !IsOrDerivesFrom(sourceType, scrollViewerType))
+            {
+                Report(InvalidDirective, scroll.Source, Path.GetFileName(file.Path), "@scroll source '" + scroll.SourceReference + "' must resolve to an attached ScrollViewer part.");
+                resolved = null;
+                return false;
+            }
+
+            List<ResolvedMotionScrollProperty> properties = [];
+            foreach (MotionScrollAssignmentSyntax assignment in scroll.Assignments)
+            {
+                MotionAssignmentSyntax target = new(
+                    assignment.Target,
+                    new MotionAtomValueSyntax("0", assignment.Location),
+                    null,
+                    assignment.Location);
+                if (!TryResolveMotionTarget(applicationElement, aspect, target, out XElement? targetElement, out PropertySpec? property))
+                {
+                    resolved = null;
+                    return false;
+                }
+
+                if (!property!.Assignable || property.ValueType.SpecialType != SpecialType.System_Single)
+                {
+                    Report(InvalidDirective, assignment.Location, Path.GetFileName(file.Path), "@scroll target '" + assignment.Target + "' must be an assignable float UiProperty.");
+                    resolved = null;
+                    return false;
+                }
+
+                properties.Add(new ResolvedMotionScrollProperty(assignment, targetElement!, property));
+            }
+
+            resolved = new ResolvedMotionScroll(scroll, sourceElement, properties);
             return true;
         }
 
@@ -1472,6 +1627,154 @@ public sealed partial class UiMarkupGenerator
                     ", () => " + variable + "." + trigger.EventSymbol.Name + " += " + handlerName +
                     ", () => " + variable + "." + trigger.EventSymbol.Name + " -= " + handlerName + ");");
             }
+
+            EmitMotionScrolls(element, variable, aspect, sessionName);
+            EmitMotionDrag(element, variable, aspect, sessionName);
+            EmitMotionGesturePress(element, variable, aspect, sessionName);
+        }
+
+        private void EmitMotionScrolls(XElement element, string variable, AspectResource aspect, string sessionName)
+        {
+            if (!resolvedMotionScrolls.TryGetValue((aspect, element), out IReadOnlyList<ResolvedMotionScroll>? scrolls))
+            {
+                return;
+            }
+
+            foreach (ResolvedMotionScroll scroll in scrolls)
+            {
+                string id = nextReactiveId.ToString(CultureInfo.InvariantCulture);
+                nextReactiveId++;
+                string timelineName = "motionScrollTimeline" + id;
+                string handlerName = "motionScrollHandler" + id;
+                string sourceCode = ReferenceEquals(scroll.SourceElement, element)
+                    ? variable
+                    : CreateIdentifier(scroll.SourceElement.Attribute("Name")!.Value);
+                currentPostLines.Add("global::Cerneala.UI.Motion.Input.ScrollTimeline? " + timelineName + " = null;");
+                currentPostLines.Add(
+                    "global::System.EventHandler<global::Cerneala.UI.Controls.ScrollChangedEventArgs> " + handlerName +
+                    " = (sender, args) => " + timelineName + "?.Update();");
+
+                List<string> bindingNames = [];
+                List<string> attachLines = [timelineName + " = global::Cerneala.UI.Motion.MotionExtensions.Motion(" + sourceCode + ").ScrollTimeline();", timelineName + ".Update();"];
+                List<string> detachLines = [sourceCode + ".ScrollChanged -= " + handlerName + ";"];
+                for (int index = 0; index < scroll.Properties.Count; index++)
+                {
+                    ResolvedMotionScrollProperty property = scroll.Properties[index];
+                    string bindingName = "motionScrollBinding" + id + "_" + index.ToString(CultureInfo.InvariantCulture);
+                    bindingNames.Add(bindingName);
+                    currentPostLines.Add("global::Cerneala.UI.Motion.Input.ScrollMotionBinding<float>? " + bindingName + " = null;");
+                    string progress = scroll.Syntax.Axis == MotionScrollAxis.Vertical ? "Progress" : "HorizontalProgress";
+                    string mapping = timelineName + "." + progress + ".Map(" +
+                        property.Syntax.From.ToString("R", CultureInfo.InvariantCulture) + "f, " +
+                        property.Syntax.To.ToString("R", CultureInfo.InvariantCulture) + "f)" +
+                        (scroll.Syntax.AllowLayout ? ".AllowLayout()" : string.Empty);
+                    string targetCode = ReferenceEquals(property.TargetElement, element)
+                        ? variable
+                        : CreateIdentifier(property.TargetElement.Attribute("Name")!.Value);
+                    attachLines.Add(bindingName + " = " + mapping + ";");
+                    attachLines.Add("global::Cerneala.UI.Motion.MotionExtensions.Motion(" + targetCode + ").Animate(" + property.Property.PropertyCode + ").Bind(" + bindingName + ");");
+                    detachLines.Add(bindingName + "?.Dispose();");
+                    detachLines.Add(bindingName + " = null;");
+                }
+
+                attachLines.Add(sourceCode + ".ScrollChanged += " + handlerName + ";");
+                detachLines.Add(timelineName + " = null;");
+                currentPostLines.Add(
+                    "global::Cerneala.UI.Markup.GeneratedMarkup.AddMotionTrigger(" + sessionName +
+                    ", () => { " + string.Join(" ", attachLines) + " }, () => { " + string.Join(" ", detachLines) + " });");
+            }
+        }
+
+        private void EmitMotionDrag(XElement element, string variable, AspectResource aspect, string sessionName)
+        {
+            if (!resolvedMotionDrags.TryGetValue((aspect, element), out ResolvedMotionDrag? drag))
+            {
+                return;
+            }
+
+            string id = nextReactiveId.ToString(CultureInfo.InvariantCulture);
+            nextReactiveId++;
+            string controllerName = "motionDragController" + id;
+            string nowName = "motionDragNow" + id;
+            string downHandler = "motionDragDownHandler" + id;
+            string moveHandler = "motionDragMoveHandler" + id;
+            string upHandler = "motionDragUpHandler" + id;
+            string captureLostHandler = "motionDragCaptureLostHandler" + id;
+            currentPostLines.Add("global::Cerneala.UI.Motion.Input.DragMotionController? " + controllerName + " = null;");
+            currentPostLines.Add(
+                "global::System.Func<global::System.TimeSpan> " + nowName +
+                " = () => global::System.TimeSpan.FromSeconds((double)global::System.Diagnostics.Stopwatch.GetTimestamp() / global::System.Diagnostics.Stopwatch.Frequency);");
+            currentPostLines.Add(
+                "global::Cerneala.UI.Input.RoutedEventHandler " + downHandler +
+                " = (sender, args) => { if (" + controllerName + " is not null && args is global::Cerneala.UI.Input.MouseButtonEventArgs mouseArgs) " +
+                controllerName + ".Begin(mouseArgs.X, mouseArgs.Y, " + nowName + "()); };");
+            currentPostLines.Add(
+                "global::Cerneala.UI.Input.RoutedEventHandler " + moveHandler +
+                " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Dragging && args is global::Cerneala.UI.Input.MouseEventArgs mouseArgs) " +
+                controllerName + ".Move(mouseArgs.X, mouseArgs.Y, " + nowName + "()); };");
+            currentPostLines.Add(
+                "global::Cerneala.UI.Input.RoutedEventHandler " + upHandler +
+                " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Dragging) " +
+                controllerName + ".End(" + drag.ReleaseSpec + "); };");
+            currentPostLines.Add(
+                "global::Cerneala.UI.Input.RoutedEventHandler " + captureLostHandler +
+                " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Dragging) " +
+                controllerName + ".PointerCaptureLost(" + drag.ReleaseSpec + "); };");
+
+            string attach = controllerName + " = global::Cerneala.UI.Motion.MotionExtensions.Motion(" + variable + ").Drag(); " +
+                variable + ".MouseLeftButtonDown += " + downHandler + "; " +
+                variable + ".MouseMove += " + moveHandler + "; " +
+                variable + ".MouseLeftButtonUp += " + upHandler + "; " +
+                variable + ".LostMouseCapture += " + captureLostHandler + ";";
+            string detach = variable + ".MouseLeftButtonDown -= " + downHandler + "; " +
+                variable + ".MouseMove -= " + moveHandler + "; " +
+                variable + ".MouseLeftButtonUp -= " + upHandler + "; " +
+                variable + ".LostMouseCapture -= " + captureLostHandler + "; " +
+                controllerName + "?.Dispose(); " + controllerName + " = null;";
+            currentPostLines.Add(
+                "global::Cerneala.UI.Markup.GeneratedMarkup.AddMotionTrigger(" + sessionName +
+                ", () => { " + attach + " }, () => { " + detach + " });");
+        }
+
+        private void EmitMotionGesturePress(XElement element, string variable, AspectResource aspect, string sessionName)
+        {
+            if (!resolvedMotionGesturePresses.TryGetValue((aspect, element), out ResolvedMotionGesturePress? gesture))
+            {
+                return;
+            }
+
+            string id = nextReactiveId.ToString(CultureInfo.InvariantCulture);
+            nextReactiveId++;
+            string controllerName = "motionGestureController" + id;
+            string downHandler = "motionGestureDownHandler" + id;
+            string upHandler = "motionGestureUpHandler" + id;
+            string captureLostHandler = "motionGestureCaptureLostHandler" + id;
+            currentPostLines.Add("global::Cerneala.UI.Motion.Input.GestureMotionController? " + controllerName + " = null;");
+            currentPostLines.Add(
+                "global::Cerneala.UI.Input.RoutedEventHandler " + downHandler +
+                " = (sender, args) => { if (" + controllerName + " is not null && " + controllerName +
+                ".State != global::Cerneala.UI.Motion.Input.PointerMotionState.Pressed) " + controllerName +
+                ".PointerPressed(" + gesture.Spec + "); };");
+            currentPostLines.Add(
+                "global::Cerneala.UI.Input.RoutedEventHandler " + upHandler +
+                " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Pressed) " +
+                controllerName + ".PointerReleased(" + gesture.Spec + "); };");
+            currentPostLines.Add(
+                "global::Cerneala.UI.Input.RoutedEventHandler " + captureLostHandler +
+                " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Pressed) " +
+                controllerName + ".PointerReleased(" + gesture.Spec + "); };");
+
+            string attach = controllerName + " = global::Cerneala.UI.Motion.MotionExtensions.Motion(" + variable + ").Gestures(); " +
+                variable + ".MouseLeftButtonDown += " + downHandler + "; " +
+                variable + ".MouseLeftButtonUp += " + upHandler + "; " +
+                variable + ".LostMouseCapture += " + captureLostHandler + ";";
+            string detach = variable + ".MouseLeftButtonDown -= " + downHandler + "; " +
+                variable + ".MouseLeftButtonUp -= " + upHandler + "; " +
+                variable + ".LostMouseCapture -= " + captureLostHandler + "; " +
+                controllerName + "?.Dispose(); " + controllerName + " = null;";
+            currentPostLines.Add(
+                "global::Cerneala.UI.Markup.GeneratedMarkup.AddMotionTrigger(" + sessionName +
+                ", () => { " + attach + " }, () => { " + detach + " });");
         }
 
         private void EmitMotionPresence(XElement element, string variable, AspectResource aspect)

@@ -4,18 +4,20 @@ using Cerneala.UI.Motion.Properties;
 
 namespace Cerneala.UI.Motion.Input;
 
-public sealed class ScrollMotionBinding<T>
+public sealed class ScrollMotionBinding<T> : IDisposable
 {
     private readonly ScrollTimelineProgress progress;
     private readonly MotionRange range;
     private readonly List<Action<T>> listeners = [];
+    private readonly IDisposable progressSubscription;
     private bool allowsLayout;
+    private bool disposed;
 
     internal ScrollMotionBinding(ScrollTimelineProgress progress, MotionRange range)
     {
         this.progress = progress ?? throw new ArgumentNullException(nameof(progress));
         this.range = range;
-        progress.Subscribe(Notify);
+        progressSubscription = progress.Subscribe(Notify);
     }
 
     public T Current => Convert(range.Map(progress.Current));
@@ -28,6 +30,7 @@ public sealed class ScrollMotionBinding<T>
 
     internal void Bind(UIElement element, UiProperty<T> property)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(element);
         ArgumentNullException.ThrowIfNull(property);
         if (!allowsLayout &&
@@ -39,6 +42,18 @@ public sealed class ScrollMotionBinding<T>
         Action<T> apply = value => element.SetValue(property, value, UiPropertyValueSource.Animation);
         listeners.Add(apply);
         apply(Current);
+    }
+
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        progressSubscription.Dispose();
+        listeners.Clear();
     }
 
     private void Notify(float value)

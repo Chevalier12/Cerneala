@@ -10,11 +10,13 @@ Source: `UI/Motion/Input/GestureMotionController.cs`
 Coordinates pointer press and release motion for a `UIElement`.
 
 ```csharp
-public sealed class GestureMotionController
+public sealed class GestureMotionController : IDisposable
 ```
 
 Inheritance:
 `object` -> `GestureMotionController`
+
+Implements: `System.IDisposable`
 
 ## Examples
 
@@ -23,10 +25,11 @@ Create a gesture controller from an element's motion facade and retarget scale w
 ```csharp
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion;
+using Cerneala.UI.Motion.Input;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 UIElement element = new();
-GestureMotionController gestures = element.Motion().Gestures();
+using GestureMotionController gestures = element.Motion().Gestures();
 
 gestures.PointerPressed(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
 gestures.PointerReleased(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
@@ -37,6 +40,8 @@ gestures.PointerReleased(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(10
 `GestureMotionController` is created through `MotionElementFacade.Gestures()`. Its constructor is internal, so callers use `element.Motion().Gestures()` rather than constructing the controller directly.
 
 `PointerPressed` sets `State` to `PointerMotionState.Pressed` and starts a scale animation toward `0.97f`. `PointerReleased` sets `State` to `PointerMotionState.Idle` and starts a scale animation back to `1`.
+
+The controller owns its active scale motion handle. `Dispose()` cancels that motion with `MotionCancelBehavior.KeepCurrent`, releases the handle, and resets `State` to `PointerMotionState.Idle`. Disposal is idempotent; calls to `PointerPressed` or `PointerReleased` after disposal throw `ObjectDisposedException`.
 
 The controller delegates animation work to the wrapped element's motion facade. The target element must satisfy the same motion requirements as other `UIElement.Motion()` property animations.
 
@@ -50,6 +55,7 @@ The controller delegates animation work to the wrapped element's motion facade. 
 
 | Name | Return Type | Description |
 | --- | --- | --- |
+| `Dispose()` | `void` | Cancels the active scale motion, releases controller-owned state, and returns `State` to `Idle`. |
 | `PointerPressed(MotionSpec<float>)` | `void` | Marks the pointer as pressed and animates the element scale to `0.97f` using the supplied motion spec. |
 | `PointerReleased(MotionSpec<float>)` | `void` | Marks the pointer as idle and animates the element scale to `1` using the supplied motion spec. |
 

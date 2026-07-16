@@ -11,11 +11,14 @@ Source: `UI/Motion/Input/ScrollMotionBinding.cs`
 Maps scroll timeline progress to a float motion value that can be bound to a UI property.
 
 ```csharp
-public sealed class ScrollMotionBinding<T>
+public sealed class ScrollMotionBinding<T> : IDisposable
 ```
 
 Inheritance:
 `object` -> `ScrollMotionBinding<T>`
+
+Implements:
+`IDisposable`
 
 ## Examples
 
@@ -69,6 +72,8 @@ label.Motion()
 
 Binding is applied through `MotionAnimationBuilder<T>.Bind` or `MotionPropertyShortcut<T>.Bind`. When bound, the class immediately writes the current mapped value to the target `UiProperty<T>` using `UiPropertyValueSource.Animation`, then updates the property whenever the timeline progress changes.
 
+Call `Dispose` when the binding is detached. Disposal is idempotent, releases the progress subscription, and removes every target listener so later timeline updates cannot write detached elements. A disposed binding cannot be bound again; create a new mapping for a new attachment session.
+
 Only `float` bindings are supported by the current implementation. Calling `Current` or processing an update for another generic type throws `InvalidOperationException`.
 
 By default, scroll-linked bindings reject properties classified as layout-affecting by `MotionPropertyInvalidationClassifier`. Call `AllowLayout` before binding when the property intentionally affects measure or arrange.
@@ -84,6 +89,7 @@ By default, scroll-linked bindings reject properties classified as layout-affect
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `AllowLayout()` | `ScrollMotionBinding<T>` | Enables binding to layout-affecting properties and returns the same binding for fluent use. |
+| `Dispose()` | `void` | Idempotently releases the timeline subscription and all bound target listeners. |
 
 ## Exceptions
 
@@ -92,6 +98,7 @@ By default, scroll-linked bindings reject properties classified as layout-affect
 | `Current` | `InvalidOperationException` | `T` is not `float`. |
 | `AllowLayout` then bind path | `InvalidOperationException` | Not thrown by `AllowLayout` itself; without calling it, binding a layout-affecting property throws. |
 | Bind/update path | `InvalidOperationException` | `T` is not `float`, or a layout-affecting property is bound without `AllowLayout`. |
+| Bind path | `ObjectDisposedException` | The binding has already been disposed. |
 
 ## Applies to
 

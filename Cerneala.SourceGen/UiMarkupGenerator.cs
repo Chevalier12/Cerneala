@@ -908,6 +908,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 IReadOnlyList<DirectiveOnNode> eventTriggers,
                 MotionPresenceNode? presence,
                 MotionLayoutNode? layout,
+                IReadOnlyList<MotionScrollNode> scrolls,
+                MotionDragNode? drag,
+                MotionGesturePressNode? gesturePress,
                 DirectiveTemplateNode? template,
                 XElement source,
                 bool isInline = false)
@@ -919,6 +922,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 EventTriggers = eventTriggers;
                 Presence = presence;
                 Layout = layout;
+                Scrolls = scrolls;
+                Drag = drag;
+                GesturePress = gesturePress;
                 Template = template;
                 Source = source;
                 IsInline = isInline;
@@ -937,6 +943,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public MotionPresenceNode? Presence { get; }
 
             public MotionLayoutNode? Layout { get; }
+
+            public IReadOnlyList<MotionScrollNode> Scrolls { get; }
+
+            public MotionDragNode? Drag { get; }
+
+            public MotionGesturePressNode? GesturePress { get; }
 
             public DirectiveTemplateNode? Template { get; }
 
@@ -1444,6 +1456,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 out List<DirectiveOnNode> eventTriggers,
                 out MotionPresenceNode? presence,
                 out MotionLayoutNode? layout,
+                out List<MotionScrollNode> scrolls,
+                out MotionDragNode? drag,
+                out MotionGesturePressNode? gesturePress,
                 out DirectiveTemplateNode? template))
             {
                 return;
@@ -1469,6 +1484,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 eventTriggers,
                 presence,
                 layout,
+                scrolls,
+                drag,
+                gesturePress,
                 template,
                 resource);
             allAspects.Add(aspect);
@@ -1591,6 +1609,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     out List<DirectiveOnNode> eventTriggers,
                     out MotionPresenceNode? presence,
                     out MotionLayoutNode? layout,
+                    out List<MotionScrollNode> scrolls,
+                    out MotionDragNode? drag,
+                    out MotionGesturePressNode? gesturePress,
                     out DirectiveTemplateNode? template))
                 {
                     AspectResource aspect = new(
@@ -1601,6 +1622,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         eventTriggers,
                         presence,
                         layout,
+                        scrolls,
+                        drag,
+                        gesturePress,
                         template,
                         aspectBody,
                         isInline: true);
@@ -1619,6 +1643,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             out List<DirectiveOnNode> eventTriggers,
             out MotionPresenceNode? presence,
             out MotionLayoutNode? layout,
+            out List<MotionScrollNode> scrolls,
+            out MotionDragNode? drag,
+            out MotionGesturePressNode? gesturePress,
             out DirectiveTemplateNode? template)
         {
             assignments = [];
@@ -1626,12 +1653,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             eventTriggers = [];
             presence = null;
             layout = null;
+            scrolls = [];
+            drag = null;
+            gesturePress = null;
             template = null;
             DirectiveParseResult parsed = ParseDirectiveContent(
                 source,
                 DirectiveContentKind.Assignments | DirectiveContentKind.Templates |
                 DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles |
-                DirectiveContentKind.MotionPresence | DirectiveContentKind.MotionLayout);
+                DirectiveContentKind.MotionPresence | DirectiveContentKind.MotionLayout | DirectiveContentKind.MotionScroll |
+                DirectiveContentKind.MotionDrag | DirectiveContentKind.MotionGesture);
             if (parsed.Error is not null)
             {
                 Report(InvalidDirective, parsed.ErrorSource ?? source, Path.GetFileName(file.Path), parsed.Error);
@@ -1704,6 +1735,30 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
                     layout = declaredLayout;
                 }
+                else if (node is MotionScrollNode scroll)
+                {
+                    scrolls.Add(scroll);
+                }
+                else if (node is MotionDragNode declaredDrag)
+                {
+                    if (drag is not null)
+                    {
+                        Report(InvalidDirective, declaredDrag.Source, Path.GetFileName(file.Path), "An Aspect may declare only one @drag statement.");
+                        return false;
+                    }
+
+                    drag = declaredDrag;
+                }
+                else if (node is MotionGesturePressNode declaredGesturePress)
+                {
+                    if (gesturePress is not null)
+                    {
+                        Report(InvalidDirective, declaredGesturePress.Source, Path.GetFileName(file.Path), "An Aspect may declare only one @gesture press statement.");
+                        return false;
+                    }
+
+                    gesturePress = declaredGesturePress;
+                }
                 else if (node is DirectiveTemplateNode declaredTemplate)
                 {
                     if (template is not null)
@@ -1720,7 +1775,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 }
                 else
                 {
-                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default, @when, @on, @presence, @layout and @template blocks.");
+                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default, @when, @on, @presence, @layout, @scroll, @drag, @gesture press and @template blocks.");
                     return false;
                 }
             }

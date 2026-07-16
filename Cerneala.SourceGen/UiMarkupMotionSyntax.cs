@@ -68,6 +68,73 @@ public sealed partial class UiMarkupGenerator
         public MotionSpecSyntax Spec { get; }
     }
 
+    private enum MotionScrollAxis
+    {
+        Vertical,
+        Horizontal
+    }
+
+    private sealed class MotionScrollNode : DirectiveNode
+    {
+        public MotionScrollNode(
+            string sourceReference,
+            MotionScrollAxis axis,
+            bool allowLayout,
+            IReadOnlyList<MotionScrollAssignmentSyntax> assignments,
+            XObject source) : base(source)
+        {
+            SourceReference = sourceReference;
+            Axis = axis;
+            AllowLayout = allowLayout;
+            Assignments = assignments;
+        }
+
+        public string SourceReference { get; }
+
+        public MotionScrollAxis Axis { get; }
+
+        public bool AllowLayout { get; }
+
+        public IReadOnlyList<MotionScrollAssignmentSyntax> Assignments { get; }
+    }
+
+    private sealed class MotionScrollAssignmentSyntax : MotionSyntaxNode
+    {
+        public MotionScrollAssignmentSyntax(string target, float from, float to, DirectiveExpressionLocation location)
+            : base(location)
+        {
+            Target = target;
+            From = from;
+            To = to;
+        }
+
+        public string Target { get; }
+
+        public float From { get; }
+
+        public float To { get; }
+    }
+
+    private sealed class MotionDragNode : DirectiveNode
+    {
+        public MotionDragNode(MotionSpecSyntax spec, XObject source) : base(source)
+        {
+            Spec = spec;
+        }
+
+        public MotionSpecSyntax Spec { get; }
+    }
+
+    private sealed class MotionGesturePressNode : DirectiveNode
+    {
+        public MotionGesturePressNode(MotionSpecSyntax spec, XObject source) : base(source)
+        {
+            Spec = spec;
+        }
+
+        public MotionSpecSyntax Spec { get; }
+    }
+
     private sealed class MotionAnimateNode : MotionExecutionNode
     {
         public MotionAnimateNode(

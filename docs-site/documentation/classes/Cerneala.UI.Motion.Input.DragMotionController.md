@@ -10,11 +10,14 @@ Source: `UI/Motion/Input/DragMotionController.cs`
 Coordinates pointer drag movement with graph-bound motion values that drive a `UIElement`'s translation.
 
 ```csharp
-public sealed class DragMotionController
+public sealed class DragMotionController : IDisposable
 ```
 
 Inheritance:
 `object` -> `DragMotionController`
+
+Implements:
+`IDisposable`
 
 ## Examples
 
@@ -52,6 +55,8 @@ The controller creates two `MotionValue<float>` instances from the element's cur
 
 `End` enters `PointerMotionState.Settling` and animates both axes toward the current position plus ten percent of the captured velocity. `PointerCaptureLost` only acts while dragging; it animates both axes back to the translation recorded by `Begin`.
 
+Call `Dispose` when the input session detaches. Disposal is idempotent, cancels active settle handles, releases both motion-value subscriptions, and returns `State` to `Idle`. A disposed controller cannot process later begin, move, end, or capture-loss calls; create a new controller after reattachment.
+
 ## Properties
 
 | Name | Type | Description |
@@ -70,6 +75,7 @@ The controller creates two `MotionValue<float>` instances from the element's cur
 | `Move(float x, float y, TimeSpan time)` | `void` | Adds a velocity sample and immediately moves `DragX` and `DragY` to follow the pointer offset captured by `Begin`. |
 | `End(MotionSpec<float> settleSpec)` | `void` | Switches to settling and animates both axes toward the current translation plus velocity-based momentum using `settleSpec`. |
 | `PointerCaptureLost(MotionSpec<float> settleSpec)` | `void` | If currently dragging, switches to settling and animates both axes back to the translation recorded by `Begin`. |
+| `Dispose()` | `void` | Idempotently cancels active settling and releases both element-update subscriptions. |
 
 ## Exceptions
 
@@ -78,6 +84,7 @@ The controller creates two `MotionValue<float>` instances from the element's cur
 | `MotionElementFacade.Drag()` | `InvalidOperationException` | The element is not attached to a `UIRoot`, so no root motion system is available for the controller. |
 | `PointerCaptureLost` | `ArgumentNullException` | `settleSpec` is `null`. |
 | `End` | `ArgumentNullException` | `settleSpec` is `null`; this is thrown by the underlying `MotionValue<float>.AnimateTo` call. |
+| Input methods | `ObjectDisposedException` | The controller has already been disposed. |
 
 ## Applies to
 

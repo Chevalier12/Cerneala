@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace Cerneala.SourceGen;
@@ -21,7 +22,10 @@ public sealed partial class UiMarkupGenerator
         MotionParameters = 32,
         MotionHandles = 64,
         MotionPresence = 128,
-        MotionLayout = 256
+        MotionLayout = 256,
+        MotionScroll = 512,
+        MotionDrag = 1024,
+        MotionGesture = 2048
     }
 
     private abstract class DirectiveNode
@@ -382,6 +386,39 @@ public sealed partial class UiMarkupGenerator
                     continue;
                 }
 
+                if (StartsWith("@scroll"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionScroll))
+                    {
+                        throw Error("@scroll is allowed only directly inside an Aspect body.");
+                    }
+
+                    nodes.Add(ParseScroll());
+                    continue;
+                }
+
+                if (StartsWith("@drag"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionDrag))
+                    {
+                        throw Error("@drag is allowed only directly inside an Aspect body.");
+                    }
+
+                    nodes.Add(ParseDrag());
+                    continue;
+                }
+
+                if (StartsWith("@gesture"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.MotionGesture))
+                    {
+                        throw Error("@gesture is allowed only directly inside an Aspect body.");
+                    }
+
+                    nodes.Add(ParseGesture());
+                    continue;
+                }
+
                 if (StartsWith("@animate"))
                 {
                     if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
@@ -729,6 +766,143 @@ public sealed partial class UiMarkupGenerator
 
             DirectiveExpressionLocation specLocation = new(source, statementOffset + statement.LastIndexOf(specText, StringComparison.Ordinal));
             return new MotionLayoutNode(id, ParseMotionSpec(specText, specLocation), source);
+        }
+
+        private MotionScrollNode ParseScroll()
+        {
+            XObject source = CurrentSource;
+            Consume("@scroll");
+            DirectiveHeader header = ReadHeaderUntilBrace();
+            Match match = Regex.Match(
+                header.Text,
+                @"^\s*source\s+(\$part\.[A-Za-z_][A-Za-z0-9_]*)\s+axis\s+(vertical|horizontal)(?:\s+allowLayout\s*=\s*(true|false))?\s*$",
+                RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+            if (!match.Success)
+            {
+                throw new DirectiveParseException(
+                    "@scroll requires 'source $part.Name axis vertical|horizontal' and optionally 'allowLayout = true'. Pixel ranges, easing, input subranges and keyframes are not supported.",
+                    new DirectiveExpressionLocation(header.Source, header.Offset));
+            }
+
+            MotionScrollAxis axis = string.Equals(match.Groups[2].Value, "vertical", StringComparison.OrdinalIgnoreCase)
+                ? MotionScrollAxis.Vertical
+                : MotionScrollAxis.Horizontal;
+            bool allowLayout = match.Groups[3].Success && bool.Parse(match.Groups[3].Value);
+            List<MotionScrollAssignmentSyntax> assignments = [];
+            HashSet<string> targets = new(StringComparer.Ordinal);
+            while (true)
+            {
+                SkipWhitespace();
+                if (AtEnd)
+                {
+                    throw new DirectiveParseException("Missing closing '}' for @scroll.", source);
+                }
+
+                if (CurrentElement is not null || Peek() == '@')
+                {
+                    throw new DirectiveParseException("@scroll accepts only linear float range assignments.", CurrentSource);
+                }
+
+                if (Peek() == '}')
+                {
+                    Read();
+                    break;
+                }
+
+                DirectiveAssignmentNode assignment = ParseAssignment();
+                int separator = assignment.Value.IndexOf("..", StringComparison.Ordinal);
+                if (separator <= 0 || separator != assignment.Value.LastIndexOf("..", StringComparison.Ordinal) ||
+                    !float.TryParse(assignment.Value.Substring(0, separator).Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out float from) ||
+                    !float.TryParse(assignment.Value.Substring(separator + 2).Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out float to) ||
+                    float.IsNaN(from) || float.IsInfinity(from) || float.IsNaN(to) || float.IsInfinity(to))
+                {
+                    throw new DirectiveParseException(
+                        "@scroll assignments require one finite float output range 'from..to'; pixels, easing, input subranges and keyframes are not supported.",
+                        assignment.ValueLocation);
+                }
+
+                if (!targets.Add(assignment.PropertyName))
+                {
+                    throw new DirectiveParseException("Duplicate @scroll target '" + assignment.PropertyName + "'.", assignment.Source);
+                }
+
+                assignments.Add(new MotionScrollAssignmentSyntax(assignment.PropertyName, from, to, assignment.ValueLocation));
+            }
+
+            if (assignments.Count == 0)
+            {
+                throw new DirectiveParseException("@scroll requires at least one float range assignment.", source);
+            }
+
+            return new MotionScrollNode(match.Groups[1].Value, axis, allowLayout, assignments, source);
+        }
+
+        private MotionDragNode ParseDrag()
+        {
+            XObject source = CurrentSource;
+            Consume("@drag");
+            SkipWhitespace();
+            int statementOffset = characterIndex;
+            string statement = ReadMotionStatement().Trim();
+            if (!statement.StartsWith("with ", StringComparison.Ordinal) || statement.Length == 5)
+            {
+                throw new DirectiveParseException(
+                    "@drag requires exactly 'with MotionSpec'. Axis, source, target, bounds, resistance and snapping options are not supported.",
+                    source);
+            }
+
+            string specText = statement.Substring(5).Trim();
+            if (specText.IndexOfAny(new[] { '{', '}' }) >= 0 ||
+                specText.IndexOf(" axis ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                specText.IndexOf(" source ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                specText.IndexOf(" target ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                specText.IndexOf(" bounds ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                specText.IndexOf(" resistance ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                specText.IndexOf(" snapping ", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                throw new DirectiveParseException(
+                    "@drag supports only one release MotionSpec; axis, source, target, bounds, resistance and snapping options are not supported.",
+                    source);
+            }
+
+            DirectiveExpressionLocation location = new(source, statementOffset + statement.LastIndexOf(specText, StringComparison.Ordinal));
+            MotionSpecSyntax spec = ParseMotionSpec(specText, location);
+            if (spec is MotionInlineSpecSyntax { Kind: "Decay" })
+            {
+                throw new DirectiveParseException("@drag does not support a Decay release spec.", location);
+            }
+
+            return new MotionDragNode(spec, source);
+        }
+
+        private MotionGesturePressNode ParseGesture()
+        {
+            XObject source = CurrentSource;
+            Consume("@gesture");
+            SkipWhitespace();
+            int statementOffset = characterIndex;
+            string statement = ReadMotionStatement().Trim();
+            const string prefix = "press with ";
+            if (!statement.StartsWith(prefix, StringComparison.Ordinal) || statement.Length == prefix.Length)
+            {
+                throw new DirectiveParseException(
+                    "@gesture supports exactly 'press with MotionSpec'. Pinch, rotate and custom scale endpoints are not supported.",
+                    source);
+            }
+
+            string specText = statement.Substring(prefix.Length).Trim();
+            if (specText.IndexOfAny(new[] { '{', '}' }) >= 0 ||
+                specText.IndexOf(" scale ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                specText.IndexOf(" from ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                specText.IndexOf(" to ", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                throw new DirectiveParseException(
+                    "@gesture press uses the fixed runtime endpoints 0.97 and 1; custom scale endpoints are not supported.",
+                    source);
+            }
+
+            DirectiveExpressionLocation location = new(source, statementOffset + statement.LastIndexOf(specText, StringComparison.Ordinal));
+            return new MotionGesturePressNode(ParseMotionSpec(specText, location), source);
         }
 
         private MotionCompositionNode ParseMotionComposition(string directive, MotionCompositionKind kind)
@@ -1798,7 +1972,7 @@ public sealed partial class UiMarkupGenerator
         private static bool IsMotionDirective(string directive)
         {
             return directive is "@animate" or "@parallel" or "@sequence" or "@run" or "@cancel" or
-                "@keyframes" or "@stagger" or "@handle" or "@parameter" or "@from" or "@to" or "@on" or "@presence" or "@layout";
+                "@keyframes" or "@stagger" or "@handle" or "@parameter" or "@from" or "@to" or "@on" or "@presence" or "@layout" or "@scroll";
         }
 
         private static bool Allows(DirectiveContentKind allowed, DirectiveContentKind value)
