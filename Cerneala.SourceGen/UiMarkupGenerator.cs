@@ -260,6 +260,22 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true);
 
+    private static readonly DiagnosticDescriptor InvalidApplication = new(
+        "CERNEALAUI013",
+        "Invalid Application declaration",
+        "Application markup file '{0}' is invalid: {1}",
+        "Cerneala.UiMarkup",
+        DiagnosticSeverity.Error,
+        true);
+
+    private static readonly DiagnosticDescriptor InvalidApplicationStartup = new(
+        "CERNEALAUI014",
+        "Invalid Application startup",
+        "Application startup in '{0}' is invalid: {1}",
+        "Cerneala.UiMarkup",
+        DiagnosticSeverity.Error,
+        true);
+
     private static readonly DiagnosticDescriptor MotionSyntaxDiagnostic = new(
         "CERNEALAUI020", "Invalid Motion markup syntax", "Motion syntax in '{0}' is invalid: {1}",
         "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
@@ -320,8 +336,50 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
     private static void GenerateFiles(SourceProductionContext context, ImmutableArray<MarkupSource> files, Compilation compilation)
     {
         string[] classNames = AssignClassNames(files);
+        MarkupSource[] applicationDocuments = files
+            .Where(file => ParseDocument(file).Document?.Root.Name.LocalName == "Application")
+            .ToArray();
+        if (applicationDocuments.Length > 1 && compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                InvalidApplicationStartup,
+                CreateLocation(applicationDocuments[1], new object()),
+                Path.GetFileName(applicationDocuments[1].Path),
+                "An executable project may contain only one Application definition."));
+            return;
+        }
+
+        ApplicationPairResolution[] applicationPairs = files
+            .Select(file => ResolveApplicationPair(context, file, compilation))
+            .ToArray();
+        int applicationCount = applicationPairs.Count(resolution => resolution.Pair is not null);
+        bool hasApplicationDocument = applicationPairs.Any(resolution => resolution.HasCompanion);
+        if (applicationCount > 1 && compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                InvalidApplicationStartup,
+                Location.None,
+                "<Application>",
+                "An executable project may contain only one paired Application definition."));
+            return;
+        }
+
+        GenerationScope.ApplicationResourceCatalog? applicationResources = null;
+        int applicationIndex = Array.FindIndex(applicationPairs, resolution => resolution.Pair is not null);
+        if (applicationIndex >= 0 && applicationCount == 1)
+        {
+            applicationResources = GenerateApplicationFile(
+                context,
+                files[applicationIndex],
+                classNames[applicationIndex],
+                compilation,
+                applicationPairs[applicationIndex].Pair!);
+        }
+
         WindowPairResolution[] windowPairs = files
-            .Select(file => ResolveWindowPair(context, file, compilation))
+            .Select((file, index) => applicationPairs[index].HasCompanion
+                ? default
+                : ResolveWindowPair(context, file, compilation))
             .ToArray();
         int mainWindowCount = windowPairs.Count(resolution => resolution.Pair?.TypeSymbol.Name == "MainWindow");
         if (mainWindowCount > 1 && compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary)
@@ -334,13 +392,29 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         for (int i = 0; i < files.Length; i++)
         {
+            ApplicationPairResolution applicationPair = applicationPairs[i];
+            if (applicationPair.HasCompanion)
+            {
+                continue;
+            }
+
             WindowPairResolution windowPair = windowPairs[i];
             if (windowPair.HasCompanion)
             {
                 if (windowPair.Pair is not null)
                 {
-                    bool generateStartup = mainWindowCount == 1 && windowPair.Pair.TypeSymbol.Name == "MainWindow";
-                    GenerateWindowFile(context, files[i], classNames[i], compilation, windowPair.Pair, generateStartup);
+                    bool generateStartup =
+                        !hasApplicationDocument &&
+                        mainWindowCount == 1 &&
+                        windowPair.Pair.TypeSymbol.Name == "MainWindow";
+                    GenerateWindowFile(
+                        context,
+                        files[i],
+                        classNames[i],
+                        compilation,
+                        windowPair.Pair,
+                        generateStartup,
+                        applicationResources);
                 }
 
                 continue;
@@ -351,13 +425,19 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             {
                 if (pair.Pair is not null)
                 {
-                    GenerateUserControlFile(context, files[i], classNames[i], compilation, pair.Pair);
+                    GenerateUserControlFile(
+                        context,
+                        files[i],
+                        classNames[i],
+                        compilation,
+                        pair.Pair,
+                        applicationResources);
                 }
 
                 continue;
             }
 
-            GenerateFile(context, files[i], classNames[i], compilation);
+            GenerateFile(context, files[i], classNames[i], compilation, applicationResources);
         }
     }
 
@@ -393,7 +473,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         return classNames;
     }
 
-    private static void GenerateFile(SourceProductionContext context, MarkupSource file, string className, Compilation compilation)
+    private static void GenerateFile(
+        SourceProductionContext context,
+        MarkupSource file,
+        string className,
+        Compilation compilation,
+        GenerationScope.ApplicationResourceCatalog? applicationResources)
     {
         if (file.Text is null)
         {
@@ -427,7 +512,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return;
         }
 
-        GenerationScope scope = new(context, file, document, compilation, dataType);
+        GenerationScope scope = new(
+            context,
+            file,
+            document,
+            compilation,
+            dataType,
+            applicationResources: applicationResources);
         string rootVariable = scope.EmitElement(document.Root);
         if (scope.HasErrors)
         {
@@ -787,6 +878,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly Compilation compilation;
         private readonly INamedTypeSymbol? dataType;
         private readonly UserControlPair? userControlPair;
+        private readonly ApplicationResourceCatalog? applicationResources;
         private readonly bool reactiveDocument;
         private int nextId;
 
@@ -796,7 +888,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             MarkupDocument document,
             Compilation compilation,
             INamedTypeSymbol? dataType,
-            UserControlPair? userControlPair = null)
+            UserControlPair? userControlPair = null,
+            ApplicationResourceCatalog? applicationResources = null)
         {
             this.context = context;
             this.file = file;
@@ -804,6 +897,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             this.compilation = compilation;
             this.dataType = dataType;
             this.userControlPair = userControlPair;
+            this.applicationResources = applicationResources;
             currentLines = Lines;
             currentPostLines = PostLines;
 
@@ -888,15 +982,18 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private sealed class GeneratedExpression
         {
-            public GeneratedExpression(string code, MarkupValueKind kind)
+            public GeneratedExpression(string code, MarkupValueKind kind, string? applicationResourceName = null)
             {
                 Code = code;
                 Kind = kind;
+                ApplicationResourceName = applicationResourceName;
             }
 
             public string Code { get; }
 
             public MarkupValueKind Kind { get; }
+
+            public string? ApplicationResourceName { get; }
         }
 
         private sealed class NamedSymbol
@@ -1081,6 +1178,26 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public Dictionary<string, AspectResource> DefaultAspectsByTarget { get; } = new(StringComparer.Ordinal);
 
             public List<object> RuntimeResources { get; } = [];
+        }
+
+        public sealed class ApplicationResourceCatalog
+        {
+            private readonly HashSet<object> symbols;
+
+            public ApplicationResourceCatalog(
+                IReadOnlyDictionary<string, object> namedResources,
+                IReadOnlyDictionary<string, object> defaultAspects)
+            {
+                NamedResources = namedResources;
+                DefaultAspects = defaultAspects;
+                symbols = new HashSet<object>(namedResources.Values);
+            }
+
+            public IReadOnlyDictionary<string, object> NamedResources { get; }
+
+            public IReadOnlyDictionary<string, object> DefaultAspects { get; }
+
+            public bool Contains(object symbol) => symbols.Contains(symbol);
         }
 
         private readonly struct ColorLiteral
@@ -2596,7 +2713,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 switch (resource)
                 {
                     case BrushResource brush:
-                        currentLines.Add(ownerVariable + ".Resources[" + Literal(brush.Name) + "] = " + brush.Variable + ";");
+                        currentLines.Add(
+                            ownerVariable + ".Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.UI.Media.Brush>(" +
+                            Literal(brush.Name) + "), " + brush.Variable + ");");
                         break;
                     case AspectResource aspect:
                         string targetType = ResolveAspectTargetType(aspect.TargetName)!;
@@ -2782,6 +2901,25 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
+        public ApplicationResourceCatalog CreateApplicationResourceCatalog()
+        {
+            if (!resourceScopes.TryGetValue(document.Root, out ResourceScope? scope))
+            {
+                return new ApplicationResourceCatalog(
+                    new Dictionary<string, object>(StringComparer.Ordinal),
+                    new Dictionary<string, object>(StringComparer.Ordinal));
+            }
+
+            return new ApplicationResourceCatalog(
+                scope.NamedResources.ToDictionary(pair => pair.Key, pair => (object)pair.Value, StringComparer.Ordinal),
+                scope.DefaultAspectsByTarget.ToDictionary(pair => pair.Key, pair => (object)pair.Value, StringComparer.Ordinal));
+        }
+
+        public void EmitApplicationResources()
+        {
+            EmitRuntimeResources(document.Root, "this");
+        }
+
         private static bool IsLocalAspect(AspectResource aspect) => aspect.IsInline || aspect.Name is not null;
 
         private void EmitLocalAspect(XElement element, string variable, AspectResource aspect)
@@ -2868,6 +3006,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     return;
                 }
 
+                if (expression.ApplicationResourceName is not null && spec.IsUiProperty)
+                {
+                    EmitApplicationResourceBinding(
+                        variable,
+                        spec,
+                        expression.ApplicationResourceName,
+                        "global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase");
+                    continue;
+                }
+
                 currentLines.Add(spec.IsUiProperty
                     ? variable + ".SetValue(" + spec.PropertyCode + ", " + expression.Code +
                         ", global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase);"
@@ -2891,6 +3039,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             if (targetKind == MarkupValueKind.Brush && symbol.Source is BrushResource brushResource)
             {
+                if (applicationResources?.Contains(symbol) == true)
+                {
+                    string code =
+                        "((global::Cerneala.UI.Resources.IResourceProvider)global::Cerneala.UI.Application.Current!.Resources).GetResource(" +
+                        "new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.UI.Media.Brush>(" +
+                        Literal(referenceName) + "))";
+                    return new GeneratedExpression(code, MarkupValueKind.Brush, referenceName);
+                }
+
                 return new GeneratedExpression(brushResource.Variable, MarkupValueKind.Brush);
             }
 
@@ -2913,6 +3070,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 }
             }
 
+            if (applicationResources is not null &&
+                applicationResources.DefaultAspects.TryGetValue(targetName, out object? applicationAspect) &&
+                applicationAspect is AspectResource typedAspect)
+            {
+                aspect = typedAspect;
+                return true;
+            }
+
             aspect = null!;
             return false;
         }
@@ -2925,6 +3090,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     return true;
                 }
+            }
+
+            if (applicationResources is not null &&
+                applicationResources.NamedResources.TryGetValue(name, out object? applicationSymbol) &&
+                applicationSymbol is NamedSymbol typedSymbol)
+            {
+                symbol = typedSymbol;
+                return true;
             }
 
             symbol = null!;
@@ -3106,6 +3279,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     attribute);
                 if (resourceExpression is not null)
                 {
+                    if (resourceExpression.ApplicationResourceName is not null && spec.IsUiProperty)
+                    {
+                        EmitApplicationResourceBinding(
+                            variable,
+                            spec,
+                            resourceExpression.ApplicationResourceName,
+                            "global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase");
+                        return;
+                    }
+
                     currentLines.Add(reactiveDocument && spec.IsUiProperty
                         ? variable + ".SetValue(" + spec.PropertyCode + ", " + resourceExpression.Code +
                             ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
@@ -3128,6 +3311,18 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 ? variable + ".SetValue(" + spec.PropertyCode + ", " + expression.Code +
                     ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
                 : variable + "." + spec.Name + " = " + expression.Code + ";");
+        }
+
+        private void EmitApplicationResourceBinding(
+            string variable,
+            PropertySpec spec,
+            string resourceName,
+            string valueSource)
+        {
+            currentLines.Add(
+                "global::Cerneala.UI.Markup.GeneratedMarkup.AttachResource(" +
+                variable + ", " + variable + ", " + spec.PropertyCode + ", " +
+                Literal(resourceName) + ", " + valueSource + ");");
         }
 
         private PropertySpec? FindPropertySpec(string elementName, string propertyName)

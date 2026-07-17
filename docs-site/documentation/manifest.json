@@ -285,6 +285,26 @@
     "source": "UI/Accessibility/TextBoxAutomationPeer.cs"
   },
   {
+    "name": "Cerneala.UI.Application",
+    "file": "documentation/classes/Cerneala.UI.Application.md",
+    "source": "UI/Application.cs"
+  },
+  {
+    "name": "Cerneala.UI.ApplicationExitEventArgs",
+    "file": "documentation/classes/Cerneala.UI.ApplicationExitEventArgs.md",
+    "source": "UI/ApplicationExitEventArgs.cs"
+  },
+  {
+    "name": "Cerneala.UI.ApplicationShutdownMode",
+    "file": "documentation/classes/Cerneala.UI.ApplicationShutdownMode.md",
+    "source": "UI/ApplicationShutdownMode.cs"
+  },
+  {
+    "name": "Cerneala.UI.ApplicationStartupEventArgs",
+    "file": "documentation/classes/Cerneala.UI.ApplicationStartupEventArgs.md",
+    "source": "UI/ApplicationStartupEventArgs.cs"
+  },
+  {
     "name": "Cerneala.UI.Aspect.AllAspectCondition",
     "file": "documentation/classes/Cerneala.UI.Aspect.AllAspectCondition.md",
     "source": "UI/Aspect/AspectConditionNode.cs"

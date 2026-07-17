@@ -2024,7 +2024,7 @@ public sealed partial class UiMarkupGenerator
 
             foreach (ResolvedMotionProperty property in animation.Properties)
             {
-            string typeCode = GetMotionTypeCode(property.Property.ValueType);
+                string typeCode = GetMotionTypeCode(property.Property.ValueType);
                 bool hasFrom = property.Source is not null && property.Source.Value is not MotionCurrentValueSyntax;
                 string fromCode = hasFrom
                     ? EmitMotionValue(property.Source!.Value, property.Property, itemName, animation.Parameters)

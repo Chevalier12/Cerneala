@@ -10,6 +10,7 @@ using Cerneala.UI.Resources;
 
 namespace Cerneala.Tests.UI.Hosting;
 
+[Collection(WindowRuntimeTestCollection.Name)]
 public sealed class WindowRuntimeTests : IDisposable
 {
     public WindowRuntimeTests()

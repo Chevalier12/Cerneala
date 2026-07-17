@@ -49,6 +49,37 @@ ListBox list = new()
 };
 ```
 
+## Declare The Application
+
+Desktop projects should pair `App.cui.xml` with `App.cui.xml.cs`. The application
+definition selects any concrete `Window` type at build time, owns global
+resources, and generates the process entry point. A separate `Program.cs` is not
+required.
+
+```xml
+<Application StartupWindow="ShellWindow"
+             ShutdownMode="OnLastWindowClose">
+    <Application.Resources>
+        <SolidColorBrush Name="AccentBrush" Color="#FF4DF0FF" />
+    </Application.Resources>
+</Application>
+```
+
+```csharp
+public partial class App : Application
+{
+    protected override void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<Workspace>();
+    }
+}
+```
+
+`StartupWindow` is a type name resolved in the companion's Roslyn scope, not a
+URI or runtime-loaded file. See [Application Markup](application-markup.md) for
+shutdown policies, global resources, shadowing, lifecycle, diagnostics, and the
+legacy fallback.
+
 ## Build A Generated Window In Markup
 
 Paired `.cui.xml` Window and UserControl files are a supported generated authoring path. The generator resolves controls and UI properties semantically through Roslyn, validates event handlers against the companion code-behind, and emits typed C#.

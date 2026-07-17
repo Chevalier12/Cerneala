@@ -21,7 +21,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
     private readonly ThemeProvider themeProvider;
     private readonly IPlatformServices? platformServices;
     private bool disposed;
-    private Window? mainWindow;
+    private Window? legacyMainWindow;
+    private Application? application;
 
     internal WindowApplicationRuntime(
         IWindowPlatform platform,
@@ -63,12 +64,22 @@ internal sealed class WindowApplicationRuntime : IDisposable
     public void StartMainWindow(Window window)
     {
         VerifyAccess();
-        if (mainWindow is not null && !ReferenceEquals(mainWindow, window))
+        Window? currentMainWindow = application?.MainWindow ?? legacyMainWindow;
+        if (currentMainWindow is not null && !ReferenceEquals(currentMainWindow, window))
         {
             throw new InvalidOperationException("The Window runtime already has a MainWindow.");
         }
 
-        mainWindow = window ?? throw new ArgumentNullException(nameof(window));
+        ArgumentNullException.ThrowIfNull(window);
+        if (application is not null)
+        {
+            application.MainWindow = window;
+        }
+        else
+        {
+            legacyMainWindow = window;
+        }
+
         Show(window, modal: false);
     }
 
@@ -162,7 +173,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             Close(owned, force: true);
         }
 
-        if (ReferenceEquals(window, mainWindow))
+        if (application is null && ReferenceEquals(window, legacyMainWindow))
         {
             foreach (Window remaining in windows.Where(candidate => !ReferenceEquals(candidate, window)).ToArray())
             {
@@ -192,7 +203,38 @@ internal sealed class WindowApplicationRuntime : IDisposable
         window.SetOwnerCore(null);
         window.SetRuntimeOwner(null);
         window.MarkClosed();
+        application?.HandleWindowClosed(window);
         return true;
+    }
+
+    internal void SetApplication(Application value)
+    {
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(value);
+        if (application is not null && !ReferenceEquals(application, value))
+        {
+            throw new InvalidOperationException("The Window runtime already has an Application.");
+        }
+
+        application = value;
+    }
+
+    internal void ClearApplication(Application value)
+    {
+        VerifyAccess();
+        if (ReferenceEquals(application, value))
+        {
+            application = null;
+        }
+    }
+
+    internal void CloseAll()
+    {
+        VerifyAccess();
+        foreach (Window window in windows.ToArray())
+        {
+            Close(window, force: true);
+        }
     }
 
     public void SetOwner(Window window, Window? owner)
@@ -303,6 +345,21 @@ internal sealed class WindowApplicationRuntime : IDisposable
         }
     }
 
+    internal void RunStandalone(Application value)
+    {
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(value);
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        TimeSpan previous = stopwatch.Elapsed;
+        while (!value.IsShutdownRequested)
+        {
+            TimeSpan now = stopwatch.Elapsed;
+            PumpOnce(now - previous);
+            previous = now;
+            Thread.Sleep(1);
+        }
+    }
+
     public void Dispose()
     {
         DisposeCore(verifyAccess: true);
@@ -340,9 +397,20 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         platform.Dispose();
         disposed = true;
+        Application? attachedApplication = application;
+        application = null;
         if (ReferenceEquals(current, this))
         {
             current = null;
+        }
+
+        if (verifyAccess)
+        {
+            attachedApplication?.CompleteExit();
+        }
+        else
+        {
+            attachedApplication?.ResetStateForTesting();
         }
     }
 
@@ -358,7 +426,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
         UIRoot root = new(platformWindow.Viewport.Width, platformWindow.Viewport.Height, platformWindow.Viewport.Scale);
         root.Relay.VerifyAccess();
         root.SetThemeProvider(themeProvider);
-        root.SetResourceProvider(resourceProvider);
+        root.SetResourceProvider(application?.Resources ?? resourceProvider);
         root.SetPlatformServices(platformServices);
         root.SetImageResourceCache(
             platformWindow.GraphicsSession.ImageLoader,

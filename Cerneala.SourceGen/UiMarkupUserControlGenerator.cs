@@ -161,7 +161,8 @@ public sealed partial class UiMarkupGenerator
         MarkupSource file,
         string className,
         Compilation compilation,
-        UserControlPair pair)
+        UserControlPair pair,
+        GenerationScope.ApplicationResourceCatalog? applicationResources)
     {
         if (file.Text is null)
         {
@@ -213,7 +214,14 @@ public sealed partial class UiMarkupGenerator
             return;
         }
 
-        GenerationScope scope = new(context, file, document, compilation, dataType, pair);
+        GenerationScope scope = new(
+            context,
+            file,
+            document,
+            compilation,
+            dataType,
+            pair,
+            applicationResources);
         string? rootVariable = scope.EmitUserControlRoot(document.Root);
         if (scope.HasErrors)
         {

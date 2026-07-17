@@ -808,7 +808,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         {
             preparedTextRasterizations.Add(work[index].Key, results[index]);
         }
-        }
+    }
 
     private bool TryCreateTextTextureAtlas(
         KeyValuePair<TextTextureKey, TextRasterizationRequest>[] work,

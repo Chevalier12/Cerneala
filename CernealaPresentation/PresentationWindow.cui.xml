@@ -26,35 +26,17 @@
             Name="RaisedBrush"
             Color="#FF191C22" />
         <SolidColorBrush
-            Name="LineBrush"
-            Color="#FF2A2E38" />
-        <SolidColorBrush
             Name="LineStrongBrush"
             Color="#FF424754" />
         <SolidColorBrush
             Name="PaperBrush"
             Color="#FFEDEFF3" />
         <SolidColorBrush
-            Name="SlateBrush"
-            Color="#FF8A93A6" />
-        <SolidColorBrush
             Name="SlateDimBrush"
             Color="#FF565E6E" />
         <SolidColorBrush
-            Name="CyanBrush"
-            Color="#FF4DF0FF" />
-        <SolidColorBrush
-            Name="CyanWashBrush"
-            Color="#FF10282D" />
-        <SolidColorBrush
-            Name="PinkBrush"
-            Color="#FFFF3EA5" />
-        <SolidColorBrush
             Name="PinkWashBrush"
             Color="#FF2C1323" />
-        <SolidColorBrush
-            Name="LimeBrush"
-            Color="#FFC6FF3D" />
         <SolidColorBrush
             Name="LimeWashBrush"
             Color="#FF202914" />
@@ -64,9 +46,6 @@
         <SolidColorBrush
             Name="OrangeWashBrush"
             Color="#FF2C1D14" />
-        <SolidColorBrush
-            Name="TransparentBrush"
-            Color="#00000000" />
         <Tween
             Name="NavHoverIn"
             Duration="180ms"

@@ -23,6 +23,10 @@ Generated from `.`.
 |   |   |-- QueueEngineBenchmarks.cs
 |   |   |-- README.md
 |   |   +-- UiRelayBenchmarks.cs
+|   |-- Cerneala.PresentationFrameBudget/
+|   |   |-- Cerneala.PresentationFrameBudget.csproj
+|   |   |-- Program.cs
+|   |   +-- README.md
 |   |-- Cerneala.WpfDispatcherBenchmarks/
 |   |   |-- Cerneala.WpfDispatcherBenchmarks.csproj
 |   |   |-- DispatcherComparisonBenchmarks.cs
@@ -82,44 +86,46 @@ Generated from `.`.
 |       |   |   +-- Cerneala.Benchmarks.UiRelaySchedulingBenchmarks-20260714-194107.log
 |       |   |-- BenchmarkRun-20260714-192927.log
 |       |   +-- README.md
-|       +-- 2026-07-14-wpf-dispatcher-comparison/
-|           |-- final/
-|           |   |-- results/
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-default.md
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-github.md
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.csv
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.html
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-default.md
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-github.md
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.csv
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.html
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-default.md
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-github.md
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.csv
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.html
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-default.md
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-github.md
-|           |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.csv
-|           |   |   +-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.html
-|           |   +-- BenchmarkRun-20260714-211746.log
-|           |-- results/
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-default.md
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-github.md
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.csv
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.html
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-default.md
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-github.md
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.csv
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.html
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-default.md
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-github.md
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.csv
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.html
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-default.md
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-github.md
-|           |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.csv
-|           |   +-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.html
-|           |-- BenchmarkRun-20260714-211614.log
+|       |-- 2026-07-14-wpf-dispatcher-comparison/
+|       |   |-- final/
+|       |   |   |-- results/
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.csv
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.html
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.csv
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.html
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.csv
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.html
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-default.md
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.csv
+|       |   |   |   +-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.html
+|       |   |   +-- BenchmarkRun-20260714-211746.log
+|       |   |-- results/
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-default.md
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report-github.md
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.csv
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherDrainComparisonBenchmarks-report.html
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-default.md
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report-github.md
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.csv
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherInvokeAsyncComparisonBenchmarks-report.html
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-default.md
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report-github.md
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.csv
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherPostComparisonBenchmarks-report.html
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-default.md
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report-github.md
+|       |   |   |-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.csv
+|       |   |   +-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.html
+|       |   |-- BenchmarkRun-20260714-211614.log
+|       |   +-- README.md
+|       +-- 2026-07-17-presentation-frame-budget/
 |           +-- README.md
 |-- Cerneala.SourceGen/
 |   |-- tests/
@@ -127,6 +133,7 @@ Generated from `.`.
 |   |       +-- generated/
 |   |-- Cerneala.SourceGen.csproj
 |   |-- MotionMarkupLanguage.cs
+|   |-- UiMarkupApplicationGenerator.cs
 |   |-- UiMarkupBindingResolver.cs
 |   |-- UiMarkupDirectiveParser.cs
 |   |-- UiMarkupGenerator.cs
@@ -139,6 +146,8 @@ Generated from `.`.
 |   |-- tests/
 |   |   +-- CodexPresentationHarness/
 |   |       +-- generated/
+|   |-- App.cui.xml
+|   |-- App.cui.xml.cs
 |   |-- BrandMark.cui.xml
 |   |-- BrandMark.cui.xml.cs
 |   |-- CernealaPresentation.csproj
@@ -176,6 +185,7 @@ Generated from `.`.
 |   |   |-- 2026-07-15-motion-markup-presence-and-layout.md
 |   |   |-- 2026-07-15-motion-markup-scroll-and-input.md
 |   |   |-- 2026-07-15-motion-markup-timelines-and-specs.md
+|   |   |-- 2026-07-17-application-markup-and-startup-contract.md
 |   |   +-- 2026-07-17-text-texture-cache-frame-budget-hardening.md
 |   |-- superpowers/
 |   |   |-- plans/
@@ -231,6 +241,7 @@ Generated from `.`.
 |   |   |   +-- developer-preview-smoke-failure-fix-plan.md
 |   |   +-- specs/
 |   |       +-- 2026-07-09-markup-aspect-resources-design.md
+|   |-- application-markup.md
 |   |-- architecture-v2.md
 |   |-- aspect-system.md
 |   |-- developer-preview-checklist.md
@@ -306,6 +317,10 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Accessibility.SemanticsRole.md
 |   |   |   |-- Cerneala.UI.Accessibility.SemanticsTree.md
 |   |   |   |-- Cerneala.UI.Accessibility.TextBoxAutomationPeer.md
+|   |   |   |-- Cerneala.UI.Application.md
+|   |   |   |-- Cerneala.UI.ApplicationExitEventArgs.md
+|   |   |   |-- Cerneala.UI.ApplicationShutdownMode.md
+|   |   |   |-- Cerneala.UI.ApplicationStartupEventArgs.md
 |   |   |   |-- Cerneala.UI.Aspect.AllAspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.AnyAspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectApplicationResult.md
@@ -1142,6 +1157,7 @@ Generated from `.`.
 |   |   |-- OpenTypeFontData.cs
 |   |   |-- RasterizedText.cs
 |   |   |-- SkiaFont.cs
+|   |   |-- SkiaTextBlobCache.cs
 |   |   |-- SkiaTextRasterizer.cs
 |   |   |-- SkiaTextRendering.cs
 |   |   |-- SkiaTextShaper.cs
@@ -1154,6 +1170,7 @@ Generated from `.`.
 |   |-- DrawCommand.cs
 |   |-- DrawCommandKind.cs
 |   |-- DrawCommandList.cs
+|   |-- DrawingBackendFrameTiming.cs
 |   |-- DrawingContext.cs
 |   |-- DrawPoint.cs
 |   |-- DrawRect.cs
@@ -1375,6 +1392,7 @@ Generated from `.`.
 |   |   |   |   |-- UIElementTreeTests.cs
 |   |   |   |   +-- UIRootTests.cs
 |   |   |   |-- Hosting/
+|   |   |   |   |-- ApplicationRuntimeTests.cs
 |   |   |   |   |-- FakeDrawingBackend.cs
 |   |   |   |   |-- FakeInputSource.cs
 |   |   |   |   |-- FakeUiClock.cs
@@ -1393,6 +1411,7 @@ Generated from `.`.
 |   |   |   |   |-- UiViewportScaleContractTests.cs
 |   |   |   |   |-- UiViewportTests.cs
 |   |   |   |   |-- Win32WindowPlatformTests.cs
+|   |   |   |   |-- WindowRuntimeTestCollection.cs
 |   |   |   |   |-- WindowRuntimeTests.cs
 |   |   |   |   +-- WindowsDxProcessSmokeTests.cs
 |   |   |   |-- Input/
@@ -1504,6 +1523,7 @@ Generated from `.`.
 |   |   |   |   |-- RetainedRendererTests.cs
 |   |   |   |   +-- TextRenderDependencyTests.cs
 |   |   |   |-- Resources/
+|   |   |   |   |-- ApplicationResourceIntegrationTests.cs
 |   |   |   |   |-- DetachedResourceDependencyCleanupTests.cs
 |   |   |   |   |-- ElementResourceDictionaryTests.cs
 |   |   |   |   |-- FontResourceInvalidationTests.cs
@@ -1537,6 +1557,7 @@ Generated from `.`.
 |   |-- Cerneala.Tests.SourceGen/
 |   |   |-- Cerneala.Tests.SourceGen.csproj
 |   |   |-- PresentationMarkupRegressionTests.cs
+|   |   |-- UiMarkupGeneratorApplicationTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageFiveTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
@@ -2019,6 +2040,7 @@ Generated from `.`.
 |   |   |-- GeneratedMarkupBindings.cs
 |   |   |-- GeneratedMarkupConditions.cs
 |   |   |-- GeneratedMarkupMotion.cs
+|   |   |-- GeneratedMarkupResources.cs
 |   |   |-- GeneratedUiFactory.cs
 |   |   |-- MarkupAspectResource.cs
 |   |   |-- MarkupDiagnostic.cs
@@ -2259,13 +2281,17 @@ Generated from `.`.
 |   |   |-- TextTrimming.cs
 |   |   |-- TextWrapping.cs
 |   |   +-- UndoRedoStack.cs
-|   +-- Theming/
-|       |-- DefaultTheme.cs
-|       |-- Theme.cs
-|       |-- ThemeKey{T}.cs
-|       |-- ThemePalette.cs
-|       |-- ThemeProvider.cs
-|       +-- ThemeResource.cs
+|   |-- Theming/
+|   |   |-- DefaultTheme.cs
+|   |   |-- Theme.cs
+|   |   |-- ThemeKey{T}.cs
+|   |   |-- ThemePalette.cs
+|   |   |-- ThemeProvider.cs
+|   |   +-- ThemeResource.cs
+|   |-- Application.cs
+|   |-- ApplicationExitEventArgs.cs
+|   |-- ApplicationShutdownMode.cs
+|   +-- ApplicationStartupEventArgs.cs
 |-- .gitignore
 |-- .roslyn-index.json
 |-- AGENTS.md

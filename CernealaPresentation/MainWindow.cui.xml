@@ -25,35 +25,14 @@
             Name="RaisedBrush"
             Color="#FF171A20" />
         <SolidColorBrush
-            Name="LineBrush"
-            Color="#FF2A2E38" />
-        <SolidColorBrush
             Name="LineStrongBrush"
             Color="#FF454B58" />
         <SolidColorBrush
             Name="PaperBrush"
             Color="#FFF2F3F6" />
         <SolidColorBrush
-            Name="SlateBrush"
-            Color="#FF8A93A6" />
-        <SolidColorBrush
             Name="SlateDimBrush"
             Color="#FF555E6E" />
-        <SolidColorBrush
-            Name="CyanBrush"
-            Color="#FF4DF0FF" />
-        <SolidColorBrush
-            Name="CyanWashBrush"
-            Color="#FF10282D" />
-        <SolidColorBrush
-            Name="LimeBrush"
-            Color="#FFC6FF3D" />
-        <SolidColorBrush
-            Name="PinkBrush"
-            Color="#FFFF3EA5" />
-        <SolidColorBrush
-            Name="TransparentBrush"
-            Color="#00000000" />
         <MotionClip
             Name="LoadingSequence"
             TargetType="Cerneala.Presentation.MainWindow">

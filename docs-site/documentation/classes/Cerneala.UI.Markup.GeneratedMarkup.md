@@ -3,7 +3,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Markup`  
 Assembly/Project: `Cerneala`  
-Source: `UI/Markup/GeneratedMarkupConditions.cs`, `UI/Markup/GeneratedMarkupBindings.cs`, `UI/Markup/GeneratedMarkupMotion.cs`
+Source: `UI/Markup/GeneratedMarkupConditions.cs`, `UI/Markup/GeneratedMarkupBindings.cs`, `UI/Markup/GeneratedMarkupMotion.cs`, `UI/Markup/GeneratedMarkupResources.cs`
 
 Factory methods used by source-generated markup to observe reactive sources and
 attach generated property bindings.
@@ -43,6 +43,7 @@ using Binding binding = GeneratedMarkup.AttachPropertyBinding(
 | `StartMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation through the target root's motion system. |
 | `AttachPropertyBinding<T>(UIElement owner, UiObject target, UiProperty<T> targetProperty, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, string description)` | `Binding` | Attaches a typed one-way or two-way binding in the `MarkupBase` value slot. |
 | `AttachInterpolatedStringBinding(UIElement owner, UiObject target, UiProperty<string> targetProperty, IReadOnlyList<MarkupObservation> observations, Func<string> compose, string description)` | `Binding` | Attaches a one-way string composer backed by one or more observations. |
+| `AttachResource<T>(UIElement owner, UiObject target, UiProperty<T> targetProperty, string key, UiPropertyValueSource valueSource)` | `IDisposable` | Resolves the nearest resource, tracks application-provider changes, and updates the generated target value slot. |
 | `CreateConditionalPropertyBinding<T>(UiObject target, UiProperty<T> targetProperty, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, string description)` | `MarkupConditionalValue` | Creates a reactive conditional value provider activated only while its rule wins. |
 | `CreateConditionalInterpolatedStringBinding(UiObject target, UiProperty<string> targetProperty, IReadOnlyList<MarkupObservation> observations, Func<string> compose, string description)` | `MarkupConditionalValue` | Creates a conditional one-way string composer. |
 | `FormatStringValue(object? value)` | `string` | Converts a binding value with `CurrentCulture`; `null` becomes `string.Empty`. |
@@ -56,6 +57,12 @@ Property bindings write to `MarkupBase`; conditional providers write to
 from an effective `Local` target change and remove that transient local value
 after the source is updated. Binding controllers stop observations on detach,
 refresh on reattach, and clear only their owned value slot when disposed.
+
+`AttachResource<T>` follows element and ancestor resources before the attached
+root provider. A local resource therefore shadows an application resource with
+the same key. The controller subscribes only while its owner is attached,
+re-resolves the nearest value after matching application-provider changes, and
+marshals a cross-thread provider notification through the root Relay.
 
 The binding thread is captured when the controller first activates. A source
 notification received on another thread fails before the observation reads its
@@ -96,6 +103,7 @@ started, while `toCurrent` captures the binding's current sampled value.
 | Observation factories | `ArgumentNullException` or `ArgumentException` | A required source, getter, path segment collection, property, owner, or part name is invalid. |
 | Property binding factories | `ArgumentNullException` | A required owner, target, target property, observation, observation collection, or projection delegate is `null`. |
 | Interpolated binding factories | `ArgumentNullException` | A required owner, target, target property, observation collection, or compose delegate is `null`. |
+| `AttachResource<T>` | `ArgumentNullException` or `ArgumentException` | A required owner, target, target property, or resource key is invalid. |
 | Motion session factories | `ArgumentNullException` | A required owner, callback, start delegate, target, property, or options value is `null`. |
 | `AddMotionTrigger`, `StartMotion`, `StartMotionExecution`, `CancelMotionExecution`, `StartMotionProperty<T>` | `ArgumentException` | The supplied lifetime was not created by `AttachMotionSession`, or a named execution slot is empty or whitespace. |
 | `AddMotionTrigger`, `StartMotion`, `StartMotionExecution`, `CancelMotionExecution`, `StartMotionProperty<T>` | `ObjectDisposedException` | The motion session has already been disposed. |
