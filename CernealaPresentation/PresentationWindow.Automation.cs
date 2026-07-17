@@ -212,10 +212,17 @@ public partial class PresentationWindow
                     throw new InvalidOperationException("Presentation automation could not invoke the Next button.");
                 }
 
-                TimeSpan maximumWait = currentChapter == 5
-                    ? TimeSpan.FromSeconds(5)
-                    : TimeSpan.FromSeconds(2);
-                await WaitForFrameIdleAsync(maximumWait);
+                if (currentChapter == 5)
+                {
+                    await Task.Delay(250);
+                }
+                else
+                {
+                    TimeSpan maximumWait = currentChapter == 6
+                        ? TimeSpan.FromSeconds(5)
+                        : TimeSpan.FromSeconds(2);
+                    await WaitForFrameIdleAsync(maximumWait);
+                }
                 samples.Add(CaptureAutomationSample(cycle, ChapterNames[currentChapter]));
             }
         }

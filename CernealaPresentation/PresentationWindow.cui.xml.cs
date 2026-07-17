@@ -17,13 +17,13 @@ public partial class PresentationWindow : Window
         "BUILD-TIME MARKUP",
         "ASPECT DESIGN SYSTEM",
         "MOTION",
+        "SOLAR MOTION",
         "FRAME PIPELINE",
         "DIAGNOSTICS"
     ];
 
     private int currentChapter;
     private bool contentReady;
-    private bool skipNextDiagnosticsRefresh;
     private ToggleButton[] tourNavigation = [];
 
     private void OnContentRendered(object? sender, EventArgs args)
@@ -47,27 +47,27 @@ public partial class PresentationWindow : Window
 
     private void InitializeTourNavigation()
     {
-        tourNavigation = [NavWelcome, NavRetained, NavMarkup, NavAspect, NavMotion, NavPipeline, NavDiagnostics];
+        tourNavigation =
+        [
+            NavWelcome,
+            NavRetained,
+            NavMarkup,
+            NavAspect,
+            NavMotion,
+            NavSolarSystem,
+            NavPipeline,
+            NavDiagnostics
+        ];
     }
 
     private void OnFrameRendered(object? sender, EventArgs args)
     {
-        if (LastFrame is null || currentChapter != 6)
+        if (LastFrame is null || currentChapter != 7)
         {
             return;
         }
 
-        if (skipNextDiagnosticsRefresh)
-        {
-            skipNextDiagnosticsRefresh = false;
-            return;
-        }
-
-        DiagFrameTime.Text = $"{LastFrame.ProcessingTime.TotalMilliseconds:0.00} ms";
-        DiagLayout.Text = $"{LastFrame.Stats.MeasuredElements} / {LastFrame.Stats.ArrangedElements}";
-        DiagRender.Text = $"{LastFrame.Stats.RenderedElements} / {LastFrame.Stats.HitTestElements}";
-        DiagSummary.Text = LastFrame.Stats.HasWork ? "dirty work committed" : "idle fast path";
-        skipNextDiagnosticsRefresh = true;
+        PageDiagnostics.UpdateDiagnostics(LastFrame);
     }
 
     private void OnWelcome(UiElementId sender, RoutedEventArgs args) => ShowChapter(0);
@@ -75,8 +75,9 @@ public partial class PresentationWindow : Window
     private void OnMarkup(UiElementId sender, RoutedEventArgs args) => ShowChapter(2);
     private void OnAspect(UiElementId sender, RoutedEventArgs args) => ShowChapter(3);
     private void OnMotion(UiElementId sender, RoutedEventArgs args) => ShowChapter(4);
-    private void OnPipeline(UiElementId sender, RoutedEventArgs args) => ShowChapter(5);
-    private void OnDiagnostics(UiElementId sender, RoutedEventArgs args) => ShowChapter(6);
+    private void OnSolarSystem(UiElementId sender, RoutedEventArgs args) => ShowChapter(5);
+    private void OnPipeline(UiElementId sender, RoutedEventArgs args) => ShowChapter(6);
+    private void OnDiagnostics(UiElementId sender, RoutedEventArgs args) => ShowChapter(7);
 
     private void OnPrevious(UiElementId sender, RoutedEventArgs args)
     {
@@ -90,7 +91,17 @@ public partial class PresentationWindow : Window
 
     private void ShowChapter(int index)
     {
-        UIElement[] pages = [PageWelcome, PageRetained, PageMarkup, PageAspect, PageMotion, PagePipeline, PageDiagnostics];
+        UIElement[] pages =
+        [
+            PageWelcome,
+            PageRetained,
+            PageMarkup,
+            PageAspect,
+            PageMotion,
+            PageSolarSystem,
+            PagePipeline,
+            PageDiagnostics
+        ];
         int nextChapter = Math.Clamp(index, 0, pages.Length - 1);
         currentChapter = nextChapter;
         for (int i = 0; i < pages.Length; i++)
@@ -106,12 +117,6 @@ public partial class PresentationWindow : Window
         NextButton.Content = currentChapter == ChapterNames.Length - 1 ? "RESTART TOUR  ->" : "NEXT  ->";
 
     }
-    private void OnOpenMotionLab(UiElementId sender, RoutedEventArgs args)
-    {
-        MotionLabWindow lab = new() { Owner = this };
-        lab.Show();
-    }
-
     private async Task CaptureIfRequestedAsync()
     {
         string? path = Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_TOUR_CAPTURE");

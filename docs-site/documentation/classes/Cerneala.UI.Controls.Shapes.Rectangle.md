@@ -59,7 +59,6 @@ Default measuring uses an empty rectangle because the default geometry is based 
 | `GeometryProperty` | `UiProperty<Geometry?>` | `Shape` | Identifies the `Geometry` UI property. Default value is `null`; changes affect measure and render. |
 | `RenderTransformProperty` | `UiProperty<Transform>` | `Shape` | Identifies the shape-specific `RenderTransform` UI property. Default value is `Transform.Identity`; values cannot be `null`. Changes affect render. |
 | `OpacityProperty` | `UiProperty<float>` | `Shape` | Identifies the shape-specific `Opacity` UI property. Default value is `1`; values must be finite and between `0` and `1`. Changes affect render. |
-| `ShadowProperty` | `UiProperty<ShadowEffect?>` | `Shape` | Identifies the `Shadow` UI property. Default value is `null`; changes affect render. |
 
 ## Relevant Inherited Properties
 
@@ -71,7 +70,6 @@ Default measuring uses an empty rectangle because the default geometry is based 
 | `Geometry` | `Geometry?` | `Shape` | Gets or sets an explicit geometry. When `null`, `Rectangle` creates a `RectangleGeometry` from its arranged bounds. |
 | `RenderTransform` | `Transform` | `Shape` | Gets or sets the transform applied to rendered shape coordinates. |
 | `Opacity` | `float` | `Shape` | Gets or sets the opacity multiplier applied to emitted fill and stroke colors. |
-| `Shadow` | `ShadowEffect?` | `Shape` | Gets or sets the shadow effect value stored on the shape. |
 
 ## Relevant Inherited Methods
 

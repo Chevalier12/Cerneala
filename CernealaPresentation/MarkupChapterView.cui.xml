@@ -1,0 +1,166 @@
+<UserControl
+    Aspect="$PageReveal">
+    <Grid>
+        <StackPanel
+            Margin="46,38,46,42">
+            <TextBlock
+                Text="03 / BUILD-TIME MARKUP"
+                FontFamily="Cascadia Mono SemiBold"
+                FontSize="11"
+                Foreground="$LimeBrush" />
+            <TextBlock
+                Text="Describe the tree. Keep behavior in C#."
+                FontFamily="Bahnschrift SemiBold"
+                FontSize="42"
+                Margin="0,12,0,0" />
+            <TextBlock
+                Text="Every .cui.xml file is an additional file consumed by the incremental generator. Named elements and event hooks become compiled, typed C# with no runtime XML parser in the frame loop."
+                FontSize="16"
+                Foreground="$SlateBrush"
+                TextWrapping="Wrap"
+                Margin="0,14,80,0" />
+            <Grid
+                Margin="0,28,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition
+                        Width="1*" />
+                    <ColumnDefinition
+                        Width="1*" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Grid.Column="0"
+                    Background="$PanelAltBrush"
+                    BorderBrush="$LineStrongBrush"
+                    BorderThickness="1"
+                    Margin="0,0,8,0">
+                    <StackPanel>
+                        <Border
+                            Background="$PanelBrush"
+                            BorderBrush="$LineBrush"
+                            BorderThickness="0,0,0,1"
+                            Padding="16,11,16,11">
+                            <Grid>
+                                <TextBlock
+                                    Text="MainWindow.cui.xml"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="11" />
+                                <TextBlock
+                                    Text="MARKUP"
+                                    FontFamily="Cascadia Mono"
+                                    FontSize="9"
+                                    Foreground="$CyanBrush"
+                                    HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
+                        <TextBlock
+                            Padding="18"
+                            FontFamily="Cascadia Mono"
+                            FontSize="11"
+                            Foreground="$SlateBrush"
+                            TextWrapping="Wrap"
+                            Text="&lt;Window Title=&quot;Cerneala&quot;>&#xA;  &lt;Window.Resources>&#xA;    &lt;Aspect Target=&quot;Button&quot;>&#xA;      @when IsMouseOver&#xA;      {&#xA;        Background = $Cyan;&#xA;      }&#xA;    &lt;/Aspect>&#xA;  &lt;/Window.Resources>&#xA;&#xA;  &lt;Button Name=&quot;Launch&quot;&#xA;          Content=&quot;Launch&quot;&#xA;          Click=&quot;OnLaunch&quot; />&#xA;&lt;/Window>" />
+                    </StackPanel>
+                </Border>
+                <Border
+                    Grid.Column="1"
+                    Background="$PanelAltBrush"
+                    BorderBrush="$LineStrongBrush"
+                    BorderThickness="1"
+                    Margin="8,0,0,0">
+                    <StackPanel>
+                        <Border
+                            Background="$PanelBrush"
+                            BorderBrush="$LineBrush"
+                            BorderThickness="0,0,0,1"
+                            Padding="16,11,16,11">
+                            <Grid>
+                                <TextBlock
+                                    Text="MainWindow.cui.xml.cs"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="11" />
+                                <TextBlock
+                                    Text="BEHAVIOR"
+                                    FontFamily="Cascadia Mono"
+                                    FontSize="9"
+                                    Foreground="$PinkBrush"
+                                    HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
+                        <TextBlock
+                            Padding="18"
+                            FontFamily="Cascadia Mono"
+                            FontSize="11"
+                            Foreground="$SlateBrush"
+                            TextWrapping="Wrap"
+                            Text="public partial class MainWindow : Window&#xA;{&#xA;  private void OnLaunch(&#xA;    UiElementId sender,&#xA;    RoutedEventArgs args)&#xA;  {&#xA;    Launch.Motion()&#xA;      .Scale.To(&#xA;        1.08f,&#xA;        Motion.Spring&lt;float>());&#xA;  }&#xA;}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+            <Grid
+                Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition
+                        Width="1*" />
+                    <ColumnDefinition
+                        Width="1*" />
+                    <ColumnDefinition
+                        Width="1*" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Grid.Column="0"
+                    BorderBrush="$CyanBrush"
+                    BorderThickness="0,2,0,0"
+                    Padding="16">
+                    <StackPanel>
+                        <TextBlock
+                            Text="01  ADDITIONAL FILE"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Foreground="$CyanBrush" />
+                        <TextBlock
+                            Text="MSBuild feeds markup to the generator."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,7,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border
+                    Grid.Column="1"
+                    BorderBrush="$PinkBrush"
+                    BorderThickness="0,2,0,0"
+                    Padding="16">
+                    <StackPanel>
+                        <TextBlock
+                            Text="02  PAIR"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Foreground="$PinkBrush" />
+                        <TextBlock
+                            Text="Markup and partial class meet at build time."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,7,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border
+                    Grid.Column="2"
+                    BorderBrush="$LimeBrush"
+                    BorderThickness="0,2,0,0"
+                    Padding="16">
+                    <StackPanel>
+                        <TextBlock
+                            Text="03  COMPILE"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Foreground="$LimeBrush" />
+                        <TextBlock
+                            Text="Typed names, events, resources, and aspects."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,7,0,0" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>

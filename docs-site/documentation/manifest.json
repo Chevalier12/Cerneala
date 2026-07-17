@@ -2710,11 +2710,6 @@
     "source": "UI/Media/Matrix3x2.cs"
   },
   {
-    "name": "Cerneala.UI.Media.OpacityLayer",
-    "file": "documentation/classes/Cerneala.UI.Media.OpacityLayer.md",
-    "source": "UI/Media/OpacityLayer.cs"
-  },
-  {
     "name": "Cerneala.UI.Media.PathGeometry",
     "file": "documentation/classes/Cerneala.UI.Media.PathGeometry.md",
     "source": "UI/Media/PathGeometry.cs"
@@ -2738,11 +2733,6 @@
     "name": "Cerneala.UI.Media.RenderTargetImage",
     "file": "documentation/classes/Cerneala.UI.Media.RenderTargetImage.md",
     "source": "UI/Media/RenderTargetImage.cs"
-  },
-  {
-    "name": "Cerneala.UI.Media.ShadowEffect",
-    "file": "documentation/classes/Cerneala.UI.Media.ShadowEffect.md",
-    "source": "UI/Media/ShadowEffect.cs"
   },
   {
     "name": "Cerneala.UI.Media.SolidColorBrush",

@@ -2,6 +2,7 @@ using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;
 using Cerneala.UI.Rendering;
 
@@ -21,6 +22,38 @@ public sealed class HitTestServiceTests
         HitTestResult? result = new HitTestService().HitTest(root, 10, 10);
 
         Assert.Same(top, result!.Element);
+    }
+
+    [Fact]
+    public void LayoutPanelWithoutInputHandlersDoesNotOccludeInteractiveSibling()
+    {
+        UIRoot root = new(100, 100);
+        UIElement target = Arranged(0, 0, 50, 50);
+        target.AddHandler(UIElement.MouseUpEvent, (_, _) => { });
+        Grid transparentLayoutPanel = new();
+        transparentLayoutPanel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 50, 50)));
+        root.VisualChildren.Add(target);
+        root.VisualChildren.Add(transparentLayoutPanel);
+
+        HitTestResult? result = new HitTestService().HitTest(root, 10, 10);
+
+        Assert.Same(target, result!.Element);
+    }
+
+    [Fact]
+    public void LayoutPanelWithInputHandlerCanBeHitDirectly()
+    {
+        UIRoot root = new(100, 100);
+        UIElement target = Arranged(0, 0, 50, 50);
+        Grid interactiveLayoutPanel = new();
+        interactiveLayoutPanel.AddHandler(UIElement.MouseUpEvent, (_, _) => { });
+        interactiveLayoutPanel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 50, 50)));
+        root.VisualChildren.Add(target);
+        root.VisualChildren.Add(interactiveLayoutPanel);
+
+        HitTestResult? result = new HitTestService().HitTest(root, 10, 10);
+
+        Assert.Same(interactiveLayoutPanel, result!.Element);
     }
 
     [Fact]
@@ -140,7 +173,7 @@ public sealed class HitTestServiceTests
     }
 
     [Fact]
-    public void RenderTransformDoesNotAffectHitTestBounds()
+    public void RenderTransformMovesHitTestBounds()
     {
         UIRoot root = new(200, 200);
         UIElement element = Arranged(0, 0, 20, 20);
@@ -150,9 +183,31 @@ public sealed class HitTestServiceTests
         HitTestResult? layoutHit = new HitTestService().HitTest(root, 10, 10);
         HitTestResult? visualOnlyHit = new HitTestService().HitTest(root, 55, 10);
 
-        Assert.Same(element, layoutHit!.Element);
-        Assert.NotSame(element, visualOnlyHit!.Element);
-        Assert.Same(root, visualOnlyHit.Element);
+        Assert.Same(root, layoutHit!.Element);
+        Assert.Same(element, visualOnlyHit!.Element);
+    }
+
+    [Fact]
+    public void NestedMotionTransformsMoveHitTestBounds()
+    {
+        UIRoot root = new(300, 300);
+        UIElement parent = Arranged(0, 0, 200, 200);
+        parent.RenderTransformOrigin = new LayoutPoint(0, 0);
+        parent.TranslateX = 20;
+        parent.TranslateY = 30;
+        parent.ScaleX = 2;
+        parent.ScaleY = 2;
+        UIElement child = Arranged(40, 10, 20, 10);
+        child.RenderTransformOrigin = new LayoutPoint(0, 0);
+        child.Rotation = MathF.PI / 2;
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+
+        HitTestResult? staleLayoutHit = new HitTestService().HitTest(root, 50, 15);
+        HitTestResult? visualHit = new HitTestService().HitTest(root, 90, 70);
+
+        Assert.Same(root, staleLayoutHit!.Element);
+        Assert.Same(child, visualHit!.Element);
     }
 
     internal static UIElement Arranged(float x, float y, float width, float height)

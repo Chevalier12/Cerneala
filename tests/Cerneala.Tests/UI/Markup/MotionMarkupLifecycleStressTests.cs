@@ -96,6 +96,7 @@ public sealed class MotionMarkupLifecycleStressTests
             Assert.Null(scrollBinding);
             Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(parent));
             Assert.Equal(0, root.Motion.Graph.ActiveNodeCount);
+            Assert.Equal(0, root.Motion.Properties.BindingCount);
             Assert.False(root.Motion.HasActiveMotion);
             Assert.Equal(cycle + 1, conditionActivations);
         }

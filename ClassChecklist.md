@@ -1464,10 +1464,6 @@ Excluded RoslynRepoIndexer class-like types: 0
 
 - [x] `Cerneala.UI.Media.Matrix3x2` - record, public, sealed, line 5
 
-### UI/Media/OpacityLayer.cs
-
-- [x] `Cerneala.UI.Media.OpacityLayer` - record, public, sealed, line 3
-
 ### UI/Media/PathGeometry.cs
 
 - [x] `Cerneala.UI.Media.PathGeometry` - record, public, sealed, line 5
@@ -1487,10 +1483,6 @@ Excluded RoslynRepoIndexer class-like types: 0
 ### UI/Media/RenderTargetImage.cs
 
 - [x] `Cerneala.UI.Media.RenderTargetImage` - record, public, sealed, line 7
-
-### UI/Media/ShadowEffect.cs
-
-- [x] `Cerneala.UI.Media.ShadowEffect` - record, public, sealed, line 5
 
 ### UI/Media/SolidColorBrush.cs
 

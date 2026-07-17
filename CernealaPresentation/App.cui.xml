@@ -3,11 +3,32 @@
     ShutdownMode="OnMainWindowClose">
     <Application.Resources>
         <SolidColorBrush
+            Name="InkBrush"
+            Color="#FF0A0B0E" />
+        <SolidColorBrush
+            Name="PanelBrush"
+            Color="#FF14161B" />
+        <SolidColorBrush
+            Name="PanelAltBrush"
+            Color="#FF101217" />
+        <SolidColorBrush
+            Name="RaisedBrush"
+            Color="#FF191C22" />
+        <SolidColorBrush
             Name="LineBrush"
             Color="#FF2A2E38" />
         <SolidColorBrush
+            Name="LineStrongBrush"
+            Color="#FF424754" />
+        <SolidColorBrush
+            Name="PaperBrush"
+            Color="#FFEDEFF3" />
+        <SolidColorBrush
             Name="SlateBrush"
             Color="#FF8A93A6" />
+        <SolidColorBrush
+            Name="SlateDimBrush"
+            Color="#FF565E6E" />
         <SolidColorBrush
             Name="CyanBrush"
             Color="#FF4DF0FF" />
@@ -18,10 +39,105 @@
             Name="PinkBrush"
             Color="#FFFF3EA5" />
         <SolidColorBrush
+            Name="PinkWashBrush"
+            Color="#FF2C1323" />
+        <SolidColorBrush
             Name="LimeBrush"
             Color="#FFC6FF3D" />
         <SolidColorBrush
+            Name="LimeWashBrush"
+            Color="#FF202914" />
+        <SolidColorBrush
+            Name="OrangeBrush"
+            Color="#FFFF8A3D" />
+        <SolidColorBrush
+            Name="OrangeWashBrush"
+            Color="#FF2C1D14" />
+        <SolidColorBrush
             Name="TransparentBrush"
             Color="#00000000" />
+        <Aspect
+            Name="PageReveal"
+            Target="UserControl">
+            @when Visibility
+            {
+                @if Visibility == Visible
+                {
+                    @parallel
+                    {
+                        @animate with Tween(360ms, EaseOut)
+                        {
+                            @from
+                            {
+                                Opacity = 0.25;
+                            }
+                            @to
+                            {
+                                Opacity = 1;
+                            }
+                        }
+                        @animate with Spring(460, 38)
+                        {
+                            @from
+                            {
+                                TranslateY = 18;
+                            }
+                            @to
+                            {
+                                TranslateY = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        </Aspect>
+        <Aspect
+            Target="TextBlock">
+            @default
+            {
+                FontFamily = "Segoe UI Variable Text";
+                FontSize = 14;
+                Foreground = $PaperBrush;
+            }
+        </Aspect>
+        <Aspect
+            Name="GhostButton"
+            Target="Button">
+            @default
+            {
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 12;
+                Background = $TransparentBrush;
+                Foreground = $PaperBrush;
+                BorderBrush = $LineStrongBrush;
+                BorderThickness = "1";
+                Padding = "18,11,18,11";
+            }
+            @when IsMouseOver
+            {
+                Background = $CyanWashBrush;
+                Foreground = $CyanBrush;
+                BorderBrush = $CyanBrush;
+            }
+        </Aspect>
+        <Aspect
+            Name="LimeButton"
+            Target="Button">
+            @default
+            {
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 12;
+                Background = $LimeBrush;
+                Foreground = $InkBrush;
+                BorderBrush = $LimeBrush;
+                BorderThickness = "1";
+                Padding = "20,12,20,12";
+            }
+            @when IsMouseOver
+            {
+                Background = $CyanBrush;
+                BorderBrush = $CyanBrush;
+            }
+        </Aspect>
     </Application.Resources>
 </Application>

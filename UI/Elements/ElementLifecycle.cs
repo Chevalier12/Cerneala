@@ -111,6 +111,7 @@ public static class ElementLifecycle
         root.ElementIds.Release(element);
         root.ResourceDependencyTracker.RemoveOwner(element);
         element.DetachFromRoot();
+        root.Motion.Properties.RemoveBindings(element);
         root.RemovePendingWork(element);
         root.AspectProcessor.Clear(element);
     }

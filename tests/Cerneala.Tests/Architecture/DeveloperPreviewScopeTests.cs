@@ -234,14 +234,29 @@ public sealed class DeveloperPreviewScopeTests
         [
             "- [~] `UI/Media/LinearGradientBrush.cs`",
             "- [~] `UI/Media/RadialGradientBrush.cs`",
-            "- [~] `UI/Media/PathGeometry.cs`",
-            "- [~] `UI/Media/OpacityLayer.cs`",
-            "- [~] `UI/Media/ShadowEffect.cs`"
+            "- [~] `UI/Media/PathGeometry.cs`"
         ];
 
         AssertContainsAll(mediaSection, frozenEffects);
+        Assert.Contains(
+            "- [ ] Effects API and backend pipeline are intentionally absent until designed and implemented end to end.",
+            mediaSection,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("OpacityLayer.cs", mediaSection, StringComparison.Ordinal);
+        Assert.DoesNotContain("ShadowEffect.cs", mediaSection, StringComparison.Ordinal);
         Assert.Contains("backend", mediaSection, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("frozen until", mediaSection, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void EffectsSurfaceRemainsAbsentUntilDesignedEndToEnd()
+    {
+        System.Reflection.Assembly assembly = typeof(Cerneala.UI.Media.Transform).Assembly;
+
+        Assert.Null(assembly.GetType("Cerneala.UI.Media.OpacityLayer"));
+        Assert.Null(assembly.GetType("Cerneala.UI.Media.ShadowEffect"));
+        Assert.Null(typeof(Cerneala.UI.Controls.Shapes.Shape).GetProperty("Shadow"));
+        Assert.Null(typeof(Cerneala.UI.Controls.Shapes.Shape).GetField("ShadowProperty"));
     }
 
     private static void AssertNoForbiddenTermsInPreviewSources(string[] forbiddenTerms, bool removeStringLiterals = true)

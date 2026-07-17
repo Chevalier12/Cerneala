@@ -33,7 +33,9 @@ public sealed class DrawCommandListBuilder
             return;
         }
 
-        Matrix3x2 elementTransform = Matrix3x2.Multiply(GetElementTransform(element), ancestorTransform);
+        Matrix3x2 elementTransform = Matrix3x2.Multiply(
+            ElementVisualTransform.GetElementTransform(element),
+            ancestorTransform);
         float elementOpacity = ancestorOpacity * element.Opacity * element.PresenceOpacity;
         if (elementOpacity <= 0)
         {
@@ -250,33 +252,6 @@ public sealed class DrawCommandListBuilder
             DrawCommandKind.PopClip => command,
             _ => command
         };
-    }
-
-    private static Matrix3x2 GetElementTransform(UIElement element)
-    {
-        LayoutRect bounds = element.ArrangedBounds;
-        LayoutPoint origin = element.RenderTransformOrigin;
-        float pivotX = bounds.X + (bounds.Width * origin.X);
-        float pivotY = bounds.Y + (bounds.Height * origin.Y);
-
-        Matrix3x2 channelTransform = Matrix3x2.Identity;
-        channelTransform = Matrix3x2.Multiply(channelTransform, Matrix3x2.CreateScale(
-            element.Scale * element.ScaleX * element.PresenceScale,
-            element.Scale * element.ScaleY * element.PresenceScale));
-        channelTransform = Matrix3x2.Multiply(channelTransform, Matrix3x2.CreateSkew(element.SkewX, element.SkewY));
-        channelTransform = Matrix3x2.Multiply(channelTransform, Matrix3x2.CreateRotation(element.Rotation));
-        channelTransform = Matrix3x2.Multiply(channelTransform, Matrix3x2.CreateTranslation(element.TranslateX, element.TranslateY));
-        channelTransform = Matrix3x2.Multiply(channelTransform, element.RenderTransform.Matrix);
-        channelTransform = Matrix3x2.Multiply(channelTransform, element.LayoutCorrectionTransform.Matrix);
-
-        if (channelTransform == Matrix3x2.Identity)
-        {
-            return Matrix3x2.Identity;
-        }
-
-        return Matrix3x2.Multiply(
-            Matrix3x2.Multiply(Matrix3x2.CreateTranslation(-pivotX, -pivotY), channelTransform),
-            Matrix3x2.CreateTranslation(pivotX, pivotY));
     }
 
     private static DrawRect Transform(DrawRect rect, Matrix3x2 transform)

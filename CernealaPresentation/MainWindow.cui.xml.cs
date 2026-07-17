@@ -19,16 +19,6 @@ public partial class MainWindow : Window
         }
 
         sequenceStarted = true;
-        string? motionLabCapture = Environment.GetEnvironmentVariable("CERNEALA_MOTION_LAB_CAPTURE");
-        if (!string.IsNullOrWhiteSpace(motionLabCapture))
-        {
-            MotionLabWindow lab = new();
-            lab.Closed += (_, _) => Close();
-            lab.Show();
-            Hide();
-            return;
-        }
-
         _ = RunLoadingAutomationAsync();
     }
 

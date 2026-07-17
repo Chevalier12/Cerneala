@@ -41,21 +41,4 @@ public sealed class TransformTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new Matrix3x2(value, 0, 0, 1, 0, 0));
     }
 
-    [Theory]
-    [InlineData(-0.1f)]
-    [InlineData(1.1f)]
-    [InlineData(float.NaN)]
-    public void OpacityLayerRejectsInvalidOpacity(float opacity)
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new OpacityLayer(opacity));
-    }
-
-    [Theory]
-    [InlineData(-1)]
-    [InlineData(float.NaN)]
-    [InlineData(float.PositiveInfinity)]
-    public void ShadowEffectRejectsInvalidBlur(float blur)
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ShadowEffect(new DrawPoint(0, 0), blur, Color.Black));
-    }
 }

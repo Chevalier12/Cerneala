@@ -148,17 +148,31 @@ Generated from `.`.
 |   |       +-- generated/
 |   |-- App.cui.xml
 |   |-- App.cui.xml.cs
+|   |-- AspectChapterView.cui.xml
+|   |-- AspectChapterView.cui.xml.cs
 |   |-- BrandMark.cui.xml
 |   |-- BrandMark.cui.xml.cs
 |   |-- CernealaPresentation.csproj
+|   |-- DiagnosticsChapterView.cui.xml
+|   |-- DiagnosticsChapterView.cui.xml.cs
+|   |-- FramePipelineChapterView.cui.xml
+|   |-- FramePipelineChapterView.cui.xml.cs
 |   |-- MainWindow.cui.xml
 |   |-- MainWindow.cui.xml.cs
-|   |-- MotionLabWindow.cui.xml
-|   |-- MotionLabWindow.cui.xml.cs
+|   |-- MarkupChapterView.cui.xml
+|   |-- MarkupChapterView.cui.xml.cs
+|   |-- MotionChapterView.cui.xml
+|   |-- MotionChapterView.cui.xml.cs
 |   |-- PresentationWindow.Automation.cs
 |   |-- PresentationWindow.cui.xml
 |   |-- PresentationWindow.cui.xml.cs
-|   +-- SvgImage.cs
+|   |-- RetainedModelChapterView.cui.xml
+|   |-- RetainedModelChapterView.cui.xml.cs
+|   |-- SolarSystemChapterView.cui.xml
+|   |-- SolarSystemChapterView.cui.xml.cs
+|   |-- SvgImage.cs
+|   |-- WelcomeChapterView.cui.xml
+|   +-- WelcomeChapterView.cui.xml.cs
 |-- docs/
 |   |-- diagrams/
 |   |   |-- cerneala-drawing-flowchart.svg
@@ -244,6 +258,7 @@ Generated from `.`.
 |   |-- application-markup.md
 |   |-- architecture-v2.md
 |   |-- aspect-system.md
+|   |-- CernealaMarkupGuide.md
 |   |-- developer-preview-checklist.md
 |   |-- developer-preview-scope.md
 |   |-- getting-started.md
@@ -802,13 +817,11 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Media.ImageSource.md
 |   |   |   |-- Cerneala.UI.Media.LinearGradientBrush.md
 |   |   |   |-- Cerneala.UI.Media.Matrix3x2.md
-|   |   |   |-- Cerneala.UI.Media.OpacityLayer.md
 |   |   |   |-- Cerneala.UI.Media.PathGeometry.md
 |   |   |   |-- Cerneala.UI.Media.Pen.md
 |   |   |   |-- Cerneala.UI.Media.RadialGradientBrush.md
 |   |   |   |-- Cerneala.UI.Media.RectangleGeometry.md
 |   |   |   |-- Cerneala.UI.Media.RenderTargetImage.md
-|   |   |   |-- Cerneala.UI.Media.ShadowEffect.md
 |   |   |   |-- Cerneala.UI.Media.SolidColorBrush.md
 |   |   |   |-- Cerneala.UI.Media.SvgGeometry.md
 |   |   |   |-- Cerneala.UI.Media.TileBrush.md
@@ -1328,6 +1341,8 @@ Generated from `.`.
 |   |   |   +-- TouchInputBridgeTests.cs
 |   |   |-- Playground/
 |   |   |   +-- MainWindowContractTests.cs
+|   |   |-- Presentation/
+|   |   |   +-- SolarSystemChapterViewTests.cs
 |   |   |-- UI/
 |   |   |   |-- Accessibility/
 |   |   |   |   |-- AccessibilityPlatformTests.cs
@@ -1867,6 +1882,7 @@ Generated from `.`.
 |   |   |-- ElementTreeChange.cs
 |   |   |-- ElementTreeChangeKind.cs
 |   |   |-- ElementTreeWalker.cs
+|   |   |-- ElementVisualTransform.cs
 |   |   |-- IElementChildHost.cs
 |   |   |-- IElementHost.cs
 |   |   |-- IElementLifecycleBehavior.cs
@@ -2072,13 +2088,11 @@ Generated from `.`.
 |   |   |-- ImageSource.cs
 |   |   |-- LinearGradientBrush.cs
 |   |   |-- Matrix3x2.cs
-|   |   |-- OpacityLayer.cs
 |   |   |-- PathGeometry.cs
 |   |   |-- Pen.cs
 |   |   |-- RadialGradientBrush.cs
 |   |   |-- RectangleGeometry.cs
 |   |   |-- RenderTargetImage.cs
-|   |   |-- ShadowEffect.cs
 |   |   |-- SolidColorBrush.cs
 |   |   |-- SvgGeometry.cs
 |   |   |-- TileBrush.cs
@@ -2306,6 +2320,7 @@ Generated from `.`.
 |-- ROADMAP.md
 |-- ROADMAPv2_AUDIT.md
 |-- ROADMAPv2.md
-+-- roslyn_indexer_codex_plan_final.md
+|-- roslyn_indexer_codex_plan_final.md
++-- solar-system.html
 ```
 

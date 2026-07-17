@@ -1,0 +1,160 @@
+<UserControl
+    Aspect="$PageReveal">
+    <Grid>
+        <StackPanel
+            Margin="46,38,46,42">
+            <TextBlock
+                Text="08 / DIAGNOSTICS"
+                FontFamily="Cascadia Mono SemiBold"
+                FontSize="11"
+                Foreground="$LimeBrush" />
+            <TextBlock
+                Text="See inside the frame."
+                FontFamily="Bahnschrift SemiBold"
+                FontSize="45"
+                Margin="0,12,0,0" />
+            <TextBlock
+                Text="Frame snapshots, invalidation traces, dirty-tree dumps, layout captures, routed-event routes, render-cache diagnostics, motion traces, and runtime probes make the retained engine legible."
+                FontSize="16"
+                Foreground="$SlateBrush"
+                TextWrapping="Wrap"
+                Margin="0,14,80,0" />
+            <Grid
+                Margin="0,28,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition
+                        Width="1.2*" />
+                    <ColumnDefinition
+                        Width="0.8*" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Grid.Column="0"
+                    Background="$PanelAltBrush"
+                    BorderBrush="$LineStrongBrush"
+                    BorderThickness="1"
+                    Padding="22"
+                    Margin="0,0,14,0">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock
+                                Text="LIVE FRAME SNAPSHOT"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="10"
+                                Foreground="$CyanBrush" />
+                            <TextBlock
+                                Text="SAMPLING"
+                                FontFamily="Cascadia Mono"
+                                FontSize="9"
+                                Foreground="$LimeBrush"
+                                HorizontalAlignment="Right" />
+                        </Grid>
+                        <Border
+                            BorderBrush="$LineBrush"
+                            BorderThickness="0,1,0,0"
+                            Margin="0,16,0,0"
+                            Padding="0,13,0,0">
+                            <Grid>
+                                <TextBlock
+                                    Text="FRAME TIME"
+                                    FontFamily="Cascadia Mono"
+                                    FontSize="10"
+                                    Foreground="$SlateDimBrush" />
+                                <TextBlock
+                                    Name="DiagFrameTime"
+                                    Text="0.00 ms"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="11"
+                                    Foreground="$CyanBrush"
+                                    HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
+                        <Border
+                            BorderBrush="$LineBrush"
+                            BorderThickness="0,1,0,0"
+                            Margin="0,13,0,0"
+                            Padding="0,13,0,0">
+                            <Grid>
+                                <TextBlock
+                                    Text="MEASURE / ARRANGE"
+                                    FontFamily="Cascadia Mono"
+                                    FontSize="10"
+                                    Foreground="$SlateDimBrush" />
+                                <TextBlock
+                                    Name="DiagLayout"
+                                    Text="0 / 0"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="11"
+                                    Foreground="$OrangeBrush"
+                                    HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
+                        <Border
+                            BorderBrush="$LineBrush"
+                            BorderThickness="0,1,0,0"
+                            Margin="0,13,0,0"
+                            Padding="0,13,0,0">
+                            <Grid>
+                                <TextBlock
+                                    Text="RENDER / HIT TEST"
+                                    FontFamily="Cascadia Mono"
+                                    FontSize="10"
+                                    Foreground="$SlateDimBrush" />
+                                <TextBlock
+                                    Name="DiagRender"
+                                    Text="0 / 0"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="11"
+                                    Foreground="$PinkBrush"
+                                    HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
+                        <Border
+                            BorderBrush="$LineBrush"
+                            BorderThickness="0,1,0,0"
+                            Margin="0,13,0,0"
+                            Padding="0,13,0,0">
+                            <Grid>
+                                <TextBlock
+                                    Text="PIPELINE"
+                                    FontFamily="Cascadia Mono"
+                                    FontSize="10"
+                                    Foreground="$SlateDimBrush" />
+                                <TextBlock
+                                    Name="DiagSummary"
+                                    Text="waiting for frame"
+                                    FontFamily="Cascadia Mono"
+                                    FontSize="10"
+                                    Foreground="$SlateBrush"
+                                    HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="14,0,0,0">
+                    <Border
+                        Background="$CyanWashBrush"
+                        BorderBrush="$CyanBrush"
+                        BorderThickness="1"
+                        Padding="18"
+                        Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock
+                                Text="THIS APP IS THE DEMO"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="10"
+                                Foreground="$CyanBrush" />
+                            <TextBlock
+                                Text="Every page you saw is Cerneala markup, Aspect resources, retained layout, native hosting, and Motion running together."
+                                FontSize="13"
+                                Foreground="$SlateBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,9,0,0" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>

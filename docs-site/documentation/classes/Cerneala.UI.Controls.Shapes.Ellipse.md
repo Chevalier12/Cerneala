@@ -63,7 +63,6 @@ Measurement is inherited from `Shape`. With a custom `Geometry`, desired size is
 | `GeometryProperty` | `UiProperty<Geometry?>` | `Shape` | Identifies the `Geometry` UI property. Defaults to `null` and affects measure and render. |
 | `RenderTransformProperty` | `UiProperty<Transform>` | `Shape` | Identifies the shape-specific `RenderTransform` UI property. Defaults to `Transform.Identity`, affects render, and rejects `null`. |
 | `OpacityProperty` | `UiProperty<float>` | `Shape` | Identifies the shape-specific `Opacity` UI property. Defaults to `1`, affects render, and accepts finite values from `0` through `1`. |
-| `ShadowProperty` | `UiProperty<ShadowEffect?>` | `Shape` | Identifies the `Shadow` UI property. Defaults to `null` and affects render. |
 
 ## Inherited Properties
 
@@ -75,7 +74,6 @@ Measurement is inherited from `Shape`. With a custom `Geometry`, desired size is
 | `Geometry` | `Geometry?` | `Shape` | `null` | Gets or sets an optional custom geometry. When set, it replaces the default bounds-based ellipse geometry. |
 | `RenderTransform` | `Transform` | `Shape` | `Transform.Identity` | Gets or sets the transform applied to rendered shape bounds. |
 | `Opacity` | `float` | `Shape` | `1` | Gets or sets the opacity multiplier applied to fill and stroke alpha. Values must be finite and between `0` and `1`. |
-| `Shadow` | `ShadowEffect?` | `Shape` | `null` | Gets or sets an optional shadow effect value registered as render-affecting shape state. |
 
 ## Methods
 

@@ -1086,6 +1086,21 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             args.NewValue is Visibility;
         Visibility oldVisibility = isVisibilityChange ? (Visibility)args.OldValue! : Visibility.Visible;
         Visibility newVisibility = isVisibilityChange ? (Visibility)args.NewValue! : Visibility.Visible;
+        bool isIsVisibleChange = ReferenceEquals(args.Property, IsVisibleProperty) &&
+            args.OldValue is bool &&
+            args.NewValue is bool;
+        bool becameNonVisible =
+            (isVisibilityChange &&
+                oldVisibility == Visibility.Visible &&
+                newVisibility != Visibility.Visible) ||
+            (isIsVisibleChange &&
+                (bool)args.OldValue! &&
+                !(bool)args.NewValue!);
+        if (becameNonVisible && Root is UIRoot motionRoot)
+        {
+            motionRoot.Motion.CancelMotionForSubtree(this);
+        }
+
         bool layoutParticipationChanged = isVisibilityChange &&
             (oldVisibility == Visibility.Collapsed) != (newVisibility == Visibility.Collapsed);
         bool expandingFromCollapsed = layoutParticipationChanged &&

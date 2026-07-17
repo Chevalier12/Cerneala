@@ -1,4 +1,5 @@
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Motion.Properties;
 
@@ -14,7 +15,7 @@ public sealed class MotionPropertyStore
 
     public MotionPropertyBinding<T> GetOrCreateBinding<T>(
         Core.MotionSystem motion,
-        Elements.UIElement target,
+        UIElement target,
         UiProperty<T> property)
     {
         ArgumentNullException.ThrowIfNull(motion);
@@ -37,6 +38,45 @@ public sealed class MotionPropertyStore
         MotionPropertyBinding<T> binding = new(motion, target, property, value);
         bindings[key] = binding;
         return binding;
+    }
+
+    internal void RemoveBindings(UIElement target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        MotionPropertyBinding[] targetBindings = bindings
+            .Where(pair => ReferenceEquals(pair.Key.Target, target))
+            .Select(pair => pair.Value)
+            .ToArray();
+
+        foreach (MotionPropertyBinding binding in targetBindings)
+        {
+            binding.Dispose();
+        }
+    }
+
+    internal void CancelBindings(UIElement target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        MotionPropertyBinding[] targetBindings = bindings
+            .Where(pair => ReferenceEquals(pair.Key.Target, target))
+            .Select(pair => pair.Value)
+            .ToArray();
+
+        foreach (MotionPropertyBinding binding in targetBindings)
+        {
+            binding.Clear();
+        }
+    }
+
+    internal void RemoveBinding(MotionPropertyBinding binding)
+    {
+        ArgumentNullException.ThrowIfNull(binding);
+        MotionPropertyKey key = new(binding.Target, binding.PropertyUntyped);
+        if (bindings.TryGetValue(key, out MotionPropertyBinding? current) &&
+            ReferenceEquals(current, binding))
+        {
+            bindings.Remove(key);
+        }
     }
 
     internal void StageSet<T>(

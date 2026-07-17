@@ -1,0 +1,1388 @@
+<UserControl
+    Aspect="$ChapterMotion">
+    <UserControl.Resources>
+        <MotionClip
+            Name="ReactorReplay"
+            TargetType="Cerneala.Presentation.MotionChapterView">
+            @sequence
+            {
+                @set
+                {
+                    $MotionStatusText.Text = "ARMING / 00 NODES";
+                    $MotionClockText.Text = "T + 00:00.000";
+                    $MotionTransactionText.Text = "OPEN";
+                    $MotionPhaseIndex.Text = "00";
+                    $MotionFieldReadout.Text = "FIELD LOCKED";
+                    $MotionReactorState.Text = "STANDBY";
+                }
+                @parallel
+                {
+                    @animate with Tween(90ms)
+                    {
+                        @from
+                        {
+                            $MotionOrbTween.Opacity = current;
+                            $MotionOrbSpring.Opacity = current;
+                            $MotionOrbPresence.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionOrbTween.Opacity = 0;
+                            $MotionOrbSpring.Opacity = 0;
+                            $MotionOrbPresence.Opacity = 0;
+                        }
+                    }
+                    @animate with Tween(90ms)
+                    {
+                        @from
+                        {
+                            $MotionStarA.Opacity = current;
+                            $MotionStarB.Opacity = current;
+                            $MotionStarC.Opacity = current;
+                            $MotionStarD.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionStarA.Opacity = 0;
+                            $MotionStarB.Opacity = 0;
+                            $MotionStarC.Opacity = 0;
+                            $MotionStarD.Opacity = 0;
+                        }
+                    }
+                    @animate with Tween(90ms)
+                    {
+                        @from
+                        {
+                            $MotionActIgnition.Opacity = current;
+                            $MotionActOrbit.Opacity = current;
+                            $MotionActCommit.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionActIgnition.Opacity = 0.38;
+                            $MotionActOrbit.Opacity = 0.38;
+                            $MotionActCommit.Opacity = 0.38;
+                        }
+                    }
+                    @animate with Tween(90ms)
+                    {
+                        @from
+                        {
+                            $MotionCore.Scale = current;
+                            $MotionCoreHalo.Scale = current;
+                            $MotionCoreRing.Scale = current;
+                        }
+                        @to
+                        {
+                            $MotionCore.Scale = 0.72;
+                            $MotionCoreHalo.Scale = 0.68;
+                            $MotionCoreRing.Scale = 0.74;
+                        }
+                    }
+                }
+                @set
+                {
+                    $MotionPhaseIndex.Text = "01";
+                    $MotionStatusText.Text = "IGNITION / 04 NODES";
+                    $MotionReactorState.Text = "CLOCK PRIMED";
+                }
+                @parallel
+                {
+                    @animate with Spring(360, 25)
+                    {
+                        @from
+                        {
+                            $MotionCore.Scale = 0.72;
+                        }
+                        @to
+                        {
+                            $MotionCore.Scale = 1.08;
+                        }
+                    }
+                    @animate with Spring(300, 23)
+                    {
+                        @from
+                        {
+                            $MotionCoreHalo.Scale = 0.68;
+                        }
+                        @to
+                        {
+                            $MotionCoreHalo.Scale = 1;
+                        }
+                    }
+                    @animate with Tween(420ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionCoreHalo.Opacity = 0.08;
+                        }
+                        @to
+                        {
+                            $MotionCoreHalo.Opacity = 0.42;
+                        }
+                    }
+                    @animate with Spring(480, 31)
+                    {
+                        @from
+                        {
+                            $MotionCoreRing.Scale = 0.74;
+                        }
+                        @to
+                        {
+                            $MotionCoreRing.Scale = 1;
+                        }
+                    }
+                    @animate with Tween(260ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionActIgnition.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionActIgnition.Opacity = 1;
+                        }
+                    }
+                }
+                @set
+                {
+                    $MotionPhaseIndex.Text = "02";
+                    $MotionClockText.Text = "T + 00:00.620";
+                    $MotionStatusText.Text = "TRAJECTORIES / 15 NODES";
+                    $MotionFieldReadout.Text = "FIELD IN MOTION";
+                    $MotionReactorState.Text = "COMPOSING";
+                }
+                @parallel
+                {
+                    @keyframes duration 1780ms
+                    {
+                        @animate 0%..24% with EaseInOut
+                        {
+                            @from
+                            {
+                                $MotionOrbTween.TranslateX = -220;
+                                $MotionOrbTween.TranslateY = 0;
+                            }
+                            @to
+                            {
+                                $MotionOrbTween.TranslateX = 0;
+                                $MotionOrbTween.TranslateY = -118;
+                            }
+                        }
+                        @animate 24%..50% with EaseInOut
+                        {
+                            @from
+                            {
+                                $MotionOrbTween.TranslateX = 0;
+                                $MotionOrbTween.TranslateY = -118;
+                            }
+                            @to
+                            {
+                                $MotionOrbTween.TranslateX = 220;
+                                $MotionOrbTween.TranslateY = 0;
+                            }
+                        }
+                        @animate 50%..76% with EaseInOut
+                        {
+                            @from
+                            {
+                                $MotionOrbTween.TranslateX = 220;
+                                $MotionOrbTween.TranslateY = 0;
+                            }
+                            @to
+                            {
+                                $MotionOrbTween.TranslateX = 0;
+                                $MotionOrbTween.TranslateY = 118;
+                            }
+                        }
+                        @animate 76%..100% with EaseInOut
+                        {
+                            @from
+                            {
+                                $MotionOrbTween.TranslateX = 0;
+                                $MotionOrbTween.TranslateY = 118;
+                            }
+                            @to
+                            {
+                                $MotionOrbTween.TranslateX = -180;
+                                $MotionOrbTween.TranslateY = 30;
+                            }
+                        }
+                    }
+                    @animate with Tween(180ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionOrbTween.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionOrbTween.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(310, 19)
+                    {
+                        @from
+                        {
+                            $MotionOrbSpring.TranslateX = -42;
+                        }
+                        @to
+                        {
+                            $MotionOrbSpring.TranslateX = 166;
+                        }
+                    }
+                    @animate with Spring(420, 24)
+                    {
+                        @from
+                        {
+                            $MotionOrbSpring.TranslateY = 12;
+                        }
+                        @to
+                        {
+                            $MotionOrbSpring.TranslateY = 76;
+                        }
+                    }
+                    @animate with Spring(520, 30)
+                    {
+                        @from
+                        {
+                            $MotionOrbSpring.Scale = 0.35;
+                        }
+                        @to
+                        {
+                            $MotionOrbSpring.Scale = 1;
+                        }
+                    }
+                    @animate with Tween(280ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionOrbSpring.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionOrbSpring.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(560, 36)
+                    {
+                        @from
+                        {
+                            $MotionOrbPresence.TranslateX = 0;
+                        }
+                        @to
+                        {
+                            $MotionOrbPresence.TranslateX = -108;
+                        }
+                    }
+                    @animate with Spring(600, 38)
+                    {
+                        @from
+                        {
+                            $MotionOrbPresence.TranslateY = 0;
+                        }
+                        @to
+                        {
+                            $MotionOrbPresence.TranslateY = -82;
+                        }
+                    }
+                    @animate with Spring(440, 27)
+                    {
+                        @from
+                        {
+                            $MotionOrbPresence.Scale = 0.05;
+                        }
+                        @to
+                        {
+                            $MotionOrbPresence.Scale = 1;
+                        }
+                    }
+                    @animate with Tween(520ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionOrbPresence.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionOrbPresence.Opacity = 1;
+                        }
+                    }
+                    @animate with Tween(920ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarA.TranslateX = -80;
+                            $MotionStarA.TranslateY = -90;
+                        }
+                        @to
+                        {
+                            $MotionStarA.TranslateX = 720;
+                            $MotionStarA.TranslateY = 250;
+                        }
+                    }
+                    @animate with Tween(180ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionStarA.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionStarA.Opacity = 0.72;
+                        }
+                    }
+                    @animate with Tween(1180ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarB.TranslateX = -180;
+                            $MotionStarB.TranslateY = -120;
+                        }
+                        @to
+                        {
+                            $MotionStarB.TranslateX = 640;
+                            $MotionStarB.TranslateY = 280;
+                        }
+                    }
+                    @animate with Tween(240ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionStarB.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionStarB.Opacity = 0.82;
+                        }
+                    }
+                    @animate with Tween(1460ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarC.TranslateX = -280;
+                            $MotionStarC.TranslateY = -100;
+                        }
+                        @to
+                        {
+                            $MotionStarC.TranslateX = 520;
+                            $MotionStarC.TranslateY = 260;
+                        }
+                    }
+                    @animate with Tween(320ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionStarC.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionStarC.Opacity = 0.68;
+                        }
+                    }
+                    @animate with Tween(1020ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarD.TranslateX = -420;
+                            $MotionStarD.TranslateY = -150;
+                        }
+                        @to
+                        {
+                            $MotionStarD.TranslateX = 380;
+                            $MotionStarD.TranslateY = 220;
+                        }
+                    }
+                    @animate with Tween(220ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionStarD.Opacity = 0;
+                        }
+                        @to
+                        {
+                            $MotionStarD.Opacity = 0.74;
+                        }
+                    }
+                    @animate with Tween(90ms)
+                    {
+                        @from
+                        {
+                            $MotionActOrbit.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionActOrbit.Opacity = 1;
+                        }
+                    }
+                }
+                @set
+                {
+                    $MotionPhaseIndex.Text = "03";
+                    $MotionClockText.Text = "T + 00:02.400";
+                    $MotionStatusText.Text = "COMMITTING / 06 NODES";
+                    $MotionTransactionText.Text = "COMMITTING";
+                    $MotionReactorState.Text = "SETTLING";
+                }
+                @parallel
+                {
+                    @animate with Spring(620, 42)
+                    {
+                        @from
+                        {
+                            $MotionCore.Scale = 1.08;
+                        }
+                        @to
+                        {
+                            $MotionCore.Scale = 1;
+                        }
+                    }
+                    @animate with Tween(520ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionCoreHalo.Scale = 1;
+                            $MotionCoreHalo.Opacity = 0.42;
+                        }
+                        @to
+                        {
+                            $MotionCoreHalo.Scale = 1.28;
+                            $MotionCoreHalo.Opacity = 0.14;
+                        }
+                    }
+                    @animate with Tween(260ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $MotionActCommit.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionActCommit.Opacity = 1;
+                        }
+                    }
+                    @animate with Tween(180ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarA.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionStarA.Opacity = 0;
+                        }
+                    }
+                    @animate with Tween(220ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarB.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionStarB.Opacity = 0;
+                        }
+                    }
+                    @animate with Tween(260ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarC.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionStarC.Opacity = 0;
+                        }
+                    }
+                    @animate with Tween(200ms, EaseIn)
+                    {
+                        @from
+                        {
+                            $MotionStarD.Opacity = current;
+                        }
+                        @to
+                        {
+                            $MotionStarD.Opacity = 0;
+                        }
+                    }
+                }
+                @set
+                {
+                    $MotionClockText.Text = "T + 00:02.920";
+                    $MotionStatusText.Text = "SETTLED / GRAPH IDLE";
+                    $MotionTransactionText.Text = "COMMITTED";
+                    $MotionFieldReadout.Text = "FIELD STABLE";
+                    $MotionReactorState.Text = "AT REST";
+                }
+            }
+        </MotionClip>
+        <Aspect
+            Name="ChapterMotion"
+            TargetType="Cerneala.Presentation.MotionChapterView">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @parallel
+                    {
+                        @run $ReactorReplay as Playback;
+                        @animate with Tween(360ms, EaseOut)
+                        {
+                            @from
+                            {
+                                Opacity = 0.25;
+                            }
+                            @to
+                            {
+                                Opacity = 1;
+                            }
+                        }
+                        @animate with Spring(460, 38)
+                        {
+                            @from
+                            {
+                                TranslateY = 18;
+                            }
+                            @to
+                            {
+                                TranslateY = 0;
+                            }
+                        }
+                    }
+                }
+                @if value == Collapsed
+                {
+                    @cancel Playback;
+                }
+            }
+            @when $ReplayMotionButton.IsPressed
+            {
+                @run $ReactorReplay as Playback;
+            }
+        </Aspect>
+        <Aspect
+            Name="MotionReactorBackdrop"
+            Target="Control">
+            @template
+            {
+                <Grid
+                    ClipToBounds="True">
+                    <Grid
+                        Width="620"
+                        Height="380"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition
+                                Height="1*" />
+                            <RowDefinition
+                                Height="1*" />
+                            <RowDefinition
+                                Height="1*" />
+                            <RowDefinition
+                                Height="1*" />
+                            <RowDefinition
+                                Height="1*" />
+                            <RowDefinition
+                                Height="1*" />
+                            <RowDefinition
+                                Height="1*" />
+                            <RowDefinition
+                                Height="1*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                            <ColumnDefinition
+                                Width="1*" />
+                        </Grid.ColumnDefinitions>
+                        <Border
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.45" />
+                        <Border
+                            Grid.Row="5"
+                            Grid.Column="1"
+                            Width="2"
+                            Height="2"
+                            Background="$SlateBrush"
+                            Opacity="0.55" />
+                        <Border
+                            Grid.Row="2"
+                            Grid.Column="2"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.5" />
+                        <Border
+                            Grid.Row="7"
+                            Grid.Column="2"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.35" />
+                        <Border
+                            Grid.Row="0"
+                            Grid.Column="3"
+                            Width="2"
+                            Height="2"
+                            Background="$SlateBrush"
+                            Opacity="0.55" />
+                        <Border
+                            Grid.Row="4"
+                            Grid.Column="4"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.45" />
+                        <Border
+                            Grid.Row="2"
+                            Grid.Column="4"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.4" />
+                        <Border
+                            Grid.Row="6"
+                            Grid.Column="5"
+                            Width="2"
+                            Height="2"
+                            Background="$SlateBrush"
+                            Opacity="0.55" />
+                        <Border
+                            Grid.Row="1"
+                            Grid.Column="6"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.45" />
+                        <Border
+                            Grid.Row="5"
+                            Grid.Column="6"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.4" />
+                        <Border
+                            Grid.Row="3"
+                            Grid.Column="7"
+                            Width="2"
+                            Height="2"
+                            Background="$SlateBrush"
+                            Opacity="0.6" />
+                        <Border
+                            Grid.Row="7"
+                            Grid.Column="7"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.35" />
+                        <Border
+                            Grid.Row="0"
+                            Grid.Column="8"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.45" />
+                        <Border
+                            Grid.Row="4"
+                            Grid.Column="8"
+                            Width="2"
+                            Height="2"
+                            Background="$SlateBrush"
+                            Opacity="0.55" />
+                        <Border
+                            Grid.Row="2"
+                            Grid.Column="9"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.4" />
+                        <Border
+                            Grid.Row="6"
+                            Grid.Column="9"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.45" />
+                        <Border
+                            Grid.Row="1"
+                            Grid.Column="10"
+                            Width="2"
+                            Height="2"
+                            Background="$SlateBrush"
+                            Opacity="0.6" />
+                        <Border
+                            Grid.Row="5"
+                            Grid.Column="11"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.4" />
+                        <Border
+                            Grid.Row="3"
+                            Grid.Column="0"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.45" />
+                        <Border
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.4" />
+                        <Border
+                            Grid.Row="4"
+                            Grid.Column="3"
+                            Width="2"
+                            Height="2"
+                            Background="$SlateBrush"
+                            Opacity="0.55" />
+                        <Border
+                            Grid.Row="7"
+                            Grid.Column="4"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.35" />
+                        <Border
+                            Grid.Row="3"
+                            Grid.Column="5"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.45" />
+                        <Border
+                            Grid.Row="0"
+                            Grid.Column="7"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.45" />
+                        <Border
+                            Grid.Row="6"
+                            Grid.Column="8"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.4" />
+                        <Border
+                            Grid.Row="4"
+                            Grid.Column="10"
+                            Width="2"
+                            Height="2"
+                            Background="$SlateBrush"
+                            Opacity="0.55" />
+                        <Border
+                            Grid.Row="7"
+                            Grid.Column="11"
+                            Width="1"
+                            Height="1"
+                            Background="$SlateBrush"
+                            Opacity="0.35" />
+                    </Grid>
+                    <Border
+                        Height="1"
+                        Background="$LineBrush"
+                        Margin="28,0,28,0"
+                        VerticalAlignment="Center" />
+                    <Border
+                        Width="1"
+                        Background="$LineBrush"
+                        Margin="0,22,0,22"
+                        HorizontalAlignment="Center" />
+                    <Ellipse
+                        Width="470"
+                        Height="292"
+                        Stroke="$LineStrongBrush"
+                        StrokeThickness="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                    <Ellipse
+                        Width="360"
+                        Height="218"
+                        Stroke="$LineBrush"
+                        StrokeThickness="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                    <Ellipse
+                        Width="232"
+                        Height="232"
+                        Stroke="$LineBrush"
+                        StrokeThickness="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                    <Ellipse
+                        Width="156"
+                        Height="156"
+                        Stroke="$CyanBrush"
+                        StrokeThickness="1"
+                        Opacity="0.82"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                    <Grid
+                        Width="470"
+                        Height="292"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                        <Border
+                            Width="5"
+                            Height="5"
+                            Background="$CyanBrush"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center" />
+                        <Border
+                            Width="5"
+                            Height="5"
+                            Background="$PinkBrush"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center" />
+                        <Border
+                            Width="5"
+                            Height="5"
+                            Background="$LimeBrush"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top" />
+                        <Border
+                            Width="5"
+                            Height="5"
+                            Background="$SlateBrush"
+                            Opacity="0.55"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Bottom" />
+                    </Grid>
+                </Grid>
+            }
+        </Aspect>
+        <Aspect
+            Name="ShootingStar"
+            Target="Control">
+            @default
+            {
+                Width = 72;
+                Height = 32;
+                Opacity = 0;
+            }
+            @template
+            {
+                <Grid
+                    ClipToBounds="True">
+                    <Border
+                        Width="2"
+                        Height="2"
+                        Background="$owner.Background"
+                        Opacity="0.18"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="2,2,0,0" />
+                    <Border
+                        Width="3"
+                        Height="2"
+                        Background="$owner.Background"
+                        Opacity="0.24"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="11,6,0,0" />
+                    <Border
+                        Width="4"
+                        Height="2"
+                        Background="$owner.Background"
+                        Opacity="0.32"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="20,10,0,0" />
+                    <Border
+                        Width="6"
+                        Height="2"
+                        Background="$owner.Background"
+                        Opacity="0.44"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="29,14,0,0" />
+                    <Border
+                        Width="9"
+                        Height="2"
+                        Background="$owner.Background"
+                        Opacity="0.58"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="38,18,0,0" />
+                    <Border
+                        Width="12"
+                        Height="3"
+                        Background="$owner.Background"
+                        Opacity="0.76"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="47,22,0,0" />
+                    <Ellipse
+                        Width="8"
+                        Height="8"
+                        Fill="$owner.Background"
+                        Stroke="$PaperBrush"
+                        StrokeThickness="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,2,1" />
+                </Grid>
+            }
+        </Aspect>
+    </UserControl.Resources>
+    <Grid>
+        <Grid
+            Margin="40,28,40,30">
+            <Grid.RowDefinitions>
+                <RowDefinition
+                    Height="102" />
+                <RowDefinition
+                    Height="*" />
+            </Grid.RowDefinitions>
+            <Grid
+                Grid.Row="0">
+                <StackPanel
+                    VerticalAlignment="Top">
+                    <TextBlock
+                        Text="05 / MOTION"
+                        FontFamily="Cascadia Mono SemiBold"
+                        FontSize="10"
+                        Foreground="$PinkBrush" />
+                    <TextBlock
+                        Text="Motion is time, made visible."
+                        FontFamily="Bahnschrift SemiBold"
+                        FontSize="40"
+                        Margin="0,8,0,0" />
+                    <TextBlock
+                        Text="A single frame clock turns intent into trajectories, interruption, presence, and rest."
+                        FontSize="14"
+                        Foreground="$SlateBrush"
+                        Margin="0,7,0,0" />
+                </StackPanel>
+                <StackPanel
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center">
+                    <StackPanel
+                        Margin="0,0,18,0">
+                        <TextBlock
+                            Name="MotionClockText"
+                            Text="T + 00:00.000"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Foreground="$CyanBrush"
+                            HorizontalAlignment="Right" />
+                        <TextBlock
+                            Name="MotionStatusText"
+                            Text="READY / GRAPH IDLE"
+                            FontFamily="Cascadia Mono"
+                            FontSize="9"
+                            Foreground="$SlateBrush"
+                            HorizontalAlignment="Right"
+                            Margin="0,6,0,0" />
+                    </StackPanel>
+                    <Button
+                        Name="ReplayMotionButton"
+                        Aspect="$LimeButton"
+                        Content="IGNITE  ->"
+                        Padding="20,11,20,11" />
+                </StackPanel>
+            </Grid>
+            <Border
+                Grid.Row="1"
+                Background="$PanelAltBrush"
+                BorderBrush="$LineStrongBrush"
+                BorderThickness="1">
+                <Grid
+                    ClipToBounds="True">
+                    <Grid.RowDefinitions>
+                        <RowDefinition
+                            Height="48" />
+                        <RowDefinition
+                            Height="*" />
+                        <RowDefinition
+                            Height="62" />
+                    </Grid.RowDefinitions>
+                    <Border
+                        Grid.Row="0"
+                        Background="$PanelBrush"
+                        BorderBrush="$LineBrush"
+                        BorderThickness="0,0,0,1"
+                        Padding="22,0,22,0">
+                        <Grid>
+                            <StackPanel
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="TEMPORAL REACTOR / LIVE COMPOSITION"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="9"
+                                    Foreground="$PaperBrush" />
+                            </StackPanel>
+                            <StackPanel
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="REDUCED MOTION"
+                                    FontFamily="Cascadia Mono"
+                                    FontSize="8"
+                                    Foreground="$SlateDimBrush"
+                                    Margin="0,0,8,0" />
+                                <TextBlock
+                                    Text="POLICY / FULL"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="9"
+                                    Foreground="$LimeBrush" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <Grid
+                        Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition
+                                Width="*" />
+                            <ColumnDefinition
+                                Width="292" />
+                        </Grid.ColumnDefinitions>
+                        <Grid
+                            Grid.Column="0"
+                            ClipToBounds="True">
+                            <Control
+                                Aspect="$MotionReactorBackdrop" />
+                            <Control
+                                Name="MotionStarA"
+                                Aspect="$ShootingStar"
+                                Background="$PaperBrush"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="52,34,0,0" />
+                            <Control
+                                Name="MotionStarB"
+                                Aspect="$ShootingStar"
+                                Background="$CyanBrush"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="186,18,0,0" />
+                            <Control
+                                Name="MotionStarC"
+                                Aspect="$ShootingStar"
+                                Background="$PinkBrush"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="408,50,0,0" />
+                            <Control
+                                Name="MotionStarD"
+                                Aspect="$ShootingStar"
+                                Background="$LimeBrush"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="590,12,0,0" />
+                            <TextBlock
+                                Text="ORBITAL FIELD / 04"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="8"
+                                Foreground="$SlateDimBrush"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="22,18,0,0" />
+                            <TextBlock
+                                Name="MotionFieldReadout"
+                                Text="FIELD LOCKED"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="8"
+                                Foreground="$LimeBrush"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="0,18,22,0" />
+                            <Ellipse
+                                Name="MotionCoreHalo"
+                                Width="168"
+                                Height="168"
+                                Stroke="$CyanBrush"
+                                StrokeThickness="1"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Opacity="0.18" />
+                            <Ellipse
+                                Name="MotionCoreRing"
+                                Width="112"
+                                Height="112"
+                                Stroke="$PaperBrush"
+                                StrokeThickness="1"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Opacity="0.42" />
+                            <Ellipse
+                                Name="MotionCore"
+                                Width="70"
+                                Height="70"
+                                Fill="$CyanWashBrush"
+                                Stroke="$CyanBrush"
+                                StrokeThickness="3"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                            <Ellipse
+                                Width="20"
+                                Height="20"
+                                Fill="$PaperBrush"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                            <Ellipse
+                                Name="MotionOrbTween"
+                                Width="22"
+                                Height="22"
+                                Fill="$CyanBrush"
+                                Stroke="$PaperBrush"
+                                StrokeThickness="2"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                            <Ellipse
+                                Name="MotionOrbSpring"
+                                Width="18"
+                                Height="18"
+                                Fill="$PinkBrush"
+                                Stroke="$PaperBrush"
+                                StrokeThickness="1"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                            <Ellipse
+                                Name="MotionOrbPresence"
+                                Width="16"
+                                Height="16"
+                                Fill="$LimeBrush"
+                                Stroke="$PaperBrush"
+                                StrokeThickness="1"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Margin="0,148,0,0">
+                                <TextBlock
+                                    Text="FRAME CLOCK"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="8"
+                                    Foreground="$SlateDimBrush"
+                                    HorizontalAlignment="Center" />
+                                <TextBlock
+                                    Name="MotionReactorState"
+                                    Text="STANDBY"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="10"
+                                    Foreground="$PaperBrush"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,5,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <Border
+                            Grid.Column="1"
+                            Background="$PanelBrush"
+                            BorderBrush="$LineBrush"
+                            BorderThickness="1,0,0,0"
+                            Padding="22,20,22,18">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition
+                                        Height="20" />
+                                    <RowDefinition
+                                        Height="72" />
+                                    <RowDefinition
+                                        Height="*" />
+                                    <RowDefinition
+                                        Height="54" />
+                                </Grid.RowDefinitions>
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Text="SEQUENCE / THREE ACTS"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="9"
+                                    Foreground="$PinkBrush" />
+                                <Grid
+                                    Grid.Row="1"
+                                    Margin="0,10,0,0">
+                                    <TextBlock
+                                        Name="MotionPhaseIndex"
+                                        Text="00"
+                                        FontFamily="Bahnschrift SemiBold"
+                                        FontSize="52"
+                                        Foreground="$PaperBrush" />
+                                    <StackPanel
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center">
+                                        <TextBlock
+                                            Text="TRANSACTION"
+                                            FontFamily="Cascadia Mono"
+                                            FontSize="8"
+                                            Foreground="$SlateDimBrush"
+                                            HorizontalAlignment="Right" />
+                                        <TextBlock
+                                            Name="MotionTransactionText"
+                                            Text="COMMITTED"
+                                            FontFamily="Cascadia Mono SemiBold"
+                                            FontSize="9"
+                                            Foreground="$LimeBrush"
+                                            HorizontalAlignment="Right"
+                                            Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                                <StackPanel
+                                    Grid.Row="2"
+                                    Margin="0,14,0,0">
+                                    <Border
+                                        Name="MotionActIgnition"
+                                        BorderBrush="$CyanBrush"
+                                        BorderThickness="3,0,0,0"
+                                        Padding="15,9,0,9"
+                                        Opacity="0.38">
+                                        <StackPanel>
+                                            <TextBlock
+                                                Text="01 / IGNITION"
+                                                FontFamily="Cascadia Mono SemiBold"
+                                                FontSize="9"
+                                                Foreground="$CyanBrush" />
+                                            <TextBlock
+                                                Text="A spring wakes the shared clock."
+                                                FontSize="11"
+                                                Foreground="$SlateBrush"
+                                                Margin="0,5,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border
+                                        Name="MotionActOrbit"
+                                        BorderBrush="$PinkBrush"
+                                        BorderThickness="3,0,0,0"
+                                        Padding="15,9,0,9"
+                                        Margin="0,6,0,0"
+                                        Opacity="0.38">
+                                        <StackPanel>
+                                            <TextBlock
+                                                Text="02 / TRAJECTORY"
+                                                FontFamily="Cascadia Mono SemiBold"
+                                                FontSize="9"
+                                                Foreground="$PinkBrush" />
+                                            <TextBlock
+                                                Text="Keyframes bend values through space."
+                                                FontSize="11"
+                                                Foreground="$SlateBrush"
+                                                Margin="0,5,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border
+                                        Name="MotionActCommit"
+                                        BorderBrush="$LimeBrush"
+                                        BorderThickness="3,0,0,0"
+                                        Padding="15,9,0,9"
+                                        Margin="0,6,0,0"
+                                        Opacity="0.38">
+                                        <StackPanel>
+                                            <TextBlock
+                                                Text="03 / COMMIT"
+                                                FontFamily="Cascadia Mono SemiBold"
+                                                FontSize="9"
+                                                Foreground="$LimeBrush" />
+                                            <TextBlock
+                                                Text="Every channel settles in one frame."
+                                                FontSize="11"
+                                                Foreground="$SlateBrush"
+                                                Margin="0,5,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock
+                                    Grid.Row="3"
+                                    Text="Replay is interruptible. New intent cancels and redirects the active graph without leaking nodes."
+                                    FontSize="11"
+                                    Foreground="$SlateBrush"
+                                    TextWrapping="Wrap" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    <Border
+                        Grid.Row="2"
+                        Background="$PanelBrush"
+                        BorderBrush="$LineBrush"
+                        BorderThickness="0,1,0,0"
+                        Padding="22,0,22,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition
+                                    Width="1*" />
+                                <ColumnDefinition
+                                    Width="1*" />
+                                <ColumnDefinition
+                                    Width="1*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel
+                                Grid.Column="0"
+                                VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="TWEEN / CYAN"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="8"
+                                    Foreground="$CyanBrush" />
+                                <TextBlock
+                                    Text="Deterministic keyframed orbit"
+                                    FontSize="10"
+                                    Foreground="$SlateBrush"
+                                    Margin="0,4,0,0" />
+                            </StackPanel>
+                            <StackPanel
+                                Grid.Column="1"
+                                VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="SPRING / PINK"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="8"
+                                    Foreground="$PinkBrush" />
+                                <TextBlock
+                                    Text="Overshoot with retained velocity"
+                                    FontSize="10"
+                                    Foreground="$SlateBrush"
+                                    Margin="0,4,0,0" />
+                            </StackPanel>
+                            <StackPanel
+                                Grid.Column="2"
+                                VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="PRESENCE / LIME"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="8"
+                                    Foreground="$LimeBrush" />
+                                <TextBlock
+                                    Text="Enter, settle, and remain"
+                                    FontSize="10"
+                                    Foreground="$SlateBrush"
+                                    Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

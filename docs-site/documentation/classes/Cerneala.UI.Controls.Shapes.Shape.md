@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/Shapes/Shape.cs`
 
-Provides the abstract base class for retained UI controls that render geometry with fill, stroke, opacity, transform, and shadow settings.
+Provides the abstract base class for retained UI controls that render geometry with fill, stroke, opacity, and transform settings.
 
 ```csharp
 public abstract class Shape : Control
@@ -38,7 +38,7 @@ Rectangle rectangle = new()
 
 `Shape` centralizes the rendering behavior for geometry-backed controls. Derived classes provide geometry by implementing `ResolveGeometry`; the base class measures from geometry bounds and renders rectangle, ellipse, and path geometry through the retained drawing context.
 
-`Fill`, `Stroke`, `RenderTransform`, `Opacity`, and `Shadow` affect rendering. `StrokeThickness` and `Geometry` affect both measure and rendering. `StrokeThickness` must be finite and greater than or equal to zero. `Opacity` must be finite and between `0` and `1`. `RenderTransform` cannot be `null`.
+`Fill`, `Stroke`, `RenderTransform`, and `Opacity` affect rendering. `StrokeThickness` and `Geometry` affect both measure and rendering. `StrokeThickness` must be finite and greater than or equal to zero. `Opacity` must be finite and between `0` and `1`. `RenderTransform` cannot be `null`.
 
 Rendering exits early when `Opacity` is `0` or less, or when the resolved geometry is `null`. Rectangle and ellipse geometry can render both fill and stroke; path geometry renders connected line segments when a visible stroke is present.
 
@@ -52,7 +52,6 @@ Rendering exits early when `Opacity` is `0` or less, or when the resolved geomet
 | `GeometryProperty` | Identifies the `Geometry` UI property. |
 | `RenderTransformProperty` | Identifies the shape-specific `RenderTransform` UI property. |
 | `OpacityProperty` | Identifies the shape-specific `Opacity` UI property. |
-| `ShadowProperty` | Identifies the `Shadow` UI property. |
 
 ## Properties
 
@@ -64,7 +63,6 @@ Rendering exits early when `Opacity` is `0` or less, or when the resolved geomet
 | `Geometry` | Gets or sets explicit geometry used for measuring and rendering when a derived class resolves it. |
 | `RenderTransform` | Gets or sets the transform applied to rendered shape bounds or path points. |
 | `Opacity` | Gets or sets the alpha multiplier applied to rendered fill and stroke colors. |
-| `Shadow` | Gets or sets the shadow effect associated with the shape. |
 
 ## Methods
 

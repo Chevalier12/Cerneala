@@ -39,11 +39,6 @@ public abstract class Shape : Control
         typeof(Shape),
         new UiPropertyMetadata<float>(1, UiPropertyOptions.AffectsRender, validateValue: value => float.IsFinite(value) && value >= 0 && value <= 1));
 
-    public static readonly UiProperty<ShadowEffect?> ShadowProperty = UiProperty<ShadowEffect?>.Register(
-        nameof(Shadow),
-        typeof(Shape),
-        new UiPropertyMetadata<ShadowEffect?>(null, UiPropertyOptions.AffectsRender));
-
     public Brush? Fill
     {
         get => GetValue(FillProperty);
@@ -78,12 +73,6 @@ public abstract class Shape : Control
     {
         get => GetValue(OpacityProperty);
         set => SetValue(OpacityProperty, value);
-    }
-
-    public ShadowEffect? Shadow
-    {
-        get => GetValue(ShadowProperty);
-        set => SetValue(ShadowProperty, value);
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)

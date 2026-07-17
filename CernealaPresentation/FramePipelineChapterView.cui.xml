@@ -1,0 +1,572 @@
+<UserControl
+    Aspect="$ChapterMotion">
+    <UserControl.Resources>
+        <MotionClip
+            Name="PipelineReplay"
+            TargetType="Cerneala.Presentation.FramePipelineChapterView">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(80ms)
+                    {
+                        @from
+                        {
+                            $PipelineRelay.Opacity = current;
+                            $PipelineInput.Opacity = current;
+                            $PipelineState.Opacity = current;
+                            $PipelineMeasure.Opacity = current;
+                            $PipelineArrange.Opacity = current;
+                            $PipelineCache.Opacity = current;
+                            $PipelineHit.Opacity = current;
+                            $PipelineBackend.Opacity = current;
+                        }
+                        @to
+                        {
+                            $PipelineRelay.Opacity = 0.24;
+                            $PipelineInput.Opacity = 0.24;
+                            $PipelineState.Opacity = 0.24;
+                            $PipelineMeasure.Opacity = 0.24;
+                            $PipelineArrange.Opacity = 0.24;
+                            $PipelineCache.Opacity = 0.24;
+                            $PipelineHit.Opacity = 0.24;
+                            $PipelineBackend.Opacity = 0.24;
+                        }
+                    }
+                    @animate with Tween(80ms)
+                    {
+                        @from
+                        {
+                            $PipelineRelay.Scale = current;
+                            $PipelineInput.Scale = current;
+                            $PipelineState.Scale = current;
+                            $PipelineMeasure.Scale = current;
+                            $PipelineArrange.Scale = current;
+                            $PipelineCache.Scale = current;
+                            $PipelineHit.Scale = current;
+                            $PipelineBackend.Scale = current;
+                        }
+                        @to
+                        {
+                            $PipelineRelay.Scale = 0.94;
+                            $PipelineInput.Scale = 0.94;
+                            $PipelineState.Scale = 0.94;
+                            $PipelineMeasure.Scale = 0.94;
+                            $PipelineArrange.Scale = 0.94;
+                            $PipelineCache.Scale = 0.94;
+                            $PipelineHit.Scale = 0.94;
+                            $PipelineBackend.Scale = 0.94;
+                        }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(150ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $PipelineRelay.Opacity = 0.24;
+                        }
+                        @to
+                        {
+                            $PipelineRelay.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(700, 45)
+                    {
+                        @from
+                        {
+                            $PipelineRelay.Scale = 0.94;
+                        }
+                        @to
+                        {
+                            $PipelineRelay.Scale = 1;
+                        }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(150ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $PipelineInput.Opacity = 0.24;
+                        }
+                        @to
+                        {
+                            $PipelineInput.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(700, 45)
+                    {
+                        @from
+                        {
+                            $PipelineInput.Scale = 0.94;
+                        }
+                        @to
+                        {
+                            $PipelineInput.Scale = 1;
+                        }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(150ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $PipelineState.Opacity = 0.24;
+                        }
+                        @to
+                        {
+                            $PipelineState.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(700, 45)
+                    {
+                        @from
+                        {
+                            $PipelineState.Scale = 0.94;
+                        }
+                        @to
+                        {
+                            $PipelineState.Scale = 1;
+                        }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(150ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $PipelineMeasure.Opacity = 0.24;
+                        }
+                        @to
+                        {
+                            $PipelineMeasure.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(700, 45)
+                    {
+                        @from
+                        {
+                            $PipelineMeasure.Scale = 0.94;
+                        }
+                        @to
+                        {
+                            $PipelineMeasure.Scale = 1;
+                        }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(150ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $PipelineArrange.Opacity = 0.24;
+                        }
+                        @to
+                        {
+                            $PipelineArrange.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(700, 45)
+                    {
+                        @from
+                        {
+                            $PipelineArrange.Scale = 0.94;
+                        }
+                        @to
+                        {
+                            $PipelineArrange.Scale = 1;
+                        }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(150ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $PipelineCache.Opacity = 0.24;
+                        }
+                        @to
+                        {
+                            $PipelineCache.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(700, 45)
+                    {
+                        @from
+                        {
+                            $PipelineCache.Scale = 0.94;
+                        }
+                        @to
+                        {
+                            $PipelineCache.Scale = 1;
+                        }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(150ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $PipelineHit.Opacity = 0.24;
+                        }
+                        @to
+                        {
+                            $PipelineHit.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(700, 45)
+                    {
+                        @from
+                        {
+                            $PipelineHit.Scale = 0.94;
+                        }
+                        @to
+                        {
+                            $PipelineHit.Scale = 1;
+                        }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(150ms, EaseOut)
+                    {
+                        @from
+                        {
+                            $PipelineBackend.Opacity = 0.24;
+                        }
+                        @to
+                        {
+                            $PipelineBackend.Opacity = 1;
+                        }
+                    }
+                    @animate with Spring(700, 45)
+                    {
+                        @from
+                        {
+                            $PipelineBackend.Scale = 0.94;
+                        }
+                        @to
+                        {
+                            $PipelineBackend.Scale = 1;
+                        }
+                    }
+                }
+            }
+        </MotionClip>
+        <Aspect
+            Name="ChapterMotion"
+            TargetType="Cerneala.Presentation.FramePipelineChapterView">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @parallel
+                    {
+                        @run $PipelineReplay as Playback;
+                        @animate with Tween(360ms, EaseOut)
+                        {
+                            @from
+                            {
+                                Opacity = 0.25;
+                            }
+                            @to
+                            {
+                                Opacity = 1;
+                            }
+                        }
+                        @animate with Spring(460, 38)
+                        {
+                            @from
+                            {
+                                TranslateY = 18;
+                            }
+                            @to
+                            {
+                                TranslateY = 0;
+                            }
+                        }
+                    }
+                }
+                @if value == Collapsed
+                {
+                    @cancel Playback;
+                }
+            }
+            @when $RunPipelineButton.IsPressed
+            {
+                @run $PipelineReplay as Playback;
+            }
+        </Aspect>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel
+            Margin="46,38,46,42">
+            <TextBlock
+                Text="07 / FRAME PIPELINE"
+                FontFamily="Cascadia Mono SemiBold"
+                FontSize="11"
+                Foreground="$CyanBrush" />
+            <TextBlock
+                Text="One host frame. Dirty work only."
+                FontFamily="Bahnschrift SemiBold"
+                FontSize="45"
+                Margin="0,12,0,0" />
+            <TextBlock
+                Text="Relay drains a bounded FIFO snapshot, input dispatches, state settles, layout runs only where required, caches refresh independently, and the committed command stream reaches the backend."
+                FontSize="16"
+                Foreground="$SlateBrush"
+                TextWrapping="Wrap"
+                Margin="0,14,80,0" />
+            <Grid
+                Margin="0,28,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition
+                        Height="Auto" />
+                    <RowDefinition
+                        Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition
+                        Width="1*" />
+                    <ColumnDefinition
+                        Width="1*" />
+                    <ColumnDefinition
+                        Width="1*" />
+                    <ColumnDefinition
+                        Width="1*" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Name="PipelineRelay"
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Background="$PinkWashBrush"
+                    BorderBrush="$PinkBrush"
+                    BorderThickness="1"
+                    Padding="17"
+                    Margin="0,0,7,7">
+                    <StackPanel>
+                        <TextBlock
+                            Text="RL"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="20"
+                            Foreground="$PinkBrush" />
+                        <TextBlock
+                            Text="RELAY"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Margin="0,9,0,0" />
+                        <TextBlock
+                            Text="Cross-thread work drains."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,5,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border
+                    Name="PipelineInput"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Background="$CyanWashBrush"
+                    BorderBrush="$CyanBrush"
+                    BorderThickness="1"
+                    Padding="17"
+                    Margin="7,0,7,7">
+                    <StackPanel>
+                        <TextBlock
+                            Text="IN"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="20"
+                            Foreground="$CyanBrush" />
+                        <TextBlock
+                            Text="INPUT"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Margin="0,9,0,0" />
+                        <TextBlock
+                            Text="Routes and commands."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,5,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border
+                    Name="PipelineState"
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Background="$LimeWashBrush"
+                    BorderBrush="$LimeBrush"
+                    BorderThickness="1"
+                    Padding="17"
+                    Margin="7,0,7,7">
+                    <StackPanel>
+                        <TextBlock
+                            Text="ST"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="20"
+                            Foreground="$LimeBrush" />
+                        <TextBlock
+                            Text="STATE"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Margin="0,9,0,0" />
+                        <TextBlock
+                            Text="Aspects and inheritance."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,5,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border
+                    Name="PipelineMeasure"
+                    Grid.Row="0"
+                    Grid.Column="3"
+                    Background="$OrangeWashBrush"
+                    BorderBrush="$OrangeBrush"
+                    BorderThickness="1"
+                    Padding="17"
+                    Margin="7,0,0,7">
+                    <StackPanel>
+                        <TextBlock
+                            Text="ME"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="20"
+                            Foreground="$OrangeBrush" />
+                        <TextBlock
+                            Text="MEASURE"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Margin="0,9,0,0" />
+                        <TextBlock
+                            Text="Desired size resolves."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,5,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border
+                    Name="PipelineArrange"
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Background="$OrangeWashBrush"
+                    BorderBrush="$OrangeBrush"
+                    BorderThickness="1"
+                    Padding="17"
+                    Margin="0,7,7,0">
+                    <StackPanel>
+                        <TextBlock
+                            Text="AR"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="20"
+                            Foreground="$OrangeBrush" />
+                        <TextBlock
+                            Text="ARRANGE"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Margin="0,9,0,0" />
+                        <TextBlock
+                            Text="Final bounds commit."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,5,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border
+                    Name="PipelineCache"
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Background="$PinkWashBrush"
+                    BorderBrush="$PinkBrush"
+                    BorderThickness="1"
+                    Padding="17"
+                    Margin="7,7,7,0">
+                    <StackPanel>
+                        <TextBlock
+                            Text="RC"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="20"
+                            Foreground="$PinkBrush" />
+                        <TextBlock
+                            Text="RENDER CACHE"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Margin="0,9,0,0" />
+                        <TextBlock
+                            Text="Dirty entries refresh."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,5,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border
+                    Name="PipelineHit"
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Background="$CyanWashBrush"
+                    BorderBrush="$CyanBrush"
+                    BorderThickness="1"
+                    Padding="17"
+                    Margin="7,7,7,0">
+                    <StackPanel>
+                        <TextBlock
+                            Text="HT"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="20"
+                            Foreground="$CyanBrush" />
+                        <TextBlock
+                            Text="HIT TEST"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Margin="0,9,0,0" />
+                        <TextBlock
+                            Text="Routes become current."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,5,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border
+                    Name="PipelineBackend"
+                    Grid.Row="1"
+                    Grid.Column="3"
+                    Background="$LimeWashBrush"
+                    BorderBrush="$LimeBrush"
+                    BorderThickness="1"
+                    Padding="17"
+                    Margin="7,7,0,0">
+                    <StackPanel>
+                        <TextBlock
+                            Text="BE"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="20"
+                            Foreground="$LimeBrush" />
+                        <TextBlock
+                            Text="BACKEND"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Margin="0,9,0,0" />
+                        <TextBlock
+                            Text="Command stream draws."
+                            FontSize="12"
+                            Foreground="$SlateBrush"
+                            Margin="0,5,0,0" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+            <Button
+                Name="RunPipelineButton"
+                Aspect="$LimeButton"
+                Content="RUN ONE FRAME"
+                HorizontalAlignment="Left"
+                Margin="0,22,0,0" />
+        </StackPanel>
+    </Grid>
+</UserControl>

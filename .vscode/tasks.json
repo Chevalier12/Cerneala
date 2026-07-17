@@ -19,6 +19,23 @@
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "label": "build cerneala presentation",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/CernealaPresentation/CernealaPresentation.csproj"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "MSBuildEnableWorkloadResolver": "false"
+        }
+      },
+      "problemMatcher": "$msCompile",
+      "group": "build"
     }
   ]
 }

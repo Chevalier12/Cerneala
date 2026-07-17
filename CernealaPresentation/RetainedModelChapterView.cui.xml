@@ -1,0 +1,161 @@
+<UserControl
+    Aspect="$PageReveal">
+    <Grid>
+        <StackPanel
+            Margin="46,38,46,42">
+            <TextBlock
+                Text="02 / RETAINED MODEL"
+                FontFamily="Cascadia Mono SemiBold"
+                FontSize="11"
+                Foreground="$PinkBrush" />
+            <TextBlock
+                Text="The interface remembers."
+                FontFamily="Bahnschrift SemiBold"
+                FontSize="45"
+                Margin="0,12,0,0" />
+            <TextBlock
+                Text="Cerneala keeps a logical tree for ownership and inherited state, plus a visual tree for layout, rendering, input, and generated template parts."
+                FontSize="16"
+                Foreground="$SlateBrush"
+                TextWrapping="Wrap"
+                Margin="0,14,80,0" />
+            <Grid
+                Margin="0,30,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition
+                        Width="1.1*" />
+                    <ColumnDefinition
+                        Width="0.9*" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Grid.Column="0"
+                    Background="$PanelAltBrush"
+                    BorderBrush="$LineStrongBrush"
+                    BorderThickness="1"
+                    Padding="22"
+                    Margin="0,0,14,0">
+                    <StackPanel>
+                        <TextBlock
+                            Text="LIVE ELEMENT TREE"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="10"
+                            Foreground="$CyanBrush" />
+                        <Border
+                            Background="$CyanWashBrush"
+                            BorderBrush="$CyanBrush"
+                            BorderThickness="2,0,0,0"
+                            Padding="14,11,14,11"
+                            Margin="0,16,0,0">
+                            <TextBlock
+                                Text="Window  #MainWindow"
+                                FontFamily="Cascadia Mono"
+                                FontSize="12" />
+                        </Border>
+                        <Border
+                            Background="$PanelBrush"
+                            BorderBrush="$LineBrush"
+                            BorderThickness="2,0,0,0"
+                            Padding="14,11,14,11"
+                            Margin="22,7,0,0">
+                            <TextBlock
+                                Text="Grid  #AppShell"
+                                FontFamily="Cascadia Mono"
+                                FontSize="12" />
+                        </Border>
+                        <Border
+                            Background="$PinkWashBrush"
+                            BorderBrush="$PinkBrush"
+                            BorderThickness="2,0,0,0"
+                            Padding="14,11,14,11"
+                            Margin="44,7,0,0">
+                            <TextBlock
+                                Text="Button  #NextChapter"
+                                FontFamily="Cascadia Mono"
+                                FontSize="12" />
+                        </Border>
+                        <Border
+                            Background="$LimeWashBrush"
+                            BorderBrush="$LimeBrush"
+                            BorderThickness="2,0,0,0"
+                            Padding="14,11,14,11"
+                            Margin="44,7,0,0">
+                            <TextBlock
+                                Text="ContentPresenter  @template"
+                                FontFamily="Cascadia Mono"
+                                FontSize="12" />
+                        </Border>
+                        <TextBlock
+                            Text="Named elements remain typed. Template parts remain inspectable. Input routes reuse this structure."
+                            FontSize="13"
+                            Foreground="$SlateBrush"
+                            TextWrapping="Wrap"
+                            Margin="0,18,0,0" />
+                    </StackPanel>
+                </Border>
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="14,0,0,0">
+                    <Border
+                        Background="$PanelBrush"
+                        BorderBrush="$LineBrush"
+                        BorderThickness="1"
+                        Padding="20"
+                        Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock
+                                Text="DIRTY BY CONTRACT"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="10"
+                                Foreground="$OrangeBrush" />
+                            <TextBlock
+                                Text="Property metadata tells the scheduler whether measure, arrange, render, inheritance, or hit testing must run."
+                                FontSize="14"
+                                Foreground="$SlateBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,10,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border
+                        Background="$PanelBrush"
+                        BorderBrush="$LineBrush"
+                        BorderThickness="1"
+                        Padding="20"
+                        Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock
+                                Text="CACHED BY DEFAULT"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="10"
+                                Foreground="$LimeBrush" />
+                            <TextBlock
+                                Text="Unchanged retained command lists and shared visual order are reused instead of rebuilt for sport."
+                                FontSize="14"
+                                Foreground="$SlateBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,10,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border
+                        Background="$PanelBrush"
+                        BorderBrush="$LineBrush"
+                        BorderThickness="1"
+                        Padding="20">
+                        <StackPanel>
+                            <TextBlock
+                                Text="ROUTED INPUT"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="10"
+                                Foreground="$PinkBrush" />
+                            <TextBlock
+                                Text="Pointer and keyboard events tunnel to the target, then bubble back through the retained route."
+                                FontSize="14"
+                                Foreground="$SlateBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,10,0,0" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>

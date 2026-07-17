@@ -152,5 +152,15 @@ public sealed class MotionSystem
         return result;
     }
 
+    internal void CancelMotionForSubtree(UIElement element)
+    {
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(element);
+        foreach (UIElement target in ElementTreeWalker.PreOrder(element))
+        {
+            Properties.CancelBindings(target);
+        }
+    }
+
     internal void VerifyAccess() => Root.Relay.VerifyAccess();
 }

@@ -56,6 +56,12 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         MotionHandle handle = Value.AnimateTo(to, spec, effectiveOptions.ToMotionStartOptions());
         activeHandle = handle;
         activeHandle.Completed += OnMotionCompleted;
+        if (Target is UIElement element && !UIElementVisibility.IsEffectivelyVisible(element))
+        {
+            Clear();
+            return handle;
+        }
+
         if (handle.IsCompleted)
         {
             activeHandle = null;
@@ -111,6 +117,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         Clear();
         disposed = true;
         valueSubscription.Dispose();
+        motion.Properties.RemoveBinding(this);
     }
 
     private void OnValueChanged(MotionValueChanged<T> change)
@@ -141,7 +148,8 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
             return new MotionNodeTickResult(Completed: true);
         }
 
-        if (Target is UIElement element && !element.IsAttached)
+        if (Target is UIElement element &&
+            (!element.IsAttached || !UIElementVisibility.IsEffectivelyVisible(element)))
         {
             Clear();
             return new MotionNodeTickResult(Completed: true);

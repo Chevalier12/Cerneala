@@ -223,7 +223,7 @@ Problem: many sections are `[x]` because a file and a test exist, not because th
 Examples:
 
 - `UI/Media/LinearGradientBrush.cs` and `UI/Media/RadialGradientBrush.cs` exist, but `Shape.RenderGeometry(...)` only uses `Brush.SolidColor`. Gradients do not render.
-- `UI/Media/ShadowEffect.cs` exists, but it is not translated into drawing commands or backend behavior.
+- The descriptor-only `ShadowEffect` and `OpacityLayer` stubs were removed so a future effects system starts from an end-to-end design.
 - `UI/Media/PathGeometry.cs` is a point list. `Shape.DrawPathStroke(...)` emits line segments only. No real path fill/stroke command exists.
 - `UI/Text/TextWrapping.cs` exists, but wrapping uses fixed character-width slicing. That is acceptable as MVP text measurement, not production text layout.
 - `UI/Text/TextTrimming.cs` only has `None`.

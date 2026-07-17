@@ -27,4 +27,18 @@ public static class UIElementVisibility
         ArgumentNullException.ThrowIfNull(element);
         return !element.IsPresenceExiting && element.IsVisible && element.Visibility == Visibility.Visible;
     }
+
+    internal static bool IsEffectivelyVisible(UIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (!ParticipatesInRendering(current))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

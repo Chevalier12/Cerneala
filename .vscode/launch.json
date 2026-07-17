@@ -11,6 +11,17 @@
       "cwd": "${workspaceFolder}/Playground/Cerneala.Playground",
       "console": "internalConsole",
       "stopAtEntry": false
+    },
+    {
+      "name": "Run Cerneala Presentation",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build cerneala presentation",
+      "program": "${workspaceFolder}/CernealaPresentation/bin/Debug/net8.0-windows/CernealaPresentation.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/CernealaPresentation",
+      "console": "internalConsole",
+      "stopAtEntry": false
     }
   ]
 }

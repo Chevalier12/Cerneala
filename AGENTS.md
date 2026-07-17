@@ -7,6 +7,7 @@
 - Follow DRY: avoid unnecessary duplication.
 - Follow YAGNI: do not build what is not needed.
 - Follow SOLID principles.
+- Fix bugs in the layer that owns the broken invariant. Do not add app- or view-level workarounds for framework defects unless the user explicitly approves a temporary workaround; remove existing workarounds when implementing the root fix.
 
 ## Repository Search and Indexing (MANDATORY)
 

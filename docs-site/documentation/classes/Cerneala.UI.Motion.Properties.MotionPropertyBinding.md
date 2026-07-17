@@ -58,7 +58,7 @@ binding.Clear(MotionClearBehavior.RestoreBase);
 
 The concrete `MotionPropertyBinding<T>` owns the typed `MotionValue<T>`, subscribes to value changes, stages animation writes through `MotionPropertyStore`, and registers a motion graph node while an animation is active. The base class keeps those details behind an untyped API for storage and cleanup.
 
-`Clear` removes the current animation contribution from the target property by default. Passing `MotionClearBehavior.HoldCurrent` asks the concrete binding to keep the current sampled value as the animation source instead. `Dispose` releases the binding; concrete implementations are expected to clear their staged animation state and unsubscribe from motion value updates.
+`Clear` removes the current animation contribution from the target property by default. Passing `MotionClearBehavior.HoldCurrent` asks the concrete binding to keep the current sampled value as the animation source instead. `Dispose` releases the binding; concrete implementations are expected to clear their staged animation state, unsubscribe from motion value updates, and remove themselves from their property store.
 
 Property writes use the `Animation` value source in the UI property system. Local values can still mask an animated value, and clearing the local value can reveal the active animation source again.
 
@@ -74,7 +74,7 @@ Property writes use the `Animation` value source in the UI property system. Loca
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Clear(MotionClearBehavior behavior = MotionClearBehavior.RestoreBase)` | `void` | Clears or holds the animation contribution for `PropertyUntyped` on `Target`, depending on the requested clear behavior. |
-| `Dispose()` | `void` | Releases the binding and its concrete subscriptions or staged animation state. |
+| `Dispose()` | `void` | Releases the binding, its concrete subscriptions and staged animation state, and its property-store registration. |
 
 ## Applies to
 

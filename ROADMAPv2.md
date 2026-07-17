@@ -1032,8 +1032,7 @@ New media concepts must translate into `DrawCommand` extensions or clear backend
 - [~] `UI/Media/PathGeometry.cs` — type exists; frozen until real path fill/stroke command semantics exist.
 - [x] `UI/Media/Transform.cs`
 - [x] `UI/Media/Matrix3x2.cs`
-- [~] `UI/Media/OpacityLayer.cs` — type exists; frozen until layer composition has retained render-cache and backend semantics.
-- [~] `UI/Media/ShadowEffect.cs` — type exists; frozen until shadow/effect command semantics and backend behavior exist.
+- [ ] Effects API and backend pipeline are intentionally absent until designed and implemented end to end.
 - [x] `UI/Controls/Shapes/Shape.cs`
 - [x] `UI/Controls/Shapes/Rectangle.cs`
 - [x] `UI/Controls/Shapes/Ellipse.cs`

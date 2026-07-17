@@ -183,7 +183,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(System.Environment.NewLine, emit.Diagnostics));
         StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.MotionDragRuntimeFactory"));
         Border element = Assert.IsType<Border>(Assert.Single(panel.VisualChildren));
-        UIRoot root = new(100, 100);
+        UIRoot root = new(5000, 5000);
         ElementInputBridge bridge = new();
 
         for (int cycle = 0; cycle < 100; cycle++)
@@ -197,19 +197,36 @@ public sealed partial class UiMarkupGeneratorTests
             Assert.Single(element.Handlers.GetHandlers(UIElement.LostMouseCaptureEvent));
             float startX = element.TranslateX;
             float startY = element.TranslateY;
-            bridge.Dispatch(root, DragPointerFrame(10, 20, 10, 20));
-            bridge.Dispatch(root, DragPointerFrame(10, 20, 10, 20, currentDown: true));
-            bridge.Dispatch(root, DragPointerFrame(10, 20, 25, 45, previousDown: true, currentDown: true));
+            float pointerX = 10 + startX;
+            float pointerY = 20 + startY;
+            bridge.Dispatch(root, DragPointerFrame(pointerX, pointerY, pointerX, pointerY));
+            bridge.Dispatch(root, DragPointerFrame(pointerX, pointerY, pointerX, pointerY, currentDown: true));
+            bridge.Dispatch(root, DragPointerFrame(
+                pointerX,
+                pointerY,
+                pointerX + 15,
+                pointerY + 25,
+                previousDown: true,
+                currentDown: true));
             Assert.Equal(startX + 15, element.TranslateX);
             Assert.Equal(startY + 25, element.TranslateY);
 
             if (cycle % 2 == 0)
             {
-                element.RaiseEvent(new MouseEventArgs(UIElement.LostMouseCaptureEvent, element, 25, 45));
+                element.RaiseEvent(new MouseEventArgs(
+                    UIElement.LostMouseCaptureEvent,
+                    element,
+                    (int)(pointerX + 15),
+                    (int)(pointerY + 25)));
             }
             else
             {
-                bridge.Dispatch(root, DragPointerFrame(25, 45, 25, 45, previousDown: true));
+                bridge.Dispatch(root, DragPointerFrame(
+                    pointerX + 15,
+                    pointerY + 25,
+                    pointerX + 15,
+                    pointerY + 25,
+                    previousDown: true));
             }
 
             Assert.True(root.Motion.HasActiveMotion);

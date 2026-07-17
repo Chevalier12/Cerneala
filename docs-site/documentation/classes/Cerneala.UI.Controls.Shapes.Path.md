@@ -73,7 +73,6 @@ The inherited `Shape` renderer draws `PathGeometry` instances as connected line 
 | `Fill` | `Brush?` | `null` | Inherited from `Shape`, but not used when rendering a `PathGeometry`. |
 | `RenderTransform` | `Transform` | `Transform.Identity` | Applies to rendered path segment endpoints. |
 | `Opacity` | `float` | `1` | Multiplies rendered stroke alpha; rendering is skipped when opacity is less than or equal to `0`. |
-| `Shadow` | `ShadowEffect?` | `null` | Inherited shape effect property. |
 
 ## Methods
 

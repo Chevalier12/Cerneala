@@ -67,9 +67,9 @@ The constructor requires the supplied `MotionValue<T>` to come from the same `Mo
 
 `AnimateTo` starts the underlying `MotionValue<T>` animation, stages the current value, and returns the `MotionHandle` from the motion graph. By default, natural completion clears the animation source so the target property falls back to its next available source, such as an aspect base value. When `MotionPropertyStartOptions.HoldOnComplete` is `true`, completion stages the current animated value instead.
 
-`Clear` cancels the active handle with `MotionCancelBehavior.KeepCurrent`, then either clears the animation source or stages the current value depending on `MotionClearBehavior`. `Dispose` calls `Clear` and releases the value subscription. Calling `Clear` after disposal is a no-op; calling `AnimateTo` after disposal throws `ObjectDisposedException`.
+`Clear` cancels the active handle with `MotionCancelBehavior.KeepCurrent`, then either clears the animation source or stages the current value depending on `MotionClearBehavior`. `Dispose` calls `Clear`, releases the value subscription, and removes the binding from its `MotionPropertyStore`. Calling `Clear` after disposal is a no-op; calling `AnimateTo` after disposal throws `ObjectDisposedException`.
 
-When the target is a `UIElement` and becomes detached, the binding clears itself during its next tick and the active handle is canceled. Render-only and layout-affecting invalidation are chosen from the bound property by `MotionPropertyInvalidationClassifier`.
+When the target is a `UIElement`, `AnimateTo` immediately cancels the new handle if the target or one of its visual ancestors is not render-visible. An active binding also clears itself and cancels its handle when the target becomes detached, `Hidden`, `Collapsed`, or hidden by `IsVisible` on itself or a visual ancestor. Render-only and layout-affecting invalidation are chosen from the bound property by `MotionPropertyInvalidationClassifier`.
 
 ## Constructors
 
@@ -90,9 +90,9 @@ When the target is a `UIElement` and becomes detached, the binding clears itself
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `AnimateTo(T to, MotionSpec<T> spec, MotionPropertyStartOptions? options = null)` | `MotionHandle` | Starts animating `Value` toward `to`, stages samples into `Property`, and returns the active motion handle. |
+| `AnimateTo(T to, MotionSpec<T> spec, MotionPropertyStartOptions? options = null)` | `MotionHandle` | Starts animating `Value` toward `to`, stages samples into `Property`, and returns the motion handle; a non-visible `UIElement` target returns an immediately canceled handle. |
 | `Clear(MotionClearBehavior behavior = MotionClearBehavior.RestoreBase)` | `void` | Cancels the active animation and either clears the animation source or holds the current sampled value. |
-| `Dispose()` | `void` | Clears the binding once and unsubscribes from `Value` updates. |
+| `Dispose()` | `void` | Clears the binding once, unsubscribes from `Value` updates, and removes it from its property store. |
 
 ## Exceptions
 

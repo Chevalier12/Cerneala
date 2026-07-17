@@ -1,0 +1,701 @@
+<UserControl
+    Aspect="$SolarMotion"
+    FontFamily="Segoe UI"
+    FontSize="12"
+    Foreground="$SolarTextBrush"
+    Background="$SolarSpaceBrush"
+    ClipToBounds="True"
+    MouseWheel="OnMouseWheel">
+    <UserControl.Resources>
+        <SolidColorBrush
+            Name="SolarSpaceBrush"
+            Color="#FF02040A" />
+        <SolidColorBrush
+            Name="SolarPanelBrush"
+            Color="#D0070C16" />
+        <SolidColorBrush
+            Name="SolarPanelStrongBrush"
+            Color="#EB080E1A" />
+        <SolidColorBrush
+            Name="SolarLineBrush"
+            Color="#3AB1CCE6" />
+        <SolidColorBrush
+            Name="SolarTextBrush"
+            Color="#FFEDF6FF" />
+        <SolidColorBrush
+            Name="SolarMutedBrush"
+            Color="#FF9DB0C5" />
+        <SolidColorBrush
+            Name="SolarAccentBrush"
+            Color="#FF7DD3FC" />
+        <SolidColorBrush
+            Name="SolarWarmBrush"
+            Color="#FFFFB84D" />
+        <SolidColorBrush
+            Name="SolarSunBrush"
+            Color="#FFFFAD42" />
+        <SolidColorBrush
+            Name="SolarTransparentBrush"
+            Color="#00000000" />
+        <RadialGradientBrush
+            Name="SolarSpaceGradient"
+            Center="510,330"
+            RadiusX="820"
+            RadiusY="680">
+            <GradientStop
+                Offset="0"
+                Color="#FF0B1424" />
+            <GradientStop
+                Offset="0.44"
+                Color="#FF050B15" />
+            <GradientStop
+                Offset="1"
+                Color="#FF010207" />
+        </RadialGradientBrush>
+        <RadialGradientBrush
+            Name="SunHaloGradient"
+            Center="60,60"
+            RadiusX="60"
+            RadiusY="60">
+            <GradientStop
+                Offset="0"
+                Color="#D9FFF3B0" />
+            <GradientStop
+                Offset="0.2"
+                Color="#A8FFA73D" />
+            <GradientStop
+                Offset="0.55"
+                Color="#28FF5D15" />
+            <GradientStop
+                Offset="1"
+                Color="#00FF4E0C" />
+        </RadialGradientBrush>
+        <RadialGradientBrush
+            Name="SunSurfaceGradient"
+            Center="18,16"
+            RadiusX="34"
+            RadiusY="34">
+            <GradientStop
+                Offset="0"
+                Color="#FFFFF9C7" />
+            <GradientStop
+                Offset="0.22"
+                Color="#FFFFD46B" />
+            <GradientStop
+                Offset="0.64"
+                Color="#FFFF912F" />
+            <GradientStop
+                Offset="1"
+                Color="#FFD95118" />
+        </RadialGradientBrush>
+        <RadialGradientBrush
+            Name="MercuryGradient"
+            Center="3,3"
+            RadiusX="7"
+            RadiusY="7">
+            <GradientStop
+                Offset="0"
+                Color="#FFD9D2C7" />
+            <GradientStop
+                Offset="0.55"
+                Color="#FF89837C" />
+            <GradientStop
+                Offset="1"
+                Color="#FF3F4144" />
+        </RadialGradientBrush>
+        <RadialGradientBrush
+            Name="VenusGradient"
+            Center="4,4"
+            RadiusX="10"
+            RadiusY="10">
+            <GradientStop
+                Offset="0"
+                Color="#FFFFE1A1" />
+            <GradientStop
+                Offset="0.55"
+                Color="#FFC78A44" />
+            <GradientStop
+                Offset="1"
+                Color="#FF613B27" />
+        </RadialGradientBrush>
+        <RadialGradientBrush
+            Name="EarthGradient"
+            Center="4,4"
+            RadiusX="11"
+            RadiusY="11">
+            <GradientStop
+                Offset="0"
+                Color="#FF8CD6FF" />
+            <GradientStop
+                Offset="0.55"
+                Color="#FF246FB8" />
+            <GradientStop
+                Offset="1"
+                Color="#FF071C42" />
+        </RadialGradientBrush>
+        <RadialGradientBrush
+            Name="MarsGradient"
+            Center="3,3"
+            RadiusX="8"
+            RadiusY="8">
+            <GradientStop
+                Offset="0"
+                Color="#FFF49A68" />
+            <GradientStop
+                Offset="0.55"
+                Color="#FFAE492F" />
+            <GradientStop
+                Offset="1"
+                Color="#FF401B1B" />
+        </RadialGradientBrush>
+        <RadialGradientBrush
+            Name="JupiterGradient"
+            Center="9,8"
+            RadiusX="24"
+            RadiusY="24">
+            <GradientStop
+                Offset="0"
+                Color="#FFF3D8B3" />
+            <GradientStop
+                Offset="0.55"
+                Color="#FFB77955" />
+            <GradientStop
+                Offset="1"
+                Color="#FF59423D" />
+        </RadialGradientBrush>
+        <RadialGradientBrush
+            Name="SaturnGradient"
+            Center="8,7"
+            RadiusX="21"
+            RadiusY="21">
+            <GradientStop
+                Offset="0"
+                Color="#FFF6E2AA" />
+            <GradientStop
+                Offset="0.55"
+                Color="#FFC09E63" />
+            <GradientStop
+                Offset="1"
+                Color="#FF554837" />
+        </RadialGradientBrush>
+        <RadialGradientBrush
+            Name="UranusGradient"
+            Center="6,5"
+            RadiusX="15"
+            RadiusY="15">
+            <GradientStop
+                Offset="0"
+                Color="#FFC6FBF7" />
+            <GradientStop
+                Offset="0.55"
+                Color="#FF67B8C7" />
+            <GradientStop
+                Offset="1"
+                Color="#FF24566D" />
+        </RadialGradientBrush>
+        <RadialGradientBrush
+            Name="NeptuneGradient"
+            Center="6,5"
+            RadiusX="15"
+            RadiusY="15">
+            <GradientStop
+                Offset="0"
+                Color="#FF86A9FF" />
+            <GradientStop
+                Offset="0.55"
+                Color="#FF3157BD" />
+            <GradientStop
+                Offset="1"
+                Color="#FF102152" />
+        </RadialGradientBrush>
+        <MotionClip
+            Name="SolarCycle"
+            TargetType="Cerneala.Presentation.SolarSystemChapterView">
+            @parallel
+            {
+                @animate with Repeat(Tween(7s, Linear), forever)
+                {
+                    @from { $MercuryOrbit.Rotation = 1.1; $MercuryBody.Rotation = -1.1; }
+                    @to { $MercuryOrbit.Rotation = 7.383185; $MercuryBody.Rotation = -7.383185; }
+                }
+                @animate with Repeat(Tween(9.2s, Linear), forever)
+                {
+                    @from { $VenusOrbit.Rotation = 2.8; $VenusBody.Rotation = -2.8; }
+                    @to { $VenusOrbit.Rotation = 9.083185; $VenusBody.Rotation = -9.083185; }
+                }
+                @animate with Repeat(Tween(11.6s, Linear), forever)
+                {
+                    @from { $EarthOrbit.Rotation = 5.1; $EarthBody.Rotation = -5.1; }
+                    @to { $EarthOrbit.Rotation = 11.383185; $EarthBody.Rotation = -11.383185; }
+                }
+                @animate with Repeat(Tween(14.6s, Linear), forever)
+                {
+                    @from { $MarsOrbit.Rotation = 3.9; $MarsBody.Rotation = -3.9; }
+                    @to { $MarsOrbit.Rotation = 10.183185; $MarsBody.Rotation = -10.183185; }
+                }
+                @animate with Repeat(Tween(42s, Linear), forever)
+                {
+                    @from { $AsteroidBelt.Rotation = 0; }
+                    @to { $AsteroidBelt.Rotation = 6.283185; }
+                }
+                @animate with Repeat(Tween(26s, Linear), forever)
+                {
+                    @from { $JupiterOrbit.Rotation = 0.5; $JupiterBody.Rotation = -0.5; }
+                    @to { $JupiterOrbit.Rotation = 6.783185; $JupiterBody.Rotation = -6.783185; }
+                }
+                @animate with Repeat(Tween(37s, Linear), forever)
+                {
+                    @from { $SaturnOrbit.Rotation = 2; $SaturnBody.Rotation = -2; }
+                    @to { $SaturnOrbit.Rotation = 8.283185; $SaturnBody.Rotation = -8.283185; }
+                }
+                @animate with Repeat(Tween(52s, Linear), forever)
+                {
+                    @from { $UranusOrbit.Rotation = 4.4; $UranusBody.Rotation = -4.4; }
+                    @to { $UranusOrbit.Rotation = 10.683185; $UranusBody.Rotation = -10.683185; }
+                }
+                @animate with Repeat(Tween(66s, Linear), forever)
+                {
+                    @from { $NeptuneOrbit.Rotation = 5.8; $NeptuneBody.Rotation = -5.8; }
+                    @to { $NeptuneOrbit.Rotation = 12.083185; $NeptuneBody.Rotation = -12.083185; }
+                }
+                @animate with Repeat(Tween(18s, Linear), forever)
+                {
+                    @from { $SolarFlares.Rotation = 0; }
+                    @to { $SolarFlares.Rotation = -6.283185; }
+                }
+                @animate with Repeat(Tween(13s, Linear), forever)
+                {
+                    @from { $Comet.TranslateX = 430; $Comet.TranslateY = -210; }
+                    @to { $Comet.TranslateX = -760; $Comet.TranslateY = 260; }
+                }
+            }
+        </MotionClip>
+        <Aspect
+            Name="SolarMotion"
+            TargetType="Cerneala.Presentation.SolarSystemChapterView">
+            @handle SolarOrbits;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $SolarCycle as SolarOrbits;
+                }
+                @if value == Collapsed
+                {
+                    @cancel SolarOrbits;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid
+        ClipToBounds="True">
+        <Grid.RowDefinitions>
+            <RowDefinition
+                Height="84" />
+            <RowDefinition
+                Height="*" />
+            <RowDefinition
+                Height="0" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Grid.Row="0"
+            Grid.RowSpan="3"
+            Background="$SolarSpaceGradient"
+            ClipToBounds="True">
+            <Grid
+                Name="SolarScene"
+                ClipToBounds="True">
+                <Grid
+                    Width="980"
+                    Height="720"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" Opacity="0.8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="34,26,0,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarAccentBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="92,77,0,0" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" Opacity="0.55" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="148,132,0,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarWarmBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="208,48,0,0" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="276,186,0,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarAccentBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="332,89,0,0" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" Opacity="0.7" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="386,31,0,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="442,146,0,0" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarAccentBrush" Opacity="0.65" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="504,68,0,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,112,418,0" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" Opacity="0.65" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,36,354,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarWarmBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,178,302,0" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,84,246,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarAccentBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,145,188,0" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" Opacity="0.75" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,28,118,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,206,62,0" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="24,0,0,140" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarAccentBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="82,0,0,42" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" Opacity="0.6" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="138,96,0,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarWarmBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="194,0,0,184" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="254,174,0,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="310,0,0,218" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarAccentBrush" Opacity="0.7" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,126,338,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,274,204" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,182,214,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarWarmBrush" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,154,86" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" Opacity="0.7" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,40,94,0" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarAccentBrush" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,38,176" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="48,0,0,44" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="108,0,0,126" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarAccentBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="168,0,0,72" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarWarmBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="228,0,0,164" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" Opacity="0.7" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="294,0,0,34" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="358,0,0,112" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarAccentBrush" Opacity="0.6" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="424,0,0,54" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,426,138" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,356,44" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarWarmBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,286,184" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" Opacity="0.7" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,214,82" />
+                    <Ellipse Width="1" Height="1" Fill="$SolarAccentBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,142,142" />
+                    <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,72,38" />
+                </Grid>
+
+                <Grid
+                    Width="700"
+                    Height="700"
+                    TranslateX="20"
+                    TranslateY="-25"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                    <Grid
+                        Name="OrbitLines">
+                        <Ellipse Width="87" Height="87" Stroke="$SolarLineBrush" StrokeThickness="1" Opacity="0.5" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="132" Height="132" Stroke="$SolarLineBrush" StrokeThickness="1" Opacity="0.48" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="180" Height="180" Stroke="$SolarAccentBrush" StrokeThickness="1" Opacity="0.48" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="231" Height="231" Stroke="$SolarLineBrush" StrokeThickness="1" Opacity="0.46" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="348" Height="348" Stroke="$SolarLineBrush" StrokeThickness="1" Opacity="0.44" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="453" Height="453" Stroke="$SolarLineBrush" StrokeThickness="1" Opacity="0.42" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="549" Height="549" Stroke="$SolarLineBrush" StrokeThickness="1" Opacity="0.4" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="645" Height="645" Stroke="$SolarLineBrush" StrokeThickness="1" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid Name="AsteroidBelt" Width="304" Height="304" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Ellipse Width="2" Height="2" Fill="$SolarMutedBrush" HorizontalAlignment="Center" VerticalAlignment="Top" />
+                        <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,58,0" />
+                        <Ellipse Width="3" Height="3" Fill="$SolarMutedBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,28,34,0" />
+                        <Ellipse Width="2" Height="2" Fill="$SolarLineBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,54,14,0" />
+                        <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,2,98" />
+                        <Ellipse Width="3" Height="3" Fill="$SolarMutedBrush" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,28" />
+                        <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,46,4,0" />
+                        <Ellipse Width="1" Height="1" Fill="$SolarMutedBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,12,62" />
+                        <Ellipse Width="3" Height="3" Fill="$SolarLineBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,32,32" />
+                        <Ellipse Width="2" Height="2" Fill="$SolarTextBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,68,10" />
+                        <Ellipse Width="1" Height="1" Fill="$SolarMutedBrush" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="82,0,0,0" />
+                        <Ellipse Width="3" Height="3" Fill="$SolarTextBrush" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,12,2" />
+                        <Ellipse Width="2" Height="2" Fill="$SolarMutedBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="62,0,0,10" />
+                        <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="28,0,0,38" />
+                        <Ellipse Width="3" Height="3" Fill="$SolarLineBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,72" />
+                        <Ellipse Width="2" Height="2" Fill="$SolarMutedBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="2,72,0,0" />
+                        <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,0,10" />
+                        <Ellipse Width="3" Height="3" Fill="$SolarMutedBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,0,0,80" />
+                        <Ellipse Width="2" Height="2" Fill="$SolarLineBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,62,0,0" />
+                        <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,30,0,0" />
+                        <Ellipse Width="3" Height="3" Fill="$SolarMutedBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="72,10,0,0" />
+                        <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="68,4,0,0" />
+                    </Grid>
+
+                    <Ellipse Width="120" Height="120" Fill="$SunHaloGradient" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                    <Grid Name="MercuryOrbit" Width="87" Height="87" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid Name="MercuryBody" Width="8" Height="8" HorizontalAlignment="Right" VerticalAlignment="Center" MouseUp="OnMercuryClicked">
+                            <Ellipse Width="36" Height="36" Fill="$SolarTransparentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Fill="$MercuryGradient" Stroke="$SolarTextBrush" StrokeThickness="1" />
+                            <TextBlock Text="Mercur" Width="48" FontSize="9" Foreground="$SolarMutedBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="-20,13,-20,0" />
+                        </Grid>
+                    </Grid>
+                    <Grid Name="VenusOrbit" Width="132" Height="132" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid Name="VenusBody" Width="12" Height="12" HorizontalAlignment="Right" VerticalAlignment="Center" MouseUp="OnVenusClicked">
+                            <Ellipse Width="36" Height="36" Fill="$SolarTransparentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Fill="$VenusGradient" />
+                            <Ellipse Width="4" Height="2" Fill="$SolarWarmBrush" Opacity="0.5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="2,3,0,0" />
+                            <TextBlock Text="Venus" Width="46" FontSize="9" Foreground="$SolarMutedBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="-17,17,-17,0" />
+                        </Grid>
+                    </Grid>
+                    <Grid Name="EarthOrbit" Width="180" Height="180" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid Name="EarthBody" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Center" MouseUp="OnEarthClicked">
+                            <Ellipse Width="36" Height="36" Fill="$SolarTransparentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Width="28" Height="28" Stroke="$SolarAccentBrush" StrokeThickness="1" Opacity="0.7" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Fill="$EarthGradient" Stroke="$SolarAccentBrush" StrokeThickness="1" />
+                            <Ellipse Width="5" Height="3" Fill="#FF4E9B55" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="2,4,0,0" />
+                            <Ellipse Width="4" Height="2" Fill="#FF4E9B55" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,2,3" />
+                            <Ellipse Width="3" Height="3" Fill="#FFD9DDE2" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,-8,1" />
+                            <TextBlock Text="Pamant" Width="52" FontFamily="Segoe UI Semibold" FontSize="10" Foreground="$SolarAccentBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="-19,20,-19,0" />
+                        </Grid>
+                    </Grid>
+                    <Grid Name="MarsOrbit" Width="231" Height="231" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid Name="MarsBody" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Center" MouseUp="OnMarsClicked">
+                            <Ellipse Width="36" Height="36" Fill="$SolarTransparentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Fill="$MarsGradient" />
+                            <Ellipse Width="2" Height="2" Stroke="#885B231C" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="2,2,0,0" />
+                            <TextBlock Text="Marte" Width="44" FontSize="9" Foreground="$SolarMutedBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="-17,15,-17,0" />
+                        </Grid>
+                    </Grid>
+                    <Grid Name="JupiterOrbit" Width="348" Height="348" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid Name="JupiterBody" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" MouseUp="OnJupiterClicked">
+                            <Ellipse Width="44" Height="44" Fill="$SolarTransparentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Fill="$JupiterGradient" />
+                            <Border Width="26" Height="2" Background="#55FFF0DD" VerticalAlignment="Center" Margin="0,0,0,9" />
+                            <Border Width="27" Height="3" Background="#66A64F3C" VerticalAlignment="Center" Margin="0,7,0,0" />
+                            <Ellipse Width="6" Height="3" Fill="#AA913E2B" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,8,3,0" />
+                            <TextBlock Text="Jupiter" Width="54" FontSize="9" Foreground="$SolarMutedBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="-12,35,-12,0" />
+                        </Grid>
+                    </Grid>
+                    <Grid Name="SaturnOrbit" Width="453" Height="453" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid Name="SaturnBody" Width="46" Height="28" HorizontalAlignment="Right" VerticalAlignment="Center" MouseUp="OnSaturnClicked">
+                            <Ellipse Width="60" Height="60" Fill="$SolarTransparentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Width="44" Height="12" Stroke="#DDE8D39E" StrokeThickness="3" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Width="25" Height="25" Fill="$SaturnGradient" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border Width="21" Height="2" Background="#448C704C" VerticalAlignment="Center" Margin="0,5,0,0" />
+                            <TextBlock Text="Saturn" Width="50" FontSize="9" Foreground="$SolarMutedBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="-2,34,-2,0" />
+                        </Grid>
+                    </Grid>
+                    <Grid Name="UranusOrbit" Width="549" Height="549" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid Name="UranusBody" Width="19" Height="19" HorizontalAlignment="Right" VerticalAlignment="Center" MouseUp="OnUranusClicked">
+                            <Ellipse Width="36" Height="36" Fill="$SolarTransparentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Fill="$UranusGradient" Stroke="$SolarAccentBrush" StrokeThickness="1" />
+                            <Ellipse Width="22" Height="7" Stroke="#668DE6E0" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Text="Uranus" Width="50" FontSize="9" Foreground="$SolarMutedBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="-15,24,-15,0" />
+                        </Grid>
+                    </Grid>
+                    <Grid Name="NeptuneOrbit" Width="645" Height="645" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid Name="NeptuneBody" Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Center" MouseUp="OnNeptuneClicked">
+                            <Ellipse Width="36" Height="36" Fill="$SolarTransparentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Fill="$NeptuneGradient" Stroke="#AA86A9FF" StrokeThickness="1" />
+                            <Border Width="12" Height="2" Background="#6686A9FF" VerticalAlignment="Center" Margin="0,4,0,0" />
+                            <TextBlock Text="Neptun" Width="50" FontSize="9" Foreground="$SolarMutedBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="-16,23,-16,0" />
+                        </Grid>
+                    </Grid>
+
+                    <Grid Name="SolarFlares" Width="82" Height="82" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Border Width="2" Height="19" Background="$SolarWarmBrush" Opacity="0.45" HorizontalAlignment="Center" VerticalAlignment="Top" />
+                        <Border Width="18" Height="2" Background="$SolarWarmBrush" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        <Border Width="2" Height="17" Background="$SolarWarmBrush" Opacity="0.35" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+                        <Border Width="16" Height="2" Background="$SolarWarmBrush" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Ellipse Fill="$SunSurfaceGradient" Stroke="#FFFFC977" StrokeThickness="1" />
+                        <Ellipse Width="8" Height="8" Fill="#44FFF09A" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,9,0,0" />
+                        <Ellipse Width="5" Height="5" Fill="#33FFF09A" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,14,9,0" />
+                        <Ellipse Width="7" Height="7" Fill="#33FFF09A" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="9,0,0,11" />
+                        <Ellipse Width="4" Height="4" Fill="#44FFF09A" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,13,8" />
+                        <TextBlock Text="Soare" Width="46" FontFamily="Segoe UI Semibold" FontSize="10" Foreground="$SolarWarmBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,57,0,0" />
+                    </Grid>
+                </Grid>
+
+                <Grid
+                    Name="Comet"
+                    Width="116"
+                    Height="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                    <Border Width="104" Height="1" Background="$SolarAccentBrush" Opacity="0.32" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    <Ellipse Width="14" Height="14" Fill="$SolarAccentBrush" Opacity="0.12" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                    <Ellipse Width="5" Height="5" Fill="$SolarTextBrush" Stroke="$SolarAccentBrush" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Grid
+            Grid.Row="0"
+            Margin="20,18,20,0">
+            <StackPanel
+                Orientation="Horizontal"
+                VerticalAlignment="Top">
+                <Grid
+                    Width="34"
+                    Height="34"
+                    Margin="0,0,12,0">
+                    <Ellipse
+                        Width="34"
+                        Height="34"
+                        Fill="$SolarSunBrush"
+                        Opacity="0.16" />
+                    <Ellipse
+                        Width="27"
+                        Height="27"
+                        Fill="$SolarWarmBrush"
+                        Opacity="0.46"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                    <Ellipse
+                        Width="18"
+                        Height="18"
+                        Fill="$SolarSunBrush"
+                        Stroke="$SolarWarmBrush"
+                        StrokeThickness="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                    <Ellipse
+                        Width="6"
+                        Height="6"
+                        Fill="$SolarTextBrush"
+                        Opacity="0.82"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="8,7,0,0" />
+                </Grid>
+                <StackPanel>
+                    <TextBlock
+                        Text="HARTA ORBITALA 2D / SIMULARE LIVE"
+                        FontSize="11"
+                        Foreground="$SolarAccentBrush" />
+                    <TextBlock
+                        Text="Sistemul Solar"
+                        FontFamily="Segoe UI Semibold"
+                        FontSize="18"
+                        Foreground="$SolarTextBrush"
+                        Margin="0,3,0,0" />
+                </StackPanel>
+            </StackPanel>
+
+        </Grid>
+
+        <Border
+            Grid.Row="1"
+            Width="310"
+            Height="150"
+            Margin="20,0,0,8"
+            Padding="16"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
+            Background="$SolarPanelBrush"
+            BorderBrush="$SolarLineBrush"
+            BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition
+                        Height="47" />
+                    <RowDefinition
+                        Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel
+                    Grid.Row="0"
+                    Orientation="Horizontal">
+                    <Grid
+                        Width="31"
+                        Height="31"
+                        Margin="0,0,11,0">
+                        <Ellipse
+                            Name="PlanetSwatchGlow"
+                            Width="31"
+                            Height="31"
+                            Fill="$SolarAccentBrush"
+                            Opacity="0.18" />
+                        <Ellipse
+                            Name="PlanetSwatchCore"
+                            Width="27"
+                            Height="27"
+                            Fill="$SolarAccentBrush"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel>
+                        <TextBlock
+                            Name="ObjectNameText"
+                            Text="Pamant"
+                            FontFamily="Segoe UI Semibold"
+                            FontSize="19"
+                            Foreground="$SolarTextBrush" />
+                        <TextBlock
+                            Name="ObjectTypeText"
+                            Text="Planeta terestra"
+                            FontSize="12"
+                            Foreground="$SolarMutedBrush"
+                            Margin="0,2,0,0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Grid
+                    Grid.Row="1"
+                    Margin="0,2,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition
+                            Width="*" />
+                        <ColumnDefinition
+                            Width="*" />
+                        <ColumnDefinition
+                            Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border
+                        Grid.Column="0"
+                        Background="$SolarPanelStrongBrush"
+                        Margin="1,1,0,1"
+                        Padding="8,9,8,9">
+                        <StackPanel>
+                            <TextBlock
+                                Text="DISTANTA"
+                                FontSize="10"
+                                Foreground="$SolarMutedBrush" />
+                            <TextBlock
+                                Name="DistanceText"
+                                Text="149,6 mil. km"
+                                FontFamily="Segoe UI Semibold"
+                                FontSize="11"
+                                Foreground="$SolarTextBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border
+                        Grid.Column="1"
+                        Background="$SolarPanelStrongBrush"
+                        Margin="1,1,0,1"
+                        Padding="8,9,8,9">
+                        <StackPanel>
+                            <TextBlock
+                                Text="DIAMETRU"
+                                FontSize="10"
+                                Foreground="$SolarMutedBrush" />
+                            <TextBlock
+                                Name="DiameterText"
+                                Text="12.742 km"
+                                FontFamily="Segoe UI Semibold"
+                                FontSize="11"
+                                Foreground="$SolarTextBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border
+                        Grid.Column="2"
+                        Background="$SolarPanelStrongBrush"
+                        Margin="1"
+                        Padding="8,9,8,9">
+                        <StackPanel>
+                            <TextBlock
+                                Text="AN ORBITAL"
+                                FontSize="10"
+                                Foreground="$SolarMutedBrush" />
+                            <TextBlock
+                                Name="OrbitalYearText"
+                                Text="365 zile"
+                                FontFamily="Segoe UI Semibold"
+                                FontSize="11"
+                                Foreground="$SolarTextBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <TextBlock
+            Grid.Row="1"
+            Text="Trage pentru deplasare / rotita pentru zoom / click pe o planeta"
+            FontSize="10"
+            Foreground="$SolarMutedBrush"
+            Opacity="0.58"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Margin="0,0,22,12" />
+
+    </Grid>
+</UserControl>

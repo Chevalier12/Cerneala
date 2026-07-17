@@ -802,8 +802,6 @@ public sealed class ArchitectureBoundaryTests
             "`UI/Media/LinearGradientBrush.cs` — type exists; frozen until gradient draw commands and backend rendering exist.",
             "`UI/Media/RadialGradientBrush.cs` — type exists; frozen until gradient draw commands and backend rendering exist.",
             "`UI/Media/PathGeometry.cs` — type exists; frozen until real path fill/stroke command semantics exist.",
-            "`UI/Media/OpacityLayer.cs` — type exists; frozen until layer composition has retained render-cache and backend semantics.",
-            "`UI/Media/ShadowEffect.cs` — type exists; frozen until shadow/effect command semantics and backend behavior exist.",
             "`UI/Media/RenderTargetImage.cs` — type exists; frozen until render-target lifecycle and backend ownership are designed."
         ];
 
@@ -821,6 +819,14 @@ public sealed class ArchitectureBoundaryTests
             Assert.Contains($"- [~] {partialEntry}", roadmap, StringComparison.Ordinal);
             Assert.DoesNotContain($"- [x] `{requiredFile}`", roadmap, StringComparison.Ordinal);
         }
+
+        const string absentEffectsEntry =
+            "- [ ] Effects API and backend pipeline are intentionally absent until designed and implemented end to end.";
+        Assert.Contains(absentEffectsEntry, section22, StringComparison.Ordinal);
+        Assert.DoesNotContain("OpacityLayer.cs", section22, StringComparison.Ordinal);
+        Assert.DoesNotContain("ShadowEffect.cs", section22, StringComparison.Ordinal);
+        Assert.False(File.Exists(Path.Combine(root, "UI", "Media", "OpacityLayer.cs")));
+        Assert.False(File.Exists(Path.Combine(root, "UI", "Media", "ShadowEffect.cs")));
 
         Assert.Contains("- [ ] Full project tests pass for the backend-supported advanced media scenario before this phase is scenario-complete.", roadmap, StringComparison.Ordinal);
         Assert.DoesNotContain("- [x] Full project tests pass for this phase.", section22, StringComparison.Ordinal);

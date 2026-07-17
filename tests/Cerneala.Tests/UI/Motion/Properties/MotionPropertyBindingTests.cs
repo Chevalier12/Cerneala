@@ -311,4 +311,81 @@ public sealed class MotionPropertyBindingTests
         Assert.True(handle.IsCanceled);
         Assert.NotEqual(UiPropertyValueSource.Animation, control.GetValueSource(Control.BackgroundProperty));
     }
+
+    [Theory]
+    [InlineData(Visibility.Hidden)]
+    [InlineData(Visibility.Collapsed)]
+    public void NonVisibleTargetCancelsForeverBinding(Visibility visibility)
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Control control = new();
+        root.VisualChildren.Add(control);
+        MotionPropertyBinding<float> binding = root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            control,
+            UIElement.OpacityProperty);
+        MotionHandle handle = binding.AnimateTo(
+            0,
+            new RepeatSpec<float>(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100))));
+        root.ProcessFrame();
+
+        control.Visibility = visibility;
+        root.ProcessFrame();
+
+        Assert.True(handle.IsCanceled);
+        Assert.False(root.Motion.HasActiveMotion);
+        Assert.Equal(0, root.Motion.Graph.ActiveNodeCount);
+    }
+
+    [Theory]
+    [InlineData(Visibility.Hidden)]
+    [InlineData(Visibility.Collapsed)]
+    public void NonVisibleAncestorCancelsDescendantForeverBinding(Visibility visibility)
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        StackPanel parent = new();
+        Control child = new();
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+        MotionPropertyBinding<float> binding = root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            child,
+            UIElement.OpacityProperty);
+        MotionHandle handle = binding.AnimateTo(
+            0,
+            new RepeatSpec<float>(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100))));
+        root.ProcessFrame();
+
+        parent.Visibility = visibility;
+        root.ProcessFrame();
+
+        Assert.True(handle.IsCanceled);
+        Assert.False(root.Motion.HasActiveMotion);
+        Assert.Equal(0, root.Motion.Graph.ActiveNodeCount);
+    }
+
+    [Fact]
+    public void StartingBindingUnderHiddenAncestorCancelsImmediately()
+    {
+        UIRoot root = new();
+        StackPanel parent = new() { Visibility = Visibility.Hidden };
+        Control child = new();
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+        MotionPropertyBinding<float> binding = root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            child,
+            UIElement.OpacityProperty);
+
+        MotionHandle handle = binding.AnimateTo(
+            0,
+            new RepeatSpec<float>(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100))));
+        root.ProcessFrame();
+
+        Assert.True(handle.IsCanceled);
+        Assert.False(root.Motion.HasActiveMotion);
+        Assert.Equal(0, root.Motion.Graph.ActiveNodeCount);
+    }
 }

@@ -59,6 +59,8 @@ An attached element's property mutations are UI-thread-affine and use `Root.Rela
 
 Most element settings are registered `UiProperty<T>` values. Setting properties such as `Margin`, `Visibility`, `Opacity`, focus state, or transform values flows through `UiObject.SetValue`, raises property notifications, and calls `OnPropertyInvalidated` with the metadata options from the registered property.
 
+Changing `Visibility` from `Visible` to `Hidden` or `Collapsed`, or changing `IsVisible` to `false`, cancels active property motion for the element and its visual descendants. Canceled motion does not resume automatically when the subtree becomes visible again; callers or markup conditions can start it again explicitly.
+
 Layout uses `Measure` and `Arrange`. `Measure` caches the last available size and layout version; `Arrange` caches the last final rectangle and layout version. Elements that do not participate in layout return zero desired size and zero arranged size. Otherwise, `Measure` constrains `MeasureCore` with explicit `Width` and `Height` values when present, substitutes those values into the desired size, and then applies `Margin`. `Arrange` applies `Margin`, the explicit dimensions, `HorizontalAlignment`, and `VerticalAlignment` before calling `ArrangeCore`. An unset dimension is represented by `float.NaN` and continues to use content measurement or stretch behavior.
 
 Rendering calls `Render`, which null-checks the `RenderContext` and delegates to `OnRender`. Render-scope properties such as `RenderTransform`, `Opacity`, translation, scale, rotation, skew, and `ClipToBounds` update `RenderScopeVersion`; render content dependencies can be updated by derived classes with `SetRenderDependencies`.
@@ -76,13 +78,13 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | Name | Description |
 | --- | --- |
 | `IsEnabledProperty` | Property identifier for `IsEnabled`; defaults to `true` and affects hit testing, input visual state, aspect matching, and semantics. |
-| `IsVisibleProperty` | Property identifier for `IsVisible`; defaults to `true` and affects render, hit testing, and semantics. |
+| `IsVisibleProperty` | Property identifier for `IsVisible`; defaults to `true`, affects render, hit testing, and semantics, and cancels property motion for the visual subtree when set to `false`. |
 | `MarginProperty` | Property identifier for `Margin`; defaults to `Thickness.Zero` and affects measure. |
 | `WidthProperty` | Property identifier for `Width`; defaults to `float.NaN`, affects measure and arrange, and accepts automatic sizing or a finite non-negative value. |
 | `HeightProperty` | Property identifier for `Height`; defaults to `float.NaN`, affects measure and arrange, and accepts automatic sizing or a finite non-negative value. |
 | `HorizontalAlignmentProperty` | Property identifier for `HorizontalAlignment`; defaults to `HorizontalAlignment.Stretch` and affects arrange. |
 | `VerticalAlignmentProperty` | Property identifier for `VerticalAlignment`; defaults to `VerticalAlignment.Stretch` and affects arrange. |
-| `VisibilityProperty` | Property identifier for `Visibility`; defaults to `Visibility.Visible` and affects measure, arrange, render, hit testing, and semantics. |
+| `VisibilityProperty` | Property identifier for `Visibility`; defaults to `Visibility.Visible`, affects measure, arrange, render, hit testing, and semantics, and cancels property motion for the visual subtree when changed to `Hidden` or `Collapsed`. |
 | `RenderTransformProperty` | Property identifier for `RenderTransform`; defaults to `Transform.Identity`, affects render, and rejects `null`. |
 | `RenderTransformOriginProperty` | Property identifier for `RenderTransformOrigin`; defaults to `(0.5, 0.5)`, affects render, and requires normalized finite coordinates. |
 | `OpacityProperty` | Property identifier for `Opacity`; defaults to `1`, affects render, and accepts finite values from `0` through `1`. |
@@ -131,13 +133,13 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `PresenceOpacity` | `float` | Current presence-animation opacity value. |
 | `PresenceScale` | `float` | Current presence-animation scale value. |
 | `IsEnabled` | `bool` | Enables or disables element participation in input-related state; defaults to `true`. |
-| `IsVisible` | `bool` | Boolean visibility flag; defaults to `true`. |
+| `IsVisible` | `bool` | Boolean visibility flag; defaults to `true`. Setting it to `false` cancels property motion for this element and its visual descendants. |
 | `Margin` | `Thickness` | Space included around the measured and arranged content; defaults to `Thickness.Zero`. |
 | `Width` | `float` | Explicit content width, or `float.NaN` for automatic sizing; defaults to `float.NaN`. |
 | `Height` | `float` | Explicit content height, or `float.NaN` for automatic sizing; defaults to `float.NaN`. |
 | `HorizontalAlignment` | `HorizontalAlignment` | Horizontal placement inside the arranged content rectangle; defaults to `Stretch`. |
 | `VerticalAlignment` | `VerticalAlignment` | Vertical placement inside the arranged content rectangle; defaults to `Stretch`. |
-| `Visibility` | `Visibility` | Layout/render/hit-test visibility mode; defaults to `Visible`. |
+| `Visibility` | `Visibility` | Layout/render/hit-test visibility mode; defaults to `Visible`. Changing it to `Hidden` or `Collapsed` cancels property motion for this element and its visual descendants. |
 | `RenderTransform` | `Transform` | Transform applied at render time; defaults to `Transform.Identity`. |
 | `RenderTransformOrigin` | `LayoutPoint` | Normalized transform origin; defaults to `(0.5, 0.5)`. |
 | `Opacity` | `float` | Render opacity from `0` through `1`; defaults to `1`. |

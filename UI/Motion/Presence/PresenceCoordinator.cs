@@ -147,7 +147,7 @@ public sealed class PresenceCoordinator
         }
 
         element.SetPresenceExiting(false);
-        states[element] = PresenceState.Detached;
+        states.Remove(element);
     }
 
     private void CompleteExit(PresenceHandle handle)
@@ -163,7 +163,7 @@ public sealed class PresenceCoordinator
         element.SetPresenceVisual(1, 1);
         handle.RemoveElement(motion.Root);
         handle.Cancel();
-        states[element] = PresenceState.Detached;
+        states.Remove(element);
     }
 
     private void CompleteEnter(UIElement element, EnterAnimation animation)
