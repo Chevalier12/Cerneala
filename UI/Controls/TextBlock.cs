@@ -143,7 +143,7 @@ public class TextBlock : Control
         RecordFontResourceDependency();
         TextMeasureResult measurement = GetTextMeasurer().Measure(Text, aspect, context.AvailableSize.Width);
         lastMeasurement = measurement;
-        SetRenderDependencies(RenderDependencies.WithTextLayoutIdentity(measurement.CacheKey.ToString()));
+        SetRenderDependencies(RenderDependencies.WithTextLayoutIdentity(measurement.RenderIdentity));
         return measurement.Size;
     }
 
@@ -166,7 +166,7 @@ public class TextBlock : Control
         if (lastMeasurement is null || lastMeasurement.CacheKey != measurement.CacheKey)
         {
             lastMeasurement = measurement;
-            SetRenderDependencies(RenderDependencies.WithTextLayoutIdentity(measurement.CacheKey.ToString()));
+            SetRenderDependencies(RenderDependencies.WithTextLayoutIdentity(measurement.RenderIdentity));
         }
     }
 

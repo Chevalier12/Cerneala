@@ -31,13 +31,51 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         IMotionClock? motionClock = null,
         ReducedMotionPolicy? reducedMotion = null,
         UiRelayOptions? relayOptions = null)
+        : this(
+            viewportWidth,
+            viewportHeight,
+            scale,
+            motionClock,
+            reducedMotion,
+            relayOptions,
+            InvalidationTrace.Disabled)
+    {
+    }
+
+    public UIRoot(
+        InvalidationTrace invalidationTrace,
+        float viewportWidth = 0,
+        float viewportHeight = 0,
+        float scale = 1,
+        IMotionClock? motionClock = null,
+        ReducedMotionPolicy? reducedMotion = null,
+        UiRelayOptions? relayOptions = null)
+        : this(
+            viewportWidth,
+            viewportHeight,
+            scale,
+            motionClock,
+            reducedMotion,
+            relayOptions,
+            invalidationTrace ?? throw new ArgumentNullException(nameof(invalidationTrace)))
+    {
+    }
+
+    private UIRoot(
+        float viewportWidth,
+        float viewportHeight,
+        float scale,
+        IMotionClock? motionClock,
+        ReducedMotionPolicy? reducedMotion,
+        UiRelayOptions? relayOptions,
+        InvalidationTrace invalidationTrace)
     {
         Relay = new UiRelay(relayOptions);
         ViewportWidth = viewportWidth;
         ViewportHeight = viewportHeight;
         Scale = scale;
         ElementIds = new ElementIdProvider();
-        Trace = new InvalidationTrace();
+        Trace = invalidationTrace;
         QueueOrderIndex = new ElementQueueOrderIndex(this);
         LayoutQueue = new LayoutQueue(this);
         InheritedPropertyQueue = new InheritedPropertyQueue(this);

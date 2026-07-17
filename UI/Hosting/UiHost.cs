@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -103,32 +104,62 @@ public sealed class UiHost
         FrameStats stats = new();
         using (currentRoot.BeginUpdate(stats))
         {
+            long updatePhaseStarted = Stopwatch.GetTimestamp();
             ApplyViewportIfChanged(currentRoot, currentViewport);
             PrimeInitialFrame(currentRoot);
             if (advanceRenderTime)
             {
                 TimeSensitiveRenderInvalidator.Invalidate(currentRoot, frameTime);
             }
+            TimeSpan updatePreparationTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
 
+            updatePhaseStarted = Stopwatch.GetTimestamp();
+            FramePhaseTiming scheduledPhases = default;
             if (currentRoot.Scheduler.HasWork)
             {
                 currentRoot.ProcessFrameCore(null, default, stats, MotionFrameReason.Scheduled);
+                scheduledPhases = currentRoot.Scheduler.LastFrameTiming;
             }
+            TimeSpan scheduledProcessingTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
 
+            updatePhaseStarted = Stopwatch.GetTimestamp();
             InputBridge.Dispatch(currentRoot, inputFrame, frameTime);
+            TimeSpan inputDispatchTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
 
+            updatePhaseStarted = Stopwatch.GetTimestamp();
+            FramePhaseTiming inputPhases = default;
             if (currentRoot.Scheduler.HasWork || (currentRoot.Motion.HasActiveMotion && stats.MotionFrames == 0))
             {
                 currentRoot.ProcessFrameCore(null, default, stats, MotionFrameReason.Input);
+                inputPhases = currentRoot.Scheduler.LastFrameTiming;
             }
             else if (!stats.HasWork)
             {
                 stats.CountNoWorkFrame();
             }
+            TimeSpan inputProcessingTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
 
+            updatePhaseStarted = Stopwatch.GetTimestamp();
             currentRoot.RetainedRenderer.Commit(currentRoot);
+            TimeSpan retainedCommitTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
+            updatePhaseStarted = Stopwatch.GetTimestamp();
             PublishCursor(currentRoot, inputFrame);
+            TimeSpan cursorPublicationTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
             LastFrame = new UiFrame(frameTime, this.viewport, inputFrame, stats);
+            LastFrame.DiagnosticsTiming = new UiFrameTiming(
+                default,
+                default,
+                default,
+                default,
+                default,
+                updatePreparationTime,
+                scheduledProcessingTime,
+                inputDispatchTime,
+                inputProcessingTime,
+                retainedCommitTime,
+                cursorPublicationTime,
+                scheduledPhases,
+                inputPhases);
             return LastFrame;
         }
     }

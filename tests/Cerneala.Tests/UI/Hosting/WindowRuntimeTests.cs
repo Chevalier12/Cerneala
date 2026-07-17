@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
@@ -88,6 +89,29 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.Equal(2, observedFrames.Count);
         Assert.Same(window.LastFrame, observedFrames[^1]);
         Assert.Equal(TimeSpan.FromMilliseconds(16), window.LastFrame!.ElapsedTime);
+    }
+
+    [Fact]
+    public void FrameProcessingTimeExcludesThePresentationWait()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Diagnostics" } };
+        TimeSpan presentationWait = TimeSpan.FromMilliseconds(80);
+
+        window.Show();
+        FakeGraphicsSession session = Assert.Single(platform.Windows).Session;
+        session.PresentDelay = presentationWait;
+        window.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "timed frame");
+
+        Stopwatch pumpTime = Stopwatch.StartNew();
+        WindowApplicationRuntime.Current!.PumpOnce(TimeSpan.FromMilliseconds(16));
+        pumpTime.Stop();
+
+        Assert.True(window.LastFrame!.ProcessingTime >= TimeSpan.Zero);
+        Assert.True(
+            pumpTime.Elapsed - window.LastFrame.ProcessingTime >= presentationWait,
+            $"Processing time {window.LastFrame.ProcessingTime} included the {presentationWait} presentation wait from a {pumpTime.Elapsed} pump.");
     }
 
     [Fact]
@@ -557,6 +581,8 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public int RenderCountAtSave { get; private set; }
 
+        public TimeSpan PresentDelay { get; set; }
+
         public void Resize(int pixelWidth, int pixelHeight, float coordinateScale)
         {
         }
@@ -569,6 +595,7 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public void Present()
         {
+            Thread.Sleep(PresentDelay);
             PresentCount++;
         }
 

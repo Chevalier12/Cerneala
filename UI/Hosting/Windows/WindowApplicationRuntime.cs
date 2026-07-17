@@ -402,7 +402,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
         context.RenderRequested = false;
         try
         {
+            long processingStarted = Stopwatch.GetTimestamp();
+            long inputCollectionStarted = Stopwatch.GetTimestamp();
             InputFrame inputFrame = context.PlatformWindow.InputSource.GetFrame();
+            TimeSpan inputCollectionTime = Stopwatch.GetElapsedTime(inputCollectionStarted);
+            long retainedUpdateStarted = Stopwatch.GetTimestamp();
             UiFrame frame;
             if (renderTimeAlreadyAdvanced)
             {
@@ -412,6 +416,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             {
                 frame = context.Host.Update(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
             }
+            TimeSpan retainedUpdateTime = Stopwatch.GetElapsedTime(retainedUpdateStarted);
 
             if (!IsLiveContext(context))
             {
@@ -419,10 +424,33 @@ internal sealed class WindowApplicationRuntime : IDisposable
             }
 
             IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
+            long beginFrameStarted = Stopwatch.GetTimestamp();
             graphicsSession.BeginFrame(Color.White);
+            TimeSpan beginFrameTime = Stopwatch.GetElapsedTime(beginFrameStarted);
             try
             {
+                long drawingStarted = Stopwatch.GetTimestamp();
                 context.Host.Draw(graphicsSession.DrawingBackend);
+                TimeSpan drawingTime = Stopwatch.GetElapsedTime(drawingStarted);
+                DrawingBackendFrameTiming backendTiming =
+                    graphicsSession.DrawingBackend is IDrawingBackendFrameTimingSource timingSource
+                        ? timingSource.LastFrameTiming
+                        : default;
+                frame.DiagnosticsTiming = new UiFrameTiming(
+                    inputCollectionTime,
+                    retainedUpdateTime,
+                    beginFrameTime,
+                    drawingTime,
+                    backendTiming,
+                    frame.DiagnosticsTiming.UpdatePreparation,
+                    frame.DiagnosticsTiming.ScheduledProcessing,
+                    frame.DiagnosticsTiming.InputDispatch,
+                    frame.DiagnosticsTiming.InputProcessing,
+                    frame.DiagnosticsTiming.RetainedCommit,
+                    frame.DiagnosticsTiming.CursorPublication,
+                    frame.DiagnosticsTiming.ScheduledPhases,
+                    frame.DiagnosticsTiming.InputPhases);
+                frame.ProcessingTime = Stopwatch.GetElapsedTime(processingStarted);
             }
             finally
             {

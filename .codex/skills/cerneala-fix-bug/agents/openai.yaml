@@ -1,4 +1,4 @@
 interface:
   display_name: "CernealaFixBug"
   short_description: "Reproduce, test and fix Cerneala bugs"
-  default_prompt: "Use $cerneala-fix-bug to reproduce this Cerneala bug automatically, add a RED regression test, implement the smallest correct fix, and finish the automated verification before giving me the user-validation steps."
+  default_prompt: "Use $cerneala-fix-bug to reproduce this Cerneala bug automatically with CSI or a temporary native runtime harness, add a RED regression test, implement the smallest correct fix, and finish automated verification before giving me the user-validation steps."

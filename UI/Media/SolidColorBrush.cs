@@ -4,10 +4,13 @@ namespace Cerneala.UI.Media;
 
 public sealed record SolidColorBrush : Brush
 {
+    private readonly SolidDrawBrushDescriptor descriptor;
+
     public SolidColorBrush(Color color, float opacity = 1)
         : base(opacity)
     {
         Color = color;
+        descriptor = new SolidDrawBrushDescriptor(color, opacity);
     }
 
     public Color Color { get; }
@@ -18,6 +21,6 @@ public sealed record SolidColorBrush : Brush
 
     protected override DrawBrushDescriptor CreateDescriptor()
     {
-        return new SolidDrawBrushDescriptor(Color, Opacity);
+        return descriptor;
     }
 }

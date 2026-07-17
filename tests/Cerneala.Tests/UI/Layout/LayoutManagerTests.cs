@@ -73,6 +73,25 @@ public sealed class LayoutManagerTests
     }
 
     [Fact]
+    public void ContainerRemeasuresChildrenWhenReturningToAnOlderConstraint()
+    {
+        StackPanel panel = new();
+        WidthSensitiveElement child = new();
+        panel.VisualChildren.Add(child);
+        LayoutSize narrow = new(40, float.PositiveInfinity);
+        LayoutSize wide = new(100, float.PositiveInfinity);
+
+        panel.Measure(new MeasureContext(narrow));
+        panel.Measure(new MeasureContext(wide));
+        panel.Measure(new MeasureContext(narrow));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 30)));
+
+        Assert.Equal(new LayoutSize(40, 30), child.DesiredSize);
+        Assert.Equal(new LayoutRect(0, 0, 40, 30), child.ArrangedBounds);
+        Assert.Equal(2, child.MeasureCount);
+    }
+
+    [Fact]
     public void DirtyMeasureBypassesParentMeasureCacheWhenChildLayoutChanges()
     {
         UIRoot root = new(100, 100);
@@ -322,6 +341,19 @@ public sealed class LayoutManagerTests
         {
             MeasureCount++;
             return Size;
+        }
+    }
+
+    private sealed class WidthSensitiveElement : UIElement
+    {
+        public int MeasureCount { get; private set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            MeasureCount++;
+            return context.AvailableSize.Width <= 40
+                ? new LayoutSize(40, 30)
+                : new LayoutSize(100, 10);
         }
     }
 

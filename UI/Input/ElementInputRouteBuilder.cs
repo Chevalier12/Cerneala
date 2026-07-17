@@ -46,9 +46,14 @@ public sealed class ElementInputRouteBuilder
             }
         }
 
-        foreach (UIElement child in element.VisualChildren)
+        UIElementCollection visualChildren = element.VisualChildren;
+        for (int index = 0; index < visualChildren.Count; index++)
         {
-            AddElementAndDescendants(child, parentForDescendants, map, includeDisabled);
+            AddElementAndDescendants(
+                visualChildren[index],
+                parentForDescendants,
+                map,
+                includeDisabled);
         }
     }
 

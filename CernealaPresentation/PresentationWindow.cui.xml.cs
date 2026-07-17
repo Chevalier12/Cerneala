@@ -63,7 +63,7 @@ public partial class PresentationWindow : Window
             return;
         }
 
-        DiagFrameTime.Text = $"{LastFrame.ElapsedTime.TotalMilliseconds:0.00} ms";
+        DiagFrameTime.Text = $"{LastFrame.ProcessingTime.TotalMilliseconds:0.00} ms";
         DiagLayout.Text = $"{LastFrame.Stats.MeasuredElements} / {LastFrame.Stats.ArrangedElements}";
         DiagRender.Text = $"{LastFrame.Stats.RenderedElements} / {LastFrame.Stats.HitTestElements}";
         DiagSummary.Text = LastFrame.Stats.HasWork ? "dirty work committed" : "idle fast path";
@@ -106,7 +106,6 @@ public partial class PresentationWindow : Window
         NextButton.Content = currentChapter == ChapterNames.Length - 1 ? "RESTART TOUR  ->" : "NEXT  ->";
 
     }
-
     private void OnOpenMotionLab(UiElementId sender, RoutedEventArgs args)
     {
         MotionLabWindow lab = new() { Owner = this };

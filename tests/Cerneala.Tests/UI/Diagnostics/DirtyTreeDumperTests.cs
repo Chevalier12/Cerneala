@@ -10,7 +10,7 @@ public sealed class DirtyTreeDumperTests
     [Fact]
     public void DumpListsDirtyElementsWithFlagsVersionAndReason()
     {
-        UIRoot root = new();
+        UIRoot root = new(invalidationTrace: new InvalidationTrace());
         UIElement child = new();
         root.VisualChildren.Add(child);
         root.ProcessFrame();
@@ -30,7 +30,7 @@ public sealed class DirtyTreeDumperTests
     [Fact]
     public void DumpIncludesSourcePropertyWhenTraceRecordedPropertyInvalidation()
     {
-        UIRoot root = new();
+        UIRoot root = new(invalidationTrace: new InvalidationTrace());
         UIElement child = new();
         root.VisualChildren.Add(child);
 
@@ -46,7 +46,7 @@ public sealed class DirtyTreeDumperTests
     [Fact]
     public void DumpKeepsRequeuedAspectReasonWhenAspectProcessorInvalidatesAgain()
     {
-        UIRoot root = new();
+        UIRoot root = new(invalidationTrace: new InvalidationTrace());
         UIElement child = new();
         root.VisualChildren.Add(child);
         root.ProcessFrame();

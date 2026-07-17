@@ -1,6 +1,6 @@
 ---
 name: cerneala-fix-bug
-description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end with evidence-first debugging, a focused RED regression test, the smallest architecture-correct production change, CSI or another narrow automated experiment when applicable, and a final green test suite. Use when the user reports broken behavior, a regression, an exception, incorrect rendering, input or layout failures, performance bugs, flaky behavior, or asks to investigate and fix a Cerneala issue rather than implement a new capability.
+description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end with evidence-first debugging, a focused RED regression test, CSI or a temporary native runtime harness when needed, the smallest architecture-correct production change, and a final green test suite. Use when the user reports broken behavior, a regression, an exception, incorrect rendering, input or layout failures, performance bugs, flaky behavior, or asks to investigate and fix a Cerneala issue rather than implement a new capability.
 ---
 
 # Cerneala Fix Bug
@@ -27,8 +27,40 @@ Fix the reported behavior from reproduction through final verification. Treat th
 - Reproduce the bug with the narrowest deterministic path available.
 - For runtime C# behavior, prefer a temporary CSI `.csx` experiment when it can expose the relevant state faster than a throwaway project.
 - Run CSI with a short timeout, clean up the script, and check for a stuck `csi` process after suspicious execution.
-- If CSI is not applicable, use the closest focused automated harness: an existing test fixture or a small repository-native experiment.
+- If CSI cannot exercise the real window, frame loop, layout, rendering, input, or Motion behavior, use the temporary native runtime harness workflow below.
 - Record the failing observation. Do not accept a theory-only reproduction.
+
+### Temporary Native Runtime Harness
+
+Use this workflow for intermittent or hosted-runtime defects that a unit test cannot reproduce faithfully:
+
+1. Prefer an existing automation or probe API. Do not create another driver when the application already exposes deterministic navigation, reports, snapshots, or frame hooks.
+2. Create source only under `tests/Codex<Scenario>Harness/`. Never put harness `.cs` files under the repository-level `tmp/` directory: SDK default compile globs can pull them into an unrelated project. Use `tmp/` only for generated reports and other outputs.
+3. Keep the project minimal: target the required Windows framework, reference the exact project under test, and add no reusable abstraction unless the harness proves it is needed.
+4. Start the real application through its native generated application/startup descriptors. Wait for `ContentRendered` or an equivalent tree-ready signal, then observe frames through `FrameRendered` or the closest real frame hook.
+5. Drive named controls through automation peers or the application's public automation API. Reflection is acceptable only inside the temporary harness to reach generated private named fields when no public route exists; use exact member lookup and fail loudly when it is absent.
+6. Find unnamed retained elements by traversing `VisualChildren` with a stable semantic predicate such as type plus text prefix. Do not modify production markup merely to make the probe convenient.
+7. Capture the values that express the violated invariant, not screenshots alone: `DesiredSize`, `ArrangedBounds`, `Visibility`, dirty state, queue sizes, frame statistics, hit-test/render counts, Motion writes, cache state, or trace entries as applicable.
+8. Compute an explicit failure signal. For overflow, for example:
+
+   ```text
+   contentBottom = body.Y + body.Height + padding.Bottom
+   overflowPixels = contentBottom - (border.Y + border.Height)
+   ```
+
+9. Turn randomness into a bounded stress sequence. Repeat the exact transition many times with deterministic short timing variations, a fixed cycle count, and a command timeout. Never use an unbounded loop.
+10. Print a concise aggregate such as observed frames, failure count, and maximum delta, plus the first representative failure with enough state to diagnose it. Avoid drowning the useful frame in thousands of trace lines.
+11. Save the exact command, cycle count, timing pattern, and pre-fix result. After the fix, run the identical harness and compare the same metrics.
+
+The harness supplies high-fidelity reproduction evidence; it does not replace the permanent RED regression test. Once the owning invariant is known, encode the smallest stable version of that contract in the appropriate test project before changing production code.
+
+### Harness Cleanup
+
+- Close the native window on success, failure, and timeout paths. Surface asynchronous exceptions in the report instead of silently hanging.
+- Reindex after creating, modifying, or deleting harness C# or project files, as required by `AGENTS.md`.
+- Delete only the exact resolved harness directory and its generated report after verification. Guard the resolved path before recursive deletion.
+- Confirm with `git status` that no harness source, project, binaries, or reports remain.
+- Never commit the temporary harness unless the user explicitly asks to promote it. If it has lasting diagnostic value, discuss turning it into a permanent test or supported automation probe instead.
 
 ## 4. Add a RED Regression Test
 
@@ -57,7 +89,7 @@ Fix the reported behavior from reproduction through final verification. Treat th
 Run verification in this order:
 
 1. Run the RED regression test and confirm it is now green.
-2. Repeat the original CSI or focused reproduction and compare the previously failing state.
+2. Repeat the original CSI or runtime harness with the same inputs, cycle count, and timing pattern; compare the previously failing state and aggregate metrics.
 3. Run the affected test project or focused test group.
 4. Run the complete repository test suite. If another contract regresses, diagnose it, fix the damage, and rerun the full suite until green.
 

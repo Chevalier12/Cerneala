@@ -159,6 +159,62 @@ public sealed class TextPipelineTests
         Assert.True(HasDifferentAlphaCoverage(black[2], slate[2]));
     }
 
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(1.25f)]
+    [InlineData(1.5f)]
+    [InlineData(2f)]
+    public void CanonicalSubpixelRasterizationStaysCloseToIntermediatePositions(float coordinateScale)
+    {
+        SystemFontSource fonts = new();
+        DrawTextRun textRun = new(fonts.LoadFont("Arial", 16), "Motion baseline", 16);
+        SkiaTextRasterizer rasterizer = new();
+        DrawPoint position = new(20.049f / coordinateScale, 30.049f / coordinateScale);
+        DrawPoint phase = Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.GetCanonicalPixelPhaseForDiagnostics(
+            position,
+            coordinateScale);
+
+        RasterizedText[] exact = rasterizer.RasterizeSubpixel(
+            textRun,
+            new Color(38, 72, 110),
+            coordinateScale,
+            position);
+        RasterizedText[] canonical = rasterizer.RasterizeSubpixelAtPhase(
+            textRun,
+            new Color(38, 72, 110),
+            coordinateScale,
+            phase);
+
+        Assert.Equal(exact[0].ShapeResult.GlyphIds, canonical[0].ShapeResult.GlyphIds);
+        Assert.InRange(Math.Abs(exact[0].Width - canonical[0].Width), 0, 1);
+        Assert.InRange(Math.Abs(exact[0].Height - canonical[0].Height), 0, 1);
+        Assert.InRange(Math.Abs(exact[0].OriginOffset.X - canonical[0].OriginOffset.X), 0, 0.063f);
+        Assert.InRange(Math.Abs(exact[0].OriginOffset.Y - canonical[0].OriginOffset.Y), 0, 0.063f);
+        Assert.InRange(MeanAlphaDifference(exact, canonical), 0, 12);
+    }
+
+    [Fact]
+    public void AdjacentCanonicalPhasesDoNotIntroduceLargeCoverageJump()
+    {
+        SystemFontSource fonts = new();
+        DrawTextRun textRun = new(fonts.LoadFont("Arial", 16), "Motion baseline", 16);
+        SkiaTextRasterizer rasterizer = new();
+
+        RasterizedText[] left = rasterizer.RasterizeSubpixelAtPhase(
+            textRun,
+            Color.Black,
+            1.25f,
+            new DrawPoint(0, 0));
+        RasterizedText[] right = rasterizer.RasterizeSubpixelAtPhase(
+            textRun,
+            Color.Black,
+            1.25f,
+            new DrawPoint(0.125f, 0.125f));
+
+        Assert.InRange(MeanAlphaDifference(left, right), 0, 24);
+        Assert.True(HasDifferentAlphaCoverage(left[0], right[0]));
+    }
+
     [Fact]
     public void TextRasterizerResolvesBackendAgnosticFontsByFamily()
     {
@@ -389,6 +445,32 @@ public sealed class TextPipelineTests
         }
 
         return false;
+    }
+
+    private static double MeanAlphaDifference(
+        IReadOnlyList<RasterizedText> left,
+        IReadOnlyList<RasterizedText> right)
+    {
+        int width = Math.Min(left[0].Width, right[0].Width);
+        int height = Math.Min(left[0].Height, right[0].Height);
+        long difference = 0;
+        int samples = width * height * left.Count;
+        for (int layer = 0; layer < left.Count; layer++)
+        {
+            byte[] leftPixels = left[layer].RgbaPixels;
+            byte[] rightPixels = right[layer].RgbaPixels;
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int leftIndex = (((y * left[layer].Width) + x) * 4) + 3;
+                    int rightIndex = (((y * right[layer].Width) + x) * 4) + 3;
+                    difference += Math.Abs(leftPixels[leftIndex] - rightPixels[rightIndex]);
+                }
+            }
+        }
+
+        return difference / (double)samples;
     }
 
     private sealed record ContractFont(string FamilyName, float Size) : IDrawFont;

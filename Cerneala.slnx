@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Cerneala.Benchmarks/Cerneala.Benchmarks.csproj" />
+    <Project Path="benchmarks/Cerneala.PresentationFrameBudget/Cerneala.PresentationFrameBudget.csproj" />
     <Project Path="benchmarks/Cerneala.WpfDispatcherBenchmarks/Cerneala.WpfDispatcherBenchmarks.csproj" />
   </Folder>
   <Folder Name="/tests/">

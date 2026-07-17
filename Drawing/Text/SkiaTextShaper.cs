@@ -1,6 +1,8 @@
 using Cerneala.Drawing;
 using HarfBuzzSharp;
 using SkiaSharp;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using HarfBuzzBuffer = HarfBuzzSharp.Buffer;
 using HarfBuzzFont = HarfBuzzSharp.Font;
 
@@ -8,6 +10,10 @@ namespace Cerneala.Drawing.Text;
 
 public sealed class SkiaTextShaper
 {
+    private const int MaximumCachedShapesPerTypeface = 4_096;
+    private static readonly ConditionalWeakTable<SKTypeface, CachedHarfBuzzFace> FaceCache = new();
+    private static readonly ConditionalWeakTable<SKTypeface, ShapeCache> ShapesByTypeface = new();
+
     public TextShapeResult Shape(DrawTextRun textRun)
     {
         ArgumentNullException.ThrowIfNull(textRun);
@@ -17,15 +23,22 @@ public sealed class SkiaTextShaper
             throw new InvalidOperationException("SkiaTextShaper requires a SkiaFont.");
         }
 
+        ShapeCache cache = ShapesByTypeface.GetValue(font.Typeface, _ => new ShapeCache());
+        ShapeCacheKey key = new(textRun.Text, textRun.Size);
+        return cache.GetOrAdd(key, () => ShapeCore(textRun, font));
+    }
+
+    private static TextShapeResult ShapeCore(DrawTextRun textRun, SkiaFont font)
+    {
         using HarfBuzzBuffer buffer = new();
         buffer.AddUtf16(textRun.Text);
         buffer.GuessSegmentProperties();
 
-        OpenTypeFontData data = OpenTypeFontData.Read(font);
-        using Blob blob = data.CreatePinnedBlob();
-        using Face face = new(blob, data.FaceIndex);
-        using HarfBuzzFont harfBuzzFont = new(face);
-        int unitsPerEm = Math.Max(1, face.UnitsPerEm);
+        CachedHarfBuzzFace cachedFace = FaceCache.GetValue(
+            font.Typeface,
+            _ => new CachedHarfBuzzFace(OpenTypeFontData.Read(font)));
+        using HarfBuzzFont harfBuzzFont = new(cachedFace.Face);
+        int unitsPerEm = cachedFace.UnitsPerEm;
         harfBuzzFont.SetScale(unitsPerEm, unitsPerEm);
         harfBuzzFont.SetFunctionsOpenType();
         harfBuzzFont.Shape(buffer);
@@ -33,13 +46,12 @@ public sealed class SkiaTextShaper
         ushort[] glyphIds = GetGlyphIds(buffer);
         double textScale = textRun.Size / unitsPerEm;
         DrawPoint[] glyphPositions = GetGlyphPositions(buffer, textScale, out float advanceWidth);
-        return new TextShapeResult(
+        return TextShapeResult.FromOwnedGlyphs(
             textRun.Text,
-            buffer.Length,
             glyphIds,
             glyphPositions,
             advanceWidth,
-            GetOriginOffset(font, textRun.Size, glyphIds, glyphPositions));
+            GetOriginOffset(font, textRun, glyphIds, glyphPositions));
     }
 
     private static ushort[] GetGlyphIds(HarfBuzzBuffer buffer)
@@ -79,35 +91,82 @@ public sealed class SkiaTextShaper
         return positions;
     }
 
-    private static DrawPoint GetOriginOffset(SkiaFont font, float size, ushort[] glyphIds, DrawPoint[] glyphPositions)
+    private static DrawPoint GetOriginOffset(
+        SkiaFont font,
+        DrawTextRun textRun,
+        ushort[] glyphIds,
+        DrawPoint[] glyphPositions)
     {
         if (glyphIds.Length == 0)
         {
             return default;
         }
 
-        using SKFont skFont = new(font.Typeface, size);
-        using SKTextBlobBuilder builder = new();
-        builder.AddPositionedRun(glyphIds, skFont, ToPoints(glyphPositions));
-        using SKTextBlob textBlob = builder.Build() ?? throw new InvalidOperationException("Could not build text blob.");
-        SKRect bounds = textBlob.Bounds;
+        using SkiaTextBlobCache.Lease lease = SkiaTextBlobCache.Rent(
+            font,
+            textRun.Size,
+            textRun.Text,
+            glyphIds,
+            glyphPositions);
+        SKRect bounds = lease.Value.Bounds;
         return new DrawPoint(bounds.Left, bounds.Top);
-    }
-
-    private static SKPoint[] ToPoints(DrawPoint[] positions)
-    {
-        SKPoint[] points = new SKPoint[positions.Length];
-
-        for (int i = 0; i < positions.Length; i++)
-        {
-            points[i] = new SKPoint(positions[i].X, positions[i].Y);
-        }
-
-        return points;
     }
 
     private static float ToPixels(int harfBuzzValue, double textScale)
     {
         return (float)(harfBuzzValue * textScale);
     }
+
+    private sealed class CachedHarfBuzzFace
+    {
+        private readonly Blob blob;
+
+        public CachedHarfBuzzFace(OpenTypeFontData data)
+        {
+            blob = data.CreatePinnedBlob();
+            Face = new Face(blob, data.FaceIndex);
+            UnitsPerEm = Math.Max(1, Face.UnitsPerEm);
+        }
+
+        public Face Face { get; }
+
+        public int UnitsPerEm { get; }
+    }
+
+    private sealed class ShapeCache
+    {
+        private readonly ConcurrentDictionary<ShapeCacheKey, Lazy<TextShapeResult>> entries = new();
+        private readonly ConcurrentQueue<ShapeCacheKey> insertionOrder = new();
+
+        public TextShapeResult GetOrAdd(ShapeCacheKey key, Func<TextShapeResult> create)
+        {
+            if (entries.TryGetValue(key, out Lazy<TextShapeResult>? existing))
+            {
+                return existing.Value;
+            }
+
+            Lazy<TextShapeResult> candidate = new(
+                create,
+                LazyThreadSafetyMode.ExecutionAndPublication);
+            Lazy<TextShapeResult> cached = entries.GetOrAdd(key, candidate);
+            if (ReferenceEquals(cached, candidate))
+            {
+                insertionOrder.Enqueue(key);
+                Trim();
+            }
+
+            return cached.Value;
+        }
+
+        private void Trim()
+        {
+            while (entries.Count > MaximumCachedShapesPerTypeface &&
+                insertionOrder.TryDequeue(out ShapeCacheKey oldest))
+            {
+                entries.TryRemove(oldest, out _);
+            }
+        }
+    }
+
+    private readonly record struct ShapeCacheKey(string Text, float Size);
 }

@@ -2,15 +2,18 @@ namespace Cerneala.UI.Core;
 
 public sealed class UiProperty<T> : UiProperty
 {
+    private readonly object? boxedDefaultValue;
+
     internal UiProperty(long id, string name, Type ownerType, UiPropertyMetadata<T> metadata)
         : base(id, name, ownerType, typeof(T), metadata.Options)
     {
         Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
+        boxedDefaultValue = metadata.DefaultValue;
     }
 
     public UiPropertyMetadata<T> Metadata { get; }
 
-    internal override object? DefaultValueUntyped => Metadata.DefaultValue;
+    internal override object? DefaultValueUntyped => boxedDefaultValue;
 
     public static UiProperty<T> Register(string name, Type ownerType, UiPropertyMetadata<T> metadata)
     {

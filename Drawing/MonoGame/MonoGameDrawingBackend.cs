@@ -1,3 +1,5 @@
+using System.Buffers;
+using System.Diagnostics;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Hosting;
 using Microsoft.Xna.Framework;
@@ -7,15 +9,23 @@ using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.Drawing.MonoGame;
 
-public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
+public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFrameTimingSource, IDisposable
 {
+    private const int TextSubpixelPhaseCount = 8;
+    private const int DefaultMaximumTextTextureEntries = 2_048;
+    private const long DefaultMaximumTextTextureBytes = 256L * 1024 * 1024;
+
     private readonly SpriteBatch _spriteBatch;
     private readonly Dictionary<TextTextureKey, TextTexture> _textTextureCache = new();
     private readonly Dictionary<TextBrushTextureKey, Texture2D> textBrushTextureCache = new();
-    private readonly HashSet<TextTextureKey> activeTextTextureKeys = [];
-    private readonly HashSet<TextBrushTextureKey> activeTextBrushTextureKeys = [];
-    private readonly List<TextTextureKey> inactiveTextTextureKeys = [];
-    private readonly List<TextBrushTextureKey> inactiveTextBrushTextureKeys = [];
+    private Dictionary<TextTextureKey, TextTextureCacheMetadata> textTextureCacheMetadata = new();
+    private HashSet<TextTextureKey> activeTextTextureKeys = [];
+    private List<TextTextureKey> textTextureEvictionCandidates = [];
+    private readonly Dictionary<TextTextureKey, TextRasterizationRequest> textRasterizationRequests = new();
+    private readonly Dictionary<TextTextureKey, RasterizedText[]> preparedTextRasterizations = new();
+    private readonly HashSet<TextTextureKey> preparedTextTextureKeys = [];
+    private readonly Dictionary<Texture2D, int> sharedTextTextureReferenceCounts =
+        new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<BrushTextureKey, Texture2D> brushTextureCache = new();
     private readonly Dictionary<PathMeshKey, MonoGamePathMesh> pathMeshCache = new();
     private readonly HashSet<IDrawBrush> activeBrushes = new(ReferenceEqualityComparer.Instance);
@@ -27,9 +37,20 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
     private readonly BlendState greenTextBlendState;
     private readonly BlendState blueTextBlendState;
     private readonly BlendState textMaskBlendState;
+    private long textTextureCacheHits;
+    private long textTextureCacheMisses;
+    private long textTextureCacheEvictions;
+    private long textTextureCacheEstimatedBytes;
+    private long textTextureCacheGeneration;
+    private long textTextureCacheInsertionSequence;
     private float coordinateScale = 1;
     private bool disposed;
     private MonoGameClipStack? clipStack;
+    private TimeSpan lastTextRequestCollectionTime;
+    private TimeSpan lastTextRasterizationTime;
+    private TimeSpan lastTextAtlasUploadTime;
+    private int lastTextRequestCount;
+    private long lastRasterizedPixelCount;
 
     public MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer = null)
     {
@@ -77,20 +98,47 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         graphicsDevice.ScissorRectangle = viewportClip;
         clipStack = new MonoGameClipStack(viewportClip);
         activeTextTextureKeys.Clear();
-        activeTextBrushTextureKeys.Clear();
+        lastTextRequestCollectionTime = TimeSpan.Zero;
+        lastTextRasterizationTime = TimeSpan.Zero;
+        lastTextAtlasUploadTime = TimeSpan.Zero;
+        lastTextRequestCount = 0;
+        lastRasterizedPixelCount = 0;
+        long preparationStarted = Stopwatch.GetTimestamp();
+        PrepareTextRasterizations(commands);
+        TimeSpan preparationTime = Stopwatch.GetElapsedTime(preparationStarted);
+        long commandRenderingStarted = Stopwatch.GetTimestamp();
 
         try
         {
-            foreach (DrawCommand command in commands)
+            for (int index = 0; index < commands.Count; index++)
             {
-                RenderCommand(command);
+                RenderCommand(commands[index]);
             }
         }
         finally
         {
+            TimeSpan commandRenderingTime = Stopwatch.GetElapsedTime(commandRenderingStarted);
+            long cleanupStarted = Stopwatch.GetTimestamp();
             clipStack.Reset();
             graphicsDevice.ScissorRectangle = previousScissor;
-            PruneInactiveTextTextureCaches();
+            foreach (RasterizedText[] layers in preparedTextRasterizations.Values)
+            {
+                ReturnRasterizedTextPixels(layers);
+            }
+            preparedTextRasterizations.Clear();
+            preparedTextTextureKeys.Clear();
+            CompleteTextTextureFrame(
+                DefaultMaximumTextTextureEntries,
+                DefaultMaximumTextTextureBytes);
+            LastFrameTiming = new DrawingBackendFrameTiming(
+                preparationTime,
+                lastTextRequestCollectionTime,
+                lastTextRasterizationTime,
+                lastTextAtlasUploadTime,
+                commandRenderingTime,
+                Stopwatch.GetElapsedTime(cleanupStarted),
+                lastTextRequestCount,
+                lastRasterizedPixelCount);
         }
     }
 
@@ -567,24 +615,64 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             : command.Brush is null
                 ? new CernealaColor(command.Color.R, command.Color.G, command.Color.B)
                 : CernealaColor.White;
-        DrawPoint pixelPhase = GetPixelPhase(command.Position, coordinateScale);
+        DrawPoint pixelPhase = GetCanonicalPixelPhase(command.Position, coordinateScale);
         TextTextureKey key = TextTextureKey.FromWithRasterizationColor(command.TextRun, coordinateScale, pixelPhase, rasterizationColor);
-        activeTextTextureKeys.Add(key);
+        bool needsMask = command.Brush is not null && solidTextColor is null;
 
         if (!_textTextureCache.TryGetValue(key, out TextTexture cachedText))
         {
-            RasterizedText[] layers = _textRasterizer.RasterizeSubpixel(
+            textTextureCacheMisses++;
+            RasterizedText[] layers = preparedTextRasterizations.Remove(key, out RasterizedText[]? prepared)
+                ? prepared
+                : _textRasterizer.RasterizeSubpixelAtPhase(
+                    command.TextRun,
+                    rasterizationColor,
+                    coordinateScale,
+                    pixelPhase);
+            try
+            {
+                cachedText = CreatePackedTextTexture(
+                    layers,
+                    needsMask ? CreateTexture(CreateGrayscaleMask(layers)) : null);
+            }
+            finally
+            {
+                ReturnRasterizedTextPixels(layers);
+            }
+            _textTextureCache.Add(key, cachedText);
+            textTextureCacheEstimatedBytes += EstimateBytes(cachedText);
+            MarkTextTextureUsed(key);
+        }
+        else if (preparedTextTextureKeys.Remove(key))
+        {
+            textTextureCacheMisses++;
+            MarkTextTextureUsed(key);
+        }
+        else
+        {
+            textTextureCacheHits++;
+            MarkTextTextureUsed(key);
+        }
+
+        if (needsMask && cachedText.MaskTexture is null)
+        {
+            RasterizedText[] layers = _textRasterizer.RasterizeSubpixelAtPhase(
                 command.TextRun,
                 rasterizationColor,
                 coordinateScale,
-                command.Position);
-            cachedText = new TextTexture(
-                CreateTexture(layers[0]),
-                CreateTexture(layers[1]),
-                CreateTexture(layers[2]),
-                CreateTexture(CreateGrayscaleMask(layers)),
-                layers[0].OriginOffset);
-            _textTextureCache.Add(key, cachedText);
+                pixelPhase);
+            Texture2D mask;
+            try
+            {
+                mask = CreateTexture(CreateGrayscaleMask(layers));
+            }
+            finally
+            {
+                ReturnRasterizedTextPixels(layers);
+            }
+            cachedText = cachedText with { MaskTexture = mask };
+            _textTextureCache[key] = cachedText;
+            textTextureCacheEstimatedBytes += EstimateBytes(mask);
         }
 
         Vector2 origin = MapTextTexturePosition(command.Position, cachedText.OriginOffset, coordinateScale);
@@ -604,6 +692,322 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         DrawSolidText(cachedText, origin, ToColor(command.Color));
     }
 
+    private void PrepareTextRasterizations(DrawCommandList commands)
+    {
+        long requestCollectionStarted = Stopwatch.GetTimestamp();
+        preparedTextRasterizations.Clear();
+        textRasterizationRequests.Clear();
+        if (_textRasterizer is null)
+        {
+            lastTextRequestCollectionTime = Stopwatch.GetElapsedTime(requestCollectionStarted);
+            return;
+        }
+
+        for (int index = 0; index < commands.Count; index++)
+        {
+            DrawCommand command = commands[index];
+            if (command.Kind != DrawCommandKind.DrawText || command.TextRun is null)
+            {
+                continue;
+            }
+
+            CernealaColor rasterizationColor = ResolveTextRasterizationColor(command);
+            DrawPoint pixelPhase = GetCanonicalPixelPhase(command.Position, coordinateScale);
+            TextTextureKey key = TextTextureKey.FromWithRasterizationColor(
+                command.TextRun,
+                coordinateScale,
+                pixelPhase,
+                rasterizationColor);
+            if (!_textTextureCache.ContainsKey(key))
+            {
+                bool needsMask = command.Brush is not null &&
+                    !TryGetSolidColor(command.Brush.CreateDescriptor(), command.BrushOpacity, out _);
+                textRasterizationRequests.TryAdd(
+                    key,
+                    new TextRasterizationRequest(
+                        command.TextRun,
+                        rasterizationColor,
+                        pixelPhase,
+                        needsMask));
+            }
+        }
+
+        lastTextRequestCollectionTime = Stopwatch.GetElapsedTime(requestCollectionStarted);
+        lastTextRequestCount = textRasterizationRequests.Count;
+        if (textRasterizationRequests.Count == 0)
+        {
+            return;
+        }
+
+        KeyValuePair<TextTextureKey, TextRasterizationRequest>[] work = textRasterizationRequests.ToArray();
+        RasterizedText[][] results = new RasterizedText[work.Length][];
+        long rasterizationStarted = Stopwatch.GetTimestamp();
+        try
+        {
+            if (work.Length == 1)
+            {
+                TextRasterizationRequest request = work[0].Value;
+                results[0] = _textRasterizer.RasterizeSubpixelAtPhase(
+                    request.TextRun,
+                    request.RasterizationColor,
+                    coordinateScale,
+                    request.PixelPhase);
+            }
+            else
+            {
+                Parallel.For(
+                    0,
+                    work.Length,
+                    index =>
+                    {
+                        TextRasterizationRequest request = work[index].Value;
+                        results[index] = _textRasterizer.RasterizeSubpixelAtPhase(
+                            request.TextRun,
+                            request.RasterizationColor,
+                            coordinateScale,
+                            request.PixelPhase);
+                    });
+            }
+        }
+        catch
+        {
+            ReturnRasterizedTextPixels(results);
+            throw;
+        }
+        lastTextRasterizationTime = Stopwatch.GetElapsedTime(rasterizationStarted);
+        for (int index = 0; index < results.Length; index++)
+        {
+            RasterizedText[] layers = results[index];
+            if (layers.Length > 0)
+            {
+                long pixelCount = (long)layers[0].Width * layers[0].Height * layers.Length;
+                lastRasterizedPixelCount += pixelCount;
+            }
+        }
+
+        bool atlasCreated;
+        long atlasUploadStarted = Stopwatch.GetTimestamp();
+        try
+        {
+            atlasCreated = TryCreateTextTextureAtlas(work, results);
+        }
+        catch
+        {
+            ReturnRasterizedTextPixels(results);
+            throw;
+        }
+        lastTextAtlasUploadTime = Stopwatch.GetElapsedTime(atlasUploadStarted);
+
+        if (atlasCreated)
+        {
+            ReturnRasterizedTextPixels(results);
+            return;
+        }
+
+        for (int index = 0; index < work.Length; index++)
+        {
+            preparedTextRasterizations.Add(work[index].Key, results[index]);
+        }
+        }
+
+    private bool TryCreateTextTextureAtlas(
+        KeyValuePair<TextTextureKey, TextRasterizationRequest>[] work,
+        RasterizedText[][] results)
+    {
+        if (work.Length < 2)
+        {
+            return false;
+        }
+
+        if (!TryPackTextAtlas(results, out int atlasWidth, out int atlasHeight, out Rectangle[] placements))
+        {
+            return false;
+        }
+
+        int atlasPixelBytes = checked(atlasWidth * atlasHeight * 4);
+        byte[] atlasPixels = ArrayPool<byte>.Shared.Rent(atlasPixelBytes);
+        Texture2D atlas;
+        try
+        {
+            atlasPixels.AsSpan(0, atlasPixelBytes).Clear();
+            for (int index = 0; index < results.Length; index++)
+            {
+                RasterizedText[] layers = results[index];
+                Rectangle placement = placements[index];
+                int sourceRowBytes = layers[0].Width * 4;
+                for (int layerIndex = 0; layerIndex < layers.Length; layerIndex++)
+                {
+                    ReadOnlySpan<byte> source = layers[layerIndex].PixelSpan;
+                    int layerY = placement.Y + (layerIndex * layers[0].Height);
+                    for (int row = 0; row < layers[0].Height; row++)
+                    {
+                        source.Slice(row * sourceRowBytes, sourceRowBytes).CopyTo(
+                            atlasPixels.AsSpan(
+                                ((((layerY + row) * atlasWidth) + placement.X) * 4),
+                                sourceRowBytes));
+                    }
+                }
+            }
+
+            atlas = new Texture2D(_spriteBatch.GraphicsDevice, atlasWidth, atlasHeight);
+            try
+            {
+                atlas.SetData(
+                    level: 0,
+                    rect: null,
+                    data: atlasPixels,
+                    startIndex: 0,
+                    elementCount: atlasPixelBytes);
+            }
+            catch
+            {
+                atlas.Dispose();
+                throw;
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(atlasPixels);
+        }
+
+        sharedTextTextureReferenceCounts.Add(atlas, work.Length);
+        textTextureCacheEstimatedBytes += EstimateBytes(atlas);
+
+        for (int index = 0; index < work.Length; index++)
+        {
+            RasterizedText[] layers = results[index];
+            RasterizedText first = layers[0];
+            Rectangle placement = placements[index];
+            Texture2D? mask = work[index].Value.NeedsMask
+                ? CreateTexture(CreateGrayscaleMask(layers))
+                : null;
+            TextTexture text = new(
+                atlas,
+                atlas,
+                atlas,
+                mask,
+                first.OriginOffset)
+            {
+                RedSource = new Rectangle(placement.X, placement.Y, first.Width, first.Height),
+                GreenSource = new Rectangle(placement.X, placement.Y + first.Height, first.Width, first.Height),
+                BlueSource = new Rectangle(placement.X, placement.Y + (first.Height * 2), first.Width, first.Height)
+            };
+            _textTextureCache.Add(work[index].Key, text);
+            preparedTextTextureKeys.Add(work[index].Key);
+            if (mask is not null)
+            {
+                textTextureCacheEstimatedBytes += EstimateBytes(mask);
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryPackTextAtlas(
+        RasterizedText[][] results,
+        out int atlasWidth,
+        out int atlasHeight,
+        out Rectangle[] placements)
+    {
+        const int maximumSafeAtlasDimension = 4_096;
+        long totalArea = 0;
+        int widestBlock = 0;
+        int[] order = new int[results.Length];
+        placements = new Rectangle[results.Length];
+        for (int index = 0; index < results.Length; index++)
+        {
+            RasterizedText first = results[index][0];
+            int blockHeight = checked(first.Height * 3);
+            widestBlock = Math.Max(widestBlock, first.Width);
+            totalArea = checked(totalArea + ((long)first.Width * blockHeight));
+            order[index] = index;
+        }
+
+        if (widestBlock > maximumSafeAtlasDimension)
+        {
+            atlasWidth = 0;
+            atlasHeight = 0;
+            return false;
+        }
+
+        Array.Sort(
+            order,
+            (left, right) =>
+                (results[right][0].Height * 3).CompareTo(results[left][0].Height * 3));
+        atlasWidth = Math.Max(
+            widestBlock,
+            Math.Min(maximumSafeAtlasDimension, (int)Math.Ceiling(Math.Sqrt(totalArea))));
+
+        while (!TryPackTextAtlasAtWidth(
+            results,
+            order,
+            atlasWidth,
+            maximumSafeAtlasDimension,
+            placements,
+            out atlasHeight))
+        {
+            if (atlasWidth == maximumSafeAtlasDimension)
+            {
+                atlasHeight = 0;
+                return false;
+            }
+
+            atlasWidth = Math.Min(maximumSafeAtlasDimension, checked(atlasWidth * 2));
+        }
+
+        return true;
+    }
+
+    private static bool TryPackTextAtlasAtWidth(
+        RasterizedText[][] results,
+        int[] order,
+        int atlasWidth,
+        int maximumAtlasHeight,
+        Rectangle[] placements,
+        out int atlasHeight)
+    {
+        int x = 0;
+        int y = 0;
+        int shelfHeight = 0;
+        foreach (int index in order)
+        {
+            RasterizedText first = results[index][0];
+            int blockHeight = first.Height * 3;
+            if (x > 0 && x + first.Width > atlasWidth)
+            {
+                y += shelfHeight;
+                x = 0;
+                shelfHeight = 0;
+            }
+
+            if (y + blockHeight > maximumAtlasHeight)
+            {
+                atlasHeight = 0;
+                return false;
+            }
+
+            placements[index] = new Rectangle(x, y, first.Width, blockHeight);
+            x += first.Width;
+            shelfHeight = Math.Max(shelfHeight, blockHeight);
+        }
+
+        atlasHeight = y + shelfHeight;
+        return true;
+    }
+
+    private static CernealaColor ResolveTextRasterizationColor(DrawCommand command)
+    {
+        if (command.Brush is not null &&
+            TryGetSolidColor(command.Brush.CreateDescriptor(), command.BrushOpacity, out XnaColor solid))
+        {
+            return new CernealaColor(solid.R, solid.G, solid.B);
+        }
+
+        return command.Brush is null
+            ? new CernealaColor(command.Color.R, command.Color.G, command.Color.B)
+            : CernealaColor.White;
+    }
+
     private void DrawSolidText(TextTexture cachedText, Vector2 origin, XnaColor color)
     {
         color = Premultiply(color);
@@ -611,9 +1015,9 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         BlendState previousBlendState = graphicsDevice.BlendState;
         try
         {
-            DrawTextLayer(cachedText.RedTexture, origin, color, redTextBlendState);
-            DrawTextLayer(cachedText.GreenTexture, origin, color, greenTextBlendState);
-            DrawTextLayer(cachedText.BlueTexture, origin, color, blueTextBlendState);
+            DrawTextLayer(cachedText.RedTexture, cachedText.RedSource, origin, color, redTextBlendState);
+            DrawTextLayer(cachedText.GreenTexture, cachedText.GreenSource, origin, color, greenTextBlendState);
+            DrawTextLayer(cachedText.BlueTexture, cachedText.BlueSource, origin, color, blueTextBlendState);
         }
         finally
         {
@@ -621,17 +1025,91 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         }
     }
 
+    private TextTexture CreatePackedTextTexture(RasterizedText[] layers, Texture2D? mask)
+    {
+        RasterizedText first = layers[0];
+        int layerByteCount = first.PixelLength;
+        byte[] packedPixels;
+        if (ReferenceEquals(first.PixelBuffer, layers[1].PixelBuffer) &&
+            ReferenceEquals(first.PixelBuffer, layers[2].PixelBuffer) &&
+            first.PixelOffset == 0 &&
+            layers[1].PixelOffset == layerByteCount &&
+            layers[2].PixelOffset == layerByteCount * 2)
+        {
+            packedPixels = first.PixelBuffer;
+        }
+        else
+        {
+            packedPixels = GC.AllocateUninitializedArray<byte>(layerByteCount * 3);
+            for (int index = 0; index < layers.Length; index++)
+            {
+                layers[index].PixelSpan.CopyTo(packedPixels.AsSpan(index * layerByteCount, layerByteCount));
+            }
+        }
+
+        Texture2D packedTexture = new(
+            _spriteBatch.GraphicsDevice,
+            first.Width,
+            first.Height * 3);
+        packedTexture.SetData(
+            level: 0,
+            rect: null,
+            data: packedPixels,
+            startIndex: 0,
+            elementCount: checked(layerByteCount * 3));
+        return new TextTexture(
+            packedTexture,
+            packedTexture,
+            packedTexture,
+            mask,
+            first.OriginOffset)
+        {
+            RedSource = new Rectangle(0, 0, first.Width, first.Height),
+            GreenSource = new Rectangle(0, first.Height, first.Width, first.Height),
+            BlueSource = new Rectangle(0, first.Height * 2, first.Width, first.Height)
+        };
+    }
+
     private Texture2D CreateTexture(RasterizedText text)
     {
         Texture2D texture = new(_spriteBatch.GraphicsDevice, text.Width, text.Height);
-        texture.SetData(text.RgbaPixels);
+        texture.SetData(
+            level: 0,
+            rect: null,
+            data: text.PixelBuffer,
+            startIndex: text.PixelOffset,
+            elementCount: text.PixelLength);
         return texture;
     }
 
-    private void DrawTextLayer(Texture2D texture, Vector2 origin, XnaColor color, BlendState blendState)
+    private static void ReturnRasterizedTextPixels(RasterizedText[] layers)
+    {
+        if (layers.Length > 0)
+        {
+            layers[0].ReturnPixelBuffer();
+        }
+    }
+
+    private static void ReturnRasterizedTextPixels(RasterizedText[][] results)
+    {
+        foreach (RasterizedText[]? layers in results)
+        {
+            if (layers is not null)
+            {
+                ReturnRasterizedTextPixels(layers);
+            }
+        }
+    }
+
+    private void DrawTextLayer(
+        Texture2D texture,
+        Rectangle? source,
+        Vector2 origin,
+        XnaColor color,
+        BlendState blendState)
     {
         _spriteBatch.GraphicsDevice.BlendState = blendState;
-        _spriteBatch.Draw(texture, origin, color);
+        _spriteBatch.Draw(texture, origin, source, color);
     }
 
     private Texture2D GetOrCreateTextBrushTexture(
@@ -641,7 +1119,6 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         float commandOpacity)
     {
         TextBrushTextureKey key = new(textKey, brush, commandOpacity);
-        activeTextBrushTextureKeys.Add(key);
         if (textBrushTextureCache.TryGetValue(key, out Texture2D? cached))
         {
             return cached;
@@ -655,7 +1132,9 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         DepthStencilState previousDepth = device.DepthStencilState;
         RasterizerState previousRasterizer = device.RasterizerState;
         MonoGameClipStack? previousClipStack = clipStack;
-        RenderTarget2D target = new(device, text.MaskTexture.Width, text.MaskTexture.Height, false, SurfaceFormat.Color, DepthFormat.None);
+        Texture2D mask = text.MaskTexture ??
+            throw new InvalidOperationException("Non-solid text brushes require a grayscale text mask.");
+        RenderTarget2D target = new(device, mask.Width, mask.Height, false, SurfaceFormat.Color, DepthFormat.None);
         DrawRect localBounds = new(0, 0, target.Width / coordinateScale, target.Height / coordinateScale);
 
         _spriteBatch.End();
@@ -670,7 +1149,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             _spriteBatch.End();
 
             _spriteBatch.Begin(SpriteSortMode.Immediate, textMaskBlendState, SamplerState.PointClamp, DepthStencilState.None, previousRasterizer);
-            _spriteBatch.Draw(text.MaskTexture, Vector2.Zero, XnaColor.White);
+            _spriteBatch.Draw(mask, Vector2.Zero, XnaColor.White);
             _spriteBatch.End();
         }
         catch
@@ -695,24 +1174,32 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         }
 
         textBrushTextureCache.Add(key, target);
+        textTextureCacheEstimatedBytes += EstimateBytes(target);
         return target;
     }
 
     private static RasterizedText CreateGrayscaleMask(IReadOnlyList<RasterizedText> layers)
     {
         RasterizedText first = layers[0];
-        byte[][] pixels = layers.Select(layer => layer.RgbaPixels).ToArray();
-        byte[] mask = new byte[pixels[0].Length];
+        ReadOnlySpan<byte> red = layers[0].PixelSpan;
+        ReadOnlySpan<byte> green = layers[1].PixelSpan;
+        ReadOnlySpan<byte> blue = layers[2].PixelSpan;
+        byte[] mask = new byte[red.Length];
         for (int index = 0; index < mask.Length; index += 4)
         {
-            byte coverage = (byte)((pixels[0][index + 3] + pixels[1][index + 3] + pixels[2][index + 3] + 1) / 3);
+            byte coverage = (byte)((red[index + 3] + green[index + 3] + blue[index + 3] + 1) / 3);
             mask[index] = coverage;
             mask[index + 1] = coverage;
             mask[index + 2] = coverage;
             mask[index + 3] = coverage;
         }
 
-        return new RasterizedText(first.Width, first.Height, mask, first.ShapeResult, first.OriginOffset);
+        return RasterizedText.FromOwnedPixels(
+            first.Width,
+            first.Height,
+            mask,
+            first.ShapeResult,
+            first.OriginOffset);
     }
 
     private void PushClip(DrawRect rect)
@@ -1298,6 +1785,17 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
 
     internal int TextTextureCacheCount => _textTextureCache.Count;
 
+    internal TextTextureCacheDiagnosticSnapshot TextTextureCacheDiagnostics =>
+        new(
+            textTextureCacheHits,
+            textTextureCacheMisses,
+            textTextureCacheEvictions,
+            textTextureCacheEstimatedBytes);
+
+    DrawingBackendFrameTiming IDrawingBackendFrameTimingSource.LastFrameTiming => LastFrameTiming;
+
+    internal DrawingBackendFrameTiming LastFrameTiming { get; private set; }
+
     internal int BrushTextureCacheCount => brushTextureCache?.Count ?? 0;
 
     private void OnDeviceReset(object? sender, EventArgs args)
@@ -1313,14 +1811,14 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         {
             foreach (TextTexture text in _textTextureCache.Values)
             {
-                text.RedTexture.Dispose();
-                text.GreenTexture.Dispose();
-                text.BlueTexture.Dispose();
-                text.MaskTexture.Dispose();
+                ReleaseRgbTextures(text);
+                text.MaskTexture?.Dispose();
             }
 
             _textTextureCache.Clear();
         }
+
+        textTextureCacheMetadata?.Clear();
 
         if (textBrushTextureCache is null)
         {
@@ -1332,55 +1830,120 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             texture.Dispose();
         }
         textBrushTextureCache.Clear();
+        sharedTextTextureReferenceCounts?.Clear();
+        textTextureCacheEstimatedBytes = 0;
     }
 
-    private void PruneInactiveTextTextureCaches()
+    private void MarkTextTextureUsed(TextTextureKey key)
     {
-        if (_textTextureCache is null || activeTextTextureKeys is null)
+        activeTextTextureKeys ??= [];
+        activeTextTextureKeys.Add(key);
+        Dictionary<TextTextureKey, TextTextureCacheMetadata> metadata =
+            textTextureCacheMetadata ??= new Dictionary<TextTextureKey, TextTextureCacheMetadata>();
+        if (metadata.TryGetValue(key, out TextTextureCacheMetadata current))
+        {
+            metadata[key] = current with { LastUsedGeneration = textTextureCacheGeneration };
+            return;
+        }
+
+        metadata[key] = new TextTextureCacheMetadata(
+            textTextureCacheGeneration,
+            textTextureCacheInsertionSequence++);
+    }
+
+    private void CompleteTextTextureFrame(int maximumEntries, long maximumBytes)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumEntries);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumBytes);
+        if (_textTextureCache is null)
         {
             return;
         }
 
-        List<TextTextureKey> staleTextKeys = inactiveTextTextureKeys ?? [];
-        staleTextKeys.Clear();
+        Dictionary<TextTextureKey, TextTextureCacheMetadata> metadata =
+            textTextureCacheMetadata ??= new Dictionary<TextTextureKey, TextTextureCacheMetadata>();
         foreach (TextTextureKey key in _textTextureCache.Keys)
         {
-            if (!activeTextTextureKeys.Contains(key))
+            if (!metadata.ContainsKey(key))
             {
-                staleTextKeys.Add(key);
+                metadata[key] = new TextTextureCacheMetadata(
+                    activeTextTextureKeys?.Contains(key) == true ? textTextureCacheGeneration : -1,
+                    textTextureCacheInsertionSequence++);
+            }
+            else if (activeTextTextureKeys?.Contains(key) == true)
+            {
+                metadata[key] = metadata[key] with { LastUsedGeneration = textTextureCacheGeneration };
             }
         }
 
-        foreach (TextTextureKey key in staleTextKeys)
+        if (_textTextureCache.Count <= maximumEntries &&
+            textTextureCacheEstimatedBytes <= maximumBytes)
         {
-            TextTexture text = _textTextureCache[key];
-            text.RedTexture.Dispose();
-            text.GreenTexture.Dispose();
-            text.BlueTexture.Dispose();
-            text.MaskTexture.Dispose();
-            _textTextureCache.Remove(key);
+            textTextureCacheGeneration++;
+            return;
         }
 
-        if (textBrushTextureCache is null || activeTextBrushTextureKeys is null)
+        List<TextTextureKey> candidates = textTextureEvictionCandidates ??= [];
+        candidates.Clear();
+        candidates.AddRange(_textTextureCache.Keys);
+        candidates.Sort((left, right) =>
+        {
+            TextTextureCacheMetadata leftMetadata = metadata[left];
+            TextTextureCacheMetadata rightMetadata = metadata[right];
+            int generationOrder = leftMetadata.LastUsedGeneration.CompareTo(rightMetadata.LastUsedGeneration);
+            return generationOrder != 0
+                ? generationOrder
+                : leftMetadata.InsertionSequence.CompareTo(rightMetadata.InsertionSequence);
+        });
+
+        int candidateIndex = 0;
+        while ((_textTextureCache.Count > maximumEntries ||
+                textTextureCacheEstimatedBytes > maximumBytes) &&
+            candidateIndex < candidates.Count)
+        {
+            EvictTextTexture(candidates[candidateIndex++]);
+        }
+
+        textTextureCacheGeneration++;
+    }
+
+    private void EvictTextTexture(TextTextureKey key)
+    {
+        if (!_textTextureCache.Remove(key, out TextTexture text))
         {
             return;
         }
 
-        List<TextBrushTextureKey> staleBrushKeys = inactiveTextBrushTextureKeys ?? [];
-        staleBrushKeys.Clear();
-        foreach (TextBrushTextureKey key in textBrushTextureCache.Keys)
+        long releasedBytes = ReleaseRgbTextures(text);
+        if (text.MaskTexture is not null)
         {
-            if (!activeTextBrushTextureKeys.Contains(key))
+            releasedBytes += EstimateBytes(text.MaskTexture);
+            text.MaskTexture.Dispose();
+        }
+        textTextureCacheMetadata?.Remove(key);
+
+        if (textBrushTextureCache is not null)
+        {
+            List<TextBrushTextureKey> dependentKeys = [];
+            foreach (TextBrushTextureKey brushKey in textBrushTextureCache.Keys)
             {
-                staleBrushKeys.Add(key);
+                if (brushKey.Text.Equals(key))
+                {
+                    dependentKeys.Add(brushKey);
+                }
+            }
+
+            foreach (TextBrushTextureKey brushKey in dependentKeys)
+            {
+                Texture2D texture = textBrushTextureCache[brushKey];
+                releasedBytes += EstimateBytes(texture);
+                texture.Dispose();
+                textBrushTextureCache.Remove(brushKey);
             }
         }
 
-        foreach (TextBrushTextureKey key in staleBrushKeys)
-        {
-            textBrushTextureCache[key].Dispose();
-            textBrushTextureCache.Remove(key);
-        }
+        textTextureCacheEstimatedBytes = Math.Max(0, textTextureCacheEstimatedBytes - releasedBytes);
+        textTextureCacheEvictions++;
     }
 
     private void ClearBrushTextureCache()
@@ -1417,11 +1980,19 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             MathF.Round(mapped.Y + originOffset.Y));
     }
 
-    private static DrawPoint GetPixelPhase(DrawPoint position, float coordinateScale)
+    private static DrawPoint GetCanonicalPixelPhase(DrawPoint position, float coordinateScale)
     {
-        float x = position.X * coordinateScale;
-        float y = position.Y * coordinateScale;
-        return new DrawPoint(x - MathF.Floor(x), y - MathF.Floor(y));
+        return new DrawPoint(
+            CanonicalizePixelPhase(position.X * coordinateScale),
+            CanonicalizePixelPhase(position.Y * coordinateScale));
+    }
+
+    private static float CanonicalizePixelPhase(float physicalPosition)
+    {
+        float phase = physicalPosition - MathF.Floor(physicalPosition);
+        int bucket = (int)MathF.Floor((phase * TextSubpixelPhaseCount) + 0.5f);
+        bucket %= TextSubpixelPhaseCount;
+        return bucket / (float)TextSubpixelPhaseCount;
     }
 
     private static BlendState CreateTextBlendState(ColorWriteChannels channels)
@@ -1450,6 +2021,56 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
     private static Vector2 MapTextTexturePositionForDiagnostics(DrawPoint position, DrawPoint originOffset, float coordinateScale)
     {
         return MapTextTexturePosition(position, originOffset, coordinateScale);
+    }
+
+    internal static DrawPoint GetCanonicalPixelPhaseForDiagnostics(DrawPoint position, float coordinateScale)
+    {
+        return GetCanonicalPixelPhase(position, coordinateScale);
+    }
+
+    internal static object CreateTextTextureKeyForDiagnostics(
+        DrawTextRun textRun,
+        float coordinateScale,
+        DrawPoint position,
+        CernealaColor rasterizationColor)
+    {
+        return TextTextureKey.FromWithRasterizationColor(
+            textRun,
+            coordinateScale,
+            GetCanonicalPixelPhase(position, coordinateScale),
+            rasterizationColor);
+    }
+
+    internal static object CreateTextBrushTextureKeyForDiagnostics(
+        DrawTextRun textRun,
+        float coordinateScale,
+        DrawPoint position,
+        IDrawBrush brush,
+        float commandOpacity)
+    {
+        TextTextureKey textKey = TextTextureKey.From(
+            textRun,
+            coordinateScale,
+            GetCanonicalPixelPhase(position, coordinateScale));
+        return new TextBrushTextureKey(textKey, brush, commandOpacity);
+    }
+
+    internal bool UseTextTextureForDiagnostics(object key)
+    {
+        if (key is not TextTextureKey textKey || _textTextureCache?.ContainsKey(textKey) != true)
+        {
+            textTextureCacheMisses++;
+            return false;
+        }
+
+        textTextureCacheHits++;
+        MarkTextTextureUsed(textKey);
+        return true;
+    }
+
+    internal void CompleteTextTextureFrameForDiagnostics(int maximumEntries, long maximumBytes)
+    {
+        CompleteTextTextureFrame(maximumEntries, maximumBytes);
     }
 
     internal void RenderClipCommandsForDiagnostics(DrawCommandList commands, Rectangle viewport)
@@ -1491,6 +2112,81 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
             color.A);
     }
 
+    private static long EstimateBytes(TextTexture text)
+    {
+        long rgbBytes = EstimateBytes(text.RedTexture);
+        if (!ReferenceEquals(text.GreenTexture, text.RedTexture))
+        {
+            rgbBytes += EstimateBytes(text.GreenTexture);
+        }
+
+        if (!ReferenceEquals(text.BlueTexture, text.RedTexture) &&
+            !ReferenceEquals(text.BlueTexture, text.GreenTexture))
+        {
+            rgbBytes += EstimateBytes(text.BlueTexture);
+        }
+
+        return rgbBytes +
+            (text.MaskTexture is null ? 0 : EstimateBytes(text.MaskTexture));
+    }
+
+    private long ReleaseRgbTextures(TextTexture text)
+    {
+        long releasedBytes = ReleaseTextTexture(text.RedTexture);
+        if (!ReferenceEquals(text.GreenTexture, text.RedTexture))
+        {
+            releasedBytes += ReleaseTextTexture(text.GreenTexture);
+        }
+
+        if (!ReferenceEquals(text.BlueTexture, text.RedTexture) &&
+            !ReferenceEquals(text.BlueTexture, text.GreenTexture))
+        {
+            releasedBytes += ReleaseTextTexture(text.BlueTexture);
+        }
+
+        return releasedBytes;
+    }
+
+    private long ReleaseTextTexture(Texture2D texture)
+    {
+        if (sharedTextTextureReferenceCounts is not null &&
+            sharedTextTextureReferenceCounts.TryGetValue(texture, out int references))
+        {
+            if (references > 1)
+            {
+                sharedTextTextureReferenceCounts[texture] = references - 1;
+                return 0;
+            }
+
+            sharedTextTextureReferenceCounts.Remove(texture);
+        }
+
+        long releasedBytes = EstimateBytes(texture);
+        texture.Dispose();
+        return releasedBytes;
+    }
+
+    private static long EstimateBytes(Texture2D texture)
+    {
+        return (long)texture.Width * texture.Height * 4;
+    }
+
+    internal readonly record struct TextTextureCacheDiagnosticSnapshot(
+        long Hits,
+        long Misses,
+        long Evictions,
+        long EstimatedBytes);
+
+    private readonly record struct TextTextureCacheMetadata(
+        long LastUsedGeneration,
+        long InsertionSequence);
+
+    private readonly record struct TextRasterizationRequest(
+        DrawTextRun TextRun,
+        CernealaColor RasterizationColor,
+        DrawPoint PixelPhase,
+        bool NeedsMask);
+
     private readonly record struct TextTextureKey(
         string Text,
         object FontIdentity,
@@ -1527,8 +2223,15 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
         Texture2D RedTexture,
         Texture2D GreenTexture,
         Texture2D BlueTexture,
-        Texture2D MaskTexture,
-        DrawPoint OriginOffset);
+        Texture2D? MaskTexture,
+        DrawPoint OriginOffset)
+    {
+        public Rectangle? RedSource { get; init; }
+
+        public Rectangle? GreenSource { get; init; }
+
+        public Rectangle? BlueSource { get; init; }
+    }
 
     private readonly record struct TextBrushTextureKey(
         TextTextureKey Text,

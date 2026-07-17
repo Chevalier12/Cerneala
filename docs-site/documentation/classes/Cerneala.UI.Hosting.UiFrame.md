@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Hosting/UiFrame.cs`
 
-Represents the input, viewport, elapsed time, and frame statistics for a single UI update.
+Represents the input, viewport, timing, and frame statistics for a single UI update.
 
 ```csharp
 public sealed class UiFrame
@@ -38,6 +38,7 @@ UiFrame frame = new(
     stats);
 
 TimeSpan elapsed = frame.ElapsedTime;
+TimeSpan processing = frame.ProcessingTime;
 float viewportWidth = frame.Viewport.Width;
 bool frameDidWork = frame.Stats.HasWork;
 ```
@@ -47,6 +48,8 @@ bool frameDidWork = frame.Stats.HasWork;
 `UiFrame` is the frame result type returned by `UiHost.Update` and exposed as `UiHost.LastFrame`. `MonoGameUiHost` also exposes the most recent `UiFrame` through its own `LastFrame` property.
 
 The constructor stores the supplied values. `Input` and `Stats` are required and throw `ArgumentNullException` when `null`; `ElapsedTime` is stored without validation, and `Viewport` is a value type.
+
+`ElapsedTime` is the simulation delta supplied to the update. It does not measure how long the update took. `ProcessingTime` measures input collection, retained UI update, and draw-command submission for a natively hosted window. It excludes the graphics presentation wait, including vertical synchronization. A directly constructed frame has a zero processing time until a host records it.
 
 `Stats` references the `FrameStats` instance for the update. It records work counted during retained UI processing, input dispatch, motion, rendering cache updates, hit testing, and no-work frames.
 
@@ -61,6 +64,7 @@ The constructor stores the supplied values. `Input` and `Stats` are required and
 | Name | Type | Description |
 | --- | --- | --- |
 | `ElapsedTime` | `TimeSpan` | Gets the elapsed time associated with the update that produced the frame. |
+| `ProcessingTime` | `TimeSpan` | Gets the measured host processing duration, excluding graphics presentation wait. |
 | `Viewport` | `UiViewport` | Gets the logical viewport and scale used by the update. |
 | `Input` | `InputFrame` | Gets the input frame processed during the update. |
 | `Stats` | `FrameStats` | Gets the frame statistics collected for the update. |

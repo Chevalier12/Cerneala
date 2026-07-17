@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Motion.Core;
 
@@ -57,6 +58,8 @@ public sealed class UiFrameScheduler
 
     internal bool IsProcessingLayout => layoutProcessingDepth > 0;
 
+    internal FramePhaseTiming LastFrameTiming { get; private set; }
+
     public FrameStats ProcessFrame(
         FramePhaseProcessors? processors = null,
         FrameBudget budget = default,
@@ -68,19 +71,43 @@ public sealed class UiFrameScheduler
         budget = budget == default ? FrameBudget.ProcessAll : budget;
 
         stats ??= new FrameStats();
+        LastFrameTiming = default;
         if (!HasWork)
         {
             if (motion is not null)
             {
+                long noWorkPhaseStarted = Stopwatch.GetTimestamp();
                 stats.CountMotion(motion.BeginFrame(motionReason));
                 stats.CountMotion(motion.BeforeLayout());
+                TimeSpan noWorkMotionTime = Stopwatch.GetElapsedTime(noWorkPhaseStarted);
+                noWorkPhaseStarted = Stopwatch.GetTimestamp();
                 ProcessMeasure(processors, stats);
+                TimeSpan noWorkMeasureTime = Stopwatch.GetElapsedTime(noWorkPhaseStarted);
+                noWorkPhaseStarted = Stopwatch.GetTimestamp();
                 ProcessArrange(processors, stats);
+                TimeSpan noWorkArrangeTime = Stopwatch.GetElapsedTime(noWorkPhaseStarted);
+                noWorkPhaseStarted = Stopwatch.GetTimestamp();
                 stats.CountMotion(motion.AfterLayout());
                 stats.CountMotion(motion.BeforeRender());
+                noWorkMotionTime += Stopwatch.GetElapsedTime(noWorkPhaseStarted);
+                noWorkPhaseStarted = Stopwatch.GetTimestamp();
                 ProcessRender(processors, stats);
+                TimeSpan noWorkRenderTime = Stopwatch.GetElapsedTime(noWorkPhaseStarted);
+                noWorkPhaseStarted = Stopwatch.GetTimestamp();
                 ProcessHitTest(processors, stats);
+                TimeSpan noWorkHitTestTime = Stopwatch.GetElapsedTime(noWorkPhaseStarted);
+                noWorkPhaseStarted = Stopwatch.GetTimestamp();
                 stats.CountMotion(motion.EndFrame());
+                noWorkMotionTime += Stopwatch.GetElapsedTime(noWorkPhaseStarted);
+                LastFrameTiming = new FramePhaseTiming(
+                    default,
+                    default,
+                    default,
+                    noWorkMeasureTime,
+                    noWorkArrangeTime,
+                    noWorkRenderTime,
+                    noWorkHitTestTime,
+                    noWorkMotionTime);
                 return stats;
             }
 
@@ -92,19 +119,52 @@ public sealed class UiFrameScheduler
         // MVP scheduler contract: each phase processes one deterministic snapshot.
         // Same-phase work enqueued during processing is deferred to a later frame.
         // Downstream phase work may still run in this frame if its snapshot has not been taken yet.
+        long phaseStarted = Stopwatch.GetTimestamp();
         stats.CountMotion(motion?.BeginFrame(motionReason) ?? default);
+        TimeSpan motionTime = Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         ProcessInheritedProperties(processors, stats);
+        TimeSpan inheritedTime = Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         ProcessCommandState(processors, stats);
+        TimeSpan commandStateTime = Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         ProcessAspect(processors, stats);
+        TimeSpan aspectTime = Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         ProcessInheritedProperties(processors, stats);
+        inheritedTime += Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         stats.CountMotion(motion?.BeforeLayout() ?? default);
+        motionTime += Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         ProcessMeasure(processors, stats);
+        TimeSpan measureTime = Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         ProcessArrange(processors, stats);
+        TimeSpan arrangeTime = Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         stats.CountMotion(motion?.AfterLayout() ?? default);
         stats.CountMotion(motion?.BeforeRender() ?? default);
+        motionTime += Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         ProcessRender(processors, stats);
+        TimeSpan renderTime = Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         ProcessHitTest(processors, stats);
+        TimeSpan hitTestTime = Stopwatch.GetElapsedTime(phaseStarted);
+        phaseStarted = Stopwatch.GetTimestamp();
         stats.CountMotion(motion?.EndFrame() ?? default);
+        motionTime += Stopwatch.GetElapsedTime(phaseStarted);
+        LastFrameTiming = new FramePhaseTiming(
+            inheritedTime,
+            commandStateTime,
+            aspectTime,
+            measureTime,
+            arrangeTime,
+            renderTime,
+            hitTestTime,
+            motionTime);
 
         return stats;
     }
@@ -120,8 +180,9 @@ public sealed class UiFrameScheduler
                 break;
             }
 
-            foreach (Elements.UIElement element in snapshot)
+            for (int index = 0; index < snapshot.Count; index++)
             {
+                Elements.UIElement element = snapshot[index];
                 inheritedPropertyQueue.Remove(element);
                 InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Inherited);
                 try
@@ -148,8 +209,9 @@ public sealed class UiFrameScheduler
     private void ProcessCommandState(FramePhaseProcessors processors, FrameStats stats)
     {
         IReadOnlyList<Elements.UIElement> snapshot = commandStateQueue.Snapshot();
-        foreach (Elements.UIElement element in snapshot)
+        for (int index = 0; index < snapshot.Count; index++)
         {
+            Elements.UIElement element = snapshot[index];
             commandStateQueue.Remove(element);
             try
             {
@@ -171,8 +233,9 @@ public sealed class UiFrameScheduler
     private void ProcessAspect(FramePhaseProcessors processors, FrameStats stats)
     {
         IReadOnlyList<Elements.UIElement> snapshot = aspectQueue.Snapshot();
-        foreach (Elements.UIElement element in snapshot)
+        for (int index = 0; index < snapshot.Count; index++)
         {
+            Elements.UIElement element = snapshot[index];
             aspectQueue.Remove(element);
             InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Aspect);
             try
@@ -213,8 +276,9 @@ public sealed class UiFrameScheduler
             ? layoutQueue.SnapshotMeasureIncremental()
             : layoutQueue.SnapshotMeasure();
         int processed = 0;
-        foreach (Elements.UIElement element in snapshot)
+        for (int index = 0; index < snapshot.Count; index++)
         {
+            Elements.UIElement element = snapshot[index];
             LayoutQueueEntryKind kind = layoutQueue.GetMeasureKind(element);
             layoutQueue.RemoveMeasure(element);
 
@@ -276,8 +340,9 @@ public sealed class UiFrameScheduler
     {
         IReadOnlyList<Elements.UIElement> snapshot = layoutQueue.SnapshotArrange();
         int processed = 0;
-        foreach (Elements.UIElement element in snapshot)
+        for (int index = 0; index < snapshot.Count; index++)
         {
+            Elements.UIElement element = snapshot[index];
             LayoutQueueEntryKind kind = layoutQueue.GetArrangeKind(element);
             layoutQueue.RemoveArrange(element);
 
@@ -314,8 +379,9 @@ public sealed class UiFrameScheduler
     private void ProcessRender(FramePhaseProcessors processors, FrameStats stats)
     {
         IReadOnlyList<Elements.UIElement> snapshot = renderQueue.Snapshot();
-        foreach (Elements.UIElement element in snapshot)
+        for (int index = 0; index < snapshot.Count; index++)
         {
+            Elements.UIElement element = snapshot[index];
             renderQueue.Remove(element);
             try
             {
@@ -342,8 +408,9 @@ public sealed class UiFrameScheduler
     private void ProcessHitTest(FramePhaseProcessors processors, FrameStats stats)
     {
         IReadOnlyList<Elements.UIElement> snapshot = hitTestQueue.Snapshot();
-        foreach (Elements.UIElement element in snapshot)
+        for (int index = 0; index < snapshot.Count; index++)
         {
+            Elements.UIElement element = snapshot[index];
             hitTestQueue.Remove(element);
             try
             {
@@ -381,3 +448,13 @@ public sealed class UiFrameScheduler
         return cleared;
     }
 }
+
+internal readonly record struct FramePhaseTiming(
+    TimeSpan InheritedProperties,
+    TimeSpan CommandState,
+    TimeSpan Aspect,
+    TimeSpan Measure,
+    TimeSpan Arrange,
+    TimeSpan Render,
+    TimeSpan HitTest,
+    TimeSpan Motion);

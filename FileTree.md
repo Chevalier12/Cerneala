@@ -175,7 +175,8 @@ Generated from `.`.
 |   |   |-- 2026-07-15-motion-markup-plan-index.md
 |   |   |-- 2026-07-15-motion-markup-presence-and-layout.md
 |   |   |-- 2026-07-15-motion-markup-scroll-and-input.md
-|   |   +-- 2026-07-15-motion-markup-timelines-and-specs.md
+|   |   |-- 2026-07-15-motion-markup-timelines-and-specs.md
+|   |   +-- 2026-07-17-text-texture-cache-frame-budget-hardening.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -244,14 +245,6 @@ Generated from `.`.
 |-- docs-site/
 |   |-- assets/
 |   |   |-- mascot-concepts/
-|   |   |   |-- cerneala-mascot-01-ink-drop-violet.png
-|   |   |   |-- cerneala-mascot-01-ink-drop.png
-|   |   |   |-- cerneala-mascot-02-nib-knight-violet.png
-|   |   |   |-- cerneala-mascot-02-nib-knight.png
-|   |   |   |-- cerneala-mascot-03-window-bot-violet.png
-|   |   |   |-- cerneala-mascot-03-window-bot.png
-|   |   |   |-- cerneala-mascot-04-void-orbit-violet.png
-|   |   |   +-- cerneala-mascot-04-void-orbit.png
 |   |   |-- cerneala-mascot-void-suction-well.png
 |   |   +-- cerneala-mascot-void-suction-well.svg
 |   |-- documentation/
@@ -1563,12 +1556,10 @@ Generated from `.`.
 |       +-- WindowsDxSmokeApplication.cs
 |-- tmp/
 |   |-- CodexPresentationHarness/
-|   +-- imagegen/
-|       +-- cerneala-mascots/
-|           |-- variant-01-chroma.png
-|           |-- variant-02-chroma.png
-|           |-- variant-03-chroma.png
-|           +-- variant-04-chroma.png
+|   |-- imagegen/
+|   |   +-- cerneala-mascots/
+|   |-- LayoutBugHarness/
+|   +-- presentation-frame-cause.nettrace.etlx
 |-- Tools/
 |   |-- RoslynRepoIndexer/
 |   |   |-- benchmarks/

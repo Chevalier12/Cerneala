@@ -50,22 +50,38 @@ public sealed class DrawCommandListBuilder
 
         ElementRenderCache localCache = renderCache.GetElementCache(element);
         DrawCommandList localCommands = GetLocalCommands(element, localCache, out float offsetX, out float offsetY);
-        foreach (DrawCommand command in localCommands)
+        for (int index = 0; index < localCommands.Count; index++)
         {
+            DrawCommand command = localCommands[index];
             rootCommands.Add(ApplyRenderScope(Translate(command, offsetX, offsetY), elementTransform, elementOpacity));
             counters.CountEmittedCommands(1);
         }
 
-        foreach (UIElement child in element.VisualChildren)
+        UIElementCollection visualChildren = element.VisualChildren;
+        for (int index = 0; index < visualChildren.Count; index++)
         {
-            AppendElement(child, renderCache, counters, rootCommands, elementTransform, elementOpacity);
+            AppendElement(
+                visualChildren[index],
+                renderCache,
+                counters,
+                rootCommands,
+                elementTransform,
+                elementOpacity);
         }
 
         if (element.Root is UIRoot root)
         {
-            foreach (UIElement child in root.Motion.Presence.GetExitingVisualChildren(element))
+            IReadOnlyList<UIElement> exitingChildren =
+                root.Motion.Presence.GetExitingVisualChildren(element);
+            for (int index = 0; index < exitingChildren.Count; index++)
             {
-                AppendElement(child, renderCache, counters, rootCommands, elementTransform, elementOpacity);
+                AppendElement(
+                    exitingChildren[index],
+                    renderCache,
+                    counters,
+                    rootCommands,
+                    elementTransform,
+                    elementOpacity);
             }
         }
 

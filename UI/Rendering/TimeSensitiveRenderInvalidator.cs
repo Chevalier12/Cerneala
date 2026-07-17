@@ -21,9 +21,9 @@ public static class TimeSensitiveRenderInvalidator
             ? element.VisualChildren
             : element.LogicalChildren;
 
-        foreach (UIElement child in children)
+        for (int index = 0; index < children.Count; index++)
         {
-            Traverse(child, frameTime);
+            Traverse(children[index], frameTime);
         }
     }
 }

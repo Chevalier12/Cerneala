@@ -351,7 +351,9 @@ public sealed class RelayStageZeroTests
             maxCallbacks.SetValue(options, maxCallbacksPerUpdate);
 
             ConstructorInfo constructor = typeof(UIRoot).GetConstructors()
-                .Single(candidate => candidate.GetParameters().LastOrDefault()?.ParameterType == optionsType);
+                .Single(candidate =>
+                    candidate.GetParameters().Any(parameter => parameter.ParameterType == optionsType) &&
+                    candidate.GetParameters().All(parameter => parameter.IsOptional));
             object?[] arguments = constructor.GetParameters()
                 .Select(parameter => parameter.ParameterType == optionsType
                     ? options

@@ -83,13 +83,21 @@ public sealed class LayoutManager
             return;
         }
 
-        foreach (UIElement descendant in ElementTreeWalker.Descendants(element, ElementChildRole.Visual))
+        PruneTranslatedChildRenderWork(element);
+    }
+
+    private void PruneTranslatedChildRenderWork(UIElement parent)
+    {
+        for (int index = 0; index < parent.VisualChildren.Count; index++)
         {
+            UIElement descendant = parent.VisualChildren[index];
             if (CanReuseTranslatedRenderCache(descendant))
             {
                 root.RenderQueue.Remove(descendant);
                 root.RetainedRenderCache.InvalidateRoot();
             }
+
+            PruneTranslatedChildRenderWork(descendant);
         }
     }
 

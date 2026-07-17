@@ -7,9 +7,23 @@ namespace Cerneala.Tests.UI.Diagnostics;
 public sealed class InvalidationTraceTests
 {
     [Fact]
-    public void EnabledTraceRecordsInvalidationRequestAndPhases()
+    public void RootDoesNotRetainInvalidationTraceUnlessOptedIn()
     {
         UIRoot root = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+
+        child.Invalidate(InvalidationFlags.Render, "render");
+        root.ProcessFrame();
+
+        Assert.False(root.Trace.IsEnabled);
+        Assert.Empty(root.Trace.Entries);
+    }
+
+    [Fact]
+    public void EnabledTraceRecordsInvalidationRequestAndPhases()
+    {
+        UIRoot root = new(invalidationTrace: new InvalidationTrace());
         UIElement child = new();
         root.VisualChildren.Add(child);
 
@@ -31,13 +45,13 @@ public sealed class InvalidationTraceTests
         trace.RecordRequest(new InvalidationRequest(child, InvalidationFlags.Render, "render"));
 
         Assert.Empty(trace.Entries);
-        Assert.True(root.Trace.IsEnabled);
+        Assert.False(root.Trace.IsEnabled);
     }
 
     [Fact]
     public void TraceEntryKeepsElementIdRecordedAtInvalidationTime()
     {
-        UIRoot root = new();
+        UIRoot root = new(invalidationTrace: new InvalidationTrace());
         UIElement child = new();
         root.VisualChildren.Add(child);
         string elementId = child.ElementId!.Value.ToString();

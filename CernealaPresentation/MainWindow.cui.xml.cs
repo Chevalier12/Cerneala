@@ -37,6 +37,7 @@ public partial class MainWindow : Window
         await WaitForContinueButtonAsync();
         await CaptureIfRequestedAsync("CERNEALA_PRESENTATION_LOADING_CAPTURE");
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTOMATION_REPORT")) ||
+            !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_FRAME_BUDGET_REPORT")) ||
             string.Equals(
                 Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTO_CONTINUE"),
                 "1",

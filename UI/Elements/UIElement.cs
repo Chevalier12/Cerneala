@@ -718,6 +718,13 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             return true;
         }
 
+        // Alternate-constraint entries do not capture descendant measure state.
+        if (VisualChildren.Count > 0)
+        {
+            desiredSize = default;
+            return false;
+        }
+
         if (TryUsePreviousMeasureCache(
             availableSize,
             ref previousMeasureAvailableSize,

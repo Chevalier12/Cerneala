@@ -1,3 +1,4 @@
+using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
@@ -69,7 +70,7 @@ public sealed class HoverTrackerTests
     [Fact]
     public void HoverStateChangesInvalidateInputVisuals()
     {
-        UIRoot root = new();
+        UIRoot root = new(invalidationTrace: new InvalidationTrace());
         UIElement target = new();
         root.VisualChildren.Add(target);
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);

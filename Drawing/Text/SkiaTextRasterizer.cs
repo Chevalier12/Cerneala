@@ -1,3 +1,5 @@
+using System.Buffers;
+using System.Collections.Concurrent;
 using Cerneala.Drawing;
 using SkiaSharp;
 
@@ -5,6 +7,11 @@ namespace Cerneala.Drawing.Text;
 
 public sealed class SkiaTextRasterizer
 {
+    private const int MaxPooledPaints = 32;
+    private static readonly ConcurrentBag<SKPaint> PaintPool = [];
+    private static readonly SKSurfaceProperties RgbHorizontalSurfaceProperties =
+        new(SKPixelGeometry.RgbHorizontal);
+    private static int pooledPaintCount;
     private readonly SkiaTextShaper _textShaper;
 
     public SkiaTextRasterizer()
@@ -55,9 +62,44 @@ public sealed class SkiaTextRasterizer
             throw new ArgumentOutOfRangeException(nameof(position));
         }
 
+        float mappedBaselineX = position.X * coordinateScale;
+        float mappedBaselineY = position.Y * coordinateScale;
+        DrawPoint pixelPhase = new(
+            mappedBaselineX - MathF.Floor(mappedBaselineX),
+            mappedBaselineY - MathF.Floor(mappedBaselineY));
+        return RasterizeSubpixelAtPhase(textRun, color, coordinateScale, pixelPhase);
+    }
+
+    internal RasterizedText[] RasterizeSubpixelAtPhase(
+        DrawTextRun textRun,
+        Color color,
+        float coordinateScale,
+        DrawPoint pixelPhase)
+    {
+        ArgumentNullException.ThrowIfNull(textRun);
+        if (!float.IsFinite(coordinateScale) || coordinateScale <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(coordinateScale));
+        }
+
+        if (!float.IsFinite(pixelPhase.X) ||
+            !float.IsFinite(pixelPhase.Y) ||
+            pixelPhase.X < 0 ||
+            pixelPhase.X >= 1 ||
+            pixelPhase.Y < 0 ||
+            pixelPhase.Y >= 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pixelPhase));
+        }
+
         return WithResolvedFont(
             textRun,
-            (resolvedRun, font) => RasterizeSubpixelCore(resolvedRun, color, font, coordinateScale, position));
+            (resolvedRun, font) => RasterizeSubpixelCore(
+                resolvedRun,
+                color,
+                font,
+                coordinateScale,
+                pixelPhase));
     }
 
     private static TResult WithResolvedFont<TResult>(
@@ -91,17 +133,14 @@ public sealed class SkiaTextRasterizer
 
         if (shapeResult.GlyphCount == 0)
         {
-            return new RasterizedText(1, 1, new byte[4], shapeResult);
+            return RasterizedText.FromOwnedPixels(1, 1, new byte[4], shapeResult);
         }
 
-        using SKFont skFont = SkiaTextRendering.CreateFont(font, textRun.Size);
-        using SKPaint paint = new()
-        {
-            Color = ToColor(color),
-            IsAntialias = true
-        };
+        using PaintLease paintLease = RentPaint(ToColor(color));
+        SKPaint paint = paintLease.Value;
 
-        using SKTextBlob textBlob = CreateTextBlob(skFont, shapeResult);
+        using SkiaTextBlobCache.Lease textBlobLease = SkiaTextBlobCache.Rent(font, textRun.Size, shapeResult);
+        SKTextBlob textBlob = textBlobLease.Value;
         SKRect bounds = textBlob.Bounds;
         int width = Math.Max(1, (int)MathF.Ceiling(bounds.Width));
         int height = Math.Max(1, (int)MathF.Ceiling(bounds.Height));
@@ -113,7 +152,7 @@ public sealed class SkiaTextRasterizer
 
         byte[] pixels = bitmap.Bytes;
         pixels = TrimTransparentLeftColumns(pixels, width, height, out int trimmedLeftColumns);
-        return new RasterizedText(
+        return RasterizedText.FromOwnedPixels(
             width - trimmedLeftColumns,
             height,
             pixels,
@@ -126,69 +165,95 @@ public sealed class SkiaTextRasterizer
         Color color,
         SkiaFont font,
         float coordinateScale,
-        DrawPoint position)
+        DrawPoint pixelPhase)
     {
         TextShapeResult shapeResult = _textShaper.Shape(textRun);
         if (shapeResult.GlyphCount == 0)
         {
-            RasterizedText empty = new(1, 1, new byte[4], shapeResult);
+            RasterizedText empty = RasterizedText.FromOwnedPixels(1, 1, new byte[4], shapeResult);
             return [empty, empty, empty];
         }
 
-        using SKFont skFont = SkiaTextRendering.CreateFont(font, textRun.Size);
-        using SKPaint paint = new()
-        {
-            Color = new SKColor(color.R, color.G, color.B, 255),
-            IsAntialias = true
-        };
-        using SKTextBlob textBlob = CreateTextBlob(skFont, shapeResult);
+        using PaintLease paintLease = RentPaint(new SKColor(color.R, color.G, color.B, 255));
+        SKPaint paint = paintLease.Value;
+        using SkiaTextBlobCache.Lease textBlobLease = SkiaTextBlobCache.Rent(font, textRun.Size, shapeResult);
+        SKTextBlob textBlob = textBlobLease.Value;
 
         SKRect bounds = textBlob.Bounds;
-        float mappedBaselineX = position.X * coordinateScale;
-        float mappedBaselineY = position.Y * coordinateScale;
-        float phaseX = mappedBaselineX - MathF.Floor(mappedBaselineX);
-        float phaseY = mappedBaselineY - MathF.Floor(mappedBaselineY);
+        float phaseX = pixelPhase.X;
+        float phaseY = pixelPhase.Y;
         float localBaselineX = phaseX + 1 - MathF.Floor(phaseX + (bounds.Left * coordinateScale));
         float localBaselineY = phaseY + 1 - MathF.Floor(phaseY + (bounds.Top * coordinateScale));
         int width = Math.Max(1, (int)MathF.Ceiling(localBaselineX + (bounds.Right * coordinateScale)) + 1);
         int height = Math.Max(1, (int)MathF.Ceiling(localBaselineY + (bounds.Bottom * coordinateScale)) + 1);
-        int globalPixelLeft = (int)MathF.Floor(mappedBaselineX + (bounds.Left * coordinateScale)) - 1;
-        int globalPixelTop = (int)MathF.Floor(mappedBaselineY + (bounds.Top * coordinateScale)) - 1;
+        int globalPixelLeft = (int)MathF.Floor(phaseX + (bounds.Left * coordinateScale)) - 1;
+        int globalPixelTop = (int)MathF.Floor(phaseY + (bounds.Top * coordinateScale)) - 1;
 
         SKImageInfo imageInfo = new(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
-        using SKSurfaceProperties properties = new(SKPixelGeometry.RgbHorizontal);
-        byte[] whiteReference = RasterizeSubpixelReference(
-            imageInfo,
-            properties,
-            textBlob,
-            paint,
-            coordinateScale,
-            localBaselineX,
-            localBaselineY,
-            SKColors.White);
-        byte[] blackReference = RasterizeSubpixelReference(
-            imageInfo,
-            properties,
-            textBlob,
-            paint,
-            coordinateScale,
-            localBaselineX,
-            localBaselineY,
-            SKColors.Black);
-        byte[][] layers = CreateSubpixelLayers(whiteReference, blackReference, color);
+        bool needsWhiteReference = color.R < 128 || color.G < 128 || color.B < 128;
+        bool needsBlackReference = color.R >= 128 || color.G >= 128 || color.B >= 128;
+        using SKSurface? whiteReference = needsWhiteReference
+            ? RasterizeSubpixelReference(
+                imageInfo,
+                RgbHorizontalSurfaceProperties,
+                textBlob,
+                paint,
+                coordinateScale,
+                localBaselineX,
+                localBaselineY,
+                SKColors.White)
+            : null;
+        using SKSurface? blackReference = needsBlackReference
+            ? RasterizeSubpixelReference(
+                imageInfo,
+                RgbHorizontalSurfaceProperties,
+                textBlob,
+                paint,
+                coordinateScale,
+                localBaselineX,
+                localBaselineY,
+                SKColors.Black)
+            : null;
+        using SKPixmap? whitePixels = whiteReference?.PeekPixels();
+        using SKPixmap? blackPixels = blackReference?.PeekPixels();
+        ReadOnlySpan<byte> whiteSpan = whitePixels is null ? default : whitePixels.GetPixelSpan();
+        ReadOnlySpan<byte> blackSpan = blackPixels is null ? default : blackPixels.GetPixelSpan();
+        byte[] layers = CreateSubpixelLayers(whiteSpan, blackSpan, color);
+        int layerByteCount = !whiteSpan.IsEmpty ? whiteSpan.Length : blackSpan.Length;
         DrawPoint originOffset = new(
-            globalPixelLeft - mappedBaselineX,
-            globalPixelTop - mappedBaselineY);
+            globalPixelLeft - phaseX,
+            globalPixelTop - phaseY);
 
         return
         [
-            new RasterizedText(width, height, layers[0], shapeResult, originOffset),
-            new RasterizedText(width, height, layers[1], shapeResult, originOffset),
-            new RasterizedText(width, height, layers[2], shapeResult, originOffset)
+            RasterizedText.FromPooledPixelSlice(
+                width,
+                height,
+                layers,
+                0,
+                shapeResult,
+                originOffset,
+                returnPixelBufferToPool: true),
+            RasterizedText.FromPooledPixelSlice(
+                width,
+                height,
+                layers,
+                layerByteCount,
+                shapeResult,
+                originOffset,
+                returnPixelBufferToPool: false),
+            RasterizedText.FromPooledPixelSlice(
+                width,
+                height,
+                layers,
+                layerByteCount * 2,
+                shapeResult,
+                originOffset,
+                returnPixelBufferToPool: false)
         ];
     }
 
-    private static byte[] RasterizeSubpixelReference(
+    private static SKSurface RasterizeSubpixelReference(
         SKImageInfo imageInfo,
         SKSurfaceProperties properties,
         SKTextBlob textBlob,
@@ -198,7 +263,7 @@ public sealed class SkiaTextRasterizer
         float localBaselineY,
         SKColor background)
     {
-        using SKSurface surface = SKSurface.Create(imageInfo, properties)
+        SKSurface surface = SKSurface.Create(imageInfo, properties)
             ?? throw new InvalidOperationException("Could not create the subpixel text surface.");
         surface.Canvas.Clear(background);
         surface.Canvas.Scale(coordinateScale);
@@ -208,48 +273,67 @@ public sealed class SkiaTextRasterizer
             localBaselineY / coordinateScale,
             paint);
 
-        using SKImage image = surface.Snapshot();
-        using SKPixmap pixmap = image.PeekPixels();
-        return pixmap.GetPixelSpan().ToArray();
+        return surface;
     }
 
-    private static byte[][] CreateSubpixelLayers(byte[] whiteReference, byte[] blackReference, Color color)
+    private static byte[] CreateSubpixelLayers(
+        ReadOnlySpan<byte> whiteReference,
+        ReadOnlySpan<byte> blackReference,
+        Color color)
     {
-        byte[][] layers =
-        [
-            new byte[whiteReference.Length],
-            new byte[whiteReference.Length],
-            new byte[whiteReference.Length]
-        ];
+        int layerByteCount = !whiteReference.IsEmpty
+            ? whiteReference.Length
+            : !blackReference.IsEmpty
+                ? blackReference.Length
+                : throw new ArgumentException("At least one subpixel reference is required.");
+        int totalLayerBytes = checked(layerByteCount * 3);
+        byte[] layers = ArrayPool<byte>.Shared.Rent(totalLayerBytes);
+        layers.AsSpan(0, totalLayerBytes).Clear();
+        bool opaque = color.A == byte.MaxValue;
 
-        for (int index = 0; index < whiteReference.Length; index += 4)
+        for (int index = 0; index < layerByteCount; index += 4)
         {
-            WriteLayerPixel(layers[0], index, channel: 0, RecoverCoverage(whiteReference[index + 2], blackReference[index + 2], color.R), 255, color.A);
-            WriteLayerPixel(layers[1], index, channel: 1, RecoverCoverage(whiteReference[index + 1], blackReference[index + 1], color.G), 255, color.A);
-            WriteLayerPixel(layers[2], index, channel: 2, RecoverCoverage(whiteReference[index], blackReference[index], color.B), 255, color.A);
+            byte redCoverage = ApplyOpacity(
+                RecoverCoverage(whiteReference, blackReference, index + 2, color.R),
+                color.A,
+                opaque);
+            layers[index] = redCoverage;
+            layers[index + 3] = redCoverage;
+
+            int greenIndex = layerByteCount + index;
+            byte greenCoverage = ApplyOpacity(
+                RecoverCoverage(whiteReference, blackReference, index + 1, color.G),
+                color.A,
+                opaque);
+            layers[greenIndex + 1] = greenCoverage;
+            layers[greenIndex + 3] = greenCoverage;
+
+            int blueIndex = (layerByteCount * 2) + index;
+            byte blueCoverage = ApplyOpacity(
+                RecoverCoverage(whiteReference, blackReference, index, color.B),
+                color.A,
+                opaque);
+            layers[blueIndex + 2] = blueCoverage;
+            layers[blueIndex + 3] = blueCoverage;
         }
 
         return layers;
     }
 
-    private static int RecoverCoverage(byte overWhite, byte overBlack, byte foreground)
+    private static int RecoverCoverage(
+        ReadOnlySpan<byte> whiteReference,
+        ReadOnlySpan<byte> blackReference,
+        int index,
+        byte foreground)
     {
         return foreground >= 128
-            ? Math.Clamp(((overBlack * 255) + (foreground / 2)) / foreground, 0, 255)
-            : Math.Clamp((((255 - overWhite) * 255) + ((255 - foreground) / 2)) / (255 - foreground), 0, 255);
+            ? Math.Clamp(((blackReference[index] * 255) + (foreground / 2)) / foreground, 0, 255)
+            : Math.Clamp((((255 - whiteReference[index]) * 255) + ((255 - foreground) / 2)) / (255 - foreground), 0, 255);
     }
 
-    private static void WriteLayerPixel(
-        byte[] pixels,
-        int index,
-        int channel,
-        int coverage,
-        byte foreground,
-        byte opacity)
+    private static byte ApplyOpacity(int coverage, byte opacity, bool opaque)
     {
-        byte effectiveCoverage = MultiplyByte(coverage, opacity);
-        pixels[index + channel] = MultiplyByte(foreground, effectiveCoverage);
-        pixels[index + 3] = effectiveCoverage;
+        return opaque ? (byte)coverage : MultiplyByte(coverage, opacity);
     }
 
     private static byte MultiplyByte(int left, int right)
@@ -262,23 +346,34 @@ public sealed class SkiaTextRasterizer
         return new SKColor(color.R, color.G, color.B, color.A);
     }
 
-    private static SKTextBlob CreateTextBlob(SKFont font, TextShapeResult shapeResult)
+    private static PaintLease RentPaint(SKColor color)
     {
-        using SKTextBlobBuilder builder = new();
-        builder.AddPositionedRun(shapeResult.GlyphIds, font, ToPoints(shapeResult.GlyphPositions));
-        return builder.Build() ?? throw new InvalidOperationException("Could not build text blob.");
-    }
-
-    private static SKPoint[] ToPoints(DrawPoint[] positions)
-    {
-        SKPoint[] points = new SKPoint[positions.Length];
-
-        for (int i = 0; i < positions.Length; i++)
+        SKPaint paint;
+        if (PaintPool.TryTake(out SKPaint? pooledPaint))
         {
-            points[i] = new SKPoint(positions[i].X, positions[i].Y);
+            Interlocked.Decrement(ref pooledPaintCount);
+            paint = pooledPaint;
+        }
+        else
+        {
+            paint = new SKPaint();
         }
 
-        return points;
+        paint.Color = color;
+        paint.IsAntialias = true;
+        return new PaintLease(paint);
+    }
+
+    private static void ReturnPaint(SKPaint paint)
+    {
+        if (Interlocked.Increment(ref pooledPaintCount) <= MaxPooledPaints)
+        {
+            PaintPool.Add(paint);
+            return;
+        }
+
+        Interlocked.Decrement(ref pooledPaintCount);
+        paint.Dispose();
     }
 
     private static byte[] TrimTransparentLeftColumns(byte[] pixels, int width, int height, out int trimmedColumns)
@@ -319,4 +414,15 @@ public sealed class SkiaTextRasterizer
 
         return true;
     }
+
+    private readonly struct PaintLease(SKPaint value) : IDisposable
+    {
+        internal SKPaint Value { get; } = value;
+
+        public void Dispose()
+        {
+            ReturnPaint(Value);
+        }
+    }
+
 }
