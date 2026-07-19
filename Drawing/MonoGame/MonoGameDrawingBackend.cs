@@ -87,10 +87,11 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         }
     }
 
-    public void Render(DrawCommandList commands)
+    public void Render(DrawCommandList commands, in DrawingFrameContext frameContext)
     {
         ArgumentNullException.ThrowIfNull(commands);
         ObjectDisposedException.ThrowIf(disposed, this);
+        frameContext.EnsureCurrent(commands);
 
         GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
         Rectangle previousScissor = graphicsDevice.ScissorRectangle;
@@ -219,6 +220,10 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
 
             case DrawCommandKind.PopClip:
                 PopClip();
+                break;
+
+            case DrawCommandKind.BeginPrism:
+            case DrawCommandKind.EndPrism:
                 break;
 
             default:
@@ -1529,6 +1534,8 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
             DrawCommandKind.DrawText => DrawCommand.DrawText(command.TextRun!, MapPoint(command.Position), ApplyOpacity(command.Color, opacity)),
             DrawCommandKind.PushClip => DrawCommand.PushClip(MapRect(command.Rect)),
             DrawCommandKind.PopClip => command,
+            DrawCommandKind.BeginPrism => command,
+            DrawCommandKind.EndPrism => command,
             _ => command
         };
     }

@@ -11,14 +11,17 @@ Source: `Drawing/MonoGame/MonoGameDrawingBackend.cs`
 Renders `DrawCommandList` instances through a MonoGame `SpriteBatch`.
 
 ```csharp
-public sealed class MonoGameDrawingBackend : IDrawingBackend, IDisposable
+public sealed class MonoGameDrawingBackend :
+    IDrawingBackend,
+    IDrawingBackendFrameTimingSource,
+    IDisposable
 ```
 
 Inheritance:
 `object` -> `MonoGameDrawingBackend`
 
 Implements:
-`IDrawingBackend`, `IDisposable`
+`IDrawingBackend`, `IDrawingBackendFrameTimingSource`, `IDisposable`
 
 ## Examples
 
@@ -28,20 +31,25 @@ The backend is expected to render inside a `SpriteBatch.Begin`/`End` pair. Use
 ```csharp
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
-using Microsoft.Xna.Framework;
+using Cerneala.Drawing.Prism.Graph;
 using Microsoft.Xna.Framework.Graphics;
+using CernealaColor = Cerneala.Drawing.Color;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 Texture2D whitePixel = new(graphicsDevice, 1, 1);
-whitePixel.SetData(new[] { Color.White });
+whitePixel.SetData(new[] { XnaColor.White });
 
 using SpriteBatch spriteBatch = new(graphicsDevice);
 using MonoGameDrawingBackend backend = new(spriteBatch, whitePixel);
 
 DrawCommandList commands = new();
 commands.Add(DrawCommand.PushClip(new DrawRect(0, 0, 200, 120)));
-commands.Add(DrawCommand.FillRectangle(new DrawRect(10, 10, 80, 40), new Color(32, 120, 220, 255)));
-commands.Add(DrawCommand.DrawRectangle(new DrawRect(10, 10, 80, 40), new Color(255, 255, 255, 255), 2));
+commands.Add(DrawCommand.FillRectangle(new DrawRect(10, 10, 80, 40), new CernealaColor(32, 120, 220, 255)));
+commands.Add(DrawCommand.DrawRectangle(new DrawRect(10, 10, 80, 40), CernealaColor.White, 2));
 commands.Add(DrawCommand.PopClip());
+
+DrawingFrameContext frameContext = new(
+    new PrismFrameAnalyzer().Analyze(commands));
 
 spriteBatch.Begin(
     sortMode: SpriteSortMode.Immediate,
@@ -49,7 +57,7 @@ spriteBatch.Begin(
 
 try
 {
-    backend.Render(commands);
+    backend.Render(commands, in frameContext);
 }
 finally
 {
@@ -66,6 +74,11 @@ ellipses, lines, filled SVG paths, images, text, and push/pop clip commands.
 The backend treats the submitted command list as read-only while rendering. It
 does not call `SpriteBatch.Begin` or `SpriteBatch.End`; callers own the
 surrounding MonoGame batch lifetime.
+
+`Render` first validates the supplied `DrawingFrameContext` against the command
+list. The current fallback path ignores `BeginPrism` and `EndPrism` delimiters
+while continuing to render their interior commands, so non-Prism output remains
+unchanged until Prism graph composition is handled by the compositor.
 
 Clipping uses `GraphicsDevice.ScissorRectangle`. During `Render`, the backend
 creates a clip stack from the current viewport, applies clip commands, and
@@ -115,13 +128,13 @@ throws `InvalidOperationException`.
 | Name | Type | Description |
 | --- | --- | --- |
 | `CoordinateScale` | `float` | Gets or sets the logical-to-physical coordinate scale used by the backend. The default is `1`. The setter validates the value with `UiCoordinateMapper.ValidateScale`. |
-| `ScissorRasterizerState` | `RasterizerState` | Gets a shared rasterizer state with `ScissorTestEnable` set to `true`, intended for `SpriteBatch.Begin` calls that render clipped command lists. |
+| `ScissorRasterizerState` | `RasterizerState` | Gets a rasterizer state with `ScissorTestEnable` set to `true`, intended for `SpriteBatch.Begin` calls that render clipped command lists. |
 
 ## Methods
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Render(DrawCommandList commands)` | `void` | Renders each command in `commands`. Throws `ArgumentNullException` when `commands` is `null` and `ObjectDisposedException` after the backend has been disposed. |
+| `Render(DrawCommandList commands, in DrawingFrameContext frameContext)` | `void` | Validates the current frame context, then renders each supported command in `commands`. |
 | `Dispose()` | `void` | Disposes cached text textures, clears the text texture cache, and marks the backend as disposed. Calling it more than once is allowed. |
 
 ## Supported Draw Commands
@@ -138,6 +151,7 @@ throws `InvalidOperationException`.
 | `DrawText` | Reuses cached glyph masks, then applies a solid, gradient, image, drawing, or visual brush at the mapped text position. |
 | `PushClip` | Pushes the mapped rectangle onto the clip stack and assigns the intersected clip to `GraphicsDevice.ScissorRectangle`. |
 | `PopClip` | Pops the clip stack and assigns the resulting clip to `GraphicsDevice.ScissorRectangle`. |
+| `BeginPrism`, `EndPrism` | Ignores the Prism delimiters in the fallback path while preserving and rendering commands between them. |
 
 ## Exceptions
 
@@ -146,6 +160,7 @@ throws `InvalidOperationException`.
 | Constructor | `ArgumentNullException` | `spriteBatch` or `whitePixel` is `null`. |
 | `CoordinateScale` | `ArgumentOutOfRangeException` | The assigned scale is not finite or is less than or equal to zero. |
 | `Render` | `ArgumentNullException` | `commands` is `null`. |
+| `Render` | `InvalidOperationException` | `frameContext` is uninitialized or its analysis does not match the command list and current Prism scope versions. |
 | `Render` | `ObjectDisposedException` | The backend has already been disposed. |
 | `Render` | `InvalidOperationException` | A command kind is unsupported, or a `DrawImage` command contains an image that is not `MonoGameImage`. |
 | `Render` | `NotSupportedException` | A `FillPath` command uses a non-solid brush. |
@@ -159,5 +174,6 @@ Cerneala MonoGame drawing integration.
 - `Cerneala.Drawing.IDrawingBackend`
 - `Cerneala.Drawing.DrawCommandList`
 - `Cerneala.Drawing.DrawCommand`
+- `Cerneala.Drawing.DrawingFrameContext`
 - `Cerneala.Drawing.MonoGame.MonoGameImage`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost`

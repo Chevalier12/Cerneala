@@ -4,6 +4,7 @@ Generated from `.`.
 
 ```text
 ./
+|-- .agents/
 |-- .github/
 |   +-- workflows/
 |       +-- pages.yml
@@ -132,9 +133,20 @@ Generated from `.`.
 |           +-- README.md
 |-- Cerneala.SourceGen/
 |   |-- Prism/
+|   |   |-- Binding/
+|   |   |   |-- BoundPrismModel.cs
+|   |   |   |-- PrismMarkupBinder.cs
+|   |   |   +-- PrismMotionResolver.cs
 |   |   |-- Catalog/
 |   |   |   |-- prism-catalog.json
 |   |   |   +-- prism-catalog.schema.json
+|   |   |-- Emission/
+|   |   |   |-- PrismMarkupEmitter.cs
+|   |   |   +-- PrismMotionEmitter.cs
+|   |   |-- Syntax/
+|   |   |   |-- PrismDirectiveParser.cs
+|   |   |   |-- PrismMarkupLanguage.cs
+|   |   |   +-- PrismSyntax.cs
 |   |   |-- PrismCatalogCompiler.cs
 |   |   +-- PrismCatalogGenerator.cs
 |   |-- Properties/
@@ -312,6 +324,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.DrawGradientStop.md
 |   |   |   |-- Cerneala.Drawing.DrawingContext.md
 |   |   |   |-- Cerneala.Drawing.DrawingDrawBrushDescriptor.md
+|   |   |   |-- Cerneala.Drawing.DrawingFrameContext.md
 |   |   |   |-- Cerneala.Drawing.DrawPoint.md
 |   |   |   |-- Cerneala.Drawing.DrawRect.md
 |   |   |   |-- Cerneala.Drawing.DrawSize.md
@@ -335,6 +348,37 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismFilterId.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismSampling.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismStyleId.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismAnalyzedScope.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismBackdropRequirement.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismDependencyStamp.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismFrameAnalysis.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismFrameAnalyzer.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraph.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphBoundsStatus.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphBuilder.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphBuildException.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphCapabilities.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphCompositionSettings.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphDependency.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphDependencyKind.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphEdge.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphEdgeKind.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphExecutionPlan.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphLayerSettings.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphNode.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphNodeId.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphNodeKind.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphNodePlan.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphOptimizer.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphParameter.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphParameterValueKind.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphScope.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphSurfaceLifetime.md
+|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphUncacheableReason.md
+|   |   |   |-- Cerneala.Drawing.Prism.IBackdropFrameLease.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismCacheOwnerToken.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismDrawScope.md
 |   |   |   |-- Cerneala.Drawing.RadialGradientDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.SolidDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.Text.RasterizedText.md
@@ -1014,6 +1058,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismNodeDefinition.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismNodeId.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismResourceId.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismSourceSpan.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismStyleDefinition.md
 |   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBackdropState.md
 |   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBlendChannels.md
@@ -1222,8 +1267,21 @@ Generated from `.`.
 |   |-- Paths/
 |   |   +-- SvgPathFlattener.cs
 |   |-- Prism/
-|   |   +-- Catalog/
-|   |       +-- PrismFallbackPolicy.cs
+|   |   |-- Catalog/
+|   |   |   +-- PrismFallbackPolicy.cs
+|   |   |-- Graph/
+|   |   |   |-- PrismAnalyzedScope.cs
+|   |   |   |-- PrismBackdropRequirement.cs
+|   |   |   |-- PrismDependencyStamp.cs
+|   |   |   |-- PrismFrameAnalysis.cs
+|   |   |   |-- PrismFrameAnalyzer.cs
+|   |   |   |-- PrismGraph.cs
+|   |   |   |-- PrismGraphBuilder.cs
+|   |   |   |-- PrismGraphCapabilities.cs
+|   |   |   |-- PrismGraphDiagnostic.cs
+|   |   |   +-- PrismGraphOptimizer.cs
+|   |   |-- IBackdropFrameLease.cs
+|   |   +-- PrismDrawScope.cs
 |   |-- Text/
 |   |   |-- OpenTypeFontData.cs
 |   |   |-- RasterizedText.cs
@@ -1243,6 +1301,7 @@ Generated from `.`.
 |   |-- DrawCommandList.cs
 |   |-- DrawingBackendFrameTiming.cs
 |   |-- DrawingContext.cs
+|   |-- DrawingFrameContext.cs
 |   |-- DrawPoint.cs
 |   |-- DrawRect.cs
 |   |-- DrawSize.cs
@@ -1358,6 +1417,12 @@ Generated from `.`.
 |   |   |   |   +-- MonoGameDrawMapperTests.cs
 |   |   |   |-- Paths/
 |   |   |   |   +-- SvgPathFlattenerTests.cs
+|   |   |   |-- Prism/
+|   |   |   |   |-- PrismCommandListContractTests.cs
+|   |   |   |   |-- PrismGraphContractTests.cs
+|   |   |   |   |-- PrismGraphOptimizerTests.cs
+|   |   |   |   |-- PrismRetainedCommandContractTests.cs
+|   |   |   |   +-- PrismTestData.cs
 |   |   |   |-- AdvancedDrawCommandTests.cs
 |   |   |   |-- ColorTests.cs
 |   |   |   |-- DrawCommandListTests.cs
@@ -1571,8 +1636,10 @@ Generated from `.`.
 |   |   |   |   |-- ServiceRegistrationTests.cs
 |   |   |   |   +-- UiHostPlatformServicesIntegrationTests.cs
 |   |   |   |-- Prism/
+|   |   |   |   |-- PrismAttachmentTests.cs
 |   |   |   |   |-- PrismDefinitionContractTests.cs
-|   |   |   |   +-- PrismInstanceTests.cs
+|   |   |   |   |-- PrismInstanceTests.cs
+|   |   |   |   +-- PrismMotionIntegrationTests.cs
 |   |   |   |-- Relay/
 |   |   |   |   |-- FirstPartyRelayIntegrationTests.cs
 |   |   |   |   |-- RelayStageZeroTests.cs
@@ -1632,7 +1699,8 @@ Generated from `.`.
 |   |   +-- GlobalUsings.cs
 |   |-- Cerneala.Tests.SourceGen/
 |   |   |-- Prism/
-|   |   |   +-- PrismCatalogCompilerTests.cs
+|   |   |   |-- PrismCatalogCompilerTests.cs
+|   |   |   +-- PrismMarkupContractTests.cs
 |   |   |-- Cerneala.Tests.SourceGen.csproj
 |   |   |-- PresentationMarkupRegressionTests.cs
 |   |   |-- UiMarkupGeneratorApplicationTests.cs
@@ -2119,6 +2187,7 @@ Generated from `.`.
 |   |   |-- GeneratedMarkupBindings.cs
 |   |   |-- GeneratedMarkupConditions.cs
 |   |   |-- GeneratedMarkupMotion.cs
+|   |   |-- GeneratedMarkupPrism.cs
 |   |   |-- GeneratedMarkupResources.cs
 |   |   |-- GeneratedUiFactory.cs
 |   |   |-- MarkupAspectResource.cs
@@ -2307,9 +2376,11 @@ Generated from `.`.
 |   |   |   |-- PrismNodeId.cs
 |   |   |   |-- PrismParameterKey{T}.cs
 |   |   |   |-- PrismResourceId.cs
+|   |   |   |-- PrismSourceSpan.cs
 |   |   |   +-- PrismStyleDefinition.cs
 |   |   +-- Runtime/
 |   |       |-- PrismAdvancedBlend.cs
+|   |       |-- PrismAttachment.cs
 |   |       |-- PrismInstance.cs
 |   |       |-- PrismParameterStore.cs
 |   |       |-- PrismStates.cs

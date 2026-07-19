@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
+using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
@@ -94,7 +95,7 @@ internal static class WindowsDxSmokeApplication
             color));
 
         session.BeginFrame(Color.Black);
-        session.DrawingBackend.Render(commands);
+        Render(session.DrawingBackend, commands);
         session.Present();
 
         XnaColor[] pixels = new XnaColor[width * height];
@@ -128,7 +129,7 @@ internal static class WindowsDxSmokeApplication
             foreignImageCommands.Add(DrawCommand.DrawImage(firstImage, new DrawRect(0, 0, 8, 8), Color.White));
             secondSession.BeginFrame(Color.Black);
             InvalidOperationException foreignImageError = ExpectInvalidOperation(
-                () => secondSession.DrawingBackend.Render(foreignImageCommands));
+                () => Render(secondSession.DrawingBackend, foreignImageCommands));
             Assert(foreignImageError.Message.Contains("GraphicsDevice", StringComparison.Ordinal), "Cross-device image failure was not descriptive.");
             secondSession.Present();
 
@@ -137,7 +138,7 @@ internal static class WindowsDxSmokeApplication
             DrawCommandList commands = new();
             commands.Add(DrawCommand.DrawImage(firstImage, new DrawRect(0, 0, width, height), Color.White));
             firstSession.BeginFrame(Color.Black);
-            firstSession.DrawingBackend.Render(commands);
+            Render(firstSession.DrawingBackend, commands);
             firstSession.Present();
 
             XnaColor center = ReadCenterPixel(firstSession);
@@ -158,7 +159,7 @@ internal static class WindowsDxSmokeApplication
             new DrawPoint(12, 12),
             Color.Black));
         session.BeginFrame(Color.White);
-        session.DrawingBackend.Render(commands);
+        Render(session.DrawingBackend, commands);
         session.Present();
 
         int width = session.GraphicsDevice.PresentationParameters.BackBufferWidth;
@@ -216,7 +217,7 @@ internal static class WindowsDxSmokeApplication
         commands.Add(DrawCommand.FillRectangle(new DrawRect(width / 2f, height / 2f, 16, 16), drawingBrush));
 
         session.BeginFrame(Color.Black);
-        session.DrawingBackend.Render(commands);
+        Render(session.DrawingBackend, commands);
         session.Present();
 
         XnaColor[] pixels = new XnaColor[width * height];
@@ -240,7 +241,7 @@ internal static class WindowsDxSmokeApplication
             new DrawPoint(20, 64),
             brush));
         session.BeginFrame(Color.White);
-        session.DrawingBackend.Render(commands);
+        Render(session.DrawingBackend, commands);
         session.Present();
 
         int width = session.GraphicsDevice.PresentationParameters.BackBufferWidth;
@@ -255,6 +256,13 @@ internal static class WindowsDxSmokeApplication
         bool warm = pixels.Any(pixel => pixel.R > pixel.B + 20 && pixel.G < 220);
         bool cool = pixels.Any(pixel => pixel.B > pixel.R + 20 && pixel.G < 220);
         return warm && cool;
+    }
+
+    private static void Render(IDrawingBackend backend, DrawCommandList commands)
+    {
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(commands);
+        DrawingFrameContext frameContext = new(analysis);
+        backend.Render(commands, in frameContext);
     }
 
     private static XnaColor ReadCenterPixel(WindowsDxWindowGraphicsSession session)

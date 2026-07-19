@@ -8,9 +8,15 @@ internal sealed class FakeDrawingBackend : IDrawingBackend
 
     public DrawCommandList? LastCommands { get; private set; }
 
-    public void Render(DrawCommandList commands)
+    public DrawingFrameContext? LastFrameContext { get; private set; }
+
+    public void Render(
+        DrawCommandList commands,
+        in DrawingFrameContext frameContext)
     {
+        frameContext.EnsureCurrent(commands);
         RenderCalls++;
         LastCommands = commands;
+        LastFrameContext = frameContext;
     }
 }

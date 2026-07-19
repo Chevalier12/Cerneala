@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
@@ -85,10 +86,13 @@ public sealed class RetainedRendererTests
         PrepareSubtree(root);
         DrawCommandList committed = root.RetainedRenderer.Commit(root);
         CapturingDrawingBackend backend = new();
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(committed);
+        DrawingFrameContext frameContext = new(analysis);
 
-        root.RetainedRenderer.Submit(root, backend);
+        root.RetainedRenderer.Submit(root, backend, in frameContext);
 
         Assert.Same(committed, backend.LastCommands);
+        Assert.Same(analysis, backend.LastFrameContext!.Value.PrismAnalysis);
         Assert.Single(committed);
     }
 
@@ -107,9 +111,15 @@ public sealed class RetainedRendererTests
     {
         public DrawCommandList? LastCommands { get; private set; }
 
-        public void Render(DrawCommandList commands)
+        public DrawingFrameContext? LastFrameContext { get; private set; }
+
+        public void Render(
+            DrawCommandList commands,
+            in DrawingFrameContext frameContext)
         {
+            frameContext.EnsureCurrent(commands);
             LastCommands = commands;
+            LastFrameContext = frameContext;
         }
     }
 }

@@ -48,6 +48,8 @@ if (line.Kind == DrawCommandKind.DrawLine)
 
 `DrawCommand` is a value object for retained drawing work. Each static factory method sets `Kind` and populates only the payload fields needed by that command kind. For example, `DrawLine` uses `Position`, `EndPoint`, `Color`, and `Thickness`, while `DrawImage` uses `Rect`, `Color`, and `Image`.
 
+`BeginPrism` and `EndPrism` delimit a retained Prism capture scope. Only the begin command carries a typed `PrismDrawScope`; backends that do not implement Prism may ignore both delimiters while continuing to process the commands between them.
+
 The field-populating constructor is private, so callers normally create commands through the static factory methods. Because this is a struct, `default(DrawCommand)` is still possible; use the factory methods when a command should represent intentional drawing work.
 
 Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLine` and `DrawText` also validate point coordinates against the drawing pixel range. `DrawText` rejects a null `DrawTextRun`, and `DrawImage` rejects a null `IDrawImage`.
@@ -70,6 +72,7 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `Font` | `IDrawFont?` | Font copied from the `DrawTextRun` for text commands. |
 | `PathData` | `string?` | SVG path-data payload for `FillPath` commands. |
 | `SourceRect` | `DrawRect` | Source view box used to map SVG coordinates into `Rect`. |
+| `PrismScope` | `PrismDrawScope?` | Typed retained Prism payload for `BeginPrism`; `null` for other command kinds. |
 
 ## Methods
 
@@ -86,6 +89,8 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `DrawImage(IDrawImage image, DrawRect destination, Color color)` | `DrawCommand` | Creates a `DrawImage` command with `Image`, destination `Rect`, and `Color` populated. |
 | `PushClip(DrawRect rect)` | `DrawCommand` | Creates a `PushClip` command for the supplied clipping rectangle. |
 | `PopClip()` | `DrawCommand` | Creates a `PopClip` command. |
+| `BeginPrism(PrismDrawScope scope)` | `DrawCommand` | Begins a retained Prism capture scope and stores its typed frame state. |
+| `EndPrism()` | `DrawCommand` | Ends the innermost retained Prism capture scope. |
 
 ## Exceptions
 
@@ -111,4 +116,5 @@ Cerneala drawing command recording and rendering paths.
 
 - [`DrawCommandKind`](../../Drawing/DrawCommandKind.cs)
 - [`DrawCommandList`](../../Drawing/DrawCommandList.cs)
+- [`PrismDrawScope`](../../Drawing/Prism/PrismDrawScope.cs)
 - [`DrawingContext`](../../Drawing/DrawingContext.cs)

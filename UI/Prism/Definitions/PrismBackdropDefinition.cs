@@ -13,8 +13,9 @@ public sealed class PrismBackdropDefinition : PrismNodeDefinition
         IEnumerable<PrismStyleDefinition>? styles = null,
         PrismMaskDefinition? mask = null,
         bool visible = PrismCatalogGenerated.BackdropVisible,
-        float opacity = PrismCatalogGenerated.BackdropOpacity)
-        : base(id, name)
+        float opacity = PrismCatalogGenerated.BackdropOpacity,
+        PrismSourceSpan? sourceSpan = null)
+        : base(id, name, sourceSpan)
     {
         Filters = PrismDefinitionValidation.ToImmutableArray(filters, nameof(filters));
         Styles = PrismDefinitionValidation.ToImmutableArray(styles, nameof(styles));

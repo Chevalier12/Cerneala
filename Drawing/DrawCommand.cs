@@ -1,3 +1,5 @@
+using Cerneala.Drawing.Prism;
+
 namespace Cerneala.Drawing;
 
 public readonly record struct DrawCommand
@@ -16,7 +18,8 @@ public readonly record struct DrawCommand
         IDrawBrush? brush,
         float brushOpacity,
         string? pathData = null,
-        DrawRect sourceRect = default)
+        DrawRect sourceRect = default,
+        PrismDrawScope? prismScope = null)
     {
         Kind = kind;
         Rect = rect;
@@ -32,6 +35,7 @@ public readonly record struct DrawCommand
         BrushOpacity = brushOpacity;
         PathData = pathData;
         SourceRect = sourceRect;
+        PrismScope = prismScope;
     }
 
     public DrawCommandKind Kind { get; }
@@ -61,6 +65,8 @@ public readonly record struct DrawCommand
     public string? PathData { get; }
 
     public DrawRect SourceRect { get; }
+
+    public PrismDrawScope? PrismScope { get; }
 
     public static DrawCommand FillRectangle(DrawRect rect, Color color)
     {
@@ -177,6 +183,41 @@ public readonly record struct DrawCommand
     public static DrawCommand PopClip()
     {
         return new DrawCommand(DrawCommandKind.PopClip, default, default, 0, null, null, default, default, null, null, null, 1);
+    }
+
+    public static DrawCommand BeginPrism(PrismDrawScope scope)
+    {
+        return new DrawCommand(
+            DrawCommandKind.BeginPrism,
+            default,
+            default,
+            0,
+            null,
+            null,
+            default,
+            default,
+            null,
+            null,
+            null,
+            1,
+            prismScope: scope);
+    }
+
+    public static DrawCommand EndPrism()
+    {
+        return new DrawCommand(
+            DrawCommandKind.EndPrism,
+            default,
+            default,
+            0,
+            null,
+            null,
+            default,
+            default,
+            null,
+            null,
+            null,
+            1);
     }
 
     private static DrawCommand CreateBrushCommand(

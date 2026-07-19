@@ -38,9 +38,14 @@ public sealed class RetainedRenderer
         return renderCache.RootCommands;
     }
 
-    public void Submit(UIRoot root, IDrawingBackend backend)
+    public void Submit(
+        UIRoot root,
+        IDrawingBackend backend,
+        in DrawingFrameContext frameContext)
     {
         ArgumentNullException.ThrowIfNull(backend);
-        backend.Render(Render(root));
+        DrawCommandList commands = Render(root);
+        frameContext.EnsureCurrent(commands);
+        backend.Render(commands, in frameContext);
     }
 }

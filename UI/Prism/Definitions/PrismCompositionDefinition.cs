@@ -13,7 +13,8 @@ public sealed class PrismCompositionDefinition : IEquatable<PrismCompositionDefi
         IEnumerable<PrismNodeDefinition> nodes,
         PrismColorProfile workingColorProfile = PrismCatalogGenerated.CompositionWorkingColorProfile,
         float globalLightAngle = PrismCatalogGenerated.CompositionGlobalLightAngle,
-        float globalLightAltitude = PrismCatalogGenerated.CompositionGlobalLightAltitude)
+        float globalLightAltitude = PrismCatalogGenerated.CompositionGlobalLightAltitude,
+        PrismSourceSpan? sourceSpan = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -30,6 +31,7 @@ public sealed class PrismCompositionDefinition : IEquatable<PrismCompositionDefi
         WorkingColorProfile = workingColorProfile;
         GlobalLightAngle = PrismDefinitionValidation.Finite(globalLightAngle, nameof(globalLightAngle));
         GlobalLightAltitude = PrismDefinitionValidation.Finite(globalLightAltitude, nameof(globalLightAltitude));
+        SourceSpan = sourceSpan;
         namedNodes = ValidateAndIndex(Nodes);
     }
 
@@ -42,6 +44,8 @@ public sealed class PrismCompositionDefinition : IEquatable<PrismCompositionDefi
     public float GlobalLightAngle { get; }
 
     public float GlobalLightAltitude { get; }
+
+    public PrismSourceSpan? SourceSpan { get; }
 
     public PrismBackdropDefinition? Backdrop =>
         Nodes[^1] as PrismBackdropDefinition;

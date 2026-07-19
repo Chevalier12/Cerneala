@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Rendering;
 
@@ -42,8 +43,9 @@ public sealed class RetainedRendererDrawPurityTests
         PrepareSubtree(root);
         DrawCommandList committed = root.RetainedRenderer.Commit(root);
         CapturingBackend backend = new();
+        DrawingFrameContext frameContext = CreateFrameContext(committed);
 
-        root.RetainedRenderer.Submit(root, backend);
+        root.RetainedRenderer.Submit(root, backend, in frameContext);
 
         Assert.Same(committed, backend.LastCommands);
         Assert.Equal(1, child.RenderCount);
@@ -54,9 +56,10 @@ public sealed class RetainedRendererDrawPurityTests
     {
         UIRoot root = new();
         CapturingBackend backend = new();
+        DrawingFrameContext frameContext = CreateFrameContext(new DrawCommandList());
 
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
-            root.RetainedRenderer.Submit(root, backend));
+            root.RetainedRenderer.Submit(root, backend, in frameContext));
 
         Assert.Contains("committed", exception.Message);
         Assert.Equal(0, backend.RenderCalls);
@@ -73,14 +76,23 @@ public sealed class RetainedRendererDrawPurityTests
         }
     }
 
+    private static DrawingFrameContext CreateFrameContext(DrawCommandList commands)
+    {
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(commands);
+        return new DrawingFrameContext(analysis);
+    }
+
     private sealed class CapturingBackend : IDrawingBackend
     {
         public int RenderCalls { get; private set; }
 
         public DrawCommandList? LastCommands { get; private set; }
 
-        public void Render(DrawCommandList commands)
+        public void Render(
+            DrawCommandList commands,
+            in DrawingFrameContext frameContext)
         {
+            frameContext.EnsureCurrent(commands);
             RenderCalls++;
             LastCommands = commands;
         }

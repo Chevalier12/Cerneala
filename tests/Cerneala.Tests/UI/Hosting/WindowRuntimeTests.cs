@@ -554,7 +554,7 @@ public sealed class WindowRuntimeTests : IDisposable
     {
         public int RenderCount { get; private set; }
 
-        public void Render(DrawCommandList commands)
+        public void Render(DrawCommandList commands, in DrawingFrameContext frameContext)
         {
             RenderCount++;
         }

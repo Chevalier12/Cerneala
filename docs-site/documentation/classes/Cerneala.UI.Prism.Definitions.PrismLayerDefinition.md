@@ -20,18 +20,21 @@ PrismLayerDefinition layer = new(
     new PrismNodeId(1),
     "SoftGlow",
     filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
-    styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
+    styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)],
+    sourceSpan: new PrismSourceSpan(24, 7, "Card.cui.xml"));
 ```
 
 ## Remarks
 
 A layer is always a leaf. Filters and styles are separate ordered collections, and `Mask` represents the optional single mask. The layer must contain at least one filter or style.
 
+The optional inherited `SourceSpan` is immutable diagnostic metadata and does not participate in semantic equality or hashing.
+
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `PrismLayerDefinition(PrismNodeId id, string? name, IEnumerable<PrismFilterDefinition>? filters = null, IEnumerable<PrismStyleDefinition>? styles = null, PrismMaskDefinition? mask = null, bool visible = true, float opacity = 1, float fill = 1, PrismBlendMode blendMode = Normal, bool clipToBelow = false)` | Initializes an immutable layer using catalog-backed defaults. |
+| `PrismLayerDefinition(PrismNodeId id, string? name, IEnumerable<PrismFilterDefinition>? filters = null, IEnumerable<PrismStyleDefinition>? styles = null, PrismMaskDefinition? mask = null, bool visible = true, float opacity = 1, float fill = 1, PrismBlendMode blendMode = Normal, bool clipToBelow = false, PrismSourceSpan? sourceSpan = null)` | Initializes an immutable layer using catalog-backed defaults and optional source metadata. |
 
 ## Properties
 
@@ -45,6 +48,7 @@ A layer is always a leaf. Filters and styles are separate ordered collections, a
 | `Fill` | `float` | Gets filtered-content opacity before styles. |
 | `BlendMode` | `PrismBlendMode` | Gets the layer blend mode. |
 | `ClipToBelow` | `bool` | Gets whether the layer joins the clipping chain below it. |
+| `SourceSpan` | `PrismSourceSpan?` | Gets the optional authoring source location (inherited). |
 
 ## Exceptions
 
@@ -56,3 +60,8 @@ A layer is always a leaf. Filters and styles are separate ordered collections, a
 ## Applies to
 
 Normal Prism content stacks.
+
+## See also
+
+- `Cerneala.UI.Prism.Definitions.PrismSourceSpan`
+- `Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic`

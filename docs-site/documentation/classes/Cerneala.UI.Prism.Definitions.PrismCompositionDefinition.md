@@ -27,18 +27,21 @@ PrismCompositionDefinition composition = new(
             new PrismNodeId(2),
             "Glass",
             filters: [new PrismFilterDefinition(PrismFilterId.Blur)])
-    ]);
+    ],
+    sourceSpan: new PrismSourceSpan(0, 128, "Card.cui.xml"));
 ```
 
 ## Remarks
 
 Nodes are declared front-to-back and evaluated bottom-up. The optional `Backdrop` remains a separate logical plane and is excluded from `EnumerateContentBottomUp()`. Node IDs are unique across the tree; optional names are unique in their address scope.
 
+`SourceSpan` is immutable diagnostic metadata used when a graph failure cannot be attributed to a more specific node. It is deliberately excluded from semantic equality and hashing.
+
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `PrismCompositionDefinition(string name, IEnumerable<PrismNodeDefinition> nodes, PrismColorProfile workingColorProfile = LinearSrgb, float globalLightAngle = 120, float globalLightAltitude = 30)` | Initializes and validates an immutable composition. |
+| `PrismCompositionDefinition(string name, IEnumerable<PrismNodeDefinition> nodes, PrismColorProfile workingColorProfile = LinearSrgb, float globalLightAngle = 120, float globalLightAltitude = 30, PrismSourceSpan? sourceSpan = null)` | Initializes and validates an immutable composition with optional source metadata. |
 
 ## Properties
 
@@ -49,6 +52,7 @@ Nodes are declared front-to-back and evaluated bottom-up. The optional `Backdrop
 | `WorkingColorProfile` | `PrismColorProfile` | Gets the working color profile. |
 | `GlobalLightAngle` | `float` | Gets the shared light angle in degrees. |
 | `GlobalLightAltitude` | `float` | Gets the shared light altitude in degrees. |
+| `SourceSpan` | `PrismSourceSpan?` | Gets the optional authoring source location. |
 | `Backdrop` | `PrismBackdropDefinition?` | Gets the last direct node when it is a backdrop. |
 
 ## Methods
@@ -73,3 +77,9 @@ Nodes are declared front-to-back and evaluated bottom-up. The optional `Backdrop
 ## Applies to
 
 Shared Prism definitions used by one or more `PrismInstance` objects.
+
+## See also
+
+- `Cerneala.UI.Prism.Definitions.PrismSourceSpan`
+- `Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic`
+- `Cerneala.Drawing.Prism.Graph.PrismGraphBuildException`

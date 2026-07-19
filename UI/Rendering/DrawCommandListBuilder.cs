@@ -1,8 +1,11 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
+using Cerneala.UI.Prism.Runtime;
+using NumericsMatrix3x2 = System.Numerics.Matrix3x2;
 
 namespace Cerneala.UI.Rendering;
 
@@ -16,11 +19,11 @@ public sealed class DrawCommandListBuilder
 
         DrawCommandList rootCommands = renderCache.RootCommands;
         rootCommands.Clear();
-        AppendElement(root, renderCache, counters, rootCommands, Matrix3x2.Identity, 1);
+        _ = AppendElement(root, renderCache, counters, rootCommands, Matrix3x2.Identity, 1);
         renderCache.MarkRootBuilt();
     }
 
-    private static void AppendElement(
+    private static long AppendElement(
         UIElement element,
         RetainedRenderCache renderCache,
         RenderCounters counters,
@@ -30,7 +33,7 @@ public sealed class DrawCommandListBuilder
     {
         if (!UIElementVisibility.ParticipatesInRendering(element))
         {
-            return;
+            return 0;
         }
 
         Matrix3x2 elementTransform = Matrix3x2.Multiply(
@@ -39,7 +42,7 @@ public sealed class DrawCommandListBuilder
         float elementOpacity = ancestorOpacity * element.Opacity * element.PresenceOpacity;
         if (elementOpacity <= 0)
         {
-            return;
+            return 0;
         }
 
         counters.CountComposedElement();
@@ -50,25 +53,53 @@ public sealed class DrawCommandListBuilder
             counters.CountEmittedCommands(1);
         }
 
+        bool hasPrism = PrismAttachment.TryGetRenderState(
+            element,
+            out PrismInstance? prismInstance,
+            out PrismCacheOwnerToken cacheOwnerToken);
+        int prismBeginIndex = -1;
+        if (hasPrism)
+        {
+            prismBeginIndex = rootCommands.Count;
+            rootCommands.Add(DrawCommand.BeginPrism(CreatePrismScope(
+                element,
+                prismInstance!,
+                cacheOwnerToken,
+                elementTransform,
+                visualContentVersion: 0)));
+            counters.CountEmittedCommands(1);
+        }
+
+        long visualSignature = MixVisualVersion(
+            MixVisualVersion(17, element.RenderVersion),
+            element.RenderScopeVersion);
         ElementRenderCache localCache = renderCache.GetElementCache(element);
         DrawCommandList localCommands = GetLocalCommands(element, localCache, out float offsetX, out float offsetY);
         for (int index = 0; index < localCommands.Count; index++)
         {
             DrawCommand command = localCommands[index];
-            rootCommands.Add(ApplyRenderScope(Translate(command, offsetX, offsetY), elementTransform, elementOpacity));
+            DrawCommand composed = ApplyRenderScope(
+                Translate(command, offsetX, offsetY),
+                elementTransform,
+                elementOpacity);
+            rootCommands.Add(composed);
             counters.CountEmittedCommands(1);
         }
 
         UIElementCollection visualChildren = element.VisualChildren;
         for (int index = 0; index < visualChildren.Count; index++)
         {
-            AppendElement(
+            long childVersion = AppendElement(
                 visualChildren[index],
                 renderCache,
                 counters,
                 rootCommands,
                 elementTransform,
                 elementOpacity);
+            if (childVersion != 0)
+            {
+                visualSignature = MixVisualVersion(visualSignature, childVersion);
+            }
         }
 
         if (element.Root is UIRoot root)
@@ -77,20 +108,93 @@ public sealed class DrawCommandListBuilder
                 root.Motion.Presence.GetExitingVisualChildren(element);
             for (int index = 0; index < exitingChildren.Count; index++)
             {
-                AppendElement(
+                long childVersion = AppendElement(
                     exitingChildren[index],
                     renderCache,
                     counters,
                     rootCommands,
                     elementTransform,
                     elementOpacity);
+                if (childVersion != 0)
+                {
+                    visualSignature = MixVisualVersion(visualSignature, childVersion);
+                }
             }
+        }
+
+        long visualContentVersion = renderCache.GetVisualContentVersion(
+            element,
+            visualSignature);
+        if (hasPrism)
+        {
+            PrismDrawScope scope = CreatePrismScope(
+                element,
+                prismInstance!,
+                cacheOwnerToken,
+                elementTransform,
+                visualContentVersion);
+            rootCommands.ReplaceAt(prismBeginIndex, DrawCommand.BeginPrism(scope));
+            rootCommands.Add(DrawCommand.EndPrism());
+            counters.CountEmittedCommands(1);
         }
 
         if (hasClip)
         {
             rootCommands.Add(DrawCommand.PopClip());
             counters.CountEmittedCommands(1);
+        }
+
+        if (!hasPrism)
+        {
+            return visualContentVersion;
+        }
+
+        long composedVersion = MixVisualVersion(
+            visualContentVersion,
+            cacheOwnerToken.Value);
+        composedVersion = MixVisualVersion(
+            composedVersion,
+            prismInstance!.StructuralVersion.Value);
+        return MixVisualVersion(composedVersion, prismInstance.ValueVersion.Value);
+    }
+
+    private static PrismDrawScope CreatePrismScope(
+        UIElement element,
+        PrismInstance instance,
+        PrismCacheOwnerToken cacheOwnerToken,
+        Matrix3x2 effectiveTransform,
+        long visualContentVersion)
+    {
+        float pixelScale = element is UIRoot root
+            ? root.Scale
+            : element.Root?.Scale ?? 1;
+        return new PrismDrawScope(
+            instance,
+            cacheOwnerToken,
+            ToDrawRect(element.ArrangedBounds),
+            ToNumerics(effectiveTransform),
+            pixelScale,
+            visualContentVersion);
+    }
+
+    private static NumericsMatrix3x2 ToNumerics(Matrix3x2 matrix)
+    {
+        return new NumericsMatrix3x2(
+            matrix.M11,
+            matrix.M12,
+            matrix.M21,
+            matrix.M22,
+            matrix.M31,
+            matrix.M32);
+    }
+
+    private static long MixVisualVersion(long current, long value)
+    {
+        unchecked
+        {
+            ulong hash = (ulong)current;
+            hash ^= (ulong)value + 0x9E3779B97F4A7C15UL + (hash << 6) + (hash >> 2);
+            return (long)(hash & long.MaxValue);
         }
     }
 
@@ -198,6 +302,8 @@ public sealed class DrawCommandListBuilder
             DrawCommandKind.DrawImage => DrawCommand.DrawImage(command.Image!, Translate(command.Rect, offsetX, offsetY), command.Color),
             DrawCommandKind.PushClip => DrawCommand.PushClip(Translate(command.Rect, offsetX, offsetY)),
             DrawCommandKind.PopClip => command,
+            DrawCommandKind.BeginPrism => command,
+            DrawCommandKind.EndPrism => command,
             _ => command
         };
     }
@@ -250,6 +356,8 @@ public sealed class DrawCommandListBuilder
             DrawCommandKind.DrawImage => DrawCommand.DrawImage(command.Image!, Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity)),
             DrawCommandKind.PushClip => DrawCommand.PushClip(Transform(command.Rect, transform)),
             DrawCommandKind.PopClip => command,
+            DrawCommandKind.BeginPrism => command,
+            DrawCommandKind.EndPrism => command,
             _ => command
         };
     }

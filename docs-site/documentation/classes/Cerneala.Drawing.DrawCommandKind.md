@@ -10,7 +10,7 @@ Source: `Drawing/DrawCommandKind.cs`
 Provides the `Cerneala.Drawing.DrawCommandKind` API surface.
 
 ```csharp
-public sealed enum DrawCommandKind
+public enum DrawCommandKind
 ```
 
 ## Remarks
@@ -31,6 +31,8 @@ public sealed enum DrawCommandKind
 | `DrawImage` | Draws an image. |
 | `PushClip` | Pushes a rectangular clip. |
 | `PopClip` | Removes the current clip. |
+| `BeginPrism` | Begins a typed retained Prism capture scope. |
+| `EndPrism` | Ends the innermost retained Prism capture scope. |
 
 ## Applies to
 

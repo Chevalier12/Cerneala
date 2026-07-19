@@ -151,6 +151,32 @@ public sealed class UiHostTests
         Assert.Equal(2, clickCount);
     }
 
+    [Fact]
+    public void DrawSubmitsOneCurrentFrameAnalysisWithTheCommittedCommands()
+    {
+        UIRoot root = new(100, 100);
+        FakeDrawingBackend backend = new();
+        UiHost host = new(new UiHostOptions
+        {
+            Root = root,
+            Viewport = new UiViewport(100, 100)
+        });
+        host.Update(
+            FakeInputSource.CreateFrame(),
+            elapsedTime: TimeSpan.Zero);
+
+        host.Draw(backend);
+
+        Assert.Equal(1, backend.RenderCalls);
+        Assert.NotNull(backend.LastCommands);
+        DrawingFrameContext frameContext =
+            Assert.IsType<DrawingFrameContext>(backend.LastFrameContext);
+        Assert.Equal(
+            backend.LastCommands!.Version,
+            frameContext.PrismAnalysis.CommandListVersion);
+        frameContext.EnsureCurrent(backend.LastCommands);
+    }
+
     private static InputFrame PointerFrame(bool previousDown, bool currentDown)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(10, 10);

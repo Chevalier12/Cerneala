@@ -93,9 +93,18 @@ public sealed class DrawingResourceTests
     }
 
     [Fact]
-    public void BackendInterfaceConsumesCommandList()
+    public void BackendInterfaceConsumesCommandListAndTypedFrameContext()
     {
-        Assert.NotNull(typeof(IDrawingBackend).GetMethod(nameof(IDrawingBackend.Render)));
+        System.Reflection.MethodInfo? render =
+            typeof(IDrawingBackend).GetMethod(nameof(IDrawingBackend.Render));
+        Assert.NotNull(render);
+        System.Reflection.ParameterInfo[] parameters = render.GetParameters();
+
+        Assert.Equal(2, parameters.Length);
+        Assert.Equal(typeof(DrawCommandList), parameters[0].ParameterType);
+        Assert.Equal(
+            typeof(DrawingFrameContext).MakeByRefType(),
+            parameters[1].ParameterType);
     }
 
     [Fact]

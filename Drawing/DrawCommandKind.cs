@@ -11,5 +11,7 @@ public enum DrawCommandKind
     DrawText,
     DrawImage,
     PushClip,
-    PopClip
+    PopClip,
+    BeginPrism,
+    EndPrism
 }

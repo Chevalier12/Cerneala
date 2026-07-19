@@ -751,7 +751,7 @@ public sealed class ApplicationRuntimeTests : IDisposable
 
     private sealed class NullDrawingBackend : IDrawingBackend
     {
-        public void Render(DrawCommandList commands)
+        public void Render(DrawCommandList commands, in DrawingFrameContext frameContext)
         {
         }
     }

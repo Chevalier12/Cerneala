@@ -65,6 +65,11 @@
     "source": "Drawing/IDrawBrush.cs"
   },
   {
+    "name": "Cerneala.Drawing.DrawingFrameContext",
+    "file": "documentation/classes/Cerneala.Drawing.DrawingFrameContext.md",
+    "source": "Drawing/DrawingFrameContext.cs"
+  },
+  {
     "name": "Cerneala.Drawing.DrawPoint",
     "file": "documentation/classes/Cerneala.Drawing.DrawPoint.md",
     "source": "Drawing/DrawPoint.cs"
@@ -153,6 +158,161 @@
     "name": "Cerneala.Drawing.MonoGame.MonoGameImage",
     "file": "documentation/classes/Cerneala.Drawing.MonoGame.MonoGameImage.md",
     "source": "Drawing/MonoGame/MonoGameImage.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismAnalyzedScope",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismAnalyzedScope.md",
+    "source": "Drawing/Prism/Graph/PrismAnalyzedScope.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismBackdropRequirement",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismBackdropRequirement.md",
+    "source": "Drawing/Prism/Graph/PrismBackdropRequirement.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismDependencyStamp",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismDependencyStamp.md",
+    "source": "Drawing/Prism/Graph/PrismDependencyStamp.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismFrameAnalysis",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismFrameAnalysis.md",
+    "source": "Drawing/Prism/Graph/PrismFrameAnalysis.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismFrameAnalyzer",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismFrameAnalyzer.md",
+    "source": "Drawing/Prism/Graph/PrismFrameAnalyzer.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraph",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraph.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphBoundsStatus",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphBoundsStatus.md",
+    "source": "Drawing/Prism/Graph/PrismGraphOptimizer.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphBuildException",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphBuildException.md",
+    "source": "Drawing/Prism/Graph/PrismGraphDiagnostic.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphBuilder",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphBuilder.md",
+    "source": "Drawing/Prism/Graph/PrismGraphBuilder.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphCapabilities",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphCapabilities.md",
+    "source": "Drawing/Prism/Graph/PrismGraphCapabilities.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphCompositionSettings",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphCompositionSettings.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphDependency",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphDependency.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphDependencyKind",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphDependencyKind.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic.md",
+    "source": "Drawing/Prism/Graph/PrismGraphDiagnostic.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphEdge",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphEdge.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphEdgeKind",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphEdgeKind.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphExecutionPlan",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphExecutionPlan.md",
+    "source": "Drawing/Prism/Graph/PrismGraphOptimizer.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphLayerSettings",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphLayerSettings.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphNode",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphNode.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphNodeId",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphNodeId.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphNodeKind",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphNodeKind.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphNodePlan",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphNodePlan.md",
+    "source": "Drawing/Prism/Graph/PrismGraphOptimizer.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphOptimizer",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphOptimizer.md",
+    "source": "Drawing/Prism/Graph/PrismGraphOptimizer.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphParameter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphParameter.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphParameterValueKind",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphParameterValueKind.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphScope",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphScope.md",
+    "source": "Drawing/Prism/Graph/PrismGraph.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphSurfaceLifetime",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphSurfaceLifetime.md",
+    "source": "Drawing/Prism/Graph/PrismGraphOptimizer.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Graph.PrismGraphUncacheableReason",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismGraphUncacheableReason.md",
+    "source": "Drawing/Prism/Graph/PrismGraphOptimizer.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.IBackdropFrameLease",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.IBackdropFrameLease.md",
+    "source": "Drawing/Prism/IBackdropFrameLease.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PrismCacheOwnerToken",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismCacheOwnerToken.md",
+    "source": "Drawing/Prism/PrismDrawScope.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PrismDrawScope",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismDrawScope.md",
+    "source": "Drawing/Prism/PrismDrawScope.cs"
   },
   {
     "name": "Cerneala.Drawing.RadialGradientDrawBrushDescriptor",
@@ -3933,6 +4093,11 @@
     "name": "Cerneala.UI.Prism.Definitions.PrismResourceId",
     "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismResourceId.md",
     "source": "UI/Prism/Definitions/PrismResourceId.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismSourceSpan",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismSourceSpan.md",
+    "source": "UI/Prism/Definitions/PrismSourceSpan.cs"
   },
   {
     "name": "Cerneala.UI.Prism.Definitions.PrismStyleDefinition",

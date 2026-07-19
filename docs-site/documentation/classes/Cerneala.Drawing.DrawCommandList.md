@@ -37,6 +37,7 @@ commands.Add(DrawCommand.DrawRectangle(
 
 DrawCommand first = commands[0];
 int count = commands.Count;
+long structuralVersion = commands.Version;
 
 commands.Clear();
 ```
@@ -48,6 +49,8 @@ commands.Clear();
 The list is mutable through `Add` and `Clear`, but consumers that receive it as an `IReadOnlyList<DrawCommand>` can inspect the command count, index commands, and enumerate commands without additional copying.
 
 Render backends should treat submitted command lists as read-only while rendering. Retained rendering may reuse the same command-list instance across unchanged draw frames.
+
+`Version` changes deterministically after every `Add` and `Clear` call, including a `Clear` on an already empty list. Frame analyses can compare the captured version with the current list version to reject stale results without rescanning the commands.
 
 ## Constructors
 
@@ -61,6 +64,7 @@ Render backends should treat submitted command lists as read-only while renderin
 | --- | --- |
 | `Count` | Gets the number of stored commands. |
 | `this[int index]` | Gets the command at the specified zero-based index. |
+| `Version` | Gets the structural mutation version used to validate cached command-list analyses. |
 
 ## Methods
 

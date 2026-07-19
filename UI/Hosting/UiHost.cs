@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
@@ -17,6 +18,7 @@ public sealed class UiHost
     private bool needsInitialFrame = true;
     private readonly IPlatformServices? platformServices;
     private readonly CursorService cursorService = new();
+    private readonly PrismFrameAnalyzer prismFrameAnalyzer = new();
 
     public UiHost(UiHostOptions? options = null)
     {
@@ -178,7 +180,13 @@ public sealed class UiHost
 
         UIRoot currentRoot = RequireRoot();
         currentRoot.Relay.VerifyAccess();
-        currentRoot.RetainedRenderer.Submit(currentRoot, backend);
+        DrawCommandList commands = currentRoot.RetainedRenderer.Render(currentRoot);
+        PrismFrameAnalysis analysis = prismFrameAnalyzer.Analyze(commands);
+        DrawingFrameContext frameContext = new(analysis);
+        currentRoot.RetainedRenderer.Submit(
+            currentRoot,
+            backend,
+            in frameContext);
     }
 
     private UIRoot RequireRoot()

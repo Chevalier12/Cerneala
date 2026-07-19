@@ -16,8 +16,9 @@ public sealed class PrismLayerDefinition : PrismNodeDefinition
         float opacity = PrismCatalogGenerated.LayerOpacity,
         float fill = PrismCatalogGenerated.LayerFill,
         PrismBlendMode blendMode = PrismCatalogGenerated.LayerBlendMode,
-        bool clipToBelow = PrismCatalogGenerated.LayerClipToBelow)
-        : base(id, name)
+        bool clipToBelow = PrismCatalogGenerated.LayerClipToBelow,
+        PrismSourceSpan? sourceSpan = null)
+        : base(id, name, sourceSpan)
     {
         if (blendMode == PrismBlendMode.PassThrough)
         {

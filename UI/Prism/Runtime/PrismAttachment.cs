@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Cerneala.Drawing.Prism;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Prism.Runtime;
@@ -6,12 +7,14 @@ namespace Cerneala.UI.Prism.Runtime;
 internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
 {
     private static readonly ConditionalWeakTable<UIElement, PrismAttachment> Attachments = new();
+    private static long nextCacheOwnerToken;
 
     private UIElement? owner;
     private Func<PrismInstance>? instanceFactory;
     private IReadOnlyList<Func<PrismInstance, IDisposable>>? bindingFactories;
     private IDisposable[]? bindings;
     private PrismInstance? instance;
+    private PrismCacheOwnerToken cacheOwnerToken;
     private bool attached;
     private bool renderable;
     private bool disposed;
@@ -67,6 +70,24 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         return false;
     }
 
+    public static bool TryGetRenderState(
+        UIElement owner,
+        out PrismInstance? instance,
+        out PrismCacheOwnerToken cacheOwnerToken)
+    {
+        if (Attachments.TryGetValue(owner, out PrismAttachment? attachment) &&
+            attachment.instance is PrismInstance current)
+        {
+            instance = current;
+            cacheOwnerToken = attachment.cacheOwnerToken;
+            return true;
+        }
+
+        instance = null;
+        cacheOwnerToken = default;
+        return false;
+    }
+
     public void Attach()
     {
         if (attached || disposed)
@@ -77,6 +98,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         PrismInstance created = instanceFactory!()
             ?? throw new InvalidOperationException("A generated Prism factory returned null.");
         instance = created;
+        cacheOwnerToken = NextCacheOwnerToken();
         attached = true;
         renderable = UIElementVisibility.IsEffectivelyVisible(owner!);
 
@@ -111,9 +133,11 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         }
 
         PrismInstance previous = instance!;
+        PrismCacheOwnerToken previousCacheOwnerToken = cacheOwnerToken;
         PrismInstance created = instanceFactory!()
             ?? throw new InvalidOperationException("A generated Prism factory returned null.");
         instance = created;
+        cacheOwnerToken = NextCacheOwnerToken();
         renderable = true;
         try
         {
@@ -123,6 +147,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         {
             renderable = false;
             instance = previous;
+            cacheOwnerToken = previousCacheOwnerToken;
             throw;
         }
     }
@@ -143,6 +168,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         finally
         {
             instance = null;
+            cacheOwnerToken = default;
         }
     }
 
@@ -171,6 +197,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
             bindingFactories = null;
             bindings = null;
             instance = null;
+            cacheOwnerToken = default;
 
             if (previousOwner is not null)
             {
@@ -241,5 +268,16 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
                 "One or more Prism bindings failed to detach.",
                 failure);
         }
+    }
+
+    private static PrismCacheOwnerToken NextCacheOwnerToken()
+    {
+        long value = Interlocked.Increment(ref nextCacheOwnerToken);
+        if (value <= 0)
+        {
+            throw new InvalidOperationException("Prism cache owner token space was exhausted.");
+        }
+
+        return new PrismCacheOwnerToken(value);
     }
 }

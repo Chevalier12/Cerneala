@@ -5,6 +5,7 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
+using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Input;
 using Cerneala.UI.Resources;
 
@@ -168,7 +169,7 @@ public sealed class Win32WindowPlatformTests
         DrawCommandList commands = new();
         commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 32, 32), new Color(20, 40, 60)));
         owner.GraphicsSession.BeginFrame(Color.White);
-        owner.GraphicsSession.DrawingBackend.Render(commands);
+        Render(owner.GraphicsSession.DrawingBackend, commands);
         owner.Show();
         owner.GraphicsSession.Present();
         platform.PumpEvents();
@@ -397,7 +398,14 @@ public sealed class Win32WindowPlatformTests
 
     private sealed class RecordingDrawingBackend : IDrawingBackend
     {
-        public void Render(DrawCommandList commands) { }
+        public void Render(DrawCommandList commands, in DrawingFrameContext frameContext) { }
+    }
+
+    private static void Render(IDrawingBackend backend, DrawCommandList commands)
+    {
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(commands);
+        DrawingFrameContext frameContext = new(analysis);
+        backend.Render(commands, in frameContext);
     }
 
     [DllImport("user32.dll")]

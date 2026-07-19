@@ -15,8 +15,9 @@ public sealed class PrismGroupDefinition : PrismNodeDefinition
         PrismMaskDefinition? mask = null,
         bool visible = PrismCatalogGenerated.GroupVisible,
         float opacity = PrismCatalogGenerated.GroupOpacity,
-        PrismBlendMode blendMode = PrismCatalogGenerated.GroupBlendMode)
-        : base(id, name)
+        PrismBlendMode blendMode = PrismCatalogGenerated.GroupBlendMode,
+        PrismSourceSpan? sourceSpan = null)
+        : base(id, name, sourceSpan)
     {
         Children = PrismDefinitionValidation.ToImmutableArray(children, nameof(children));
         if (Children.IsEmpty)

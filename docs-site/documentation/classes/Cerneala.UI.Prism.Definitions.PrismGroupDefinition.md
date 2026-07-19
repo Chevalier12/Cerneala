@@ -13,15 +13,32 @@ Defines an immutable Prism container for layers and nested groups.
 public sealed class PrismGroupDefinition : PrismNodeDefinition
 ```
 
+## Examples
+
+```csharp
+PrismGroupDefinition group = new(
+    new PrismNodeId(10),
+    "Effects",
+    [
+        new PrismLayerDefinition(
+            new PrismNodeId(11),
+            "Content",
+            filters: [new PrismFilterDefinition(PrismFilterId.Blur)])
+    ],
+    sourceSpan: new PrismSourceSpan(40, 12, "Card.cui.xml"));
+```
+
 ## Remarks
 
 Only groups may contain normal-stack children. `Children` preserves declaration order; `EnumerateChildrenBottomUp()` traverses it in evaluation order without moving or duplicating nodes. The default blend mode is `PassThrough`.
+
+The optional inherited `SourceSpan` is immutable diagnostic metadata and does not participate in semantic equality or hashing.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `PrismGroupDefinition(PrismNodeId id, string? name, IEnumerable<PrismNodeDefinition> children, IEnumerable<PrismFilterDefinition>? filters = null, IEnumerable<PrismStyleDefinition>? styles = null, PrismMaskDefinition? mask = null, bool visible = true, float opacity = 1, PrismBlendMode blendMode = PassThrough)` | Initializes a nonempty immutable group. |
+| `PrismGroupDefinition(PrismNodeId id, string? name, IEnumerable<PrismNodeDefinition> children, IEnumerable<PrismFilterDefinition>? filters = null, IEnumerable<PrismStyleDefinition>? styles = null, PrismMaskDefinition? mask = null, bool visible = true, float opacity = 1, PrismBlendMode blendMode = PassThrough, PrismSourceSpan? sourceSpan = null)` | Initializes a nonempty immutable group with optional source metadata. |
 
 ## Properties
 
@@ -34,6 +51,7 @@ Only groups may contain normal-stack children. `Children` preserves declaration 
 | `Visible` | `bool` | Gets whether the group and its subtree participate. |
 | `Opacity` | `float` | Gets complete group opacity. |
 | `BlendMode` | `PrismBlendMode` | Gets pass-through or isolated group blending. |
+| `SourceSpan` | `PrismSourceSpan?` | Gets the optional authoring source location (inherited). |
 
 ## Methods
 
@@ -51,3 +69,8 @@ Only groups may contain normal-stack children. `Children` preserves declaration 
 ## Applies to
 
 Nested normal Prism layer stacks.
+
+## See also
+
+- `Cerneala.UI.Prism.Definitions.PrismSourceSpan`
+- `Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic`

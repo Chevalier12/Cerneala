@@ -19,9 +19,21 @@ Inheritance:
 Derived types:
 `PrismLayerDefinition`, `PrismGroupDefinition`, `PrismBackdropDefinition`
 
+## Examples
+
+```csharp
+PrismLayerDefinition layer = new(
+    new PrismNodeId(1),
+    "Content",
+    styles: [new PrismStyleDefinition(PrismStyleId.DropShadow)],
+    sourceSpan: new PrismSourceSpan(24, 7, "Card.cui.xml"));
+```
+
 ## Remarks
 
 `Id` is the runtime identity used by dense instance state. `Name` is an optional Motion and diagnostics address; it never becomes an arbitrary image source.
+
+`SourceSpan` is immutable diagnostic metadata supplied to a concrete node constructor. It is deliberately excluded from semantic equality and hashing, so the same Prism definition authored at different source locations remains structurally equal.
 
 ## Properties
 
@@ -29,6 +41,7 @@ Derived types:
 | --- | --- | --- |
 | `Id` | `PrismNodeId` | Gets the stable numeric node identifier. |
 | `Name` | `string?` | Gets the optional addressable node name. |
+| `SourceSpan` | `PrismSourceSpan?` | Gets the optional authoring source location. |
 
 ## Methods
 
@@ -41,3 +54,8 @@ Derived types:
 ## Applies to
 
 Immutable Prism composition trees.
+
+## See also
+
+- `Cerneala.UI.Prism.Definitions.PrismSourceSpan`
+- `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition`

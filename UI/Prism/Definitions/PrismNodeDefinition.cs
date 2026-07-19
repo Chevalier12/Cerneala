@@ -4,15 +4,21 @@ namespace Cerneala.UI.Prism.Definitions;
 
 public abstract class PrismNodeDefinition : IEquatable<PrismNodeDefinition>
 {
-    protected PrismNodeDefinition(PrismNodeId id, string? name)
+    protected PrismNodeDefinition(
+        PrismNodeId id,
+        string? name,
+        PrismSourceSpan? sourceSpan)
     {
         Id = id;
         Name = PrismDefinitionValidation.ValidateOptionalName(name, nameof(name));
+        SourceSpan = sourceSpan;
     }
 
     public PrismNodeId Id { get; }
 
     public string? Name { get; }
+
+    public PrismSourceSpan? SourceSpan { get; }
 
     public abstract bool Equals(PrismNodeDefinition? other);
 
