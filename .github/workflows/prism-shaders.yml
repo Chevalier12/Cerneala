@@ -1,0 +1,51 @@
+name: Prism Shader Build
+
+on:
+  push:
+    paths:
+      - ".config/dotnet-tools.json"
+      - ".github/workflows/prism-shaders.yml"
+      - "Cerneala.csproj"
+      - "Drawing/MonoGame/Prism/**"
+      - "tests/Cerneala.WindowsDxSmoke/**"
+      - "tests/Cerneala.Tests/Drawing/MonoGame/**"
+  pull_request:
+    paths:
+      - ".config/dotnet-tools.json"
+      - ".github/workflows/prism-shaders.yml"
+      - "Cerneala.csproj"
+      - "Drawing/MonoGame/Prism/**"
+      - "tests/Cerneala.WindowsDxSmoke/**"
+      - "tests/Cerneala.Tests/Drawing/MonoGame/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windowsdx:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: |
+          dotnet tool restore
+          dotnet restore .\Cerneala.slnx
+
+      - name: Clean shader build
+        run: |
+          dotnet clean .\Cerneala.csproj -c Release --no-restore
+          dotnet build .\Cerneala.csproj -c Release --no-restore
+
+      - name: Verify embedded shader contract
+        run: dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj -c Release --no-restore --filter "FullyQualifiedName~PrismShaderResourcesTests"
+
+      - name: Verify WindowsDX shader
+        run: dotnet run --project .\tests\Cerneala.WindowsDxSmoke\Cerneala.WindowsDxSmoke.csproj -c Release --no-restore

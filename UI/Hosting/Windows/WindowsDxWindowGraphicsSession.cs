@@ -25,12 +25,11 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
     private readonly GraphicsDevice graphicsDevice;
     private readonly SpriteBatch spriteBatch;
     private readonly Texture2D whitePixel;
-    private readonly RasterizerState rasterizerState;
     private readonly MonoGameDrawingBackend drawingBackend;
     private readonly ImageResourceCache imageResourceCache;
     private PresentationParameters presentationParameters;
     private float coordinateScale;
-    private bool frameBegun;
+    private bool frameActive;
     private bool disposed;
 
     public WindowsDxWindowGraphicsSession(nint windowHandle, int pixelWidth, int pixelHeight, float coordinateScale)
@@ -48,7 +47,6 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
         GraphicsDevice? createdDevice = null;
         SpriteBatch? createdSpriteBatch = null;
         Texture2D? createdWhitePixel = null;
-        RasterizerState? createdRasterizerState = null;
         MonoGameDrawingBackend? createdBackend = null;
         ImageResourceCache? createdImageCache = null;
         try
@@ -58,7 +56,6 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             createdSpriteBatch = new SpriteBatch(createdDevice);
             createdWhitePixel = new Texture2D(createdDevice, 1, 1);
             createdWhitePixel.SetData([XnaColor.White]);
-            createdRasterizerState = MonoGameDrawingBackend.ScissorRasterizerState;
             createdBackend = new MonoGameDrawingBackend(createdSpriteBatch, createdWhitePixel, new SkiaTextRasterizer())
             {
                 CoordinateScale = coordinateScale
@@ -69,7 +66,6 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             graphicsDevice = createdDevice;
             spriteBatch = createdSpriteBatch;
             whitePixel = createdWhitePixel;
-            rasterizerState = createdRasterizerState;
             drawingBackend = createdBackend;
             imageResourceCache = createdImageCache;
         }
@@ -78,7 +74,6 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             createdImageCache?.Dispose();
             createdBackend?.Dispose();
             createdWhitePixel?.Dispose();
-            createdRasterizerState?.Dispose();
             createdSpriteBatch?.Dispose();
             createdDevice?.Dispose();
             throw CreateGraphicsException("create", windowHandle, pixelWidth, pixelHeight, exception);
@@ -110,17 +105,7 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             return;
         }
 
-        if (frameBegun)
-        {
-            try
-            {
-                spriteBatch.End();
-            }
-            finally
-            {
-                frameBegun = false;
-            }
-        }
+        frameActive = false;
 
         presentationParameters.BackBufferWidth = pixelWidth;
         presentationParameters.BackBufferHeight = pixelHeight;
@@ -137,27 +122,9 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
     public void BeginFrame(CernealaColor clearColor)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        if (frameBegun)
-        {
-            try
-            {
-                spriteBatch.End();
-            }
-            finally
-            {
-                frameBegun = false;
-            }
-        }
-
         graphicsDevice.Clear(new XnaColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A));
         drawingBackend.CoordinateScale = coordinateScale;
-        spriteBatch.Begin(
-            sortMode: SpriteSortMode.Immediate,
-            blendState: BlendState.AlphaBlend,
-            samplerState: SamplerState.LinearClamp,
-            depthStencilState: DepthStencilState.None,
-            rasterizerState: rasterizerState);
-        frameBegun = true;
+        frameActive = true;
     }
 
     public void Present()
@@ -165,18 +132,6 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
         ObjectDisposedException.ThrowIf(disposed, this);
         try
         {
-            if (frameBegun)
-            {
-                try
-                {
-                    spriteBatch.End();
-                }
-                finally
-                {
-                    frameBegun = false;
-                }
-            }
-
             graphicsDevice.Present();
         }
         catch (Exception exception)
@@ -187,6 +142,10 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
                 presentationParameters.BackBufferWidth,
                 presentationParameters.BackBufferHeight,
                 exception);
+        }
+        finally
+        {
+            frameActive = false;
         }
     }
 
@@ -200,14 +159,15 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             throw new ArgumentException("The screenshot stream must be writable.", nameof(output));
         }
 
-        if (frameBegun)
+        if (frameActive)
         {
             throw new InvalidOperationException("A screenshot cannot be rendered while an on-screen frame is active.");
         }
 
         int width = presentationParameters.BackBufferWidth;
         int height = presentationParameters.BackBufferHeight;
-        RenderTargetBinding[] previousTargets = graphicsDevice.GetRenderTargets();
+        MonoGameGraphicsDeviceStateSnapshot stateSnapshot = new();
+        stateSnapshot.Capture(graphicsDevice);
         using RenderTarget2D target = new(
             graphicsDevice,
             width,
@@ -216,54 +176,24 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             SurfaceFormat.Color,
             DepthFormat.None,
             0,
-            RenderTargetUsage.DiscardContents);
+            RenderTargetUsage.PreserveContents);
         using SpriteBatch captureSpriteBatch = new(graphicsDevice);
         using MonoGameDrawingBackend captureBackend = new(captureSpriteBatch, whitePixel, new SkiaTextRasterizer())
         {
             CoordinateScale = coordinateScale
         };
-        bool targetsRestored = false;
 
         try
         {
             graphicsDevice.SetRenderTarget(target);
             graphicsDevice.Clear(new XnaColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A));
-            captureSpriteBatch.Begin(
-                sortMode: SpriteSortMode.Immediate,
-                blendState: BlendState.AlphaBlend,
-                samplerState: SamplerState.LinearClamp,
-                depthStencilState: DepthStencilState.None,
-                rasterizerState: rasterizerState);
-            try
-            {
-                draw(captureBackend);
-            }
-            finally
-            {
-                captureSpriteBatch.End();
-            }
-
-            RestoreRenderTargets();
-            targetsRestored = true;
+            draw(captureBackend);
+            stateSnapshot.Restore(graphicsDevice);
             target.SaveAsPng(output, width, height);
         }
         finally
         {
-            if (!targetsRestored)
-            {
-                RestoreRenderTargets();
-            }
-        }
-
-        void RestoreRenderTargets()
-        {
-            if (previousTargets.Length == 0)
-            {
-                graphicsDevice.SetRenderTarget(null);
-                return;
-            }
-
-            graphicsDevice.SetRenderTargets(previousTargets);
+            stateSnapshot.Restore(graphicsDevice);
         }
     }
 
@@ -275,23 +205,9 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
         }
 
         Exception? failure = null;
-        if (frameBegun)
-        {
-            try
-            {
-                spriteBatch.End();
-            }
-            catch (Exception exception)
-            {
-                failure = exception;
-            }
-
-            frameBegun = false;
-        }
-
+        frameActive = false;
         DisposeResource(imageResourceCache, ref failure);
         DisposeResource(drawingBackend, ref failure);
-        DisposeResource(rasterizerState, ref failure);
         DisposeResource(whitePixel, ref failure);
         DisposeResource(spriteBatch, ref failure);
         DisposeResource(graphicsDevice, ref failure);

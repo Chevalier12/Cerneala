@@ -5,9 +5,12 @@ Generated from `.`.
 ```text
 ./
 |-- .agents/
+|-- .config/
+|   +-- dotnet-tools.json
 |-- .github/
 |   +-- workflows/
-|       +-- pages.yml
+|       |-- pages.yml
+|       +-- prism-shaders.yml
 |-- .superpowers/
 |   +-- brainstorm/
 |       +-- manual-1783588990/
@@ -1259,9 +1262,26 @@ Generated from `.`.
 |   +-- wpf-compendium.js
 |-- Drawing/
 |   |-- MonoGame/
+|   |   |-- Prism/
+|   |   |   |-- Execution/
+|   |   |   |   |-- IPrismCommandRenderer.cs
+|   |   |   |   |-- PrismExecutionDiagnostics.cs
+|   |   |   |   +-- PrismGraphExecutor.cs
+|   |   |   |-- Kernels/
+|   |   |   |   +-- PrismKernelRegistry.cs
+|   |   |   |-- Shaders/
+|   |   |   |   |-- CopyComposite.fx
+|   |   |   |   +-- PrismShaderResources.cs
+|   |   |   +-- Surfaces/
+|   |   |       |-- PrismRetainedSurface.cs
+|   |   |       |-- PrismSurfaceAllocationException.cs
+|   |   |       |-- PrismSurfaceFrame.cs
+|   |   |       |-- PrismSurfaceKey.cs
+|   |   |       +-- PrismSurfacePool.cs
 |   |   |-- MonoGameClipStack.cs
 |   |   |-- MonoGameDrawingBackend.cs
 |   |   |-- MonoGameDrawMapper.cs
+|   |   |-- MonoGameGraphicsDeviceStateSnapshot.cs
 |   |   |-- MonoGameImage.cs
 |   |   +-- MonoGamePathMeshBuilder.cs
 |   |-- Paths/
@@ -1414,7 +1434,11 @@ Generated from `.`.
 |   |   |   |   |-- BrushRenderingTests.cs
 |   |   |   |   |-- MonoGameClipStackTests.cs
 |   |   |   |   |-- MonoGameDrawingBackendStateTests.cs
-|   |   |   |   +-- MonoGameDrawMapperTests.cs
+|   |   |   |   |-- MonoGameDrawMapperTests.cs
+|   |   |   |   |-- PrismGraphExecutorTests.cs
+|   |   |   |   |-- PrismShaderResourcesTests.cs
+|   |   |   |   |-- PrismSurfacePoolTests.cs
+|   |   |   |   +-- PrismWindowsDxConformanceTests.cs
 |   |   |   |-- Paths/
 |   |   |   |   +-- SvgPathFlattenerTests.cs
 |   |   |   |-- Prism/
@@ -1429,6 +1453,16 @@ Generated from `.`.
 |   |   |   |-- DrawingContextTests.cs
 |   |   |   |-- DrawingResourceTests.cs
 |   |   |   +-- TextPipelineTests.cs
+|   |   |-- Golden/
+|   |   |   +-- Prism/
+|   |   |       |-- clip.png
+|   |   |       |-- conformance.json
+|   |   |       |-- fill.png
+|   |   |       |-- mask.png
+|   |   |       |-- nested-prism.png
+|   |   |       |-- normal-blend.png
+|   |   |       |-- opacity.png
+|   |   |       +-- transform.png
 |   |   |-- Input/
 |   |   |   |-- ActionCommandTests.cs
 |   |   |   |-- ClickTrackerTests.cs

@@ -4,6 +4,8 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PrismShaderToolManifest>$(MSBuildProjectDirectory)\.config\dotnet-tools.json</PrismShaderToolManifest>
+    <PrismShaderOutputDirectory>$(MSBuildProjectExtensionsPath)$(Configuration)\$(TargetFramework)\prism-shaders\</PrismShaderOutputDirectory>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,5 +45,48 @@
     <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**;Cerneala.SourceGen\**;CernealaPresentation\**;docs\**;Playground\**;Tools\**;tests\**" />
     <AdditionalFiles Include="Cerneala.SourceGen\Prism\Catalog\prism-catalog.json" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PrismShaderSource Include="Drawing\MonoGame\Prism\Shaders\*.fx" />
+    <PrismShaderOutput Include="@(PrismShaderSource->'$(PrismShaderOutputDirectory)%(Filename).mgfxo')" />
+    <EmbeddedResource Include="@(PrismShaderOutput)">
+      <LogicalName>Cerneala.Drawing.MonoGame.Prism.Shaders.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <FileWrites Include="@(PrismShaderOutput)" />
+  </ItemGroup>
+
+  <Target
+    Name="RestorePrismShaderCompiler"
+    Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec
+      Command="dotnet tool restore --tool-manifest &quot;$(PrismShaderToolManifest)&quot;"
+      WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
+  <Target
+    Name="CompilePrismShaders"
+    BeforeTargets="PrepareForBuild"
+    DependsOnTargets="RestorePrismShaderCompiler"
+    Inputs="@(PrismShaderSource);$(PrismShaderToolManifest)"
+    Outputs="@(PrismShaderOutput)"
+    Condition="'$(DesignTimeBuild)' != 'true'">
+    <Error
+      Condition="'@(PrismShaderSource)' == ''"
+      Text="No versioned Prism shader sources were found." />
+    <MakeDir Directories="$(PrismShaderOutputDirectory)" />
+    <Exec
+      Command="dotnet tool run mgfxc &quot;%(PrismShaderSource.FullPath)&quot; &quot;$(PrismShaderOutputDirectory)%(PrismShaderSource.Filename).mgfxo&quot; /Profile:DirectX_11"
+      WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
+  <Target
+    Name="VerifyPrismShaderArtifacts"
+    BeforeTargets="PrepareResources"
+    DependsOnTargets="CompilePrismShaders"
+    Condition="'$(DesignTimeBuild)' != 'true'">
+    <Error
+      Condition="!Exists('%(PrismShaderOutput.FullPath)')"
+      Text="Prism shader artifact '%(PrismShaderOutput.FullPath)' is missing or stale." />
+  </Target>
 
 </Project>

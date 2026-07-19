@@ -25,8 +25,8 @@ Implements:
 
 ## Examples
 
-The backend is expected to render inside a `SpriteBatch.Begin`/`End` pair. Use
-`ScissorRasterizerState` when command lists can contain clip commands.
+`Render` owns its complete `SpriteBatch.Begin`/`End` pair. Do not begin the
+supplied sprite batch before calling it.
 
 ```csharp
 using Cerneala.Drawing;
@@ -36,7 +36,7 @@ using Microsoft.Xna.Framework.Graphics;
 using CernealaColor = Cerneala.Drawing.Color;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-Texture2D whitePixel = new(graphicsDevice, 1, 1);
+using Texture2D whitePixel = new(graphicsDevice, 1, 1);
 whitePixel.SetData(new[] { XnaColor.White });
 
 using SpriteBatch spriteBatch = new(graphicsDevice);
@@ -51,18 +51,7 @@ commands.Add(DrawCommand.PopClip());
 DrawingFrameContext frameContext = new(
     new PrismFrameAnalyzer().Analyze(commands));
 
-spriteBatch.Begin(
-    sortMode: SpriteSortMode.Immediate,
-    rasterizerState: MonoGameDrawingBackend.ScissorRasterizerState);
-
-try
-{
-    backend.Render(commands, in frameContext);
-}
-finally
-{
-    spriteBatch.End();
-}
+backend.Render(commands, in frameContext);
 ```
 
 ## Remarks
@@ -71,18 +60,42 @@ finally
 operations. It supports filled and stroked rectangles, filled and stroked
 ellipses, lines, filled SVG paths, images, text, and push/pop clip commands.
 
-The backend treats the submitted command list as read-only while rendering. It
-does not call `SpriteBatch.Begin` or `SpriteBatch.End`; callers own the
-surrounding MonoGame batch lifetime.
+The backend treats the submitted command list as read-only while rendering and
+owns the top-level `SpriteBatch.Begin`/`End` pair for every `Render` call. The
+sprite batch must not already be active when `Render` starts.
+
+The constructor borrows `SpriteBatch`, `whitePixel`, and their
+`GraphicsDevice`. They must be alive, and the texture and sprite batch must
+belong to the same device. Disposing the backend releases only backend-owned
+states, effects, and cached GPU resources; it does not dispose the borrowed
+sprite batch, texture, or graphics device.
 
 `Render` first validates the supplied `DrawingFrameContext` against the command
-list. The current fallback path ignores `BeginPrism` and `EndPrism` delimiters
-while continuing to render their interior commands, so non-Prism output remains
-unchanged until Prism graph composition is handled by the compositor.
+list. A frame without analyzed Prism scopes follows the direct command path. A
+frame with Prism scopes builds and optimizes the backend-neutral graph, captures
+each scope once, executes the fundamental copy, normal-composite, mask, clip,
+opacity, fill, color-conversion, and present passes on transient render targets,
+then composites the result into the incoming host target.
+
+The Prism executor uses build-embedded shader bytes and does not compile effects
+at runtime or use the application's `ContentManager`. Missing non-fundamental
+filter and style kernels follow the explicit Prism fallback policy. If the
+fundamental shader resource cannot be loaded, the backend renders the raw
+commands between the Prism delimiters instead of silently substituting another
+effect. Transient Prism surfaces are evicted on device reset and backend
+disposal.
+
+When Prism renders into an offscreen host target, that target must use
+`RenderTargetUsage.PreserveContents` if pixels written before `Render` must
+survive the compositor's target switches. The WindowsDX `RenderPng` path
+configures its capture target this way.
 
 Clipping uses `GraphicsDevice.ScissorRectangle`. During `Render`, the backend
-creates a clip stack from the current viewport, applies clip commands, and
-restores the previous scissor rectangle in a `finally` block.
+creates a clip stack from the current viewport and applies clip commands. In a
+`finally` block, including when preparation or a command throws, it ends its
+sprite batch and restores the incoming render targets, viewport, scissor
+rectangle, blend state and blend factor, depth/stencil state, rasterizer state,
+sampler slot 0, texture slot 0, and index buffer.
 
 `CoordinateScale` converts logical coordinates into physical MonoGame
 coordinates. Rectangles, vectors, line thickness, and text size are mapped
@@ -121,21 +134,21 @@ throws `InvalidOperationException`.
 
 | Name | Description |
 | --- | --- |
-| `MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer = null)` | Initializes a backend that draws through `spriteBatch`, uses `whitePixel` for primitive shapes and lines, and optionally rasterizes text with `textRasterizer`. Throws `ArgumentNullException` when `spriteBatch` or `whitePixel` is `null`. |
+| `MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer = null)` | Initializes a backend that borrows `spriteBatch`, its graphics device, and `whitePixel`, and optionally rasterizes text with `textRasterizer`. The resources remain caller-owned and must use the same graphics device. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `CoordinateScale` | `float` | Gets or sets the logical-to-physical coordinate scale used by the backend. The default is `1`. The setter validates the value with `UiCoordinateMapper.ValidateScale`. |
-| `ScissorRasterizerState` | `RasterizerState` | Gets a rasterizer state with `ScissorTestEnable` set to `true`, intended for `SpriteBatch.Begin` calls that render clipped command lists. |
+| `ScissorRasterizerState` | `RasterizerState` | Creates a caller-owned rasterizer state with `ScissorTestEnable` set to `true`. `Render` uses its own internal state, so callers do not need this property for backend rendering. |
 
 ## Methods
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Render(DrawCommandList commands, in DrawingFrameContext frameContext)` | `void` | Validates the current frame context, then renders each supported command in `commands`. |
-| `Dispose()` | `void` | Disposes cached text textures, clears the text texture cache, and marks the backend as disposed. Calling it more than once is allowed. |
+| `Render(DrawCommandList commands, in DrawingFrameContext frameContext)` | `void` | Validates the current frame context, owns the sprite batch for the call, executes direct or Prism-composited drawing, and restores the documented incoming graphics-device state. |
+| `Dispose()` | `void` | Disposes backend-owned states, effects, and caches without disposing the borrowed sprite batch, white-pixel texture, or graphics device. Calling it more than once is allowed. |
 
 ## Supported Draw Commands
 
@@ -151,17 +164,20 @@ throws `InvalidOperationException`.
 | `DrawText` | Reuses cached glyph masks, then applies a solid, gradient, image, drawing, or visual brush at the mapped text position. |
 | `PushClip` | Pushes the mapped rectangle onto the clip stack and assigns the intersected clip to `GraphicsDevice.ScissorRectangle`. |
 | `PopClip` | Pops the clip stack and assigns the resulting clip to `GraphicsDevice.ScissorRectangle`. |
-| `BeginPrism`, `EndPrism` | Ignores the Prism delimiters in the fallback path while preserving and rendering commands between them. |
+| `BeginPrism`, `EndPrism` | Delimits analyzed Prism scopes. The compositor captures their interior commands and executes the optimized graph; shader-unavailable fallback preserves the raw interior commands. |
 
 ## Exceptions
 
 | Member | Exception | Condition |
 | --- | --- | --- |
 | Constructor | `ArgumentNullException` | `spriteBatch` or `whitePixel` is `null`. |
+| Constructor | `ObjectDisposedException` | `spriteBatch`, `whitePixel`, or their graphics device is disposed. |
+| Constructor | `ArgumentException` | `whitePixel` belongs to a different graphics device than `spriteBatch`. |
 | `CoordinateScale` | `ArgumentOutOfRangeException` | The assigned scale is not finite or is less than or equal to zero. |
 | `Render` | `ArgumentNullException` | `commands` is `null`. |
 | `Render` | `InvalidOperationException` | `frameContext` is uninitialized or its analysis does not match the command list and current Prism scope versions. |
 | `Render` | `ObjectDisposedException` | The backend has already been disposed. |
+| `Render` | `InvalidOperationException` | The sprite batch is already active or does not have a graphics device. |
 | `Render` | `InvalidOperationException` | A command kind is unsupported, or a `DrawImage` command contains an image that is not `MonoGameImage`. |
 | `Render` | `NotSupportedException` | A `FillPath` command uses a non-solid brush. |
 

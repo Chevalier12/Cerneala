@@ -63,6 +63,48 @@ public sealed class MonoGameContentServicesLifetimeTests
         Assert.NotNull(secondRoot.ImageResourceCache);
     }
 
+    [Fact]
+    public void MonoGameUiHostsCanBeCreatedAndDisposedSequentially()
+    {
+        DisposableTestImage firstImage = new(16, 8);
+        MonoGameUiHost firstHost = CreateHostWithResolvedImage(firstImage);
+        firstHost.Dispose();
+
+        DisposableTestImage secondImage = new(32, 16);
+        MonoGameUiHost secondHost = CreateHostWithResolvedImage(secondImage);
+        secondHost.Dispose();
+
+        Assert.Equal(1, firstImage.DisposeCount);
+        Assert.Equal(1, secondImage.DisposeCount);
+    }
+
+    [Fact]
+    public void MonoGameUiHostRejectsNullGraphicsResources()
+    {
+        MonoGameUiHostOptions missingSpriteBatch = new()
+        {
+            SpriteBatch = null!,
+            WhitePixel = CreateUninitialized<Texture2D>()
+        };
+        MonoGameUiHostOptions missingWhitePixel = new()
+        {
+            SpriteBatch = CreateUninitialized<SpriteBatch>(),
+            WhitePixel = null!
+        };
+
+        Assert.Throws<ArgumentNullException>(() => new MonoGameUiHost(missingSpriteBatch));
+        Assert.Throws<ArgumentNullException>(() => new MonoGameUiHost(missingWhitePixel));
+    }
+
+    private static MonoGameUiHost CreateHostWithResolvedImage(DisposableTestImage image)
+    {
+        RecordingImageLoader loader = new();
+        loader.SetImage("logo.png", image);
+        MonoGameContentServices services = CreateContentServices(loader);
+        GetRequiredImageCache(services).Resolve(new ImageResource("logo.png"));
+        return CreateHostWithoutGpu(new UIRoot(), services);
+    }
+
     private static MonoGameUiHost CreateHostWithoutGpu(UIRoot root, MonoGameContentServices services)
     {
         return new MonoGameUiHost(new MonoGameUiHostOptions

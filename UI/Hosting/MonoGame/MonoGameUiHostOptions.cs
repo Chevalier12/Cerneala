@@ -1,4 +1,5 @@
 using Cerneala.Drawing.Text;
+using Cerneala.Drawing.MonoGame;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input.MonoGame;
 using Cerneala.UI.Platform;
@@ -28,4 +29,14 @@ public sealed class MonoGameUiHostOptions
     public SkiaTextRasterizer? TextRasterizer { get; init; }
 
     public IPlatformServices? PlatformServices { get; init; }
+
+    internal void Validate()
+    {
+        ArgumentNullException.ThrowIfNull(SpriteBatch);
+        ArgumentNullException.ThrowIfNull(WhitePixel);
+        MonoGameDrawingBackend.ValidateGraphicsResources(
+            SpriteBatch,
+            WhitePixel,
+            nameof(WhitePixel));
+    }
 }

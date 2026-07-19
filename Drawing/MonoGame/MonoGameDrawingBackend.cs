@@ -1,6 +1,10 @@
 using System.Buffers;
 using System.Diagnostics;
+using Cerneala.Drawing.MonoGame.Prism.Execution;
+using Cerneala.Drawing.MonoGame.Prism.Kernels;
 using Cerneala.Drawing.Text;
+using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Hosting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -9,7 +13,11 @@ using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.Drawing.MonoGame;
 
-public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFrameTimingSource, IDisposable
+public sealed class MonoGameDrawingBackend :
+    IDrawingBackend,
+    IDrawingBackendFrameTimingSource,
+    IPrismCommandRenderer,
+    IDisposable
 {
     private const int TextSubpixelPhaseCount = 8;
     private const int DefaultMaximumTextTextureEntries = 2_048;
@@ -31,7 +39,13 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
     private readonly HashSet<IDrawBrush> activeBrushes = new(ReferenceEqualityComparer.Instance);
     private readonly Texture2D _whitePixel;
     private readonly SkiaTextRasterizer? _textRasterizer;
+    private readonly RasterizerState? scissorRasterizerState;
+    private readonly MonoGameGraphicsDeviceStateSnapshot? deviceStateSnapshot;
+    private readonly PrismGraphBuilder prismGraphBuilder = new();
+    private readonly PrismGraphOptimizer prismGraphOptimizer = new();
+    private readonly PrismExecutionDiagnostics prismDiagnostics = new();
     private BasicEffect? pathEffect;
+    private PrismGraphExecutor? prismExecutor;
     private RasterizerState? pathRasterizerState;
     private readonly BlendState redTextBlendState;
     private readonly BlendState greenTextBlendState;
@@ -51,12 +65,16 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
     private TimeSpan lastTextAtlasUploadTime;
     private int lastTextRequestCount;
     private long lastRasterizedPixelCount;
+    private bool spriteBatchBegun;
 
     public MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer = null)
     {
         _spriteBatch = spriteBatch ?? throw new ArgumentNullException(nameof(spriteBatch));
         _whitePixel = whitePixel ?? throw new ArgumentNullException(nameof(whitePixel));
+        ValidateGraphicsResources(_spriteBatch, _whitePixel, nameof(whitePixel));
         _textRasterizer = textRasterizer;
+        scissorRasterizerState = ScissorRasterizerState;
+        deviceStateSnapshot = new MonoGameGraphicsDeviceStateSnapshot();
         redTextBlendState = CreateTextBlendState(ColorWriteChannels.Red);
         greenTextBlendState = CreateTextBlendState(ColorWriteChannels.Green);
         blueTextBlendState = CreateTextBlendState(ColorWriteChannels.Blue);
@@ -93,53 +111,158 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         ObjectDisposedException.ThrowIf(disposed, this);
         frameContext.EnsureCurrent(commands);
 
-        GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
-        Rectangle previousScissor = graphicsDevice.ScissorRectangle;
-        Rectangle viewportClip = new(0, 0, graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height);
-        graphicsDevice.ScissorRectangle = viewportClip;
-        clipStack = new MonoGameClipStack(viewportClip);
-        activeTextTextureKeys.Clear();
-        lastTextRequestCollectionTime = TimeSpan.Zero;
-        lastTextRasterizationTime = TimeSpan.Zero;
-        lastTextAtlasUploadTime = TimeSpan.Zero;
-        lastTextRequestCount = 0;
-        lastRasterizedPixelCount = 0;
-        long preparationStarted = Stopwatch.GetTimestamp();
-        PrepareTextRasterizations(commands);
-        TimeSpan preparationTime = Stopwatch.GetElapsedTime(preparationStarted);
-        long commandRenderingStarted = Stopwatch.GetTimestamp();
+        GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice ??
+            throw new InvalidOperationException("The SpriteBatch does not have a GraphicsDevice.");
+        MonoGameGraphicsDeviceStateSnapshot stateSnapshot = deviceStateSnapshot ??
+            throw new InvalidOperationException("The backend graphics state snapshot is unavailable.");
+        stateSnapshot.Capture(graphicsDevice);
+        TimeSpan preparationTime = TimeSpan.Zero;
+        TimeSpan commandRenderingTime = TimeSpan.Zero;
+        long commandRenderingStarted = 0;
+        bool commandRenderingStartedValid = false;
 
         try
         {
-            for (int index = 0; index < commands.Count; index++)
+            Viewport viewport = graphicsDevice.Viewport;
+            Rectangle viewportClip = new(viewport.X, viewport.Y, viewport.Width, viewport.Height);
+            graphicsDevice.ScissorRectangle = viewportClip;
+            clipStack = new MonoGameClipStack(viewportClip);
+            activeTextTextureKeys.Clear();
+            lastTextRequestCollectionTime = TimeSpan.Zero;
+            lastTextRasterizationTime = TimeSpan.Zero;
+            lastTextAtlasUploadTime = TimeSpan.Zero;
+            lastTextRequestCount = 0;
+            lastRasterizedPixelCount = 0;
+
+            long preparationStarted = Stopwatch.GetTimestamp();
+            PrepareTextRasterizations(commands);
+            preparationTime = Stopwatch.GetElapsedTime(preparationStarted);
+
+            prismDiagnostics.BeginFrame();
+            BeginSpriteBatch(
+                SpriteSortMode.Immediate,
+                BlendState.AlphaBlend,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                scissorRasterizerState!);
+            commandRenderingStarted = Stopwatch.GetTimestamp();
+            commandRenderingStartedValid = true;
+            if (frameContext.PrismAnalysis.Scopes.IsEmpty)
             {
-                RenderCommand(commands[index]);
+                for (int index = 0; index < commands.Count; index++)
+                {
+                    RenderCommand(commands[index]);
+                }
             }
+            else
+            {
+                PrismGraph graph =
+                    prismGraphBuilder.Build(frameContext.PrismAnalysis);
+                PrismGraphExecutionPlan executionPlan =
+                    prismGraphOptimizer.Optimize(graph);
+                if (TryEnsurePrismExecutor(graphicsDevice))
+                {
+                    prismExecutor!.Execute(
+                        commands,
+                        frameContext.PrismAnalysis,
+                        executionPlan,
+                        this,
+                        viewport,
+                        frameContext.BackdropLease);
+                }
+                else
+                {
+                    for (int index = 0; index < commands.Count; index++)
+                    {
+                        RenderCommand(commands[index]);
+                    }
+                }
+            }
+
+            commandRenderingTime = Stopwatch.GetElapsedTime(commandRenderingStarted);
+            commandRenderingStartedValid = false;
         }
         finally
         {
-            TimeSpan commandRenderingTime = Stopwatch.GetElapsedTime(commandRenderingStarted);
-            long cleanupStarted = Stopwatch.GetTimestamp();
-            clipStack.Reset();
-            graphicsDevice.ScissorRectangle = previousScissor;
-            foreach (RasterizedText[] layers in preparedTextRasterizations.Values)
+            if (commandRenderingStartedValid)
             {
-                ReturnRasterizedTextPixels(layers);
+                commandRenderingTime = Stopwatch.GetElapsedTime(commandRenderingStarted);
             }
-            preparedTextRasterizations.Clear();
-            preparedTextTextureKeys.Clear();
-            CompleteTextTextureFrame(
-                DefaultMaximumTextTextureEntries,
-                DefaultMaximumTextTextureBytes);
-            LastFrameTiming = new DrawingBackendFrameTiming(
-                preparationTime,
-                lastTextRequestCollectionTime,
-                lastTextRasterizationTime,
-                lastTextAtlasUploadTime,
-                commandRenderingTime,
-                Stopwatch.GetElapsedTime(cleanupStarted),
-                lastTextRequestCount,
-                lastRasterizedPixelCount);
+
+            try
+            {
+                try
+                {
+                    EndSpriteBatch();
+                }
+                finally
+                {
+                    long cleanupStarted = Stopwatch.GetTimestamp();
+                    clipStack?.Reset();
+                    foreach (RasterizedText[] layers in preparedTextRasterizations.Values)
+                    {
+                        ReturnRasterizedTextPixels(layers);
+                    }
+                    preparedTextRasterizations.Clear();
+                    preparedTextTextureKeys.Clear();
+                    CompleteTextTextureFrame(
+                        DefaultMaximumTextTextureEntries,
+                        DefaultMaximumTextTextureBytes);
+                    LastFrameTiming = new DrawingBackendFrameTiming(
+                        preparationTime,
+                        lastTextRequestCollectionTime,
+                        lastTextRasterizationTime,
+                        lastTextAtlasUploadTime,
+                        commandRenderingTime,
+                        Stopwatch.GetElapsedTime(cleanupStarted),
+                        lastTextRequestCount,
+                        lastRasterizedPixelCount);
+                }
+            }
+            finally
+            {
+                stateSnapshot.Restore(graphicsDevice);
+            }
+        }
+    }
+
+    private void BeginSpriteBatch(
+        SpriteSortMode sortMode,
+        BlendState blendState,
+        SamplerState samplerState,
+        DepthStencilState depthStencilState,
+        RasterizerState rasterizerState,
+        Effect? effect = null)
+    {
+        if (spriteBatchBegun)
+        {
+            throw new InvalidOperationException("The backend SpriteBatch is already active.");
+        }
+
+        _spriteBatch.Begin(
+            sortMode,
+            blendState,
+            samplerState,
+            depthStencilState,
+            rasterizerState,
+            effect);
+        spriteBatchBegun = true;
+    }
+
+    private void EndSpriteBatch()
+    {
+        if (!spriteBatchBegun)
+        {
+            return;
+        }
+
+        try
+        {
+            _spriteBatch.End();
+        }
+        finally
+        {
+            spriteBatchBegun = false;
         }
     }
 
@@ -544,7 +667,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         DepthStencilState previousDepth = device.DepthStencilState;
         RasterizerState previousRasterizer = device.RasterizerState;
 
-        _spriteBatch.End();
+        EndSpriteBatch();
         try
         {
             device.BlendState = BlendState.AlphaBlend;
@@ -575,7 +698,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         }
         finally
         {
-            _spriteBatch.Begin(
+            BeginSpriteBatch(
                 SpriteSortMode.Immediate,
                 previousBlend,
                 previousSampler,
@@ -1142,20 +1265,32 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         RenderTarget2D target = new(device, mask.Width, mask.Height, false, SurfaceFormat.Color, DepthFormat.None);
         DrawRect localBounds = new(0, 0, target.Width / coordinateScale, target.Height / coordinateScale);
 
-        _spriteBatch.End();
+        EndSpriteBatch();
         try
         {
             device.SetRenderTarget(target);
             device.Clear(XnaColor.Transparent);
             device.ScissorRectangle = new Rectangle(0, 0, target.Width, target.Height);
             clipStack = new MonoGameClipStack(device.ScissorRectangle);
-            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, previousSampler, DepthStencilState.None, previousRasterizer);
-            FillRectangle(localBounds, brush, commandOpacity);
-            _spriteBatch.End();
+            BeginSpriteBatch(SpriteSortMode.Immediate, BlendState.AlphaBlend, previousSampler, DepthStencilState.None, previousRasterizer);
+            try
+            {
+                FillRectangle(localBounds, brush, commandOpacity);
+            }
+            finally
+            {
+                EndSpriteBatch();
+            }
 
-            _spriteBatch.Begin(SpriteSortMode.Immediate, textMaskBlendState, SamplerState.PointClamp, DepthStencilState.None, previousRasterizer);
-            _spriteBatch.Draw(mask, Vector2.Zero, XnaColor.White);
-            _spriteBatch.End();
+            BeginSpriteBatch(SpriteSortMode.Immediate, textMaskBlendState, SamplerState.PointClamp, DepthStencilState.None, previousRasterizer);
+            try
+            {
+                _spriteBatch.Draw(mask, Vector2.Zero, XnaColor.White);
+            }
+            finally
+            {
+                EndSpriteBatch();
+            }
         }
         catch
         {
@@ -1164,6 +1299,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         }
         finally
         {
+            EndSpriteBatch();
             if (previousTargets.Length == 0)
             {
                 device.SetRenderTarget(null);
@@ -1175,7 +1311,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
 
             device.ScissorRectangle = previousScissor;
             clipStack = previousClipStack;
-            _spriteBatch.Begin(SpriteSortMode.Immediate, previousBlend, previousSampler, previousDepth, previousRasterizer);
+            BeginSpriteBatch(SpriteSortMode.Immediate, previousBlend, previousSampler, previousDepth, previousRasterizer);
         }
 
         textBrushTextureCache.Add(key, target);
@@ -1424,14 +1560,14 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         MonoGameClipStack? previousClipStack = clipStack;
         RenderTarget2D target = new(device, key.Width, key.Height, false, SurfaceFormat.Color, DepthFormat.None);
 
-        _spriteBatch.End();
+        EndSpriteBatch();
         try
         {
             device.SetRenderTarget(target);
             device.Clear(XnaColor.Transparent);
             device.ScissorRectangle = new Rectangle(0, 0, target.Width, target.Height);
             clipStack = new MonoGameClipStack(device.ScissorRectangle);
-            _spriteBatch.Begin(
+            BeginSpriteBatch(
                 SpriteSortMode.Immediate,
                 BlendState.AlphaBlend,
                 SamplerState.LinearClamp,
@@ -1446,7 +1582,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
             }
             finally
             {
-                _spriteBatch.End();
+                EndSpriteBatch();
             }
         }
         catch
@@ -1456,6 +1592,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         }
         finally
         {
+            EndSpriteBatch();
             if (previousTargets.Length == 0)
             {
                 device.SetRenderTarget(null);
@@ -1467,7 +1604,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
 
             device.ScissorRectangle = previousScissor;
             clipStack = previousClipStack;
-            _spriteBatch.Begin(
+            BeginSpriteBatch(
                 SpriteSortMode.Immediate,
                 previousBlend,
                 previousSampler,
@@ -1775,6 +1912,7 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         ClearTextTextureCaches();
         ClearBrushTextureCache();
         ClearPathMeshCache();
+        prismExecutor?.Dispose();
         if (_spriteBatch?.GraphicsDevice is GraphicsDevice graphicsDevice)
         {
             graphicsDevice.DeviceReset -= OnDeviceReset;
@@ -1785,7 +1923,33 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
         textMaskBlendState?.Dispose();
         pathEffect?.Dispose();
         pathRasterizerState?.Dispose();
+        scissorRasterizerState?.Dispose();
         disposed = true;
+    }
+
+    internal static void ValidateGraphicsResources(
+        SpriteBatch spriteBatch,
+        Texture2D whitePixel,
+        string whitePixelParameterName)
+    {
+        ObjectDisposedException.ThrowIf(spriteBatch.IsDisposed, spriteBatch);
+        ObjectDisposedException.ThrowIf(whitePixel.IsDisposed, whitePixel);
+
+        GraphicsDevice? spriteBatchDevice = spriteBatch.GraphicsDevice;
+        GraphicsDevice? whitePixelDevice = whitePixel.GraphicsDevice;
+        if (spriteBatchDevice is not null)
+        {
+            ObjectDisposedException.ThrowIf(spriteBatchDevice.IsDisposed, spriteBatchDevice);
+        }
+
+        if (spriteBatchDevice is not null &&
+            whitePixelDevice is not null &&
+            !ReferenceEquals(spriteBatchDevice, whitePixelDevice))
+        {
+            throw new ArgumentException(
+                "WhitePixel must belong to the same GraphicsDevice as SpriteBatch.",
+                whitePixelParameterName);
+        }
     }
 
     internal int ClipStackDepth => clipStack?.Depth ?? 0;
@@ -1805,11 +1969,97 @@ public sealed class MonoGameDrawingBackend : IDrawingBackend, IDrawingBackendFra
 
     internal int BrushTextureCacheCount => brushTextureCache?.Count ?? 0;
 
+    internal PrismExecutionDiagnostics PrismDiagnostics =>
+        prismDiagnostics;
+
     private void OnDeviceReset(object? sender, EventArgs args)
     {
         ClearTextTextureCaches();
         ClearBrushTextureCache();
         ClearPathMeshCache();
+        prismExecutor?.Reset();
+    }
+
+    private bool TryEnsurePrismExecutor(GraphicsDevice graphicsDevice)
+    {
+        if (prismExecutor is not null)
+        {
+            return true;
+        }
+
+        try
+        {
+            prismExecutor = new PrismGraphExecutor(
+                graphicsDevice,
+                prismDiagnostics);
+            return true;
+        }
+        catch (PrismShaderUnavailableException exception)
+        {
+            prismDiagnostics.Record(
+                null,
+                -1,
+                PrismFallbackReason.ShaderUnavailable,
+                exception.Message);
+            return false;
+        }
+    }
+
+    GraphicsDevice IPrismCommandRenderer.GraphicsDevice =>
+        _spriteBatch.GraphicsDevice;
+
+    void IPrismCommandRenderer.BeginCommandBatch()
+    {
+        BeginSpriteBatch(
+            SpriteSortMode.Immediate,
+            BlendState.AlphaBlend,
+            SamplerState.LinearClamp,
+            DepthStencilState.None,
+            scissorRasterizerState!);
+    }
+
+    void IPrismCommandRenderer.BeginKernelBatch(
+        Effect effect,
+        BlendState blendState)
+    {
+        BeginSpriteBatch(
+            SpriteSortMode.Immediate,
+            blendState,
+            SamplerState.LinearClamp,
+            DepthStencilState.None,
+            RasterizerState.CullNone,
+            effect);
+    }
+
+    void IPrismCommandRenderer.EndBatch()
+    {
+        EndSpriteBatch();
+    }
+
+    void IPrismCommandRenderer.RenderCommand(DrawCommand command)
+    {
+        RenderCommand(command);
+    }
+
+    void IPrismCommandRenderer.DrawFullscreen(
+        Texture2D texture,
+        Rectangle destination)
+    {
+        _spriteBatch.Draw(texture, destination, XnaColor.White);
+    }
+
+    void IPrismCommandRenderer.RestoreHostTarget()
+    {
+        GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
+        MonoGameGraphicsDeviceStateSnapshot snapshot =
+            deviceStateSnapshot ??
+            throw new InvalidOperationException(
+                "The backend graphics state snapshot is unavailable.");
+        snapshot.RestoreRenderTargetsAndViewport(graphicsDevice);
+        if (clipStack is not null)
+        {
+            graphicsDevice.ScissorRectangle = clipStack.CurrentClip;
+        }
     }
 
     private void ClearTextTextureCaches()

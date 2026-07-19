@@ -53,32 +53,26 @@ public sealed class MonoGameUiHostBoundaryTests
     }
 
     [Fact]
-    public void MonoGameUiHostDrawUsesTryFinallyAroundSpriteBatchEnd()
+    public void MonoGameUiHostDelegatesSpriteBatchOwnershipToDrawingBackend()
     {
         string source = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "UI", "Hosting", "MonoGame", "MonoGameUiHost.cs"));
 
-        Assert.Contains("spriteBatch.Begin", source, StringComparison.Ordinal);
-        Assert.Contains("try", source, StringComparison.Ordinal);
         Assert.Contains("host.Draw(drawingBackend);", source, StringComparison.Ordinal);
-        Assert.Contains("finally", source, StringComparison.Ordinal);
-        Assert.Contains("spriteBatch.End();", source, StringComparison.Ordinal);
-        Assert.True(
-            source.IndexOf("try", StringComparison.Ordinal) <
-            source.IndexOf("host.Draw(drawingBackend);", StringComparison.Ordinal));
-        Assert.True(
-            source.IndexOf("finally", StringComparison.Ordinal) <
-            source.IndexOf("spriteBatch.End();", StringComparison.Ordinal));
+        Assert.DoesNotContain("spriteBatch.Begin", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("spriteBatch.End", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("ScissorRasterizerState", source, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void MonoGameUiHostDrawUsesImmediateSpriteBatchModeForClipChanges()
+    public void MonoGameDrawingBackendOwnsImmediateBatchAndRestoresDeviceState()
     {
-        string source = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "UI", "Hosting", "MonoGame", "MonoGameUiHost.cs"));
+        string source = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "Drawing", "MonoGame", "MonoGameDrawingBackend.cs"));
 
-        Assert.Contains("sortMode: SpriteSortMode.Immediate", source, StringComparison.Ordinal);
-        Assert.Contains("rasterizerState = MonoGameDrawingBackend.ScissorRasterizerState", source, StringComparison.Ordinal);
-        Assert.Contains("rasterizerState: rasterizerState", source, StringComparison.Ordinal);
-        Assert.Contains("rasterizerState.Dispose();", source, StringComparison.Ordinal);
+        Assert.Contains("BeginSpriteBatch(", source, StringComparison.Ordinal);
+        Assert.Contains("SpriteSortMode.Immediate", source, StringComparison.Ordinal);
+        Assert.Contains("scissorRasterizerState", source, StringComparison.Ordinal);
+        Assert.Contains("finally", source, StringComparison.Ordinal);
+        Assert.Contains("stateSnapshot.Restore(graphicsDevice);", source, StringComparison.Ordinal);
     }
 
     private static string FindRepositoryRoot()

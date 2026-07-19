@@ -40,15 +40,22 @@ host.Draw();
 
 `Update(UiViewport, TimeSpan)` reads input through the configured input source after applying the viewport scale. `Update(InputFrame, UiViewport, TimeSpan)` lets callers supply an already constructed input frame. Both verify the root's Relay before pumping hosted windows and delegate the single root Relay drain to the core host update.
 
-`Draw` begins a `SpriteBatch` with `SpriteSortMode.Immediate` and `MonoGameDrawingBackend.ScissorRasterizerState`, delegates retained drawing to the core host, and always ends the sprite batch in a `finally` block.
+`Draw` delegates retained drawing to `MonoGameDrawingBackend`, which owns the
+top-level sprite batch and restores the documented incoming graphics-device
+state after success or failure. Callers must not begin the configured sprite
+batch around `Draw`.
 
-Disposal releases the drawing backend and content services once.
+The host borrows the configured `SpriteBatch`, white-pixel texture, and graphics
+device. It owns the drawing backend it creates and disposes that backend once,
+without disposing the borrowed graphics resources. The configured
+`ContentServices` instance is host-owned even when supplied by the caller and is
+disposed with the host.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `MonoGameUiHost(MonoGameUiHostOptions)` | Initializes the MonoGame UI host from sprite batch, content, root, viewport, input, clock, and platform options. |
+| `MonoGameUiHost(MonoGameUiHostOptions)` | Validates the graphics resources, then initializes the MonoGame UI host from sprite batch, content, root, viewport, input, clock, and platform options. |
 
 ## Properties
 
@@ -68,8 +75,16 @@ Disposal releases the drawing backend and content services once.
 | `Update(UiViewport, TimeSpan)` | Updates input scaling and advances the UI frame using the input source. |
 | `Update(InputFrame, UiViewport, TimeSpan)` | Advances the UI frame with an explicit input frame. |
 | `QueueTextInput(string)` | Queues text input into the MonoGame input source. |
-| `Draw()` | Draws the retained UI through the MonoGame drawing backend. |
-| `Dispose()` | Disposes drawing and content services once. |
+| `Draw()` | Draws the retained UI through the backend-owned sprite batch without requiring an external `Begin`/`End` pair. |
+| `Dispose()` | Disposes the owned drawing backend and content services once, but not the borrowed sprite batch, white-pixel texture, or graphics device. |
+
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| Constructor | `ArgumentNullException` | `options`, `SpriteBatch`, or `WhitePixel` is `null`. |
+| Constructor | `ObjectDisposedException` | A configured graphics resource or its graphics device is disposed. |
+| Constructor | `ArgumentException` | `WhitePixel` belongs to a different graphics device than `SpriteBatch`. |
 
 ## Applies to
 

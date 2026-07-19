@@ -13,9 +13,7 @@ namespace Cerneala.UI.Hosting.MonoGame;
 
 public sealed class MonoGameUiHost : IDisposable
 {
-    private readonly SpriteBatch spriteBatch;
     private readonly MonoGameDrawingBackend drawingBackend;
-    private readonly RasterizerState rasterizerState;
     private readonly MonoGameUiBackend backend;
     private readonly UiHost host;
     private bool disposed;
@@ -23,13 +21,13 @@ public sealed class MonoGameUiHost : IDisposable
     public MonoGameUiHost(MonoGameUiHostOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        spriteBatch = options.SpriteBatch ?? throw new ArgumentNullException(nameof(options.SpriteBatch));
+        options.Validate();
+        SpriteBatch spriteBatch = options.SpriteBatch;
         InputSource = options.InputSource ?? new MonoGameInputSource();
         ContentServices = options.ContentServices ?? new MonoGameContentServices(
             textRasterizer: options.TextRasterizer,
             imageLoader: options.ImageLoader ?? new MonoGameImageLoader(spriteBatch.GraphicsDevice));
         drawingBackend = new MonoGameDrawingBackend(spriteBatch, options.WhitePixel, ContentServices.TextRasterizer);
-        rasterizerState = MonoGameDrawingBackend.ScissorRasterizerState;
         backend = new MonoGameUiBackend(InputSource, drawingBackend);
         host = new UiHost(new UiHostOptions
         {
@@ -82,15 +80,7 @@ public sealed class MonoGameUiHost : IDisposable
     {
         RequireRelay().VerifyAccess();
         drawingBackend.CoordinateScale = host.Viewport.Scale;
-        spriteBatch.Begin(sortMode: SpriteSortMode.Immediate, rasterizerState: rasterizerState);
-        try
-        {
-            host.Draw(drawingBackend);
-        }
-        finally
-        {
-            spriteBatch.End();
-        }
+        host.Draw(drawingBackend);
     }
 
     public void Dispose()
@@ -101,7 +91,6 @@ public sealed class MonoGameUiHost : IDisposable
         }
 
         drawingBackend.Dispose();
-        rasterizerState.Dispose();
         ContentServices.Dispose();
         GeneratedWindowApplication.StopHosted();
         disposed = true;

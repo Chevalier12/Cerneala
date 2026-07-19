@@ -3,6 +3,10 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
+using Cerneala.Drawing.Prism.Graph;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Hosting;
+using Cerneala.UI.Hosting.Windows;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -11,6 +15,104 @@ namespace Cerneala.Tests.Drawing.MonoGame;
 public sealed class MonoGameDrawingBackendStateTests
 {
     private const BindingFlags NonPublicInstance = BindingFlags.Instance | BindingFlags.NonPublic;
+
+    [Fact]
+    public void RenderOwnsSpriteBatchAcrossConsecutiveFramesWithoutPrism()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        DrawCommandList commands = new();
+        Cerneala.Drawing.Color expected = new(42, 96, 173);
+        commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 96, 64), expected));
+
+        for (int frame = 0; frame < 2; frame++)
+        {
+            fixture.Session.GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.Black);
+            RenderBackend(fixture.Session.DrawingBackend, commands);
+            fixture.Session.Present();
+        }
+
+        PresentationParameters parameters = fixture.Session.GraphicsDevice.PresentationParameters;
+        Microsoft.Xna.Framework.Color[] pixels =
+            new Microsoft.Xna.Framework.Color[parameters.BackBufferWidth * parameters.BackBufferHeight];
+        fixture.Session.GraphicsDevice.GetBackBufferData(pixels);
+        Microsoft.Xna.Framework.Color actual =
+            pixels[((parameters.BackBufferHeight / 2) * parameters.BackBufferWidth) + (parameters.BackBufferWidth / 2)];
+        Assert.InRange(Math.Abs(actual.R - expected.R), 0, 2);
+        Assert.InRange(Math.Abs(actual.G - expected.G), 0, 2);
+        Assert.InRange(Math.Abs(actual.B - expected.B), 0, 2);
+    }
+
+    [Fact]
+    public void RenderRestoresCompleteDeviceStateAfterSuccess()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        using DeviceStateFixture state = new(fixture.Session.GraphicsDevice);
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.FillRectangle(
+            new DrawRect(0, 0, 16, 16),
+            new Cerneala.Drawing.Color(20, 40, 80)));
+
+        RenderBackend(fixture.Session.DrawingBackend, commands);
+
+        state.AssertRestored();
+    }
+
+    [Fact]
+    public void RenderRestoresCompleteDeviceStateWhenACommandThrows()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        using DeviceStateFixture state = new(fixture.Session.GraphicsDevice);
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.FillRectangle(
+            new DrawRect(0, 0, 16, 16),
+            new Cerneala.Drawing.Color(20, 40, 80)));
+        commands.Add(DrawCommand.DrawImage(
+            new UnsupportedImage(),
+            new DrawRect(0, 0, 8, 8),
+            Cerneala.Drawing.Color.White));
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => RenderBackend(fixture.Session.DrawingBackend, commands));
+
+        state.AssertRestored();
+        Assert.Contains("DrawImage requires a MonoGameImage", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BackendDisposeDoesNotDisposeBorrowedGraphicsResources()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        using SpriteBatch spriteBatch = new(fixture.Session.GraphicsDevice);
+        using Texture2D whitePixel = new(fixture.Session.GraphicsDevice, 1, 1);
+        whitePixel.SetData([Microsoft.Xna.Framework.Color.White]);
+        MonoGameDrawingBackend backend = new(spriteBatch, whitePixel);
+
+        backend.Dispose();
+
+        Assert.False(spriteBatch.IsDisposed);
+        Assert.False(whitePixel.IsDisposed);
+        Assert.False(fixture.Session.GraphicsDevice.IsDisposed);
+    }
 
     [Fact]
     public void RenderWithBalancedClipsEndsWithEmptyClipStack()
@@ -729,6 +831,13 @@ public sealed class MonoGameDrawingBackendStateTests
         return field!;
     }
 
+    private static void RenderBackend(IDrawingBackend backend, DrawCommandList commands)
+    {
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(commands);
+        DrawingFrameContext frameContext = new(analysis);
+        backend.Render(commands, in frameContext);
+    }
+
     private sealed record TestFont(string FamilyName, float Size) : IDrawFont;
 
     private sealed record TextTextureFixture(
@@ -748,5 +857,151 @@ public sealed class MonoGameDrawingBackendStateTests
 
         public DrawBrushDescriptor CreateDescriptor() =>
             new SolidDrawBrushDescriptor(Cerneala.Drawing.Color.White, 1);
+    }
+
+    private sealed class UnsupportedImage : IDrawImage
+    {
+        public int Width => 1;
+
+        public int Height => 1;
+    }
+
+    private sealed class DeviceStateFixture : IDisposable
+    {
+        private readonly GraphicsDevice device;
+        private readonly RenderTarget2D target;
+        private readonly BlendState blendState;
+        private readonly DepthStencilState depthStencilState;
+        private readonly RasterizerState rasterizerState;
+        private readonly SamplerState samplerState;
+        private readonly Texture2D texture;
+        private readonly IndexBuffer indexBuffer;
+        private readonly Viewport viewport = new(3, 4, 32, 20);
+        private readonly Rectangle scissor = new(5, 6, 20, 10);
+        private readonly Microsoft.Xna.Framework.Color blendFactor = new(17, 31, 47, 63);
+
+        public DeviceStateFixture(GraphicsDevice device)
+        {
+            this.device = device;
+            target = new RenderTarget2D(
+                device,
+                48,
+                32,
+                false,
+                SurfaceFormat.Color,
+                DepthFormat.Depth24Stencil8,
+                0,
+                RenderTargetUsage.PreserveContents);
+            blendState = new BlendState
+            {
+                ColorSourceBlend = Blend.SourceAlpha,
+                ColorDestinationBlend = Blend.InverseSourceAlpha
+            };
+            depthStencilState = new DepthStencilState
+            {
+                DepthBufferEnable = true,
+                DepthBufferWriteEnable = false
+            };
+            rasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.CullClockwiseFace,
+                ScissorTestEnable = true
+            };
+            samplerState = new SamplerState
+            {
+                Filter = TextureFilter.Point,
+                AddressU = TextureAddressMode.Wrap,
+                AddressV = TextureAddressMode.Mirror
+            };
+            texture = new Texture2D(device, 2, 2);
+            texture.SetData(Enumerable.Repeat(Microsoft.Xna.Framework.Color.White, 4).ToArray());
+            indexBuffer = new IndexBuffer(device, IndexElementSize.SixteenBits, 3, BufferUsage.None);
+            indexBuffer.SetData(new ushort[] { 0, 1, 2 });
+
+            device.SetRenderTarget(target);
+            device.Viewport = viewport;
+            device.ScissorRectangle = scissor;
+            device.BlendState = blendState;
+            device.BlendFactor = blendFactor;
+            device.DepthStencilState = depthStencilState;
+            device.RasterizerState = rasterizerState;
+            device.SamplerStates[0] = samplerState;
+            device.Textures[0] = texture;
+            device.Indices = indexBuffer;
+        }
+
+        public void AssertRestored()
+        {
+            RenderTargetBinding binding = Assert.Single(device.GetRenderTargets());
+            Assert.Same(target, binding.RenderTarget);
+            Assert.Equal(viewport, device.Viewport);
+            Assert.Equal(scissor, device.ScissorRectangle);
+            Assert.Same(blendState, device.BlendState);
+            Assert.Equal(blendFactor, device.BlendFactor);
+            Assert.Same(depthStencilState, device.DepthStencilState);
+            Assert.Same(rasterizerState, device.RasterizerState);
+            Assert.Same(samplerState, device.SamplerStates[0]);
+            Assert.Same(texture, device.Textures[0]);
+            Assert.Same(indexBuffer, device.Indices);
+        }
+
+        public void Dispose()
+        {
+            device.SetRenderTarget(null);
+            device.BlendState = BlendState.Opaque;
+            device.BlendFactor = Microsoft.Xna.Framework.Color.White;
+            device.DepthStencilState = DepthStencilState.None;
+            device.RasterizerState = RasterizerState.CullNone;
+            device.SamplerStates[0] = SamplerState.LinearClamp;
+            device.Textures[0] = null;
+            device.Indices = null;
+            indexBuffer.Dispose();
+            texture.Dispose();
+            samplerState.Dispose();
+            rasterizerState.Dispose();
+            depthStencilState.Dispose();
+            blendState.Dispose();
+            target.Dispose();
+        }
+    }
+
+    private sealed class WindowsDxFixture : IDisposable
+    {
+        private readonly Win32WindowPlatform platform = new();
+        private readonly IPlatformWindow window;
+
+        public WindowsDxFixture()
+        {
+            window = platform.CreateWindow(
+                new Window
+                {
+                    Title = $"Cerneala backend state {Guid.NewGuid():N}",
+                    Width = 96,
+                    Height = 64
+                },
+                new CallbackSink());
+            window.Show();
+            platform.PumpEvents();
+            Session = Assert.IsType<WindowsDxWindowGraphicsSession>(window.GraphicsSession);
+        }
+
+        public WindowsDxWindowGraphicsSession Session { get; }
+
+        public void Dispose()
+        {
+            window.Dispose();
+            platform.Dispose();
+        }
+    }
+
+    private sealed class CallbackSink : IWindowPlatformCallbacks
+    {
+        public void RequestClose() { }
+
+        public void ActivationChanged(bool active) { }
+
+        public void BoundsChanged(UiViewport viewport, float left, float top, WindowState state) { }
+
+        public void RenderRequested() { }
     }
 }

@@ -1,0 +1,9 @@
+{
+  "platform": "WindowsDX",
+  "captureApi": "IWindowScreenshotSource.RenderPng",
+  "colorProfile": "sRGB IEC61966-2.1",
+  "alphaConvention": "straight RGBA PNG; premultiplied-alpha compositor inputs",
+  "channelTolerance": 2,
+  "width": 96,
+  "height": 64
+}

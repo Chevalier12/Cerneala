@@ -1,13 +1,16 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
+using Cerneala.Drawing.MonoGame.Prism.Kernels;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Media;
+using Microsoft.Xna.Framework.Graphics;
 using CernealaColor = Cerneala.Drawing.Color;
 using XnaColor = Microsoft.Xna.Framework.Color;
+using XnaVector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Cerneala.WindowsDxSmoke;
 
@@ -55,6 +58,7 @@ internal static class WindowsDxSmokeApplication
             RenderTextAndCheck(secondSession);
             RenderBrushTextAndCheck(secondSession);
             RenderOffscreenBrushWithoutDiscardingBackBuffer(secondSession);
+            VerifyPrismCopyCompositeShader(secondSession);
 
             firstSession.Resize(192, 128, 1.25f);
             secondSession.Resize(224, 144, 1.5f);
@@ -226,6 +230,109 @@ internal static class WindowsDxSmokeApplication
         Assert(
             Math.Abs(corner.R - 24) <= 2 && Math.Abs(corner.G - 40) <= 2 && Math.Abs(corner.B - 72) <= 2,
             $"Offscreen brush generation discarded earlier backbuffer content. Received {corner}.");
+    }
+
+    private static void VerifyPrismCopyCompositeShader(WindowsDxWindowGraphicsSession session)
+    {
+        GraphicsDevice device = session.GraphicsDevice;
+        RenderTargetBinding[] previousTargets = device.GetRenderTargets();
+        Viewport previousViewport = device.Viewport;
+        Microsoft.Xna.Framework.Rectangle previousScissor = device.ScissorRectangle;
+        XnaColor sourceColor = new(96, 32, 16, 128);
+        XnaColor background = new(20, 40, 60);
+
+        using Texture2D source = new(device, 2, 2);
+        source.SetData([sourceColor, sourceColor, sourceColor, sourceColor]);
+        using RenderTarget2D captured = new(
+            device,
+            32,
+            32,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents);
+        using SpriteBatch batch = new(device);
+        using PrismKernelRegistry kernels = new(device);
+
+        try
+        {
+            device.SetRenderTarget(captured);
+            device.Clear(XnaColor.Transparent);
+            PrismKernelParameters copyParameters = new(
+                source,
+                1f,
+                new XnaVector2(1f / captured.Width, 1f / captured.Height),
+                XnaVector2.One,
+                XnaVector2.Zero);
+            kernels.Bind(kernels.Copy, in copyParameters);
+            batch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.PointClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                kernels.Effect);
+            try
+            {
+                batch.Draw(source, new Microsoft.Xna.Framework.Rectangle(0, 0, 32, 32), XnaColor.White);
+            }
+            finally
+            {
+                batch.End();
+            }
+
+            device.SetRenderTarget(null);
+            device.Clear(background);
+            PrismKernelParameters presentParameters = new(
+                captured,
+                1f,
+                new XnaVector2(1f / captured.Width, 1f / captured.Height),
+                XnaVector2.One,
+                XnaVector2.Zero);
+            kernels.Bind(kernels.Present, in presentParameters);
+            batch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.AlphaBlend,
+                SamplerState.PointClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                kernels.Effect);
+            try
+            {
+                batch.Draw(captured, new Microsoft.Xna.Framework.Rectangle(0, 0, 32, 32), XnaColor.White);
+            }
+            finally
+            {
+                batch.End();
+            }
+
+            session.Present();
+            XnaColor[] pixels = new XnaColor[
+                device.PresentationParameters.BackBufferWidth *
+                device.PresentationParameters.BackBufferHeight];
+            device.GetBackBufferData(pixels);
+            XnaColor actual = pixels[(16 * device.PresentationParameters.BackBufferWidth) + 16];
+            Assert(
+                Math.Abs(actual.R - 106) <= 3 &&
+                Math.Abs(actual.G - 52) <= 3 &&
+                Math.Abs(actual.B - 46) <= 3,
+                $"Prism copy/composite shader produced {actual} instead of the expected premultiplied blend.");
+        }
+        finally
+        {
+            if (previousTargets.Length == 0)
+            {
+                device.SetRenderTarget(null);
+            }
+            else
+            {
+                device.SetRenderTargets(previousTargets);
+            }
+
+            device.Viewport = previousViewport;
+            device.ScissorRectangle = previousScissor;
+        }
     }
 
     private static void VerifyTextBrush(
