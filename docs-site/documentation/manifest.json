@@ -3860,6 +3860,161 @@
     "source": "UI/Theming/ThemeResource.cs"
   },
   {
+    "name": "Cerneala.Drawing.Prism.Catalog.PrismBlendMode",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismBlendMode.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Catalog.PrismColorProfile",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismColorProfile.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Catalog.PrismFilterId",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismFilterId.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Catalog.PrismSampling",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismSampling.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Catalog.PrismStyleId",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismStyleId.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismBackdropDefinition",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismBackdropDefinition.md",
+    "source": "UI/Prism/Definitions/PrismBackdropDefinition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismCompositionDefinition",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismCompositionDefinition.md",
+    "source": "UI/Prism/Definitions/PrismCompositionDefinition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismFilterDefinition",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismFilterDefinition.md",
+    "source": "UI/Prism/Definitions/PrismFilterDefinition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismGroupDefinition",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismGroupDefinition.md",
+    "source": "UI/Prism/Definitions/PrismGroupDefinition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismLayerDefinition",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismLayerDefinition.md",
+    "source": "UI/Prism/Definitions/PrismLayerDefinition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismMaskChannel",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismMaskChannel.md",
+    "source": "UI/Prism/Definitions/PrismMaskDefinition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismMaskDefinition",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismMaskDefinition.md",
+    "source": "UI/Prism/Definitions/PrismMaskDefinition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismNodeDefinition",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismNodeDefinition.md",
+    "source": "UI/Prism/Definitions/PrismNodeDefinition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismNodeId",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismNodeId.md",
+    "source": "UI/Prism/Definitions/PrismNodeId.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismResourceId",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismResourceId.md",
+    "source": "UI/Prism/Definitions/PrismResourceId.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismStyleDefinition",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismStyleDefinition.md",
+    "source": "UI/Prism/Definitions/PrismStyleDefinition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismBackdropState",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismBackdropState.md",
+    "source": "UI/Prism/Runtime/PrismStates.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismBlendChannels",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismBlendChannels.md",
+    "source": "UI/Prism/Runtime/PrismAdvancedBlend.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismBlendIfChannel",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismBlendIfChannel.md",
+    "source": "UI/Prism/Runtime/PrismAdvancedBlend.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismBlendRange",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismBlendRange.md",
+    "source": "UI/Prism/Runtime/PrismAdvancedBlend.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismCompositionState",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismCompositionState.md",
+    "source": "UI/Prism/Runtime/PrismStates.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismFilterState",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismFilterState.md",
+    "source": "UI/Prism/Runtime/PrismStates.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismGroupState",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismGroupState.md",
+    "source": "UI/Prism/Runtime/PrismStates.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismInstance",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismInstance.md",
+    "source": "UI/Prism/Runtime/PrismInstance.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismKnockout",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismKnockout.md",
+    "source": "UI/Prism/Runtime/PrismAdvancedBlend.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismLayerState",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismLayerState.md",
+    "source": "UI/Prism/Runtime/PrismStates.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismMaskState",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismMaskState.md",
+    "source": "UI/Prism/Runtime/PrismStates.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismNodeState",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismNodeState.md",
+    "source": "UI/Prism/Runtime/PrismStates.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismStructuralVersion",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismStructuralVersion.md",
+    "source": "UI/Prism/Runtime/PrismVersions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismStyleState",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismStyleState.md",
+    "source": "UI/Prism/Runtime/PrismStates.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Runtime.PrismValueVersion",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismValueVersion.md",
+    "source": "UI/Prism/Runtime/PrismVersions.cs"
+  },
+  {
     "name": "RoslynRepoIndexer.Core.CallGraphDirection",
     "file": "documentation/classes/RoslynRepoIndexer.Core.CallGraphDirection.md",
     "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"
