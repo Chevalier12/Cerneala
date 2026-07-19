@@ -231,6 +231,15 @@ public sealed partial class UiMarkupGenerator
 
         source.Append("partial class ").Append(pair.TypeSymbol.Name).AppendLine();
         source.AppendLine("{");
+        foreach (string line in scope.PrismDeclarationLines)
+        {
+            source.Append("    ").AppendLine(line);
+        }
+        if (scope.PrismDeclarationLines.Count > 0)
+        {
+            source.AppendLine();
+        }
+
         if (pair.ViewModelType is null)
         {
             source.Append("    public ").Append(pair.TypeSymbol.Name).AppendLine("()");

@@ -15,4 +15,9 @@
     <PackageReference Include="System.Text.Json" Version="8.0.5" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Prism\Catalog\prism-catalog.json"
+                      LogicalName="Cerneala.SourceGen.Prism.prism-catalog.json" />
+  </ItemGroup>
+
 </Project>

@@ -14,11 +14,14 @@ Generated from `.`.
 |           |   +-- visual-direction.html
 |           +-- state/
 |               +-- server-stopped
+|-- BenchmarkDotNet.Artifacts/
+|   +-- results/
 |-- benchmarks/
 |   |-- Cerneala.Benchmarks/
 |   |   |-- results/
 |   |   |   +-- 2026-07-13-queue-engine-2.md
 |   |   |-- Cerneala.Benchmarks.csproj
+|   |   |-- PrismInstanceBenchmarks.cs
 |   |   |-- Program.cs
 |   |   |-- QueueEngineBenchmarks.cs
 |   |   |-- README.md
@@ -128,6 +131,14 @@ Generated from `.`.
 |       +-- 2026-07-17-presentation-frame-budget/
 |           +-- README.md
 |-- Cerneala.SourceGen/
+|   |-- Prism/
+|   |   |-- Catalog/
+|   |   |   |-- prism-catalog.json
+|   |   |   +-- prism-catalog.schema.json
+|   |   |-- PrismCatalogCompiler.cs
+|   |   +-- PrismCatalogGenerator.cs
+|   |-- Properties/
+|   |   +-- AssemblyInfo.cs
 |   |-- tests/
 |   |   +-- CodexPresentationHarness/
 |   |       +-- generated/
@@ -200,7 +211,17 @@ Generated from `.`.
 |   |   |-- 2026-07-15-motion-markup-scroll-and-input.md
 |   |   |-- 2026-07-15-motion-markup-timelines-and-specs.md
 |   |   |-- 2026-07-17-application-markup-and-startup-contract.md
-|   |   +-- 2026-07-17-text-texture-cache-frame-budget-hardening.md
+|   |   |-- 2026-07-17-text-texture-cache-frame-budget-hardening.md
+|   |   |-- 2026-07-18-prism-backdrop-hosting.md
+|   |   |-- 2026-07-18-prism-color-blend-and-styles.md
+|   |   |-- 2026-07-18-prism-filter-catalog.md
+|   |   |-- 2026-07-18-prism-foundation-and-catalog.md
+|   |   |-- 2026-07-18-prism-integration-and-hardening.md
+|   |   |-- 2026-07-18-prism-markup-motion-and-lifecycle.md
+|   |   |-- 2026-07-18-prism-monogame-compositor.md
+|   |   |-- 2026-07-18-prism-plan-index.md
+|   |   |-- 2026-07-18-prism-retained-composition-graph.md
+|   |   +-- 2026-07-18-prism-retained-pixel-cache.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -267,6 +288,9 @@ Generated from `.`.
 |   |-- motion-diagnostics.md
 |   |-- motion-markup-syntax-proposal.md
 |   |-- motion-system.md
+|   |-- prism-markup-syntax-proposal.md
+|   |-- prism-public-api-baseline.md
+|   |-- prism-technical-design.md
 |   +-- wpf-event-coverage.md
 |-- docs-site/
 |   |-- assets/
@@ -306,6 +330,11 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTextureKey.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawMapper.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameImage.md
+|   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismBlendMode.md
+|   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismColorProfile.md
+|   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismFilterId.md
+|   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismSampling.md
+|   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismStyleId.md
 |   |   |   |-- Cerneala.Drawing.RadialGradientDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.SolidDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.Text.RasterizedText.md
@@ -975,6 +1004,32 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Platform.IPlatformServices.md
 |   |   |   |-- Cerneala.UI.Platform.ITextInputPlatform.md
 |   |   |   |-- Cerneala.UI.Platform.PlatformServices.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismBackdropDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismCompositionDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismFilterDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismGroupDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismLayerDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismMaskChannel.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismMaskDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismNodeDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismNodeId.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismResourceId.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismStyleDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBackdropState.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBlendChannels.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBlendIfChannel.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBlendRange.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismCompositionState.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismFilterState.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismGroupState.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismInstance.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismKnockout.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismLayerState.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismMaskState.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismNodeState.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismStructuralVersion.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismStyleState.md
+|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismValueVersion.md
 |   |   |   |-- Cerneala.UI.Relay.UiRelay.md
 |   |   |   |-- Cerneala.UI.Relay.UiRelayOptions.md
 |   |   |   |-- Cerneala.UI.Rendering.ClipNode.ClipBox.md
@@ -1166,6 +1221,9 @@ Generated from `.`.
 |   |   +-- MonoGamePathMeshBuilder.cs
 |   |-- Paths/
 |   |   +-- SvgPathFlattener.cs
+|   |-- Prism/
+|   |   +-- Catalog/
+|   |       +-- PrismFallbackPolicy.cs
 |   |-- Text/
 |   |   |-- OpenTypeFontData.cs
 |   |   |-- RasterizedText.cs
@@ -1512,6 +1570,9 @@ Generated from `.`.
 |   |   |   |   |-- PlatformBoundaryTests.cs
 |   |   |   |   |-- ServiceRegistrationTests.cs
 |   |   |   |   +-- UiHostPlatformServicesIntegrationTests.cs
+|   |   |   |-- Prism/
+|   |   |   |   |-- PrismDefinitionContractTests.cs
+|   |   |   |   +-- PrismInstanceTests.cs
 |   |   |   |-- Relay/
 |   |   |   |   |-- FirstPartyRelayIntegrationTests.cs
 |   |   |   |   |-- RelayStageZeroTests.cs
@@ -1570,6 +1631,8 @@ Generated from `.`.
 |   |   |-- GameBootstrapTests.cs
 |   |   +-- GlobalUsings.cs
 |   |-- Cerneala.Tests.SourceGen/
+|   |   |-- Prism/
+|   |   |   +-- PrismCatalogCompilerTests.cs
 |   |   |-- Cerneala.Tests.SourceGen.csproj
 |   |   |-- PresentationMarkupRegressionTests.cs
 |   |   |-- UiMarkupGeneratorApplicationTests.cs
@@ -2231,6 +2294,26 @@ Generated from `.`.
 |   |   |-- IPlatformServices.cs
 |   |   |-- ITextInputPlatform.cs
 |   |   +-- PlatformServices.cs
+|   |-- Prism/
+|   |   |-- Definitions/
+|   |   |   |-- PrismBackdropDefinition.cs
+|   |   |   |-- PrismCompositionDefinition.cs
+|   |   |   |-- PrismDefinitionValidation.cs
+|   |   |   |-- PrismFilterDefinition.cs
+|   |   |   |-- PrismGroupDefinition.cs
+|   |   |   |-- PrismLayerDefinition.cs
+|   |   |   |-- PrismMaskDefinition.cs
+|   |   |   |-- PrismNodeDefinition.cs
+|   |   |   |-- PrismNodeId.cs
+|   |   |   |-- PrismParameterKey{T}.cs
+|   |   |   |-- PrismResourceId.cs
+|   |   |   +-- PrismStyleDefinition.cs
+|   |   +-- Runtime/
+|   |       |-- PrismAdvancedBlend.cs
+|   |       |-- PrismInstance.cs
+|   |       |-- PrismParameterStore.cs
+|   |       |-- PrismStates.cs
+|   |       +-- PrismVersions.cs
 |   |-- Relay/
 |   |   |-- CapturedUiThreadAccess.cs
 |   |   |-- IUiThreadAccess.cs

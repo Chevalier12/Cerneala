@@ -532,6 +532,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         source.AppendLine();
         source.Append("public static partial class ").Append(className).AppendLine("Factory");
         source.AppendLine("{");
+        foreach (string line in scope.PrismDeclarationLines)
+        {
+            source.Append("    ").AppendLine(line);
+        }
+        if (scope.PrismDeclarationLines.Count > 0)
+        {
+            source.AppendLine();
+        }
+
         source.AppendLine("    public static global::Cerneala.UI.Elements.UIElement Create()");
         source.AppendLine("    {");
         source.AppendLine("        return CreateCore(null);");
@@ -905,7 +914,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             ReadInlineAspects();
             reactiveDocument = allAspects.Any(aspect => aspect.Conditions.Count > 0) ||
                 document.Root.DescendantsAndSelf().Any(element =>
-                    GetDirectiveContent(element, DirectiveContentKind.Elements | DirectiveContentKind.Templates).HasDirectives);
+                    GetDirectiveContent(
+                        element,
+                        DirectiveContentKind.Elements |
+                        DirectiveContentKind.Templates |
+                        DirectiveContentKind.Prism).HasDirectives);
+            BindPrism();
             EmitAspectTemplates();
         }
 
@@ -1116,6 +1130,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string contextVariable,
                 string ownerVariable,
                 string ownerElementName,
+                XElement? ownerElement,
                 INamedTypeSymbol ownerType,
                 bool ownerIsRoot,
                 bool registerParts)
@@ -1123,6 +1138,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 ContextVariable = contextVariable;
                 OwnerVariable = ownerVariable;
                 OwnerElementName = ownerElementName;
+                OwnerElement = ownerElement;
                 OwnerType = ownerType;
                 OwnerIsRoot = ownerIsRoot;
                 RegisterParts = registerParts;
@@ -1133,6 +1149,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public string OwnerVariable { get; }
 
             public string OwnerElementName { get; }
+
+            public XElement? OwnerElement { get; }
 
             public INamedTypeSymbol OwnerType { get; }
 
@@ -1177,6 +1195,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public Dictionary<string, AspectResource> DefaultAspectsByTarget { get; } = new(StringComparer.Ordinal);
 
+            public List<PrismCompositionResourceSyntax> PrismCompositions { get; } = [];
+
             public List<object> RuntimeResources { get; } = [];
         }
 
@@ -1186,16 +1206,20 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public ApplicationResourceCatalog(
                 IReadOnlyDictionary<string, object> namedResources,
-                IReadOnlyDictionary<string, object> defaultAspects)
+                IReadOnlyDictionary<string, object> defaultAspects,
+                IReadOnlyDictionary<string, object> prismCompositions)
             {
                 NamedResources = namedResources;
                 DefaultAspects = defaultAspects;
+                PrismCompositions = prismCompositions;
                 symbols = new HashSet<object>(namedResources.Values);
             }
 
             public IReadOnlyDictionary<string, object> NamedResources { get; }
 
             public IReadOnlyDictionary<string, object> DefaultAspects { get; }
+
+            public IReadOnlyDictionary<string, object> PrismCompositions { get; }
 
             public bool Contains(object symbol) => symbols.Contains(symbol);
         }
@@ -1322,6 +1346,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                             break;
                         case "MotionClip":
                             ReadMotionClip(scope, resource);
+                            break;
+                        case "PrismComposition":
+                            ReadPrismComposition(scope, resource);
                             break;
                         default:
                             Report(UnsupportedElement, resource, resource.Name.LocalName);
@@ -2181,6 +2208,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     "global::Cerneala.UI.Controls.Templates.ComponentTemplate<" +
                         ownerType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "> " + variable,
                     aspect.TargetName,
+                    ownerElement: null,
                     ownerType,
                     ownerIsRoot: false,
                     aspect.Template!,
@@ -2208,6 +2236,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             EmitComponentTemplate(
                 ownerVariable + ".ComponentTemplate",
                 owner.Name.LocalName,
+                owner,
                 ownerType!,
                 ownerIsRoot,
                 template,
@@ -2217,6 +2246,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private void EmitComponentTemplate(
             string assignmentTarget,
             string ownerElementName,
+            XElement? ownerElement,
             INamedTypeSymbol ownerType,
             bool ownerIsRoot,
             DirectiveTemplateNode template,
@@ -2231,6 +2261,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 contextVariable,
                 contextVariable + ".Owner",
                 ownerElementName,
+                ownerElement,
                 ownerType,
                 ownerIsRoot,
                 registerParts);
@@ -2363,7 +2394,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
             DirectiveParseResult parsedContent = GetDirectiveContent(
                 element,
-                DirectiveContentKind.Elements | DirectiveContentKind.Templates);
+                DirectiveContentKind.Elements |
+                DirectiveContentKind.Templates |
+                DirectiveContentKind.Prism);
+            if (ReportPrismSyntaxDiagnostics(parsedContent))
+            {
+                return variable;
+            }
+
             if (parsedContent.Error is not null)
             {
                 Report(InvalidDirective, parsedContent.ErrorSource ?? element, Path.GetFileName(file.Path), parsedContent.Error);
@@ -2448,6 +2486,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 }
             }
 
+            EmitPrismApplication(element, variable);
             return variable;
         }
 
@@ -2907,12 +2946,23 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             {
                 return new ApplicationResourceCatalog(
                     new Dictionary<string, object>(StringComparer.Ordinal),
+                    new Dictionary<string, object>(StringComparer.Ordinal),
                     new Dictionary<string, object>(StringComparer.Ordinal));
             }
 
+            IReadOnlyDictionary<string, object> prismCompositions =
+                boundPrismResources.TryGetValue(
+                    scope,
+                    out Dictionary<string, BoundPrismComposition>? bound)
+                    ? bound.ToDictionary(
+                        pair => pair.Key,
+                        pair => (object)pair.Value,
+                        StringComparer.Ordinal)
+                    : new Dictionary<string, object>(StringComparer.Ordinal);
             return new ApplicationResourceCatalog(
                 scope.NamedResources.ToDictionary(pair => pair.Key, pair => (object)pair.Value, StringComparer.Ordinal),
-                scope.DefaultAspectsByTarget.ToDictionary(pair => pair.Key, pair => (object)pair.Value, StringComparer.Ordinal));
+                scope.DefaultAspectsByTarget.ToDictionary(pair => pair.Key, pair => (object)pair.Value, StringComparer.Ordinal),
+                prismCompositions);
         }
 
         public void EmitApplicationResources()

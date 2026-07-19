@@ -25,7 +25,8 @@ public sealed partial class UiMarkupGenerator
         MotionLayout = 256,
         MotionScroll = 512,
         MotionDrag = 1024,
-        MotionGesture = 2048
+        MotionGesture = 2048,
+        Prism = 4096
     }
 
     private abstract class DirectiveNode
@@ -64,10 +65,12 @@ public sealed partial class UiMarkupGenerator
             string propertyName,
             string value,
             XObject source,
+            DirectiveExpressionLocation propertyLocation,
             DirectiveExpressionLocation valueLocation) : base(source)
         {
             PropertyName = propertyName;
             Value = value;
+            PropertyLocation = propertyLocation;
             ValueLocation = valueLocation;
         }
 
@@ -75,7 +78,19 @@ public sealed partial class UiMarkupGenerator
 
         public string Value { get; }
 
+        public DirectiveExpressionLocation PropertyLocation { get; }
+
         public DirectiveExpressionLocation ValueLocation { get; }
+    }
+
+    private sealed class DirectivePrismNode : DirectiveNode
+    {
+        public DirectivePrismNode(PrismApplicationSyntax application, XObject source) : base(source)
+        {
+            Application = application;
+        }
+
+        public PrismApplicationSyntax Application { get; }
     }
 
     private sealed class DirectiveDefaultNode : DirectiveNode
@@ -242,11 +257,16 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class DirectiveParseResult
     {
-        public DirectiveParseResult(IReadOnlyList<DirectiveNode> nodes, string? error, object? errorSource)
+        public DirectiveParseResult(
+            IReadOnlyList<DirectiveNode> nodes,
+            string? error,
+            object? errorSource,
+            IReadOnlyList<PrismSyntaxDiagnostic>? prismDiagnostics = null)
         {
             Nodes = nodes;
             Error = error;
             ErrorSource = errorSource;
+            PrismDiagnostics = prismDiagnostics ?? [];
         }
 
         public IReadOnlyList<DirectiveNode> Nodes { get; }
@@ -254,6 +274,8 @@ public sealed partial class UiMarkupGenerator
         public string? Error { get; }
 
         public object? ErrorSource { get; }
+
+        public IReadOnlyList<PrismSyntaxDiagnostic> PrismDiagnostics { get; }
 
         public bool HasDirectives => Nodes.Any(ContainsDirective);
 
@@ -271,13 +293,21 @@ public sealed partial class UiMarkupGenerator
             IReadOnlyList<DirectiveNode> nodes = cursor.ParseNodes(stopAtClosingBrace: false, allowedContent);
             return new DirectiveParseResult(nodes, null, null);
         }
+        catch (PrismSyntaxParseException ex)
+        {
+            return new DirectiveParseResult(
+                [],
+                null,
+                null,
+                [new PrismSyntaxDiagnostic(ex.Descriptor, ex.Message, ex.LocationSource ?? element)]);
+        }
         catch (DirectiveParseException ex)
         {
             return new DirectiveParseResult([], ex.Message, ex.LocationSource ?? element);
         }
     }
 
-    private sealed class DirectiveCursor
+    private sealed partial class DirectiveCursor
     {
         private readonly IReadOnlyList<Segment> segments;
         private int segmentIndex;
@@ -331,6 +361,17 @@ public sealed partial class UiMarkupGenerator
 
                     Read();
                     return nodes;
+                }
+
+                if (StartsWith("@prism"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.Prism))
+                    {
+                        throw Error("@prism is not allowed in this directive context.");
+                    }
+
+                    nodes.Add(ParsePrismApplication());
+                    continue;
                 }
 
                 if (StartsWith("@when"))
@@ -1448,7 +1489,9 @@ public sealed partial class UiMarkupGenerator
 
         private DirectiveAssignmentNode ParseAssignment()
         {
+            SkipWhitespace();
             XObject source = CurrentSource;
+            int propertyOffset = characterIndex;
             string propertyName = ReadIdentifier();
             SkipWhitespace();
             if (Read() != '=')
@@ -1498,6 +1541,7 @@ public sealed partial class UiMarkupGenerator
                         propertyName,
                         rawValue,
                         source,
+                        new DirectiveExpressionLocation(source, propertyOffset, Math.Max(1, propertyName.Length)),
                         new DirectiveExpressionLocation(valueSource, valueOffset));
                 }
 
@@ -1604,6 +1648,14 @@ public sealed partial class UiMarkupGenerator
                 return target;
             }
 
+            if (parts.Length >= 4 &&
+                hasValidOwner &&
+                parts[1] == "prism" &&
+                parts.Skip(2).All(IsIdentifier))
+            {
+                return target;
+            }
+
             if (parts.Length == 4 &&
                 hasValidOwner &&
                 parts[1] == "parts" &&
@@ -1615,7 +1667,10 @@ public sealed partial class UiMarkupGenerator
                 return target;
             }
 
-            throw Error("Motion target must be Property, $self.Property, $owner.Property, $Name.Property, or $control.parts.$part.Property.");
+            throw Error(
+                "Motion target must be Property, $self.Property, $owner.Property, " +
+                "$Name.Property, $target.prism.Node.Property, or " +
+                "$control.parts.$part.Property.");
         }
 
         private string ReadMotionStatement()
@@ -2118,7 +2173,9 @@ public sealed partial class UiMarkupGenerator
                     }
                 }
 
-                return AtEnd || CurrentElement is not null || !char.IsLetterOrDigit(Peek());
+                return AtEnd ||
+                    CurrentElement is not null ||
+                    !char.IsLetterOrDigit(Peek()) && Peek() != '_';
             }
             finally
             {

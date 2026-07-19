@@ -9,4 +9,8 @@ internal interface IElementLifecycleBehavior
     void Attach();
 
     void Detach();
+
+    void OnRenderabilityChanged(bool isRenderable)
+    {
+    }
 }

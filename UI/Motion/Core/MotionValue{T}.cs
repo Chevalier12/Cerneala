@@ -10,6 +10,8 @@ public sealed class MotionValue<T> : MotionValue
     private readonly ValueMixer<T> mixer;
     private readonly ValueNode node;
     private readonly List<Action<MotionValueChanged<T>>> listeners = [];
+    private readonly List<Action<MotionValueChanged<T>>[]> listenerSnapshots = [];
+    private int notificationDepth;
     private MotionSampler<T>? sampler;
     private MotionHandle? activeHandle;
     private T current;
@@ -316,9 +318,32 @@ public sealed class MotionValue<T> : MotionValue
         T oldValue = current;
         current = value;
         MotionValueChanged<T> change = new(oldValue, current, target, IsAnimating);
-        foreach (Action<MotionValueChanged<T>> listener in listeners.ToArray())
+        int depth = notificationDepth++;
+        if (listenerSnapshots.Count == depth)
         {
-            listener(change);
+            listenerSnapshots.Add(Array.Empty<Action<MotionValueChanged<T>>>());
+        }
+
+        Action<MotionValueChanged<T>>[] snapshot = listenerSnapshots[depth];
+        int count = listeners.Count;
+        if (snapshot.Length < count)
+        {
+            snapshot = new Action<MotionValueChanged<T>>[count];
+            listenerSnapshots[depth] = snapshot;
+        }
+
+        listeners.CopyTo(snapshot, 0);
+        try
+        {
+            for (int index = 0; index < count; index++)
+            {
+                snapshot[index](change);
+            }
+        }
+        finally
+        {
+            Array.Clear(snapshot, 0, count);
+            notificationDepth--;
         }
 
         return true;

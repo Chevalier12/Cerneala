@@ -664,6 +664,15 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         lifecycleBehaviors.Remove(behavior);
     }
 
+    private void NotifyLifecycleRenderabilityChanged()
+    {
+        bool isRenderable = UIElementVisibility.IsEffectivelyVisible(this);
+        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+        {
+            behavior.OnRenderabilityChanged(isRenderable);
+        }
+    }
+
     public void QueueCommandStateRefresh()
     {
         if (this is not ICommandStateSource)
@@ -1099,6 +1108,14 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         if (becameNonVisible && Root is UIRoot motionRoot)
         {
             motionRoot.Motion.CancelMotionForSubtree(this);
+        }
+
+        if ((isVisibilityChange || isIsVisibleChange) && IsAttached)
+        {
+            foreach (UIElement element in ElementTreeWalker.PreOrder(this))
+            {
+                element.NotifyLifecycleRenderabilityChanged();
+            }
         }
 
         bool layoutParticipationChanged = isVisibilityChange &&

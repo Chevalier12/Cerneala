@@ -3,7 +3,10 @@
 ## Statut
 
 Acest document descrie arhitectura tehnică necesară pentru implementarea Prism în
-Cerneala. Nu reprezintă cod implementat.
+Cerneala. Compilatorul de markup, atașarea instanței tipizate, bindingurile
+generate, target-urile Motion și lifecycle-ul de randabilitate sunt implementate.
+Secțiunile despre compositor, backend GPU, cache retained și backdrop rămân design
+până când componentele respective există în repository.
 
 Contractul de markup și modelul mental sunt definite în
 [`prism-markup-syntax-proposal.md`](prism-markup-syntax-proposal.md). Catalogul
@@ -381,12 +384,13 @@ O instanță este creată pentru fiecare aplicare `@prism`.
 Conține:
 
 - referința la definiția partajată;
-- `PrismRenderState`;
-- valorile parametrilor suprascriși;
-- versiunea valorilor;
-- starea de atașare;
-- binding-urile și Motion handles asociate;
-- identificatorul runtime folosit în diagnostics.
+- stările tipizate și valorile parametrilor suprascriși;
+- versiunile structurale și de valori.
+
+`PrismAttachment` deține starea de atașare și subscriptions create de binding
+factories. `MarkupMotionSession` deține execuțiile și handles Motion. Separarea
+asta face ca `PrismInstance` să rămână un model de valori ușor, fără delegate sau
+referințe la element.
 
 Nu conține:
 
@@ -423,26 +427,27 @@ comenzilor locale ale controlului.
 
 La atașare:
 
-1. creează sau primește `PrismInstance`;
-2. înregistrează target-urile Motion tipizate;
-3. conectează binding-urile;
-4. atașează `PrismRenderState` elementului;
-5. alocă un `PrismCacheOwnerToken` numeric, nerefolosit pe durata backendului și
-   fără referință inversă la element;
-6. invalidează numai structura de compunere a root-ului.
+1. înlocuiește determinist și dispune orice attachment Prism anterior;
+2. înregistrează un singur `PrismAttachment` ca lifecycle behavior;
+3. creează `PrismInstance` din fabrica generată când elementul intră în arbore;
+4. conectează binding factories numai dacă elementul este efectiv randabil;
+5. revine curat dacă fabrica instanței sau un binding factory eșuează.
+
+Integrarea ulterioară cu drawing atașează aceluiași transition
+`PrismRenderState`, alocă `PrismCacheOwnerToken` fără referință inversă la element
+și invalidează numai structura de compunere a root-ului. Aceste responsabilități
+nu sunt mutate în `PrismAttachment`.
 
 ### Detach
 
 La detașare:
 
-1. anulează Motion asociat instanței;
-2. elimină binding-urile și subscriptions;
-3. scoate target-urile din registrul Motion;
-4. elimină attachment-ul de pe element;
-5. eliberează referințele la resurse auxiliare;
-6. publică tokenul într-o coadă backend-neutrală de invalidare consumată la
-   următorul submit;
-7. nu contactează direct backend-ul și nu eliberează direct resurse GPU.
+1. sesiunea Motion anulează execuțiile asociate subtree-ului;
+2. attachment-ul elimină binding-urile și subscriptions în ordine inversă;
+3. elimină instanța curentă și toate referințele de lifecycle la disposal;
+4. integrarea drawing publică tokenul într-o coadă backend-neutrală de invalidare
+   consumată la următorul submit;
+5. nu contactează direct backend-ul și nu eliberează direct resurse GPU.
 
 Backend-ul indexează intrările retained după token/generație și nu ține o referință
 puternică la `PrismInstance` sau `UIElement`. Dacă nu mai există un submit, dispose-ul
@@ -450,14 +455,24 @@ backendului eliberează oricum întregul cache.
 
 ### Visibility
 
-Când elementul devine `Hidden` sau `Collapsed`:
+Când elementul sau un ancestor devine `Hidden`, `Collapsed` ori
+`IsVisible=false`:
 
-- Motion pentru Prism este anulat prin lifecycle-ul existent al subtree-ului;
+- Motion pentru Prism este anulat sincron și o singură dată prin lifecycle-ul
+  existent al subtree-ului;
+- subscriptions generate de binding factories sunt deconectate;
 - nicio comandă Prism nu este executată;
 - nu se achiziționează backdrop;
 - nu se alocă suprafețe;
 - tokenul cache este marcat o singură dată ca imediat evictable;
-- definiția și valorile de bază rămân atașate.
+- instanța veche poate rămâne doar ca stare inertă și nu mai primește scrieri.
+
+Când elementul redevine efectiv randabil:
+
+- fabrica generată creează o instanță nouă;
+- binding factories se reconectează și reaplică valorile de bază și valorile
+  surselor curente;
+- execuțiile Motion anulate nu reînvie și trebuie declanșate din nou explicit.
 
 Când `Visible=false` pe un layer sau group:
 
@@ -848,15 +863,30 @@ Generatorul validează:
 - tipul valorii;
 - existența mixerului Motion.
 
+Prefixele `$self`, `$owner` și `$Name` sunt rezolvate static. `$owner` este valid
+numai într-un component template și folosește elementul owner păstrat de contextul
+de emission; `$Name` trebuie să fie în același namescope. Codul emis accesează
+direct instanța, `PrismNodeId` și slotul tipizat, fără reflection sau dispatch
+textual.
+
 ### Scrieri discrete
 
-`Visible` și enum-urile folosesc scrieri discrete. Ele pot fi setate de Motion, dar
-nu sunt interpolate. Pentru fade se animează `Opacity`.
+`Visible`, valorile booleene, întregii și enum-urile suportate folosesc scrieri
+discrete. Ele pot fi setate de Motion, dar nu sunt interpolate. Numerele și
+culorile folosesc mixerele Motion continue existente. Pentru fade se animează
+`Opacity`.
+
+Bindingul Motion Prism este identificat de element și property ID-ul generat.
+Înlocuirea instanței elimină bindingul vechi și creează unul pentru instanța
+curentă. O scriere identică nu schimbă `ValueVersion` și produce zero invalidări
+de prezentare.
 
 ### Anulare
 
 - detașarea elementului anulează toate target-urile Prism;
-- `Hidden` și `Collapsed` anulează Motion pentru subtree;
+- `Hidden`, `Collapsed` și `IsVisible=false`, inclusiv pe un ancestor, anulează
+  sincron Motion pentru subtree;
+- revenirea la starea randabilă nu repornește o execuție anulată;
 - ascunderea unui group anulează Motion pentru descendenții săi;
 - ascunderea unui layer sau backdrop anulează Motion din acel scope;
 - Motion nu este păstrat în viață doar pentru că definiția este reutilizabilă.

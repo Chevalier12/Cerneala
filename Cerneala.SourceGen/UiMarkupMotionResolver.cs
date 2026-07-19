@@ -380,12 +380,14 @@ public sealed partial class UiMarkupGenerator
                 ResolvedMotionTargetKind kind,
                 XElement element,
                 string? ownerName = null,
-                string? partName = null)
+                string? partName = null,
+                ResolvedPrismMotionTarget? prism = null)
             {
                 Kind = kind;
                 Element = element;
                 OwnerName = ownerName;
                 PartName = partName;
+                Prism = prism;
             }
 
             public ResolvedMotionTargetKind Kind { get; }
@@ -395,6 +397,8 @@ public sealed partial class UiMarkupGenerator
             public string? OwnerName { get; }
 
             public string? PartName { get; }
+
+            public ResolvedPrismMotionTarget? Prism { get; }
         }
 
         private sealed class ResolvedMotionKeyframesSpec
@@ -927,7 +931,9 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                if (!property!.Assignable || property.ValueType.SpecialType != SpecialType.System_Single)
+                if (resolvedTarget!.Prism is not null ||
+                    !property!.Assignable ||
+                    property.ValueType.SpecialType != SpecialType.System_Single)
                 {
                     Report(InvalidDirective, assignment.Location, Path.GetFileName(file.Path), "@scroll target '" + assignment.Target + "' must be an assignable float UiProperty.");
                     resolved = null;
@@ -1278,9 +1284,14 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 if (!TryResolveMotionTarget(applicationElement, aspect, ordered[0].Destination, out ResolvedMotionTarget? target, out PropertySpec? property) ||
-                    !property!.Assignable || !HasBuiltInMixer(property.ValueType))
+                    !property!.Assignable ||
+                    !(target!.Prism?.IsDiscrete == true ||
+                        HasBuiltInMixer(property.ValueType)))
                 {
-                    if (property is not null && (!property.Assignable || !HasBuiltInMixer(property.ValueType)))
+                    if (property is not null &&
+                        (!property.Assignable ||
+                            !(target?.Prism?.IsDiscrete == true ||
+                                HasBuiltInMixer(property.ValueType))))
                     {
                         Report(InvalidDirective, ordered[0].Destination.Location, Path.GetFileName(file.Path), "Motion property '" + group.Key + "' is not animatable.");
                     }
@@ -1606,7 +1617,8 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                if (!HasBuiltInMixer(property.ValueType))
+                if (!(target!.Prism?.IsDiscrete == true ||
+                    HasBuiltInMixer(property.ValueType)))
                 {
                     Report(InvalidDirective, destination.Location, Path.GetFileName(file.Path), "Motion property '" + destination.Target + "' has no compatible mixer.");
                     return false;
@@ -1619,7 +1631,15 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 MotionSpecSyntax? spec = destination.Spec ?? animation.DefaultSpec;
-                if (!TryResolveMotionSpec(applicationElement, spec, property, destination.Target, parameters, out string? specVariable))
+                string? specVariable = null;
+                if ((target.Prism is null || spec is not null) &&
+                    !TryResolveMotionSpec(
+                        applicationElement,
+                        spec,
+                        property,
+                        destination.Target,
+                        parameters,
+                        out specVariable))
                 {
                     return false;
                 }
@@ -1689,11 +1709,21 @@ public sealed partial class UiMarkupGenerator
                             BuildDurationExpression(property.Keyframes.Duration) + ");");
                     }
                     string optionsCode = EmitMotionOptions(animation.Syntax.Options, animation.Parameters);
-                    starts.Add(
-                        "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
-                        targetCode + ", " + property.Property.PropertyCode + ", " +
-                        (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
-                        (toCurrent ? "true" : "false") + ", " + toCode + ", " + specCode + ", " + optionsCode + ")");
+                    starts.Add(property.Target.Prism is null
+                        ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
+                            targetCode + ", " + property.Property.PropertyCode + ", " +
+                            (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
+                            (toCurrent ? "true" : "false") + ", " + toCode + ", " + specCode + ", " + optionsCode + ")"
+                        : EmitPrismMotionStart(
+                            sessionName,
+                            property,
+                            targetCode,
+                            hasFrom,
+                            fromCode,
+                            toCurrent,
+                            toCode,
+                            specCode,
+                            optionsCode));
                 }
 
                 currentPostLines.Add(
@@ -1712,9 +1742,19 @@ public sealed partial class UiMarkupGenerator
                 foreach (ResolvedMotionSetProperty property in set.Properties)
                 {
                     string targetCode = EmitMotionTargetCode(property.Target, variable);
-                    assignments.Add(
-                        targetCode + ".SetValue(" + property.Property.PropertyCode + ", " +
-                        EmitMotionValue(property.Syntax.Value, property.Property, targetCode, set.Parameters) + ");");
+                    string valueCode = EmitMotionValue(
+                        property.Syntax.Value,
+                        property.Property,
+                        targetCode,
+                        set.Parameters);
+                    assignments.Add(property.Target.Prism is null
+                        ? targetCode + ".SetValue(" +
+                            property.Property.PropertyCode + ", " +
+                            valueCode + ");"
+                        : EmitPrismMotionSet(
+                            property,
+                            targetCode,
+                            valueCode));
                 }
 
                 currentPostLines.Add(
@@ -2158,6 +2198,18 @@ public sealed partial class UiMarkupGenerator
             out ResolvedMotionTarget? target,
             out PropertySpec? property)
         {
+            if (assignment.Target.IndexOf(
+                    ".prism.",
+                    StringComparison.Ordinal) >= 0)
+            {
+                return TryResolvePrismMotionTarget(
+                    applicationElement,
+                    aspect,
+                    assignment,
+                    out target,
+                    out property);
+            }
+
             target = null;
             string propertyName = assignment.Target;
             INamedTypeSymbol? targetType = ResolvePropertyOwnerType(
@@ -2268,6 +2320,11 @@ public sealed partial class UiMarkupGenerator
 
         private string EmitMotionTargetCode(ResolvedMotionTarget target, string selfVariable)
         {
+            if (target.Prism?.ElementCode is string prismElementCode)
+            {
+                return prismElementCode;
+            }
+
             string ownerCode = target.Kind switch
             {
                 ResolvedMotionTargetKind.Self or ResolvedMotionTargetKind.SelfPart => selfVariable,
@@ -2382,6 +2439,9 @@ public sealed partial class UiMarkupGenerator
                 MarkupValueKind.Double => double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out _),
                 MarkupValueKind.Integer => int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
                 MarkupValueKind.Bool => bool.TryParse(text, out _),
+                MarkupValueKind.Color =>
+                    ParseHexColor(text) is not null ||
+                    text.StartsWith("$", StringComparison.Ordinal),
                 MarkupValueKind.String => text.Length >= 2 && text[0] == '"' && text[text.Length - 1] == '"',
                 MarkupValueKind.Enum => property.ValueType.GetMembers(text).OfType<IFieldSymbol>().Any(field => field.HasConstantValue),
                 _ => text.StartsWith("$", StringComparison.Ordinal)

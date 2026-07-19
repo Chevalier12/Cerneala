@@ -270,6 +270,34 @@ public sealed class MotionValueTests
     }
 
     [Fact]
+    public void RecursiveNotificationPreservesTheOuterListenerSnapshot()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle? handle = null;
+        bool completedFromListener = false;
+        int trailingListenerNotifications = 0;
+        using IDisposable first = value.Subscribe(_ =>
+        {
+            if (!completedFromListener)
+            {
+                completedFromListener = true;
+                handle?.Complete();
+            }
+        });
+        using IDisposable second = value.Subscribe(_ =>
+            trailingListenerNotifications++);
+        handle = value.AnimateTo(
+            10d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+
+        harness.Tick(TimeSpan.FromMilliseconds(50));
+
+        Assert.True(handle.IsCompleted);
+        Assert.Equal(2, trailingListenerNotifications);
+    }
+
+    [Fact]
     public void ListenerCanRestartDuringTickWithoutOldTickCancelingNewHandle()
     {
         UIRootHarness harness = new();

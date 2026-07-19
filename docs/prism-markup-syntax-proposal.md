@@ -2,8 +2,12 @@
 
 ## Status
 
-This document is a design proposal for discussion. The syntax and runtime behavior
-described here are not implemented.
+This document remains the normative design proposal for Prism. The generated
+markup compiler, typed `PrismInstance` attachment, generated bindings, Motion
+targets, and effective-visibility lifecycle described in the relevant sections
+are implemented. Backend rendering, GPU composition, retained caching, and
+backdrop work not present in the repository remain design material rather than
+implemented claims.
 
 The proposal deliberately describes the author-facing language before prescribing
 renderer or backend implementation details. Prism markup should be easy to read even
@@ -1394,6 +1398,20 @@ The generator resolves the parameter statically:
 - the value type must match;
 - Motion must have a compatible interpolator.
 
+`$self` selects the element where the Aspect is applied. `$owner` is legal only
+inside a component template and selects that template's owner. A named prefix
+such as `$Card` must resolve in the same generated namescope. All three forms are
+lowered to direct element, node, and typed-property access; runtime name lookup is
+not used.
+
+Numbers and colors use the existing continuous Motion mixers. Boolean values
+including `Visible`, integers, and supported enum values change discretely at the
+end of the Motion interval. Other Prism value kinds are rejected as
+non-animatable at generation time. Prism Motion uses the existing scheduler,
+specs, cancellation, and execution sessions rather than introducing another
+animation engine. Writing the already-current value leaves `ValueVersion`
+unchanged and does not request a presentation invalidation.
+
 Animating a parameter changes only that parameter. It does not rebuild the
 `PrismComposition` or compile a new filter pipeline every frame.
 
@@ -1540,7 +1558,17 @@ The Prism authoring model is syntax, not resource ownership.
 
 - UI elements do not own backend textures or shaders.
 - Detaching an element releases its Prism instance bindings.
-- Hiding or collapsing an element cancels Motion targeting its Prism parameters.
+- Effective renderability includes the owner and its ancestors: `Hidden`,
+  `Collapsed`, or `IsVisible=false` makes the attachment non-renderable
+  synchronously.
+- Becoming non-renderable disconnects generated Prism binding subscriptions and
+  cancels generated Motion targeting the subtree exactly once. While
+  non-renderable, it performs no Motion tick and no Prism value invalidation.
+- Becoming renderable again creates a fresh `PrismInstance` from the same
+  generated factory, reconnects the binding factories, and reapplies current
+  base and bound values. Canceled Motion executions do not restart themselves.
+- Detach, disposal, and composition replacement follow the same cleanup policy
+  and leave every previous instance inert.
 - Temporary surfaces belong to the renderer and are pooled under explicit budgets.
 - Retained Prism results belong to the backend cache, carry no strong UI references,
   and are evicted under a separate explicit byte budget.

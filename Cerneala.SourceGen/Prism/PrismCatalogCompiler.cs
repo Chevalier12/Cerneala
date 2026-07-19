@@ -157,7 +157,21 @@ internal static class PrismCatalogCompiler
                 commonFilterProperties,
                 commonStyleProperties,
                 entries);
-            return new PrismCatalogCompilation(generatedSource, ImmutableArray<PrismCatalogIssue>.Empty);
+            PrismCatalogModel model = new(
+                catalogVersion,
+                defaultColorProfile,
+                commonCompositionProperties.ToImmutableArray(),
+                commonLayerProperties.ToImmutableArray(),
+                commonGroupProperties.ToImmutableArray(),
+                commonBackdropProperties.ToImmutableArray(),
+                commonMaskProperties.ToImmutableArray(),
+                commonFilterProperties.ToImmutableArray(),
+                commonStyleProperties.ToImmutableArray(),
+                entries.ToImmutableArray());
+            return new PrismCatalogCompilation(
+                generatedSource,
+                ImmutableArray<PrismCatalogIssue>.Empty,
+                model);
         }
     }
 
@@ -1065,7 +1079,7 @@ internal static class PrismCatalogCompiler
         return value.ToString("R", CultureInfo.InvariantCulture);
     }
 
-    private sealed class CatalogEntry
+    internal sealed class CatalogEntry
     {
         public CatalogEntry(
             int stableId,
@@ -1103,7 +1117,7 @@ internal static class PrismCatalogCompiler
         public CatalogCoverage Coverage { get; }
     }
 
-    private sealed class CatalogProperty
+    internal sealed class CatalogProperty
     {
         public CatalogProperty(
             string id,
@@ -1132,7 +1146,7 @@ internal static class PrismCatalogCompiler
         public string Unit { get; }
     }
 
-    private sealed class CatalogDomain
+    internal sealed class CatalogDomain
     {
         public CatalogDomain(string kind, double? minimum, double? maximum)
         {
@@ -1148,7 +1162,7 @@ internal static class PrismCatalogCompiler
             $"{Kind}:{(Minimum.HasValue ? FormatNumber(Minimum.Value) : string.Empty)}:{(Maximum.HasValue ? FormatNumber(Maximum.Value) : string.Empty)}";
     }
 
-    private sealed class CatalogCoverage
+    internal sealed class CatalogCoverage
     {
         public static readonly CatalogCoverage Empty = new(string.Empty, string.Empty, string.Empty, string.Empty);
 
@@ -1169,15 +1183,68 @@ internal static class PrismCatalogCompiler
 
 internal sealed class PrismCatalogCompilation
 {
-    public PrismCatalogCompilation(string? generatedSource, ImmutableArray<PrismCatalogIssue> issues)
+    public PrismCatalogCompilation(
+        string? generatedSource,
+        ImmutableArray<PrismCatalogIssue> issues,
+        PrismCatalogModel? model = null)
     {
         GeneratedSource = generatedSource;
         Issues = issues;
+        Model = model;
     }
 
     public string? GeneratedSource { get; }
 
     public ImmutableArray<PrismCatalogIssue> Issues { get; }
+
+    public PrismCatalogModel? Model { get; }
+}
+
+internal sealed class PrismCatalogModel
+{
+    public PrismCatalogModel(
+        string catalogVersion,
+        string defaultColorProfile,
+        ImmutableArray<PrismCatalogCompiler.CatalogProperty> compositionProperties,
+        ImmutableArray<PrismCatalogCompiler.CatalogProperty> layerProperties,
+        ImmutableArray<PrismCatalogCompiler.CatalogProperty> groupProperties,
+        ImmutableArray<PrismCatalogCompiler.CatalogProperty> backdropProperties,
+        ImmutableArray<PrismCatalogCompiler.CatalogProperty> maskProperties,
+        ImmutableArray<PrismCatalogCompiler.CatalogProperty> filterProperties,
+        ImmutableArray<PrismCatalogCompiler.CatalogProperty> styleProperties,
+        ImmutableArray<PrismCatalogCompiler.CatalogEntry> entries)
+    {
+        CatalogVersion = catalogVersion;
+        DefaultColorProfile = defaultColorProfile;
+        CompositionProperties = compositionProperties;
+        LayerProperties = layerProperties;
+        GroupProperties = groupProperties;
+        BackdropProperties = backdropProperties;
+        MaskProperties = maskProperties;
+        FilterProperties = filterProperties;
+        StyleProperties = styleProperties;
+        Entries = entries;
+    }
+
+    public string CatalogVersion { get; }
+
+    public string DefaultColorProfile { get; }
+
+    public ImmutableArray<PrismCatalogCompiler.CatalogProperty> CompositionProperties { get; }
+
+    public ImmutableArray<PrismCatalogCompiler.CatalogProperty> LayerProperties { get; }
+
+    public ImmutableArray<PrismCatalogCompiler.CatalogProperty> GroupProperties { get; }
+
+    public ImmutableArray<PrismCatalogCompiler.CatalogProperty> BackdropProperties { get; }
+
+    public ImmutableArray<PrismCatalogCompiler.CatalogProperty> MaskProperties { get; }
+
+    public ImmutableArray<PrismCatalogCompiler.CatalogProperty> FilterProperties { get; }
+
+    public ImmutableArray<PrismCatalogCompiler.CatalogProperty> StyleProperties { get; }
+
+    public ImmutableArray<PrismCatalogCompiler.CatalogEntry> Entries { get; }
 }
 
 internal sealed class PrismCatalogIssue

@@ -243,6 +243,15 @@ public sealed partial class UiMarkupGenerator
 
         source.Append("partial class ").Append(pair.TypeSymbol.Name).AppendLine();
         source.AppendLine("{");
+        foreach (string line in scope.PrismDeclarationLines)
+        {
+            source.Append("    ").AppendLine(line);
+        }
+        if (scope.PrismDeclarationLines.Count > 0)
+        {
+            source.AppendLine();
+        }
+
         source.Append("    private static readonly global::Cerneala.UI.Controls.Templates.ComponentTemplate<")
             .Append(typeCode)
             .Append("> __CernealaGeneratedTemplate = new(")
@@ -473,6 +482,7 @@ public sealed partial class UiMarkupGenerator
                     "templateContext",
                     "templateContext.Owner",
                     root.Name.LocalName,
+                    root,
                     userControlPair!.TypeSymbol,
                     ownerIsRoot: true,
                     registerParts: false);
