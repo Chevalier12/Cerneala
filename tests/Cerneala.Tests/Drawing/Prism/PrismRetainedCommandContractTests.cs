@@ -9,6 +9,7 @@ using Cerneala.UI.Motion.Presence;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Resources;
 using Cerneala.Tests.UI.Motion.Core;
 using Cerneala.Tests.UI.Rendering;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
@@ -119,6 +120,45 @@ public sealed class PrismRetainedCommandContractTests
         Assert.True(parentScope.CacheOwnerToken.Value > 0);
         Assert.Equal(128, cache.RootCommands[1].Color.A);
         Assert.Equal(64, cache.RootCommands[3].Color.A);
+    }
+
+    [Fact]
+    public void BuilderSnapshotsNamedMaskImagesIntoThePrismScope()
+    {
+        PrismResourceId maskId = new("CardMask");
+        TestImage image = new(8, 6);
+        UIRoot root = new(100, 100);
+        RenderingTestElement owner = new(Color.White);
+        owner.Resources.SetResource(
+            new ResourceId<ImageResource>(maskId.Key!),
+            new ImageResource(image));
+        root.VisualChildren.Add(owner);
+        using IDisposable prism = GeneratedMarkup.AttachPrism(
+            owner,
+            () => new PrismInstance(
+                PrismTestData.Composition(
+                    "Masked card",
+                    PrismTestData.Layer(
+                        1,
+                        "Content",
+                        mask: new PrismMaskDefinition(maskId)))));
+        RetainedRenderCache cache = PreparedCache(root);
+
+        new DrawCommandListBuilder().Build(
+            root,
+            cache,
+            new RenderCounters());
+
+        PrismDrawScope scope = Assert.Single(
+            cache.RootCommands.Where(
+                command =>
+                    command.Kind == DrawCommandKind.BeginPrism))
+            .PrismScope!.Value;
+        Assert.True(
+            scope.Resources.TryGetImage(
+                maskId,
+                out IDrawImage resolved));
+        Assert.Same(image, resolved);
     }
 
     [Fact]
@@ -514,4 +554,8 @@ public sealed class PrismRetainedCommandContractTests
             }
         }
     }
+
+    private sealed record TestImage(
+        int Width,
+        int Height) : IDrawImage;
 }

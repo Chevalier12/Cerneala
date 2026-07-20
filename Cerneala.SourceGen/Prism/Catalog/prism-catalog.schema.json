@@ -10,6 +10,7 @@
     "catalogVersion",
     "defaultColorProfile",
     "commonProperties",
+    "conformance",
     "entries"
   ],
   "properties": {
@@ -80,6 +81,22 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/property"
+          }
+        }
+      }
+    },
+    "conformance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "features"
+      ],
+      "properties": {
+        "features": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/conformanceFeature"
           }
         }
       }
@@ -194,6 +211,47 @@
         "documentation": {
           "type": "string",
           "minLength": 1
+        }
+      }
+    },
+    "conformanceFeature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "symbol",
+        "propertyRefs",
+        "coverage"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+        },
+        "kind": {
+          "enum": [
+            "advanced-blending",
+            "blend-if",
+            "mask",
+            "clipping"
+          ]
+        },
+        "symbol": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$"
+        },
+        "propertyRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^commonProperties\\.(?:layer|mask)\\.[A-Z][A-Za-z0-9]*$"
+          }
+        },
+        "coverage": {
+          "$ref": "#/$defs/coverage"
         }
       }
     },

@@ -11,9 +11,13 @@ using Cerneala.Tests.UI.Hosting;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Markup;
 using Cerneala.UI.Prism.Definitions;
+using Cerneala.UI.Prism.Runtime;
+using Microsoft.Xna.Framework.Graphics;
 using SkiaSharp;
 using CernealaColor = Cerneala.Drawing.Color;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.Tests.Drawing.MonoGame;
 
@@ -40,20 +44,30 @@ public sealed class PrismWindowsDxConformanceTests
         GoldenManifest manifest = ReadManifest();
         AssertManifest(manifest);
         using WindowsDxFixture fixture = new();
+        PrismScene[] scenes =
+            CreateScenes(fixture.Session.GraphicsDevice);
 
-        foreach (PrismScene scene in CreateScenes())
+        try
         {
-            RenderedScene rendered = RenderPng(fixture.Session, scene);
+            foreach (PrismScene scene in scenes)
+            {
+                RenderedScene rendered =
+                    RenderPng(fixture.Session, scene);
 
-            AssertMinimalExecution(scene, rendered);
-            AssertMatchesGolden(
-                scene,
-                rendered.Png,
-                manifest);
-            AssertSemanticImage(
-                scene,
-                rendered.Png,
-                manifest.ChannelTolerance);
+                AssertMinimalExecution(scene, rendered);
+                AssertMatchesGolden(
+                    scene,
+                    rendered.Png,
+                    manifest);
+                AssertSemanticImage(
+                    scene,
+                    rendered.Png,
+                    manifest.ChannelTolerance.Maximum);
+            }
+        }
+        finally
+        {
+            DisposeScenes(scenes);
         }
     }
 
@@ -65,58 +79,70 @@ public sealed class PrismWindowsDxConformanceTests
             return;
         }
 
-        PrismScene[] scenes = CreateScenes();
-        PrismScene nested = Assert.Single(
-            scenes,
-            scene => scene.Name == "nested-prism");
-        PrismScene transform = Assert.Single(
-            scenes,
-            scene => scene.Name == "transform");
         using WindowsDxFixture fixture = new();
+        PrismScene[] scenes =
+            CreateScenes(fixture.Session.GraphicsDevice);
 
-        RenderedScene nestedFirst = RenderPng(fixture.Session, nested);
-        RenderedScene nestedSecond = RenderPng(fixture.Session, nested);
-        RenderedScene transformFirst =
-            RenderPng(fixture.Session, transform);
-        RenderedScene transformSecond =
-            RenderPng(fixture.Session, transform);
+        try
+        {
+            PrismScene nested = Assert.Single(
+                scenes,
+                scene => scene.Name == "nested-prism");
+            PrismScene transform = Assert.Single(
+                scenes,
+                scene => scene.Name == "transform");
+            RenderedScene nestedFirst =
+                RenderPng(fixture.Session, nested);
+            RenderedScene nestedSecond =
+                RenderPng(fixture.Session, nested);
+            RenderedScene transformFirst =
+                RenderPng(fixture.Session, transform);
+            RenderedScene transformSecond =
+                RenderPng(fixture.Session, transform);
 
-        Assert.Equal(nestedFirst.GraphDump, nestedSecond.GraphDump);
-        Assert.Equal(
-            transformFirst.GraphDump,
-            transformSecond.GraphDump);
-        Assert.StartsWith(
-            "prism-execution v1",
-            nestedFirst.GraphDump,
-            StringComparison.Ordinal);
-        Assert.Contains(
-            "scope 1 commands=",
-            nestedFirst.GraphDump,
-            StringComparison.Ordinal);
-        Assert.Contains(
-            "depth=1 parent=0 owner=602",
-            nestedFirst.GraphDump,
-            StringComparison.Ordinal);
-        Assert.Contains(
-            " NestedPresent scope=1 ",
-            nestedFirst.GraphDump,
-            StringComparison.Ordinal);
-        Assert.Contains(
-            "transform=[1,0,0,1,12,8]",
-            transformFirst.GraphDump,
-            StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            "Texture2D",
-            nestedFirst.GraphDump,
-            StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            "RenderTarget2D",
-            nestedFirst.GraphDump,
-            StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            "GraphicsDevice",
-            nestedFirst.GraphDump,
-            StringComparison.Ordinal);
+            Assert.Equal(
+                nestedFirst.GraphDump,
+                nestedSecond.GraphDump);
+            Assert.Equal(
+                transformFirst.GraphDump,
+                transformSecond.GraphDump);
+            Assert.StartsWith(
+                "prism-execution v1",
+                nestedFirst.GraphDump,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "scope 1 commands=",
+                nestedFirst.GraphDump,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "depth=1 parent=0 owner=602",
+                nestedFirst.GraphDump,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                " NestedPresent scope=1 ",
+                nestedFirst.GraphDump,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "transform=[1,0,0,1,12,8]",
+                transformFirst.GraphDump,
+                StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                "Texture2D",
+                nestedFirst.GraphDump,
+                StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                "RenderTarget2D",
+                nestedFirst.GraphDump,
+                StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                "GraphicsDevice",
+                nestedFirst.GraphDump,
+                StringComparison.Ordinal);
+        }
+        finally
+        {
+            DisposeScenes(scenes);
+        }
     }
 
     [Fact]
@@ -296,20 +322,14 @@ public sealed class PrismWindowsDxConformanceTests
             counters.CpuSubmitTime > TimeSpan.Zero,
             $"{scene.Name} did not report CPU submit time.");
 
-        if (scene.Name == "mask")
-        {
-            Assert.Contains(
-                "reason=UnsupportedCapability",
-                rendered.GraphDump,
-                StringComparison.Ordinal);
-        }
-        else
-        {
-            Assert.DoesNotContain(
-                "reason=UnsupportedCapability",
-                rendered.GraphDump,
-                StringComparison.Ordinal);
-        }
+        Assert.DoesNotContain(
+            "reason=UnsupportedCapability",
+            rendered.GraphDump,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "reason=MissingResource",
+            rendered.GraphDump,
+            StringComparison.Ordinal);
     }
 
     private static void AssertSemanticImage(
@@ -412,10 +432,10 @@ public sealed class PrismWindowsDxConformanceTests
                     IsWithinTolerance(
                         actualPixel,
                         expectedPixel,
-                        manifest.ChannelTolerance),
+                        manifest.ChannelTolerance.Maximum),
                     $"{scene.Name} differs at ({x},{y}): " +
                     $"actual={actualPixel}, expected={expectedPixel}, " +
-                    $"tolerance={manifest.ChannelTolerance}.");
+                    $"tolerance={manifest.ChannelTolerance.Maximum}.");
             }
         }
     }
@@ -446,26 +466,89 @@ public sealed class PrismWindowsDxConformanceTests
         Assert.Equal(
             "IWindowScreenshotSource.RenderPng",
             manifest.CaptureApi);
+        Assert.Equal("R8G8B8A8_UNorm", manifest.PixelFormat);
         Assert.Equal("sRGB IEC61966-2.1", manifest.ColorProfile);
+        Assert.Equal("LinearSrgb", manifest.WorkingColorProfile);
         Assert.Equal(
-            "straight RGBA PNG; premultiplied-alpha compositor inputs",
+            "straight RGBA PNG output; premultiplied linear-light compositor inputs",
             manifest.AlphaConvention);
-        Assert.Equal(2, manifest.ChannelTolerance);
+        Assert.Equal(12648430, manifest.Seed);
+        Assert.Equal(2, manifest.ChannelTolerance.Red);
+        Assert.Equal(2, manifest.ChannelTolerance.Green);
+        Assert.Equal(2, manifest.ChannelTolerance.Blue);
+        Assert.Equal(2, manifest.ChannelTolerance.Alpha);
+        Assert.Equal(
+            "Direct3D 11",
+            manifest.SupportedHardware.GraphicsApi);
+        Assert.Equal(
+            "10_0",
+            manifest.SupportedHardware.MinimumFeatureLevel);
+        Assert.Equal(
+            "ps_4_0",
+            manifest.SupportedHardware.ShaderProfile);
+        Assert.Equal(
+            "WHQL-certified or current vendor production driver",
+            manifest.SupportedHardware.DriverPolicy);
         Assert.Equal(Width, manifest.Width);
         Assert.Equal(Height, manifest.Height);
     }
 
-    private static PrismScene[] CreateScenes()
+    private static PrismScene[] CreateScenes(
+        GraphicsDevice graphicsDevice)
     {
         return
         [
             CreateNormalBlendScene(),
             CreateOpacityScene(),
             CreateFillScene(),
-            CreateMaskScene(),
+            CreateMaskScene(graphicsDevice),
             CreateClipScene(),
             CreateNestedScene(),
-            CreateTransformScene()
+            CreateTransformScene(),
+            CreateBlendCombinationScene(graphicsDevice),
+            CreateMaskTransformScene(graphicsDevice),
+            CreateClippingChainScene(),
+            CreateNestedGroupsScene(),
+            CreateStyleScene(
+                graphicsDevice,
+                PrismStyleId.DropShadow,
+                "style-drop-shadow"),
+            CreateStyleScene(
+                graphicsDevice,
+                PrismStyleId.InnerShadow,
+                "style-inner-shadow"),
+            CreateStyleScene(
+                graphicsDevice,
+                PrismStyleId.OuterGlow,
+                "style-outer-glow"),
+            CreateStyleScene(
+                graphicsDevice,
+                PrismStyleId.InnerGlow,
+                "style-inner-glow"),
+            CreateStyleScene(
+                graphicsDevice,
+                PrismStyleId.BevelEmboss,
+                "style-bevel-emboss"),
+            CreateStyleScene(
+                graphicsDevice,
+                PrismStyleId.Satin,
+                "style-satin"),
+            CreateStyleScene(
+                graphicsDevice,
+                PrismStyleId.ColorOverlay,
+                "style-color-overlay"),
+            CreateStyleScene(
+                graphicsDevice,
+                PrismStyleId.GradientOverlay,
+                "style-gradient-overlay"),
+            CreateStyleScene(
+                graphicsDevice,
+                PrismStyleId.PatternOverlay,
+                "style-pattern-overlay"),
+            CreateStyleScene(
+                graphicsDevice,
+                PrismStyleId.Stroke,
+                "style-stroke")
         ];
     }
 
@@ -524,14 +607,32 @@ public sealed class PrismWindowsDxConformanceTests
             foregroundY: 18);
     }
 
-    private static PrismScene CreateMaskScene()
+    private static PrismScene CreateMaskScene(
+        GraphicsDevice graphicsDevice)
     {
+        ImageResource resource = CreateImageResource(
+            graphicsDevice,
+            "ConformanceMask",
+            static (x, y) =>
+            {
+                float horizontal = x / (float)(Width - 1);
+                float vertical = y / (float)(Height - 1);
+                byte alpha = ToByte(
+                    Math.Clamp(
+                        (horizontal * 0.75f) +
+                        (vertical * 0.25f),
+                        0,
+                        1));
+                return new XnaColor(alpha, alpha, alpha, alpha);
+            });
         PrismMaskDefinition mask = new(
-            new PrismResourceId(7001),
+            resource.Id,
             density: 0.65f);
         PrismDrawScope scope = CreateScope(
             "Mask",
             ownerToken: 401,
+            Matrix3x2.Identity,
+            resource.Resources,
             Layer(1, "Masked layer", mask: mask));
         return BuildScene(
             "mask",
@@ -540,9 +641,10 @@ public sealed class PrismWindowsDxConformanceTests
                 RedRectangle(),
                 BlueRectangle(),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 2,
+            expectedFallbackCount: 1,
             foregroundX: 20,
-            foregroundY: 18);
+            foregroundY: 18,
+            ownedResource: resource.Image);
     }
 
     private static PrismScene CreateClipScene()
@@ -620,15 +722,322 @@ public sealed class PrismWindowsDxConformanceTests
             backgroundY: 12);
     }
 
+    private static PrismScene CreateBlendCombinationScene(
+        GraphicsDevice graphicsDevice)
+    {
+        ImageResource resource = CreateImageResource(
+            graphicsDevice,
+            "BlendCombinationMask",
+            static (x, y) =>
+            {
+                float centerX = Width * 0.52f;
+                float centerY = Height * 0.48f;
+                float dx = (x - centerX) / (Width * 0.55f);
+                float dy = (y - centerY) / (Height * 0.7f);
+                byte alpha = ToByte(
+                    Math.Clamp(
+                        1 - MathF.Sqrt((dx * dx) + (dy * dy)),
+                        0,
+                        1));
+                return new XnaColor(alpha, alpha, alpha, alpha);
+            });
+        PrismMaskDefinition mask = new(
+            resource.Id,
+            density: 0.72f,
+            feather: 1.5f);
+        PrismLayerDefinition clipped = Layer(
+            11,
+            "Masked vivid-light clip",
+            opacity: 0.82f,
+            fill: 0.68f,
+            mask: mask,
+            clipToBelow: true,
+            blendMode: PrismBlendMode.VividLight,
+            styles:
+            [
+                new PrismStyleDefinition(
+                    PrismStyleId.DropShadow)
+            ]);
+        PrismGroupDefinition isolated = new(
+            new PrismNodeId(10),
+            "Isolated blend group",
+            [
+                clipped,
+                Layer(
+                    12,
+                    "Multiply clip base",
+                    blendMode: PrismBlendMode.Multiply)
+            ],
+            opacity: 0.88f,
+            blendMode: PrismBlendMode.Normal);
+        PrismDrawScope scope = CreateScope(
+            "Blend combination",
+            ownerToken: 801,
+            Matrix3x2.Identity,
+            resource.Resources,
+            isolated,
+            Layer(
+                2,
+                "Screen root base",
+                blendMode: PrismBlendMode.Screen));
+        return BuildScene(
+            "blend-combination",
+            Commands(
+                DrawCommand.BeginPrism(scope),
+                DrawCommand.FillRectangle(
+                    new DrawRect(8, 8, 58, 34),
+                    new CernealaColor(224, 58, 92, 220)),
+                DrawCommand.FillRectangle(
+                    new DrawRect(34, 20, 50, 34),
+                    new CernealaColor(43, 170, 224, 196)),
+                DrawCommand.FillRectangle(
+                    new DrawRect(20, 36, 58, 20),
+                    new CernealaColor(238, 193, 51, 184)),
+                DrawCommand.EndPrism()),
+            expectedFallbackCount: 3,
+            foregroundX: 24,
+            foregroundY: 18,
+            ownedResource: resource.Image);
+    }
+
+    private static PrismScene CreateMaskTransformScene(
+        GraphicsDevice graphicsDevice)
+    {
+        ImageResource resource = CreateImageResource(
+            graphicsDevice,
+            "TransformedMask",
+            static (x, y) =>
+            {
+                bool high =
+                    ((x / 12) + (y / 10)) % 2 == 0;
+                byte value = high ? (byte)224 : (byte)36;
+                return new XnaColor(
+                    value,
+                    value,
+                    value,
+                    byte.MaxValue);
+            });
+        PrismMaskDefinition mask = new(
+            resource.Id,
+            channel: PrismMaskChannel.Luminance,
+            feather: 2,
+            density: 0.8f,
+            invert: true);
+        PrismDrawScope scope = CreateScope(
+            "Mask transform",
+            ownerToken: 901,
+            Matrix3x2.CreateTranslation(12, 8),
+            resource.Resources,
+            Layer(1, "Transformed mask layer", mask: mask));
+        return BuildScene(
+            "mask-transform",
+            Commands(
+                DrawCommand.BeginPrism(scope),
+                DrawCommand.FillRectangle(
+                    new DrawRect(10, 10, 66, 38),
+                    new CernealaColor(230, 72, 96)),
+                DrawCommand.FillRectangle(
+                    new DrawRect(38, 28, 46, 26),
+                    new CernealaColor(48, 174, 219, 210)),
+                DrawCommand.EndPrism()),
+            expectedFallbackCount: 1,
+            foregroundX: 30,
+            foregroundY: 24,
+            ownedResource: resource.Image);
+    }
+
+    private static PrismScene CreateClippingChainScene()
+    {
+        PrismDrawScope scope = CreateScope(
+            "Clipping chain",
+            ownerToken: 1001,
+            Layer(
+                3,
+                "Top clipped layer",
+                opacity: 0.7f,
+                clipToBelow: true,
+                blendMode: PrismBlendMode.Screen),
+            Layer(
+                2,
+                "Middle clipped layer",
+                fill: 0.55f,
+                clipToBelow: true,
+                blendMode: PrismBlendMode.Multiply),
+            Layer(
+                1,
+                "Partial alpha base",
+                opacity: 0.62f));
+        return BuildScene(
+            "clipping-chain",
+            Commands(
+                DrawCommand.BeginPrism(scope),
+                DrawCommand.FillRectangle(
+                    new DrawRect(8, 10, 58, 36),
+                    new CernealaColor(232, 63, 95, 176)),
+                DrawCommand.FillRectangle(
+                    new DrawRect(34, 22, 50, 32),
+                    new CernealaColor(47, 175, 225, 204)),
+                DrawCommand.EndPrism()),
+            expectedFallbackCount: 3,
+            foregroundX: 24,
+            foregroundY: 20);
+    }
+
+    private static PrismScene CreateNestedGroupsScene()
+    {
+        PrismGroupDefinition inner = new(
+            new PrismNodeId(20),
+            "Inner isolated group",
+            [
+                Layer(
+                    21,
+                    "Inner top",
+                    fill: 0.65f,
+                    blendMode: PrismBlendMode.Overlay),
+                Layer(
+                    22,
+                    "Inner base",
+                    opacity: 0.8f,
+                    blendMode: PrismBlendMode.Multiply)
+            ],
+            opacity: 0.82f,
+            blendMode: PrismBlendMode.Normal);
+        PrismGroupDefinition outer = new(
+            new PrismNodeId(10),
+            "Outer pass-through group",
+            [
+                inner,
+                Layer(
+                    11,
+                    "Outer base",
+                    blendMode: PrismBlendMode.Screen)
+            ],
+            opacity: 0.9f,
+            blendMode: PrismBlendMode.PassThrough);
+        PrismDrawScope scope = CreateScope(
+            "Nested groups",
+            ownerToken: 1101,
+            outer);
+        return BuildScene(
+            "nested-groups",
+            Commands(
+                DrawCommand.BeginPrism(scope),
+                DrawCommand.FillRectangle(
+                    new DrawRect(8, 8, 64, 38),
+                    new CernealaColor(226, 61, 91, 218)),
+                DrawCommand.FillRectangle(
+                    new DrawRect(30, 22, 54, 34),
+                    new CernealaColor(46, 171, 222, 194)),
+                DrawCommand.FillRectangle(
+                    new DrawRect(18, 38, 62, 18),
+                    new CernealaColor(239, 194, 53, 180)),
+                DrawCommand.EndPrism()),
+            expectedFallbackCount: 3,
+            foregroundX: 22,
+            foregroundY: 18);
+    }
+
+    private static PrismScene CreateStyleScene(
+        GraphicsDevice graphicsDevice,
+        PrismStyleId style,
+        string sceneName)
+    {
+        PrismLayerDefinition layer = Layer(
+            1,
+            style.ToString(),
+            styles:
+            [
+                new PrismStyleDefinition(style)
+            ]);
+        ImageResource? resource = null;
+        PrismDrawScope scope;
+        if (style == PrismStyleId.PatternOverlay)
+        {
+            resource = CreateImageResource(
+                graphicsDevice,
+                "ConformanceStylePattern",
+                static (x, y) =>
+                {
+                    bool first =
+                        ((x / 8) + (y / 8)) % 2 == 0;
+                    return first
+                        ? new XnaColor(35, 202, 157)
+                        : new XnaColor(244, 188, 52);
+                });
+            scope = CreateScope(
+                style.ToString(),
+                ownerToken: 1200 + (int)style,
+                Matrix3x2.Identity,
+                resource.Resources,
+                layer);
+        }
+        else
+        {
+            scope = CreateScope(
+                style.ToString(),
+                ownerToken: 1200 + (int)style,
+                layer);
+        }
+
+        PrismStyleState state = Assert.Single(
+            scope.Instance
+                .GetLayerState(layer.Id)
+                .Styles);
+        PrismCatalogEntryDescriptor entry =
+            PrismCatalogRuntime.GetEntry((int)style);
+        if (resource is not null)
+        {
+            PrismCatalogPropertyDescriptor pattern =
+                entry.Properties.Single(property =>
+                    property.Name == "Pattern");
+            GeneratedMarkup.SetPrismStyleResource(
+                state,
+                entry.StableId,
+                pattern.TypeSlot,
+                resource.Id);
+        }
+        else if (style is PrismStyleId.DropShadow or
+            PrismStyleId.Stroke)
+        {
+            PrismCatalogPropertyDescriptor color =
+                entry.Properties.Single(property =>
+                    property.Name == "Color");
+            GeneratedMarkup.SetPrismStyleColor(
+                state,
+                entry.StableId,
+                color.TypeSlot,
+                style == PrismStyleId.DropShadow
+                    ? new CernealaColor(74, 218, 188)
+                    : new CernealaColor(255, 208, 62));
+        }
+
+        return BuildScene(
+            sceneName,
+            Commands(
+                DrawCommand.BeginPrism(scope),
+                DrawCommand.FillRectangle(
+                    new DrawRect(20, 14, 52, 36),
+                    new CernealaColor(222, 69, 83)),
+                DrawCommand.FillRectangle(
+                    new DrawRect(58, 32, 28, 24),
+                    new CernealaColor(56, 129, 229, 210)),
+                DrawCommand.EndPrism()),
+            expectedFallbackCount: 1,
+            foregroundX: 28,
+            foregroundY: 22,
+            ownedResource: resource?.Image);
+    }
+
     private static PrismDrawScope CreateScope(
         string name,
         long ownerToken,
-        params PrismLayerDefinition[] layers)
+        params PrismNodeDefinition[] layers)
     {
         return CreateScope(
             name,
             ownerToken,
             Matrix3x2.Identity,
+            resources: null,
             layers);
     }
 
@@ -636,17 +1045,33 @@ public sealed class PrismWindowsDxConformanceTests
         string name,
         long ownerToken,
         Matrix3x2 transform,
-        params PrismLayerDefinition[] layers)
+        params PrismNodeDefinition[] layers)
+    {
+        return CreateScope(
+            name,
+            ownerToken,
+            transform,
+            resources: null,
+            layers);
+    }
+
+    private static PrismDrawScope CreateScope(
+        string name,
+        long ownerToken,
+        Matrix3x2 transform,
+        PrismDrawResources? resources,
+        params PrismNodeDefinition[] layers)
     {
         PrismCompositionDefinition composition = new(
             name,
             layers,
-            workingColorProfile: PrismColorProfile.Srgb);
+            workingColorProfile: PrismColorProfile.LinearSrgb);
         return PrismTestData.Scope(
             composition,
             ownerToken,
             ScopeBounds,
-            transform);
+            transform,
+            resources: resources);
     }
 
     private static PrismLayerDefinition Layer(
@@ -655,7 +1080,9 @@ public sealed class PrismWindowsDxConformanceTests
         float opacity = 1,
         float fill = 1,
         PrismMaskDefinition? mask = null,
-        bool clipToBelow = false)
+        bool clipToBelow = false,
+        PrismBlendMode blendMode = PrismBlendMode.Normal,
+        IEnumerable<PrismStyleDefinition>? styles = null)
     {
         return new PrismLayerDefinition(
             new PrismNodeId(id),
@@ -664,10 +1091,11 @@ public sealed class PrismWindowsDxConformanceTests
             [
                 new PrismFilterDefinition(PrismFilterId.Blur)
             ],
+            styles: styles,
             mask: mask,
             opacity: opacity,
             fill: fill,
-            blendMode: PrismBlendMode.Normal,
+            blendMode: blendMode,
             clipToBelow: clipToBelow);
     }
 
@@ -678,7 +1106,8 @@ public sealed class PrismWindowsDxConformanceTests
         int foregroundX,
         int foregroundY,
         int backgroundX = 2,
-        int backgroundY = 2)
+        int backgroundY = 2,
+        IDisposable? ownedResource = null)
     {
         PrismFrameAnalysis analysis =
             new PrismFrameAnalyzer().Analyze(commands);
@@ -695,7 +1124,52 @@ public sealed class PrismWindowsDxConformanceTests
             foregroundX,
             foregroundY,
             backgroundX,
-            backgroundY);
+            backgroundY,
+            ownedResource);
+    }
+
+    private static ImageResource CreateImageResource(
+        GraphicsDevice graphicsDevice,
+        string key,
+        Func<int, int, XnaColor> pixelFactory)
+    {
+        Texture2D texture = new(
+            graphicsDevice,
+            Width,
+            Height,
+            false,
+            SurfaceFormat.Color);
+        XnaColor[] pixels = new XnaColor[Width * Height];
+        for (int y = 0; y < Height; y++)
+        {
+            for (int x = 0; x < Width; x++)
+            {
+                pixels[(y * Width) + x] =
+                    pixelFactory(x, y);
+            }
+        }
+        texture.SetData(pixels);
+
+        MonoGameImage image = new(texture);
+        PrismResourceId id = new(key);
+        PrismDrawResources resources = PrismDrawResources.Create(
+            [new PrismDrawImageResource(id, image)]);
+        return new ImageResource(id, resources, image);
+    }
+
+    private static void DisposeScenes(
+        IEnumerable<PrismScene> scenes)
+    {
+        foreach (PrismScene scene in scenes)
+        {
+            scene.Dispose();
+        }
+    }
+
+    private static byte ToByte(float value)
+    {
+        return (byte)MathF.Round(
+            Math.Clamp(value, 0, 1) * byte.MaxValue);
     }
 
     private static DrawCommandList Commands(
@@ -772,7 +1246,19 @@ public sealed class PrismWindowsDxConformanceTests
         int ForegroundX,
         int ForegroundY,
         int BackgroundX,
-        int BackgroundY);
+        int BackgroundY,
+        IDisposable? OwnedResource = null) : IDisposable
+    {
+        public void Dispose()
+        {
+            OwnedResource?.Dispose();
+        }
+    }
+
+    private sealed record ImageResource(
+        PrismResourceId Id,
+        PrismDrawResources Resources,
+        MonoGameImage Image);
 
     private sealed record RenderedScene(
         byte[] Png,
@@ -785,15 +1271,49 @@ public sealed class PrismWindowsDxConformanceTests
 
         public string CaptureApi { get; init; } = string.Empty;
 
+        public string PixelFormat { get; init; } = string.Empty;
+
         public string ColorProfile { get; init; } = string.Empty;
+
+        public string WorkingColorProfile { get; init; } = string.Empty;
 
         public string AlphaConvention { get; init; } = string.Empty;
 
-        public int ChannelTolerance { get; init; }
+        public int Seed { get; init; }
+
+        public ChannelTolerance ChannelTolerance { get; init; } = new();
+
+        public SupportedHardware SupportedHardware { get; init; } = new();
 
         public int Width { get; init; }
 
         public int Height { get; init; }
+    }
+
+    private sealed class ChannelTolerance
+    {
+        public int Red { get; init; }
+
+        public int Green { get; init; }
+
+        public int Blue { get; init; }
+
+        public int Alpha { get; init; }
+
+        public int Maximum => Math.Max(
+            Math.Max(Red, Green),
+            Math.Max(Blue, Alpha));
+    }
+
+    private sealed class SupportedHardware
+    {
+        public string GraphicsApi { get; init; } = string.Empty;
+
+        public string MinimumFeatureLevel { get; init; } = string.Empty;
+
+        public string ShaderProfile { get; init; } = string.Empty;
+
+        public string DriverPolicy { get; init; } = string.Empty;
     }
 
     private sealed class WindowsDxFixture : IDisposable

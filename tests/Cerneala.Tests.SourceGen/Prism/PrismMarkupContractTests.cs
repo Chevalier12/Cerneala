@@ -194,6 +194,10 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains("PrismFilterDefinition", generated, StringComparison.Ordinal);
         Assert.Contains("PrismStyleDefinition", generated, StringComparison.Ordinal);
         Assert.Contains("PrismMaskDefinition", generated, StringComparison.Ordinal);
+        Assert.Contains(
+            "new global::Cerneala.UI.Prism.Definitions.PrismResourceId(\"MaskImage\")",
+            generated,
+            StringComparison.Ordinal);
         Assert.Contains("PrismColorProfile.DisplayP3", generated, StringComparison.Ordinal);
         Assert.Contains("PrismBlendMode.Screen", generated, StringComparison.Ordinal);
         Assert.True(

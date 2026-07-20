@@ -551,10 +551,8 @@ public sealed partial class UiMarkupGenerator
                         return "default(global::Cerneala.UI.Prism.Definitions.PrismResourceId)";
                     }
 
-                    uint hash = Fnv1a32(value.ResourceName ?? value.Syntax.Text);
-                    int id = (int)(hash & 0x7fffffff);
                     return "new global::Cerneala.UI.Prism.Definitions.PrismResourceId(" +
-                        (id == 0 ? 1 : id).ToString(CultureInfo.InvariantCulture) + ")";
+                        Literal(value.ResourceName ?? value.Syntax.Text) + ")";
                 default:
                     throw new InvalidOperationException("Unknown bound Prism value type.");
             }

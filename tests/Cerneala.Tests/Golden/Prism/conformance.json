@@ -1,9 +1,23 @@
 {
   "platform": "WindowsDX",
   "captureApi": "IWindowScreenshotSource.RenderPng",
+  "pixelFormat": "R8G8B8A8_UNorm",
   "colorProfile": "sRGB IEC61966-2.1",
-  "alphaConvention": "straight RGBA PNG; premultiplied-alpha compositor inputs",
-  "channelTolerance": 2,
+  "workingColorProfile": "LinearSrgb",
+  "alphaConvention": "straight RGBA PNG output; premultiplied linear-light compositor inputs",
+  "seed": 12648430,
+  "channelTolerance": {
+    "red": 2,
+    "green": 2,
+    "blue": 2,
+    "alpha": 2
+  },
+  "supportedHardware": {
+    "graphicsApi": "Direct3D 11",
+    "minimumFeatureLevel": "10_0",
+    "shaderProfile": "ps_4_0",
+    "driverPolicy": "WHQL-certified or current vendor production driver"
+  },
   "width": 96,
   "height": 64
 }

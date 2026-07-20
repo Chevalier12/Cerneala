@@ -109,8 +109,10 @@ public sealed class PrismGraphBuilder
                     analyzedScope.DependencyStamp.CacheOwnerToken,
                     compositionSettings,
                     analyzedScope.Bounds,
+                    analyzedScope.Scope.ControlBounds,
                     analyzedScope.Scope.EffectiveTransform,
                     analyzedScope.Scope.PixelScale,
+                    analyzedScope.Scope.Resources,
                     null);
             }
 
@@ -167,8 +169,10 @@ public sealed class PrismGraphBuilder
                 analyzedScope.DependencyStamp.CacheOwnerToken,
                 compositionSettings,
                 analyzedScope.Bounds,
+                analyzedScope.Scope.ControlBounds,
                 analyzedScope.Scope.EffectiveTransform,
                 analyzedScope.Scope.PixelScale,
+                analyzedScope.Scope.Resources,
                 output);
         }
 
@@ -268,7 +272,8 @@ public sealed class PrismGraphBuilder
                     definitionOrders[nodeDefinition.Id],
                     $"{diagnosticNames[nodeDefinition.Id]}/composite",
                     Dependencies(),
-                    blendMode: built.BlendMode);
+                    blendMode: built.BlendMode,
+                    layerSettings: built.LayerSettings);
                 if (current is not null)
                 {
                     AddEdge(
@@ -325,6 +330,8 @@ public sealed class PrismGraphBuilder
                 return null;
             }
 
+            PrismGraphLayerSettings layerSettings =
+                SnapshotLayerSettings(state);
             PrismGraphNode layerNode = AddNode(
                 PrismGraphNodeKind.Layer,
                 layer.Id,
@@ -333,10 +340,10 @@ public sealed class PrismGraphBuilder
                 diagnosticNames[layer.Id],
                 Dependencies(),
                 blendMode: state.BlendMode,
-                layerSettings: SnapshotLayerSettings(state));
+                layerSettings: layerSettings);
             AddEdge(controlSource, layerNode.Id, PrismGraphEdgeKind.Control);
 
-            PrismGraphNodeId current = ApplyFilters(
+            PrismGraphNodeId preparedContent = ApplyFilters(
                 layer.Id,
                 state.Filters,
                 layerNode.Id);
@@ -348,8 +355,15 @@ public sealed class PrismGraphBuilder
                 $"{diagnosticNames[layer.Id]}/fill",
                 Dependencies(),
                 amount: state.Fill);
-            AddEdge(current, fill.Id, PrismGraphEdgeKind.Content);
-            current = ApplyStyles(layer.Id, state.Styles, fill.Id);
+            AddEdge(
+                preparedContent,
+                fill.Id,
+                PrismGraphEdgeKind.Content);
+            PrismGraphNodeId current = ApplyStyles(
+                layer.Id,
+                state.Styles,
+                fill.Id,
+                preparedContent);
             current = ApplyMask(layer, state.Mask, current);
             PrismGraphNode opacity = AddNode(
                 PrismGraphNodeKind.Opacity,
@@ -365,7 +379,8 @@ public sealed class PrismGraphBuilder
                 opacity.Id,
                 state.BlendMode,
                 state.ClipToBelow,
-                ConsumesBackground: false);
+                ConsumesBackground: false,
+                layerSettings);
         }
 
         private NodeBuildResult? BuildGroup(
@@ -406,8 +421,16 @@ public sealed class PrismGraphBuilder
                     PrismGraphEdgeKind.CompositeBackground);
             }
 
-            PrismGraphNodeId current = ApplyFilters(group.Id, state.Filters, groupNode.Id);
-            current = ApplyStyles(group.Id, state.Styles, current);
+            PrismGraphNodeId preparedContent =
+                ApplyFilters(
+                    group.Id,
+                    state.Filters,
+                    groupNode.Id);
+            PrismGraphNodeId current = ApplyStyles(
+                group.Id,
+                state.Styles,
+                preparedContent,
+                preparedContent);
             current = ApplyMask(group, state.Mask, current);
             PrismGraphNode opacity = AddNode(
                 PrismGraphNodeKind.Opacity,
@@ -453,7 +476,8 @@ public sealed class PrismGraphBuilder
                 output,
                 state.BlendMode,
                 ClipToBelow: false,
-                ConsumesBackground: isPassThrough);
+                ConsumesBackground: isPassThrough,
+                LayerSettings: null);
         }
 
         private PrismGraphNodeId? BuildBackdrop()
@@ -513,11 +537,15 @@ public sealed class PrismGraphBuilder
                 colorProfile: colorProfile);
             AddEdge(input.Id, conversion.Id, PrismGraphEdgeKind.Backdrop);
 
-            PrismGraphNodeId current = ApplyFilters(
+            PrismGraphNodeId preparedContent = ApplyFilters(
                 backdropDefinition.Id,
                 state.Filters,
                 conversion.Id);
-            current = ApplyStyles(backdropDefinition.Id, state.Styles, current);
+            PrismGraphNodeId current = ApplyStyles(
+                backdropDefinition.Id,
+                state.Styles,
+                preparedContent,
+                preparedContent);
             current = ApplyMask(backdropDefinition, state.Mask, current);
             PrismGraphNode opacity = AddNode(
                 PrismGraphNodeKind.Opacity,
@@ -615,7 +643,8 @@ public sealed class PrismGraphBuilder
         private PrismGraphNodeId ApplyStyles(
             PrismNodeId definitionNodeId,
             IReadOnlyList<PrismStyleState> states,
-            PrismGraphNodeId input)
+            PrismGraphNodeId input,
+            PrismGraphNodeId styleSource)
         {
             PrismNodeDefinition nodeDefinition = DefinitionNode(definitionNodeId);
             IReadOnlyList<PrismStyleDefinition> definitions = nodeDefinition switch
@@ -631,7 +660,7 @@ public sealed class PrismGraphBuilder
             }
 
             PrismGraphNodeId current = input;
-            for (int index = 0; index < states.Count; index++)
+            for (int index = states.Count - 1; index >= 0; index--)
             {
                 PrismStyleState state = states[index];
                 if (!state.Visible)
@@ -651,6 +680,10 @@ public sealed class PrismGraphBuilder
                     parameters,
                     style: state.Style);
                 AddEdge(current, style.Id, PrismGraphEdgeKind.Content);
+                AddEdge(
+                    styleSource,
+                    style.Id,
+                    PrismGraphEdgeKind.StyleSource);
                 current = style.Id;
             }
 
@@ -681,6 +714,21 @@ public sealed class PrismGraphBuilder
             {
                 throw new InvalidOperationException($"Unknown mask channel '{state.Channel}'.");
             }
+            if (!float.IsFinite(state.Feather) || state.Feather < 0)
+            {
+                throw new InvalidOperationException(
+                    "Mask feather must be finite and non-negative.");
+            }
+            if (!float.IsFinite(state.Density) ||
+                state.Density is < 0 or > 1)
+            {
+                throw new InvalidOperationException(
+                    "Mask density must be in [0, 1].");
+            }
+            if (state.Density == 0)
+            {
+                return input;
+            }
 
             PrismGraphNode mask = AddNode(
                 PrismGraphNodeKind.Mask,
@@ -692,12 +740,49 @@ public sealed class PrismGraphBuilder
                     new PrismGraphDependency(
                         PrismGraphDependencyKind.Resource,
                         definitionNode.Id.Value,
-                        state.Image.Value)),
+                        analyzedScope.Scope.Resources.TryGetVersion(
+                            state.Image,
+                            out long resourceVersion)
+                            ? resourceVersion
+                            : 0)),
                 resource: state.Image,
                 maskChannel: state.Channel,
                 feather: state.Feather,
                 density: state.Density,
-                invert: state.Invert);
+                invert: state.Invert,
+                maskPass: PrismMaskPass.Extract);
+            PrismGraphNodeId maskOutput = mask.Id;
+            if (state.Feather > 0)
+            {
+                PrismGraphNode horizontal = AddNode(
+                    PrismGraphNodeKind.Mask,
+                    definitionNode.Id,
+                    ordinal: 1,
+                    definitionOrders[definitionNode.Id],
+                    $"{diagnosticNames[definitionNode.Id]}/mask-feather-x",
+                    Dependencies(),
+                    feather: state.Feather,
+                    maskPass: PrismMaskPass.FeatherHorizontal);
+                AddEdge(
+                    maskOutput,
+                    horizontal.Id,
+                    PrismGraphEdgeKind.Content);
+                PrismGraphNode vertical = AddNode(
+                    PrismGraphNodeKind.Mask,
+                    definitionNode.Id,
+                    ordinal: 2,
+                    definitionOrders[definitionNode.Id],
+                    $"{diagnosticNames[definitionNode.Id]}/mask-feather-y",
+                    Dependencies(),
+                    feather: state.Feather,
+                    density: state.Density,
+                    maskPass: PrismMaskPass.FeatherVertical);
+                AddEdge(
+                    horizontal.Id,
+                    vertical.Id,
+                    PrismGraphEdgeKind.Content);
+                maskOutput = vertical.Id;
+            }
             PrismGraphNode composite = AddNode(
                 PrismGraphNodeKind.Composite,
                 definitionNode.Id,
@@ -706,7 +791,10 @@ public sealed class PrismGraphBuilder
                 $"{diagnosticNames[definitionNode.Id]}/mask-composite",
                 Dependencies());
             AddEdge(input, composite.Id, PrismGraphEdgeKind.Content);
-            AddEdge(mask.Id, composite.Id, PrismGraphEdgeKind.MaskAlpha);
+            AddEdge(
+                maskOutput,
+                composite.Id,
+                PrismGraphEdgeKind.MaskAlpha);
             return composite.Id;
         }
 
@@ -729,6 +817,7 @@ public sealed class PrismGraphBuilder
             float? feather = null,
             float? density = null,
             bool? invert = null,
+            PrismMaskPass? maskPass = null,
             PrismGraphLayerSettings? layerSettings = null)
         {
             PrismGraphNodeId id = new(
@@ -763,6 +852,7 @@ public sealed class PrismGraphBuilder
                 feather,
                 density,
                 invert,
+                maskPass,
                 layerSettings);
             nodes.Add(node);
             return node;
@@ -841,12 +931,14 @@ public sealed class PrismGraphBuilder
             int stableId,
             ImmutableArray<PrismGraphParameter> parameters)
         {
+            PrismCatalogEntryDescriptor entry =
+                PrismCatalogRuntime.GetEntry(stableId);
             List<PrismGraphDependency> additional =
             [
                 new PrismGraphDependency(
                     PrismGraphDependencyKind.CatalogEntry,
                     stableId,
-                    Version: 1)
+                    entry.DependencyVersion)
             ];
             foreach (PrismGraphParameter parameter in parameters)
             {
@@ -857,7 +949,11 @@ public sealed class PrismGraphBuilder
                         new PrismGraphDependency(
                             PrismGraphDependencyKind.Resource,
                             ((long)stableId << 32) | (uint)parameter.Index,
-                            parameter.ResourceValue.Value));
+                            analyzedScope.Scope.Resources.TryGetVersion(
+                                parameter.ResourceValue,
+                                out long resourceVersion)
+                                ? resourceVersion
+                                : 0));
                 }
             }
             return Dependencies(additional.ToArray());
@@ -1182,6 +1278,7 @@ public sealed class PrismGraphBuilder
             PrismGraphNodeId Alpha,
             PrismBlendMode BlendMode,
             bool ClipToBelow,
-            bool ConsumesBackground);
+            bool ConsumesBackground,
+            PrismGraphLayerSettings? LayerSettings);
     }
 }

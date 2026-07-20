@@ -1,10 +1,14 @@
+using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
+using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
+using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
+using Cerneala.UI.Resources;
 using NumericsMatrix3x2 = System.Numerics.Matrix3x2;
 
 namespace Cerneala.UI.Rendering;
@@ -66,7 +70,8 @@ public sealed class DrawCommandListBuilder
                 prismInstance!,
                 cacheOwnerToken,
                 elementTransform,
-                visualContentVersion: 0)));
+                visualContentVersion: 0,
+                PrismDrawResources.Empty)));
             counters.CountEmittedCommands(1);
         }
 
@@ -132,7 +137,10 @@ public sealed class DrawCommandListBuilder
                 prismInstance!,
                 cacheOwnerToken,
                 elementTransform,
-                visualContentVersion);
+                visualContentVersion,
+                ResolvePrismResources(
+                    element,
+                    prismInstance!));
             rootCommands.ReplaceAt(prismBeginIndex, DrawCommand.BeginPrism(scope));
             rootCommands.Add(DrawCommand.EndPrism());
             counters.CountEmittedCommands(1);
@@ -163,7 +171,8 @@ public sealed class DrawCommandListBuilder
         PrismInstance instance,
         PrismCacheOwnerToken cacheOwnerToken,
         Matrix3x2 effectiveTransform,
-        long visualContentVersion)
+        long visualContentVersion,
+        PrismDrawResources resources)
     {
         float pixelScale = element is UIRoot root
             ? root.Scale
@@ -174,7 +183,130 @@ public sealed class DrawCommandListBuilder
             ToDrawRect(element.ArrangedBounds),
             ToNumerics(effectiveTransform),
             pixelScale,
-            visualContentVersion);
+            visualContentVersion,
+            resources);
+    }
+
+    private static PrismDrawResources ResolvePrismResources(
+        UIElement element,
+        PrismInstance instance)
+    {
+        List<PrismDrawImageResource> resources = [];
+        HashSet<PrismResourceId> resolvedIds = [];
+        foreach (PrismNodeDefinition definition in
+            instance.Definition.Nodes)
+        {
+            ResolveNodeState(
+                instance.GetNodeState(definition.Id));
+        }
+
+        return PrismDrawResources.Create(resources);
+
+        void ResolveNodeState(PrismNodeState state)
+        {
+            switch (state)
+            {
+                case PrismLayerState layer
+                    when layer.Visible && layer.Opacity > 0:
+                    ResolveMask(layer.Mask);
+                    ResolveStyles(layer.Styles);
+                    break;
+                case PrismGroupState group
+                    when group.Visible && group.Opacity > 0:
+                    ResolveMask(group.Mask);
+                    ResolveStyles(group.Styles);
+                    foreach (PrismNodeState child in group.Children)
+                    {
+                        ResolveNodeState(child);
+                    }
+                    break;
+                case PrismBackdropState backdrop
+                    when backdrop.Visible && backdrop.Opacity > 0:
+                    ResolveMask(backdrop.Mask);
+                    ResolveStyles(backdrop.Styles);
+                    break;
+            }
+        }
+
+        void ResolveMask(PrismMaskState? mask)
+        {
+            if (mask is null ||
+                mask.Density <= 0 ||
+                mask.Image.Value <= 0)
+            {
+                return;
+            }
+
+            ResolveImage(mask.Image);
+        }
+
+        void ResolveStyles(
+            IReadOnlyList<PrismStyleState> styles)
+        {
+            foreach (PrismStyleState style in styles)
+            {
+                if (!style.Visible)
+                {
+                    continue;
+                }
+
+                int stableId = (int)style.Style;
+                PrismCatalogEntryDescriptor entry =
+                    PrismCatalogRuntime.GetEntry(stableId);
+                foreach (PrismCatalogPropertyDescriptor property in
+                    entry.Properties)
+                {
+                    if (property.ValueType !=
+                        PrismCatalogValueType.Resource)
+                    {
+                        continue;
+                    }
+
+                    PrismResourceId id = style.GetValue(
+                        new PrismParameterKey<PrismResourceId>(
+                            stableId,
+                            property.TypeSlot));
+                    if (id.Value > 0)
+                    {
+                        ResolveImage(id);
+                    }
+                }
+            }
+        }
+
+        void ResolveImage(PrismResourceId id)
+        {
+            if (id.Key is not string key ||
+                !resolvedIds.Add(id) ||
+                !element.TryFindResource<ImageResource>(
+                    key,
+                    out ImageResource? resource))
+            {
+                return;
+            }
+
+            IDrawImage? image = resource.HasEmbeddedImage
+                ? resource.Resolve()
+                : element.Root?.ImageResourceCache?.Resolve(resource);
+            if (image is not null)
+            {
+                long version =
+                    element.Root?.ResourceDependencyTracker
+                        .GetResourceVersion(
+                            new ResourceId<ImageResource>(key)) ?? 0;
+                if (version <= 0)
+                {
+                    version = checked(
+                        (long)(uint)RuntimeHelpers.GetHashCode(
+                            image) + 1);
+                }
+                resources.Add(
+                    new PrismDrawImageResource(
+                        id,
+                        image,
+                        version));
+            }
+        }
     }
 
     private static NumericsMatrix3x2 ToNumerics(Matrix3x2 matrix)

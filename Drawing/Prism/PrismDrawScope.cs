@@ -31,8 +31,28 @@ public readonly record struct PrismDrawScope
         Matrix3x2 effectiveTransform,
         float pixelScale,
         long visualContentVersion)
+        : this(
+            instance,
+            cacheOwnerToken,
+            controlBounds,
+            effectiveTransform,
+            pixelScale,
+            visualContentVersion,
+            PrismDrawResources.Empty)
+    {
+    }
+
+    internal PrismDrawScope(
+        PrismInstance instance,
+        PrismCacheOwnerToken cacheOwnerToken,
+        DrawRect controlBounds,
+        Matrix3x2 effectiveTransform,
+        float pixelScale,
+        long visualContentVersion,
+        PrismDrawResources resources)
     {
         Instance = instance ?? throw new ArgumentNullException(nameof(instance));
+        ArgumentNullException.ThrowIfNull(resources);
         if (!float.IsFinite(pixelScale) || pixelScale <= 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -53,6 +73,7 @@ public readonly record struct PrismDrawScope
         EffectiveTransform = effectiveTransform;
         PixelScale = pixelScale;
         VisualContentVersion = visualContentVersion;
+        Resources = resources;
     }
 
     public PrismInstance Instance { get; }
@@ -72,4 +93,6 @@ public readonly record struct PrismDrawScope
     public PrismValueVersion ValueVersion => Instance.ValueVersion;
 
     public long VisualContentVersion { get; }
+
+    internal PrismDrawResources Resources { get; }
 }

@@ -5,6 +5,7 @@ internal enum PrismFallbackReason
     UnsupportedCapability,
     MissingKernel,
     MissingBackdrop,
+    MissingResource,
     InvalidColorProfile,
     SurfaceAllocationFailed,
     ShaderUnavailable

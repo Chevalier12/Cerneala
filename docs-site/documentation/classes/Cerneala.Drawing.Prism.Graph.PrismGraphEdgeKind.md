@@ -25,7 +25,9 @@ static IEnumerable<PrismGraphEdge> GetMaskInputs(PrismGraph graph) =>
 
 ## Remarks
 
-An edge runs from `Source` to `Target`. Specialized kinds keep control, backdrop, mask, clipping, group, and foreground/background inputs explicit instead of overloading a generic content edge.
+An edge runs from `Source` to `Target`. Specialized kinds keep control, prepared style source, backdrop, mask, clipping, group, and foreground/background inputs explicit instead of overloading a generic content edge.
+
+`StyleSource` preserves the prepared layer alpha before `Fill` is applied. A style node therefore receives its current composited `Content` separately from the source geometry used to produce shadows, glows, bevels, overlays, satin, and strokes.
 
 When `ClipBaseAlpha` is sourced from a `PassThroughComposite` node, it selects that boundary's local contribution alpha rather than alpha from the original incoming background.
 
@@ -34,6 +36,7 @@ When `ClipBaseAlpha` is sourced from a `PassThroughComposite` node, it selects t
 | Name | Description |
 | --- | --- |
 | `Content` | Connects the ordinary output of one operation to the next. |
+| `StyleSource` | Supplies prepared, pre-`Fill` layer content to a layer-style operation. |
 | `Control` | Connects converted retained control content to a layer. |
 | `Backdrop` | Connects a backdrop input to its color-conversion branch. |
 | `GroupContent` | Connects an assembled child stack to its group node. |

@@ -17,6 +17,7 @@ internal static class PrismCatalogCompiler
         "catalogVersion",
         "defaultColorProfile",
         "commonProperties",
+        "conformance",
         "entries");
 
     private static readonly HashSet<string> CommonPropertyFields = Set(
@@ -604,6 +605,7 @@ internal static class PrismCatalogCompiler
         source.AppendLine("    string[] Capabilities,");
         source.AppendLine("    bool Deterministic,");
         source.AppendLine("    bool Cacheable,");
+        source.AppendLine("    long DependencyVersion,");
         source.AppendLine("    PrismCatalogCoverageDescriptor Coverage);");
         source.AppendLine();
         source.AppendLine("internal static class PrismCatalogGenerated");
@@ -666,6 +668,13 @@ internal static class PrismCatalogCompiler
                 .AppendLine("],");
             source.Append("            ").Append(entry.Deterministic ? "true" : "false").AppendLine(",");
             source.Append("            ").Append(entry.Cacheable ? "true" : "false").AppendLine(",");
+            source.Append("            ")
+                .Append(
+                    ComputeEntryDependencyVersion(
+                        catalogVersion,
+                        entry)
+                    .ToString(CultureInfo.InvariantCulture))
+                .AppendLine("L,");
             source.Append("            new(\"").Append(Escape(entry.Coverage.Runtime))
                 .Append("\", \"").Append(Escape(entry.Coverage.Kernel))
                 .Append("\", \"").Append(Escape(entry.Coverage.Test))
@@ -675,6 +684,57 @@ internal static class PrismCatalogCompiler
         source.AppendLine("    ];");
         source.AppendLine("}");
         return source.ToString();
+    }
+
+    private static long ComputeEntryDependencyVersion(
+        string catalogVersion,
+        CatalogEntry entry)
+    {
+        const ulong offset = 14695981039346656037UL;
+        const ulong prime = 1099511628211UL;
+        ulong hash = offset;
+
+        Add(catalogVersion);
+        Add(entry.StableId.ToString(CultureInfo.InvariantCulture));
+        Add(entry.Id);
+        Add(entry.Symbol);
+        Add(entry.Kind);
+        Add(entry.Category);
+        Add(entry.Deterministic ? "1" : "0");
+        Add(entry.Cacheable ? "1" : "0");
+        foreach (CatalogProperty property in entry.Properties)
+        {
+            Add(property.Id);
+            Add(property.Name);
+            Add(property.ValueType);
+            Add(property.Required ? "1" : "0");
+            Add(property.DefaultValue);
+            Add(property.Domain.Canonical);
+            Add(property.Unit);
+        }
+        foreach (string capability in entry.Capabilities
+            .OrderBy(value => value, StringComparer.Ordinal))
+        {
+            Add(capability);
+        }
+
+        long version = (long)(hash & long.MaxValue);
+        return version == 0 ? 1 : version;
+
+        void Add(string? value)
+        {
+            if (value is not null)
+            {
+                foreach (char character in value)
+                {
+                    hash ^= character;
+                    hash *= prime;
+                }
+            }
+
+            hash ^= 0xFF;
+            hash *= prime;
+        }
     }
 
     private static void AppendDefinitionDefaults(

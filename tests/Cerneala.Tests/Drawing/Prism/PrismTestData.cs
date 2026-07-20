@@ -43,7 +43,8 @@ internal static class PrismTestData
         DrawRect bounds = default,
         Matrix3x2 transform = default,
         float pixelScale = 1,
-        long visualContentVersion = 1)
+        long visualContentVersion = 1,
+        PrismDrawResources? resources = null)
     {
         if (bounds == default)
         {
@@ -61,7 +62,8 @@ internal static class PrismTestData
             bounds,
             transform,
             pixelScale,
-            visualContentVersion);
+            visualContentVersion,
+            resources ?? PrismDrawResources.Empty);
     }
 
     public static PrismCompositionDefinition Composition(

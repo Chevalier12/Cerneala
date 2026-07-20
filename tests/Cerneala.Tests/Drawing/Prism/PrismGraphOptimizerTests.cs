@@ -5,6 +5,7 @@ using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Graph;
+using Cerneala.Drawing.Prism.Styles;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
@@ -468,6 +469,141 @@ public sealed class PrismGraphOptimizerTests
     }
 
     [Fact]
+    public void ZeroOpacityStyleNoOpsAreRemovedForEveryCatalogFamily()
+    {
+        foreach (PrismStyleId style in
+            Enum.GetValues<PrismStyleId>())
+        {
+            PrismLayerDefinition layer = new(
+                new PrismNodeId(1),
+                style.ToString(),
+                styles: [new PrismStyleDefinition(style)]);
+            PrismGraph raw = BuildGraph(
+                PrismTestData.Composition(
+                    $"NoOp{style}",
+                    layer),
+                instance => SetStyleNoOp(
+                    instance.GetLayerState(layer.Id).Styles[0]))
+                .Graph;
+            PrismGraphNode rawStyle = Assert.Single(
+                raw.Nodes.Where(
+                    node => node.Kind == PrismGraphNodeKind.Style));
+
+            PrismGraphExecutionPlan plan =
+                new PrismGraphOptimizer().Optimize(raw);
+
+            Assert.Contains(rawStyle.Id, plan.RemovedNodeIds);
+            Assert.DoesNotContain(
+                plan.OptimizedGraph.Nodes,
+                node => node.Kind == PrismGraphNodeKind.Style);
+            Assert.DoesNotContain(
+                plan.OptimizedGraph.Edges,
+                edge => edge.Kind == PrismGraphEdgeKind.StyleSource);
+            Assert.Equal(
+                SemanticSnapshot(raw),
+                SemanticSnapshot(plan.OptimizedGraph));
+        }
+    }
+
+    [Fact]
+    public void InvisibleAndNoOpStylesPreserveOrderMaskClipBlendAndAlpha()
+    {
+        PrismLayerDefinition styled = new(
+            new PrismNodeId(1),
+            "Styled",
+            styles:
+            [
+                new PrismStyleDefinition(PrismStyleId.ColorOverlay),
+                new PrismStyleDefinition(PrismStyleId.DropShadow),
+                new PrismStyleDefinition(PrismStyleId.Stroke),
+                new PrismStyleDefinition(PrismStyleId.ColorOverlay)
+            ],
+            mask: new PrismMaskDefinition(new PrismResourceId(71)),
+            opacity: 0.63f,
+            fill: 0.47f,
+            blendMode: PrismBlendMode.Screen,
+            clipToBelow: true);
+        PrismLayerDefinition background = Layer(
+            2,
+            "Background",
+            opacity: 0.71f,
+            fill: 0.82f,
+            blendMode: PrismBlendMode.Multiply);
+        PrismGraph raw = BuildGraph(
+            PrismTestData.Composition(
+                "StyleNoOpComposition",
+                styled,
+                background),
+            instance =>
+            {
+                IReadOnlyList<PrismStyleState> styles =
+                    instance.GetLayerState(styled.Id).Styles;
+                styles[0].Visible = false;
+                SetStyleNoOp(styles[1]);
+            }).Graph;
+        PrismGraphNode[] rawStyles = raw.Nodes
+            .Where(
+                node =>
+                    node.Kind == PrismGraphNodeKind.Style &&
+                    node.DefinitionNodeId == styled.Id)
+            .ToArray();
+        Assert.Equal(3, rawStyles.Length);
+        PrismGraphNode noOp = Assert.Single(
+            rawStyles.Where(
+                node => node.Style == PrismStyleId.DropShadow));
+        PrismGraphNodeId[] expectedOrder = rawStyles
+            .Where(node => node.Id != noOp.Id)
+            .Select(node => node.Id)
+            .ToArray();
+
+        PrismGraphExecutionPlan plan =
+            new PrismGraphOptimizer().Optimize(raw);
+        PrismGraph optimized = plan.OptimizedGraph;
+        PrismGraphNodeId[] actualOrder = plan.ExecutionOrder
+            .Where(
+                id =>
+                {
+                    PrismGraphNode node = optimized.GetNode(id);
+                    return node.Kind == PrismGraphNodeKind.Style &&
+                        node.DefinitionNodeId == styled.Id;
+                })
+            .ToArray();
+
+        Assert.Contains(noOp.Id, plan.RemovedNodeIds);
+        Assert.Equal(expectedOrder, actualOrder);
+        Assert.DoesNotContain(
+            optimized.Edges,
+            edge =>
+                edge.Kind == PrismGraphEdgeKind.StyleSource &&
+                optimized.GetNode(edge.Target).Kind !=
+                    PrismGraphNodeKind.Style);
+        Assert.Equal(
+            SemanticSnapshot(raw),
+            SemanticSnapshot(optimized));
+        Assert.Equal(
+            raw.Nodes
+                .Where(
+                    node => node.Kind is
+                        PrismGraphNodeKind.Fill or
+                        PrismGraphNodeKind.Opacity or
+                        PrismGraphNodeKind.ClipToBelow)
+                .OrderBy(
+                    node => node.Id.ToString(),
+                    StringComparer.Ordinal)
+                .Select(node => (node.Id, node.Kind, node.Amount)),
+            optimized.Nodes
+                .Where(
+                    node => node.Kind is
+                        PrismGraphNodeKind.Fill or
+                        PrismGraphNodeKind.Opacity or
+                        PrismGraphNodeKind.ClipToBelow)
+                .OrderBy(
+                    node => node.Id.ToString(),
+                    StringComparer.Ordinal)
+                .Select(node => (node.Id, node.Kind, node.Amount)));
+    }
+
+    [Fact]
     public void LifetimePlanKeepsFanOutInputsUntilTheirLastConsumer()
     {
         PrismGroupDefinition passThrough = new(
@@ -773,6 +909,31 @@ public sealed class PrismGraphOptimizerTests
         return new PrismGraphOptimizer().Optimize(graph);
     }
 
+    private static void SetStyleNoOp(PrismStyleState state)
+    {
+        string[] opacityNames =
+            state.Style == PrismStyleId.BevelEmboss
+                ? ["HighlightOpacity", "ShadowOpacity"]
+                : ["Opacity"];
+        PrismCatalogEntryDescriptor entry =
+            PrismCatalogRuntime.GetEntry((int)state.Style);
+        foreach (string opacityName in opacityNames)
+        {
+            PrismCatalogPropertyDescriptor property = Assert.Single(
+                entry.Properties.Where(
+                    candidate =>
+                        string.Equals(
+                            candidate.Name,
+                            opacityName,
+                            StringComparison.Ordinal)));
+            GeneratedMarkup.SetPrismStyleNumber(
+                state,
+                (int)state.Style,
+                property.TypeSlot,
+                0);
+        }
+    }
+
     private static PrismLayerDefinition Layer(
         int id,
         string name,
@@ -942,6 +1103,8 @@ public sealed class PrismGraphOptimizerTests
         Dictionary<PrismGraphNodeId, List<PrismGraphEdge>> incoming = graph.Edges
             .GroupBy(edge => edge.Target)
             .ToDictionary(group => group.Key, group => group.ToList());
+        Dictionary<int, PrismGraphScope> scopes = graph.Scopes
+            .ToDictionary(scope => scope.AnalysisScopeIndex);
         Dictionary<PrismGraphNodeId, string> memo = [];
 
         string Evaluate(PrismGraphNodeId id)
@@ -966,6 +1129,25 @@ public sealed class PrismGraphOptimizerTests
                 PrismGraphEdge content = Assert.Single(
                     inputs.Where(edge => edge.Kind == PrismGraphEdgeKind.Content));
                 return memo[id] = Evaluate(content.Source);
+            }
+            if (node.Kind == PrismGraphNodeKind.Style)
+            {
+                PrismStylePlan stylePlan = PrismStylePlanner.Create(
+                    node,
+                    scopes[node.AnalysisScopeIndex]);
+                bool noOp = stylePlan.Style == PrismStyleId.BevelEmboss
+                    ? stylePlan.Opacity == 0f &&
+                        stylePlan.SecondaryOpacity == 0f
+                    : stylePlan.Opacity == 0f;
+                if (noOp)
+                {
+                    PrismGraphEdge content = Assert.Single(
+                        inputs.Where(
+                            edge =>
+                                edge.Kind ==
+                                PrismGraphEdgeKind.Content));
+                    return memo[id] = Evaluate(content.Source);
+                }
             }
             if (node.Kind == PrismGraphNodeKind.ColorConversion &&
                 inputs.Length == 1)

@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Numerics;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Styles;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 
@@ -208,8 +209,13 @@ public sealed class PrismGraphOptimizer
 
         Dictionary<PrismGraphNodeId, PrismGraphNode> originalNodes =
             graph.Nodes.ToDictionary(node => node.Id);
+        Dictionary<int, PrismGraphScope> originalScopes =
+            graph.Scopes.ToDictionary(scope => scope.AnalysisScopeIndex);
         Dictionary<PrismGraphNodeId, PrismGraphNodeId> aliases =
-            FindProvenAliases(graph, originalNodes);
+            FindProvenAliases(
+                graph,
+                originalNodes,
+                originalScopes);
         ImmutableDictionary<
             PrismGraphNodeId,
             ImmutableArray<PrismGraphDependency>> aliasedDependencies =
@@ -281,7 +287,8 @@ public sealed class PrismGraphOptimizer
 
     private static Dictionary<PrismGraphNodeId, PrismGraphNodeId> FindProvenAliases(
         PrismGraph graph,
-        IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNode> nodes)
+        IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNode> nodes,
+        IReadOnlyDictionary<int, PrismGraphScope> scopes)
     {
         Dictionary<PrismGraphNodeId, ImmutableArray<PrismGraphEdge>> incoming =
             IndexIncomingEdges(graph.Edges);
@@ -296,7 +303,13 @@ public sealed class PrismGraphOptimizer
             foreach (PrismGraphNode node in orderedNodes)
             {
                 if (aliases.ContainsKey(node.Id) ||
-                    !TryGetAliasSource(node, incoming, aliases, nodes, out PrismGraphNodeId source))
+                    !TryGetAliasSource(
+                        node,
+                        incoming,
+                        aliases,
+                        nodes,
+                        scopes,
+                        out PrismGraphNodeId source))
                 {
                     continue;
                 }
@@ -315,6 +328,7 @@ public sealed class PrismGraphOptimizer
         IReadOnlyDictionary<PrismGraphNodeId, ImmutableArray<PrismGraphEdge>> incoming,
         IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNodeId> aliases,
         IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNode> nodes,
+        IReadOnlyDictionary<int, PrismGraphScope> scopes,
         out PrismGraphNodeId source)
     {
         source = default;
@@ -340,6 +354,18 @@ public sealed class PrismGraphOptimizer
             IsProvenFilterNoOp(node))
         {
             return true;
+        }
+        if (node.Kind == PrismGraphNodeKind.Style)
+        {
+            if (!scopes.TryGetValue(
+                    node.AnalysisScopeIndex,
+                    out PrismGraphScope scope))
+            {
+                throw new InvalidOperationException(
+                    $"Prism style node '{node.Id}' has no owning graph scope.");
+            }
+
+            return IsProvenStyleNoOp(node, scope);
         }
 
         if (node.Kind != PrismGraphNodeKind.ColorConversion ||
@@ -391,6 +417,17 @@ public sealed class PrismGraphOptimizer
             skew.Y == 0f;
     }
 
+    private static bool IsProvenStyleNoOp(
+        PrismGraphNode node,
+        PrismGraphScope scope)
+    {
+        PrismStylePlan plan = PrismStylePlanner.Create(node, scope);
+        return plan.Style == PrismStyleId.BevelEmboss
+            ? plan.Opacity == 0f &&
+                plan.SecondaryOpacity == 0f
+            : plan.Opacity == 0f;
+    }
+
     private static ImmutableArray<PrismGraphScope> RewriteScopes(
         ImmutableArray<PrismGraphScope> scopes,
         IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNodeId> aliases)
@@ -407,8 +444,10 @@ public sealed class PrismGraphOptimizer
                     scope.CacheOwnerToken,
                     scope.CompositionSettings,
                     scope.Bounds,
+                    scope.ControlBounds,
                     scope.EffectiveTransform,
                     scope.PixelScale,
+                    scope.Resources,
                     scope.Output is PrismGraphNodeId output
                         ? ResolveAlias(output, aliases)
                         : null))
@@ -457,6 +496,12 @@ public sealed class PrismGraphOptimizer
         HashSet<PrismGraphEdge> rewritten = [];
         foreach (PrismGraphEdge edge in edges)
         {
+            if (edge.Kind == PrismGraphEdgeKind.StyleSource &&
+                aliases.ContainsKey(edge.Target))
+            {
+                continue;
+            }
+
             PrismGraphNodeId source = ResolveAlias(edge.Source, aliases);
             PrismGraphNodeId target = ResolveAlias(edge.Target, aliases);
             if (source == target)
@@ -668,6 +713,23 @@ public sealed class PrismGraphOptimizer
         ImmutableArray<PrismGraphEdge> inputs,
         IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNodePlan> plans)
     {
+        if (node.Kind == PrismGraphNodeKind.Composite &&
+            inputs.Any(
+                input => input.Kind == PrismGraphEdgeKind.MaskAlpha))
+        {
+            return BoundsFromContentInput(
+                node,
+                inputs,
+                plans);
+        }
+        if (node.Kind == PrismGraphNodeKind.ClipToBelow)
+        {
+            return BoundsFromContentInput(
+                node,
+                inputs,
+                plans);
+        }
+
         DrawRect bounds = scope.Bounds;
         PrismGraphBoundsStatus status = PrismGraphBoundsStatus.Exact;
         bool hasInput = false;
@@ -690,14 +752,71 @@ public sealed class PrismGraphOptimizer
         {
             PrismGraphNodeKind.Filter => ExpandFilterBounds(node, bounds, status),
             PrismGraphNodeKind.Style => ExpandStyleBounds(node, scope, bounds, status),
-            PrismGraphNodeKind.ClipToBelow or
+            PrismGraphNodeKind.Mask =>
+                ExpandMaskBounds(node, scope, bounds, status),
             PrismGraphNodeKind.PassThroughComposite =>
-                ConservativeBounds(bounds, status),
-            PrismGraphNodeKind.Composite
-                when inputs.Any(input => input.Kind == PrismGraphEdgeKind.MaskAlpha) =>
                 ConservativeBounds(bounds, status),
             _ => new BoundsCalculation(bounds, status)
         };
+    }
+
+    private static BoundsCalculation BoundsFromContentInput(
+        PrismGraphNode node,
+        ImmutableArray<PrismGraphEdge> inputs,
+        IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNodePlan> plans)
+    {
+        PrismGraphEdge content = inputs.FirstOrDefault(
+            input => input.Kind == PrismGraphEdgeKind.Content);
+        if (content == default ||
+            !plans.TryGetValue(
+                content.Source,
+                out PrismGraphNodePlan contentPlan))
+        {
+            throw new InvalidOperationException(
+                $"Prism graph node '{node.Id}' has no content bounds.");
+        }
+
+        PrismGraphBoundsStatus status = contentPlan.BoundsStatus;
+        foreach (PrismGraphEdge input in inputs)
+        {
+            status = WorstBoundsStatus(
+                status,
+                plans[input.Source].BoundsStatus);
+        }
+        return ConservativeBounds(contentPlan.Bounds, status);
+    }
+
+    private static BoundsCalculation ExpandMaskBounds(
+        PrismGraphNode node,
+        PrismGraphScope scope,
+        DrawRect bounds,
+        PrismGraphBoundsStatus inputStatus)
+    {
+        if (node.MaskPass is not (
+            PrismMaskPass.FeatherHorizontal or
+            PrismMaskPass.FeatherVertical))
+        {
+            return new BoundsCalculation(bounds, inputStatus);
+        }
+
+        float feather = node.Feather ?? 0;
+        float transformScale = MathF.Max(
+            MathF.Sqrt(
+                (scope.EffectiveTransform.M11 *
+                    scope.EffectiveTransform.M11) +
+                (scope.EffectiveTransform.M12 *
+                    scope.EffectiveTransform.M12)),
+            MathF.Sqrt(
+                (scope.EffectiveTransform.M21 *
+                    scope.EffectiveTransform.M21) +
+                (scope.EffectiveTransform.M22 *
+                    scope.EffectiveTransform.M22)));
+        float support = checked(feather * transformScale);
+        DrawRect expanded =
+            node.MaskPass == PrismMaskPass.FeatherHorizontal
+                ? Inflate(bounds, support, 0)
+                : Inflate(bounds, 0, support);
+        return ConservativeBounds(expanded, inputStatus);
     }
 
     private static BoundsCalculation ExpandFilterBounds(
@@ -739,18 +858,20 @@ public sealed class PrismGraphOptimizer
         DrawRect bounds,
         PrismGraphBoundsStatus inputStatus)
     {
-        return node.Style switch
+        if (node.Style is null)
         {
-            PrismStyleId.DropShadow => ConservativeBounds(
-                ExpandDropShadow(node, scope, bounds),
-                inputStatus),
-            PrismStyleId.Stroke => ConservativeBounds(
-                Inflate(bounds, GetNumber(node, BoundsParameters.StrokeSize)),
-                inputStatus),
-            _ => new BoundsCalculation(
+            return new BoundsCalculation(
                 bounds,
-                PrismGraphBoundsStatus.Unknown)
-        };
+                PrismGraphBoundsStatus.Unknown);
+        }
+
+        PrismStylePlan plan =
+            PrismStylePlanner.Create(node, scope);
+        DrawRect expanded =
+            PrismStylePlanner.ExpandBounds(plan, scope, bounds);
+        return expanded == bounds
+            ? new BoundsCalculation(bounds, inputStatus)
+            : ConservativeBounds(expanded, inputStatus);
     }
 
     private static BoundsCalculation ConservativeBounds(
@@ -775,28 +896,6 @@ public sealed class PrismGraphOptimizer
             right == PrismGraphBoundsStatus.Conservative
             ? PrismGraphBoundsStatus.Conservative
             : PrismGraphBoundsStatus.Exact;
-    }
-
-    private static DrawRect ExpandDropShadow(
-        PrismGraphNode node,
-        PrismGraphScope scope,
-        DrawRect bounds)
-    {
-        bool useGlobalLight = GetBoolean(
-            node,
-            BoundsParameters.DropShadowUseGlobalLight);
-        float angle = useGlobalLight
-            ? scope.CompositionSettings.GlobalLightAngle
-            : GetNumber(node, BoundsParameters.DropShadowAngle);
-        float distance = GetNumber(node, BoundsParameters.DropShadowDistance);
-        float support =
-            GetNumber(node, BoundsParameters.DropShadowSpread) +
-            GetNumber(node, BoundsParameters.DropShadowSize);
-        float radians = angle * (MathF.PI / 180f);
-        float offsetX = MathF.Cos(radians) * distance;
-        float offsetY = -MathF.Sin(radians) * distance;
-        DrawRect shadow = Translate(Inflate(bounds, support), offsetX, offsetY);
-        return Union(bounds, shadow);
     }
 
     private static DrawRect TransformBounds(
@@ -872,10 +971,7 @@ public sealed class PrismGraphOptimizer
             reasons |= PrismGraphUncacheableReason.FrameBackdrop;
         }
 
-        if ((node.Resource is PrismResourceId resource && resource.Value > 0) ||
-            node.Parameters.Any(
-                parameter => parameter.Kind == PrismGraphParameterValueKind.Resource &&
-                    parameter.ResourceValue.Value > 0))
+        if (!HasAvailableResourceVersions(node))
         {
             reasons |= PrismGraphUncacheableReason.ResourceVersionUnavailable;
         }
@@ -894,6 +990,56 @@ public sealed class PrismGraphOptimizer
         }
 
         return reasons;
+    }
+
+    private static bool HasAvailableResourceVersions(
+        PrismGraphNode node)
+    {
+        if (node.Resource is PrismResourceId resource &&
+            resource.Value > 0 &&
+            !node.Dependencies.Any(
+                dependency =>
+                    dependency.Kind ==
+                        PrismGraphDependencyKind.Resource &&
+                    dependency.Version > 0))
+        {
+            return false;
+        }
+
+        int? stableId = node.Filter is PrismFilterId filter
+            ? (int)filter
+            : node.Style is PrismStyleId style
+                ? (int)style
+                : null;
+        foreach (PrismGraphParameter parameter in
+            node.Parameters)
+        {
+            if (parameter.Kind !=
+                    PrismGraphParameterValueKind.Resource ||
+                parameter.ResourceValue.Value <= 0)
+            {
+                continue;
+            }
+            if (stableId is not int entryStableId)
+            {
+                return false;
+            }
+
+            long key =
+                ((long)entryStableId << 32) |
+                (uint)parameter.Index;
+            if (!node.Dependencies.Any(
+                dependency =>
+                    dependency.Kind ==
+                        PrismGraphDependencyKind.Resource &&
+                    dependency.Key == key &&
+                    dependency.Version > 0))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static PrismGraphUncacheableReason CatalogReasons(int stableId)
@@ -1105,16 +1251,27 @@ public sealed class PrismGraphOptimizer
 
     private static DrawRect Inflate(DrawRect bounds, float amount)
     {
-        if (!float.IsFinite(amount) || amount < 0)
+        return Inflate(bounds, amount, amount);
+    }
+
+    private static DrawRect Inflate(
+        DrawRect bounds,
+        float horizontal,
+        float vertical)
+    {
+        if (!float.IsFinite(horizontal) ||
+            !float.IsFinite(vertical) ||
+            horizontal < 0 ||
+            vertical < 0)
         {
             throw new InvalidOperationException(
                 "Prism bounds expansion must be finite and non-negative.");
         }
         return CreateBounds(
-            bounds.X - amount,
-            bounds.Y - amount,
-            bounds.Right + amount,
-            bounds.Bottom + amount);
+            bounds.X - horizontal,
+            bounds.Y - vertical,
+            bounds.Right + horizontal,
+            bounds.Bottom + vertical);
     }
 
     private static DrawRect Translate(DrawRect bounds, float x, float y)
@@ -1188,19 +1345,6 @@ public sealed class PrismGraphOptimizer
             ParameterIndex((int)PrismFilterId.Transform, "Skew");
         public static readonly int TransformOrigin =
             ParameterIndex((int)PrismFilterId.Transform, "Origin");
-        public static readonly int DropShadowUseGlobalLight =
-            ParameterIndex((int)PrismStyleId.DropShadow, "UseGlobalLight");
-        public static readonly int DropShadowAngle =
-            ParameterIndex((int)PrismStyleId.DropShadow, "Angle");
-        public static readonly int DropShadowDistance =
-            ParameterIndex((int)PrismStyleId.DropShadow, "Distance");
-        public static readonly int DropShadowSpread =
-            ParameterIndex((int)PrismStyleId.DropShadow, "Spread");
-        public static readonly int DropShadowSize =
-            ParameterIndex((int)PrismStyleId.DropShadow, "Size");
-        public static readonly int StrokeSize =
-            ParameterIndex((int)PrismStyleId.Stroke, "Size");
-
         private static int ParameterIndex(int stableId, string name)
         {
             PrismCatalogPropertyDescriptor[] properties =

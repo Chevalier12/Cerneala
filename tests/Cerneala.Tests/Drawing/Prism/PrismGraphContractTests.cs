@@ -358,8 +358,20 @@ public sealed class PrismGraphContractTests
             graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Filter));
         PrismGraphNode style = Assert.Single(
             graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Style));
+        PrismGraphNode fill = Assert.Single(
+            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Fill));
+        PrismGraphNode opacity = Assert.Single(
+            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Opacity));
+        PrismGraphNode composite = Assert.Single(
+            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Composite));
         Assert.Equal(PrismFilterId.Blur, filter.Filter);
         Assert.Equal(PrismStyleId.DropShadow, style.Style);
+        Assert.True(
+            graph.Nodes.IndexOf(fill) < graph.Nodes.IndexOf(style));
+        Assert.True(
+            graph.Nodes.IndexOf(style) < graph.Nodes.IndexOf(opacity));
+        Assert.True(
+            graph.Nodes.IndexOf(opacity) < graph.Nodes.IndexOf(composite));
         Assert.NotEmpty(filter.Parameters);
         Assert.NotEmpty(style.Parameters);
         Assert.All(
@@ -400,21 +412,29 @@ public sealed class PrismGraphContractTests
 
         PrismGraphNode layer = Assert.Single(
             graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Layer));
+        PrismGraphNode composite = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Composite &&
+                    node.DefinitionNodeId == new PrismNodeId(1)));
+        PrismGraphLayerSettings expectedLayerSettings = new(
+            PrismBlendChannels.Red | PrismBlendChannels.Alpha,
+            PrismKnockout.Deep,
+            BlendInteriorStylesAsGroup: true,
+            BlendClippedLayersAsGroup: false,
+            TransparencyShapesLayer: false,
+            LayerMaskHidesStyles: true,
+            VectorMaskHidesStyles: true,
+            PrismBlendIfChannel.Blue,
+            new PrismBlendRange(0.1f, 0.2f, 0.7f, 0.9f),
+            new PrismBlendRange(0.05f, 0.3f, 0.8f, 1f),
+            DissolveSeed: 47);
         Assert.True(layer.LayerSettings.HasValue);
         Assert.Equal(
-            new PrismGraphLayerSettings(
-                PrismBlendChannels.Red | PrismBlendChannels.Alpha,
-                PrismKnockout.Deep,
-                BlendInteriorStylesAsGroup: true,
-                BlendClippedLayersAsGroup: false,
-                TransparencyShapesLayer: false,
-                LayerMaskHidesStyles: true,
-                VectorMaskHidesStyles: true,
-                PrismBlendIfChannel.Blue,
-                new PrismBlendRange(0.1f, 0.2f, 0.7f, 0.9f),
-                new PrismBlendRange(0.05f, 0.3f, 0.8f, 1f),
-                DissolveSeed: 47),
+            expectedLayerSettings,
             layer.LayerSettings.Value);
+        Assert.Equal(
+            expectedLayerSettings,
+            composite.LayerSettings);
         Assert.Equal(
             new PrismGraphCompositionSettings(
                 PrismColorProfile.LinearSrgb,

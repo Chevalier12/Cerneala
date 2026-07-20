@@ -28,6 +28,7 @@ public enum PrismGraphNodeKind
 public enum PrismGraphEdgeKind
 {
     Content,
+    StyleSource,
     Control,
     Backdrop,
     GroupContent,
@@ -172,6 +173,13 @@ public readonly record struct PrismGraphLayerSettings(
     PrismBlendRange UnderlyingRange,
     int DissolveSeed);
 
+internal enum PrismMaskPass
+{
+    Extract,
+    FeatherHorizontal,
+    FeatherVertical
+}
+
 public readonly record struct PrismGraphScope
 {
     internal PrismGraphScope(
@@ -183,8 +191,10 @@ public readonly record struct PrismGraphScope
         PrismCacheOwnerToken cacheOwnerToken,
         PrismGraphCompositionSettings compositionSettings,
         DrawRect bounds,
+        DrawRect controlBounds,
         Matrix3x2 effectiveTransform,
         float pixelScale,
+        PrismDrawResources resources,
         PrismGraphNodeId? output)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(analysisScopeIndex);
@@ -251,8 +261,12 @@ public readonly record struct PrismGraphScope
         CacheOwnerToken = cacheOwnerToken;
         CompositionSettings = compositionSettings;
         Bounds = bounds;
+        ControlBounds = controlBounds;
         EffectiveTransform = effectiveTransform;
         PixelScale = pixelScale;
+        Resources =
+            resources ??
+            throw new ArgumentNullException(nameof(resources));
         Output = output;
     }
 
@@ -272,9 +286,13 @@ public readonly record struct PrismGraphScope
 
     public DrawRect Bounds { get; }
 
+    internal DrawRect ControlBounds { get; }
+
     public Matrix3x2 EffectiveTransform { get; }
 
     public float PixelScale { get; }
+
+    internal PrismDrawResources Resources { get; }
 
     public PrismGraphNodeId? Output { get; }
 
@@ -309,6 +327,7 @@ public sealed class PrismGraphNode
         float? feather = null,
         float? density = null,
         bool? invert = null,
+        PrismMaskPass? maskPass = null,
         PrismGraphLayerSettings? layerSettings = null)
     {
         Id = id;
@@ -334,6 +353,7 @@ public sealed class PrismGraphNode
         Feather = feather;
         Density = density;
         Invert = invert;
+        MaskPass = maskPass;
         LayerSettings = layerSettings;
     }
 
@@ -374,6 +394,8 @@ public sealed class PrismGraphNode
     public float? Density { get; }
 
     public bool? Invert { get; }
+
+    internal PrismMaskPass? MaskPass { get; }
 
     public PrismGraphLayerSettings? LayerSettings { get; }
 }

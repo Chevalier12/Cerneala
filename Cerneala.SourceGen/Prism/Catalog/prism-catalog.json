@@ -408,6 +408,79 @@
       }
     ]
   },
+  "conformance": {
+    "features": [
+      {
+        "id": "advanced-blending",
+        "kind": "advanced-blending",
+        "symbol": "AdvancedBlending",
+        "propertyRefs": [
+          "commonProperties.layer.BlendChannels",
+          "commonProperties.layer.Knockout",
+          "commonProperties.layer.BlendInteriorStylesAsGroup",
+          "commonProperties.layer.BlendClippedLayersAsGroup",
+          "commonProperties.layer.TransparencyShapesLayer",
+          "commonProperties.layer.LayerMaskHidesStyles",
+          "commonProperties.layer.VectorMaskHidesStyles",
+          "commonProperties.layer.DissolveSeed"
+        ],
+        "coverage": {
+          "runtime": "UI/Prism/Runtime/PrismAdvancedBlend.cs",
+          "kernel": "planned:PrismKernelRegistry/AdvancedBlending",
+          "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/AdvancedBlending",
+          "documentation": "docs/prism-markup-syntax-proposal.md#advanced-blending"
+        }
+      },
+      {
+        "id": "blend-if",
+        "kind": "blend-if",
+        "symbol": "BlendIf",
+        "propertyRefs": [
+          "commonProperties.layer.BlendIfChannel",
+          "commonProperties.layer.ThisLayerRange",
+          "commonProperties.layer.UnderlyingRange"
+        ],
+        "coverage": {
+          "runtime": "UI/Prism/Runtime/PrismAdvancedBlend.cs",
+          "kernel": "planned:PrismKernelRegistry/BlendIf",
+          "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/BlendIf",
+          "documentation": "docs/prism-markup-syntax-proposal.md#blend-if"
+        }
+      },
+      {
+        "id": "mask",
+        "kind": "mask",
+        "symbol": "Mask",
+        "propertyRefs": [
+          "commonProperties.mask.Image",
+          "commonProperties.mask.Channel",
+          "commonProperties.mask.Feather",
+          "commonProperties.mask.Density",
+          "commonProperties.mask.Invert"
+        ],
+        "coverage": {
+          "runtime": "UI/Prism/Definitions/PrismMaskDefinition.cs",
+          "kernel": "planned:PrismKernelRegistry/Mask",
+          "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/Mask",
+          "documentation": "docs/prism-markup-syntax-proposal.md#mask"
+        }
+      },
+      {
+        "id": "clipping",
+        "kind": "clipping",
+        "symbol": "Clipping",
+        "propertyRefs": [
+          "commonProperties.layer.ClipToBelow"
+        ],
+        "coverage": {
+          "runtime": "UI/Prism/Definitions/PrismLayerDefinition.cs",
+          "kernel": "planned:PrismKernelRegistry/Clipping",
+          "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/Clipping",
+          "documentation": "docs/prism-markup-syntax-proposal.md#clipping"
+        }
+      }
+    ]
+  },
   "entries": [
     {
       "stableId": 1,

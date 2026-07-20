@@ -37,10 +37,18 @@ PrismGraphExecutionPlan plan = optimizer.Optimize(rawGraph);
 definitions, or runtime instances. Re-optimizing the resulting graph preserves
 the effective plan.
 
-The optimizer removes only proven no-op operations, invisible contributions,
-and redundant color conversions. It does not fuse catalog operations unless
-their equivalence is declared. Dependencies from aliased nodes remain in the
-transitive cache dependency closure.
+The graph builder omits styles whose runtime state is not visible. For visible
+styles, the optimizer aliases a style pass to its `Content` input only when the
+generated style plan proves that its effective opacity is zero. A
+`BevelEmboss` pass is a no-op only when both its highlight and shadow opacities
+are zero.
+
+Removing a proven style no-op also removes that pass's `StyleSource` edge. The
+optimizer preserves the declared order of surviving styles and does not
+reorder `Fill`, layer opacity, masks, clipping, or blend operations. It does
+not fuse catalog operations unless their equivalence is declared.
+Dependencies from aliased nodes remain in the transitive cache dependency
+closure.
 
 The result classifies cacheability conservatively, expands known spatial
 bounds, and computes explicit surface lifetimes. The optimizer does not execute

@@ -3,10 +3,11 @@
 ## Statut
 
 Acest document descrie arhitectura tehnică necesară pentru implementarea Prism în
-Cerneala. Compilatorul de markup, atașarea instanței tipizate, bindingurile
-generate, target-urile Motion și lifecycle-ul de randabilitate sunt implementate.
-Secțiunile despre compositor, backend GPU, cache retained și backdrop rămân design
-până când componentele respective există în repository.
+Cerneala. Compilatorul de markup, lifecycle-ul, graful de compoziție, executorul
+MonoGame și pipeline-urile de culoare, blending, măști și layer styles sunt
+implementate. Secțiunile despre cache-ul retained cross-frame, catalogul complet
+de filtre și backdrop rămân design până când componentele respective există în
+repository.
 
 Contractul de markup și modelul mental sunt definite în
 [`prism-markup-syntax-proposal.md`](prism-markup-syntax-proposal.md). Catalogul
@@ -268,7 +269,7 @@ PrismGraphBuilder
 PrismGraphOptimizer
     |
     v
-MonoGamePrismExecutor
+PrismGraphExecutor
     |
     +--> shader registry
     +--> transient surface pool
@@ -633,13 +634,13 @@ Pipeline-ul are responsabilități separate:
    immutable.
 3. `PrismGraphOptimizer` elimină no-op-uri și fuzionează passes fără să schimbe
    ordinea semantică.
-4. `MonoGamePrismExecutor` execută graph-ul și gestionează exclusiv resursele GPU.
+4. `PrismGraphExecutor` execută graph-ul și gestionează exclusiv resursele GPU.
 
-Semantica fiecărui filter sau style este tradusă de un
-`IPrismOperationPlanner` intern și specializat. Registrul catalogului mapează
-identificatorul stabil la planificator; nu există un switch central care trebuie
-modificat pentru fiecare operație nouă. Interfața este internă deoarece există
-substituție reală între operațiile built-in, nu ca punct public de extensie.
+Semantica layer styles este tradusă de `PrismStylePlanner` într-un plan comun de
+sampling și compoziție. Descriptorul generat al catalogului furnizează sloturile,
+default-urile, determinismul, cacheability și versiunea dependenței. Backend-ul
+consumă planul printr-o singură tehnică `LayerStyle`; cele zece familii nu au
+surse shader copiate separat.
 
 Nodurile principale sunt:
 
@@ -914,12 +915,23 @@ Conversia finală se face o singură dată.
 - HSL blend modes lucrează pe culoare neasociată;
 - masks sunt tratate ca date scalare, nu ca imagini color reinterpretate.
 
+Contractul implementat folosește input și output sRGB la granița hostului.
+`LinearSrgb`, `Srgb`, `LinearDisplayP3`, `DisplayP3` și `ScRgb` au câte un
+kernel de intrare și unul de prezentare generate din simbolurile catalogului.
+O compoziție nested este prezentată o dată în sRGB, apoi conversia de intrare a
+părintelui rulează o dată; nu se aplică gamma de două ori.
+
+Toate pass-urile primesc și produc RGBA premultiplicat. Conversiile fac
+unpremultiply numai cât aplică transferul sau matricea, iar alpha zero produce
+obligatoriu RGB zero. `Fill` scalează conținutul înaintea layer styles;
+`Opacity` scalează rezultatul complet după styles și mask.
+
 ### Formate MonoGame
 
-Ordinea preferată este:
+Ordinea implementată este:
 
-1. `HalfVector4` pentru intermediare și `ScRgb`;
-2. `Color` doar pentru fallback SDR și output compatibil;
+1. `HalfVector4` pentru toate intermediarele Prism;
+2. `Color` pentru output-ul SDR compatibil cu hostul;
 3. format scalar pentru masks când platforma îl suportă;
 4. `Color` pentru masks când nu există format scalar renderable.
 
@@ -927,23 +939,53 @@ Ordinea preferată este:
 raportează capabilitatea lipsă și bypass-uiește compoziția; nu comprimă silențios HDR
 în SDR.
 
-### Profiluri custom
+### Toleranța numerică
 
-`PrismColorProfile` este immutable și are un hash stabil. Poate descrie:
-
-- primaries și white point;
-- transfer function;
-- matrix transform;
-- LUT 1D sau 3D opțional.
-
-Backend-ul cache-uiește transformările după perechea source/destination și versiunile
-resurselor.
+Referința CPU folosește `double`; shader-ele folosesc `float`, intermediarele
+`HalfVector4`, iar output-ul golden este `R8G8B8A8_UNorm`. Gate-ul WindowsDX
+acceptă maximum `2/255` pe fiecare canal. Pragul acoperă rotunjirea half-float,
+evaluarea transferului pe GPU și cuantizarea UNorm finală, dar este suficient de
+strict pentru a detecta halo-uri, o conversie lipsă sau aplicarea dublă a gamma.
+Alpha zero și curățarea RGB asociată rămân exacte, nu doar în toleranță.
 
 ## Blend modes
 
-Modurile simple pot folosi fixed-function blending când rezultatul este identic cu
-contractul Prism. Modurile care necesită citirea destination-ului folosesc un pass
-shader explicit.
+Registrul construiește câte o tehnică `${BlendMode}Blend` pentru fiecare simbol
+generat din catalog. Lipsa tehnicii este eroare de inițializare a pachetului de
+shader-e; executorul nu remapează niciun mod necunoscut la `Normal`.
+
+Shaderul folosește primitive comune pentru modurile separabile, luminozitate,
+saturație, `ClipColor`, `SetLuminosity` și `SetSaturation`. Wrapper-ele tehnicilor
+aleg primitiva, fără copii independente ale întregului shader. Modurile HSL fac
+unpremultiply cu gardă la alpha zero și reasociază rezultatul înainte de scriere.
+
+Pentru sursa și fundalul premultiplicate, cu valorile straight `Cs`, `Cb` și
+alpha `As`, `Ab`, compoziția comună este:
+
+```text
+Ao = As + Ab - As * Ab
+Co = Cs * As * (1 - Ab)
+   + Cb * Ab * (1 - As)
+   + B(Cb, Cs) * As * Ab
+```
+
+Intermediarele rămân `HalfVector4`, iar pass-ul scrie tot RGBA premultiplicat.
+Setul complet de blend kernels cere profilul `ps_4_0` și feature level `10_0`;
+aceste valori sunt parte din manifestul conformance WindowsDX.
+
+`BlendChannels` selectează independent canalele straight RGB și alpha dintre
+rezultatul compus și fundal. `Knockout` înlocuiește contribuția suprapusă cu
+culoarea straight a sursei; diferența structurală dintre `Shallow` și `Deep` este
+păstrată în graph și devine observabilă la traversarea grupurilor. Flagurile care
+afectează styles, masks și clipping sunt snapshot-uite pe nodul final de
+compoziție, nu recitite din starea UI în executor.
+
+`BlendIf` produce două rampe lineare pentru fiecare interval
+`(blackStart, blackEnd, whiteStart, whiteEnd)`: urcare de la zero la unu între
+pragurile negre, platou, apoi coborâre de la unu la zero între pragurile albe.
+Rampele `ThisLayerRange` și `UnderlyingRange`, evaluate pe canalul selectat în
+working profile, se înmulțesc și scalează contribuția sursei înainte de
+compoziția finală.
 
 Toate modurile trebuie testate cu:
 
@@ -954,26 +996,49 @@ Toate modurile trebuie testate cu:
 - `Fill`, `Opacity`, masks și clipping chains.
 
 `Dissolve` folosește hash determinist din coordonata pixelului, identificatorul
-layerului și `DissolveSeed`. Nu are voie să pâlpâie între frame-uri.
+layerului și `DissolveSeed`. Seed-ul normalizat este trimis explicit shaderului,
+iar aceeași intrare produce același pattern între frame-uri. Nu are voie să
+pâlpâie.
+
+Ordinea rămâne bottom-up. Un group cu `PassThrough` transmite fundalul exterior
+copiilor; orice alt blend mode este o frontieră de izolare și compune grupul ca o
+singură imagine. `Fill` scalează conținutul înaintea styles, iar `Opacity`
+scalează contribuția completă înainte de blend.
 
 ## Styles
 
-Styles folosesc alpha prepared content și nu recapturează controlul.
+Styles folosesc alpha prepared content și nu recapturează controlul. Graph-ul
+păstrează acest input pre-`Fill` prin muchia `StyleSource`, separat de `Content`,
+astfel încât `Fill=0` ascunde conținutul, nu și stilurile. `Opacity` rămâne după
+rezultatul complet content-plus-styles.
+
+`PrismStylePlanner` consumă direct sloturile tipizate generate și produce planuri
+pentru `DropShadow`, `InnerShadow`, `OuterGlow`, `InnerGlow`, `BevelEmboss`,
+`Satin`, `ColorOverlay`, `GradientOverlay`, `PatternOverlay` și `Stroke`.
+Executorul împachetează planul pentru o singură tehnică GPU `LayerStyle`, iar
+registrul validează toate cele zece identificatoare de catalog la același kernel.
 
 Primitivele interne includ:
 
 - alpha dilation și erosion;
-- signed sau approximate distance field;
-- blur separabil;
-- offset sampling;
+- un edge/distance field aproximativ comun;
+- blur și offset sampling comune;
 - contour lookup;
 - gradient și pattern sampling;
-- highlight/shadow lighting.
+- highlight/shadow lighting;
+- compoziție RGBA premultiplicată cu blend modes.
 
-`BevelEmboss` poate produce mai multe passes, dar rămâne un singur style semantic.
-Contour și Texture sunt subcomponente ale lui, nu layere ascunse.
+`BevelEmboss` rămâne un singur style semantic; Contour și Texture sunt
+subcomponente ale planului, nu layere ascunse. Resursele gradient/pattern intră în
+dependency stamp cu versiunea lor; o resursă activă fără versiune stabilă face
+nodul necacheable.
 
-Mai multe instanțe ale aceluiași style sunt executate bottom-up în ordinea declarată.
+Aceeași funcție `PrismStylePlanner.ExpandBounds` este consumată de optimizer pentru
+shadow, glow, bevel și stroke, iar executorul folosește aceeași geometrie de
+sampling. Formulele nu sunt duplicate în analyzer sau backend.
+
+Mai multe instanțe ale aceluiași style sunt păstrate și executate bottom-up în
+ordinea declarată.
 
 ## Masks
 
@@ -1235,6 +1300,14 @@ barrier rămân batch-uibile.
 O compoziție în care toate nodurile sunt hidden sau no-op trebuie să se reducă la
 desenarea normală a controlului fără captură offscreen.
 
+Pentru layer styles, graph builder-ul nu emite stările `Visible=false`, iar
+optimizer-ul elimină numai passes dovedite no-op de planificatorul comun generat
+din catalog. `Opacity=0` este suficient pentru fiecare familie cu o singură
+contribuție; `BevelEmboss` este no-op numai când atât highlight opacity, cât și
+shadow opacity sunt zero. Aliasarea se face către inputul `Content`, elimină
+`StyleSource`-ul rămas fără consumator și păstrează ordinea celorlalte styles,
+`Fill`, layer opacity, mask, clipping și blend.
+
 ## Erori și fallback
 
 | Situație | Comportament |
@@ -1455,6 +1528,24 @@ Gates inițiale:
 Bugetele CPU și GPU absolute se fixează împreună cu hardware-ul de referință și
 scene standard. Ele sunt rezultate ale benchmark-ului, nu numere scoase din joben.
 Nu se declară performanță pe baza unei singure capturi convenabile.
+
+### Dovada curentă pentru layer styles
+
+Gate-ul automat WindowsDX folosește o scenă cu 48 de passes `ColorOverlay`.
+După opt frame-uri de warmup și un frame de stabilizare după GC, măsoară 16
+frame-uri consecutive și cere simultan:
+
+- `0 B` alocări managed pe thread-ul de draw;
+- niciun render target nou după warmup;
+- creșterea contorului de suprafețe reutilizate;
+- zero lease-uri active după fiecare frame;
+- un peak de suprafețe live mai mic decât numărul de styles.
+
+Un test de arhitectură separat scanează calea de producție
+`Drawing/MonoGame/Prism/**/*.cs` și respinge apelurile `GetData` și
+`GetBackBufferData`. Astfel, măsurarea surface reuse și contractul fără CPU
+readback rămân verificabile în CI, nu doar observații dintr-o sesiune de
+profiling.
 
 ## Securitate și robustețe
 

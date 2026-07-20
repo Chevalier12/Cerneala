@@ -1287,8 +1287,12 @@ Generated from `.`.
 |   |-- Paths/
 |   |   +-- SvgPathFlattener.cs
 |   |-- Prism/
+|   |   |-- Blend/
+|   |   |   +-- PrismBlendMath.cs
 |   |   |-- Catalog/
 |   |   |   +-- PrismFallbackPolicy.cs
+|   |   |-- Color/
+|   |   |   +-- PrismColorPipeline.cs
 |   |   |-- Graph/
 |   |   |   |-- PrismAnalyzedScope.cs
 |   |   |   |-- PrismBackdropRequirement.cs
@@ -1300,7 +1304,12 @@ Generated from `.`.
 |   |   |   |-- PrismGraphCapabilities.cs
 |   |   |   |-- PrismGraphDiagnostic.cs
 |   |   |   +-- PrismGraphOptimizer.cs
+|   |   |-- Masking/
+|   |   |   +-- PrismMaskMath.cs
+|   |   |-- Styles/
+|   |   |   +-- PrismStylePlanner.cs
 |   |   |-- IBackdropFrameLease.cs
+|   |   |-- PrismDrawResources.cs
 |   |   +-- PrismDrawScope.cs
 |   |-- Text/
 |   |   |-- OpenTypeFontData.cs
@@ -1442,10 +1451,14 @@ Generated from `.`.
 |   |   |   |-- Paths/
 |   |   |   |   +-- SvgPathFlattenerTests.cs
 |   |   |   |-- Prism/
+|   |   |   |   |-- PrismColorBlendStyleCoverageTests.cs
+|   |   |   |   |-- PrismColorPipelineTests.cs
 |   |   |   |   |-- PrismCommandListContractTests.cs
 |   |   |   |   |-- PrismGraphContractTests.cs
 |   |   |   |   |-- PrismGraphOptimizerTests.cs
+|   |   |   |   |-- PrismMaskPipelineTests.cs
 |   |   |   |   |-- PrismRetainedCommandContractTests.cs
+|   |   |   |   |-- PrismStylePipelineTests.cs
 |   |   |   |   +-- PrismTestData.cs
 |   |   |   |-- AdvancedDrawCommandTests.cs
 |   |   |   |-- ColorTests.cs
@@ -1455,13 +1468,32 @@ Generated from `.`.
 |   |   |   +-- TextPipelineTests.cs
 |   |   |-- Golden/
 |   |   |   +-- Prism/
+|   |   |       |-- Analytic/
+|   |   |       |   |-- alpha-extremes.png
+|   |   |       |   |-- coverage-inputs.png
+|   |   |       |   |-- multiply-opaque.png
+|   |   |       |   +-- premultiplied-edge.png
+|   |   |       |-- blend-combination.png
 |   |   |       |-- clip.png
+|   |   |       |-- clipping-chain.png
 |   |   |       |-- conformance.json
 |   |   |       |-- fill.png
+|   |   |       |-- mask-transform.png
 |   |   |       |-- mask.png
+|   |   |       |-- nested-groups.png
 |   |   |       |-- nested-prism.png
 |   |   |       |-- normal-blend.png
 |   |   |       |-- opacity.png
+|   |   |       |-- style-bevel-emboss.png
+|   |   |       |-- style-color-overlay.png
+|   |   |       |-- style-drop-shadow.png
+|   |   |       |-- style-gradient-overlay.png
+|   |   |       |-- style-inner-glow.png
+|   |   |       |-- style-inner-shadow.png
+|   |   |       |-- style-outer-glow.png
+|   |   |       |-- style-pattern-overlay.png
+|   |   |       |-- style-satin.png
+|   |   |       |-- style-stroke.png
 |   |   |       +-- transform.png
 |   |   |-- Input/
 |   |   |   |-- ActionCommandTests.cs
