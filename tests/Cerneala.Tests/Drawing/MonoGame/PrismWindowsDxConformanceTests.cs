@@ -5,6 +5,7 @@ using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.MonoGame.Prism.Execution;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Tests.Drawing.Prism;
 using Cerneala.Tests.UI.Hosting;
@@ -69,6 +70,59 @@ public sealed class PrismWindowsDxConformanceTests
         {
             DisposeScenes(scenes);
         }
+    }
+
+    [Fact]
+    public void PrismFilterCatalogGalleryRendersThroughAutomatedCaptureApi()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        PrismFilterConformanceGalleryEntry[] gallery =
+            PrismFilterConformanceGallery.Entries.ToArray();
+        Assert.NotEmpty(gallery);
+        using WindowsDxFixture fixture = new();
+        int capturedCount = 0;
+
+        foreach (PrismFilterConformanceGalleryEntry entry in gallery)
+        {
+            PrismDrawScope scope = PrismTestData.Scope(
+                entry.Composition,
+                ownerToken: 10_000L + (int)entry.Filter,
+                bounds: ScopeBounds);
+            using PrismScene scene = BuildScene(
+                $"filter-{entry.Symbol}",
+                Commands(
+                    DrawCommand.BeginPrism(scope),
+                    RedRectangle(),
+                    BlueRectangle(),
+                    DrawCommand.EndPrism()),
+                expectedFallbackCount: 0,
+                foregroundX: 28,
+                foregroundY: 22);
+            RenderedScene rendered =
+                RenderPng(fixture.Session, scene);
+
+            Assert.True(
+                rendered.Png.Length > 0,
+                $"{entry.Symbol} produced no PNG capture.");
+            using SKBitmap bitmap =
+                Decode(rendered.Png, entry.Symbol);
+            Assert.Equal(Width, bitmap.Width);
+            Assert.Equal(Height, bitmap.Height);
+            Assert.True(
+                ContainsPixelOtherThanClearColor(bitmap),
+                $"{entry.Symbol} produced a blank capture.");
+            Assert.Equal(1, rendered.Counters.CaptureCount);
+            Assert.True(
+                rendered.Counters.PassCount >= 1,
+                $"{entry.Symbol} executed no Prism passes.");
+            capturedCount++;
+        }
+
+        Assert.Equal(gallery.Length, capturedCount);
     }
 
     [Fact]
@@ -566,7 +620,7 @@ public sealed class PrismWindowsDxConformanceTests
                 RedRectangle(),
                 BlueRectangle(),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 2,
+            expectedFallbackCount: 0,
             foregroundX: 20,
             foregroundY: 18);
     }
@@ -584,7 +638,7 @@ public sealed class PrismWindowsDxConformanceTests
                 RedRectangle(),
                 BlueRectangle(),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 1,
+            expectedFallbackCount: 0,
             foregroundX: 20,
             foregroundY: 18);
     }
@@ -602,7 +656,7 @@ public sealed class PrismWindowsDxConformanceTests
                 RedRectangle(),
                 BlueRectangle(),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 1,
+            expectedFallbackCount: 0,
             foregroundX: 20,
             foregroundY: 18);
     }
@@ -641,7 +695,7 @@ public sealed class PrismWindowsDxConformanceTests
                 RedRectangle(),
                 BlueRectangle(),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 1,
+            expectedFallbackCount: 0,
             foregroundX: 20,
             foregroundY: 18,
             ownedResource: resource.Image);
@@ -661,7 +715,7 @@ public sealed class PrismWindowsDxConformanceTests
                 RedRectangle(),
                 BlueRectangle(),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 2,
+            expectedFallbackCount: 0,
             foregroundX: 20,
             foregroundY: 18);
     }
@@ -692,7 +746,7 @@ public sealed class PrismWindowsDxConformanceTests
                     new DrawRect(58, 38, 24, 14),
                     new CernealaColor(244, 191, 52)),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 2,
+            expectedFallbackCount: 0,
             foregroundX: 16,
             foregroundY: 16);
     }
@@ -715,7 +769,7 @@ public sealed class PrismWindowsDxConformanceTests
                     new DrawRect(54, 32, 34, 22),
                     new CernealaColor(56, 129, 229)),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 1,
+            expectedFallbackCount: 0,
             foregroundX: 30,
             foregroundY: 26,
             backgroundX: 12,
@@ -794,7 +848,7 @@ public sealed class PrismWindowsDxConformanceTests
                     new DrawRect(20, 36, 58, 20),
                     new CernealaColor(238, 193, 51, 184)),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 3,
+            expectedFallbackCount: 0,
             foregroundX: 24,
             foregroundY: 18,
             ownedResource: resource.Image);
@@ -840,7 +894,7 @@ public sealed class PrismWindowsDxConformanceTests
                     new DrawRect(38, 28, 46, 26),
                     new CernealaColor(48, 174, 219, 210)),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 1,
+            expectedFallbackCount: 0,
             foregroundX: 30,
             foregroundY: 24,
             ownedResource: resource.Image);
@@ -878,7 +932,7 @@ public sealed class PrismWindowsDxConformanceTests
                     new DrawRect(34, 22, 50, 32),
                     new CernealaColor(47, 175, 225, 204)),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 3,
+            expectedFallbackCount: 0,
             foregroundX: 24,
             foregroundY: 20);
     }
@@ -932,7 +986,7 @@ public sealed class PrismWindowsDxConformanceTests
                     new DrawRect(18, 38, 62, 18),
                     new CernealaColor(239, 194, 53, 180)),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 3,
+            expectedFallbackCount: 0,
             foregroundX: 22,
             foregroundY: 18);
     }
@@ -1022,7 +1076,7 @@ public sealed class PrismWindowsDxConformanceTests
                     new DrawRect(58, 32, 28, 24),
                     new CernealaColor(56, 129, 229, 210)),
                 DrawCommand.EndPrism()),
-            expectedFallbackCount: 1,
+            expectedFallbackCount: 0,
             foregroundX: 28,
             foregroundY: 22,
             ownedResource: resource?.Image);
@@ -1216,6 +1270,27 @@ public sealed class PrismWindowsDxConformanceTests
             ((uint)color.Red << 16) |
             ((uint)color.Green << 8) |
             color.Blue;
+    }
+
+    private static bool ContainsPixelOtherThanClearColor(SKBitmap bitmap)
+    {
+        SKColor clear = new(
+            ClearColor.R,
+            ClearColor.G,
+            ClearColor.B,
+            ClearColor.A);
+        for (int y = 0; y < bitmap.Height; y++)
+        {
+            for (int x = 0; x < bitmap.Width; x++)
+            {
+                if (bitmap.GetPixel(x, y) != clear)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static string FindRepositoryRoot()

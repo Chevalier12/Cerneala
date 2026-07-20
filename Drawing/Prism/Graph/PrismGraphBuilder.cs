@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Numerics;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 
@@ -611,6 +612,7 @@ public sealed class PrismGraphBuilder
             }
 
             PrismGraphNodeId current = input;
+            int nextIntermediateOrdinal = states.Count;
             for (int index = 0; index < states.Count; index++)
             {
                 PrismFilterState state = states[index];
@@ -622,19 +624,122 @@ public sealed class PrismGraphBuilder
 
                 ImmutableArray<PrismGraphParameter> parameters =
                     SnapshotParameters(state.Filter, state);
-                PrismGraphNode filter = AddNode(
-                    PrismGraphNodeKind.Filter,
-                    definitionNodeId,
-                    index,
-                    definitionOrders[definitionNodeId],
-                    $"{diagnosticNames[definitionNodeId]}/filter[{index}]",
-                    DependenciesForCatalogEntry((int)state.Filter, parameters),
-                    parameters,
-                    blendMode: state.BlendMode,
-                    amount: state.Opacity,
-                    filter: state.Filter);
-                AddEdge(current, filter.Id, PrismGraphEdgeKind.Content);
-                current = filter.Id;
+                PrismNeighborhoodPlan? neighborhoodPlan = null;
+                PrismResamplingPlan? resamplingPlan = null;
+                PrismCatalogFilterPlan? catalogFilterPlan = null;
+                int passCount;
+                if (PrismNeighborhoodPlanner.IsSupported(
+                        state.Filter))
+                {
+                    neighborhoodPlan =
+                        PrismNeighborhoodPlanner.Create(
+                            state.Filter,
+                            parameters,
+                            state.BlendMode,
+                            analyzedScope.Scope.PixelScale,
+                            analyzedScope.Scope.EffectiveTransform,
+                            analyzedScope.Bounds);
+                    passCount =
+                        neighborhoodPlan.Value.Passes.Length;
+                }
+                else if (PrismResamplingPlanner.IsSupported(
+                    state.Filter))
+                {
+                    resamplingPlan =
+                        PrismResamplingPlanner.Create(
+                            state.Filter,
+                            parameters,
+                            state.BlendMode,
+                            analyzedScope.Scope.PixelScale,
+                            analyzedScope.Scope.EffectiveTransform,
+                            analyzedScope.Bounds);
+                    passCount =
+                        resamplingPlan.Value.Passes.Length;
+                }
+                else if (PrismCatalogFilterPlanner.IsSupported(
+                    state.Filter))
+                {
+                    catalogFilterPlan =
+                        PrismCatalogFilterPlanner.Create(
+                            state.Filter,
+                            parameters,
+                            state.BlendMode,
+                            analyzedScope.Scope.PixelScale,
+                            analyzedScope.Scope.EffectiveTransform,
+                            analyzedScope.Bounds);
+                    passCount =
+                        catalogFilterPlan.Value.Passes.Length;
+                }
+                else
+                {
+                    PrismGraphNode filter = AddNode(
+                        PrismGraphNodeKind.Filter,
+                        definitionNodeId,
+                        index,
+                        definitionOrders[definitionNodeId],
+                        $"{diagnosticNames[definitionNodeId]}/filter[{index}]",
+                        DependenciesForCatalogEntry(
+                            (int)state.Filter,
+                            parameters),
+                        parameters,
+                        blendMode: state.BlendMode,
+                        amount: state.Opacity,
+                        filter: state.Filter);
+                    AddEdge(
+                        current,
+                        filter.Id,
+                        PrismGraphEdgeKind.Content);
+                    current = filter.Id;
+                    continue;
+                }
+
+                for (int passIndex = 0;
+                    passIndex < passCount;
+                    passIndex++)
+                {
+                    bool isFinal =
+                        passIndex == passCount - 1;
+                    int ordinal = isFinal
+                        ? index
+                        : nextIntermediateOrdinal++;
+                    PrismGraphNode filter = AddNode(
+                        PrismGraphNodeKind.Filter,
+                        definitionNodeId,
+                        ordinal,
+                        definitionOrders[definitionNodeId],
+                        $"{diagnosticNames[definitionNodeId]}/filter[{index}]/pass[{passIndex}]",
+                        DependenciesForCatalogEntry(
+                            (int)state.Filter,
+                            parameters),
+                        parameters,
+                        blendMode: isFinal
+                            ? state.BlendMode
+                            : PrismBlendMode.Normal,
+                        amount: isFinal
+                            ? state.Opacity
+                            : 1,
+                        filter: state.Filter,
+                        neighborhoodPlan: neighborhoodPlan,
+                        neighborhoodPassIndex:
+                            neighborhoodPlan is null
+                                ? -1
+                                : passIndex,
+                        resamplingPlan: resamplingPlan,
+                        resamplingPassIndex:
+                            resamplingPlan is null
+                                ? -1
+                                : passIndex,
+                        catalogFilterPlan: catalogFilterPlan,
+                        catalogFilterPassIndex:
+                            catalogFilterPlan is null
+                                ? -1
+                                : passIndex);
+                    AddEdge(
+                        current,
+                        filter.Id,
+                        PrismGraphEdgeKind.Content);
+                    current = filter.Id;
+                }
             }
 
             return current;
@@ -818,7 +923,13 @@ public sealed class PrismGraphBuilder
             float? density = null,
             bool? invert = null,
             PrismMaskPass? maskPass = null,
-            PrismGraphLayerSettings? layerSettings = null)
+            PrismGraphLayerSettings? layerSettings = null,
+            PrismNeighborhoodPlan? neighborhoodPlan = null,
+            int neighborhoodPassIndex = -1,
+            PrismResamplingPlan? resamplingPlan = null,
+            int resamplingPassIndex = -1,
+            PrismCatalogFilterPlan? catalogFilterPlan = null,
+            int catalogFilterPassIndex = -1)
         {
             PrismGraphNodeId id = new(
                 analyzedScope.DependencyStamp.CacheOwnerToken,
@@ -853,7 +964,13 @@ public sealed class PrismGraphBuilder
                 density,
                 invert,
                 maskPass,
-                layerSettings);
+                layerSettings,
+                neighborhoodPlan,
+                neighborhoodPassIndex,
+                resamplingPlan,
+                resamplingPassIndex,
+                catalogFilterPlan,
+                catalogFilterPassIndex);
             nodes.Add(node);
             return node;
         }

@@ -23,7 +23,8 @@ Generated from `.`.
 |-- benchmarks/
 |   |-- Cerneala.Benchmarks/
 |   |   |-- results/
-|   |   |   +-- 2026-07-13-queue-engine-2.md
+|   |   |   |-- 2026-07-13-queue-engine-2.md
+|   |   |   +-- 2026-07-20-prism-filter-catalog.md
 |   |   |-- Cerneala.Benchmarks.csproj
 |   |   |-- PrismInstanceBenchmarks.cs
 |   |   |-- Program.cs
@@ -303,7 +304,12 @@ Generated from `.`.
 |   |-- motion-diagnostics.md
 |   |-- motion-markup-syntax-proposal.md
 |   |-- motion-system.md
+|   |-- prism-adjustment-filters.md
+|   |-- prism-catalog-filters.md
+|   |-- prism-distortion-filters.md
+|   |-- prism-filter-reference.generated.md
 |   |-- prism-markup-syntax-proposal.md
+|   |-- prism-neighborhood-filters.md
 |   |-- prism-public-api-baseline.md
 |   |-- prism-technical-design.md
 |   +-- wpf-event-coverage.md
@@ -1293,6 +1299,17 @@ Generated from `.`.
 |   |   |   +-- PrismFallbackPolicy.cs
 |   |   |-- Color/
 |   |   |   +-- PrismColorPipeline.cs
+|   |   |-- Filters/
+|   |   |   |-- PrismAdjustmentMath.cs
+|   |   |   |-- PrismAdjustmentPlanner.cs
+|   |   |   |-- PrismCatalogFilterMath.cs
+|   |   |   |-- PrismCatalogFilterPlanner.cs
+|   |   |   |-- PrismFilterConformanceGallery.cs
+|   |   |   |-- PrismFilterParameterReader.cs
+|   |   |   |-- PrismNeighborhoodMath.cs
+|   |   |   |-- PrismNeighborhoodPlanner.cs
+|   |   |   |-- PrismResamplingMath.cs
+|   |   |   +-- PrismResamplingPlanner.cs
 |   |   |-- Graph/
 |   |   |   |-- PrismAnalyzedScope.cs
 |   |   |   |-- PrismBackdropRequirement.cs
@@ -1451,12 +1468,16 @@ Generated from `.`.
 |   |   |   |-- Paths/
 |   |   |   |   +-- SvgPathFlattenerTests.cs
 |   |   |   |-- Prism/
+|   |   |   |   |-- PrismAdjustmentFilterTests.cs
+|   |   |   |   |-- PrismCatalogFilterTests.cs
 |   |   |   |   |-- PrismColorBlendStyleCoverageTests.cs
 |   |   |   |   |-- PrismColorPipelineTests.cs
 |   |   |   |   |-- PrismCommandListContractTests.cs
+|   |   |   |   |-- PrismDistortionFilterTests.cs
 |   |   |   |   |-- PrismGraphContractTests.cs
 |   |   |   |   |-- PrismGraphOptimizerTests.cs
 |   |   |   |   |-- PrismMaskPipelineTests.cs
+|   |   |   |   |-- PrismNeighborhoodFilterTests.cs
 |   |   |   |   |-- PrismRetainedCommandContractTests.cs
 |   |   |   |   |-- PrismStylePipelineTests.cs
 |   |   |   |   +-- PrismTestData.cs
@@ -1850,7 +1871,8 @@ Generated from `.`.
 |   +-- scripts/
 |       |-- Archive-Repo.ps1
 |       |-- Archive-Repo.Tests.ps1
-|       +-- New-FileTree.ps1
+|       |-- New-FileTree.ps1
+|       +-- New-PrismFilterReference.ps1
 |-- UI/
 |   |-- Accessibility/
 |   |   |-- AccessibleName.cs
@@ -2447,6 +2469,7 @@ Generated from `.`.
 |   |   +-- Runtime/
 |   |       |-- PrismAdvancedBlend.cs
 |   |       |-- PrismAttachment.cs
+|   |       |-- PrismCatalogParameterValidation.cs
 |   |       |-- PrismInstance.cs
 |   |       |-- PrismParameterStore.cs
 |   |       |-- PrismStates.cs

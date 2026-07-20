@@ -562,18 +562,41 @@ public sealed class PrismFilterState
     internal PrismResourceId GetValue(PrismParameterKey<PrismResourceId> key) =>
         parameters.Get(key);
 
-    internal void SetValue(PrismParameterKey<bool> key, bool value) => parameters.Set(key, value);
-
-    internal void SetValue(PrismParameterKey<int> key, int value) => parameters.Set(key, value);
-
-    internal void SetValue(PrismParameterKey<float> key, float value) => parameters.Set(key, value);
-
-    internal void SetValue(PrismParameterKey<Color> key, Color value) => parameters.Set(key, value);
-
-    internal void SetValue(PrismParameterKey<Vector4> key, Vector4 value) => parameters.Set(key, value);
-
-    internal void SetValue(PrismParameterKey<PrismResourceId> key, PrismResourceId value) =>
+    internal void SetValue(PrismParameterKey<bool> key, bool value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
         parameters.Set(key, value);
+    }
+
+    internal void SetValue(PrismParameterKey<int> key, int value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
+        parameters.Set(key, value);
+    }
+
+    internal void SetValue(PrismParameterKey<float> key, float value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
+        parameters.Set(key, value);
+    }
+
+    internal void SetValue(PrismParameterKey<Color> key, Color value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
+        parameters.Set(key, value);
+    }
+
+    internal void SetValue(PrismParameterKey<Vector4> key, Vector4 value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
+        parameters.Set(key, value);
+    }
+
+    internal void SetValue(PrismParameterKey<PrismResourceId> key, PrismResourceId value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
+        parameters.Set(key, value);
+    }
 }
 
 public sealed class PrismStyleState

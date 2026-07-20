@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\Cerneala.csproj" />
     <ProjectReference Include="..\..\CernealaPresentation\CernealaPresentation.csproj" />
     <ProjectReference Include="..\..\Playground\Cerneala.Playground\Cerneala.Playground.csproj" />
+    <ProjectReference Include="..\Cerneala.WindowsDxSmoke\Cerneala.WindowsDxSmoke.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

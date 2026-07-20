@@ -3,6 +3,78 @@
   "schemaVersion": 1,
   "catalogVersion": "1.0.0",
   "defaultColorProfile": "LinearSrgb",
+  "executionProfiles": [
+    {
+      "category": "color-and-adjustment",
+      "primitive": "matrix-curve-lut",
+      "bounds": "source",
+      "sampling": "point",
+      "surfaceFormat": "linear-premultiplied-rgba",
+      "colorSpace": "working-profile",
+      "gpuCapabilities": [
+        "pixel-shader"
+      ]
+    },
+    {
+      "category": "blur-and-sharpen",
+      "primitive": "convolution-neighborhood",
+      "bounds": "parameter-derived",
+      "sampling": "neighborhood",
+      "surfaceFormat": "linear-premultiplied-rgba",
+      "colorSpace": "working-profile",
+      "gpuCapabilities": [
+        "pixel-shader",
+        "multi-pass"
+      ]
+    },
+    {
+      "category": "distort-geometry-and-morphology",
+      "primitive": "coordinate-map-morphology",
+      "bounds": "parameter-derived",
+      "sampling": "coordinate-map",
+      "surfaceFormat": "linear-premultiplied-rgba",
+      "colorSpace": "working-profile",
+      "gpuCapabilities": [
+        "pixel-shader",
+        "multi-pass"
+      ]
+    },
+    {
+      "category": "noise-pixelate-render-and-video",
+      "primitive": "noise-quantization-procedural",
+      "bounds": "parameter-derived",
+      "sampling": "neighborhood-or-procedural",
+      "surfaceFormat": "linear-premultiplied-rgba",
+      "colorSpace": "working-profile",
+      "gpuCapabilities": [
+        "pixel-shader",
+        "multi-pass"
+      ]
+    },
+    {
+      "category": "artistic-brush-sketch-stylize-and-texture",
+      "primitive": "edge-morphology-quantization-texture",
+      "bounds": "parameter-derived",
+      "sampling": "multi-pass-neighborhood",
+      "surfaceFormat": "linear-premultiplied-rgba",
+      "colorSpace": "working-profile",
+      "gpuCapabilities": [
+        "pixel-shader",
+        "multi-pass"
+      ]
+    },
+    {
+      "category": "general-and-cerneala-native",
+      "primitive": "matrix-convolution-procedural",
+      "bounds": "parameter-derived",
+      "sampling": "point-or-neighborhood",
+      "surfaceFormat": "linear-premultiplied-rgba",
+      "colorSpace": "working-profile",
+      "gpuCapabilities": [
+        "pixel-shader"
+      ]
+    }
+  ],
   "commonProperties": {
     "composition": [
       {
@@ -495,7 +567,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": -1,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 0.0
@@ -506,7 +580,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": -1,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 0.0
@@ -530,8 +606,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/BrightnessContrast",
-        "kernel": "planned:PrismKernelRegistry/BrightnessContrast",
-        "test": "planned:PrismCatalogConformance/BrightnessContrast",
+        "kernel": "PrismKernelRegistry/BrightnessContrast",
+        "test": "PrismAdjustmentFilterTests/BrightnessContrast",
         "documentation": "generated:prism-catalog/filter/BrightnessContrast"
       }
     },
@@ -559,7 +635,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 0.0
@@ -570,7 +648,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 1.0
@@ -581,7 +661,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0.0001,
+            "maximum": null
           },
           "unit": "unitless",
           "default": 1.0
@@ -592,7 +674,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 0.0
@@ -603,7 +687,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 1.0
@@ -616,8 +702,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Levels",
-        "kernel": "planned:PrismKernelRegistry/Levels",
-        "test": "planned:PrismCatalogConformance/Levels",
+        "kernel": "PrismKernelRegistry/Levels",
+        "test": "PrismAdjustmentFilterTests/Levels",
         "documentation": "generated:prism-catalog/filter/Levels"
       }
     },
@@ -669,8 +755,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Curves",
-        "kernel": "planned:PrismKernelRegistry/Curves",
-        "test": "planned:PrismCatalogConformance/Curves",
+        "kernel": "PrismKernelRegistry/Curves",
+        "test": "PrismAdjustmentFilterTests/Curves",
         "documentation": "generated:prism-catalog/filter/Curves"
       }
     },
@@ -709,7 +795,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0.0001,
+            "maximum": null
           },
           "unit": "unitless",
           "default": 1.0
@@ -722,8 +810,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Exposure",
-        "kernel": "planned:PrismKernelRegistry/Exposure",
-        "test": "planned:PrismCatalogConformance/Exposure",
+        "kernel": "PrismKernelRegistry/Exposure",
+        "test": "PrismAdjustmentFilterTests/Exposure",
         "documentation": "generated:prism-catalog/filter/Exposure"
       }
     },
@@ -740,7 +828,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": -1,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 0.0
@@ -751,7 +841,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": -1,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 0.0
@@ -764,8 +856,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Vibrance",
-        "kernel": "planned:PrismKernelRegistry/Vibrance",
-        "test": "planned:PrismCatalogConformance/Vibrance",
+        "kernel": "PrismKernelRegistry/Vibrance",
+        "test": "PrismAdjustmentFilterTests/Vibrance",
         "documentation": "generated:prism-catalog/filter/Vibrance"
       }
     },
@@ -793,7 +885,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": -180,
+            "maximum": 180
           },
           "unit": "degrees",
           "default": 0.0
@@ -804,7 +898,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": -1,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 0.0
@@ -815,7 +911,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": -1,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 0.0
@@ -839,8 +937,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/HueSaturation",
-        "kernel": "planned:PrismKernelRegistry/HueSaturation",
-        "test": "planned:PrismCatalogConformance/HueSaturation",
+        "kernel": "PrismKernelRegistry/HueSaturation",
+        "test": "PrismAdjustmentFilterTests/HueSaturation",
         "documentation": "generated:prism-catalog/filter/HueSaturation"
       }
     },
@@ -915,8 +1013,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ColorBalance",
-        "kernel": "planned:PrismKernelRegistry/ColorBalance",
-        "test": "planned:PrismCatalogConformance/ColorBalance",
+        "kernel": "PrismKernelRegistry/ColorBalance",
+        "test": "PrismAdjustmentFilterTests/ColorBalance",
         "documentation": "generated:prism-catalog/filter/ColorBalance"
       }
     },
@@ -1023,8 +1121,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/BlackWhite",
-        "kernel": "planned:PrismKernelRegistry/BlackWhite",
-        "test": "planned:PrismCatalogConformance/BlackWhite",
+        "kernel": "PrismKernelRegistry/BlackWhite",
+        "test": "PrismAdjustmentFilterTests/BlackWhite",
         "documentation": "generated:prism-catalog/filter/BlackWhite"
       }
     },
@@ -1052,7 +1150,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 0.25
@@ -1076,8 +1176,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/PhotoFilter",
-        "kernel": "planned:PrismKernelRegistry/PhotoFilter",
-        "test": "planned:PrismCatalogConformance/PhotoFilter",
+        "kernel": "PrismKernelRegistry/PhotoFilter",
+        "test": "PrismAdjustmentFilterTests/PhotoFilter",
         "documentation": "generated:prism-catalog/filter/PhotoFilter"
       }
     },
@@ -1167,8 +1267,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ChannelMixer",
-        "kernel": "planned:PrismKernelRegistry/ChannelMixer",
-        "test": "planned:PrismCatalogConformance/ChannelMixer",
+        "kernel": "PrismKernelRegistry/ChannelMixer",
+        "test": "PrismAdjustmentFilterTests/ChannelMixer",
         "documentation": "generated:prism-catalog/filter/ChannelMixer"
       }
     },
@@ -1195,7 +1295,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 1.0
@@ -1213,14 +1315,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processingauxiliary-resource"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ColorLookup",
-        "kernel": "planned:PrismKernelRegistry/ColorLookup",
-        "test": "planned:PrismCatalogConformance/ColorLookup",
+        "kernel": "PrismKernelRegistry/ColorLookup",
+        "test": "PrismAdjustmentFilterTests/ColorLookup",
         "documentation": "generated:prism-catalog/filter/ColorLookup"
       }
     },
@@ -1238,8 +1341,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Invert",
-        "kernel": "planned:PrismKernelRegistry/Invert",
-        "test": "planned:PrismCatalogConformance/Invert",
+        "kernel": "PrismKernelRegistry/Invert",
+        "test": "PrismAdjustmentFilterTests/Invert",
         "documentation": "generated:prism-catalog/filter/Invert"
       }
     },
@@ -1257,7 +1360,7 @@
           "required": false,
           "domain": {
             "kind": "range",
-            "minimum": 0,
+            "minimum": 2,
             "maximum": null
           },
           "unit": "count",
@@ -1271,8 +1374,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Posterize",
-        "kernel": "planned:PrismKernelRegistry/Posterize",
-        "test": "planned:PrismCatalogConformance/Posterize",
+        "kernel": "PrismKernelRegistry/Posterize",
+        "test": "PrismAdjustmentFilterTests/Posterize",
         "documentation": "generated:prism-catalog/filter/Posterize"
       }
     },
@@ -1289,7 +1392,9 @@
           "valueType": "number",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1
           },
           "unit": "unitless",
           "default": 0.5
@@ -1300,10 +1405,11 @@
       ],
       "deterministic": true,
       "cacheable": true,
+      "fusion": "same-parameters-idempotent",
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Threshold",
-        "kernel": "planned:PrismKernelRegistry/Threshold",
-        "test": "planned:PrismCatalogConformance/Threshold",
+        "kernel": "PrismKernelRegistry/Threshold",
+        "test": "PrismAdjustmentFilterTests/Threshold",
         "documentation": "generated:prism-catalog/filter/Threshold"
       }
     },
@@ -1366,8 +1472,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/GradientMap",
-        "kernel": "planned:PrismKernelRegistry/GradientMap",
-        "test": "planned:PrismCatalogConformance/GradientMap",
+        "kernel": "PrismKernelRegistry/GradientMap",
+        "test": "PrismAdjustmentFilterTests/GradientMap",
         "documentation": "generated:prism-catalog/filter/GradientMap"
       }
     },
@@ -1541,8 +1647,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/SelectiveColor",
-        "kernel": "planned:PrismKernelRegistry/SelectiveColor",
-        "test": "planned:PrismCatalogConformance/SelectiveColor",
+        "kernel": "PrismKernelRegistry/SelectiveColor",
+        "test": "PrismAdjustmentFilterTests/SelectiveColor",
         "documentation": "generated:prism-catalog/filter/SelectiveColor"
       }
     },
@@ -1560,8 +1666,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Average",
-        "kernel": "planned:PrismKernelRegistry/Average",
-        "test": "planned:PrismCatalogConformance/Average",
+        "kernel": "PrismKernelRegistry/Average",
+        "test": "PrismNeighborhoodFilterTests/Average",
         "documentation": "generated:prism-catalog/filter/Average"
       }
     },
@@ -1615,8 +1721,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Blur",
-        "kernel": "planned:PrismKernelRegistry/Blur",
-        "test": "planned:PrismCatalogConformance/Blur",
+        "kernel": "PrismKernelRegistry/Blur",
+        "test": "PrismNeighborhoodFilterTests/Blur",
         "documentation": "generated:prism-catalog/filter/Blur"
       }
     },
@@ -1670,8 +1776,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/BlurMore",
-        "kernel": "planned:PrismKernelRegistry/BlurMore",
-        "test": "planned:PrismCatalogConformance/BlurMore",
+        "kernel": "PrismKernelRegistry/BlurMore",
+        "test": "PrismNeighborhoodFilterTests/BlurMore",
         "documentation": "generated:prism-catalog/filter/BlurMore"
       }
     },
@@ -1727,8 +1833,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/BoxBlur",
-        "kernel": "planned:PrismKernelRegistry/BoxBlur",
-        "test": "planned:PrismCatalogConformance/BoxBlur",
+        "kernel": "PrismKernelRegistry/BoxBlur",
+        "test": "PrismNeighborhoodFilterTests/BoxBlur",
         "documentation": "generated:prism-catalog/filter/BoxBlur"
       }
     },
@@ -1782,8 +1888,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/GaussianBlur",
-        "kernel": "planned:PrismKernelRegistry/GaussianBlur",
-        "test": "planned:PrismCatalogConformance/GaussianBlur",
+        "kernel": "PrismKernelRegistry/GaussianBlur",
+        "test": "PrismNeighborhoodFilterTests/GaussianBlur",
         "documentation": "generated:prism-catalog/filter/GaussianBlur"
       }
     },
@@ -1945,14 +2051,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processing"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/LensBlur",
-        "kernel": "planned:PrismKernelRegistry/LensBlur",
-        "test": "planned:PrismCatalogConformance/LensBlur",
+        "kernel": "PrismKernelRegistry/LensBlur",
+        "test": "PrismNeighborhoodFilterTests/LensBlur",
         "documentation": "generated:prism-catalog/filter/LensBlur"
       }
     },
@@ -2017,8 +2124,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/MotionBlur",
-        "kernel": "planned:PrismKernelRegistry/MotionBlur",
-        "test": "planned:PrismCatalogConformance/MotionBlur",
+        "kernel": "PrismKernelRegistry/MotionBlur",
+        "test": "PrismNeighborhoodFilterTests/MotionBlur",
         "documentation": "generated:prism-catalog/filter/MotionBlur"
       }
     },
@@ -2084,8 +2191,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/RadialBlur",
-        "kernel": "planned:PrismKernelRegistry/RadialBlur",
-        "test": "planned:PrismCatalogConformance/RadialBlur",
+        "kernel": "PrismKernelRegistry/RadialBlur",
+        "test": "PrismNeighborhoodFilterTests/RadialBlur",
         "documentation": "generated:prism-catalog/filter/RadialBlur"
       }
     },
@@ -2132,14 +2239,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processingauxiliary-resource"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ShapeBlur",
-        "kernel": "planned:PrismKernelRegistry/ShapeBlur",
-        "test": "planned:PrismCatalogConformance/ShapeBlur",
+        "kernel": "PrismKernelRegistry/ShapeBlur",
+        "test": "PrismNeighborhoodFilterTests/ShapeBlur",
         "documentation": "generated:prism-catalog/filter/ShapeBlur"
       }
     },
@@ -2204,8 +2312,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/SmartBlur",
-        "kernel": "planned:PrismKernelRegistry/SmartBlur",
-        "test": "planned:PrismCatalogConformance/SmartBlur",
+        "kernel": "PrismKernelRegistry/SmartBlur",
+        "test": "PrismNeighborhoodFilterTests/SmartBlur",
         "documentation": "generated:prism-catalog/filter/SmartBlur"
       }
     },
@@ -2259,8 +2367,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/SurfaceBlur",
-        "kernel": "planned:PrismKernelRegistry/SurfaceBlur",
-        "test": "planned:PrismCatalogConformance/SurfaceBlur",
+        "kernel": "PrismKernelRegistry/SurfaceBlur",
+        "test": "PrismNeighborhoodFilterTests/SurfaceBlur",
         "documentation": "generated:prism-catalog/filter/SurfaceBlur"
       }
     },
@@ -2330,14 +2438,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processingauxiliary-resource"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/FieldBlur",
-        "kernel": "planned:PrismKernelRegistry/FieldBlur",
-        "test": "planned:PrismCatalogConformance/FieldBlur",
+        "kernel": "PrismKernelRegistry/FieldBlur",
+        "test": "PrismNeighborhoodFilterTests/FieldBlur",
         "documentation": "generated:prism-catalog/filter/FieldBlur"
       }
     },
@@ -2466,8 +2575,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/IrisBlur",
-        "kernel": "planned:PrismKernelRegistry/IrisBlur",
-        "test": "planned:PrismCatalogConformance/IrisBlur",
+        "kernel": "PrismKernelRegistry/IrisBlur",
+        "test": "PrismNeighborhoodFilterTests/IrisBlur",
         "documentation": "generated:prism-catalog/filter/IrisBlur"
       }
     },
@@ -2581,8 +2690,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/TiltShift",
-        "kernel": "planned:PrismKernelRegistry/TiltShift",
-        "test": "planned:PrismCatalogConformance/TiltShift",
+        "kernel": "PrismKernelRegistry/TiltShift",
+        "test": "PrismNeighborhoodFilterTests/TiltShift",
         "documentation": "generated:prism-catalog/filter/TiltShift"
       }
     },
@@ -2682,14 +2791,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processingauxiliary-resource"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/PathBlur",
-        "kernel": "planned:PrismKernelRegistry/PathBlur",
-        "test": "planned:PrismCatalogConformance/PathBlur",
+        "kernel": "PrismKernelRegistry/PathBlur",
+        "test": "PrismNeighborhoodFilterTests/PathBlur",
         "documentation": "generated:prism-catalog/filter/PathBlur"
       }
     },
@@ -2804,8 +2914,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/SpinBlur",
-        "kernel": "planned:PrismKernelRegistry/SpinBlur",
-        "test": "planned:PrismCatalogConformance/SpinBlur",
+        "kernel": "PrismKernelRegistry/SpinBlur",
+        "test": "PrismNeighborhoodFilterTests/SpinBlur",
         "documentation": "generated:prism-catalog/filter/SpinBlur"
       }
     },
@@ -2835,8 +2945,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Sharpen",
-        "kernel": "planned:PrismKernelRegistry/Sharpen",
-        "test": "planned:PrismCatalogConformance/Sharpen",
+        "kernel": "PrismKernelRegistry/Sharpen",
+        "test": "PrismNeighborhoodFilterTests/Sharpen",
         "documentation": "generated:prism-catalog/filter/Sharpen"
       }
     },
@@ -2866,8 +2976,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/SharpenMore",
-        "kernel": "planned:PrismKernelRegistry/SharpenMore",
-        "test": "planned:PrismCatalogConformance/SharpenMore",
+        "kernel": "PrismKernelRegistry/SharpenMore",
+        "test": "PrismNeighborhoodFilterTests/SharpenMore",
         "documentation": "generated:prism-catalog/filter/SharpenMore"
       }
     },
@@ -2908,8 +3018,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/SharpenEdges",
-        "kernel": "planned:PrismKernelRegistry/SharpenEdges",
-        "test": "planned:PrismCatalogConformance/SharpenEdges",
+        "kernel": "PrismKernelRegistry/SharpenEdges",
+        "test": "PrismNeighborhoodFilterTests/SharpenEdges",
         "documentation": "generated:prism-catalog/filter/SharpenEdges"
       }
     },
@@ -2963,8 +3073,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/UnsharpMask",
-        "kernel": "planned:PrismKernelRegistry/UnsharpMask",
-        "test": "planned:PrismCatalogConformance/UnsharpMask",
+        "kernel": "PrismKernelRegistry/UnsharpMask",
+        "test": "PrismNeighborhoodFilterTests/UnsharpMask",
         "documentation": "generated:prism-catalog/filter/UnsharpMask"
       }
     },
@@ -3114,8 +3224,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/SmartSharpen",
-        "kernel": "planned:PrismKernelRegistry/SmartSharpen",
-        "test": "planned:PrismCatalogConformance/SmartSharpen",
+        "kernel": "PrismKernelRegistry/SmartSharpen",
+        "test": "PrismNeighborhoodFilterTests/SmartSharpen",
         "documentation": "generated:prism-catalog/filter/SmartSharpen"
       }
     },
@@ -3158,8 +3268,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/HighPass",
-        "kernel": "planned:PrismKernelRegistry/HighPass",
-        "test": "planned:PrismCatalogConformance/HighPass",
+        "kernel": "PrismKernelRegistry/HighPass",
+        "test": "PrismNeighborhoodFilterTests/HighPass",
         "documentation": "generated:prism-catalog/filter/HighPass"
       }
     },
@@ -3267,8 +3377,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Transform",
-        "kernel": "planned:PrismKernelRegistry/Transform",
-        "test": "planned:PrismCatalogConformance/Transform",
+        "kernel": "PrismKernelRegistry/Transform",
+        "test": "PrismDistortionFilterTests/Transform",
         "documentation": "generated:prism-catalog/filter/Transform"
       }
     },
@@ -3360,14 +3470,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processingauxiliary-resource"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/AdaptiveWideAngle",
-        "kernel": "planned:PrismKernelRegistry/AdaptiveWideAngle",
-        "test": "planned:PrismCatalogConformance/AdaptiveWideAngle",
+        "kernel": "PrismKernelRegistry/AdaptiveWideAngle",
+        "test": "PrismDistortionFilterTests/AdaptiveWideAngle",
         "documentation": "generated:prism-catalog/filter/AdaptiveWideAngle"
       }
     },
@@ -3498,8 +3609,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/LensCorrection",
-        "kernel": "planned:PrismKernelRegistry/LensCorrection",
-        "test": "planned:PrismCatalogConformance/LensCorrection",
+        "kernel": "PrismKernelRegistry/LensCorrection",
+        "test": "PrismDistortionFilterTests/LensCorrection",
         "documentation": "generated:prism-catalog/filter/LensCorrection"
       }
     },
@@ -3562,8 +3673,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/DiffuseGlow",
-        "kernel": "planned:PrismKernelRegistry/DiffuseGlow",
-        "test": "planned:PrismCatalogConformance/DiffuseGlow",
+        "kernel": "PrismKernelRegistry/DiffuseGlow",
+        "test": "PrismDistortionFilterTests/DiffuseGlow",
         "documentation": "generated:prism-catalog/filter/DiffuseGlow"
       }
     },
@@ -3652,14 +3763,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processingauxiliary-resource"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Displace",
-        "kernel": "planned:PrismKernelRegistry/Displace",
-        "test": "planned:PrismCatalogConformance/Displace",
+        "kernel": "PrismKernelRegistry/Displace",
+        "test": "PrismDistortionFilterTests/Displace",
         "documentation": "generated:prism-catalog/filter/Displace"
       }
     },
@@ -3738,14 +3850,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processing"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Glass",
-        "kernel": "planned:PrismKernelRegistry/Glass",
-        "test": "planned:PrismCatalogConformance/Glass",
+        "kernel": "PrismKernelRegistry/Glass",
+        "test": "PrismDistortionFilterTests/Glass",
         "documentation": "generated:prism-catalog/filter/Glass"
       }
     },
@@ -3783,24 +3896,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/OceanRipple",
-        "kernel": "planned:PrismKernelRegistry/OceanRipple",
-        "test": "planned:PrismCatalogConformance/OceanRipple",
+        "kernel": "PrismKernelRegistry/OceanRipple",
+        "test": "PrismDistortionFilterTests/OceanRipple",
         "documentation": "generated:prism-catalog/filter/OceanRipple"
       }
     },
@@ -3844,8 +3960,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Pinch",
-        "kernel": "planned:PrismKernelRegistry/Pinch",
-        "test": "planned:PrismCatalogConformance/Pinch",
+        "kernel": "PrismKernelRegistry/Pinch",
+        "test": "PrismDistortionFilterTests/Pinch",
         "documentation": "generated:prism-catalog/filter/Pinch"
       }
     },
@@ -3889,8 +4005,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/PolarCoordinates",
-        "kernel": "planned:PrismKernelRegistry/PolarCoordinates",
-        "test": "planned:PrismCatalogConformance/PolarCoordinates",
+        "kernel": "PrismKernelRegistry/PolarCoordinates",
+        "test": "PrismDistortionFilterTests/PolarCoordinates",
         "documentation": "generated:prism-catalog/filter/PolarCoordinates"
       }
     },
@@ -3926,13 +4042,15 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         },
         {
           "id": "edge-mode",
@@ -3947,14 +4065,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Ripple",
-        "kernel": "planned:PrismKernelRegistry/Ripple",
-        "test": "planned:PrismCatalogConformance/Ripple",
+        "kernel": "PrismKernelRegistry/Ripple",
+        "test": "PrismDistortionFilterTests/Ripple",
         "documentation": "generated:prism-catalog/filter/Ripple"
       }
     },
@@ -3995,8 +4114,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Shear",
-        "kernel": "planned:PrismKernelRegistry/Shear",
-        "test": "planned:PrismCatalogConformance/Shear",
+        "kernel": "PrismKernelRegistry/Shear",
+        "test": "PrismDistortionFilterTests/Shear",
         "documentation": "generated:prism-catalog/filter/Shear"
       }
     },
@@ -4051,8 +4170,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Spherize",
-        "kernel": "planned:PrismKernelRegistry/Spherize",
-        "test": "planned:PrismCatalogConformance/Spherize",
+        "kernel": "PrismKernelRegistry/Spherize",
+        "test": "PrismDistortionFilterTests/Spherize",
         "documentation": "generated:prism-catalog/filter/Spherize"
       }
     },
@@ -4096,8 +4215,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Twirl",
-        "kernel": "planned:PrismKernelRegistry/Twirl",
-        "test": "planned:PrismCatalogConformance/Twirl",
+        "kernel": "PrismKernelRegistry/Twirl",
+        "test": "PrismDistortionFilterTests/Twirl",
         "documentation": "generated:prism-catalog/filter/Twirl"
       }
     },
@@ -4188,24 +4307,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Wave",
-        "kernel": "planned:PrismKernelRegistry/Wave",
-        "test": "planned:PrismCatalogConformance/Wave",
+        "kernel": "PrismKernelRegistry/Wave",
+        "test": "PrismDistortionFilterTests/Wave",
         "documentation": "generated:prism-catalog/filter/Wave"
       }
     },
@@ -4273,8 +4395,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ZigZag",
-        "kernel": "planned:PrismKernelRegistry/ZigZag",
-        "test": "planned:PrismCatalogConformance/ZigZag",
+        "kernel": "PrismKernelRegistry/ZigZag",
+        "test": "PrismDistortionFilterTests/ZigZag",
         "documentation": "generated:prism-catalog/filter/ZigZag"
       }
     },
@@ -4341,14 +4463,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processingauxiliary-resource"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Liquify",
-        "kernel": "planned:PrismKernelRegistry/Liquify",
-        "test": "planned:PrismCatalogConformance/Liquify",
+        "kernel": "PrismKernelRegistry/Liquify",
+        "test": "PrismDistortionFilterTests/Liquify",
         "documentation": "generated:prism-catalog/filter/Liquify"
       }
     },
@@ -4391,8 +4514,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Maximum",
-        "kernel": "planned:PrismKernelRegistry/Maximum",
-        "test": "planned:PrismCatalogConformance/Maximum",
+        "kernel": "PrismKernelRegistry/Maximum",
+        "test": "PrismCatalogFilterTests/Maximum",
         "documentation": "generated:prism-catalog/filter/Maximum"
       }
     },
@@ -4435,8 +4558,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Minimum",
-        "kernel": "planned:PrismKernelRegistry/Minimum",
-        "test": "planned:PrismCatalogConformance/Minimum",
+        "kernel": "PrismKernelRegistry/Minimum",
+        "test": "PrismCatalogFilterTests/Minimum",
         "documentation": "generated:prism-catalog/filter/Minimum"
       }
     },
@@ -4491,8 +4614,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Offset",
-        "kernel": "planned:PrismKernelRegistry/Offset",
-        "test": "planned:PrismCatalogConformance/Offset",
+        "kernel": "PrismKernelRegistry/Offset",
+        "test": "PrismDistortionFilterTests/Offset",
         "documentation": "generated:prism-catalog/filter/Offset"
       }
     },
@@ -4539,24 +4662,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/AddNoise",
-        "kernel": "planned:PrismKernelRegistry/AddNoise",
-        "test": "planned:PrismCatalogConformance/AddNoise",
+        "kernel": "PrismKernelRegistry/AddNoise",
+        "test": "PrismNeighborhoodFilterTests/AddNoise",
         "documentation": "generated:prism-catalog/filter/AddNoise"
       }
     },
@@ -4599,8 +4725,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Despeckle",
-        "kernel": "planned:PrismKernelRegistry/Despeckle",
-        "test": "planned:PrismCatalogConformance/Despeckle",
+        "kernel": "PrismKernelRegistry/Despeckle",
+        "test": "PrismNeighborhoodFilterTests/Despeckle",
         "documentation": "generated:prism-catalog/filter/Despeckle"
       }
     },
@@ -4643,8 +4769,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/DustScratches",
-        "kernel": "planned:PrismKernelRegistry/DustScratches",
-        "test": "planned:PrismCatalogConformance/DustScratches",
+        "kernel": "PrismKernelRegistry/DustScratches",
+        "test": "PrismNeighborhoodFilterTests/DustScratches",
         "documentation": "generated:prism-catalog/filter/DustScratches"
       }
     },
@@ -4676,8 +4802,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Median",
-        "kernel": "planned:PrismKernelRegistry/Median",
-        "test": "planned:PrismCatalogConformance/Median",
+        "kernel": "PrismKernelRegistry/Median",
+        "test": "PrismNeighborhoodFilterTests/Median",
         "documentation": "generated:prism-catalog/filter/Median"
       }
     },
@@ -4751,8 +4877,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ReduceNoise",
-        "kernel": "planned:PrismKernelRegistry/ReduceNoise",
-        "test": "planned:PrismCatalogConformance/ReduceNoise",
+        "kernel": "PrismKernelRegistry/ReduceNoise",
+        "test": "PrismNeighborhoodFilterTests/ReduceNoise",
         "documentation": "generated:prism-catalog/filter/ReduceNoise"
       }
     },
@@ -4800,8 +4926,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ColorHalftone",
-        "kernel": "planned:PrismKernelRegistry/ColorHalftone",
-        "test": "planned:PrismCatalogConformance/ColorHalftone",
+        "kernel": "PrismKernelRegistry/ColorHalftone",
+        "test": "PrismCatalogFilterTests/ColorHalftone",
         "documentation": "generated:prism-catalog/filter/ColorHalftone"
       }
     },
@@ -4828,24 +4954,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Crystallize",
-        "kernel": "planned:PrismKernelRegistry/Crystallize",
-        "test": "planned:PrismCatalogConformance/Crystallize",
+        "kernel": "PrismKernelRegistry/Crystallize",
+        "test": "PrismCatalogFilterTests/Crystallize",
         "documentation": "generated:prism-catalog/filter/Crystallize"
       }
     },
@@ -4877,8 +5006,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Facet",
-        "kernel": "planned:PrismKernelRegistry/Facet",
-        "test": "planned:PrismCatalogConformance/Facet",
+        "kernel": "PrismKernelRegistry/Facet",
+        "test": "PrismCatalogFilterTests/Facet",
         "documentation": "generated:prism-catalog/filter/Facet"
       }
     },
@@ -4908,8 +5037,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Fragment",
-        "kernel": "planned:PrismKernelRegistry/Fragment",
-        "test": "planned:PrismCatalogConformance/Fragment",
+        "kernel": "PrismKernelRegistry/Fragment",
+        "test": "PrismCatalogFilterTests/Fragment",
         "documentation": "generated:prism-catalog/filter/Fragment"
       }
     },
@@ -4934,24 +5063,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Mezzotint",
-        "kernel": "planned:PrismKernelRegistry/Mezzotint",
-        "test": "planned:PrismCatalogConformance/Mezzotint",
+        "kernel": "PrismKernelRegistry/Mezzotint",
+        "test": "PrismCatalogFilterTests/Mezzotint",
         "documentation": "generated:prism-catalog/filter/Mezzotint"
       }
     },
@@ -4995,8 +5127,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Mosaic",
-        "kernel": "planned:PrismKernelRegistry/Mosaic",
-        "test": "planned:PrismCatalogConformance/Mosaic",
+        "kernel": "PrismKernelRegistry/Mosaic",
+        "test": "PrismCatalogFilterTests/Mosaic",
         "documentation": "generated:prism-catalog/filter/Mosaic"
       }
     },
@@ -5034,24 +5166,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Pointillize",
-        "kernel": "planned:PrismKernelRegistry/Pointillize",
-        "test": "planned:PrismCatalogConformance/Pointillize",
+        "kernel": "PrismKernelRegistry/Pointillize",
+        "test": "PrismCatalogFilterTests/Pointillize",
         "documentation": "generated:prism-catalog/filter/Pointillize"
       }
     },
@@ -5098,24 +5233,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Clouds",
-        "kernel": "planned:PrismKernelRegistry/Clouds",
-        "test": "planned:PrismCatalogConformance/Clouds",
+        "kernel": "PrismKernelRegistry/Clouds",
+        "test": "PrismCatalogFilterTests/Clouds",
         "documentation": "generated:prism-catalog/filter/Clouds"
       }
     },
@@ -5162,24 +5300,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/DifferenceClouds",
-        "kernel": "planned:PrismKernelRegistry/DifferenceClouds",
-        "test": "planned:PrismCatalogConformance/DifferenceClouds",
+        "kernel": "PrismKernelRegistry/DifferenceClouds",
+        "test": "PrismCatalogFilterTests/DifferenceClouds",
         "documentation": "generated:prism-catalog/filter/DifferenceClouds"
       }
     },
@@ -5237,24 +5378,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Fibers",
-        "kernel": "planned:PrismKernelRegistry/Fibers",
-        "test": "planned:PrismCatalogConformance/Fibers",
+        "kernel": "PrismKernelRegistry/Fibers",
+        "test": "PrismCatalogFilterTests/Fibers",
         "documentation": "generated:prism-catalog/filter/Fibers"
       }
     },
@@ -5309,8 +5453,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/LensFlare",
-        "kernel": "planned:PrismKernelRegistry/LensFlare",
-        "test": "planned:PrismCatalogConformance/LensFlare",
+        "kernel": "PrismKernelRegistry/LensFlare",
+        "test": "PrismCatalogFilterTests/LensFlare",
         "documentation": "generated:prism-catalog/filter/LensFlare"
       }
     },
@@ -5401,14 +5545,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processingauxiliary-resource"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/LightingEffects",
-        "kernel": "planned:PrismKernelRegistry/LightingEffects",
-        "test": "planned:PrismCatalogConformance/LightingEffects",
+        "kernel": "PrismKernelRegistry/LightingEffects",
+        "test": "PrismCatalogFilterTests/LightingEffects",
         "documentation": "generated:prism-catalog/filter/LightingEffects"
       }
     },
@@ -5449,8 +5594,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Deinterlace",
-        "kernel": "planned:PrismKernelRegistry/Deinterlace",
-        "test": "planned:PrismCatalogConformance/Deinterlace",
+        "kernel": "PrismKernelRegistry/Deinterlace",
+        "test": "PrismCatalogFilterTests/Deinterlace",
         "documentation": "generated:prism-catalog/filter/Deinterlace"
       }
     },
@@ -5491,8 +5636,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/NtscColors",
-        "kernel": "planned:PrismKernelRegistry/NtscColors",
-        "test": "planned:PrismCatalogConformance/NtscColors",
+        "kernel": "PrismKernelRegistry/NtscColors",
+        "test": "PrismCatalogFilterTests/NtscColors",
         "documentation": "generated:prism-catalog/filter/NtscColors"
       }
     },
@@ -5557,8 +5702,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ColoredPencil",
-        "kernel": "planned:PrismKernelRegistry/ColoredPencil",
-        "test": "planned:PrismCatalogConformance/ColoredPencil",
+        "kernel": "PrismKernelRegistry/ColoredPencil",
+        "test": "PrismCatalogFilterTests/ColoredPencil",
         "documentation": "generated:prism-catalog/filter/ColoredPencil"
       }
     },
@@ -5612,8 +5757,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Cutout",
-        "kernel": "planned:PrismKernelRegistry/Cutout",
-        "test": "planned:PrismCatalogConformance/Cutout",
+        "kernel": "PrismKernelRegistry/Cutout",
+        "test": "PrismCatalogFilterTests/Cutout",
         "documentation": "generated:prism-catalog/filter/Cutout"
       }
     },
@@ -5667,8 +5812,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/DryBrush",
-        "kernel": "planned:PrismKernelRegistry/DryBrush",
-        "test": "planned:PrismCatalogConformance/DryBrush",
+        "kernel": "PrismKernelRegistry/DryBrush",
+        "test": "PrismCatalogFilterTests/DryBrush",
         "documentation": "generated:prism-catalog/filter/DryBrush"
       }
     },
@@ -5715,24 +5860,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/FilmGrain",
-        "kernel": "planned:PrismKernelRegistry/FilmGrain",
-        "test": "planned:PrismCatalogConformance/FilmGrain",
+        "kernel": "PrismKernelRegistry/FilmGrain",
+        "test": "PrismCatalogFilterTests/FilmGrain",
         "documentation": "generated:prism-catalog/filter/FilmGrain"
       }
     },
@@ -5786,8 +5934,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Fresco",
-        "kernel": "planned:PrismKernelRegistry/Fresco",
-        "test": "planned:PrismCatalogConformance/Fresco",
+        "kernel": "PrismKernelRegistry/Fresco",
+        "test": "PrismCatalogFilterTests/Fresco",
         "documentation": "generated:prism-catalog/filter/Fresco"
       }
     },
@@ -5841,8 +5989,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/NeonGlow",
-        "kernel": "planned:PrismKernelRegistry/NeonGlow",
-        "test": "planned:PrismCatalogConformance/NeonGlow",
+        "kernel": "PrismKernelRegistry/NeonGlow",
+        "test": "PrismCatalogFilterTests/NeonGlow",
         "documentation": "generated:prism-catalog/filter/NeonGlow"
       }
     },
@@ -5896,8 +6044,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/PaintDaubs",
-        "kernel": "planned:PrismKernelRegistry/PaintDaubs",
-        "test": "planned:PrismCatalogConformance/PaintDaubs",
+        "kernel": "PrismKernelRegistry/PaintDaubs",
+        "test": "PrismCatalogFilterTests/PaintDaubs",
         "documentation": "generated:prism-catalog/filter/PaintDaubs"
       }
     },
@@ -5951,8 +6099,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/PaletteKnife",
-        "kernel": "planned:PrismKernelRegistry/PaletteKnife",
-        "test": "planned:PrismCatalogConformance/PaletteKnife",
+        "kernel": "PrismKernelRegistry/PaletteKnife",
+        "test": "PrismCatalogFilterTests/PaletteKnife",
         "documentation": "generated:prism-catalog/filter/PaletteKnife"
       }
     },
@@ -6004,8 +6152,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/PlasticWrap",
-        "kernel": "planned:PrismKernelRegistry/PlasticWrap",
-        "test": "planned:PrismCatalogConformance/PlasticWrap",
+        "kernel": "PrismKernelRegistry/PlasticWrap",
+        "test": "PrismCatalogFilterTests/PlasticWrap",
         "documentation": "generated:prism-catalog/filter/PlasticWrap"
       }
     },
@@ -6057,8 +6205,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/PosterEdges",
-        "kernel": "planned:PrismKernelRegistry/PosterEdges",
-        "test": "planned:PrismCatalogConformance/PosterEdges",
+        "kernel": "PrismKernelRegistry/PosterEdges",
+        "test": "PrismCatalogFilterTests/PosterEdges",
         "documentation": "generated:prism-catalog/filter/PosterEdges"
       }
     },
@@ -6154,8 +6302,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/RoughPastels",
-        "kernel": "planned:PrismKernelRegistry/RoughPastels",
-        "test": "planned:PrismCatalogConformance/RoughPastels",
+        "kernel": "PrismKernelRegistry/RoughPastels",
+        "test": "PrismCatalogFilterTests/RoughPastels",
         "documentation": "generated:prism-catalog/filter/RoughPastels"
       }
     },
@@ -6207,8 +6355,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/SmudgeStick",
-        "kernel": "planned:PrismKernelRegistry/SmudgeStick",
-        "test": "planned:PrismCatalogConformance/SmudgeStick",
+        "kernel": "PrismKernelRegistry/SmudgeStick",
+        "test": "PrismCatalogFilterTests/SmudgeStick",
         "documentation": "generated:prism-catalog/filter/SmudgeStick"
       }
     },
@@ -6262,8 +6410,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Sponge",
-        "kernel": "planned:PrismKernelRegistry/Sponge",
-        "test": "planned:PrismCatalogConformance/Sponge",
+        "kernel": "PrismKernelRegistry/Sponge",
+        "test": "PrismCatalogFilterTests/Sponge",
         "documentation": "generated:prism-catalog/filter/Sponge"
       }
     },
@@ -6361,8 +6509,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Underpainting",
-        "kernel": "planned:PrismKernelRegistry/Underpainting",
-        "test": "planned:PrismCatalogConformance/Underpainting",
+        "kernel": "PrismKernelRegistry/Underpainting",
+        "test": "PrismCatalogFilterTests/Underpainting",
         "documentation": "generated:prism-catalog/filter/Underpainting"
       }
     },
@@ -6414,8 +6562,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Watercolor",
-        "kernel": "planned:PrismKernelRegistry/Watercolor",
-        "test": "planned:PrismCatalogConformance/Watercolor",
+        "kernel": "PrismKernelRegistry/Watercolor",
+        "test": "PrismCatalogFilterTests/Watercolor",
         "documentation": "generated:prism-catalog/filter/Watercolor"
       }
     },
@@ -6469,8 +6617,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/AccentedEdges",
-        "kernel": "planned:PrismKernelRegistry/AccentedEdges",
-        "test": "planned:PrismCatalogConformance/AccentedEdges",
+        "kernel": "PrismKernelRegistry/AccentedEdges",
+        "test": "PrismCatalogFilterTests/AccentedEdges",
         "documentation": "generated:prism-catalog/filter/AccentedEdges"
       }
     },
@@ -6522,8 +6670,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/AngledStrokes",
-        "kernel": "planned:PrismKernelRegistry/AngledStrokes",
-        "test": "planned:PrismCatalogConformance/AngledStrokes",
+        "kernel": "PrismKernelRegistry/AngledStrokes",
+        "test": "PrismCatalogFilterTests/AngledStrokes",
         "documentation": "generated:prism-catalog/filter/AngledStrokes"
       }
     },
@@ -6575,8 +6723,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Crosshatch",
-        "kernel": "planned:PrismKernelRegistry/Crosshatch",
-        "test": "planned:PrismCatalogConformance/Crosshatch",
+        "kernel": "PrismKernelRegistry/Crosshatch",
+        "test": "PrismCatalogFilterTests/Crosshatch",
         "documentation": "generated:prism-catalog/filter/Crosshatch"
       }
     },
@@ -6628,8 +6776,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/DarkStrokes",
-        "kernel": "planned:PrismKernelRegistry/DarkStrokes",
-        "test": "planned:PrismCatalogConformance/DarkStrokes",
+        "kernel": "PrismKernelRegistry/DarkStrokes",
+        "test": "PrismCatalogFilterTests/DarkStrokes",
         "documentation": "generated:prism-catalog/filter/DarkStrokes"
       }
     },
@@ -6681,8 +6829,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/InkOutlines",
-        "kernel": "planned:PrismKernelRegistry/InkOutlines",
-        "test": "planned:PrismCatalogConformance/InkOutlines",
+        "kernel": "PrismKernelRegistry/InkOutlines",
+        "test": "PrismCatalogFilterTests/InkOutlines",
         "documentation": "generated:prism-catalog/filter/InkOutlines"
       }
     },
@@ -6720,24 +6868,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Spatter",
-        "kernel": "planned:PrismKernelRegistry/Spatter",
-        "test": "planned:PrismCatalogConformance/Spatter",
+        "kernel": "PrismKernelRegistry/Spatter",
+        "test": "PrismCatalogFilterTests/Spatter",
         "documentation": "generated:prism-catalog/filter/Spatter"
       }
     },
@@ -6786,24 +6937,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/SprayedStrokes",
-        "kernel": "planned:PrismKernelRegistry/SprayedStrokes",
-        "test": "planned:PrismCatalogConformance/SprayedStrokes",
+        "kernel": "PrismKernelRegistry/SprayedStrokes",
+        "test": "PrismCatalogFilterTests/SprayedStrokes",
         "documentation": "generated:prism-catalog/filter/SprayedStrokes"
       }
     },
@@ -6857,8 +7011,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/SumiE",
-        "kernel": "planned:PrismKernelRegistry/SumiE",
-        "test": "planned:PrismCatalogConformance/SumiE",
+        "kernel": "PrismKernelRegistry/SumiE",
+        "test": "PrismCatalogFilterTests/SumiE",
         "documentation": "generated:prism-catalog/filter/SumiE"
       }
     },
@@ -6932,8 +7086,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/BasRelief",
-        "kernel": "planned:PrismKernelRegistry/BasRelief",
-        "test": "planned:PrismCatalogConformance/BasRelief",
+        "kernel": "PrismKernelRegistry/BasRelief",
+        "test": "PrismCatalogFilterTests/BasRelief",
         "documentation": "generated:prism-catalog/filter/BasRelief"
       }
     },
@@ -7007,8 +7161,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ChalkCharcoal",
-        "kernel": "planned:PrismKernelRegistry/ChalkCharcoal",
-        "test": "planned:PrismCatalogConformance/ChalkCharcoal",
+        "kernel": "PrismKernelRegistry/ChalkCharcoal",
+        "test": "PrismCatalogFilterTests/ChalkCharcoal",
         "documentation": "generated:prism-catalog/filter/ChalkCharcoal"
       }
     },
@@ -7082,8 +7236,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Charcoal",
-        "kernel": "planned:PrismKernelRegistry/Charcoal",
-        "test": "planned:PrismCatalogConformance/Charcoal",
+        "kernel": "PrismKernelRegistry/Charcoal",
+        "test": "PrismCatalogFilterTests/Charcoal",
         "documentation": "generated:prism-catalog/filter/Charcoal"
       }
     },
@@ -7124,8 +7278,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Chrome",
-        "kernel": "planned:PrismKernelRegistry/Chrome",
-        "test": "planned:PrismCatalogConformance/Chrome",
+        "kernel": "PrismKernelRegistry/Chrome",
+        "test": "PrismCatalogFilterTests/Chrome",
         "documentation": "generated:prism-catalog/filter/Chrome"
       }
     },
@@ -7232,8 +7386,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ConteCrayon",
-        "kernel": "planned:PrismKernelRegistry/ConteCrayon",
-        "test": "planned:PrismCatalogConformance/ConteCrayon",
+        "kernel": "PrismKernelRegistry/ConteCrayon",
+        "test": "PrismCatalogFilterTests/ConteCrayon",
         "documentation": "generated:prism-catalog/filter/ConteCrayon"
       }
     },
@@ -7307,8 +7461,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/GraphicPen",
-        "kernel": "planned:PrismKernelRegistry/GraphicPen",
-        "test": "planned:PrismCatalogConformance/GraphicPen",
+        "kernel": "PrismKernelRegistry/GraphicPen",
+        "test": "PrismCatalogFilterTests/GraphicPen",
         "documentation": "generated:prism-catalog/filter/GraphicPen"
       }
     },
@@ -7384,8 +7538,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/HalftonePattern",
-        "kernel": "planned:PrismKernelRegistry/HalftonePattern",
-        "test": "planned:PrismCatalogConformance/HalftonePattern",
+        "kernel": "PrismKernelRegistry/HalftonePattern",
+        "test": "PrismCatalogFilterTests/HalftonePattern",
         "documentation": "generated:prism-catalog/filter/HalftonePattern"
       }
     },
@@ -7459,8 +7613,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/NotePaper",
-        "kernel": "planned:PrismKernelRegistry/NotePaper",
-        "test": "planned:PrismCatalogConformance/NotePaper",
+        "kernel": "PrismKernelRegistry/NotePaper",
+        "test": "PrismCatalogFilterTests/NotePaper",
         "documentation": "generated:prism-catalog/filter/NotePaper"
       }
     },
@@ -7523,8 +7677,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Photocopy",
-        "kernel": "planned:PrismKernelRegistry/Photocopy",
-        "test": "planned:PrismCatalogConformance/Photocopy",
+        "kernel": "PrismKernelRegistry/Photocopy",
+        "test": "PrismCatalogFilterTests/Photocopy",
         "documentation": "generated:prism-catalog/filter/Photocopy"
       }
     },
@@ -7598,8 +7752,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Plaster",
-        "kernel": "planned:PrismKernelRegistry/Plaster",
-        "test": "planned:PrismCatalogConformance/Plaster",
+        "kernel": "PrismKernelRegistry/Plaster",
+        "test": "PrismCatalogFilterTests/Plaster",
         "documentation": "generated:prism-catalog/filter/Plaster"
       }
     },
@@ -7646,24 +7800,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Reticulation",
-        "kernel": "planned:PrismKernelRegistry/Reticulation",
-        "test": "planned:PrismCatalogConformance/Reticulation",
+        "kernel": "PrismKernelRegistry/Reticulation",
+        "test": "PrismCatalogFilterTests/Reticulation",
         "documentation": "generated:prism-catalog/filter/Reticulation"
       }
     },
@@ -7726,8 +7883,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Stamp",
-        "kernel": "planned:PrismKernelRegistry/Stamp",
-        "test": "planned:PrismCatalogConformance/Stamp",
+        "kernel": "PrismKernelRegistry/Stamp",
+        "test": "PrismCatalogFilterTests/Stamp",
         "documentation": "generated:prism-catalog/filter/Stamp"
       }
     },
@@ -7801,8 +7958,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/TornEdges",
-        "kernel": "planned:PrismKernelRegistry/TornEdges",
-        "test": "planned:PrismCatalogConformance/TornEdges",
+        "kernel": "PrismKernelRegistry/TornEdges",
+        "test": "PrismCatalogFilterTests/TornEdges",
         "documentation": "generated:prism-catalog/filter/TornEdges"
       }
     },
@@ -7849,24 +8006,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/WaterPaper",
-        "kernel": "planned:PrismKernelRegistry/WaterPaper",
-        "test": "planned:PrismCatalogConformance/WaterPaper",
+        "kernel": "PrismKernelRegistry/WaterPaper",
+        "test": "PrismCatalogFilterTests/WaterPaper",
         "documentation": "generated:prism-catalog/filter/WaterPaper"
       }
     },
@@ -7904,24 +8064,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Diffuse",
-        "kernel": "planned:PrismKernelRegistry/Diffuse",
-        "test": "planned:PrismCatalogConformance/Diffuse",
+        "kernel": "PrismKernelRegistry/Diffuse",
+        "test": "PrismCatalogFilterTests/Diffuse",
         "documentation": "generated:prism-catalog/filter/Diffuse"
       }
     },
@@ -7975,8 +8138,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Emboss",
-        "kernel": "planned:PrismKernelRegistry/Emboss",
-        "test": "planned:PrismCatalogConformance/Emboss",
+        "kernel": "PrismKernelRegistry/Emboss",
+        "test": "PrismCatalogFilterTests/Emboss",
         "documentation": "generated:prism-catalog/filter/Emboss"
       }
     },
@@ -8058,24 +8221,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Extrude",
-        "kernel": "planned:PrismKernelRegistry/Extrude",
-        "test": "planned:PrismCatalogConformance/Extrude",
+        "kernel": "PrismKernelRegistry/Extrude",
+        "test": "PrismCatalogFilterTests/Extrude",
         "documentation": "generated:prism-catalog/filter/Extrude"
       }
     },
@@ -8105,8 +8271,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/FindEdges",
-        "kernel": "planned:PrismKernelRegistry/FindEdges",
-        "test": "planned:PrismCatalogConformance/FindEdges",
+        "kernel": "PrismKernelRegistry/FindEdges",
+        "test": "PrismCatalogFilterTests/FindEdges",
         "documentation": "generated:prism-catalog/filter/FindEdges"
       }
     },
@@ -8160,8 +8326,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/GlowingEdges",
-        "kernel": "planned:PrismKernelRegistry/GlowingEdges",
-        "test": "planned:PrismCatalogConformance/GlowingEdges",
+        "kernel": "PrismKernelRegistry/GlowingEdges",
+        "test": "PrismCatalogFilterTests/GlowingEdges",
         "documentation": "generated:prism-catalog/filter/GlowingEdges"
       }
     },
@@ -8191,8 +8357,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Solarize",
-        "kernel": "planned:PrismKernelRegistry/Solarize",
-        "test": "planned:PrismCatalogConformance/Solarize",
+        "kernel": "PrismKernelRegistry/Solarize",
+        "test": "PrismCatalogFilterTests/Solarize",
         "documentation": "generated:prism-catalog/filter/Solarize"
       }
     },
@@ -8250,24 +8416,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Tiles",
-        "kernel": "planned:PrismKernelRegistry/Tiles",
-        "test": "planned:PrismCatalogConformance/Tiles",
+        "kernel": "PrismKernelRegistry/Tiles",
+        "test": "PrismCatalogFilterTests/Tiles",
         "documentation": "generated:prism-catalog/filter/Tiles"
       }
     },
@@ -8308,8 +8477,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/TraceContour",
-        "kernel": "planned:PrismKernelRegistry/TraceContour",
-        "test": "planned:PrismCatalogConformance/TraceContour",
+        "kernel": "PrismKernelRegistry/TraceContour",
+        "test": "PrismCatalogFilterTests/TraceContour",
         "documentation": "generated:prism-catalog/filter/TraceContour"
       }
     },
@@ -8356,24 +8525,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Wind",
-        "kernel": "planned:PrismKernelRegistry/Wind",
-        "test": "planned:PrismCatalogConformance/Wind",
+        "kernel": "PrismKernelRegistry/Wind",
+        "test": "PrismCatalogFilterTests/Wind",
         "documentation": "generated:prism-catalog/filter/Wind"
       }
     },
@@ -8420,24 +8592,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Craquelure",
-        "kernel": "planned:PrismKernelRegistry/Craquelure",
-        "test": "planned:PrismCatalogConformance/Craquelure",
+        "kernel": "PrismKernelRegistry/Craquelure",
+        "test": "PrismCatalogFilterTests/Craquelure",
         "documentation": "generated:prism-catalog/filter/Craquelure"
       }
     },
@@ -8484,24 +8659,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Grain",
-        "kernel": "planned:PrismKernelRegistry/Grain",
-        "test": "planned:PrismCatalogConformance/Grain",
+        "kernel": "PrismKernelRegistry/Grain",
+        "test": "PrismCatalogFilterTests/Grain",
         "documentation": "generated:prism-catalog/filter/Grain"
       }
     },
@@ -8557,8 +8735,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/MosaicTiles",
-        "kernel": "planned:PrismKernelRegistry/MosaicTiles",
-        "test": "planned:PrismCatalogConformance/MosaicTiles",
+        "kernel": "PrismKernelRegistry/MosaicTiles",
+        "test": "PrismCatalogFilterTests/MosaicTiles",
         "documentation": "generated:prism-catalog/filter/MosaicTiles"
       }
     },
@@ -8596,24 +8774,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Patchwork",
-        "kernel": "planned:PrismKernelRegistry/Patchwork",
-        "test": "planned:PrismCatalogConformance/Patchwork",
+        "kernel": "PrismKernelRegistry/Patchwork",
+        "test": "PrismCatalogFilterTests/Patchwork",
         "documentation": "generated:prism-catalog/filter/Patchwork"
       }
     },
@@ -8673,24 +8854,27 @@
         {
           "id": "seed",
           "name": "Seed",
-          "valueType": "number",
+          "valueType": "integer",
           "required": false,
           "domain": {
-            "kind": "finite"
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "unit": "count",
-          "default": 0.0
+          "default": 0
         }
       ],
       "capabilities": [
-        "pixel-processingseeded"
+        "pixel-processing",
+        "seeded"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/StainedGlass",
-        "kernel": "planned:PrismKernelRegistry/StainedGlass",
-        "test": "planned:PrismCatalogConformance/StainedGlass",
+        "kernel": "PrismKernelRegistry/StainedGlass",
+        "test": "PrismCatalogFilterTests/StainedGlass",
         "documentation": "generated:prism-catalog/filter/StainedGlass"
       }
     },
@@ -8769,14 +8953,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processing"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Texturizer",
-        "kernel": "planned:PrismKernelRegistry/Texturizer",
-        "test": "planned:PrismCatalogConformance/Texturizer",
+        "kernel": "PrismKernelRegistry/Texturizer",
+        "test": "PrismCatalogFilterTests/Texturizer",
         "documentation": "generated:prism-catalog/filter/Texturizer"
       }
     },
@@ -8872,8 +9057,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/OilPaint",
-        "kernel": "planned:PrismKernelRegistry/OilPaint",
-        "test": "planned:PrismCatalogConformance/OilPaint",
+        "kernel": "PrismKernelRegistry/OilPaint",
+        "test": "PrismCatalogFilterTests/OilPaint",
         "documentation": "generated:prism-catalog/filter/OilPaint"
       }
     },
@@ -8940,14 +9125,15 @@
         }
       ],
       "capabilities": [
-        "pixel-processingauxiliary-resource"
+        "pixel-processing",
+        "auxiliary-resource"
       ],
       "deterministic": true,
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/CustomConvolution",
-        "kernel": "planned:PrismKernelRegistry/CustomConvolution",
-        "test": "planned:PrismCatalogConformance/CustomConvolution",
+        "kernel": "PrismKernelRegistry/CustomConvolution",
+        "test": "PrismCatalogFilterTests/CustomConvolution",
         "documentation": "generated:prism-catalog/filter/CustomConvolution"
       }
     },
@@ -8988,8 +9174,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ColorMatrix",
-        "kernel": "planned:PrismKernelRegistry/ColorMatrix",
-        "test": "planned:PrismCatalogConformance/ColorMatrix",
+        "kernel": "PrismKernelRegistry/ColorMatrix",
+        "test": "PrismCatalogFilterTests/ColorMatrix",
         "documentation": "generated:prism-catalog/filter/ColorMatrix"
       }
     },
@@ -9107,8 +9293,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Color",
-        "kernel": "planned:PrismKernelRegistry/Color",
-        "test": "planned:PrismCatalogConformance/Color",
+        "kernel": "PrismKernelRegistry/Color",
+        "test": "PrismCatalogFilterTests/Color",
         "documentation": "generated:prism-catalog/filter/Color"
       }
     },
@@ -9188,8 +9374,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/ChromaticAberration",
-        "kernel": "planned:PrismKernelRegistry/ChromaticAberration",
-        "test": "planned:PrismCatalogConformance/ChromaticAberration",
+        "kernel": "PrismKernelRegistry/ChromaticAberration",
+        "test": "PrismCatalogFilterTests/ChromaticAberration",
         "documentation": "generated:prism-catalog/filter/ChromaticAberration"
       }
     },
@@ -9276,8 +9462,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/filter/Scanlines",
-        "kernel": "planned:PrismKernelRegistry/Scanlines",
-        "test": "planned:PrismCatalogConformance/Scanlines",
+        "kernel": "PrismKernelRegistry/Scanlines",
+        "test": "PrismCatalogFilterTests/Scanlines",
         "documentation": "generated:prism-catalog/filter/Scanlines"
       }
     },

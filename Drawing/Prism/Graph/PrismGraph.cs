@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Text;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 
@@ -328,7 +329,13 @@ public sealed class PrismGraphNode
         float? density = null,
         bool? invert = null,
         PrismMaskPass? maskPass = null,
-        PrismGraphLayerSettings? layerSettings = null)
+        PrismGraphLayerSettings? layerSettings = null,
+        PrismNeighborhoodPlan? neighborhoodPlan = null,
+        int neighborhoodPassIndex = -1,
+        PrismResamplingPlan? resamplingPlan = null,
+        int resamplingPassIndex = -1,
+        PrismCatalogFilterPlan? catalogFilterPlan = null,
+        int catalogFilterPassIndex = -1)
     {
         Id = id;
         Kind = kind;
@@ -355,6 +362,75 @@ public sealed class PrismGraphNode
         Invert = invert;
         MaskPass = maskPass;
         LayerSettings = layerSettings;
+        if (neighborhoodPlan is PrismNeighborhoodPlan prepared)
+        {
+            if ((uint)neighborhoodPassIndex >=
+                (uint)prepared.Passes.Length)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(neighborhoodPassIndex),
+                    neighborhoodPassIndex,
+                    "A prepared filter pass must exist in its plan.");
+            }
+        }
+        else if (neighborhoodPassIndex != -1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(neighborhoodPassIndex),
+                neighborhoodPassIndex,
+                "A filter pass index requires a prepared plan.");
+        }
+        if (resamplingPlan is PrismResamplingPlan resampling)
+        {
+            if ((uint)resamplingPassIndex >=
+                (uint)resampling.Passes.Length)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(resamplingPassIndex),
+                    resamplingPassIndex,
+                    "A prepared resampling pass must exist in its plan.");
+            }
+        }
+        else if (resamplingPassIndex != -1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(resamplingPassIndex),
+                resamplingPassIndex,
+                "A resampling pass index requires a prepared plan.");
+        }
+        if (catalogFilterPlan is PrismCatalogFilterPlan catalogFilter)
+        {
+            if ((uint)catalogFilterPassIndex >=
+                (uint)catalogFilter.Passes.Length)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(catalogFilterPassIndex),
+                    catalogFilterPassIndex,
+                    "A prepared catalog filter pass must exist in its plan.");
+            }
+        }
+        else if (catalogFilterPassIndex != -1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(catalogFilterPassIndex),
+                catalogFilterPassIndex,
+                "A catalog filter pass index requires a prepared plan.");
+        }
+        int preparedFamilyCount =
+            (neighborhoodPlan is null ? 0 : 1) +
+            (resamplingPlan is null ? 0 : 1) +
+            (catalogFilterPlan is null ? 0 : 1);
+        if (preparedFamilyCount > 1)
+        {
+            throw new ArgumentException(
+                "A filter node cannot contain multiple prepared planner families.");
+        }
+        NeighborhoodPlan = neighborhoodPlan;
+        NeighborhoodPassIndex = neighborhoodPassIndex;
+        ResamplingPlan = resamplingPlan;
+        ResamplingPassIndex = resamplingPassIndex;
+        CatalogFilterPlan = catalogFilterPlan;
+        CatalogFilterPassIndex = catalogFilterPassIndex;
     }
 
     public PrismGraphNodeId Id { get; }
@@ -398,6 +474,18 @@ public sealed class PrismGraphNode
     internal PrismMaskPass? MaskPass { get; }
 
     public PrismGraphLayerSettings? LayerSettings { get; }
+
+    internal PrismNeighborhoodPlan? NeighborhoodPlan { get; }
+
+    internal int NeighborhoodPassIndex { get; }
+
+    internal PrismResamplingPlan? ResamplingPlan { get; }
+
+    internal int ResamplingPassIndex { get; }
+
+    internal PrismCatalogFilterPlan? CatalogFilterPlan { get; }
+
+    internal int CatalogFilterPassIndex { get; }
 }
 
 public sealed class PrismGraph

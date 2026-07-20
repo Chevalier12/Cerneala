@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Cerneala.SourceGen.Prism;
@@ -35,6 +36,223 @@ public sealed class PrismCatalogCompilerTests
             "PrismCatalogValueType.Integer",
             compilation.GeneratedSource,
             StringComparison.Ordinal);
+        Assert.Contains(
+            "FilterImplementationMatrix",
+            compilation.GeneratedSource,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "PrismCatalogExecutionDescriptor",
+            compilation.GeneratedSource,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RepositoryCatalogGeneratesCompleteFilterImplementationMatrix()
+    {
+        string catalogText = ReadRepositoryCatalog();
+        PrismCatalogCompilation compilation = PrismCatalogCompiler.Compile(catalogText);
+        JsonObject catalog = ParseCatalog(catalogText);
+        JsonObject[] catalogFilters = catalog["entries"]!
+            .AsArray()
+            .Select(entry => entry!.AsObject())
+            .Where(entry => entry["kind"]!.GetValue<string>() == "filter")
+            .ToArray();
+        PrismCatalogCompiler.CatalogEntry[] compiledFilters = compilation.Model!.Entries
+            .Where(entry => entry.Kind == "filter")
+            .ToArray();
+
+        Assert.Empty(compilation.Issues);
+        Assert.Equal(catalogFilters.Length, compiledFilters.Length);
+        Assert.Equal(
+            compiledFilters.Length,
+            CountOccurrences(compilation.GeneratedSource!, "        Entries["));
+
+        for (int index = 0; index < compiledFilters.Length; index++)
+        {
+            PrismCatalogCompiler.CatalogEntry entry = compiledFilters[index];
+            JsonObject source = catalogFilters[index];
+            Assert.Equal(source["properties"]!.AsArray().Count, entry.Properties.Count);
+            Assert.NotSame(PrismCatalogCompiler.CatalogExecutionProfile.Empty, entry.ExecutionProfile);
+            Assert.False(string.IsNullOrWhiteSpace(entry.ExecutionProfile.Primitive));
+            Assert.False(string.IsNullOrWhiteSpace(entry.ExecutionProfile.Bounds));
+            Assert.False(string.IsNullOrWhiteSpace(entry.ExecutionProfile.Sampling));
+            Assert.False(string.IsNullOrWhiteSpace(entry.ExecutionProfile.SurfaceFormat));
+            Assert.False(string.IsNullOrWhiteSpace(entry.ExecutionProfile.ColorSpace));
+            Assert.NotEmpty(entry.ExecutionProfile.GpuCapabilities);
+            Assert.False(string.IsNullOrWhiteSpace(entry.Coverage.Runtime));
+            Assert.False(string.IsNullOrWhiteSpace(entry.Coverage.Planner));
+            Assert.False(string.IsNullOrWhiteSpace(entry.Coverage.Kernel));
+            Assert.False(string.IsNullOrWhiteSpace(entry.Coverage.Test));
+            Assert.False(string.IsNullOrWhiteSpace(entry.Coverage.Golden));
+            Assert.False(string.IsNullOrWhiteSpace(entry.Coverage.Documentation));
+
+            foreach (PrismCatalogCompiler.CatalogProperty property in entry.Properties)
+            {
+                Assert.False(string.IsNullOrWhiteSpace(property.Name));
+                Assert.False(string.IsNullOrWhiteSpace(property.ValueType));
+                Assert.False(string.IsNullOrWhiteSpace(property.Domain.Kind));
+            }
+        }
+    }
+
+    [Fact]
+    public void CompletenessGateRejectsForgottenFilterAndPropertyWithoutParallelAllowlists()
+    {
+        JsonObject missingFilterImplementation = ParseCatalog(ReadRepositoryCatalog());
+        JsonObject filter = missingFilterImplementation["entries"]!
+            .AsArray()
+            .Select(entry => entry!.AsObject())
+            .First(entry => entry["kind"]!.GetValue<string>() == "filter");
+        filter["coverage"]!.AsObject().Remove("kernel");
+
+        PrismCatalogIssue missingFilterIssue = Assert.Single(
+            PrismCatalogCompiler.Compile(Serialize(missingFilterImplementation)).Issues,
+            issue => issue.Id == "PRISM3005");
+        Assert.Contains(filter["id"]!.GetValue<string>(), missingFilterIssue.Message, StringComparison.Ordinal);
+
+        JsonObject missingPropertyImplementation = ParseCatalog(ReadRepositoryCatalog());
+        JsonObject property = missingPropertyImplementation["entries"]!
+            .AsArray()
+            .Select(entry => entry!.AsObject())
+            .First(entry => entry["kind"]!.GetValue<string>() == "filter")["properties"]!
+            .AsArray()[0]!
+            .AsObject();
+        property.Remove("domain");
+
+        PrismCatalogIssue missingPropertyIssue = Assert.Single(
+            PrismCatalogCompiler.Compile(Serialize(missingPropertyImplementation)).Issues,
+            issue => issue.Id == "PRISM3001" &&
+                issue.Message.Contains(".domain must be an object", StringComparison.Ordinal));
+        Assert.Contains("entries[", missingPropertyIssue.Message, StringComparison.Ordinal);
+
+        JsonObject missingClassification = ParseCatalog(ReadRepositoryCatalog());
+        JsonArray profiles = missingClassification["executionProfiles"]!.AsArray();
+        string category = profiles[0]!["category"]!.GetValue<string>();
+        profiles.RemoveAt(0);
+
+        var missingClassificationIssues =
+            PrismCatalogCompiler.Compile(Serialize(missingClassification)).Issues;
+        Assert.Contains(
+            missingClassificationIssues,
+            issue => issue.Id == "PRISM3007" &&
+                issue.Message.Contains("has no execution profile", StringComparison.Ordinal));
+        PrismCatalogIssue missingClassificationIssue = missingClassificationIssues.First(issue =>
+            issue.Id == "PRISM3007" &&
+            issue.Message.Contains("has no execution profile", StringComparison.Ordinal));
+        Assert.Contains(category, missingClassificationIssue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SeededAndResourceFiltersHaveExplicitDeterministicInputs()
+    {
+        PrismCatalogCompilation compilation = PrismCatalogCompiler.Compile(ReadRepositoryCatalog());
+
+        Assert.Empty(compilation.Issues);
+        foreach (PrismCatalogCompiler.CatalogEntry filter in
+            compilation.Model!.Entries.Where(entry => entry.Kind == "filter"))
+        {
+            bool seeded = filter.Capabilities.Contains("seeded", StringComparer.Ordinal);
+            PrismCatalogCompiler.CatalogProperty? seed = filter.Properties.SingleOrDefault(property =>
+                property.Name == "Seed");
+            Assert.Equal(seeded, seed is not null);
+            Assert.True(filter.Deterministic);
+
+            string[] resources = filter.Properties
+                .Where(property => property.ValueType == "resource")
+                .Select(property => property.Name)
+                .ToArray();
+            Assert.Equal(
+                resources.Length > 0,
+                filter.Capabilities.Contains("auxiliary-resource", StringComparer.Ordinal));
+        }
+    }
+
+    [Fact]
+    public void RepositoryCatalogMarksOnlyProvenIdempotentThresholdFusion()
+    {
+        PrismCatalogCompilation compilation =
+            PrismCatalogCompiler.Compile(ReadRepositoryCatalog());
+
+        Assert.Empty(compilation.Issues);
+        PrismCatalogCompiler.CatalogEntry fusion = Assert.Single(
+            compilation.Model!.Entries.Where(entry => entry.Fusion is not null));
+        Assert.Equal("filter:threshold", fusion.Id);
+        Assert.Equal("same-parameters-idempotent", fusion.Fusion);
+        Assert.Contains(
+            "string? Fusion",
+            compilation.GeneratedSource,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void UnknownFusionModeHasPreciseDiagnostic()
+    {
+        JsonObject catalog = ParseCatalog(ReadRepositoryCatalog());
+        FindEntry(catalog, "filter:threshold")["fusion"] = "trust-me";
+
+        PrismCatalogIssue issue = Assert.Single(
+            PrismCatalogCompiler.Compile(Serialize(catalog)).Issues,
+            candidate => candidate.Id == "PRISM3007" &&
+                candidate.Message.Contains("unknown fusion mode", StringComparison.Ordinal));
+
+        Assert.Contains("filter:threshold", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GeneratedFilterReferenceMatchesEveryCatalogEntryAndDefault()
+    {
+        PrismCatalogCompilation compilation =
+            PrismCatalogCompiler.Compile(ReadRepositoryCatalog());
+        string reference = ReadRepositoryFilterReference();
+        string catalogHash = Convert.ToHexString(
+                SHA256.HashData(
+                    File.ReadAllBytes(RepositoryCatalogPath())))
+            .ToLowerInvariant();
+        PrismCatalogCompiler.CatalogEntry[] filters =
+            compilation.Model!.Entries
+                .Where(entry => entry.Kind == "filter")
+                .OrderBy(entry => entry.StableId)
+                .ToArray();
+
+        Assert.Empty(compilation.Issues);
+        Assert.Contains(
+            $"catalog-sha256: {catalogHash}",
+            reference,
+            StringComparison.Ordinal);
+        Assert.Equal(
+            filters.Length,
+            CountOccurrences(reference, "\n## `"));
+        for (int index = 0; index < filters.Length; index++)
+        {
+            PrismCatalogCompiler.CatalogEntry filter = filters[index];
+            string heading = $"## `{filter.Symbol}` (`{filter.Id}`)";
+            int start = reference.IndexOf(
+                heading,
+                StringComparison.Ordinal);
+            Assert.True(start >= 0, $"Missing generated reference heading '{heading}'.");
+            int end = reference.IndexOf(
+                "\n## `",
+                start + heading.Length,
+                StringComparison.Ordinal);
+            string section = end >= 0
+                ? reference.Substring(start, end - start)
+                : reference.Substring(start);
+            foreach (PrismCatalogCompiler.CatalogProperty property in
+                filter.Properties)
+            {
+                Assert.Contains(
+                    $"| `{property.Name}` |",
+                    section,
+                    StringComparison.Ordinal);
+                if (property.DefaultValue is not null)
+                {
+                    Assert.Contains(
+                        $"`{property.DefaultValue}`",
+                        section,
+                        StringComparison.Ordinal);
+                }
+            }
+        }
     }
 
     [Fact]
@@ -134,7 +352,12 @@ public sealed class PrismCatalogCompilerTests
 
     private static string ReadRepositoryCatalog()
     {
-        string path = Path.GetFullPath(
+        return File.ReadAllText(RepositoryCatalogPath());
+    }
+
+    private static string RepositoryCatalogPath()
+    {
+        return Path.GetFullPath(
             Path.Combine(
                 AppContext.BaseDirectory,
                 "..",
@@ -146,6 +369,20 @@ public sealed class PrismCatalogCompilerTests
                 "Prism",
                 "Catalog",
                 "prism-catalog.json"));
+    }
+
+    private static string ReadRepositoryFilterReference()
+    {
+        string path = Path.GetFullPath(
+            Path.Combine(
+                AppContext.BaseDirectory,
+                "..",
+                "..",
+                "..",
+                "..",
+                "..",
+                "docs",
+                "prism-filter-reference.generated.md"));
         return File.ReadAllText(path);
     }
 
@@ -174,6 +411,19 @@ public sealed class PrismCatalogCompilerTests
     private static int CountKind(JsonArray entries, string kind)
     {
         return entries.Count(entry => entry!["kind"]!.GetValue<string>() == kind);
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        int count = 0;
+        int position = 0;
+        while ((position = text.IndexOf(value, position, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            position += value.Length;
+        }
+
+        return count;
     }
 
     private static string Serialize(JsonObject catalog)

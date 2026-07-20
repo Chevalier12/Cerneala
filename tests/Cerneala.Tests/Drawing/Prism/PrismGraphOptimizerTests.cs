@@ -4,6 +4,8 @@ using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.ColorManagement;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Prism.Styles;
 using Cerneala.UI.Markup;
@@ -277,7 +279,14 @@ public sealed class PrismGraphOptimizerTests
         PrismGraphNodePlan transformPlan =
             PlanForOperation(transform, PrismGraphNodeKind.Filter);
         AssertRect(
-            new DrawRect(5, -2, 45, 10),
+            new DrawRect(
+                5,
+                -2,
+                40 +
+                    (10 * MathF.Tan(
+                        0.5f *
+                        (MathF.PI / 180f))),
+                10),
             transformPlan.Bounds);
         Assert.Equal(PrismGraphBoundsStatus.Exact, transformPlan.BoundsStatus);
 
@@ -370,11 +379,11 @@ public sealed class PrismGraphOptimizerTests
         AssertRect(new DrawRect(0, 0, 40, 20), graphScope.Bounds);
         Assert.Equal(effectiveTransform, graphScope.EffectiveTransform);
         Assert.Equal(2, graphScope.PixelScale);
-        AssertRect(new DrawRect(-3, -3, 46, 26), blur.Bounds);
+        AssertRect(new DrawRect(-6, -6, 52, 32), blur.Bounds);
     }
 
     [Fact]
-    public void UnknownSpatialOperationDoesNotClaimSafeBounds()
+    public void PreparedNeighborhoodOperationClaimsConservativeBounds()
     {
         PrismLayerDefinition layer = new(
             new PrismNodeId(1),
@@ -387,8 +396,14 @@ public sealed class PrismGraphOptimizerTests
         PrismGraphNodePlan output = plan.GetNodePlan(
             Assert.Single(plan.OptimizedGraph.Scopes).Output!.Value);
 
-        Assert.Equal(PrismGraphBoundsStatus.Unknown, filter.BoundsStatus);
-        Assert.Equal(PrismGraphBoundsStatus.Unknown, output.BoundsStatus);
+        Assert.Equal(
+            PrismGraphBoundsStatus.Conservative,
+            filter.BoundsStatus);
+        Assert.Equal(
+            PrismGraphBoundsStatus.Conservative,
+            output.BoundsStatus);
+        Assert.True(filter.Bounds.Width > 20);
+        Assert.True(filter.Bounds.Height > 10);
     }
 
     [Fact]
@@ -900,6 +915,141 @@ public sealed class PrismGraphOptimizerTests
             SemanticSnapshot(plan.OptimizedGraph));
     }
 
+    [Fact]
+    public void DeclaredThresholdFusionUsesTypedValuesAndPreservesOutput()
+    {
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "TwoThresholds",
+            filters:
+            [
+                new PrismFilterDefinition(PrismFilterId.Threshold),
+                new PrismFilterDefinition(PrismFilterId.Threshold)
+            ]);
+        PrismGraph raw = BuildGraph(
+            PrismTestData.Composition("TypedFusion", layer),
+            instance => SetFilterNumber(
+                instance.GetLayerState(layer.Id).Filters[0],
+                "Level",
+                0.5f)).Graph;
+
+        PrismGraphExecutionPlan plan = new PrismGraphOptimizer().Optimize(raw);
+
+        Assert.Equal(
+            2,
+            raw.Nodes.Count(node => node.Kind == PrismGraphNodeKind.Filter));
+        Assert.Equal(
+            PrismFilterId.Threshold,
+            Assert.Single(
+                plan.OptimizedGraph.Nodes.Where(
+                    node => node.Kind == PrismGraphNodeKind.Filter)).Filter);
+        Assert.Single(
+            plan.RemovedNodeIds.Where(
+                id => raw.GetNode(id).Kind == PrismGraphNodeKind.Filter));
+        AssertNumericallyEquivalent(raw, plan.OptimizedGraph);
+    }
+
+    [Fact]
+    public void FusionRequiresEqualTypedValuesAndPreservesNonCommutativeOrder()
+    {
+        PrismLayerDefinition unequalLayer = new(
+            new PrismNodeId(1),
+            "UnequalThresholds",
+            filters:
+            [
+                new PrismFilterDefinition(PrismFilterId.Threshold),
+                new PrismFilterDefinition(PrismFilterId.Threshold)
+            ]);
+        PrismGraph unequal = BuildGraph(
+            PrismTestData.Composition("UnequalFusion", unequalLayer),
+            instance =>
+            {
+                PrismLayerState state = instance.GetLayerState(unequalLayer.Id);
+                SetFilterNumber(state.Filters[0], "Level", 0.4f);
+                SetFilterNumber(state.Filters[1], "Level", 0.6f);
+            }).Graph;
+
+        PrismGraphExecutionPlan unequalPlan =
+            new PrismGraphOptimizer().Optimize(unequal);
+        Assert.Equal(
+            2,
+            unequalPlan.OptimizedGraph.Nodes.Count(
+                node => node.Kind == PrismGraphNodeKind.Filter));
+
+        PrismLayerDefinition orderedLayer = new(
+            new PrismNodeId(2),
+            "Ordered",
+            filters:
+            [
+                new PrismFilterDefinition(PrismFilterId.Threshold),
+                new PrismFilterDefinition(PrismFilterId.Invert),
+                new PrismFilterDefinition(PrismFilterId.Threshold)
+            ]);
+        PrismGraph ordered = BuildGraph(
+            PrismTestData.Composition("NonCommutativeFusion", orderedLayer),
+            instance =>
+            {
+                PrismLayerState state = instance.GetLayerState(orderedLayer.Id);
+                SetFilterNumber(state.Filters[0], "Level", 0.5f);
+                SetFilterNumber(state.Filters[2], "Level", 0.5f);
+            }).Graph;
+
+        PrismGraphExecutionPlan orderedPlan =
+            new PrismGraphOptimizer().Optimize(ordered);
+        Assert.Equal(
+            new[]
+            {
+                PrismFilterId.Threshold,
+                PrismFilterId.Invert,
+                PrismFilterId.Threshold
+            },
+            orderedPlan.OptimizedGraph.Nodes
+                .Where(node => node.Kind == PrismGraphNodeKind.Filter)
+                .OrderBy(node => node.DefinitionOrder)
+                .Select(node => node.Filter!.Value));
+        AssertNumericallyEquivalent(ordered, orderedPlan.OptimizedGraph);
+    }
+
+    [Fact]
+    public void TypedAdjustmentNoOpsAreRemovedWithoutReorderingActiveFilters()
+    {
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "AdjustmentNoOps",
+            filters:
+            [
+                new PrismFilterDefinition(PrismFilterId.ChannelMixer),
+                new PrismFilterDefinition(PrismFilterId.BrightnessContrast),
+                new PrismFilterDefinition(PrismFilterId.Threshold),
+                new PrismFilterDefinition(PrismFilterId.SelectiveColor),
+                new PrismFilterDefinition(PrismFilterId.Exposure)
+            ]);
+        PrismGraph raw = BuildGraph(
+            PrismTestData.Composition("TypedAdjustmentNoOps", layer),
+            instance =>
+            {
+                PrismLayerState state = instance.GetLayerState(layer.Id);
+                SetFilterNumber(state.Filters[4], "Exposure", 0.25f);
+            }).Graph;
+
+        PrismGraphExecutionPlan plan = new PrismGraphOptimizer().Optimize(raw);
+
+        Assert.Equal(
+            new[]
+            {
+                PrismFilterId.Threshold,
+                PrismFilterId.Exposure
+            },
+            plan.OptimizedGraph.Nodes
+                .Where(node => node.Kind == PrismGraphNodeKind.Filter)
+                .OrderBy(node => node.DefinitionOrder)
+                .Select(node => node.Filter!.Value));
+        Assert.Equal(
+            3,
+            plan.RemovedNodeIds.Count(
+                id => raw.GetNode(id).Kind == PrismGraphNodeKind.Filter));
+    }
+
     private static PrismGraphExecutionPlan OptimizeConfigured(
         PrismCompositionDefinition definition,
         Action<PrismInstance> configure,
@@ -932,6 +1082,24 @@ public sealed class PrismGraphOptimizerTests
                 property.TypeSlot,
                 0);
         }
+    }
+
+    private static void SetFilterNumber(
+        PrismFilterState state,
+        string propertyName,
+        float value)
+    {
+        PrismCatalogPropertyDescriptor property = Assert.Single(
+            PrismCatalogRuntime.GetEntry((int)state.Filter).Properties.Where(
+                candidate => string.Equals(
+                    candidate.Name,
+                    propertyName,
+                    StringComparison.Ordinal)));
+        GeneratedMarkup.SetPrismFilterNumber(
+            state,
+            (int)state.Filter,
+            property.TypeSlot,
+            value);
     }
 
     private static PrismLayerDefinition Layer(
@@ -1225,6 +1393,7 @@ public sealed class PrismGraphOptimizerTests
     private sealed class NumericGraphEvaluator
     {
         private readonly IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNode> nodes;
+        private readonly IReadOnlyDictionary<int, PrismGraphScope> scopes;
         private readonly IReadOnlyDictionary<
             (PrismGraphNodeId Target, PrismGraphEdgeKind Kind),
             PrismGraphNodeId> inputs;
@@ -1232,6 +1401,8 @@ public sealed class PrismGraphOptimizerTests
         public NumericGraphEvaluator(PrismGraph graph)
         {
             nodes = graph.Nodes.ToDictionary(node => node.Id);
+            scopes = graph.Scopes.ToDictionary(
+                scope => scope.AnalysisScopeIndex);
             inputs = graph.Edges
                 .GroupBy(edge => (edge.Target, edge.Kind))
                 .ToDictionary(
@@ -1333,6 +1504,34 @@ public sealed class PrismGraphOptimizerTests
             Dictionary<PrismGraphNodeId, Pixel> memo,
             HashSet<PrismGraphNodeId> visiting)
         {
+            Pixel input = Input(
+                node,
+                PrismGraphEdgeKind.Content,
+                overrides,
+                memo,
+                visiting);
+            if (node.Filter is PrismFilterId adjustment &&
+                PrismAdjustmentPlanner.IsSupported(adjustment) &&
+                node.BlendMode == PrismBlendMode.Normal &&
+                node.Amount == 1f)
+            {
+                PrismGraphScope scope = scopes[node.AnalysisScopeIndex];
+                PrismPremultipliedColor adjusted =
+                    PrismAdjustmentMath.Apply(
+                        PrismAdjustmentPlanner.Create(node, scope),
+                        new PrismPremultipliedColor(
+                            input.R,
+                            input.G,
+                            input.B,
+                            input.A),
+                        scope.CompositionSettings.WorkingColorProfile);
+                return new Pixel(
+                    (float)adjusted.Red,
+                    (float)adjusted.Green,
+                    (float)adjusted.Blue,
+                    (float)adjusted.Alpha);
+            }
+
             if (node.Filter is not (
                     PrismFilterId.Blur or
                     PrismFilterId.BlurMore or
@@ -1346,12 +1545,7 @@ public sealed class PrismGraphOptimizerTests
                     $"The numeric differential probe cannot model filter '{node.Filter}'.");
             }
 
-            return Input(
-                node,
-                PrismGraphEdgeKind.Content,
-                overrides,
-                memo,
-                visiting);
+            return input;
         }
 
         private Pixel EvaluateClip(

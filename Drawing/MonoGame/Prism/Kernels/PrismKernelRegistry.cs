@@ -1,5 +1,6 @@
 using Cerneala.Drawing.MonoGame.Prism.Shaders;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Filters;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -14,6 +15,10 @@ internal enum PrismKernelKind
     MaskAlpha,
     ClipAlpha,
     LayerStyle,
+    AdjustmentFilter,
+    NeighborhoodFilter,
+    ResamplingFilter,
+    CatalogFilter,
     InputColorConversion,
     OutputColorConversion
 }
@@ -81,12 +86,41 @@ internal readonly record struct PrismKernelParameters(
     public Vector4 StyleModes3 { get; init; }
 
     public float StyleResourceAvailable { get; init; }
+
+    public Vector4 FilterHeader { get; init; }
+
+    public Vector4 FilterOptions0 { get; init; }
+
+    public Vector4 FilterOptions1 { get; init; }
+
+    public Vector4 FilterOptions2 { get; init; }
+
+    public Vector4 FilterOptions3 { get; init; }
+
+    public Vector4 FilterOptions4 { get; init; }
+
+    public Vector4 FilterOptions5 { get; init; }
+
+    public Vector4 FilterOptions6 { get; init; }
+
+    public Vector4 FilterOptions7 { get; init; }
+
+    public Vector4 FilterOptions8 { get; init; }
+
+    public Vector4 FilterOptions9 { get; init; }
+
+    public Vector2 FilterTextureSize { get; init; } =
+        Vector2.One;
+
+    public Texture2D? FilterAuxiliaryTexture { get; init; }
 }
 
 internal sealed class PrismKernelRegistry : IDisposable
 {
     private const string CatalogOwnerPrefix =
         "planned:PrismKernelRegistry/";
+    private const string FilterOwnerPrefix =
+        "PrismKernelRegistry/";
 
     private readonly Effect effect;
     private readonly EffectParameter secondaryTextureParameter;
@@ -119,14 +153,33 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly EffectParameter styleModes2Parameter;
     private readonly EffectParameter styleModes3Parameter;
     private readonly EffectParameter styleResourceAvailableParameter;
+    private readonly EffectParameter filterHeaderParameter;
+    private readonly EffectParameter filterOptions0Parameter;
+    private readonly EffectParameter filterOptions1Parameter;
+    private readonly EffectParameter filterOptions2Parameter;
+    private readonly EffectParameter filterOptions3Parameter;
+    private readonly EffectParameter filterOptions4Parameter;
+    private readonly EffectParameter filterOptions5Parameter;
+    private readonly EffectParameter filterOptions6Parameter;
+    private readonly EffectParameter filterOptions7Parameter;
+    private readonly EffectParameter filterOptions8Parameter;
+    private readonly EffectParameter filterOptions9Parameter;
+    private readonly EffectParameter filterTextureSizeParameter;
+    private readonly EffectParameter filterAuxiliaryTextureParameter;
     private readonly PrismKernel copy;
     private readonly PrismKernel maskExtract;
     private readonly PrismKernel maskFeather;
     private readonly PrismKernel maskAlpha;
     private readonly PrismKernel clipAlpha;
     private readonly PrismKernel layerStyle;
+    private readonly PrismKernel adjustmentFilter;
+    private readonly PrismKernel neighborhoodFilter;
+    private readonly PrismKernel resamplingFilter;
+    private readonly PrismKernel catalogFilter;
     private readonly Dictionary<PrismBlendMode, PrismKernel>
         blendKernels = [];
+    private readonly Dictionary<PrismFilterId, PrismKernel>
+        filterKernels = [];
     private readonly Dictionary<PrismColorProfile, PrismKernel>
         inputColorConversions = [];
     private readonly Dictionary<PrismColorProfile, PrismKernel>
@@ -194,6 +247,32 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleModes3Parameter = GetParameter("StyleModes3");
         styleResourceAvailableParameter =
             GetParameter("StyleResourceAvailable");
+        filterHeaderParameter =
+            GetParameter("FilterHeader");
+        filterOptions0Parameter =
+            GetParameter("FilterOptions0");
+        filterOptions1Parameter =
+            GetParameter("FilterOptions1");
+        filterOptions2Parameter =
+            GetParameter("FilterOptions2");
+        filterOptions3Parameter =
+            GetParameter("FilterOptions3");
+        filterOptions4Parameter =
+            GetParameter("FilterOptions4");
+        filterOptions5Parameter =
+            GetParameter("FilterOptions5");
+        filterOptions6Parameter =
+            GetParameter("FilterOptions6");
+        filterOptions7Parameter =
+            GetParameter("FilterOptions7");
+        filterOptions8Parameter =
+            GetParameter("FilterOptions8");
+        filterOptions9Parameter =
+            GetParameter("FilterOptions9");
+        filterTextureSizeParameter =
+            GetParameter("FilterTextureSize");
+        filterAuxiliaryTextureParameter =
+            GetParameter("FilterAuxiliaryTexture");
 
         copy = CreateKernel(
             PrismKernelKind.Copy,
@@ -213,6 +292,18 @@ internal sealed class PrismKernelRegistry : IDisposable
         layerStyle = CreateKernel(
             PrismKernelKind.LayerStyle,
             "LayerStyle");
+        adjustmentFilter = CreateKernel(
+            PrismKernelKind.AdjustmentFilter,
+            "AdjustmentFilter");
+        neighborhoodFilter = CreateKernel(
+            PrismKernelKind.NeighborhoodFilter,
+            "NeighborhoodFilter");
+        resamplingFilter = CreateKernel(
+            PrismKernelKind.ResamplingFilter,
+            "ResamplingFilter");
+        catalogFilter = CreateKernel(
+            PrismKernelKind.CatalogFilter,
+            "CatalogFilter");
         foreach (PrismBlendMode blendMode in
             Enum.GetValues<PrismBlendMode>())
         {
@@ -237,6 +328,7 @@ internal sealed class PrismKernelRegistry : IDisposable
                     PrismKernelKind.OutputColorConversion,
                     $"{symbol}ToOutput"));
         }
+        RegisterCatalogFilters();
     }
 
     public Effect Effect => effect;
@@ -252,6 +344,14 @@ internal sealed class PrismKernelRegistry : IDisposable
     public PrismKernel ClipAlpha => clipAlpha;
 
     public PrismKernel LayerStyle => layerStyle;
+
+    public PrismKernel AdjustmentFilter => adjustmentFilter;
+
+    public PrismKernel NeighborhoodFilter => neighborhoodFilter;
+
+    public PrismKernel ResamplingFilter => resamplingFilter;
+
+    public PrismKernel CatalogFilter => catalogFilter;
 
     public PrismKernel Present =>
         outputColorConversions[PrismColorProfile.Srgb];
@@ -295,6 +395,11 @@ internal sealed class PrismKernelRegistry : IDisposable
         return false;
     }
 
+    public bool TryGetFilterKernel(
+        PrismFilterId filter,
+        out PrismKernel kernel) =>
+        filterKernels.TryGetValue(filter, out kernel);
+
     public bool IsFundamentalCatalogEntryRegistered(
         string kind,
         string symbol)
@@ -312,6 +417,8 @@ internal sealed class PrismKernelRegistry : IDisposable
                 symbol == "Linear",
             "style" =>
                 IsRegisteredStyle(symbol),
+            "filter" =>
+                IsRegisteredFilter(symbol),
             _ => false
         };
     }
@@ -365,6 +472,33 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleModes3Parameter.SetValue(parameters.StyleModes3);
         styleResourceAvailableParameter.SetValue(
             parameters.StyleResourceAvailable);
+        filterHeaderParameter.SetValue(
+            parameters.FilterHeader);
+        filterOptions0Parameter.SetValue(
+            parameters.FilterOptions0);
+        filterOptions1Parameter.SetValue(
+            parameters.FilterOptions1);
+        filterOptions2Parameter.SetValue(
+            parameters.FilterOptions2);
+        filterOptions3Parameter.SetValue(
+            parameters.FilterOptions3);
+        filterOptions4Parameter.SetValue(
+            parameters.FilterOptions4);
+        filterOptions5Parameter.SetValue(
+            parameters.FilterOptions5);
+        filterOptions6Parameter.SetValue(
+            parameters.FilterOptions6);
+        filterOptions7Parameter.SetValue(
+            parameters.FilterOptions7);
+        filterOptions8Parameter.SetValue(
+            parameters.FilterOptions8);
+        filterOptions9Parameter.SetValue(
+            parameters.FilterOptions9);
+        filterTextureSizeParameter.SetValue(
+            parameters.FilterTextureSize);
+        filterAuxiliaryTextureParameter.SetValue(
+            parameters.FilterAuxiliaryTexture ??
+            parameters.SecondaryTexture);
     }
 
     public void Dispose()
@@ -460,6 +594,93 @@ internal sealed class PrismKernelRegistry : IDisposable
                 StringComparison.Ordinal) &&
             TryGetStyleKernel(style, out PrismKernel kernel) &&
             kernel == layerStyle;
+    }
+
+    private bool IsRegisteredFilter(
+        string symbol)
+    {
+        if (!Enum.TryParse(
+                symbol,
+                ignoreCase: false,
+                out PrismFilterId filter) ||
+            !string.Equals(
+                filter.ToString(),
+                symbol,
+                StringComparison.Ordinal) ||
+            !filterKernels.TryGetValue(
+                filter,
+                out PrismKernel kernel))
+        {
+            return false;
+        }
+
+        return PrismAdjustmentPlanner.IsSupported(filter)
+            ? kernel == adjustmentFilter
+            : PrismNeighborhoodPlanner.IsSupported(filter)
+                ? kernel == neighborhoodFilter
+                : PrismResamplingPlanner.IsSupported(filter)
+                    ? kernel == resamplingFilter
+                    : PrismCatalogFilterPlanner.IsSupported(filter) &&
+                        kernel == catalogFilter;
+    }
+
+    private void RegisterCatalogFilters()
+    {
+        foreach (PrismCatalogEntryDescriptor entry in
+            PrismCatalogGenerated.Entries)
+        {
+            if (entry.Kind != "filter")
+            {
+                continue;
+            }
+            if (!Enum.TryParse(
+                    entry.Symbol,
+                    ignoreCase: false,
+                    out PrismFilterId filter) ||
+                !string.Equals(
+                    filter.ToString(),
+                    entry.Symbol,
+                    StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    $"Catalog filter '{entry.Id}' has no generated filter id.");
+            }
+
+            PrismKernel kernel;
+            if (PrismAdjustmentPlanner.IsSupported(filter))
+            {
+                kernel = adjustmentFilter;
+            }
+            else if (PrismNeighborhoodPlanner.IsSupported(filter))
+            {
+                kernel = neighborhoodFilter;
+            }
+            else if (PrismResamplingPlanner.IsSupported(filter))
+            {
+                kernel = resamplingFilter;
+            }
+            else if (PrismCatalogFilterPlanner.IsSupported(filter))
+            {
+                kernel = catalogFilter;
+            }
+            else
+            {
+                continue;
+            }
+
+            string expectedOwner =
+                FilterOwnerPrefix + entry.Symbol;
+            if (!string.Equals(
+                entry.Coverage.Kernel,
+                expectedOwner,
+                StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    $"Catalog filter '{entry.Id}' is assigned to " +
+                    $"'{entry.Coverage.Kernel}', not '{expectedOwner}'.");
+            }
+            filterKernels.Add(filter, kernel);
+        }
     }
 
     private static void ValidateCatalogBinding(

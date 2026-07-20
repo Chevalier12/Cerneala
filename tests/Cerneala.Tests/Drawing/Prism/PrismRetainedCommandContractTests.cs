@@ -282,6 +282,58 @@ public sealed class PrismRetainedCommandContractTests
     }
 
     [Fact]
+    public void ThousandsOfAnimatedParameterCommitsReuseRetainedCommands()
+    {
+        const int frameCount = 4_096;
+        UIRoot root = new(100, 100);
+        RenderingTestElement owner = new(new Color(1, 0, 0));
+        root.VisualChildren.Add(owner);
+        using IDisposable prism = AttachPrism(owner, "AnimatedStress");
+        RetainedRenderCache cache = PreparedCache(root);
+        RenderCounters counters = new();
+        RetainedRenderer renderer = new(
+            cache,
+            new DrawCommandListBuilder(),
+            counters);
+        DrawCommandList commands = renderer.Commit(root);
+        long commandListVersion = commands.Version;
+        int retainedCacheVersion = cache.Version;
+        ElementRenderCache elementCache =
+            cache.GetElementCache(owner);
+        int elementRenderVersion = elementCache.RenderVersion;
+        int missesAfterWarmup = counters.CacheMisses;
+        int rebuildsAfterWarmup = counters.LocalRebuilds;
+        int hitsAfterWarmup = counters.CacheHits;
+        PrismInstance instance = Assert.Single(
+            commands.Where(
+                command =>
+                    command.Kind == DrawCommandKind.BeginPrism))
+            .PrismScope!.Value.Instance;
+        PrismLayerState layer =
+            instance.GetLayerState(new PrismNodeId(1));
+
+        for (int frame = 0; frame < frameCount; frame++)
+        {
+            layer.Opacity =
+                (frame & 1) == 0 ? 0.25f : 0.75f;
+            Assert.Same(commands, renderer.Commit(root));
+        }
+
+        Assert.Equal(commandListVersion, commands.Version);
+        Assert.Equal(retainedCacheVersion, cache.Version);
+        Assert.Equal(elementRenderVersion, elementCache.RenderVersion);
+        Assert.True(elementCache.IsValid);
+        Assert.Equal(missesAfterWarmup, counters.CacheMisses);
+        Assert.Equal(rebuildsAfterWarmup, counters.LocalRebuilds);
+        Assert.Equal(hitsAfterWarmup, counters.CacheHits);
+        Console.WriteLine(
+            $"PRISM_RETAINED frames={frameCount} " +
+            $"hits={counters.CacheHits - hitsAfterWarmup} " +
+            $"misses={counters.CacheMisses - missesAfterWarmup} " +
+            $"rebuilds={counters.LocalRebuilds - rebuildsAfterWarmup}");
+    }
+
+    [Fact]
     public void FallbackBackendIgnoresPrismDelimitersAndProcessesInteriorCommands()
     {
         PrismDrawScope scope = PrismTestData.Scope(

@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Numerics;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.Drawing.Prism.Styles;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
@@ -351,7 +352,16 @@ public sealed class PrismGraphOptimizer
             return node.Amount == 1f;
         }
         if (node.Kind == PrismGraphNodeKind.Filter &&
-            IsProvenFilterNoOp(node))
+            IsProvenFilterNoOp(node, scopes))
+        {
+            return true;
+        }
+        if (node.Kind == PrismGraphNodeKind.Filter &&
+            IsProvenFilterFusion(
+                node,
+                source,
+                nodes,
+                scopes))
         {
             return true;
         }
@@ -379,42 +389,77 @@ public sealed class PrismGraphOptimizer
             sourceNode.ColorProfile == profile;
     }
 
-    private static bool IsProvenFilterNoOp(PrismGraphNode node)
+    private static bool IsProvenFilterNoOp(
+        PrismGraphNode node,
+        IReadOnlyDictionary<int, PrismGraphScope> scopes)
     {
         if (node.Amount != 1f ||
             node.BlendMode != PrismBlendMode.Normal)
         {
             return false;
         }
-
-        return node.Filter switch
+        if (node.NeighborhoodPlan is PrismNeighborhoodPlan)
         {
-            PrismFilterId.Blur =>
-                GetNumber(node, BoundsParameters.BlurRadius) == 0f,
-            PrismFilterId.BlurMore =>
-                GetNumber(node, BoundsParameters.BlurMoreRadius) == 0f,
-            PrismFilterId.GaussianBlur =>
-                GetNumber(node, BoundsParameters.GaussianBlurRadius) == 0f,
-            PrismFilterId.BoxBlur =>
-                GetNumber(node, BoundsParameters.BoxBlurRadius) == 0f ||
-                GetNumber(node, BoundsParameters.BoxBlurIterations) == 0f,
-            PrismFilterId.Transform => IsIdentityTransform(node),
-            _ => false
-        };
+            return GetNeighborhoodPass(node).IsNoOp;
+        }
+        if (node.ResamplingPlan is PrismResamplingPlan)
+        {
+            return GetResamplingPass(node).IsNoOp;
+        }
+        if (node.CatalogFilterPlan is PrismCatalogFilterPlan)
+        {
+            return GetCatalogFilterPass(node).IsNoOp;
+        }
+        if (node.Filter is PrismFilterId filter &&
+            PrismAdjustmentPlanner.IsSupported(filter))
+        {
+            if (!scopes.TryGetValue(
+                    node.AnalysisScopeIndex,
+                    out PrismGraphScope scope))
+            {
+                throw new InvalidOperationException(
+                    $"Prism adjustment node '{node.Id}' has no owning graph scope.");
+            }
+
+            return PrismAdjustmentPlanner.IsNoOp(
+                PrismAdjustmentPlanner.Create(node, scope));
+        }
+
+        return false;
     }
 
-    private static bool IsIdentityTransform(PrismGraphNode node)
+    private static bool IsProvenFilterFusion(
+        PrismGraphNode node,
+        PrismGraphNodeId source,
+        IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNode> nodes,
+        IReadOnlyDictionary<int, PrismGraphScope> scopes)
     {
-        Vector4 translate = GetVector(node, BoundsParameters.TransformTranslate);
-        Vector4 scale = GetVector(node, BoundsParameters.TransformScale);
-        Vector4 skew = GetVector(node, BoundsParameters.TransformSkew);
-        return translate.X == 0f &&
-            translate.Y == 0f &&
-            scale.X == 1f &&
-            scale.Y == 1f &&
-            GetNumber(node, BoundsParameters.TransformRotation) == 0f &&
-            skew.X == 0f &&
-            skew.Y == 0f;
+        if (node.Amount != 1f ||
+            node.BlendMode != PrismBlendMode.Normal ||
+            node.Filter is not PrismFilterId filter ||
+            !nodes.TryGetValue(source, out PrismGraphNode? sourceNode) ||
+            sourceNode.Kind != PrismGraphNodeKind.Filter ||
+            sourceNode.Filter != filter ||
+            sourceNode.Amount != 1f ||
+            sourceNode.BlendMode != PrismBlendMode.Normal ||
+            sourceNode.AnalysisScopeIndex != node.AnalysisScopeIndex ||
+            sourceNode.Id.ScopeOwnerToken != node.Id.ScopeOwnerToken ||
+            PrismCatalogRuntime.GetEntry((int)filter).Fusion !=
+                "same-parameters-idempotent")
+        {
+            return false;
+        }
+
+        if (!PrismAdjustmentPlanner.IsSupported(filter) ||
+            !scopes.TryGetValue(
+                node.AnalysisScopeIndex,
+                out PrismGraphScope scope))
+        {
+            return false;
+        }
+
+        return PrismAdjustmentPlanner.Create(node, scope) ==
+            PrismAdjustmentPlanner.Create(sourceNode, scope);
     }
 
     private static bool IsProvenStyleNoOp(
@@ -824,32 +869,67 @@ public sealed class PrismGraphOptimizer
         DrawRect bounds,
         PrismGraphBoundsStatus inputStatus)
     {
-        return node.Filter switch
+        if (node.ResamplingPlan is PrismResamplingPlan resamplingPlan)
         {
-            PrismFilterId.Blur => ConservativeBounds(
-                Inflate(bounds, GetNumber(node, BoundsParameters.BlurRadius)),
-                inputStatus),
-            PrismFilterId.BlurMore => ConservativeBounds(
-                Inflate(bounds, GetNumber(node, BoundsParameters.BlurMoreRadius)),
-                inputStatus),
-            PrismFilterId.GaussianBlur => ConservativeBounds(
-                Inflate(bounds, GetNumber(node, BoundsParameters.GaussianBlurRadius)),
-                inputStatus),
-            PrismFilterId.BoxBlur => ConservativeBounds(
+            return resamplingPlan.TransformsBounds
+                ? ExpandTransformBounds(
+                    node,
+                    resamplingPlan,
+                    bounds,
+                    inputStatus)
+                : new BoundsCalculation(bounds, inputStatus);
+        }
+        if (node.CatalogFilterPlan is PrismCatalogFilterPlan)
+        {
+            PrismCatalogFilterPass pass =
+                GetCatalogFilterPass(node);
+            if (pass.BoundsRadiusX == 0 &&
+                pass.BoundsRadiusY == 0)
+            {
+                return new BoundsCalculation(
+                    bounds,
+                    inputStatus);
+            }
+
+            return ConservativeBounds(
                 Inflate(
                     bounds,
-                    checked(
-                        GetNumber(node, BoundsParameters.BoxBlurRadius) *
-                        GetNumber(node, BoundsParameters.BoxBlurIterations))),
-                inputStatus),
-            PrismFilterId.Transform => ExpandTransformBounds(
-                node,
-                bounds,
-                inputStatus),
-            _ => new BoundsCalculation(
-                bounds,
-                PrismGraphBoundsStatus.Unknown)
-        };
+                    pass.BoundsRadiusX,
+                    pass.BoundsRadiusY),
+                inputStatus);
+        }
+        if (node.Filter is PrismFilterId filter &&
+            string.Equals(
+                PrismCatalogRuntime.GetEntry((int)filter)
+                    .Execution?.Bounds,
+                "source",
+                StringComparison.Ordinal))
+        {
+            return new BoundsCalculation(bounds, inputStatus);
+        }
+        if (node.NeighborhoodPlan is PrismNeighborhoodPlan)
+        {
+            PrismNeighborhoodPass pass =
+                GetNeighborhoodPass(node);
+            if (pass.BoundsRadiusX == 0 &&
+                pass.BoundsRadiusY == 0)
+            {
+                return new BoundsCalculation(
+                    bounds,
+                    inputStatus);
+            }
+
+            return ConservativeBounds(
+                Inflate(
+                    bounds,
+                    pass.BoundsRadiusX,
+                    pass.BoundsRadiusY),
+                inputStatus);
+        }
+
+        return new BoundsCalculation(
+            bounds,
+            PrismGraphBoundsStatus.Unknown);
     }
 
     private static BoundsCalculation ExpandStyleBounds(
@@ -899,40 +979,36 @@ public sealed class PrismGraphOptimizer
     }
 
     private static DrawRect TransformBounds(
-        PrismGraphNode node,
+        PrismResamplingPlan plan,
         DrawRect bounds)
     {
-        Vector4 translate = GetVector(node, BoundsParameters.TransformTranslate);
-        Vector4 scale = GetVector(node, BoundsParameters.TransformScale);
-        float rotation = GetNumber(node, BoundsParameters.TransformRotation);
-        Vector4 skew = GetVector(node, BoundsParameters.TransformSkew);
-        Vector4 origin = GetVector(node, BoundsParameters.TransformOrigin);
         Vector2 pivot = new(
-            bounds.X + (bounds.Width * origin.X),
-            bounds.Y + (bounds.Height * origin.Y));
+            bounds.X + (bounds.Width * plan.BoundsOrigin.X),
+            bounds.Y + (bounds.Height * plan.BoundsOrigin.Y));
         Matrix3x2 skewMatrix = new(
             1f,
-            skew.Y,
-            skew.X,
+            plan.BoundsSkew.Y,
+            plan.BoundsSkew.X,
             1f,
             0f,
             0f);
         Matrix3x2 transform =
             Matrix3x2.CreateTranslation(-pivot) *
-            Matrix3x2.CreateScale(scale.X, scale.Y) *
+            Matrix3x2.CreateScale(plan.BoundsScale) *
             skewMatrix *
-            Matrix3x2.CreateRotation(rotation * (MathF.PI / 180f)) *
+            Matrix3x2.CreateRotation(plan.BoundsRotation) *
             Matrix3x2.CreateTranslation(
-                pivot + new Vector2(translate.X, translate.Y));
+                pivot + plan.BoundsTranslation);
         return Transform(bounds, transform);
     }
 
     private static BoundsCalculation ExpandTransformBounds(
         PrismGraphNode node,
+        PrismResamplingPlan plan,
         DrawRect bounds,
         PrismGraphBoundsStatus inputStatus)
     {
-        DrawRect transformed = TransformBounds(node, bounds);
+        DrawRect transformed = TransformBounds(plan, bounds);
         if (node.Amount == 1f &&
             node.BlendMode == PrismBlendMode.Normal)
         {
@@ -1198,56 +1274,47 @@ public sealed class PrismGraphOptimizer
         return nodeId;
     }
 
-    private static float GetNumber(PrismGraphNode node, int parameterIndex)
+    private static PrismNeighborhoodPass GetNeighborhoodPass(
+        PrismGraphNode node)
     {
-        PrismGraphParameter parameter = GetParameter(node, parameterIndex);
-        if (parameter.Kind != PrismGraphParameterValueKind.Number)
+        if (node.NeighborhoodPlan is not PrismNeighborhoodPlan plan ||
+            (uint)node.NeighborhoodPassIndex >=
+                (uint)plan.Passes.Length)
         {
-            throw InvalidParameter(node, parameterIndex);
+            throw new InvalidOperationException(
+                $"Prism filter node '{node.Id}' has no prepared neighborhood pass.");
         }
-        return parameter.NumberValue;
+
+        return plan.Passes[node.NeighborhoodPassIndex];
     }
 
-    private static bool GetBoolean(PrismGraphNode node, int parameterIndex)
+    private static PrismResamplingPass GetResamplingPass(
+        PrismGraphNode node)
     {
-        PrismGraphParameter parameter = GetParameter(node, parameterIndex);
-        if (parameter.Kind != PrismGraphParameterValueKind.Boolean)
+        if (node.ResamplingPlan is not PrismResamplingPlan plan ||
+            (uint)node.ResamplingPassIndex >=
+                (uint)plan.Passes.Length)
         {
-            throw InvalidParameter(node, parameterIndex);
+            throw new InvalidOperationException(
+                $"Prism filter node '{node.Id}' has no prepared resampling pass.");
         }
-        return parameter.BooleanValue;
+
+        return plan.Passes[node.ResamplingPassIndex];
     }
 
-    private static Vector4 GetVector(PrismGraphNode node, int parameterIndex)
+    private static PrismCatalogFilterPass GetCatalogFilterPass(
+        PrismGraphNode node)
     {
-        PrismGraphParameter parameter = GetParameter(node, parameterIndex);
-        if (parameter.Kind != PrismGraphParameterValueKind.Vector)
+        if (node.CatalogFilterPlan is not PrismCatalogFilterPlan plan ||
+            (uint)node.CatalogFilterPassIndex >=
+                (uint)plan.Passes.Length)
         {
-            throw InvalidParameter(node, parameterIndex);
+            throw new InvalidOperationException(
+                $"Prism filter node '{node.Id}' has no prepared catalog filter pass.");
         }
-        return parameter.VectorValue;
-    }
 
-    private static PrismGraphParameter GetParameter(
-        PrismGraphNode node,
-        int parameterIndex)
-    {
-        foreach (PrismGraphParameter parameter in node.Parameters)
-        {
-            if (parameter.Index == parameterIndex)
-            {
-                return parameter;
-            }
-        }
-        throw InvalidParameter(node, parameterIndex);
+        return plan.Passes[node.CatalogFilterPassIndex];
     }
-
-    private static InvalidOperationException InvalidParameter(
-        PrismGraphNode node,
-        int parameterIndex) =>
-        new(
-            $"Prism graph node '{node.Id}' has no compatible catalog parameter " +
-            $"at index {parameterIndex}.");
 
     private static DrawRect Inflate(DrawRect bounds, float amount)
     {
@@ -1320,44 +1387,6 @@ public sealed class PrismGraphOptimizer
             throw new InvalidOperationException(
                 "A Prism operation produced non-finite or unsupported expanded bounds.",
                 exception);
-        }
-    }
-
-    private static class BoundsParameters
-    {
-        public static readonly int BlurRadius =
-            ParameterIndex((int)PrismFilterId.Blur, "Radius");
-        public static readonly int BlurMoreRadius =
-            ParameterIndex((int)PrismFilterId.BlurMore, "Radius");
-        public static readonly int BoxBlurRadius =
-            ParameterIndex((int)PrismFilterId.BoxBlur, "Radius");
-        public static readonly int BoxBlurIterations =
-            ParameterIndex((int)PrismFilterId.BoxBlur, "Iterations");
-        public static readonly int GaussianBlurRadius =
-            ParameterIndex((int)PrismFilterId.GaussianBlur, "Radius");
-        public static readonly int TransformTranslate =
-            ParameterIndex((int)PrismFilterId.Transform, "Translate");
-        public static readonly int TransformScale =
-            ParameterIndex((int)PrismFilterId.Transform, "Scale");
-        public static readonly int TransformRotation =
-            ParameterIndex((int)PrismFilterId.Transform, "Rotation");
-        public static readonly int TransformSkew =
-            ParameterIndex((int)PrismFilterId.Transform, "Skew");
-        public static readonly int TransformOrigin =
-            ParameterIndex((int)PrismFilterId.Transform, "Origin");
-        private static int ParameterIndex(int stableId, string name)
-        {
-            PrismCatalogPropertyDescriptor[] properties =
-                PrismCatalogRuntime.GetEntry(stableId).Properties;
-            for (int index = 0; index < properties.Length; index++)
-            {
-                if (string.Equals(properties[index].Name, name, StringComparison.Ordinal))
-                {
-                    return properties[index].Slot;
-                }
-            }
-            throw new InvalidOperationException(
-                $"Prism catalog entry '{stableId}' has no '{name}' property.");
         }
     }
 

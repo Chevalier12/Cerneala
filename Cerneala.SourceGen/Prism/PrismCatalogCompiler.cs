@@ -16,6 +16,7 @@ internal static class PrismCatalogCompiler
         "schemaVersion",
         "catalogVersion",
         "defaultColorProfile",
+        "executionProfiles",
         "commonProperties",
         "conformance",
         "entries");
@@ -38,6 +39,7 @@ internal static class PrismCatalogCompiler
         "capabilities",
         "deterministic",
         "cacheable",
+        "fusion",
         "coverage",
         "transferFunction",
         "gamut",
@@ -52,6 +54,20 @@ internal static class PrismCatalogCompiler
         "unit");
     private static readonly HashSet<string> DomainFields = Set("kind", "minimum", "maximum");
     private static readonly HashSet<string> CoverageFields = Set("runtime", "kernel", "test", "documentation");
+    private static readonly HashSet<string> ExecutionProfileFields = Set(
+        "category",
+        "primitive",
+        "bounds",
+        "sampling",
+        "surfaceFormat",
+        "colorSpace",
+        "gpuCapabilities");
+    private static readonly HashSet<string> FilterCapabilities = Set(
+        "pixel-processing",
+        "seeded",
+        "auxiliary-resource");
+    private static readonly HashSet<string> FusionModes = Set(
+        "same-parameters-idempotent");
     private static readonly HashSet<string> EntryKinds = Set(
         "filter",
         "style",
@@ -112,6 +128,7 @@ internal static class PrismCatalogCompiler
 
             string catalogVersion = ReadRequiredString(root, "catalogVersion", "catalog root", issues);
             string defaultColorProfile = ReadRequiredString(root, "defaultColorProfile", "catalog root", issues);
+            List<CatalogExecutionProfile> executionProfiles = ParseExecutionProfiles(root, issues);
             List<CatalogProperty> commonCompositionProperties = new();
             List<CatalogProperty> commonLayerProperties = new();
             List<CatalogProperty> commonGroupProperties = new();
@@ -129,10 +146,11 @@ internal static class PrismCatalogCompiler
                 commonFilterProperties,
                 commonStyleProperties,
                 issues);
-            List<CatalogEntry> entries = ParseEntries(root, issues);
+            List<CatalogEntry> entries = ParseEntries(root, executionProfiles, issues);
 
             ValidateCatalog(
                 entries,
+                executionProfiles,
                 defaultColorProfile,
                 commonCompositionProperties,
                 commonLayerProperties,
@@ -161,6 +179,7 @@ internal static class PrismCatalogCompiler
             PrismCatalogModel model = new(
                 catalogVersion,
                 defaultColorProfile,
+                executionProfiles.ToImmutableArray(),
                 commonCompositionProperties.ToImmutableArray(),
                 commonLayerProperties.ToImmutableArray(),
                 commonGroupProperties.ToImmutableArray(),
@@ -204,7 +223,47 @@ internal static class PrismCatalogCompiler
         ParsePropertyArray(common, "style", "commonProperties.style", styleProperties, issues);
     }
 
-    private static List<CatalogEntry> ParseEntries(JsonElement root, List<PrismCatalogIssue> issues)
+    private static List<CatalogExecutionProfile> ParseExecutionProfiles(
+        JsonElement root,
+        List<PrismCatalogIssue> issues)
+    {
+        List<CatalogExecutionProfile> profiles = new();
+        if (!root.TryGetProperty("executionProfiles", out JsonElement profileArray) ||
+            profileArray.ValueKind != JsonValueKind.Array)
+        {
+            issues.Add(Issue("PRISM3007", "Catalog root is missing array 'executionProfiles'."));
+            return profiles;
+        }
+
+        int index = 0;
+        foreach (JsonElement element in profileArray.EnumerateArray())
+        {
+            string context = $"executionProfiles[{index}]";
+            index++;
+            if (element.ValueKind != JsonValueKind.Object)
+            {
+                issues.Add(Issue("PRISM3007", $"{context} must be an object."));
+                continue;
+            }
+
+            ValidateUnknownFields(element, ExecutionProfileFields, context, issues);
+            profiles.Add(new CatalogExecutionProfile(
+                ReadRequiredString(element, "category", context, issues),
+                ReadRequiredString(element, "primitive", context, issues),
+                ReadRequiredString(element, "bounds", context, issues),
+                ReadRequiredString(element, "sampling", context, issues),
+                ReadRequiredString(element, "surfaceFormat", context, issues),
+                ReadRequiredString(element, "colorSpace", context, issues),
+                ReadStringArray(element, "gpuCapabilities", context, issues)));
+        }
+
+        return profiles;
+    }
+
+    private static List<CatalogEntry> ParseEntries(
+        JsonElement root,
+        List<CatalogExecutionProfile> executionProfiles,
+        List<PrismCatalogIssue> issues)
     {
         List<CatalogEntry> entries = new();
         if (!root.TryGetProperty("entries", out JsonElement entriesElement) ||
@@ -233,10 +292,16 @@ internal static class PrismCatalogCompiler
             string category = ReadRequiredString(element, "category", context, issues);
             bool deterministic = ReadRequiredBoolean(element, "deterministic", context, issues);
             bool cacheable = ReadRequiredBoolean(element, "cacheable", context, issues);
+            string? fusion = ReadOptionalString(element, "fusion", context, issues);
             List<CatalogProperty> properties = new();
             ParsePropertyArray(element, "properties", $"{context}.properties", properties, issues);
             List<string> capabilities = ReadStringArray(element, "capabilities", context, issues);
             CatalogCoverage coverage = ParseCoverage(element, id, context, issues);
+            CatalogExecutionProfile executionProfile = kind == "filter"
+                ? executionProfiles.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Category, category, StringComparison.Ordinal)) ??
+                    CatalogExecutionProfile.Empty
+                : CatalogExecutionProfile.Empty;
             entries.Add(new CatalogEntry(
                 stableId,
                 id,
@@ -247,7 +312,9 @@ internal static class PrismCatalogCompiler
                 capabilities,
                 deterministic,
                 cacheable,
-                coverage));
+                fusion,
+                coverage,
+                executionProfile));
         }
 
         return entries;
@@ -366,8 +433,10 @@ internal static class PrismCatalogCompiler
         ValidateUnknownFields(coverage, CoverageFields, $"{context}.coverage", issues);
         return new CatalogCoverage(
             ReadCoverageOwner(coverage, entryId, "runtime", issues),
+            $"generated:PrismGraphBuilder/CatalogEntry/{entryId}",
             ReadCoverageOwner(coverage, entryId, "kernel", issues),
             ReadCoverageOwner(coverage, entryId, "test", issues),
+            $"planned:PrismCatalogGolden/{entryId}",
             ReadCoverageOwner(coverage, entryId, "documentation", issues));
     }
 
@@ -392,6 +461,7 @@ internal static class PrismCatalogCompiler
 
     private static void ValidateCatalog(
         List<CatalogEntry> entries,
+        List<CatalogExecutionProfile> executionProfiles,
         string defaultColorProfile,
         List<CatalogProperty> commonCompositionProperties,
         List<CatalogProperty> commonLayerProperties,
@@ -409,6 +479,7 @@ internal static class PrismCatalogCompiler
         ValidatePropertySet(commonMaskProperties, "commonProperties.mask", issues);
         ValidatePropertySet(commonFilterProperties, "commonProperties.filter", issues);
         ValidatePropertySet(commonStyleProperties, "commonProperties.style", issues);
+        ValidateExecutionProfiles(executionProfiles, entries, issues);
 
         HashSet<int> stableIds = new();
         HashSet<string> identifiers = new(StringComparer.Ordinal);
@@ -443,6 +514,16 @@ internal static class PrismCatalogCompiler
             }
 
             ValidatePropertySet(entry.Properties, entry.Id, issues);
+            if (entry.Kind == "filter")
+            {
+                ValidateFilterContract(entry, issues);
+            }
+            else if (entry.Fusion is not null)
+            {
+                issues.Add(Issue(
+                    "PRISM3007",
+                    $"Catalog entry '{entry.Id}' cannot declare filter fusion mode '{entry.Fusion}'."));
+            }
         }
 
         if (!entries.Any(entry =>
@@ -452,6 +533,110 @@ internal static class PrismCatalogCompiler
             issues.Add(Issue(
                 "PRISM3001",
                 $"Default color profile '{defaultColorProfile}' has no color-profile entry."));
+        }
+    }
+
+    private static void ValidateExecutionProfiles(
+        List<CatalogExecutionProfile> profiles,
+        List<CatalogEntry> entries,
+        List<PrismCatalogIssue> issues)
+    {
+        HashSet<string> categories = new(StringComparer.Ordinal);
+        foreach (CatalogExecutionProfile profile in profiles)
+        {
+            if (!categories.Add(profile.Category))
+            {
+                issues.Add(Issue(
+                    "PRISM3007",
+                    $"Duplicate execution profile for category '{profile.Category}'."));
+            }
+            if (profile.GpuCapabilities.Count == 0 ||
+                profile.GpuCapabilities.Any(string.IsNullOrWhiteSpace) ||
+                profile.GpuCapabilities.Distinct(StringComparer.Ordinal).Count() !=
+                    profile.GpuCapabilities.Count)
+            {
+                issues.Add(Issue(
+                    "PRISM3007",
+                    $"Execution profile '{profile.Category}' must declare unique GPU capabilities."));
+            }
+            if (!entries.Any(entry =>
+                    entry.Kind == "filter" &&
+                    string.Equals(entry.Category, profile.Category, StringComparison.Ordinal)))
+            {
+                issues.Add(Issue(
+                    "PRISM3007",
+                    $"Execution profile '{profile.Category}' does not classify any filter."));
+            }
+        }
+    }
+
+    private static void ValidateFilterContract(
+        CatalogEntry entry,
+        List<PrismCatalogIssue> issues)
+    {
+        if (ReferenceEquals(entry.ExecutionProfile, CatalogExecutionProfile.Empty))
+        {
+            issues.Add(Issue(
+                "PRISM3007",
+                $"Filter '{entry.Id}' has no execution profile for category '{entry.Category}'."));
+        }
+
+        HashSet<string> capabilities = new(StringComparer.Ordinal);
+        foreach (string capability in entry.Capabilities)
+        {
+            if (!FilterCapabilities.Contains(capability) || !capabilities.Add(capability))
+            {
+                issues.Add(Issue(
+                    "PRISM3007",
+                    $"Filter '{entry.Id}' has unknown or duplicate capability '{capability}'."));
+            }
+        }
+        if (!capabilities.Contains("pixel-processing"))
+        {
+            issues.Add(Issue(
+                "PRISM3007",
+                $"Filter '{entry.Id}' must declare the 'pixel-processing' capability."));
+        }
+
+        CatalogProperty? seed = entry.Properties.FirstOrDefault(property =>
+            string.Equals(property.Name, "Seed", StringComparison.Ordinal));
+        bool isSeeded = capabilities.Contains("seeded");
+        if (isSeeded != (seed is not null))
+        {
+            issues.Add(Issue(
+                "PRISM3007",
+                $"Filter '{entry.Id}' must pair the 'seeded' capability with an explicit Seed property."));
+        }
+        if (seed is not null &&
+            (seed.ValueType != "integer" ||
+             seed.Required ||
+             seed.DefaultValue is null))
+        {
+            issues.Add(Issue(
+                "PRISM3007",
+                $"Filter '{entry.Id}' Seed must be an optional integer with an explicit default."));
+        }
+        if (!entry.Deterministic)
+        {
+            issues.Add(Issue(
+                "PRISM3007",
+                $"Filter '{entry.Id}' must produce deterministic output from its catalog parameters."));
+        }
+        if (entry.Fusion is string fusion &&
+            !FusionModes.Contains(fusion))
+        {
+            issues.Add(Issue(
+                "PRISM3007",
+                $"Filter '{entry.Id}' has unknown fusion mode '{fusion}'."));
+        }
+
+        bool hasVersionedResources = entry.Properties.Any(property =>
+            property.ValueType == "resource");
+        if (hasVersionedResources != capabilities.Contains("auxiliary-resource"))
+        {
+            issues.Add(Issue(
+                "PRISM3007",
+                $"Filter '{entry.Id}' must pair resource properties with the 'auxiliary-resource' capability."));
         }
     }
 
@@ -589,10 +774,23 @@ internal static class PrismCatalogCompiler
         source.AppendLine("    string Domain,");
         source.AppendLine("    string Unit);");
         source.AppendLine();
+        source.AppendLine("internal readonly record struct PrismCatalogExecutionDescriptor(");
+        source.AppendLine("    string Primitive,");
+        source.AppendLine("    string Bounds,");
+        source.AppendLine("    string Sampling,");
+        source.AppendLine("    string SurfaceFormat,");
+        source.AppendLine("    string ColorSpace,");
+        source.AppendLine("    string[] GpuCapabilities,");
+        source.AppendLine("    string? SeedProperty,");
+        source.AppendLine("    string[] VersionedResourceProperties,");
+        source.AppendLine("    string FallbackPolicy);");
+        source.AppendLine();
         source.AppendLine("internal readonly record struct PrismCatalogCoverageDescriptor(");
         source.AppendLine("    string Runtime,");
+        source.AppendLine("    string Planner,");
         source.AppendLine("    string Kernel,");
         source.AppendLine("    string Test,");
+        source.AppendLine("    string Golden,");
         source.AppendLine("    string Documentation);");
         source.AppendLine();
         source.AppendLine("internal readonly record struct PrismCatalogEntryDescriptor(");
@@ -605,6 +803,8 @@ internal static class PrismCatalogCompiler
         source.AppendLine("    string[] Capabilities,");
         source.AppendLine("    bool Deterministic,");
         source.AppendLine("    bool Cacheable,");
+        source.AppendLine("    string? Fusion,");
+        source.AppendLine("    PrismCatalogExecutionDescriptor? Execution,");
         source.AppendLine("    long DependencyVersion,");
         source.AppendLine("    PrismCatalogCoverageDescriptor Coverage);");
         source.AppendLine();
@@ -669,6 +869,11 @@ internal static class PrismCatalogCompiler
             source.Append("            ").Append(entry.Deterministic ? "true" : "false").AppendLine(",");
             source.Append("            ").Append(entry.Cacheable ? "true" : "false").AppendLine(",");
             source.Append("            ")
+                .Append(entry.Fusion is null ? "null" : $"\"{Escape(entry.Fusion)}\"")
+                .AppendLine(",");
+            AppendExecutionDescriptor(source, entry, 3);
+            source.AppendLine(",");
+            source.Append("            ")
                 .Append(
                     ComputeEntryDependencyVersion(
                         catalogVersion,
@@ -676,14 +881,80 @@ internal static class PrismCatalogCompiler
                     .ToString(CultureInfo.InvariantCulture))
                 .AppendLine("L,");
             source.Append("            new(\"").Append(Escape(entry.Coverage.Runtime))
+                .Append("\", \"").Append(Escape(entry.Coverage.Planner))
                 .Append("\", \"").Append(Escape(entry.Coverage.Kernel))
                 .Append("\", \"").Append(Escape(entry.Coverage.Test))
+                .Append("\", \"").Append(Escape(entry.Coverage.Golden))
                 .Append("\", \"").Append(Escape(entry.Coverage.Documentation))
                 .AppendLine("\")),");
         }
         source.AppendLine("    ];");
+        source.AppendLine();
+        source.AppendLine("    internal static readonly PrismCatalogEntryDescriptor[] FilterImplementationMatrix =");
+        source.AppendLine("    [");
+        for (int index = 0; index < orderedEntries.Length; index++)
+        {
+            if (orderedEntries[index].Kind == "filter")
+            {
+                source.Append("        Entries[").Append(index).AppendLine("],");
+            }
+        }
+        source.AppendLine("    ];");
         source.AppendLine("}");
         return source.ToString();
+    }
+
+    private static void AppendExecutionDescriptor(
+        StringBuilder source,
+        CatalogEntry entry,
+        int indent)
+    {
+        if (entry.Kind != "filter")
+        {
+            source.Append(' ', indent * 4).Append("null");
+            return;
+        }
+
+        CatalogExecutionProfile profile = entry.ExecutionProfile;
+        string? seedProperty = entry.Properties
+            .FirstOrDefault(property => string.Equals(property.Name, "Seed", StringComparison.Ordinal))
+            ?.Name;
+        string[] versionedResources = entry.Properties
+            .Where(property => property.ValueType == "resource")
+            .Select(property => property.Name)
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+
+        source.Append(' ', indent * 4).AppendLine("new(");
+        source.Append(' ', (indent + 1) * 4).Append('"').Append(Escape(profile.Primitive)).AppendLine("\",");
+        source.Append(' ', (indent + 1) * 4).Append('"').Append(Escape(profile.Bounds)).AppendLine("\",");
+        source.Append(' ', (indent + 1) * 4).Append('"').Append(Escape(profile.Sampling)).AppendLine("\",");
+        source.Append(' ', (indent + 1) * 4).Append('"').Append(Escape(profile.SurfaceFormat)).AppendLine("\",");
+        source.Append(' ', (indent + 1) * 4).Append('"').Append(Escape(profile.ColorSpace)).AppendLine("\",");
+        AppendStringArray(source, profile.GpuCapabilities, indent + 1);
+        source.AppendLine(",");
+        source.Append(' ', (indent + 1) * 4)
+            .Append(seedProperty is null ? "null" : $"\"{Escape(seedProperty)}\"")
+            .AppendLine(",");
+        AppendStringArray(source, versionedResources, indent + 1);
+        source.AppendLine(",");
+        source.Append(' ', (indent + 1) * 4)
+            .AppendLine("\"PrismFallbackPolicy/observable-diagnostic\")");
+    }
+
+    private static void AppendStringArray(
+        StringBuilder source,
+        IEnumerable<string> values,
+        int indent)
+    {
+        source.Append(' ', indent * 4)
+            .Append('[')
+            .Append(string.Join(
+                ", ",
+                values
+                    .OrderBy(value => value, StringComparer.Ordinal)
+                    .Select(value => $"\"{Escape(value)}\"")))
+            .Append(']');
     }
 
     private static long ComputeEntryDependencyVersion(
@@ -702,6 +973,17 @@ internal static class PrismCatalogCompiler
         Add(entry.Category);
         Add(entry.Deterministic ? "1" : "0");
         Add(entry.Cacheable ? "1" : "0");
+        Add(entry.Fusion);
+        Add(entry.ExecutionProfile.Primitive);
+        Add(entry.ExecutionProfile.Bounds);
+        Add(entry.ExecutionProfile.Sampling);
+        Add(entry.ExecutionProfile.SurfaceFormat);
+        Add(entry.ExecutionProfile.ColorSpace);
+        foreach (string capability in entry.ExecutionProfile.GpuCapabilities
+            .OrderBy(value => value, StringComparer.Ordinal))
+        {
+            Add(capability);
+        }
         foreach (CatalogProperty property in entry.Properties)
         {
             Add(property.Id);
@@ -1042,6 +1324,28 @@ internal static class PrismCatalogCompiler
         return value.GetBoolean();
     }
 
+    private static string? ReadOptionalString(
+        JsonElement owner,
+        string field,
+        string context,
+        List<PrismCatalogIssue> issues)
+    {
+        if (!owner.TryGetProperty(field, out JsonElement value))
+        {
+            return null;
+        }
+        if (value.ValueKind != JsonValueKind.String ||
+            string.IsNullOrWhiteSpace(value.GetString()))
+        {
+            issues.Add(Issue(
+                "PRISM3001",
+                $"{context} optional '{field}' must be a non-empty string."));
+            return null;
+        }
+
+        return value.GetString();
+    }
+
     private static List<string> ReadStringArray(
         JsonElement owner,
         string field,
@@ -1151,7 +1455,9 @@ internal static class PrismCatalogCompiler
             List<string> capabilities,
             bool deterministic,
             bool cacheable,
-            CatalogCoverage coverage)
+            string? fusion,
+            CatalogCoverage coverage,
+            CatalogExecutionProfile executionProfile)
         {
             StableId = stableId;
             Id = id;
@@ -1162,7 +1468,9 @@ internal static class PrismCatalogCompiler
             Capabilities = capabilities;
             Deterministic = deterministic;
             Cacheable = cacheable;
+            Fusion = fusion;
             Coverage = coverage;
+            ExecutionProfile = executionProfile;
         }
 
         public int StableId { get; }
@@ -1174,7 +1482,9 @@ internal static class PrismCatalogCompiler
         public List<string> Capabilities { get; }
         public bool Deterministic { get; }
         public bool Cacheable { get; }
+        public string? Fusion { get; }
         public CatalogCoverage Coverage { get; }
+        public CatalogExecutionProfile ExecutionProfile { get; }
     }
 
     internal sealed class CatalogProperty
@@ -1224,20 +1534,74 @@ internal static class PrismCatalogCompiler
 
     internal sealed class CatalogCoverage
     {
-        public static readonly CatalogCoverage Empty = new(string.Empty, string.Empty, string.Empty, string.Empty);
+        public static readonly CatalogCoverage Empty = new(
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty);
 
-        public CatalogCoverage(string runtime, string kernel, string test, string documentation)
+        public CatalogCoverage(
+            string runtime,
+            string planner,
+            string kernel,
+            string test,
+            string golden,
+            string documentation)
         {
             Runtime = runtime;
+            Planner = planner;
             Kernel = kernel;
             Test = test;
+            Golden = golden;
             Documentation = documentation;
         }
 
         public string Runtime { get; }
+        public string Planner { get; }
         public string Kernel { get; }
         public string Test { get; }
+        public string Golden { get; }
         public string Documentation { get; }
+    }
+
+    internal sealed class CatalogExecutionProfile
+    {
+        public static readonly CatalogExecutionProfile Empty = new(
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            new List<string>());
+
+        public CatalogExecutionProfile(
+            string category,
+            string primitive,
+            string bounds,
+            string sampling,
+            string surfaceFormat,
+            string colorSpace,
+            List<string> gpuCapabilities)
+        {
+            Category = category;
+            Primitive = primitive;
+            Bounds = bounds;
+            Sampling = sampling;
+            SurfaceFormat = surfaceFormat;
+            ColorSpace = colorSpace;
+            GpuCapabilities = gpuCapabilities;
+        }
+
+        public string Category { get; }
+        public string Primitive { get; }
+        public string Bounds { get; }
+        public string Sampling { get; }
+        public string SurfaceFormat { get; }
+        public string ColorSpace { get; }
+        public List<string> GpuCapabilities { get; }
     }
 }
 
@@ -1265,6 +1629,7 @@ internal sealed class PrismCatalogModel
     public PrismCatalogModel(
         string catalogVersion,
         string defaultColorProfile,
+        ImmutableArray<PrismCatalogCompiler.CatalogExecutionProfile> executionProfiles,
         ImmutableArray<PrismCatalogCompiler.CatalogProperty> compositionProperties,
         ImmutableArray<PrismCatalogCompiler.CatalogProperty> layerProperties,
         ImmutableArray<PrismCatalogCompiler.CatalogProperty> groupProperties,
@@ -1276,6 +1641,7 @@ internal sealed class PrismCatalogModel
     {
         CatalogVersion = catalogVersion;
         DefaultColorProfile = defaultColorProfile;
+        ExecutionProfiles = executionProfiles;
         CompositionProperties = compositionProperties;
         LayerProperties = layerProperties;
         GroupProperties = groupProperties;
@@ -1289,6 +1655,8 @@ internal sealed class PrismCatalogModel
     public string CatalogVersion { get; }
 
     public string DefaultColorProfile { get; }
+
+    public ImmutableArray<PrismCatalogCompiler.CatalogExecutionProfile> ExecutionProfiles { get; }
 
     public ImmutableArray<PrismCatalogCompiler.CatalogProperty> CompositionProperties { get; }
 

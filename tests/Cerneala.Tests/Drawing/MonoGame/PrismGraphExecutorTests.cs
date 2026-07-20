@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.MonoGame.Prism.Execution;
@@ -6,6 +8,7 @@ using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Blending;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.ColorManagement;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Tests.Drawing.Prism;
 using Cerneala.UI.Controls;
@@ -27,6 +30,7 @@ public sealed class PrismGraphExecutorTests
     private const int SurfaceHeight = 16;
     private const int MeasuredFrameCount = 16;
     private const int StyleStressCount = 48;
+    private const int AnimatedFrameCount = 2_048;
 
     [Fact]
     public void RegistryValidatesCatalogAndRegistersGeneratedColorKernels()
@@ -88,10 +92,62 @@ public sealed class PrismGraphExecutorTests
             registry.IsFundamentalCatalogEntryRegistered(
                 "sampling",
                 "Linear"));
-        Assert.False(
-            registry.IsFundamentalCatalogEntryRegistered(
-                "filter",
-                "Blur"));
+        foreach (PrismCatalogEntryDescriptor entry in
+            PrismCatalogGenerated.Entries.Where(candidate =>
+                candidate.Kind == "filter" &&
+                (PrismAdjustmentPlanner.IsSupported(
+                    (PrismFilterId)candidate.StableId) ||
+                PrismNeighborhoodPlanner.IsSupported(
+                    (PrismFilterId)candidate.StableId) ||
+                PrismResamplingPlanner.IsSupported(
+                    (PrismFilterId)candidate.StableId) ||
+                PrismCatalogFilterPlanner.IsSupported(
+                    (PrismFilterId)candidate.StableId))))
+        {
+            PrismFilterId filter =
+                (PrismFilterId)entry.StableId;
+            Assert.True(
+                registry.IsFundamentalCatalogEntryRegistered(
+                    "filter",
+                    entry.Symbol));
+            Assert.True(
+                registry.TryGetFilterKernel(
+                    filter,
+                    out PrismKernel filterKernel));
+            bool isAdjustment =
+                PrismAdjustmentPlanner.IsSupported(filter);
+            bool isNeighborhood =
+                PrismNeighborhoodPlanner.IsSupported(filter);
+            bool isResampling =
+                PrismResamplingPlanner.IsSupported(filter);
+            Assert.Equal(
+                isAdjustment
+                    ? PrismKernelKind.AdjustmentFilter
+                    : isNeighborhood
+                        ? PrismKernelKind.NeighborhoodFilter
+                        : isResampling
+                            ? PrismKernelKind.ResamplingFilter
+                            : PrismKernelKind.CatalogFilter,
+                filterKernel.Kind);
+            Assert.Equal(
+                isAdjustment
+                    ? "AdjustmentFilter"
+                    : isNeighborhood
+                        ? "NeighborhoodFilter"
+                        : isResampling
+                            ? "ResamplingFilter"
+                            : "CatalogFilter",
+                filterKernel.Technique.Name);
+            Assert.Equal(
+                isAdjustment
+                    ? registry.AdjustmentFilter
+                    : isNeighborhood
+                        ? registry.NeighborhoodFilter
+                        : isResampling
+                            ? registry.ResamplingFilter
+                            : registry.CatalogFilter,
+                filterKernel);
+        }
         foreach (PrismStyleId style in Enum.GetValues<PrismStyleId>())
         {
             Assert.True(
@@ -127,6 +183,10 @@ public sealed class PrismGraphExecutorTests
             registry.TryGetStyleKernel(
                 (PrismStyleId)int.MaxValue,
                 out _));
+        Assert.False(
+            registry.TryGetFilterKernel(
+                (PrismFilterId)int.MaxValue,
+                out _));
         Assert.Equal(
             PrismKernelKind.MaskExtract,
             registry.MaskExtract.Kind);
@@ -139,6 +199,234 @@ public sealed class PrismGraphExecutorTests
         Assert.Equal(
             "MaskFeather",
             registry.MaskFeather.Technique.Name);
+    }
+
+    [Fact]
+    public void ResamplingTransformGpuMapsTranslationAndTransparentEdges()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice =
+            fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry =
+            new(graphicsDevice);
+        using SpriteBatch spriteBatch =
+            new(graphicsDevice);
+        PrismPremultipliedColor red =
+            PrismPremultipliedColor.FromStraight(
+                1,
+                0,
+                0,
+                1);
+        PrismPremultipliedColor green =
+            PrismPremultipliedColor.FromStraight(
+                0,
+                1,
+                0,
+                0.5);
+        PrismPremultipliedColor blue =
+            PrismPremultipliedColor.FromStraight(
+                0,
+                0,
+                1,
+                1);
+        using Texture2D source = CreateHalfVectorTexture(
+            graphicsDevice,
+            [red, green, blue]);
+        using RenderTarget2D output = CreateTarget(
+            graphicsDevice,
+            3,
+            SurfaceFormat.HalfVector4);
+        Assert.True(
+            registry.TryGetFilterKernel(
+                PrismFilterId.Transform,
+                out PrismKernel kernel));
+
+        graphicsDevice.SetRenderTarget(output);
+        graphicsDevice.Clear(XnaColor.Transparent);
+        PrismKernelParameters parameters = new(
+            source,
+            1,
+            new Vector2(1f / 3, 1),
+            Vector2.One,
+            Vector2.Zero)
+        {
+            FilterHeader = new Vector4(
+                (int)PrismResamplingOperation.Transform,
+                (int)PrismColorProfile.LinearSrgb,
+                (int)PrismResamplingPassKind.Direct,
+                0),
+            FilterOptions0 = new Vector4(
+                1,
+                0,
+                1,
+                1),
+            FilterOptions1 = Vector4.Zero,
+            FilterOptions2 = new Vector4(
+                0.5f,
+                0.5f,
+                1,
+                0),
+            FilterOptions3 = new Vector4(
+                3,
+                1,
+                0,
+                0),
+            FilterOptions9 = new Vector4(
+                0,
+                0,
+                0,
+                (int)PrismBlendMode.Normal),
+            FilterTextureSize = new Vector2(3, 1)
+        };
+        registry.Bind(kernel, in parameters);
+        spriteBatch.Begin(
+            SpriteSortMode.Immediate,
+            BlendState.Opaque,
+            SamplerState.LinearClamp,
+            DepthStencilState.None,
+            RasterizerState.CullNone,
+            registry.Effect);
+        spriteBatch.Draw(
+            source,
+            new Rectangle(0, 0, 3, 1),
+            XnaColor.White);
+        spriteBatch.End();
+        graphicsDevice.SetRenderTarget(null);
+        HalfVector4[] pixels = new HalfVector4[3];
+        output.GetData(pixels);
+
+        AssertHalfVectorWithin(
+            pixels[0],
+            default,
+            tolerance: 0.003,
+            "translated transparent edge");
+        AssertHalfVectorWithin(
+            pixels[1],
+            red,
+            tolerance: 0.003,
+            "translated red");
+        AssertHalfVectorWithin(
+            pixels[2],
+            green,
+            tolerance: 0.003,
+            "translated green");
+    }
+
+    [Fact]
+    public void NeighborhoodNoiseGpuIsDeterministicAndUsesPreparedSeed()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int width = 32;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice =
+            fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry =
+            new(graphicsDevice);
+        using SpriteBatch spriteBatch =
+            new(graphicsDevice);
+        using Texture2D source = CreateHalfVectorTexture(
+            graphicsDevice,
+            Enumerable.Repeat(
+                PrismPremultipliedColor.FromStraight(
+                    0.5,
+                    0.5,
+                    0.5,
+                    1),
+                width)
+            .ToArray());
+        using RenderTarget2D output = CreateTarget(
+            graphicsDevice,
+            width,
+            SurfaceFormat.HalfVector4);
+        Assert.True(
+            registry.TryGetFilterKernel(
+                PrismFilterId.AddNoise,
+                out PrismKernel kernel));
+
+        HalfVector4[] first = DrawNoise(seed: 41);
+        HalfVector4[] repeated = DrawNoise(seed: 41);
+        HalfVector4[] changed = DrawNoise(seed: 42);
+
+        Assert.Equal(first, repeated);
+        Assert.False(first.SequenceEqual(changed));
+        Assert.All(
+            first,
+            pixel =>
+            {
+                Vector4 value = pixel.ToVector4();
+                Assert.InRange(
+                    MathF.Abs(value.X - value.Y),
+                    0,
+                    0.001f);
+                Assert.InRange(
+                    MathF.Abs(value.X - value.Z),
+                    0,
+                    0.001f);
+            });
+
+        HalfVector4[] DrawNoise(int seed)
+        {
+            graphicsDevice.SetRenderTarget(output);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters parameters = new(
+                source,
+                1,
+                new Vector2(1f / width, 1),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                FilterHeader = new Vector4(
+                    (int)PrismNeighborhoodOperation.AddNoise,
+                    (int)PrismColorProfile.LinearSrgb,
+                    (int)PrismNeighborhoodPassKind.Direct,
+                    0),
+                FilterOptions0 = new Vector4(
+                    0.2f,
+                    0,
+                    1,
+                    seed & 0xffff),
+                FilterOptions1 = new Vector4(
+                    (seed >> 16) & 0xffff,
+                    0,
+                    0,
+                    0),
+                FilterOptions9 = new Vector4(
+                    0,
+                    0,
+                    9,
+                    (int)PrismBlendMode.Normal),
+                FilterTextureSize = new Vector2(
+                    width,
+                    1)
+            };
+            registry.Bind(kernel, in parameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                source,
+                new Rectangle(0, 0, width, 1),
+                XnaColor.White);
+            spriteBatch.End();
+            graphicsDevice.SetRenderTarget(null);
+            HalfVector4[] pixels =
+                new HalfVector4[width];
+            output.GetData(pixels);
+            return pixels;
+        }
     }
 
     [Fact]
@@ -867,13 +1155,7 @@ public sealed class PrismGraphExecutorTests
             executor.SurfacePool.ReusedSurfaceCount >
             reusedAfterWarmup);
         Assert.Equal(0, executor.SurfacePool.ActiveLeaseCount);
-        Assert.Equal(1, diagnostics.Count);
-        Assert.Equal(
-            PrismFallbackReason.MissingKernel,
-            diagnostics.Get(0).Reason);
-        Assert.Equal(
-            PrismFallbackAction.BypassOperation,
-            diagnostics.Get(0).Action);
+        Assert.Equal(0, diagnostics.Count);
 
         XnaColor pixel = renderer.ReadCenterPixel();
         Assert.InRange(pixel.R, 126, 129);
@@ -1004,6 +1286,206 @@ public sealed class PrismGraphExecutorTests
     }
 
     [Fact]
+    public void RepresentativeScenesStayWithinMeasuredExecutionBudgets()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        foreach (PrismProfileScenario scenario in
+            CreateRepresentativeScenarios())
+        {
+            using TestPrismRenderer renderer = new(
+                fixture.Session.GraphicsDevice,
+                SurfaceWidth,
+                SurfaceHeight);
+            PrismExecutionDiagnostics diagnostics = new();
+            using PrismGraphExecutor executor = new(
+                fixture.Session.GraphicsDevice,
+                diagnostics);
+            Viewport viewport =
+                new(0, 0, SurfaceWidth, SurfaceHeight);
+
+            for (int frame = 0; frame < 8; frame++)
+            {
+                ExecuteFrame(
+                    renderer,
+                    executor,
+                    scenario.Commands,
+                    scenario.Analysis,
+                    scenario.Plan,
+                    viewport);
+            }
+
+            long createdAfterWarmup =
+                executor.SurfacePool.CreatedSurfaceCount;
+            long reusedAfterWarmup =
+                executor.SurfacePool.ReusedSurfaceCount;
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            ExecuteFrame(
+                renderer,
+                executor,
+                scenario.Commands,
+                scenario.Analysis,
+                scenario.Plan,
+                viewport);
+            renderer.ResetRenderedCommandCount();
+
+            long allocationStart =
+                GC.GetAllocatedBytesForCurrentThread();
+            long cpuSubmitTicks = 0;
+            for (int frame = 0;
+                frame < MeasuredFrameCount;
+                frame++)
+            {
+                ExecuteFrame(
+                    renderer,
+                    executor,
+                    scenario.Commands,
+                    scenario.Analysis,
+                    scenario.Plan,
+                    viewport);
+                cpuSubmitTicks +=
+                    diagnostics.Counters.CpuSubmitTime.Ticks;
+            }
+            long allocatedBytes =
+                GC.GetAllocatedBytesForCurrentThread() -
+                allocationStart;
+            PrismExecutionCounters counters =
+                diagnostics.Counters;
+
+            long completionStarted =
+                Stopwatch.GetTimestamp();
+            ExecuteFrame(
+                renderer,
+                executor,
+                scenario.Commands,
+                scenario.Analysis,
+                scenario.Plan,
+                viewport);
+            _ = renderer.ReadCenterPixel();
+            TimeSpan gpuCompletionUpperBound =
+                Stopwatch.GetElapsedTime(completionStarted);
+
+            int expectedPasses =
+                scenario.Plan.ExecutionOrder.Length +
+                scenario.Plan.OptimizedGraph.Scopes.Count(
+                    scope => scope.Output.HasValue);
+            Assert.Equal(expectedPasses, counters.PassCount);
+            Assert.Equal(0, allocatedBytes);
+            Assert.Equal(
+                createdAfterWarmup,
+                executor.SurfacePool.CreatedSurfaceCount);
+            Assert.True(
+                executor.SurfacePool.ReusedSurfaceCount >
+                reusedAfterWarmup);
+            Assert.InRange(
+                counters.PeakLiveSurfaceCount,
+                1,
+                scenario.Plan.PeakLiveSurfaces);
+            Assert.Equal(0, executor.SurfacePool.ActiveLeaseCount);
+            Assert.Equal(0, diagnostics.Count);
+            Assert.True(cpuSubmitTicks > 0);
+            Assert.True(gpuCompletionUpperBound > TimeSpan.Zero);
+
+            Console.WriteLine(
+                string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"PRISM_PROFILE name={scenario.Name} " +
+                    $"passes={counters.PassCount} " +
+                    $"peak={counters.PeakLiveSurfaceCount} " +
+                    $"created={counters.CreatedSurfaceCount} " +
+                    $"reused={counters.ReusedSurfaceCount} " +
+                    $"cpu-submit-us=" +
+                    $"{TimeSpan.FromTicks(cpuSubmitTicks / MeasuredFrameCount).TotalMicroseconds:F3} " +
+                    $"gpu-completion-upper-bound-us=" +
+                    $"{gpuCompletionUpperBound.TotalMicroseconds:F3} " +
+                    $"allocated-bytes={allocatedBytes}"));
+        }
+    }
+
+    [Fact]
+    public void ThousandsOfAnimatedFramesReuseSurfacesAndCompiledShader()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        using TestPrismRenderer renderer = new(
+            fixture.Session.GraphicsDevice,
+            SurfaceWidth,
+            SurfaceHeight);
+        PrismExecutionDiagnostics diagnostics = new();
+        using PrismGraphExecutor executor = new(
+            fixture.Session.GraphicsDevice,
+            diagnostics);
+        (
+            DrawCommandList lowCommands,
+            PrismFrameAnalysis lowAnalysis,
+            PrismGraphExecutionPlan lowPlan) =
+            CreateSimpleComposition(opacity: 0.25f);
+        (
+            DrawCommandList highCommands,
+            PrismFrameAnalysis highAnalysis,
+            PrismGraphExecutionPlan highPlan) =
+            CreateSimpleComposition(opacity: 0.75f);
+        Viewport viewport =
+            new(0, 0, SurfaceWidth, SurfaceHeight);
+        Effect compiledEffect = executor.Kernels.Effect;
+
+        for (int frame = 0; frame < 8; frame++)
+        {
+            ExecuteFrame(
+                renderer,
+                executor,
+                frame % 2 == 0 ? lowCommands : highCommands,
+                frame % 2 == 0 ? lowAnalysis : highAnalysis,
+                frame % 2 == 0 ? lowPlan : highPlan,
+                viewport);
+        }
+
+        long createdAfterWarmup =
+            executor.SurfacePool.CreatedSurfaceCount;
+        long reusedAfterWarmup =
+            executor.SurfacePool.ReusedSurfaceCount;
+        renderer.ResetRenderedCommandCount();
+        for (int frame = 0; frame < AnimatedFrameCount; frame++)
+        {
+            bool low = frame % 2 == 0;
+            PrismGraphExecutionPlan plan =
+                low ? lowPlan : highPlan;
+            ExecuteFrame(
+                renderer,
+                executor,
+                low ? lowCommands : highCommands,
+                low ? lowAnalysis : highAnalysis,
+                plan,
+                viewport);
+            Assert.InRange(
+                diagnostics.Counters.PeakLiveSurfaceCount,
+                1,
+                plan.PeakLiveSurfaces);
+        }
+
+        Assert.Equal(
+            createdAfterWarmup,
+            executor.SurfacePool.CreatedSurfaceCount);
+        Assert.True(
+            executor.SurfacePool.ReusedSurfaceCount >
+            reusedAfterWarmup);
+        Assert.Equal(0, executor.SurfacePool.ActiveLeaseCount);
+        Assert.Same(compiledEffect, executor.Kernels.Effect);
+        Assert.Equal(AnimatedFrameCount, renderer.RenderedCommandCount);
+        Assert.Equal(0, diagnostics.Count);
+    }
+
+    [Fact]
     public void PrismStyleGpuPathHasNoCpuReadbackCalls()
     {
         string repositoryRoot = FindRepositoryRoot();
@@ -1078,10 +1560,7 @@ public sealed class PrismGraphExecutorTests
         Assert.InRange(pixel.G, 126, 129);
         Assert.InRange(pixel.B, 126, 129);
         Assert.InRange(pixel.A, 126, 129);
-        Assert.Equal(1, backend.PrismDiagnostics.Count);
-        Assert.Equal(
-            PrismFallbackReason.MissingKernel,
-            backend.PrismDiagnostics.Get(0).Reason);
+        Assert.Equal(0, backend.PrismDiagnostics.Count);
     }
 
     private static (
@@ -1090,7 +1569,8 @@ public sealed class PrismGraphExecutorTests
         PrismGraphExecutionPlan Plan)
         CreateSimpleComposition(
             int width = SurfaceWidth,
-            int height = SurfaceHeight)
+            int height = SurfaceHeight,
+            float opacity = 0.5f)
     {
         PrismDrawScope scope = PrismTestData.Scope(
             PrismTestData.Composition(
@@ -1098,7 +1578,7 @@ public sealed class PrismGraphExecutorTests
                 PrismTestData.Layer(
                     1,
                     "Half opacity",
-                    opacity: 0.5f)),
+                    opacity: opacity)),
             bounds: new DrawRect(0, 0, width, height));
         DrawCommandList commands = PrismTestData.Commands(
             DrawCommand.BeginPrism(scope),
@@ -1113,6 +1593,131 @@ public sealed class PrismGraphExecutorTests
         PrismGraphExecutionPlan plan =
             new PrismGraphOptimizer().Optimize(graph);
         return (commands, analysis, plan);
+    }
+
+    private static PrismProfileScenario[] CreateRepresentativeScenarios()
+    {
+        (
+            DrawCommandList simpleCommands,
+            PrismFrameAnalysis simpleAnalysis,
+            PrismGraphExecutionPlan simplePlan) =
+            CreateSimpleComposition();
+        PrismLayerDefinition chainedLayer = new(
+            new PrismNodeId(10),
+            "Chained",
+            filters:
+            [
+                new PrismFilterDefinition(PrismFilterId.GaussianBlur),
+                new PrismFilterDefinition(PrismFilterId.Threshold),
+                new PrismFilterDefinition(PrismFilterId.Invert)
+            ]);
+        PrismDrawScope chainedScope = PrismTestData.Scope(
+            PrismTestData.Composition(
+                "Chained profile",
+                chainedLayer),
+            ownerToken: 10,
+            bounds: new DrawRect(
+                0,
+                0,
+                SurfaceWidth,
+                SurfaceHeight));
+        PrismProfileScenario chained = CreateProfileScenario(
+            "chained",
+            PrismTestData.Commands(
+                DrawCommand.BeginPrism(chainedScope),
+                DrawCommand.FillRectangle(
+                    new DrawRect(
+                        0,
+                        0,
+                        SurfaceWidth,
+                        SurfaceHeight),
+                    CernealaColor.White),
+                DrawCommand.EndPrism()));
+
+        PrismDrawScope outer = PrismTestData.Scope(
+            PrismTestData.Composition(
+                "Nested outer profile",
+                new PrismLayerDefinition(
+                    new PrismNodeId(20),
+                    "Outer",
+                    filters:
+                    [
+                        new PrismFilterDefinition(
+                            PrismFilterId.Maximum)
+                    ])),
+            ownerToken: 20,
+            bounds: new DrawRect(
+                0,
+                0,
+                SurfaceWidth,
+                SurfaceHeight));
+        PrismDrawScope inner = PrismTestData.Scope(
+            PrismTestData.Composition(
+                "Nested inner profile",
+                new PrismLayerDefinition(
+                    new PrismNodeId(21),
+                    "Inner",
+                    filters:
+                    [
+                        new PrismFilterDefinition(
+                            PrismFilterId.GaussianBlur),
+                        new PrismFilterDefinition(
+                            PrismFilterId.Invert)
+                    ])),
+            ownerToken: 21,
+            bounds: new DrawRect(
+                2,
+                2,
+                SurfaceWidth - 4,
+                SurfaceHeight - 4));
+        PrismProfileScenario nested = CreateProfileScenario(
+            "nested",
+            PrismTestData.Commands(
+                DrawCommand.BeginPrism(outer),
+                DrawCommand.FillRectangle(
+                    new DrawRect(
+                        0,
+                        0,
+                        SurfaceWidth,
+                        SurfaceHeight),
+                    CernealaColor.White),
+                DrawCommand.BeginPrism(inner),
+                DrawCommand.FillRectangle(
+                    new DrawRect(
+                        2,
+                        2,
+                        SurfaceWidth - 4,
+                        SurfaceHeight - 4),
+                    CernealaColor.White),
+                DrawCommand.EndPrism(),
+                DrawCommand.EndPrism()));
+
+        return
+        [
+            new PrismProfileScenario(
+                "simple",
+                simpleCommands,
+                simpleAnalysis,
+                simplePlan),
+            chained,
+            nested
+        ];
+    }
+
+    private static PrismProfileScenario CreateProfileScenario(
+        string name,
+        DrawCommandList commands)
+    {
+        PrismFrameAnalysis analysis =
+            new PrismFrameAnalyzer().Analyze(commands);
+        PrismGraphExecutionPlan plan =
+            new PrismGraphOptimizer().Optimize(
+                new PrismGraphBuilder().Build(analysis));
+        return new PrismProfileScenario(
+            name,
+            commands,
+            analysis,
+            plan);
     }
 
     private static void ExecuteFrame(
@@ -1628,6 +2233,12 @@ public sealed class PrismGraphExecutorTests
             batchActive = true;
         }
     }
+
+    private readonly record struct PrismProfileScenario(
+        string Name,
+        DrawCommandList Commands,
+        PrismFrameAnalysis Analysis,
+        PrismGraphExecutionPlan Plan);
 
     private sealed class WindowsDxFixture : IDisposable
     {

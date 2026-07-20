@@ -4,8 +4,10 @@ using Cerneala.Drawing.MonoGame.Prism.Surfaces;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Blending;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Prism.Styles;
+using Cerneala.UI.Prism.Definitions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -355,19 +357,14 @@ internal sealed class PrismGraphExecutor : IDisposable
                     1f);
                 break;
             case PrismGraphNodeKind.Filter:
-                RecordFallback(
-                    node,
-                    PrismFallbackReason.MissingKernel,
-                    node.DiagnosticName);
-                RenderCopyInput(
+                RenderFilter(
                     renderer,
                     plan,
                     graph,
                     frame,
                     step,
                     target,
-                    node,
-                    1f);
+                    node);
                 break;
             case PrismGraphNodeKind.Style:
                 RenderStyle(
@@ -763,6 +760,445 @@ internal sealed class PrismGraphExecutor : IDisposable
             styleSettings: settings);
     }
 
+    private void RenderFilter(
+        IPrismCommandRenderer renderer,
+        PrismGraphExecutionPlan executionPlan,
+        PrismGraph graph,
+        PrismSurfaceFrame frame,
+        int step,
+        RenderTarget2D target,
+        PrismGraphNode node)
+    {
+        if (node.Filter is not PrismFilterId filter ||
+            !kernels.TryGetFilterKernel(
+                filter,
+                out PrismKernel kernel))
+        {
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingKernel,
+                node.DiagnosticName);
+            RenderCopyInput(
+                renderer,
+                executionPlan,
+                graph,
+                frame,
+                step,
+                target,
+                node,
+                1f);
+            return;
+        }
+
+        int sourceIndex =
+            FindAnyInputIndex(
+                executionPlan,
+                graph,
+                node.Id);
+        if (sourceIndex < 0)
+        {
+            ClearSurface(
+                renderer,
+                target,
+                Microsoft.Xna.Framework.Color.Transparent);
+            return;
+        }
+
+        PrismGraphScope scope =
+            FindScope(graph, node.AnalysisScopeIndex);
+        Texture2D source = frame.GetSurface(sourceIndex);
+        if (node.NeighborhoodPlan is PrismNeighborhoodPlan neighborhoodPlan)
+        {
+            if (neighborhoodPlan.Filter != filter ||
+                (uint)node.NeighborhoodPassIndex >=
+                    (uint)neighborhoodPlan.Passes.Length)
+            {
+                RecordFallback(
+                    node,
+                    PrismFallbackReason.MissingKernel,
+                    "The filter node has an invalid prepared neighborhood plan.");
+                RenderCopyInput(
+                    renderer,
+                    executionPlan,
+                    graph,
+                    frame,
+                    step,
+                    target,
+                    node,
+                    1f);
+                return;
+            }
+
+            if (!TryResolveFilterResource(
+                    scope,
+                    node,
+                    source,
+                    neighborhoodPlan.Resource,
+                    neighborhoodPlan.ResourceRequired,
+                    out Texture2D resourceTexture,
+                    out bool resourceAvailable))
+            {
+                RenderCopyInput(
+                    renderer,
+                    executionPlan,
+                    graph,
+                    frame,
+                    step,
+                    target,
+                    node,
+                    1f);
+                return;
+            }
+
+            PrismNeighborhoodPass pass =
+                neighborhoodPlan.Passes[node.NeighborhoodPassIndex];
+            PrismFilterKernelSettings settings = new(
+                resourceTexture,
+                new Vector4(
+                    (int)neighborhoodPlan.Operation,
+                    (int)scope.CompositionSettings.WorkingColorProfile,
+                    (int)pass.Kind,
+                    resourceAvailable ? 1 : 0),
+                ToVector4(neighborhoodPlan.Options0),
+                ToVector4(neighborhoodPlan.Options1),
+                ToVector4(neighborhoodPlan.Options2),
+                ToVector4(neighborhoodPlan.Options3),
+                Vector4.Zero,
+                Vector4.Zero,
+                Vector4.Zero,
+                Vector4.Zero,
+                Vector4.Zero,
+                new Vector4(
+                    pass.RadiusX,
+                    pass.RadiusY,
+                    pass.SampleCount,
+                    (int)neighborhoodPlan.BlendMode),
+                new Vector2(
+                    resourceTexture.Width,
+                    resourceTexture.Height));
+            RenderKernel(
+                renderer,
+                target,
+                source,
+                resourceTexture,
+                kernel,
+                Math.Clamp(node.Amount ?? 1f, 0, 1),
+                filterSettings: settings);
+            return;
+        }
+
+        if (node.ResamplingPlan is PrismResamplingPlan resamplingPlan)
+        {
+            if (resamplingPlan.Filter != filter ||
+                (uint)node.ResamplingPassIndex >=
+                    (uint)resamplingPlan.Passes.Length)
+            {
+                RecordFallback(
+                    node,
+                    PrismFallbackReason.MissingKernel,
+                    "The filter node has an invalid prepared resampling plan.");
+                RenderCopyInput(
+                    renderer,
+                    executionPlan,
+                    graph,
+                    frame,
+                    step,
+                    target,
+                    node,
+                    1f);
+                return;
+            }
+
+            if (!TryResolveFilterResource(
+                    scope,
+                    node,
+                    source,
+                    resamplingPlan.PrimaryResource,
+                    resamplingPlan.PrimaryResourceRequired,
+                    out Texture2D primaryTexture,
+                    out bool primaryAvailable) ||
+                !TryResolveFilterResource(
+                    scope,
+                    node,
+                    source,
+                    resamplingPlan.AuxiliaryResource,
+                    resamplingPlan.AuxiliaryResourceRequired,
+                    out Texture2D auxiliaryTexture,
+                    out bool auxiliaryAvailable))
+            {
+                RenderCopyInput(
+                    renderer,
+                    executionPlan,
+                    graph,
+                    frame,
+                    step,
+                    target,
+                    node,
+                    1f);
+                return;
+            }
+
+            PrismResamplingPass pass =
+                resamplingPlan.Passes[node.ResamplingPassIndex];
+            PrismFilterKernelSettings settings = new(
+                primaryTexture,
+                new Vector4(
+                    (int)resamplingPlan.Operation,
+                    (int)scope.CompositionSettings.WorkingColorProfile,
+                    (int)pass.Kind,
+                    primaryAvailable ? 1 : 0),
+                ToVector4(resamplingPlan.Options0),
+                ToVector4(resamplingPlan.Options1),
+                ToVector4(resamplingPlan.Options2),
+                ToVector4(resamplingPlan.Options3),
+                ToVector4(resamplingPlan.Options4),
+                ToVector4(resamplingPlan.Options5),
+                new Vector4(
+                    auxiliaryAvailable ? 1 : 0,
+                    0,
+                    0,
+                    0),
+                Vector4.Zero,
+                Vector4.Zero,
+                new Vector4(
+                    0,
+                    0,
+                    0,
+                    (int)resamplingPlan.BlendMode),
+                new Vector2(
+                    primaryTexture.Width,
+                    primaryTexture.Height),
+                auxiliaryTexture);
+            RenderKernel(
+                renderer,
+                target,
+                source,
+                primaryTexture,
+                kernel,
+                Math.Clamp(node.Amount ?? 1f, 0, 1),
+                filterSettings: settings);
+            return;
+        }
+
+        if (node.CatalogFilterPlan is PrismCatalogFilterPlan catalogPlan)
+        {
+            if (catalogPlan.Filter != filter ||
+                (uint)node.CatalogFilterPassIndex >=
+                    (uint)catalogPlan.Passes.Length)
+            {
+                RecordFallback(
+                    node,
+                    PrismFallbackReason.MissingKernel,
+                    "The filter node has an invalid prepared catalog filter plan.");
+                RenderCopyInput(
+                    renderer,
+                    executionPlan,
+                    graph,
+                    frame,
+                    step,
+                    target,
+                    node,
+                    1f);
+                return;
+            }
+
+            if (!TryResolveFilterResource(
+                    scope,
+                    node,
+                    source,
+                    catalogPlan.PrimaryResource,
+                    catalogPlan.PrimaryResourceRequired,
+                    out Texture2D primaryTexture,
+                    out bool primaryAvailable) ||
+                !TryResolveFilterResource(
+                    scope,
+                    node,
+                    source,
+                    catalogPlan.AuxiliaryResource,
+                    catalogPlan.AuxiliaryResourceRequired,
+                    out Texture2D auxiliaryTexture,
+                    out bool auxiliaryAvailable))
+            {
+                RenderCopyInput(
+                    renderer,
+                    executionPlan,
+                    graph,
+                    frame,
+                    step,
+                    target,
+                    node,
+                    1f);
+                return;
+            }
+
+            PrismCatalogFilterPass pass =
+                catalogPlan.Passes[node.CatalogFilterPassIndex];
+            float resourceMask =
+                (primaryAvailable ? 1 : 0) +
+                (auxiliaryAvailable ? 2 : 0);
+            float packedPass =
+                (int)pass.Kind +
+                (pass.Iteration * 4);
+            PrismFilterKernelSettings settings = new(
+                primaryTexture,
+                new Vector4(
+                    (int)catalogPlan.Filter,
+                    (int)scope.CompositionSettings.WorkingColorProfile,
+                    (int)catalogPlan.Primitive,
+                    resourceMask),
+                ToVector4(catalogPlan.Options0),
+                ToVector4(catalogPlan.Options1),
+                ToVector4(catalogPlan.Options2),
+                ToVector4(catalogPlan.Options3),
+                ToVector4(catalogPlan.Options4),
+                ToVector4(catalogPlan.Options5),
+                ToVector4(catalogPlan.Options6),
+                ToVector4(catalogPlan.Options7),
+                ToVector4(catalogPlan.Options8),
+                new Vector4(
+                    pass.RadiusX,
+                    pass.RadiusY,
+                    packedPass,
+                    (int)catalogPlan.BlendMode),
+                new Vector2(
+                    primaryTexture.Width,
+                    primaryTexture.Height),
+                auxiliaryTexture);
+            RenderKernel(
+                renderer,
+                target,
+                source,
+                primaryTexture,
+                kernel,
+                Math.Clamp(node.Amount ?? 1f, 0, 1),
+                filterSettings: settings);
+            return;
+        }
+
+        if (!PrismAdjustmentPlanner.IsSupported(filter))
+        {
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingKernel,
+                node.DiagnosticName);
+            RenderCopyInput(
+                renderer,
+                executionPlan,
+                graph,
+                frame,
+                step,
+                target,
+                node,
+                1f);
+            return;
+        }
+
+        PrismAdjustmentPlan filterPlan =
+            PrismAdjustmentPlanner.Create(node, scope);
+        if (!TryResolveFilterResource(
+                scope,
+                node,
+                source,
+                filterPlan.Resource,
+                filterPlan.ResourceRequired,
+                out Texture2D adjustmentResource,
+                out bool adjustmentResourceAvailable))
+        {
+            RenderCopyInput(
+                renderer,
+                executionPlan,
+                graph,
+                frame,
+                step,
+                target,
+                node,
+                1f);
+            return;
+        }
+
+        PrismFilterKernelSettings adjustmentSettings = new(
+            adjustmentResource,
+            new Vector4(
+                (int)filterPlan.Operation,
+                (int)scope.CompositionSettings.WorkingColorProfile,
+                (int)filterPlan.BlendMode,
+                adjustmentResourceAvailable ? 1 : 0),
+            ToVector4(filterPlan.Parameters0),
+            ToVector4(filterPlan.Parameters1),
+            ToVector4(filterPlan.Parameters2),
+            ToVector4(filterPlan.Parameters3),
+            ToVector4(filterPlan.Parameters4),
+            ToVector4(filterPlan.Parameters5),
+            ToVector4(filterPlan.Parameters6),
+            ToVector4(filterPlan.Parameters7),
+            ToVector4(filterPlan.Parameters8),
+            ToVector4(filterPlan.Parameters9),
+            new Vector2(
+                adjustmentResource.Width,
+                adjustmentResource.Height));
+        RenderKernel(
+            renderer,
+            target,
+            source,
+            adjustmentResource,
+            kernel,
+            Math.Clamp(node.Amount ?? 1f, 0, 1),
+            filterSettings: adjustmentSettings);
+    }
+
+    private bool TryResolveFilterResource(
+        PrismGraphScope scope,
+        PrismGraphNode node,
+        Texture2D fallback,
+        PrismResourceId resource,
+        bool required,
+        out Texture2D texture,
+        out bool available)
+    {
+        texture = fallback;
+        available = false;
+        if (resource.Value <= 0)
+        {
+            if (!required)
+            {
+                return true;
+            }
+
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingResource,
+                $"Filter resource '{resource}' is not available.");
+            return false;
+        }
+
+        if (!scope.Resources.TryGetImage(
+                resource,
+                out IDrawImage image))
+        {
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingResource,
+                $"Filter resource '{resource}' is not available.");
+            return false;
+        }
+        if (image is not MonoGameImage monoGameImage ||
+            monoGameImage.Texture.IsDisposed ||
+            !ReferenceEquals(
+                monoGameImage.Texture.GraphicsDevice,
+                graphicsDevice))
+        {
+            RecordFallback(
+                node,
+                PrismFallbackReason.UnsupportedCapability,
+                "The filter resource is not a live MonoGame texture owned by this graphics device.");
+            return false;
+        }
+
+        texture = monoGameImage.Texture;
+        available = true;
+        return true;
+    }
+
     private void RenderMaskExtract(
         IPrismCommandRenderer renderer,
         PrismGraph graph,
@@ -1061,7 +1497,8 @@ internal sealed class PrismGraphExecutor : IDisposable
         int layerIdentity = 0,
         bool backgroundAvailable = true,
         PrismMaskKernelSettings? maskSettings = null,
-        PrismStyleKernelSettings? styleSettings = null)
+        PrismStyleKernelSettings? styleSettings = null,
+        PrismFilterKernelSettings? filterSettings = null)
     {
         renderer.EndBatch();
         graphicsDevice.SetRenderTarget(target);
@@ -1129,6 +1566,27 @@ internal sealed class PrismGraphExecutor : IDisposable
                 StyleModes3 = style.Modes3,
                 StyleResourceAvailable =
                     style.ResourceAvailable ? 1 : 0
+            };
+        }
+        if (filterSettings is PrismFilterKernelSettings filter)
+        {
+            parameters = parameters with
+            {
+                SecondaryTexture = filter.Texture,
+                FilterHeader = filter.Header,
+                FilterOptions0 = filter.Options0,
+                FilterOptions1 = filter.Options1,
+                FilterOptions2 = filter.Options2,
+                FilterOptions3 = filter.Options3,
+                FilterOptions4 = filter.Options4,
+                FilterOptions5 = filter.Options5,
+                FilterOptions6 = filter.Options6,
+                FilterOptions7 = filter.Options7,
+                FilterOptions8 = filter.Options8,
+                FilterOptions9 = filter.Options9,
+                FilterTextureSize = filter.TextureSize,
+                FilterAuxiliaryTexture =
+                    filter.AuxiliaryTexture
             };
         }
         kernels.Bind(kernel, in parameters);
@@ -1552,4 +2010,20 @@ internal sealed class PrismGraphExecutor : IDisposable
         Vector4 Modes2,
         Vector4 Modes3,
         bool ResourceAvailable);
+
+    private readonly record struct PrismFilterKernelSettings(
+        Texture2D Texture,
+        Vector4 Header,
+        Vector4 Options0,
+        Vector4 Options1,
+        Vector4 Options2,
+        Vector4 Options3,
+        Vector4 Options4,
+        Vector4 Options5,
+        Vector4 Options6,
+        Vector4 Options7,
+        Vector4 Options8,
+        Vector4 Options9,
+        Vector2 TextureSize,
+        Texture2D? AuxiliaryTexture = null);
 }
