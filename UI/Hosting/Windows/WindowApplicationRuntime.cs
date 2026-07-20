@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -298,7 +299,12 @@ internal sealed class WindowApplicationRuntime : IDisposable
         }
 
         using FileStream output = File.Create(fullPath);
-        screenshotSource.RenderPng(output, Color.White, context.Host.Draw);
+        screenshotSource.RenderPng(
+            output,
+            Color.White,
+            drawingBackend => context.Host.Draw(
+                drawingBackend,
+                graphicsSession as IBackdropFrameSource));
     }
 
     public void PumpOnce(TimeSpan elapsedTime)
@@ -498,7 +504,9 @@ internal sealed class WindowApplicationRuntime : IDisposable
             try
             {
                 long drawingStarted = Stopwatch.GetTimestamp();
-                context.Host.Draw(graphicsSession.DrawingBackend);
+                context.Host.Draw(
+                    graphicsSession.DrawingBackend,
+                    graphicsSession as IBackdropFrameSource);
                 TimeSpan drawingTime = Stopwatch.GetElapsedTime(drawingStarted);
                 DrawingBackendFrameTiming backendTiming =
                     graphicsSession.DrawingBackend is IDrawingBackendFrameTimingSource timingSource

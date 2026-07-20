@@ -156,8 +156,12 @@ public sealed class MonoGameDrawingBackend :
             }
             else
             {
-                PrismGraph graph =
-                    prismGraphBuilder.Build(frameContext.PrismAnalysis);
+                var backdropLease = frameContext.BackdropLease;
+                PrismGraph graph = backdropLease is null
+                    ? prismGraphBuilder.Build(frameContext.PrismAnalysis)
+                    : prismGraphBuilder.Build(
+                        frameContext.PrismAnalysis,
+                        backdropLease.Metadata);
                 PrismGraphExecutionPlan executionPlan =
                     prismGraphOptimizer.Optimize(graph);
                 if (TryEnsurePrismExecutor(graphicsDevice))
@@ -168,7 +172,7 @@ public sealed class MonoGameDrawingBackend :
                         executionPlan,
                         this,
                         viewport,
-                        frameContext.BackdropLease);
+                        backdropLease);
                 }
                 else
                 {
@@ -1968,6 +1972,17 @@ public sealed class MonoGameDrawingBackend :
     internal DrawingBackendFrameTiming LastFrameTiming { get; private set; }
 
     internal int BrushTextureCacheCount => brushTextureCache?.Count ?? 0;
+
+    internal bool UsesGraphicsDevice(
+        GraphicsDevice graphicsDevice)
+    {
+        ArgumentNullException.ThrowIfNull(graphicsDevice);
+        return !disposed &&
+            !_spriteBatch.IsDisposed &&
+            ReferenceEquals(
+                _spriteBatch.GraphicsDevice,
+                graphicsDevice);
+    }
 
     internal PrismExecutionDiagnostics PrismDiagnostics =>
         prismDiagnostics;

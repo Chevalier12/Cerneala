@@ -36,6 +36,11 @@ Instances are emitted by `PrismGraphBuilder`; the constructor is not public. `Id
 
 Only properties meaningful for `Kind` are populated. For example, layer nodes expose `LayerSettings`, filter nodes expose `Filter`, style nodes expose `Style`, color-conversion nodes expose `ColorProfile`, and mask nodes expose resource and mask settings.
 
+For a backdrop branch, `BackdropSourceBounds` is populated only on the
+`BackdropCrop` node. `BackdropMetadata` is populated once, on the following
+`ColorConversion` node, so the source profile, pixel format, and alpha mode
+cannot be applied twice by an executor.
+
 `PassThroughComposite` nodes are explicit non-isolating group boundaries. Their normal output retains the original incoming background and the group's local contribution, while a `ClipBaseAlpha` edge sourced from the boundary selects the local contribution alpha rather than accumulated background alpha.
 
 `DefinitionOrder` is deterministic definition-tree order. Synthetic scope nodes use `-1`, while definition-backed nodes use a zero-based preorder index.
@@ -64,6 +69,8 @@ Only properties meaningful for `Kind` are populated. For example, layer nodes ex
 | `Density` | `float?` | Gets mask density when applicable. |
 | `Invert` | `bool?` | Gets whether mask alpha is inverted when applicable. |
 | `LayerSettings` | `PrismGraphLayerSettings?` | Gets captured advanced blending values for a layer node, or `null` for other node kinds. |
+| `BackdropMetadata` | `BackdropFrameMetadata?` | Gets the borrowed frame raster metadata on a backdrop color-conversion node, or `null` otherwise. |
+| `BackdropSourceBounds` | `DrawRect?` | Gets the clamped source-pixel crop on a `BackdropCrop` node, or `null` when no frame metadata was supplied. |
 
 ## Applies to
 

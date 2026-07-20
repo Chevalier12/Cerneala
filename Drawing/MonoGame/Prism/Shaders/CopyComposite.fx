@@ -136,6 +136,31 @@ float4 MaskExtractPixelShader(VertexShaderOutput input) : COLOR0
         * Opacity;
 }
 
+float4 BackdropCropPixelShader(VertexShaderOutput input) : COLOR0
+{
+    float2 uv = ResolveMaskUv(input);
+    float inside =
+        step(0.0, uv.x) *
+        step(uv.x, 1.0) *
+        step(0.0, uv.y) *
+        step(uv.y, 1.0);
+    float4 sample = tex2D(
+        SpriteTextureSampler,
+        clamp(
+            uv,
+            PixelSize * 0.5,
+            1.0 - (PixelSize * 0.5)));
+    if (MaskChannel < 0.5)
+    {
+        sample.a = 1.0;
+    }
+    else if (MaskChannel > 1.5)
+    {
+        sample.rgb *= sample.a;
+    }
+    return sample * inside * input.Color * Opacity;
+}
+
 float SampleMaskAlpha(float2 uv)
 {
     float2 clampedUv = clamp(
@@ -1400,6 +1425,19 @@ float4 LinearSrgbAssociatedToWorking(
     return float4(
         straight * color.a,
         color.a);
+}
+
+float4 BackdropColorConversionPixelShader(
+    VertexShaderOutput input) : COLOR0
+{
+    int sourceProfile = (int)(FilterHeader.x + 0.5);
+    int targetProfile = (int)(FilterHeader.y + 0.5);
+    float4 linearColor = WorkingAssociatedToLinearSrgb(
+        SampleSource(input),
+        sourceProfile);
+    return LinearSrgbAssociatedToWorking(
+        linearColor,
+        targetProfile) * input.Color * Opacity;
 }
 
 float3 AdjustmentRgbToHsv(float3 color)
@@ -4330,6 +4368,22 @@ technique CopyComposite
     pass Pass0
     {
         PixelShader = compile ps_4_0_level_9_1 CopyCompositePixelShader();
+    }
+}
+
+technique BackdropCrop
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 BackdropCropPixelShader();
+    }
+}
+
+technique BackdropColorConversion
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 BackdropColorConversionPixelShader();
     }
 }
 

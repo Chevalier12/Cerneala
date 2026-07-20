@@ -239,7 +239,7 @@ internal static class WindowsDxSmokeApplication
         Viewport previousViewport = device.Viewport;
         Microsoft.Xna.Framework.Rectangle previousScissor = device.ScissorRectangle;
         XnaColor sourceColor = new(96, 32, 16, 128);
-        XnaColor background = new(20, 40, 60);
+        CernealaColor background = new(20, 40, 60);
 
         using Texture2D source = new(device, 2, 2);
         source.SetData([sourceColor, sourceColor, sourceColor, sourceColor]);
@@ -282,8 +282,7 @@ internal static class WindowsDxSmokeApplication
                 batch.End();
             }
 
-            device.SetRenderTarget(null);
-            device.Clear(background);
+            session.BeginFrame(background);
             PrismKernelParameters presentParameters = new(
                 captured,
                 1f,

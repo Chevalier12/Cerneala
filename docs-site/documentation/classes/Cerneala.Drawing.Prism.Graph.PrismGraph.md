@@ -38,9 +38,10 @@ frame analysis. The optimizer returns a separate optimized graph through
 
 `Nodes` are deterministic, `Edges` are directed from producer to consumer, and
 `Scopes` preserve frame-analysis scope order. Nodes in an optimized graph follow
-the plan's topological `ExecutionOrder`.
+the plan's topological `ExecutionOrder`. Graph construction validates that all
+edge endpoints exist and rejects cycles, so every accepted graph is a DAG.
 
-`ControlCaptureCount` and `BackdropInputCount` report explicit input branches. A non-empty analyzed scope has at most one control-capture node, while backdrop input remains a separate branch.
+`ControlCaptureCount` and `BackdropInputCount` report explicit input branches. A non-empty analyzed scope has at most one control-capture node, while backdrop input remains a separate branch. Each metadata-backed backdrop input exposes the shared frame through `BackdropFrame`, then an explicit `BackdropCrop` identifies the source-pixel rectangle before color and alpha normalization.
 
 Pass-through groups use an explicit `PassThroughComposite` boundary. Its ordinary output combines the local group result with the original incoming background, but a `ClipBaseAlpha` edge sourced from that boundary addresses only the group's local alpha. Backends must preserve both semantics instead of treating the boundary as an ordinary flattened composite.
 

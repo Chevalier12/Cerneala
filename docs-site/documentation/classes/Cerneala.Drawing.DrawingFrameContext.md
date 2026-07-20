@@ -30,7 +30,7 @@ frameContext.EnsureCurrent(commands);
 
 `DrawingFrameContext` binds a `PrismFrameAnalysis` to the command list that was analyzed for the current frame. Pass the same context and command-list instance to `IDrawingBackend.Render`.
 
-`BackdropLease` is optional and uses the backend-neutral `IBackdropFrameLease` marker contract. The context does not dispose or otherwise manage the lease.
+`BackdropLease` is optional and uses the backend-neutral `IBackdropFrameLease` contract. The context borrows the lease but does not dispose it. The host that acquired the lease ends the borrow after submission, including exceptional exits.
 
 The default struct value is not initialized. Calling `EnsureCurrent` on it throws `InvalidOperationException`.
 

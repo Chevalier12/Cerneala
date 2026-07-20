@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -14,11 +15,13 @@ namespace Cerneala.UI.Hosting;
 public sealed class UiHost
 {
     private UIRoot? root;
+    private IUiBackend? backend;
     private UiViewport viewport;
     private bool needsInitialFrame = true;
     private readonly IPlatformServices? platformServices;
     private readonly CursorService cursorService = new();
     private readonly PrismFrameAnalyzer prismFrameAnalyzer = new();
+    private readonly BackdropFrameCounters backdropFrameCounters = new();
 
     public UiHost(UiHostOptions? options = null)
     {
@@ -45,7 +48,15 @@ public sealed class UiHost
 
     public IInputSource? InputSource { get; set; }
 
-    public IUiBackend? Backend { get; set; }
+    public IUiBackend? Backend
+    {
+        get => backend;
+        set
+        {
+            ValidateBackdropCompatibility(value);
+            backend = value;
+        }
+    }
 
     public IUiClock? Clock { get; set; }
 
@@ -54,6 +65,9 @@ public sealed class UiHost
     public UiViewport Viewport => viewport;
 
     public UiFrame? LastFrame { get; private set; }
+
+    internal BackdropFrameCounters BackdropFrameCounters =>
+        backdropFrameCounters;
 
     public void SetRoot(UIRoot newRoot)
     {
@@ -168,30 +182,162 @@ public sealed class UiHost
 
     public void Draw()
     {
-        UIRoot currentRoot = RequireRoot();
-        currentRoot.Relay.VerifyAccess();
-        IDrawingBackend backend = Backend?.DrawingBackend ?? throw new InvalidOperationException("UiHost requires a drawing backend for Draw without an explicit backend.");
-        Draw(backend);
+        IUiBackend configuredBackend = Backend ??
+            throw new InvalidOperationException(
+                "UiHost requires a backend for Draw without an explicit backend.");
+        IDrawingBackend drawingBackend =
+            configuredBackend.DrawingBackend ??
+            throw new InvalidOperationException(
+                "UiHost requires a drawing backend for Draw without an explicit backend.");
+        DrawCore(
+            drawingBackend,
+            configuredBackend.BackdropFrameSource);
     }
 
-    public void Draw(IDrawingBackend backend)
+    public void Draw(IDrawingBackend drawingBackend)
     {
-        ArgumentNullException.ThrowIfNull(backend);
+        ArgumentNullException.ThrowIfNull(drawingBackend);
+        IBackdropFrameSource? source =
+            ReferenceEquals(Backend?.DrawingBackend, drawingBackend)
+                ? Backend?.BackdropFrameSource
+                : null;
+        DrawCore(drawingBackend, source);
+    }
 
+    internal void Draw(
+        IDrawingBackend drawingBackend,
+        IBackdropFrameSource? backdropFrameSource)
+    {
+        ArgumentNullException.ThrowIfNull(drawingBackend);
+        ValidateBackdropCompatibility(
+            drawingBackend,
+            backdropFrameSource);
+        DrawCore(drawingBackend, backdropFrameSource);
+    }
+
+    private void DrawCore(
+        IDrawingBackend drawingBackend,
+        IBackdropFrameSource? backdropFrameSource)
+    {
         UIRoot currentRoot = RequireRoot();
         currentRoot.Relay.VerifyAccess();
         DrawCommandList commands = currentRoot.RetainedRenderer.Render(currentRoot);
         PrismFrameAnalysis analysis = prismFrameAnalyzer.Analyze(commands);
-        DrawingFrameContext frameContext = new(analysis);
-        currentRoot.RetainedRenderer.Submit(
-            currentRoot,
-            backend,
-            in frameContext);
+        IBackdropFrameLease? lease = AcquireBackdropFrame(
+            analysis,
+            backdropFrameSource);
+        try
+        {
+            DrawingFrameContext frameContext = new(analysis, lease);
+            currentRoot.RetainedRenderer.Submit(
+                currentRoot,
+                drawingBackend,
+                in frameContext);
+        }
+        finally
+        {
+            lease?.Dispose();
+        }
+    }
+
+    private IBackdropFrameLease? AcquireBackdropFrame(
+        PrismFrameAnalysis analysis,
+        IBackdropFrameSource? source)
+    {
+        PrismBackdropRequirement? requirement =
+            analysis.BackdropRequirement;
+        if (requirement is null)
+        {
+            backdropFrameCounters.RecordSkipped();
+            return null;
+        }
+
+        backdropFrameCounters.RecordRequested();
+        if (source is null ||
+            !TryGetPhysicalViewportSize(
+                out int pixelWidth,
+                out int pixelHeight))
+        {
+            backdropFrameCounters.RecordFailed();
+            return null;
+        }
+
+        BackdropFrameRequest request = new(
+            pixelWidth,
+            pixelHeight,
+            viewport.Scale,
+            requirement);
+        try
+        {
+            IBackdropFrameLease lease =
+                source.AcquireFrame(in request) ??
+                throw new InvalidOperationException(
+                    $"Backdrop frame source '{source.GetType().FullName}' returned a null lease.");
+            backdropFrameCounters.RecordAcquired(
+                requirement.ScopeCount);
+            return lease;
+        }
+        catch
+        {
+            backdropFrameCounters.RecordFailed();
+            throw;
+        }
+    }
+
+    private bool TryGetPhysicalViewportSize(
+        out int pixelWidth,
+        out int pixelHeight)
+    {
+        double width = Math.Ceiling(viewport.Width * viewport.Scale);
+        double height = Math.Ceiling(viewport.Height * viewport.Scale);
+        if (width <= 0 ||
+            height <= 0 ||
+            width > int.MaxValue ||
+            height > int.MaxValue)
+        {
+            pixelWidth = 0;
+            pixelHeight = 0;
+            return false;
+        }
+
+        pixelWidth = (int)width;
+        pixelHeight = (int)height;
+        return true;
     }
 
     private UIRoot RequireRoot()
     {
         return root ?? throw new InvalidOperationException("UiHost requires a retained root.");
+    }
+
+    private static void ValidateBackdropCompatibility(
+        IUiBackend? candidate)
+    {
+        ValidateBackdropCompatibility(
+            candidate?.DrawingBackend,
+            candidate?.BackdropFrameSource);
+    }
+
+    private static void ValidateBackdropCompatibility(
+        IDrawingBackend? drawingBackend,
+        IBackdropFrameSource? source)
+    {
+        if (source is null)
+        {
+            return;
+        }
+
+        if (drawingBackend is null)
+        {
+            throw new InvalidOperationException(
+                "A backdrop frame source requires a drawing backend.");
+        }
+        if (!source.IsCompatibleWith(drawingBackend))
+        {
+            throw new InvalidOperationException(
+                $"Backdrop frame source '{source.GetType().FullName}' is not compatible " +
+                $"with drawing backend '{drawingBackend.GetType().FullName}'.");
+        }
     }
 
     private void ApplyViewportIfChanged(UIRoot currentRoot, UiViewport nextViewport)

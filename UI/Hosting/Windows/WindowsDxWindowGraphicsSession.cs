@@ -1,5 +1,9 @@
+using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
+using Cerneala.Drawing.MonoGame.Prism;
+using Cerneala.Drawing.Prism;
+using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Resources;
@@ -19,7 +23,10 @@ internal sealed class WindowsDxWindowGraphicsSessionFactory : IWindowGraphicsSes
     }
 }
 
-internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, IWindowScreenshotSource
+internal sealed class WindowsDxWindowGraphicsSession :
+    IWindowGraphicsSession,
+    IWindowScreenshotSource,
+    IBackdropFrameSource
 {
     private readonly nint windowHandle;
     private readonly GraphicsDevice graphicsDevice;
@@ -28,8 +35,13 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
     private readonly MonoGameDrawingBackend drawingBackend;
     private readonly ImageResourceCache imageResourceCache;
     private PresentationParameters presentationParameters;
+    private RenderTarget2D? frameTarget;
+    private RenderTarget2D? activeBackdropTarget;
+    private BackdropFrameMetadata activeBackdropMetadata;
     private float coordinateScale;
-    private bool frameActive;
+    private FrameKind activeFrameKind;
+    private int activeBackdropLeaseCount;
+    private long contentVersion;
     private bool disposed;
 
     public WindowsDxWindowGraphicsSession(nint windowHandle, int pixelWidth, int pixelHeight, float coordinateScale)
@@ -49,6 +61,7 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
         Texture2D? createdWhitePixel = null;
         MonoGameDrawingBackend? createdBackend = null;
         ImageResourceCache? createdImageCache = null;
+        RenderTarget2D? createdFrameTarget = null;
         try
         {
             presentationParameters = CreatePresentationParameters(windowHandle, pixelWidth, pixelHeight);
@@ -62,15 +75,22 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             };
             ImageLoader = new MonoGameImageLoader(createdDevice);
             createdImageCache = new ImageResourceCache(ImageLoader);
+            createdFrameTarget = CreateFrameTarget(
+                createdDevice,
+                presentationParameters);
 
             graphicsDevice = createdDevice;
             spriteBatch = createdSpriteBatch;
             whitePixel = createdWhitePixel;
             drawingBackend = createdBackend;
             imageResourceCache = createdImageCache;
+            frameTarget = createdFrameTarget;
+            graphicsDevice.DeviceResetting += OnDeviceResetting;
+            graphicsDevice.DeviceReset += OnDeviceReset;
         }
         catch (Exception exception)
         {
+            createdFrameTarget?.Dispose();
             createdImageCache?.Dispose();
             createdBackend?.Dispose();
             createdWhitePixel?.Dispose();
@@ -90,11 +110,61 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
 
     internal nint WindowHandle => windowHandle;
 
+    internal RenderTarget2D? FrameTarget => frameTarget;
+
+    internal int ActiveBackdropLeaseCount =>
+        activeBackdropLeaseCount;
+
+    internal long BackdropContentVersion => contentVersion;
+
+    internal bool IsFrameActive =>
+        activeFrameKind != FrameKind.None;
+
+    public bool IsCompatibleWith(IDrawingBackend drawingBackend)
+    {
+        ArgumentNullException.ThrowIfNull(drawingBackend);
+        return !disposed &&
+            drawingBackend is MonoGameDrawingBackend monoGameBackend &&
+            monoGameBackend.UsesGraphicsDevice(graphicsDevice);
+    }
+
+    public IBackdropFrameLease AcquireFrame(
+        in BackdropFrameRequest request)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        RenderTarget2D target =
+            activeBackdropTarget ??
+            throw new InvalidOperationException(
+                "A backdrop frame can be acquired only while a WindowsDX frame is active.");
+        if (request.PixelWidth != activeBackdropMetadata.PixelWidth ||
+            request.PixelHeight != activeBackdropMetadata.PixelHeight ||
+            request.PixelScale != activeBackdropMetadata.PixelScale)
+        {
+            throw new InvalidOperationException(
+                $"Backdrop request {request.PixelWidth}x{request.PixelHeight} at scale " +
+                $"{request.PixelScale} does not match the active WindowsDX frame " +
+                $"{activeBackdropMetadata.PixelWidth}x{activeBackdropMetadata.PixelHeight} " +
+                $"at scale {activeBackdropMetadata.PixelScale}.");
+        }
+
+        activeBackdropLeaseCount = checked(
+            activeBackdropLeaseCount + 1);
+        return new BackdropFrameLease(
+            this,
+            target,
+            activeBackdropMetadata);
+    }
+
     public void Resize(int pixelWidth, int pixelHeight, float coordinateScale)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         ValidateSize(pixelWidth, pixelHeight);
         UiCoordinateMapper.ValidateScale(coordinateScale);
+        if (activeFrameKind != FrameKind.None)
+        {
+            throw new InvalidOperationException(
+                "The WindowsDX graphics session cannot be resized while a frame is active.");
+        }
 
         bool sizeChanged = presentationParameters.BackBufferWidth != pixelWidth ||
             presentationParameters.BackBufferHeight != pixelHeight;
@@ -104,8 +174,6 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
         {
             return;
         }
-
-        frameActive = false;
 
         presentationParameters.BackBufferWidth = pixelWidth;
         presentationParameters.BackBufferHeight = pixelHeight;
@@ -122,30 +190,72 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
     public void BeginFrame(CernealaColor clearColor)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        graphicsDevice.Clear(new XnaColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A));
         drawingBackend.CoordinateScale = coordinateScale;
-        frameActive = true;
+        BeginBackdropFrame(
+            FrameKind.OnScreen,
+            RequireFrameTarget(),
+            clearColor);
     }
 
     public void Present()
     {
         ObjectDisposedException.ThrowIf(disposed, this);
+        if (activeFrameKind != FrameKind.OnScreen ||
+            activeBackdropTarget is not RenderTarget2D target)
+        {
+            throw new InvalidOperationException(
+                "The WindowsDX graphics session has no on-screen frame to present.");
+        }
+        bool batchBegun = false;
         try
         {
-            graphicsDevice.Present();
-        }
-        catch (Exception exception)
-        {
-            throw CreateGraphicsException(
-                "present",
-                windowHandle,
-                presentationParameters.BackBufferWidth,
-                presentationParameters.BackBufferHeight,
-                exception);
+            EnsureNoActiveBackdropLeases("present");
+            try
+            {
+                graphicsDevice.SetRenderTarget(null);
+                spriteBatch.Begin(
+                    SpriteSortMode.Deferred,
+                    BlendState.Opaque,
+                    SamplerState.LinearClamp,
+                    DepthStencilState.None,
+                    RasterizerState.CullNone);
+                batchBegun = true;
+                spriteBatch.Draw(
+                    target,
+                    new Rectangle(
+                        0,
+                        0,
+                        presentationParameters.BackBufferWidth,
+                        presentationParameters.BackBufferHeight),
+                    XnaColor.White);
+                spriteBatch.End();
+                batchBegun = false;
+                graphicsDevice.Present();
+            }
+            catch (Exception exception)
+            {
+                throw CreateGraphicsException(
+                    "present",
+                    windowHandle,
+                    presentationParameters.BackBufferWidth,
+                    presentationParameters.BackBufferHeight,
+                    exception);
+            }
         }
         finally
         {
-            frameActive = false;
+            if (batchBegun)
+            {
+                try
+                {
+                    spriteBatch.End();
+                }
+                catch
+                {
+                    // Preserve the original present failure.
+                }
+            }
+            EndBackdropFrame();
         }
     }
 
@@ -159,10 +269,11 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             throw new ArgumentException("The screenshot stream must be writable.", nameof(output));
         }
 
-        if (frameActive)
+        if (activeFrameKind != FrameKind.None)
         {
             throw new InvalidOperationException("A screenshot cannot be rendered while an on-screen frame is active.");
         }
+        EnsureNoActiveBackdropLeases("render a screenshot");
 
         int width = presentationParameters.BackBufferWidth;
         int height = presentationParameters.BackBufferHeight;
@@ -185,14 +296,20 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
 
         try
         {
-            graphicsDevice.SetRenderTarget(target);
-            graphicsDevice.Clear(new XnaColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A));
+            BeginBackdropFrame(
+                FrameKind.Capture,
+                target,
+                clearColor);
             draw(captureBackend);
+            EnsureNoActiveBackdropLeases(
+                "complete a screenshot");
+            EndBackdropFrame();
             stateSnapshot.Restore(graphicsDevice);
             target.SaveAsPng(output, width, height);
         }
         finally
         {
+            EndBackdropFrame();
             stateSnapshot.Restore(graphicsDevice);
         }
     }
@@ -205,7 +322,14 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
         }
 
         Exception? failure = null;
-        frameActive = false;
+        graphicsDevice.DeviceResetting -= OnDeviceResetting;
+        graphicsDevice.DeviceReset -= OnDeviceReset;
+        EndBackdropFrame();
+        if (frameTarget is not null)
+        {
+            DisposeResource(frameTarget, ref failure);
+            frameTarget = null;
+        }
         DisposeResource(imageResourceCache, ref failure);
         DisposeResource(drawingBackend, ref failure);
         DisposeResource(whitePixel, ref failure);
@@ -237,6 +361,148 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
             PresentationInterval = PresentInterval.One,
             RenderTargetUsage = RenderTargetUsage.PreserveContents
         };
+    }
+
+    private void BeginBackdropFrame(
+        FrameKind frameKind,
+        RenderTarget2D target,
+        CernealaColor clearColor)
+    {
+        if (activeFrameKind != FrameKind.None)
+        {
+            throw new InvalidOperationException(
+                "The WindowsDX graphics session already has an active frame.");
+        }
+        EnsureNoActiveBackdropLeases("begin another frame");
+
+        contentVersion = checked(contentVersion + 1);
+        if (!MonoGameBackdropFrameValidation.TryMapPixelFormat(
+            target.Format,
+            out BackdropPixelFormat pixelFormat))
+        {
+            throw new InvalidOperationException(
+                $"WindowsDX cannot expose surface format '{target.Format}' as a backdrop.");
+        }
+
+        activeBackdropMetadata = new BackdropFrameMetadata(
+            target.Width,
+            target.Height,
+            coordinateScale,
+            PrismColorProfile.Srgb,
+            pixelFormat,
+            BackdropAlphaMode.Premultiplied,
+            Matrix3x2.CreateScale(coordinateScale),
+            contentVersion);
+        activeBackdropTarget = target;
+        activeFrameKind = frameKind;
+        graphicsDevice.SetRenderTarget(target);
+        graphicsDevice.Clear(
+            new XnaColor(
+                clearColor.R,
+                clearColor.G,
+                clearColor.B,
+                clearColor.A));
+    }
+
+    private void EndBackdropFrame()
+    {
+        activeBackdropTarget = null;
+        activeBackdropMetadata = default;
+        activeFrameKind = FrameKind.None;
+    }
+
+    private void EnsureNoActiveBackdropLeases(
+        string operation)
+    {
+        if (activeBackdropLeaseCount != 0)
+        {
+            throw new InvalidOperationException(
+                $"The WindowsDX graphics session cannot {operation} while " +
+                $"{activeBackdropLeaseCount} backdrop lease(s) are still active.");
+        }
+    }
+
+    private void ValidateLease(
+        RenderTarget2D target,
+        long version)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        if (activeFrameKind == FrameKind.None ||
+            !ReferenceEquals(activeBackdropTarget, target) ||
+            activeBackdropMetadata.ContentVersion != version)
+        {
+            throw new InvalidOperationException(
+                "The backdrop lease is no longer valid for the active WindowsDX frame.");
+        }
+    }
+
+    private void ReleaseBackdropLease()
+    {
+        if (activeBackdropLeaseCount <= 0)
+        {
+            throw new InvalidOperationException(
+                "The WindowsDX backdrop lease count is already zero.");
+        }
+
+        activeBackdropLeaseCount--;
+    }
+
+    private RenderTarget2D RequireFrameTarget()
+    {
+        return frameTarget ??
+            throw new InvalidOperationException(
+                "The WindowsDX frame target is unavailable after a device reset.");
+    }
+
+    private void OnDeviceResetting(
+        object? sender,
+        EventArgs eventArgs)
+    {
+        EndBackdropFrame();
+        frameTarget?.Dispose();
+        frameTarget = null;
+    }
+
+    private void OnDeviceReset(
+        object? sender,
+        EventArgs eventArgs)
+    {
+        if (!disposed)
+        {
+            frameTarget = CreateFrameTarget(
+                graphicsDevice,
+                presentationParameters);
+        }
+    }
+
+    private static RenderTarget2D CreateFrameTarget(
+        GraphicsDevice graphicsDevice,
+        PresentationParameters parameters)
+    {
+        try
+        {
+            return new RenderTarget2D(
+                graphicsDevice,
+                parameters.BackBufferWidth,
+                parameters.BackBufferHeight,
+                false,
+                parameters.BackBufferFormat,
+                DepthFormat.None,
+                parameters.MultiSampleCount,
+                RenderTargetUsage.PreserveContents);
+        }
+        catch when (parameters.MultiSampleCount > 0)
+        {
+            return new RenderTarget2D(
+                graphicsDevice,
+                parameters.BackBufferWidth,
+                parameters.BackBufferHeight,
+                false,
+                parameters.BackBufferFormat,
+                DepthFormat.None,
+                0,
+                RenderTargetUsage.PreserveContents);
+        }
     }
 
     private static GraphicsDevice CreateGraphicsDevice(PresentationParameters parameters)
@@ -305,6 +571,67 @@ internal sealed class WindowsDxWindowGraphicsSession : IWindowGraphicsSession, I
         catch (Exception exception)
         {
             failure ??= exception;
+        }
+    }
+
+    private enum FrameKind
+    {
+        None,
+        OnScreen,
+        Capture
+    }
+
+    private sealed class BackdropFrameLease :
+        IMonoGameBackdropFrameLease
+    {
+        private WindowsDxWindowGraphicsSession? owner;
+        private readonly RenderTarget2D texture;
+        private readonly BackdropFrameMetadata metadata;
+
+        public BackdropFrameLease(
+            WindowsDxWindowGraphicsSession owner,
+            RenderTarget2D texture,
+            BackdropFrameMetadata metadata)
+        {
+            this.owner = owner;
+            this.texture = texture;
+            this.metadata = metadata;
+        }
+
+        public BackdropFrameMetadata Metadata
+        {
+            get
+            {
+                RequireOwner().ValidateLease(
+                    texture,
+                    metadata.ContentVersion);
+                return metadata;
+            }
+        }
+
+        public Texture2D Texture
+        {
+            get
+            {
+                RequireOwner().ValidateLease(
+                    texture,
+                    metadata.ContentVersion);
+                return texture;
+            }
+        }
+
+        public void Dispose()
+        {
+            WindowsDxWindowGraphicsSession? currentOwner =
+                Interlocked.Exchange(ref owner, null);
+            currentOwner?.ReleaseBackdropLease();
+        }
+
+        private WindowsDxWindowGraphicsSession RequireOwner()
+        {
+            return owner ??
+                throw new ObjectDisposedException(
+                    nameof(BackdropFrameLease));
         }
     }
 }

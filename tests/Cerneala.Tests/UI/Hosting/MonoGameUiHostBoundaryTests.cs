@@ -53,11 +53,11 @@ public sealed class MonoGameUiHostBoundaryTests
     }
 
     [Fact]
-    public void MonoGameUiHostDelegatesSpriteBatchOwnershipToDrawingBackend()
+    public void MonoGameUiHostDelegatesConfiguredFrameToDrawingBackend()
     {
         string source = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "UI", "Hosting", "MonoGame", "MonoGameUiHost.cs"));
 
-        Assert.Contains("host.Draw(drawingBackend);", source, StringComparison.Ordinal);
+        Assert.Contains("host.Draw();", source, StringComparison.Ordinal);
         Assert.DoesNotContain("spriteBatch.Begin", source, StringComparison.Ordinal);
         Assert.DoesNotContain("spriteBatch.End", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ScissorRasterizerState", source, StringComparison.Ordinal);

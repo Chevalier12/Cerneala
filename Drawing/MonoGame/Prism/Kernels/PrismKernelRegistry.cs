@@ -19,6 +19,8 @@ internal enum PrismKernelKind
     NeighborhoodFilter,
     ResamplingFilter,
     CatalogFilter,
+    BackdropCrop,
+    BackdropColorConversion,
     InputColorConversion,
     OutputColorConversion
 }
@@ -176,6 +178,8 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly PrismKernel neighborhoodFilter;
     private readonly PrismKernel resamplingFilter;
     private readonly PrismKernel catalogFilter;
+    private readonly PrismKernel backdropCrop;
+    private readonly PrismKernel backdropColorConversion;
     private readonly Dictionary<PrismBlendMode, PrismKernel>
         blendKernels = [];
     private readonly Dictionary<PrismFilterId, PrismKernel>
@@ -304,6 +308,12 @@ internal sealed class PrismKernelRegistry : IDisposable
         catalogFilter = CreateKernel(
             PrismKernelKind.CatalogFilter,
             "CatalogFilter");
+        backdropCrop = CreateKernel(
+            PrismKernelKind.BackdropCrop,
+            "BackdropCrop");
+        backdropColorConversion = CreateKernel(
+            PrismKernelKind.BackdropColorConversion,
+            "BackdropColorConversion");
         foreach (PrismBlendMode blendMode in
             Enum.GetValues<PrismBlendMode>())
         {
@@ -352,6 +362,11 @@ internal sealed class PrismKernelRegistry : IDisposable
     public PrismKernel ResamplingFilter => resamplingFilter;
 
     public PrismKernel CatalogFilter => catalogFilter;
+
+    public PrismKernel BackdropCrop => backdropCrop;
+
+    public PrismKernel BackdropColorConversion =>
+        backdropColorConversion;
 
     public PrismKernel Present =>
         outputColorConversions[PrismColorProfile.Srgb];

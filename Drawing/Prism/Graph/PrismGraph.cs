@@ -23,7 +23,8 @@ public enum PrismGraphNodeKind
     Opacity,
     ClipToBelow,
     Composite,
-    PassThroughComposite
+    PassThroughComposite,
+    BackdropCrop
 }
 
 public enum PrismGraphEdgeKind
@@ -50,7 +51,8 @@ public enum PrismGraphDependencyKind
     Transform,
     ColorProfile,
     CatalogEntry,
-    Resource
+    Resource,
+    BackdropFrame
 }
 
 public enum PrismGraphParameterValueKind
@@ -335,7 +337,9 @@ public sealed class PrismGraphNode
         PrismResamplingPlan? resamplingPlan = null,
         int resamplingPassIndex = -1,
         PrismCatalogFilterPlan? catalogFilterPlan = null,
-        int catalogFilterPassIndex = -1)
+        int catalogFilterPassIndex = -1,
+        BackdropFrameMetadata? backdropMetadata = null,
+        DrawRect? backdropSourceBounds = null)
     {
         Id = id;
         Kind = kind;
@@ -431,6 +435,22 @@ public sealed class PrismGraphNode
         ResamplingPassIndex = resamplingPassIndex;
         CatalogFilterPlan = catalogFilterPlan;
         CatalogFilterPassIndex = catalogFilterPassIndex;
+        if (backdropMetadata is not null &&
+            kind != PrismGraphNodeKind.ColorConversion)
+        {
+            throw new ArgumentException(
+                "Backdrop raster metadata belongs on its color-conversion node.",
+                nameof(backdropMetadata));
+        }
+        if (backdropSourceBounds is not null &&
+            kind != PrismGraphNodeKind.BackdropCrop)
+        {
+            throw new ArgumentException(
+                "Backdrop source bounds belong on a backdrop-crop node.",
+                nameof(backdropSourceBounds));
+        }
+        BackdropMetadata = backdropMetadata;
+        BackdropSourceBounds = backdropSourceBounds;
     }
 
     public PrismGraphNodeId Id { get; }
@@ -486,6 +506,10 @@ public sealed class PrismGraphNode
     internal PrismCatalogFilterPlan? CatalogFilterPlan { get; }
 
     internal int CatalogFilterPassIndex { get; }
+
+    public BackdropFrameMetadata? BackdropMetadata { get; }
+
+    public DrawRect? BackdropSourceBounds { get; }
 }
 
 public sealed class PrismGraph
@@ -514,6 +538,7 @@ public sealed class PrismGraph
                 throw new InvalidOperationException("A Prism graph edge references an unknown node.");
             }
         }
+        ValidateAcyclic(index.Keys, edges);
 
         Nodes = nodes;
         Edges = edges;
@@ -589,5 +614,47 @@ public sealed class PrismGraph
         }
 
         return builder.ToString().TrimEnd();
+    }
+
+    private static void ValidateAcyclic(
+        IEnumerable<PrismGraphNodeId> nodeIds,
+        ImmutableArray<PrismGraphEdge> edges)
+    {
+        Dictionary<PrismGraphNodeId, int> indegrees = [];
+        Dictionary<PrismGraphNodeId, List<PrismGraphNodeId>> outgoing = [];
+        foreach (PrismGraphNodeId nodeId in nodeIds)
+        {
+            indegrees.Add(nodeId, 0);
+            outgoing.Add(nodeId, []);
+        }
+        foreach (PrismGraphEdge edge in edges)
+        {
+            indegrees[edge.Target]++;
+            outgoing[edge.Source].Add(edge.Target);
+        }
+
+        Queue<PrismGraphNodeId> ready = new(
+            indegrees
+                .Where(pair => pair.Value == 0)
+                .Select(pair => pair.Key));
+        int visited = 0;
+        while (ready.TryDequeue(out PrismGraphNodeId nodeId))
+        {
+            visited++;
+            foreach (PrismGraphNodeId target in outgoing[nodeId])
+            {
+                indegrees[target]--;
+                if (indegrees[target] == 0)
+                {
+                    ready.Enqueue(target);
+                }
+            }
+        }
+
+        if (visited != indegrees.Count)
+        {
+            throw new InvalidOperationException(
+                "The Prism graph contains a cycle.");
+        }
     }
 }

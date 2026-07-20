@@ -76,11 +76,22 @@ public sealed class PrismDefinitionContractTests
         PrismBackdropDefinition firstBackdrop = Backdrop(1, "First");
         PrismBackdropDefinition secondBackdrop = Backdrop(2, "Second");
         PrismLayerDefinition layer = Layer(3, "Content");
+        PrismCompositionDefinition withoutBackdrop = new("NoBackdrop", [layer]);
+        PrismCompositionDefinition withBackdrop = new(
+            "OneBackdrop",
+            [layer, firstBackdrop]);
 
+        Assert.Null(withoutBackdrop.Backdrop);
+        Assert.Same(firstBackdrop, withBackdrop.Backdrop);
         Assert.Throws<ArgumentException>(
             () => new PrismCompositionDefinition("BackdropNotLast", [firstBackdrop, layer]));
         Assert.Throws<ArgumentException>(
             () => new PrismCompositionDefinition("TwoBackdrops", [firstBackdrop, secondBackdrop]));
+        Assert.Throws<ArgumentException>(
+            () => new PrismGroupDefinition(
+                new PrismNodeId(4),
+                "NestedBackdrop",
+                [firstBackdrop]));
     }
 
     [Fact]

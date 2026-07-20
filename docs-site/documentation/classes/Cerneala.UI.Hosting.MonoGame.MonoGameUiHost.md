@@ -32,6 +32,8 @@ MonoGameUiHost host = new(new MonoGameUiHostOptions
 
 host.Update(new UiViewport(800, 600), elapsed);
 host.Draw();
+
+host.BackdropFrameSource = nextBackdropSource;
 ```
 
 ## Remarks
@@ -43,13 +45,26 @@ host.Draw();
 `Draw` delegates retained drawing to `MonoGameDrawingBackend`, which owns the
 top-level sprite batch and restores the documented incoming graphics-device
 state after success or failure. Callers must not begin the configured sprite
-batch around `Draw`.
+batch around `Draw`. When `MonoGameUiHostOptions.BackdropFrameSource` is set,
+the core host acquires at most one lease from it after frame analysis and
+disposes the lease after drawing, including exceptional exits.
 
 The host borrows the configured `SpriteBatch`, white-pixel texture, and graphics
 device. It owns the drawing backend it creates and disposes that backend once,
 without disposing the borrowed graphics resources. The configured
 `ContentServices` instance is host-owned even when supplied by the caller and is
 disposed with the host.
+
+The backdrop source and the already-rendered scene remain caller-owned. The
+host does not dispose the source and does not retain a lease after `Draw`
+returns. `BackdropFrameSource` can be replaced between frames or set to `null`.
+Each assignment validates the candidate against the existing
+`MonoGameDrawingBackend`; an incompatible candidate is rejected and the
+previous provider remains configured. The WindowsDX scene source accepts any
+live `MonoGameDrawingBackend` that uses its `GraphicsDevice`; compatibility does
+not require the source and consumer to share the same backend instance. This
+also keeps screenshot rendering through a temporary same-device backend on the
+same backdrop path as on-screen drawing.
 
 ## Constructors
 
@@ -66,6 +81,7 @@ disposed with the host.
 | `Root` | Gets the current UI root, if one is attached. |
 | `Relay` | Gets the current root's UI-thread Relay through the core host, or `null` while no root is attached. |
 | `LastFrame` | Gets the last frame produced by the core UI host. |
+| `BackdropFrameSource` | Gets or replaces the optional caller-owned source used for backdrop-aware frames. Set `null` to disable backdrop acquisition. |
 
 ## Methods
 
@@ -85,6 +101,8 @@ disposed with the host.
 | Constructor | `ArgumentNullException` | `options`, `SpriteBatch`, or `WhitePixel` is `null`. |
 | Constructor | `ObjectDisposedException` | A configured graphics resource or its graphics device is disposed. |
 | Constructor | `ArgumentException` | `WhitePixel` belongs to a different graphics device than `SpriteBatch`. |
+| `BackdropFrameSource` setter | `ObjectDisposedException` | The host has already been disposed. |
+| `BackdropFrameSource` setter | `InvalidOperationException` | The candidate source cannot supply leases consumable by the host's live MonoGame drawing backend. The previous source remains configured. |
 
 ## Applies to
 
@@ -95,5 +113,7 @@ Cerneala MonoGame UI hosting.
 - `Cerneala.UI.Hosting.UiHost`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions`
 - `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend`
+- `Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease`
+- `Cerneala.Drawing.Prism.IBackdropFrameSource`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices`
 - `Cerneala.UI.Relay.UiRelay`

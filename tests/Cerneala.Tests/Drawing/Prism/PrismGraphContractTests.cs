@@ -1,3 +1,4 @@
+using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
@@ -262,7 +263,12 @@ public sealed class PrismGraphContractTests
             graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.ControlCapture));
         PrismGraphNode backdrop = Assert.Single(
             graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.BackdropInput));
+        PrismGraphNode crop = Assert.Single(
+            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.BackdropCrop));
         Assert.NotEqual(capture.Id, backdrop.Id);
+        Assert.False(
+            HasPath(graph, capture.Id, backdrop.Id),
+            "Control content must never become an input to the backdrop branch.");
         Assert.DoesNotContain(
             graph.Edges,
             edge => edge.Source == capture.Id &&
@@ -270,9 +276,263 @@ public sealed class PrismGraphContractTests
         Assert.Contains(
             graph.Edges,
             edge => edge.Source == backdrop.Id &&
+                edge.Target == crop.Id &&
                 edge.Kind == PrismGraphEdgeKind.Backdrop);
+        Assert.DoesNotContain(
+            graph.Edges,
+            edge => edge.Source == backdrop.Id &&
+                graph.GetNode(edge.Target).Kind == PrismGraphNodeKind.Layer);
         Assert.Equal(1, graph.ControlCaptureCount);
         Assert.Equal(1, graph.BackdropInputCount);
+    }
+
+    [Fact]
+    public void BackdropGraphCropsNormalizesProcessesAndComposesBeforeControlLayers()
+    {
+        PrismBackdropDefinition backdropDefinition = new(
+            new PrismNodeId(20),
+            "Glass",
+            filters: [new PrismFilterDefinition(PrismFilterId.GaussianBlur)],
+            styles: [new PrismStyleDefinition(PrismStyleId.ColorOverlay)],
+            mask: new PrismMaskDefinition(new PrismResourceId(71)),
+            opacity: 0.65f);
+        PrismCompositionDefinition definition = PrismTestData.Composition(
+            "BackdropPipeline",
+            PrismTestData.Layer(1, "Control"),
+            backdropDefinition);
+        PrismDrawScope scope = PrismTestData.Scope(
+            definition,
+            ownerToken: 91,
+            bounds: new DrawRect(10, 20, 30, 10));
+        DrawCommandList commands = PrismTestData.Commands(
+            DrawCommand.BeginPrism(scope),
+            DrawCommand.FillRectangle(new DrawRect(10, 20, 30, 10), Color.White),
+            DrawCommand.EndPrism());
+        BackdropFrameMetadata metadata = new(
+            200,
+            160,
+            2,
+            PrismColorProfile.DisplayP3,
+            BackdropPixelFormat.Bgra8Unorm,
+            BackdropAlphaMode.Straight,
+            new Matrix3x2(2, 0, 0, 2, 5, 7),
+            77);
+
+        PrismGraph graph = new PrismGraphBuilder().Build(
+            new PrismFrameAnalyzer().Analyze(commands),
+            metadata);
+
+        PrismGraphNode input = Assert.Single(
+            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.BackdropInput));
+        PrismGraphNode crop = Assert.Single(
+            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.BackdropCrop));
+        PrismGraphNode conversion = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.ColorConversion &&
+                    node.DefinitionNodeId == backdropDefinition.Id));
+        PrismGraphNode[] filters = graph.Nodes
+            .Where(
+                node => node.Kind == PrismGraphNodeKind.Filter &&
+                    node.DefinitionNodeId == backdropDefinition.Id)
+            .ToArray();
+        PrismGraphNode style = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Style &&
+                    node.DefinitionNodeId == backdropDefinition.Id));
+        PrismGraphNode mask = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Mask &&
+                    node.DefinitionNodeId == backdropDefinition.Id));
+        PrismGraphNode opacity = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Opacity &&
+                    node.DefinitionNodeId == backdropDefinition.Id));
+        PrismGraphDependency frameDependency = Assert.Single(
+            input.Dependencies.Where(
+                dependency => dependency.Kind == PrismGraphDependencyKind.BackdropFrame));
+
+        Assert.Equal(77, frameDependency.Version);
+        Assert.Equal(new DrawRect(25, 47, 60, 20), crop.BackdropSourceBounds);
+        Assert.Equal(metadata, conversion.BackdropMetadata);
+        Assert.Equal(PrismColorProfile.LinearSrgb, conversion.ColorProfile);
+        Assert.Single(graph.Nodes.Where(node => node.BackdropMetadata is not null));
+        Assert.True(HasPath(graph, input.Id, crop.Id));
+        Assert.True(HasPath(graph, crop.Id, conversion.Id));
+        Assert.Equal(2, filters.Length);
+        Assert.True(HasPath(graph, conversion.Id, filters[0].Id));
+        Assert.True(HasPath(graph, filters[0].Id, filters[1].Id));
+        Assert.True(HasPath(graph, filters[1].Id, style.Id));
+        PrismGraphEdge maskEdge = Assert.Single(
+            graph.Edges.Where(
+                edge => edge.Source == mask.Id &&
+                    edge.Kind == PrismGraphEdgeKind.MaskAlpha));
+        Assert.True(HasPath(graph, style.Id, maskEdge.Target));
+        Assert.True(HasPath(graph, mask.Id, maskEdge.Target));
+        Assert.True(HasPath(graph, maskEdge.Target, opacity.Id));
+
+        PrismGraphNode controlCapture = Assert.Single(
+            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.ControlCapture));
+        PrismGraphNode controlLayer = Assert.Single(
+            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Layer));
+        Assert.False(HasPath(graph, controlCapture.Id, input.Id));
+        Assert.False(HasPath(graph, controlLayer.Id, input.Id));
+        PrismGraphEdge finalBackdropEdge = Assert.Single(
+            graph.Edges.Where(
+                edge => edge.Source == opacity.Id &&
+                    edge.Kind == PrismGraphEdgeKind.CompositeBackground));
+        Assert.Equal(
+            PrismGraphNodeKind.Composite,
+            graph.GetNode(finalBackdropEdge.Target).Kind);
+        Assert.Contains(
+            graph.Edges,
+            edge => edge.Target == finalBackdropEdge.Target &&
+                edge.Kind == PrismGraphEdgeKind.CompositeForeground &&
+                HasPath(graph, controlLayer.Id, edge.Source));
+    }
+
+    [Fact]
+    public void MultipleControlsShareOneBackdropFrameWithoutCrossScopeOrLaterUiInputs()
+    {
+        PrismGroupDefinition nested = new(
+            new PrismNodeId(10),
+            "Nested",
+            [
+                PrismTestData.Layer(11, "Visible"),
+                PrismTestData.Layer(12, "Invisible", visible: false)
+            ]);
+        PrismDrawScope first = PrismTestData.Scope(
+            PrismTestData.Composition(
+                "First",
+                nested,
+                PrismTestData.Backdrop(20, "FirstGlass")),
+            ownerToken: 101,
+            bounds: new DrawRect(0, 0, 20, 10));
+        PrismDrawScope second = PrismTestData.Scope(
+            PrismTestData.Composition(
+                "Second",
+                PrismTestData.Layer(21, "Control"),
+                PrismTestData.Backdrop(22, "SecondGlass")),
+            ownerToken: 102,
+            bounds: new DrawRect(20, 0, 20, 10));
+        DrawCommandList commands = PrismTestData.Commands(
+            DrawCommand.FillRectangle(new DrawRect(0, 0, 5, 5), Color.White),
+            DrawCommand.BeginPrism(first),
+            DrawCommand.FillRectangle(new DrawRect(0, 0, 20, 10), Color.White),
+            DrawCommand.EndPrism(),
+            DrawCommand.FillRectangle(new DrawRect(5, 0, 5, 5), Color.White),
+            DrawCommand.BeginPrism(second),
+            DrawCommand.FillRectangle(new DrawRect(20, 0, 20, 10), Color.White),
+            DrawCommand.EndPrism(),
+            DrawCommand.FillRectangle(new DrawRect(40, 0, 5, 5), Color.White));
+        BackdropFrameMetadata metadata = new(
+            100,
+            50,
+            1,
+            PrismColorProfile.Srgb,
+            BackdropPixelFormat.Rgba8Unorm,
+            BackdropAlphaMode.Premultiplied,
+            Matrix3x2.Identity,
+            88);
+
+        PrismGraph graph = new PrismGraphBuilder().Build(
+            new PrismFrameAnalyzer().Analyze(commands),
+            metadata);
+
+        PrismGraphNode[] inputs = graph.Nodes
+            .Where(node => node.Kind == PrismGraphNodeKind.BackdropInput)
+            .OrderBy(node => node.AnalysisScopeIndex)
+            .ToArray();
+        PrismGraphDependency[] frameDependencies = inputs
+            .Select(
+                input => Assert.Single(
+                    input.Dependencies.Where(
+                        dependency =>
+                            dependency.Kind == PrismGraphDependencyKind.BackdropFrame)))
+            .ToArray();
+        DrawRect?[] cropBounds = graph.Nodes
+            .Where(node => node.Kind == PrismGraphNodeKind.BackdropCrop)
+            .OrderBy(node => node.AnalysisScopeIndex)
+            .Select(node => node.BackdropSourceBounds)
+            .ToArray();
+
+        Assert.Equal(2, inputs.Length);
+        Assert.Single(frameDependencies.Select(dependency => dependency.Key).Distinct());
+        Assert.All(frameDependencies, dependency => Assert.Equal(88, dependency.Version));
+        Assert.Equal(
+            [new DrawRect(0, 0, 20, 10), new DrawRect(20, 0, 20, 10)],
+            cropBounds);
+        Assert.Contains(
+            graph.Nodes,
+            node => node.Kind == PrismGraphNodeKind.Group &&
+                node.DefinitionNodeId == nested.Id);
+        Assert.DoesNotContain(
+            graph.Nodes,
+            node => node.DefinitionNodeId == new PrismNodeId(12));
+        Assert.DoesNotContain(
+            graph.Edges,
+            edge =>
+                graph.GetNode(edge.Source).AnalysisScopeIndex !=
+                graph.GetNode(edge.Target).AnalysisScopeIndex);
+        foreach (PrismGraphNode input in inputs)
+        {
+            Assert.DoesNotContain(
+                graph.Nodes.Where(
+                    node => node.AnalysisScopeIndex == input.AnalysisScopeIndex &&
+                        node.Kind is PrismGraphNodeKind.ControlCapture or
+                            PrismGraphNodeKind.Layer),
+                node => HasPath(graph, node.Id, input.Id));
+        }
+
+        Assert.Equal(
+            """
+            scope=0;nodes=ControlCapture,ColorConversion,Layer,Filter,Fill,Opacity,Composite,Group,Opacity,PassThroughComposite,BackdropInput,BackdropCrop,ColorConversion,Filter,Filter,Opacity,Composite;crop=0,0,20,10;frame=88
+            scope=1;nodes=ControlCapture,ColorConversion,Layer,Filter,Fill,Opacity,Composite,BackdropInput,BackdropCrop,ColorConversion,Filter,Filter,Opacity,Composite;crop=20,0,20,10;frame=88
+            """.ReplaceLineEndings("\n"),
+            BackdropScopeSnapshot(graph));
+    }
+
+    [Fact]
+    public void GraphRejectsCyclesAndIncompatibleBackdropTransforms()
+    {
+        PrismCompositionDefinition definition = PrismTestData.Composition(
+            "Cycle",
+            PrismTestData.Layer(1, "Control"),
+            PrismTestData.Backdrop(2, "Glass"));
+        PrismGraph graph = BuildGraph(definition);
+        PrismGraphEdge firstEdge = graph.Edges[0];
+
+        InvalidOperationException cycle = Assert.Throws<InvalidOperationException>(
+            () => new PrismGraph(
+                graph.Nodes,
+                graph.Edges.Add(
+                    new PrismGraphEdge(
+                        firstEdge.Target,
+                        firstEdge.Source,
+                        PrismGraphEdgeKind.Content)),
+                graph.Scopes));
+        Assert.Contains("cycle", cycle.Message, StringComparison.OrdinalIgnoreCase);
+
+        PrismDrawScope scope = PrismTestData.Scope(definition);
+        DrawCommandList commands = PrismTestData.Commands(
+            DrawCommand.BeginPrism(scope),
+            DrawCommand.EndPrism());
+        BackdropFrameMetadata incompatible = new(
+            20,
+            10,
+            1,
+            PrismColorProfile.Srgb,
+            BackdropPixelFormat.Rgba8Unorm,
+            BackdropAlphaMode.Opaque,
+            new Matrix3x2(1, 0, 0, 0, 0, 0),
+            1);
+        ArgumentException metadata = Assert.Throws<ArgumentException>(
+            () => new PrismGraphBuilder().Build(
+                new PrismFrameAnalyzer().Analyze(commands),
+                incompatible));
+        Assert.Contains(
+            "invertible coordinate transform",
+            metadata.Message,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -716,6 +976,35 @@ public sealed class PrismGraphContractTests
         return Assert.Single(node.Dependencies.Where(dependency => dependency.Kind == kind));
     }
 
+    private static bool HasPath(
+        PrismGraph graph,
+        PrismGraphNodeId source,
+        PrismGraphNodeId target)
+    {
+        HashSet<PrismGraphNodeId> visited = [];
+        Stack<PrismGraphNodeId> pending = new();
+        pending.Push(source);
+        while (pending.TryPop(out PrismGraphNodeId current))
+        {
+            if (!visited.Add(current))
+            {
+                continue;
+            }
+
+            foreach (PrismGraphEdge edge in graph.Edges.Where(edge => edge.Source == current))
+            {
+                if (edge.Target == target)
+                {
+                    return true;
+                }
+
+                pending.Push(edge.Target);
+            }
+        }
+
+        return false;
+    }
+
     private static void AssertSnapshot(
         PrismCompositionDefinition definition,
         string expected)
@@ -745,6 +1034,34 @@ public sealed class PrismGraphContractTests
                     return $"E:{source.Kind}/{source.DefinitionNodeId?.Value ?? 0}->" +
                         $"{target.Kind}/{target.DefinitionNodeId?.Value ?? 0}:{edge.Kind}";
                 }));
+        return string.Join("\n", lines);
+    }
+
+    private static string BackdropScopeSnapshot(PrismGraph graph)
+    {
+        List<string> lines = [];
+        foreach (IGrouping<int, PrismGraphNode> scopeNodes in graph.Nodes
+            .GroupBy(node => node.AnalysisScopeIndex)
+            .OrderBy(group => group.Key))
+        {
+            PrismGraphNode input = Assert.Single(
+                scopeNodes.Where(
+                    node => node.Kind == PrismGraphNodeKind.BackdropInput));
+            PrismGraphNode crop = Assert.Single(
+                scopeNodes.Where(
+                    node => node.Kind == PrismGraphNodeKind.BackdropCrop));
+            PrismGraphDependency frame = Assert.Single(
+                input.Dependencies.Where(
+                    dependency =>
+                        dependency.Kind == PrismGraphDependencyKind.BackdropFrame));
+            DrawRect bounds = crop.BackdropSourceBounds!.Value;
+            lines.Add(
+                $"scope={scopeNodes.Key};nodes=" +
+                $"{string.Join(",", scopeNodes.Select(node => node.Kind))};" +
+                $"crop={bounds.X:R},{bounds.Y:R},{bounds.Width:R},{bounds.Height:R};" +
+                $"frame={frame.Version}");
+        }
+
         return string.Join("\n", lines);
     }
 }

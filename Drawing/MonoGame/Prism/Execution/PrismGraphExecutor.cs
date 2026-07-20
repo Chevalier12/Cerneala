@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Cerneala.Drawing.MonoGame.Prism;
 using Cerneala.Drawing.MonoGame.Prism.Kernels;
 using Cerneala.Drawing.MonoGame.Prism.Surfaces;
 using Cerneala.Drawing.Prism;
@@ -321,18 +322,21 @@ internal sealed class PrismGraphExecutor : IDisposable
                     node);
                 break;
             case PrismGraphNodeKind.BackdropInput:
-                ClearSurface(
+                RenderBackdropInput(
                     renderer,
                     target,
-                    Microsoft.Xna.Framework.Color.Transparent);
-                RecordFallback(
                     node,
-                    backdropLease is null
-                        ? PrismFallbackReason.MissingBackdrop
-                        : PrismFallbackReason.UnsupportedCapability,
-                    backdropLease is null
-                        ? "The frame did not provide a backdrop lease."
-                        : "The backdrop lease does not expose a MonoGame texture.");
+                    backdropLease);
+                break;
+            case PrismGraphNodeKind.BackdropCrop:
+                RenderBackdropCrop(
+                    renderer,
+                    plan,
+                    graph,
+                    frame,
+                    step,
+                    target,
+                    node);
                 break;
             case PrismGraphNodeKind.ColorConversion:
                 RenderColorConversion(
@@ -460,6 +464,171 @@ internal sealed class PrismGraphExecutor : IDisposable
         renderer.EndBatch();
     }
 
+    private void RenderBackdropInput(
+        IPrismCommandRenderer renderer,
+        RenderTarget2D target,
+        PrismGraphNode node,
+        IBackdropFrameLease? backdropLease)
+    {
+        if (backdropLease is null)
+        {
+            ClearSurface(
+                renderer,
+                target,
+                Microsoft.Xna.Framework.Color.Transparent);
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingBackdrop,
+                "The frame did not provide a backdrop lease.");
+            return;
+        }
+        if (backdropLease is not IMonoGameBackdropFrameLease monoGameLease)
+        {
+            ClearSurface(
+                renderer,
+                target,
+                Microsoft.Xna.Framework.Color.Transparent);
+            RecordFallback(
+                node,
+                PrismFallbackReason.UnsupportedCapability,
+                "The backdrop lease does not expose a MonoGame texture.");
+            return;
+        }
+
+        Texture2D texture;
+        BackdropFrameMetadata metadata;
+        try
+        {
+            texture = monoGameLease.Texture;
+            metadata = backdropLease.Metadata;
+        }
+        catch (Exception exception) when (
+            exception is ObjectDisposedException or
+                InvalidOperationException)
+        {
+            ClearSurface(
+                renderer,
+                target,
+                Microsoft.Xna.Framework.Color.Transparent);
+            RecordFallback(
+                node,
+                PrismFallbackReason.UnsupportedCapability,
+                exception.Message);
+            return;
+        }
+
+        if (!MonoGameBackdropFrameValidation.TryValidate(
+            texture,
+            graphicsDevice,
+            in metadata,
+            out string diagnostic))
+        {
+            ClearSurface(
+                renderer,
+                target,
+                Microsoft.Xna.Framework.Color.Transparent);
+            RecordFallback(
+                node,
+                PrismFallbackReason.UnsupportedCapability,
+                diagnostic);
+            return;
+        }
+
+        RenderKernel(
+            renderer,
+            target,
+            texture,
+            texture,
+            kernels.Copy,
+            1f);
+    }
+
+    private void RenderBackdropCrop(
+        IPrismCommandRenderer renderer,
+        PrismGraphExecutionPlan plan,
+        PrismGraph graph,
+        PrismSurfaceFrame frame,
+        int step,
+        RenderTarget2D target,
+        PrismGraphNode node)
+    {
+        int sourceIndex =
+            FindAnyInputIndex(plan, graph, node.Id);
+        if (sourceIndex < 0 ||
+            node.BackdropSourceBounds is not DrawRect sourceBounds ||
+            sourceBounds.Width <= 0 ||
+            sourceBounds.Height <= 0)
+        {
+            ClearSurface(
+                renderer,
+                target,
+                Microsoft.Xna.Framework.Color.Transparent);
+            return;
+        }
+
+        PrismGraphScope scope =
+            FindScope(graph, node.AnalysisScopeIndex);
+        Texture2D source = frame.GetSurface(sourceIndex);
+        BackdropFrameMetadata? metadata = FindBackdropMetadata(
+            plan,
+            graph,
+            node.Id);
+        if (metadata is not BackdropFrameMetadata backdropMetadata)
+        {
+            ClearSurface(
+                renderer,
+                target,
+                Microsoft.Xna.Framework.Color.Transparent);
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingBackdrop,
+                "The backdrop crop has no raster metadata.");
+            return;
+        }
+
+        System.Numerics.Matrix3x2 transform =
+            backdropMetadata.CoordinateTransform;
+        float pixelScale = scope.PixelScale;
+        PrismBackdropCropKernelSettings settings = new(
+            (float)backdropMetadata.AlphaMode,
+            new Vector3(
+                transform.M11 /
+                    (pixelScale * backdropMetadata.PixelWidth),
+                transform.M21 /
+                    (pixelScale * backdropMetadata.PixelWidth),
+                transform.M31 /
+                    backdropMetadata.PixelWidth),
+            new Vector3(
+                transform.M12 /
+                    (pixelScale * backdropMetadata.PixelHeight),
+                transform.M22 /
+                    (pixelScale * backdropMetadata.PixelHeight),
+                transform.M32 /
+                    backdropMetadata.PixelHeight));
+        Rectangle destination = ResolveBackdropDestination(
+            scope.Bounds,
+            pixelScale,
+            target);
+        if (destination.Width <= 0 || destination.Height <= 0)
+        {
+            ClearSurface(
+                renderer,
+                target,
+                Microsoft.Xna.Framework.Color.Transparent);
+            return;
+        }
+
+        RenderKernel(
+            renderer,
+            target,
+            source,
+            source,
+            kernels.BackdropCrop,
+            1f,
+            destination: destination,
+            backdropCropSettings: settings);
+    }
+
     private void RenderColorConversion(
         IPrismCommandRenderer renderer,
         PrismGraphExecutionPlan plan,
@@ -469,6 +638,54 @@ internal sealed class PrismGraphExecutor : IDisposable
         RenderTarget2D target,
         PrismGraphNode node)
     {
+        if (node.BackdropMetadata is BackdropFrameMetadata backdropMetadata)
+        {
+            if (node.ColorProfile is not PrismColorProfile targetProfile ||
+                !Enum.IsDefined(backdropMetadata.ColorProfile) ||
+                !Enum.IsDefined(targetProfile))
+            {
+                RecordFallback(
+                    node,
+                    PrismFallbackReason.InvalidColorProfile,
+                    node.DiagnosticName);
+                RenderCopyInput(
+                    renderer,
+                    plan,
+                    graph,
+                    frame,
+                    step,
+                    target,
+                    node,
+                    1f);
+                return;
+            }
+
+            int sourceIndex =
+                FindAnyInputIndex(plan, graph, node.Id);
+            if (sourceIndex < 0)
+            {
+                ClearSurface(
+                    renderer,
+                    target,
+                    Microsoft.Xna.Framework.Color.Transparent);
+                return;
+            }
+
+            Texture2D source = frame.GetSurface(sourceIndex);
+            RenderKernel(
+                renderer,
+                target,
+                source,
+                source,
+                kernels.BackdropColorConversion,
+                1f,
+                backdropColorSettings:
+                    new PrismBackdropColorKernelSettings(
+                        backdropMetadata.ColorProfile,
+                        targetProfile));
+            return;
+        }
+
         if (node.ColorProfile is not PrismColorProfile profile ||
             !kernels.TryGetColorConversionKernel(
                 profile,
@@ -1498,7 +1715,10 @@ internal sealed class PrismGraphExecutor : IDisposable
         bool backgroundAvailable = true,
         PrismMaskKernelSettings? maskSettings = null,
         PrismStyleKernelSettings? styleSettings = null,
-        PrismFilterKernelSettings? filterSettings = null)
+        PrismFilterKernelSettings? filterSettings = null,
+        Rectangle? destination = null,
+        PrismBackdropCropKernelSettings? backdropCropSettings = null,
+        PrismBackdropColorKernelSettings? backdropColorSettings = null)
     {
         renderer.EndBatch();
         graphicsDevice.SetRenderTarget(target);
@@ -1509,8 +1729,8 @@ internal sealed class PrismGraphExecutor : IDisposable
             secondary,
             opacity,
             new Vector2(
-                1f / target.Width,
-                1f / target.Height),
+                1f / source.Width,
+                1f / source.Height),
             FullUvScale,
             ZeroUvOffset)
         {
@@ -1589,14 +1809,91 @@ internal sealed class PrismGraphExecutor : IDisposable
                     filter.AuxiliaryTexture
             };
         }
+        if (backdropCropSettings is PrismBackdropCropKernelSettings crop)
+        {
+            parameters = parameters with
+            {
+                MaskChannel = crop.AlphaMode,
+                MaskUvRowX = crop.UvRowX,
+                MaskUvRowY = crop.UvRowY
+            };
+        }
+        if (backdropColorSettings is PrismBackdropColorKernelSettings color)
+        {
+            parameters = parameters with
+            {
+                FilterHeader = new Vector4(
+                    (float)color.SourceProfile,
+                    (float)color.TargetProfile,
+                    0,
+                    0)
+            };
+        }
         kernels.Bind(kernel, in parameters);
         renderer.BeginKernelBatch(
             kernels.Effect,
             BlendState.Opaque);
         renderer.DrawFullscreen(
             source,
-            new Rectangle(0, 0, target.Width, target.Height));
+            destination ??
+                new Rectangle(0, 0, target.Width, target.Height));
         renderer.EndBatch();
+    }
+
+    private static BackdropFrameMetadata? FindBackdropMetadata(
+        PrismGraphExecutionPlan plan,
+        PrismGraph graph,
+        PrismGraphNodeId cropNodeId)
+    {
+        for (int edgeIndex = 0;
+            edgeIndex < graph.Edges.Length;
+            edgeIndex++)
+        {
+            PrismGraphEdge edge = graph.Edges[edgeIndex];
+            if (edge.Source != cropNodeId)
+            {
+                continue;
+            }
+
+            PrismGraphNode target = graph.GetNode(edge.Target);
+            if (target.Kind == PrismGraphNodeKind.ColorConversion &&
+                FindExecutionIndex(plan, target.Id) >= 0)
+            {
+                return target.BackdropMetadata;
+            }
+        }
+
+        return null;
+    }
+
+    private static Rectangle ResolveBackdropDestination(
+        DrawRect bounds,
+        float pixelScale,
+        RenderTarget2D target)
+    {
+        float leftValue = Math.Clamp(
+            MathF.Floor(bounds.X * pixelScale),
+            0,
+            target.Width);
+        float topValue = Math.Clamp(
+            MathF.Floor(bounds.Y * pixelScale),
+            0,
+            target.Height);
+        float rightValue = Math.Clamp(
+            MathF.Ceiling(bounds.Right * pixelScale),
+            0,
+            target.Width);
+        float bottomValue = Math.Clamp(
+            MathF.Ceiling(bounds.Bottom * pixelScale),
+            0,
+            target.Height);
+        int left = (int)leftValue;
+        int top = (int)topValue;
+        return new Rectangle(
+            left,
+            top,
+            Math.Max(0, (int)rightValue - left),
+            Math.Max(0, (int)bottomValue - top));
     }
 
     private static Vector4 ResolveBlendChannels(
@@ -1996,6 +2293,15 @@ internal sealed class PrismGraphExecutor : IDisposable
         Vector3 UvRowX,
         Vector3 UvRowY,
         Vector2 FeatherStep);
+
+    private readonly record struct PrismBackdropCropKernelSettings(
+        float AlphaMode,
+        Vector3 UvRowX,
+        Vector3 UvRowY);
+
+    private readonly record struct PrismBackdropColorKernelSettings(
+        PrismColorProfile SourceProfile,
+        PrismColorProfile TargetProfile);
 
     private readonly record struct PrismStyleKernelSettings(
         Texture2D Texture,

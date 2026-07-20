@@ -1,5 +1,6 @@
 using Cerneala.Drawing.Text;
 using Cerneala.Drawing.MonoGame;
+using Cerneala.Drawing.Prism;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input.MonoGame;
 using Cerneala.UI.Platform;
@@ -29,6 +30,8 @@ public sealed class MonoGameUiHostOptions
     public SkiaTextRasterizer? TextRasterizer { get; init; }
 
     public IPlatformServices? PlatformServices { get; init; }
+
+    public IBackdropFrameSource? BackdropFrameSource { get; init; }
 
     internal void Validate()
     {

@@ -24,7 +24,7 @@ static bool IsCapture(PrismGraphNode node) =>
 
 ## Remarks
 
-`PrismGraphBuilder` emits nodes in deterministic evaluation order. Input nodes identify retained control or backdrop pixels, operation nodes transform inputs, and composite nodes combine branches.
+`PrismGraphBuilder` emits nodes in deterministic evaluation order. Input nodes identify retained control or backdrop pixels, operation nodes transform inputs, and composite nodes combine branches. A backdrop always passes through an explicit `BackdropCrop` before color and alpha normalization.
 
 `PassThroughComposite` is distinct from an ordinary `Composite`: it closes a non-isolating group over the original incoming background while retaining the group's local alpha for downstream `ClipBaseAlpha` edges.
 
@@ -34,6 +34,7 @@ static bool IsCapture(PrismGraphNode node) =>
 | --- | --- |
 | `ControlCapture` | Captures retained control content for one non-empty analyzed scope. |
 | `BackdropInput` | Represents the separate backdrop input branch. |
+| `BackdropCrop` | Crops the shared backdrop frame to the analyzed control bounds in source-pixel coordinates. |
 | `ColorConversion` | Converts an input to the composition working color profile. |
 | `Layer` | Selects a visible Prism layer from captured control content. |
 | `Group` | Represents an assembled group child stack. |

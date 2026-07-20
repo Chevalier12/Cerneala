@@ -41,6 +41,15 @@ When `ContentServices` is supplied, the host takes ownership of that service
 object and disposes it with the host. `ImageLoader` and `TextRasterizer` are used
 only when `ContentServices` is not supplied.
 
+`BackdropFrameSource` is optional and remains application-owned. The application
+also keeps ownership of the already-rendered scene and its GPU resources.
+Cerneala acquires and disposes only a frame-scoped lease while drawing; it does
+not dispose the source or retain its scene after the frame. A MonoGame source
+must be compatible with the host backend's live `GraphicsDevice`. The WindowsDX
+source uses device compatibility rather than backend-instance identity, so the
+same source works for both on-screen and temporary screenshot backends created
+on that device.
+
 ## Properties
 
 | Name | Description |
@@ -55,6 +64,7 @@ only when `ContentServices` is not supplied.
 | `Clock` | Gets the optional UI clock. |
 | `TextRasterizer` | Gets an optional text rasterizer used when content services are not supplied. |
 | `PlatformServices` | Gets optional platform services. |
+| `BackdropFrameSource` | Gets the optional application-owned source of already-rendered backdrop frames. |
 
 ## Validation
 
@@ -65,6 +75,7 @@ Constructing `MonoGameUiHost` validates the required graphics resources.
 | `SpriteBatch` or `WhitePixel` is `null`. | `ArgumentNullException` |
 | A required resource or its graphics device is disposed. | `ObjectDisposedException` |
 | `WhitePixel` belongs to a different graphics device than `SpriteBatch`. | `ArgumentException` |
+| `BackdropFrameSource` cannot supply leases consumable by the created live MonoGame drawing backend. | `InvalidOperationException` |
 
 ## Applies to
 
@@ -75,3 +86,4 @@ Cerneala MonoGame UI hosting.
 - `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices`
 - `Cerneala.UI.Hosting.UiViewport`
+- `Cerneala.Drawing.Prism.IBackdropFrameSource`

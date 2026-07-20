@@ -160,6 +160,31 @@
     "source": "Drawing/MonoGame/MonoGameImage.cs"
   },
   {
+    "name": "Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease",
+    "file": "documentation/classes/Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease.md",
+    "source": "Drawing/MonoGame/Prism/IMonoGameBackdropFrameLease.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BackdropAlphaMode",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BackdropAlphaMode.md",
+    "source": "Drawing/Prism/BackdropAlphaMode.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BackdropFrameMetadata",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BackdropFrameMetadata.md",
+    "source": "Drawing/Prism/BackdropFrameMetadata.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BackdropFrameRequest",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BackdropFrameRequest.md",
+    "source": "Drawing/Prism/BackdropFrameRequest.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BackdropPixelFormat",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BackdropPixelFormat.md",
+    "source": "Drawing/Prism/BackdropPixelFormat.cs"
+  },
+  {
     "name": "Cerneala.Drawing.Prism.Graph.PrismAnalyzedScope",
     "file": "documentation/classes/Cerneala.Drawing.Prism.Graph.PrismAnalyzedScope.md",
     "source": "Drawing/Prism/Graph/PrismAnalyzedScope.cs"
@@ -303,6 +328,11 @@
     "name": "Cerneala.Drawing.Prism.IBackdropFrameLease",
     "file": "documentation/classes/Cerneala.Drawing.Prism.IBackdropFrameLease.md",
     "source": "Drawing/Prism/IBackdropFrameLease.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.IBackdropFrameSource",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.IBackdropFrameSource.md",
+    "source": "Drawing/Prism/IBackdropFrameSource.cs"
   },
   {
     "name": "Cerneala.Drawing.Prism.PrismCacheOwnerToken",

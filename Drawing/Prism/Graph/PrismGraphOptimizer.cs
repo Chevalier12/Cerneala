@@ -1152,6 +1152,10 @@ public sealed class PrismGraphOptimizer
                 Has(PrismGraphDependencyKind.Bounds) &&
                 Has(PrismGraphDependencyKind.PixelScale) &&
                 Has(PrismGraphDependencyKind.Transform),
+            PrismGraphNodeKind.BackdropInput =>
+                Has(PrismGraphDependencyKind.BackdropFrame),
+            PrismGraphNodeKind.BackdropCrop =>
+                Has(PrismGraphDependencyKind.Bounds),
             PrismGraphNodeKind.ColorConversion =>
                 Has(PrismGraphDependencyKind.ColorProfile),
             PrismGraphNodeKind.Filter or PrismGraphNodeKind.Style =>

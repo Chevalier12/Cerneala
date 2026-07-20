@@ -1,5 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
+using Cerneala.Drawing.MonoGame.Prism.Execution;
+using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -28,7 +30,10 @@ public sealed class MonoGameUiHost : IDisposable
             textRasterizer: options.TextRasterizer,
             imageLoader: options.ImageLoader ?? new MonoGameImageLoader(spriteBatch.GraphicsDevice));
         drawingBackend = new MonoGameDrawingBackend(spriteBatch, options.WhitePixel, ContentServices.TextRasterizer);
-        backend = new MonoGameUiBackend(InputSource, drawingBackend);
+        backend = new MonoGameUiBackend(
+            InputSource,
+            drawingBackend,
+            options.BackdropFrameSource);
         host = new UiHost(new UiHostOptions
         {
             Root = options.Root,
@@ -49,6 +54,33 @@ public sealed class MonoGameUiHost : IDisposable
     public UiRelay? Relay => host.Relay;
 
     public UiFrame? LastFrame => host.LastFrame;
+
+    internal BackdropFrameCounters BackdropFrameCounters =>
+        host.BackdropFrameCounters;
+
+    internal PrismExecutionCounters PrismExecutionCounters =>
+        drawingBackend.PrismDiagnostics.Counters;
+
+    public IBackdropFrameSource? BackdropFrameSource
+    {
+        get => backend.BackdropFrameSource;
+        set
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            IBackdropFrameSource? previous =
+                backend.BackdropFrameSource;
+            backend.BackdropFrameSource = value;
+            try
+            {
+                host.Backend = backend;
+            }
+            catch
+            {
+                backend.BackdropFrameSource = previous;
+                throw;
+            }
+        }
+    }
 
     public void SetRoot(UIRoot root)
     {
@@ -80,7 +112,7 @@ public sealed class MonoGameUiHost : IDisposable
     {
         RequireRelay().VerifyAccess();
         drawingBackend.CoordinateScale = host.Viewport.Scale;
-        host.Draw(drawingBackend);
+        host.Draw();
     }
 
     public void Dispose()
@@ -109,13 +141,24 @@ public sealed class MonoGameUiHost : IDisposable
     private sealed class MonoGameUiBackend : IUiBackend
     {
         public MonoGameUiBackend(IInputSource inputSource, IDrawingBackend drawingBackend)
+            : this(inputSource, drawingBackend, backdropFrameSource: null)
+        {
+        }
+
+        public MonoGameUiBackend(
+            IInputSource inputSource,
+            IDrawingBackend drawingBackend,
+            IBackdropFrameSource? backdropFrameSource)
         {
             InputSource = inputSource ?? throw new ArgumentNullException(nameof(inputSource));
             DrawingBackend = drawingBackend ?? throw new ArgumentNullException(nameof(drawingBackend));
+            BackdropFrameSource = backdropFrameSource;
         }
 
         public IInputSource InputSource { get; }
 
         public IDrawingBackend DrawingBackend { get; }
+
+        public IBackdropFrameSource? BackdropFrameSource { get; set; }
     }
 }

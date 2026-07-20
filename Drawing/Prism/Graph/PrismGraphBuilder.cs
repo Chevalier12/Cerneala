@@ -11,6 +11,22 @@ public sealed class PrismGraphBuilder
 {
     public PrismGraph Build(PrismFrameAnalysis analysis)
     {
+        return BuildCore(analysis, backdropFrame: null);
+    }
+
+    public PrismGraph Build(
+        PrismFrameAnalysis analysis,
+        in BackdropFrameMetadata backdropMetadata)
+    {
+        PrismBackdropFrameDescriptor backdropFrame =
+            PrismBackdropFramePolicy.Prepare(in backdropMetadata);
+        return BuildCore(analysis, backdropFrame);
+    }
+
+    private static PrismGraph BuildCore(
+        PrismFrameAnalysis analysis,
+        PrismBackdropFrameDescriptor? backdropFrame)
+    {
         ArgumentNullException.ThrowIfNull(analysis);
         EnsureCurrent(analysis);
 
@@ -24,7 +40,12 @@ public sealed class PrismGraphBuilder
 
         foreach (PrismAnalyzedScope analyzedScope in analysis.Scopes)
         {
-            ScopeBuilder scopeBuilder = new(analyzedScope, nodes, edges, nodeIds);
+            ScopeBuilder scopeBuilder = new(
+                analyzedScope,
+                backdropFrame,
+                nodes,
+                edges,
+                nodeIds);
             scopes.Add(scopeBuilder.Build());
         }
 
@@ -71,6 +92,7 @@ public sealed class PrismGraphBuilder
         private readonly PrismAnalyzedScope analyzedScope;
         private readonly PrismCompositionDefinition definition;
         private readonly PrismInstance instance;
+        private readonly PrismBackdropFrameDescriptor? backdropFrame;
         private readonly ImmutableArray<PrismGraphNode>.Builder nodes;
         private readonly ImmutableArray<PrismGraphEdge>.Builder edges;
         private readonly HashSet<PrismGraphNodeId> nodeIds;
@@ -81,6 +103,7 @@ public sealed class PrismGraphBuilder
 
         public ScopeBuilder(
             PrismAnalyzedScope analyzedScope,
+            PrismBackdropFrameDescriptor? backdropFrame,
             ImmutableArray<PrismGraphNode>.Builder nodes,
             ImmutableArray<PrismGraphEdge>.Builder edges,
             HashSet<PrismGraphNodeId> nodeIds)
@@ -88,6 +111,7 @@ public sealed class PrismGraphBuilder
             this.analyzedScope = analyzedScope;
             definition = analyzedScope.Scope.Definition;
             instance = analyzedScope.Scope.Instance;
+            this.backdropFrame = backdropFrame;
             this.nodes = nodes;
             this.edges = edges;
             this.nodeIds = nodeIds;
@@ -522,21 +546,52 @@ public sealed class PrismGraphBuilder
                 ordinal: 0,
                 definitionOrders[backdropDefinition.Id],
                 diagnosticNames[backdropDefinition.Id],
-                Dependencies());
+                backdropFrame is PrismBackdropFrameDescriptor frame
+                    ? Dependencies(frame.Dependency)
+                    : Dependencies());
+            DrawRect? sourceBounds =
+                backdropFrame is PrismBackdropFrameDescriptor cropFrame
+                    ? PrismBackdropFramePolicy.CalculateSourceBounds(
+                        in cropFrame,
+                        analyzedScope.Bounds)
+                    : null;
+            PrismGraphNode crop = AddNode(
+                PrismGraphNodeKind.BackdropCrop,
+                backdropDefinition.Id,
+                ordinal: 0,
+                definitionOrders[backdropDefinition.Id],
+                $"{diagnosticNames[backdropDefinition.Id]}/crop",
+                Dependencies(
+                    new PrismGraphDependency(
+                        PrismGraphDependencyKind.Bounds,
+                        analyzedScope.DependencyStamp.CacheOwnerToken.Value,
+                        StableBoundsHash(analyzedScope.Bounds))),
+                backdropSourceBounds: sourceBounds);
+            AddEdge(input.Id, crop.Id, PrismGraphEdgeKind.Backdrop);
             PrismColorProfile colorProfile = instance.Composition.WorkingColorProfile;
+            PrismGraphDependency targetProfileDependency = new(
+                PrismGraphDependencyKind.ColorProfile,
+                analyzedScope.DependencyStamp.CacheOwnerToken.Value,
+                (int)colorProfile);
+            ImmutableArray<PrismGraphDependency> conversionDependencies =
+                backdropFrame is PrismBackdropFrameDescriptor conversionFrame
+                    ? Dependencies(
+                        targetProfileDependency,
+                        new PrismGraphDependency(
+                            PrismGraphDependencyKind.ColorProfile,
+                            conversionFrame.DependencyKey,
+                            (int)conversionFrame.Metadata.ColorProfile))
+                    : Dependencies(targetProfileDependency);
             PrismGraphNode conversion = AddNode(
                 PrismGraphNodeKind.ColorConversion,
                 backdropDefinition.Id,
                 ordinal: 1,
                 definitionOrders[backdropDefinition.Id],
                 $"{diagnosticNames[backdropDefinition.Id]}/color",
-                Dependencies(
-                    new PrismGraphDependency(
-                        PrismGraphDependencyKind.ColorProfile,
-                        analyzedScope.DependencyStamp.CacheOwnerToken.Value,
-                        (int)colorProfile)),
-                colorProfile: colorProfile);
-            AddEdge(input.Id, conversion.Id, PrismGraphEdgeKind.Backdrop);
+                conversionDependencies,
+                colorProfile: colorProfile,
+                backdropMetadata: backdropFrame?.Metadata);
+            AddEdge(crop.Id, conversion.Id, PrismGraphEdgeKind.Backdrop);
 
             PrismGraphNodeId preparedContent = ApplyFilters(
                 backdropDefinition.Id,
@@ -929,7 +984,9 @@ public sealed class PrismGraphBuilder
             PrismResamplingPlan? resamplingPlan = null,
             int resamplingPassIndex = -1,
             PrismCatalogFilterPlan? catalogFilterPlan = null,
-            int catalogFilterPassIndex = -1)
+            int catalogFilterPassIndex = -1,
+            BackdropFrameMetadata? backdropMetadata = null,
+            DrawRect? backdropSourceBounds = null)
         {
             PrismGraphNodeId id = new(
                 analyzedScope.DependencyStamp.CacheOwnerToken,
@@ -970,7 +1027,9 @@ public sealed class PrismGraphBuilder
                 resamplingPlan,
                 resamplingPassIndex,
                 catalogFilterPlan,
-                catalogFilterPassIndex);
+                catalogFilterPassIndex,
+                backdropMetadata,
+                backdropSourceBounds);
             nodes.Add(node);
             return node;
         }

@@ -31,7 +31,7 @@ public sealed class MonoGameDrawingBackendStateTests
 
         for (int frame = 0; frame < 2; frame++)
         {
-            fixture.Session.GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.Black);
+            fixture.Session.BeginFrame(Cerneala.Drawing.Color.Black);
             RenderBackend(fixture.Session.DrawingBackend, commands);
             fixture.Session.Present();
         }

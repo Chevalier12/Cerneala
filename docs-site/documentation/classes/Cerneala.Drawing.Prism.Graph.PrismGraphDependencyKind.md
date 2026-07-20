@@ -28,9 +28,11 @@ static bool DependsOnPixels(PrismGraphNode node) =>
 
 Every emitted node carries the scope structure, value, and descendant stamps.
 Nodes add narrower dependencies for captured pixels, bounds, scale, effective
-transform, color profile, catalog entries, and resources when those inputs
-affect their output. `Bounds` tracks the already transformed logical rectangle;
-`Transform` independently tracks the matrix that produced it.
+transform, color profile, catalog entries, resources, and a borrowed backdrop
+frame when those inputs affect their output. `Bounds` tracks the already
+transformed logical rectangle; `Transform` independently tracks the matrix that
+produced it. Every backdrop input that borrows the same frame carries an equal
+`BackdropFrame` key and content version.
 
 ## Fields
 
@@ -46,6 +48,7 @@ affect their output. `Bounds` tracks the already transformed logical rectangle;
 | `ColorProfile` | Tracks the composition working color profile. |
 | `CatalogEntry` | Tracks the selected generated filter or style catalog entry. |
 | `Resource` | Tracks an image or catalog parameter resource identity. |
+| `BackdropFrame` | Tracks the shared borrowed backdrop raster contract and its `ContentVersion`. |
 
 ## Applies to
 
