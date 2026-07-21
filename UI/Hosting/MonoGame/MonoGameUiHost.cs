@@ -29,7 +29,12 @@ public sealed class MonoGameUiHost : IDisposable
         ContentServices = options.ContentServices ?? new MonoGameContentServices(
             textRasterizer: options.TextRasterizer,
             imageLoader: options.ImageLoader ?? new MonoGameImageLoader(spriteBatch.GraphicsDevice));
-        drawingBackend = new MonoGameDrawingBackend(spriteBatch, options.WhitePixel, ContentServices.TextRasterizer);
+        drawingBackend = new MonoGameDrawingBackend(
+            spriteBatch,
+            options.WhitePixel,
+            ContentServices.TextRasterizer,
+            options.PrismRendererOptions ??
+                new PrismRendererOptions());
         backend = new MonoGameUiBackend(
             InputSource,
             drawingBackend,
@@ -54,6 +59,9 @@ public sealed class MonoGameUiHost : IDisposable
     public UiRelay? Relay => host.Relay;
 
     public UiFrame? LastFrame => host.LastFrame;
+
+    public PrismRendererDiagnostics PrismDiagnostics =>
+        drawingBackend.RendererDiagnostics;
 
     internal BackdropFrameCounters BackdropFrameCounters =>
         host.BackdropFrameCounters;

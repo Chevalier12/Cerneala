@@ -259,7 +259,21 @@ internal sealed class WindowsDxWindowGraphicsSession :
         }
     }
 
-    public void RenderPng(Stream output, CernealaColor clearColor, Action<IDrawingBackend> draw)
+    public void RenderPng(
+        Stream output,
+        CernealaColor clearColor,
+        Action<IDrawingBackend> draw) =>
+        RenderPng(
+            output,
+            clearColor,
+            retainedCacheEnabled: true,
+            draw);
+
+    internal void RenderPng(
+        Stream output,
+        CernealaColor clearColor,
+        bool retainedCacheEnabled,
+        Action<IDrawingBackend> draw)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(output);
@@ -289,7 +303,12 @@ internal sealed class WindowsDxWindowGraphicsSession :
             0,
             RenderTargetUsage.PreserveContents);
         using SpriteBatch captureSpriteBatch = new(graphicsDevice);
-        using MonoGameDrawingBackend captureBackend = new(captureSpriteBatch, whitePixel, new SkiaTextRasterizer())
+        using MonoGameDrawingBackend captureBackend = new(
+            captureSpriteBatch,
+            whitePixel,
+            new SkiaTextRasterizer(),
+            new PrismRendererOptions(),
+            retainedCacheEnabled)
         {
             CoordinateScale = coordinateScale
         };

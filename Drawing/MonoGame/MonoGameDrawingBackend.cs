@@ -2,7 +2,9 @@ using System.Buffers;
 using System.Diagnostics;
 using Cerneala.Drawing.MonoGame.Prism.Execution;
 using Cerneala.Drawing.MonoGame.Prism.Kernels;
+using Cerneala.Drawing.MonoGame.Prism.Surfaces;
 using Cerneala.Drawing.Text;
+using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Hosting;
@@ -44,6 +46,8 @@ public sealed class MonoGameDrawingBackend :
     private readonly PrismGraphBuilder prismGraphBuilder = new();
     private readonly PrismGraphOptimizer prismGraphOptimizer = new();
     private readonly PrismExecutionDiagnostics prismDiagnostics = new();
+    private readonly PrismRendererOptions prismRendererOptions;
+    private readonly bool prismRetainedCacheEnabled;
     private BasicEffect? pathEffect;
     private PrismGraphExecutor? prismExecutor;
     private RasterizerState? pathRasterizerState;
@@ -68,9 +72,42 @@ public sealed class MonoGameDrawingBackend :
     private bool spriteBatchBegun;
 
     public MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer = null)
+        : this(
+            spriteBatch,
+            whitePixel,
+            textRasterizer,
+            new PrismRendererOptions())
+    {
+    }
+
+    public MonoGameDrawingBackend(
+        SpriteBatch spriteBatch,
+        Texture2D whitePixel,
+        SkiaTextRasterizer? textRasterizer,
+        PrismRendererOptions prismRendererOptions)
+        : this(
+            spriteBatch,
+            whitePixel,
+            textRasterizer,
+            prismRendererOptions,
+            retainedCacheEnabled: true)
+    {
+    }
+
+    internal MonoGameDrawingBackend(
+        SpriteBatch spriteBatch,
+        Texture2D whitePixel,
+        SkiaTextRasterizer? textRasterizer,
+        PrismRendererOptions prismRendererOptions,
+        bool retainedCacheEnabled)
     {
         _spriteBatch = spriteBatch ?? throw new ArgumentNullException(nameof(spriteBatch));
         _whitePixel = whitePixel ?? throw new ArgumentNullException(nameof(whitePixel));
+        this.prismRendererOptions = prismRendererOptions ??
+            throw new ArgumentNullException(
+                nameof(prismRendererOptions));
+        prismRetainedCacheEnabled = retainedCacheEnabled;
+        this.prismRendererOptions.Validate();
         ValidateGraphicsResources(_spriteBatch, _whitePixel, nameof(whitePixel));
         _textRasterizer = textRasterizer;
         scissorRasterizerState = ScissorRasterizerState;
@@ -99,6 +136,7 @@ public sealed class MonoGameDrawingBackend :
                 ClearTextTextureCaches();
                 ClearBrushTextureCache();
                 ClearPathMeshCache();
+                prismExecutor?.InvalidateAll();
             }
 
             coordinateScale = value;
@@ -113,6 +151,8 @@ public sealed class MonoGameDrawingBackend :
 
         GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice ??
             throw new InvalidOperationException("The SpriteBatch does not have a GraphicsDevice.");
+        ConsumePrismCacheInvalidations(
+            frameContext.PrismCacheInvalidations);
         MonoGameGraphicsDeviceStateSnapshot stateSnapshot = deviceStateSnapshot ??
             throw new InvalidOperationException("The backend graphics state snapshot is unavailable.");
         stateSnapshot.Capture(graphicsDevice);
@@ -161,7 +201,8 @@ public sealed class MonoGameDrawingBackend :
                     ? prismGraphBuilder.Build(frameContext.PrismAnalysis)
                     : prismGraphBuilder.Build(
                         frameContext.PrismAnalysis,
-                        backdropLease.Metadata);
+                        backdropLease.Metadata,
+                        frameContext.BackdropSourceToken);
                 PrismGraphExecutionPlan executionPlan =
                     prismGraphOptimizer.Optimize(graph);
                 if (TryEnsurePrismExecutor(graphicsDevice))
@@ -1984,8 +2025,31 @@ public sealed class MonoGameDrawingBackend :
                 graphicsDevice);
     }
 
+    public PrismRendererDiagnostics RendererDiagnostics =>
+        prismExecutor?.RendererDiagnostics ??
+        PrismRendererDiagnostics.Empty(
+            prismRetainedCacheEnabled);
+
     internal PrismExecutionDiagnostics PrismDiagnostics =>
         prismDiagnostics;
+
+    internal PrismRetainedSurfaceCache? PrismRetainedCacheForDiagnostics =>
+        prismExecutor?.RetainedSurfaceCache;
+
+    private void ConsumePrismCacheInvalidations(
+        PrismCacheInvalidationQueue? invalidations)
+    {
+        if (invalidations is null)
+        {
+            return;
+        }
+
+        while (invalidations.TryDequeue(
+            out PrismCacheInvalidation invalidation))
+        {
+            prismExecutor?.Invalidate(invalidation);
+        }
+    }
 
     private void OnDeviceReset(object? sender, EventArgs args)
     {
@@ -2006,7 +2070,9 @@ public sealed class MonoGameDrawingBackend :
         {
             prismExecutor = new PrismGraphExecutor(
                 graphicsDevice,
-                prismDiagnostics);
+                prismDiagnostics,
+                prismRendererOptions,
+                prismRetainedCacheEnabled);
             return true;
         }
         catch (PrismShaderUnavailableException exception)

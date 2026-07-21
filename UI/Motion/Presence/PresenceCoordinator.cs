@@ -62,6 +62,7 @@ public sealed class PresenceCoordinator
         }
 
         exitingChildren.Add(element);
+        element.SetRetainedVisualParent(owner);
         states[element] = PresenceState.Exiting;
         element.SetPresenceExiting(options.ExcludeInputWhileExiting);
 
@@ -97,6 +98,8 @@ public sealed class PresenceCoordinator
         }
 
         RemoveFromOwner(handle.Owner, element);
+        element.SetRetainedVisualParent(null);
+        handle.Owner.IncrementPrismDescendantVisualVersion();
         handle.Cancel();
         element.SetPresenceExiting(false);
         element.SetPresenceVisual(1, 1);
@@ -143,6 +146,8 @@ public sealed class PresenceCoordinator
         if (exits.Remove(element, out PresenceHandle? handle))
         {
             RemoveFromOwner(handle.Owner, element);
+            element.SetRetainedVisualParent(null);
+            handle.Owner.IncrementPrismDescendantVisualVersion();
             handle.Cancel();
         }
 
@@ -159,6 +164,8 @@ public sealed class PresenceCoordinator
         }
 
         RemoveFromOwner(handle.Owner, element);
+        element.SetRetainedVisualParent(null);
+        handle.Owner.IncrementPrismDescendantVisualVersion();
         element.SetPresenceExiting(false);
         element.SetPresenceVisual(1, 1);
         handle.RemoveElement(motion.Root);

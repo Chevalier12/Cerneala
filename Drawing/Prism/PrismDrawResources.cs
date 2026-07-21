@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Cerneala.UI.Prism.Definitions;
 
 namespace Cerneala.Drawing.Prism;
@@ -6,20 +5,25 @@ namespace Cerneala.Drawing.Prism;
 internal readonly record struct PrismDrawImageResource(
     PrismResourceId Id,
     IDrawImage Image,
-    long Version = 0);
+    long Version = 0,
+    long Identity = 0);
 
 internal sealed class PrismDrawResources
 {
     private readonly Dictionary<PrismResourceId, ResolvedImage> images;
 
     private PrismDrawResources(
-        Dictionary<PrismResourceId, ResolvedImage> images)
+        Dictionary<PrismResourceId, ResolvedImage> images,
+        bool hasStableVersions)
     {
         this.images = images;
+        HasStableVersions = hasStableVersions;
     }
 
     public static PrismDrawResources Empty { get; } =
-        new([]);
+        new([], hasStableVersions: true);
+
+    public bool HasStableVersions { get; }
 
     public static PrismDrawResources Create(
         IEnumerable<PrismDrawImageResource> resources)
@@ -29,18 +33,44 @@ internal sealed class PrismDrawResources
         foreach (PrismDrawImageResource resource in resources)
         {
             ArgumentNullException.ThrowIfNull(resource.Image);
-            long version = resource.Version > 0
-                ? resource.Version
-                : checked(
-                    (long)(uint)RuntimeHelpers.GetHashCode(
-                        resource.Image) + 1);
+            if (resource.Version < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(resources),
+                    resource.Version,
+                    "Prism resource versions cannot be negative.");
+            }
+            if (resource.Identity < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(resources),
+                    resource.Identity,
+                    "Prism resource identities cannot be negative.");
+            }
+
             images[resource.Id] =
-                new ResolvedImage(resource.Image, version);
+                new ResolvedImage(
+                    resource.Image,
+                    resource.Identity,
+                    resource.Version);
         }
 
-        return images.Count == 0
-            ? Empty
-            : new PrismDrawResources(images);
+        if (images.Count == 0)
+        {
+            return Empty;
+        }
+
+        bool hasStableVersions = true;
+        foreach (ResolvedImage image in images.Values)
+        {
+            if (image.Version <= 0)
+            {
+                hasStableVersions = false;
+                break;
+            }
+        }
+
+        return new PrismDrawResources(images, hasStableVersions);
     }
 
     public bool TryGetImage(
@@ -71,7 +101,25 @@ internal sealed class PrismDrawResources
         return false;
     }
 
+    public bool TryGetDependency(
+        PrismResourceId id,
+        out long identity,
+        out long version)
+    {
+        if (images.TryGetValue(id, out ResolvedImage resource))
+        {
+            identity = resource.Identity;
+            version = resource.Version;
+            return true;
+        }
+
+        identity = 0;
+        version = 0;
+        return false;
+    }
+
     private readonly record struct ResolvedImage(
         IDrawImage Image,
+        long Identity,
         long Version);
 }

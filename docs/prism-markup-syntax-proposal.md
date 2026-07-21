@@ -5,9 +5,10 @@
 This document remains the normative design proposal for Prism. The generated
 markup compiler, typed `PrismInstance` attachment, generated bindings, Motion
 targets, and effective-visibility lifecycle described in the relevant sections
-are implemented. Backend rendering, GPU composition, retained caching, and
-backdrop work not present in the repository remain design material rather than
-implemented claims.
+are implemented. The MonoGame retained GPU cache described below is implemented,
+measured, and exposed through code-only renderer options and diagnostics. Backend
+work not present in the repository remains design material rather than an
+implemented claim.
 
 The proposal deliberately describes the author-facing language before prescribing
 renderer or backend implementation details. Prism markup should be easy to read even
@@ -27,6 +28,14 @@ requires a separate design decision backed by a real use case.
 
 These scope limits change no markup grammar. Prism still has exactly the eight
 directives defined below, and filter/style types still use bare semantic identifiers.
+
+The implemented cache is configured only through `PrismRendererOptions`, either
+on `MonoGameDrawingBackend` or through `MonoGameUiHostOptions`. Its measured
+defaults are a 512 MiB hard limit for all Prism surfaces, a 256 MiB retained soft
+limit, and 256 retained entries. `PrismRendererDiagnostics` reports cache work and
+surface usage. The cache-off conformance path remains internal, so none of these
+implementation controls adds a directive, layer property, or alternate markup
+dialect.
 
 ## Foundation Rendering Contract
 

@@ -1,4 +1,5 @@
 using Cerneala.UI.Diagnostics;
+using Cerneala.Drawing.Prism;
 using Cerneala.UI.Accessibility;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Invalidation;
@@ -159,6 +160,9 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public UiRelay Relay { get; }
 
     public MotionSystem Motion { get; }
+
+    internal PrismCacheInvalidationQueue PrismCacheInvalidations { get; } =
+        new();
 
     public ThemeProvider? ThemeProvider => themeProvider;
 

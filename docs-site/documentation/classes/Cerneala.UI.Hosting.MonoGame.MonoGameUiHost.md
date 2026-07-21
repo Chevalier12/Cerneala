@@ -66,6 +66,11 @@ not require the source and consumer to share the same backend instance. This
 also keeps screenshot rendering through a temporary same-device backend on the
 same backdrop path as on-screen drawing.
 
+The host passes `MonoGameUiHostOptions.PrismRendererOptions` to its owned
+drawing backend. `PrismDiagnostics` returns that backend's immutable diagnostic
+snapshot, so applications can inspect hit, miss, promotion, eviction, memory,
+and saved-work counters without taking ownership of cache resources.
+
 ## Constructors
 
 | Name | Description |
@@ -81,6 +86,7 @@ same backdrop path as on-screen drawing.
 | `Root` | Gets the current UI root, if one is attached. |
 | `Relay` | Gets the current root's UI-thread Relay through the core host, or `null` while no root is attached. |
 | `LastFrame` | Gets the last frame produced by the core UI host. |
+| `PrismDiagnostics` | Gets an immutable snapshot of cumulative Prism retained-cache work and current surface usage from the owned drawing backend. |
 | `BackdropFrameSource` | Gets or replaces the optional caller-owned source used for backdrop-aware frames. Set `null` to disable backdrop acquisition. |
 
 ## Methods
@@ -101,6 +107,7 @@ same backdrop path as on-screen drawing.
 | Constructor | `ArgumentNullException` | `options`, `SpriteBatch`, or `WhitePixel` is `null`. |
 | Constructor | `ObjectDisposedException` | A configured graphics resource or its graphics device is disposed. |
 | Constructor | `ArgumentException` | `WhitePixel` belongs to a different graphics device than `SpriteBatch`. |
+| Constructor | `ArgumentOutOfRangeException` | A configured Prism byte or entry limit is negative, or its retained soft limit exceeds its hard limit. |
 | `BackdropFrameSource` setter | `ObjectDisposedException` | The host has already been disposed. |
 | `BackdropFrameSource` setter | `InvalidOperationException` | The candidate source cannot supply leases consumable by the host's live MonoGame drawing backend. The previous source remains configured. |
 
@@ -115,5 +122,7 @@ Cerneala MonoGame UI hosting.
 - `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend`
 - `Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease`
 - `Cerneala.Drawing.Prism.IBackdropFrameSource`
+- `Cerneala.Drawing.Prism.PrismRendererDiagnostics`
+- `Cerneala.Drawing.Prism.PrismRendererOptions`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices`
 - `Cerneala.UI.Relay.UiRelay`

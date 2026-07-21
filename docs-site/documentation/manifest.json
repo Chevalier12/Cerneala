@@ -335,14 +335,39 @@
     "source": "Drawing/Prism/IBackdropFrameSource.cs"
   },
   {
+    "name": "Cerneala.Drawing.Prism.PrismCacheEvictionReason",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismCacheEvictionReason.md",
+    "source": "Drawing/Prism/PrismRendererOptions.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PrismCacheMissReason",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismCacheMissReason.md",
+    "source": "Drawing/Prism/PrismRendererOptions.cs"
+  },
+  {
     "name": "Cerneala.Drawing.Prism.PrismCacheOwnerToken",
     "file": "documentation/classes/Cerneala.Drawing.Prism.PrismCacheOwnerToken.md",
     "source": "Drawing/Prism/PrismDrawScope.cs"
   },
   {
+    "name": "Cerneala.Drawing.Prism.PrismDependencyChange",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismDependencyChange.md",
+    "source": "Drawing/Prism/PrismRendererOptions.cs"
+  },
+  {
     "name": "Cerneala.Drawing.Prism.PrismDrawScope",
     "file": "documentation/classes/Cerneala.Drawing.Prism.PrismDrawScope.md",
     "source": "Drawing/Prism/PrismDrawScope.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PrismRendererDiagnostics",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismRendererDiagnostics.md",
+    "source": "Drawing/Prism/PrismRendererOptions.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PrismRendererOptions",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismRendererOptions.md",
+    "source": "Drawing/Prism/PrismRendererOptions.cs"
   },
   {
     "name": "Cerneala.Drawing.RadialGradientDrawBrushDescriptor",

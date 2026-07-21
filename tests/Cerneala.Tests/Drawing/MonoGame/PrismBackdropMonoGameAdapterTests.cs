@@ -926,7 +926,10 @@ public sealed class PrismBackdropMonoGameAdapterTests
         int hiddenFrames = 0;
         int pixelWidth = Width;
         int pixelHeight = Height;
-        int surfaceBudget = 0;
+        int freshPassBudget = 0;
+        int freshCaptureBudget = 0;
+        int transientSurfaceBudget = 0;
+        long surfaceCreationBudget = 0;
         List<WeakReference> replacedProviders = [];
 
         for (int iteration = 0; iteration < 16; iteration++)
@@ -988,14 +991,37 @@ public sealed class PrismBackdropMonoGameAdapterTests
             if (visible)
             {
                 visibleFrames++;
-                AssertResourceBudget(capture.Counters);
-                surfaceBudget = Math.Max(
-                    surfaceBudget,
-                    capture.Counters.PeakLiveSurfaceCount);
+                if (freshPassBudget == 0)
+                {
+                    AssertResourceBudget(capture.Counters);
+                    freshPassBudget =
+                        capture.Counters.PassCount;
+                    freshCaptureBudget =
+                        capture.Counters.CaptureCount;
+                    transientSurfaceBudget =
+                        capture.Counters.PeakLiveSurfaceCount;
+                    surfaceCreationBudget =
+                        capture.Counters.CreatedSurfaceCount;
+                }
+                Assert.InRange(
+                    capture.Counters.PassCount,
+                    1,
+                    freshPassBudget);
+                Assert.InRange(
+                    capture.Counters.CaptureCount,
+                    0,
+                    freshCaptureBudget);
+                Assert.InRange(
+                    capture.Counters.PeakLiveSurfaceCount,
+                    0,
+                    transientSurfaceBudget);
                 Assert.InRange(
                     capture.Counters.CreatedSurfaceCount,
                     0,
-                    surfaceBudget);
+                    surfaceCreationBudget);
+                Assert.Equal(
+                    0,
+                    capture.Counters.FallbackCount);
             }
             else
             {
@@ -1028,7 +1054,10 @@ public sealed class PrismBackdropMonoGameAdapterTests
         Assert.Equal(
             0,
             host.BackdropFrameCounters.FailedFrames);
-        Assert.True(surfaceBudget > 0);
+        Assert.True(freshPassBudget > 0);
+        Assert.True(freshCaptureBudget > 0);
+        Assert.True(transientSurfaceBudget > 0);
+        Assert.True(surfaceCreationBudget > 0);
 
         return new LifecycleReferences(
             sessionReference,

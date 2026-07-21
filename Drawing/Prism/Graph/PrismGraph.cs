@@ -197,6 +197,8 @@ public readonly record struct PrismGraphScope
         DrawRect controlBounds,
         Matrix3x2 effectiveTransform,
         float pixelScale,
+        PrismDependencyStamp dependencyStamp,
+        long lowerUiVersion,
         PrismDrawResources resources,
         PrismGraphNodeId? output)
     {
@@ -248,6 +250,19 @@ public readonly record struct PrismGraphScope
                 nameof(effectiveTransform),
                 "A graph scope requires a finite effective transform.");
         }
+        if (dependencyStamp.CacheOwnerToken != cacheOwnerToken)
+        {
+            throw new ArgumentException(
+                "A graph scope dependency stamp must belong to the same cache owner.",
+                nameof(dependencyStamp));
+        }
+        if (lowerUiVersion < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(lowerUiVersion),
+                lowerUiVersion,
+                "A graph scope lower UI version cannot be negative.");
+        }
         if (output is PrismGraphNodeId outputId &&
             outputId.ScopeOwnerToken != cacheOwnerToken)
         {
@@ -267,6 +282,8 @@ public readonly record struct PrismGraphScope
         ControlBounds = controlBounds;
         EffectiveTransform = effectiveTransform;
         PixelScale = pixelScale;
+        DependencyStamp = dependencyStamp;
+        LowerUiVersion = lowerUiVersion;
         Resources =
             resources ??
             throw new ArgumentNullException(nameof(resources));
@@ -294,6 +311,10 @@ public readonly record struct PrismGraphScope
     public Matrix3x2 EffectiveTransform { get; }
 
     public float PixelScale { get; }
+
+    internal PrismDependencyStamp DependencyStamp { get; }
+
+    internal long LowerUiVersion { get; }
 
     internal PrismDrawResources Resources { get; }
 

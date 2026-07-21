@@ -22,6 +22,8 @@ public sealed class UiHost
     private readonly CursorService cursorService = new();
     private readonly PrismFrameAnalyzer prismFrameAnalyzer = new();
     private readonly BackdropFrameCounters backdropFrameCounters = new();
+    private WeakReference<IBackdropFrameSource>? identifiedBackdropSource;
+    private PrismBackdropSourceToken backdropSourceToken;
 
     public UiHost(UiHostOptions? options = null)
     {
@@ -74,6 +76,10 @@ public sealed class UiHost
         ArgumentNullException.ThrowIfNull(newRoot);
         root?.Relay.VerifyAccess();
         newRoot.Relay.VerifyAccess();
+        if (!ReferenceEquals(root, newRoot))
+        {
+            newRoot.PrismCacheInvalidations.EnqueueAll();
+        }
         root = newRoot;
         needsInitialFrame = true;
         root.SetPlatformServices(platformServices);
@@ -228,7 +234,14 @@ public sealed class UiHost
             backdropFrameSource);
         try
         {
-            DrawingFrameContext frameContext = new(analysis, lease);
+            PrismBackdropSourceToken sourceToken = lease is null
+                ? default
+                : GetBackdropSourceToken(backdropFrameSource!);
+            DrawingFrameContext frameContext = new(
+                analysis,
+                lease,
+                sourceToken,
+                currentRoot.PrismCacheInvalidations);
             currentRoot.RetainedRenderer.Submit(
                 currentRoot,
                 drawingBackend,
@@ -238,6 +251,24 @@ public sealed class UiHost
         {
             lease?.Dispose();
         }
+    }
+
+    private PrismBackdropSourceToken GetBackdropSourceToken(
+        IBackdropFrameSource source)
+    {
+        if (identifiedBackdropSource is not null &&
+            identifiedBackdropSource.TryGetTarget(
+                out IBackdropFrameSource? current) &&
+            ReferenceEquals(current, source))
+        {
+            return backdropSourceToken;
+        }
+
+        identifiedBackdropSource =
+            new WeakReference<IBackdropFrameSource>(source);
+        backdropSourceToken =
+            PrismBackdropSourceToken.CreateUnique();
+        return backdropSourceToken;
     }
 
     private IBackdropFrameLease? AcquireBackdropFrame(

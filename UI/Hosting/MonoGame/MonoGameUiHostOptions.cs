@@ -33,6 +33,8 @@ public sealed class MonoGameUiHostOptions
 
     public IBackdropFrameSource? BackdropFrameSource { get; init; }
 
+    public PrismRendererOptions? PrismRendererOptions { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(SpriteBatch);
@@ -41,5 +43,6 @@ public sealed class MonoGameUiHostOptions
             SpriteBatch,
             WhitePixel,
             nameof(WhitePixel));
+        PrismRendererOptions?.Validate();
     }
 }

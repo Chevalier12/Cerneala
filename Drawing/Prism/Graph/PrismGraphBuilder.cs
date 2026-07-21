@@ -18,8 +18,21 @@ public sealed class PrismGraphBuilder
         PrismFrameAnalysis analysis,
         in BackdropFrameMetadata backdropMetadata)
     {
+        return Build(
+            analysis,
+            in backdropMetadata,
+            default);
+    }
+
+    internal PrismGraph Build(
+        PrismFrameAnalysis analysis,
+        in BackdropFrameMetadata backdropMetadata,
+        PrismBackdropSourceToken sourceToken)
+    {
         PrismBackdropFrameDescriptor backdropFrame =
-            PrismBackdropFramePolicy.Prepare(in backdropMetadata);
+            PrismBackdropFramePolicy.Prepare(
+                in backdropMetadata,
+                sourceToken);
         return BuildCore(analysis, backdropFrame);
     }
 
@@ -137,6 +150,8 @@ public sealed class PrismGraphBuilder
                     analyzedScope.Scope.ControlBounds,
                     analyzedScope.Scope.EffectiveTransform,
                     analyzedScope.Scope.PixelScale,
+                    analyzedScope.DependencyStamp,
+                    analyzedScope.Scope.LowerUiVersion,
                     analyzedScope.Scope.Resources,
                     null);
             }
@@ -197,6 +212,8 @@ public sealed class PrismGraphBuilder
                 analyzedScope.Scope.ControlBounds,
                 analyzedScope.Scope.EffectiveTransform,
                 analyzedScope.Scope.PixelScale,
+                analyzedScope.DependencyStamp,
+                analyzedScope.Scope.LowerUiVersion,
                 analyzedScope.Scope.Resources,
                 output);
         }
@@ -547,7 +564,9 @@ public sealed class PrismGraphBuilder
                 definitionOrders[backdropDefinition.Id],
                 diagnosticNames[backdropDefinition.Id],
                 backdropFrame is PrismBackdropFrameDescriptor frame
-                    ? Dependencies(frame.Dependency)
+                    ? Dependencies(
+                        frame.CreateDependency(
+                            analyzedScope.Scope.LowerUiVersion))
                     : Dependencies());
             DrawRect? sourceBounds =
                 backdropFrame is PrismBackdropFrameDescriptor cropFrame
@@ -579,7 +598,7 @@ public sealed class PrismGraphBuilder
                         targetProfileDependency,
                         new PrismGraphDependency(
                             PrismGraphDependencyKind.ColorProfile,
-                            conversionFrame.DependencyKey,
+                            conversionFrame.SourceIdentity,
                             (int)conversionFrame.Metadata.ColorProfile))
                     : Dependencies(targetProfileDependency);
             PrismGraphNode conversion = AddNode(
@@ -897,14 +916,7 @@ public sealed class PrismGraphBuilder
                 definitionOrders[definitionNode.Id],
                 $"{diagnosticNames[definitionNode.Id]}/mask",
                 Dependencies(
-                    new PrismGraphDependency(
-                        PrismGraphDependencyKind.Resource,
-                        definitionNode.Id.Value,
-                        analyzedScope.Scope.Resources.TryGetVersion(
-                            state.Image,
-                            out long resourceVersion)
-                            ? resourceVersion
-                            : 0)),
+                    ResourceDependency(state.Image)),
                 resource: state.Image,
                 maskChannel: state.Channel,
                 feather: state.Feather,
@@ -1122,17 +1134,30 @@ public sealed class PrismGraphBuilder
                     parameter.ResourceValue.Value > 0)
                 {
                     additional.Add(
-                        new PrismGraphDependency(
-                            PrismGraphDependencyKind.Resource,
-                            ((long)stableId << 32) | (uint)parameter.Index,
-                            analyzedScope.Scope.Resources.TryGetVersion(
-                                parameter.ResourceValue,
-                                out long resourceVersion)
-                                ? resourceVersion
-                                : 0));
+                        ResourceDependency(parameter.ResourceValue));
                 }
             }
             return Dependencies(additional.ToArray());
+        }
+
+        private PrismGraphDependency ResourceDependency(
+            PrismResourceId resourceId)
+        {
+            if (analyzedScope.Scope.Resources.TryGetDependency(
+                    resourceId,
+                    out long identity,
+                    out long version))
+            {
+                return new PrismGraphDependency(
+                    PrismGraphDependencyKind.Resource,
+                    identity,
+                    version);
+            }
+
+            return new PrismGraphDependency(
+                PrismGraphDependencyKind.Resource,
+                0,
+                0);
         }
 
         private ImmutableArray<PrismGraphDependency> CreateScopeDependencies()

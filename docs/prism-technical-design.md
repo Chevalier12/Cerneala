@@ -5,9 +5,9 @@
 Acest document descrie arhitectura tehnică necesară pentru implementarea Prism în
 Cerneala. Compilatorul de markup, lifecycle-ul, graful de compoziție, executorul
 MonoGame și pipeline-urile de culoare, blending, măști și layer styles sunt
-implementate. Secțiunile despre cache-ul retained cross-frame, catalogul complet
-de filtre și backdrop rămân design până când componentele respective există în
-repository.
+implementate. Cache-ul retained GPU cross-frame descris mai jos este, de asemenea,
+implementat și măsurat. Formulările anticipative despre alte componente rămân
+design acolo unde secțiunea lor nu indică explicit contrariul.
 
 Contractul de markup și modelul mental sunt definite în
 [`prism-markup-syntax-proposal.md`](prism-markup-syntax-proposal.md). Catalogul
@@ -1237,6 +1237,40 @@ hit-rate, fără depășirea hard cap-ului.
 Nu se introduce o abstracție generică de cache, task graph sau fences. Cache-ul este
 specializat pentru suprafețe GPU Prism și respectă modelul sincron al backend-ului
 MonoGame actual.
+
+### Implementare și bugete confirmate
+
+Implementarea MonoGame separă `PrismRetainedSurfaceCache` de `PrismSurfacePool` și
+folosește un accountant comun pentru suprafețele transient și retained. Configurația
+publică este `PrismRendererOptions`, transmisă direct constructorului
+`MonoGameDrawingBackend` sau prin `MonoGameUiHostOptions.PrismRendererOptions`.
+Valorile implicite măsurate sunt:
+
+- 512 MiB pentru `SurfaceHardByteLimit`, aplicat tuturor suprafețelor Prism;
+- 256 MiB pentru `RetainedCacheSoftByteLimit`;
+- 256 pentru `RetainedCacheEntryLimit`;
+- dependency-diff diagnostics oprite implicit.
+
+Limitele rămân configurabile și sunt validate înainte de crearea executorului.
+Limita retained sau limita de intrări setată la zero împiedică promovarea. Modul
+cache-off există numai intern pentru conformance, diagnostics și benchmark; nu
+adaugă directivă, proprietate de layer sau dialect markup.
+
+`PrismRendererDiagnostics` expune snapshot-uri immutable cu hit-uri finale și
+intermediare, miss/promotion/eviction și motivele lor, bytes și intrări curente,
+peak bytes, intrări pin-uite și capturi/passes economisite. Clasificarea diferenței
+de dependency stamp este calculată numai când development diagnostics sunt pornite;
+calea implicită nu construiește diff-uri și nu alocă pentru ele per frame.
+
+Benchmark-ul Release WindowsDX a fost rulat de trei ori pe NVIDIA RTX 2000 Ada,
+la 256 x 144, cu 96 de frame-uri măsurate după warmup. Medianele CPU submit au
+scăzut cu 70,0% pentru controlul static, 74,4% pentru backdrop-ul static și 80,9%
+pentru 24 de instanțe comune, toate cu `0 B` managed pe hit după warmup. Scenele
+dinamice fără hit au avut overhead măsurat între 15,9% și 56,9%, iar churn-ul
+intenționat cu patru intrări a adăugat 26,170 microsecunde per frame, menținând
+patru intrări și eviction LRU determinist. Setup-ul, contoarele și raționamentul
+bugetelor sunt în
+[`2026-07-21-prism-retained-cache.md`](../benchmarks/Cerneala.Benchmarks/results/2026-07-21-prism-retained-cache.md).
 
 ## Bounds și clipping
 

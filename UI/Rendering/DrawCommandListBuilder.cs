@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
@@ -23,21 +22,30 @@ public sealed class DrawCommandListBuilder
 
         DrawCommandList rootCommands = renderCache.RootCommands;
         rootCommands.Clear();
-        _ = AppendElement(root, renderCache, counters, rootCommands, Matrix3x2.Identity, 1);
+        long lowerUiVersion = 17;
+        AppendElement(
+            root,
+            renderCache,
+            counters,
+            rootCommands,
+            Matrix3x2.Identity,
+            1,
+            ref lowerUiVersion);
         renderCache.MarkRootBuilt();
     }
 
-    private static long AppendElement(
+    private static void AppendElement(
         UIElement element,
         RetainedRenderCache renderCache,
         RenderCounters counters,
         DrawCommandList rootCommands,
         Matrix3x2 ancestorTransform,
-        float ancestorOpacity)
+        float ancestorOpacity,
+        ref long lowerUiVersion)
     {
         if (!UIElementVisibility.ParticipatesInRendering(element))
         {
-            return 0;
+            return;
         }
 
         Matrix3x2 elementTransform = Matrix3x2.Multiply(
@@ -46,7 +54,7 @@ public sealed class DrawCommandListBuilder
         float elementOpacity = ancestorOpacity * element.Opacity * element.PresenceOpacity;
         if (elementOpacity <= 0)
         {
-            return 0;
+            return;
         }
 
         counters.CountComposedElement();
@@ -61,6 +69,7 @@ public sealed class DrawCommandListBuilder
             element,
             out PrismInstance? prismInstance,
             out PrismCacheOwnerToken cacheOwnerToken);
+        long prismLowerUiVersion = lowerUiVersion;
         int prismBeginIndex = -1;
         if (hasPrism)
         {
@@ -71,13 +80,17 @@ public sealed class DrawCommandListBuilder
                 cacheOwnerToken,
                 elementTransform,
                 visualContentVersion: 0,
+                prismLowerUiVersion,
                 PrismDrawResources.Empty)));
             counters.CountEmittedCommands(1);
         }
 
-        long visualSignature = MixVisualVersion(
-            MixVisualVersion(17, element.RenderVersion),
-            element.RenderScopeVersion);
+        lowerUiVersion = MixVisualVersion(
+            lowerUiVersion,
+            element.PrismVisualNodeId);
+        lowerUiVersion = MixVisualVersion(
+            lowerUiVersion,
+            element.PrismLocalVisualVersion);
         ElementRenderCache localCache = renderCache.GetElementCache(element);
         DrawCommandList localCommands = GetLocalCommands(element, localCache, out float offsetX, out float offsetY);
         for (int index = 0; index < localCommands.Count; index++)
@@ -94,17 +107,14 @@ public sealed class DrawCommandListBuilder
         UIElementCollection visualChildren = element.VisualChildren;
         for (int index = 0; index < visualChildren.Count; index++)
         {
-            long childVersion = AppendElement(
+            AppendElement(
                 visualChildren[index],
                 renderCache,
                 counters,
                 rootCommands,
                 elementTransform,
-                elementOpacity);
-            if (childVersion != 0)
-            {
-                visualSignature = MixVisualVersion(visualSignature, childVersion);
-            }
+                elementOpacity,
+                ref lowerUiVersion);
         }
 
         if (element.Root is UIRoot root)
@@ -113,23 +123,18 @@ public sealed class DrawCommandListBuilder
                 root.Motion.Presence.GetExitingVisualChildren(element);
             for (int index = 0; index < exitingChildren.Count; index++)
             {
-                long childVersion = AppendElement(
+                AppendElement(
                     exitingChildren[index],
                     renderCache,
                     counters,
                     rootCommands,
                     elementTransform,
-                    elementOpacity);
-                if (childVersion != 0)
-                {
-                    visualSignature = MixVisualVersion(visualSignature, childVersion);
-                }
+                    elementOpacity,
+                    ref lowerUiVersion);
             }
         }
 
-        long visualContentVersion = renderCache.GetVisualContentVersion(
-            element,
-            visualSignature);
+        long visualContentVersion = element.PrismVisualVersion;
         if (hasPrism)
         {
             PrismDrawScope scope = CreatePrismScope(
@@ -138,12 +143,22 @@ public sealed class DrawCommandListBuilder
                 cacheOwnerToken,
                 elementTransform,
                 visualContentVersion,
+                prismLowerUiVersion,
                 ResolvePrismResources(
                     element,
                     prismInstance!));
             rootCommands.ReplaceAt(prismBeginIndex, DrawCommand.BeginPrism(scope));
             rootCommands.Add(DrawCommand.EndPrism());
             counters.CountEmittedCommands(1);
+            lowerUiVersion = MixVisualVersion(
+                lowerUiVersion,
+                cacheOwnerToken.Value);
+            lowerUiVersion = MixVisualVersion(
+                lowerUiVersion,
+                prismInstance!.StructuralVersion.Value);
+            lowerUiVersion = MixVisualVersion(
+                lowerUiVersion,
+                prismInstance.ValueVersion.Value);
         }
 
         if (hasClip)
@@ -151,19 +166,6 @@ public sealed class DrawCommandListBuilder
             rootCommands.Add(DrawCommand.PopClip());
             counters.CountEmittedCommands(1);
         }
-
-        if (!hasPrism)
-        {
-            return visualContentVersion;
-        }
-
-        long composedVersion = MixVisualVersion(
-            visualContentVersion,
-            cacheOwnerToken.Value);
-        composedVersion = MixVisualVersion(
-            composedVersion,
-            prismInstance!.StructuralVersion.Value);
-        return MixVisualVersion(composedVersion, prismInstance.ValueVersion.Value);
     }
 
     private static PrismDrawScope CreatePrismScope(
@@ -172,6 +174,7 @@ public sealed class DrawCommandListBuilder
         PrismCacheOwnerToken cacheOwnerToken,
         Matrix3x2 effectiveTransform,
         long visualContentVersion,
+        long lowerUiVersion,
         PrismDrawResources resources)
     {
         float pixelScale = element is UIRoot root
@@ -184,7 +187,8 @@ public sealed class DrawCommandListBuilder
             ToNumerics(effectiveTransform),
             pixelScale,
             visualContentVersion,
-            resources);
+            resources,
+            lowerUiVersion);
     }
 
     private static PrismDrawResources ResolvePrismResources(
@@ -294,17 +298,12 @@ public sealed class DrawCommandListBuilder
                     element.Root?.ResourceDependencyTracker
                         .GetResourceVersion(
                             new ResourceId<ImageResource>(key)) ?? 0;
-                if (version <= 0)
-                {
-                    version = checked(
-                        (long)(uint)RuntimeHelpers.GetHashCode(
-                            image) + 1);
-                }
                 resources.Add(
                     new PrismDrawImageResource(
                         id,
                         image,
-                        version));
+                        version,
+                        resource.RetainedIdentity));
             }
         }
     }

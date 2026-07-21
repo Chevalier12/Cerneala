@@ -82,8 +82,16 @@ at runtime or use the application's `ContentManager`. Missing non-fundamental
 filter and style kernels follow the explicit Prism fallback policy. If the
 fundamental shader resource cannot be loaded, the backend renders the raw
 commands between the Prism delimiters instead of silently substituting another
-effect. Transient Prism surfaces are evicted on device reset and backend
-disposal.
+effect.
+
+Completed Prism captures, intermediate passes, and final compositions can be
+retained as backend-owned GPU surfaces across frames. Lookup uses the complete
+pixel dependency key, and retained entries are bounded by the configured byte
+and entry limits. The cache is cleared or selectively invalidated when its
+owner, resources, raster context, shader package, device, or backend lifetime
+changes. `RendererDiagnostics` exposes an immutable snapshot of this work.
+Both transient and retained Prism surfaces are released on device reset and
+backend disposal.
 
 When Prism renders into an offscreen host target, that target must use
 `RenderTargetUsage.PreserveContents` if pixels written before `Render` must
@@ -135,12 +143,14 @@ throws `InvalidOperationException`.
 | Name | Description |
 | --- | --- |
 | `MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer = null)` | Initializes a backend that borrows `spriteBatch`, its graphics device, and `whitePixel`, and optionally rasterizes text with `textRasterizer`. The resources remain caller-owned and must use the same graphics device. |
+| `MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer, PrismRendererOptions prismRendererOptions)` | Initializes a backend with explicit Prism surface budgets and development-diagnostic behavior. The options are validated before backend resources are created. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `CoordinateScale` | `float` | Gets or sets the logical-to-physical coordinate scale used by the backend. The default is `1`. The setter validates the value with `UiCoordinateMapper.ValidateScale`. |
+| `RendererDiagnostics` | `PrismRendererDiagnostics` | Gets an immutable snapshot of cumulative Prism cache work and current surface usage. Before the first Prism frame, the snapshot contains zero counters. |
 | `ScissorRasterizerState` | `RasterizerState` | Creates a caller-owned rasterizer state with `ScissorTestEnable` set to `true`. `Render` uses its own internal state, so callers do not need this property for backend rendering. |
 
 ## Methods
@@ -170,9 +180,10 @@ throws `InvalidOperationException`.
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| Constructor | `ArgumentNullException` | `spriteBatch` or `whitePixel` is `null`. |
+| Constructor | `ArgumentNullException` | `spriteBatch`, `whitePixel`, or the explicit `prismRendererOptions` is `null`. |
 | Constructor | `ObjectDisposedException` | `spriteBatch`, `whitePixel`, or their graphics device is disposed. |
 | Constructor | `ArgumentException` | `whitePixel` belongs to a different graphics device than `spriteBatch`. |
+| Constructor | `ArgumentOutOfRangeException` | A Prism byte or entry limit is negative, or the retained soft byte limit exceeds the surface hard byte limit. |
 | `CoordinateScale` | `ArgumentOutOfRangeException` | The assigned scale is not finite or is less than or equal to zero. |
 | `Render` | `ArgumentNullException` | `commands` is `null`. |
 | `Render` | `InvalidOperationException` | `frameContext` is uninitialized or its analysis does not match the command list and current Prism scope versions. |
@@ -192,4 +203,6 @@ Cerneala MonoGame drawing integration.
 - `Cerneala.Drawing.DrawCommand`
 - `Cerneala.Drawing.DrawingFrameContext`
 - `Cerneala.Drawing.MonoGame.MonoGameImage`
+- `Cerneala.Drawing.Prism.PrismRendererOptions`
+- `Cerneala.Drawing.Prism.PrismRendererDiagnostics`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost`

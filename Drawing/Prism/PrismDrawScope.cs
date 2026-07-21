@@ -49,7 +49,8 @@ public readonly record struct PrismDrawScope
         Matrix3x2 effectiveTransform,
         float pixelScale,
         long visualContentVersion,
-        PrismDrawResources resources)
+        PrismDrawResources resources,
+        long lowerUiVersion = 0)
     {
         Instance = instance ?? throw new ArgumentNullException(nameof(instance));
         ArgumentNullException.ThrowIfNull(resources);
@@ -67,12 +68,20 @@ public readonly record struct PrismDrawScope
                 visualContentVersion,
                 "Prism visual content versions cannot be negative.");
         }
+        if (lowerUiVersion < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(lowerUiVersion),
+                lowerUiVersion,
+                "Prism lower UI versions cannot be negative.");
+        }
 
         CacheOwnerToken = cacheOwnerToken;
         ControlBounds = controlBounds;
         EffectiveTransform = effectiveTransform;
         PixelScale = pixelScale;
         VisualContentVersion = visualContentVersion;
+        LowerUiVersion = lowerUiVersion;
         Resources = resources;
     }
 
@@ -93,6 +102,8 @@ public readonly record struct PrismDrawScope
     public PrismValueVersion ValueVersion => Instance.ValueVersion;
 
     public long VisualContentVersion { get; }
+
+    internal long LowerUiVersion { get; }
 
     internal PrismDrawResources Resources { get; }
 }

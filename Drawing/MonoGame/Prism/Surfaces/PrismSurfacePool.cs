@@ -6,7 +6,9 @@ namespace Cerneala.Drawing.MonoGame.Prism.Surfaces;
 internal sealed class PrismSurfacePool : IDisposable
 {
     private readonly GraphicsDevice graphicsDevice;
+    private readonly PrismSurfaceMemoryAccountant accountant;
     private readonly List<SurfaceEntry> available = [];
+    private PrismRetainedSurfaceCache? retainedCache;
     private SurfaceEntry?[] frameEntries = [];
     private PrismGraphExecutionPlan? framePlan;
     private long frameGeneration;
@@ -15,6 +17,15 @@ internal sealed class PrismSurfacePool : IDisposable
     private bool disposed;
 
     public PrismSurfacePool(GraphicsDevice graphicsDevice)
+        : this(
+            graphicsDevice,
+            PrismSurfaceBudget.Unbounded)
+    {
+    }
+
+    internal PrismSurfacePool(
+        GraphicsDevice graphicsDevice,
+        PrismSurfaceBudget budget)
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
         if (graphicsDevice.IsDisposed)
@@ -23,6 +34,8 @@ internal sealed class PrismSurfacePool : IDisposable
         }
 
         this.graphicsDevice = graphicsDevice;
+        accountant =
+            new PrismSurfaceMemoryAccountant(budget);
         graphicsDevice.DeviceResetting += OnDeviceResetting;
     }
 
@@ -35,6 +48,15 @@ internal sealed class PrismSurfacePool : IDisposable
 
     public int PeakActiveLeaseCount { get; private set; }
 
+    public long TransientByteCount =>
+        accountant.TransientByteCount;
+
+    public long TotalByteCount =>
+        accountant.TotalByteCount;
+
+    public long PeakTotalByteCount =>
+        accountant.PeakTotalByteCount;
+
     public long CreatedSurfaceCount { get; private set; }
 
     public long ReusedSurfaceCount { get; private set; }
@@ -43,8 +65,12 @@ internal sealed class PrismSurfacePool : IDisposable
 
     public long PromotedSurfaceCount { get; private set; }
 
+    internal PrismSurfaceMemoryAccountant MemoryAccountant =>
+        accountant;
+
     public PrismSurfaceFrame BeginFrame(PrismGraphExecutionPlan plan)
     {
+        accountant.VerifyAccess();
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(plan);
         if (framePlan is not null)
@@ -59,7 +85,6 @@ internal sealed class PrismSurfacePool : IDisposable
         }
 
         retentionLimit = plan.PeakLiveSurfaces;
-        TrimAvailableToLimit();
         available.EnsureCapacity(retentionLimit);
 
         if (frameEntries.Length < plan.ExecutionOrder.Length)
@@ -79,8 +104,9 @@ internal sealed class PrismSurfacePool : IDisposable
 
     public void Reset()
     {
+        accountant.VerifyAccess();
         ThrowIfDisposed();
-        ResetCore();
+        ResetCore(poolDisposing: false);
     }
 
     public void Dispose()
@@ -90,9 +116,35 @@ internal sealed class PrismSurfacePool : IDisposable
             return;
         }
 
+        accountant.VerifyAccess();
         graphicsDevice.DeviceResetting -= OnDeviceResetting;
-        ResetCore();
+        ResetCore(poolDisposing: true);
         disposed = true;
+    }
+
+    internal void AttachRetainedCache(
+        PrismRetainedSurfaceCache cache)
+    {
+        accountant.VerifyAccess();
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(cache);
+        if (retainedCache is not null)
+        {
+            throw new InvalidOperationException(
+                "A Prism surface pool already has a retained cache.");
+        }
+
+        retainedCache = cache;
+    }
+
+    internal void DetachRetainedCache(
+        PrismRetainedSurfaceCache cache)
+    {
+        accountant.VerifyAccess();
+        if (ReferenceEquals(retainedCache, cache))
+        {
+            retainedCache = null;
+        }
     }
 
     internal void AdvanceToStep(
@@ -100,12 +152,33 @@ internal sealed class PrismSurfacePool : IDisposable
         int step,
         ReadOnlySpan<PrismSurfaceKey> surfaceKeys)
     {
+        AdvanceToStep(
+            generation,
+            step,
+            surfaceKeys,
+            requiredSurfaces: default);
+    }
+
+    internal void AdvanceToStep(
+        long generation,
+        int step,
+        ReadOnlySpan<PrismSurfaceKey> surfaceKeys,
+        ReadOnlySpan<bool> requiredSurfaces)
+    {
+        accountant.VerifyAccess();
         PrismGraphExecutionPlan plan = GetActivePlan(generation);
         if (surfaceKeys.Length != plan.ExecutionOrder.Length)
         {
             throw new ArgumentException(
                 "Surface keys must align with the optimized execution order.",
                 nameof(surfaceKeys));
+        }
+        if (!requiredSurfaces.IsEmpty &&
+            requiredSurfaces.Length != plan.ExecutionOrder.Length)
+        {
+            throw new ArgumentException(
+                "Required-surface flags must align with the optimized execution order.",
+                nameof(requiredSurfaces));
         }
         if (step != frameStep + 1 ||
             step < 0 ||
@@ -134,6 +207,11 @@ internal sealed class PrismSurfacePool : IDisposable
             {
                 continue;
             }
+            if (!requiredSurfaces.IsEmpty &&
+                !requiredSurfaces[index])
+            {
+                continue;
+            }
             if (frameEntries[index] is not null)
             {
                 throw new InvalidOperationException(
@@ -157,6 +235,7 @@ internal sealed class PrismSurfacePool : IDisposable
         long generation,
         int executionIndex)
     {
+        accountant.VerifyAccess();
         PrismGraphExecutionPlan plan = GetActivePlan(generation);
         ValidateExecutionIndex(plan, executionIndex);
 
@@ -180,35 +259,82 @@ internal sealed class PrismSurfacePool : IDisposable
         long generation,
         int executionIndex)
     {
-        PrismGraphExecutionPlan plan = GetActivePlan(generation);
-        ValidateExecutionIndex(plan, executionIndex);
-
-        SurfaceEntry? entry = frameEntries[executionIndex];
-        if (entry is null)
+        accountant.VerifyAccess();
+        SurfaceEntry entry = GetPromotableEntry(
+            generation,
+            executionIndex);
+        accountant.TransferTransientToRetained(
+            entry.ByteCount);
+        PrismRetainedSurface retained;
+        try
         {
-            throw new InvalidOperationException(
-                "Only a live Prism execution surface can be promoted.");
+            retained = new PrismRetainedSurface(
+                entry.Key,
+                entry.Surface,
+                accountant,
+                entry.ByteCount);
         }
-        if (frameStep < plan.SurfaceLifetimes[executionIndex].LastStep)
+        catch
         {
-            throw new InvalidOperationException(
-                "A Prism surface can be promoted only after its final planned use.");
+            accountant.TransferRetainedToTransient(
+                entry.ByteCount);
+            throw;
         }
-        if (entry.Surface.IsDisposed)
-        {
-            throw new ObjectDisposedException(
-                nameof(RenderTarget2D),
-                "A disposed Prism surface cannot be promoted.");
-        }
-
         frameEntries[executionIndex] = null;
         ActiveLeaseCount--;
         PromotedSurfaceCount++;
-        return new PrismRetainedSurface(entry.Key, entry.Surface);
+        return retained;
+    }
+
+    internal PrismSurfaceKey ValidatePromotion(
+        long generation,
+        int executionIndex)
+    {
+        accountant.VerifyAccess();
+        return GetPromotableEntry(
+            generation,
+            executionIndex).Key;
+    }
+
+    internal bool TryReclaim(
+        PrismRetainedSurface retained)
+    {
+        accountant.VerifyAccess();
+        ArgumentNullException.ThrowIfNull(retained);
+        if (disposed ||
+            retentionLimit <= 0 ||
+            !retained.IsOwnedBy(accountant) ||
+            retained.Surface.IsDisposed)
+        {
+            return false;
+        }
+
+        try
+        {
+            available.EnsureCapacity(available.Count + 1);
+            SurfaceEntry entry = new(
+                retained.Key,
+                retained.Surface,
+                retained.ByteCount);
+            RenderTarget2D surface =
+                retained.DetachToTransientOwner();
+            if (!ReferenceEquals(surface, entry.Surface))
+            {
+                throw new InvalidOperationException(
+                    "Prism retained ownership transfer changed its GPU surface.");
+            }
+            available.Add(entry);
+            return true;
+        }
+        catch (OutOfMemoryException)
+        {
+            return false;
+        }
     }
 
     internal void EndFrame(long generation)
     {
+        accountant.VerifyAccess();
         if (framePlan is null || generation != frameGeneration)
         {
             return;
@@ -227,6 +353,7 @@ internal sealed class PrismSurfacePool : IDisposable
             throw new InvalidOperationException(
                 "The Prism surface frame ended with active leases.");
         }
+        TrimAvailableToLimit();
     }
 
     private SurfaceEntry RentEntry(PrismSurfaceKey key)
@@ -262,7 +389,41 @@ internal sealed class PrismSurfacePool : IDisposable
             EvictAvailableAt(0);
         }
 
-        RenderTarget2D surface;
+        long byteCount = key.CalculateByteSize();
+        while (!accountant.CanReserveTransient(
+                byteCount) &&
+            available.Count > 0)
+        {
+            EvictAvailableAt(0);
+        }
+        if (!accountant.CanReserveTransient(byteCount))
+        {
+            _ = retainedCache?.EvictForTransient(byteCount);
+        }
+        if (!accountant.TryReserveTransient(byteCount))
+        {
+            throw new PrismSurfaceAllocationException(
+                key,
+                new OutOfMemoryException(
+                    "The Prism surface hard byte budget is exhausted."));
+        }
+
+        SurfaceEntry pendingEntry;
+        try
+        {
+            pendingEntry = new SurfaceEntry(
+                key,
+                byteCount);
+        }
+        catch (OutOfMemoryException exception)
+        {
+            accountant.ReleaseTransient(byteCount);
+            throw new PrismSurfaceAllocationException(
+                key,
+                exception);
+        }
+
+        RenderTarget2D? surface = null;
         try
         {
             surface = new RenderTarget2D(
@@ -274,16 +435,16 @@ internal sealed class PrismSurfacePool : IDisposable
                 DepthFormat.None,
                 key.MultiSampleCount,
                 RenderTargetUsage.DiscardContents);
+            pendingEntry.Attach(surface);
         }
-        catch (Exception exception) when (
-            exception is InvalidOperationException or
-                ArgumentException or
-                OutOfMemoryException)
+        catch (Exception exception)
         {
+            accountant.ReleaseTransient(byteCount);
+            surface?.Dispose();
             throw new PrismSurfaceAllocationException(key, exception);
         }
         CreatedSurfaceCount++;
-        return new SurfaceEntry(key, surface);
+        return pendingEntry;
     }
 
     private void ReleaseFrameEntry(int executionIndex)
@@ -298,6 +459,7 @@ internal sealed class PrismSurfacePool : IDisposable
         ActiveLeaseCount--;
         if (entry.Surface.IsDisposed)
         {
+            accountant.ReleaseTransient(entry.ByteCount);
             DisposedSurfaceCount++;
             return;
         }
@@ -320,9 +482,14 @@ internal sealed class PrismSurfacePool : IDisposable
         DisposeEntry(entry);
     }
 
-    private void ResetCore()
+    private void ResetCore(bool poolDisposing)
     {
         frameGeneration = unchecked(frameGeneration + 1);
+        retainedCache?.ResetFromPool(poolDisposing);
+        if (poolDisposing)
+        {
+            retainedCache = null;
+        }
 
         for (int index = 0; index < frameEntries.Length; index++)
         {
@@ -350,8 +517,45 @@ internal sealed class PrismSurfacePool : IDisposable
 
     private void DisposeEntry(SurfaceEntry entry)
     {
-        entry.Surface.Dispose();
-        DisposedSurfaceCount++;
+        accountant.ReleaseTransient(entry.ByteCount);
+        try
+        {
+            entry.Surface.Dispose();
+        }
+        finally
+        {
+            DisposedSurfaceCount++;
+        }
+    }
+
+    private SurfaceEntry GetPromotableEntry(
+        long generation,
+        int executionIndex)
+    {
+        PrismGraphExecutionPlan plan =
+            GetActivePlan(generation);
+        ValidateExecutionIndex(plan, executionIndex);
+
+        SurfaceEntry? entry = frameEntries[executionIndex];
+        if (entry is null)
+        {
+            throw new InvalidOperationException(
+                "Only a live Prism execution surface can be promoted.");
+        }
+        if (frameStep <
+            plan.SurfaceLifetimes[executionIndex].LastStep)
+        {
+            throw new InvalidOperationException(
+                "A Prism surface can be promoted only after its final planned use.");
+        }
+        if (entry.Surface.IsDisposed)
+        {
+            throw new ObjectDisposedException(
+                nameof(RenderTarget2D),
+                "A disposed Prism surface cannot be promoted.");
+        }
+
+        return entry;
     }
 
     private PrismGraphExecutionPlan GetActivePlan(long generation)
@@ -385,22 +589,50 @@ internal sealed class PrismSurfacePool : IDisposable
     {
         if (!disposed)
         {
-            ResetCore();
+            ResetCore(poolDisposing: false);
         }
     }
 
     private sealed class SurfaceEntry
     {
+        private RenderTarget2D? surface;
+
         public SurfaceEntry(
             PrismSurfaceKey key,
-            RenderTarget2D surface)
+            long byteCount)
         {
             Key = key;
-            Surface = surface;
+            ByteCount = byteCount;
+        }
+
+        public SurfaceEntry(
+            PrismSurfaceKey key,
+            RenderTarget2D surface,
+            long byteCount)
+            : this(key, byteCount)
+        {
+            Attach(surface);
         }
 
         public PrismSurfaceKey Key { get; }
 
-        public RenderTarget2D Surface { get; }
+        public RenderTarget2D Surface =>
+            surface ??
+            throw new InvalidOperationException(
+                "A Prism transient surface entry has no surface owner.");
+
+        public long ByteCount { get; }
+
+        public void Attach(RenderTarget2D ownedSurface)
+        {
+            ArgumentNullException.ThrowIfNull(ownedSurface);
+            if (surface is not null)
+            {
+                throw new InvalidOperationException(
+                    "A Prism transient surface entry already owns a surface.");
+            }
+
+            surface = ownedSurface;
+        }
     }
 }

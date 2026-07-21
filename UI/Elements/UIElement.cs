@@ -15,7 +15,9 @@ namespace Cerneala.UI.Elements;
 
 public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderableElement
 {
+    private static long nextPrismVisualNodeId;
     private readonly HashSet<UiProperty> appliedLocalAspectProperties = new(ReferenceEqualityComparer.Instance);
+    private readonly long prismVisualNodeId;
 
     public static readonly UiProperty<object?> DataContextProperty = UiProperty<object?>.Register(
         nameof(DataContext),
@@ -181,6 +183,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     public UIElement()
     {
+        prismVisualNodeId = NextPrismVisualNodeId();
         LogicalChildren = new UIElementCollection(this, ElementChildRole.Logical);
         VisualChildren = new UIElementCollection(this, ElementChildRole.Visual);
         Handlers = new ElementHandlerStore(this);
@@ -234,6 +237,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     public bool IsLayoutBoundary { get; set; }
 
+    internal long PrismVisualNodeId => prismVisualNodeId;
+
+    internal long PrismLocalVisualVersion { get; private set; } = 1;
+
+    internal long PrismVisualVersion { get; private set; } = 1;
+
     internal Transform LayoutCorrectionTransform { get; private set; } = Transform.Identity;
 
     internal bool IsPresenceExiting { get; private set; }
@@ -255,6 +264,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     private bool hasPendingCommandStateRefresh;
     private bool hasPendingRenderScopeInvalidation;
     private bool hasPendingRenderContentInvalidation;
+    private bool isPrismVisualBoundary;
+    private UIElement? retainedVisualParent;
     private readonly List<IElementLifecycleBehavior> lifecycleBehaviors = [];
     private bool isInitialized;
     private int attachmentGeneration;
@@ -562,12 +573,14 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         UIRoot? root = Root;
         if (root is null)
         {
+            IncrementPrismVisualVersion();
             Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
             return;
         }
 
         if (root.Relay.CheckAccess())
         {
+            IncrementPrismVisualVersion();
             Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
             return;
         }
@@ -580,6 +593,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
                 ReferenceEquals(target.Root, root) &&
                 Volatile.Read(ref target.attachmentGeneration) == generation)
             {
+                target.IncrementPrismVisualVersion();
                 target.Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
             }
         });
@@ -593,6 +607,26 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void SetVisualParent(UIElement? parent)
     {
         VisualParent = parent;
+        if (parent is not null)
+        {
+            retainedVisualParent = null;
+        }
+    }
+
+    internal void SetRetainedVisualParent(UIElement? parent)
+    {
+        retainedVisualParent = parent;
+    }
+
+    internal void SetPrismVisualBoundary(bool isBoundary)
+    {
+        isPrismVisualBoundary = isBoundary;
+    }
+
+    internal void InvalidatePrismAttachment()
+    {
+        hasPendingRenderScopeInvalidation = true;
+        Invalidate(InvalidationFlags.Render, "Prism attachment changed");
     }
 
     internal void AttachToRoot(UIRoot root, UiElementId id)
@@ -845,6 +879,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void IncrementRenderVersion()
     {
         RenderVersion++;
+        IncrementPrismVisualVersion();
+    }
+
+    internal void IncrementPrismDescendantVisualVersion()
+    {
+        IncrementPrismAggregateVersion();
     }
 
     internal bool ConsumeRenderScopeOnlyInvalidation()
@@ -864,7 +904,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
 
         LayoutCorrectionTransform = correction;
-        RenderScopeVersion++;
+        IncrementRenderScopeVersion();
         hasPendingRenderScopeInvalidation = true;
         Invalidate(InvalidationFlags.Render, "Layout motion correction changed");
     }
@@ -895,7 +935,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
         PresenceOpacity = opacity;
         PresenceScale = scale;
-        RenderScopeVersion++;
+        IncrementRenderScopeVersion();
         hasPendingRenderScopeInvalidation = true;
         Invalidate(InvalidationFlags.Render, "Presence visual state changed");
     }
@@ -1079,7 +1119,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         {
             if (IsRenderScopeProperty(args.Property))
             {
-                RenderScopeVersion++;
+                IncrementRenderScopeVersion();
                 hasPendingRenderScopeInvalidation = true;
             }
             else
@@ -1258,5 +1298,55 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             ReferenceEquals(property, SkewXProperty) ||
             ReferenceEquals(property, SkewYProperty) ||
             ReferenceEquals(property, ClipToBoundsProperty);
+    }
+
+    private void IncrementRenderScopeVersion()
+    {
+        RenderScopeVersion++;
+        IncrementPrismVisualVersion();
+    }
+
+    private void IncrementPrismVisualVersion()
+    {
+        PrismLocalVisualVersion = NextPrismVisualVersion(PrismLocalVisualVersion);
+        IncrementPrismAggregateVersion();
+    }
+
+    private void IncrementPrismAggregateVersion()
+    {
+        for (UIElement? current = this;
+            current is not null;
+            current = current.VisualParent ?? current.retainedVisualParent)
+        {
+            current.PrismVisualVersion =
+                NextPrismVisualVersion(current.PrismVisualVersion);
+            if (current.isPrismVisualBoundary)
+            {
+                break;
+            }
+        }
+    }
+
+    private static long NextPrismVisualNodeId()
+    {
+        long value = Interlocked.Increment(ref nextPrismVisualNodeId);
+        if (value <= 0)
+        {
+            throw new InvalidOperationException(
+                "Prism visual node identifier space was exhausted.");
+        }
+
+        return value;
+    }
+
+    private static long NextPrismVisualVersion(long version)
+    {
+        if (version == long.MaxValue)
+        {
+            throw new InvalidOperationException(
+                "Prism visual version space was exhausted.");
+        }
+
+        return version + 1;
     }
 }

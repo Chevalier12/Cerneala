@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
@@ -125,6 +126,39 @@ public sealed class UiHostTests
 
         Assert.Same(nextRoot, host.Root);
         Assert.True(frame.Stats.HasWork);
+    }
+
+    [Fact]
+    public void RootNavigationQueuesCacheClearForTheNextSubmit()
+    {
+        UiHost host = new(
+            new UiHostOptions
+            {
+                Root = new UIRoot(),
+                Viewport = new UiViewport(100, 100)
+            });
+        UIRoot nextRoot = new();
+        FakeDrawingBackend backend = new();
+
+        host.SetRoot(nextRoot);
+        host.Update(
+            FakeInputSource.CreateFrame(),
+            elapsedTime: TimeSpan.Zero);
+        host.Draw(backend);
+
+        DrawingFrameContext frameContext =
+            Assert.IsType<DrawingFrameContext>(
+                backend.LastFrameContext);
+        PrismCacheInvalidationQueue invalidations =
+            Assert.IsType<PrismCacheInvalidationQueue>(
+                frameContext.PrismCacheInvalidations);
+        Assert.True(
+            invalidations.TryDequeue(
+                out PrismCacheInvalidation invalidation));
+        Assert.Equal(
+            PrismCacheInvalidationKind.All,
+            invalidation.Kind);
+        Assert.Equal(0, invalidations.Count);
     }
 
     [Fact]

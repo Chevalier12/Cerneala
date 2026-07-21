@@ -4,13 +4,49 @@ namespace Cerneala.Drawing.Prism.Graph;
 
 internal readonly record struct PrismBackdropFrameDescriptor(
     BackdropFrameMetadata Metadata,
-    long DependencyKey)
+    long SourceIdentity)
 {
     public PrismGraphDependency Dependency =>
+        CreateDependency(lowerUiVersion: 0);
+
+    public PrismGraphDependency CreateDependency(long lowerUiVersion)
+    {
+        if (lowerUiVersion < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(lowerUiVersion));
+        }
+
+        long version = lowerUiVersion == 0
+            ? Metadata.ContentVersion
+            : ComposeContentVersion(
+                Metadata.ContentVersion,
+                lowerUiVersion);
+        return
         new(
             PrismGraphDependencyKind.BackdropFrame,
-            DependencyKey,
-            Metadata.ContentVersion);
+            SourceIdentity,
+            version);
+    }
+
+    private static long ComposeContentVersion(
+        long contentVersion,
+        long lowerUiVersion)
+    {
+        const ulong offset = 14695981039346656037;
+        ulong hash = offset;
+        Mix(ref hash, (uint)contentVersion);
+        Mix(ref hash, (uint)((ulong)contentVersion >> 32));
+        Mix(ref hash, (uint)lowerUiVersion);
+        Mix(ref hash, (uint)((ulong)lowerUiVersion >> 32));
+        long version = (long)(hash & long.MaxValue);
+        return version == 0 ? 1 : version;
+    }
+
+    private static void Mix(ref ulong hash, uint value)
+    {
+        const ulong prime = 1099511628211;
+        hash = unchecked((hash ^ value) * prime);
+    }
 }
 
 internal static class PrismBackdropFramePolicy
@@ -18,10 +54,17 @@ internal static class PrismBackdropFramePolicy
     public static PrismBackdropFrameDescriptor Prepare(
         in BackdropFrameMetadata metadata)
     {
+        return Prepare(in metadata, default);
+    }
+
+    public static PrismBackdropFrameDescriptor Prepare(
+        in BackdropFrameMetadata metadata,
+        PrismBackdropSourceToken sourceToken)
+    {
         Validate(metadata);
         return new PrismBackdropFrameDescriptor(
             metadata,
-            StableMetadataHash(metadata));
+            sourceToken.Value);
     }
 
     public static DrawRect CalculateSourceBounds(
@@ -108,32 +151,6 @@ internal static class PrismBackdropFramePolicy
                 "Backdrop frame metadata requires a finite invertible coordinate transform.",
                 nameof(metadata));
         }
-    }
-
-    private static long StableMetadataHash(BackdropFrameMetadata metadata)
-    {
-        const ulong offset = 14695981039346656037;
-        ulong hash = offset;
-        Mix(ref hash, (uint)metadata.PixelWidth);
-        Mix(ref hash, (uint)metadata.PixelHeight);
-        Mix(ref hash, BitConverter.SingleToUInt32Bits(metadata.PixelScale));
-        Mix(ref hash, (uint)metadata.ColorProfile);
-        Mix(ref hash, (uint)metadata.PixelFormat);
-        Mix(ref hash, (uint)metadata.AlphaMode);
-        Mix(ref hash, BitConverter.SingleToUInt32Bits(metadata.CoordinateTransform.M11));
-        Mix(ref hash, BitConverter.SingleToUInt32Bits(metadata.CoordinateTransform.M12));
-        Mix(ref hash, BitConverter.SingleToUInt32Bits(metadata.CoordinateTransform.M21));
-        Mix(ref hash, BitConverter.SingleToUInt32Bits(metadata.CoordinateTransform.M22));
-        Mix(ref hash, BitConverter.SingleToUInt32Bits(metadata.CoordinateTransform.M31));
-        Mix(ref hash, BitConverter.SingleToUInt32Bits(metadata.CoordinateTransform.M32));
-        long result = unchecked((long)hash);
-        return result == 0 ? 1 : result;
-    }
-
-    private static void Mix(ref ulong hash, uint value)
-    {
-        const ulong prime = 1099511628211;
-        hash = unchecked((hash ^ value) * prime);
     }
 
     private static bool IsFinite(Matrix3x2 matrix) =>

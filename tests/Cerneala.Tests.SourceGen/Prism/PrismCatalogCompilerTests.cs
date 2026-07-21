@@ -44,6 +44,22 @@ public sealed class PrismCatalogCompilerTests
             "PrismCatalogExecutionDescriptor",
             compilation.GeneratedSource,
             StringComparison.Ordinal);
+        Assert.Contains(
+            "[global::System.Flags]",
+            compilation.GeneratedSource,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "internal enum PrismCatalogCacheDependency",
+            compilation.GeneratedSource,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "PrismCatalogCacheDependency CacheDependencies",
+            compilation.GeneratedSource,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "CachePolicyMatrix = Entries;",
+            compilation.GeneratedSource,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -165,6 +181,91 @@ public sealed class PrismCatalogCompilerTests
                 resources.Length > 0,
                 filter.Capabilities.Contains("auxiliary-resource", StringComparer.Ordinal));
         }
+    }
+
+    [Fact]
+    public void GeneratedCachePolicyDependenciesCoverEveryCatalogEntry()
+    {
+        PrismCatalogCompilation compilation =
+            PrismCatalogCompiler.Compile(ReadRepositoryCatalog());
+        PrismCatalogCompiler.CatalogEntry[] entries =
+            compilation.Model!.Entries.ToArray();
+        string generated = compilation.GeneratedSource!;
+
+        Assert.Empty(compilation.Issues);
+        Assert.Equal(
+            entries.Length,
+            CountOccurrences(
+                generated,
+                "PrismCatalogCacheDependency.InputPixels"));
+        Assert.Equal(
+            entries.Count(entry => entry.Properties.Count > 0),
+            CountOccurrences(
+                generated,
+                "PrismCatalogCacheDependency.ParameterValues"));
+        Assert.Equal(
+            entries.Count(entry =>
+                entry.Capabilities.Contains(
+                    "seeded",
+                    StringComparer.Ordinal)),
+            CountOccurrences(
+                generated,
+                "PrismCatalogCacheDependency.ExplicitSeed"));
+        Assert.Equal(
+            entries.Count(entry =>
+                entry.Properties.Any(
+                    property =>
+                        property.ValueType == "resource")),
+            CountOccurrences(
+                generated,
+                "PrismCatalogCacheDependency.VersionedResources"));
+    }
+
+    [Fact]
+    public void NonDeterminismAndUnseededRandomnessCannotEnterCacheMatrix()
+    {
+        JsonObject nonDeterministic =
+            ParseCatalog(ReadRepositoryCatalog());
+        FindEntry(nonDeterministic, "filter:blur")["deterministic"] =
+            false;
+        Assert.Contains(
+            PrismCatalogCompiler.Compile(
+                    Serialize(nonDeterministic))
+                .Issues,
+            issue =>
+                issue.Id == "PRISM3007" &&
+                issue.Message.Contains(
+                    "deterministic output",
+                    StringComparison.Ordinal));
+
+        JsonObject unseeded =
+            ParseCatalog(ReadRepositoryCatalog());
+        JsonObject seededEntry =
+            unseeded["entries"]!
+                .AsArray()
+                .Select(entry => entry!.AsObject())
+                .First(entry =>
+                    entry["capabilities"]!
+                        .AsArray()
+                        .Any(capability =>
+                            capability!.GetValue<string>() ==
+                            "seeded"));
+        JsonArray capabilities =
+            seededEntry["capabilities"]!.AsArray();
+        JsonNode seededCapability = capabilities.Single(
+            capability =>
+                capability!.GetValue<string>() == "seeded")!;
+        capabilities.Remove(seededCapability);
+
+        Assert.Contains(
+            PrismCatalogCompiler.Compile(
+                    Serialize(unseeded))
+                .Issues,
+            issue =>
+                issue.Id == "PRISM3007" &&
+                issue.Message.Contains(
+                    "explicit Seed property",
+                    StringComparison.Ordinal));
     }
 
     [Fact]

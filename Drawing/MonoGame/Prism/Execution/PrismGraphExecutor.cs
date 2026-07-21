@@ -21,35 +21,95 @@ internal sealed class PrismGraphExecutor : IDisposable
 
     private readonly GraphicsDevice graphicsDevice;
     private readonly PrismSurfacePool surfacePool;
+    private readonly PrismRetainedSurfaceCache retainedSurfaceCache;
     private readonly PrismKernelRegistry kernels;
     private readonly PrismExecutionDiagnostics diagnostics;
+    private readonly bool retainedCacheEnabled;
+    private readonly bool developmentDiagnosticsEnabled;
+    private readonly long[] missCounts =
+        new long[(int)PrismCacheMissReason.Disabled + 1];
+    private readonly Dictionary<
+        PrismCacheOwnerToken,
+        PrismRetainedCacheKey> ownerFinalKeys = [];
     private PrismSurfaceKey[] surfaceKeys = [];
+    private bool[] requiredNodes = [];
+    private bool[] requiredTransientSurfaces = [];
+    private bool[] cacheResultValid = [];
+    private bool[] retainedKeyAvailable = [];
+    private PrismRetainedCacheKey[] retainedKeys = [];
+    private PrismRetainedSurfaceLease[] retainedLeases = [];
+    private int[] requiredTraversal = [];
+    private int[] promotionHeads = [];
+    private int[] promotionNext = [];
     private bool[] bypassedScopes = [];
     private int[] captureSteps = [];
     private int[] captureCommandIndices = [];
     private bool[] initializedCaptures = [];
+    private PrismRetainedRasterContext lastRasterContext;
+    private PrismCacheMissReason pendingMissReason =
+        PrismCacheMissReason.NotFound;
+    private PrismCacheMissReason lastMissReason;
+    private PrismDependencyChange lastDependencyChange;
+    private long finalHitCount;
+    private long intermediateHitCount;
+    private long missCount;
+    private long savedCaptureCount;
+    private long savedPassCount;
+    private bool hasLastRasterContext;
     private bool disposed;
 
     public PrismGraphExecutor(
         GraphicsDevice graphicsDevice,
         PrismExecutionDiagnostics? diagnostics = null)
+        : this(
+            graphicsDevice,
+            diagnostics,
+            new PrismRendererOptions(),
+            retainedCacheEnabled: true)
+    {
+    }
+
+    internal PrismGraphExecutor(
+        GraphicsDevice graphicsDevice,
+        PrismExecutionDiagnostics? diagnostics,
+        PrismRendererOptions options,
+        bool retainedCacheEnabled)
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
+        ArgumentNullException.ThrowIfNull(options);
         ObjectDisposedException.ThrowIf(
             graphicsDevice.IsDisposed,
             graphicsDevice);
+        options.Validate();
 
         this.graphicsDevice = graphicsDevice;
         this.diagnostics =
             diagnostics ?? new PrismExecutionDiagnostics();
-        surfacePool = new PrismSurfacePool(graphicsDevice);
+        this.retainedCacheEnabled = retainedCacheEnabled;
+        developmentDiagnosticsEnabled =
+            options.EnableDevelopmentDiagnostics;
+        surfacePool = new PrismSurfacePool(
+            graphicsDevice,
+            new PrismSurfaceBudget(
+                options.SurfaceHardByteLimit,
+                options.RetainedCacheSoftByteLimit,
+                options.RetainedCacheEntryLimit));
+        retainedSurfaceCache =
+            new PrismRetainedSurfaceCache(surfacePool);
         try
         {
             kernels = new PrismKernelRegistry(graphicsDevice);
         }
         catch
         {
-            surfacePool.Dispose();
+            try
+            {
+                retainedSurfaceCache.Dispose();
+            }
+            finally
+            {
+                surfacePool.Dispose();
+            }
             throw;
         }
     }
@@ -58,7 +118,53 @@ internal sealed class PrismGraphExecutor : IDisposable
 
     public PrismSurfacePool SurfacePool => surfacePool;
 
+    public PrismRetainedSurfaceCache RetainedSurfaceCache =>
+        retainedSurfaceCache;
+
     public PrismKernelRegistry Kernels => kernels;
+
+    public PrismRendererDiagnostics RendererDiagnostics =>
+        new(
+            retainedCacheEnabled,
+            finalHitCount,
+            intermediateHitCount,
+            missCount,
+            lastMissReason,
+            retainedSurfaceCache.LookupCount,
+            retainedSurfaceCache.PromotionCount,
+            retainedSurfaceCache.RejectedPromotionCount,
+            retainedSurfaceCache.EvictionCount,
+            retainedSurfaceCache.LastEvictionReason,
+            retainedSurfaceCache.EntryCount,
+            retainedSurfaceCache.PinnedEntryCount,
+            surfacePool.TransientByteCount,
+            retainedSurfaceCache.RetainedByteCount,
+            surfacePool.TotalByteCount,
+            surfacePool.PeakTotalByteCount,
+            savedCaptureCount,
+            savedPassCount,
+            lastDependencyChange,
+            GetMissCount(PrismCacheMissReason.NotFound),
+            GetMissCount(PrismCacheMissReason.NotCacheable),
+            GetMissCount(PrismCacheMissReason.DependencyChanged),
+            GetMissCount(PrismCacheMissReason.Invalidated),
+            GetMissCount(PrismCacheMissReason.Disabled),
+            retainedSurfaceCache.GetEvictionCount(
+                PrismCacheEvictionReason.Capacity),
+            retainedSurfaceCache.GetEvictionCount(
+                PrismCacheEvictionReason.Invalidation),
+            retainedSurfaceCache.GetEvictionCount(
+                PrismCacheEvictionReason.TransientPressure),
+            retainedSurfaceCache.GetEvictionCount(
+                PrismCacheEvictionReason.Replacement),
+            retainedSurfaceCache.GetEvictionCount(
+                PrismCacheEvictionReason.InvalidSurface),
+            retainedSurfaceCache.GetEvictionCount(
+                PrismCacheEvictionReason.DeviceReset),
+            retainedSurfaceCache.GetEvictionCount(
+                PrismCacheEvictionReason.Disposal),
+            retainedSurfaceCache.GetEvictionCount(
+                PrismCacheEvictionReason.ExplicitRemoval));
 
     public void Execute(
         DrawCommandList commands,
@@ -105,69 +211,102 @@ internal sealed class PrismGraphExecutor : IDisposable
                 return;
             }
 
-            PrepareFrameBuffers(plan, graph, hostViewport);
-            int hostCommandIndex =
-                RenderHostPrelude(renderer, commands, graph);
-
+            PrepareFrameBuffers(
+                analysis,
+                plan,
+                graph,
+                hostViewport);
+            int hostCommandIndex = 0;
             try
             {
-                using PrismSurfaceFrame frame =
-                    surfacePool.BeginFrame(plan);
-                for (int step = 0;
-                    step < plan.ExecutionOrder.Length;
-                    step++)
+                AcquireRetainedHits(plan);
+                hostCommandIndex =
+                    RenderHostPrelude(renderer, commands, graph);
+
+                try
                 {
-                    frame.AdvanceToStep(step, surfaceKeys);
-                    diagnostics.ObserveLiveSurfaces(
-                        surfacePool.ActiveLeaseCount);
-                    PrismGraphNode node =
-                        graph.GetNode(plan.ExecutionOrder[step]);
-                    RenderNode(
+                    using PrismSurfaceFrame frame =
+                        surfacePool.BeginFrame(plan);
+                    for (int step = 0;
+                        step < plan.ExecutionOrder.Length;
+                        step++)
+                    {
+                        frame.AdvanceToStep(
+                            step,
+                            surfaceKeys,
+                            requiredTransientSurfaces);
+                        diagnostics.ObserveLiveSurfaces(
+                            surfacePool.ActiveLeaseCount);
+                        PrismGraphNode node =
+                            graph.GetNode(plan.ExecutionOrder[step]);
+                        int fallbackCountBefore = diagnostics.Count;
+                        if (requiredTransientSurfaces[step])
+                        {
+                            RenderNode(
+                                renderer,
+                                commands,
+                                plan,
+                                graph,
+                                frame,
+                                step,
+                                node,
+                                backdropLease);
+                            diagnostics.RecordGraphPass(node);
+                        }
+                        if (requiredNodes[step])
+                        {
+                            PresentCompletedNestedScopes(
+                                renderer,
+                                commands,
+                                plan,
+                                graph,
+                                frame,
+                                step,
+                                node);
+                            PresentCompletedRootScopes(
+                                renderer,
+                                commands,
+                                plan,
+                                graph,
+                                frame,
+                                step,
+                                node,
+                                hostViewport,
+                                ref hostCommandIndex);
+                            cacheResultValid[step] =
+                                cacheResultValid[step] &&
+                                diagnostics.Count ==
+                                    fallbackCountBefore &&
+                                AreCacheInputsValid(plan, step);
+                        }
+
+                        PromoteCompletedResults(
+                            plan,
+                            frame,
+                            step);
+                    }
+                }
+                catch (PrismSurfaceAllocationException exception)
+                {
+                    diagnostics.Record(
+                        null,
+                        -1,
+                        PrismFallbackReason.SurfaceAllocationFailed,
+                        exception.Message);
+                    renderer.EndBatch();
+                    renderer.RestoreHostTarget();
+                    renderer.BeginCommandBatch();
+                    RenderRawRange(
                         renderer,
                         commands,
-                        plan,
-                        graph,
-                        frame,
-                        step,
-                        node,
-                        backdropLease);
-                    diagnostics.RecordGraphPass(node);
-                    PresentCompletedNestedScopes(
-                        renderer,
-                        commands,
-                        plan,
-                        graph,
-                        frame,
-                        step,
-                        node);
-                    PresentCompletedRootScopes(
-                        renderer,
-                        commands,
-                        plan,
-                        graph,
-                        frame,
-                        step,
-                        node,
-                        hostViewport,
-                        ref hostCommandIndex);
+                        hostCommandIndex,
+                        commands.Count);
+                    return;
                 }
             }
-            catch (PrismSurfaceAllocationException exception)
+            finally
             {
-                diagnostics.Record(
-                    null,
-                    -1,
-                    PrismFallbackReason.SurfaceAllocationFailed,
-                    exception.Message);
-                renderer.EndBatch();
-                renderer.RestoreHostTarget();
-                renderer.BeginCommandBatch();
-                RenderRawRange(
-                    renderer,
-                    commands,
-                    hostCommandIndex,
-                    commands.Count);
-                return;
+                ReleaseRetainedLeases();
             }
 
             renderer.EndBatch();
@@ -178,6 +317,11 @@ internal sealed class PrismGraphExecutor : IDisposable
                 commands,
                 hostCommandIndex,
                 commands.Count);
+        }
+        catch
+        {
+            InvalidateGraphOwners(graph);
+            throw;
         }
         finally
         {
@@ -192,6 +336,41 @@ internal sealed class PrismGraphExecutor : IDisposable
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         surfacePool.Reset();
+        ownerFinalKeys.Clear();
+        hasLastRasterContext = false;
+        pendingMissReason = PrismCacheMissReason.Invalidated;
+    }
+
+    public void Invalidate(
+        PrismCacheInvalidation invalidation)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        switch (invalidation.Kind)
+        {
+            case PrismCacheInvalidationKind.Owner:
+                InvalidateOwner(
+                    invalidation.OwnerToken,
+                    PrismCacheMissReason.Invalidated);
+                break;
+            case PrismCacheInvalidationKind.All:
+                InvalidateAll();
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(invalidation),
+                    invalidation.Kind,
+                    "Unknown Prism cache invalidation kind.");
+        }
+    }
+
+    public void InvalidateAll()
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        retainedSurfaceCache.Clear(
+            PrismCacheEvictionReason.Invalidation);
+        ownerFinalKeys.Clear();
+        hasLastRasterContext = false;
+        pendingMissReason = PrismCacheMissReason.Invalidated;
     }
 
     public void Dispose()
@@ -201,22 +380,44 @@ internal sealed class PrismGraphExecutor : IDisposable
             return;
         }
 
-        kernels.Dispose();
-        surfacePool.Dispose();
-        disposed = true;
+        try
+        {
+            kernels.Dispose();
+        }
+        finally
+        {
+            try
+            {
+                retainedSurfaceCache.Dispose();
+            }
+            finally
+            {
+                surfacePool.Dispose();
+                disposed = true;
+            }
+        }
     }
 
     private void PrepareFrameBuffers(
+        PrismFrameAnalysis analysis,
         PrismGraphExecutionPlan plan,
         PrismGraph graph,
         Viewport hostViewport)
     {
-        if (surfaceKeys.Length < plan.ExecutionOrder.Length)
+        int nodeCount = plan.ExecutionOrder.Length;
+        if (surfaceKeys.Length < nodeCount)
         {
             Array.Resize(
                 ref surfaceKeys,
-                plan.ExecutionOrder.Length);
+                nodeCount);
         }
+        EnsureCacheBuffers(nodeCount);
+        Array.Clear(requiredNodes, 0, nodeCount);
+        Array.Clear(requiredTransientSurfaces, 0, nodeCount);
+        Array.Clear(cacheResultValid, 0, nodeCount);
+        Array.Clear(retainedKeyAvailable, 0, nodeCount);
+        Array.Fill(promotionHeads, -1, 0, nodeCount);
+        Array.Fill(promotionNext, -1, 0, nodeCount);
 
         int requiredScopeSlots = 0;
         for (int index = 0; index < graph.Scopes.Length; index++)
@@ -248,10 +449,22 @@ internal sealed class PrismGraphExecutor : IDisposable
             -1,
             0,
             requiredScopeSlots);
+        if (developmentDiagnosticsEnabled)
+        {
+            lastDependencyChange =
+                PrismDependencyChange.None;
+        }
 
-        for (int index = 0;
-            index < plan.ExecutionOrder.Length;
-            index++)
+        PrismRetainedRasterContext rasterContext = new(
+            hostViewport.Width,
+            hostViewport.Height,
+            PrismColorProfile.Srgb,
+            BackdropPixelFormat.Rgba16Float,
+            PrismSampling.Linear,
+            analysis.RequiredCapabilities,
+            PrismKernelRegistry.ShaderPackageVersion);
+        EnsureRasterContext(rasterContext);
+        for (int index = 0; index < nodeCount; index++)
         {
             PrismGraphNode node =
                 graph.GetNode(plan.ExecutionOrder[index]);
@@ -272,6 +485,572 @@ internal sealed class PrismGraphExecutor : IDisposable
                 SurfaceFormat.HalfVector4,
                 0,
                 profile);
+            if (!retainedCacheEnabled)
+            {
+                continue;
+            }
+            if (!PrismRetainedCacheKey.TryCreate(
+                    plan,
+                    node.Id,
+                    rasterContext,
+                    out retainedKeys[index]))
+            {
+                continue;
+            }
+
+            retainedKeyAvailable[index] = true;
+            int promotionStep =
+                plan.SurfaceLifetimes[index].LastStep;
+            promotionNext[index] =
+                promotionHeads[promotionStep];
+            promotionHeads[promotionStep] = index;
+        }
+        if (retainedCacheEnabled)
+        {
+            InvalidateChangedOwners(plan, graph);
+        }
+    }
+
+    internal void EnsureRasterContext(
+        PrismRetainedRasterContext rasterContext)
+    {
+        if (hasLastRasterContext &&
+            lastRasterContext != rasterContext)
+        {
+            if (developmentDiagnosticsEnabled)
+            {
+                lastDependencyChange =
+                    DiffRasterContext(
+                        lastRasterContext,
+                        rasterContext);
+            }
+            retainedSurfaceCache.Clear(
+                PrismCacheEvictionReason.Invalidation);
+            ownerFinalKeys.Clear();
+            pendingMissReason =
+                PrismCacheMissReason.DependencyChanged;
+        }
+
+        lastRasterContext = rasterContext;
+        hasLastRasterContext = true;
+    }
+
+    private void InvalidateChangedOwners(
+        PrismGraphExecutionPlan plan,
+        PrismGraph graph)
+    {
+        foreach (PrismGraphScope scope in graph.Scopes)
+        {
+            if (scope.Output is not PrismGraphNodeId output)
+            {
+                InvalidateOwner(
+                    scope.CacheOwnerToken,
+                    PrismCacheMissReason.DependencyChanged);
+                continue;
+            }
+
+            int outputIndex =
+                plan.GetExecutionIndex(output);
+            if (!retainedKeyAvailable[outputIndex] ||
+                plan.NodePlans[outputIndex].CacheCandidateKind !=
+                    PrismRetainedCacheCandidateKind.Final)
+            {
+                InvalidateOwner(
+                    scope.CacheOwnerToken,
+                    PrismCacheMissReason.DependencyChanged);
+                continue;
+            }
+
+            PrismRetainedCacheKey current =
+                retainedKeys[outputIndex];
+            if (ownerFinalKeys.TryGetValue(
+                    scope.CacheOwnerToken,
+                out PrismRetainedCacheKey previous) &&
+                previous != current)
+            {
+                if (developmentDiagnosticsEnabled)
+                {
+                    lastDependencyChange |=
+                        DiffRetainedKey(previous, current);
+                }
+                retainedSurfaceCache.RemoveOwner(
+                    scope.CacheOwnerToken);
+                pendingMissReason =
+                    PrismCacheMissReason.DependencyChanged;
+            }
+            ownerFinalKeys[scope.CacheOwnerToken] =
+                current;
+        }
+    }
+
+    private void InvalidateGraphOwners(
+        PrismGraph graph)
+    {
+        foreach (PrismGraphScope scope in graph.Scopes)
+        {
+            InvalidateOwner(
+                scope.CacheOwnerToken,
+                PrismCacheMissReason.Invalidated);
+        }
+    }
+
+    private void InvalidateOwner(
+        PrismCacheOwnerToken ownerToken,
+        PrismCacheMissReason missReason)
+    {
+        retainedSurfaceCache.RemoveOwner(ownerToken);
+        ownerFinalKeys.Remove(ownerToken);
+        pendingMissReason = missReason;
+    }
+
+    private void EnsureCacheBuffers(int nodeCount)
+    {
+        if (requiredNodes.Length < nodeCount)
+        {
+            Array.Resize(ref requiredNodes, nodeCount);
+            Array.Resize(
+                ref requiredTransientSurfaces,
+                nodeCount);
+            Array.Resize(ref cacheResultValid, nodeCount);
+            Array.Resize(ref retainedKeyAvailable, nodeCount);
+            Array.Resize(ref retainedKeys, nodeCount);
+            Array.Resize(ref requiredTraversal, nodeCount);
+            Array.Resize(ref promotionHeads, nodeCount);
+            Array.Resize(ref promotionNext, nodeCount);
+        }
+        if (retainedLeases.Length >= nodeCount)
+        {
+            return;
+        }
+
+        int previousLength = retainedLeases.Length;
+        Array.Resize(ref retainedLeases, nodeCount);
+        for (int index = previousLength;
+            index < retainedLeases.Length;
+            index++)
+        {
+            retainedLeases[index] =
+                new PrismRetainedSurfaceLease();
+        }
+    }
+
+    private void AcquireRetainedHits(
+        PrismGraphExecutionPlan plan)
+    {
+        RecalculateRequiredNodes(plan);
+        int baselinePassCount =
+            CountRequiredNodes(
+                plan.ExecutionOrder.Length,
+                requiredNodes);
+        int baselineCaptureCount =
+            CountRequiredCaptures(plan, requiredNodes);
+        PrismCacheMissReason frameMissReason =
+            pendingMissReason;
+        pendingMissReason =
+            PrismCacheMissReason.NotFound;
+        AcquireRetainedHits(
+            plan,
+            finalCandidates: true,
+            frameMissReason);
+        AcquireRetainedHits(
+            plan,
+            finalCandidates: false,
+            frameMissReason);
+
+        for (int index = 0;
+            index < plan.ExecutionOrder.Length;
+            index++)
+        {
+            requiredTransientSurfaces[index] =
+                requiredNodes[index] &&
+                !retainedLeases[index].IsActive;
+            if (requiredTransientSurfaces[index])
+            {
+                cacheResultValid[index] = true;
+            }
+        }
+
+        int requiredPassCount =
+            CountRequiredNodes(
+                plan.ExecutionOrder.Length,
+                requiredTransientSurfaces);
+        int requiredCaptureCount =
+            CountRequiredCaptures(
+                plan,
+                requiredTransientSurfaces);
+        savedPassCount = checked(
+            savedPassCount +
+            baselinePassCount -
+            requiredPassCount);
+        savedCaptureCount = checked(
+            savedCaptureCount +
+            baselineCaptureCount -
+            requiredCaptureCount);
+    }
+
+    private void AcquireRetainedHits(
+        PrismGraphExecutionPlan plan,
+        bool finalCandidates,
+        PrismCacheMissReason frameMissReason)
+    {
+        for (int index = plan.ExecutionOrder.Length - 1;
+            index >= 0;
+            index--)
+        {
+            PrismRetainedCacheCandidateKind kind =
+                plan.NodePlans[index].CacheCandidateKind;
+            bool isCandidate = finalCandidates
+                ? kind == PrismRetainedCacheCandidateKind.Final ||
+                    IsRootOutput(plan, index)
+                : kind is
+                    PrismRetainedCacheCandidateKind.Capture or
+                    PrismRetainedCacheCandidateKind.Intermediate;
+            if (!isCandidate ||
+                !requiredNodes[index])
+            {
+                continue;
+            }
+            if (!retainedCacheEnabled)
+            {
+                RecordMiss(PrismCacheMissReason.Disabled);
+                continue;
+            }
+            if (!retainedKeyAvailable[index])
+            {
+                RecordMiss(PrismCacheMissReason.NotCacheable);
+                continue;
+            }
+            if (!retainedSurfaceCache.TryAcquire(
+                retainedKeys[index],
+                retainedLeases[index]))
+            {
+                RecordMiss(frameMissReason);
+                continue;
+            }
+
+            cacheResultValid[index] = true;
+            if (kind ==
+                PrismRetainedCacheCandidateKind.Final)
+            {
+                finalHitCount++;
+            }
+            else
+            {
+                intermediateHitCount++;
+            }
+            RecalculateRequiredNodes(plan);
+            ReleaseUnusedRetainedLeases(
+                plan.ExecutionOrder.Length);
+        }
+    }
+
+    private void RecalculateRequiredNodes(
+        PrismGraphExecutionPlan plan)
+    {
+        int nodeCount = plan.ExecutionOrder.Length;
+        Array.Clear(requiredNodes, 0, nodeCount);
+        int pendingCount = 0;
+        foreach (int rootIndex in
+            plan.RootOutputExecutionIndices)
+        {
+            if (requiredNodes[rootIndex])
+            {
+                continue;
+            }
+
+            requiredNodes[rootIndex] = true;
+            requiredTraversal[pendingCount++] = rootIndex;
+        }
+
+        while (pendingCount > 0)
+        {
+            int index =
+                requiredTraversal[--pendingCount];
+            if (retainedLeases[index].IsActive)
+            {
+                continue;
+            }
+
+            foreach (int inputIndex in
+                plan.CacheInputExecutionIndices[index])
+            {
+                if (requiredNodes[inputIndex])
+                {
+                    continue;
+                }
+
+                requiredNodes[inputIndex] = true;
+                requiredTraversal[pendingCount++] =
+                    inputIndex;
+            }
+        }
+    }
+
+    private void ReleaseUnusedRetainedLeases(
+        int nodeCount)
+    {
+        for (int index = 0; index < nodeCount; index++)
+        {
+            if (retainedLeases[index].IsActive &&
+                !requiredNodes[index])
+            {
+                retainedLeases[index].Dispose();
+                cacheResultValid[index] = false;
+            }
+        }
+    }
+
+    private bool AreCacheInputsValid(
+        PrismGraphExecutionPlan plan,
+        int executionIndex)
+    {
+        foreach (int inputIndex in
+            plan.CacheInputExecutionIndices[executionIndex])
+        {
+            if (!cacheResultValid[inputIndex])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void PromoteCompletedResults(
+        PrismGraphExecutionPlan plan,
+        PrismSurfaceFrame frame,
+        int step)
+    {
+        if (!retainedCacheEnabled)
+        {
+            return;
+        }
+
+        for (int index = promotionHeads[step];
+            index >= 0;
+            index = promotionNext[index])
+        {
+            if (requiredTransientSurfaces[index] &&
+                cacheResultValid[index])
+            {
+                retainedSurfaceCache.TryPromote(
+                    retainedKeys[index],
+                    frame,
+                    index);
+            }
+        }
+    }
+
+    private void RecordMiss(PrismCacheMissReason reason)
+    {
+        if (reason == PrismCacheMissReason.None ||
+            !Enum.IsDefined(reason))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(reason),
+                reason,
+                "A retained cache miss requires a concrete reason.");
+        }
+
+        missCount++;
+        missCounts[(int)reason]++;
+        lastMissReason = reason;
+    }
+
+    private long GetMissCount(
+        PrismCacheMissReason reason) =>
+        missCounts[(int)reason];
+
+    private static int CountRequiredNodes(
+        int nodeCount,
+        bool[] required)
+    {
+        int count = 0;
+        for (int index = 0; index < nodeCount; index++)
+        {
+            if (required[index])
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static int CountRequiredCaptures(
+        PrismGraphExecutionPlan plan,
+        bool[] required)
+    {
+        int count = 0;
+        PrismGraph graph = plan.OptimizedGraph;
+        for (int index = 0;
+            index < plan.ExecutionOrder.Length;
+            index++)
+        {
+            if (required[index] &&
+                graph.GetNode(plan.ExecutionOrder[index]).Kind ==
+                    PrismGraphNodeKind.ControlCapture)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static bool IsRootOutput(
+        PrismGraphExecutionPlan plan,
+        int executionIndex)
+    {
+        foreach (int rootIndex in
+            plan.RootOutputExecutionIndices)
+        {
+            if (rootIndex == executionIndex)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static PrismDependencyChange DiffRetainedKey(
+        in PrismRetainedCacheKey previous,
+        in PrismRetainedCacheKey current)
+    {
+        PrismDependencyChange changes =
+            PrismDependencyChange.None;
+        if (previous.DependencyStamp.CacheOwnerToken !=
+                current.DependencyStamp.CacheOwnerToken ||
+            previous.StableNodeId.ScopeOwnerToken !=
+                current.StableNodeId.ScopeOwnerToken)
+        {
+            changes |= PrismDependencyChange.Owner;
+        }
+        if (previous.CandidateKind != current.CandidateKind ||
+            previous.StableNodeId.DefinitionNodeId !=
+                current.StableNodeId.DefinitionNodeId ||
+            previous.StableNodeId.Kind !=
+                current.StableNodeId.Kind ||
+            previous.StableNodeId.Ordinal !=
+                current.StableNodeId.Ordinal ||
+            previous.DependencyStamp.StructuralVersion !=
+                current.DependencyStamp.StructuralVersion ||
+            previous.StructuralFingerprint !=
+                current.StructuralFingerprint)
+        {
+            changes |= PrismDependencyChange.Structure;
+        }
+        if (previous.DependencyStamp.ValueVersion !=
+                current.DependencyStamp.ValueVersion ||
+            previous.DependencyStamp.VisualContentVersion !=
+                current.DependencyStamp.VisualContentVersion ||
+            previous.DependencyStamp.DescendantVersion !=
+                current.DependencyStamp.DescendantVersion ||
+            previous.ValueFingerprint != current.ValueFingerprint)
+        {
+            changes |= PrismDependencyChange.Values;
+        }
+        if (previous.DependencyFingerprint !=
+            current.DependencyFingerprint)
+        {
+            changes |= PrismDependencyChange.Resources;
+        }
+        if (previous.RasterBounds != current.RasterBounds)
+        {
+            changes |= PrismDependencyChange.RasterBounds;
+        }
+        if (previous.SurfaceWidth != current.SurfaceWidth ||
+            previous.SurfaceHeight != current.SurfaceHeight)
+        {
+            changes |= PrismDependencyChange.SurfaceSize;
+        }
+        if (previous.LowerUiVersion != current.LowerUiVersion)
+        {
+            changes |= PrismDependencyChange.LowerUi;
+        }
+        if (previous.PixelScaleBits != current.PixelScaleBits)
+        {
+            changes |= PrismDependencyChange.PixelScale;
+        }
+        if (previous.EffectiveTransform !=
+            current.EffectiveTransform)
+        {
+            changes |= PrismDependencyChange.Transform;
+        }
+        if (previous.WorkingColorProfile !=
+            current.WorkingColorProfile)
+        {
+            changes |=
+                PrismDependencyChange.WorkingColorProfile;
+        }
+        if (previous.OutputColorProfile !=
+            current.OutputColorProfile)
+        {
+            changes |=
+                PrismDependencyChange.OutputColorProfile;
+        }
+        if (previous.SurfaceFormat != current.SurfaceFormat)
+        {
+            changes |= PrismDependencyChange.SurfaceFormat;
+        }
+        if (previous.Sampling != current.Sampling)
+        {
+            changes |= PrismDependencyChange.Sampling;
+        }
+        if (previous.CapabilitySet != current.CapabilitySet)
+        {
+            changes |= PrismDependencyChange.Capabilities;
+        }
+        if (previous.ShaderPackageVersion !=
+            current.ShaderPackageVersion)
+        {
+            changes |= PrismDependencyChange.ShaderPackage;
+        }
+        return changes;
+    }
+
+    private static PrismDependencyChange DiffRasterContext(
+        in PrismRetainedRasterContext previous,
+        in PrismRetainedRasterContext current)
+    {
+        PrismDependencyChange changes =
+            PrismDependencyChange.None;
+        if (previous.SurfaceWidth != current.SurfaceWidth ||
+            previous.SurfaceHeight != current.SurfaceHeight)
+        {
+            changes |= PrismDependencyChange.SurfaceSize;
+        }
+        if (previous.OutputColorProfile !=
+            current.OutputColorProfile)
+        {
+            changes |=
+                PrismDependencyChange.OutputColorProfile;
+        }
+        if (previous.SurfaceFormat != current.SurfaceFormat)
+        {
+            changes |= PrismDependencyChange.SurfaceFormat;
+        }
+        if (previous.Sampling != current.Sampling)
+        {
+            changes |= PrismDependencyChange.Sampling;
+        }
+        if (previous.CapabilitySet != current.CapabilitySet)
+        {
+            changes |= PrismDependencyChange.Capabilities;
+        }
+        if (previous.ShaderPackageVersion !=
+            current.ShaderPackageVersion)
+        {
+            changes |= PrismDependencyChange.ShaderPackage;
+        }
+        return changes;
+    }
+
+    private void ReleaseRetainedLeases()
+    {
+        for (int index = 0;
+            index < retainedLeases.Length;
+            index++)
+        {
+            retainedLeases[index]?.Dispose();
         }
     }
 
@@ -568,7 +1347,8 @@ internal sealed class PrismGraphExecutor : IDisposable
 
         PrismGraphScope scope =
             FindScope(graph, node.AnalysisScopeIndex);
-        Texture2D source = frame.GetSurface(sourceIndex);
+        Texture2D source =
+            GetExecutionSurface(frame, sourceIndex);
         BackdropFrameMetadata? metadata = FindBackdropMetadata(
             plan,
             graph,
@@ -671,7 +1451,8 @@ internal sealed class PrismGraphExecutor : IDisposable
                 return;
             }
 
-            Texture2D source = frame.GetSurface(sourceIndex);
+            Texture2D source =
+                GetExecutionSurface(frame, sourceIndex);
             RenderKernel(
                 renderer,
                 target,
@@ -789,7 +1570,8 @@ internal sealed class PrismGraphExecutor : IDisposable
             UvRowX: new Vector3(1, 0, 0),
             UvRowY: new Vector3(0, 1, 0),
             FeatherStep: featherStep);
-        Texture2D source = frame.GetSurface(sourceIndex);
+        Texture2D source =
+            GetExecutionSurface(frame, sourceIndex);
         RenderKernel(
             renderer,
             target,
@@ -863,7 +1645,7 @@ internal sealed class PrismGraphExecutor : IDisposable
         PrismStylePlan stylePlan =
             PrismStylePlanner.Create(node, scope);
         Texture2D styleTexture =
-            frame.GetSurface(sourceIndex);
+            GetExecutionSurface(frame, sourceIndex);
         bool resourceAvailable = false;
         if (stylePlan.ResourceEnabled)
         {
@@ -970,8 +1752,8 @@ internal sealed class PrismGraphExecutor : IDisposable
         RenderKernel(
             renderer,
             target,
-            frame.GetSurface(contentIndex),
-            frame.GetSurface(sourceIndex),
+            GetExecutionSurface(frame, contentIndex),
+            GetExecutionSurface(frame, sourceIndex),
             kernel,
             1f,
             styleSettings: settings);
@@ -1023,7 +1805,8 @@ internal sealed class PrismGraphExecutor : IDisposable
 
         PrismGraphScope scope =
             FindScope(graph, node.AnalysisScopeIndex);
-        Texture2D source = frame.GetSurface(sourceIndex);
+        Texture2D source =
+            GetExecutionSurface(frame, sourceIndex);
         if (node.NeighborhoodPlan is PrismNeighborhoodPlan neighborhoodPlan)
         {
             if (neighborhoodPlan.Filter != filter ||
@@ -1583,8 +2366,8 @@ internal sealed class PrismGraphExecutor : IDisposable
             RenderKernel(
                 renderer,
                 target,
-                frame.GetSurface(foregroundIndex),
-                frame.GetSurface(foregroundIndex),
+                GetExecutionSurface(frame, foregroundIndex),
+                GetExecutionSurface(frame, foregroundIndex),
                 kernels.Copy,
                 1f);
             return;
@@ -1593,10 +2376,10 @@ internal sealed class PrismGraphExecutor : IDisposable
         RenderKernel(
             renderer,
             target,
-            frame.GetSurface(foregroundIndex),
+            GetExecutionSurface(frame, foregroundIndex),
             backgroundIndex >= 0
-                ? frame.GetSurface(backgroundIndex)
-                : frame.GetSurface(foregroundIndex),
+                ? GetExecutionSurface(frame, backgroundIndex)
+                : GetExecutionSurface(frame, foregroundIndex),
             kernel,
             1f,
             node.LayerSettings,
@@ -1651,8 +2434,8 @@ internal sealed class PrismGraphExecutor : IDisposable
         RenderKernel(
             renderer,
             target,
-            frame.GetSurface(sourceIndex),
-            frame.GetSurface(sourceIndex),
+            GetExecutionSurface(frame, sourceIndex),
+            GetExecutionSurface(frame, sourceIndex),
             kernel,
             opacity);
     }
@@ -1697,8 +2480,8 @@ internal sealed class PrismGraphExecutor : IDisposable
         RenderKernel(
             renderer,
             target,
-            frame.GetSurface(sourceIndex),
-            frame.GetSurface(secondaryIndex),
+            GetExecutionSurface(frame, sourceIndex),
+            GetExecutionSurface(frame, secondaryIndex),
             kernel,
             opacity);
     }
@@ -2003,7 +2786,8 @@ internal sealed class PrismGraphExecutor : IDisposable
             else
             {
                 renderer.EndBatch();
-                RenderTarget2D source = frame.GetSurface(step);
+                RenderTarget2D source =
+                    GetExecutionSurface(frame, step);
                 DrawPresentation(
                     renderer,
                     source,
@@ -2068,7 +2852,8 @@ internal sealed class PrismGraphExecutor : IDisposable
             else
             {
                 renderer.EndBatch();
-                RenderTarget2D source = frame.GetSurface(step);
+                RenderTarget2D source =
+                    GetExecutionSurface(frame, step);
                 DrawPresentation(
                     renderer,
                     source,
@@ -2174,6 +2959,17 @@ internal sealed class PrismGraphExecutor : IDisposable
     {
         return (uint)scopeIndex < (uint)bypassedScopes.Length &&
             bypassedScopes[scopeIndex];
+    }
+
+    private RenderTarget2D GetExecutionSurface(
+        PrismSurfaceFrame frame,
+        int executionIndex)
+    {
+        PrismRetainedSurfaceLease lease =
+            retainedLeases[executionIndex];
+        return lease.IsActive
+            ? lease.Surface
+            : frame.GetSurface(executionIndex);
     }
 
     private static int FindInputIndex(

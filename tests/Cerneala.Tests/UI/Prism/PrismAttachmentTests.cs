@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Markup;
@@ -32,20 +33,37 @@ public sealed class PrismAttachmentTests
 
         ElementLifecycle.AttachSubtree(root, element);
         PrismInstance first = GeneratedMarkup.GetPrismInstance(element);
+        Assert.True(
+            PrismAttachment.TryGetRenderState(
+                element,
+                out _,
+                out PrismCacheOwnerToken firstOwnerToken));
         Assert.Equal(1, connected);
         Assert.Equal(0, disconnected);
 
         ElementLifecycle.DetachSubtree(root, element);
         Assert.False(GeneratedMarkup.TryGetPrismInstance(element, out _));
+        AssertOwnerInvalidation(
+            root,
+            firstOwnerToken);
         Assert.Equal(1, disconnected);
 
         ElementLifecycle.AttachSubtree(root, element);
         PrismInstance second = GeneratedMarkup.GetPrismInstance(element);
+        Assert.True(
+            PrismAttachment.TryGetRenderState(
+                element,
+                out _,
+                out PrismCacheOwnerToken secondOwnerToken));
         Assert.NotSame(first, second);
+        Assert.NotEqual(firstOwnerToken, secondOwnerToken);
         Assert.Equal(2, connected);
 
         lifetime.Dispose();
         Assert.False(GeneratedMarkup.TryGetPrismInstance(element, out _));
+        AssertOwnerInvalidation(
+            root,
+            secondOwnerToken);
         Assert.Equal(2, disconnected);
     }
 
@@ -61,24 +79,37 @@ public sealed class PrismAttachmentTests
             new Func<PrismInstance, IDisposable>[]
             {
                 _ => new CallbackDisposable(() => previousBindingDisposals++)
-            });
+        });
         ElementLifecycle.AttachSubtree(root, element);
         PrismInstance first = GeneratedMarkup.GetPrismInstance(element);
+        Assert.True(
+            PrismAttachment.TryGetRenderState(
+                element,
+                out _,
+                out PrismCacheOwnerToken firstOwnerToken));
 
         using IDisposable replacement = GeneratedMarkup.AttachPrism(
             element,
             () => new PrismInstance(CreateDefinition(opacity: 0.5f)));
         PrismInstance second = GeneratedMarkup.GetPrismInstance(element);
+        Assert.True(
+            PrismAttachment.TryGetRenderState(
+                element,
+                out _,
+                out PrismCacheOwnerToken secondOwnerToken));
 
         Assert.NotSame(first, second);
+        Assert.NotEqual(firstOwnerToken, secondOwnerToken);
         Assert.Equal(0.5f, second.GetLayerState(new PrismNodeId(1)).Opacity);
         Assert.Equal(1, previousBindingDisposals);
+        AssertOwnerInvalidation(root, firstOwnerToken);
 
         previous.Dispose();
         Assert.Same(second, GeneratedMarkup.GetPrismInstance(element));
 
         ElementLifecycle.DetachSubtree(root, element);
         Assert.False(GeneratedMarkup.TryGetPrismInstance(element, out _));
+        AssertOwnerInvalidation(root, secondOwnerToken);
     }
 
     [Fact]
@@ -140,6 +171,11 @@ public sealed class PrismAttachmentTests
         root.VisualChildren.Add(container);
         root.ProcessFrame();
         PrismInstance first = GeneratedMarkup.GetPrismInstance(element);
+        Assert.True(
+            PrismAttachment.TryGetRenderState(
+                element,
+                out _,
+                out PrismCacheOwnerToken firstOwnerToken));
 
         source.Value = 0.8f;
         SetRenderable(container, mode, renderable: false);
@@ -149,11 +185,25 @@ public sealed class PrismAttachmentTests
         Assert.Equal(1, connected);
         Assert.Equal(1, disconnected);
         Assert.Equal(hiddenVersion, first.ValueVersion);
+        Assert.False(
+            PrismAttachment.TryGetRenderState(
+                element,
+                out _,
+                out _));
+        AssertOwnerInvalidation(
+            root,
+            firstOwnerToken);
 
         SetRenderable(container, mode, renderable: true);
         PrismInstance resumed = GeneratedMarkup.GetPrismInstance(element);
+        Assert.True(
+            PrismAttachment.TryGetRenderState(
+                element,
+                out _,
+                out PrismCacheOwnerToken resumedOwnerToken));
 
         Assert.NotSame(first, resumed);
+        Assert.NotEqual(firstOwnerToken, resumedOwnerToken);
         Assert.Equal(2, connected);
         Assert.Equal(0.2f, resumed.GetLayerState(new PrismNodeId(1)).Opacity);
     }
@@ -169,6 +219,21 @@ public sealed class PrismAttachmentTests
         Assert.DoesNotContain(
             references.Instances,
             reference => reference.TryGetTarget(out _));
+        Assert.Equal(
+            10_000,
+            references.Invalidations.Count);
+        HashSet<PrismCacheOwnerToken> invalidatedOwners = [];
+        while (references.Invalidations.TryDequeue(
+            out PrismCacheInvalidation invalidation))
+        {
+            Assert.Equal(
+                PrismCacheInvalidationKind.Owner,
+                invalidation.Kind);
+            Assert.True(
+                invalidatedOwners.Add(
+                    invalidation.OwnerToken));
+        }
+        Assert.Equal(10_000, invalidatedOwners.Count);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -195,7 +260,8 @@ public sealed class PrismAttachmentTests
 
         return new AttachmentReferences(
             new WeakReference<UIElement>(element),
-            instances);
+            instances,
+            root.PrismCacheInvalidations);
     }
 
     private static void CollectGarbage()
@@ -231,6 +297,19 @@ public sealed class PrismAttachmentTests
             default:
                 throw new ArgumentOutOfRangeException(nameof(mode));
         }
+    }
+
+    private static void AssertOwnerInvalidation(
+        UIRoot root,
+        PrismCacheOwnerToken expected)
+    {
+        Assert.True(
+            root.PrismCacheInvalidations.TryDequeue(
+                out PrismCacheInvalidation invalidation));
+        Assert.Equal(
+            PrismCacheInvalidationKind.Owner,
+            invalidation.Kind);
+        Assert.Equal(expected, invalidation.OwnerToken);
     }
 
     private static PrismCompositionDefinition CreateDefinition(float opacity = 1f)
@@ -303,5 +382,6 @@ public sealed class PrismAttachmentTests
 
     private readonly record struct AttachmentReferences(
         WeakReference<UIElement> Element,
-        IReadOnlyList<WeakReference<PrismInstance>> Instances);
+        IReadOnlyList<WeakReference<PrismInstance>> Instances,
+        PrismCacheInvalidationQueue Invalidations);
 }

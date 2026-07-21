@@ -4,12 +4,16 @@ namespace Cerneala.UI.Resources;
 
 public sealed class ImageResource
 {
+    private static long nextRetainedIdentity;
+
     private readonly IDrawImage? image;
     private readonly string? path;
+    private readonly long retainedIdentity;
 
     public ImageResource(IDrawImage image)
     {
         this.image = image ?? throw new ArgumentNullException(nameof(image));
+        retainedIdentity = NextRetainedIdentity();
     }
 
     public ImageResource(string path)
@@ -20,6 +24,7 @@ public sealed class ImageResource
         }
 
         this.path = path;
+        retainedIdentity = NextRetainedIdentity();
     }
 
     public string Identity => path ?? $"embedded:{System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(image!)}";
@@ -30,6 +35,8 @@ public sealed class ImageResource
 
     public bool HasEmbeddedImage => image is not null;
 
+    internal long RetainedIdentity => retainedIdentity;
+
     public IDrawImage Resolve(IImageLoader? loader = null)
     {
         if (image is not null)
@@ -39,5 +46,17 @@ public sealed class ImageResource
 
         IDrawImage loadedImage = (loader ?? throw new InvalidOperationException("An image loader is required for path-backed image resources.")).Load(path!);
         return loadedImage ?? throw new InvalidOperationException("Image loader returned a null image.");
+    }
+
+    private static long NextRetainedIdentity()
+    {
+        long value = Interlocked.Increment(ref nextRetainedIdentity);
+        if (value <= 0)
+        {
+            throw new InvalidOperationException(
+                "Image resource identity space was exhausted.");
+        }
+
+        return value;
     }
 }

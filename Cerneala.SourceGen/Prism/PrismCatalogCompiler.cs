@@ -763,6 +763,16 @@ internal static class PrismCatalogCompiler
         source.AppendLine("    Resource");
         source.AppendLine("}");
         source.AppendLine();
+        source.AppendLine("[global::System.Flags]");
+        source.AppendLine("internal enum PrismCatalogCacheDependency");
+        source.AppendLine("{");
+        source.AppendLine("    None = 0,");
+        source.AppendLine("    InputPixels = 1 << 0,");
+        source.AppendLine("    ParameterValues = 1 << 1,");
+        source.AppendLine("    ExplicitSeed = 1 << 2,");
+        source.AppendLine("    VersionedResources = 1 << 3");
+        source.AppendLine("}");
+        source.AppendLine();
         source.AppendLine("internal readonly record struct PrismCatalogPropertyDescriptor(");
         source.AppendLine("    int Slot,");
         source.AppendLine("    int TypeSlot,");
@@ -803,6 +813,7 @@ internal static class PrismCatalogCompiler
         source.AppendLine("    string[] Capabilities,");
         source.AppendLine("    bool Deterministic,");
         source.AppendLine("    bool Cacheable,");
+        source.AppendLine("    PrismCatalogCacheDependency CacheDependencies,");
         source.AppendLine("    string? Fusion,");
         source.AppendLine("    PrismCatalogExecutionDescriptor? Execution,");
         source.AppendLine("    long DependencyVersion,");
@@ -869,6 +880,9 @@ internal static class PrismCatalogCompiler
             source.Append("            ").Append(entry.Deterministic ? "true" : "false").AppendLine(",");
             source.Append("            ").Append(entry.Cacheable ? "true" : "false").AppendLine(",");
             source.Append("            ")
+                .Append(CacheDependencyExpression(entry))
+                .AppendLine(",");
+            source.Append("            ")
                 .Append(entry.Fusion is null ? "null" : $"\"{Escape(entry.Fusion)}\"")
                 .AppendLine(",");
             AppendExecutionDescriptor(source, entry, 3);
@@ -900,8 +914,39 @@ internal static class PrismCatalogCompiler
             }
         }
         source.AppendLine("    ];");
+        source.AppendLine();
+        source.AppendLine("    internal static readonly PrismCatalogEntryDescriptor[] CachePolicyMatrix = Entries;");
         source.AppendLine("}");
         return source.ToString();
+    }
+
+    private static string CacheDependencyExpression(
+        CatalogEntry entry)
+    {
+        List<string> dependencies = new()
+        {
+            "PrismCatalogCacheDependency.InputPixels"
+        };
+        if (entry.Properties.Count > 0)
+        {
+            dependencies.Add(
+                "PrismCatalogCacheDependency.ParameterValues");
+        }
+        if (entry.Capabilities.Contains(
+                "seeded",
+                StringComparer.Ordinal))
+        {
+            dependencies.Add(
+                "PrismCatalogCacheDependency.ExplicitSeed");
+        }
+        if (entry.Properties.Any(
+                property => property.ValueType == "resource"))
+        {
+            dependencies.Add(
+                "PrismCatalogCacheDependency.VersionedResources");
+        }
+
+        return string.Join(" | ", dependencies);
     }
 
     private static void AppendExecutionDescriptor(

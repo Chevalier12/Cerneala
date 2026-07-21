@@ -40,7 +40,8 @@ public sealed class MonoGameDependencyBoundaryTests
             Path.Combine(root, "UI", "Input", "MonoGame"),
             Path.Combine(root, "Drawing", "MonoGame"),
             Path.Combine(root, "UI", "Resources", "MonoGame"),
-            Path.Combine(root, "Playground")
+            Path.Combine(root, "Playground"),
+            Path.Combine(root, "benchmarks")
         ];
 
         foreach (string file in EnumerateSourceFiles(root))

@@ -18,13 +18,19 @@ public sealed class MonoGameUiHostOptions
 ```csharp
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.MonoGame;
+using Cerneala.Drawing.Prism;
 
 MonoGameUiHostOptions options = new()
 {
     SpriteBatch = spriteBatch,
     WhitePixel = whitePixel,
     Root = root,
-    Viewport = new UiViewport(800, 600)
+    Viewport = new UiViewport(800, 600),
+    PrismRendererOptions = new PrismRendererOptions
+    {
+        RetainedCacheSoftByteLimit = 128L * 1024 * 1024,
+        RetainedCacheEntryLimit = 128
+    }
 };
 ```
 
@@ -50,6 +56,11 @@ source uses device compatibility rather than backend-instance identity, so the
 same source works for both on-screen and temporary screenshot backends created
 on that device.
 
+`PrismRendererOptions` is optional. When it is `null`, the host creates default
+Prism options. When supplied, its total-surface hard limit, retained soft limit,
+entry limit, and development-diagnostic switch are passed to the owned drawing
+backend and validated during host construction.
+
 ## Properties
 
 | Name | Description |
@@ -65,6 +76,7 @@ on that device.
 | `TextRasterizer` | Gets an optional text rasterizer used when content services are not supplied. |
 | `PlatformServices` | Gets optional platform services. |
 | `BackdropFrameSource` | Gets the optional application-owned source of already-rendered backdrop frames. |
+| `PrismRendererOptions` | Gets optional Prism surface-budget and development-diagnostic options. `null` selects `PrismRendererOptions` defaults. |
 
 ## Validation
 
@@ -76,6 +88,7 @@ Constructing `MonoGameUiHost` validates the required graphics resources.
 | A required resource or its graphics device is disposed. | `ObjectDisposedException` |
 | `WhitePixel` belongs to a different graphics device than `SpriteBatch`. | `ArgumentException` |
 | `BackdropFrameSource` cannot supply leases consumable by the created live MonoGame drawing backend. | `InvalidOperationException` |
+| A Prism byte or entry limit is negative, or the retained soft limit exceeds the hard limit. | `ArgumentOutOfRangeException` |
 
 ## Applies to
 
@@ -87,3 +100,4 @@ Cerneala MonoGame UI hosting.
 - `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices`
 - `Cerneala.UI.Hosting.UiViewport`
 - `Cerneala.Drawing.Prism.IBackdropFrameSource`
+- `Cerneala.Drawing.Prism.PrismRendererOptions`

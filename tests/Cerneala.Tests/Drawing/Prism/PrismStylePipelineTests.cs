@@ -260,7 +260,8 @@ public sealed class PrismStylePipelineTests
                 new PrismDrawImageResource(
                     pattern,
                     new TestImage(),
-                    Version: 73)
+                    Version: 73,
+                    Identity: 7_301)
             ]);
         PrismDrawScope resolved = CreatePatternScope(
             pattern,

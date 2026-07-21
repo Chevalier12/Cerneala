@@ -119,6 +119,8 @@ internal readonly record struct PrismKernelParameters(
 
 internal sealed class PrismKernelRegistry : IDisposable
 {
+    public const long ShaderPackageVersion = 1;
+
     private const string CatalogOwnerPrefix =
         "planned:PrismKernelRegistry/";
     private const string FilterOwnerPrefix =

@@ -52,17 +52,40 @@ public sealed class PrismWindowsDxConformanceTests
         {
             foreach (PrismScene scene in scenes)
             {
-                RenderedScene rendered =
-                    RenderPng(fixture.Session, scene);
+                RenderedScene cacheOn =
+                    RenderPng(
+                        fixture.Session,
+                        scene,
+                        retainedCacheEnabled: true);
+                RenderedScene cacheOff =
+                    RenderPng(
+                        fixture.Session,
+                        scene,
+                        retainedCacheEnabled: false);
 
-                AssertMinimalExecution(scene, rendered);
+                Assert.True(
+                    cacheOn.RendererDiagnostics
+                        .RetainedCacheEnabled);
+                Assert.False(
+                    cacheOff.RendererDiagnostics
+                        .RetainedCacheEnabled);
+                AssertMinimalExecution(scene, cacheOn);
+                AssertMinimalExecution(scene, cacheOff);
                 AssertMatchesGolden(
                     scene,
-                    rendered.Png,
+                    cacheOn.Png,
+                    manifest);
+                AssertMatchesGolden(
+                    scene,
+                    cacheOff.Png,
                     manifest);
                 AssertSemanticImage(
                     scene,
-                    rendered.Png,
+                    cacheOn.Png,
+                    manifest.ChannelTolerance.Maximum);
+                AssertSemanticImage(
+                    scene,
+                    cacheOff.Png,
                     manifest.ChannelTolerance.Maximum);
             }
         }
@@ -220,7 +243,11 @@ public sealed class PrismWindowsDxConformanceTests
                 RenderOnScreen(fixture.Session, scene);
             Assert.Equal(
                 scene.Plan.PeakLiveSurfaces,
-                before.CreatedSurfaceCount);
+                before.PeakLiveSurfaceCount);
+            Assert.Equal(
+                scene.Plan.ExecutionOrder.Length,
+                before.CreatedSurfaceCount +
+                    before.ReusedSurfaceCount);
 
             fixture.Session.Resize(112, 72, coordinateScale: 1f);
 
@@ -230,10 +257,17 @@ public sealed class PrismWindowsDxConformanceTests
             Assert.Equal(1, resetCount);
             Assert.Equal(
                 scene.Plan.PeakLiveSurfaces,
+                after.PeakLiveSurfaceCount);
+            Assert.Equal(
+                scene.Plan.ExecutionOrder.Length,
+                after.CreatedSurfaceCount +
+                    after.ReusedSurfaceCount);
+            Assert.Equal(
+                before.CreatedSurfaceCount,
                 after.CreatedSurfaceCount);
             Assert.Equal(
-                scene.Plan.PeakLiveSurfaces,
-                after.PeakLiveSurfaceCount);
+                before.ReusedSurfaceCount,
+                after.ReusedSurfaceCount);
             Assert.Equal(112, fixture.Session.GraphicsDevice.PresentationParameters.BackBufferWidth);
             Assert.Equal(72, fixture.Session.GraphicsDevice.PresentationParameters.BackBufferHeight);
         }
@@ -297,16 +331,18 @@ public sealed class PrismWindowsDxConformanceTests
 
     private static RenderedScene RenderPng(
         WindowsDxWindowGraphicsSession session,
-        PrismScene scene)
+        PrismScene scene,
+        bool retainedCacheEnabled = true)
     {
         using MemoryStream output = new();
         PrismExecutionCounters counters = default;
+        PrismRendererDiagnostics rendererDiagnostics = default;
         string? dump = null;
-        IWindowScreenshotSource screenshotSource = session;
 
-        screenshotSource.RenderPng(
+        session.RenderPng(
             output,
             ClearColor,
+            retainedCacheEnabled,
             drawingBackend =>
             {
                 MonoGameDrawingBackend backend =
@@ -316,6 +352,8 @@ public sealed class PrismWindowsDxConformanceTests
                     new(scene.Analysis);
                 backend.Render(scene.Commands, in frameContext);
                 counters = backend.PrismDiagnostics.Counters;
+                rendererDiagnostics =
+                    backend.RendererDiagnostics;
                 dump =
                     backend.PrismDiagnostics.DumpExecutedGraph();
             });
@@ -323,6 +361,7 @@ public sealed class PrismWindowsDxConformanceTests
         return new RenderedScene(
             output.ToArray(),
             counters,
+            rendererDiagnostics,
             Assert.IsType<string>(dump));
     }
 
@@ -358,13 +397,6 @@ public sealed class PrismWindowsDxConformanceTests
         Assert.Equal(
             scene.Plan.PeakLiveSurfaces,
             counters.PeakLiveSurfaceCount);
-        Assert.Equal(
-            scene.Plan.PeakLiveSurfaces,
-            counters.CreatedSurfaceCount);
-        Assert.Equal(
-            scene.Plan.ExecutionOrder.Length -
-                scene.Plan.PeakLiveSurfaces,
-            counters.ReusedSurfaceCount);
         Assert.Equal(
             scene.Plan.ExecutionOrder.Length,
             counters.CreatedSurfaceCount +
@@ -1338,6 +1370,7 @@ public sealed class PrismWindowsDxConformanceTests
     private sealed record RenderedScene(
         byte[] Png,
         PrismExecutionCounters Counters,
+        PrismRendererDiagnostics RendererDiagnostics,
         string GraphDump);
 
     private sealed class GoldenManifest

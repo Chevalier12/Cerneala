@@ -34,7 +34,11 @@ public readonly record struct PrismGraphNodePlan
         DrawRect bounds,
         PrismGraphBoundsStatus boundsStatus,
         ImmutableArray<PrismGraphDependency> cacheDependencies,
-        PrismGraphUncacheableReason uncacheableReasons)
+        PrismGraphUncacheableReason uncacheableReasons,
+        PrismRetainedCacheCandidateKind cacheCandidateKind,
+        PrismVerifiedFingerprint structuralFingerprint,
+        PrismVerifiedFingerprint valueFingerprint,
+        PrismVerifiedFingerprint dependencyFingerprint)
     {
         if (!Enum.IsDefined(boundsStatus))
         {
@@ -51,6 +55,22 @@ public readonly record struct PrismGraphNodePlan
             ? ImmutableArray<PrismGraphDependency>.Empty
             : cacheDependencies;
         UncacheableReasons = uncacheableReasons;
+        if (cacheCandidateKind !=
+                PrismRetainedCacheCandidateKind.None &&
+            (uncacheableReasons !=
+                PrismGraphUncacheableReason.None ||
+             !structuralFingerprint.IsInitialized ||
+             !valueFingerprint.IsInitialized ||
+             !dependencyFingerprint.IsInitialized))
+        {
+            throw new ArgumentException(
+                "A retained cache candidate requires complete verified fingerprints and no uncacheable reason.",
+                nameof(cacheCandidateKind));
+        }
+        CacheCandidateKind = cacheCandidateKind;
+        StructuralFingerprint = structuralFingerprint;
+        ValueFingerprint = valueFingerprint;
+        DependencyFingerprint = dependencyFingerprint;
     }
 
     public PrismGraphNodeId NodeId { get; }
@@ -62,6 +82,14 @@ public readonly record struct PrismGraphNodePlan
     public ImmutableArray<PrismGraphDependency> CacheDependencies { get; }
 
     public PrismGraphUncacheableReason UncacheableReasons { get; }
+
+    internal PrismRetainedCacheCandidateKind CacheCandidateKind { get; }
+
+    internal PrismVerifiedFingerprint StructuralFingerprint { get; }
+
+    internal PrismVerifiedFingerprint ValueFingerprint { get; }
+
+    internal PrismVerifiedFingerprint DependencyFingerprint { get; }
 
     public bool IsCacheable =>
         NodeId.ScopeOwnerToken.Value > 0 &&
@@ -99,6 +127,7 @@ public readonly record struct PrismGraphSurfaceLifetime
 public sealed class PrismGraphExecutionPlan
 {
     private readonly ImmutableDictionary<PrismGraphNodeId, PrismGraphNodePlan> nodesById;
+    private readonly ImmutableDictionary<PrismGraphNodeId, int> executionIndicesById;
 
     internal PrismGraphExecutionPlan(
         PrismGraph optimizedGraph,
@@ -179,6 +208,18 @@ public sealed class PrismGraphExecutionPlan
         RemovedNodeIds = removedNodeIds;
         PeakLiveSurfaces = peakLiveSurfaces;
         nodesById = nodePlans.ToImmutableDictionary(node => node.NodeId);
+        executionIndicesById = executionIndices.ToImmutableDictionary();
+        CacheInputExecutionIndices = BuildCacheInputExecutionIndices(
+            optimizedGraph,
+            executionIndices);
+        RootOutputExecutionIndices = optimizedGraph.Scopes
+            .Where(scope =>
+                scope.Depth == 0 &&
+                scope.Output.HasValue)
+            .OrderBy(scope => scope.BeginCommandIndex)
+            .Select(scope => executionIndices[scope.Output!.Value])
+            .Distinct()
+            .ToImmutableArray();
     }
 
     public PrismGraph OptimizedGraph { get; }
@@ -193,12 +234,82 @@ public sealed class PrismGraphExecutionPlan
 
     public int PeakLiveSurfaces { get; }
 
+    internal ImmutableArray<ImmutableArray<int>>
+        CacheInputExecutionIndices { get; }
+
+    internal ImmutableArray<int> RootOutputExecutionIndices { get; }
+
     public PrismGraphNodePlan GetNodePlan(PrismGraphNodeId nodeId)
     {
         return nodesById.TryGetValue(nodeId, out PrismGraphNodePlan node)
             ? node
             : throw new KeyNotFoundException(
                 $"Prism graph execution node '{nodeId}' does not exist.");
+    }
+
+    internal int GetExecutionIndex(PrismGraphNodeId nodeId)
+    {
+        return executionIndicesById.TryGetValue(nodeId, out int index)
+            ? index
+            : throw new KeyNotFoundException(
+                $"Prism graph execution node '{nodeId}' does not exist.");
+    }
+
+    private static ImmutableArray<ImmutableArray<int>>
+        BuildCacheInputExecutionIndices(
+            PrismGraph graph,
+            IReadOnlyDictionary<PrismGraphNodeId, int> executionIndices)
+    {
+        List<int>[] inputs = new List<int>[graph.Nodes.Length];
+        for (int index = 0; index < inputs.Length; index++)
+        {
+            inputs[index] = [];
+        }
+
+        foreach (PrismGraphEdge edge in graph.Edges)
+        {
+            inputs[executionIndices[edge.Target]].Add(
+                executionIndices[edge.Source]);
+        }
+
+        foreach (PrismGraphNode node in graph.Nodes)
+        {
+            if (node.Kind != PrismGraphNodeKind.ControlCapture)
+            {
+                continue;
+            }
+
+            int captureIndex = executionIndices[node.Id];
+            foreach (PrismGraphScope child in graph.Scopes)
+            {
+                if (child.ParentScopeIndex ==
+                        node.AnalysisScopeIndex &&
+                    child.Output is PrismGraphNodeId output)
+                {
+                    inputs[captureIndex].Add(
+                        executionIndices[output]);
+                }
+            }
+        }
+
+        ImmutableArray<ImmutableArray<int>> result = inputs
+            .Select((nodeInputs, targetIndex) =>
+            {
+                ImmutableArray<int> ordered = nodeInputs
+                    .Distinct()
+                    .Order()
+                    .ToImmutableArray();
+                if (ordered.Any(sourceIndex =>
+                        sourceIndex >= targetIndex))
+                {
+                    throw new ArgumentException(
+                        "Prism cache-pruning inputs must precede their consuming node.");
+                }
+
+                return ordered;
+            })
+            .ToImmutableArray();
+        return result;
     }
 }
 
@@ -492,6 +603,8 @@ public sealed class PrismGraphOptimizer
                     scope.ControlBounds,
                     scope.EffectiveTransform,
                     scope.PixelScale,
+                    scope.DependencyStamp,
+                    scope.LowerUiVersion,
                     scope.Resources,
                     scope.Output is PrismGraphNodeId output
                         ? ResolveAlias(output, aliases)
@@ -688,6 +801,8 @@ public sealed class PrismGraphOptimizer
         Dictionary<PrismGraphNodeId, ImmutableArray<PrismGraphEdge>> incoming =
             IndexIncomingEdges(graph.Edges);
         Dictionary<PrismGraphNodeId, PrismGraphNodePlan> plans = [];
+        PrismRetainedFingerprintBuilder fingerprintBuilder =
+            new(graph);
         ImmutableArray<PrismGraphNodePlan>.Builder result =
             ImmutableArray.CreateBuilder<PrismGraphNodePlan>(graph.Nodes.Length);
         foreach (PrismGraphNode node in graph.Nodes)
@@ -711,13 +826,36 @@ public sealed class PrismGraphOptimizer
                     plans,
                     aliasedDependencies);
             PrismGraphUncacheableReason reasons =
-                CalculateUncacheableReasons(node, inputs, plans);
+                CalculateUncacheableReasons(
+                    node,
+                    scope,
+                    inputs,
+                    plans);
+            PrismRetainedCacheCandidateKind cacheCandidateKind =
+                SelectCacheCandidate(node, scope, reasons);
+            PrismVerifiedFingerprint structuralFingerprint = default;
+            PrismVerifiedFingerprint valueFingerprint = default;
+            PrismVerifiedFingerprint dependencyFingerprint = default;
+            if (cacheCandidateKind !=
+                PrismRetainedCacheCandidateKind.None)
+            {
+                fingerprintBuilder.Create(
+                    node.Id,
+                    dependencies,
+                    out structuralFingerprint,
+                    out valueFingerprint,
+                    out dependencyFingerprint);
+            }
             PrismGraphNodePlan plan = new(
                 node.Id,
                 bounds.Bounds,
                 bounds.Status,
                 dependencies,
-                reasons);
+                reasons,
+                cacheCandidateKind,
+                structuralFingerprint,
+                valueFingerprint,
+                dependencyFingerprint);
             plans.Add(node.Id, plan);
             result.Add(plan);
         }
@@ -1020,10 +1158,12 @@ public sealed class PrismGraphOptimizer
 
     private static PrismGraphUncacheableReason CalculateUncacheableReasons(
         PrismGraphNode node,
+        PrismGraphScope scope,
         ImmutableArray<PrismGraphEdge> inputs,
         IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNodePlan> plans)
     {
-        PrismGraphUncacheableReason reasons = OwnUncacheableReasons(node);
+        PrismGraphUncacheableReason reasons =
+            OwnUncacheableReasons(node, scope);
         foreach (PrismGraphEdge input in inputs)
         {
             PrismGraphNodePlan source = plans[input.Source];
@@ -1039,15 +1179,21 @@ public sealed class PrismGraphOptimizer
     }
 
     private static PrismGraphUncacheableReason OwnUncacheableReasons(
-        PrismGraphNode node)
+        PrismGraphNode node,
+        PrismGraphScope scope)
     {
         PrismGraphUncacheableReason reasons = PrismGraphUncacheableReason.None;
-        if (node.Kind == PrismGraphNodeKind.BackdropInput)
+        if (node.Kind == PrismGraphNodeKind.BackdropInput &&
+            !node.Dependencies.Any(
+                dependency =>
+                    dependency.Kind ==
+                        PrismGraphDependencyKind.BackdropFrame &&
+                    dependency.Key > 0))
         {
             reasons |= PrismGraphUncacheableReason.FrameBackdrop;
         }
 
-        if (!HasAvailableResourceVersions(node))
+        if (!HasAvailableResourceVersions(node, scope))
         {
             reasons |= PrismGraphUncacheableReason.ResourceVersionUnavailable;
         }
@@ -1069,24 +1215,16 @@ public sealed class PrismGraphOptimizer
     }
 
     private static bool HasAvailableResourceVersions(
-        PrismGraphNode node)
+        PrismGraphNode node,
+        PrismGraphScope scope)
     {
         if (node.Resource is PrismResourceId resource &&
             resource.Value > 0 &&
-            !node.Dependencies.Any(
-                dependency =>
-                    dependency.Kind ==
-                        PrismGraphDependencyKind.Resource &&
-                    dependency.Version > 0))
+            !HasVersionedResource(resource))
         {
             return false;
         }
 
-        int? stableId = node.Filter is PrismFilterId filter
-            ? (int)filter
-            : node.Style is PrismStyleId style
-                ? (int)style
-                : null;
         foreach (PrismGraphParameter parameter in
             node.Parameters)
         {
@@ -1096,26 +1234,35 @@ public sealed class PrismGraphOptimizer
             {
                 continue;
             }
-            if (stableId is not int entryStableId)
-            {
-                return false;
-            }
-
-            long key =
-                ((long)entryStableId << 32) |
-                (uint)parameter.Index;
-            if (!node.Dependencies.Any(
-                dependency =>
-                    dependency.Kind ==
-                        PrismGraphDependencyKind.Resource &&
-                    dependency.Key == key &&
-                    dependency.Version > 0))
+            if (!HasVersionedResource(
+                    parameter.ResourceValue))
             {
                 return false;
             }
         }
 
         return true;
+
+        bool HasVersionedResource(
+            PrismResourceId resourceId)
+        {
+            if (!scope.Resources.TryGetDependency(
+                    resourceId,
+                    out long identity,
+                    out long version) ||
+                identity <= 0 ||
+                version <= 0)
+            {
+                return false;
+            }
+
+            return node.Dependencies.Any(
+                dependency =>
+                    dependency.Kind ==
+                        PrismGraphDependencyKind.Resource &&
+                    dependency.Key == identity &&
+                    dependency.Version == version);
+        }
     }
 
     private static PrismGraphUncacheableReason CatalogReasons(int stableId)
@@ -1159,9 +1306,98 @@ public sealed class PrismGraphOptimizer
             PrismGraphNodeKind.ColorConversion =>
                 Has(PrismGraphDependencyKind.ColorProfile),
             PrismGraphNodeKind.Filter or PrismGraphNodeKind.Style =>
-                Has(PrismGraphDependencyKind.CatalogEntry),
+                Has(PrismGraphDependencyKind.CatalogEntry) &&
+                HasRequiredCatalogPolicy(node),
             _ => true
         };
+    }
+
+    private static bool HasRequiredCatalogPolicy(
+        PrismGraphNode node)
+    {
+        int stableId = node.Filter is PrismFilterId filter
+            ? (int)filter
+            : node.Style is PrismStyleId style
+                ? (int)style
+                : throw new InvalidOperationException(
+                    "A catalog cache policy requires a filter or style node.");
+        PrismCatalogEntryDescriptor entry =
+            PrismCatalogRuntime.GetEntry(stableId);
+        const PrismCatalogCacheDependency known =
+            PrismCatalogCacheDependency.InputPixels |
+            PrismCatalogCacheDependency.ParameterValues |
+            PrismCatalogCacheDependency.ExplicitSeed |
+            PrismCatalogCacheDependency.VersionedResources;
+        PrismCatalogCacheDependency policy =
+            entry.CacheDependencies;
+        if ((policy & ~known) != 0 ||
+            (policy & PrismCatalogCacheDependency.InputPixels) == 0)
+        {
+            return false;
+        }
+
+        bool hasParameters = entry.Properties.Length > 0;
+        bool hasSeed = entry.Properties.Any(
+            property => string.Equals(
+                property.Name,
+                "Seed",
+                StringComparison.Ordinal));
+        bool hasResources = entry.Properties.Any(
+            property =>
+                property.ValueType ==
+                PrismCatalogValueType.Resource);
+        if (hasParameters != policy.HasFlag(
+                PrismCatalogCacheDependency.ParameterValues) ||
+            hasSeed != policy.HasFlag(
+                PrismCatalogCacheDependency.ExplicitSeed) ||
+            hasResources != policy.HasFlag(
+                PrismCatalogCacheDependency.VersionedResources) ||
+            node.Parameters.Length != entry.Properties.Length)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < node.Parameters.Length; index++)
+        {
+            if (node.Parameters[index].Index != index)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static PrismRetainedCacheCandidateKind SelectCacheCandidate(
+        PrismGraphNode node,
+        PrismGraphScope scope,
+        PrismGraphUncacheableReason reasons)
+    {
+        if (reasons != PrismGraphUncacheableReason.None)
+        {
+            return PrismRetainedCacheCandidateKind.None;
+        }
+        if (scope.Output == node.Id)
+        {
+            return PrismRetainedCacheCandidateKind.Final;
+        }
+        if (node.Kind == PrismGraphNodeKind.ControlCapture)
+        {
+            return PrismRetainedCacheCandidateKind.Capture;
+        }
+        if (node.Kind is
+                PrismGraphNodeKind.Filter or
+                PrismGraphNodeKind.Style or
+                PrismGraphNodeKind.Mask or
+                PrismGraphNodeKind.ColorConversion or
+                PrismGraphNodeKind.BackdropCrop ||
+            node.Kind == PrismGraphNodeKind.Group &&
+            node.IsIsolationBoundary)
+        {
+            return PrismRetainedCacheCandidateKind.Intermediate;
+        }
+
+        return PrismRetainedCacheCandidateKind.None;
     }
 
     private static ImmutableArray<PrismGraphSurfaceLifetime> BuildSurfaceLifetimes(

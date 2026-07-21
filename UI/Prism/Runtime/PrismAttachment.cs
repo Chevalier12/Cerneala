@@ -42,6 +42,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         PrismAttachment attachment = new(owner, instanceFactory, bindingFactories);
         Attachments.Add(owner, attachment);
         owner.AddLifecycleBehavior(attachment);
+        owner.SetPrismVisualBoundary(true);
         try
         {
             if (owner.IsAttached)
@@ -55,6 +56,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
             throw;
         }
 
+        owner.InvalidatePrismAttachment();
         return attachment;
     }
 
@@ -76,6 +78,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         out PrismCacheOwnerToken cacheOwnerToken)
     {
         if (Attachments.TryGetValue(owner, out PrismAttachment? attachment) &&
+            attachment.renderable &&
             attachment.instance is PrismInstance current)
         {
             instance = current;
@@ -128,6 +131,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         if (!isRenderable)
         {
             renderable = false;
+            QueueOwnerInvalidation();
             DisconnectBindings();
             return;
         }
@@ -159,6 +163,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
             return;
         }
 
+        QueueOwnerInvalidation();
         attached = false;
         renderable = false;
         try
@@ -201,6 +206,8 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
 
             if (previousOwner is not null)
             {
+                previousOwner.SetPrismVisualBoundary(false);
+                previousOwner.InvalidatePrismAttachment();
                 previousOwner.RemoveLifecycleBehavior(this);
                 if (Attachments.TryGetValue(previousOwner, out PrismAttachment? current) &&
                     ReferenceEquals(current, this))
@@ -267,6 +274,15 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
             throw new AggregateException(
                 "One or more Prism bindings failed to detach.",
                 failure);
+        }
+    }
+
+    private void QueueOwnerInvalidation()
+    {
+        if (cacheOwnerToken.Value > 0)
+        {
+            owner?.Root?.PrismCacheInvalidations.EnqueueOwner(
+                cacheOwnerToken);
         }
     }
 
