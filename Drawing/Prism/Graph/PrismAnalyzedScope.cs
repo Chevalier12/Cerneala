@@ -1,6 +1,6 @@
 namespace Cerneala.Drawing.Prism.Graph;
 
-public readonly record struct PrismAnalyzedScope
+internal readonly record struct PrismAnalyzedScope
 {
     internal PrismAnalyzedScope(
         int scopeIndex,

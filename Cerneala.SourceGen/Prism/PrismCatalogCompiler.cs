@@ -296,7 +296,7 @@ internal static class PrismCatalogCompiler
             List<CatalogProperty> properties = new();
             ParsePropertyArray(element, "properties", $"{context}.properties", properties, issues);
             List<string> capabilities = ReadStringArray(element, "capabilities", context, issues);
-            CatalogCoverage coverage = ParseCoverage(element, id, context, issues);
+            CatalogCoverage coverage = ParseCoverage(element, id, kind, context, issues);
             CatalogExecutionProfile executionProfile = kind == "filter"
                 ? executionProfiles.FirstOrDefault(candidate =>
                     string.Equals(candidate.Category, category, StringComparison.Ordinal)) ??
@@ -420,6 +420,7 @@ internal static class PrismCatalogCompiler
     private static CatalogCoverage ParseCoverage(
         JsonElement entry,
         string entryId,
+        string entryKind,
         string context,
         List<PrismCatalogIssue> issues)
     {
@@ -433,10 +434,12 @@ internal static class PrismCatalogCompiler
         ValidateUnknownFields(coverage, CoverageFields, $"{context}.coverage", issues);
         return new CatalogCoverage(
             ReadCoverageOwner(coverage, entryId, "runtime", issues),
-            $"generated:PrismGraphBuilder/CatalogEntry/{entryId}",
+            $"PrismGraphBuilder/CatalogEntry/{entryId}",
             ReadCoverageOwner(coverage, entryId, "kernel", issues),
             ReadCoverageOwner(coverage, entryId, "test", issues),
-            $"planned:PrismCatalogGolden/{entryId}",
+            entryKind == "filter"
+                ? $"PrismWindowsDxConformanceTests/CatalogGallery/{entryId}"
+                : $"PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/{entryId}",
             ReadCoverageOwner(coverage, entryId, "documentation", issues));
     }
 
@@ -456,7 +459,16 @@ internal static class PrismCatalogCompiler
             return string.Empty;
         }
 
-        return value.GetString()!;
+        string ownerName = value.GetString()!;
+        if (ownerName.StartsWith("planned:", StringComparison.Ordinal) ||
+            ownerName.StartsWith("future:", StringComparison.Ordinal))
+        {
+            issues.Add(Issue(
+                "PRISM3005",
+                $"Catalog entry '{entryId}' coverage owner '{owner}' is not implemented: '{ownerName}'."));
+        }
+
+        return ownerName;
     }
 
     private static void ValidateCatalog(

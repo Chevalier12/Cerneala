@@ -2,13 +2,20 @@
 
 ## Status
 
-This document remains the normative design proposal for Prism. The generated
-markup compiler, typed `PrismInstance` attachment, generated bindings, Motion
-targets, and effective-visibility lifecycle described in the relevant sections
-are implemented. The MonoGame retained GPU cache described below is implemented,
-measured, and exposed through code-only renderer options and diagnostics. Backend
-work not present in the repository remains design material rather than an
-implemented claim.
+This document remains the normative design proposal for Prism. The first
+implementation is complete for generated markup, typed `PrismInstance`
+attachment, bindings, Motion targets, effective-visibility lifecycle, retained
+command scopes, the WindowsDX/MonoGame compositor, backdrop hosting, the built-in
+catalog, diagnostics, and the retained GPU cache. The implementation is exercised
+by the real Presentation Solar System chapter and measured in the
+[integration-hardening benchmark](../benchmarks/Cerneala.Benchmarks/results/2026-07-21-prism-integration-hardening.md).
+
+Deferred work is deliberately separate: Prism compositors for other graphics
+backends, a public third-party filter/style SDK, runtime shader compilation,
+adaptive quality, async compute, and generic GPU scheduling are not implemented
+claims. Backends without Prism support still render the commands inside Prism
+delimiters normally. The concise authoring and hosting contract is summarized in
+the [Prism guide](prism-guide.md).
 
 The proposal deliberately describes the author-facing language before prescribing
 renderer or backend implementation details. Prism markup should be easy to read even
@@ -1610,11 +1617,30 @@ The Prism authoring model is syntax, not resource ownership.
   dependency stamps and explicit memory budgets.
 - Public application-provided or third-party filter/style registration is explicitly
   deferred. This scope decision does not change the approved markup grammar.
+- Measurements freeze the MonoGame defaults at a 512 MiB hard surface limit, a
+  256 MiB retained soft limit, and 256 retained entries. A hard-limit failure
+  reports `PRISM7006`/`SurfaceAllocationFailed`, restores host graphics state, and
+  resumes the remaining raw inner commands without partial Prism output.
+- The Release WindowsDX dogfood gate measured a 388.664 ms Solar System cold frame
+  against a 500 ms ceiling and a 12.874 ms warm p99 against 16.6667 ms. The two
+  warm outliers remain visible in the raw report; no adaptive degradation hides
+  them.
 
-No open question in this section requires another markup directive. Remaining work
-belongs to the implementation planning specification: backend capability rollout,
-GPU algorithm selection, quality tiers, resource budgets, diagnostics identifiers,
-and conformance images for every catalog entry.
+### Implemented contract
+
+The eight directives, Photoshop ordering, implicit control source, layer/group/
+mask/clipping semantics, typed Motion paths, optional backdrop plane, generated
+built-in catalog, lifecycle, deterministic fallback, diagnostics, and bounded
+retained GPU caching are implemented and covered by semantic, conformance,
+lifecycle, stress, and Presentation tests.
+
+### Deferred ideas
+
+Other Prism graphics backends, public operation plugins, runtime shader source,
+adaptive quality, async compute, and a generic task/fence framework require a
+separate use case and design. They are not hidden remaining work and do not alter
+the approved grammar. The generated catalog remains the only normative list of
+operations and defaults.
 
 ## Reference Model
 

@@ -404,6 +404,9 @@ internal sealed class PrismSurfacePool : IDisposable
         {
             throw new PrismSurfaceAllocationException(
                 key,
+                byteCount,
+                accountant.TotalByteCount,
+                accountant.Budget.HardByteLimit,
                 new OutOfMemoryException(
                     "The Prism surface hard byte budget is exhausted."));
         }
@@ -420,6 +423,9 @@ internal sealed class PrismSurfacePool : IDisposable
             accountant.ReleaseTransient(byteCount);
             throw new PrismSurfaceAllocationException(
                 key,
+                byteCount,
+                accountant.TotalByteCount,
+                accountant.Budget.HardByteLimit,
                 exception);
         }
 
@@ -441,7 +447,12 @@ internal sealed class PrismSurfacePool : IDisposable
         {
             accountant.ReleaseTransient(byteCount);
             surface?.Dispose();
-            throw new PrismSurfaceAllocationException(key, exception);
+            throw new PrismSurfaceAllocationException(
+                key,
+                byteCount,
+                accountant.TotalByteCount,
+                accountant.Budget.HardByteLimit,
+                exception);
         }
         CreatedSurfaceCount++;
         return pendingEntry;

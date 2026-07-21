@@ -284,12 +284,20 @@ public sealed class UiHost
         }
 
         backdropFrameCounters.RecordRequested();
-        if (source is null ||
-            !TryGetPhysicalViewportSize(
+        if (source is null)
+        {
+            backdropFrameCounters.RecordFailed(
+                BackdropFrameFailureReason.MissingSource,
+                $"A backdrop was requested by {requirement.ScopeCount} Prism scope(s), but no backdrop frame source is configured.");
+            return null;
+        }
+        if (!TryGetPhysicalViewportSize(
                 out int pixelWidth,
                 out int pixelHeight))
         {
-            backdropFrameCounters.RecordFailed();
+            backdropFrameCounters.RecordFailed(
+                BackdropFrameFailureReason.InvalidViewport,
+                $"The viewport cannot produce a physical backdrop size: width={viewport.Width}, height={viewport.Height}, scale={viewport.Scale}.");
             return null;
         }
 
@@ -298,21 +306,32 @@ public sealed class UiHost
             pixelHeight,
             viewport.Scale,
             requirement);
+        IBackdropFrameLease? lease;
         try
         {
-            IBackdropFrameLease lease =
-                source.AcquireFrame(in request) ??
-                throw new InvalidOperationException(
-                    $"Backdrop frame source '{source.GetType().FullName}' returned a null lease.");
-            backdropFrameCounters.RecordAcquired(
-                requirement.ScopeCount);
-            return lease;
+            lease = source.AcquireFrame(in request);
         }
-        catch
+        catch (Exception exception)
         {
-            backdropFrameCounters.RecordFailed();
+            backdropFrameCounters.RecordFailed(
+                BackdropFrameFailureReason.AcquisitionFailed,
+                $"Backdrop frame source '{source.GetType().FullName}' failed with {exception.GetType().FullName}: {exception.Message}");
             throw;
         }
+
+        if (lease is null)
+        {
+            string detail =
+                $"Backdrop frame source '{source.GetType().FullName}' returned a null lease.";
+            backdropFrameCounters.RecordFailed(
+                BackdropFrameFailureReason.NullLease,
+                detail);
+            throw new InvalidOperationException(detail);
+        }
+
+        backdropFrameCounters.RecordAcquired(
+            requirement.ScopeCount);
+        return lease;
     }
 
     private bool TryGetPhysicalViewportSize(

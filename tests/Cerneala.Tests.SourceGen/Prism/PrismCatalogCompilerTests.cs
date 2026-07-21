@@ -430,6 +430,24 @@ public sealed class PrismCatalogCompilerTests
             issue.Message);
     }
 
+    [Theory]
+    [InlineData("planned:PrismKernelRegistry/Blur")]
+    [InlineData("future:PrismKernelRegistry/Blur")]
+    public void SpeculativeCoverageOwnerIsRejected(string owner)
+    {
+        JsonObject catalog = ParseCatalog(ReadRepositoryCatalog());
+        JsonObject blur = FindEntry(catalog, "filter:blur");
+        blur["coverage"]!["kernel"] = owner;
+
+        PrismCatalogIssue issue = Assert.Single(
+            PrismCatalogCompiler.Compile(Serialize(catalog)).Issues,
+            candidate => candidate.Id == "PRISM3005");
+
+        Assert.Contains("filter:blur", issue.Message, StringComparison.Ordinal);
+        Assert.Contains(owner, issue.Message, StringComparison.Ordinal);
+        Assert.Contains("not implemented", issue.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void GeneratedOutputIsDeterministicAcrossEntryOrder()
     {

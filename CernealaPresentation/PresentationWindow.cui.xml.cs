@@ -3,6 +3,7 @@ using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Hosting.MonoGame;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 
@@ -40,6 +41,7 @@ public partial class PresentationWindow : Window
             out int requestedChapter)
             ? Math.Clamp(requestedChapter - 1, 0, ChapterNames.Length - 1)
             : 0;
+        PrepareDeterministicPrismCaptureState(ref initialChapter);
         ShowChapter(initialChapter);
         _ = CaptureIfRequestedAsync();
         _ = RunAutomationIfRequestedAsync();
@@ -125,46 +127,98 @@ public partial class PresentationWindow : Window
             return;
         }
 
-        if (int.TryParse(
-                Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_HOVER_CHAPTER"),
-                out int hoverChapter) &&
-            hoverChapter >= 1 &&
-            hoverChapter <= tourNavigation.Length)
-        {
-            tourNavigation[hoverChapter - 1].IsPointerOver = true;
-        }
-
-        bool captureDuringMotion = string.Equals(
-            Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_CAPTURE_DURING_MOTION"),
-            "1",
-            StringComparison.OrdinalIgnoreCase);
-        if (captureDuringMotion)
-        {
-            await Task.Delay(1_350);
-        }
-        else
-        {
-            await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
-            await Task.Delay(100);
-        }
+        bool prismCapture = IsPrismCaptureRequested();
         string fullPath = Path.GetFullPath(path);
+        string errorPath = fullPath + ".error.txt";
+        File.Delete(errorPath);
+        try
+        {
+            if (prismCapture)
+            {
+                await PreparePrismCaptureAsync();
+            }
+            else
+            {
+                if (int.TryParse(
+                        Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_HOVER_CHAPTER"),
+                        out int hoverChapter) &&
+                    hoverChapter >= 1 &&
+                    hoverChapter <= tourNavigation.Length)
+                {
+                    tourNavigation[hoverChapter - 1].IsPointerOver = true;
+                }
+
+                bool captureDuringMotion = string.Equals(
+                    Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_CAPTURE_DURING_MOTION"),
+                    "1",
+                    StringComparison.OrdinalIgnoreCase);
+                if (captureDuringMotion)
+                {
+                    await Task.Delay(1_350);
+                }
+                else
+                {
+                    await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+                    await Task.Delay(100);
+                }
+            }
+
+            PrismOperationalDiagnostics? beforeCapture = prismCapture
+                ? CapturePrismDiagnosticsSnapshot()
+                : null;
+            await CaptureScreenshotFrameAsync(fullPath);
+            PrismOperationalDiagnostics? afterCapture = prismCapture
+                ? CapturePrismDiagnosticsSnapshot()
+                : null;
+
+            if (prismCapture)
+            {
+                await WritePrismCaptureReportAsync(fullPath, beforeCapture, afterCapture);
+            }
+            else
+            {
+                await File.WriteAllLinesAsync(Path.ChangeExtension(fullPath, ".metrics.txt"),
+                [
+                    $"Chapter={currentChapter + 1}",
+                    $"RootCommands={Root?.RetainedRenderCache.RootCommands.Count ?? 0}",
+                    $"RenderCacheVersion={Root?.RetainedRenderCache.Version ?? 0}"
+                ]);
+            }
+        }
+        catch (Exception exception)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(errorPath)!);
+            await File.WriteAllTextAsync(errorPath, exception.ToString());
+        }
+        finally
+        {
+            if (prismCapture)
+            {
+                Close();
+            }
+        }
+    }
+
+    private async Task CaptureScreenshotFrameAsync(string fullPath)
+    {
         TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
         EventHandler? handler = null;
         handler = (_, _) =>
         {
             FrameRendered -= handler;
-            SaveScreenshot(fullPath);
-            File.WriteAllLines(Path.ChangeExtension(fullPath, ".metrics.txt"),
-            [
-                $"Chapter={currentChapter + 1}",
-                $"RootCommands={Root?.RetainedRenderCache.RootCommands.Count ?? 0}",
-                $"RenderCacheVersion={Root?.RetainedRenderCache.Version ?? 0}"
-            ]);
-            completion.TrySetResult();
+            try
+            {
+                SaveScreenshot(fullPath);
+                completion.TrySetResult();
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
         };
 
         FrameRendered += handler;
         Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "presentation screenshot");
-        await completion.Task;
+        await completion.Task.WaitAsync(TimeSpan.FromSeconds(30));
     }
 }

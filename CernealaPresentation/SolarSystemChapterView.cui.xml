@@ -208,6 +208,68 @@
                 Offset="1"
                 Color="#FF102152" />
         </RadialGradientBrush>
+        <ImageBrush
+            Name="PlanetCardMask"
+            Source="Assets/cerneala-mascot-void-suction-well.png"
+            Stretch="UniformToFill" />
+        <PrismComposition
+            Name="PlanetCardPrism">
+            @layer SignalPulse
+            {
+                Opacity = 0.18;
+                BlendMode = Screen;
+
+                @style OuterGlow
+                {
+                    Size = 7;
+                    Opacity = 0.72;
+                    Color = #8060D8FF;
+                }
+
+                @mask
+                {
+                    Image = $PlanetCardMask;
+                    Channel = Luminance;
+                    Feather = 1.5;
+                    Density = 0.42;
+                    Invert = false;
+                }
+            }
+
+            @group CardTreatment
+            {
+                Opacity = 1;
+                BlendMode = Normal;
+
+                @layer CardClarity
+                {
+                    @filter BrightnessContrast
+                    {
+                        Brightness = 0.02;
+                        Contrast = 0.08;
+                    }
+                }
+            }
+
+            @backdrop SpaceGlass
+            {
+                Opacity = 0.76;
+
+                @filter Blur
+                {
+                    Radius = 8;
+                }
+            }
+        </PrismComposition>
+        <MotionClip
+            Name="PlanetCardPulse"
+            TargetType="Cerneala.Presentation.SolarSystemChapterView">
+            @animate with Repeat(Tween(3s, EaseInOut), forever)
+            {
+                @from { $PlanetInfoCard.prism.SignalPulse.Opacity = 0.16; }
+                @to { $PlanetInfoCard.prism.SignalPulse.Opacity = 0.28; }
+            }
+        </MotionClip>
         <MotionClip
             Name="SolarCycle"
             TargetType="Cerneala.Presentation.SolarSystemChapterView">
@@ -274,6 +336,7 @@
             Name="SolarMotion"
             TargetType="Cerneala.Presentation.SolarSystemChapterView">
             @handle SolarOrbits;
+            @handle PlanetCardEffect;
             @when $self.Visibility
             {
                 @if value == Visible
@@ -283,6 +346,17 @@
                 @if value == Collapsed
                 {
                     @cancel SolarOrbits;
+                }
+            }
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $PlanetCardPulse as PlanetCardEffect;
+                }
+                @if value == Collapsed
+                {
+                    @cancel PlanetCardEffect;
                 }
             }
         </Aspect>
@@ -556,6 +630,7 @@
         </Grid>
 
         <Border
+            Name="PlanetInfoCard"
             Grid.Row="1"
             Width="310"
             Height="150"
@@ -566,6 +641,7 @@
             Background="$SolarPanelBrush"
             BorderBrush="$SolarLineBrush"
             BorderThickness="1">
+            @prism $PlanetCardPrism;
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition

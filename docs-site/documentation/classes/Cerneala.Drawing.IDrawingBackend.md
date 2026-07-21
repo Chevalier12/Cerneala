@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `Drawing/IDrawingBackend.cs`
 
-Defines the backend-neutral entry point for rendering a retained command list with its current frame analysis.
+Defines the backend-neutral entry point for rendering a retained command list with its current frame context.
 
 ```csharp
 public interface IDrawingBackend
@@ -17,22 +17,27 @@ public interface IDrawingBackend
 
 ```csharp
 using Cerneala.Drawing;
-using Cerneala.Drawing.Prism.Graph;
 
-DrawCommandList commands = new();
-DrawingFrameContext frameContext = new(
-    new PrismFrameAnalyzer().Analyze(commands));
-IDrawingBackend backend = new CapturingBackend();
-
-backend.Render(commands, in frameContext);
-
-sealed class CapturingBackend : IDrawingBackend
+sealed class BasicBackend : IDrawingBackend
 {
+    public List<DrawCommandKind> ExecutedKinds { get; } = [];
+
     public void Render(
         DrawCommandList commands,
         in DrawingFrameContext frameContext)
     {
-        frameContext.EnsureCurrent(commands);
+        foreach (DrawCommand command in commands)
+        {
+            if (command.Kind is DrawCommandKind.BeginPrism or DrawCommandKind.EndPrism)
+            {
+                continue;
+            }
+
+            ExecutedKinds.Add(command.Kind);
+        }
+
+        // A backend that supports backdrop can inspect the frame-scoped lease.
+        _ = frameContext.BackdropLease;
     }
 }
 ```
@@ -41,7 +46,9 @@ sealed class CapturingBackend : IDrawingBackend
 
 Implementations must treat `commands` as read-only for the duration of `Render`. Retained UI can submit the same command-list instance across unchanged frames.
 
-The supplied `DrawingFrameContext` carries the `PrismFrameAnalysis` produced for the same command list and can also carry an optional backend-neutral backdrop lease. Implementations should validate it with `DrawingFrameContext.EnsureCurrent` before using analyzed scope data.
+`UiHost` creates and validates the supplied `DrawingFrameContext` for the committed command list. Its public surface exposes only the optional backend-neutral backdrop lease; Prism scope analysis and freshness validation remain framework-owned implementation details.
+
+A backend without Prism support ignores only `BeginPrism` and `EndPrism` and processes every command between them normally. Prism is presentation-only, so this fallback does not change layout, hit testing, or input routing and does not require a backdrop provider.
 
 The `in` modifier passes the readonly frame context by reference. A backend must not retain frame-scoped state beyond the rendering call.
 
@@ -49,7 +56,7 @@ The `in` modifier passes the readonly frame context by reference. A backend must
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Render(DrawCommandList commands, in DrawingFrameContext frameContext)` | `void` | Renders the read-only command list using the analysis and optional backdrop lease for the current frame. |
+| `Render(DrawCommandList commands, in DrawingFrameContext frameContext)` | `void` | Renders the read-only command list using the optional backdrop lease for the current frame. |
 
 ## Applies to
 

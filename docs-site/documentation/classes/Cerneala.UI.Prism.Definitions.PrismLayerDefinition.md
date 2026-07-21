@@ -64,4 +64,4 @@ Normal Prism content stacks.
 ## See also
 
 - `Cerneala.UI.Prism.Definitions.PrismSourceSpan`
-- `Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic`
+- `Cerneala.UI.Prism.Runtime.PrismLayerState`

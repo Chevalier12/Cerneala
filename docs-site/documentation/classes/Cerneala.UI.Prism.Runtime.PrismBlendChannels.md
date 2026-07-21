@@ -14,6 +14,11 @@ Specifies the color and alpha channels written by a Prism layer.
 public enum PrismBlendChannels
 ```
 
+## Remarks
+
+Values may be combined because the enum has `FlagsAttribute`. Runtime setters
+reject bit combinations outside the declared `Rgba` mask.
+
 ## Values
 
 | Name | Value | Description |

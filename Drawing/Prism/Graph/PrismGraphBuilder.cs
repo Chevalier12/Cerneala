@@ -7,7 +7,7 @@ using Cerneala.UI.Prism.Runtime;
 
 namespace Cerneala.Drawing.Prism.Graph;
 
-public sealed class PrismGraphBuilder
+internal sealed class PrismGraphBuilder
 {
     public PrismGraph Build(PrismFrameAnalysis analysis)
     {

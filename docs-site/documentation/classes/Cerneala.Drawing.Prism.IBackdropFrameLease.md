@@ -16,13 +16,10 @@ public interface IBackdropFrameLease : IDisposable
 ## Examples
 
 ```csharp
-using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
-using Cerneala.Drawing.Prism.Graph;
 
-using IBackdropFrameLease lease = new FrameBackdropLease(metadata);
-PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(new DrawCommandList());
-DrawingFrameContext context = new(analysis, lease);
+static IBackdropFrameLease Borrow(BackdropFrameMetadata metadata) =>
+    new FrameBackdropLease(metadata);
 
 sealed class FrameBackdropLease(BackdropFrameMetadata metadata)
     : IBackdropFrameLease
@@ -66,4 +63,3 @@ Cerneala backdrop-aware frame hosting and backend composition.
 - `Cerneala.Drawing.DrawingFrameContext`
 - `Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease`
 - `Cerneala.Drawing.Prism.IBackdropFrameSource`
-- `Cerneala.Drawing.Prism.Graph.PrismBackdropRequirement`

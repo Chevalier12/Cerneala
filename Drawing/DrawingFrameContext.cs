@@ -5,7 +5,7 @@ namespace Cerneala.Drawing;
 
 public readonly struct DrawingFrameContext
 {
-    public DrawingFrameContext(
+    internal DrawingFrameContext(
         PrismFrameAnalysis prismAnalysis,
         IBackdropFrameLease? backdropLease = null)
         : this(
@@ -29,7 +29,7 @@ public readonly struct DrawingFrameContext
         PrismCacheInvalidations = prismCacheInvalidations;
     }
 
-    public PrismFrameAnalysis PrismAnalysis { get; }
+    internal PrismFrameAnalysis PrismAnalysis { get; }
 
     public IBackdropFrameLease? BackdropLease { get; }
 
@@ -37,7 +37,7 @@ public readonly struct DrawingFrameContext
 
     internal PrismCacheInvalidationQueue? PrismCacheInvalidations { get; }
 
-    public void EnsureCurrent(DrawCommandList commands)
+    internal void EnsureCurrent(DrawCommandList commands)
     {
         if (PrismAnalysis is null)
         {

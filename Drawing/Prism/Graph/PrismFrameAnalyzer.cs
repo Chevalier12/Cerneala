@@ -6,7 +6,7 @@ using Cerneala.UI.Prism.Runtime;
 
 namespace Cerneala.Drawing.Prism.Graph;
 
-public sealed class PrismFrameAnalyzer
+internal sealed class PrismFrameAnalyzer
 {
     private const ulong DependencyOffset = 14695981039346656037UL;
     private const ulong DependencyPrime = 1099511628211UL;

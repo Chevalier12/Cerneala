@@ -211,6 +211,47 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void PrismBindingIsNotSkippedWhenAResourceAspectAlreadyMakesTheDocumentReactive()
+    {
+        const string markup = """
+            <StackPanel Aspect="$ReactiveAspect">
+              <StackPanel.Resources>
+                <PrismComposition Name="CardFx">
+                  @layer Glow
+                  {
+                    @filter Blur { Radius = 4; }
+                  }
+                </PrismComposition>
+                <Aspect Name="ReactiveAspect" TargetType="StackPanel">
+                  @when $self.Visibility
+                  {
+                    @if value == Visible
+                    {
+                      @set { $Card.prism.Glow.Opacity = 0.5; }
+                    }
+                  }
+                </Aspect>
+              </StackPanel.Resources>
+
+              <Border Name="Card">
+                @prism $CardFx;
+                <TextBlock Text="Prism dogfood" />
+              </Border>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "ReactiveAspectPrism.cui.xml",
+            markup,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Contains("GeneratedMarkup.AttachPrism(", generated, StringComparison.Ordinal);
+        Assert.Contains("SetPrismMotionProperty(", generated, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void PrismParserReportsUnknownDirectiveAtTheExactToken()
     {
         const string markup = """

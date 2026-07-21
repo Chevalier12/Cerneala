@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `Drawing/DrawingFrameContext.cs`
 
-Carries the typed, backend-neutral analysis and optional backdrop lease for one drawing submission.
+Carries the public, backend-neutral resources borrowed for one drawing submission.
 
 ```csharp
 public readonly struct DrawingFrameContext
@@ -17,49 +17,32 @@ public readonly struct DrawingFrameContext
 
 ```csharp
 using Cerneala.Drawing;
-using Cerneala.Drawing.Prism.Graph;
 
-DrawCommandList commands = new();
-PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(commands);
-DrawingFrameContext frameContext = new(analysis);
-
-frameContext.EnsureCurrent(commands);
+public sealed class InspectingBackend : IDrawingBackend
+{
+    public void Render(
+        DrawCommandList commands,
+        in DrawingFrameContext frameContext)
+    {
+        bool hasBackdrop = frameContext.BackdropLease is not null;
+        Console.WriteLine($"Commands: {commands.Count}; backdrop: {hasBackdrop}");
+    }
+}
 ```
 
 ## Remarks
 
-`DrawingFrameContext` binds a `PrismFrameAnalysis` to the command list that was analyzed for the current frame. Pass the same context and command-list instance to `IDrawingBackend.Render`.
+`UiHost` creates the context and passes it with the matching `DrawCommandList` to `IDrawingBackend.Render`. Graph analysis and freshness validation are framework implementation details and are not part of the public backend contract.
 
-`BackdropLease` is optional and uses the backend-neutral `IBackdropFrameLease` contract. The context borrows the lease but does not dispose it. The host that acquired the lease ends the borrow after submission, including exceptional exits.
+`BackdropLease` is optional. The context borrows the lease but does not dispose it; the host that acquired the lease ends the borrow after submission, including exceptional exits. Backends should not retain the context or lease beyond `Render`.
 
-The default struct value is not initialized. Calling `EnsureCurrent` on it throws `InvalidOperationException`.
-
-## Constructors
-
-| Name | Description |
-| --- | --- |
-| `DrawingFrameContext(PrismFrameAnalysis prismAnalysis, IBackdropFrameLease? backdropLease = null)` | Creates a frame context from a non-null Prism analysis and an optional backdrop lease. |
+The default struct value has no backdrop lease and is not a substitute for a host-created frame submission.
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `PrismAnalysis` | `PrismFrameAnalysis` | Gets the Prism analysis created for the submitted command list. |
-| `BackdropLease` | `IBackdropFrameLease?` | Gets the optional backend-neutral lease for backdrop input. |
-
-## Methods
-
-| Name | Return Type | Description |
-| --- | --- | --- |
-| `EnsureCurrent(DrawCommandList commands)` | `void` | Verifies that the context is initialized and that its Prism analysis still matches `commands`. |
-
-## Exceptions
-
-| Member | Exception | Condition |
-| --- | --- | --- |
-| Constructor | `ArgumentNullException` | `prismAnalysis` is `null`. |
-| `EnsureCurrent` | `ArgumentNullException` | `commands` is `null`. |
-| `EnsureCurrent` | `InvalidOperationException` | The context is uninitialized, the command list does not match the analyzed instance or version, or a Prism scope has changed since analysis. |
+| `BackdropLease` | `IBackdropFrameLease?` | Gets the optional backend-neutral backdrop lease borrowed for this submission. |
 
 ## Applies to
 
@@ -69,5 +52,3 @@ Cerneala retained frame submission and drawing backend integration.
 
 - `Cerneala.Drawing.IDrawingBackend`
 - `Cerneala.Drawing.Prism.IBackdropFrameLease`
-- `Cerneala.Drawing.Prism.Graph.PrismFrameAnalysis`
-- `Cerneala.Drawing.Prism.Graph.PrismFrameAnalyzer`

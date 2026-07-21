@@ -73,4 +73,4 @@ Nested normal Prism layer stacks.
 ## See also
 
 - `Cerneala.UI.Prism.Definitions.PrismSourceSpan`
-- `Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic`
+- `Cerneala.UI.Prism.Runtime.PrismGroupState`

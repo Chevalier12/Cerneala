@@ -60,4 +60,5 @@ Optional Prism backdrop processing.
 ## See also
 
 - `Cerneala.UI.Prism.Definitions.PrismSourceSpan`
-- `Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic`
+- `Cerneala.Drawing.Prism.IBackdropFrameSource`
+- `Cerneala.UI.Prism.Runtime.PrismBackdropState`

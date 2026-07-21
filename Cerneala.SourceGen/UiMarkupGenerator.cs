@@ -912,13 +912,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             ReadResources();
             ReadInlineAspects();
+            DirectiveParseResult[] elementDirectiveContent = document.Root
+                .DescendantsAndSelf()
+                .Select(element => GetDirectiveContent(
+                    element,
+                    DirectiveContentKind.Elements |
+                    DirectiveContentKind.Templates |
+                    DirectiveContentKind.Prism))
+                .ToArray();
             reactiveDocument = allAspects.Any(aspect => aspect.Conditions.Count > 0) ||
-                document.Root.DescendantsAndSelf().Any(element =>
-                    GetDirectiveContent(
-                        element,
-                        DirectiveContentKind.Elements |
-                        DirectiveContentKind.Templates |
-                        DirectiveContentKind.Prism).HasDirectives);
+                elementDirectiveContent.Any(content => content.HasDirectives);
             BindPrism();
             EmitAspectTemplates();
         }

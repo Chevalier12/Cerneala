@@ -724,6 +724,7 @@ public sealed class PrismGraphContractTests
             () => new PrismGraphBuilder().Build(analysis));
 
         Assert.Equal("DiagnosticCard", exception.Diagnostic.CompositionName);
+        Assert.Equal("PRISM7201", exception.Diagnostic.Code);
         Assert.Equal(layer.Id, exception.Diagnostic.NodeId);
         Assert.Equal("Broken", exception.Diagnostic.NodeName);
         Assert.Equal(layer.SourceSpan, exception.Diagnostic.SourceSpan);
@@ -754,6 +755,7 @@ public sealed class PrismGraphContractTests
                 new PrismFrameAnalyzer().Analyze(commands)));
 
         Assert.Equal("BackdropDiagnostic", exception.Diagnostic.CompositionName);
+        Assert.Equal("PRISM7201", exception.Diagnostic.Code);
         Assert.Equal(backdrop.Id, exception.Diagnostic.NodeId);
         Assert.Equal(backdrop.Name, exception.Diagnostic.NodeName);
         Assert.Equal(backdrop.SourceSpan, exception.Diagnostic.SourceSpan);
@@ -785,6 +787,7 @@ public sealed class PrismGraphContractTests
             () => new PrismGraphBuilder().Build(analysis));
 
         Assert.Equal("Second", exception.Diagnostic.CompositionName);
+        Assert.Equal("PRISM7201", exception.Diagnostic.Code);
         Assert.Equal(secondSpan, exception.Diagnostic.SourceSpan);
     }
 

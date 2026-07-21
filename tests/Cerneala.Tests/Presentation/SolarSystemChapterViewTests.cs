@@ -36,6 +36,33 @@ public sealed class SolarSystemChapterViewTests
     }
 
     [Fact]
+    public void VisibleSolarSystem_AdvancesOrbitTransformsBetweenFrames()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(1000, 700, motionClock: clock);
+        SolarSystemChapterView view = new() { Visibility = Visibility.Collapsed };
+        root.VisualChildren.Add(view);
+        root.ProcessFrame();
+
+        view.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+        UIElement mercuryBody = Assert.Single(
+            Descendants(view).Where(element =>
+                element.VisualChildren
+                    .OfType<Cerneala.UI.Controls.TextBlock>()
+                    .Any(label => label.Text == "Mercur")));
+        UIElement mercuryOrbit = Assert.IsAssignableFrom<UIElement>(mercuryBody.VisualParent);
+        float initialOrbitRotation = mercuryOrbit.Rotation;
+        float initialBodyRotation = mercuryBody.Rotation;
+
+        clock.Advance(TimeSpan.FromSeconds(1));
+        root.ProcessFrame();
+
+        Assert.NotEqual(initialOrbitRotation, mercuryOrbit.Rotation);
+        Assert.NotEqual(initialBodyRotation, mercuryBody.Rotation);
+    }
+
+    [Fact]
     public void DetachedAnimatedView_IsCollectibleWhileRootRemainsAlive()
     {
         ManualMotionClock clock = new();

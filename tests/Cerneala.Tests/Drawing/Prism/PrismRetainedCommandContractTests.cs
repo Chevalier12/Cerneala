@@ -159,6 +159,44 @@ public sealed class PrismRetainedCommandContractTests
                 maskId,
                 out IDrawImage resolved));
         Assert.Same(image, resolved);
+        Assert.True(scope.Resources.HasStableVersions);
+    }
+
+    [Fact]
+    public void BuilderSnapshotsMarkupImageBrushesIntoThePrismScope()
+    {
+        PrismResourceId maskId = new("MarkupMask");
+        TestImage image = new(9, 7);
+        UIRoot root = new(100, 100);
+        RenderingTestElement owner = new(Color.White);
+        owner.Resources.Add(maskId.Key!, new ImageBrush(image));
+        root.VisualChildren.Add(owner);
+        using IDisposable prism = GeneratedMarkup.AttachPrism(
+            owner,
+            () => new PrismInstance(
+                PrismTestData.Composition(
+                    "Markup mask",
+                    PrismTestData.Layer(
+                        1,
+                        "Content",
+                        mask: new PrismMaskDefinition(maskId)))));
+        RetainedRenderCache cache = PreparedCache(root);
+
+        new DrawCommandListBuilder().Build(
+            root,
+            cache,
+            new RenderCounters());
+
+        PrismDrawScope scope = Assert.Single(
+            cache.RootCommands.Where(
+                command =>
+                    command.Kind == DrawCommandKind.BeginPrism))
+            .PrismScope!.Value;
+        Assert.True(
+            scope.Resources.TryGetImage(
+                maskId,
+                out IDrawImage resolved));
+        Assert.Same(image, resolved);
     }
 
     [Fact]

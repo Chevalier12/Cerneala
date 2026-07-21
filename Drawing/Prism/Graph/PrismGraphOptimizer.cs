@@ -9,7 +9,7 @@ using Cerneala.UI.Prism.Runtime;
 namespace Cerneala.Drawing.Prism.Graph;
 
 [Flags]
-public enum PrismGraphUncacheableReason
+internal enum PrismGraphUncacheableReason
 {
     None = 0,
     NonDeterministicOperation = 1 << 0,
@@ -20,14 +20,14 @@ public enum PrismGraphUncacheableReason
     UncacheableInput = 1 << 5
 }
 
-public enum PrismGraphBoundsStatus
+internal enum PrismGraphBoundsStatus
 {
     Unknown,
     Exact,
     Conservative
 }
 
-public readonly record struct PrismGraphNodePlan
+internal readonly record struct PrismGraphNodePlan
 {
     internal PrismGraphNodePlan(
         PrismGraphNodeId nodeId,
@@ -96,7 +96,7 @@ public readonly record struct PrismGraphNodePlan
         UncacheableReasons == PrismGraphUncacheableReason.None;
 }
 
-public readonly record struct PrismGraphSurfaceLifetime
+internal readonly record struct PrismGraphSurfaceLifetime
 {
     internal PrismGraphSurfaceLifetime(
         PrismGraphNodeId nodeId,
@@ -124,7 +124,7 @@ public readonly record struct PrismGraphSurfaceLifetime
     public int LastStep { get; }
 }
 
-public sealed class PrismGraphExecutionPlan
+internal sealed class PrismGraphExecutionPlan
 {
     private readonly ImmutableDictionary<PrismGraphNodeId, PrismGraphNodePlan> nodesById;
     private readonly ImmutableDictionary<PrismGraphNodeId, int> executionIndicesById;
@@ -313,7 +313,7 @@ public sealed class PrismGraphExecutionPlan
     }
 }
 
-public sealed class PrismGraphOptimizer
+internal sealed class PrismGraphOptimizer
 {
     public PrismGraphExecutionPlan Optimize(PrismGraph graph)
     {

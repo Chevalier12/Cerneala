@@ -13,6 +13,12 @@ Exposes mutable typed mask values for one Prism scope instance.
 public sealed class PrismMaskState
 ```
 
+## Remarks
+
+Changing a value advances the owning instance value generation and invalidates
+its rendered Prism result. `Image` is a backend-neutral resource identifier; the
+state does not own or retain a texture.
+
 ## Properties
 
 | Name | Type | Description |

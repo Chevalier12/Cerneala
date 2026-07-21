@@ -13,6 +13,11 @@ Specifies the composite or component channel evaluated by Blend If.
 public enum PrismBlendIfChannel
 ```
 
+## Remarks
+
+The selected channel is evaluated against the source and underlying Blend If
+ranges after mask and fill preparation and before final opacity and blending.
+
 ## Values
 
 | Name | Description |

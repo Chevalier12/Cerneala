@@ -9,7 +9,7 @@ using Cerneala.UI.Prism.Runtime;
 
 namespace Cerneala.Drawing.Prism.Graph;
 
-public enum PrismGraphNodeKind
+internal enum PrismGraphNodeKind
 {
     ControlCapture,
     BackdropInput,
@@ -27,7 +27,7 @@ public enum PrismGraphNodeKind
     BackdropCrop
 }
 
-public enum PrismGraphEdgeKind
+internal enum PrismGraphEdgeKind
 {
     Content,
     StyleSource,
@@ -40,7 +40,7 @@ public enum PrismGraphEdgeKind
     CompositeForeground
 }
 
-public enum PrismGraphDependencyKind
+internal enum PrismGraphDependencyKind
 {
     Structure,
     Values,
@@ -55,7 +55,7 @@ public enum PrismGraphDependencyKind
     BackdropFrame
 }
 
-public enum PrismGraphParameterValueKind
+internal enum PrismGraphParameterValueKind
 {
     Boolean,
     Integer,
@@ -66,7 +66,7 @@ public enum PrismGraphParameterValueKind
     Resource
 }
 
-public readonly record struct PrismGraphNodeId
+internal readonly record struct PrismGraphNodeId
 {
     public PrismGraphNodeId(
         PrismCacheOwnerToken scopeOwnerToken,
@@ -109,12 +109,12 @@ public readonly record struct PrismGraphNodeId
     }
 }
 
-public readonly record struct PrismGraphDependency(
+internal readonly record struct PrismGraphDependency(
     PrismGraphDependencyKind Kind,
     long Key,
     long Version);
 
-public readonly record struct PrismGraphParameter
+internal readonly record struct PrismGraphParameter
 {
     internal PrismGraphParameter(
         int index,
@@ -153,17 +153,17 @@ public readonly record struct PrismGraphParameter
     public PrismResourceId ResourceValue { get; }
 }
 
-public readonly record struct PrismGraphEdge(
+internal readonly record struct PrismGraphEdge(
     PrismGraphNodeId Source,
     PrismGraphNodeId Target,
     PrismGraphEdgeKind Kind);
 
-public readonly record struct PrismGraphCompositionSettings(
+internal readonly record struct PrismGraphCompositionSettings(
     PrismColorProfile WorkingColorProfile,
     float GlobalLightAngle,
     float GlobalLightAltitude);
 
-public readonly record struct PrismGraphLayerSettings(
+internal readonly record struct PrismGraphLayerSettings(
     PrismBlendChannels BlendChannels,
     PrismKnockout Knockout,
     bool BlendInteriorStylesAsGroup,
@@ -183,7 +183,7 @@ internal enum PrismMaskPass
     FeatherVertical
 }
 
-public readonly record struct PrismGraphScope
+internal readonly record struct PrismGraphScope
 {
     internal PrismGraphScope(
         int analysisScopeIndex,
@@ -329,7 +329,7 @@ public readonly record struct PrismGraphScope
         float.IsFinite(matrix.M32);
 }
 
-public sealed class PrismGraphNode
+internal sealed class PrismGraphNode
 {
     internal PrismGraphNode(
         PrismGraphNodeId id,
@@ -533,7 +533,7 @@ public sealed class PrismGraphNode
     public DrawRect? BackdropSourceBounds { get; }
 }
 
-public sealed class PrismGraph
+internal sealed class PrismGraph
 {
     private readonly ImmutableDictionary<PrismGraphNodeId, PrismGraphNode> nodesById;
 

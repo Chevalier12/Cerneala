@@ -13,6 +13,11 @@ Specifies Photoshop-style knockout behavior for a Prism layer.
 public enum PrismKnockout
 ```
 
+## Remarks
+
+Knockout is a layer-only setting and defaults to `None`. The corresponding
+runtime state setter rejects values outside this enum.
+
 ## Values
 
 | Name | Description |

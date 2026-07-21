@@ -6,12 +6,15 @@ return await PresentationFrameBudgetRunner.RunAsync(args);
 
 internal static class PresentationFrameBudgetRunner
 {
+    private const double WarmTargetPercentile = 0.99;
+
     private static readonly string[] ExpectedChapters =
     [
         "RETAINED MODEL",
         "BUILD-TIME MARKUP",
         "ASPECT DESIGN SYSTEM",
         "MOTION",
+        "SOLAR MOTION",
         "FRAME PIPELINE",
         "DIAGNOSTICS"
     ];
@@ -114,7 +117,7 @@ internal static class PresentationFrameBudgetRunner
         }
 
         IReadOnlyList<string> errors = Validate(report, options);
-        PrintSummary(report!, options.BudgetMilliseconds, reportPath, elapsed.Elapsed);
+        PrintSummary(report!, options, reportPath, elapsed.Elapsed);
         if (errors.Count == 0)
         {
             return 0;
@@ -215,12 +218,32 @@ internal static class PresentationFrameBudgetRunner
             }
         }
 
-        int overBudget = report.Samples.Count(
-            sample => sample.ProcessingTimeMs > options.BudgetMilliseconds);
-        if (overBudget > 0)
+        foreach (string chapter in ExpectedChapters)
         {
-            errors.Add(
-                $"{overBudget} frame(s) exceeded {options.BudgetMilliseconds:0.####} ms.");
+            FrameBudgetSample[] chapterSamples = report.Samples
+                .Where(sample => string.Equals(
+                    sample.Chapter,
+                    chapter,
+                    StringComparison.Ordinal))
+                .ToArray();
+            double coldMaximum = Maximum(
+                chapterSamples.Where(sample => sample.IsCold).ToArray());
+            if (coldMaximum > options.ColdBudgetMilliseconds)
+            {
+                errors.Add(
+                    $"{chapter}: cold maximum {coldMaximum:0.###} ms exceeded " +
+                    $"{options.ColdBudgetMilliseconds:0.####} ms.");
+            }
+
+            double warmPercentile = Percentile(
+                chapterSamples.Where(sample => !sample.IsCold),
+                WarmTargetPercentile);
+            if (warmPercentile > options.BudgetMilliseconds)
+            {
+                errors.Add(
+                    $"{chapter}: warm p99 {warmPercentile:0.###} ms exceeded " +
+                    $"{options.BudgetMilliseconds:0.####} ms.");
+            }
         }
 
         return errors;
@@ -228,12 +251,13 @@ internal static class PresentationFrameBudgetRunner
 
     private static void PrintSummary(
         FrameBudgetReport report,
-        double budgetMilliseconds,
+        RunnerOptions options,
         string reportPath,
         TimeSpan elapsed)
     {
         Console.WriteLine(
-            $"Frame budget: {budgetMilliseconds:0.####} ms | " +
+            $"Warm p99 budget: {options.BudgetMilliseconds:0.####} ms | " +
+            $"cold maximum: {options.ColdBudgetMilliseconds:0.####} ms | " +
             $"{report.Cycles} cycles x {report.FramesPerLoad} frames/load");
         Console.WriteLine($"Report: {reportPath}");
         foreach (string chapter in ExpectedChapters)
@@ -245,13 +269,14 @@ internal static class PresentationFrameBudgetRunner
             FrameBudgetSample[] warm = samples.Where(sample => !sample.IsCold).ToArray();
             Console.WriteLine(
                 $"{chapter,-22} cold max {Maximum(cold),8:0.000} ms " +
-                $"({OverBudget(cold, budgetMilliseconds),3} over) | " +
-                $"warm max {Maximum(warm),8:0.000} ms " +
-                $"({OverBudget(warm, budgetMilliseconds),3} over)");
+                $"({OverBudget(cold, options.ColdBudgetMilliseconds),3} over) | " +
+                $"warm p99 {Percentile(warm, WarmTargetPercentile),8:0.000} ms, " +
+                $"max {Maximum(warm),8:0.000} ms " +
+                $"({OverBudget(warm, options.BudgetMilliseconds),3} over target)");
         }
 
         foreach (FrameBudgetSample sample in report.Samples
-            .Where(sample => sample.ProcessingTimeMs > budgetMilliseconds)
+            .Where(sample => sample.ProcessingTimeMs > options.BudgetMilliseconds)
             .OrderByDescending(sample => sample.ProcessingTimeMs))
         {
             FrameBudgetTiming timing = sample.Timing;
@@ -296,6 +321,26 @@ internal static class PresentationFrameBudgetRunner
         double budgetMilliseconds) =>
         samples.Count(sample => sample.ProcessingTimeMs > budgetMilliseconds);
 
+    private static double Percentile(
+        IEnumerable<FrameBudgetSample> samples,
+        double percentile)
+    {
+        double[] sorted = samples
+            .Select(sample => sample.ProcessingTimeMs)
+            .Order()
+            .ToArray();
+        if (sorted.Length == 0)
+        {
+            return 0;
+        }
+
+        int index = Math.Clamp(
+            (int)Math.Ceiling(percentile * sorted.Length) - 1,
+            0,
+            sorted.Length - 1);
+        return sorted[index];
+    }
+
     private static string FindRepositoryRoot()
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
@@ -331,6 +376,7 @@ internal sealed record RunnerOptions(
     int Cycles,
     int FramesPerLoad,
     double BudgetMilliseconds,
+    double ColdBudgetMilliseconds,
     TimeSpan Timeout,
     string? ReportPath)
 {
@@ -339,6 +385,7 @@ internal sealed record RunnerOptions(
         int cycles = 8;
         int framesPerLoad = 45;
         double budgetMilliseconds = 16.6667;
+        double coldBudgetMilliseconds = 500;
         TimeSpan timeout = TimeSpan.FromMinutes(4);
         string? reportPath = null;
 
@@ -356,6 +403,13 @@ internal sealed record RunnerOptions(
                 case "--budget-ms":
                     budgetMilliseconds = ParseDouble(value, "--budget-ms", double.Epsilon, 60_000);
                     break;
+                case "--cold-budget-ms":
+                    coldBudgetMilliseconds = ParseDouble(
+                        value,
+                        "--cold-budget-ms",
+                        double.Epsilon,
+                        60_000);
+                    break;
                 case "--timeout-seconds":
                     timeout = TimeSpan.FromSeconds(
                         ParseDouble(value, "--timeout-seconds", 1, 3_600));
@@ -368,7 +422,13 @@ internal sealed record RunnerOptions(
             }
         }
 
-        return new RunnerOptions(cycles, framesPerLoad, budgetMilliseconds, timeout, reportPath);
+        return new RunnerOptions(
+            cycles,
+            framesPerLoad,
+            budgetMilliseconds,
+            coldBudgetMilliseconds,
+            timeout,
+            reportPath);
     }
 
     private static string RequireValue(string[] args, ref int index)

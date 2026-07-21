@@ -30,7 +30,7 @@ Console.WriteLine(span); // Card.cui.xml@24+7
 
 `Start` and `Length` are non-negative source coordinates supplied by the caller. `SourceName` is optional but cannot be empty or whitespace when present.
 
-`ToString()` uses `sourceName@start+length`. When no source name is available, it uses `<source>` as the name. Prism graph diagnostics include this form in exception messages.
+`ToString()` uses `sourceName@start+length`. When no source name is available, it uses `<source>` as the name. Framework diagnostics include this form when reporting an authoring location.
 
 The span is diagnostic metadata. Definition constructors store it without making it part of Prism structural equality or hashing.
 
@@ -69,4 +69,3 @@ Cerneala Prism definition authoring and retained graph diagnostics.
 
 - `Cerneala.UI.Prism.Definitions.PrismNodeDefinition`
 - `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition`
-- `Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic`

@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace Cerneala.Drawing.Prism.Graph;
 
-public sealed class PrismFrameAnalysis
+internal sealed class PrismFrameAnalysis
 {
     private readonly DrawCommandList sourceCommands;
 

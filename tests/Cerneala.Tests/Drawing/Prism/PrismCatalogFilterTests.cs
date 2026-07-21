@@ -43,7 +43,7 @@ public sealed class PrismCatalogFilterTests
             Assert.True(
                 PrismCatalogFilterPlanner.IsSupported(filter));
             Assert.StartsWith(
-                "generated:PrismGraphBuilder/CatalogEntry/",
+                "PrismGraphBuilder/CatalogEntry/",
                 entry.Coverage.Planner,
                 StringComparison.Ordinal);
             Assert.Equal(

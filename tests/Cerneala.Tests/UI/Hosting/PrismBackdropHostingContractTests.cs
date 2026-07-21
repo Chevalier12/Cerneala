@@ -162,6 +162,59 @@ public sealed class PrismBackdropHostingContractTests
         Assert.Equal(1, host.BackdropFrameCounters.RequestedFrames);
         Assert.Equal(0, host.BackdropFrameCounters.AcquiredFrames);
         Assert.Equal(1, host.BackdropFrameCounters.FailedFrames);
+        BackdropFrameFailureDiagnostic failure = AssertFailure(
+            host,
+            "PRISM7101",
+            BackdropFrameFailureReason.MissingSource);
+        Assert.Contains("no backdrop frame source", failure.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidViewportBackdropFailureIsDiagnosedPrecisely()
+    {
+        UIRoot root = RootWith(new OrderedElement(Color.White, "control"));
+        using IDisposable prism = AttachBackdrop(root.VisualChildren[0], "InvalidViewport", 1);
+        RecordingBackdropFrameSource source = new();
+        RecordingDrawingBackend drawing = new();
+        UiHost host = CreateHost(root, drawing, source);
+
+        UpdateAndDraw(host, new UiViewport(0, 100));
+
+        Assert.Equal(0, source.AcquireCalls);
+        Assert.Equal(1, drawing.RenderCalls);
+        BackdropFrameFailureDiagnostic failure = AssertFailure(
+            host,
+            "PRISM7102",
+            BackdropFrameFailureReason.InvalidViewport);
+        Assert.Contains("width=0", failure.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NullBackdropLeaseIsRejectedAndDiagnosedPrecisely()
+    {
+        UIRoot root = RootWith(new OrderedElement(Color.White, "control"));
+        using IDisposable prism = AttachBackdrop(root.VisualChildren[0], "NullLease", 1);
+        RecordingBackdropFrameSource source = new()
+        {
+            ReturnNullLease = true
+        };
+        RecordingDrawingBackend drawing = new();
+        UiHost host = CreateHost(root, drawing, source);
+        host.Update(
+            FakeInputSource.CreateFrame(),
+            new UiViewport(100, 100),
+            TimeSpan.Zero);
+
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+            () => host.Draw());
+
+        Assert.Contains("returned a null lease", error.Message, StringComparison.Ordinal);
+        Assert.Equal(0, drawing.RenderCalls);
+        BackdropFrameFailureDiagnostic failure = AssertFailure(
+            host,
+            "PRISM7103",
+            BackdropFrameFailureReason.NullLease);
+        Assert.Contains(source.GetType().FullName!, failure.Detail, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -267,6 +320,11 @@ public sealed class PrismBackdropHostingContractTests
         Assert.Equal(1, host.BackdropFrameCounters.RequestedFrames);
         Assert.Equal(0, host.BackdropFrameCounters.AcquiredFrames);
         Assert.Equal(1, host.BackdropFrameCounters.FailedFrames);
+        BackdropFrameFailureDiagnostic failure = AssertFailure(
+            host,
+            "PRISM7104",
+            BackdropFrameFailureReason.AcquisitionFailed);
+        Assert.Contains(nameof(TestAcquireException), failure.Detail, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -316,6 +374,20 @@ public sealed class PrismBackdropHostingContractTests
     {
         host.Update(FakeInputSource.CreateFrame(), viewport, TimeSpan.Zero);
         host.Draw();
+    }
+
+    private static BackdropFrameFailureDiagnostic AssertFailure(
+        UiHost host,
+        string code,
+        BackdropFrameFailureReason reason)
+    {
+        BackdropFrameFailureDiagnostic failure = Assert.IsType<BackdropFrameFailureDiagnostic>(
+            host.BackdropFrameCounters.LastFailure);
+        Assert.Equal(code, failure.Code);
+        Assert.Equal(reason, failure.Reason);
+        Assert.False(string.IsNullOrWhiteSpace(failure.Detail));
+        Assert.Equal(failure, host.BackdropFrameCounters.Snapshot.LastFailure);
+        return failure;
     }
 
     private static UIRoot RootWith(params UIElement[] children)
@@ -396,6 +468,8 @@ public sealed class PrismBackdropHostingContractTests
 
         public bool ThrowOnAcquire { get; init; }
 
+        public bool ReturnNullLease { get; init; }
+
         public List<BackdropFrameRequest> Requests { get; } = [];
 
         public List<RecordingBackdropFrameLease> Leases { get; } = [];
@@ -413,6 +487,10 @@ public sealed class PrismBackdropHostingContractTests
             if (ThrowOnAcquire)
             {
                 throw new TestAcquireException();
+            }
+            if (ReturnNullLease)
+            {
+                return null!;
             }
 
             RecordingBackdropFrameLease lease = new(metadata);

@@ -32,37 +32,6 @@ DrawCommandList rendered = root.RetainedRenderer.Render(root);
 bool reusedCommandList = ReferenceEquals(committed, rendered);
 ```
 
-Submit the committed command list to a drawing backend:
-
-```csharp
-using Cerneala.Drawing;
-using Cerneala.Drawing.Prism.Graph;
-using Cerneala.UI.Elements;
-
-UIRoot root = new();
-CapturingBackend backend = new();
-
-DrawCommandList committed = root.RetainedRenderer.Commit(root);
-DrawingFrameContext frameContext = new(
-    new PrismFrameAnalyzer().Analyze(committed));
-root.RetainedRenderer.Submit(root, backend, in frameContext);
-
-bool backendReceivedCommittedList = ReferenceEquals(committed, backend.LastCommands);
-
-private sealed class CapturingBackend : IDrawingBackend
-{
-    public DrawCommandList? LastCommands { get; private set; }
-
-    public void Render(
-        DrawCommandList commands,
-        in DrawingFrameContext frameContext)
-    {
-        frameContext.EnsureCurrent(commands);
-        LastCommands = commands;
-    }
-}
-```
-
 ## Remarks
 
 `RetainedRenderer` is the small public facade over retained rendering. `UIRoot` creates one using its `RetainedRenderCache`, `DrawCommandListBuilder`, and `RenderCounters`, then exposes it through `UIRoot.RetainedRenderer`.
@@ -73,7 +42,7 @@ private sealed class CapturingBackend : IDrawingBackend
 
 `Submit` validates the backend, calls `Render`, validates the supplied `DrawingFrameContext` against the committed list, and passes that same list and context directly to `IDrawingBackend.Render`. The command list is not copied, so backends must treat it as read-only during rendering.
 
-`RetainedRenderer` does not analyze the command list itself. The caller creates the frame analysis once and supplies it through the context; `UiHost.Draw` performs that orchestration for hosted rendering.
+`RetainedRenderer` does not analyze the command list itself. `UiHost.Draw` creates and validates the frame context, acquires any required backdrop lease, and calls `Submit`. Application code normally renders through the host rather than constructing a frame context directly.
 
 ## Constructors
 
@@ -112,4 +81,3 @@ Cerneala retained UI rendering, especially `UIRoot` update/draw flows and `UiHos
 - `Cerneala.Drawing.DrawCommandList`
 - `Cerneala.Drawing.DrawingFrameContext`
 - `Cerneala.Drawing.IDrawingBackend`
-- `Cerneala.Drawing.Prism.Graph.PrismFrameAnalyzer`

@@ -24,17 +24,31 @@ public partial class MainWindow : Window
 
     private async Task RunLoadingAutomationAsync()
     {
+        if (IsPresentationAutomationRequested())
+        {
+            ContinueButton.IsEnabled = true;
+            new ButtonAutomationPeer(ContinueButton).Invoke();
+            return;
+        }
+
         await WaitForContinueButtonAsync();
         await CaptureIfRequestedAsync("CERNEALA_PRESENTATION_LOADING_CAPTURE");
-        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTOMATION_REPORT")) ||
+    }
+
+    private static bool IsPresentationAutomationRequested()
+    {
+        return
+            !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTOMATION_REPORT")) ||
             !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_FRAME_BUDGET_REPORT")) ||
+            !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_PRISM_LIFECYCLE_REPORT")) ||
+            string.Equals(
+                Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_PRISM_CAPTURE"),
+                "1",
+                StringComparison.OrdinalIgnoreCase) ||
             string.Equals(
                 Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTO_CONTINUE"),
                 "1",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            new ButtonAutomationPeer(ContinueButton).Invoke();
-        }
+                StringComparison.OrdinalIgnoreCase);
     }
 
     private Task WaitForContinueButtonAsync()

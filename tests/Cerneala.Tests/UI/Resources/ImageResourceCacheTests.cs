@@ -3,6 +3,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
+using Cerneala.UI.Resources.MonoGame;
 
 namespace Cerneala.Tests.UI.Resources;
 
@@ -113,6 +114,22 @@ public sealed class ImageResourceCacheTests
 
         Assert.Contains("image loader", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("path-backed", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void MonoGameLoaderFallsBackToApplicationBaseForPackagedRelativePaths()
+    {
+        string relativePath = Path.Combine(
+            "packaged-assets",
+            Guid.NewGuid().ToString("N") + ".png");
+        string workingDirectoryPath = Path.GetFullPath(relativePath);
+        Assert.False(File.Exists(workingDirectoryPath));
+
+        string resolved = MonoGameImageLoader.ResolvePath(relativePath);
+
+        Assert.Equal(
+            Path.GetFullPath(relativePath, AppContext.BaseDirectory),
+            resolved);
     }
 
     private sealed class RecordingImageLoader : IImageLoader

@@ -13,6 +13,12 @@ Defines one immutable built-in layer-style occurrence in a Prism scope.
 public sealed class PrismStyleDefinition : IEquatable<PrismStyleDefinition>
 ```
 
+## Remarks
+
+The definition stores the stable built-in style identifier and its initial
+visibility. Typed catalog parameters are held by the corresponding per-instance
+style state and are exposed to generated markup accessors.
+
 ## Constructors
 
 | Name | Description |

@@ -281,29 +281,88 @@ public sealed class DrawCommandListBuilder
         void ResolveImage(PrismResourceId id)
         {
             if (id.Key is not string key ||
-                !resolvedIds.Add(id) ||
-                !element.TryFindResource<ImageResource>(
-                    key,
-                    out ImageResource? resource))
+                !resolvedIds.Add(id))
             {
                 return;
             }
 
-            IDrawImage? image = resource.HasEmbeddedImage
-                ? resource.Resolve()
-                : element.Root?.ImageResourceCache?.Resolve(resource);
-            if (image is not null)
+            if (element.TryFindResource<ImageResource>(
+                    key,
+                    out ImageResource? resource))
             {
-                long version =
-                    element.Root?.ResourceDependencyTracker
-                        .GetResourceVersion(
-                            new ResourceId<ImageResource>(key)) ?? 0;
-                resources.Add(
-                    new PrismDrawImageResource(
-                        id,
-                        image,
-                        version,
-                        resource.RetainedIdentity));
+                IDrawImage? image = resource.HasEmbeddedImage
+                    ? resource.Resolve()
+                    : element.Root?.ImageResourceCache?.Resolve(resource);
+                AddResolvedImage(
+                    image,
+                    ResourceVersion<ImageResource>(key),
+                    resource.RetainedIdentity);
+                return;
+            }
+
+            if (!element.TryFindResource<ImageBrush>(
+                    key,
+                    out ImageBrush? brush))
+            {
+                return;
+            }
+
+            IDrawImage? brushImage =
+                brush.Source?.ResolveDrawImage() ?? brush.Image;
+            string? sourceIdentity =
+                brush.Source?.Identity ?? brush.SourceIdentity;
+            if (brushImage is null &&
+                !string.IsNullOrWhiteSpace(sourceIdentity))
+            {
+                ImageResource pathResource = new(sourceIdentity);
+                brushImage = element.Root?.ImageResourceCache?
+                    .Resolve(pathResource);
+            }
+
+            long identity = !string.IsNullOrWhiteSpace(sourceIdentity)
+                ? unchecked((uint)StringComparer.Ordinal.GetHashCode(sourceIdentity)) + 1L
+                : brushImage is null
+                    ? 0
+                    : unchecked((uint)System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(brushImage)) + 1L;
+            AddResolvedImage(
+                brushImage,
+                ResourceVersion<ImageBrush>(key),
+                identity);
+
+            void AddResolvedImage(
+                IDrawImage? image,
+                long version,
+                long identity)
+            {
+                if (image is not null)
+                {
+                    resources.Add(
+                        new PrismDrawImageResource(
+                            id,
+                            image,
+                            version,
+                            identity));
+                }
+            }
+
+            long ResourceVersion<T>(string resourceKey)
+            {
+                UIRoot? root = element.Root;
+                if (root is null)
+                {
+                    return 1;
+                }
+
+                ResourceId<T> resourceId = new(resourceKey);
+                root.ResourceDependencyTracker.RecordDependency(
+                    element,
+                    resourceId,
+                    InvalidationFlags.Render,
+                    affectsIntrinsicSize: false);
+                return Math.Max(
+                    1,
+                    root.ResourceDependencyTracker
+                        .GetResourceVersion(resourceId));
             }
         }
     }

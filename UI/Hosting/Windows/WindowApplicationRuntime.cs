@@ -1,8 +1,11 @@
 using System.Diagnostics;
 using Cerneala.Drawing;
+using Cerneala.Drawing.MonoGame;
+using Cerneala.Drawing.MonoGame.Prism.Execution;
 using Cerneala.Drawing.Prism;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Hosting.MonoGame;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Resources;
@@ -305,6 +308,28 @@ internal sealed class WindowApplicationRuntime : IDisposable
             drawingBackend => context.Host.Draw(
                 drawingBackend,
                 graphicsSession as IBackdropFrameSource));
+    }
+
+    internal PrismOperationalDiagnostics? CapturePrismDiagnostics(Window window)
+    {
+        VerifyAccess();
+        WindowContext context = RequireContext(window);
+        IWindowGraphicsSession graphicsSession =
+            context.PlatformWindow.GraphicsSession;
+        IWindowPrismScreenshotDiagnosticsSource? prismSource =
+            graphicsSession as IWindowPrismScreenshotDiagnosticsSource;
+        PrismExecutionDiagnostics? diagnostics =
+            prismSource?.LastPrismScreenshotDiagnostics;
+        diagnostics ??=
+            (graphicsSession.DrawingBackend as MonoGameDrawingBackend)?
+                .PrismDiagnostics;
+        return diagnostics is null
+            ? null
+            : PrismOperationalDiagnostics.Capture(
+                diagnostics,
+                context.Host.BackdropFrameCounters.Snapshot,
+                prismSource?.ActiveBackdropLeaseCount ?? 0,
+                context.Root.Motion.HasActiveMotion);
     }
 
     public void PumpOnce(TimeSpan elapsedTime)

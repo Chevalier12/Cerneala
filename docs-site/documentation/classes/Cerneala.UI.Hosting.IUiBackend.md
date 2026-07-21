@@ -48,7 +48,7 @@ sealed class HostBackend : IUiBackend
 
 `UiHost.Update` uses `InputSource` when no explicit input frame or host-level input source is supplied. `UiHost.Draw` uses `DrawingBackend` when no explicit drawing backend is supplied.
 
-The interface does not create `DrawingFrameContext` instances. `UiHost` reads the committed command list, runs one `PrismFrameAnalyzer` analysis for that draw, optionally acquires one backdrop lease from `BackdropFrameSource`, creates the frame context, and submits both through the resolved `IDrawingBackend`.
+The interface does not create `DrawingFrameContext` instances. `UiHost` reads the committed command list, analyzes it once for that draw, optionally acquires one backdrop lease from `BackdropFrameSource`, creates the frame context, and submits both through the resolved `IDrawingBackend`.
 
 `BackdropFrameSource` has a default interface implementation that returns `null`, so existing backends and hosts that do not use Prism backdrop require no new implementation. When a source is supplied, assigning the backend to a host validates source/backend compatibility.
 

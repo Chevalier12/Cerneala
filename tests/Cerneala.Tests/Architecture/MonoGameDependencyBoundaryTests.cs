@@ -7,6 +7,7 @@ public sealed class MonoGameDependencyBoundaryTests
     {
         string root = FindRepositoryRoot();
         string monoGameHostRoot = Path.Combine(root, "UI", "Hosting", "MonoGame");
+        string prismAuditRoot = Path.Combine(root, "Tools", "PrismAudit");
         string[] monoGameTerms =
         [
             "MonoGameUiHost",
@@ -24,7 +25,10 @@ public sealed class MonoGameDependencyBoundaryTests
             }
 
             Assert.True(
-                IsUnder(file, monoGameHostRoot) || IsTestFile(root, file) || IsPlaygroundFile(root, file),
+                IsUnder(file, monoGameHostRoot) ||
+                    IsUnder(file, prismAuditRoot) ||
+                    IsTestFile(root, file) ||
+                    IsPlaygroundFile(root, file),
                 $"{Path.GetRelativePath(root, file)} references a MonoGame host adapter concept outside the adapter folder.");
         }
     }
@@ -41,7 +45,8 @@ public sealed class MonoGameDependencyBoundaryTests
             Path.Combine(root, "Drawing", "MonoGame"),
             Path.Combine(root, "UI", "Resources", "MonoGame"),
             Path.Combine(root, "Playground"),
-            Path.Combine(root, "benchmarks")
+            Path.Combine(root, "benchmarks"),
+            Path.Combine(root, "Tools", "PrismAudit")
         ];
 
         foreach (string file in EnumerateSourceFiles(root))

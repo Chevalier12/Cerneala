@@ -24,9 +24,13 @@ Generated from `.`.
 |   |-- Cerneala.Benchmarks/
 |   |   |-- results/
 |   |   |   |-- 2026-07-13-queue-engine-2.md
-|   |   |   +-- 2026-07-20-prism-filter-catalog.md
+|   |   |   |-- 2026-07-20-prism-filter-catalog.md
+|   |   |   |-- 2026-07-20-prism-retained-cache-off-baseline.md
+|   |   |   |-- 2026-07-21-prism-integration-hardening.md
+|   |   |   +-- 2026-07-21-prism-retained-cache.md
 |   |   |-- Cerneala.Benchmarks.csproj
 |   |   |-- PrismInstanceBenchmarks.cs
+|   |   |-- PrismRetainedCacheBenchmarkRunner.cs
 |   |   |-- Program.cs
 |   |   |-- QueueEngineBenchmarks.cs
 |   |   |-- README.md
@@ -306,8 +310,10 @@ Generated from `.`.
 |   |-- motion-system.md
 |   |-- prism-adjustment-filters.md
 |   |-- prism-catalog-filters.md
+|   |-- prism-completeness-report.generated.md
 |   |-- prism-distortion-filters.md
 |   |-- prism-filter-reference.generated.md
+|   |-- prism-guide.md
 |   |-- prism-markup-syntax-proposal.md
 |   |-- prism-neighborhood-filters.md
 |   |-- prism-public-api-baseline.md
@@ -352,42 +358,25 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTextureKey.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawMapper.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameImage.md
+|   |   |   |-- Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease.md
+|   |   |   |-- Cerneala.Drawing.Prism.BackdropAlphaMode.md
+|   |   |   |-- Cerneala.Drawing.Prism.BackdropFrameMetadata.md
+|   |   |   |-- Cerneala.Drawing.Prism.BackdropFrameRequest.md
+|   |   |   |-- Cerneala.Drawing.Prism.BackdropPixelFormat.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismBlendMode.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismColorProfile.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismFilterId.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismSampling.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismStyleId.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismAnalyzedScope.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismBackdropRequirement.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismDependencyStamp.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismFrameAnalysis.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismFrameAnalyzer.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraph.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphBoundsStatus.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphBuilder.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphBuildException.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphCapabilities.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphCompositionSettings.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphDependency.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphDependencyKind.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphEdge.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphEdgeKind.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphExecutionPlan.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphLayerSettings.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphNode.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphNodeId.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphNodeKind.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphNodePlan.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphOptimizer.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphParameter.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphParameterValueKind.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphScope.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphSurfaceLifetime.md
-|   |   |   |-- Cerneala.Drawing.Prism.Graph.PrismGraphUncacheableReason.md
 |   |   |   |-- Cerneala.Drawing.Prism.IBackdropFrameLease.md
+|   |   |   |-- Cerneala.Drawing.Prism.IBackdropFrameSource.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismCacheEvictionReason.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismCacheMissReason.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismCacheOwnerToken.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismDependencyChange.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismDrawScope.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismRendererDiagnostics.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismRendererOptions.md
 |   |   |   |-- Cerneala.Drawing.RadialGradientDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.SolidDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.Text.RasterizedText.md
@@ -1278,12 +1267,16 @@ Generated from `.`.
 |   |   |   |-- Shaders/
 |   |   |   |   |-- CopyComposite.fx
 |   |   |   |   +-- PrismShaderResources.cs
-|   |   |   +-- Surfaces/
-|   |   |       |-- PrismRetainedSurface.cs
-|   |   |       |-- PrismSurfaceAllocationException.cs
-|   |   |       |-- PrismSurfaceFrame.cs
-|   |   |       |-- PrismSurfaceKey.cs
-|   |   |       +-- PrismSurfacePool.cs
+|   |   |   |-- Surfaces/
+|   |   |   |   |-- PrismRetainedSurface.cs
+|   |   |   |   |-- PrismRetainedSurfaceCache.cs
+|   |   |   |   |-- PrismSurfaceAllocationException.cs
+|   |   |   |   |-- PrismSurfaceFrame.cs
+|   |   |   |   |-- PrismSurfaceKey.cs
+|   |   |   |   |-- PrismSurfaceMemoryAccountant.cs
+|   |   |   |   +-- PrismSurfacePool.cs
+|   |   |   |-- IMonoGameBackdropFrameLease.cs
+|   |   |   +-- MonoGameBackdropFrameValidation.cs
 |   |   |-- MonoGameClipStack.cs
 |   |   |-- MonoGameDrawingBackend.cs
 |   |   |-- MonoGameDrawMapper.cs
@@ -1312,6 +1305,7 @@ Generated from `.`.
 |   |   |   +-- PrismResamplingPlanner.cs
 |   |   |-- Graph/
 |   |   |   |-- PrismAnalyzedScope.cs
+|   |   |   |-- PrismBackdropFramePolicy.cs
 |   |   |   |-- PrismBackdropRequirement.cs
 |   |   |   |-- PrismDependencyStamp.cs
 |   |   |   |-- PrismFrameAnalysis.cs
@@ -1320,14 +1314,23 @@ Generated from `.`.
 |   |   |   |-- PrismGraphBuilder.cs
 |   |   |   |-- PrismGraphCapabilities.cs
 |   |   |   |-- PrismGraphDiagnostic.cs
-|   |   |   +-- PrismGraphOptimizer.cs
+|   |   |   |-- PrismGraphOptimizer.cs
+|   |   |   +-- PrismRetainedCacheKey.cs
 |   |   |-- Masking/
 |   |   |   +-- PrismMaskMath.cs
 |   |   |-- Styles/
 |   |   |   +-- PrismStylePlanner.cs
+|   |   |-- BackdropAlphaMode.cs
+|   |   |-- BackdropFrameMetadata.cs
+|   |   |-- BackdropFrameRequest.cs
+|   |   |-- BackdropPixelFormat.cs
 |   |   |-- IBackdropFrameLease.cs
+|   |   |-- IBackdropFrameSource.cs
+|   |   |-- PrismBackdropSourceToken.cs
+|   |   |-- PrismCacheInvalidationQueue.cs
 |   |   |-- PrismDrawResources.cs
-|   |   +-- PrismDrawScope.cs
+|   |   |-- PrismDrawScope.cs
+|   |   +-- PrismRendererOptions.cs
 |   |-- Text/
 |   |   |-- OpenTypeFontData.cs
 |   |   |-- RasterizedText.cs
@@ -1457,11 +1460,19 @@ Generated from `.`.
 |   |   |   +-- GettingStartedDocsTests.cs
 |   |   |-- Drawing/
 |   |   |   |-- MonoGame/
+|   |   |   |   |-- Prism/
+|   |   |   |   |   +-- Cache/
+|   |   |   |   |       |-- PrismRetainedCacheKeyTests.cs
+|   |   |   |   |       |-- PrismRetainedCacheRedContractTests.cs
+|   |   |   |   |       |-- PrismRetainedSurfaceCacheTests.cs
+|   |   |   |   |       +-- PrismRetainedVisualVersionTests.cs
 |   |   |   |   |-- BrushRenderingTests.cs
 |   |   |   |   |-- MonoGameClipStackTests.cs
 |   |   |   |   |-- MonoGameDrawingBackendStateTests.cs
 |   |   |   |   |-- MonoGameDrawMapperTests.cs
+|   |   |   |   |-- PrismBackdropMonoGameAdapterTests.cs
 |   |   |   |   |-- PrismGraphExecutorTests.cs
+|   |   |   |   |-- PrismOperationalDiagnosticsTests.cs
 |   |   |   |   |-- PrismShaderResourcesTests.cs
 |   |   |   |   |-- PrismSurfacePoolTests.cs
 |   |   |   |   +-- PrismWindowsDxConformanceTests.cs
@@ -1478,6 +1489,7 @@ Generated from `.`.
 |   |   |   |   |-- PrismGraphOptimizerTests.cs
 |   |   |   |   |-- PrismMaskPipelineTests.cs
 |   |   |   |   |-- PrismNeighborhoodFilterTests.cs
+|   |   |   |   |-- PrismRendererOptionsTests.cs
 |   |   |   |   |-- PrismRetainedCommandContractTests.cs
 |   |   |   |   |-- PrismStylePipelineTests.cs
 |   |   |   |   +-- PrismTestData.cs
@@ -1494,6 +1506,8 @@ Generated from `.`.
 |   |   |       |   |-- coverage-inputs.png
 |   |   |       |   |-- multiply-opaque.png
 |   |   |       |   +-- premultiplied-edge.png
+|   |   |       |-- backdrop-hosting-150.png
+|   |   |       |-- backdrop-hosting-native.png
 |   |   |       |-- blend-combination.png
 |   |   |       |-- clip.png
 |   |   |       |-- clipping-chain.png
@@ -1625,6 +1639,7 @@ Generated from `.`.
 |   |   |   |   |-- MonoGameContentServicesLifetimeTests.cs
 |   |   |   |   |-- MonoGameUiHostBoundaryTests.cs
 |   |   |   |   |-- ObservableListAuthoringSliceTests.cs
+|   |   |   |   |-- PrismBackdropHostingContractTests.cs
 |   |   |   |   |-- RetainedStressBudgetTests.cs
 |   |   |   |   |-- TabNavigationFrameContractTests.cs
 |   |   |   |   |-- UiHostFrameContractTests.cs
@@ -1815,6 +1830,9 @@ Generated from `.`.
 |   |-- LayoutBugHarness/
 |   +-- presentation-frame-cause.nettrace.etlx
 |-- Tools/
+|   |-- PrismAudit/
+|   |   |-- PrismAudit.csproj
+|   |   +-- Program.cs
 |   |-- RoslynRepoIndexer/
 |   |   |-- benchmarks/
 |   |   |   |-- RoslynRepoIndexer.Benchmarks/
@@ -2116,7 +2134,8 @@ Generated from `.`.
 |   |   |-- MonoGame/
 |   |   |   |-- MonoGameContentServices.cs
 |   |   |   |-- MonoGameUiHost.cs
-|   |   |   +-- MonoGameUiHostOptions.cs
+|   |   |   |-- MonoGameUiHostOptions.cs
+|   |   |   +-- PrismOperationalDiagnostics.cs
 |   |   |-- Windows/
 |   |   |   |-- GeneratedWindowApplication.cs
 |   |   |   |-- IWindowPlatform.cs
@@ -2126,6 +2145,7 @@ Generated from `.`.
 |   |   |   |-- WindowApplicationRuntime.cs
 |   |   |   |-- WindowsDpiAwareness.cs
 |   |   |   +-- WindowsDxWindowGraphicsSession.cs
+|   |   |-- BackdropFrameCounters.cs
 |   |   |-- IUiBackend.cs
 |   |   |-- IUiClock.cs
 |   |   |-- UiCoordinateMapper.cs

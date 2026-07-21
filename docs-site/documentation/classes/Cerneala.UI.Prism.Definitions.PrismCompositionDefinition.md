@@ -81,5 +81,4 @@ Shared Prism definitions used by one or more `PrismInstance` objects.
 ## See also
 
 - `Cerneala.UI.Prism.Definitions.PrismSourceSpan`
-- `Cerneala.Drawing.Prism.Graph.PrismGraphDiagnostic`
-- `Cerneala.Drawing.Prism.Graph.PrismGraphBuildException`
+- `Cerneala.UI.Prism.Runtime.PrismInstance`

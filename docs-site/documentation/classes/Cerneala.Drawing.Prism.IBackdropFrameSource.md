@@ -44,7 +44,7 @@ sealed class SceneFrameLease(BackdropFrameMetadata metadata)
 
 The application retains ownership of its scene, render targets, textures, and source object. Cerneala borrows only the already-rendered frame represented by the returned lease. `AcquireFrame` must not transfer texture ownership, and callers must not retain the lease after the drawing frame ends.
 
-`UiHost` validates the source against the selected drawing backend when the backend is assigned. It acquires only when the single `PrismFrameAnalysis` reports a backdrop requirement, and it acquires at most one lease for that drawing frame. A compatible source must return a non-null lease per request. The host disposes the lease exactly once after submission, including exceptional exits; disposing the lease releases the borrow, not the application-owned scene.
+`UiHost` validates the source against the selected drawing backend when the backend is assigned. It acquires only when its internal analysis of the submitted command list requires a backdrop, and it acquires at most one lease for that drawing frame. A compatible source must return a non-null lease per request. The host disposes the lease exactly once after submission, including exceptional exits; disposing the lease releases the borrow, not the application-owned scene.
 
 Compatibility describes whether the backend can consume the leases, not whether
 the source owns that backend instance. For example, the WindowsDX source accepts

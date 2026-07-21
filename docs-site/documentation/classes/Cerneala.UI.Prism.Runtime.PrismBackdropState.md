@@ -13,6 +13,12 @@ Exposes mutable typed values for the optional backdrop plane in one `PrismInstan
 public sealed class PrismBackdropState : PrismNodeState
 ```
 
+## Remarks
+
+This state belongs to one `PrismInstance`; it owns typed values, not textures or
+other GPU resources. Setting `Visible` to `false` suppresses backdrop acquisition
+and processing for the scope.
+
 ## Properties
 
 | Name | Type | Description |

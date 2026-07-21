@@ -184,7 +184,7 @@ public sealed class PrismWindowsDxConformanceTests
                 transformFirst.GraphDump,
                 transformSecond.GraphDump);
             Assert.StartsWith(
-                "prism-execution v1",
+                "prism-execution v2 runtime-identifiers=redacted",
                 nestedFirst.GraphDump,
                 StringComparison.Ordinal);
             Assert.Contains(
@@ -192,7 +192,7 @@ public sealed class PrismWindowsDxConformanceTests
                 nestedFirst.GraphDump,
                 StringComparison.Ordinal);
             Assert.Contains(
-                "depth=1 parent=0 owner=602",
+                "depth=1 parent=0 owner=scope-1",
                 nestedFirst.GraphDump,
                 StringComparison.Ordinal);
             Assert.Contains(

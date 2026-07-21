@@ -13,6 +13,12 @@ Specifies the built-in sampling policy used by Prism catalog operations.
 public enum PrismSampling
 ```
 
+## Remarks
+
+The generated enum contains the sampling policies supported by the current
+built-in catalog. `Linear` is currently the only value and this enum is not a
+third-party operation extensibility point.
+
 ## Values
 
 | Name | Stable ID | Description |

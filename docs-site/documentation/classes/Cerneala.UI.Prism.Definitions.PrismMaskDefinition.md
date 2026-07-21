@@ -13,6 +13,13 @@ Defines an immutable image mask applied to the complete prepared contribution of
 public sealed class PrismMaskDefinition : IEquatable<PrismMaskDefinition>
 ```
 
+## Remarks
+
+Definitions are immutable and may be shared by multiple Prism instances. A mask
+is applied after filters and styles prepare the scope contribution and before the
+scope opacity and blend operation. Mutable per-instance values live in
+`PrismMaskState`.
+
 ## Constructors
 
 | Name | Description |

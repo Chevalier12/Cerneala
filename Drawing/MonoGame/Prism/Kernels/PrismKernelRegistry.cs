@@ -122,7 +122,7 @@ internal sealed class PrismKernelRegistry : IDisposable
     public const long ShaderPackageVersion = 1;
 
     private const string CatalogOwnerPrefix =
-        "planned:PrismKernelRegistry/";
+        "PrismKernelRegistry/";
     private const string FilterOwnerPrefix =
         "PrismKernelRegistry/";
 

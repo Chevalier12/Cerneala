@@ -498,7 +498,7 @@
         ],
         "coverage": {
           "runtime": "UI/Prism/Runtime/PrismAdvancedBlend.cs",
-          "kernel": "planned:PrismKernelRegistry/AdvancedBlending",
+          "kernel": "PrismKernelRegistry/AdvancedBlending",
           "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/AdvancedBlending",
           "documentation": "docs/prism-markup-syntax-proposal.md#advanced-blending"
         }
@@ -514,7 +514,7 @@
         ],
         "coverage": {
           "runtime": "UI/Prism/Runtime/PrismAdvancedBlend.cs",
-          "kernel": "planned:PrismKernelRegistry/BlendIf",
+          "kernel": "PrismKernelRegistry/BlendIf",
           "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/BlendIf",
           "documentation": "docs/prism-markup-syntax-proposal.md#blend-if"
         }
@@ -532,7 +532,7 @@
         ],
         "coverage": {
           "runtime": "UI/Prism/Definitions/PrismMaskDefinition.cs",
-          "kernel": "planned:PrismKernelRegistry/Mask",
+          "kernel": "PrismKernelRegistry/Mask",
           "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/Mask",
           "documentation": "docs/prism-markup-syntax-proposal.md#mask"
         }
@@ -546,7 +546,7 @@
         ],
         "coverage": {
           "runtime": "UI/Prism/Definitions/PrismLayerDefinition.cs",
-          "kernel": "planned:PrismKernelRegistry/Clipping",
+          "kernel": "PrismKernelRegistry/Clipping",
           "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/Clipping",
           "documentation": "docs/prism-markup-syntax-proposal.md#clipping"
         }
@@ -9623,8 +9623,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/style/DropShadow",
-        "kernel": "planned:PrismKernelRegistry/DropShadow",
-        "test": "planned:PrismCatalogConformance/DropShadow",
+        "kernel": "PrismKernelRegistry/DropShadow",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/DropShadow",
         "documentation": "generated:prism-catalog/style/DropShadow"
       }
     },
@@ -9773,8 +9773,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/style/InnerShadow",
-        "kernel": "planned:PrismKernelRegistry/InnerShadow",
-        "test": "planned:PrismCatalogConformance/InnerShadow",
+        "kernel": "PrismKernelRegistry/InnerShadow",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/InnerShadow",
         "documentation": "generated:prism-catalog/style/InnerShadow"
       }
     },
@@ -9932,8 +9932,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/style/OuterGlow",
-        "kernel": "planned:PrismKernelRegistry/OuterGlow",
-        "test": "planned:PrismCatalogConformance/OuterGlow",
+        "kernel": "PrismKernelRegistry/OuterGlow",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/OuterGlow",
         "documentation": "generated:prism-catalog/style/OuterGlow"
       }
     },
@@ -10102,8 +10102,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/style/InnerGlow",
-        "kernel": "planned:PrismKernelRegistry/InnerGlow",
-        "test": "planned:PrismCatalogConformance/InnerGlow",
+        "kernel": "PrismKernelRegistry/InnerGlow",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/InnerGlow",
         "documentation": "generated:prism-catalog/style/InnerGlow"
       }
     },
@@ -10442,8 +10442,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/style/BevelEmboss",
-        "kernel": "planned:PrismKernelRegistry/BevelEmboss",
-        "test": "planned:PrismCatalogConformance/BevelEmboss",
+        "kernel": "PrismKernelRegistry/BevelEmboss",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/BevelEmboss",
         "documentation": "generated:prism-catalog/style/BevelEmboss"
       }
     },
@@ -10568,8 +10568,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/style/Satin",
-        "kernel": "planned:PrismKernelRegistry/Satin",
-        "test": "planned:PrismCatalogConformance/Satin",
+        "kernel": "PrismKernelRegistry/Satin",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Satin",
         "documentation": "generated:prism-catalog/style/Satin"
       }
     },
@@ -10624,8 +10624,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/style/ColorOverlay",
-        "kernel": "planned:PrismKernelRegistry/ColorOverlay",
-        "test": "planned:PrismCatalogConformance/ColorOverlay",
+        "kernel": "PrismKernelRegistry/ColorOverlay",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/ColorOverlay",
         "documentation": "generated:prism-catalog/style/ColorOverlay"
       }
     },
@@ -10771,8 +10771,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/style/GradientOverlay",
-        "kernel": "planned:PrismKernelRegistry/GradientOverlay",
-        "test": "planned:PrismCatalogConformance/GradientOverlay",
+        "kernel": "PrismKernelRegistry/GradientOverlay",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/GradientOverlay",
         "documentation": "generated:prism-catalog/style/GradientOverlay"
       }
     },
@@ -10863,8 +10863,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/style/PatternOverlay",
-        "kernel": "planned:PrismKernelRegistry/PatternOverlay",
-        "test": "planned:PrismCatalogConformance/PatternOverlay",
+        "kernel": "PrismKernelRegistry/PatternOverlay",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/PatternOverlay",
         "documentation": "generated:prism-catalog/style/PatternOverlay"
       }
     },
@@ -11103,8 +11103,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/style/Stroke",
-        "kernel": "planned:PrismKernelRegistry/Stroke",
-        "test": "planned:PrismCatalogConformance/Stroke",
+        "kernel": "PrismKernelRegistry/Stroke",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Stroke",
         "documentation": "generated:prism-catalog/style/Stroke"
       }
     },
@@ -11122,8 +11122,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Normal",
-        "kernel": "planned:PrismKernelRegistry/Normal",
-        "test": "planned:PrismCatalogConformance/Normal",
+        "kernel": "PrismKernelRegistry/Normal",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Normal",
         "documentation": "generated:prism-catalog/blend-mode/Normal"
       }
     },
@@ -11141,8 +11141,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Dissolve",
-        "kernel": "planned:PrismKernelRegistry/Dissolve",
-        "test": "planned:PrismCatalogConformance/Dissolve",
+        "kernel": "PrismKernelRegistry/Dissolve",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Dissolve",
         "documentation": "generated:prism-catalog/blend-mode/Dissolve"
       }
     },
@@ -11160,8 +11160,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Darken",
-        "kernel": "planned:PrismKernelRegistry/Darken",
-        "test": "planned:PrismCatalogConformance/Darken",
+        "kernel": "PrismKernelRegistry/Darken",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Darken",
         "documentation": "generated:prism-catalog/blend-mode/Darken"
       }
     },
@@ -11179,8 +11179,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Multiply",
-        "kernel": "planned:PrismKernelRegistry/Multiply",
-        "test": "planned:PrismCatalogConformance/Multiply",
+        "kernel": "PrismKernelRegistry/Multiply",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Multiply",
         "documentation": "generated:prism-catalog/blend-mode/Multiply"
       }
     },
@@ -11198,8 +11198,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/ColorBurn",
-        "kernel": "planned:PrismKernelRegistry/ColorBurn",
-        "test": "planned:PrismCatalogConformance/ColorBurn",
+        "kernel": "PrismKernelRegistry/ColorBurn",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/ColorBurn",
         "documentation": "generated:prism-catalog/blend-mode/ColorBurn"
       }
     },
@@ -11217,8 +11217,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/LinearBurn",
-        "kernel": "planned:PrismKernelRegistry/LinearBurn",
-        "test": "planned:PrismCatalogConformance/LinearBurn",
+        "kernel": "PrismKernelRegistry/LinearBurn",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/LinearBurn",
         "documentation": "generated:prism-catalog/blend-mode/LinearBurn"
       }
     },
@@ -11236,8 +11236,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/DarkerColor",
-        "kernel": "planned:PrismKernelRegistry/DarkerColor",
-        "test": "planned:PrismCatalogConformance/DarkerColor",
+        "kernel": "PrismKernelRegistry/DarkerColor",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/DarkerColor",
         "documentation": "generated:prism-catalog/blend-mode/DarkerColor"
       }
     },
@@ -11255,8 +11255,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Lighten",
-        "kernel": "planned:PrismKernelRegistry/Lighten",
-        "test": "planned:PrismCatalogConformance/Lighten",
+        "kernel": "PrismKernelRegistry/Lighten",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Lighten",
         "documentation": "generated:prism-catalog/blend-mode/Lighten"
       }
     },
@@ -11274,8 +11274,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Screen",
-        "kernel": "planned:PrismKernelRegistry/Screen",
-        "test": "planned:PrismCatalogConformance/Screen",
+        "kernel": "PrismKernelRegistry/Screen",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Screen",
         "documentation": "generated:prism-catalog/blend-mode/Screen"
       }
     },
@@ -11293,8 +11293,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/ColorDodge",
-        "kernel": "planned:PrismKernelRegistry/ColorDodge",
-        "test": "planned:PrismCatalogConformance/ColorDodge",
+        "kernel": "PrismKernelRegistry/ColorDodge",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/ColorDodge",
         "documentation": "generated:prism-catalog/blend-mode/ColorDodge"
       }
     },
@@ -11312,8 +11312,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/LinearDodge",
-        "kernel": "planned:PrismKernelRegistry/LinearDodge",
-        "test": "planned:PrismCatalogConformance/LinearDodge",
+        "kernel": "PrismKernelRegistry/LinearDodge",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/LinearDodge",
         "documentation": "generated:prism-catalog/blend-mode/LinearDodge"
       }
     },
@@ -11331,8 +11331,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/LighterColor",
-        "kernel": "planned:PrismKernelRegistry/LighterColor",
-        "test": "planned:PrismCatalogConformance/LighterColor",
+        "kernel": "PrismKernelRegistry/LighterColor",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/LighterColor",
         "documentation": "generated:prism-catalog/blend-mode/LighterColor"
       }
     },
@@ -11350,8 +11350,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Overlay",
-        "kernel": "planned:PrismKernelRegistry/Overlay",
-        "test": "planned:PrismCatalogConformance/Overlay",
+        "kernel": "PrismKernelRegistry/Overlay",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Overlay",
         "documentation": "generated:prism-catalog/blend-mode/Overlay"
       }
     },
@@ -11369,8 +11369,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/SoftLight",
-        "kernel": "planned:PrismKernelRegistry/SoftLight",
-        "test": "planned:PrismCatalogConformance/SoftLight",
+        "kernel": "PrismKernelRegistry/SoftLight",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/SoftLight",
         "documentation": "generated:prism-catalog/blend-mode/SoftLight"
       }
     },
@@ -11388,8 +11388,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/HardLight",
-        "kernel": "planned:PrismKernelRegistry/HardLight",
-        "test": "planned:PrismCatalogConformance/HardLight",
+        "kernel": "PrismKernelRegistry/HardLight",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/HardLight",
         "documentation": "generated:prism-catalog/blend-mode/HardLight"
       }
     },
@@ -11407,8 +11407,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/VividLight",
-        "kernel": "planned:PrismKernelRegistry/VividLight",
-        "test": "planned:PrismCatalogConformance/VividLight",
+        "kernel": "PrismKernelRegistry/VividLight",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/VividLight",
         "documentation": "generated:prism-catalog/blend-mode/VividLight"
       }
     },
@@ -11426,8 +11426,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/LinearLight",
-        "kernel": "planned:PrismKernelRegistry/LinearLight",
-        "test": "planned:PrismCatalogConformance/LinearLight",
+        "kernel": "PrismKernelRegistry/LinearLight",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/LinearLight",
         "documentation": "generated:prism-catalog/blend-mode/LinearLight"
       }
     },
@@ -11445,8 +11445,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/PinLight",
-        "kernel": "planned:PrismKernelRegistry/PinLight",
-        "test": "planned:PrismCatalogConformance/PinLight",
+        "kernel": "PrismKernelRegistry/PinLight",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/PinLight",
         "documentation": "generated:prism-catalog/blend-mode/PinLight"
       }
     },
@@ -11464,8 +11464,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/HardMix",
-        "kernel": "planned:PrismKernelRegistry/HardMix",
-        "test": "planned:PrismCatalogConformance/HardMix",
+        "kernel": "PrismKernelRegistry/HardMix",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/HardMix",
         "documentation": "generated:prism-catalog/blend-mode/HardMix"
       }
     },
@@ -11483,8 +11483,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Difference",
-        "kernel": "planned:PrismKernelRegistry/Difference",
-        "test": "planned:PrismCatalogConformance/Difference",
+        "kernel": "PrismKernelRegistry/Difference",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Difference",
         "documentation": "generated:prism-catalog/blend-mode/Difference"
       }
     },
@@ -11502,8 +11502,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Exclusion",
-        "kernel": "planned:PrismKernelRegistry/Exclusion",
-        "test": "planned:PrismCatalogConformance/Exclusion",
+        "kernel": "PrismKernelRegistry/Exclusion",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Exclusion",
         "documentation": "generated:prism-catalog/blend-mode/Exclusion"
       }
     },
@@ -11521,8 +11521,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Subtract",
-        "kernel": "planned:PrismKernelRegistry/Subtract",
-        "test": "planned:PrismCatalogConformance/Subtract",
+        "kernel": "PrismKernelRegistry/Subtract",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Subtract",
         "documentation": "generated:prism-catalog/blend-mode/Subtract"
       }
     },
@@ -11540,8 +11540,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Divide",
-        "kernel": "planned:PrismKernelRegistry/Divide",
-        "test": "planned:PrismCatalogConformance/Divide",
+        "kernel": "PrismKernelRegistry/Divide",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Divide",
         "documentation": "generated:prism-catalog/blend-mode/Divide"
       }
     },
@@ -11559,8 +11559,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Hue",
-        "kernel": "planned:PrismKernelRegistry/Hue",
-        "test": "planned:PrismCatalogConformance/Hue",
+        "kernel": "PrismKernelRegistry/Hue",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Hue",
         "documentation": "generated:prism-catalog/blend-mode/Hue"
       }
     },
@@ -11578,8 +11578,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Saturation",
-        "kernel": "planned:PrismKernelRegistry/Saturation",
-        "test": "planned:PrismCatalogConformance/Saturation",
+        "kernel": "PrismKernelRegistry/Saturation",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Saturation",
         "documentation": "generated:prism-catalog/blend-mode/Saturation"
       }
     },
@@ -11597,8 +11597,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Color",
-        "kernel": "planned:PrismKernelRegistry/Color",
-        "test": "planned:PrismCatalogConformance/Color",
+        "kernel": "PrismKernelRegistry/Color",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Color",
         "documentation": "generated:prism-catalog/blend-mode/Color"
       }
     },
@@ -11616,8 +11616,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/Luminosity",
-        "kernel": "planned:PrismKernelRegistry/Luminosity",
-        "test": "planned:PrismCatalogConformance/Luminosity",
+        "kernel": "PrismKernelRegistry/Luminosity",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Luminosity",
         "documentation": "generated:prism-catalog/blend-mode/Luminosity"
       }
     },
@@ -11635,8 +11635,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/blend-mode/PassThrough",
-        "kernel": "planned:PrismKernelRegistry/PassThrough",
-        "test": "planned:PrismCatalogConformance/PassThrough",
+        "kernel": "PrismKernelRegistry/PassThrough",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/PassThrough",
         "documentation": "generated:prism-catalog/blend-mode/PassThrough"
       }
     },
@@ -11654,8 +11654,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/color-profile/LinearSrgb",
-        "kernel": "planned:PrismKernelRegistry/LinearSrgb",
-        "test": "planned:PrismCatalogConformance/LinearSrgb",
+        "kernel": "PrismKernelRegistry/LinearSrgb",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/LinearSrgb",
         "documentation": "generated:prism-catalog/color-profile/LinearSrgb"
       },
       "transferFunction": "linear",
@@ -11676,8 +11676,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/color-profile/Srgb",
-        "kernel": "planned:PrismKernelRegistry/Srgb",
-        "test": "planned:PrismCatalogConformance/Srgb",
+        "kernel": "PrismKernelRegistry/Srgb",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Srgb",
         "documentation": "generated:prism-catalog/color-profile/Srgb"
       },
       "transferFunction": "sRGB",
@@ -11698,8 +11698,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/color-profile/LinearDisplayP3",
-        "kernel": "planned:PrismKernelRegistry/LinearDisplayP3",
-        "test": "planned:PrismCatalogConformance/LinearDisplayP3",
+        "kernel": "PrismKernelRegistry/LinearDisplayP3",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/LinearDisplayP3",
         "documentation": "generated:prism-catalog/color-profile/LinearDisplayP3"
       },
       "transferFunction": "linear",
@@ -11720,8 +11720,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/color-profile/DisplayP3",
-        "kernel": "planned:PrismKernelRegistry/DisplayP3",
-        "test": "planned:PrismCatalogConformance/DisplayP3",
+        "kernel": "PrismKernelRegistry/DisplayP3",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/DisplayP3",
         "documentation": "generated:prism-catalog/color-profile/DisplayP3"
       },
       "transferFunction": "Display P3",
@@ -11742,8 +11742,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/color-profile/ScRgb",
-        "kernel": "planned:PrismKernelRegistry/ScRgb",
-        "test": "planned:PrismCatalogConformance/ScRgb",
+        "kernel": "PrismKernelRegistry/ScRgb",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/ScRgb",
         "documentation": "generated:prism-catalog/color-profile/ScRgb"
       },
       "transferFunction": "linear floating point",
@@ -11764,8 +11764,8 @@
       "cacheable": true,
       "coverage": {
         "runtime": "generated:PrismCatalog/sampling/Linear",
-        "kernel": "planned:PrismKernelRegistry/Linear",
-        "test": "planned:PrismCatalogConformance/Linear",
+        "kernel": "PrismKernelRegistry/Linear",
+        "test": "PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/Linear",
         "documentation": "generated:prism-catalog/sampling/Linear"
       }
     }

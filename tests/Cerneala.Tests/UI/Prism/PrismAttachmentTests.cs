@@ -1,8 +1,12 @@
 using System.Runtime.CompilerServices;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Tests.UI.Motion.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Markup;
+using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Properties;
+using Cerneala.UI.Motion.Specs;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 
@@ -209,7 +213,7 @@ public sealed class PrismAttachmentTests
     }
 
     [Fact]
-    public void TemplateRecyclingAcrossTenThousandCyclesRetainsNoElementsOrInstances()
+    public void FullStackTemplateRecyclingAcrossTenThousandCyclesRetainsNoLifecycleObjects()
     {
         AttachmentReferences references = ExerciseTenThousandCycles();
 
@@ -219,19 +223,23 @@ public sealed class PrismAttachmentTests
         Assert.DoesNotContain(
             references.Instances,
             reference => reference.TryGetTarget(out _));
-        Assert.Equal(
-            10_000,
-            references.Invalidations.Count);
+        Assert.DoesNotContain(
+            references.MotionHandles,
+            reference => reference.TryGetTarget(out _));
+        Assert.False(references.HadActiveMotionAfterDetach);
+        Assert.Equal(10_000, references.BindingConnections);
+        Assert.Equal(10_000, references.BindingDisconnections);
+        Assert.True(references.Invalidations.Sum(queue => queue.Count) >= 10_000);
         HashSet<PrismCacheOwnerToken> invalidatedOwners = [];
-        while (references.Invalidations.TryDequeue(
-            out PrismCacheInvalidation invalidation))
+        foreach (PrismCacheInvalidationQueue queue in references.Invalidations)
         {
-            Assert.Equal(
-                PrismCacheInvalidationKind.Owner,
-                invalidation.Kind);
-            Assert.True(
-                invalidatedOwners.Add(
-                    invalidation.OwnerToken));
+            while (queue.TryDequeue(out PrismCacheInvalidation invalidation))
+            {
+                Assert.Equal(
+                    PrismCacheInvalidationKind.Owner,
+                    invalidation.Kind);
+                invalidatedOwners.Add(invalidation.OwnerToken);
+            }
         }
         Assert.Equal(10_000, invalidatedOwners.Count);
     }
@@ -239,29 +247,73 @@ public sealed class PrismAttachmentTests
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static AttachmentReferences ExerciseTenThousandCycles()
     {
-        UIRoot root = new();
+        ManualMotionClock clock = new();
+        UIRoot[] roots =
+        [
+            new UIRoot(motionClock: clock),
+            new UIRoot(motionClock: clock)
+        ];
         UIElement element = new();
-        PrismCompositionDefinition definition = CreateDefinition();
+        PrismCompositionDefinition definition = CreateFullStackDefinition();
+        FloatSource source = new(0.6f);
         List<WeakReference<PrismInstance>> instances = new(10_000);
-        _ = GeneratedMarkup.AttachPrism(
+        List<WeakReference<MotionHandle>> motionHandles = new(10_000);
+        int bindingConnections = 0;
+        int bindingDisconnections = 0;
+        bool hadActiveMotionAfterDetach = false;
+        using IDisposable prismLifetime = GeneratedMarkup.AttachPrism(
             element,
             () =>
             {
                 PrismInstance instance = new(definition);
                 instances.Add(new WeakReference<PrismInstance>(instance));
                 return instance;
+            },
+            new Func<PrismInstance, IDisposable>[]
+            {
+                instance =>
+                {
+                    bindingConnections++;
+                    return source.Bind(
+                        value => instance.GetLayerState(LifecycleLayerId).Opacity = value,
+                        () => bindingDisconnections++);
+                }
             });
+        using IDisposable motionSession = GeneratedMarkup.AttachMotionSession(element);
 
         for (int cycle = 0; cycle < 10_000; cycle++)
         {
+            UIRoot root = roots[cycle % roots.Length];
+            source.Value = cycle % 2 == 0 ? 0.6f : 0.7f;
             ElementLifecycle.AttachSubtree(root, element);
+            MotionHandle handle = GeneratedMarkup.StartPrismMotionProperty(
+                motionSession,
+                element,
+                propertyId: 1_001,
+                static instance => instance.GetLayerState(LifecycleLayerId).Opacity,
+                static (instance, value) => instance.GetLayerState(LifecycleLayerId).Opacity = value,
+                discrete: false,
+                hasFrom: false,
+                from: 0f,
+                toCurrent: false,
+                to: 0.1f,
+                spec: new TweenSpec<float>(TimeSpan.FromSeconds(10), Easings.Linear),
+                MotionPropertyStartOptions.Default);
+            motionHandles.Add(new WeakReference<MotionHandle>(handle));
+            root.Motion.Tick();
             ElementLifecycle.DetachSubtree(root, element);
+            root.Motion.Tick();
+            hadActiveMotionAfterDetach |= root.Motion.HasActiveMotion;
         }
 
         return new AttachmentReferences(
             new WeakReference<UIElement>(element),
             instances,
-            root.PrismCacheInvalidations);
+            motionHandles,
+            roots.Select(root => root.PrismCacheInvalidations).ToArray(),
+            bindingConnections,
+            bindingDisconnections,
+            hadActiveMotionAfterDetach || roots.Any(root => root.Motion.HasActiveMotion));
     }
 
     private static void CollectGarbage()
@@ -325,6 +377,33 @@ public sealed class PrismAttachmentTests
             ]);
     }
 
+    private static readonly PrismNodeId LifecycleLayerId = new(11);
+
+    private static PrismCompositionDefinition CreateFullStackDefinition()
+    {
+        PrismMaskDefinition mask = new(new PrismResourceId("LifecycleMask"));
+        return new PrismCompositionDefinition(
+            "full-stack-lifecycle",
+            [
+                new PrismGroupDefinition(
+                    new PrismNodeId(10),
+                    "Composite",
+                    [
+                        new PrismLayerDefinition(
+                            LifecycleLayerId,
+                            "Content",
+                            filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
+                            styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)],
+                            mask: mask)
+                    ]),
+                new PrismBackdropDefinition(
+                    new PrismNodeId(12),
+                    "Backdrop",
+                    filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
+                    mask: mask)
+            ]);
+    }
+
     private sealed class CallbackDisposable : IDisposable
     {
         private Action? callback;
@@ -383,5 +462,9 @@ public sealed class PrismAttachmentTests
     private readonly record struct AttachmentReferences(
         WeakReference<UIElement> Element,
         IReadOnlyList<WeakReference<PrismInstance>> Instances,
-        PrismCacheInvalidationQueue Invalidations);
+        IReadOnlyList<WeakReference<MotionHandle>> MotionHandles,
+        IReadOnlyList<PrismCacheInvalidationQueue> Invalidations,
+        int BindingConnections,
+        int BindingDisconnections,
+        bool HadActiveMotionAfterDetach);
 }

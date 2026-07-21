@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.MonoGame.Prism.Execution;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
@@ -56,6 +57,13 @@ internal interface IWindowGraphicsSession : IDisposable
 internal interface IWindowScreenshotSource
 {
     void RenderPng(Stream output, Color clearColor, Action<IDrawingBackend> draw);
+}
+
+internal interface IWindowPrismScreenshotDiagnosticsSource
+{
+    PrismExecutionDiagnostics? LastPrismScreenshotDiagnostics { get; }
+
+    int ActiveBackdropLeaseCount { get; }
 }
 
 internal interface IWindowGraphicsSessionFactory

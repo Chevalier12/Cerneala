@@ -7,8 +7,20 @@ public readonly record struct BackdropFrameRequest
     public BackdropFrameRequest(
         int PixelWidth,
         int PixelHeight,
+        float PixelScale)
+        : this(
+            PixelWidth,
+            PixelHeight,
+            PixelScale,
+            backdropRequirement: null)
+    {
+    }
+
+    internal BackdropFrameRequest(
+        int PixelWidth,
+        int PixelHeight,
         float PixelScale,
-        PrismBackdropRequirement BackdropRequirement)
+        PrismBackdropRequirement? backdropRequirement)
     {
         if (PixelWidth <= 0)
         {
@@ -32,8 +44,7 @@ public readonly record struct BackdropFrameRequest
         this.PixelWidth = PixelWidth;
         this.PixelHeight = PixelHeight;
         this.PixelScale = PixelScale;
-        this.BackdropRequirement = BackdropRequirement ??
-            throw new ArgumentNullException(nameof(BackdropRequirement));
+        BackdropRequirement = backdropRequirement;
     }
 
     public int PixelWidth { get; }
@@ -42,5 +53,5 @@ public readonly record struct BackdropFrameRequest
 
     public float PixelScale { get; }
 
-    public PrismBackdropRequirement BackdropRequirement { get; }
+    internal PrismBackdropRequirement? BackdropRequirement { get; }
 }

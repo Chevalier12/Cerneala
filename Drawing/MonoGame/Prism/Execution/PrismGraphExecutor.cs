@@ -64,7 +64,11 @@ internal sealed class PrismGraphExecutor : IDisposable
         : this(
             graphicsDevice,
             diagnostics,
-            new PrismRendererOptions(),
+            new PrismRendererOptions
+            {
+                EnableDevelopmentDiagnostics =
+                    diagnostics?.DetailedDiagnosticsEnabled == true
+            },
             retainedCacheEnabled: true)
     {
     }
@@ -84,10 +88,12 @@ internal sealed class PrismGraphExecutor : IDisposable
 
         this.graphicsDevice = graphicsDevice;
         this.diagnostics =
-            diagnostics ?? new PrismExecutionDiagnostics();
+            diagnostics ?? new PrismExecutionDiagnostics(
+                options.EnableDevelopmentDiagnostics);
         this.retainedCacheEnabled = retainedCacheEnabled;
         developmentDiagnosticsEnabled =
-            options.EnableDevelopmentDiagnostics;
+            options.EnableDevelopmentDiagnostics ||
+            this.diagnostics.DetailedDiagnosticsEnabled;
         surfacePool = new PrismSurfacePool(
             graphicsDevice,
             new PrismSurfaceBudget(
@@ -328,6 +334,9 @@ internal sealed class PrismGraphExecutor : IDisposable
             diagnostics.CompleteExecution(
                 surfacePool.CreatedSurfaceCount - createdBefore,
                 surfacePool.ReusedSurfaceCount - reusedBefore,
+                surfacePool.ActiveLeaseCount,
+                surfacePool.TotalByteCount,
+                surfacePool.PeakTotalByteCount,
                 Stopwatch.GetElapsedTime(submitStarted));
         }
     }
@@ -2800,7 +2809,7 @@ internal sealed class PrismGraphExecutor : IDisposable
                         parentTarget.Height));
                 diagnostics.RecordPresentation(
                     PrismExecutionPassKind.NestedPresent,
-                    node.Id,
+                    node,
                     scope.AnalysisScopeIndex);
             }
 
@@ -2866,7 +2875,7 @@ internal sealed class PrismGraphExecutor : IDisposable
                         hostViewport.Height));
                 diagnostics.RecordPresentation(
                     PrismExecutionPassKind.RootPresent,
-                    node.Id,
+                    node,
                     scope.AnalysisScopeIndex);
                 renderer.BeginCommandBatch();
             }

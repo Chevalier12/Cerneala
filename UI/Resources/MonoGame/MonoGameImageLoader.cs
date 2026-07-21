@@ -20,7 +20,15 @@ public sealed class MonoGameImageLoader : IImageLoader
             throw new ArgumentException("Image path cannot be empty.", nameof(path));
         }
 
-        using FileStream stream = File.OpenRead(path);
+        using FileStream stream = File.OpenRead(ResolvePath(path));
         return new MonoGameImage(Texture2D.FromStream(graphicsDevice, stream));
+    }
+
+    internal static string ResolvePath(string path)
+    {
+        string workingDirectoryPath = Path.GetFullPath(path);
+        return Path.IsPathFullyQualified(path) || File.Exists(workingDirectoryPath)
+            ? workingDirectoryPath
+            : Path.GetFullPath(path, AppContext.BaseDirectory);
     }
 }

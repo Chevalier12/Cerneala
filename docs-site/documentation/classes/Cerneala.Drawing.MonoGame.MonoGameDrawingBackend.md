@@ -13,7 +13,6 @@ Renders `DrawCommandList` instances through a MonoGame `SpriteBatch`.
 ```csharp
 public sealed class MonoGameDrawingBackend :
     IDrawingBackend,
-    IDrawingBackendFrameTimingSource,
     IDisposable
 ```
 
@@ -21,37 +20,26 @@ Inheritance:
 `object` -> `MonoGameDrawingBackend`
 
 Implements:
-`IDrawingBackend`, `IDrawingBackendFrameTimingSource`, `IDisposable`
+`IDrawingBackend`, `IDisposable`
 
 ## Examples
 
-`Render` owns its complete `SpriteBatch.Begin`/`End` pair. Do not begin the
-supplied sprite batch before calling it.
+Configure Prism when constructing the backend. Hosted rendering supplies the
+frame context and owns submission.
 
 ```csharp
-using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
-using Cerneala.Drawing.Prism.Graph;
+using Cerneala.Drawing.Prism;
 using Microsoft.Xna.Framework.Graphics;
-using CernealaColor = Cerneala.Drawing.Color;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
-using Texture2D whitePixel = new(graphicsDevice, 1, 1);
-whitePixel.SetData(new[] { XnaColor.White });
+PrismRendererOptions prismOptions = new();
+using MonoGameDrawingBackend backend = new(
+    spriteBatch,
+    whitePixel,
+    textRasterizer: null,
+    prismRendererOptions: prismOptions);
 
-using SpriteBatch spriteBatch = new(graphicsDevice);
-using MonoGameDrawingBackend backend = new(spriteBatch, whitePixel);
-
-DrawCommandList commands = new();
-commands.Add(DrawCommand.PushClip(new DrawRect(0, 0, 200, 120)));
-commands.Add(DrawCommand.FillRectangle(new DrawRect(10, 10, 80, 40), new CernealaColor(32, 120, 220, 255)));
-commands.Add(DrawCommand.DrawRectangle(new DrawRect(10, 10, 80, 40), CernealaColor.White, 2));
-commands.Add(DrawCommand.PopClip());
-
-DrawingFrameContext frameContext = new(
-    new PrismFrameAnalyzer().Analyze(commands));
-
-backend.Render(commands, in frameContext);
+PrismRendererDiagnostics diagnostics = backend.RendererDiagnostics;
 ```
 
 ## Remarks
@@ -70,7 +58,7 @@ belong to the same device. Disposing the backend releases only backend-owned
 states, effects, and cached GPU resources; it does not dispose the borrowed
 sprite batch, texture, or graphics device.
 
-`Render` first validates the supplied `DrawingFrameContext` against the command
+`Render` receives a host-created `DrawingFrameContext` for the submitted command
 list. A frame without analyzed Prism scopes follows the direct command path. A
 frame with Prism scopes builds and optimizes the backend-neutral graph, captures
 each scope once, executes the fundamental copy, normal-composite, mask, clip,
@@ -92,6 +80,13 @@ owner, resources, raster context, shader package, device, or backend lifetime
 changes. `RendererDiagnostics` exposes an immutable snapshot of this work.
 Both transient and retained Prism surfaces are released on device reset and
 backend disposal.
+
+When the hard surface limit cannot admit a required transient surface even after
+retained eviction, the backend records `PRISM7006` with
+`SurfaceAllocationFailed`, restores the incoming target and graphics state, and
+resumes the remaining raw commands inside the affected Prism scope. It does not
+show partial Prism output, silently exceed the limit, or lower quality
+adaptively.
 
 When Prism renders into an offscreen host target, that target must use
 `RenderTargetUsage.PreserveContents` if pixels written before `Render` must

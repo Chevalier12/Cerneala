@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace Cerneala.Drawing.Prism.Graph;
 
-public sealed class PrismBackdropRequirement
+internal sealed class PrismBackdropRequirement
 {
     internal PrismBackdropRequirement(ImmutableArray<int> scopeIndices)
     {

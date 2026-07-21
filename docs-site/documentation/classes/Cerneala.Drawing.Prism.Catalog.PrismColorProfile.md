@@ -13,6 +13,12 @@ Specifies a working or output color profile for Prism processing.
 public enum PrismColorProfile
 ```
 
+## Remarks
+
+The generated enum is the closed built-in profile set for the current Prism
+contract. `LinearSrgb` is the composition default. The enum is not a registration
+point for application-provided color profiles.
+
 ## Values
 
 | Name | Stable ID | Description |

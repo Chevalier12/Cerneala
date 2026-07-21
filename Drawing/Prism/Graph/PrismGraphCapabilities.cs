@@ -1,7 +1,7 @@
 namespace Cerneala.Drawing.Prism.Graph;
 
 [Flags]
-public enum PrismGraphCapabilities
+internal enum PrismGraphCapabilities
 {
     None = 0,
     ControlCapture = 1 << 0,

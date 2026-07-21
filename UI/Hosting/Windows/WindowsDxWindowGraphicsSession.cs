@@ -2,6 +2,7 @@ using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.MonoGame.Prism;
+using Cerneala.Drawing.MonoGame.Prism.Execution;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Text;
@@ -26,6 +27,7 @@ internal sealed class WindowsDxWindowGraphicsSessionFactory : IWindowGraphicsSes
 internal sealed class WindowsDxWindowGraphicsSession :
     IWindowGraphicsSession,
     IWindowScreenshotSource,
+    IWindowPrismScreenshotDiagnosticsSource,
     IBackdropFrameSource
 {
     private readonly nint windowHandle;
@@ -42,6 +44,7 @@ internal sealed class WindowsDxWindowGraphicsSession :
     private FrameKind activeFrameKind;
     private int activeBackdropLeaseCount;
     private long contentVersion;
+    private PrismExecutionDiagnostics? lastPrismScreenshotDiagnostics;
     private bool disposed;
 
     public WindowsDxWindowGraphicsSession(nint windowHandle, int pixelWidth, int pixelHeight, float coordinateScale)
@@ -119,6 +122,12 @@ internal sealed class WindowsDxWindowGraphicsSession :
 
     internal bool IsFrameActive =>
         activeFrameKind != FrameKind.None;
+
+    PrismExecutionDiagnostics? IWindowPrismScreenshotDiagnosticsSource.LastPrismScreenshotDiagnostics =>
+        lastPrismScreenshotDiagnostics;
+
+    int IWindowPrismScreenshotDiagnosticsSource.ActiveBackdropLeaseCount =>
+        activeBackdropLeaseCount;
 
     public bool IsCompatibleWith(IDrawingBackend drawingBackend)
     {
@@ -288,6 +297,7 @@ internal sealed class WindowsDxWindowGraphicsSession :
             throw new InvalidOperationException("A screenshot cannot be rendered while an on-screen frame is active.");
         }
         EnsureNoActiveBackdropLeases("render a screenshot");
+        lastPrismScreenshotDiagnostics = null;
 
         int width = presentationParameters.BackBufferWidth;
         int height = presentationParameters.BackBufferHeight;
@@ -307,7 +317,10 @@ internal sealed class WindowsDxWindowGraphicsSession :
             captureSpriteBatch,
             whitePixel,
             new SkiaTextRasterizer(),
-            new PrismRendererOptions(),
+            new PrismRendererOptions
+            {
+                EnableDevelopmentDiagnostics = true
+            },
             retainedCacheEnabled)
         {
             CoordinateScale = coordinateScale
@@ -320,6 +333,8 @@ internal sealed class WindowsDxWindowGraphicsSession :
                 target,
                 clearColor);
             draw(captureBackend);
+            lastPrismScreenshotDiagnostics =
+                captureBackend.PrismDiagnostics;
             EnsureNoActiveBackdropLeases(
                 "complete a screenshot");
             EndBackdropFrame();
@@ -354,6 +369,7 @@ internal sealed class WindowsDxWindowGraphicsSession :
         DisposeResource(whitePixel, ref failure);
         DisposeResource(spriteBatch, ref failure);
         DisposeResource(graphicsDevice, ref failure);
+        lastPrismScreenshotDiagnostics = null;
         disposed = true;
         if (failure is not null)
         {

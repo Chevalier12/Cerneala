@@ -13,6 +13,11 @@ Specifies how a Prism mask image is converted into mask coverage.
 public enum PrismMaskChannel
 ```
 
+## Remarks
+
+`Alpha` is the default and reads coverage from image alpha. `Luminance` derives
+coverage from image brightness instead.
+
 ## Values
 
 | Name | Description |

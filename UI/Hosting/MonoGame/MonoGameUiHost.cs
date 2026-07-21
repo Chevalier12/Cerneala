@@ -69,6 +69,13 @@ public sealed class MonoGameUiHost : IDisposable
     internal PrismExecutionCounters PrismExecutionCounters =>
         drawingBackend.PrismDiagnostics.Counters;
 
+    internal PrismOperationalDiagnostics OperationalPrismDiagnostics =>
+        PrismOperationalDiagnostics.Capture(
+            drawingBackend.PrismDiagnostics,
+            host.BackdropFrameCounters.Snapshot,
+            activeBackdropLeaseCount: 0,
+            host.Root?.Motion.HasActiveMotion == true);
+
     public IBackdropFrameSource? BackdropFrameSource
     {
         get => backend.BackdropFrameSource;

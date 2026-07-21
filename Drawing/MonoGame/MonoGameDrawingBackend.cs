@@ -45,7 +45,7 @@ public sealed class MonoGameDrawingBackend :
     private readonly MonoGameGraphicsDeviceStateSnapshot? deviceStateSnapshot;
     private readonly PrismGraphBuilder prismGraphBuilder = new();
     private readonly PrismGraphOptimizer prismGraphOptimizer = new();
-    private readonly PrismExecutionDiagnostics prismDiagnostics = new();
+    private readonly PrismExecutionDiagnostics prismDiagnostics;
     private readonly PrismRendererOptions prismRendererOptions;
     private readonly bool prismRetainedCacheEnabled;
     private BasicEffect? pathEffect;
@@ -70,6 +70,7 @@ public sealed class MonoGameDrawingBackend :
     private int lastTextRequestCount;
     private long lastRasterizedPixelCount;
     private bool spriteBatchBegun;
+    private bool prismExecutorUnavailable;
 
     public MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer = null)
         : this(
@@ -108,6 +109,8 @@ public sealed class MonoGameDrawingBackend :
                 nameof(prismRendererOptions));
         prismRetainedCacheEnabled = retainedCacheEnabled;
         this.prismRendererOptions.Validate();
+        prismDiagnostics = new PrismExecutionDiagnostics(
+            this.prismRendererOptions.EnableDevelopmentDiagnostics);
         ValidateGraphicsResources(_spriteBatch, _whitePixel, nameof(whitePixel));
         _textRasterizer = textRasterizer;
         scissorRasterizerState = ScissorRasterizerState;
@@ -2056,6 +2059,7 @@ public sealed class MonoGameDrawingBackend :
         ClearTextTextureCaches();
         ClearBrushTextureCache();
         ClearPathMeshCache();
+        prismExecutorUnavailable = false;
         prismExecutor?.Reset();
     }
 
@@ -2064,6 +2068,10 @@ public sealed class MonoGameDrawingBackend :
         if (prismExecutor is not null)
         {
             return true;
+        }
+        if (prismExecutorUnavailable)
+        {
+            return false;
         }
 
         try
@@ -2077,6 +2085,7 @@ public sealed class MonoGameDrawingBackend :
         }
         catch (PrismShaderUnavailableException exception)
         {
+            prismExecutorUnavailable = true;
             prismDiagnostics.Record(
                 null,
                 -1,
