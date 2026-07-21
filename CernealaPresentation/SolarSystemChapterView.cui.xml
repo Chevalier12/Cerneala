@@ -53,24 +53,6 @@
                 Color="#FF010207" />
         </RadialGradientBrush>
         <RadialGradientBrush
-            Name="SunHaloGradient"
-            Center="60,60"
-            RadiusX="60"
-            RadiusY="60">
-            <GradientStop
-                Offset="0"
-                Color="#D9FFF3B0" />
-            <GradientStop
-                Offset="0.2"
-                Color="#A8FFA73D" />
-            <GradientStop
-                Offset="0.55"
-                Color="#28FF5D15" />
-            <GradientStop
-                Offset="1"
-                Color="#00FF4E0C" />
-        </RadialGradientBrush>
-        <RadialGradientBrush
             Name="SunSurfaceGradient"
             Center="18,16"
             RadiusX="34"
@@ -208,31 +190,18 @@
                 Offset="1"
                 Color="#FF102152" />
         </RadialGradientBrush>
-        <ImageBrush
-            Name="PlanetCardMask"
-            Source="Assets/cerneala-mascot-void-suction-well.png"
-            Stretch="UniformToFill" />
         <PrismComposition
             Name="PlanetCardPrism">
             @layer SignalPulse
             {
-                Opacity = 0.18;
+                Opacity = 0.55;
                 BlendMode = Screen;
 
                 @style OuterGlow
                 {
-                    Size = 7;
-                    Opacity = 0.72;
-                    Color = #8060D8FF;
-                }
-
-                @mask
-                {
-                    Image = $PlanetCardMask;
-                    Channel = Luminance;
-                    Feather = 1.5;
-                    Density = 0.42;
-                    Invert = false;
+                    Size = 12;
+                    Opacity = 0.95;
+                    Color = #FF269DFF;
                 }
             }
 
@@ -264,10 +233,10 @@
         <MotionClip
             Name="PlanetCardPulse"
             TargetType="Cerneala.Presentation.SolarSystemChapterView">
-            @animate with Repeat(Tween(3s, EaseInOut), forever)
+            @animate with PingPong(Tween(3s, EaseInOut), forever)
             {
-                @from { $PlanetInfoCard.prism.SignalPulse.Opacity = 0.16; }
-                @to { $PlanetInfoCard.prism.SignalPulse.Opacity = 0.28; }
+                @from { $PlanetInfoCard.prism.SignalPulse.Opacity = 0.35; }
+                @to { $PlanetInfoCard.prism.SignalPulse.Opacity = 0.85; }
             }
         </MotionClip>
         <MotionClip
@@ -319,11 +288,6 @@
                 {
                     @from { $NeptuneOrbit.Rotation = 5.8; $NeptuneBody.Rotation = -5.8; }
                     @to { $NeptuneOrbit.Rotation = 12.083185; $NeptuneBody.Rotation = -12.083185; }
-                }
-                @animate with Repeat(Tween(18s, Linear), forever)
-                {
-                    @from { $SolarFlares.Rotation = 0; }
-                    @to { $SolarFlares.Rotation = -6.283185; }
                 }
                 @animate with Repeat(Tween(13s, Linear), forever)
                 {
@@ -473,8 +437,6 @@
                         <Ellipse Width="1" Height="1" Fill="$SolarTextBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="68,4,0,0" />
                     </Grid>
 
-                    <Ellipse Width="120" Height="120" Fill="$SunHaloGradient" HorizontalAlignment="Center" VerticalAlignment="Center" />
-
                     <Grid Name="MercuryOrbit" Width="87" Height="87" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Grid Name="MercuryBody" Width="8" Height="8" HorizontalAlignment="Right" VerticalAlignment="Center" MouseUp="OnMercuryClicked">
                             <Ellipse Width="36" Height="36" Fill="$SolarTransparentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -545,13 +507,7 @@
                         </Grid>
                     </Grid>
 
-                    <Grid Name="SolarFlares" Width="82" Height="82" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Border Width="2" Height="19" Background="$SolarWarmBrush" Opacity="0.45" HorizontalAlignment="Center" VerticalAlignment="Top" />
-                        <Border Width="18" Height="2" Background="$SolarWarmBrush" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                        <Border Width="2" Height="17" Background="$SolarWarmBrush" Opacity="0.35" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
-                        <Border Width="16" Height="2" Background="$SolarWarmBrush" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Center" />
-                    </Grid>
-                    <Grid Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid Name="SunBody" Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Ellipse Fill="$SunSurfaceGradient" Stroke="#FFFFC977" StrokeThickness="1" />
                         <Ellipse Width="8" Height="8" Fill="#44FFF09A" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,9,0,0" />
                         <Ellipse Width="5" Height="5" Fill="#33FFF09A" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,14,9,0" />

@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Motion/Specs/PingPongSpec.cs`
 
-Samples a finite `PingPongSpec<T>` by alternating tween progress between the starting and target values for a fixed number of cycles.
+Samples a `PingPongSpec<T>` by alternating tween progress between the starting and target values for a fixed or unbounded number of cycles.
 
 ```csharp
 private sealed class Sampler : MotionSampler<T>
@@ -55,7 +55,7 @@ float returningValue = sampler.Current; // 5
 
 ## Remarks
 
-`Sampler` stores the wrapped `TweenSpec<T>`, cycle count, starting value, target value, and `ValueMixer<T>` supplied by `PingPongSpec<T>.CreateSampler`. It initializes `Current` to the starting value and completes after `spec.Duration * cycles`.
+`Sampler` stores the wrapped `TweenSpec<T>`, optional cycle count, starting value, target value, and `ValueMixer<T>` supplied by `PingPongSpec<T>.CreateSampler`. It initializes `Current` to the starting value and completes after `spec.Duration * cycles` when the count is finite. A `null` count remains active until canceled by its owner.
 
 Each `Advance` call adds the supplied delta to elapsed time, identifies the current cycle from elapsed milliseconds, and computes progress within that cycle. Odd-numbered cycles invert progress with `1 - progress`, so the sampled value moves from `to` back toward `from` instead of restarting at `from`.
 
@@ -67,7 +67,7 @@ The sampled progress is transformed through the wrapped tween's `Easing` and the
 
 | Name | Description |
 | --- | --- |
-| `Sampler(TweenSpec<T> spec, int cycles, T from, T to, ValueMixer<T> mixer)` | Initializes the sampler from a tween spec, positive cycle count, endpoint values, and mixer. |
+| `Sampler(TweenSpec<T> spec, int? cycles, T from, T to, ValueMixer<T> mixer)` | Initializes the sampler from a tween spec, optional positive cycle count, endpoint values, and mixer. |
 
 ## Properties
 

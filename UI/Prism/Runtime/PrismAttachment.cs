@@ -17,6 +17,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
     private PrismCacheOwnerToken cacheOwnerToken;
     private bool attached;
     private bool renderable;
+    private bool hasBeenRenderable;
     private bool disposed;
 
     private PrismAttachment(
@@ -91,6 +92,14 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         return false;
     }
 
+    internal static void InvalidateRenderState(UIElement owner)
+    {
+        if (Attachments.TryGetValue(owner, out PrismAttachment? attachment))
+        {
+            attachment.QueueOwnerInvalidation();
+        }
+    }
+
     public void Attach()
     {
         if (attached || disposed)
@@ -113,6 +122,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         try
         {
             ConnectBindings(created);
+            hasBeenRenderable = true;
         }
         catch
         {
@@ -136,6 +146,23 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
             return;
         }
 
+        if (!hasBeenRenderable)
+        {
+            renderable = true;
+            try
+            {
+                ConnectBindings(instance!);
+                hasBeenRenderable = true;
+            }
+            catch
+            {
+                renderable = false;
+                throw;
+            }
+
+            return;
+        }
+
         PrismInstance previous = instance!;
         PrismCacheOwnerToken previousCacheOwnerToken = cacheOwnerToken;
         PrismInstance created = instanceFactory!()
@@ -146,6 +173,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         try
         {
             ConnectBindings(created);
+            hasBeenRenderable = true;
         }
         catch
         {
@@ -166,6 +194,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         QueueOwnerInvalidation();
         attached = false;
         renderable = false;
+        hasBeenRenderable = false;
         try
         {
             DisconnectBindings();

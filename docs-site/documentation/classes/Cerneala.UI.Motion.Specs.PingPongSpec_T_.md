@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Motion/Specs/PingPongSpec.cs`
 
-Represents a finite motion specification that alternates between the start and target values for a fixed number of tween-based cycles.
+Represents a motion specification that alternates between the start and target values for a fixed or unbounded number of tween-based cycles.
 
 ```csharp
 public sealed class PingPongSpec<T> : MotionSpec<T>
@@ -52,11 +52,11 @@ float returningValue = sampler.Current; // 5
 
 ## Remarks
 
-`PingPongSpec<T>` wraps a `TweenSpec<T>` and repeats its duration for the requested number of cycles. Even-numbered cycles reverse progress so the sampler alternates between the `from` and `to` values instead of restarting at the beginning of each cycle.
+`PingPongSpec<T>` wraps a `TweenSpec<T>` and repeats its duration for the requested number of cycles. Pass `null` for an unbounded animation. Even-numbered cycles reverse progress so the sampler alternates between the `from` and `to` values instead of restarting at the beginning of each cycle.
 
 Each sampler starts at `from`. During sampling, progress is calculated from elapsed milliseconds within the current cycle, transformed through the wrapped tween's `Easing`, and mixed with the supplied `ValueMixer<T>`. The wrapped tween's `Duration` and `Easing` are used directly.
 
-The total runtime is `inner.Duration * cycles`. When the sampler reaches or passes that total duration, it completes and sets `Current` to `from` for an even cycle count, or `to` for an odd cycle count.
+For a finite cycle count, the total runtime is `inner.Duration * cycles`. When the sampler reaches or passes that total duration, it completes and sets `Current` to `from` for an even cycle count, or `to` for an odd cycle count. With `cycles: null`, the sampler remains active until its owner cancels it. Reduced-motion modes complete an unbounded ping-pong immediately at `to`.
 
 `Retarget` is implemented as a no-op by the current sampler. Calling it does not change the target, current value, elapsed time, or completion state.
 
@@ -64,7 +64,7 @@ The total runtime is `inner.Duration * cycles`. When the sampler reaches or pass
 
 | Name | Description |
 | --- | --- |
-| `PingPongSpec(TweenSpec<T>, int)` | Initializes a ping-pong specification from an inner tween and a positive cycle count. |
+| `PingPongSpec(TweenSpec<T>, int?)` | Initializes a ping-pong specification from an inner tween and a positive cycle count, or `null` for an unbounded animation. |
 
 ## Methods
 
@@ -77,12 +77,12 @@ The total runtime is `inner.Duration * cycles`. When the sampler reaches or pass
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `PingPongSpec(TweenSpec<T>, int)` | `ArgumentNullException` | `inner` is `null`. |
-| `PingPongSpec(TweenSpec<T>, int)` | `ArgumentOutOfRangeException` | `cycles` is zero or negative. |
+| `PingPongSpec(TweenSpec<T>, int?)` | `ArgumentNullException` | `inner` is `null`. |
+| `PingPongSpec(TweenSpec<T>, int?)` | `ArgumentOutOfRangeException` | `cycles` is zero or negative. |
 
 ## Applies to
 
-Cerneala UI motion specifications and finite alternating value animation sampling.
+Cerneala UI motion specifications and finite or unbounded alternating value animation sampling.
 
 ## See also
 

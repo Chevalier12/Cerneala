@@ -57,34 +57,30 @@ public sealed class PresentationMarkupRegressionTests
             "SolarSystemChapterView.cui.xml");
         XDocument document = XDocument.Load(markupPath, LoadOptions.PreserveWhitespace);
 
-        XElement composition = Assert.Single(document
+        XElement cardComposition = Assert.Single(document
             .Descendants("PrismComposition")
             .Where(element => string.Equals(
                 element.Attribute("Name")?.Value,
                 "PlanetCardPrism",
                 StringComparison.Ordinal)));
-        string compositionBody = composition.Value;
-        Assert.Contains("@layer SignalPulse", compositionBody, StringComparison.Ordinal);
-        Assert.Contains("@group CardTreatment", compositionBody, StringComparison.Ordinal);
-        Assert.Contains("@filter BrightnessContrast", compositionBody, StringComparison.Ordinal);
-        Assert.Contains("@style OuterGlow", compositionBody, StringComparison.Ordinal);
-        Assert.Contains("@mask", compositionBody, StringComparison.Ordinal);
-        Assert.Contains("Image = $PlanetCardMask", compositionBody, StringComparison.Ordinal);
-        Assert.Contains("@backdrop SpaceGlass", compositionBody, StringComparison.Ordinal);
+        string cardCompositionBody = cardComposition.Value;
+        Assert.DoesNotContain("@layer SignalPulse", cardCompositionBody, StringComparison.Ordinal);
+        Assert.Contains("@group CardTreatment", cardCompositionBody, StringComparison.Ordinal);
+        Assert.Contains("@filter BrightnessContrast", cardCompositionBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("@style OuterGlow", cardCompositionBody, StringComparison.Ordinal);
+        Assert.Contains("@backdrop SpaceGlass", cardCompositionBody, StringComparison.Ordinal);
         Assert.True(
-            compositionBody.IndexOf("@backdrop SpaceGlass", StringComparison.Ordinal) >
-            compositionBody.IndexOf("@group CardTreatment", StringComparison.Ordinal));
+            cardCompositionBody.IndexOf("@backdrop SpaceGlass", StringComparison.Ordinal) >
+            cardCompositionBody.IndexOf("@group CardTreatment", StringComparison.Ordinal));
 
-        XElement maskBrush = Assert.Single(document
-            .Descendants("ImageBrush")
+        XElement pulseComposition = Assert.Single(document
+            .Descendants("PrismComposition")
             .Where(element => string.Equals(
                 element.Attribute("Name")?.Value,
-                "PlanetCardMask",
+                "PlanetCardPulsePrism",
                 StringComparison.Ordinal)));
-        Assert.EndsWith(
-            "cerneala-mascot-void-suction-well.png",
-            maskBrush.Attribute("Source")?.Value,
-            StringComparison.Ordinal);
+        Assert.Contains("@layer SignalPulse", pulseComposition.Value, StringComparison.Ordinal);
+        Assert.Contains("@style OuterGlow", pulseComposition.Value, StringComparison.Ordinal);
 
         XElement planetCard = Assert.Single(document
             .Descendants("Border")
@@ -94,6 +90,15 @@ public sealed class PresentationMarkupRegressionTests
                 StringComparison.Ordinal)));
         Assert.Contains("@prism $PlanetCardPrism;", planetCard.Value, StringComparison.Ordinal);
 
+        XElement pulseFrame = Assert.Single(document
+            .Descendants("Border")
+            .Where(element => string.Equals(
+                element.Attribute("Name")?.Value,
+                "PlanetInfoPulseFrame",
+                StringComparison.Ordinal)));
+        Assert.Empty(pulseFrame.Elements());
+        Assert.Contains("@prism $PlanetCardPulsePrism;", pulseFrame.Value, StringComparison.Ordinal);
+
         XElement motionClip = Assert.Single(document
             .Descendants("MotionClip")
             .Where(element => string.Equals(
@@ -101,7 +106,7 @@ public sealed class PresentationMarkupRegressionTests
                 "PlanetCardPulse",
                 StringComparison.Ordinal)));
         Assert.Contains(
-            "$PlanetInfoCard.prism.SignalPulse.Opacity",
+            "$PlanetInfoPulseFrame.prism.SignalPulse.Opacity",
             motionClip.Value,
             StringComparison.Ordinal);
 

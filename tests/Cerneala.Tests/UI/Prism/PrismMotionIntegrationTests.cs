@@ -23,7 +23,6 @@ public sealed class PrismMotionIntegrationTests
         ElementRenderCache renderCache = scenario.Root.RetainedRenderCache.GetElementCache(
             scenario.Element);
         renderCache.Ensure(scenario.Element, new RenderCounters());
-        int cachedRenderVersion = renderCache.RenderVersion;
 
         _ = StartOpacityMotion(scenario, 0.25f);
         scenario.Root.Motion.Tick();
@@ -39,7 +38,7 @@ public sealed class PrismMotionIntegrationTests
         Assert.Equal(1, frame.MotionRenderInvalidations);
         Assert.Equal(0, frame.MotionLayoutInvalidations);
         Assert.True(renderCache.IsValid);
-        Assert.Equal(cachedRenderVersion, renderCache.RenderVersion);
+        Assert.Equal(1, scenario.Root.PrismCacheInvalidations.Count);
     }
 
     [Fact]

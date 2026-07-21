@@ -239,8 +239,8 @@ internal sealed class PrismGraphExecutor : IDisposable
                     {
                         frame.AdvanceToStep(
                             step,
-                            surfaceKeys,
-                            requiredTransientSurfaces);
+                            surfaceKeys.AsSpan(0, plan.ExecutionOrder.Length),
+                            requiredTransientSurfaces.AsSpan(0, plan.ExecutionOrder.Length));
                         diagnostics.ObserveLiveSurfaces(
                             surfacePool.ActiveLeaseCount);
                         PrismGraphNode node =

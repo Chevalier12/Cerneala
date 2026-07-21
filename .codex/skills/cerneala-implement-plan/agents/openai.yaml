@@ -1,4 +1,4 @@
 interface:
   display_name: "CernealaImplementPlan"
   short_description: "Implementeaza rapid planuri Cerneala"
-  default_prompt: "Use $cerneala-implement-plan to implement the named Cerneala checklist plan end-to-end with one stage per batch, mandatory stage checkoffs, and throughput-first batching that avoids redundant work."
+  default_prompt: "Use $cerneala-implement-plan to implement the named Cerneala checklist plan end-to-end with one stage per batch, mandatory stage checkoffs, and a goal that requires re-reading the complete skill after every context compaction."

@@ -34,6 +34,27 @@ public sealed class MotionRepeatTimelineTests
     }
 
     [Fact]
+    public void InfinitePingPongKeepsReversingUntilCanceledByItsOwner()
+    {
+        PingPongSpec<float> spec = new(
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear),
+            cycles: null);
+        MotionSampler<float> sampler = spec.CreateSampler(
+            0,
+            10,
+            new FloatMixer(),
+            DefaultContext());
+
+        sampler.Advance(TimeSpan.FromMilliseconds(100));
+        Assert.Equal(10, sampler.Current);
+        sampler.Advance(TimeSpan.FromMilliseconds(100));
+        Assert.Equal(0, sampler.Current);
+        sampler.Advance(TimeSpan.FromMilliseconds(100));
+        Assert.Equal(10, sampler.Current);
+        Assert.False(sampler.IsComplete);
+    }
+
+    [Fact]
     public void EvenCyclePingPongMotionValueCompletesAtStart()
     {
         ManualMotionClock clock = new();
@@ -94,6 +115,29 @@ public sealed class MotionRepeatTimelineTests
         Assert.False(first.NeedsAnotherFrame);
         Assert.False(second.NeedsAnotherFrame);
         Assert.True(root.Motion.Diagnostics.ReducedMotionSkipCount > 0);
+    }
+
+    [Fact]
+    public void ReducedMotionMakesInfinitePingPongStaticAtDestination()
+    {
+        MotionSpecContext context = new(
+            new ReducedMotionPolicy(ReducedMotionMode.DisableNonEssential),
+            DefaultContext().Mixers,
+            null,
+            TimeSpan.Zero,
+            null);
+        PingPongSpec<float> spec = new(
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            cycles: null);
+
+        MotionSampler<float> sampler = spec.CreateSampler(
+            0,
+            10,
+            new FloatMixer(),
+            context);
+
+        Assert.Equal(10, sampler.Current);
+        Assert.True(sampler.IsComplete);
     }
 
     [Fact]

@@ -3,7 +3,10 @@ using Cerneala.Presentation;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Markup;
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Prism.Definitions;
+using Cerneala.UI.Prism.Runtime;
 using Cerneala.Tests.UI.Motion.Core;
 
 namespace Cerneala.Tests.Presentation;
@@ -60,6 +63,47 @@ public sealed class SolarSystemChapterViewTests
 
         Assert.NotEqual(initialOrbitRotation, mercuryOrbit.Rotation);
         Assert.NotEqual(initialBodyRotation, mercuryBody.Rotation);
+    }
+
+    [Fact]
+    public void VisibleSolarSystem_AnimatesPlanetCardPrismSignalPulse()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(1000, 700, motionClock: clock);
+        SolarSystemChapterView view = new() { Visibility = Visibility.Collapsed };
+        root.VisualChildren.Add(view);
+        root.ProcessFrame();
+
+        view.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+        PrismInstance prism = Assert.Single(
+            Descendants(view)
+                .Select(element =>
+                    GeneratedMarkup.TryGetPrismInstance(element, out PrismInstance? instance)
+                        ? instance
+                        : null)
+                .OfType<PrismInstance>()
+                .Where(instance => instance.Definition.TryGetNamedNode("SignalPulse", out _)));
+        Assert.True(prism.Definition.TryGetNamedNode("SignalPulse", out PrismNodeId pulseId));
+        PrismLayerState pulse = prism.GetLayerState(pulseId);
+        float initialOpacity = pulse.Opacity;
+
+        for (int frame = 0; frame < 88; frame++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(16));
+            root.ProcessFrame();
+        }
+
+        float peakOpacity = pulse.Opacity;
+        for (int frame = 0; frame < 88; frame++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(16));
+            root.ProcessFrame();
+        }
+
+        Assert.InRange(initialOpacity, 0.079f, 0.081f);
+        Assert.True(peakOpacity > 0.9f, $"Expected the pulse near its peak, but opacity was {peakOpacity}.");
+        Assert.InRange(pulse.Opacity, 0.079f, 0.081f);
     }
 
     [Fact]

@@ -664,7 +664,13 @@ public static partial class GeneratedMarkup
         {
             PrismValueVersion before = Instance.ValueVersion;
             setValue(Instance, next);
-            return before == Instance.ValueVersion ? 0 : 1;
+            if (before == Instance.ValueVersion)
+            {
+                return 0;
+            }
+
+            PrismAttachment.InvalidateRenderState(target);
+            return 1;
         }
 
         private void OnValueChanged(MotionValueChanged<T> change)

@@ -1900,11 +1900,11 @@ public sealed partial class UiMarkupGenerator
                     throw new DirectiveParseException(kind + " requires Tween(...) as its first argument.", location);
                 }
 
-                bool validCount = kind == "Repeat" && arguments[1].Text == "forever" ||
+                bool validCount = arguments[1].Text == "forever" ||
                     int.TryParse(arguments[1].Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int count) && count > 0;
-                if (!validCount || kind == "PingPong" && arguments[1].Text == "forever")
+                if (!validCount)
                 {
-                    throw new DirectiveParseException(kind + " requires a positive finite count" + (kind == "Repeat" ? " or forever" : string.Empty) + ".", arguments[1].Location);
+                    throw new DirectiveParseException(kind + " requires a positive count or forever.", arguments[1].Location);
                 }
             }
 

@@ -11,13 +11,37 @@ Execute the named checklist plan completely. Use the plan file as the durable pr
 
 1. Resolve the requested plan to one exact Markdown file.
 2. Call `get_goal` before creating a goal.
-3. If no unfinished goal exists, call `create_goal` with a concrete objective containing the resolved plan path and the requirement to implement, verify, document, and check off the plan end-to-end.
+3. If no unfinished goal exists, call `create_goal` with a concrete objective containing:
+   - the resolved plan path;
+   - the requirement to implement, verify, document, and check off the plan end-to-end;
+   - the explicit requirement that, after every context compaction, Codex must
+     re-read this complete `cerneala-implement-plan` skill from disk before
+     resuming any work.
 4. Do not set `token_budget` unless the user explicitly requested a budget.
 5. If the active goal already targets the same plan, continue it instead of creating a duplicate.
 6. If a different unfinished goal is active, do not falsely complete or replace it. Report the conflict and request that the user pause, cancel, or redirect the existing goal.
 7. Keep the goal active across batches and turns. Call `update_goal(status: "complete")` only after the plan is genuinely finished.
 
 The user's invocation of this skill is explicit authorization to create the goal.
+
+## Compaction Recovery (MANDATORY)
+
+After every context compaction, re-read this complete
+`cerneala-implement-plan/SKILL.md` file from disk. This is mandatory even when the
+compacted summary appears to contain all skill instructions or a reliable workflow
+recap.
+
+Before any repository search, edit, test, checklist update, or stage-completion
+claim after a compaction:
+
+1. Read the entire skill file, not only this recovery section.
+2. Call `get_goal` and recover the exact plan path from the active goal.
+3. Follow the freshly reloaded skill from `Resolve and Audit the Plan` onward,
+   including re-reading the plan and reconstructing its current stage.
+
+Do not treat a compaction summary as a substitute for the skill. Enforce this
+recovery sequence for an older matching goal even if its objective predates the
+mandatory compaction wording.
 
 ## Resolve and Audit the Plan
 
@@ -158,7 +182,7 @@ Interpret checklist states strictly:
 - If the plan conflicts with current architecture, stop only that batch, record the contradiction, and ask the user before changing the approved design.
 - If an external or user decision blocks progress, keep the goal active while meaningful work remains elsewhere.
 - Mark the goal `blocked` only under the goal tool's repeated-blocker rules, never merely because the work is difficult or large.
-- After interruption or context compaction, call `get_goal`, read the plan, inspect unchecked items, and resume from the first incomplete stage. Do not resume isolated tasks from later stages.
+- After interruption without compaction, call `get_goal`, read the plan, inspect unchecked items, and resume from the first incomplete stage. After any context compaction, follow the stricter mandatory compaction recovery sequence above.
 - Treat the plan file and repository state as authoritative, not memory of an older turn.
 
 ## Final Completion Audit

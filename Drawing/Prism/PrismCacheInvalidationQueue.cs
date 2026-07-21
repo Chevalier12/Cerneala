@@ -50,7 +50,8 @@ internal sealed class PrismCacheInvalidationQueue
         PrismCacheOwnerToken ownerToken)
     {
         if (Count > 0 &&
-            items[^1].Kind == PrismCacheInvalidationKind.All)
+            (items[^1].Kind == PrismCacheInvalidationKind.All ||
+             items[^1].OwnerToken == ownerToken))
         {
             return;
         }

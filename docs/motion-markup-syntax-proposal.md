@@ -570,7 +570,7 @@ The runtime implements repeat and ping-pong as typed spec wrappers around `Tween
 }
 ```
 
-`Repeat(..., count)` performs exactly `count` tween cycles. `Repeat(..., forever)` maps to the runtime's null repeat count; under reduced motion it completes immediately at the destination. `PingPong(..., cycles)` requires a positive finite cycle count, and each cycle is one traversal.
+`Repeat(..., count)` performs exactly `count` tween cycles. `Repeat(..., forever)` maps to the runtime's null repeat count; under reduced motion it completes immediately at the destination. `PingPong(..., cycles)` accepts a positive cycle count or `forever`, and each cycle is one traversal. An infinite ping-pong also completes immediately at the destination under reduced motion.
 
 The completed value follows the sampler: an even cycle count finishes at `@from`, while an odd cycle count finishes at `@to`.
 

@@ -103,6 +103,23 @@ public sealed class PrismRetainedCacheContractTests
     }
 
     [Fact]
+    public void LiveLayerOpacityMutationChangesRetainedPixels()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismRetainedCacheContractHarness harness = new();
+
+        PrismLiveMutationObservation result =
+            harness.RenderLiveLayerOpacityMutation();
+
+        Assert.False(result.BaselinePixels.SequenceEqual(result.ChangedPixels));
+        AssertPixelsWithin(result.ChangedPixels, result.FreshPixels);
+    }
+
+    [Fact]
     public void IntermediateHitPrunesOnlyTheCoveredSubgraph()
     {
         if (!OperatingSystem.IsWindows())
@@ -359,6 +376,69 @@ internal sealed class PrismRetainedCacheContractHarness : IDisposable
                 after.SavedPassCount -
                 before.SavedPassCount),
             executionDiagnostics.Counters.PassCount);
+    }
+
+    public PrismLiveMutationObservation RenderLiveLayerOpacityMutation()
+    {
+        PrismCompositionDefinition definition =
+            PrismTestData.Composition(
+                "Live opacity mutation",
+                new PrismLayerDefinition(
+                    new PrismNodeId(1),
+                    "SignalPulse",
+                    styles:
+                    [
+                        new PrismStyleDefinition(
+                            PrismStyleId.OuterGlow)
+                    ],
+                    opacity: 0.08f,
+                    blendMode: PrismBlendMode.Screen));
+        PrismInstance instance = new(definition);
+        PrismDrawScope scope = new(
+            instance,
+            new PrismCacheOwnerToken(OwnerToken),
+            new DrawRect(
+                0,
+                0,
+                ExecutorTests.SurfaceWidth,
+                ExecutorTests.SurfaceHeight),
+            System.Numerics.Matrix3x2.Identity,
+            pixelScale: 1,
+            visualContentVersion: 1);
+        DrawCommandList commands =
+            PrismTestData.Commands(
+                DrawCommand.BeginPrism(scope),
+                DrawCommand.FillRectangle(
+                    new DrawRect(4, 4, 16, 12),
+                    new CernealaColor(38, 157, 255, 255)),
+                DrawCommand.EndPrism());
+        using ExecutorTests.TestPrismRenderer renderer =
+            CreateRenderer();
+        using ExecutorTests.TestPrismRenderer freshRenderer =
+            CreateRenderer();
+        using PrismGraphExecutor executor = new(GraphicsDevice);
+        using PrismGraphExecutor fresh = new(
+            GraphicsDevice,
+            diagnostics: null,
+            new PrismRendererOptions(),
+            retainedCacheEnabled: false);
+        Viewport viewport = CreateViewport();
+
+        ContractScene baseline = CreateScene(commands);
+        Execute(renderer, executor, baseline, viewport);
+        byte[] baselinePixels = ToBytes(renderer.ReadPixels());
+
+        instance.GetLayerState(new PrismNodeId(1)).Opacity = 1f;
+        ContractScene changed = CreateScene(commands);
+        Execute(renderer, executor, changed, viewport);
+        byte[] changedPixels = ToBytes(renderer.ReadPixels());
+        Execute(freshRenderer, fresh, changed, viewport);
+        byte[] freshPixels = ToBytes(freshRenderer.ReadPixels());
+
+        return new PrismLiveMutationObservation(
+            baselinePixels,
+            changedPixels,
+            freshPixels);
     }
 
     public PrismOwnershipObservation
@@ -933,6 +1013,20 @@ internal sealed class PrismRetainedCacheContractHarness : IDisposable
             BackdropLease: null);
     }
 
+    private static ContractScene CreateScene(DrawCommandList commands)
+    {
+        PrismFrameAnalysis analysis =
+            new PrismFrameAnalyzer().Analyze(commands);
+        PrismGraphExecutionPlan plan =
+            new PrismGraphOptimizer().Optimize(
+                new PrismGraphBuilder().Build(analysis));
+        return new ContractScene(
+            commands,
+            analysis,
+            plan,
+            BackdropLease: null);
+    }
+
     private static PrismRetainedRasterContext
         CreateChangedRasterContext(
             PrismCacheMutation mutation,
@@ -1237,6 +1331,11 @@ internal readonly record struct PrismMutationObservation(
     byte[] CacheOnPixels,
     int FinalHitCount,
     int MissCount);
+
+internal readonly record struct PrismLiveMutationObservation(
+    byte[] BaselinePixels,
+    byte[] ChangedPixels,
+    byte[] FreshPixels);
 
 internal readonly record struct PrismIntermediateHitObservation(
     byte[] FreshPixels,

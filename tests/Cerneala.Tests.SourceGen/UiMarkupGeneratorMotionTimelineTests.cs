@@ -627,6 +627,7 @@ public sealed partial class UiMarkupGeneratorTests
     [InlineData("Repeat(Tween(100ms, Linear), 3)", "RepeatSpec<float>")]
     [InlineData("Repeat(Tween(100ms, Linear), forever)", "RepeatSpec<float>")]
     [InlineData("PingPong(Tween(100ms, Linear), 4)", "PingPongSpec<float>")]
+    [InlineData("PingPong(Tween(100ms, Linear), forever)", "PingPongSpec<float>")]
     public void MotionWrappersGenerateTypedTweenSpecs(string spec, string expectedCode)
     {
         GeneratorRunResult result = RunGenerator(
@@ -642,7 +643,7 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Theory]
     [InlineData("Repeat(Tween(100ms), 0)")]
-    [InlineData("PingPong(Tween(100ms), forever)")]
+    [InlineData("PingPong(Tween(100ms), 0)")]
     public void MotionWrappersRejectInvalidCounts(string spec)
     {
         GeneratorRunResult result = RunGenerator(
