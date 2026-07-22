@@ -327,6 +327,16 @@ tests/
 Responsabilitățile nu trebuie mutate între aceste directoare doar pentru comoditate.
 În special, `UI/Prism` nu poate referenția MonoGame.
 
+Shader-ele MonoGame păstrează un singur entry point compilat,
+`Shaders/CopyComposite.fx`, dar acesta este doar agregatorul de `#include`-uri.
+Codul comun, compoziția, blend modes, conversiile de culoare și tehnicile trăiesc
+în module dedicate. Fiecare layer style are propriul fișier în `Shaders/Styles/`,
+iar filtrele sunt grupate în `Shaders/Filters/` după algoritmul GPU real
+(`Adjustment`, `Neighborhood`, `Resampling` și familiile catalogului), nu după
+cele peste o sută de nume publice care reutilizează aceleași primitive. Target-ul
+MSBuild urmărește toate fragmentele `.fx` ca input-uri, astfel încât modificarea
+oricărui include recompilă artefactul embedded `CopyComposite.mgfxo`.
+
 ## Modelul de definiții
 
 ### PrismCompositionDefinition

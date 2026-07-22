@@ -199,8 +199,6 @@ Generated from `.`.
 |   |-- PresentationWindow.cui.xml.cs
 |   |-- RetainedModelChapterView.cui.xml
 |   |-- RetainedModelChapterView.cui.xml.cs
-|   |-- SolarSystemChapterView.cui.xml
-|   |-- SolarSystemChapterView.cui.xml.cs
 |   |-- SvgImage.cs
 |   |-- WelcomeChapterView.cui.xml
 |   +-- WelcomeChapterView.cui.xml.cs
@@ -1265,11 +1263,54 @@ Generated from `.`.
 |   |   |   |-- Kernels/
 |   |   |   |   +-- PrismKernelRegistry.cs
 |   |   |   |-- Shaders/
+|   |   |   |   |-- Blends/
+|   |   |   |   |   +-- BlendModes.fx
+|   |   |   |   |-- Color/
+|   |   |   |   |   +-- ColorConversion.fx
+|   |   |   |   |-- Common/
+|   |   |   |   |   |-- BlendMath.fx
+|   |   |   |   |   +-- Parameters.fx
+|   |   |   |   |-- Composition/
+|   |   |   |   |   +-- CopyAndMasks.fx
+|   |   |   |   |-- Filters/
+|   |   |   |   |   |-- Catalog/
+|   |   |   |   |   |   |-- Artistic.fx
+|   |   |   |   |   |   |-- Color.fx
+|   |   |   |   |   |   |-- Common.fx
+|   |   |   |   |   |   |-- Convolution.fx
+|   |   |   |   |   |   |-- Dispatcher.fx
+|   |   |   |   |   |   |-- Edge.fx
+|   |   |   |   |   |   |-- Morphology.fx
+|   |   |   |   |   |   |-- Procedural.fx
+|   |   |   |   |   |   |-- Quantization.fx
+|   |   |   |   |   |   |-- Texture.fx
+|   |   |   |   |   |   |-- Tiling.fx
+|   |   |   |   |   |   +-- Video.fx
+|   |   |   |   |   |-- Adjustment.fx
+|   |   |   |   |   |-- Neighborhood.fx
+|   |   |   |   |   |-- OptimizedBilinearGaussian.fx
+|   |   |   |   |   +-- Resampling.fx
+|   |   |   |   |-- Pipeline/
+|   |   |   |   |   +-- Techniques.fx
+|   |   |   |   |-- Styles/
+|   |   |   |   |   |-- BevelEmboss.fx
+|   |   |   |   |   |-- ColorOverlay.fx
+|   |   |   |   |   |-- Common.fx
+|   |   |   |   |   |-- DropShadow.fx
+|   |   |   |   |   |-- GradientOverlay.fx
+|   |   |   |   |   |-- InnerGlow.fx
+|   |   |   |   |   |-- InnerShadow.fx
+|   |   |   |   |   |-- LayerStyle.fx
+|   |   |   |   |   |-- OuterGlow.fx
+|   |   |   |   |   |-- PatternOverlay.fx
+|   |   |   |   |   |-- Satin.fx
+|   |   |   |   |   +-- Stroke.fx
 |   |   |   |   |-- CopyComposite.fx
 |   |   |   |   +-- PrismShaderResources.cs
 |   |   |   |-- Surfaces/
 |   |   |   |   |-- PrismRetainedSurface.cs
 |   |   |   |   |-- PrismRetainedSurfaceCache.cs
+|   |   |   |   |-- PrismScratchSurfaceLease.cs
 |   |   |   |   |-- PrismSurfaceAllocationException.cs
 |   |   |   |   |-- PrismSurfaceFrame.cs
 |   |   |   |   |-- PrismSurfaceKey.cs
@@ -1566,7 +1607,6 @@ Generated from `.`.
 |   |   |-- Playground/
 |   |   |   +-- MainWindowContractTests.cs
 |   |   |-- Presentation/
-|   |   |   +-- SolarSystemChapterViewTests.cs
 |   |   |-- UI/
 |   |   |   |-- Accessibility/
 |   |   |   |   |-- AccessibilityPlatformTests.cs
@@ -2583,7 +2623,6 @@ Generated from `.`.
 |-- ROADMAP.md
 |-- ROADMAPv2_AUDIT.md
 |-- ROADMAPv2.md
-|-- roslyn_indexer_codex_plan_final.md
-+-- solar-system.html
++-- roslyn_indexer_codex_plan_final.md
 ```
 

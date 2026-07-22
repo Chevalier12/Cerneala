@@ -175,7 +175,7 @@ public sealed class PrismGraphOptimizerTests
                 value: 3),
             scopeBounds);
         PrismGraphNodePlan blurPlan =
-            PlanForOperation(blur, PrismGraphNodeKind.Filter);
+            PlanForFinalNeighborhoodPass(blur, PrismFilterId.Blur);
         AssertRect(
             new DrawRect(-3, -3, 26, 16),
             blurPlan.Bounds);
@@ -374,7 +374,7 @@ public sealed class PrismGraphOptimizerTests
             new PrismGraphOptimizer().Optimize(BuildGraph(scope));
         PrismGraphScope graphScope = Assert.Single(plan.OptimizedGraph.Scopes);
         PrismGraphNodePlan blur =
-            PlanForOperation(plan, PrismGraphNodeKind.Filter);
+            PlanForFinalNeighborhoodPass(plan, PrismFilterId.Blur);
 
         AssertRect(new DrawRect(0, 0, 40, 20), graphScope.Bounds);
         Assert.Equal(effectiveTransform, graphScope.EffectiveTransform);
@@ -907,7 +907,7 @@ public sealed class PrismGraphOptimizerTests
         PrismGraphExecutionPlan plan = new PrismGraphOptimizer().Optimize(raw);
 
         Assert.Equal(
-            2,
+            4,
             plan.OptimizedGraph.Nodes.Count(
                 node => node.Kind == PrismGraphNodeKind.Filter));
         Assert.Equal(
@@ -1179,6 +1179,18 @@ public sealed class PrismGraphOptimizerTests
         PrismGraphNode node = Assert.Single(
             plan.OptimizedGraph.Nodes.Where(
                 candidate => candidate.Kind == kind));
+        return plan.GetNodePlan(node.Id);
+    }
+
+    private static PrismGraphNodePlan PlanForFinalNeighborhoodPass(
+        PrismGraphExecutionPlan plan,
+        PrismFilterId filter)
+    {
+        PrismGraphNode node = Assert.Single(
+            plan.OptimizedGraph.Nodes.Where(candidate =>
+                candidate.Filter == filter &&
+                candidate.NeighborhoodPlan is PrismNeighborhoodPlan prepared &&
+                candidate.NeighborhoodPassIndex == prepared.Passes.Length - 1));
         return plan.GetNodePlan(node.Id);
     }
 

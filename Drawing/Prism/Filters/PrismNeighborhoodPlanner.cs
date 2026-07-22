@@ -170,7 +170,16 @@ internal static class PrismNeighborhoodPlanner
                     boundsRadiusX: 0,
                     boundsRadiusY: 0,
                     noOp: sourceWidth <= 1 && sourceHeight <= 1),
-            PrismNeighborhoodOperation.Blur or
+            PrismNeighborhoodOperation.Blur =>
+                SeparableRadiusPlan(
+                    filter,
+                    operation,
+                    blendMode,
+                    values.Number("Radius") * deviceScale,
+                    Quality(values, "Quality"),
+                    EdgeMode(values, "EdgeMode"),
+                    sourceWidth,
+                    sourceHeight),
             PrismNeighborhoodOperation.BlurMore =>
                 RadiusPlan(
                     filter,

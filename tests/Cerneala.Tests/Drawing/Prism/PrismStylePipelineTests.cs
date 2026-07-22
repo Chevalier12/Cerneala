@@ -2,6 +2,7 @@ using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Prism.Styles;
 using Cerneala.UI.Markup;
@@ -175,7 +176,9 @@ public sealed class PrismStylePipelineTests
 
         PrismGraphNode preparedSource = Assert.Single(
             graph.Nodes.Where(node =>
-                node.Kind == PrismGraphNodeKind.Filter));
+                node.Kind == PrismGraphNodeKind.Filter &&
+                node.NeighborhoodPlan is PrismNeighborhoodPlan plan &&
+                node.NeighborhoodPassIndex == plan.Passes.Length - 1));
         PrismGraphNode fill = Assert.Single(
             graph.Nodes.Where(node =>
                 node.Kind == PrismGraphNodeKind.Fill));

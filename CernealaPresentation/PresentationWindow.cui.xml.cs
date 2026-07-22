@@ -18,7 +18,6 @@ public partial class PresentationWindow : Window
         "BUILD-TIME MARKUP",
         "ASPECT DESIGN SYSTEM",
         "MOTION",
-        "SOLAR MOTION",
         "FRAME PIPELINE",
         "DIAGNOSTICS"
     ];
@@ -41,7 +40,6 @@ public partial class PresentationWindow : Window
             out int requestedChapter)
             ? Math.Clamp(requestedChapter - 1, 0, ChapterNames.Length - 1)
             : 0;
-        PrepareDeterministicPrismCaptureState(ref initialChapter);
         ShowChapter(initialChapter);
         _ = CaptureIfRequestedAsync();
         _ = RunAutomationIfRequestedAsync();
@@ -56,7 +54,6 @@ public partial class PresentationWindow : Window
             NavMarkup,
             NavAspect,
             NavMotion,
-            NavSolarSystem,
             NavPipeline,
             NavDiagnostics
         ];
@@ -64,7 +61,7 @@ public partial class PresentationWindow : Window
 
     private void OnFrameRendered(object? sender, EventArgs args)
     {
-        if (LastFrame is null || currentChapter != 7)
+        if (LastFrame is null || currentChapter != 6)
         {
             return;
         }
@@ -77,9 +74,8 @@ public partial class PresentationWindow : Window
     private void OnMarkup(UiElementId sender, RoutedEventArgs args) => ShowChapter(2);
     private void OnAspect(UiElementId sender, RoutedEventArgs args) => ShowChapter(3);
     private void OnMotion(UiElementId sender, RoutedEventArgs args) => ShowChapter(4);
-    private void OnSolarSystem(UiElementId sender, RoutedEventArgs args) => ShowChapter(5);
-    private void OnPipeline(UiElementId sender, RoutedEventArgs args) => ShowChapter(6);
-    private void OnDiagnostics(UiElementId sender, RoutedEventArgs args) => ShowChapter(7);
+    private void OnPipeline(UiElementId sender, RoutedEventArgs args) => ShowChapter(5);
+    private void OnDiagnostics(UiElementId sender, RoutedEventArgs args) => ShowChapter(6);
 
     private void OnPrevious(UiElementId sender, RoutedEventArgs args)
     {
@@ -100,7 +96,6 @@ public partial class PresentationWindow : Window
             PageMarkup,
             PageAspect,
             PageMotion,
-            PageSolarSystem,
             PagePipeline,
             PageDiagnostics
         ];
@@ -127,75 +122,46 @@ public partial class PresentationWindow : Window
             return;
         }
 
-        bool prismCapture = IsPrismCaptureRequested();
         string fullPath = Path.GetFullPath(path);
         string errorPath = fullPath + ".error.txt";
         File.Delete(errorPath);
         try
         {
-            if (prismCapture)
+            if (int.TryParse(
+                    Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_HOVER_CHAPTER"),
+                    out int hoverChapter) &&
+                hoverChapter >= 1 &&
+                hoverChapter <= tourNavigation.Length)
             {
-                await PreparePrismCaptureAsync();
+                tourNavigation[hoverChapter - 1].IsPointerOver = true;
+            }
+
+            bool captureDuringMotion = string.Equals(
+                Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_CAPTURE_DURING_MOTION"),
+                "1",
+                StringComparison.OrdinalIgnoreCase);
+            if (captureDuringMotion)
+            {
+                await Task.Delay(1_350);
             }
             else
             {
-                if (int.TryParse(
-                        Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_HOVER_CHAPTER"),
-                        out int hoverChapter) &&
-                    hoverChapter >= 1 &&
-                    hoverChapter <= tourNavigation.Length)
-                {
-                    tourNavigation[hoverChapter - 1].IsPointerOver = true;
-                }
-
-                bool captureDuringMotion = string.Equals(
-                    Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_CAPTURE_DURING_MOTION"),
-                    "1",
-                    StringComparison.OrdinalIgnoreCase);
-                if (captureDuringMotion)
-                {
-                    await Task.Delay(1_350);
-                }
-                else
-                {
-                    await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
-                    await Task.Delay(100);
-                }
+                await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+                await Task.Delay(100);
             }
 
-            PrismOperationalDiagnostics? beforeCapture = prismCapture
-                ? CapturePrismDiagnosticsSnapshot()
-                : null;
             await CaptureScreenshotFrameAsync(fullPath);
-            PrismOperationalDiagnostics? afterCapture = prismCapture
-                ? CapturePrismDiagnosticsSnapshot()
-                : null;
-
-            if (prismCapture)
-            {
-                await WritePrismCaptureReportAsync(fullPath, beforeCapture, afterCapture);
-            }
-            else
-            {
-                await File.WriteAllLinesAsync(Path.ChangeExtension(fullPath, ".metrics.txt"),
-                [
-                    $"Chapter={currentChapter + 1}",
-                    $"RootCommands={Root?.RetainedRenderCache.RootCommands.Count ?? 0}",
-                    $"RenderCacheVersion={Root?.RetainedRenderCache.Version ?? 0}"
-                ]);
-            }
+            await File.WriteAllLinesAsync(Path.ChangeExtension(fullPath, ".metrics.txt"),
+            [
+                $"Chapter={currentChapter + 1}",
+                $"RootCommands={Root?.RetainedRenderCache.RootCommands.Count ?? 0}",
+                $"RenderCacheVersion={Root?.RetainedRenderCache.Version ?? 0}"
+            ]);
         }
         catch (Exception exception)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(errorPath)!);
             await File.WriteAllTextAsync(errorPath, exception.ToString());
-        }
-        finally
-        {
-            if (prismCapture)
-            {
-                Close();
-            }
         }
     }
 

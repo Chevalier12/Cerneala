@@ -48,6 +48,9 @@
 
   <ItemGroup>
     <PrismShaderSource Include="Drawing\MonoGame\Prism\Shaders\*.fx" />
+    <PrismShaderInclude
+      Include="Drawing\MonoGame\Prism\Shaders\**\*.fx"
+      Exclude="Drawing\MonoGame\Prism\Shaders\*.fx" />
     <PrismShaderOutput Include="@(PrismShaderSource->'$(PrismShaderOutputDirectory)%(Filename).mgfxo')" />
     <EmbeddedResource Include="@(PrismShaderOutput)">
       <LogicalName>Cerneala.Drawing.MonoGame.Prism.Shaders.%(Filename)%(Extension)</LogicalName>
@@ -67,7 +70,7 @@
     Name="CompilePrismShaders"
     BeforeTargets="PrepareForBuild"
     DependsOnTargets="RestorePrismShaderCompiler"
-    Inputs="@(PrismShaderSource);$(PrismShaderToolManifest)"
+    Inputs="@(PrismShaderSource);@(PrismShaderInclude);$(PrismShaderToolManifest)"
     Outputs="@(PrismShaderOutput)"
     Condition="'$(DesignTimeBuild)' != 'true'">
     <Error

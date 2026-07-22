@@ -485,8 +485,8 @@ public sealed class PrismGraphContractTests
 
         Assert.Equal(
             """
-            scope=0;nodes=ControlCapture,ColorConversion,Layer,Filter,Fill,Opacity,Composite,Group,Opacity,PassThroughComposite,BackdropInput,BackdropCrop,ColorConversion,Filter,Filter,Opacity,Composite;crop=0,0,20,10;frame=88
-            scope=1;nodes=ControlCapture,ColorConversion,Layer,Filter,Fill,Opacity,Composite,BackdropInput,BackdropCrop,ColorConversion,Filter,Filter,Opacity,Composite;crop=20,0,20,10;frame=88
+            scope=0;nodes=ControlCapture,ColorConversion,Layer,Filter,Filter,Fill,Opacity,Composite,Group,Opacity,PassThroughComposite,BackdropInput,BackdropCrop,ColorConversion,Filter,Filter,Opacity,Composite;crop=0,0,20,10;frame=88
+            scope=1;nodes=ControlCapture,ColorConversion,Layer,Filter,Filter,Fill,Opacity,Composite,BackdropInput,BackdropCrop,ColorConversion,Filter,Filter,Opacity,Composite;crop=20,0,20,10;frame=88
             """.ReplaceLineEndings("\n"),
             BackdropScopeSnapshot(graph));
     }
@@ -594,12 +594,20 @@ public sealed class PrismGraphContractTests
         Assert.Equal(
             PrismGraphNodeKind.ColorConversion,
             first.GetNode(controlEdge.Source).Kind);
-        PrismGraphNode filter = Assert.Single(
-            first.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Filter));
-        Assert.NotEmpty(filter.Parameters);
-        Assert.Contains(
-            filter.Dependencies,
-            dependency => dependency.Kind == PrismGraphDependencyKind.CatalogEntry);
+        PrismGraphNode[] filters = first.Nodes
+            .Where(node => node.Kind == PrismGraphNodeKind.Filter)
+            .ToArray();
+        Assert.Equal(2, filters.Length);
+        Assert.All(
+            filters,
+            filter =>
+            {
+                Assert.NotEmpty(filter.Parameters);
+                Assert.Contains(
+                    filter.Dependencies,
+                    dependency => dependency.Kind ==
+                        PrismGraphDependencyKind.CatalogEntry);
+            });
     }
 
     [Fact]
@@ -614,8 +622,11 @@ public sealed class PrismGraphContractTests
         PrismGraph graph = BuildGraph(
             PrismTestData.Composition("Operations", layer));
 
-        PrismGraphNode filter = Assert.Single(
-            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Filter));
+        PrismGraphNode[] filters = graph.Nodes
+            .Where(node => node.Kind == PrismGraphNodeKind.Filter)
+            .ToArray();
+        Assert.Equal(2, filters.Length);
+        PrismGraphNode filter = filters[^1];
         PrismGraphNode style = Assert.Single(
             graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Style));
         PrismGraphNode fill = Assert.Single(
@@ -825,10 +836,12 @@ public sealed class PrismGraphContractTests
             N:ColorConversion:0:-1:Structure,Values,Descendants,ColorProfile
             N:Layer:3:2:Structure,Values,Descendants
             N:Filter:3:2:Structure,Values,Descendants,CatalogEntry
+            N:Filter:3:2:Structure,Values,Descendants,CatalogEntry
             N:Fill:3:2:Structure,Values,Descendants
             N:Opacity:3:2:Structure,Values,Descendants
             N:Composite:3:2:Structure,Values,Descendants
             N:Layer:1:0:Structure,Values,Descendants
+            N:Filter:1:0:Structure,Values,Descendants,CatalogEntry
             N:Filter:1:0:Structure,Values,Descendants,CatalogEntry
             N:Fill:1:0:Structure,Values,Descendants
             N:Opacity:1:0:Structure,Values,Descendants
@@ -836,11 +849,13 @@ public sealed class PrismGraphContractTests
             E:ControlCapture/0->ColorConversion/0:Content
             E:ColorConversion/0->Layer/3:Control
             E:Layer/3->Filter/3:Content
+            E:Filter/3->Filter/3:Content
             E:Filter/3->Fill/3:Content
             E:Fill/3->Opacity/3:Content
             E:Opacity/3->Composite/3:CompositeForeground
             E:ColorConversion/0->Layer/1:Control
             E:Layer/1->Filter/1:Content
+            E:Filter/1->Filter/1:Content
             E:Filter/1->Fill/1:Content
             E:Fill/1->Opacity/1:Content
             E:Composite/3->Composite/1:CompositeBackground
@@ -854,10 +869,12 @@ public sealed class PrismGraphContractTests
             N:ColorConversion:0:-1:Structure,Values,Descendants,ColorProfile
             N:Layer:12:2:Structure,Values,Descendants
             N:Filter:12:2:Structure,Values,Descendants,CatalogEntry
+            N:Filter:12:2:Structure,Values,Descendants,CatalogEntry
             N:Fill:12:2:Structure,Values,Descendants
             N:Opacity:12:2:Structure,Values,Descendants
             N:Composite:12:2:Structure,Values,Descendants
             N:Layer:11:1:Structure,Values,Descendants
+            N:Filter:11:1:Structure,Values,Descendants,CatalogEntry
             N:Filter:11:1:Structure,Values,Descendants,CatalogEntry
             N:Fill:11:1:Structure,Values,Descendants
             N:Opacity:11:1:Structure,Values,Descendants
@@ -868,11 +885,13 @@ public sealed class PrismGraphContractTests
             E:ControlCapture/0->ColorConversion/0:Content
             E:ColorConversion/0->Layer/12:Control
             E:Layer/12->Filter/12:Content
+            E:Filter/12->Filter/12:Content
             E:Filter/12->Fill/12:Content
             E:Fill/12->Opacity/12:Content
             E:Opacity/12->Composite/12:CompositeForeground
             E:ColorConversion/0->Layer/11:Control
             E:Layer/11->Filter/11:Content
+            E:Filter/11->Filter/11:Content
             E:Filter/11->Fill/11:Content
             E:Fill/11->Opacity/11:Content
             E:Composite/12->Composite/11:CompositeBackground
@@ -889,6 +908,7 @@ public sealed class PrismGraphContractTests
             N:ColorConversion:0:-1:Structure,Values,Descendants,ColorProfile
             N:Layer:1:0:Structure,Values,Descendants
             N:Filter:1:0:Structure,Values,Descendants,CatalogEntry
+            N:Filter:1:0:Structure,Values,Descendants,CatalogEntry
             N:Fill:1:0:Structure,Values,Descendants
             N:Mask:1:0:Structure,Values,Descendants,Resource
             N:Composite:1:0:Structure,Values,Descendants
@@ -897,6 +917,7 @@ public sealed class PrismGraphContractTests
             E:ControlCapture/0->ColorConversion/0:Content
             E:ColorConversion/0->Layer/1:Control
             E:Layer/1->Filter/1:Content
+            E:Filter/1->Filter/1:Content
             E:Filter/1->Fill/1:Content
             E:Fill/1->Composite/1:Content
             E:Mask/1->Composite/1:MaskAlpha
@@ -911,16 +932,19 @@ public sealed class PrismGraphContractTests
             N:ColorConversion:0:-1:Structure,Values,Descendants,ColorProfile
             N:Layer:3:2:Structure,Values,Descendants
             N:Filter:3:2:Structure,Values,Descendants,CatalogEntry
+            N:Filter:3:2:Structure,Values,Descendants,CatalogEntry
             N:Fill:3:2:Structure,Values,Descendants
             N:Opacity:3:2:Structure,Values,Descendants
             N:Composite:3:2:Structure,Values,Descendants
             N:Layer:2:1:Structure,Values,Descendants
+            N:Filter:2:1:Structure,Values,Descendants,CatalogEntry
             N:Filter:2:1:Structure,Values,Descendants,CatalogEntry
             N:Fill:2:1:Structure,Values,Descendants
             N:Opacity:2:1:Structure,Values,Descendants
             N:ClipToBelow:2:1:Structure,Values,Descendants
             N:Composite:2:1:Structure,Values,Descendants
             N:Layer:1:0:Structure,Values,Descendants
+            N:Filter:1:0:Structure,Values,Descendants,CatalogEntry
             N:Filter:1:0:Structure,Values,Descendants,CatalogEntry
             N:Fill:1:0:Structure,Values,Descendants
             N:Opacity:1:0:Structure,Values,Descendants
@@ -929,11 +953,13 @@ public sealed class PrismGraphContractTests
             E:ControlCapture/0->ColorConversion/0:Content
             E:ColorConversion/0->Layer/3:Control
             E:Layer/3->Filter/3:Content
+            E:Filter/3->Filter/3:Content
             E:Filter/3->Fill/3:Content
             E:Fill/3->Opacity/3:Content
             E:Opacity/3->Composite/3:CompositeForeground
             E:ColorConversion/0->Layer/2:Control
             E:Layer/2->Filter/2:Content
+            E:Filter/2->Filter/2:Content
             E:Filter/2->Fill/2:Content
             E:Fill/2->Opacity/2:Content
             E:Opacity/2->ClipToBelow/2:Content
@@ -942,6 +968,7 @@ public sealed class PrismGraphContractTests
             E:ClipToBelow/2->Composite/2:CompositeForeground
             E:ColorConversion/0->Layer/1:Control
             E:Layer/1->Filter/1:Content
+            E:Filter/1->Filter/1:Content
             E:Filter/1->Fill/1:Content
             E:Fill/1->Opacity/1:Content
             E:Opacity/1->ClipToBelow/1:Content

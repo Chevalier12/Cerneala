@@ -167,24 +167,40 @@ public sealed class PrismNeighborhoodFilterTests
             PrismNeighborhoodPassKind.Direct,
             tinyPass.Kind);
 
-        Assert.Equal(
-            5,
-            Assert.Single(
-                CreatePlan(
-                    PrismFilterId.Blur,
-                    configure: (state, entry) =>
-                        SetSymbol(
-                            state,
-                            entry,
-                            "Quality",
-                            "Draft"))
-                    .Passes)
-                .SampleCount);
-        Assert.Equal(
-            9,
-            Assert.Single(
-                CreatePlan(PrismFilterId.Blur).Passes)
-                .SampleCount);
+        PrismNeighborhoodPlan draftBlur = CreatePlan(
+            PrismFilterId.Blur,
+            configure: (state, entry) =>
+                SetSymbol(
+                    state,
+                    entry,
+                    "Quality",
+                    "Draft"));
+        Assert.Collection(
+            draftBlur.Passes,
+            horizontal =>
+            {
+                Assert.Equal(
+                    PrismNeighborhoodPassKind.Horizontal,
+                    horizontal.Kind);
+                Assert.Equal(5, horizontal.SampleCount);
+            },
+            vertical =>
+            {
+                Assert.Equal(
+                    PrismNeighborhoodPassKind.Vertical,
+                    vertical.Kind);
+                Assert.Equal(5, vertical.SampleCount);
+            });
+
+        PrismNeighborhoodPlan blur =
+            CreatePlan(PrismFilterId.Blur);
+        Assert.Equal(2, blur.Passes.Length);
+        Assert.All(
+            blur.Passes,
+            pass => Assert.Equal(9, pass.SampleCount));
+
+        Assert.Single(
+            CreatePlan(PrismFilterId.BlurMore).Passes);
     }
 
     [Fact]
@@ -241,6 +257,51 @@ public sealed class PrismNeighborhoodFilterTests
         Assert.True(clamped[2].Alpha > 0);
         Assert.All(clamped, AssertFiniteAssociated);
         Assert.All(transparentResult, AssertFiniteAssociated);
+    }
+
+    [Fact]
+    public void BlurProducesSymmetricGaussianFalloffFromAnImpulse()
+    {
+        const int size = 9;
+        PrismPremultipliedColor[] source = new PrismPremultipliedColor[
+            size * size];
+        source[((size / 2) * size) + (size / 2)] =
+            PrismPremultipliedColor.FromStraight(1, 1, 1, 1);
+        PrismNeighborhoodPlan blur = CreatePlan(
+            PrismFilterId.Blur,
+            new DrawRect(0, 0, size, size),
+            (state, entry) =>
+            {
+                SetNumber(state, entry, "Radius", 4);
+                SetSymbol(state, entry, "Quality", "Best");
+            });
+
+        PrismPremultipliedColor[] result =
+            PrismNeighborhoodMath.Apply(
+                blur,
+                source,
+                size,
+                size,
+                PrismColorProfile.LinearSrgb);
+        int center = size / 2;
+        double centerAlpha = result[(center * size) + center].Alpha;
+        double nearAlpha = result[(center * size) + center + 1].Alpha;
+        double farAlpha = result[(center * size) + center + 3].Alpha;
+
+        Assert.True(centerAlpha > nearAlpha);
+        Assert.True(nearAlpha > farAlpha);
+        for (int offset = 1; offset <= center; offset++)
+        {
+            Assert.Equal(
+                result[(center * size) + center - offset].Alpha,
+                result[(center * size) + center + offset].Alpha,
+                precision: 7);
+            Assert.Equal(
+                result[((center - offset) * size) + center].Alpha,
+                result[((center + offset) * size) + center].Alpha,
+                precision: 7);
+        }
+        Assert.All(result, AssertFiniteAssociated);
     }
 
     [Fact]

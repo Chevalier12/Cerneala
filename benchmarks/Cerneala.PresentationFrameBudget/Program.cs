@@ -14,7 +14,6 @@ internal static class PresentationFrameBudgetRunner
         "BUILD-TIME MARKUP",
         "ASPECT DESIGN SYSTEM",
         "MOTION",
-        "SOLAR MOTION",
         "FRAME PIPELINE",
         "DIAGNOSTICS"
     ];

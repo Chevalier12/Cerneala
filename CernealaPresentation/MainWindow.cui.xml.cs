@@ -40,11 +40,6 @@ public partial class MainWindow : Window
         return
             !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTOMATION_REPORT")) ||
             !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_FRAME_BUDGET_REPORT")) ||
-            !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_PRISM_LIFECYCLE_REPORT")) ||
-            string.Equals(
-                Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_PRISM_CAPTURE"),
-                "1",
-                StringComparison.OrdinalIgnoreCase) ||
             string.Equals(
                 Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTO_CONTINUE"),
                 "1",

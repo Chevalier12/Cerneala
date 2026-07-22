@@ -26,11 +26,11 @@ separată sub control, nu intră în stiva normală.
 - `Visible = false` elimină întregul scope și munca lui; `Opacity = 0` păstrează
   evaluarea, apoi face contribuția transparentă.
 
-Exemplul real folosit de capitolul Solar System:
+Exemplu generic:
 
 ```xml
-<PrismComposition Name="PlanetCardPrism">
-    @layer SignalPulse
+<PrismComposition Name="FrostedPanelPrism">
+    @layer Highlight
     {
         Opacity = 0.18;
         BlendMode = Screen;
@@ -44,7 +44,7 @@ Exemplul real folosit de capitolul Solar System:
 
         @mask
         {
-            Image = $PlanetCardMask;
+            Image = $PanelMask;
             Channel = Luminance;
             Feather = 1.5;
             Density = 0.42;
@@ -70,8 +70,8 @@ Exemplul real folosit de capitolul Solar System:
     }
 </PrismComposition>
 
-<Border Name="PlanetInfoCard">
-    @prism $PlanetCardPrism;
+<Border Name="FrostedPanel">
+    @prism $FrostedPanelPrism;
 </Border>
 ```
 
@@ -82,9 +82,9 @@ Un `@backdrop` este opțional, unic și ultimul copil direct al compoziției.
 Motion intră în instanța Prism prin segmentul rezervat `.prism.`:
 
 ```text
-$self.prism.SignalPulse.Opacity
+$self.prism.Highlight.Opacity
 $owner.prism.CardTreatment.CardClarity.Visible
-$PlanetInfoCard.prism.SpaceGlass.Opacity
+$FrostedPanel.prism.SpaceGlass.Opacity
 ```
 
 `$self`, `$owner` și numele din namescope urmează regulile Motion existente.

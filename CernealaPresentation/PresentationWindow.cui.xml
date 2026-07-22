@@ -273,19 +273,14 @@
                             Content="05  MOTION"
                             Click="OnMotion" />
                         <ToggleButton
-                            Name="NavSolarSystem"
-                            Aspect="$NavButton"
-                            Content="06  SOLAR MOTION"
-                            Click="OnSolarSystem" />
-                        <ToggleButton
                             Name="NavPipeline"
                             Aspect="$NavButton"
-                            Content="07  FRAME PIPELINE"
+                            Content="06  FRAME PIPELINE"
                             Click="OnPipeline" />
                         <ToggleButton
                             Name="NavDiagnostics"
                             Aspect="$NavButton"
-                            Content="08  DIAGNOSTICS"
+                            Content="07  DIAGNOSTICS"
                             Click="OnDiagnostics" />
                     </StackPanel>
                     <Border
@@ -326,9 +321,6 @@
                     Visibility="Collapsed" />
                 <MotionChapterView
                     Name="PageMotion"
-                    Visibility="Collapsed" />
-                <SolarSystemChapterView
-                    Name="PageSolarSystem"
                     Visibility="Collapsed" />
                 <FramePipelineChapterView
                     Name="PagePipeline"

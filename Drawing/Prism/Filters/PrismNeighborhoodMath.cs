@@ -135,7 +135,15 @@ internal static class PrismNeighborhoodMath
         int edgeMode = EdgeMode(plan);
         return plan.Operation switch
         {
-            PrismNeighborhoodOperation.Blur or
+            PrismNeighborhoodOperation.Blur =>
+                SampleOptimizedBilinearGaussian(
+                    source,
+                    width,
+                    height,
+                    x,
+                    y,
+                    pass,
+                    edgeMode),
             PrismNeighborhoodOperation.BlurMore =>
                 SampleDisk(
                     source,
@@ -553,6 +561,68 @@ internal static class PrismNeighborhoodMath
         return total / count;
     }
 
+    private static Vector4 SampleOptimizedBilinearGaussian(
+        Vector4[] source,
+        int width,
+        int height,
+        int x,
+        int y,
+        PrismNeighborhoodPass pass,
+        int edgeMode)
+    {
+        int halfTapCount = Math.Max(0, (pass.SampleCount - 1) / 2);
+        if (halfTapCount == 0)
+        {
+            return source[(y * width) + x];
+        }
+
+        float centerWeight = 1;
+        Vector4 total = source[(y * width) + x] * centerWeight;
+        float totalWeight = centerWeight;
+        float stepX = pass.RadiusX / halfTapCount;
+        float stepY = pass.RadiusY / halfTapCount;
+        for (int firstTap = 1;
+            firstTap <= halfTapCount;
+            firstTap += 2)
+        {
+            int secondTap = firstTap + 1;
+            float firstPosition = (float)firstTap / halfTapCount;
+            float firstWeight = MathF.Exp(
+                -3.125f * firstPosition * firstPosition);
+            float secondWeight = 0;
+            if (secondTap <= halfTapCount)
+            {
+                float secondPosition =
+                    (float)secondTap / halfTapCount;
+                secondWeight = MathF.Exp(
+                    -3.125f * secondPosition * secondPosition);
+            }
+
+            float pairWeight = firstWeight + secondWeight;
+            float pairOffset = firstTap +
+                (secondWeight / MathF.Max(pairWeight, 0.000001f));
+            float offsetX = pairOffset * stepX;
+            float offsetY = pairOffset * stepY;
+            total += (
+                SampleBilinear(
+                    source,
+                    width,
+                    height,
+                    x + offsetX,
+                    y + offsetY,
+                    edgeMode) +
+                SampleBilinear(
+                    source,
+                    width,
+                    height,
+                    x - offsetX,
+                    y - offsetY,
+                    edgeMode)) * pairWeight;
+            totalWeight += pairWeight * 2;
+        }
+        return total / MathF.Max(totalWeight, 0.000001f);
+    }
+
     private static Vector4 SampleEdgeAware(
         PrismNeighborhoodPlan plan,
         PrismNeighborhoodPass pass,
@@ -807,6 +877,29 @@ internal static class PrismNeighborhoodMath
             _ => Math.Clamp(sampleY, 0, height - 1)
         };
         return source[(sampleY * width) + sampleX];
+    }
+
+    private static Vector4 SampleBilinear(
+        Vector4[] source,
+        int width,
+        int height,
+        float x,
+        float y,
+        int edgeMode)
+    {
+        int left = (int)MathF.Floor(x);
+        int top = (int)MathF.Floor(y);
+        float fractionX = x - left;
+        float fractionY = y - top;
+        Vector4 topRow = Vector4.Lerp(
+            Sample(source, width, height, left, top, edgeMode),
+            Sample(source, width, height, left + 1, top, edgeMode),
+            fractionX);
+        Vector4 bottomRow = Vector4.Lerp(
+            Sample(source, width, height, left, top + 1, edgeMode),
+            Sample(source, width, height, left + 1, top + 1, edgeMode),
+            fractionX);
+        return Vector4.Lerp(topRow, bottomRow, fractionY);
     }
 
     private static int EdgeMode(PrismNeighborhoodPlan plan) =>
