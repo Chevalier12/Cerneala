@@ -104,6 +104,32 @@ public sealed class DrawCommandListBuilder
             counters.CountEmittedCommands(1);
         }
 
+        if (hasPrism)
+        {
+            PrismDrawScope scope = CreatePrismScope(
+                element,
+                prismInstance!,
+                cacheOwnerToken,
+                elementTransform,
+                element.PrismLocalVisualVersion,
+                prismLowerUiVersion,
+                ResolvePrismResources(
+                    element,
+                    prismInstance!));
+            rootCommands.ReplaceAt(prismBeginIndex, DrawCommand.BeginPrism(scope));
+            rootCommands.Add(DrawCommand.EndPrism());
+            counters.CountEmittedCommands(1);
+            lowerUiVersion = MixVisualVersion(
+                lowerUiVersion,
+                cacheOwnerToken.Value);
+            lowerUiVersion = MixVisualVersion(
+                lowerUiVersion,
+                prismInstance!.StructuralVersion.Value);
+            lowerUiVersion = MixVisualVersion(
+                lowerUiVersion,
+                prismInstance.ValueVersion.Value);
+        }
+
         UIElementCollection visualChildren = element.VisualChildren;
         for (int index = 0; index < visualChildren.Count; index++)
         {
@@ -132,33 +158,6 @@ public sealed class DrawCommandListBuilder
                     elementOpacity,
                     ref lowerUiVersion);
             }
-        }
-
-        long visualContentVersion = element.PrismVisualVersion;
-        if (hasPrism)
-        {
-            PrismDrawScope scope = CreatePrismScope(
-                element,
-                prismInstance!,
-                cacheOwnerToken,
-                elementTransform,
-                visualContentVersion,
-                prismLowerUiVersion,
-                ResolvePrismResources(
-                    element,
-                    prismInstance!));
-            rootCommands.ReplaceAt(prismBeginIndex, DrawCommand.BeginPrism(scope));
-            rootCommands.Add(DrawCommand.EndPrism());
-            counters.CountEmittedCommands(1);
-            lowerUiVersion = MixVisualVersion(
-                lowerUiVersion,
-                cacheOwnerToken.Value);
-            lowerUiVersion = MixVisualVersion(
-                lowerUiVersion,
-                prismInstance!.StructuralVersion.Value);
-            lowerUiVersion = MixVisualVersion(
-                lowerUiVersion,
-                prismInstance.ValueVersion.Value);
         }
 
         if (hasClip)

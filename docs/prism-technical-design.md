@@ -57,9 +57,10 @@ acceptare fără dovadă măsurabilă și o decizie actualizată în acest docum
 
 ## Rezumat executiv
 
-Prism este un compositor vizual declarativ pentru subtree-uri UI. Un control este
-randat normal, capturat o singură dată ca imagine de bază, procesat printr-o
-compoziție de layere și apoi desenat fără să schimbe layout-ul sau hitbox-ul.
+Prism este un compositor vizual declarativ pentru vizualul local al unui element
+UI. Comenzile proprii ale controlului sunt capturate o singură dată ca imagine de
+bază, procesate printr-o compoziție de layere și apoi desenate fără să schimbe
+layout-ul sau hitbox-ul. Descendenții vizuali nu intră în captură.
 
 Implementarea este împărțită în patru zone:
 
@@ -76,11 +77,12 @@ Decizia structurală principală este folosirea a două comenzi balansate:
 
 ```text
 BeginPrism
-    comenzile normale ale elementului și ale subtree-ului său
+    comenzile locale ale elementului
 EndPrism
+comenzile descendenților vizuali
 ```
 
-Backend-ul poate astfel captura întregul rezultat vizual al controlului fără
+Backend-ul poate astfel captura vizualul local al controlului fără
 `OnRender` custom, screenshot-uri, recursie în view sau cunoașterea arborelui UI.
 
 ## Obiective
@@ -149,8 +151,8 @@ trebuie să păstreze aceleași reguli, fără interpretări locale:
 
 - ordinea declarată este front-to-back ca în panoul Photoshop, iar evaluarea
   normală este bottom-up;
-- sursa implicită este o singură captură immutable a subtree-ului controlului, iar
-  numele nodurilor nu pot deveni surse;
+- sursa implicită este o singură captură immutable a vizualului local al
+  controlului, fără descendenții vizuali, iar numele nodurilor nu pot deveni surse;
 - layer-ul este frunză, group-ul este singurul container, iar masca se aplică
   contribuției pregătite înainte de opacity și blend;
 - `ClipToBelow`, `PassThrough`, `Visible`, `Fill`, `Opacity` și `BlendIf` păstrează
@@ -177,8 +179,8 @@ elementele care folosesc aceeași resursă. Fiecare element primește propriul
 
 ### Nicio recapturare per layer
 
-Subtree-ul controlului este executat o singură dată într-o suprafață de bază.
-Layerele procesează rezultate intermediare, nu redesenează controlul.
+Vizualul local al controlului este executat o singură dată într-o suprafață de
+bază. Layerele procesează rezultate intermediare, nu redesenează controlul.
 
 ### GPU-only pentru pixeli
 
@@ -263,7 +265,7 @@ cod generat
 UIElement + PrismAttachment
     |
     v
-BeginPrism / comenzi subtree / EndPrism
+BeginPrism / comenzi locale / EndPrism / comenzi descendenți
     |
     v
 PrismFrameAnalyzer
@@ -540,7 +542,7 @@ VisualContentVersion
 
 `EndPrism` nu are payload. Scope-urile trebuie să fie balansate și pot fi nested.
 
-### Compunerea subtree-ului
+### Compunerea vizualului local
 
 `DrawCommandListBuilder.AppendElement` emite:
 
@@ -549,18 +551,20 @@ clip-uri de ancestor deja active
 PushClip al elementului, dacă există
 BeginPrism, dacă elementul are Prism
 comenzile locale
+EndPrism, dacă elementul are Prism
 copiii vizuali
 copiii Presence aflați în exit
-EndPrism
 PopClip
 ```
 
 Astfel:
 
-- Prism capturează controlul împreună cu copiii săi;
+- Prism capturează exclusiv comenzile locale ale controlului;
+- descendenții sunt compuși normal peste rezultatul Prism și nu primesc implicit
+  efectele controlului;
 - clip-urile explicite limitează rezultatul final;
 - efectele pot extinde rezultatul dincolo de arranged bounds dacă nu există clip;
-- nested Prism funcționează natural;
+- Prism atașat descendenților este evaluat independent;
 - backend-ul nu trebuie să cunoască `UIElement`.
 
 Un backend fără suport Prism ignoră `BeginPrism` și `EndPrism`, dar execută comenzile
@@ -1204,8 +1208,8 @@ elemente UI. Stamp-ul include:
 
 - versiunea structurală a compoziției și identitatea stabilă a nodului;
 - versiunea valorilor Prism sau fingerprint-ul valorilor pixel-affecting;
-- tokenul unic, nerefolosit, al attachment-ului și versiunea agregată a rezultatului
-  vizual al subtree-ului capturat;
+- tokenul unic, nerefolosit, al attachment-ului și versiunea rezultatului vizual
+  local capturat;
 - pentru backdrop, identitatea providerului, `ContentVersion` și versiunile tuturor
   nodurilor UI inferioare;
 - identitățile și versiunile imaginilor, măștilor, LUT-urilor, patternurilor și
@@ -1214,10 +1218,9 @@ elemente UI. Stamp-ul include:
 - working/output color profile, formatul suprafeței și sampling quality;
 - backend capability set și versiunea pachetului de shader-e.
 
-Versiunea vizuală agregată a subtree-ului se întreține incremental în retained UI:
-o proprietate render-affecting, Motion, o resursă sau o schimbare de copil
-incrementează generația locală și propagă invalidarea minimă spre scope-ul Prism.
-Analyzer-ul nu traversează întregul subtree doar pentru a calcula cheia.
+Versiunea vizuală locală se întreține incremental în retained UI: o proprietate
+render-affecting, Motion sau o resursă a elementului incrementează generația locală.
+Schimbările descendenților nu invalidează captura Prism a ancestorului.
 
 `PrismGraphOptimizer` marchează explicit nodurile cacheable. Un nod este eligibil
 numai dacă operația este deterministă, toate resursele sale au versiuni și cheia
@@ -1743,8 +1746,9 @@ Prism este implementat ca extensie a pipeline-ului retained și a backend-ului d
 drawing, nu ca efect atașat care se randează singur.
 
 Markupul produce o definiție immutable. Elementul deține numai o instanță ușoară.
-Lista de comenzi delimitează subtree-ul. Analyzer-ul produce o singură descriere a
-frame-ului, graph builder-ul o transformă în graph, iar optimizer-ul îl simplifică.
+Lista de comenzi delimitează vizualul local al elementului. Analyzer-ul produce o
+singură descriere a frame-ului, graph builder-ul o transformă în graph, iar
+optimizer-ul îl simplifică.
 Backend-ul procesează GPU-only și deține toate resursele temporare și retained.
 
 Această separare păstrează sintaxa simplă, permite puterea modelului Photoshop și

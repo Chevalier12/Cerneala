@@ -54,9 +54,11 @@ every drawing backend:
   bottom-up, from the last declared node toward the first, without reordering or
   duplicating nodes.
 - The only implicit source for the normal stack is one immutable capture of the
-  attached control's normal rendered subtree. The bottom node receives that image;
-  every higher node receives only the accumulated result directly below it. A node
-  name is an address for Motion and diagnostics, never an image source.
+  attached control's local visual: commands emitted by that control itself, never
+  commands emitted by visual descendants. The bottom node receives that image;
+  every higher node receives only the accumulated result directly below it. Visual
+  descendants render normally after the Prism result. A node name is an address
+  for Motion and diagnostics, never an image source.
 - `@layer` is a leaf. It may own filters, styles and at most one mask, but never a
   layer or group child. `@group` is the only normal-stack container and must contain
   at least one layer or nested group.
@@ -169,8 +171,9 @@ styling system beside Cerneala Aspect.
 
 Imagine several transparent sheets placed on a table.
 
-Prism first takes one picture of the control exactly as it would normally render,
-including its visual children. That picture sits beneath the entire Prism stack.
+Prism first takes one picture containing only what the control itself draws. Its
+visual children are not in that picture; they render normally after the processed
+control image. That local picture sits beneath the entire Prism stack.
 
 Prism starts at the bottom of the layer panel. The lowest layer receives the control
 picture, processes it, and passes its result upward. The next layer receives that

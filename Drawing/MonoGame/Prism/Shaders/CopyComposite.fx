@@ -1,6 +1,7 @@
 Texture2D SpriteTexture;
 Texture2D SecondaryTexture;
 Texture2D StyleTexture;
+Texture2D StyleMaskTexture;
 Texture2D FilterAuxiliaryTexture;
 float Opacity;
 float2 PixelSize;
@@ -29,6 +30,8 @@ float4 StyleModes0;
 float4 StyleModes1;
 float4 StyleModes2;
 float4 StyleModes3;
+float3 StyleBoundsUvRowX;
+float3 StyleBoundsUvRowY;
 float StyleResourceAvailable;
 float4 FilterHeader;
 float4 FilterOptions0;
@@ -58,6 +61,23 @@ sampler2D StyleTextureSampler = sampler_state
     Texture = <StyleTexture>;
     AddressU = Wrap;
     AddressV = Wrap;
+};
+
+sampler2D StyleMaskTextureSampler = sampler_state
+{
+    Texture = <StyleMaskTexture>;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+sampler2D StyleMaskSourceSampler = sampler_state
+{
+    Texture = <SpriteTexture>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 sampler2D FilterAuxiliaryTextureSampler = sampler_state
@@ -548,24 +568,115 @@ float StyleBlurAlpha(
     float2 uv,
     float radius)
 {
-    float2 stepX = float2(PixelSize.x * radius, 0.0);
-    float2 stepY = float2(0.0, PixelSize.y * radius);
-    float2 diagonal = float2(
-        stepX.x * 0.70710678,
-        stepY.y * 0.70710678);
-    float value =
-        4.0 * SampleStyleAlpha(uv) +
-        2.0 * SampleStyleAlpha(uv - stepX) +
-        2.0 * SampleStyleAlpha(uv + stepX) +
-        2.0 * SampleStyleAlpha(uv - stepY) +
-        2.0 * SampleStyleAlpha(uv + stepY) +
-        SampleStyleAlpha(uv - diagonal) +
-        SampleStyleAlpha(uv + diagonal) +
-        SampleStyleAlpha(
-            uv + float2(diagonal.x, -diagonal.y)) +
-        SampleStyleAlpha(
-            uv + float2(-diagonal.x, diagonal.y));
-    return value / 16.0;
+    float value = 4.0 * SampleStyleAlpha(uv);
+    float totalWeight = 4.0;
+    [unroll]
+    for (int ring = 1; ring <= 8; ring++)
+    {
+        float position = ring / 8.0;
+        float weight = exp(-2.0 * position * position);
+        float2 stepX = float2(
+            PixelSize.x * radius * position,
+            0.0);
+        float2 stepY = float2(
+            0.0,
+            PixelSize.y * radius * position);
+        float2 diagonal = float2(
+            stepX.x * 0.70710678,
+            stepY.y * 0.70710678);
+        value += weight * (
+            SampleStyleAlpha(uv - stepX) +
+            SampleStyleAlpha(uv + stepX) +
+            SampleStyleAlpha(uv - stepY) +
+            SampleStyleAlpha(uv + stepY) +
+            SampleStyleAlpha(uv - diagonal) +
+            SampleStyleAlpha(uv + diagonal) +
+            SampleStyleAlpha(
+                uv + float2(diagonal.x, -diagonal.y)) +
+            SampleStyleAlpha(
+                uv + float2(-diagonal.x, diagonal.y)));
+        totalWeight += 8.0 * weight;
+    }
+    return value / totalWeight;
+}
+
+float SampleStyleMaskSource(float2 uv)
+{
+    float inside =
+        step(0.0, uv.x) *
+        step(uv.x, 1.0) *
+        step(0.0, uv.y) *
+        step(uv.y, 1.0);
+    return tex2D(
+        StyleMaskSourceSampler,
+        saturate(uv)).a * inside;
+}
+
+float4 StyleDilatePixelShader(
+    VertexShaderOutput input) : COLOR0
+{
+    float2 uv = ResolveUv(input);
+    float radius = min(max(MaskDensity, 0.0), 32.0);
+    float value = 0.0;
+    [unroll]
+    for (int offset = -32; offset <= 32; offset++)
+    {
+        if (abs(offset) <= radius)
+        {
+            value = max(
+                value,
+                SampleStyleMaskSource(
+                    uv + (MaskFeatherStep * offset)));
+        }
+    }
+    return float4(value, value, value, value);
+}
+
+float GaussianWeight(float position, float sigma)
+{
+    return exp(
+        -(position * position) /
+        (2.0 * sigma * sigma));
+}
+
+float4 StyleGaussianPixelShader(
+    VertexShaderOutput input) : COLOR0
+{
+    float2 uv = ResolveUv(input);
+    float radius = min(max(MaskDensity, 1.0), 32.0);
+    float sigma = max(radius / 3.0, 0.5);
+    float value = SampleStyleMaskSource(uv);
+    float totalWeight = 1.0;
+
+    // Pairing neighboring Gaussian taps lets bilinear filtering resolve
+    // both samples with one lookup while preserving their exact weights.
+    [unroll]
+    for (int pair = 0; pair < 16; pair++)
+    {
+        float firstPosition = 1.0 + (pair * 2.0);
+        float secondPosition = firstPosition + 1.0;
+        float firstWeight = firstPosition <= radius
+            ? GaussianWeight(firstPosition, sigma)
+            : 0.0;
+        float secondWeight = secondPosition <= radius
+            ? GaussianWeight(secondPosition, sigma)
+            : 0.0;
+        float pairWeight = firstWeight + secondWeight;
+        if (pairWeight > 0.0)
+        {
+            float pairedPosition = firstPosition +
+                (secondWeight / pairWeight);
+            float2 sampleOffset =
+                MaskFeatherStep * pairedPosition;
+            value += pairWeight * (
+                SampleStyleMaskSource(uv - sampleOffset) +
+                SampleStyleMaskSource(uv + sampleOffset));
+            totalWeight += 2.0 * pairWeight;
+        }
+    }
+
+    value /= totalWeight;
+    return float4(value, value, value, value);
 }
 
 float ApplyStyleContour(
@@ -761,10 +872,26 @@ float4 LayerStylePixelShader(
         StyleGeometry0.z * techniqueScale,
         0.5);
     float spread = max(StyleGeometry0.w, 0.0);
-    float shifted = StyleBlurAlpha(
-        uv - offset,
-        size);
-    float local = StyleBlurAlpha(uv, size);
+    float shifted = alpha;
+    float local = alpha;
+    if (kind == 0 || kind == 1)
+    {
+        shifted = StyleBlurAlpha(
+            uv - offset,
+            size);
+    }
+    else if (kind == 2)
+    {
+        local = tex2D(
+            StyleMaskTextureSampler,
+            uv).a;
+        shifted = local;
+    }
+    else if (kind == 3 || kind == 9)
+    {
+        local = StyleBlurAlpha(uv, size);
+        shifted = local;
+    }
     float spreadRatio =
         spread / max(size + spread, 0.0001);
     float grown = saturate(
@@ -772,6 +899,15 @@ float4 LayerStylePixelShader(
     float innerEdge = saturate(
         alpha * (1.0 - local));
     float outerEdge = saturate(grown - alpha);
+    float3 pixelPosition = float3(input.Position.xy, 1.0);
+    float2 boundsUv = float2(
+        dot(pixelPosition, StyleBoundsUvRowX),
+        dot(pixelPosition, StyleBoundsUvRowY));
+    float insideBounds =
+        step(0.0, boundsUv.x) *
+        step(boundsUv.x, 1.0) *
+        step(0.0, boundsUv.y) *
+        step(boundsUv.y, 1.0);
     float mask = alpha;
 
     if (kind == 0)
@@ -786,7 +922,8 @@ float4 LayerStylePixelShader(
     }
     else if (kind == 2)
     {
-        mask = outerEdge;
+        mask = saturate(local - alpha) *
+            (1.0 - insideBounds);
     }
     else if (kind == 3)
     {
@@ -4680,6 +4817,22 @@ technique LayerStyle
     pass Pass0
     {
         PixelShader = compile ps_4_0 LayerStylePixelShader();
+    }
+}
+
+technique StyleDilate
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 StyleDilatePixelShader();
+    }
+}
+
+technique StyleGaussian
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 StyleGaussianPixelShader();
     }
 }
 

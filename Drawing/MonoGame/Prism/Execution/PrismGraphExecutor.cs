@@ -1713,8 +1713,13 @@ internal sealed class PrismGraphExecutor : IDisposable
             PrismStylePlanner.ResolveSamplingGeometry(
                 stylePlan,
                 scope);
+        ResolveScopeUvMapping(
+            scope,
+            out Vector3 boundsUvRowX,
+            out Vector3 boundsUvRowY);
         PrismStyleKernelSettings settings = new(
             styleTexture,
+            GetExecutionSurface(frame, sourceIndex),
             ToVector4(stylePlan.PrimaryColor),
             ToVector4(stylePlan.SecondaryColor),
             new Vector4(
@@ -1757,15 +1762,124 @@ internal sealed class PrismGraphExecutor : IDisposable
                 (int)stylePlan.Flags,
                 stylePlan.Range,
                 0),
+            boundsUvRowX,
+            boundsUvRowY,
             resourceAvailable);
+        PrismScratchSurfaceLease? scratchA = null;
+        PrismScratchSurfaceLease? scratchB = null;
+        try
+        {
+            if (style == PrismStyleId.OuterGlow)
+            {
+                scratchA = frame.RentScratch(surfaceKeys[step]);
+                scratchB = frame.RentScratch(surfaceKeys[step]);
+                Texture2D preparedMask = PrepareOuterGlowMask(
+                    renderer,
+                    GetExecutionSurface(frame, sourceIndex),
+                    scratchA.Value.Surface,
+                    scratchB.Value.Surface,
+                    geometry.Size,
+                    geometry.Spread,
+                    stylePlan.Technique);
+                settings = settings with
+                {
+                    MaskTexture = preparedMask
+                };
+            }
+
+            RenderKernel(
+                renderer,
+                target,
+                GetExecutionSurface(frame, contentIndex),
+                GetExecutionSurface(frame, sourceIndex),
+                kernel,
+                1f,
+                styleSettings: settings);
+        }
+        finally
+        {
+            scratchB?.Dispose();
+            scratchA?.Dispose();
+        }
+    }
+
+    private Texture2D PrepareOuterGlowMask(
+        IPrismCommandRenderer renderer,
+        Texture2D source,
+        RenderTarget2D scratchA,
+        RenderTarget2D scratchB,
+        float size,
+        float spread,
+        float technique)
+    {
+        Texture2D prepared = source;
+        if (spread >= 0.5f)
+        {
+            RenderStyleMaskPass(
+                renderer,
+                scratchA,
+                prepared,
+                kernels.StyleDilate,
+                MathF.Ceiling(spread),
+                horizontal: true);
+            RenderStyleMaskPass(
+                renderer,
+                scratchB,
+                scratchA,
+                kernels.StyleDilate,
+                MathF.Ceiling(spread),
+                horizontal: false);
+            prepared = scratchB;
+        }
+
+        float techniqueScale = technique < 0.5f
+            ? 1f
+            : technique < 1.5f ? 0.65f : 0.8f;
+        float radius = MathF.Max(
+            MathF.Ceiling(size * techniqueScale * 1.5f),
+            1f);
+        RenderStyleMaskPass(
+            renderer,
+            scratchA,
+            prepared,
+            kernels.StyleGaussian,
+            radius,
+            horizontal: true);
+        RenderStyleMaskPass(
+            renderer,
+            scratchB,
+            scratchA,
+            kernels.StyleGaussian,
+            radius,
+            horizontal: false);
+        return scratchB;
+    }
+
+    private void RenderStyleMaskPass(
+        IPrismCommandRenderer renderer,
+        RenderTarget2D target,
+        Texture2D source,
+        PrismKernel kernel,
+        float radius,
+        bool horizontal)
+    {
+        PrismMaskKernelSettings settings = new(
+            Channel: 0,
+            Density: radius,
+            Invert: 0,
+            UvRowX: new Vector3(1, 0, 0),
+            UvRowY: new Vector3(0, 1, 0),
+            FeatherStep: horizontal
+                ? new Vector2(1f / source.Width, 0)
+                : new Vector2(0, 1f / source.Height));
         RenderKernel(
             renderer,
             target,
-            GetExecutionSurface(frame, contentIndex),
-            GetExecutionSurface(frame, sourceIndex),
+            source,
+            source,
             kernel,
             1f,
-            styleSettings: settings);
+            maskSettings: settings);
     }
 
     private void RenderFilter(
@@ -2243,12 +2357,10 @@ internal sealed class PrismGraphExecutor : IDisposable
             return;
         }
 
-        DrawRect bounds = scope.ControlBounds;
-        if (bounds.Width <= 0 ||
-            bounds.Height <= 0 ||
-            !System.Numerics.Matrix3x2.Invert(
-                scope.EffectiveTransform,
-                out System.Numerics.Matrix3x2 inverse))
+        if (!ResolveScopeUvMapping(
+            scope,
+            out Vector3 uvRowX,
+            out Vector3 uvRowY))
         {
             RenderOpaqueMaskFallback(
                 renderer,
@@ -2259,15 +2371,6 @@ internal sealed class PrismGraphExecutor : IDisposable
             return;
         }
 
-        float pixelScale = scope.PixelScale;
-        Vector3 uvRowX = new(
-            inverse.M11 / (pixelScale * bounds.Width),
-            inverse.M21 / (pixelScale * bounds.Width),
-            (inverse.M31 - bounds.X) / bounds.Width);
-        Vector3 uvRowY = new(
-            inverse.M12 / (pixelScale * bounds.Height),
-            inverse.M22 / (pixelScale * bounds.Height),
-            (inverse.M32 - bounds.Y) / bounds.Height);
         float density = (node.Feather ?? 0) > 0
             ? 1
             : node.Density ?? 1;
@@ -2565,6 +2668,7 @@ internal sealed class PrismGraphExecutor : IDisposable
             parameters = parameters with
             {
                 StyleTexture = style.Texture,
+                StyleMaskTexture = style.MaskTexture,
                 StyleColor = style.Color,
                 StyleSecondaryColor =
                     style.SecondaryColor,
@@ -2576,6 +2680,8 @@ internal sealed class PrismGraphExecutor : IDisposable
                 StyleModes1 = style.Modes1,
                 StyleModes2 = style.Modes2,
                 StyleModes3 = style.Modes3,
+                StyleBoundsUvRowX = style.BoundsUvRowX,
+                StyleBoundsUvRowY = style.BoundsUvRowY,
                 StyleResourceAvailable =
                     style.ResourceAvailable ? 1 : 0
             };
@@ -2964,6 +3070,35 @@ internal sealed class PrismGraphExecutor : IDisposable
         return action;
     }
 
+    private static bool ResolveScopeUvMapping(
+        PrismGraphScope scope,
+        out Vector3 uvRowX,
+        out Vector3 uvRowY)
+    {
+        DrawRect bounds = scope.ControlBounds;
+        if (bounds.Width <= 0 ||
+            bounds.Height <= 0 ||
+            !System.Numerics.Matrix3x2.Invert(
+                scope.EffectiveTransform,
+                out System.Numerics.Matrix3x2 inverse))
+        {
+            uvRowX = Vector3.Zero;
+            uvRowY = Vector3.Zero;
+            return false;
+        }
+
+        float pixelScale = scope.PixelScale;
+        uvRowX = new Vector3(
+            inverse.M11 / (pixelScale * bounds.Width),
+            inverse.M21 / (pixelScale * bounds.Width),
+            (inverse.M31 - bounds.X) / bounds.Width);
+        uvRowY = new Vector3(
+            inverse.M12 / (pixelScale * bounds.Height),
+            inverse.M22 / (pixelScale * bounds.Height),
+            (inverse.M32 - bounds.Y) / bounds.Height);
+        return true;
+    }
+
     private bool IsScopeBypassed(int scopeIndex)
     {
         return (uint)scopeIndex < (uint)bypassedScopes.Length &&
@@ -3110,6 +3245,7 @@ internal sealed class PrismGraphExecutor : IDisposable
 
     private readonly record struct PrismStyleKernelSettings(
         Texture2D Texture,
+        Texture2D MaskTexture,
         Vector4 Color,
         Vector4 SecondaryColor,
         Vector4 Geometry0,
@@ -3120,6 +3256,8 @@ internal sealed class PrismGraphExecutor : IDisposable
         Vector4 Modes1,
         Vector4 Modes2,
         Vector4 Modes3,
+        Vector3 BoundsUvRowX,
+        Vector3 BoundsUvRowY,
         bool ResourceAvailable);
 
     private readonly record struct PrismFilterKernelSettings(

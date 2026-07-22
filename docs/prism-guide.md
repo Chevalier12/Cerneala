@@ -5,9 +5,11 @@ aranjarea, hitbox-ul, focusul sau rutarea inputului.
 
 ## Modelul Photoshop și sursa implicită
 
-Prism capturează o singură dată rezultatul normal al controlului și al subtree-ului
-său. Acea captură este sursa implicită a stivei normale; numele layerelor și
-group-urilor sunt adrese pentru Motion și diagnostics, nu surse de imagini.
+Prism capturează o singură dată numai vizualul local al controlului: comenzile
+produse de propriul `OnRender`, fără comenzile descendenților vizuali. Acea captură
+este sursa implicită a stivei normale; copiii sunt desenați normal după rezultatul
+Prism, iar numele layerelor și group-urilor sunt adrese pentru Motion și
+diagnostics, nu surse de imagini.
 
 Ordinea declarată este ca în panoul Photoshop: primul nod este în față, ultimul
 este în spate, iar evaluarea se face de jos în sus. Un `@backdrop` este o suprafață

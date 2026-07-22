@@ -192,19 +192,6 @@
         </RadialGradientBrush>
         <PrismComposition
             Name="PlanetCardPrism">
-            @layer SignalPulse
-            {
-                Opacity = 0.55;
-                BlendMode = Screen;
-
-                @style OuterGlow
-                {
-                    Size = 12;
-                    Opacity = 0.95;
-                    Color = #FF269DFF;
-                }
-            }
-
             @group CardTreatment
             {
                 Opacity = 1;
@@ -230,13 +217,29 @@
                 }
             }
         </PrismComposition>
+        <PrismComposition
+            Name="PlanetCardPulsePrism">
+            @layer SignalPulse
+            {
+                @parameter GlowOpacity: float = 0.35;
+                Opacity = 1;
+                BlendMode = Screen;
+
+                @style OuterGlow
+                {
+                    Size = 24;
+                    Opacity = GlowOpacity;
+                    Color = #37fb01;
+                }
+            }
+        </PrismComposition>
         <MotionClip
             Name="PlanetCardPulse"
             TargetType="Cerneala.Presentation.SolarSystemChapterView">
             @animate with PingPong(Tween(3s, EaseInOut), forever)
             {
-                @from { $PlanetInfoCard.prism.SignalPulse.Opacity = 0.35; }
-                @to { $PlanetInfoCard.prism.SignalPulse.Opacity = 0.85; }
+                @from { $PlanetInfoPulseFrame.prism.SignalPulse.GlowOpacity = 0.35; }
+                @to { $PlanetInfoPulseFrame.prism.SignalPulse.GlowOpacity = 1.00; }
             }
         </MotionClip>
         <MotionClip
@@ -585,20 +588,21 @@
 
         </Grid>
 
-        <Border
-            Name="PlanetInfoCard"
+        <Grid
             Grid.Row="1"
             Width="310"
             Height="150"
             Margin="20,0,0,8"
-            Padding="16"
             HorizontalAlignment="Left"
-            VerticalAlignment="Bottom"
-            Background="$SolarPanelBrush"
-            BorderBrush="$SolarLineBrush"
-            BorderThickness="1">
-            @prism $PlanetCardPrism;
-            <Grid>
+            VerticalAlignment="Bottom">
+            <Border
+                Name="PlanetInfoCard"
+                Padding="16"
+                Background="$SolarPanelBrush"
+                BorderBrush="$SolarLineBrush"
+                BorderThickness="1">
+                @prism $PlanetCardPrism;
+                <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition
                         Height="47" />
@@ -716,8 +720,16 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-            </Grid>
-        </Border>
+                </Grid>
+            </Border>
+
+            <Border
+                Name="PlanetInfoPulseFrame"
+                BorderBrush="$SolarAccentBrush"
+                BorderThickness="1">
+                @prism $PlanetCardPulsePrism;
+            </Border>
+        </Grid>
 
         <TextBlock
             Grid.Row="1"

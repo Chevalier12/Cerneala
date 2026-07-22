@@ -1,7 +1,12 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism;
+using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Markup;
 using Cerneala.UI.Media;
+using Cerneala.UI.Prism.Definitions;
+using Cerneala.UI.Prism.Runtime;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.Tests.UI.Rendering;
@@ -20,6 +25,45 @@ public sealed class DrawCommandListBuilderTests
 
         Assert.Equal(new Color(1, 0, 0), cache.RootCommands[0].Color);
         Assert.Equal(new Color(2, 0, 0), cache.RootCommands[1].Color);
+    }
+
+    [Fact]
+    public void PrismCaptureWrapsOnlyTheAttachedElementsLocalCommands()
+    {
+        UIRoot root = new();
+        RenderingTestElement parent = new(new Color(1, 0, 0));
+        RenderingTestElement child = new(new Color(2, 0, 0));
+        parent.VisualChildren.Add(child);
+        using IDisposable prismLifetime = GeneratedMarkup.AttachPrism(
+            parent,
+            () => new PrismInstance(
+                new PrismCompositionDefinition(
+                    "local-visual-only",
+                    [
+                        new PrismLayerDefinition(
+                            new PrismNodeId(1),
+                            "Content",
+                            filters: [new PrismFilterDefinition(PrismFilterId.Blur)])
+                    ])));
+        ElementLifecycle.AttachSubtree(root, parent);
+        RetainedRenderCache cache = PreparedCache(parent);
+
+        new DrawCommandListBuilder().Build(parent, cache, new RenderCounters());
+
+        Assert.Collection(
+            cache.RootCommands,
+            command => Assert.Equal(DrawCommandKind.BeginPrism, command.Kind),
+            command =>
+            {
+                Assert.Equal(DrawCommandKind.FillRectangle, command.Kind);
+                Assert.Equal(new Color(1, 0, 0), command.Color);
+            },
+            command => Assert.Equal(DrawCommandKind.EndPrism, command.Kind),
+            command =>
+            {
+                Assert.Equal(DrawCommandKind.FillRectangle, command.Kind);
+                Assert.Equal(new Color(2, 0, 0), command.Color);
+            });
     }
 
     [Fact]

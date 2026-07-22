@@ -5,11 +5,15 @@ namespace Cerneala.Drawing.MonoGame.Prism.Surfaces;
 
 internal sealed class PrismSurfacePool : IDisposable
 {
+    private const int ScratchSurfaceLimit = 2;
+
     private readonly GraphicsDevice graphicsDevice;
     private readonly PrismSurfaceMemoryAccountant accountant;
     private readonly List<SurfaceEntry> available = [];
     private PrismRetainedSurfaceCache? retainedCache;
     private SurfaceEntry?[] frameEntries = [];
+    private readonly SurfaceEntry?[] scratchEntries =
+        new SurfaceEntry?[ScratchSurfaceLimit];
     private PrismGraphExecutionPlan? framePlan;
     private long frameGeneration;
     private int frameStep = -1;
@@ -255,6 +259,71 @@ internal sealed class PrismSurfacePool : IDisposable
         return entry.Surface;
     }
 
+    internal PrismScratchSurfaceLease RentScratch(
+        long generation,
+        PrismSurfaceKey key)
+    {
+        accountant.VerifyAccess();
+        _ = GetActivePlan(generation);
+
+        int scratchIndex = -1;
+        for (int index = 0; index < scratchEntries.Length; index++)
+        {
+            if (scratchEntries[index] is null)
+            {
+                scratchIndex = index;
+                break;
+            }
+        }
+        if (scratchIndex < 0)
+        {
+            throw new InvalidOperationException(
+                $"A Prism frame cannot hold more than {ScratchSurfaceLimit} scratch surfaces concurrently.");
+        }
+
+        SurfaceEntry entry = RentEntry(
+            key,
+            checked(retentionLimit + ScratchSurfaceLimit));
+        scratchEntries[scratchIndex] = entry;
+        ActiveLeaseCount++;
+        PeakActiveLeaseCount = Math.Max(
+            PeakActiveLeaseCount,
+            ActiveLeaseCount);
+        return new PrismScratchSurfaceLease(
+            this,
+            generation,
+            scratchIndex,
+            entry.Surface);
+    }
+
+    internal void ReleaseScratch(
+        long generation,
+        int scratchIndex,
+        RenderTarget2D surface)
+    {
+        accountant.VerifyAccess();
+        _ = GetActivePlan(generation);
+        if ((uint)scratchIndex >= (uint)scratchEntries.Length ||
+            scratchEntries[scratchIndex] is not SurfaceEntry entry ||
+            !ReferenceEquals(entry.Surface, surface))
+        {
+            throw new InvalidOperationException(
+                "The Prism scratch-surface lease is no longer active.");
+        }
+
+        scratchEntries[scratchIndex] = null;
+        ActiveLeaseCount--;
+        if (entry.Surface.IsDisposed)
+        {
+            accountant.ReleaseTransient(entry.ByteCount);
+            DisposedSurfaceCount++;
+        }
+        else
+        {
+            available.Add(entry);
+        }
+    }
+
     internal PrismRetainedSurface PromoteToRetainedOwner(
         long generation,
         int executionIndex)
@@ -340,6 +409,15 @@ internal sealed class PrismSurfacePool : IDisposable
             return;
         }
 
+        for (int index = 0; index < scratchEntries.Length; index++)
+        {
+            if (scratchEntries[index] is not null)
+            {
+                throw new InvalidOperationException(
+                    "The Prism surface frame ended with active scratch leases.");
+            }
+        }
+
         int surfaceCount = framePlan.SurfaceLifetimes.Length;
         for (int index = 0; index < surfaceCount; index++)
         {
@@ -356,9 +434,12 @@ internal sealed class PrismSurfacePool : IDisposable
         TrimAvailableToLimit();
     }
 
-    private SurfaceEntry RentEntry(PrismSurfaceKey key)
+    private SurfaceEntry RentEntry(
+        PrismSurfaceKey key,
+        int? ownedSurfaceLimit = null)
     {
         key.Validate();
+        int effectiveLimit = ownedSurfaceLimit ?? retentionLimit;
 
         for (int index = available.Count - 1; index >= 0; index--)
         {
@@ -378,7 +459,7 @@ internal sealed class PrismSurfacePool : IDisposable
             return entry;
         }
 
-        while (OwnedSurfaceCount >= retentionLimit)
+        while (OwnedSurfaceCount >= effectiveLimit)
         {
             if (available.Count == 0)
             {
@@ -511,6 +592,18 @@ internal sealed class PrismSurfacePool : IDisposable
             }
 
             frameEntries[index] = null;
+            DisposeEntry(entry);
+        }
+
+        for (int index = 0; index < scratchEntries.Length; index++)
+        {
+            SurfaceEntry? entry = scratchEntries[index];
+            if (entry is null)
+            {
+                continue;
+            }
+
+            scratchEntries[index] = null;
             DisposeEntry(entry);
         }
 

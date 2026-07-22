@@ -14,6 +14,8 @@ internal enum PrismKernelKind
     MaskFeather,
     MaskAlpha,
     ClipAlpha,
+    StyleDilate,
+    StyleGaussian,
     LayerStyle,
     AdjustmentFilter,
     NeighborhoodFilter,
@@ -65,6 +67,8 @@ internal readonly record struct PrismKernelParameters(
 
     public Texture2D? StyleTexture { get; init; }
 
+    public Texture2D? StyleMaskTexture { get; init; }
+
     public Vector4 StyleColor { get; init; } =
         Vector4.One;
 
@@ -86,6 +90,12 @@ internal readonly record struct PrismKernelParameters(
     public Vector4 StyleModes2 { get; init; }
 
     public Vector4 StyleModes3 { get; init; }
+
+    public Vector3 StyleBoundsUvRowX { get; init; } =
+        new(1, 0, 0);
+
+    public Vector3 StyleBoundsUvRowY { get; init; } =
+        new(0, 1, 0);
 
     public float StyleResourceAvailable { get; init; }
 
@@ -119,7 +129,7 @@ internal readonly record struct PrismKernelParameters(
 
 internal sealed class PrismKernelRegistry : IDisposable
 {
-    public const long ShaderPackageVersion = 1;
+    public const long ShaderPackageVersion = 2;
 
     private const string CatalogOwnerPrefix =
         "PrismKernelRegistry/";
@@ -146,6 +156,7 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly EffectParameter maskUvRowYParameter;
     private readonly EffectParameter maskFeatherStepParameter;
     private readonly EffectParameter styleTextureParameter;
+    private readonly EffectParameter styleMaskTextureParameter;
     private readonly EffectParameter styleColorParameter;
     private readonly EffectParameter styleSecondaryColorParameter;
     private readonly EffectParameter styleGeometry0Parameter;
@@ -156,6 +167,8 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly EffectParameter styleModes1Parameter;
     private readonly EffectParameter styleModes2Parameter;
     private readonly EffectParameter styleModes3Parameter;
+    private readonly EffectParameter styleBoundsUvRowXParameter;
+    private readonly EffectParameter styleBoundsUvRowYParameter;
     private readonly EffectParameter styleResourceAvailableParameter;
     private readonly EffectParameter filterHeaderParameter;
     private readonly EffectParameter filterOptions0Parameter;
@@ -175,6 +188,8 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly PrismKernel maskFeather;
     private readonly PrismKernel maskAlpha;
     private readonly PrismKernel clipAlpha;
+    private readonly PrismKernel styleDilate;
+    private readonly PrismKernel styleGaussian;
     private readonly PrismKernel layerStyle;
     private readonly PrismKernel adjustmentFilter;
     private readonly PrismKernel neighborhoodFilter;
@@ -236,6 +251,7 @@ internal sealed class PrismKernelRegistry : IDisposable
         maskFeatherStepParameter =
             GetParameter("MaskFeatherStep");
         styleTextureParameter = GetParameter("StyleTexture");
+        styleMaskTextureParameter = GetParameter("StyleMaskTexture");
         styleColorParameter = GetParameter("StyleColor");
         styleSecondaryColorParameter =
             GetParameter("StyleSecondaryColor");
@@ -251,6 +267,10 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleModes1Parameter = GetParameter("StyleModes1");
         styleModes2Parameter = GetParameter("StyleModes2");
         styleModes3Parameter = GetParameter("StyleModes3");
+        styleBoundsUvRowXParameter =
+            GetParameter("StyleBoundsUvRowX");
+        styleBoundsUvRowYParameter =
+            GetParameter("StyleBoundsUvRowY");
         styleResourceAvailableParameter =
             GetParameter("StyleResourceAvailable");
         filterHeaderParameter =
@@ -295,6 +315,12 @@ internal sealed class PrismKernelRegistry : IDisposable
         clipAlpha = CreateKernel(
             PrismKernelKind.ClipAlpha,
             "ClipAlpha");
+        styleDilate = CreateKernel(
+            PrismKernelKind.StyleDilate,
+            "StyleDilate");
+        styleGaussian = CreateKernel(
+            PrismKernelKind.StyleGaussian,
+            "StyleGaussian");
         layerStyle = CreateKernel(
             PrismKernelKind.LayerStyle,
             "LayerStyle");
@@ -354,6 +380,10 @@ internal sealed class PrismKernelRegistry : IDisposable
     public PrismKernel MaskAlpha => maskAlpha;
 
     public PrismKernel ClipAlpha => clipAlpha;
+
+    public PrismKernel StyleDilate => styleDilate;
+
+    public PrismKernel StyleGaussian => styleGaussian;
 
     public PrismKernel LayerStyle => layerStyle;
 
@@ -472,6 +502,9 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleTextureParameter.SetValue(
             parameters.StyleTexture ??
             parameters.SecondaryTexture);
+        styleMaskTextureParameter.SetValue(
+            parameters.StyleMaskTexture ??
+            parameters.SecondaryTexture);
         styleColorParameter.SetValue(parameters.StyleColor);
         styleSecondaryColorParameter.SetValue(
             parameters.StyleSecondaryColor);
@@ -487,6 +520,10 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleModes1Parameter.SetValue(parameters.StyleModes1);
         styleModes2Parameter.SetValue(parameters.StyleModes2);
         styleModes3Parameter.SetValue(parameters.StyleModes3);
+        styleBoundsUvRowXParameter.SetValue(
+            parameters.StyleBoundsUvRowX);
+        styleBoundsUvRowYParameter.SetValue(
+            parameters.StyleBoundsUvRowY);
         styleResourceAvailableParameter.SetValue(
             parameters.StyleResourceAvailable);
         filterHeaderParameter.SetValue(

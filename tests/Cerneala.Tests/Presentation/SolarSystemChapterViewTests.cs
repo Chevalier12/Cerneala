@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Presentation;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -86,24 +87,42 @@ public sealed class SolarSystemChapterViewTests
                 .Where(instance => instance.Definition.TryGetNamedNode("SignalPulse", out _)));
         Assert.True(prism.Definition.TryGetNamedNode("SignalPulse", out PrismNodeId pulseId));
         PrismLayerState pulse = prism.GetLayerState(pulseId);
-        float initialOpacity = pulse.Opacity;
+        PrismStyleState outerGlow = Assert.Single(
+            pulse.Styles,
+            style => style.Style == PrismStyleId.OuterGlow);
+        PrismCatalogEntryDescriptor outerGlowEntry =
+            PrismCatalogRuntime.GetEntry((int)PrismStyleId.OuterGlow);
+        PrismCatalogPropertyDescriptor opacityProperty = Assert.Single(
+            outerGlowEntry.Properties,
+            property => property.Name == "Opacity");
+        float initialOpacity = GeneratedMarkup.GetPrismStyleNumber(
+            outerGlow,
+            outerGlowEntry.StableId,
+            opacityProperty.TypeSlot);
 
-        for (int frame = 0; frame < 88; frame++)
+        for (int frame = 0; frame < 188; frame++)
         {
             clock.Advance(TimeSpan.FromMilliseconds(16));
             root.ProcessFrame();
         }
 
-        float peakOpacity = pulse.Opacity;
-        for (int frame = 0; frame < 88; frame++)
+        float peakOpacity = GeneratedMarkup.GetPrismStyleNumber(
+            outerGlow,
+            outerGlowEntry.StableId,
+            opacityProperty.TypeSlot);
+        for (int frame = 0; frame < 188; frame++)
         {
             clock.Advance(TimeSpan.FromMilliseconds(16));
             root.ProcessFrame();
         }
 
-        Assert.InRange(initialOpacity, 0.079f, 0.081f);
-        Assert.True(peakOpacity > 0.9f, $"Expected the pulse near its peak, but opacity was {peakOpacity}.");
-        Assert.InRange(pulse.Opacity, 0.079f, 0.081f);
+        float returnedOpacity = GeneratedMarkup.GetPrismStyleNumber(
+            outerGlow,
+            outerGlowEntry.StableId,
+            opacityProperty.TypeSlot);
+        Assert.InRange(initialOpacity, 0.349f, 0.351f);
+        Assert.True(peakOpacity > 0.84f, $"Expected the glow near its peak, but opacity was {peakOpacity}.");
+        Assert.InRange(returnedOpacity, 0.349f, 0.351f);
     }
 
     [Fact]

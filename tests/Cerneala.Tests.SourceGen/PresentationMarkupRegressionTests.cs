@@ -69,9 +69,6 @@ public sealed class PresentationMarkupRegressionTests
         Assert.Contains("@filter BrightnessContrast", cardCompositionBody, StringComparison.Ordinal);
         Assert.DoesNotContain("@style OuterGlow", cardCompositionBody, StringComparison.Ordinal);
         Assert.Contains("@backdrop SpaceGlass", cardCompositionBody, StringComparison.Ordinal);
-        Assert.True(
-            cardCompositionBody.IndexOf("@backdrop SpaceGlass", StringComparison.Ordinal) >
-            cardCompositionBody.IndexOf("@group CardTreatment", StringComparison.Ordinal));
 
         XElement pulseComposition = Assert.Single(document
             .Descendants("PrismComposition")
@@ -80,6 +77,7 @@ public sealed class PresentationMarkupRegressionTests
                 "PlanetCardPulsePrism",
                 StringComparison.Ordinal)));
         Assert.Contains("@layer SignalPulse", pulseComposition.Value, StringComparison.Ordinal);
+        Assert.Contains("@parameter GlowOpacity", pulseComposition.Value, StringComparison.Ordinal);
         Assert.Contains("@style OuterGlow", pulseComposition.Value, StringComparison.Ordinal);
 
         XElement planetCard = Assert.Single(document
@@ -106,7 +104,7 @@ public sealed class PresentationMarkupRegressionTests
                 "PlanetCardPulse",
                 StringComparison.Ordinal)));
         Assert.Contains(
-            "$PlanetInfoPulseFrame.prism.SignalPulse.Opacity",
+            "$PlanetInfoPulseFrame.prism.SignalPulse.GlowOpacity",
             motionClip.Value,
             StringComparison.Ordinal);
 

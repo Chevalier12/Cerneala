@@ -37,6 +37,11 @@ internal readonly struct PrismSurfaceFrame : IDisposable
         return GetPool().GetSurface(generation, executionIndex);
     }
 
+    public PrismScratchSurfaceLease RentScratch(PrismSurfaceKey key)
+    {
+        return GetPool().RentScratch(generation, key);
+    }
+
     public PrismRetainedSurface PromoteToRetainedOwner(int executionIndex)
     {
         return GetPool().PromoteToRetainedOwner(generation, executionIndex);

@@ -96,6 +96,164 @@ public sealed class PrismWindowsDxConformanceTests
     }
 
     [Fact]
+    public void OuterGlowFallsOffContinuouslyInsteadOfDrawingDetachedRectangles()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Outer glow continuity",
+            styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
+        DrawRect elementBounds = new(24, 18, 48, 28);
+        PrismCompositionDefinition composition = new(
+            "Outer glow continuity",
+            [layer],
+            workingColorProfile: PrismColorProfile.LinearSrgb);
+        PrismDrawScope scope = PrismTestData.Scope(
+            composition,
+            ownerToken: 1_370,
+            bounds: elementBounds);
+        PrismStyleState glow = Assert.Single(
+            scope.Instance.GetLayerState(layer.Id).Styles);
+        PrismCatalogEntryDescriptor entry =
+            PrismCatalogRuntime.GetEntry((int)PrismStyleId.OuterGlow);
+        SetNumber("Size", 12);
+        SetNumber("Range", 1);
+        SetNumber("Opacity", 1);
+        using PrismScene scene = BuildScene(
+            "outer-glow-continuity",
+            Commands(
+                DrawCommand.BeginPrism(scope),
+                DrawCommand.DrawRectangle(
+                    elementBounds,
+                    new CernealaColor(7, 12, 22, 208),
+                    1),
+                DrawCommand.EndPrism()),
+            expectedFallbackCount: 0,
+            foregroundX: 48,
+            foregroundY: 24);
+        using WindowsDxFixture fixture = new();
+
+        RenderedScene rendered = RenderPng(fixture.Session, scene);
+        using SKBitmap bitmap = Decode(rendered.Png, scene.Name);
+        int[] intensities = Enumerable
+            .Range(1, 12)
+            .Select(distance =>
+            {
+                SKColor pixel = bitmap.GetPixel(48, 18 - distance);
+                return Math.Abs(pixel.Red - ClearColor.R) +
+                    Math.Abs(pixel.Green - ClearColor.G) +
+                    Math.Abs(pixel.Blue - ClearColor.B);
+            })
+            .ToArray();
+        int[] interiorIntensities = Enumerable
+            .Range(1, 12)
+            .Select(distance =>
+            {
+                SKColor pixel = bitmap.GetPixel(48, 18 + distance);
+                return Math.Abs(pixel.Red - ClearColor.R) +
+                    Math.Abs(pixel.Green - ClearColor.G) +
+                    Math.Abs(pixel.Blue - ClearColor.B);
+            })
+            .ToArray();
+
+        Assert.All(intensities, intensity => Assert.True(intensity > 0));
+        Assert.True(
+            intensities.Max() >= 30,
+            $"Expected a visible one-pixel outer glow, but found [{string.Join(", ", intensities)}].");
+        Assert.True(
+            intensities.Distinct().Count() >= 6,
+            $"Expected a continuous glow falloff, but found bands [{string.Join(", ", intensities)}].");
+        Assert.All(
+            interiorIntensities,
+            intensity => Assert.Equal(0, intensity));
+
+        void SetNumber(string name, float value)
+        {
+            PrismCatalogPropertyDescriptor property =
+                entry.Properties.Single(candidate => candidate.Name == name);
+            GeneratedMarkup.SetPrismStyleNumber(
+                glow,
+                entry.StableId,
+                property.TypeSlot,
+                value);
+        }
+    }
+
+    [Fact]
+    public void OuterGlowGaussianFalloffDoesNotFavorCardinalDirections()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Outer glow isotropy",
+            styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
+        DrawRect elementBounds = new(48, 32, 1, 1);
+        PrismCompositionDefinition composition = new(
+            "Outer glow isotropy",
+            [layer],
+            workingColorProfile: PrismColorProfile.LinearSrgb);
+        PrismDrawScope scope = PrismTestData.Scope(
+            composition,
+            ownerToken: 1_371,
+            bounds: elementBounds);
+        PrismStyleState glow = Assert.Single(
+            scope.Instance.GetLayerState(layer.Id).Styles);
+        PrismCatalogEntryDescriptor entry =
+            PrismCatalogRuntime.GetEntry((int)PrismStyleId.OuterGlow);
+        SetNumber("Size", 12);
+        SetNumber("Spread", 0);
+        SetNumber("Range", 1);
+        SetNumber("Opacity", 1);
+        using PrismScene scene = BuildScene(
+            "outer-glow-isotropy",
+            Commands(
+                DrawCommand.BeginPrism(scope),
+                DrawCommand.FillRectangle(
+                    elementBounds,
+                    new CernealaColor(255, 255, 255, 255)),
+                DrawCommand.EndPrism()),
+            expectedFallbackCount: 0,
+            foregroundX: 48,
+            foregroundY: 32);
+        using WindowsDxFixture fixture = new();
+
+        RenderedScene rendered = RenderPng(fixture.Session, scene);
+        using SKBitmap bitmap = Decode(rendered.Png, scene.Name);
+        int cardinal = Intensity(bitmap.GetPixel(43, 32));
+        int diagonal = Intensity(bitmap.GetPixel(45, 28));
+
+        Assert.True(cardinal > 0 && diagonal > 0);
+        Assert.InRange(
+            Math.Abs(cardinal - diagonal),
+            0,
+            12);
+
+        int Intensity(SKColor pixel) =>
+            Math.Abs(pixel.Red - ClearColor.R) +
+            Math.Abs(pixel.Green - ClearColor.G) +
+            Math.Abs(pixel.Blue - ClearColor.B);
+
+        void SetNumber(string name, float value)
+        {
+            PrismCatalogPropertyDescriptor property =
+                entry.Properties.Single(candidate => candidate.Name == name);
+            GeneratedMarkup.SetPrismStyleNumber(
+                glow,
+                entry.StableId,
+                property.TypeSlot,
+                value);
+        }
+    }
+
+    [Fact]
     public void PrismFilterCatalogGalleryRendersThroughAutomatedCaptureApi()
     {
         if (!OperatingSystem.IsWindows())
@@ -386,21 +544,33 @@ public sealed class PrismWindowsDxConformanceTests
         RenderedScene rendered)
     {
         PrismExecutionCounters counters = rendered.Counters;
-        int expectedPassCount =
+        int outerGlowCount = scene.Plan.ExecutionOrder.Count(
+            nodeId => scene.Plan.OptimizedGraph
+                .GetNode(nodeId)
+                is { Kind: PrismGraphNodeKind.Style, Style: PrismStyleId.OuterGlow });
+        int outerGlowScratchCount = outerGlowCount > 0 ? 2 : 0;
+        int basePassCount =
             scene.Plan.ExecutionOrder.Length +
             scene.Analysis.Scopes.Length;
 
-        Assert.Equal(expectedPassCount, counters.PassCount);
+        Assert.InRange(
+            counters.PassCount,
+            basePassCount,
+            basePassCount + outerGlowScratchCount);
         Assert.Equal(
             scene.Analysis.Scopes.Length,
             counters.CaptureCount);
-        Assert.Equal(
+        Assert.InRange(
+            counters.PeakLiveSurfaceCount,
             scene.Plan.PeakLiveSurfaces,
-            counters.PeakLiveSurfaceCount);
-        Assert.Equal(
-            scene.Plan.ExecutionOrder.Length,
+            scene.Plan.PeakLiveSurfaces +
+                Math.Min(outerGlowScratchCount, 2));
+        Assert.InRange(
             counters.CreatedSurfaceCount +
-                counters.ReusedSurfaceCount);
+                counters.ReusedSurfaceCount,
+            scene.Plan.ExecutionOrder.Length,
+            scene.Plan.ExecutionOrder.Length +
+                outerGlowScratchCount);
         Assert.Equal(
             scene.ExpectedFallbackCount,
             counters.FallbackCount);
@@ -1036,7 +1206,6 @@ public sealed class PrismWindowsDxConformanceTests
                 new PrismStyleDefinition(style)
             ]);
         ImageResource? resource = null;
-        PrismDrawScope scope;
         if (style == PrismStyleId.PatternOverlay)
         {
             resource = CreateImageResource(
@@ -1050,20 +1219,16 @@ public sealed class PrismWindowsDxConformanceTests
                         ? new XnaColor(35, 202, 157)
                         : new XnaColor(244, 188, 52);
                 });
-            scope = CreateScope(
-                style.ToString(),
-                ownerToken: 1200 + (int)style,
-                Matrix3x2.Identity,
-                resource.Resources,
-                layer);
         }
-        else
-        {
-            scope = CreateScope(
-                style.ToString(),
-                ownerToken: 1200 + (int)style,
-                layer);
-        }
+        PrismCompositionDefinition composition = new(
+            style.ToString(),
+            [layer],
+            workingColorProfile: PrismColorProfile.LinearSrgb);
+        PrismDrawScope scope = PrismTestData.Scope(
+            composition,
+            ownerToken: 1200 + (int)style,
+            bounds: new DrawRect(20, 14, 66, 42),
+            resources: resource?.Resources);
 
         PrismStyleState state = Assert.Single(
             scope.Instance
