@@ -408,6 +408,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Accessibility.AutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.ButtonAutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.ItemsControlAutomationPeer.md
+|   |   |   |-- Cerneala.UI.Accessibility.PasswordBoxAutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.SemanticsNode.md
 |   |   |   |-- Cerneala.UI.Accessibility.SemanticsProperty.md
 |   |   |   |-- Cerneala.UI.Accessibility.SemanticsProvider.md
@@ -600,7 +601,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Templates.TemplateTokenBinding.md
 |   |   |   |-- Cerneala.UI.Controls.TextBlock.md
 |   |   |   |-- Cerneala.UI.Controls.TextBox.md
-|   |   |   |-- Cerneala.UI.Controls.TextBoxBase.md
 |   |   |   |-- Cerneala.UI.Controls.TextChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.ToolTip.md
 |   |   |   |-- Cerneala.UI.Controls.UserControl_TViewModel_.md
@@ -1131,13 +1131,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Text.TextAspect.md
 |   |   |   |-- Cerneala.UI.Text.TextCaret.md
 |   |   |   |-- Cerneala.UI.Text.TextCaretLayout.md
-|   |   |   |-- Cerneala.UI.Text.TextCompositionManager.md
-|   |   |   |-- Cerneala.UI.Text.TextCompositionState.md
 |   |   |   |-- Cerneala.UI.Text.TextDirection.md
-|   |   |   |-- Cerneala.UI.Text.TextDocument.md
-|   |   |   |-- Cerneala.UI.Text.TextEditingController.md
-|   |   |   |-- Cerneala.UI.Text.TextEditor.md
-|   |   |   |-- Cerneala.UI.Text.TextEditorSnapshot.md
 |   |   |   |-- Cerneala.UI.Text.TextLayoutCache.md
 |   |   |   |-- Cerneala.UI.Text.TextLayoutKey.md
 |   |   |   |-- Cerneala.UI.Text.TextLine.md
@@ -1148,7 +1142,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Text.TextSelection.md
 |   |   |   |-- Cerneala.UI.Text.TextTrimming.md
 |   |   |   |-- Cerneala.UI.Text.TextWrapping.md
-|   |   |   |-- Cerneala.UI.Text.UndoRedoStack.md
 |   |   |   |-- Cerneala.UI.Theming.DefaultTheme.md
 |   |   |   |-- Cerneala.UI.Theming.Theme.EntryKey.md
 |   |   |   |-- Cerneala.UI.Theming.Theme.md
@@ -1501,6 +1494,7 @@ Generated from `.`.
 |   |   |   |-- TextBlockInvalidationTests.cs
 |   |   |   |-- TextBlockLayoutContractTests.cs
 |   |   |   |-- TextBlockTests.cs
+|   |   |   |-- TextBoxArchitectureTests.cs
 |   |   |   |-- TextBoxCaretBlinkTests.cs
 |   |   |   |-- TextBoxClipboardShortcutTests.cs
 |   |   |   |-- TextBoxEditingVisualContractTests.cs
@@ -1954,6 +1948,7 @@ Generated from `.`.
 |   |   |-- AutomationPeer.cs
 |   |   |-- ButtonAutomationPeer.cs
 |   |   |-- ItemsControlAutomationPeer.cs
+|   |   |-- PasswordBoxAutomationPeer.cs
 |   |   |-- SemanticsNode.cs
 |   |   |-- SemanticsProperty.cs
 |   |   |-- SemanticsProvider.cs
@@ -2089,6 +2084,7 @@ Generated from `.`.
 |   |   |-- IScrollInfo.cs
 |   |   |-- ItemsControl.cs
 |   |   |-- ItemsPresenter.cs
+|   |   |-- ITextInputHost.cs
 |   |   |-- Label.cs
 |   |   |-- ListBox.cs
 |   |   |-- ListBoxItem.cs
@@ -2110,8 +2106,10 @@ Generated from `.`.
 |   |   |-- TabItem.cs
 |   |   |-- TextBlock.cs
 |   |   |-- TextBox.cs
-|   |   |-- TextBoxBase.cs
 |   |   |-- TextChangedEventArgs.cs
+|   |   |-- TextInputCore.cs
+|   |   |-- TextInputPolicy.cs
+|   |   |-- TextInputViewport.cs
 |   |   |-- ToolTip.cs
 |   |   |-- UserControl.cs
 |   |   |-- Window.cs
