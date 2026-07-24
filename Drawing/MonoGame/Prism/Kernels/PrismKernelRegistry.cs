@@ -16,6 +16,8 @@ internal enum PrismKernelKind
     ClipAlpha,
     StyleDilate,
     StyleGaussian,
+    StrokeDistanceSeed,
+    StrokeDistanceFlood,
     LayerStyle,
     AdjustmentFilter,
     NeighborhoodFilter,
@@ -129,7 +131,7 @@ internal readonly record struct PrismKernelParameters(
 
 internal sealed class PrismKernelRegistry : IDisposable
 {
-    public const long ShaderPackageVersion = 2;
+    public const long ShaderPackageVersion = 3;
 
     private const string CatalogOwnerPrefix =
         "PrismKernelRegistry/";
@@ -190,6 +192,8 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly PrismKernel clipAlpha;
     private readonly PrismKernel styleDilate;
     private readonly PrismKernel styleGaussian;
+    private readonly PrismKernel strokeDistanceSeed;
+    private readonly PrismKernel strokeDistanceFlood;
     private readonly PrismKernel layerStyle;
     private readonly PrismKernel adjustmentFilter;
     private readonly PrismKernel neighborhoodFilter;
@@ -321,6 +325,12 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleGaussian = CreateKernel(
             PrismKernelKind.StyleGaussian,
             "StyleGaussian");
+        strokeDistanceSeed = CreateKernel(
+            PrismKernelKind.StrokeDistanceSeed,
+            "StrokeDistanceSeed");
+        strokeDistanceFlood = CreateKernel(
+            PrismKernelKind.StrokeDistanceFlood,
+            "StrokeDistanceFlood");
         layerStyle = CreateKernel(
             PrismKernelKind.LayerStyle,
             "LayerStyle");
@@ -384,6 +394,10 @@ internal sealed class PrismKernelRegistry : IDisposable
     public PrismKernel StyleDilate => styleDilate;
 
     public PrismKernel StyleGaussian => styleGaussian;
+
+    public PrismKernel StrokeDistanceSeed => strokeDistanceSeed;
+
+    public PrismKernel StrokeDistanceFlood => strokeDistanceFlood;
 
     public PrismKernel LayerStyle => layerStyle;
 

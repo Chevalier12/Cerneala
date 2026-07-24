@@ -1,3 +1,5 @@
+using System.Numerics;
+using Cerneala.Drawing;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
@@ -6,6 +8,77 @@ namespace Cerneala.Tests.UI.Prism;
 
 public sealed class PrismInstanceTests
 {
+    [Fact]
+    public void PublicCatalogExposesCompleteEditorMetadata()
+    {
+        Assert.Equal(134, PrismCatalog.Filters.Length);
+        Assert.Equal(10, PrismCatalog.Styles.Length);
+        Assert.Equal(9, PrismCatalog.Filters.Count(operation => operation.RequiresResource));
+        Assert.Single(PrismCatalog.Styles, operation => operation.RequiresResource);
+        Assert.All(
+            PrismCatalog.Filters.Concat(PrismCatalog.Styles)
+                .SelectMany(operation => operation.Parameters)
+                .Where(parameter => parameter.ValueKind == PrismCatalogValueKind.Symbol),
+            parameter => Assert.NotEmpty(parameter.SymbolOptions));
+
+        PrismCatalogParameterInfo brightness = PrismCatalog.GetFilter(PrismFilterId.BrightnessContrast)
+            .Parameters.Single(parameter => parameter.Name == "Brightness");
+        Assert.Equal(PrismCatalogValueKind.Number, brightness.ValueKind);
+        Assert.Equal(-1d, brightness.Minimum);
+        Assert.Equal(1d, brightness.Maximum);
+        Assert.Equal("0", brightness.DefaultValue);
+    }
+
+    [Fact]
+    public void PublicCatalogAccessRoundTripsEveryParameterKind()
+    {
+        PrismInstance instance = new(CreateEditorComposition());
+        PrismLayerState layer = instance.GetLayerState(new PrismNodeId(1));
+
+        PrismFilterState color = layer.Filters[0];
+        SetAndAssert(color, "Clamp", false);
+        SetAndAssert(color, "Exposure", 0.25f);
+        SetAndAssert(color, "Matrix", "Identity");
+
+        PrismFilterState noise = layer.Filters[1];
+        SetAndAssert(noise, "Seed", 17);
+
+        PrismFilterState scanlines = layer.Filters[2];
+        SetAndAssert(scanlines, "Color", new Color(255, 32, 64, 96));
+
+        PrismFilterState chromatic = layer.Filters[3];
+        SetAndAssert(chromatic, "Direction", new Vector4(0f, 1f, 0f, 0f));
+
+        PrismFilterState texturizer = layer.Filters[4];
+        PrismCatalogParameterInfo textureImage = Parameter(texturizer, "TextureImage");
+        Assert.Equal(default, texturizer.GetValue<PrismResourceId>(textureImage));
+
+        PrismStyleState shadow = Assert.Single(layer.Styles);
+        PrismCatalogParameterInfo size = PrismCatalog.GetStyle(shadow.Style)
+            .Parameters.Single(parameter => parameter.Name == "Size");
+        shadow.SetValue(size, 12f);
+        Assert.Equal(12f, shadow.GetValue<float>(size));
+
+        Assert.True(instance.ValueVersion.Value >= 5);
+    }
+
+    [Fact]
+    public void PublicCatalogAccessRejectsWrongTypesOperationsAndStaleState()
+    {
+        PrismInstance instance = new(CreateEditorComposition());
+        PrismFilterState color = instance.GetLayerState(new PrismNodeId(1)).Filters[0];
+        PrismCatalogParameterInfo exposure = Parameter(color, "Exposure");
+        PrismCatalogParameterInfo seed = PrismCatalog.GetFilter(PrismFilterId.AddNoise)
+            .Parameters.Single(parameter => parameter.Name == "Seed");
+
+        Assert.Throws<ArgumentException>(() => color.GetValue<int>(exposure));
+        Assert.Throws<ArgumentException>(() => color.GetValue<int>(seed));
+
+        instance.ReplaceDefinition(CreateComposition());
+
+        Assert.Throws<InvalidOperationException>(() => color.GetValue<float>(exposure));
+    }
+
     [Fact]
     public void InstancesShareDefinitionWithoutSharingValues()
     {
@@ -161,5 +234,38 @@ public sealed class PrismInstanceTests
                     filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
                     opacity: opacity)
             ]);
+    }
+
+    private static PrismCompositionDefinition CreateEditorComposition()
+    {
+        return new PrismCompositionDefinition(
+            "editor",
+            [
+                new PrismLayerDefinition(
+                    new PrismNodeId(1),
+                    "content",
+                    filters:
+                    [
+                        new PrismFilterDefinition(PrismFilterId.Color),
+                        new PrismFilterDefinition(PrismFilterId.AddNoise),
+                        new PrismFilterDefinition(PrismFilterId.Scanlines),
+                        new PrismFilterDefinition(PrismFilterId.ChromaticAberration),
+                        new PrismFilterDefinition(PrismFilterId.Texturizer)
+                    ],
+                    styles: [new PrismStyleDefinition(PrismStyleId.DropShadow)])
+            ]);
+    }
+
+    private static PrismCatalogParameterInfo Parameter(PrismFilterState state, string name)
+    {
+        return PrismCatalog.GetFilter(state.Filter)
+            .Parameters.Single(parameter => parameter.Name == name);
+    }
+
+    private static void SetAndAssert<T>(PrismFilterState state, string name, T value)
+    {
+        PrismCatalogParameterInfo parameter = Parameter(state, name);
+        state.SetValue(parameter, value);
+        Assert.Equal(value, state.GetValue<T>(parameter));
     }
 }

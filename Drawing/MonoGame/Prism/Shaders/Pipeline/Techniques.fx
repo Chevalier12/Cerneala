@@ -334,6 +334,22 @@ technique StyleGaussian
     }
 }
 
+technique StrokeDistanceSeed
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 StrokeDistanceSeedPixelShader();
+    }
+}
+
+technique StrokeDistanceFlood
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 StrokeDistanceFloodPixelShader();
+    }
+}
+
 technique InputToLinearSrgb
 {
     pass Pass0

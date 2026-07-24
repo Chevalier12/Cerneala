@@ -549,6 +549,60 @@ public sealed class PrismFilterState
         }
     }
 
+    public T GetValue<T>(PrismCatalogParameterInfo parameter)
+    {
+        PrismRuntimeValidation.ValidateParameter<T>(parameter, PrismCatalogOperationKind.Filter, (int)Filter);
+        object value = parameter.ValueKind switch
+        {
+            PrismCatalogValueKind.Boolean => GetValue(new PrismParameterKey<bool>((int)Filter, parameter.TypeSlot)),
+            PrismCatalogValueKind.Integer => GetValue(new PrismParameterKey<int>((int)Filter, parameter.TypeSlot)),
+            PrismCatalogValueKind.Number => GetValue(new PrismParameterKey<float>((int)Filter, parameter.TypeSlot)),
+            PrismCatalogValueKind.Color => GetValue(new PrismParameterKey<Color>((int)Filter, parameter.TypeSlot)),
+            PrismCatalogValueKind.Vector => GetValue(new PrismParameterKey<Vector4>((int)Filter, parameter.TypeSlot)),
+            PrismCatalogValueKind.Symbol => parameter.ResolveSymbol(
+                GetValue(new PrismParameterKey<int>((int)Filter, parameter.TypeSlot))),
+            PrismCatalogValueKind.Resource => GetValue(
+                new PrismParameterKey<PrismResourceId>((int)Filter, parameter.TypeSlot)),
+            _ => throw new InvalidOperationException($"Unknown Prism catalog value kind '{parameter.ValueKind}'.")
+        };
+        return (T)value;
+    }
+
+    public void SetValue<T>(PrismCatalogParameterInfo parameter, T value)
+    {
+        PrismRuntimeValidation.ValidateParameter<T>(parameter, PrismCatalogOperationKind.Filter, (int)Filter);
+        switch (parameter.ValueKind)
+        {
+            case PrismCatalogValueKind.Boolean:
+                SetValue(new PrismParameterKey<bool>((int)Filter, parameter.TypeSlot), (bool)(object)value!);
+                break;
+            case PrismCatalogValueKind.Integer:
+                SetValue(new PrismParameterKey<int>((int)Filter, parameter.TypeSlot), (int)(object)value!);
+                break;
+            case PrismCatalogValueKind.Number:
+                SetValue(new PrismParameterKey<float>((int)Filter, parameter.TypeSlot), (float)(object)value!);
+                break;
+            case PrismCatalogValueKind.Color:
+                SetValue(new PrismParameterKey<Color>((int)Filter, parameter.TypeSlot), (Color)(object)value!);
+                break;
+            case PrismCatalogValueKind.Vector:
+                SetValue(new PrismParameterKey<Vector4>((int)Filter, parameter.TypeSlot), (Vector4)(object)value!);
+                break;
+            case PrismCatalogValueKind.Symbol:
+                SetValue(
+                    new PrismParameterKey<int>((int)Filter, parameter.TypeSlot),
+                    parameter.ResolveSymbol((string)(object)value!));
+                break;
+            case PrismCatalogValueKind.Resource:
+                SetValue(
+                    new PrismParameterKey<PrismResourceId>((int)Filter, parameter.TypeSlot),
+                    (PrismResourceId)(object)value!);
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown Prism catalog value kind '{parameter.ValueKind}'.");
+        }
+    }
+
     internal bool GetValue(PrismParameterKey<bool> key) => parameters.Get(key);
 
     internal int GetValue(PrismParameterKey<int> key) => parameters.Get(key);
@@ -622,6 +676,60 @@ public sealed class PrismStyleState
         set => common.Set(PrismCatalogGenerated.PrismStyleCommonParameterKeys.VisibleKey, value);
     }
 
+    public T GetValue<T>(PrismCatalogParameterInfo parameter)
+    {
+        PrismRuntimeValidation.ValidateParameter<T>(parameter, PrismCatalogOperationKind.Style, (int)Style);
+        object value = parameter.ValueKind switch
+        {
+            PrismCatalogValueKind.Boolean => GetValue(new PrismParameterKey<bool>((int)Style, parameter.TypeSlot)),
+            PrismCatalogValueKind.Integer => GetValue(new PrismParameterKey<int>((int)Style, parameter.TypeSlot)),
+            PrismCatalogValueKind.Number => GetValue(new PrismParameterKey<float>((int)Style, parameter.TypeSlot)),
+            PrismCatalogValueKind.Color => GetValue(new PrismParameterKey<Color>((int)Style, parameter.TypeSlot)),
+            PrismCatalogValueKind.Vector => GetValue(new PrismParameterKey<Vector4>((int)Style, parameter.TypeSlot)),
+            PrismCatalogValueKind.Symbol => parameter.ResolveSymbol(
+                GetValue(new PrismParameterKey<int>((int)Style, parameter.TypeSlot))),
+            PrismCatalogValueKind.Resource => GetValue(
+                new PrismParameterKey<PrismResourceId>((int)Style, parameter.TypeSlot)),
+            _ => throw new InvalidOperationException($"Unknown Prism catalog value kind '{parameter.ValueKind}'.")
+        };
+        return (T)value;
+    }
+
+    public void SetValue<T>(PrismCatalogParameterInfo parameter, T value)
+    {
+        PrismRuntimeValidation.ValidateParameter<T>(parameter, PrismCatalogOperationKind.Style, (int)Style);
+        switch (parameter.ValueKind)
+        {
+            case PrismCatalogValueKind.Boolean:
+                SetValue(new PrismParameterKey<bool>((int)Style, parameter.TypeSlot), (bool)(object)value!);
+                break;
+            case PrismCatalogValueKind.Integer:
+                SetValue(new PrismParameterKey<int>((int)Style, parameter.TypeSlot), (int)(object)value!);
+                break;
+            case PrismCatalogValueKind.Number:
+                SetValue(new PrismParameterKey<float>((int)Style, parameter.TypeSlot), (float)(object)value!);
+                break;
+            case PrismCatalogValueKind.Color:
+                SetValue(new PrismParameterKey<Color>((int)Style, parameter.TypeSlot), (Color)(object)value!);
+                break;
+            case PrismCatalogValueKind.Vector:
+                SetValue(new PrismParameterKey<Vector4>((int)Style, parameter.TypeSlot), (Vector4)(object)value!);
+                break;
+            case PrismCatalogValueKind.Symbol:
+                SetValue(
+                    new PrismParameterKey<int>((int)Style, parameter.TypeSlot),
+                    parameter.ResolveSymbol((string)(object)value!));
+                break;
+            case PrismCatalogValueKind.Resource:
+                SetValue(
+                    new PrismParameterKey<PrismResourceId>((int)Style, parameter.TypeSlot),
+                    (PrismResourceId)(object)value!);
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown Prism catalog value kind '{parameter.ValueKind}'.");
+        }
+    }
+
     internal bool GetValue(PrismParameterKey<bool> key) => parameters.Get(key);
 
     internal int GetValue(PrismParameterKey<int> key) => parameters.Get(key);
@@ -635,22 +743,75 @@ public sealed class PrismStyleState
     internal PrismResourceId GetValue(PrismParameterKey<PrismResourceId> key) =>
         parameters.Get(key);
 
-    internal void SetValue(PrismParameterKey<bool> key, bool value) => parameters.Set(key, value);
-
-    internal void SetValue(PrismParameterKey<int> key, int value) => parameters.Set(key, value);
-
-    internal void SetValue(PrismParameterKey<float> key, float value) => parameters.Set(key, value);
-
-    internal void SetValue(PrismParameterKey<Color> key, Color value) => parameters.Set(key, value);
-
-    internal void SetValue(PrismParameterKey<Vector4> key, Vector4 value) => parameters.Set(key, value);
-
-    internal void SetValue(PrismParameterKey<PrismResourceId> key, PrismResourceId value) =>
+    internal void SetValue(PrismParameterKey<bool> key, bool value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
         parameters.Set(key, value);
+    }
+
+    internal void SetValue(PrismParameterKey<int> key, int value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
+        parameters.Set(key, value);
+    }
+
+    internal void SetValue(PrismParameterKey<float> key, float value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
+        parameters.Set(key, value);
+    }
+
+    internal void SetValue(PrismParameterKey<Color> key, Color value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
+        parameters.Set(key, value);
+    }
+
+    internal void SetValue(PrismParameterKey<Vector4> key, Vector4 value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
+        parameters.Set(key, value);
+    }
+
+    internal void SetValue(PrismParameterKey<PrismResourceId> key, PrismResourceId value)
+    {
+        PrismCatalogParameterValidation.Validate(key, value);
+        parameters.Set(key, value);
+    }
 }
 
 internal static class PrismRuntimeValidation
 {
+    public static void ValidateParameter<T>(
+        PrismCatalogParameterInfo parameter,
+        PrismCatalogOperationKind operationKind,
+        int operationStableId)
+    {
+        ArgumentNullException.ThrowIfNull(parameter);
+        if (parameter.OperationKind != operationKind || parameter.OperationStableId != operationStableId)
+        {
+            throw new ArgumentException("The Prism catalog parameter belongs to a different operation.", nameof(parameter));
+        }
+
+        Type expected = parameter.ValueKind switch
+        {
+            PrismCatalogValueKind.Boolean => typeof(bool),
+            PrismCatalogValueKind.Integer => typeof(int),
+            PrismCatalogValueKind.Number => typeof(float),
+            PrismCatalogValueKind.Color => typeof(Color),
+            PrismCatalogValueKind.Vector => typeof(Vector4),
+            PrismCatalogValueKind.Symbol => typeof(string),
+            PrismCatalogValueKind.Resource => typeof(PrismResourceId),
+            _ => throw new InvalidOperationException($"Unknown Prism catalog value kind '{parameter.ValueKind}'.")
+        };
+        if (typeof(T) != expected)
+        {
+            throw new ArgumentException(
+                $"Prism parameter '{parameter.Name}' requires values of type '{expected.Name}', not '{typeof(T).Name}'.",
+                nameof(parameter));
+        }
+    }
+
     public static float UnitInterval(float value, string parameterName)
     {
         if (!float.IsFinite(value) || value is < 0f or > 1f)

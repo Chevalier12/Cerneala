@@ -24,7 +24,14 @@ public sealed class PrismFilterState
 
 ## Remarks
 
-Catalog-specific filter parameters are stored in dense typed slots addressed by generated keys. The framework and generated markup use those keys without string lookup or boxing in the update path.
+Catalog-specific filter parameters are stored in dense typed slots. Applications use `PrismCatalogParameterInfo` with the generic accessors, while generated markup continues to use allocation-free generated keys internally.
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| `GetValue<T>(PrismCatalogParameterInfo)` | Gets a typed catalog parameter after validating the descriptor and generic type. |
+| `SetValue<T>(PrismCatalogParameterInfo, T)` | Validates and updates a typed catalog parameter. Changed writes advance the owning instance value version. |
 
 ## Exceptions
 
@@ -32,6 +39,9 @@ Catalog-specific filter parameters are stored in dense typed slots addressed by 
 | --- | --- | --- |
 | `Opacity` | `ArgumentOutOfRangeException` | The assigned value is non-finite or outside zero through one. |
 | `BlendMode` | `ArgumentException` | The assigned value is `PassThrough`. |
+| `GetValue<T>`, `SetValue<T>` | `ArgumentException` | The descriptor belongs to another operation or `T` does not match its catalog value kind. |
+| `SetValue<T>` | `ArgumentOutOfRangeException` | The value violates the catalog domain or symbol options. |
+| `GetValue<T>`, `SetValue<T>` | `InvalidOperationException` | The state handle belongs to a replaced definition. |
 
 ## Applies to
 

@@ -63,6 +63,27 @@ public sealed class PrismCatalogCompilerTests
     }
 
     [Fact]
+    public void EverySymbolParameterHasAValidPublicMetadataSeed()
+    {
+        PrismCatalogCompilation compilation = PrismCatalogCompiler.Compile(ReadRepositoryCatalog());
+
+        Assert.Empty(compilation.Issues);
+        PrismCatalogCompiler.CatalogProperty[] symbols = compilation.Model!.Entries
+            .Where(entry => entry.Kind is "filter" or "style")
+            .SelectMany(entry => entry.Properties)
+            .Where(property => property.ValueType == "symbol")
+            .ToArray();
+
+        Assert.NotEmpty(symbols);
+        Assert.All(symbols, property =>
+        {
+            Assert.False(property.Required);
+            Assert.False(string.IsNullOrWhiteSpace(property.DefaultValue));
+            Assert.Equal("catalog-symbol", property.Domain.Kind);
+        });
+    }
+
+    [Fact]
     public void RepositoryCatalogGeneratesCompleteFilterImplementationMatrix()
     {
         string catalogText = ReadRepositoryCatalog();

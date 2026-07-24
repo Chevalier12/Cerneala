@@ -1786,6 +1786,27 @@ internal sealed class PrismGraphExecutor : IDisposable
                     MaskTexture = preparedMask
                 };
             }
+            else if (style == PrismStyleId.Stroke)
+            {
+                PrismSurfaceKey distanceKey = new(
+                    target.Width,
+                    target.Height,
+                    SurfaceFormat.Vector4,
+                    0,
+                    surfaceKeys[step].ColorProfile);
+                scratchA = frame.RentScratch(distanceKey);
+                scratchB = frame.RentScratch(distanceKey);
+                Texture2D distanceField =
+                    PrepareStrokeDistanceField(
+                        renderer,
+                        GetExecutionSurface(frame, sourceIndex),
+                        scratchA.Value.Surface,
+                        scratchB.Value.Surface);
+                settings = settings with
+                {
+                    MaskTexture = distanceField
+                };
+            }
 
             RenderKernel(
                 renderer,
@@ -1853,6 +1874,75 @@ internal sealed class PrismGraphExecutor : IDisposable
             radius,
             horizontal: false);
         return scratchB;
+    }
+
+    private Texture2D PrepareStrokeDistanceField(
+        IPrismCommandRenderer renderer,
+        Texture2D source,
+        RenderTarget2D scratchA,
+        RenderTarget2D scratchB)
+    {
+        RenderKernel(
+            renderer,
+            scratchA,
+            source,
+            source,
+            kernels.StrokeDistanceSeed,
+            1f);
+
+        RenderTarget2D read = scratchA;
+        RenderTarget2D write = scratchB;
+        int extent = Math.Max(source.Width, source.Height);
+        int jump = 1;
+        while (jump < extent)
+        {
+            jump <<= 1;
+        }
+        jump >>= 1;
+
+        while (jump >= 1)
+        {
+            RenderStrokeDistanceFloodPass(
+                renderer,
+                write,
+                read,
+                jump);
+            (read, write) = (write, read);
+            jump >>= 1;
+        }
+
+        // JFA+1 removes the common one-texel propagation errors at Voronoi boundaries.
+        RenderStrokeDistanceFloodPass(
+            renderer,
+            write,
+            read,
+            1);
+        return write;
+    }
+
+    private void RenderStrokeDistanceFloodPass(
+        IPrismCommandRenderer renderer,
+        RenderTarget2D target,
+        Texture2D source,
+        int jump)
+    {
+        PrismMaskKernelSettings settings = new(
+            Channel: 0,
+            Density: 0,
+            Invert: 0,
+            UvRowX: new Vector3(1, 0, 0),
+            UvRowY: new Vector3(0, 1, 0),
+            FeatherStep: new Vector2(
+                jump / (float)source.Width,
+                jump / (float)source.Height));
+        RenderKernel(
+            renderer,
+            target,
+            source,
+            source,
+            kernels.StrokeDistanceFlood,
+            1f,
+            maskSettings: settings);
     }
 
     private void RenderStyleMaskPass(

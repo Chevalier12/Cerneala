@@ -548,7 +548,13 @@ public sealed class PrismWindowsDxConformanceTests
             nodeId => scene.Plan.OptimizedGraph
                 .GetNode(nodeId)
                 is { Kind: PrismGraphNodeKind.Style, Style: PrismStyleId.OuterGlow });
-        int outerGlowScratchCount = outerGlowCount > 0 ? 2 : 0;
+        int strokeCount = scene.Plan.ExecutionOrder.Count(
+            nodeId => scene.Plan.OptimizedGraph
+                .GetNode(nodeId)
+                is { Kind: PrismGraphNodeKind.Style, Style: PrismStyleId.Stroke });
+        int styleScratchCount =
+            (outerGlowCount > 0 ? 2 : 0) +
+            (strokeCount > 0 ? 2 : 0);
         int basePassCount =
             scene.Plan.ExecutionOrder.Length +
             scene.Analysis.Scopes.Length;
@@ -556,7 +562,7 @@ public sealed class PrismWindowsDxConformanceTests
         Assert.InRange(
             counters.PassCount,
             basePassCount,
-            basePassCount + outerGlowScratchCount);
+            basePassCount + styleScratchCount);
         Assert.Equal(
             scene.Analysis.Scopes.Length,
             counters.CaptureCount);
@@ -564,13 +570,13 @@ public sealed class PrismWindowsDxConformanceTests
             counters.PeakLiveSurfaceCount,
             scene.Plan.PeakLiveSurfaces,
             scene.Plan.PeakLiveSurfaces +
-                Math.Min(outerGlowScratchCount, 2));
+                Math.Min(styleScratchCount, 2));
         Assert.InRange(
             counters.CreatedSurfaceCount +
                 counters.ReusedSurfaceCount,
             scene.Plan.ExecutionOrder.Length,
             scene.Plan.ExecutionOrder.Length +
-                outerGlowScratchCount);
+                styleScratchCount);
         Assert.Equal(
             scene.ExpectedFallbackCount,
             counters.FallbackCount);

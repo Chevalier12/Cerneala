@@ -22,7 +22,22 @@ public sealed class PrismStyleState
 
 ## Remarks
 
-Style-specific values use catalog-generated typed keys and dense per-type storage. Changed writes increment the owning instance value version; identical writes do not.
+Style-specific values use catalog-generated dense storage. Applications can discover parameters through `PrismCatalog` and access them without stable IDs or slot numbers.
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| `GetValue<T>(PrismCatalogParameterInfo)` | Gets a typed style parameter after validating its descriptor and generic type. |
+| `SetValue<T>(PrismCatalogParameterInfo, T)` | Validates and updates a typed style parameter. Changed writes advance the owning instance value version. |
+
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `GetValue<T>`, `SetValue<T>` | `ArgumentException` | The descriptor belongs to another operation or `T` does not match its catalog value kind. |
+| `SetValue<T>` | `ArgumentOutOfRangeException` | The value violates the catalog domain or symbol options. |
+| `GetValue<T>`, `SetValue<T>` | `InvalidOperationException` | The state handle belongs to a replaced definition. |
 
 ## Applies to
 

@@ -63,7 +63,7 @@ The foundation-and-catalog plan does not change these three APIs.
 
 ## Final Compatibility Result
 
-The final Prism public-surface audit covers 46 Prism types and 10 existing types
+The final Prism public-surface audit covers 51 Prism types and 10 existing types
 extended for Prism. Every retained symbol has a current author, backend, hosting,
 or diagnostics scenario and a matching API page/manifest entry.
 

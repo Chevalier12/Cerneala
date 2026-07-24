@@ -3940,6 +3940,31 @@
     "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
   },
   {
+    "name": "Cerneala.Drawing.Prism.Catalog.PrismCatalog",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismCatalog.md",
+    "source": "Drawing/Prism/Catalog/PrismCatalog.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Catalog.PrismCatalogOperationInfo",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismCatalogOperationInfo.md",
+    "source": "Drawing/Prism/Catalog/PrismCatalog.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Catalog.PrismCatalogOperationKind",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismCatalogOperationKind.md",
+    "source": "Drawing/Prism/Catalog/PrismCatalog.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Catalog.PrismCatalogParameterInfo",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismCatalogParameterInfo.md",
+    "source": "Drawing/Prism/Catalog/PrismCatalog.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Catalog.PrismCatalogValueKind",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismCatalogValueKind.md",
+    "source": "Drawing/Prism/Catalog/PrismCatalog.cs"
+  },
+  {
     "name": "Cerneala.Drawing.Prism.Catalog.PrismColorProfile",
     "file": "documentation/classes/Cerneala.Drawing.Prism.Catalog.PrismColorProfile.md",
     "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"

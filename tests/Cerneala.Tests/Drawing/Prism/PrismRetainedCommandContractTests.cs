@@ -43,7 +43,7 @@ public sealed class PrismRetainedCommandContractTests
     }
 
     [Fact]
-    public void BuilderEmitsClipLocalPrismAndChildrenInCanonicalOrder()
+    public void BuilderEmitsClipAndPrismAroundTheOwnedVisualSubtree()
     {
         UIRoot root = new(100, 100);
         RenderingTestElement owner = new(new Color(1, 0, 0));
@@ -61,8 +61,8 @@ public sealed class PrismRetainedCommandContractTests
                 DrawCommandKind.PushClip,
                 DrawCommandKind.BeginPrism,
                 DrawCommandKind.FillRectangle,
-                DrawCommandKind.EndPrism,
                 DrawCommandKind.FillRectangle,
+                DrawCommandKind.EndPrism,
                 DrawCommandKind.PopClip
             ],
             cache.RootCommands.Select(command => command.Kind));
@@ -74,7 +74,7 @@ public sealed class PrismRetainedCommandContractTests
     }
 
     [Fact]
-    public void BuilderKeepsParentAndChildScopesIndependentAndPreservesRenderState()
+    public void BuilderNestsParentAndChildScopesAndPreservesRenderState()
     {
         UIRoot root = new(100, 100, scale: 2);
         RenderingTestElement parent = new(new Color(10, 0, 0))
@@ -99,15 +99,15 @@ public sealed class PrismRetainedCommandContractTests
             [
                 DrawCommandKind.BeginPrism,
                 DrawCommandKind.FillRectangle,
-                DrawCommandKind.EndPrism,
                 DrawCommandKind.BeginPrism,
                 DrawCommandKind.FillRectangle,
+                DrawCommandKind.EndPrism,
                 DrawCommandKind.EndPrism
             ],
             cache.RootCommands.Select(command => command.Kind));
 
         PrismDrawScope parentScope = cache.RootCommands[0].PrismScope!.Value;
-        PrismDrawScope childScope = cache.RootCommands[3].PrismScope!.Value;
+        PrismDrawScope childScope = cache.RootCommands[2].PrismScope!.Value;
         Assert.Equal(new DrawRect(0, 0, 10, 10), parentScope.ControlBounds);
         Assert.Equal(2, parentScope.PixelScale);
         Assert.Equal(4, parentScope.EffectiveTransform.M31);
@@ -119,7 +119,7 @@ public sealed class PrismRetainedCommandContractTests
         Assert.True(parentScope.VisualContentVersion > 0);
         Assert.True(parentScope.CacheOwnerToken.Value > 0);
         Assert.Equal(128, cache.RootCommands[1].Color.A);
-        Assert.Equal(64, cache.RootCommands[4].Color.A);
+        Assert.Equal(64, cache.RootCommands[3].Color.A);
     }
 
     [Fact]
@@ -200,7 +200,7 @@ public sealed class PrismRetainedCommandContractTests
     }
 
     [Fact]
-    public void PresenceExitingChildrenRenderAfterTheOwningLocalPrismAndLiveChildren()
+    public void PresenceExitingChildrenRenderInsideTheOwningPrismAfterLiveChildren()
     {
         ManualMotionClock clock = new();
         UIRoot root = new(100, 100, motionClock: clock);
@@ -236,10 +236,9 @@ public sealed class PrismRetainedCommandContractTests
         int liveCommand = FindColor(commands, new Color(2, 0, 0));
         int exitingCommand = FindColor(commands, new Color(3, 0, 0));
         Assert.True(begin < ownerCommand);
-        Assert.True(ownerCommand < end);
-        Assert.True(end < liveCommand);
         Assert.True(ownerCommand < liveCommand);
         Assert.True(liveCommand < exitingCommand);
+        Assert.True(exitingCommand < end);
     }
 
     [Fact]

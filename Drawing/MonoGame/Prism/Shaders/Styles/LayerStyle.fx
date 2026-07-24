@@ -32,7 +32,7 @@ float4 LayerStylePixelShader(
             uv).a;
         shifted = local;
     }
-    else if (kind == 3 || kind == 9)
+    else if (kind == 3)
     {
         local = StyleBlurAlpha(uv, size);
         shifted = local;
@@ -102,9 +102,7 @@ float4 LayerStylePixelShader(
     }
     else if (kind == 9)
     {
-        mask = EvaluateStrokeMask(
-            outerEdge,
-            innerEdge);
+        mask = EvaluateStrokeMask(uv, alpha, size);
     }
 
     if (kind == 2 || kind == 3)

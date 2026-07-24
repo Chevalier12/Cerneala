@@ -28,7 +28,7 @@ public sealed class DrawCommandListBuilderTests
     }
 
     [Fact]
-    public void PrismCaptureWrapsOnlyTheAttachedElementsLocalCommands()
+    public void PrismCaptureWrapsTheAttachedElementsVisualSubtree()
     {
         UIRoot root = new();
         RenderingTestElement parent = new(new Color(1, 0, 0));
@@ -38,7 +38,7 @@ public sealed class DrawCommandListBuilderTests
             parent,
             () => new PrismInstance(
                 new PrismCompositionDefinition(
-                    "local-visual-only",
+                    "visual-subtree",
                     [
                         new PrismLayerDefinition(
                             new PrismNodeId(1),
@@ -58,12 +58,12 @@ public sealed class DrawCommandListBuilderTests
                 Assert.Equal(DrawCommandKind.FillRectangle, command.Kind);
                 Assert.Equal(new Color(1, 0, 0), command.Color);
             },
-            command => Assert.Equal(DrawCommandKind.EndPrism, command.Kind),
             command =>
             {
                 Assert.Equal(DrawCommandKind.FillRectangle, command.Kind);
                 Assert.Equal(new Color(2, 0, 0), command.Color);
-            });
+            },
+            command => Assert.Equal(DrawCommandKind.EndPrism, command.Kind));
     }
 
     [Fact]

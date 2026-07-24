@@ -204,6 +204,223 @@ public sealed class PrismGraphExecutorTests
     }
 
     [Fact]
+    public void StrokeGpuProducesSolidEuclideanOutsideBand()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int size = 17;
+        const int center = size / 2;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        HalfVector4[] sourcePixels = new HalfVector4[size * size];
+        sourcePixels[(center * size) + center] =
+            new HalfVector4(Vector4.One);
+        using Texture2D source = new(
+            graphicsDevice,
+            size,
+            size,
+            false,
+            SurfaceFormat.HalfVector4);
+        source.SetData(sourcePixels);
+        using RenderTarget2D output = new(
+            graphicsDevice,
+            size,
+            size,
+            mipMap: false,
+            SurfaceFormat.HalfVector4,
+            DepthFormat.None,
+            preferredMultiSampleCount: 0,
+            RenderTargetUsage.PreserveContents);
+        using RenderTarget2D distanceA = new(
+            graphicsDevice,
+            size,
+            size,
+            mipMap: false,
+            SurfaceFormat.Vector4,
+            DepthFormat.None,
+            preferredMultiSampleCount: 0,
+            RenderTargetUsage.PreserveContents);
+        using RenderTarget2D distanceB = new(
+            graphicsDevice,
+            size,
+            size,
+            mipMap: false,
+            SurfaceFormat.Vector4,
+            DepthFormat.None,
+            preferredMultiSampleCount: 0,
+            RenderTargetUsage.PreserveContents);
+
+        DrawDistancePass(
+            registry.StrokeDistanceSeed,
+            source,
+            distanceA,
+            Vector2.Zero);
+        RenderTarget2D read = distanceA;
+        RenderTarget2D write = distanceB;
+        for (int jump = 16; jump >= 1; jump >>= 1)
+        {
+            DrawDistancePass(
+                registry.StrokeDistanceFlood,
+                read,
+                write,
+                new Vector2(
+                    jump / (float)size,
+                    jump / (float)size));
+            (read, write) = (write, read);
+        }
+        DrawDistancePass(
+            registry.StrokeDistanceFlood,
+            read,
+            write,
+            new Vector2(1f / size, 1f / size));
+        read = write;
+
+        graphicsDevice.SetRenderTarget(output);
+        graphicsDevice.Clear(XnaColor.Transparent);
+        PrismKernelParameters parameters = new(
+            source,
+            1,
+            new Vector2(1f / size, 1f / size),
+            Vector2.One,
+            Vector2.Zero)
+        {
+            StyleTexture = source,
+            StyleMaskTexture = read,
+            StyleColor = new Vector4(1, 0, 0, 1),
+            StyleGeometry0 = new Vector4(0, 0, 3, 0),
+            StyleOptions0 = new Vector4(1, 0, 0, 0),
+            StyleModes0 = new Vector4(
+                9,
+                (int)PrismBlendMode.Normal,
+                0,
+                0),
+            StyleModes1 = Vector4.Zero
+        };
+        registry.Bind(registry.LayerStyle, in parameters);
+        spriteBatch.Begin(
+            SpriteSortMode.Immediate,
+            BlendState.Opaque,
+            SamplerState.LinearClamp,
+            DepthStencilState.None,
+            RasterizerState.CullNone,
+            registry.Effect);
+        spriteBatch.Draw(
+            source,
+            new Rectangle(0, 0, size, size),
+            XnaColor.White);
+        spriteBatch.End();
+        graphicsDevice.SetRenderTarget(null);
+        HalfVector4[] pixels = new HalfVector4[size * size];
+        output.GetData(pixels);
+
+        Assert.InRange(AlphaAt(2, 0), 0.997f, 1f);
+        Assert.InRange(AlphaAt(2, 2), 0.997f, 1f);
+        Assert.InRange(AlphaAt(4, 1), 0f, 0.003f);
+
+        float AlphaAt(int offsetX, int offsetY) =>
+            pixels[
+                ((center + offsetY) * size) +
+                center + offsetX]
+            .ToVector4()
+            .W;
+
+        void DrawDistancePass(
+            PrismKernel kernel,
+            Texture2D input,
+            RenderTarget2D target,
+            Vector2 jump)
+        {
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters passParameters = new(
+                input,
+                1,
+                new Vector2(1f / size, 1f / size),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                MaskFeatherStep = jump
+            };
+            registry.Bind(kernel, in passParameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.PointClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                input,
+                new Rectangle(0, 0, size, size),
+                XnaColor.White);
+            spriteBatch.End();
+        }
+    }
+
+    [Fact]
+    public void StrokeExecutorPreparesAndConsumesSignedDistanceField()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int size = 17;
+        const int center = size / 2;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using TestPrismRenderer renderer = new(
+            graphicsDevice,
+            size,
+            size);
+        using PrismGraphExecutor executor = new(graphicsDevice);
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Stroke",
+            styles: [new PrismStyleDefinition(PrismStyleId.Stroke)]);
+        PrismDrawScope scope = PrismTestData.Scope(
+            PrismTestData.Composition("Stroke", layer),
+            bounds: new DrawRect(0, 0, size, size));
+        DrawCommandList commands = PrismTestData.Commands(
+            DrawCommand.BeginPrism(scope),
+            DrawCommand.FillRectangle(
+                new DrawRect(center, center, 1, 1),
+                CernealaColor.White),
+            DrawCommand.EndPrism());
+        PrismFrameAnalysis analysis =
+            new PrismFrameAnalyzer().Analyze(commands);
+        PrismGraphExecutionPlan plan =
+            new PrismGraphOptimizer().Optimize(
+                new PrismGraphBuilder().Build(analysis));
+
+        ExecuteFrame(
+            renderer,
+            executor,
+            commands,
+            analysis,
+            plan,
+            new Viewport(0, 0, size, size));
+        XnaColor[] pixels = renderer.ReadPixels();
+
+        Assert.InRange(AlphaAt(2, 0), 254, 255);
+        Assert.InRange(AlphaAt(2, 2), 254, 255);
+        Assert.InRange(AlphaAt(4, 1), 0, 1);
+        Assert.Equal(0, executor.Diagnostics.Count);
+        Assert.Equal(0, executor.SurfacePool.ActiveLeaseCount);
+
+        byte AlphaAt(int offsetX, int offsetY) =>
+            pixels[
+                ((center + offsetY) * size) +
+                center + offsetX]
+            .A;
+    }
+
+    [Fact]
     public void ResamplingTransformGpuMapsTranslationAndTransparentEdges()
     {
         if (!OperatingSystem.IsWindows())

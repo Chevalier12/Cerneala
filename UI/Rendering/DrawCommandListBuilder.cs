@@ -111,23 +111,12 @@ public sealed class DrawCommandListBuilder
                 prismInstance!,
                 cacheOwnerToken,
                 elementTransform,
-                element.PrismLocalVisualVersion,
+                element.PrismVisualVersion,
                 prismLowerUiVersion,
                 ResolvePrismResources(
                     element,
                     prismInstance!));
             rootCommands.ReplaceAt(prismBeginIndex, DrawCommand.BeginPrism(scope));
-            rootCommands.Add(DrawCommand.EndPrism());
-            counters.CountEmittedCommands(1);
-            lowerUiVersion = MixVisualVersion(
-                lowerUiVersion,
-                cacheOwnerToken.Value);
-            lowerUiVersion = MixVisualVersion(
-                lowerUiVersion,
-                prismInstance!.StructuralVersion.Value);
-            lowerUiVersion = MixVisualVersion(
-                lowerUiVersion,
-                prismInstance.ValueVersion.Value);
         }
 
         UIElementCollection visualChildren = element.VisualChildren;
@@ -158,6 +147,21 @@ public sealed class DrawCommandListBuilder
                     elementOpacity,
                     ref lowerUiVersion);
             }
+        }
+
+        if (hasPrism)
+        {
+            rootCommands.Add(DrawCommand.EndPrism());
+            counters.CountEmittedCommands(1);
+            lowerUiVersion = MixVisualVersion(
+                lowerUiVersion,
+                cacheOwnerToken.Value);
+            lowerUiVersion = MixVisualVersion(
+                lowerUiVersion,
+                prismInstance!.StructuralVersion.Value);
+            lowerUiVersion = MixVisualVersion(
+                lowerUiVersion,
+                prismInstance.ValueVersion.Value);
         }
 
         if (hasClip)
