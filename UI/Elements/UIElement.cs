@@ -1162,25 +1162,24 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             (oldVisibility == Visibility.Collapsed) != (newVisibility == Visibility.Collapsed);
         bool expandingFromCollapsed = layoutParticipationChanged &&
             oldVisibility == Visibility.Collapsed;
-        bool requiresExpandedSubtreeRelayout = expandingFromCollapsed &&
+        bool requiresExpandedSubtreeScheduling = expandingFromCollapsed &&
             (Root is not UIRoot root || !root.Scheduler.IsProcessingLayout);
-        if (requiresExpandedSubtreeRelayout)
+        if (expandingFromCollapsed)
         {
             foreach (UIElement descendant in ElementTreeWalker.Descendants(this, ElementChildRole.Visual))
             {
                 descendant.IncrementLayoutVersion();
             }
-
-            flags |= InvalidationFlags.Subtree;
         }
 
         if (flags != InvalidationFlags.None)
         {
             Invalidate(new InvalidationRequest(this, flags, "Property changed", args.Property));
-            if (requiresExpandedSubtreeRelayout &&
+            if (requiresExpandedSubtreeScheduling &&
                 Root is UIRoot layoutRoot &&
                 VisualParent is UIElement parent)
             {
+                parent.IncrementLayoutVersion();
                 layoutRoot.LayoutQueue.RequireMeasure(parent);
                 layoutRoot.LayoutQueue.RequireArrange(parent);
             }

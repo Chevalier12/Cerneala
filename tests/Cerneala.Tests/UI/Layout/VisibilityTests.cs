@@ -1,6 +1,5 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
-using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 
@@ -97,13 +96,13 @@ public sealed class VisibilityTests
         parent.VisualChildren.Add(child);
         child.VisualChildren.Add(grandchild);
         root.ProcessFrame();
+        int hostLayoutVersion = host.LayoutVersion;
         int childLayoutVersion = child.LayoutVersion;
         int grandchildLayoutVersion = grandchild.LayoutVersion;
 
         parent.Visibility = Visibility.Visible;
 
-        Assert.True(child.DirtyState.Has(InvalidationFlags.Measure));
-        Assert.True(grandchild.DirtyState.Has(InvalidationFlags.Measure));
+        Assert.True(host.LayoutVersion > hostLayoutVersion);
         Assert.True(child.LayoutVersion > childLayoutVersion);
         Assert.True(grandchild.LayoutVersion > grandchildLayoutVersion);
         root.ProcessFrame();
@@ -118,4 +117,5 @@ public sealed class VisibilityTests
             return size;
         }
     }
+
 }

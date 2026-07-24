@@ -62,7 +62,7 @@ During measure and arrange, the control reevaluates whether each scroll bar is n
 
 Template replacement unsubscribes the old presenter and scroll bars, releases content ownership from the old presenter, then connects and synchronizes the new parts. Missing parts and wrong part types fail during template application with the part name and expected type. Old parts cannot continue changing viewer offsets after a swap.
 
-Visibility changes performed during convergence normally enqueue ancestor layout work. Because the viewer immediately measures and arranges that same active template hierarchy, it consumes only those measure/arrange entries while applying the visibility change. Render, hit-test, input, and other invalidations remain intact; the next unchanged frame therefore has no stale layout work.
+Visibility changes performed during convergence normally enqueue layout work along the visual ancestor chain. The viewer consumes measure and arrange entries only from the changed scroll bar through its own template boundary, because that hierarchy is laid out synchronously. Work for parents outside the viewer remains scheduled so an outer grid or panel can recompute the viewer's slot. Render, hit-test, input, and other invalidations remain intact; the next unchanged frame therefore has no stale internal layout work.
 
 Mouse wheel input scrolls vertically by `48` units per wheel event sign when vertical scrolling is not disabled. The event is marked handled only when the vertical offset actually changes.
 

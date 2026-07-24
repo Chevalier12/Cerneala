@@ -274,7 +274,7 @@ public class ScrollViewer : Control
         }
     }
 
-    private static void SetScrollBarVisibility(ScrollBar scrollBar, Visibility visibility)
+    private void SetScrollBarVisibility(ScrollBar scrollBar, Visibility visibility)
     {
         if (scrollBar.Visibility == visibility)
         {
@@ -288,13 +288,13 @@ public class ScrollViewer : Control
             return;
         }
 
-        // Visibility invalidates the hierarchy, but convergence immediately performs that layout.
+        // Convergence immediately lays out the viewer template, but not its external ancestors.
         for (UIElement? current = scrollBar; current is not null; current = current.VisualParent)
         {
             root.LayoutQueue.RemoveMeasure(current);
             root.LayoutQueue.RemoveArrange(current);
             current.DirtyState.Clear(InvalidationFlags.Measure | InvalidationFlags.Arrange);
-            if (current is UIRoot)
+            if (ReferenceEquals(current, this))
             {
                 break;
             }

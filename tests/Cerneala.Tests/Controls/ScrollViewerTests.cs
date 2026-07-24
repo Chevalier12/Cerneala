@@ -450,6 +450,33 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void ScrollBarConvergenceDoesNotConsumeExternalAncestorArrangeWork()
+    {
+        UIRoot root = new(200, 100);
+        Cerneala.UI.Layout.Panels.Grid host = new();
+        host.ColumnDefinitions.Add(new Cerneala.UI.Layout.Panels.ColumnDefinition(
+            Cerneala.UI.Layout.Panels.GridLength.Pixels(50)));
+        host.ColumnDefinitions.Add(new Cerneala.UI.Layout.Panels.ColumnDefinition(
+            Cerneala.UI.Layout.Panels.GridLength.Star));
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(100, 300)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            Visibility = Visibility.Collapsed
+        };
+        Cerneala.UI.Layout.Panels.Grid.SetColumn(viewer, 1);
+        root.VisualChildren.Add(host);
+        host.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        viewer.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(50, 0, 150, 100), viewer.ArrangedBounds);
+        Assert.True(viewer.IsVerticalScrollBarVisible);
+    }
+
+    [Fact]
     public void AutoVerticalScrollBarWithoutOverflowDoesNotRetainLateLayoutWork()
     {
         UIRoot root = new(100, 100);

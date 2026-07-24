@@ -41,4 +41,18 @@ public static class UIElementVisibility
 
         return true;
     }
+
+    internal static bool IsEffectivelyParticipatingInLayout(UIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (!ParticipatesInLayout(current))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

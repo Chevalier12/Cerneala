@@ -282,6 +282,13 @@ public sealed class UiFrameScheduler
             LayoutQueueEntryKind kind = layoutQueue.GetMeasureKind(element);
             layoutQueue.RemoveMeasure(element);
 
+            if (!Elements.UIElementVisibility.IsEffectivelyParticipatingInLayout(element))
+            {
+                InvalidationFlags skipped = ClearProcessedFlags(element, InvalidationFlags.Measure);
+                trace.RecordClear(element, skipped);
+                continue;
+            }
+
             if (processors.SupportsIncrementalMeasure && kind == LayoutQueueEntryKind.Propagated)
             {
                 InvalidationFlags skipped = ClearProcessedFlags(element, InvalidationFlags.Measure);
@@ -345,6 +352,13 @@ public sealed class UiFrameScheduler
             Elements.UIElement element = snapshot[index];
             LayoutQueueEntryKind kind = layoutQueue.GetArrangeKind(element);
             layoutQueue.RemoveArrange(element);
+
+            if (!Elements.UIElementVisibility.IsEffectivelyParticipatingInLayout(element))
+            {
+                InvalidationFlags skipped = ClearProcessedFlags(element, InvalidationFlags.Arrange);
+                trace.RecordClear(element, skipped);
+                continue;
+            }
 
             if (processors.SupportsIncrementalMeasure && kind == LayoutQueueEntryKind.Propagated)
             {
