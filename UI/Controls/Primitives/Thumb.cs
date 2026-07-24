@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Core;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
@@ -18,9 +19,23 @@ public class Thumb : Control, IPointerDragSource
 
     public Thumb()
     {
-        Background = new Cerneala.UI.Media.SolidColorBrush(new Color(180, 180, 180));
-        BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(80, 80, 80));
-        BorderThickness = new Thickness(1);
+        SetValue(
+            BackgroundProperty,
+            new Cerneala.UI.Media.SolidColorBrush(new Color(180, 180, 180)),
+            UiPropertyValueSource.AspectBase);
+        SetValue(
+            BorderBrushProperty,
+            new Cerneala.UI.Media.SolidColorBrush(new Color(80, 80, 80)),
+            UiPropertyValueSource.AspectBase);
+        SetValue(BorderThicknessProperty, new Thickness(1), UiPropertyValueSource.AspectBase);
+        Handlers.AddHandler(InputEvents.MouseMoveEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseWheelEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseDownEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseUpEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseLeftButtonDownEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseLeftButtonUpEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseRightButtonDownEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseRightButtonUpEvent, OnCapturedPointerInput);
         Handlers.AddHandler(InputEvents.LostMouseCaptureEvent, (_, _) => CancelDrag());
     }
 
@@ -154,6 +169,14 @@ public class Thumb : Control, IPointerDragSource
         if (BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)
         {
             context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
+        }
+    }
+
+    private void OnCapturedPointerInput(UiElementId source, RoutedEventArgs args)
+    {
+        if (isDragging)
+        {
+            args.Handled = true;
         }
     }
 }

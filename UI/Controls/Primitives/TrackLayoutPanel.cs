@@ -3,7 +3,7 @@ using Cerneala.UI.Layout;
 
 namespace Cerneala.UI.Controls.Primitives;
 
-internal sealed class TrackLayoutPanel : Cerneala.UI.Layout.Panels.Panel
+public sealed class TrackLayoutPanel : Cerneala.UI.Layout.Panels.Panel
 {
     public static readonly UiProperty<Orientation> OrientationProperty = UiProperty<Orientation>.Register(
         nameof(Orientation),

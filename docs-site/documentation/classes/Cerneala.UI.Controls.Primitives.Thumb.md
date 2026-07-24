@@ -68,9 +68,11 @@ thumb.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
 
 During an active drag, `UpdateDrag` computes `LastHorizontalChange` and `LastVerticalChange` from the previous drag point, and `TotalHorizontalChange` and `TotalVerticalChange` from the drag start point. `DragDelta` is raised only when the latest horizontal or vertical change is non-zero. The update event is marked handled while dragging.
 
+While the drag owns pointer capture, `Thumb` handles mouse movement, wheel, generic button transitions, and left/right button-specific events. This prevents ancestor controls such as `ScrollViewer` from acting on pointer input until the left button is released. Hover tracking also remains on the captured thumb rather than moving to the element physically under the cursor.
+
 Completing a left-button drag performs a final update, clears `IsDragging`, releases capture through the supplied route map, raises `DragCompleted` with `Canceled` set to `false`, and marks the mouse-up event as handled. `CancelDrag` clears the drag state and raises `DragCompleted` with `Canceled` set to `true`. The constructor also registers a lost-mouse-capture handler that cancels the active drag, and detaching the thumb cancels any active drag before base detachment runs.
 
-Without a template child, the fallback layout reports a desired size of `10 x 10`. Fallback rendering fills the arranged bounds with `Background` when it is not `null`, then draws a border using the maximum side of `BorderThickness` when `BorderBrush` is not `null`. The constructor initializes `Background` to `new SolidColorBrush(new Color(180, 180, 180))`, `BorderBrush` to `new SolidColorBrush(new Color(80, 80, 80))`, and `BorderThickness` to `new Thickness(1)`.
+Without a template child, the fallback layout reports a desired size of `10 x 10`. Fallback rendering fills the arranged bounds with `Background` when it is not `null`, then draws a border using the maximum side of `BorderThickness` when `BorderBrush` is not `null`. The constructor initializes `Background` to `new SolidColorBrush(new Color(180, 180, 180))`, `BorderBrush` to `new SolidColorBrush(new Color(80, 80, 80))`, and `BorderThickness` to `new Thickness(1)` at the `AspectBase` value source so markup aspects can replace those visual defaults.
 
 `BeginDrag`, `CompleteDrag`, `BeginPointerDrag`, and `CompletePointerDrag` require non-null `PointerCaptureManager`, `ElementInputRouteMap`, and `MouseButtonEventArgs` arguments. `UpdateDrag` and `UpdatePointerDrag` require a non-null `MouseEventArgs` argument.
 

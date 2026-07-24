@@ -1,4 +1,6 @@
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -8,6 +10,42 @@ namespace Cerneala.Tests.Controls;
 
 public sealed class SliderTests
 {
+    [Fact]
+    public void SliderDeclaresRequiredTrackTemplatePart()
+    {
+        TemplatePartAttribute part = Assert.Single(
+            typeof(Slider).GetCustomAttributes(typeof(TemplatePartAttribute), inherit: true)
+                .Cast<TemplatePartAttribute>(),
+            candidate => candidate.Name == "PART_Track");
+
+        Assert.Equal(typeof(Track), part.Type);
+    }
+
+    [Fact]
+    public void SliderUsesTrackProvidedByComponentTemplate()
+    {
+        Track templateTrack = new();
+        ComponentTemplate<Slider> template = new("Slider.Custom", context =>
+        {
+            context.RequirePart("PART_Track", templateTrack);
+            return templateTrack;
+        });
+        Slider slider = new()
+        {
+            ComponentTemplate = template,
+            Minimum = 0,
+            Maximum = 100,
+            Value = 25
+        };
+
+        slider.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        slider.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+        templateTrack.Value = 75;
+
+        Assert.Same(templateTrack, slider.Track);
+        Assert.Equal(75, slider.Value);
+    }
+
     [Fact]
     public void SliderValueFollowsThumbDrag()
     {
@@ -27,6 +65,26 @@ public sealed class SliderTests
         bridge.Dispatch(root, PointerFrame(5, 5, 55, 5, previousDown: true, currentDown: true));
 
         Assert.Equal(50, slider.Value);
+    }
+
+    [Fact]
+    public void ClickingSliderTrackMovesValueToPointer()
+    {
+        UIRoot root = new(200, 100);
+        Slider slider = new()
+        {
+            Minimum = 0,
+            Maximum = 1,
+            Value = 1
+        };
+        slider.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        slider.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+        root.VisualChildren.Add(slider);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(30, 5, currentDown: true));
+
+        Assert.Equal(0.25f, slider.Value);
     }
 
     [Fact]

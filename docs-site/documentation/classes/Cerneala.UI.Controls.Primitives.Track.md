@@ -61,7 +61,7 @@ track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 20)));
 
 ## Remarks
 
-`Track` requires a `Thumb` named `PART_Thumb` in its active component template. The default template supplies that part through an internal layout panel. `Thumb` always returns the part from the active template rather than a parallel fallback instance. Replacing the template unsubscribes the old thumb before subscribing to the new one. Assigning `null` to `ComponentTemplate` clears the local override and restores the default template.
+`Track` requires a `Thumb` named `PART_Thumb` in its active component template. The default template supplies that part through `TrackLayoutPanel`, which template authors can also use to keep thumb arrangement owned by `Track`. `Thumb` always returns the part from the active template rather than a parallel fallback instance. Replacing the template unsubscribes the old thumb before subscribing to the new one. Assigning `null` to `ComponentTemplate` clears the local override and restores the default template.
 
 `Minimum`, `Maximum`, and `Value` accept only finite floating-point values. `ViewportSize`, `SmallChange`, and `LargeChange` accept only finite, non-negative values. `Value` is coerced into the active `Minimum..Maximum` range. If an endpoint change would invert the range, the other endpoint is moved to preserve an ordered range, then `Value` is coerced again.
 
@@ -69,7 +69,7 @@ The default template layout is orientation-aware. A horizontal track reports a d
 
 Dragging the thumb updates `Value` from the pointer delta, using horizontal movement for horizontal tracks and vertical movement for vertical tracks. `ValueChanged` is raised when the stored value actually changes. A left mouse down on the track outside the thumb compares the clicked position with the current value and applies `DecreaseLarge` or `IncreaseLarge`; the input event is marked handled only when this changes the value.
 
-The default template binds `Background`, `BorderBrush`, and `BorderThickness` to its border root. The constructor initializes `Background` to `new SolidColorBrush(new Color(225, 225, 225))`, `BorderBrush` to `new SolidColorBrush(new Color(120, 120, 120))`, `BorderThickness` to `new Thickness(1)`, `SmallChange` to `0.1f`, and `LargeChange` to `1`.
+The default template binds `Background`, `BorderBrush`, and `BorderThickness` to its border root. The constructor initializes `Background` to `new SolidColorBrush(new Color(225, 225, 225))`, `BorderBrush` to `new SolidColorBrush(new Color(120, 120, 120))`, and `BorderThickness` to `new Thickness(1)` at the `AspectBase` value source so markup aspects can replace those visual defaults. It also initializes `SmallChange` to `0.1f` and `LargeChange` to `1`.
 
 `Slider` and `ScrollBar` use `Track` as their owned range interaction primitive and synchronize their range state into it.
 
@@ -168,6 +168,7 @@ The default template binds `Background`, `BorderBrush`, and `BorderThickness` to
 ## See also
 
 - `Cerneala.UI.Controls.Primitives.Thumb`
+- `Cerneala.UI.Controls.Primitives.TrackLayoutPanel`
 - `Cerneala.UI.Controls.Primitives.ScrollBar`
 - `Cerneala.UI.Controls.Slider`
 - `Cerneala.UI.Controls.Control`

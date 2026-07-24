@@ -1055,6 +1055,11 @@
     "source": "UI/Controls/Primitives/Track.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.Primitives.TrackLayoutPanel",
+    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.TrackLayoutPanel.md",
+    "source": "UI/Controls/Primitives/TrackLayoutPanel.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ProgressBar",
     "file": "documentation/classes/Cerneala.UI.Controls.ProgressBar.md",
     "source": "UI/Controls/ProgressBar.cs"

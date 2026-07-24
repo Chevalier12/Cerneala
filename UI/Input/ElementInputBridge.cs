@@ -90,13 +90,14 @@ public sealed class ElementInputBridge
         HitTestResult? hitTarget,
         HitTestResult? pointerTarget)
     {
+        bool hadCapture = pointerCaptureManager.HasCapture;
         bool moved = !hasLastPointerPosition ||
             inputFrame.Pointer.X != lastPointerX ||
             inputFrame.Pointer.Y != lastPointerY;
 
         if (moved)
         {
-            hoverTracker.Update(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+            hoverTracker.Update(pointerTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
             if (hasLastPointerPosition)
             {
                 RaiseMouseMovePair(routeMap, pointerTarget);
@@ -198,6 +199,11 @@ public sealed class ElementInputBridge
             frameTime,
             commandRouter,
             pressedStateTracker);
+
+        if (hadCapture && !pointerCaptureManager.HasCapture)
+        {
+            hoverTracker.Update(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        }
 
         hasLastPointerPosition = true;
         lastPointerX = inputFrame.Pointer.X;

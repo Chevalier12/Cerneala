@@ -16,9 +16,15 @@ public class Track : Control
 
     public Track()
     {
-        Background = new Cerneala.UI.Media.SolidColorBrush(new Color(225, 225, 225));
-        BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(120, 120, 120));
-        BorderThickness = new Thickness(1);
+        SetValue(
+            BackgroundProperty,
+            new Cerneala.UI.Media.SolidColorBrush(new Color(225, 225, 225)),
+            UiPropertyValueSource.AspectBase);
+        SetValue(
+            BorderBrushProperty,
+            new Cerneala.UI.Media.SolidColorBrush(new Color(120, 120, 120)),
+            UiPropertyValueSource.AspectBase);
+        SetValue(BorderThicknessProperty, new Thickness(1), UiPropertyValueSource.AspectBase);
         SmallChange = 0.1f;
         LargeChange = 1;
         Handlers.AddHandler(InputEvents.MouseDownEvent, OnMouseDown);
@@ -67,6 +73,8 @@ public class Track : Control
     public event EventHandler? ValueChanged;
 
     internal event EventHandler<TrackValueChangedEventArgs>? ValueChangedWithReason;
+
+    internal bool MoveToPointOnClick { get; set; }
 
     public Thumb Thumb
     {
@@ -287,7 +295,11 @@ public class Track : Control
 
         float oldValue = Value;
         float pointValue = ValueFromPoint(mouseArgs.X, mouseArgs.Y);
-        if (pointValue < Value)
+        if (MoveToPointOnClick)
+        {
+            ChangeValue(pointValue, TrackValueChangeReason.ThumbTrack);
+        }
+        else if (pointValue < Value)
         {
             DecreaseLarge();
         }

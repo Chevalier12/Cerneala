@@ -1,22 +1,20 @@
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
-using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 
 namespace Cerneala.UI.Controls;
 
+[TemplatePart("PART_Track", typeof(Track))]
 public class Slider : RangeBase
 {
-    private readonly Track track;
-    private bool ownsTrack;
+    private Track? track;
     private bool syncingTrack;
 
     public Slider()
     {
-        track = new Track();
-        track.ValueChanged += OnTrackValueChanged;
-        AddTrack();
+        SetValue(ComponentTemplateProperty, SliderTemplates.Default, UiPropertyValueSource.AspectBase);
     }
 
     public static readonly UiProperty<Orientation> OrientationProperty = UiProperty<Orientation>.Register(
@@ -30,35 +28,49 @@ public class Slider : RangeBase
         set => SetValue(OrientationProperty, value);
     }
 
-    public Track Track => track;
+    public Track Track
+    {
+        get
+        {
+            ApplyTemplate();
+            return track ?? throw new InvalidOperationException("Slider template did not provide the required part 'PART_Track'.");
+        }
+    }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
-        if (TemplateChild is not null)
-        {
-            return base.MeasureCore(context);
-        }
-
+        ApplyTemplate();
         SyncTrack();
-        track.Measure(new MeasureContext(context.AvailableSize, context.Rounding));
-        return track.DesiredSize;
+        return base.MeasureCore(context);
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
-        if (TemplateChild is not null)
+        SyncTrack();
+        return base.ArrangeCore(context);
+    }
+
+    protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
+    {
+        if (track is not null)
         {
-            return base.ArrangeCore(context);
+            track.ValueChanged -= OnTrackValueChanged;
         }
 
+        track = null;
+        if (instance is null)
+        {
+            return;
+        }
+
+        track = GetRequiredTemplatePart<Track>("PART_Track");
+        track.MoveToPointOnClick = true;
+        track.ValueChanged += OnTrackValueChanged;
         SyncTrack();
-        track.Arrange(context);
-        return context.FinalRect;
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
-        bool templateChanged = ReferenceEquals(args.Property, ComponentTemplateProperty);
         base.OnPropertyChanged(args);
         if (!syncingTrack &&
             (ReferenceEquals(args.Property, MinimumProperty) ||
@@ -71,21 +83,21 @@ public class Slider : RangeBase
             SyncTrack();
         }
 
-        if (templateChanged)
+        if (ReferenceEquals(args.Property, ComponentTemplateProperty) &&
+            ComponentTemplate is null &&
+            GetSourceValue(ComponentTemplateProperty, UiPropertyValueSource.AspectBase) is ComponentTemplate)
         {
-            if (ComponentTemplate is null)
-            {
-                AddTrack();
-            }
-            else
-            {
-                RemoveTrack();
-            }
+            ClearValue(ComponentTemplateProperty);
         }
     }
 
     private void SyncTrack()
     {
+        if (track is null)
+        {
+            return;
+        }
+
         syncingTrack = true;
         try
         {
@@ -104,35 +116,11 @@ public class Slider : RangeBase
 
     private void OnTrackValueChanged(object? sender, EventArgs args)
     {
-        if (syncingTrack)
+        if (syncingTrack || !ReferenceEquals(sender, track))
         {
             return;
         }
 
-        Value = track.Value;
-    }
-
-    private void AddTrack()
-    {
-        if (ownsTrack)
-        {
-            return;
-        }
-
-        LogicalChildren.Add(track);
-        VisualChildren.Add(track);
-        ownsTrack = true;
-    }
-
-    private void RemoveTrack()
-    {
-        if (!ownsTrack)
-        {
-            return;
-        }
-
-        VisualChildren.Remove(track);
-        LogicalChildren.Remove(track);
-        ownsTrack = false;
+        Value = track!.Value;
     }
 }

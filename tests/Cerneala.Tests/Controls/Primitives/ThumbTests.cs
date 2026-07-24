@@ -69,6 +69,50 @@ public sealed class ThumbTests
         Assert.True(args.Canceled);
     }
 
+    [Fact]
+    public void ThumbCaptureMonopolizesPointerInputUntilLeftButtonRelease()
+    {
+        UIRoot root = new(120, 40);
+        Thumb thumb = new();
+        UIElement other = new();
+        thumb.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
+        other.Arrange(new ArrangeContext(new LayoutRect(60, 0, 20, 20)));
+        root.VisualChildren.Add(thumb);
+        root.VisualChildren.Add(other);
+        ElementInputBridge bridge = new();
+        int rootWheelCount = 0;
+        int otherMouseDownCount = 0;
+        root.Handlers.AddHandler(InputEvents.MouseWheelEvent, (_, _) => rootWheelCount++);
+        other.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => otherMouseDownCount++);
+
+        bridge.Dispatch(root, PointerFrame(5, 5, currentDown: true));
+
+        PointerSnapshot previous = PointerSnapshot.Empty
+            .WithPosition(5, 5)
+            .WithButton(InputMouseButton.Left, true);
+        PointerSnapshot current = PointerSnapshot.Empty
+            .WithPosition(65, 5)
+            .WithWheelValue(120)
+            .WithButton(InputMouseButton.Left, true)
+            .WithButton(InputMouseButton.Right, true);
+        bridge.Dispatch(root, new InputFrame(
+            previous,
+            current,
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []));
+
+        Assert.Same(thumb, bridge.PointerCaptureManager.CapturedElement);
+        Assert.False(other.IsPointerOver);
+        Assert.Equal(0, rootWheelCount);
+        Assert.Equal(0, otherMouseDownCount);
+
+        bridge.Dispatch(root, PointerFrame(65, 5, 65, 5, previousDown: true));
+
+        Assert.False(bridge.PointerCaptureManager.HasCapture);
+        Assert.False(thumb.IsDragging);
+    }
+
     private static InputFrame PointerFrame(
         float previousX,
         float previousY,
