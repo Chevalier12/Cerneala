@@ -1,0 +1,420 @@
+<UserControl>
+    <UserControl.Resources>
+        <Aspect
+            Name="PrismStudioGhostButton"
+            Target="Button">
+            @default
+            {
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 9;
+                Background = "#00000000";
+                Foreground = "#FFEDEFF3";
+                BorderBrush = "#FF424754";
+                BorderThickness = "1";
+            }
+            @when IsMouseOver
+            {
+                Background = "#FF10282D";
+                Foreground = "#FF4DF0FF";
+                BorderBrush = "#FF4DF0FF";
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioPrimaryButton"
+            Target="Button">
+            @default
+            {
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 9;
+                Background = "#FFC6FF3D";
+                Foreground = "#FF0A0B0E";
+                BorderBrush = "#FFC6FF3D";
+                BorderThickness = "1";
+            }
+            @when IsMouseOver
+            {
+                Background = "#FF4DF0FF";
+                BorderBrush = "#FF4DF0FF";
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioCatalogButton"
+            Target="Button">
+            @default
+            {
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 9;
+                Background = "#00000000";
+                Foreground = "#FFEDEFF3";
+                BorderBrush = "#FF424754";
+                BorderThickness = "1";
+                Padding = "6,4,6,4";
+            }
+            @when IsMouseOver
+            {
+                Background = "#FF10282D";
+                Foreground = "#FF4DF0FF";
+                BorderBrush = "#FF4DF0FF";
+            }
+        </Aspect>
+    </UserControl.Resources>
+    <Grid
+        Margin="24,18,24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="54" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="38" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock
+                    Text="06 / PRISM STUDIO"
+                    FontFamily="Cascadia Mono SemiBold"
+                    FontSize="10"
+                    Foreground="$PinkBrush" />
+                <TextBlock
+                    Text="Composite the retained tree."
+                    FontFamily="Bahnschrift SemiBold"
+                    FontSize="25"
+                    Margin="0,5,0,0" />
+            </StackPanel>
+            <Button
+                Grid.Column="1"
+                Content="RESET"
+                Click="OnReset"
+                Background="$PanelAltBrush"
+                BorderBrush="$LineStrongBrush"
+                BorderThickness="1"
+                Padding="14,8,14,8"
+                VerticalAlignment="Center" />
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.12*" />
+                <ColumnDefinition Width="0.78*" />
+                <ColumnDefinition Width="1.10*" />
+            </Grid.ColumnDefinitions>
+            <Grid
+                Grid.Column="0"
+                Margin="0,0,10,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="42" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <TextBlock
+                        Text="LIVE PREVIEW"
+                        FontFamily="Cascadia Mono SemiBold"
+                        FontSize="9"
+                        Foreground="$CyanBrush"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        Text="RENDER-OWNING TARGET"
+                        FontFamily="Cascadia Mono"
+                        FontSize="8"
+                        Foreground="$SlateDimBrush"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+                </Grid>
+                <Border
+                    Grid.Row="1"
+                    Background="$PanelAltBrush"
+                    BorderBrush="$LineStrongBrush"
+                    BorderThickness="1"
+                    Padding="18">
+                    <Grid
+                        ClipToBounds="True">
+                        <Border
+                            Name="PreviewMascot"
+                            Background="#FF11151B"
+                            BorderBrush="$CyanBrush"
+                            BorderThickness="1">
+                            <Grid>
+                                <SvgImage
+                                    Name="PreviewMascotImage"
+                                    DisplaySize="205"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                                <TextBlock
+                                    Text="CERNEALA / MASCOT"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="9"
+                                    Foreground="$CyanBrush"
+                                    Margin="12"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Bottom" />
+                            </Grid>
+                        </Border>
+                        <Border
+                            Name="PreviewTypography"
+                            Visibility="Collapsed"
+                            Background="#FFF1F2ED"
+                            BorderBrush="$PinkBrush"
+                            BorderThickness="8,0,0,0"
+                            Padding="24">
+                            <StackPanel
+                                VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="PRISM"
+                                    FontFamily="Bahnschrift SemiBold"
+                                    FontSize="58"
+                                    Foreground="#FF111318" />
+                                <Border
+                                    Height="7"
+                                    Background="$CyanBrush"
+                                    Margin="0,2,40,12" />
+                                <TextBlock
+                                    Text="COLOR / LIGHT / COMPOSITE"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="9"
+                                    Foreground="#FF343A46" />
+                            </StackPanel>
+                        </Border>
+                        <Border
+                            Name="PreviewBadge"
+                            Visibility="Collapsed"
+                            Background="#FF11151B"
+                            BorderBrush="$OrangeBrush"
+                            BorderThickness="1"
+                            Padding="30">
+                            <Grid>
+                                <Border
+                                    Width="180"
+                                    Height="180"
+                                    Background="$PinkWashBrush"
+                                    BorderBrush="$PinkBrush"
+                                    BorderThickness="10"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                                <Border
+                                    Width="118"
+                                    Height="118"
+                                    Background="$CyanWashBrush"
+                                    BorderBrush="$CyanBrush"
+                                    BorderThickness="7"
+                                    Rotation="45"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                                <TextBlock
+                                    Text="P"
+                                    FontFamily="Bahnschrift SemiBold"
+                                    FontSize="52"
+                                    Foreground="$PaperBrush"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                        <Border
+                            Name="PreviewCard"
+                            Visibility="Collapsed"
+                            Background="#FFEFF2F3"
+                            BorderBrush="$LimeBrush"
+                            BorderThickness="1"
+                            Padding="24">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock
+                                    Text="SURFACE 04"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="9"
+                                    Foreground="#FF39414A" />
+                                <StackPanel
+                                    Grid.Row="1"
+                                    VerticalAlignment="Center">
+                                    <TextBlock
+                                        Text="Ready to render"
+                                        FontFamily="Bahnschrift SemiBold"
+                                        FontSize="28"
+                                        Foreground="#FF101419" />
+                                    <TextBlock
+                                        Text="Four targets. One non-destructive Prism stack."
+                                        FontSize="12"
+                                        Foreground="#FF56616B"
+                                        TextWrapping="Wrap"
+                                        Margin="0,8,0,0" />
+                                </StackPanel>
+                                <Border
+                                    Grid.Row="2"
+                                    Height="34"
+                                    Background="#FF101419"
+                                    Padding="12,8,12,8">
+                                    <TextBlock
+                                        Text="COMMIT FRAME"
+                                        FontFamily="Cascadia Mono SemiBold"
+                                        FontSize="9"
+                                        Foreground="$LimeBrush" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+                <Grid Grid.Row="2" Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Aspect="$PrismStudioGhostButton" Content="MASCOT" Click="OnTargetMascot" Padding="5" Margin="0,0,3,0" />
+                    <Button Aspect="$PrismStudioGhostButton" Grid.Column="1" Content="TYPE" Click="OnTargetTypography" Padding="5" Margin="3,0,3,0" />
+                    <Button Aspect="$PrismStudioGhostButton" Grid.Column="2" Content="BADGE" Click="OnTargetBadge" Padding="5" Margin="3,0,3,0" />
+                    <Button Aspect="$PrismStudioGhostButton" Grid.Column="3" Content="UI CARD" Click="OnTargetCard" Padding="5" Margin="3,0,0,0" />
+                </Grid>
+            </Grid>
+            <Grid
+                Grid.Column="1"
+                Margin="10,0,10,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="42" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <TextBlock
+                        Text="LAYERS"
+                        FontFamily="Cascadia Mono SemiBold"
+                        FontSize="9"
+                        Foreground="$LimeBrush"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        Name="LayerCountText"
+                        Text="02"
+                        FontFamily="Cascadia Mono"
+                        FontSize="9"
+                        Foreground="$SlateDimBrush"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+                </Grid>
+                <PrismStudioScrollHost
+                    Name="LayersHost"
+                    Grid.Row="1"
+                    Background="$PanelAltBrush"
+                    BorderBrush="$LineStrongBrush"
+                    BorderThickness="1"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Disabled" />
+                <Grid Grid.Row="2" Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Aspect="$PrismStudioPrimaryButton" Content="+ LAYER" Click="OnAddLayer" Padding="7" Margin="0,0,4,0" />
+                    <Button Aspect="$PrismStudioGhostButton" Grid.Column="1" Content="DELETE" Click="OnDeleteLayer" Padding="7" Margin="4,0,0,0" />
+                </Grid>
+            </Grid>
+            <Grid
+                Grid.Column="2"
+                Margin="10,0,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="0.86*" />
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="1.14*" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <TextBlock
+                        Text="CATALOG"
+                        FontFamily="Cascadia Mono SemiBold"
+                        FontSize="9"
+                        Foreground="$OrangeBrush"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        Name="CatalogCountText"
+                        Text="000 / 144"
+                        FontFamily="Cascadia Mono"
+                        FontSize="8"
+                        Foreground="$SlateDimBrush"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+                </Grid>
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="34" />
+                        <RowDefinition Height="38" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBox
+                        Name="SearchBox"
+                        TextChanged="OnCatalogSearchChanged"
+                        Background="$PanelAltBrush"
+                        BorderBrush="$LineStrongBrush"
+                        BorderThickness="1"
+                        Padding="9,7,9,7"
+                        FontFamily="Cascadia Mono"
+                        FontSize="10" />
+                    <Grid Grid.Row="1" Margin="0,5,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="1.35*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Name="FilterTab" Aspect="$PrismStudioCatalogButton" Content="FILTERS" Click="OnFiltersTab" Margin="0,0,3,0" />
+                        <Button Name="StyleTab" Aspect="$PrismStudioCatalogButton" Grid.Column="1" Content="STYLES" Click="OnStylesTab" Margin="3,0,3,0" />
+                        <Button Name="CategoryButton" Aspect="$PrismStudioCatalogButton" Grid.Column="2" Content="ALL CATEGORIES" Click="OnCategory" Margin="3,0,0,0" />
+                    </Grid>
+                    <PrismStudioScrollHost
+                        Name="CatalogHost"
+                        Grid.Row="2"
+                        Background="$PanelAltBrush"
+                        BorderBrush="$LineStrongBrush"
+                        BorderThickness="1"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled" />
+                </Grid>
+                <Grid Grid.Row="2">
+                    <TextBlock
+                        Text="INSPECTOR"
+                        FontFamily="Cascadia Mono SemiBold"
+                        FontSize="9"
+                        Foreground="$PinkBrush"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        Name="InspectorSelectionText"
+                        Text="LAYER"
+                        FontFamily="Cascadia Mono"
+                        FontSize="8"
+                        Foreground="$SlateDimBrush"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+                </Grid>
+                <PrismStudioScrollHost
+                    Name="InspectorHost"
+                    Grid.Row="3"
+                    Background="$PanelAltBrush"
+                    BorderBrush="$LineStrongBrush"
+                    BorderThickness="1"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Disabled" />
+            </Grid>
+        </Grid>
+        <Border
+            Grid.Row="2"
+            BorderBrush="$LineBrush"
+            BorderThickness="0,1,0,0"
+            Padding="0,10,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Name="StatusLayers" Text="LAYERS 02" FontFamily="Cascadia Mono" FontSize="8" Foreground="$SlateBrush" Margin="0,0,18,0" />
+                <TextBlock Name="StatusOperations" Grid.Column="1" Text="OPS 04" FontFamily="Cascadia Mono" FontSize="8" Foreground="$SlateBrush" Margin="0,0,18,0" />
+                <TextBlock Name="StatusPasses" Grid.Column="2" Text="PASSES 00" FontFamily="Cascadia Mono" FontSize="8" Foreground="$CyanBrush" Margin="0,0,18,0" />
+                <TextBlock Name="StatusSurfaces" Grid.Column="3" Text="SURFACES 00 / 0 B" FontFamily="Cascadia Mono" FontSize="8" Foreground="$OrangeBrush" Margin="0,0,18,0" />
+                <TextBlock Name="StatusFallback" Grid.Column="4" Text="FALLBACK NONE" FontFamily="Cascadia Mono" FontSize="8" Foreground="$LimeBrush" HorizontalAlignment="Right" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

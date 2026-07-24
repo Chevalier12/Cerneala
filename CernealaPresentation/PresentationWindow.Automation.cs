@@ -60,16 +60,17 @@ public partial class PresentationWindow
             defaultValue: 45,
             minimum: 1,
             maximum: 1_000);
-        List<FrameBudgetSample> samples = new(cycles * framesPerLoad * (ChapterNames.Length - 1));
+        List<FrameBudgetSample> samples = new(cycles * framesPerLoad * (ChapterOrder.Length - 1));
         ButtonAutomationPeer next = new(NextButton);
         Stopwatch runTime = Stopwatch.StartNew();
 
         await WaitForFrameIdleAsync(TimeSpan.FromSeconds(2));
         for (int cycle = 1; cycle <= cycles; cycle++)
         {
-            for (int chapterIndex = 1; chapterIndex < ChapterNames.Length; chapterIndex++)
+            foreach (PresentationChapter chapter in ChapterOrder.Skip(1))
             {
-                while (currentChapter != chapterIndex - 1)
+                PresentationChapter previous = ChapterOrder[(ChapterIndex(chapter) - 1 + ChapterOrder.Length) % ChapterOrder.Length];
+                while (currentChapter != previous)
                 {
                     await InvokeNextAndWaitForFrameAsync(next);
                 }
@@ -77,7 +78,7 @@ public partial class PresentationWindow
                 await CaptureFrameBudgetLoadAsync(
                     next,
                     cycle,
-                    chapterIndex,
+                    chapter,
                     framesPerLoad,
                     runTime,
                     samples);
@@ -101,7 +102,7 @@ public partial class PresentationWindow
     private async Task CaptureFrameBudgetLoadAsync(
         ButtonAutomationPeer next,
         int cycle,
-        int chapterIndex,
+        PresentationChapter chapter,
         int framesPerLoad,
         Stopwatch runTime,
         List<FrameBudgetSample> samples)
@@ -123,8 +124,8 @@ public partial class PresentationWindow
             long allocatedBytes = GC.GetTotalAllocatedBytes(precise: false);
             samples.Add(new FrameBudgetSample(
                 cycle,
-                ChapterNames[chapterIndex],
-                chapterIndex,
+                ChapterName(chapter),
+                ChapterIndex(chapter),
                 frameIndex,
                 frame.ProcessingTime.TotalMilliseconds,
                 frame.ElapsedTime.TotalMilliseconds,
@@ -212,18 +213,18 @@ public partial class PresentationWindow
         samples.Add(CaptureAutomationSample(0, "baseline"));
         for (int cycle = 1; cycle <= cycles; cycle++)
         {
-            for (int click = 0; click < ChapterNames.Length; click++)
+            for (int click = 0; click < ChapterOrder.Length; click++)
             {
                 if (!next.Invoke())
                 {
                     throw new InvalidOperationException("Presentation automation could not invoke the Next button.");
                 }
 
-                TimeSpan maximumWait = currentChapter == 5
+                TimeSpan maximumWait = currentChapter is PresentationChapter.Motion or PresentationChapter.Prism
                     ? TimeSpan.FromSeconds(5)
                     : TimeSpan.FromSeconds(2);
                 await WaitForFrameIdleAsync(maximumWait);
-                samples.Add(CaptureAutomationSample(cycle, ChapterNames[currentChapter]));
+                samples.Add(CaptureAutomationSample(cycle, ChapterName(currentChapter)));
             }
         }
 

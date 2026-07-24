@@ -1,8 +1,8 @@
 # Cerneala Presentation frame-budget benchmark
 
 This Windows-only benchmark launches the real WindowsDX presentation window, navigates
-through the seven measured chapters with automation peers, including the animated
-Solar Motion Prism dogfood scene, and captures every native
+through the seven measured chapters with automation peers, including Prism Studio,
+and captures every native
 `UiFrame.ProcessingTime` sample. Welcome is navigation-only and is never measured.
 It requires Windows with a working Direct3D 11 adapter and the WindowsDX Presentation
 build; it is not a headless or cross-platform benchmark.

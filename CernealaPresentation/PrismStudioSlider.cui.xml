@@ -1,0 +1,59 @@
+<UserControl>
+    <UserControl.Resources>
+        <Aspect
+            Name="PrismStudioSliderThumb"
+            Target="Thumb">
+            @default
+            {
+                Background = "#FF4DF0FF";
+                BorderBrush = "#FFE8EBE8";
+                BorderThickness = "1";
+            }
+            @when IsMouseOver
+            {
+                Background = "#FFC6FF3D";
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioSliderTrack"
+            Target="Track">
+            @default
+            {
+                Background = "#FF21272F";
+                BorderBrush = "#FF343C46";
+                BorderThickness = "1";
+            }
+            @template
+            {
+                <Border
+                    Background="$owner.Background"
+                    BorderBrush="$owner.BorderBrush"
+                    BorderThickness="$owner.BorderThickness">
+                    <TrackLayoutPanel
+                        Orientation="$owner.Orientation">
+                        <Thumb
+                            Name="PART_Thumb"
+                            Aspect="$PrismStudioSliderThumb" />
+                    </TrackLayoutPanel>
+                </Border>
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioSlider"
+            Target="Slider">
+            @default
+            {
+                Height = 20;
+            }
+            @template
+            {
+                <Track
+                    Name="PART_Track"
+                    Aspect="$PrismStudioSliderTrack" />
+            }
+        </Aspect>
+    </UserControl.Resources>
+    <Slider
+        Name="Input"
+        Aspect="$PrismStudioSlider" />
+</UserControl>

@@ -273,14 +273,19 @@
                             Content="05  MOTION"
                             Click="OnMotion" />
                         <ToggleButton
+                            Name="NavPrism"
+                            Aspect="$NavButton"
+                            Content="06  PRISM"
+                            Click="OnPrism" />
+                        <ToggleButton
                             Name="NavPipeline"
                             Aspect="$NavButton"
-                            Content="06  FRAME PIPELINE"
+                            Content="07  FRAME PIPELINE"
                             Click="OnPipeline" />
                         <ToggleButton
                             Name="NavDiagnostics"
                             Aspect="$NavButton"
-                            Content="07  DIAGNOSTICS"
+                            Content="08  DIAGNOSTICS"
                             Click="OnDiagnostics" />
                     </StackPanel>
                     <Border
@@ -321,6 +326,9 @@
                     Visibility="Collapsed" />
                 <MotionChapterView
                     Name="PageMotion"
+                    Visibility="Collapsed" />
+                <PrismChapterView
+                    Name="PagePrism"
                     Visibility="Collapsed" />
                 <FramePipelineChapterView
                     Name="PagePipeline"

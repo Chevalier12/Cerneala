@@ -80,6 +80,7 @@ public partial class MainWindow : Window
         isContinuing = true;
         ContinueButton.IsEnabled = false;
         PresentationWindow presentation = new();
+        presentation.ApplyRequestedWindowSize();
         presentation.Closed += (_, _) => Close();
         presentation.Show();
         Hide();
