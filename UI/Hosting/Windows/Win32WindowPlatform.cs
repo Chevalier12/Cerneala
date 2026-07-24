@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Cerneala.UI.Controls;
@@ -10,7 +11,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
 {
     private const string WindowClassName = "Cerneala.NativeWindow";
     private static readonly object RegistrationGate = new();
-    private static readonly Dictionary<nint, Win32PlatformWindow> Windows = [];
+    private static readonly ConcurrentDictionary<nint, Win32PlatformWindow> Windows = [];
     private static readonly Win32.WndProc WindowProcedure = WndProc;
     private static ushort classAtom;
     private readonly IWindowGraphicsSessionFactory graphicsSessionFactory;
@@ -40,7 +41,11 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         ArgumentNullException.ThrowIfNull(callbacks);
 
         Win32PlatformWindow created = new(window, callbacks, graphicsSessionFactory);
-        Windows.Add(created.Handle, created);
+        if (!Windows.TryAdd(created.Handle, created))
+        {
+            created.Dispose();
+            throw new InvalidOperationException("A native window with the same handle is already registered.");
+        }
         return created;
     }
 
@@ -76,7 +81,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
 
     private static void RemoveWindow(nint handle)
     {
-        Windows.Remove(handle);
+        Windows.TryRemove(handle, out _);
     }
 
     private static void EnsureWindowClass()
