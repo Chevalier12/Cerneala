@@ -2952,7 +2952,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel>
               <Slider Minimum="1" Maximum="10" Value="4" SmallChange="0.5" Orientation="Vertical" />
-              <TextBox Text="hello" CaretColor="18,52,86" />
+              <TextBox Text="hello" CaretBrush="#FF123456" />
               <CheckBox IsChecked="True" />
             </StackPanel>
             """;
@@ -2974,7 +2974,9 @@ public sealed partial class UiMarkupGeneratorTests
 
         TextBox textBox = Assert.IsType<TextBox>(panel.VisualChildren[1]);
         Assert.Equal("hello", textBox.Text);
-        Assert.Equal(new Cerneala.Drawing.Color(0x12, 0x34, 0x56), textBox.CaretColor);
+        Assert.Equal(
+            new Cerneala.Drawing.Color(0x12, 0x34, 0x56),
+            Assert.IsType<SolidColorBrush>(textBox.CaretBrush).Color);
 
         CheckBox checkBox = Assert.IsType<CheckBox>(panel.VisualChildren[2]);
         Assert.True(checkBox.IsChecked);

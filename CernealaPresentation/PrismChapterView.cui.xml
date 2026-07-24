@@ -347,6 +347,7 @@
                         TextChanged="OnCatalogSearchChanged"
                         Background="$PanelAltBrush"
                         Foreground="$PaperBrush"
+                        CaretBrush="#FFFFFFFF"
                         BorderBrush="$LineStrongBrush"
                         BorderThickness="1"
                         Padding="9,7,9,7"

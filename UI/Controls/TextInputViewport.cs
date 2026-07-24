@@ -292,7 +292,7 @@ internal sealed class TextInputViewport
         DrawRect verticalBounds = GetCaretVerticalBounds(content);
         context.DrawingContext.FillRectangle(
             new DrawRect(x, verticalBounds.Y, caretWidth, verticalBounds.Height),
-            host.CaretColor);
+            host.CaretBrush);
     }
 
     private DrawRect GetCaretVerticalBounds(LayoutRect content)
@@ -315,7 +315,7 @@ internal sealed class TextInputViewport
         return Control.IsKeyboardFocused &&
             Control.IsEnabled &&
             UIElementVisibility.ParticipatesInRendering(Control) &&
-            host.CaretColor.A != 0;
+            host.CaretBrush.Opacity > 0;
     }
 
     private float GetCaretTextX(int position)

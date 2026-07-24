@@ -55,7 +55,7 @@ public sealed class PrismChapterViewTests
     }
 
     [Fact]
-    public void PrismTextBoxesUseThePaperForeground()
+    public void PrismTextBoxesUseLightTextAndCaret()
     {
         XDocument markup = XDocument.Load(
             RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml"));
@@ -64,7 +64,9 @@ public sealed class PrismChapterViewTests
             RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs"));
 
         Assert.Equal("$PaperBrush", (string?)searchBox.Attribute("Foreground"));
+        Assert.Equal("#FFFFFFFF", (string?)searchBox.Attribute("CaretBrush"));
         Assert.Contains("Foreground = PaperBrush", code, StringComparison.Ordinal);
+        Assert.Contains("CaretBrush = new SolidColorBrush(Color.White)", code, StringComparison.Ordinal);
     }
 
     [Fact]

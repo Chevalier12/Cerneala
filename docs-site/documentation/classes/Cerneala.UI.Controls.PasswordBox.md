@@ -55,7 +55,7 @@ Default chrome is supplied through `AspectBase`. Derived controls can override `
 | --- | --- | --- |
 | `PasswordChangedEvent` | `RoutedEvent` | Identifies the bubbling password-change event. |
 | `PasswordCharProperty` | `UiProperty<char>` | Identifies the mask-character property. |
-| `CaretColorProperty` | `UiProperty<Color>` | Identifies the caret color property. |
+| `CaretBrushProperty` | `UiProperty<Brush>` | Identifies the caret brush property. |
 | `SelectionBackgroundProperty` | `UiProperty<Color>` | Identifies the selection background property. |
 
 ## Properties
@@ -64,7 +64,7 @@ Default chrome is supplied through `AspectBase`. Derived controls can override `
 | --- | --- | --- |
 | `Password` | `string` | Gets or sets the stored password. `null` becomes an empty string. |
 | `PasswordChar` | `char` | Gets or sets the mask character. The default is `*`. |
-| `CaretColor` | `Color` | Gets or sets the caret color. |
+| `CaretBrush` | `Brush` | Gets or sets the brush used to paint the caret. |
 | `SelectionBackground` | `Color` | Gets or sets the internal selection highlight color. |
 | `TextMeasurer` | `TextMeasurer` | Gets or sets the fallback text measurer. |
 | `TextRenderer` | `TextRenderer` | Gets or sets the fallback text renderer. |

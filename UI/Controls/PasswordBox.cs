@@ -26,10 +26,13 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
             '*',
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<Color> CaretColorProperty = UiProperty<Color>.Register(
-        nameof(CaretColor),
+    public static readonly UiProperty<Brush> CaretBrushProperty = UiProperty<Brush>.Register(
+        nameof(CaretBrush),
         typeof(PasswordBox),
-        new UiPropertyMetadata<Color>(Color.Black, UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<Brush>(
+            new SolidColorBrush(Color.Black),
+            UiPropertyOptions.AffectsRender,
+            validateValue: value => value is not null));
 
     public static readonly UiProperty<Color> SelectionBackgroundProperty = UiProperty<Color>.Register(
         nameof(SelectionBackground),
@@ -63,10 +66,14 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
         set => SetPassword(value ?? string.Empty, synchronizeEditor: true);
     }
 
-    public Color CaretColor
+    public Brush CaretBrush
     {
-        get => GetValue(CaretColorProperty);
-        set => SetValue(CaretColorProperty, value);
+        get => GetValue(CaretBrushProperty);
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SetValue(CaretBrushProperty, value);
+        }
     }
 
     public Color SelectionBackground
@@ -148,7 +155,7 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
 
     string ITextInputHost.DisplayText => new(PasswordChar, CountTextElements(Password));
 
-    Color ITextInputHost.CaretColor => CaretColor;
+    Brush ITextInputHost.CaretBrush => CaretBrush;
 
     Color ITextInputHost.SelectionBackground => SelectionBackground;
 

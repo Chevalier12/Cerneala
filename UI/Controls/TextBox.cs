@@ -34,10 +34,13 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
                 UiPropertyOptions.AffectsSemantics,
             coerceValue: (_, value) => value ?? string.Empty));
 
-    public static readonly UiProperty<Color> CaretColorProperty = UiProperty<Color>.Register(
-        nameof(CaretColor),
+    public static readonly UiProperty<Brush> CaretBrushProperty = UiProperty<Brush>.Register(
+        nameof(CaretBrush),
         typeof(TextBox),
-        new UiPropertyMetadata<Color>(Color.Black, UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<Brush>(
+            new SolidColorBrush(Color.Black),
+            UiPropertyOptions.AffectsRender,
+            validateValue: value => value is not null));
 
     public static readonly UiProperty<Color> SelectionBackgroundProperty = UiProperty<Color>.Register(
         nameof(SelectionBackground),
@@ -74,10 +77,14 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
 
     public TextCaret Caret => textInput.Caret;
 
-    public Color CaretColor
+    public Brush CaretBrush
     {
-        get => GetValue(CaretColorProperty);
-        set => SetValue(CaretColorProperty, value);
+        get => GetValue(CaretBrushProperty);
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SetValue(CaretBrushProperty, value);
+        }
     }
 
     public Color SelectionBackground
@@ -185,7 +192,7 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
 
     string ITextInputHost.DisplayText => Text;
 
-    Color ITextInputHost.CaretColor => CaretColor;
+    Brush ITextInputHost.CaretBrush => CaretBrush;
 
     Color ITextInputHost.SelectionBackground => SelectionBackground;
 

@@ -3,6 +3,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls;
 
@@ -101,7 +102,7 @@ public sealed class TextBoxCaretBlinkTests
         TextBox textBox = new()
         {
             Text = "blink",
-            CaretColor = CaretColor,
+            CaretBrush = new SolidColorBrush(CaretColor),
             IsKeyboardFocused = focused
         };
         textBox.MoveCaret(2);
@@ -127,7 +128,10 @@ public sealed class TextBoxCaretBlinkTests
     {
         return root.RetainedRenderer
             .Render(root)
-            .Count(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+            .Count(command =>
+                command.Kind == DrawCommandKind.FillRectangle &&
+                command.Brush is SolidColorBrush brush &&
+                brush.Color == CaretColor);
     }
 
     private static InputFrame EmptyInputFrame()

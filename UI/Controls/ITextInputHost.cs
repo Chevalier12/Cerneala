@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Controls;
 
@@ -11,7 +12,7 @@ internal interface ITextInputHost
 
     string DisplayText { get; }
 
-    Color CaretColor { get; }
+    Brush CaretBrush { get; }
 
     Color SelectionBackground { get; }
 

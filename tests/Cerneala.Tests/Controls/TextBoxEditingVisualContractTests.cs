@@ -23,11 +23,12 @@ public sealed class TextBoxEditingVisualContractTests
     {
         TextBox textBox = ArrangedTextBox("abc");
         textBox.IsKeyboardFocused = true;
-        textBox.CaretColor = CaretColor;
+        textBox.CaretBrush = new SolidColorBrush(CaretColor);
         textBox.MoveCaret(1);
 
-        DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+        DrawCommand caret = Render(textBox).Single(command => HasSolidFillBrush(command, CaretColor));
 
+        Assert.Equal(CaretColor, Assert.IsType<SolidColorBrush>(caret.Brush).Color);
         Assert.True(caret.Rect.Height > 0);
         Assert.True(caret.Rect.Width > 0);
     }
@@ -42,7 +43,7 @@ public sealed class TextBoxEditingVisualContractTests
         {
             Text = "Editable semantic TextBox",
             IsKeyboardFocused = true,
-            CaretColor = CaretColor
+            CaretBrush = new SolidColorBrush(CaretColor)
         };
         root.VisualChildren.Add(textBox);
         textBox.Measure(new MeasureContext(new LayoutSize(220, 40)));
@@ -52,7 +53,7 @@ public sealed class TextBoxEditingVisualContractTests
         for (int position = 0; position <= textBox.Text.Length; position++)
         {
             textBox.MoveCaret(position);
-            DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+            DrawCommand caret = Render(textBox).Single(command => HasSolidFillBrush(command, CaretColor));
 
             Assert.Equal(1, mapper.MapRectangle(caret.Rect).Width);
         }
@@ -63,10 +64,10 @@ public sealed class TextBoxEditingVisualContractTests
     {
         TextBox textBox = ArrangedSystemFontTextBox("a", width: 160, fontSize: 16);
         textBox.IsKeyboardFocused = true;
-        textBox.CaretColor = CaretColor;
+        textBox.CaretBrush = new SolidColorBrush(CaretColor);
         textBox.MoveCaret(textBox.Text.Length);
 
-        DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+        DrawCommand caret = Render(textBox).Single(command => HasSolidFillBrush(command, CaretColor));
         TextCaretVerticalMetrics expectedMetrics = TextCaretLayout.Default.GetCaretVerticalMetrics(
             CreateTextAspect(textBox),
             new FontResolver(textBox.ResourceProvider!));
@@ -80,10 +81,10 @@ public sealed class TextBoxEditingVisualContractTests
     public void UnfocusedTextBoxDoesNotRenderCaretCommand()
     {
         TextBox textBox = ArrangedTextBox("abc");
-        textBox.CaretColor = CaretColor;
+        textBox.CaretBrush = new SolidColorBrush(CaretColor);
         textBox.MoveCaret(1);
 
-        Assert.DoesNotContain(Render(textBox), command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+        Assert.DoesNotContain(Render(textBox), command => HasSolidFillBrush(command, CaretColor));
     }
 
     [Fact]
@@ -92,6 +93,17 @@ public sealed class TextBoxEditingVisualContractTests
         TextBox textBox = ArrangedTextBox("abc");
 
         textBox.MoveCaret(1);
+
+        Assert.True(textBox.DirtyState.Has(InvalidationFlags.Render));
+        Assert.False(textBox.DirtyState.Has(InvalidationFlags.Measure));
+    }
+
+    [Fact]
+    public void CaretBrushChangeInvalidatesRenderWithoutMeasure()
+    {
+        TextBox textBox = ArrangedTextBox("abc");
+
+        textBox.CaretBrush = new SolidColorBrush(CaretColor);
 
         Assert.True(textBox.DirtyState.Has(InvalidationFlags.Render));
         Assert.False(textBox.DirtyState.Has(InvalidationFlags.Measure));
@@ -215,10 +227,10 @@ public sealed class TextBoxEditingVisualContractTests
     {
         TextBox textBox = ArrangedTextBox("abcdefghijklmnop", width: 48);
         textBox.IsKeyboardFocused = true;
-        textBox.CaretColor = CaretColor;
+        textBox.CaretBrush = new SolidColorBrush(CaretColor);
         textBox.MoveCaret(textBox.Text.Length);
 
-        DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+        DrawCommand caret = Render(textBox).Single(command => HasSolidFillBrush(command, CaretColor));
 
         Assert.InRange(caret.Rect.X, textBox.ArrangedBounds.X, textBox.ArrangedBounds.X + textBox.ArrangedBounds.Width);
     }
@@ -228,10 +240,10 @@ public sealed class TextBoxEditingVisualContractTests
     {
         TextBox textBox = ArrangedSystemFontTextBox("iiiiWWWW", width: 220);
         textBox.IsKeyboardFocused = true;
-        textBox.CaretColor = CaretColor;
+        textBox.CaretBrush = new SolidColorBrush(CaretColor);
         textBox.MoveCaret(textBox.Text.Length);
 
-        DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+        DrawCommand caret = Render(textBox).Single(command => HasSolidFillBrush(command, CaretColor));
         float expectedX = ContentX(textBox) + TextCaretLayout.Default.GetCaretX(
             textBox.Text,
             textBox.Text.Length,
@@ -246,11 +258,11 @@ public sealed class TextBoxEditingVisualContractTests
     {
         TextBox textBox = ArrangedSystemFontTextBox("iiiiWWWW", width: 56);
         textBox.IsKeyboardFocused = true;
-        textBox.CaretColor = CaretColor;
+        textBox.CaretBrush = new SolidColorBrush(CaretColor);
         textBox.MoveCaret(textBox.Text.Length);
         textBox.MoveCaret(textBox.Text.Length - 1);
 
-        DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+        DrawCommand caret = Render(textBox).Single(command => HasSolidFillBrush(command, CaretColor));
         float contentX = ContentX(textBox);
         float contentWidth = ContentWidth(textBox);
         float fullWidth = TextCaretLayout.Default.GetCaretX(textBox.Text, textBox.Text.Length, CreateTextAspect(textBox), new FontResolver(textBox.ResourceProvider!));
@@ -266,11 +278,11 @@ public sealed class TextBoxEditingVisualContractTests
     {
         TextBox textBox = ArrangedTextBox("abcdefghijklmnop", width: 48);
         textBox.IsKeyboardFocused = true;
-        textBox.CaretColor = CaretColor;
+        textBox.CaretBrush = new SolidColorBrush(CaretColor);
         textBox.MoveCaret(textBox.Text.Length);
         textBox.MoveCaret(1);
 
-        DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+        DrawCommand caret = Render(textBox).Single(command => HasSolidFillBrush(command, CaretColor));
 
         Assert.InRange(caret.Rect.X, textBox.ArrangedBounds.X, textBox.ArrangedBounds.X + textBox.ArrangedBounds.Width);
     }
@@ -280,12 +292,12 @@ public sealed class TextBoxEditingVisualContractTests
     {
         TextBox textBox = ArrangedTextBox("abcdefghijklmnop", width: 48);
         textBox.IsKeyboardFocused = true;
-        textBox.CaretColor = CaretColor;
+        textBox.CaretBrush = new SolidColorBrush(CaretColor);
         textBox.MoveCaret(textBox.Text.Length);
 
         textBox.Text = "a";
         textBox.MoveCaret(0);
-        DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
+        DrawCommand caret = Render(textBox).Single(command => HasSolidFillBrush(command, CaretColor));
 
         Assert.True(caret.Rect.X <= textBox.ArrangedBounds.X + 6);
     }
@@ -357,6 +369,13 @@ public sealed class TextBoxEditingVisualContractTests
     private static bool HasSolidTextBrush(DrawCommand command, Color color)
     {
         return command.Kind == DrawCommandKind.DrawText &&
+            command.Brush is SolidColorBrush brush &&
+            brush.Color == color;
+    }
+
+    private static bool HasSolidFillBrush(DrawCommand command, Color color)
+    {
+        return command.Kind == DrawCommandKind.FillRectangle &&
             command.Brush is SolidColorBrush brush &&
             brush.Color == color;
     }

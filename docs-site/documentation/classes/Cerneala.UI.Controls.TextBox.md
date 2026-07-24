@@ -69,7 +69,7 @@ Derived controls can override `NormalizeTextInput`, `OnTextChanged` and `OnSelec
 | Name | Type | Description |
 | --- | --- | --- |
 | `TextProperty` | `UiProperty<string>` | Identifies the concrete `TextBox.Text` UI property. |
-| `CaretColorProperty` | `UiProperty<Color>` | Identifies the caret color property. |
+| `CaretBrushProperty` | `UiProperty<Brush>` | Identifies the caret brush property. |
 | `SelectionBackgroundProperty` | `UiProperty<Color>` | Identifies the selection background property. |
 | `TextChangedEvent` | `RoutedEvent` | Identifies the bubbling text-change event. |
 | `SelectionChangedEvent` | `RoutedEvent` | Identifies the bubbling selection-change event. |
@@ -81,7 +81,7 @@ Derived controls can override `NormalizeTextInput`, `OnTextChanged` and `OnSelec
 | `Text` | `string` | Gets or sets the editable text. `null` is coerced to an empty string. |
 | `Selection` | `TextSelection` | Gets the current selection without exposing the editor. |
 | `Caret` | `TextCaret` | Gets the current caret state. |
-| `CaretColor` | `Color` | Gets or sets the caret color. |
+| `CaretBrush` | `Brush` | Gets or sets the brush used to paint the caret. |
 | `SelectionBackground` | `Color` | Gets or sets the selection highlight color. |
 | `TextMeasurer` | `TextMeasurer` | Gets or sets the fallback text measurer. |
 | `TextRenderer` | `TextRenderer` | Gets or sets the fallback text renderer. |

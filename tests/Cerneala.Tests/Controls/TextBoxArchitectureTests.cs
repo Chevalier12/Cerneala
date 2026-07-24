@@ -1,6 +1,7 @@
 using System.Reflection;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls;
 
@@ -26,6 +27,17 @@ public sealed class TextBoxArchitectureTests
         Assert.False(assembly.GetType("Cerneala.UI.Text.TextCompositionManager")!.IsPublic);
         Assert.False(assembly.GetType("Cerneala.UI.Text.TextEditorSnapshot")!.IsPublic);
         Assert.False(assembly.GetType("Cerneala.UI.Text.UndoRedoStack")!.IsPublic);
+    }
+
+    [Fact]
+    public void TextInputsExposeCaretBrushInsteadOfCaretColor()
+    {
+        Assert.Equal(typeof(Brush), typeof(TextBox).GetProperty("CaretBrush")!.PropertyType);
+        Assert.Equal(typeof(Brush), typeof(PasswordBox).GetProperty("CaretBrush")!.PropertyType);
+        Assert.Null(typeof(TextBox).GetProperty("CaretColor"));
+        Assert.Null(typeof(PasswordBox).GetProperty("CaretColor"));
+        Assert.Equal(typeof(TextBox), TextBox.CaretBrushProperty.OwnerType);
+        Assert.Equal(typeof(PasswordBox), PasswordBox.CaretBrushProperty.OwnerType);
     }
 
     [Fact]

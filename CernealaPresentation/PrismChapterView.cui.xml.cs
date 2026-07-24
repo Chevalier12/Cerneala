@@ -782,6 +782,7 @@ public partial class PrismChapterView : UserControl
         BorderBrush = LineBrush,
         BorderThickness = new Thickness(1),
         Foreground = PaperBrush,
+        CaretBrush = new SolidColorBrush(Color.White),
         FontFamily = "Cascadia Mono",
         FontSize = 9,
         Padding = new Thickness(6, 5, 6, 5),
