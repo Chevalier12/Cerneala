@@ -589,13 +589,18 @@ public sealed class ArchitectureBoundaryTests
         string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
         string[] requiredFiles =
         [
-            "UI/Controls/TextBoxBase.cs",
             "UI/Controls/TextBox.cs",
             "UI/Controls/PasswordBox.cs",
+            "UI/Controls/ITextInputHost.cs",
+            "UI/Controls/TextInputCore.cs",
+            "UI/Controls/TextInputPolicy.cs",
+            "UI/Controls/TextInputViewport.cs",
             "UI/Text/TextDocument.cs",
             "UI/Text/TextCaret.cs",
             "UI/Text/TextSelection.cs",
             "UI/Text/TextEditor.cs",
+            "UI/Text/TextEditorSnapshot.cs",
+            "UI/Text/TextEditingController.cs",
             "UI/Text/TextCompositionManager.cs",
             "UI/Text/TextCompositionState.cs",
             "UI/Text/UndoRedoStack.cs",
@@ -675,13 +680,18 @@ public sealed class ArchitectureBoundaryTests
         string root = FindRepositoryRoot();
         string[] files =
         [
-            Path.Combine(root, "UI", "Controls", "TextBoxBase.cs"),
             Path.Combine(root, "UI", "Controls", "TextBox.cs"),
             Path.Combine(root, "UI", "Controls", "PasswordBox.cs"),
+            Path.Combine(root, "UI", "Controls", "ITextInputHost.cs"),
+            Path.Combine(root, "UI", "Controls", "TextInputCore.cs"),
+            Path.Combine(root, "UI", "Controls", "TextInputPolicy.cs"),
+            Path.Combine(root, "UI", "Controls", "TextInputViewport.cs"),
             Path.Combine(root, "UI", "Text", "TextDocument.cs"),
             Path.Combine(root, "UI", "Text", "TextCaret.cs"),
             Path.Combine(root, "UI", "Text", "TextSelection.cs"),
             Path.Combine(root, "UI", "Text", "TextEditor.cs"),
+            Path.Combine(root, "UI", "Text", "TextEditorSnapshot.cs"),
+            Path.Combine(root, "UI", "Text", "TextEditingController.cs"),
             Path.Combine(root, "UI", "Text", "TextCompositionManager.cs"),
             Path.Combine(root, "UI", "Text", "TextCompositionState.cs"),
             Path.Combine(root, "UI", "Text", "UndoRedoStack.cs"),

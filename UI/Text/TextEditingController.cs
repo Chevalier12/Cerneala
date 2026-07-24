@@ -2,7 +2,7 @@ using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Text;
 
-public sealed class TextEditingController
+internal sealed class TextEditingController
 {
     public TextEditingController(TextEditor editor)
     {

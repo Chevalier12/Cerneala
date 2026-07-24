@@ -108,7 +108,8 @@ Cerneala UI text editing and single-line text box caret layout.
 
 ## See Also
 
-- `Cerneala.UI.Controls.TextBoxBase`
+- `Cerneala.UI.Controls.TextBox`
+- `Cerneala.UI.Controls.PasswordBox`
 - `Cerneala.UI.Text.TextCaret`
 - `Cerneala.UI.Text.TextAspect`
 - `Cerneala.UI.Text.FontResolver`

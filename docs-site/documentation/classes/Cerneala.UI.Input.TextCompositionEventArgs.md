@@ -37,7 +37,7 @@ void OnTextInput(object? sender, RoutedEventArgs args)
 
 `TextInputBridge` creates this type for both `InputEvents.PreviewTextInputEvent` and `InputEvents.TextInputEvent`. The preview event uses tunneling routing, and the text input event uses bubbling routing. If a preview handler sets the inherited `Handled` property, the bubble text input event is suppressed by the routing pair.
 
-`TextBoxBase` consumes unhandled text input by reading `Text` and then setting `Handled` to `true`.
+`TextBox` and `PasswordBox` consume unhandled text input through their internal editing core, then set `Handled` to `true`.
 
 The constructor throws `ArgumentNullException` when `routedEvent`, `originalSource`, or `text` is `null`.
 

@@ -38,7 +38,7 @@ ObservableValue<string> statusText = new("Type a value to enable add.");
 ObservableList<string> items = new(["First item"]);
 
 TextBox entry = new();
-entry.Bindings.Add(BindingOperations.BindTwoWay(entry, TextBoxBase.TextProperty, entryText));
+entry.Bindings.Add(BindingOperations.BindTwoWay(entry, TextBox.TextProperty, entryText));
 
 TextBlock status = new();
 status.Bindings.Add(BindingOperations.BindOneWay(status, TextBlock.TextProperty, statusText));

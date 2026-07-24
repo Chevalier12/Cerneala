@@ -1,6 +1,6 @@
 namespace Cerneala.UI.Text;
 
-public sealed class TextDocument
+internal sealed class TextDocument
 {
     public TextDocument(string text = "")
     {

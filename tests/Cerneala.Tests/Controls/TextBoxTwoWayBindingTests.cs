@@ -13,7 +13,7 @@ public sealed class TextBoxTwoWayBindingTests
         ObservableValue<string> source = new("hello");
         TextBox textBox = new();
 
-        using IDisposable binding = BindingOperations.BindTwoWay(textBox, TextBoxBase.TextProperty, source);
+        using IDisposable binding = BindingOperations.BindTwoWay(textBox, TextBox.TextProperty, source);
 
         Assert.Equal("hello", textBox.Text);
     }
@@ -28,7 +28,7 @@ public sealed class TextBoxTwoWayBindingTests
         ElementInputRouteMap routeMap = new ElementInputRouteBuilder().Build(root);
         FocusManager focusManager = new();
         Assert.True(focusManager.Focus(textBox, routeMap));
-        using IDisposable binding = BindingOperations.BindTwoWay(textBox, TextBoxBase.TextProperty, source);
+        using IDisposable binding = BindingOperations.BindTwoWay(textBox, TextBox.TextProperty, source);
 
         new TextInputBridge().Dispatch([new TextInputSnapshotEvent("a")], focusManager, routeMap);
 
@@ -42,7 +42,7 @@ public sealed class TextBoxTwoWayBindingTests
         TextBox textBox = new();
         int sourceChanges = 0;
         source.ValueChanged += (_, _) => sourceChanges++;
-        using IDisposable binding = BindingOperations.BindTwoWay(textBox, TextBoxBase.TextProperty, source);
+        using IDisposable binding = BindingOperations.BindTwoWay(textBox, TextBox.TextProperty, source);
 
         source.Value = "two";
 
@@ -55,7 +55,7 @@ public sealed class TextBoxTwoWayBindingTests
     {
         ObservableValue<string> source = new("one");
         TextBox textBox = new();
-        IDisposable binding = BindingOperations.BindTwoWay(textBox, TextBoxBase.TextProperty, source);
+        IDisposable binding = BindingOperations.BindTwoWay(textBox, TextBox.TextProperty, source);
 
         binding.Dispose();
         source.Value = "two";

@@ -2,14 +2,11 @@ using Cerneala.UI.Controls;
 
 namespace Cerneala.UI.Accessibility;
 
-public sealed class TextBoxAutomationPeer : AutomationPeer
+public sealed class PasswordBoxAutomationPeer : AutomationPeer
 {
-    private readonly TextBox textBox;
-
-    public TextBoxAutomationPeer(TextBox textBox)
-        : base(textBox)
+    public PasswordBoxAutomationPeer(PasswordBox passwordBox)
+        : base(passwordBox)
     {
-        this.textBox = textBox;
     }
 
     public override SemanticsRole Role => SemanticsRole.EditableText;
@@ -18,7 +15,7 @@ public sealed class TextBoxAutomationPeer : AutomationPeer
     {
         Dictionary<SemanticsProperty, object?> properties = new(base.GetProperties())
         {
-            [SemanticsProperty.Value] = textBox.Text
+            [SemanticsProperty.Value] = null
         };
         return properties;
     }

@@ -964,13 +964,18 @@ Acceptance checklist:
 
 This phase should wait until input, focus, text layout, and diagnostics are stable. Text editing should build on `TextInputSnapshotEvent` but add composition lifecycle where platform adapters support it.
 
-- [x] `UI/Controls/TextBoxBase.cs`
 - [x] `UI/Controls/TextBox.cs`
 - [x] `UI/Controls/PasswordBox.cs`
+- [x] `UI/Controls/ITextInputHost.cs`
+- [x] `UI/Controls/TextInputCore.cs`
+- [x] `UI/Controls/TextInputPolicy.cs`
+- [x] `UI/Controls/TextInputViewport.cs`
 - [x] `UI/Text/TextDocument.cs`
 - [x] `UI/Text/TextCaret.cs`
 - [x] `UI/Text/TextSelection.cs`
 - [x] `UI/Text/TextEditor.cs`
+- [x] `UI/Text/TextEditorSnapshot.cs`
+- [x] `UI/Text/TextEditingController.cs`
 - [x] `UI/Text/TextCompositionManager.cs`
 - [x] `UI/Text/TextCompositionState.cs`
 - [x] `UI/Text/UndoRedoStack.cs`

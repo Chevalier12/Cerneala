@@ -2,11 +2,14 @@ using System.Globalization;
 
 namespace Cerneala.UI.Text;
 
-public sealed class TextEditor
+internal sealed class TextEditor
 {
-    public TextEditor(TextDocument? document = null)
+    private readonly bool recordsHistory;
+
+    public TextEditor(TextDocument? document = null, bool recordsHistory = true)
     {
         Document = document ?? new TextDocument();
+        this.recordsHistory = recordsHistory;
         Caret = TextCaret.At(Document.Length, Document.Length);
         Selection = TextSelection.Caret(Caret.Position);
     }
@@ -142,7 +145,8 @@ public sealed class TextEditor
         Caret = TextCaret.At(caretPosition, Document.Length);
         Selection = TextSelection.Caret(Caret.Position);
 
-        if (before.Text != Document.Text || before.Caret != Caret || before.Selection != Selection)
+        if (recordsHistory &&
+            (before.Text != Document.Text || before.Caret != Caret || before.Selection != Selection))
         {
             UndoRedo.PushUndo(before);
         }
@@ -154,7 +158,7 @@ public sealed class TextEditor
         Document.SetText(snapshot.Text);
         Caret = TextCaret.At(snapshot.Caret.Position, Document.Length);
         Selection = snapshot.Selection.Clamp(Document.Length);
-        if (recordUndo && before != Capture())
+        if (recordsHistory && recordUndo && before != Capture())
         {
             UndoRedo.PushUndo(before);
         }

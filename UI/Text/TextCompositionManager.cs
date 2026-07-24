@@ -1,6 +1,6 @@
 namespace Cerneala.UI.Text;
 
-public sealed class TextCompositionManager
+internal sealed class TextCompositionManager
 {
     public TextCompositionState State { get; private set; } = TextCompositionState.Inactive;
 

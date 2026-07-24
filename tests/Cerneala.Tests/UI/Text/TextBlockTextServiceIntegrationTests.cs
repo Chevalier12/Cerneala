@@ -9,7 +9,7 @@ namespace Cerneala.Tests.UI.Text;
 public sealed class TextBlockTextServiceIntegrationTests
 {
     [Fact]
-    public void TextBoxBaseUsesRootResourceProviderWhenLocalProviderIsNull()
+    public void TextBoxUsesRootResourceProviderWhenLocalProviderIsNull()
     {
         ResourceStore store = new();
         ResourceId<FontResource> id = new("Input");

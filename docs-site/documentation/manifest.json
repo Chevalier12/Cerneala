@@ -355,6 +355,11 @@
     "source": "UI/Accessibility/SemanticsTree.cs"
   },
   {
+    "name": "Cerneala.UI.Accessibility.PasswordBoxAutomationPeer",
+    "file": "documentation/classes/Cerneala.UI.Accessibility.PasswordBoxAutomationPeer.md",
+    "source": "UI/Accessibility/PasswordBoxAutomationPeer.cs"
+  },
+  {
     "name": "Cerneala.UI.Accessibility.TextBoxAutomationPeer",
     "file": "documentation/classes/Cerneala.UI.Accessibility.TextBoxAutomationPeer.md",
     "source": "UI/Accessibility/TextBoxAutomationPeer.cs"
@@ -1288,11 +1293,6 @@
     "name": "Cerneala.UI.Controls.TextBox",
     "file": "documentation/classes/Cerneala.UI.Controls.TextBox.md",
     "source": "UI/Controls/TextBox.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.TextBoxBase",
-    "file": "documentation/classes/Cerneala.UI.Controls.TextBoxBase.md",
-    "source": "UI/Controls/TextBoxBase.cs"
   },
   {
     "name": "Cerneala.UI.Controls.TextChangedEventArgs",
@@ -3810,39 +3810,9 @@
     "source": "UI/Text/TextCaretLayout.cs"
   },
   {
-    "name": "Cerneala.UI.Text.TextCompositionManager",
-    "file": "documentation/classes/Cerneala.UI.Text.TextCompositionManager.md",
-    "source": "UI/Text/TextCompositionManager.cs"
-  },
-  {
-    "name": "Cerneala.UI.Text.TextCompositionState",
-    "file": "documentation/classes/Cerneala.UI.Text.TextCompositionState.md",
-    "source": "UI/Text/TextCompositionState.cs"
-  },
-  {
     "name": "Cerneala.UI.Text.TextDirection",
     "file": "documentation/classes/Cerneala.UI.Text.TextDirection.md",
     "source": "UI/Text/TextDirection.cs"
-  },
-  {
-    "name": "Cerneala.UI.Text.TextDocument",
-    "file": "documentation/classes/Cerneala.UI.Text.TextDocument.md",
-    "source": "UI/Text/TextDocument.cs"
-  },
-  {
-    "name": "Cerneala.UI.Text.TextEditingController",
-    "file": "documentation/classes/Cerneala.UI.Text.TextEditingController.md",
-    "source": "UI/Text/TextEditingController.cs"
-  },
-  {
-    "name": "Cerneala.UI.Text.TextEditor",
-    "file": "documentation/classes/Cerneala.UI.Text.TextEditor.md",
-    "source": "UI/Text/TextEditor.cs"
-  },
-  {
-    "name": "Cerneala.UI.Text.TextEditorSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Text.TextEditorSnapshot.md",
-    "source": "UI/Text/TextEditorSnapshot.cs"
   },
   {
     "name": "Cerneala.UI.Text.TextLayoutCache",
@@ -3893,11 +3863,6 @@
     "name": "Cerneala.UI.Text.TextWrapping",
     "file": "documentation/classes/Cerneala.UI.Text.TextWrapping.md",
     "source": "UI/Text/TextWrapping.cs"
-  },
-  {
-    "name": "Cerneala.UI.Text.UndoRedoStack",
-    "file": "documentation/classes/Cerneala.UI.Text.UndoRedoStack.md",
-    "source": "UI/Text/UndoRedoStack.cs"
   },
   {
     "name": "Cerneala.UI.Theming.DefaultTheme",

@@ -33,7 +33,7 @@ public sealed class TextBoxSemanticsTests
     }
 
     [Fact]
-    public void TextBoxBaseDerivedControlsExposeEditableTextRoleAndValue()
+    public void TextBoxDerivedControlsExposeEditableTextRoleAndValue()
     {
         UIRoot root = new();
         SearchTextBox textBox = new() { Text = "query" };
@@ -45,7 +45,7 @@ public sealed class TextBoxSemanticsTests
         Assert.Equal("query", node.GetProperty<string>(SemanticsProperty.Value));
     }
 
-    private sealed class SearchTextBox : TextBoxBase
+    private sealed class SearchTextBox : TextBox
     {
     }
 }

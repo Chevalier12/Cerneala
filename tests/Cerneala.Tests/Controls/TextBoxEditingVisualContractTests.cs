@@ -248,7 +248,7 @@ public sealed class TextBoxEditingVisualContractTests
         textBox.IsKeyboardFocused = true;
         textBox.CaretColor = CaretColor;
         textBox.MoveCaret(textBox.Text.Length);
-        textBox.Editor.MoveCaret(textBox.Text.Length - 1);
+        textBox.MoveCaret(textBox.Text.Length - 1);
 
         DrawCommand caret = Render(textBox).Single(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == CaretColor);
         float contentX = ContentX(textBox);

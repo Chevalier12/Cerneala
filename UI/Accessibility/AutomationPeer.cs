@@ -32,7 +32,8 @@ public class AutomationPeer
         return element switch
         {
             Button button => new ButtonAutomationPeer(button),
-            TextBoxBase textBox => new TextBoxAutomationPeer(textBox),
+            TextBox textBox => new TextBoxAutomationPeer(textBox),
+            PasswordBox passwordBox => new PasswordBoxAutomationPeer(passwordBox),
             ItemsControl itemsControl => new ItemsControlAutomationPeer(itemsControl),
             TextBlock => new AutomationPeer(element) { OverrideRole = SemanticsRole.Text },
             _ => new AutomationPeer(element)

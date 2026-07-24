@@ -50,7 +50,7 @@ TextCaretVerticalMetrics metrics =
 
 `TextShaper.TryMeasureCaretVerticalMetrics` creates this value from a rasterized `"Ag"` sample when the text run uses a Skia-backed font. `TextCaretLayout.GetCaretVerticalMetrics` falls back to `OffsetY` equal to `0` and `Height` equal to `TextAspect.FontSize * TextAspect.Scale` when raster metrics are unavailable.
 
-`TextBoxBase` uses `OffsetY + Height` during measurement so the editing surface can contain the caret. During rendering, it clamps the offset and height to the available content bounds before drawing the caret.
+The internal text-input viewport used by `TextBox` and `PasswordBox` uses `OffsetY + Height` during measurement so the editing surface can contain the caret. During rendering, it clamps the offset and height to the available content bounds before drawing the caret.
 
 The constructor requires a finite `offsetY` and a positive finite `height`. Because this is a struct, `default(TextCaretVerticalMetrics)` is readable and has both values equal to `0`, but it does not satisfy the constructor's positive-height invariant.
 
@@ -82,4 +82,5 @@ Cerneala drawing text metrics and UI text caret layout/rendering paths.
 
 - `Cerneala.Drawing.Text.TextShaper`
 - `Cerneala.UI.Text.TextCaretLayout`
-- `Cerneala.UI.Controls.TextBoxBase`
+- `Cerneala.UI.Controls.TextBox`
+- `Cerneala.UI.Controls.PasswordBox`

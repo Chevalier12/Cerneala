@@ -43,7 +43,7 @@ _ = host.Update(elapsedTime: TimeSpan.FromMilliseconds(16));
 
 `TimeSensitiveRenderInvalidator` is used by the hosting update path to keep render-only time state in sync with the frame clock. It starts at the supplied root and visits each element in the retained UI tree. When an element implements `ITimeSensitiveRenderElement`, the invalidator calls `UpdateRenderTime(frameTime)`.
 
-The invalidator does not inspect the return value from `UpdateRenderTime`. Time-sensitive elements are responsible for invalidating themselves when their time state changes. For example, `TextBoxBase` uses this hook to update caret blink visibility and invalidates render state when the blink phase changes.
+The invalidator does not inspect the return value from `UpdateRenderTime`. Time-sensitive elements are responsible for invalidating themselves when their time state changes. For example, `TextBox` and `PasswordBox` use this hook to update caret blink visibility and invalidate render state when the blink phase changes.
 
 Traversal follows visual children when an element has any visual children. If the element has no visual children, traversal falls back to logical children. This keeps template-generated visual trees preferred when they exist while still supporting elements that only expose logical children.
 
@@ -70,4 +70,5 @@ Cerneala retained UI rendering and hosting frame updates.
 - `Cerneala.UI.Hosting.UiHost`
 - `Cerneala.UI.Rendering.ITimeSensitiveRenderElement`
 - `Cerneala.UI.Elements.UIElement`
-- `Cerneala.UI.Controls.TextBoxBase`
+- `Cerneala.UI.Controls.TextBox`
+- `Cerneala.UI.Controls.PasswordBox`

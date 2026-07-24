@@ -17,7 +17,7 @@ Inheritance:
 `Object` -> `AutomationPeer`
 
 Derived:
-`ButtonAutomationPeer`, `ItemsControlAutomationPeer`, `TextBoxAutomationPeer`
+`ButtonAutomationPeer`, `ItemsControlAutomationPeer`, `PasswordBoxAutomationPeer`, `TextBoxAutomationPeer`
 
 ## Examples
 
@@ -53,7 +53,8 @@ The default role is `SemanticsRole.Root` for `UIRoot` and `SemanticsRole.Group` 
 | Element type | Peer returned | Role behavior |
 | --- | --- | --- |
 | `Button` | `ButtonAutomationPeer` | Uses `SemanticsRole.Button`; name can fall back to content text. |
-| `TextBoxBase` | `TextBoxAutomationPeer` | Uses `SemanticsRole.EditableText`; adds `SemanticsProperty.Value` except for `PasswordBox`, where the value is `null`. |
+| `TextBox` | `TextBoxAutomationPeer` | Uses `SemanticsRole.EditableText` and adds the current text as `SemanticsProperty.Value`. |
+| `PasswordBox` | `PasswordBoxAutomationPeer` | Uses `SemanticsRole.EditableText` without exposing a semantic value. |
 | `ItemsControl` | `ItemsControlAutomationPeer` | Uses `SemanticsRole.List`; adds `SemanticsProperty.ItemCount`. |
 | `TextBlock` | `AutomationPeer` | Uses `SemanticsRole.Text` through the factory override path. |
 | Any other `UIElement` | `AutomationPeer` | Uses the base role rules. |
@@ -100,4 +101,5 @@ Cerneala UI semantics and accessibility infrastructure.
 - `Cerneala.UI.Accessibility.AccessibleName`
 - `Cerneala.UI.Accessibility.ButtonAutomationPeer`
 - `Cerneala.UI.Accessibility.TextBoxAutomationPeer`
+- `Cerneala.UI.Accessibility.PasswordBoxAutomationPeer`
 - `Cerneala.UI.Accessibility.ItemsControlAutomationPeer`

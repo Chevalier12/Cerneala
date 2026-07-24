@@ -1,6 +1,6 @@
 namespace Cerneala.UI.Text;
 
-public sealed class UndoRedoStack
+internal sealed class UndoRedoStack
 {
     private readonly Stack<TextEditorSnapshot> undo = new();
     private readonly Stack<TextEditorSnapshot> redo = new();

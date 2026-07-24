@@ -43,7 +43,7 @@ ObservableValue<string> name = new("Ada");
 TextBox nameTextBox = new();
 
 using UiPropertyBinding<string> binding =
-    BindingOperations.BindTwoWay(nameTextBox, TextBoxBase.TextProperty, name);
+BindingOperations.BindTwoWay(nameTextBox, TextBox.TextProperty, name);
 
 nameTextBox.Text = "Grace";
 ```

@@ -46,7 +46,7 @@ ObservableValue<string> name = new("Ada");
 TextBox editor = new();
 
 using UiPropertyBinding<string> binding =
-    BindingOperations.BindTwoWay(editor, TextBoxBase.TextProperty, name);
+BindingOperations.BindTwoWay(editor, TextBox.TextProperty, name);
 
 editor.Text = "Grace";
 ```
