@@ -174,6 +174,8 @@ Generated from `.`.
 |   |-- UiMarkupUserControlGenerator.cs
 |   +-- UiMarkupWindowGenerator.cs
 |-- CernealaPresentation/
+|   |-- Properties/
+|   |   +-- AssemblyInfo.cs
 |   |-- tests/
 |   |   +-- CodexPresentationHarness/
 |   |       +-- generated/
@@ -197,6 +199,11 @@ Generated from `.`.
 |   |-- PresentationWindow.Automation.cs
 |   |-- PresentationWindow.cui.xml
 |   |-- PresentationWindow.cui.xml.cs
+|   |-- PrismChapterView.cui.xml
+|   |-- PrismChapterView.cui.xml.cs
+|   |-- PrismStudioModel.cs
+|   |-- PrismStudioSlider.cui.xml
+|   |-- PrismStudioSlider.cui.xml.cs
 |   |-- RetainedModelChapterView.cui.xml
 |   |-- RetainedModelChapterView.cui.xml.cs
 |   |-- SvgImage.cs
@@ -239,7 +246,8 @@ Generated from `.`.
 |   |   |-- 2026-07-18-prism-monogame-compositor.md
 |   |   |-- 2026-07-18-prism-plan-index.md
 |   |   |-- 2026-07-18-prism-retained-composition-graph.md
-|   |   +-- 2026-07-18-prism-retained-pixel-cache.md
+|   |   |-- 2026-07-18-prism-retained-pixel-cache.md
+|   |   +-- 2026-07-22-prism-studio-presentation.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -362,6 +370,11 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.Prism.BackdropFrameRequest.md
 |   |   |   |-- Cerneala.Drawing.Prism.BackdropPixelFormat.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismBlendMode.md
+|   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismCatalog.md
+|   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismCatalogOperationInfo.md
+|   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismCatalogOperationKind.md
+|   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismCatalogParameterInfo.md
+|   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismCatalogValueKind.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismColorProfile.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismFilterId.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismSampling.md
@@ -540,6 +553,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Primitives.Thumb.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.ToggleButton.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.Track.md
+|   |   |   |-- Cerneala.UI.Controls.Primitives.TrackLayoutPanel.md
 |   |   |   |-- Cerneala.UI.Controls.ProgressBar.md
 |   |   |   |-- Cerneala.UI.Controls.RadioButton.md
 |   |   |   |-- Cerneala.UI.Controls.ResizeMode.md
@@ -1330,6 +1344,7 @@ Generated from `.`.
 |   |   |-- Blend/
 |   |   |   +-- PrismBlendMath.cs
 |   |   |-- Catalog/
+|   |   |   |-- PrismCatalog.cs
 |   |   |   +-- PrismFallbackPolicy.cs
 |   |   |-- Color/
 |   |   |   +-- PrismColorPipeline.cs
@@ -1607,6 +1622,8 @@ Generated from `.`.
 |   |   |-- Playground/
 |   |   |   +-- MainWindowContractTests.cs
 |   |   |-- Presentation/
+|   |   |   |-- PrismChapterViewTests.cs
+|   |   |   +-- PrismStudioModelTests.cs
 |   |   |-- UI/
 |   |   |   |-- Accessibility/
 |   |   |   |   |-- AccessibilityPlatformTests.cs
@@ -2087,6 +2104,7 @@ Generated from `.`.
 |   |   |-- ScrollViewer.cs
 |   |   |-- ScrollViewerTemplates.cs
 |   |   |-- Slider.cs
+|   |   |-- SliderTemplates.cs
 |   |   |-- StackPanel.cs
 |   |   |-- TabControl.cs
 |   |   |-- TabItem.cs
