@@ -55,6 +55,19 @@ public sealed class PrismChapterViewTests
     }
 
     [Fact]
+    public void PrismTextBoxesUseThePaperForeground()
+    {
+        XDocument markup = XDocument.Load(
+            RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml"));
+        XElement searchBox = FindNamedElement(markup, "SearchBox");
+        string code = File.ReadAllText(
+            RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs"));
+
+        Assert.Equal("$PaperBrush", (string?)searchBox.Attribute("Foreground"));
+        Assert.Contains("Foreground = PaperBrush", code, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void CatalogAndInspectorContractsCoverEveryOperationAndValueKind()
     {
         Assert.Equal(134, PrismCatalog.Filters.Length);

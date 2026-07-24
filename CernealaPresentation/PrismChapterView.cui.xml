@@ -346,6 +346,7 @@
                         Name="SearchBox"
                         TextChanged="OnCatalogSearchChanged"
                         Background="$PanelAltBrush"
+                        Foreground="$PaperBrush"
                         BorderBrush="$LineStrongBrush"
                         BorderThickness="1"
                         Padding="9,7,9,7"
