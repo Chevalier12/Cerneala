@@ -199,7 +199,7 @@ public static class PrismCatalog
                 property.DefaultValue,
                 property.Domain,
                 property.Unit,
-                SymbolOptions(property, entries)))
+                SymbolOptions(entry, property, entries)))
             .ToImmutableArray();
         return new PrismCatalogOperationInfo(
             entry.StableId,
@@ -211,12 +211,38 @@ public static class PrismCatalog
     }
 
     private static ImmutableArray<string> SymbolOptions(
+        PrismCatalogEntryDescriptor entry,
         PrismCatalogPropertyDescriptor property,
         PrismCatalogEntryDescriptor[] entries)
     {
         if (property.ValueType != PrismCatalogValueType.Symbol)
         {
             return [];
+        }
+
+        if (string.Equals(entry.Symbol, "Exposure", StringComparison.Ordinal))
+        {
+            if (string.Equals(property.Name, "Style", StringComparison.Ordinal))
+            {
+                return ["Linear", "Logarithmic", "Video"];
+            }
+
+            if (string.Equals(property.Name, "Direction", StringComparison.Ordinal))
+            {
+                return ["Forward", "Inverse"];
+            }
+        }
+
+        if (string.Equals(entry.Symbol, "ZigZag", StringComparison.Ordinal) &&
+            string.Equals(property.Name, "Style", StringComparison.Ordinal))
+        {
+            return ["PondRipples", "OutFromCenter", "AroundCenter"];
+        }
+
+        if (string.Equals(entry.Symbol, "Diffuse", StringComparison.Ordinal) &&
+            string.Equals(property.Name, "Mode", StringComparison.Ordinal))
+        {
+            return ["Normal", "DarkenOnly", "LightenOnly", "Anisotropic"];
         }
 
         IEnumerable<string> options = entries

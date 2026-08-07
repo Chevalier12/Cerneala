@@ -25,14 +25,20 @@ internal enum PrismResamplingOperation
     Wave,
     ZigZag,
     Liquify,
-    Offset
+    Offset,
+    NeonGlow
 }
 
 internal enum PrismResamplingPassKind
 {
     Direct,
-    Diffuse,
-    Grain
+    BloomExtractHorizontal,
+    BloomVerticalComposite,
+    Grain,
+    NeonEdgeExtract,
+    NeonBlurHorizontal,
+    NeonBlurVertical,
+    NeonPyramidComposite
 }
 
 internal readonly record struct PrismResamplingPass(
@@ -93,12 +99,15 @@ internal readonly record struct PrismResamplingPlan
     public Vector2 BoundsSkew { get; init; }
 
     public Vector2 BoundsOrigin { get; init; }
+
+    public Vector2 BoundsOutset { get; init; }
 }
 
 internal static class PrismResamplingPlanner
 {
     private const string ResamplingOwnerPrefix =
         "PrismKernelRegistry/";
+    internal const int MaximumWaveGenerators = 32;
 
     public static bool IsSupported(PrismFilterId filter)
     {
@@ -175,8 +184,7 @@ internal static class PrismResamplingPlanner
                     filter,
                     operation,
                     blendMode,
-                    values,
-                    deviceScale),
+                    values),
             PrismResamplingOperation.LensCorrection =>
                 LensCorrectionPlan(
                     filter,
@@ -195,13 +203,16 @@ internal static class PrismResamplingPlanner
                     operation,
                     blendMode,
                     values,
-                    deviceScale),
+                    deviceScale,
+                    transformScale),
             PrismResamplingOperation.Glass =>
                 GlassPlan(
                     filter,
                     operation,
                     blendMode,
-                    values),
+                    values,
+                    deviceScale,
+                    transformScale),
             PrismResamplingOperation.OceanRipple =>
                 OceanRipplePlan(
                     filter,
@@ -244,14 +255,13 @@ internal static class PrismResamplingPlanner
                     operation,
                     blendMode,
                     new Vector4(
+                        values.Number("Amount"),
                         ShearCurve(values, "Curve"),
                         UndefinedAreas(
                             values,
                             "UndefinedAreas"),
-                        0,
                         0),
-                    noOp:
-                        ShearCurve(values, "Curve") == 0),
+                    noOp: values.Number("Amount") == 0),
             PrismResamplingOperation.Spherize =>
                 PointPlan(
                     filter,
@@ -300,6 +310,15 @@ internal static class PrismResamplingPlanner
                     blendMode,
                     values,
                     deviceScale),
+            PrismResamplingOperation.NeonGlow =>
+                NeonGlowPlan(
+                    filter,
+                    operation,
+                    blendMode,
+                    values,
+                    deviceScale,
+                    transformScale,
+                    sourceSize),
             _ => throw new InvalidOperationException(
                 $"Resampling operation '{operation}' has no planner.")
         };
@@ -368,29 +387,30 @@ internal static class PrismResamplingPlanner
         PrismFilterId filter,
         PrismResamplingOperation operation,
         PrismBlendMode blendMode,
-        PrismFilterParameterReader values,
-        float deviceScale)
+        PrismFilterParameterReader values)
     {
-        Vector4 translate = values.Vector("Translate");
+        Vector4 focalLength = values.Vector("FocalLength");
+        if (focalLength.X <= 0 || focalLength.Y <= 0)
+        {
+            throw new InvalidOperationException(
+                "AdaptiveWideAngle requires positive focal-length components.");
+        }
+
+        Vector4 principalPoint = values.Vector("PrincipalPoint");
+        Vector4 distortion =
+            values.Vector("DistortionCoefficients");
         return PointPlan(
             filter,
             operation,
             blendMode,
             new Vector4(
-                Projection(values, "Projection"),
-                FocalLength(values, "FocalLength"),
-                values.Number("CropFactor"),
-                values.Number("Scale")),
-            noOp: false) with
+                focalLength.X,
+                focalLength.Y,
+                principalPoint.X,
+                principalPoint.Y),
+            noOp: distortion == Vector4.Zero) with
         {
-            Options1 = new Vector4(
-                Degrees(values.Number("Rotation")),
-                translate.X * deviceScale,
-                translate.Y * deviceScale,
-                0),
-            PrimaryResource =
-                values.Resource("Constraints"),
-            PrimaryResourceRequired = true
+            Options1 = distortion
         };
     }
 
@@ -449,27 +469,40 @@ internal static class PrismResamplingPlanner
         PrismBlendMode blendMode,
         PrismFilterParameterReader values)
     {
-        float grain = values.Number("Grain");
-        float glow = values.Number("GlowAmount");
-        float clear = values.Number("ClearAmount");
+        float grain = Math.Clamp(
+            values.Number("Grain"),
+            0,
+            1);
+        float glow = Math.Clamp(
+            values.Number("GlowAmount"),
+            0,
+            1);
+        float threshold = Math.Clamp(
+            values.Number("ClearAmount"),
+            0,
+            1);
+        float radius = 0.5f + (glow * 1.5f);
         return new PrismResamplingPlan(
             filter,
             operation,
             blendMode,
             [
                 new PrismResamplingPass(
-                    PrismResamplingPassKind.Diffuse,
+                    PrismResamplingPassKind.BloomExtractHorizontal,
+                    glow == 0),
+                new PrismResamplingPass(
+                    PrismResamplingPassKind.BloomVerticalComposite,
                     glow == 0),
                 new PrismResamplingPass(
                     PrismResamplingPassKind.Grain,
-                    grain == 0 && clear == 0)
+                    grain == 0)
             ])
         {
             Options0 = new Vector4(
                 grain,
                 glow,
-                clear,
-                0),
+                threshold,
+                radius),
             Options1 = values.Color("Color")
         };
     }
@@ -479,12 +512,13 @@ internal static class PrismResamplingPlanner
         PrismResamplingOperation operation,
         PrismBlendMode blendMode,
         PrismFilterParameterReader values,
-        float deviceScale)
+        float deviceScale,
+        float transformScale)
     {
-        float horizontal =
-            values.Number("HorizontalScale") * deviceScale;
-        float vertical =
-            values.Number("VerticalScale") * deviceScale;
+        float horizontalScale = values.Number("HorizontalScale");
+        float verticalScale = values.Number("VerticalScale");
+        float horizontal = horizontalScale * deviceScale;
+        float vertical = verticalScale * deviceScale;
         return PointPlan(
             filter,
             operation,
@@ -504,7 +538,76 @@ internal static class PrismResamplingPlanner
                 0,
                 0),
             PrimaryResource = values.Resource("Map"),
-            PrimaryResourceRequired = true
+            PrimaryResourceRequired = true,
+            BoundsOutset = new Vector2(
+                MathF.Abs(horizontalScale * transformScale) * 0.5f,
+                MathF.Abs(verticalScale * transformScale) * 0.5f)
+        };
+    }
+
+    private static PrismResamplingPlan NeonGlowPlan(
+        PrismFilterId filter,
+        PrismResamplingOperation operation,
+        PrismBlendMode blendMode,
+        PrismFilterParameterReader values,
+        float deviceScale,
+        float transformScale,
+        Vector2 sourceSize)
+    {
+        float logicalRadius = values.Number("GlowSize");
+        float maximumDimension = MathF.Max(
+            sourceSize.X,
+            sourceSize.Y);
+        float radius = Math.Clamp(
+            logicalRadius * deviceScale,
+            0,
+            maximumDimension);
+        float maximumLod = MathF.Floor(
+            MathF.Log2(MathF.Max(maximumDimension, 1)));
+        float pyramidLod = Math.Clamp(
+            MathF.Log2(MathF.Max(radius, 1)),
+            0,
+            maximumLod);
+        float baseRadius = Math.Clamp(
+            radius / MathF.Pow(2, pyramidLod),
+            0.5f,
+            2);
+        float brightness = Math.Clamp(
+            MathF.Max(values.Number("GlowBrightness"), 0) / 15,
+            0,
+            8);
+        Vector4 color = values.Color("GlowColor");
+        bool noOp =
+            radius == 0 ||
+            brightness == 0 ||
+            color.W == 0;
+        return new PrismResamplingPlan(
+            filter,
+            operation,
+            blendMode,
+            [
+                new PrismResamplingPass(
+                    PrismResamplingPassKind.NeonEdgeExtract,
+                    noOp),
+                new PrismResamplingPass(
+                    PrismResamplingPassKind.NeonBlurHorizontal,
+                    noOp),
+                new PrismResamplingPass(
+                    PrismResamplingPassKind.NeonBlurVertical,
+                    noOp),
+                new PrismResamplingPass(
+                    PrismResamplingPassKind.NeonPyramidComposite,
+                    noOp)
+            ])
+        {
+            Options0 = new Vector4(
+                radius,
+                baseRadius,
+                pyramidLod,
+                brightness),
+            Options1 = color,
+            BoundsOutset = new Vector2(
+                (radius / deviceScale) * transformScale)
         };
     }
 
@@ -512,15 +615,18 @@ internal static class PrismResamplingPlanner
         PrismFilterId filter,
         PrismResamplingOperation operation,
         PrismBlendMode blendMode,
-        PrismFilterParameterReader values)
+        PrismFilterParameterReader values,
+        float deviceScale,
+        float transformScale)
     {
         float distortion = values.Number("Distortion");
+        float deviceDistortion = distortion * 20 * deviceScale;
         return PointPlan(
             filter,
             operation,
             blendMode,
             new Vector4(
-                distortion,
+                deviceDistortion,
                 values.Number("Smoothness"),
                 GlassTexture(values, "Texture"),
                 values.Number("Scaling")),
@@ -532,7 +638,9 @@ internal static class PrismResamplingPlanner
                 0,
                 0),
             PrimaryResource =
-                values.Resource("TextureImage")
+                values.Resource("TextureImage"),
+            BoundsOutset = new Vector2(
+                MathF.Abs(distortion * 10 * transformScale))
         };
     }
 
@@ -572,7 +680,7 @@ internal static class PrismResamplingPlanner
             blendMode,
             new Vector4(
                 amount * deviceScale,
-                RippleSize(values, "Size"),
+                (8 << RippleSize(values, "Size")) * deviceScale,
                 seed & 0xffff,
                 (seed >> 16) & 0xffff),
             noOp: amount == 0) with
@@ -596,23 +704,39 @@ internal static class PrismResamplingPlanner
         Vector4 amplitude = values.Vector("Amplitude");
         Vector4 scale = values.Vector("Scale");
         int seed = values.Integer("Seed");
-        float generators = values.Number("Generators");
+        int generators = Math.Clamp(
+            (int)MathF.Round(values.Number("Generators")),
+            0,
+            MaximumWaveGenerators);
+        float wavelengthMinimum = MathF.Max(
+            MathF.Min(wavelength.X, wavelength.Y),
+            0.001f);
+        float wavelengthMaximum = MathF.Max(
+            MathF.Max(wavelength.X, wavelength.Y),
+            wavelengthMinimum);
+        float amplitudeMinimum = MathF.Max(
+            MathF.Min(amplitude.X, amplitude.Y),
+            0);
+        float amplitudeMaximum = MathF.Max(
+            MathF.Max(amplitude.X, amplitude.Y),
+            amplitudeMinimum);
         return PointPlan(
             filter,
             operation,
             blendMode,
             new Vector4(
                 generators,
-                wavelength.X * deviceScale,
-                wavelength.Y * deviceScale,
+                wavelengthMinimum * deviceScale,
+                wavelengthMaximum * deviceScale,
                 WaveType(values, "Type")),
             noOp:
                 generators == 0 ||
-                (amplitude.X == 0 && amplitude.Y == 0)) with
+                amplitudeMaximum == 0 ||
+                (scale.X == 0 && scale.Y == 0)) with
         {
             Options1 = new Vector4(
-                amplitude.X * deviceScale,
-                amplitude.Y * deviceScale,
+                amplitudeMinimum * deviceScale,
+                amplitudeMaximum * deviceScale,
                 scale.X,
                 scale.Y),
             Options2 = new Vector4(
@@ -751,24 +875,6 @@ internal static class PrismResamplingPlanner
             ("SetToBackground", 4),
             ("Transparent", 1));
 
-    private static int Projection(
-        PrismFilterParameterReader values,
-        string name) =>
-        values.SymbolCode(
-            name,
-            ("Auto", 0),
-            ("Fisheye", 1),
-            ("Perspective", 2),
-            ("FullSpherical", 3));
-
-    private static int FocalLength(
-        PrismFilterParameterReader values,
-        string name) =>
-        values.SymbolCode(
-            name,
-            ("Auto", 0),
-            ("Measured", 1));
-
     private static int MapFit(
         PrismFilterParameterReader values,
         string name) =>
@@ -897,6 +1003,8 @@ internal static class PrismResamplingPlanner
                 PrismResamplingOperation.Liquify,
             PrismFilterId.Offset =>
                 PrismResamplingOperation.Offset,
+            PrismFilterId.NeonGlow =>
+                PrismResamplingOperation.NeonGlow,
             _ => (PrismResamplingOperation)(-1)
         };
         return (int)operation >= 0;

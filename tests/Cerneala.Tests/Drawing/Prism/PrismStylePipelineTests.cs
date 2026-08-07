@@ -254,6 +254,52 @@ public sealed class PrismStylePipelineTests
     }
 
     [Fact]
+    public void DropShadowBoundsCoverThePreparedGaussianMask()
+    {
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Drop shadow bounds",
+            styles:
+            [
+                new PrismStyleDefinition(
+                    PrismStyleId.DropShadow)
+            ]);
+        DrawRect bounds = new(10, 20, 40, 30);
+        PrismDrawScope scope = PrismTestData.Scope(
+            PrismTestData.Composition(
+                "Drop shadow bounds",
+                layer),
+            bounds: bounds);
+        PrismStyleState state = Assert.Single(
+            scope.Instance
+                .GetLayerState(layer.Id)
+                .Styles);
+        PrismCatalogEntryDescriptor entry =
+            PrismCatalogRuntime.GetEntry(
+                (int)PrismStyleId.DropShadow);
+
+        SetStyleNumber(state, entry, "Distance", 0);
+        SetStyleNumber(state, entry, "Size", 5);
+        SetStyleNumber(state, entry, "Spread", 2);
+
+        PrismGraph graph = BuildGraph(scope);
+        PrismGraphScope graphScope = Assert.Single(graph.Scopes);
+        PrismGraphNode styleNode = Assert.Single(
+            graph.Nodes.Where(node =>
+                node.Kind == PrismGraphNodeKind.Style));
+        PrismStylePlan plan = PrismStylePlanner.Create(
+            styleNode,
+            graphScope);
+
+        Assert.Equal(
+            new DrawRect(0, 10, 60, 50),
+            PrismStylePlanner.ExpandBounds(
+                plan,
+                graphScope,
+                bounds));
+    }
+
+    [Fact]
     public void ResourceVersionsFlowIntoStyleDependencyStampAndCacheability()
     {
         PrismResourceId pattern = new("StylePattern");
@@ -410,6 +456,22 @@ public sealed class PrismStylePipelineTests
                 throw new InvalidOperationException(
                     $"Unhandled catalog value type '{property.ValueType}'.");
         }
+    }
+
+    private static void SetStyleNumber(
+        PrismStyleState state,
+        PrismCatalogEntryDescriptor entry,
+        string name,
+        float value)
+    {
+        PrismCatalogPropertyDescriptor property =
+            entry.Properties.Single(candidate =>
+                candidate.Name == name);
+        GeneratedMarkup.SetPrismStyleNumber(
+            state,
+            entry.StableId,
+            property.TypeSlot,
+            value);
     }
 
     private static PrismGraph BuildGraph(

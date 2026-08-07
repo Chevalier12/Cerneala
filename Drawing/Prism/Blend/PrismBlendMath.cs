@@ -17,11 +17,15 @@ internal static class PrismBlendMath
         Validate(mode, source, backdrop, options);
         PrismBlendColor sourceStraight = Unassociate(source);
         PrismBlendColor backdropStraight = Unassociate(backdrop);
-        double blendIf = EvaluateBlendRange(
-                SelectChannel(sourceStraight, options.BlendIfChannel),
+        double blendIf = PrismBlendIfStyle.Evaluate(
+                PrismBlendIfStyle.SelectChannel(
+                    sourceStraight,
+                    options.BlendIfChannel),
                 options.ThisLayerRange) *
-            EvaluateBlendRange(
-                SelectChannel(backdropStraight, options.BlendIfChannel),
+            PrismBlendIfStyle.Evaluate(
+                PrismBlendIfStyle.SelectChannel(
+                    backdropStraight,
+                    options.BlendIfChannel),
                 options.UnderlyingRange);
         PrismPremultipliedColor gatedSource =
             Scale(source, blendIf);
@@ -29,13 +33,14 @@ internal static class PrismBlendMath
         PrismPremultipliedColor composite;
         if (mode == PrismBlendMode.Dissolve)
         {
-            int seed = NormalizeDissolveSeed(
+            int seed = PrismDissolveBlend.NormalizeSeed(
                 options.DissolveSeed,
                 options.LayerIdentity);
-            bool selected = DissolveValue(
+            bool selected = PrismDissolveBlend.IsSelected(
                 pixelX,
                 pixelY,
-                seed) < gatedSource.Alpha;
+                seed,
+                gatedSource.Alpha);
             PrismPremultipliedColor dissolved = selected
                 ? PrismPremultipliedColor.FromStraight(
                     sourceStraight.Red,
@@ -46,19 +51,24 @@ internal static class PrismBlendMath
             composite = CompositeAssociated(
                 PrismBlendMode.Normal,
                 dissolved,
-                backdrop,
-                PrismKnockout.None);
+                backdrop);
         }
         else
         {
-            composite = CompositeAssociated(
-                mode,
-                gatedSource,
-                backdrop,
-                options.Knockout);
+            composite = options.Knockout == PrismKnockout.None
+                ? CompositeAssociated(
+                    mode,
+                    gatedSource,
+                    backdrop)
+                : CompositeKnockout(
+                    mode,
+                    gatedSource,
+                    backdrop,
+                    backdrop,
+                    gatedSource.Alpha);
         }
 
-        return ApplyChannelMask(
+        return PrismAdvancedBlendingStyle.ApplyChannelMask(
             composite,
             backdrop,
             options.BlendChannels);
@@ -67,50 +77,28 @@ internal static class PrismBlendMath
     public static double EvaluateBlendRange(
         double value,
         PrismBlendRange range)
-    {
-        double black = range.BlackEnd > range.BlackStart
-            ? Math.Clamp(
-                (value - range.BlackStart) /
-                    (range.BlackEnd - range.BlackStart),
-                0,
-                1)
-            : value >= range.BlackStart ? 1 : 0;
-        double white = range.WhiteEnd > range.WhiteStart
-            ? 1 - Math.Clamp(
-                (value - range.WhiteStart) /
-                    (range.WhiteEnd - range.WhiteStart),
-                0,
-                1)
-            : value <= range.WhiteStart ? 1 : 0;
-        return black * white;
-    }
+        => PrismBlendIfStyle.Evaluate(value, range);
 
     public static int NormalizeDissolveSeed(
         int dissolveSeed,
-        int layerIdentity)
-    {
-        uint hash = 2166136261;
-        hash = (hash ^ unchecked((uint)dissolveSeed)) * 16777619;
-        hash = (hash ^ unchecked((uint)layerIdentity)) * 16777619;
-        return (int)(hash & 0xffff);
-    }
+        int layerIdentity) =>
+        PrismDissolveBlend.NormalizeSeed(
+            dissolveSeed,
+            layerIdentity);
 
     private static PrismPremultipliedColor CompositeAssociated(
         PrismBlendMode mode,
         PrismPremultipliedColor source,
-        PrismPremultipliedColor backdrop,
-        PrismKnockout knockout)
+        PrismPremultipliedColor backdrop)
     {
         PrismBlendColor sourceStraight = Unassociate(source);
         PrismBlendColor backdropStraight = Unassociate(backdrop);
-        PrismBlendColor blended = knockout == PrismKnockout.None
-            ? Blend(
-                mode == PrismBlendMode.PassThrough
-                    ? PrismBlendMode.Normal
-                    : mode,
-                backdropStraight,
-                sourceStraight)
-            : sourceStraight;
+        PrismBlendColor blended = Blend(
+            mode == PrismBlendMode.PassThrough
+                ? PrismBlendMode.Normal
+                : mode,
+            backdropStraight,
+            sourceStraight);
         double overlap = source.Alpha * backdrop.Alpha;
         return new PrismPremultipliedColor(
             (source.Red * (1 - backdrop.Alpha)) +
@@ -125,6 +113,80 @@ internal static class PrismBlendMath
             source.Alpha + backdrop.Alpha - overlap);
     }
 
+
+    internal static PrismPremultipliedColor CompositeKnockout(
+        PrismBlendMode mode,
+        PrismPremultipliedColor source,
+        PrismPremultipliedColor currentBackdrop,
+        PrismPremultipliedColor originalBackdrop,
+        double sourceShape)
+    {
+        ValidateColor(source, nameof(source));
+        ValidateColor(currentBackdrop, nameof(currentBackdrop));
+        ValidateColor(originalBackdrop, nameof(originalBackdrop));
+        if (!double.IsFinite(sourceShape) ||
+            sourceShape is < 0 or > 1 ||
+            source.Alpha > sourceShape)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sourceShape),
+                "Knockout shape must be finite, in [0, 1], and no smaller than source alpha.");
+        }
+
+        PrismBlendColor sourceStraight = Unassociate(source);
+        PrismBlendColor originalStraight = Unassociate(originalBackdrop);
+        PrismBlendColor blended = Blend(
+            mode == PrismBlendMode.PassThrough
+                ? PrismBlendMode.Normal
+                : mode,
+            originalStraight,
+            sourceStraight);
+        double previousGroupAlpha = ResolveGroupAlpha(
+            currentBackdrop.Alpha,
+            originalBackdrop.Alpha);
+        double groupAlpha =
+            ((1 - sourceShape) * previousGroupAlpha) +
+            source.Alpha;
+        double alpha = Union(originalBackdrop.Alpha, groupAlpha);
+        double uncoveredShape = sourceShape - source.Alpha;
+
+        return new PrismPremultipliedColor(
+            ((1 - sourceShape) * currentBackdrop.Red) +
+                (uncoveredShape * originalBackdrop.Red) +
+                (source.Alpha *
+                    (((1 - originalBackdrop.Alpha) * sourceStraight.Red) +
+                        (originalBackdrop.Alpha * blended.Red))),
+            ((1 - sourceShape) * currentBackdrop.Green) +
+                (uncoveredShape * originalBackdrop.Green) +
+                (source.Alpha *
+                    (((1 - originalBackdrop.Alpha) * sourceStraight.Green) +
+                        (originalBackdrop.Alpha * blended.Green))),
+            ((1 - sourceShape) * currentBackdrop.Blue) +
+                (uncoveredShape * originalBackdrop.Blue) +
+                (source.Alpha *
+                    (((1 - originalBackdrop.Alpha) * sourceStraight.Blue) +
+                        (originalBackdrop.Alpha * blended.Blue))),
+            alpha);
+    }
+
+    private static double ResolveGroupAlpha(
+        double currentAlpha,
+        double originalAlpha)
+    {
+        if (originalAlpha >= 1)
+        {
+            return 0;
+        }
+
+        return Math.Clamp(
+            (currentAlpha - originalAlpha) / (1 - originalAlpha),
+            0,
+            1);
+    }
+
+    private static double Union(double backdrop, double source) =>
+        backdrop + source - (backdrop * source);
+
     private static PrismBlendColor Blend(
         PrismBlendMode mode,
         PrismBlendColor backdrop,
@@ -134,107 +196,33 @@ internal static class PrismBlendMath
         source = Clamp01(source);
         PrismBlendColor result = mode switch
         {
-            PrismBlendMode.Normal => source,
-            PrismBlendMode.Darken => Zip(backdrop, source, Math.Min),
-            PrismBlendMode.Multiply => Zip(
-                backdrop,
-                source,
-                static (left, right) => left * right),
-            PrismBlendMode.ColorBurn => Zip(
-                backdrop,
-                source,
-                ColorBurn),
-            PrismBlendMode.LinearBurn => Zip(
-                backdrop,
-                source,
-                static (left, right) => left + right - 1),
-            PrismBlendMode.DarkerColor =>
-                Luminosity(backdrop) <= Luminosity(source)
-                    ? backdrop
-                    : source,
-            PrismBlendMode.Lighten => Zip(backdrop, source, Math.Max),
-            PrismBlendMode.Screen => Zip(
-                backdrop,
-                source,
-                static (left, right) =>
-                    left + right - (left * right)),
-            PrismBlendMode.ColorDodge => Zip(
-                backdrop,
-                source,
-                ColorDodge),
-            PrismBlendMode.LinearDodge => Zip(
-                backdrop,
-                source,
-                static (left, right) => left + right),
-            PrismBlendMode.LighterColor =>
-                Luminosity(backdrop) >= Luminosity(source)
-                    ? backdrop
-                    : source,
-            PrismBlendMode.Overlay => Zip(
-                backdrop,
-                source,
-                Overlay),
-            PrismBlendMode.SoftLight => Zip(
-                backdrop,
-                source,
-                SoftLight),
-            PrismBlendMode.HardLight => Zip(
-                backdrop,
-                source,
-                static (left, right) => Overlay(right, left)),
-            PrismBlendMode.VividLight => Zip(
-                backdrop,
-                source,
-                VividLight),
-            PrismBlendMode.LinearLight => Zip(
-                backdrop,
-                source,
-                static (left, right) =>
-                    left + (2 * right) - 1),
-            PrismBlendMode.PinLight => Zip(
-                backdrop,
-                source,
-                PinLight),
-            PrismBlendMode.HardMix => Zip(
-                backdrop,
-                source,
-                static (left, right) =>
-                    VividLight(left, right) < 0.5 ? 0 : 1),
-            PrismBlendMode.Difference => Zip(
-                backdrop,
-                source,
-                static (left, right) => Math.Abs(left - right)),
-            PrismBlendMode.Exclusion => Zip(
-                backdrop,
-                source,
-                static (left, right) =>
-                    left + right - (2 * left * right)),
-            PrismBlendMode.Subtract => Zip(
-                backdrop,
-                source,
-                static (left, right) => left - right),
-            PrismBlendMode.Divide => Zip(
-                backdrop,
-                source,
-                static (left, right) =>
-                    right <= 0 ? 1 : left / right),
-            PrismBlendMode.Hue => SetLuminosity(
-                SetSaturation(
-                    source,
-                    Saturation(backdrop)),
-                Luminosity(backdrop)),
-            PrismBlendMode.Saturation => SetLuminosity(
-                SetSaturation(
-                    backdrop,
-                    Saturation(source)),
-                Luminosity(backdrop)),
-            PrismBlendMode.Color => SetLuminosity(
-                source,
-                Luminosity(backdrop)),
-            PrismBlendMode.Luminosity => SetLuminosity(
-                backdrop,
-                Luminosity(source)),
-            PrismBlendMode.PassThrough => source,
+            PrismBlendMode.Normal => PrismNormalBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Darken => PrismDarkenBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Multiply => PrismMultiplyBlend.Evaluate(backdrop, source),
+            PrismBlendMode.ColorBurn => PrismColorBurnBlend.Evaluate(backdrop, source),
+            PrismBlendMode.LinearBurn => PrismLinearBurnBlend.Evaluate(backdrop, source),
+            PrismBlendMode.DarkerColor => PrismDarkerColorBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Lighten => PrismLightenBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Screen => PrismScreenBlend.Evaluate(backdrop, source),
+            PrismBlendMode.ColorDodge => PrismColorDodgeBlend.Evaluate(backdrop, source),
+            PrismBlendMode.LinearDodge => PrismLinearDodgeBlend.Evaluate(backdrop, source),
+            PrismBlendMode.LighterColor => PrismLighterColorBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Overlay => PrismOverlayBlend.Evaluate(backdrop, source),
+            PrismBlendMode.SoftLight => PrismSoftLightBlend.Evaluate(backdrop, source),
+            PrismBlendMode.HardLight => PrismHardLightBlend.Evaluate(backdrop, source),
+            PrismBlendMode.VividLight => PrismVividLightBlend.Evaluate(backdrop, source),
+            PrismBlendMode.LinearLight => PrismLinearLightBlend.Evaluate(backdrop, source),
+            PrismBlendMode.PinLight => PrismPinLightBlend.Evaluate(backdrop, source),
+            PrismBlendMode.HardMix => PrismHardMixBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Difference => PrismDifferenceBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Exclusion => PrismExclusionBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Subtract => PrismSubtractBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Divide => PrismDivideBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Hue => PrismHueBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Saturation => PrismSaturationBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Color => PrismColorBlend.Evaluate(backdrop, source),
+            PrismBlendMode.Luminosity => PrismLuminosityBlend.Evaluate(backdrop, source),
+            PrismBlendMode.PassThrough => PrismPassThroughBlend.Evaluate(backdrop, source),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(mode),
                 mode,
@@ -243,31 +231,7 @@ internal static class PrismBlendMath
         return Clamp01(result);
     }
 
-    private static PrismPremultipliedColor ApplyChannelMask(
-        PrismPremultipliedColor composite,
-        PrismPremultipliedColor backdrop,
-        PrismBlendChannels channels)
-    {
-        PrismBlendColor compositeStraight = Unassociate(composite);
-        PrismBlendColor backdropStraight = Unassociate(backdrop);
-        double alpha =
-            (channels & PrismBlendChannels.Alpha) != 0
-            ? composite.Alpha
-            : backdrop.Alpha;
-        return PrismPremultipliedColor.FromStraight(
-            (channels & PrismBlendChannels.Red) != 0
-                ? compositeStraight.Red
-                : backdropStraight.Red,
-            (channels & PrismBlendChannels.Green) != 0
-                ? compositeStraight.Green
-                : backdropStraight.Green,
-            (channels & PrismBlendChannels.Blue) != 0
-                ? compositeStraight.Blue
-                : backdropStraight.Blue,
-            alpha);
-    }
-
-    private static PrismBlendColor SetLuminosity(
+    internal static PrismBlendColor SetLuminosity(
         PrismBlendColor color,
         double luminosity)
     {
@@ -278,7 +242,7 @@ internal static class PrismBlendMath
             color.Blue + delta));
     }
 
-    private static PrismBlendColor SetSaturation(
+    internal static PrismBlendColor SetSaturation(
         PrismBlendColor color,
         double saturation)
     {
@@ -368,7 +332,7 @@ internal static class PrismBlendMath
         return color;
     }
 
-    private static PrismBlendColor Zip(
+    internal static PrismBlendColor Zip(
         PrismBlendColor left,
         PrismBlendColor right,
         Func<double, double, double> operation)
@@ -387,7 +351,7 @@ internal static class PrismBlendMath
             Math.Clamp(color.Blue, 0, 1));
     }
 
-    private static PrismBlendColor Unassociate(
+    internal static PrismBlendColor Unassociate(
         PrismPremultipliedColor color)
     {
         return color.Alpha > 0
@@ -409,31 +373,14 @@ internal static class PrismBlendMath
             color.Alpha * amount);
     }
 
-    private static double SelectChannel(
-        PrismBlendColor color,
-        PrismBlendIfChannel channel)
-    {
-        return channel switch
-        {
-            PrismBlendIfChannel.Gray => Luminosity(color),
-            PrismBlendIfChannel.Red => color.Red,
-            PrismBlendIfChannel.Green => color.Green,
-            PrismBlendIfChannel.Blue => color.Blue,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(channel),
-                channel,
-                "Unknown Blend If channel.")
-        };
-    }
-
-    private static double Luminosity(PrismBlendColor color)
+    internal static double Luminosity(PrismBlendColor color)
     {
         return (0.3 * color.Red) +
             (0.59 * color.Green) +
             (0.11 * color.Blue);
     }
 
-    private static double Saturation(PrismBlendColor color)
+    internal static double Saturation(PrismBlendColor color)
     {
         return Math.Max(
                 color.Red,
@@ -441,68 +388,6 @@ internal static class PrismBlendMath
             Math.Min(
                 color.Red,
                 Math.Min(color.Green, color.Blue));
-    }
-
-    private static double ColorBurn(double backdrop, double source)
-    {
-        return source <= 0
-            ? 0
-            : 1 - Math.Min(1, (1 - backdrop) / source);
-    }
-
-    private static double ColorDodge(double backdrop, double source)
-    {
-        return source >= 1
-            ? 1
-            : Math.Min(1, backdrop / (1 - source));
-    }
-
-    private static double Overlay(double backdrop, double source)
-    {
-        return backdrop <= 0.5
-            ? 2 * backdrop * source
-            : 1 - (2 * (1 - backdrop) * (1 - source));
-    }
-
-    private static double SoftLight(double backdrop, double source)
-    {
-        if (source <= 0.5)
-        {
-            return backdrop -
-                ((1 - (2 * source)) * backdrop * (1 - backdrop));
-        }
-
-        double curve = backdrop <= 0.25
-            ? (((16 * backdrop) - 12) * backdrop + 4) * backdrop
-            : Math.Sqrt(backdrop);
-        return backdrop +
-            (((2 * source) - 1) * (curve - backdrop));
-    }
-
-    private static double VividLight(double backdrop, double source)
-    {
-        return source < 0.5
-            ? ColorBurn(backdrop, 2 * source)
-            : ColorDodge(backdrop, 2 * (source - 0.5));
-    }
-
-    private static double PinLight(double backdrop, double source)
-    {
-        return source < 0.5
-            ? Math.Min(backdrop, 2 * source)
-            : Math.Max(backdrop, (2 * source) - 1);
-    }
-
-    private static double DissolveValue(
-        int pixelX,
-        int pixelY,
-        int normalizedSeed)
-    {
-        int value = unchecked(
-            (pixelX * 17) +
-            (pixelY * 131) +
-            (normalizedSeed * 13));
-        return (value & 255) / 256d;
     }
 
     private static void Validate(
@@ -549,11 +434,12 @@ internal static class PrismBlendMath
         }
     }
 
-    private readonly record struct PrismBlendColor(
-        double Red,
-        double Green,
-        double Blue);
 }
+
+internal readonly record struct PrismBlendColor(
+    double Red,
+    double Green,
+    double Blue);
 
 internal readonly record struct PrismBlendOptions(
     PrismBlendChannels BlendChannels,

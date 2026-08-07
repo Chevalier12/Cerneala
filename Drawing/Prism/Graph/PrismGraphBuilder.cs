@@ -111,6 +111,7 @@ internal sealed class PrismGraphBuilder
         private readonly HashSet<PrismGraphNodeId> nodeIds;
         private readonly Dictionary<PrismNodeId, int> definitionOrders = [];
         private readonly Dictionary<PrismNodeId, string> diagnosticNames = [];
+        private readonly List<PrismGraphNodeId> deferredKnockoutBackdrops = [];
         private readonly ImmutableArray<PrismGraphDependency> scopeDependencies;
         private PrismGraphNodeId controlSource;
 
@@ -196,9 +197,22 @@ internal sealed class PrismGraphBuilder
             AddEdge(capture.Id, conversion.Id, PrismGraphEdgeKind.Content);
             controlSource = conversion.Id;
 
-            PrismGraphNodeId? content =
-                BuildStack(definition.Nodes, excludeBackdrop: true).Output;
+            PrismGraphNodeId? content = BuildStack(
+                definition.Nodes,
+                excludeBackdrop: true,
+                deferShallowKnockoutBackdrop: true,
+                deferDeepKnockoutBackdrop: true).Output;
             PrismGraphNodeId? backdrop = BuildBackdrop();
+            if (backdrop is PrismGraphNodeId originalBackdrop)
+            {
+                foreach (PrismGraphNodeId target in deferredKnockoutBackdrops)
+                {
+                    AddEdge(
+                        originalBackdrop,
+                        target,
+                        PrismGraphEdgeKind.KnockoutBackdrop);
+                }
+            }
             PrismGraphNodeId? output = CombineBackdrop(backdrop, content);
             return new PrismGraphScope(
                 analyzedScope.ScopeIndex,
@@ -221,7 +235,11 @@ internal sealed class PrismGraphBuilder
         private StackBuildResult BuildStack(
             IReadOnlyList<PrismNodeDefinition> definitions,
             bool excludeBackdrop = false,
-            PrismGraphNodeId? initialBackground = null)
+            PrismGraphNodeId? initialBackground = null,
+            PrismGraphNodeId? shallowKnockoutBackdrop = null,
+            PrismGraphNodeId? deepKnockoutBackdrop = null,
+            bool deferShallowKnockoutBackdrop = false,
+            bool deferDeepKnockoutBackdrop = false)
         {
             PrismGraphNodeId? current = initialBackground;
             PrismGraphNodeId? clipBaseAlpha = null;
@@ -262,7 +280,12 @@ internal sealed class PrismGraphBuilder
                     }
                 }
 
-                NodeBuildResult? result = BuildNode(nodeDefinition, current);
+                NodeBuildResult? result = BuildNode(
+                    nodeDefinition,
+                    current,
+                    deepKnockoutBackdrop,
+                    deferShallowKnockoutBackdrop,
+                    deferDeepKnockoutBackdrop);
                 if (result is null)
                 {
                     if (!disposition.ClipToBelow)
@@ -327,6 +350,31 @@ internal sealed class PrismGraphBuilder
                     foreground,
                     composite.Id,
                     PrismGraphEdgeKind.CompositeForeground);
+                if (built.LayerSettings is PrismGraphLayerSettings settings &&
+                    settings.Knockout != PrismKnockout.None)
+                {
+                    PrismGraphNodeId? knockoutBackdrop =
+                        settings.Knockout == PrismKnockout.Shallow
+                            ? shallowKnockoutBackdrop
+                            : deepKnockoutBackdrop;
+                    if (knockoutBackdrop is PrismGraphNodeId original)
+                    {
+                        AddEdge(
+                            original,
+                            composite.Id,
+                            PrismGraphEdgeKind.KnockoutBackdrop);
+                    }
+                    else if (settings.Knockout == PrismKnockout.Shallow
+                        ? deferShallowKnockoutBackdrop
+                        : deferDeepKnockoutBackdrop)
+                    {
+                        deferredKnockoutBackdrops.Add(composite.Id);
+                    }
+                    AddEdge(
+                        built.Shape,
+                        composite.Id,
+                        PrismGraphEdgeKind.KnockoutShape);
+                }
                 current = composite.Id;
                 hasContent = true;
             }
@@ -336,14 +384,22 @@ internal sealed class PrismGraphBuilder
 
         private NodeBuildResult? BuildNode(
             PrismNodeDefinition nodeDefinition,
-            PrismGraphNodeId? background)
+            PrismGraphNodeId? background,
+            PrismGraphNodeId? deepKnockoutBackdrop,
+            bool deferShallowKnockoutBackdrop,
+            bool deferDeepKnockoutBackdrop)
         {
             try
             {
                 return nodeDefinition switch
                 {
                     PrismLayerDefinition layer => BuildLayer(layer),
-                    PrismGroupDefinition group => BuildGroup(group, background),
+                    PrismGroupDefinition group => BuildGroup(
+                        group,
+                        background,
+                        deepKnockoutBackdrop,
+                        deferShallowKnockoutBackdrop,
+                        deferDeepKnockoutBackdrop),
                     PrismBackdropDefinition => throw new InvalidOperationException(
                         "A backdrop cannot appear inside a content stack."),
                     _ => throw new InvalidOperationException(
@@ -419,6 +475,7 @@ internal sealed class PrismGraphBuilder
             return new NodeBuildResult(
                 opacity.Id,
                 opacity.Id,
+                current,
                 state.BlendMode,
                 state.ClipToBelow,
                 ConsumesBackground: false,
@@ -427,7 +484,10 @@ internal sealed class PrismGraphBuilder
 
         private NodeBuildResult? BuildGroup(
             PrismGroupDefinition group,
-            PrismGraphNodeId? background)
+            PrismGraphNodeId? background,
+            PrismGraphNodeId? deepKnockoutBackdrop,
+            bool deferShallowKnockoutBackdrop,
+            bool deferDeepKnockoutBackdrop)
         {
             PrismGroupState state = instance.GetGroupState(group.Id);
             ValidateBlendMode(state.BlendMode, allowPassThrough: true);
@@ -439,7 +499,16 @@ internal sealed class PrismGraphBuilder
             bool isPassThrough = state.BlendMode == PrismBlendMode.PassThrough;
             StackBuildResult childStack = BuildStack(
                 group.Children,
-                initialBackground: isPassThrough ? background : null);
+                initialBackground: isPassThrough ? background : null,
+                shallowKnockoutBackdrop: isPassThrough ? background : null,
+                deepKnockoutBackdrop: deepKnockoutBackdrop,
+                deferShallowKnockoutBackdrop:
+                    isPassThrough &&
+                    background is null &&
+                    deferShallowKnockoutBackdrop,
+                deferDeepKnockoutBackdrop:
+                    deepKnockoutBackdrop is null &&
+                    deferDeepKnockoutBackdrop);
             if (!childStack.HasContent || childStack.Output is null)
             {
                 return null;
@@ -514,6 +583,7 @@ internal sealed class PrismGraphBuilder
             }
 
             return new NodeBuildResult(
+                output,
                 output,
                 output,
                 state.BlendMode,
@@ -767,6 +837,8 @@ internal sealed class PrismGraphBuilder
                     continue;
                 }
 
+                PrismGraphNodeId filterInput = current;
+                PrismGraphNodeId iterationEstimate = filterInput;
                 for (int passIndex = 0;
                     passIndex < passCount;
                     passIndex++)
@@ -812,6 +884,58 @@ internal sealed class PrismGraphBuilder
                         current,
                         filter.Id,
                         PrismGraphEdgeKind.Content);
+                    if (neighborhoodPlan is
+                        PrismNeighborhoodPlan preparedNeighborhood)
+                    {
+                        PrismNeighborhoodPassKind passKind =
+                            preparedNeighborhood.Passes[passIndex].Kind;
+                        PrismGraphNodeId? auxiliary = passKind switch
+                        {
+                            PrismNeighborhoodPassKind.RichardsonLucyRatio or
+                            PrismNeighborhoodPassKind.Recombine or
+                            PrismNeighborhoodPassKind.DespeckleDetect or
+                            PrismNeighborhoodPassKind.DespeckleFilter or
+                            PrismNeighborhoodPassKind.DespeckleDecode =>
+                                filterInput,
+                            PrismNeighborhoodPassKind.RichardsonLucyUpdate =>
+                                iterationEstimate,
+                            _ => null
+                        };
+                        if (auxiliary is PrismGraphNodeId auxiliarySource)
+                        {
+                            AddEdge(
+                                auxiliarySource,
+                                filter.Id,
+                                PrismGraphEdgeKind.FilterOriginal);
+                        }
+                        if (passKind ==
+                            PrismNeighborhoodPassKind.RichardsonLucyUpdate)
+                        {
+                            iterationEstimate = filter.Id;
+                        }
+                    }
+                    if (resamplingPlan is
+                        PrismResamplingPlan preparedResampling &&
+                        preparedResampling.Passes[passIndex].Kind is
+                            PrismResamplingPassKind.BloomVerticalComposite or
+                            PrismResamplingPassKind.NeonPyramidComposite)
+                    {
+                        AddEdge(
+                            filterInput,
+                            filter.Id,
+                            PrismGraphEdgeKind.FilterOriginal);
+                    }
+                    if (catalogFilterPlan is
+                            PrismCatalogFilterPlan preparedCatalog &&
+                        PrismCatalogFilterPlanner.RequiresOriginalInput(
+                            preparedCatalog.Filter,
+                            preparedCatalog.Passes[passIndex]))
+                    {
+                        AddEdge(
+                            filterInput,
+                            filter.Id,
+                            PrismGraphEdgeKind.FilterOriginal);
+                    }
                     current = filter.Id;
                 }
             }
@@ -1477,6 +1601,7 @@ internal sealed class PrismGraphBuilder
         private readonly record struct NodeBuildResult(
             PrismGraphNodeId Output,
             PrismGraphNodeId Alpha,
+            PrismGraphNodeId Shape,
             PrismBlendMode BlendMode,
             bool ClipToBelow,
             bool ConsumesBackground,

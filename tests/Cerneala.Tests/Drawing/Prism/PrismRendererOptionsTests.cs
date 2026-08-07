@@ -1,4 +1,5 @@
 using Cerneala.Drawing.Prism;
+using Cerneala.Drawing.Prism.Catalog;
 
 namespace Cerneala.Tests.Drawing.Prism;
 
@@ -16,6 +17,9 @@ public sealed class PrismRendererOptionsTests
             256L * 1024 * 1024,
             options.RetainedCacheSoftByteLimit);
         Assert.Equal(256, options.RetainedCacheEntryLimit);
+        Assert.Equal(
+            PrismColorProfile.Srgb,
+            options.HostColorProfile);
         Assert.False(options.EnableDevelopmentDiagnostics);
         options.Validate();
     }
@@ -38,6 +42,12 @@ public sealed class PrismRendererOptionsTests
             () => new PrismRendererOptions
             {
                 RetainedCacheEntryLimit = -1
+            }.Validate());
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new PrismRendererOptions
+            {
+                HostColorProfile =
+                    (PrismColorProfile)int.MaxValue
             }.Validate());
     }
 

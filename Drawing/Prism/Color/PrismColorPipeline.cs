@@ -8,45 +8,16 @@ internal static class PrismColorPipeline
 
     public static PrismPremultipliedColor ConvertInputToWorking(
         PrismPremultipliedColor source,
-        PrismColorProfile targetProfile)
-    {
-        Validate(source);
-        if (source.Alpha == 0)
-        {
-            return default;
-        }
+        PrismColorProfile targetProfile) =>
+        ConvertInputToWorking(
+            source,
+            PrismColorProfile.Srgb,
+            targetProfile);
 
-        PrismColorChannels straight = Clamp01(new PrismColorChannels(
-            source.Red / source.Alpha,
-            source.Green / source.Alpha,
-            source.Blue / source.Alpha));
-        PrismColorChannels converted = targetProfile switch
-        {
-            PrismColorProfile.LinearSrgb =>
-                DecodeSrgb(straight),
-            PrismColorProfile.Srgb =>
-                straight,
-            PrismColorProfile.LinearDisplayP3 =>
-                Clamp01(LinearSrgbToLinearDisplayP3(
-                    DecodeSrgb(straight))),
-            PrismColorProfile.DisplayP3 =>
-                Clamp01(EncodeSrgb(
-                    LinearSrgbToLinearDisplayP3(
-                        DecodeSrgb(straight)))),
-            PrismColorProfile.ScRgb =>
-                DecodeSrgb(straight),
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(targetProfile),
-                targetProfile,
-                "Unknown Prism color profile.")
-        };
-
-        return Associate(converted, source.Alpha);
-    }
-
-    public static PrismPremultipliedColor ConvertWorkingToOutput(
+    public static PrismPremultipliedColor ConvertInputToWorking(
         PrismPremultipliedColor source,
-        PrismColorProfile sourceProfile)
+        PrismColorProfile sourceProfile,
+        PrismColorProfile targetProfile)
     {
         Validate(source);
         if (source.Alpha == 0)
@@ -58,31 +29,92 @@ internal static class PrismColorPipeline
             source.Red / source.Alpha,
             source.Green / source.Alpha,
             source.Blue / source.Alpha);
-        PrismColorChannels converted = sourceProfile switch
+        PrismColorChannels linear = DecodeProfile(
+            straight,
+            sourceProfile);
+        PrismColorChannels converted = EncodeProfile(
+            linear,
+            targetProfile);
+
+        return Associate(converted, source.Alpha);
+    }
+
+    public static PrismPremultipliedColor ConvertWorkingToOutput(
+        PrismPremultipliedColor source,
+        PrismColorProfile sourceProfile) =>
+        ConvertWorkingToOutput(
+            source,
+            sourceProfile,
+            PrismColorProfile.Srgb);
+
+    public static PrismPremultipliedColor ConvertWorkingToOutput(
+        PrismPremultipliedColor source,
+        PrismColorProfile sourceProfile,
+        PrismColorProfile targetProfile)
+    {
+        Validate(source);
+        if (source.Alpha == 0)
+        {
+            return default;
+        }
+
+        PrismColorChannels straight = new(
+            source.Red / source.Alpha,
+            source.Green / source.Alpha,
+            source.Blue / source.Alpha);
+        PrismColorChannels linear = DecodeProfile(
+            straight,
+            sourceProfile);
+        PrismColorChannels converted = EncodeProfile(
+            linear,
+            targetProfile);
+
+        return Associate(converted, source.Alpha);
+    }
+
+    private static PrismColorChannels DecodeProfile(
+        PrismColorChannels value,
+        PrismColorProfile profile) =>
+        profile switch
         {
             PrismColorProfile.LinearSrgb =>
-                EncodeSrgb(straight),
+                PrismLinearSrgbStyle.DecodeInput(value),
             PrismColorProfile.Srgb =>
-                straight,
+                PrismSrgbStyle.DecodeInput(value),
             PrismColorProfile.LinearDisplayP3 =>
-                EncodeSrgb(
-                    LinearDisplayP3ToLinearSrgb(straight)),
+                PrismLinearDisplayP3Style.DecodeInput(value),
             PrismColorProfile.DisplayP3 =>
-                EncodeSrgb(
-                    LinearDisplayP3ToLinearSrgb(
-                        DecodeSrgb(Clamp01(straight)))),
+                PrismDisplayP3Style.DecodeInput(value),
             PrismColorProfile.ScRgb =>
-                EncodeSrgb(straight),
+                PrismScRgbStyle.DecodeInput(value),
             _ => throw new ArgumentOutOfRangeException(
-                nameof(sourceProfile),
-                sourceProfile,
+                nameof(profile),
+                profile,
                 "Unknown Prism color profile.")
         };
 
-        return Associate(Clamp01(converted), source.Alpha);
-    }
+    private static PrismColorChannels EncodeProfile(
+        PrismColorChannels value,
+        PrismColorProfile profile) =>
+        profile switch
+        {
+            PrismColorProfile.LinearSrgb =>
+                PrismLinearSrgbStyle.EncodeOutput(value),
+            PrismColorProfile.Srgb =>
+                PrismSrgbStyle.EncodeOutput(value),
+            PrismColorProfile.LinearDisplayP3 =>
+                PrismLinearDisplayP3Style.EncodeOutput(value),
+            PrismColorProfile.DisplayP3 =>
+                PrismDisplayP3Style.EncodeOutput(value),
+            PrismColorProfile.ScRgb =>
+                PrismScRgbStyle.EncodeOutput(value),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(profile),
+                profile,
+                "Unknown Prism color profile.")
+        };
 
-    private static PrismColorChannels DecodeSrgb(
+    internal static PrismColorChannels DecodeSrgb(
         PrismColorChannels value)
     {
         return new PrismColorChannels(
@@ -91,7 +123,7 @@ internal static class PrismColorPipeline
             DecodeSrgb(value.Blue));
     }
 
-    private static PrismColorChannels EncodeSrgb(
+    internal static PrismColorChannels EncodeSrgb(
         PrismColorChannels value)
     {
         return new PrismColorChannels(
@@ -100,7 +132,7 @@ internal static class PrismColorPipeline
             EncodeSrgb(value.Blue));
     }
 
-    private static PrismColorChannels LinearSrgbToLinearDisplayP3(
+    internal static PrismColorChannels LinearSrgbToLinearDisplayP3(
         PrismColorChannels value)
     {
         return new PrismColorChannels(
@@ -115,7 +147,7 @@ internal static class PrismColorPipeline
                 (0.9103014762 * value.Blue));
     }
 
-    private static PrismColorChannels LinearDisplayP3ToLinearSrgb(
+    internal static PrismColorChannels LinearDisplayP3ToLinearSrgb(
         PrismColorChannels value)
     {
         return new PrismColorChannels(
@@ -130,7 +162,7 @@ internal static class PrismColorPipeline
                 (1.0985371622 * value.Blue));
     }
 
-    private static PrismColorChannels Clamp01(
+    internal static PrismColorChannels Clamp01(
         PrismColorChannels value)
     {
         return new PrismColorChannels(
@@ -152,16 +184,22 @@ internal static class PrismColorPipeline
 
     private static double DecodeSrgb(double value)
     {
-        return value <= 0.04045
+        double magnitude = Math.Abs(value);
+        return magnitude <= 0.04045
             ? value / 12.92
-            : Math.Pow((value + 0.055) / 1.055, 2.4);
+            : Math.CopySign(
+                Math.Pow((magnitude + 0.055) / 1.055, 2.4),
+                value);
     }
 
     private static double EncodeSrgb(double value)
     {
-        return value <= 0.0031308
+        double magnitude = Math.Abs(value);
+        return magnitude <= 0.0031308
             ? value * 12.92
-            : (1.055 * Math.Pow(value, 1 / 2.4)) - 0.055;
+            : Math.CopySign(
+                (1.055 * Math.Pow(magnitude, 1 / 2.4)) - 0.055,
+                value);
     }
 
     private static void Validate(PrismPremultipliedColor color)
@@ -179,11 +217,12 @@ internal static class PrismColorPipeline
         }
     }
 
-    private readonly record struct PrismColorChannels(
-        double Red,
-        double Green,
-        double Blue);
 }
+
+internal readonly record struct PrismColorChannels(
+    double Red,
+    double Green,
+    double Blue);
 
 internal readonly record struct PrismPremultipliedColor(
     double Red,

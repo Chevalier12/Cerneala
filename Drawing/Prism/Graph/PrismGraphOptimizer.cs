@@ -1009,6 +1009,16 @@ internal sealed class PrismGraphOptimizer
     {
         if (node.ResamplingPlan is PrismResamplingPlan resamplingPlan)
         {
+            if (resamplingPlan.BoundsOutset != Vector2.Zero &&
+                node.ResamplingPassIndex == 0)
+            {
+                return ConservativeBounds(
+                    Inflate(
+                        bounds,
+                        resamplingPlan.BoundsOutset.X,
+                        resamplingPlan.BoundsOutset.Y),
+                    inputStatus);
+            }
             return resamplingPlan.TransformsBounds
                 ? ExpandTransformBounds(
                     node,

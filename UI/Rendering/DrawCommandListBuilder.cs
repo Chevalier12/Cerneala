@@ -198,8 +198,16 @@ public sealed class DrawCommandListBuilder
         UIElement element,
         PrismInstance instance)
     {
-        List<PrismDrawImageResource> resources = [];
-        HashSet<PrismResourceId> resolvedIds = [];
+        List<PrismDrawImageResource> imageResources = [];
+        List<PrismDrawCurvesResource> curveResources = [];
+        List<PrismDrawLensProfileResource> lensProfileResources = [];
+        List<PrismDrawLightingResource> lightingResources = [];
+        List<PrismDrawColorMatrixResource> colorMatrixResources = [];
+        HashSet<PrismResourceId> resolvedImageIds = [];
+        HashSet<PrismResourceId> resolvedCurveIds = [];
+        HashSet<PrismResourceId> resolvedLensProfileIds = [];
+        HashSet<PrismResourceId> resolvedLightingIds = [];
+        HashSet<PrismResourceId> resolvedColorMatrixIds = [];
         foreach (PrismNodeDefinition definition in
             instance.Definition.Nodes)
         {
@@ -207,7 +215,13 @@ public sealed class DrawCommandListBuilder
                 instance.GetNodeState(definition.Id));
         }
 
-        return PrismDrawResources.Create(resources);
+        return PrismDrawResources.Create(
+            imageResources,
+            curveResources,
+            [],
+            lensProfileResources,
+            lightingResources,
+            colorMatrixResources);
 
         void ResolveNodeState(PrismNodeState state)
         {
@@ -216,11 +230,13 @@ public sealed class DrawCommandListBuilder
                 case PrismLayerState layer
                     when layer.Visible && layer.Opacity > 0:
                     ResolveMask(layer.Mask);
+                    ResolveFilters(layer.Filters);
                     ResolveStyles(layer.Styles);
                     break;
                 case PrismGroupState group
                     when group.Visible && group.Opacity > 0:
                     ResolveMask(group.Mask);
+                    ResolveFilters(group.Filters);
                     ResolveStyles(group.Styles);
                     foreach (PrismNodeState child in group.Children)
                     {
@@ -230,8 +246,68 @@ public sealed class DrawCommandListBuilder
                 case PrismBackdropState backdrop
                     when backdrop.Visible && backdrop.Opacity > 0:
                     ResolveMask(backdrop.Mask);
+                    ResolveFilters(backdrop.Filters);
                     ResolveStyles(backdrop.Styles);
                     break;
+            }
+        }
+
+        void ResolveFilters(
+            IReadOnlyList<PrismFilterState> filters)
+        {
+            foreach (PrismFilterState filter in filters)
+            {
+                if (!filter.Visible)
+                {
+                    continue;
+                }
+
+                int stableId = (int)filter.Filter;
+                PrismCatalogEntryDescriptor entry =
+                    PrismCatalogRuntime.GetEntry(stableId);
+                foreach (PrismCatalogPropertyDescriptor property in
+                    entry.Properties)
+                {
+                    if (property.ValueType !=
+                        PrismCatalogValueType.Resource)
+                    {
+                        continue;
+                    }
+
+                    PrismResourceId id = filter.GetValue(
+                        new PrismParameterKey<PrismResourceId>(
+                            stableId,
+                            property.TypeSlot));
+                    if (id.Value <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (filter.Filter == PrismFilterId.Curves &&
+                        property.Name == "Curves")
+                    {
+                        ResolveCurves(id);
+                    }
+                    else if (filter.Filter == PrismFilterId.LensFlare &&
+                        property.Name == "Lens")
+                    {
+                        ResolveLensProfile(id);
+                    }
+                    else if (filter.Filter == PrismFilterId.LightingEffects &&
+                        property.Name == "Lights")
+                    {
+                        ResolveLighting(id);
+                    }
+                    else if (filter.Filter == PrismFilterId.ColorMatrix &&
+                        property.Name == "Matrix")
+                    {
+                        ResolveColorMatrix(id);
+                    }
+                    else
+                    {
+                        ResolveImage(id);
+                    }
+                }
             }
         }
 
@@ -284,7 +360,7 @@ public sealed class DrawCommandListBuilder
         void ResolveImage(PrismResourceId id)
         {
             if (id.Key is not string key ||
-                !resolvedIds.Add(id))
+                !resolvedImageIds.Add(id))
             {
                 return;
             }
@@ -339,7 +415,7 @@ public sealed class DrawCommandListBuilder
             {
                 if (image is not null)
                 {
-                    resources.Add(
+                    imageResources.Add(
                         new PrismDrawImageResource(
                             id,
                             image,
@@ -348,25 +424,106 @@ public sealed class DrawCommandListBuilder
                 }
             }
 
-            long ResourceVersion<T>(string resourceKey)
-            {
-                UIRoot? root = element.Root;
-                if (root is null)
-                {
-                    return 1;
-                }
+        }
 
-                ResourceId<T> resourceId = new(resourceKey);
-                root.ResourceDependencyTracker.RecordDependency(
-                    element,
-                    resourceId,
-                    InvalidationFlags.Render,
-                    affectsIntrinsicSize: false);
-                return Math.Max(
-                    1,
-                    root.ResourceDependencyTracker
-                        .GetResourceVersion(resourceId));
+        void ResolveCurves(PrismResourceId id)
+        {
+            if (id.Key is not string key ||
+                !resolvedCurveIds.Add(id) ||
+                !element.TryFindResource<PrismCurvesResource>(
+                    key,
+                    out PrismCurvesResource? resource))
+            {
+                return;
             }
+
+            curveResources.Add(
+                new PrismDrawCurvesResource(
+                    id,
+                    resource,
+                    ResourceVersion<PrismCurvesResource>(key),
+                    unchecked((uint)System.Runtime.CompilerServices
+                        .RuntimeHelpers.GetHashCode(resource)) + 1L));
+        }
+
+        void ResolveLensProfile(PrismResourceId id)
+        {
+            if (id.Key is not string key ||
+                !resolvedLensProfileIds.Add(id) ||
+                !element.TryFindResource<PrismLensProfileResource>(
+                    key,
+                    out PrismLensProfileResource? resource))
+            {
+                return;
+            }
+
+            lensProfileResources.Add(
+                new PrismDrawLensProfileResource(
+                    id,
+                    resource,
+                    ResourceVersion<PrismLensProfileResource>(key),
+                    unchecked((uint)System.Runtime.CompilerServices
+                        .RuntimeHelpers.GetHashCode(resource)) + 1L));
+        }
+
+        void ResolveLighting(PrismResourceId id)
+        {
+            if (id.Key is not string key ||
+                !resolvedLightingIds.Add(id) ||
+                !element.TryFindResource<PrismLightingResource>(
+                    key,
+                    out PrismLightingResource? resource))
+            {
+                return;
+            }
+
+            lightingResources.Add(
+                new PrismDrawLightingResource(
+                    id,
+                    resource,
+                    ResourceVersion<PrismLightingResource>(key),
+                    unchecked((uint)System.Runtime.CompilerServices
+                        .RuntimeHelpers.GetHashCode(resource)) + 1L));
+        }
+
+        void ResolveColorMatrix(PrismResourceId id)
+        {
+            if (id.Key is not string key ||
+                !resolvedColorMatrixIds.Add(id) ||
+                !element.TryFindResource<PrismColorMatrixResource>(
+                    key,
+                    out PrismColorMatrixResource? resource))
+            {
+                return;
+            }
+
+            colorMatrixResources.Add(
+                new PrismDrawColorMatrixResource(
+                    id,
+                    resource,
+                    ResourceVersion<PrismColorMatrixResource>(key),
+                    unchecked((uint)System.Runtime.CompilerServices
+                        .RuntimeHelpers.GetHashCode(resource)) + 1L));
+        }
+
+        long ResourceVersion<T>(string resourceKey)
+        {
+            UIRoot? root = element.Root;
+            if (root is null)
+            {
+                return 1;
+            }
+
+            ResourceId<T> resourceId = new(resourceKey);
+            root.ResourceDependencyTracker.RecordDependency(
+                element,
+                resourceId,
+                InvalidationFlags.Render,
+                affectsIntrinsicSize: false);
+            return Math.Max(
+                1,
+                root.ResourceDependencyTracker
+                    .GetResourceVersion(resourceId));
         }
     }
 

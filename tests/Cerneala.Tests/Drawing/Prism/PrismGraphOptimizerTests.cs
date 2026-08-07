@@ -221,7 +221,7 @@ public sealed class PrismGraphOptimizerTests
         PrismGraphNodePlan shadowPlan =
             PlanForOperation(shadow, PrismGraphNodeKind.Style);
         AssertRect(
-            new DrawRect(0, -5, 30, 20),
+            new DrawRect(-2, -7, 34, 24),
             shadowPlan.Bounds);
         Assert.Equal(PrismGraphBoundsStatus.Conservative, shadowPlan.BoundsStatus);
 

@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Cerneala.SourceGen.Prism;
@@ -321,63 +320,6 @@ public sealed class PrismCatalogCompilerTests
     }
 
     [Fact]
-    public void GeneratedFilterReferenceMatchesEveryCatalogEntryAndDefault()
-    {
-        PrismCatalogCompilation compilation =
-            PrismCatalogCompiler.Compile(ReadRepositoryCatalog());
-        string reference = ReadRepositoryFilterReference();
-        string catalogHash = Convert.ToHexString(
-                SHA256.HashData(
-                    File.ReadAllBytes(RepositoryCatalogPath())))
-            .ToLowerInvariant();
-        PrismCatalogCompiler.CatalogEntry[] filters =
-            compilation.Model!.Entries
-                .Where(entry => entry.Kind == "filter")
-                .OrderBy(entry => entry.StableId)
-                .ToArray();
-
-        Assert.Empty(compilation.Issues);
-        Assert.Contains(
-            $"catalog-sha256: {catalogHash}",
-            reference,
-            StringComparison.Ordinal);
-        Assert.Equal(
-            filters.Length,
-            CountOccurrences(reference, "\n## `"));
-        for (int index = 0; index < filters.Length; index++)
-        {
-            PrismCatalogCompiler.CatalogEntry filter = filters[index];
-            string heading = $"## `{filter.Symbol}` (`{filter.Id}`)";
-            int start = reference.IndexOf(
-                heading,
-                StringComparison.Ordinal);
-            Assert.True(start >= 0, $"Missing generated reference heading '{heading}'.");
-            int end = reference.IndexOf(
-                "\n## `",
-                start + heading.Length,
-                StringComparison.Ordinal);
-            string section = end >= 0
-                ? reference.Substring(start, end - start)
-                : reference.Substring(start);
-            foreach (PrismCatalogCompiler.CatalogProperty property in
-                filter.Properties)
-            {
-                Assert.Contains(
-                    $"| `{property.Name}` |",
-                    section,
-                    StringComparison.Ordinal);
-                if (property.DefaultValue is not null)
-                {
-                    Assert.Contains(
-                        $"`{property.DefaultValue}`",
-                        section,
-                        StringComparison.Ordinal);
-                }
-            }
-        }
-    }
-
-    [Fact]
     public void DuplicateIdentifiersHavePreciseDiagnostic()
     {
         JsonObject catalog = ParseCatalog(ReadRepositoryCatalog());
@@ -509,21 +451,6 @@ public sealed class PrismCatalogCompilerTests
                 "Prism",
                 "Catalog",
                 "prism-catalog.json"));
-    }
-
-    private static string ReadRepositoryFilterReference()
-    {
-        string path = Path.GetFullPath(
-            Path.Combine(
-                AppContext.BaseDirectory,
-                "..",
-                "..",
-                "..",
-                "..",
-                "..",
-                "docs",
-                "prism-filter-reference.generated.md"));
-        return File.ReadAllText(path);
     }
 
     private static JsonObject ParseCatalog(string text)

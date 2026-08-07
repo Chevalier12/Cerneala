@@ -130,6 +130,63 @@ public sealed class PrismColorPipelineTests
     }
 
     [Fact]
+    public void ScRgbProfilePreservesLinearExtendedRangeChannels()
+    {
+        PrismColorChannels source = new(-0.25, 2, 7);
+
+        Assert.Equal(source, PrismScRgbStyle.DecodeInput(source));
+        Assert.Equal(source, PrismScRgbStyle.EncodeOutput(source));
+    }
+
+    [Fact]
+    public void ScRgbHostRoundTripsExtendedPremultipliedPixels()
+    {
+        PrismPremultipliedColor source =
+            PrismPremultipliedColor.FromStraight(
+                -0.25,
+                2,
+                7,
+                0.4);
+
+        PrismPremultipliedColor working =
+            PrismColorPipeline.ConvertInputToWorking(
+                source,
+                PrismColorProfile.ScRgb,
+                PrismColorProfile.ScRgb);
+        PrismPremultipliedColor actual =
+            PrismColorPipeline.ConvertWorkingToOutput(
+                working,
+                PrismColorProfile.ScRgb,
+                PrismColorProfile.ScRgb);
+
+        AssertClose(source, actual, "ScRgb host round trip");
+    }
+
+    [Fact]
+    public void ScRgbExtendedRangeCrossesTheSrgbBoundarySymmetrically()
+    {
+        PrismPremultipliedColor source =
+            PrismPremultipliedColor.FromStraight(
+                -0.25,
+                2,
+                7,
+                0.4);
+
+        PrismPremultipliedColor encoded =
+            PrismColorPipeline.ConvertWorkingToOutput(
+                source,
+                PrismColorProfile.ScRgb,
+                PrismColorProfile.Srgb);
+        PrismPremultipliedColor actual =
+            PrismColorPipeline.ConvertInputToWorking(
+                encoded,
+                PrismColorProfile.Srgb,
+                PrismColorProfile.ScRgb);
+
+        AssertClose(source, actual, "extended sRGB boundary");
+    }
+
+    [Fact]
     public void PrismColorGraphKeepsFillBeforeStylesAndOpacityAfterStyles()
     {
         PrismLayerDefinition layer = new(

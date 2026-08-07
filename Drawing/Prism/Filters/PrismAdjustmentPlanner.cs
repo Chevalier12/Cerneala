@@ -133,7 +133,7 @@ internal static class PrismAdjustmentPlanner
                 Parameters1 = new Vector4(
                     values.Number("OutputBlack"),
                     values.Number("OutputWhite"),
-                    0,
+                    values.Boolean("Auto") ? 1 : 0,
                     0)
             },
             PrismFilterId.Curves => new(
@@ -141,26 +141,8 @@ internal static class PrismAdjustmentPlanner
                 PrismAdjustmentOperation.Curves,
                 blendMode)
             {
-                Parameters0 = new Vector4(
-                    values.SymbolCode(
-                        "Channel",
-                        ("Composite", 0),
-                        ("Red", 1),
-                        ("Green", 2),
-                        ("Blue", 3)),
-                    values.SymbolCode(
-                        "Curve",
-                        ("Linear", 0),
-                        ("Lighten", 1),
-                        ("Darken", 2),
-                        ("Contrast", 3)),
-                    values.SymbolCode(
-                        "Interpolation",
-                        ("Smooth", 0),
-                        ("Tetrahedral", 0),
-                        ("Linear", 1),
-                        ("Trilinear", 1)),
-                    0)
+                Resource = values.Resource("Curves"),
+                ResourceRequired = true
             },
             PrismFilterId.Exposure => new(
                 filter,
@@ -169,9 +151,21 @@ internal static class PrismAdjustmentPlanner
             {
                 Parameters0 = new Vector4(
                     values.Number("Exposure"),
-                    values.Number("Offset"),
+                    values.Number("Contrast"),
                     values.Number("Gamma"),
-                    0)
+                    values.Number("Pivot")),
+                Parameters1 = new Vector4(
+                    values.SymbolCode(
+                        "Style",
+                        ("Linear", 0),
+                        ("Video", 1),
+                        ("Logarithmic", 2)),
+                    values.SymbolCode(
+                        "Direction",
+                        ("Forward", 0),
+                        ("Inverse", 1)),
+                    values.Number("LogExposureStep"),
+                    values.Number("LogMidGray"))
             },
             PrismFilterId.Vibrance => new(
                 filter,
@@ -181,8 +175,11 @@ internal static class PrismAdjustmentPlanner
                 Parameters0 = new Vector4(
                     values.Number("Amount"),
                     values.Number("Saturation"),
-                    0,
-                    0)
+                    values.Boolean(
+                        "AvoidSaturatingSkinTones") ? 1 : 0,
+                    0),
+                Parameters1 =
+                    values.Vector("GrayColorTransform")
             },
             PrismFilterId.HueSaturation => new(
                 filter,
@@ -228,16 +225,10 @@ internal static class PrismAdjustmentPlanner
                 blendMode)
             {
                 Parameters0 = new Vector4(
-                    values.Number("Reds"),
-                    values.Number("Yellows"),
-                    values.Number("Greens"),
-                    values.Number("Cyans")),
-                Parameters1 = new Vector4(
-                    values.Number("Blues"),
-                    values.Number("Magentas"),
-                    values.Boolean("Tint") ? 1 : 0,
-                    0),
-                Parameters2 = values.Color("TintColor")
+                    values.Number("Red"),
+                    values.Number("Green"),
+                    values.Number("Blue"),
+                    values.Boolean("PreserveLuminosity") ? 1 : 0)
             },
             PrismFilterId.PhotoFilter => new(
                 filter,
@@ -247,7 +238,7 @@ internal static class PrismAdjustmentPlanner
                 Parameters0 = values.Color("Color"),
                 Parameters1 = new Vector4(
                     values.Number("Density"),
-                    values.Boolean("PreserveLuminosity") ? 1 : 0,
+                    0,
                     0,
                     0)
             },
@@ -259,28 +250,13 @@ internal static class PrismAdjustmentPlanner
                 Parameters0 = values.Vector("Red"),
                 Parameters1 = values.Vector("Green"),
                 Parameters2 = values.Vector("Blue"),
-                Parameters3 = values.Vector("Constant"),
-                Parameters4 = new Vector4(
-                    values.Boolean("Monochrome") ? 1 : 0,
-                    0,
-                    0,
-                    0)
+                Parameters3 = values.Vector("Constant")
             },
             PrismFilterId.ColorLookup => new(
                 filter,
                 PrismAdjustmentOperation.ColorLookup,
                 blendMode)
             {
-                Parameters0 = new Vector4(
-                    values.Number("Intensity"),
-                    values.SymbolCode(
-                        "Interpolation",
-                        ("Smooth", 0),
-                        ("Tetrahedral", 0),
-                        ("Linear", 1),
-                        ("Trilinear", 1)),
-                    0,
-                    0),
                 Resource = values.Resource("Lookup"),
                 ResourceRequired = true
             },
@@ -316,17 +292,16 @@ internal static class PrismAdjustmentPlanner
                 blendMode)
             {
                 Parameters0 = new Vector4(
-                    values.SymbolCode(
-                        "Gradient",
-                        ("BlackToWhite", 0),
-                        ("BlueRedYellow", 1)),
+                    0,
                     values.Boolean("Reverse") ? 1 : 0,
                     values.Boolean("Dither") ? 1 : 0,
                     values.SymbolCode(
                         "Method",
                         ("Perceptual", 0),
                         ("Relative", 0),
-                        ("Absolute", 1)))
+                        ("Absolute", 1))),
+                Resource = values.Resource("Gradient"),
+                ResourceRequired = true
             },
             PrismFilterId.SelectiveColor => new(
                 filter,
@@ -369,12 +344,11 @@ internal static class PrismAdjustmentPlanner
                 plan.Parameters0.Z == 1 &&
                 plan.Parameters0.W == 1 &&
                 plan.Parameters1.X == 0 &&
-                plan.Parameters1.Y == 1,
-            PrismAdjustmentOperation.Curves =>
-                plan.Parameters0.Y == 0,
+                plan.Parameters1.Y == 1 &&
+                plan.Parameters1.Z == 0,
             PrismAdjustmentOperation.Exposure =>
                 plan.Parameters0.X == 0 &&
-                plan.Parameters0.Y == 0 &&
+                plan.Parameters0.Y == 1 &&
                 plan.Parameters0.Z == 1,
             PrismAdjustmentOperation.Vibrance =>
                 plan.Parameters0.X == 0 &&

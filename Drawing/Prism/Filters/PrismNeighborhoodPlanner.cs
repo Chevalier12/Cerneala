@@ -42,7 +42,17 @@ internal enum PrismNeighborhoodPassKind
 {
     Direct,
     Horizontal,
-    Vertical
+    Vertical,
+    RichardsonLucyPsf,
+    RichardsonLucyRatio,
+    RichardsonLucyBackProject,
+    RichardsonLucyUpdate,
+    Recombine,
+    DespeckleDetect,
+    DespeckleFilter,
+    DespeckleDecode,
+    JpegDeblockHorizontal,
+    JpegDeblockVertical
 }
 
 internal readonly record struct PrismNeighborhoodPass(
@@ -97,6 +107,10 @@ internal static class PrismNeighborhoodPlanner
     private const int DraftSamples = 5;
     private const int GoodSamples = 9;
     private const int BestSamples = 17;
+    private const int MaximumAdaptiveMedianRadius = 3;
+    private const int ReduceNoiseIterationCount = 3;
+    private const int MaximumDomainTransformRadius = 8;
+    internal const int MaximumSpinSamples = 65;
 
     public static bool IsSupported(PrismFilterId filter)
     {
@@ -164,9 +178,9 @@ internal static class PrismNeighborhoodPlanner
                     filter,
                     operation,
                     blendMode,
-                    sourceWidth,
-                    sourceHeight,
-                    sampleCount: BestSamples,
+                    radiusX: 1,
+                    radiusY: 1,
+                    sampleCount: 9,
                     boundsRadiusX: 0,
                     boundsRadiusY: 0,
                     noOp: sourceWidth <= 1 && sourceHeight <= 1),
@@ -181,14 +195,15 @@ internal static class PrismNeighborhoodPlanner
                     sourceWidth,
                     sourceHeight),
             PrismNeighborhoodOperation.BlurMore =>
-                RadiusPlan(
+                SeparableRadiusPlan(
                     filter,
                     operation,
                     blendMode,
                     values.Number("Radius") * deviceScale,
                     Quality(values, "Quality"),
                     EdgeMode(values, "EdgeMode"),
-                    separable: false),
+                    sourceWidth,
+                    sourceHeight),
             PrismNeighborhoodOperation.BoxBlur =>
                 BoxPlan(
                     filter,
@@ -200,7 +215,7 @@ internal static class PrismNeighborhoodPlanner
                     sourceWidth,
                     sourceHeight),
             PrismNeighborhoodOperation.GaussianBlur =>
-                SeparableRadiusPlan(
+                GaussianPlan(
                     filter,
                     operation,
                     blendMode,
@@ -222,7 +237,8 @@ internal static class PrismNeighborhoodPlanner
                     operation,
                     blendMode,
                     values,
-                    deviceScale),
+                    pixelScale,
+                    effectiveTransform),
             PrismNeighborhoodOperation.RadialBlur =>
                 RadialPlan(
                     filter,
@@ -239,27 +255,26 @@ internal static class PrismNeighborhoodPlanner
                     values,
                     deviceScale),
             PrismNeighborhoodOperation.SmartBlur =>
-                EdgeAwarePlan(
+                SmartBlurPlan(
                     filter,
                     operation,
                     blendMode,
                     values,
-                    deviceScale,
-                    hasMode: true),
+                    deviceScale),
             PrismNeighborhoodOperation.SurfaceBlur =>
-                EdgeAwarePlan(
+                SurfaceBlurPlan(
                     filter,
                     operation,
                     blendMode,
                     values,
-                    deviceScale,
-                    hasMode: false),
+                    deviceScale),
             PrismNeighborhoodOperation.FieldBlur =>
                 FieldPlan(
                     filter,
                     operation,
                     blendMode,
-                    values),
+                    values,
+                    deviceScale),
             PrismNeighborhoodOperation.IrisBlur =>
                 IrisPlan(
                     filter,
@@ -286,15 +301,21 @@ internal static class PrismNeighborhoodPlanner
                     filter,
                     operation,
                     blendMode,
-                    values),
-            PrismNeighborhoodOperation.Sharpen or
-            PrismNeighborhoodOperation.SharpenMore =>
-                PointPlan(
+                    values,
+                    sourceWidth,
+                    sourceHeight),
+            PrismNeighborhoodOperation.Sharpen =>
+                ContrastAdaptiveSharpenPlan(
                     filter,
                     operation,
                     blendMode,
-                    new Vector4(values.Number("Amount"), 0, 0, 0),
-                    noOp: values.Number("Amount") == 0),
+                    values),
+            PrismNeighborhoodOperation.SharpenMore =>
+                BinomialHighBoostPlan(
+                    filter,
+                    operation,
+                    blendMode,
+                    values),
             PrismNeighborhoodOperation.SharpenEdges =>
                 PointPlan(
                     filter,
@@ -305,6 +326,7 @@ internal static class PrismNeighborhoodPlanner
                         values.Number("Threshold"),
                         0,
                         0),
+                    radius: 1,
                     noOp: values.Number("Amount") == 0),
             PrismNeighborhoodOperation.UnsharpMask =>
                 UnsharpPlan(
@@ -312,25 +334,27 @@ internal static class PrismNeighborhoodPlanner
                     operation,
                     blendMode,
                     values,
-                    deviceScale),
+                    deviceScale,
+                    sourceWidth,
+                    sourceHeight),
             PrismNeighborhoodOperation.SmartSharpen =>
                 SmartSharpenPlan(
                     filter,
                     operation,
                     blendMode,
                     values,
-                    deviceScale),
+                    deviceScale,
+                    sourceWidth,
+                    sourceHeight),
             PrismNeighborhoodOperation.HighPass =>
-                RadiusPlan(
+                HighPassPlan(
                     filter,
                     operation,
                     blendMode,
-                    values.Number("Radius") * deviceScale,
-                    GoodSamples,
-                    EdgeMode(values, "EdgeMode"),
-                    separable: false,
-                    noOp: false,
-                    expandBounds: false),
+                    values,
+                    deviceScale,
+                    sourceWidth,
+                    sourceHeight),
             PrismNeighborhoodOperation.AddNoise =>
                 NoisePlan(
                     filter,
@@ -338,41 +362,31 @@ internal static class PrismNeighborhoodPlanner
                     blendMode,
                     values),
             PrismNeighborhoodOperation.Despeckle =>
-                PointPlan(
+                DespecklePlan(
                     filter,
                     operation,
                     blendMode,
-                    new Vector4(
-                        values.Number("Threshold"),
-                        values.Number("Radius") * deviceScale,
-                        0,
-                        0),
-                    radius: values.Number("Radius") * deviceScale,
-                    noOp: values.Number("Radius") == 0),
+                    values,
+                    deviceScale),
             PrismNeighborhoodOperation.DustScratches =>
-                PointPlan(
+                DustScratchesPlan(
                     filter,
                     operation,
                     blendMode,
-                    new Vector4(
-                        values.Number("Radius") * deviceScale,
-                        values.Number("Threshold"),
-                        0,
-                        0),
-                    radius: values.Number("Radius") * deviceScale,
-                    noOp: values.Number("Radius") == 0),
+                    values,
+                    deviceScale),
             PrismNeighborhoodOperation.Median =>
                 PointPlan(
                     filter,
                     operation,
                     blendMode,
                     new Vector4(
-                        values.Number("Radius") * deviceScale,
+                        values.Integer("Radius"),
                         0,
                         0,
                         0),
-                    radius: values.Number("Radius") * deviceScale,
-                    noOp: values.Number("Radius") == 0),
+                    radius: values.Integer("Radius"),
+                    noOp: values.Integer("Radius") == 0),
             PrismNeighborhoodOperation.ReduceNoise =>
                 ReduceNoisePlan(
                     filter,
@@ -401,6 +415,87 @@ internal static class PrismNeighborhoodPlanner
         };
     }
 
+    private static PrismNeighborhoodPlan HighPassPlan(
+        PrismFilterId filter,
+        PrismNeighborhoodOperation operation,
+        PrismBlendMode blendMode,
+        PrismFilterParameterReader values,
+        float deviceScale,
+        float sourceWidth,
+        float sourceHeight)
+    {
+        float radius = values.Number("Radius") * deviceScale;
+        float sigma = radius / 3f;
+        int edgeMode = EdgeMode(values, "EdgeMode");
+        Vector4 options = new(radius, BestSamples, edgeMode, sigma);
+
+        ImmutableArray<PrismNeighborhoodPass>.Builder passes =
+            ImmutableArray.CreateBuilder<PrismNeighborhoodPass>(3);
+        if (radius > 0 && sourceWidth > 1)
+        {
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.Horizontal,
+                radius,
+                0,
+                0,
+                0,
+                BestSamples,
+                IsNoOp: false));
+        }
+        if (radius > 0 && sourceHeight > 1)
+        {
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.Vertical,
+                0,
+                radius,
+                0,
+                0,
+                BestSamples,
+                IsNoOp: false));
+        }
+        passes.Add(new PrismNeighborhoodPass(
+            PrismNeighborhoodPassKind.Recombine,
+            0,
+            0,
+            0,
+            0,
+            1,
+            IsNoOp: false));
+        return new PrismNeighborhoodPlan(
+            filter,
+            operation,
+            blendMode,
+            passes.ToImmutable())
+        {
+            Options0 = options
+        };
+    }
+
+    private static PrismNeighborhoodPlan GaussianPlan(
+        PrismFilterId filter,
+        PrismNeighborhoodOperation operation,
+        PrismBlendMode blendMode,
+        float radius,
+        int sampleCount,
+        int edgeMode,
+        float sourceWidth,
+        float sourceHeight)
+    {
+
+
+        float sigma = radius / 3f;
+        return SeparableRadiusPlan(
+            filter,
+            operation,
+            blendMode,
+            radius,
+            sampleCount,
+            edgeMode,
+            sourceWidth,
+            sourceHeight,
+            new Vector4(radius, sampleCount, edgeMode, sigma));
+    }
+
     private static PrismNeighborhoodPlan BoxPlan(
         PrismFilterId filter,
         PrismNeighborhoodOperation operation,
@@ -411,18 +506,65 @@ internal static class PrismNeighborhoodPlanner
         float sourceWidth,
         float sourceHeight)
     {
-        float support = radius * MathF.Max(0, iterations);
-        return SeparableRadiusPlan(
+        int integerRadius = Math.Max(0, (int)MathF.Round(radius));
+        int iterationCount = Math.Max(0, (int)MathF.Round(iterations));
+        if (integerRadius == 0 || iterationCount == 0 ||
+            (sourceWidth <= 1 && sourceHeight <= 1))
+        {
+            return Plan(
+                filter,
+                operation,
+                blendMode,
+                0,
+                0,
+                1,
+                0,
+                0,
+                noOp: true) with
+            {
+                Options0 = new Vector4(
+                    integerRadius,
+                    iterationCount,
+                    edgeMode,
+                    0)
+            };
+        }
+
+        ImmutableArray<PrismNeighborhoodPass>.Builder passes =
+            ImmutableArray.CreateBuilder<PrismNeighborhoodPass>(
+                checked(iterationCount * 2));
+        int sampleCount = checked((integerRadius * 2) + 1);
+        for (int index = 0; index < iterationCount; index++)
+        {
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.Horizontal,
+                integerRadius,
+                0,
+                integerRadius,
+                0,
+                sampleCount,
+                IsNoOp: false));
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.Vertical,
+                0,
+                integerRadius,
+                0,
+                integerRadius,
+                sampleCount,
+                IsNoOp: false));
+        }
+        return new PrismNeighborhoodPlan(
             filter,
             operation,
             blendMode,
-            support,
-            GoodSamples,
-            edgeMode,
-            sourceWidth,
-            sourceHeight,
-            new Vector4(radius, iterations, edgeMode, 0),
-            noOp: radius == 0 || iterations == 0);
+            passes.ToImmutable())
+        {
+            Options0 = new Vector4(
+                integerRadius,
+                iterationCount,
+                edgeMode,
+                0)
+        };
     }
 
     private static PrismNeighborhoodPlan LensPlan(
@@ -469,24 +611,37 @@ internal static class PrismNeighborhoodPlanner
         PrismNeighborhoodOperation operation,
         PrismBlendMode blendMode,
         PrismFilterParameterReader values,
-        float deviceScale)
+        float pixelScale,
+        Matrix3x2 effectiveTransform)
     {
-        float distance = values.Number("Distance") * deviceScale;
+        float distance = values.Number("Distance");
+        float angle = Degrees(values.Number("Angle"));
+        Vector2 travel = Vector2.TransformNormal(
+            new Vector2(
+                MathF.Cos(angle) * distance,
+                -MathF.Sin(angle) * distance),
+            effectiveTransform) * pixelScale;
+        Vector2 halfTravel = travel * 0.5f;
+        float effectiveDistance = travel.Length();
+        float effectiveAngle = effectiveDistance == 0
+            ? angle
+            : MathF.Atan2(-travel.Y, travel.X);
+        int sampleCount = Quality(values, "Quality");
         return Plan(
             filter,
             operation,
             blendMode,
-            distance,
-            distance,
-            Quality(values, "Quality"),
-            distance,
-            distance,
-            noOp: distance == 0) with
+            halfTravel.X,
+            halfTravel.Y,
+            sampleCount,
+            MathF.Abs(halfTravel.X),
+            MathF.Abs(halfTravel.Y),
+            noOp: effectiveDistance == 0) with
         {
             Options0 = new Vector4(
-                distance,
-                Degrees(values.Number("Angle")),
-                Quality(values, "Quality"),
+                effectiveDistance,
+                effectiveAngle,
+                sampleCount,
                 EdgeMode(values, "EdgeMode"))
         };
     }
@@ -500,25 +655,44 @@ internal static class PrismNeighborhoodPlanner
         float sourceHeight)
     {
         float amount = values.Number("Amount");
+        int mode = RadialMode(values, "Mode");
+        int sampleCount = Quality(values, "Quality");
         Vector4 center = values.Vector("Center");
+        float maximumTravel;
+        if (mode == 0)
+        {
+            float maximumRadius = MathF.Sqrt(
+                (sourceWidth * sourceWidth) +
+                (sourceHeight * sourceHeight));
+            float boundedSweep = MathF.Min(
+                MathF.Abs(amount),
+                MathF.PI * 2);
+            maximumTravel = maximumRadius *
+                MathF.Sin(boundedSweep * 0.25f) * 2;
+        }
+        else
+        {
+            maximumTravel = MathF.Max(sourceWidth, sourceHeight) *
+                MathF.Abs(amount) * 0.5f;
+        }
         return Plan(
             filter,
             operation,
             blendMode,
-            MathF.Max(sourceWidth, sourceHeight) * MathF.Abs(amount),
-            MathF.Max(sourceWidth, sourceHeight) * MathF.Abs(amount),
-            Quality(values, "Quality"),
+            maximumTravel,
+            maximumTravel,
+            sampleCount,
             boundsRadiusX: 0,
             boundsRadiusY: 0,
             noOp: amount == 0) with
         {
             Options0 = new Vector4(
-                RadialMode(values, "Mode"),
+                mode,
                 amount,
                 center.X,
                 center.Y),
             Options1 = new Vector4(
-                Quality(values, "Quality"),
+                sampleCount,
                 0,
                 0,
                 0)
@@ -533,13 +707,14 @@ internal static class PrismNeighborhoodPlanner
         float deviceScale)
     {
         float radius = values.Number("Radius") * deviceScale;
+        int sampleCount = Quality(values, "Quality");
         return Plan(
             filter,
             operation,
             blendMode,
             radius,
             radius,
-            BestSamples,
+            sampleCount,
             radius,
             radius,
             noOp: radius == 0) with
@@ -547,38 +722,65 @@ internal static class PrismNeighborhoodPlanner
             Options0 = new Vector4(
                 radius,
                 EdgeMode(values, "EdgeMode"),
-                0,
+                sampleCount,
                 0),
-            Resource = values.Resource("Kernel"),
+            Resource = values.Resource("Shape"),
             ResourceRequired = true
         };
     }
 
-    private static PrismNeighborhoodPlan EdgeAwarePlan(
+    private static PrismNeighborhoodPlan SmartBlurPlan(
         PrismFilterId filter,
         PrismNeighborhoodOperation operation,
         PrismBlendMode blendMode,
         PrismFilterParameterReader values,
-        float deviceScale,
-        bool hasMode)
+        float deviceScale)
     {
         float radius = values.Number("Radius") * deviceScale;
+        int quality = Quality(values, "Quality");
         return Plan(
             filter,
             operation,
             blendMode,
             radius,
             radius,
-            Quality(values, "Quality"),
+            quality,
             boundsRadiusX: 0,
             boundsRadiusY: 0,
             noOp: radius == 0) with
         {
             Options0 = new Vector4(
                 radius,
-                values.Number("Threshold"),
-                Quality(values, "Quality"),
-                hasMode ? SmartBlurMode(values, "Mode") : 0)
+                MathF.Max(0, values.Number("Threshold")),
+                quality,
+                SmartBlurMode(values, "Mode")),
+            Options1 = new Vector4(EdgeMode(values, "EdgeMode"), 0, 0, 0)
+        };
+    }
+
+    private static PrismNeighborhoodPlan SurfaceBlurPlan(
+        PrismFilterId filter,
+        PrismNeighborhoodOperation operation,
+        PrismBlendMode blendMode,
+        PrismFilterParameterReader values,
+        float deviceScale)
+    {
+        float radius = values.Number("Radius") * deviceScale;
+        float threshold = MathF.Max(0, values.Number("Threshold"));
+        int quality = Quality(values, "Quality");
+        return Plan(
+            filter,
+            operation,
+            blendMode,
+            radius,
+            radius,
+            quality,
+            boundsRadiusX: 0,
+            boundsRadiusY: 0,
+            noOp: radius == 0) with
+        {
+            Options0 = new Vector4(radius, threshold, quality, 0),
+            Options1 = new Vector4(EdgeMode(values, "EdgeMode"), 0, 0, 0)
         };
     }
 
@@ -586,26 +788,28 @@ internal static class PrismNeighborhoodPlanner
         PrismFilterId filter,
         PrismNeighborhoodOperation operation,
         PrismBlendMode blendMode,
-        PrismFilterParameterReader values)
+        PrismFilterParameterReader values,
+        float deviceScale)
     {
+        float blur = values.Number("Blur") * deviceScale;
+        int quality = Quality(values, "Quality");
         return Plan(
             filter,
             operation,
             blendMode,
-            radiusX: 1,
-            radiusY: 1,
-            sampleCount: BestSamples,
-            boundsRadiusX: 0,
-            boundsRadiusY: 0,
-            noOp: false) with
+            radiusX: blur,
+            radiusY: blur,
+            sampleCount: quality,
+            boundsRadiusX: blur,
+            boundsRadiusY: blur,
+            noOp: blur <= 0.000001f) with
         {
             Options0 = new Vector4(
-                values.Number("BokehAmount"),
-                values.Number("BokehColor"),
-                values.Number("Noise"),
+                values.Number("FocalDistance"),
+                values.Boolean("Invert") ? 1 : 0,
+                values.Number("Highlight"),
                 0),
-            Options1 = values.Vector("LightRange"),
-            Resource = values.Resource("Pins"),
+            Resource = values.Resource("BlurField"),
             ResourceRequired = true
         };
     }
@@ -640,13 +844,7 @@ internal static class PrismNeighborhoodPlanner
                 values.Number("Feather"),
                 Degrees(values.Number("Rotation")),
                 blur,
-                values.Number("BokehAmount")),
-            Options2 = new Vector4(
-                values.Number("BokehColor"),
-                values.Number("Noise"),
-                0,
-                0),
-            Options3 = values.Vector("LightRange")
+                0)
         };
     }
 
@@ -659,8 +857,6 @@ internal static class PrismNeighborhoodPlanner
     {
         Vector4 center = values.Vector("Center");
         float blur = values.Number("Blur") * deviceScale;
-        float distortion = values.Number("Distortion");
-        float noise = values.Number("Noise");
         return Plan(
             filter,
             operation,
@@ -670,7 +866,7 @@ internal static class PrismNeighborhoodPlanner
             BestSamples,
             boundsRadiusX: 0,
             boundsRadiusY: 0,
-            noOp: blur == 0 && distortion == 0 && noise == 0) with
+            noOp: blur == 0) with
         {
             Options0 = new Vector4(
                 center.X,
@@ -680,9 +876,8 @@ internal static class PrismNeighborhoodPlanner
             Options1 = new Vector4(
                 values.Number("Feather"),
                 blur,
-                distortion,
-                values.Boolean("SymmetricDistortion") ? 1 : 0),
-            Options2 = new Vector4(noise, 0, 0, 0)
+                0,
+                0)
         };
     }
 
@@ -704,9 +899,9 @@ internal static class PrismNeighborhoodPlanner
             radius,
             radius,
             BestSamples,
-            boundsRadiusX: 0,
-            boundsRadiusY: 0,
-            noOp: speed == 0 && endSpeed == 0 && noise == 0) with
+            boundsRadiusX: radius,
+            boundsRadiusY: radius,
+            noOp: speed == 0 && endSpeed == 0) with
         {
             Options0 = new Vector4(
                 speed,
@@ -727,39 +922,72 @@ internal static class PrismNeighborhoodPlanner
         PrismFilterId filter,
         PrismNeighborhoodOperation operation,
         PrismBlendMode blendMode,
-        PrismFilterParameterReader values)
+        PrismFilterParameterReader values,
+        float sourceWidth,
+        float sourceHeight)
     {
         Vector4 center = values.Vector("Center");
         Vector4 radius = values.Vector("Radius");
         float rotation = Degrees(values.Number("Rotation"));
-        float noise = values.Number("Noise");
+        float radiusX = MathF.Abs(radius.X);
+        float radiusY = MathF.Abs(radius.Y);
+        float maximumRadius = MathF.Max(
+            radiusX * sourceWidth,
+            radiusY * sourceHeight);
+        int sampleCount = SpinSampleCount(
+            MathF.Abs(rotation) * maximumRadius,
+            MaximumSpinSamples);
         return Plan(
             filter,
             operation,
             blendMode,
-            MathF.Abs(rotation),
-            MathF.Abs(rotation),
-            BestSamples,
+            maximumRadius,
+            maximumRadius,
+            sampleCount,
             boundsRadiusX: 0,
             boundsRadiusY: 0,
-            noOp: rotation == 0 && noise == 0) with
+            noOp:
+                rotation == 0 ||
+                radiusX <= 0.000001f ||
+                radiusY <= 0.000001f) with
         {
             Options0 = new Vector4(
                 center.X,
                 center.Y,
-                radius.X,
-                radius.Y),
+                radiusX,
+                radiusY),
             Options1 = new Vector4(
                 rotation,
-                values.Number("Feather"),
-                values.Number("StrobeStrength"),
-                values.Number("StrobeFlashes")),
+                Math.Clamp(values.Number("Feather"), 0, 1),
+                Math.Clamp(values.Number("StrobeStrength"), 0, 1),
+                Math.Clamp(
+                    values.Integer("StrobeFlashes"),
+                    0,
+                    MaximumSpinSamples - 1)),
             Options2 = new Vector4(
-                values.Number("StrobeDuration"),
-                noise,
+                Math.Clamp(values.Number("StrobeDuration"), 0, 1),
+                Math.Clamp(values.Number("Noise"), 0, 1),
                 0,
                 0)
         };
+    }
+
+    internal static int SpinSampleCount(
+        float arcLength,
+        int maximumSamples)
+    {
+        if (!float.IsFinite(arcLength) || arcLength <= 0)
+        {
+            return 1;
+        }
+
+        int maximumIntervals = Math.Max(2, maximumSamples - 1);
+        maximumIntervals -= maximumIntervals & 1;
+        int intervals = arcLength >= maximumIntervals
+            ? maximumIntervals
+            : Math.Max(2, (int)MathF.Ceiling(arcLength));
+        intervals += intervals & 1;
+        return Math.Min(intervals, maximumIntervals) + 1;
     }
 
     private static PrismNeighborhoodPlan UnsharpPlan(
@@ -767,21 +995,77 @@ internal static class PrismNeighborhoodPlanner
         PrismNeighborhoodOperation operation,
         PrismBlendMode blendMode,
         PrismFilterParameterReader values,
-        float deviceScale)
+        float deviceScale,
+        float sourceWidth,
+        float sourceHeight)
     {
         float amount = values.Number("Amount");
         float radius = values.Number("Radius") * deviceScale;
-        return PointPlan(
+        float sigma = radius / 3f;
+        Vector4 options = new(
+            amount,
+            radius,
+            values.Number("Threshold"),
+            sigma);
+        if (amount == 0 ||
+            radius == 0 ||
+            (sourceWidth <= 1 && sourceHeight <= 1))
+        {
+            return Plan(
+                filter,
+                operation,
+                blendMode,
+                0,
+                0,
+                1,
+                0,
+                0,
+                noOp: true) with
+            {
+                Options0 = options
+            };
+        }
+
+        ImmutableArray<PrismNeighborhoodPass>.Builder passes =
+            ImmutableArray.CreateBuilder<PrismNeighborhoodPass>(3);
+        if (sourceWidth > 1)
+        {
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.Horizontal,
+                radius,
+                0,
+                0,
+                0,
+                BestSamples,
+                IsNoOp: false));
+        }
+        if (sourceHeight > 1)
+        {
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.Vertical,
+                0,
+                radius,
+                0,
+                0,
+                BestSamples,
+                IsNoOp: false));
+        }
+        passes.Add(new PrismNeighborhoodPass(
+            PrismNeighborhoodPassKind.Recombine,
+            0,
+            0,
+            0,
+            0,
+            1,
+            IsNoOp: false));
+        return new PrismNeighborhoodPlan(
             filter,
             operation,
             blendMode,
-            new Vector4(
-                amount,
-                radius,
-                values.Number("Threshold"),
-                0),
-            radius,
-            noOp: amount == 0 || radius == 0);
+            passes.ToImmutable())
+        {
+            Options0 = options
+        };
     }
 
     private static PrismNeighborhoodPlan SmartSharpenPlan(
@@ -789,33 +1073,102 @@ internal static class PrismNeighborhoodPlanner
         PrismNeighborhoodOperation operation,
         PrismBlendMode blendMode,
         PrismFilterParameterReader values,
-        float deviceScale)
+        float deviceScale,
+        float sourceWidth,
+        float sourceHeight)
     {
+        const int iterationCount = 4;
         float amount = values.Number("Amount");
         float radius = values.Number("Radius") * deviceScale;
         float reduceNoise = values.Number("ReduceNoise");
-        return PointPlan(
+        int remove = SmartSharpenRemove(values, "Remove");
+        bool noOp =
+            amount <= 0 ||
+            radius <= 0 ||
+            (sourceWidth <= 1 && sourceHeight <= 1);
+        if (noOp)
+        {
+            return PointPlan(
+                filter,
+                operation,
+                blendMode,
+                new Vector4(amount, radius, reduceNoise, remove),
+                radius: 0,
+                noOp: true);
+        }
+
+        ImmutableArray<PrismNeighborhoodPass>.Builder passes =
+            ImmutableArray.CreateBuilder<PrismNeighborhoodPass>(
+                (iterationCount * 4) + 1);
+        for (int iteration = 0; iteration < iterationCount; iteration++)
+        {
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.RichardsonLucyPsf,
+                radius,
+                radius,
+                0,
+                0,
+                BestSamples,
+                IsNoOp: false));
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.RichardsonLucyRatio,
+                0,
+                0,
+                0,
+                0,
+                1,
+                IsNoOp: false));
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.RichardsonLucyBackProject,
+                radius,
+                radius,
+                0,
+                0,
+                BestSamples,
+                IsNoOp: false));
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.RichardsonLucyUpdate,
+                0,
+                0,
+                0,
+                0,
+                1,
+                IsNoOp: false));
+        }
+        float shadowRadius =
+            values.Number("ShadowRadius") * deviceScale;
+        float highlightRadius =
+            values.Number("HighlightRadius") * deviceScale;
+        passes.Add(new PrismNeighborhoodPass(
+            PrismNeighborhoodPassKind.Recombine,
+            MathF.Max(shadowRadius, highlightRadius),
+            MathF.Max(shadowRadius, highlightRadius),
+            0,
+            0,
+            BestSamples,
+            IsNoOp: false));
+
+        return new PrismNeighborhoodPlan(
             filter,
             operation,
             blendMode,
-            new Vector4(
+            passes.MoveToImmutable())
+        {
+            Options0 = new Vector4(
                 amount,
                 radius,
                 reduceNoise,
-                SmartSharpenRemove(values, "Remove")),
-            radius,
-            noOp: amount == 0 && reduceNoise == 0) with
-        {
+                remove),
             Options1 = new Vector4(
                 Degrees(values.Number("Angle")),
                 values.Number("ShadowFade"),
                 values.Number("ShadowTonalWidth"),
-                values.Number("ShadowRadius") * deviceScale),
+                shadowRadius),
             Options2 = new Vector4(
                 values.Number("HighlightFade"),
                 values.Number("HighlightTonalWidth"),
-                values.Number("HighlightRadius") * deviceScale,
-                0)
+                highlightRadius,
+                iterationCount)
         };
     }
 
@@ -845,36 +1198,217 @@ internal static class PrismNeighborhoodPlanner
         };
     }
 
+    private static PrismNeighborhoodPlan DustScratchesPlan(
+        PrismFilterId filter,
+        PrismNeighborhoodOperation operation,
+        PrismBlendMode blendMode,
+        PrismFilterParameterReader values,
+        float deviceScale)
+    {
+        float scaledRadius = MathF.Max(
+            0,
+            values.Number("Radius") * deviceScale);
+        int radius = Math.Clamp(
+            (int)MathF.Ceiling(scaledRadius),
+            0,
+            MaximumAdaptiveMedianRadius);
+        int diameter = (radius * 2) + 1;
+        return Plan(
+            filter,
+            operation,
+            blendMode,
+            radius,
+            radius,
+            diameter * diameter,
+            boundsRadiusX: 0,
+            boundsRadiusY: 0,
+            noOp: radius == 0) with
+        {
+            Options0 = new Vector4(
+                radius,
+                MathF.Max(0, values.Number("Threshold")),
+                0,
+                0)
+        };
+    }
+
+    private static PrismNeighborhoodPlan DespecklePlan(
+        PrismFilterId filter,
+        PrismNeighborhoodOperation operation,
+        PrismBlendMode blendMode,
+        PrismFilterParameterReader values,
+        float deviceScale)
+    {
+        const int iterationCount = 3;
+        float radius = values.Number("Radius") * deviceScale;
+        bool noOp = radius <= 0;
+        ImmutableArray<PrismNeighborhoodPass>.Builder passes =
+            ImmutableArray.CreateBuilder<PrismNeighborhoodPass>(
+                (iterationCount * 2) + 1);
+        for (int iteration = 0; iteration < iterationCount; iteration++)
+        {
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.DespeckleDetect,
+                radius,
+                radius,
+                0,
+                0,
+                iteration,
+                noOp));
+        }
+        for (int iteration = 0; iteration < iterationCount; iteration++)
+        {
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.DespeckleFilter,
+                radius,
+                radius,
+                0,
+                0,
+                iteration,
+                noOp));
+        }
+        passes.Add(new PrismNeighborhoodPass(
+            PrismNeighborhoodPassKind.DespeckleDecode,
+            radius,
+            radius,
+            0,
+            0,
+            0,
+            noOp));
+
+        return new PrismNeighborhoodPlan(
+            filter,
+            operation,
+            blendMode,
+            passes.MoveToImmutable())
+        {
+            Options0 = new Vector4(
+                MathF.Max(0, values.Number("Threshold")),
+                radius,
+                iterationCount,
+                0)
+        };
+    }
+
     private static PrismNeighborhoodPlan ReduceNoisePlan(
         PrismFilterId filter,
         PrismNeighborhoodOperation operation,
         PrismBlendMode blendMode,
         PrismFilterParameterReader values)
     {
-        float strength = values.Number("Strength");
-        float colorNoise = values.Number("ReduceColorNoise");
-        float sharpen = values.Number("SharpenDetails");
-        return PointPlan(
+        float strength = Math.Clamp(values.Number("Strength"), 0, 1);
+        float preserveDetails =
+            Math.Clamp(values.Number("PreserveDetails"), 0, 1);
+        float colorNoise =
+            Math.Clamp(values.Number("ReduceColorNoise"), 0, 1);
+        float sharpen =
+            Math.Clamp(values.Number("SharpenDetails"), 0, 1);
+        bool removeJpeg = values.Boolean("RemoveJpegArtifact");
+        float domainAmount = MathF.Max(
+            strength,
+            MathF.Max(colorNoise, sharpen));
+        float spatialSigma = 0.75f + (3.25f * domainAmount);
+        Vector4 iterationSigmas = new(
+            DomainTransformIterationSigma(spatialSigma, 0),
+            DomainTransformIterationSigma(spatialSigma, 1),
+            DomainTransformIterationSigma(spatialSigma, 2),
+            0);
+        bool domainNoOp = domainAmount <= 0;
+        bool noOp = domainNoOp && !removeJpeg;
+
+        ImmutableArray<PrismNeighborhoodPass>.Builder passes =
+            ImmutableArray.CreateBuilder<PrismNeighborhoodPass>(
+                (ReduceNoiseIterationCount * 2) +
+                (removeJpeg ? 2 : 0) +
+                1);
+        for (int iteration = 0;
+            iteration < ReduceNoiseIterationCount;
+            iteration++)
+        {
+            float iterationSigma = DomainTransformIterationSigma(
+                spatialSigma,
+                iteration);
+            int radius = Math.Clamp(
+                (int)MathF.Ceiling(iterationSigma * 3),
+                1,
+                MaximumDomainTransformRadius);
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.Horizontal,
+                radius,
+                0,
+                0,
+                0,
+                iteration,
+                domainNoOp));
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.Vertical,
+                0,
+                radius,
+                0,
+                0,
+                iteration,
+                domainNoOp));
+        }
+        if (removeJpeg)
+        {
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.JpegDeblockHorizontal,
+                2,
+                0,
+                0,
+                0,
+                1,
+                IsNoOp: false));
+            passes.Add(new PrismNeighborhoodPass(
+                PrismNeighborhoodPassKind.JpegDeblockVertical,
+                0,
+                2,
+                0,
+                0,
+                1,
+                IsNoOp: false));
+        }
+        passes.Add(new PrismNeighborhoodPass(
+            PrismNeighborhoodPassKind.Recombine,
+            0,
+            0,
+            0,
+            0,
+            1,
+            noOp));
+
+        return new PrismNeighborhoodPlan(
             filter,
             operation,
             blendMode,
-            new Vector4(
+            passes.MoveToImmutable())
+        {
+            Options0 = new Vector4(
                 strength,
-                values.Number("PreserveDetails"),
+                preserveDetails,
                 colorNoise,
                 sharpen),
-            radius: 1,
-            noOp:
-                strength == 0 &&
-                colorNoise == 0 &&
-                sharpen == 0) with
-        {
             Options1 = new Vector4(
-                values.Boolean("RemoveJpegArtifact") ? 1 : 0,
-                0,
-                0,
-                0)
+                removeJpeg ? 1 : 0,
+                spatialSigma,
+                ReduceNoiseIterationCount,
+                0),
+            Options2 = iterationSigmas
         };
+    }
+
+    private static float DomainTransformIterationSigma(
+        float spatialSigma,
+        int iteration)
+    {
+        float numerator =
+            MathF.Sqrt(3) *
+            MathF.Pow(
+                2,
+                ReduceNoiseIterationCount - iteration - 1);
+        float denominator = MathF.Sqrt(
+            MathF.Pow(4, ReduceNoiseIterationCount) - 1);
+        return spatialSigma * numerator / denominator;
     }
 
     private static PrismNeighborhoodPlan RadiusPlan(
@@ -997,6 +1531,50 @@ internal static class PrismNeighborhoodPlanner
         {
             Options0 =
                 options ?? new Vector4(radius, sampleCount, edgeMode, 0)
+        };
+    }
+
+    private static PrismNeighborhoodPlan ContrastAdaptiveSharpenPlan(
+        PrismFilterId filter,
+        PrismNeighborhoodOperation operation,
+        PrismBlendMode blendMode,
+        PrismFilterParameterReader values)
+    {
+        float amount = Math.Clamp(values.Number("Amount"), 0, 1);
+        return Plan(
+            filter,
+            operation,
+            blendMode,
+            radiusX: 1,
+            radiusY: 1,
+            sampleCount: 5,
+            boundsRadiusX: 0,
+            boundsRadiusY: 0,
+            noOp: amount == 0) with
+        {
+            Options0 = new Vector4(amount, 0, 0, 0)
+        };
+    }
+
+    private static PrismNeighborhoodPlan BinomialHighBoostPlan(
+        PrismFilterId filter,
+        PrismNeighborhoodOperation operation,
+        PrismBlendMode blendMode,
+        PrismFilterParameterReader values)
+    {
+        float amount = Math.Clamp(values.Number("Amount"), 0, 1);
+        return Plan(
+            filter,
+            operation,
+            blendMode,
+            radiusX: 1,
+            radiusY: 1,
+            sampleCount: 9,
+            boundsRadiusX: 0,
+            boundsRadiusY: 0,
+            noOp: amount == 0) with
+        {
+            Options0 = new Vector4(amount, 0, 0, 0)
         };
     }
 

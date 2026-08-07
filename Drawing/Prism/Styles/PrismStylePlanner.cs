@@ -127,17 +127,6 @@ internal readonly record struct PrismStylePlan
 
 internal static class PrismStylePlanner
 {
-    private const int DropShadowKind = 0;
-    private const int InnerShadowKind = 1;
-    private const int OuterGlowKind = 2;
-    private const int InnerGlowKind = 3;
-    private const int BevelEmbossKind = 4;
-    private const int SatinKind = 5;
-    private const int ColorOverlayKind = 6;
-    private const int GradientOverlayKind = 7;
-    private const int PatternOverlayKind = 8;
-    private const int StrokeKind = 9;
-
     private static readonly int LinearSymbol =
         PrismCatalogRuntime.ResolveSymbol("Contour", "Linear");
     private static readonly int GaussianSymbol =
@@ -209,25 +198,25 @@ internal static class PrismStylePlanner
         return style switch
         {
             PrismStyleId.DropShadow =>
-                CreateDropShadow(parameters, scope),
+                PrismDropShadowStyle.Create(parameters, scope),
             PrismStyleId.InnerShadow =>
-                CreateInnerShadow(parameters, scope),
+                PrismInnerShadowStyle.Create(parameters, scope),
             PrismStyleId.OuterGlow =>
-                CreateOuterGlow(parameters, scope),
+                PrismOuterGlowStyle.Create(parameters, scope),
             PrismStyleId.InnerGlow =>
-                CreateInnerGlow(parameters, scope),
+                PrismInnerGlowStyle.Create(parameters, scope),
             PrismStyleId.BevelEmboss =>
-                CreateBevelEmboss(parameters, scope),
+                PrismBevelEmbossStyle.Create(parameters, scope),
             PrismStyleId.Satin =>
-                CreateSatin(parameters, scope),
+                PrismSatinStyle.Create(parameters, scope),
             PrismStyleId.ColorOverlay =>
-                CreateColorOverlay(parameters, scope),
+                PrismColorOverlayStyle.Create(parameters, scope),
             PrismStyleId.GradientOverlay =>
-                CreateGradientOverlay(parameters, scope),
+                PrismGradientOverlayStyle.Create(parameters, scope),
             PrismStyleId.PatternOverlay =>
-                CreatePatternOverlay(parameters),
+                PrismPatternOverlayStyle.Create(parameters),
             PrismStyleId.Stroke =>
-                CreateStroke(parameters, scope),
+                PrismStrokeStyle.Create(parameters, scope),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(node),
                 style,
@@ -265,7 +254,15 @@ internal static class PrismStylePlanner
                 Translate(
                     Inflate(
                         bounds,
-                        checked(geometry.Size + geometry.Spread)),
+                        checked(
+                            MathF.Max(
+                                MathF.Ceiling(
+                                    geometry.Size * 1.5f),
+                                1f) +
+                            (geometry.Spread >= 0.5f
+                                ? MathF.Ceiling(
+                                    geometry.Spread)
+                                : 0f))),
                     geometry.Offset.X,
                     geometry.Offset.Y)),
             PrismStyleId.OuterGlow => Inflate(
@@ -282,369 +279,7 @@ internal static class PrismStylePlanner
         };
     }
 
-    private static PrismStylePlan CreateDropShadow(
-        ParameterReader parameters,
-        PrismGraphScope scope)
-    {
-        return new PrismStylePlan(
-            PrismStyleId.DropShadow,
-            DropShadowKind)
-        {
-            BlendMode = parameters.BlendMode("BlendMode"),
-            PrimaryColor = parameters.Color(
-                "Color",
-                scope.CompositionSettings.WorkingColorProfile),
-            Opacity = parameters.Number("Opacity"),
-            Angle = ResolveAngle(parameters, scope),
-            Distance = parameters.Number("Distance"),
-            Spread = parameters.Number("Spread"),
-            Size = parameters.Number("Size"),
-            Contour = ContourCode(parameters.Symbol("Contour")),
-            Noise = parameters.Number("Noise"),
-            Flags =
-                Flag(
-                    parameters.Boolean("AntiAlias"),
-                    PrismStyleFlags.AntiAlias) |
-                Flag(
-                    parameters.Boolean("LayerKnocksOut"),
-                    PrismStyleFlags.Knockout)
-        };
-    }
-
-    private static PrismStylePlan CreateInnerShadow(
-        ParameterReader parameters,
-        PrismGraphScope scope)
-    {
-        return new PrismStylePlan(
-            PrismStyleId.InnerShadow,
-            InnerShadowKind)
-        {
-            BlendMode = parameters.BlendMode("BlendMode"),
-            PrimaryColor = parameters.Color(
-                "Color",
-                scope.CompositionSettings.WorkingColorProfile),
-            Opacity = parameters.Number("Opacity"),
-            Angle = ResolveAngle(parameters, scope),
-            Distance = parameters.Number("Distance"),
-            Spread = parameters.Number("Choke"),
-            Size = parameters.Number("Size"),
-            Contour = ContourCode(parameters.Symbol("Contour")),
-            Noise = parameters.Number("Noise"),
-            Flags = Flag(
-                parameters.Boolean("AntiAlias"),
-                PrismStyleFlags.AntiAlias)
-        };
-    }
-
-    private static PrismStylePlan CreateOuterGlow(
-        ParameterReader parameters,
-        PrismGraphScope scope)
-    {
-        PrismResourceId gradient = parameters.Resource("Gradient");
-        return new PrismStylePlan(
-            PrismStyleId.OuterGlow,
-            OuterGlowKind)
-        {
-            BlendMode = parameters.BlendMode("BlendMode"),
-            PrimaryColor = parameters.Color(
-                "Color",
-                scope.CompositionSettings.WorkingColorProfile),
-            PaintKind = gradient.Value > 0
-                ? PrismStylePaintKind.Gradient
-                : PrismStylePaintKind.Color,
-            Opacity = parameters.Number("Opacity"),
-            Noise = parameters.Number("Noise"),
-            Technique = TechniqueCode(
-                parameters.Symbol("Technique")),
-            Spread = parameters.Number("Spread"),
-            Size = parameters.Number("Size"),
-            Contour = ContourCode(parameters.Symbol("Contour")),
-            Range = parameters.Number("Range"),
-            Jitter = parameters.Number("Jitter"),
-            Flags = Flag(
-                parameters.Boolean("AntiAlias"),
-                PrismStyleFlags.AntiAlias),
-            Resource = gradient,
-            ResourceEnabled = gradient.Value > 0,
-            ResourceRequired = gradient.Value > 0
-        };
-    }
-
-    private static PrismStylePlan CreateInnerGlow(
-        ParameterReader parameters,
-        PrismGraphScope scope)
-    {
-        PrismResourceId gradient = parameters.Resource("Gradient");
-        return new PrismStylePlan(
-            PrismStyleId.InnerGlow,
-            InnerGlowKind)
-        {
-            BlendMode = parameters.BlendMode("BlendMode"),
-            PrimaryColor = parameters.Color(
-                "Color",
-                scope.CompositionSettings.WorkingColorProfile),
-            PaintKind = gradient.Value > 0
-                ? PrismStylePaintKind.Gradient
-                : PrismStylePaintKind.Color,
-            Opacity = parameters.Number("Opacity"),
-            Noise = parameters.Number("Noise"),
-            Technique = TechniqueCode(
-                parameters.Symbol("Technique")),
-            Origin = OriginCode(parameters.Symbol("Origin")),
-            Spread = parameters.Number("Choke"),
-            Size = parameters.Number("Size"),
-            Contour = ContourCode(parameters.Symbol("Contour")),
-            Range = parameters.Number("Range"),
-            Jitter = parameters.Number("Jitter"),
-            Flags = Flag(
-                parameters.Boolean("AntiAlias"),
-                PrismStyleFlags.AntiAlias),
-            Resource = gradient,
-            ResourceEnabled = gradient.Value > 0,
-            ResourceRequired = gradient.Value > 0
-        };
-    }
-
-    private static PrismStylePlan CreateBevelEmboss(
-        ParameterReader parameters,
-        PrismGraphScope scope)
-    {
-        bool textureEnabled =
-            parameters.Boolean("TextureEnabled");
-        PrismResourceId pattern = parameters.Resource("Pattern");
-        PrismStyleFlags flags =
-            Flag(
-                parameters.Boolean("AntiAlias"),
-                PrismStyleFlags.AntiAlias) |
-            Flag(
-                parameters.Boolean("ContourEnabled"),
-                PrismStyleFlags.ContourEnabled) |
-            Flag(
-                parameters.Boolean("ContourAntiAlias"),
-                PrismStyleFlags.ContourAntiAlias) |
-            Flag(
-                textureEnabled,
-                PrismStyleFlags.TextureEnabled) |
-            Flag(
-                parameters.Boolean("TextureInvert"),
-                PrismStyleFlags.TextureInvert) |
-            Flag(
-                parameters.Boolean("TextureLinkWithLayer"),
-                PrismStyleFlags.ResourceLinked);
-        return new PrismStylePlan(
-            PrismStyleId.BevelEmboss,
-            BevelEmbossKind)
-        {
-            BevelStyle = BevelStyleCode(parameters.Symbol("Style")),
-            Technique = TechniqueCode(
-                parameters.Symbol("Technique")),
-            Depth = parameters.Number("Depth"),
-            Direction = DirectionCode(
-                parameters.Symbol("Direction")),
-            Size = parameters.Number("Size"),
-            Soften = parameters.Number("Soften"),
-            Angle = ResolveAngle(parameters, scope),
-            Altitude = ResolveAltitude(parameters, scope),
-            Contour = ContourCode(
-                parameters.Symbol("GlossContour")),
-            BlendMode = parameters.BlendMode("HighlightMode"),
-            PrimaryColor = parameters.Color(
-                "HighlightColor",
-                scope.CompositionSettings.WorkingColorProfile),
-            Opacity = parameters.Number("HighlightOpacity"),
-            SecondaryBlendMode =
-                parameters.BlendMode("ShadowMode"),
-            SecondaryColor = parameters.Color(
-                "ShadowColor",
-                scope.CompositionSettings.WorkingColorProfile),
-            SecondaryOpacity =
-                parameters.Number("ShadowOpacity"),
-            DetailContour = ContourCode(
-                parameters.Symbol("Contour")),
-            Range = parameters.Number("ContourRange"),
-            PaintKind = textureEnabled
-                ? PrismStylePaintKind.Pattern
-                : PrismStylePaintKind.Color,
-            Resource = pattern,
-            ResourceEnabled = textureEnabled,
-            ResourceRequired = textureEnabled,
-            Scale = parameters.Number("TextureScale"),
-            TextureDepth = parameters.Number("TextureDepth"),
-            Offset = parameters.Vector2("TextureOffset"),
-            Flags = flags
-        };
-    }
-
-    private static PrismStylePlan CreateSatin(
-        ParameterReader parameters,
-        PrismGraphScope scope)
-    {
-        return new PrismStylePlan(
-            PrismStyleId.Satin,
-            SatinKind)
-        {
-            BlendMode = parameters.BlendMode("BlendMode"),
-            PrimaryColor = parameters.Color(
-                "Color",
-                scope.CompositionSettings.WorkingColorProfile),
-            Opacity = parameters.Number("Opacity"),
-            Angle = parameters.Number("Angle"),
-            Distance = parameters.Number("Distance"),
-            Size = parameters.Number("Size"),
-            Contour = ContourCode(parameters.Symbol("Contour")),
-            Flags =
-                Flag(
-                    parameters.Boolean("AntiAlias"),
-                    PrismStyleFlags.AntiAlias) |
-                Flag(
-                    parameters.Boolean("Invert"),
-                    PrismStyleFlags.Invert)
-        };
-    }
-
-    private static PrismStylePlan CreateColorOverlay(
-        ParameterReader parameters,
-        PrismGraphScope scope)
-    {
-        return new PrismStylePlan(
-            PrismStyleId.ColorOverlay,
-            ColorOverlayKind)
-        {
-            BlendMode = parameters.BlendMode("BlendMode"),
-            PrimaryColor = parameters.Color(
-                "Color",
-                scope.CompositionSettings.WorkingColorProfile),
-            Opacity = parameters.Number("Opacity"),
-            PaintKind = PrismStylePaintKind.Color
-        };
-    }
-
-    private static PrismStylePlan CreateGradientOverlay(
-        ParameterReader parameters,
-        PrismGraphScope scope)
-    {
-        return new PrismStylePlan(
-            PrismStyleId.GradientOverlay,
-            GradientOverlayKind)
-        {
-            BlendMode = parameters.BlendMode("BlendMode"),
-            Opacity = parameters.Number("Opacity"),
-            PrimaryColor = parameters.ColorConstant(
-                new Color(0, 0, 0),
-                scope.CompositionSettings.WorkingColorProfile),
-            SecondaryColor = parameters.ColorConstant(
-                new Color(255, 255, 255),
-                scope.CompositionSettings.WorkingColorProfile),
-            PaintKind = PrismStylePaintKind.Gradient,
-            DetailContour = StableSymbolCode(
-                parameters.Symbol("Gradient")),
-            GradientMethod = GradientMethodCode(
-                parameters.Symbol("Method")),
-            GradientStyle = GradientStyleCode(
-                parameters.Symbol("Style")),
-            Angle = parameters.Number("Angle"),
-            Scale = parameters.Number("Scale"),
-            Offset = parameters.Vector2("Offset"),
-            Flags =
-                Flag(
-                    parameters.Boolean("AlignWithLayer"),
-                    PrismStyleFlags.AlignWithLayer) |
-                Flag(
-                    parameters.Boolean("Reverse"),
-                    PrismStyleFlags.Reverse) |
-                Flag(
-                    parameters.Boolean("Dither"),
-                    PrismStyleFlags.Dither)
-        };
-    }
-
-    private static PrismStylePlan CreatePatternOverlay(
-        ParameterReader parameters)
-    {
-        PrismResourceId pattern = parameters.Resource("Pattern");
-        return new PrismStylePlan(
-            PrismStyleId.PatternOverlay,
-            PatternOverlayKind)
-        {
-            BlendMode = parameters.BlendMode("BlendMode"),
-            Opacity = parameters.Number("Opacity"),
-            PaintKind = PrismStylePaintKind.Pattern,
-            Resource = pattern,
-            ResourceEnabled = true,
-            ResourceRequired = true,
-            Scale = parameters.Number("Scale"),
-            Offset = parameters.Vector2("Offset"),
-            Flags = Flag(
-                parameters.Boolean("LinkWithLayer"),
-                PrismStyleFlags.ResourceLinked)
-        };
-    }
-
-    private static PrismStylePlan CreateStroke(
-        ParameterReader parameters,
-        PrismGraphScope scope)
-    {
-        PrismStylePaintKind paintKind = PaintKindCode(
-            parameters.Symbol("FillType"));
-        PrismResourceId pattern = parameters.Resource("Pattern");
-        PrismStylePlan plan = new(
-            PrismStyleId.Stroke,
-            StrokeKind)
-        {
-            Size = parameters.Number("Size"),
-            Position = PositionCode(
-                parameters.Symbol("Position")),
-            BlendMode = parameters.BlendMode("BlendMode"),
-            Opacity = parameters.Number("Opacity"),
-            PaintKind = paintKind,
-            PrimaryColor = parameters.Color(
-                "Color",
-                scope.CompositionSettings.WorkingColorProfile),
-            SecondaryColor = parameters.ColorConstant(
-                new Color(255, 255, 255),
-                scope.CompositionSettings.WorkingColorProfile),
-            DetailContour = StableSymbolCode(
-                parameters.Symbol("Gradient")),
-            GradientMethod = GradientMethodCode(
-                parameters.Symbol("GradientMethod")),
-            GradientStyle = GradientStyleCode(
-                parameters.Symbol("GradientStyle")),
-            Angle = parameters.Number("GradientAngle"),
-            Scale = paintKind == PrismStylePaintKind.Pattern
-                ? parameters.Number("PatternScale")
-                : parameters.Number("GradientScale"),
-            Offset = paintKind == PrismStylePaintKind.Pattern
-                ? parameters.Vector2("PatternOffset")
-                : parameters.Vector2("GradientOffset"),
-            Resource = pattern,
-            ResourceEnabled =
-                paintKind == PrismStylePaintKind.Pattern,
-            ResourceRequired =
-                paintKind == PrismStylePaintKind.Pattern
-        };
-        PrismStyleFlags flags = PrismStyleFlags.None;
-        if (paintKind == PrismStylePaintKind.Gradient)
-        {
-            flags |= Flag(
-                parameters.Boolean("GradientAlignWithLayer"),
-                PrismStyleFlags.AlignWithLayer);
-            flags |= Flag(
-                parameters.Boolean("GradientReverse"),
-                PrismStyleFlags.Reverse);
-            flags |= Flag(
-                parameters.Boolean("GradientDither"),
-                PrismStyleFlags.Dither);
-        }
-        else
-        {
-            flags |= Flag(
-                parameters.Boolean("PatternLinkWithLayer"),
-                PrismStyleFlags.ResourceLinked);
-        }
-        return plan with { Flags = flags };
-    }
-
-    private static float ResolveAngle(
+    internal static float ResolveAngle(
         ParameterReader parameters,
         PrismGraphScope scope)
     {
@@ -653,7 +288,7 @@ internal static class PrismStylePlanner
             : parameters.Number("Angle");
     }
 
-    private static float ResolveAltitude(
+    internal static float ResolveAltitude(
         ParameterReader parameters,
         PrismGraphScope scope)
     {
@@ -662,12 +297,12 @@ internal static class PrismStylePlanner
             : parameters.Number("Altitude");
     }
 
-    private static PrismStyleFlags Flag(
+    internal static PrismStyleFlags Flag(
         bool condition,
         PrismStyleFlags flag) =>
         condition ? flag : PrismStyleFlags.None;
 
-    private static int ContourCode(int symbol)
+    internal static int ContourCode(int symbol)
     {
         if (symbol == LinearSymbol)
         {
@@ -680,7 +315,7 @@ internal static class PrismStylePlanner
         return 2 + (StableSymbolCode(symbol) % 2);
     }
 
-    private static int TechniqueCode(int symbol)
+    internal static int TechniqueCode(int symbol)
     {
         if (symbol == SofterSymbol || symbol == SmoothSymbol)
         {
@@ -693,7 +328,7 @@ internal static class PrismStylePlanner
         return 2;
     }
 
-    private static int PositionCode(int symbol)
+    internal static int PositionCode(int symbol)
     {
         if (symbol == OutsideSymbol)
         {
@@ -710,13 +345,13 @@ internal static class PrismStylePlanner
         return 0;
     }
 
-    private static int OriginCode(int symbol) =>
+    internal static int OriginCode(int symbol) =>
         symbol == EdgeSymbol ? 0 : 1;
 
-    private static int DirectionCode(int symbol) =>
+    internal static int DirectionCode(int symbol) =>
         symbol == UpSymbol ? 0 : 1;
 
-    private static PrismStylePaintKind PaintKindCode(int symbol)
+    internal static PrismStylePaintKind PaintKindCode(int symbol)
     {
         if (symbol == GradientSymbol)
         {
@@ -731,10 +366,10 @@ internal static class PrismStylePlanner
             : PrismStylePaintKind.Color;
     }
 
-    private static int GradientMethodCode(int symbol) =>
+    internal static int GradientMethodCode(int symbol) =>
         symbol == PerceptualSymbol ? 0 : 1;
 
-    private static int GradientStyleCode(int symbol)
+    internal static int GradientStyleCode(int symbol)
     {
         if (symbol == RadialSymbol)
         {
@@ -755,7 +390,7 @@ internal static class PrismStylePlanner
         return 0;
     }
 
-    private static int BevelStyleCode(int symbol)
+    internal static int BevelStyleCode(int symbol)
     {
         if (symbol == OuterBevelSymbol)
         {
@@ -776,7 +411,7 @@ internal static class PrismStylePlanner
         return 0;
     }
 
-    private static int StableSymbolCode(int symbol) =>
+    internal static int StableSymbolCode(int symbol) =>
         (symbol & int.MaxValue) % 1024;
 
     private static float ResolveSpatialScale(
@@ -858,7 +493,7 @@ internal static class PrismStylePlanner
         }
     }
 
-    private readonly ref struct ParameterReader
+    internal readonly ref struct ParameterReader
     {
         private readonly PrismGraphNode node;
         private readonly PrismCatalogPropertyDescriptor[] properties;

@@ -1,3 +1,5 @@
+using Cerneala.Drawing.Prism.Catalog;
+
 namespace Cerneala.Drawing.Prism;
 
 public sealed class PrismRendererOptions
@@ -9,6 +11,9 @@ public sealed class PrismRendererOptions
         256L * 1024 * 1024;
 
     public int RetainedCacheEntryLimit { get; init; } = 256;
+
+    public PrismColorProfile HostColorProfile { get; init; } =
+        PrismColorProfile.Srgb;
 
     public bool EnableDevelopmentDiagnostics { get; init; }
 
@@ -29,6 +34,11 @@ public sealed class PrismRendererOptions
         {
             throw new ArgumentOutOfRangeException(
                 nameof(RetainedCacheEntryLimit));
+        }
+        if (!Enum.IsDefined(HostColorProfile))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(HostColorProfile));
         }
     }
 }

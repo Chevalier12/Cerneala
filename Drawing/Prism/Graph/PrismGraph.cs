@@ -37,7 +37,10 @@ internal enum PrismGraphEdgeKind
     MaskAlpha,
     ClipBaseAlpha,
     CompositeBackground,
-    CompositeForeground
+    CompositeForeground,
+    KnockoutBackdrop,
+    KnockoutShape,
+    FilterOriginal
 }
 
 internal enum PrismGraphDependencyKind

@@ -607,6 +607,7 @@ internal sealed class PrismRetainedFingerprintBuilder
             AppendFloat(components, resampling.BoundsRotation);
             AppendVector(components, resampling.BoundsSkew);
             AppendVector(components, resampling.BoundsOrigin);
+            AppendVector(components, resampling.BoundsOutset);
             return;
         }
 

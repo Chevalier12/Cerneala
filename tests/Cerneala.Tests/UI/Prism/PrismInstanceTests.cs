@@ -13,7 +13,7 @@ public sealed class PrismInstanceTests
     {
         Assert.Equal(134, PrismCatalog.Filters.Length);
         Assert.Equal(10, PrismCatalog.Styles.Length);
-        Assert.Equal(9, PrismCatalog.Filters.Count(operation => operation.RequiresResource));
+        Assert.Equal(11, PrismCatalog.Filters.Count(operation => operation.RequiresResource));
         Assert.Single(PrismCatalog.Styles, operation => operation.RequiresResource);
         Assert.All(
             PrismCatalog.Filters.Concat(PrismCatalog.Styles)
