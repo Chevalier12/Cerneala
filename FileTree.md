@@ -11,6 +11,11 @@ Generated from `.`.
 |   +-- workflows/
 |       |-- pages.yml
 |       +-- prism-shaders.yml
+|-- .kilo/
+|   |-- .gitignore
+|   |-- agent-manager.json
+|   |-- package-lock.json
+|   +-- package.json
 |-- .superpowers/
 |   +-- brainstorm/
 |       +-- manual-1783588990/
@@ -210,6 +215,9 @@ Generated from `.`.
 |   |-- WelcomeChapterView.cui.xml
 |   +-- WelcomeChapterView.cui.xml.cs
 |-- docs/
+|   |-- audits/
+|   |   |-- prism-visual-algorithm-checklist-2026-07-25.md
+|   |   +-- prism-visual-style-algorithm-checklist-2026-08-02.md
 |   |-- diagrams/
 |   |   |-- cerneala-drawing-flowchart.svg
 |   |   |-- retained-frame-loop.md
@@ -247,7 +255,8 @@ Generated from `.`.
 |   |   |-- 2026-07-18-prism-plan-index.md
 |   |   |-- 2026-07-18-prism-retained-composition-graph.md
 |   |   |-- 2026-07-18-prism-retained-pixel-cache.md
-|   |   +-- 2026-07-22-prism-studio-presentation.md
+|   |   |-- 2026-07-22-prism-studio-presentation.md
+|   |   +-- 2026-07-28-motion-studio.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -379,6 +388,9 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismFilterId.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismSampling.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismStyleId.md
+|   |   |   |-- Cerneala.Drawing.Prism.Filters.PrismLensFlareRaySample.md
+|   |   |   |-- Cerneala.Drawing.Prism.Filters.PrismLensProfileFitOptions.md
+|   |   |   |-- Cerneala.Drawing.Prism.Filters.PrismLensProfileFitter.md
 |   |   |   |-- Cerneala.Drawing.Prism.IBackdropFrameLease.md
 |   |   |   |-- Cerneala.Drawing.Prism.IBackdropFrameSource.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismCacheEvictionReason.md
@@ -508,6 +520,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Canvas.md
 |   |   |   |-- Cerneala.UI.Controls.CheckBox.md
 |   |   |   |-- Cerneala.UI.Controls.ComboBox.md
+|   |   |   |-- Cerneala.UI.Controls.ComboBoxItem.md
 |   |   |   |-- Cerneala.UI.Controls.ContentControl.ContentValueEqualityComparer.md
 |   |   |   |-- Cerneala.UI.Controls.ContentControl.md
 |   |   |   |-- Cerneala.UI.Controls.ContentPresenter.md
@@ -537,6 +550,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Label.md
 |   |   |   |-- Cerneala.UI.Controls.ListBox.md
 |   |   |   |-- Cerneala.UI.Controls.ListBoxItem.md
+|   |   |   |-- Cerneala.UI.Controls.Overlay.md
+|   |   |   |-- Cerneala.UI.Controls.OverlayPlacement.md
 |   |   |   |-- Cerneala.UI.Controls.Panel.md
 |   |   |   |-- Cerneala.UI.Controls.PasswordBox.md
 |   |   |   |-- Cerneala.UI.Controls.PopupRoot.md
@@ -1059,16 +1074,31 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Platform.ITextInputPlatform.md
 |   |   |   |-- Cerneala.UI.Platform.PlatformServices.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismBackdropDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismColorMatrixResource.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismCompositionDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismCurvePoint.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismCurvesResource.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismFilterDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismGradientMapPoint.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismGradientMapResource.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismGroupDefinition.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismLayerDefinition.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismLensFlareGhost.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismLensFlarePolynomialInput.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismLensFlarePolynomialRegion.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismLensProfileJson.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismLensProfileResource.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismLight.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismLightingResource.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismLightKind.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismMaskChannel.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismMaskDefinition.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismNodeDefinition.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismNodeId.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismResourceId.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismSourceSpan.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismSparsePolynomial.md
+|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismSparsePolynomialTerm.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismStyleDefinition.md
 |   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBackdropState.md
 |   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBlendChannels.md
@@ -1265,44 +1295,224 @@ Generated from `.`.
 |   |   |-- Prism/
 |   |   |   |-- Execution/
 |   |   |   |   |-- IPrismCommandRenderer.cs
+|   |   |   |   |-- PrismCurveTextureCache.cs
 |   |   |   |   |-- PrismExecutionDiagnostics.cs
-|   |   |   |   +-- PrismGraphExecutor.cs
+|   |   |   |   |-- PrismGradientDitherTexture.cs
+|   |   |   |   |-- PrismGradientMapTextureCache.cs
+|   |   |   |   |-- PrismGradientOverlayTextureCache.cs
+|   |   |   |   |-- PrismGraphExecutor.cs
+|   |   |   |   |-- PrismLensProfileTextureCache.cs
+|   |   |   |   |-- PrismSpatterPointTextureCache.cs
+|   |   |   |   +-- PrismWaveNoiseTextureCache.cs
 |   |   |   |-- Kernels/
 |   |   |   |   +-- PrismKernelRegistry.cs
 |   |   |   |-- Shaders/
 |   |   |   |   |-- Blends/
-|   |   |   |   |   +-- BlendModes.fx
+|   |   |   |   |   |-- AdvancedBlending.fx
+|   |   |   |   |   |-- All.fx
+|   |   |   |   |   |-- BlendIf.fx
+|   |   |   |   |   |-- Color.fx
+|   |   |   |   |   |-- ColorBurn.fx
+|   |   |   |   |   |-- ColorDodge.fx
+|   |   |   |   |   |-- Common.fx
+|   |   |   |   |   |-- Darken.fx
+|   |   |   |   |   |-- DarkerColor.fx
+|   |   |   |   |   |-- Difference.fx
+|   |   |   |   |   |-- Dispatcher.fx
+|   |   |   |   |   |-- Dissolve.fx
+|   |   |   |   |   |-- Divide.fx
+|   |   |   |   |   |-- Exclusion.fx
+|   |   |   |   |   |-- HardLight.fx
+|   |   |   |   |   |-- HardMix.fx
+|   |   |   |   |   |-- Hue.fx
+|   |   |   |   |   |-- Lighten.fx
+|   |   |   |   |   |-- LighterColor.fx
+|   |   |   |   |   |-- LinearBurn.fx
+|   |   |   |   |   |-- LinearDodge.fx
+|   |   |   |   |   |-- LinearLight.fx
+|   |   |   |   |   |-- Luminosity.fx
+|   |   |   |   |   |-- Multiply.fx
+|   |   |   |   |   |-- Normal.fx
+|   |   |   |   |   |-- Overlay.fx
+|   |   |   |   |   |-- PassThrough.fx
+|   |   |   |   |   |-- PinLight.fx
+|   |   |   |   |   |-- Saturation.fx
+|   |   |   |   |   |-- Screen.fx
+|   |   |   |   |   |-- SoftLight.fx
+|   |   |   |   |   |-- Subtract.fx
+|   |   |   |   |   +-- VividLight.fx
 |   |   |   |   |-- Color/
-|   |   |   |   |   +-- ColorConversion.fx
+|   |   |   |   |   |-- All.fx
+|   |   |   |   |   |-- Common.fx
+|   |   |   |   |   |-- DisplayP3.fx
+|   |   |   |   |   |-- LinearDisplayP3.fx
+|   |   |   |   |   |-- LinearSrgb.fx
+|   |   |   |   |   |-- ScRgb.fx
+|   |   |   |   |   |-- Srgb.fx
+|   |   |   |   |   +-- WorkingColorConversion.fx
 |   |   |   |   |-- Common/
-|   |   |   |   |   |-- BlendMath.fx
 |   |   |   |   |   +-- Parameters.fx
 |   |   |   |   |-- Composition/
-|   |   |   |   |   +-- CopyAndMasks.fx
+|   |   |   |   |   |-- Clipping.fx
+|   |   |   |   |   |-- Copy.fx
+|   |   |   |   |   +-- Mask.fx
 |   |   |   |   |-- Filters/
 |   |   |   |   |   |-- Catalog/
+|   |   |   |   |   |   |-- AccentedEdges.fx
+|   |   |   |   |   |   |-- AngledStrokes.fx
 |   |   |   |   |   |   |-- Artistic.fx
+|   |   |   |   |   |   |-- BasRelief.fx
+|   |   |   |   |   |   |-- CategoryDispatchers.fx
+|   |   |   |   |   |   |-- ChalkCharcoal.fx
+|   |   |   |   |   |   |-- Charcoal.fx
+|   |   |   |   |   |   |-- ChromaticAberration.fx
+|   |   |   |   |   |   |-- Chrome.fx
+|   |   |   |   |   |   |-- Clouds.fx
 |   |   |   |   |   |   |-- Color.fx
+|   |   |   |   |   |   |-- ColoredPencil.fx
+|   |   |   |   |   |   |-- ColorHalftone.fx
+|   |   |   |   |   |   |-- ColorMatrix.fx
 |   |   |   |   |   |   |-- Common.fx
-|   |   |   |   |   |   |-- Convolution.fx
+|   |   |   |   |   |   |-- ConteCrayon.fx
+|   |   |   |   |   |   |-- Craquelure.fx
+|   |   |   |   |   |   |-- Crosshatch.fx
+|   |   |   |   |   |   |-- Crystallize.fx
+|   |   |   |   |   |   |-- CustomConvolution.fx
+|   |   |   |   |   |   |-- Cutout.fx
+|   |   |   |   |   |   |-- DarkStrokes.fx
+|   |   |   |   |   |   |-- DifferenceClouds.fx
+|   |   |   |   |   |   |-- Diffuse.fx
 |   |   |   |   |   |   |-- Dispatcher.fx
-|   |   |   |   |   |   |-- Edge.fx
-|   |   |   |   |   |   |-- Morphology.fx
+|   |   |   |   |   |   |-- DryBrush.fx
+|   |   |   |   |   |   |-- Emboss.fx
+|   |   |   |   |   |   |-- Extrude.fx
+|   |   |   |   |   |   |-- Facet.fx
+|   |   |   |   |   |   |-- Fibers.fx
+|   |   |   |   |   |   |-- FilmGrain.fx
+|   |   |   |   |   |   |-- Fragment.fx
+|   |   |   |   |   |   |-- Fresco.fx
+|   |   |   |   |   |   |-- GlowingEdges.fx
+|   |   |   |   |   |   |-- Grain.fx
+|   |   |   |   |   |   |-- GraphicPen.fx
+|   |   |   |   |   |   |-- HalftonePattern.fx
+|   |   |   |   |   |   |-- InkOutlines.fx
+|   |   |   |   |   |   |-- LensFlare.fx
+|   |   |   |   |   |   |-- LightingEffects.fx
+|   |   |   |   |   |   |-- Maximum.fx
+|   |   |   |   |   |   |-- Mezzotint.fx
+|   |   |   |   |   |   |-- Minimum.fx
+|   |   |   |   |   |   |-- Mosaic.fx
+|   |   |   |   |   |   |-- MosaicTiles.fx
+|   |   |   |   |   |   |-- NotePaper.fx
+|   |   |   |   |   |   |-- NtscColors.fx
+|   |   |   |   |   |   |-- OilPaint.fx
+|   |   |   |   |   |   |-- PaintDaubs.fx
+|   |   |   |   |   |   |-- PaletteKnife.fx
+|   |   |   |   |   |   |-- Patchwork.fx
+|   |   |   |   |   |   |-- Photocopy.fx
+|   |   |   |   |   |   |-- Plaster.fx
+|   |   |   |   |   |   |-- PlasticWrap.fx
+|   |   |   |   |   |   |-- Pointillize.fx
+|   |   |   |   |   |   |-- PosterEdges.fx
 |   |   |   |   |   |   |-- Procedural.fx
 |   |   |   |   |   |   |-- Quantization.fx
+|   |   |   |   |   |   |-- Reticulation.fx
+|   |   |   |   |   |   |-- RoughPastels.fx
+|   |   |   |   |   |   |-- Scanlines.fx
+|   |   |   |   |   |   |-- SmudgeStick.fx
+|   |   |   |   |   |   |-- Solarize.fx
+|   |   |   |   |   |   |-- Spatter.fx
+|   |   |   |   |   |   |-- Sponge.fx
+|   |   |   |   |   |   |-- SprayedStrokes.fx
+|   |   |   |   |   |   |-- StainedGlass.fx
+|   |   |   |   |   |   |-- Stamp.fx
+|   |   |   |   |   |   |-- SumiE.fx
 |   |   |   |   |   |   |-- Texture.fx
-|   |   |   |   |   |   |-- Tiling.fx
-|   |   |   |   |   |   +-- Video.fx
+|   |   |   |   |   |   |-- Texturizer.fx
+|   |   |   |   |   |   |-- Tiles.fx
+|   |   |   |   |   |   |-- TornEdges.fx
+|   |   |   |   |   |   |-- TraceContour.fx
+|   |   |   |   |   |   |-- Underpainting.fx
+|   |   |   |   |   |   |-- Video.fx
+|   |   |   |   |   |   |-- Watercolor.fx
+|   |   |   |   |   |   |-- WaterPaper.fx
+|   |   |   |   |   |   +-- Wind.fx
+|   |   |   |   |   |-- AdaptiveWideAngle.fx
+|   |   |   |   |   |-- AddNoise.fx
 |   |   |   |   |   |-- Adjustment.fx
+|   |   |   |   |   |-- AdjustmentDispatcher.fx
+|   |   |   |   |   |-- Average.fx
+|   |   |   |   |   |-- BlackWhite.fx
+|   |   |   |   |   |-- Blur.fx
+|   |   |   |   |   |-- BlurMore.fx
+|   |   |   |   |   |-- BoxBlur.fx
+|   |   |   |   |   |-- BrightnessContrast.fx
+|   |   |   |   |   |-- ChannelMixer.fx
+|   |   |   |   |   |-- ColorBalance.fx
+|   |   |   |   |   |-- ColorLookup.fx
+|   |   |   |   |   |-- Curves.fx
+|   |   |   |   |   |-- Despeckle.fx
+|   |   |   |   |   |-- DiffuseGlow.fx
+|   |   |   |   |   |-- Displace.fx
+|   |   |   |   |   |-- DustScratches.fx
+|   |   |   |   |   |-- Exposure.fx
+|   |   |   |   |   |-- FieldBlur.fx
+|   |   |   |   |   |-- GaussianBlur.fx
+|   |   |   |   |   |-- Glass.fx
+|   |   |   |   |   |-- GradientMap.fx
+|   |   |   |   |   |-- HighPass.fx
+|   |   |   |   |   |-- HueSaturation.fx
+|   |   |   |   |   |-- Invert.fx
+|   |   |   |   |   |-- IrisBlur.fx
+|   |   |   |   |   |-- LensBlur.fx
+|   |   |   |   |   |-- LensCorrection.fx
+|   |   |   |   |   |-- Levels.fx
+|   |   |   |   |   |-- Liquify.fx
+|   |   |   |   |   |-- Median.fx
+|   |   |   |   |   |-- MotionBlur.fx
 |   |   |   |   |   |-- Neighborhood.fx
+|   |   |   |   |   |-- NeighborhoodDispatcher.fx
+|   |   |   |   |   |-- NeonGlow.fx
+|   |   |   |   |   |-- OceanRipple.fx
+|   |   |   |   |   |-- Offset.fx
 |   |   |   |   |   |-- OptimizedBilinearGaussian.fx
-|   |   |   |   |   +-- Resampling.fx
+|   |   |   |   |   |-- PathBlur.fx
+|   |   |   |   |   |-- PhotoFilter.fx
+|   |   |   |   |   |-- Pinch.fx
+|   |   |   |   |   |-- PolarCoordinates.fx
+|   |   |   |   |   |-- Posterize.fx
+|   |   |   |   |   |-- RadialBlur.fx
+|   |   |   |   |   |-- ReduceNoise.fx
+|   |   |   |   |   |-- Resampling.fx
+|   |   |   |   |   |-- ResamplingDispatcher.fx
+|   |   |   |   |   |-- Ripple.fx
+|   |   |   |   |   |-- SelectiveColor.fx
+|   |   |   |   |   |-- ShapeBlur.fx
+|   |   |   |   |   |-- Sharpen.fx
+|   |   |   |   |   |-- SharpenEdges.fx
+|   |   |   |   |   |-- SharpenMore.fx
+|   |   |   |   |   |-- Shear.fx
+|   |   |   |   |   |-- SmartBlur.fx
+|   |   |   |   |   |-- SmartSharpen.fx
+|   |   |   |   |   |-- Spherize.fx
+|   |   |   |   |   |-- SpinBlur.fx
+|   |   |   |   |   |-- SurfaceBlur.fx
+|   |   |   |   |   |-- Threshold.fx
+|   |   |   |   |   |-- TiltShift.fx
+|   |   |   |   |   |-- Transform.fx
+|   |   |   |   |   |-- Twirl.fx
+|   |   |   |   |   |-- UnsharpMask.fx
+|   |   |   |   |   |-- Vibrance.fx
+|   |   |   |   |   |-- Wave.fx
+|   |   |   |   |   +-- ZigZag.fx
 |   |   |   |   |-- Pipeline/
+|   |   |   |   |   |-- StyleTechniques.fx
 |   |   |   |   |   +-- Techniques.fx
 |   |   |   |   |-- Styles/
 |   |   |   |   |   |-- BevelEmboss.fx
 |   |   |   |   |   |-- ColorOverlay.fx
 |   |   |   |   |   |-- Common.fx
+|   |   |   |   |   |-- DistanceField.fx
 |   |   |   |   |   |-- DropShadow.fx
 |   |   |   |   |   |-- GradientOverlay.fx
 |   |   |   |   |   |-- InnerGlow.fx
@@ -1312,8 +1522,14 @@ Generated from `.`.
 |   |   |   |   |   |-- PatternOverlay.fx
 |   |   |   |   |   |-- Satin.fx
 |   |   |   |   |   +-- Stroke.fx
+|   |   |   |   |-- Charcoal.fx
+|   |   |   |   |-- ConteCrayon.fx
 |   |   |   |   |-- CopyComposite.fx
-|   |   |   |   +-- PrismShaderResources.cs
+|   |   |   |   |-- Deinterlace.fx
+|   |   |   |   |-- GraphicPen.fx
+|   |   |   |   |-- Plaster.fx
+|   |   |   |   |-- PrismShaderResources.cs
+|   |   |   |   +-- Styles.fx
 |   |   |   |-- Surfaces/
 |   |   |   |   |-- PrismRetainedSurface.cs
 |   |   |   |   |-- PrismRetainedSurfaceCache.cs
@@ -1335,23 +1551,214 @@ Generated from `.`.
 |   |   +-- SvgPathFlattener.cs
 |   |-- Prism/
 |   |   |-- Blend/
-|   |   |   +-- PrismBlendMath.cs
+|   |   |   |-- Assets/
+|   |   |   |   |-- dissolve-fastnoise-ranks.bin
+|   |   |   |   +-- README.md
+|   |   |   |-- PrismAdvancedBlendingStyle.cs
+|   |   |   |-- PrismBlendIfStyle.cs
+|   |   |   |-- PrismBlendMath.cs
+|   |   |   |-- PrismColorBlend.cs
+|   |   |   |-- PrismColorBurnBlend.cs
+|   |   |   |-- PrismColorDodgeBlend.cs
+|   |   |   |-- PrismDarkenBlend.cs
+|   |   |   |-- PrismDarkerColorBlend.cs
+|   |   |   |-- PrismDifferenceBlend.cs
+|   |   |   |-- PrismDissolveBlend.cs
+|   |   |   |-- PrismDivideBlend.cs
+|   |   |   |-- PrismExclusionBlend.cs
+|   |   |   |-- PrismHardLightBlend.cs
+|   |   |   |-- PrismHardMixBlend.cs
+|   |   |   |-- PrismHueBlend.cs
+|   |   |   |-- PrismLightenBlend.cs
+|   |   |   |-- PrismLighterColorBlend.cs
+|   |   |   |-- PrismLinearBurnBlend.cs
+|   |   |   |-- PrismLinearDodgeBlend.cs
+|   |   |   |-- PrismLinearLightBlend.cs
+|   |   |   |-- PrismLuminosityBlend.cs
+|   |   |   |-- PrismMultiplyBlend.cs
+|   |   |   |-- PrismNormalBlend.cs
+|   |   |   |-- PrismOverlayBlend.cs
+|   |   |   |-- PrismPassThroughBlend.cs
+|   |   |   |-- PrismPinLightBlend.cs
+|   |   |   |-- PrismSaturationBlend.cs
+|   |   |   |-- PrismScreenBlend.cs
+|   |   |   |-- PrismSoftLightBlend.cs
+|   |   |   |-- PrismSubtractBlend.cs
+|   |   |   +-- PrismVividLightBlend.cs
 |   |   |-- Catalog/
 |   |   |   |-- PrismCatalog.cs
 |   |   |   +-- PrismFallbackPolicy.cs
 |   |   |-- Color/
-|   |   |   +-- PrismColorPipeline.cs
+|   |   |   |-- PrismColorPipeline.cs
+|   |   |   |-- PrismDisplayP3Style.cs
+|   |   |   |-- PrismLinearDisplayP3Style.cs
+|   |   |   |-- PrismLinearSrgbStyle.cs
+|   |   |   |-- PrismOklab.cs
+|   |   |   |-- PrismScRgbStyle.cs
+|   |   |   +-- PrismSrgbStyle.cs
 |   |   |-- Filters/
+|   |   |   |-- Assets/
+|   |   |   |   +-- bluenoise.bin
+|   |   |   |-- PrismAccentedEdgesFilter.cs
+|   |   |   |-- PrismAdaptiveWideAngleFilter.cs
+|   |   |   |-- PrismAddNoiseFilter.cs
 |   |   |   |-- PrismAdjustmentMath.cs
 |   |   |   |-- PrismAdjustmentPlanner.cs
+|   |   |   |-- PrismAngledStrokesFilter.cs
+|   |   |   |-- PrismArbitraryFlatMorphology.cs
+|   |   |   |-- PrismAverageFilter.cs
+|   |   |   |-- PrismBasReliefFilter.cs
+|   |   |   |-- PrismBlackWhiteFilter.cs
+|   |   |   |-- PrismBlurFilter.cs
+|   |   |   |-- PrismBlurMoreFilter.cs
+|   |   |   |-- PrismBoxBlurFilter.cs
+|   |   |   |-- PrismBrightnessContrastFilter.cs
 |   |   |   |-- PrismCatalogFilterMath.cs
 |   |   |   |-- PrismCatalogFilterPlanner.cs
+|   |   |   |-- PrismChalkCharcoalFilter.cs
+|   |   |   |-- PrismChannelMixerFilter.cs
+|   |   |   |-- PrismCharcoalFilter.cs
+|   |   |   |-- PrismChromaticAberrationFilter.cs
+|   |   |   |-- PrismChromeFilter.cs
+|   |   |   |-- PrismCloudsFilter.cs
+|   |   |   |-- PrismColorBalanceFilter.cs
+|   |   |   |-- PrismColoredPencilFilter.cs
+|   |   |   |-- PrismColorFilter.cs
+|   |   |   |-- PrismColorHalftoneFilter.cs
+|   |   |   |-- PrismColorLookupFilter.cs
+|   |   |   |-- PrismColorMatrixFilter.cs
+|   |   |   |-- PrismConteCrayonFilter.cs
+|   |   |   |-- PrismCraquelureFilter.cs
+|   |   |   |-- PrismCrosshatchFilter.cs
+|   |   |   |-- PrismCrystallizeFilter.cs
+|   |   |   |-- PrismCurveLut.cs
+|   |   |   |-- PrismCurvesFilter.cs
+|   |   |   |-- PrismCustomConvolutionFilter.cs
+|   |   |   |-- PrismCutoutFilter.cs
+|   |   |   |-- PrismDarkStrokesFilter.cs
+|   |   |   |-- PrismDeinterlaceFilter.cs
+|   |   |   |-- PrismDespeckleFilter.cs
+|   |   |   |-- PrismDifferenceCloudsFilter.cs
+|   |   |   |-- PrismDiffuseFilter.cs
+|   |   |   |-- PrismDiffuseGlowFilter.cs
+|   |   |   |-- PrismDisplaceFilter.cs
+|   |   |   |-- PrismDryBrushFilter.cs
+|   |   |   |-- PrismDustScratchesFilter.cs
+|   |   |   |-- PrismEmbossFilter.cs
+|   |   |   |-- PrismExposureFilter.cs
+|   |   |   |-- PrismExtrudeFilter.cs
+|   |   |   |-- PrismFacetFilter.cs
+|   |   |   |-- PrismFibersFilter.cs
+|   |   |   |-- PrismFibersNoise.cs
+|   |   |   |-- PrismFieldBlurFilter.cs
+|   |   |   |-- PrismFilmGrainFilter.cs
 |   |   |   |-- PrismFilterConformanceGallery.cs
 |   |   |   |-- PrismFilterParameterReader.cs
+|   |   |   |-- PrismFindEdgesFilter.cs
+|   |   |   |-- PrismFragmentFilter.cs
+|   |   |   |-- PrismFrescoFilter.cs
+|   |   |   |-- PrismGaussianBlurFilter.cs
+|   |   |   |-- PrismGlassFilter.cs
+|   |   |   |-- PrismGlowingEdgesFilter.cs
+|   |   |   |-- PrismGradientMapFilter.cs
+|   |   |   |-- PrismGradientMapLut.cs
+|   |   |   |-- PrismGrainFilter.cs
+|   |   |   |-- PrismGraphicPenFilter.cs
+|   |   |   |-- PrismHaldLut.cs
+|   |   |   |-- PrismHalftonePatternFilter.cs
+|   |   |   |-- PrismHighPassFilter.cs
+|   |   |   |-- PrismHueSaturationFilter.cs
+|   |   |   |-- PrismIncrementalVoronoiSet.cs
+|   |   |   |-- PrismInkOutlinesFilter.cs
+|   |   |   |-- PrismInvertFilter.cs
+|   |   |   |-- PrismIrisBlurFilter.cs
+|   |   |   |-- PrismLensBlurFilter.cs
+|   |   |   |-- PrismLensCorrectionFilter.cs
+|   |   |   |-- PrismLensFlareFilter.cs
+|   |   |   |-- PrismLensFlareRenderer.cs
+|   |   |   |-- PrismLensProfileFitter.cs
+|   |   |   |-- PrismLevelsAnalysis.cs
+|   |   |   |-- PrismLevelsFilter.cs
+|   |   |   |-- PrismLightingEffectsFilter.cs
+|   |   |   |-- PrismLiquifyFilter.cs
+|   |   |   |-- PrismMaximumFilter.cs
+|   |   |   |-- PrismMedianFilter.cs
+|   |   |   |-- PrismMezzotintFilter.cs
+|   |   |   |-- PrismMezzotintThreshold.cs
+|   |   |   |-- PrismMinimumFilter.cs
+|   |   |   |-- PrismMosaicFilter.cs
+|   |   |   |-- PrismMosaicTilesFilter.cs
+|   |   |   |-- PrismMotionBlurFilter.cs
 |   |   |   |-- PrismNeighborhoodMath.cs
 |   |   |   |-- PrismNeighborhoodPlanner.cs
+|   |   |   |-- PrismNeonGlowFilter.cs
+|   |   |   |-- PrismNotePaperFilter.cs
+|   |   |   |-- PrismNtscColorsFilter.cs
+|   |   |   |-- PrismOceanRippleFilter.cs
+|   |   |   |-- PrismOffsetFilter.cs
+|   |   |   |-- PrismOilPaintFilter.cs
+|   |   |   |-- PrismOkhsl.cs
+|   |   |   |-- PrismPaintDaubsFilter.cs
+|   |   |   |-- PrismPaletteKnifeFilter.cs
+|   |   |   |-- PrismPatchworkFilter.cs
+|   |   |   |-- PrismPathBlurFilter.cs
+|   |   |   |-- PrismPhotocopyFilter.cs
+|   |   |   |-- PrismPhotoFilterFilter.cs
+|   |   |   |-- PrismPinchFilter.cs
+|   |   |   |-- PrismPlasterFilter.cs
+|   |   |   |-- PrismPlasticWrapFilter.cs
+|   |   |   |-- PrismPointillizeFilter.cs
+|   |   |   |-- PrismPolarCoordinatesFilter.cs
+|   |   |   |-- PrismPosterEdgesFilter.cs
+|   |   |   |-- PrismPosterizeFilter.cs
+|   |   |   |-- PrismRadialBlurFilter.cs
+|   |   |   |-- PrismRecursiveWangBlueNoise.cs
+|   |   |   |-- PrismReduceNoiseFilter.cs
 |   |   |   |-- PrismResamplingMath.cs
-|   |   |   +-- PrismResamplingPlanner.cs
+|   |   |   |-- PrismResamplingPlanner.cs
+|   |   |   |-- PrismReticulationFilter.cs
+|   |   |   |-- PrismRippleFilter.cs
+|   |   |   |-- PrismRoughPastelsFilter.cs
+|   |   |   |-- PrismScanlinesFilter.cs
+|   |   |   |-- PrismSelectiveColorFilter.cs
+|   |   |   |-- PrismShapeBlurFilter.cs
+|   |   |   |-- PrismSharpenEdgesFilter.cs
+|   |   |   |-- PrismSharpenFilter.cs
+|   |   |   |-- PrismSharpenMoreFilter.cs
+|   |   |   |-- PrismShearFilter.cs
+|   |   |   |-- PrismSmartBlurFilter.cs
+|   |   |   |-- PrismSmartSharpenFilter.cs
+|   |   |   |-- PrismSmudgeStickFilter.cs
+|   |   |   |-- PrismSolarizeFilter.cs
+|   |   |   |-- PrismSpatterFilter.cs
+|   |   |   |-- PrismSpherizeFilter.cs
+|   |   |   |-- PrismSpinBlurFilter.cs
+|   |   |   |-- PrismSpongeFilter.cs
+|   |   |   |-- PrismSprayedStrokesFilter.cs
+|   |   |   |-- PrismStainedGlassFilter.cs
+|   |   |   |-- PrismStampFilter.cs
+|   |   |   |-- PrismSumiEFilter.cs
+|   |   |   |-- PrismSurfaceBlurFilter.cs
+|   |   |   |-- PrismSurfaceTexture.cs
+|   |   |   |-- PrismTexturizerFilter.cs
+|   |   |   |-- PrismThresholdAnalysis.cs
+|   |   |   |-- PrismThresholdFilter.cs
+|   |   |   |-- PrismTilesFilter.cs
+|   |   |   |-- PrismTiltShiftFilter.cs
+|   |   |   |-- PrismTornEdgesFilter.cs
+|   |   |   |-- PrismTraceContourFilter.cs
+|   |   |   |-- PrismTransformFilter.cs
+|   |   |   |-- PrismTwirlFilter.cs
+|   |   |   |-- PrismUnderpaintingFilter.cs
+|   |   |   |-- PrismUnsharpMaskFilter.cs
+|   |   |   |-- PrismVibranceFilter.cs
+|   |   |   |-- PrismWatercolorFilter.cs
+|   |   |   |-- PrismWaterPaperFilter.cs
+|   |   |   |-- PrismWaveFilter.cs
+|   |   |   |-- PrismWaveNoise.cs
+|   |   |   |-- PrismWindFilter.cs
+|   |   |   |-- PrismXDogLuminance.cs
+|   |   |   +-- PrismZigZagFilter.cs
 |   |   |-- Graph/
 |   |   |   |-- PrismAnalyzedScope.cs
 |   |   |   |-- PrismBackdropFramePolicy.cs
@@ -1366,8 +1773,21 @@ Generated from `.`.
 |   |   |   |-- PrismGraphOptimizer.cs
 |   |   |   +-- PrismRetainedCacheKey.cs
 |   |   |-- Masking/
-|   |   |   +-- PrismMaskMath.cs
+|   |   |   |-- PrismClippingStyle.cs
+|   |   |   |-- PrismMaskMath.cs
+|   |   |   +-- PrismMaskStyle.cs
 |   |   |-- Styles/
+|   |   |   |-- PrismBevelEmbossStyle.cs
+|   |   |   |-- PrismColorOverlayStyle.cs
+|   |   |   |-- PrismCssGradientLut.cs
+|   |   |   |-- PrismDropShadowStyle.cs
+|   |   |   |-- PrismGradientOverlayStyle.cs
+|   |   |   |-- PrismInnerGlowStyle.cs
+|   |   |   |-- PrismInnerShadowStyle.cs
+|   |   |   |-- PrismOuterGlowStyle.cs
+|   |   |   |-- PrismPatternOverlayStyle.cs
+|   |   |   |-- PrismSatinStyle.cs
+|   |   |   |-- PrismStrokeStyle.cs
 |   |   |   +-- PrismStylePlanner.cs
 |   |   |-- BackdropAlphaMode.cs
 |   |   |-- BackdropFrameMetadata.cs
@@ -1478,6 +1898,7 @@ Generated from `.`.
 |   |   |   |-- ItemsPanelTemplateTests.cs
 |   |   |   |-- ItemsSourceObservableTests.cs
 |   |   |   |-- ListBoxTests.cs
+|   |   |   |-- OverlayTests.cs
 |   |   |   |-- PanelTests.cs
 |   |   |   |-- PasswordBoxTests.cs
 |   |   |   |-- ProgressBarTests.cs
@@ -1506,8 +1927,6 @@ Generated from `.`.
 |   |   |   |-- WindowRenderingTests.cs
 |   |   |   +-- WpfEventSurfaceTests.cs
 |   |   |-- Docs/
-|   |   |   |-- AspectDocsTests.cs
-|   |   |   +-- GettingStartedDocsTests.cs
 |   |   |-- Drawing/
 |   |   |   |-- MonoGame/
 |   |   |   |   |-- Prism/
@@ -1521,28 +1940,108 @@ Generated from `.`.
 |   |   |   |   |-- MonoGameDrawingBackendStateTests.cs
 |   |   |   |   |-- MonoGameDrawMapperTests.cs
 |   |   |   |   |-- PrismBackdropMonoGameAdapterTests.cs
+|   |   |   |   |-- PrismChromaticAberrationGpuTests.cs
+|   |   |   |   |-- PrismChromeGpuTests.cs
+|   |   |   |   |-- PrismColorGpuTests.cs
+|   |   |   |   |-- PrismColorMatrixGpuTests.cs
+|   |   |   |   |-- PrismConteCrayonGpuTests.cs
+|   |   |   |   |-- PrismCraquelureGpuTests.cs
+|   |   |   |   |-- PrismCustomConvolutionGpuTests.cs
+|   |   |   |   |-- PrismDissolveGpuTests.cs
+|   |   |   |   |-- PrismEmbossGpuTests.cs
+|   |   |   |   |-- PrismGrainGpuTests.cs
 |   |   |   |   |-- PrismGraphExecutorTests.cs
+|   |   |   |   |-- PrismGraphicPenGpuTests.cs
+|   |   |   |   |-- PrismMosaicTilesGpuTests.cs
+|   |   |   |   |-- PrismNotePaperGpuTests.cs
 |   |   |   |   |-- PrismOperationalDiagnosticsTests.cs
+|   |   |   |   |-- PrismPatchworkGpuTests.cs
+|   |   |   |   |-- PrismPhotocopyGpuTests.cs
+|   |   |   |   |-- PrismPlasterGpuTests.cs
+|   |   |   |   |-- PrismReticulationGpuTests.cs
+|   |   |   |   |-- PrismScanlinesGpuTests.cs
+|   |   |   |   |-- PrismShaderBuildIncrementalityTests.cs
 |   |   |   |   |-- PrismShaderResourcesTests.cs
+|   |   |   |   |-- PrismSolarizeGpuTests.cs
+|   |   |   |   |-- PrismSpatterPointTextureCacheTests.cs
+|   |   |   |   |-- PrismStainedGlassGpuTests.cs
+|   |   |   |   |-- PrismStrokeDistanceFieldGpuTests.cs
 |   |   |   |   |-- PrismSurfacePoolTests.cs
+|   |   |   |   |-- PrismTexturizerGpuTests.cs
+|   |   |   |   |-- PrismTilesGpuTests.cs
+|   |   |   |   |-- PrismTraceContourGpuTests.cs
+|   |   |   |   |-- PrismWaterPaperGpuTests.cs
+|   |   |   |   |-- PrismWindGpuTests.cs
 |   |   |   |   +-- PrismWindowsDxConformanceTests.cs
 |   |   |   |-- Paths/
 |   |   |   |   +-- SvgPathFlattenerTests.cs
 |   |   |   |-- Prism/
+|   |   |   |   |-- PrismAccentedEdgesFilterTests.cs
 |   |   |   |   |-- PrismAdjustmentFilterTests.cs
+|   |   |   |   |-- PrismAdvancedBlendingKnockoutTests.cs
+|   |   |   |   |-- PrismBasReliefFilterTests.cs
 |   |   |   |   |-- PrismCatalogFilterTests.cs
+|   |   |   |   |-- PrismChalkCharcoalFilterTests.cs
+|   |   |   |   |-- PrismCharcoalFilterTests.cs
+|   |   |   |   |-- PrismChromaticAberrationFilterTests.cs
+|   |   |   |   |-- PrismChromeFilterTests.cs
+|   |   |   |   |-- PrismCloudsCatalogContractTests.cs
 |   |   |   |   |-- PrismColorBlendStyleCoverageTests.cs
+|   |   |   |   |-- PrismColorFilterTests.cs
+|   |   |   |   |-- PrismColorMatrixFilterTests.cs
 |   |   |   |   |-- PrismColorPipelineTests.cs
 |   |   |   |   |-- PrismCommandListContractTests.cs
+|   |   |   |   |-- PrismConteCrayonFilterTests.cs
+|   |   |   |   |-- PrismCraquelureFilterTests.cs
+|   |   |   |   |-- PrismCrosshatchFilterTests.cs
+|   |   |   |   |-- PrismCustomConvolutionFilterTests.cs
+|   |   |   |   |-- PrismDarkStrokesFilterTests.cs
+|   |   |   |   |-- PrismDissolveBlendTests.cs
 |   |   |   |   |-- PrismDistortionFilterTests.cs
+|   |   |   |   |-- PrismEmbossFilterTests.cs
+|   |   |   |   |-- PrismFrescoFilterTests.cs
+|   |   |   |   |-- PrismGlowingEdgesFilterTests.cs
+|   |   |   |   |-- PrismGradientOverlayPipelineTests.cs
+|   |   |   |   |-- PrismGrainFilterTests.cs
 |   |   |   |   |-- PrismGraphContractTests.cs
+|   |   |   |   |-- PrismGraphicPenFilterTests.cs
 |   |   |   |   |-- PrismGraphOptimizerTests.cs
+|   |   |   |   |-- PrismInkOutlinesFilterTests.cs
+|   |   |   |   |-- PrismLensProfileTests.cs
+|   |   |   |   |-- PrismLightingResourceTests.cs
 |   |   |   |   |-- PrismMaskPipelineTests.cs
+|   |   |   |   |-- PrismMosaicTilesFilterTests.cs
 |   |   |   |   |-- PrismNeighborhoodFilterTests.cs
+|   |   |   |   |-- PrismNotePaperFilterTests.cs
+|   |   |   |   |-- PrismOilPaintFilterTests.cs
+|   |   |   |   |-- PrismPatchworkFilterTests.cs
+|   |   |   |   |-- PrismPhotocopyFilterTests.cs
+|   |   |   |   |-- PrismPlasterFilterTests.cs
+|   |   |   |   |-- PrismPosterEdgesFilterTests.cs
 |   |   |   |   |-- PrismRendererOptionsTests.cs
 |   |   |   |   |-- PrismRetainedCommandContractTests.cs
+|   |   |   |   |-- PrismReticulationFilterTests.cs
+|   |   |   |   |-- PrismRoughPastelsFilterTests.cs
+|   |   |   |   |-- PrismScanlinesFilterTests.cs
+|   |   |   |   |-- PrismSmudgeStickFilterTests.cs
+|   |   |   |   |-- PrismSolarizeFilterTests.cs
+|   |   |   |   |-- PrismSpatterFilterTests.cs
+|   |   |   |   |-- PrismSpongeFilterTests.cs
+|   |   |   |   |-- PrismSprayedStrokesFilterTests.cs
+|   |   |   |   |-- PrismStainedGlassFilterTests.cs
+|   |   |   |   |-- PrismStampFilterTests.cs
 |   |   |   |   |-- PrismStylePipelineTests.cs
-|   |   |   |   +-- PrismTestData.cs
+|   |   |   |   |-- PrismSumiEFilterTests.cs
+|   |   |   |   |-- PrismTestData.cs
+|   |   |   |   |-- PrismTexturizerFilterTests.cs
+|   |   |   |   |-- PrismTilesFilterTests.cs
+|   |   |   |   |-- PrismTornEdgesFilterTests.cs
+|   |   |   |   |-- PrismTraceContourFilterTests.cs
+|   |   |   |   |-- PrismUnderpaintingFilterTests.cs
+|   |   |   |   |-- PrismVisualStyleSourcePairTests.cs
+|   |   |   |   |-- PrismWatercolorFilterTests.cs
+|   |   |   |   |-- PrismWaterPaperFilterTests.cs
+|   |   |   |   +-- PrismWindFilterTests.cs
 |   |   |   |-- AdvancedDrawCommandTests.cs
 |   |   |   |-- ColorTests.cs
 |   |   |   |-- DrawCommandListTests.cs
@@ -1875,11 +2374,6 @@ Generated from `.`.
 |       |-- Cerneala.WindowsDxSmoke.csproj
 |       +-- WindowsDxSmokeApplication.cs
 |-- tmp/
-|   |-- CodexPresentationHarness/
-|   |-- imagegen/
-|   |   +-- cerneala-mascots/
-|   |-- LayoutBugHarness/
-|   +-- presentation-frame-cause.nettrace.etlx
 |-- Tools/
 |   |-- PrismAudit/
 |   |   |-- PrismAudit.csproj
@@ -2019,12 +2513,14 @@ Generated from `.`.
 |   |   |   |-- ButtonTokens.cs
 |   |   |   +-- ButtonVariants.cs
 |   |   |-- Items/
+|   |   |   |-- DisplayMemberPathAccessor.cs
 |   |   |   |-- ItemCollection.cs
 |   |   |   |-- ItemContainerGenerator.cs
 |   |   |   |-- ItemContainerRecyclePool.cs
 |   |   |   +-- ItemsPanelTemplate.cs
 |   |   |-- Primitives/
 |   |   |   |-- ButtonBase.cs
+|   |   |   |-- DirectionGlyphs.cs
 |   |   |   |-- DragCompletedEventArgs.cs
 |   |   |   |-- DragDeltaEventArgs.cs
 |   |   |   |-- DragStartedEventArgs.cs
@@ -2073,6 +2569,8 @@ Generated from `.`.
 |   |   |-- CheckBox.cs
 |   |   |-- CheckBoxTemplates.cs
 |   |   |-- ComboBox.cs
+|   |   |-- ComboBoxItem.cs
+|   |   |-- ComboBoxTemplates.cs
 |   |   |-- ContentControl.cs
 |   |   |-- ContentPresenter.cs
 |   |   |-- Control.cs
@@ -2088,6 +2586,9 @@ Generated from `.`.
 |   |   |-- Label.cs
 |   |   |-- ListBox.cs
 |   |   |-- ListBoxItem.cs
+|   |   |-- Overlay.cs
+|   |   |-- OverlayManager.cs
+|   |   |-- OverlayPlacement.cs
 |   |   |-- Panel.cs
 |   |   |-- PasswordBox.cs
 |   |   |-- PopupRoot.cs
@@ -2530,11 +3031,17 @@ Generated from `.`.
 |   |-- Prism/
 |   |   |-- Definitions/
 |   |   |   |-- PrismBackdropDefinition.cs
+|   |   |   |-- PrismColorMatrixResource.cs
 |   |   |   |-- PrismCompositionDefinition.cs
+|   |   |   |-- PrismCurvePoint.cs
 |   |   |   |-- PrismDefinitionValidation.cs
 |   |   |   |-- PrismFilterDefinition.cs
+|   |   |   |-- PrismGradientMapResource.cs
 |   |   |   |-- PrismGroupDefinition.cs
 |   |   |   |-- PrismLayerDefinition.cs
+|   |   |   |-- PrismLensProfileJson.cs
+|   |   |   |-- PrismLensProfileResource.cs
+|   |   |   |-- PrismLightingResource.cs
 |   |   |   |-- PrismMaskDefinition.cs
 |   |   |   |-- PrismNodeDefinition.cs
 |   |   |   |-- PrismNodeId.cs
@@ -2636,6 +3143,7 @@ Generated from `.`.
 |-- ConceptualIdeas.md
 |-- GameBootstrap.cs
 |-- global.json
+|-- LICENSE
 |-- ROADMAP.md
 |-- ROADMAPv2_AUDIT.md
 |-- ROADMAPv2.md
