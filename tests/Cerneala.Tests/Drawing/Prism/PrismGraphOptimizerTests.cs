@@ -48,7 +48,7 @@ public sealed class PrismGraphOptimizerTests
     }
 
     [Fact]
-    public void InvisibleCompositionPrunesOrphanedCaptureAndNeedsNoSurface()
+    public void InvisibleCompositionRetainsTheControlMaster()
     {
         PrismCompositionDefinition definition = PrismTestData.Composition(
             "Hidden",
@@ -58,11 +58,19 @@ public sealed class PrismGraphOptimizerTests
         PrismGraphExecutionPlan plan = new PrismGraphOptimizer().Optimize(raw);
 
         Assert.Equal(1, raw.ControlCaptureCount);
-        Assert.Empty(plan.OptimizedGraph.Nodes);
-        Assert.Empty(plan.OptimizedGraph.Edges);
-        Assert.Null(Assert.Single(plan.OptimizedGraph.Scopes).Output);
-        Assert.Equal(0, plan.OptimizedGraph.ControlCaptureCount);
-        Assert.Equal(0, plan.PeakLiveSurfaces);
+        Assert.Equal(2, plan.OptimizedGraph.Nodes.Length);
+        Assert.Equal(
+            [
+                PrismGraphNodeKind.ControlCapture,
+                PrismGraphNodeKind.ColorConversion
+            ],
+            plan.OptimizedGraph.Nodes.Select(node => node.Kind));
+        Assert.Single(plan.OptimizedGraph.Edges);
+        PrismGraphNode output = plan.OptimizedGraph.GetNode(
+            Assert.Single(plan.OptimizedGraph.Scopes).Output!.Value);
+        Assert.Equal(PrismGraphNodeKind.ColorConversion, output.Kind);
+        Assert.Equal(1, plan.OptimizedGraph.ControlCaptureCount);
+        Assert.Equal(2, plan.PeakLiveSurfaces);
     }
 
     [Fact]

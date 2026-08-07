@@ -4424,10 +4424,10 @@ public sealed class PrismGraphExecutorTests
         Assert.Equal(0, diagnostics.Count);
 
         XnaColor pixel = renderer.ReadCenterPixel();
-        Assert.InRange(pixel.R, 126, 129);
-        Assert.InRange(pixel.G, 126, 129);
-        Assert.InRange(pixel.B, 126, 129);
-        Assert.InRange(pixel.A, 126, 129);
+        Assert.InRange(pixel.R, 254, 255);
+        Assert.InRange(pixel.G, 254, 255);
+        Assert.InRange(pixel.B, 254, 255);
+        Assert.InRange(pixel.A, 254, 255);
     }
 
     [Fact]
@@ -4819,10 +4819,10 @@ public sealed class PrismGraphExecutorTests
                 parameters.BackBufferWidth) +
             (parameters.BackBufferWidth / 2)];
 
-        Assert.InRange(pixel.R, 126, 129);
-        Assert.InRange(pixel.G, 126, 129);
-        Assert.InRange(pixel.B, 126, 129);
-        Assert.InRange(pixel.A, 126, 129);
+        Assert.InRange(pixel.R, 254, 255);
+        Assert.InRange(pixel.G, 254, 255);
+        Assert.InRange(pixel.B, 254, 255);
+        Assert.InRange(pixel.A, 254, 255);
         Assert.Equal(0, backend.PrismDiagnostics.Count);
     }
 

@@ -37,6 +37,87 @@ public sealed class PrismGraphContractTests
     }
 
     [Fact]
+    public void SingleLayerOpacityCompositesMotionBlurOverTheControlMaster()
+    {
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "MotionBlur",
+            filters: [new PrismFilterDefinition(PrismFilterId.MotionBlur)],
+            opacity: 0.01f);
+
+        PrismGraph graph = BuildGraph(
+            PrismTestData.Composition("MasterLayer", layer));
+
+        PrismGraphNode controlMaster = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.ColorConversion &&
+                    node.DefinitionNodeId is null));
+        PrismGraphNode layerComposite = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Composite &&
+                    node.DefinitionNodeId == layer.Id));
+        Assert.Contains(
+            graph.Edges,
+            edge => edge.Source == controlMaster.Id &&
+                edge.Target == layerComposite.Id &&
+                edge.Kind == PrismGraphEdgeKind.CompositeBackground);
+    }
+
+    [Fact]
+    public void HigherNeonGlowLayerReceivesAccumulatedMotionBlurResult()
+    {
+        PrismLayerDefinition neonGlow = new(
+            new PrismNodeId(1),
+            "NeonGlow",
+            filters: [new PrismFilterDefinition(PrismFilterId.NeonGlow)]);
+        PrismLayerDefinition motionBlur = new(
+            new PrismNodeId(2),
+            "MotionBlur",
+            filters: [new PrismFilterDefinition(PrismFilterId.MotionBlur)]);
+
+        PrismGraph graph = BuildGraph(
+            PrismTestData.Composition(
+                "AccumulatedFilters",
+                neonGlow,
+                motionBlur));
+
+        PrismGraphNode motionBlurComposite = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Composite &&
+                    node.DefinitionNodeId == motionBlur.Id));
+        PrismGraphNode neonGlowLayer = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Layer &&
+                    node.DefinitionNodeId == neonGlow.Id));
+        Assert.Contains(
+            graph.Edges,
+            edge => edge.Source == motionBlurComposite.Id &&
+                edge.Target == neonGlowLayer.Id &&
+                edge.Kind == PrismGraphEdgeKind.Control);
+    }
+
+    [Fact]
+    public void ZeroOpacitySingleLayerKeepsTheControlMasterAsScopeOutput()
+    {
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "MotionBlur",
+            filters: [new PrismFilterDefinition(PrismFilterId.MotionBlur)],
+            opacity: 0);
+
+        PrismGraph graph = BuildGraph(
+            PrismTestData.Composition("ZeroOpacityMaster", layer));
+
+        PrismGraphNode controlMaster = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.ColorConversion &&
+                    node.DefinitionNodeId is null));
+        Assert.Equal(
+            controlMaster.Id,
+            Assert.Single(graph.Scopes).Output);
+    }
+
+    [Fact]
     public void GraphKeepsGroupsBottomUpAndOnlyNonPassThroughGroupsAreIsolated()
     {
         PrismGroupDefinition isolated = new(
@@ -852,8 +933,9 @@ public sealed class PrismGraphContractTests
             E:Filter/3->Filter/3:Content
             E:Filter/3->Fill/3:Content
             E:Fill/3->Opacity/3:Content
+            E:ColorConversion/0->Composite/3:CompositeBackground
             E:Opacity/3->Composite/3:CompositeForeground
-            E:ColorConversion/0->Layer/1:Control
+            E:Composite/3->Layer/1:Control
             E:Layer/1->Filter/1:Content
             E:Filter/1->Filter/1:Content
             E:Filter/1->Fill/1:Content
@@ -889,7 +971,7 @@ public sealed class PrismGraphContractTests
             E:Filter/12->Fill/12:Content
             E:Fill/12->Opacity/12:Content
             E:Opacity/12->Composite/12:CompositeForeground
-            E:ColorConversion/0->Layer/11:Control
+            E:Composite/12->Layer/11:Control
             E:Layer/11->Filter/11:Content
             E:Filter/11->Filter/11:Content
             E:Filter/11->Fill/11:Content
@@ -898,6 +980,7 @@ public sealed class PrismGraphContractTests
             E:Opacity/11->Composite/11:CompositeForeground
             E:Composite/11->Group/10:GroupContent
             E:Group/10->Opacity/10:Content
+            E:ColorConversion/0->Composite/10:CompositeBackground
             E:Opacity/10->Composite/10:CompositeForeground
             """);
         AssertSnapshot(
@@ -922,6 +1005,7 @@ public sealed class PrismGraphContractTests
             E:Fill/1->Composite/1:Content
             E:Mask/1->Composite/1:MaskAlpha
             E:Composite/1->Opacity/1:Content
+            E:ColorConversion/0->Composite/1:CompositeBackground
             E:Opacity/1->Composite/1:CompositeForeground
             """);
         AssertSnapshot(
@@ -956,8 +1040,9 @@ public sealed class PrismGraphContractTests
             E:Filter/3->Filter/3:Content
             E:Filter/3->Fill/3:Content
             E:Fill/3->Opacity/3:Content
+            E:ColorConversion/0->Composite/3:CompositeBackground
             E:Opacity/3->Composite/3:CompositeForeground
-            E:ColorConversion/0->Layer/2:Control
+            E:Composite/3->Layer/2:Control
             E:Layer/2->Filter/2:Content
             E:Filter/2->Filter/2:Content
             E:Filter/2->Fill/2:Content
@@ -966,7 +1051,7 @@ public sealed class PrismGraphContractTests
             E:Opacity/3->ClipToBelow/2:ClipBaseAlpha
             E:Composite/3->Composite/2:CompositeBackground
             E:ClipToBelow/2->Composite/2:CompositeForeground
-            E:ColorConversion/0->Layer/1:Control
+            E:Composite/2->Layer/1:Control
             E:Layer/1->Filter/1:Content
             E:Filter/1->Filter/1:Content
             E:Filter/1->Fill/1:Content

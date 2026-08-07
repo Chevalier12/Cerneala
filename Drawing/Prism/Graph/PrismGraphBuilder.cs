@@ -200,6 +200,8 @@ internal sealed class PrismGraphBuilder
             PrismGraphNodeId? content = BuildStack(
                 definition.Nodes,
                 excludeBackdrop: true,
+                initialBackground:
+                    definition.Backdrop is null ? controlSource : null,
                 deferShallowKnockoutBackdrop: true,
                 deferDeepKnockoutBackdrop: true).Output;
             PrismGraphNodeId? backdrop = BuildBackdrop();
@@ -393,7 +395,7 @@ internal sealed class PrismGraphBuilder
             {
                 return nodeDefinition switch
                 {
-                    PrismLayerDefinition layer => BuildLayer(layer),
+                    PrismLayerDefinition layer => BuildLayer(layer, background),
                     PrismGroupDefinition group => BuildGroup(
                         group,
                         background,
@@ -419,7 +421,9 @@ internal sealed class PrismGraphBuilder
             }
         }
 
-        private NodeBuildResult? BuildLayer(PrismLayerDefinition layer)
+        private NodeBuildResult? BuildLayer(
+            PrismLayerDefinition layer,
+            PrismGraphNodeId? background)
         {
             PrismLayerState state = instance.GetLayerState(layer.Id);
             ValidateBlendMode(state.BlendMode, allowPassThrough: false);
@@ -439,7 +443,10 @@ internal sealed class PrismGraphBuilder
                 Dependencies(),
                 blendMode: state.BlendMode,
                 layerSettings: layerSettings);
-            AddEdge(controlSource, layerNode.Id, PrismGraphEdgeKind.Control);
+            AddEdge(
+                background ?? controlSource,
+                layerNode.Id,
+                PrismGraphEdgeKind.Control);
 
             PrismGraphNodeId preparedContent = ApplyFilters(
                 layer.Id,
