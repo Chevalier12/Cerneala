@@ -99,5 +99,13 @@ Write-TreeEntries -Directory $rootInfo -Prefix ""
 $script:Lines.Add("``````") | Out-Null
 $script:Lines.Add("") | Out-Null
 
+if (Test-Path -LiteralPath $resolvedOutput) {
+    $existingLines = Get-Content -LiteralPath $resolvedOutput
+    if (($existingLines -join "`n") -ceq ($script:Lines -join "`n")) {
+        Write-Output "Unchanged $resolvedOutput"
+        return
+    }
+}
+
 Set-Content -LiteralPath $resolvedOutput -Value $script:Lines -Encoding UTF8
 Write-Output "Wrote $resolvedOutput"

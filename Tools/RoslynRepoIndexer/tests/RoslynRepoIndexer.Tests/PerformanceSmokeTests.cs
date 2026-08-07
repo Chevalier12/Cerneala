@@ -45,6 +45,18 @@ public sealed class PerformanceSmokeTests
     }
 
     [Fact]
+    public void Incremental_reuse_builds_snapshot_lookups_instead_of_rescanning_every_collection()
+    {
+        var indexing = File.ReadAllText(Path.Combine(TestPaths.RepositoryRoot, "Tools", "RoslynRepoIndexer", "src", "RoslynRepoIndexer.Core", "RoslynIndexing.cs"));
+
+        Assert.Contains("ReusableSnapshotIndex", indexing, StringComparison.Ordinal);
+        Assert.DoesNotContain("oldSnapshot.Documents.Where", indexing, StringComparison.Ordinal);
+        Assert.DoesNotContain("oldSnapshot.Symbols.Where", indexing, StringComparison.Ordinal);
+        Assert.DoesNotContain("oldSnapshot.References.Where", indexing, StringComparison.Ordinal);
+        Assert.DoesNotContain("oldSnapshot.Tokens.Where", indexing, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Json_commands_report_elapsed_ms_without_time_thresholds()
     {
         using var repo = TestRepo.Create();

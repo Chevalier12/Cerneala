@@ -403,7 +403,7 @@ public sealed class IndexBuilder
         var repoRoot = root.RootPath;
         var diagnostics = new DiagnosticsCollector();
         var configHash = ConfigLoader.ComputeHash(config);
-        var repositoryStateFingerprint = RepositoryDiscovery.TryComputeGitStateFingerprint(repoRoot);
+        var repositoryStateFingerprint = RepositoryDiscovery.TryComputeGitStateFingerprint(repoRoot, config);
         if (!force && repositoryStateFingerprint is not null
                    && TryCreateRepositoryNoOpSummary(repoRoot, configHash, repositoryStateFingerprint, stopwatch, discoveryStopwatch, out var repositoryNoOpSummary))
         {
@@ -430,6 +430,7 @@ public sealed class IndexBuilder
         }
 
         var oldSnapshot = LoadReusableSnapshot(repoRoot, force, configHash, workspaceHash);
+        var reusableSnapshot = oldSnapshot is null ? null : new ReusableSnapshotIndex(oldSnapshot);
         var incremental = oldSnapshot is not null;
         var stats = new IndexRunStats();
         discoveryStopwatch.Stop();
@@ -462,9 +463,9 @@ public sealed class IndexBuilder
                         ? RemoveAnalyzerReferences(await workspace!.OpenProjectAsync(input.Path, cancellationToken: cancellationToken).ConfigureAwait(false))
                         : (await workspaceSession.LoadSolutionAsync(input, cancellationToken).ConfigureAwait(false)).Projects.Single(project => string.Equals(Path.GetFullPath(project.FilePath!), Path.GetFullPath(input.Path), StringComparison.OrdinalIgnoreCase));
                     workspaceLoadMs += (long)Stopwatch.GetElapsedTime(workspaceLoadStart).TotalMilliseconds;
-                    var semanticDirtyPlan = await CreateSemanticDirtyPlanAsync(repoRoot, new[] { project }, config, oldSnapshot, cancellationToken).ConfigureAwait(false);
+                    var semanticDirtyPlan = await CreateSemanticDirtyPlanAsync(repoRoot, new[] { project }, config, reusableSnapshot, cancellationToken).ConfigureAwait(false);
                     var semanticIndexStart = Stopwatch.GetTimestamp();
-                    var projectBatch = await IndexProjectIsolatedAsync(repoRoot, project, config, oldSnapshot, semanticDirtyPlan, fullTextIndexedPaths, cancellationToken).ConfigureAwait(false);
+                    var projectBatch = await IndexProjectIsolatedAsync(repoRoot, project, config, reusableSnapshot, semanticDirtyPlan, fullTextIndexedPaths, cancellationToken).ConfigureAwait(false);
                     MergeProjectBatch(projectBatch, documents, symbols, references, tokens, projects, stats, dirtyDocumentIds);
                     semanticIndexMs += (long)Stopwatch.GetElapsedTime(semanticIndexStart).TotalMilliseconds;
                 }
@@ -476,12 +477,12 @@ public sealed class IndexBuilder
                         : await workspaceSession.LoadSolutionAsync(input, cancellationToken).ConfigureAwait(false);
                     workspaceLoadMs += (long)Stopwatch.GetElapsedTime(workspaceLoadStart).TotalMilliseconds;
                     var csharpProjects = solution.Projects.Where(p => p.Language == LanguageNames.CSharp).OrderBy(p => p.Name, StringComparer.Ordinal).ToArray();
-                    var semanticDirtyPlan = await CreateSemanticDirtyPlanAsync(repoRoot, csharpProjects, config, oldSnapshot, cancellationToken).ConfigureAwait(false);
+                    var semanticDirtyPlan = await CreateSemanticDirtyPlanAsync(repoRoot, csharpProjects, config, reusableSnapshot, cancellationToken).ConfigureAwait(false);
                     var semanticIndexStart = Stopwatch.GetTimestamp();
                     var projectParallelism = Math.Max(1, Math.Min(csharpProjects.Length, Math.Max(1, Math.Min(config.MaxDegreeOfParallelism, 4))));
                     var perProjectConfig = config with { MaxDegreeOfParallelism = Math.Max(1, config.MaxDegreeOfParallelism / projectParallelism) };
                     var projectTasks = csharpProjects.Select(project =>
-                        IndexProjectIsolatedAsync(repoRoot, project, perProjectConfig, oldSnapshot, semanticDirtyPlan, fullTextIndexedPaths, cancellationToken));
+                        IndexProjectIsolatedAsync(repoRoot, project, perProjectConfig, reusableSnapshot, semanticDirtyPlan, fullTextIndexedPaths, cancellationToken));
                     var projectBatches = await Task.WhenAll(projectTasks).ConfigureAwait(false);
                     foreach (var projectBatch in projectBatches)
                     {
@@ -504,7 +505,7 @@ public sealed class IndexBuilder
         if (config.IncludeNonCSharpText)
         {
             var textIndexStart = Stopwatch.GetTimestamp();
-            IndexTextFiles(repoRoot, config, oldSnapshot, documents, tokens, diagnostics, stats);
+            IndexTextFiles(repoRoot, config, reusableSnapshot, documents, tokens, diagnostics, stats);
             textIndexMs += (long)Stopwatch.GetElapsedTime(textIndexStart).TotalMilliseconds;
         }
 
@@ -689,10 +690,10 @@ public sealed class IndexBuilder
         string repoRoot,
         IReadOnlyCollection<Project> projects,
         IndexerConfig config,
-        IndexSnapshot? oldSnapshot,
+        ReusableSnapshotIndex? reusableSnapshot,
         CancellationToken cancellationToken)
     {
-        if (oldSnapshot is null || projects.Count == 0)
+        if (reusableSnapshot is null || projects.Count == 0)
         {
             return SemanticDirtyPlan.Empty;
         }
@@ -703,7 +704,6 @@ public sealed class IndexBuilder
 
         foreach (var project in projects)
         {
-            var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
             foreach (var document in project.Documents)
             {
                 if (!TryGetIndexableRelativePath(repoRoot, document.FilePath, config, out var relative))
@@ -712,7 +712,7 @@ public sealed class IndexBuilder
                 }
 
                 csharpDocumentCount++;
-                if (!IsChangedComparedToManifest(repoRoot, relative, oldSnapshot.Manifest))
+                if (!IsChangedComparedToManifest(repoRoot, relative, reusableSnapshot.Manifest))
                 {
                     continue;
                 }
@@ -724,12 +724,9 @@ public sealed class IndexBuilder
                 var declarationHash = root is not null && semanticModel is not null
                     ? DeclarationHash(root, semanticModel, cancellationToken)
                     : DeclarationHash(text.ToString());
-                var previousHashes = oldSnapshot.Documents
-                    .Where(d => string.Equals(d.RelativePath, relative, StringComparison.Ordinal)
-                                && string.Equals(d.ProjectName, project.Name, StringComparison.Ordinal))
-                    .Select(d => d.DeclarationHash)
-                    .ToArray();
-                if (previousHashes.Length > 0 && previousHashes.Any(previous => !string.Equals(previous, declarationHash, StringComparison.Ordinal)))
+                var previousDocuments = reusableSnapshot.GetRows(relative, project.Name).Documents;
+                if (previousDocuments.Count > 0
+                    && previousDocuments.Any(previous => !string.Equals(previous.DeclarationHash, declarationHash, StringComparison.Ordinal)))
                 {
                     changedDeclarationProjects.Add(project.Id);
                 }
@@ -790,7 +787,7 @@ public sealed class IndexBuilder
         string repoRoot,
         Project project,
         IndexerConfig config,
-        IndexSnapshot? oldSnapshot,
+        ReusableSnapshotIndex? reusableSnapshot,
         SemanticDirtyPlan semanticDirtyPlan,
         List<DocumentEntry> documents,
         List<SymbolEntry> symbols,
@@ -816,7 +813,7 @@ public sealed class IndexBuilder
             },
             async (document, ct) =>
             {
-                var batch = await IndexDocumentAsync(repoRoot, project, projectId, document, compilation, config, oldSnapshot, semanticDirtyPlan, fullTextIndexedPaths, ct).ConfigureAwait(false);
+                var batch = await IndexDocumentAsync(repoRoot, project, projectId, document, compilation, config, reusableSnapshot, semanticDirtyPlan, fullTextIndexedPaths, ct).ConfigureAwait(false);
                 if (batch is null)
                 {
                     return;
@@ -906,7 +903,7 @@ public sealed class IndexBuilder
         Document document,
         Compilation? compilation,
         IndexerConfig config,
-        IndexSnapshot? oldSnapshot,
+        ReusableSnapshotIndex? reusableSnapshot,
         SemanticDirtyPlan semanticDirtyPlan,
         HashSet<string> fullTextIndexedPaths,
         CancellationToken cancellationToken)
@@ -938,7 +935,7 @@ public sealed class IndexBuilder
         }
 
         var forceSemanticReindex = semanticDirtyPlan.ForceAllCSharpDocuments || semanticDirtyPlan.ProjectNames.Contains(project.Name);
-        if (!forceSemanticReindex && TryReuseUnchangedDocument(repoRoot, relative, project.Name, oldSnapshot, documents, symbols, references, tokens))
+        if (!forceSemanticReindex && TryReuseUnchangedDocument(repoRoot, relative, project.Name, reusableSnapshot, documents, symbols, references, tokens))
         {
             return new DocumentIndexBatch(relative, project.Name, documents, symbols, references, tokens, DirtyDocuments: 0, UnchangedDocuments: 1);
         }
@@ -1041,7 +1038,7 @@ public sealed class IndexBuilder
     private static void IndexTextFiles(
         string repoRoot,
         IndexerConfig config,
-        IndexSnapshot? oldSnapshot,
+        ReusableSnapshotIndex? reusableSnapshot,
         List<DocumentEntry> documents,
         List<TokenPosting> tokens,
         DiagnosticsCollector diagnostics,
@@ -1067,7 +1064,7 @@ public sealed class IndexBuilder
                     continue;
                 }
 
-                if (TryReuseUnchangedDocument(repoRoot, file.RelativePath, projectName: null, oldSnapshot, documents, symbols: null, references: null, tokens))
+                if (TryReuseUnchangedDocument(repoRoot, file.RelativePath, projectName: null, reusableSnapshot, documents, symbols: null, references: null, tokens))
                 {
                     stats.UnchangedDocuments++;
                     continue;
@@ -1232,13 +1229,13 @@ public sealed class IndexBuilder
         string repoRoot,
         string relativePath,
         string? projectName,
-        IndexSnapshot? oldSnapshot,
+        ReusableSnapshotIndex? reusableSnapshot,
         List<DocumentEntry> documents,
         List<SymbolEntry>? symbols,
         List<ReferenceEntry>? references,
         List<TokenPosting> tokens)
     {
-        if (oldSnapshot is null || !oldSnapshot.Manifest.DocumentsByRelativePath.TryGetValue(relativePath, out var state))
+        if (reusableSnapshot is null || !reusableSnapshot.Manifest.DocumentsByRelativePath.TryGetValue(relativePath, out var state))
         {
             return false;
         }
@@ -1256,14 +1253,11 @@ public sealed class IndexBuilder
             return false;
         }
 
-        documents.AddRange(oldSnapshot.Documents.Where(d => string.Equals(d.RelativePath, relativePath, StringComparison.Ordinal)
-                                                             && string.Equals(d.ProjectName, projectName, StringComparison.Ordinal)));
-        symbols?.AddRange(oldSnapshot.Symbols.Where(s => string.Equals(s.Path, relativePath, StringComparison.Ordinal)
-                                                          && string.Equals(s.ProjectName, projectName, StringComparison.Ordinal)));
-        references?.AddRange(oldSnapshot.References.Where(r => string.Equals(r.Path, relativePath, StringComparison.Ordinal)
-                                                               && string.Equals(r.ProjectName, projectName, StringComparison.Ordinal)));
-        tokens.AddRange(oldSnapshot.Tokens.Where(t => string.Equals(t.Path, relativePath, StringComparison.Ordinal)
-                                                       && string.Equals(t.ProjectName, projectName, StringComparison.Ordinal)));
+        var rows = reusableSnapshot.GetRows(relativePath, projectName);
+        documents.AddRange(rows.Documents);
+        symbols?.AddRange(rows.Symbols);
+        references?.AddRange(rows.References);
+        tokens.AddRange(rows.Tokens);
         return true;
     }
 
@@ -1326,7 +1320,7 @@ public sealed class IndexBuilder
         string repoRoot,
         Project project,
         IndexerConfig config,
-        IndexSnapshot? oldSnapshot,
+        ReusableSnapshotIndex? reusableSnapshot,
         SemanticDirtyPlan semanticDirtyPlan,
         HashSet<string> fullTextIndexedPaths,
         CancellationToken cancellationToken)
@@ -1338,7 +1332,7 @@ public sealed class IndexBuilder
         var projects = new List<ProjectEntry>();
         var stats = new IndexRunStats();
         var dirtyDocumentIds = new HashSet<string>(StringComparer.Ordinal);
-        await IndexProjectAsync(repoRoot, project, config, oldSnapshot, semanticDirtyPlan, documents, symbols, references, tokens, projects, stats, dirtyDocumentIds, fullTextIndexedPaths, cancellationToken).ConfigureAwait(false);
+        await IndexProjectAsync(repoRoot, project, config, reusableSnapshot, semanticDirtyPlan, documents, symbols, references, tokens, projects, stats, dirtyDocumentIds, fullTextIndexedPaths, cancellationToken).ConfigureAwait(false);
         return new ProjectIndexBatch(documents, symbols, references, tokens, projects, stats.DirtyDocuments, stats.UnchangedDocuments, dirtyDocumentIds);
     }
 
@@ -1701,6 +1695,54 @@ public sealed class IndexBuilder
         public int DirtyDocuments { get; set; }
         public int UnchangedDocuments { get; set; }
     }
+
+    private sealed class ReusableSnapshotIndex
+    {
+        private static readonly ReusableDocumentRows EmptyRows = new();
+        private readonly Dictionary<ReusableDocumentKey, ReusableDocumentRows> rowsByDocument = new();
+
+        public ReusableSnapshotIndex(IndexSnapshot snapshot)
+        {
+            Manifest = snapshot.Manifest;
+            AddRows(snapshot.Documents, entry => new ReusableDocumentKey(entry.RelativePath, entry.ProjectName), static (rows, entry) => rows.Documents.Add(entry));
+            AddRows(snapshot.Symbols, entry => new ReusableDocumentKey(entry.Path, entry.ProjectName), static (rows, entry) => rows.Symbols.Add(entry));
+            AddRows(snapshot.References, entry => new ReusableDocumentKey(entry.Path, entry.ProjectName), static (rows, entry) => rows.References.Add(entry));
+            AddRows(snapshot.Tokens, entry => new ReusableDocumentKey(entry.Path, entry.ProjectName), static (rows, entry) => rows.Tokens.Add(entry));
+        }
+
+        public IndexManifest Manifest { get; }
+
+        public ReusableDocumentRows GetRows(string relativePath, string? projectName)
+            => rowsByDocument.GetValueOrDefault(new ReusableDocumentKey(relativePath, projectName), EmptyRows);
+
+        private void AddRows<T>(
+            IReadOnlyList<T> entries,
+            Func<T, ReusableDocumentKey> keySelector,
+            Action<ReusableDocumentRows, T> add)
+        {
+            foreach (var entry in entries)
+            {
+                var key = keySelector(entry);
+                if (!rowsByDocument.TryGetValue(key, out var rows))
+                {
+                    rows = new ReusableDocumentRows();
+                    rowsByDocument.Add(key, rows);
+                }
+
+                add(rows, entry);
+            }
+        }
+    }
+
+    private sealed class ReusableDocumentRows
+    {
+        public List<DocumentEntry> Documents { get; } = new();
+        public List<SymbolEntry> Symbols { get; } = new();
+        public List<ReferenceEntry> References { get; } = new();
+        public List<TokenPosting> Tokens { get; } = new();
+    }
+
+    private readonly record struct ReusableDocumentKey(string RelativePath, string? ProjectName);
 
     private sealed record DocumentIndexBatch(
         string RelativePath,

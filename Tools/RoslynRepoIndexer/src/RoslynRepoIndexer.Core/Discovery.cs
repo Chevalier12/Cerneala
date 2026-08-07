@@ -5,6 +5,9 @@ namespace RoslynRepoIndexer.Core;
 public static class RepositoryDiscovery
 {
     public static string? TryComputeGitStateFingerprint(string repoRoot)
+        => TryComputeGitStateFingerprint(repoRoot, IndexerConfig.Default);
+
+    internal static string? TryComputeGitStateFingerprint(string repoRoot, IndexerConfig config)
     {
         if (!Directory.Exists(Path.Combine(repoRoot, ".git")))
         {
@@ -31,6 +34,11 @@ public static class RepositoryDiscovery
                 }
 
                 path = NormalizeRelative(path.Trim('"'));
+                if (IsExcluded(path, config))
+                {
+                    continue;
+                }
+
                 var fullPath = Path.Combine(repoRoot, path);
                 var state = "deleted";
                 if (File.Exists(fullPath))

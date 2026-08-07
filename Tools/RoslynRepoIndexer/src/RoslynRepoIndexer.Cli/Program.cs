@@ -3,8 +3,18 @@ using RoslynRepoIndexer.Core;
 
 return await CliApp.RunAsync(args).ConfigureAwait(false);
 
+internal sealed record CliInvocationContext(
+    string WorkingDirectory,
+    TextWriter Output,
+    TextWriter Error)
+{
+    public static CliInvocationContext CreateConsole()
+        => new(Directory.GetCurrentDirectory(), Console.Out, Console.Error);
+}
+
 internal static class CliApp
 {
+    private static readonly AsyncLocal<CliInvocationContext?> CurrentInvocation = new();
     internal static RepositorySessionRegistry? ServerSessions { get; set; }
 
     public static async Task<int> RunAsync(string[] args)
@@ -21,23 +31,30 @@ internal static class CliApp
             return proxy.ExitCode;
         }
 
-        return await RunLocalAsync(args).ConfigureAwait(false);
+        return await RunLocalAsync(args, CliInvocationContext.CreateConsole()).ConfigureAwait(false);
     }
 
     internal static async Task<int> RunLocalAsync(string[] args)
+        => await RunLocalAsync(args, CliInvocationContext.CreateConsole()).ConfigureAwait(false);
+
+    internal static async Task<int> RunLocalAsync(
+        string[] args,
+        CliInvocationContext invocation)
     {
+        var previousInvocation = CurrentInvocation.Value;
+        CurrentInvocation.Value = invocation;
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         try
         {
             if (args.Length == 0 || Has(args, "--help") || Has(args, "-h"))
             {
-                Console.WriteLine(Help.Global);
+                OutputWriter.WriteLine(Help.Global);
                 return 0;
             }
 
             if (Has(args, "--version"))
             {
-                Console.WriteLine("ri 0.1.0");
+                OutputWriter.WriteLine("ri 0.1.0");
                 return 0;
             }
 
@@ -45,7 +62,7 @@ internal static class CliApp
             var rest = args.Skip(1).ToArray();
             if (Has(rest, "--help"))
             {
-                Console.WriteLine(Help.For(command));
+                OutputWriter.WriteLine(Help.For(command));
                 return 0;
             }
 
@@ -84,6 +101,10 @@ internal static class CliApp
         {
             return Error(4, ex.Message, Has(args, "--json"), args.FirstOrDefault(), null, null, stopwatch);
         }
+        finally
+        {
+            CurrentInvocation.Value = previousInvocation;
+        }
     }
 
     private static async Task<int> Index(string[] args, string command, System.Diagnostics.Stopwatch stopwatch)
@@ -95,7 +116,7 @@ internal static class CliApp
         }
 
         var response = await CreateService().IndexAsync(new IndexCommandRequest(
-            options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory(),
+            options.Positionals.FirstOrDefault() ?? WorkingDirectory,
             options.Flag("force"),
             options.Value("include-generated") is not null || options.Flag("include-generated"),
             TryParseBool(options.Value("include-non-csharp-text")),
@@ -113,8 +134,8 @@ internal static class CliApp
 
             if (response.Success && response.Data is { } summary)
             {
-                Console.WriteLine($"Indexed {summary.RepoRoot}");
-                Console.WriteLine($"documents: {summary.Documents}, symbols: {summary.Symbols}, references: {summary.References}, tokens: {summary.Tokens}, warnings: {summary.Warnings}, duration: {summary.Duration.TotalSeconds:0.00}s");
+                OutputWriter.WriteLine($"Indexed {summary.RepoRoot}");
+                OutputWriter.WriteLine($"documents: {summary.Documents}, symbols: {summary.Symbols}, references: {summary.References}, tokens: {summary.Tokens}, warnings: {summary.Warnings}, duration: {summary.Duration.TotalSeconds:0.00}s");
             }
             else
             {
@@ -212,7 +233,7 @@ internal static class CliApp
             return error;
         }
 
-        var root = RepositoryDiscovery.FindRoot(Directory.GetCurrentDirectory());
+        var root = RepositoryDiscovery.FindRoot(WorkingDirectory);
         if (!IndexStore.Exists(root.RootPath))
         {
             return Error(3, "Index is missing. Run 'ri index' first.", options.Json, command, null, root.RootPath, stopwatch);
@@ -248,7 +269,7 @@ internal static class CliApp
             return error;
         }
 
-        var response = await CreateService().DoctorAsync(new PathCommandRequest(options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory(), options.Value("config"), options.Flag("deep"))).ConfigureAwait(false);
+        var response = await CreateService().DoctorAsync(new PathCommandRequest(options.Positionals.FirstOrDefault() ?? WorkingDirectory, options.Value("config"), options.Flag("deep"))).ConfigureAwait(false);
         return OutputResponse(response, options.Json, string.Empty);
     }
 
@@ -260,7 +281,7 @@ internal static class CliApp
             return error;
         }
 
-        var response = CreateService().Status(new PathCommandRequest(options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory()));
+        var response = CreateService().Status(new PathCommandRequest(options.Positionals.FirstOrDefault() ?? WorkingDirectory));
         return OutputResponse(response, options.Json, string.Empty);
     }
 
@@ -272,7 +293,7 @@ internal static class CliApp
             return error;
         }
 
-        var path = options.Positionals.FirstOrDefault() ?? Directory.GetCurrentDirectory();
+        var path = options.Positionals.FirstOrDefault() ?? WorkingDirectory;
         if (!options.Flag("yes"))
         {
             return Error(1, "Refusing to delete index without --yes.", options.Json, command, null, null, stopwatch);
@@ -312,7 +333,7 @@ internal static class CliApp
             else
             {
                 WriteWarnings(response.Warnings);
-                Console.Write(result.Content);
+                OutputWriter.Write(result.Content);
             }
 
             return 0;
@@ -386,7 +407,7 @@ internal static class CliApp
             else
             {
                 WriteWarnings(response.Warnings);
-                Console.Write(result.Content);
+                OutputWriter.Write(result.Content);
             }
 
             return 0;
@@ -467,7 +488,7 @@ internal static class CliApp
     {
         foreach (var warning in warnings)
         {
-            Console.Error.WriteLine("warning: " + warning);
+            ErrorWriter.WriteLine("warning: " + warning);
         }
     }
 
@@ -475,7 +496,7 @@ internal static class CliApp
     {
         foreach (var error in errors)
         {
-            Console.Error.WriteLine(error);
+            ErrorWriter.WriteLine(error);
         }
     }
 
@@ -505,7 +526,7 @@ internal static class CliApp
         string repoRoot,
         System.Diagnostics.Stopwatch stopwatch)
     {
-        Console.WriteLine(JsonSerializer.Serialize(new
+        OutputWriter.WriteLine(JsonSerializer.Serialize(new
         {
             success = true,
             exitCode = 0,
@@ -534,7 +555,7 @@ internal static class CliApp
         string repoRoot,
         System.Diagnostics.Stopwatch stopwatch)
     {
-        Console.WriteLine(JsonSerializer.Serialize(new
+        OutputWriter.WriteLine(JsonSerializer.Serialize(new
         {
             success = true,
             exitCode = 0,
@@ -659,8 +680,17 @@ internal static class CliApp
 
     private static RoslynIndexerApplicationService CreateService()
         => ServerSessions is null
-            ? new RoslynIndexerApplicationService()
-            : new RoslynIndexerApplicationService(queryIndexLoader: repoRoot => ServerSessions.Get(repoRoot).GetQueryIndex());
+            ? new RoslynIndexerApplicationService(WorkingDirectory)
+            : new RoslynIndexerApplicationService(
+                WorkingDirectory,
+                repoRoot => ServerSessions.Get(repoRoot).GetQueryIndex());
+
+    private static CliInvocationContext Invocation
+        => CurrentInvocation.Value ?? CliInvocationContext.CreateConsole();
+
+    private static TextWriter OutputWriter => Invocation.Output;
+    private static TextWriter ErrorWriter => Invocation.Error;
+    private static string WorkingDirectory => Invocation.WorkingDirectory;
 
     private static void Output<T>(
         T data,
@@ -687,7 +717,7 @@ internal static class CliApp
             {
                 if (!string.IsNullOrWhiteSpace(emptyMessage))
                 {
-                    Console.WriteLine(emptyMessage);
+                    OutputWriter.WriteLine(emptyMessage);
                 }
 
                 return;
@@ -702,7 +732,7 @@ internal static class CliApp
 
                 if (items.Length > 1)
                 {
-                    Console.WriteLine($"showing {items.Length} of {items.Length}");
+                    OutputWriter.WriteLine($"showing {items.Length} of {items.Length}");
                 }
 
                 return;
@@ -710,13 +740,13 @@ internal static class CliApp
 
             foreach (var item in enumerable)
             {
-                Console.WriteLine(JsonSerializer.Serialize(item, JsonOptions.Default));
+                OutputWriter.WriteLine(JsonSerializer.Serialize(item, JsonOptions.Default));
             }
 
             return;
         }
 
-        Console.WriteLine(JsonSerializer.Serialize(data, JsonOptions.Default));
+        OutputWriter.WriteLine(JsonSerializer.Serialize(data, JsonOptions.Default));
     }
 
     private static void WriteHumanSearchResult(SearchResult result)
@@ -727,15 +757,15 @@ internal static class CliApp
         var location = $"{result.Path}:{result.Line}:{result.Column}";
         var score = result.Score.ToString("0", System.Globalization.CultureInfo.InvariantCulture);
         var suffix = result.ReferenceKind is null ? string.Empty : $"  ref-kind={result.ReferenceKind}";
-        Console.WriteLine($"[{result.Kind}] {title}  {location}  score={score}{suffix}");
+        OutputWriter.WriteLine($"[{result.Kind}] {title}  {location}  score={score}{suffix}");
         if (!string.IsNullOrWhiteSpace(result.Snippet))
         {
-            Console.WriteLine("    " + result.Snippet.Trim());
+            OutputWriter.WriteLine("    " + result.Snippet.Trim());
         }
     }
 
     private static void WriteJson<T>(CommandResponse<T> response)
-        => Console.WriteLine(JsonSerializer.Serialize(response, JsonOptions.Default));
+        => OutputWriter.WriteLine(JsonSerializer.Serialize(response, JsonOptions.Default));
 
     private static int Error(int exitCode, string message, bool json, string? command, string? query, string? repoRoot, System.Diagnostics.Stopwatch stopwatch)
     {
@@ -745,7 +775,7 @@ internal static class CliApp
         }
         else
         {
-            Console.Error.WriteLine(message);
+            ErrorWriter.WriteLine(message);
         }
 
         return exitCode;
@@ -776,16 +806,16 @@ internal static class CliApp
                 stopwatch.ElapsedMilliseconds,
                 indexUpdatedUtc,
                 data);
-            Console.WriteLine(JsonSerializer.Serialize(response, JsonOptions.Default));
+            OutputWriter.WriteLine(JsonSerializer.Serialize(response, JsonOptions.Default));
         }
         else
         {
-            Console.Error.WriteLine(message);
+            ErrorWriter.WriteLine(message);
             if (data is System.Collections.IEnumerable enumerable and not string)
             {
                 foreach (var item in enumerable)
                 {
-                    Console.WriteLine(JsonSerializer.Serialize(item, JsonOptions.Default));
+                    OutputWriter.WriteLine(JsonSerializer.Serialize(item, JsonOptions.Default));
                 }
             }
         }

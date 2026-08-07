@@ -14,6 +14,7 @@ dotnet test Tools/RoslynRepoIndexer/RoslynRepoIndexer.slnx -c Release
 - `RepositorySessionRegistry` owns a bounded LRU set of repository sessions.
 - `RepositoryIndexSession` loads one generation, builds `QueryIndex` once, performs single-flight reloads, and atomically publishes the replacement.
 - Every query captures one immutable generation. Concurrent queries never mix rows from two generations.
+- The CLI daemon accepts concurrent clients and gives every invocation isolated working-directory and output streams.
 - `RepositoryWorkspaceSession` reuses an `MSBuildWorkspace` for incremental indexing and reloads it when project shape, globbed source files, or workspace inputs change.
 - The no-op path checks repository/config/workspace fingerprints before opening Roslyn and never rewrites the generation pointer.
 
@@ -48,7 +49,7 @@ dotnet run -c Release --project Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cl
 
 `doctor` is quick by default and does not open `MSBuildWorkspace`; `--deep` explicitly validates workspace loading. The CLI can be packed as a .NET tool with command name `ri`.
 
-Query commands (`search`, `refs`, `goto`, `symbols`, and `status`) automatically reuse a repository-scoped background session for ten minutes, so separate CLI invocations do not reload the same index. The session runs from a shadow copy and does not lock build outputs. Set `RI_DISABLE_DAEMON=1` for isolated scripts and tests.
+Read and query commands (`read`, `pread`, `search`, `refs`, `goto`, `symbols`, and `status`) automatically reuse a repository-scoped background session for ten minutes, so separate CLI invocations do not reload the same index. The daemon handles independent invocations concurrently without sharing their working directories or output streams. The session runs from a shadow copy and does not lock build outputs. Set `RI_DISABLE_DAEMON=1` for isolated scripts and tests.
 
 ## Configuration
 

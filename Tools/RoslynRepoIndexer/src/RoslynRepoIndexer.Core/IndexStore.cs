@@ -475,7 +475,7 @@ public static class IndexStore
             }
             catch (Exception ex) when (IsIndexReadFailure(ex))
             {
-                // A broken retired generation must not make publishing the new generation fail.
+
             }
         }
 

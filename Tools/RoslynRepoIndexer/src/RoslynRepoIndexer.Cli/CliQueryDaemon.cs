@@ -13,7 +13,7 @@ internal static class CliQueryDaemon
     private const string ServerArgument = "__query_server";
     private static readonly HashSet<string> ProxiedCommands = new(StringComparer.OrdinalIgnoreCase)
     {
-        "search", "refs", "goto", "symbols", "status"
+        "read", "pread", "search", "refs", "goto", "symbols", "status"
     };
 
     public static async Task<int?> TryHandleServerModeAsync(string[] args)
@@ -65,14 +65,13 @@ internal static class CliQueryDaemon
 
     private static async Task RunServerAsync(string repoRoot, string pipeName)
     {
-        Directory.SetCurrentDirectory(repoRoot);
         CliApp.ServerSessions = new RepositorySessionRegistry(maxSessions: 1);
         while (true)
         {
-            await using var server = new NamedPipeServerStream(
+            var server = new NamedPipeServerStream(
                 pipeName,
                 PipeDirection.InOut,
-                1,
+                NamedPipeServerStream.MaxAllowedServerInstances,
                 PipeTransmissionMode.Byte,
                 PipeOptions.Asynchronous);
             using var idle = new CancellationTokenSource(TimeSpan.FromMinutes(10));
@@ -82,56 +81,81 @@ internal static class CliQueryDaemon
             }
             catch (OperationCanceledException)
             {
+                await server.DisposeAsync().ConfigureAwait(false);
                 return;
             }
 
-            using var reader = new StreamReader(server, Encoding.UTF8, leaveOpen: true);
-            using var writer = new StreamWriter(server, new UTF8Encoding(false), leaveOpen: true) { AutoFlush = true };
-            var line = await reader.ReadLineAsync().ConfigureAwait(false);
-            if (line is null)
-            {
-                continue;
-            }
+            _ = HandleConnectionAsync(server);
+        }
+    }
 
-            var request = JsonSerializer.Deserialize<CliProxyRequest>(line);
-            var response = request is null
-                ? new CliProxyResponse(4, string.Empty, "Invalid CLI daemon request." + Environment.NewLine)
-                : await ExecuteAsync(request).ConfigureAwait(false);
+    private static async Task HandleConnectionAsync(NamedPipeServerStream server)
+    {
+        await using (server.ConfigureAwait(false))
+        using (var reader = new StreamReader(server, Encoding.UTF8, leaveOpen: true))
+        await using (var writer = new StreamWriter(
+            server,
+            new UTF8Encoding(false),
+            leaveOpen: true)
+        {
+            AutoFlush = true
+        })
+        {
             try
             {
+                using var requestTimeout = new CancellationTokenSource(
+                    TimeSpan.FromMinutes(1));
+                var line = await reader.ReadLineAsync(requestTimeout.Token)
+                    .ConfigureAwait(false);
+                if (line is null)
+                {
+                    return;
+                }
+
+                CliProxyRequest? request;
+                try
+                {
+                    request = JsonSerializer.Deserialize<CliProxyRequest>(line);
+                }
+                catch (JsonException)
+                {
+                    request = null;
+                }
+
+                var response = request is null
+                    ? new CliProxyResponse(
+                        4,
+                        string.Empty,
+                        "Invalid CLI daemon request." + Environment.NewLine)
+                    : await ExecuteAsync(request).ConfigureAwait(false);
                 await writer.WriteLineAsync(JsonSerializer.Serialize(response)).ConfigureAwait(false);
             }
-            catch (IOException)
+            catch (Exception ex) when (ex is IOException or OperationCanceledException)
             {
-                // A client may time out or be terminated while a long first load is completing.
+
             }
         }
     }
 
     private static async Task<CliProxyResponse> ExecuteAsync(CliProxyRequest request)
     {
-        var previousDirectory = Directory.GetCurrentDirectory();
-        var previousOut = Console.Out;
-        var previousError = Console.Error;
         using var output = new StringWriter();
         using var error = new StringWriter();
         try
         {
-            Directory.SetCurrentDirectory(request.WorkingDirectory);
-            Console.SetOut(output);
-            Console.SetError(error);
-            var exitCode = await CliApp.RunLocalAsync(request.Arguments).ConfigureAwait(false);
+            var invocation = new CliInvocationContext(
+                request.WorkingDirectory,
+                output,
+                error);
+            var exitCode = await CliApp.RunLocalAsync(
+                    request.Arguments,
+                    invocation)
+                .ConfigureAwait(false);
             return new CliProxyResponse(exitCode, output.ToString(), error.ToString());
         }
         catch (Exception ex)
         {
             return new CliProxyResponse(4, output.ToString(), error.ToString() + ex.Message + Environment.NewLine);
-        }
-        finally
-        {
-            Console.SetOut(previousOut);
-            Console.SetError(previousError);
-            Directory.SetCurrentDirectory(previousDirectory);
         }
     }
 
@@ -168,13 +192,11 @@ internal static class CliQueryDaemon
             : Path.Combine(Path.GetDirectoryName(serverAssemblyPath)!, Path.GetFileName(executable));
         var startInfo = new ProcessStartInfo(serverExecutable)
         {
-            WorkingDirectory = repoRoot,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WindowStyle = ProcessWindowStyle.Hidden,
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true
+            WorkingDirectory = Path.GetDirectoryName(serverAssemblyPath)!,
+
+
+            UseShellExecute = true,
+            WindowStyle = ProcessWindowStyle.Hidden
         };
         if (usesDotnetHost)
         {

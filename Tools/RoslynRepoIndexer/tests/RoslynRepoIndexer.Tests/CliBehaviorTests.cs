@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.IO.Pipes;
+using System.Text;
 using System.Text.Json;
 using RoslynRepoIndexer.Core;
 
@@ -38,6 +40,142 @@ public sealed class CliBehaviorTests
 
         Assert.Equal(2, result.ExitCode);
         Assert.Contains("Unknown command", result.Stderr, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Query_daemon_accepts_another_client_while_a_connected_client_is_idle()
+    {
+        using var repo = TestRepo.Create();
+        File.WriteAllText(Path.Combine(repo.Root, "Repo.sln"), string.Empty);
+        var cliDll = await GetCliDllPathAsync();
+        var pipeName = "ri-query-test-" + Guid.NewGuid().ToString("N");
+        var startInfo = new ProcessStartInfo("dotnet")
+        {
+            WorkingDirectory = repo.Root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+        startInfo.ArgumentList.Add(cliDll);
+        startInfo.ArgumentList.Add("__query_server");
+        startInfo.ArgumentList.Add(repo.Root);
+        startInfo.ArgumentList.Add(pipeName);
+
+        using var daemon = Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Failed to start the query daemon.");
+        try
+        {
+            await using var idleClient = new NamedPipeClientStream(
+                ".",
+                pipeName,
+                PipeDirection.InOut,
+                PipeOptions.Asynchronous);
+            await idleClient.ConnectAsync(5_000);
+
+            await using var activeClient = new NamedPipeClientStream(
+                ".",
+                pipeName,
+                PipeDirection.InOut,
+                PipeOptions.Asynchronous);
+            await activeClient.ConnectAsync(1_000);
+            using var reader = new StreamReader(
+                activeClient,
+                Encoding.UTF8,
+                leaveOpen: true);
+            await using var writer = new StreamWriter(
+                activeClient,
+                new UTF8Encoding(false),
+                leaveOpen: true)
+            {
+                AutoFlush = true
+            };
+            await writer.WriteLineAsync(JsonSerializer.Serialize(new
+            {
+                WorkingDirectory = repo.Root,
+                Arguments = new[] { "status", "--json" }
+            }));
+
+            using var responseTimeout = new CancellationTokenSource(
+                TimeSpan.FromSeconds(2));
+            var responseLine = await reader.ReadLineAsync(responseTimeout.Token);
+            Assert.NotNull(responseLine);
+            using var response = JsonDocument.Parse(responseLine);
+            Assert.Equal(0, response.RootElement.GetProperty("ExitCode").GetInt32());
+            using var stdout = JsonDocument.Parse(
+                response.RootElement.GetProperty("StandardOutput").GetString()!);
+            Assert.Equal(
+                "status",
+                stdout.RootElement.GetProperty("command").GetString());
+        }
+        finally
+        {
+            if (!daemon.HasExited)
+            {
+                daemon.Kill(entireProcessTree: true);
+            }
+
+            await daemon.WaitForExitAsync();
+        }
+    }
+
+    [Fact]
+    public async Task Query_daemon_keeps_concurrent_working_directories_and_output_isolated()
+    {
+        using var firstRepo = TestRepo.Create();
+        using var secondRepo = TestRepo.Create();
+        File.WriteAllText(Path.Combine(firstRepo.Root, "Repo.sln"), string.Empty);
+        File.WriteAllText(Path.Combine(secondRepo.Root, "Repo.sln"), string.Empty);
+        var cliDll = await GetCliDllPathAsync();
+        var pipeName = "ri-query-test-" + Guid.NewGuid().ToString("N");
+        var startInfo = new ProcessStartInfo("dotnet")
+        {
+            WorkingDirectory = firstRepo.Root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+        startInfo.ArgumentList.Add(cliDll);
+        startInfo.ArgumentList.Add("__query_server");
+        startInfo.ArgumentList.Add(firstRepo.Root);
+        startInfo.ArgumentList.Add(pipeName);
+
+        using var daemon = Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Failed to start the query daemon.");
+        try
+        {
+            var expectedRoots = Enumerable.Range(0, 20)
+                .Select(index => index % 2 == 0
+                    ? firstRepo.Root
+                    : secondRepo.Root)
+                .ToArray();
+            var responses = await Task.WhenAll(expectedRoots.Select(root =>
+                SendDaemonRequestAsync(
+                    pipeName,
+                    root,
+                    ["status", "--json"])));
+
+            Assert.All(responses, response =>
+                Assert.Equal(0, response.ExitCode));
+            for (var index = 0; index < responses.Length; index++)
+            {
+                using var stdout = JsonDocument.Parse(responses[index].Stdout);
+                Assert.Equal(
+                    expectedRoots[index],
+                    stdout.RootElement
+                        .GetProperty("data")
+                        .GetProperty("repoRoot")
+                        .GetString());
+            }
+        }
+        finally
+        {
+            if (!daemon.HasExited)
+            {
+                daemon.Kill(entireProcessTree: true);
+            }
+
+            await daemon.WaitForExitAsync();
+        }
     }
 
     [Fact]
@@ -513,6 +651,45 @@ public sealed class CliBehaviorTests
         {
             BuildLock.Release();
         }
+    }
+
+    private static async Task<CliResult> SendDaemonRequestAsync(
+        string pipeName,
+        string workingDirectory,
+        string[] arguments)
+    {
+        await using var client = new NamedPipeClientStream(
+            ".",
+            pipeName,
+            PipeDirection.InOut,
+            PipeOptions.Asynchronous);
+        await client.ConnectAsync(5_000);
+        using var reader = new StreamReader(
+            client,
+            Encoding.UTF8,
+            leaveOpen: true);
+        await using var writer = new StreamWriter(
+            client,
+            new UTF8Encoding(false),
+            leaveOpen: true)
+        {
+            AutoFlush = true
+        };
+        await writer.WriteLineAsync(JsonSerializer.Serialize(new
+        {
+            WorkingDirectory = workingDirectory,
+            Arguments = arguments
+        }));
+
+        using var responseTimeout = new CancellationTokenSource(
+            TimeSpan.FromSeconds(10));
+        var responseLine = await reader.ReadLineAsync(responseTimeout.Token);
+        Assert.NotNull(responseLine);
+        using var response = JsonDocument.Parse(responseLine);
+        return new CliResult(
+            response.RootElement.GetProperty("ExitCode").GetInt32(),
+            response.RootElement.GetProperty("StandardOutput").GetString()!,
+            response.RootElement.GetProperty("StandardError").GetString()!);
     }
 
     private sealed record CliResult(int ExitCode, string Stdout, string Stderr);

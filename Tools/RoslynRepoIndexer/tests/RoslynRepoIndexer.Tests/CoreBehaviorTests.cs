@@ -42,6 +42,14 @@ public sealed class CoreBehaviorTests
     }
 
     [Fact]
+    public void Repository_configuration_excludes_generated_file_tree()
+    {
+        var load = ConfigLoader.Load(TestPaths.RepositoryRoot, null);
+
+        Assert.True(RepositoryDiscovery.IsExcluded("FileTree.md", load.Config));
+    }
+
+    [Fact]
     public void ConfigLoader_uses_defaults_and_warns_for_invalid_values()
     {
         using var repo = TestRepo.Create();
