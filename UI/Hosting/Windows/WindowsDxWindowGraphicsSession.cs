@@ -261,7 +261,7 @@ internal sealed class WindowsDxWindowGraphicsSession :
                 }
                 catch
                 {
-                    // Preserve the original present failure.
+
                 }
             }
             EndBackdropFrame();
@@ -554,7 +554,7 @@ internal sealed class WindowsDxWindowGraphicsSession :
             }
             catch when (sampleCount > 0)
             {
-                // Fall back to the next supported MSAA level.
+
             }
         }
 

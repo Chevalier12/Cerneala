@@ -1142,9 +1142,10 @@ internal static class PrismRetainedCacheBenchmarkRunner
 
         public void BeginKernelBatch(
             Effect effect,
-            BlendState blendState)
+            BlendState blendState,
+            SamplerState samplerState)
         {
-            BeginBatch(effect, blendState);
+            BeginBatch(effect, blendState, samplerState);
         }
 
         public void EndBatch()
@@ -1219,7 +1220,8 @@ internal static class PrismRetainedCacheBenchmarkRunner
 
         private void BeginBatch(
             Effect? effect,
-            BlendState blendState)
+            BlendState blendState,
+            SamplerState samplerState = null!)
         {
             if (batchActive)
             {
@@ -1230,7 +1232,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
             spriteBatch.Begin(
                 SpriteSortMode.Immediate,
                 blendState,
-                SamplerState.LinearClamp,
+                samplerState ?? SamplerState.LinearClamp,
                 DepthStencilState.None,
                 RasterizerState.CullNone,
                 effect);

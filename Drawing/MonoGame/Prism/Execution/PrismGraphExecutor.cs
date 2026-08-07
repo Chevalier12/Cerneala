@@ -23,9 +23,19 @@ internal sealed class PrismGraphExecutor : IDisposable
     private readonly PrismSurfacePool surfacePool;
     private readonly PrismRetainedSurfaceCache retainedSurfaceCache;
     private readonly PrismKernelRegistry kernels;
+    private readonly PrismCurveTextureCache curveTextures;
+    private readonly PrismGradientMapTextureCache gradientMapTextures;
+    private readonly PrismGradientOverlayTextureCache gradientOverlayTextures;
+    private readonly PrismGradientDitherTexture gradientDitherTexture;
+    private readonly PrismLensProfileTextureCache lensProfileTextures;
+    private readonly PrismWaveNoiseTextureCache waveNoiseTextures;
+    private readonly PrismSpatterPointTextureCache spatterPointTextures;
     private readonly PrismExecutionDiagnostics diagnostics;
     private readonly bool retainedCacheEnabled;
     private readonly bool developmentDiagnosticsEnabled;
+    private readonly PrismColorProfile hostColorProfile;
+    private RenderTarget2D? levelsCdfSurface;
+    private RenderTarget2D? levelsRangeSurface;
     private readonly long[] missCounts =
         new long[(int)PrismCacheMissReason.Disabled + 1];
     private readonly Dictionary<
@@ -94,6 +104,7 @@ internal sealed class PrismGraphExecutor : IDisposable
         developmentDiagnosticsEnabled =
             options.EnableDevelopmentDiagnostics ||
             this.diagnostics.DetailedDiagnosticsEnabled;
+        hostColorProfile = options.HostColorProfile;
         surfacePool = new PrismSurfacePool(
             graphicsDevice,
             new PrismSurfaceBudget(
@@ -105,6 +116,20 @@ internal sealed class PrismGraphExecutor : IDisposable
         try
         {
             kernels = new PrismKernelRegistry(graphicsDevice);
+            curveTextures =
+                new PrismCurveTextureCache(graphicsDevice);
+            gradientMapTextures =
+                new PrismGradientMapTextureCache(graphicsDevice);
+            gradientOverlayTextures =
+                new PrismGradientOverlayTextureCache(graphicsDevice);
+            gradientDitherTexture =
+                new PrismGradientDitherTexture(graphicsDevice);
+            lensProfileTextures =
+                new PrismLensProfileTextureCache(graphicsDevice);
+            waveNoiseTextures =
+                new PrismWaveNoiseTextureCache(graphicsDevice);
+            spatterPointTextures =
+                new PrismSpatterPointTextureCache(graphicsDevice);
         }
         catch
         {
@@ -391,6 +416,15 @@ internal sealed class PrismGraphExecutor : IDisposable
 
         try
         {
+            levelsCdfSurface?.Dispose();
+            levelsRangeSurface?.Dispose();
+            curveTextures.Dispose();
+            gradientMapTextures.Dispose();
+            gradientOverlayTextures.Dispose();
+            gradientDitherTexture.Dispose();
+            lensProfileTextures.Dispose();
+            waveNoiseTextures.Dispose();
+            spatterPointTextures.Dispose();
             kernels.Dispose();
         }
         finally
@@ -467,7 +501,7 @@ internal sealed class PrismGraphExecutor : IDisposable
         PrismRetainedRasterContext rasterContext = new(
             hostViewport.Width,
             hostViewport.Height,
-            PrismColorProfile.Srgb,
+            hostColorProfile,
             BackdropPixelFormat.Rgba16Float,
             PrismSampling.Linear,
             analysis.RequiredCapabilities,
@@ -493,7 +527,8 @@ internal sealed class PrismGraphExecutor : IDisposable
                 hostViewport.Height,
                 SurfaceFormat.HalfVector4,
                 0,
-                profile);
+                profile,
+                mipMap: true);
             if (!retainedCacheEnabled)
             {
                 continue;
@@ -1427,17 +1462,15 @@ internal sealed class PrismGraphExecutor : IDisposable
         RenderTarget2D target,
         PrismGraphNode node)
     {
-        if (node.BackdropMetadata is BackdropFrameMetadata backdropMetadata)
+        if (node.BackdropMetadata is null &&
+            hostColorProfile == PrismColorProfile.Srgb)
         {
-            if (node.ColorProfile is not PrismColorProfile targetProfile ||
-                !Enum.IsDefined(backdropMetadata.ColorProfile) ||
-                !Enum.IsDefined(targetProfile))
+            if (node.ColorProfile is PrismColorProfile profile &&
+                kernels.TryGetColorConversionKernel(
+                    profile,
+                    out PrismKernel kernel))
             {
-                RecordFallback(
-                    node,
-                    PrismFallbackReason.InvalidColorProfile,
-                    node.DiagnosticName);
-                RenderCopyInput(
+                RenderSingleInputKernel(
                     renderer,
                     plan,
                     graph,
@@ -1445,41 +1478,36 @@ internal sealed class PrismGraphExecutor : IDisposable
                     step,
                     target,
                     node,
+                    kernel,
                     1f);
                 return;
             }
 
-            int sourceIndex =
-                FindAnyInputIndex(plan, graph, node.Id);
-            if (sourceIndex < 0)
-            {
-                ClearSurface(
-                    renderer,
-                    target,
-                    Microsoft.Xna.Framework.Color.Transparent);
-                return;
-            }
-
-            Texture2D source =
-                GetExecutionSurface(frame, sourceIndex);
-            RenderKernel(
+            RecordFallback(
+                node,
+                PrismFallbackReason.InvalidColorProfile,
+                node.DiagnosticName);
+            RenderCopyInput(
                 renderer,
+                plan,
+                graph,
+                frame,
+                step,
                 target,
-                source,
-                source,
-                kernels.BackdropColorConversion,
-                1f,
-                backdropColorSettings:
-                    new PrismBackdropColorKernelSettings(
-                        backdropMetadata.ColorProfile,
-                        targetProfile));
+                node,
+                1f);
             return;
         }
 
-        if (node.ColorProfile is not PrismColorProfile profile ||
-            !kernels.TryGetColorConversionKernel(
-                profile,
-                out PrismKernel kernel))
+        PrismColorProfile sourceProfile = hostColorProfile;
+        if (node.BackdropMetadata is BackdropFrameMetadata backdropMetadata)
+        {
+            sourceProfile = backdropMetadata.ColorProfile;
+        }
+
+        if (node.ColorProfile is not PrismColorProfile targetProfile ||
+            !Enum.IsDefined(sourceProfile) ||
+            !Enum.IsDefined(targetProfile))
         {
             RecordFallback(
                 node,
@@ -1497,16 +1525,28 @@ internal sealed class PrismGraphExecutor : IDisposable
             return;
         }
 
-        RenderSingleInputKernel(
+        int sourceIndex = FindAnyInputIndex(plan, graph, node.Id);
+        if (sourceIndex < 0)
+        {
+            ClearSurface(
+                renderer,
+                target,
+                Microsoft.Xna.Framework.Color.Transparent);
+            return;
+        }
+
+        Texture2D source = GetExecutionSurface(frame, sourceIndex);
+        RenderKernel(
             renderer,
-            plan,
-            graph,
-            frame,
-            step,
             target,
-            node,
-            kernel,
-            1f);
+            source,
+            source,
+            kernels.BackdropColorConversion,
+            1f,
+            backdropColorSettings:
+                new PrismBackdropColorKernelSettings(
+                    sourceProfile,
+                    targetProfile));
     }
 
     private void RenderMask(
@@ -1656,7 +1696,45 @@ internal sealed class PrismGraphExecutor : IDisposable
         Texture2D styleTexture =
             GetExecutionSurface(frame, sourceIndex);
         bool resourceAvailable = false;
-        if (stylePlan.ResourceEnabled)
+        if (style == PrismStyleId.GradientOverlay)
+        {
+            PrismGradientMapResource gradient =
+                PrismGradientOverlayStyle.DefaultGradient;
+            long identity = 0;
+            long version = 0;
+            if (stylePlan.ResourceEnabled &&
+                !scope.Resources.TryGetGradientMap(
+                    stylePlan.Resource,
+                    out gradient,
+                    out identity,
+                    out version))
+            {
+                RecordFallback(
+                    node,
+                    PrismFallbackReason.MissingResource,
+                    $"Gradient resource '{stylePlan.Resource}' is not available.");
+                RenderCopyInput(
+                    renderer,
+                    executionPlan,
+                    graph,
+                    frame,
+                    step,
+                    target,
+                    node,
+                    1f);
+                return;
+            }
+
+            styleTexture = gradientOverlayTextures.GetOrCreate(
+                stylePlan.Resource,
+                gradient,
+                identity,
+                version,
+                (PrismGradientInterpolation)stylePlan.GradientMethod,
+                scope.CompositionSettings.WorkingColorProfile);
+            resourceAvailable = true;
+        }
+        else if (stylePlan.ResourceEnabled)
         {
             if (stylePlan.Resource.Value <= 0 ||
                 !scope.Resources.TryGetImage(
@@ -1717,9 +1795,28 @@ internal sealed class PrismGraphExecutor : IDisposable
             scope,
             out Vector3 boundsUvRowX,
             out Vector3 boundsUvRowY);
+        bool alignGradientWithLayer =
+            (stylePlan.Flags & PrismStyleFlags.AlignWithLayer) != 0;
+        System.Numerics.Vector2 gradientOffset =
+            alignGradientWithLayer
+                ? new System.Numerics.Vector2(
+                    stylePlan.Offset.X /
+                        MathF.Max(scope.ControlBounds.Width, 1),
+                    stylePlan.Offset.Y /
+                        MathF.Max(scope.ControlBounds.Height, 1))
+                : new System.Numerics.Vector2(
+                    (stylePlan.Offset.X * scope.PixelScale) /
+                        Math.Max(target.Width, 1),
+                    (stylePlan.Offset.Y * scope.PixelScale) /
+                        Math.Max(target.Height, 1));
+        float gradientAspect = alignGradientWithLayer
+            ? scope.ControlBounds.Width /
+                MathF.Max(scope.ControlBounds.Height, 1)
+            : target.Width / (float)Math.Max(target.Height, 1);
         PrismStyleKernelSettings settings = new(
             styleTexture,
             GetExecutionSurface(frame, sourceIndex),
+            gradientDitherTexture.Texture,
             ToVector4(stylePlan.PrimaryColor),
             ToVector4(stylePlan.SecondaryColor),
             new Vector4(
@@ -1739,9 +1836,15 @@ internal sealed class PrismGraphExecutor : IDisposable
                 stylePlan.Jitter),
             new Vector4(
                 stylePlan.Scale,
-                stylePlan.TextureDepth,
-                stylePlan.Offset.X,
-                stylePlan.Offset.Y),
+                style == PrismStyleId.GradientOverlay
+                    ? gradientAspect
+                    : stylePlan.TextureDepth,
+                style == PrismStyleId.GradientOverlay
+                    ? gradientOffset.X
+                    : stylePlan.Offset.X,
+                style == PrismStyleId.GradientOverlay
+                    ? gradientOffset.Y
+                    : stylePlan.Offset.Y),
             new Vector4(
                 stylePlan.Kind,
                 (int)stylePlan.BlendMode,
@@ -1769,11 +1872,11 @@ internal sealed class PrismGraphExecutor : IDisposable
         PrismScratchSurfaceLease? scratchB = null;
         try
         {
-            if (style == PrismStyleId.OuterGlow)
+            if (style == PrismStyleId.DropShadow)
             {
                 scratchA = frame.RentScratch(surfaceKeys[step]);
                 scratchB = frame.RentScratch(surfaceKeys[step]);
-                Texture2D preparedMask = PrepareOuterGlowMask(
+                Texture2D preparedMask = PrepareDropShadowMask(
                     renderer,
                     GetExecutionSurface(frame, sourceIndex),
                     scratchA.Value.Surface,
@@ -1786,7 +1889,9 @@ internal sealed class PrismGraphExecutor : IDisposable
                     MaskTexture = preparedMask
                 };
             }
-            else if (style == PrismStyleId.Stroke)
+            else if (style is PrismStyleId.OuterGlow or
+                PrismStyleId.BevelEmboss or
+                PrismStyleId.Stroke)
             {
                 PrismSurfaceKey distanceKey = new(
                     target.Width,
@@ -1797,15 +1902,55 @@ internal sealed class PrismGraphExecutor : IDisposable
                 scratchA = frame.RentScratch(distanceKey);
                 scratchB = frame.RentScratch(distanceKey);
                 Texture2D distanceField =
-                    PrepareStrokeDistanceField(
+                    PrepareStyleDistanceField(
                         renderer,
                         GetExecutionSurface(frame, sourceIndex),
                         scratchA.Value.Surface,
-                        scratchB.Value.Surface);
-                settings = settings with
+                        scratchB.Value.Surface,
+                        settings);
+                if (style == PrismStyleId.BevelEmboss)
                 {
-                    MaskTexture = distanceField
-                };
+                    RenderTarget2D heightTarget = ReferenceEquals(
+                        distanceField,
+                        scratchA.Value.Surface)
+                        ? scratchB.Value.Surface
+                        : scratchA.Value.Surface;
+                    RenderKernel(
+                        renderer,
+                        heightTarget,
+                        GetExecutionSurface(frame, sourceIndex),
+                        GetExecutionSurface(frame, sourceIndex),
+                        kernels.BevelHeight,
+                        1f,
+                        styleSettings: settings with
+                        {
+                            MaskTexture = distanceField
+                        });
+                    RenderTarget2D lightingTarget =
+                        (RenderTarget2D)distanceField;
+                    RenderKernel(
+                        renderer,
+                        lightingTarget,
+                        heightTarget,
+                        GetExecutionSurface(frame, sourceIndex),
+                        kernels.BevelLighting,
+                        1f,
+                        styleSettings: settings with
+                        {
+                            MaskTexture = heightTarget
+                        });
+                    settings = settings with
+                    {
+                        MaskTexture = lightingTarget
+                    };
+                }
+                else
+                {
+                    settings = settings with
+                    {
+                        MaskTexture = distanceField
+                    };
+                }
             }
 
             RenderKernel(
@@ -1824,7 +1969,7 @@ internal sealed class PrismGraphExecutor : IDisposable
         }
     }
 
-    private Texture2D PrepareOuterGlowMask(
+    private Texture2D PrepareDropShadowMask(
         IPrismCommandRenderer renderer,
         Texture2D source,
         RenderTarget2D scratchA,
@@ -1876,11 +2021,12 @@ internal sealed class PrismGraphExecutor : IDisposable
         return scratchB;
     }
 
-    private Texture2D PrepareStrokeDistanceField(
+    private Texture2D PrepareStyleDistanceField(
         IPrismCommandRenderer renderer,
         Texture2D source,
         RenderTarget2D scratchA,
-        RenderTarget2D scratchB)
+        RenderTarget2D scratchB,
+        PrismStyleKernelSettings styleSettings)
     {
         RenderKernel(
             renderer,
@@ -1888,7 +2034,8 @@ internal sealed class PrismGraphExecutor : IDisposable
             source,
             source,
             kernels.StrokeDistanceSeed,
-            1f);
+            1f,
+            styleSettings: styleSettings);
 
         RenderTarget2D read = scratchA;
         RenderTarget2D write = scratchB;
@@ -1902,7 +2049,7 @@ internal sealed class PrismGraphExecutor : IDisposable
 
         while (jump >= 1)
         {
-            RenderStrokeDistanceFloodPass(
+            RenderStyleDistanceFloodPass(
                 renderer,
                 write,
                 read,
@@ -1911,8 +2058,8 @@ internal sealed class PrismGraphExecutor : IDisposable
             jump >>= 1;
         }
 
-        // JFA+1 removes the common one-texel propagation errors at Voronoi boundaries.
-        RenderStrokeDistanceFloodPass(
+
+        RenderStyleDistanceFloodPass(
             renderer,
             write,
             read,
@@ -1920,7 +2067,7 @@ internal sealed class PrismGraphExecutor : IDisposable
         return write;
     }
 
-    private void RenderStrokeDistanceFloodPass(
+    private void RenderStyleDistanceFloodPass(
         IPrismCommandRenderer renderer,
         RenderTarget2D target,
         Texture2D source,
@@ -2003,10 +2150,11 @@ internal sealed class PrismGraphExecutor : IDisposable
         }
 
         int sourceIndex =
-            FindAnyInputIndex(
+            FindInputIndex(
                 executionPlan,
                 graph,
-                node.Id);
+                node.Id,
+                PrismGraphEdgeKind.Content);
         if (sourceIndex < 0)
         {
             ClearSurface(
@@ -2042,6 +2190,43 @@ internal sealed class PrismGraphExecutor : IDisposable
                 return;
             }
 
+            PrismNeighborhoodPass pass =
+                neighborhoodPlan.Passes[node.NeighborhoodPassIndex];
+            Texture2D? originalTexture = null;
+            if (pass.Kind is
+                PrismNeighborhoodPassKind.RichardsonLucyRatio or
+                PrismNeighborhoodPassKind.RichardsonLucyUpdate or
+                PrismNeighborhoodPassKind.Recombine or
+                PrismNeighborhoodPassKind.DespeckleDetect or
+                PrismNeighborhoodPassKind.DespeckleFilter or
+                PrismNeighborhoodPassKind.DespeckleDecode)
+            {
+                int originalIndex = FindInputIndex(
+                    executionPlan,
+                    graph,
+                    node.Id,
+                    PrismGraphEdgeKind.FilterOriginal);
+                if (originalIndex < 0)
+                {
+                    RecordFallback(
+                        node,
+                        PrismFallbackReason.MissingKernel,
+                        "The neighborhood pass has no preserved auxiliary input.");
+                    RenderCopyInput(
+                        renderer,
+                        executionPlan,
+                        graph,
+                        frame,
+                        step,
+                        target,
+                        node,
+                        1f);
+                    return;
+                }
+                originalTexture =
+                    GetExecutionSurface(frame, originalIndex);
+            }
+
             if (!TryResolveFilterResource(
                     scope,
                     node,
@@ -2063,8 +2248,6 @@ internal sealed class PrismGraphExecutor : IDisposable
                 return;
             }
 
-            PrismNeighborhoodPass pass =
-                neighborhoodPlan.Passes[node.NeighborhoodPassIndex];
             PrismFilterKernelSettings settings = new(
                 resourceTexture,
                 new Vector4(
@@ -2088,7 +2271,8 @@ internal sealed class PrismGraphExecutor : IDisposable
                     (int)neighborhoodPlan.BlendMode),
                 new Vector2(
                     resourceTexture.Width,
-                    resourceTexture.Height));
+                    resourceTexture.Height),
+                AuxiliaryTexture: originalTexture);
             RenderKernel(
                 renderer,
                 target,
@@ -2153,6 +2337,41 @@ internal sealed class PrismGraphExecutor : IDisposable
 
             PrismResamplingPass pass =
                 resamplingPlan.Passes[node.ResamplingPassIndex];
+            bool isNeonIntermediate =
+                resamplingPlan.Operation ==
+                    PrismResamplingOperation.NeonGlow &&
+                pass.Kind !=
+                    PrismResamplingPassKind.NeonPyramidComposite;
+            Texture2D? originalTexture = null;
+            if (pass.Kind is
+                PrismResamplingPassKind.BloomVerticalComposite or
+                PrismResamplingPassKind.NeonPyramidComposite)
+            {
+                int originalIndex = FindInputIndex(
+                    executionPlan,
+                    graph,
+                    node.Id,
+                    PrismGraphEdgeKind.FilterOriginal);
+                if (originalIndex < 0)
+                {
+                    RecordFallback(
+                        node,
+                        PrismFallbackReason.MissingKernel,
+                        "The glow composite pass has no preserved source input.");
+                    RenderCopyInput(
+                        renderer,
+                        executionPlan,
+                        graph,
+                        frame,
+                        step,
+                        target,
+                        node,
+                        1f);
+                    return;
+                }
+                originalTexture =
+                    GetExecutionSurface(frame, originalIndex);
+            }
             PrismFilterKernelSettings settings = new(
                 primaryTexture,
                 new Vector4(
@@ -2177,18 +2396,22 @@ internal sealed class PrismGraphExecutor : IDisposable
                     0,
                     0,
                     0,
-                    (int)resamplingPlan.BlendMode),
+                    (int)(isNeonIntermediate
+                        ? PrismBlendMode.Normal
+                        : resamplingPlan.BlendMode)),
                 new Vector2(
                     primaryTexture.Width,
                     primaryTexture.Height),
-                auxiliaryTexture);
+                originalTexture ?? auxiliaryTexture);
             RenderKernel(
                 renderer,
                 target,
                 source,
                 primaryTexture,
                 kernel,
-                Math.Clamp(node.Amount ?? 1f, 0, 1),
+                isNeonIntermediate
+                    ? 1
+                    : Math.Clamp(node.Amount ?? 1f, 0, 1),
                 filterSettings: settings);
             return;
         }
@@ -2215,14 +2438,55 @@ internal sealed class PrismGraphExecutor : IDisposable
                 return;
             }
 
-            if (!TryResolveFilterResource(
+            PrismLightingResource? lightingResource = null;
+            PrismColorMatrixResource? colorMatrixResource = null;
+            bool resolvedPrimary;
+            Texture2D primaryTexture;
+            bool primaryAvailable;
+            if (catalogPlan.Filter == PrismFilterId.ColorMatrix)
+            {
+                resolvedPrimary = TryResolveColorMatrix(
                     scope,
                     node,
                     source,
-                    catalogPlan.PrimaryResource,
-                    catalogPlan.PrimaryResourceRequired,
-                    out Texture2D primaryTexture,
-                    out bool primaryAvailable) ||
+                    catalogPlan,
+                    out primaryTexture,
+                    out primaryAvailable,
+                    out colorMatrixResource);
+            }
+            else if (catalogPlan.Filter == PrismFilterId.LensFlare)
+            {
+                resolvedPrimary = TryResolveLensProfile(
+                        scope,
+                        node,
+                        source,
+                        catalogPlan,
+                        out primaryTexture,
+                        out primaryAvailable);
+            }
+            else if (catalogPlan.Filter == PrismFilterId.LightingEffects)
+            {
+                resolvedPrimary = TryResolveLighting(
+                    scope,
+                    node,
+                    source,
+                    catalogPlan,
+                    out primaryTexture,
+                    out primaryAvailable,
+                    out lightingResource);
+            }
+            else
+            {
+                resolvedPrimary = TryResolveFilterResource(
+                        scope,
+                        node,
+                        source,
+                        catalogPlan.PrimaryResource,
+                        catalogPlan.PrimaryResourceRequired,
+                        out primaryTexture,
+                        out primaryAvailable);
+            }
+            if (!resolvedPrimary ||
                 !TryResolveFilterResource(
                     scope,
                     node,
@@ -2246,12 +2510,80 @@ internal sealed class PrismGraphExecutor : IDisposable
 
             PrismCatalogFilterPass pass =
                 catalogPlan.Passes[node.CatalogFilterPassIndex];
+            kernel = kernels.ResolveCatalogFilterPassKernel(
+                catalogPlan.Filter,
+                pass.Iteration);
             float resourceMask =
                 (primaryAvailable ? 1 : 0) +
                 (auxiliaryAvailable ? 2 : 0);
             float packedPass =
                 (int)pass.Kind +
                 (pass.Iteration * 4);
+            bool usesWaveNoise =
+                catalogPlan.Filter is
+                    PrismFilterId.Clouds or
+                    PrismFilterId.DifferenceClouds;
+            bool usesSpatter =
+                catalogPlan.Filter == PrismFilterId.Spatter;
+            bool usesBlueNoisePoints =
+                usesSpatter ||
+                catalogPlan.Filter == PrismFilterId.SprayedStrokes;
+            Texture2D filterAuxiliaryTexture;
+            bool needsPreservedSource =
+                PrismCatalogFilterPlanner.RequiresOriginalInput(
+                    catalogPlan.Filter,
+                    pass);
+            if (needsPreservedSource)
+            {
+                int originalIndex = FindInputIndex(
+                    executionPlan,
+                    graph,
+                    node.Id,
+                    PrismGraphEdgeKind.FilterOriginal);
+                if (originalIndex < 0)
+                {
+                    RecordFallback(
+                        node,
+                        PrismFallbackReason.MissingKernel,
+                        $"The '{catalogPlan.Filter}' final pass has no preserved source input.");
+                    RenderCopyInput(
+                        renderer,
+                        executionPlan,
+                        graph,
+                        frame,
+                        step,
+                        target,
+                        node,
+                        1f);
+                    return;
+                }
+                filterAuxiliaryTexture =
+                    GetExecutionSurface(frame, originalIndex);
+            }
+            else
+            {
+                filterAuxiliaryTexture = usesWaveNoise
+                    ? waveNoiseTextures.GetOrCreate(
+                        catalogPlan.WaveNoiseTable)
+                    : usesBlueNoisePoints
+                        ? spatterPointTextures.GetOrCreate()
+                        : auxiliaryTexture;
+            }
+            System.Numerics.Vector4 option2 = catalogPlan.Options2;
+            System.Numerics.Vector4 option3 = catalogPlan.Options3;
+            System.Numerics.Vector4 option4 = catalogPlan.Options4;
+            System.Numerics.Vector4 option5 = catalogPlan.Options5;
+            System.Numerics.Vector4 option6 = catalogPlan.Options6;
+            if (catalogPlan.Filter == PrismFilterId.ColorMatrix)
+            {
+                PrismColorMatrixFilter.Pack(
+                    colorMatrixResource,
+                    out option2,
+                    out option3,
+                    out option4,
+                    out option5,
+                    out option6);
+            }
             PrismFilterKernelSettings settings = new(
                 primaryTexture,
                 new Vector4(
@@ -2261,22 +2593,31 @@ internal sealed class PrismGraphExecutor : IDisposable
                     resourceMask),
                 ToVector4(catalogPlan.Options0),
                 ToVector4(catalogPlan.Options1),
-                ToVector4(catalogPlan.Options2),
-                ToVector4(catalogPlan.Options3),
-                ToVector4(catalogPlan.Options4),
-                ToVector4(catalogPlan.Options5),
-                ToVector4(catalogPlan.Options6),
+                ToVector4(option2),
+                usesWaveNoise
+                    ? PackWaveNoiseSeed(catalogPlan.WaveNoiseSeed)
+                    : usesSpatter
+                        ? PackWaveNoiseSeed(catalogPlan.SpatterSeed)
+                        : ToVector4(option3),
+                ToVector4(option4),
+                ToVector4(option5),
+                ToVector4(option6),
                 ToVector4(catalogPlan.Options7),
                 ToVector4(catalogPlan.Options8),
                 new Vector4(
-                    pass.RadiusX,
+                    usesWaveNoise
+                        ? catalogPlan.WaveNoiseTable.Normalization
+                        : pass.RadiusX,
                     pass.RadiusY,
                     packedPass,
                     (int)catalogPlan.BlendMode),
                 new Vector2(
                     primaryTexture.Width,
                     primaryTexture.Height),
-                auxiliaryTexture);
+                filterAuxiliaryTexture,
+                Lighting: lightingResource is null
+                    ? null
+                    : PackLighting(lightingResource));
             RenderKernel(
                 renderer,
                 target,
@@ -2308,14 +2649,44 @@ internal sealed class PrismGraphExecutor : IDisposable
 
         PrismAdjustmentPlan filterPlan =
             PrismAdjustmentPlanner.Create(node, scope);
-        if (!TryResolveFilterResource(
+        float lookupCubeSize = 0;
+        bool resolved = filterPlan.Operation ==
+                PrismAdjustmentOperation.Curves
+            ? TryResolveCurvesResource(
                 scope,
                 node,
                 source,
                 filterPlan.Resource,
-                filterPlan.ResourceRequired,
                 out Texture2D adjustmentResource,
-                out bool adjustmentResourceAvailable))
+                out bool adjustmentResourceAvailable)
+            : filterPlan.Operation ==
+                PrismAdjustmentOperation.ColorLookup
+                ? TryResolveHaldLookupResource(
+                    scope,
+                    node,
+                    source,
+                    filterPlan.Resource,
+                    out adjustmentResource,
+                    out adjustmentResourceAvailable,
+                    out lookupCubeSize)
+                : filterPlan.Operation ==
+                    PrismAdjustmentOperation.GradientMap
+                    ? TryResolveGradientMapResource(
+                        scope,
+                        node,
+                        source,
+                        filterPlan.Resource,
+                        out adjustmentResource,
+                        out adjustmentResourceAvailable)
+                : TryResolveFilterResource(
+                    scope,
+                    node,
+                    source,
+                    filterPlan.Resource,
+                    filterPlan.ResourceRequired,
+                    out adjustmentResource,
+                    out adjustmentResourceAvailable);
+        if (!resolved)
         {
             RenderCopyInput(
                 renderer,
@@ -2329,13 +2700,35 @@ internal sealed class PrismGraphExecutor : IDisposable
             return;
         }
 
+        if (filterPlan.Operation ==
+                PrismAdjustmentOperation.Levels &&
+            filterPlan.Parameters1.Z > 0.5f)
+        {
+            adjustmentResource = RenderAutomaticLevelsRange(
+                renderer,
+                source,
+                filterPlan,
+                scope.CompositionSettings.WorkingColorProfile);
+            adjustmentResourceAvailable = true;
+        }
+        else if (filterPlan.Operation ==
+            PrismAdjustmentOperation.Threshold)
+        {
+            adjustmentResource = RenderOtsuThreshold(
+                renderer,
+                source,
+                filterPlan,
+                scope.CompositionSettings.WorkingColorProfile);
+            adjustmentResourceAvailable = true;
+        }
+
         PrismFilterKernelSettings adjustmentSettings = new(
             adjustmentResource,
             new Vector4(
                 (int)filterPlan.Operation,
                 (int)scope.CompositionSettings.WorkingColorProfile,
                 (int)filterPlan.BlendMode,
-                adjustmentResourceAvailable ? 1 : 0),
+                lookupCubeSize),
             ToVector4(filterPlan.Parameters0),
             ToVector4(filterPlan.Parameters1),
             ToVector4(filterPlan.Parameters2),
@@ -2357,6 +2750,271 @@ internal sealed class PrismGraphExecutor : IDisposable
             kernel,
             Math.Clamp(node.Amount ?? 1f, 0, 1),
             filterSettings: adjustmentSettings);
+    }
+
+    private bool TryResolveCurvesResource(
+        PrismGraphScope scope,
+        PrismGraphNode node,
+        Texture2D fallback,
+        PrismResourceId resource,
+        out Texture2D texture,
+        out bool available)
+    {
+        texture = fallback;
+        available = false;
+        if (resource.Value <= 0 ||
+            !scope.Resources.TryGetCurves(
+                resource,
+                out PrismCurvesResource curves,
+                out long identity,
+                out long version))
+        {
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingResource,
+                $"Curves resource '{resource}' is not available.");
+            return false;
+        }
+
+        texture = curveTextures.GetOrCreate(
+            resource,
+            curves,
+            identity,
+            version);
+        available = true;
+        return true;
+    }
+
+    private bool TryResolveGradientMapResource(
+        PrismGraphScope scope,
+        PrismGraphNode node,
+        Texture2D fallback,
+        PrismResourceId resource,
+        out Texture2D texture,
+        out bool available)
+    {
+        texture = fallback;
+        available = false;
+        if (resource.Value <= 0 ||
+            !scope.Resources.TryGetGradientMap(
+                resource,
+                out PrismGradientMapResource gradient,
+                out long identity,
+                out long version))
+        {
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingResource,
+                $"Gradient map resource '{resource}' is not available.");
+            return false;
+        }
+        texture = gradientMapTextures.GetOrCreate(
+            resource,
+            gradient,
+            identity,
+            version);
+        available = true;
+        return true;
+    }
+
+    private bool TryResolveHaldLookupResource(
+        PrismGraphScope scope,
+        PrismGraphNode node,
+        Texture2D fallback,
+        PrismResourceId resource,
+        out Texture2D texture,
+        out bool available,
+        out float cubeSize)
+    {
+        cubeSize = 0;
+        if (!TryResolveFilterResource(
+                scope,
+                node,
+                fallback,
+                resource,
+                required: true,
+                out texture,
+                out available))
+        {
+            return false;
+        }
+
+        if (TryGetHaldCubeSize(texture, out int resolvedCubeSize))
+        {
+            cubeSize = resolvedCubeSize;
+            return true;
+        }
+
+        RecordFallback(
+            node,
+            PrismFallbackReason.UnsupportedCapability,
+            "ColorLookup requires a square Hald LUT whose side is level cubed (level >= 2).");
+        texture = fallback;
+        available = false;
+        return false;
+    }
+
+    private static bool TryGetHaldCubeSize(
+        Texture2D texture,
+        out int cubeSize)
+    {
+        cubeSize = 0;
+        if (texture.Width != texture.Height ||
+            texture.Width < 8)
+        {
+            return false;
+        }
+
+        int level = (int)Math.Round(
+            Math.Pow(texture.Width, 1d / 3d));
+        if (level < 2 ||
+            (long)level * level * level != texture.Width)
+        {
+            return false;
+        }
+
+        cubeSize = checked(level * level);
+        return true;
+    }
+
+    private Texture2D RenderAutomaticLevelsRange(
+        IPrismCommandRenderer renderer,
+        Texture2D source,
+        PrismAdjustmentPlan plan,
+        PrismColorProfile workingProfile)
+    {
+        levelsCdfSurface ??= new RenderTarget2D(
+            graphicsDevice,
+            PrismLevelsAnalysis.BinCount,
+            1,
+            mipMap: false,
+            SurfaceFormat.Single,
+            DepthFormat.None,
+            preferredMultiSampleCount: 0,
+            RenderTargetUsage.DiscardContents);
+        levelsRangeSurface ??= new RenderTarget2D(
+            graphicsDevice,
+            1,
+            1,
+            mipMap: false,
+            SurfaceFormat.Color,
+            DepthFormat.None,
+            preferredMultiSampleCount: 0,
+            RenderTargetUsage.DiscardContents);
+
+        PrismFilterKernelSettings analysisSettings = new(
+            source,
+            new Vector4(
+                plan.Parameters0.X,
+                (int)workingProfile,
+                0,
+                0),
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            new Vector2(source.Width, source.Height));
+        RenderKernel(
+            renderer,
+            levelsCdfSurface,
+            source,
+            source,
+            kernels.LevelsCdf,
+            1,
+            filterSettings: analysisSettings);
+        RenderKernel(
+            renderer,
+            levelsRangeSurface,
+            levelsCdfSurface,
+            levelsCdfSurface,
+            kernels.LevelsRange,
+            1);
+        return levelsRangeSurface;
+    }
+
+    private Texture2D RenderOtsuThreshold(
+        IPrismCommandRenderer renderer,
+        Texture2D source,
+        PrismAdjustmentPlan plan,
+        PrismColorProfile workingProfile)
+    {
+        levelsCdfSurface ??= new RenderTarget2D(
+            graphicsDevice,
+            PrismThresholdAnalysis.BinCount,
+            1,
+            mipMap: false,
+            SurfaceFormat.Single,
+            DepthFormat.None,
+            preferredMultiSampleCount: 0,
+            RenderTargetUsage.DiscardContents);
+        levelsRangeSurface ??= new RenderTarget2D(
+            graphicsDevice,
+            1,
+            1,
+            mipMap: false,
+            SurfaceFormat.Color,
+            DepthFormat.None,
+            preferredMultiSampleCount: 0,
+            RenderTargetUsage.DiscardContents);
+
+        PrismFilterKernelSettings analysisSettings = new(
+            source,
+            new Vector4(
+                0,
+                (int)workingProfile,
+                0,
+                0),
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            new Vector2(source.Width, source.Height));
+        RenderKernel(
+            renderer,
+            levelsCdfSurface,
+            source,
+            source,
+            kernels.LevelsCdf,
+            1,
+            filterSettings: analysisSettings);
+
+        PrismFilterKernelSettings thresholdSettings = new(
+            levelsCdfSurface,
+            new Vector4(plan.Parameters0.X, 0, 0, 0),
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            Vector4.Zero,
+            new Vector2(
+                levelsCdfSurface.Width,
+                levelsCdfSurface.Height));
+        RenderKernel(
+            renderer,
+            levelsRangeSurface,
+            levelsCdfSurface,
+            levelsCdfSurface,
+            kernels.ThresholdRange,
+            1,
+            filterSettings: thresholdSettings);
+        return levelsRangeSurface;
     }
 
     private bool TryResolveFilterResource(
@@ -2408,6 +3066,115 @@ internal sealed class PrismGraphExecutor : IDisposable
         }
 
         texture = monoGameImage.Texture;
+        available = true;
+        return true;
+    }
+
+    private bool TryResolveLensProfile(
+        PrismGraphScope scope,
+        PrismGraphNode node,
+        Texture2D fallback,
+        PrismCatalogFilterPlan plan,
+        out Texture2D texture,
+        out bool available)
+    {
+        texture = fallback;
+        available = false;
+        PrismResourceId resource = plan.PrimaryResource;
+        if (resource.Value <= 0 ||
+            !scope.Resources.TryGetLensProfile(
+                resource,
+                out PrismLensProfileResource profile,
+                out long identity,
+                out long version))
+        {
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingResource,
+                $"Lens profile '{resource}' is not available.");
+            return false;
+        }
+
+        System.Numerics.Vector4 center = plan.GetOption("Center");
+        float brightness = MathF.Max(
+            0,
+            plan.GetOption("Brightness").X);
+        texture = lensProfileTextures.GetOrCreate(
+            resource,
+            profile,
+            identity,
+            version,
+            fallback.Width,
+            fallback.Height,
+            new System.Numerics.Vector2(center.X, center.Y),
+            brightness);
+        available = true;
+        return true;
+    }
+
+    private bool TryResolveColorMatrix(
+        PrismGraphScope scope,
+        PrismGraphNode node,
+        Texture2D fallback,
+        PrismCatalogFilterPlan plan,
+        out Texture2D texture,
+        out bool available,
+        out PrismColorMatrixResource? colorMatrix)
+    {
+        texture = fallback;
+        available = false;
+        colorMatrix = null;
+        PrismResourceId resource = plan.PrimaryResource;
+        if (resource.Value <= 0)
+        {
+            return true;
+        }
+        if (!scope.Resources.TryGetColorMatrix(
+                resource,
+                out PrismColorMatrixResource resolved,
+                out _,
+                out _))
+        {
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingResource,
+                $"Color matrix '{resource}' is not available.");
+            return false;
+        }
+
+        colorMatrix = resolved;
+        available = true;
+        return true;
+    }
+
+    private bool TryResolveLighting(
+        PrismGraphScope scope,
+        PrismGraphNode node,
+        Texture2D fallback,
+        PrismCatalogFilterPlan plan,
+        out Texture2D texture,
+        out bool available,
+        out PrismLightingResource? lighting)
+    {
+        texture = fallback;
+        available = false;
+        lighting = null;
+        PrismResourceId resource = plan.PrimaryResource;
+        if (resource.Value <= 0 ||
+            !scope.Resources.TryGetLighting(
+                resource,
+                out PrismLightingResource resolved,
+                out _,
+                out _))
+        {
+            RecordFallback(
+                node,
+                PrismFallbackReason.MissingResource,
+                $"Lighting resource '{resource}' is not available.");
+            return false;
+        }
+
+        lighting = resolved;
         available = true;
         return true;
     }
@@ -2546,6 +3313,16 @@ internal sealed class PrismGraphExecutor : IDisposable
             graph,
             node.Id,
             PrismGraphEdgeKind.CompositeBackground);
+        int knockoutBackdropIndex = FindInputIndex(
+            plan,
+            graph,
+            node.Id,
+            PrismGraphEdgeKind.KnockoutBackdrop);
+        int knockoutShapeIndex = FindInputIndex(
+            plan,
+            graph,
+            node.Id,
+            PrismGraphEdgeKind.KnockoutShape);
 
         if (foregroundIndex < 0)
         {
@@ -2586,7 +3363,13 @@ internal sealed class PrismGraphExecutor : IDisposable
             1f,
             node.LayerSettings,
             node.DefinitionNodeId?.Value ?? 0,
-            backgroundIndex >= 0);
+            backgroundIndex >= 0,
+            knockoutBackdrop: knockoutBackdropIndex >= 0
+                ? GetExecutionSurface(frame, knockoutBackdropIndex)
+                : null,
+            knockoutShape: knockoutShapeIndex >= 0
+                ? GetExecutionSurface(frame, knockoutShapeIndex)
+                : null);
     }
 
     private void RenderCopyInput(
@@ -2703,7 +3486,9 @@ internal sealed class PrismGraphExecutor : IDisposable
         PrismFilterKernelSettings? filterSettings = null,
         Rectangle? destination = null,
         PrismBackdropCropKernelSettings? backdropCropSettings = null,
-        PrismBackdropColorKernelSettings? backdropColorSettings = null)
+        PrismBackdropColorKernelSettings? backdropColorSettings = null,
+        Texture2D? knockoutBackdrop = null,
+        Texture2D? knockoutShape = null)
     {
         renderer.EndBatch();
         graphicsDevice.SetRenderTarget(target);
@@ -2719,8 +3504,13 @@ internal sealed class PrismGraphExecutor : IDisposable
             FullUvScale,
             ZeroUvOffset)
         {
+            SourceTexture = source,
             BackgroundAvailable =
-                backgroundAvailable ? 1 : 0
+                backgroundAvailable ? 1 : 0,
+            KnockoutBackdropTexture = knockoutBackdrop,
+            KnockoutShapeTexture = knockoutShape,
+            KnockoutBackdropAvailable =
+                knockoutBackdrop is null ? 0 : 1
         };
         if (layerSettings is PrismGraphLayerSettings settings)
         {
@@ -2759,6 +3549,7 @@ internal sealed class PrismGraphExecutor : IDisposable
             {
                 StyleTexture = style.Texture,
                 StyleMaskTexture = style.MaskTexture,
+                FilterAuxiliaryTexture = style.AuxiliaryTexture,
                 StyleColor = style.Color,
                 StyleSecondaryColor =
                     style.SecondaryColor,
@@ -2794,7 +3585,11 @@ internal sealed class PrismGraphExecutor : IDisposable
                 FilterOptions9 = filter.Options9,
                 FilterTextureSize = filter.TextureSize,
                 FilterAuxiliaryTexture =
-                    filter.AuxiliaryTexture
+                    filter.AuxiliaryTexture,
+                FilterLightCount =
+                    filter.Lighting?.LightCount ?? 0,
+                FilterLights =
+                    filter.Lighting?.PackedLights
             };
         }
         if (backdropCropSettings is PrismBackdropCropKernelSettings crop)
@@ -2818,9 +3613,18 @@ internal sealed class PrismGraphExecutor : IDisposable
             };
         }
         kernels.Bind(kernel, in parameters);
+        SamplerState samplerState =
+            filterSettings?.Header.X ==
+                (int)PrismResamplingOperation.Transform
+                ? SamplerState.AnisotropicClamp
+                : filterSettings?.Header.X ==
+                    (int)PrismFilterId.StainedGlass
+                    ? SamplerState.PointClamp
+                    : SamplerState.LinearClamp;
         renderer.BeginKernelBatch(
             kernels.Effect,
-            BlendState.Opaque);
+            BlendState.Opaque,
+            samplerState);
         renderer.DrawFullscreen(
             source,
             destination ??
@@ -2910,6 +3714,49 @@ internal sealed class PrismGraphExecutor : IDisposable
         System.Numerics.Vector4 value) =>
         new(value.X, value.Y, value.Z, value.W);
 
+    private static Vector4 PackWaveNoiseSeed(uint seed) =>
+        new(
+            seed & 0xffffu,
+            seed >> 16,
+            0,
+            0);
+
+    private static PrismLightingKernelSettings PackLighting(
+        PrismLightingResource resource)
+    {
+        Vector4[] packed =
+            new Vector4[
+                PrismLightingResource.MaximumLightCount * 3];
+        for (int index = 0; index < resource.Lights.Length; index++)
+        {
+            PrismLight light = resource.Lights[index];
+            int baseIndex = index * 3;
+            packed[baseIndex] = new Vector4(
+                (int)light.Kind,
+                light.Intensity,
+                0,
+                0);
+            System.Numerics.Vector3 value =
+                light.PackedDirectionOrPosition;
+            packed[baseIndex + 1] = new Vector4(
+                value.X,
+                value.Y,
+                value.Z,
+                0);
+            System.Numerics.Vector3 color =
+                light.LinearSrgb;
+            packed[baseIndex + 2] = new Vector4(
+                color.X,
+                color.Y,
+                color.Z,
+                0);
+        }
+
+        return new PrismLightingKernelSettings(
+            resource.Lights.Length,
+            packed);
+    }
+
     private static Vector4 ResolveBlendRange(
         UI.Prism.Runtime.PrismBlendRange range)
     {
@@ -2998,6 +3845,7 @@ internal sealed class PrismGraphExecutor : IDisposable
                     source,
                     parentTarget,
                     presentKernel,
+                    scope.CompositionSettings.WorkingColorProfile,
                     new Rectangle(
                         0,
                         0,
@@ -3064,6 +3912,7 @@ internal sealed class PrismGraphExecutor : IDisposable
                     source,
                     target: null,
                     presentKernel,
+                    scope.CompositionSettings.WorkingColorProfile,
                     new Rectangle(
                         hostViewport.X,
                         hostViewport.Y,
@@ -3093,6 +3942,7 @@ internal sealed class PrismGraphExecutor : IDisposable
         RenderTarget2D source,
         RenderTarget2D? target,
         PrismKernel kernel,
+        PrismColorProfile sourceProfile,
         Rectangle destination)
     {
         if (target is not null)
@@ -3107,11 +3957,19 @@ internal sealed class PrismGraphExecutor : IDisposable
                 1f / source.Width,
                 1f / source.Height),
             FullUvScale,
-            ZeroUvOffset);
+            ZeroUvOffset)
+        {
+            FilterHeader = new Vector4(
+                (float)sourceProfile,
+                (float)hostColorProfile,
+                0,
+                0)
+        };
         kernels.Bind(kernel, in parameters);
         renderer.BeginKernelBatch(
             kernels.Effect,
-            BlendState.AlphaBlend);
+            BlendState.AlphaBlend,
+            SamplerState.LinearClamp);
         renderer.DrawFullscreen(source, destination);
         renderer.EndBatch();
     }
@@ -3120,11 +3978,18 @@ internal sealed class PrismGraphExecutor : IDisposable
         PrismGraphScope scope,
         PrismGraphNode node)
     {
-        if (kernels.TryGetPresentKernel(
-            scope.CompositionSettings.WorkingColorProfile,
-            out PrismKernel kernel))
+        if (hostColorProfile == PrismColorProfile.Srgb &&
+            kernels.TryGetPresentKernel(
+                scope.CompositionSettings.WorkingColorProfile,
+                out PrismKernel sRgbKernel))
         {
-            return kernel;
+            return sRgbKernel;
+        }
+        if (Enum.IsDefined(
+                scope.CompositionSettings.WorkingColorProfile) &&
+            Enum.IsDefined(hostColorProfile))
+        {
+            return kernels.BackdropColorConversion;
         }
 
         return RecordInvalidPresentProfile(scope, node);
@@ -3336,6 +4201,7 @@ internal sealed class PrismGraphExecutor : IDisposable
     private readonly record struct PrismStyleKernelSettings(
         Texture2D Texture,
         Texture2D MaskTexture,
+        Texture2D AuxiliaryTexture,
         Vector4 Color,
         Vector4 SecondaryColor,
         Vector4 Geometry0,
@@ -3364,5 +4230,10 @@ internal sealed class PrismGraphExecutor : IDisposable
         Vector4 Options8,
         Vector4 Options9,
         Vector2 TextureSize,
-        Texture2D? AuxiliaryTexture = null);
+        Texture2D? AuxiliaryTexture = null,
+        PrismLightingKernelSettings? Lighting = null);
+
+    private readonly record struct PrismLightingKernelSettings(
+        int LightCount,
+        Vector4[] PackedLights);
 }

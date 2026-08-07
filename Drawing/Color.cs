@@ -2,9 +2,9 @@ using System.Globalization;
 
 namespace Cerneala.Drawing;
 
-/// <summary>
-/// An immutable ARGB color value used by Cerneala drawing and controls.
-/// </summary>
+
+
+
 public readonly record struct Color(byte R, byte G, byte B, byte A = 255)
 {
     public static Color Transparent { get; } = new(0, 0, 0, 0);
@@ -153,9 +153,9 @@ public readonly record struct Color(byte R, byte G, byte B, byte A = 255)
 
     public static Color FromArgb(byte a, byte r, byte g, byte b) => new(r, g, b, a);
 
-    /// <summary>
-    /// Parses a WPF-style named color, #RRGGBB, #AARRGGBB, or comma-separated byte channels.
-    /// </summary>
+
+
+
     public static bool TryParse(string? value, out Color color)
     {
         color = default;

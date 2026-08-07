@@ -35,6 +35,58 @@ public sealed class PrismGraphExecutorTests
     private const int AnimatedFrameCount = 2_048;
 
     [Fact]
+    public void CurvesTextureCacheUploadsAndInvalidates1024SampleRgbLut()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        using PrismCurveTextureCache cache =
+            new(fixture.Session.GraphicsDevice);
+        PrismResourceId id = new("curves-cache");
+        PrismCurvesResource firstResource = new(
+            red:
+            [
+                new PrismCurvePoint(0, 0),
+                new PrismCurvePoint(1, 0.5f)
+            ]);
+
+        Texture2D first = cache.GetOrCreate(
+            id,
+            firstResource,
+            identity: 1,
+            version: 1);
+        Texture2D reused = cache.GetOrCreate(
+            id,
+            firstResource,
+            identity: 1,
+            version: 1);
+        HalfVector4[] pixels =
+            new HalfVector4[PrismCurveLut.SampleCount];
+        first.GetData(pixels);
+
+        Assert.Same(first, reused);
+        Assert.Equal(PrismCurveLut.SampleCount, first.Width);
+        Assert.Equal(1, first.Height);
+        Assert.Equal(SurfaceFormat.HalfVector4, first.Format);
+        Assert.InRange(
+            pixels[PrismCurveLut.SampleCount / 2].ToVector4().X,
+            0.249f,
+            0.252f);
+
+        PrismCurvesResource changedResource = new();
+        Texture2D changed = cache.GetOrCreate(
+            id,
+            changedResource,
+            identity: 2,
+            version: 2);
+        Assert.NotSame(first, changed);
+        Assert.True(first.IsDisposed);
+    }
+
+    [Fact]
     public void RegistryValidatesCatalogAndRegistersGeneratedColorKernels()
     {
         if (!OperatingSystem.IsWindows())
@@ -45,6 +97,9 @@ public sealed class PrismGraphExecutorTests
         using WindowsDxFixture fixture = new();
         using PrismKernelRegistry registry =
             new(fixture.Session.GraphicsDevice);
+
+        Assert.Equal("LevelsCdf", registry.LevelsCdf.Technique.Name);
+        Assert.Equal("LevelsRange", registry.LevelsRange.Technique.Name);
 
         foreach (PrismBlendMode blendMode in
             Enum.GetValues<PrismBlendMode>())
@@ -122,6 +177,85 @@ public sealed class PrismGraphExecutorTests
                 PrismNeighborhoodPlanner.IsSupported(filter);
             bool isResampling =
                 PrismResamplingPlanner.IsSupported(filter);
+            bool isColorHalftone =
+                filter == PrismFilterId.ColorHalftone;
+            bool isColoredPencil =
+                filter == PrismFilterId.ColoredPencil;
+            bool isFresco =
+                filter == PrismFilterId.Fresco;
+            bool isCutout =
+                filter == PrismFilterId.Cutout;
+            bool isDryBrush =
+                filter == PrismFilterId.DryBrush;
+            bool isDeinterlace =
+                filter == PrismFilterId.Deinterlace;
+            bool isFacet =
+                filter == PrismFilterId.Facet;
+            bool isLightingEffects =
+                filter == PrismFilterId.LightingEffects;
+            bool isChalkCharcoal =
+                filter == PrismFilterId.ChalkCharcoal;
+            bool isCharcoal =
+                filter == PrismFilterId.Charcoal;
+            bool isConteCrayon =
+                filter == PrismFilterId.ConteCrayon;
+            bool isGraphicPen =
+                filter == PrismFilterId.GraphicPen;
+            bool usesAccentedEdgesKernel =
+                filter is
+                    PrismFilterId.AccentedEdges or
+                    PrismFilterId.DarkStrokes or
+                    PrismFilterId.InkOutlines;
+            bool isGlowingEdges =
+                filter == PrismFilterId.GlowingEdges;
+            bool isTraceContour =
+                filter == PrismFilterId.TraceContour;
+            bool isBasRelief =
+                filter == PrismFilterId.BasRelief;
+            bool isPosterEdges =
+                filter == PrismFilterId.PosterEdges;
+            bool isUnderpainting =
+                filter == PrismFilterId.Underpainting;
+            bool isWatercolor =
+                filter == PrismFilterId.Watercolor;
+            bool isWaterPaper =
+                filter == PrismFilterId.WaterPaper;
+            bool isWind =
+                filter == PrismFilterId.Wind;
+            bool isSumiE =
+                filter == PrismFilterId.SumiE;
+            bool isChrome =
+                filter == PrismFilterId.Chrome;
+            bool isNotePaper =
+                filter == PrismFilterId.NotePaper;
+            bool isPlaster =
+                filter == PrismFilterId.Plaster;
+            bool usesPhotocopyKernel =
+                filter is
+                    PrismFilterId.Photocopy or
+                    PrismFilterId.Stamp or
+                    PrismFilterId.TornEdges;
+            bool isCraquelure =
+                filter == PrismFilterId.Craquelure;
+            bool isTexturizer =
+                filter == PrismFilterId.Texturizer;
+            bool isGrain =
+                filter == PrismFilterId.Grain;
+            bool isMosaicTiles =
+                filter == PrismFilterId.MosaicTiles;
+            bool isPatchwork =
+                filter == PrismFilterId.Patchwork;
+            bool isReticulation =
+                filter == PrismFilterId.Reticulation;
+            bool isStainedGlass =
+                filter == PrismFilterId.StainedGlass;
+            bool isWaveNoise =
+                filter is PrismFilterId.Clouds or
+                    PrismFilterId.DifferenceClouds;
+            bool isSpatter =
+                filter == PrismFilterId.Spatter;
+            bool isSprayedStrokes =
+                filter == PrismFilterId.SprayedStrokes;
             Assert.Equal(
                 isAdjustment
                     ? PrismKernelKind.AdjustmentFilter
@@ -129,7 +263,19 @@ public sealed class PrismGraphExecutorTests
                         ? PrismKernelKind.NeighborhoodFilter
                         : isResampling
                             ? PrismKernelKind.ResamplingFilter
-                            : PrismKernelKind.CatalogFilter,
+                            : isColoredPencil
+                                ? PrismKernelKind.ColoredPencilFilter
+                            : isFresco
+                                ? PrismKernelKind.FrescoFilter
+                            : isCutout
+                                ? PrismKernelKind.CutoutFilter
+                            : isColorHalftone
+                                ? PrismKernelKind.ColorHalftoneFilter
+                                : isFacet
+                                    ? PrismKernelKind.FacetFilter
+                                    : isLightingEffects
+                                        ? PrismKernelKind.LightingEffectsFilter
+                                    : PrismKernelKind.CatalogFilter,
                 filterKernel.Kind);
             Assert.Equal(
                 isAdjustment
@@ -138,7 +284,79 @@ public sealed class PrismGraphExecutorTests
                         ? "NeighborhoodFilter"
                         : isResampling
                             ? "ResamplingFilter"
-                            : "CatalogFilter",
+                            : isColoredPencil
+                                ? "ColoredPencilFilter"
+                            : isFresco
+                                ? "FrescoFilter"
+                            : isCutout
+                                ? "CutoutFilter"
+                            : isDryBrush
+                                ? "DryBrushFilter"
+                            : isDeinterlace
+                                ? "DeinterlaceFilter"
+                            : isColorHalftone
+                            ? "ColorHalftoneFilter"
+                                : isFacet
+                                    ? "FacetFilter"
+                                    : isLightingEffects
+                                        ? "LightingEffectsFilter"
+                                    : isWaveNoise
+                                        ? "WaveNoiseFilter"
+                                    : isSpatter
+                                        ? "SpatterFilter"
+                                    : isSprayedStrokes
+                                        ? "SprayedStrokesFilter"
+                                    : isChalkCharcoal
+                                        ? "ChalkCharcoalFilter"
+                                    : isCharcoal
+                                        ? "CharcoalFilter"
+                                    : isConteCrayon
+                                        ? "ConteCrayonFilter"
+                                    : isGraphicPen
+                                        ? "GraphicPenFilter"
+                                    : usesAccentedEdgesKernel
+                                        ? "AccentedEdgesFilter"
+                                    : isGlowingEdges
+                                        ? "GlowingEdgesFilter"
+                                    : isTraceContour
+                                        ? "TraceContourFilter"
+                                    : isBasRelief
+                                        ? "BasReliefFilter"
+                                    : isPosterEdges
+                                        ? "PosterEdgesFilter"
+                                    : isUnderpainting
+                                        ? "UnderpaintingFilter"
+                                    : isWatercolor
+                                        ? "WatercolorFilter"
+                                    : isWaterPaper
+                                        ? "WaterPaperFilter"
+                                    : isWind
+                                        ? "WindFilter"
+                                    : isSumiE
+                                        ? "SumiEFilter"
+                                    : isChrome
+                                        ? "ChromeFilter"
+                                    : isNotePaper
+                                        ? "NotePaperFilter"
+                                    : isPlaster
+                                        ? "PlasterFilter"
+                                    : usesPhotocopyKernel
+                                        ? "PhotocopyFilter"
+                                    : isCraquelure
+                                        ? "CraquelureFilter"
+                                    : isTexturizer
+                                        ? "TexturizerFilter"
+                                    : isGrain
+                                        ? "GrainFilter"
+                                    : isMosaicTiles
+                                        ? "MosaicTilesFilter"
+                                    : isPatchwork
+                                        ? "PatchworkFilter"
+                                    : isReticulation
+                                        ? "ReticulationFilter"
+                                    : isStainedGlass
+                                        ? "StainedGlassFilter"
+                                        : "CatalogFilter",
                 filterKernel.Technique.Name);
             Assert.Equal(
                 isAdjustment
@@ -147,7 +365,79 @@ public sealed class PrismGraphExecutorTests
                         ? registry.NeighborhoodFilter
                         : isResampling
                             ? registry.ResamplingFilter
-                            : registry.CatalogFilter,
+                            : isColoredPencil
+                                ? registry.ColoredPencilFilter
+                            : isFresco
+                                ? registry.FrescoFilter
+                            : isCutout
+                                ? registry.CutoutFilter
+                            : isDryBrush
+                                ? registry.DryBrushFilter
+                            : isDeinterlace
+                                ? registry.DeinterlaceFilter
+                            : isColorHalftone
+                            ? registry.ColorHalftoneFilter
+                                : isFacet
+                                    ? registry.FacetFilter
+                                    : isLightingEffects
+                                        ? registry.LightingEffectsFilter
+                                    : isWaveNoise
+                                        ? registry.WaveNoiseFilter
+                                    : isSpatter
+                                        ? registry.SpatterFilter
+                                    : isSprayedStrokes
+                                        ? registry.SprayedStrokesFilter
+                                    : isChalkCharcoal
+                                        ? registry.ChalkCharcoalFilter
+                                    : isCharcoal
+                                        ? registry.CharcoalFilter
+                                    : isConteCrayon
+                                        ? registry.ConteCrayonFilter
+                                    : isGraphicPen
+                                        ? registry.GraphicPenFilter
+                                    : usesAccentedEdgesKernel
+                                        ? registry.AccentedEdgesFilter
+                                    : isGlowingEdges
+                                        ? registry.GlowingEdgesFilter
+                                    : isTraceContour
+                                        ? registry.TraceContourFilter
+                                    : isBasRelief
+                                        ? registry.BasReliefFilter
+                                    : isPosterEdges
+                                        ? registry.PosterEdgesFilter
+                                    : isUnderpainting
+                                        ? registry.UnderpaintingFilter
+                                    : isWatercolor
+                                        ? registry.WatercolorFilter
+                                    : isWaterPaper
+                                        ? registry.WaterPaperFilter
+                                    : isWind
+                                        ? registry.WindFilter
+                                    : isSumiE
+                                        ? registry.SumiEFilter
+                                    : isChrome
+                                        ? registry.ChromeFilter
+                                    : isNotePaper
+                                        ? registry.NotePaperFilter
+                                    : isPlaster
+                                        ? registry.PlasterFilter
+                                    : usesPhotocopyKernel
+                                        ? registry.PhotocopyFilter
+                                    : isCraquelure
+                                        ? registry.CraquelureFilter
+                                    : isTexturizer
+                                        ? registry.TexturizerFilter
+                                    : isGrain
+                                        ? registry.GrainFilter
+                                    : isMosaicTiles
+                                        ? registry.MosaicTilesFilter
+                                    : isPatchwork
+                                        ? registry.PatchworkFilter
+                                    : isReticulation
+                                        ? registry.ReticulationFilter
+                                    : isStainedGlass
+                                        ? registry.StainedGlassFilter
+                                        : registry.CatalogFilter,
                 filterKernel);
         }
         foreach (PrismStyleId style in Enum.GetValues<PrismStyleId>())
@@ -201,6 +491,1488 @@ public sealed class PrismGraphExecutorTests
         Assert.Equal(
             "MaskFeather",
             registry.MaskFeather.Technique.Name);
+    }
+
+    [Fact]
+    public void HalftonePatternGpuPreservesDotAreaColorsAndAlpha()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int size = 64;
+        const float alpha = 0.4f;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        using Texture2D source = new(
+            graphicsDevice,
+            size,
+            size,
+            false,
+            SurfaceFormat.HalfVector4);
+        source.SetData(
+            Enumerable.Repeat(
+                    new HalfVector4(
+                        new Vector4(
+                            0.7f * alpha,
+                            0.7f * alpha,
+                            0.7f * alpha,
+                            alpha)),
+                    size * size)
+                .ToArray());
+        using RenderTarget2D target = new(
+            graphicsDevice,
+            size,
+            size,
+            mipMap: false,
+            SurfaceFormat.HalfVector4,
+            DepthFormat.None,
+            preferredMultiSampleCount: 0,
+            RenderTargetUsage.PreserveContents);
+
+        graphicsDevice.SetRenderTarget(target);
+        graphicsDevice.Clear(XnaColor.Transparent);
+        PrismKernelParameters parameters = new(
+            source,
+            1,
+            new Vector2(1f / size, 1f / size),
+            Vector2.One,
+            Vector2.Zero)
+        {
+            FilterHeader = new Vector4(
+                (int)PrismFilterId.HalftonePattern,
+                (int)PrismColorProfile.LinearSrgb,
+                (int)PrismCatalogFilterPrimitive.Procedural,
+                0),
+            FilterOptions0 = new Vector4(0, 0, 1, 1),
+            FilterOptions1 = Vector4.Zero,
+            FilterOptions2 = new Vector4(1, 0, 0, 1),
+            FilterOptions3 = Vector4.Zero,
+            FilterOptions4 = new Vector4(8, 0, 0, 0),
+            FilterOptions9 = new Vector4(
+                0,
+                0,
+                0,
+                (int)PrismBlendMode.Normal)
+        };
+        registry.Bind(registry.CatalogFilter, in parameters);
+        spriteBatch.Begin(
+            SpriteSortMode.Immediate,
+            BlendState.Opaque,
+            SamplerState.LinearClamp,
+            DepthStencilState.None,
+            RasterizerState.CullNone,
+            registry.Effect);
+        spriteBatch.Draw(
+            source,
+            new Rectangle(0, 0, size, size),
+            XnaColor.White);
+        spriteBatch.End();
+        graphicsDevice.SetRenderTarget(null);
+
+        HalfVector4[] pixels = new HalfVector4[size * size];
+        target.GetData(pixels);
+        Vector4[] values = pixels
+            .Select(pixel => pixel.ToVector4())
+            .ToArray();
+        double meanInk = values.Average(value => value.X / value.W);
+
+        Assert.InRange(meanInk, 0.25, 0.35);
+        Assert.True(
+            values.Max(value => value.X) -
+            values.Min(value => value.X) > 0.2f);
+        Assert.All(
+            values,
+            value =>
+            {
+                Assert.InRange(value.W, alpha - 0.001f, alpha + 0.001f);
+                Assert.InRange(
+                    Math.Abs((value.X + value.Z) - value.W),
+                    0,
+                    0.002f);
+            });
+    }
+
+    [Fact]
+    public void WaveNoiseGpuMatchesTheCpuSpectralEvaluation()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int size = 8;
+        const float scale = 1.75f;
+        const uint seed = 2_000_000_007u;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using PrismWaveNoiseTextureCache cache =
+            new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        using Texture2D source = new(
+            graphicsDevice,
+            size,
+            size,
+            false,
+            SurfaceFormat.HalfVector4);
+        source.SetData(
+            Enumerable.Repeat(
+                    new HalfVector4(Vector4.One),
+                    size * size)
+                .ToArray());
+        using RenderTarget2D target = new(
+            graphicsDevice,
+            size,
+            size,
+            mipMap: false,
+            SurfaceFormat.HalfVector4,
+            DepthFormat.None,
+            preferredMultiSampleCount: 0,
+            RenderTargetUsage.PreserveContents);
+        PrismWaveNoiseTable table = PrismWaveNoise.Precompute(
+            unchecked((int)seed),
+            new System.Numerics.Vector4(
+                0.03125f,
+                1,
+                0,
+                0),
+            PrismWaveSpectrum.Brown);
+        Texture2D tableTexture = cache.GetOrCreate(table);
+        Vector4 foreground = new(0.8f, 0.1f, 0.2f, 1);
+        Vector4 background = new(0.1f, 0.6f, 0.9f, 1);
+
+        graphicsDevice.SetRenderTarget(target);
+        graphicsDevice.Clear(XnaColor.Transparent);
+        PrismKernelParameters parameters = new(
+            source,
+            1,
+            new Vector2(1f / size, 1f / size),
+            Vector2.One,
+            Vector2.Zero)
+        {
+            FilterHeader = new Vector4(
+                (int)PrismFilterId.Clouds,
+                (int)PrismColorProfile.LinearSrgb,
+                (int)PrismCatalogFilterPrimitive.Procedural,
+                0),
+            FilterOptions0 = foreground,
+            FilterOptions1 = background,
+            FilterOptions2 = new Vector4(scale, 0, 0, 0),
+            FilterOptions3 = new Vector4(
+                seed & 0xffffu,
+                seed >> 16,
+                0,
+                0),
+            FilterOptions4 = new Vector4(20, 0, 0, 0),
+            FilterOptions5 = new Vector4(4, 0, 0, 0),
+            FilterOptions7 = new Vector4(0, 1, 0, 0),
+            FilterOptions9 = new Vector4(
+                table.Normalization,
+                0,
+                0,
+                (int)PrismBlendMode.Normal),
+            FilterAuxiliaryTexture = tableTexture
+        };
+        registry.Bind(registry.WaveNoiseFilter, in parameters);
+        spriteBatch.Begin(
+            SpriteSortMode.Immediate,
+            BlendState.Opaque,
+            SamplerState.LinearClamp,
+            DepthStencilState.None,
+            RasterizerState.CullNone,
+            registry.Effect);
+        spriteBatch.Draw(
+            source,
+            new Rectangle(0, 0, size, size),
+            XnaColor.White);
+        spriteBatch.End();
+        graphicsDevice.SetRenderTarget(null);
+
+        HalfVector4[] actual = new HalfVector4[size * size];
+        target.GetData(actual);
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float noise = PrismWaveNoise.Sample(
+                    table,
+                    new System.Numerics.Vector2(
+                        (x + 0.5f) / scale,
+                        (y + 0.5f) / scale),
+                    seed,
+                    20,
+                    4,
+                    new System.Numerics.Vector4(0, 1, 0, 0));
+                Vector3 expected = Vector3.Lerp(
+                    new Vector3(
+                        background.X,
+                        background.Y,
+                        background.Z),
+                    new Vector3(
+                        foreground.X,
+                        foreground.Y,
+                        foreground.Z),
+                    noise);
+                Vector4 pixel = actual[(y * size) + x].ToVector4();
+                Assert.True(
+                    MathF.Abs(pixel.X - expected.X) <= 0.006f,
+                    $"Wave noise at ({x}, {y}) was {pixel}, " +
+                    $"expected {expected} from noise {noise:R}.");
+                Assert.InRange(
+                    MathF.Abs(pixel.Y - expected.Y),
+                    0,
+                    0.006f);
+                Assert.InRange(
+                    MathF.Abs(pixel.Z - expected.Z),
+                    0,
+                    0.006f);
+                Assert.InRange(pixel.W, 0.999f, 1);
+            }
+        }
+    }
+
+    [Fact]
+    public void ColorHalftoneGpuProducesChromaticAngleSensitiveScreens()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int size = 17;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        using Texture2D source = new(
+            graphicsDevice,
+            size,
+            size,
+            false,
+            SurfaceFormat.HalfVector4);
+        source.SetData(
+            Enumerable.Repeat(
+                    new HalfVector4(
+                        new Vector4(0.15f, 0.45f, 0.3f, 0.75f)),
+                    size * size)
+                .ToArray());
+        using RenderTarget2D firstTarget = CreateTarget();
+        using RenderTarget2D changedTarget = CreateTarget();
+        Vector4 angles = new(108, 162, 90, 45);
+
+        HalfVector4[] first = Render(firstTarget, angles);
+        HalfVector4[] changed = Render(
+            changedTarget,
+            new Vector4(139, angles.Y, angles.Z, angles.W));
+
+        Assert.All(
+            first,
+            pixel => Assert.InRange(
+                pixel.ToVector4().W,
+                0.749f,
+                0.751f));
+        Assert.Contains(
+            first,
+            pixel =>
+            {
+                Vector4 value = pixel.ToVector4();
+                return MathF.Abs(value.X - value.Y) > 0.02f ||
+                    MathF.Abs(value.Y - value.Z) > 0.02f;
+            });
+        Assert.Contains(
+            first.Zip(changed),
+            pair =>
+                Vector4.Distance(
+                    pair.First.ToVector4(),
+                    pair.Second.ToVector4()) > 0.02f);
+
+        RenderTarget2D CreateTarget() =>
+            new(
+                graphicsDevice,
+                size,
+                size,
+                mipMap: false,
+                SurfaceFormat.HalfVector4,
+                DepthFormat.None,
+                preferredMultiSampleCount: 0,
+                RenderTargetUsage.PreserveContents);
+
+        HalfVector4[] Render(
+            RenderTarget2D target,
+            Vector4 screenAngles)
+        {
+            Vector4 radians = screenAngles * (MathF.PI / 180f);
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters parameters = new(
+                source,
+                1,
+                new Vector2(1f / size, 1f / size),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                FilterHeader = new Vector4(
+                    (int)PrismFilterId.ColorHalftone,
+                    (int)PrismColorProfile.LinearSrgb,
+                    (int)PrismCatalogFilterPrimitive.Quantization,
+                    0),
+                FilterOptions2 = new Vector4(
+                    MathF.Cos(radians.X),
+                    MathF.Cos(radians.Y),
+                    MathF.Cos(radians.Z),
+                    MathF.Cos(radians.W)),
+                FilterOptions3 = new Vector4(
+                    MathF.Sin(radians.X),
+                    MathF.Sin(radians.Y),
+                    MathF.Sin(radians.Z),
+                    MathF.Sin(radians.W)),
+                FilterOptions9 = new Vector4(
+                    4,
+                    4,
+                    0,
+                    (int)PrismBlendMode.Normal)
+            };
+            registry.Bind(registry.ColorHalftoneFilter, in parameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                source,
+                new Rectangle(0, 0, size, size),
+                XnaColor.White);
+            spriteBatch.End();
+            graphicsDevice.SetRenderTarget(null);
+            HalfVector4[] pixels = new HalfVector4[size * size];
+            target.GetData(pixels);
+            return pixels;
+        }
+    }
+
+    [Fact]
+    public void ColoredPencilGpuRunsTensorBlurAndSwingBilateralComposite()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int size = 17;
+        const float alpha = 0.65f;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        using Texture2D source = new(
+            graphicsDevice,
+            size,
+            size,
+            false,
+            SurfaceFormat.HalfVector4);
+        HalfVector4[] sourcePixels =
+            new HalfVector4[size * size];
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                bool firstRegion = x + y < size;
+                Vector4 straight = firstRegion
+                    ? new Vector4(0.15f, 0.45f, 0.75f, 1)
+                    : new Vector4(0.85f, 0.35f, 0.2f, 1);
+                sourcePixels[(y * size) + x] =
+                    new HalfVector4(
+                        new Vector4(
+                            straight.X * alpha,
+                            straight.Y * alpha,
+                            straight.Z * alpha,
+                            alpha));
+            }
+        }
+        source.SetData(sourcePixels);
+
+        using RenderTarget2D tensor = CreateTarget();
+        using RenderTarget2D blurX = CreateTarget();
+        using RenderTarget2D blurY = CreateTarget();
+        using RenderTarget2D result = CreateTarget();
+        using RenderTarget2D softResult = CreateTarget();
+        RenderPass(source, tensor, source, 0, 1, 1, 8);
+        RenderPass(tensor, blurX, source, 5, 2, 0, 8);
+        RenderPass(blurX, blurY, source, 10, 0, 2, 8);
+        RenderPass(blurY, result, source, 15, 3, 3, 8);
+        RenderPass(blurY, softResult, source, 15, 3, 3, 2);
+
+        HalfVector4[] actual = new HalfVector4[size * size];
+        HalfVector4[] soft = new HalfVector4[size * size];
+        result.GetData(actual);
+        softResult.GetData(soft);
+        Assert.All(
+            actual,
+            pixel => Assert.InRange(
+                pixel.ToVector4().W,
+                alpha - 0.002f,
+                alpha + 0.002f));
+        Assert.Contains(
+            actual.Zip(sourcePixels),
+            pair => Vector4.Distance(
+                pair.First.ToVector4(),
+                pair.Second.ToVector4()) > 0.05f);
+        Assert.Contains(
+            actual.Zip(soft),
+            pair => Vector4.Distance(
+                pair.First.ToVector4(),
+                pair.Second.ToVector4()) > 0.01f);
+
+        RenderTarget2D CreateTarget() =>
+            new(
+                graphicsDevice,
+                size,
+                size,
+                mipMap: false,
+                SurfaceFormat.HalfVector4,
+                DepthFormat.None,
+                preferredMultiSampleCount: 0,
+                RenderTargetUsage.PreserveContents);
+
+        void RenderPass(
+            Texture2D input,
+            RenderTarget2D target,
+            Texture2D original,
+            float packedPass,
+            float radiusX,
+            float radiusY,
+            float pressure)
+        {
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters parameters = new(
+                input,
+                1,
+                new Vector2(1f / size, 1f / size),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                FilterHeader = new Vector4(
+                    (int)PrismFilterId.ColoredPencil,
+                    (int)PrismColorProfile.LinearSrgb,
+                    (int)PrismCatalogFilterPrimitive.Artistic,
+                    0),
+                FilterOptions0 = new Vector4(3, 0, 0, 0),
+                FilterOptions1 = new Vector4(pressure, 0, 0, 0),
+                FilterOptions2 = new Vector4(0.25f, 0, 0, 0),
+                FilterOptions3 = Vector4.One,
+                FilterOptions9 = new Vector4(
+                    radiusX,
+                    radiusY,
+                    packedPass,
+                    (int)PrismBlendMode.Normal),
+                FilterAuxiliaryTexture = original
+            };
+            registry.Bind(
+                registry.ColoredPencilFilter,
+                in parameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                input,
+                new Rectangle(0, 0, size, size),
+                XnaColor.White);
+            spriteBatch.End();
+            graphicsDevice.SetRenderTarget(null);
+        }
+    }
+
+    [Fact]
+    public void FrescoGpuRunsSmoothedTensorAndAnisotropicKuwaharaComposite()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int size = 17;
+        const float alpha = 0.65f;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        using Texture2D source = new(
+            graphicsDevice,
+            size,
+            size,
+            false,
+            SurfaceFormat.HalfVector4);
+        HalfVector4[] sourcePixels =
+            new HalfVector4[size * size];
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float value = x < size / 2 ? 0.15f : 0.85f;
+                value += ((x + y) & 1) == 0 ? -0.08f : 0.08f;
+                sourcePixels[(y * size) + x] =
+                    new HalfVector4(
+                        new Vector4(
+                            value * alpha,
+                            value * alpha,
+                            value * alpha,
+                            alpha));
+            }
+        }
+        source.SetData(sourcePixels);
+
+        using RenderTarget2D tensor = CreateTarget();
+        using RenderTarget2D blurX = CreateTarget();
+        using RenderTarget2D blurY = CreateTarget();
+        using RenderTarget2D result = CreateTarget();
+        using RenderTarget2D texturedResult = CreateTarget();
+        RenderPass(source, tensor, source, 0, 1, 1, 0);
+        RenderPass(tensor, blurX, source, 5, 2, 0, 0);
+        RenderPass(blurX, blurY, source, 10, 0, 2, 0);
+        RenderPass(blurY, result, source, 15, 3, 3, 0);
+        RenderPass(blurY, texturedResult, source, 15, 3, 3, 8);
+
+        HalfVector4[] actual = new HalfVector4[size * size];
+        HalfVector4[] textured = new HalfVector4[size * size];
+        result.GetData(actual);
+        texturedResult.GetData(textured);
+        Assert.All(
+            actual,
+            pixel => Assert.InRange(
+                pixel.ToVector4().W,
+                alpha - 0.002f,
+                alpha + 0.002f));
+        Assert.Contains(
+            actual.Zip(sourcePixels),
+            pair => Vector4.Distance(
+                pair.First.ToVector4(),
+                pair.Second.ToVector4()) > 0.02f);
+        Assert.Contains(
+            actual.Zip(textured),
+            pair => Vector4.Distance(
+                pair.First.ToVector4(),
+                pair.Second.ToVector4()) > 0.005f);
+
+        RenderTarget2D CreateTarget() =>
+            new(
+                graphicsDevice,
+                size,
+                size,
+                mipMap: false,
+                SurfaceFormat.HalfVector4,
+                DepthFormat.None,
+                preferredMultiSampleCount: 0,
+                RenderTargetUsage.PreserveContents);
+
+        void RenderPass(
+            Texture2D input,
+            RenderTarget2D target,
+            Texture2D original,
+            float packedPass,
+            float radiusX,
+            float radiusY,
+            float texture)
+        {
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters parameters = new(
+                input,
+                1,
+                new Vector2(1f / size, 1f / size),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                FilterHeader = new Vector4(
+                    (int)PrismFilterId.Fresco,
+                    (int)PrismColorProfile.LinearSrgb,
+                    (int)PrismCatalogFilterPrimitive.Artistic,
+                    0),
+                FilterOptions0 = new Vector4(3, 0, 0, 0),
+                FilterOptions1 = new Vector4(8, 0, 0, 0),
+                FilterOptions2 = new Vector4(texture, 0, 0, 0),
+                FilterOptions9 = new Vector4(
+                    radiusX,
+                    radiusY,
+                    packedPass,
+                    (int)PrismBlendMode.Normal),
+                FilterAuxiliaryTexture = original
+            };
+            registry.Bind(registry.FrescoFilter, in parameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                input,
+                new Rectangle(0, 0, size, size),
+                XnaColor.White);
+            spriteBatch.End();
+            graphicsDevice.SetRenderTarget(null);
+        }
+    }
+
+    [Theory]
+    [InlineData(PrismFilterId.AccentedEdges)]
+    [InlineData(PrismFilterId.DarkStrokes)]
+    [InlineData(PrismFilterId.InkOutlines)]
+    public void XDogGpuMatchesTheCpuReference(PrismFilterId filter)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int width = 31;
+        const int height = 19;
+        const float alpha = 0.7f;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        float option0 = filter switch
+        {
+            PrismFilterId.AccentedEdges => 0,
+            PrismFilterId.InkOutlines => 20,
+            _ => 5
+        };
+        float option1 = filter == PrismFilterId.InkOutlines
+            ? 10
+            : filter == PrismFilterId.AccentedEdges ? 2 : 6;
+        float option2 = filter == PrismFilterId.InkOutlines
+            ? 4
+            : filter == PrismFilterId.AccentedEdges ? 5 : 2;
+        PrismPremultipliedColor[] sourceColors =
+            new PrismPremultipliedColor[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                double value = x < width / 2 ? 0.2 : 0.8;
+                sourceColors[(y * width) + x] =
+                    PrismPremultipliedColor.FromStraight(
+                        value,
+                        value,
+                        value,
+                        alpha);
+            }
+        }
+
+        using Texture2D source = new(
+            graphicsDevice,
+            width,
+            height,
+            false,
+            SurfaceFormat.HalfVector4);
+        source.SetData(sourceColors.Select(ToHalfVector).ToArray());
+        using RenderTarget2D horizontal = CreateTarget();
+        using RenderTarget2D vertical = CreateTarget();
+        using RenderTarget2D result = CreateTarget();
+        RenderPass(source, horizontal, 1);
+        RenderPass(horizontal, vertical, 6);
+        RenderPass(vertical, result, 8);
+
+        PrismCatalogFilterPlan plan = PrismCatalogFilterPlanner.Create(
+            filter,
+            [
+                new PrismGraphParameter(
+                    0,
+                    PrismGraphParameterValueKind.Number,
+                    numberValue: option0),
+                new PrismGraphParameter(
+                    1,
+                    PrismGraphParameterValueKind.Number,
+                    numberValue: option1),
+                new PrismGraphParameter(
+                    2,
+                    PrismGraphParameterValueKind.Number,
+                    numberValue: option2)
+            ],
+            PrismBlendMode.Normal,
+            1,
+            System.Numerics.Matrix3x2.Identity,
+            new DrawRect(0, 0, width, height));
+        PrismPremultipliedColor[] expected =
+            PrismCatalogFilterMath.Apply(
+                plan,
+                sourceColors,
+                width,
+                height,
+                PrismColorProfile.LinearSrgb);
+        HalfVector4[] actual = new HalfVector4[width * height];
+        result.GetData(actual);
+        double meanDifference = actual
+            .Select((pixel, index) =>
+            {
+                Vector4 value = pixel.ToVector4();
+                PrismPremultipliedColor reference = expected[index];
+                Assert.InRange(value.W, alpha - 0.002f, alpha + 0.002f);
+                Assert.InRange(value.X, 0, value.W);
+                Assert.InRange(value.Y, 0, value.W);
+                Assert.InRange(value.Z, 0, value.W);
+                return
+                    Math.Abs(value.X - reference.Red) +
+                    Math.Abs(value.Y - reference.Green) +
+                    Math.Abs(value.Z - reference.Blue);
+            })
+            .Average();
+        Assert.InRange(meanDifference, 0, 0.02);
+        Assert.Contains(
+            actual.Zip(sourceColors),
+            pair => Vector4.Distance(
+                pair.First.ToVector4(),
+                new Vector4(
+                    (float)pair.Second.Red,
+                    (float)pair.Second.Green,
+                    (float)pair.Second.Blue,
+                    (float)pair.Second.Alpha)) > 0.05f);
+
+        RenderTarget2D CreateTarget() =>
+            new(
+                graphicsDevice,
+                width,
+                height,
+                mipMap: false,
+                SurfaceFormat.HalfVector4,
+                DepthFormat.None,
+                preferredMultiSampleCount: 0,
+                RenderTargetUsage.PreserveContents);
+
+        void RenderPass(
+            Texture2D input,
+            RenderTarget2D target,
+            float packedPass)
+        {
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters parameters = new(
+                input,
+                1,
+                new Vector2(1f / width, 1f / height),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                FilterHeader = new Vector4(
+                    (int)filter,
+                    (int)PrismColorProfile.LinearSrgb,
+                    (int)PrismCatalogFilterPrimitive.Artistic,
+                    0),
+                FilterOptions0 = new Vector4(option0, 0, 0, 0),
+                FilterOptions1 = new Vector4(option1, 0, 0, 0),
+                FilterOptions2 = new Vector4(option2, 0, 0, 0),
+                FilterOptions3 = new Vector4(1, 1.6f, 2, 4),
+                FilterOptions9 = new Vector4(
+                    4,
+                    4,
+                    packedPass,
+                    (int)PrismBlendMode.Normal),
+                FilterAuxiliaryTexture = source
+            };
+            registry.Bind(registry.AccentedEdgesFilter, in parameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                input,
+                new Rectangle(0, 0, width, height),
+                XnaColor.White);
+            spriteBatch.End();
+            graphicsDevice.SetRenderTarget(null);
+        }
+    }
+
+    [Fact]
+    public void PosterEdgesGpuRunsGuidedFilterQuantizationAndInkComposite()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int width = 25;
+        const int height = 17;
+        const float alpha = 0.65f;
+        const float radius = 2;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        using Texture2D source = new(
+            graphicsDevice,
+            width,
+            height,
+            false,
+            SurfaceFormat.HalfVector4);
+        HalfVector4[] sourcePixels =
+            new HalfVector4[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                float value = x < width / 2 ? 0.2f : 0.8f;
+                value += ((x + y) & 1) == 0 ? -0.04f : 0.04f;
+                sourcePixels[(y * width) + x] =
+                    new HalfVector4(
+                        new Vector4(
+                            value * alpha,
+                            value * alpha,
+                            value * alpha,
+                            alpha));
+            }
+        }
+        source.SetData(sourcePixels);
+
+        using RenderTarget2D momentsX = CreateTarget();
+        using RenderTarget2D momentsY = CreateTarget();
+        using RenderTarget2D coefficients = CreateTarget();
+        using RenderTarget2D coefficientsX = CreateTarget();
+        using RenderTarget2D guided = CreateTarget();
+        using RenderTarget2D result = CreateTarget();
+        using RenderTarget2D noInk = CreateTarget();
+        RenderPass(source, momentsX, 1, radius, 0, 1);
+        RenderPass(momentsX, momentsY, 6, 0, radius, 1);
+        RenderPass(momentsY, coefficients, 8, 0, 0, 1);
+        RenderPass(coefficients, coefficientsX, 13, radius, 0, 1);
+        RenderPass(coefficientsX, guided, 18, 0, radius, 1);
+        RenderPass(guided, result, 20, radius, radius, 1);
+        RenderPass(guided, noInk, 20, radius, radius, 0);
+
+        HalfVector4[] actual = new HalfVector4[width * height];
+        HalfVector4[] noInkPixels = new HalfVector4[width * height];
+        result.GetData(actual);
+        noInk.GetData(noInkPixels);
+        Assert.All(
+            actual,
+            pixel =>
+            {
+                Vector4 value = pixel.ToVector4();
+                Assert.InRange(value.W, alpha - 0.002f, alpha + 0.002f);
+                Assert.True(float.IsFinite(value.X));
+                Assert.InRange(value.X, 0, value.W);
+                Assert.InRange(value.Y, 0, value.W);
+                Assert.InRange(value.Z, 0, value.W);
+            });
+        Assert.Contains(
+            actual.Zip(sourcePixels),
+            pair => Vector4.Distance(
+                pair.First.ToVector4(),
+                pair.Second.ToVector4()) > 0.05f);
+        Assert.True(
+            BoundaryMean(actual) <
+            BoundaryMean(noInkPixels));
+
+        RenderTarget2D CreateTarget() =>
+            new(
+                graphicsDevice,
+                width,
+                height,
+                mipMap: false,
+                SurfaceFormat.HalfVector4,
+                DepthFormat.None,
+                preferredMultiSampleCount: 0,
+                RenderTargetUsage.PreserveContents);
+
+        void RenderPass(
+            Texture2D input,
+            RenderTarget2D target,
+            float packedPass,
+            float radiusX,
+            float radiusY,
+            float edgeIntensity)
+        {
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters parameters = new(
+                input,
+                1,
+                new Vector2(1f / width, 1f / height),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                FilterHeader = new Vector4(
+                    (int)PrismFilterId.PosterEdges,
+                    (int)PrismColorProfile.LinearSrgb,
+                    (int)PrismCatalogFilterPrimitive.Artistic,
+                    0),
+                FilterOptions0 = new Vector4(
+                    edgeIntensity,
+                    0,
+                    0,
+                    0),
+                FilterOptions1 = new Vector4(radius, 0, 0, 0),
+                FilterOptions2 = new Vector4(4, 0, 0, 0),
+                FilterOptions9 = new Vector4(
+                    radiusX,
+                    radiusY,
+                    packedPass,
+                    (int)PrismBlendMode.Normal),
+                FilterAuxiliaryTexture = source
+            };
+            registry.Bind(registry.PosterEdgesFilter, in parameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                input,
+                new Rectangle(0, 0, width, height),
+                XnaColor.White);
+            spriteBatch.End();
+            graphicsDevice.SetRenderTarget(null);
+        }
+
+        static float BoundaryMean(HalfVector4[] pixels) =>
+            pixels
+                .Where((_, index) =>
+                    index % width is 11 or 12 or 13)
+                .Average(pixel =>
+                {
+                    Vector4 value = pixel.ToVector4();
+                    return value.W <= 0
+                        ? 0
+                        : value.X / value.W;
+                });
+    }
+
+    [Fact]
+    public void BasReliefGpuMatchesCpuAndReversesDirectionalShading()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int width = 25;
+        const int height = 17;
+        const float alpha = 0.65f;
+        const float radius = 3;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        using Texture2D source = new(
+            graphicsDevice,
+            width,
+            height,
+            false,
+            SurfaceFormat.HalfVector4);
+        PrismPremultipliedColor[] cpuSource =
+            new PrismPremultipliedColor[width * height];
+        HalfVector4[] sourcePixels =
+            new HalfVector4[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                float value = x < width / 2 ? 0.2f : 0.8f;
+                value += ((x + y) & 1) == 0 ? -0.04f : 0.04f;
+                int index = (y * width) + x;
+                cpuSource[index] =
+                    PrismPremultipliedColor.FromStraight(
+                        value,
+                        value,
+                        value,
+                        alpha);
+                sourcePixels[index] = new HalfVector4(
+                    new Vector4(
+                        value * alpha,
+                        value * alpha,
+                        value * alpha,
+                        alpha));
+            }
+        }
+        source.SetData(sourcePixels);
+
+        HalfVector4[] left = RenderRelief(lightDirection: 6);
+        HalfVector4[] right = RenderRelief(lightDirection: 2);
+        PrismCatalogFilterPlan cpuPlan =
+            PrismCatalogFilterPlanner.Create(
+                PrismFilterId.BasRelief,
+                [
+                    new PrismGraphParameter(
+                        0,
+                        PrismGraphParameterValueKind.Color,
+                        colorValue: CernealaColor.White),
+                    new PrismGraphParameter(
+                        1,
+                        PrismGraphParameterValueKind.Number,
+                        numberValue: 13),
+                    new PrismGraphParameter(
+                        2,
+                        PrismGraphParameterValueKind.Color,
+                        colorValue: CernealaColor.Black),
+                    new PrismGraphParameter(
+                        3,
+                        PrismGraphParameterValueKind.Symbol,
+                        integerValue: PrismCatalogRuntime.ResolveSymbol(
+                            "LightDirection",
+                            "Left")),
+                    new PrismGraphParameter(
+                        4,
+                        PrismGraphParameterValueKind.Number,
+                        numberValue: 3)
+                ],
+                PrismBlendMode.Normal,
+                pixelScale: 1,
+                System.Numerics.Matrix3x2.Identity,
+                new DrawRect(0, 0, width, height));
+        PrismPremultipliedColor[] expected =
+            PrismCatalogFilterMath.Apply(
+                cpuPlan,
+                cpuSource,
+                width,
+                height,
+                PrismColorProfile.LinearSrgb);
+
+        Assert.True(BoundaryMean(left) > BoundaryMean(right));
+        for (int index = 0; index < expected.Length; index++)
+        {
+            AssertHalfVectorWithin(
+                left[index],
+                expected[index],
+                tolerance: 0.025,
+                context: $"BasRelief pixel {index}");
+        }
+
+        HalfVector4[] RenderRelief(float lightDirection)
+        {
+            using RenderTarget2D momentsX = CreateTarget();
+            using RenderTarget2D momentsY = CreateTarget();
+            using RenderTarget2D coefficients = CreateTarget();
+            using RenderTarget2D coefficientsX = CreateTarget();
+            using RenderTarget2D guided = CreateTarget();
+            using RenderTarget2D result = CreateTarget();
+            RenderPass(source, momentsX, 1, radius, 0, lightDirection);
+            RenderPass(momentsX, momentsY, 6, 0, radius, lightDirection);
+            RenderPass(momentsY, coefficients, 8, 0, 0, lightDirection);
+            RenderPass(
+                coefficients,
+                coefficientsX,
+                13,
+                radius,
+                0,
+                lightDirection);
+            RenderPass(
+                coefficientsX,
+                guided,
+                18,
+                0,
+                radius,
+                lightDirection);
+            RenderPass(guided, result, 20, 1, 1, lightDirection);
+            HalfVector4[] pixels = new HalfVector4[width * height];
+            result.GetData(pixels);
+            return pixels;
+        }
+
+        RenderTarget2D CreateTarget() =>
+            new(
+                graphicsDevice,
+                width,
+                height,
+                mipMap: false,
+                SurfaceFormat.HalfVector4,
+                DepthFormat.None,
+                preferredMultiSampleCount: 0,
+                RenderTargetUsage.PreserveContents);
+
+        void RenderPass(
+            Texture2D input,
+            RenderTarget2D target,
+            float packedPass,
+            float radiusX,
+            float radiusY,
+            float lightDirection)
+        {
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters parameters = new(
+                input,
+                1,
+                new Vector2(1f / width, 1f / height),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                FilterHeader = new Vector4(
+                    (int)PrismFilterId.BasRelief,
+                    (int)PrismColorProfile.LinearSrgb,
+                    (int)PrismCatalogFilterPrimitive.EdgeDetection,
+                    0),
+                FilterOptions0 = Vector4.One,
+                FilterOptions1 = new Vector4(13, 0, 0, 0),
+                FilterOptions2 = new Vector4(0, 0, 0, 1),
+                FilterOptions3 = new Vector4(lightDirection, 0, 0, 0),
+                FilterOptions4 = new Vector4(3, 0, 0, 0),
+                FilterOptions9 = new Vector4(
+                    radiusX,
+                    radiusY,
+                    packedPass,
+                    (int)PrismBlendMode.Normal),
+                FilterAuxiliaryTexture = source
+            };
+            registry.Bind(registry.BasReliefFilter, in parameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                input,
+                new Rectangle(0, 0, width, height),
+                XnaColor.White);
+            spriteBatch.End();
+            graphicsDevice.SetRenderTarget(null);
+        }
+
+        static float BoundaryMean(HalfVector4[] pixels) =>
+            pixels
+                .Where((_, index) =>
+                    index % width is 11 or 12 or 13)
+                .Average(pixel =>
+                {
+                    Vector4 value = pixel.ToVector4();
+                    return value.W <= 0
+                        ? 0
+                        : value.X / value.W;
+                });
+    }
+
+    [Fact]
+    public void CutoutGpuRunsBoundedMeanShiftAndQuantizesOnce()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int width = 17;
+        const int height = 9;
+        const float alpha = 0.6f;
+        const float levels = 8;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        using Texture2D source = new(
+            graphicsDevice,
+            width,
+            height,
+            false,
+            SurfaceFormat.HalfVector4);
+        HalfVector4[] sourcePixels =
+            new HalfVector4[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                bool leftRegion = x < width / 2;
+                float noise =
+                    ((((x * 3) + (y * 5)) % 7) - 3) * 0.018f;
+                Vector3 straight = leftRegion
+                    ? new Vector3(
+                        0.18f + noise,
+                        0.45f - (noise * 0.5f),
+                        0.72f + (noise * 0.3f))
+                    : new Vector3(
+                        0.78f + noise,
+                        0.28f - (noise * 0.3f),
+                        0.14f - (noise * 0.5f));
+                sourcePixels[(y * width) + x] =
+                    new HalfVector4(
+                        new Vector4(straight * alpha, alpha));
+            }
+        }
+        source.SetData(sourcePixels);
+
+        using RenderTarget2D shift0 = CreateTarget();
+        using RenderTarget2D shift1 = CreateTarget();
+        using RenderTarget2D result = CreateTarget();
+        using RenderTarget2D originalResult = CreateTarget();
+        RenderPass(source, shift0, packedPass: 3, opacity: 1);
+        RenderPass(shift0, shift1, packedPass: 7, opacity: 1);
+        RenderPass(shift1, result, packedPass: 8, opacity: 1);
+        RenderPass(
+            shift1,
+            originalResult,
+            packedPass: 8,
+            opacity: 0);
+
+        HalfVector4[] actual = new HalfVector4[width * height];
+        HalfVector4[] opacityZero = new HalfVector4[width * height];
+        result.GetData(actual);
+        originalResult.GetData(opacityZero);
+        Assert.All(
+            actual,
+            pixel =>
+            {
+                Vector4 color = pixel.ToVector4();
+                Assert.InRange(
+                    color.W,
+                    alpha - 0.002f,
+                    alpha + 0.002f);
+                Vector3 straight =
+                    new(color.X, color.Y, color.Z);
+                straight /= color.W;
+                Assert.InRange(
+                    MathF.Abs(
+                        (straight.X * (levels - 1)) -
+                        MathF.Round(straight.X * (levels - 1))),
+                    0,
+                    0.01f);
+                Assert.InRange(
+                    MathF.Abs(
+                        (straight.Y * (levels - 1)) -
+                        MathF.Round(straight.Y * (levels - 1))),
+                    0,
+                    0.01f);
+                Assert.InRange(
+                    MathF.Abs(
+                        (straight.Z * (levels - 1)) -
+                        MathF.Round(straight.Z * (levels - 1))),
+                    0,
+                    0.01f);
+            });
+        Assert.Contains(
+            actual.Zip(sourcePixels),
+            pair => Vector4.Distance(
+                pair.First.ToVector4(),
+                pair.Second.ToVector4()) > 0.02f);
+        Assert.All(
+            opacityZero.Zip(sourcePixels),
+            pair => Assert.True(
+                Vector4.Distance(
+                    pair.First.ToVector4(),
+                    pair.Second.ToVector4()) < 0.003f));
+
+        RenderTarget2D CreateTarget() =>
+            new(
+                graphicsDevice,
+                width,
+                height,
+                mipMap: false,
+                SurfaceFormat.HalfVector4,
+                DepthFormat.None,
+                preferredMultiSampleCount: 0,
+                RenderTargetUsage.PreserveContents);
+
+        void RenderPass(
+            Texture2D input,
+            RenderTarget2D target,
+            float packedPass,
+            float opacity)
+        {
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters parameters = new(
+                input,
+                opacity,
+                new Vector2(1f / width, 1f / height),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                FilterHeader = new Vector4(
+                    (int)PrismFilterId.Cutout,
+                    (int)PrismColorProfile.LinearSrgb,
+                    (int)PrismCatalogFilterPrimitive.Artistic,
+                    0),
+                FilterOptions0 =
+                    new Vector4(levels, 0, 0, 0),
+                FilterOptions1 = new Vector4(4, 0, 0, 0),
+                FilterOptions2 = new Vector4(3, 0, 0, 0),
+                FilterOptions9 = new Vector4(
+                    4,
+                    4,
+                    packedPass,
+                    (int)PrismBlendMode.Normal),
+                FilterAuxiliaryTexture = source
+            };
+            registry.Bind(registry.CutoutFilter, in parameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                input,
+                new Rectangle(0, 0, width, height),
+                XnaColor.White);
+            spriteBatch.End();
+            graphicsDevice.SetRenderTarget(null);
+        }
+    }
+
+    [Fact]
+    public void LightingEffectsGpuUsesPackedLightsHeightNormalsAndExposure()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int size = 7;
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        using Texture2D source = new(
+            graphicsDevice,
+            size,
+            size,
+            false,
+            SurfaceFormat.HalfVector4);
+        source.SetData(
+            Enumerable.Repeat(
+                    new HalfVector4(
+                        new Vector4(0.28f, 0.12f, 0.04f, 0.4f)),
+                    size * size)
+                .ToArray());
+        using Texture2D height = new(
+            graphicsDevice,
+            size,
+            size,
+            false,
+            SurfaceFormat.HalfVector4);
+        height.SetData(
+            Enumerable.Range(0, size * size)
+                .Select(index =>
+                {
+                    float value =
+                        (index % size) / (float)(size - 1);
+                    return new HalfVector4(
+                        new Vector4(value, value, value, 1));
+                })
+                .ToArray());
+        using RenderTarget2D flatTarget = CreateTarget();
+        using RenderTarget2D reliefTarget = CreateTarget();
+        using RenderTarget2D exposedTarget = CreateTarget();
+        Vector4[] packedLights = new Vector4[24];
+        packedLights[0] = new Vector4(0, 1.5f, 0, 0);
+        packedLights[1] = Vector4.Normalize(
+            new Vector4(0.6f, -0.2f, 1, 0));
+        packedLights[2] = new Vector4(1, 0.8f, 0.6f, 0);
+
+        HalfVector4[] flat = Render(flatTarget, 0, 0);
+        HalfVector4[] relief = Render(reliefTarget, 8, 0);
+        HalfVector4[] exposed = Render(exposedTarget, 8, 1);
+
+        Assert.Contains(
+            flat.Zip(relief),
+            pair =>
+                Vector4.Distance(
+                    pair.First.ToVector4(),
+                    pair.Second.ToVector4()) > 0.01f);
+        int center = ((size / 2) * size) + (size / 2);
+        Assert.True(
+            exposed[center].ToVector4().X >
+            relief[center].ToVector4().X);
+        Assert.All(
+            relief,
+            pixel =>
+            {
+                Vector4 value = pixel.ToVector4();
+                Assert.True(
+                    float.IsFinite(value.X) &&
+                    float.IsFinite(value.Y) &&
+                    float.IsFinite(value.Z) &&
+                    float.IsFinite(value.W));
+                Assert.InRange(value.W, 0.399f, 0.401f);
+                Assert.InRange(value.X, 0, value.W);
+                Assert.InRange(value.Y, 0, value.W);
+                Assert.InRange(value.Z, 0, value.W);
+            });
+
+        RenderTarget2D CreateTarget() =>
+            new(
+                graphicsDevice,
+                size,
+                size,
+                mipMap: false,
+                SurfaceFormat.HalfVector4,
+                DepthFormat.None,
+                preferredMultiSampleCount: 0,
+                RenderTargetUsage.PreserveContents);
+
+        HalfVector4[] Render(
+            RenderTarget2D target,
+            float textureHeight,
+            float exposure)
+        {
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters parameters = new(
+                source,
+                1,
+                new Vector2(1f / size, 1f / size),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                FilterHeader = new Vector4(
+                    (int)PrismFilterId.LightingEffects,
+                    (int)PrismColorProfile.LinearSrgb,
+                    (int)PrismCatalogFilterPrimitive.Procedural,
+                    2),
+                FilterOptions1 = new Vector4(0.05f, 0, 0, 0),
+                FilterOptions2 = new Vector4(0.25f, 0, 0, 0),
+                FilterOptions3 = new Vector4(0.8f, 0, 0, 0),
+                FilterOptions4 = new Vector4(exposure, 0, 0, 0),
+                FilterOptions6 = new Vector4(
+                    textureHeight,
+                    0,
+                    0,
+                    0),
+                FilterOptions9 = new Vector4(
+                    0,
+                    0,
+                    0,
+                    (int)PrismBlendMode.Normal),
+                FilterAuxiliaryTexture = height,
+                FilterLightCount = 1,
+                FilterLights = packedLights
+            };
+            registry.Bind(
+                registry.LightingEffectsFilter,
+                in parameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                source,
+                new Rectangle(0, 0, size, size),
+                XnaColor.White);
+            spriteBatch.End();
+            graphicsDevice.SetRenderTarget(null);
+            HalfVector4[] pixels = new HalfVector4[size * size];
+            target.GetData(pixels);
+            return pixels;
+        }
     }
 
     [Fact]
@@ -421,6 +2193,296 @@ public sealed class PrismGraphExecutorTests
     }
 
     [Fact]
+    public void TransformExecutionUsesMipmappedAnisotropicSampling()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using TestPrismRenderer renderer = new(
+            graphicsDevice,
+            SurfaceWidth,
+            SurfaceHeight);
+        using PrismGraphExecutor executor = new(graphicsDevice);
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Transform",
+            filters: [new PrismFilterDefinition(PrismFilterId.Transform)]);
+        PrismCompositionDefinition composition =
+            PrismTestData.Composition("Transform", layer);
+        PrismInstance instance = new(composition);
+        instance.GetLayerState(new PrismNodeId(1))
+            .Filters
+            .Single()
+            .SetValue(
+                PrismCatalog.GetFilter(PrismFilterId.Transform)
+                    .Parameters
+                    .Single(parameter => parameter.Name == "Scale"),
+                new System.Numerics.Vector4(0.25f, 0.25f, 0, 0));
+        PrismDrawScope scope = new(
+            instance,
+            new PrismCacheOwnerToken(1),
+            new DrawRect(0, 0, SurfaceWidth, SurfaceHeight),
+            System.Numerics.Matrix3x2.Identity,
+            1,
+            1,
+            PrismDrawResources.Empty);
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.BeginPrism(scope));
+        for (int y = 0; y < SurfaceHeight; y++)
+        {
+            for (int x = 0; x < SurfaceWidth; x++)
+            {
+                commands.Add(DrawCommand.FillRectangle(
+                    new DrawRect(x, y, 1, 1),
+                    (x + y) % 2 == 0
+                        ? CernealaColor.White
+                        : new CernealaColor(0, 0, 0, 255)));
+            }
+        }
+        commands.Add(DrawCommand.EndPrism());
+        PrismFrameAnalysis analysis =
+            new PrismFrameAnalyzer().Analyze(commands);
+        PrismGraphExecutionPlan plan =
+            new PrismGraphOptimizer().Optimize(
+                new PrismGraphBuilder().Build(analysis));
+
+        ExecuteFrame(
+            renderer,
+            executor,
+            commands,
+            analysis,
+            plan,
+            new Viewport(0, 0, SurfaceWidth, SurfaceHeight));
+
+        Assert.True(renderer.UsedAnisotropicKernelSampler);
+        Assert.Equal(0, executor.Diagnostics.Count);
+        XnaColor center = renderer.ReadCenterPixel();
+        Assert.InRange(center.R, 70, 200);
+        Assert.Equal(center.R, center.G);
+        Assert.Equal(center.R, center.B);
+    }
+
+    [Fact]
+    public void ChannelMixerGpuMatchesCpuLinearRgbMatrixAcrossProfiles()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        PrismAdjustmentPlan matrix = new(
+            PrismFilterId.ChannelMixer,
+            PrismAdjustmentOperation.ChannelMixer,
+            PrismBlendMode.Normal)
+        {
+            Parameters0 = new System.Numerics.Vector4(
+                0.5f, 0.25f, 0.1f, 0),
+            Parameters1 = new System.Numerics.Vector4(
+                0.2f, 0.6f, 0.1f, 0),
+            Parameters2 = new System.Numerics.Vector4(
+                0.1f, 0.3f, 0.5f, 0),
+            Parameters3 = new System.Numerics.Vector4(
+                0.05f, 0.1f, 0, 0)
+        };
+        PrismPremultipliedColor[] input =
+        [
+            PrismPremultipliedColor.FromStraight(
+                0.2, 0.4, 0.6, 0.5),
+            PrismPremultipliedColor.FromStraight(
+                0.7, 0.1, 0.3, 1),
+            default
+        ];
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+
+        Assert.True(
+            registry.TryGetFilterKernel(
+                PrismFilterId.ChannelMixer,
+                out PrismKernel kernel));
+        Assert.Equal(PrismKernelKind.AdjustmentFilter, kernel.Kind);
+
+        foreach (PrismColorProfile profile in
+            Enum.GetValues<PrismColorProfile>())
+        {
+            PrismPremultipliedColor[] working = input
+                .Select(color => PrismColorPipeline.ConvertInputToWorking(
+                    color,
+                    profile))
+                .ToArray();
+            using Texture2D source = CreateHalfVectorTexture(
+                graphicsDevice,
+                working);
+            using RenderTarget2D output = CreateTarget(
+                graphicsDevice,
+                working.Length,
+                SurfaceFormat.HalfVector4);
+
+            foreach (bool monochrome in new[] { false, true })
+            {
+                PrismAdjustmentPlan plan = matrix with
+                {
+                    Parameters4 = new System.Numerics.Vector4(
+                        monochrome ? 1 : 0,
+                        0,
+                        0,
+                        0)
+                };
+                graphicsDevice.SetRenderTarget(output);
+                graphicsDevice.Clear(XnaColor.Transparent);
+                PrismKernelParameters parameters = new(
+                    source,
+                    1,
+                    new Vector2(1f / working.Length, 1),
+                    Vector2.One,
+                    Vector2.Zero)
+                {
+                    FilterHeader = new Microsoft.Xna.Framework.Vector4(
+                        (int)PrismAdjustmentOperation.ChannelMixer,
+                        (int)profile,
+                        (int)PrismBlendMode.Normal,
+                        0),
+                    FilterOptions0 = ToXnaVector4(plan.Parameters0),
+                    FilterOptions1 = ToXnaVector4(plan.Parameters1),
+                    FilterOptions2 = ToXnaVector4(plan.Parameters2),
+                    FilterOptions3 = ToXnaVector4(plan.Parameters3),
+                    FilterOptions4 = ToXnaVector4(plan.Parameters4),
+                    FilterTextureSize = new Vector2(
+                        working.Length,
+                        1)
+                };
+                registry.Bind(kernel, in parameters);
+                spriteBatch.Begin(
+                    SpriteSortMode.Immediate,
+                    BlendState.Opaque,
+                    SamplerState.LinearClamp,
+                    DepthStencilState.None,
+                    RasterizerState.CullNone,
+                    registry.Effect);
+                spriteBatch.Draw(
+                    source,
+                    new Rectangle(0, 0, working.Length, 1),
+                    XnaColor.White);
+                spriteBatch.End();
+                graphicsDevice.SetRenderTarget(null);
+                HalfVector4[] actual = new HalfVector4[working.Length];
+                output.GetData(actual);
+
+                for (int index = 0; index < working.Length; index++)
+                {
+                    AssertHalfVectorWithin(
+                        actual[index],
+                        PrismAdjustmentMath.Apply(
+                            plan,
+                            working[index],
+                            profile),
+                        tolerance: 0.003,
+                        $"{profile} monochrome={monochrome} " +
+                            $"sample {index}");
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public void PosterizeGpuMatchesCpuUniformLinearRgbQuantizationAcrossProfiles()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        PrismAdjustmentPlan plan = new(
+            PrismFilterId.Posterize,
+            PrismAdjustmentOperation.Posterize,
+            PrismBlendMode.Normal)
+        {
+            Parameters0 = new System.Numerics.Vector4(5, 0, 0, 0)
+        };
+        PrismPremultipliedColor[] input =
+        [
+            PrismPremultipliedColor.FromStraight(0, 0.376, 1, 0.4),
+            PrismPremultipliedColor.FromStraight(0.12, 0.13, 0.62, 1),
+            default
+        ];
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        Assert.True(registry.TryGetFilterKernel(
+            PrismFilterId.Posterize,
+            out PrismKernel kernel));
+
+        foreach (PrismColorProfile profile in
+            Enum.GetValues<PrismColorProfile>())
+        {
+            PrismPremultipliedColor[] working = input
+                .Select(color => PrismColorPipeline.ConvertInputToWorking(
+                    color,
+                    profile))
+                .ToArray();
+            using Texture2D source = CreateHalfVectorTexture(
+                graphicsDevice,
+                working);
+            using RenderTarget2D output = CreateTarget(
+                graphicsDevice,
+                working.Length,
+                SurfaceFormat.HalfVector4);
+            graphicsDevice.SetRenderTarget(output);
+            graphicsDevice.Clear(XnaColor.Transparent);
+            PrismKernelParameters parameters = new(
+                source,
+                0.5f,
+                new Vector2(1f / working.Length, 1),
+                Vector2.One,
+                Vector2.Zero)
+            {
+                FilterHeader = new Vector4(
+                    (int)PrismAdjustmentOperation.Posterize,
+                    (int)profile,
+                    (int)PrismBlendMode.Normal,
+                    0),
+                FilterOptions0 = ToXnaVector4(plan.Parameters0),
+                FilterTextureSize = new Vector2(working.Length, 1)
+            };
+            registry.Bind(kernel, in parameters);
+            spriteBatch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                registry.Effect);
+            spriteBatch.Draw(
+                source,
+                new Rectangle(0, 0, working.Length, 1),
+                XnaColor.White);
+            spriteBatch.End();
+            graphicsDevice.SetRenderTarget(null);
+            HalfVector4[] actual = new HalfVector4[working.Length];
+            output.GetData(actual);
+
+            for (int index = 0; index < working.Length; index++)
+            {
+                AssertHalfVectorWithin(
+                    actual[index],
+                    PrismAdjustmentMath.Apply(
+                        plan,
+                        working[index],
+                        profile,
+                        opacity: 0.5f),
+                    tolerance: 0.003,
+                    $"{profile} sample {index}");
+            }
+        }
+    }
+
+    [Fact]
     public void ResamplingTransformGpuMapsTranslationAndTransparentEdges()
     {
         if (!OperatingSystem.IsWindows())
@@ -537,6 +2599,143 @@ public sealed class PrismGraphExecutorTests
     }
 
     [Fact]
+    public void SpherizeGpuMatchesCpuOrthographicProjection()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const int width = 17;
+        const int height = 9;
+        PrismPremultipliedColor[] sourcePixels =
+            new PrismPremultipliedColor[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                sourcePixels[(y * width) + x] =
+                    PrismPremultipliedColor.FromStraight(
+                        x / (double)(width - 1),
+                        y / (double)(height - 1),
+                        (x + y) /
+                            (double)(width + height - 2),
+                        1);
+            }
+        }
+
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice =
+            fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry =
+            new(graphicsDevice);
+        using SpriteBatch spriteBatch =
+            new(graphicsDevice);
+        using Texture2D source = new(
+            graphicsDevice,
+            width,
+            height,
+            false,
+            SurfaceFormat.HalfVector4);
+        source.SetData(
+            sourcePixels
+                .Select(ToHalfVector)
+                .ToArray());
+        using RenderTarget2D output = new(
+            graphicsDevice,
+            width,
+            height,
+            mipMap: false,
+            SurfaceFormat.HalfVector4,
+            DepthFormat.None,
+            preferredMultiSampleCount: 0,
+            RenderTargetUsage.PreserveContents);
+        Assert.True(
+            registry.TryGetFilterKernel(
+                PrismFilterId.Spherize,
+                out PrismKernel kernel));
+
+        foreach (float amount in new[] { -1f, 1f })
+        {
+            for (int mode = 0; mode <= 2; mode++)
+            {
+                System.Numerics.Vector4 options =
+                    new(amount, mode, 0.4f, 0.6f);
+                PrismResamplingPlan plan = new(
+                    PrismFilterId.Spherize,
+                    PrismResamplingOperation.Spherize,
+                    PrismBlendMode.Normal,
+                    [
+                        new PrismResamplingPass(
+                            PrismResamplingPassKind.Direct,
+                            IsNoOp: false)
+                    ])
+                {
+                    Options0 = options
+                };
+                PrismPremultipliedColor[] expected =
+                    PrismResamplingMath.Apply(
+                        plan,
+                        sourcePixels,
+                        width,
+                        height,
+                        PrismColorProfile.LinearSrgb);
+
+                graphicsDevice.SetRenderTarget(output);
+                graphicsDevice.Clear(XnaColor.Transparent);
+                PrismKernelParameters parameters = new(
+                    source,
+                    1,
+                    new Vector2(1f / width, 1f / height),
+                    Vector2.One,
+                    Vector2.Zero)
+                {
+                    FilterHeader = new Vector4(
+                        (int)PrismResamplingOperation.Spherize,
+                        (int)PrismColorProfile.LinearSrgb,
+                        (int)PrismResamplingPassKind.Direct,
+                        0),
+                    FilterOptions0 = ToXnaVector4(options),
+                    FilterOptions9 = new Vector4(
+                        0,
+                        0,
+                        0,
+                        (int)PrismBlendMode.Normal),
+                    FilterTextureSize = new Vector2(width, height)
+                };
+                registry.Bind(kernel, in parameters);
+                spriteBatch.Begin(
+                    SpriteSortMode.Immediate,
+                    BlendState.Opaque,
+                    SamplerState.LinearClamp,
+                    DepthStencilState.None,
+                    RasterizerState.CullNone,
+                    registry.Effect);
+                spriteBatch.Draw(
+                    source,
+                    new Rectangle(0, 0, width, height),
+                    XnaColor.White);
+                spriteBatch.End();
+                graphicsDevice.SetRenderTarget(null);
+                HalfVector4[] actual =
+                    new HalfVector4[width * height];
+                output.GetData(actual);
+
+                for (int index = 0;
+                    index < actual.Length;
+                    index++)
+                {
+                    AssertHalfVectorWithin(
+                        actual[index],
+                        expected[index],
+                        tolerance: 0.004,
+                        $"amount={amount} mode={mode} sample={index}");
+                }
+            }
+        }
+    }
+
+    [Fact]
     public void NeighborhoodNoiseGpuIsDeterministicAndUsesPreparedSeed()
     {
         if (!OperatingSystem.IsWindows())
@@ -544,7 +2743,7 @@ public sealed class PrismGraphExecutorTests
             return;
         }
 
-        const int width = 32;
+        const int width = 256;
         using WindowsDxFixture fixture = new();
         GraphicsDevice graphicsDevice =
             fixture.Session.GraphicsDevice;
@@ -574,9 +2773,18 @@ public sealed class PrismGraphExecutorTests
         HalfVector4[] first = DrawNoise(seed: 41);
         HalfVector4[] repeated = DrawNoise(seed: 41);
         HalfVector4[] changed = DrawNoise(seed: 42);
+        HalfVector4[] highSeedChanged = DrawNoise(seed: 41 + 65536);
+        HalfVector4[] gaussian = DrawNoise(seed: 41, gaussian: true);
 
         Assert.Equal(first, repeated);
         Assert.False(first.SequenceEqual(changed));
+        Assert.False(first.SequenceEqual(highSeedChanged));
+        Assert.Contains(
+            gaussian,
+            pixel => MathF.Abs(pixel.ToVector4().X - 0.5f) > 0.4f);
+        Assert.DoesNotContain(
+            first,
+            pixel => MathF.Abs(pixel.ToVector4().X - 0.5f) > 0.201f);
         Assert.All(
             first,
             pixel =>
@@ -592,7 +2800,7 @@ public sealed class PrismGraphExecutorTests
                     0.001f);
             });
 
-        HalfVector4[] DrawNoise(int seed)
+        HalfVector4[] DrawNoise(int seed, bool gaussian = false)
         {
             graphicsDevice.SetRenderTarget(output);
             graphicsDevice.Clear(XnaColor.Transparent);
@@ -610,7 +2818,7 @@ public sealed class PrismGraphExecutorTests
                     0),
                 FilterOptions0 = new Vector4(
                     0.2f,
-                    0,
+                    gaussian ? 1 : 0,
                     1,
                     seed & 0xffff),
                 FilterOptions1 = new Vector4(
@@ -951,6 +3159,83 @@ public sealed class PrismGraphExecutorTests
                 tolerance: 0.003,
                 item.Name);
         }
+    }
+
+    [Fact]
+    public void PrismBlendGpuMatchesDualBackdropKnockoutRecurrence()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        PrismPremultipliedColor originalBackdrop =
+            Premultiply(0.1, 0.2, 0.3, 0.4);
+        PrismPremultipliedColor currentBackdrop = new(
+            0.42,
+            0.09,
+            0.16,
+            0.7);
+        PrismPremultipliedColor sourceColor =
+            Premultiply(0.2, 0.9, 0.5, 0.4);
+        PrismPremultipliedColor shapeColor = new(0, 0, 0, 0.8);
+        PrismBlendOptions options = PrismBlendOptions.Default with
+        {
+            Knockout = PrismKnockout.Deep
+        };
+        using WindowsDxFixture fixture = new();
+        GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+        using PrismKernelRegistry registry = new(graphicsDevice);
+        using SpriteBatch spriteBatch = new(graphicsDevice);
+        using Texture2D source = CreateHalfVectorTexture(
+            graphicsDevice,
+            [sourceColor]);
+        using Texture2D current = CreateHalfVectorTexture(
+            graphicsDevice,
+            [currentBackdrop]);
+        using Texture2D original = CreateHalfVectorTexture(
+            graphicsDevice,
+            [originalBackdrop]);
+        using Texture2D shape = CreateHalfVectorTexture(
+            graphicsDevice,
+            [shapeColor]);
+        using RenderTarget2D output = CreateTarget(
+            graphicsDevice,
+            1,
+            SurfaceFormat.HalfVector4);
+        Assert.True(
+            registry.TryGetBlendKernel(
+                PrismBlendMode.Multiply,
+                out PrismKernel kernel));
+
+        DrawKernel(
+            graphicsDevice,
+            spriteBatch,
+            registry,
+            kernel,
+            source,
+            current,
+            output,
+            1,
+            options,
+            knockoutBackdrop: original,
+            knockoutShape: shape);
+        graphicsDevice.SetRenderTarget(null);
+        HalfVector4[] actual = new HalfVector4[1];
+        output.GetData(actual);
+        PrismPremultipliedColor expected =
+            PrismBlendMath.CompositeKnockout(
+                PrismBlendMode.Multiply,
+                sourceColor,
+                currentBackdrop,
+                originalBackdrop,
+                sourceShape: 0.8);
+
+        AssertHalfVectorWithin(
+            actual[0],
+            expected,
+            tolerance: 0.003,
+            "dual-backdrop knockout");
     }
 
     [Fact]
@@ -3259,7 +5544,9 @@ public sealed class PrismGraphExecutorTests
         RenderTarget2D target,
         float opacity,
         PrismBlendOptions? blendOptions = null,
-        bool backgroundAvailable = true)
+        bool backgroundAvailable = true,
+        Texture2D? knockoutBackdrop = null,
+        Texture2D? knockoutShape = null)
     {
         graphicsDevice.SetRenderTarget(target);
         graphicsDevice.Clear(XnaColor.Transparent);
@@ -3276,6 +5563,11 @@ public sealed class PrismGraphExecutorTests
         {
             BlendChannels = ToBlendChannels(options.BlendChannels),
             KnockoutMode = (float)options.Knockout,
+            KnockoutBackdropTexture =
+                knockoutBackdrop ?? secondary,
+            KnockoutShapeTexture =
+                knockoutShape ?? source,
+            KnockoutBackdropAvailable = 1,
             BlendIfChannel = (float)options.BlendIfChannel,
             ThisLayerRange = ToBlendRange(options.ThisLayerRange),
             UnderlyingRange =
@@ -3381,6 +5673,10 @@ public sealed class PrismGraphExecutorTests
                 (float)color.Blue,
                 (float)color.Alpha));
     }
+
+    private static Microsoft.Xna.Framework.Vector4 ToXnaVector4(
+        System.Numerics.Vector4 value) =>
+        new(value.X, value.Y, value.Z, value.W);
 
     private static Vector4 ToBlendChannels(
         PrismBlendChannels channels)
@@ -3574,6 +5870,8 @@ public sealed class PrismGraphExecutorTests
 
         public int RenderedCommandCount { get; private set; }
 
+        public bool UsedAnisotropicKernelSampler { get; private set; }
+
         public bool ThrowOnNextRenderCommand { get; set; }
 
         public void BeginFrame()
@@ -3614,9 +5912,14 @@ public sealed class PrismGraphExecutorTests
 
         public void BeginKernelBatch(
             Effect effect,
-            BlendState blendState)
+            BlendState blendState,
+            SamplerState samplerState)
         {
-            BeginBatch(effect, blendState);
+            UsedAnisotropicKernelSampler |=
+                ReferenceEquals(
+                    samplerState,
+                    SamplerState.AnisotropicClamp);
+            BeginBatch(effect, blendState, samplerState);
         }
 
         public void EndBatch()
@@ -3700,7 +6003,8 @@ public sealed class PrismGraphExecutorTests
 
         private void BeginBatch(
             Effect? effect,
-            BlendState blendState)
+            BlendState blendState,
+            SamplerState? samplerState = null)
         {
             if (batchActive)
             {
@@ -3711,7 +6015,7 @@ public sealed class PrismGraphExecutorTests
             spriteBatch.Begin(
                 SpriteSortMode.Immediate,
                 blendState,
-                SamplerState.LinearClamp,
+                samplerState ?? SamplerState.LinearClamp,
                 DepthStencilState.None,
                 RasterizerState.CullNone,
                 effect);

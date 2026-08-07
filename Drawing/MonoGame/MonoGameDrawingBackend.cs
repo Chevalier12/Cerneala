@@ -2110,12 +2110,13 @@ public sealed class MonoGameDrawingBackend :
 
     void IPrismCommandRenderer.BeginKernelBatch(
         Effect effect,
-        BlendState blendState)
+        BlendState blendState,
+        SamplerState samplerState)
     {
         BeginSpriteBatch(
             SpriteSortMode.Immediate,
             blendState,
-            SamplerState.LinearClamp,
+            samplerState,
             DepthStencilState.None,
             RasterizerState.CullNone,
             effect);

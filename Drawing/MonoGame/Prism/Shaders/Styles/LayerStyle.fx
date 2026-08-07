@@ -1,3 +1,15 @@
+float SamplePreparedStyleMask(float2 uv)
+{
+    float inside =
+        step(0.0, uv.x) *
+        step(uv.x, 1.0) *
+        step(0.0, uv.y) *
+        step(uv.y, 1.0);
+    return tex2D(
+        StyleMaskTextureSampler,
+        saturate(uv)).a * inside;
+}
+
 float4 LayerStylePixelShader(
     VertexShaderOutput input) : COLOR0
 {
@@ -14,12 +26,17 @@ float4 LayerStylePixelShader(
         ? 1.0
         : styleTechnique < 1.5 ? 0.65 : 0.8;
     float size = max(
-        StyleGeometry0.z * techniqueScale,
+        StyleGeometry0.z * (kind == 2 ? 1.0 : techniqueScale),
         0.5);
     float spread = max(StyleGeometry0.w, 0.0);
     float shifted = alpha;
     float local = alpha;
-    if (kind == 0 || kind == 1)
+    if (kind == 0)
+    {
+        shifted = SamplePreparedStyleMask(
+            uv - offset);
+    }
+    else if (kind == 1)
     {
         shifted = StyleBlurAlpha(
             uv - offset,
@@ -27,10 +44,7 @@ float4 LayerStylePixelShader(
     }
     else if (kind == 2)
     {
-        local = tex2D(
-            StyleMaskTextureSampler,
-            uv).a;
-        shifted = local;
+        shifted = alpha;
     }
     else if (kind == 3)
     {
@@ -41,18 +55,12 @@ float4 LayerStylePixelShader(
         spread / max(size + spread, 0.0001);
     float grown = saturate(
         shifted + (spreadRatio * (1.0 - shifted)));
+    if (kind == 0)
+    {
+        grown = shifted;
+    }
     float innerEdge = saturate(
         alpha * (1.0 - local));
-    float outerEdge = saturate(grown - alpha);
-    float3 pixelPosition = float3(input.Position.xy, 1.0);
-    float2 boundsUv = float2(
-        dot(pixelPosition, StyleBoundsUvRowX),
-        dot(pixelPosition, StyleBoundsUvRowY));
-    float insideBounds =
-        step(0.0, boundsUv.x) *
-        step(boundsUv.x, 1.0) *
-        step(0.0, boundsUv.y) *
-        step(boundsUv.y, 1.0);
     float mask = alpha;
 
     if (kind == 0)
@@ -69,9 +77,11 @@ float4 LayerStylePixelShader(
     else if (kind == 2)
     {
         mask = EvaluateOuterGlowMask(
-            local,
+            uv,
             alpha,
-            insideBounds);
+            StyleGeometry0.z,
+            spread,
+            styleTechnique);
     }
     else if (kind == 3)
     {
@@ -137,8 +147,6 @@ float4 LayerStylePixelShader(
             input,
             content,
             uv,
-            alpha,
-            styleTechnique,
             blendMode,
             secondaryBlendMode);
     }
@@ -155,12 +163,6 @@ float4 LayerStylePixelShader(
     if (kind == 0)
     {
         result = CompositeDropShadowStyle(
-            content,
-            style);
-    }
-    else if (kind == 2)
-    {
-        result = CompositeOuterGlowStyle(
             content,
             style);
     }

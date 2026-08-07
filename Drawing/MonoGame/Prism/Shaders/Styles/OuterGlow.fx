@@ -46,8 +46,8 @@ float4 StyleGaussianPixelShader(
     float value = SampleStyleMaskSource(uv);
     float totalWeight = 1.0;
 
-    // Pairing neighboring Gaussian taps lets bilinear filtering resolve
-    // both samples with one lookup while preserving their exact weights.
+
+
     [unroll]
     for (int pair = 0; pair < 16; pair++)
     {
@@ -79,17 +79,37 @@ float4 StyleGaussianPixelShader(
 
 
 float EvaluateOuterGlowMask(
-    float local,
+    float2 uv,
     float alpha,
-    float insideBounds)
+    float size,
+    float spread,
+    float techniqueCode)
 {
-    return saturate(local - alpha) *
-        (1.0 - insideBounds);
-}
-
-float4 CompositeOuterGlowStyle(
-    float4 content,
-    float4 style)
-{
-    return content + (style * (1.0 - content.a));
+    float distance = max(
+        StyleSignedEuclideanDistance(uv, alpha),
+        0.0);
+    float fadeSize = max(size, 0.0001);
+    float coordinate = saturate(
+        (distance - spread) / fadeSize);
+    float linearFalloff = 1.0 - coordinate;
+    float softerFalloff = exp(
+        -4.0 * coordinate * coordinate);
+    float smoothFalloff = smoothstep(
+        1.0,
+        0.0,
+        coordinate);
+    float falloff = softerFalloff;
+    if (techniqueCode >= 0.5 && techniqueCode < 1.5)
+    {
+        falloff = linearFalloff;
+    }
+    else if (techniqueCode >= 1.5)
+    {
+        falloff = smoothFalloff;
+    }
+    float support =
+        step(distance, spread + size) *
+        step(0.0001, spread + size);
+    return saturate(falloff * support) *
+        (1.0 - alpha);
 }

@@ -55,6 +55,46 @@ public sealed class PrismSurfacePoolTests
     }
 
     [Fact]
+    public void MipmappedSurfaceKeyAccountsForEveryMipLevel()
+    {
+        PrismSurfaceKey key = new(
+            8,
+            4,
+            SurfaceFormat.Color,
+            0,
+            PrismColorProfile.Srgb,
+            mipMap: true);
+
+        Assert.Equal(172, key.CalculateByteSize());
+    }
+
+    [Fact]
+    public void MipmappedSurfaceCreatesCompleteTextureChain()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        using PrismSurfacePool pool =
+            new(fixture.Session.GraphicsDevice);
+        PrismGraphExecutionPlan plan = CreatePlan();
+        PrismSurfaceKey mipmappedKey = new(
+            8,
+            8,
+            SurfaceFormat.Color,
+            0,
+            PrismColorProfile.Srgb,
+            mipMap: true);
+
+        using PrismSurfaceFrame frame = pool.BeginFrame(plan);
+        frame.AdvanceToStep(0, CreateKeys(plan, mipmappedKey));
+
+        Assert.Equal(4, frame.GetSurface(0).LevelCount);
+    }
+
+    [Fact]
     public void CompatibleSurfacesAreReusedAcrossFrames()
     {
         if (!OperatingSystem.IsWindows())

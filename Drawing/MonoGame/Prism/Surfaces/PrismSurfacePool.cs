@@ -517,7 +517,7 @@ internal sealed class PrismSurfacePool : IDisposable
                 graphicsDevice,
                 key.Width,
                 key.Height,
-                mipMap: false,
+                mipMap: key.MipMap,
                 key.Format,
                 DepthFormat.None,
                 key.MultiSampleCount,

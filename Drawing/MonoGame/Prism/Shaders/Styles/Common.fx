@@ -46,7 +46,7 @@ float StyleBlurAlpha(
     return value / totalWeight;
 }
 
-float ApplyStyleContour(
+float SampleStyleContourLut(
     float value,
     float contour)
 {
@@ -65,6 +65,13 @@ float ApplyStyleContour(
     }
     return saturate(
         0.5 - (0.5 * cos(value * 6.28318531)));
+}
+
+float ApplyStyleContour(
+    float value,
+    float contour)
+{
+    return SampleStyleContourLut(value, contour);
 }
 
 float StyleFlag(float bit)
@@ -88,17 +95,23 @@ float GradientCoordinate(
     float style,
     float angle,
     float scale,
-    float2 offset)
+    float2 offset,
+    float aspect)
 {
+    float2 dimensions = float2(max(aspect, 0.0001), 1.0);
+    float2 halfExtents = dimensions * 0.5;
     float2 centered =
-        (uv - 0.5 - offset) / max(scale, 0.0001);
+        ((uv - 0.5 - offset) * dimensions) /
+        max(scale, 0.0001);
     float2 direction = float2(cos(angle), -sin(angle));
     float coordinate =
-        dot(centered, direction) + 0.5;
+        (dot(centered, direction) /
+            max(2.0 * dot(abs(direction), halfExtents), 0.0001)) +
+        0.5;
     if (style > 0.5 && style < 1.5)
     {
         coordinate =
-            length(centered * 1.41421356);
+            length(centered) / max(length(halfExtents), 0.0001);
     }
     else if (style > 1.5 && style < 2.5)
     {
@@ -114,9 +127,16 @@ float GradientCoordinate(
     else if (style > 3.5)
     {
         coordinate =
-            abs(centered.x) + abs(centered.y);
+            (abs(centered.x) + abs(centered.y)) /
+            max(halfExtents.x + halfExtents.y, 0.0001);
     }
     return saturate(coordinate);
+}
+
+float GradientBlueNoise(float2 position)
+{
+    float2 uv = (fmod(floor(position), 16.0) + 0.5) / 16.0;
+    return tex2D(GradientDitherSampler, uv).r - 0.5;
 }
 
 float4 SampleStylePaint(
@@ -126,12 +146,17 @@ float4 SampleStylePaint(
     float2 uv = ResolveUv(input);
     float linked =
         max(StyleFlag(32.0), StyleFlag(512.0));
+    float3 position = float3(input.Position.xy, 1.0);
+    float2 layerUv = float2(
+        dot(StyleBoundsUvRowX, position),
+        dot(StyleBoundsUvRowY, position));
     float2 paintUv = lerp(
         input.Position.xy * PixelSize,
-        uv,
+        layerUv,
         linked);
     float paintKind = StyleModes0.w;
     float scale = max(StyleOptions1.x, 0.0001);
+    float aspect = max(StyleOptions1.y, 0.0001);
     float2 offset = StyleOptions1.zw;
     float4 result = StyleColor;
     if (paintKind > 1.5)
@@ -156,16 +181,19 @@ float4 SampleStylePaint(
     }
     else if (paintKind > 0.5)
     {
-        float coordinate = GradientCoordinate(
-            paintUv,
-            StyleModes2.w,
-            StyleGeometry1.x,
-            scale,
-            offset);
+        float coordinate = StyleModes0.x == 2.0
+            ? 1.0 - saturate(mask)
+            : GradientCoordinate(
+                paintUv,
+                StyleModes2.w,
+                StyleGeometry1.x,
+                scale,
+                offset,
+                aspect);
         coordinate = lerp(
-            smoothstep(0.0, 1.0, coordinate),
             coordinate,
-            step(0.5, StyleModes2.z));
+            1.0 - coordinate,
+            StyleFlag(2.0));
         if (StyleResourceAvailable > 0.5)
         {
             float4 resource = tex2D(
@@ -181,20 +209,16 @@ float4 SampleStylePaint(
         }
         else
         {
-            coordinate = lerp(
-                coordinate,
-                1.0 - coordinate,
-                StyleFlag(2.0));
-            coordinate = saturate(
-                coordinate +
-                ((StyleRandom(input.Position.xy) - 0.5) /
-                    255.0) *
-                StyleFlag(4.0));
             result = lerp(
                 StyleColor,
                 StyleSecondaryColor,
                 coordinate);
         }
+        result.rgb = saturate(
+            result.rgb +
+            (GradientBlueNoise(input.Position.xy) / 255.0) *
+            StyleFlag(4.0));
+        result.rgb *= step(0.000001, result.a);
     }
 
     return result;

@@ -30,6 +30,30 @@ technique AdjustmentFilter
     }
 }
 
+technique LevelsCdf
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 LevelsCdfPixelShader();
+    }
+}
+
+technique LevelsRange
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 LevelsRangePixelShader();
+    }
+}
+
+technique ThresholdRange
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 ThresholdRangePixelShader();
+    }
+}
+
 technique NeighborhoodFilter
 {
     pass Pass0
@@ -51,6 +75,255 @@ technique CatalogFilter
     pass Pass0
     {
         PixelShader = compile ps_4_0 CatalogFilterPixelShader();
+    }
+}
+
+technique DryBrushFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 DryBrushFilterPixelShader();
+    }
+}
+
+technique UnderpaintingFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 UnderpaintingFilterPixelShader();
+    }
+}
+
+technique WatercolorFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 WatercolorFilterPixelShader();
+    }
+}
+
+technique WaterPaperFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 WaterPaperFilterPixelShader();
+    }
+}
+
+technique WindFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 WindFilterPixelShader();
+    }
+}
+
+technique SumiEFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 SumiEFilterPixelShader();
+    }
+}
+
+technique ChalkCharcoalFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 ChalkCharcoalFilterPixelShader();
+    }
+}
+
+technique ColoredPencilFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 ColoredPencilFilterPixelShader();
+    }
+}
+
+technique FrescoFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 FrescoFilterPixelShader();
+    }
+}
+
+technique CutoutFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 CutoutFilterPixelShader();
+    }
+}
+
+technique PosterEdgesFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 PosterEdgesFilterPixelShader();
+    }
+}
+
+technique BasReliefFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 PosterEdgesFilterPixelShader();
+    }
+}
+
+technique AccentedEdgesFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 AccentedEdgesFilterPixelShader();
+    }
+}
+
+technique GlowingEdgesFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 GlowingEdgesFilterPixelShader();
+    }
+}
+
+technique TraceContourFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 TraceContourFilterPixelShader();
+    }
+}
+
+technique ChromeFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 ChromeFilterPixelShader();
+    }
+}
+
+technique NotePaperFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 NotePaperFilterPixelShader();
+    }
+}
+
+technique PhotocopyFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 PhotocopyFilterPixelShader();
+    }
+}
+
+technique ReticulationFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 ReticulationFilterPixelShader();
+    }
+}
+
+technique StainedGlassFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 StainedGlassFilterPixelShader();
+    }
+}
+
+technique CraquelureFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 CraquelureFilterPixelShader();
+    }
+}
+
+technique TexturizerFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 TexturizerFilterPixelShader();
+    }
+}
+
+technique GrainFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 GrainFilterPixelShader();
+    }
+}
+
+technique MosaicTilesFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 MosaicTilesFilterPixelShader();
+    }
+}
+
+technique PatchworkFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 PatchworkFilterPixelShader();
+    }
+}
+
+technique WaveNoiseFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 WaveNoiseFilterPixelShader();
+    }
+}
+
+technique SpatterFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 SpatterFilterPixelShader();
+    }
+}
+
+technique SprayedStrokesFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 SprayedStrokesFilterPixelShader();
+    }
+}
+
+
+technique ColorHalftoneFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 ColorHalftoneFilterPixelShader();
+    }
+}
+
+technique FacetFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 FacetFilterPixelShader();
+    }
+}
+
+technique LightingEffectsFilter
+{
+    pass Pass0
+    {
+        PixelShader = compile ps_4_0 LightingEffectsFilterPixelShader();
     }
 }
 
@@ -307,46 +580,6 @@ technique ClipAlpha
     pass Pass0
     {
         PixelShader = compile ps_4_0_level_9_1 ClipAlphaPixelShader();
-    }
-}
-
-technique LayerStyle
-{
-    pass Pass0
-    {
-        PixelShader = compile ps_4_0 LayerStylePixelShader();
-    }
-}
-
-technique StyleDilate
-{
-    pass Pass0
-    {
-        PixelShader = compile ps_4_0 StyleDilatePixelShader();
-    }
-}
-
-technique StyleGaussian
-{
-    pass Pass0
-    {
-        PixelShader = compile ps_4_0 StyleGaussianPixelShader();
-    }
-}
-
-technique StrokeDistanceSeed
-{
-    pass Pass0
-    {
-        PixelShader = compile ps_4_0 StrokeDistanceSeedPixelShader();
-    }
-}
-
-technique StrokeDistanceFlood
-{
-    pass Pass0
-    {
-        PixelShader = compile ps_4_0 StrokeDistanceFloodPixelShader();
     }
 }
 

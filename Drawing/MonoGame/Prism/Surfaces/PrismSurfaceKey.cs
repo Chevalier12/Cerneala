@@ -10,15 +10,23 @@ internal readonly record struct PrismSurfaceKey
         int height,
         SurfaceFormat format,
         int multiSampleCount,
-        PrismColorProfile colorProfile)
+        PrismColorProfile colorProfile,
+        bool mipMap = false)
     {
-        Validate(width, height, format, multiSampleCount, colorProfile);
+        Validate(
+            width,
+            height,
+            format,
+            multiSampleCount,
+            colorProfile,
+            mipMap);
 
         Width = width;
         Height = height;
         Format = format;
         MultiSampleCount = multiSampleCount;
         ColorProfile = colorProfile;
+        MipMap = mipMap;
     }
 
     public int Width { get; }
@@ -31,9 +39,17 @@ internal readonly record struct PrismSurfaceKey
 
     public PrismColorProfile ColorProfile { get; }
 
+    public bool MipMap { get; }
+
     internal void Validate()
     {
-        Validate(Width, Height, Format, MultiSampleCount, ColorProfile);
+        Validate(
+            Width,
+            Height,
+            Format,
+            MultiSampleCount,
+            ColorProfile,
+            MipMap);
     }
 
     internal long CalculateByteSize()
@@ -44,16 +60,33 @@ internal readonly record struct PrismSurfaceKey
             out int blockWidth,
             out int blockHeight,
             out int bytesPerBlock);
-        long blocksWide =
-            ((long)Width + blockWidth - 1) / blockWidth;
-        long blocksHigh =
-            ((long)Height + blockHeight - 1) / blockHeight;
         long sampleCount = Math.Max(1, MultiSampleCount);
-        return checked(
-            blocksWide *
-            blocksHigh *
-            bytesPerBlock *
-            sampleCount);
+        int levelWidth = Width;
+        int levelHeight = Height;
+        long total = 0;
+        while (true)
+        {
+            long blocksWide =
+                ((long)levelWidth + blockWidth - 1) / blockWidth;
+            long blocksHigh =
+                ((long)levelHeight + blockHeight - 1) / blockHeight;
+            total = checked(
+                total +
+                (blocksWide *
+                    blocksHigh *
+                    bytesPerBlock *
+                    sampleCount));
+            if (!MipMap ||
+                (levelWidth == 1 && levelHeight == 1))
+            {
+                break;
+            }
+
+            levelWidth = Math.Max(1, levelWidth / 2);
+            levelHeight = Math.Max(1, levelHeight / 2);
+        }
+
+        return total;
     }
 
     private static void GetStorageLayout(
@@ -145,11 +178,18 @@ internal readonly record struct PrismSurfaceKey
         int height,
         SurfaceFormat format,
         int multiSampleCount,
-        PrismColorProfile colorProfile)
+        PrismColorProfile colorProfile,
+        bool mipMap)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
         ArgumentOutOfRangeException.ThrowIfNegative(multiSampleCount);
+        if (mipMap && multiSampleCount != 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(multiSampleCount),
+                "Mipmapped Prism surfaces cannot be multisampled.");
+        }
 
         if (!Enum.IsDefined(format))
         {

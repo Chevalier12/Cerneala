@@ -1,0 +1,7 @@
+#include "Color/Common.fx"
+#include "Color/LinearSrgb.fx"
+#include "Color/Srgb.fx"
+#include "Color/LinearDisplayP3.fx"
+#include "Color/DisplayP3.fx"
+#include "Color/ScRgb.fx"
+#include "Color/WorkingColorConversion.fx"

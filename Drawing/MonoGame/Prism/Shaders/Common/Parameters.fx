@@ -1,14 +1,18 @@
 Texture2D SpriteTexture;
 Texture2D SecondaryTexture;
+Texture2D KnockoutBackdropTexture;
+Texture2D KnockoutShapeTexture;
 Texture2D StyleTexture;
 Texture2D StyleMaskTexture;
 Texture2D FilterAuxiliaryTexture;
+Texture2D DissolveThresholdTexture;
 float Opacity;
 float2 PixelSize;
 float2 UvScale;
 float2 UvOffset;
 float4 BlendChannels;
 float KnockoutMode;
+float KnockoutBackdropAvailable;
 float BlendIfChannel;
 float4 ThisLayerRange;
 float4 UnderlyingRange;
@@ -45,6 +49,8 @@ float4 FilterOptions7;
 float4 FilterOptions8;
 float4 FilterOptions9;
 float2 FilterTextureSize;
+float FilterLightCount;
+float4 FilterLights[24];
 
 sampler2D SpriteTextureSampler = sampler_state
 {
@@ -54,6 +60,41 @@ sampler2D SpriteTextureSampler = sampler_state
 sampler2D SecondaryTextureSampler = sampler_state
 {
     Texture = <SecondaryTexture>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+sampler2D KnockoutBackdropSampler = sampler_state
+{
+    Texture = <KnockoutBackdropTexture>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+sampler2D KnockoutShapeSampler = sampler_state
+{
+    Texture = <KnockoutShapeTexture>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+sampler2D DisplacementMapSampler = sampler_state
+{
+    Texture = <SecondaryTexture>;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 sampler2D StyleTextureSampler = sampler_state
@@ -66,6 +107,16 @@ sampler2D StyleTextureSampler = sampler_state
 sampler2D StyleMaskTextureSampler = sampler_state
 {
     Texture = <StyleMaskTexture>;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+sampler2D StyleDistanceTextureSampler = sampler_state
+{
+    Texture = <StyleMaskTexture>;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = Point;
     AddressU = Clamp;
     AddressV = Clamp;
 };
@@ -83,6 +134,46 @@ sampler2D StyleMaskSourceSampler = sampler_state
 sampler2D FilterAuxiliaryTextureSampler = sampler_state
 {
     Texture = <FilterAuxiliaryTexture>;
+};
+
+sampler2D GradientDitherSampler = sampler_state
+{
+    Texture = <FilterAuxiliaryTexture>;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = Point;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+
+sampler2D DissolveThresholdSampler = sampler_state
+{
+    Texture = <DissolveThresholdTexture>;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = Point;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+
+sampler2D WaveNoiseTableSampler = sampler_state
+{
+    Texture = <FilterAuxiliaryTexture>;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+sampler2D SpatterPointSampler = sampler_state
+{
+    Texture = <FilterAuxiliaryTexture>;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 struct VertexShaderOutput
@@ -106,5 +197,15 @@ float4 SampleSource(VertexShaderOutput input)
 float4 SampleSecondary(VertexShaderOutput input)
 {
     return tex2D(SecondaryTextureSampler, ResolveUv(input));
+}
+
+float4 SampleKnockoutBackdrop(VertexShaderOutput input)
+{
+    return tex2D(KnockoutBackdropSampler, ResolveUv(input));
+}
+
+float SampleKnockoutShape(VertexShaderOutput input)
+{
+    return tex2D(KnockoutShapeSampler, ResolveUv(input)).a;
 }
 

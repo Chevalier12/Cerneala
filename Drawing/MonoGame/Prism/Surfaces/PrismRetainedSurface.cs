@@ -2,8 +2,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Cerneala.Drawing.MonoGame.Prism.Surfaces;
 
-// Ownership has left the transient pool. The retained owner must dispose this
-// object and must not render into the finalized surface again.
+
+
 internal sealed class PrismRetainedSurface : IDisposable
 {
     private readonly PrismSurfaceMemoryAccountant accountant;

@@ -4,6 +4,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PrismShaderToolManifest>$(MSBuildProjectDirectory)\.config\dotnet-tools.json</PrismShaderToolManifest>
     <PrismShaderOutputDirectory>$(MSBuildProjectExtensionsPath)$(Configuration)\$(TargetFramework)\prism-shaders\</PrismShaderOutputDirectory>
   </PropertyGroup>
@@ -44,10 +45,51 @@
     <ProjectReference Include="Cerneala.SourceGen\Cerneala.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**;Cerneala.SourceGen\**;CernealaPresentation\**;docs\**;Playground\**;Tools\**;tests\**" />
     <AdditionalFiles Include="Cerneala.SourceGen\Prism\Catalog\prism-catalog.json" />
+    <EmbeddedResource Include="Drawing\Prism\Filters\Assets\bluenoise.bin">
+      <LogicalName>Cerneala.Drawing.Prism.Filters.Assets.bluenoise.bin</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Drawing\Prism\Blend\Assets\dissolve-fastnoise-ranks.bin">
+      <LogicalName>Cerneala.Drawing.Prism.Blending.Assets.dissolve-fastnoise-ranks.bin</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
-    <PrismShaderSource Include="Drawing\MonoGame\Prism\Shaders\*.fx" />
+    <PrismCopyCompositeInclude
+      Include="Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;Drawing\MonoGame\Prism\Shaders\Composition\*.fx;Drawing\MonoGame\Prism\Shaders\Blends\*.fx;Drawing\MonoGame\Prism\Shaders\Color\*.fx;Drawing\MonoGame\Prism\Shaders\Filters\*.fx;Drawing\MonoGame\Prism\Shaders\Filters\Catalog\*.fx;Drawing\MonoGame\Prism\Shaders\Pipeline\Techniques.fx"
+      Exclude="Drawing\MonoGame\Prism\Shaders\Blends\All.fx;Drawing\MonoGame\Prism\Shaders\Color\All.fx;Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Charcoal.fx;Drawing\MonoGame\Prism\Shaders\Filters\Catalog\ConteCrayon.fx;Drawing\MonoGame\Prism\Shaders\Filters\Catalog\GraphicPen.fx;Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Plaster.fx" />
+    <PrismStyleInclude
+      Include="Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;Drawing\MonoGame\Prism\Shaders\Blends\*.fx;Drawing\MonoGame\Prism\Shaders\Styles\*.fx;Drawing\MonoGame\Prism\Shaders\Pipeline\StyleTechniques.fx" />
+    <PrismSpecializedCommonInclude
+      Include="Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;Drawing\MonoGame\Prism\Shaders\Blends\*.fx;Drawing\MonoGame\Prism\Shaders\Color\*.fx;Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Common.fx" />
+    <PrismCharcoalInclude Include="@(PrismSpecializedCommonInclude);Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Charcoal.fx" />
+    <PrismConteCrayonInclude Include="@(PrismSpecializedCommonInclude);Drawing\MonoGame\Prism\Shaders\Filters\Catalog\ConteCrayon.fx" />
+    <PrismGraphicPenInclude Include="@(PrismSpecializedCommonInclude);Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Charcoal.fx;Drawing\MonoGame\Prism\Shaders\Filters\Catalog\GraphicPen.fx" />
+    <PrismPlasterInclude Include="@(PrismSpecializedCommonInclude);Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Plaster.fx" />
+    <PrismDeinterlaceInclude Include="@(PrismSpecializedCommonInclude);Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Video.fx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PrismShaderSource Include="Drawing\MonoGame\Prism\Shaders\CopyComposite.fx">
+      <Dependencies>@(PrismCopyCompositeInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="Drawing\MonoGame\Prism\Shaders\Styles.fx">
+      <Dependencies>@(PrismStyleInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="Drawing\MonoGame\Prism\Shaders\Charcoal.fx">
+      <Dependencies>@(PrismCharcoalInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="Drawing\MonoGame\Prism\Shaders\ConteCrayon.fx">
+      <Dependencies>@(PrismConteCrayonInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="Drawing\MonoGame\Prism\Shaders\GraphicPen.fx">
+      <Dependencies>@(PrismGraphicPenInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="Drawing\MonoGame\Prism\Shaders\Plaster.fx">
+      <Dependencies>@(PrismPlasterInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="Drawing\MonoGame\Prism\Shaders\Deinterlace.fx">
+      <Dependencies>@(PrismDeinterlaceInclude)</Dependencies>
+    </PrismShaderSource>
     <PrismShaderInclude
       Include="Drawing\MonoGame\Prism\Shaders\**\*.fx"
       Exclude="Drawing\MonoGame\Prism\Shaders\*.fx" />
@@ -70,8 +112,8 @@
     Name="CompilePrismShaders"
     BeforeTargets="PrepareForBuild"
     DependsOnTargets="RestorePrismShaderCompiler"
-    Inputs="@(PrismShaderSource);@(PrismShaderInclude);$(PrismShaderToolManifest)"
-    Outputs="@(PrismShaderOutput)"
+    Inputs="%(PrismShaderSource.FullPath);%(PrismShaderSource.Dependencies);$(PrismShaderToolManifest)"
+    Outputs="$(PrismShaderOutputDirectory)%(PrismShaderSource.Filename).mgfxo"
     Condition="'$(DesignTimeBuild)' != 'true'">
     <Error
       Condition="'@(PrismShaderSource)' == ''"

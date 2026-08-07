@@ -11,7 +11,8 @@ internal interface IPrismCommandRenderer
 
     void BeginKernelBatch(
         Effect effect,
-        BlendState blendState);
+        BlendState blendState,
+        SamplerState samplerState);
 
     void EndBatch();
 

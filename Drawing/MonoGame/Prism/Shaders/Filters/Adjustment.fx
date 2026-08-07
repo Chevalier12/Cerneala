@@ -1,3 +1,150 @@
+float AdjustmentOkhslToe(float value)
+{
+    const float k1 = 0.206;
+    const float k2 = 0.03;
+    const float k3 = (1.0 + k1) / (1.0 + k2);
+    float scaled = (k3 * value) - k1;
+    return 0.5 * (scaled + sqrt(
+        (scaled * scaled) + (4.0 * k2 * k3 * value)));
+}
+
+float AdjustmentOkhslToeInverse(float value)
+{
+    const float k1 = 0.206;
+    const float k2 = 0.03;
+    const float k3 = (1.0 + k1) / (1.0 + k2);
+    return ((value * value) + (k1 * value)) /
+        (k3 * (value + k2));
+}
+
+float3 AdjustmentLinearSrgbToOklab(float3 color)
+{
+    float3 lms = float3(
+        dot(color, float3(
+            0.4122214708, 0.5363325363, 0.0514459929)),
+        dot(color, float3(
+            0.2119034982, 0.6806995451, 0.1073969566)),
+        dot(color, float3(
+            0.0883024619, 0.2817188376, 0.6299787005)));
+    lms = pow(max(lms, 0.0), 1.0 / 3.0);
+    return float3(
+        dot(lms, float3(
+            0.2104542553, 0.7936177850, -0.0040720468)),
+        dot(lms, float3(
+            1.9779984951, -2.4285922050, 0.4505937099)),
+        dot(lms, float3(
+            0.0259040371, 0.7827717662, -0.8086757660)));
+}
+
+float3 AdjustmentOklabToLinearSrgb(float3 lab)
+{
+    float l = lab.x +
+        (0.3963377774 * lab.y) +
+        (0.2158037573 * lab.z);
+    float m = lab.x -
+        (0.1055613458 * lab.y) -
+        (0.0638541728 * lab.z);
+    float s = lab.x -
+        (0.0894841775 * lab.y) -
+        (1.2914855480 * lab.z);
+    l *= l * l;
+    m *= m * m;
+    s *= s * s;
+    return float3(
+        (4.0767416361 * l) -
+            (3.3077115913 * m) +
+            (0.2309699449 * s),
+        (-1.2684380046 * l) +
+            (2.6097574011 * m) -
+            (0.3413193965 * s),
+        (-0.0041960863 * l) -
+            (0.7034186145 * m) +
+            (1.7076147010 * s));
+}
+
+float AdjustmentOkhslMaximumChroma(
+    float lightness,
+    float hue)
+{
+    const float tau = 6.28318530717958647692;
+    float angle = hue * tau;
+    float2 direction = float2(cos(angle), sin(angle));
+    float minimum = 0.0;
+    float maximum = 0.5;
+
+    [unroll]
+    for (int iteration = 0; iteration < 10; iteration++)
+    {
+        float candidate = (minimum + maximum) * 0.5;
+        float3 rgb = AdjustmentOklabToLinearSrgb(
+            float3(
+                lightness,
+                candidate * direction.x,
+                candidate * direction.y));
+        bool inGamut =
+            all(rgb >= 0.0) && all(rgb <= 1.0);
+        if (inGamut)
+        {
+            minimum = candidate;
+        }
+        else
+        {
+            maximum = candidate;
+        }
+    }
+
+    return minimum;
+}
+
+float3 AdjustmentLinearSrgbToOkhsl(float3 color)
+{
+    const float tau = 6.28318530717958647692;
+    float3 lab = AdjustmentLinearSrgbToOklab(saturate(color));
+    float chroma = length(lab.yz);
+    float hue = chroma <= 0.000001
+        ? 0.0
+        : frac((atan2(lab.z, lab.y) / tau) + 1.0);
+    float maximumChroma = chroma <= 0.000001
+        ? 0.0
+        : AdjustmentOkhslMaximumChroma(lab.x, hue);
+    return float3(
+        hue,
+        maximumChroma <= 0.000001
+            ? 0.0
+            : saturate(chroma / maximumChroma),
+        AdjustmentOkhslToe(lab.x));
+}
+
+float3 AdjustmentOkhslToLinearSrgb(float3 hsl)
+{
+    const float tau = 6.28318530717958647692;
+    float hue = frac(hsl.x);
+    float saturation = saturate(hsl.y);
+    float lightness = saturate(hsl.z);
+    float labLightness = AdjustmentOkhslToeInverse(lightness);
+    if (saturation <= 0.000001 ||
+        labLightness <= 0.000001 ||
+        labLightness >= 0.999999)
+    {
+        return saturate(AdjustmentOklabToLinearSrgb(
+            float3(labLightness, 0.0, 0.0)));
+    }
+
+    float angle = hue * tau;
+    float chroma = saturation *
+        AdjustmentOkhslMaximumChroma(labLightness, hue);
+    return saturate(AdjustmentOklabToLinearSrgb(float3(
+        labLightness,
+        chroma * cos(angle),
+        chroma * sin(angle))));
+}
+
+float AdjustmentShortestHueDelta(float from, float to)
+{
+    float delta = frac(to - from + 0.5) - 0.5;
+    return delta == -0.5 ? 0.5 : delta;
+}
+
 float3 AdjustmentRgbToHsv(float3 color)
 {
     float maximum = max(color.r, max(color.g, color.b));
@@ -64,41 +211,153 @@ float3 AdjustmentHsvToRgb(float3 hsv)
     return color + (hsv.z - chroma);
 }
 
-float AdjustmentCurve(float value, int curve)
+float AdjustmentSkinToneMask(float3 color)
 {
-    if (curve == 1)
-    {
-        return sqrt(max(value, 0.0));
-    }
-    if (curve == 2)
-    {
-        return value * value;
-    }
-    if (curve == 3)
-    {
-        return value * value * (3.0 - (2.0 * value));
-    }
-    return value;
+    float3 hsv = AdjustmentRgbToHsv(color);
+    float hueDistance = abs(hsv.x - 0.075);
+    hueDistance = min(
+        hueDistance,
+        1.0 - hueDistance);
+    float hueWeight = 1.0 -
+        smoothstep(0.035, 0.16, hueDistance);
+    float saturationWeight =
+        smoothstep(0.1, 0.3, hsv.y) *
+        (1.0 - smoothstep(0.92, 1.0, hsv.y));
+    float valueWeight =
+        smoothstep(0.08, 0.25, hsv.z) *
+        (1.0 - smoothstep(0.98, 1.0, hsv.z));
+    return hueWeight *
+        saturationWeight *
+        valueWeight;
 }
 
-float3 AdjustmentChannelMap(
+float3 AdjustmentScaleChroma(
     float3 color,
-    int channel,
-    int curve)
+    float3 grayTransform,
+    float scale)
 {
-    if (channel == 0 || channel == 1)
+    float gray = dot(color, grayTransform);
+    return gray + ((color - gray) * scale);
+}
+
+float3 AdjustmentClipChromaToUnit(
+    float3 color,
+    float gray)
+{
+    gray = saturate(gray);
+    float maximum =
+        max(color.r, max(color.g, color.b));
+    float minimum =
+        min(color.r, min(color.g, color.b));
+    float scale = 1.0;
+    if (minimum < 0.0 && gray > minimum)
     {
-        color.r = AdjustmentCurve(color.r, curve);
+        scale = min(
+            scale,
+            gray / (gray - minimum));
     }
-    if (channel == 0 || channel == 2)
+    if (maximum > 1.0 && maximum > gray)
     {
-        color.g = AdjustmentCurve(color.g, curve);
+        scale = min(
+            scale,
+            (1.0 - gray) / (maximum - gray));
     }
-    if (channel == 0 || channel == 3)
+    return saturate(
+        gray + ((color - gray) * scale));
+}
+
+float3 AdjustmentVibrance(float3 color)
+{
+    float vibrance = FilterOptions0.x;
+    float saturation = FilterOptions0.y;
+    if (vibrance == 0.0 && saturation == 0.0)
     {
-        color.b = AdjustmentCurve(color.b, curve);
+        return color;
     }
-    return color;
+
+    float3 perceptual = EncodeSrgb(max(color, 0.0));
+    float3 grayTransform = FilterOptions1.rgb;
+    if (vibrance > 0.0)
+    {
+        float maximum = max(
+            perceptual.r,
+            max(perceptual.g, perceptual.b));
+        float minimum = min(
+            perceptual.r,
+            min(perceptual.g, perceptual.b));
+        float chroma = maximum > 0.0
+            ? (maximum - minimum) / maximum
+            : 0.0;
+        float chromaSquared = chroma * chroma;
+        float vibranceSquared = vibrance * vibrance;
+        float vibranceCubed =
+            vibranceSquared * vibrance;
+        float response =
+            (3.0 * vibrance) +
+            ((-4.5 * vibranceSquared -
+                1.5 * vibrance) * chroma) +
+            ((4.5 * vibranceCubed -
+                0.5 * vibrance) * chromaSquared) +
+            ((-4.5 * vibranceCubed +
+                4.5 * vibranceSquared -
+                vibrance) *
+                chromaSquared * chroma);
+        if (FilterOptions0.z > 0.5)
+        {
+            response *= 1.0 -
+                (0.75 * AdjustmentSkinToneMask(
+                    perceptual));
+        }
+        perceptual = AdjustmentScaleChroma(
+            perceptual,
+            grayTransform,
+            1.0 + max(0.0, response));
+    }
+    else
+    {
+        perceptual = AdjustmentScaleChroma(
+            perceptual,
+            grayTransform,
+            1.0 + vibrance);
+    }
+
+    perceptual = AdjustmentScaleChroma(
+        perceptual,
+        grayTransform,
+        1.0 + saturation);
+    float gray = dot(perceptual, grayTransform);
+    return DecodeSrgb(
+        AdjustmentClipChromaToUnit(
+            perceptual,
+            gray));
+}
+
+float AdjustmentCurveLut(float value, int channel)
+{
+    float width = max(FilterTextureSize.x, 1.0);
+    float coordinate =
+        ((saturate(value) * (width - 1.0)) + 0.5) /
+        width;
+    float4 mapped = tex2D(
+        SecondaryTextureSampler,
+        float2(coordinate, 0.5));
+    if (channel == 0)
+    {
+        return mapped.r;
+    }
+    if (channel == 1)
+    {
+        return mapped.g;
+    }
+    return mapped.b;
+}
+
+float3 AdjustmentCurves(float3 color)
+{
+    return float3(
+        AdjustmentCurveLut(color.r, 0),
+        AdjustmentCurveLut(color.g, 1),
+        AdjustmentCurveLut(color.b, 2));
 }
 
 float AdjustmentLevel(
@@ -122,12 +381,22 @@ float AdjustmentLevel(
 float3 AdjustmentLevels(float3 color)
 {
     int channel = (int)(FilterOptions0.x + 0.5);
+    float inputBlack = FilterOptions0.y;
+    float inputWhite = FilterOptions0.z;
+    if (FilterOptions1.z > 0.5)
+    {
+        float4 automaticRange = tex2D(
+            SecondaryTextureSampler,
+            float2(0.5, 0.5));
+        inputBlack = automaticRange.r;
+        inputWhite = automaticRange.g;
+    }
     if (channel == 0 || channel == 1)
     {
         color.r = AdjustmentLevel(
             color.r,
-            FilterOptions0.y,
-            FilterOptions0.z,
+            inputBlack,
+            inputWhite,
             FilterOptions0.w,
             FilterOptions1.x,
             FilterOptions1.y);
@@ -136,8 +405,8 @@ float3 AdjustmentLevels(float3 color)
     {
         color.g = AdjustmentLevel(
             color.g,
-            FilterOptions0.y,
-            FilterOptions0.z,
+            inputBlack,
+            inputWhite,
             FilterOptions0.w,
             FilterOptions1.x,
             FilterOptions1.y);
@@ -146,13 +415,167 @@ float3 AdjustmentLevels(float3 color)
     {
         color.b = AdjustmentLevel(
             color.b,
-            FilterOptions0.y,
-            FilterOptions0.z,
+            inputBlack,
+            inputWhite,
             FilterOptions0.w,
             FilterOptions1.x,
             FilterOptions1.y);
     }
     return color;
+}
+
+float LevelsAnalysisValue(float3 color, int channel)
+{
+    if (channel == 1)
+    {
+        return color.r;
+    }
+    if (channel == 2)
+    {
+        return color.g;
+    }
+    if (channel == 3)
+    {
+        return color.b;
+    }
+    return AdjustmentLuminance(color);
+}
+
+float4 LevelsCdfPixelShader(
+    VertexShaderOutput input) : COLOR0
+{
+    const int sampleSide = 32;
+    const int sampleCount = sampleSide * sampleSide;
+    int channel = (int)(FilterHeader.x + 0.5);
+    int profile = (int)(FilterHeader.y + 0.5);
+    float threshold =
+        (input.Position.x - 0.5) / 255.0;
+    float accepted = 0.0;
+    float valid = 0.0;
+
+    [loop]
+    for (int index = 0; index < sampleCount; index++)
+    {
+        float2 uv = float2(
+            (fmod(index, sampleSide) + 0.5) / sampleSide,
+            (floor(index / sampleSide) + 0.5) / sampleSide);
+        float4 source = tex2D(SpriteTextureSampler, uv);
+        if (source.a > 0.0)
+        {
+            float4 linearSample = WorkingAssociatedToLinearSrgb(
+                source,
+                profile);
+            float value = LevelsAnalysisValue(
+                Unpremultiply(linearSample),
+                channel);
+            accepted += value <= threshold ? 1.0 : 0.0;
+            valid += 1.0;
+        }
+    }
+
+    float cdf = valid > 0.0 ? accepted / valid : 0.0;
+    return float4(cdf, 0.0, 0.0, 1.0);
+}
+
+float4 LevelsRangePixelShader(
+    VertexShaderOutput input) : COLOR0
+{
+    const float clippedFraction = 0.001;
+    float inputBlack = 0.0;
+    float inputWhite = 1.0;
+    bool foundBlack = false;
+    bool foundWhite = false;
+
+    [loop]
+    for (int bin = 0; bin < 256; bin++)
+    {
+        float cdf = tex2D(
+            SpriteTextureSampler,
+            float2((bin + 0.5) / 256.0, 0.5)).r;
+        if (!foundBlack && cdf > clippedFraction)
+        {
+            inputBlack = bin / 255.0;
+            foundBlack = true;
+        }
+        if (!foundWhite &&
+            cdf >= 1.0 - clippedFraction)
+        {
+            inputWhite = bin / 255.0;
+            foundWhite = true;
+        }
+    }
+
+    if (!foundBlack ||
+        !foundWhite ||
+        inputBlack >= inputWhite)
+    {
+        inputBlack = 0.0;
+        inputWhite = 1.0;
+    }
+    return float4(inputBlack, inputWhite, 0.0, 1.0);
+}
+
+float4 ThresholdRangePixelShader(
+    VertexShaderOutput input) : COLOR0
+{
+    float weightedTotal = 0.0;
+    float previousCdf = 0.0;
+    int nonemptyBinCount = 0;
+    int onlyNonemptyBin = 0;
+    [loop]
+    for (int bin = 0; bin < 256; bin++)
+    {
+        float cdf = tex2D(
+            SpriteTextureSampler,
+            float2((bin + 0.5) / 256.0, 0.5)).r;
+        float probability = max(0.0, cdf - previousCdf);
+        if (probability > 0.0)
+        {
+            nonemptyBinCount++;
+            onlyNonemptyBin = bin;
+        }
+        weightedTotal += bin * probability;
+        previousCdf = cdf;
+    }
+
+    float backgroundWeight = 0.0;
+    float backgroundWeighted = 0.0;
+    float previous = 0.0;
+    float bestVariance = 0.0;
+    float bestThreshold = FilterHeader.x;
+    [loop]
+    for (int threshold = 0; threshold < 255; threshold++)
+    {
+        float cdf = tex2D(
+            SpriteTextureSampler,
+            float2((threshold + 0.5) / 256.0, 0.5)).r;
+        float probability = max(0.0, cdf - previous);
+        backgroundWeight += probability;
+        backgroundWeighted += threshold * probability;
+        previous = cdf;
+        float foregroundWeight = 1.0 - backgroundWeight;
+        if (backgroundWeight > 0.0 && foregroundWeight > 0.0)
+        {
+            float backgroundMean =
+                backgroundWeighted / backgroundWeight;
+            float foregroundMean =
+                (weightedTotal - backgroundWeighted) /
+                foregroundWeight;
+            float difference = backgroundMean - foregroundMean;
+            float variance = backgroundWeight * foregroundWeight *
+                difference * difference;
+            if (variance > bestVariance)
+            {
+                bestVariance = variance;
+                bestThreshold = threshold / 255.0;
+            }
+        }
+    }
+    if (nonemptyBinCount == 1)
+    {
+        bestThreshold = onlyNonemptyBin / 255.0;
+    }
+    return float4(bestThreshold, 0.0, 0.0, 1.0);
 }
 
 float3 PreserveAdjustmentLuminance(
@@ -161,6 +584,16 @@ float3 PreserveAdjustmentLuminance(
 {
     return color +
         (luminance - AdjustmentLuminance(color));
+}
+
+float3 PreserveAdjustmentLightness(
+    float3 source,
+    float3 adjusted)
+{
+    float3 sourceHsl = AdjustmentLinearSrgbToOkhsl(source);
+    float3 adjustedHsl = AdjustmentLinearSrgbToOkhsl(adjusted);
+    adjustedHsl.z = sourceHsl.z;
+    return AdjustmentOkhslToLinearSrgb(adjustedHsl);
 }
 
 float AdjustmentHueWeight(float hue, int channel)
@@ -175,67 +608,20 @@ float AdjustmentHueWeight(float hue, int channel)
     return saturate(1.0 - (distance * 6.0));
 }
 
-float AdjustmentBlackWhiteWeight(int index)
-{
-    if (index == 0)
-    {
-        return FilterOptions0.x;
-    }
-    if (index == 1)
-    {
-        return FilterOptions0.y;
-    }
-    if (index == 2)
-    {
-        return FilterOptions0.z;
-    }
-    if (index == 3)
-    {
-        return FilterOptions0.w;
-    }
-    if (index == 4)
-    {
-        return FilterOptions1.x;
-    }
-    return FilterOptions1.y;
-}
-
-float4 AdjustmentSelectiveParameter(int index)
-{
-    if (index == 0)
-    {
-        return FilterOptions0;
-    }
-    if (index == 1)
-    {
-        return FilterOptions1;
-    }
-    if (index == 2)
-    {
-        return FilterOptions2;
-    }
-    if (index == 3)
-    {
-        return FilterOptions3;
-    }
-    if (index == 4)
-    {
-        return FilterOptions4;
-    }
-    return FilterOptions5;
-}
-
 float3 SampleAdjustmentLutPoint(float3 coordinate)
 {
-    float size = max(FilterTextureSize.y, 2.0);
+    float size = max(FilterHeader.w, 2.0);
     coordinate = clamp(
         coordinate,
         0.0,
         size - 1.0);
+    float linearIndex = coordinate.x +
+        (size * (coordinate.y + (size * coordinate.z)));
     float2 uv = float2(
-        ((coordinate.z * size) + coordinate.x + 0.5) /
+        (fmod(linearIndex, FilterTextureSize.x) + 0.5) /
             FilterTextureSize.x,
-        (coordinate.y + 0.5) / FilterTextureSize.y);
+        (floor(linearIndex / FilterTextureSize.x) + 0.5) /
+            FilterTextureSize.y);
     float4 sample = tex2D(
         SecondaryTextureSampler,
         uv);
@@ -277,13 +663,13 @@ float3 SampleAdjustmentLutTrilinear(
 
 float3 SampleAdjustmentLut(float3 color)
 {
-    float size = max(FilterTextureSize.y, 2.0);
+    float size = max(FilterHeader.w, 2.0);
     float3 coordinate =
         saturate(color) * (size - 1.0);
     float3 baseCoordinate = floor(coordinate);
     float3 fraction = coordinate - baseCoordinate;
     float3 result;
-    if (FilterOptions0.y > 0.5)
+    if (true)
     {
         result = SampleAdjustmentLutTrilinear(
             baseCoordinate,
@@ -369,262 +755,3 @@ float3 SampleAdjustmentLut(float3 color)
     }
     return result;
 }
-
-float3 ApplyAdjustment(
-    float3 color,
-    VertexShaderOutput input)
-{
-    int operation = (int)(FilterHeader.x + 0.5);
-    if (operation == 0)
-    {
-        float factor = FilterOptions0.z > 0.5
-            ? max(0.0, 1.0 + FilterOptions0.y)
-            : pow(2.0, FilterOptions0.y * 2.0);
-        return ((color - 0.5) * factor) +
-            0.5 + FilterOptions0.x;
-    }
-    if (operation == 1)
-    {
-        return AdjustmentLevels(color);
-    }
-    if (operation == 2)
-    {
-        return AdjustmentChannelMap(
-            color,
-            (int)(FilterOptions0.x + 0.5),
-            (int)(FilterOptions0.y + 0.5));
-    }
-    if (operation == 3)
-    {
-        float3 exposed =
-            (color * pow(2.0, FilterOptions0.x)) +
-            FilterOptions0.y;
-        return pow(
-            max(exposed, 0.0),
-            1.0 / max(FilterOptions0.z, 0.000001));
-    }
-    if (operation == 4)
-    {
-        float maximum =
-            max(color.r, max(color.g, color.b));
-        float minimum =
-            min(color.r, min(color.g, color.b));
-        float amount = 1.0 +
-            (FilterOptions0.x *
-                (1.0 - (maximum - minimum))) +
-            FilterOptions0.y;
-        float luminance = AdjustmentLuminance(color);
-        return luminance +
-            ((color - luminance) * amount);
-    }
-    if (operation == 5)
-    {
-        float3 hsv = AdjustmentRgbToHsv(color);
-        float weight = AdjustmentHueWeight(
-            hsv.x,
-            (int)(FilterOptions0.x + 0.5));
-        if (FilterOptions1.x > 0.5)
-        {
-            hsv.x = frac(
-                (FilterOptions0.y / 360.0) + 1.0);
-            hsv.y = saturate(
-                0.5 + (FilterOptions0.z * 0.5));
-            hsv.z = saturate(
-                AdjustmentLuminance(color) +
-                FilterOptions0.w);
-        }
-        else
-        {
-            hsv.x = frac(
-                hsv.x +
-                ((FilterOptions0.y / 360.0) * weight) +
-                1.0);
-            hsv.y = saturate(
-                hsv.y *
-                (1.0 + (FilterOptions0.z * weight)));
-            hsv.z = saturate(
-                hsv.z + (FilterOptions0.w * weight));
-        }
-        return AdjustmentHsvToRgb(hsv);
-    }
-    if (operation == 6)
-    {
-        float luminance = AdjustmentLuminance(color);
-        float shadows =
-            (1.0 - luminance) * (1.0 - luminance);
-        float highlights = luminance * luminance;
-        float midtones = max(
-            0.0,
-            1.0 - shadows - highlights);
-        float3 adjusted = color +
-            (FilterOptions0.rgb * shadows) +
-            (FilterOptions1.rgb * midtones) +
-            (FilterOptions2.rgb * highlights);
-        return FilterOptions3.x > 0.5
-            ? PreserveAdjustmentLuminance(
-                adjusted,
-                luminance)
-            : adjusted;
-    }
-    if (operation == 7)
-    {
-        float3 hsv = AdjustmentRgbToHsv(color);
-        float sector = hsv.x * 6.0;
-        int first = min((int)floor(sector), 5);
-        int second = first == 5 ? 0 : first + 1;
-        float amount = lerp(
-            AdjustmentBlackWhiteWeight(first),
-            AdjustmentBlackWhiteWeight(second),
-            frac(sector));
-        float gray =
-            AdjustmentLuminance(color) * amount;
-        return FilterOptions1.z > 0.5
-            ? FilterOptions2.rgb * gray
-            : gray;
-    }
-    if (operation == 8)
-    {
-        float luminance = AdjustmentLuminance(color);
-        float3 filtered = lerp(
-            color,
-            color * FilterOptions0.rgb,
-            FilterOptions1.x);
-        return FilterOptions1.y > 0.5
-            ? PreserveAdjustmentLuminance(
-                filtered,
-                luminance)
-            : filtered;
-    }
-    if (operation == 9)
-    {
-        float3 mixed = float3(
-            dot(color, FilterOptions0.rgb) +
-                FilterOptions3.x,
-            dot(color, FilterOptions1.rgb) +
-                FilterOptions3.y,
-            dot(color, FilterOptions2.rgb) +
-                FilterOptions3.z);
-        return FilterOptions4.x > 0.5
-            ? mixed.xxx
-            : mixed;
-    }
-    if (operation == 10)
-    {
-        float3 mapped = SampleAdjustmentLut(color);
-        return lerp(
-            color,
-            mapped,
-            FilterOptions0.x);
-    }
-    if (operation == 11)
-    {
-        return 1.0 - color;
-    }
-    if (operation == 12)
-    {
-        float levels =
-            max(1.0, round(FilterOptions0.x) - 1.0);
-        return round(color * levels) / levels;
-    }
-    if (operation == 13)
-    {
-        float value =
-            AdjustmentLuminance(color) >= FilterOptions0.x
-                ? 1.0
-                : 0.0;
-        return value.xxx;
-    }
-    if (operation == 14)
-    {
-        float coordinate = AdjustmentLuminance(color);
-        if (FilterOptions0.z > 0.5)
-        {
-            float ordered = fmod(
-                floor(input.Position.x) * 5.0 +
-                floor(input.Position.y) * 3.0,
-                16.0);
-            coordinate = saturate(
-                coordinate +
-                ((ordered - 7.5) / (16.0 * 255.0)));
-        }
-        coordinate = FilterOptions0.y > 0.5
-            ? 1.0 - coordinate
-            : coordinate;
-        if (FilterOptions0.x > 0.5)
-        {
-            return coordinate < 0.5
-                ? lerp(
-                    float3(0.04, 0.08, 0.8),
-                    float3(0.85, 0.05, 0.03),
-                    coordinate * 2.0)
-                : lerp(
-                    float3(0.85, 0.05, 0.03),
-                    float3(1.0, 0.9, 0.05),
-                    (coordinate - 0.5) * 2.0);
-        }
-        return coordinate.xxx;
-    }
-
-    float3 hsv = AdjustmentRgbToHsv(color);
-    float sector = hsv.x * 6.0;
-    int first = min((int)floor(sector), 5);
-    int second = first == 5 ? 0 : first + 1;
-    float4 hue = lerp(
-        AdjustmentSelectiveParameter(first),
-        AdjustmentSelectiveParameter(second),
-        frac(sector));
-    float maximum = max(color.r, max(color.g, color.b));
-    float minimum = min(color.r, min(color.g, color.b));
-    float chroma = maximum - minimum;
-    float whiteWeight = saturate((minimum - 0.5) * 2.0);
-    float blackWeight = saturate((0.5 - maximum) * 2.0);
-    float neutralWeight = saturate(
-        1.0 - chroma - whiteWeight - blackWeight);
-    float4 adjustment =
-        (hue * chroma) +
-        (FilterOptions6 * whiteWeight) +
-        (FilterOptions7 * neutralWeight) +
-        (FilterOptions8 * blackWeight);
-    float scale = FilterOptions9.x < 0.5
-        ? max(0.05, 1.0 - minimum)
-        : 1.0;
-    float3 cmy = 1.0 - color;
-    cmy += adjustment.rgb * scale;
-    cmy += adjustment.a * scale;
-    return 1.0 - cmy;
-}
-
-float4 AdjustmentFilterPixelShader(
-    VertexShaderOutput input) : COLOR0
-{
-    float4 source = SampleSource(input);
-    if (source.a <= 0.0)
-    {
-        return 0.0;
-    }
-
-    int profile = (int)(FilterHeader.y + 0.5);
-    int blendMode = (int)(FilterHeader.z + 0.5);
-    float4 linearSource =
-        WorkingAssociatedToLinearSrgb(
-            source,
-            profile);
-    float3 linearColor =
-        Unpremultiply(linearSource);
-    float3 adjusted = saturate(
-        ApplyAdjustment(linearColor, input));
-    float3 blended = EvaluateBlendMode(
-        blendMode,
-        saturate(linearColor),
-        adjusted);
-    float3 result = lerp(
-        linearColor,
-        blended,
-        saturate(Opacity));
-    return LinearSrgbAssociatedToWorking(
-        float4(
-            result * source.a,
-            source.a),
-        profile) * input.Color;
-}
-

@@ -4,6 +4,11 @@ float4 CatalogTexture(
     int filterId,
     int profile)
 {
+    if (filterId == 129)
+    {
+        return CatalogOilPaint(uv, source, profile);
+    }
+
     float textureValue =
         FilterHeader.w >= 1.0
             ? dot(
