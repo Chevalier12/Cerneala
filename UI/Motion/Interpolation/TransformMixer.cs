@@ -51,9 +51,9 @@ public sealed class TransformMixer : ValueMixer<Transform>
         ArgumentNullException.ThrowIfNull(transform);
         Matrix3x2 matrix = transform.Matrix;
 
-        // Canonical affine decomposition for UI transforms: translation, scale,
-        // rotation, and equivalent X skew. Matrices with collapsed scale are
-        // rejected instead of silently falling back to matrix lerp in component mode.
+
+
+
         float scaleX = MathF.Sqrt((matrix.M11 * matrix.M11) + (matrix.M12 * matrix.M12));
         if (scaleX <= DecompositionEpsilon)
         {

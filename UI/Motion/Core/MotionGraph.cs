@@ -5,10 +5,10 @@ using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Motion.Core;
 
-/// <summary>
-/// Owns active motion nodes. Cross-thread animation requests must be marshaled
-/// through the platform UI dispatcher before calling mutation APIs.
-/// </summary>
+
+
+
+
 public sealed class MotionGraph
 {
     private readonly IUiThreadAccess threadAccess;

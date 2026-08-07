@@ -23,11 +23,11 @@ public sealed class MotionSystem
     private bool wasActiveLastTick;
     private TimeSpan maxDelta = TimeSpan.FromMilliseconds(100);
 
-    /// <summary>
-    /// Creates the root-owned motion system and captures thread affinity immediately.
-    /// Construct the owning root on the UI thread; marshal cross-thread motion requests
-    /// through the platform UI dispatcher before calling motion APIs.
-    /// </summary>
+
+
+
+
+
     public MotionSystem(UIRoot root, IMotionClock clock, ReducedMotionPolicy reducedMotion)
     {
         Root = root ?? throw new ArgumentNullException(nameof(root));

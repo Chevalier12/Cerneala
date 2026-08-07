@@ -166,7 +166,7 @@ public sealed class SpringSpec<T> : MotionSpec<T>
             isComplete = false;
         }
 
-        // Semi-implicit Euler keeps the integrator simple and stable enough for small fixed substeps.
+
         private void Integrate(float seconds)
         {
             T displacement = mixer.Subtract(current, target);
