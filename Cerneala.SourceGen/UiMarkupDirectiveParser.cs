@@ -652,8 +652,8 @@ public sealed partial class UiMarkupGenerator
                     throw Error("Only @if blocks may appear directly inside @when.");
                 }
 
-                // Assignments are valid inside @if even though bare assignments are
-                // intentionally rejected at the surrounding XML element level.
+
+
                 DirectiveContentKind branchContent =
                     (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions) &
                     ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles |

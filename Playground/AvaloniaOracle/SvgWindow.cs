@@ -28,7 +28,7 @@ public sealed class SvgWindow : Window
 
         Content = new Viewbox
         {
-            // Match Cerneala's 52/53 physical-pixel layout rounding at 125% DPI.
+
             Margin = new Thickness(41.6, 41.6, 42.4, 42.4),
             Stretch = Stretch.Uniform,
             Child = canvas

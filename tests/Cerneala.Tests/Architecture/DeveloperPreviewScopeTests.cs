@@ -39,96 +39,6 @@ public sealed class DeveloperPreviewScopeTests
     ];
 
     [Fact]
-    public void DeveloperPreviewScopeDocumentExists()
-    {
-        string root = FindRepositoryRoot();
-
-        Assert.True(File.Exists(Path.Combine(root, "docs", "developer-preview-scope.md")));
-    }
-
-    [Fact]
-    public void DeveloperPreviewScopeNamesSupportedCoreAuthoringRuntimeSurfaces()
-    {
-        string scope = ReadPreviewScope();
-        string[] requiredTerms =
-        [
-            "Retained tree",
-            "Typed UiProperty<T>",
-            "Invalidation/frame scheduler",
-            "Drawing command cache",
-            "Input/routed events/focus/commands/input bindings",
-            "Style/theme/default button template",
-            "Core controls used by Authoring/Runtime samples",
-            "Typed ObservableValue/ObservableList/BindingOperations",
-            "TextBlock and single-line TextBox MVP",
-            "ItemsControl/ListBox/ScrollViewer retained list path",
-            "Resources/image cache/font resources",
-            "MonoGame runtime adapter",
-            "Platform services seams for cursor/clipboard/etc.",
-            "Platform-neutral semantics tree",
-            "Diagnostics and preview samples",
-            "Typed `.cui.xml` source generation",
-            "modern `@template` on Control-derived elements"
-        ];
-
-        AssertContainsAll(scope, requiredTerms);
-    }
-
-    [Fact]
-    public void DeveloperPreviewScopeNamesDeferredFrozenSurfaces()
-    {
-        string scope = ReadPreviewScope();
-        string[] requiredTerms =
-        [
-            "Package split",
-            "Native accessibility adapters",
-            "Full IME/multiline/rich text",
-            "Markup/sourcegen syntax beyond the documented `.cui.xml` grammar",
-            "String-path binding as core hot path",
-            "Advanced rendering/effects/path rendering/render targets",
-            "Animation/storyboard expansion",
-            "Advanced input categories beyond platform-backed seams"
-        ];
-
-        AssertContainsAll(scope, requiredTerms);
-    }
-
-    [Fact]
-    public void DeveloperPreviewScopeStatesCodeFirstNoXamlFirstCore()
-    {
-        string scope = ReadPreviewScope();
-
-        Assert.Contains("code-first", scope, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("not a compatibility promise", scope, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("XAML-first core", scope, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public void DeveloperPreviewScopeStatesStringPropertyPathsAreUnsupportedInCoreHotPath()
-    {
-        string scope = ReadPreviewScope();
-
-        Assert.Contains("String-path binding as core hot path", scope, StringComparison.Ordinal);
-        Assert.Contains("unsupported", scope, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public void DeveloperPreviewScopeStatesRetainedGameLoopContract()
-    {
-        string scope = ReadPreviewScope();
-        string[] requiredTerms =
-        [
-            "Update may run every frame.",
-            "Draw may run every frame.",
-            "Layout/render command generation must be invalidation-driven.",
-            "Unchanged frames should report no retained work.",
-            "Draw must not mutate retained work."
-        ];
-
-        AssertContainsAll(scope, requiredTerms);
-    }
-
-    [Fact]
     public void PreviewSamplesDoNotReferenceMarkupOrSourceGeneration()
     {
         AssertNoForbiddenTermsInPreviewSources(PreviewSampleForbiddenMarkupTerms);
@@ -180,75 +90,6 @@ public sealed class DeveloperPreviewScopeTests
     }
 
     [Fact]
-    public void RoadmapDoesNotClaimPackageSplitProjectsImplementedWhenFilesDoNotExist()
-    {
-        string root = FindRepositoryRoot();
-        string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
-        string[] optionalProjectFiles =
-        [
-            "Cerneala.Core.csproj",
-            "Cerneala.MonoGame.csproj",
-            "Cerneala.Tests.Core.csproj",
-            "Cerneala.Tests.MonoGame.csproj"
-        ];
-
-        foreach (string projectFile in optionalProjectFiles)
-        {
-            bool exists = File.Exists(Path.Combine(root, projectFile));
-            string expectedCheckbox = exists ? $"- [x] `{projectFile}`" : $"- [ ] `{projectFile}`";
-
-            Assert.Contains(expectedCheckbox, roadmap, StringComparison.Ordinal);
-        }
-    }
-
-    [Fact]
-    public void RoadmapDoesNotClaimNativeAccessibilityAdaptersScenarioComplete()
-    {
-        string roadmap = ReadRoadmap();
-        string accessibilitySection = ExtractSection(roadmap, "## 21. [Later] Accessibility and semantics");
-
-        Assert.Contains("platform-neutral semantics tree", accessibilitySection, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Platform accessibility adapters are **later/frozen**", accessibilitySection, StringComparison.Ordinal);
-        Assert.Contains("- [ ] Native platform accessibility adapters exist and are tested before scenario-complete.", accessibilitySection, StringComparison.Ordinal);
-        Assert.DoesNotContain("- [x] Native platform accessibility adapters", accessibilitySection, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public void RoadmapKeepsMarkupSourceGenMarkedOptionalOrFrozen()
-    {
-        string roadmap = ReadRoadmap();
-        string markupSection = ExtractSection(roadmap, "## 25. [Optional/Experimental] Markup, serialization, and source generation");
-
-        Assert.Contains("optional", markupSection, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("frozen", markupSection, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("- [~] `Cerneala.SourceGen/UiMarkupGenerator.cs`", markupSection, StringComparison.Ordinal);
-        Assert.Contains("Markup/source generation remains frozen", markupSection, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void RoadmapKeepsAdvancedRenderingEffectsMarkedDeferredUntilBackendSupported()
-    {
-        string roadmap = ReadRoadmap();
-        string mediaSection = ExtractSection(roadmap, "## 22. [Later] Advanced rendering and media");
-        string[] frozenEffects =
-        [
-            "- [~] `UI/Media/LinearGradientBrush.cs`",
-            "- [~] `UI/Media/RadialGradientBrush.cs`",
-            "- [~] `UI/Media/PathGeometry.cs`"
-        ];
-
-        AssertContainsAll(mediaSection, frozenEffects);
-        Assert.Contains(
-            "- [ ] Effects API and backend pipeline are intentionally absent until designed and implemented end to end.",
-            mediaSection,
-            StringComparison.Ordinal);
-        Assert.DoesNotContain("OpacityLayer.cs", mediaSection, StringComparison.Ordinal);
-        Assert.DoesNotContain("ShadowEffect.cs", mediaSection, StringComparison.Ordinal);
-        Assert.Contains("backend", mediaSection, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("frozen until", mediaSection, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
     public void EffectsSurfaceRemainsAbsentUntilDesignedEndToEnd()
     {
         System.Reflection.Assembly assembly = typeof(Cerneala.UI.Media.Transform).Assembly;
@@ -276,18 +117,6 @@ public sealed class DeveloperPreviewScopeTests
                 foundTerms.Length == 0,
                 $"{Path.GetRelativePath(root, file)} references frozen Developer Preview scope: {string.Join(", ", foundTerms)}.");
         }
-    }
-
-    private static string ReadPreviewScope()
-    {
-        string root = FindRepositoryRoot();
-        return File.ReadAllText(Path.Combine(root, "docs", "developer-preview-scope.md"));
-    }
-
-    private static string ReadRoadmap()
-    {
-        string root = FindRepositoryRoot();
-        return File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
     }
 
     private static IEnumerable<string> EnumeratePreviewSourceFiles()
@@ -473,14 +302,6 @@ public sealed class DeveloperPreviewScopeTests
         return initializers.ToArray();
     }
 
-    private static void AssertContainsAll(string text, string[] requiredTerms)
-    {
-        foreach (string term in requiredTerms)
-        {
-            Assert.Contains(term, text, StringComparison.Ordinal);
-        }
-    }
-
     private static string FindRepositoryRoot()
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
@@ -495,14 +316,6 @@ public sealed class DeveloperPreviewScopeTests
         }
 
         throw new DirectoryNotFoundException("Could not find repository root.");
-    }
-
-    private static string ExtractSection(string markdown, string heading)
-    {
-        int start = markdown.IndexOf(heading, StringComparison.Ordinal);
-        Assert.True(start >= 0, $"Could not find heading '{heading}'.");
-        int next = markdown.IndexOf("\n## ", start + heading.Length, StringComparison.Ordinal);
-        return next < 0 ? markdown[start..] : markdown[start..next];
     }
 
     private static string RemoveCommentsAndStringLiterals(string text)

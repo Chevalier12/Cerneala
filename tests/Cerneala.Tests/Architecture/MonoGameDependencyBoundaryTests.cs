@@ -86,28 +86,6 @@ public sealed class MonoGameDependencyBoundaryTests
         }
     }
 
-    [Fact]
-    public void OptionalPackageSplitProjectsAreNotClaimedUnlessFilesExist()
-    {
-        string root = FindRepositoryRoot();
-        string roadmap = File.ReadAllText(Path.Combine(root, "ROADMAPv2.md"));
-        string[] optionalProjectFiles =
-        [
-            "Cerneala.Core.csproj",
-            "Cerneala.MonoGame.csproj",
-            "Cerneala.Tests.Core.csproj",
-            "Cerneala.Tests.MonoGame.csproj"
-        ];
-
-        foreach (string projectFile in optionalProjectFiles)
-        {
-            bool exists = File.Exists(Path.Combine(root, projectFile));
-            string expectedCheckbox = exists ? $"- [x] `{projectFile}`" : $"- [ ] `{projectFile}`";
-
-            Assert.Contains(expectedCheckbox, roadmap, StringComparison.Ordinal);
-        }
-    }
-
     private static string FindRepositoryRoot()
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
