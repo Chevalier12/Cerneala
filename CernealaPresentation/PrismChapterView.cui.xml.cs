@@ -449,8 +449,8 @@ public partial class PrismChapterView : UserControl
             CommitLayerValue(instance => model.SetLayerOpacity(instance, layer.Id, value)));
         AddUnitSlider("FILL", layer.Fill, value =>
             CommitLayerValue(instance => model.SetLayerFill(instance, layer.Id, value)));
-        Add(InspectorHost.Panel, CreateCycleButton(
-            $"BLEND / {layer.BlendMode}",
+        Add(InspectorHost.Panel, Label("BLEND", MutedBrush));
+        Add(InspectorHost.Panel, CreateComboBox(
             BlendModes(),
             layer.BlendMode,
             value => CommitLayerValue(instance => model.SetLayerBlendMode(instance, layer.Id, value))));
@@ -466,8 +466,8 @@ public partial class PrismChapterView : UserControl
         {
             AddUnitSlider("FILTER OPACITY", operation.Opacity, value =>
                 CommitValue(instance => model.SetFilterOpacity(instance, operation.Id, value)));
-            Add(InspectorHost.Panel, CreateCycleButton(
-                $"FILTER BLEND / {operation.BlendMode}",
+            Add(InspectorHost.Panel, Label("FILTER BLEND", MutedBrush));
+            Add(InspectorHost.Panel, CreateComboBox(
                 BlendModes(),
                 operation.BlendMode,
                 value => CommitValue(instance => model.SetFilterBlendMode(instance, operation.Id, value))));
@@ -525,7 +525,7 @@ public partial class PrismChapterView : UserControl
                 break;
             case PrismCatalogValueKind.Symbol:
                 string symbol = (string)operation.GetValue(parameter);
-                Add(editor, CreateCycleButton(symbol, parameter.SymbolOptions, symbol,
+                Add(editor, CreateComboBox(parameter.SymbolOptions, symbol,
                     value => SetParameter(operation, parameter, value)));
                 break;
             case PrismCatalogValueKind.Resource:
@@ -789,23 +789,48 @@ public partial class PrismChapterView : UserControl
         Margin = new Thickness(0, 3, 0, 3)
     };
 
-    private static Button CreateCycleButton<T>(
-        string text,
+    private static ComboBox CreateComboBox<T>(
         IReadOnlyList<T> values,
         T current,
         Action<T> changed)
     {
-        int index = Enumerable.Range(0, values.Count)
-            .FirstOrDefault(candidate => EqualityComparer<T>.Default.Equals(values[candidate], current));
-        Button? button = null;
-        button = CreateButton(text, () =>
+        ComboBox comboBox = new()
         {
-            index = (index + 1) % values.Count;
-            T value = values[index];
-            button!.Content = value?.ToString() ?? string.Empty;
-            changed(value);
-        });
-        return button;
+            Background = PanelBrush,
+            BorderBrush = LineBrush,
+            BorderThickness = new Thickness(1),
+            Foreground = PaperBrush,
+            FontFamily = "Cascadia Mono SemiBold",
+            FontSize = 9,
+            Padding = new Thickness(7, 6, 7, 6),
+            Margin = new Thickness(0, 0, 3, 3),
+            MaxDropDownHeight = 180
+        };
+        comboBox.ApplyTemplate();
+        ToggleButton toggle = (ToggleButton)comboBox.ComponentTemplateInstance!
+            .Parts["PART_DropDownToggle"];
+        toggle.Background = PanelBrush;
+        toggle.BorderBrush = LineBrush;
+        toggle.BorderThickness = new Thickness(1);
+        toggle.Foreground = PaperBrush;
+        toggle.FontFamily = "Cascadia Mono SemiBold";
+        toggle.Padding = new Thickness(6, 4, 6, 4);
+        if (toggle.Content is Cerneala.UI.Controls.Shapes.Shape glyph)
+        {
+            glyph.Fill = PaperBrush;
+        }
+
+        comboBox.SetItems(values);
+        comboBox.SelectedIndex = Enumerable.Range(0, values.Count)
+            .First(candidate => EqualityComparer<T>.Default.Equals(values[candidate], current));
+        comboBox.SelectionChanged += (_, _) =>
+        {
+            if (comboBox.SelectedItem is T value)
+            {
+                changed(value);
+            }
+        };
+        return comboBox;
     }
 
     private static PrismBlendMode[] BlendModes() =>

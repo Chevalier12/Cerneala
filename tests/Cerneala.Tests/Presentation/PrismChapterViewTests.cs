@@ -74,7 +74,7 @@ public sealed class PrismChapterViewTests
     {
         Assert.Equal(134, PrismCatalog.Filters.Length);
         Assert.Equal(10, PrismCatalog.Styles.Length);
-        Assert.Equal(9, PrismCatalog.Filters.Count(operation => operation.RequiresResource));
+        Assert.Equal(11, PrismCatalog.Filters.Count(operation => operation.RequiresResource));
         Assert.Single(PrismCatalog.Styles.Where(operation => operation.RequiresResource));
 
         string code = File.ReadAllText(RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs"));
@@ -145,6 +145,104 @@ public sealed class PrismChapterViewTests
                 slider.Track.Thumb.GetValueSource(Control.BackgroundProperty));
             Assert.Equal(10, slider.Track.Thumb.ArrangedBounds.Width);
         });
+    }
+
+    [Fact]
+    public void InspectorUsesComboBoxesForEveryDiscreteChoice()
+    {
+        PrismChapterView view = new();
+        PrismStudioLayer layer = view.Model.AddLayer();
+        PrismCatalogOperationInfo filter = PrismCatalog.Filters.First(operation =>
+            !operation.RequiresResource &&
+            operation.Parameters.Any(parameter => parameter.ValueKind == PrismCatalogValueKind.Symbol));
+        Assert.True(view.Model.AddOperation(layer.Id, filter));
+        view.PrepareEditorForTests();
+
+        Arrange(view, 830, 586);
+
+        ComboBox[] comboBoxes = Descendants(view).OfType<ComboBox>().ToArray();
+        int symbolParameterCount = filter.Parameters.Count(
+            parameter => parameter.ValueKind == PrismCatalogValueKind.Symbol);
+        Assert.Equal(2 + symbolParameterCount, comboBoxes.Length);
+        Assert.DoesNotContain(
+            "CreateCycleButton",
+            File.ReadAllText(RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs")),
+            StringComparison.Ordinal);
+
+        PrismBlendMode nextBlendMode = Assert.IsType<PrismBlendMode>(
+            Enumerable.Range(0, comboBoxes[0].ItemCount)
+                .Select(comboBoxes[0].GetItemAt)
+                .First(item => !Equals(item, layer.BlendMode)));
+        comboBoxes[0].SelectedIndex = Enumerable.Range(0, comboBoxes[0].ItemCount)
+            .First(index => Equals(comboBoxes[0].GetItemAt(index), nextBlendMode));
+
+        Assert.Equal(nextBlendMode, layer.BlendMode);
+    }
+
+    [Fact]
+    public void OpenInspectorComboBoxRendersItsBlendModeItems()
+    {
+        UIRoot root = new(1650, 1004);
+        PrismChapterView view = new();
+        root.VisualChildren.Add(view);
+        root.ProcessFrame();
+        view.AddLayerForTests();
+        root.ProcessFrame();
+        ComboBox comboBox = Assert.Single(Descendants(view).OfType<ComboBox>());
+        Cerneala.UI.Controls.Primitives.ToggleButton toggle =
+            Assert.IsType<Cerneala.UI.Controls.Primitives.ToggleButton>(
+                comboBox.ComponentTemplateInstance!.Parts["PART_DropDownToggle"]);
+        Assert.Equal(
+            new Color(20, 24, 30),
+            Assert.IsType<SolidColorBrush>(toggle.Background).Color);
+        Assert.Equal(
+            new Color(52, 60, 70),
+            Assert.IsType<SolidColorBrush>(toggle.BorderBrush).Color);
+        Cerneala.UI.Controls.Shapes.Path toggleGlyph =
+            Assert.IsType<Cerneala.UI.Controls.Shapes.Path>(toggle.Content);
+        Assert.Equal(
+            new Color(232, 235, 232),
+            Assert.IsType<SolidColorBrush>(toggleGlyph.Fill).Color);
+
+        comboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+
+        Overlay overlay = Assert.IsType<Overlay>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        Assert.True(overlay.ProjectedPresenter.ArrangedBounds.Height > 0);
+        Border dropDownBorder = Assert.IsType<Border>(overlay.Content);
+        ScrollViewer scrollViewer = Assert.IsType<ScrollViewer>(dropDownBorder.Child);
+        Assert.True(scrollViewer.Presenter.ExtentHeight > scrollViewer.Presenter.ViewportHeight);
+        Assert.True(scrollViewer.IsVerticalScrollBarVisible);
+        Assert.True(scrollViewer.VerticalScrollBar.ArrangedBounds.Width > 0);
+        Assert.True(scrollViewer.VerticalScrollBar.ArrangedBounds.Height > 0);
+        ItemsPresenter itemsPresenter = Assert.IsType<ItemsPresenter>(
+            comboBox.ComponentTemplateInstance.Parts["PART_ItemsPresenter"]);
+        Assert.NotNull(itemsPresenter.LayoutPanelRoot);
+        Assert.NotEmpty(itemsPresenter.LayoutPanelRoot.VisualChildren);
+        TextBlock[] itemText = Descendants(overlay.ProjectedPresenter).OfType<TextBlock>().ToArray();
+        Assert.Contains(itemText, text => text.Text == nameof(PrismBlendMode.Multiply));
+        TextBlock multiplyText = Assert.Single(
+            itemText.Where(text => text.Text == nameof(PrismBlendMode.Multiply)));
+        Assert.True(multiplyText.IsAttached);
+        Assert.True(multiplyText.IsVisible);
+        Assert.Equal(Visibility.Visible, multiplyText.Visibility);
+        Assert.NotNull(multiplyText.Foreground);
+        Assert.True(
+            root.RetainedRenderCache.GetElementCache(multiplyText).IsValid,
+            $"dirty={multiplyText.DirtyState}; bounds={multiplyText.ArrangedBounds}");
+        Assert.Contains(
+            root.RetainedRenderCache.GetElementCache(multiplyText).Commands,
+            command => command.Kind == DrawCommandKind.DrawText &&
+                command.Text == nameof(PrismBlendMode.Multiply));
+        string[] renderedText = root.RetainedRenderer.Commit(root)
+            .Where(command => command.Kind == DrawCommandKind.DrawText)
+            .Select(command => command.Text)
+            .Where(text => text is not null)
+            .Cast<string>()
+            .ToArray();
+        Assert.Contains(nameof(PrismBlendMode.Multiply), renderedText);
+        Assert.Contains(nameof(PrismBlendMode.Screen), renderedText);
     }
 
     [Fact]

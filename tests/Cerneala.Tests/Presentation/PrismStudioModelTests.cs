@@ -187,6 +187,18 @@ public sealed class PrismStudioModelTests
     }
 
     [Fact]
+    public void ZigZagStyleEditorOffersOnlyRuntimeSupportedSymbols()
+    {
+        PrismCatalogParameterInfo style = PrismCatalog.GetFilter(PrismFilterId.ZigZag)
+            .Parameters
+            .Single(parameter => parameter.Name == "Style");
+
+        Assert.Equal(
+            ["PondRipples", "OutFromCenter", "AroundCenter"],
+            style.SymbolOptions);
+    }
+
+    [Fact]
     public void ResetRestoresTheEmptyInitialState()
     {
         PrismStudioModel model = new();
