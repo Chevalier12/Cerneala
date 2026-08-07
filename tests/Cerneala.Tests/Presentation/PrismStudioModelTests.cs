@@ -199,6 +199,75 @@ public sealed class PrismStudioModelTests
     }
 
     [Fact]
+    public void DiscreteEditorsMatchOperationSpecificRuntimeSymbols()
+    {
+        AssertSymbols(
+            PrismCatalog.GetFilter(PrismFilterId.MotionBlur),
+            "EdgeMode",
+            "Clamp",
+            "Transparent",
+            "Wrap",
+            "Mirror",
+            "Reflect");
+        AssertSymbols(
+            PrismCatalog.GetFilter(PrismFilterId.GradientMap),
+            "Method",
+            "Perceptual",
+            "Relative",
+            "Absolute");
+        AssertSymbols(
+            PrismCatalog.GetFilter(PrismFilterId.TraceContour),
+            "Edge",
+            "Lower",
+            "Upper");
+        AssertSymbols(
+            PrismCatalog.GetFilter(PrismFilterId.Transform),
+            "Sampling",
+            "Linear");
+        AssertSymbols(
+            PrismCatalog.GetStyle(PrismStyleId.BevelEmboss),
+            "Style",
+            "InnerBevel",
+            "OuterBevel",
+            "Emboss",
+            "PillowEmboss",
+            "StrokeEmboss");
+    }
+
+    [Fact]
+    public void EveryDiscreteEditorHasCompleteResolvableCatalogMetadata()
+    {
+        PrismCatalogOperationInfo[] operations =
+            [.. PrismCatalog.Filters, .. PrismCatalog.Styles];
+
+        foreach (PrismCatalogOperationInfo operation in operations)
+        {
+            foreach (PrismCatalogParameterInfo parameter in
+                operation.Parameters.Where(candidate =>
+                    candidate.ValueKind == PrismCatalogValueKind.Symbol))
+            {
+                Assert.NotEmpty(parameter.SymbolOptions);
+                Assert.Equal(
+                    parameter.SymbolOptions.Length,
+                    parameter.SymbolOptions.Distinct(StringComparer.Ordinal).Count());
+                Assert.Contains(
+                    parameter.DefaultValue,
+                    parameter.SymbolOptions,
+                    StringComparer.Ordinal);
+
+                foreach (string symbol in parameter.SymbolOptions)
+                {
+                    int value = parameter.ResolveSymbol(symbol);
+                    Assert.Contains(
+                        parameter.ResolveSymbol(value),
+                        parameter.SymbolOptions,
+                        StringComparer.Ordinal);
+                }
+            }
+        }
+    }
+
+    [Fact]
     public void ResetRestoresTheEmptyInitialState()
     {
         PrismStudioModel model = new();
@@ -211,5 +280,16 @@ public sealed class PrismStudioModelTests
         Assert.Equal(PrismStudioTarget.Mascot, model.Target);
         Assert.Equal(0, model.SelectedLayerId);
         Assert.Null(model.SelectedOperationId);
+    }
+
+    private static void AssertSymbols(
+        PrismCatalogOperationInfo operation,
+        string parameterName,
+        params string[] expected)
+    {
+        PrismCatalogParameterInfo parameter = operation.Parameters
+            .Single(candidate => candidate.Name == parameterName);
+
+        Assert.Equal(expected, parameter.SymbolOptions);
     }
 }

@@ -86,7 +86,8 @@
           "kind": "catalog-symbol"
         },
         "unit": "none",
-        "default": "LinearSrgb"
+        "default": "LinearSrgb",
+        "symbols": ["LinearSrgb", "Srgb", "LinearDisplayP3", "DisplayP3", "ScRgb"]
       },
       {
         "id": "global-light-angle",
@@ -160,7 +161,8 @@
           "kind": "catalog-symbol"
         },
         "unit": "none",
-        "default": "Normal"
+        "default": "Normal",
+        "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity", "PassThrough"]
       },
       {
         "id": "clip-to-below",
@@ -182,7 +184,8 @@
           "kind": "catalog-symbol"
         },
         "unit": "none",
-        "default": "RGBA"
+        "default": "RGBA",
+        "symbols": ["RGBA"]
       },
       {
         "id": "knockout",
@@ -193,7 +196,8 @@
           "kind": "catalog-symbol"
         },
         "unit": "none",
-        "default": "None"
+        "default": "None",
+        "symbols": ["None", "Shallow", "Deep"]
       },
       {
         "id": "blend-interior-styles-as-group",
@@ -259,7 +263,8 @@
           "kind": "catalog-symbol"
         },
         "unit": "none",
-        "default": "Gray"
+        "default": "Gray",
+        "symbols": ["Gray", "Red", "Green", "Blue"]
       },
       {
         "id": "this-layer-range",
@@ -341,7 +346,8 @@
           "kind": "catalog-symbol"
         },
         "unit": "none",
-        "default": "PassThrough"
+        "default": "PassThrough",
+        "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity", "PassThrough"]
       }
     ],
     "backdrop": [
@@ -390,7 +396,8 @@
           "kind": "catalog-symbol"
         },
         "unit": "none",
-        "default": "Alpha"
+        "default": "Alpha",
+        "symbols": ["Alpha", "Luminance"]
       },
       {
         "id": "feather",
@@ -463,7 +470,8 @@
           "kind": "catalog-symbol"
         },
         "unit": "none",
-        "default": "Normal"
+        "default": "Normal",
+        "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity", "PassThrough"]
       }
     ],
     "style": [
@@ -627,7 +635,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Composite"
+          "default": "Composite",
+          "symbols": ["Composite", "Red", "Green", "Blue"]
         },
         {
           "id": "auto",
@@ -765,7 +774,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear", "Logarithmic", "Video"]
         },
         {
           "id": "direction",
@@ -776,7 +786,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Forward"
+          "default": "Forward",
+          "symbols": ["Forward", "Inverse"]
         },
         {
           "id": "exposure",
@@ -945,7 +956,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Master"
+          "default": "Master",
+          "symbols": ["Master", "Reds", "Yellows", "Greens", "Cyans", "Blues", "Magentas"]
         },
         {
           "id": "hue",
@@ -1445,7 +1457,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Perceptual"
+          "default": "Perceptual",
+          "symbols": ["Perceptual", "Relative", "Absolute"]
         }
       ],
       "capabilities": [
@@ -1621,7 +1634,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Relative"
+          "default": "Relative",
+          "symbols": ["Perceptual", "Relative", "Absolute"]
         }
       ],
       "capabilities": [
@@ -1684,7 +1698,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Good"
+          "default": "Good",
+          "symbols": ["Draft", "Low", "Good", "Medium", "Best", "High"]
         },
         {
           "id": "edge-mode",
@@ -1695,7 +1710,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Clamp"
+          "default": "Clamp",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -1739,7 +1755,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Good"
+          "default": "Good",
+          "symbols": ["Draft", "Low", "Good", "Medium", "Best", "High"]
         },
         {
           "id": "edge-mode",
@@ -1750,7 +1767,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Clamp"
+          "default": "Clamp",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -1807,7 +1825,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Clamp"
+          "default": "Clamp",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -1851,7 +1870,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Good"
+          "default": "Good",
+          "symbols": ["Draft", "Low", "Good", "Medium", "Best", "High"]
         },
         {
           "id": "edge-mode",
@@ -1862,7 +1882,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Clamp"
+          "default": "Clamp",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -1974,7 +1995,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Luminance"
+          "default": "Luminance",
+          "symbols": ["Luminance", "Red", "Green", "Blue", "Alpha"]
         },
         {
           "id": "focal-distance",
@@ -2020,7 +2042,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Uniform"
+          "default": "Uniform",
+          "symbols": ["Uniform", "Gaussian"]
         },
         {
           "id": "monochromatic-noise",
@@ -2087,7 +2110,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Good"
+          "default": "Good",
+          "symbols": ["Draft", "Low", "Good", "Medium", "Best", "High"]
         },
         {
           "id": "edge-mode",
@@ -2098,7 +2122,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Transparent"
+          "default": "Transparent",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -2129,7 +2154,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Spin"
+          "default": "Spin",
+          "symbols": ["Spin", "Zoom"]
         },
         {
           "id": "amount",
@@ -2165,7 +2191,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Good"
+          "default": "Good",
+          "symbols": ["Draft", "Low", "Good", "Medium", "Best", "High"]
         }
       ],
       "capabilities": [
@@ -2219,7 +2246,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Good"
+          "default": "Good",
+          "symbols": ["Draft", "Low", "Good", "Medium", "Best", "High"]
         },
         {
           "id": "edge-mode",
@@ -2230,7 +2258,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Clamp"
+          "default": "Clamp",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -2286,7 +2315,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Good"
+          "default": "Good",
+          "symbols": ["Draft", "Low", "Good", "Medium", "Best", "High"]
         },
         {
           "id": "mode",
@@ -2297,7 +2327,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Normal"
+          "default": "Normal",
+          "symbols": ["Normal", "EdgeOnly", "OverlayEdge"]
         },
         {
           "id": "edge-mode",
@@ -2308,7 +2339,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Clamp"
+          "default": "Clamp",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -2363,7 +2395,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Good"
+          "default": "Good",
+          "symbols": ["Draft", "Low", "Good", "Medium", "Best", "High"]
         },
         {
           "id": "edge-mode",
@@ -2374,7 +2407,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Clamp"
+          "default": "Clamp",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -2452,7 +2486,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Best"
+          "default": "Best",
+          "symbols": ["Draft", "Low", "Good", "Medium", "Best", "High"]
         },
         {
           "id": "highlight",
@@ -2716,7 +2751,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Basic"
+          "default": "Basic",
+          "symbols": ["Basic", "Taper"]
         },
         {
           "id": "flash-sync",
@@ -2727,7 +2763,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Rear"
+          "default": "Rear",
+          "symbols": ["Rear", "Center", "Front"]
         },
         {
           "id": "noise",
@@ -3092,7 +3129,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "GaussianBlur"
+          "default": "GaussianBlur",
+          "symbols": ["GaussianBlur", "LensBlur", "MotionBlur"]
         },
         {
           "id": "angle",
@@ -3221,7 +3259,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Clamp"
+          "default": "Clamp",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -3319,7 +3358,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear"]
         },
         {
           "id": "edge-mode",
@@ -3330,7 +3370,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Transparent"
+          "default": "Transparent",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Repeat", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -3526,7 +3567,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Transparent"
+          "default": "Transparent",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Repeat", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -3653,7 +3695,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Stretch"
+          "default": "Stretch",
+          "symbols": ["Stretch", "Tile"]
         },
         {
           "id": "undefined-areas",
@@ -3664,7 +3707,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "RepeatEdgePixels"
+          "default": "RepeatEdgePixels",
+          "symbols": ["RepeatEdgePixels", "WrapAround", "SetToBackground", "Transparent"]
         },
         {
           "id": "channel-x",
@@ -3675,7 +3719,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Red"
+          "default": "Red",
+          "symbols": ["Red", "Green", "Blue", "Alpha", "Luminance"]
         },
         {
           "id": "channel-y",
@@ -3686,7 +3731,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Green"
+          "default": "Green",
+          "symbols": ["Red", "Green", "Blue", "Alpha", "Luminance"]
         }
       ],
       "capabilities": [
@@ -3740,7 +3786,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Frosted"
+          "default": "Frosted",
+          "symbols": ["Frosted", "TinyLens", "Blocks", "Canvas", "TextureImage"]
         },
         {
           "id": "texture-image",
@@ -3908,7 +3955,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "RectangularToPolar"
+          "default": "RectangularToPolar",
+          "symbols": ["RectangularToPolar", "PolarToRectangular"]
         },
         {
           "id": "center",
@@ -3964,7 +4012,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Medium"
+          "default": "Medium",
+          "symbols": ["Small", "Medium", "Large"]
         },
         {
           "id": "seed",
@@ -3988,7 +4037,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Repeat"
+          "default": "Repeat",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Repeat", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -4031,7 +4081,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear", "EaseIn", "EaseOut", "EaseInOut", "SCurve"]
         },
         {
           "id": "undefined-areas",
@@ -4042,7 +4093,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "RepeatEdgePixels"
+          "default": "RepeatEdgePixels",
+          "symbols": ["RepeatEdgePixels", "WrapAround", "SetToBackground", "Transparent"]
         }
       ],
       "capabilities": [
@@ -4084,7 +4136,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Normal"
+          "default": "Normal",
+          "symbols": ["Normal", "HorizontalOnly", "VerticalOnly"]
         },
         {
           "id": "center",
@@ -4229,7 +4282,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Sine"
+          "default": "Sine",
+          "symbols": ["Sine", "Triangle", "Square"]
         },
         {
           "id": "undefined-areas",
@@ -4240,7 +4294,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "RepeatEdgePixels"
+          "default": "RepeatEdgePixels",
+          "symbols": ["RepeatEdgePixels", "WrapAround", "SetToBackground", "Transparent"]
         },
         {
           "id": "seed",
@@ -4309,7 +4364,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "PondRipples"
+          "default": "PondRipples",
+          "symbols": ["PondRipples", "OutFromCenter", "AroundCenter"]
         },
         {
           "id": "center",
@@ -4397,7 +4453,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Clamp"
+          "default": "Clamp",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Repeat", "Mirror", "Reflect"]
         }
       ],
       "capabilities": [
@@ -4442,7 +4499,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Roundness"
+          "default": "Roundness",
+          "symbols": ["Roundness"]
         }
       ],
       "capabilities": [
@@ -4486,7 +4544,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Roundness"
+          "default": "Roundness",
+          "symbols": ["Roundness", "Squareness"]
         }
       ],
       "capabilities": [
@@ -4531,7 +4590,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "WrapAround"
+          "default": "WrapAround",
+          "symbols": ["RepeatEdgePixels", "WrapAround", "SetToBackground", "Transparent"]
         },
         {
           "id": "fill-color",
@@ -4584,7 +4644,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Uniform"
+          "default": "Uniform",
+          "symbols": ["Uniform", "Gaussian"]
         },
         {
           "id": "monochromatic",
@@ -4996,7 +5057,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "MediumDots"
+          "default": "MediumDots",
+          "symbols": ["FineDots", "MediumDots", "GrainyDots", "CoarseDots", "ShortLines", "MediumLines", "LongLines", "ShortStrokes", "MediumStrokes", "LongStrokes"]
         },
         {
           "id": "seed",
@@ -5246,7 +5308,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Brown"
+          "default": "Brown",
+          "symbols": ["White", "Blue", "Pink", "Brown"]
         }
       ],
       "capabilities": [
@@ -5380,7 +5443,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Brown"
+          "default": "Brown",
+          "symbols": ["White", "Blue", "Pink", "Brown"]
         }
       ],
       "capabilities": [
@@ -5645,7 +5709,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Odd"
+          "default": "Odd",
+          "symbols": ["Even", "Odd"]
         },
         {
           "id": "replacement",
@@ -5656,7 +5721,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Interpolation"
+          "default": "Interpolation",
+          "symbols": ["Interpolation", "Duplication", "Duplicate"]
         }
       ],
       "capabilities": [
@@ -5687,7 +5753,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "NTSC"
+          "default": "NTSC",
+          "symbols": ["NTSC"]
         },
         {
           "id": "method",
@@ -5698,7 +5765,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "ReduceLuminance"
+          "default": "ReduceLuminance",
+          "symbols": ["ReduceLuminance"]
         }
       ],
       "capabilities": [
@@ -6106,7 +6174,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Simple"
+          "default": "Simple",
+          "symbols": ["Simple", "LightRough", "DarkRough", "WideSharp", "WideBlurry", "Sparkle"]
         }
       ],
       "capabilities": [
@@ -6320,7 +6389,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Canvas"
+          "default": "Canvas",
+          "symbols": ["Canvas", "Brick", "Burlap", "Sandstone"]
         },
         {
           "id": "scaling",
@@ -6353,7 +6423,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Top"
+          "default": "Top",
+          "symbols": ["Top", "TopRight", "Right", "BottomRight", "Bottom", "BottomLeft", "Left", "TopLeft"]
         },
         {
           "id": "invert",
@@ -6527,7 +6598,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Canvas"
+          "default": "Canvas",
+          "symbols": ["Canvas", "Brick", "Burlap", "Sandstone"]
         },
         {
           "id": "scaling",
@@ -6560,7 +6632,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Top"
+          "default": "Top",
+          "symbols": ["Top", "TopRight", "Right", "BottomRight", "Bottom", "BottomLeft", "Left", "TopLeft"]
         },
         {
           "id": "invert",
@@ -7004,7 +7077,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "RightDiagonal"
+          "default": "RightDiagonal",
+          "symbols": ["RightDiagonal", "Horizontal", "LeftDiagonal", "Vertical"]
         },
         {
           "id": "seed",
@@ -7126,7 +7200,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "BottomLeft"
+          "default": "BottomLeft",
+          "symbols": ["Top", "TopRight", "Right", "BottomRight", "Bottom", "BottomLeft", "Left", "TopLeft"]
         },
         {
           "id": "foreground",
@@ -7393,7 +7468,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Canvas"
+          "default": "Canvas",
+          "symbols": ["Canvas", "Brick", "Burlap", "Sandstone"]
         },
         {
           "id": "scaling",
@@ -7426,7 +7502,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Top"
+          "default": "Top",
+          "symbols": ["Top", "TopRight", "Right", "BottomRight", "Bottom", "BottomLeft", "Left", "TopLeft"]
         },
         {
           "id": "foreground",
@@ -7501,7 +7578,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "RightDiagonal"
+          "default": "RightDiagonal",
+          "symbols": ["RightDiagonal", "Horizontal", "LeftDiagonal", "Vertical"]
         },
         {
           "id": "foreground",
@@ -7578,7 +7656,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Dot"
+          "default": "Dot",
+          "symbols": ["Dot", "Line", "Circle"]
         },
         {
           "id": "foreground",
@@ -7792,7 +7871,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "TopLeft"
+          "default": "TopLeft",
+          "symbols": ["Top", "TopRight", "Right", "BottomRight", "Bottom", "BottomLeft", "Left", "TopLeft"]
         },
         {
           "id": "foreground",
@@ -8118,7 +8198,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Normal"
+          "default": "Normal",
+          "symbols": ["Normal", "DarkenOnly", "LightenOnly", "Anisotropic"]
         },
         {
           "id": "iterations",
@@ -8231,7 +8312,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Blocks"
+          "default": "Blocks",
+          "symbols": ["Blocks", "Pyramids"]
         },
         {
           "id": "size",
@@ -8266,7 +8348,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Random"
+          "default": "Random",
+          "symbols": ["Random", "Level"]
         },
         {
           "id": "solid-front-faces",
@@ -8478,7 +8561,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Background"
+          "default": "Background",
+          "symbols": ["Background"]
         },
         {
           "id": "background",
@@ -8545,7 +8629,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Lower"
+          "default": "Lower",
+          "symbols": ["Lower", "Upper"]
         }
       ],
       "capabilities": [
@@ -8576,7 +8661,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Wind"
+          "default": "Wind",
+          "symbols": ["Wind", "Blast", "Stagger"]
         },
         {
           "id": "direction",
@@ -8587,7 +8673,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "FromRight"
+          "default": "FromRight",
+          "symbols": ["FromRight", "FromLeft"]
         },
         {
           "id": "strength",
@@ -8732,7 +8819,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Regular"
+          "default": "Regular",
+          "symbols": ["Regular", "Soft", "Sprinkles", "Clumped", "Contrasty", "Enlarged", "Stippled", "Horizontal", "Vertical", "Speckle"]
         },
         {
           "id": "seed",
@@ -8972,7 +9060,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Canvas"
+          "default": "Canvas",
+          "symbols": ["Canvas", "Brick", "Burlap", "Sandstone"]
         },
         {
           "id": "texture-image",
@@ -9016,7 +9105,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Top"
+          "default": "Top",
+          "symbols": ["Top", "TopRight", "Right", "BottomRight", "Bottom", "BottomLeft", "Left", "TopLeft"]
         },
         {
           "id": "invert",
@@ -9188,7 +9278,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Clamp"
+          "default": "Clamp",
+          "symbols": ["Clamp", "Transparent", "Wrap", "Mirror", "Reflect"]
         },
         {
           "id": "affect-alpha",
@@ -9351,7 +9442,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Identity"
+          "default": "Identity",
+          "symbols": ["Identity"]
         },
         {
           "id": "clamp",
@@ -9443,7 +9535,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear"]
         }
       ],
       "capabilities": [
@@ -9562,7 +9655,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Multiply"
+          "default": "Multiply",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "color",
@@ -9658,7 +9752,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear", "Gaussian"]
         },
         {
           "id": "anti-alias",
@@ -9723,7 +9818,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Multiply"
+          "default": "Multiply",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "color",
@@ -9819,7 +9915,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear", "Gaussian"]
         },
         {
           "id": "anti-alias",
@@ -9873,7 +9970,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Screen"
+          "default": "Screen",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "color",
@@ -9930,7 +10028,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Softer"
+          "default": "Softer",
+          "symbols": ["Softer", "Precise"]
         },
         {
           "id": "spread",
@@ -9967,7 +10066,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear", "Gaussian"]
         },
         {
           "id": "anti-alias",
@@ -10032,7 +10132,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Screen"
+          "default": "Screen",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "color",
@@ -10089,7 +10190,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Softer"
+          "default": "Softer",
+          "symbols": ["Softer", "Precise"]
         },
         {
           "id": "origin",
@@ -10100,7 +10202,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Edge"
+          "default": "Edge",
+          "symbols": ["Edge", "Center"]
         },
         {
           "id": "choke",
@@ -10137,7 +10240,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear", "Gaussian"]
         },
         {
           "id": "anti-alias",
@@ -10202,7 +10306,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "InnerBevel"
+          "default": "InnerBevel",
+          "symbols": ["InnerBevel", "OuterBevel", "Emboss", "PillowEmboss", "StrokeEmboss"]
         },
         {
           "id": "technique",
@@ -10213,7 +10318,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Smooth"
+          "default": "Smooth",
+          "symbols": ["Smooth"]
         },
         {
           "id": "depth",
@@ -10235,7 +10341,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Up"
+          "default": "Up",
+          "symbols": ["Up", "Down"]
         },
         {
           "id": "size",
@@ -10305,7 +10412,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear", "Gaussian"]
         },
         {
           "id": "anti-alias",
@@ -10327,7 +10435,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Screen"
+          "default": "Screen",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "highlight-color",
@@ -10362,7 +10471,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Multiply"
+          "default": "Multiply",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "shadow-color",
@@ -10408,7 +10518,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear", "Gaussian"]
         },
         {
           "id": "contour-anti-alias",
@@ -10542,7 +10653,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Multiply"
+          "default": "Multiply",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "color",
@@ -10614,7 +10726,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Gaussian"
+          "default": "Gaussian",
+          "symbols": ["Linear", "Gaussian"]
         },
         {
           "id": "anti-alias",
@@ -10668,7 +10781,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Normal"
+          "default": "Normal",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "color",
@@ -10724,7 +10838,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Normal"
+          "default": "Normal",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "opacity",
@@ -10759,7 +10874,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Perceptual"
+          "default": "Perceptual",
+          "symbols": ["Perceptual"]
         },
         {
           "id": "style",
@@ -10770,7 +10886,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear", "Radial", "Angle", "Reflected", "Diamond"]
         },
         {
           "id": "angle",
@@ -10872,7 +10989,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Normal"
+          "default": "Normal",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "opacity",
@@ -10977,7 +11095,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Outside"
+          "default": "Outside",
+          "symbols": ["Outside", "Center", "Inside"]
         },
         {
           "id": "blend-mode",
@@ -10988,7 +11107,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Normal"
+          "default": "Normal",
+          "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity"]
         },
         {
           "id": "opacity",
@@ -11012,7 +11132,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Color"
+          "default": "Color",
+          "symbols": ["Color", "Gradient", "Pattern"]
         },
         {
           "id": "color",
@@ -11034,7 +11155,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "BlackToWhite"
+          "default": "BlackToWhite",
+          "symbols": ["BlackToWhite"]
         },
         {
           "id": "gradient-method",
@@ -11045,7 +11167,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Perceptual"
+          "default": "Perceptual",
+          "symbols": ["Perceptual"]
         },
         {
           "id": "gradient-style",
@@ -11056,7 +11179,8 @@
             "kind": "catalog-symbol"
           },
           "unit": "none",
-          "default": "Linear"
+          "default": "Linear",
+          "symbols": ["Linear", "Radial", "Angle", "Reflected", "Diamond"]
         },
         {
           "id": "gradient-angle",

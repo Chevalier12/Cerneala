@@ -308,7 +308,8 @@ public partial class PrismChapterView : UserControl
         }
 
         VisibleCatalogCount = visible.Length;
-        CatalogCountText.Text = $"{visible.Length:000} / 144";
+        int catalogCount = PrismCatalog.Filters.Length + PrismCatalog.Styles.Length;
+        CatalogCountText.Text = $"{visible.Length:000} / {catalogCount:000}";
         CategoryButton.Content = catalogCategory?.ToUpperInvariant() ?? "ALL CATEGORIES";
         FilterTab.Background = catalogKind == PrismCatalogOperationKind.Filter ? SelectedBrush : PanelBrush;
         StyleTab.Background = catalogKind == PrismCatalogOperationKind.Style ? SelectedBrush : PanelBrush;
@@ -821,8 +822,15 @@ public partial class PrismChapterView : UserControl
         }
 
         comboBox.SetItems(values);
-        comboBox.SelectedIndex = Enumerable.Range(0, values.Count)
-            .First(candidate => EqualityComparer<T>.Default.Equals(values[candidate], current));
+        comboBox.SelectedIndex = -1;
+        for (int index = 0; index < values.Count; index++)
+        {
+            if (EqualityComparer<T>.Default.Equals(values[index], current))
+            {
+                comboBox.SelectedIndex = index;
+                break;
+            }
+        }
         comboBox.SelectionChanged += (_, _) =>
         {
             if (comboBox.SelectedItem is T value)

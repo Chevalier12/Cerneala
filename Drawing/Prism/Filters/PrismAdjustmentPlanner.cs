@@ -158,8 +158,8 @@ internal static class PrismAdjustmentPlanner
                     values.SymbolCode(
                         "Style",
                         ("Linear", 0),
-                        ("Video", 1),
-                        ("Logarithmic", 2)),
+                        ("Logarithmic", 2),
+                        ("Video", 1)),
                     values.SymbolCode(
                         "Direction",
                         ("Forward", 0),

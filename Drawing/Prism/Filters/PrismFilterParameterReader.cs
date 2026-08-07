@@ -77,6 +77,23 @@ internal readonly ref struct PrismFilterParameterReader
         string name,
         params (string Symbol, int Code)[] mappings)
     {
+        PrismCatalogPropertyDescriptor property = properties.Single(candidate =>
+            string.Equals(candidate.Name, name, StringComparison.Ordinal));
+        if (property.Symbols.Length != mappings.Length)
+        {
+            throw SymbolMetadataMismatch(name);
+        }
+        for (int index = 0; index < mappings.Length; index++)
+        {
+            if (!string.Equals(
+                    property.Symbols[index],
+                    mappings[index].Symbol,
+                    StringComparison.Ordinal))
+            {
+                throw SymbolMetadataMismatch(name);
+            }
+        }
+
         int value =
             Value(name, PrismGraphParameterValueKind.Symbol)
                 .IntegerValue;
@@ -92,6 +109,11 @@ internal readonly ref struct PrismFilterParameterReader
         throw new InvalidOperationException(
             $"Filter property '{name}' has unsupported symbol '{value}'.");
     }
+
+    private InvalidOperationException SymbolMetadataMismatch(string name) =>
+        new(
+            $"Filter '{filter}' runtime symbols for '{name}' do not match " +
+            "the generated Prism catalog metadata.");
 
     private PrismGraphParameter Value(
         string name,

@@ -23,7 +23,14 @@ internal static class PrismCatalogParameterValidation
                 key.Slot,
                 PrismCatalogValueType.Integer,
                 PrismCatalogValueType.Symbol);
-        ValidateRange(property, value);
+        if (property.ValueType == PrismCatalogValueType.Symbol)
+        {
+            ValidateSymbol(property, value);
+        }
+        else
+        {
+            ValidateRange(property, value);
+        }
     }
 
     public static void Validate(
@@ -137,6 +144,19 @@ internal static class PrismCatalogParameterValidation
                 value,
                 $"must be at most {domain[2]}");
         }
+    }
+
+    private static void ValidateSymbol(
+        PrismCatalogPropertyDescriptor property,
+        int value)
+    {
+        if (property.Symbols.Any(symbol =>
+                PrismCatalogRuntime.ResolveSymbol(property.Name, symbol) == value))
+        {
+            return;
+        }
+
+        throw Invalid(property, value, "must be a declared catalog symbol");
     }
 
     private static ArgumentOutOfRangeException Invalid(

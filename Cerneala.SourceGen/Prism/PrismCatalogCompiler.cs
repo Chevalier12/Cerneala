@@ -51,7 +51,8 @@ internal static class PrismCatalogCompiler
         "required",
         "default",
         "domain",
-        "unit");
+        "unit",
+        "symbols");
     private static readonly HashSet<string> DomainFields = Set("kind", "minimum", "maximum");
     private static readonly HashSet<string> CoverageFields = Set("runtime", "kernel", "test", "documentation");
     private static readonly HashSet<string> ExecutionProfileFields = Set(
@@ -352,6 +353,10 @@ internal static class PrismCatalogCompiler
             string unit = ReadRequiredString(element, "unit", propertyContext, issues);
             CatalogDomain domain = ParseDomain(element, propertyContext, issues);
             bool hasDefault = element.TryGetProperty("default", out JsonElement defaultValue);
+            bool hasSymbols = element.TryGetProperty("symbols", out _);
+            List<string> symbols = hasSymbols
+                ? ReadStringArray(element, "symbols", propertyContext, issues)
+                : new List<string>();
 
             if (required && hasDefault)
             {
@@ -380,6 +385,40 @@ internal static class PrismCatalogCompiler
                 ValidateNumericDefault(defaultValue, domain, propertyContext, issues);
             }
 
+            if (valueType == "symbol")
+            {
+                if (!hasSymbols || symbols.Count == 0)
+                {
+                    issues.Add(Issue(
+                        "PRISM3003",
+                        $"{propertyContext} symbol property must declare non-empty 'symbols'."));
+                }
+                else
+                {
+                    if (symbols.Any(symbol => !SymbolIdentifier.IsMatch(symbol)) ||
+                        symbols.Distinct(StringComparer.Ordinal).Count() != symbols.Count)
+                    {
+                        issues.Add(Issue(
+                            "PRISM3003",
+                            $"{propertyContext}.symbols must contain unique valid symbols."));
+                    }
+                    if (hasDefault &&
+                        defaultValue.ValueKind == JsonValueKind.String &&
+                        !symbols.Contains(defaultValue.GetString()!, StringComparer.Ordinal))
+                    {
+                        issues.Add(Issue(
+                            "PRISM3003",
+                            $"{propertyContext} default '{defaultValue.GetString()}' is not declared in 'symbols'."));
+                    }
+                }
+            }
+            else if (hasSymbols)
+            {
+                issues.Add(Issue(
+                    "PRISM3003",
+                    $"{propertyContext} non-symbol property cannot declare 'symbols'."));
+            }
+
             properties.Add(new CatalogProperty(
                 id,
                 name,
@@ -387,7 +426,8 @@ internal static class PrismCatalogCompiler
                 required,
                 hasDefault ? CanonicalValue(defaultValue) : null,
                 domain,
-                unit));
+                unit,
+                symbols));
         }
     }
 
@@ -794,7 +834,8 @@ internal static class PrismCatalogCompiler
         source.AppendLine("    bool Required,");
         source.AppendLine("    string? DefaultValue,");
         source.AppendLine("    string Domain,");
-        source.AppendLine("    string Unit);");
+        source.AppendLine("    string Unit,");
+        source.AppendLine("    string[] Symbols);");
         source.AppendLine();
         source.AppendLine("internal readonly record struct PrismCatalogExecutionDescriptor(");
         source.AppendLine("    string Primitive,");
@@ -1005,13 +1046,19 @@ internal static class PrismCatalogCompiler
         int indent)
     {
         source.Append(' ', indent * 4)
-            .Append('[')
-            .Append(string.Join(
-                ", ",
-                values
-                    .OrderBy(value => value, StringComparer.Ordinal)
-                    .Select(value => $"\"{Escape(value)}\"")))
-            .Append(']');
+            .Append(StringArrayExpression(values, sort: true));
+    }
+
+    private static string StringArrayExpression(
+        IEnumerable<string> values,
+        bool sort)
+    {
+        IEnumerable<string> ordered = sort
+            ? values.OrderBy(value => value, StringComparer.Ordinal)
+            : values;
+        return "[" + string.Join(
+            ", ",
+            ordered.Select(value => $"\"{Escape(value)}\"")) + "]";
     }
 
     private static long ComputeEntryDependencyVersion(
@@ -1277,7 +1324,9 @@ internal static class PrismCatalogCompiler
                 .Append(Escape(property.Domain.Canonical))
                 .Append("\", \"")
                 .Append(Escape(property.Unit))
-                .AppendLine("\"),");
+                .Append("\", ")
+                .Append(StringArrayExpression(property.Symbols, sort: false))
+                .AppendLine("),");
         }
         source.Append(' ', indent * 4).Append(']');
     }
@@ -1553,7 +1602,8 @@ internal static class PrismCatalogCompiler
             bool required,
             string? defaultValue,
             CatalogDomain domain,
-            string unit)
+            string unit,
+            List<string> symbols)
         {
             Id = id;
             Name = name;
@@ -1562,6 +1612,7 @@ internal static class PrismCatalogCompiler
             DefaultValue = defaultValue;
             Domain = domain;
             Unit = unit;
+            Symbols = symbols;
         }
 
         public string Id { get; }
@@ -1571,6 +1622,7 @@ internal static class PrismCatalogCompiler
         public string? DefaultValue { get; }
         public CatalogDomain Domain { get; }
         public string Unit { get; }
+        public List<string> Symbols { get; }
     }
 
     internal sealed class CatalogDomain

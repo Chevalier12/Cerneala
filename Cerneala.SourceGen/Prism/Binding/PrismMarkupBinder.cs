@@ -929,22 +929,13 @@ public sealed partial class UiMarkupGenerator
                 return true;
             }
 
-            string? catalogKind = schema.Name switch
-            {
-                "WorkingColorProfile" => "color-profile",
-                "BlendMode" => "blend-mode",
-                "Sampling" => "sampling",
-                _ => null
-            };
-            if (catalogKind is not null &&
-                !PrismCatalog.Value.Entries.Any(entry =>
-                    string.Equals(entry.Kind, catalogKind, StringComparison.Ordinal) &&
-                    string.Equals(entry.Symbol, syntax.Text, StringComparison.Ordinal)))
+            if (!schema.Symbols.Contains(syntax.Text, StringComparer.Ordinal))
             {
                 ReportPrismBinding(
                     PrismValueDiagnostic,
                     syntax.Location,
-                    "Unknown Prism " + catalogKind + " symbol '" + syntax.Text + "'.");
+                    "Unknown Prism symbol '" + syntax.Text + "' for property '" +
+                    schema.Name + "'.");
                 return false;
             }
 

@@ -79,7 +79,34 @@ public sealed class PrismCatalogCompilerTests
             Assert.False(property.Required);
             Assert.False(string.IsNullOrWhiteSpace(property.DefaultValue));
             Assert.Equal("catalog-symbol", property.Domain.Kind);
+            Assert.NotEmpty(property.Symbols);
+            Assert.Equal(
+                property.Symbols.Count,
+                property.Symbols.Distinct(StringComparer.Ordinal).Count());
+            Assert.Contains(property.DefaultValue!, property.Symbols, StringComparer.Ordinal);
         });
+    }
+
+    [Fact]
+    public void SymbolMetadataRequiresOptionsAndARepresentedDefault()
+    {
+        JsonObject missingSymbols = ParseCatalog(ReadRepositoryCatalog());
+        FindProperty(missingSymbols, "filter:motion-blur", "edge-mode")
+            .Remove("symbols");
+
+        Assert.Contains(
+            PrismCatalogCompiler.Compile(Serialize(missingSymbols)).Issues,
+            issue => issue.Id == "PRISM3003" &&
+                issue.Message.Contains("non-empty 'symbols'", StringComparison.Ordinal));
+
+        JsonObject missingDefault = ParseCatalog(ReadRepositoryCatalog());
+        FindProperty(missingDefault, "filter:motion-blur", "edge-mode")["symbols"] =
+            new JsonArray("Clamp", "Wrap");
+
+        Assert.Contains(
+            PrismCatalogCompiler.Compile(Serialize(missingDefault)).Issues,
+            issue => issue.Id == "PRISM3003" &&
+                issue.Message.Contains("is not declared in 'symbols'", StringComparison.Ordinal));
     }
 
     [Fact]

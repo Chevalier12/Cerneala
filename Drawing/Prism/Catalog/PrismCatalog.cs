@@ -176,13 +176,12 @@ public static class PrismCatalog
         PrismCatalogEntryDescriptor[] entries = PrismCatalogGenerated.Entries;
         return entries
             .Where(entry => entry.Kind is "filter" or "style")
-            .Select(entry => BuildOperation(entry, entries))
+            .Select(BuildOperation)
             .ToImmutableArray();
     }
 
     private static PrismCatalogOperationInfo BuildOperation(
-        PrismCatalogEntryDescriptor entry,
-        PrismCatalogEntryDescriptor[] entries)
+        PrismCatalogEntryDescriptor entry)
     {
         PrismCatalogOperationKind kind = entry.Kind == "filter"
             ? PrismCatalogOperationKind.Filter
@@ -199,7 +198,7 @@ public static class PrismCatalog
                 property.DefaultValue,
                 property.Domain,
                 property.Unit,
-                SymbolOptions(entry, property, entries)))
+                property.Symbols.ToImmutableArray()))
             .ToImmutableArray();
         return new PrismCatalogOperationInfo(
             entry.StableId,
@@ -208,61 +207,6 @@ public static class PrismCatalog
             kind,
             entry.Category,
             parameters);
-    }
-
-    private static ImmutableArray<string> SymbolOptions(
-        PrismCatalogEntryDescriptor entry,
-        PrismCatalogPropertyDescriptor property,
-        PrismCatalogEntryDescriptor[] entries)
-    {
-        if (property.ValueType != PrismCatalogValueType.Symbol)
-        {
-            return [];
-        }
-
-        if (string.Equals(entry.Symbol, "Exposure", StringComparison.Ordinal))
-        {
-            if (string.Equals(property.Name, "Style", StringComparison.Ordinal))
-            {
-                return ["Linear", "Logarithmic", "Video"];
-            }
-
-            if (string.Equals(property.Name, "Direction", StringComparison.Ordinal))
-            {
-                return ["Forward", "Inverse"];
-            }
-        }
-
-        if (string.Equals(entry.Symbol, "ZigZag", StringComparison.Ordinal) &&
-            string.Equals(property.Name, "Style", StringComparison.Ordinal))
-        {
-            return ["PondRipples", "OutFromCenter", "AroundCenter"];
-        }
-
-        if (string.Equals(entry.Symbol, "Diffuse", StringComparison.Ordinal) &&
-            string.Equals(property.Name, "Mode", StringComparison.Ordinal))
-        {
-            return ["Normal", "DarkenOnly", "LightenOnly", "Anisotropic"];
-        }
-
-        IEnumerable<string> options = entries
-            .SelectMany(entry => entry.Properties)
-            .Where(candidate =>
-                candidate.ValueType == PrismCatalogValueType.Symbol &&
-                string.Equals(candidate.Name, property.Name, StringComparison.Ordinal) &&
-                candidate.DefaultValue is not null)
-            .Select(candidate => candidate.DefaultValue!);
-        if (string.Equals(property.Name, "BlendMode", StringComparison.Ordinal))
-        {
-            options = options.Concat(
-                Enum.GetNames<PrismBlendMode>().Where(name => name != nameof(PrismBlendMode.PassThrough)));
-        }
-        else if (string.Equals(property.Name, "Sampling", StringComparison.Ordinal))
-        {
-            options = options.Concat(Enum.GetNames<PrismSampling>());
-        }
-
-        return options.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToImmutableArray();
     }
 
     private static PrismCatalogValueKind Convert(PrismCatalogValueType valueType) => valueType switch
