@@ -39,7 +39,7 @@ public class Selector : ItemsControl
         set => selectionModel.Select(value);
     }
 
-    public object? SelectedItem => SelectedIndex >= 0 && SelectedIndex < Items.Count ? Items[SelectedIndex] : null;
+    public object? SelectedItem => SelectedIndex >= 0 && SelectedIndex < ItemCount ? GetItemAt(SelectedIndex) : null;
 
     public SelectionModel SelectionModel => selectionModel;
 
@@ -72,7 +72,7 @@ public class Selector : ItemsControl
         }
     }
 
-    protected void SelectContainer(UIElement container)
+    protected virtual void SelectContainer(UIElement container)
     {
         int index = global::Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItemIndex(container);
         if (index >= 0)
@@ -92,8 +92,8 @@ public class Selector : ItemsControl
 
     private void OnSelectionChanged(object? sender, SelectionChangedEventArgs args)
     {
-        object? removed = args.Change.OldIndex >= 0 && args.Change.OldIndex < Items.Count ? Items[args.Change.OldIndex] : null;
-        object? added = args.Change.NewIndex >= 0 && args.Change.NewIndex < Items.Count ? Items[args.Change.NewIndex] : null;
+        object? removed = args.Change.OldIndex >= 0 && args.Change.OldIndex < ItemCount ? GetItemAt(args.Change.OldIndex) : null;
+        object? added = args.Change.NewIndex >= 0 && args.Change.NewIndex < ItemCount ? GetItemAt(args.Change.NewIndex) : null;
         SetValue(SelectedIndexProperty, args.Change.NewIndex);
         InvalidateContainer(args.Change.OldIndex);
         InvalidateContainer(args.Change.NewIndex);
@@ -112,7 +112,7 @@ public class Selector : ItemsControl
             return;
         }
 
-        PrepareItemContainer(container, index, Items[index]);
+        PrepareItemContainer(container, index, GetItemAt(index));
         container.IncrementRenderVersion();
         container.Invalidate(InvalidationFlags.Render | InvalidationFlags.InputVisual, "Selection changed");
     }

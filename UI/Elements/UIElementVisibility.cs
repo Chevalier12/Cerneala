@@ -25,7 +25,10 @@ public static class UIElementVisibility
     public static bool ParticipatesInHitTest(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return !element.IsPresenceExiting && element.IsVisible && element.Visibility == Visibility.Visible;
+        return !element.IsPresenceExiting &&
+            element.IsHitTestVisible &&
+            element.IsVisible &&
+            element.Visibility == Visibility.Visible;
     }
 
     internal static bool IsEffectivelyVisible(UIElement element)

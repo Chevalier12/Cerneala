@@ -2,6 +2,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using LayoutCanvas = Cerneala.UI.Layout.Panels.Canvas;
 
 namespace Cerneala.Tests.Controls;
 
@@ -10,19 +11,23 @@ public sealed class ToolTipTests
     [Fact]
     public void ToolTipHostsContentThroughPopupRootWhenOpen()
     {
+        UIRoot root = new(100, 100);
         ToolTip toolTip = new()
         {
             Content = new FixedElement(new LayoutSize(30, 10)),
             IsOpen = true
         };
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(toolTip);
+        root.VisualChildren.Add(canvas);
 
-        LayoutSize desired = toolTip.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        toolTip.Arrange(new ArrangeContext(new LayoutRect(0, 0, 30, 10)));
+        root.ProcessFrame();
 
-        Assert.Equal(new LayoutSize(30, 10), desired);
-        Assert.Contains(toolTip.PopupRoot, toolTip.VisualChildren);
+        Assert.Equal(LayoutSize.Zero, toolTip.DesiredSize);
+        Assert.DoesNotContain(toolTip.PopupRoot, toolTip.VisualChildren);
         UIElement content = Assert.IsType<FixedElement>(toolTip.Content);
         Assert.Same(toolTip.PopupRoot, content.VisualParent);
+        Assert.Same(root.VisualChildren[^1], toolTip.PopupRoot.VisualParent?.VisualParent);
     }
 
     [Fact]
@@ -36,34 +41,35 @@ public sealed class ToolTipTests
         };
         bool routed = false;
         toolTip.PopupRoot.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => routed = true);
-        root.VisualChildren.Add(toolTip);
-        toolTip.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        toolTip.Arrange(new ArrangeContext(new LayoutRect(0, 0, 30, 10)));
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(toolTip);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
 
-        HitTestResult? hit = new HitTestService().HitTest(root, 5, 5);
-        new ElementInputBridge().Dispatch(root, PointerFrame(5, 5, currentDown: true));
+        LayoutRect bounds = toolTip.PopupRoot.ArrangedBounds;
+        float x = bounds.X + 1;
+        float y = bounds.Y + 1;
+        HitTestResult? hit = new HitTestService().HitTest(root, x, y);
+        new ElementInputBridge().Dispatch(root, PointerFrame(x, y, currentDown: true));
 
         Assert.NotNull(hit);
         Assert.True(routed);
     }
 
     [Fact]
-    public void RejectedOpenDoesNotLeavePopupRootAttached()
+    public void RejectedContentChangeRollsBackWithoutDisturbingOverlayHost()
     {
         UIElement existingParent = new();
         UIElement content = new();
         existingParent.VisualChildren.Add(content);
-        ToolTip toolTip = new()
-        {
-            Content = content
-        };
+        ToolTip toolTip = new();
 
-        Assert.Throws<InvalidOperationException>(() => toolTip.IsOpen = true);
+        Assert.Throws<InvalidOperationException>(() => toolTip.Content = content);
 
-        Assert.DoesNotContain(toolTip.PopupRoot, toolTip.LogicalChildren);
         Assert.DoesNotContain(toolTip.PopupRoot, toolTip.VisualChildren);
-        Assert.Null(toolTip.PopupRoot.LogicalParent);
-        Assert.Null(toolTip.PopupRoot.VisualParent);
+        Assert.NotNull(toolTip.PopupRoot.LogicalParent);
+        Assert.NotNull(toolTip.PopupRoot.VisualParent);
+        Assert.Null(toolTip.Content);
         Assert.Null(content.LogicalParent);
         Assert.Same(existingParent, content.VisualParent);
     }

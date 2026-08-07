@@ -116,9 +116,9 @@ public sealed class UiFrameScheduler
             return stats;
         }
 
-        // MVP scheduler contract: each phase processes one deterministic snapshot.
-        // Same-phase work enqueued during processing is deferred to a later frame.
-        // Downstream phase work may still run in this frame if its snapshot has not been taken yet.
+
+
+
         long phaseStarted = Stopwatch.GetTimestamp();
         stats.CountMotion(motion?.BeginFrame(motionReason) ?? default);
         TimeSpan motionTime = Stopwatch.GetElapsedTime(phaseStarted);

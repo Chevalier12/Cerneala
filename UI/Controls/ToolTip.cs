@@ -1,6 +1,4 @@
 using Cerneala.UI.Core;
-using Cerneala.UI.Elements;
-using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Input;
 
@@ -8,14 +6,30 @@ namespace Cerneala.UI.Controls;
 
 public class ToolTip : Control
 {
+    private readonly PopupRoot popupRoot = new();
+    private readonly Overlay overlay;
+    private object? content;
+
+    public ToolTip()
+    {
+        overlay = new Overlay
+        {
+            Content = popupRoot,
+            PlacementTarget = this,
+            Placement = OverlayPlacement.Auto,
+            IsLightDismissEnabled = false
+        };
+        overlay.Opened += OnOverlayOpened;
+        overlay.Closed += OnOverlayClosed;
+        LogicalChildren.Add(overlay);
+        VisualChildren.Add(overlay);
+    }
+
     public static readonly RoutedEvent OpenedEvent = RoutedEventRegistry.Register(nameof(Opened), typeof(ToolTip), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
     public static readonly RoutedEvent ClosedEvent = RoutedEventRegistry.Register(nameof(Closed), typeof(ToolTip), RoutingStrategy.Bubble, typeof(RoutedEventArgs));
 
     public event RoutedEventHandler Opened { add => AddHandler(OpenedEvent, value); remove => RemoveHandler(OpenedEvent, value); }
     public event RoutedEventHandler Closed { add => AddHandler(ClosedEvent, value); remove => RemoveHandler(ClosedEvent, value); }
-    private readonly PopupRoot popupRoot = new();
-    private object? content;
-    private bool popupAttached;
 
     public static readonly UiProperty<bool> IsOpenProperty = UiProperty<bool>.Register(
         nameof(IsOpen),
@@ -27,38 +41,24 @@ public class ToolTip : Control
         get => content;
         set
         {
-            object? oldContent = content;
             if (ContentControl.ContentEqualityComparer.Equals(content, value))
             {
                 content = value;
-                if (IsOpen)
-                {
-                    RefreshPopupRoot();
-                }
-
+                popupRoot.Content = value;
                 return;
             }
 
-            content = value;
+            object? oldContent = content;
             try
             {
-                if (IsOpen)
-                {
-                    RefreshPopupRoot();
-                }
+                popupRoot.Content = value;
+                content = value;
             }
             catch
             {
                 content = oldContent;
-                if (IsOpen && popupAttached)
-                {
-                    popupRoot.Content = oldContent;
-                }
-
                 throw;
             }
-
-            Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "ToolTip content changed");
         }
     }
 
@@ -72,18 +72,13 @@ public class ToolTip : Control
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
-        RefreshPopupRoot();
-        return IsOpen ? popupRoot.Measure(context) : LayoutSize.Zero;
+        overlay.Measure(context);
+        return LayoutSize.Zero;
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
-        RefreshPopupRoot();
-        if (IsOpen)
-        {
-            popupRoot.Arrange(context);
-        }
-
+        overlay.Arrange(context);
         return context.FinalRect;
     }
 
@@ -92,61 +87,27 @@ public class ToolTip : Control
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, IsOpenProperty))
         {
-            RefreshPopupRoot();
-            RaiseEvent(new RoutedEventArgs(IsOpen ? OpenedEvent : ClosedEvent, this));
+            overlay.IsOpen = IsOpen;
         }
     }
 
-    private void RefreshPopupRoot()
+    private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
+    {
+        if (!IsOpen)
+        {
+            SetValue(IsOpenProperty, true);
+        }
+
+        RaiseEvent(new RoutedEventArgs(OpenedEvent, this));
+    }
+
+    private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
     {
         if (IsOpen)
         {
-            AttachPopupRoot();
-            return;
+            SetValue(IsOpenProperty, false);
         }
 
-        if (!popupAttached)
-        {
-            return;
-        }
-
-        popupRoot.Content = null;
-        VisualChildren.Remove(popupRoot);
-        LogicalChildren.Remove(popupRoot);
-        popupAttached = false;
-    }
-
-    private void AttachPopupRoot()
-    {
-        if (popupAttached)
-        {
-            popupRoot.Content = content;
-            return;
-        }
-
-        try
-        {
-            popupRoot.Content = content;
-            LogicalChildren.Add(popupRoot);
-            try
-            {
-                VisualChildren.Add(popupRoot);
-            }
-            catch
-            {
-                LogicalChildren.Remove(popupRoot);
-                throw;
-            }
-
-            popupAttached = true;
-        }
-        catch
-        {
-            popupRoot.Content = null;
-            VisualChildren.Remove(popupRoot);
-            LogicalChildren.Remove(popupRoot);
-            popupAttached = false;
-            throw;
-        }
+        RaiseEvent(new RoutedEventArgs(ClosedEvent, this));
     }
 }

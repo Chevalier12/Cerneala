@@ -1,4 +1,6 @@
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
@@ -57,6 +59,40 @@ public sealed class ItemsControlTests
         Assert.Equal("templated", child.Value);
         Assert.Null(item.LogicalParent);
         Assert.Null(item.VisualParent);
+    }
+
+    [Fact]
+    public void ItemContainerAspectAppliesToGeneratedContainersAndRespectsLocalAspect()
+    {
+        ElementAspect containerAspect = new(
+            [new ElementAspectValue(UIElement.MarginProperty, new Thickness(3, 0, 3, 3))]);
+        ItemsControl control = new()
+        {
+            ItemContainerAspect = containerAspect
+        };
+        control.SetItems(new[] { "generated" });
+
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+
+        UIElement generated = control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0];
+        Assert.Same(containerAspect, generated.Aspect);
+        Assert.Equal(new Thickness(3, 0, 3, 3), generated.Margin);
+        Assert.Equal(UiPropertyValueSource.AspectBase, generated.GetValueSource(UIElement.AspectProperty));
+
+        ElementAspect localAspect = new(
+            [new ElementAspectValue(UIElement.MarginProperty, new Thickness(9))]);
+        UIElement explicitItem = new()
+        {
+            Aspect = localAspect
+        };
+        control.SetItems(new[] { explicitItem });
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+
+        Assert.Same(localAspect, explicitItem.Aspect);
+        Assert.Equal(new Thickness(9), explicitItem.Margin);
+        Assert.Same(containerAspect, explicitItem.GetSourceValue(
+            UIElement.AspectProperty,
+            UiPropertyValueSource.AspectBase));
     }
 
     [Fact]

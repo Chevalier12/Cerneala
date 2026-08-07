@@ -11,6 +11,7 @@ using Cerneala.UI.Relay;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Theming;
+using Cerneala.UI.Controls;
 
 namespace Cerneala.UI.Elements;
 
@@ -86,6 +87,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         HitTestQueue = new HitTestQueue(this);
         InputCache = new ElementInputCache();
         LayoutManager = new LayoutManager(this);
+        OverlayManager = new OverlayManager(this);
         RenderCounters = new RenderCounters();
         RetainedRenderCache = new RetainedRenderCache();
         RenderQueueProcessor = new RenderQueueProcessor(RetainedRenderCache, RenderCounters);
@@ -134,6 +136,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public ElementInputCache InputCache { get; }
 
     public LayoutManager LayoutManager { get; }
+
+    internal OverlayManager OverlayManager { get; }
 
     public RenderCounters RenderCounters { get; }
 
@@ -235,6 +239,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         ViewportHeight = height;
         Scale = scale;
         IncrementTreeVersion();
+        OverlayManager.OnViewportChanged();
     }
 
     public void SetThemeProvider(ThemeProvider? provider)

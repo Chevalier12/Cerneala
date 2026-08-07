@@ -1,4 +1,5 @@
 using System.Collections;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Core;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Templates;
@@ -12,7 +13,8 @@ namespace Cerneala.UI.Controls;
 
 public class ItemsControl : Control
 {
-    private readonly ItemsPresenter itemsPresenter;
+    private readonly ItemsPresenter fallbackItemsPresenter;
+    private ItemsPresenter itemsPresenter;
     private IObservableList? observableItemsSource;
     private bool isObservableItemsSourceSubscribed;
     private bool hasEverAttached;
@@ -23,12 +25,13 @@ public class ItemsControl : Control
         Items = new ItemCollection();
         Items.Changed += OnItemsChanged;
         ItemContainerGenerator = new ItemContainerGenerator(this);
-        itemsPresenter = new ItemsPresenter
+        fallbackItemsPresenter = new ItemsPresenter
         {
             ItemsOwner = this
         };
-        LogicalChildren.Add(itemsPresenter);
-        VisualChildren.Add(itemsPresenter);
+        itemsPresenter = fallbackItemsPresenter;
+        LogicalChildren.Add(fallbackItemsPresenter);
+        VisualChildren.Add(fallbackItemsPresenter);
     }
 
     public static readonly UiProperty<ContentTemplate?> ItemTemplateProperty = UiProperty<ContentTemplate?>.Register(
@@ -41,6 +44,14 @@ public class ItemsControl : Control
         typeof(ItemsControl),
         new UiPropertyMetadata<ItemsPanelTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
+    public static readonly UiProperty<ElementAspect?> ItemContainerAspectProperty = UiProperty<ElementAspect?>.Register(
+        nameof(ItemContainerAspect),
+        typeof(ItemsControl),
+        new UiPropertyMetadata<ElementAspect?>(
+            null,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange |
+            UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest));
+
     public static readonly UiProperty<string?> ItemTemplateKeyProperty = UiProperty<string?>.Register(
         nameof(ItemTemplateKey),
         typeof(ItemsControl),
@@ -52,6 +63,14 @@ public class ItemsControl : Control
         new UiPropertyMetadata<IEnumerable?>(
             null,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsSemantics));
+
+    public static readonly UiProperty<string> DisplayMemberPathProperty = UiProperty<string>.Register(
+        nameof(DisplayMemberPath),
+        typeof(ItemsControl),
+        new UiPropertyMetadata<string>(
+            string.Empty,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsSemantics,
+            validateValue: value => value is not null));
 
     public ItemCollection Items { get; }
 
@@ -67,10 +86,22 @@ public class ItemsControl : Control
 
     public int ItemCount => observableItemsSource?.Count ?? ItemsSource?.Cast<object?>().Count() ?? Items.Count;
 
+    public string DisplayMemberPath
+    {
+        get => GetValue(DisplayMemberPathProperty);
+        set => SetValue(DisplayMemberPathProperty, value ?? string.Empty);
+    }
+
     public ContentTemplate? ItemTemplate
     {
         get => GetValue(ItemTemplateProperty);
         set => SetValue(ItemTemplateProperty, value);
+    }
+
+    public ElementAspect? ItemContainerAspect
+    {
+        get => GetValue(ItemContainerAspectProperty);
+        set => SetValue(ItemContainerAspectProperty, value);
     }
 
     public string? ItemTemplateKey
@@ -149,7 +180,9 @@ public class ItemsControl : Control
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, ItemTemplateProperty) ||
             ReferenceEquals(args.Property, ItemTemplateKeyProperty) ||
-            ReferenceEquals(args.Property, ItemsPanelProperty))
+            ReferenceEquals(args.Property, ItemsPanelProperty) ||
+            ReferenceEquals(args.Property, DisplayMemberPathProperty) ||
+            ReferenceEquals(args.Property, ItemContainerAspectProperty))
         {
             ItemContainerGenerator.Clear();
             itemsPresenter.MarkItemsDirty();
@@ -201,6 +234,7 @@ public class ItemsControl : Control
 
     protected internal virtual void PrepareItemContainer(UIElement container, int index, object? item)
     {
+        ApplyItemContainerAspect(container);
         bool selected = IsItemSelected(index);
         ItemContainerGenerator.SetInfo(container, index, item, selected);
         if (container is ISelectableItemContainer selectable)
@@ -215,23 +249,79 @@ public class ItemsControl : Control
             return;
         }
 
+        PrepareItemContent(container, index, item);
+    }
+
+    protected virtual void PrepareItemContent(UIElement container, int index, object? item)
+    {
         switch (container)
         {
             case ContentPresenter presenter:
-                presenter.Content = item;
+                presenter.Content = ItemTemplate is null ? GetItemDisplayValue(item) : item;
                 presenter.ContentTemplate = ItemTemplate;
                 presenter.ContentTemplateKey = ItemTemplateKey;
                 presenter.LocalTemplateRegistry = ContentTemplateRegistry;
                 presenter.ContentIndex = index;
                 break;
             case ContentControl contentControl:
-                contentControl.Content = item;
+                contentControl.Content = ItemTemplate is null ? GetItemDisplayValue(item) : item;
                 break;
         }
     }
 
+    protected void ActivateItemsPresenter(ItemsPresenter? presenter)
+    {
+        ItemsPresenter next = presenter ?? fallbackItemsPresenter;
+        if (ReferenceEquals(itemsPresenter, next))
+        {
+            next.ItemsOwner = this;
+            return;
+        }
+
+        ItemsPresenter previous = itemsPresenter;
+        previous.ItemsOwner = null;
+        if (ReferenceEquals(previous.VisualParent, this))
+        {
+            VisualChildren.Remove(previous);
+        }
+
+        if (ReferenceEquals(previous.LogicalParent, this))
+        {
+            LogicalChildren.Remove(previous);
+        }
+
+        itemsPresenter = next;
+        next.ItemsOwner = this;
+        if (ReferenceEquals(next, fallbackItemsPresenter))
+        {
+            if (next.LogicalParent is null)
+            {
+                LogicalChildren.Add(next);
+            }
+
+            if (next.VisualParent is null)
+            {
+                VisualChildren.Add(next);
+            }
+        }
+
+        next.MarkItemsDirty();
+        InvalidateItems("Items presenter changed");
+    }
+
+    internal object? GetItemDisplayValue(object? item)
+    {
+        return DisplayMemberPathAccessor.Resolve(item, DisplayMemberPath);
+    }
+
+    internal string GetItemDisplayText(object? item)
+    {
+        return GetItemDisplayValue(item)?.ToString() ?? string.Empty;
+    }
+
     protected internal virtual void ClearItemContainer(UIElement container)
     {
+        container.ClearValue(UIElement.AspectProperty, UiPropertyValueSource.AspectBase);
         ItemContainerGenerator.ClearInfo(container);
         if (container is ISelectableItemContainer selectable)
         {
@@ -348,6 +438,18 @@ public class ItemsControl : Control
             throw new InvalidOperationException(
                 $"{collectionName} changes observed by an attached ItemsControl must run on the owning UI thread. " +
                 "Use await root.Relay.InvokeAsync(() => items.Add(item)).");
+        }
+    }
+
+    private void ApplyItemContainerAspect(UIElement container)
+    {
+        if (ItemContainerAspect is ElementAspect aspect)
+        {
+            container.SetValue(UIElement.AspectProperty, aspect, UiPropertyValueSource.AspectBase);
+        }
+        else
+        {
+            container.ClearValue(UIElement.AspectProperty, UiPropertyValueSource.AspectBase);
         }
     }
 }

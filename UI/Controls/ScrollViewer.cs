@@ -282,13 +282,14 @@ public class ScrollViewer : Control
         }
 
         scrollBar.Visibility = visibility;
+        TemplateRoot.IncrementLayoutVersion();
         UIRoot? root = scrollBar.Root;
         if (root is null)
         {
             return;
         }
 
-        // Convergence immediately lays out the viewer template, but not its external ancestors.
+
         for (UIElement? current = scrollBar; current is not null; current = current.VisualParent)
         {
             root.LayoutQueue.RemoveMeasure(current);
@@ -321,7 +322,7 @@ public class ScrollViewer : Control
             return;
         }
 
-        // The owner measures and arranges the template root synchronously during convergence.
+
         root.LayoutQueue.RemoveMeasure(templateRoot);
         root.LayoutQueue.RemoveArrange(templateRoot);
         templateRoot.DirtyState.Clear(InvalidationFlags.Measure | InvalidationFlags.Arrange);

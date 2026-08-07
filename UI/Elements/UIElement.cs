@@ -39,6 +39,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         typeof(UIElement),
         new UiPropertyMetadata<bool>(true, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest | UiPropertyOptions.AffectsSemantics));
 
+    public static readonly UiProperty<bool> IsHitTestVisibleProperty = UiProperty<bool>.Register(
+        nameof(IsHitTestVisible),
+        typeof(UIElement),
+        new UiPropertyMetadata<bool>(true, UiPropertyOptions.AffectsHitTest));
+
     public static readonly UiProperty<Thickness> MarginProperty = UiProperty<Thickness>.Register(
         nameof(Margin),
         typeof(UIElement),
@@ -312,6 +317,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         get => GetValue(IsVisibleProperty);
         set => SetValue(IsVisibleProperty, value);
+    }
+
+    public bool IsHitTestVisible
+    {
+        get => GetValue(IsHitTestVisibleProperty);
+        set => SetValue(IsHitTestVisibleProperty, value);
     }
 
     public Thickness Margin
@@ -761,7 +772,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             return true;
         }
 
-        // Alternate-constraint entries do not capture descendant measure state.
+
         if (VisualChildren.Count > 0)
         {
             desiredSize = default;
@@ -867,6 +878,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         IncrementRenderVersion();
         Root?.RetainedRenderCache.InvalidateRoot();
         Root?.RenderQueue.Enqueue(this);
+        Root?.OverlayManager.OnElementArranged(this);
         RaiseEvent(new SizeChangedEventArgs(SizeChangedEvent, this, previousBounds.Size, arrangedBounds.Size));
         return true;
     }
