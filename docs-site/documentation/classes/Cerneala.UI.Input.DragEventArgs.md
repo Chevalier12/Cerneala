@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Input`
 
 Assembly/Project: `Cerneala`
 
-Source: [UI/Input/DragDropController.cs](../../UI/Input/DragDropController.cs)
+Source: [UI/Input/DragDropController.cs](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/DragDropController.cs)
 
 Provides data for drag-and-drop routed events raised by `DragDropController`.
 

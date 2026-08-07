@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Accessibility/SemanticsProperty.cs`
 Provides the `Cerneala.UI.Accessibility.SemanticsProperty` API surface.
 ```csharp
-public sealed enum SemanticsProperty
+public enum SemanticsProperty
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

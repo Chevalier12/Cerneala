@@ -24,6 +24,7 @@ Inheritance:
 ```csharp
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 CheckBox checkBox = new()
 {

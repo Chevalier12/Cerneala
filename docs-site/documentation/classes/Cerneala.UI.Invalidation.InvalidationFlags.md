@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Invalidation/InvalidationFlags.cs`
 Provides the `Cerneala.UI.Invalidation.InvalidationFlags` API surface.
 ```csharp
-public sealed enum InvalidationFlags
+public enum InvalidationFlags
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

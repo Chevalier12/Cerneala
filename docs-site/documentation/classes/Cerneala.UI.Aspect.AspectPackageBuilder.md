@@ -43,6 +43,7 @@ Create and register a package that contributes an aspect rule:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectPackage package = AspectPackage.Create("App")
     .Components(components => components.AddRule(new AspectRuleSet(

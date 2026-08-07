@@ -10,8 +10,21 @@ Source: `Cerneala.SourceGen/UiMarkupGenerator.cs`
 Provides the `Cerneala.SourceGen.UiMarkupGenerator.MarkupSource` API surface.
 
 ```csharp
-private sealed struct MarkupSource
+private readonly struct MarkupSource
 ```
+
+## Constructors
+
+| Name | Description |
+| --- | --- |
+| `MarkupSource(string path, string? text)` | Creates a markup source record with its path and optional text. |
+
+## Properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `Path` | `string` | Gets the additional-text path. |
+| `Text` | `string?` | Gets the loaded markup text, or `null` when unavailable. |
 
 ## Remarks
 

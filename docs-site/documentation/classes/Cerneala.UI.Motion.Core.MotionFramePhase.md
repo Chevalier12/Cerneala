@@ -10,7 +10,7 @@ Source: `UI/Motion/Core/MotionFramePhase.cs`
 Provides the `Cerneala.UI.Motion.Core.MotionFramePhase` API surface.
 
 ```csharp
-public sealed enum MotionFramePhase
+public enum MotionFramePhase
 ```
 
 ## Remarks

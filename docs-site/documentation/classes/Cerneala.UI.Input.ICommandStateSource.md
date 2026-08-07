@@ -10,7 +10,7 @@ Source: `UI/Input/ICommandStateSource.cs`
 Provides the `Cerneala.UI.Input.ICommandStateSource` API surface.
 
 ```csharp
-public abstract interface ICommandStateSource
+public interface ICommandStateSource
 ```
 
 ## Remarks

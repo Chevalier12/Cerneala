@@ -10,8 +10,12 @@ Source: `UI/Motion/Specs/StepEasing.cs`
 Provides the `Cerneala.UI.Motion.Specs.StepPosition` API surface.
 
 ```csharp
-public sealed enum StepPosition
+public enum StepPosition
 ```
+
+## Values
+
+`JumpStart`, `JumpEnd`, `JumpBoth`, `JumpNone`
 
 ## Remarks
 

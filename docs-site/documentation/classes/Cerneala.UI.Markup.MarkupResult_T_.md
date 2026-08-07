@@ -1,4 +1,4 @@
-# MarkupResult&lt;T&gt; Class
+# MarkupResult<T> Class
 
 ## Definition
 Namespace: `Cerneala.UI.Markup`

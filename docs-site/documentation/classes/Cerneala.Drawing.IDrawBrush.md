@@ -13,6 +13,9 @@ public interface IDrawBrush
 
 ## Examples
 ```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Media;
+
 IDrawBrush brush = new SolidColorBrush(Color.CornflowerBlue);
 DrawCommand command = DrawCommand.FillRectangle(new DrawRect(0, 0, 80, 24), brush);
 ```

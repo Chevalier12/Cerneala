@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Motion.Interpolation`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Motion/Interpolation/DrawSizeMixer.cs`](../../UI/Motion/Interpolation/DrawSizeMixer.cs)
+Source: [`UI/Motion/Interpolation/DrawSizeMixer.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/DrawSizeMixer.cs)
 
 Interpolates `DrawSize` values and provides vector-style arithmetic for motion calculations.
 
@@ -94,7 +94,7 @@ Cerneala motion interpolation APIs that animate `DrawSize` values.
 
 ## See Also
 
-- [`DrawSize`](../../Drawing/DrawSize.cs)
+- [`DrawSize`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/DrawSize.cs)
 - [`DrawPointMixer`](Cerneala.UI.Motion.Interpolation.DrawPointMixer.md)
-- [`ValueMixer<T>`](../../UI/Motion/Interpolation/ValueMixer.cs)
-- [`ValueMixerRegistry`](../../UI/Motion/Interpolation/ValueMixerRegistry.cs)
+- [`ValueMixer<T>`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixer.cs)
+- [`ValueMixerRegistry`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixerRegistry.cs)

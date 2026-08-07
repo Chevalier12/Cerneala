@@ -10,7 +10,7 @@ Source: `UI/Motion/Specs/FillMode.cs`
 Provides the `Cerneala.UI.Motion.Specs.FillMode` API surface.
 
 ```csharp
-public sealed enum FillMode
+public enum FillMode
 ```
 
 ## Remarks

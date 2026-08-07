@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Input/IPointerDragSource.cs`
 Provides the `Cerneala.UI.Input.IPointerDragSource` API surface.
 ```csharp
-public abstract interface IPointerDragSource
+public interface IPointerDragSource
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

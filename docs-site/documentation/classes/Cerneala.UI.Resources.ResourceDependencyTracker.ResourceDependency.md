@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Resources`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Resources/ResourceDependencyTracker.cs`](../../UI/Resources/ResourceDependencyTracker.cs)
+Source: [`UI/Resources/ResourceDependencyTracker.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Resources/ResourceDependencyTracker.cs)
 
 Stores the element, resource key, and invalidation metadata for one tracked resource dependency.
 
@@ -67,6 +67,6 @@ Cerneala UI resource dependency tracking for retained rendering and layout inval
 
 ## See also
 - [`ResourceDependencyTracker`](Cerneala.UI.Resources.ResourceDependencyTracker.md)
-- [`ResourceDependencyChange`](../../UI/Resources/ResourceDependencyTracker.cs)
-- [`ResourceId<T>`](Cerneala.UI.Resources.ResourceIdT.md)
-- [`InvalidationFlags`](../../UI/Invalidation/InvalidationFlags.cs)
+- [`ResourceDependencyChange`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Resources/ResourceDependencyTracker.cs)
+- [`ResourceId<T>`](Cerneala.UI.Resources.ResourceId_T_.md)
+- [`InvalidationFlags`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Invalidation/InvalidationFlags.cs)

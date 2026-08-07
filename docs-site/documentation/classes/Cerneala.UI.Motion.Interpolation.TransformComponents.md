@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Motion.Interpolation`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Motion/Interpolation/TransformMixer.cs`](../../UI/Motion/Interpolation/TransformMixer.cs)
+Source: [`UI/Motion/Interpolation/TransformMixer.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/TransformMixer.cs)
 
 Represents the component form used by `TransformMixer` when composing, decomposing, and interpolating two-dimensional transforms.
 
@@ -88,7 +88,7 @@ Cerneala retained UI motion APIs that interpolate `Transform` values with `Trans
 
 ## See Also
 
-- [`TransformMixer`](../../UI/Motion/Interpolation/TransformMixer.cs)
-- [`TransformInterpolationMode`](../../UI/Motion/Interpolation/TransformMixer.cs)
-- [`Transform`](../../UI/Media/Transform.cs)
-- [`Matrix3x2`](../../UI/Media/Matrix3x2.cs)
+- [`TransformMixer`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/TransformMixer.cs)
+- [`TransformInterpolationMode`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/TransformMixer.cs)
+- [`Transform`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Media/Transform.cs)
+- [`Matrix3x2`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Media/Matrix3x2.cs)

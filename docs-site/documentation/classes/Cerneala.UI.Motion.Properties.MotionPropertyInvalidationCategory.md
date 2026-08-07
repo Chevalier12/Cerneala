@@ -10,7 +10,7 @@ Source: `UI/Motion/Properties/MotionPropertyInvalidationCategory.cs`
 Provides the `Cerneala.UI.Motion.Properties.MotionPropertyInvalidationCategory` API surface.
 
 ```csharp
-public sealed enum MotionPropertyInvalidationCategory
+public enum MotionPropertyInvalidationCategory
 ```
 
 ## Remarks

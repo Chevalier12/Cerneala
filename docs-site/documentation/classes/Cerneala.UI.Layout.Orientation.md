@@ -10,7 +10,7 @@ Source: `UI/Layout/Orientation.cs`
 Provides the `Cerneala.UI.Layout.Orientation` API surface.
 
 ```csharp
-public sealed enum Orientation
+public enum Orientation
 ```
 
 ## Remarks

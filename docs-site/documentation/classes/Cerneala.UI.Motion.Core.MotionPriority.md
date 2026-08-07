@@ -10,7 +10,7 @@ Source: `UI/Motion/Core/MotionPriority.cs`
 Provides the `Cerneala.UI.Motion.Core.MotionPriority` API surface.
 
 ```csharp
-public sealed enum MotionPriority
+public enum MotionPriority
 ```
 
 ## Remarks

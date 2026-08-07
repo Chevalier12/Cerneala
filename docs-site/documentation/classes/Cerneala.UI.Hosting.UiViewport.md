@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Hosting`
 
 Assembly/Project: `Cerneala` (`net8.0`)
 
-Source: [`UI/Hosting/UiViewport.cs`](../../UI/Hosting/UiViewport.cs)
+Source: [`UI/Hosting/UiViewport.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Hosting/UiViewport.cs)
 
 Represents the logical size and scale used by a hosted Cerneala UI frame.
 
@@ -80,6 +80,6 @@ Cerneala UI hosting APIs in the `Cerneala.UI.Hosting` namespace.
 
 ## See Also
 
-- [`UiCoordinateMapper`](../../UI/Hosting/UiCoordinateMapper.cs)
-- [`UiHost`](../../UI/Hosting/UiHost.cs)
-- [`UiHostOptions`](../../UI/Hosting/UiHostOptions.cs)
+- [`UiCoordinateMapper`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Hosting/UiCoordinateMapper.cs)
+- [`UiHost`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Hosting/UiHost.cs)
+- [`UiHostOptions`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Hosting/UiHostOptions.cs)

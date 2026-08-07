@@ -7,81 +7,38 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/PopupRoot.cs`
 
-Represents a content host used as the root element for popup-style content.
+Represents the compatibility content root used by popup-style controls.
 
 ```csharp
 public class PopupRoot : ContentControl
 ```
 
-Inheritance:
-`object` -> `UiObject` -> `UIElement` -> `Control` -> `ContentControl` -> `PopupRoot`
-
 ## Examples
-Create a popup root and assign retained UI content to it:
 
 ```csharp
-using Cerneala.UI.Controls;
-
-PopupRoot popupRoot = new()
-{
-    Content = new TextBlock
-    {
-        Text = "Saved"
-    }
-};
-```
-
-Access the popup root owned by a `ToolTip`:
-
-```csharp
-using Cerneala.UI.Controls;
-
-ToolTip toolTip = new()
-{
-    Content = new TextBlock { Text = "Open details" },
-    IsOpen = true
-};
-
-PopupRoot popupRoot = toolTip.PopupRoot;
+ToolTip toolTip = new() { Content = new TextBlock { Text = "Details" } };
+PopupRoot root = toolTip.PopupRoot;
 ```
 
 ## Remarks
-`PopupRoot` is a specialized `ContentControl` with no additional public properties, fields, methods, or events of its own. Its layout overrides currently delegate directly to `ContentControl`, so untemplated `UIElement` content is measured and arranged using the inherited content-hosting behavior.
 
-`ToolTip` owns a private `PopupRoot` instance and exposes it through `ToolTip.PopupRoot`. When the tooltip is open, the root receives the tooltip content and is added to the tooltip's logical and visual children. When the tooltip closes, the root content is cleared and the root is removed from those child collections.
+`PopupRoot` keeps its public API for compatibility. In `ToolTip`, it is hosted inside the `UIRoot` overlay layer rather than inserted inline under the tooltip. It does not create or own a native window.
 
-Use the inherited `Content` property to assign the popup payload. Because `PopupRoot` inherits `ContentControl`, `UIElement` content follows the same ownership checks as other content controls: it cannot already have a logical or visual parent, cannot be the owner itself, cannot be an ancestor of the owner, and cannot belong to a different root.
+Its measure and arrange behavior is inherited from `ContentControl`, including transactional ownership checks for `UIElement` content.
 
-## Constructors
+## Properties
+
 | Name | Description |
 | --- | --- |
-| `PopupRoot()` | Initializes a new `PopupRoot` instance. |
+| `Content` | Inherited popup payload. |
+| `ComponentTemplate` | Inherited component template. |
 
-## Public Members
-`PopupRoot` declares no additional public members beyond its constructor.
+## Applies to
 
-## Relevant Inherited Properties
-| Name | Type | Declared By | Description |
-| --- | --- | --- | --- |
-| `Content` | `object?` | `ContentControl` | Gets or sets the popup content value. `UIElement` content may become a logical and visual child when the root is untemplated. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template used by inherited layout behavior. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template, which takes precedence over `ComponentTemplate`. |
-| `Padding` | `Thickness` | `Control` | Gets or sets inherited padding used by `ContentControl` layout insets. |
-| `BorderThickness` | `Thickness` | `Control` | Gets or sets inherited border thickness used by `ContentControl` layout insets. |
-
-## Protected Methods
-| Name | Return Type | Description |
-| --- | --- | --- |
-| `MeasureCore(MeasureContext context)` | `LayoutSize` | Delegates to `ContentControl.MeasureCore(context)`. |
-| `ArrangeCore(ArrangeContext context)` | `LayoutRect` | Delegates to `ContentControl.ArrangeCore(context)`. |
-
-## Applies To
 Project: `Cerneala`
 
-UI area: retained controls, content hosting, and tooltip popup composition.
+## See also
 
-## See Also
-- `ContentControl`
 - `ToolTip`
-- `Control`
-- `UIElement`
+- `Overlay`
+- `ContentControl`

@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing`
 
 Assembly/Project: `Cerneala` (`net8.0`)
 
-Source: [`Drawing/DrawPoint.cs`](../../Drawing/DrawPoint.cs)
+Source: [`Drawing/DrawPoint.cs`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/DrawPoint.cs)
 
 Represents an immutable two-dimensional drawing coordinate with finite `float` components.
 
@@ -66,6 +66,6 @@ Cerneala drawing primitives in the `Cerneala.Drawing` namespace.
 
 ## See Also
 
-- [`DrawSize`](../../Drawing/DrawSize.cs)
-- [`DrawRect`](../../Drawing/DrawRect.cs)
-- [`DrawCommand`](../../Drawing/DrawCommand.cs)
+- [`DrawSize`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/DrawSize.cs)
+- [`DrawRect`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/DrawRect.cs)
+- [`DrawCommand`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/DrawCommand.cs)

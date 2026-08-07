@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Platform/IDpiProvider.cs`
 Provides the `Cerneala.UI.Platform.IDpiProvider` API surface.
 ```csharp
-public abstract interface IDpiProvider
+public interface IDpiProvider
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

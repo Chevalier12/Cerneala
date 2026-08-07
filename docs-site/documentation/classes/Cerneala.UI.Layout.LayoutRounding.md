@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Layout`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Layout/LayoutRounding.cs`](../../UI/Layout/LayoutRounding.cs)
+Source: [`UI/Layout/LayoutRounding.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Layout/LayoutRounding.cs)
 
 Represents an explicit layout-rounding mode that can either preserve layout values or round them to whole-number coordinates and sizes.
 
@@ -87,8 +87,8 @@ When rounding is disabled, `Round(float)` returns the original value. The layout
 
 ## See also
 
-- [`LayoutPoint`](../../UI/Layout/LayoutPoint.cs)
-- [`LayoutSize`](../../UI/Layout/LayoutSize.cs)
-- [`LayoutRect`](../../UI/Layout/LayoutRect.cs)
-- [`MeasureContext`](../../UI/Layout/MeasureContext.cs)
-- [`ArrangeContext`](../../UI/Layout/ArrangeContext.cs)
+- [`LayoutPoint`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Layout/LayoutPoint.cs)
+- [`LayoutSize`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Layout/LayoutSize.cs)
+- [`LayoutRect`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Layout/LayoutRect.cs)
+- [`MeasureContext`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Layout/MeasureContext.cs)
+- [`ArrangeContext`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Layout/ArrangeContext.cs)

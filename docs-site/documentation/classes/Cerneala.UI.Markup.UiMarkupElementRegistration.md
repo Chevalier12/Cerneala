@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Markup`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Markup/UiMarkupTypeRegistry.cs`](../../UI/Markup/UiMarkupTypeRegistry.cs)
+Source: [`UI/Markup/UiMarkupTypeRegistry.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupTypeRegistry.cs)
 
 Describes how a markup element name maps to a `UIElement` factory, optional child/content behavior, and the set of markup properties that can be applied to created elements.
 
@@ -68,7 +68,7 @@ Property registration names are stored with ordinal string comparison. Registeri
 Markup element schema registration in the `Cerneala` project.
 
 ## See Also
-- [`UiMarkupTypeRegistry`](../../UI/Markup/UiMarkupTypeRegistry.cs)
-- [`UiMarkupPropertyRegistration`](../../UI/Markup/UiMarkupTypeRegistry.cs)
-- [`UiFactory`](../../UI/Markup/UiFactory.cs)
-- [`UiMarkupSchema`](../../UI/Markup/UiMarkupSchema.cs)
+- [`UiMarkupTypeRegistry`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupTypeRegistry.cs)
+- [`UiMarkupPropertyRegistration`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupTypeRegistry.cs)
+- [`UiFactory`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiFactory.cs)
+- [`UiMarkupSchema`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupSchema.cs)

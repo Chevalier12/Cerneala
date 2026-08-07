@@ -29,6 +29,7 @@ The supplied `font` cannot be `null`. `TextAspect.ToDrawTextRun` also validates 
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `MeasureLineHeight(TextAspect aspect, ResolvedTextFont font)` | `float` | Returns the measured line height for the text aspect and resolved font, or the effective text size when shaper metrics are unavailable. |
+| `MeasureBaseline(TextAspect aspect, ResolvedTextFont font)` | `float` | Returns the measured baseline for the text aspect and resolved font, or the effective text size when shaper metrics are unavailable. |
 
 ## Method Details
 
@@ -50,6 +51,29 @@ public static float MeasureLineHeight(TextAspect aspect, ResolvedTextFont font)
 `float`
 
 The rasterized height of the `"Ag"` sample when `TextShaper.Default.TryMeasureLineHeight` succeeds; otherwise `aspect.FontSize * aspect.Scale`.
+
+#### Exceptions
+
+| Exception | Condition |
+| --- | --- |
+| `ArgumentNullException` | `font` is `null`. |
+
+### MeasureBaseline
+
+```csharp
+public static float MeasureBaseline(TextAspect aspect, ResolvedTextFont font)
+```
+
+#### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `aspect` | `TextAspect` | Font size, scale, and font conversion settings used to create the draw text run. |
+| `font` | `ResolvedTextFont` | The resolved drawing font used for shaper measurement. Cannot be `null`. |
+
+#### Returns
+
+The rasterized baseline of the `"Ag"` sample when shaper metrics are available; otherwise `aspect.FontSize * aspect.Scale`.
 
 #### Exceptions
 

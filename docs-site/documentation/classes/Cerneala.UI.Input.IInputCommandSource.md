@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Input/IInputCommandSource.cs`
 Provides the `Cerneala.UI.Input.IInputCommandSource` API surface.
 ```csharp
-public abstract interface IInputCommandSource
+public interface IInputCommandSource
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

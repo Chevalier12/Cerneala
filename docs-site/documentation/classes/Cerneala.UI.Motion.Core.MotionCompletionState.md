@@ -10,7 +10,7 @@ Source: `UI/Motion/Core/MotionCancellation.cs`
 Provides the `Cerneala.UI.Motion.Core.MotionCompletionState` API surface.
 
 ```csharp
-public sealed enum MotionCompletionState
+public enum MotionCompletionState
 ```
 
 ## Remarks

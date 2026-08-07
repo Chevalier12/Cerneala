@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Input`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Input/TouchInputBridge.cs`](../../UI/Input/TouchInputBridge.cs)
+Source: [`UI/Input/TouchInputBridge.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TouchInputBridge.cs)
 
 Represents a batch of touch input points dispatched together by `TouchInputBridge`.
 
@@ -59,7 +59,7 @@ As a record, `TouchInputFrame` uses value-based record equality over its `Points
 
 ## See also
 
-- [`TouchInputBridge`](../../UI/Input/TouchInputBridge.cs)
-- [`TouchInputPoint`](../../UI/Input/TouchInputBridge.cs)
-- [`TouchInputAction`](../../UI/Input/TouchInputBridge.cs)
-- [`TouchEventArgs`](../../UI/Input/TouchInputBridge.cs)
+- [`TouchInputBridge`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TouchInputBridge.cs)
+- [`TouchInputPoint`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TouchInputBridge.cs)
+- [`TouchInputAction`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TouchInputBridge.cs)
+- [`TouchEventArgs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TouchInputBridge.cs)

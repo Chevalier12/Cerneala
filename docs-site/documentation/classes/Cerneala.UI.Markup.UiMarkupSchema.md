@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Markup`
 
 Assembly/Project: `Cerneala`
 
-Source: [UI/Markup/UiMarkupSchema.cs](../../UI/Markup/UiMarkupSchema.cs)
+Source: [UI/Markup/UiMarkupSchema.cs](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupSchema.cs)
 
 Creates the default runtime markup type registry for the built-in retained UI elements supported by `UiFactory`.
 
@@ -80,6 +80,6 @@ Parsing and assignment failures are surfaced by `UiFactory` as markup diagnostic
 Cerneala retained UI markup loading through `UiMarkupReader`, `UiMarkupTypeRegistry`, and `UiFactory`.
 
 ## See also
-- [UiMarkupTypeRegistry.cs](../../UI/Markup/UiMarkupTypeRegistry.cs)
-- [UiFactory.cs](../../UI/Markup/UiFactory.cs)
-- [UiMarkupReader.cs](../../UI/Markup/UiMarkupReader.cs)
+- [UiMarkupTypeRegistry.cs](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupTypeRegistry.cs)
+- [UiFactory.cs](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiFactory.cs)
+- [UiMarkupReader.cs](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupReader.cs)

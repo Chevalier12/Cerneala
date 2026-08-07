@@ -10,7 +10,7 @@ Source: `UI/Motion/Input/PointerMotionState.cs`
 Provides the `Cerneala.UI.Motion.Input.PointerMotionState` API surface.
 
 ```csharp
-public sealed enum PointerMotionState
+public enum PointerMotionState
 ```
 
 ## Remarks

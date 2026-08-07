@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Resources`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Resources/ResourceDependencyTracker.cs`](../../UI/Resources/ResourceDependencyTracker.cs)
+Source: [`UI/Resources/ResourceDependencyTracker.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Resources/ResourceDependencyTracker.cs)
 
 Compares observable resource providers by reference identity for provider tracking inside `ResourceDependencyTracker`.
 

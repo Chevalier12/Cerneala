@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Hosting/IUiClock.cs`
 Provides the `Cerneala.UI.Hosting.IUiClock` API surface.
 ```csharp
-public abstract interface IUiClock
+public interface IUiClock
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

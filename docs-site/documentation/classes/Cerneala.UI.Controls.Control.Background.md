@@ -20,6 +20,9 @@ public Brush? Background { get; set; }
 ## Examples
 
 ```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
+
 Border border = new()
 {
     Background = new SolidColorBrush(Color.White)

@@ -10,7 +10,7 @@ Source: `UI/Controls/InkCanvas.cs`
 Provides the `Cerneala.UI.Controls.InkCanvas.InkInputAction` API surface.
 
 ```csharp
-private sealed enum InkInputAction
+private enum InkInputAction
 ```
 
 ## Remarks

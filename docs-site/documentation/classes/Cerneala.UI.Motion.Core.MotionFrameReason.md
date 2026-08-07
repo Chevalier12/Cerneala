@@ -10,7 +10,7 @@ Source: `UI/Motion/Core/MotionFrame.cs`
 Provides the `Cerneala.UI.Motion.Core.MotionFrameReason` API surface.
 
 ```csharp
-public sealed enum MotionFrameReason
+public enum MotionFrameReason
 ```
 
 ## Remarks

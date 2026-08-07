@@ -935,11 +935,13 @@ Conversia finală se face o singură dată.
 - HSL blend modes lucrează pe culoare neasociată;
 - masks sunt tratate ca date scalare, nu ca imagini color reinterpretate.
 
-Contractul implementat folosește input și output sRGB la granița hostului.
-`LinearSrgb`, `Srgb`, `LinearDisplayP3`, `DisplayP3` și `ScRgb` au câte un
-kernel de intrare și unul de prezentare generate din simbolurile catalogului.
-O compoziție nested este prezentată o dată în sRGB, apoi conversia de intrare a
-părintelui rulează o dată; nu se aplică gamma de două ori.
+Contractul folosește profilul declarat de `PrismRendererOptions.HostColorProfile`
+atât pentru pixelii capturați de la host, cât și pentru destinația de prezentare.
+Valoarea implicită este `Srgb`. Conversia generică trece din profilul hostului în
+working profile și înapoi fără clamp intermediar. O compoziție nested este
+prezentată o dată în profilul hostului, apoi conversia de intrare a părintelui
+rulează o dată; nu se aplică gamma de două ori și nu se reinterpretează implicit
+scRGB drept sRGB.
 
 Toate pass-urile primesc și produc RGBA premultiplicat. Conversiile fac
 unpremultiply numai cât aplică transferul sau matricea, iar alpha zero produce
@@ -951,13 +953,18 @@ obligatoriu RGB zero. `Fill` scalează conținutul înaintea layer styles;
 Ordinea implementată este:
 
 1. `HalfVector4` pentru toate intermediarele Prism;
-2. `Color` pentru output-ul SDR compatibil cu hostul;
+2. formatul destinației hostului pentru prezentare (`Color` implicit pentru SDR,
+   floating-point RGBA pentru scRGB);
 3. format scalar pentru masks când platforma îl suportă;
 4. `Color` pentru masks când nu există format scalar renderable.
 
-`ScRgb` necesită un format floating-point. Dacă backend-ul nu îl suportă, Prism
-raportează capabilitatea lipsă și bypass-uiește compoziția; nu comprimă silențios HDR
-în SDR.
+`ScRgb` este linear BT.709/D65 și păstrează valori RGB negative sau peste `1` în
+`HalfVector4`; alpha rămâne coverage liniar premultiplicat. Când profilul hostului
+este `ScRgb`, hostul trebuie să furnizeze și să prezinte RGBA floating-point și să
+configureze swapchain-ul scRGB (`1.0` corespunde la 80 niți). Opțiunea Prism declară
+semantica pixelilor, dar nu poate transforma un backbuffer de 8 biți într-unul HDR.
+Un backend fără format floating-point trebuie să raporteze capabilitatea lipsă și
+să facă bypass, nu să comprime silențios HDR în SDR.
 
 ### Toleranța numerică
 
@@ -1652,7 +1659,7 @@ pentru constructorii/proprietățile/metoda graph-bearing eliminate. Nu există 
 rupere neclasificată; schimbarea mai veche a semnăturii `IDrawingBackend` este
 acoperită separat de baseline-ul pre-Prism de mai sus.
 
-Nu există API public pentru extensii third-party. Toate cele 56 de tipuri publice
+Nu există API public pentru extensii third-party. Toate cele 78 de tipuri publice
 Prism sau extinse de Prism au pagină în `docs-site/documentation/classes/` și
 intrare în manifest.
 

@@ -10,7 +10,7 @@ Source: `UI/Motion/Specs/MotionCompletion.cs`
 Provides the `Cerneala.UI.Motion.Specs.MotionCompletion` API surface.
 
 ```csharp
-public sealed enum MotionCompletion
+public enum MotionCompletion
 ```
 
 ## Remarks

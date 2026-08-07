@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Input/InputMouseButton.cs`
 Provides the `Cerneala.UI.Input.InputMouseButton` API surface.
 ```csharp
-public sealed enum InputMouseButton
+public enum InputMouseButton
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

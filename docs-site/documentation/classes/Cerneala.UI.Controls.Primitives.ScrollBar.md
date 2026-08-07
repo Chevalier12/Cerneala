@@ -26,7 +26,7 @@ Create a horizontal scroll bar with a viewport-sized thumb:
 
 ```csharp
 using Cerneala.UI.Controls.Primitives;
-using Cerneala.UI.Layout.Panels;
+using Cerneala.UI.Layout;
 
 ScrollBar scrollBar = new()
 {

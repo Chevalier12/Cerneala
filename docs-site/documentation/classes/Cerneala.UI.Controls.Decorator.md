@@ -78,7 +78,6 @@ Changing `Child` invalidates measure and render for the decorator.
 | `BorderThickness` | `Control` | Contributes to the inset used when measuring and arranging `Child`. |
 | `Background` | `Control` | Inherited render property for the control background. |
 | `BorderBrush` | `Control` | Inherited nullable brush property for the control border. |
-| `Template` | `Control` | Inherited control template property. `Decorator` still owns its `Child` directly. |
 | `ComponentTemplate` | `Control` | Inherited component template property. |
 
 ## Layout Behavior

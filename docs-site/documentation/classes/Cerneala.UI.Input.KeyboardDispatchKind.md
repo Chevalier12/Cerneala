@@ -10,7 +10,7 @@ Source: `UI/Input/KeyboardDispatchResult.cs`
 Provides the `Cerneala.UI.Input.KeyboardDispatchKind` API surface.
 
 ```csharp
-internal sealed enum KeyboardDispatchKind
+internal enum KeyboardDispatchKind
 ```
 
 ## Remarks

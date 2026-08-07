@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Motion.Core`
 
 Assembly/Project: `Cerneala`
 
-Source: [UI/Motion/Core/MotionHandle.cs](../../UI/Motion/Core/MotionHandle.cs)
+Source: [UI/Motion/Core/MotionHandle.cs](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Core/MotionHandle.cs)
 
 Provides data for the `MotionHandle.Completed` event.
 

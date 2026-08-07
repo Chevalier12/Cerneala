@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Motion.Interpolation`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Motion/Interpolation/ThicknessMixer.cs`](../../UI/Motion/Interpolation/ThicknessMixer.cs)
+Source: [`UI/Motion/Interpolation/ThicknessMixer.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ThicknessMixer.cs)
 
 Interpolates `Thickness` values and provides vector-style arithmetic for motion calculations.
 
@@ -96,7 +96,7 @@ Cerneala motion interpolation APIs that animate `Thickness` values.
 
 ## See Also
 
-- [`Thickness`](../../UI/Layout/Thickness.cs)
-- [`ValueMixer<T>`](../../UI/Motion/Interpolation/ValueMixer.cs)
-- [`ValueMixerRegistry`](../../UI/Motion/Interpolation/ValueMixerRegistry.cs)
-- [`AnimatablePropertyRegistry`](../../UI/Motion/Properties/AnimatablePropertyRegistry.cs)
+- [`Thickness`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Layout/Thickness.cs)
+- [`ValueMixer<T>`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixer.cs)
+- [`ValueMixerRegistry`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixerRegistry.cs)
+- [`AnimatablePropertyRegistry`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Properties/AnimatablePropertyRegistry.cs)

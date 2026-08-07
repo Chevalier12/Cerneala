@@ -10,8 +10,29 @@ Source: `Drawing/MonoGame/MonoGameDrawMapper.cs`
 Provides the `Cerneala.Drawing.MonoGame.MonoGameDrawMapper` API surface.
 
 ```csharp
-internal sealed struct MonoGameDrawMapper
+internal readonly struct MonoGameDrawMapper
 ```
+
+## Constructors
+
+| Name | Description |
+| --- | --- |
+| `MonoGameDrawMapper(float coordinateScale)` | Creates a mapper for the supplied positive coordinate scale. |
+
+## Properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `CoordinateScale` | `float` | Gets the validated logical-to-physical coordinate scale. |
+
+## Methods
+
+| Name | Return Type | Description |
+| --- | --- | --- |
+| `MapRectangle(DrawRect rect)` | `Rectangle` | Maps a logical rectangle to a MonoGame rectangle. |
+| `MapVector(DrawPoint point)` | `Vector2` | Maps a logical point to physical coordinates. |
+| `MapThickness(float thickness)` | `int` | Maps a logical thickness to a physical pixel width, with a minimum of one pixel. |
+| `MapTextRun(DrawTextRun textRun)` | `DrawTextRun` | Maps text size to physical pixels and preserves the original run at scale one. |
 
 ## Remarks
 

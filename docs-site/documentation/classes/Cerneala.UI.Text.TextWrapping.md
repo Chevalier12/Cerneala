@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Text/TextWrapping.cs`
 Provides the `Cerneala.UI.Text.TextWrapping` API surface.
 ```csharp
-public sealed enum TextWrapping
+public enum TextWrapping
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

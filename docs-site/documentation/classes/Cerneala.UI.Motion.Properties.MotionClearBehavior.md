@@ -10,7 +10,7 @@ Source: `UI/Motion/Properties/MotionClearBehavior.cs`
 Provides the `Cerneala.UI.Motion.Properties.MotionClearBehavior` API surface.
 
 ```csharp
-public sealed enum MotionClearBehavior
+public enum MotionClearBehavior
 ```
 
 ## Remarks

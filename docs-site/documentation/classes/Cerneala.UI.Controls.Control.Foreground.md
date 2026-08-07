@@ -20,6 +20,10 @@ public Brush? Foreground { get; set; }
 ## Examples
 
 ```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
+
 TextBlock text = new()
 {
     Text = "Gradient",

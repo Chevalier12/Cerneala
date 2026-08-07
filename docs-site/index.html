@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ============================= RESET / BASE ============================= */
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 *{
@@ -115,7 +115,7 @@ ul{list-style:none;}
 section{padding:100px 0;position:relative;}
 section.bordered{border-top:1px solid var(--line);}
 
-/* ============================= BUTTONS ============================= */
+
 .btn{
   display:inline-flex;align-items:center;gap:9px;
   font-family:var(--mono);font-weight:600;font-size:.8rem;
@@ -147,7 +147,7 @@ section.bordered{border-top:1px solid var(--line);}
 }
 .btn__arrow{opacity:.7;}
 
-/* ============================= NAV ============================= */
+
 .nav{
   position:fixed;top:0;left:0;right:0;z-index:100;
   border-bottom:1px solid var(--line);
@@ -187,7 +187,7 @@ section.bordered{border-top:1px solid var(--line);}
   .nav__actions{display:none;}
 }
 
-/* ============================= HERO ============================= */
+
 .hero{
   padding:92px 20px 0;position:relative;
 }
@@ -317,7 +317,7 @@ section.bordered{border-top:1px solid var(--line);}
 .console__cursor{color:var(--lime);animation:blink 1.1s step-end infinite;}
 @keyframes blink{50%{opacity:0;}}
 
-/* ============================= TICKER ============================= */
+
 .ticker{
   border-top:1px solid var(--line);border-bottom:1px solid var(--line);
   background:var(--panel-alt);
@@ -334,7 +334,7 @@ section.bordered{border-top:1px solid var(--line);}
 .ticker__track span::before{content:"";width:4px;height:4px;background:var(--cyan);border-radius:50%;}
 @keyframes tickerScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 
-/* ============================= FEATURES ============================= */
+
 .surface__intro{
   display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:80px;align-items:end;
 }
@@ -397,7 +397,7 @@ section.bordered{border-top:1px solid var(--line);}
 }
 @media (max-width:560px){.features__grid{grid-template-columns:1fr;}}
 
-/* ============================= PIPELINE ============================= */
+
 .pipeline__row{
   display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;position:relative;margin-top:34px;
 }
@@ -487,7 +487,7 @@ section.bordered{border-top:1px solid var(--line);}
   .pipeline__idle{align-items:flex-start;text-align:left;}
 }
 
-/* ============================= MARKUP PAIR ============================= */
+
 .markup-demo{
   border:1px solid var(--line-strong);border-radius:var(--radius);overflow:hidden;background:var(--panel-alt);
 }
@@ -560,7 +560,7 @@ section.bordered{border-top:1px solid var(--line);}
   .markup-file__code,.markup-file__lines{font-size:.7rem;}
 }
 
-/* ============================= DIAGNOSTICS ============================= */
+
 .diag{
   display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;
 }
@@ -587,7 +587,7 @@ section.bordered{border-top:1px solid var(--line);}
   .diag{grid-template-columns:1fr;gap:40px;}
 }
 
-/* ============================= FINAL CTA ============================= */
+
 .final-cta{text-align:center;}
 .final-cta h2{
   font-family:var(--disp);font-weight:700;
@@ -610,7 +610,7 @@ section.bordered{border-top:1px solid var(--line);}
 }
 .install-snip button:hover{color:var(--paper);border-color:var(--cyan);}
 
-/* ============================= FOOTER ============================= */
+
 footer{
   border-top:1px solid var(--line);padding:52px 0 40px;
 }
@@ -673,7 +673,7 @@ footer{
 </head>
 <body>
 
-<!-- ============================= NAV ============================= -->
+
 <header class="nav">
   <div class="nav__inner">
     <a class="nav__brand" href="#top">
@@ -704,7 +704,7 @@ footer{
   </div>
 </header>
 
-<!-- ============================= HERO ============================= -->
+
 <section class="hero" id="top">
   <div class="wrap" style="padding:0;">
   <div class="hero__viewport">
@@ -821,7 +821,7 @@ footer{
   </div>
 </div>
 
-<!-- ============================= FEATURES ============================= -->
+
 <section id="features">
   <div class="wrap">
     <div class="surface__intro">
@@ -1006,7 +1006,7 @@ footer{
   </div>
 </section>
 
-<!-- ============================= PIPELINE ============================= -->
+
 <section id="pipeline" class="bordered">
   <div class="wrap">
     <div class="section-head">
@@ -1095,7 +1095,7 @@ footer{
   </div>
 </section>
 
-<!-- ============================= CODE ============================= -->
+
 <section id="code" class="bordered">
   <div class="wrap">
     <div class="section-head" style="margin-left:auto;margin-right:auto;text-align:center;">
@@ -1240,7 +1240,7 @@ footer{
   </div>
 </section>
 
-<!-- ============================= DIAGNOSTICS ============================= -->
+
 <section id="diagnostics" class="bordered">
   <div class="wrap">
     <div class="diag">
@@ -1298,7 +1298,7 @@ footer{
   </div>
 </section>
 
-<!-- ============================= FINAL CTA ============================= -->
+
 <section class="bordered final-cta">
   <div class="wrap">
     <p class="eyebrow" style="justify-content:center;">Get started</p>
@@ -1315,7 +1315,7 @@ footer{
   </div>
 </section>
 
-<!-- ============================= FOOTER ============================= -->
+
 <footer>
   <div class="wrap">
     <div class="footer__top">
@@ -1353,7 +1353,7 @@ footer{
 </footer>
 
 <script>
-  // Runtime inspector tabs
+
   var heroTabs = Array.from(document.querySelectorAll('.hero__tab'));
   var heroViews = Array.from(document.querySelectorAll('.hero-view'));
   var heroStatus = document.getElementById('hero-status');
@@ -1402,7 +1402,7 @@ footer{
     });
   });
 
-  // copy install snippet
+
   var copyBtn = document.getElementById('copy-btn');
   if(copyBtn){
     copyBtn.addEventListener('click', function(){

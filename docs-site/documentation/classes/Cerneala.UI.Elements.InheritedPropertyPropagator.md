@@ -25,6 +25,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Media;
 
 UIRoot root = new();
 Control parent = new() { Foreground = new SolidColorBrush(Color.White) };
@@ -35,7 +36,7 @@ root.VisualChildren.Add(parent);
 
 int changed = root.InheritedPropertyPropagator.PropagateFrom(root);
 
-Color foreground = child.Foreground;
+Brush? foreground = child.Foreground;
 UiPropertyValueSource source = child.GetValueSource(Control.ForegroundProperty);
 ```
 

@@ -1,4 +1,4 @@
-# ObservableValueChangedEventArgs&lt;T&gt; Class
+# ObservableValueChangedEventArgs<T> Class
 
 ## Definition
 Namespace: `Cerneala.UI.Data`

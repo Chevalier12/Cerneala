@@ -3,7 +3,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Controls`
 Assembly/Project: `Cerneala`
-Source: [`UI/Controls/Image.cs`](../../UI/Controls/Image.cs)
+Source: [`UI/Controls/Image.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Controls/Image.cs)
 
 Compares `IDrawImage` values by object identity for `Image.Source` change detection.
 
@@ -75,6 +75,6 @@ This matters for layout and rendering invalidation. `Image.SourceProperty` is re
 Cerneala retained UI image control internals.
 
 ## See also
-- [`Image`](../../UI/Controls/Image.cs)
-- [`UiPropertyMetadata<T>`](../../UI/Core/UiPropertyMetadata%7BT%7D.cs)
-- [`UiObject`](../../UI/Core/UiObject.cs)
+- [`Image`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Controls/Image.cs)
+- [`UiPropertyMetadata<T>`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Core/UiPropertyMetadata%7BT%7D.cs)
+- [`UiObject`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Core/UiObject.cs)

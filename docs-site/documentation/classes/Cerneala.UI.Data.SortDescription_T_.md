@@ -1,4 +1,4 @@
-# SortDescription&lt;T&gt; Class
+# SortDescription<T> Class
 
 ## Definition
 Namespace: `Cerneala.UI.Data`

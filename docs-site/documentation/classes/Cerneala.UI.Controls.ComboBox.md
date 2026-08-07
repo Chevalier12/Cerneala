@@ -2,79 +2,83 @@
 
 ## Definition
 Namespace: `Cerneala.UI.Controls`
+
 Assembly/Project: `Cerneala`
+
 Source: `UI/Controls/ComboBox.cs`
 
-Represents an items control with shared selector state for choosing one item by index or item container input.
+Represents a single-selection control with an optional text editor and an in-root drop-down overlay.
 
 ```csharp
 public class ComboBox : Selector
 ```
 
 Inheritance:
+
 `object` -> `UiObject` -> `UIElement` -> `Control` -> `ItemsControl` -> `Selector` -> `ComboBox`
 
 ## Examples
 
 ```csharp
-using Cerneala.UI.Controls;
-
-var comboBox = new ComboBox();
-comboBox.SetItems(new[] { "one", "two" });
-
-comboBox.SelectedIndex = 1;
-object? selected = comboBox.SelectedItem; // "two"
+var people = new[] { new { Name = "Bucharest" } };
+ComboBox cities = new()
+{
+    DisplayMemberPath = "Name",
+    IsEditable = true,
+    MaxDropDownHeight = 240
+};
+cities.SetItems(people);
+cities.DropDownOpened += (_, _) => System.Console.WriteLine("opened");
 ```
 
 ## Remarks
 
-`ComboBox` is currently a thin concrete control over `Selector`. It does not declare additional members in `ComboBox.cs`; its item and selection behavior comes from `ItemsControl` and `Selector`.
+The default template uses an `Overlay`; opening the drop-down does not create a native window or a second `UIRoot`. The list is projected above normal root content and is removed from hit testing while closed. The drop-down matches the control width, and its background, border, item foreground, and item font follow the corresponding `ComboBox` properties.
 
-Selection is single-index based. Setting `SelectedIndex` delegates to the shared `SelectionModel`, and `SelectedItem` resolves the selected item from `Items` when the index is in range. The `SelectedIndex` UI property defaults to `-1` and rejects values lower than `-1`.
+The default `ItemContainerAspect` assigns `Padding="6"` to each `ComboBoxItem`. Assign another `ItemContainerAspect` to replace this default.
 
-Realized item containers participate in retained input routing through `Selector`: a left mouse button release on a realized container selects that container's item index.
+Selection updates `SelectedIndex`, `SelectedItem`, and `Text` immediately. In editable mode, text may differ from every item. A differing value clears selection without filtering or automatically matching items.
+
+Without an `ItemTemplate`, each item is presented through its display text. An empty `DisplayMemberPath` uses `ToString()`, including for enum and other non-string values.
+
+Keyboard commands include `F4`, `Alt+Down`, `Alt+Up`, `Escape`, `Enter`, arrow keys, `Home`, and `End`. The drop-down also closes after pointer selection, light-dismiss, composite focus exit, disabling, or detaching.
+
+The template must provide `PART_SelectionPresenter`, `PART_EditableTextBox`, `PART_DropDownToggle`, `PART_DropDownOverlay`, and `PART_ItemsPresenter`.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `ComboBox()` | Initializes a `ComboBox` using the inherited `Selector` and `ItemsControl` setup. |
+| `ComboBox()` | Initializes the default template, vertical items panel, item-container padding, focus behavior, and keyboard commands. |
 
 ## Fields
 
 | Name | Description |
 | --- | --- |
-| `SelectedIndexProperty` | Inherited from `Selector`. Identifies the `SelectedIndex` UI property; default value is `-1` and valid values are `-1` or greater. |
-| `ItemTemplateProperty` | Inherited from `ItemsControl`. Identifies the template used to render item content. |
-| `ItemTemplateKeyProperty` | Inherited from `ItemsControl`. Identifies the template key used to resolve item content templates. |
-| `ItemsPanelProperty` | Inherited from `ItemsControl`. Identifies the panel template used to lay out item containers. |
-| `ItemsSourceProperty` | Inherited from `ItemsControl`. Identifies the enumerable source used to provide items. |
+| `IsDropDownOpenProperty` | Identifies `IsDropDownOpen`; default `false`. |
+| `IsEditableProperty` | Identifies `IsEditable`; default `false`. |
+| `TextProperty` | Identifies `Text`; default empty string. |
+| `MaxDropDownHeightProperty` | Identifies `MaxDropDownHeight`; default positive infinity. |
+| `DropDownOpenedEvent` | Identifies the bubbling open event. |
+| `DropDownClosedEvent` | Identifies the bubbling close event. |
 
 ## Properties
 
-| Name | Description |
-| --- | --- |
-| `SelectedIndex` | Inherited from `Selector`. Gets or sets the selected item index. Setting it updates the shared `SelectionModel`. |
-| `SelectedItem` | Inherited from `Selector`. Gets the item at `SelectedIndex`, or `null` when there is no valid selection. |
-| `SelectionModel` | Inherited from `Selector`. Gets the selection model that stores the selected index and raises selection changes. |
-| `Items` | Inherited from `ItemsControl`. Gets the local item collection used when `ItemsSource` is not set. |
-| `ItemsSource` | Inherited from `ItemsControl`. Gets or sets an enumerable source for items. |
-| `ItemCount` | Inherited from `ItemsControl`. Gets the number of items from the observable source, `ItemsSource`, or `Items`. |
-| `ItemTemplate` | Inherited from `ItemsControl`. Gets or sets the data template applied to item content. |
-| `ItemTemplateKey` | Inherited from `ItemsControl`. Gets or sets the key used to resolve an item content template. |
-| `ContentTemplateRegistry` | Inherited from `ItemsControl`. Gets or sets the registry used by generated content presenters. |
-| `ItemsPanel` | Inherited from `ItemsControl`. Gets or sets the panel template used by the items presenter. |
-| `ItemContainerGenerator` | Inherited from `ItemsControl`. Gets the generator that realizes and tracks item containers. |
-| `ItemsPresenter` | Inherited from `ItemsControl`. Gets the presenter responsible for displaying realized items. |
+| Name | Type | Description |
+| --- | --- | --- |
+| `IsDropDownOpen` | `bool` | Gets or sets the requested drop-down state. |
+| `IsEditable` | `bool` | Selects text-editor or selection-presenter mode. |
+| `Text` | `string` | Gets or sets the displayed/editor text. |
+| `MaxDropDownHeight` | `float` | Limits projected drop-down height. Must be positive and not `NaN`. |
+| `DisplayMemberPath` | `string` | Inherited dotted path used for default text and visuals. |
 
-## Methods
+## Events
 
 | Name | Description |
 | --- | --- |
-| `SetItems(IEnumerable?)` | Inherited from `ItemsControl`. Replaces the local `Items` collection. |
-| `GetItemAt(int)` | Inherited from `ItemsControl`. Returns the item at the requested index from the observable source, `ItemsSource`, or `Items`. |
-| `SetVirtualizationContext(VirtualizationContext?)` | Inherited from `ItemsControl`. Sets the virtualization context used by the inherited items presenter. |
-| `UpdateVirtualizationFromScrollInfo(IScrollInfo, float, int)` | Inherited from `ItemsControl`. Updates item virtualization from scroll information, item extent, and optional cache item count. |
+| `DropDownOpened` | Raised once the overlay is actually projected. |
+| `DropDownClosed` | Raised once the projected overlay is withdrawn. |
+| `SelectionChanged` | Inherited event raised when immediate selection changes. |
 
 ## Applies to
 
@@ -82,7 +86,7 @@ Project: `Cerneala`
 
 ## See also
 
-- Source: `UI/Controls/ComboBox.cs`
-- `Selector`
+- `ComboBoxItem`
 - `ItemsControl`
-- `SelectionModel`
+- `Overlay`
+- `Selector`

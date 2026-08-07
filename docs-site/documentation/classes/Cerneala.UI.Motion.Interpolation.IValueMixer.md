@@ -10,7 +10,7 @@ Source: `UI/Motion/Interpolation/IValueMixer.cs`
 Provides the `Cerneala.UI.Motion.Interpolation.IValueMixer` API surface.
 
 ```csharp
-public abstract interface IValueMixer
+public interface IValueMixer
 ```
 
 ## Remarks

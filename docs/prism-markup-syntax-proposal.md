@@ -904,10 +904,10 @@ These cover Photoshop's adjustment-layer surface while retaining the same Prism
 | Filter | Type-specific properties and defaults |
 | --- | --- |
 | `BrightnessContrast` | `Brightness=0`; `Contrast=0`; `UseLegacy=false` |
-| `Levels` | `Channel=Composite`; `InputBlack=0`; `InputWhite=1`; `Gamma=1`; `OutputBlack=0`; `OutputWhite=1` |
-| `Curves` | `Channel=Composite`; `Curve=Linear`; `Interpolation=Smooth` |
+| `Levels` | `Channel=Composite`; `Auto=false`; `InputBlack=0`; `InputWhite=1`; `Gamma=1`; `OutputBlack=0`; `OutputWhite=1` |
+| `Curves` | `Curves=<required PrismCurvesResource>` |
 | `Exposure` | `Exposure=0`; `Offset=0`; `Gamma=1` |
-| `Vibrance` | `Amount=0`; `Saturation=0` |
+| `Vibrance` | `Amount=0`; `Saturation=0`; `AvoidSaturatingSkinTones=true`; `GrayColorTransform=(0.2126,0.7152,0.0722)` |
 | `HueSaturation` | `Channel=Master`; `Hue=0`; `Saturation=0`; `Lightness=0`; `Colorize=false` |
 | `ColorBalance` | `Shadows=(0,0,0)`; `Midtones=(0,0,0)`; `Highlights=(0,0,0)`; `PreserveLuminosity=true` |
 | `BlackWhite` | `Reds=0.40`; `Yellows=0.60`; `Greens=0.40`; `Cyans=0.60`; `Blues=0.20`; `Magentas=0.80`; `Tint=false`; `TintColor=#FFFFFFFF` |
@@ -932,9 +932,9 @@ These cover Photoshop's adjustment-layer surface while retaining the same Prism
 | `LensBlur` | `Radius=15`; `BladeCount=6`; `BladeCurvature=0`; `Rotation=0`; `SpecularBrightness=0`; `SpecularThreshold=1`; `DepthMap=null`; `DepthChannel=Luminance`; `FocalDistance=0.5`; `InvertDepth=false`; `Noise=0`; `NoiseDistribution=Uniform`; `MonochromaticNoise=false` |
 | `MotionBlur` | `Distance=10`; `Angle=0`; `Quality=Good`; `EdgeMode=Transparent` |
 | `RadialBlur` | `Mode=Spin`; `Amount=0.1`; `Center=(0.5,0.5)`; `Quality=Good` |
-| `ShapeBlur` | `Kernel=required`; `Radius=5`; `EdgeMode=Clamp` |
+| `ShapeBlur` | `Shape=required`; `Radius=5`; `Quality=Good`; `EdgeMode=Clamp` |
 | `SmartBlur` | `Radius=5`; `Threshold=0.1`; `Quality=Good`; `Mode=Normal` |
-| `SurfaceBlur` | `Radius=5`; `Threshold=0.1`; `Quality=Good` |
+| `SurfaceBlur` | `Radius=5`; `Threshold=0.1`; `Quality=Good`; `EdgeMode=Clamp` |
 | `FieldBlur` | `Pins=required`; `BokehAmount=0`; `BokehColor=0`; `LightRange=(0,1)`; `Noise=0` |
 | `IrisBlur` | `Center=(0.5,0.5)`; `Radius=(0.25,0.25)`; `Feather=0.5`; `Rotation=0`; `Blur=15`; `BokehAmount=0`; `BokehColor=0`; `LightRange=(0,1)`; `Noise=0` |
 | `TiltShift` | `Center=(0.5,0.5)`; `Angle=0`; `FocusWidth=0.25`; `Feather=0.25`; `Blur=15`; `Distortion=0`; `SymmetricDistortion=true`; `Noise=0` |
@@ -952,7 +952,7 @@ These cover Photoshop's adjustment-layer surface while retaining the same Prism
 | Filter | Type-specific properties and defaults |
 | --- | --- |
 | `Transform` | `Translate=(0,0)`; `Scale=(1,1)`; `Rotation=0`; `Skew=(0,0)`; `Origin=(0.5,0.5)`; `Sampling=Linear`; `EdgeMode=Transparent` |
-| `AdaptiveWideAngle` | `Projection=Auto`; `FocalLength=Auto`; `CropFactor=1`; `Constraints=required`; `Scale=1`; `Rotation=0`; `Translate=(0,0)` |
+| `AdaptiveWideAngle` | `FocalLength=(0.5,0.5)`; `PrincipalPoint=(0.5,0.5)`; `DistortionCoefficients=(0,0,0,0)` |
 | `LensCorrection` | `Distortion=0`; `ChromaticRedCyan=0`; `ChromaticBlueYellow=0`; `VignetteAmount=0`; `VignetteMidpoint=0.5`; `PerspectiveVertical=0`; `PerspectiveHorizontal=0`; `Angle=0`; `Scale=1`; `EdgeMode=Transparent` |
 | `DiffuseGlow` | `Grain=0`; `GlowAmount=0.1`; `ClearAmount=0.15`; `Color=#FFFFFFFF` |
 | `Displace` | `Map=required`; `HorizontalScale=10`; `VerticalScale=10`; `MapFit=Stretch`; `UndefinedAreas=RepeatEdgePixels`; `ChannelX=Red`; `ChannelY=Green` |
@@ -961,7 +961,7 @@ These cover Photoshop's adjustment-layer surface while retaining the same Prism
 | `Pinch` | `Amount=0.5`; `Center=(0.5,0.5)` |
 | `PolarCoordinates` | `Mode=RectangularToPolar`; `Center=(0.5,0.5)` |
 | `Ripple` | `Amount=1`; `Size=Medium`; `Seed=0`; `EdgeMode=Repeat` |
-| `Shear` | `Curve=Linear`; `UndefinedAreas=RepeatEdgePixels` |
+| `Shear` | `Amount=0`; `Curve=Linear`; `UndefinedAreas=RepeatEdgePixels` |
 | `Spherize` | `Amount=1`; `Mode=Normal`; `Center=(0.5,0.5)` |
 | `Twirl` | `Angle=50`; `Center=(0.5,0.5)` |
 | `Wave` | `Generators=5`; `Wavelength=(10,120)`; `Amplitude=(5,35)`; `Scale=(1,1)`; `Type=Sine`; `UndefinedAreas=RepeatEdgePixels`; `Seed=0` |
@@ -987,8 +987,8 @@ These cover Photoshop's adjustment-layer surface while retaining the same Prism
 | `Mezzotint` | `Type=MediumDots`; `Seed=0` |
 | `Mosaic` | `CellSize=(10,10)`; `PreserveEdges=false` |
 | `Pointillize` | `CellSize=10`; `Background=#00000000`; `Seed=0` |
-| `Clouds` | `Foreground=#FF000000`; `Background=#FFFFFFFF`; `Scale=1`; `Seed=0` |
-| `DifferenceClouds` | `Foreground=#FF000000`; `Background=#FFFFFFFF`; `Scale=1`; `Seed=0` |
+| `Clouds` | `Foreground=#FF000000`; `Background=#FFFFFFFF`; `Scale=1`; `Seed=0`; `DirectionCount=20`; `SliceThickness=4`; `FrequencyRange=(0.03125,1)`; `Anisotropy=(0,1)`; `Spectrum=Brown` |
+| `DifferenceClouds` | `Foreground=#FF000000`; `Background=#FFFFFFFF`; `Scale=1`; `Seed=0`; `DirectionCount=20`; `SliceThickness=4`; `FrequencyRange=(0.03125,1)`; `Anisotropy=(0,1)`; `Spectrum=Brown` |
 | `Fibers` | `Foreground=#FF000000`; `Background=#FFFFFFFF`; `Variance=16`; `Strength=4`; `Seed=0` |
 | `LensFlare` | `Center=(0.5,0.5)`; `Brightness=1`; `Lens=50To300Zoom` |
 | `LightingEffects` | `Lights=required`; `Ambient=0`; `Metallic=0`; `Gloss=0.5`; `Exposure=0`; `Texture=null`; `TextureHeight=0` |
@@ -1062,7 +1062,7 @@ swatches:
 | Filter | Type-specific properties and defaults |
 | --- | --- |
 | `CustomConvolution` | `Kernel=required`; `Scale=1`; `Offset=0`; `EdgeMode=Clamp`; `AffectAlpha=false` |
-| `ColorMatrix` | `Matrix=Identity`; `Clamp=true` |
+| `ColorMatrix` | `Matrix=null` (optional `PrismColorMatrixResource`); `Clamp=true` |
 | `Color` | `Brightness=0`; `Contrast=1`; `Exposure=0`; `Saturation=1`; `Hue=0`; `Temperature=0`; `Tint=#00000000`; `Matrix=Identity`; `Clamp=true` |
 | `ChromaticAberration` | `Amount=0`; `Direction=(1,0)`; `Radial=false`; `Center=(0.5,0.5)`; `Sampling=Linear` |
 | `Scanlines` | `Frequency=320`; `Thickness=0.5`; `Phase=0`; `Color=#FF000000`; `LineOpacity=0.18`; `Softness=0` |

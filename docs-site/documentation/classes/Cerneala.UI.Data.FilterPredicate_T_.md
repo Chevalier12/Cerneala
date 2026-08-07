@@ -1,4 +1,4 @@
-# FilterPredicate Delegate
+# FilterPredicate<T> Delegate
 
 ## Definition
 Namespace: `Cerneala.UI.Data`
@@ -10,8 +10,24 @@ Source: `UI/Data/FilterPredicate{T}.cs`
 Provides the `Cerneala.UI.Data.FilterPredicate<T>` API surface.
 
 ```csharp
-public sealed delegate FilterPredicate
+public delegate bool FilterPredicate<in T>(T item)
 ```
+
+## Type Parameters
+
+| Name | Description |
+| --- | --- |
+| `T` | The item type being filtered. |
+
+## Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `item` | `T` | The item to test. |
+
+## Returns
+
+`true` when the item should be included; otherwise, `false`.
 
 ## Remarks
 

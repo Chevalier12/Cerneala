@@ -45,6 +45,8 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Motion;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Specs;
+using Cerneala.Drawing;
+using Cerneala.UI.Media;
 
 UIRoot root = new();
 Control control = new();

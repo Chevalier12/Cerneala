@@ -10,7 +10,7 @@ Source: `UI/Motion/Core/MotionCancellation.cs`
 Provides the `Cerneala.UI.Motion.Core.MotionCancelBehavior` API surface.
 
 ```csharp
-public sealed enum MotionCancelBehavior
+public enum MotionCancelBehavior
 ```
 
 ## Remarks

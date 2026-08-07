@@ -84,7 +84,7 @@ const comparisonRows = [
 
   ['Controls', '`Button`, toggles, ranges', 'Button, RepeatButton, ToggleButton, CheckBox, RadioButton, Slider, ProgressBar, ScrollBar', 'close', 'The standard retained primitive set is present with templated/aspected visuals and press-and-hold repeat input.'],
   ['Controls', '`ItemsControl`, `ListBox`', 'ItemsControl, ListBox, generator/recycle pool', 'close', 'The retained list path includes observation, generation, recycling, scrolling, and selection.'],
-  ['Controls', '`ComboBox`', 'ComboBox without promised WPF popup lifecycle', 'partial', 'Do not assume DropDownOpened/Closed behavior or full popup interaction.'],
+  ['Controls', '`ComboBox`', 'ComboBox with retained in-root drop-down overlay', 'close', 'Includes editable text mode, dotted DisplayMemberPath, adaptive placement, light-dismiss, keyboard commands, and DropDownOpened/Closed. Filtering and autocomplete remain out of scope.'],
   ['Controls', '`TextBlock`, `TextBox`, `PasswordBox`', 'Matching core text controls', 'partial', 'Core text/display/editing exists; full WPF editing, IME, rich text, and command breadth do not.'],
   ['Controls', '`TabControl`', 'TabControl + TabItem', 'close', 'Selection and item-container instincts transfer with narrower overall control-suite context.'],
   ['Controls', '`ToolTip`', 'ToolTip with Opened/Closed', 'partial', 'A current control exists; WPF popup placement and service parity are not blanket claims.'],
@@ -198,7 +198,6 @@ async function loadSnapshotMetrics() {
     document.getElementById('api-count').textContent = docs.length.toString();
     document.getElementById('namespace-count').textContent = new Set(docs.map(doc => categoryFromSource(doc.source))).size.toString();
   } catch {
-    // The dated fallback values remain visible when the page is opened without a server.
   }
 }
 

@@ -10,7 +10,7 @@ Source: `UI/Motion/Presence/PresenceState.cs`
 Provides the `Cerneala.UI.Motion.Presence.PresenceState` API surface.
 
 ```csharp
-public sealed enum PresenceState
+public enum PresenceState
 ```
 
 ## Remarks

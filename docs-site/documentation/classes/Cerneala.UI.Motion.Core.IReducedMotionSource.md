@@ -10,7 +10,7 @@ Source: `UI/Motion/Core/IReducedMotionSource.cs`
 Provides the `Cerneala.UI.Motion.Core.IReducedMotionSource` API surface.
 
 ```csharp
-public abstract interface IReducedMotionSource
+public interface IReducedMotionSource
 ```
 
 ## Remarks

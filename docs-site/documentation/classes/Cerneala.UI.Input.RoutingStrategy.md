@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Input/RoutingStrategy.cs`
 Provides the `Cerneala.UI.Input.RoutingStrategy` API surface.
 ```csharp
-public sealed enum RoutingStrategy
+public enum RoutingStrategy
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

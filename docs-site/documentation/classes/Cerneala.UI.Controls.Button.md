@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/Button.cs`
 
-Represents a command-capable content button that can render simple fallback chrome and text when no control template is applied.
+Represents a command-capable content button that can render simple fallback chrome and text when no `ComponentTemplate` is applied.
 
 ```csharp
 public class Button : ButtonBase
@@ -57,11 +57,11 @@ Button button = new()
 
 `Button` builds on `ButtonBase`, so it is focusable, participates in tab navigation, uses a hand cursor, exposes pressed state, and can execute `ICommand` or `RoutedCommand` instances through the retained input pipeline.
 
-The button does not declare its own content property. It uses `ContentControl.ContentProperty`, so element content follows the content-control ownership rules. While the `ComponentTemplate` property is `null`, `UIElement` content is added as logical and visual content. When the button has no `ComponentTemplate` or `ComponentTemplate`, `UIElement` content is measured and arranged inside `Padding + BorderThickness`; string content is measured by `TextMeasurer` and rendered by `TextRenderer`.
+The button does not declare its own content property. It uses `ContentControl.ContentProperty`, so element content follows the content-control ownership rules. While the `ComponentTemplate` property is `null`, `UIElement` content is added as logical and visual content. When no template child is present, `UIElement` content is measured and arranged inside `Padding + BorderThickness`; string content is measured by `TextMeasurer` and rendered by `TextRenderer`.
 
 Fallback rendering draws the resolved background brush, then the border, then non-empty string content. If `Background` has an explicit value, that brush is used. Otherwise fallback state colors are wrapped in solid brushes for disabled, pressed, pointer-over, and keyboard-focused states before falling back to the default background.
 
-When a template or component template supplies a template child, layout is delegated to the base template path and `Button` skips its fallback rendering. Template-based buttons commonly bind `Content`, `Background`, `BorderBrush`, `BorderThickness`, and `Padding` into the template root or presenter.
+When `ComponentTemplate` supplies a template child, layout is delegated to the base template path and `Button` skips its fallback rendering. Template-based buttons commonly bind `Content`, `Background`, `BorderBrush`, `BorderThickness`, and `Padding` into the template root or presenter.
 
 `TextMeasurer` and `TextRenderer` default to `TextMeasurer.Default` and `TextRenderer.Default`. Assigning `null` to either property throws `ArgumentNullException`. Changing `TextMeasurer` invalidates measure and render; changing `TextRenderer` invalidates render.
 
@@ -89,17 +89,21 @@ When a template or component template supplies a template child, layout is deleg
 | `CommandParameter` | `object?` | `ButtonBase` | Gets or sets the parameter passed to `Command`. |
 | `IsPressed` | `bool` | `ButtonBase` | Gets or sets the pressed visual/input state. |
 | `Background` | `Brush?` | `Control` | Gets or sets the background brush. An explicit value overrides fallback state brushes. |
-| `Foreground` | `Color` | `Control` | Gets or sets the foreground color used by fallback text rendering. |
+| `Foreground` | `Brush?` | `Control` | Gets or sets the foreground brush used by fallback text rendering. |
 | `BorderBrush` | `Brush?` | `Control` | Gets or sets the fallback border brush. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the fallback border thickness and contributes to content insets. |
 | `Padding` | `Thickness` | `Control` | Gets or sets the padding around fallback content. |
 | `FontFamily` | `string` | `Control` | Gets or sets the inherited font family used to create the fallback text aspect. |
 | `FontSize` | `float` | `Control` | Gets or sets the inherited font size used to create the fallback text aspect. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. When present, the template child handles layout and rendering. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template. When present, it takes precedence over `ComponentTemplate`. |
-| `ComponentTemplateInstance` | `ComponentTemplateInstance?` | `Control` | Gets the active template instance, when one has been applied. |
-| `ComponentTemplateInstance` | `ComponentTemplateInstance?` | `Control` | Gets the active component template instance, when one has been applied. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template. When present, the template child handles layout and rendering. |
+| `ComponentTemplateInstance` | `ComponentTemplateInstance?` | `Control` | Gets the active component-template instance, when one has been applied. |
 | `AspectVariants` | `AspectVariantSet` | `Control` | Gets the active aspect variant values used by component templates. |
+
+## Important Inherited Events
+
+| Name | Declared by | Description |
+| --- | --- | --- |
+| `Click` | `ButtonBase` | Occurs when pointer or keyboard activation invokes the button. |
 
 ## Important Inherited Fields
 
@@ -114,7 +118,8 @@ When a template or component template supplies a template child, layout is deleg
 | `BorderBrushProperty` | `UiProperty<Brush?>` | `Control` | Identifies the `BorderBrush` UI property. |
 | `BorderThicknessProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `BorderThickness` UI property. |
 | `PaddingProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `Padding` UI property. |
-| `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | `Control` | Identifies the `ComponentTemplate` UI property. |
+| `FontFamilyProperty` | `UiProperty<string>` | `Control` | Identifies the inherited `FontFamily` UI property. |
+| `FontSizeProperty` | `UiProperty<float>` | `Control` | Identifies the inherited `FontSize` UI property. |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | `Control` | Identifies the `ComponentTemplate` UI property. |
 
 ## Important Inherited Methods
@@ -124,7 +129,7 @@ When a template or component template supplies a template child, layout is deleg
 | `CanExecuteCommand(CommandRouter router, ElementInputRouteMap routeMap)` | `bool` | `ButtonBase` | Returns whether the current command can execute for this button and command parameter. |
 | `ExecuteCommand(CommandRouter router, ElementInputRouteMap routeMap)` | `bool` | `ButtonBase` | Executes the current command when the button is enabled and the command can run. |
 | `RefreshCommandState(CommandRouter router, ElementInputRouteMap routeMap)` | `bool` | `ButtonBase` | Updates `IsEnabled` from command state and returns whether it changed. |
-| `ApplyTemplate()` | `void` | `Control` | Creates or refreshes the active template instance for the current template properties. |
+| `ApplyTemplate()` | `void` | `Control` | Creates or refreshes the active component-template instance for the current `ComponentTemplate`. |
 | `SetAspectVariant<TControl, TValue>(AspectVariantKey<TControl, TValue> key, TValue value)` | `void` | `Control` | Sets a component-template aspect variant and invalidates aspect/render state when it changes. |
 
 ## Applies to

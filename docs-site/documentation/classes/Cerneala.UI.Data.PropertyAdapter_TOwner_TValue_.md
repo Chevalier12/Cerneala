@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Data`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Data/PropertyAdapter{TOwner,TValue}.cs`](../../UI/Data/PropertyAdapter%7BTOwner,TValue%7D.cs)
+Source: [`UI/Data/PropertyAdapter{TOwner,TValue}.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Data/PropertyAdapter%7BTOwner,TValue%7D.cs)
 
 Adapts a typed owner/value pair to a small read/write API backed by delegates or by a `UiProperty<TValue>`.
 
@@ -93,6 +93,6 @@ An adapter constructed without a setter is read-only: `CanWrite` returns `false`
 Cerneala retained UI data and binding infrastructure.
 
 ## See Also
-- [`UiObject`](../../UI/Core/UiObject.cs)
-- [`UiProperty<T>`](../../UI/Core/UiProperty%7BT%7D.cs)
-- [`Binding<T>`](../../UI/Data/Binding%7BT%7D.cs)
+- [`UiObject`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Core/UiObject.cs)
+- [`UiProperty<T>`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Core/UiProperty%7BT%7D.cs)
+- [`Binding<T>`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Data/Binding%7BT%7D.cs)

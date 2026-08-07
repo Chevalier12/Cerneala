@@ -71,7 +71,7 @@ The `Owner` identifies the element to invalidate. `Effects` carries the original
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Deconstruct(out UIElement Owner, out InvalidationFlags Effects, out bool AffectsIntrinsicSize)` | Deconstructs the record into its owner, invalidation effects, and intrinsic-size flag. |
+| `Deconstruct(out UIElement Owner, out InvalidationFlags Effects, out bool AffectsIntrinsicSize)` | `void` | Deconstructs the record into its owner, invalidation effects, and intrinsic-size flag. |
 
 ## Applies to
 

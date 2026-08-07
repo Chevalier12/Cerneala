@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Input`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Input/TextInputSnapshotEvent.cs`](../../UI/Input/TextInputSnapshotEvent.cs)
+Source: [`UI/Input/TextInputSnapshotEvent.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TextInputSnapshotEvent.cs)
 
 Represents one non-empty text input payload captured during an input frame.
 
@@ -74,7 +74,7 @@ Cerneala input snapshots in the `Cerneala.UI.Input` namespace.
 
 ## See Also
 
-- [`InputFrame`](../../UI/Input/InputFrame.cs)
-- [`TextInputBridge`](../../UI/Input/TextInputBridge.cs)
-- [`TextCompositionEventArgs`](../../UI/Input/TextCompositionEventArgs.cs)
-- [`MonoGameInputSource`](../../UI/Input/MonoGame/MonoGameInputSource.cs)
+- [`InputFrame`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/InputFrame.cs)
+- [`TextInputBridge`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TextInputBridge.cs)
+- [`TextCompositionEventArgs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TextCompositionEventArgs.cs)
+- [`MonoGameInputSource`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/MonoGame/MonoGameInputSource.cs)

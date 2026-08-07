@@ -10,7 +10,7 @@ Source: `UI/Controls/Buttons/ButtonSize.cs`
 Provides the `Cerneala.UI.Controls.Buttons.ButtonSize` API surface.
 
 ```csharp
-public sealed enum ButtonSize
+public enum ButtonSize
 ```
 
 ## Remarks

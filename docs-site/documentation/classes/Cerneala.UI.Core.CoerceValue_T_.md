@@ -1,4 +1,4 @@
-# CoerceValue Delegate
+# CoerceValue<T> Delegate
 
 ## Definition
 Namespace: `Cerneala.UI.Core`
@@ -10,8 +10,25 @@ Source: `UI/Core/CoerceValue.cs`
 Provides the `Cerneala.UI.Core.CoerceValue<T>` API surface.
 
 ```csharp
-public sealed delegate CoerceValue
+public delegate T CoerceValue<T>(UiObject owner, T value)
 ```
+
+## Type Parameters
+
+| Name | Description |
+| --- | --- |
+| `T` | The value type being coerced. |
+
+## Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `owner` | `UiObject` | The object whose property value is being coerced. |
+| `value` | `T` | The proposed value. |
+
+## Returns
+
+The effective value to store.
 
 ## Remarks
 

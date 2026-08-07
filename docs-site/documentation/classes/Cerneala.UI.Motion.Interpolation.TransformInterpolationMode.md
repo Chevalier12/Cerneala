@@ -10,7 +10,7 @@ Source: `UI/Motion/Interpolation/TransformInterpolationMode.cs`
 Provides the `Cerneala.UI.Motion.Interpolation.TransformInterpolationMode` API surface.
 
 ```csharp
-public sealed enum TransformInterpolationMode
+public enum TransformInterpolationMode
 ```
 
 ## Remarks

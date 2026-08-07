@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Input`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Input/HoverTracker.cs`](../../UI/Input/HoverTracker.cs)
+Source: [`UI/Input/HoverTracker.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/HoverTracker.cs)
 
 Tracks the current pointer hover target and synchronizes hover state for the target's visual ancestor path.
 
@@ -81,7 +81,7 @@ Cerneala retained UI input routing.
 
 ## See Also
 
-- [`ElementInputBridge`](../../UI/Input/ElementInputBridge.cs)
-- [`HitTestResult`](../../UI/Input/HitTestResult.cs)
-- [`ElementInputRouteMap`](../../UI/Input/ElementInputRouteMap.cs)
-- [`InputEvents`](../../UI/Input/InputEvents.cs)
+- [`ElementInputBridge`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/ElementInputBridge.cs)
+- [`HitTestResult`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/HitTestResult.cs)
+- [`ElementInputRouteMap`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/ElementInputRouteMap.cs)
+- [`InputEvents`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/InputEvents.cs)

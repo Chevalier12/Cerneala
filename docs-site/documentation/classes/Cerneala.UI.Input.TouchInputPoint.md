@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Input`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Input/TouchInputBridge.cs`](../../UI/Input/TouchInputBridge.cs)
+Source: [`UI/Input/TouchInputBridge.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TouchInputBridge.cs)
 
 Represents one touch sample, including its touch identifier, coordinates, and action.
 
@@ -78,7 +78,7 @@ The type is a sealed record, so its constructor parameters are exposed as immuta
 
 ## See also
 
-- [`TouchInputBridge`](../../UI/Input/TouchInputBridge.cs)
-- [`TouchInputFrame`](../../UI/Input/TouchInputBridge.cs)
-- [`TouchEventArgs`](../../UI/Input/TouchInputBridge.cs)
-- [`InputEvents`](../../UI/Input/InputEvents.cs)
+- [`TouchInputBridge`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TouchInputBridge.cs)
+- [`TouchInputFrame`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TouchInputBridge.cs)
+- [`TouchEventArgs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TouchInputBridge.cs)
+- [`InputEvents`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/InputEvents.cs)

@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Platform/ICursorService.cs`
 Provides the `Cerneala.UI.Platform.CursorShape` API surface.
 ```csharp
-public sealed enum CursorShape
+public enum CursorShape
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

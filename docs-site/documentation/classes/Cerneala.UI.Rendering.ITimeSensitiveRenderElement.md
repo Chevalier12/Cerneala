@@ -10,7 +10,7 @@ Source: `UI/Rendering/ITimeSensitiveRenderElement.cs`
 Provides the `Cerneala.UI.Rendering.ITimeSensitiveRenderElement` API surface.
 
 ```csharp
-public abstract interface ITimeSensitiveRenderElement
+public interface ITimeSensitiveRenderElement
 ```
 
 ## Remarks

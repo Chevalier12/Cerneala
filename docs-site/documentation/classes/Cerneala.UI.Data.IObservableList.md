@@ -10,8 +10,21 @@ Source: `UI/Data/IObservableList{T}.cs`
 Provides the `Cerneala.UI.Data.IObservableList` API surface.
 
 ```csharp
-public abstract interface IObservableList
+public interface IObservableList : IEnumerable
 ```
+
+## Events
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `Changed` | `EventHandler<ObservableListChangedEventArgs>?` | Raised when the collection changes. |
+
+## Properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `Count` | `int` | Gets the number of items. |
+| `this[int index]` | `object?` | Gets the item at the specified index. |
 
 ## Remarks
 

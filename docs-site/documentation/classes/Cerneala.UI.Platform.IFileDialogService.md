@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Platform/IFileDialogService.cs`
 Provides the `Cerneala.UI.Platform.IFileDialogService` API surface.
 ```csharp
-public abstract interface IFileDialogService
+public interface IFileDialogService
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

@@ -10,7 +10,7 @@ Source: `UI/Motion/Specs/RetargetMode.cs`
 Provides the `Cerneala.UI.Motion.Specs.RetargetMode` API surface.
 
 ```csharp
-public sealed enum RetargetMode
+public enum RetargetMode
 ```
 
 ## Remarks

@@ -1,4 +1,4 @@
-# ValidateValue Delegate
+# ValidateValue<T> Delegate
 
 ## Definition
 Namespace: `Cerneala.UI.Core`
@@ -10,8 +10,24 @@ Source: `UI/Core/ValidateValue.cs`
 Provides the `Cerneala.UI.Core.ValidateValue<T>` API surface.
 
 ```csharp
-public sealed delegate ValidateValue
+public delegate bool ValidateValue<in T>(T value)
 ```
+
+## Type Parameters
+
+| Name | Description |
+| --- | --- |
+| `T` | The value type being validated. |
+
+## Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `value` | `T` | The proposed value. |
+
+## Returns
+
+`true` when the value is valid; otherwise, `false`.
 
 ## Remarks
 

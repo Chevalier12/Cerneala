@@ -50,11 +50,12 @@ Create and arrange a standalone fallback-rendered thumb:
 using Cerneala.Drawing;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 Thumb thumb = new()
 {
     Background = new SolidColorBrush(new Color(210, 210, 210)),
-BorderBrush = new SolidColorBrush(new Color(70, 70, 70)),
+    BorderBrush = new SolidColorBrush(new Color(70, 70, 70)),
     BorderThickness = new Thickness(1)
 };
 
@@ -128,7 +129,6 @@ Without a template child, the fallback layout reports a desired size of `10 x 10
 | `BorderBrush` | `Brush?` | `Control` | Gets or sets the fallback border brush rendered by the thumb. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the fallback border thickness used by the thumb renderer. |
 | `IsEnabled` | `bool` | `UIElement` | Controls whether `BeginDrag` can start a drag. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template inherited by the thumb. |
 | `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template inherited by the thumb. |
 
 ## Applies to

@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Resources/IResourceProvider.cs`
 Provides the `Cerneala.UI.Resources.IResourceProvider` API surface.
 ```csharp
-public abstract interface IResourceProvider
+public interface IResourceProvider
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

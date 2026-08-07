@@ -13,6 +13,11 @@ public sealed class ResourceDictionary : IObservableResourceProvider, IEnumerabl
 
 ## Examples
 ```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
+
+TextBlock element = new();
 element.Resources.Add("Accent", new SolidColorBrush(Color.CornflowerBlue));
 SolidColorBrush accent = element.FindResource<SolidColorBrush>("Accent");
 ```

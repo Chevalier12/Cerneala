@@ -5,7 +5,7 @@ Namespace: `Cerneala.Drawing.Text`
 
 Assembly/Project: `Cerneala`
 
-Source: [`Drawing/Text/SkiaFont.cs`](../../Drawing/Text/SkiaFont.cs)
+Source: [`Drawing/Text/SkiaFont.cs`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/Text/SkiaFont.cs)
 
 Represents a Skia-backed font used by Cerneala drawing and text services.
 
@@ -68,6 +68,6 @@ Cerneala drawing text pipeline backed by SkiaSharp.
 
 ## See also
 
-- [`IDrawFont`](../../Drawing/IDrawFont.cs)
-- [`SystemFontSource`](../../Drawing/Text/SystemFontSource.cs)
-- [`TextShaper`](../../Drawing/Text/TextShaper.cs)
+- [`IDrawFont`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/IDrawFont.cs)
+- [`SystemFontSource`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/Text/SystemFontSource.cs)
+- [`TextShaper`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/Text/TextShaper.cs)

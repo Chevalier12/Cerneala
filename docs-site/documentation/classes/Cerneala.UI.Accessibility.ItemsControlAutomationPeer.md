@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Accessibility`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Accessibility/ItemsControlAutomationPeer.cs`](../../UI/Accessibility/ItemsControlAutomationPeer.cs)
+Source: [`UI/Accessibility/ItemsControlAutomationPeer.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Accessibility/ItemsControlAutomationPeer.cs)
 
 Provides the automation peer used to expose an `ItemsControl` as a list in the semantics tree.
 
@@ -72,7 +72,7 @@ Cerneala UI accessibility semantics for `Cerneala.UI.Controls.ItemsControl`.
 
 ## See Also
 
-- [`AutomationPeer`](../../UI/Accessibility/AutomationPeer.cs)
-- [`ItemsControl`](../../UI/Controls/ItemsControl.cs)
-- [`SemanticsProperty`](../../UI/Accessibility/SemanticsProperty.cs)
-- [`SemanticsRole`](../../UI/Accessibility/SemanticsRole.cs)
+- [`AutomationPeer`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Accessibility/AutomationPeer.cs)
+- [`ItemsControl`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Controls/ItemsControl.cs)
+- [`SemanticsProperty`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Accessibility/SemanticsProperty.cs)
+- [`SemanticsRole`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Accessibility/SemanticsRole.cs)

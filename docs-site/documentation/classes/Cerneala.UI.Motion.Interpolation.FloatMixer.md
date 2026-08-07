@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Motion.Interpolation`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Motion/Interpolation/FloatMixer.cs`](../../UI/Motion/Interpolation/FloatMixer.cs)
+Source: [`UI/Motion/Interpolation/FloatMixer.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/FloatMixer.cs)
 
 Interpolates `float` values and provides vector-style arithmetic for motion calculations.
 
@@ -83,6 +83,6 @@ Cerneala motion interpolation APIs that animate `float` values, including built-
 
 ## See Also
 
-- [`ValueMixer<T>`](../../UI/Motion/Interpolation/ValueMixer.cs)
+- [`ValueMixer<T>`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixer.cs)
 - [`DoubleMixer`](Cerneala.UI.Motion.Interpolation.DoubleMixer.md)
-- [`ValueMixerRegistry`](../../UI/Motion/Interpolation/ValueMixerRegistry.cs)
+- [`ValueMixerRegistry`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixerRegistry.cs)

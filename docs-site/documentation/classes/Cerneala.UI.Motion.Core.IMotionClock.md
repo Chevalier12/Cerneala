@@ -10,7 +10,7 @@ Source: `UI/Motion/Core/IMotionClock.cs`
 Provides the `Cerneala.UI.Motion.Core.IMotionClock` API surface.
 
 ```csharp
-public abstract interface IMotionClock
+public interface IMotionClock
 ```
 
 ## Remarks

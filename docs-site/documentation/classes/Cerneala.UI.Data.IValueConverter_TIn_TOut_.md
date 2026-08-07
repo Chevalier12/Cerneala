@@ -1,4 +1,4 @@
-# IValueConverter Interface
+# IValueConverter<TIn, TOut> Interface
 
 ## Definition
 Namespace: `Cerneala.UI.Data`
@@ -10,8 +10,22 @@ Source: `UI/Data/IValueConverter{TIn,TOut}.cs`
 Provides the `Cerneala.UI.Data.IValueConverter<TIn, TOut>` API surface.
 
 ```csharp
-public abstract interface IValueConverter
+public interface IValueConverter<TIn, TOut>
 ```
+
+## Type Parameters
+
+| Name | Description |
+| --- | --- |
+| `TIn` | The input value type. |
+| `TOut` | The converted value type. |
+
+## Methods
+
+| Name | Return Type | Description |
+| --- | --- | --- |
+| `Convert(TIn value)` | `TOut` | Converts an input value. |
+| `ConvertBack(TOut value)` | `TIn` | Converts an output value back to the input type. |
 
 ## Remarks
 

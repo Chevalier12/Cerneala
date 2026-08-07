@@ -10,7 +10,7 @@ Source: `UI/Motion/Properties/MotionPropertyStore.cs`
 Provides the `Cerneala.UI.Motion.Properties.MotionPropertyStore.PendingWriteKind` API surface.
 
 ```csharp
-private sealed enum PendingWriteKind
+private enum PendingWriteKind
 ```
 
 ## Remarks

@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Layout/Alignment.cs`
 Provides the `Cerneala.UI.Layout.VerticalAlignment` API surface.
 ```csharp
-public sealed enum VerticalAlignment
+public enum VerticalAlignment
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

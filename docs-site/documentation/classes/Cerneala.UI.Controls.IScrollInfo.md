@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Controls/IScrollInfo.cs`
 Provides the `Cerneala.UI.Controls.IScrollInfo` API surface.
 ```csharp
-public abstract interface IScrollInfo
+public interface IScrollInfo
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

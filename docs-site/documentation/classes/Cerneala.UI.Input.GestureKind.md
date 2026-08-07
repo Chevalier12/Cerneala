@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Input/GestureRecognizer.cs`
 Provides the `Cerneala.UI.Input.GestureKind` API surface.
 ```csharp
-public sealed enum GestureKind
+public enum GestureKind
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

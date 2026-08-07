@@ -10,7 +10,7 @@ Source: `UI/Motion/Core/MotionChannel.cs`
 Provides the `Cerneala.UI.Motion.Core.MotionChannel` API surface.
 
 ```csharp
-public sealed enum MotionChannel
+public enum MotionChannel
 ```
 
 ## Remarks

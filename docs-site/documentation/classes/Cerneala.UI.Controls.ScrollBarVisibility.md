@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Controls/ScrollBarVisibility.cs`
 Provides the `Cerneala.UI.Controls.ScrollBarVisibility` API surface.
 ```csharp
-public sealed enum ScrollBarVisibility
+public enum ScrollBarVisibility
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

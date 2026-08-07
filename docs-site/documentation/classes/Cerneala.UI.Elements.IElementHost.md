@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Elements/IElementHost.cs`
 Provides the `Cerneala.UI.Elements.IElementHost` API surface.
 ```csharp
-public abstract interface IElementHost
+public interface IElementHost
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

@@ -10,7 +10,7 @@ Source: `UI/Motion/Core/ReducedMotionMode.cs`
 Provides the `Cerneala.UI.Motion.Core.ReducedMotionMode` API surface.
 
 ```csharp
-public sealed enum ReducedMotionMode
+public enum ReducedMotionMode
 ```
 
 ## Remarks

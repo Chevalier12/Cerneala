@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Invalidation/IInvalidationSink.cs`
 Provides the `Cerneala.UI.Invalidation.IInvalidationSink` API surface.
 ```csharp
-public abstract interface IInvalidationSink
+public interface IInvalidationSink
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Motion.Interpolation`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Motion/Interpolation/ValueMixer.cs`](../../UI/Motion/Interpolation/ValueMixer.cs)
+Source: [`UI/Motion/Interpolation/ValueMixer.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixer.cs)
 
 Provides the generic base class for value interpolation and optional vector-style motion arithmetic.
 
@@ -122,7 +122,7 @@ Cerneala motion interpolation, motion specs, and value mixer registry APIs.
 
 ## See Also
 
-- [`IValueMixer`](../../UI/Motion/Interpolation/IValueMixer.cs)
-- [`ValueMixerRegistry`](../../UI/Motion/Interpolation/ValueMixerRegistry.cs)
-- [`FloatMixer`](../../UI/Motion/Interpolation/FloatMixer.cs)
-- [`DoubleMixer`](../../UI/Motion/Interpolation/DoubleMixer.cs)
+- [`IValueMixer`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/IValueMixer.cs)
+- [`ValueMixerRegistry`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixerRegistry.cs)
+- [`FloatMixer`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/FloatMixer.cs)
+- [`DoubleMixer`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/DoubleMixer.cs)

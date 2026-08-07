@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Controls.Templates`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Controls/Templates/TemplateBinding{T}.cs`](../../UI/Controls/TemplateBinding%7BT%7D.cs)
+Source: [`UI/Controls/Templates/TemplateBinding{T}.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Controls/TemplateBinding%7BT%7D.cs)
 
 Represents a typed template binding that copies a property value from a template owner `Control` to a target `UIElement` property and keeps it synchronized while attached.
 

@@ -84,8 +84,7 @@ This class does not declare additional public events.
 | `ResourceProvider` | `IResourceProvider?` | `ContentControl` | Gets or sets the optional resource provider used by templates that forward content rendering resources to presenters. |
 | `Padding` | `Thickness` | `Control` | Gets or sets the inset between the label bounds and directly hosted content. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets border thickness that contributes to inherited content insets. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. When present, the template child handles layout and content presentation. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template, when component-template rendering is used. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template. When present, the template child handles layout and content presentation. |
 
 ## Important Inherited Methods
 

@@ -10,7 +10,7 @@ Source: `UI/Aspect/AspectConditionDependency.cs`
 Provides the `Cerneala.UI.Aspect.AspectConditionDependencyKind` API surface.
 
 ```csharp
-public sealed enum AspectConditionDependencyKind
+public enum AspectConditionDependencyKind
 ```
 
 ## Remarks

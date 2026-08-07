@@ -10,7 +10,7 @@ Source: `UI/Motion/Specs/SpringVelocityMode.cs`
 Provides the `Cerneala.UI.Motion.Specs.SpringVelocityMode` API surface.
 
 ```csharp
-public sealed enum SpringVelocityMode
+public enum SpringVelocityMode
 ```
 
 ## Remarks

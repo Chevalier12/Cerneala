@@ -10,7 +10,7 @@ Source: `Drawing/IDrawImage.cs`
 Provides the `Cerneala.Drawing.IDrawImage` API surface.
 
 ```csharp
-public abstract interface IDrawImage
+public interface IDrawImage
 ```
 
 ## Remarks

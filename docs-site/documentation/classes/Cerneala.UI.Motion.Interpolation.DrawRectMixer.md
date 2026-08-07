@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Motion.Interpolation`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Motion/Interpolation/DrawRectMixer.cs`](../../UI/Motion/Interpolation/DrawRectMixer.cs)
+Source: [`UI/Motion/Interpolation/DrawRectMixer.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/DrawRectMixer.cs)
 
 Interpolates `DrawRect` values for motion animations.
 
@@ -97,5 +97,5 @@ Cerneala motion interpolation APIs that animate `DrawRect` values.
 ## See Also
 
 - [`DrawRect`](Cerneala.Drawing.DrawRect.md)
-- [`ValueMixer<T>`](../../UI/Motion/Interpolation/ValueMixer.cs)
-- [`ValueMixerRegistry`](../../UI/Motion/Interpolation/ValueMixerRegistry.cs)
+- [`ValueMixer<T>`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixer.cs)
+- [`ValueMixerRegistry`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixerRegistry.cs)

@@ -16,6 +16,7 @@ This audit maps the current retained control surface to applicable WPF event con
 - `ToggleButton`, `CheckBox`, `RadioButton`: `Checked` and `Unchecked` inherited from the shared primitive.
 - `RangeBase`, `Slider`, `ProgressBar`, `ScrollBar`: `ValueChanged`; `ScrollBar` also exposes `Scroll`.
 - `Selector`, `ListBox`, `ComboBox`, `TabControl`: `SelectionChanged`; selectable item containers also raise `Selected` and `Unselected`.
+- `ComboBox`: routed `DropDownOpened` and `DropDownClosed`, emitted when its in-root overlay is actually projected or withdrawn.
 - `Thumb`: routed `DragStarted`, `DragDelta`, and `DragCompleted` while retaining typed CLR handlers.
 - `TextBoxBase`, `TextBox`, `PasswordBox`: `TextChanged`, text `SelectionChanged`, and `PasswordChanged`.
 - `ScrollViewer`: `ScrollChanged`.
@@ -24,7 +25,6 @@ This audit maps the current retained control surface to applicable WPF event con
 
 ## Not applicable to the current surface
 
-- `ComboBox.DropDownOpened/DropDownClosed`: this `ComboBox` currently has no popup/drop-down state or open/close capability.
 - `Image.ImageFailed`: the current `Image` consumes an already resolved `ImageSource`; loading and failure live in resource services, not the control.
 - `InkCanvas` erasing, gesture, and selection events: there is no erase mode, gesture recognition contract, or stroke selection model in `InkCanvas` yet.
 - `TextBoxBase` rich-text/clipboard command events: there is no `RichTextBox`, document formatting surface, or WPF command manager equivalent.

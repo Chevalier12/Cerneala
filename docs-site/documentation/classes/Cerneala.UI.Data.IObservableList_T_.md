@@ -1,4 +1,4 @@
-# IObservableList Interface
+# IObservableList<T> Interface
 
 ## Definition
 Namespace: `Cerneala.UI.Data`
@@ -10,8 +10,24 @@ Source: `UI/Data/IObservableList{T}.cs`
 Provides the `Cerneala.UI.Data.IObservableList<T>` API surface.
 
 ```csharp
-public abstract interface IObservableList
+public interface IObservableList<T> : IReadOnlyList<T>
 ```
+
+## Type Parameters
+
+| Name | Description |
+| --- | --- |
+| `T` | The item type stored by the list. |
+
+## Events
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `Changed` | `EventHandler<ObservableListChangedEventArgs<T>>?` | Raised when the collection changes. |
+
+## Inherited Members
+
+`Count`, the integer indexer, and enumeration are inherited from `IReadOnlyList<T>`.
 
 ## Remarks
 

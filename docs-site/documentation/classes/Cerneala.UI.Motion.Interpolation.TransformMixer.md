@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Motion.Interpolation`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Motion/Interpolation/TransformMixer.cs`](../../UI/Motion/Interpolation/TransformMixer.cs)
+Source: [`UI/Motion/Interpolation/TransformMixer.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/TransformMixer.cs)
 
 Interpolates `Transform` values for retained UI motion.
 
@@ -87,8 +87,8 @@ Cerneala retained UI motion APIs that animate `Transform` values, especially `UI
 
 ## See Also
 
-- [`Transform`](../../UI/Media/Transform.cs)
-- [`TransformComponents`](../../UI/Motion/Interpolation/TransformMixer.cs)
-- [`TransformInterpolationMode`](../../UI/Motion/Interpolation/TransformMixer.cs)
-- [`ValueMixer<T>`](../../UI/Motion/Interpolation/ValueMixer.cs)
-- [`ValueMixerRegistry`](../../UI/Motion/Interpolation/ValueMixerRegistry.cs)
+- [`Transform`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Media/Transform.cs)
+- [`TransformComponents`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/TransformMixer.cs)
+- [`TransformInterpolationMode`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/TransformMixer.cs)
+- [`ValueMixer<T>`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixer.cs)
+- [`ValueMixerRegistry`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixerRegistry.cs)

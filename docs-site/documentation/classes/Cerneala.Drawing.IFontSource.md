@@ -10,7 +10,7 @@ Source: `Drawing/IFontSource.cs`
 Provides the `Cerneala.Drawing.IFontSource` API surface.
 
 ```csharp
-public abstract interface IFontSource
+public interface IFontSource
 ```
 
 ## Remarks

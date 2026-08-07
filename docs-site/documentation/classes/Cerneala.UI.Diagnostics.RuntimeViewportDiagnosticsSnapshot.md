@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Diagnostics`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Diagnostics/RuntimeDiagnostics.cs`](../../UI/Diagnostics/RuntimeDiagnostics.cs)
+Source: [`UI/Diagnostics/RuntimeDiagnostics.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Diagnostics/RuntimeDiagnostics.cs)
 
 Represents the logical viewport dimensions and scale captured during a runtime diagnostics snapshot.
 

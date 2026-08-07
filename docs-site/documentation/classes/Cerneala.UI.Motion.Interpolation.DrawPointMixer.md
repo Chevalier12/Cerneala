@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Motion.Interpolation`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Motion/Interpolation/DrawPointMixer.cs`](../../UI/Motion/Interpolation/DrawPointMixer.cs)
+Source: [`UI/Motion/Interpolation/DrawPointMixer.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/DrawPointMixer.cs)
 
 Interpolates `DrawPoint` values and provides vector-style arithmetic for motion calculations.
 
@@ -93,5 +93,5 @@ Cerneala motion interpolation APIs that animate `DrawPoint` values.
 ## See Also
 
 - [`DrawPoint`](Cerneala.Drawing.DrawPoint.md)
-- [`ValueMixer<T>`](../../UI/Motion/Interpolation/ValueMixer.cs)
-- [`ValueMixerRegistry`](../../UI/Motion/Interpolation/ValueMixerRegistry.cs)
+- [`ValueMixer<T>`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixer.cs)
+- [`ValueMixerRegistry`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/ValueMixerRegistry.cs)

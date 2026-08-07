@@ -830,6 +830,11 @@
     "source": "UI/Controls/ComboBox.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.ComboBoxItem",
+    "file": "documentation/classes/Cerneala.UI.Controls.ComboBoxItem.md",
+    "source": "UI/Controls/ComboBoxItem.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ContentControl",
     "file": "documentation/classes/Cerneala.UI.Controls.ContentControl.md",
     "source": "UI/Controls/ContentControl.cs"
@@ -988,6 +993,16 @@
     "name": "Cerneala.UI.Controls.PopupRoot",
     "file": "documentation/classes/Cerneala.UI.Controls.PopupRoot.md",
     "source": "UI/Controls/PopupRoot.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Overlay",
+    "file": "documentation/classes/Cerneala.UI.Controls.Overlay.md",
+    "source": "UI/Controls/Overlay.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.OverlayPlacement",
+    "file": "documentation/classes/Cerneala.UI.Controls.OverlayPlacement.md",
+    "source": "UI/Controls/OverlayPlacement.cs"
   },
   {
     "name": "Cerneala.UI.Controls.Primitives.ButtonBase",
@@ -3955,6 +3970,21 @@
     "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
   },
   {
+    "name": "Cerneala.Drawing.Prism.Filters.PrismLensFlareRaySample",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Filters.PrismLensFlareRaySample.md",
+    "source": "Drawing/Prism/Filters/PrismLensProfileFitter.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Filters.PrismLensProfileFitOptions",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Filters.PrismLensProfileFitOptions.md",
+    "source": "Drawing/Prism/Filters/PrismLensProfileFitter.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Filters.PrismLensProfileFitter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Filters.PrismLensProfileFitter.md",
+    "source": "Drawing/Prism/Filters/PrismLensProfileFitter.cs"
+  },
+  {
     "name": "Cerneala.UI.Prism.Definitions.PrismBackdropDefinition",
     "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismBackdropDefinition.md",
     "source": "UI/Prism/Definitions/PrismBackdropDefinition.cs"
@@ -3963,6 +3993,81 @@
     "name": "Cerneala.UI.Prism.Definitions.PrismCompositionDefinition",
     "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismCompositionDefinition.md",
     "source": "UI/Prism/Definitions/PrismCompositionDefinition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismCurvePoint",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismCurvePoint.md",
+    "source": "UI/Prism/Definitions/PrismCurvePoint.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismCurvesResource",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismCurvesResource.md",
+    "source": "UI/Prism/Definitions/PrismCurvePoint.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismLensFlareGhost",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismLensFlareGhost.md",
+    "source": "UI/Prism/Definitions/PrismLensProfileResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismLensFlarePolynomialInput",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismLensFlarePolynomialInput.md",
+    "source": "UI/Prism/Definitions/PrismLensProfileResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismLensFlarePolynomialRegion",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismLensFlarePolynomialRegion.md",
+    "source": "UI/Prism/Definitions/PrismLensProfileResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismLensProfileJson",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismLensProfileJson.md",
+    "source": "UI/Prism/Definitions/PrismLensProfileJson.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismLensProfileResource",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismLensProfileResource.md",
+    "source": "UI/Prism/Definitions/PrismLensProfileResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismLight",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismLight.md",
+    "source": "UI/Prism/Definitions/PrismLightingResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismLightingResource",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismLightingResource.md",
+    "source": "UI/Prism/Definitions/PrismLightingResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismLightKind",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismLightKind.md",
+    "source": "UI/Prism/Definitions/PrismLightingResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismSparsePolynomial",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismSparsePolynomial.md",
+    "source": "UI/Prism/Definitions/PrismLensProfileResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismSparsePolynomialTerm",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismSparsePolynomialTerm.md",
+    "source": "UI/Prism/Definitions/PrismLensProfileResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismGradientMapPoint",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismGradientMapPoint.md",
+    "source": "UI/Prism/Definitions/PrismGradientMapResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismGradientMapResource",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismGradientMapResource.md",
+    "source": "UI/Prism/Definitions/PrismGradientMapResource.cs"
+  },
+  {
+    "name": "Cerneala.UI.Prism.Definitions.PrismColorMatrixResource",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismColorMatrixResource.md",
+    "source": "UI/Prism/Definitions/PrismColorMatrixResource.cs"
   },
   {
     "name": "Cerneala.UI.Prism.Definitions.PrismFilterDefinition",

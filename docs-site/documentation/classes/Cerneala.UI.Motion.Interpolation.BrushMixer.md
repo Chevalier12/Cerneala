@@ -16,6 +16,10 @@ public sealed class BrushMixer : ValueMixer<Brush?>
 ## Examples
 
 ```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Media;
+using Cerneala.UI.Motion.Interpolation;
+
 BrushMixer mixer = new();
 Brush? current = mixer.Mix(
     new SolidColorBrush(Color.Black),

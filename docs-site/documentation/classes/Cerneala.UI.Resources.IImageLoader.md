@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Resources/IImageLoader.cs`
 Provides the `Cerneala.UI.Resources.IImageLoader` API surface.
 ```csharp
-public abstract interface IImageLoader
+public interface IImageLoader
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

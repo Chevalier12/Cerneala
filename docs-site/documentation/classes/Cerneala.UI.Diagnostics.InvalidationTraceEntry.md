@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Diagnostics`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Diagnostics/InvalidationTrace.cs`](../../UI/Diagnostics/InvalidationTrace.cs)
+Source: [`UI/Diagnostics/InvalidationTrace.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Diagnostics/InvalidationTrace.cs)
 
 Represents one retained diagnostic event recorded by `InvalidationTrace`.
 
@@ -90,7 +90,7 @@ Cerneala retained UI diagnostics.
 
 ## See also
 
-- [`InvalidationTrace`](../../UI/Diagnostics/InvalidationTrace.cs)
-- [`InvalidationTraceEventKind`](../../UI/Diagnostics/InvalidationTrace.cs)
-- [`InvalidationFlags`](../../UI/Invalidation/InvalidationFlags.cs)
-- [`FramePhase`](../../UI/Invalidation/FramePhase.cs)
+- [`InvalidationTrace`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Diagnostics/InvalidationTrace.cs)
+- [`InvalidationTraceEventKind`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Diagnostics/InvalidationTrace.cs)
+- [`InvalidationFlags`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Invalidation/InvalidationFlags.cs)
+- [`FramePhase`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Invalidation/FramePhase.cs)

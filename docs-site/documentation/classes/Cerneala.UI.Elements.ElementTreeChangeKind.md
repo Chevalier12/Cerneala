@@ -5,7 +5,7 @@ Assembly/Project: `Cerneala`
 Source: `UI/Elements/ElementTreeChangeKind.cs`
 Provides the `Cerneala.UI.Elements.ElementTreeChangeKind` API surface.
 ```csharp
-public sealed enum ElementTreeChangeKind
+public enum ElementTreeChangeKind
 ```
 ## Remarks
 This page is generated from the repository API index so the documentation surface stays aligned with the source tree.

@@ -59,6 +59,8 @@ An attached element's property mutations are UI-thread-affine and use `Root.Rela
 
 Most element settings are registered `UiProperty<T>` values. Setting properties such as `Margin`, `Visibility`, `Opacity`, focus state, or transform values flows through `UiObject.SetValue`, raises property notifications, and calls `OnPropertyInvalidated` with the metadata options from the registered property.
 
+`IsHitTestVisible` controls direct pointer hit testing without changing layout or rendering. When it is `false`, the element and its visual subtree are skipped by hit testing; the default is `true`.
+
 Changing `Visibility` from `Visible` to `Hidden` or `Collapsed`, or changing `IsVisible` to `false`, cancels active property motion for the element and its visual descendants. Canceled motion does not resume automatically when the subtree becomes visible again; callers or markup conditions can start it again explicitly.
 
 Layout uses `Measure` and `Arrange`. `Measure` caches the last available size and layout version; `Arrange` caches the last final rectangle and layout version. Elements that do not participate in layout return zero desired size and zero arranged size. Otherwise, `Measure` constrains `MeasureCore` with explicit `Width` and `Height` values when present, substitutes those values into the desired size, and then applies `Margin`. `Arrange` applies `Margin`, the explicit dimensions, `HorizontalAlignment`, and `VerticalAlignment` before calling `ArrangeCore`. An unset dimension is represented by `float.NaN` and continues to use content measurement or stretch behavior.
@@ -79,6 +81,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | --- | --- |
 | `IsEnabledProperty` | Property identifier for `IsEnabled`; defaults to `true` and affects hit testing, input visual state, aspect matching, and semantics. |
 | `IsVisibleProperty` | Property identifier for `IsVisible`; defaults to `true`, affects render, hit testing, and semantics, and cancels property motion for the visual subtree when set to `false`. |
+| `IsHitTestVisibleProperty` | Property identifier for `IsHitTestVisible`; defaults to `true` and affects hit testing. |
 | `MarginProperty` | Property identifier for `Margin`; defaults to `Thickness.Zero` and affects measure. |
 | `WidthProperty` | Property identifier for `Width`; defaults to `float.NaN`, affects measure and arrange, and accepts automatic sizing or a finite non-negative value. |
 | `HeightProperty` | Property identifier for `Height`; defaults to `float.NaN`, affects measure and arrange, and accepts automatic sizing or a finite non-negative value. |
@@ -134,6 +137,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `PresenceScale` | `float` | Current presence-animation scale value. |
 | `IsEnabled` | `bool` | Enables or disables element participation in input-related state; defaults to `true`. |
 | `IsVisible` | `bool` | Boolean visibility flag; defaults to `true`. Setting it to `false` cancels property motion for this element and its visual descendants. |
+| `IsHitTestVisible` | `bool` | Includes the element and its visual subtree in pointer hit testing when `true`; defaults to `true`. |
 | `Margin` | `Thickness` | Space included around the measured and arranged content; defaults to `Thickness.Zero`. |
 | `Width` | `float` | Explicit content width, or `float.NaN` for automatic sizing; defaults to `float.NaN`. |
 | `Height` | `float` | Explicit content height, or `float.NaN` for automatic sizing; defaults to `float.NaN`. |

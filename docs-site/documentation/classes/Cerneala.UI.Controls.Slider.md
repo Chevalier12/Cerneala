@@ -39,7 +39,7 @@ Create a vertical slider:
 
 ```csharp
 using Cerneala.UI.Controls;
-using Cerneala.UI.Layout.Panels;
+using Cerneala.UI.Layout;
 
 Slider slider = new()
 {

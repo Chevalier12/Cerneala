@@ -10,8 +10,12 @@ Source: `UI/Controls/Buttons/ButtonKind.cs`
 Provides the `Cerneala.UI.Controls.Buttons.ButtonKind` API surface.
 
 ```csharp
-public sealed enum ButtonKind
+public enum ButtonKind
 ```
+
+## Values
+
+`Neutral`, `Primary`, `Danger`
 
 ## Remarks
 

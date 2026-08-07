@@ -10,7 +10,7 @@ Source: `UI/Motion/Diagnostics/MotionTraceEvent.cs`
 Provides the `Cerneala.UI.Motion.Diagnostics.MotionTraceEventKind` API surface.
 
 ```csharp
-public sealed enum MotionTraceEventKind
+public enum MotionTraceEventKind
 ```
 
 ## Remarks

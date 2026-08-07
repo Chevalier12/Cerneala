@@ -13,6 +13,9 @@ public abstract record Brush : IDrawBrush
 
 ## Examples
 ```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Media;
+
 Brush brush = new SolidColorBrush(Color.White, opacity: 0.5f);
 ```
 
