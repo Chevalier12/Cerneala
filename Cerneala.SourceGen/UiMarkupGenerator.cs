@@ -3708,6 +3708,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             INamedTypeSymbol? panelType = compilation.GetTypeByMetadataName("Cerneala.UI.Layout.Panels.Panel");
             INamedTypeSymbol? decoratorType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Decorator");
             INamedTypeSymbol? contentControlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ContentControl");
+            INamedTypeSymbol? scrollViewerType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ScrollViewer");
 
             if (parentType is not null && panelType is not null && IsOrDerivesFrom(parentType, panelType))
             {
@@ -3723,6 +3724,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             if (parentType is not null && contentControlType is not null && IsOrDerivesFrom(parentType, contentControlType))
+            {
+                currentLines.Add(parentVariable + ".Content = " + childVariable + ";");
+                return;
+            }
+
+            if (parentType is not null && scrollViewerType is not null && IsOrDerivesFrom(parentType, scrollViewerType))
             {
                 currentLines.Add(parentVariable + ".Content = " + childVariable + ";");
                 return;

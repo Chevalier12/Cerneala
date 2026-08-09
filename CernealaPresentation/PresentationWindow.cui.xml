@@ -449,26 +449,34 @@
             <Grid
                 Grid.Column="1"
                 ClipToBounds="True">
-                <WelcomeChapterView
-                    Name="PageWelcome"
-                    Visibility="Collapsed" />
-                <RetainedModelChapterView
-                    Name="PageRetained"
-                    Visibility="Collapsed" />
-                <MarkupChapterView
-                    Name="PageMarkup"
-                    Visibility="Collapsed" />
-                <AspectChapterView
-                    Name="PageAspect"
-                    Visibility="Collapsed" />
-                <MotionChapterView
-                    Name="PageMotion"
-                    Visibility="Collapsed" />
+                <ScrollViewer
+                    Name="ChapterScrollViewer"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Disabled">
+                    <Grid
+                        ClipToBounds="True">
+                        <WelcomeChapterView
+                            Name="PageWelcome"
+                            Visibility="Collapsed" />
+                        <RetainedModelChapterView
+                            Name="PageRetained"
+                            Visibility="Collapsed" />
+                        <MarkupChapterView
+                            Name="PageMarkup"
+                            Visibility="Collapsed" />
+                        <AspectChapterView
+                            Name="PageAspect"
+                            Visibility="Collapsed" />
+                        <MotionChapterView
+                            Name="PageMotion"
+                            Visibility="Collapsed" />
+                        <FramePipelineChapterView
+                            Name="PagePipeline"
+                            Visibility="Collapsed" />
+                    </Grid>
+                </ScrollViewer>
                 <PrismChapterView
                     Name="PagePrism"
-                    Visibility="Collapsed" />
-                <FramePipelineChapterView
-                    Name="PagePipeline"
                     Visibility="Collapsed" />
             </Grid>
         </Grid>

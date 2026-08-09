@@ -180,11 +180,18 @@ public partial class PresentationWindow : Window
         }
 
         currentChapter = chapter;
+        ChapterScrollViewer.Visibility = chapter == PresentationChapter.Prism
+            ? Visibility.Collapsed
+            : Visibility.Visible;
         foreach (PresentationChapter candidate in ChapterOrder)
         {
             bool selected = candidate == currentChapter;
             tourPages[candidate].Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
             tourNavigation[candidate].IsChecked = selected;
+        }
+        if (chapter != PresentationChapter.Prism)
+        {
+            ChapterScrollViewer.ScrollInfo.SetVerticalOffset(0);
         }
 
         if (currentChapter == PresentationChapter.Prism)

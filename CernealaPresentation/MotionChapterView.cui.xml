@@ -1205,14 +1205,17 @@
                             BorderBrush="$LineBrush"
                             BorderThickness="1,0,0,0"
                             Padding="22,20,22,18">
-                            <Grid>
+                            <ScrollViewer
+                                VerticalScrollBarVisibility="Auto"
+                                HorizontalScrollBarVisibility="Disabled">
+                                <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition
                                         Height="20" />
                                     <RowDefinition
                                         Height="72" />
                                     <RowDefinition
-                                        Height="*" />
+                                        Height="Auto" />
                                     <RowDefinition
                                         Height="54" />
                                 </Grid.RowDefinitions>
@@ -1319,7 +1322,8 @@
                                     FontSize="11"
                                     Foreground="$SlateBrush"
                                     TextWrapping="Wrap" />
-                            </Grid>
+                                </Grid>
+                            </ScrollViewer>
                         </Border>
                     </Grid>
                     <Border

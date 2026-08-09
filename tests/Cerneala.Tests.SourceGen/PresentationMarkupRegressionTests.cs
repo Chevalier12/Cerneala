@@ -125,6 +125,87 @@ public sealed class PresentationMarkupRegressionTests
         Assert.Empty(scrollBarAspect.Descendants("RepeatButton"));
     }
 
+    [Fact]
+    public void MotionSequenceScrollsInsteadOfCompressingItsActs()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        XDocument document = XDocument.Load(Path.Combine(
+            repositoryRoot,
+            "CernealaPresentation",
+            "MotionChapterView.cui.xml"), LoadOptions.PreserveWhitespace);
+        XElement ignition = Assert.Single(document.Descendants().Where(element =>
+            element.Attribute("Name")?.Value == "MotionActIgnition"));
+        XElement sequenceGrid = Assert.IsType<XElement>(ignition
+            .Ancestors("Grid")
+            .FirstOrDefault(element => element.Element("Grid.RowDefinitions") is not null));
+        XElement scrollViewer = Assert.IsType<XElement>(sequenceGrid.Parent);
+
+        Assert.Equal("ScrollViewer", scrollViewer.Name.LocalName);
+        Assert.Equal("Auto", scrollViewer.Attribute("VerticalScrollBarVisibility")?.Value);
+        Assert.Equal("Disabled", scrollViewer.Attribute("HorizontalScrollBarVisibility")?.Value);
+        Assert.Equal(
+            ["20", "72", "Auto", "54"],
+            sequenceGrid
+                .Element("Grid.RowDefinitions")!
+                .Elements("RowDefinition")
+                .Select(element => element.Attribute("Height")?.Value)
+                .ToArray());
+    }
+
+    [Fact]
+    public void NarrativeChaptersScrollWhilePrismKeepsAFiniteViewport()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        string presentationRoot = Path.Combine(repositoryRoot, "CernealaPresentation");
+        XDocument document = XDocument.Load(
+            Path.Combine(presentationRoot, "PresentationWindow.cui.xml"),
+            LoadOptions.PreserveWhitespace);
+        string[] pageNames =
+        [
+            "PageWelcome",
+            "PageRetained",
+            "PageMarkup",
+            "PageAspect",
+            "PageMotion",
+            "PagePipeline"
+        ];
+        XElement[] pages = pageNames.Select(name => Assert.Single(document.Descendants().Where(element =>
+            element.Attribute("Name")?.Value == name))).ToArray();
+        XElement pageHost = Assert.IsType<XElement>(pages[0].Parent);
+        XElement scrollViewer = Assert.IsType<XElement>(pageHost.Parent);
+        XElement prism = Assert.Single(document.Descendants().Where(element =>
+            element.Attribute("Name")?.Value == "PagePrism"));
+
+        Assert.All(pages, page => Assert.Same(pageHost, page.Parent));
+        Assert.Equal("ScrollViewer", scrollViewer.Name.LocalName);
+        Assert.Equal("ChapterScrollViewer", scrollViewer.Attribute("Name")?.Value);
+        Assert.Equal("Auto", scrollViewer.Attribute("VerticalScrollBarVisibility")?.Value);
+        Assert.Equal("Disabled", scrollViewer.Attribute("HorizontalScrollBarVisibility")?.Value);
+        Assert.Same(scrollViewer.Parent, prism.Parent);
+        Assert.DoesNotContain(prism, scrollViewer.Descendants());
+
+        string code = File.ReadAllText(Path.Combine(
+            presentationRoot,
+            "PresentationWindow.cui.xml.cs"));
+        Assert.Contains(
+            "ChapterScrollViewer.Visibility = chapter == PresentationChapter.Prism",
+            code,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "ChapterScrollViewer.ScrollInfo.SetVerticalOffset(0)",
+            code,
+            StringComparison.Ordinal);
+        int containerVisibilityIndex = code.IndexOf(
+            "ChapterScrollViewer.Visibility = chapter == PresentationChapter.Prism",
+            StringComparison.Ordinal);
+        int pageVisibilityIndex = code.IndexOf(
+            "tourPages[candidate].Visibility = selected ? Visibility.Visible : Visibility.Collapsed",
+            StringComparison.Ordinal);
+        Assert.True(
+            containerVisibilityIndex < pageVisibilityIndex,
+            "The narrative chapter container must become renderable before a child chapter becomes visible.");
+    }
+
     private static string FindRepositoryRoot()
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
