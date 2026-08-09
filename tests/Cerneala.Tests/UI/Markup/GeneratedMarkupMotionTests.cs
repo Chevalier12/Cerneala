@@ -114,6 +114,60 @@ public sealed class GeneratedMarkupMotionTests
     }
 
     [Fact]
+    public void ConditionalMotionWaitsForEffectiveVisibilityBeforeStarting()
+    {
+        UIRoot root = new();
+        Grid parent = new() { Visibility = Visibility.Collapsed };
+        UIElement owner = new() { Visibility = Visibility.Collapsed };
+        parent.VisualChildren.Add(owner);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        MarkupObservation observation = GeneratedMarkup.ObserveProperty(owner, UIElement.VisibilityProperty);
+        int activations = 0;
+        using IDisposable conditions = GeneratedMarkup.AttachConditions(
+            owner,
+            new[] { observation },
+            new[]
+            {
+                new MarkupConditionRule(
+                    0,
+                    () => (Visibility)observation.Value! == Visibility.Visible,
+                    null,
+                    null,
+                    () =>
+                    {
+                        GeneratedMarkup.StartMotionExecution(
+                            session,
+                            () => MarkupMotionExecution.From(GeneratedMarkup.StartMotionProperty(
+                                session,
+                                owner,
+                                UIElement.OpacityProperty,
+                                false,
+                                default,
+                                false,
+                                0.5f,
+                                MotionFactory.Tween<float>(TimeSpan.FromSeconds(1)),
+                                new MotionPropertyStartOptions())));
+                        activations++;
+                    })
+            });
+
+        root.VisualChildren.Add(parent);
+        root.ProcessFrame();
+
+        Exception? activationError = Record.Exception(() => owner.Visibility = Visibility.Visible);
+
+        Assert.Null(activationError);
+        Assert.Equal(0, activations);
+        Assert.False(root.Motion.HasActiveMotion);
+
+        parent.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+
+        Assert.Equal(1, activations);
+        Assert.True(root.Motion.HasActiveMotion);
+    }
+
+    [Fact]
     public void DetachCancelsOnlyTheOwningMotionSession()
     {
         UIRoot root = new();
