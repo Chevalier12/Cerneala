@@ -2,17 +2,36 @@ using System.Xml.Linq;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Presentation;
+using Cerneala.UI;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;
+using Cerneala.Tests.UI.Hosting;
 
 namespace Cerneala.Tests.Presentation;
 
-public sealed class PrismChapterViewTests
+[Collection(WindowRuntimeTestCollection.Name)]
+public sealed class PrismChapterViewTests : IDisposable
 {
+    public PrismChapterViewTests()
+    {
+        Application.ResetForTesting();
+        WindowApplicationRuntime.ResetForTesting();
+        WindowApplicationRuntime runtime = WindowApplicationRuntime.CurrentOrDefault;
+        App app = new();
+        app.Install(runtime);
+    }
+
+    public void Dispose()
+    {
+        WindowApplicationRuntime.ResetForTesting();
+        Application.ResetForTesting();
+    }
+
     [Fact]
     public void MarkupDefinesFourRenderOwningTargetsAndThreeEditorZones()
     {
@@ -144,6 +163,48 @@ public sealed class PrismChapterViewTests
                 UiPropertyValueSource.LocalAspectBase,
                 slider.Track.Thumb.GetValueSource(Control.BackgroundProperty));
             Assert.Equal(10, slider.Track.Thumb.ArrangedBounds.Width);
+        });
+    }
+
+    [Fact]
+    public void InspectorAutoScrollbarAppearsWhenDynamicControlsOverflowAfterInitialLayout()
+    {
+        UIRoot root = new(487, 663);
+        PrismChapterView view = new();
+        root.VisualChildren.Add(view);
+        root.ProcessFrame();
+        PrismStudioScrollHost inspector = Descendants(view)
+            .OfType<PrismStudioScrollHost>()
+            .Last();
+        Assert.False(inspector.IsVerticalScrollBarVisible);
+
+        view.AddLayerForTests();
+        PrismStudioLayer layer = Assert.Single(view.Model.Layers);
+        Assert.True(view.Model.AddOperation(
+            layer.Id,
+            PrismCatalog.GetFilter(PrismFilterId.AccentedEdges)));
+        view.Deactivate();
+        view.Activate();
+        root.ProcessFrame();
+
+        Assert.True(inspector.Presenter.ExtentHeight > inspector.Presenter.ViewportHeight);
+        Assert.True(inspector.IsVerticalScrollBarVisible);
+        Assert.True(inspector.VerticalScrollBar.ArrangedBounds.Height > 0);
+    }
+
+    [Fact]
+    public void EditorScrollHostsUseTheApplicationScrollViewerAspect()
+    {
+        PrismChapterView view = new();
+        PrismStudioScrollHost[] hosts = Descendants(view)
+            .OfType<PrismStudioScrollHost>()
+            .ToArray();
+
+        Assert.Equal(3, hosts.Length);
+        Assert.All(hosts, host =>
+        {
+            Assert.NotNull(host.ComponentTemplate);
+            Assert.NotSame(ScrollViewerTemplates.Default, host.ComponentTemplate);
         });
     }
 

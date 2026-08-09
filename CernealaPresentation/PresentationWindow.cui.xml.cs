@@ -1,10 +1,9 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Accessibility;
-using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
-using Cerneala.UI.Hosting.MonoGame;
+using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 
@@ -18,8 +17,7 @@ internal enum PresentationChapter
     Aspect,
     Motion,
     Prism,
-    FramePipeline,
-    Diagnostics
+    FramePipeline
 }
 
 public partial class PresentationWindow : Window
@@ -32,13 +30,14 @@ public partial class PresentationWindow : Window
         PresentationChapter.Aspect,
         PresentationChapter.Motion,
         PresentationChapter.Prism,
-        PresentationChapter.FramePipeline,
-        PresentationChapter.Diagnostics
+        PresentationChapter.FramePipeline
     ];
 
     private PresentationChapter currentChapter = PresentationChapter.Welcome;
     private bool contentReady;
+    private bool skipNextHeaderDiagnosticsRefresh;
     private bool suppressLiveDiagnostics;
+    private bool outerGlowLabActive;
     private IReadOnlyDictionary<PresentationChapter, ToggleButton> tourNavigation =
         new Dictionary<PresentationChapter, ToggleButton>();
     private IReadOnlyDictionary<PresentationChapter, UIElement> tourPages =
@@ -92,8 +91,7 @@ public partial class PresentationWindow : Window
             [PresentationChapter.Aspect] = NavAspect,
             [PresentationChapter.Motion] = NavMotion,
             [PresentationChapter.Prism] = NavPrism,
-            [PresentationChapter.FramePipeline] = NavPipeline,
-            [PresentationChapter.Diagnostics] = NavDiagnostics
+            [PresentationChapter.FramePipeline] = NavPipeline
         };
         tourPages = new Dictionary<PresentationChapter, UIElement>
         {
@@ -103,26 +101,55 @@ public partial class PresentationWindow : Window
             [PresentationChapter.Aspect] = PageAspect,
             [PresentationChapter.Motion] = PageMotion,
             [PresentationChapter.Prism] = PagePrism,
-            [PresentationChapter.FramePipeline] = PagePipeline,
-            [PresentationChapter.Diagnostics] = PageDiagnostics
+            [PresentationChapter.FramePipeline] = PagePipeline
         };
     }
 
     private void OnFrameRendered(object? sender, EventArgs args)
     {
-        if (LastFrame is null)
+        if (LastFrame is null || outerGlowLabActive)
         {
             return;
         }
 
+        UpdateHeaderDiagnostics(LastFrame);
         if (currentChapter == PresentationChapter.Prism && !suppressLiveDiagnostics)
         {
             PagePrism.UpdateDiagnostics(CapturePrismDiagnosticsSnapshot());
         }
-        else if (currentChapter == PresentationChapter.Diagnostics)
+    }
+
+    private void UpdateHeaderDiagnostics(UiFrame frame)
+    {
+        if (skipNextHeaderDiagnosticsRefresh)
         {
-            PageDiagnostics.UpdateDiagnostics(LastFrame);
+            skipNextHeaderDiagnosticsRefresh = false;
+            return;
         }
+
+        HeaderDiagFrame.Text =
+            $"{frame.ProcessingTime.TotalMilliseconds:0.00} ms\n" +
+            (frame.Stats.HasWork ? "WORK COMMITTED" : "IDLE FAST PATH");
+        HeaderDiagPhases.Text =
+            $"INHERITED {frame.Stats.InheritedElements}  COMMAND {frame.Stats.CommandStateElements}\n" +
+            $"ASPECT {frame.Stats.AspectElements}";
+        HeaderDiagLayout.Text =
+            $"QUEUED {frame.Stats.MeasuredElements} / {frame.Stats.ArrangedElements}\n" +
+            $"CALLS {frame.Stats.MeasureCalls} / {frame.Stats.ArrangeCalls}";
+        HeaderDiagRender.Text =
+            $"RENDER {frame.Stats.RenderedElements}  HIT {frame.Stats.HitTestElements}\n" +
+            $"REUSED {frame.Stats.ReusedCaches}  NO-WORK {frame.Stats.NoWorkFrames}";
+        HeaderDiagMotion.Text =
+            $"FRAME {frame.Stats.MotionFrames}  SAMPLE {frame.Stats.MotionNodesSampled}  " +
+            $"VALUE {frame.Stats.MotionValuesChanged}  WRITE {frame.Stats.MotionPropertyWrites}\n" +
+            $"DONE {frame.Stats.MotionCompleted}  R-INV {frame.Stats.MotionRenderInvalidations}  " +
+            $"L-INV {frame.Stats.MotionLayoutInvalidations}  REDUCED {frame.Stats.MotionSkippedByReducedMotion}";
+        HeaderDiagRelay.Text =
+            $"SNAP {frame.Stats.RelaySnapshotCallbacks}  DEQ {frame.Stats.RelayDequeuedCallbacks}  " +
+            $"EXEC {frame.Stats.RelayExecutedCallbacks}  BACK {frame.Stats.RelayBacklog}\n" +
+            $"CANCEL {frame.Stats.RelayCanceledCallbacks}  FAULT {frame.Stats.RelayFaultedCallbacks}  " +
+            $"DEFER {frame.Stats.RelayDeferredCallbacks}";
+        skipNextHeaderDiagnosticsRefresh = true;
     }
 
     private void OnWelcome(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Welcome);
@@ -132,7 +159,6 @@ public partial class PresentationWindow : Window
     private void OnMotion(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Motion);
     private void OnPrism(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Prism);
     private void OnPipeline(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.FramePipeline);
-    private void OnDiagnostics(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Diagnostics);
 
     private void OnPrevious(UiElementId sender, RoutedEventArgs args)
     {
@@ -185,7 +211,6 @@ public partial class PresentationWindow : Window
         PresentationChapter.Motion => "MOTION",
         PresentationChapter.Prism => "PRISM",
         PresentationChapter.FramePipeline => "FRAME PIPELINE",
-        PresentationChapter.Diagnostics => "DIAGNOSTICS",
         _ => throw new ArgumentOutOfRangeException(nameof(chapter), chapter, "Unknown presentation chapter.")
     };
     private async Task CaptureIfRequestedAsync()

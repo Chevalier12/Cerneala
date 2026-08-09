@@ -163,7 +163,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition
-                Height="68" />
+                Height="140" />
             <RowDefinition
                 Height="*" />
             <RowDefinition
@@ -173,47 +173,189 @@
             Grid.Row="0"
             Background="$PanelAltBrush"
             BorderBrush="$LineBrush"
-            BorderThickness="0,0,0,1"
-            Padding="26,0,26,0">
+            BorderThickness="0,0,0,1">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition
-                        Width="250" />
-                    <ColumnDefinition
-                        Width="*" />
-                    <ColumnDefinition
-                        Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <BrandMark
-                    Grid.Column="0"
-                    VerticalAlignment="Center" />
-                <StackPanel
-                    Grid.Column="1"
-                    Orientation="Horizontal"
-                    VerticalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition
+                        Height="52" />
+                    <RowDefinition
+                        Height="88" />
+                </Grid.RowDefinitions>
+                <Grid
+                    Grid.Row="0"
+                    Margin="26,0,26,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition
+                            Width="250" />
+                        <ColumnDefinition
+                            Width="*" />
+                        <ColumnDefinition
+                            Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <BrandMark
+                        Grid.Column="0"
+                        VerticalAlignment="Center" />
+                    <StackPanel
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                        <TextBlock
+                            Text="/"
+                            FontFamily="Cascadia Mono"
+                            FontSize="13"
+                            Foreground="$SlateDimBrush"
+                            Margin="0,0,12,0" />
+                        <TextBlock
+                            Name="HeaderChapterText"
+                            Text="WELCOME"
+                            FontFamily="Cascadia Mono SemiBold"
+                            FontSize="12"
+                            Foreground="$CyanBrush" />
+                    </StackPanel>
                     <TextBlock
-                        Text="/"
-                        FontFamily="Cascadia Mono"
-                        FontSize="13"
-                        Foreground="$SlateDimBrush"
-                        Margin="0,0,12,0" />
-                    <TextBlock
-                        Name="HeaderChapterText"
-                        Text="WELCOME"
-                        FontFamily="Cascadia Mono SemiBold"
-                        FontSize="12"
-                        Foreground="$CyanBrush" />
-                </StackPanel>
-                <StackPanel
-                    Grid.Column="2"
-                    Orientation="Horizontal"
-                    VerticalAlignment="Center">
-                    <TextBlock
-                        Text="LIVE RETAINED TREE"
+                        Grid.Column="2"
+                        Text="LIVE RUNTIME DIAGNOSTICS"
                         FontFamily="Cascadia Mono"
                         FontSize="10"
-                        Foreground="$SlateBrush" />
-                </StackPanel>
+                        Foreground="$SlateBrush"
+                        VerticalAlignment="Center" />
+                </Grid>
+                <Border
+                    Grid.Row="1"
+                    Background="$PanelBrush"
+                    BorderBrush="$LineBrush"
+                    BorderThickness="0,1,0,0"
+                    Padding="26,0,26,0">
+                    <Grid
+                        Width="990"
+                        HorizontalAlignment="Center"
+                        ClipToBounds="True">
+                        <Grid.RowDefinitions>
+                            <RowDefinition
+                                Height="44" />
+                            <RowDefinition
+                                Height="44" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition
+                                Width="330" />
+                            <ColumnDefinition
+                                Width="330" />
+                            <ColumnDefinition
+                                Width="330" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel
+                            Grid.Column="0"
+                            Width="300"
+                            Margin="0,0,12,0">
+                            <TextBlock
+                                Text="FRAME"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="8"
+                                Foreground="$CyanBrush" />
+                            <TextBlock
+                                Name="HeaderDiagFrame"
+                                Text="0.00 ms"
+                                FontFamily="Cascadia Mono"
+                                FontSize="9"
+                                Foreground="$PaperBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Column="1"
+                            Width="300"
+                            Margin="0,0,12,0">
+                            <TextBlock
+                                Text="PHASES"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="8"
+                                Foreground="$LimeBrush" />
+                            <TextBlock
+                                Name="HeaderDiagPhases"
+                                Text="INHERITED 0  COMMAND 0"
+                                FontFamily="Cascadia Mono"
+                                FontSize="9"
+                                Foreground="$SlateBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Column="2"
+                            Width="300"
+                            Margin="0,0,12,0">
+                            <TextBlock
+                                Text="LAYOUT"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="8"
+                                Foreground="$OrangeBrush" />
+                            <TextBlock
+                                Name="HeaderDiagLayout"
+                                Text="QUEUED 0 / 0"
+                                FontFamily="Cascadia Mono"
+                                FontSize="9"
+                                Foreground="$SlateBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Width="300"
+                            Margin="0,0,12,0">
+                            <TextBlock
+                                Text="RENDER"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="8"
+                                Foreground="$PinkBrush" />
+                            <TextBlock
+                                Name="HeaderDiagRender"
+                                Text="RENDER 0  HIT 0"
+                                FontFamily="Cascadia Mono"
+                                FontSize="9"
+                                Foreground="$SlateBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Width="300"
+                            Margin="0,0,12,0">
+                            <TextBlock
+                                Text="MOTION"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="8"
+                                Foreground="$CyanBrush" />
+                            <TextBlock
+                                Name="HeaderDiagMotion"
+                                Text="FRAME 0  SAMPLE 0  VALUE 0  WRITE 0"
+                                FontFamily="Cascadia Mono"
+                                FontSize="9"
+                                Foreground="$SlateBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="1"
+                            Grid.Column="2"
+                            Width="300">
+                            <TextBlock
+                                Text="RELAY"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="8"
+                                Foreground="$LimeBrush" />
+                            <TextBlock
+                                Name="HeaderDiagRelay"
+                                Text="SNAP 0  DEQ 0  EXEC 0  BACKLOG 0"
+                                FontFamily="Cascadia Mono"
+                                FontSize="9"
+                                Foreground="$SlateBrush"
+                                TextWrapping="Wrap"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </Grid>
         </Border>
         <Grid
@@ -282,11 +424,6 @@
                             Aspect="$NavButton"
                             Content="07  FRAME PIPELINE"
                             Click="OnPipeline" />
-                        <ToggleButton
-                            Name="NavDiagnostics"
-                            Aspect="$NavButton"
-                            Content="08  DIAGNOSTICS"
-                            Click="OnDiagnostics" />
                     </StackPanel>
                     <Border
                         Grid.Row="2"
@@ -333,9 +470,6 @@
                 <FramePipelineChapterView
                     Name="PagePipeline"
                     Visibility="Collapsed" />
-                <DiagnosticsChapterView
-                    Name="PageDiagnostics"
-                    Visibility="Collapsed" />
             </Grid>
         </Grid>
         <Border
@@ -356,7 +490,7 @@
                 <TextBlock
                     Name="ChapterCounter"
                     Grid.Column="0"
-                    Text="CHAPTER 01 / 08"
+                    Text="CHAPTER 01 / 07"
                     FontFamily="Cascadia Mono SemiBold"
                     FontSize="10"
                     Foreground="$SlateBrush"

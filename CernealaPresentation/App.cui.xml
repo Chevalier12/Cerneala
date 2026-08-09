@@ -57,6 +57,94 @@
             Name="TransparentBrush"
             Color="#00000000" />
         <Aspect
+            Name="PresentationScrollThumb"
+            Target="Thumb">
+            @default
+            {
+                Background = $SlateDimBrush;
+                BorderBrush = $LineStrongBrush;
+                BorderThickness = "1";
+            }
+            @when IsMouseOver
+            {
+                Background = $CyanBrush;
+                BorderBrush = $CyanBrush;
+            }
+        </Aspect>
+        <Aspect
+            Name="PresentationScrollTrack"
+            Target="Track">
+            @default
+            {
+                Background = $PanelAltBrush;
+                BorderBrush = $LineBrush;
+                BorderThickness = "1";
+            }
+            @template
+            {
+                <Border
+                    Background="$owner.Background"
+                    BorderBrush="$owner.BorderBrush"
+                    BorderThickness="$owner.BorderThickness"
+                    Padding="2">
+                    <TrackLayoutPanel
+                        Orientation="$owner.Orientation">
+                        <Thumb
+                            Name="PART_Thumb"
+                            Aspect="$PresentationScrollThumb" />
+                    </TrackLayoutPanel>
+                </Border>
+            }
+        </Aspect>
+        <Aspect
+            Name="PresentationScrollBar"
+            Target="ScrollBar">
+            @template
+            {
+                <Track
+                    Name="PART_Track"
+                    Aspect="$PresentationScrollTrack" />
+            }
+        </Aspect>
+        <Aspect
+            Target="ScrollViewer">
+            @template
+            {
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ScrollContentPresenter
+                        Name="PART_ScrollContentPresenter"
+                        Grid.Row="0"
+                        Grid.Column="0" />
+                    <ScrollBar
+                        Name="PART_VerticalScrollBar"
+                        Aspect="$PresentationScrollBar"
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Orientation="Vertical"
+                        Width="12"
+                        Margin="3,0,0,0"
+                        Visibility="Collapsed" />
+                    <ScrollBar
+                        Name="PART_HorizontalScrollBar"
+                        Aspect="$PresentationScrollBar"
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Orientation="Horizontal"
+                        Height="12"
+                        Margin="0,3,0,0"
+                        Visibility="Collapsed" />
+                </Grid>
+            }
+        </Aspect>
+        <Aspect
             Name="PageReveal"
             Target="UserControl">
             @when Visibility
