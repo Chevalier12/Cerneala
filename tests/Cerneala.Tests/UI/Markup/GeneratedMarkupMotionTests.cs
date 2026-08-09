@@ -165,6 +165,24 @@ public sealed class GeneratedMarkupMotionTests
 
         Assert.Equal(1, activations);
         Assert.True(root.Motion.HasActiveMotion);
+
+        parent.Visibility = Visibility.Collapsed;
+        root.ProcessFrame();
+
+        Assert.False(root.Motion.HasActiveMotion);
+
+        owner.Visibility = Visibility.Collapsed;
+        parent.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+
+        Assert.Equal(1, activations);
+        Assert.False(root.Motion.HasActiveMotion);
+
+        owner.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+
+        Assert.Equal(2, activations);
+        Assert.True(root.Motion.HasActiveMotion);
     }
 
     [Fact]
