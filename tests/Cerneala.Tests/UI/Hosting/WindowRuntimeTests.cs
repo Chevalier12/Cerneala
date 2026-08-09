@@ -93,6 +93,46 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void PumpOnceReportsWhetherItPresentedAFrame()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Pacing" } };
+        window.Show();
+
+        object? idleResult = typeof(WindowApplicationRuntime)
+            .GetMethod(nameof(WindowApplicationRuntime.PumpOnce))!
+            .Invoke(runtime, [TimeSpan.FromMilliseconds(16)]);
+
+        window.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "pacing test");
+        object? renderedResult = typeof(WindowApplicationRuntime)
+            .GetMethod(nameof(WindowApplicationRuntime.PumpOnce))!
+            .Invoke(runtime, [TimeSpan.FromMilliseconds(16)]);
+
+        Assert.False(Assert.IsType<bool>(idleResult));
+        Assert.True(Assert.IsType<bool>(renderedResult));
+    }
+
+    [Fact]
+    public void PumpOnceWaitsForTheCompositorOnlyAfterPresentingAFrame()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Pacing" } };
+        window.Show();
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.Equal(0, platform.PresentedFrameWaitCount);
+
+        window.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "pacing test");
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.Equal(1, platform.PresentedFrameWaitCount);
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.Equal(1, platform.PresentedFrameWaitCount);
+    }
+
+    [Fact]
     public void FrameProcessingTimeExcludesThePresentationWait()
     {
         FakeWindowPlatform platform = new();
@@ -419,6 +459,8 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public int PumpCount { get; private set; }
 
+        public int PresentedFrameWaitCount { get; private set; }
+
         public IPlatformWindow CreateWindow(Window window, IWindowPlatformCallbacks callbacks)
         {
             FakePlatformWindow created = new(window, callbacks, Windows.Count + 1);
@@ -429,6 +471,11 @@ public sealed class WindowRuntimeTests : IDisposable
         public void PumpEvents()
         {
             PumpCount++;
+        }
+
+        public void WaitForPresentedFrames()
+        {
+            PresentedFrameWaitCount++;
         }
 
         public void Dispose()

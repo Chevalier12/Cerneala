@@ -332,10 +332,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 context.Root.Motion.HasActiveMotion);
     }
 
-    public void PumpOnce(TimeSpan elapsedTime)
+    public bool PumpOnce(TimeSpan elapsedTime)
     {
         VerifyAccess();
         platform.PumpEvents();
+        bool framePresented = false;
         foreach (WindowContext context in contexts.Values.ToArray())
         {
             if (!context.Window.IsShown ||
@@ -357,9 +358,16 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 context.Root.Motion.HasActiveMotion ||
                 context.Host.InputBridge.HasActivePointerRepeat)
             {
-                Render(context, elapsedTime, renderTimeAlreadyAdvanced: true);
+                framePresented |= Render(context, elapsedTime, renderTimeAlreadyAdvanced: true);
             }
         }
+
+        if (framePresented)
+        {
+            platform.WaitForPresentedFrames();
+        }
+
+        return framePresented;
     }
 
     public void RunStandalone(Window window)
@@ -370,9 +378,12 @@ internal sealed class WindowApplicationRuntime : IDisposable
         while (!window.IsClosed && windows.Count > 0)
         {
             TimeSpan now = stopwatch.Elapsed;
-            PumpOnce(now - previous);
+            bool framePresented = PumpOnce(now - previous);
             previous = now;
-            Thread.Sleep(1);
+            if (!framePresented)
+            {
+                Thread.Sleep(1);
+            }
         }
     }
 
@@ -385,9 +396,12 @@ internal sealed class WindowApplicationRuntime : IDisposable
         while (!value.IsShutdownRequested)
         {
             TimeSpan now = stopwatch.Elapsed;
-            PumpOnce(now - previous);
+            bool framePresented = PumpOnce(now - previous);
             previous = now;
-            Thread.Sleep(1);
+            if (!framePresented)
+            {
+                Thread.Sleep(1);
+            }
         }
     }
 
@@ -489,12 +503,12 @@ internal sealed class WindowApplicationRuntime : IDisposable
         return context;
     }
 
-    private void Render(WindowContext context, TimeSpan elapsedTime, bool renderTimeAlreadyAdvanced = false)
+    private bool Render(WindowContext context, TimeSpan elapsedTime, bool renderTimeAlreadyAdvanced = false)
     {
         if (context.IsRendering)
         {
             context.RenderRequested = true;
-            return;
+            return false;
         }
 
         context.IsRendering = true;
@@ -519,7 +533,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
             if (!IsLiveContext(context))
             {
-                return;
+                return false;
             }
 
             IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
@@ -568,6 +582,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
                     context.Window.MarkContentRendered();
                 }
             }
+
+            return true;
         }
         finally
         {

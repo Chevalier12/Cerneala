@@ -59,6 +59,12 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         }
     }
 
+    public void WaitForPresentedFrames()
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        Marshal.ThrowExceptionForHR(Win32.DwmFlush());
+    }
+
     public void Dispose()
     {
         if (disposed)

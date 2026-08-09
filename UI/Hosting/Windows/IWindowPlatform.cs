@@ -12,6 +12,8 @@ internal interface IWindowPlatform : IDisposable
     IPlatformWindow CreateWindow(Window window, IWindowPlatformCallbacks callbacks);
 
     void PumpEvents();
+
+    void WaitForPresentedFrames();
 }
 
 internal interface IPlatformWindow : IDisposable
