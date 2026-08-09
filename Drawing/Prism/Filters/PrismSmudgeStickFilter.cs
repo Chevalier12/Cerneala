@@ -12,6 +12,6 @@ internal static class PrismSmudgeStickFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.SmudgeStick(
+        PrismCatalogTextureMath.SmudgeStick(
             plan, pass, source, width, height, x, y);
 }

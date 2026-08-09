@@ -12,6 +12,6 @@ internal static class PrismOilPaintFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.OilPaint(
+        PrismCatalogGeometryMath.OilPaint(
             plan, pass, source, width, height, x, y);
 }

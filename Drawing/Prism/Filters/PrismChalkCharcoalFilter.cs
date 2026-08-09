@@ -9,7 +9,7 @@ internal static class PrismChalkCharcoalFilter
         Vector4[] source,
         int width,
         int height) =>
-        PrismCatalogFilterMath.ChalkCharcoal(
+        PrismCatalogInkMath.ChalkCharcoal(
             plan,
             source,
             width,

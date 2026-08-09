@@ -9,7 +9,7 @@ internal static class PrismAccentedEdgesFilter
         Vector4[] source,
         int width,
         int height) =>
-        PrismCatalogFilterMath.AccentedEdges(
+        PrismCatalogInkMath.AccentedEdges(
             plan,
             source,
             width,

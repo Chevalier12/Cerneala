@@ -9,5 +9,5 @@ internal static class PrismCrosshatchFilter
         Vector4 center,
         int x,
         int y) =>
-        PrismCatalogFilterMath.Crosshatch(plan, center, x, y);
+        PrismCatalogArtisticMath.Crosshatch(plan, center, x, y);
 }

@@ -12,6 +12,6 @@ internal static class PrismSpongeFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.Sponge(
+        PrismCatalogTextureMath.Sponge(
             plan, pass, source, width, height, x, y);
 }

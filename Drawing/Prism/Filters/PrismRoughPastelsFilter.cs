@@ -12,6 +12,6 @@ internal static class PrismRoughPastelsFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.RoughPastels(
+        PrismCatalogTextureMath.RoughPastels(
             plan, pass, source, width, height, x, y);
 }

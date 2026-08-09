@@ -11,6 +11,6 @@ internal static class PrismSprayedStrokesFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.SprayedStrokes(
+        PrismCatalogArtisticMath.SprayedStrokes(
             plan, source, width, height, x, y);
 }

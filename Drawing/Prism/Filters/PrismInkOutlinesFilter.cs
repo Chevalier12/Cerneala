@@ -9,5 +9,5 @@ internal static class PrismInkOutlinesFilter
         Vector4[] source,
         int width,
         int height) =>
-        PrismCatalogFilterMath.InkOutlines(plan, source, width, height);
+        PrismCatalogInkMath.InkOutlines(plan, source, width, height);
 }

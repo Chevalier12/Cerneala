@@ -11,7 +11,7 @@ internal static class PrismHalftonePatternFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.HalftonePattern(
+        PrismCatalogProceduralMath.HalftonePattern(
             plan,
             center,
             new Vector2(x + 0.5f, y + 0.5f),

@@ -9,5 +9,5 @@ internal static class PrismFrescoFilter
         Vector4[] source,
         int width,
         int height) =>
-        PrismCatalogFilterMath.Fresco(plan, source, width, height);
+        PrismCatalogPainterlyMath.Fresco(plan, source, width, height);
 }

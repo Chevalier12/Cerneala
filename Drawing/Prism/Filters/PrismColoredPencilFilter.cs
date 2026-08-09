@@ -9,7 +9,7 @@ internal static class PrismColoredPencilFilter
         Vector4[] source,
         int width,
         int height) =>
-        PrismCatalogFilterMath.ColoredPencil(
+        PrismCatalogPainterlyMath.ColoredPencil(
             plan,
             source,
             width,

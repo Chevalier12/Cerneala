@@ -12,6 +12,6 @@ internal static class PrismPaletteKnifeFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.PaletteKnife(
+        PrismCatalogTextureMath.PaletteKnife(
             plan, pass, source, width, height, x, y);
 }

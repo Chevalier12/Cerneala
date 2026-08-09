@@ -23,7 +23,7 @@ internal static class PrismMosaicFilter
                 "PreserveEdges",
                 0) >= 0.5f)
         {
-            return PrismCatalogFilterMath.BilateralMosaic(
+            return PrismCatalogQuantizationMath.BilateralMosaic(
                 source,
                 width,
                 height,

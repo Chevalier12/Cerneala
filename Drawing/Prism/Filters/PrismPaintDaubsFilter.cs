@@ -12,6 +12,6 @@ internal static class PrismPaintDaubsFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.PaintDaubs(
+        PrismCatalogTextureMath.PaintDaubs(
             plan, pass, source, width, height, x, y);
 }

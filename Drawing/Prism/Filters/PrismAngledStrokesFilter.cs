@@ -12,6 +12,6 @@ internal static class PrismAngledStrokesFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.AngledStrokes(
+        PrismCatalogTextureMath.AngledStrokes(
             plan, pass, source, width, height, x, y);
 }

@@ -9,5 +9,5 @@ internal static class PrismDarkStrokesFilter
         Vector4[] source,
         int width,
         int height) =>
-        PrismCatalogFilterMath.DarkStrokes(plan, source, width, height);
+        PrismCatalogInkMath.DarkStrokes(plan, source, width, height);
 }

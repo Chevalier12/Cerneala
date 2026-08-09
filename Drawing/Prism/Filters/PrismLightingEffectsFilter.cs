@@ -13,7 +13,7 @@ internal static class PrismLightingEffectsFilter
         int height,
         Func<Vector2, Vector4>? heightResource,
         PrismLightingResource lighting) =>
-        PrismCatalogFilterMath.LightingEffects(
+        PrismCatalogProceduralMath.LightingEffects(
             plan,
             center,
             uv,

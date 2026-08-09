@@ -12,6 +12,6 @@ internal static class PrismUnderpaintingFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.Underpainting(
+        PrismCatalogTextureMath.Underpainting(
             plan, pass, source, width, height, x, y);
 }

@@ -9,5 +9,5 @@ internal static class PrismWatercolorFilter
         Vector4[] source,
         int width,
         int height) =>
-        PrismCatalogFilterMath.Watercolor(plan, source, width, height);
+        PrismCatalogInkMath.Watercolor(plan, source, width, height);
 }

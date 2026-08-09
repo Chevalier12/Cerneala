@@ -12,7 +12,7 @@ internal static class PrismDeinterlaceFilter
         int x,
         int y,
         Vector4 center) =>
-        PrismCatalogFilterMath.Deinterlace(
+        PrismCatalogProceduralMath.Deinterlace(
             plan,
             source,
             width,

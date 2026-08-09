@@ -9,5 +9,5 @@ internal static class PrismPosterEdgesFilter
         Vector4[] source,
         int width,
         int height) =>
-        PrismCatalogFilterMath.PosterEdges(plan, source, width, height);
+        PrismCatalogInkMath.PosterEdges(plan, source, width, height);
 }

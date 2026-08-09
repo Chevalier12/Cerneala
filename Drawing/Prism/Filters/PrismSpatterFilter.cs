@@ -11,6 +11,6 @@ internal static class PrismSpatterFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.Spatter(
+        PrismCatalogArtisticMath.Spatter(
             plan, source, width, height, x, y);
 }

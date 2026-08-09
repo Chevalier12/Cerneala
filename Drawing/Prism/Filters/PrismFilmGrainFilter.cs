@@ -9,5 +9,5 @@ internal static class PrismFilmGrainFilter
         Vector4 center,
         int x,
         int y) =>
-        PrismCatalogFilterMath.FilmGrain(plan, center, x, y);
+        PrismCatalogTextureMath.FilmGrain(plan, center, x, y);
 }

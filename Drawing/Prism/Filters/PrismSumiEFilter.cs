@@ -9,5 +9,5 @@ internal static class PrismSumiEFilter
         Vector4[] source,
         int width,
         int height) =>
-        PrismCatalogFilterMath.SumiE(plan, source, width, height);
+        PrismCatalogInkMath.SumiE(plan, source, width, height);
 }

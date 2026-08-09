@@ -11,6 +11,6 @@ internal static class PrismExtrudeFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.Extrude(
+        PrismCatalogGeometryMath.Extrude(
             plan, source, width, height, x, y);
 }

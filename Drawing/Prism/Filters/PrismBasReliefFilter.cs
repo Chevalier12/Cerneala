@@ -9,5 +9,5 @@ internal static class PrismBasReliefFilter
         Vector4[] source,
         int width,
         int height) =>
-        PrismCatalogFilterMath.BasRelief(plan, source, width, height);
+        PrismCatalogReliefMath.BasRelief(plan, source, width, height);
 }

@@ -10,7 +10,7 @@ internal static class PrismFacetFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.AnisotropicKuwahara(
+        PrismCatalogQuantizationMath.AnisotropicKuwahara(
             source,
             width,
             height,

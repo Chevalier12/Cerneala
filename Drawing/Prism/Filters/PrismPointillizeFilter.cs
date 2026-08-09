@@ -11,7 +11,7 @@ internal static class PrismPointillizeFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.Pointillize(
+        PrismCatalogColorMath.Pointillize(
             source,
             width,
             height,

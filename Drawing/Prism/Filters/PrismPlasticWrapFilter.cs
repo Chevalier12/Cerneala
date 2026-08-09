@@ -12,6 +12,6 @@ internal static class PrismPlasticWrapFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.PlasticWrap(
+        PrismCatalogTextureMath.PlasticWrap(
             plan, pass, source, width, height, x, y);
 }

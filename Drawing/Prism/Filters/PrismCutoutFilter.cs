@@ -12,6 +12,6 @@ internal static class PrismCutoutFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.Cutout(
+        PrismCatalogTextureMath.Cutout(
             plan, pass, source, width, height, x, y);
 }

@@ -10,7 +10,7 @@ internal static class PrismColorHalftoneFilter
         Vector4 center,
         int x,
         int y) =>
-        PrismCatalogFilterMath.ColorHalftone(
+        PrismCatalogQuantizationMath.ColorHalftone(
             plan,
             center,
             new Vector2(x + 0.5f, y + 0.5f),

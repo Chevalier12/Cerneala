@@ -12,6 +12,6 @@ internal static class PrismDryBrushFilter
         int height,
         int x,
         int y) =>
-        PrismCatalogFilterMath.DryBrush(
+        PrismCatalogTextureMath.DryBrush(
             plan, pass, source, width, height, x, y);
 }
