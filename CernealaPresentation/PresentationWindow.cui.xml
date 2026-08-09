@@ -339,7 +339,8 @@
                         <StackPanel
                             Grid.Row="1"
                             Grid.Column="2"
-                            Width="300">
+                            Width="300"
+                            Margin="0,0,12,0">
                             <TextBlock
                                 Text="RELAY"
                                 FontFamily="Cascadia Mono SemiBold"

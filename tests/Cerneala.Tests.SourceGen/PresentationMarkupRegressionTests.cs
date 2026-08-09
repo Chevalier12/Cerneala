@@ -93,6 +93,30 @@ public sealed class PresentationMarkupRegressionTests
     }
 
     [Fact]
+    public void RelayDiagnosticsUseTheSameColumnContractAsTheirPeers()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        XDocument document = XDocument.Load(Path.Combine(
+            repositoryRoot,
+            "CernealaPresentation",
+            "PresentationWindow.cui.xml"), LoadOptions.PreserveWhitespace);
+
+        XElement diagnosticsGrid = Assert.Single(document.Descendants("Grid").Where(element =>
+            element.Attribute("Width")?.Value == "990"));
+        XElement layoutPanel = Assert.Single(diagnosticsGrid
+            .Elements("StackPanel")
+            .Where(element => element.Descendants("TextBlock").Any(textBlock =>
+                textBlock.Attribute("Name")?.Value == "HeaderDiagLayout")));
+        XElement relayPanel = Assert.Single(diagnosticsGrid
+            .Elements("StackPanel")
+            .Where(element => element.Descendants("TextBlock").Any(textBlock =>
+                textBlock.Attribute("Name")?.Value == "HeaderDiagRelay")));
+
+        Assert.Equal(layoutPanel.Attribute("Width")?.Value, relayPanel.Attribute("Width")?.Value);
+        Assert.Equal(layoutPanel.Attribute("Margin")?.Value, relayPanel.Attribute("Margin")?.Value);
+    }
+
+    [Fact]
     public void PresentationScrollViewersUseTheApplicationScrollAspect()
     {
         string repositoryRoot = FindRepositoryRoot();
