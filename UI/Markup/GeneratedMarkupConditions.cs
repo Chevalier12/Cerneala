@@ -668,6 +668,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
     private bool evaluating;
     private bool reevaluate;
     private bool deferActivations;
+    private bool renderable;
     private int attachmentVersion;
     private Func<bool>? callbackGuard;
     private readonly UiRelayRefreshDispatcher refreshDispatcher;
@@ -692,6 +693,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
             Stop();
         }
 
+        renderable = UIElementVisibility.IsEffectivelyVisible(owner);
         deferActivations = hasRuleActivations;
         Start();
         if (!hasRuleActivations)
@@ -712,7 +714,14 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
 
     public void Detach()
     {
+        renderable = false;
         Stop();
+    }
+
+    public void OnRenderabilityChanged(bool isRenderable)
+    {
+        renderable = isRenderable;
+        Evaluate();
     }
 
     public void Dispose()
@@ -793,12 +802,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         }
 
         activeContent.Clear();
-        foreach (MarkupConditionRule rule in activeRules)
-        {
-            rule.Deactivated?.Invoke();
-        }
-
-        activeRules.Clear();
+        DeactivateRules();
     }
 
     private void OnObservationChanged(object? sender, EventArgs args)
@@ -860,6 +864,12 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
             return;
         }
 
+        if (!renderable)
+        {
+            DeactivateRules();
+            return;
+        }
+
         foreach (MarkupConditionRule previous in activeRules.Where(rule => !active.Contains(rule)).ToArray())
         {
             previous.Deactivated?.Invoke();
@@ -872,6 +882,16 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
 
         activeRules.Clear();
         activeRules.AddRange(active);
+    }
+
+    private void DeactivateRules()
+    {
+        foreach (MarkupConditionRule rule in activeRules)
+        {
+            rule.Deactivated?.Invoke();
+        }
+
+        activeRules.Clear();
     }
 
     private void CompleteInitialActivation(UIRoot root, int version)

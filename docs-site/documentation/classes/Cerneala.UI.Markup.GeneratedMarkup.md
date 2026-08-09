@@ -34,7 +34,7 @@ using Binding binding = GeneratedMarkup.AttachPropertyBinding(
 | `ObserveTemplatePartProperty(Control owner, string partName, UiProperty property)` | `MarkupObservation` | Observes a property on a named component-template part and reconnects after template replacement. |
 | `ObserveObject(Func<object?> getter)` | `MarkupObservation` | Observes a getter-backed object value. |
 | `ObserveDataPath(UIElement owner, params MarkupDataPathSegment[] segments)` | `MarkupObservation` | Observes a typed `DataContext` property path and its intermediate owners. |
-| `AttachConditions(UIElement owner, IReadOnlyList<MarkupObservation> observations, IReadOnlyList<MarkupConditionRule> rules)` | `IDisposable` | Attaches observations and rules to an element lifecycle. |
+| `AttachConditions(UIElement owner, IReadOnlyList<MarkupObservation> observations, IReadOnlyList<MarkupConditionRule> rules)` | `IDisposable` | Attaches observations and rules to an element lifecycle and gates rule activation callbacks on effective renderability. |
 | `AttachMotionSession(UIElement owner)` | `IDisposable` | Creates a lifecycle-scoped session for generated motion triggers and executions. |
 | `AttachMotionTriggers(UIElement owner, Action attach, Action detach)` | `IDisposable` | Runs direct event-subscription callbacks on attach and their matching unsubscription callbacks on detach. |
 | `AddMotionTrigger(IDisposable session, Action attach, Action detach)` | `void` | Adds direct subscribe/unsubscribe callbacks to a generated motion session. |
@@ -89,6 +89,13 @@ Property bindings write to `MarkupBase`; conditional providers write to
 from an effective `Local` target change and remove that transient local value
 after the source is updated. Binding controllers stop observations on detach,
 refresh on reattach, and clear only their owned value slot when disposed.
+
+Conditional observations continue to reconcile rule values and content while
+their owner is attached but effectively hidden. Rule activation callbacks are
+deactivated while the owner or an ancestor is hidden, collapsed, or invisible.
+When the owner becomes renderable, the controller reevaluates the latest rule
+state and activates matching callbacks. This allows generated Motion conditions
+to be prepared in a hidden subtree without starting an execution prematurely.
 
 `AttachResource<T>` follows element and ancestor resources before the attached
 root provider. A local resource therefore shadows an application resource with
