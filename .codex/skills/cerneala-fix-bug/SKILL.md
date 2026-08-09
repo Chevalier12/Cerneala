@@ -1,6 +1,6 @@
 ---
 name: cerneala-fix-bug
-description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end with evidence-first debugging, a focused RED regression test, CSI or a temporary native runtime harness when needed, the smallest architecture-correct production change, and a final green test suite. Use when the user reports broken behavior, a regression, an exception, incorrect rendering, input or layout failures, performance bugs, flaky behavior, or asks to investigate and fix a Cerneala issue rather than implement a new capability.
+description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end with evidence-first debugging, a focused RED regression test, CSI, temporary direct view instrumentation, or a native runtime harness when needed, the smallest architecture-correct production change, and a final green test suite. Use when the user reports broken behavior, a regression, an exception, incorrect rendering, input or layout failures, performance bugs, flaky behavior, or asks to investigate and fix a Cerneala issue rather than implement a new capability.
 ---
 
 # Cerneala Fix Bug
@@ -27,8 +27,21 @@ Fix the reported behavior from reproduction through final verification. Treat th
 - Reproduce the bug with the narrowest deterministic path available.
 - For runtime C# behavior, prefer a temporary CSI `.csx` experiment when it can expose the relevant state faster than a throwaway project.
 - Run CSI with a short timeout, clean up the script, and check for a stuck `csi` process after suspicious execution.
-- If CSI cannot exercise the real window, frame loop, layout, rendering, input, or Motion behavior, use the temporary native runtime harness workflow below.
+- If CSI cannot exercise the real window, frame loop, layout, rendering, input, graphics, or Motion behavior, instrument and automate the owning view directly when the application can host it faithfully. Otherwise use the temporary native runtime harness workflow below.
 - Record the failing observation. Do not accept a theory-only reproduction.
+
+### Temporary Direct View Instrumentation
+
+Prefer this over a separate harness when the bug belongs to an application view or window that can reproduce itself inside the real application runtime.
+
+1. Add an explicitly opt-in temporary automation path in the view, its code-behind, or the owning window. Guard it with a unique environment variable, command-line switch, or internal test entry point so normal runs remain unchanged.
+2. Navigate directly to or instantiate the target view, construct the exact state, and drive real controls or handlers through automation peers or existing internal automation APIs. Do not require manual clicks when code-behind can reproduce the transition deterministically.
+3. Add temporary diagnostics at the narrowest useful boundaries: event-handler phases, model mutation, invalidation, measure/arrange/render, frame hooks, allocations and GC counts, backend diagnostics, or relevant state snapshots. Capture component, trigger, and owning-layer evidence separately.
+4. Run a bounded scenario, wait for the relevant frame or state transition, write a concise structured report outside the repository, surface asynchronous failures, and close the window automatically.
+5. Keep instrumentation observational. Do not mix a speculative fix into the probe, expose new public API, or permanently alter product behavior merely to gather evidence.
+6. After capturing the result, remove every temporary branch, diagnostic type, environment variable, report, and generated artifact. Re-index after source changes, rebuild, and verify the instrumented production files have no remaining diff unless the user explicitly asks to retain supported diagnostics.
+
+Use a separate native runtime harness instead when direct instrumentation would distort the failing ownership boundary, cannot start the required host/backend, or would require broad product changes.
 
 ### Temporary Native Runtime Harness
 
