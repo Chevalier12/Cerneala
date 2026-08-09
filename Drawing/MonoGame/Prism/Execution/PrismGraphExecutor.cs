@@ -262,14 +262,14 @@ internal sealed class PrismGraphExecutor : IDisposable
                         step < plan.ExecutionOrder.Length;
                         step++)
                     {
+                        PrismGraphNode node =
+                            graph.GetNode(plan.ExecutionOrder[step]);
                         frame.AdvanceToStep(
                             step,
                             surfaceKeys.AsSpan(0, plan.ExecutionOrder.Length),
                             requiredTransientSurfaces.AsSpan(0, plan.ExecutionOrder.Length));
                         diagnostics.ObserveLiveSurfaces(
                             surfacePool.ActiveLeaseCount);
-                        PrismGraphNode node =
-                            graph.GetNode(plan.ExecutionOrder[step]);
                         int fallbackCountBefore = diagnostics.Count;
                         if (requiredTransientSurfaces[step])
                         {

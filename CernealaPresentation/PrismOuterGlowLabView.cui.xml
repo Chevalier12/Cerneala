@@ -1,0 +1,66 @@
+<UserControl
+    Background="#FF0A0B0E">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition
+                Height="Auto" />
+            <RowDefinition
+                Height="*" />
+            <RowDefinition
+                Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel
+            Grid.Row="0"
+            Margin="28,24,28,0">
+            <TextBlock
+                Text="PRISM / EFFECT PERFORMANCE LAB"
+                FontFamily="Cascadia Mono SemiBold"
+                FontSize="12"
+                Foreground="#FF4DF0FF" />
+            <TextBlock
+                Text="OUTER GLOW  /  MOTION BLUR  /  ANIMATED PARAMETERS"
+                FontFamily="Cascadia Mono"
+                FontSize="9"
+                Foreground="#FF96A0AB"
+                Margin="0,7,0,0" />
+        </StackPanel>
+        <Grid
+            Grid.Row="1">
+            <Border
+                Name="GlowTarget"
+                Width="320"
+                Height="220"
+                Background="#FF14181E"
+                BorderBrush="#FF4DF0FF"
+                BorderThickness="2"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+                <Grid>
+                    <TextBlock
+                        Text="PRISM EFFECT"
+                        FontFamily="Bahnschrift"
+                        FontSize="34"
+                        Foreground="#FFE8EBE8"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                    <Border
+                        Width="88"
+                        Height="3"
+                        Background="#FFC6FF3D"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="0,58,0,0" />
+                </Grid>
+            </Border>
+        </Grid>
+        <TextBlock
+            Name="LabStatus"
+            Grid.Row="2"
+            Text="READY / NO PRISM ATTACHMENT"
+            FontFamily="Cascadia Mono SemiBold"
+            FontSize="9"
+            Foreground="#FFFF3EA5"
+            HorizontalAlignment="Center"
+            Margin="0,0,0,24" />
+    </Grid>
+</UserControl>

@@ -119,10 +119,43 @@ public sealed class MonoGameDrawingBackend :
         greenTextBlendState = CreateTextBlendState(ColorWriteChannels.Green);
         blueTextBlendState = CreateTextBlendState(ColorWriteChannels.Blue);
         textMaskBlendState = CreateTextMaskBlendState();
+        PrismColdStartWarmup.Begin();
+        PrismExecutionColdStartWarmup.Begin();
         if (_spriteBatch.GraphicsDevice is GraphicsDevice graphicsDevice)
         {
             CreatePathResources(graphicsDevice);
+            TryEnsurePrismExecutor(graphicsDevice);
+            TryWarmUpPrism(graphicsDevice);
             graphicsDevice.DeviceReset += OnDeviceReset;
+        }
+    }
+
+    private void TryWarmUpPrism(GraphicsDevice graphicsDevice)
+    {
+        if (prismExecutor is null)
+        {
+            return;
+        }
+
+        Viewport originalViewport = graphicsDevice.Viewport;
+        try
+        {
+            (DrawCommandList commands, PrismFrameAnalysis analysis) =
+                PrismColdStartWarmup.CreateOuterGlowWorkload();
+            graphicsDevice.Viewport = new Viewport(0, 0, 64, 64);
+            DrawingFrameContext frameContext = new(analysis);
+            Render(commands, frameContext);
+            prismExecutor.InvalidateAll();
+            prismDiagnostics.BeginFrame();
+            LastFrameTiming = default;
+        }
+        catch
+        {
+            prismDiagnostics.BeginFrame();
+        }
+        finally
+        {
+            graphicsDevice.Viewport = originalViewport;
         }
     }
 

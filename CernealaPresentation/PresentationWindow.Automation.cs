@@ -14,6 +14,16 @@ public partial class PresentationWindow
 {
     private async Task RunAutomationIfRequestedAsync()
     {
+        string? outerGlowLabReportPath =
+            Environment.GetEnvironmentVariable("CERNEALA_PRISM_OUTER_GLOW_LAB_REPORT");
+        if (!string.IsNullOrWhiteSpace(outerGlowLabReportPath))
+        {
+            await RunAutomationWithErrorReportAsync(
+                outerGlowLabReportPath,
+                () => ExecuteOuterGlowLabAsync(outerGlowLabReportPath));
+            return;
+        }
+
         string? frameBudgetReportPath =
             Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_FRAME_BUDGET_REPORT");
         if (!string.IsNullOrWhiteSpace(frameBudgetReportPath))
