@@ -367,6 +367,29 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void AutoScrollbarsReevaluateWhenExistingPanelGrowsAfterInitialLayout()
+    {
+        UIRoot root = new(100, 100);
+        StackPanel content = new();
+        ScrollViewer viewer = new()
+        {
+            Content = content,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        Assert.False(viewer.IsVerticalScrollBarVisible);
+
+        content.VisualChildren.Add(new FixedElement(new LayoutSize(80, 60)));
+        content.VisualChildren.Add(new FixedElement(new LayoutSize(80, 60)));
+        root.ProcessFrame();
+
+        Assert.Equal(120, viewer.ScrollInfo.ExtentHeight);
+        Assert.Equal(100, viewer.ScrollInfo.ViewportHeight);
+        Assert.True(viewer.IsVerticalScrollBarVisible);
+    }
+
+    [Fact]
     public void AutoScrollbarsCollapseDuringUnboundedMeasureWhenExistingContentShrinks()
     {
         MutableElement content = new(new LayoutSize(300, 300));

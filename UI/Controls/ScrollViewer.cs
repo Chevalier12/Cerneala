@@ -370,9 +370,30 @@ public class ScrollViewer : Control
     {
         if (syncingScrollBars ||
             !ReferenceEquals(sender, presenter) ||
-            presenter is null ||
-            (!ReferenceEquals(args.Property, ScrollContentPresenter.HorizontalOffsetProperty) &&
-             !ReferenceEquals(args.Property, ScrollContentPresenter.VerticalOffsetProperty)))
+            presenter is null)
+        {
+            return;
+        }
+
+        if (IsScrollMetricProperty(args.Property))
+        {
+            ScrollBarState current = InitialScrollBarState();
+            ScrollBarState required = EvaluateScrollBarState();
+            if (required != current)
+            {
+                ApplyScrollBarVisibility(required);
+                IncrementLayoutVersion();
+                Invalidate(
+                    InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render,
+                    "Scroll metrics changed");
+            }
+
+            UpdateScrollBarState();
+            return;
+        }
+
+        if (!ReferenceEquals(args.Property, ScrollContentPresenter.HorizontalOffsetProperty) &&
+            !ReferenceEquals(args.Property, ScrollContentPresenter.VerticalOffsetProperty))
         {
             return;
         }
@@ -391,6 +412,14 @@ public class ScrollViewer : Control
             oldVertical,
             presenter.HorizontalOffset,
             presenter.VerticalOffset));
+    }
+
+    private static bool IsScrollMetricProperty(UiProperty property)
+    {
+        return ReferenceEquals(property, ScrollContentPresenter.ExtentWidthProperty) ||
+            ReferenceEquals(property, ScrollContentPresenter.ExtentHeightProperty) ||
+            ReferenceEquals(property, ScrollContentPresenter.ViewportWidthProperty) ||
+            ReferenceEquals(property, ScrollContentPresenter.ViewportHeightProperty);
     }
 
     private void UpdateScrollBarState()
