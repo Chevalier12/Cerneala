@@ -450,6 +450,64 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void ApplicationDefaultAspectAppliesToControlsDerivedFromItsTarget()
+    {
+        MarkupFile[] files =
+        [
+            new(
+                "App.cui.xml",
+                """
+                <Application StartupWindow="ShellWindow">
+                    <Application.Resources>
+                        <Aspect Target="ScrollViewer">
+                            @default
+                            {
+                                Opacity = 0.42;
+                            }
+                            @template
+                            {
+                                <ScrollContentPresenter Name="PART_ScrollContentPresenter" />
+                            }
+                        </Aspect>
+                    </Application.Resources>
+                </Application>
+                """),
+            new("ShellWindow.cui.xml", "<Window><DerivedScrollViewer /></Window>")
+        ];
+        (string Path, string Source)[] sources =
+        [
+            (
+                "App.cui.xml.cs",
+                """
+                using Cerneala.UI;
+                namespace TestInput;
+                public partial class App : Application { }
+                """),
+            (
+                "ShellWindow.cui.xml.cs",
+                """
+                using Cerneala.UI.Controls;
+                namespace TestInput;
+                public sealed class DerivedScrollViewer : ScrollViewer { }
+                public partial class ShellWindow : Window { }
+                """)
+        ];
+
+        GeneratorRunResult result = RunApplicationViewsGenerator(files, sources, out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string generated = string.Join(
+            Environment.NewLine,
+            result.GeneratedSources.Select(source => source.SourceText.ToString()));
+        Assert.Contains("0.42", generated, StringComparison.Ordinal);
+        Assert.Contains("UiPropertyValueSource.AspectBase", generated, StringComparison.Ordinal);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
     public void ApplicationResourcesAreResolvedByPairedWindowsAndUserControls()
     {
         MarkupFile[] files =

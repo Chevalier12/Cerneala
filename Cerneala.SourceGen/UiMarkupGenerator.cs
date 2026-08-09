@@ -912,6 +912,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             ReadResources();
             ReadInlineAspects();
+            ImportApplicationAspects();
             DirectiveParseResult[] elementDirectiveContent = document.Root
                 .DescendantsAndSelf()
                 .Select(element => GetDirectiveContent(
@@ -1271,6 +1272,28 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private int nextReactiveId;
         private int nextResourceId;
         private int nextTemplateId;
+
+        private void ImportApplicationAspects()
+        {
+            if (applicationResources is null)
+            {
+                return;
+            }
+
+            IEnumerable<AspectResource> applicationAspects =
+                applicationResources.DefaultAspects.Values.OfType<AspectResource>()
+                    .Concat(applicationResources.NamedResources.Values
+                        .OfType<NamedSymbol>()
+                        .Select(symbol => symbol.Source)
+                        .OfType<AspectResource>());
+            foreach (AspectResource aspect in applicationAspects)
+            {
+                if (!allAspects.Contains(aspect))
+                {
+                    allAspects.Add(aspect);
+                }
+            }
+        }
 
         private void ReadResources()
         {
@@ -2191,6 +2214,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private void EmitAspectTemplates()
         {
+            List<(AspectResource Aspect, INamedTypeSymbol OwnerType)> templates = [];
             foreach (AspectResource aspect in allAspects.Where(candidate => candidate.Template is not null))
             {
                 INamedTypeSymbol? ownerType = ResolveAspectTargetTypeSymbol(aspect.TargetName);
@@ -2207,9 +2231,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string variable = "aspectTemplate" + nextTemplateId.ToString(CultureInfo.InvariantCulture);
                 nextTemplateId++;
                 aspect.TemplateVariable = variable;
-                EmitComponentTemplate(
+                templates.Add((aspect, ownerType!));
+                currentLines.Add(
                     "global::Cerneala.UI.Controls.Templates.ComponentTemplate<" +
-                        ownerType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "> " + variable,
+                    ownerType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "> " + variable + " = null!;");
+            }
+
+            foreach ((AspectResource aspect, INamedTypeSymbol ownerType) in templates)
+            {
+                EmitComponentTemplate(
+                    aspect.TemplateVariable!,
                     aspect.TargetName,
                     ownerElement: null,
                     ownerType,
@@ -3115,9 +3146,19 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private bool TryResolveDefaultAspect(XObject source, string targetName, out AspectResource aspect)
         {
+            bool isRoot = source is XElement element && ReferenceEquals(element, document.Root);
+            INamedTypeSymbol? appliedElementType = ResolvePropertyOwnerType(targetName, isRoot);
             foreach (ResourceScope scope in EnumerateResourceScopes(source))
             {
                 if (scope.DefaultAspectsByTarget.TryGetValue(targetName, out aspect))
+                {
+                    return true;
+                }
+
+                if (appliedElementType is not null && TryResolveNearestDefaultAspect(
+                    scope.DefaultAspectsByTarget.Values,
+                    appliedElementType,
+                    out aspect))
                 {
                     return true;
                 }
@@ -3131,8 +3172,60 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return true;
             }
 
+            if (applicationResources is not null &&
+                appliedElementType is not null &&
+                TryResolveNearestDefaultAspect(
+                    applicationResources.DefaultAspects.Values.OfType<AspectResource>(),
+                    appliedElementType,
+                    out aspect))
+            {
+                return true;
+            }
+
             aspect = null!;
             return false;
+        }
+
+        private bool TryResolveNearestDefaultAspect(
+            IEnumerable<AspectResource> candidates,
+            INamedTypeSymbol appliedElementType,
+            out AspectResource aspect)
+        {
+            AspectResource? nearest = null;
+            int nearestDistance = int.MaxValue;
+            foreach (AspectResource candidate in candidates)
+            {
+                INamedTypeSymbol? candidateType = ResolveAspectTargetTypeSymbol(candidate.TargetName);
+                int distance = candidateType is null
+                    ? -1
+                    : GetBaseTypeDistance(appliedElementType, candidateType);
+                if (distance < 0 || distance >= nearestDistance)
+                {
+                    continue;
+                }
+
+                nearest = candidate;
+                nearestDistance = distance;
+            }
+
+            aspect = nearest!;
+            return nearest is not null;
+        }
+
+        private static int GetBaseTypeDistance(INamedTypeSymbol type, INamedTypeSymbol candidateBaseType)
+        {
+            int distance = 0;
+            for (INamedTypeSymbol? current = type; current is not null; current = current.BaseType)
+            {
+                if (SymbolEqualityComparer.Default.Equals(current, candidateBaseType))
+                {
+                    return distance;
+                }
+
+                distance++;
+            }
+
+            return -1;
         }
 
         private bool TryResolveResource(XObject source, string name, out NamedSymbol symbol)
