@@ -67,6 +67,25 @@ public sealed class GridTests
     }
 
     [Fact]
+    public void GridRecomputesInfiniteStarRowAfterStarColumnsConstrainChildWidth()
+    {
+        StackPanel stack = new();
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        WidthSensitiveElement wrappingChild = new();
+        grid.VisualChildren.Add(wrappingChild);
+        stack.VisualChildren.Add(grid);
+
+        stack.Measure(new MeasureContext(new LayoutSize(200, 100)));
+        stack.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, stack.DesiredSize.Height)));
+
+        Assert.Equal(60, grid.DesiredSize.Height);
+        Assert.Equal(60, wrappingChild.DesiredSize.Height);
+        Assert.Equal(wrappingChild.DesiredSize.Height, wrappingChild.ArrangedBounds.Height);
+    }
+
+    [Fact]
     public void ChangingAttachedGridPlacementQueuesGridLayout()
     {
         UIRoot root = new(100, 100);
@@ -99,6 +118,15 @@ public sealed class GridTests
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
             return size;
+        }
+    }
+
+    private sealed class WidthSensitiveElement : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            float height = context.AvailableSize.Width <= 100 ? 60 : 20;
+            return new LayoutSize(context.AvailableSize.Width, height);
         }
     }
 }

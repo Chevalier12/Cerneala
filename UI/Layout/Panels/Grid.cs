@@ -87,19 +87,20 @@ public class Grid : Panel
 
             child.Measure(new MeasureContext(context.AvailableSize, context.Rounding));
             GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
-            if (placement.ColumnSpan == 1 &&
-                (columns[placement.Column].IsAuto ||
-                 (columns[placement.Column].IsStar && float.IsPositiveInfinity(context.AvailableSize.Width))))
-            {
-                columnSizes[placement.Column] = MathF.Max(columnSizes[placement.Column], child.DesiredSize.Width);
-            }
-
-            if (placement.RowSpan == 1 &&
-                (rows[placement.Row].IsAuto ||
-                 (rows[placement.Row].IsStar && float.IsPositiveInfinity(context.AvailableSize.Height))))
-            {
-                rowSizes[placement.Row] = MathF.Max(rowSizes[placement.Row], child.DesiredSize.Height);
-            }
+            ExpandContentSizedDefinition(
+                columns,
+                columnSizes,
+                placement.Column,
+                placement.ColumnSpan,
+                context.AvailableSize.Width,
+                child.DesiredSize.Width);
+            ExpandContentSizedDefinition(
+                rows,
+                rowSizes,
+                placement.Row,
+                placement.RowSpan,
+                context.AvailableSize.Height,
+                child.DesiredSize.Height);
         }
 
         ResolveStarSizes(columns, columnSizes, context.AvailableSize.Width);
@@ -118,6 +119,30 @@ public class Grid : Panel
                     Sum(columnSizes, placement.Column, placement.ColumnSpan),
                     Sum(rowSizes, placement.Row, placement.RowSpan)),
                 context.Rounding));
+        }
+
+        foreach (UIElement child in VisualChildren)
+        {
+            if (child.Visibility == Visibility.Collapsed)
+            {
+                continue;
+            }
+
+            GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
+            ExpandContentSizedDefinition(
+                columns,
+                columnSizes,
+                placement.Column,
+                placement.ColumnSpan,
+                context.AvailableSize.Width,
+                child.DesiredSize.Width);
+            ExpandContentSizedDefinition(
+                rows,
+                rowSizes,
+                placement.Row,
+                placement.RowSpan,
+                context.AvailableSize.Height,
+                child.DesiredSize.Height);
         }
 
         measuredColumnSizes = columnSizes;
@@ -180,6 +205,22 @@ public class Grid : Panel
         }
 
         return sizes;
+    }
+
+    private static void ExpandContentSizedDefinition(
+        GridLength[] lengths,
+        float[] sizes,
+        int index,
+        int span,
+        float availableSize,
+        float desiredSize)
+    {
+        if (span == 1 &&
+            (lengths[index].IsAuto ||
+             (lengths[index].IsStar && float.IsPositiveInfinity(availableSize))))
+        {
+            sizes[index] = MathF.Max(sizes[index], desiredSize);
+        }
     }
 
     private static float[] ResolveArrangeSizes(GridLength[] lengths, float[] measuredSizes, float finalSize)
