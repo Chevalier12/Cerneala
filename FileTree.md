@@ -23,6 +23,7 @@ Generated from `.`.
 |           |   +-- visual-direction.html
 |           +-- state/
 |               +-- server-stopped
+|-- .tmp/
 |-- BenchmarkDotNet.Artifacts/
 |   +-- results/
 |-- benchmarks/
@@ -191,8 +192,6 @@ Generated from `.`.
 |   |-- BrandMark.cui.xml
 |   |-- BrandMark.cui.xml.cs
 |   |-- CernealaPresentation.csproj
-|   |-- DiagnosticsChapterView.cui.xml
-|   |-- DiagnosticsChapterView.cui.xml.cs
 |   |-- FramePipelineChapterView.cui.xml
 |   |-- FramePipelineChapterView.cui.xml.cs
 |   |-- MainWindow.cui.xml
@@ -204,8 +203,11 @@ Generated from `.`.
 |   |-- PresentationWindow.Automation.cs
 |   |-- PresentationWindow.cui.xml
 |   |-- PresentationWindow.cui.xml.cs
+|   |-- PresentationWindow.OuterGlowLab.cs
 |   |-- PrismChapterView.cui.xml
 |   |-- PrismChapterView.cui.xml.cs
+|   |-- PrismOuterGlowLabView.cui.xml
+|   |-- PrismOuterGlowLabView.cui.xml.cs
 |   |-- PrismStudioModel.cs
 |   |-- PrismStudioSlider.cui.xml
 |   |-- PrismStudioSlider.cui.xml.cs
@@ -1296,6 +1298,7 @@ Generated from `.`.
 |   |   |   |-- Execution/
 |   |   |   |   |-- IPrismCommandRenderer.cs
 |   |   |   |   |-- PrismCurveTextureCache.cs
+|   |   |   |   |-- PrismExecutionColdStartWarmup.cs
 |   |   |   |   |-- PrismExecutionDiagnostics.cs
 |   |   |   |   |-- PrismGradientDitherTexture.cs
 |   |   |   |   |-- PrismGradientMapTextureCache.cs
@@ -1763,6 +1766,7 @@ Generated from `.`.
 |   |   |   |-- PrismAnalyzedScope.cs
 |   |   |   |-- PrismBackdropFramePolicy.cs
 |   |   |   |-- PrismBackdropRequirement.cs
+|   |   |   |-- PrismColdStartWarmup.cs
 |   |   |   |-- PrismDependencyStamp.cs
 |   |   |   |-- PrismFrameAnalysis.cs
 |   |   |   |-- PrismFrameAnalyzer.cs
@@ -2115,7 +2119,9 @@ Generated from `.`.
 |   |   |-- Playground/
 |   |   |   +-- MainWindowContractTests.cs
 |   |   |-- Presentation/
+|   |   |   |-- PresentationChapterLayoutTests.cs
 |   |   |   |-- PrismChapterViewTests.cs
+|   |   |   |-- PrismOuterGlowLabViewTests.cs
 |   |   |   +-- PrismStudioModelTests.cs
 |   |   |-- UI/
 |   |   |   |-- Accessibility/
@@ -2434,6 +2440,7 @@ Generated from `.`.
 |   +-- scripts/
 |       |-- Archive-Repo.ps1
 |       |-- Archive-Repo.Tests.ps1
+|       |-- Measure-PrismOuterGlowColdStart.ps1
 |       |-- New-FileTree.ps1
 |       +-- New-PrismFilterReference.ps1
 |-- UI/
