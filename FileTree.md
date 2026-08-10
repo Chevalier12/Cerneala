@@ -510,6 +510,13 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.StateAspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.ThemeTokenBridge.md
 |   |   |   |-- Cerneala.UI.Aspect.VariantAspectCondition.md
+|   |   |   |-- Cerneala.UI.Automation.AutomationElement.md
+|   |   |   |-- Cerneala.UI.Automation.AutomationModifiers.md
+|   |   |   |-- Cerneala.UI.Automation.AutomationProperties.md
+|   |   |   |-- Cerneala.UI.Automation.AutomationScriptRunner.md
+|   |   |   |-- Cerneala.UI.Automation.AutomationSession.md
+|   |   |   |-- Cerneala.UI.Automation.IAutomationInputDriver.md
+|   |   |   |-- Cerneala.UI.Automation.RetainedAutomationInputDriver.md
 |   |   |   |-- Cerneala.UI.Controls.Border.md
 |   |   |   |-- Cerneala.UI.Controls.Button.md
 |   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonKind.md
@@ -618,6 +625,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.TextBlock.md
 |   |   |   |-- Cerneala.UI.Controls.TextBox.md
 |   |   |   |-- Cerneala.UI.Controls.TextChangedEventArgs.md
+|   |   |   |-- Cerneala.UI.Controls.TextSearch.md
 |   |   |   |-- Cerneala.UI.Controls.ToolTip.md
 |   |   |   |-- Cerneala.UI.Controls.UserControl_TViewModel_.md
 |   |   |   |-- Cerneala.UI.Controls.UserControl.md
@@ -1856,6 +1864,10 @@ Generated from `.`.
 |   |   |-- MotionLabHeaderWindow.cs
 |   |   |-- Program.cs
 |   |   +-- SvgWindow.cs
+|   |-- Cerneala.ComboBoxLab/
+|   |   |-- Cerneala.ComboBoxLab.csproj
+|   |   |-- MainWindow.cui.xml
+|   |   +-- MainWindow.cui.xml.cs
 |   |-- Cerneala.Playground/
 |   |   |-- Cerneala.Playground.csproj
 |   |   |-- MainWindow.cui.xml
@@ -2161,6 +2173,8 @@ Generated from `.`.
 |   |   |   |   |-- AspectVariantTests.cs
 |   |   |   |   |-- DefaultAspectPackageTests.cs
 |   |   |   |   +-- ThemeTokenBridgeTests.cs
+|   |   |   |-- Automation/
+|   |   |   |   +-- AutomationSessionTests.cs
 |   |   |   |-- Controls/
 |   |   |   |   |-- Shapes/
 |   |   |   |   |   +-- ShapeTests.cs
@@ -2221,6 +2235,7 @@ Generated from `.`.
 |   |   |   |   |-- UiHostViewportFrameContractTests.cs
 |   |   |   |   |-- UiViewportScaleContractTests.cs
 |   |   |   |   |-- UiViewportTests.cs
+|   |   |   |   |-- Win32InputSourceTests.cs
 |   |   |   |   |-- Win32WindowPlatformTests.cs
 |   |   |   |   |-- WindowRuntimeTestCollection.cs
 |   |   |   |   |-- WindowRuntimeTests.cs
@@ -2526,6 +2541,14 @@ Generated from `.`.
 |   |   |-- ResolvedAspect.cs
 |   |   |-- ResolvedAspectValue.cs
 |   |   +-- ThemeTokenBridge.cs
+|   |-- Automation/
+|   |   |-- AutomationElement.cs
+|   |   |-- AutomationModifiers.cs
+|   |   |-- AutomationProperties.cs
+|   |   |-- AutomationScriptRunner.cs
+|   |   |-- AutomationSession.cs
+|   |   |-- IAutomationInputDriver.cs
+|   |   +-- RetainedAutomationInputDriver.cs
 |   |-- Controls/
 |   |   |-- Buttons/
 |   |   |   |-- ButtonKind.cs
@@ -2594,6 +2617,7 @@ Generated from `.`.
 |   |   |-- ComboBox.cs
 |   |   |-- ComboBoxItem.cs
 |   |   |-- ComboBoxTemplates.cs
+|   |   |-- ComboBoxTextMatcher.cs
 |   |   |-- ContentControl.cs
 |   |   |-- ContentPresenter.cs
 |   |   |-- Control.cs
@@ -2634,6 +2658,7 @@ Generated from `.`.
 |   |   |-- TextInputCore.cs
 |   |   |-- TextInputPolicy.cs
 |   |   |-- TextInputViewport.cs
+|   |   |-- TextSearch.cs
 |   |   |-- ToolTip.cs
 |   |   |-- UserControl.cs
 |   |   |-- Window.cs
