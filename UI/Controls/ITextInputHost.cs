@@ -18,6 +18,10 @@ internal interface ITextInputHost
 
     Thickness Insets { get; }
 
+    bool AllowsEditing { get; }
+
+    bool CentersSingleLineContentVertically { get; }
+
     string NormalizeInput(string text);
 
     void ApplyEditorText(string text);

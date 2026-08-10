@@ -50,6 +50,24 @@ public sealed class TextBoxTests
     }
 
     [Fact]
+    public void ReadOnlyTextBoxAllowsSelectionButRejectsEditingOperations()
+    {
+        TextBox textBox = new()
+        {
+            Text = "alpha",
+            IsReadOnly = true
+        };
+        textBox.Select(1, 4);
+
+        textBox.ReceiveTextInput("x");
+
+        Assert.Equal("alpha", textBox.Text);
+        Assert.Equal(1, textBox.Selection.Start);
+        Assert.Equal(4, textBox.Selection.End);
+        Assert.False(textBox.Undo());
+    }
+
+    [Fact]
     public void BackspaceKeyDeletesTextWithoutInsertingTextInputControlCharacter()
     {
         UIRoot root = RootWithFocusedTextBox("ab", out TextBox textBox, out ElementInputBridge bridge);

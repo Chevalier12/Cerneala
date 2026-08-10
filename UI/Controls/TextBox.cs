@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
 using Cerneala.UI.Rendering;
@@ -34,6 +35,11 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
                 UiPropertyOptions.AffectsSemantics,
             coerceValue: (_, value) => value ?? string.Empty));
 
+    public static readonly UiProperty<bool> IsReadOnlyProperty = UiProperty<bool>.Register(
+        nameof(IsReadOnly),
+        typeof(TextBox),
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsSemantics));
+
     public static readonly UiProperty<Brush> CaretBrushProperty = UiProperty<Brush>.Register(
         nameof(CaretBrush),
         typeof(TextBox),
@@ -48,6 +54,7 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
         new UiPropertyMetadata<Color>(new Color(0, 120, 215), UiPropertyOptions.AffectsRender));
 
     private readonly TextInputCore textInput;
+    private bool centerSingleLineContentVertically;
 
     public TextBox()
     {
@@ -71,6 +78,12 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
     {
         get => GetValue(TextProperty);
         set => SetValue(TextProperty, value ?? string.Empty);
+    }
+
+    public bool IsReadOnly
+    {
+        get => GetValue(IsReadOnlyProperty);
+        set => SetValue(IsReadOnlyProperty, value);
     }
 
     public TextSelection Selection => textInput.Selection;
@@ -115,6 +128,22 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
     {
         get => textInput.ResourceProvider;
         set => textInput.ResourceProvider = value;
+    }
+
+    internal bool CenterSingleLineContentVertically
+    {
+        get => centerSingleLineContentVertically;
+        set
+        {
+            if (centerSingleLineContentVertically == value)
+            {
+                return;
+            }
+
+            centerSingleLineContentVertically = value;
+            IncrementRenderVersion();
+            Invalidate(InvalidationFlags.Render, "TextBox vertical content alignment changed");
+        }
     }
 
     public void ReceiveTextInput(string text) => textInput.ReceiveTextInput(text);
@@ -197,6 +226,10 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
     Color ITextInputHost.SelectionBackground => SelectionBackground;
 
     Thickness ITextInputHost.Insets => Insets;
+
+    bool ITextInputHost.AllowsEditing => !IsReadOnly;
+
+    bool ITextInputHost.CentersSingleLineContentVertically => CenterSingleLineContentVertically;
 
     string ITextInputHost.NormalizeInput(string text) => NormalizeTextInput(text);
 

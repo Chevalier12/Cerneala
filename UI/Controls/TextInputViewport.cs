@@ -126,15 +126,16 @@ internal sealed class TextInputViewport
             context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
         }
 
-        LayoutRect content = ContentControl.Deflate(context.Bounds, host.Insets);
-        if (content.Width <= 0 || content.Height <= 0)
+        LayoutRect viewport = ContentControl.Deflate(context.Bounds, host.Insets);
+        if (viewport.Width <= 0 || viewport.Height <= 0)
         {
             return;
         }
 
-        DrawRect clip = Border.ToDrawRect(content);
+        DrawRect clip = Border.ToDrawRect(viewport);
         context.DrawingContext.PushClip(clip);
 
+        LayoutRect content = AlignSingleLineContent(viewport);
         DrawRect? selectionBounds = GetSelectionBounds(content);
         if (host.DisplayText.Length > 0)
         {
@@ -159,6 +160,33 @@ internal sealed class TextInputViewport
         }
 
         context.DrawingContext.PopClip();
+    }
+
+    private LayoutRect AlignSingleLineContent(LayoutRect viewport)
+    {
+        if (!host.CentersSingleLineContentVertically)
+        {
+            return viewport;
+        }
+
+        TextAspect aspect = CreateTextAspect();
+        TextMeasureResult result = GetTextMeasurer().Measure(
+            host.DisplayText,
+            aspect,
+            viewport.Width + horizontalTextOffset);
+        TextCaretVerticalMetrics caretMetrics = caretLayout.GetCaretVerticalMetrics(
+            aspect,
+            CreateFontResolver());
+        float naturalHeight = MathF.Max(
+            result.Size.Height,
+            caretMetrics.OffsetY + caretMetrics.Height);
+        float height = MathF.Min(viewport.Height, MathF.Max(1, naturalHeight));
+        float offsetY = MathF.Max(0, (viewport.Height - height) / 2);
+        return new LayoutRect(
+            viewport.X,
+            viewport.Y + offsetY,
+            viewport.Width,
+            height);
     }
 
     public bool UpdateRenderTime(TimeSpan frameTime)

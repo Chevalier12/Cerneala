@@ -91,6 +91,11 @@ internal sealed class TextInputCore
 
     public void ReceiveTextInput(string text)
     {
+        if (!host.AllowsEditing)
+        {
+            return;
+        }
+
         string input = host.NormalizeInput(text);
         if (input.Length == 0 || !controller.InsertText(input))
         {
@@ -119,7 +124,7 @@ internal sealed class TextInputCore
 
     public bool Undo()
     {
-        if (!policy.RecordsHistory || !editor.Undo())
+        if (!host.AllowsEditing || !policy.RecordsHistory || !editor.Undo())
         {
             return false;
         }
@@ -130,7 +135,7 @@ internal sealed class TextInputCore
 
     public bool Redo()
     {
-        if (!policy.RecordsHistory || !editor.Redo())
+        if (!host.AllowsEditing || !policy.RecordsHistory || !editor.Redo())
         {
             return false;
         }
@@ -284,6 +289,11 @@ internal sealed class TextInputCore
 
     private bool HandleEditingKey(InputKey key, bool extendSelection)
     {
+        if (!host.AllowsEditing && key is InputKey.Back or InputKey.Delete)
+        {
+            return true;
+        }
+
         bool changed = controller.HandleKey(key, extendSelection);
         switch (key)
         {
@@ -316,8 +326,8 @@ internal sealed class TextInputCore
         {
             InputKey.A => SelectAllText(),
             InputKey.C => policy.AllowsCopy ? CopySelection() : true,
-            InputKey.X => policy.AllowsCut ? CutSelection() : true,
-            InputKey.V => policy.AllowsPaste ? PasteClipboardText() : true,
+            InputKey.X => host.AllowsEditing && policy.AllowsCut ? CutSelection() : true,
+            InputKey.V => host.AllowsEditing && policy.AllowsPaste ? PasteClipboardText() : true,
             _ => false
         };
     }

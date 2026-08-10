@@ -52,6 +52,8 @@ public sealed class UpperTextBox : TextBox
 
 Input is single-line. The default normalizer removes control characters. Keyboard handling supports navigation, selection extension, backspace, delete, undo/redo through the public methods, and Ctrl+A/C/X/V when a platform clipboard is available.
 
+When `IsReadOnly` is `true`, text can still be selected and copied, and `Text` can still be assigned programmatically. User insertion, deletion, cut, paste, undo, and redo are rejected.
+
 Pointer selection captures the mouse until the left button is released or capture is lost. Long text uses an internal horizontal viewport to keep the caret visible.
 
 The control renders its background, border, text, selection and blinking caret directly. Default chrome is supplied through `AspectBase`, so aspects and local values can override it.
@@ -69,6 +71,7 @@ Derived controls can override `NormalizeTextInput`, `OnTextChanged` and `OnSelec
 | Name | Type | Description |
 | --- | --- | --- |
 | `TextProperty` | `UiProperty<string>` | Identifies the concrete `TextBox.Text` UI property. |
+| `IsReadOnlyProperty` | `UiProperty<bool>` | Identifies the read-only editing property. Defaults to `false`. |
 | `CaretBrushProperty` | `UiProperty<Brush>` | Identifies the caret brush property. |
 | `SelectionBackgroundProperty` | `UiProperty<Color>` | Identifies the selection background property. |
 | `TextChangedEvent` | `RoutedEvent` | Identifies the bubbling text-change event. |
@@ -79,6 +82,7 @@ Derived controls can override `NormalizeTextInput`, `OnTextChanged` and `OnSelec
 | Name | Type | Description |
 | --- | --- | --- |
 | `Text` | `string` | Gets or sets the editable text. `null` is coerced to an empty string. |
+| `IsReadOnly` | `bool` | Gets or sets whether user editing operations are rejected. |
 | `Selection` | `TextSelection` | Gets the current selection without exposing the editor. |
 | `Caret` | `TextCaret` | Gets the current caret state. |
 | `CaretBrush` | `Brush` | Gets or sets the brush used to paint the caret. |

@@ -161,6 +161,10 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
 
     Thickness ITextInputHost.Insets => Insets;
 
+    bool ITextInputHost.AllowsEditing => true;
+
+    bool ITextInputHost.CentersSingleLineContentVertically => false;
+
     string ITextInputHost.NormalizeInput(string text) => NormalizeTextInput(text);
 
     void ITextInputHost.ApplyEditorText(string text) =>
