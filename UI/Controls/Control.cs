@@ -29,6 +29,17 @@ public class Control : UIElement
             UiPropertyOptions.AffectsHitTest |
             UiPropertyOptions.AffectsInputVisual));
 
+    public static readonly UiProperty<string?> ComponentTemplateKeyProperty = UiProperty<string?>.Register(
+        nameof(ComponentTemplateKey),
+        typeof(Control),
+        new UiPropertyMetadata<string?>(
+            null,
+            UiPropertyOptions.AffectsMeasure |
+            UiPropertyOptions.AffectsArrange |
+            UiPropertyOptions.AffectsRender |
+            UiPropertyOptions.AffectsHitTest |
+            UiPropertyOptions.AffectsInputVisual));
+
     public static readonly UiProperty<Brush?> BackgroundProperty = UiProperty<Brush?>.Register(
         nameof(Background),
         typeof(Control),
@@ -121,6 +132,12 @@ public class Control : UIElement
         set => SetValue(ComponentTemplateProperty, value);
     }
 
+    public string? ComponentTemplateKey
+    {
+        get => GetValue(ComponentTemplateKeyProperty);
+        set => SetValue(ComponentTemplateKeyProperty, value);
+    }
+
     public AspectVariantSet AspectVariants { get; private set; } = AspectVariantSet.Empty;
 
     public void SetAspectVariant<TControl, TValue>(AspectVariantKey<TControl, TValue> key, TValue value)
@@ -147,7 +164,8 @@ public class Control : UIElement
 
     public void ApplyTemplate()
     {
-        ComponentTemplate? template = ComponentTemplate;
+        ComponentTemplate? template = ComponentTemplate ??
+            Root?.AspectProcessor.ResolveComponentTemplate(this, ComponentTemplateKey);
         if (ReferenceEquals(ComponentTemplateInstanceTemplate, template) &&
             (template is null || ComponentTemplateInstance is not null))
         {
@@ -252,7 +270,8 @@ public class Control : UIElement
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
-        if (ReferenceEquals(args.Property, ComponentTemplateProperty))
+        if (ReferenceEquals(args.Property, ComponentTemplateProperty) ||
+            ReferenceEquals(args.Property, ComponentTemplateKeyProperty))
         {
             ApplyTemplate();
         }

@@ -71,7 +71,7 @@ public class TabItem : ContentControl, ISelectableItemContainer
 
     private UIElement? HeaderElement => Header as UIElement;
 
-    private bool HostsHeaderDirectly => ComponentTemplate is null;
+    private bool HostsHeaderDirectly => ComponentTemplate is null && ComponentTemplateKey is null;
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
@@ -109,7 +109,8 @@ public class TabItem : ContentControl, ISelectableItemContainer
             return;
         }
 
-        if (!ReferenceEquals(args.Property, ComponentTemplateProperty))
+        if (!ReferenceEquals(args.Property, ComponentTemplateProperty) &&
+            !ReferenceEquals(args.Property, ComponentTemplateKeyProperty))
         {
             base.OnPropertyChanged(args);
             return;

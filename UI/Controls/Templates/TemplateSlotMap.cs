@@ -7,6 +7,8 @@ public sealed class TemplateSlotMap
 {
     private readonly Dictionary<AspectSlot, UIElement> slots = [];
 
+    internal IEnumerable<KeyValuePair<AspectSlot, UIElement>> Entries => slots;
+
     public UIElement this[AspectSlot slot] => slots[slot];
 
     public void Register(AspectSlot slot, UIElement element)

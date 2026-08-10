@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Core;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
@@ -15,6 +16,7 @@ public class ContentPresenter : Control
     private bool presentationDirty = true;
     private bool generatedTextChild;
     private int contentIndex = -1;
+    private int aspectTemplateCatalogVersion = -1;
     private ContentTemplateRegistry? localTemplateRegistry;
 
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
@@ -95,6 +97,26 @@ public class ContentPresenter : Control
 
     public UIElement? PresentedChild => presentedChild;
 
+    internal void RefreshAspectContentTemplates(int catalogVersion)
+    {
+        if (aspectTemplateCatalogVersion == catalogVersion)
+        {
+            return;
+        }
+
+        aspectTemplateCatalogVersion = catalogVersion;
+        if (ContentTemplate is not null || LocalTemplateRegistry is not null)
+        {
+            return;
+        }
+
+        presentationDirty = true;
+        RefreshPresentedChild();
+        Invalidate(
+            InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render,
+            "Aspect content template catalog changed");
+    }
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         RefreshPresentedChild();
@@ -164,15 +186,15 @@ public class ContentPresenter : Control
         if (template is not null)
         {
             generatedTextChild = false;
-            return template.Create(new ContentTemplateContext(content, this, index: ContentIndex));
+            return template.Create(CreateTemplateContext(content));
         }
 
-        ContentTemplateRegistry? registry = LocalTemplateRegistry;
+        ContentTemplateRegistry? registry = LocalTemplateRegistry ?? Root?.AspectProcessor.ContentTemplates;
         if (registry is not null &&
             registry.TryResolve(new ContentTemplateMatchContext(content, ContentTemplateKey, this), out ContentTemplate? resolved))
         {
             generatedTextChild = false;
-            return resolved.Create(new ContentTemplateContext(content, this, index: ContentIndex));
+            return resolved.Create(CreateTemplateContext(content));
         }
 
         if (content is UIElement element)
@@ -198,6 +220,25 @@ public class ContentPresenter : Control
 
         generatedTextChild = false;
         return null;
+    }
+
+    private ContentTemplateContext CreateTemplateContext(object? content)
+    {
+        AspectVariantSet variants = AspectVariants;
+        object owner = this;
+        if (TemplateAspectContext.TryGet(this, out TemplateAspectContext.Registration registration))
+        {
+            variants = registration.Owner.AspectVariants;
+            owner = registration.Owner;
+        }
+
+        return new ContentTemplateContext(
+            content,
+            this,
+            Root?.AspectProcessor.Environment,
+            variants,
+            ContentIndex,
+            owner);
     }
 
     private void ApplyGeneratedTextAspect(TextBlock textBlock)

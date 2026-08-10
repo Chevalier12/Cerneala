@@ -1,3 +1,4 @@
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Controls.Templates;
@@ -48,6 +49,11 @@ public sealed class ComponentTemplateInstance : IDisposable
                 TemplateChildOwner.Attach(templateOwner, Root);
             }
 
+            foreach ((AspectSlot slot, UIElement element) in Slots.Entries)
+            {
+                TemplateAspectContext.Attach(templateOwner, slot, element);
+            }
+
             foreach (TemplateBinding binding in bindings)
             {
                 binding.Attach(templateOwner);
@@ -80,6 +86,11 @@ public sealed class ComponentTemplateInstance : IDisposable
         foreach (TemplateBinding binding in bindings)
         {
             binding.Detach();
+        }
+
+        foreach ((AspectSlot _, UIElement element) in Slots.Entries)
+        {
+            TemplateAspectContext.Detach(element);
         }
 
         if (Root is not null)

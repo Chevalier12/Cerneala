@@ -74,13 +74,13 @@ ComponentTemplateInstance? instance = control.ComponentTemplateInstance;
 
 `Control` is the common base for controls that need shared chrome, text styling, template support, and aspect variants. It does not render fallback chrome by itself; derived controls or template roots use properties such as `Background`, `BorderBrush`, `BorderThickness`, `Padding`, `Foreground`, `FontFamily`, and `FontSize`.
 
-`ComponentTemplate` stores the control's only template type. `ApplyTemplate()` creates and attaches the matching `ComponentTemplateInstance`, or detaches the current instance when the property is cleared. Reapplying the same template keeps the existing instance and generated root. Template replacement first notifies the derived control to unsubscribe from its old parts, disposes the old instance, attaches and validates the new parts, and only then publishes the new instance. A failed part hook disposes the new instance and leaves no partially attached template root.
+`ComponentTemplate` stores a template instance directly. `ComponentTemplateKey` instead selects a named `ComponentTemplateDefinition` from the root Aspect catalog. A direct `ComponentTemplate` takes precedence over the key. `ApplyTemplate()` creates and attaches the resolved `ComponentTemplateInstance`, or detaches the current instance when neither source resolves a template. Reapplying the same resolved template keeps the existing instance and generated root. Template replacement first notifies the derived control to unsubscribe from its old parts, disposes the old instance, attaches and validates the new parts, and only then publishes the new instance. A failed part hook disposes the new instance and leaves no partially attached template root.
 
 Derived templated controls override `OnTemplateApplied(ComponentTemplateInstance?)` to release old part subscriptions and resolve the new parts. `GetRequiredTemplatePart<TElement>` fails immediately when a named part is absent or has the wrong type. `GetOptionalTemplatePart<TElement>` permits an absent part but still rejects a registered part of the wrong type. Both error forms identify the part name and expected type.
 
 Layout is delegated to the active template child. During measure and arrange, `Control` calls `ApplyTemplate()` and then measures or arranges `ComponentTemplateInstance.Root`; if no template child exists, measurement returns `LayoutSize.Zero`.
 
-Component-template changes affect measure, arrange, render, hit testing, and input visuals. `Background` and `BorderBrush` affect render and input visuals. `Foreground` accepts the same solid, gradient, image, drawing, and visual brushes, is inherited, and affects render. A `null` foreground suppresses text drawing. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
+Component-template and component-template-key changes affect measure, arrange, render, hit testing, and input visuals. The root Aspect processor refreshes keyed templates when the package catalog changes. `Background` and `BorderBrush` affect render and input visuals. `Foreground` accepts the same solid, gradient, image, drawing, and visual brushes, is inherited, and affects render. A `null` foreground suppresses text drawing. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
 
 `Padding` and `BorderThickness` reject negative, `NaN`, and infinite side values. `FontFamily` rejects `null`, empty, and whitespace-only values. `FontSize` must be finite and greater than zero.
 
@@ -97,6 +97,7 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | Name | Type | Description |
 | --- | --- | --- |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | Identifies the `ComponentTemplate` UI property. Defaults to `null`; affects measure, arrange, render, hit testing, and input visuals. |
+| `ComponentTemplateKeyProperty` | `UiProperty<string?>` | Identifies the named Aspect catalog component-template key. Defaults to `null`; affects measure, arrange, render, hit testing, and input visuals. |
 | `BackgroundProperty` | `UiProperty<Brush?>` | Identifies the `Background` UI property. Defaults to `null`; affects render and input visuals. |
 | `ForegroundProperty` | `UiProperty<Brush?>` | Identifies the inherited `Foreground` UI property. Defaults to `new SolidColorBrush(Color.Black)`; affects render. |
 | `BorderBrushProperty` | `UiProperty<Brush?>` | Identifies the `BorderBrush` UI property. Defaults to `null`; affects render and input visuals. |
@@ -117,6 +118,7 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | `FontFamily` | `string` | Gets or sets the inherited font family. The value cannot be empty or whitespace-only. |
 | `FontSize` | `float` | Gets or sets the inherited font size. The value must be finite and greater than zero. |
 | `ComponentTemplate` | `ComponentTemplate?` | Gets or sets the component template. |
+| `ComponentTemplateKey` | `string?` | Gets or sets the name of a component template registered by an Aspect package. A direct `ComponentTemplate` takes precedence. |
 | `ComponentTemplateInstance` | `ComponentTemplateInstance?` | Gets the active component template instance after `ApplyTemplate()` creates one. |
 | `AspectVariants` | `AspectVariantSet` | Gets the current aspect variant values passed to component templates. |
 
@@ -124,7 +126,7 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `ApplyTemplate()` | `void` | Creates, reuses, or detaches the component template instance so it matches `ComponentTemplate`. |
+| `ApplyTemplate()` | `void` | Creates, reuses, or detaches the component template instance so it matches the direct template or named Aspect catalog template. |
 | `SetAspectVariant<TControl, TValue>(AspectVariantKey<TControl, TValue> key, TValue value)` | `void` | Sets an aspect variant value and invalidates aspect/render state when the variant set changes. |
 
 ## Protected Properties
@@ -143,7 +145,7 @@ Component-template changes affect measure, arrange, render, hit testing, and inp
 | `OnTemplateApplied(ComponentTemplateInstance? instance)` | `void` | Releases old template-part state when `instance` is `null`, or connects validated parts from the newly attached instance. |
 | `GetRequiredTemplatePart<TElement>(string name)` | `TElement` | Returns a required named part and throws `InvalidOperationException` when it is absent or has the wrong type. |
 | `GetOptionalTemplatePart<TElement>(string name)` | `TElement?` | Returns an optional named part, `null` when absent, and throws `InvalidOperationException` when present with the wrong type. |
-| `OnPropertyChanged(UiPropertyChangedEventArgs args)` | `void` | Applies the template when `ComponentTemplate` changes, after the base property-change handling runs. |
+| `OnPropertyChanged(UiPropertyChangedEventArgs args)` | `void` | Applies the template when `ComponentTemplate` or `ComponentTemplateKey` changes, after the base property-change handling runs. |
 
 ## Migration
 

@@ -59,7 +59,7 @@ public class ContentControl : Control
 
     protected UIElement? ContentElement => Content as UIElement;
 
-    private bool HostsContentDirectly => ComponentTemplate is null;
+    private bool HostsContentDirectly => ComponentTemplate is null && ComponentTemplateKey is null;
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
@@ -89,7 +89,8 @@ public class ContentControl : Control
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
-        if (!ReferenceEquals(args.Property, ComponentTemplateProperty))
+        if (!ReferenceEquals(args.Property, ComponentTemplateProperty) &&
+            !ReferenceEquals(args.Property, ComponentTemplateKeyProperty))
         {
             base.OnPropertyChanged(args);
             return;

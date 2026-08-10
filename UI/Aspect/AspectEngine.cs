@@ -35,9 +35,60 @@ public sealed class AspectEngine
         AspectDataContext? dataContext = null,
         AspectSlotPath? slotPath = null)
     {
+        return ApplyCore(
+            element,
+            element,
+            catalog,
+            environment,
+            themeProvider,
+            variants,
+            dataContext,
+            slotPath);
+    }
+
+    internal AspectApplicationResult ApplyTemplateSlot(
+        UIElement element,
+        UIElement ownerComponent,
+        AspectCatalog catalog,
+        AspectEnvironment environment,
+        ThemeProvider? themeProvider,
+        AspectVariantSet variants,
+        AspectDataContext dataContext,
+        AspectSlotPath slotPath)
+    {
+        return ApplyCore(
+            element,
+            ownerComponent,
+            catalog,
+            environment,
+            themeProvider,
+            variants,
+            dataContext,
+            slotPath);
+    }
+
+    private AspectApplicationResult ApplyCore(
+        UIElement element,
+        UIElement ownerComponent,
+        AspectCatalog catalog,
+        AspectEnvironment environment,
+        ThemeProvider? themeProvider,
+        AspectVariantSet? variants,
+        AspectDataContext? dataContext,
+        AspectSlotPath? slotPath)
+    {
         threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
-        ResolvedAspect resolved = Resolve(element, catalog, environment, themeProvider, variants, dataContext, slotPath);
+        ArgumentNullException.ThrowIfNull(ownerComponent);
+        ResolvedAspect resolved = ResolveCore(
+            element,
+            ownerComponent,
+            catalog,
+            environment,
+            themeProvider,
+            variants,
+            dataContext,
+            slotPath);
         AspectEngineElementState state = states.GetOrCreateValue(element);
         bool changed = ApplyResolved(element, state.LastResolved, resolved, themeProvider);
         state.LastResolved = resolved;
@@ -56,15 +107,37 @@ public sealed class AspectEngine
         AspectDataContext? dataContext = null,
         AspectSlotPath? slotPath = null)
     {
+        return ResolveCore(
+            element,
+            element,
+            catalog,
+            environment,
+            themeProvider,
+            variants,
+            dataContext,
+            slotPath);
+    }
+
+    private ResolvedAspect ResolveCore(
+        UIElement element,
+        UIElement ownerComponent,
+        AspectCatalog catalog,
+        AspectEnvironment environment,
+        ThemeProvider? themeProvider,
+        AspectVariantSet? variants,
+        AspectDataContext? dataContext,
+        AspectSlotPath? slotPath)
+    {
         threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
+        ArgumentNullException.ThrowIfNull(ownerComponent);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(environment);
 
-        AspectStateSet states = AspectStateSet.FromElement(element);
+        AspectStateSet states = AspectStateSet.FromElement(ownerComponent);
         AspectMatchContext matchContext = new(
             element,
-            ownerComponent: element,
+            ownerComponent,
             slotPath: slotPath,
             states: states,
             variants: variants ?? AspectVariantSet.Empty,

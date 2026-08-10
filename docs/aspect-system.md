@@ -44,6 +44,8 @@ Component templates register slots so aspects can target generated parts without
 context.RegisterSlot(ButtonSlots.Content, presenter);
 ```
 
+Rules targeting a slot evaluate state and variant conditions against the templated owner. For example, a `Hover` rule for `ButtonSlots.Content` follows the owning button's hover state even though the declaration is applied to the generated presenter. Slot context is detached when the template instance is replaced.
+
 ## Component Templates
 
 Component templates build retained controls and expose slots, required parts, bindings, and token bindings. Prefer `ComponentTemplate` for new control chrome.
@@ -51,6 +53,22 @@ Component templates build retained controls and expose slots, required parts, bi
 ```csharp
 button.ComponentTemplate = ButtonTemplates.Modern;
 ```
+
+Packages can also publish named templates. Set `ComponentTemplateKey` to resolve the definition for the nearest compatible owner type from the root Aspect catalog:
+
+```csharp
+AspectPackage package = AspectPackage.Create("App")
+    .Components(components => components.AddTemplate(
+        new ComponentTemplateDefinition(
+            "App.Button",
+            typeof(Button),
+            ButtonTemplates.Modern)))
+    .Build();
+
+button.ComponentTemplateKey = "App.Button";
+```
+
+A direct `ComponentTemplate` has precedence over `ComponentTemplateKey`. Registering or replacing a package invalidates the catalog and the named template is resolved again; for equal owner types, the later package definition wins.
 
 The source generator exposes the same runtime contract through `@template`. It is available on every markup element whose resolved type derives from `Control`; it is not available on layout-only elements such as `StackPanel`.
 
@@ -121,6 +139,8 @@ registry.Register(new ContentTemplate<UserCard>(
     priority: 10,
     context => new TextBlock { Text = context.Data.Name }));
 ```
+
+Definitions added through `AspectPackage.Content(...)` are synchronized into the root registry automatically. A `ContentPresenter` first uses its explicit `ContentTemplate`, then its local `ContentTemplateRegistry`, and finally the root Aspect catalog. Root environment values and owner variants are carried into `ContentTemplateContext`, so package templates can consume the same typed runtime inputs as component rules.
 
 ## Diagnostics
 
