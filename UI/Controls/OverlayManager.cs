@@ -270,30 +270,36 @@ internal sealed class OverlayManager
                 OverlayPlacement.Top => above,
                 _ => MathF.Max(below, above)
             };
-            initialLimit = MathF.Min(initialLimit, overlay.MaxHeight);
+            bool hasExplicitHeight = !float.IsNaN(overlay.Height);
             float measureWidth = overlay.MatchTargetWidth
                 ? MathF.Min(targetBounds.Width, viewport.Width)
                 : viewport.Width;
 
             ContentPresenter presenter = overlay.ProjectedPresenter;
             LayoutSize desired = presenter.Measure(new MeasureContext(
-                new LayoutSize(measureWidth, initialLimit),
+                new LayoutSize(
+                    measureWidth,
+                    hasExplicitHeight ? MathF.Min(initialLimit, overlay.Height) : float.PositiveInfinity),
                 rounding));
+            float requestedHeight = hasExplicitHeight
+                ? overlay.Height
+                : MathF.Min(desired.Height, overlay.MaxHeight);
 
             bool placeBelow = overlay.Placement switch
             {
                 OverlayPlacement.Bottom => true,
                 OverlayPlacement.Top => false,
-                _ when desired.Height <= below => true,
-                _ when desired.Height <= above => false,
+                _ when requestedHeight <= below => true,
+                _ when requestedHeight <= above => false,
                 _ => below >= above
             };
 
-            float sideLimit = MathF.Min(placeBelow ? below : above, overlay.MaxHeight);
-            if (sideLimit != initialLimit)
+            float sideLimit = placeBelow ? below : above;
+            float height = MathF.Min(requestedHeight, sideLimit);
+            if (hasExplicitHeight || desired.Height > height)
             {
                 desired = presenter.Measure(new MeasureContext(
-                    new LayoutSize(measureWidth, sideLimit),
+                    new LayoutSize(measureWidth, height),
                     rounding));
             }
 
@@ -301,7 +307,6 @@ internal sealed class OverlayManager
                 ? targetBounds.Width
                 : desired.Width;
             width = MathF.Min(width, viewport.Width);
-            float height = MathF.Min(desired.Height, sideLimit);
             float x = Math.Clamp(targetBounds.X, 0, MathF.Max(0, viewport.Width - width));
             float y = placeBelow
                 ? Math.Clamp(targetBottom, 0, MathF.Max(0, viewport.Height - height))

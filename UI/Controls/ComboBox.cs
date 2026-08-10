@@ -82,7 +82,7 @@ public class ComboBox : Selector
         nameof(MaxDropDownHeight),
         typeof(ComboBox),
         new UiPropertyMetadata<float>(
-            float.PositiveInfinity,
+            300,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange,
             validateValue: value => value > 0 && !float.IsNaN(value)));
 

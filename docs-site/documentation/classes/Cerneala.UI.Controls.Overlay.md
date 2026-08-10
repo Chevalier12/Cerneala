@@ -26,7 +26,7 @@ Overlay menu = new()
     Placement = OverlayPlacement.Auto,
     IsLightDismissEnabled = true,
     MatchTargetWidth = true,
-    MaxHeight = 320,
+    Height = 240,
     IsOpen = true
 };
 ```
@@ -36,6 +36,8 @@ Overlay menu = new()
 The content remains a logical descendant of the overlay but is visually projected into a root-owned layer. The inline overlay placeholder has `IsHitTestVisible` set to `false`; it remains logically visible so projected descendants can render, while only the projected presenter receives pointer input. The layer is attached only while overlays are open, renders last, and hit-tests projected children before ordinary content. Empty layer space is input-transparent.
 
 Opening before attachment is deferred. Detaching closes the overlay. `Auto` placement prefers below, flips above when needed, chooses the larger side when neither fits, and clamps the result to the viewport. Placement is refreshed for target layout and viewport changes.
+
+Without an explicit `Height`, projected content is measured at its natural height and then limited by `MaxHeight`. Setting `Height` requests that exact projected height and overrides `MaxHeight`; the available viewport side remains the final safety limit. The overlay-specific `Height` does not enlarge the inline placeholder or its owner layout.
 
 Light-dismiss examines only the topmost eligible overlay. An exterior pointer press closes it without handling the event, so the same press continues to the underlying control. Owner and projected content form one focus domain.
 
@@ -49,7 +51,8 @@ Light-dismiss examines only the topmost eligible overlay. An exterior pointer pr
 | `Placement` | `OverlayPlacement` | `Auto` | Vertical placement policy. |
 | `IsLightDismissEnabled` | `bool` | `false` | Enables exterior-click and focus-exit dismissal. |
 | `MatchTargetWidth` | `bool` | `false` | Measures and arranges projected content at the target width, clamped to the viewport. |
-| `MaxHeight` | `float` | Positive infinity | Maximum projected height; accepts zero or a positive value. |
+| `Height` | `float` | `NaN` (automatic) | Exact projected height. Overrides `MaxHeight` and is clamped to available viewport space. |
+| `MaxHeight` | `float` | Positive infinity | Maximum automatically sized projected height; accepts zero or a positive value. |
 
 Each property has a same-named `UiProperty` identifier field.
 

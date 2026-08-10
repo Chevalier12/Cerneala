@@ -77,6 +77,81 @@ public sealed class ComboBoxTests
     }
 
     [Fact]
+    public void DefaultDropDownAutoSizesToContentUpToThreeHundredPixels()
+    {
+        UIRoot root = new(400, 500);
+        ComboBox comboBox = new()
+        {
+            Width = 180,
+            IsDropDownOpen = true
+        };
+        comboBox.SetItems(new[] { "one", "two" });
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+
+        root.ProcessFrame();
+
+        Overlay overlay = Assert.IsType<Overlay>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        Border border = Assert.IsType<Border>(overlay.Content);
+        ScrollViewer scrollViewer = Assert.IsType<ScrollViewer>(border.Child);
+        Assert.Equal(
+            scrollViewer.Presenter.ExtentHeight + border.BorderThickness.Vertical,
+            overlay.ProjectedPresenter.ArrangedBounds.Height);
+        Assert.True(overlay.ProjectedPresenter.ArrangedBounds.Height < 300);
+        Assert.False(scrollViewer.IsVerticalScrollBarVisible);
+        Assert.Equal(300, comboBox.MaxDropDownHeight);
+    }
+
+    [Fact]
+    public void ExplicitOverlayHeightOverridesComboBoxDropDownAutoSize()
+    {
+        UIRoot root = new(400, 500);
+        ComboBox comboBox = new()
+        {
+            Width = 180
+        };
+        comboBox.SetItems(new[] { "one", "two" });
+        comboBox.ApplyTemplate();
+        Overlay overlay = Assert.IsType<Overlay>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        overlay.Height = 360;
+        comboBox.IsDropDownOpen = true;
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+
+        root.ProcessFrame();
+
+        Assert.Equal(360, overlay.ProjectedPresenter.ArrangedBounds.Height);
+    }
+
+    [Fact]
+    public void DefaultDropDownCapsOverflowAtThreeHundredPixels()
+    {
+        UIRoot root = new(400, 500);
+        ComboBox comboBox = new()
+        {
+            Width = 180,
+            IsDropDownOpen = true
+        };
+        comboBox.SetItems(Enumerable.Range(1, 40).Select(index => $"item {index}"));
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+
+        root.ProcessFrame();
+
+        Overlay overlay = Assert.IsType<Overlay>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        Border border = Assert.IsType<Border>(overlay.Content);
+        ScrollViewer scrollViewer = Assert.IsType<ScrollViewer>(border.Child);
+        Assert.Equal(300, overlay.ProjectedPresenter.ArrangedBounds.Height);
+        Assert.True(scrollViewer.IsVerticalScrollBarVisible);
+    }
+
+    [Fact]
     public void ComboBoxRealizedItemsParticipateInRetainedInputRouting()
     {
         UIRoot root = new(100, 100);

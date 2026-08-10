@@ -33,7 +33,9 @@ cities.DropDownOpened += (_, _) => System.Console.WriteLine("opened");
 
 ## Remarks
 
-The default template uses an `Overlay`; opening the drop-down does not create a native window or a second `UIRoot`. The list is projected above normal root content and is removed from hit testing while closed. The drop-down matches the control width, and its background, border, item foreground, and item font follow the corresponding `ComboBox` properties.
+The default template uses an `Overlay`; opening the drop-down does not create a native window or a second `UIRoot`. The list is projected above normal root content and is removed from hit testing while closed. The drop-down matches the control width, sizes to its content up to `MaxDropDownHeight`, and scrolls when the content exceeds that limit. Its background, border, item foreground, and item font follow the corresponding `ComboBox` properties.
+
+`MaxDropDownHeight` defaults to `300`. A custom component template can set `Height` on `PART_DropDownOverlay` to request an exact projected height instead; an explicit height overrides the automatic maximum but remains clamped to the available viewport side.
 
 The default `ItemContainerAspect` assigns `Padding="6"` to each `ComboBoxItem`. Assign another `ItemContainerAspect` to replace this default.
 
@@ -58,7 +60,7 @@ The template must provide `PART_SelectionPresenter`, `PART_EditableTextBox`, `PA
 | `IsDropDownOpenProperty` | Identifies `IsDropDownOpen`; default `false`. |
 | `IsEditableProperty` | Identifies `IsEditable`; default `false`. |
 | `TextProperty` | Identifies `Text`; default empty string. |
-| `MaxDropDownHeightProperty` | Identifies `MaxDropDownHeight`; default positive infinity. |
+| `MaxDropDownHeightProperty` | Identifies `MaxDropDownHeight`; default `300`. |
 | `DropDownOpenedEvent` | Identifies the bubbling open event. |
 | `DropDownClosedEvent` | Identifies the bubbling close event. |
 
@@ -69,7 +71,7 @@ The template must provide `PART_SelectionPresenter`, `PART_EditableTextBox`, `PA
 | `IsDropDownOpen` | `bool` | Gets or sets the requested drop-down state. |
 | `IsEditable` | `bool` | Selects text-editor or selection-presenter mode. |
 | `Text` | `string` | Gets or sets the displayed/editor text. |
-| `MaxDropDownHeight` | `float` | Limits projected drop-down height. Must be positive and not `NaN`. |
+| `MaxDropDownHeight` | `float` | Limits automatically sized projected drop-down height. Defaults to `300`; must be positive and not `NaN`. |
 | `DisplayMemberPath` | `string` | Inherited dotted path used for default text and visuals. |
 
 ## Events

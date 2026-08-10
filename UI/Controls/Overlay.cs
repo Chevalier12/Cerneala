@@ -72,6 +72,14 @@ public class Overlay : Control
             false,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange));
 
+    public new static readonly UiProperty<float> HeightProperty = UiProperty<float>.Register(
+        nameof(Height),
+        typeof(Overlay),
+        new UiPropertyMetadata<float>(
+            float.NaN,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange,
+            validateValue: value => float.IsNaN(value) || (float.IsFinite(value) && value >= 0)));
+
     public static readonly UiProperty<float> MaxHeightProperty = UiProperty<float>.Register(
         nameof(MaxHeight),
         typeof(Overlay),
@@ -147,6 +155,12 @@ public class Overlay : Control
         set => SetValue(MatchTargetWidthProperty, value);
     }
 
+    public new float Height
+    {
+        get => GetValue(HeightProperty);
+        set => SetValue(HeightProperty, value);
+    }
+
     public float MaxHeight
     {
         get => GetValue(MaxHeightProperty);
@@ -198,6 +212,7 @@ public class Overlay : Control
         if (ReferenceEquals(args.Property, PlacementTargetProperty) ||
             ReferenceEquals(args.Property, PlacementProperty) ||
             ReferenceEquals(args.Property, MatchTargetWidthProperty) ||
+            ReferenceEquals(args.Property, HeightProperty) ||
             ReferenceEquals(args.Property, MaxHeightProperty))
         {
             Root?.OverlayManager.InvalidatePlacement(this);
