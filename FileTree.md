@@ -23,7 +23,6 @@ Generated from `.`.
 |           |   +-- visual-direction.html
 |           +-- state/
 |               +-- server-stopped
-|-- .tmp/
 |-- BenchmarkDotNet.Artifacts/
 |   +-- results/
 |-- benchmarks/
@@ -1303,7 +1302,11 @@ Generated from `.`.
 |   |   |   |   |-- PrismGradientDitherTexture.cs
 |   |   |   |   |-- PrismGradientMapTextureCache.cs
 |   |   |   |   |-- PrismGradientOverlayTextureCache.cs
+|   |   |   |   |-- PrismGraphExecutionCache.cs
 |   |   |   |   |-- PrismGraphExecutor.cs
+|   |   |   |   |-- PrismGraphFallbackTracker.cs
+|   |   |   |   |-- PrismGraphFilterResources.cs
+|   |   |   |   |-- PrismGraphPresentation.cs
 |   |   |   |   |-- PrismLensProfileTextureCache.cs
 |   |   |   |   |-- PrismSpatterPointTextureCache.cs
 |   |   |   |   +-- PrismWaveNoiseTextureCache.cs
@@ -1616,8 +1619,17 @@ Generated from `.`.
 |   |   |   |-- PrismBlurMoreFilter.cs
 |   |   |   |-- PrismBoxBlurFilter.cs
 |   |   |   |-- PrismBrightnessContrastFilter.cs
+|   |   |   |-- PrismCatalogArtisticMath.cs
+|   |   |   |-- PrismCatalogColorMath.cs
 |   |   |   |-- PrismCatalogFilterMath.cs
 |   |   |   |-- PrismCatalogFilterPlanner.cs
+|   |   |   |-- PrismCatalogGeometryMath.cs
+|   |   |   |-- PrismCatalogInkMath.cs
+|   |   |   |-- PrismCatalogPainterlyMath.cs
+|   |   |   |-- PrismCatalogProceduralMath.cs
+|   |   |   |-- PrismCatalogQuantizationMath.cs
+|   |   |   |-- PrismCatalogReliefMath.cs
+|   |   |   |-- PrismCatalogTextureMath.cs
 |   |   |   |-- PrismChalkCharcoalFilter.cs
 |   |   |   |-- PrismChannelMixerFilter.cs
 |   |   |   |-- PrismCharcoalFilter.cs
@@ -2119,7 +2131,9 @@ Generated from `.`.
 |   |   |-- Playground/
 |   |   |   +-- MainWindowContractTests.cs
 |   |   |-- Presentation/
+|   |   |   |-- AspectChapterViewTests.cs
 |   |   |   |-- PresentationChapterLayoutTests.cs
+|   |   |   |-- PresentationOverlayAspectTests.cs
 |   |   |   |-- PrismChapterViewTests.cs
 |   |   |   |-- PrismOuterGlowLabViewTests.cs
 |   |   |   +-- PrismStudioModelTests.cs
@@ -2142,6 +2156,7 @@ Generated from `.`.
 |   |   |   |   |-- AspectRuntimeMigrationTests.cs
 |   |   |   |   |-- AspectSlotTests.cs
 |   |   |   |   |-- AspectStateSetTests.cs
+|   |   |   |   |-- AspectTemplateCatalogIntegrationTests.cs
 |   |   |   |   |-- AspectTokenTests.cs
 |   |   |   |   |-- AspectVariantTests.cs
 |   |   |   |   |-- DefaultAspectPackageTests.cs
@@ -2563,6 +2578,7 @@ Generated from `.`.
 |   |   |   |-- ContentTemplateDefinition.cs
 |   |   |   |-- ContentTemplateMatchContext.cs
 |   |   |   |-- ContentTemplateRegistry.cs
+|   |   |   |-- TemplateAspectContext.cs
 |   |   |   |-- TemplateBinding{T}.cs
 |   |   |   |-- TemplatePartAttribute.cs
 |   |   |   |-- TemplatePartMap.cs
@@ -2704,6 +2720,7 @@ Generated from `.`.
 |   |   |   |-- GeneratedWindowApplication.cs
 |   |   |   |-- IWindowPlatform.cs
 |   |   |   |-- Win32.cs
+|   |   |   |-- Win32CursorService.cs
 |   |   |   |-- Win32InputSource.cs
 |   |   |   |-- Win32WindowPlatform.cs
 |   |   |   |-- WindowApplicationRuntime.cs
