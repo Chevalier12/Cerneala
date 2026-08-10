@@ -118,7 +118,12 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
 
     public bool RefreshCommandState(CommandRouter router, ElementInputRouteMap routeMap)
     {
-        bool canExecute = Command is null || CanExecuteCommand(router, routeMap);
+        if (Command is null)
+        {
+            return false;
+        }
+
+        bool canExecute = CanExecuteCommand(router, routeMap);
         if (IsEnabled == canExecute)
         {
             return false;

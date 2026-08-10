@@ -133,6 +133,19 @@ public sealed class ButtonBaseCommandTests
         Assert.False(button.IsEnabled);
     }
 
+    [Fact]
+    public void RefreshCommandStateWithoutCommandPreservesAuthoredEnabledState()
+    {
+        UIRoot root = RootWithButton(out ButtonBase button);
+        button.IsEnabled = false;
+        ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
+
+        bool changed = button.RefreshCommandState(new CommandRouter(), map);
+
+        Assert.False(changed);
+        Assert.False(button.IsEnabled);
+    }
+
     private static UIRoot RootWithButton(out ButtonBase button)
     {
         UIRoot root = new(100, 100);
