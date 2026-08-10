@@ -3,6 +3,7 @@ using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.MonoGame.Prism.Execution;
 using Cerneala.Drawing.Prism;
+using Cerneala.UI.Automation;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting.MonoGame;
@@ -25,6 +26,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
     private readonly ThemeProvider themeProvider;
     private readonly IPlatformServices? platformServices;
     private bool disposed;
+    private bool automationScriptStarted;
     private Window? legacyMainWindow;
     private Application? application;
 
@@ -310,6 +312,17 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 graphicsSession as IBackdropFrameSource));
     }
 
+    public AutomationSession CreateAutomationSession(Window window)
+    {
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(window);
+        WindowContext context = RequireContext(window);
+        return new AutomationSession(
+            context.Root,
+            new RetainedAutomationInputDriver(context.Host),
+            path => SaveScreenshot(window, path));
+    }
+
     internal PrismOperationalDiagnostics? CapturePrismDiagnostics(Window window)
     {
         VerifyAccess();
@@ -588,6 +601,12 @@ internal sealed class WindowApplicationRuntime : IDisposable
         finally
         {
             context.IsRendering = false;
+            if (IsLiveContext(context) &&
+                context.ContentRendered &&
+                context.Root.RetainedRenderCache.IsRootValid)
+            {
+                RunAutomationScriptIfRequested(context);
+            }
         }
     }
 
@@ -597,6 +616,41 @@ internal sealed class WindowApplicationRuntime : IDisposable
         return contexts.TryGetValue(window, out WindowContext? context)
             ? context
             : throw new InvalidOperationException("The Window has not been shown.");
+    }
+
+    private void RunAutomationScriptIfRequested(WindowContext context)
+    {
+        if (automationScriptStarted)
+        {
+            return;
+        }
+
+        string? path = Environment.GetEnvironmentVariable("CERNEALA_AUTOMATION_SCRIPT");
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        string? requiredWindowTitle =
+            Environment.GetEnvironmentVariable("CERNEALA_AUTOMATION_WINDOW_TITLE");
+        if (!string.IsNullOrWhiteSpace(requiredWindowTitle) &&
+            !string.Equals(context.Window.Title, requiredWindowTitle, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        automationScriptStarted = true;
+        try
+        {
+            AutomationScriptRunner.RunFile(
+                CreateAutomationSession(context.Window),
+                path);
+        }
+        catch (Exception exception)
+        {
+            File.WriteAllText(Path.GetFullPath(path) + ".error.txt", exception.ToString());
+            throw;
+        }
     }
 
     private bool IsLiveContext(WindowContext context)

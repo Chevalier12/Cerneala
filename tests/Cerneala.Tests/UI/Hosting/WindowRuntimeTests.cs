@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
@@ -301,6 +302,46 @@ public sealed class WindowRuntimeTests : IDisposable
         finally
         {
             File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void AutomationScriptWaitsForACommittedFrameAfterContentRenderedChanges()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBlock content = new() { Text = "Before" };
+        Window window = new() { Content = content, Title = "Automation target" };
+        string scriptPath = Path.Combine(Path.GetTempPath(), $"cerneala-automation-{Guid.NewGuid():N}.json");
+        string screenshotPath = Path.ChangeExtension(scriptPath, ".png");
+        string? previousScript = Environment.GetEnvironmentVariable("CERNEALA_AUTOMATION_SCRIPT");
+        string? previousTitle = Environment.GetEnvironmentVariable("CERNEALA_AUTOMATION_WINDOW_TITLE");
+        File.WriteAllText(scriptPath, JsonSerializer.Serialize(new
+        {
+            steps = new[] { new { action = "screenshot", path = screenshotPath } }
+        }));
+        Environment.SetEnvironmentVariable("CERNEALA_AUTOMATION_SCRIPT", scriptPath);
+        Environment.SetEnvironmentVariable("CERNEALA_AUTOMATION_WINDOW_TITLE", window.Title);
+        window.ContentRendered += (_, _) => content.Text = "After";
+
+        try
+        {
+            window.Show();
+
+            Assert.Equal(0, Assert.Single(platform.Windows).Session.SavePngCount);
+
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+            Assert.Equal(1, Assert.Single(platform.Windows).Session.SavePngCount);
+            Assert.True(File.Exists(screenshotPath));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("CERNEALA_AUTOMATION_SCRIPT", previousScript);
+            Environment.SetEnvironmentVariable("CERNEALA_AUTOMATION_WINDOW_TITLE", previousTitle);
+            File.Delete(scriptPath);
+            File.Delete(screenshotPath);
+            File.Delete(scriptPath + ".error.txt");
         }
     }
 

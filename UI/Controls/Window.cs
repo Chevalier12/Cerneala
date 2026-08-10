@@ -1,3 +1,4 @@
+using Cerneala.UI.Automation;
 using Cerneala.UI.Core;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
@@ -288,6 +289,12 @@ public class Window : ContentControl
     public void SaveScreenshot(string path)
     {
         (runtimeOwner ?? WindowApplicationRuntime.CurrentOrDefault).SaveScreenshot(this, path);
+    }
+
+    public AutomationSession CreateAutomationSession()
+    {
+        return (runtimeOwner ?? WindowApplicationRuntime.CurrentOrDefault)
+            .CreateAutomationSession(this);
     }
 
     public void Close()

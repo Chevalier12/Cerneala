@@ -775,6 +775,41 @@
     "source": "UI/Aspect/AspectConditionNode.cs"
   },
   {
+    "name": "Cerneala.UI.Automation.AutomationElement",
+    "file": "documentation/classes/Cerneala.UI.Automation.AutomationElement.md",
+    "source": "UI/Automation/AutomationElement.cs"
+  },
+  {
+    "name": "Cerneala.UI.Automation.AutomationModifiers",
+    "file": "documentation/classes/Cerneala.UI.Automation.AutomationModifiers.md",
+    "source": "UI/Automation/AutomationModifiers.cs"
+  },
+  {
+    "name": "Cerneala.UI.Automation.AutomationProperties",
+    "file": "documentation/classes/Cerneala.UI.Automation.AutomationProperties.md",
+    "source": "UI/Automation/AutomationProperties.cs"
+  },
+  {
+    "name": "Cerneala.UI.Automation.AutomationScriptRunner",
+    "file": "documentation/classes/Cerneala.UI.Automation.AutomationScriptRunner.md",
+    "source": "UI/Automation/AutomationScriptRunner.cs"
+  },
+  {
+    "name": "Cerneala.UI.Automation.AutomationSession",
+    "file": "documentation/classes/Cerneala.UI.Automation.AutomationSession.md",
+    "source": "UI/Automation/AutomationSession.cs"
+  },
+  {
+    "name": "Cerneala.UI.Automation.IAutomationInputDriver",
+    "file": "documentation/classes/Cerneala.UI.Automation.IAutomationInputDriver.md",
+    "source": "UI/Automation/IAutomationInputDriver.cs"
+  },
+  {
+    "name": "Cerneala.UI.Automation.RetainedAutomationInputDriver",
+    "file": "documentation/classes/Cerneala.UI.Automation.RetainedAutomationInputDriver.md",
+    "source": "UI/Automation/RetainedAutomationInputDriver.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Border",
     "file": "documentation/classes/Cerneala.UI.Controls.Border.md",
     "source": "UI/Controls/Border.cs"

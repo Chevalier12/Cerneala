@@ -42,6 +42,13 @@
 - `csi` is available as a local C# scripting/REPL command via the globally installed `dotnet-csi` tool. Use it for small C# experiments when a focused script is faster than adding throwaway project code.
 - When using `csi`, prefer running a temporary `.csx` file instead of piping script text into stdin, always use a short timeout, clean up the temp file, and check/kill any stuck `csi` process after suspicious runs. Do not leave interactive `csi` sessions or long-running scripts in the background; they can leak or balloon memory badly.
 
+## Screenshots (MANDATORY)
+
+- Codex MUST capture application screenshots exclusively through the application's screenshot API (for Cerneala windows, use `Window.SaveScreenshot`).
+- Do not use Computer Use, PowerShell, Win32 screen-copy APIs, screen-capture utilities, image libraries, or any other custom capture workaround to create screenshots.
+- UI automation may use real input APIs with user-like operations such as `Click`, `PressKey`, and `SendText`; it MUST NOT simulate user behavior by directly assigning control properties or application state.
+- If the application screenshot API is unavailable or fails, report that blocker explicitly instead of substituting another capture method.
+
 ## Principles
 
 1. Ask, don't assume. If something is unclear, ask before writing a single line. Never make silent assumptions about intent, architecture, or requirements. When running unattended, pick the most reasonable interpretation, proceed, and record the assumption rather than blocking.
