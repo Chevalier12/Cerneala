@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
+using Cerneala.UI.Platform;
 
 namespace Cerneala.UI.Hosting.Windows;
 
@@ -15,6 +16,8 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
     private static readonly Win32.WndProc WindowProcedure = WndProc;
     private static ushort classAtom;
     private readonly IWindowGraphicsSessionFactory graphicsSessionFactory;
+    private readonly Win32CursorService cursorService = new();
+    private readonly IPlatformServices platformServices;
     private bool disposed;
 
     public Win32WindowPlatform()
@@ -32,7 +35,10 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         WindowsDpiAwareness.EnsurePerMonitorV2();
         EnsureWindowClass();
         this.graphicsSessionFactory = graphicsSessionFactory ?? throw new ArgumentNullException(nameof(graphicsSessionFactory));
+        platformServices = new PlatformServices(Cursor: cursorService);
     }
+
+    public IPlatformServices PlatformServices => platformServices;
 
     public IPlatformWindow CreateWindow(Window window, IWindowPlatformCallbacks callbacks)
     {
@@ -40,7 +46,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         ArgumentNullException.ThrowIfNull(window);
         ArgumentNullException.ThrowIfNull(callbacks);
 
-        Win32PlatformWindow created = new(window, callbacks, graphicsSessionFactory);
+        Win32PlatformWindow created = new(window, callbacks, graphicsSessionFactory, cursorService);
         if (!Windows.TryAdd(created.Handle, created))
         {
             created.Dispose();
@@ -132,6 +138,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         private readonly Window window;
         private readonly Win32InputSource inputSource = new();
         private readonly IWindowGraphicsSession graphicsSession;
+        private readonly ICursorService cursorService;
         private bool destroyed;
         private bool visible;
         private bool initialPlacementApplied;
@@ -148,10 +155,12 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         public Win32PlatformWindow(
             Window window,
             IWindowPlatformCallbacks callbacks,
-            IWindowGraphicsSessionFactory graphicsSessionFactory)
+            IWindowGraphicsSessionFactory graphicsSessionFactory,
+            ICursorService cursorService)
         {
             this.window = window;
             this.callbacks = callbacks;
+            this.cursorService = cursorService;
             desiredState = window.WindowState;
             style = StyleFor(window.ResizeMode);
             extendedStyle = ExtendedStyleFor(window);
@@ -349,6 +358,9 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                     return 0;
                 case Win32.WM_NCHITTEST when window.ResizeMode == ResizeMode.CanResizeWithGrip:
                     return HitTestResizeGrip(message, wParam, lParam);
+                case Win32.WM_SETCURSOR when SignedLowWord(lParam) == Win32.HTCLIENT:
+                    cursorService.SetCursor(cursorService.Current);
+                    return 1;
                 case Win32.WM_DPICHANGED:
                     ApplyDpiChange(wParam, lParam);
                     return 0;

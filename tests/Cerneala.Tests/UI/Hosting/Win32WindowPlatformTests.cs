@@ -7,6 +7,7 @@ using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Input;
+using Cerneala.UI.Platform;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.Tests.UI.Hosting;
@@ -20,6 +21,102 @@ public sealed class Win32WindowPlatformTests
     private const int GclpBackground = -10;
     private const int GclpIcon = -14;
     private const int GclpIconSmall = -34;
+
+    [Theory]
+    [InlineData(CursorShape.Default, Win32.IDC_ARROW)]
+    [InlineData(CursorShape.Arrow, Win32.IDC_ARROW)]
+    [InlineData(CursorShape.Hand, Win32.IDC_HAND)]
+    [InlineData(CursorShape.IBeam, Win32.IDC_IBEAM)]
+    [InlineData(CursorShape.Crosshair, Win32.IDC_CROSS)]
+    [InlineData(CursorShape.ResizeHorizontal, Win32.IDC_SIZEWE)]
+    [InlineData(CursorShape.ResizeVertical, Win32.IDC_SIZENS)]
+    public void CursorServiceMapsPlatformShapesToWin32Resources(CursorShape shape, int resourceId)
+    {
+        int loadedResource = 0;
+        nint appliedHandle = 0;
+        Win32CursorService service = new(
+            requestedResource =>
+            {
+                loadedResource = requestedResource;
+                return requestedResource + 1000;
+            },
+            handle => appliedHandle = handle);
+
+        service.SetCursor(shape);
+
+        Assert.Equal(resourceId, loadedResource);
+        Assert.Equal((nint)(resourceId + 1000), appliedHandle);
+        Assert.Equal(shape, service.Current);
+    }
+
+    [Fact]
+    public void HiddenCursorPublishesAZeroHandle()
+    {
+        bool loaded = false;
+        nint appliedHandle = -1;
+        Win32CursorService service = new(
+            _ =>
+            {
+                loaded = true;
+                return 1;
+            },
+            handle => appliedHandle = handle);
+
+        service.SetCursor(CursorShape.Hidden);
+
+        Assert.False(loaded);
+        Assert.Equal(0, appliedHandle);
+        Assert.Equal(CursorShape.Hidden, service.Current);
+    }
+
+    [Fact]
+    public void RuntimePublishesHoveredElementCursorToWin32()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        nint arrow = Win32.LoadCursor(0, Win32.IDC_ARROW);
+        try
+        {
+            RecordingGraphicsFactory factory = new();
+            using WindowApplicationRuntime runtime = new(new Win32WindowPlatform(factory));
+            Button button = new()
+            {
+                Content = "Hover",
+                Cursor = Cursor.Crosshair
+            };
+            Window source = new()
+            {
+                Title = $"Cerneala cursor {Guid.NewGuid():N}",
+                Content = button
+            };
+            runtime.StartMainWindow(source);
+            LayoutRect bounds = button.ArrangedBounds;
+            float scale = factory.CoordinateScale;
+            int x = (int)MathF.Round((bounds.X + (bounds.Width / 2)) * scale);
+            int y = (int)MathF.Round((bounds.Y + (bounds.Height / 2)) * scale);
+
+            SendMessage(factory.WindowHandle, Win32.WM_MOUSEMOVE, 0, PackCoordinates(x, y));
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+            nint crosshair = Win32.LoadCursor(0, Win32.IDC_CROSS);
+            Assert.Equal(crosshair, GetCursor());
+
+            SendMessage(
+                factory.WindowHandle,
+                Win32.WM_SETCURSOR,
+                (nuint)factory.WindowHandle,
+                PackCoordinates(Win32.HTCLIENT, (int)Win32.WM_MOUSEMOVE));
+
+            Assert.Equal(crosshair, GetCursor());
+        }
+        finally
+        {
+            Win32.SetCursor(arrow);
+        }
+    }
 
     [Fact]
     public void NativeMaximizeCoversTheMonitorWorkArea()
@@ -413,6 +510,9 @@ public sealed class Win32WindowPlatformTests
 
     [DllImport("user32.dll")]
     private static extern nint GetWindow(nint window, uint command);
+
+    [DllImport("user32.dll")]
+    private static extern nint GetCursor();
 
     [DllImport("user32.dll", EntryPoint = "GetClassLongPtrW")]
     private static extern nint GetClassLongPtr(nint window, int index);

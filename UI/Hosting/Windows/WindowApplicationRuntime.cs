@@ -37,7 +37,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
         this.platform = platform ?? throw new ArgumentNullException(nameof(platform));
         this.resourceProvider = resourceProvider;
         this.themeProvider = themeProvider ?? new ThemeProvider(DefaultTheme.Create());
-        this.platformServices = platformServices;
+        this.platformServices = platformServices ?? platform.PlatformServices;
     }
 
     public static WindowApplicationRuntime? Current => current;

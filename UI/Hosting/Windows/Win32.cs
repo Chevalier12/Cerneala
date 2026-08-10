@@ -34,6 +34,7 @@ internal static class Win32
     public const uint WM_MOVE = 0x0003;
     public const uint WM_SIZE = 0x0005;
     public const uint WM_GETMINMAXINFO = 0x0024;
+    public const uint WM_SETCURSOR = 0x0020;
     public const uint WM_NCHITTEST = 0x0084;
     public const uint WM_ERASEBKGND = 0x0014;
     public const uint WM_PAINT = 0x000F;
@@ -61,6 +62,11 @@ internal static class Win32
     public const int COLOR_WINDOW = 5;
     public const int IDI_APPLICATION = 32512;
     public const int IDC_ARROW = 32512;
+    public const int IDC_IBEAM = 32513;
+    public const int IDC_CROSS = 32515;
+    public const int IDC_SIZEWE = 32644;
+    public const int IDC_SIZENS = 32645;
+    public const int IDC_HAND = 32649;
     public const int SM_CXSCREEN = 0;
     public const int SM_CYSCREEN = 1;
     public const int SM_CXVSCROLL = 2;
@@ -256,6 +262,9 @@ internal static class Win32
 
     [DllImport("user32.dll", EntryPoint = "LoadCursorW")]
     public static extern nint LoadCursor(nint instance, int cursorName);
+
+    [DllImport("user32.dll")]
+    public static extern nint SetCursor(nint cursor);
 
     [DllImport("user32.dll", EntryPoint = "LoadIconW")]
     public static extern nint LoadIcon(nint instance, int iconName);

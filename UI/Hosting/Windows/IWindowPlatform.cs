@@ -3,12 +3,15 @@ using Cerneala.Drawing.MonoGame.Prism.Execution;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
+using Cerneala.UI.Platform;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Hosting.Windows;
 
 internal interface IWindowPlatform : IDisposable
 {
+    IPlatformServices? PlatformServices => null;
+
     IPlatformWindow CreateWindow(Window window, IWindowPlatformCallbacks callbacks);
 
     void PumpEvents();

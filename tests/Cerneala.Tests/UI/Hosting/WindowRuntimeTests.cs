@@ -5,6 +5,7 @@ using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Input;
+using Cerneala.UI.Platform;
 using Microsoft.Extensions.DependencyInjection;
 using Cerneala.UI.Resources;
 
@@ -235,6 +236,30 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void RuntimeUsesNativePlatformCursorWhenNoServicesOverrideIsProvided()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new()
+        {
+            Content = "Hover",
+            Cursor = Cursor.Crosshair
+        };
+        Window window = new() { Content = button };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        LayoutRect bounds = button.ArrangedBounds;
+        nativeWindow.Input.MovePointer(
+            bounds.X + (bounds.Width / 2),
+            bounds.Y + (bounds.Height / 2));
+        nativeWindow.RequestRender();
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal(CursorShape.Crosshair, platform.Cursor.Current);
+    }
+
+    [Fact]
     public void PendingRelayWorkWakesAnOtherwiseIdleStandaloneWindow()
     {
         FakeWindowPlatform platform = new();
@@ -457,6 +482,10 @@ public sealed class WindowRuntimeTests : IDisposable
     {
         public List<FakePlatformWindow> Windows { get; } = [];
 
+        public FakeCursorService Cursor { get; } = new();
+
+        public IPlatformServices PlatformServices => new PlatformServices(Cursor: Cursor);
+
         public int PumpCount { get; private set; }
 
         public int PresentedFrameWaitCount { get; private set; }
@@ -484,6 +513,16 @@ public sealed class WindowRuntimeTests : IDisposable
             {
                 window.Dispose();
             }
+        }
+    }
+
+    private sealed class FakeCursorService : ICursorService
+    {
+        public CursorShape Current { get; private set; } = CursorShape.Arrow;
+
+        public void SetCursor(CursorShape shape)
+        {
+            Current = shape;
         }
     }
 
