@@ -88,6 +88,27 @@ public sealed class VirtualizingStackPanelTests
         Assert.Equal(new LayoutRect(0, 20, 100, 10), third.ArrangedBounds);
     }
 
+    [Fact]
+    public void FullyRealizedPanelUsesNaturalItemHeightsForAutoSize()
+    {
+        VirtualizingStackPanel panel = new()
+        {
+            VirtualizationContext = new VirtualizationContext(3, 28, 300, 0),
+            FirstRealizedIndex = 0
+        };
+        panel.VisualChildren.Add(new FixedHeightElement(35));
+        panel.VisualChildren.Add(new FixedHeightElement(40));
+        panel.VisualChildren.Add(new FixedHeightElement(30));
+
+        panel.Measure(new MeasureContext(new LayoutSize(100, 300)));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height)));
+
+        Assert.Equal(105, panel.DesiredSize.Height);
+        Assert.Equal(new LayoutRect(0, 0, 100, 35), panel.VisualChildren[0].ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 35, 100, 40), panel.VisualChildren[1].ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 75, 100, 30), panel.VisualChildren[2].ArrangedBounds);
+    }
+
     private sealed class CountingElement : UIElement
     {
         public int MeasureCount { get; private set; }
@@ -96,6 +117,14 @@ public sealed class VirtualizingStackPanelTests
         {
             MeasureCount++;
             return new LayoutSize(20, 10);
+        }
+    }
+
+    private sealed class FixedHeightElement(float height) : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            return new LayoutSize(20, height);
         }
     }
 }

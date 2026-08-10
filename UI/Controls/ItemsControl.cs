@@ -86,6 +86,8 @@ public class ItemsControl : Control
 
     public int ItemCount => observableItemsSource?.Count ?? ItemsSource?.Cast<object?>().Count() ?? Items.Count;
 
+    internal virtual int ViewItemCount => ItemCount;
+
     public string DisplayMemberPath
     {
         get => GetValue(DisplayMemberPathProperty);
@@ -154,6 +156,11 @@ public class ItemsControl : Control
         return Items[index];
     }
 
+    internal virtual int GetSourceIndexForViewIndex(int viewIndex)
+    {
+        return viewIndex;
+    }
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         if (TemplateChild is not null)
@@ -191,6 +198,7 @@ public class ItemsControl : Control
         else if (ReferenceEquals(args.Property, ItemsSourceProperty))
         {
             SubscribeItemsSource(args.OldValue as IEnumerable, args.NewValue as IEnumerable);
+            OnItemsViewSourceChanged();
             ItemContainerGenerator.Clear();
             itemsPresenter.MarkItemsDirty();
             InvalidateItems("ItemsControl items source changed");
@@ -354,6 +362,10 @@ public class ItemsControl : Control
     {
     }
 
+    internal virtual void OnItemsViewSourceChanged()
+    {
+    }
+
     public void SetVirtualizationContext(VirtualizationContext? context)
     {
         itemsPresenter.VirtualizationContext = context;
@@ -384,6 +396,12 @@ public class ItemsControl : Control
             return;
         }
 
+        if (Items.IsResetNotification)
+        {
+            ItemContainerGenerator.Clear();
+        }
+
+        OnItemsViewSourceChanged();
         itemsPresenter.MarkItemsDirty();
         InvalidateItems("Items changed");
     }
@@ -427,6 +445,12 @@ public class ItemsControl : Control
     {
         VerifyCollectionNotificationAccess("ObservableList");
 
+        if (args.Kind is ObservableListChangeKind.Reset or ObservableListChangeKind.Clear)
+        {
+            ItemContainerGenerator.Clear();
+        }
+
+        OnItemsViewSourceChanged();
         itemsPresenter.MarkItemsDirty();
         InvalidateItems("Observable items source changed");
     }

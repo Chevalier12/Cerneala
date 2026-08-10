@@ -9,7 +9,16 @@ public class VirtualizingStackPanel : Panel
 
     public RealizationWindow RealizationWindow => VirtualizationContext?.GetRealizationWindow() ?? RealizationWindow.Create(VisualChildren.Count, 0, VisualChildren.Count);
 
-    public float TotalExtent => VirtualizationContext?.TotalExtent ?? DesiredSize.Height;
+    public float TotalExtent
+    {
+        get
+        {
+            RealizationWindow window = RealizationWindow;
+            return UsesNaturalItemHeights(window)
+                ? DesiredSize.Height
+                : VirtualizationContext?.TotalExtent ?? DesiredSize.Height;
+        }
+    }
 
     public int FirstRealizedIndex { get; set; }
 
@@ -33,14 +42,18 @@ public class VirtualizingStackPanel : Panel
             height += child.DesiredSize.Height;
         }
 
-        float desiredHeight = VirtualizationContext?.TotalExtent ?? height;
+        float desiredHeight = UsesNaturalItemHeights(window)
+            ? height
+            : VirtualizationContext?.TotalExtent ?? height;
         return new LayoutSize(width, desiredHeight);
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
         RealizationWindow window = RealizationWindow;
-        float itemExtent = VirtualizationContext is { ItemExtent: > 0 } virtualizationContext && float.IsFinite(virtualizationContext.ItemExtent)
+        float itemExtent = !UsesNaturalItemHeights(window) &&
+            VirtualizationContext is { ItemExtent: > 0 } virtualizationContext &&
+            float.IsFinite(virtualizationContext.ItemExtent)
             ? virtualizationContext.ItemExtent
             : 0;
         float y = context.FinalRect.Y;
@@ -64,5 +77,14 @@ public class VirtualizingStackPanel : Panel
         }
 
         return context.FinalRect;
+    }
+
+    private bool UsesNaturalItemHeights(RealizationWindow window)
+    {
+        return VirtualizationContext is not { } context ||
+            (FirstRealizedIndex == 0 &&
+             VisualChildren.Count == context.ItemCount &&
+             window.StartIndex == 0 &&
+             window.EndIndexExclusive >= context.ItemCount);
     }
 }

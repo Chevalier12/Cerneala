@@ -22,12 +22,13 @@ public sealed class ItemContainerGenerator
 
     public IReadOnlyList<UIElement> Realize(RealizationWindow? window = null)
     {
-        int count = owner.ItemCount;
+        int count = owner.ViewItemCount;
         int start = window?.StartIndex ?? 0;
         int end = window?.EndIndexExclusive ?? count;
         start = Math.Clamp(start, 0, count);
         end = Math.Clamp(end, start, count);
-        HashSet<int> desired = [.. Enumerable.Range(start, end - start)];
+        HashSet<int> desired = [.. Enumerable.Range(start, end - start)
+            .Select(owner.GetSourceIndexForViewIndex)];
 
         foreach (int index in realized.Keys.Where(index => !desired.Contains(index)).ToArray())
         {
@@ -35,9 +36,9 @@ public sealed class ItemContainerGenerator
         }
 
         List<UIElement> containers = [];
-        for (int index = start; index < end; index++)
+        for (int viewIndex = start; viewIndex < end; viewIndex++)
         {
-            containers.Add(GetOrCreate(index));
+            containers.Add(GetOrCreate(owner.GetSourceIndexForViewIndex(viewIndex)));
         }
 
         return containers;

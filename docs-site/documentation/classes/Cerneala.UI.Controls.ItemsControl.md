@@ -41,7 +41,7 @@ Without a component template, `ItemsControl` uses its built-in `ItemsPresenter`.
 
 `ItemTemplate` has priority for item visuals. Otherwise, `DisplayMemberPath` resolves a public readable property path. Paths may contain dots, an intermediate `null` produces an empty/default presentation, and an invalid segment throws `InvalidOperationException`. An empty path uses the item itself and therefore `ToString()` for textual presentation. Accessor chains are cached per item type and path.
 
-`ItemsSource` takes precedence over `Items`. Observable sources are subscribed while attached. Generated containers, recycling, and virtualization remain managed by `ItemContainerGenerator` and `ItemsPresenter`.
+`ItemsSource` takes precedence over `Items`. Observable sources are subscribed while attached. Replacing or clearing the local collection, or receiving an observable reset/clear notification, immediately clears containers associated with the previous item snapshot even when the presenter is not currently measured. Incremental add and replace notifications preserve compatible realized containers. Generated containers, recycling, and virtualization remain managed by `ItemContainerGenerator` and `ItemsPresenter`.
 
 `ItemContainerAspect` is applied to every prepared container at the `AspectBase` value source and removed when the container is cleared or recycled. An aspect assigned directly to an item container has higher precedence. Changing the property refreshes realized containers.
 

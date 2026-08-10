@@ -84,7 +84,7 @@ public class ItemsPresenter : Control
     internal bool UpdateVirtualizationFromScrollInfoCore(IScrollInfo scrollInfo, float itemExtent, int cacheItems = 0)
     {
         ArgumentNullException.ThrowIfNull(scrollInfo);
-        int itemCount = ItemsOwner?.ItemCount ?? Items?.Cast<object?>().Count() ?? 0;
+        int itemCount = ItemsOwner?.ViewItemCount ?? Items?.Cast<object?>().Count() ?? 0;
         VirtualizationContext? previousContext = VirtualizationContext;
         VirtualizationContext nextContext = new(itemCount, itemExtent, scrollInfo.ViewportHeight, scrollInfo.VerticalOffset, cacheItems);
         RealizationWindow nextWindow = nextContext.GetRealizationWindow();

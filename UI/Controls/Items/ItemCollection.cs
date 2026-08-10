@@ -9,6 +9,8 @@ public sealed class ItemCollection : IList<object?>
 
     public event EventHandler? Changed;
 
+    internal bool IsResetNotification { get; private set; }
+
     public int Count => items.Count;
 
     public bool IsReadOnly => false;
@@ -43,7 +45,7 @@ public sealed class ItemCollection : IList<object?>
         }
 
         items.Clear();
-        OnChanged();
+        OnChanged(reset: true);
     }
 
     public bool Contains(object? item)
@@ -101,7 +103,7 @@ public sealed class ItemCollection : IList<object?>
 
         items.Clear();
         items.AddRange(next);
-        OnChanged();
+        OnChanged(reset: true);
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -109,8 +111,16 @@ public sealed class ItemCollection : IList<object?>
         return GetEnumerator();
     }
 
-    private void OnChanged()
+    private void OnChanged(bool reset = false)
     {
-        Changed?.Invoke(this, EventArgs.Empty);
+        IsResetNotification = reset;
+        try
+        {
+            Changed?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            IsResetNotification = false;
+        }
     }
 }

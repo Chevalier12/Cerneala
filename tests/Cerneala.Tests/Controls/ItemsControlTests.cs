@@ -154,6 +154,19 @@ public sealed class ItemsControlTests
         Assert.Equal(3, ItemContainerGenerator.GetItemIndex(control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0]));
     }
 
+    [Fact]
+    public void ReplacingItemsImmediatelyClearsContainersFromThePreviousCollection()
+    {
+        ItemsControl control = new();
+        control.SetItems(Enumerable.Range(0, 200).Cast<object>());
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        Assert.Equal(200, control.ItemContainerGenerator.RealizedContainers.Count);
+
+        control.SetItems(Enumerable.Range(0, 20).Cast<object>());
+
+        Assert.Empty(control.ItemContainerGenerator.RealizedContainers);
+    }
+
     private sealed class FixedElement(string value, LayoutSize size) : UIElement
     {
         public string Value { get; } = value;
