@@ -790,7 +790,7 @@ public partial class PrismChapterView : UserControl
         Margin = new Thickness(0, 3, 0, 3)
     };
 
-    private static ComboBox CreateComboBox<T>(
+    private ComboBox CreateComboBox<T>(
         IReadOnlyList<T> values,
         T current,
         Action<T> changed)
@@ -808,6 +808,10 @@ public partial class PrismChapterView : UserControl
             MaxDropDownHeight = 180
         };
         comboBox.ApplyTemplate();
+        Overlay overlay = (Overlay)comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"];
+        Border dropDownBorder = (Border)overlay.Content!;
+        ScrollViewer dropDownScrollViewer = (ScrollViewer)dropDownBorder.Child!;
+        dropDownScrollViewer.ComponentTemplate = InspectorHost.ComponentTemplate;
         ToggleButton toggle = (ToggleButton)comboBox.ComponentTemplateInstance!
             .Parts["PART_DropDownToggle"];
         toggle.Background = PanelBrush;
