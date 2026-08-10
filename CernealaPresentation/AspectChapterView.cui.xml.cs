@@ -1,6 +1,7 @@
 using System.Globalization;
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
+using Cerneala.UI.Automation;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
@@ -30,6 +31,7 @@ public partial class AspectChapterView : UserControl
     private static readonly SolidColorBrush SelectedBrush = new(new Color(20, 55, 61));
     private static readonly SolidColorBrush LineBrush = new(new Color(52, 60, 70));
     private static readonly SolidColorBrush PaperBrush = new(new Color(237, 239, 243));
+    private static readonly SolidColorBrush TransparentBrush = new(Color.Transparent);
     private static readonly SolidColorBrush MutedBrush = new(new Color(150, 160, 171));
     private static readonly SolidColorBrush CyanBrush = new(new Color(77, 240, 255));
     private static readonly SolidColorBrush PinkBrush = new(new Color(255, 62, 165));
@@ -299,6 +301,7 @@ public partial class AspectChapterView : UserControl
     {
         object? current = target.GetValue(property);
         UIElement editor = CreateEditor(target, property, current);
+        AutomationProperties.SetAutomationId(editor, $"aspect-property-{property.Name}");
         Grid row = new();
         row.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(126)));
         row.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
@@ -719,7 +722,7 @@ public partial class AspectChapterView : UserControl
     {
         ComboBox comboBox = new()
         {
-            Background = PanelBrush,
+            Background = TransparentBrush,
             BorderBrush = LineBrush,
             BorderThickness = new Thickness(1),
             Foreground = PaperBrush,
@@ -731,19 +734,14 @@ public partial class AspectChapterView : UserControl
         comboBox.ApplyTemplate();
         Overlay overlay = (Overlay)comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"];
         Border dropDownBorder = (Border)overlay.Content!;
+        dropDownBorder.Background = PanelBrush;
         ScrollViewer dropDownScrollViewer = (ScrollViewer)dropDownBorder.Child!;
         dropDownScrollViewer.ComponentTemplate = PropertyHost.ComponentTemplate;
         ToggleButton toggle = (ToggleButton)comboBox.ComponentTemplateInstance.Parts["PART_DropDownToggle"];
-        toggle.Background = PanelBrush;
         toggle.BorderBrush = LineBrush;
         toggle.BorderThickness = new Thickness(1);
-        toggle.Foreground = PaperBrush;
         toggle.FontFamily = "Cascadia Mono SemiBold";
         toggle.Padding = new Thickness(6, 4, 6, 4);
-        if (toggle.Content is Cerneala.UI.Controls.Shapes.Shape glyph)
-        {
-            glyph.Fill = PaperBrush;
-        }
 
         object?[] items = values.Cast<object?>().ToArray();
         comboBox.SetItems(items);

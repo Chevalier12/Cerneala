@@ -253,16 +253,48 @@ public sealed class PrismChapterViewTests : IDisposable
         Cerneala.UI.Controls.Primitives.ToggleButton toggle =
             Assert.IsType<Cerneala.UI.Controls.Primitives.ToggleButton>(
                 comboBox.ComponentTemplateInstance!.Parts["PART_DropDownToggle"]);
+        TextBox editor = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance.Parts["PART_EditableTextBox"]);
+        Color paper = new(232, 235, 232);
+        Color line = new(52, 60, 70);
+        Color panel = new(20, 24, 30);
         Assert.Equal(
-            new Color(20, 24, 30),
+            UiPropertyValueSource.Local,
+            comboBox.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(
+            UiPropertyValueSource.Local,
+            comboBox.GetValueSource(Control.ForegroundProperty));
+        Assert.Equal(
+            Color.Transparent,
+            Assert.IsType<SolidColorBrush>(comboBox.Background).Color);
+        Assert.Equal(
+            paper,
+            Assert.IsType<SolidColorBrush>(comboBox.Foreground).Color);
+        Assert.Equal(
+            line,
+            Assert.IsType<SolidColorBrush>(comboBox.BorderBrush).Color);
+        Assert.Equal(
+            Color.Transparent,
+            Assert.IsType<SolidColorBrush>(editor.Background).Color);
+        Assert.Equal(
+            paper,
+            Assert.IsType<SolidColorBrush>(editor.Foreground).Color);
+        Assert.Equal(
+            paper,
+            Assert.IsType<SolidColorBrush>(editor.CaretBrush).Color);
+        Assert.Equal(
+            Color.Transparent,
             Assert.IsType<SolidColorBrush>(toggle.Background).Color);
         Assert.Equal(
-            new Color(52, 60, 70),
+            paper,
+            Assert.IsType<SolidColorBrush>(toggle.Foreground).Color);
+        Assert.Equal(
+            line,
             Assert.IsType<SolidColorBrush>(toggle.BorderBrush).Color);
         Cerneala.UI.Controls.Shapes.Path toggleGlyph =
             Assert.IsType<Cerneala.UI.Controls.Shapes.Path>(toggle.Content);
         Assert.Equal(
-            new Color(232, 235, 232),
+            paper,
             Assert.IsType<SolidColorBrush>(toggleGlyph.Fill).Color);
 
         comboBox.IsDropDownOpen = true;
@@ -272,6 +304,9 @@ public sealed class PrismChapterViewTests : IDisposable
             comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
         Assert.True(overlay.ProjectedPresenter.ArrangedBounds.Height > 0);
         Border dropDownBorder = Assert.IsType<Border>(overlay.Content);
+        Assert.Equal(
+            panel,
+            Assert.IsType<SolidColorBrush>(dropDownBorder.Background).Color);
         ScrollViewer scrollViewer = Assert.IsType<ScrollViewer>(dropDownBorder.Child);
         Assert.True(scrollViewer.Presenter.ExtentHeight > scrollViewer.Presenter.ViewportHeight);
         Assert.True(scrollViewer.IsVerticalScrollBarVisible);
@@ -303,7 +338,7 @@ public sealed class PrismChapterViewTests : IDisposable
             .Cast<string>()
             .ToArray();
         Assert.Contains(nameof(PrismBlendMode.Multiply), renderedText);
-        Assert.Contains(nameof(PrismBlendMode.Screen), renderedText);
+        Assert.True(itemText.Length < comboBox.ItemCount);
     }
 
     [Fact]

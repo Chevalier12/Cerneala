@@ -2,10 +2,12 @@ using System.Xml.Linq;
 using Cerneala.Drawing;
 using Cerneala.Presentation;
 using Cerneala.UI;
+using Cerneala.UI.Automation;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -173,6 +175,106 @@ public sealed class AspectChapterViewTests : IDisposable
     }
 
     [Fact]
+    public void ComboBoxPropertyEditorsUsePresentationPalette()
+    {
+        UIRoot root = AttachStudio(out AspectChapterView view);
+        view.SelectForTests(AspectStudioElementKind.Button);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        ComboBox comboBox = Assert.IsType<ComboBox>(PropertyRow(view, UIElement.CursorProperty).Editor);
+        TextBox editor = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        ToggleButton toggle = Assert.IsType<ToggleButton>(
+            comboBox.ComponentTemplateInstance.Parts["PART_DropDownToggle"]);
+        Cerneala.UI.Controls.Shapes.Shape glyph =
+            Assert.IsAssignableFrom<Cerneala.UI.Controls.Shapes.Shape>(toggle.Content);
+        Overlay overlay = Assert.IsType<Overlay>(
+            comboBox.ComponentTemplateInstance.Parts["PART_DropDownOverlay"]);
+        Border dropDownBorder = Assert.IsType<Border>(overlay.Content);
+
+        Color paper = new(237, 239, 243);
+        Color line = new(52, 60, 70);
+        Color panel = new(20, 24, 30);
+        Assert.Equal(UiPropertyValueSource.Local, comboBox.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(UiPropertyValueSource.Local, comboBox.GetValueSource(Control.ForegroundProperty));
+        Assert.Equal(Color.Transparent, Assert.IsType<SolidColorBrush>(comboBox.Background).Color);
+        Assert.Equal(paper, Assert.IsType<SolidColorBrush>(comboBox.Foreground).Color);
+        Assert.Equal(line, Assert.IsType<SolidColorBrush>(comboBox.BorderBrush).Color);
+        Assert.Equal(Color.Transparent, Assert.IsType<SolidColorBrush>(editor.Background).Color);
+        Assert.Equal(paper, Assert.IsType<SolidColorBrush>(editor.Foreground).Color);
+        Assert.Equal(paper, Assert.IsType<SolidColorBrush>(editor.CaretBrush).Color);
+        Assert.Equal(Color.Transparent, Assert.IsType<SolidColorBrush>(toggle.Background).Color);
+        Assert.Equal(paper, Assert.IsType<SolidColorBrush>(toggle.Foreground).Color);
+        Assert.Equal(line, Assert.IsType<SolidColorBrush>(toggle.BorderBrush).Color);
+        Assert.Equal(paper, Assert.IsType<SolidColorBrush>(glyph.Fill).Color);
+        Assert.Equal(panel, Assert.IsType<SolidColorBrush>(dropDownBorder.Background).Color);
+    }
+
+    [Fact]
+    public void PropertyEditorsExposeStableAutomationIds()
+    {
+        UIRoot root = AttachStudio(out AspectChapterView view);
+        view.SelectForTests(AspectStudioElementKind.Button);
+        root.ProcessFrame();
+
+        UIElement cursorEditor = PropertyRow(view, UIElement.CursorProperty).Editor;
+
+        Assert.Equal(
+            "aspect-property-Cursor",
+            AutomationProperties.GetAutomationId(cursorEditor));
+    }
+
+    [Fact]
+    public void FilteredCursorDropDownAutoSizesToItsVisibleItems()
+    {
+        UIRoot root = AttachStudio(out AspectChapterView view, 1650, 1055);
+        view.SelectForTests(AspectStudioElementKind.Button);
+        root.ProcessFrame();
+        UiHost host = new(new UiHostOptions
+        {
+            Root = root,
+            Viewport = new UiViewport(root.ViewportWidth, root.ViewportHeight)
+        });
+        AutomationSession session = new(root, new RetainedAutomationInputDriver(host));
+
+        session.FindByAutomationId("aspect-property-Cursor")
+            .Click()
+            .PressKey(InputKey.A, AutomationModifiers.Control)
+            .SendText("a");
+
+        ComboBox comboBox = Assert.IsType<ComboBox>(PropertyRow(view, UIElement.CursorProperty).Editor);
+        Overlay overlay = Assert.IsType<Overlay>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        Border border = Assert.IsType<Border>(overlay.Content);
+        ScrollViewer scrollViewer = Assert.IsType<ScrollViewer>(border.Child);
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal(
+            [1, 2, 0, 3, 4],
+            comboBox.ItemsPresenter.LayoutPanelRoot!.VisualChildren
+                .Select(Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItemIndex)
+                .ToArray());
+        Assert.Equal(
+            scrollViewer.Presenter.ExtentHeight + border.BorderThickness.Vertical,
+            overlay.ProjectedPresenter.ArrangedBounds.Height);
+        Assert.True(overlay.ProjectedPresenter.ArrangedBounds.Height < comboBox.MaxDropDownHeight);
+        DrawCommand[] renderedCommands = root.RetainedRenderer.Commit(root)
+            .Where(command => command.Kind == DrawCommandKind.DrawText)
+            .ToArray();
+        string[] renderedText = renderedCommands
+            .Where(command => command.Kind == DrawCommandKind.DrawText)
+            .Select(command => command.Text)
+            .Where(text => text is not null)
+            .Cast<string>()
+            .ToArray();
+        Assert.Contains("IBEAM", renderedText);
+        Assert.Contains("CROSSHAIR", renderedText);
+        float dropDownTop = overlay.ProjectedPresenter.ArrangedBounds.Y;
+        float dropDownBottom = dropDownTop + overlay.ProjectedPresenter.ArrangedBounds.Height;
+        Assert.InRange(Assert.Single(renderedCommands, command => command.Text == "IBEAM").Position.Y, dropDownTop, dropDownBottom);
+        Assert.InRange(Assert.Single(renderedCommands, command => command.Text == "CROSSHAIR").Position.Y, dropDownTop, dropDownBottom);
+    }
+
+    [Fact]
     public void InvalidValuesAreRejectedWithoutMutatingPreview()
     {
         UIRoot root = AttachStudio(out AspectChapterView view);
@@ -241,9 +343,12 @@ public sealed class AspectChapterViewTests : IDisposable
         Assert.True(bounds.Y + bounds.Height <= height);
     }
 
-    private static UIRoot AttachStudio(out AspectChapterView view)
+    private static UIRoot AttachStudio(
+        out AspectChapterView view,
+        float width = 1070,
+        float height = 726)
     {
-        UIRoot root = new(1070, 726);
+        UIRoot root = new(width, height);
         view = new AspectChapterView();
         root.VisualChildren.Add(view);
         root.ProcessFrame();

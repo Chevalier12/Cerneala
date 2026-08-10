@@ -1,0 +1,146 @@
+<Window
+    Title="Cerneala ComboBox Lab"
+    Width="1000"
+    Height="760"
+    MinWidth="820"
+    MinHeight="640"
+    WindowStartupLocation="CenterScreen"
+    ContentRendered="OnContentRendered"
+    FrameRendered="OnFrameRendered"
+    PreviewKeyDown="OnPreviewKeyDown"
+    Background="#FF111519"
+    BorderBrush="#FF3A434D"
+    BorderThickness="1"
+    Padding="0">
+    <Window.Resources>
+        <SolidColorBrush Name="SurfaceBrush" Color="#FF1A2026" />
+        <SolidColorBrush Name="RaisedBrush" Color="#FF232B33" />
+        <SolidColorBrush Name="DividerBrush" Color="#FF3A434D" />
+        <SolidColorBrush Name="TextBrush" Color="#FFF2F5F7" />
+        <SolidColorBrush Name="MutedBrush" Color="#FFAAB4BE" />
+        <SolidColorBrush Name="AccentBrush" Color="#FF48D6A8" />
+        <SolidColorBrush Name="WarningBrush" Color="#FFFFCA64" />
+        <SolidColorBrush Name="InputBrush" Color="#FFF7F9FA" />
+        <SolidColorBrush Name="InputTextBrush" Color="#FF111519" />
+
+        <Aspect Target="TextBlock">
+            @default
+            {
+                FontFamily = "Segoe UI";
+                FontSize = 14;
+                Foreground = $TextBrush;
+            }
+        </Aspect>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="96" />
+            <RowDefinition Height="52" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="150" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Grid.Row="0"
+            Background="$RaisedBrush"
+            BorderBrush="$DividerBrush"
+            BorderThickness="0,0,0,1"
+            Padding="24,18,24,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="ComboBox Adversarial Lab" FontFamily="Segoe UI Semibold" FontSize="22" />
+                    <TextBlock Text="Runtime izolat" Foreground="$AccentBrush" Margin="0,5,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Reset" Click="OnReset" Padding="16,9,16,9" Margin="0,0,8,0" />
+                    <Button Content="200 items" Click="OnLoadStressItems" Padding="16,9,16,9" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border
+            Grid.Row="1"
+            Background="$SurfaceBrush"
+            BorderBrush="$DividerBrush"
+            BorderThickness="0,0,0,1"
+            Padding="24,12,24,12">
+            <StackPanel Orientation="Horizontal">
+                <CheckBox Name="FilterToggle" Content="Filter + fuzzy" IsChecked="true" Checked="OnFilterToggle" Unchecked="OnFilterToggle" Margin="0,0,20,0" />
+                <CheckBox Name="CaseToggle" Content="Case sensitive" Checked="OnCaseToggle" Unchecked="OnCaseToggle" Margin="0,0,20,0" />
+                <CheckBox Name="ReadOnlyToggle" Content="Read only" Checked="OnReadOnlyToggle" Unchecked="OnReadOnlyToggle" />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Margin="24,24,18,20">
+                <TextBlock Text="Editable + filtering" FontFamily="Segoe UI Semibold" FontSize="17" />
+                <ComboBox
+                    Name="FilteredCombo"
+                    IsEditable="true"
+                    IsTextFilterEnabled="true"
+                    IsTextSearchEnabled="true"
+                    MaxDropDownHeight="260"
+                    Height="36"
+                    Background="$InputBrush"
+                    Foreground="$InputTextBrush"
+                    BorderBrush="$DividerBrush"
+                    Margin="0,12,0,0" />
+                <TextBlock Name="FilteredCommittedState" FontFamily="Consolas" FontSize="12" Foreground="$WarningBrush" Margin="0,16,0,0" TextWrapping="Wrap" />
+                <TextBlock Name="FilteredRuntimeState" FontFamily="Consolas" FontSize="12" Foreground="$MutedBrush" Margin="0,7,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Border Grid.Column="1" BorderBrush="$DividerBrush" BorderThickness="1,0,0,0">
+                <StackPanel Margin="18,24,24,20">
+                    <TextBlock Text="Non-editable transaction" FontFamily="Segoe UI Semibold" FontSize="17" />
+                    <ComboBox
+                        Name="SelectionCombo"
+                        MaxDropDownHeight="260"
+                        Height="36"
+                        Background="$InputBrush"
+                        Foreground="$InputTextBrush"
+                        BorderBrush="$DividerBrush"
+                        Margin="0,12,0,0" />
+                    <TextBlock Name="SelectionCommittedState" FontFamily="Consolas" FontSize="12" Foreground="$WarningBrush" Margin="0,16,0,0" TextWrapping="Wrap" />
+                    <TextBlock Name="SelectionRuntimeState" FontFamily="Consolas" FontSize="12" Foreground="$MutedBrush" Margin="0,7,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border
+            Grid.Row="3"
+            Background="$SurfaceBrush"
+            BorderBrush="$DividerBrush"
+            BorderThickness="0,1,0,0"
+            Padding="24,18,24,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="360" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Bottom">
+                    <TextBlock Text="Bottom-edge placement" FontFamily="Segoe UI Semibold" FontSize="16" />
+                    <TextBlock Name="BottomState" FontFamily="Consolas" FontSize="12" Foreground="$MutedBrush" Margin="0,7,20,0" TextWrapping="Wrap" />
+                </StackPanel>
+                <ComboBox
+                    Name="BottomCombo"
+                    Grid.Column="1"
+                    MaxDropDownHeight="260"
+                    Height="36"
+                    Background="$InputBrush"
+                    Foreground="$InputTextBrush"
+                    BorderBrush="$DividerBrush"
+                    VerticalAlignment="Bottom" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
