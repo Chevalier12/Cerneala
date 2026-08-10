@@ -1350,6 +1350,11 @@
     "source": "UI/Controls/TextChangedEventArgs.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.TextSearch",
+    "file": "documentation/classes/Cerneala.UI.Controls.TextSearch.md",
+    "source": "UI/Controls/TextSearch.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ToolTip",
     "file": "documentation/classes/Cerneala.UI.Controls.ToolTip.md",
     "source": "UI/Controls/ToolTip.cs"
