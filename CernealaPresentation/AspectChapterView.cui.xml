@@ -1,220 +1,211 @@
-<UserControl
-    Aspect="$PageReveal">
-    <Grid>
-        <StackPanel
-            Margin="46,38,46,42">
-            <TextBlock
-                Text="04 / ASPECT"
-                FontFamily="Cascadia Mono SemiBold"
-                FontSize="11"
-                Foreground="$OrangeBrush" />
-            <TextBlock
-                Text="A typed design system, not a bag of CSS tricks."
-                FontFamily="Bahnschrift SemiBold"
-                FontSize="42"
-                Margin="0,12,0,0" />
-            <TextBlock
-                Text="Aspect owns semantic tokens, component rules, templates, slots, variants, state conditions, cascade resolution, and diagnostics. It stays typed from declaration to application."
-                FontSize="16"
-                Foreground="$SlateBrush"
-                TextWrapping="Wrap"
-                Margin="0,14,80,0" />
-            <Grid
-                Margin="0,28,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition
-                        Width="0.8*" />
-                    <ColumnDefinition
-                        Width="1.2*" />
-                </Grid.ColumnDefinitions>
-                <StackPanel
-                    Grid.Column="0"
-                    Margin="0,0,14,0">
-                    <TextBlock
-                        Text="SEMANTIC TOKENS"
-                        FontFamily="Cascadia Mono SemiBold"
-                        FontSize="10"
-                        Foreground="$SlateDimBrush"
-                        Margin="0,0,0,10" />
-                    <Border
-                        Background="$CyanWashBrush"
-                        BorderBrush="$CyanBrush"
-                        BorderThickness="8,0,0,0"
-                        Padding="16,13,16,13"
-                        Margin="0,0,0,8">
-                        <Grid>
-                            <TextBlock
-                                Text="accent.primary"
-                                FontFamily="Cascadia Mono"
-                                FontSize="11" />
-                            <TextBlock
-                                Text="#4DF0FF"
-                                FontFamily="Cascadia Mono"
-                                FontSize="10"
-                                Foreground="$CyanBrush"
-                                HorizontalAlignment="Right" />
-                        </Grid>
-                    </Border>
-                    <Border
-                        Background="$PinkWashBrush"
-                        BorderBrush="$PinkBrush"
-                        BorderThickness="8,0,0,0"
-                        Padding="16,13,16,13"
-                        Margin="0,0,0,8">
-                        <Grid>
-                            <TextBlock
-                                Text="state.focus"
-                                FontFamily="Cascadia Mono"
-                                FontSize="11" />
-                            <TextBlock
-                                Text="#FF3EA5"
-                                FontFamily="Cascadia Mono"
-                                FontSize="10"
-                                Foreground="$PinkBrush"
-                                HorizontalAlignment="Right" />
-                        </Grid>
-                    </Border>
-                    <Border
-                        Background="$LimeWashBrush"
-                        BorderBrush="$LimeBrush"
-                        BorderThickness="8,0,0,0"
-                        Padding="16,13,16,13"
-                        Margin="0,0,0,8">
-                        <Grid>
-                            <TextBlock
-                                Text="action.primary"
-                                FontFamily="Cascadia Mono"
-                                FontSize="11" />
-                            <TextBlock
-                                Text="#C6FF3D"
-                                FontFamily="Cascadia Mono"
-                                FontSize="10"
-                                Foreground="$LimeBrush"
-                                HorizontalAlignment="Right" />
-                        </Grid>
-                    </Border>
-                    <Border
-                        Background="$OrangeWashBrush"
-                        BorderBrush="$OrangeBrush"
-                        BorderThickness="8,0,0,0"
-                        Padding="16,13,16,13">
-                        <Grid>
-                            <TextBlock
-                                Text="signal.dirty"
-                                FontFamily="Cascadia Mono"
-                                FontSize="11" />
-                            <TextBlock
-                                Text="#FF8A3D"
-                                FontFamily="Cascadia Mono"
-                                FontSize="10"
-                                Foreground="$OrangeBrush"
-                                HorizontalAlignment="Right" />
-                        </Grid>
-                    </Border>
+<UserControl>
+    <UserControl.Resources>
+        <Aspect Name="AspectStudioGhostButton" Target="Button">
+            @default
+            {
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 9;
+                Background = "#00000000";
+                Foreground = "#FFEDEFF3";
+                BorderBrush = "#FF424754";
+                BorderThickness = "1";
+            }
+            @when IsMouseOver
+            {
+                Background = "#FF10282D";
+                Foreground = "#FF4DF0FF";
+                BorderBrush = "#FF4DF0FF";
+            }
+        </Aspect>
+    </UserControl.Resources>
+    <Grid Margin="24,18,24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="36" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock
+                    Text="04 / ASPECT STUDIO"
+                    FontFamily="Cascadia Mono SemiBold"
+                    FontSize="10"
+                    Foreground="$OrangeBrush" />
+                <TextBlock
+                    Text="Border. TextBlock. Button."
+                    FontFamily="Bahnschrift SemiBold"
+                    FontSize="25"
+                    Margin="0,5,0,0" />
+            </StackPanel>
+            <Button
+                Grid.Column="1"
+                Aspect="$AspectStudioGhostButton"
+                Content="RESET CURRENT"
+                Click="OnReset"
+                Padding="14,8,14,8"
+                VerticalAlignment="Center" />
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="174" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="352" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0" Margin="0,0,12,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock
+                    Text="ELEMENT"
+                    FontFamily="Cascadia Mono SemiBold"
+                    FontSize="9"
+                    Foreground="$CyanBrush"
+                    VerticalAlignment="Center" />
+                <StackPanel Grid.Row="1">
+                    <Button
+                        Name="BorderElementButton"
+                        Aspect="$AspectStudioGhostButton"
+                        Content="BORDER"
+                        Click="OnSelectBorder"
+                        Padding="10,11,10,11"
+                        Margin="0,0,0,7" />
+                    <Button
+                        Name="TextBlockElementButton"
+                        Aspect="$AspectStudioGhostButton"
+                        Content="TEXTBLOCK"
+                        Click="OnSelectTextBlock"
+                        Padding="10,11,10,11"
+                        Margin="0,0,0,7" />
+                    <Button
+                        Name="ButtonElementButton"
+                        Aspect="$AspectStudioGhostButton"
+                        Content="BUTTON"
+                        Click="OnSelectButton"
+                        Padding="10,11,10,11" />
                 </StackPanel>
+            </Grid>
+            <Grid Grid.Column="1" Margin="0,0,12,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <TextBlock
+                        Text="LIVE PREVIEW"
+                        FontFamily="Cascadia Mono SemiBold"
+                        FontSize="9"
+                        Foreground="$LimeBrush"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        Name="PreviewTypeText"
+                        Text="BORDER / LOCAL ASPECT"
+                        FontFamily="Cascadia Mono"
+                        FontSize="8"
+                        Foreground="$SlateDimBrush"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+                </Grid>
                 <Border
-                    Grid.Column="1"
-                    Background="$PanelBrush"
+                    Name="PreviewStage"
+                    Grid.Row="1"
+                    Background="$PanelAltBrush"
                     BorderBrush="$LineStrongBrush"
                     BorderThickness="1"
-                    Padding="24"
-                    Margin="14,0,0,0">
-                    <StackPanel>
-                        <TextBlock
-                            Text="CASCADE TRACE"
-                            FontFamily="Cascadia Mono SemiBold"
-                            FontSize="10"
-                            Foreground="$CyanBrush" />
-                        <TextBlock
-                            Text="Button#Continue"
-                            FontFamily="Bahnschrift SemiBold"
-                            FontSize="25"
-                            Margin="0,12,0,0" />
-                        <Border
-                            BorderBrush="$LineBrush"
-                            BorderThickness="0,1,0,0"
-                            Margin="0,18,0,0"
-                            Padding="0,13,0,0">
-                            <Grid>
-                                <TextBlock
-                                    Text="TYPE DEFAULT"
-                                    FontFamily="Cascadia Mono"
-                                    FontSize="10"
-                                    Foreground="$SlateDimBrush" />
-                                <TextBlock
-                                    Text="accepted"
-                                    FontFamily="Cascadia Mono"
-                                    FontSize="10"
-                                    Foreground="$SlateBrush"
-                                    HorizontalAlignment="Right" />
-                            </Grid>
-                        </Border>
-                        <Border
-                            BorderBrush="$LineBrush"
-                            BorderThickness="0,1,0,0"
-                            Margin="0,13,0,0"
-                            Padding="0,13,0,0">
-                            <Grid>
-                                <TextBlock
-                                    Text="NAMED ASPECT / PrimaryButton"
-                                    FontFamily="Cascadia Mono"
-                                    FontSize="10"
-                                    Foreground="$SlateDimBrush" />
-                                <TextBlock
-                                    Text="wins"
-                                    FontFamily="Cascadia Mono"
-                                    FontSize="10"
-                                    Foreground="$LimeBrush"
-                                    HorizontalAlignment="Right" />
-                            </Grid>
-                        </Border>
-                        <Border
-                            BorderBrush="$LineBrush"
-                            BorderThickness="0,1,0,0"
-                            Margin="0,13,0,0"
-                            Padding="0,13,0,0">
-                            <Grid>
-                                <TextBlock
-                                    Text="STATE / hover"
-                                    FontFamily="Cascadia Mono"
-                                    FontSize="10"
-                                    Foreground="$SlateDimBrush" />
-                                <TextBlock
-                                    Text="active"
-                                    FontFamily="Cascadia Mono"
-                                    FontSize="10"
-                                    Foreground="$PinkBrush"
-                                    HorizontalAlignment="Right" />
-                            </Grid>
-                        </Border>
-                        <Border
-                            BorderBrush="$LineBrush"
-                            BorderThickness="0,1,0,0"
-                            Margin="0,13,0,0"
-                            Padding="0,13,0,0">
-                            <Grid>
-                                <TextBlock
-                                    Text="LOCAL ATTRIBUTE"
-                                    FontFamily="Cascadia Mono"
-                                    FontSize="10"
-                                    Foreground="$SlateDimBrush" />
-                                <TextBlock
-                                    Text="highest"
-                                    FontFamily="Cascadia Mono"
-                                    FontSize="10"
-                                    Foreground="$CyanBrush"
-                                    HorizontalAlignment="Right" />
-                            </Grid>
-                        </Border>
-                        <TextBlock
-                            Text="Every winner has an origin, specificity, layer, and token trace. No haunted styling séance required."
-                            FontSize="13"
-                            Foreground="$SlateBrush"
-                            TextWrapping="Wrap"
-                            Margin="0,20,0,0" />
-                    </StackPanel>
-                </Border>
+                    Padding="28"
+                    ClipToBounds="True" />
             </Grid>
-        </StackPanel>
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="38" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <TextBlock
+                        Text="PROPERTIES"
+                        FontFamily="Cascadia Mono SemiBold"
+                        FontSize="9"
+                        Foreground="$PinkBrush"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        Name="PropertyCountText"
+                        Text="00 EDITABLE"
+                        FontFamily="Cascadia Mono"
+                        FontSize="8"
+                        Foreground="$SlateDimBrush"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+                </Grid>
+                <Grid Grid.Row="1" Margin="0,0,0,7">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="54" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Text="FILTER"
+                        FontFamily="Cascadia Mono SemiBold"
+                        FontSize="8"
+                        Foreground="$SlateDimBrush"
+                        VerticalAlignment="Center" />
+                    <TextBox
+                        Name="PropertySearch"
+                        Grid.Column="1"
+                        TextChanged="OnPropertySearchChanged"
+                        Background="$PanelBrush"
+                        BorderBrush="$LineStrongBrush"
+                        BorderThickness="1"
+                        Foreground="$PaperBrush"
+                        CaretBrush="$CyanBrush"
+                        FontFamily="Cascadia Mono"
+                        FontSize="9"
+                        Padding="7,5,7,5" />
+                </Grid>
+                <AspectStudioScrollHost
+                    Name="PropertyHost"
+                    Grid.Row="2"
+                    Background="$PanelAltBrush"
+                    BorderBrush="$LineStrongBrush"
+                    BorderThickness="1"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Disabled" />
+            </Grid>
+        </Grid>
+        <Border Grid.Row="2" BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Name="StatusElement"
+                    Text="BORDER"
+                    FontFamily="Cascadia Mono"
+                    FontSize="8"
+                    Foreground="$CyanBrush"
+                    Margin="0,0,18,0" />
+                <TextBlock
+                    Name="StatusModified"
+                    Grid.Column="1"
+                    Text="MODIFIED 00"
+                    FontFamily="Cascadia Mono"
+                    FontSize="8"
+                    Foreground="$LimeBrush"
+                    Margin="0,0,18,0" />
+                <TextBlock
+                    Name="StatusMessage"
+                    Grid.Column="2"
+                    Text="READY"
+                    FontFamily="Cascadia Mono"
+                    FontSize="8"
+                    Foreground="$SlateBrush"
+                    HorizontalAlignment="Right" />
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

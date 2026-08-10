@@ -117,6 +117,10 @@ public partial class PresentationWindow : Window
         {
             PagePrism.UpdateDiagnostics(CapturePrismDiagnosticsSnapshot());
         }
+        if (currentChapter == PresentationChapter.Aspect && !suppressLiveDiagnostics)
+        {
+            PageAspect.UpdateDiagnostics();
+        }
     }
 
     private void UpdateHeaderDiagnostics(UiFrame frame)
@@ -178,9 +182,13 @@ public partial class PresentationWindow : Window
         {
             PagePrism.Deactivate();
         }
+        if (currentChapter == PresentationChapter.Aspect && chapter != PresentationChapter.Aspect)
+        {
+            PageAspect.Deactivate();
+        }
 
         currentChapter = chapter;
-        ChapterScrollViewer.Visibility = chapter == PresentationChapter.Prism
+        ChapterScrollViewer.Visibility = chapter is PresentationChapter.Aspect or PresentationChapter.Prism
             ? Visibility.Collapsed
             : Visibility.Visible;
         foreach (PresentationChapter candidate in ChapterOrder)
@@ -189,11 +197,15 @@ public partial class PresentationWindow : Window
             tourPages[candidate].Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
             tourNavigation[candidate].IsChecked = selected;
         }
-        if (chapter != PresentationChapter.Prism)
+        if (chapter is not PresentationChapter.Aspect and not PresentationChapter.Prism)
         {
             ChapterScrollViewer.ScrollInfo.SetVerticalOffset(0);
         }
 
+        if (currentChapter == PresentationChapter.Aspect)
+        {
+            PageAspect.Activate();
+        }
         if (currentChapter == PresentationChapter.Prism)
         {
             PagePrism.Activate();
@@ -214,7 +226,7 @@ public partial class PresentationWindow : Window
         PresentationChapter.Welcome => "WELCOME",
         PresentationChapter.RetainedModel => "RETAINED MODEL",
         PresentationChapter.Markup => "BUILD-TIME MARKUP",
-        PresentationChapter.Aspect => "ASPECT DESIGN SYSTEM",
+        PresentationChapter.Aspect => "ASPECT STUDIO",
         PresentationChapter.Motion => "MOTION",
         PresentationChapter.Prism => "PRISM",
         PresentationChapter.FramePipeline => "FRAME PIPELINE",
@@ -266,7 +278,7 @@ public partial class PresentationWindow : Window
                 (captureIndex - 1 + ChapterOrder.Length) % ChapterOrder.Length];
             ShowChapter(previousChapter);
             ButtonAutomationPeer next = new(NextButton);
-            suppressLiveDiagnostics = true;
+            suppressLiveDiagnostics = captureChapter != PresentationChapter.Aspect;
             try
             {
                 await CaptureScreenshotFrameAsync(fullPath, () =>
@@ -307,7 +319,7 @@ public partial class PresentationWindow : Window
         handler = (_, _) =>
         {
             renderedFrames++;
-            if (renderedFrames < 4)
+            if (renderedFrames < 4 || Root?.RetainedRenderCache.IsRootValid != true)
             {
                 Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "presentation screenshot settle");
                 return;

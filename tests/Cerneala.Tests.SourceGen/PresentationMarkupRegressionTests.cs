@@ -177,7 +177,7 @@ public sealed class PresentationMarkupRegressionTests
     }
 
     [Fact]
-    public void NarrativeChaptersScrollWhilePrismKeepsAFiniteViewport()
+    public void NarrativeChaptersScrollWhileStudiosKeepAFiniteViewport()
     {
         string repositoryRoot = FindRepositoryRoot();
         string presentationRoot = Path.Combine(repositoryRoot, "CernealaPresentation");
@@ -189,7 +189,6 @@ public sealed class PresentationMarkupRegressionTests
             "PageWelcome",
             "PageRetained",
             "PageMarkup",
-            "PageAspect",
             "PageMotion",
             "PagePipeline"
         ];
@@ -197,22 +196,24 @@ public sealed class PresentationMarkupRegressionTests
             element.Attribute("Name")?.Value == name))).ToArray();
         XElement pageHost = Assert.IsType<XElement>(pages[0].Parent);
         XElement scrollViewer = Assert.IsType<XElement>(pageHost.Parent);
-        XElement prism = Assert.Single(document.Descendants().Where(element =>
-            element.Attribute("Name")?.Value == "PagePrism"));
+        XElement[] studios = new[] { "PageAspect", "PagePrism" }
+            .Select(name => Assert.Single(document.Descendants().Where(element =>
+                element.Attribute("Name")?.Value == name)))
+            .ToArray();
 
         Assert.All(pages, page => Assert.Same(pageHost, page.Parent));
         Assert.Equal("ScrollViewer", scrollViewer.Name.LocalName);
         Assert.Equal("ChapterScrollViewer", scrollViewer.Attribute("Name")?.Value);
         Assert.Equal("Auto", scrollViewer.Attribute("VerticalScrollBarVisibility")?.Value);
         Assert.Equal("Disabled", scrollViewer.Attribute("HorizontalScrollBarVisibility")?.Value);
-        Assert.Same(scrollViewer.Parent, prism.Parent);
-        Assert.DoesNotContain(prism, scrollViewer.Descendants());
+        Assert.All(studios, studio => Assert.Same(scrollViewer.Parent, studio.Parent));
+        Assert.All(studios, studio => Assert.DoesNotContain(studio, scrollViewer.Descendants()));
 
         string code = File.ReadAllText(Path.Combine(
             presentationRoot,
             "PresentationWindow.cui.xml.cs"));
         Assert.Contains(
-            "ChapterScrollViewer.Visibility = chapter == PresentationChapter.Prism",
+            "ChapterScrollViewer.Visibility = chapter is PresentationChapter.Aspect or PresentationChapter.Prism",
             code,
             StringComparison.Ordinal);
         Assert.Contains(
@@ -220,7 +221,7 @@ public sealed class PresentationMarkupRegressionTests
             code,
             StringComparison.Ordinal);
         int containerVisibilityIndex = code.IndexOf(
-            "ChapterScrollViewer.Visibility = chapter == PresentationChapter.Prism",
+            "ChapterScrollViewer.Visibility = chapter is PresentationChapter.Aspect or PresentationChapter.Prism",
             StringComparison.Ordinal);
         int pageVisibilityIndex = code.IndexOf(
             "tourPages[candidate].Visibility = selected ? Visibility.Visible : Visibility.Collapsed",

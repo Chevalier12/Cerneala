@@ -465,9 +465,6 @@
                         <MarkupChapterView
                             Name="PageMarkup"
                             Visibility="Collapsed" />
-                        <AspectChapterView
-                            Name="PageAspect"
-                            Visibility="Collapsed" />
                         <MotionChapterView
                             Name="PageMotion"
                             Visibility="Collapsed" />
@@ -476,6 +473,9 @@
                             Visibility="Collapsed" />
                     </Grid>
                 </ScrollViewer>
+                <AspectChapterView
+                    Name="PageAspect"
+                    Visibility="Collapsed" />
                 <PrismChapterView
                     Name="PagePrism"
                     Visibility="Collapsed" />
