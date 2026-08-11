@@ -527,6 +527,9 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonVariants.md
 |   |   |   |-- Cerneala.UI.Controls.Canvas.md
 |   |   |   |-- Cerneala.UI.Controls.CheckBox.md
+|   |   |   |-- Cerneala.UI.Controls.ColorPicker.md
+|   |   |   |-- Cerneala.UI.Controls.ColorSpectrum.md
+|   |   |   |-- Cerneala.UI.Controls.ColorSwatch.md
 |   |   |   |-- Cerneala.UI.Controls.ComboBox.md
 |   |   |   |-- Cerneala.UI.Controls.ComboBoxItem.md
 |   |   |   |-- Cerneala.UI.Controls.ContentControl.ContentValueEqualityComparer.md
@@ -593,6 +596,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Path.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Rectangle.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Shape.md
+|   |   |   |-- Cerneala.UI.Controls.Shapes.SvgPath.md
 |   |   |   |-- Cerneala.UI.Controls.Slider.md
 |   |   |   |-- Cerneala.UI.Controls.StackPanel.md
 |   |   |   |-- Cerneala.UI.Controls.TabControl.md
@@ -1907,6 +1911,8 @@ Generated from `.`.
 |   |   |   |-- ButtonTests.cs
 |   |   |   |-- CanvasTests.cs
 |   |   |   |-- CheckBoxTests.cs
+|   |   |   |-- ColorPickerTests.cs
+|   |   |   |-- ColorSwatchTests.cs
 |   |   |   |-- ComboBoxTests.cs
 |   |   |   |-- ComponentTemplateLifecycleTests.cs
 |   |   |   |-- ContentControlTests.cs
@@ -1963,6 +1969,7 @@ Generated from `.`.
 |   |   |   |   |       |-- PrismRetainedCacheRedContractTests.cs
 |   |   |   |   |       |-- PrismRetainedSurfaceCacheTests.cs
 |   |   |   |   |       +-- PrismRetainedVisualVersionTests.cs
+|   |   |   |   |-- AlphaBlendRenderingTests.cs
 |   |   |   |   |-- BrushRenderingTests.cs
 |   |   |   |   |-- MonoGameClipStackTests.cs
 |   |   |   |   |-- MonoGameDrawingBackendStateTests.cs
@@ -2590,7 +2597,8 @@ Generated from `.`.
 |   |   |   |-- Ellipse.cs
 |   |   |   |-- Path.cs
 |   |   |   |-- Rectangle.cs
-|   |   |   +-- Shape.cs
+|   |   |   |-- Shape.cs
+|   |   |   +-- SvgPath.cs
 |   |   |-- Templates/
 |   |   |   |-- ComponentTemplate.cs
 |   |   |   |-- ComponentTemplateContext.cs
@@ -2614,6 +2622,12 @@ Generated from `.`.
 |   |   |-- Canvas.cs
 |   |   |-- CheckBox.cs
 |   |   |-- CheckBoxTemplates.cs
+|   |   |-- ColorPicker.cs
+|   |   |-- ColorPickerColorMath.cs
+|   |   |-- ColorPickerTemplates.cs
+|   |   |-- ColorSpectrum.cs
+|   |   |-- ColorSwatch.cs
+|   |   |-- ColorSwatchTemplates.cs
 |   |   |-- ComboBox.cs
 |   |   |-- ComboBoxItem.cs
 |   |   |-- ComboBoxTemplates.cs
