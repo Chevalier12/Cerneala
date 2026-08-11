@@ -22,11 +22,17 @@ The following example wraps text using the shared service instance and a `TextAs
 ```csharp
 using Cerneala.UI.Text;
 
-TextAspect aspect = new("Arial", 16, TextWrapping.Wrap);
+TextAspect aspect = new(
+    "Arial",
+    16,
+    TextWrapping.NoWrap,
+    TextTrimming.WordEllipsis);
+ResolvedTextFont font = FontResolver.Default.Resolve(aspect);
 
 IReadOnlyList<TextLine> lines = LineBreakService.Default.BreakLines(
-    "alpha beta/gamma",
+    "alpha beta gamma",
     aspect,
+    font,
     availableWidth: 48);
 
 float measuredWidth = LineBreakService.Default.MeasureTextWidth("alpha", aspect);
@@ -41,7 +47,9 @@ Wrapping is skipped when `TextAspect.Wrapping` is `TextWrapping.NoWrap`, when `a
 
 When wrapping is enabled, the service parses the paragraph with `StringInfo.ParseCombiningCharacters`, so fallback breaks are made at text element boundaries rather than inside combining-character sequences. Preferred break opportunities occur after whitespace and after `-`, `/`, `\`, `,`, `;`, or `:`. Whitespace used as a wrap boundary is trimmed from the end of the emitted line, and leading break whitespace is skipped before the next line.
 
-Widths are estimated with a fixed character width: `aspect.FontSize * aspect.Scale * 0.5f`. This service does not resolve fonts or shape glyphs; callers that need cached layout and font-aware line height typically use `TextMeasurer`.
+When trimming is `CharacterEllipsis` or `WordEllipsis`, finite-width overflowing lines are collapsed with a `U+2026` glyph. Character trimming uses the closest fitting Unicode text-element boundary. Word trimming uses the closest complete break boundary and falls back to character trimming when the first word cannot fit. If even the ellipsis glyph cannot fit, the service returns an empty line.
+
+The `BreakLines` overload receives a resolved font and uses `TextShaper` advances when available, with the fixed `aspect.FontSize * aspect.Scale * 0.5f` estimate as a fallback. The public `MeasureTextWidth(string, TextAspect)` convenience method uses the fixed estimate because it does not receive a resolved font.
 
 Passing `null` for `text` to `BreakLines` or `MeasureTextWidth` throws `ArgumentNullException`.
 
@@ -58,7 +66,7 @@ Passing `null` for `text` to `BreakLines` or `MeasureTextWidth` throws `Argument
 ## Methods
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `BreakLines(string text, TextAspect aspect, float availableWidth)` | `IReadOnlyList<TextLine>` | Splits `text` into measured lines according to paragraph separators, `aspect.Wrapping`, and `availableWidth`. |
+| `BreakLines(string text, TextAspect aspect, ResolvedTextFont font, float availableWidth)` | `IReadOnlyList<TextLine>` | Splits and, when requested, ellipsizes `text` according to paragraphs, wrapping, trimming, and available width. |
 | `MeasureTextWidth(string text, TextAspect aspect)` | `float` | Returns the estimated width of `text` using the service's fixed character-width formula. |
 
 ## Related Supporting Types

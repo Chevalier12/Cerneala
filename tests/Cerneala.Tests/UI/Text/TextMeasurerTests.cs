@@ -89,6 +89,165 @@ public sealed class TextMeasurerTests
     }
 
     [Fact]
+    public void CharacterEllipsisUsesTheClosestGraphemeBoundary()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, trimming: TextTrimming.CharacterEllipsis);
+        float width = measurer.Measure("Alpha be…", aspect, float.PositiveInfinity).Size.Width;
+
+        TextMeasureResult result = measurer.Measure("Alpha beta gamma", aspect, width);
+
+        TextLine line = Assert.Single(result.Lines);
+        Assert.Equal("Alpha be…", line.Text);
+        Assert.True(line.Width <= width);
+    }
+
+    [Fact]
+    public void CharacterEllipsisDoesNotSplitSurrogatePairs()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, trimming: TextTrimming.CharacterEllipsis);
+        float width = measurer.Measure("A…", aspect, float.PositiveInfinity).Size.Width;
+
+        TextLine line = Assert.Single(measurer.Measure("A\U0001F600B", aspect, width).Lines);
+
+        Assert.Equal("A…", line.Text);
+    }
+
+    [Fact]
+    public void WordEllipsisUsesTheClosestCompleteWord()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, trimming: TextTrimming.WordEllipsis);
+        float width = measurer.Measure("Alpha be…", aspect, float.PositiveInfinity).Size.Width;
+
+        TextLine line = Assert.Single(measurer.Measure("Alpha beta gamma", aspect, width).Lines);
+
+        Assert.Equal("Alpha…", line.Text);
+        Assert.True(line.Width <= width);
+    }
+
+    [Fact]
+    public void WordEllipsisFallsBackToCharacterBoundaryForAnOversizedFirstWord()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, trimming: TextTrimming.WordEllipsis);
+        float width = measurer.Measure("Supe…", aspect, float.PositiveInfinity).Size.Width;
+
+        TextLine line = Assert.Single(measurer.Measure("Supercalifragilistic", aspect, width).Lines);
+
+        Assert.Equal("Supe…", line.Text);
+        Assert.True(line.Width <= width);
+    }
+
+    [Fact]
+    public void TrimmingLeavesFittingTextUnchanged()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, trimming: TextTrimming.CharacterEllipsis);
+
+        TextLine line = Assert.Single(measurer.Measure("Alpha", aspect, 100).Lines);
+
+        Assert.Equal("Alpha", line.Text);
+    }
+
+    [Fact]
+    public void TrimmingReturnsAnEmptyLineWhenEvenTheEllipsisCannotFit()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, trimming: TextTrimming.CharacterEllipsis);
+
+        TextLine line = Assert.Single(measurer.Measure("Alpha", aspect, 1).Lines);
+
+        Assert.Equal(string.Empty, line.Text);
+        Assert.Equal(0, line.Width);
+    }
+
+    [Fact]
+    public void VerticalOverflowCollapsesTheLastVisibleWrappedLine()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, TextWrapping.Wrap, TextTrimming.WordEllipsis);
+        float lineHeight = measurer.Measure("A", aspect, 45).Size.Height;
+
+        TextMeasureResult result = measurer.Measure(
+            "Alpha beta gamma delta",
+            aspect,
+            new Cerneala.UI.Layout.LayoutSize(45, lineHeight * 2));
+
+        Assert.Equal(["Alpha", "beta…"], result.Lines.Select(line => line.Text).ToArray());
+        Assert.Equal(2, result.LineCount);
+        Assert.Equal(lineHeight * 2, result.Size.Height, precision: 3);
+    }
+
+    [Fact]
+    public void VerticalOverflowCollapsesExplicitLinesAtTheLastVisibleLine()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, TextWrapping.NoWrap, TextTrimming.WordEllipsis);
+        float lineHeight = measurer.Measure("A", aspect, 100).Size.Height;
+
+        TextMeasureResult result = measurer.Measure(
+            "Alpha\nbeta\ngamma",
+            aspect,
+            new Cerneala.UI.Layout.LayoutSize(100, lineHeight * 2));
+
+        Assert.Equal(["Alpha", "beta…"], result.Lines.Select(line => line.Text).ToArray());
+    }
+
+    [Fact]
+    public void VerticalOverflowRetainsTheFirstLineWhenHeightIsSmallerThanLineHeight()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, TextWrapping.Wrap, TextTrimming.CharacterEllipsis);
+        float lineHeight = measurer.Measure("A", aspect, 45).Size.Height;
+
+        TextMeasureResult result = measurer.Measure(
+            "Alpha beta gamma",
+            aspect,
+            new Cerneala.UI.Layout.LayoutSize(45, lineHeight / 2));
+
+        TextLine line = Assert.Single(result.Lines);
+        Assert.EndsWith("…", line.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VisibleLineCountParticipatesInTheLayoutCacheIdentity()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, TextWrapping.Wrap, TextTrimming.WordEllipsis);
+        float lineHeight = measurer.Measure("A", aspect, 45).Size.Height;
+
+        TextMeasureResult oneLine = measurer.Measure(
+            "Alpha beta gamma delta",
+            aspect,
+            new Cerneala.UI.Layout.LayoutSize(45, lineHeight));
+        TextMeasureResult twoLines = measurer.Measure(
+            "Alpha beta gamma delta",
+            aspect,
+            new Cerneala.UI.Layout.LayoutSize(45, lineHeight * 2));
+
+        Assert.NotEqual(oneLine.CacheKey, twoLines.CacheKey);
+        Assert.Equal(1, oneLine.LineCount);
+        Assert.Equal(2, twoLines.LineCount);
+    }
+
+    [Fact]
+    public void NoneDoesNotCollapseLinesForFiniteLayoutBounds()
+    {
+        TextMeasurer measurer = new();
+        TextAspect aspect = new("Default", 10, TextWrapping.Wrap, TextTrimming.None);
+        float lineHeight = measurer.Measure("A", aspect, 45).Size.Height;
+
+        TextMeasureResult result = measurer.Measure(
+            "Alpha beta gamma",
+            aspect,
+            new Cerneala.UI.Layout.LayoutSize(45, lineHeight));
+
+        Assert.Equal(["Alpha", "beta", "gamma"], result.Lines.Select(line => line.Text).ToArray());
+    }
+
+    [Fact]
     public void MeasureAllowsConcurrentAccessToSharedCache()
     {
         TextLayoutCache cache = new();

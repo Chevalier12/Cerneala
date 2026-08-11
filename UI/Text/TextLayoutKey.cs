@@ -7,4 +7,5 @@ public readonly record struct TextLayoutKey(
     TextWrapping Wrapping,
     float WrappingWidth,
     TextTrimming Trimming,
-    float Scale);
+    float Scale,
+    int VisibleLineCount = int.MaxValue);

@@ -17,7 +17,8 @@ public readonly record struct TextLayoutKey(
     TextWrapping Wrapping,
     float WrappingWidth,
     TextTrimming Trimming,
-    float Scale)
+    float Scale,
+    int VisibleLineCount = int.MaxValue)
 ```
 
 Inheritance:
@@ -44,7 +45,7 @@ bool cached = cache.Contains(key);
 
 ## Remarks
 
-`TextLayoutKey` is an immutable value used as the dictionary key for text layout caching. It combines the text content, resolved font identity, font size, wrapping mode and width, trimming mode, and scale.
+`TextLayoutKey` is an immutable value used as the dictionary key for text layout caching. It combines the text content, resolved font identity, font size, wrapping mode and width, trimming mode, scale, and effective visible-line count. `VisibleLineCount` remains `int.MaxValue` for unconstrained or fully visible layouts and contains the collapsed line count for height-limited ellipsis layouts.
 
 The type does not validate constructor values. It relies on callers to supply values that match the measurement request.
 
@@ -59,6 +60,7 @@ The type does not validate constructor values. It relies on callers to supply va
 | `WrappingWidth` | `float` | Gets the available wrapping width. |
 | `Trimming` | `TextTrimming` | Gets the trimming mode. |
 | `Scale` | `float` | Gets the text scale. |
+| `VisibleLineCount` | `int` | Gets the effective visible-line limit used by height-aware trimming. Defaults to `int.MaxValue`. |
 
 ## Applies To
 

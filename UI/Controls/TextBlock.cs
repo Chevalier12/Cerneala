@@ -141,7 +141,9 @@ public class TextBlock : Control
     {
         TextAspect aspect = CreateTextAspect();
         RecordFontResourceDependency();
-        TextMeasureResult measurement = GetTextMeasurer().Measure(Text, aspect, context.AvailableSize.Width);
+        TextMeasureResult measurement = TextTrimming == TextTrimming.None
+            ? GetTextMeasurer().Measure(Text, aspect, context.AvailableSize.Width)
+            : GetTextMeasurer().Measure(Text, aspect, context.AvailableSize);
         lastMeasurement = measurement;
         SetRenderDependencies(RenderDependencies.WithTextLayoutIdentity(measurement.RenderIdentity));
         return measurement.Size;
@@ -156,12 +158,19 @@ public class TextBlock : Control
 
         TextAspect aspect = CreateTextAspect();
         RecordFontResourceDependency();
-        TextMeasureResult measurement = GetTextRenderer().Render(
-            context.DrawingContext,
-            Text,
-            aspect,
-            context.Bounds.Width,
-            new DrawPoint(context.Bounds.X, context.Bounds.Y));
+        TextMeasureResult measurement = TextTrimming == TextTrimming.None
+            ? GetTextRenderer().Render(
+                context.DrawingContext,
+                Text,
+                aspect,
+                context.Bounds.Width,
+                new DrawPoint(context.Bounds.X, context.Bounds.Y))
+            : GetTextRenderer().Render(
+                context.DrawingContext,
+                Text,
+                aspect,
+                new LayoutSize(context.Bounds.Width, context.Bounds.Height),
+                new DrawPoint(context.Bounds.X, context.Bounds.Y));
 
         if (lastMeasurement is null || lastMeasurement.CacheKey != measurement.CacheKey)
         {

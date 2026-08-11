@@ -22,12 +22,17 @@ Measure wrapped text with the shared default measurer:
 
 ```csharp
 using Cerneala.UI.Text;
+using Cerneala.UI.Layout;
 
-TextAspect aspect = new("Arial", 14, TextWrapping.Wrap);
+TextAspect aspect = new(
+    "Arial",
+    14,
+    TextWrapping.Wrap,
+    TextTrimming.WordEllipsis);
 TextMeasureResult result = TextMeasurer.Default.Measure(
     "A short line of text for layout.",
     aspect,
-    availableWidth: 160);
+    new LayoutSize(160, 40));
 
 float desiredWidth = result.Size.Width;
 float desiredHeight = result.Size.Height;
@@ -54,9 +59,11 @@ int misses = cache.Misses;
 
 `TextMeasurer` is the layout-facing text measurement service used by controls such as text and button surfaces. It delegates font lookup to `FontResolver`, line creation to `LineBreakService`, and stores `TextMeasureResult` instances in a `TextLayoutCache`.
 
-`Measure` normalizes the supplied width before it builds the cache key. `TextWrapping.NoWrap` and `float.PositiveInfinity` use an infinite wrapping width. Non-positive or `NaN` widths become `0`. Other widths are used as supplied.
+`Measure` normalizes the supplied width before it builds the cache key. `TextWrapping.NoWrap` uses an infinite width only when trimming is `None`; either ellipsis mode retains a finite width so overflowing no-wrap lines can be collapsed. Positive infinity remains unconstrained, while non-positive or `NaN` widths become `0`.
 
-The cache key includes the text, resolved font identity, font size, wrapping mode, normalized wrapping width, trimming mode, and scale. The returned result contains the measured `LayoutSize`, line count, cache key, resolved font identity, and the measured lines. Height is based on measured line height when the text shaper can provide it, otherwise on `FontSize * Scale`.
+The `LayoutSize` overload also applies finite height. When an ellipsis mode is active and all lines do not fit, the result retains at least the first line and collapses the final visible line. The width-only overload is equivalent to an unconstrained height.
+
+The cache key includes the text, resolved font identity, font size, wrapping mode, normalized wrapping width, trimming mode, scale, and the effective visible-line count. The returned result contains the measured `LayoutSize`, visible line count, cache key, resolved font identity, and the exact lines to render. Height is based on measured line height when the text shaper can provide it, otherwise on `FontSize * Scale`.
 
 Calls to `Measure` lock around cache access for the `TextMeasurer` instance. The exposed `LayoutCache` object can still be accessed directly by callers, so direct cache operations should be coordinated by the caller when shared across threads.
 
@@ -81,6 +88,7 @@ Calls to `Measure` lock around cache access for the `TextMeasurer` instance. The
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Measure(string text, TextAspect aspect, float availableWidth)` | `TextMeasureResult` | Measures text for the supplied text aspect and available width, using the layout cache when an equivalent measurement already exists. |
+| `Measure(string text, TextAspect aspect, LayoutSize availableSize)` | `TextMeasureResult` | Measures text against width and height, including horizontal and final-visible-line ellipsis behavior. |
 
 ## Method Details
 
@@ -96,7 +104,7 @@ public virtual TextMeasureResult Measure(string text, TextAspect aspect, float a
 | --- | --- | --- |
 | `text` | `string` | The text to measure. Cannot be `null`. |
 | `aspect` | `TextAspect` | Font, wrapping, trimming, scale, color, and optional font resource information used for measurement. |
-| `availableWidth` | `float` | The available width used for wrapping. Infinite width or `TextWrapping.NoWrap` disables wrapping for measurement. |
+| `availableWidth` | `float` | The available width used for wrapping or ellipsis trimming. The overload leaves height unconstrained. |
 
 #### Returns
 
@@ -108,8 +116,16 @@ A measurement containing the requested size, line count, cache key, resolved fon
 
 | Exception | Condition |
 | --- | --- |
-| `ArgumentNullException` | `text` is `null`. |
+| `ArgumentNullException` | `text` or `aspect` is `null`. |
 | `InvalidOperationException` | Font resolution requires a font resource provider, but the configured `FontResolver` cannot resolve font resources. |
+
+### Measure with layout bounds
+
+```csharp
+public virtual TextMeasureResult Measure(string text, TextAspect aspect, LayoutSize availableSize)
+```
+
+`availableSize.Width` controls wrapping and horizontal collapse. `availableSize.Height` limits visible lines only when trimming is not `None`; at least the first line remains visible, matching the WPF `TextBlock` height-overflow contract.
 
 ## Applies To
 

@@ -123,4 +123,46 @@ public sealed class TextRendererTests
         Assert.Single(commands);
         Assert.Same(requestedBrush, commands[0].Brush);
     }
+
+    [Fact]
+    public void RenderDrawsCharacterEllipsisInsteadOfOverflowingText()
+    {
+        TextRenderer renderer = new();
+        DrawCommandList commands = new();
+        TextAspect aspect = new(
+            "Default",
+            10,
+            trimming: TextTrimming.CharacterEllipsis,
+            foreground: new SolidColorBrush(Color.White));
+        float width = new TextMeasurer().Measure("Alpha be…", aspect, float.PositiveInfinity).Size.Width;
+
+        renderer.Render(new DrawingContext(commands), "Alpha beta gamma", aspect, width, default);
+
+        DrawCommand command = Assert.Single(commands);
+        Assert.Equal("Alpha be…", command.Text);
+    }
+
+    [Fact]
+    public void RenderDrawsOnlyVisibleLinesAndEllipsizesTheLastOne()
+    {
+        TextMeasurer measurer = new();
+        TextRenderer renderer = new(FontResolver.Default, measurer);
+        DrawCommandList commands = new();
+        TextAspect aspect = new(
+            "Default",
+            10,
+            TextWrapping.Wrap,
+            TextTrimming.WordEllipsis,
+            foreground: new SolidColorBrush(Color.White));
+        float lineHeight = measurer.Measure("A", aspect, 45).Size.Height;
+
+        renderer.Render(
+            new DrawingContext(commands),
+            "Alpha beta gamma delta",
+            aspect,
+            new Cerneala.UI.Layout.LayoutSize(45, lineHeight * 2),
+            default);
+
+        Assert.Equal(["Alpha", "beta…"], commands.Select(command => command.Text).ToArray());
+    }
 }

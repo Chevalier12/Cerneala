@@ -53,20 +53,39 @@ public sealed class TextBlockLayoutContractTests
     }
 
     [Fact]
-    public void TextBlockTrimmingPropertyInvalidatesRenderWithoutClaimingProductionEllipsis()
+    public void TextBlockTrimmingPropertyInvalidatesMeasureAndRender()
     {
         TextBlock textBlock = new()
         {
             Text = "abcdefghijklmnopqrst"
         };
         textBlock.Measure(new MeasureContext(new LayoutSize(50, 200)));
-        string identity = textBlock.RenderDependencies.TextLayoutIdentity;
         textBlock.DirtyState.ClearAll();
 
-        textBlock.TextTrimming = TextTrimming.None;
+        textBlock.TextTrimming = TextTrimming.CharacterEllipsis;
 
-        Assert.Equal(identity, textBlock.RenderDependencies.TextLayoutIdentity);
-        Assert.False(textBlock.DirtyState.Has(InvalidationFlags.Render));
+        Assert.True(textBlock.DirtyState.Has(InvalidationFlags.Measure));
+        Assert.True(textBlock.DirtyState.Has(InvalidationFlags.Render));
+    }
+
+    [Fact]
+    public void TextBlockMeasuresAndRendersCharacterEllipsisInsideItsBounds()
+    {
+        UIRoot root = new(45, 30);
+        TextBlock textBlock = new()
+        {
+            Text = "Alpha beta gamma",
+            FontSize = 10,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        root.VisualChildren.Add(textBlock);
+
+        root.ProcessFrame();
+        DrawCommand command = Assert.Single(root.RetainedRenderer.Commit(root));
+
+        Assert.EndsWith("…", command.Text, StringComparison.Ordinal);
+        Assert.NotEqual(textBlock.Text, command.Text);
+        Assert.True(textBlock.DesiredSize.Width <= root.ViewportWidth);
     }
 
     [Fact]

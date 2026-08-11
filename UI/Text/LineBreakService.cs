@@ -6,6 +6,8 @@ namespace Cerneala.UI.Text;
 
 public sealed class LineBreakService
 {
+    private const string Ellipsis = "…";
+
     public static LineBreakService Default { get; } = new();
 
     public IReadOnlyList<TextLine> BreakLines(
@@ -34,7 +36,83 @@ public sealed class LineBreakService
             WrapParagraph(paragraph, availableWidth, Measure, lines);
         }
 
-        return lines;
+        if (aspect.Trimming == TextTrimming.None || float.IsPositiveInfinity(availableWidth))
+        {
+            return lines;
+        }
+
+        return lines
+            .Select(line => CollapseLine(line, aspect, font, availableWidth, forceEllipsis: false))
+            .ToArray();
+    }
+
+    internal TextLine CollapseLine(
+        TextLine line,
+        TextAspect aspect,
+        ResolvedTextFont font,
+        float availableWidth,
+        bool forceEllipsis)
+    {
+        ArgumentNullException.ThrowIfNull(font);
+        if (aspect.Trimming == TextTrimming.None || float.IsPositiveInfinity(availableWidth))
+        {
+            return line;
+        }
+
+        if (!forceEllipsis && line.Width <= availableWidth)
+        {
+            return line;
+        }
+
+        if (line.Text.EndsWith(Ellipsis, StringComparison.Ordinal) && line.Width <= availableWidth)
+        {
+            return line;
+        }
+
+        if (!float.IsFinite(availableWidth) || availableWidth <= 0)
+        {
+            return new TextLine(string.Empty, 0);
+        }
+
+        float Measure(string value) => MeasureTextWidth(value, aspect, font);
+        float ellipsisWidth = Measure(Ellipsis);
+        if (ellipsisWidth > availableWidth)
+        {
+            return new TextLine(string.Empty, 0);
+        }
+
+        string source = line.Text.TrimEnd();
+        if (source.Length == 0)
+        {
+            return new TextLine(Ellipsis, ellipsisWidth);
+        }
+
+        string complete = source + Ellipsis;
+        float completeWidth = Measure(complete);
+        if (completeWidth <= availableWidth)
+        {
+            return new TextLine(complete, completeWidth);
+        }
+
+        TextElement[] elements = CreateTextElements(source);
+        int fittingCount = FindFittingPrefixCount(source, elements, availableWidth, Measure);
+        if (fittingCount == 0)
+        {
+            return new TextLine(Ellipsis, ellipsisWidth);
+        }
+
+        int prefixEnd = elements[fittingCount - 1].End;
+        if (aspect.Trimming == TextTrimming.WordEllipsis)
+        {
+            int wordBoundary = FindLastWordBoundary(source, elements, fittingCount);
+            if (wordBoundary > 0)
+            {
+                prefixEnd = wordBoundary;
+            }
+        }
+
+        string collapsed = source[..prefixEnd].TrimEnd() + Ellipsis;
+        return new TextLine(collapsed, Measure(collapsed));
     }
 
     private static void WrapParagraph(
@@ -136,6 +214,56 @@ public sealed class LineBreakService
         }
 
         return lastFittingIndex;
+    }
+
+    private static int FindFittingPrefixCount(
+        string text,
+        TextElement[] elements,
+        float availableWidth,
+        Func<string, float> measure)
+    {
+        int low = 0;
+        int high = elements.Length - 1;
+        int fittingCount = 0;
+        while (low <= high)
+        {
+            int middle = low + ((high - low) / 2);
+            string candidate = text[..elements[middle].End] + Ellipsis;
+            if (measure(candidate) <= availableWidth)
+            {
+                fittingCount = middle + 1;
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle - 1;
+            }
+        }
+
+        return fittingCount;
+    }
+
+    private static int FindLastWordBoundary(string text, TextElement[] elements, int fittingCount)
+    {
+        for (int index = fittingCount - 1; index >= 0; index--)
+        {
+            bool boundaryAfter = IsBreakOpportunityAfter(elements[index].Text);
+            bool nextIsWhitespace = index + 1 < elements.Length && IsBreakWhitespace(elements[index + 1].Text);
+            if (!boundaryAfter && !nextIsWhitespace)
+            {
+                continue;
+            }
+
+            int end = IsBreakWhitespace(elements[index].Text)
+                ? TrimTrailingBreakWhitespace(text, 0, elements[index].End)
+                : elements[index].End;
+            if (end > 0)
+            {
+                return end;
+            }
+        }
+
+        return 0;
     }
 
     private static IEnumerable<string> EnumerateParagraphs(string text)
