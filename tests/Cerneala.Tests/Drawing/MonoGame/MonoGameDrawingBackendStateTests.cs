@@ -7,6 +7,7 @@ using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Media;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -15,6 +16,39 @@ namespace Cerneala.Tests.Drawing.MonoGame;
 public sealed class MonoGameDrawingBackendStateTests
 {
     private const BindingFlags NonPublicInstance = BindingFlags.Instance | BindingFlags.NonPublic;
+
+    [Theory]
+    [InlineData(80f, 0f, true, false)]
+    [InlineData(0f, 40f, false, true)]
+    [InlineData(80f, 40f, true, true)]
+    public void LinearGradientTextureUsesOnlyTheVaryingAxes(
+        float endX,
+        float endY,
+        bool variesHorizontally,
+        bool variesVertically)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        LinearGradientBrush brush = new(
+            new DrawPoint(0, 0),
+            new DrawPoint(endX, endY),
+            [new GradientStop(0, Cerneala.Drawing.Color.White), new GradientStop(1, Cerneala.Drawing.Color.Black)]);
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 80, 40), brush));
+
+        fixture.Session.BeginFrame(Cerneala.Drawing.Color.Black);
+        MonoGameDrawingBackend backend = Assert.IsType<MonoGameDrawingBackend>(fixture.Session.DrawingBackend);
+        RenderBackend(backend, commands);
+
+        Rectangle mappedBounds = GetBackendMapper(backend).MapRectangle(new DrawRect(0, 0, 80, 40));
+        Texture2D texture = Assert.IsType<Texture2D>(Assert.Single(BrushTextureCache(backend).Values));
+        Assert.Equal(variesHorizontally ? mappedBounds.Width : 1, texture.Width);
+        Assert.Equal(variesVertically ? mappedBounds.Height : 1, texture.Height);
+    }
 
     [Fact]
     public void RenderOwnsSpriteBatchAcrossConsecutiveFramesWithoutPrism()
@@ -449,21 +483,12 @@ public sealed class MonoGameDrawingBackendStateTests
     }
 
     [Fact]
-    public void TextTextureKeySeparatesForegroundColorsWithDifferentGammaMasks()
+    public void TextTextureKeyDoesNotContainForegroundColor()
     {
         Type keyType = TextTextureCacheField().FieldType.GetGenericArguments()[0];
-        MethodInfo fromMethod = keyType.GetMethod(
-            "FromWithRasterizationColor",
-            BindingFlags.Static | BindingFlags.Public,
-            binder: null,
-            types: [typeof(DrawTextRun), typeof(float), typeof(DrawPoint), typeof(Cerneala.Drawing.Color)],
-            modifiers: null)!;
-        DrawTextRun textRun = new(new TestFont("Cascadia Mono", 10), "MOTION LAB", 10);
-
-        object black = fromMethod.Invoke(null, [textRun, 1f, default(DrawPoint), Cerneala.Drawing.Color.Black])!;
-        object slate = fromMethod.Invoke(null, [textRun, 1f, default(DrawPoint), new Cerneala.Drawing.Color(138, 147, 166)])!;
-
-        Assert.NotEqual(black, slate);
+        Assert.DoesNotContain(
+            keyType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic),
+            property => property.Name.Contains("Color", StringComparison.Ordinal));
     }
 
     [Theory]
@@ -548,7 +573,7 @@ public sealed class MonoGameDrawingBackendStateTests
     }
 
     [Fact]
-    public void TextTextureKeyStillSeparatesFontSizeScaleAndColor()
+    public void TextTextureKeySeparatesGeometryButReusesCoverageAcrossColors()
     {
         IDrawFont firstFont = new TestFont("Arial", 16);
         IDrawFont secondFont = new TestFont("Consolas", 16);
@@ -581,7 +606,7 @@ public sealed class MonoGameDrawingBackendStateTests
                 1.25f,
                 position,
                 Cerneala.Drawing.Color.Black));
-        Assert.NotEqual(
+        Assert.Equal(
             baseline,
             MonoGameDrawingBackend.CreateTextTextureKeyForDiagnostics(
                 new DrawTextRun(firstFont, "key", 16),
@@ -798,6 +823,13 @@ public sealed class MonoGameDrawingBackendStateTests
         }
 
         return cache;
+    }
+
+    private static IDictionary BrushTextureCache(MonoGameDrawingBackend backend)
+    {
+        FieldInfo? field = typeof(MonoGameDrawingBackend).GetField("brushTextureCache", NonPublicInstance);
+        Assert.True(field is not null, "Expected gradient textures to remain inspectable through the backend cache.");
+        return Assert.IsAssignableFrom<IDictionary>(field!.GetValue(backend));
     }
 
     private static void InvokeDeviceReset(MonoGameDrawingBackend backend)

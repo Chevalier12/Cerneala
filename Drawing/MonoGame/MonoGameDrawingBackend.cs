@@ -37,6 +37,8 @@ public sealed class MonoGameDrawingBackend :
     private readonly Dictionary<Texture2D, int> sharedTextTextureReferenceCounts =
         new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<BrushTextureKey, Texture2D> brushTextureCache = new();
+    private readonly HashSet<BrushTextureKey> activeBrushTextureKeys = [];
+    private readonly List<BrushTextureKey> brushTextureEvictionCandidates = [];
     private readonly Dictionary<PathMeshKey, MonoGamePathMesh> pathMeshCache = new();
     private readonly HashSet<IDrawBrush> activeBrushes = new(ReferenceEqualityComparer.Instance);
     private readonly Texture2D _whitePixel;
@@ -204,6 +206,7 @@ public sealed class MonoGameDrawingBackend :
             graphicsDevice.ScissorRectangle = viewportClip;
             clipStack = new MonoGameClipStack(viewportClip);
             activeTextTextureKeys.Clear();
+            activeBrushTextureKeys.Clear();
             lastTextRequestCollectionTime = TimeSpan.Zero;
             lastTextRasterizationTime = TimeSpan.Zero;
             lastTextAtlasUploadTime = TimeSpan.Zero;
@@ -289,6 +292,7 @@ public sealed class MonoGameDrawingBackend :
                     CompleteTextTextureFrame(
                         DefaultMaximumTextTextureEntries,
                         DefaultMaximumTextTextureBytes);
+                    CompleteBrushTextureFrame();
                     LastFrameTiming = new DrawingBackendFrameTiming(
                         preparationTime,
                         lastTextRequestCollectionTime,
@@ -437,7 +441,7 @@ public sealed class MonoGameDrawingBackend :
 
     private void FillRectangle(DrawRect rect, CernealaColor color)
     {
-        _spriteBatch.Draw(_whitePixel, Mapper.MapRectangle(rect), ToColor(color));
+        _spriteBatch.Draw(_whitePixel, Mapper.MapRectangle(rect), Premultiply(ToColor(color)));
     }
 
     private void FillRectangle(DrawRect rect, IDrawBrush brush, float commandOpacity)
@@ -445,7 +449,7 @@ public sealed class MonoGameDrawingBackend :
         DrawBrushDescriptor descriptor = brush.CreateDescriptor();
         if (TryGetSolidColor(descriptor, commandOpacity, out XnaColor solid))
         {
-            _spriteBatch.Draw(_whitePixel, Mapper.MapRectangle(rect), solid);
+            _spriteBatch.Draw(_whitePixel, Mapper.MapRectangle(rect), Premultiply(solid));
             return;
         }
 
@@ -477,7 +481,7 @@ public sealed class MonoGameDrawingBackend :
     {
         int lineThickness = Mapper.MapThickness(thickness);
         Rectangle bounds = Mapper.MapRectangle(rect);
-        XnaColor monoGameColor = ToColor(color);
+        XnaColor monoGameColor = Premultiply(ToColor(color));
 
         _spriteBatch.Draw(_whitePixel, new Rectangle(bounds.Left, bounds.Top, bounds.Width, lineThickness), monoGameColor);
         _spriteBatch.Draw(_whitePixel, new Rectangle(bounds.Left, bounds.Bottom - lineThickness, bounds.Width, lineThickness), monoGameColor);
@@ -507,7 +511,7 @@ public sealed class MonoGameDrawingBackend :
             return;
         }
 
-        XnaColor monoGameColor = ToColor(color);
+        XnaColor monoGameColor = Premultiply(ToColor(color));
         float radiusX = bounds.Width / 2f;
         float radiusY = bounds.Height / 2f;
         float centerY = bounds.Top + radiusY;
@@ -642,6 +646,7 @@ public sealed class MonoGameDrawingBackend :
 
     private void DrawLine(Vector2 start, Vector2 end, XnaColor color, int thickness)
     {
+        color = Premultiply(color);
         Vector2 delta = end - start;
         float length = delta.Length();
         if (length <= 0)
@@ -682,7 +687,10 @@ public sealed class MonoGameDrawingBackend :
             throw new InvalidOperationException("A MonoGameImage can only be drawn by the GraphicsDevice that created it.");
         }
 
-        _spriteBatch.Draw(image.Texture, Mapper.MapRectangle(command.Rect), ToColor(command.Color));
+        _spriteBatch.Draw(
+            image.Texture,
+            Mapper.MapRectangle(command.Rect),
+            Premultiply(ToColor(command.Color)));
     }
 
     private void FillPath(DrawCommand command)
@@ -819,13 +827,8 @@ public sealed class MonoGameDrawingBackend :
             solidTextColor = resolvedSolid;
         }
 
-        CernealaColor rasterizationColor = solidTextColor is XnaColor brushColor
-            ? new CernealaColor(brushColor.R, brushColor.G, brushColor.B)
-            : command.Brush is null
-                ? new CernealaColor(command.Color.R, command.Color.G, command.Color.B)
-                : CernealaColor.White;
         DrawPoint pixelPhase = GetCanonicalPixelPhase(command.Position, coordinateScale);
-        TextTextureKey key = TextTextureKey.FromWithRasterizationColor(command.TextRun, coordinateScale, pixelPhase, rasterizationColor);
+        TextTextureKey key = TextTextureKey.From(command.TextRun, coordinateScale, pixelPhase);
         bool needsMask = command.Brush is not null && solidTextColor is null;
 
         if (!_textTextureCache.TryGetValue(key, out TextTexture cachedText))
@@ -835,7 +838,7 @@ public sealed class MonoGameDrawingBackend :
                 ? prepared
                 : _textRasterizer.RasterizeSubpixelAtPhase(
                     command.TextRun,
-                    rasterizationColor,
+                    CernealaColor.White,
                     coordinateScale,
                     pixelPhase);
             try
@@ -867,7 +870,7 @@ public sealed class MonoGameDrawingBackend :
         {
             RasterizedText[] layers = _textRasterizer.RasterizeSubpixelAtPhase(
                 command.TextRun,
-                rasterizationColor,
+                CernealaColor.White,
                 coordinateScale,
                 pixelPhase);
             Texture2D mask;
@@ -920,13 +923,8 @@ public sealed class MonoGameDrawingBackend :
                 continue;
             }
 
-            CernealaColor rasterizationColor = ResolveTextRasterizationColor(command);
             DrawPoint pixelPhase = GetCanonicalPixelPhase(command.Position, coordinateScale);
-            TextTextureKey key = TextTextureKey.FromWithRasterizationColor(
-                command.TextRun,
-                coordinateScale,
-                pixelPhase,
-                rasterizationColor);
+            TextTextureKey key = TextTextureKey.From(command.TextRun, coordinateScale, pixelPhase);
             if (!_textTextureCache.ContainsKey(key))
             {
                 bool needsMask = command.Brush is not null &&
@@ -935,7 +933,6 @@ public sealed class MonoGameDrawingBackend :
                     key,
                     new TextRasterizationRequest(
                         command.TextRun,
-                        rasterizationColor,
                         pixelPhase,
                         needsMask));
             }
@@ -958,7 +955,7 @@ public sealed class MonoGameDrawingBackend :
                 TextRasterizationRequest request = work[0].Value;
                 results[0] = _textRasterizer.RasterizeSubpixelAtPhase(
                     request.TextRun,
-                    request.RasterizationColor,
+                    CernealaColor.White,
                     coordinateScale,
                     request.PixelPhase);
             }
@@ -972,7 +969,7 @@ public sealed class MonoGameDrawingBackend :
                         TextRasterizationRequest request = work[index].Value;
                         results[index] = _textRasterizer.RasterizeSubpixelAtPhase(
                             request.TextRun,
-                            request.RasterizationColor,
+                            CernealaColor.White,
                             coordinateScale,
                             request.PixelPhase);
                     });
@@ -1204,19 +1201,6 @@ public sealed class MonoGameDrawingBackend :
         return true;
     }
 
-    private static CernealaColor ResolveTextRasterizationColor(DrawCommand command)
-    {
-        if (command.Brush is not null &&
-            TryGetSolidColor(command.Brush.CreateDescriptor(), command.BrushOpacity, out XnaColor solid))
-        {
-            return new CernealaColor(solid.R, solid.G, solid.B);
-        }
-
-        return command.Brush is null
-            ? new CernealaColor(command.Color.R, command.Color.G, command.Color.B)
-            : CernealaColor.White;
-    }
-
     private void DrawSolidText(TextTexture cachedText, Vector2 origin, XnaColor color)
     {
         color = Premultiply(color);
@@ -1443,11 +1427,11 @@ public sealed class MonoGameDrawingBackend :
     private Texture2D GetOrCreateBrushTexture(IDrawBrush brush, DrawBrushDescriptor descriptor, DrawRect rect)
     {
         Rectangle pixelBounds = Mapper.MapRectangle(rect);
-        int width = Math.Max(1, pixelBounds.Width);
-        int height = Math.Max(1, pixelBounds.Height);
+        (int width, int height) = BrushTextureSize(descriptor, pixelBounds);
         BrushTextureKey key = new(brush, rect, width, height, coordinateScale, 0);
         if (brushTextureCache.TryGetValue(key, out Texture2D? cached))
         {
+            activeBrushTextureKeys.Add(key);
             return cached;
         }
 
@@ -1465,9 +1449,33 @@ public sealed class MonoGameDrawingBackend :
         }
 
         Texture2D texture = new(_spriteBatch.GraphicsDevice, width, height);
-        texture.SetData(pixels.Select(ToColor).ToArray());
+        texture.SetData(pixels.Select(color => Premultiply(ToColor(color))).ToArray());
         brushTextureCache.Add(key, texture);
+        activeBrushTextureKeys.Add(key);
         return texture;
+    }
+
+    private static (int Width, int Height) BrushTextureSize(
+        DrawBrushDescriptor descriptor,
+        Rectangle pixelBounds)
+    {
+        int width = Math.Max(1, pixelBounds.Width);
+        int height = Math.Max(1, pixelBounds.Height);
+        if (descriptor is not LinearGradientDrawBrushDescriptor linear)
+        {
+            return (width, height);
+        }
+
+        if (linear.StartPoint.X == linear.EndPoint.X)
+        {
+            width = 1;
+        }
+        if (linear.StartPoint.Y == linear.EndPoint.Y)
+        {
+            height = 1;
+        }
+
+        return (width, height);
     }
 
     private void DrawImageBrush(DrawRect destination, ImageDrawBrushDescriptor descriptor, float commandOpacity)
@@ -1620,6 +1628,7 @@ public sealed class MonoGameDrawingBackend :
         BrushTextureKey key = new(brush, localTile, Math.Max(1, pixels.Width), Math.Max(1, pixels.Height), coordinateScale, contentVersion);
         if (brushTextureCache.TryGetValue(key, out Texture2D? cached))
         {
+            activeBrushTextureKeys.Add(key);
             return cached;
         }
 
@@ -1694,6 +1703,7 @@ public sealed class MonoGameDrawingBackend :
         }
 
         brushTextureCache.Add(key, target);
+        activeBrushTextureKeys.Add(key);
         return target;
     }
 
@@ -2340,6 +2350,31 @@ public sealed class MonoGameDrawingBackend :
         }
 
         brushTextureCache.Clear();
+        activeBrushTextureKeys.Clear();
+        brushTextureEvictionCandidates.Clear();
+    }
+
+    private void CompleteBrushTextureFrame()
+    {
+        if (brushTextureCache.Count == activeBrushTextureKeys.Count)
+        {
+            return;
+        }
+
+        brushTextureEvictionCandidates.Clear();
+        foreach (BrushTextureKey key in brushTextureCache.Keys)
+        {
+            if (!activeBrushTextureKeys.Contains(key))
+            {
+                brushTextureEvictionCandidates.Add(key);
+            }
+        }
+
+        foreach (BrushTextureKey key in brushTextureEvictionCandidates)
+        {
+            brushTextureCache[key].Dispose();
+            brushTextureCache.Remove(key);
+        }
     }
 
     private void ClearPathMeshCache()
@@ -2415,11 +2450,10 @@ public sealed class MonoGameDrawingBackend :
         DrawPoint position,
         CernealaColor rasterizationColor)
     {
-        return TextTextureKey.FromWithRasterizationColor(
+        return TextTextureKey.From(
             textRun,
             coordinateScale,
-            GetCanonicalPixelPhase(position, coordinateScale),
-            rasterizationColor);
+            GetCanonicalPixelPhase(position, coordinateScale));
     }
 
     internal static object CreateTextBrushTextureKeyForDiagnostics(
@@ -2564,7 +2598,6 @@ public sealed class MonoGameDrawingBackend :
 
     private readonly record struct TextRasterizationRequest(
         DrawTextRun TextRun,
-        CernealaColor RasterizationColor,
         DrawPoint PixelPhase,
         bool NeedsMask);
 
@@ -2573,30 +2606,19 @@ public sealed class MonoGameDrawingBackend :
         object FontIdentity,
         float FontSize,
         float CoordinateScale,
-        DrawPoint PixelPhase,
-        CernealaColor RasterizationColor)
+        DrawPoint PixelPhase)
     {
         public static TextTextureKey From(
             DrawTextRun textRun,
             float coordinateScale,
             DrawPoint pixelPhase)
         {
-            return FromWithRasterizationColor(textRun, coordinateScale, pixelPhase, CernealaColor.White);
-        }
-
-        public static TextTextureKey FromWithRasterizationColor(
-            DrawTextRun textRun,
-            float coordinateScale,
-            DrawPoint pixelPhase,
-            CernealaColor rasterizationColor)
-        {
             return new TextTextureKey(
                 textRun.Text,
                 textRun.Font is SkiaFont skiaFont ? skiaFont.Typeface : textRun.Font,
                 textRun.Size,
                 coordinateScale,
-                pixelPhase,
-                rasterizationColor);
+                pixelPhase);
         }
     }
 
