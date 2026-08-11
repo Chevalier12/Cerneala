@@ -812,8 +812,6 @@ public partial class PrismChapterView : UserControl
         Overlay overlay = (Overlay)comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"];
         Border dropDownBorder = (Border)overlay.Content!;
         dropDownBorder.Background = PanelBrush;
-        ScrollViewer dropDownScrollViewer = (ScrollViewer)dropDownBorder.Child!;
-        dropDownScrollViewer.ComponentTemplate = InspectorHost.ComponentTemplate;
         ToggleButton toggle = (ToggleButton)comboBox.ComponentTemplateInstance!
             .Parts["PART_DropDownToggle"];
         toggle.BorderBrush = LineBrush;

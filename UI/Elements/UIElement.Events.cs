@@ -1,3 +1,4 @@
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -175,7 +176,20 @@ public partial class UIElement
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
-        if (ReferenceEquals(args.Property, AspectProperty)) ApplyLocalAspect(Aspect);
+        if (ReferenceEquals(args.Property, AspectProperty))
+        {
+            if (args.OldValue is ElementAspect oldAspect)
+            {
+                oldAspect.Detach(aspectConsumer);
+            }
+
+            if (args.NewValue is ElementAspect newAspect)
+            {
+                newAspect.Attach(aspectConsumer);
+            }
+
+            ApplyLocalAspect(Aspect);
+        }
         else if (ReferenceEquals(args.Property, DataContextProperty)) DataContextChanged?.Invoke(this, args);
         else if (ReferenceEquals(args.Property, IsEnabledProperty)) IsEnabledChanged?.Invoke(this, args);
         else if (ReferenceEquals(args.Property, IsVisibleProperty) || ReferenceEquals(args.Property, VisibilityProperty)) IsVisibleChanged?.Invoke(this, args);

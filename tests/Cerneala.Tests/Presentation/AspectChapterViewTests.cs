@@ -12,7 +12,9 @@ using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
+using Cerneala.UI.Text;
 using Cerneala.Tests.UI.Hosting;
+using SvgPath = Cerneala.UI.Controls.Shapes.SvgPath;
 
 namespace Cerneala.Tests.Presentation;
 
@@ -62,8 +64,10 @@ public sealed class AspectChapterViewTests : IDisposable
         Border preview = Assert.IsType<Border>(view.SelectedPreview);
         TextBlock label = Assert.IsType<TextBlock>(preview.Child);
         Assert.Same(preview, Assert.Single(Descendants(view).Where(element => ReferenceEquals(element, preview))));
-        Assert.Equal(preview.FontFamily, label.FontFamily);
-        Assert.Same(preview.Foreground, label.Foreground);
+        Assert.Equal("Segoe UI Variable Text", label.FontFamily);
+        Assert.Equal(
+            UiPropertyValueSource.ApplicationAspectBase,
+            label.GetValueSource(Control.FontFamilyProperty));
         Assert.Contains(Control.BackgroundProperty, view.SelectedProperties);
         Assert.Contains(Control.BorderThicknessProperty, view.SelectedProperties);
         Assert.Contains(UIElement.OpacityProperty, view.SelectedProperties);
@@ -73,10 +77,87 @@ public sealed class AspectChapterViewTests : IDisposable
     }
 
     [Fact]
+    public void PropertyRowsInsetLabelsAndEditorsFromBothOuterBorders()
+    {
+        _ = AttachStudio(out AspectChapterView view);
+        AspectStudioPropertyRow row = PropertyRow(view, Control.FontSizeProperty);
+        Cerneala.UI.Layout.Panels.Grid grid =
+            Assert.IsType<Cerneala.UI.Layout.Panels.Grid>(row.Child);
+        TextBlock label = Assert.IsType<TextBlock>(grid.VisualChildren[0]);
+
+        Assert.Equal(new Thickness(8, 7, 8, 7), row.Padding);
+        Assert.True(label.ArrangedBounds.X >= row.ArrangedBounds.X + row.BorderThickness.Left + 8);
+        Assert.True(
+            row.Editor.ArrangedBounds.X + row.Editor.ArrangedBounds.Width
+            <= row.ArrangedBounds.X + row.ArrangedBounds.Width - row.BorderThickness.Right - 8);
+    }
+
+    [Fact]
+    public void BooleanPropertyEditorsReceiveTheApplicationCheckBoxAspect()
+    {
+        UIRoot root = AttachStudio(out AspectChapterView view);
+        CheckBox checkBox = Assert.IsType<CheckBox>(PropertyRow(view, UIElement.ClipToBoundsProperty).Editor);
+        checkBox.ApplyTemplate();
+        Border indicator = Assert.IsType<Border>(
+            checkBox.ComponentTemplateInstance!.Parts["PART_Indicator"]);
+        Border checkMark = Assert.IsType<Border>(
+            checkBox.ComponentTemplateInstance.Parts["PART_CheckMark"]);
+        SvgPath checkGlyph = Assert.IsType<SvgPath>(checkMark.Child);
+
+        Assert.Equal(16, indicator.Width);
+        Assert.Equal(16, indicator.Height);
+        Assert.Equal(new Color(16, 18, 23), Assert.IsType<SolidColorBrush>(indicator.Background).Color);
+        Assert.Equal(new Color(66, 71, 84), Assert.IsType<SolidColorBrush>(indicator.BorderBrush).Color);
+        Assert.Equal(Visibility.Hidden, checkMark.Visibility);
+
+        UiHost host = new(new UiHostOptions
+        {
+            Root = root,
+            Viewport = new UiViewport(root.ViewportWidth, root.ViewportHeight)
+        });
+        new AutomationSession(root, new RetainedAutomationInputDriver(host))
+            .FindByAutomationId("aspect-property-ClipToBounds")
+            .Click();
+
+        Assert.True(checkBox.IsChecked);
+        Assert.True(Assert.IsType<Border>(view.SelectedPreview).ClipToBounds);
+        Assert.Equal(new Color(16, 18, 23), Assert.IsType<SolidColorBrush>(indicator.Background).Color);
+        Assert.Equal(new Color(77, 240, 255), Assert.IsType<SolidColorBrush>(checkMark.Background).Color);
+        Assert.False(string.IsNullOrWhiteSpace(checkGlyph.Data));
+        Assert.False(string.IsNullOrWhiteSpace(checkGlyph.ViewBox));
+        Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(checkGlyph.Fill).Color);
+        Assert.Equal(Visibility.Visible, checkMark.Visibility);
+    }
+
+    [Fact]
+    public void ApplicationCheckBoxAspectUsesACenteredGeometryCheckMark()
+    {
+        _ = AttachStudio(out AspectChapterView view);
+        CheckBox checkBox = Assert.IsType<CheckBox>(
+            PropertyRow(view, UIElement.ClipToBoundsProperty).Editor);
+        checkBox.ApplyTemplate();
+        Border checkMark = Assert.IsType<Border>(
+            checkBox.ComponentTemplateInstance!.Parts["PART_CheckMark"]);
+        SvgPath glyph = Assert.IsType<SvgPath>(checkMark.Child);
+
+        Assert.False(string.IsNullOrWhiteSpace(glyph.Data));
+        Assert.Equal(
+            checkMark.ArrangedBounds.X + (checkMark.ArrangedBounds.Width / 2),
+            glyph.ArrangedBounds.X + (glyph.ArrangedBounds.Width / 2),
+            3);
+        Assert.Equal(
+            checkMark.ArrangedBounds.Y + (checkMark.ArrangedBounds.Height / 2),
+            glyph.ArrangedBounds.Y + (glyph.ArrangedBounds.Height / 2),
+            3);
+    }
+
+    [Fact]
     public void TextBlockValuesApplyThroughLocalAspectOnTheNextFrame()
     {
         UIRoot root = AttachStudio(out AspectChapterView view);
         view.SelectForTests(AspectStudioElementKind.TextBlock);
+        object? initialAspect = view.SelectedPreview.Aspect;
+        Assert.NotNull(initialAspect);
 
         Assert.True(view.TrySetPropertyForTests(TextBlock.TextProperty, "Editat live"));
         Assert.True(view.TrySetPropertyForTests(Control.FontSizeProperty, "42"));
@@ -88,6 +169,7 @@ public sealed class AspectChapterViewTests : IDisposable
         Assert.Equal("Editat live", preview.Text);
         Assert.Equal(42, preview.FontSize);
         Assert.Equal(new Color(255, 62, 165), Assert.IsType<SolidColorBrush>(preview.Foreground).Color);
+        Assert.Same(initialAspect, preview.Aspect);
     }
 
     [Fact]
@@ -107,6 +189,69 @@ public sealed class AspectChapterViewTests : IDisposable
         Assert.Equal(expected, Assert.IsType<SolidColorBrush>(preview.Background).Color);
         Assert.Contains(root.RetainedRenderCache.RootCommands, command =>
             command.Brush is SolidColorBrush solid && solid.Color == expected);
+    }
+
+    [Fact]
+    public void ColorSwatchOpensPickerOverlayAndSpectrumClickUpdatesPreviewAndHexText()
+    {
+        UIRoot root = AttachStudio(out AspectChapterView view, 1650, 1055);
+        AspectStudioPropertyRow row = PropertyRow(view, Control.BackgroundProperty);
+        ColorSwatch swatch = Assert.Single(row.Editor.VisualChildren.OfType<ColorSwatch>());
+        Overlay overlay = Assert.IsType<Overlay>(
+            swatch.ComponentTemplateInstance!.Parts["PART_PickerOverlay"]);
+        ColorPicker picker = swatch.Picker;
+        TextBox input = Assert.Single(row.Editor.VisualChildren.OfType<TextBox>());
+        Border preview = Assert.IsType<Border>(view.SelectedPreview);
+        Color initial = Assert.IsType<SolidColorBrush>(preview.Background).Color;
+        UiHost host = new(new UiHostOptions
+        {
+            Root = root,
+            Viewport = new UiViewport(root.ViewportWidth, root.ViewportHeight)
+        });
+        AutomationSession session = new(root, new RetainedAutomationInputDriver(host));
+
+        session.FindByAutomationId("aspect-color-Background-swatch").Click();
+
+        Assert.True(overlay.IsOpen);
+        Assert.True(overlay.IsProjected);
+
+        session.FindByAutomationId("aspect-color-Background-spectrum").Click();
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Color selected = picker.SelectedColor;
+        Assert.NotEqual(initial, selected);
+        Assert.Equal($"#{selected.A:X2}{selected.R:X2}{selected.G:X2}{selected.B:X2}", input.Text);
+        Assert.Equal(selected, Assert.IsType<SolidColorBrush>(preview.Background).Color);
+    }
+
+    [Fact]
+    public void HueInteractionDoesNotReapplyUnchangedPreviewAspectValues()
+    {
+        UIRoot root = AttachStudio(out AspectChapterView view, 1650, 1055);
+        UiHost host = new(new UiHostOptions
+        {
+            Root = root,
+            Viewport = new UiViewport(root.ViewportWidth, root.ViewportHeight)
+        });
+        PointerSnapshot pointer = PointerSnapshot.Empty;
+        UIElement swatch = new AutomationSession(root, new RetainedAutomationInputDriver(host))
+            .FindByAutomationId("aspect-color-BorderBrush-swatch")
+            .Element;
+
+        ClickWithInputFrames(host, ref pointer, swatch);
+        UIElement hueSlider = new AutomationSession(root, new RetainedAutomationInputDriver(host))
+            .FindByAutomationId("aspect-color-BorderBrush-hue")
+            .Element;
+
+        UiFrame[] frames = DragWithInputFrames(host, ref pointer, hueSlider, steps: 12);
+
+        Assert.All(frames, frame => Assert.Equal(0, frame.Stats.InheritedElements));
+        Assert.All(frames, frame => Assert.InRange(frame.Stats.AspectElements, 0, 1));
+        Assert.InRange(frames[0].Stats.MeasuredElements, 0, 4);
+        Assert.InRange(frames[0].Stats.ArrangedElements, 0, 6);
+        Assert.All(frames.Skip(1), frame => Assert.Equal(0, frame.Stats.MeasuredElements));
+        Assert.All(frames.Skip(1), frame => Assert.Equal(0, frame.Stats.ArrangedElements));
     }
 
     [Fact]
@@ -211,6 +356,20 @@ public sealed class AspectChapterViewTests : IDisposable
     }
 
     [Fact]
+    public void TextTrimmingEditorExposesTheCompleteWpfEquivalentContract()
+    {
+        UIRoot root = AttachStudio(out AspectChapterView view);
+        view.SelectForTests(AspectStudioElementKind.TextBlock);
+        root.ProcessFrame();
+
+        ComboBox editor = Assert.IsType<ComboBox>(PropertyRow(view, TextBlock.TextTrimmingProperty).Editor);
+
+        Assert.Equal(
+            [TextTrimming.None, TextTrimming.CharacterEllipsis, TextTrimming.WordEllipsis],
+            editor.Items.Cast<TextTrimming>().ToArray());
+    }
+
+    [Fact]
     public void PropertyEditorsExposeStableAutomationIds()
     {
         UIRoot root = AttachStudio(out AspectChapterView view);
@@ -222,6 +381,10 @@ public sealed class AspectChapterViewTests : IDisposable
         Assert.Equal(
             "aspect-property-Cursor",
             AutomationProperties.GetAutomationId(cursorEditor));
+        Assert.Equal(
+            "aspect-element-textblock",
+            AutomationProperties.GetAutomationId(
+                Assert.Single(Descendants(view).OfType<Button>().Where(button => Equals(button.Content, "TEXTBLOCK")))));
     }
 
     [Fact]
@@ -349,6 +512,7 @@ public sealed class AspectChapterViewTests : IDisposable
         float height = 726)
     {
         UIRoot root = new(width, height);
+        root.SetResourceProvider(Application.Current!.Resources);
         view = new AspectChapterView();
         root.VisualChildren.Add(view);
         root.ProcessFrame();
@@ -394,6 +558,69 @@ public sealed class AspectChapterViewTests : IDisposable
         Assert.True(focusManager.Focus(input, routeMap));
         input.Select(0, input.Text.Length);
         new TextInputBridge().Dispatch([new TextInputSnapshotEvent(text)], focusManager, routeMap);
+    }
+
+    private static UiFrame[] ClickWithInputFrames(
+        UiHost host,
+        ref PointerSnapshot pointer,
+        UIElement target)
+    {
+        LayoutRect bounds = target.ArrangedBounds;
+        PointerSnapshot moved = pointer.WithPosition(
+            bounds.X + (bounds.Width / 2),
+            bounds.Y + (bounds.Height / 2));
+        UiFrame moveFrame = host.Update(
+            new InputFrame(pointer, moved, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []),
+            elapsedTime: TimeSpan.Zero);
+        PointerSnapshot pressed = moved.WithButton(InputMouseButton.Left, true);
+        UiFrame pressFrame = host.Update(
+            new InputFrame(moved, pressed, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []),
+            elapsedTime: TimeSpan.Zero);
+        PointerSnapshot released = pressed.WithButton(InputMouseButton.Left, false);
+        UiFrame releaseFrame = host.Update(
+            new InputFrame(pressed, released, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []),
+            elapsedTime: TimeSpan.Zero);
+        pointer = released;
+        return [moveFrame, pressFrame, releaseFrame];
+    }
+
+    private static UiFrame[] DragWithInputFrames(
+        UiHost host,
+        ref PointerSnapshot pointer,
+        UIElement target,
+        int steps)
+    {
+        LayoutRect bounds = target.ArrangedBounds;
+        float y = bounds.Y + (bounds.Height / 2);
+        float startX = bounds.X + (bounds.Width * 0.1f);
+        float endX = bounds.X + (bounds.Width * 0.9f);
+        PointerSnapshot moved = pointer.WithPosition(startX, y);
+        host.Update(
+            new InputFrame(pointer, moved, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []),
+            elapsedTime: TimeSpan.Zero);
+
+        List<UiFrame> frames = new(steps + 2);
+        PointerSnapshot pressed = moved.WithButton(InputMouseButton.Left, true);
+        frames.Add(host.Update(
+            new InputFrame(moved, pressed, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []),
+            elapsedTime: TimeSpan.Zero));
+        PointerSnapshot current = pressed;
+        for (int step = 1; step <= steps; step++)
+        {
+            float progress = step / (float)steps;
+            PointerSnapshot next = current.WithPosition(startX + ((endX - startX) * progress), y);
+            frames.Add(host.Update(
+                new InputFrame(current, next, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []),
+                elapsedTime: TimeSpan.Zero));
+            current = next;
+        }
+
+        PointerSnapshot released = current.WithButton(InputMouseButton.Left, false);
+        frames.Add(host.Update(
+            new InputFrame(current, released, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []),
+            elapsedTime: TimeSpan.Zero));
+        pointer = released;
+        return frames.ToArray();
     }
 
     private static IEnumerable<UIElement> Descendants(UIElement element)

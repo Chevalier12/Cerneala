@@ -17,6 +17,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 {
     private static long nextPrismVisualNodeId;
     private readonly HashSet<UiProperty> appliedLocalAspectProperties = new(ReferenceEqualityComparer.Instance);
+    private readonly ElementAspectConsumer aspectConsumer;
     private readonly long prismVisualNodeId;
 
     public static readonly UiProperty<object?> DataContextProperty = UiProperty<object?>.Register(
@@ -188,6 +189,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     public UIElement()
     {
+        aspectConsumer = new ElementAspectConsumer(this);
         prismVisualNodeId = NextPrismVisualNodeId();
         LogicalChildren = new UIElementCollection(this, ElementChildRole.Logical);
         VisualChildren = new UIElementCollection(this, ElementChildRole.Visual);
@@ -1200,33 +1202,79 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     private void ApplyLocalAspect(ElementAspect? aspect)
     {
+        HashSet<UiProperty> nextProperties = new(ReferenceEqualityComparer.Instance);
+        if (aspect is not null)
+        {
+            foreach (ElementAspectValue value in aspect.DefaultValues)
+            {
+                ValidateLocalAspectProperty(value.Property);
+                nextProperties.Add(value.Property);
+            }
+        }
+
         foreach (UiProperty property in appliedLocalAspectProperties)
         {
-            ClearValueUntyped(property, UiPropertyValueSource.LocalAspectBase);
+            if (!nextProperties.Contains(property))
+            {
+                ClearValueUntyped(property, UiPropertyValueSource.LocalAspectBase);
+            }
+        }
+
+        if (aspect is not null)
+        {
+            foreach (ElementAspectValue value in aspect.DefaultValues)
+            {
+                object? previousValue = GetSourceValue(value.Property, UiPropertyValueSource.LocalAspectBase);
+                if (!appliedLocalAspectProperties.Contains(value.Property) ||
+                    !value.Property.AreEqualUntyped(previousValue, value.Value))
+                {
+                    SetValueUntyped(value.Property, value.Value, UiPropertyValueSource.LocalAspectBase);
+                }
+            }
         }
 
         appliedLocalAspectProperties.Clear();
-        if (aspect is null)
+        appliedLocalAspectProperties.UnionWith(nextProperties);
+    }
+
+    private void ValidateIncrementalAspectValue(UiProperty property)
+    {
+        VerifyMutationAccess();
+        ValidateLocalAspectProperty(property);
+    }
+
+    private void ApplyIncrementalAspectValue(UiProperty property, object? value)
+    {
+        bool wasApplied = appliedLocalAspectProperties.Contains(property);
+        object? previousValue = GetSourceValue(property, UiPropertyValueSource.LocalAspectBase);
+        if (!wasApplied || !property.AreEqualUntyped(previousValue, value))
         {
-            return;
+            SetValueUntyped(property, value, UiPropertyValueSource.LocalAspectBase);
         }
 
-        foreach (ElementAspectValue value in aspect.DefaultValues)
+        appliedLocalAspectProperties.Add(property);
+    }
+
+    private void ValidateLocalAspectProperty(UiProperty property)
+    {
+        if (ReferenceEquals(property, AspectProperty))
         {
-            if (ReferenceEquals(value.Property, AspectProperty))
-            {
-                throw new InvalidOperationException("A local aspect cannot assign UIElement.AspectProperty.");
-            }
-
-            if (!value.Property.OwnerType.IsAssignableFrom(GetType()))
-            {
-                throw new InvalidOperationException(
-                    $"UI property '{value.Property.DiagnosticName}' cannot be applied to element '{GetType().FullName}'.");
-            }
-
-            SetValueUntyped(value.Property, value.Value, UiPropertyValueSource.LocalAspectBase);
-            appliedLocalAspectProperties.Add(value.Property);
+            throw new InvalidOperationException("A local aspect cannot assign UIElement.AspectProperty.");
         }
+
+        if (!property.OwnerType.IsAssignableFrom(GetType()))
+        {
+            throw new InvalidOperationException(
+                $"UI property '{property.DiagnosticName}' cannot be applied to element '{GetType().FullName}'.");
+        }
+    }
+
+    private sealed class ElementAspectConsumer(UIElement owner) : IElementAspectConsumer
+    {
+        public void ValidateAspectValue(UiProperty property) => owner.ValidateIncrementalAspectValue(property);
+
+        public void ApplyAspectValue(UiProperty property, object? value) =>
+            owner.ApplyIncrementalAspectValue(property, value);
     }
 
     private static InvalidationFlags MapInvalidationOptions(UiPropertyOptions options)

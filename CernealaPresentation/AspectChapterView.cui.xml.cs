@@ -127,6 +127,9 @@ public partial class AspectChapterView : UserControl
 
         if (targets.Count == 0)
         {
+            AutomationProperties.SetAutomationId(BorderElementButton, "aspect-element-border");
+            AutomationProperties.SetAutomationId(TextBlockElementButton, "aspect-element-textblock");
+            AutomationProperties.SetAutomationId(ButtonElementButton, "aspect-element-button");
             BuildTargets();
         }
 
@@ -322,7 +325,7 @@ public partial class AspectChapterView : UserControl
         {
             BorderBrush = LineBrush,
             BorderThickness = new Thickness(0, 1, 0, 0),
-            Padding = new Thickness(0, 7, 0, 7),
+            Padding = new Thickness(8, 7, 8, 7),
             Child = row
         };
     }
@@ -388,23 +391,63 @@ public partial class AspectChapterView : UserControl
         Grid editor = new();
         editor.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(26)));
         editor.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
-        Border swatch = new()
+        ColorSwatch swatch = new()
         {
             Width = 20,
             Height = 20,
-            Background = current,
+            SelectedColor = current is SolidColorBrush solid ? solid.Color : Color.Transparent,
             BorderBrush = LineBrush,
             BorderThickness = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center
         };
         TextBox input = CreateInput(FormatBrush(current));
         input.Margin = Thickness.Zero;
+        ColorPicker picker = swatch.Picker;
+        picker.Background = PanelBrush;
+        picker.Foreground = PaperBrush;
+        picker.BorderBrush = LineBrush;
+        picker.BorderThickness = new Thickness(1);
+        picker.Padding = new Thickness(8);
+        picker.ApplyTemplate();
+        string automationPrefix = $"aspect-color-{property.Name}";
+        AutomationProperties.SetAutomationId(swatch, $"{automationPrefix}-swatch");
+        AutomationProperties.SetAutomationId(picker, $"{automationPrefix}-picker");
+        AutomationProperties.SetAutomationId(
+            (ColorSpectrum)picker.ComponentTemplateInstance!.Parts["PART_Spectrum"],
+            $"{automationPrefix}-spectrum");
+        AutomationProperties.SetAutomationId(
+            (Slider)picker.ComponentTemplateInstance.Parts["PART_HueSlider"],
+            $"{automationPrefix}-hue");
+        AutomationProperties.SetAutomationId(
+            (Slider)picker.ComponentTemplateInstance.Parts["PART_AlphaSlider"],
+            $"{automationPrefix}-alpha");
+
+        bool synchronizingSwatch = false;
+        bool synchronizingText = false;
         input.TextChanged += (_, _) =>
         {
+            if (synchronizingText)
+            {
+                return;
+            }
+
             if (TryParseValue(property, input.Text, out object? value, out string error))
             {
                 input.BorderBrush = LineBrush;
-                swatch.Background = value as Brush;
+                Color parsedColor = value is SolidColorBrush parsed ? parsed.Color : Color.Transparent;
+                if (swatch.SelectedColor != parsedColor)
+                {
+                    synchronizingSwatch = true;
+                    try
+                    {
+                        swatch.SelectedColor = parsedColor;
+                    }
+                    finally
+                    {
+                        synchronizingSwatch = false;
+                    }
+                }
+
                 CommitProperty(target, property, value);
             }
             else
@@ -412,6 +455,27 @@ public partial class AspectChapterView : UserControl
                 input.BorderBrush = PinkBrush;
                 UpdateStatus(error);
             }
+        };
+        swatch.SelectedColorChanged += (_, args) =>
+        {
+            if (synchronizingSwatch)
+            {
+                return;
+            }
+
+            SolidColorBrush brush = new(args.NewValue);
+            synchronizingText = true;
+            try
+            {
+                input.Text = FormatBrush(brush);
+                input.BorderBrush = LineBrush;
+            }
+            finally
+            {
+                synchronizingText = false;
+            }
+
+            CommitProperty(target, property, brush);
         };
         Grid.SetColumn(input, 1);
         Add(editor, swatch);
@@ -437,7 +501,8 @@ public partial class AspectChapterView : UserControl
     {
         target.Values[property] = value;
         target.Modified.Add(property);
-        ApplyTargetAspect(target);
+        (target.Element.Aspect ?? throw new InvalidOperationException("The Aspect Studio target has no local aspect."))
+            .SetValue(property, value);
         UpdateStatus($"{property.Name.ToUpperInvariant()} UPDATED");
     }
 
@@ -735,8 +800,6 @@ public partial class AspectChapterView : UserControl
         Overlay overlay = (Overlay)comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"];
         Border dropDownBorder = (Border)overlay.Content!;
         dropDownBorder.Background = PanelBrush;
-        ScrollViewer dropDownScrollViewer = (ScrollViewer)dropDownBorder.Child!;
-        dropDownScrollViewer.ComponentTemplate = PropertyHost.ComponentTemplate;
         ToggleButton toggle = (ToggleButton)comboBox.ComponentTemplateInstance.Parts["PART_DropDownToggle"];
         toggle.BorderBrush = LineBrush;
         toggle.BorderThickness = new Thickness(1);
