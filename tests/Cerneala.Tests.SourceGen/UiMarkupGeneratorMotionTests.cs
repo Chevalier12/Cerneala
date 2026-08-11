@@ -15,7 +15,7 @@ public sealed partial class UiMarkupGeneratorTests
               <Border.Resources>
                 <Tween Name="QuickOut" Duration="180ms" Easing="EaseOut" />
                 <Spring Name="Responsive" Stiffness="520" Damping="38" Mass="1" />
-                <Aspect Name="NavigationHover" Target="Border">
+                <Aspect Name="NavigationHover" TargetType="Border">
                   @when IsMouseOver
                   {
                     @animate with $QuickOut
@@ -46,7 +46,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel>
               <StackPanel.Resources>
-                <Aspect Name="Pulse" Target="Border">
+                <Aspect Name="Pulse" TargetType="Border">
                   @on Loaded { @animate { @to { Opacity = 0.5; } } }
                 </Aspect>
               </StackPanel.Resources>
@@ -98,7 +98,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Border Aspect="$NavigationHover">
               <Border.Resources>
-                <Aspect Name="NavigationHover" Target="Border">
+                <Aspect Name="NavigationHover" TargetType="Border">
                   @when IsMouseOver
                   {
                     @animate with Tween(180ms, EaseOut)
@@ -299,7 +299,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Grid Aspect="$HostMotion">
               <Grid.Resources>
-                <Aspect Name="HostMotion" Target="Grid">
+                <Aspect Name="HostMotion" TargetType="Grid">
                   @on Loaded
                   {
                     @set
@@ -308,7 +308,7 @@ public sealed partial class UiMarkupGeneratorTests
                     }
                   }
                 </Aspect>
-                <Aspect Name="TemplateChildMotion" Target="Border">
+                <Aspect Name="TemplateChildMotion" TargetType="Border">
                   @on Loaded
                   {
                     @animate
@@ -321,7 +321,7 @@ public sealed partial class UiMarkupGeneratorTests
                     }
                   }
                 </Aspect>
-                <Aspect Name="TemplatedMotion" Target="ToggleButton">
+                <Aspect Name="TemplatedMotion" TargetType="ToggleButton">
                   @on Loaded
                   {
                     @animate
@@ -706,7 +706,7 @@ public sealed partial class UiMarkupGeneratorTests
         return $"""
             <Border>
               <Border.Resources>
-                <Aspect Target="Border">
+                <Aspect TargetType="Border">
             {body}
                 </Aspect>
               </Border.Resources>

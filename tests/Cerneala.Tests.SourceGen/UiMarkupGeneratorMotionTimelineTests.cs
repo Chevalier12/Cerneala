@@ -54,7 +54,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel>
               <StackPanel.Resources>
-                <Aspect Target="Border">@gesture press with Tween(160ms, EaseOut);</Aspect>
+                <Aspect TargetType="Border">@gesture press with Tween(160ms, EaseOut);</Aspect>
               </StackPanel.Resources>
               <Border Width="100" Height="100" />
             </StackPanel>
@@ -168,7 +168,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel>
               <StackPanel.Resources>
-                <Aspect Target="Border">@drag with Spring(520, 38, 1);</Aspect>
+                <Aspect TargetType="Border">@drag with Spring(520, 38, 1);</Aspect>
               </StackPanel.Resources>
               <Border Width="100" Height="100" />
             </StackPanel>
@@ -660,7 +660,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel>
               <StackPanel.Resources>
-                <Aspect Target="StackPanel">
+                <Aspect TargetType="StackPanel">
                   @on Loaded
                   {
                     @stagger target $Items each 40ms
@@ -713,7 +713,7 @@ public sealed partial class UiMarkupGeneratorTests
               <Border.Resources>
                 <Tween Name="Delayed" Duration="240ms" Delay="80ms" Easing="EaseOut" FillMode="Backwards" />
                 <Spring Name="Responsive" Stiffness="520" Damping="38" Mass="1" RestSpeed="0.02" RestDelta="0.03" VelocityMode="Reset" />
-                <Aspect Target="Border">
+                <Aspect TargetType="Border">
                   @on Loaded
                   {
                     @parallel

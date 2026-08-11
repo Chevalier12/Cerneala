@@ -98,6 +98,7 @@ public static class ElementLifecycle
             throw new InvalidOperationException("Element is already attached to a different root.");
         }
 
+        root.ApplyApplicationAspects(element);
         element.AttachToRoot(root, root.ElementIds.GetOrCreate(element));
     }
 

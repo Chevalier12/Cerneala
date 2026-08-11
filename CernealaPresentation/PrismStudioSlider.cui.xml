@@ -2,7 +2,7 @@
     <UserControl.Resources>
         <Aspect
             Name="PrismStudioSliderThumb"
-            Target="Thumb">
+            TargetType="Thumb">
             @default
             {
                 Background = "#FF4DF0FF";
@@ -16,7 +16,7 @@
         </Aspect>
         <Aspect
             Name="PrismStudioSliderTrack"
-            Target="Track">
+            TargetType="Track">
             @default
             {
                 Background = "#FF21272F";
@@ -40,7 +40,7 @@
         </Aspect>
         <Aspect
             Name="PrismStudioSlider"
-            Target="Slider">
+            TargetType="Slider">
             @default
             {
                 Height = 20;

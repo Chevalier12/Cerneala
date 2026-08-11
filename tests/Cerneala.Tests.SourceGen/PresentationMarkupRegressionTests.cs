@@ -127,7 +127,7 @@ public sealed class PresentationMarkupRegressionTests
         XElement[] aspects = application.Descendants("Aspect").ToArray();
         XElement scrollViewerAspect = Assert.Single(aspects.Where(element =>
             element.Attribute("Name") is null &&
-            element.Attribute("Target")?.Value == "ScrollViewer"));
+            element.Attribute("TargetType")?.Value == "ScrollViewer"));
         XElement scrollBarAspect = Assert.Single(aspects.Where(element =>
             element.Attribute("Name")?.Value == "PresentationScrollBar"));
         XElement scrollTrackAspect = Assert.Single(aspects.Where(element =>

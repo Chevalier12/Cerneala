@@ -685,7 +685,7 @@ public void UnnamedAspectAppliesToEveryMatchingElement()
 {
     const string markup = """
         <Resources>
-          <Aspect Target="TextBlock">
+          <Aspect TargetType="TextBlock">
             @default
             {
               FontFamily = "Consolas";
@@ -716,14 +716,14 @@ public void NamedAspectAppliesAfterUnnamedDefault()
 {
     const string markup = """
         <Resources>
-          <Aspect Target="TextBlock">
+          <Aspect TargetType="TextBlock">
             @default
             {
               FontSize = 14;
               Foreground = Black;
             }
           </Aspect>
-          <Aspect Name="KickerText" Target="TextBlock">
+          <Aspect Name="KickerText" TargetType="TextBlock">
             @default
             {
               FontSize = 12;
@@ -1059,7 +1059,7 @@ public void AspectCanReferenceSolidColorBrushForColorProperty()
     const string markup = """
         <Resources>
           <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
-          <Aspect Name="KickerText" Target="TextBlock">
+          <Aspect Name="KickerText" TargetType="TextBlock">
             @default
             {
               Foreground = $PulseColor;
@@ -1088,7 +1088,7 @@ public void UnknownNameReferenceReportsDiagnostic()
 {
     const string markup = """
         <Resources>
-          <Aspect Name="KickerText" Target="TextBlock">
+          <Aspect Name="KickerText" TargetType="TextBlock">
             @default
             {
               Foreground = $MissingColor;
@@ -1282,7 +1282,7 @@ public void AspectTargetMismatchReportsDiagnostic()
 {
     const string markup = """
         <Resources>
-          <Aspect Name="KickerText" Target="TextBlock">
+          <Aspect Name="KickerText" TargetType="TextBlock">
             @default
             {
               FontSize = 12;
@@ -1304,10 +1304,10 @@ public void DuplicateUnnamedAspectForTargetReportsDiagnostic()
 {
     const string markup = """
         <Resources>
-          <Aspect Target="TextBlock">
+          <Aspect TargetType="TextBlock">
             @default { FontSize = 12; }
           </Aspect>
-          <Aspect Target="TextBlock">
+          <Aspect TargetType="TextBlock">
             @default { FontSize = 14; }
           </Aspect>
         </Resources>
@@ -1326,7 +1326,7 @@ public void UnsupportedAspectPropertyReportsDiagnostic()
 {
     const string markup = """
         <Resources>
-          <Aspect Target="TextBlock">
+          <Aspect TargetType="TextBlock">
             @default
             {
               Width = 100;

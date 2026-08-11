@@ -31,7 +31,7 @@ Aspect resources are declared inside a top-level `Resources` element.
   <SolidColorBrush Name="TextColor" Color="#1E293B" />
   <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
 
-  <Aspect Target="TextBlock">
+  <Aspect TargetType="TextBlock">
     @default
     {
       FontFamily = "Segoe UI";
@@ -40,7 +40,7 @@ Aspect resources are declared inside a top-level `Resources` element.
     }
   </Aspect>
 
-  <Aspect Name="KickerText" Target="TextBlock">
+  <Aspect Name="KickerText" TargetType="TextBlock">
     @default
     {
       FontFamily = "Consolas";
@@ -60,9 +60,9 @@ Elements may also declare a `Name` for reference purposes:
 <TextBlock Name="KickerLabel" Aspect="$KickerText" Text="HELLO" />
 ```
 
-`Aspect Target="TextBlock"` without a `Name` defines the implicit default aspect for every `TextBlock` in the document.
+`Aspect TargetType="TextBlock"` without a `Name` defines the implicit default aspect for every `TextBlock` in the document.
 
-`Aspect Name="KickerText" Target="TextBlock"` defines a named aspect resource. It is not applied automatically. Elements opt into it with `Aspect="$KickerText"`.
+`Aspect Name="KickerText" TargetType="TextBlock"` defines a named aspect resource. It is not applied automatically. Elements opt into it with `Aspect="$KickerText"`.
 
 `SolidColorBrush Name="PulseColor"` defines a reusable brush resource. Property values inside aspect declaration bodies can reference it with `$PulseColor`.
 
@@ -114,7 +114,7 @@ Target mismatch example:
 
 ```xml
 <Resources>
-  <Aspect Name="KickerText" Target="TextBlock">
+  <Aspect Name="KickerText" TargetType="TextBlock">
     @default
     {
       FontSize = 12;
@@ -202,7 +202,7 @@ Named element references use the same `$Name` syntax, but only contexts that acc
 
 Add focused source generator tests for:
 
-- An unnamed `Aspect Target="TextBlock"` applying to every `TextBlock`.
+- An unnamed `Aspect TargetType="TextBlock"` applying to every `TextBlock`.
 - A named aspect applying after the type default.
 - Local attributes overriding named aspect values.
 - Element `Name` registration.

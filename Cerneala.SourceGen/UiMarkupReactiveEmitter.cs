@@ -150,7 +150,8 @@ public sealed partial class UiMarkupGenerator
             XElement element,
             string variable,
             DirectiveParseResult parsed,
-            IReadOnlyList<AspectResource> aspects)
+            IReadOnlyList<AspectResource> aspects,
+            string? applicationAspectValueSource = null)
         {
             ReactivePlan plan = new(
                 variable,
@@ -161,7 +162,7 @@ public sealed partial class UiMarkupGenerator
             {
                 string valueSource = IsLocalAspect(aspect)
                     ? "global::Cerneala.UI.Core.UiPropertyValueSource.LocalAspectConditional"
-                    : "global::Cerneala.UI.Core.UiPropertyValueSource.AspectVisualState";
+                    : applicationAspectValueSource ?? "global::Cerneala.UI.Core.UiPropertyValueSource.AspectVisualState";
                 string inheritedPredicate = "true";
                 if (IsLocalAspect(aspect) && aspect.Conditions.Count > 0)
                 {

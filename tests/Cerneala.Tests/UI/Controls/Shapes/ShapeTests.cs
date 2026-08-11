@@ -131,6 +131,40 @@ public sealed class ShapeTests
     }
 
     [Fact]
+    public void SvgPathParsesMarkupFriendlyDataAndViewBox()
+    {
+        UIRoot root = new();
+        SolidColorBrush fill = new(Color.Black);
+        SvgPath path = new()
+        {
+            Data = "M1 2L23 22Z",
+            ViewBox = "0 0 24 24",
+            Fill = fill
+        };
+        root.VisualChildren.Add(path);
+        root.ProcessFrame();
+        path.Arrange(new ArrangeContext(new LayoutRect(3, 4, 48, 48)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        DrawCommand command = Assert.Single(root.RetainedRenderer.Commit(root));
+
+        Assert.Equal(DrawCommandKind.FillPath, command.Kind);
+        Assert.Equal("M1 2L23 22Z", command.PathData);
+        Assert.Equal(new DrawRect(0, 0, 24, 24), command.SourceRect);
+        Assert.Equal(new DrawRect(3, 4, 48, 48), command.Rect);
+        Assert.Same(fill, command.Brush);
+    }
+
+    [Fact]
+    public void SvgPathRejectsInvalidViewBox()
+    {
+        SvgPath path = new();
+
+        Assert.Throws<ArgumentException>(() => path.ViewBox = "0 0 0 24");
+    }
+
+    [Fact]
     public void ShapePropertyChangeInvalidatesRender()
     {
         RectangleShape rectangle = new();

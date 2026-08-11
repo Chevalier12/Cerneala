@@ -80,6 +80,35 @@ public sealed class ApplicationResourceIntegrationTests
         Assert.Same(latest, later.Background);
     }
 
+    [Fact]
+    public void ApplicationAspectAppliesToCodeCreatedDerivedControlAtCorrectPrecedence()
+    {
+        Application application = new();
+        SolidColorBrush applicationBrush = new(new Color(12, 34, 56));
+        application.Resources[typeof(Button)] = new MarkupAspectResource(
+            null,
+            typeof(Button),
+            [nameof(Control.Background)],
+            isConditional: false,
+            element => element.SetValue(
+                Control.BackgroundProperty,
+                applicationBrush,
+                UiPropertyValueSource.ApplicationAspectBase));
+        UIRoot root = CreateRoot(application);
+        DerivedButton button = new();
+
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+
+        Assert.Same(applicationBrush, button.Background);
+        Assert.Equal(UiPropertyValueSource.ApplicationAspectBase, button.GetValueSource(Control.BackgroundProperty));
+
+        SolidColorBrush localBrush = new(new Color(65, 43, 21));
+        button.Background = localBrush;
+        Assert.Same(localBrush, button.Background);
+        Assert.Equal(UiPropertyValueSource.Local, button.GetValueSource(Control.BackgroundProperty));
+    }
+
     private static UIRoot CreateRoot(Application application)
     {
         UIRoot root = new(100, 100);
@@ -98,5 +127,9 @@ public sealed class ApplicationResourceIntegrationTests
             UiPropertyValueSource.MarkupBase);
         root.VisualChildren.Add(border);
         return border;
+    }
+
+    private sealed class DerivedButton : Button
+    {
     }
 }

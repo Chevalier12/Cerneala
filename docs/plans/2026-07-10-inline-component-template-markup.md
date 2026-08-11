@@ -31,7 +31,7 @@ Vrem sa permitem forma locala:
 si aceeasi capacitate intr-un Aspect:
 
 ```xml
-<Aspect Name="TitleBarButton" Target="Button">
+<Aspect Name="TitleBarButton" TargetType="Button">
     @default
     {
         Width = 28;
@@ -175,11 +175,11 @@ Exceptie intentionata: continutul generat pentru radacina unui `UserControl` pai
 Sintaxa Aspect ramane cea existenta:
 
 ```xml
-<Aspect Target="TextBlock">
+<Aspect TargetType="TextBlock">
     ...
 </Aspect>
 
-<Aspect Name="TitleBarButton" Target="Button">
+<Aspect Name="TitleBarButton" TargetType="Button">
     ...
 </Aspect>
 ```

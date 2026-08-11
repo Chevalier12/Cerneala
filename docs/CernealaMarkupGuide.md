@@ -672,7 +672,7 @@ Do not create WPF `Style`, trigger, or storyboard markup.
 <UserControl.Resources>
     <Aspect
         Name="QuietButton"
-        Target="Button">
+        TargetType="Button">
         @default
         {
             Background = $TransparentBrush;
@@ -713,7 +713,7 @@ Apply it with:
 An unnamed aspect targets all matching controls in its resource scope:
 
 ```xml
-<Aspect Target="TextBlock">
+<Aspect TargetType="TextBlock">
     @default
     {
         FontFamily = "Segoe UI Variable Text";
@@ -727,7 +727,7 @@ An unnamed aspect targets all matching controls in its resource scope:
 
 Existing markup uses:
 
-- `Target="Button"` for a normal control target;
+- `TargetType="Button"` for a normal control target;
 - `TargetType="Fully.Qualified.CustomType"` for a specific CLR type.
 
 Follow the pattern already used in the surrounding file.
@@ -754,7 +754,7 @@ An aspect can own one control template:
 ```xml
 <Aspect
     Name="CompactButton"
-    Target="Button">
+    TargetType="Button">
     @template
     {
     <Border
@@ -828,7 +828,7 @@ Repeat(Tween(4s, Linear), forever)
 ```xml
 <Aspect
     Name="AnimatedTile"
-    Target="Border">
+    TargetType="Border">
     @when IsMouseOver
     {
         @if IsMouseOver == true
@@ -1118,7 +1118,7 @@ using WPF-only syntax:
             Easing="EaseOut" />
         <Aspect
             Name="PanelButton"
-            Target="Button">
+            TargetType="Button">
             @default
             {
                 Background = $SurfaceBrush;

@@ -20,7 +20,7 @@
         <SolidColorBrush Name="AccentHoverBrush" Color="#FF174C42" />
         <SolidColorBrush Name="WarningBrush" Color="#FFFFC857" />
 
-        <Aspect Target="TextBlock">
+        <Aspect TargetType="TextBlock">
             @default
             {
                 FontFamily = "Segoe UI";

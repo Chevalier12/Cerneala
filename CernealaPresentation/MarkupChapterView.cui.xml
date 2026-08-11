@@ -58,7 +58,7 @@
                             FontSize="11"
                             Foreground="$SlateBrush"
                             TextWrapping="Wrap"
-                            Text="&lt;Window Title=&quot;Cerneala&quot;>&#xA;  &lt;Window.Resources>&#xA;    &lt;Aspect Target=&quot;Button&quot;>&#xA;      @when IsMouseOver&#xA;      {&#xA;        Background = $Cyan;&#xA;      }&#xA;    &lt;/Aspect>&#xA;  &lt;/Window.Resources>&#xA;&#xA;  &lt;Button Name=&quot;Launch&quot;&#xA;          Content=&quot;Launch&quot;&#xA;          Click=&quot;OnLaunch&quot; />&#xA;&lt;/Window>" />
+                            Text="&lt;Window Title=&quot;Cerneala&quot;>&#xA;  &lt;Window.Resources>&#xA;    &lt;Aspect TargetType=&quot;Button&quot;>&#xA;      @when IsMouseOver&#xA;      {&#xA;        Background = $Cyan;&#xA;      }&#xA;    &lt;/Aspect>&#xA;  &lt;/Window.Resources>&#xA;&#xA;  &lt;Button Name=&quot;Launch&quot;&#xA;          Content=&quot;Launch&quot;&#xA;          Click=&quot;OnLaunch&quot; />&#xA;&lt;/Window>" />
                     </StackPanel>
                 </Border>
                 <Border

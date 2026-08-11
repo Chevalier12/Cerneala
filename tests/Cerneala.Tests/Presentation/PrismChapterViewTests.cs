@@ -195,7 +195,11 @@ public sealed class PrismChapterViewTests : IDisposable
     [Fact]
     public void EditorScrollHostsUseTheApplicationScrollViewerAspect()
     {
+        UIRoot root = new(830, 586);
+        root.SetResourceProvider(Application.Current!.Resources);
         PrismChapterView view = new();
+        root.VisualChildren.Add(view);
+        root.ProcessFrame();
         PrismStudioScrollHost[] hosts = Descendants(view)
             .OfType<PrismStudioScrollHost>()
             .ToArray();

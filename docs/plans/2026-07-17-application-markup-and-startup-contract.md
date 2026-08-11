@@ -28,7 +28,7 @@ cu o radacina `Application`, similara ca rol cu `App.xaml` din WPF si `App.axaml
             Easing="EaseOut" />
         <Aspect
             Name="AppCaption"
-            Target="TextBlock">
+            TargetType="TextBlock">
             @default
             {
                 Foreground = $AccentBrush;

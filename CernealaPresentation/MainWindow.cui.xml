@@ -388,7 +388,7 @@
             }
         </Aspect>
         <Aspect
-            Target="TextBlock">
+            TargetType="TextBlock">
             @default
             {
                 FontFamily = "Segoe UI Variable Text";
@@ -398,7 +398,7 @@
         </Aspect>
         <Aspect
             Name="PrimaryButton"
-            Target="Button">
+            TargetType="Button">
             @default
             {
                 FontFamily = "Cascadia Mono SemiBold";

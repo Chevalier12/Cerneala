@@ -270,7 +270,7 @@ public sealed partial class UiMarkupGeneratorTests
             <StackPanel>
               <StackPanel.Resources>
                 <SolidColorBrush Name="Accent" Color="White" />
-                <Aspect Name="NamedAspect" Target="TextBlock">
+                <Aspect Name="NamedAspect" TargetType="TextBlock">
                   @default { IsEnabled = False; }
                 </Aspect>
               </StackPanel.Resources>

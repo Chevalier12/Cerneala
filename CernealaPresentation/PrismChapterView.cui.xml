@@ -2,7 +2,7 @@
     <UserControl.Resources>
         <Aspect
             Name="PrismStudioGhostButton"
-            Target="Button">
+            TargetType="Button">
             @default
             {
                 FontFamily = "Cascadia Mono SemiBold";
@@ -21,7 +21,7 @@
         </Aspect>
         <Aspect
             Name="PrismStudioPrimaryButton"
-            Target="Button">
+            TargetType="Button">
             @default
             {
                 FontFamily = "Cascadia Mono SemiBold";
@@ -39,7 +39,7 @@
         </Aspect>
         <Aspect
             Name="PrismStudioCatalogButton"
-            Target="Button">
+            TargetType="Button">
             @default
             {
                 FontFamily = "Cascadia Mono SemiBold";

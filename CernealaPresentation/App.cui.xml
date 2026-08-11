@@ -58,7 +58,7 @@
             Color="#00000000" />
         <Aspect
             Name="PresentationScrollThumb"
-            Target="Thumb">
+            TargetType="Thumb">
             @default
             {
                 Background = $SlateDimBrush;
@@ -73,7 +73,7 @@
         </Aspect>
         <Aspect
             Name="PresentationScrollTrack"
-            Target="Track">
+            TargetType="Track">
             @default
             {
                 Background = $PanelAltBrush;
@@ -98,7 +98,7 @@
         </Aspect>
         <Aspect
             Name="PresentationScrollBar"
-            Target="ScrollBar">
+            TargetType="ScrollBar">
             @template
             {
                 <Track
@@ -107,7 +107,7 @@
             }
         </Aspect>
         <Aspect
-            Target="ScrollViewer">
+            TargetType="ScrollViewer">
             @template
             {
                 <Grid>
@@ -146,7 +146,7 @@
         </Aspect>
         <Aspect
             Name="PageReveal"
-            Target="UserControl">
+            TargetType="UserControl">
             @when Visibility
             {
                 @if Visibility == Visible
@@ -180,7 +180,7 @@
             }
         </Aspect>
         <Aspect
-            Target="TextBlock">
+            TargetType="TextBlock">
             @default
             {
                 FontFamily = "Segoe UI Variable Text";
@@ -189,8 +189,53 @@
             }
         </Aspect>
         <Aspect
+            TargetType="CheckBox">
+            @default
+            {
+                Foreground = $PaperBrush;
+                Padding = "0";
+            }
+            @template
+            {
+                <Border Padding="$owner.Padding">
+                    <StackPanel Orientation="Horizontal">
+                        <Border
+                            Name="PART_Indicator"
+                            Width="16"
+                            Height="16"
+                            Background="$PanelAltBrush"
+                            BorderBrush="$LineStrongBrush"
+                            BorderThickness="1"
+                            VerticalAlignment="Center">
+                            <Border
+                                Name="PART_CheckMark"
+                                Background="$CyanBrush"
+                                Padding="2">
+                                <SvgPath
+                                    Width="10"
+                                    Height="10"
+                                    Data="M4.63 15.638a1.028 1.028 0 0 1-.79-.37L.36 11.09a1.03 1.03 0 1 1 1.58-1.316l2.535 3.043L9.958 3.32a1.029 1.029 0 0 1 1.783 1.03L5.52 15.122a1.03 1.03 0 0 1-.803.511.89.89 0 0 1-.088.004z"
+                                    ViewBox="-3.5 0 19 19"
+                                    Fill="#FF000000"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                            </Border>
+                        </Border>
+                        <ContentPresenter
+                            Content="$owner.Content"
+                            FontFamily="$owner.FontFamily"
+                            FontSize="$owner.FontSize"
+                            Foreground="$owner.Foreground"
+                            Margin="8,0,0,0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            }
+        </Aspect>
+        <Aspect
             Name="GhostButton"
-            Target="Button">
+            TargetType="Button">
             @default
             {
                 FontFamily = "Cascadia Mono SemiBold";
@@ -210,7 +255,7 @@
         </Aspect>
         <Aspect
             Name="LimeButton"
-            Target="Button">
+            TargetType="Button">
             @default
             {
                 FontFamily = "Cascadia Mono SemiBold";

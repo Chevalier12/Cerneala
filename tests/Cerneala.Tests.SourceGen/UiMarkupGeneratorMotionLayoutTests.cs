@@ -13,7 +13,7 @@ public sealed partial class UiMarkupGeneratorTests
             """
             <TextBlock Text="card">
               <TextBlock.Resources>
-                <Aspect Target="TextBlock">
+                <Aspect TargetType="TextBlock">
                   @layout id $self.Text with Tween(100ms, EaseOut);
                 </Aspect>
               </TextBlock.Resources>
@@ -46,7 +46,7 @@ public sealed partial class UiMarkupGeneratorTests
             """
             <TextBlock Text="card">
               <TextBlock.Resources>
-                <Aspect Target="TextBlock">
+                <Aspect TargetType="TextBlock">
             """ + body + """
                 </Aspect>
               </TextBlock.Resources>

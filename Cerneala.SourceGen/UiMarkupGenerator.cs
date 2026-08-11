@@ -1280,12 +1280,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            IEnumerable<AspectResource> applicationAspects =
-                applicationResources.DefaultAspects.Values.OfType<AspectResource>()
-                    .Concat(applicationResources.NamedResources.Values
-                        .OfType<NamedSymbol>()
-                        .Select(symbol => symbol.Source)
-                        .OfType<AspectResource>());
+            IEnumerable<AspectResource> applicationAspects = applicationResources.NamedResources.Values
+                .OfType<NamedSymbol>()
+                .Select(symbol => symbol.Source)
+                .OfType<AspectResource>();
             foreach (AspectResource aspect in applicationAspects)
             {
                 if (!allAspects.Contains(aspect))
@@ -1643,11 +1641,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private void ReadAspect(ResourceScope scope, XElement resource)
         {
-            XAttribute? targetAttribute = resource.Attribute("TargetType") ?? resource.Attribute("Target");
+            XAttribute? targetAttribute = resource.Attribute("TargetType");
             string targetName = targetAttribute?.Value ?? string.Empty;
             if (string.IsNullOrWhiteSpace(targetName))
             {
-                Report(InvalidPropertyValue, resource, "Aspect", "Target", targetName);
+                Report(InvalidPropertyValue, resource, "Aspect", "TargetType", targetName);
                 return;
             }
 
@@ -2800,13 +2798,74 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         }
 
                         string properties = string.Join(", ", propertyNames.Select(Literal));
-                        currentLines.Add(
-                            ownerVariable + ".Resources[" + key + "] = new global::Cerneala.UI.Markup.MarkupAspectResource(" +
-                            (aspect.Name is null ? "null" : Literal(aspect.Name)) + ", typeof(" + targetType + "), new string[] { " +
-                            properties + " }, " + (aspect.Conditions.Count > 0 ? "true" : "false") + ");");
+                        if (aspect.Name is null && ReferenceEquals(owner, document.Root) &&
+                            string.Equals(document.Root.Name.LocalName, "Application", StringComparison.Ordinal))
+                        {
+                            EmitApplicationAspectResource(ownerVariable, key, properties, targetType, aspect);
+                        }
+                        else
+                        {
+                            currentLines.Add(
+                                ownerVariable + ".Resources[" + key + "] = new global::Cerneala.UI.Markup.MarkupAspectResource(" +
+                                (aspect.Name is null ? "null" : Literal(aspect.Name)) + ", typeof(" + targetType + "), new string[] { " +
+                                properties + " }, " + (aspect.Conditions.Count > 0 ? "true" : "false") + ");");
+                        }
                         break;
                 }
             }
+        }
+
+        private void EmitApplicationAspectResource(
+            string ownerVariable,
+            string key,
+            string properties,
+            string targetType,
+            AspectResource aspect)
+        {
+            List<string> applicatorLines = [];
+            List<string> applicatorPostLines = [];
+            XElement targetElement = new(aspect.TargetName);
+            WithEmissionBuffers(applicatorLines, applicatorPostLines, () =>
+            {
+                if (!ResolveMotionAspect(targetElement, "target", aspect))
+                {
+                    return;
+                }
+
+                EmitMotionPresence(targetElement, "target", aspect);
+                EmitMotionLayout(targetElement, "target", aspect);
+                EmitAspectAssignments(
+                    targetElement,
+                    "target",
+                    aspect,
+                    "global::Cerneala.UI.Core.UiPropertyValueSource.ApplicationAspectBase");
+                EmitMotionActivations(targetElement, "target", aspect);
+                if (aspect.Conditions.Count > 0)
+                {
+                    EmitReactiveContent(
+                        targetElement,
+                        "target",
+                        new DirectiveParseResult([], null, null),
+                        [aspect],
+                        "global::Cerneala.UI.Core.UiPropertyValueSource.ApplicationAspectVisualState");
+                }
+            });
+
+            currentLines.Add(ownerVariable + ".Resources[" + key + "] = new global::Cerneala.UI.Markup.MarkupAspectResource(");
+            currentLines.Add("    null, typeof(" + targetType + "), new string[] { " + properties + " }, " +
+                (aspect.Conditions.Count > 0 ? "true" : "false") + ",");
+            currentLines.Add("    element =>");
+            currentLines.Add("    {");
+            currentLines.Add("        if (element is not " + targetType + " target)");
+            currentLines.Add("        {");
+            currentLines.Add("            return;");
+            currentLines.Add("        }");
+            foreach (string line in applicatorLines.Concat(applicatorPostLines))
+            {
+                currentLines.Add("        " + line);
+            }
+
+            currentLines.Add("    });");
         }
 
         private string? ResolveElementType(string elementName)
@@ -3062,14 +3121,18 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return value.Substring(1);
         }
 
-        private void EmitAspectAssignments(XElement element, string variable, AspectResource aspect)
+        private void EmitAspectAssignments(
+            XElement element,
+            string variable,
+            AspectResource aspect,
+            string valueSource = "global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase")
         {
             string elementName = element.Name.LocalName;
             if (aspect.TemplateVariable is not null)
             {
                 currentLines.Add(
                     variable + ".SetValue(global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " +
-                    aspect.TemplateVariable + ", global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase);");
+                    aspect.TemplateVariable + ", " + valueSource + ");");
             }
 
             foreach (AspectPropertyAssignment assignment in aspect.Assignments)
@@ -3096,13 +3159,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         variable,
                         spec,
                         expression.ApplicationResourceName,
-                        "global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase");
+                        valueSource);
                     continue;
                 }
 
                 currentLines.Add(spec.IsUiProperty
                     ? variable + ".SetValue(" + spec.PropertyCode + ", " + expression.Code +
-                        ", global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase);"
+                        ", " + valueSource + ");"
                     : variable + "." + spec.Name + " = " + expression.Code + ";");
             }
         }
@@ -3123,7 +3186,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             if (targetKind == MarkupValueKind.Brush && symbol.Source is BrushResource brushResource)
             {
-                if (applicationResources?.Contains(symbol) == true)
+                if (applicationResources?.Contains(symbol) == true ||
+                    string.Equals(document.Root.Name.LocalName, "Application", StringComparison.Ordinal))
                 {
                     string code =
                         "((global::Cerneala.UI.Resources.IResourceProvider)global::Cerneala.UI.Application.Current!.Resources).GetResource(" +
@@ -3162,24 +3226,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     return true;
                 }
-            }
-
-            if (applicationResources is not null &&
-                applicationResources.DefaultAspects.TryGetValue(targetName, out object? applicationAspect) &&
-                applicationAspect is AspectResource typedAspect)
-            {
-                aspect = typedAspect;
-                return true;
-            }
-
-            if (applicationResources is not null &&
-                appliedElementType is not null &&
-                TryResolveNearestDefaultAspect(
-                    applicationResources.DefaultAspects.Values.OfType<AspectResource>(),
-                    appliedElementType,
-                    out aspect))
-            {
-                return true;
             }
 
             aspect = null!;

@@ -12,6 +12,7 @@ using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Theming;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Markup;
 
 namespace Cerneala.UI.Elements;
 
@@ -25,6 +26,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     private SemanticsTree? cachedSemanticsTree;
     private int cachedSemanticsTreeVersion = -1;
     private bool semanticsDirty = true;
+    private IReadOnlyList<MarkupAspectResource> applicationAspects = [];
 
     public UIRoot(
         float viewportWidth = 0,
@@ -186,6 +188,9 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         resourceChangedSubscription = null;
 
         ResourceProvider = provider;
+        applicationAspects = provider is ResourceDictionary resources
+            ? resources.Values.OfType<MarkupAspectResource>().Where(aspect => aspect.Name is null).ToArray()
+            : [];
         if (provider is IObservableResourceProvider observableProvider)
         {
             resourceChangedSubscription = new ResourceChangedSubscription(this, observableProvider);
@@ -430,6 +435,14 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     internal void CountArrangeCall()
     {
         activeFrameStats?.CountArrangeCall();
+    }
+
+    internal void ApplyApplicationAspects(UIElement element)
+    {
+        foreach (MarkupAspectResource aspect in applicationAspects)
+        {
+            aspect.ApplyTo(element);
+        }
     }
 
     private FramePhaseProcessors CreatePhaseProcessors()

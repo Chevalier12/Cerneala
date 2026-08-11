@@ -12,5 +12,7 @@ public enum UiPropertyValueSource
     Animation = 7,
     MarkupBase = 8,
     MarkupConditional = 9,
-    Local = 10
+    Local = 10,
+    ApplicationAspectBase = 11,
+    ApplicationAspectVisualState = 12
 }

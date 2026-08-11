@@ -23,7 +23,7 @@
         <SolidColorBrush Name="InputBrush" Color="#FFF7F9FA" />
         <SolidColorBrush Name="InputTextBrush" Color="#FF111519" />
 
-        <Aspect Target="TextBlock">
+        <Aspect TargetType="TextBlock">
             @default
             {
                 FontFamily = "Segoe UI";

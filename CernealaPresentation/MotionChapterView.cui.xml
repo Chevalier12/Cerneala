@@ -563,7 +563,7 @@
         </Aspect>
         <Aspect
             Name="MotionReactorBackdrop"
-            Target="Control">
+            TargetType="Control">
             @template
             {
                 <Grid
@@ -882,7 +882,7 @@
         </Aspect>
         <Aspect
             Name="ShootingStar"
-            Target="Control">
+            TargetType="Control">
             @default
             {
                 Width = 72;

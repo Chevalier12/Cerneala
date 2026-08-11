@@ -860,6 +860,21 @@
     "source": "UI/Controls/CheckBox.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.ColorPicker",
+    "file": "documentation/classes/Cerneala.UI.Controls.ColorPicker.md",
+    "source": "UI/Controls/ColorPicker.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.ColorSpectrum",
+    "file": "documentation/classes/Cerneala.UI.Controls.ColorSpectrum.md",
+    "source": "UI/Controls/ColorSpectrum.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.ColorSwatch",
+    "file": "documentation/classes/Cerneala.UI.Controls.ColorSwatch.md",
+    "source": "UI/Controls/ColorSwatch.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ComboBox",
     "file": "documentation/classes/Cerneala.UI.Controls.ComboBox.md",
     "source": "UI/Controls/ComboBox.cs"
@@ -1178,6 +1193,11 @@
     "name": "Cerneala.UI.Controls.Shapes.Path",
     "file": "documentation/classes/Cerneala.UI.Controls.Shapes.Path.md",
     "source": "UI/Controls/Shapes/Path.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Shapes.SvgPath",
+    "file": "documentation/classes/Cerneala.UI.Controls.Shapes.SvgPath.md",
+    "source": "UI/Controls/Shapes/SvgPath.cs"
   },
   {
     "name": "Cerneala.UI.Controls.Shapes.Rectangle",

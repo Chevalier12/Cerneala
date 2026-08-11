@@ -113,7 +113,7 @@ public sealed partial class UiMarkupGeneratorTests
             <Border Background="#FFFFFFFF">
               <Border.Resources>
                 <Tween Name="QuickOut" Duration="100ms" Easing="EaseOut" />
-                <Aspect Target="Border">
+                <Aspect TargetType="Border">
                   @presence
                   {
                     enter = $QuickOut;

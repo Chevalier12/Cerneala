@@ -32,6 +32,7 @@ public sealed class PresentationOverlayAspectTests : IDisposable
     public void ComboBoxDropDownScrollViewerUsesPresentationAspect()
     {
         UIRoot root = new(1650, 1004);
+        root.SetResourceProvider(Application.Current!.Resources);
         PrismChapterView view = new();
         root.VisualChildren.Add(view);
         root.ProcessFrame();
@@ -50,6 +51,7 @@ public sealed class PresentationOverlayAspectTests : IDisposable
     public void AspectStudioComboBoxDropDownScrollViewerUsesPresentationAspect()
     {
         UIRoot root = new(1650, 1004);
+        root.SetResourceProvider(Application.Current!.Resources);
         AspectChapterView view = new();
         root.VisualChildren.Add(view);
         root.ProcessFrame();

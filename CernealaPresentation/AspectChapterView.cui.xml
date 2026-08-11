@@ -1,6 +1,6 @@
 <UserControl>
     <UserControl.Resources>
-        <Aspect Name="AspectStudioGhostButton" Target="Button">
+        <Aspect Name="AspectStudioGhostButton" TargetType="Button">
             @default
             {
                 FontFamily = "Cascadia Mono SemiBold";

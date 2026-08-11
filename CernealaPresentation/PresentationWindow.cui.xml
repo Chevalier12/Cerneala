@@ -26,7 +26,7 @@
             Easing="EaseOut" />
         <Aspect
             Name="NavButton"
-            Target="ToggleButton">
+            TargetType="ToggleButton">
             @default
             {
                 FontFamily = "Cascadia Mono SemiBold";

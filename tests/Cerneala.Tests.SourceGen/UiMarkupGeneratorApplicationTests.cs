@@ -409,7 +409,7 @@ public sealed partial class UiMarkupGeneratorTests
                     <SolidColorBrush Name="Accent" Color="#FF20A060" />
                     <Tween Name="Quick" Duration="150ms" Easing="EaseOut" />
                     <Spring Name="Soft" Stiffness="420" Damping="32" Mass="1" />
-                    <Aspect Target="Border">
+                    <Aspect TargetType="Border">
                         @default
                         {
                             Background = $Accent;
@@ -459,10 +459,14 @@ public sealed partial class UiMarkupGeneratorTests
                 """
                 <Application StartupWindow="ShellWindow">
                     <Application.Resources>
-                        <Aspect Target="ScrollViewer">
+                        <Aspect TargetType="ScrollViewer">
                             @default
                             {
                                 Opacity = 0.42;
+                            }
+                            @when IsMouseOver
+                            {
+                                Opacity = 0.84;
                             }
                             @template
                             {
@@ -496,15 +500,41 @@ public sealed partial class UiMarkupGeneratorTests
         GeneratorRunResult result = RunApplicationViewsGenerator(files, sources, out Compilation compilation);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        string generated = string.Join(
-            Environment.NewLine,
-            result.GeneratedSources.Select(source => source.SourceText.ToString()));
-        Assert.Contains("0.42", generated, StringComparison.Ordinal);
-        Assert.Contains("UiPropertyValueSource.AspectBase", generated, StringComparison.Ordinal);
+        string applicationSource = Assert.Single(
+            result.GeneratedSources,
+            source => source.HintName.Contains("Application", StringComparison.Ordinal)).SourceText.ToString();
+        string windowSource = Assert.Single(
+            result.GeneratedSources,
+            source => source.HintName.Contains("Window", StringComparison.Ordinal)).SourceText.ToString();
+        Assert.Contains("0.42", applicationSource, StringComparison.Ordinal);
+        Assert.Contains("UiPropertyValueSource.ApplicationAspectBase", applicationSource, StringComparison.Ordinal);
+        Assert.Contains("UiPropertyValueSource.ApplicationAspectVisualState", applicationSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("0.42", windowSource, StringComparison.Ordinal);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void AspectRequiresTargetTypeAttribute()
+    {
+        GeneratorRunResult result = RunApplicationGenerator(
+            """
+            <Application StartupWindow="ShellWindow">
+                <Application.Resources>
+                    <Aspect Target="Button">@default { Opacity = 0.5; }</Aspect>
+                </Application.Resources>
+            </Application>
+            """,
+            ApplicationInput,
+            OutputKind.WindowsApplication,
+            out _);
+
+        Diagnostic diagnostic = Assert.Single(
+            result.Diagnostics,
+            candidate => candidate.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("TargetType", diagnostic.GetMessage(), StringComparison.Ordinal);
     }
 
     [Fact]

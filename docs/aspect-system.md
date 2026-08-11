@@ -99,7 +99,7 @@ Content projection is explicit. A template displays `ContentControl.Content` onl
 Markup keeps the existing `Name`/`Target` contract. An Aspect can provide defaults, reactive values, and one modern component template:
 
 ```xml
-<Aspect Name="GhostButton" Target="Button">
+<Aspect Name="GhostButton" TargetType="Button">
     @default
     {
         Background = "Transparent";

@@ -475,7 +475,7 @@ public sealed partial class UiMarkupGeneratorTests
               <Border>
                 <Border.Resources>
                   <SolidColorBrush Name="Accent" Color="#FF00FF00" />
-                  <Aspect Name="Card" Target="Border">
+                  <Aspect Name="Card" TargetType="Border">
                     @default { Background = $Accent; }
                   </Aspect>
                 </Border.Resources>
@@ -515,7 +515,7 @@ public sealed partial class UiMarkupGeneratorTests
                 <SolidColorBrush Name="Ink" Color="#FF0A0B0E" />
                 <SolidColorBrush Name="Lime" Color="#FFC6FF3D" />
                 <SolidColorBrush Name="Cyan" Color="#FF00E8FF" />
-                <Aspect Name="PrimaryButton" Target="Button">
+                <Aspect Name="PrimaryButton" TargetType="Button">
                   @default
                   {
                     Background = $Lime;
@@ -611,7 +611,7 @@ public sealed partial class UiMarkupGeneratorTests
             <StackPanel>
               <StackPanel.Resources>
                 <SolidColorBrush Name="Accent" Color="#FFFF0000" />
-                <Aspect Name="Label" Target="TextBlock">
+                <Aspect Name="Label" TargetType="TextBlock">
                   @default { Foreground = $Accent; }
                 </Aspect>
               </StackPanel.Resources>
@@ -620,7 +620,7 @@ public sealed partial class UiMarkupGeneratorTests
               <Border>
                 <Border.Resources>
                   <SolidColorBrush Name="Accent" Color="#FF00FF00" />
-                  <Aspect Name="Label" Target="TextBlock">
+                  <Aspect Name="Label" TargetType="TextBlock">
                     @default { Foreground = $Accent; }
                   </Aspect>
                 </Border.Resources>
@@ -871,7 +871,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Button Aspect="$GhostButton" Content="Ghost">
               <Button.Resources>
-                <Aspect Name="GhostButton" Target="Button">
+                <Aspect Name="GhostButton" TargetType="Button">
                   @default { Background = "Black"; }
                   @template
                   {
@@ -905,7 +905,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Button Background="White" IsEnabled="False">
               <Button.Resources>
-                <Aspect Target="Button">
+                <Aspect TargetType="Button">
                   @default { Foreground = "White"; }
                   @when IsEnabled
                   {
@@ -1046,8 +1046,8 @@ public sealed partial class UiMarkupGeneratorTests
         const string namedMarkup = """
             <Button Aspect="$Named">
               <Button.Resources>
-                <Aspect Target="Button">@template { <TextBlock Text="Default" /> }</Aspect>
-                <Aspect Name="Named" Target="Button">@template { <TextBlock Text="Named" /> }</Aspect>
+                <Aspect TargetType="Button">@template { <TextBlock Text="Default" /> }</Aspect>
+                <Aspect Name="Named" TargetType="Button">@template { <TextBlock Text="Named" /> }</Aspect>
               </Button.Resources>
             </Button>
             """;
@@ -1066,7 +1066,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel>
               <StackPanel.Resources>
-                <Aspect Target="Button">
+                <Aspect TargetType="Button">
                   @template { <Border Name="Chrome" /> }
                 </Aspect>
               </StackPanel.Resources>
@@ -1161,7 +1161,7 @@ public sealed partial class UiMarkupGeneratorTests
     [InlineData("<Button>@template { <Border>@when $owner.Unknown { Background = \"White\"; }</Border> }</Button>", "CERNEALAUI007", "template owner")]
     [InlineData("<Button>@template { <Border>@when $self.Unknown { Background = \"White\"; }</Border> }</Button>", "CERNEALAUI007", "template element")]
     [InlineData("<Button>@template { <Border>@when $owner.FontSize { Background = \"White\"; }</Border> }</Button>", "CERNEALAUI007", "Boolean")]
-    [InlineData("<StackPanel><StackPanel.Resources><Aspect Target=\"StackPanel\">@template { <Border /> }</Aspect></StackPanel.Resources></StackPanel>", "CERNEALAUI012", "not a Control")]
+    [InlineData("<StackPanel><StackPanel.Resources><Aspect TargetType=\"StackPanel\">@template { <Border /> }</Aspect></StackPanel.Resources></StackPanel>", "CERNEALAUI012", "not a Control")]
     [InlineData("<Button><Button.Resources><SolidColorBrush Name=\"owner\" Color=\"#FF000000\" /></Button.Resources></Button>", "CERNEALAUI005", "reserved")]
     public void InvalidTemplateShapesReportFocusedDiagnostics(string markup, string diagnosticId, string message)
     {
@@ -1253,7 +1253,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel>
               <StackPanel.Resources>
-                <Aspect Target="TextBlock">
+                <Aspect TargetType="TextBlock">
                   @default
                   {
                     FontFamily = "Consolas";
@@ -1287,14 +1287,14 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <TextBlock Aspect="$KickerText" Text="HELLO">
               <TextBlock.Resources>
-                <Aspect Target="TextBlock">
+                <Aspect TargetType="TextBlock">
                   @default
                   {
                     FontSize = 14;
                     Foreground = Black;
                   }
                 </Aspect>
-                <Aspect Name="KickerText" Target="TextBlock">
+                <Aspect Name="KickerText" TargetType="TextBlock">
                   @default
                   {
                     FontSize = 12;
@@ -1343,7 +1343,7 @@ public sealed partial class UiMarkupGeneratorTests
             <TextBlock Aspect="$KickerText" Text="HELLO">
               <TextBlock.Resources>
                 <SolidColorBrush Name="PulseColor" Color="#FF5D73" />
-                <Aspect Name="KickerText" Target="TextBlock">
+                <Aspect Name="KickerText" TargetType="TextBlock">
                   @default
                   {
                     Foreground = $PulseColor;
@@ -1395,7 +1395,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <TextBlock Aspect="$KickerText">
               <TextBlock.Resources>
-                <Aspect Name="KickerText" Target="TextBlock">
+                <Aspect Name="KickerText" TargetType="TextBlock">
                   @default
                   {
                     Foreground = $MissingColor;
@@ -1456,7 +1456,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Button Aspect="$KickerText">
               <Button.Resources>
-                <Aspect Name="KickerText" Target="TextBlock">
+                <Aspect Name="KickerText" TargetType="TextBlock">
                   @default
                   {
                     FontSize = 12;
@@ -1479,10 +1479,10 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <TextBlock>
               <TextBlock.Resources>
-                <Aspect Target="TextBlock">
+                <Aspect TargetType="TextBlock">
                   @default { FontSize = 12; }
                 </Aspect>
-                <Aspect Target="TextBlock">
+                <Aspect TargetType="TextBlock">
                   @default { FontSize = 14; }
                 </Aspect>
               </TextBlock.Resources>
@@ -1502,7 +1502,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <TextBlock>
               <TextBlock.Resources>
-                <Aspect Target="TextBlock">
+                <Aspect TargetType="TextBlock">
                   @default
                   {
                     Bogus = 100;
@@ -2481,7 +2481,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Border Aspect="$Hover">
               <Border.Resources>
-                <Aspect Name="Hover" Target="Border">
+                <Aspect Name="Hover" TargetType="Border">
                   @default { Background = Black; }
                   @when IsMouseOver
                   {
@@ -3224,7 +3224,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Window Background="Black">
               <Window.Resources>
-                <Aspect Target="Window">
+                <Aspect TargetType="Window">
                   @template { <Border Name="AspectChrome" Background="$owner.Background" /> }
                 </Aspect>
               </Window.Resources>
