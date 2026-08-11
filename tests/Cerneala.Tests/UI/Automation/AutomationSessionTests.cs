@@ -27,7 +27,7 @@ public sealed class AutomationSessionTests
     }
 
     [Fact]
-    public void ElementOperationsUseTheConfiguredInputDriver()
+    public async Task ElementOperationsUseTheConfiguredInputDriver()
     {
         UIElement root = new();
         Button button = new();
@@ -36,14 +36,51 @@ public sealed class AutomationSessionTests
         RecordingInputDriver input = new();
         AutomationSession session = new(root, input);
 
-        session.FindByAutomationId("target")
-            .Click()
+        AutomationElement target = session.FindByAutomationId("target");
+        target.Click()
             .PressKey(InputKey.A, AutomationModifiers.Control)
             .SendText("typed");
+        await target.DragAsync(0, 0.5f, 1, 0.5f, steps: 4);
 
         Assert.Same(button, input.ClickedElement);
         Assert.Equal((InputKey.A, AutomationModifiers.Control), input.KeyPress);
         Assert.Equal("typed", input.Text);
+        Assert.Equal((0f, 0.5f, 1f, 0.5f, 4), input.Drag);
+    }
+
+    [Fact]
+    public async Task RetainedDriverDragsSliderThroughPointerPipeline()
+    {
+        UIRoot root = new(240, 80);
+        Slider slider = new()
+        {
+            Minimum = 0,
+            Maximum = 100,
+            Width = 200,
+            Height = 40
+        };
+        root.VisualChildren.Add(slider);
+        UiHost host = new(new UiHostOptions
+        {
+            Root = root,
+            Viewport = new UiViewport(240, 80)
+        });
+        host.Update(
+            new InputFrame(
+                PointerSnapshot.Empty,
+                PointerSnapshot.Empty,
+                KeyboardSnapshot.Empty,
+                KeyboardSnapshot.Empty,
+                []),
+            host.Viewport,
+            TimeSpan.Zero);
+        AutomationProperties.SetAutomationId(slider, "slider");
+        AutomationSession session = new(root, new RetainedAutomationInputDriver(host));
+
+        await session.FindByAutomationId("slider")
+            .DragAsync(0.025f, 0.5f, 0.9f, 0.5f, steps: 8);
+
+        Assert.InRange(slider.Value, 85, 95);
     }
 
     [Fact]
@@ -119,6 +156,8 @@ public sealed class AutomationSessionTests
 
         public string? Text { get; private set; }
 
+        public (float StartX, float StartY, float EndX, float EndY, int Steps)? Drag { get; private set; }
+
         public void Click(UIElement target)
         {
             ClickedElement = target;
@@ -132,6 +171,19 @@ public sealed class AutomationSessionTests
         public void SendText(string text)
         {
             Text = text;
+        }
+
+        public Task DragAsync(
+            UIElement target,
+            float startXRatio,
+            float startYRatio,
+            float endXRatio,
+            float endYRatio,
+            int steps = 12,
+            CancellationToken cancellationToken = default)
+        {
+            Drag = (startXRatio, startYRatio, endXRatio, endYRatio, steps);
+            return Task.CompletedTask;
         }
     }
 }

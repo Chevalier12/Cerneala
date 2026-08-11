@@ -25,6 +25,24 @@ public sealed class AutomationElement
         return this;
     }
 
+    public Task DragAsync(
+        float startXRatio,
+        float startYRatio,
+        float endXRatio,
+        float endYRatio,
+        int steps = 12,
+        CancellationToken cancellationToken = default)
+    {
+        return session.Input.DragAsync(
+            Element,
+            startXRatio,
+            startYRatio,
+            endXRatio,
+            endYRatio,
+            steps,
+            cancellationToken);
+    }
+
     public AutomationElement PressKey(InputKey key, AutomationModifiers modifiers = AutomationModifiers.None)
     {
         session.Input.PressKey(key, modifiers);

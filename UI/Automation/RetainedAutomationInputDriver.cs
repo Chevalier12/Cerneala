@@ -9,12 +9,23 @@ namespace Cerneala.UI.Automation;
 public sealed class RetainedAutomationInputDriver : IAutomationInputDriver
 {
     private readonly UiHost host;
+    private readonly Func<IReadOnlyList<InputFrame>, CancellationToken, Task>? frameSynchronizedDrag;
     private PointerSnapshot pointer = PointerSnapshot.Empty;
     private KeyboardSnapshot keyboard = KeyboardSnapshot.Empty;
+    private bool dragging;
 
     public RetainedAutomationInputDriver(UiHost host)
     {
         this.host = host ?? throw new ArgumentNullException(nameof(host));
+    }
+
+    internal RetainedAutomationInputDriver(
+        UiHost host,
+        Func<IReadOnlyList<InputFrame>, CancellationToken, Task> frameSynchronizedDrag)
+        : this(host)
+    {
+        this.frameSynchronizedDrag = frameSynchronizedDrag ??
+            throw new ArgumentNullException(nameof(frameSynchronizedDrag));
     }
 
     public void Click(UIElement target)
@@ -34,6 +45,68 @@ public sealed class RetainedAutomationInputDriver : IAutomationInputDriver
         MovePointer(bounds.X + (bounds.Width / 2), bounds.Y + (bounds.Height / 2));
         SetPointerButton(InputMouseButton.Left, true);
         SetPointerButton(InputMouseButton.Left, false);
+    }
+
+    public async Task DragAsync(
+        UIElement target,
+        float startXRatio,
+        float startYRatio,
+        float endXRatio,
+        float endYRatio,
+        int steps = 12,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateTarget(target);
+        ValidateRatio(startXRatio, nameof(startXRatio));
+        ValidateRatio(startYRatio, nameof(startYRatio));
+        ValidateRatio(endXRatio, nameof(endXRatio));
+        ValidateRatio(endYRatio, nameof(endYRatio));
+        ArgumentOutOfRangeException.ThrowIfLessThan(steps, 1);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (dragging)
+        {
+            throw new InvalidOperationException("An automation pointer drag is already in progress.");
+        }
+
+        LayoutRect bounds = target.ArrangedBounds;
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            throw new InvalidOperationException("The automation target has no arranged hit-test area.");
+        }
+
+        dragging = true;
+        try
+        {
+            List<InputFrame> frames = new(steps + 3);
+            AppendPointerMove(frames, PointInBounds(bounds, startXRatio, startYRatio));
+            AppendPointerButton(frames, InputMouseButton.Left, isDown: true);
+            for (int step = 1; step <= steps; step++)
+            {
+                float progress = step / (float)steps;
+                AppendPointerMove(frames, PointInBounds(
+                    bounds,
+                    Lerp(startXRatio, endXRatio, progress),
+                    Lerp(startYRatio, endYRatio, progress)));
+            }
+            AppendPointerButton(frames, InputMouseButton.Left, isDown: false);
+
+            if (frameSynchronizedDrag is not null)
+            {
+                await frameSynchronizedDrag(frames, cancellationToken);
+            }
+            else
+            {
+                foreach (InputFrame frame in frames)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    host.Update(frame, host.Viewport, TimeSpan.Zero);
+                }
+            }
+        }
+        finally
+        {
+            dragging = false;
+        }
     }
 
     public void PressKey(InputKey key, AutomationModifiers modifiers = AutomationModifiers.None)
@@ -64,6 +137,20 @@ public sealed class RetainedAutomationInputDriver : IAutomationInputDriver
     {
         PointerSnapshot next = pointer.WithPosition(x, y);
         Dispatch(next, keyboard, []);
+        pointer = next;
+    }
+
+    private void AppendPointerMove(List<InputFrame> frames, LayoutPoint point)
+    {
+        PointerSnapshot next = pointer.WithPosition(point.X, point.Y);
+        frames.Add(new InputFrame(pointer, next, keyboard, keyboard, []));
+        pointer = next;
+    }
+
+    private void AppendPointerButton(List<InputFrame> frames, InputMouseButton button, bool isDown)
+    {
+        PointerSnapshot next = pointer.WithButton(button, isDown);
+        frames.Add(new InputFrame(pointer, next, keyboard, keyboard, []));
         pointer = next;
     }
 
@@ -115,4 +202,35 @@ public sealed class RetainedAutomationInputDriver : IAutomationInputDriver
 
         return keys.ToArray();
     }
+
+    private void ValidateTarget(UIElement target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        if (!ReferenceEquals(target.Root, host.Root))
+        {
+            throw new InvalidOperationException("The automation target does not belong to this driver's UI root.");
+        }
+    }
+
+    private static void ValidateRatio(float ratio, string parameterName)
+    {
+        if (!float.IsFinite(ratio) || ratio is < 0 or > 1)
+        {
+            throw new ArgumentOutOfRangeException(parameterName, ratio, "Automation drag ratios must be between 0 and 1.");
+        }
+    }
+
+    private static LayoutPoint PointInBounds(LayoutRect bounds, float xRatio, float yRatio)
+    {
+        float x = xRatio == 1
+            ? MathF.BitDecrement(bounds.X + bounds.Width)
+            : bounds.X + (bounds.Width * xRatio);
+        float y = yRatio == 1
+            ? MathF.BitDecrement(bounds.Y + bounds.Height)
+            : bounds.Y + (bounds.Height * yRatio);
+        return new LayoutPoint(x, y);
+    }
+
+    private static float Lerp(float start, float end, float progress) =>
+        start + ((end - start) * progress);
 }

@@ -319,8 +319,38 @@ internal sealed class WindowApplicationRuntime : IDisposable
         WindowContext context = RequireContext(window);
         return new AutomationSession(
             context.Root,
-            new RetainedAutomationInputDriver(context.Host),
+            new RetainedAutomationInputDriver(
+                context.Host,
+                (frames, cancellationToken) =>
+                    EnqueueAutomationDragAsync(context, frames, cancellationToken)),
             path => SaveScreenshot(window, path));
+    }
+
+    private Task EnqueueAutomationDragAsync(
+        WindowContext context,
+        IReadOnlyList<InputFrame> frames,
+        CancellationToken cancellationToken)
+    {
+        VerifyAccess();
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!IsLiveContext(context))
+        {
+            throw new InvalidOperationException("Automation input requires a visible, open Window.");
+        }
+        if (frames.Count == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        for (int index = 0; index < frames.Count; index++)
+        {
+            context.AutomationFrames.Enqueue(new AutomationFrameRequest(
+                frames[index],
+                index == frames.Count - 1 ? completion : null));
+        }
+        context.RenderRequested = true;
+        return completion.Task.WaitAsync(cancellationToken);
     }
 
     internal PrismOperationalDiagnostics? CapturePrismDiagnostics(Window window)
@@ -530,7 +560,12 @@ internal sealed class WindowApplicationRuntime : IDisposable
         {
             long processingStarted = Stopwatch.GetTimestamp();
             long inputCollectionStarted = Stopwatch.GetTimestamp();
-            InputFrame inputFrame = context.PlatformWindow.InputSource.GetFrame();
+            AutomationFrameRequest? automationRequest =
+                context.AutomationFrames.TryDequeue(out AutomationFrameRequest? queuedRequest)
+                    ? queuedRequest
+                    : null;
+            InputFrame inputFrame = automationRequest?.Frame ??
+                context.PlatformWindow.InputSource.GetFrame();
             TimeSpan inputCollectionTime = Stopwatch.GetElapsedTime(inputCollectionStarted);
             long retainedUpdateStarted = Stopwatch.GetTimestamp();
             UiFrame frame;
@@ -588,6 +623,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             using (context.Root.Relay.EnterSynchronizationContext())
             {
                 context.Window.MarkFrameRendered(frame);
+                automationRequest?.Completion?.TrySetResult();
 
                 if (!context.ContentRendered)
                 {
@@ -601,6 +637,10 @@ internal sealed class WindowApplicationRuntime : IDisposable
         finally
         {
             context.IsRendering = false;
+            if (IsLiveContext(context) && context.AutomationFrames.Count > 0)
+            {
+                context.RenderRequested = true;
+            }
             if (IsLiveContext(context) &&
                 context.ContentRendered &&
                 context.Root.RetainedRenderCache.IsRootValid)
@@ -790,11 +830,22 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         public UiViewport? OverrideViewport { get; set; }
 
+        public Queue<AutomationFrameRequest> AutomationFrames { get; } = new();
+
         public void Dispose()
         {
+            foreach (AutomationFrameRequest request in AutomationFrames)
+            {
+                request.Completion?.TrySetCanceled();
+            }
+            AutomationFrames.Clear();
             PlatformWindow.Dispose();
         }
     }
+
+    private sealed record AutomationFrameRequest(
+        InputFrame Frame,
+        TaskCompletionSource? Completion);
 
     private sealed class ReferenceEqualityComparer : IEqualityComparer<Window>
     {

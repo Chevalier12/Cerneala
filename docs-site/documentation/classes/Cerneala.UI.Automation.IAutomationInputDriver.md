@@ -17,12 +17,13 @@ var session = new AutomationSession(root, customDriver);
 ```
 
 ## Remarks
-Implementations should model user input rather than mutate target control values. `RetainedAutomationInputDriver` is the built-in implementation.
+Implementations should model user input rather than mutate target control values. `RetainedAutomationInputDriver` is the built-in implementation. Custom drivers that do not override `DragAsync` receive a faulted task with `NotSupportedException`.
 
 ## Methods
 | Name | Description |
 | --- | --- |
 | `Click(UIElement)` | Clicks a target element. |
+| `DragAsync(UIElement, float, float, float, float, int, CancellationToken)` | Drags across normalized target coordinates using the requested number of pointer-move steps. |
 | `PressKey(InputKey, AutomationModifiers)` | Sends a key chord. |
 | `SendText(string)` | Sends text input. |
 
