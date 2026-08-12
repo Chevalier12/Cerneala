@@ -42,6 +42,9 @@ public partial class PresentationWindow : Window
     private bool contentReady;
     private bool tourTransitionStarted;
     private bool tourEntered;
+    private bool aspectPagePrewarming;
+    private bool aspectPagePreparedForNavigation;
+    private Task? aspectPagePrewarmTask;
     private bool skipNextHeaderDiagnosticsRefresh;
     private bool suppressLiveDiagnostics;
     private bool outerGlowLabActive;
@@ -54,6 +57,7 @@ public partial class PresentationWindow : Window
     {
         EnsureContentReady();
         OpeningSurface.Start();
+        _ = PrewarmAspectPageAsync();
     }
 
     private void EnsureContentReady()
@@ -94,6 +98,7 @@ public partial class PresentationWindow : Window
         float transitionWidth = Math.Max(Width, ArrangedBounds.Width);
         SpringSpec<float> transitionSpring = new(stiffness: 420f, damping: 28f);
         TimeSpan transitionCaptureDelay = TimeSpan.FromMilliseconds(130);
+        await PrewarmAspectPageAsync();
         TourSurface.Visibility = Visibility.Visible;
 
         using (IDisposable transitionSession = GeneratedMarkup.AttachMotionSession(this))
@@ -136,6 +141,51 @@ public partial class PresentationWindow : Window
         Title = "Cerneala / Inside the Frame";
         tourEntered = true;
         await RunRequestedWorkAsync();
+    }
+
+    private Task PrewarmAspectPageAsync()
+    {
+        return aspectPagePrewarmTask ??= PrewarmAspectPageCoreAsync();
+    }
+
+    private async Task PrewarmAspectPageCoreAsync()
+    {
+        if (currentChapter == PresentationChapter.Aspect || aspectPagePreparedForNavigation)
+        {
+            return;
+        }
+
+        aspectPagePrewarming = true;
+        TourSurface.Visibility = Visibility.Visible;
+        PageAspect.Visibility = Visibility.Hidden;
+        TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        EventHandler? handler = null;
+        handler = (_, _) =>
+        {
+            FrameRendered -= handler;
+            completion.TrySetResult();
+        };
+
+        FrameRendered += handler;
+        Invalidate(
+            Cerneala.UI.Invalidation.InvalidationFlags.Measure |
+            Cerneala.UI.Invalidation.InvalidationFlags.Arrange |
+            Cerneala.UI.Invalidation.InvalidationFlags.Render,
+            "prewarm Aspect chapter");
+        try
+        {
+            PageAspect.Visibility = Visibility.Visible;
+            await completion.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            aspectPagePreparedForNavigation = true;
+        }
+        finally
+        {
+            FrameRendered -= handler;
+            aspectPagePrewarming = false;
+            PageAspect.Visibility = currentChapter == PresentationChapter.Aspect
+                ? Visibility.Visible
+                : Visibility.Hidden;
+        }
     }
 
     private async Task CaptureTransitionIfRequestedAsync(TimeSpan delay)
@@ -287,7 +337,12 @@ public partial class PresentationWindow : Window
         foreach (PresentationChapter candidate in ChapterOrder)
         {
             bool selected = candidate == currentChapter;
-            tourPages[candidate].Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+            tourPages[candidate].Visibility = selected
+                ? Visibility.Visible
+                : candidate == PresentationChapter.Aspect &&
+                  (aspectPagePrewarming || aspectPagePreparedForNavigation)
+                    ? Visibility.Hidden
+                    : Visibility.Collapsed;
             tourNavigation[candidate].IsChecked = selected;
         }
         if (chapter is not PresentationChapter.Aspect and not PresentationChapter.Prism)

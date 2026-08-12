@@ -224,7 +224,7 @@ public sealed class PresentationMarkupRegressionTests
             "ChapterScrollViewer.Visibility = chapter is PresentationChapter.Aspect or PresentationChapter.Prism",
             StringComparison.Ordinal);
         int pageVisibilityIndex = code.IndexOf(
-            "tourPages[candidate].Visibility = selected ? Visibility.Visible : Visibility.Collapsed",
+            "tourPages[candidate].Visibility = selected",
             StringComparison.Ordinal);
         Assert.True(
             containerVisibilityIndex < pageVisibilityIndex,
