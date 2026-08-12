@@ -142,8 +142,9 @@ Generated from `.`.
 |       |   |   +-- Cerneala.WpfDispatcherBenchmarks.DispatcherProducerComparisonBenchmarks-report.html
 |       |   |-- BenchmarkRun-20260714-211614.log
 |       |   +-- README.md
-|       +-- 2026-07-17-presentation-frame-budget/
-|           +-- README.md
+|       |-- 2026-07-17-presentation-frame-budget/
+|       |   +-- README.md
+|       +-- 2026-08-11-aspect-mutation/
 |-- Cerneala.SourceGen/
 |   |-- Prism/
 |   |   |-- Binding/
@@ -188,17 +189,18 @@ Generated from `.`.
 |   |-- App.cui.xml.cs
 |   |-- AspectChapterView.cui.xml
 |   |-- AspectChapterView.cui.xml.cs
+|   |-- AspectStudioPropertyRows.cs
 |   |-- BrandMark.cui.xml
 |   |-- BrandMark.cui.xml.cs
 |   |-- CernealaPresentation.csproj
 |   |-- FramePipelineChapterView.cui.xml
 |   |-- FramePipelineChapterView.cui.xml.cs
-|   |-- MainWindow.cui.xml
-|   |-- MainWindow.cui.xml.cs
 |   |-- MarkupChapterView.cui.xml
 |   |-- MarkupChapterView.cui.xml.cs
 |   |-- MotionChapterView.cui.xml
 |   |-- MotionChapterView.cui.xml.cs
+|   |-- OpeningView.cui.xml
+|   |-- OpeningView.cui.xml.cs
 |   |-- PresentationWindow.Automation.cs
 |   |-- PresentationWindow.cui.xml
 |   |-- PresentationWindow.cui.xml.cs
@@ -208,11 +210,8 @@ Generated from `.`.
 |   |-- PrismOuterGlowLabView.cui.xml
 |   |-- PrismOuterGlowLabView.cui.xml.cs
 |   |-- PrismStudioModel.cs
-|   |-- PrismStudioSlider.cui.xml
-|   |-- PrismStudioSlider.cui.xml.cs
 |   |-- RetainedModelChapterView.cui.xml
 |   |-- RetainedModelChapterView.cui.xml.cs
-|   |-- SvgImage.cs
 |   |-- WelcomeChapterView.cui.xml
 |   +-- WelcomeChapterView.cui.xml.cs
 |-- docs/
@@ -555,7 +554,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Items.ItemContainerGenerator.ItemContainerInfo.md
 |   |   |   |-- Cerneala.UI.Controls.Items.ItemContainerGenerator.md
 |   |   |   |-- Cerneala.UI.Controls.Items.ItemContainerRecyclePool.md
-|   |   |   |-- Cerneala.UI.Controls.Items.ItemsPanelTemplate.md
 |   |   |   |-- Cerneala.UI.Controls.ItemsControl.md
 |   |   |   |-- Cerneala.UI.Controls.ItemsPresenter.md
 |   |   |   |-- Cerneala.UI.Controls.Label.md
@@ -599,6 +597,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Shapes.SvgPath.md
 |   |   |   |-- Cerneala.UI.Controls.Slider.md
 |   |   |   |-- Cerneala.UI.Controls.StackPanel.md
+|   |   |   |-- Cerneala.UI.Controls.SvgImage.md
 |   |   |   |-- Cerneala.UI.Controls.TabControl.md
 |   |   |   |-- Cerneala.UI.Controls.TabItem.md
 |   |   |   |-- Cerneala.UI.Controls.Templates.ComponentTemplate_TControl_.md
@@ -884,6 +883,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Layout.Panels.VirtualizingStackPanel.md
 |   |   |   |-- Cerneala.UI.Layout.Thickness.md
 |   |   |   |-- Cerneala.UI.Layout.VerticalAlignment.md
+|   |   |   |-- Cerneala.UI.Layout.Virtualization.IItemsVirtualizingPanel.md
+|   |   |   |-- Cerneala.UI.Layout.Virtualization.ItemsVirtualizationViewport.md
 |   |   |   |-- Cerneala.UI.Layout.Virtualization.RealizationWindow.md
 |   |   |   |-- Cerneala.UI.Layout.Virtualization.VirtualizationContext.md
 |   |   |   |-- Cerneala.UI.Layout.Visibility.md
@@ -1856,7 +1857,8 @@ Generated from `.`.
 |   |-- IDrawFont.cs
 |   |-- IDrawImage.cs
 |   |-- IDrawingBackend.cs
-|   +-- IFontSource.cs
+|   |-- IFontSource.cs
+|   +-- SvgRasterizer.cs
 |-- Playground/
 |   |-- Assets/
 |   |   |-- cerneala-playground.ico
@@ -1929,7 +1931,7 @@ Generated from `.`.
 |   |   |   |-- ItemsControlRecyclingStabilityTests.cs
 |   |   |   |-- ItemsControlRetainedInvalidationTests.cs
 |   |   |   |-- ItemsControlTests.cs
-|   |   |   |-- ItemsPanelTemplateTests.cs
+|   |   |   |-- ItemsPresenterTests.cs
 |   |   |   |-- ItemsSourceObservableTests.cs
 |   |   |   |-- ListBoxTests.cs
 |   |   |   |-- OverlayTests.cs
@@ -1941,6 +1943,7 @@ Generated from `.`.
 |   |   |   |-- SelectionModelTests.cs
 |   |   |   |-- SliderTests.cs
 |   |   |   |-- StackPanelTests.cs
+|   |   |   |-- SvgImageTests.cs
 |   |   |   |-- TabControlTests.cs
 |   |   |   |-- TabItemTests.cs
 |   |   |   |-- TemplateBindingTests.cs
@@ -2568,8 +2571,7 @@ Generated from `.`.
 |   |   |   |-- DisplayMemberPathAccessor.cs
 |   |   |   |-- ItemCollection.cs
 |   |   |   |-- ItemContainerGenerator.cs
-|   |   |   |-- ItemContainerRecyclePool.cs
-|   |   |   +-- ItemsPanelTemplate.cs
+|   |   |   +-- ItemContainerRecyclePool.cs
 |   |   |-- Primitives/
 |   |   |   |-- ButtonBase.cs
 |   |   |   |-- DirectionGlyphs.cs
@@ -2664,6 +2666,7 @@ Generated from `.`.
 |   |   |-- Slider.cs
 |   |   |-- SliderTemplates.cs
 |   |   |-- StackPanel.cs
+|   |   |-- SvgImage.cs
 |   |   |-- TabControl.cs
 |   |   |-- TabItem.cs
 |   |   |-- TextBlock.cs
@@ -2892,6 +2895,8 @@ Generated from `.`.
 |   |   |   |-- StackPanel.cs
 |   |   |   +-- VirtualizingStackPanel.cs
 |   |   |-- Virtualization/
+|   |   |   |-- IItemsVirtualizingPanel.cs
+|   |   |   |-- ItemsVirtualizationViewport.cs
 |   |   |   |-- RealizationWindow.cs
 |   |   |   +-- VirtualizationContext.cs
 |   |   |-- Alignment.cs
