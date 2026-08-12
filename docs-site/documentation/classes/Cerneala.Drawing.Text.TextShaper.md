@@ -53,7 +53,7 @@ if (TextShaper.Default.TryMeasureCaretVerticalMetrics(textRun, out TextCaretVert
 ## Remarks
 `TextShaper` wraps the Skia text shaping pipeline behind `Try...` methods. It accepts `DrawTextRun` instances whose `Font` is a `SkiaFont`; unsupported font implementations return `false` instead of throwing. This makes it useful for higher-level text layout code that can fall back to approximate metrics when the drawing backend cannot shape the run.
 
-`TryShape` delegates to `SkiaTextShaper.Shape` and returns the shaped glyph IDs, positions, advance width, and origin offset in a `TextShapeResult`.
+`TryShape` delegates to `SkiaTextShaper.Shape` and returns the shaped glyph IDs, positions, and advance width in a `TextShapeResult`. Raster placement is calculated later by `SkiaTextRasterizer`.
 
 `TryMeasureLineHeight` and `TryMeasureCaretVerticalMetrics` both rasterize the sample text `"Ag"` with the run's font and size. The line-height method returns the rasterized height. The caret metrics method currently reports a top offset of `0` and the same rasterized height.
 

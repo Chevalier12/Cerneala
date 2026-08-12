@@ -9,6 +9,14 @@ internal static class SkiaTextBlobCache
     private const int MaximumEntriesPerTypeface = 4_096;
     private static readonly ConditionalWeakTable<SKTypeface, TypefaceCache> Caches = new();
 
+    internal static int GetCachedEntryCount(SkiaFont font)
+    {
+        ArgumentNullException.ThrowIfNull(font);
+        return Caches.TryGetValue(font.Typeface, out TypefaceCache? cache)
+            ? cache.Count
+            : 0;
+    }
+
     public static Lease Rent(SkiaFont font, float size, TextShapeResult shapeResult)
     {
         return Rent(
@@ -72,6 +80,8 @@ internal static class SkiaTextBlobCache
     private sealed class TypefaceCache
     {
         private readonly ConcurrentDictionary<CacheKey, Lazy<SKTextBlob>> entries = new();
+
+        public int Count => entries.Count;
 
         public Lease Rent(CacheKey key, Func<SKTextBlob> create)
         {

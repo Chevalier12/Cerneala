@@ -29,6 +29,25 @@ public sealed class TextPipelineTests
     }
 
     [Fact]
+    public void TextShapingDoesNotPopulateRasterBlobCache()
+    {
+        SkiaFont font = Assert.IsType<SkiaFont>(new SystemFontSource().LoadFont("Arial", 16));
+        DrawTextRun textRun = new(font, $"shape-only-{Guid.NewGuid():N}", 16);
+        SkiaTextShaper shaper = new();
+        int entriesBefore = SkiaTextBlobCache.GetCachedEntryCount(font);
+
+        shaper.Shape(textRun);
+
+        Assert.Equal(entriesBefore, SkiaTextBlobCache.GetCachedEntryCount(font));
+    }
+
+    [Fact]
+    public void TextShapeResultDoesNotExposeRasterPlacement()
+    {
+        Assert.Null(typeof(TextShapeResult).GetProperty("OriginOffset"));
+    }
+
+    [Fact]
     public void OpenTypeFontDataIsReusedForTheSameTypeface()
     {
         SkiaFont font = Assert.IsType<SkiaFont>(new SystemFontSource().LoadFont("Arial", 16));

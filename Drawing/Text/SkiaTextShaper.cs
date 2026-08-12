@@ -50,8 +50,7 @@ public sealed class SkiaTextShaper
             textRun.Text,
             glyphIds,
             glyphPositions,
-            advanceWidth,
-            GetOriginOffset(font, textRun, glyphIds, glyphPositions));
+            advanceWidth);
     }
 
     private static ushort[] GetGlyphIds(HarfBuzzBuffer buffer)
@@ -89,27 +88,6 @@ public sealed class SkiaTextShaper
 
         advanceWidth = x;
         return positions;
-    }
-
-    private static DrawPoint GetOriginOffset(
-        SkiaFont font,
-        DrawTextRun textRun,
-        ushort[] glyphIds,
-        DrawPoint[] glyphPositions)
-    {
-        if (glyphIds.Length == 0)
-        {
-            return default;
-        }
-
-        using SkiaTextBlobCache.Lease lease = SkiaTextBlobCache.Rent(
-            font,
-            textRun.Size,
-            textRun.Text,
-            glyphIds,
-            glyphPositions);
-        SKRect bounds = lease.Value.Bounds;
-        return new DrawPoint(bounds.Left, bounds.Top);
     }
 
     private static float ToPixels(int harfBuzzValue, double textScale)
