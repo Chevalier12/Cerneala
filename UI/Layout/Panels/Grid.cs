@@ -72,6 +72,21 @@ public class Grid : Panel
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
+        return MeasureGrid(context, reconcileVisibilityChanges: true);
+    }
+
+    private LayoutSize MeasureGrid(MeasureContext context, bool reconcileVisibilityChanges)
+    {
+        Span<Visibility> initialVisibilities = reconcileVisibilityChanges
+            ? VisualChildren.Count <= 128
+                ? stackalloc Visibility[VisualChildren.Count]
+                : new Visibility[VisualChildren.Count]
+            : [];
+        for (int index = 0; index < initialVisibilities.Length; index++)
+        {
+            initialVisibilities[index] = VisualChildren[index].Visibility;
+        }
+
         GridLength[] columns = GetColumnLengths();
         GridLength[] rows = GetRowLengths();
         float[] columnSizes = ResolveFixedSizes(columns);
@@ -85,8 +100,23 @@ public class Grid : Panel
                 continue;
             }
 
-            child.Measure(new MeasureContext(context.AvailableSize, context.Rounding));
             GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
+            bool needsContentMeasure = RequiresContentMeasure(
+                columns,
+                placement.Column,
+                placement.ColumnSpan,
+                context.AvailableSize.Width) ||
+                RequiresContentMeasure(
+                    rows,
+                    placement.Row,
+                    placement.RowSpan,
+                    context.AvailableSize.Height);
+            if (!needsContentMeasure)
+            {
+                continue;
+            }
+
+            child.Measure(new MeasureContext(context.AvailableSize, context.Rounding));
             ExpandContentSizedDefinition(
                 columns,
                 columnSizes,
@@ -145,9 +175,31 @@ public class Grid : Panel
                 child.DesiredSize.Height);
         }
 
+        if (reconcileVisibilityChanges && VisualChildren.Count == initialVisibilities.Length)
+        {
+            for (int index = 0; index < initialVisibilities.Length; index++)
+            {
+                if (VisualChildren[index].Visibility != initialVisibilities[index])
+                {
+                    return MeasureGrid(context, reconcileVisibilityChanges: false);
+                }
+            }
+        }
+
         measuredColumnSizes = columnSizes;
         measuredRowSizes = rowSizes;
         return new LayoutSize(columnSizes.Sum(), rowSizes.Sum());
+    }
+
+    private static bool RequiresContentMeasure(
+        GridLength[] lengths,
+        int index,
+        int span,
+        float availableSize)
+    {
+        return span == 1 &&
+            (lengths[index].IsAuto ||
+             (lengths[index].IsStar && float.IsPositiveInfinity(availableSize)));
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)

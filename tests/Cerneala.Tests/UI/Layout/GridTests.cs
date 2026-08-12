@@ -86,6 +86,30 @@ public sealed class GridTests
     }
 
     [Fact]
+    public void NestedStarGridsMeasureLeafOncePerConstraint()
+    {
+        Grid outer = new();
+        Grid current = outer;
+        for (int depth = 0; depth < 4; depth++)
+        {
+            current.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(10)));
+            current.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+            Grid child = new();
+            Grid.SetColumn(child, 1);
+            current.VisualChildren.Add(child);
+            current = child;
+        }
+
+        CountingElement leaf = new(new LayoutSize(40, 20));
+        current.VisualChildren.Add(leaf);
+
+        outer.Measure(new MeasureContext(new LayoutSize(320, 180)));
+
+        Assert.Equal(1, leaf.MeasureCount);
+        Assert.Equal(new LayoutSize(280, 180), leaf.LastAvailableSize);
+    }
+
+    [Fact]
     public void ChangingAttachedGridPlacementQueuesGridLayout()
     {
         UIRoot root = new(100, 100);
@@ -127,6 +151,20 @@ public sealed class GridTests
         {
             float height = context.AvailableSize.Width <= 100 ? 60 : 20;
             return new LayoutSize(context.AvailableSize.Width, height);
+        }
+    }
+
+    private sealed class CountingElement(LayoutSize size) : UIElement
+    {
+        public int MeasureCount { get; private set; }
+
+        public LayoutSize LastAvailableSize { get; private set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            MeasureCount++;
+            LastAvailableSize = context.AvailableSize;
+            return size;
         }
     }
 }
