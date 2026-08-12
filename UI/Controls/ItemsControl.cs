@@ -1,4 +1,7 @@
 using System.Collections;
+using System.Collections.Specialized;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Core;
 using Cerneala.UI.Controls.Items;
@@ -15,14 +18,17 @@ public class ItemsControl : Control
 {
     private readonly ItemsPresenter fallbackItemsPresenter;
     private ItemsPresenter itemsPresenter;
+    private IReadOnlyList<object?> itemsSourceSnapshot = [];
     private IObservableList? observableItemsSource;
-    private bool isObservableItemsSourceSubscribed;
+    private INotifyCollectionChanged? notifyingItemsSource;
+    private bool isItemsSourceSubscribed;
     private bool hasEverAttached;
     private ContentTemplateRegistry contentTemplateRegistry = new();
 
     public ItemsControl()
     {
         Items = new ItemCollection();
+        Templates = new ContentTemplateCollection(RebuildTemplateRegistry);
         Items.Changed += OnItemsChanged;
         ItemContainerGenerator = new ItemContainerGenerator(this);
         fallbackItemsPresenter = new ItemsPresenter
@@ -39,10 +45,12 @@ public class ItemsControl : Control
         typeof(ItemsControl),
         new UiPropertyMetadata<ContentTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<ItemsPanelTemplate?> ItemsPanelProperty = UiProperty<ItemsPanelTemplate?>.Register(
+    public static readonly UiProperty<Layout.Panels.Panel?> ItemsPanelProperty = UiProperty<Layout.Panels.Panel?>.Register(
         nameof(ItemsPanel),
         typeof(ItemsControl),
-        new UiPropertyMetadata<ItemsPanelTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<Layout.Panels.Panel?>(
+            null,
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender));
 
     public static readonly UiProperty<ElementAspect?> ItemContainerAspectProperty = UiProperty<ElementAspect?>.Register(
         nameof(ItemContainerAspect),
@@ -74,9 +82,11 @@ public class ItemsControl : Control
 
     public ItemCollection Items { get; }
 
-    public ItemContainerGenerator ItemContainerGenerator { get; }
+    public Collection<ContentTemplate> Templates { get; }
 
-    public ItemsPresenter ItemsPresenter => itemsPresenter;
+    internal ItemContainerGenerator ItemContainerGenerator { get; }
+
+    internal ItemsPresenter ItemsPresenter => itemsPresenter;
 
     public IEnumerable? ItemsSource
     {
@@ -84,7 +94,10 @@ public class ItemsControl : Control
         set => SetValue(ItemsSourceProperty, value);
     }
 
-    public int ItemCount => observableItemsSource?.Count ?? ItemsSource?.Cast<object?>().Count() ?? Items.Count;
+    public int ItemCount => ItemsSource is null ? Items.Count : itemsSourceSnapshot.Count;
+
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
+    public int RealizedItemCount => ItemContainerGenerator.RealizedContainers.Count;
 
     internal virtual int ViewItemCount => ItemCount;
 
@@ -112,7 +125,7 @@ public class ItemsControl : Control
         set => SetValue(ItemTemplateKeyProperty, value);
     }
 
-    public ContentTemplateRegistry ContentTemplateRegistry
+    internal ContentTemplateRegistry ContentTemplateRegistry
     {
         get => contentTemplateRegistry;
         set
@@ -130,7 +143,7 @@ public class ItemsControl : Control
         }
     }
 
-    public ItemsPanelTemplate? ItemsPanel
+    public Layout.Panels.Panel? ItemsPanel
     {
         get => GetValue(ItemsPanelProperty);
         set => SetValue(ItemsPanelProperty, value);
@@ -143,14 +156,9 @@ public class ItemsControl : Control
 
     public object? GetItemAt(int index)
     {
-        if (observableItemsSource is not null)
-        {
-            return observableItemsSource[index];
-        }
-
         if (ItemsSource is not null)
         {
-            return ItemsSource.Cast<object?>().ElementAt(index);
+            return itemsSourceSnapshot[index];
         }
 
         return Items[index];
@@ -210,13 +218,21 @@ public class ItemsControl : Control
     protected override void OnAttached()
     {
         base.OnAttached();
+        bool isReattaching = hasEverAttached;
         hasEverAttached = true;
-        SubscribeObservableItemsSourceIfAttached();
+        if (isReattaching && ItemsSource is not null)
+        {
+            RebuildItemsSourceSnapshot(ItemsSource);
+            ItemContainerGenerator.Clear();
+            itemsPresenter.MarkItemsDirty();
+        }
+
+        SubscribeItemsSourceIfAttached();
     }
 
     protected override void OnDetached()
     {
-        UnsubscribeObservableItemsSource();
+        UnsubscribeItemsSource();
         base.OnDetached();
     }
 
@@ -366,14 +382,14 @@ public class ItemsControl : Control
     {
     }
 
-    public void SetVirtualizationContext(VirtualizationContext? context)
+    internal void SetVirtualizationContext(VirtualizationContext? context)
     {
         itemsPresenter.VirtualizationContext = context;
         itemsPresenter.MarkItemsDirty();
         InvalidateItems("Items virtualization context changed");
     }
 
-    public void UpdateVirtualizationFromScrollInfo(IScrollInfo scrollInfo, float itemExtent, int cacheItems = 0)
+    internal void UpdateVirtualizationFromScrollInfo(IScrollInfo scrollInfo, float itemExtent, int cacheItems = 0)
     {
         if (itemsPresenter.UpdateVirtualizationFromScrollInfoCore(scrollInfo, itemExtent, cacheItems))
         {
@@ -413,37 +429,63 @@ public class ItemsControl : Control
             return;
         }
 
-        UnsubscribeObservableItemsSource();
-
+        UnsubscribeItemsSource();
+        RebuildItemsSourceSnapshot(newSource);
         observableItemsSource = newSource as IObservableList;
-        SubscribeObservableItemsSourceIfAttached();
+        notifyingItemsSource = observableItemsSource is null ? newSource as INotifyCollectionChanged : null;
+        SubscribeItemsSourceIfAttached();
     }
 
-    private void SubscribeObservableItemsSourceIfAttached()
+    private void SubscribeItemsSourceIfAttached()
     {
-        if ((hasEverAttached && !IsAttached) || observableItemsSource is null || isObservableItemsSourceSubscribed)
+        if ((hasEverAttached && !IsAttached) || isItemsSourceSubscribed)
         {
             return;
         }
 
-        observableItemsSource.Changed += OnObservableItemsSourceChanged;
-        isObservableItemsSourceSubscribed = true;
+        if (observableItemsSource is not null)
+        {
+            observableItemsSource.Changed += OnObservableItemsSourceChanged;
+            isItemsSourceSubscribed = true;
+        }
+        else if (notifyingItemsSource is not null)
+        {
+            notifyingItemsSource.CollectionChanged += OnNotifyingItemsSourceChanged;
+            isItemsSourceSubscribed = true;
+        }
     }
 
-    private void UnsubscribeObservableItemsSource()
+    internal void UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
     {
-        if (observableItemsSource is null || !isObservableItemsSourceSubscribed)
+        if (itemsPresenter.UpdateAutomaticVirtualization(viewportExtent, scrollOffset))
+        {
+            InvalidateItems("Items scroll viewport changed");
+        }
+    }
+
+    private void UnsubscribeItemsSource()
+    {
+        if (!isItemsSourceSubscribed)
         {
             return;
         }
 
-        observableItemsSource.Changed -= OnObservableItemsSourceChanged;
-        isObservableItemsSourceSubscribed = false;
+        if (observableItemsSource is not null)
+        {
+            observableItemsSource.Changed -= OnObservableItemsSourceChanged;
+        }
+        else if (notifyingItemsSource is not null)
+        {
+            notifyingItemsSource.CollectionChanged -= OnNotifyingItemsSourceChanged;
+        }
+
+        isItemsSourceSubscribed = false;
     }
 
     private void OnObservableItemsSourceChanged(object? sender, ObservableListChangedEventArgs args)
     {
         VerifyCollectionNotificationAccess("ObservableList");
+        RebuildItemsSourceSnapshot(ItemsSource);
 
         if (args.Kind is ObservableListChangeKind.Reset or ObservableListChangeKind.Clear)
         {
@@ -453,6 +495,26 @@ public class ItemsControl : Control
         OnItemsViewSourceChanged();
         itemsPresenter.MarkItemsDirty();
         InvalidateItems("Observable items source changed");
+    }
+
+    private void OnNotifyingItemsSourceChanged(object? sender, NotifyCollectionChangedEventArgs args)
+    {
+        VerifyCollectionNotificationAccess("INotifyCollectionChanged");
+        RebuildItemsSourceSnapshot(ItemsSource);
+
+        if (args.Action is NotifyCollectionChangedAction.Reset)
+        {
+            ItemContainerGenerator.Clear();
+        }
+
+        OnItemsViewSourceChanged();
+        itemsPresenter.MarkItemsDirty();
+        InvalidateItems("Observable items source changed");
+    }
+
+    private void RebuildItemsSourceSnapshot(IEnumerable? source)
+    {
+        itemsSourceSnapshot = source is null ? [] : [.. source.Cast<object?>()];
     }
 
     private void VerifyCollectionNotificationAccess(string collectionName)
@@ -474,6 +536,65 @@ public class ItemsControl : Control
         else
         {
             container.ClearValue(UIElement.AspectProperty, UiPropertyValueSource.AspectBase);
+        }
+    }
+
+    private void RebuildTemplateRegistry()
+    {
+        ContentTemplateRegistry registry = new();
+        foreach (ContentTemplate template in Templates)
+        {
+            registry.Register(template);
+        }
+
+        ContentTemplateRegistry = registry;
+    }
+
+    private sealed class ContentTemplateCollection(Action changed) : Collection<ContentTemplate>
+    {
+        protected override void InsertItem(int index, ContentTemplate item)
+        {
+            ArgumentNullException.ThrowIfNull(item);
+            EnsureUnique(item, ignoredIndex: -1);
+            base.InsertItem(index, item);
+            changed();
+        }
+
+        protected override void SetItem(int index, ContentTemplate item)
+        {
+            ArgumentNullException.ThrowIfNull(item);
+            EnsureUnique(item, index);
+            base.SetItem(index, item);
+            changed();
+        }
+
+        protected override void RemoveItem(int index)
+        {
+            base.RemoveItem(index);
+            changed();
+        }
+
+        protected override void ClearItems()
+        {
+            base.ClearItems();
+            changed();
+        }
+
+        private void EnsureUnique(ContentTemplate candidate, int ignoredIndex)
+        {
+            for (int index = 0; index < Count; index++)
+            {
+                ContentTemplate existing = this[index];
+                if (index != ignoredIndex &&
+                    existing.DataType == candidate.DataType &&
+                    string.Equals(existing.Key, candidate.Key, StringComparison.Ordinal))
+                {
+                    string dataType = candidate.DataType?.FullName ?? "<null>";
+                    string key = candidate.Key is null ? string.Empty : $" and key '{candidate.Key}'";
+                    throw new InvalidOperationException(
+                        $"ItemsControl already contains a template for DataType '{dataType}'{key}.");
+                }
+            }
         }
     }
 }

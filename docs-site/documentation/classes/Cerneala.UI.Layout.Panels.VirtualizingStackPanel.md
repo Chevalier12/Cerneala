@@ -18,12 +18,12 @@ Inheritance:
 
 ## Examples
 
-Use `VirtualizingStackPanel` as the items panel for an `ItemsControl` when the presenter supplies a virtualization context from scroll information.
+Use `VirtualizingStackPanel` as the direct items panel for automatic variable-height virtualization inside a `ScrollViewer`.
 
 ```csharp
 ItemsControl list = new()
 {
-    ItemsPanel = new ItemsPanelTemplate(() => new VirtualizingStackPanel())
+    ItemsPanel = new VirtualizingStackPanel()
 };
 ```
 
@@ -47,13 +47,15 @@ panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 120)));
 
 ## Remarks
 
-`VirtualizingStackPanel` is intended for item presenters that realize only a subset of an item collection. When an `ItemsPresenter` applies virtualization to this panel, it assigns `VirtualizationContext` and sets `FirstRealizedIndex` to the start of the current realization window.
+`VirtualizingStackPanel` implements `IItemsVirtualizingPanel`. An owning `ItemsControl` receives viewport and offset updates from its `ScrollViewer` and forwards them to the panel. The panel estimates unknown row heights, records actual heights during measure, updates its average estimate, and corrects the realization window as measurements become available.
+
+`VirtualizationContext` remains available for fixed-extent hosts such as specialized controls. Automatic variable-height virtualization is used when that property is `null`.
 
 During measure, the panel maps each visual child to an item index by adding `FirstRealizedIndex` to the child's visual-child position. Children whose item index is outside `RealizationWindow` are not measured and receive `LayoutSize.Zero` as their desired size. Realized children are measured with the available width and an infinite available height.
 
-During arrange, unrealized children are arranged into zero-sized bounds. While only part of the collection is realized, a finite positive `ItemExtent` positions realized children in content coordinates at `FinalRect.Y + itemIndex * ItemExtent` and supplies their arranged height. When every item is realized, the panel instead stacks children using their measured heights so an auto-sized host reflects the actual item content.
+During arrange, automatic mode positions each child using the measured or estimated prefix extent of all preceding items. Fixed mode uses `ItemExtent`. When every item is realized without virtualization, the panel stacks children using their measured heights.
 
-Without a `VirtualizationContext`, or when every item is realized, `TotalExtent` reports the panel's measured desired height. Partially realized collections continue to use the estimated total extent from `VirtualizationContext`.
+In automatic mode, `TotalExtent` combines measured heights with the current estimate for unknown items. Without either automatic viewport data or a fixed `VirtualizationContext`, it reports the measured desired height.
 
 ## Constructors
 
@@ -66,8 +68,8 @@ Without a `VirtualizationContext`, or when every item is realized, `TotalExtent`
 | Name | Type | Description |
 | --- | --- | --- |
 | `VirtualizationContext` | `VirtualizationContext?` | Gets or sets the item count, item extent, viewport extent, scroll offset, and cache size used to compute virtualization metrics. |
-| `RealizationWindow` | `RealizationWindow` | Gets the active realized item-index range. Uses `VirtualizationContext.GetRealizationWindow()` when a context exists; otherwise covers all current visual children. |
-| `TotalExtent` | `float` | Gets the measured natural height when every item is realized; otherwise gets the estimated total extent from `VirtualizationContext`. |
+| `RealizationWindow` | `RealizationWindow` | Gets the active realized item-index range from fixed context, automatic viewport state, or all current children. |
+| `TotalExtent` | `float` | Gets the measured, fixed, or variable-height estimated total extent. |
 | `FirstRealizedIndex` | `int` | Gets or sets the item index represented by the first visual child in `VisualChildren`. |
 
 ## Layout Behavior
@@ -78,7 +80,7 @@ Without a `VirtualizationContext`, or when every item is realized, `TotalExtent`
 | Arrange | Arranges skipped children into zero-sized bounds and arranges realized children vertically. |
 | Partially realized extent | Uses `VirtualizationContext.ItemExtent` for child height and content-coordinate Y placement when it is finite and greater than zero. |
 | Fully realized extent | Uses each child's `DesiredSize.Height`, allowing an auto-sized host to fit all realized content up to its external size constraint. |
-| Variable item extent fallback | Uses each child's `DesiredSize.Height` and stacks realized children sequentially when no valid fixed item extent is available. |
+| Variable item extent | Learns realized heights and estimates unknown items, then corrects offsets and the realization window. |
 
 ## Applies to
 
@@ -88,6 +90,6 @@ Without a `VirtualizationContext`, or when every item is realized, `TotalExtent`
 
 - `Panel`
 - `ItemsPresenter`
-- `ItemsPanelTemplate`
+- `IItemsVirtualizingPanel`
 - `VirtualizationContext`
 - `RealizationWindow`

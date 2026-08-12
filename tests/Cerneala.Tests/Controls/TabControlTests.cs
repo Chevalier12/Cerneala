@@ -27,7 +27,7 @@ public sealed class TabControlTests
         UIRoot root = new(100, 100);
         TabControl tabControl = new()
         {
-            ItemsPanel = new ItemsPanelTemplate(() => new StackPanel())
+            ItemsPanel = new StackPanel()
         };
         tabControl.SetItems(new[]
         {
@@ -53,7 +53,7 @@ public sealed class TabControlTests
         FixedElement wideHeader = new(new LayoutSize(120, 10));
         TabControl tabControl = new()
         {
-            ItemsPanel = new ItemsPanelTemplate(() => new StackPanel { Orientation = Orientation.Horizontal })
+            ItemsPanel = new StackPanel { Orientation = Orientation.Horizontal }
         };
         tabControl.SetItems(new[]
         {

@@ -94,6 +94,7 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
     public void SetVerticalOffset(float offset)
     {
         VerticalOffset = CanVerticallyScroll ? offset : 0;
+        UpdateItemsVirtualization(ViewportHeight);
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -103,6 +104,7 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         LayoutSize measureSize = new(
             CanHorizontallyScroll ? float.PositiveInfinity : available.Width,
             CanVerticallyScroll ? float.PositiveInfinity : available.Height);
+        UpdateItemsVirtualization(available.Height);
         LayoutSize contentSize = content?.Measure(new MeasureContext(measureSize, context.Rounding)) ?? LayoutSize.Zero;
         ExtentWidth = ResolveExtent(contentSize.Width, available.Width);
         ExtentHeight = ResolveExtent(contentSize.Height, available.Height);
@@ -139,6 +141,15 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
     {
         HorizontalOffset = HorizontalOffset;
         VerticalOffset = VerticalOffset;
+    }
+
+    private void UpdateItemsVirtualization(float viewportExtent)
+    {
+        if (CanVerticallyScroll && ContentElement is ItemsControl itemsControl &&
+            viewportExtent >= 0 && float.IsFinite(viewportExtent))
+        {
+            itemsControl.UpdateAutomaticVirtualization(viewportExtent, VerticalOffset);
+        }
     }
 
     private float MaxHorizontalOffset => MathF.Max(0, ExtentWidth - ViewportWidth);

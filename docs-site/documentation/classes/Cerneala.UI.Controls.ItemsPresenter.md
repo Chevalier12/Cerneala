@@ -53,7 +53,7 @@ ItemsPresenter presenter = new()
 {
     Items = new[] { "zero", "one", "two", "three", "four" },
     ItemTemplate = new ContentTemplate<string>("Text", key: null, priority: 0, context => new TextBlock { Text = context.Data ?? string.Empty }),
-    ItemsPanel = new ItemsPanelTemplate(() => new VirtualizingStackPanel()),
+    ItemsPanel = new VirtualizingStackPanel(),
     VirtualizationContext = new VirtualizationContext(
         ItemCount: 5,
         ItemExtent: 10,
@@ -70,13 +70,13 @@ RealizationWindow window = presenter.CurrentRealizationWindow; // StartIndex: 2,
 
 `ItemsPresenter` is the realization surface used by `ItemsControl`, and it can also be used directly. In direct mode, it reads `Items`, creates one child per realized item, and either hosts `UIElement` items directly or asks `ItemTemplate` to create an element for non-element data items. Items that are not `UIElement` instances and do not have a matching `ItemTemplate` do not produce children.
 
-The presenter owns a single panel root. If `ItemsPanel` is set, that template creates the panel; otherwise the presenter uses an internal default template that creates `Cerneala.UI.Controls.Panel`. `PanelRoot` returns the panel only when it is the controls-facing `Panel` type. `LayoutPanelRoot` exposes the underlying `Cerneala.UI.Layout.Panels.Panel`, which is useful for custom panels such as `VirtualizingStackPanel`.
+The presenter owns a single retained panel root. If `ItemsPanel` is set, that panel is used directly and retained across item refreshes; otherwise the presenter uses an internal vertical `Cerneala.UI.Controls.StackPanel`. `PanelRoot` returns the panel only when it is the controls-facing `Panel` type. `LayoutPanelRoot` exposes the underlying `Cerneala.UI.Layout.Panels.Panel`, including custom panels such as `VirtualizingStackPanel`.
 
-When `ItemsOwner` is set, the presenter delegates item realization to the owner's `ItemContainerGenerator`. In that mode, `ItemsControl` owns item source selection, container preparation, item templates, content template keys, selection state, and recycling policy. The presenter's `ItemsPanel` overrides the owner's `ItemsPanel`; if it is not set, the owner panel template is used before the default panel.
+When `ItemsOwner` is set, the presenter delegates item realization to the owner's container generator. In that mode, `ItemsControl` owns item source selection, container preparation, item templates, content template keys, selection state, and recycling policy. The presenter's `ItemsPanel` overrides the owner's panel; if it is not set, the owner panel is used before the default panel.
 
 Changing `Items`, `ItemTemplate`, or `ItemsPanel` marks the presentation dirty and refreshes the panel content. `MarkItemsDirty()` explicitly marks the presenter dirty, increments layout and render versions, and invalidates measure, arrange, render, and hit testing.
 
-Virtualization is driven by `VirtualizationContext`. The current realization window is cached in `CurrentRealizationWindow`; when no context has produced a window, it returns `RealizationWindow.Empty`. `UpdateVirtualizationFromScrollInfo` creates a new context from `IScrollInfo.ViewportHeight`, `IScrollInfo.VerticalOffset`, item extent, item count, and optional cache size. When the window or virtualization shape changes, the presenter marks items dirty. If the active panel is a `VirtualizingStackPanel`, the presenter also applies the context and first realized index to that panel.
+Fixed-extent virtualization can be driven explicitly through `VirtualizationContext`. When owned by an `ItemsControl`, a panel implementing `IItemsVirtualizingPanel` instead receives automatic viewport updates from the surrounding `ScrollViewer`; `VirtualizingStackPanel` uses that path for variable-height items.
 
 `MeasureCore` and `ArrangeCore` refresh dirty items before layout. During measure, the presenter also processes inherited properties and aspects for the realized subtree and removes completed layout work from the root queues.
 
@@ -84,7 +84,7 @@ Virtualization is driven by `VirtualizationContext`. The current realization win
 
 | Name | Description |
 | --- | --- |
-| `ItemsPresenter()` | Creates an items presenter with no items, no item template, no explicit items panel, and an empty realization window. |
+| `ItemsPresenter()` | Creates an items presenter with no items, no item template, a vertical stack panel fallback, and an empty realization window. |
 
 ## Fields
 
@@ -92,7 +92,7 @@ Virtualization is driven by `VirtualizationContext`. The current realization win
 | --- | --- | --- |
 | `ItemsProperty` | `UiProperty<IEnumerable?>` | Identifies the `Items` UI property. The default value is `null`; metadata affects measure and render. |
 | `ItemTemplateProperty` | `UiProperty<ContentTemplate?>` | Identifies the `ItemTemplate` UI property. The default value is `null`; metadata affects measure and render. |
-| `ItemsPanelProperty` | `UiProperty<ItemsPanelTemplate?>` | Identifies the `ItemsPanel` UI property. The default value is `null`; metadata affects measure and render. |
+| `ItemsPanelProperty` | `UiProperty<Panel?>` | Identifies the retained `ItemsPanel` UI property. The default value is `null`; metadata affects layout and render. |
 
 ## Properties
 
@@ -100,7 +100,7 @@ Virtualization is driven by `VirtualizationContext`. The current realization win
 | --- | --- | --- |
 | `Items` | `IEnumerable?` | Gets or sets the standalone item sequence to materialize when `ItemsOwner` is not set. |
 | `ItemTemplate` | `ContentTemplate?` | Gets or sets the template used to create child elements for non-`UIElement` standalone items. |
-| `ItemsPanel` | `ItemsPanelTemplate?` | Gets or sets the panel template used for the presenter's panel root. Overrides the owner panel template when `ItemsOwner` is set. |
+| `ItemsPanel` | `Panel?` | Gets or sets the retained panel root. Overrides the owner panel when `ItemsOwner` is set. |
 | `PanelRoot` | `Panel?` | Gets the current panel root as `Cerneala.UI.Controls.Panel`, or `null` when the root is another layout panel type. |
 | `LayoutPanelRoot` | `Cerneala.UI.Layout.Panels.Panel?` | Gets the current underlying layout panel root, including custom panel types. |
 | `ItemsOwner` | `ItemsControl?` | Gets or sets the owning `ItemsControl`. When set, owner item container generation is used. |
@@ -130,7 +130,7 @@ Virtualization is driven by `VirtualizationContext`. The current realization win
 
 - `Cerneala.UI.Controls.ItemsControl`
 - `Cerneala.UI.Controls.Items.ItemContainerGenerator`
-- `Cerneala.UI.Controls.Items.ItemsPanelTemplate`
+- `Cerneala.UI.Layout.Virtualization.IItemsVirtualizingPanel`
 - `Cerneala.UI.Controls.Templates.ContentTemplate`
 - `Cerneala.UI.Layout.Panels.VirtualizingStackPanel`
 - `Cerneala.UI.Layout.Virtualization.VirtualizationContext`

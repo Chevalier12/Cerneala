@@ -137,7 +137,6 @@ public sealed class ArchitectureBoundaryTests
             Path.Combine("Templates", "TemplatePartAttribute.cs"),
             "ContentPresenter.cs",
             "ItemsPresenter.cs",
-            Path.Combine("Items", "ItemsPanelTemplate.cs"),
             Path.Combine("Templates", "ContentTemplate.cs"),
             Path.Combine("Templates", "ContentTemplateContext.cs")
         ];
@@ -384,6 +383,8 @@ public sealed class ArchitectureBoundaryTests
             Path.Combine(root, "UI", "Controls", "TabControl.cs"),
             Path.Combine(root, "UI", "Controls", "TabItem.cs"),
             Path.Combine(root, "UI", "Layout", "Panels", "VirtualizingStackPanel.cs"),
+            Path.Combine(root, "UI", "Layout", "Virtualization", "IItemsVirtualizingPanel.cs"),
+            Path.Combine(root, "UI", "Layout", "Virtualization", "ItemsVirtualizationViewport.cs"),
             Path.Combine(root, "UI", "Layout", "Virtualization", "VirtualizationContext.cs"),
             Path.Combine(root, "UI", "Layout", "Virtualization", "RealizationWindow.cs")
         ];

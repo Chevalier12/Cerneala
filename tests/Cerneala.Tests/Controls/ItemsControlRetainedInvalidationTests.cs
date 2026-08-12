@@ -73,7 +73,7 @@ public sealed class ItemsControlRetainedInvalidationTests
     {
         ItemsControl control = new()
         {
-            ItemsPanel = new ItemsPanelTemplate(() => new VirtualizingStackPanel())
+            ItemsPanel = new VirtualizingStackPanel()
         };
         control.SetItems(Enumerable.Range(0, 100).Cast<object>());
         control.SetVirtualizationContext(new VirtualizationContext(100, 12, 36, 24, CacheItems: 1));
@@ -91,7 +91,7 @@ public sealed class ItemsControlRetainedInvalidationTests
         UIRoot root = new(100, 100);
         itemsControl = new ItemsControl
         {
-            ItemsPanel = new ItemsPanelTemplate(() => new Cerneala.UI.Layout.Panels.StackPanel()),
+            ItemsPanel = new Cerneala.UI.Layout.Panels.StackPanel(),
             ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context => new FixedElement(context.Data!))
         };
         itemsControl.SetItems(new[] { "one", "two" });

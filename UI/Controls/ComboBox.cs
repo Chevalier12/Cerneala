@@ -29,9 +29,7 @@ public class ComboBox : Selector
     [
         new ElementAspectValue(Control.PaddingProperty, new Thickness(6))
     ]);
-    private static readonly ItemsPanelTemplate DefaultItemsPanelTemplate = new(
-        () => new VirtualizingStackPanel());
-
+    private readonly VirtualizingStackPanel defaultItemsPanel = new();
     private ContentPresenter? selectionPresenter;
     private TextBox? editableTextBox;
     private ToggleButton? dropDownToggle;
@@ -54,7 +52,7 @@ public class ComboBox : Selector
     {
         Focusable = true;
         IsTabStop = true;
-        ItemsPanel = DefaultItemsPanelTemplate;
+        ItemsPanel = defaultItemsPanel;
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
         Handlers.AddHandler(InputEvents.TextInputEvent, OnTextInput);
         SetValue(BackgroundProperty, new SolidColorBrush(Color.White), UiPropertyValueSource.AspectBase);
@@ -1161,7 +1159,7 @@ public class ComboBox : Selector
 
     private void ResetDropDownVirtualization()
     {
-        if (!ReferenceEquals(ItemsPanel, DefaultItemsPanelTemplate) || dropDownScrollViewer is null)
+        if (!ReferenceEquals(ItemsPanel, defaultItemsPanel) || dropDownScrollViewer is null)
         {
             SetVirtualizationContext(null);
             return;

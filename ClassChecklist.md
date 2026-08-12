@@ -446,7 +446,6 @@ Excluded RoslynRepoIndexer class-like types: 0
 
 ### UI/Controls/Items/ItemsPanelTemplate.cs
 
-- [x] `Cerneala.UI.Controls.Items.ItemsPanelTemplate` - class, public, sealed, line 3
 
 ### UI/Controls/ItemsControl.cs
 

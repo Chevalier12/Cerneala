@@ -20,6 +20,37 @@ Derived:
 `ContentTemplate<TData>`
 
 ## Examples
+Declare typed templates directly on the `ItemsControl` that resolves them:
+
+```xml
+<ItemsControl
+    xmlns:sample="clr-namespace:Sample"
+    ItemsSource="$DataContext.Rows">
+    <ItemsControl.Templates>
+        <ContentTemplate DataType="sample:PersonRow">
+            <TextBlock Text="$DataContext.Name" />
+        </ContentTemplate>
+        <ContentTemplate DataType="sample:ToggleRow">
+            <CheckBox IsChecked="$DataContext.Value:TwoWay" />
+        </ContentTemplate>
+    </ItemsControl.Templates>
+</ItemsControl>
+```
+
+Declare a single template inline on the property that owns it:
+
+```xml
+<UserControl>
+    <ItemsControl ItemsSource="$DataContext.People">
+        <ItemsControl.ItemTemplate>
+            <ContentTemplate DataType="Sample.PersonRow">
+                <TextBlock Text="$DataContext.Name" />
+            </ContentTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>
+```
+
 Register a template and resolve it for matching content:
 
 ```csharp
@@ -79,6 +110,8 @@ public sealed record MessageViewModel(string Title, bool IsImportant);
 `ContentTemplateRegistry` orders matching templates by keyed match, predicate presence, priority, data-type specificity, and registration order. The registry disables its cache while any registered template has a predicate because predicate results can depend on the full match context.
 
 `ContentPresenter.ContentTemplate` can apply a template directly. When no explicit template is set, `ContentPresenter.LocalTemplateRegistry` can resolve one from a registry. If neither path produces a template, the presenter falls back to hosting an existing `UIElement`, generating a `TextBlock` for string content, or producing no child.
+
+The `.cui.xml` source generator accepts `ContentTemplate` only as the inline value of a content-template property or inside `ItemsControl.Templates`. A `ContentTemplate` declaration inside any `Resources` collection is rejected, regardless of whether it has a `Name`; templates must have an explicit owning control or property. `DataType` accepts a fully qualified metadata name or a scoped XML alias declared as `xmlns:prefix="clr-namespace:Namespace"`. References to another assembly may use `clr-namespace:Namespace;assembly=AssemblyName`. `DataType` is required, while `Key` and `Priority` are optional. Each declaration must contain exactly one visual root. The generated factory assigns the item to that root's `DataContext`, and `$DataContext` bindings inside the template are resolved statically against `DataType`. Names inside the repeated visual tree are rejected until per-realization name scopes are supported.
 
 For typed factories, prefer `ContentTemplate<TData>`. It sets `DataType` to `typeof(TData)` and wraps the untyped context in `ContentTemplateContext<TData>`.
 

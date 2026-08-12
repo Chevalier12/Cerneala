@@ -5,18 +5,8 @@ using Cerneala.UI.Layout.Virtualization;
 
 namespace Cerneala.Tests.Controls;
 
-public sealed class ItemsPanelTemplateTests
+public sealed class ItemsPresenterTests
 {
-    [Fact]
-    public void ItemsPanelTemplateCreatesPanelRoot()
-    {
-        ItemsPanelTemplate template = new(() => new Panel());
-
-        Panel panel = template.CreatePanel();
-
-        Assert.NotNull(panel);
-    }
-
     [Fact]
     public void ItemsPresenterMaterializesItemsThroughContentTemplate()
     {
@@ -28,7 +18,7 @@ public sealed class ItemsPanelTemplateTests
 
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
-        Panel panel = presenter.PanelRoot!;
+        Cerneala.UI.Layout.Panels.Panel panel = presenter.LayoutPanelRoot!;
         Assert.Same(presenter, panel.LogicalParent);
         Assert.Equal(2, panel.VisualChildren.Count);
         Assert.Equal("one", Assert.IsType<ItemElement>(panel.VisualChildren[0]).Value);
@@ -44,13 +34,13 @@ public sealed class ItemsPanelTemplateTests
             ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context => new ItemElement(context.Data!))
         };
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        UIElement oldChild = presenter.PanelRoot!.VisualChildren[0];
+        UIElement oldChild = presenter.LayoutPanelRoot!.VisualChildren[0];
 
         presenter.Items = new[] { "new-1", "new-2" };
 
         Assert.Null(oldChild.LogicalParent);
         Assert.Null(oldChild.VisualParent);
-        Assert.Equal(["new-1", "new-2"], presenter.PanelRoot!.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Equal(["new-1", "new-2"], presenter.LayoutPanelRoot!.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
     }
 
     [Fact]
@@ -62,14 +52,12 @@ public sealed class ItemsPanelTemplateTests
             Items = new UIElement[] { item }
         };
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        Panel oldPanel = presenter.PanelRoot!;
+        Cerneala.UI.Layout.Panels.Panel oldPanel = presenter.LayoutPanelRoot!;
 
         presenter.Items = new UIElement[] { item };
 
-        Panel newPanel = presenter.PanelRoot!;
-        Assert.NotSame(oldPanel, newPanel);
-        Assert.Empty(oldPanel.VisualChildren);
-        Assert.Empty(oldPanel.LogicalChildren);
+        Cerneala.UI.Layout.Panels.Panel newPanel = presenter.LayoutPanelRoot!;
+        Assert.Same(oldPanel, newPanel);
         Assert.Same(newPanel, item.VisualParent);
         Assert.Same(newPanel, item.LogicalParent);
         Assert.Same(item, newPanel.VisualChildren[0]);
@@ -90,11 +78,11 @@ public sealed class ItemsPanelTemplateTests
         };
 
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        UIElement child = presenter.PanelRoot!.VisualChildren[0];
+        UIElement child = presenter.LayoutPanelRoot!.VisualChildren[0];
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
         Assert.Equal(1, created);
-        Assert.Same(child, presenter.PanelRoot!.VisualChildren[0]);
+        Assert.Same(child, presenter.LayoutPanelRoot!.VisualChildren[0]);
     }
 
     [Fact]
@@ -104,7 +92,7 @@ public sealed class ItemsPanelTemplateTests
         {
             Items = new[] { "zero", "one", "two", "three", "four" },
             ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context => new ItemElement(context.Data!)),
-            ItemsPanel = new ItemsPanelTemplate(() => new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()),
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
             VirtualizationContext = new VirtualizationContext(5, 10, 20, 20)
         };
 

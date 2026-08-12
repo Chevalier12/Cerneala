@@ -1,4 +1,3 @@
-using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 
@@ -8,7 +7,7 @@ public class ListBox : Selector
 {
     public ListBox()
     {
-        ItemsPanel = new ItemsPanelTemplate(() => new StackPanel());
+        ItemsPanel = new StackPanel();
     }
 
     protected override Type DefaultContainerType => typeof(ListBoxItem);

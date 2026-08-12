@@ -65,7 +65,7 @@ Selection can also be changed through the inherited `Selector` input behavior: a
 | `Items` | `ItemsControl` | `ItemCollection` | Gets the local item collection used when `ItemsSource` is not the active source. |
 | `ItemsSource` | `ItemsControl` | `IEnumerable?` | Gets or sets an enumerable source for items. |
 | `ItemContainerGenerator` | `ItemsControl` | `ItemContainerGenerator` | Gets the generator that realizes item containers. |
-| `ItemsPanel` | `ItemsControl` | `ItemsPanelTemplate?` | Gets or sets the panel template used to lay out item containers. |
+| `ItemsPanel` | `ItemsControl` | `Panel?` | Gets or sets the retained panel used to lay out item containers. |
 
 ## Relevant Inherited Methods
 

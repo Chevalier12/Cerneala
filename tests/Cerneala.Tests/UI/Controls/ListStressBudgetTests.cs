@@ -109,7 +109,7 @@ public sealed class ListStressBudgetTests
         list = new ItemsControl
         {
             ItemsSource = items,
-            ItemsPanel = new ItemsPanelTemplate(() => new VirtualizingStackPanel())
+            ItemsPanel = new VirtualizingStackPanel()
         };
         list.SetVirtualizationContext(new VirtualizationContext(items.Count, ItemExtent, ViewportExtent, 0, CacheItems: 1));
         UIRoot root = new(200, 60);

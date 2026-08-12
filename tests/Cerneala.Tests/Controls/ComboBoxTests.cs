@@ -249,7 +249,7 @@ public sealed class ComboBoxTests
         UIRoot root = new(100, 100);
         ComboBox comboBox = new()
         {
-            ItemsPanel = new ItemsPanelTemplate(() => new LayoutStackPanel()),
+            ItemsPanel = new LayoutStackPanel(),
             IsDropDownOpen = true
         };
         comboBox.SetItems(new UIElement[] { new FixedElement(), new FixedElement() });

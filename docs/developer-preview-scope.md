@@ -37,7 +37,7 @@ These areas may have prototype files or tests, but they are unsupported for Deve
 
 ## Naming Stance
 
-Cerneala keeps familiar names where they improve developer ergonomics: `ComponentTemplate`, `ContentTemplate`, `ItemsPanelTemplate`, routed events, commands, and familiar control names. These names are not a compatibility promise. The Developer Preview is retained and strongly typed. It supports both code-first construction and the documented compile-time `.cui.xml` path, but does not claim general XAML compatibility or runtime XAML interpretation.
+Cerneala keeps familiar names where they improve developer ergonomics: `ComponentTemplate`, `ContentTemplate`, direct `ItemsPanel` declarations, routed events, commands, and familiar control names. These names are not a compatibility promise. The Developer Preview is retained and strongly typed. It supports both code-first construction and the documented compile-time `.cui.xml` path, but does not claim general XAML compatibility or runtime XAML interpretation.
 
 Generated `@template` declarations compile to `ComponentTemplate<TControl>`. They support owner bindings, lexical resources, template parts, nested controls, and reactive branches. They do not support templates on non-Control elements, implicit content projection, template merging, binding converters, two-way template bindings, or dynamic template switching from `@when`.
 

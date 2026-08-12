@@ -40,7 +40,7 @@ ListBox listBox = new()
 
 ## Remarks
 
-`ListBox` is a concrete `Selector` that configures item presentation for a vertical list. Its constructor sets `ItemsPanel` to an `ItemsPanelTemplate` that creates a `StackPanel`.
+`ListBox` is a concrete `Selector` that configures item presentation for a vertical list. Its constructor assigns a retained vertical `StackPanel` directly to `ItemsPanel`.
 
 Each data item is wrapped in a `ListBoxItem` container. If an item is already a `ListBoxItem`, that same element is used as its own container. Selection is inherited from `Selector`: setting `SelectedIndex` updates the selection model, and a left mouse button release on a prepared item container selects that item.
 
@@ -75,7 +75,7 @@ Each data item is wrapped in a `ListBoxItem` container. If an item is already a 
 | `ItemTemplate` | `ContentTemplate?` | Inherited from `ItemsControl`. Gets or sets the template used to display non-container items. |
 | `ItemTemplateKey` | `string?` | Inherited from `ItemsControl`. Gets or sets the template key used by content presentation. |
 | `ContentTemplateRegistry` | `ContentTemplateRegistry` | Inherited from `ItemsControl`. Gets or sets the registry used to resolve content templates. |
-| `ItemsPanel` | `ItemsPanelTemplate?` | Inherited from `ItemsControl`. Gets or sets the panel template used by the items presenter. `ListBox` initializes it to a `StackPanel` template. |
+| `ItemsPanel` | `Panel?` | Inherited from `ItemsControl`. Gets or sets the retained panel used by the items presenter. `ListBox` initializes it to a vertical `StackPanel`. |
 | `ItemContainerGenerator` | `ItemContainerGenerator` | Inherited from `ItemsControl`. Gets the generator that realizes and tracks item containers. |
 | `ItemsPresenter` | `ItemsPresenter` | Inherited from `ItemsControl`. Gets the presenter that hosts generated item containers. |
 

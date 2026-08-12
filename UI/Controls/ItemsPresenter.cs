@@ -12,7 +12,7 @@ namespace Cerneala.UI.Controls;
 
 public class ItemsPresenter : Control
 {
-    private static readonly ItemsPanelTemplate DefaultItemsPanelTemplate = new(() => new Panel());
+    private readonly Layout.Panels.Panel defaultItemsPanel = new StackPanel();
     private Layout.Panels.Panel? panelRoot;
     private bool itemsDirty = true;
     private RealizationWindow? lastRealizationWindow;
@@ -31,12 +31,12 @@ public class ItemsPresenter : Control
             null,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<ItemsPanelTemplate?> ItemsPanelProperty = UiProperty<ItemsPanelTemplate?>.Register(
+    public static readonly UiProperty<Layout.Panels.Panel?> ItemsPanelProperty = UiProperty<Layout.Panels.Panel?>.Register(
         nameof(ItemsPanel),
         typeof(ItemsPresenter),
-        new UiPropertyMetadata<ItemsPanelTemplate?>(
+        new UiPropertyMetadata<Layout.Panels.Panel?>(
             null,
-            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+            UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender));
 
     public IEnumerable? Items
     {
@@ -50,7 +50,7 @@ public class ItemsPresenter : Control
         set => SetValue(ItemTemplateProperty, value);
     }
 
-    public ItemsPanelTemplate? ItemsPanel
+    public Layout.Panels.Panel? ItemsPanel
     {
         get => GetValue(ItemsPanelProperty);
         set => SetValue(ItemsPanelProperty, value);
@@ -107,10 +107,39 @@ public class ItemsPresenter : Control
         return true;
     }
 
+    internal bool UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
+    {
+        if (VirtualizationContext is not null ||
+            (ItemsOwner?.ItemsPanel ?? ItemsPanel) is not IItemsVirtualizingPanel virtualizingPanel)
+        {
+            return false;
+        }
+
+        RealizationWindow previous = virtualizingPanel.RealizationWindow;
+        virtualizingPanel.UpdateViewport(new ItemsVirtualizationViewport(
+            ItemsOwner?.ViewItemCount ?? Items?.Cast<object?>().Count() ?? 0,
+            viewportExtent,
+            scrollOffset));
+        RealizationWindow next = virtualizingPanel.RealizationWindow;
+        bool changed = itemsDirty || previous != next;
+        if (changed)
+        {
+            MarkItemsDirty();
+        }
+
+        return changed;
+    }
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         RefreshItems();
+        RealizationWindow? windowBeforeMeasure = GetRealizationWindow();
         LayoutSize desired = panelRoot?.Measure(context) ?? LayoutSize.Zero;
+        if (windowBeforeMeasure != GetRealizationWindow())
+        {
+            MarkItemsDirty();
+        }
+
         ProcessInheritedAndAspectForSubtree(panelRoot);
         RemoveMeasureWorkForSubtree(panelRoot);
         RemoveMeasureWorkForLayoutScope();
@@ -154,18 +183,22 @@ public class ItemsPresenter : Control
             return;
         }
 
-        Layout.Panels.Panel nextPanel = (ItemsPanel ?? DefaultItemsPanelTemplate).CreateLayoutPanel();
+        Layout.Panels.Panel nextPanel = ItemsPanel ?? defaultItemsPanel;
         ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
 
         List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
         Layout.Panels.Panel? oldPanel = panelRoot;
         List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
+        bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
         if (oldPanel is not null)
         {
             ClearPanelChildren(oldPanel);
-            VisualChildren.Remove(oldPanel);
-            LogicalChildren.Remove(oldPanel);
-            panelRoot = null;
+            if (!reusesPanel)
+            {
+                VisualChildren.Remove(oldPanel);
+                LogicalChildren.Remove(oldPanel);
+                panelRoot = null;
+            }
         }
 
         try
@@ -175,13 +208,21 @@ public class ItemsPresenter : Control
                 AddPanelChild(nextPanel, child);
             }
 
-            AddPanelRoot(nextPanel);
+            if (!reusesPanel)
+            {
+                AddPanelRoot(nextPanel);
+            }
+
             panelRoot = nextPanel;
         }
         catch
         {
             ClearPanelChildren(nextPanel);
-            RemovePanelRoot(nextPanel);
+            if (!reusesPanel)
+            {
+                RemovePanelRoot(nextPanel);
+            }
+
             panelRoot = null;
             if (oldPanel is not null)
             {
@@ -190,7 +231,11 @@ public class ItemsPresenter : Control
                     AddPanelChild(oldPanel, child);
                 }
 
-                AddPanelRoot(oldPanel);
+                if (!reusesPanel)
+                {
+                    AddPanelRoot(oldPanel);
+                }
+
                 panelRoot = oldPanel;
             }
 
@@ -200,33 +245,62 @@ public class ItemsPresenter : Control
 
     private void RefreshOwnerItems(RealizationWindow? nextWindow)
     {
-        Layout.Panels.Panel nextPanel = (ItemsPanel ?? ItemsOwner?.ItemsPanel ?? DefaultItemsPanelTemplate).CreateLayoutPanel();
+        Layout.Panels.Panel nextPanel = ItemsPanel ?? ItemsOwner?.ItemsPanel ?? defaultItemsPanel;
         ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
 
         Layout.Panels.Panel? oldPanel = panelRoot;
+        List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
+        List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
+        bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
         if (oldPanel is not null)
         {
             ClearPanelChildren(oldPanel);
-            VisualChildren.Remove(oldPanel);
-            LogicalChildren.Remove(oldPanel);
-            panelRoot = null;
+            if (!reusesPanel)
+            {
+                VisualChildren.Remove(oldPanel);
+                LogicalChildren.Remove(oldPanel);
+                panelRoot = null;
+            }
         }
 
         try
         {
-            foreach (UIElement child in CreateItemChildren(nextWindow))
+            foreach (UIElement child in nextChildren)
             {
                 AddPanelChild(nextPanel, child);
             }
 
-            AddPanelRoot(nextPanel);
+            if (!reusesPanel)
+            {
+                AddPanelRoot(nextPanel);
+            }
+
             panelRoot = nextPanel;
         }
         catch
         {
             ClearPanelChildren(nextPanel);
-            RemovePanelRoot(nextPanel);
+            if (!reusesPanel)
+            {
+                RemovePanelRoot(nextPanel);
+            }
+
             panelRoot = null;
+            if (oldPanel is not null)
+            {
+                foreach (UIElement child in oldChildren)
+                {
+                    AddPanelChild(oldPanel, child);
+                }
+
+                if (!reusesPanel)
+                {
+                    AddPanelRoot(oldPanel);
+                }
+
+                panelRoot = oldPanel;
+            }
+
             throw;
         }
     }
@@ -330,7 +404,14 @@ public class ItemsPresenter : Control
 
     private RealizationWindow? GetRealizationWindow()
     {
-        return VirtualizationContext?.GetRealizationWindow();
+        if (VirtualizationContext is not null)
+        {
+            return VirtualizationContext.Value.GetRealizationWindow();
+        }
+
+        return (ItemsOwner?.ItemsPanel ?? ItemsPanel) is IItemsVirtualizingPanel virtualizingPanel
+            ? virtualizingPanel.RealizationWindow
+            : null;
     }
 
     private static void ApplyVirtualizationContext(Layout.Panels.Panel? panel, VirtualizationContext? context, RealizationWindow? window)
@@ -339,6 +420,11 @@ public class ItemsPresenter : Control
         {
             virtualizingPanel.VirtualizationContext = virtualizationContext;
             virtualizingPanel.FirstRealizedIndex = window?.StartIndex ?? 0;
+        }
+
+        else if (panel is VirtualizingStackPanel automaticPanel && window is RealizationWindow automaticWindow)
+        {
+            automaticPanel.FirstRealizedIndex = automaticWindow.StartIndex;
         }
     }
 

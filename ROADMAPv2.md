@@ -1271,7 +1271,7 @@ This order prioritizes a working retained UI loop before broad API coverage.
 - [x] Style/value precedence order is `local > animation > style visual state > style base > inherited > default`.
 - [x] Templates are code-first until a markup layer exists.
 - [x] Typed binding APIs are enough for Core before adding string property paths.
-- [x] Use the modern `ComponentTemplate`, `ContentTemplate`, and `ItemsPanelTemplate` APIs consistently.
+- [x] Use the modern `ComponentTemplate`, `ContentTemplate`, and direct `ItemsPanel` APIs consistently.
 
 ### Platform and packages
 
