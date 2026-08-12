@@ -1,7 +1,13 @@
+using Cerneala.UI.Rendering;
+
 namespace Cerneala.UI.Controls;
 
 public class UserControl : Control
 {
+    protected override void OnRender(RenderContext context)
+    {
+        Border.RenderBox(this, context);
+    }
 }
 
 public class UserControl<TViewModel> : UserControl
