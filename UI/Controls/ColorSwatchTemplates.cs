@@ -16,10 +16,8 @@ internal static class ColorSwatchTemplates
             Padding = Thickness.Zero,
             Cursor = Cursor.Hand
         };
-        ColorPicker picker = new();
         Overlay overlay = new()
         {
-            Content = picker,
             PlacementTarget = button,
             Placement = OverlayPlacement.Auto,
             IsLightDismissEnabled = true,
@@ -34,7 +32,6 @@ internal static class ColorSwatchTemplates
         context.Bind(Control.BorderThicknessProperty, button, Control.BorderThicknessProperty, OwnerBindingSource);
         context.RequirePart("PART_SwatchButton", button);
         context.RequirePart("PART_PickerOverlay", overlay);
-        context.RequirePart("PART_ColorPicker", picker);
         return root;
     });
 

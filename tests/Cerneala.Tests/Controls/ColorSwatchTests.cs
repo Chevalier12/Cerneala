@@ -11,13 +11,20 @@ namespace Cerneala.Tests.Controls;
 public sealed class ColorSwatchTests
 {
     [Fact]
-    public void DefaultTemplateProvidesButtonOverlayAndPicker()
+    public void ClosedSwatchDoesNotMaterializeColorPicker()
+    {
+        ColorSwatch swatch = ArrangeSwatch();
+
+        Assert.Null(Part<Overlay>(swatch, "PART_PickerOverlay").Content);
+    }
+
+    [Fact]
+    public void DefaultTemplateProvidesButtonAndOverlay()
     {
         ColorSwatch swatch = ArrangeSwatch();
 
         Assert.IsType<Button>(Part(swatch, "PART_SwatchButton"));
         Assert.IsType<Overlay>(Part(swatch, "PART_PickerOverlay"));
-        Assert.Same(swatch.Picker, Part(swatch, "PART_ColorPicker"));
     }
 
     [Fact]
@@ -29,7 +36,9 @@ public sealed class ColorSwatchTests
         button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, button));
 
         Assert.True(swatch.IsPickerOpen);
-        Assert.True(Part<Overlay>(swatch, "PART_PickerOverlay").IsOpen);
+        Overlay overlay = Part<Overlay>(swatch, "PART_PickerOverlay");
+        Assert.True(overlay.IsOpen);
+        Assert.Same(swatch.Picker, overlay.Content);
     }
 
     [Fact]

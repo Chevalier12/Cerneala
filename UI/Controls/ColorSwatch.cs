@@ -9,7 +9,6 @@ namespace Cerneala.UI.Controls;
 
 [TemplatePart("PART_SwatchButton", typeof(Button))]
 [TemplatePart("PART_PickerOverlay", typeof(Overlay))]
-[TemplatePart("PART_ColorPicker", typeof(ColorPicker))]
 public class ColorSwatch : Control
 {
     public static readonly RoutedEvent SelectedColorChangedEvent = RoutedEventRegistry.Register(
@@ -65,7 +64,7 @@ public class ColorSwatch : Control
         get
         {
             ApplyTemplate();
-            return picker!;
+            return EnsurePicker();
         }
     }
 
@@ -79,9 +78,7 @@ public class ColorSwatch : Control
 
         swatchButton = GetRequiredTemplatePart<Button>("PART_SwatchButton");
         pickerOverlay = GetRequiredTemplatePart<Overlay>("PART_PickerOverlay");
-        picker = GetRequiredTemplatePart<ColorPicker>("PART_ColorPicker");
         swatchButton.Click += OnSwatchClick;
-        picker.SelectedColorChanged += OnPickerSelectedColorChanged;
         pickerOverlay.Opened += OnOverlayOpened;
         pickerOverlay.Closed += OnOverlayClosed;
         SynchronizeTemplateParts();
@@ -127,6 +124,7 @@ public class ColorSwatch : Control
 
     private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
     {
+        EnsurePicker();
         if (!IsPickerOpen)
         {
             IsPickerOpen = true;
@@ -143,7 +141,7 @@ public class ColorSwatch : Control
 
     private void SynchronizeTemplateParts()
     {
-        if (swatchButton is null || pickerOverlay is null || picker is null)
+        if (swatchButton is null || pickerOverlay is null)
         {
             return;
         }
@@ -152,13 +150,36 @@ public class ColorSwatch : Control
         try
         {
             swatchButton.Background = new SolidColorBrush(SelectedColor);
-            picker.SelectedColor = SelectedColor;
+            if (IsPickerOpen)
+            {
+                EnsurePicker().SelectedColor = SelectedColor;
+            }
+            else if (picker is not null)
+            {
+                picker.SelectedColor = SelectedColor;
+            }
+
             pickerOverlay.IsOpen = IsPickerOpen;
         }
         finally
         {
             synchronizing = false;
         }
+    }
+
+    private ColorPicker EnsurePicker()
+    {
+        if (picker is not null)
+        {
+            return picker;
+        }
+
+        Overlay overlay = pickerOverlay ??
+            throw new InvalidOperationException("The color swatch template has not been applied.");
+        picker = new ColorPicker { SelectedColor = SelectedColor };
+        picker.SelectedColorChanged += OnPickerSelectedColorChanged;
+        overlay.Content = picker;
+        return picker;
     }
 
     private void DetachTemplateParts()
