@@ -110,6 +110,28 @@ public sealed class GeneratedMarkupObservationTests
     }
 
     [Fact]
+    public void DataPathEvaluatesEachSegmentOnceWhenStarted()
+    {
+        int getterCalls = 0;
+        EndpointRoot source = new(new EndpointChild("value"));
+        UIElement target = new() { DataContext = source };
+        MarkupObservation observation = GeneratedMarkup.ObserveDataPath(
+            target,
+            new MarkupDataPathSegment(
+                "Child",
+                owner =>
+                {
+                    getterCalls++;
+                    return ((EndpointRoot)owner!).Child;
+                }));
+
+        observation.Start();
+
+        Assert.Equal(1, getterCalls);
+        Assert.Same(source.Child, observation.Value);
+    }
+
+    [Fact]
     public void UiPropertyEndpointWritesOnlyWritablePropertiesAndTracksChanges()
     {
         EndpointElement source = new() { Value = "initial" };

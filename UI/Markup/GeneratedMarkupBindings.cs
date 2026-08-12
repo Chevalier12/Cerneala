@@ -202,7 +202,18 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
     {
         if (active)
         {
-            DeactivateCore(clearOwnedValue: false);
+            refreshDispatcher.RebindRelay();
+            if (!canRead())
+            {
+                foreach (MarkupObservation observation in observations)
+                {
+                    observation.RefreshValue();
+                }
+
+                RefreshTarget();
+            }
+
+            return;
         }
 
         ActivateCore();

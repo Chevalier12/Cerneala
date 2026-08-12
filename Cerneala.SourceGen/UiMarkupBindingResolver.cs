@@ -845,7 +845,9 @@ public sealed partial class UiMarkupGenerator
                 expression,
                 BindingSourceKind.DataPath,
                 currentType,
-                resolutionContext.OwnerVariable,
+                contentTemplateContextVariables.Count > 0
+                    ? contentTemplateContextVariables.Peek() + ".Data"
+                    : resolutionContext.OwnerVariable,
                 dataSegments: segments,
                 canWrite: canWrite);
         }

@@ -32,6 +32,14 @@ internal sealed class UiRelayRefreshDispatcher
         return () => ShouldProcessSynchronously(currentGeneration);
     }
 
+    public void RebindRelay()
+    {
+        UiRelay? resolvedRelay = resolveRelay();
+        resolvedRelay?.VerifyAccess();
+        relay = resolvedRelay;
+        ownerThreadId = Environment.CurrentManagedThreadId;
+    }
+
     public void Deactivate()
     {
         Interlocked.Exchange(ref active, 0);

@@ -215,6 +215,11 @@ public static partial class GeneratedMarkup
         return new DataPathObservation(owner, segments);
     }
 
+    public static MarkupObservation ObserveDataPath(object? source, params MarkupDataPathSegment[] segments)
+    {
+        return new DataPathObservation(source, segments);
+    }
+
     public static IDisposable AttachConditions(
         UIElement owner,
         IReadOnlyList<MarkupObservation> observations,
@@ -443,7 +448,8 @@ public static partial class GeneratedMarkup
 
     private sealed class DataPathObservation : MarkupObservation
     {
-        private readonly UIElement owner;
+        private readonly UIElement? owner;
+        private readonly object? source;
         private readonly IReadOnlyList<MarkupDataPathSegment> segments;
         private readonly List<Action> unsubscribeContext = [];
         private readonly List<Action> unsubscribePath = [];
@@ -455,7 +461,12 @@ public static partial class GeneratedMarkup
         {
             this.owner = owner ?? throw new ArgumentNullException(nameof(owner));
             this.segments = segments?.ToArray() ?? throw new ArgumentNullException(nameof(segments));
-            Rebuild(raiseChanged: false);
+        }
+
+        public DataPathObservation(object? source, IReadOnlyList<MarkupDataPathSegment> segments)
+        {
+            this.source = source;
+            this.segments = segments?.ToArray() ?? throw new ArgumentNullException(nameof(segments));
         }
 
         internal override void Start()
@@ -572,6 +583,11 @@ public static partial class GeneratedMarkup
 
         private object? ResolveDataContext()
         {
+            if (owner is null)
+            {
+                return source;
+            }
+
             UIElement? current = owner;
             object? inherited = owner.DataContext;
             HashSet<UIElement> visited = new(ReferenceEqualityComparer.Instance);

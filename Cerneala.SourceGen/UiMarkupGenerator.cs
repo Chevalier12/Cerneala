@@ -1317,6 +1317,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly Stack<List<NamedElementMember>> conditionalMemberScopes = new();
         private readonly Stack<TemplateEmissionContext> templateEmissionContexts = new();
         private readonly Stack<INamedTypeSymbol?> contentTemplateDataTypes = new();
+        private readonly Stack<string> contentTemplateContextVariables = new();
         private readonly Dictionary<DirectiveTemplateNode, IReadOnlyDictionary<string, XElement>> templateParts = new();
         private readonly List<NamedElementMember> namedElementMembers = [];
         private List<string> currentLines;
@@ -3333,12 +3334,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             WithEmissionBuffers(factoryLines, factoryPostLines, () =>
             {
                 contentTemplateDataTypes.Push(template.DataType);
+                contentTemplateContextVariables.Push(contextVariable);
                 try
                 {
                     rootVariable = EmitElement(template.Root);
                 }
                 finally
                 {
+                    contentTemplateContextVariables.Pop();
                     contentTemplateDataTypes.Pop();
                 }
             });

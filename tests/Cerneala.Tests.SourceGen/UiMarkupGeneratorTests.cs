@@ -237,6 +237,7 @@ public sealed partial class UiMarkupGeneratorTests
             inputSource,
             out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("ObserveDataPath(contentTemplateContext", SingleGeneratedSource(result), StringComparison.Ordinal);
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));

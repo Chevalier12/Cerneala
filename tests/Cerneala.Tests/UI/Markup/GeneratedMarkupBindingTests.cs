@@ -401,6 +401,34 @@ public sealed class GeneratedMarkupBindingTests
     }
 
     [Fact]
+    public void FirstRootAttachmentRebindsRelayWithoutReevaluatingActiveBinding()
+    {
+        ThreadedSource source = new();
+        TextBlock target = new() { DataContext = source };
+        MarkupObservation observation = GeneratedMarkup.ObserveDataPath(
+            target,
+            new MarkupDataPathSegment("Value", owner => ((ThreadedSource)owner!).Value));
+        using Binding binding = GeneratedMarkup.AttachPropertyBinding(
+            target,
+            target,
+            TextBlock.TextProperty,
+            observation,
+            BindingMode.OneWay,
+            value => (string)value!,
+            "first root attachment");
+        source.ResetReads();
+        UIRoot root = new();
+
+        root.VisualChildren.Add(target);
+
+        Assert.Equal(0, source.ReadCount);
+        Assert.Null(source.RaiseFromWorker());
+        Assert.Equal(1, root.Relay.PendingCount);
+        root.ProcessFrame();
+        Assert.Equal(1, source.ReadCount);
+    }
+
+    [Fact]
     public void BindingReconnectsTemplatePartAndStopsAfterDisposal()
     {
         StringEndpoint first = new() { Value = "first" };

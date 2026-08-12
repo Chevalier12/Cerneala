@@ -34,6 +34,7 @@ using Binding binding = GeneratedMarkup.AttachPropertyBinding(
 | `ObserveTemplatePartProperty(Control owner, string partName, UiProperty property)` | `MarkupObservation` | Observes a property on a named component-template part and reconnects after template replacement. |
 | `ObserveObject(Func<object?> getter)` | `MarkupObservation` | Observes a getter-backed object value. |
 | `ObserveDataPath(UIElement owner, params MarkupDataPathSegment[] segments)` | `MarkupObservation` | Observes a typed `DataContext` property path and its intermediate owners. |
+| `ObserveDataPath(object? source, params MarkupDataPathSegment[] segments)` | `MarkupObservation` | Observes a typed property path from a fixed source object without resolving `DataContext` through an element tree. Source-generated content templates use this overload for their item. |
 | `AttachConditions(UIElement owner, IReadOnlyList<MarkupObservation> observations, IReadOnlyList<MarkupConditionRule> rules)` | `IDisposable` | Attaches observations and rules to an element lifecycle and gates rule activation callbacks on effective renderability. |
 | `AttachMotionSession(UIElement owner)` | `IDisposable` | Creates a lifecycle-scoped session for generated motion triggers and executions. |
 | `AttachMotionTriggers(UIElement owner, Action attach, Action detach)` | `IDisposable` | Runs direct event-subscription callbacks on attach and their matching unsubscription callbacks on detach. |
@@ -83,6 +84,9 @@ using Binding binding = GeneratedMarkup.AttachPropertyBinding(
 ## Remarks
 Returned observations are lifecycle-managed by the attached controller. The
 generated path and template observers reconnect when their source changes.
+Content-template paths start from the item carried by `ContentTemplateContext`,
+while ordinary `$DataContext` paths continue to follow the element's effective
+data context.
 
 Property bindings write to `MarkupBase`; conditional providers write to
 `MarkupConditional` only while active. Two-way bindings accept write-back only
