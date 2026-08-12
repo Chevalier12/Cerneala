@@ -15,6 +15,7 @@ public class ContentPresenter : Control
     private UIElement? presentedChild;
     private bool presentationDirty = true;
     private bool generatedTextChild;
+    private bool deferPresentationRefresh;
     private int contentIndex = -1;
     private int aspectTemplateCatalogVersion = -1;
     private ContentTemplateRegistry? localTemplateRegistry;
@@ -69,7 +70,11 @@ public class ContentPresenter : Control
 
             localTemplateRegistry = value;
             presentationDirty = true;
-            RefreshPresentedChild();
+            if (!deferPresentationRefresh)
+            {
+                RefreshPresentedChild();
+            }
+
             Invalidate(
                 InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render,
                 "Content presenter local template registry changed");
@@ -96,6 +101,28 @@ public class ContentPresenter : Control
     }
 
     public UIElement? PresentedChild => presentedChild;
+
+    internal void PrepareItemPresentation(
+        object? content,
+        ContentTemplate? contentTemplate,
+        string? contentTemplateKey,
+        ContentTemplateRegistry templateRegistry,
+        int index)
+    {
+        deferPresentationRefresh = true;
+        try
+        {
+            Content = content;
+            ContentTemplate = contentTemplate;
+            ContentTemplateKey = contentTemplateKey;
+            LocalTemplateRegistry = templateRegistry;
+            ContentIndex = index;
+        }
+        finally
+        {
+            deferPresentationRefresh = false;
+        }
+    }
 
     internal void RefreshAspectContentTemplates(int catalogVersion)
     {
@@ -138,7 +165,10 @@ public class ContentPresenter : Control
             ReferenceEquals(args.Property, ContentTemplateKeyProperty))
         {
             presentationDirty = true;
-            RefreshPresentedChild();
+            if (!deferPresentationRefresh)
+            {
+                RefreshPresentedChild();
+            }
         }
 
         if (generatedTextChild &&

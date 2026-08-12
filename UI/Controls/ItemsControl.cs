@@ -281,11 +281,12 @@ public class ItemsControl : Control
         switch (container)
         {
             case ContentPresenter presenter:
-                presenter.Content = ItemTemplate is null ? GetItemDisplayValue(item) : item;
-                presenter.ContentTemplate = ItemTemplate;
-                presenter.ContentTemplateKey = ItemTemplateKey;
-                presenter.LocalTemplateRegistry = ContentTemplateRegistry;
-                presenter.ContentIndex = index;
+                presenter.PrepareItemPresentation(
+                    ItemTemplate is null ? GetItemDisplayValue(item) : item,
+                    ItemTemplate,
+                    ItemTemplateKey,
+                    ContentTemplateRegistry,
+                    index);
                 break;
             case ContentControl contentControl:
                 contentControl.Content = ItemTemplate is null ? GetItemDisplayValue(item) : item;

@@ -102,8 +102,54 @@ public sealed class ItemsPresenterTests
         Assert.Equal(["two", "three"], presenter.LayoutPanelRoot!.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
     }
 
-    private sealed class ItemElement(string value) : UIElement
+    [Fact]
+    public void ChangingVirtualizationWindowKeepsOverlappingChildrenAttached()
+    {
+        LifecycleElement[] items = Enumerable.Range(0, 5)
+            .Select(index => new LifecycleElement(index.ToString()))
+            .ToArray();
+        ItemsPresenter presenter = new()
+        {
+            Items = items,
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            VirtualizationContext = new VirtualizationContext(5, 10, 40, 0)
+        };
+        UIRoot root = new();
+        root.VisualChildren.Add(presenter);
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 40)));
+
+        presenter.VirtualizationContext = new VirtualizationContext(5, 10, 30, 10);
+        presenter.MarkItemsDirty();
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 30)));
+
+        Assert.Equal(["1", "2", "3"], presenter.LayoutPanelRoot!.VisualChildren.Cast<LifecycleElement>().Select(item => item.Value));
+        Assert.Equal(1, items[0].DetachedCount);
+        Assert.All(items[1..4], item =>
+        {
+            Assert.Equal(1, item.AttachedCount);
+            Assert.Equal(0, item.DetachedCount);
+        });
+    }
+
+    private class ItemElement(string value) : UIElement
     {
         public string Value { get; } = value;
+    }
+
+    private sealed class LifecycleElement(string value) : ItemElement(value)
+    {
+        public int AttachedCount { get; private set; }
+
+        public int DetachedCount { get; private set; }
+
+        protected override void OnAttached()
+        {
+            AttachedCount++;
+        }
+
+        protected override void OnDetached()
+        {
+            DetachedCount++;
+        }
     }
 }

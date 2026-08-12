@@ -69,6 +69,29 @@ public sealed class ItemsContentTemplateIntegrationTests
     }
 
     [Fact]
+    public void PreparingItemContainerMaterializesTemplateOnceAtFirstMeasure()
+    {
+        int creationCount = 0;
+        TestItemsControl items = new();
+        items.ContentTemplateRegistry.Register(new ContentTemplate<string>(
+            "string",
+            key: null,
+            priority: 0,
+            _ =>
+            {
+                creationCount++;
+                return new FixedElement();
+            }));
+        ContentPresenter presenter = (ContentPresenter)items.CreateContainer(0, "hello");
+
+        items.PrepareContainer(presenter, 0, "hello");
+
+        Assert.Equal(0, creationCount);
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        Assert.Equal(1, creationCount);
+    }
+
+    [Fact]
     public void ChangingTemplateRegistryInvalidatesRealizedItems()
     {
         TestItemsControl items = new();

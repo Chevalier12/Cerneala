@@ -57,7 +57,11 @@ public sealed class ItemContainerGenerator
         {
             if (IsCompatibleContainer(existing, item, containerType))
             {
-                owner.PrepareItemContainer(existing, index, item);
+                if (!ReferenceEquals(GetItem(existing), item))
+                {
+                    owner.PrepareItemContainer(existing, index, item);
+                }
+
                 return existing;
             }
 

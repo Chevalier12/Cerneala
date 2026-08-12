@@ -133,8 +133,10 @@ public class ItemsPresenter : Control
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         RefreshItems();
+
         RealizationWindow? windowBeforeMeasure = GetRealizationWindow();
         LayoutSize desired = panelRoot?.Measure(context) ?? LayoutSize.Zero;
+
         if (windowBeforeMeasure != GetRealizationWindow())
         {
             MarkItemsDirty();
@@ -144,6 +146,7 @@ public class ItemsPresenter : Control
         RemoveMeasureWorkForSubtree(panelRoot);
         RemoveMeasureWorkForLayoutScope();
         RemoveInheritedAndAspectWorkForLayoutScope();
+
         return desired;
     }
 
@@ -190,15 +193,19 @@ public class ItemsPresenter : Control
         Layout.Panels.Panel? oldPanel = panelRoot;
         List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
         bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
+        if (reusesPanel)
+        {
+            SynchronizePanelChildren(nextPanel, nextChildren);
+            panelRoot = nextPanel;
+            return;
+        }
+
         if (oldPanel is not null)
         {
             ClearPanelChildren(oldPanel);
-            if (!reusesPanel)
-            {
-                VisualChildren.Remove(oldPanel);
-                LogicalChildren.Remove(oldPanel);
-                panelRoot = null;
-            }
+            VisualChildren.Remove(oldPanel);
+            LogicalChildren.Remove(oldPanel);
+            panelRoot = null;
         }
 
         try
@@ -208,20 +215,14 @@ public class ItemsPresenter : Control
                 AddPanelChild(nextPanel, child);
             }
 
-            if (!reusesPanel)
-            {
-                AddPanelRoot(nextPanel);
-            }
+            AddPanelRoot(nextPanel);
 
             panelRoot = nextPanel;
         }
         catch
         {
             ClearPanelChildren(nextPanel);
-            if (!reusesPanel)
-            {
-                RemovePanelRoot(nextPanel);
-            }
+            RemovePanelRoot(nextPanel);
 
             panelRoot = null;
             if (oldPanel is not null)
@@ -231,10 +232,7 @@ public class ItemsPresenter : Control
                     AddPanelChild(oldPanel, child);
                 }
 
-                if (!reusesPanel)
-                {
-                    AddPanelRoot(oldPanel);
-                }
+                AddPanelRoot(oldPanel);
 
                 panelRoot = oldPanel;
             }
@@ -252,15 +250,19 @@ public class ItemsPresenter : Control
         List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
         List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
         bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
+        if (reusesPanel)
+        {
+            SynchronizePanelChildren(nextPanel, nextChildren);
+            panelRoot = nextPanel;
+            return;
+        }
+
         if (oldPanel is not null)
         {
             ClearPanelChildren(oldPanel);
-            if (!reusesPanel)
-            {
-                VisualChildren.Remove(oldPanel);
-                LogicalChildren.Remove(oldPanel);
-                panelRoot = null;
-            }
+            VisualChildren.Remove(oldPanel);
+            LogicalChildren.Remove(oldPanel);
+            panelRoot = null;
         }
 
         try
@@ -270,20 +272,14 @@ public class ItemsPresenter : Control
                 AddPanelChild(nextPanel, child);
             }
 
-            if (!reusesPanel)
-            {
-                AddPanelRoot(nextPanel);
-            }
+            AddPanelRoot(nextPanel);
 
             panelRoot = nextPanel;
         }
         catch
         {
             ClearPanelChildren(nextPanel);
-            if (!reusesPanel)
-            {
-                RemovePanelRoot(nextPanel);
-            }
+            RemovePanelRoot(nextPanel);
 
             panelRoot = null;
             if (oldPanel is not null)
@@ -293,10 +289,7 @@ public class ItemsPresenter : Control
                     AddPanelChild(oldPanel, child);
                 }
 
-                if (!reusesPanel)
-                {
-                    AddPanelRoot(oldPanel);
-                }
+                AddPanelRoot(oldPanel);
 
                 panelRoot = oldPanel;
             }
@@ -317,6 +310,67 @@ public class ItemsPresenter : Control
             panel.LogicalChildren.Remove(child);
             throw;
         }
+    }
+
+    private static void SynchronizePanelChildren(Layout.Panels.Panel panel, IReadOnlyList<UIElement> desiredChildren)
+    {
+        HashSet<UIElement> desired = new(desiredChildren, ReferenceEqualityComparer.Instance);
+        for (int index = panel.VisualChildren.Count - 1; index >= 0; index--)
+        {
+            UIElement child = panel.VisualChildren[index];
+            if (desired.Contains(child))
+            {
+                continue;
+            }
+
+            panel.VisualChildren.Remove(child);
+            panel.LogicalChildren.Remove(child);
+        }
+
+        for (int desiredIndex = 0; desiredIndex < desiredChildren.Count; desiredIndex++)
+        {
+            UIElement desiredChild = desiredChildren[desiredIndex];
+            if (desiredIndex < panel.VisualChildren.Count &&
+                ReferenceEquals(panel.VisualChildren[desiredIndex], desiredChild))
+            {
+                continue;
+            }
+
+            int existingIndex = IndexOfReference(panel.VisualChildren, desiredChild, desiredIndex + 1);
+            if (existingIndex >= 0)
+            {
+                panel.LogicalChildren.Move(existingIndex, desiredIndex);
+                panel.VisualChildren.Move(existingIndex, desiredIndex);
+                continue;
+            }
+
+            panel.LogicalChildren.Insert(desiredIndex, desiredChild);
+            try
+            {
+                panel.VisualChildren.Insert(desiredIndex, desiredChild);
+            }
+            catch
+            {
+                panel.LogicalChildren.Remove(desiredChild);
+                throw;
+            }
+        }
+    }
+
+    private static int IndexOfReference(
+        IReadOnlyList<UIElement> children,
+        UIElement candidate,
+        int startIndex)
+    {
+        for (int index = startIndex; index < children.Count; index++)
+        {
+            if (ReferenceEquals(children[index], candidate))
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     private void AddPanelRoot(Layout.Panels.Panel panel)

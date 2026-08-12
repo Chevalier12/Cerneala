@@ -21,6 +21,18 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void GeneratorPreparesOnlyNewContainersWhenRealizationWindowsOverlap()
+    {
+        CountingItemsControl control = new();
+        control.SetItems(new[] { "a", "b", "c", "d" });
+
+        control.ItemContainerGenerator.Realize(new RealizationWindow(0, 3));
+        control.ItemContainerGenerator.Realize(new RealizationWindow(1, 4));
+
+        Assert.Equal(4, control.PrepareCount);
+    }
+
+    [Fact]
     public void GeneratorRecyclesUnrealizedContainersAndClearsStaleState()
     {
         ListBox listBox = new();
@@ -114,6 +126,17 @@ public sealed class ItemContainerGeneratorTests
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
             return new LayoutSize(10, 10);
+        }
+    }
+
+    private sealed class CountingItemsControl : ItemsControl
+    {
+        public int PrepareCount { get; private set; }
+
+        protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
+        {
+            PrepareCount++;
+            base.PrepareItemContainer(container, index, item);
         }
     }
 }

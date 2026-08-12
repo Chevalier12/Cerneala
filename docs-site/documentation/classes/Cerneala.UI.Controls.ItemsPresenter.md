@@ -74,7 +74,7 @@ The presenter owns a single retained panel root. If `ItemsPanel` is set, that pa
 
 When `ItemsOwner` is set, the presenter delegates item realization to the owner's container generator. In that mode, `ItemsControl` owns item source selection, container preparation, item templates, content template keys, selection state, and recycling policy. The presenter's `ItemsPanel` overrides the owner's panel; if it is not set, the owner panel is used before the default panel.
 
-Changing `Items`, `ItemTemplate`, or `ItemsPanel` marks the presentation dirty and refreshes the panel content. `MarkItemsDirty()` explicitly marks the presenter dirty, increments layout and render versions, and invalidates measure, arrange, render, and hit testing.
+Changing `Items`, `ItemTemplate`, or `ItemsPanel` marks the presentation dirty and refreshes the panel content. When the realization window moves, the presenter synchronizes children by reference: overlapping containers remain attached, exiting containers are removed, and entering containers are inserted or moved into order. `MarkItemsDirty()` explicitly marks the presenter dirty, increments layout and render versions, and invalidates measure, arrange, render, and hit testing.
 
 Fixed-extent virtualization can be driven explicitly through `VirtualizationContext`. When owned by an `ItemsControl`, a panel implementing `IItemsVirtualizingPanel` instead receives automatic viewport updates from the surrounding `ScrollViewer`; `VirtualizingStackPanel` uses that path for variable-height items.
 

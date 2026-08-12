@@ -108,4 +108,5 @@ public sealed class ItemsControlRetainedInvalidationTests
             return new LayoutSize(40, 10);
         }
     }
+
 }
