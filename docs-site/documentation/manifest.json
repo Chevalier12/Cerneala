@@ -940,6 +940,11 @@
     "source": "UI/Controls/Image.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.SvgImage",
+    "file": "documentation/classes/Cerneala.UI.Controls.SvgImage.md",
+    "source": "UI/Controls/SvgImage.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Image.ReferenceImageComparer",
     "file": "documentation/classes/Cerneala.UI.Controls.Image.ReferenceImageComparer.md",
     "source": "UI/Controls/Image.cs"
@@ -998,11 +1003,6 @@
     "name": "Cerneala.UI.Controls.Items.ItemContainerRecyclePool",
     "file": "documentation/classes/Cerneala.UI.Controls.Items.ItemContainerRecyclePool.md",
     "source": "UI/Controls/Items/ItemContainerRecyclePool.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Items.ItemsPanelTemplate",
-    "file": "documentation/classes/Cerneala.UI.Controls.Items.ItemsPanelTemplate.md",
-    "source": "UI/Controls/Items/ItemsPanelTemplate.cs"
   },
   {
     "name": "Cerneala.UI.Controls.ItemsControl",
@@ -2643,6 +2643,16 @@
     "name": "Cerneala.UI.Layout.VerticalAlignment",
     "file": "documentation/classes/Cerneala.UI.Layout.VerticalAlignment.md",
     "source": "UI/Layout/Alignment.cs"
+  },
+  {
+    "name": "Cerneala.UI.Layout.Virtualization.IItemsVirtualizingPanel",
+    "file": "documentation/classes/Cerneala.UI.Layout.Virtualization.IItemsVirtualizingPanel.md",
+    "source": "UI/Layout/Virtualization/IItemsVirtualizingPanel.cs"
+  },
+  {
+    "name": "Cerneala.UI.Layout.Virtualization.ItemsVirtualizationViewport",
+    "file": "documentation/classes/Cerneala.UI.Layout.Virtualization.ItemsVirtualizationViewport.md",
+    "source": "UI/Layout/Virtualization/ItemsVirtualizationViewport.cs"
   },
   {
     "name": "Cerneala.UI.Layout.Virtualization.RealizationWindow",
