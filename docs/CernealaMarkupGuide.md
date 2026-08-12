@@ -367,7 +367,8 @@ property exists. Before using an unfamiliar control or property:
 4. Build immediately after the first small usage.
 
 Custom project controls can be used by their CLR class name. For example,
-`CernealaPresentation` uses controls such as `BrandMark` and `SvgImage`.
+`CernealaPresentation` defines `BrandMark`. Framework controls such as
+`SvgImage` are provided directly by `Cerneala.UI.Controls`.
 
 ## 7. Text
 

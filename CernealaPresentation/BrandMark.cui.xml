@@ -3,7 +3,10 @@
         Orientation="Horizontal"
         VerticalAlignment="Center">
         <SvgImage
-            DisplaySize="32"
+            SourcePath="Assets/cerneala-mascot-void-suction-well.svg"
+            Width="32"
+            Height="32"
+            UseIntrinsicSize="False"
             Margin="0,0,10,0" />
         <TextBlock
             Text="CERNEALA"

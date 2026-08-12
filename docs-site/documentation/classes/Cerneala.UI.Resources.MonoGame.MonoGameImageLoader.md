@@ -38,7 +38,7 @@ IDrawImage image = loader.Load("Assets/logo.png");
 
 `MonoGameImageLoader` uses `Texture2D.FromStream` with the supplied `GraphicsDevice`, then wraps the created texture in a `MonoGameImage`.
 
-The constructor throws `ArgumentNullException` when `graphicsDevice` is `null`. `Load` throws `ArgumentException` when `path` is `null`, empty, or whitespace. It opens the file with `File.OpenRead`, so file system exceptions can surface when the path cannot be read.
+The constructor throws `ArgumentNullException` when `graphicsDevice` is `null`. `Load(string)` throws `ArgumentException` when `path` is `null`, empty, or whitespace. It opens the file with `File.OpenRead`, so file system exceptions can surface when the path cannot be read. `Load(Stream)` throws `ArgumentNullException` for a null stream and `ArgumentException` for a stream that cannot be read. Neither overload takes ownership of a caller-supplied stream.
 
 ## Constructors
 
@@ -51,6 +51,7 @@ The constructor throws `ArgumentNullException` when `graphicsDevice` is `null`. 
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Load(string path)` | `IDrawImage` | Loads an image file from disk and returns a MonoGame-backed draw image. |
+| `Load(Stream stream)` | `IDrawImage` | Loads encoded image data from a readable stream and returns a MonoGame-backed draw image. |
 
 ## Applies To
 

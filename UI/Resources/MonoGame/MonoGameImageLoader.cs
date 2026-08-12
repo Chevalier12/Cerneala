@@ -21,6 +21,17 @@ public sealed class MonoGameImageLoader : IImageLoader
         }
 
         using FileStream stream = File.OpenRead(ResolvePath(path));
+        return Load(stream);
+    }
+
+    public IDrawImage Load(Stream stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        if (!stream.CanRead)
+        {
+            throw new ArgumentException("Image stream must be readable.", nameof(stream));
+        }
+
         return new MonoGameImage(Texture2D.FromStream(graphicsDevice, stream));
     }
 
