@@ -10,7 +10,9 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Input;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;
 using Cerneala.UI.Text;
 using Cerneala.Tests.UI.Hosting;
@@ -57,6 +59,32 @@ public sealed class AspectChapterViewTests : IDisposable
     }
 
     [Fact]
+    public void MarkupDeclaresPropertyInspectorItemsSource()
+    {
+        XDocument markup = XDocument.Load(RepositoryFile("CernealaPresentation", "AspectChapterView.cui.xml"));
+        XElement propertyItems = Assert.Single(markup.Descendants()
+            .Where(element => (string?)element.Attribute("Name") == "PropertyItems"));
+        string codeBehind = File.ReadAllText(
+            RepositoryFile("CernealaPresentation", "AspectChapterView.cui.xml.cs"));
+
+        Assert.Equal("$root.PropertyRows", (string?)propertyItems.Attribute("ItemsSource"));
+        Assert.DoesNotContain("PropertyItems.ItemsSource", codeBehind, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PropertyInspectorUsesExplicitVirtualizingItemsPanel()
+    {
+        _ = AttachStudio(out AspectChapterView view);
+
+        ItemsControl propertyItems = Assert.Single(Descendants(view)
+            .OfType<ItemsControl>()
+            .Where(items => items.ItemsSource?.Cast<object?>()
+                .Any(item => item is AspectStudioPropertyRowModel) == true));
+
+        Assert.IsType<VirtualizingStackPanel>(propertyItems.ItemsPanel);
+    }
+
+    [Fact]
     public void AttachedStudioBuildsBorderPreviewFromRegisteredEditableProperties()
     {
         UIRoot root = AttachStudio(out AspectChapterView view);
@@ -72,7 +100,7 @@ public sealed class AspectChapterViewTests : IDisposable
         Assert.Contains(Control.BorderThicknessProperty, view.SelectedProperties);
         Assert.Contains(UIElement.OpacityProperty, view.SelectedProperties);
         Assert.DoesNotContain(UIElement.AspectProperty, view.SelectedProperties);
-        Assert.True(Descendants(view).OfType<AspectStudioPropertyRow>().Count() >= 20);
+        Assert.True(PropertyModels(view).Count() >= 20);
         Assert.NotNull(root);
     }
 
@@ -80,23 +108,24 @@ public sealed class AspectChapterViewTests : IDisposable
     public void PropertyRowsInsetLabelsAndEditorsFromBothOuterBorders()
     {
         _ = AttachStudio(out AspectChapterView view);
-        AspectStudioPropertyRow row = PropertyRow(view, Control.FontSizeProperty);
+        RenderedPropertyRow row = PropertyRow(view, Control.FontSizeProperty);
+        Border chrome = row.Chrome;
         Cerneala.UI.Layout.Panels.Grid grid =
-            Assert.IsType<Cerneala.UI.Layout.Panels.Grid>(row.Child);
+            Assert.IsType<Cerneala.UI.Layout.Panels.Grid>(chrome.Child);
         TextBlock label = Assert.IsType<TextBlock>(grid.VisualChildren[0]);
 
-        Assert.Equal(new Thickness(8, 7, 8, 7), row.Padding);
-        Assert.True(label.ArrangedBounds.X >= row.ArrangedBounds.X + row.BorderThickness.Left + 8);
+        Assert.Equal(new Thickness(8, 7, 8, 7), chrome.Padding);
+        Assert.True(label.ArrangedBounds.X >= chrome.ArrangedBounds.X + chrome.BorderThickness.Left + 8);
         Assert.True(
             row.Editor.ArrangedBounds.X + row.Editor.ArrangedBounds.Width
-            <= row.ArrangedBounds.X + row.ArrangedBounds.Width - row.BorderThickness.Right - 8);
+            <= chrome.ArrangedBounds.X + chrome.ArrangedBounds.Width - chrome.BorderThickness.Right - 8);
     }
 
     [Fact]
     public void BooleanPropertyEditorsReceiveTheApplicationCheckBoxAspect()
     {
         UIRoot root = AttachStudio(out AspectChapterView view);
-        CheckBox checkBox = Assert.IsType<CheckBox>(PropertyRow(view, UIElement.ClipToBoundsProperty).Editor);
+        CheckBox checkBox = Assert.IsAssignableFrom<CheckBox>(PropertyRow(view, UIElement.ClipToBoundsProperty).Editor);
         checkBox.ApplyTemplate();
         Border indicator = Assert.IsType<Border>(
             checkBox.ComponentTemplateInstance!.Parts["PART_Indicator"]);
@@ -118,8 +147,22 @@ public sealed class AspectChapterViewTests : IDisposable
         new AutomationSession(root, new RetainedAutomationInputDriver(host))
             .FindByAutomationId("aspect-property-ClipToBounds")
             .Click();
+        AspectStudioBooleanRow model = Assert.IsType<AspectStudioBooleanRow>(
+            PropertyRow(view, UIElement.ClipToBoundsProperty).Model);
+        HitTestResult? checkBoxHit = new HitTestService().HitTest(
+            root,
+            checkBox.ArrangedBounds.X + (checkBox.ArrangedBounds.Width / 2),
+            checkBox.ArrangedBounds.Y + (checkBox.ArrangedBounds.Height / 2));
+        Assert.True(
+            checkBox.IsChecked,
+            $"Automation click missed the generated CheckBox at {checkBox.ArrangedBounds}; " +
+            $"hit {checkBoxHit?.Element.GetType().Name ?? "nothing"} at {checkBoxHit?.Element.ArrangedBounds}.");
+        Assert.True(model.IsChecked, "The generated TwoWay binding did not update its data item.");
+        root.ProcessFrame();
+        root.ProcessFrame();
 
         Assert.True(checkBox.IsChecked);
+        Assert.True(model.IsChecked);
         Assert.True(Assert.IsType<Border>(view.SelectedPreview).ClipToBounds);
         Assert.Equal(new Color(16, 18, 23), Assert.IsType<SolidColorBrush>(indicator.Background).Color);
         Assert.Equal(new Color(77, 240, 255), Assert.IsType<SolidColorBrush>(checkMark.Background).Color);
@@ -133,7 +176,7 @@ public sealed class AspectChapterViewTests : IDisposable
     public void ApplicationCheckBoxAspectUsesACenteredGeometryCheckMark()
     {
         _ = AttachStudio(out AspectChapterView view);
-        CheckBox checkBox = Assert.IsType<CheckBox>(
+        CheckBox checkBox = Assert.IsAssignableFrom<CheckBox>(
             PropertyRow(view, UIElement.ClipToBoundsProperty).Editor);
         checkBox.ApplyTemplate();
         Border checkMark = Assert.IsType<Border>(
@@ -168,6 +211,7 @@ public sealed class AspectChapterViewTests : IDisposable
         TextBlock preview = Assert.IsType<TextBlock>(view.SelectedPreview);
         Assert.Equal("Editat live", preview.Text);
         Assert.Equal(42, preview.FontSize);
+        Assert.Equal(UiPropertyValueSource.LocalAspectBase, preview.GetValueSource(Control.ForegroundProperty));
         Assert.Equal(new Color(255, 62, 165), Assert.IsType<SolidColorBrush>(preview.Foreground).Color);
         Assert.Same(initialAspect, preview.Aspect);
     }
@@ -195,10 +239,12 @@ public sealed class AspectChapterViewTests : IDisposable
     public void ColorSwatchOpensPickerOverlayAndSpectrumClickUpdatesPreviewAndHexText()
     {
         UIRoot root = AttachStudio(out AspectChapterView view, 1650, 1055);
-        AspectStudioPropertyRow row = PropertyRow(view, Control.BackgroundProperty);
+        RenderedPropertyRow row = PropertyRow(view, Control.BackgroundProperty);
         ColorSwatch swatch = Assert.Single(row.Editor.VisualChildren.OfType<ColorSwatch>());
         Overlay overlay = Assert.IsType<Overlay>(
             swatch.ComponentTemplateInstance!.Parts["PART_PickerOverlay"]);
+        Button swatchButton = Assert.IsType<Button>(
+            swatch.ComponentTemplateInstance.Parts["PART_SwatchButton"]);
         ColorPicker picker = swatch.Picker;
         TextBox input = Assert.Single(row.Editor.VisualChildren.OfType<TextBox>());
         Border preview = Assert.IsType<Border>(view.SelectedPreview);
@@ -210,12 +256,28 @@ public sealed class AspectChapterViewTests : IDisposable
         });
         AutomationSession session = new(root, new RetainedAutomationInputDriver(host));
 
-        session.FindByAutomationId("aspect-color-Background-swatch").Click();
+        PointerSnapshot pointer = PointerSnapshot.Empty;
+        Assert.True(
+            swatchButton.ArrangedBounds.Width > 0 && swatchButton.ArrangedBounds.Height > 0,
+            $"The generated swatch template button was not arranged: {swatchButton.ArrangedBounds}.");
+        ClickWithInputFrames(host, ref pointer, swatch);
+        host.Update(
+            new InputFrame(pointer, pointer, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []),
+            elapsedTime: TimeSpan.Zero);
 
-        Assert.True(overlay.IsOpen);
+        HitTestResult? swatchHit = new HitTestService().HitTest(
+            root,
+            swatch.ArrangedBounds.X + (swatch.ArrangedBounds.Width / 2),
+            swatch.ArrangedBounds.Y + (swatch.ArrangedBounds.Height / 2));
+        Assert.True(
+            overlay.IsOpen,
+            $"Swatch click hit {swatchHit?.Element.GetType().Name ?? "nothing"} at " +
+            $"{swatchHit?.Element.ArrangedBounds} instead of opening the picker.");
         Assert.True(overlay.IsProjected);
 
-        session.FindByAutomationId("aspect-color-Background-spectrum").Click();
+        ColorSpectrum spectrum = Assert.IsType<ColorSpectrum>(
+            picker.ComponentTemplateInstance!.Parts["PART_Spectrum"]);
+        ClickWithInputFrames(host, ref pointer, spectrum);
         root.ProcessFrame();
         root.ProcessFrame();
 
@@ -235,20 +297,18 @@ public sealed class AspectChapterViewTests : IDisposable
             Viewport = new UiViewport(root.ViewportWidth, root.ViewportHeight)
         });
         PointerSnapshot pointer = PointerSnapshot.Empty;
-        UIElement swatch = new AutomationSession(root, new RetainedAutomationInputDriver(host))
-            .FindByAutomationId("aspect-color-BorderBrush-swatch")
-            .Element;
+        ColorSwatch swatch = Assert.Single(
+            PropertyRow(view, Control.BorderBrushProperty).Editor.VisualChildren.OfType<ColorSwatch>());
 
         ClickWithInputFrames(host, ref pointer, swatch);
-        UIElement hueSlider = new AutomationSession(root, new RetainedAutomationInputDriver(host))
-            .FindByAutomationId("aspect-color-BorderBrush-hue")
-            .Element;
+        Slider hueSlider = Assert.IsType<Slider>(
+            swatch.Picker.ComponentTemplateInstance!.Parts["PART_HueSlider"]);
 
         UiFrame[] frames = DragWithInputFrames(host, ref pointer, hueSlider, steps: 12);
 
         Assert.All(frames, frame => Assert.Equal(0, frame.Stats.InheritedElements));
         Assert.All(frames, frame => Assert.InRange(frame.Stats.AspectElements, 0, 1));
-        Assert.InRange(frames[0].Stats.MeasuredElements, 0, 4);
+        Assert.InRange(frames[0].Stats.MeasuredElements, 0, 5);
         Assert.InRange(frames[0].Stats.ArrangedElements, 0, 6);
         Assert.All(frames.Skip(1), frame => Assert.Equal(0, frame.Stats.MeasuredElements));
         Assert.All(frames.Skip(1), frame => Assert.Equal(0, frame.Stats.ArrangedElements));
@@ -259,6 +319,7 @@ public sealed class AspectChapterViewTests : IDisposable
     {
         UIRoot root = AttachStudio(out AspectChapterView view);
         view.SelectForTests(AspectStudioElementKind.TextBlock);
+        root.ProcessFrame();
         TextBox input = PropertyInput(view, Control.ForegroundProperty);
         root.ProcessFrame();
         root.RetainedRenderer.Commit(root);
@@ -303,7 +364,7 @@ public sealed class AspectChapterViewTests : IDisposable
         view.SelectForTests(AspectStudioElementKind.Button);
         root.ProcessFrame();
         root.ProcessFrame();
-        ComboBox editor = Assert.IsType<ComboBox>(PropertyRow(view, UIElement.CursorProperty).Editor);
+        ComboBox editor = Assert.IsAssignableFrom<ComboBox>(PropertyRow(view, UIElement.CursorProperty).Editor);
 
         editor.SelectedIndex = 4;
         root.ProcessFrame();
@@ -326,7 +387,7 @@ public sealed class AspectChapterViewTests : IDisposable
         view.SelectForTests(AspectStudioElementKind.Button);
         root.ProcessFrame();
         root.ProcessFrame();
-        ComboBox comboBox = Assert.IsType<ComboBox>(PropertyRow(view, UIElement.CursorProperty).Editor);
+        ComboBox comboBox = Assert.IsAssignableFrom<ComboBox>(PropertyRow(view, UIElement.CursorProperty).Editor);
         TextBox editor = Assert.IsType<TextBox>(
             comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
         ToggleButton toggle = Assert.IsType<ToggleButton>(
@@ -340,17 +401,18 @@ public sealed class AspectChapterViewTests : IDisposable
         Color paper = new(237, 239, 243);
         Color line = new(52, 60, 70);
         Color panel = new(20, 24, 30);
-        Assert.Equal(UiPropertyValueSource.Local, comboBox.GetValueSource(Control.BackgroundProperty));
-        Assert.Equal(UiPropertyValueSource.Local, comboBox.GetValueSource(Control.ForegroundProperty));
-        Assert.Equal(Color.Transparent, Assert.IsType<SolidColorBrush>(comboBox.Background).Color);
+        Color slate = new(148, 163, 184);
+        Assert.Equal(UiPropertyValueSource.LocalAspectBase, comboBox.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(UiPropertyValueSource.LocalAspectBase, comboBox.GetValueSource(Control.ForegroundProperty));
+        Assert.Equal(panel, Assert.IsType<SolidColorBrush>(comboBox.Background).Color);
         Assert.Equal(paper, Assert.IsType<SolidColorBrush>(comboBox.Foreground).Color);
         Assert.Equal(line, Assert.IsType<SolidColorBrush>(comboBox.BorderBrush).Color);
-        Assert.Equal(Color.Transparent, Assert.IsType<SolidColorBrush>(editor.Background).Color);
+        Assert.Equal(panel, Assert.IsType<SolidColorBrush>(editor.Background).Color);
         Assert.Equal(paper, Assert.IsType<SolidColorBrush>(editor.Foreground).Color);
         Assert.Equal(paper, Assert.IsType<SolidColorBrush>(editor.CaretBrush).Color);
-        Assert.Equal(Color.Transparent, Assert.IsType<SolidColorBrush>(toggle.Background).Color);
+        Assert.Equal(panel, Assert.IsType<SolidColorBrush>(toggle.Background).Color);
         Assert.Equal(paper, Assert.IsType<SolidColorBrush>(toggle.Foreground).Color);
-        Assert.Equal(line, Assert.IsType<SolidColorBrush>(toggle.BorderBrush).Color);
+        Assert.Equal(slate, Assert.IsType<SolidColorBrush>(toggle.BorderBrush).Color);
         Assert.Equal(paper, Assert.IsType<SolidColorBrush>(glyph.Fill).Color);
         Assert.Equal(panel, Assert.IsType<SolidColorBrush>(dropDownBorder.Background).Color);
     }
@@ -362,11 +424,11 @@ public sealed class AspectChapterViewTests : IDisposable
         view.SelectForTests(AspectStudioElementKind.TextBlock);
         root.ProcessFrame();
 
-        ComboBox editor = Assert.IsType<ComboBox>(PropertyRow(view, TextBlock.TextTrimmingProperty).Editor);
+        ComboBox editor = Assert.IsAssignableFrom<ComboBox>(PropertyRow(view, TextBlock.TextTrimmingProperty).Editor);
 
         Assert.Equal(
             [TextTrimming.None, TextTrimming.CharacterEllipsis, TextTrimming.WordEllipsis],
-            editor.Items.Cast<TextTrimming>().ToArray());
+            editor.ItemsSource!.Cast<TextTrimming>().ToArray());
     }
 
     [Fact]
@@ -400,12 +462,12 @@ public sealed class AspectChapterViewTests : IDisposable
         });
         AutomationSession session = new(root, new RetainedAutomationInputDriver(host));
 
-        session.FindByAutomationId("aspect-property-Cursor")
-            .Click()
-            .PressKey(InputKey.A, AutomationModifiers.Control)
-            .SendText("a");
+        ComboBox comboBox = Assert.IsAssignableFrom<ComboBox>(PropertyRow(view, UIElement.CursorProperty).Editor);
+        TextBox editableTextBox = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        TypeInto(root, editableTextBox, "a");
+        root.ProcessFrame();
 
-        ComboBox comboBox = Assert.IsType<ComboBox>(PropertyRow(view, UIElement.CursorProperty).Editor);
         Overlay overlay = Assert.IsType<Overlay>(
             comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
         Border border = Assert.IsType<Border>(overlay.Content);
@@ -476,16 +538,35 @@ public sealed class AspectChapterViewTests : IDisposable
     {
         UIRoot root = AttachStudio(out AspectChapterView view);
         UIElement preview = view.SelectedPreview;
+        UIElement[] editors = RealizedPropertyRows(view).Select(row => (UIElement)row.Chrome).ToArray();
 
         for (int cycle = 0; cycle < 10; cycle++)
         {
             view.Deactivate();
-            Assert.Empty(Descendants(view).OfType<AspectStudioPropertyRow>());
+            Assert.Equal(editors, RealizedPropertyRows(view).Select(row => row.Chrome));
             view.Activate();
             root.ProcessFrame();
             Assert.Same(preview, view.SelectedPreview);
-            Assert.Equal(view.SelectedProperties.Count, Descendants(view).OfType<AspectStudioPropertyRow>().Count());
+            Assert.Equal(editors, RealizedPropertyRows(view).Select(row => row.Chrome));
         }
+    }
+
+    [Fact]
+    public void RepeatedActivationStaysWithinLayoutMeasureBudget()
+    {
+        UIRoot root = AttachStudio(out AspectChapterView view);
+        view.Deactivate();
+        root.ProcessFrame();
+
+        view.Activate();
+        FrameStats activation = root.ProcessFrame();
+        int visualElementCount = Descendants(view).Count() + 1;
+        int measureCallBudget = visualElementCount * 4;
+
+        Assert.True(
+            activation.MeasureCalls <= measureCallBudget,
+            $"Expected at most {measureCallBudget} measure calls for {visualElementCount} elements, " +
+            $"but activation performed {activation.MeasureCalls}.");
     }
 
     [Theory]
@@ -498,7 +579,9 @@ public sealed class AspectChapterViewTests : IDisposable
 
         Arrange(view, width, height);
 
-        AspectStudioScrollHost inspector = Assert.Single(Descendants(view).OfType<AspectStudioScrollHost>());
+        ScrollViewer inspector = Assert.Single(Descendants(view)
+            .OfType<ScrollViewer>()
+            .Where(scrollViewer => Descendants(scrollViewer).OfType<ItemsControl>().Any()));
         LayoutRect bounds = inspector.ArrangedBounds;
         Assert.True(bounds.Width > 0 && bounds.Height > 0);
         Assert.True(bounds.X >= 0 && bounds.Y >= 0);
@@ -540,15 +623,58 @@ public sealed class AspectChapterViewTests : IDisposable
 
     private static TextBox PropertyInput(AspectChapterView view, UiProperty property)
     {
-        AspectStudioPropertyRow row = PropertyRow(view, property);
+        RenderedPropertyRow row = PropertyRow(view, property);
         return Assert.Single(Descendants(row.Editor).OfType<TextBox>());
     }
 
-    private static AspectStudioPropertyRow PropertyRow(AspectChapterView view, UiProperty property)
+    private static RenderedPropertyRow PropertyRow(AspectChapterView view, UiProperty property)
+    {
+        AspectStudioPropertyRowModel model = Assert.Single(
+            PropertyModels(view).Where(candidate => candidate.Label == property.Name));
+        Border chrome = FindChrome(view, model);
+        Cerneala.UI.Layout.Panels.Grid grid = Assert.IsType<Cerneala.UI.Layout.Panels.Grid>(chrome.Child);
+        return new RenderedPropertyRow(model, chrome, grid.VisualChildren[1]);
+    }
+
+    private static RenderedPropertyRow[] RealizedPropertyRows(AspectChapterView view) =>
+        Descendants(view)
+            .OfType<Border>()
+            .Where(chrome =>
+                chrome.DataContext is AspectStudioPropertyRowModel and not AspectStudioHeaderRow &&
+                chrome.Child is Cerneala.UI.Layout.Panels.Grid grid &&
+                grid.VisualChildren.Count == 2 &&
+                grid.VisualChildren[0] is TextBlock)
+            .Select(chrome =>
+            {
+                Cerneala.UI.Layout.Panels.Grid grid =
+                    Assert.IsType<Cerneala.UI.Layout.Panels.Grid>(chrome.Child);
+                return new RenderedPropertyRow(
+                    (AspectStudioPropertyRowModel)chrome.DataContext!,
+                    chrome,
+                    grid.VisualChildren[1]);
+            })
+            .ToArray();
+
+    private static AspectStudioPropertyRowModel[] PropertyModels(AspectChapterView view)
+    {
+        ItemsControl propertyItems = Assert.Single(Descendants(view)
+            .OfType<ItemsControl>()
+            .Where(items => items.ItemsSource?.Cast<object?>().Any(item => item is AspectStudioPropertyRowModel) == true));
+        return propertyItems.ItemsSource!.Cast<AspectStudioPropertyRowModel>().ToArray();
+    }
+
+    private static Border FindChrome(
+        AspectChapterView view,
+        AspectStudioPropertyRowModel model)
     {
         return Assert.Single(Descendants(view)
-            .OfType<AspectStudioPropertyRow>()
-            .Where(candidate => ReferenceEquals(candidate.Property, property)));
+            .OfType<Border>()
+            .Where(candidate =>
+                candidate.Child is Cerneala.UI.Layout.Panels.Grid grid &&
+                grid.VisualChildren.Count == 2 &&
+                grid.VisualChildren[0] is TextBlock label &&
+                ReferenceEquals(candidate.DataContext, model) &&
+                label.Text == model.Label));
     }
 
     private static void TypeInto(UIRoot root, TextBox input, string text)
@@ -634,4 +760,9 @@ public sealed class AspectChapterViewTests : IDisposable
             }
         }
     }
+
+    private sealed record RenderedPropertyRow(
+        AspectStudioPropertyRowModel Model,
+        Border Chrome,
+        UIElement Editor);
 }

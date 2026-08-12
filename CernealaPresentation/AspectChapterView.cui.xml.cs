@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Globalization;
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
@@ -11,10 +12,6 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Media;
 using Cerneala.UI.Text;
-using ColumnDefinition = Cerneala.UI.Layout.Panels.ColumnDefinition;
-using Grid = Cerneala.UI.Layout.Panels.Grid;
-using GridLength = Cerneala.UI.Layout.Panels.GridLength;
-using StackPanel = Cerneala.UI.Controls.StackPanel;
 
 namespace Cerneala.Presentation;
 
@@ -27,14 +24,18 @@ internal enum AspectStudioElementKind
 
 public partial class AspectChapterView : UserControl
 {
+    internal static readonly UiProperty<IEnumerable?> PropertyRowsProperty = UiProperty<IEnumerable?>.Register(
+        nameof(PropertyRows),
+        typeof(AspectChapterView),
+        new UiPropertyMetadata<IEnumerable?>(null));
+
     private static readonly SolidColorBrush PanelBrush = new(new Color(20, 24, 30));
     private static readonly SolidColorBrush SelectedBrush = new(new Color(20, 55, 61));
-    private static readonly SolidColorBrush LineBrush = new(new Color(52, 60, 70));
+    internal static readonly SolidColorBrush LineBrush = new(new Color(52, 60, 70));
     private static readonly SolidColorBrush PaperBrush = new(new Color(237, 239, 243));
-    private static readonly SolidColorBrush TransparentBrush = new(Color.Transparent);
     private static readonly SolidColorBrush MutedBrush = new(new Color(150, 160, 171));
     private static readonly SolidColorBrush CyanBrush = new(new Color(77, 240, 255));
-    private static readonly SolidColorBrush PinkBrush = new(new Color(255, 62, 165));
+    internal static readonly SolidColorBrush PinkBrush = new(new Color(255, 62, 165));
     private static readonly SolidColorBrush LimeBrush = new(new Color(198, 255, 61));
     private static readonly HashSet<UiProperty> HiddenProperties =
     [
@@ -62,6 +63,12 @@ public partial class AspectChapterView : UserControl
 
     internal IReadOnlyList<UiProperty> SelectedProperties => GetInspectableProperties(SelectedPreview.GetType());
 
+    internal IEnumerable? PropertyRows
+    {
+        get => GetValue(PropertyRowsProperty);
+        set => SetValue(PropertyRowsProperty, value);
+    }
+
     protected override void OnAttached()
     {
         base.OnAttached();
@@ -74,6 +81,7 @@ public partial class AspectChapterView : UserControl
     protected override void OnDetached()
     {
         Deactivate();
+        ReleaseDynamicControls();
         base.OnDetached();
     }
 
@@ -86,8 +94,9 @@ public partial class AspectChapterView : UserControl
     internal void Deactivate()
     {
         active = false;
-        ReleaseDynamicControls();
     }
+
+    internal void PrepareEditor() => EnsureEditorBuilt();
 
     internal void PrepareEditorForTests() => EnsureEditorBuilt();
 
@@ -139,74 +148,73 @@ public partial class AspectChapterView : UserControl
 
     private void BuildTargets()
     {
-        Border border = new()
-        {
-            Child = new TextBlock
-            {
-                Text = "BORDER",
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            }
-        };
+        ButtonPreview.Cursor = Cerneala.UI.Input.Cursor.Hand;
         AddTarget(
             AspectStudioElementKind.Border,
             "BORDER",
-            border,
-            (Control.BackgroundProperty, new SolidColorBrush(new Color(27, 34, 42))),
-            (Control.BorderBrushProperty, CyanBrush),
-            (Control.BorderThicknessProperty, new Thickness(2)),
-            (Control.PaddingProperty, new Thickness(24)),
-            (Control.FontFamilyProperty, "Cascadia Mono SemiBold"),
-            (Control.FontSizeProperty, 12f),
-            (Control.ForegroundProperty, PaperBrush),
-            (UIElement.WidthProperty, 260f),
-            (UIElement.HeightProperty, 180f),
-            (UIElement.HorizontalAlignmentProperty, HorizontalAlignment.Center),
-            (UIElement.VerticalAlignmentProperty, VerticalAlignment.Center));
+            BorderPreview,
+            Control.BackgroundProperty,
+            Control.BorderBrushProperty,
+            Control.BorderThicknessProperty,
+            Control.PaddingProperty,
+            Control.FontFamilyProperty,
+            Control.FontSizeProperty,
+            Control.ForegroundProperty,
+            UIElement.WidthProperty,
+            UIElement.HeightProperty,
+            UIElement.HorizontalAlignmentProperty,
+            UIElement.VerticalAlignmentProperty);
 
-        TextBlock textBlock = new();
         AddTarget(
             AspectStudioElementKind.TextBlock,
             "TEXTBLOCK",
-            textBlock,
-            (TextBlock.TextProperty, "Cerneala, live."),
-            (Control.FontFamilyProperty, "Bahnschrift SemiBold"),
-            (Control.FontSizeProperty, 30f),
-            (Control.ForegroundProperty, new SolidColorBrush(new Color(237, 239, 243))),
-            (TextBlock.TextWrappingProperty, TextWrapping.Wrap),
-            (UIElement.WidthProperty, 320f),
-            (UIElement.HorizontalAlignmentProperty, HorizontalAlignment.Center),
-            (UIElement.VerticalAlignmentProperty, VerticalAlignment.Center));
+            TextBlockPreview,
+            TextBlock.TextProperty,
+            Control.FontFamilyProperty,
+            Control.FontSizeProperty,
+            Control.ForegroundProperty,
+            TextBlock.TextWrappingProperty,
+            UIElement.WidthProperty,
+            UIElement.HorizontalAlignmentProperty,
+            UIElement.VerticalAlignmentProperty);
 
-        Button button = new();
-        button.ClearValue(UIElement.FocusableProperty);
-        button.ClearValue(UIElement.IsTabStopProperty);
-        button.ClearValue(UIElement.CursorProperty);
         AddTarget(
             AspectStudioElementKind.Button,
             "BUTTON",
-            button,
-            ((UiProperty)ContentControl.ContentProperty, (object?)"APLICA ASPECT"),
-            (Control.BackgroundProperty, LimeBrush),
-            (Control.ForegroundProperty, new SolidColorBrush(new Color(10, 11, 14))),
-            (Control.BorderBrushProperty, LimeBrush),
-            (Control.BorderThicknessProperty, new Thickness(1)),
-            (Control.PaddingProperty, new Thickness(22, 13, 22, 13)),
-            (Control.FontFamilyProperty, "Cascadia Mono SemiBold"),
-            (Control.FontSizeProperty, 12f),
-            (UIElement.HorizontalAlignmentProperty, HorizontalAlignment.Center),
-            (UIElement.VerticalAlignmentProperty, VerticalAlignment.Center),
-            (UIElement.FocusableProperty, true),
-            (UIElement.IsTabStopProperty, true),
-            (UIElement.CursorProperty, Cerneala.UI.Input.Cursor.Hand));
+            ButtonPreview,
+            ContentControl.ContentProperty,
+            Control.BackgroundProperty,
+            Control.ForegroundProperty,
+            Control.BorderBrushProperty,
+            Control.BorderThicknessProperty,
+            Control.PaddingProperty,
+            Control.FontFamilyProperty,
+            Control.FontSizeProperty,
+            UIElement.HorizontalAlignmentProperty,
+            UIElement.VerticalAlignmentProperty,
+            UIElement.FocusableProperty,
+            UIElement.IsTabStopProperty,
+            UIElement.CursorProperty);
     }
 
     private void AddTarget(
         AspectStudioElementKind kind,
         string name,
         UIElement element,
-        params (UiProperty Property, object? Value)[] values)
+        params UiProperty[] properties)
     {
+        (UiProperty Property, object? Value)[] values = properties
+            .Select(property => (property, element.GetValue(property)))
+            .ToArray();
+        foreach (UiProperty property in properties)
+        {
+            UiPropertyValueSource source = element.GetValueSource(property);
+            if (source is UiPropertyValueSource.MarkupBase or UiPropertyValueSource.Local)
+            {
+                element.ClearValueUntyped(property, source);
+            }
+        }
+
         AspectStudioTarget target = new(kind, name, element, values);
         targets.Add(kind, target);
         ApplyTargetAspect(target);
@@ -219,8 +227,7 @@ public partial class AspectChapterView : UserControl
             return;
         }
 
-        PreviewStage.Child = null;
-        Clear(PropertyHost.Panel);
+        PropertyRows = null;
         editorBuilt = false;
     }
 
@@ -251,7 +258,9 @@ public partial class AspectChapterView : UserControl
     {
         selectedKind = kind;
         AspectStudioTarget target = SelectedTarget;
-        PreviewStage.Child = target.Element;
+        BorderPreviewHost.Visibility = kind == AspectStudioElementKind.Border ? Visibility.Visible : Visibility.Collapsed;
+        TextBlockPreviewHost.Visibility = kind == AspectStudioElementKind.TextBlock ? Visibility.Visible : Visibility.Collapsed;
+        ButtonPreviewHost.Visibility = kind == AspectStudioElementKind.Button ? Visibility.Visible : Visibility.Collapsed;
         PreviewTypeText.Text = $"{target.Name} / LOCAL ASPECT";
         BorderElementButton.Background = kind == AspectStudioElementKind.Border ? SelectedBrush : PanelBrush;
         TextBlockElementButton.Background = kind == AspectStudioElementKind.TextBlock ? SelectedBrush : PanelBrush;
@@ -267,7 +276,6 @@ public partial class AspectChapterView : UserControl
             return;
         }
 
-        Clear(PropertyHost.Panel);
         AspectStudioTarget target = SelectedTarget;
         IReadOnlyList<UiProperty> allProperties = GetInspectableProperties(target.Element.GetType());
         string filter = PropertySearch.Text.Trim();
@@ -277,22 +285,27 @@ public partial class AspectChapterView : UserControl
                 property.OwnerType.Name.Contains(filter, StringComparison.OrdinalIgnoreCase))
             .ToArray();
 
+        List<AspectStudioPropertyRowModel> rows = [];
         Type? previousOwner = null;
         foreach (UiProperty property in visibleProperties)
         {
             if (property.OwnerType != previousOwner)
             {
-                Add(PropertyHost.Panel, Label(property.OwnerType.Name, OwnerBrush(property.OwnerType)));
+                rows.Add(new AspectStudioHeaderRow(
+                    property.OwnerType.Name.ToUpperInvariant(),
+                    OwnerBrush(property.OwnerType)));
                 previousOwner = property.OwnerType;
             }
 
-            Add(PropertyHost.Panel, CreatePropertyRow(target, property));
+            rows.Add(CreatePropertyRow(target, property));
         }
 
         if (visibleProperties.Length == 0)
         {
-            Add(PropertyHost.Panel, Label("NO MATCHES", MutedBrush));
+            rows.Add(new AspectStudioHeaderRow("NO MATCHES", MutedBrush));
         }
+
+        PropertyRows = rows;
 
         PropertyCountText.Text = filter.Length == 0
             ? $"{allProperties.Count:00} EDITABLE"
@@ -300,201 +313,72 @@ public partial class AspectChapterView : UserControl
         UpdateStatus(StatusMessage.Text);
     }
 
-    private AspectStudioPropertyRow CreatePropertyRow(AspectStudioTarget target, UiProperty property)
+    private AspectStudioPropertyRowModel CreatePropertyRow(AspectStudioTarget target, UiProperty property)
     {
         object? current = target.GetValue(property);
-        UIElement editor = CreateEditor(target, property, current);
-        AutomationProperties.SetAutomationId(editor, $"aspect-property-{property.Name}");
-        Grid row = new();
-        row.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(126)));
-        row.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
-        TextBlock name = new()
-        {
-            Text = property.Name,
-            FontFamily = "Cascadia Mono",
-            FontSize = 8,
-            Foreground = target.Modified.Contains(property) ? LimeBrush : MutedBrush,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 8, 0)
-        };
-        Grid.SetColumn(editor, 1);
-        Add(row, name);
-        Add(row, editor);
-        return new AspectStudioPropertyRow(property, editor)
-        {
-            BorderBrush = LineBrush,
-            BorderThickness = new Thickness(0, 1, 0, 0),
-            Padding = new Thickness(8, 7, 8, 7),
-            Child = row
-        };
-    }
-
-    private UIElement CreateEditor(AspectStudioTarget target, UiProperty property, object? current)
-    {
+        Brush labelBrush = target.Modified.Contains(property) ? LimeBrush : MutedBrush;
+        Action<object?> commit = value => CommitProperty(target, property, value);
         Type valueType = property.ValueType;
         if (valueType == typeof(bool))
         {
-            CheckBox checkBox = new()
-            {
-                IsChecked = current is true,
-                Width = 24,
-                Height = 24,
-                HorizontalAlignment = HorizontalAlignment.Left
-            };
-            checkBox.Checked += (_, _) => CommitProperty(target, property, true);
-            checkBox.Unchecked += (_, _) => CommitProperty(target, property, false);
-            return checkBox;
+            return new AspectStudioBooleanRow(property.Name, labelBrush, current is true, commit);
         }
 
         if (valueType.IsEnum)
         {
-            Array values = Enum.GetValues(valueType);
-            ComboBox comboBox = CreateComboBox(values, current);
-            comboBox.SelectionChanged += (_, _) =>
-            {
-                if (comboBox.SelectedItem is object value)
-                {
-                    CommitProperty(target, property, value);
-                }
-            };
-            return comboBox;
+            object?[] values = Enum.GetValues(valueType).Cast<object?>().ToArray();
+            int selectedIndex = Array.FindIndex(values, value => Equals(value, current));
+            return new AspectStudioChoiceRow(
+                property.Name,
+                labelBrush,
+                values,
+                selectedIndex,
+                value => value,
+                commit);
         }
 
         if (Nullable.GetUnderlyingType(valueType) == typeof(Cursor))
         {
-            string[] values = ["DEFAULT", "ARROW", "HAND", "IBEAM", "CROSSHAIR"];
+            object?[] values = ["DEFAULT", "ARROW", "HAND", "IBEAM", "CROSSHAIR"];
             string selected = current is Cursor cursor ? cursor.Name.ToUpperInvariant() : "DEFAULT";
-            ComboBox comboBox = CreateComboBox(values, selected);
-            comboBox.SelectionChanged += (_, _) =>
-            {
-                object? value = comboBox.SelectedItem is string name && name != "DEFAULT"
+            return new AspectStudioChoiceRow(
+                property.Name,
+                labelBrush,
+                values,
+                Array.FindIndex(values, value => Equals(value, selected)),
+                value => value is string name && name != "DEFAULT"
                     ? new Cursor(name.Equals("IBEAM", StringComparison.Ordinal) ? "IBeam" : ToTitleCase(name))
-                    : null;
-                CommitProperty(target, property, value);
-            };
-            return comboBox;
+                    : null,
+                commit);
         }
 
+        Func<string, (bool Success, object? Value, string Error)> parse = text =>
+        {
+            bool success = TryParseValue(property, text, out object? value, out string error);
+            return (success, value, error);
+        };
         if (typeof(Brush).IsAssignableFrom(valueType))
         {
-            return CreateBrushEditor(target, property, current as Brush);
+            Brush? brush = current as Brush;
+            return new AspectStudioColorRow(
+                property.Name,
+                labelBrush,
+                FormatBrush(brush),
+                brush is SolidColorBrush solid ? solid.Color : Color.Transparent,
+                LineBrush,
+                parse,
+                commit,
+                UpdateStatus);
         }
 
-        TextBox input = CreateInput(FormatValue(property, current));
-        input.TextChanged += (_, _) => CommitTextInput(target, property, input);
-        return input;
-    }
-
-    private UIElement CreateBrushEditor(AspectStudioTarget target, UiProperty property, Brush? current)
-    {
-        Grid editor = new();
-        editor.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(26)));
-        editor.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
-        ColorSwatch swatch = new()
-        {
-            Width = 20,
-            Height = 20,
-            SelectedColor = current is SolidColorBrush solid ? solid.Color : Color.Transparent,
-            BorderBrush = LineBrush,
-            BorderThickness = new Thickness(1),
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        TextBox input = CreateInput(FormatBrush(current));
-        input.Margin = Thickness.Zero;
-        ColorPicker picker = swatch.Picker;
-        picker.Background = PanelBrush;
-        picker.Foreground = PaperBrush;
-        picker.BorderBrush = LineBrush;
-        picker.BorderThickness = new Thickness(1);
-        picker.Padding = new Thickness(8);
-        picker.ApplyTemplate();
-        string automationPrefix = $"aspect-color-{property.Name}";
-        AutomationProperties.SetAutomationId(swatch, $"{automationPrefix}-swatch");
-        AutomationProperties.SetAutomationId(picker, $"{automationPrefix}-picker");
-        AutomationProperties.SetAutomationId(
-            (ColorSpectrum)picker.ComponentTemplateInstance!.Parts["PART_Spectrum"],
-            $"{automationPrefix}-spectrum");
-        AutomationProperties.SetAutomationId(
-            (Slider)picker.ComponentTemplateInstance.Parts["PART_HueSlider"],
-            $"{automationPrefix}-hue");
-        AutomationProperties.SetAutomationId(
-            (Slider)picker.ComponentTemplateInstance.Parts["PART_AlphaSlider"],
-            $"{automationPrefix}-alpha");
-
-        bool synchronizingSwatch = false;
-        bool synchronizingText = false;
-        input.TextChanged += (_, _) =>
-        {
-            if (synchronizingText)
-            {
-                return;
-            }
-
-            if (TryParseValue(property, input.Text, out object? value, out string error))
-            {
-                input.BorderBrush = LineBrush;
-                Color parsedColor = value is SolidColorBrush parsed ? parsed.Color : Color.Transparent;
-                if (swatch.SelectedColor != parsedColor)
-                {
-                    synchronizingSwatch = true;
-                    try
-                    {
-                        swatch.SelectedColor = parsedColor;
-                    }
-                    finally
-                    {
-                        synchronizingSwatch = false;
-                    }
-                }
-
-                CommitProperty(target, property, value);
-            }
-            else
-            {
-                input.BorderBrush = PinkBrush;
-                UpdateStatus(error);
-            }
-        };
-        swatch.SelectedColorChanged += (_, args) =>
-        {
-            if (synchronizingSwatch)
-            {
-                return;
-            }
-
-            SolidColorBrush brush = new(args.NewValue);
-            synchronizingText = true;
-            try
-            {
-                input.Text = FormatBrush(brush);
-                input.BorderBrush = LineBrush;
-            }
-            finally
-            {
-                synchronizingText = false;
-            }
-
-            CommitProperty(target, property, brush);
-        };
-        Grid.SetColumn(input, 1);
-        Add(editor, swatch);
-        Add(editor, input);
-        return editor;
-    }
-
-    private void CommitTextInput(AspectStudioTarget target, UiProperty property, TextBox input)
-    {
-        if (TryParseValue(property, input.Text, out object? value, out string error))
-        {
-            input.BorderBrush = LineBrush;
-            CommitProperty(target, property, value);
-        }
-        else
-        {
-            input.BorderBrush = PinkBrush;
-            UpdateStatus(error);
-        }
+        return new AspectStudioTextRow(
+            property.Name,
+            labelBrush,
+            FormatValue(property, current),
+            LineBrush,
+            parse,
+            commit,
+            UpdateStatus);
     }
 
     private void CommitProperty(AspectStudioTarget target, UiProperty property, object? value)
@@ -776,62 +660,11 @@ public partial class AspectChapterView : UserControl
         matrix.M31.ToString("0.###", CultureInfo.InvariantCulture),
         matrix.M32.ToString("0.###", CultureInfo.InvariantCulture));
 
-    private static string FormatBrush(Brush? brush) => brush switch
+    internal static string FormatBrush(Brush? brush) => brush switch
     {
         null => "none",
         SolidColorBrush solid => $"#{solid.Color.A:X2}{solid.Color.R:X2}{solid.Color.G:X2}{solid.Color.B:X2}",
         _ => brush.GetType().Name
-    };
-
-    private ComboBox CreateComboBox(System.Collections.IEnumerable values, object? current)
-    {
-        ComboBox comboBox = new()
-        {
-            Background = TransparentBrush,
-            BorderBrush = LineBrush,
-            BorderThickness = new Thickness(1),
-            Foreground = PaperBrush,
-            FontFamily = "Cascadia Mono SemiBold",
-            FontSize = 8,
-            Padding = new Thickness(7, 5, 7, 5),
-            MaxDropDownHeight = 180
-        };
-        comboBox.ApplyTemplate();
-        Overlay overlay = (Overlay)comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"];
-        Border dropDownBorder = (Border)overlay.Content!;
-        dropDownBorder.Background = PanelBrush;
-        ToggleButton toggle = (ToggleButton)comboBox.ComponentTemplateInstance.Parts["PART_DropDownToggle"];
-        toggle.BorderBrush = LineBrush;
-        toggle.BorderThickness = new Thickness(1);
-        toggle.FontFamily = "Cascadia Mono SemiBold";
-        toggle.Padding = new Thickness(6, 4, 6, 4);
-
-        object?[] items = values.Cast<object?>().ToArray();
-        comboBox.SetItems(items);
-        comboBox.SelectedIndex = Array.FindIndex(items, value => Equals(value, current));
-        return comboBox;
-    }
-
-    private static TextBlock Label(string text, Brush brush) => new()
-    {
-        Text = text.ToUpperInvariant(),
-        FontFamily = "Cascadia Mono SemiBold",
-        FontSize = 8,
-        Foreground = brush,
-        Margin = new Thickness(0, 8, 0, 4)
-    };
-
-    private static TextBox CreateInput(string text) => new()
-    {
-        Text = text,
-        Background = PanelBrush,
-        BorderBrush = LineBrush,
-        BorderThickness = new Thickness(1),
-        Foreground = PaperBrush,
-        CaretBrush = CyanBrush,
-        FontFamily = "Cascadia Mono",
-        FontSize = 8,
-        Padding = new Thickness(6, 5, 6, 5)
     };
 
     private static Brush OwnerBrush(Type ownerType) => ownerType == typeof(TextBlock) || ownerType == typeof(ContentControl)
@@ -842,30 +675,6 @@ public partial class AspectChapterView : UserControl
         ? value
         : char.ToUpperInvariant(value[0]) + value[1..].ToLowerInvariant();
 
-    private static void Add(StackPanel parent, UIElement child)
-    {
-        parent.LogicalChildren.Add(child);
-        parent.VisualChildren.Add(child);
-    }
-
-    private static void Add(Grid parent, UIElement child)
-    {
-        parent.LogicalChildren.Add(child);
-        parent.VisualChildren.Add(child);
-    }
-
-    private static void Clear(StackPanel parent)
-    {
-        while (parent.VisualChildren.Count > 0)
-        {
-            parent.VisualChildren.Remove(parent.VisualChildren[0]);
-        }
-
-        while (parent.LogicalChildren.Count > 0)
-        {
-            parent.LogicalChildren.Remove(parent.LogicalChildren[0]);
-        }
-    }
 }
 
 internal sealed class AspectStudioTarget
@@ -909,28 +718,4 @@ internal sealed class AspectStudioTarget
 
         Modified.Clear();
     }
-}
-
-internal sealed class AspectStudioPropertyRow : Border
-{
-    public AspectStudioPropertyRow(UiProperty property, UIElement editor)
-    {
-        Property = property;
-        Editor = editor;
-    }
-
-    public UiProperty Property { get; }
-
-    public UIElement Editor { get; }
-}
-
-internal sealed class AspectStudioScrollHost : ScrollViewer
-{
-    public AspectStudioScrollHost()
-    {
-        Panel = new StackPanel { Margin = new Thickness(9) };
-        Content = Panel;
-    }
-
-    public StackPanel Panel { get; }
 }

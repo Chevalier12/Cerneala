@@ -1,4 +1,4 @@
-<UserControl>
+<UserControl xmlns:studio="clr-namespace:Cerneala.Presentation">
     <UserControl.Resources>
         <Aspect Name="AspectStudioGhostButton" TargetType="Button">
             @default
@@ -15,6 +15,42 @@
                 Background = "#FF10282D";
                 Foreground = "#FF4DF0FF";
                 BorderBrush = "#FF4DF0FF";
+            }
+        </Aspect>
+        <Aspect Name="AspectStudioTextInput" TargetType="TextBox">
+            @default
+            {
+                Background = "#FF14181E";
+                BorderBrush = "#FF343C46";
+                BorderThickness = "1";
+                Foreground = "#FFEDEFF3";
+                CaretBrush = "#FF4DF0FF";
+                FontFamily = "Cascadia Mono";
+                FontSize = 8;
+                Padding = "6,5,6,5";
+            }
+        </Aspect>
+        <Aspect Name="AspectStudioComboInput" TargetType="ComboBox">
+            @default
+            {
+                Background = "#FF14181E";
+                BorderBrush = "#FF343C46";
+                BorderThickness = "1";
+                Foreground = "#FFEDEFF3";
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 8;
+                Padding = "7,5,7,5";
+                MaxDropDownHeight = 180;
+            }
+        </Aspect>
+        <Aspect TargetType="ColorPicker">
+            @default
+            {
+                Background = "#FF14181E";
+                Foreground = "#FFEDEFF3";
+                BorderBrush = "#FF343C46";
+                BorderThickness = "1";
+                Padding = "8";
             }
         </Aspect>
     </UserControl.Resources>
@@ -117,7 +153,58 @@
                     BorderBrush="$LineStrongBrush"
                     BorderThickness="1"
                     Padding="28"
-                    ClipToBounds="True" />
+                    ClipToBounds="True">
+                    <Grid>
+                        <Grid Name="BorderPreviewHost">
+                            <Border
+                                Name="BorderPreview"
+                                Width="260"
+                                Height="180"
+                                Background="#FF1B222A"
+                                BorderBrush="#FF4DF0FF"
+                                BorderThickness="2"
+                                Padding="24"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="12"
+                                Foreground="#FFEDEFF3"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="BORDER"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                            </Border>
+                        </Grid>
+                        <Grid Name="TextBlockPreviewHost" Visibility="Collapsed">
+                            <TextBlock
+                                Name="TextBlockPreview"
+                                Text="Cerneala, live."
+                                Width="320"
+                                FontFamily="Bahnschrift SemiBold"
+                                FontSize="30"
+                                Foreground="#FFEDEFF3"
+                                TextWrapping="Wrap"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid Name="ButtonPreviewHost" Visibility="Collapsed">
+                            <Button
+                                Name="ButtonPreview"
+                                Content="APLICA ASPECT"
+                                Background="#FFC6FF3D"
+                                Foreground="#FF0A0B0E"
+                                BorderBrush="#FFC6FF3D"
+                                BorderThickness="1"
+                                Padding="22,13,22,13"
+                                FontFamily="Cascadia Mono SemiBold"
+                                FontSize="12"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Focusable="True"
+                                IsTabStop="True" />
+                        </Grid>
+                    </Grid>
+                </Border>
             </Grid>
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
@@ -165,14 +252,145 @@
                         FontSize="9"
                         Padding="7,5,7,5" />
                 </Grid>
-                <AspectStudioScrollHost
+                <ScrollViewer
                     Name="PropertyHost"
                     Grid.Row="2"
                     Background="$PanelAltBrush"
                     BorderBrush="$LineStrongBrush"
                     BorderThickness="1"
                     VerticalScrollBarVisibility="Auto"
-                    HorizontalScrollBarVisibility="Disabled" />
+                    HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl
+                        Name="PropertyItems"
+                        ItemsSource="$root.PropertyRows"
+                        Margin="9">
+                        <ItemsControl.ItemsPanel>
+                            <VirtualizingStackPanel />
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.Templates>
+                            <ContentTemplate DataType="studio:AspectStudioHeaderRow">
+                                <TextBlock
+                                    Text="$DataContext.Label"
+                                    Foreground="$DataContext.LabelBrush"
+                                    FontFamily="Cascadia Mono SemiBold"
+                                    FontSize="8"
+                                    Margin="0,8,0,4" />
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:AspectStudioTextRow">
+                                <Border BorderBrush="#FF343C46" BorderThickness="0,1,0,0" Padding="8,7,8,7">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="126" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Text="$DataContext.Label"
+                                            Foreground="$DataContext.LabelBrush"
+                                            FontFamily="Cascadia Mono"
+                                            FontSize="8"
+                                            TextWrapping="Wrap"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,8,0" />
+                                        <TextBox
+                                            Grid.Column="1"
+                                            Aspect="$AspectStudioTextInput"
+                                            AutomationProperties.AutomationId="$DataContext.AutomationId"
+                                            Text="$DataContext.Text:TwoWay"
+                                            BorderBrush="$DataContext.BorderBrush" />
+                                    </Grid>
+                                </Border>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:AspectStudioBooleanRow">
+                                <Border BorderBrush="#FF343C46" BorderThickness="0,1,0,0" Padding="8,7,8,7">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="126" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Text="$DataContext.Label"
+                                            Foreground="$DataContext.LabelBrush"
+                                            FontFamily="Cascadia Mono"
+                                            FontSize="8"
+                                            TextWrapping="Wrap"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,8,0" />
+                                        <CheckBox
+                                            Grid.Column="1"
+                                            AutomationProperties.AutomationId="$DataContext.AutomationId"
+                                            Width="24"
+                                            Height="24"
+                                            HorizontalAlignment="Left"
+                                            IsChecked="$DataContext.IsChecked:TwoWay" />
+                                    </Grid>
+                                </Border>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:AspectStudioChoiceRow">
+                                <Border BorderBrush="#FF343C46" BorderThickness="0,1,0,0" Padding="8,7,8,7">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="126" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Text="$DataContext.Label"
+                                            Foreground="$DataContext.LabelBrush"
+                                            FontFamily="Cascadia Mono"
+                                            FontSize="8"
+                                            TextWrapping="Wrap"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,8,0" />
+                                        <ComboBox
+                                            Grid.Column="1"
+                                            Aspect="$AspectStudioComboInput"
+                                            AutomationProperties.AutomationId="$DataContext.AutomationId"
+                                            ItemsSource="$DataContext.Items"
+                                            SelectedIndex="$DataContext.SelectedIndex:TwoWay" />
+                                    </Grid>
+                                </Border>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:AspectStudioColorRow">
+                                <Border BorderBrush="#FF343C46" BorderThickness="0,1,0,0" Padding="8,7,8,7">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="126" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Text="$DataContext.Label"
+                                            Foreground="$DataContext.LabelBrush"
+                                            FontFamily="Cascadia Mono"
+                                            FontSize="8"
+                                            TextWrapping="Wrap"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,8,0" />
+                                        <Grid Grid.Column="1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="26" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <ColorSwatch
+                                                AutomationProperties.AutomationId="$DataContext.SwatchAutomationId"
+                                                Width="20"
+                                                Height="20"
+                                                BorderBrush="#FF343C46"
+                                                BorderThickness="1"
+                                                VerticalAlignment="Center"
+                                                SelectedColor="$DataContext.SelectedColor:TwoWay" />
+                                            <TextBox
+                                                Grid.Column="1"
+                                                Aspect="$AspectStudioTextInput"
+                                                AutomationProperties.AutomationId="$DataContext.AutomationId"
+                                                Text="$DataContext.Text:TwoWay"
+                                                BorderBrush="$DataContext.BorderBrush"
+                                                Margin="0" />
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </ContentTemplate>
+                        </ItemsControl.Templates>
+                    </ItemsControl>
+                </ScrollViewer>
             </Grid>
         </Grid>
         <Border Grid.Row="2" BorderBrush="$LineBrush" BorderThickness="0,1,0,0" Padding="0,10,0,0">
