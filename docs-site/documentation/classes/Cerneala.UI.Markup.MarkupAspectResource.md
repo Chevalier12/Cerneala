@@ -19,7 +19,7 @@ var resource = new MarkupAspectResource("Card", typeof(Border), ["Background"], 
 ## Remarks
 Property names are copied on construction. A blank name is normalized to `null`; target type and property-name input cannot be `null`.
 
-The generated application markup uses the applicator overload for unnamed aspects. A `UIRoot` discovers those resources from its root resource provider and invokes each matching applicator once per element. `TargetType.IsInstanceOfType` provides derived-type matching, so controls created in markup and code-behind follow the same application aspect contract.
+Generated markup uses the applicator overload for application aspects and supported named or unnamed element-resource aspects. A `UIRoot` resolves unnamed aspects implicitly. Named aspects can be retrieved from resources and applied explicitly to dynamically created elements, including aspects that provide a component template. Each resource applies at most once per element. `TargetType.IsInstanceOfType` provides derived-type matching, so controls created in markup and code-behind follow the same aspect contract.
 
 ## Constructors
 | Name | Description |
@@ -34,6 +34,11 @@ The generated application markup uses the applicator overload for unnamed aspect
 | `TargetType` | Element type targeted by the aspect. |
 | `DefaultPropertyNames` | Copied property-name list. |
 | `IsConditional` | Whether the aspect has conditional behavior. |
+
+## Methods
+| Name | Description |
+| --- | --- |
+| `ApplyTo(UIElement)` | Applies a named or unnamed aspect to a compatible element once. Missing applicators, incompatible target types, and repeated calls are ignored. |
 
 ## Applies to
 Generated markup resources.

@@ -445,6 +445,56 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         }
     }
 
+    internal void ApplyLocalAspects(UIElement element)
+    {
+        Type elementType = element.GetType();
+        for (UIElement? owner = element;
+             owner is not null && !ReferenceEquals(owner, this);
+             owner = owner.LogicalParent ?? owner.VisualParent)
+        {
+            MarkupAspectResource? nearest = null;
+            int nearestDistance = int.MaxValue;
+            foreach (MarkupAspectResource candidate in owner.Resources.Values.OfType<MarkupAspectResource>())
+            {
+                if (candidate.Name is not null || !candidate.TargetType.IsAssignableFrom(elementType))
+                {
+                    continue;
+                }
+
+                int distance = InheritanceDistance(elementType, candidate.TargetType);
+                if (distance >= nearestDistance)
+                {
+                    continue;
+                }
+
+                nearest = candidate;
+                nearestDistance = distance;
+            }
+
+            if (nearest is not null)
+            {
+                nearest.ApplyTo(element);
+                return;
+            }
+        }
+    }
+
+    private static int InheritanceDistance(Type type, Type candidateBaseType)
+    {
+        int distance = 0;
+        for (Type? current = type; current is not null; current = current.BaseType)
+        {
+            if (current == candidateBaseType)
+            {
+                return distance;
+            }
+
+            distance++;
+        }
+
+        return int.MaxValue;
+    }
+
     private FramePhaseProcessors CreatePhaseProcessors()
     {
         FramePhaseProcessors layoutProcessors = LayoutManager.CreatePhaseProcessors();

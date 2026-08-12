@@ -36,10 +36,10 @@ public sealed class MarkupAspectResource
 
     public bool IsConditional { get; }
 
-    internal void ApplyTo(Cerneala.UI.Elements.UIElement element)
+    public void ApplyTo(Cerneala.UI.Elements.UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        if (Name is not null || apply is null || !TargetType.IsInstanceOfType(element))
+        if (apply is null || !TargetType.IsInstanceOfType(element))
         {
             return;
         }
