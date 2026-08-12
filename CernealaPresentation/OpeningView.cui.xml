@@ -1,17 +1,10 @@
-<Window
+<UserControl
     Aspect="$LoadingMotion"
-    Title="Cerneala Orientation"
-    Width="1180"
-    Height="760"
-    MinWidth="980"
-    MinHeight="680"
-    WindowStartupLocation="CenterScreen"
-    ContentRendered="OnContentRendered"
     Background="#FF080A0D"
     BorderBrush="#FF2A2E38"
     BorderThickness="1"
     Padding="0">
-    <Window.Resources>
+    <UserControl.Resources>
         <SolidColorBrush
             Name="InkBrush"
             Color="#FF080A0D" />
@@ -35,7 +28,7 @@
             Color="#FF555E6E" />
         <MotionClip
             Name="LoadingSequence"
-            TargetType="Cerneala.Presentation.MainWindow">
+            TargetType="Cerneala.Presentation.OpeningView">
             @sequence
             {
                 @parallel
@@ -380,9 +373,9 @@
         </MotionClip>
         <Aspect
             Name="LoadingMotion"
-            TargetType="Cerneala.Presentation.MainWindow">
+            TargetType="Cerneala.Presentation.OpeningView">
             @handle Loading;
-            @on ContentRendered
+            @on StartRequested
             {
                 @run $LoadingSequence as Loading;
             }
@@ -421,7 +414,7 @@
                 BorderThickness = "2";
             }
         </Aspect>
-    </Window.Resources>
+    </UserControl.Resources>
     <Grid
         ClipToBounds="True">
         <Grid.RowDefinitions>
@@ -767,7 +760,9 @@
                             TranslateY="-126" />
                         <SvgImage
                             Name="MascotImage"
-                            DisplaySize="360"
+                            SourcePath="Assets/cerneala-mascot-void-suction-well.svg"
+                            Width="360"
+                            Height="360"
                             UseIntrinsicSize="False"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
@@ -902,4 +897,4 @@
             </Grid>
         </Border>
     </Grid>
-</Window>
+</UserControl>

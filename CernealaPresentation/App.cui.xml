@@ -1,5 +1,5 @@
 <Application
-    StartupWindow="MainWindow"
+    StartupWindow="PresentationWindow"
     ShutdownMode="OnMainWindowClose">
     <Application.Resources>
         <SolidColorBrush

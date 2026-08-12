@@ -1,5 +1,5 @@
 <Window
-    Title="Cerneala / Inside the Frame"
+    Title="Cerneala Orientation"
     Width="1320"
     Height="860"
     MinWidth="1080"
@@ -160,7 +160,10 @@
             }
         </Aspect>
     </Window.Resources>
-    <Grid>
+    <Grid ClipToBounds="True">
+        <Grid
+            Name="TourSurface"
+            Visibility="Collapsed">
         <Grid.RowDefinitions>
             <RowDefinition
                 Height="140" />
@@ -548,5 +551,9 @@
                 </StackPanel>
             </Grid>
         </Border>
+        </Grid>
+        <OpeningView
+            Name="OpeningSurface"
+            ContinueRequested="OnOpeningContinue" />
     </Grid>
 </Window>

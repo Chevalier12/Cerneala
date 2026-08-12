@@ -1,17 +1,20 @@
 using Cerneala.UI.Controls;
-using Cerneala.UI.Accessibility;
+using Cerneala.UI.Automation;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 
 namespace Cerneala.Presentation;
 
-public partial class MainWindow : Window
+internal partial class OpeningView : UserControl
 {
     private bool sequenceStarted;
     private bool isContinuing;
 
-    private void OnContentRendered(object? sender, EventArgs args)
+    internal event EventHandler? ContinueRequested;
+    internal event EventHandler? StartRequested;
+
+    internal void Start()
     {
         if (sequenceStarted)
         {
@@ -19,6 +22,8 @@ public partial class MainWindow : Window
         }
 
         sequenceStarted = true;
+        AutomationProperties.SetAutomationId(ContinueButton, "presentation-continue");
+        StartRequested?.Invoke(this, EventArgs.Empty);
         _ = RunLoadingAutomationAsync();
     }
 
@@ -27,7 +32,10 @@ public partial class MainWindow : Window
         if (IsPresentationAutomationRequested())
         {
             ContinueButton.IsEnabled = true;
-            new ButtonAutomationPeer(ContinueButton).Invoke();
+            FindHostWindow()
+                .CreateAutomationSession()
+                .FindByAutomationId("presentation-continue")
+                .Click();
             return;
         }
 
@@ -41,6 +49,7 @@ public partial class MainWindow : Window
             !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTOMATION_REPORT")) ||
             !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_FRAME_BUDGET_REPORT")) ||
             !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRISM_OUTER_GLOW_LAB_REPORT")) ||
+            !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_TRANSITION_CAPTURE")) ||
             string.Equals(
                 Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTO_CONTINUE"),
                 "1",
@@ -80,11 +89,7 @@ public partial class MainWindow : Window
 
         isContinuing = true;
         ContinueButton.IsEnabled = false;
-        PresentationWindow presentation = new();
-        presentation.ApplyRequestedWindowSize();
-        presentation.Closed += (_, _) => Close();
-        presentation.Show();
-        Hide();
+        ContinueRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private async Task CaptureIfRequestedAsync(string environmentVariable)
@@ -97,21 +102,44 @@ public partial class MainWindow : Window
 
         await Task.Delay(150);
         await CaptureNextFrameAsync(Path.GetFullPath(path));
+        if (string.Equals(
+                Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_CLOSE_AFTER_CAPTURE"),
+                "1",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            FindHostWindow().Close();
+        }
     }
 
     private async Task CaptureNextFrameAsync(string path)
     {
+        Window host = FindHostWindow();
         TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
         EventHandler? handler = null;
         handler = (_, _) =>
         {
-            FrameRendered -= handler;
-            SaveScreenshot(path);
+            host.FrameRendered -= handler;
+            host.SaveScreenshot(path);
             completion.TrySetResult();
         };
 
-        FrameRendered += handler;
-        Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "presentation screenshot");
+        host.FrameRendered += handler;
+        host.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "presentation screenshot");
         await completion.Task;
+    }
+
+    private Window FindHostWindow()
+    {
+        for (UIElement? current = this;
+             current is not null;
+             current = current.LogicalParent ?? current.VisualParent)
+        {
+            if (current is Window window)
+            {
+                return window;
+            }
+        }
+
+        throw new InvalidOperationException("The opening view must be attached to a Window before capturing a frame.");
     }
 }

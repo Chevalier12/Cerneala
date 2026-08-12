@@ -1,11 +1,16 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Accessibility;
+using Cerneala.UI.Automation;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Markup;
+using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Properties;
+using Cerneala.UI.Motion.Specs;
 
 namespace Cerneala.Presentation;
 
@@ -35,6 +40,8 @@ public partial class PresentationWindow : Window
 
     private PresentationChapter currentChapter = PresentationChapter.Welcome;
     private bool contentReady;
+    private bool tourTransitionStarted;
+    private bool tourEntered;
     private bool skipNextHeaderDiagnosticsRefresh;
     private bool suppressLiveDiagnostics;
     private bool outerGlowLabActive;
@@ -45,12 +52,21 @@ public partial class PresentationWindow : Window
 
     private void OnContentRendered(object? sender, EventArgs args)
     {
+        EnsureContentReady();
+        OpeningSurface.Start();
+    }
+
+    private void EnsureContentReady()
+    {
         if (contentReady)
         {
             return;
         }
 
         contentReady = true;
+        ApplyRequestedWindowSize();
+        AutomationProperties.SetAutomationId(OpeningSurface, "presentation-opening");
+        AutomationProperties.SetAutomationId(TourSurface, "presentation-tour");
         InitializeTourNavigation();
         int initialChapter = int.TryParse(
             Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_START_CHAPTER"),
@@ -58,7 +74,84 @@ public partial class PresentationWindow : Window
             ? Math.Clamp(requestedChapter - 1, 0, ChapterOrder.Length - 1)
             : 0;
         ShowChapter(ChapterOrder[initialChapter]);
-        _ = RunRequestedWorkAsync();
+        PageAspect.PrepareEditor();
+    }
+
+    private void OnOpeningContinue(object? sender, EventArgs args)
+    {
+        if (tourTransitionStarted)
+        {
+            return;
+        }
+
+        tourTransitionStarted = true;
+        EnsureContentReady();
+        _ = EnterTourAsync();
+    }
+
+    private async Task EnterTourAsync()
+    {
+        float transitionWidth = Math.Max(Width, ArrangedBounds.Width);
+        SpringSpec<float> transitionSpring = new(stiffness: 420f, damping: 28f);
+        TimeSpan transitionCaptureDelay = TimeSpan.FromMilliseconds(130);
+        TourSurface.Visibility = Visibility.Visible;
+
+        using (IDisposable transitionSession = GeneratedMarkup.AttachMotionSession(this))
+        using (MotionHandle openingMotion = GeneratedMarkup.StartMotionProperty(
+                   transitionSession,
+                   OpeningSurface,
+                   UIElement.TranslateXProperty,
+                   hasFrom: true,
+                   from: 0f,
+                   toCurrent: false,
+                   to: -transitionWidth,
+                   spec: transitionSpring,
+                   new MotionPropertyStartOptions
+                   {
+                       HoldOnComplete = true,
+                       DebugName = "Presentation opening exit"
+                   }))
+        using (MotionHandle tourMotion = GeneratedMarkup.StartMotionProperty(
+                   transitionSession,
+                   TourSurface,
+                   UIElement.TranslateXProperty,
+                   hasFrom: true,
+                   from: transitionWidth,
+                   toCurrent: false,
+                   to: 0f,
+                   spec: transitionSpring,
+                   new MotionPropertyStartOptions
+                   {
+                       HoldOnComplete = true,
+                       DebugName = "Presentation tour entrance"
+                   }))
+        {
+            await Task.WhenAll(
+                openingMotion.Completion.AsTask(),
+                tourMotion.Completion.AsTask(),
+                CaptureTransitionIfRequestedAsync(transitionCaptureDelay));
+        }
+
+        OpeningSurface.Visibility = Visibility.Collapsed;
+        Title = "Cerneala / Inside the Frame";
+        tourEntered = true;
+        await RunRequestedWorkAsync();
+    }
+
+    private async Task CaptureTransitionIfRequestedAsync(TimeSpan delay)
+    {
+        string? path = Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_TRANSITION_CAPTURE");
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        await Task.Delay(delay);
+        await CaptureScreenshotFrameAsync(
+            Path.GetFullPath(path),
+            () => Invalidate(
+                Cerneala.UI.Invalidation.InvalidationFlags.Render,
+                "presentation transition screenshot"));
     }
 
     internal void ApplyRequestedWindowSize()
@@ -107,7 +200,7 @@ public partial class PresentationWindow : Window
 
     private void OnFrameRendered(object? sender, EventArgs args)
     {
-        if (LastFrame is null || outerGlowLabActive)
+        if (LastFrame is null || outerGlowLabActive || !tourEntered)
         {
             return;
         }
