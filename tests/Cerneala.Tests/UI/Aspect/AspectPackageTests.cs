@@ -75,5 +75,25 @@ public sealed class AspectPackageTests
         Assert.Same(definition, Assert.Single(catalog.ContentTemplates));
     }
 
+    [Fact]
+    public void RegistryReusesCatalogSnapshotUntilPackagesChange()
+    {
+        AspectRegistry registry = new();
+        registry.Register(AspectPackage.Create("First"));
+
+        AspectCatalog first = registry.BuildCatalog();
+        AspectCatalog second = registry.BuildCatalog();
+
+        Assert.Same(first, second);
+
+        registry.Register(AspectPackage.Create("Second"), notify: false);
+        AspectCatalog afterRegister = registry.BuildCatalog();
+        Assert.NotSame(first, afterRegister);
+        Assert.Equal(["First", "Second"], afterRegister.PackageDiagnostics.Select(package => package.Name));
+
+        Assert.True(registry.Unregister("Second"));
+        Assert.NotSame(afterRegister, registry.BuildCatalog());
+    }
+
     private sealed record UserCard(string Name);
 }

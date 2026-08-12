@@ -40,6 +40,28 @@ public sealed class UiPropertyRegistryTests
             () => UiProperty<int>.Register(name, typeof(UiPropertyRegistryTests), new UiPropertyMetadata<int>(0)));
     }
 
+    [Fact]
+    public void OptionQueriesReuseSnapshotUntilAPropertyIsRegistered()
+    {
+        _ = UiProperty<int>.Register(
+            UniqueName(),
+            typeof(UiPropertyRegistryTests),
+            new UiPropertyMetadata<int>(0, UiPropertyOptions.Inherits));
+        IReadOnlyList<UiProperty> first = UiPropertyRegistry.GetPropertiesWithOptions(UiPropertyOptions.Inherits);
+        IReadOnlyList<UiProperty> second = UiPropertyRegistry.GetPropertiesWithOptions(UiPropertyOptions.Inherits);
+
+        Assert.Same(first, second);
+
+        UiProperty<int> registered = UiProperty<int>.Register(
+            UniqueName(),
+            typeof(UiPropertyRegistryTests),
+            new UiPropertyMetadata<int>(0, UiPropertyOptions.Inherits));
+        IReadOnlyList<UiProperty> refreshed = UiPropertyRegistry.GetPropertiesWithOptions(UiPropertyOptions.Inherits);
+
+        Assert.NotSame(first, refreshed);
+        Assert.Contains(registered, refreshed);
+    }
+
     private static string UniqueName()
     {
         return $"{nameof(UiPropertyRegistryTests)}_{Guid.NewGuid():N}";

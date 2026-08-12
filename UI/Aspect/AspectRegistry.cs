@@ -7,6 +7,7 @@ public sealed class AspectRegistry
     private readonly List<AspectPackage> packages = [];
     private readonly Action? changed;
     private readonly IUiThreadAccess threadAccess;
+    private AspectCatalog? cachedCatalog;
 
     public AspectRegistry(Action? changed = null)
         : this(new CapturedUiThreadAccess(), changed)
@@ -34,6 +35,7 @@ public sealed class AspectRegistry
 
         packages.Add(package);
         Version++;
+        cachedCatalog = null;
         if (notify)
         {
             changed?.Invoke();
@@ -58,12 +60,14 @@ public sealed class AspectRegistry
 
         packages.RemoveAt(index);
         Version++;
+        cachedCatalog = null;
         changed?.Invoke();
         return true;
     }
 
     public AspectCatalog BuildCatalog()
     {
-        return AspectCatalog.FromPackages(packages, Version);
+        threadAccess.VerifyAccess();
+        return cachedCatalog ??= AspectCatalog.FromPackages(packages, Version);
     }
 }
