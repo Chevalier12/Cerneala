@@ -749,6 +749,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         if (TryUseCachedMeasure(context.AvailableSize, out LayoutSize cached))
         {
+            RecordScheduledMeasureVisit();
             return cached;
         }
 
@@ -762,6 +763,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         LastMeasureAvailableSize = context.AvailableSize;
         LastMeasureLayoutVersion = LayoutVersion;
         LastMeasureViewportVersion = Root?.ViewportVersion ?? -1;
+        RecordScheduledMeasureVisit();
         return desired;
     }
 
@@ -825,6 +827,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         if (LastArrangeFinalRect == context.FinalRect &&
             LastArrangeLayoutVersion == LayoutVersion)
         {
+            RecordScheduledArrangeVisit();
             return ArrangedBounds;
         }
 
@@ -840,7 +843,40 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         SetArrangedBounds(arranged);
         LastArrangeFinalRect = context.FinalRect;
         LastArrangeLayoutVersion = LayoutVersion;
+        RecordScheduledArrangeVisit();
         return arranged;
+    }
+
+    internal long LastScheduledMeasurePass { get; private set; }
+
+    internal UIRoot? LastScheduledMeasureRoot { get; private set; }
+
+    internal int LastScheduledMeasureLayoutVersion { get; private set; } = -1;
+
+    internal long LastScheduledArrangePass { get; private set; }
+
+    internal UIRoot? LastScheduledArrangeRoot { get; private set; }
+
+    internal int LastScheduledArrangeLayoutVersion { get; private set; } = -1;
+
+    private void RecordScheduledMeasureVisit()
+    {
+        if (Root?.Scheduler.IsProcessingMeasure == true)
+        {
+            LastScheduledMeasurePass = Root.Scheduler.CurrentMeasurePass;
+            LastScheduledMeasureRoot = Root;
+            LastScheduledMeasureLayoutVersion = LayoutVersion;
+        }
+    }
+
+    private void RecordScheduledArrangeVisit()
+    {
+        if (Root?.Scheduler.IsProcessingArrange == true)
+        {
+            LastScheduledArrangePass = Root.Scheduler.CurrentArrangePass;
+            LastScheduledArrangeRoot = Root;
+            LastScheduledArrangeLayoutVersion = LayoutVersion;
+        }
     }
 
     protected virtual LayoutSize MeasureCore(MeasureContext context)

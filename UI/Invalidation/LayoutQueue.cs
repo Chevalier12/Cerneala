@@ -5,6 +5,7 @@ namespace Cerneala.UI.Invalidation;
 internal enum LayoutQueueEntryKind
 {
     Propagated,
+    Subtree,
     Required,
     Direct
 }

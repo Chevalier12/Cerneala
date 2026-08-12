@@ -300,6 +300,47 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void AutoScrollbarInspectorLayoutStaysWithinFourTreeMeasurePasses()
+    {
+        UIRoot root = new(400, 240);
+        StackPanel content = new();
+        for (int index = 0; index < 32; index++)
+        {
+            Cerneala.UI.Layout.Panels.Grid row = new();
+            row.ColumnDefinitions.Add(new Cerneala.UI.Layout.Panels.ColumnDefinition(
+                Cerneala.UI.Layout.Panels.GridLength.Auto));
+            row.ColumnDefinitions.Add(new Cerneala.UI.Layout.Panels.ColumnDefinition(
+                Cerneala.UI.Layout.Panels.GridLength.Star));
+            FixedElement label = new(new LayoutSize(96, 24));
+            FixedElement editor = new(new LayoutSize(220, 24));
+            Cerneala.UI.Layout.Panels.Grid.SetColumn(editor, 1);
+            row.VisualChildren.Add(label);
+            row.VisualChildren.Add(editor);
+            content.VisualChildren.Add(new Border
+            {
+                Child = row,
+                Padding = new Thickness(8, 4, 8, 4)
+            });
+        }
+
+        ScrollViewer viewer = new()
+        {
+            Content = content,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        root.VisualChildren.Add(viewer);
+
+        FrameStats frame = root.ProcessFrame();
+        int visualElementCount = Descendants(viewer).Count() + 1;
+        int measureCallBudget = visualElementCount * 4;
+
+        Assert.True(
+            frame.MeasureCalls <= measureCallBudget,
+            $"Expected at most {measureCallBudget} measure calls for {visualElementCount} elements, " +
+            $"but layout performed {frame.MeasureCalls}.");
+    }
+
+    [Fact]
     public void AutoScrollbarsReevaluateAgainstArrangeViewport()
     {
         ScrollViewer viewer = new()
@@ -697,6 +738,18 @@ public sealed class ScrollViewerTests
             context.RequirePart("PART_VerticalScrollBar", vertical);
             return root;
         });
+    }
+
+    private static IEnumerable<UIElement> Descendants(UIElement element)
+    {
+        foreach (UIElement child in element.VisualChildren)
+        {
+            yield return child;
+            foreach (UIElement descendant in Descendants(child))
+            {
+                yield return descendant;
+            }
+        }
     }
 
     private sealed class FixedElement(LayoutSize size) : UIElement
