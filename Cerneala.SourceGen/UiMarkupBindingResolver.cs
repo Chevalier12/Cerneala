@@ -673,6 +673,29 @@ public sealed partial class UiMarkupGenerator
                 return UiPropertyDescriptor(expression, resolutionContext.OwnerVariable, selfSpec);
             }
 
+            if (expression.StartsWith("$root.", StringComparison.Ordinal))
+            {
+                string propertyName = expression.Substring("$root.".Length);
+                INamedTypeSymbol? rootType = ResolvePropertyOwnerType(
+                    document.Root.Name.LocalName,
+                    isRoot: true);
+                PropertySpec? rootSpec = propertyName.IndexOf('.') < 0 && rootType is not null
+                    ? FindPropertySpec(rootType, propertyName)
+                    : null;
+                string? rootOwnerCode = userControlPair is null ? documentRootVariable : "this";
+                if (rootSpec is null || rootOwnerCode is null)
+                {
+                    Report(
+                        InvalidBindingSource,
+                        diagnosticSource,
+                        expression,
+                        "No supported UI property with this name exists on the document root.");
+                    return null;
+                }
+
+                return UiPropertyDescriptor(expression, rootOwnerCode, rootSpec);
+            }
+
             if (expression.StartsWith("$", StringComparison.Ordinal))
             {
                 string reference = expression.Substring(1);
@@ -766,7 +789,8 @@ public sealed partial class UiMarkupGenerator
             string expression,
             object diagnosticSource)
         {
-            if (dataType is null)
+            INamedTypeSymbol? bindingDataType = CurrentDataType;
+            if (bindingDataType is null)
             {
                 Report(InvalidBindingSource, diagnosticSource, expression, "DataType is required on the root element.");
                 return null;
@@ -786,7 +810,7 @@ public sealed partial class UiMarkupGenerator
                 return null;
             }
 
-            ITypeSymbol currentType = dataType;
+            ITypeSymbol currentType = bindingDataType;
             List<DataPathSegmentDescriptor> segments = [];
             foreach (string propertyName in names)
             {

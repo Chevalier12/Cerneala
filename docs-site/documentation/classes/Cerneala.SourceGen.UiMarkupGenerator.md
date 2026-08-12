@@ -91,7 +91,7 @@ source-path[:OneWay|TwoWay]
 ```
 
 `OneWay` is the default. Supported sources are `$DataContext.Path`,
-`$element.Property`, `$self.Property`,
+`$element.Property`, `$self.Property`, `$root.Property`,
 `$control.parts.$part.Property`, and `$owner.Property` inside a component
 template. The generator resolves every segment and endpoint through Roslyn and
 emits typed access; it does not evaluate string property paths or use reflection
@@ -103,6 +103,16 @@ at runtime.
   <TextBlock Text="User: $DataContext.Name, count: $DataContext.Count" />
   <TextBox Text="$DataContext.Name:TwoWay" />
 </StackPanel>
+```
+
+`$root.Property` binds to a UI property declared by the document root. It keeps
+view dataflow in markup without requiring a `Name` on a paired `UserControl` or
+`Window` wrapper, and it reacts to subsequent root-property changes:
+
+```xml
+<UserControl>
+  <ItemsControl ItemsSource="$root.Rows" />
+</UserControl>
 ```
 
 `$DataContext` paths require a root `DataType`, except on paired generic

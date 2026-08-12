@@ -23,6 +23,399 @@ namespace Cerneala.Tests.SourceGen;
 public sealed partial class UiMarkupGeneratorTests
 {
     [Fact]
+    public void ContentTemplateResourceIsRejected()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <ContentTemplate DataType="System.String">
+                  <Border Background="#FF123456">
+                    <TextBlock Text="TEMPLATE" />
+                  </Border>
+                </ContentTemplate>
+              </StackPanel.Resources>
+              <ItemsControl />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "DeclarativeContentTemplate.cui.xml",
+            markup,
+            out Compilation compilation);
+        Diagnostic diagnostic = Assert.Single(
+            result.Diagnostics,
+            candidate => candidate.Id == "CERNEALAUI005");
+        Assert.Contains("cannot be declared in Resources", diagnostic.GetMessage(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ItemsControlOwnsMultipleInlineContentTemplates()
+    {
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.Templates>
+                <ContentTemplate DataType="System.String">
+                  <TextBlock Text="STRING" />
+                </ContentTemplate>
+                <ContentTemplate DataType="System.Int32">
+                  <TextBlock Text="INTEGER" />
+                </ContentTemplate>
+              </ItemsControl.Templates>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "ItemsControlTemplates.cui.xml",
+            markup,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        UIElement items = InvokeCreate(stream, "Cerneala.GeneratedUi.ItemsControlTemplatesFactory");
+        Assert.Equal("ItemsControl", items.GetType().Name);
+        IReadOnlyList<Cerneala.UI.Controls.Templates.ContentTemplate> templates =
+            Assert.IsAssignableFrom<IReadOnlyList<Cerneala.UI.Controls.Templates.ContentTemplate>>(
+                items.GetType().GetProperty("Templates")!.GetValue(items));
+        Assert.Equal(2, templates.Count);
+        Assert.Equal(typeof(string), templates[0].DataType);
+        Assert.Equal(typeof(int), templates[1].DataType);
+    }
+
+    [Fact]
+    public void ItemsControlOwnsDirectItemsPanelFromMarkup()
+    {
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.ItemsPanel>
+                <StackPanel Orientation="Horizontal" />
+              </ItemsControl.ItemsPanel>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "ItemsControlPanel.cui.xml",
+            markup,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        ItemsControl items = Assert.IsType<ItemsControl>(
+            InvokeCreate(stream, "Cerneala.GeneratedUi.ItemsControlPanelFactory"));
+        StackPanel panel = Assert.IsType<StackPanel>(items.ItemsPanel);
+        Assert.Equal(Orientation.Horizontal, panel.Orientation);
+    }
+
+    [Fact]
+    public void DerivedItemsControlOwnsInlineContentTemplates()
+    {
+        const string markup = """
+            <ComboBox>
+              <ComboBox.Templates>
+                <ContentTemplate DataType="System.String">
+                  <TextBlock Text="STRING" />
+                </ContentTemplate>
+              </ComboBox.Templates>
+            </ComboBox>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "ComboBoxTemplates.cui.xml",
+            markup,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        ComboBox comboBox = Assert.IsType<ComboBox>(
+            InvokeCreate(stream, "Cerneala.GeneratedUi.ComboBoxTemplatesFactory"));
+        Assert.Single(comboBox.Templates);
+        Assert.Equal(typeof(string), comboBox.Templates[0].DataType);
+    }
+
+    [Fact]
+    public void ContentTemplateDataTypeResolvesClrNamespaceAlias()
+    {
+        const string inputSource = """
+            namespace TestInput;
+
+            public sealed class PropertyRow
+            {
+                public string Label { get; set; } = "BOUND";
+            }
+            """;
+        const string markup = """
+            <ItemsControl
+                xmlns:rows="clr-namespace:TestInput"
+                xmlns:controls="clr-namespace:Cerneala.UI.Controls;assembly=Cerneala">
+              <ItemsControl.Templates>
+                <ContentTemplate DataType="rows:PropertyRow">
+                  <TextBlock Text="ROW" />
+                </ContentTemplate>
+                <ContentTemplate DataType="controls:Button">
+                  <TextBlock Text="BUTTON" />
+                </ContentTemplate>
+              </ItemsControl.Templates>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "AliasedContentTemplate.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        ItemsControl items = Assert.IsType<ItemsControl>(
+            InvokeCreate(stream, "Cerneala.GeneratedUi.AliasedContentTemplateFactory"));
+        Assert.Equal(2, items.Templates.Count);
+        Assert.Equal("TestInput.PropertyRow", items.Templates[0].DataType?.FullName);
+        Assert.Equal(typeof(Button), items.Templates[1].DataType);
+    }
+
+    [Fact]
+    public void NamedContentTemplateResourceIsRejected()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <ContentTemplate Name="PropertyRow" DataType="System.String">
+                  <TextBlock Text="ROW" />
+                </ContentTemplate>
+              </StackPanel.Resources>
+              <ItemsControl ItemTemplate="$PropertyRow" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "NamedContentTemplate.cui.xml",
+            markup,
+            out Compilation compilation);
+        Diagnostic diagnostic = Assert.Single(
+            result.Diagnostics,
+            candidate => candidate.Id == "CERNEALAUI005");
+        Assert.Contains("cannot be declared in Resources", diagnostic.GetMessage(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InlineContentTemplateBindsAgainstItsOwnDataType()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+
+            namespace TestInput;
+
+            public sealed class PropertyRow : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public string Label { get; set; } = "BOUND";
+                public string AutomationId { get; set; } = "bound-row";
+            }
+            """;
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.ItemTemplate>
+                <ContentTemplate DataType="TestInput.PropertyRow">
+                  <TextBlock
+                    AutomationProperties.AutomationId="$DataContext.AutomationId"
+                    Text="$DataContext.Label" />
+                </ContentTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "InlineContentTemplate.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        ItemsControl items = Assert.IsType<ItemsControl>(
+            assembly.GetType("Cerneala.GeneratedUi.InlineContentTemplateFactory", throwOnError: true)!
+                .GetMethod("Create", Type.EmptyTypes)!
+                .Invoke(null, null));
+        object row = Activator.CreateInstance(assembly.GetType("TestInput.PropertyRow", throwOnError: true)!)!;
+        TextBlock text = Assert.IsType<TextBlock>(items.ItemTemplate!.Create(
+            new Cerneala.UI.Controls.Templates.ContentTemplateContext(row, owner: items)));
+
+        Assert.Equal(row, text.DataContext);
+        Assert.Equal("BOUND", text.Text);
+        Assert.Equal("bound-row", Cerneala.UI.Automation.AutomationProperties.GetAutomationId(text));
+    }
+
+    [Fact]
+    public void InlineContentTemplateTwoWayBindingWritesBackToItsDataItem()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+
+            namespace TestInput;
+
+            public sealed class PropertyRow : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public bool Enabled { get; set; }
+            }
+            """;
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.ItemTemplate>
+                <ContentTemplate DataType="TestInput.PropertyRow">
+                  <CheckBox IsChecked="$DataContext.Enabled:TwoWay" />
+                </ContentTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "TwoWayContentTemplate.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        ItemsControl items = Assert.IsType<ItemsControl>(
+            assembly.GetType("Cerneala.GeneratedUi.TwoWayContentTemplateFactory", throwOnError: true)!
+                .GetMethod("Create", Type.EmptyTypes)!
+                .Invoke(null, null));
+        Type rowType = assembly.GetType("TestInput.PropertyRow", throwOnError: true)!;
+        object row = Activator.CreateInstance(rowType)!;
+        CheckBox checkBox = Assert.IsType<CheckBox>(items.ItemTemplate!.Create(
+            new Cerneala.UI.Controls.Templates.ContentTemplateContext(row, owner: items)));
+
+        checkBox.IsChecked = true;
+
+        Assert.True((bool)rowType.GetProperty("Enabled")!.GetValue(row)!);
+    }
+
+    [Fact]
+    public void NestedContentTemplateTwoWayBindingRemainsActiveAfterAttach()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+
+            namespace TestInput;
+
+            public sealed class PropertyRow : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public bool Enabled { get; set; }
+            }
+            """;
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.ItemTemplate>
+                <ContentTemplate DataType="TestInput.PropertyRow">
+                  <Border>
+                    <CheckBox IsChecked="$DataContext.Enabled:TwoWay" />
+                  </Border>
+                </ContentTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "NestedTwoWayContentTemplate.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        ItemsControl items = Assert.IsType<ItemsControl>(
+            assembly.GetType("Cerneala.GeneratedUi.NestedTwoWayContentTemplateFactory", throwOnError: true)!
+                .GetMethod("Create", Type.EmptyTypes)!
+                .Invoke(null, null));
+        Type rowType = assembly.GetType("TestInput.PropertyRow", throwOnError: true)!;
+        object row = Activator.CreateInstance(rowType)!;
+        items.ItemsSource = new[] { row };
+        UIRoot root = new(320, 200);
+        root.VisualChildren.Add(items);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        CheckBox checkBox = Assert.Single(Descendants(items).OfType<CheckBox>());
+
+        checkBox.IsChecked = true;
+
+        Assert.True((bool)rowType.GetProperty("Enabled")!.GetValue(row)!);
+    }
+
+    private static System.Collections.Generic.IEnumerable<UIElement> Descendants(UIElement element)
+    {
+        foreach (UIElement child in element.VisualChildren)
+        {
+            yield return child;
+            foreach (UIElement descendant in Descendants(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    [Fact]
+    public void LocalDefaultAspectAppliesToDynamicallyAddedDescendants()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect TargetType="Button">
+                  @default
+                  {
+                    Background = "#FF123456";
+                    Foreground = "#FFF0F1F2";
+                  }
+                </Aspect>
+              </StackPanel.Resources>
+              <Button Content="STATIC" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "DynamicLocalAspect.cui.xml",
+            markup,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(
+            InvokeCreate(stream, "Cerneala.GeneratedUi.DynamicLocalAspectFactory"));
+        UIRoot root = new(320, 200);
+        root.VisualChildren.Add(panel);
+        Button dynamicButton = new() { Content = "DYNAMIC" };
+
+        panel.VisualChildren.Add(dynamicButton);
+        AssertSolidBackground(new Color(18, 52, 86), dynamicButton);
+        root.ProcessFrame();
+
+        Assert.True(dynamicButton.IsAttached);
+        AssertSolidBackground(new Color(18, 52, 86), dynamicButton);
+        Assert.Equal(
+            new Color(240, 241, 242),
+            Assert.IsType<SolidColorBrush>(dynamicButton.Foreground).Color);
+    }
+
+    [Fact]
     public void GridMarkupEmitsDefinitionsPlacementsSpansAndLayout()
     {
         const string markup = """
@@ -477,6 +870,7 @@ public sealed partial class UiMarkupGeneratorTests
                   <SolidColorBrush Name="Accent" Color="#FF00FF00" />
                   <Aspect Name="Card" TargetType="Border">
                     @default { Background = $Accent; }
+                    @when IsMouseOver { BorderBrush = $Accent; }
                   </Aspect>
                 </Border.Resources>
                 <TextBlock Text="Inner" />
@@ -502,8 +896,57 @@ public sealed partial class UiMarkupGeneratorTests
         MarkupAspectResource aspect = border.FindResource<MarkupAspectResource>("Card");
         Assert.Equal(typeof(Border), aspect.TargetType);
         Assert.Equal(new[] { "Background" }, aspect.DefaultPropertyNames);
+        Border dynamicBorder = new();
+        aspect.ApplyTo(dynamicBorder);
+        Assert.Equal(new Cerneala.Drawing.Color(0, 255, 0), Assert.IsType<SolidColorBrush>(dynamicBorder.Background).Color);
+        dynamicBorder.SetValue(Cerneala.UI.Elements.UIElement.IsMouseOverProperty, true);
+        Assert.Equal(new Cerneala.Drawing.Color(0, 255, 0), Assert.IsType<SolidColorBrush>(dynamicBorder.BorderBrush).Color);
         Assert.Single(panel.Resources);
         Assert.Equal(2, border.Resources.Count);
+    }
+
+    [Fact]
+    public void NamedTemplatedAspectCanBeAppliedToADynamicControl()
+    {
+        const string markup = """
+            <Border>
+              <Border.Resources>
+                <Aspect Name="DynamicButton" TargetType="Button">
+                  @default { Background = "#FF10282D"; }
+                  @template
+                  {
+                    <Border Name="Chrome" Background="$owner.Background" />
+                  }
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "DynamicTemplatedAspect.cui.xml",
+            markup,
+            out Compilation compilation);
+        Assert.DoesNotContain(
+            result.Diagnostics,
+            diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Border owner = Assert.IsType<Border>(InvokeCreate(
+            stream,
+            "Cerneala.GeneratedUi.DynamicTemplatedAspectFactory"));
+        MarkupAspectResource aspect = owner.FindResource<MarkupAspectResource>("DynamicButton");
+        Button dynamicButton = new();
+
+        aspect.ApplyTo(dynamicButton);
+        dynamicButton.ApplyTemplate();
+
+        Assert.DoesNotContain("Button.Default", dynamicButton.ComponentTemplate?.Name, StringComparison.Ordinal);
+        Border chrome = Assert.IsType<Border>(dynamicButton.ComponentTemplateInstance!.Root);
+        Assert.Same(chrome, dynamicButton.ComponentTemplateInstance.Parts["Chrome"]);
+        AssertSolidBackground(new Color(16, 40, 45), chrome);
     }
 
     [Fact]
@@ -3097,6 +3540,60 @@ public sealed partial class UiMarkupGeneratorTests
             out _);
         Assert.Contains(rootResult.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI008");
         Assert.Empty(rootResult.GeneratedSources);
+    }
+
+    [Fact]
+    public void PairedMarkupCanBindChildToRootUiProperty()
+    {
+        const string inputSource = """
+            using System.Collections;
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Core;
+
+            namespace TestInput.Views;
+
+            public partial class RootItemsView : UserControl
+            {
+                public static readonly UiProperty<IEnumerable?> RowsProperty = UiProperty<IEnumerable?>.Register(
+                    nameof(Rows),
+                    typeof(RootItemsView),
+                    new UiPropertyMetadata<IEnumerable?>(null));
+
+                public IEnumerable? Rows
+                {
+                    get => GetValue(RowsProperty);
+                    set => SetValue(RowsProperty, value);
+                }
+            }
+            """;
+        const string markup = """
+            <UserControl>
+              <ItemsControl Name="Items" ItemsSource="$root.Rows" />
+            </UserControl>
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/RootItemsView.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type viewType = assembly.GetType("TestInput.Views.RootItemsView", throwOnError: true)!;
+        UserControl view = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(viewType));
+        ItemsControl items = Assert.IsType<ItemsControl>(viewType
+            .GetProperty("Items", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(view));
+        string[] rows = ["one", "two"];
+
+        viewType.GetProperty("Rows")!.SetValue(view, rows);
+
+        Assert.Same(rows, items.ItemsSource);
     }
 
     [Fact]

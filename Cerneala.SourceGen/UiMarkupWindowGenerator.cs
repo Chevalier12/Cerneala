@@ -173,6 +173,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         XAttribute? nestedDataType = document.Root.Descendants()
+            .Where(element => element.Name.LocalName != "ContentTemplate")
             .Select(element => element.Attribute("DataType"))
             .FirstOrDefault(attribute => attribute is not null);
         if (nestedDataType is not null)
