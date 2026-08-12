@@ -25,7 +25,6 @@ public partial class PrismChapterView : UserControl
     private static readonly SolidColorBrush SelectedBrush = new(new Color(20, 55, 61));
     private static readonly SolidColorBrush LineBrush = new(new Color(52, 60, 70));
     private static readonly SolidColorBrush PaperBrush = new(new Color(232, 235, 232));
-    private static readonly SolidColorBrush TransparentBrush = new(Color.Transparent);
     private static readonly SolidColorBrush MutedBrush = new(new Color(150, 160, 171));
     private static readonly SolidColorBrush CyanBrush = new(new Color(77, 240, 255));
     private static readonly SolidColorBrush PinkBrush = new(new Color(255, 62, 165));
@@ -137,9 +136,9 @@ public partial class PrismChapterView : UserControl
             return;
         }
 
-        Clear(LayersHost.Panel);
-        Clear(CatalogHost.Panel);
-        Clear(InspectorHost.Panel);
+        Clear(LayersPanel);
+        Clear(CatalogPanel);
+        Clear(InspectorPanel);
         editorBuilt = false;
         VisibleCatalogCount = 0;
     }
@@ -284,7 +283,7 @@ public partial class PrismChapterView : UserControl
             return;
         }
 
-        Clear(CatalogHost.Panel);
+        Clear(CatalogPanel);
         string search = SearchBox.Text.Trim();
         PrismCatalogOperationInfo[] visible = CurrentCatalog()
             .Where(operation => catalogCategory is null || operation.Category == catalogCategory)
@@ -305,7 +304,7 @@ public partial class PrismChapterView : UserControl
             button.IsEnabled = model.Layers.Count > 0 && !operation.RequiresResource;
             button.Margin = new Thickness(0, 0, 0, 4);
             button.Foreground = operation.RequiresResource ? MutedBrush : PaperBrush;
-            Add(CatalogHost.Panel, button);
+            Add(CatalogPanel, button);
         }
 
         VisibleCatalogCount = visible.Length;
@@ -339,7 +338,7 @@ public partial class PrismChapterView : UserControl
             return;
         }
 
-        Clear(LayersHost.Panel);
+        Clear(LayersPanel);
         foreach (PrismStudioLayer layer in model.Layers)
         {
             StackPanel layerBody = new();
@@ -372,7 +371,7 @@ public partial class PrismChapterView : UserControl
             Add(layerBody, heading);
             AddOperationSection(layerBody, layer, PrismCatalogOperationKind.Filter);
             AddOperationSection(layerBody, layer, PrismCatalogOperationKind.Style);
-            Add(LayersHost.Panel, layerBlock);
+            Add(LayersPanel, layerBlock);
         }
 
         LayerCountText.Text = model.Layers.Count.ToString("00", CultureInfo.InvariantCulture);
@@ -435,7 +434,7 @@ public partial class PrismChapterView : UserControl
             return;
         }
 
-        Clear(InspectorHost.Panel);
+        Clear(InspectorPanel);
         if (model.Layers.Count == 0)
         {
             InspectorSelectionText.Text = "NO LAYER";
@@ -446,13 +445,13 @@ public partial class PrismChapterView : UserControl
         InspectorSelectionText.Text = model.SelectedOperationId is int operationId
             ? model.Operation(operationId).Catalog.Symbol.ToUpperInvariant()
             : layer.Name;
-        Add(InspectorHost.Panel, Label(layer.Name, LimeBrush));
+        Add(InspectorPanel, Label(layer.Name, LimeBrush));
         AddUnitSlider("OPACITY", layer.Opacity, value =>
             CommitLayerValue(instance => model.SetLayerOpacity(instance, layer.Id, value)));
         AddUnitSlider("FILL", layer.Fill, value =>
             CommitLayerValue(instance => model.SetLayerFill(instance, layer.Id, value)));
-        Add(InspectorHost.Panel, Label("BLEND", MutedBrush));
-        Add(InspectorHost.Panel, CreateComboBox(
+        Add(InspectorPanel, Label("BLEND", MutedBrush));
+        Add(InspectorPanel, CreateComboBox(
             BlendModes(),
             layer.BlendMode,
             value => CommitLayerValue(instance => model.SetLayerBlendMode(instance, layer.Id, value))));
@@ -463,13 +462,13 @@ public partial class PrismChapterView : UserControl
         }
 
         PrismStudioOperation operation = model.Operation(selectedOperationId);
-        Add(InspectorHost.Panel, Label(operation.Catalog.Symbol, PinkBrush));
+        Add(InspectorPanel, Label(operation.Catalog.Symbol, PinkBrush));
         if (operation.Catalog.Kind == PrismCatalogOperationKind.Filter)
         {
             AddUnitSlider("FILTER OPACITY", operation.Opacity, value =>
                 CommitValue(instance => model.SetFilterOpacity(instance, operation.Id, value)));
-            Add(InspectorHost.Panel, Label("FILTER BLEND", MutedBrush));
-            Add(InspectorHost.Panel, CreateComboBox(
+            Add(InspectorPanel, Label("FILTER BLEND", MutedBrush));
+            Add(InspectorPanel, CreateComboBox(
                 BlendModes(),
                 operation.BlendMode,
                 value => CommitValue(instance => model.SetFilterBlendMode(instance, operation.Id, value))));
@@ -485,11 +484,11 @@ public partial class PrismChapterView : UserControl
                 CommitStructure();
             }
         }));
-        Add(InspectorHost.Panel, actions);
+        Add(InspectorPanel, actions);
 
         foreach (PrismCatalogParameterInfo parameter in operation.Catalog.Parameters)
         {
-            Add(InspectorHost.Panel, CreateParameterEditor(operation, parameter));
+            Add(InspectorPanel, CreateParameterEditor(operation, parameter));
         }
     }
 
@@ -552,8 +551,7 @@ public partial class PrismChapterView : UserControl
         float maximum)
     {
         float current = (float)operation.GetValue(parameter);
-        PrismStudioSlider sliderView = new();
-        Slider slider = sliderView.ValueControl;
+        Slider slider = ApplyAspect(new Slider(), "PrismStudioSlider");
         slider.Minimum = minimum;
         slider.Maximum = maximum;
         slider.Value = current;
@@ -572,7 +570,7 @@ public partial class PrismChapterView : UserControl
                 SetParameter(operation, parameter, value);
             }
         };
-        Add(editor, sliderView);
+        Add(editor, slider);
         Add(editor, input);
     }
 
@@ -699,17 +697,14 @@ public partial class PrismChapterView : UserControl
 
     private void AddUnitSlider(string label, float current, Action<float> changed)
     {
-        Add(InspectorHost.Panel, Label(label, MutedBrush));
-        PrismStudioSlider sliderView = new()
-        {
-            Margin = new Thickness(0, 3, 0, 7)
-        };
-        Slider slider = sliderView.ValueControl;
+        Add(InspectorPanel, Label(label, MutedBrush));
+        Slider slider = ApplyAspect(new Slider(), "PrismStudioSlider");
+        slider.Margin = new Thickness(0, 3, 0, 7);
         slider.Minimum = 0;
         slider.Maximum = 1;
         slider.Value = current;
         slider.ValueChanged += (_, args) => changed(args.NewValue);
-        Add(InspectorHost.Panel, sliderView);
+        Add(InspectorPanel, slider);
     }
 
     private void UpdateTargetVisibility()
@@ -745,69 +740,49 @@ public partial class PrismChapterView : UserControl
         TextWrapping = TextWrapping.Wrap
     };
 
-    private static Button CreateButton(string text, Action clicked, bool compact = false)
+    private Button CreateButton(string text, Action clicked, bool compact = false)
     {
         Button button = new()
         {
             Content = text,
-            Background = PanelBrush,
-            BorderBrush = LineBrush,
-            BorderThickness = new Thickness(1),
-            Foreground = PaperBrush,
-            FontFamily = "Cascadia Mono SemiBold",
             FontSize = compact ? 8 : 9,
             Padding = compact ? new Thickness(6, 4, 6, 4) : new Thickness(7, 6, 7, 6),
             Margin = new Thickness(0, 0, 3, 3)
         };
+        ApplyAspect(button, "PrismStudioButton");
         button.Click += (_, _) => clicked();
         return button;
     }
 
-    private static CheckBox CreateCheckBox(bool value, Action<bool> changed)
+    private CheckBox CreateCheckBox(bool value, Action<bool> changed)
     {
         CheckBox checkBox = new()
         {
-            IsChecked = value,
-            Width = 22,
-            Height = 22,
-            Margin = new Thickness(0, 0, 4, 3)
+            IsChecked = value
         };
+        ApplyAspect(checkBox, "PrismStudioCheckBox");
         checkBox.Checked += (_, _) => changed(true);
         checkBox.Unchecked += (_, _) => changed(false);
         return checkBox;
     }
 
-    private static TextBox CreateInput(string text) => new()
+    private TextBox CreateInput(string text)
     {
-        Text = text,
-        Background = PanelBrush,
-        BorderBrush = LineBrush,
-        BorderThickness = new Thickness(1),
-        Foreground = PaperBrush,
-        CaretBrush = new SolidColorBrush(Color.White),
-        FontFamily = "Cascadia Mono",
-        FontSize = 9,
-        Padding = new Thickness(6, 5, 6, 5),
-        Margin = new Thickness(0, 3, 0, 3)
-    };
+        TextBox input = new()
+        {
+            Text = text
+        };
+        ApplyAspect(input, "PrismStudioTextBox");
+        return input;
+    }
 
     private ComboBox CreateComboBox<T>(
         IReadOnlyList<T> values,
         T current,
         Action<T> changed)
     {
-        ComboBox comboBox = new()
-        {
-            Background = TransparentBrush,
-            BorderBrush = LineBrush,
-            BorderThickness = new Thickness(1),
-            Foreground = PaperBrush,
-            FontFamily = "Cascadia Mono SemiBold",
-            FontSize = 9,
-            Padding = new Thickness(7, 6, 7, 6),
-            Margin = new Thickness(0, 0, 3, 3),
-            MaxDropDownHeight = 180
-        };
+        ComboBox comboBox = new();
+        ApplyAspect(comboBox, "PrismStudioComboBox");
         comboBox.ApplyTemplate();
         Overlay overlay = (Overlay)comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"];
         Border dropDownBorder = (Border)overlay.Content!;
@@ -837,6 +812,13 @@ public partial class PrismChapterView : UserControl
             }
         };
         return comboBox;
+    }
+
+    private T ApplyAspect<T>(T element, string resourceName)
+        where T : UIElement
+    {
+        FindResource<MarkupAspectResource>(resourceName).ApplyTo(element);
+        return element;
     }
 
     private static PrismBlendMode[] BlendModes() =>
@@ -880,18 +862,4 @@ public partial class PrismChapterView : UserControl
         double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
             ? value
             : fallback;
-}
-
-internal sealed class PrismStudioScrollHost : ScrollViewer
-{
-    public PrismStudioScrollHost()
-    {
-        Panel = new StackPanel
-        {
-            Margin = new Thickness(8)
-        };
-        Content = Panel;
-    }
-
-    public StackPanel Panel { get; }
 }

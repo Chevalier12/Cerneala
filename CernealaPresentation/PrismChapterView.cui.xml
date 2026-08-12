@@ -57,6 +57,119 @@
                 BorderBrush = "#FF4DF0FF";
             }
         </Aspect>
+        <Aspect
+            Name="PrismStudioButton"
+            TargetType="Button">
+            @default
+            {
+                Background = "#FF14181E";
+                BorderBrush = "#FF343C46";
+                BorderThickness = "1";
+                Foreground = "#FFE8EBE8";
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 9;
+                Padding = "7,6,7,6";
+                Margin = "0,0,3,3";
+            }
+            @when IsMouseOver
+            {
+                Background = "#FF14373D";
+                BorderBrush = $CyanBrush;
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioTextBox"
+            TargetType="TextBox">
+            @default
+            {
+                Background = "#FF14181E";
+                BorderBrush = "#FF343C46";
+                BorderThickness = "1";
+                Foreground = "#FFE8EBE8";
+                CaretBrush = "#FFFFFFFF";
+                FontFamily = "Cascadia Mono";
+                FontSize = 9;
+                Padding = "6,5,6,5";
+                Margin = "0,3,0,3";
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioCheckBox"
+            TargetType="CheckBox">
+            @default
+            {
+                Width = 22;
+                Height = 22;
+                Margin = "0,0,4,3";
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioComboBox"
+            TargetType="ComboBox">
+            @default
+            {
+                Background = "#00000000";
+                BorderBrush = "#FF343C46";
+                BorderThickness = "1";
+                Foreground = "#FFE8EBE8";
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 9;
+                Padding = "7,6,7,6";
+                Margin = "0,0,3,3";
+                MaxDropDownHeight = 180;
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioSliderThumb"
+            TargetType="Thumb">
+            @default
+            {
+                Background = "#FF4DF0FF";
+                BorderBrush = "#FFE8EBE8";
+                BorderThickness = "1";
+            }
+            @when IsMouseOver
+            {
+                Background = "#FFC6FF3D";
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioSliderTrack"
+            TargetType="Track">
+            @default
+            {
+                Background = "#FF21272F";
+                BorderBrush = "#FF343C46";
+                BorderThickness = "1";
+            }
+            @template
+            {
+                <Border
+                    Background="$owner.Background"
+                    BorderBrush="$owner.BorderBrush"
+                    BorderThickness="$owner.BorderThickness">
+                    <TrackLayoutPanel Orientation="$owner.Orientation">
+                        <Thumb
+                            Name="PART_Thumb"
+                            Aspect="$PrismStudioSliderThumb" />
+                    </TrackLayoutPanel>
+                </Border>
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioSlider"
+            TargetType="Slider">
+            @default
+            {
+                Height = 20;
+            }
+            @template
+            {
+                <Track
+                    Name="PART_Track"
+                    Aspect="$PrismStudioSliderTrack" />
+            }
+        </Aspect>
     </UserControl.Resources>
     <Grid
         Margin="24,18,24,16">
@@ -84,6 +197,7 @@
             </StackPanel>
             <Button
                 Grid.Column="1"
+                Aspect="$PrismStudioGhostButton"
                 Content="RESET"
                 Click="OnReset"
                 Background="$PanelAltBrush"
@@ -137,7 +251,10 @@
                             <Grid>
                                 <SvgImage
                                     Name="PreviewMascotImage"
-                                    DisplaySize="205"
+                                    SourcePath="Assets/cerneala-mascot-void-suction-well.svg"
+                                    Width="205"
+                                    Height="205"
+                                    UseIntrinsicSize="False"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center" />
                                 <TextBlock
@@ -294,14 +411,16 @@
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center" />
                 </Grid>
-                <PrismStudioScrollHost
+                <ScrollViewer
                     Name="LayersHost"
                     Grid.Row="1"
                     Background="$PanelAltBrush"
                     BorderBrush="$LineStrongBrush"
                     BorderThickness="1"
                     VerticalScrollBarVisibility="Auto"
-                    HorizontalScrollBarVisibility="Disabled" />
+                    HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Name="LayersPanel" Margin="8" />
+                </ScrollViewer>
                 <Grid Grid.Row="2" Margin="0,8,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -363,14 +482,16 @@
                         <Button Name="StyleTab" Aspect="$PrismStudioCatalogButton" Grid.Column="1" Content="STYLES" Click="OnStylesTab" Margin="3,0,3,0" />
                         <Button Name="CategoryButton" Aspect="$PrismStudioCatalogButton" Grid.Column="2" Content="ALL CATEGORIES" Click="OnCategory" Margin="3,0,0,0" />
                     </Grid>
-                    <PrismStudioScrollHost
+                    <ScrollViewer
                         Name="CatalogHost"
                         Grid.Row="2"
                         Background="$PanelAltBrush"
                         BorderBrush="$LineStrongBrush"
                         BorderThickness="1"
                         VerticalScrollBarVisibility="Auto"
-                        HorizontalScrollBarVisibility="Disabled" />
+                        HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Name="CatalogPanel" Margin="8" />
+                    </ScrollViewer>
                 </Grid>
                 <Grid Grid.Row="2">
                     <TextBlock
@@ -388,14 +509,16 @@
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center" />
                 </Grid>
-                <PrismStudioScrollHost
+                <ScrollViewer
                     Name="InspectorHost"
                     Grid.Row="3"
                     Background="$PanelAltBrush"
                     BorderBrush="$LineStrongBrush"
                     BorderThickness="1"
                     VerticalScrollBarVisibility="Auto"
-                    HorizontalScrollBarVisibility="Disabled" />
+                    HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Name="InspectorPanel" Margin="8" />
+                </ScrollViewer>
             </Grid>
         </Grid>
         <Border

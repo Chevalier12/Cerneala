@@ -54,6 +54,7 @@ public sealed class PrismChapterViewTests : IDisposable
 
         string code = File.ReadAllText(RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs"));
         Assert.Contains("PrismStudioTarget.Mascot => PreviewMascotImage", code, StringComparison.Ordinal);
+        Assert.DoesNotContain("internal sealed class PrismStudio", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -79,13 +80,14 @@ public sealed class PrismChapterViewTests : IDisposable
         XDocument markup = XDocument.Load(
             RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml"));
         XElement searchBox = FindNamedElement(markup, "SearchBox");
-        string code = File.ReadAllText(
-            RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs"));
+        XElement textBoxAspect = Assert.Single(markup.Descendants("Aspect").Where(
+            aspect => (string?)aspect.Attribute("Name") == "PrismStudioTextBox"));
 
         Assert.Equal("$PaperBrush", (string?)searchBox.Attribute("Foreground"));
         Assert.Equal("#FFFFFFFF", (string?)searchBox.Attribute("CaretBrush"));
-        Assert.Contains("Foreground = PaperBrush", code, StringComparison.Ordinal);
-        Assert.Contains("CaretBrush = new SolidColorBrush(Color.White)", code, StringComparison.Ordinal);
+        Assert.Equal("TextBox", (string?)textBoxAspect.Attribute("TargetType"));
+        Assert.Contains("Foreground = \"#FFE8EBE8\"", textBoxAspect.Value, StringComparison.Ordinal);
+        Assert.Contains("CaretBrush = \"#FFFFFFFF\"", textBoxAspect.Value, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -106,14 +108,16 @@ public sealed class PrismChapterViewTests : IDisposable
     }
 
     [Fact]
-    public void PrismStudioSliderAspectLivesInMarkup()
+    public void PrismStudioSliderAspectLivesInChapterMarkupWithoutAWrapperControl()
     {
         XDocument markup = XDocument.Load(
-            RepositoryFile("CernealaPresentation", "PrismStudioSlider.cui.xml"));
-        XElement slider = Assert.Single(markup.Descendants("Slider"));
-        XElement[] aspects = markup.Descendants("Aspect").ToArray();
+            RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml"));
+        XElement[] aspects = markup.Descendants("Aspect")
+            .Where(aspect => ((string?)aspect.Attribute("Name"))?.StartsWith(
+                "PrismStudioSlider",
+                StringComparison.Ordinal) == true)
+            .ToArray();
 
-        Assert.Equal("$PrismStudioSlider", (string?)slider.Attribute("Aspect"));
         Assert.Equal(3, aspects.Length);
         Assert.Equal(
             "Track",
@@ -126,7 +130,16 @@ public sealed class PrismChapterViewTests : IDisposable
 
         string code = File.ReadAllText(
             RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs"));
+        Assert.Contains(
+            "ApplyAspect(new Slider(), \"PrismStudioSlider\")",
+            code,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("PrismStudioSlider sliderView", code, StringComparison.Ordinal);
         Assert.DoesNotContain("ElementAspect", code, StringComparison.Ordinal);
+        Assert.False(File.Exists(
+            RepositoryFile("CernealaPresentation", "PrismStudioSlider.cui.xml")));
+        Assert.False(File.Exists(
+            RepositoryFile("CernealaPresentation", "PrismStudioSlider.cui.xml.cs")));
     }
 
     [Fact]
@@ -143,12 +156,8 @@ public sealed class PrismChapterViewTests : IDisposable
         Assert.Equal(2, sliders.Length);
         Assert.All(sliders, slider =>
         {
-            Assert.NotNull(slider.Aspect);
-            Assert.Contains("PrismStudioSlider", slider.ComponentTemplate?.Name, StringComparison.Ordinal);
-            Assert.Contains(
-                "PrismStudioSlider",
-                slider.Track.ComponentTemplate?.Name,
-                StringComparison.Ordinal);
+            Assert.DoesNotContain("Slider.Default", slider.ComponentTemplate?.Name, StringComparison.Ordinal);
+            Assert.DoesNotContain("Track.Default", slider.Track.ComponentTemplate?.Name, StringComparison.Ordinal);
             Assert.NotNull(slider.Track.Thumb.Aspect);
             Assert.Equal(
                 new Color(33, 39, 47),
@@ -173,8 +182,8 @@ public sealed class PrismChapterViewTests : IDisposable
         PrismChapterView view = new();
         root.VisualChildren.Add(view);
         root.ProcessFrame();
-        PrismStudioScrollHost inspector = Descendants(view)
-            .OfType<PrismStudioScrollHost>()
+        ScrollViewer inspector = Descendants(view)
+            .OfType<ScrollViewer>()
             .Last();
         Assert.False(inspector.IsVerticalScrollBarVisible);
 
@@ -200,8 +209,8 @@ public sealed class PrismChapterViewTests : IDisposable
         PrismChapterView view = new();
         root.VisualChildren.Add(view);
         root.ProcessFrame();
-        PrismStudioScrollHost[] hosts = Descendants(view)
-            .OfType<PrismStudioScrollHost>()
+        ScrollViewer[] hosts = Descendants(view)
+            .OfType<ScrollViewer>()
             .ToArray();
 
         Assert.Equal(3, hosts.Length);
@@ -263,10 +272,10 @@ public sealed class PrismChapterViewTests : IDisposable
         Color line = new(52, 60, 70);
         Color panel = new(20, 24, 30);
         Assert.Equal(
-            UiPropertyValueSource.Local,
+            UiPropertyValueSource.AspectVisualState,
             comboBox.GetValueSource(Control.BackgroundProperty));
         Assert.Equal(
-            UiPropertyValueSource.Local,
+            UiPropertyValueSource.AspectVisualState,
             comboBox.GetValueSource(Control.ForegroundProperty));
         Assert.Equal(
             Color.Transparent,
@@ -405,10 +414,10 @@ public sealed class PrismChapterViewTests : IDisposable
 
         UIElement[] elements = Descendants(view).ToArray();
         LayoutRect preview = Assert.Single(elements.OfType<SvgImage>()).ArrangedBounds;
-        LayoutRect[] zones = elements.OfType<PrismStudioScrollHost>()
+        LayoutRect[] zones = elements.OfType<ScrollViewer>()
             .Select(host => host.ArrangedBounds)
             .ToArray();
-        PrismStudioScrollHost layersHost = elements.OfType<PrismStudioScrollHost>().First();
+        ScrollViewer layersHost = elements.OfType<ScrollViewer>().First();
 
         Assert.True(preview.Width > 0 && preview.Height > 0);
         Assert.Equal(3, zones.Length);
