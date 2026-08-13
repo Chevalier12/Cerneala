@@ -257,6 +257,162 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void ContentTemplateRootDataContextScopesDescendantBindingsAndRetargets()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+
+            namespace TestInput;
+
+            public sealed class PropertyRow : INotifyPropertyChanged
+            {
+                private RowDetails details = new() { Name = "FIRST" };
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public RowDetails Details
+                {
+                    get => details;
+                    set
+                    {
+                        details = value;
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Details)));
+                    }
+                }
+            }
+
+            public sealed class RowDetails : INotifyPropertyChanged
+            {
+                private string name = string.Empty;
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public string Name
+                {
+                    get => name;
+                    set
+                    {
+                        name = value;
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
+                    }
+                }
+            }
+            """;
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.ItemTemplate>
+                <ContentTemplate DataType="TestInput.PropertyRow">
+                  <StackPanel DataContext="$DataContext.Details">
+                    <TextBlock Text="$DataContext.Name" />
+                  </StackPanel>
+                </ContentTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "ScopedRootDataContext.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.DoesNotContain(
+            ".DataContext = contentTemplateContext",
+            SingleGeneratedSource(result),
+            StringComparison.Ordinal);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        ItemsControl items = Assert.IsType<ItemsControl>(
+            assembly.GetType("Cerneala.GeneratedUi.ScopedRootDataContextFactory", throwOnError: true)!
+                .GetMethod("Create", Type.EmptyTypes)!
+                .Invoke(null, null));
+        Type rowType = assembly.GetType("TestInput.PropertyRow", throwOnError: true)!;
+        Type detailsType = assembly.GetType("TestInput.RowDetails", throwOnError: true)!;
+        object row = Activator.CreateInstance(rowType)!;
+        object firstDetails = rowType.GetProperty("Details")!.GetValue(row)!;
+        StackPanel panel = Assert.IsType<StackPanel>(items.ItemTemplate!.Create(
+            new Cerneala.UI.Controls.Templates.ContentTemplateContext(row, owner: items)));
+        TextBlock text = Assert.IsType<TextBlock>(panel.VisualChildren[0]);
+
+        Assert.Same(firstDetails, panel.DataContext);
+        Assert.Equal("FIRST", text.Text);
+
+        detailsType.GetProperty("Name")!.SetValue(firstDetails, "UPDATED");
+        Assert.Equal("UPDATED", text.Text);
+
+        object replacement = Activator.CreateInstance(detailsType)!;
+        detailsType.GetProperty("Name")!.SetValue(replacement, "REPLACED");
+        rowType.GetProperty("Details")!.SetValue(row, replacement);
+
+        Assert.Same(replacement, panel.DataContext);
+        Assert.Equal("REPLACED", text.Text);
+    }
+
+    [Fact]
+    public void NestedDataContextScopesOnlyItsSubtree()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+
+            namespace TestInput;
+
+            public sealed class PropertyRow : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public string Label { get; set; } = "ROW";
+                public RowDetails Details { get; set; } = new() { Name = "DETAILS" };
+            }
+
+            public sealed class RowDetails : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public string Name { get; set; } = string.Empty;
+            }
+            """;
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.ItemTemplate>
+                <ContentTemplate DataType="TestInput.PropertyRow">
+                  <StackPanel>
+                    <TextBlock Text="$DataContext.Label" />
+                    <Border DataContext="$DataContext.Details">
+                      <TextBlock Text="$DataContext.Name" />
+                    </Border>
+                    <TextBlock Text="$DataContext.Label" />
+                  </StackPanel>
+                </ContentTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "NestedScopedDataContext.cui.xml",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        ItemsControl items = Assert.IsType<ItemsControl>(
+            assembly.GetType("Cerneala.GeneratedUi.NestedScopedDataContextFactory", throwOnError: true)!
+                .GetMethod("Create", Type.EmptyTypes)!
+                .Invoke(null, null));
+        Type rowType = assembly.GetType("TestInput.PropertyRow", throwOnError: true)!;
+        object row = Activator.CreateInstance(rowType)!;
+        object details = rowType.GetProperty("Details")!.GetValue(row)!;
+        StackPanel panel = Assert.IsType<StackPanel>(items.ItemTemplate!.Create(
+            new Cerneala.UI.Controls.Templates.ContentTemplateContext(row, owner: items)));
+
+        Assert.Equal("ROW", Assert.IsType<TextBlock>(panel.VisualChildren[0]).Text);
+        Border border = Assert.IsType<Border>(panel.VisualChildren[1]);
+        Assert.Same(details, border.DataContext);
+        Assert.Equal("DETAILS", Assert.IsType<TextBlock>(border.Child).Text);
+        Assert.Equal("ROW", Assert.IsType<TextBlock>(panel.VisualChildren[2]).Text);
+    }
+
+    [Fact]
     public void InlineContentTemplateTwoWayBindingWritesBackToItsDataItem()
     {
         const string inputSource = """
@@ -3867,6 +4023,37 @@ public sealed partial class UiMarkupGeneratorTests
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void ChangingOneMarkupFileReusesIndependentSemanticModels()
+    {
+        InMemoryAdditionalText first = new("First.cui.xml", "<Button Content=\"First\" />");
+        InMemoryAdditionalText second = new("Second.cui.xml", "<Button Content=\"Second\" />");
+        CSharpCompilation compilation = CSharpCompilation.Create(
+            "IncrementalGeneratorTests",
+            [CSharpSyntaxTree.ParseText("namespace TestInput { public static class Anchor { } }")],
+            References(),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new UiMarkupGenerator().AsSourceGenerator()],
+            [first, second],
+            parseOptions: CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest),
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+
+        driver = driver.RunGenerators(compilation);
+        InMemoryAdditionalText changed = new("First.cui.xml", "<Button Content=\"Changed\" />");
+        driver = driver.ReplaceAdditionalText(first, changed).RunGenerators(compilation);
+
+        var outputs = driver.GetRunResult().Results.Single()
+            .TrackedSteps["CernealaLanguageSemanticModel"]
+            .SelectMany(step => step.Outputs)
+            .ToArray();
+        Assert.Equal(2, outputs.Length);
+        Assert.Single(outputs, output => output.Reason == IncrementalStepRunReason.Modified);
+        Assert.Single(outputs, output => output.Reason == IncrementalStepRunReason.Cached);
     }
 
     private static GeneratorRunResult RunGenerator(string fileName, string markup, out Compilation outputCompilation)

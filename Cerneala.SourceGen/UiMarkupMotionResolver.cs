@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace Cerneala.SourceGen;
@@ -14,7 +13,7 @@ public sealed partial class UiMarkupGenerator
     {
         private sealed class MotionSpecResource
         {
-            public MotionSpecResource(string name, string kind, IReadOnlyList<string> arguments, XElement source)
+            public MotionSpecResource(string name, string kind, IReadOnlyList<string> arguments, MarkupElement source)
             {
                 Name = name;
                 Kind = kind;
@@ -28,7 +27,7 @@ public sealed partial class UiMarkupGenerator
 
             public IReadOnlyList<string> Arguments { get; }
 
-            public XElement Source { get; }
+            public MarkupElement Source { get; }
         }
 
         private sealed class MotionClipResource
@@ -38,7 +37,7 @@ public sealed partial class UiMarkupGenerator
                 string targetName,
                 IReadOnlyList<MotionParameterNode> parameters,
                 MotionExecutionNode body,
-                XElement source)
+                MarkupElement source)
             {
                 Name = name;
                 TargetName = targetName;
@@ -55,7 +54,7 @@ public sealed partial class UiMarkupGenerator
 
             public MotionExecutionNode Body { get; }
 
-            public XElement Source { get; }
+            public MarkupElement Source { get; }
         }
 
         private sealed class ResolvedMotionParameterValue
@@ -116,7 +115,7 @@ public sealed partial class UiMarkupGenerator
 
         private sealed class ResolvedMotionScroll
         {
-            public ResolvedMotionScroll(MotionScrollNode syntax, XElement sourceElement, IReadOnlyList<ResolvedMotionScrollProperty> properties)
+            public ResolvedMotionScroll(MotionScrollNode syntax, MarkupElement sourceElement, IReadOnlyList<ResolvedMotionScrollProperty> properties)
             {
                 Syntax = syntax;
                 SourceElement = sourceElement;
@@ -125,7 +124,7 @@ public sealed partial class UiMarkupGenerator
 
             public MotionScrollNode Syntax { get; }
 
-            public XElement SourceElement { get; }
+            public MarkupElement SourceElement { get; }
 
             public IReadOnlyList<ResolvedMotionScrollProperty> Properties { get; }
         }
@@ -189,7 +188,7 @@ public sealed partial class UiMarkupGenerator
                 string factoryName,
                 MotionClipInvocationContext? parameters,
                 MotionStaggerNode? stagger = null,
-                XElement? staggerTarget = null)
+                MarkupElement? staggerTarget = null)
             {
                 Syntax = syntax;
                 Properties = properties;
@@ -212,7 +211,7 @@ public sealed partial class UiMarkupGenerator
 
             public MotionStaggerNode? Stagger { get; }
 
-            public XElement? StaggerTarget { get; }
+            public MarkupElement? StaggerTarget { get; }
         }
 
         private sealed class ResolvedMotionSet
@@ -378,7 +377,7 @@ public sealed partial class UiMarkupGenerator
         {
             public ResolvedMotionTarget(
                 ResolvedMotionTargetKind kind,
-                XElement element,
+                MarkupElement element,
                 string? ownerName = null,
                 string? partName = null,
                 ResolvedPrismMotionTarget? prism = null)
@@ -392,7 +391,7 @@ public sealed partial class UiMarkupGenerator
 
             public ResolvedMotionTargetKind Kind { get; }
 
-            public XElement Element { get; }
+            public MarkupElement Element { get; }
 
             public string? OwnerName { get; }
 
@@ -433,18 +432,18 @@ public sealed partial class UiMarkupGenerator
             public bool Hold { get; }
         }
 
-        private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionAspect> resolvedMotionAspects = new();
-        private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionPresence> resolvedMotionPresences = new();
-        private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionLayout> resolvedMotionLayouts = new();
-        private readonly Dictionary<(AspectResource Aspect, XElement Element), IReadOnlyList<ResolvedMotionScroll>> resolvedMotionScrolls = new();
-        private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionDrag> resolvedMotionDrags = new();
-        private readonly Dictionary<(AspectResource Aspect, XElement Element), ResolvedMotionGesturePress> resolvedMotionGesturePresses = new();
+        private readonly Dictionary<(AspectResource Aspect, MarkupElement Element), ResolvedMotionAspect> resolvedMotionAspects = new();
+        private readonly Dictionary<(AspectResource Aspect, MarkupElement Element), ResolvedMotionPresence> resolvedMotionPresences = new();
+        private readonly Dictionary<(AspectResource Aspect, MarkupElement Element), ResolvedMotionLayout> resolvedMotionLayouts = new();
+        private readonly Dictionary<(AspectResource Aspect, MarkupElement Element), IReadOnlyList<ResolvedMotionScroll>> resolvedMotionScrolls = new();
+        private readonly Dictionary<(AspectResource Aspect, MarkupElement Element), ResolvedMotionDrag> resolvedMotionDrags = new();
+        private readonly Dictionary<(AspectResource Aspect, MarkupElement Element), ResolvedMotionGesturePress> resolvedMotionGesturePresses = new();
         private readonly Dictionary<MotionAnimateNode, string> motionExecutionNames = new();
         private readonly Dictionary<MotionExecutionNode, string> motionActionNames = new();
         private readonly Dictionary<MotionExecutionNode, string> motionExecutionFactoryNames = new();
         private readonly Dictionary<string, string> specializedMotionSpecs = new(StringComparer.Ordinal);
 
-        private void ReadMotionSpecResource(ResourceScope scope, XElement resource)
+        private void ReadMotionSpecResource(ResourceScope scope, MarkupElement resource)
         {
             string? name = RequiredName(resource);
             if (name is null)
@@ -547,7 +546,7 @@ public sealed partial class UiMarkupGenerator
             scope.NamedResources.Add(name, new NamedSymbol(name, NamedSymbolKind.MotionSpec, spec));
         }
 
-        private void ReadMotionClip(ResourceScope scope, XElement resource)
+        private void ReadMotionClip(ResourceScope scope, MarkupElement resource)
         {
             string? name = RequiredName(resource);
             if (name is null)
@@ -741,7 +740,7 @@ public sealed partial class UiMarkupGenerator
                 execution is MotionCompositionNode composition && composition.Children.Any(ContainsMotionCancel);
         }
 
-        private bool ResolveMotionAspect(XElement applicationElement, string applicationVariable, AspectResource aspect)
+        private bool ResolveMotionAspect(MarkupElement applicationElement, string applicationVariable, AspectResource aspect)
         {
             if (resolvedMotionAspects.ContainsKey((aspect, applicationElement)))
             {
@@ -898,13 +897,13 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolveMotionScroll(
-            XElement applicationElement,
+            MarkupElement applicationElement,
             AspectResource aspect,
             MotionScrollNode scroll,
             out ResolvedMotionScroll? resolved)
         {
             string sourceName = scroll.SourceReference.Substring(1);
-            XElement? sourceElement = FindMotionNamedElement(applicationElement, sourceName);
+            MarkupElement? sourceElement = FindMotionNamedElement(applicationElement, sourceName);
 
             INamedTypeSymbol? sourceType = sourceElement is null
                 ? null
@@ -988,7 +987,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolveMotionExecution(
-            XElement applicationElement,
+            MarkupElement applicationElement,
             AspectResource aspect,
             MotionExecutionNode execution,
             ICollection<ResolvedMotionAnimation> animations,
@@ -1136,14 +1135,14 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolveMotionStagger(
-            XElement applicationElement,
+            MarkupElement applicationElement,
             AspectResource aspect,
             MotionStaggerNode stagger,
             MotionClipInvocationContext? parameters,
             out ResolvedMotionAnimation? resolved)
         {
             resolved = null;
-            XElement? collectionElement = FindMotionNamedElement(applicationElement, stagger.TargetName);
+            MarkupElement? collectionElement = FindMotionNamedElement(applicationElement, stagger.TargetName);
 
             if (collectionElement is null)
             {
@@ -1220,7 +1219,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolveMotionKeyframes(
-            XElement applicationElement,
+            MarkupElement applicationElement,
             AspectResource aspect,
             MotionKeyframesNode timeline,
             ICollection<ResolvedMotionAnimation> animations,
@@ -1567,7 +1566,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolveMotionAnimation(
-            XElement applicationElement,
+            MarkupElement applicationElement,
             AspectResource aspect,
             MotionAnimateNode animation,
             MotionClipInvocationContext? parameters,
@@ -1654,7 +1653,7 @@ public sealed partial class UiMarkupGenerator
             return true;
         }
 
-        private void EmitMotionActivations(XElement element, string variable, AspectResource aspect)
+        private void EmitMotionActivations(MarkupElement element, string variable, AspectResource aspect)
         {
             if (!resolvedMotionAspects.TryGetValue((aspect, element), out ResolvedMotionAspect? resolved))
             {
@@ -1823,7 +1822,7 @@ public sealed partial class UiMarkupGenerator
             EmitMotionGesturePress(element, variable, aspect, sessionName);
         }
 
-        private void EmitMotionScrolls(XElement element, string variable, AspectResource aspect, string sessionName)
+        private void EmitMotionScrolls(MarkupElement element, string variable, AspectResource aspect, string sessionName)
         {
             if (!resolvedMotionScrolls.TryGetValue((aspect, element), out IReadOnlyList<ResolvedMotionScroll>? scrolls))
             {
@@ -1873,7 +1872,7 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private void EmitMotionDrag(XElement element, string variable, AspectResource aspect, string sessionName)
+        private void EmitMotionDrag(MarkupElement element, string variable, AspectResource aspect, string sessionName)
         {
             if (!resolvedMotionDrags.TryGetValue((aspect, element), out ResolvedMotionDrag? drag))
             {
@@ -1924,7 +1923,7 @@ public sealed partial class UiMarkupGenerator
                 ", () => { " + attach + " }, () => { " + detach + " });");
         }
 
-        private void EmitMotionGesturePress(XElement element, string variable, AspectResource aspect, string sessionName)
+        private void EmitMotionGesturePress(MarkupElement element, string variable, AspectResource aspect, string sessionName)
         {
             if (!resolvedMotionGesturePresses.TryGetValue((aspect, element), out ResolvedMotionGesturePress? gesture))
             {
@@ -1965,7 +1964,7 @@ public sealed partial class UiMarkupGenerator
                 ", () => { " + attach + " }, () => { " + detach + " });");
         }
 
-        private void EmitMotionPresence(XElement element, string variable, AspectResource aspect)
+        private void EmitMotionPresence(MarkupElement element, string variable, AspectResource aspect)
         {
             if (!resolvedMotionPresences.TryGetValue((aspect, element), out ResolvedMotionPresence? presence))
             {
@@ -1980,7 +1979,7 @@ public sealed partial class UiMarkupGenerator
                 (presence.ExcludeInputWhileExiting ? "true" : "false") + ");");
         }
 
-        private void EmitMotionLayout(XElement element, string variable, AspectResource aspect)
+        private void EmitMotionLayout(MarkupElement element, string variable, AspectResource aspect)
         {
             if (!resolvedMotionLayouts.TryGetValue((aspect, element), out ResolvedMotionLayout? layout))
             {
@@ -1995,7 +1994,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolveLayoutId(
-            XElement element,
+            MarkupElement element,
             string variable,
             DirectiveSourceExpression source,
             out string? expression)
@@ -2192,7 +2191,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolveMotionTarget(
-            XElement applicationElement,
+            MarkupElement applicationElement,
             AspectResource aspect,
             MotionAssignmentSyntax assignment,
             out ResolvedMotionTarget? target,
@@ -2216,7 +2215,7 @@ public sealed partial class UiMarkupGenerator
                 applicationElement.Name.LocalName,
                 ReferenceEquals(applicationElement, document.Root));
             ResolvedMotionTargetKind targetKind = ResolvedMotionTargetKind.Self;
-            XElement targetElement = applicationElement;
+            MarkupElement targetElement = applicationElement;
             string? ownerName = null;
             string? partName = null;
 
@@ -2246,7 +2245,7 @@ public sealed partial class UiMarkupGenerator
                 }
                 else
                 {
-                    XElement? namedElement = FindMotionNamedElement(applicationElement, ownerName);
+                    MarkupElement? namedElement = FindMotionNamedElement(applicationElement, ownerName);
                     if (namedElement is null)
                     {
                         ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion target named element '" + ownerName + "' is not available at this Aspect application site.");
@@ -2269,13 +2268,13 @@ public sealed partial class UiMarkupGenerator
                     }
 
                     partName = parts[2].Substring(1);
-                    XElement? templateRoot = targetKind switch
+                    MarkupElement? templateRoot = targetKind switch
                     {
                         ResolvedMotionTargetKind.SelfPart => ResolveMotionTemplate(applicationElement, aspect)?.Root,
                         ResolvedMotionTargetKind.OwnerPart => applicationElement.AncestorsAndSelf().LastOrDefault(),
                         _ => ResolveMotionTemplate(targetElement, null)?.Root
                     };
-                    XElement[] matchingParts = templateRoot?.DescendantsAndSelf()
+                    MarkupElement[] matchingParts = templateRoot?.DescendantsAndSelf()
                         .Where(element => string.Equals(element.Attribute("Name")?.Value?.Trim(), partName, StringComparison.Ordinal))
                         .ToArray() ?? [];
                     if (matchingParts.Length != 1)
@@ -2308,7 +2307,7 @@ public sealed partial class UiMarkupGenerator
             return true;
         }
 
-        private DirectiveTemplateNode? ResolveMotionTemplate(XElement control, AspectResource? preferredAspect)
+        private DirectiveTemplateNode? ResolveMotionTemplate(MarkupElement control, AspectResource? preferredAspect)
         {
             DirectiveParseResult content = GetDirectiveContent(
                 control,
@@ -2342,7 +2341,7 @@ public sealed partial class UiMarkupGenerator
             return "((" + partTypeCode + ")" + ownerCode + ".ComponentTemplateInstance!.Parts[" + Literal(target.PartName!) + "])";
         }
 
-        private XElement? FindMotionNamedElement(XElement applicationElement, string name)
+        private MarkupElement? FindMotionNamedElement(MarkupElement applicationElement, string name)
         {
             return applicationElement.DescendantsAndSelf()
                 .FirstOrDefault(element =>
@@ -2470,7 +2469,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolveMotionSpec(
-            XElement applicationElement,
+            MarkupElement applicationElement,
             MotionSpecSyntax? syntax,
             PropertySpec property,
             string target,

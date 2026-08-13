@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml.Linq;
 using Cerneala.SourceGen.Prism.Syntax;
 using Microsoft.CodeAnalysis;
 
@@ -12,29 +11,14 @@ namespace Cerneala.SourceGen;
 
 public sealed partial class UiMarkupGenerator
 {
-    private static readonly DiagnosticDescriptor PrismUnknownDirectiveDiagnostic = new(
-        "PRISM1001",
-        "Unknown Prism directive",
-        "Prism markup in '{0}' is invalid: {1}",
-        "Cerneala.Prism.Markup",
-        DiagnosticSeverity.Error,
-        true);
+    private static readonly DiagnosticDescriptor PrismUnknownDirectiveDiagnostic =
+        SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM1001");
 
-    private static readonly DiagnosticDescriptor PrismMissingDelimiterDiagnostic = new(
-        "PRISM1002",
-        "Missing Prism delimiter",
-        "Prism markup in '{0}' is invalid: {1}",
-        "Cerneala.Prism.Markup",
-        DiagnosticSeverity.Error,
-        true);
+    private static readonly DiagnosticDescriptor PrismMissingDelimiterDiagnostic =
+        SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM1002");
 
-    private static readonly DiagnosticDescriptor PrismInvalidSyntaxDiagnostic = new(
-        "PRISM1003",
-        "Invalid Prism syntax",
-        "Prism markup in '{0}' is invalid: {1}",
-        "Cerneala.Prism.Markup",
-        DiagnosticSeverity.Error,
-        true);
+    private static readonly DiagnosticDescriptor PrismInvalidSyntaxDiagnostic =
+        SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM1003");
 
     private static PrismValueSyntax ParsePrismValue(string text, DirectiveExpressionLocation location)
     {
@@ -91,7 +75,7 @@ public sealed partial class UiMarkupGenerator
     {
         public DirectivePrismNode ParsePrismApplication()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             DirectiveExpressionLocation directiveLocation =
                 new(source, characterIndex, "@prism".Length);
             Consume("@prism");
@@ -142,13 +126,13 @@ public sealed partial class UiMarkupGenerator
         }
 
         public PrismCompositionResourceSyntax ParsePrismCompositionResource(
-            XElement resource,
+            MarkupElement resource,
             string name,
-            XAttribute nameAttribute)
+            MarkupAttribute nameAttribute)
         {
             DirectiveExpressionLocation resourceLocation = new(resource, 0);
             List<PrismMemberSyntax> members = [];
-            foreach (XAttribute attribute in resource.Attributes()
+            foreach (MarkupAttribute attribute in resource.Attributes()
                 .Where(attribute => !attribute.IsNamespaceDeclaration && attribute.Name.LocalName != "Name"))
             {
                 DirectiveExpressionLocation location =
@@ -181,7 +165,7 @@ public sealed partial class UiMarkupGenerator
         private PrismResourceApplicationSyntax ParsePrismResourceApplication(
             DirectiveExpressionLocation directiveLocation)
         {
-            XObject referenceSource = CurrentSource;
+            MarkupObject referenceSource = CurrentSource;
             int referenceOffset = characterIndex;
             Read();
             string resourceName = ReadIdentifier();
@@ -260,7 +244,7 @@ public sealed partial class UiMarkupGenerator
                 throw PrismInvalid("@prism resource arguments require a name.", directiveLocation);
             }
 
-            XObject nameSource = CurrentSource;
+            MarkupObject nameSource = CurrentSource;
             int nameOffset = characterIndex;
             string name = ReadPrismPath();
             if (!IsPrismPath(name))
@@ -293,7 +277,7 @@ public sealed partial class UiMarkupGenerator
                 throw PrismInvalid("@prism resource arguments require a value.", directiveLocation);
             }
 
-            XObject valueSource = CurrentSource;
+            MarkupObject valueSource = CurrentSource;
             int valueOffset = characterIndex;
             StringBuilder value = new();
             int parentheses = 0;
@@ -612,7 +596,7 @@ public sealed partial class UiMarkupGenerator
         private DirectiveHeader ReadPrismHeaderUntilSemicolon(
             DirectiveExpressionLocation directiveLocation)
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             int offset = characterIndex;
             StringBuilder builder = new();
             int parentheses = 0;
@@ -663,7 +647,7 @@ public sealed partial class UiMarkupGenerator
 
         private string ReadPrismDirective(out DirectiveExpressionLocation location)
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             int offset = characterIndex;
             StringBuilder directive = new();
             directive.Append(Read());
@@ -814,10 +798,10 @@ public sealed partial class UiMarkupGenerator
 
     private sealed partial class GenerationScope
     {
-        private void ReadPrismComposition(ResourceScope scope, XElement resource)
+        private void ReadPrismComposition(ResourceScope scope, MarkupElement resource)
         {
             string? name = RequiredName(resource);
-            XAttribute? nameAttribute = resource.Attribute("Name");
+            MarkupAttribute? nameAttribute = resource.Attribute("Name");
             if (name is null || nameAttribute is null)
             {
                 return;

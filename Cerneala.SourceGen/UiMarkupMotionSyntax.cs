@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Xml.Linq;
 
 namespace Cerneala.SourceGen;
 
@@ -17,7 +16,7 @@ public sealed partial class UiMarkupGenerator
 
     private abstract class MotionExecutionNode : DirectiveNode
     {
-        protected MotionExecutionNode(XObject source) : base(source)
+        protected MotionExecutionNode(MarkupObject source) : base(source)
         {
         }
     }
@@ -28,7 +27,7 @@ public sealed partial class UiMarkupGenerator
             string eventName,
             IReadOnlyList<MotionExecutionNode> body,
             DirectiveExpressionLocation location,
-            XObject source) : base(source)
+            MarkupObject source) : base(source)
         {
             EventName = eventName;
             Body = body;
@@ -48,7 +47,7 @@ public sealed partial class UiMarkupGenerator
             MotionSpecSyntax enter,
             MotionSpecSyntax exit,
             bool excludeInputWhileExiting,
-            XObject source) : base(source)
+            MarkupObject source) : base(source)
         {
             Enter = enter;
             Exit = exit;
@@ -64,7 +63,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class MotionLayoutNode : DirectiveNode
     {
-        public MotionLayoutNode(DirectiveSourceExpression id, MotionSpecSyntax spec, XObject source) : base(source)
+        public MotionLayoutNode(DirectiveSourceExpression id, MotionSpecSyntax spec, MarkupObject source) : base(source)
         {
             Id = id;
             Spec = spec;
@@ -88,7 +87,7 @@ public sealed partial class UiMarkupGenerator
             MotionScrollAxis axis,
             bool allowLayout,
             IReadOnlyList<MotionScrollAssignmentSyntax> assignments,
-            XObject source) : base(source)
+            MarkupObject source) : base(source)
         {
             SourceReference = sourceReference;
             Axis = axis;
@@ -124,7 +123,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class MotionDragNode : DirectiveNode
     {
-        public MotionDragNode(MotionSpecSyntax spec, XObject source) : base(source)
+        public MotionDragNode(MotionSpecSyntax spec, MarkupObject source) : base(source)
         {
             Spec = spec;
         }
@@ -134,7 +133,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class MotionGesturePressNode : DirectiveNode
     {
-        public MotionGesturePressNode(MotionSpecSyntax spec, XObject source) : base(source)
+        public MotionGesturePressNode(MotionSpecSyntax spec, MarkupObject source) : base(source)
         {
             Spec = spec;
         }
@@ -149,7 +148,7 @@ public sealed partial class UiMarkupGenerator
             IReadOnlyList<MotionOptionSyntax> options,
             IReadOnlyList<MotionAssignmentSyntax> from,
             IReadOnlyList<MotionAssignmentSyntax> to,
-            XObject source) : base(source)
+            MarkupObject source) : base(source)
         {
             DefaultSpec = defaultSpec;
             Options = options;
@@ -168,7 +167,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class MotionSetNode : MotionExecutionNode
     {
-        public MotionSetNode(IReadOnlyList<MotionAssignmentSyntax> assignments, XObject source) : base(source)
+        public MotionSetNode(IReadOnlyList<MotionAssignmentSyntax> assignments, MarkupObject source) : base(source)
         {
             Assignments = assignments;
         }
@@ -181,7 +180,7 @@ public sealed partial class UiMarkupGenerator
         public MotionKeyframesNode(
             MotionDurationSyntax duration,
             IReadOnlyList<MotionKeyframeSegmentSyntax> segments,
-            XObject source) : base(source)
+            MarkupObject source) : base(source)
         {
             Duration = duration;
             Segments = segments;
@@ -194,7 +193,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class MotionStaggerNode : MotionExecutionNode
     {
-        public MotionStaggerNode(string targetName, MotionDurationSyntax each, MotionAnimateNode animation, XObject source) : base(source)
+        public MotionStaggerNode(string targetName, MotionDurationSyntax each, MotionAnimateNode animation, MarkupObject source) : base(source)
         {
             TargetName = targetName;
             Each = each;
@@ -238,7 +237,7 @@ public sealed partial class UiMarkupGenerator
         public MotionCompositionNode(
             MotionCompositionKind kind,
             IReadOnlyList<MotionExecutionNode> children,
-            XObject source) : base(source)
+            MarkupObject source) : base(source)
         {
             Kind = kind;
             Children = children;
@@ -255,7 +254,7 @@ public sealed partial class UiMarkupGenerator
             string clipName,
             IReadOnlyList<MotionRunArgumentSyntax> arguments,
             string? handleName,
-            XObject source) : base(source)
+            MarkupObject source) : base(source)
         {
             ClipName = clipName;
             Arguments = arguments;
@@ -271,7 +270,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class MotionCancelNode : MotionExecutionNode
     {
-        public MotionCancelNode(string handleName, XObject source) : base(source)
+        public MotionCancelNode(string handleName, MarkupObject source) : base(source)
         {
             HandleName = handleName;
         }
@@ -281,7 +280,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class MotionHandleNode : DirectiveNode
     {
-        public MotionHandleNode(string name, XObject source) : base(source)
+        public MotionHandleNode(string name, MarkupObject source) : base(source)
         {
             Name = name;
         }
@@ -309,7 +308,7 @@ public sealed partial class UiMarkupGenerator
             string typeName,
             string? defaultValue,
             DirectiveExpressionLocation location,
-            XObject source) : base(source)
+            MarkupObject source) : base(source)
         {
             Name = name;
             TypeName = typeName;

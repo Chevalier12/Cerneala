@@ -5,6 +5,14 @@ generator resolves every source and target with Roslyn and emits typed getters,
 setters, and observation factories. Binding paths are not interpreted through
 reflection or `StringPropertyPath` at runtime.
 
+Binding syntax and symbol resolution are owned by the shared
+`Cerneala.Language` parser and semantic model. The source generator consumes the
+validated path segments, source symbols, target symbols, modes, and diagnostics;
+it does not maintain a second binding grammar. In editor analysis, incomplete
+syntax is recovered locally and dependent diagnostics are suppressed. A build is
+still strict and emits no source for an invalid document. This shared
+editor-agnostic model does not itself provide or promise an LSP service.
+
 ## View Model Contract
 
 A `$DataContext` binding requires `DataType` on the root element. Paired
@@ -127,6 +135,35 @@ attribute; they are not part of the binding expression.
 
 The implicit and explicit `OneWay` forms are equivalent. `TwoWay` requires an
 accessible source setter and a writable target UI property.
+
+## DataContext Scopes
+
+Assigning a direct binding to an element's `DataContext` creates a typed scope
+for that element and its descendants:
+
+```xml
+<ContentTemplate DataType="sample:PersonRow">
+  <StackPanel>
+    <TextBlock Text="$DataContext.Label" />
+    <Border DataContext="$DataContext.Details">
+      <TextBlock Text="$DataContext.Name" />
+    </Border>
+    <TextBlock Text="$DataContext.Label" />
+  </StackPanel>
+</ContentTemplate>
+```
+
+The `Border.DataContext` expression is validated against `PersonRow`. Inside
+the border, `$DataContext` is validated against the result type of `Details`.
+The following sibling is outside that scope and therefore uses `PersonRow`
+again. This works at any depth and does not require another `DataType`.
+
+The scope is reactive. If `PersonRow.Details` is replaced, the border receives
+the new data context and descendant bindings reconnect to it. If the visual
+root of a `ContentTemplate` declares `DataContext`, the generated template
+factory preserves that binding instead of overwriting it with the original
+item. Without an explicit root override, the item remains the template root's
+default data context.
 
 ## String Projection
 

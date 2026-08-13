@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -30,8 +29,7 @@ public sealed partial class UiMarkupGenerator
         MarkupSource file,
         Compilation compilation)
     {
-        ParsedDocument parsed = ParseDocument(file);
-        bool applicationDocument = parsed.Document?.Root.Name.LocalName == "Application";
+        bool applicationDocument = file.Document?.Root.Name.LocalName == "Application";
 
         SyntaxTree[] trees = compilation.SyntaxTrees
             .Where(tree => PathsEqual(tree.FilePath, file.Path + ".cs"))
@@ -78,7 +76,7 @@ public sealed partial class UiMarkupGenerator
 
         if (!applicationDocument)
         {
-            ReportApplicationDiagnostic(context, file, "A paired Application document must use <Application> as its root wrapper.", parsed.Document?.Root);
+            ReportApplicationDiagnostic(context, file, "A paired Application document must use <Application> as its root wrapper.", file.Document?.Root);
             return new ApplicationPairResolution(true, null);
         }
 
@@ -107,11 +105,16 @@ public sealed partial class UiMarkupGenerator
         MarkupSource file,
         string className,
         Compilation compilation,
-        INamedTypeSymbol application)
+        INamedTypeSymbol application,
+        SourceGeneratorSemanticModel semanticModel)
     {
-        ParsedDocument parsed = ParseDocument(file);
-        XElement root = parsed.Document!.Root;
-        XAttribute? startupAttribute = root.Attribute("StartupWindow");
+        if (!TryGetEmissionDocument(context, file, semanticModel, out EmissionMarkupDocument document))
+        {
+            return null;
+        }
+
+        MarkupElement root = document.Root;
+        MarkupAttribute? startupAttribute = root.Attribute("StartupWindow");
         if (startupAttribute is null || string.IsNullOrWhiteSpace(startupAttribute.Value))
         {
             ReportApplicationStartupDiagnostic(context, file, root, "StartupWindow is required.");
@@ -172,14 +175,14 @@ public sealed partial class UiMarkupGenerator
             return null;
         }
 
-        foreach (XAttribute attribute in root.Attributes().Where(attribute =>
+        foreach (MarkupAttribute attribute in root.Attributes().Where(attribute =>
             attribute.Name.LocalName is not "StartupWindow" and not "ShutdownMode"))
         {
             ReportApplicationDiagnostic(context, file, $"Attribute '{attribute.Name.LocalName}' is not valid on Application.", attribute);
             return null;
         }
 
-        XElement? illegalChild = root.Elements()
+        MarkupElement? illegalChild = root.Elements()
             .FirstOrDefault(element => element.Name.LocalName != "Application.Resources");
         if (illegalChild is not null)
         {
@@ -187,26 +190,18 @@ public sealed partial class UiMarkupGenerator
             return null;
         }
 
-        if (root.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+        if (root.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
         {
             ReportApplicationDiagnostic(context, file, "Application does not accept directives or raw text content.", root);
             return null;
         }
 
-        XElement? motionClip = root.Element("Application.Resources")?
-            .Elements()
-            .FirstOrDefault(element => element.Name.LocalName == "MotionClip");
-        if (motionClip is not null)
+        GenerationScope scope = new(context, file, document, compilation, dataType: null, semanticModel);
+        if (scope.HasErrors)
         {
-            ReportApplicationDiagnostic(
-                context,
-                file,
-                "MotionClip is not valid in Application.Resources because Application has no visual namescope.",
-                motionClip);
             return null;
         }
 
-        GenerationScope scope = new(context, file, parsed.Document!, compilation, dataType: null);
         scope.EmitApplicationResources();
         if (scope.HasErrors)
         {
@@ -241,7 +236,7 @@ public sealed partial class UiMarkupGenerator
             source.Append("        ").AppendLine(line);
         }
 
-        if (root.Attribute("ShutdownMode") is XAttribute shutdown)
+        if (root.Attribute("ShutdownMode") is MarkupAttribute shutdown)
         {
             string[] validModes = ["OnLastWindowClose", "OnMainWindowClose", "OnExplicitShutdown"];
             string? mode = validModes.FirstOrDefault(candidate =>

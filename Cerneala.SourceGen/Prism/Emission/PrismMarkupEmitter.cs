@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Xml.Linq;
 using Cerneala.SourceGen.Prism;
 
 namespace Cerneala.SourceGen;
@@ -17,7 +16,7 @@ public sealed partial class UiMarkupGenerator
 
         public List<string> PrismDeclarationLines { get; } = new();
 
-        private void EmitPrismApplication(XElement element, string elementVariable)
+        private void EmitPrismApplication(MarkupElement element, string elementVariable)
         {
             if (!boundPrismApplications.TryGetValue(element, out BoundPrismApplication application))
             {

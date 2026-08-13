@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace Cerneala.SourceGen;
@@ -135,7 +134,7 @@ public sealed partial class UiMarkupGenerator
             public string? ValueGuard { get; }
         }
 
-        private DirectiveParseResult GetDirectiveContent(XElement element, DirectiveContentKind allowedContent)
+        private DirectiveParseResult GetDirectiveContent(MarkupElement element, DirectiveContentKind allowedContent)
         {
             if (!directiveContent.TryGetValue(element, out DirectiveParseResult? parsed))
             {
@@ -147,7 +146,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private void EmitReactiveContent(
-            XElement element,
+            MarkupElement element,
             string variable,
             DirectiveParseResult parsed,
             IReadOnlyList<AspectResource> aspects,
@@ -607,7 +606,7 @@ public sealed partial class UiMarkupGenerator
         private ObservationEmission? EmitObservation(
             ReactivePlan plan,
             string expression,
-            XObject source,
+            MarkupObject source,
             object diagnosticSource)
         {
             BindingResolutionContext resolutionContext = new(
@@ -740,7 +739,7 @@ public sealed partial class UiMarkupGenerator
             string propertyName,
             string rawValue,
             PropertySpec spec,
-            XObject source)
+            MarkupObject source)
         {
             string value = rawValue.Trim();
             if (value.StartsWith("$", StringComparison.Ordinal))
@@ -758,7 +757,7 @@ public sealed partial class UiMarkupGenerator
                 value = UnescapeMarkupDollar(value);
             }
 
-            XAttribute synthetic = new(propertyName, value);
+            MarkupAttribute synthetic = new(propertyName, value);
             return ParseLiteralValue(planElementName ?? "value", propertyName, synthetic, value, spec);
         }
 

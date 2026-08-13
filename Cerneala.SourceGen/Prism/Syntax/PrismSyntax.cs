@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace Cerneala.SourceGen;
@@ -205,7 +204,7 @@ public sealed partial class UiMarkupGenerator
             string name,
             DirectiveExpressionLocation nameLocation,
             PrismContainerSyntax composition,
-            XElement source,
+            MarkupElement source,
             DirectiveExpressionLocation location) : base(location)
         {
             Name = name;
@@ -220,7 +219,7 @@ public sealed partial class UiMarkupGenerator
 
         public PrismContainerSyntax Composition { get; }
 
-        public XElement Source { get; }
+        public MarkupElement Source { get; }
     }
 
     private sealed class PrismSyntaxDiagnostic

@@ -46,7 +46,15 @@ For a file named `typed-view.cui.xml`, the generated type name is `TypedViewFact
 
 ## Remarks
 
-`UiMarkupGenerator` reads compiler additional text files whose paths end with `.cui.xml`, ignoring case. Each markup file is parsed as XML and emitted as one generated static partial factory class under the `Cerneala.GeneratedUi` namespace.
+`UiMarkupGenerator` reads compiler additional text files whose paths end with `.cui.xml`, ignoring case. It creates a `Cerneala.Language` document, uses the shared tolerant syntax tree and semantic model in strict `Build` mode, and emits one generated static partial factory class under the `Cerneala.GeneratedUi` namespace only after validation succeeds.
+
+The shared language layer owns lossless parsing, recovery, source spans, binding,
+resource, template, Aspect, Motion, and Prism semantics, plus the host-agnostic
+`CERNEALAUI*` diagnostics. The generator owns incremental Roslyn orchestration,
+converts common diagnostics to Roslyn diagnostics, and lowers validated semantic
+results to C#. Recovery support is available to editor-agnostic consumers, but it
+does not make incomplete saved markup valid at build and does not itself expose an
+LSP service.
 
 Generated factories contain:
 
@@ -205,7 +213,8 @@ The generator reports diagnostics instead of emitting source when markup cannot 
 | `CERNEALAUI004` | The markup contains an invalid value for a supported property. |
 | `CERNEALAUI007` | A binding or reactive source has invalid syntax, scope, mode, type, accessibility, observability, or writability. |
 
-Diagnostics are created with locations from XML line information when it is available.
+Diagnostics use exact source spans from the shared syntax and semantic model and
+are converted to Roslyn source locations by the generator host adapter.
 
 ## Constructors
 

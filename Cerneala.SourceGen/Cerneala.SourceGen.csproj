@@ -16,8 +16,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Cerneala.Language\Cerneala.Language.csproj"
+                      PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="Prism\Catalog\prism-catalog.json"
                       LogicalName="Cerneala.SourceGen.Prism.prism-catalog.json" />
   </ItemGroup>
+
+  <Target Name="IncludeLanguageAnalyzerDependency" AfterTargets="GetTargetPath">
+    <ItemGroup>
+      <TargetPathWithTargetPlatformMoniker
+        Include="$(TargetDir)Cerneala.Language.dll"
+        IncludeRuntimeDependency="false" />
+    </ItemGroup>
+  </Target>
 
 </Project>

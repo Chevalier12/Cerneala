@@ -1,0 +1,112 @@
+[
+  {
+    "Id": "CERNEALAUI001",
+    "Severity": "Error",
+    "Message": "Markup file \u0027xml-less-than.cui.xml\u0027 could not be parsed: Markup must contain exactly one UI root element.",
+    "Path": "xml-less-than.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 0,
+    "EndLine": 0,
+    "EndCharacter": 1
+  },
+  {
+    "Id": "CERNEALAUI001",
+    "Severity": "Error",
+    "Message": "Markup file \u0027xml-element-name.cui.xml\u0027 could not be parsed: The opening tag is missing \u0027\u003E\u0027.",
+    "Path": "xml-element-name.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 6,
+    "EndLine": 0,
+    "EndCharacter": 6
+  },
+  {
+    "Id": "CERNEALAUI001",
+    "Severity": "Error",
+    "Message": "Markup file \u0027xml-attribute.cui.xml\u0027 could not be parsed: Attribute \u0027Te\u0027 requires \u0027=\u0027.",
+    "Path": "xml-attribute.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 25,
+    "EndLine": 0,
+    "EndCharacter": 25
+  },
+  {
+    "Id": "CERNEALAUI001",
+    "Severity": "Error",
+    "Message": "Markup file \u0027xml-quote.cui.xml\u0027 could not be parsed: Attribute \u0027Text\u0027 has an unterminated quote.",
+    "Path": "xml-quote.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 28,
+    "EndLine": 0,
+    "EndCharacter": 78
+  },
+  {
+    "Id": "CERNEALAUI001",
+    "Severity": "Error",
+    "Message": "Markup file \u0027xml-property-element.cui.xml\u0027 could not be parsed: The closing tag is missing \u0027\u003E\u0027.",
+    "Path": "xml-property-element.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 75,
+    "EndLine": 0,
+    "EndCharacter": 75
+  },
+  {
+    "Id": "CERNEALAUI001",
+    "Severity": "Error",
+    "Message": "Markup file \u0027binding-incomplete.cui.xml\u0027 could not be parsed: Attribute \u0027Text\u0027 has an unterminated quote.",
+    "Path": "binding-incomplete.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 28,
+    "EndLine": 0,
+    "EndCharacter": 82
+  },
+  {
+    "Id": "CERNEALAUI001",
+    "Severity": "Error",
+    "Message": "Markup file \u0027directive-body.cui.xml\u0027 could not be parsed: The closing tag is missing \u0027\u003E\u0027.",
+    "Path": "directive-body.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 78,
+    "EndLine": 0,
+    "EndCharacter": 78
+  },
+  {
+    "Id": "CERNEALAUI001",
+    "Severity": "Error",
+    "Message": "Markup file \u0027motion-body.cui.xml\u0027 could not be parsed: The closing tag is missing \u0027\u003E\u0027.",
+    "Path": "motion-body.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 180,
+    "EndLine": 0,
+    "EndCharacter": 180
+  },
+  {
+    "Id": "PRISM1002",
+    "Severity": "Error",
+    "Message": "Prism markup in \u0027prism-body.cui.xml\u0027 is invalid: @prism is missing its closing \u0027}\u0027.",
+    "Path": "prism-body.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 12,
+    "EndLine": 0,
+    "EndCharacter": 18
+  },
+  {
+    "Id": "PRISM1003",
+    "Severity": "Error",
+    "Message": "Prism markup in \u0027prism-body.cui.xml\u0027 is invalid: Prism layer requires a name.",
+    "Path": "prism-body.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 28,
+    "EndLine": 0,
+    "EndCharacter": 29
+  },
+  {
+    "Id": "CERNEALAUI001",
+    "Severity": "Error",
+    "Message": "Markup file \u0027prism-body.cui.xml\u0027 could not be parsed: The closing tag is missing \u0027\u003E\u0027.",
+    "Path": "prism-body.cui.xml",
+    "StartLine": 0,
+    "StartCharacter": 95,
+    "EndLine": 0,
+    "EndCharacter": 95
+  }
+]

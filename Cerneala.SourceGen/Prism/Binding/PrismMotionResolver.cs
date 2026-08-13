@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Xml.Linq;
 using Cerneala.SourceGen.Prism;
 using Microsoft.CodeAnalysis;
 
@@ -10,29 +9,9 @@ namespace Cerneala.SourceGen;
 
 public sealed partial class UiMarkupGenerator
 {
-    private static readonly DiagnosticDescriptor PrismMotionTargetDiagnostic = new(
-        "PRISM2010",
-        "Invalid Prism Motion target",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismMotionNodeDiagnostic = new(
-        "PRISM2011",
-        "Unknown Prism Motion node",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismMotionPropertyDiagnostic = new(
-        "PRISM2012",
-        "Unknown Prism Motion property",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
+    private static readonly DiagnosticDescriptor PrismMotionTargetDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2010");
+    private static readonly DiagnosticDescriptor PrismMotionNodeDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2011");
+    private static readonly DiagnosticDescriptor PrismMotionPropertyDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2012");
 
     private sealed partial class GenerationScope
     {
@@ -120,7 +99,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolvePrismMotionTarget(
-            XElement applicationElement,
+            MarkupElement applicationElement,
             AspectResource aspect,
             MotionAssignmentSyntax assignment,
             out ResolvedMotionTarget? target,
@@ -145,7 +124,7 @@ public sealed partial class UiMarkupGenerator
                     assignment,
                     segments[0],
                     out ResolvedMotionTargetKind targetKind,
-                    out XElement? targetElement,
+                    out MarkupElement? targetElement,
                     out string? ownerName,
                     out string? elementCode))
             {
@@ -261,12 +240,12 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolvePrismMotionOwner(
-            XElement applicationElement,
+            MarkupElement applicationElement,
             AspectResource aspect,
             MotionAssignmentSyntax assignment,
             string ownerSegment,
             out ResolvedMotionTargetKind targetKind,
-            out XElement? targetElement,
+            out MarkupElement? targetElement,
             out string? ownerName,
             out string? elementCode)
         {

@@ -41,3 +41,25 @@ The integration and budget reference is in
 [results/2026-07-21-prism-integration-hardening.md](results/2026-07-21-prism-integration-hardening.md).
 The earlier retained-cache-only baseline remains in
 [results/2026-07-21-prism-retained-cache.md](results/2026-07-21-prism-retained-cache.md).
+
+## Cerneala language core
+
+Run the deterministic language performance gate from the repository root:
+
+```powershell
+dotnet run -c Release --project .\benchmarks\Cerneala.Benchmarks\Cerneala.Benchmarks.csproj -- --language-core-gate
+```
+
+The gate measures cold and warm parse, a local incremental edit, semantic bind,
+and a warm symbol query for small, medium, and `AspectChapterView.cui.xml`
+documents. It reports p95, maximum latency, and managed bytes per operation. The
+large-document budgets are below 50 ms for parse/edit and below 25 ms for a warm
+semantic query; every measured synchronous operation must remain below 100 ms.
+The approved hardware baseline and allocation review are recorded in
+[results/2026-08-13-language-core.md](results/2026-08-13-language-core.md).
+
+For a full BenchmarkDotNet profile with allocation statistics:
+
+```powershell
+dotnet run -c Release --project .\benchmarks\Cerneala.Benchmarks\Cerneala.Benchmarks.csproj -- --filter "*CernealaLanguageBenchmarks*"
+```

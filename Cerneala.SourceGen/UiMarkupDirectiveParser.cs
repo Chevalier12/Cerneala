@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 namespace Cerneala.SourceGen;
 
@@ -31,27 +30,27 @@ public sealed partial class UiMarkupGenerator
 
     private abstract class DirectiveNode
     {
-        protected DirectiveNode(XObject source)
+        protected DirectiveNode(MarkupObject source)
         {
             Source = source;
         }
 
-        public XObject Source { get; }
+        public MarkupObject Source { get; }
     }
 
     private sealed class DirectiveElementNode : DirectiveNode
     {
-        public DirectiveElementNode(XElement element) : base(element)
+        public DirectiveElementNode(MarkupElement element) : base(element)
         {
             Element = element;
         }
 
-        public XElement Element { get; }
+        public MarkupElement Element { get; }
     }
 
     private sealed class DirectiveTextNode : DirectiveNode
     {
-        public DirectiveTextNode(string text, XObject source) : base(source)
+        public DirectiveTextNode(string text, MarkupObject source) : base(source)
         {
             Text = text;
         }
@@ -64,7 +63,7 @@ public sealed partial class UiMarkupGenerator
         public DirectiveAssignmentNode(
             string propertyName,
             string value,
-            XObject source,
+            MarkupObject source,
             DirectiveExpressionLocation propertyLocation,
             DirectiveExpressionLocation valueLocation) : base(source)
         {
@@ -85,7 +84,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class DirectivePrismNode : DirectiveNode
     {
-        public DirectivePrismNode(PrismApplicationSyntax application, XObject source) : base(source)
+        public DirectivePrismNode(PrismApplicationSyntax application, MarkupObject source) : base(source)
         {
             Application = application;
         }
@@ -95,7 +94,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class DirectiveDefaultNode : DirectiveNode
     {
-        public DirectiveDefaultNode(IReadOnlyList<DirectiveNode> body, XObject source) : base(source)
+        public DirectiveDefaultNode(IReadOnlyList<DirectiveNode> body, MarkupObject source) : base(source)
         {
             Body = body;
         }
@@ -105,24 +104,24 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class DirectiveTemplateNode : DirectiveNode
     {
-        public DirectiveTemplateNode(XElement root, XObject source) : base(source)
+        public DirectiveTemplateNode(MarkupElement root, MarkupObject source) : base(source)
         {
             Root = root;
         }
 
-        public XElement Root { get; }
+        public MarkupElement Root { get; }
     }
 
     private sealed class DirectiveExpressionLocation
     {
-        public DirectiveExpressionLocation(XObject source, int offset, int length = 1)
+        public DirectiveExpressionLocation(MarkupObject source, int offset, int length = 1)
         {
             Source = source;
             Offset = offset;
             Length = length;
         }
 
-        public XObject Source { get; }
+        public MarkupObject Source { get; }
 
         public int Offset { get; }
 
@@ -228,7 +227,7 @@ public sealed partial class UiMarkupGenerator
             DirectiveExpression expression,
             IReadOnlyList<DirectiveIfNode> branches,
             IReadOnlyList<DirectiveNode>? booleanBody,
-            XObject source) : base(source)
+            MarkupObject source) : base(source)
         {
             Expression = expression;
             Branches = branches;
@@ -244,7 +243,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class DirectiveIfNode : DirectiveNode
     {
-        public DirectiveIfNode(DirectiveExpression expression, IReadOnlyList<DirectiveNode> body, XObject source) : base(source)
+        public DirectiveIfNode(DirectiveExpression expression, IReadOnlyList<DirectiveNode> body, MarkupObject source) : base(source)
         {
             Expression = expression;
             Body = body;
@@ -285,7 +284,7 @@ public sealed partial class UiMarkupGenerator
         }
     }
 
-    private static DirectiveParseResult ParseDirectiveContent(XElement element, DirectiveContentKind allowedContent)
+    private static DirectiveParseResult ParseDirectiveContent(MarkupElement element, DirectiveContentKind allowedContent)
     {
         DirectiveCursor cursor = new(element.Nodes());
         try
@@ -313,12 +312,12 @@ public sealed partial class UiMarkupGenerator
         private int segmentIndex;
         private int characterIndex;
 
-        public DirectiveCursor(IEnumerable<XNode> nodes)
+        public DirectiveCursor(IEnumerable<MarkupNode> nodes)
         {
             segments = nodes.Select(node => node switch
             {
-                XText text => new Segment(text.Value, null, text),
-                XElement element => new Segment(null, element, element),
+                MarkupText text => new Segment(text.Value, null, text),
+                MarkupElement element => new Segment(null, element, element),
                 _ => new Segment(string.Empty, null, node)
             }).ToArray();
         }
@@ -339,9 +338,9 @@ public sealed partial class UiMarkupGenerator
                     return nodes;
                 }
 
-                if (CurrentElement is XElement element)
+                if (CurrentElement is MarkupElement element)
                 {
-                    XObject source = CurrentSource;
+                    MarkupObject source = CurrentSource;
                     AdvanceSegment();
                     if (!Allows(allowedContent, DirectiveContentKind.Elements))
                     {
@@ -610,7 +609,7 @@ public sealed partial class UiMarkupGenerator
 
         private DirectiveWhenNode ParseWhen(DirectiveContentKind allowedContent)
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@when");
             DirectiveExpression expression = ParseExpression(ReadHeaderUntilBrace());
 
@@ -671,7 +670,7 @@ public sealed partial class UiMarkupGenerator
 
         private DirectiveIfNode ParseIf(DirectiveContentKind allowedContent)
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@if");
             DirectiveExpression expression = ParseExpression(ReadHeaderUntilBrace());
             IReadOnlyList<DirectiveNode> body = ParseNodes(stopAtClosingBrace: true, allowedContent);
@@ -686,7 +685,7 @@ public sealed partial class UiMarkupGenerator
 
         private DirectiveOnNode ParseOn()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@on");
             DirectiveHeader header = ReadHeaderUntilBrace();
             string eventName = header.Text.Trim();
@@ -715,7 +714,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionPresenceNode ParsePresence()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@presence");
             DirectiveHeader header = ReadHeaderUntilBrace();
             if (!string.IsNullOrWhiteSpace(header.Text))
@@ -789,7 +788,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionLayoutNode ParseLayout()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@layout");
             SkipWhitespace();
             int statementOffset = characterIndex;
@@ -830,7 +829,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionScrollNode ParseScroll()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@scroll");
             DirectiveHeader header = ReadHeaderUntilBrace();
             Match match = Regex.Match(
@@ -899,7 +898,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionDragNode ParseDrag()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@drag");
             SkipWhitespace();
             int statementOffset = characterIndex;
@@ -937,7 +936,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionGesturePressNode ParseGesture()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@gesture");
             SkipWhitespace();
             int statementOffset = characterIndex;
@@ -967,7 +966,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionCompositionNode ParseMotionComposition(string directive, MotionCompositionKind kind)
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume(directive);
             DirectiveHeader header = ReadHeaderUntilBrace();
             if (!string.IsNullOrWhiteSpace(header.Text))
@@ -998,7 +997,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionRunNode ParseMotionRun()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@run");
             SkipWhitespace();
             int statementOffset = characterIndex;
@@ -1053,7 +1052,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionCancelNode ParseMotionCancel()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@cancel");
             SkipWhitespace();
             string handleName = ReadMotionStatement().Trim();
@@ -1067,7 +1066,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionHandleNode ParseMotionHandle()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@handle");
             SkipWhitespace();
             string name = ReadMotionStatement().Trim();
@@ -1081,7 +1080,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionParameterNode ParseMotionParameter()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@parameter");
             SkipWhitespace();
             int statementOffset = characterIndex;
@@ -1105,7 +1104,7 @@ public sealed partial class UiMarkupGenerator
         private static void ValidateExplicitMotionComposition(
             IReadOnlyList<DirectiveNode> nodes,
             string owner,
-            XObject source)
+            MarkupObject source)
         {
             if (nodes.OfType<MotionExecutionNode>().Skip(1).Any())
             {
@@ -1117,7 +1116,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionAnimateNode ParseAnimate()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@animate");
             DirectiveHeader header = ReadHeaderUntilBrace();
             if (string.Equals(header.Text.Trim(), "hold", StringComparison.Ordinal))
@@ -1136,7 +1135,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionSetNode ParseMotionSet()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             IReadOnlyList<MotionAssignmentSyntax> assignments = ParseMotionAssignmentBlock("@set");
             MotionAssignmentSyntax? invalid = assignments.FirstOrDefault(assignment =>
                 assignment.Spec is not null || assignment.Value is MotionCurrentValueSyntax);
@@ -1150,7 +1149,7 @@ public sealed partial class UiMarkupGenerator
             return new MotionSetNode(assignments, source);
         }
 
-        private MotionAnimateNode ParseAnimateBody(XObject source, MotionSpecSyntax? defaultSpec)
+        private MotionAnimateNode ParseAnimateBody(MarkupObject source, MotionSpecSyntax? defaultSpec)
         {
             List<MotionOptionSyntax> options = [];
             IReadOnlyList<MotionAssignmentSyntax>? from = null;
@@ -1220,7 +1219,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionKeyframesNode ParseKeyframes()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@keyframes");
             DirectiveHeader header = ReadHeaderUntilBrace();
             string text = header.Text.Trim();
@@ -1261,7 +1260,7 @@ public sealed partial class UiMarkupGenerator
                     throw Error("@keyframes accepts only ranged @animate children; nested groups are not allowed.");
                 }
 
-                XObject animationSource = CurrentSource;
+                MarkupObject animationSource = CurrentSource;
                 Consume("@animate");
                 DirectiveHeader animationHeader = ReadHeaderUntilBrace();
                 ParseKeyframeRangeHeader(animationHeader, out float start, out float end, out bool hold, out MotionSpecSyntax? spec);
@@ -1278,7 +1277,7 @@ public sealed partial class UiMarkupGenerator
 
         private MotionStaggerNode ParseStagger()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@stagger");
             DirectiveHeader header = ReadHeaderUntilBrace();
             string[] parts = header.Text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
@@ -1301,7 +1300,7 @@ public sealed partial class UiMarkupGenerator
                 throw new DirectiveParseException("@stagger requires exactly one Tween @animate child.", source);
             }
 
-            XObject animationSource = CurrentSource;
+            MarkupObject animationSource = CurrentSource;
             Consume("@animate");
             DirectiveHeader animationHeader = ReadHeaderUntilBrace();
             MotionSpecSyntax? spec = ParseAnimateSpec(animationHeader);
@@ -1393,7 +1392,7 @@ public sealed partial class UiMarkupGenerator
         {
             Consume(directive);
             SkipWhitespace();
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             if (AtEnd || CurrentElement is not null || Read() != '{')
             {
                 throw new DirectiveParseException(directive + " must be followed by a block.", source);
@@ -1424,7 +1423,7 @@ public sealed partial class UiMarkupGenerator
                     return assignments;
                 }
 
-                XObject assignmentSource = CurrentSource;
+                MarkupObject assignmentSource = CurrentSource;
                 int assignmentOffset = characterIndex;
                 string target = ReadMotionTarget();
                 SkipWhitespace();
@@ -1434,7 +1433,7 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 SkipWhitespace();
-                XObject valueSource = CurrentSource;
+                MarkupObject valueSource = CurrentSource;
                 int valueOffset = characterIndex;
                 string statement = ReadMotionStatement();
                 DirectiveExpressionLocation valueLocation = new(valueSource, valueOffset, Math.Max(1, statement.Length));
@@ -1449,7 +1448,7 @@ public sealed partial class UiMarkupGenerator
 
         private DirectiveDefaultNode ParseDefault(DirectiveContentKind allowedContent)
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@default");
             SkipWhitespace();
             if (Read() != '{')
@@ -1467,7 +1466,7 @@ public sealed partial class UiMarkupGenerator
 
         private DirectiveTemplateNode ParseTemplate()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             Consume("@template");
             SkipWhitespace();
             if (Read() != '{')
@@ -1490,7 +1489,7 @@ public sealed partial class UiMarkupGenerator
         private DirectiveAssignmentNode ParseAssignment()
         {
             SkipWhitespace();
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             int propertyOffset = characterIndex;
             string propertyName = ReadIdentifier();
             SkipWhitespace();
@@ -1500,7 +1499,7 @@ public sealed partial class UiMarkupGenerator
             }
 
             SkipWhitespace();
-            XObject valueSource = CurrentSource;
+            MarkupObject valueSource = CurrentSource;
             int valueOffset = characterIndex;
             StringBuilder value = new();
             bool quoted = false;
@@ -1558,7 +1557,7 @@ public sealed partial class UiMarkupGenerator
 
         private DirectiveTextNode? ParseText(bool stopAtClosingBrace)
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             StringBuilder builder = new();
             while (!AtEnd && CurrentElement is null)
             {
@@ -1675,7 +1674,7 @@ public sealed partial class UiMarkupGenerator
 
         private string ReadMotionStatement()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             StringBuilder builder = new();
             int parentheses = 0;
             bool quoted = false;
@@ -2086,7 +2085,7 @@ public sealed partial class UiMarkupGenerator
 
         private DirectiveHeader ReadHeaderUntilBrace()
         {
-            XObject source = CurrentSource;
+            MarkupObject source = CurrentSource;
             int offset = characterIndex;
             StringBuilder builder = new();
             bool quoted = false;
@@ -2250,13 +2249,13 @@ public sealed partial class UiMarkupGenerator
 
         private string? CurrentText => AtEnd ? null : segments[segmentIndex].Text;
 
-        private XElement? CurrentElement => AtEnd ? null : segments[segmentIndex].Element;
+        private MarkupElement? CurrentElement => AtEnd ? null : segments[segmentIndex].Element;
 
-        private XObject CurrentSource => segments[segmentIndex].Source;
+        private MarkupObject CurrentSource => segments[segmentIndex].Source;
 
         private sealed class Segment
         {
-            public Segment(string? text, XElement? element, XObject source)
+            public Segment(string? text, MarkupElement? element, MarkupObject source)
             {
                 Text = text;
                 Element = element;
@@ -2265,14 +2264,14 @@ public sealed partial class UiMarkupGenerator
 
             public string? Text { get; }
 
-            public XElement? Element { get; }
+            public MarkupElement? Element { get; }
 
-            public XObject Source { get; }
+            public MarkupObject Source { get; }
         }
 
         private sealed class DirectiveHeader
         {
-            public DirectiveHeader(string text, XObject source, int offset)
+            public DirectiveHeader(string text, MarkupObject source, int offset)
             {
                 Text = text;
                 Source = source;
@@ -2281,7 +2280,7 @@ public sealed partial class UiMarkupGenerator
 
             public string Text { get; }
 
-            public XObject Source { get; }
+            public MarkupObject Source { get; }
 
             public int Offset { get; }
         }

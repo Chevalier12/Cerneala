@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -31,8 +30,7 @@ public sealed partial class UiMarkupGenerator
         MarkupSource file,
         Compilation compilation)
     {
-        bool windowDocument = file.Text is not null &&
-            ParseDocument(file).Document?.Root.Name.LocalName == "Window";
+        bool windowDocument = file.Document?.Root.Name.LocalName == "Window";
         string companionPath = file.Path + ".cs";
         SyntaxTree[] matchingTrees = compilation.SyntaxTrees
             .Where(tree => PathsEqual(tree.FilePath, companionPath))
@@ -151,28 +149,25 @@ public sealed partial class UiMarkupGenerator
         Compilation compilation,
         UserControlPair pair,
         bool generateStartup,
-        GenerationScope.ApplicationResourceCatalog? applicationResources)
+        GenerationScope.ApplicationResourceCatalog? applicationResources,
+        SourceGeneratorSemanticModel semanticModel)
     {
         if (file.Text is null)
         {
             return;
         }
 
-        ParsedDocument parsed = ParseDocument(file);
-        if (parsed.Diagnostic is not null)
+        if (!TryGetEmissionDocument(context, file, semanticModel, out EmissionMarkupDocument document))
         {
-            context.ReportDiagnostic(parsed.Diagnostic);
             return;
         }
-
-        MarkupDocument document = parsed.Document!;
         if (!string.Equals(document.Root.Name.LocalName, "Window", StringComparison.Ordinal))
         {
             ReportWindowDiagnostic(context, file, "A paired Window document must use <Window> as its root wrapper.", document.Root);
             return;
         }
 
-        XAttribute? nestedDataType = document.Root.Descendants()
+        MarkupAttribute? nestedDataType = document.Root.Descendants()
             .Where(element => element.Name.LocalName != "ContentTemplate")
             .Select(element => element.Attribute("DataType"))
             .FirstOrDefault(attribute => attribute is not null);
@@ -210,8 +205,14 @@ public sealed partial class UiMarkupGenerator
             document,
             compilation,
             dataType,
+            semanticModel,
             pair,
             applicationResources);
+        if (scope.HasErrors)
+        {
+            return;
+        }
+
         string? rootVariable = scope.EmitWindowRoot(document.Root);
         if (scope.HasErrors)
         {
@@ -443,7 +444,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed partial class GenerationScope
     {
-        public string? EmitWindowRoot(XElement root)
+        public string? EmitWindowRoot(MarkupElement root)
         {
             EmitRuntimeResources(root, "this");
             DirectiveParseResult parsed = GetDirectiveContent(
@@ -490,7 +491,7 @@ public sealed partial class UiMarkupGenerator
                 EmitDirectTemplate(root, "this", templates[0], ownerIsRoot: true);
             }
 
-            foreach (XAttribute attribute in root.Attributes().Where(attribute =>
+            foreach (MarkupAttribute attribute in root.Attributes().Where(attribute =>
                 !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name" and not "DataType"))
             {
                 if (!TryEmitEventAttribute(root, "this", attribute, userControlPair!.TypeSymbol))

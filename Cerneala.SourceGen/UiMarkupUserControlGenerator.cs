@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -162,28 +161,25 @@ public sealed partial class UiMarkupGenerator
         string className,
         Compilation compilation,
         UserControlPair pair,
-        GenerationScope.ApplicationResourceCatalog? applicationResources)
+        GenerationScope.ApplicationResourceCatalog? applicationResources,
+        SourceGeneratorSemanticModel semanticModel)
     {
         if (file.Text is null)
         {
             return;
         }
 
-        ParsedDocument parsed = ParseDocument(file);
-        if (parsed.Diagnostic is not null)
+        if (!TryGetEmissionDocument(context, file, semanticModel, out EmissionMarkupDocument document))
         {
-            context.ReportDiagnostic(parsed.Diagnostic);
             return;
         }
-
-        MarkupDocument document = parsed.Document!;
         if (!string.Equals(document.Root.Name.LocalName, "UserControl", StringComparison.Ordinal))
         {
             ReportUserControlDiagnostic(context, file, "A paired markup document must use <UserControl> as its root wrapper.", document.Root);
             return;
         }
 
-        XAttribute? nestedDataType = document.Root.Descendants()
+        MarkupAttribute? nestedDataType = document.Root.Descendants()
             .Where(element => element.Name.LocalName != "ContentTemplate")
             .Select(element => element.Attribute("DataType"))
             .FirstOrDefault(attribute => attribute is not null);
@@ -221,8 +217,14 @@ public sealed partial class UiMarkupGenerator
             document,
             compilation,
             dataType,
+            semanticModel,
             pair,
             applicationResources);
+        if (scope.HasErrors)
+        {
+            return;
+        }
+
         string? rootVariable = scope.EmitUserControlRoot(document.Root);
         if (scope.HasErrors)
         {
@@ -381,7 +383,7 @@ public sealed partial class UiMarkupGenerator
             public string CacheMemberName { get; }
         }
 
-        public string? EmitUserControlRoot(XElement root)
+        public string? EmitUserControlRoot(MarkupElement root)
         {
             EmitRuntimeResources(root, "this");
             DirectiveParseResult parsed = GetDirectiveContent(
@@ -435,7 +437,7 @@ public sealed partial class UiMarkupGenerator
 
             IReadOnlyList<AspectResource> aspects = ResolveAspects(root);
             ApplyAspects(root, "this", aspects);
-            foreach (XAttribute attribute in root.Attributes().Where(attribute =>
+            foreach (MarkupAttribute attribute in root.Attributes().Where(attribute =>
                 !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name" and not "DataType"))
             {
                 if (!TryEmitEventAttribute(root, "this", attribute, userControlPair!.TypeSymbol))
@@ -571,9 +573,9 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryEmitEventAttribute(
-            XElement element,
+            MarkupElement element,
             string variable,
-            XAttribute attribute,
+            MarkupAttribute attribute,
             INamedTypeSymbol? explicitType = null)
         {
             if (userControlPair is null)
@@ -672,7 +674,7 @@ public sealed partial class UiMarkupGenerator
             return true;
         }
 
-        private void RegisterNamedElement(string markupName, string memberName, string typeCode, XElement source)
+        private void RegisterNamedElement(string markupName, string memberName, string typeCode, MarkupElement source)
         {
             if (userControlPair!.TypeSymbol.GetMembers(memberName).Length > 0)
             {

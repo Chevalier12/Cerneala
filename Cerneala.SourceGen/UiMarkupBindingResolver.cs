@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace Cerneala.SourceGen;
@@ -497,7 +496,7 @@ public sealed partial class UiMarkupGenerator
             BindingResolutionContext resolutionContext,
             PropertySpec target,
             ParsedMarkupValue parsed,
-            XObject source,
+            MarkupObject source,
             object diagnosticSource)
         {
             if (parsed.Kind == ParsedMarkupValueKind.Invalid)
@@ -572,6 +571,8 @@ public sealed partial class UiMarkupGenerator
 
             bool sameType = SymbolEqualityComparer.Default.Equals(source.ValueType, target.ValueType);
             bool stringProjection = target.ValueType.SpecialType == SpecialType.System_String && mode == MarkupBindingMode.OneWay;
+            bool dataContextAssignment = target.Name == "DataContext" &&
+                target.ValueType.SpecialType == SpecialType.System_Object;
             if (!sameType && target.ValueType.SpecialType == SpecialType.System_String && mode == MarkupBindingMode.TwoWay)
             {
                 Report(
@@ -582,7 +583,7 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
-            if (!sameType && !stringProjection)
+            if (!sameType && !stringProjection && !dataContextAssignment)
             {
                 Report(
                     InvalidBindingSource,
@@ -609,7 +610,7 @@ public sealed partial class UiMarkupGenerator
         private BindingSourceDescriptor? ResolveBindingSource(
             BindingResolutionContext resolutionContext,
             string expression,
-            XObject source,
+            MarkupObject source,
             object diagnosticSource)
         {
             if (expression.IndexOf(':') >= 0)
@@ -789,7 +790,7 @@ public sealed partial class UiMarkupGenerator
             string expression,
             object diagnosticSource)
         {
-            INamedTypeSymbol? bindingDataType = CurrentDataType;
+            ITypeSymbol? bindingDataType = CurrentDataType;
             if (bindingDataType is null)
             {
                 Report(InvalidBindingSource, diagnosticSource, expression, "DataType is required on the root element.");
@@ -845,7 +846,9 @@ public sealed partial class UiMarkupGenerator
                 expression,
                 BindingSourceKind.DataPath,
                 currentType,
-                contentTemplateContextVariables.Count > 0
+                localDataContextTypes.Count > 0
+                    ? resolutionContext.OwnerVariable
+                    : contentTemplateContextVariables.Count > 0
                     ? contentTemplateContextVariables.Peek() + ".Data"
                     : resolutionContext.OwnerVariable,
                 dataSegments: segments,
@@ -854,7 +857,7 @@ public sealed partial class UiMarkupGenerator
 
         private BindingSourceDescriptor? ResolveTemplatePartBindingSource(
             string expression,
-            XObject source,
+            MarkupObject source,
             object diagnosticSource)
         {
             string[] segments = expression.Split('.');
@@ -891,7 +894,7 @@ public sealed partial class UiMarkupGenerator
                 template = ResolveAspects(owner.Element).Select(aspect => aspect.Template).LastOrDefault(candidate => candidate is not null);
             }
 
-            IReadOnlyDictionary<string, XElement>? parts = null;
+            IReadOnlyDictionary<string, MarkupElement>? parts = null;
             if (template is not null && !templateParts.TryGetValue(template, out parts))
             {
                 parts = template.Root.DescendantsAndSelf()
@@ -901,7 +904,7 @@ public sealed partial class UiMarkupGenerator
                     .ToDictionary(group => group.Key, group => group.Single(), StringComparer.Ordinal);
             }
 
-            if (parts is null || !parts.TryGetValue(partName, out XElement? part))
+            if (parts is null || !parts.TryGetValue(partName, out MarkupElement? part))
             {
                 Report(InvalidBindingSource, diagnosticSource, expression, "The named control template has no part named '" + partName + "'.");
                 return null;
@@ -940,7 +943,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolveNamedElement(
-            XObject source,
+            MarkupObject source,
             string name,
             out NamedElementReference reference)
         {
@@ -952,7 +955,7 @@ public sealed partial class UiMarkupGenerator
                 return true;
             }
 
-            XElement[] candidates = document.Root.DescendantsAndSelf()
+            MarkupElement[] candidates = document.Root.DescendantsAndSelf()
                 .Where(element => string.Equals(element.Attribute("Name")?.Value?.Trim(), name, StringComparison.Ordinal))
                 .Where(element => !IsResourceElement(element) && !IsTemplatePartElement(element))
                 .ToArray();
@@ -967,15 +970,15 @@ public sealed partial class UiMarkupGenerator
             return true;
         }
 
-        private bool IsInSameBindingNameScope(XObject source, XElement candidate)
+        private bool IsInSameBindingNameScope(MarkupObject source, MarkupElement candidate)
         {
-            XElement? sourceElement = source as XElement ?? source.Parent;
+            MarkupElement? sourceElement = source as MarkupElement ?? source.Parent;
             return ReferenceEquals(
                 FindContainingTemplateRoot(sourceElement),
                 FindContainingTemplateRoot(candidate));
         }
 
-        private XElement? FindContainingTemplateRoot(XElement? element)
+        private MarkupElement? FindContainingTemplateRoot(MarkupElement? element)
         {
             if (element is null)
             {
@@ -991,7 +994,7 @@ public sealed partial class UiMarkupGenerator
                 }
             }
 
-            foreach (XElement owner in document.Root.DescendantsAndSelf())
+            foreach (MarkupElement owner in document.Root.DescendantsAndSelf())
             {
                 DirectiveParseResult content = GetDirectiveContent(
                     owner,
@@ -1009,12 +1012,12 @@ public sealed partial class UiMarkupGenerator
             return null;
         }
 
-        private static bool IsResourceElement(XElement element)
+        private static bool IsResourceElement(MarkupElement element)
         {
             return element.Ancestors().Any(ancestor => ancestor.Name.LocalName.EndsWith(".Resources", StringComparison.Ordinal));
         }
 
-        private bool IsTemplatePartElement(XElement element)
+        private bool IsTemplatePartElement(MarkupElement element)
         {
             if (templateParts.Values.Any(parts => parts.Values.Any(part =>
                 ReferenceEquals(part, element) || part.Descendants().Any(descendant => ReferenceEquals(descendant, element)))))
@@ -1022,7 +1025,7 @@ public sealed partial class UiMarkupGenerator
                 return true;
             }
 
-            foreach (XElement owner in document.Root.DescendantsAndSelf())
+            foreach (MarkupElement owner in document.Root.DescendantsAndSelf())
             {
                 DirectiveParseResult content = GetDirectiveContent(owner, DirectiveContentKind.Elements | DirectiveContentKind.Templates);
                 foreach (DirectiveTemplateNode template in content.Nodes.OfType<DirectiveTemplateNode>())

@@ -1,0 +1,34 @@
+# Every checked-in .cui.xml document known at the stage-0 baseline.
+CernealaPresentation/App.cui.xml
+CernealaPresentation/AspectChapterView.cui.xml
+CernealaPresentation/BrandMark.cui.xml
+CernealaPresentation/FramePipelineChapterView.cui.xml
+CernealaPresentation/MarkupChapterView.cui.xml
+CernealaPresentation/MotionChapterView.cui.xml
+CernealaPresentation/OpeningView.cui.xml
+CernealaPresentation/PresentationWindow.cui.xml
+CernealaPresentation/PrismChapterView.cui.xml
+CernealaPresentation/PrismOuterGlowLabView.cui.xml
+CernealaPresentation/RetainedModelChapterView.cui.xml
+CernealaPresentation/WelcomeChapterView.cui.xml
+Playground/Cerneala.ComboBoxLab/MainWindow.cui.xml
+Playground/Cerneala.Playground/MainWindow.cui.xml
+Playground/CernealaOracle/MainWindow.cui.xml
+
+# Documentation sources whose examples are represented in constructs.json.
+docs/CernealaMarkupGuide.md
+docs/markup-data-bindings.md
+docs/motion-markup-syntax-proposal.md
+docs/prism-markup-syntax-proposal.md
+
+# SourceGen test sources whose inline valid/invalid markup is represented in constructs.json.
+tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTests.cs
+tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorApplicationTests.cs
+tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorBindingStageZeroTests.cs
+tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorBindingStageThreeTests.cs
+tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorBindingStageFourTests.cs
+tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorBindingStageFiveTests.cs
+tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorMotionTests.cs
+tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorMotionDiagnosticsTests.cs
+tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorMotionCompositionTests.cs
+tests/Cerneala.Tests.SourceGen/Prism/PrismMarkupContractTests.cs

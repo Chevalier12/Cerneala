@@ -5,6 +5,14 @@ historical filename is retained so existing plan links do not break. Syntax in
 the main sections is accepted and statically lowered by `Cerneala.SourceGen`;
 the Deferred Surface section is explicitly not accepted.
 
+Motion syntax, target resolution, resource lookup, composition rules, and
+diagnostics are analyzed by the shared `Cerneala.Language` parser and semantic
+model. `Cerneala.SourceGen` lowers that validated result to the existing typed
+runtime calls and owns only emission and host diagnostic conversion. Recovery can
+preserve unaffected XML and Motion facts while a construct is being typed, but
+`Build` mode remains strict. This editor-agnostic analysis layer is not an LSP or
+an editor integration.
+
 The language includes inline and named `Aspect` behavior,
 `Tween`/`Spring` resources, `@when`, `@if`, `@on`, immediate `@set`, and parallel
 property starts inside `@animate` with optional `@from` and required `@to`. Values support typed

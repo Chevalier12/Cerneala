@@ -10,6 +10,14 @@ catalog, diagnostics, and the retained GPU cache. The implementation is exercise
 by the real Presentation Solar System chapter and measured in the
 [integration-hardening benchmark](../benchmarks/Cerneala.Benchmarks/results/2026-07-21-prism-integration-hardening.md).
 
+Prism directives, catalog symbols, parameters, values, nesting, Motion interop,
+and diagnostics are analyzed by the shared `Cerneala.Language` parser and
+semantic model. `Cerneala.SourceGen` consumes the validated semantic result for
+C# emission instead of maintaining a separate Prism binder. Recovery preserves
+unaffected markup facts during partial edits, while `Build` mode still rejects
+invalid saved markup. The common layer is editor-agnostic infrastructure and does
+not claim that an LSP or editor extension is available.
+
 Deferred work is deliberately separate: Prism compositors for other graphics
 backends, a public third-party filter/style SDK, runtime shader compilation,
 adaptive quality, async compute, and generic GPU scheduling are not implemented

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Xml.Linq;
 using Cerneala.SourceGen.Prism;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -18,85 +17,16 @@ public sealed partial class UiMarkupGenerator
     private static readonly Lazy<PrismCatalogModel> PrismCatalog =
         new(LoadPrismCatalog);
 
-    private static readonly DiagnosticDescriptor PrismUnknownPropertyDiagnostic = new(
-        "PRISM2001",
-        "Unknown Prism property",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismUnknownSymbolDiagnostic = new(
-        "PRISM2002",
-        "Unknown Prism symbol",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismDuplicateNameDiagnostic = new(
-        "PRISM2003",
-        "Duplicate Prism name",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismParameterDiagnostic = new(
-        "PRISM2004",
-        "Invalid Prism parameter",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismNestingDiagnostic = new(
-        "PRISM2005",
-        "Invalid Prism nesting",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismBackdropCountDiagnostic = new(
-        "PRISM2006",
-        "Multiple Prism backdrops",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismBackdropOrderDiagnostic = new(
-        "PRISM2007",
-        "Invalid Prism backdrop order",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismClipToBelowDiagnostic = new(
-        "PRISM2008",
-        "Invalid Prism clipping base",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismValueDiagnostic = new(
-        "PRISM2009",
-        "Invalid Prism value",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor PrismStructureDiagnostic = new(
-        "PRISM2013",
-        "Invalid Prism structure",
-        "Prism binding in '{0}' failed: {1}",
-        "Cerneala.Prism.Binding",
-        DiagnosticSeverity.Error,
-        true);
+    private static readonly DiagnosticDescriptor PrismUnknownPropertyDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2001");
+    private static readonly DiagnosticDescriptor PrismUnknownSymbolDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2002");
+    private static readonly DiagnosticDescriptor PrismDuplicateNameDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2003");
+    private static readonly DiagnosticDescriptor PrismParameterDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2004");
+    private static readonly DiagnosticDescriptor PrismNestingDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2005");
+    private static readonly DiagnosticDescriptor PrismBackdropCountDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2006");
+    private static readonly DiagnosticDescriptor PrismBackdropOrderDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2007");
+    private static readonly DiagnosticDescriptor PrismClipToBelowDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2008");
+    private static readonly DiagnosticDescriptor PrismValueDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2009");
+    private static readonly DiagnosticDescriptor PrismStructureDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2013");
 
     private static PrismCatalogModel LoadPrismCatalog()
     {
@@ -122,7 +52,7 @@ public sealed partial class UiMarkupGenerator
     {
         private readonly Dictionary<ResourceScope, Dictionary<string, BoundPrismComposition>>
             boundPrismResources = new();
-        private readonly Dictionary<XElement, BoundPrismApplication> boundPrismApplications = new();
+        private readonly Dictionary<MarkupElement, BoundPrismApplication> boundPrismApplications = new();
         private int prismBindingDiagnosticCount;
         private int nextInlinePrismId;
 
@@ -208,9 +138,9 @@ public sealed partial class UiMarkupGenerator
                 return;
             }
 
-            foreach (KeyValuePair<XElement, DirectiveParseResult> pair in directiveContent)
+            foreach (KeyValuePair<MarkupElement, DirectiveParseResult> pair in directiveContent)
             {
-                XElement owner = pair.Key;
+                MarkupElement owner = pair.Key;
                 DirectiveParseResult result = pair.Value;
                 if (result.PrismDiagnostics.Count > 0)
                 {
@@ -265,7 +195,7 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private void BindPrismApplication(XElement owner, PrismApplicationSyntax syntax)
+        private void BindPrismApplication(MarkupElement owner, PrismApplicationSyntax syntax)
         {
             int diagnosticsBefore = prismBindingDiagnosticCount;
             BoundPrismApplication? application = syntax switch
@@ -282,7 +212,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private BoundPrismApplication BindInlinePrismApplication(
-            XElement owner,
+            MarkupElement owner,
             PrismInlineApplicationSyntax syntax)
         {
             string name = "InlinePrism" +
@@ -301,7 +231,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private BoundPrismApplication? BindResourcePrismApplication(
-            XElement owner,
+            MarkupElement owner,
             PrismResourceApplicationSyntax syntax)
         {
             if (!TryResolvePrismComposition(owner, syntax.ResourceName, out BoundPrismComposition composition))
@@ -376,7 +306,7 @@ public sealed partial class UiMarkupGenerator
         private BoundPrismComposition BindPrismComposition(
             string name,
             PrismContainerSyntax syntax,
-            XElement source,
+            MarkupElement source,
             bool isReusable)
         {
             int diagnosticsBefore = prismBindingDiagnosticCount;
@@ -1086,7 +1016,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         private bool TryResolvePrismComposition(
-            XObject source,
+            MarkupObject source,
             string name,
             out BoundPrismComposition composition)
         {

@@ -6,19 +6,20 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml;
-using System.Xml.Linq;
+using Cerneala.Language.Diagnostics;
+using Cerneala.Language.Semantics;
+using Cerneala.Language.Semantics.Symbols;
+using Cerneala.Language.Syntax;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
+using LanguageSourceText = Cerneala.Language.Text.SourceText;
+using LanguageTextSpan = Cerneala.Language.Text.TextSpan;
 
 namespace Cerneala.SourceGen;
 
 [Generator]
 public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 {
-    private const string FragmentWrapperStart = "<__CernealaFragment>";
-    private const string FragmentWrapperEnd = "</__CernealaFragment>";
-
     private static readonly Dictionary<string, string> NamedColorNames = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Transparent"] = "Transparent",
@@ -164,145 +165,27 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         ["YellowGreen"] = "YellowGreen",
     };
 
-    private static readonly DiagnosticDescriptor MalformedMarkup = new(
-        "CERNEALAUI001",
-        "Malformed UI markup",
-        "Markup file '{0}' could not be parsed: {1}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor UnsupportedElement = new(
-        "CERNEALAUI002",
-        "Unsupported UI markup element",
-        "Markup element '{0}' is not supported by the source generator",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor UnsupportedProperty = new(
-        "CERNEALAUI003",
-        "Unsupported UI markup property",
-        "Markup property '{0}.{1}' is not supported by the source generator",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidPropertyValue = new(
-        "CERNEALAUI004",
-        "Invalid UI markup property value",
-        "Markup property '{0}.{1}' has invalid value '{2}'",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidDocumentShape = new(
-        "CERNEALAUI005",
-        "Invalid UI markup document shape",
-        "Markup file '{0}' has invalid document shape: {1}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidDirective = new(
-        "CERNEALAUI006",
-        "Invalid UI markup directive",
-        "Markup directive in '{0}' is invalid: {1}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidBindingSource = new(
-        "CERNEALAUI007",
-        "Invalid UI markup binding source",
-        "Markup binding source '{0}' is invalid: {1}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidUserControl = new(
-        "CERNEALAUI008",
-        "Invalid UserControl declaration",
-        "UserControl markup file '{0}' is invalid: {1}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidEventHandler = new(
-        "CERNEALAUI009",
-        "Invalid markup event handler",
-        "Event handler '{0}' for '{1}.{2}' is invalid: {3}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidWindow = new(
-        "CERNEALAUI010",
-        "Invalid Window declaration",
-        "Window markup file '{0}' is invalid: {1}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidWindowStartup = new(
-        "CERNEALAUI011",
-        "Invalid Window application startup",
-        "Generated Window startup is invalid: {0}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidComponentTemplate = new(
-        "CERNEALAUI012",
-        "Invalid component template declaration",
-        "Component template in '{0}' is invalid: {1}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidApplication = new(
-        "CERNEALAUI013",
-        "Invalid Application declaration",
-        "Application markup file '{0}' is invalid: {1}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor InvalidApplicationStartup = new(
-        "CERNEALAUI014",
-        "Invalid Application startup",
-        "Application startup in '{0}' is invalid: {1}",
-        "Cerneala.UiMarkup",
-        DiagnosticSeverity.Error,
-        true);
-
-    private static readonly DiagnosticDescriptor MotionSyntaxDiagnostic = new(
-        "CERNEALAUI020", "Invalid Motion markup syntax", "Motion syntax in '{0}' is invalid: {1}",
-        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
-
-    private static readonly DiagnosticDescriptor MotionTargetDiagnostic = new(
-        "CERNEALAUI021", "Invalid Motion target", "Motion target resolution in '{0}' failed: {1}",
-        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
-
-    private static readonly DiagnosticDescriptor MotionEventDiagnostic = new(
-        "CERNEALAUI022", "Invalid Motion event", "Motion event resolution in '{0}' failed: {1}",
-        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
-
-    private static readonly DiagnosticDescriptor MotionTypeDiagnostic = new(
-        "CERNEALAUI023", "Invalid Motion property or spec type", "Motion property/spec typing in '{0}' failed: {1}",
-        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
-
-    private static readonly DiagnosticDescriptor MotionCompositionDiagnostic = new(
-        "CERNEALAUI024", "Invalid Motion composition", "Motion composition in '{0}' is invalid: {1}",
-        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
-
-    private static readonly DiagnosticDescriptor MotionLifecycleDiagnostic = new(
-        "CERNEALAUI025", "Invalid Motion lifecycle directive", "Motion lifecycle directive in '{0}' is invalid: {1}",
-        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
-
-    private static readonly DiagnosticDescriptor MotionCapabilityDiagnostic = new(
-        "CERNEALAUI026", "Unsupported Motion runtime capability", "Motion runtime capability in '{0}' is unsupported: {1}",
-        "Cerneala.UiMarkup.Motion", DiagnosticSeverity.Error, true);
+    private static readonly DiagnosticDescriptor MalformedMarkup = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI001");
+    private static readonly DiagnosticDescriptor UnsupportedElement = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI002");
+    private static readonly DiagnosticDescriptor UnsupportedProperty = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI003");
+    private static readonly DiagnosticDescriptor InvalidPropertyValue = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI004");
+    private static readonly DiagnosticDescriptor InvalidDocumentShape = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI005");
+    private static readonly DiagnosticDescriptor InvalidDirective = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI006");
+    private static readonly DiagnosticDescriptor InvalidBindingSource = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI007");
+    private static readonly DiagnosticDescriptor InvalidUserControl = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI008");
+    private static readonly DiagnosticDescriptor InvalidEventHandler = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI009");
+    private static readonly DiagnosticDescriptor InvalidWindow = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI010");
+    private static readonly DiagnosticDescriptor InvalidWindowStartup = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI011");
+    private static readonly DiagnosticDescriptor InvalidComponentTemplate = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI012");
+    private static readonly DiagnosticDescriptor InvalidApplication = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI013");
+    private static readonly DiagnosticDescriptor InvalidApplicationStartup = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI014");
+    private static readonly DiagnosticDescriptor MotionSyntaxDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI020");
+    private static readonly DiagnosticDescriptor MotionTargetDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI021");
+    private static readonly DiagnosticDescriptor MotionEventDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI022");
+    private static readonly DiagnosticDescriptor MotionTypeDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI023");
+    private static readonly DiagnosticDescriptor MotionCompositionDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI024");
+    private static readonly DiagnosticDescriptor MotionLifecycleDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI025");
+    private static readonly DiagnosticDescriptor MotionCapabilityDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI026");
 
     private enum MotionDiagnosticKind
     {
@@ -323,8 +206,21 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 file.Path,
                 file.GetText(cancellationToken)?.ToString()));
 
+        IncrementalValueProvider<ImmutableArray<MarkupSource>> applicationFiles = markupFiles
+            .Where(static file => file.Document?.Root.Name.LocalName == "Application")
+            .Collect();
+        IncrementalValuesProvider<SemanticMarkupSource> semanticMarkupFiles = markupFiles
+            .Combine(applicationFiles)
+            .Combine(context.CompilationProvider)
+            .Select(static (input, cancellationToken) => AnalyzeMarkupFile(
+                input.Left.Left,
+                input.Left.Right,
+                input.Right,
+                cancellationToken))
+            .WithTrackingName("CernealaLanguageSemanticModel");
+
         context.RegisterSourceOutput(
-            markupFiles.Collect().Combine(context.CompilationProvider),
+            semanticMarkupFiles.Collect().Combine(context.CompilationProvider),
             static (sourceContext, input) => GenerateFiles(sourceContext, input.Left, input.Right));
     }
 
@@ -333,11 +229,40 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         return file.Path.EndsWith(".cui.xml", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void GenerateFiles(SourceProductionContext context, ImmutableArray<MarkupSource> files, Compilation compilation)
+    private static SemanticMarkupSource AnalyzeMarkupFile(
+        MarkupSource file,
+        ImmutableArray<MarkupSource> applicationFiles,
+        Compilation compilation,
+        CancellationToken cancellationToken)
     {
+        MarkupSource[] semanticInputs = applicationFiles
+            .Append(file)
+            .GroupBy(candidate => candidate.Path, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.Last())
+            .ToArray();
+        CernealaDocument[] languageDocuments = semanticInputs
+            .Select(file => file.LanguageDocument)
+            .OfType<CernealaDocument>()
+            .ToArray();
+        using CernealaCompilation languageCompilation = new(
+            new RoslynCompilationSymbols(compilation),
+            languageDocuments,
+            AnalysisMode.Build);
+        SourceGeneratorSemanticModel semanticModel = SourceGeneratorSemanticModel.Create(
+            languageCompilation.GetSemanticModel(file.Path, cancellationToken));
+        return new SemanticMarkupSource(file, semanticModel);
+    }
+
+    private static void GenerateFiles(SourceProductionContext context, ImmutableArray<SemanticMarkupSource> inputs, Compilation compilation)
+    {
+        ImmutableArray<MarkupSource> files = inputs.Select(input => input.Source).ToImmutableArray();
+        IReadOnlyDictionary<string, SourceGeneratorSemanticModel> semanticModels = inputs.ToDictionary(
+            input => input.Source.Path,
+            input => input.SemanticModel,
+            StringComparer.OrdinalIgnoreCase);
         string[] classNames = AssignClassNames(files);
         MarkupSource[] applicationDocuments = files
-            .Where(file => ParseDocument(file).Document?.Root.Name.LocalName == "Application")
+            .Where(file => file.Document?.Root.Name.LocalName == "Application")
             .ToArray();
         if (applicationDocuments.Length > 1 && compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary)
         {
@@ -373,7 +298,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 files[applicationIndex],
                 classNames[applicationIndex],
                 compilation,
-                applicationPairs[applicationIndex].Pair!);
+                applicationPairs[applicationIndex].Pair!,
+                semanticModels[files[applicationIndex].Path]);
         }
 
         WindowPairResolution[] windowPairs = files
@@ -414,7 +340,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         compilation,
                         windowPair.Pair,
                         generateStartup,
-                        applicationResources);
+                        applicationResources,
+                        semanticModels[files[i].Path]);
                 }
 
                 continue;
@@ -431,13 +358,20 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         classNames[i],
                         compilation,
                         pair.Pair,
-                        applicationResources);
+                        applicationResources,
+                        semanticModels[files[i].Path]);
                 }
 
                 continue;
             }
 
-            GenerateFile(context, files[i], classNames[i], compilation, applicationResources);
+            GenerateFile(
+                context,
+                files[i],
+                classNames[i],
+                compilation,
+                applicationResources,
+                semanticModels[files[i].Path]);
         }
     }
 
@@ -478,22 +412,19 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         MarkupSource file,
         string className,
         Compilation compilation,
-        GenerationScope.ApplicationResourceCatalog? applicationResources)
+        GenerationScope.ApplicationResourceCatalog? applicationResources,
+        SourceGeneratorSemanticModel semanticModel)
     {
         if (file.Text is null)
         {
             return;
         }
 
-        ParsedDocument parsed = ParseDocument(file);
-        if (parsed.Diagnostic is not null)
+        if (!TryGetEmissionDocument(context, file, semanticModel, out EmissionMarkupDocument document))
         {
-            context.ReportDiagnostic(parsed.Diagnostic);
             return;
         }
-
-        MarkupDocument document = parsed.Document!;
-        XAttribute? nestedDataType = document.Root.Descendants()
+        MarkupAttribute? nestedDataType = document.Root.Descendants()
             .Where(element => element.Name.LocalName != "ContentTemplate")
             .Select(element => element.Attribute("DataType"))
             .FirstOrDefault(attribute => attribute is not null);
@@ -519,7 +450,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             document,
             compilation,
             dataType,
+            semanticModel,
             applicationResources: applicationResources);
+        if (scope.HasErrors)
+        {
+            return;
+        }
+
         string rootVariable = scope.EmitElement(document.Root);
         if (scope.HasErrors)
         {
@@ -593,10 +530,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
     private static INamedTypeSymbol? ResolveDataType(
         SourceProductionContext context,
         MarkupSource file,
-        MarkupDocument document,
+        EmissionMarkupDocument document,
         Compilation compilation)
     {
-        XAttribute? attribute = document.Root.Attribute("DataType");
+        MarkupAttribute? attribute = document.Root.Attribute("DataType");
         if (attribute is null)
         {
             return null;
@@ -622,145 +559,26 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         return type;
     }
 
-    private static ParsedDocument ParseDocument(MarkupSource file)
+    private static bool TryGetEmissionDocument(
+        SourceProductionContext context,
+        MarkupSource file,
+        SourceGeneratorSemanticModel semanticModel,
+        out EmissionMarkupDocument document)
     {
-        try
+        document = file.Document!;
+        if (document is not null && !semanticModel.Diagnostics.Any(diagnostic =>
+            diagnostic.Severity == LanguageDiagnosticSeverity.Error))
         {
-            List<XElement> elements = [];
-            string markup = StripXmlDeclarationPreservingPositions(file.Text ?? string.Empty);
-            char comparatorPlaceholder = FindDirectiveComparatorPlaceholder(markup);
-            markup = ProtectDirectiveComparators(markup, comparatorPlaceholder);
-            XDocument fragment = XDocument.Parse(
-                FragmentWrapperStart + markup + FragmentWrapperEnd,
-                LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace);
-            RestoreDirectiveComparators(fragment, comparatorPlaceholder);
-
-            foreach (XNode node in fragment.Root!.Nodes())
-            {
-                if (node is XElement element)
-                {
-                    elements.Add(element);
-                    continue;
-                }
-
-                if (node is XText text && !string.IsNullOrWhiteSpace(text.Value))
-                {
-                    return new ParsedDocument(
-                        null,
-                        Diagnostic.Create(
-                            MalformedMarkup,
-                            CreateLocation(file, text),
-                            Path.GetFileName(file.Path),
-                            "Markup must contain exactly one UI root element."));
-                }
-            }
-
-            XElement? topLevelResources = elements.FirstOrDefault(element => element.Name.LocalName == "Resources");
-            if (topLevelResources is not null)
-            {
-                return InvalidShape(
-                    file,
-                    topLevelResources,
-                    "Top-level Resources is not supported; declare resources through <RootType.Resources> on a UI element.");
-            }
-
-            if (elements.Count != 1)
-            {
-                return new ParsedDocument(
-                    null,
-                    Diagnostic.Create(
-                        MalformedMarkup,
-                        CreateLocation(file, elements.FirstOrDefault() ?? new XElement("Missing")),
-                        Path.GetFileName(file.Path),
-                        "Markup must contain exactly one UI root element."));
-            }
-
-            return new ParsedDocument(new MarkupDocument(elements[0]), null);
-        }
-        catch (XmlException ex)
-        {
-            return new ParsedDocument(null, Diagnostic.Create(MalformedMarkup, CreateLocation(file, ex.LineNumber, ex.LinePosition), Path.GetFileName(file.Path), ex.Message));
-        }
-    }
-
-    private static string ProtectDirectiveComparators(string markup, char placeholder)
-    {
-        char[] protectedMarkup = markup.ToCharArray();
-        for (int index = 0; index <= markup.Length - 3; index++)
-        {
-            if (!markup.AsSpan(index).StartsWith("@if".AsSpan(), StringComparison.Ordinal) ||
-                index + 3 >= markup.Length || !char.IsWhiteSpace(markup[index + 3]) ||
-                index > 0 && !char.IsWhiteSpace(markup[index - 1]) && markup[index - 1] is not '>' and not '{' and not '}')
-            {
-                continue;
-            }
-
-            bool quoted = false;
-            bool escaped = false;
-            for (int headerIndex = index + 3; headerIndex < markup.Length; headerIndex++)
-            {
-                char character = markup[headerIndex];
-                if (escaped)
-                {
-                    escaped = false;
-                    continue;
-                }
-
-                if (character == '\\' && quoted)
-                {
-                    escaped = true;
-                    continue;
-                }
-
-                if (character == '"')
-                {
-                    quoted = !quoted;
-                    continue;
-                }
-
-                if (character == '{' && !quoted)
-                {
-                    index = headerIndex;
-                    break;
-                }
-
-                if (character == '<' && !quoted)
-                {
-                    protectedMarkup[headerIndex] = placeholder;
-                }
-            }
+            return true;
         }
 
-        return new string(protectedMarkup);
-    }
-
-    private static void RestoreDirectiveComparators(XDocument document, char placeholder)
-    {
-        foreach (XText text in document.DescendantNodes().OfType<XText>())
+        SourceText source = SourceText.From(file.Text ?? string.Empty, Encoding.UTF8);
+        foreach (LanguageDiagnostic diagnostic in semanticModel.Diagnostics)
         {
-            if (text.Value.IndexOf(placeholder) >= 0)
-            {
-                text.Value = text.Value.Replace(placeholder, '<');
-            }
-        }
-    }
-
-    private static char FindDirectiveComparatorPlaceholder(string markup)
-    {
-        for (char candidate = '\uE000'; candidate <= '\uF8FF'; candidate++)
-        {
-            if (markup.IndexOf(candidate) < 0)
-            {
-                return candidate;
-            }
+            context.ReportDiagnostic(SourceGeneratorDiagnosticAdapter.ToDiagnostic(diagnostic, file.Path, source));
         }
 
-        throw new XmlException("Markup exhausts the private-use characters reserved for directive parsing.");
-    }
-
-    private static ParsedDocument InvalidShape(MarkupSource file, object locationSource, string message)
-    {
-        return new ParsedDocument(null, Diagnostic.Create(InvalidDocumentShape, CreateLocation(file, locationSource), Path.GetFileName(file.Path), message));
+        return false;
     }
 
     private static string StripXmlDeclarationPreservingPositions(string text)
@@ -850,42 +668,51 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             Path = path;
             Text = text;
+            if (text is null)
+            {
+                LanguageDocument = null;
+                Document = null;
+                return;
+            }
+
+            LanguageDocument = new CernealaDocument(
+                path,
+                LanguageSourceText.From(StripXmlDeclarationPreservingPositions(text)));
+            ElementSyntax[] roots = LanguageDocument.Syntax.Children.OfType<ElementSyntax>().ToArray();
+            Document = roots.Length == 1
+                ? new EmissionMarkupDocument(MarkupElement.FromSyntax(roots[0]))
+                : null;
         }
 
         public string Path { get; }
 
         public string? Text { get; }
+
+        public CernealaDocument? LanguageDocument { get; }
+
+        public EmissionMarkupDocument? Document { get; }
     }
 
-    private sealed class MarkupDocument
+    private readonly struct SemanticMarkupSource
     {
-        public MarkupDocument(XElement root)
+        public SemanticMarkupSource(MarkupSource source, SourceGeneratorSemanticModel semanticModel)
         {
-            Root = root;
+            Source = source;
+            SemanticModel = semanticModel;
         }
 
-        public XElement Root { get; }
-    }
+        public MarkupSource Source { get; }
 
-    private sealed class ParsedDocument
-    {
-        public ParsedDocument(MarkupDocument? document, Diagnostic? diagnostic)
-        {
-            Document = document;
-            Diagnostic = diagnostic;
-        }
-
-        public MarkupDocument? Document { get; }
-
-        public Diagnostic? Diagnostic { get; }
+        public SourceGeneratorSemanticModel SemanticModel { get; }
     }
 
     private sealed partial class GenerationScope
     {
         private readonly SourceProductionContext context;
         private readonly MarkupSource file;
-        private readonly MarkupDocument document;
+        private readonly EmissionMarkupDocument document;
         private readonly Compilation compilation;
+        private readonly SourceGeneratorSemanticModel semanticModel;
         private readonly INamedTypeSymbol? dataType;
         private readonly UserControlPair? userControlPair;
         private readonly ApplicationResourceCatalog? applicationResources;
@@ -897,9 +724,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         public GenerationScope(
             SourceProductionContext context,
             MarkupSource file,
-            MarkupDocument document,
+            EmissionMarkupDocument document,
             Compilation compilation,
             INamedTypeSymbol? dataType,
+            SourceGeneratorSemanticModel semanticModel,
             UserControlPair? userControlPair = null,
             ApplicationResourceCatalog? applicationResources = null)
         {
@@ -908,10 +736,17 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             this.document = document;
             this.compilation = compilation;
             this.dataType = dataType;
+            this.semanticModel = semanticModel;
             this.userControlPair = userControlPair;
             this.applicationResources = applicationResources;
             currentLines = Lines;
             currentPostLines = PostLines;
+
+            ReportSharedDiagnostics();
+            if (HasErrors)
+            {
+                return;
+            }
 
             ReadResources();
             ReadInlineAspects();
@@ -936,9 +771,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         public string? DataTypeCode => dataType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        private INamedTypeSymbol? CurrentDataType => contentTemplateDataTypes.Count == 0
-            ? dataType
-            : contentTemplateDataTypes.Peek();
+        private ITypeSymbol? CurrentDataType => localDataContextTypes.Count > 0
+            ? localDataContextTypes.Peek()
+            : contentTemplateDataTypes.Count == 0
+                ? dataType
+                : contentTemplateDataTypes.Peek();
 
         public bool HasErrors { get; private set; }
 
@@ -1040,7 +877,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private sealed class BrushResource
         {
-            public BrushResource(string name, string variable, string expression, XElement source, string? colorExpression = null)
+            public BrushResource(string name, string variable, string expression, MarkupElement source, string? colorExpression = null)
             {
                 Name = name;
                 Variable = variable;
@@ -1057,7 +894,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public string? ColorExpression { get; }
 
-            public XElement Source { get; }
+            public MarkupElement Source { get; }
         }
 
         private sealed class AspectResource
@@ -1074,7 +911,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 MotionDragNode? drag,
                 MotionGesturePressNode? gesturePress,
                 DirectiveTemplateNode? template,
-                XElement source,
+                MarkupElement source,
                 bool isInline = false)
             {
                 Name = name;
@@ -1114,7 +951,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public DirectiveTemplateNode? Template { get; }
 
-            public XElement Source { get; }
+            public MarkupElement Source { get; }
 
             public bool IsInline { get; }
 
@@ -1134,8 +971,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string? key,
                 int priority,
                 string variable,
-                XElement root,
-                XElement source)
+                MarkupElement root,
+                MarkupElement source)
             {
                 Name = name;
                 GeneratedName = generatedName;
@@ -1161,14 +998,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public string Variable { get; }
 
-            public XElement Root { get; }
+            public MarkupElement Root { get; }
 
-            public XElement Source { get; }
+            public MarkupElement Source { get; }
         }
 
         private sealed class NamedElementReference
         {
-            public NamedElementReference(string code, XElement element)
+            public NamedElementReference(string code, MarkupElement element)
             {
                 Code = code;
                 Element = element;
@@ -1176,7 +1013,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public string Code { get; }
 
-            public XElement Element { get; }
+            public MarkupElement Element { get; }
         }
 
         private sealed class TemplateEmissionContext
@@ -1185,7 +1022,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string contextVariable,
                 string ownerVariable,
                 string ownerElementName,
-                XElement? ownerElement,
+                MarkupElement? ownerElement,
                 INamedTypeSymbol ownerType,
                 bool ownerIsRoot,
                 bool registerParts)
@@ -1205,7 +1042,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public string OwnerElementName { get; }
 
-            public XElement? OwnerElement { get; }
+            public MarkupElement? OwnerElement { get; }
 
             public INamedTypeSymbol OwnerType { get; }
 
@@ -1215,12 +1052,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public HashSet<string> PartNames { get; } = new(StringComparer.Ordinal);
 
-            public Dictionary<string, XElement> Parts { get; } = new(StringComparer.Ordinal);
+            public Dictionary<string, MarkupElement> Parts { get; } = new(StringComparer.Ordinal);
         }
 
         private sealed class AspectPropertyAssignment
         {
-            public AspectPropertyAssignment(string propertyName, string rawValue, bool isReference, XObject source)
+            public AspectPropertyAssignment(string propertyName, string rawValue, bool isReference, MarkupObject source)
             {
                 PropertyName = propertyName;
                 RawValue = rawValue;
@@ -1234,17 +1071,17 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public bool IsReference { get; }
 
-            public XObject Source { get; }
+            public MarkupObject Source { get; }
         }
 
         private sealed class ResourceScope
         {
-            public ResourceScope(XElement owner)
+            public ResourceScope(MarkupElement owner)
             {
                 Owner = owner;
             }
 
-            public XElement Owner { get; }
+            public MarkupElement Owner { get; }
 
             public Dictionary<string, NamedSymbol> NamedResources { get; } = new(StringComparer.Ordinal);
 
@@ -1306,11 +1143,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         private readonly Dictionary<string, NamedSymbol> symbols = new(StringComparer.Ordinal);
-        private readonly Dictionary<XElement, ResourceScope> resourceScopes = new();
-        private readonly Dictionary<XElement, ResourceScope> resourcePropertyScopes = new();
-        private readonly Dictionary<XElement, AspectResource> inlineAspects = new();
+        private readonly Dictionary<MarkupElement, ResourceScope> resourceScopes = new();
+        private readonly Dictionary<MarkupElement, ResourceScope> resourcePropertyScopes = new();
+        private readonly Dictionary<MarkupElement, AspectResource> inlineAspects = new();
         private readonly List<AspectResource> allAspects = [];
-        private readonly Dictionary<XElement, DirectiveParseResult> directiveContent = new();
+        private readonly Dictionary<MarkupElement, DirectiveParseResult> directiveContent = new();
         private readonly Dictionary<string, INamedTypeSymbol> resolvedElementTypes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, PropertySpec> resolvedProperties = new(StringComparer.Ordinal);
         private readonly Dictionary<string, IReadOnlyList<NamedElementMember>> conditionalFactoryMembers = new(StringComparer.Ordinal);
@@ -1318,7 +1155,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly Stack<TemplateEmissionContext> templateEmissionContexts = new();
         private readonly Stack<INamedTypeSymbol?> contentTemplateDataTypes = new();
         private readonly Stack<string> contentTemplateContextVariables = new();
-        private readonly Dictionary<DirectiveTemplateNode, IReadOnlyDictionary<string, XElement>> templateParts = new();
+        private readonly Stack<ITypeSymbol> localDataContextTypes = new();
+        private readonly Dictionary<DirectiveTemplateNode, IReadOnlyDictionary<string, MarkupElement>> templateParts = new();
         private readonly List<NamedElementMember> namedElementMembers = [];
         private List<string> currentLines;
         private List<string> currentPostLines;
@@ -1348,18 +1186,18 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private void ReadResources()
         {
-            XElement[] owners = document.Root.DescendantsAndSelf().ToArray();
-            foreach (XElement owner in owners)
+            MarkupElement[] owners = document.Root.DescendantsAndSelf().ToArray();
+            foreach (MarkupElement owner in owners)
             {
                 string expectedName = owner.Name.LocalName + ".Resources";
-                XElement[] resourceProperties = owner.Elements()
+                MarkupElement[] resourceProperties = owner.Elements()
                     .Where(element => element.Name.LocalName.EndsWith(".Resources", StringComparison.Ordinal))
                     .ToArray();
-                XElement[] matching = resourceProperties
+                MarkupElement[] matching = resourceProperties
                     .Where(element => string.Equals(element.Name.LocalName, expectedName, StringComparison.Ordinal))
                     .ToArray();
 
-                foreach (XElement invalid in resourceProperties.Where(element => !matching.Contains(element)))
+                foreach (MarkupElement invalid in resourceProperties.Where(element => !matching.Contains(element)))
                 {
                     Report(
                         InvalidDocumentShape,
@@ -1376,7 +1214,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         matching[1],
                         Path.GetFileName(file.Path),
                         "Element '" + owner.Name.LocalName + "' may declare only one Resources property element.");
-                    foreach (XElement duplicate in matching.Skip(1))
+                    foreach (MarkupElement duplicate in matching.Skip(1))
                     {
                         duplicate.Remove();
                     }
@@ -1387,8 +1225,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                XElement resources = matching[0];
-                if (resources.HasAttributes || resources.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+                MarkupElement resources = matching[0];
+                if (resources.HasAttributes || resources.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
                 {
                     Report(
                         InvalidDocumentShape,
@@ -1400,7 +1238,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 ResourceScope scope = new(owner);
                 resourceScopes.Add(owner, scope);
                 resourcePropertyScopes.Add(resources, scope);
-                foreach (XElement resource in resources.Elements())
+                foreach (MarkupElement resource in resources.Elements())
                 {
                     switch (resource.Name.LocalName)
                     {
@@ -1445,9 +1283,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private ContentTemplateResource? ParseContentTemplate(XElement resource)
+        private ContentTemplateResource? ParseContentTemplate(MarkupElement resource)
         {
-            XAttribute? unsupportedAttribute = resource.Attributes()
+            MarkupAttribute? unsupportedAttribute = resource.Attributes()
                 .FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration &&
                     attribute.Name.LocalName is not "Name" and not "DataType" and not "Key" and not "Priority");
             if (unsupportedAttribute is not null)
@@ -1460,7 +1298,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return null;
             }
 
-            if (resource.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            if (resource.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
             {
                 Report(
                     InvalidDocumentShape,
@@ -1470,7 +1308,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return null;
             }
 
-            XElement[] roots = resource.Elements().ToArray();
+            MarkupElement[] roots = resource.Elements().ToArray();
             if (roots.Length != 1)
             {
                 Report(
@@ -1481,7 +1319,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return null;
             }
 
-            XAttribute? namedElement = roots[0].DescendantsAndSelf()
+            MarkupAttribute? namedElement = roots[0].DescendantsAndSelf()
                 .Select(element => element.Attribute("Name"))
                 .FirstOrDefault(attribute => attribute is not null);
             if (namedElement is not null)
@@ -1506,7 +1344,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             INamedTypeSymbol? dataType = null;
-            XAttribute? dataTypeAttribute = resource.Attribute("DataType");
+            MarkupAttribute? dataTypeAttribute = resource.Attribute("DataType");
             if (dataTypeAttribute is not null)
             {
                 dataType = ResolveMarkupTypeReference(dataTypeAttribute);
@@ -1523,7 +1361,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             int priority = 0;
-            XAttribute? priorityAttribute = resource.Attribute("Priority");
+            MarkupAttribute? priorityAttribute = resource.Attribute("Priority");
             if (priorityAttribute is not null &&
                 !int.TryParse(priorityAttribute.Value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out priority))
             {
@@ -1551,7 +1389,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 resource);
         }
 
-        private INamedTypeSymbol? ResolveMarkupTypeReference(XAttribute attribute)
+        private INamedTypeSymbol? ResolveMarkupTypeReference(MarkupAttribute attribute)
         {
             string reference = attribute.Value.Trim();
             if (reference.StartsWith("global::", StringComparison.Ordinal))
@@ -1572,7 +1410,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             string prefix = reference.Substring(0, prefixSeparator);
             string localName = reference.Substring(prefixSeparator + 1);
-            XNamespace? xmlNamespace = attribute.Parent?.GetNamespaceOfPrefix(prefix);
+            MarkupNamespace? xmlNamespace = attribute.Parent?.GetNamespaceOfPrefix(prefix);
             const string clrNamespacePrefix = "clr-namespace:";
             if (xmlNamespace is null ||
                 !xmlNamespace.NamespaceName.StartsWith(clrNamespacePrefix, StringComparison.Ordinal))
@@ -1613,7 +1451,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : null;
         }
 
-        private void ReadBrush(ResourceScope scope, XElement resource)
+        private void ReadBrush(ResourceScope scope, MarkupElement resource)
         {
             string? name = RequiredName(resource);
             if (name is null)
@@ -1655,7 +1493,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             currentLines.Add(brushType + " " + variable + " = " + initializer + ";");
         }
 
-        private string? BuildSolidColorBrushExpression(XElement resource, out string? colorExpression)
+        private string? BuildSolidColorBrushExpression(MarkupElement resource, out string? colorExpression)
         {
             colorExpression = ParseBrushColor(resource.Attribute("Color"));
             if (colorExpression is null)
@@ -1677,7 +1515,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return opacity is null ? null : "new global::Cerneala.UI.Media.SolidColorBrush(" + colorExpression + ", " + opacity + ")";
         }
 
-        private string? BuildLinearGradientBrushExpression(XElement resource)
+        private string? BuildLinearGradientBrushExpression(MarkupElement resource)
         {
             string? start = ParseBrushPoint(resource, "StartPoint");
             string? end = ParseBrushPoint(resource, "EndPoint");
@@ -1688,7 +1526,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : "new global::Cerneala.UI.Media.LinearGradientBrush(" + start + ", " + end + ", " + stops + ", " + opacity + ")";
         }
 
-        private string? BuildRadialGradientBrushExpression(XElement resource)
+        private string? BuildRadialGradientBrushExpression(MarkupElement resource)
         {
             string? center = ParseBrushPoint(resource, "Center");
             string? radiusX = ParseBrushFloat(resource, "RadiusX", 0, value => value > 0);
@@ -1700,7 +1538,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : "new global::Cerneala.UI.Media.RadialGradientBrush(" + center + ", " + radiusX + ", " + radiusY + ", " + stops + ", " + opacity + ")";
         }
 
-        private string? BuildImageBrushExpression(XElement resource)
+        private string? BuildImageBrushExpression(MarkupElement resource)
         {
             string source = resource.Attribute("Source")?.Value.Trim() ?? string.Empty;
             if (source.Length == 0)
@@ -1715,7 +1553,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : "new global::Cerneala.UI.Media.ImageBrush(" + Literal(source) + ", " + tileArguments + ")";
         }
 
-        private string? BuildDrawingBrushExpression(XElement resource)
+        private string? BuildDrawingBrushExpression(MarkupElement resource)
         {
             string? bounds = ParseBrushRect(resource, "ContentBounds");
             if (bounds is null)
@@ -1724,7 +1562,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             List<string> commands = [];
-            foreach (XElement child in resource.Elements())
+            foreach (MarkupElement child in resource.Elements())
             {
                 string? rect = ParseBrushRect(child, "Rect");
                 string? color = ParseBrushColor(child.Attribute("Color"));
@@ -1750,16 +1588,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     string.Join(", ", commands) + " }, " + bounds + ", " + tileArguments + ")";
         }
 
-        private string? ParseGradientStops(XElement resource)
+        private string? ParseGradientStops(MarkupElement resource)
         {
             List<string> stops = [];
-            foreach (XElement stop in resource.Elements().Where(element => element.Name.LocalName == "GradientStop"))
+            foreach (MarkupElement stop in resource.Elements().Where(element => element.Name.LocalName == "GradientStop"))
             {
                 string? offset = ParseBrushFloat(stop, "Offset", float.NaN, value => value >= 0 && value <= 1);
                 string? color = ParseBrushColor(stop.Attribute("Color"));
                 if (offset is null || color is null)
                 {
-                    Report(InvalidPropertyValue, stop, resource.Name.LocalName, "GradientStop", stop.ToString(SaveOptions.DisableFormatting));
+                        Report(InvalidPropertyValue, stop, resource.Name.LocalName, "GradientStop", stop.ToString(MarkupSaveOptions.DisableFormatting));
                     return null;
                 }
 
@@ -1775,7 +1613,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return "new global::Cerneala.UI.Media.GradientStop[] { " + string.Join(", ", stops) + " }";
         }
 
-        private string? ParseTileArguments(XElement resource)
+        private string? ParseTileArguments(MarkupElement resource)
         {
             string stretch = resource.Attribute("Stretch")?.Value.Trim() ?? "Fill";
             string alignmentX = resource.Attribute("AlignmentX")?.Value.Trim() ?? "Center";
@@ -1790,7 +1628,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 !new[] { "None", "Tile", "FlipX", "FlipY", "FlipXY" }.Contains(tileMode) ||
                 viewport is null || viewbox is null || opacity is null)
             {
-                Report(InvalidPropertyValue, resource, resource.Name.LocalName, "Tile", resource.ToString(SaveOptions.DisableFormatting));
+                    Report(InvalidPropertyValue, resource, resource.Name.LocalName, "Tile", resource.ToString(MarkupSaveOptions.DisableFormatting));
                 return null;
             }
 
@@ -1799,7 +1637,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 ", global::Cerneala.Drawing.DrawTileMode." + tileMode + ", " + opacity;
         }
 
-        private string? ParseBrushPoint(XElement element, string attributeName)
+        private string? ParseBrushPoint(MarkupElement element, string attributeName)
         {
             string[] parts = (element.Attribute(attributeName)?.Value ?? string.Empty).Split(',').Select(value => value.Trim()).ToArray();
             if (parts.Length != 2 || !TryParseFiniteFloat(parts[0], out string? x) || !TryParseFiniteFloat(parts[1], out string? y))
@@ -1811,7 +1649,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return "new global::Cerneala.Drawing.DrawPoint(" + x + ", " + y + ")";
         }
 
-        private string? ParseBrushRect(XElement element, string attributeName)
+        private string? ParseBrushRect(MarkupElement element, string attributeName)
         {
             string[] parts = (element.Attribute(attributeName)?.Value ?? string.Empty).Split(',').Select(value => value.Trim()).ToArray();
             if (parts.Length != 4 || parts.Any(part => !float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) || float.IsNaN(value) || float.IsInfinity(value)))
@@ -1823,9 +1661,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return "new global::Cerneala.Drawing.DrawRect(" + string.Join(", ", parts.Select(part => float.Parse(part, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f")) + ")";
         }
 
-        private string? ParseBrushFloat(XElement element, string attributeName, float defaultValue, Func<float, bool> validate)
+        private string? ParseBrushFloat(MarkupElement element, string attributeName, float defaultValue, Func<float, bool> validate)
         {
-            XAttribute? attribute = element.Attribute(attributeName);
+            MarkupAttribute? attribute = element.Attribute(attributeName);
             if (attribute is null && !float.IsNaN(defaultValue) && !float.IsInfinity(defaultValue))
             {
                 return defaultValue.ToString("R", CultureInfo.InvariantCulture) + "f";
@@ -1852,7 +1690,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return false;
         }
 
-        private static string? ParseBrushColor(XAttribute? attribute)
+        private static string? ParseBrushColor(MarkupAttribute? attribute)
         {
             if (attribute is null)
             {
@@ -1868,9 +1706,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return ParseHexColor(value) is ColorLiteral color ? color.ToExpression() : null;
         }
 
-        private void ReadAspect(ResourceScope scope, XElement resource)
+        private void ReadAspect(ResourceScope scope, MarkupElement resource)
         {
-            XAttribute? targetAttribute = resource.Attribute("TargetType");
+            MarkupAttribute? targetAttribute = resource.Attribute("TargetType");
             string targetName = targetAttribute?.Value ?? string.Empty;
             if (string.IsNullOrWhiteSpace(targetName))
             {
@@ -1906,7 +1744,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             {
                 Report(
                     InvalidDocumentShape,
-                    (XObject?)resource.Attribute("Name") ?? resource,
+                    (MarkupObject?)resource.Attribute("Name") ?? resource,
                     Path.GetFileName(file.Path),
                     "Resource Name '" + trimmedName + "' is reserved by component templates.");
                 return;
@@ -1951,19 +1789,19 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private void ReadInlineAspects()
         {
-            XElement[] owners = document.Root.DescendantsAndSelf().ToArray();
+            MarkupElement[] owners = document.Root.DescendantsAndSelf().ToArray();
             INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
-            foreach (XElement owner in owners.Where(element => !element.Name.LocalName.EndsWith(".Aspect", StringComparison.Ordinal)))
+            foreach (MarkupElement owner in owners.Where(element => !element.Name.LocalName.EndsWith(".Aspect", StringComparison.Ordinal)))
             {
                 string expectedName = owner.Name.LocalName + ".Aspect";
-                XElement[] propertyElements = owner.Elements()
+                MarkupElement[] propertyElements = owner.Elements()
                     .Where(element => element.Name.LocalName.EndsWith(".Aspect", StringComparison.Ordinal))
                     .ToArray();
-                XElement[] matching = propertyElements
+                MarkupElement[] matching = propertyElements
                     .Where(element => string.Equals(element.Name.LocalName, expectedName, StringComparison.Ordinal))
                     .ToArray();
 
-                foreach (XElement invalid in propertyElements.Where(element => !matching.Contains(element)))
+                foreach (MarkupElement invalid in propertyElements.Where(element => !matching.Contains(element)))
                 {
                     Report(
                         InvalidDocumentShape,
@@ -1980,7 +1818,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         matching[1],
                         Path.GetFileName(file.Path),
                         "Element '" + owner.Name.LocalName + "' may declare only one Aspect property element.");
-                    foreach (XElement duplicate in matching.Skip(1))
+                    foreach (MarkupElement duplicate in matching.Skip(1))
                     {
                         duplicate.Remove();
                     }
@@ -1991,8 +1829,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                XElement inline = matching[0];
-                if (owner.Attribute("Aspect") is XAttribute aspectAttribute)
+                MarkupElement inline = matching[0];
+                if (owner.Attribute("Aspect") is MarkupAttribute aspectAttribute)
                 {
                     Report(
                         InvalidDocumentShape,
@@ -2018,14 +1856,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         "An inline Aspect property element does not accept attributes.");
                 }
 
-                XElement aspectBody = inline;
-                XElement[] inlineDeclarations = inline.Elements()
+                MarkupElement aspectBody = inline;
+                MarkupElement[] inlineDeclarations = inline.Elements()
                     .Where(element => element.Name.LocalName == "Aspect")
                     .ToArray();
                 if (inlineDeclarations.Length == 1 &&
-                    inline.Nodes().All(node => node is XElement element
+                    inline.Nodes().All(node => node is MarkupElement element
                         ? ReferenceEquals(element, inlineDeclarations[0])
-                        : node is XText text && string.IsNullOrWhiteSpace(text.Value)))
+                        : node is MarkupText text && string.IsNullOrWhiteSpace(text.Value)))
                 {
                     aspectBody = inlineDeclarations[0];
                     if (aspectBody.HasAttributes)
@@ -2073,7 +1911,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         private bool TryParseAspectBody(
-            XElement source,
+            MarkupElement source,
             out List<AspectPropertyAssignment> assignments,
             out List<DirectiveWhenNode> conditions,
             out List<DirectiveOnNode> eventTriggers,
@@ -2304,9 +2142,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return new AspectPropertyAssignment(assignment.PropertyName, value, isReference, assignment.Source);
         }
 
-        private IReadOnlyList<AspectPropertyAssignment> ParseAspectAssignments(XElement aspect)
+        private IReadOnlyList<AspectPropertyAssignment> ParseAspectAssignments(MarkupElement aspect)
         {
-            string text = string.Concat(aspect.Nodes().OfType<XText>().Select(node => node.Value));
+            string text = string.Concat(aspect.Nodes().OfType<MarkupText>().Select(node => node.Value));
             int start = text.IndexOf('{');
             int end = text.LastIndexOf('}');
             if (start < 0 || end <= start)
@@ -2351,7 +2189,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return assignments;
         }
 
-        private string? RequiredName(XElement element)
+        private string? RequiredName(MarkupElement element)
         {
             string? name = element.Attribute("Name")?.Value;
             if (string.IsNullOrWhiteSpace(name))
@@ -2365,7 +2203,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             {
                 Report(
                     InvalidDocumentShape,
-                    (XObject?)element.Attribute("Name") ?? element,
+                    (MarkupObject?)element.Attribute("Name") ?? element,
                     Path.GetFileName(file.Path),
                     "Resource Name '" + name + "' is reserved by component templates.");
                 return null;
@@ -2374,13 +2212,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return name;
         }
 
-        private bool AddSymbol(string name, NamedSymbolKind kind, object source, XElement location)
+        private bool AddSymbol(string name, NamedSymbolKind kind, object source, MarkupElement location)
         {
             if (IsReservedTemplateReference(name))
             {
                 Report(
                     InvalidDocumentShape,
-                    (XObject?)location.Attribute("Name") ?? location,
+                    (MarkupObject?)location.Attribute("Name") ?? location,
                     Path.GetFileName(file.Path),
                     "Name '" + name + "' is reserved by component templates.");
                 return false;
@@ -2479,7 +2317,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         private void EmitDirectTemplate(
-            XElement owner,
+            MarkupElement owner,
             string ownerVariable,
             DirectiveTemplateNode template,
             bool ownerIsRoot)
@@ -2508,7 +2346,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private void EmitComponentTemplate(
             string assignmentTarget,
             string ownerElementName,
-            XElement? ownerElement,
+            MarkupElement? ownerElement,
             INamedTypeSymbol ownerType,
             bool ownerIsRoot,
             DirectiveTemplateNode template,
@@ -2541,7 +2379,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 }
             });
 
-            templateParts[template] = new Dictionary<string, XElement>(emissionContext.Parts, StringComparer.Ordinal);
+            templateParts[template] = new Dictionary<string, MarkupElement>(emissionContext.Parts, StringComparer.Ordinal);
 
             string typeCode = ownerType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             string generatedName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Path)) +
@@ -2587,7 +2425,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return type is not null && controlType is not null && IsOrDerivesFrom(type, controlType);
         }
 
-        public string EmitElement(XElement element)
+        public string EmitElement(MarkupElement element)
         {
             string? requestedName = element.Attribute("Name")?.Value;
             string variable;
@@ -2616,7 +2454,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 documentRootVariable = userControlPair is null ? variable : "this";
             }
 
-            string? typeName = ResolveElementType(element.Name.LocalName);
+            string? typeName = ResolveElementType(element);
 
             if (typeName is null)
             {
@@ -2633,7 +2471,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     Report(
                         InvalidComponentTemplate,
-                        (XObject?)element.Attribute("Name") ?? element,
+                        (MarkupObject?)element.Attribute("Name") ?? element,
                         Path.GetFileName(file.Path),
                         "Template part Name '" + partName + "' is reserved.");
                 }
@@ -2641,7 +2479,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     Report(
                         InvalidComponentTemplate,
-                        (XObject?)element.Attribute("Name") ?? element,
+                        (MarkupObject?)element.Attribute("Name") ?? element,
                         Path.GetFileName(file.Path),
                         "Duplicate template part Name '" + partName + "'.");
                 }
@@ -2691,84 +2529,145 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 EmitDirectTemplate(element, variable, templates[0], ReferenceEquals(element, document.Root));
             }
 
-            foreach (XAttribute attribute in element.Attributes().Where(attribute => !attribute.IsNamespaceDeclaration && attribute.Name.LocalName is not "Aspect" and not "Name" and not "DataType"))
+            MarkupAttribute[] propertyAttributes = element.Attributes()
+                .Where(attribute => !attribute.IsNamespaceDeclaration &&
+                    attribute.Name.LocalName is not "Aspect" and not "Name" and not "DataType")
+                .ToArray();
+            MarkupAttribute? dataContextAttribute = propertyAttributes.FirstOrDefault(
+                attribute => attribute.Name.LocalName == "DataContext");
+            if (dataContextAttribute is not null)
             {
-                if (attribute.Name.LocalName == "MotionClip")
-                {
-                    Report(
-                        InvalidDirective,
-                        attribute,
-                        Path.GetFileName(file.Path),
-                        "MotionClip resources cannot be assigned directly to controls; invoke them with @run inside an Aspect.");
-                    continue;
-                }
-
-                if (TryEmitGridAttachedProperty(variable, attribute))
-                {
-                    continue;
-                }
-
-                if (TryEmitAutomationAttachedProperty(element, variable, attribute))
-                {
-                    continue;
-                }
-
-                if (TryEmitEventAttribute(element, variable, attribute))
-                {
-                    continue;
-                }
-
-                EmitProperty(element, variable, attribute);
+                EmitProperty(element, variable, dataContextAttribute);
             }
 
-            EmitBrushPropertyElement(element, variable);
-            EmitGridDefinitionElements(element, variable);
-            EmitContentTemplatePropertyElement(element, variable);
-            EmitItemsControlTemplatesElement(element, variable);
-            EmitItemsControlItemsPanelElement(element, variable);
-
-            if (parsedContent.HasDirectives || aspects.Any(aspect => aspect.Conditions.Count > 0))
+            ITypeSymbol? localDataContextType = dataContextAttribute is null
+                ? null
+                : ResolveLocalDataContextType(element, variable, dataContextAttribute);
+            if (localDataContextType is not null)
             {
-                EmitReactiveContent(element, variable, parsedContent, aspects);
+                localDataContextTypes.Push(localDataContextType);
             }
-            else
+
+            try
             {
-                foreach (DirectiveNode node in parsedContent.Nodes)
+                foreach (MarkupAttribute attribute in propertyAttributes.Where(attribute => !ReferenceEquals(attribute, dataContextAttribute)))
                 {
-                    switch (node)
+                    if (attribute.Name.LocalName == "MotionClip")
                     {
-                        case DirectiveTextNode text:
-                            EmitTextContent(element, variable, text.Text);
-                            break;
-                        case DirectiveElementNode child:
-                            if (IsNonContentPropertyElement(element, child.Element))
-                            {
-                                break;
-                            }
+                        Report(
+                            InvalidDirective,
+                            attribute,
+                            Path.GetFileName(file.Path),
+                            "MotionClip resources cannot be assigned directly to controls; invoke them with @run inside an Aspect.");
+                        continue;
+                    }
 
-                            string childVariable = EmitElement(child.Element);
-                            EmitChild(element, variable, childVariable);
-                            break;
-                        case DirectiveTemplateNode _:
-                            break;
-                        case DirectiveDefaultNode defaults:
-                            Report(InvalidDirective, defaults.Source, Path.GetFileName(file.Path), "@default is valid only inside Aspect resources.");
-                            break;
-                        case DirectiveAssignmentNode assignment:
-                            Report(InvalidDirective, assignment.Source, Path.GetFileName(file.Path), "Property assignments must be inside an @if block.");
-                            break;
+                    if (TryEmitGridAttachedProperty(variable, attribute))
+                    {
+                        continue;
+                    }
+
+                    if (TryEmitAutomationAttachedProperty(element, variable, attribute))
+                    {
+                        continue;
+                    }
+
+                    if (TryEmitEventAttribute(element, variable, attribute))
+                    {
+                        continue;
+                    }
+
+                    EmitProperty(element, variable, attribute);
+                }
+
+                EmitBrushPropertyElement(element, variable);
+                EmitGridDefinitionElements(element, variable);
+                EmitContentTemplatePropertyElement(element, variable);
+                EmitItemsControlTemplatesElement(element, variable);
+                EmitItemsControlItemsPanelElement(element, variable);
+
+                if (parsedContent.HasDirectives || aspects.Any(aspect => aspect.Conditions.Count > 0))
+                {
+                    EmitReactiveContent(element, variable, parsedContent, aspects);
+                }
+                else
+                {
+                    foreach (DirectiveNode node in parsedContent.Nodes)
+                    {
+                        switch (node)
+                        {
+                            case DirectiveTextNode text:
+                                EmitTextContent(element, variable, text.Text);
+                                break;
+                            case DirectiveElementNode child:
+                                if (IsNonContentPropertyElement(element, child.Element))
+                                {
+                                    break;
+                                }
+
+                                string childVariable = EmitElement(child.Element);
+                                EmitChild(element, variable, childVariable);
+                                break;
+                            case DirectiveTemplateNode _:
+                                break;
+                            case DirectiveDefaultNode defaults:
+                                Report(InvalidDirective, defaults.Source, Path.GetFileName(file.Path), "@default is valid only inside Aspect resources.");
+                                break;
+                            case DirectiveAssignmentNode assignment:
+                                Report(InvalidDirective, assignment.Source, Path.GetFileName(file.Path), "Property assignments must be inside an @if block.");
+                                break;
+                        }
                     }
                 }
+
+                EmitPrismApplication(element, variable);
+            }
+            finally
+            {
+                if (localDataContextType is not null)
+                {
+                    localDataContextTypes.Pop();
+                }
             }
 
-            EmitPrismApplication(element, variable);
             return variable;
+        }
+
+        private ITypeSymbol? ResolveLocalDataContextType(
+            MarkupElement element,
+            string variable,
+            MarkupAttribute attribute)
+        {
+            PropertySpec? dataContextSpec = FindPropertySpec(
+                element.Name.LocalName,
+                "DataContext",
+                ReferenceEquals(element, document.Root));
+            if (dataContextSpec is null)
+            {
+                return null;
+            }
+
+            ParsedMarkupValue? parsed = ParseMarkupBindingValue(
+                attribute.Value,
+                assignment: false,
+                stringTarget: false,
+                attribute);
+            if (parsed?.Kind != ParsedMarkupValueKind.DirectBinding || parsed.Binding is null)
+            {
+                return null;
+            }
+
+            BindingResolutionContext bindingContext = CreateBindingResolutionContext(
+                variable,
+                element.Name.LocalName,
+                ReferenceEquals(element, document.Root));
+            return ResolveBindingSource(bindingContext, parsed.Binding.Path, attribute, attribute)?.ValueType;
         }
 
         private bool ValidateDeclaredTemplatePartType(
             TemplateEmissionContext templateContext,
             string partName,
-            XElement element)
+            MarkupElement element)
         {
             const string templatePartAttributeName = "Cerneala.UI.Controls.Templates.TemplatePartAttribute";
             for (INamedTypeSymbol? current = templateContext.OwnerType; current is not null; current = current.BaseType)
@@ -2792,7 +2691,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
                     Report(
                         InvalidComponentTemplate,
-                        (XObject?)element.Attribute("Name") ?? element,
+                        (MarkupObject?)element.Attribute("Name") ?? element,
                         Path.GetFileName(file.Path),
                         "Template part Name '" + partName + "' on '" + templateContext.OwnerElementName +
                         "' expects type '" + expectedType.ToDisplayString() + "', but element '" +
@@ -2804,7 +2703,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return true;
         }
 
-        private bool TryEmitGridAttachedProperty(string variable, XAttribute attribute)
+        private bool TryEmitGridAttachedProperty(string variable, MarkupAttribute attribute)
         {
             string method = attribute.Name.LocalName switch
             {
@@ -2834,9 +2733,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         private bool TryEmitAutomationAttachedProperty(
-            XElement element,
+            MarkupElement element,
             string variable,
-            XAttribute attribute)
+            MarkupAttribute attribute)
         {
             if (!string.Equals(
                     attribute.Name.LocalName,
@@ -2878,7 +2777,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return true;
         }
 
-        private void EmitGridDefinitionElements(XElement owner, string ownerVariable)
+        private void EmitGridDefinitionElements(MarkupElement owner, string ownerVariable)
         {
             if (owner.Name.LocalName != "Grid")
             {
@@ -2890,14 +2789,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         private void EmitGridDefinitions(
-            XElement owner,
+            MarkupElement owner,
             string ownerVariable,
             string collectionName,
             string definitionName,
             string lengthPropertyName)
         {
             string propertyElementName = "Grid." + collectionName;
-            XElement[] propertyElements = owner.Elements(propertyElementName).ToArray();
+            MarkupElement[] propertyElements = owner.Elements(propertyElementName).ToArray();
             if (propertyElements.Length > 1)
             {
                 Report(
@@ -2913,9 +2812,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            XElement propertyElement = propertyElements[0];
+            MarkupElement propertyElement = propertyElements[0];
             if (propertyElement.Attributes().Any(attribute => !attribute.IsNamespaceDeclaration) ||
-                propertyElement.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+                propertyElement.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
             {
                 Report(
                     InvalidDocumentShape,
@@ -2925,10 +2824,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            foreach (XElement definition in propertyElement.Elements())
+            foreach (MarkupElement definition in propertyElement.Elements())
             {
                 if (definition.Name.LocalName != definitionName || definition.Elements().Any() ||
-                    definition.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)) ||
+                    definition.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)) ||
                     definition.Attributes().Any(attribute =>
                         !attribute.IsNamespaceDeclaration && attribute.Name.LocalName != lengthPropertyName))
                 {
@@ -2941,7 +2840,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                XAttribute? lengthAttribute = definition.Attribute(lengthPropertyName);
+                MarkupAttribute? lengthAttribute = definition.Attribute(lengthPropertyName);
                 string? length = lengthAttribute is null
                     ? "global::Cerneala.UI.Layout.Panels.GridLength.Star"
                     : ParseGridLength(definitionName, lengthPropertyName, lengthAttribute);
@@ -2955,7 +2854,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private string? ParseGridLength(string definitionName, string propertyName, XAttribute attribute)
+        private string? ParseGridLength(string definitionName, string propertyName, MarkupAttribute attribute)
         {
             string value = attribute.Value.Trim();
             if (string.Equals(value, "Auto", StringComparison.OrdinalIgnoreCase))
@@ -2983,7 +2882,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : "global::Cerneala.UI.Layout.Panels.GridLength.Pixels(" + literal + ")";
         }
 
-        private bool IsNonContentPropertyElement(XElement owner, XElement child)
+        private bool IsNonContentPropertyElement(MarkupElement owner, MarkupElement child)
         {
             return IsBrushPropertyElement(owner, child) ||
                 GetContentTemplatePropertyName(owner, child) is not null ||
@@ -2993,7 +2892,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     child.Name.LocalName is "Grid.ColumnDefinitions" or "Grid.RowDefinitions");
         }
 
-        private bool IsItemsControlItemsPanelElement(XElement owner, XElement child)
+        private bool IsItemsControlItemsPanelElement(MarkupElement owner, MarkupElement child)
         {
             string ownerName = owner.Name.LocalName;
             if (child.Name.LocalName != ownerName + ".ItemsPanel")
@@ -3011,7 +2910,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 IsOrDerivesFrom(ownerType, itemsControlType);
         }
 
-        private bool IsItemsControlTemplatesElement(XElement owner, XElement child)
+        private bool IsItemsControlTemplatesElement(MarkupElement owner, MarkupElement child)
         {
             string ownerName = owner.Name.LocalName;
             if (child.Name.LocalName != ownerName + ".Templates")
@@ -3029,9 +2928,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 IsOrDerivesFrom(ownerType, itemsControlType);
         }
 
-        private void EmitItemsControlTemplatesElement(XElement owner, string ownerVariable)
+        private void EmitItemsControlTemplatesElement(MarkupElement owner, string ownerVariable)
         {
-            XElement[] propertyElements = owner.Elements()
+            MarkupElement[] propertyElements = owner.Elements()
                 .Where(child => IsItemsControlTemplatesElement(owner, child))
                 .ToArray();
             if (propertyElements.Length == 0)
@@ -3049,9 +2948,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            XElement propertyElement = propertyElements[0];
+            MarkupElement propertyElement = propertyElements[0];
             if (propertyElement.Attributes().Any(attribute => !attribute.IsNamespaceDeclaration) ||
-                propertyElement.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+                propertyElement.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
             {
                 Report(
                     InvalidDocumentShape,
@@ -3061,7 +2960,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            XElement[] templates = propertyElement.Elements().ToArray();
+            MarkupElement[] templates = propertyElement.Elements().ToArray();
             if (templates.Length == 0 || templates.Any(template => template.Name.LocalName != "ContentTemplate"))
             {
                 Report(
@@ -3072,7 +2971,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            foreach (XElement templateElement in templates)
+            foreach (MarkupElement templateElement in templates)
             {
                 ContentTemplateResource? template = ParseContentTemplate(templateElement);
                 if (template is null)
@@ -3087,9 +2986,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private void EmitItemsControlItemsPanelElement(XElement owner, string ownerVariable)
+        private void EmitItemsControlItemsPanelElement(MarkupElement owner, string ownerVariable)
         {
-            XElement[] propertyElements = owner.Elements()
+            MarkupElement[] propertyElements = owner.Elements()
                 .Where(child => IsItemsControlItemsPanelElement(owner, child))
                 .ToArray();
             if (propertyElements.Length == 0)
@@ -3107,10 +3006,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            XElement propertyElement = propertyElements[0];
-            XElement[] panels = propertyElement.Elements().ToArray();
+            MarkupElement propertyElement = propertyElements[0];
+            MarkupElement[] panels = propertyElement.Elements().ToArray();
             if (propertyElement.Attributes().Any(attribute => !attribute.IsNamespaceDeclaration) ||
-                propertyElement.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)) ||
+                propertyElement.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)) ||
                 panels.Length != 1)
             {
                 Report(
@@ -3121,7 +3020,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            XElement panel = panels[0];
+            MarkupElement panel = panels[0];
             INamedTypeSymbol? panelType = ResolveElementTypeSymbol(panel.Name.LocalName);
             INamedTypeSymbol? panelBaseType = compilation.GetTypeByMetadataName(
                 "Cerneala.UI.Layout.Panels.Panel");
@@ -3139,7 +3038,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             currentLines.Add(ownerVariable + ".ItemsPanel = " + panelVariable + ";");
         }
 
-        private string? GetContentTemplatePropertyName(XElement owner, XElement child)
+        private string? GetContentTemplatePropertyName(MarkupElement owner, MarkupElement child)
         {
             string prefix = owner.Name.LocalName + ".";
             if (!child.Name.LocalName.StartsWith(prefix, StringComparison.Ordinal))
@@ -3157,15 +3056,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : null;
         }
 
-        private void EmitContentTemplatePropertyElement(XElement owner, string ownerVariable)
+        private void EmitContentTemplatePropertyElement(MarkupElement owner, string ownerVariable)
         {
-            foreach (IGrouping<string, XElement> propertyGroup in owner.Elements()
+            foreach (IGrouping<string, MarkupElement> propertyGroup in owner.Elements()
                 .Select(child => new { Element = child, PropertyName = GetContentTemplatePropertyName(owner, child) })
                 .Where(item => item.PropertyName is not null)
                 .GroupBy(item => item.PropertyName!, item => item.Element, StringComparer.Ordinal))
             {
                 string propertyName = propertyGroup.Key;
-                XElement[] propertyElements = propertyGroup.ToArray();
+                MarkupElement[] propertyElements = propertyGroup.ToArray();
                 if (propertyElements.Length > 1 || owner.Attribute(propertyName) is not null)
                 {
                     Report(
@@ -3176,9 +3075,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                XElement propertyElement = propertyElements[0];
+                MarkupElement propertyElement = propertyElements[0];
                 if (propertyElement.Attributes().Any(attribute => !attribute.IsNamespaceDeclaration) ||
-                    propertyElement.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+                    propertyElement.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
                 {
                     Report(
                         InvalidDocumentShape,
@@ -3188,7 +3087,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                XElement[] templates = propertyElement.Elements().ToArray();
+                MarkupElement[] templates = propertyElement.Elements().ToArray();
                 if (templates.Length != 1 || templates[0].Name.LocalName != "ContentTemplate")
                 {
                     Report(
@@ -3207,15 +3106,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private void EmitBrushPropertyElement(XElement owner, string ownerVariable)
+        private void EmitBrushPropertyElement(MarkupElement owner, string ownerVariable)
         {
-            foreach (IGrouping<string, XElement> propertyGroup in owner.Elements()
+            foreach (IGrouping<string, MarkupElement> propertyGroup in owner.Elements()
                 .Select(child => new { Element = child, PropertyName = GetBrushPropertyName(owner, child) })
                 .Where(item => item.PropertyName is not null)
                 .GroupBy(item => item.PropertyName!, item => item.Element, StringComparer.Ordinal))
             {
                 string propertyName = propertyGroup.Key;
-                XElement[] propertyElements = propertyGroup.ToArray();
+                MarkupElement[] propertyElements = propertyGroup.ToArray();
                 if (propertyElements.Length > 1 || owner.Attribute(propertyName) is not null)
                 {
                     Report(InvalidDocumentShape, propertyElements[0], Path.GetFileName(file.Path),
@@ -3223,8 +3122,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                XElement propertyElement = propertyElements[0];
-                XElement[] brushes = propertyElement.Elements().ToArray();
+                MarkupElement propertyElement = propertyElements[0];
+                MarkupElement[] brushes = propertyElement.Elements().ToArray();
                 if (brushes.Length != 1)
                 {
                     Report(InvalidDocumentShape, propertyElement, Path.GetFileName(file.Path),
@@ -3232,7 +3131,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                XElement brush = brushes[0];
+                MarkupElement brush = brushes[0];
                 string? expression = brush.Name.LocalName switch
                 {
                     "SolidColorBrush" => BuildSolidColorBrushExpression(brush, out _),
@@ -3256,12 +3155,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private bool IsBrushPropertyElement(XElement owner, XElement child)
+        private bool IsBrushPropertyElement(MarkupElement owner, MarkupElement child)
         {
             return GetBrushPropertyName(owner, child) is not null;
         }
 
-        private string? GetBrushPropertyName(XElement owner, XElement child)
+        private string? GetBrushPropertyName(MarkupElement owner, MarkupElement child)
         {
             string prefix = owner.Name.LocalName + ".";
             if (!child.Name.LocalName.StartsWith(prefix, StringComparison.Ordinal))
@@ -3277,7 +3176,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return property?.ValueKind == MarkupValueKind.Brush && property.Assignable ? propertyName : null;
         }
 
-        private void EmitRuntimeResources(XElement owner, string ownerVariable)
+        private void EmitRuntimeResources(MarkupElement owner, string ownerVariable)
         {
             if (!resourceScopes.TryGetValue(owner, out ResourceScope? scope))
             {
@@ -3358,7 +3257,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 currentLines.Add("        " + line);
             }
 
-            currentLines.Add("        " + rootVariable + ".DataContext = " + contextVariable + ".Data;");
+            if (template.Root.Attribute("DataContext") is null)
+            {
+                currentLines.Add("        " + rootVariable + ".DataContext = " + contextVariable + ".Data;");
+            }
             foreach (string line in factoryPostLines)
             {
                 currentLines.Add("        " + line);
@@ -3397,7 +3299,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             List<string> applicatorLines = [];
             List<string> applicatorPostLines = [];
-            XElement targetElement = new(aspect.TargetName);
+            MarkupElement targetElement = new(aspect.TargetName);
             WithEmissionBuffers(applicatorLines, applicatorPostLines, () =>
             {
                 if (!ResolveMotionAspect(targetElement, "target", aspect))
@@ -3456,7 +3358,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             List<string> applicatorLines = [];
             List<string> applicatorPostLines = [];
-            XElement targetElement = new(aspect.TargetName);
+            MarkupElement targetElement = new(aspect.TargetName);
             WithEmissionBuffers(applicatorLines, applicatorPostLines, () =>
             {
                 if (!ResolveMotionAspect(targetElement, "target", aspect))
@@ -3500,8 +3402,23 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             currentLines.Add("    });");
         }
 
-        private string? ResolveElementType(string elementName)
+        private string? ResolveElementType(MarkupElement element)
         {
+            string elementName = element.Name.LocalName;
+            CernealaSemanticSymbol? semanticSymbol = semanticModel.Symbols.FirstOrDefault(symbol =>
+                symbol.Kind is CernealaSemanticSymbolKind.RootType or CernealaSemanticSymbolKind.Element &&
+                symbol.Name.Split(':').Last() == elementName &&
+                symbol.Span.Start >= element.Span.Start &&
+                symbol.Span.End <= element.Span.End);
+            INamedTypeSymbol? semanticType = semanticSymbol is null
+                ? null
+                : compilation.GetTypeByMetadataName(semanticSymbol.ValueType);
+            if (semanticType is not null)
+            {
+                resolvedElementTypes[elementName] = semanticType;
+                return semanticType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            }
+
             INamedTypeSymbol? type = ResolveElementTypeSymbol(elementName);
             if (type is null)
             {
@@ -3594,7 +3511,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return ResolveElementTypeSymbol(elementName);
         }
 
-        private IReadOnlyList<AspectResource> ResolveAspects(XElement element)
+        private IReadOnlyList<AspectResource> ResolveAspects(MarkupElement element)
         {
             string elementName = element.Name.LocalName;
             List<AspectResource> resolved = [];
@@ -3609,7 +3526,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return resolved;
             }
 
-            XAttribute? aspectAttribute = element.Attribute("Aspect");
+            MarkupAttribute? aspectAttribute = element.Attribute("Aspect");
             if (aspectAttribute is null)
             {
                 return resolved;
@@ -3640,7 +3557,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return resolved;
         }
 
-        private void ApplyAspects(XElement element, string variable, IReadOnlyList<AspectResource> aspects)
+        private void ApplyAspects(MarkupElement element, string variable, IReadOnlyList<AspectResource> aspects)
         {
             foreach (AspectResource aspect in aspects)
             {
@@ -3703,7 +3620,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private static bool IsLocalAspect(AspectResource aspect) => aspect.IsInline || aspect.Name is not null;
 
-        private void EmitLocalAspect(XElement element, string variable, AspectResource aspect)
+        private void EmitLocalAspect(MarkupElement element, string variable, AspectResource aspect)
         {
             string elementName = element.Name.LocalName;
             List<string> values = [];
@@ -3747,7 +3664,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             currentLines.Add(variable + ".Aspect = " + aspectVariable + ";");
         }
 
-        private string ReadReferenceName(string elementName, string propertyName, XAttribute attribute)
+        private string ReadReferenceName(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string value = attribute.Value.Trim();
             if (!value.StartsWith("$", StringComparison.Ordinal) || value.Length == 1)
@@ -3760,7 +3677,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         private void EmitAspectAssignments(
-            XElement element,
+            MarkupElement element,
             string variable,
             AspectResource aspect,
             string valueSource = "global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase")
@@ -3808,13 +3725,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private GeneratedExpression? ParseAspectLiteralValue(string elementName, string propertyName, string value, PropertySpec spec, XObject source)
+        private GeneratedExpression? ParseAspectLiteralValue(string elementName, string propertyName, string value, PropertySpec spec, MarkupObject source)
         {
-            XAttribute synthetic = new(propertyName, value);
+            MarkupAttribute synthetic = new(propertyName, value);
             return ParseLiteralValue(elementName, propertyName, synthetic, value, spec);
         }
 
-        private GeneratedExpression? ResolveReferenceValue(string elementName, string propertyName, string referenceName, MarkupValueKind targetKind, XObject source)
+        private GeneratedExpression? ResolveReferenceValue(string elementName, string propertyName, string referenceName, MarkupValueKind targetKind, MarkupObject source)
         {
             if (!TryResolveResource(source, referenceName, out NamedSymbol symbol))
             {
@@ -3846,9 +3763,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return null;
         }
 
-        private bool TryResolveDefaultAspect(XObject source, string targetName, out AspectResource aspect)
+        private bool TryResolveDefaultAspect(MarkupObject source, string targetName, out AspectResource aspect)
         {
-            bool isRoot = source is XElement element && ReferenceEquals(element, document.Root);
+            bool isRoot = source is MarkupElement element && ReferenceEquals(element, document.Root);
             INamedTypeSymbol? appliedElementType = ResolvePropertyOwnerType(targetName, isRoot);
             foreach (ResourceScope scope in EnumerateResourceScopes(source))
             {
@@ -3912,7 +3829,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return -1;
         }
 
-        private bool TryResolveResource(XObject source, string name, out NamedSymbol symbol)
+        private bool TryResolveResource(MarkupObject source, string name, out NamedSymbol symbol)
         {
             foreach (ResourceScope scope in EnumerateResourceScopes(source))
             {
@@ -3934,7 +3851,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return false;
         }
 
-        private bool TryResolveObjectSymbol(XObject source, string name, out NamedSymbol symbol)
+        private bool TryResolveObjectSymbol(MarkupObject source, string name, out NamedSymbol symbol)
         {
             if (symbols.TryGetValue(name, out symbol))
             {
@@ -3944,11 +3861,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return TryResolveResource(source, name, out symbol);
         }
 
-        private IEnumerable<ResourceScope> EnumerateResourceScopes(XObject source)
+        private IEnumerable<ResourceScope> EnumerateResourceScopes(MarkupObject source)
         {
-            XElement? current = source switch
+            MarkupElement? current = source switch
             {
-                XElement element => element,
+                MarkupElement element => element,
                 _ => source.Parent
             };
 
@@ -3971,9 +3888,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         private void EmitProperty(
-            XElement element,
+            MarkupElement element,
             string variable,
-            XAttribute attribute,
+            MarkupAttribute attribute,
             PropertySpec? explicitSpec = null,
             string? explicitPropertyName = null,
             bool forceUiPropertyAssignment = false)
@@ -4342,7 +4259,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             };
         }
 
-        private GeneratedExpression? ParseLiteralValue(string elementName, string propertyName, XAttribute attribute, string value, PropertySpec spec)
+        private GeneratedExpression? ParseLiteralValue(string elementName, string propertyName, MarkupAttribute attribute, string value, PropertySpec spec)
         {
             MarkupValueKind kind = spec.ValueKind;
             string? code = kind switch
@@ -4377,7 +4294,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return new GeneratedExpression(code, kind);
         }
 
-        private void EmitTextContent(XElement element, string variable, string text)
+        private void EmitTextContent(MarkupElement element, string variable, string text)
         {
             switch (element.Name.LocalName)
             {
@@ -4399,7 +4316,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
         }
 
-        private void EmitChild(XElement parent, string parentVariable, string childVariable)
+        private void EmitChild(MarkupElement parent, string parentVariable, string childVariable)
         {
             INamedTypeSymbol? parentType = ResolveElementTypeSymbol(parent.Name.LocalName);
             INamedTypeSymbol? panelType = compilation.GetTypeByMetadataName("Cerneala.UI.Layout.Panels.Panel");
@@ -4435,13 +4352,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             Report(UnsupportedProperty, parent, parent.Name.LocalName, "#child");
         }
 
-        private static string? ReadDirectText(XElement element)
+        private static string? ReadDirectText(MarkupElement element)
         {
-            string text = string.Concat(element.Nodes().OfType<XText>().Select(node => node.Value));
+            string text = string.Concat(element.Nodes().OfType<MarkupText>().Select(node => node.Value));
             return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
         }
 
-        private string? NonNegativeFloat(string elementName, string propertyName, XAttribute attribute)
+        private string? NonNegativeFloat(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string? code = Float(elementName, propertyName, attribute);
             if (code is null || !float.TryParse(attribute.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) || value < 0)
@@ -4455,7 +4372,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private string? EnumValue(
             string elementName,
             string propertyName,
-            XAttribute attribute,
+            MarkupAttribute attribute,
             ITypeSymbol enumType)
         {
             string value = attribute.Value.Trim();
@@ -4495,12 +4412,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return builder.ToString();
         }
 
-        private string? Bool(string elementName, string propertyName, XAttribute attribute)
+        private string? Bool(string elementName, string propertyName, MarkupAttribute attribute)
         {
             return bool.TryParse(attribute.Value, out bool parsed) ? (parsed ? "true" : "false") : Invalid(attribute, elementName, propertyName, attribute.Value);
         }
 
-        private string? Float(string elementName, string propertyName, XAttribute attribute)
+        private string? Float(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string value = attribute.Value;
             return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed) &&
@@ -4510,7 +4427,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : Invalid(attribute, elementName, propertyName, value);
         }
 
-        private string? Integer(string elementName, string propertyName, XAttribute attribute, SpecialType type)
+        private string? Integer(string elementName, string propertyName, MarkupAttribute attribute, SpecialType type)
         {
             string value = attribute.Value.Trim();
             bool valid = type switch
@@ -4528,7 +4445,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return valid ? value : Invalid(attribute, elementName, propertyName, attribute.Value);
         }
 
-        private string? Double(string elementName, string propertyName, XAttribute attribute)
+        private string? Double(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string value = attribute.Value.Trim();
             return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed) &&
@@ -4537,7 +4454,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : Invalid(attribute, elementName, propertyName, attribute.Value);
         }
 
-        private string? Decimal(string elementName, string propertyName, XAttribute attribute)
+        private string? Decimal(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string value = attribute.Value.Trim();
             return decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal parsed)
@@ -4545,7 +4462,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : Invalid(attribute, elementName, propertyName, attribute.Value);
         }
 
-        private string? PositiveFloat(string elementName, string propertyName, XAttribute attribute)
+        private string? PositiveFloat(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string value = attribute.Value;
             return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed) &&
@@ -4556,7 +4473,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : Invalid(attribute, elementName, propertyName, value);
         }
 
-        private string? Thickness(string elementName, string propertyName, XAttribute attribute)
+        private string? Thickness(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string value = attribute.Value;
             string[] parts = value.Split(',').Select(part => part.Trim()).ToArray();
@@ -4587,7 +4504,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return Invalid(attribute, elementName, propertyName, value);
         }
 
-        private string? NonNegativeThickness(string elementName, string propertyName, XAttribute attribute)
+        private string? NonNegativeThickness(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string value = attribute.Value;
             string[] parts = value.Split(',').Select(part => part.Trim()).ToArray();
@@ -4618,7 +4535,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return Invalid(attribute, elementName, propertyName, value);
         }
 
-        private string? LayoutPoint(string elementName, string propertyName, XAttribute attribute)
+        private string? LayoutPoint(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string value = attribute.Value;
             string[] parts = value.Split(',').Select(part => part.Trim()).ToArray();
@@ -4634,7 +4551,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : null;
         }
 
-        private string? FloatPart(string elementName, string propertyName, XAttribute attribute, string value)
+        private string? FloatPart(string elementName, string propertyName, MarkupAttribute attribute, string value)
         {
             return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed) &&
                 !float.IsNaN(parsed) &&
@@ -4643,7 +4560,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : Invalid(attribute, elementName, propertyName, attribute.Value);
         }
 
-        private string? NonNegativeFloatPart(string elementName, string propertyName, XAttribute attribute, string value)
+        private string? NonNegativeFloatPart(string elementName, string propertyName, MarkupAttribute attribute, string value)
         {
             return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed) &&
                 parsed >= 0 &&
@@ -4653,7 +4570,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : Invalid(attribute, elementName, propertyName, attribute.Value);
         }
 
-        private string? Color(string elementName, string propertyName, XAttribute attribute)
+        private string? Color(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string value = attribute.Value;
             if (NamedColorNames.TryGetValue(value, out string? namedColor))
@@ -4680,13 +4597,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return Invalid(attribute, elementName, propertyName, value);
         }
 
-        private string? Brush(string elementName, string propertyName, XAttribute attribute)
+        private string? Brush(string elementName, string propertyName, MarkupAttribute attribute)
         {
             string? color = Color(elementName, propertyName, attribute);
             return color is null ? null : "new global::Cerneala.UI.Media.SolidColorBrush(" + color + ")";
         }
 
-        private string? Invalid(XAttribute attribute, string elementName, string propertyName, string value)
+        private string? Invalid(MarkupAttribute attribute, string elementName, string propertyName, string value)
         {
             Report(InvalidPropertyValue, attribute, elementName, propertyName, value);
             return null;
@@ -4706,6 +4623,25 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             HasErrors = true;
             context.ReportDiagnostic(diagnostic);
+        }
+
+        private void ReportSharedDiagnostics()
+        {
+            SourceText source = SourceText.From(file.Text ?? string.Empty, Encoding.UTF8);
+            foreach (LanguageDiagnostic diagnostic in semanticModel.Diagnostics)
+            {
+                Diagnostic hostDiagnostic = SourceGeneratorDiagnosticAdapter.ToDiagnostic(diagnostic, file.Path, source);
+                string key = diagnostic.Id + "|" + diagnostic.Span.Start.ToString(CultureInfo.InvariantCulture) +
+                    "|" + diagnostic.Span.Length.ToString(CultureInfo.InvariantCulture) +
+                    "|" + diagnostic.Message;
+                if (!reportedDiagnostics.Add(key))
+                {
+                    continue;
+                }
+
+                HasErrors |= hostDiagnostic.Severity == DiagnosticSeverity.Error;
+                context.ReportDiagnostic(hostDiagnostic);
+            }
         }
 
         private void ReportMotion(MotionDiagnosticKind kind, object locationSource, string message)
@@ -4757,9 +4693,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return CreateLocation(file, expressionLocation);
         }
 
-        if (locationSource is XObject xmlObject)
+        if (locationSource is MarkupObject markupObject)
         {
-            return CreateLocation(file, xmlObject);
+            return CreateLocation(file, markupObject);
+        }
+
+        if (locationSource is LanguageTextSpan span)
+        {
+            return CreateLocation(file, span);
         }
 
         return Location.Create(file.Path, TextSpan.FromBounds(0, 0), new LinePositionSpan(new LinePosition(0, 0), new LinePosition(0, 0)));
@@ -4767,62 +4708,27 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
     private static Location CreateLocation(MarkupSource file, DirectiveExpressionLocation location)
     {
-        if (location.Source is not IXmlLineInfo lineInfo || !lineInfo.HasLineInfo())
-        {
-            return CreateLocation(file, location.Source);
-        }
-
-        int line = lineInfo.LineNumber;
-        int column = lineInfo.LinePosition;
-        string text = (location.Source as XText)?.Value ?? string.Empty;
-        int length = Math.Min(location.Offset, text.Length);
-        for (int index = 0; index < length; index++)
-        {
-            if (text[index] == '\r')
-            {
-                if (index + 1 < length && text[index + 1] == '\n')
-                {
-                    index++;
-                }
-
-                line++;
-                column = 1;
-            }
-            else if (text[index] == '\n')
-            {
-                line++;
-                column = 1;
-            }
-            else
-            {
-                column++;
-            }
-        }
-
-        return CreateLocation(file, line, column, location.Length);
+        int start = Math.Min(file.Text?.Length ?? 0, location.Source.Span.Start + Math.Max(0, location.Offset));
+        return CreateLocation(file, new LanguageTextSpan(start, Math.Max(0, location.Length)));
     }
 
-    private static Location CreateLocation(MarkupSource file, XObject xmlObject)
-    {
-        if (xmlObject is IXmlLineInfo lineInfo && lineInfo.HasLineInfo())
-        {
-            return CreateLocation(file, lineInfo.LineNumber, lineInfo.LinePosition, 0);
-        }
+    private static Location CreateLocation(MarkupSource file, MarkupObject markupObject) =>
+        CreateLocation(file, markupObject.Span);
 
-        return CreateLocation(file, 1, 1, 0);
+    private static Location CreateLocation(MarkupSource file, LanguageTextSpan languageSpan)
+    {
+        SourceText sourceText = SourceText.From(file.Text ?? string.Empty, Encoding.UTF8);
+        int start = Math.Max(0, Math.Min(sourceText.Length, languageSpan.Start));
+        int end = Math.Max(start, Math.Min(sourceText.Length, languageSpan.End));
+        TextSpan span = TextSpan.FromBounds(start, end);
+        return Location.Create(file.Path, span, sourceText.Lines.GetLinePositionSpan(span));
     }
 
     private static Location CreateLocation(MarkupSource file, int oneBasedLine, int oneBasedColumn, int length = 0)
     {
         SourceText sourceText = SourceText.From(file.Text ?? string.Empty, Encoding.UTF8);
         int line = Math.Max(0, Math.Min(sourceText.Lines.Count - 1, oneBasedLine - 1));
-        int adjustedColumn = oneBasedColumn;
-        if (oneBasedLine == 1 && adjustedColumn > FragmentWrapperStart.Length)
-        {
-            adjustedColumn -= FragmentWrapperStart.Length;
-        }
-
-        int column = Math.Max(0, adjustedColumn - 1);
+        int column = Math.Max(0, oneBasedColumn - 1);
         int start = Math.Min(sourceText.Length, sourceText.Lines[line].Start + column);
         int end = Math.Min(sourceText.Length, start + Math.Max(0, length));
         TextSpan span = TextSpan.FromBounds(start, end);

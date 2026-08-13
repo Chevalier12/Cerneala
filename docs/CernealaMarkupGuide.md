@@ -12,6 +12,19 @@ Do not invent familiar XAML features and hope the generator understands them.
 The build-time source generator validates the document and will reject unknown
 elements, properties, resources, bindings, directives, or motion targets.
 
+### Shared language model
+
+All `.cui.xml` dialects now pass through one lossless, recovery-capable parser and
+one semantic model in `Cerneala.Language`. Bindings, resources, templates,
+Aspect, Motion, and Prism therefore use the same source spans, symbols, and
+diagnostics before `Cerneala.SourceGen` lowers the validated result to C#.
+
+Recovery keeps a partially typed document analyzable, but it does not weaken the
+build contract: saved markup is analyzed in strict `Build` mode, errors stop
+source emission, and generated code remains statically typed and reflection-free.
+The shared model is editor-agnostic infrastructure, not a promise that an LSP or
+editor integration is already shipped.
+
 ## 1. Agent contract
 
 When doing visual UI work:

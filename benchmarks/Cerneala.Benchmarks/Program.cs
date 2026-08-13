@@ -7,4 +7,10 @@ if (args is ["--prism-retained-cache"])
     return;
 }
 
+if (args is ["--language-core-gate"])
+{
+    CernealaLanguageBenchmarkGate.Run();
+    return;
+}
+
 BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);

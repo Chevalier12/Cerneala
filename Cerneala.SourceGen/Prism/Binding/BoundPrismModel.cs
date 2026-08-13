@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Xml.Linq;
 using Cerneala.SourceGen.Prism;
 
 namespace Cerneala.SourceGen;
@@ -176,7 +175,7 @@ public sealed partial class UiMarkupGenerator
             IReadOnlyDictionary<string, BoundPrismParameter> parametersByPath,
             IReadOnlyDictionary<string, BoundPrismNode> nodesByPath,
             PrismContainerSyntax syntax,
-            XElement source,
+            MarkupElement source,
             bool isReusable)
         {
             Name = name;
@@ -204,7 +203,7 @@ public sealed partial class UiMarkupGenerator
 
         public PrismContainerSyntax Syntax { get; }
 
-        public XElement Source { get; }
+        public MarkupElement Source { get; }
 
         public bool IsReusable { get; }
     }
@@ -215,7 +214,7 @@ public sealed partial class UiMarkupGenerator
             BoundPrismComposition composition,
             IReadOnlyDictionary<string, BoundPrismValue> arguments,
             PrismApplicationSyntax syntax,
-            XElement owner)
+            MarkupElement owner)
         {
             Composition = composition;
             Arguments = arguments;
@@ -229,6 +228,6 @@ public sealed partial class UiMarkupGenerator
 
         public PrismApplicationSyntax Syntax { get; }
 
-        public XElement Owner { get; }
+        public MarkupElement Owner { get; }
     }
 }
