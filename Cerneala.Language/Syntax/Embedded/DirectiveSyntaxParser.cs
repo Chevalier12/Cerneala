@@ -41,6 +41,7 @@ internal static class DirectiveSyntaxParser
         };
         List<DirectiveSyntax> directives = new();
         List<AssignmentSyntax> assignments = new();
+        List<DirectiveBlockSyntax> blocks = new();
         List<EmbeddedDiagnostic> diagnostics = new();
         Stack<int> braces = new();
         Stack<int> parentheses = new();
@@ -117,7 +118,9 @@ internal static class DirectiveSyntaxParser
                     }
                     else
                     {
-                        braces.Pop();
+                        int opening = braces.Pop();
+                        blocks.Add(new DirectiveBlockSyntax(
+                            new TextSpan(absoluteOffset + opening, position - opening + 1)));
                     }
                     break;
                 case '(':
@@ -174,8 +177,20 @@ internal static class DirectiveSyntaxParser
                 transient: true));
         }
 
+        foreach (int opening in braces)
+        {
+            blocks.Add(new DirectiveBlockSyntax(
+                new TextSpan(absoluteOffset + opening, text.Length - opening)));
+        }
+
         return new EmbeddedParseResult<DirectiveDocumentSyntax>(
-            new DirectiveDocumentSyntax(text, absoluteOffset, language, directives, assignments),
+            new DirectiveDocumentSyntax(
+                text,
+                absoluteOffset,
+                language,
+                directives,
+                assignments,
+                blocks.OrderBy(block => block.Span.Start).ToArray()),
             diagnostics);
     }
 

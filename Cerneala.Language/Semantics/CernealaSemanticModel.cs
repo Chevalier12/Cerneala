@@ -27,6 +27,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     private readonly Dictionary<string, NamespaceAlias> aliases = new(StringComparer.Ordinal);
     private readonly Dictionary<ElementSyntax, ElementSyntax?> parents = new();
     private readonly Dictionary<ElementSyntax, ILanguageTypeSymbol?> elementTypes = new();
+    private readonly Dictionary<ElementSyntax, ILanguageTypeSymbol?> elementDataTypes = new();
     private readonly Dictionary<ElementSyntax, SemanticNameScope> nameScopes = new();
     private readonly Dictionary<ElementSyntax, SemanticResourceScope> resourceScopes = new();
     private readonly Dictionary<ElementSyntax, ResourceDefinition> resourceElements = new();
@@ -58,6 +59,10 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     }
 
     public CernealaDocument Document => document;
+
+    internal ILanguageCompilationSymbols Compilation => compilation;
+
+    internal IReadOnlyCollection<CernealaDocument> Documents => documents;
 
     public IReadOnlyList<CernealaSemanticSymbol> Symbols
     {
@@ -99,6 +104,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         aliases.Clear();
         parents.Clear();
         elementTypes.Clear();
+        elementDataTypes.Clear();
         nameScopes.Clear();
         resourceScopes.Clear();
         resourceElements.Clear();
@@ -165,6 +171,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        elementDataTypes[element] = dataType;
         if (element.HasMissingTokens)
         {
             return;
@@ -829,7 +836,17 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     private static bool IsQuerySpecificKind(CernealaSemanticSymbolKind kind) => kind is
         CernealaSemanticSymbolKind.BindingSource or CernealaSemanticSymbolKind.BindingSegment or
         CernealaSemanticSymbolKind.BindingMode or CernealaSemanticSymbolKind.ResourceReference or
-        CernealaSemanticSymbolKind.TypeReference;
+        CernealaSemanticSymbolKind.TypeReference or CernealaSemanticSymbolKind.Aspect or
+        CernealaSemanticSymbolKind.AspectAssignment or CernealaSemanticSymbolKind.AspectCondition or
+        CernealaSemanticSymbolKind.AspectApplication or CernealaSemanticSymbolKind.MotionDirective or
+        CernealaSemanticSymbolKind.MotionTarget or CernealaSemanticSymbolKind.MotionEvent or
+        CernealaSemanticSymbolKind.MotionProperty or CernealaSemanticSymbolKind.MotionSpec or
+        CernealaSemanticSymbolKind.MotionComposition or CernealaSemanticSymbolKind.MotionLifecycle or
+        CernealaSemanticSymbolKind.MotionParameter or CernealaSemanticSymbolKind.MotionHandle or
+        CernealaSemanticSymbolKind.PrismDirective or CernealaSemanticSymbolKind.PrismComposition or
+        CernealaSemanticSymbolKind.PrismNode or CernealaSemanticSymbolKind.PrismOperation or
+        CernealaSemanticSymbolKind.PrismProperty or CernealaSemanticSymbolKind.PrismParameter or
+        CernealaSemanticSymbolKind.PrismValue;
 
     private void ThrowIfDisposed()
     {

@@ -1,0 +1,3 @@
+<Window xmlns="clr-namespace:Cerneala.UI.Controls;assembly=Cerneala">
+  <TextBlock Text="Language server fixture" />
+</Window>

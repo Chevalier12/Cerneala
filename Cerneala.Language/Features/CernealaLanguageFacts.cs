@@ -70,4 +70,15 @@ internal static class CernealaLanguageFacts
                 property.Symbols))
             .ToArray();
     }
+
+    public static IReadOnlyList<LanguageArgumentFact> FindPrismProperties(string symbol)
+    {
+        PrismCatalogSymbol? match = prismCatalog.Value.Symbols.FirstOrDefault(candidate =>
+            string.Equals(candidate.Symbol, symbol, StringComparison.Ordinal));
+        return match is null ? Array.Empty<LanguageArgumentFact>() : GetPrismProperties(match.Kind, match.Symbol);
+    }
+
+    public static string? FindPrismKind(string symbol) => prismCatalog.Value.Symbols
+        .FirstOrDefault(candidate => string.Equals(candidate.Symbol, symbol, StringComparison.Ordinal))?
+        .Kind;
 }

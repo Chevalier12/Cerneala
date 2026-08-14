@@ -54,13 +54,15 @@ internal sealed class DirectiveDocumentSyntax
         int absoluteOffset,
         EmbeddedLanguageKind language,
         IReadOnlyList<DirectiveSyntax> directives,
-        IReadOnlyList<AssignmentSyntax> assignments)
+        IReadOnlyList<AssignmentSyntax> assignments,
+        IReadOnlyList<DirectiveBlockSyntax> blocks)
     {
         Text = text;
         AbsoluteOffset = absoluteOffset;
         Language = language;
         Directives = directives;
         Assignments = assignments;
+        Blocks = blocks;
     }
 
     public string Text { get; }
@@ -72,6 +74,18 @@ internal sealed class DirectiveDocumentSyntax
     public IReadOnlyList<DirectiveSyntax> Directives { get; }
 
     public IReadOnlyList<AssignmentSyntax> Assignments { get; }
+
+    public IReadOnlyList<DirectiveBlockSyntax> Blocks { get; }
+}
+
+internal sealed class DirectiveBlockSyntax
+{
+    public DirectiveBlockSyntax(TextSpan span)
+    {
+        Span = span;
+    }
+
+    public TextSpan Span { get; }
 }
 
 internal sealed class DirectiveSyntax

@@ -1,4 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Cerneala.Tests.SourceGen")]
 [assembly: InternalsVisibleTo("Cerneala.Tests.LanguageServer")]

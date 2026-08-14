@@ -12,12 +12,14 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Cerneala.Tests.Language/Cerneala.Tests.Language.csproj" />
+    <Project Path="tests/Cerneala.Tests.LanguageServer/Cerneala.Tests.LanguageServer.csproj" />
     <Project Path="tests/Cerneala.WindowsDxSmoke/Cerneala.WindowsDxSmoke.csproj" />
     <Project Path="tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj" />
     <Project Path="tests/Cerneala.Tests/Cerneala.Tests.csproj" />
   </Folder>
   <Project Path="Cerneala.csproj" />
   <Project Path="Cerneala.Language/Cerneala.Language.csproj" />
+  <Project Path="Cerneala.LanguageServer/Cerneala.LanguageServer.csproj" />
   <Project Path="Cerneala.SourceGen/Cerneala.SourceGen.csproj" />
   <Project Path="CernealaPresentation/CernealaPresentation.csproj" />
 </Solution>

@@ -1,17 +1,20 @@
 using Cerneala.Language.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Globalization;
 
 namespace Cerneala.Language.Semantics.Symbols;
 
 internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 {
     private readonly Compilation compilation;
+    private readonly Lazy<IReadOnlyList<ILanguageTypeSymbol>> allTypes;
 
     public RoslynCompilationSymbols(Compilation compilation, long version = 0)
     {
         this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
         Version = version;
+        allTypes = new Lazy<IReadOnlyList<ILanguageTypeSymbol>>(CreateAllTypes, LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
     public long Version { get; }
@@ -34,6 +37,8 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             .ToArray();
     }
 
+    public IReadOnlyList<ILanguageTypeSymbol> GetTypes() => allTypes.Value;
+
     public ILanguageTypeSymbol? FindDeclaredTypeForFile(string path, string expectedName)
     {
         string normalized = NormalizePath(path);
@@ -48,7 +53,89 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         return candidates.Length == 1 ? new RoslynTypeSymbol(compilation, candidates[0]) : null;
     }
 
+    public IReadOnlyList<LanguageReferenceLocation> FindReferences(
+        string declaringTypeMetadataName,
+        string? memberName,
+        LanguageMemberKind? memberKind,
+        CancellationToken cancellationToken)
+    {
+        INamedTypeSymbol? declaringType = compilation.GetTypeByMetadataName(declaringTypeMetadataName);
+        ISymbol? target = memberName is null
+            ? declaringType
+            : declaringType?.GetMembers(memberName).FirstOrDefault(candidate =>
+                memberKind is null || ConvertMemberKind(candidate) == memberKind);
+        if (target is null)
+        {
+            return Array.Empty<LanguageReferenceLocation>();
+        }
+
+        List<LanguageReferenceLocation> result = ConvertLocations(target.Locations)
+            .Select(location => new LanguageReferenceLocation(location.Path, location.Span, isDefinition: true))
+            .ToList();
+        foreach (SyntaxTree tree in compilation.SyntaxTrees)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            SemanticModel semanticModel = compilation.GetSemanticModel(tree);
+            foreach (SimpleNameSyntax name in tree.GetRoot(cancellationToken).DescendantNodes().OfType<SimpleNameSyntax>())
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                SymbolInfo info = semanticModel.GetSymbolInfo(name, cancellationToken);
+                ISymbol? candidate = info.Symbol ?? info.CandidateSymbols.FirstOrDefault();
+                if (!IsSameSymbol(candidate, target))
+                {
+                    continue;
+                }
+
+                LanguageReferenceLocation reference = new(
+                    tree.FilePath ?? string.Empty,
+                    new TextSpan(name.SpanStart, name.Span.Length),
+                    isDefinition: false);
+                if (!result.Any(existing =>
+                    string.Equals(existing.Path, reference.Path, StringComparison.OrdinalIgnoreCase) &&
+                    existing.Span.Equals(reference.Span)))
+                {
+                    result.Add(reference);
+                }
+            }
+        }
+
+        return result;
+    }
+
     private static string NormalizePath(string path) => path.Replace('\\', '/');
+
+    private IReadOnlyList<ILanguageTypeSymbol> CreateAllTypes()
+    {
+        List<INamedTypeSymbol> result = new();
+        CollectTypes(compilation.GlobalNamespace, result);
+        return result
+            .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default)
+            .OrderBy(type => type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), StringComparer.Ordinal)
+            .Select(type => (ILanguageTypeSymbol)new RoslynTypeSymbol(compilation, type))
+            .ToArray();
+    }
+
+    private static void CollectTypes(INamespaceSymbol @namespace, ICollection<INamedTypeSymbol> destination)
+    {
+        foreach (INamedTypeSymbol type in @namespace.GetTypeMembers())
+        {
+            CollectType(type, destination);
+        }
+
+        foreach (INamespaceSymbol child in @namespace.GetNamespaceMembers())
+        {
+            CollectTypes(child, destination);
+        }
+    }
+
+    private static void CollectType(INamedTypeSymbol type, ICollection<INamedTypeSymbol> destination)
+    {
+        destination.Add(type);
+        foreach (INamedTypeSymbol nested in type.GetTypeMembers())
+        {
+            CollectType(nested, destination);
+        }
+    }
 
     private sealed class RoslynTypeSymbol : ILanguageTypeSymbol
     {
@@ -66,6 +153,8 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         public string MetadataName => symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
 
         public string AssemblyName => symbol.ContainingAssembly?.Name ?? string.Empty;
+
+        public string Namespace => symbol.ContainingNamespace?.ToDisplayString() ?? string.Empty;
 
         public LanguageAccessibility Accessibility => ConvertAccessibility(symbol.DeclaredAccessibility);
 
@@ -130,6 +219,20 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             {
                 members.AddRange(current.GetMembers(name)
                     .Where(member => IsAccessible(member.DeclaredAccessibility))
+                    .Select(member => (ILanguageMemberSymbol)new RoslynMemberSymbol(compilation, member)));
+            }
+
+            return members;
+        }
+
+        public IReadOnlyList<ILanguageMemberSymbol> GetMembers()
+        {
+            List<ILanguageMemberSymbol> members = new();
+            for (INamedTypeSymbol? current = symbol; current is not null; current = current.BaseType)
+            {
+                members.AddRange(current.GetMembers()
+                    .Where(member => IsAccessible(member.DeclaredAccessibility))
+                    .Where(member => !member.IsImplicitlyDeclared)
                     .Select(member => (ILanguageMemberSymbol)new RoslynMemberSymbol(compilation, member)));
             }
 
@@ -215,6 +318,35 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             }
         }
 
+        public string DeclaringTypeMetadataName =>
+            symbol.ContainingType?.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) ?? string.Empty;
+
+        public string AssemblyName => symbol.ContainingAssembly?.Name ?? string.Empty;
+
+        public string Signature => symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+
+        public bool IsDeprecated => symbol.GetAttributes().Any(attribute =>
+            attribute.AttributeClass?.ToDisplayString() == "System.ObsoleteAttribute");
+
+        public string? DefaultValue
+        {
+            get
+            {
+                AttributeData? attribute = symbol.GetAttributes().FirstOrDefault(candidate =>
+                    candidate.AttributeClass?.ToDisplayString() == "System.ComponentModel.DefaultValueAttribute");
+                return attribute?.ConstructorArguments.Length == 1
+                    ? FormatConstant(attribute.ConstructorArguments[0])
+                    : null;
+            }
+        }
+
+        public IReadOnlyList<LanguageParameterSymbol> Parameters => symbol is IMethodSymbol method
+            ? method.Parameters.Select(parameter => new LanguageParameterSymbol(
+                parameter.Name,
+                parameter.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                parameter.IsOptional)).ToArray()
+            : Array.Empty<LanguageParameterSymbol>();
+
         public string? DocumentationXml => EmptyToNull(symbol.GetDocumentationCommentXml());
 
         public IReadOnlyList<LanguageSourceLocation> Locations => ConvertLocations(symbol.Locations);
@@ -242,6 +374,49 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
     private static bool IsAccessible(Accessibility accessibility) => accessibility is
         Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal;
+
+    private static LanguageMemberKind ConvertMemberKind(ISymbol symbol) => symbol switch
+    {
+        IPropertySymbol => LanguageMemberKind.Property,
+        IEventSymbol => LanguageMemberKind.Event,
+        IMethodSymbol => LanguageMemberKind.Method,
+        _ => LanguageMemberKind.Field
+    };
+
+    private static bool IsSameSymbol(ISymbol? candidate, ISymbol target)
+    {
+        if (candidate is IAliasSymbol alias)
+        {
+            candidate = alias.Target;
+        }
+
+        if (candidate is IMethodSymbol { ReducedFrom: not null } method)
+        {
+            candidate = method.ReducedFrom;
+        }
+
+        return candidate is not null && SymbolEqualityComparer.Default.Equals(
+            candidate.OriginalDefinition,
+            target.OriginalDefinition);
+    }
+
+    private static string? FormatConstant(TypedConstant constant)
+    {
+        if (constant.IsNull)
+        {
+            return "null";
+        }
+
+        return constant.Value switch
+        {
+            bool value => value ? "true" : "false",
+            string value => "\"" + value.Replace("\"", "\\\"") + "\"",
+            char value => "'" + value.ToString() + "'",
+            IFormattable value => value.ToString(null, CultureInfo.InvariantCulture),
+            object value => value.ToString(),
+            _ => null
+        };
+    }
 
     private static LanguageAccessibility ConvertAccessibility(Accessibility accessibility) => accessibility switch
     {

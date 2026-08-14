@@ -1,0 +1,372 @@
+[
+  {
+    "Id": "CERNEALAUI001",
+    "EditorSeverity": 3,
+    "BuildSeverity": 1,
+    "Message": "Markup file \u0027arg0\u0027 could not be parsed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI002",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Markup element \u0027arg0\u0027 is not supported by the source generator",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI003",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Markup property \u0027arg0.arg1\u0027 is not supported by the source generator",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI004",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Markup property \u0027arg0.arg1\u0027 has invalid value \u0027arg2\u0027",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI005",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Markup file \u0027arg0\u0027 has invalid document shape: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI006",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Markup directive in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI007",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Markup binding source \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI008",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "UserControl markup file \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI009",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Event handler \u0027arg0\u0027 for \u0027arg1.arg2\u0027 is invalid: arg3",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI010",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Window markup file \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI011",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Generated Window startup is invalid: arg0",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI012",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Component template in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI013",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Application markup file \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI014",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Application startup in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI020",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Motion syntax in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI021",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Motion target resolution in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI022",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Motion event resolution in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI023",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Motion property/spec typing in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI024",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Motion composition in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI025",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Motion lifecycle directive in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI026",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Motion runtime capability in \u0027arg0\u0027 is unsupported: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM1001",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism markup in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM1002",
+    "EditorSeverity": 3,
+    "BuildSeverity": 1,
+    "Message": "Prism markup in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM1003",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism markup in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2001",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2002",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2003",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2004",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2005",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2006",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2007",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2008",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2009",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2010",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2011",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2012",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "PRISM2013",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Prism binding in \u0027arg0\u0027 failed: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  }
+]

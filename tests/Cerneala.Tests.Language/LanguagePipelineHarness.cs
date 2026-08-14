@@ -47,6 +47,16 @@ internal static class LanguagePipelineHarness
         return new LanguagePipelineResult(syntax, semantic, sourceGenerator);
     }
 
+    public static IReadOnlyList<HarnessDiagnostic> AnalyzePairedSourceGenerator(
+        string path,
+        string text,
+        string sourcePath,
+        string source)
+    {
+        CSharpCompilation compilation = CreateCompilation(sourcePath, source);
+        return RunSourceGenerator(compilation, path, text);
+    }
+
     private static IReadOnlyList<HarnessDiagnostic> RunSemanticModel(string path, string text)
     {
         CSharpCompilation compilation = CreateCompilation();
@@ -88,6 +98,14 @@ internal static class LanguagePipelineHarness
     private static IReadOnlyList<HarnessDiagnostic> RunSourceGenerator(string path, string text)
     {
         CSharpCompilation compilation = CreateCompilation();
+        return RunSourceGenerator(compilation, path, text);
+    }
+
+    private static IReadOnlyList<HarnessDiagnostic> RunSourceGenerator(
+        CSharpCompilation compilation,
+        string path,
+        string text)
+    {
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new UiMarkupGenerator().AsSourceGenerator()],
             [new InMemoryAdditionalText(path, text)],
@@ -99,6 +117,12 @@ internal static class LanguagePipelineHarness
             .Select(ToHarnessDiagnostic)
             .ToArray();
     }
+
+    private static CSharpCompilation CreateCompilation(string sourcePath, string source) => CSharpCompilation.Create(
+        "LanguageCorpus",
+        [CSharpSyntaxTree.ParseText(source, path: sourcePath)],
+        References(),
+        new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
     private static CSharpCompilation CreateCompilation() => CSharpCompilation.Create(
             "LanguageCorpus",
