@@ -87,13 +87,13 @@ public sealed partial class UiMarkupGeneratorTests
                 public partial class MainWindow : Window { }
             }
             """;
-        MarkupFile[] files = [new("App.cui.xml", "<Application StartupWindow=\"ShellWindow\" />")];
+        MarkupFile[] files = [new("App.crn", "<Application StartupWindow=\"ShellWindow\" />")];
 
         GeneratorRunResult result = RunGenerator(
             files,
             out _,
             input,
-            "App.cui.xml.cs",
+            "App.crn.cs",
             OutputKind.WindowsApplication);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -112,7 +112,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "MainWindow.cui.xml",
+            "MainWindow.crn",
             "<Window />",
             input,
             out Compilation compilation,
@@ -256,14 +256,14 @@ public sealed partial class UiMarkupGeneratorTests
     {
         MarkupFile[] files =
         [
-            new("App.cui.xml", "<Application StartupWindow=\"ShellWindow\" />"),
-            new("SecondApp.cui.xml", "<Application StartupWindow=\"ShellWindow\" />")
+            new("App.crn", "<Application StartupWindow=\"ShellWindow\" />"),
+            new("SecondApp.crn", "<Application StartupWindow=\"ShellWindow\" />")
         ];
         GeneratorRunResult result = RunGenerator(
             files,
             out _,
             ApplicationInput,
-            "App.cui.xml.cs",
+            "App.crn.cs",
             OutputKind.WindowsApplication);
 
         Diagnostic diagnostic = Assert.Single(
@@ -373,20 +373,20 @@ public sealed partial class UiMarkupGeneratorTests
     [Fact]
     public void ApplicationGenerationIsDeterministicAcrossAdditionalFileOrder()
     {
-        MarkupFile app = new("App.cui.xml", "<Application StartupWindow=\"ShellWindow\" />");
-        MarkupFile fragment = new("Views/Fragment.cui.xml", "<Button Content=\"Stable\" />");
+        MarkupFile app = new("App.crn", "<Application StartupWindow=\"ShellWindow\" />");
+        MarkupFile fragment = new("Views/Fragment.crn", "<Button Content=\"Stable\" />");
 
         GeneratorRunResult forward = RunGenerator(
             [app, fragment],
             out _,
             ApplicationInput,
-            "App.cui.xml.cs",
+            "App.crn.cs",
             OutputKind.WindowsApplication);
         GeneratorRunResult reverse = RunGenerator(
             [fragment, app],
             out _,
             ApplicationInput,
-            "App.cui.xml.cs",
+            "App.crn.cs",
             OutputKind.WindowsApplication);
 
         string[] forwardSources = forward.GeneratedSources
@@ -425,15 +425,15 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         MarkupFile[] files =
         [
-            new("App.cui.xml", markup),
-            new("Views/Shared.cui.xml", "<Border />")
+            new("App.crn", markup),
+            new("Views/Shared.crn", "<Border />")
         ];
 
         GeneratorRunResult result = RunGenerator(
             files,
             out Compilation compilation,
             ApplicationInput,
-            "App.cui.xml.cs",
+            "App.crn.cs",
             OutputKind.WindowsApplication);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -455,7 +455,7 @@ public sealed partial class UiMarkupGeneratorTests
         MarkupFile[] files =
         [
             new(
-                "App.cui.xml",
+                "App.crn",
                 """
                 <Application StartupWindow="ShellWindow">
                     <Application.Resources>
@@ -476,19 +476,21 @@ public sealed partial class UiMarkupGeneratorTests
                     </Application.Resources>
                 </Application>
                 """),
-            new("ShellWindow.cui.xml", "<Window><DerivedScrollViewer /></Window>")
+            new(
+                "ShellWindow.crn",
+                "<Window xmlns:views=\"clr-namespace:TestInput;assembly=GeneratorTests\"><views:DerivedScrollViewer /></Window>")
         ];
         (string Path, string Source)[] sources =
         [
             (
-                "App.cui.xml.cs",
+                "App.crn.cs",
                 """
                 using Cerneala.UI;
                 namespace TestInput;
                 public partial class App : Application { }
                 """),
             (
-                "ShellWindow.cui.xml.cs",
+                "ShellWindow.crn.cs",
                 """
                 using Cerneala.UI.Controls;
                 namespace TestInput;
@@ -543,7 +545,7 @@ public sealed partial class UiMarkupGeneratorTests
         MarkupFile[] files =
         [
             new(
-                "App.cui.xml",
+                "App.crn",
                 """
                 <Application StartupWindow="ShellWindow">
                     <Application.Resources>
@@ -551,27 +553,27 @@ public sealed partial class UiMarkupGeneratorTests
                     </Application.Resources>
                 </Application>
                 """),
-            new("ShellWindow.cui.xml", "<Window><Border Background=\"$Accent\" /></Window>"),
-            new("SharedView.cui.xml", "<UserControl><Border Background=\"$Accent\" /></UserControl>")
+            new("ShellWindow.crn", "<Window><Border Background=\"$Accent\" /></Window>"),
+            new("SharedView.crn", "<UserControl><Border Background=\"$Accent\" /></UserControl>")
         ];
         (string Path, string Source)[] sources =
         [
             (
-                "App.cui.xml.cs",
+                "App.crn.cs",
                 """
                 using Cerneala.UI;
                 namespace TestInput;
                 public partial class App : Application { }
                 """),
             (
-                "ShellWindow.cui.xml.cs",
+                "ShellWindow.crn.cs",
                 """
                 using Cerneala.UI.Controls;
                 namespace TestInput;
                 public partial class ShellWindow : Window { }
                 """),
             (
-                "SharedView.cui.xml.cs",
+                "SharedView.crn.cs",
                 """
                 using Cerneala.UI.Controls;
                 namespace TestInput;
@@ -598,7 +600,7 @@ public sealed partial class UiMarkupGeneratorTests
         MarkupFile[] files =
         [
             new(
-                "App.cui.xml",
+                "App.crn",
                 """
                 <Application StartupWindow="ShellWindow">
                     <Application.Resources>
@@ -606,14 +608,14 @@ public sealed partial class UiMarkupGeneratorTests
                     </Application.Resources>
                 </Application>
                 """),
-            new("Views/Shared.cui.xml", "<Border Background=\"$Quick\" />")
+            new("Views/Shared.crn", "<Border Background=\"$Quick\" />")
         ];
 
         GeneratorRunResult result = RunGenerator(
             files,
             out _,
             ApplicationInput,
-            "App.cui.xml.cs",
+            "App.crn.cs",
             OutputKind.WindowsApplication);
 
         Diagnostic diagnostic = Assert.Single(
@@ -653,10 +655,10 @@ public sealed partial class UiMarkupGeneratorTests
         out Compilation compilation)
     {
         return RunGenerator(
-            [new MarkupFile("App.cui.xml", markup)],
+            [new MarkupFile("App.crn", markup)],
             out compilation,
             inputSource,
-            "App.cui.xml.cs",
+            "App.crn.cs",
             outputKind);
     }
 

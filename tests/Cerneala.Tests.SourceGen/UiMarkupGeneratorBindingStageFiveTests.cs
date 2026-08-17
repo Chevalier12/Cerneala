@@ -41,15 +41,15 @@ public sealed partial class UiMarkupGeneratorTests
         (string File, string Markup, string Message)[] cases =
         [
             (
-                "UnknownMode.cui.xml",
+                "UnknownMode.crn",
                 "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Name:Sideways\" />",
                 "Unknown binding mode"),
             (
-                "EmptyPath.cui.xml",
+                "EmptyPath.crn",
                 "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.\" />",
                 "path token"),
             (
-                "MissingPartProperty.cui.xml",
+                "MissingPartProperty.crn",
                 """
                 <StackPanel>
                   <Button Name="Host">@template { <Border Name="Chrome" /> }</Button>
@@ -58,7 +58,7 @@ public sealed partial class UiMarkupGeneratorTests
                 """,
                 "$control.parts.$part.Property"),
             (
-                "CapitalizedParts.cui.xml",
+                "CapitalizedParts.crn",
                 """
                 <StackPanel>
                   <Button Name="Host">@template { <Border Name="Chrome" /> }</Button>
@@ -82,35 +82,35 @@ public sealed partial class UiMarkupGeneratorTests
         (string File, string Markup, string Message)[] cases =
         [
             (
-                "MissingDataType.cui.xml",
+                "MissingDataType.crn",
                 "<TextBlock Text=\"$DataContext.Name\" />",
                 "DataType is required"),
             (
-                "MissingMember.cui.xml",
+                "MissingMember.crn",
                 "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Missing\" />",
                 "Readable property 'Missing' was not found"),
             (
-                "InaccessibleGetter.cui.xml",
+                "InaccessibleGetter.crn",
                 "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Secret\" />",
                 "Readable property 'Secret' was not found"),
             (
-                "MismatchedType.cui.xml",
+                "MismatchedType.crn",
                 "<TextBlock DataType=\"TestInput.BindingViewModel\" IsEnabled=\"$DataContext.Name\" />",
                 "not compatible"),
             (
-                "ReadOnlyTarget.cui.xml",
+                "ReadOnlyTarget.crn",
                 "<ScrollContentPresenter DataType=\"TestInput.BindingViewModel\" HorizontalOffset=\"$DataContext.Offset\" />",
                 "read-only"),
             (
-                "ReadOnlySource.cui.xml",
+                "ReadOnlySource.crn",
                 "<TextBox DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.ReadOnlyName:TwoWay\" />",
                 "writable source endpoint"),
             (
-                "InverseStringConversion.cui.xml",
+                "InverseStringConversion.crn",
                 "<TextBox DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Count:TwoWay\" />",
                 "OneWay only"),
             (
-                "UnobservableNestedOwner.cui.xml",
+                "UnobservableNestedOwner.crn",
                 "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Plain.Name\" />",
                 "INotifyPropertyChanged")
         ];
@@ -128,19 +128,19 @@ public sealed partial class UiMarkupGeneratorTests
         (string File, string Markup, string Message)[] cases =
         [
             (
-                "MissingNamedElement.cui.xml",
+                "MissingNamedElement.crn",
                 "<TextBlock Text=\"$Missing.Text\" />",
                 "Unknown named element"),
             (
-                "MissingNamedProperty.cui.xml",
+                "MissingNamedProperty.crn",
                 "<StackPanel><TextBlock Name=\"Source\" /><TextBlock Text=\"$Source.Missing\" /></StackPanel>",
                 "No supported UI property"),
             (
-                "ReadOnlyNamedSource.cui.xml",
+                "ReadOnlyNamedSource.crn",
                 "<StackPanel><ScrollContentPresenter Name=\"Source\" /><ProgressBar Value=\"$Source.HorizontalOffset:TwoWay\" /></StackPanel>",
                 "writable source endpoint"),
             (
-                "ReadOnlyTemplatePart.cui.xml",
+                "ReadOnlyTemplatePart.crn",
                 """
                 <StackPanel>
                   <Button Name="Host">@template { <ScrollContentPresenter Name="ReadOnlyPart" /> }</Button>
@@ -149,15 +149,15 @@ public sealed partial class UiMarkupGeneratorTests
                 """,
                 "writable source endpoint"),
             (
-                "DirectSelf.cui.xml",
+                "DirectSelf.crn",
                 "<TextBlock Text=\"$self.Text\" />",
                 "cannot bind directly to itself"),
             (
-                "NamedSelf.cui.xml",
+                "NamedSelf.crn",
                 "<TextBlock Name=\"Label\" Text=\"$Label.Text\" />",
                 "cannot bind directly to itself"),
             (
-                "OutsideTemplateScope.cui.xml",
+                "OutsideTemplateScope.crn",
                 """
                 <StackPanel>
                   <TextBlock Name="Outside" Text="Outer" />
@@ -184,7 +184,7 @@ public sealed partial class UiMarkupGeneratorTests
                   @when $DataContext.Flag:{{mode}} { Text = "Active"; }
                 </TextBlock>
                 """;
-            Diagnostic diagnostic = BindingStageFiveSingleError("Condition" + mode + ".cui.xml", invalidMarkup);
+            Diagnostic diagnostic = BindingStageFiveSingleError("Condition" + mode + ".crn", invalidMarkup);
             Assert.Contains("not allowed", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
             Assert.Contains("condition", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
         }
@@ -195,7 +195,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBox>
             """;
         GeneratorRunResult valid = RunGeneratorWithInput(
-            "ConditionalAssignmentMode.cui.xml",
+            "ConditionalAssignmentMode.crn",
             validMarkup,
             BindingStageFiveInputSource,
             out _);
@@ -217,14 +217,14 @@ public sealed partial class UiMarkupGeneratorTests
                   @when IsEnabled { Text = "{{quotedPath}}"; }
                 </TextBlock>
                 """;
-            Diagnostic diagnostic = BindingStageFiveSingleError("QuotedAssignment.cui.xml", markup);
+            Diagnostic diagnostic = BindingStageFiveSingleError("QuotedAssignment.crn", markup);
             Assert.Contains("unquoted", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
         }
 
         foreach (string mode in new[] { "OneWay", "TwoWay", "Sideways" })
         {
             string markup = "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"Hello $DataContext.Name:" + mode + "\" />";
-            Diagnostic diagnostic = BindingStageFiveSingleError("Interpolation" + mode + ".cui.xml", markup);
+            Diagnostic diagnostic = BindingStageFiveSingleError("Interpolation" + mode + ".crn", markup);
             Assert.Contains(
                 mode == "Sideways" ? "Unknown binding mode" : "interpolated string",
                 diagnostic.GetMessage(),
@@ -232,7 +232,7 @@ public sealed partial class UiMarkupGeneratorTests
         }
 
         Diagnostic missingSemicolon = BindingStageFiveSingleError(
-            "MissingAssignmentSemicolon.cui.xml",
+            "MissingAssignmentSemicolon.crn",
             """
             <TextBlock DataType="TestInput.BindingViewModel" IsEnabled="True" Text="Base">
               @when IsEnabled { Text = $DataContext.Name }
@@ -241,7 +241,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains(";", missingSemicolon.GetMessage(), StringComparison.Ordinal);
 
         Diagnostic trailing = BindingStageFiveSingleError(
-            "TrailingAssignmentBinding.cui.xml",
+            "TrailingAssignmentBinding.crn",
             """
             <TextBlock DataType="TestInput.BindingViewModel" IsEnabled="True" Text="Base">
               @when IsEnabled { Text = $DataContext.Name:OneWay trailing; }
@@ -256,7 +256,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
         GeneratorRunResult legal = RunGeneratorWithInput(
-            "LegalLiteralAndInterpolation.cui.xml",
+            "LegalLiteralAndInterpolation.crn",
             legalMarkup,
             BindingStageFiveInputSource,
             out _);
@@ -279,7 +279,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "BindingResourceCompatibility.cui.xml",
+            "BindingResourceCompatibility.crn",
             markup,
             out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -305,7 +305,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "BindingInterpolationCompatibility.cui.xml",
+            "BindingInterpolationCompatibility.crn",
             markup,
             BindingStageFiveInputSource,
             out Compilation compilation);
@@ -352,7 +352,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "BindingImplicitExplicitCompatibility.cui.xml",
+            "BindingImplicitExplicitCompatibility.crn",
             markup,
             BindingStageFiveInputSource,
             out Compilation compilation);
@@ -364,12 +364,12 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(compilation.GetDiagnostics().All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error));
 
         Diagnostic ownerTwoWay = BindingStageFiveSingleError(
-            "OwnerTwoWay.cui.xml",
+            "OwnerTwoWay.crn",
             "<Button>@template { <ContentPresenter Content=\"$owner.Content:TwoWay\" /> }</Button>");
         Assert.Contains("TwoWay", ownerTwoWay.GetMessage(), StringComparison.Ordinal);
 
         GeneratorRunResult bareNamedElement = RunGenerator(
-            "BareNamedElement.cui.xml",
+            "BareNamedElement.crn",
             "<StackPanel><Slider Name=\"Volume\" /><ProgressBar Value=\"$Volume\" /></StackPanel>",
             out _);
         Assert.Contains(
@@ -395,7 +395,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "OwnerConditionalRestore.cui.xml",
+            "OwnerConditionalRestore.crn",
             markup,
             out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -434,8 +434,8 @@ public sealed partial class UiMarkupGeneratorTests
 
         foreach ((string file, string markup) in new[]
         {
-            ("PartWithoutPropertyAttribute.cui.xml", attributeMarkup),
-            ("PartWithoutPropertyCondition.cui.xml", conditionMarkup)
+            ("PartWithoutPropertyAttribute.crn", attributeMarkup),
+            ("PartWithoutPropertyCondition.crn", conditionMarkup)
         })
         {
             Diagnostic diagnostic = BindingStageFiveSingleError(file, markup);

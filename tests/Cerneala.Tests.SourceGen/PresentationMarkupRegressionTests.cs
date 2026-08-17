@@ -16,7 +16,7 @@ public sealed class PresentationMarkupRegressionTests
         XDocument document = XDocument.Load(Path.Combine(
             repositoryRoot,
             "CernealaPresentation",
-            "PresentationWindow.cui.xml"), LoadOptions.PreserveWhitespace);
+            "PresentationWindow.crn"), LoadOptions.PreserveWhitespace);
 
         XElement navigationAspect = Assert.Single(document
             .Descendants("Aspect")
@@ -54,7 +54,7 @@ public sealed class PresentationMarkupRegressionTests
         string repositoryRoot = FindRepositoryRoot();
         string presentationRoot = Path.Combine(repositoryRoot, "CernealaPresentation");
         XDocument document = XDocument.Load(
-            Path.Combine(presentationRoot, "PresentationWindow.cui.xml"),
+            Path.Combine(presentationRoot, "PresentationWindow.crn"),
             LoadOptions.PreserveWhitespace);
         string[] names = document.Descendants()
             .Select(element => element.Attribute("Name")?.Value)
@@ -62,8 +62,8 @@ public sealed class PresentationMarkupRegressionTests
             .Cast<string>()
             .ToArray();
 
-        Assert.False(File.Exists(Path.Combine(presentationRoot, "DiagnosticsChapterView.cui.xml")));
-        Assert.False(File.Exists(Path.Combine(presentationRoot, "DiagnosticsChapterView.cui.xml.cs")));
+        Assert.False(File.Exists(Path.Combine(presentationRoot, "DiagnosticsChapterView.crn")));
+        Assert.False(File.Exists(Path.Combine(presentationRoot, "DiagnosticsChapterView.crn.cs")));
         Assert.DoesNotContain("NavDiagnostics", names);
         Assert.DoesNotContain("PageDiagnostics", names);
         Assert.Contains("HeaderDiagFrame", names);
@@ -79,7 +79,7 @@ public sealed class PresentationMarkupRegressionTests
 
         string code = File.ReadAllText(Path.Combine(
             presentationRoot,
-            "PresentationWindow.cui.xml.cs"));
+            "PresentationWindow.crn.cs"));
         Assert.DoesNotContain("PresentationChapter.Diagnostics", code, StringComparison.Ordinal);
         foreach (string counter in typeof(FrameStats)
             .GetProperties()
@@ -99,7 +99,7 @@ public sealed class PresentationMarkupRegressionTests
         XDocument document = XDocument.Load(Path.Combine(
             repositoryRoot,
             "CernealaPresentation",
-            "PresentationWindow.cui.xml"), LoadOptions.PreserveWhitespace);
+            "PresentationWindow.crn"), LoadOptions.PreserveWhitespace);
 
         XElement diagnosticsGrid = Assert.Single(document.Descendants("Grid").Where(element =>
             element.Attribute("Width")?.Value == "990"));
@@ -123,7 +123,7 @@ public sealed class PresentationMarkupRegressionTests
         XDocument application = XDocument.Load(Path.Combine(
             repositoryRoot,
             "CernealaPresentation",
-            "App.cui.xml"), LoadOptions.PreserveWhitespace);
+            "App.crn"), LoadOptions.PreserveWhitespace);
         XElement[] aspects = application.Descendants("Aspect").ToArray();
         XElement scrollViewerAspect = Assert.Single(aspects.Where(element =>
             element.Attribute("Name") is null &&
@@ -156,7 +156,7 @@ public sealed class PresentationMarkupRegressionTests
         XDocument document = XDocument.Load(Path.Combine(
             repositoryRoot,
             "CernealaPresentation",
-            "MotionChapterView.cui.xml"), LoadOptions.PreserveWhitespace);
+            "MotionChapterView.crn"), LoadOptions.PreserveWhitespace);
         XElement ignition = Assert.Single(document.Descendants().Where(element =>
             element.Attribute("Name")?.Value == "MotionActIgnition"));
         XElement sequenceGrid = Assert.IsType<XElement>(ignition
@@ -182,7 +182,7 @@ public sealed class PresentationMarkupRegressionTests
         string repositoryRoot = FindRepositoryRoot();
         string presentationRoot = Path.Combine(repositoryRoot, "CernealaPresentation");
         XDocument document = XDocument.Load(
-            Path.Combine(presentationRoot, "PresentationWindow.cui.xml"),
+            Path.Combine(presentationRoot, "PresentationWindow.crn"),
             LoadOptions.PreserveWhitespace);
         string[] pageNames =
         [
@@ -211,7 +211,7 @@ public sealed class PresentationMarkupRegressionTests
 
         string code = File.ReadAllText(Path.Combine(
             presentationRoot,
-            "PresentationWindow.cui.xml.cs"));
+            "PresentationWindow.crn.cs"));
         Assert.Contains(
             "ChapterScrollViewer.Visibility = chapter is PresentationChapter.Aspect or PresentationChapter.Prism",
             code,

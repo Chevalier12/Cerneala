@@ -29,7 +29,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionSet.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionSet.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -53,7 +53,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionSetInvalid.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionSetInvalid.crn", markup, out _);
 
         AssertMotionDiagnostic(result, "concrete values");
     }
@@ -64,7 +64,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Border Aspect="$Entrance">
               <Border.Resources>
-                <MotionClip Name="EntranceClip" TargetType="Cerneala.UI.Controls.Control">
+                <MotionClip Name="EntranceClip" TargetType="Control">
                   @sequence
                   {
                     @animate { @to { Opacity = 1; } }
@@ -83,7 +83,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipNested.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionClipNested.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -115,7 +115,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipIndependentRuns.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionClipIndependentRuns.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -126,6 +126,74 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(4, factories.Length);
         Assert.Equal(2, generated.Split("AttachMotionSession", StringSplitOptions.None).Length - 1);
         Assert.Equal(4, generated.Split("StartMotionExecution", StringSplitOptions.None).Length - 1);
+    }
+
+    [Fact]
+    public void PairedUserControlMotionClipRequiresImportedOwnerTargetType()
+    {
+        const string markup = """
+            <UserControl xmlns:views="clr-namespace:TestInput;assembly=GeneratorTests">
+              <UserControl.Resources>
+                <MotionClip Name="EntranceClip" TargetType="views:OpeningView">
+                  @animate { @to { Opacity = 1; } }
+                </MotionClip>
+                <Aspect Name="Entrance" TargetType="views:OpeningView">
+                  @on Loaded { @run $EntranceClip; }
+                </Aspect>
+              </UserControl.Resources>
+              <Button Name="ContinueButton" />
+            </UserControl>
+            """;
+        const string input = """
+            using Cerneala.UI.Controls;
+
+            namespace TestInput;
+
+            internal partial class OpeningView : UserControl
+            {
+            }
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "OpeningView.crn",
+            markup,
+            input,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        Assert.Contains("ContinueButton", SingleGeneratedSource(result), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PairedUserControlMotionClipRejectsImplicitOwnerTargetType()
+    {
+        const string markup = """
+            <UserControl>
+              <UserControl.Resources>
+                <MotionClip Name="EntranceClip" TargetType="OpeningView">
+                  @animate { @to { Opacity = 1; } }
+                </MotionClip>
+              </UserControl.Resources>
+            </UserControl>
+            """;
+        const string input = """
+            using Cerneala.UI.Controls;
+
+            namespace TestInput;
+
+            internal partial class OpeningView : UserControl
+            {
+            }
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "OpeningView.crn",
+            markup,
+            input,
+            out _);
+
+        Assert.Contains(result.Diagnostics, diagnostic =>
+            diagnostic.GetMessage().Contains("TargetType", StringComparison.Ordinal));
     }
 
     [Theory]
@@ -144,7 +212,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipInvalidBody.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipInvalidBody.crn", markup, out _);
 
         AssertMotionDiagnostic(result, expectedMessage);
     }
@@ -166,7 +234,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipRecursive.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipRecursive.crn", markup, out _);
 
         AssertMotionDiagnostic(result, "recursive");
     }
@@ -175,7 +243,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionClipReportsMissingResource()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionClipMissing.cui.xml",
+            "MotionClipMissing.crn",
             MotionAspectMarkup("@on Loaded { @run $Missing; }"),
             out _);
 
@@ -198,7 +266,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipWrongTarget.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipWrongTarget.crn", markup, out _);
 
         AssertMotionDiagnostic(result, "TargetType");
     }
@@ -219,7 +287,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipMissingNamedElement.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipMissingNamedElement.crn", markup, out _);
 
         AssertMotionDiagnostic(result, "Missing");
     }
@@ -237,7 +305,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipDirectAssignment.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipDirectAssignment.crn", markup, out _);
 
         AssertMotionDiagnostic(result, "cannot be assigned directly");
     }
@@ -251,7 +319,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionRunOutsideAspect.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionRunOutsideAspect.crn", markup, out _);
 
         AssertMotionDiagnostic(result, "Aspect");
     }

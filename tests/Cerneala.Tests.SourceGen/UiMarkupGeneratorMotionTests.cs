@@ -29,7 +29,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("NamedMotionAspect.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("NamedMotionAspect.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -55,7 +55,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("IndependentMotionSessions.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("IndependentMotionSessions.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -83,7 +83,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("InlineMotionAspect.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("InlineMotionAspect.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -115,7 +115,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionOptions.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionOptions.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -128,7 +128,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionMarkupRequiresToBlock()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionMissingTo.cui.xml",
+            "MotionMissingTo.crn",
             MotionAspectMarkup(
                 """
                 @when IsMouseOver
@@ -148,7 +148,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionMarkupReportsUnknownTargetProperty()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionUnknownProperty.cui.xml",
+            "MotionUnknownProperty.crn",
             MotionAspectMarkup(
                 """
                 @when IsMouseOver
@@ -168,7 +168,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionMarkupReportsIncompatibleTargetPropertyValue()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionWrongValue.cui.xml",
+            "MotionWrongValue.crn",
             MotionAspectMarkup(
                 """
                 @when IsMouseOver
@@ -189,7 +189,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionMarkupReportsMissingMixer()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionMissingMixer.cui.xml",
+            "MotionMissingMixer.crn",
             MotionAspectMarkup(
                 """
                 @when IsMouseOver
@@ -210,7 +210,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionMarkupRequiresEveryFromPropertyToAppearInTo()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionUnpairedFrom.cui.xml",
+            "MotionUnpairedFrom.crn",
             MotionAspectMarkup(
                 """
                 @when IsMouseOver
@@ -232,7 +232,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionMarkupReportsUnknownMotionResource()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionUnknownResource.cui.xml",
+            "MotionUnknownResource.crn",
             MotionAspectMarkup(
                 """
                 @when IsMouseOver
@@ -255,7 +255,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionMarkupRejectsUnsupportedStartOptions(string option)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionUnsupportedOption.cui.xml",
+            "MotionUnsupportedOption.crn",
             MotionAspectMarkup($$"""
                 @on Loaded
                 {
@@ -288,7 +288,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionForwardNamedElement.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionForwardNamedElement.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
     }
@@ -343,7 +343,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Grid>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionSelfOwnerParts.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionSelfOwnerParts.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -365,7 +365,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionPartShorthand.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionPartShorthand.crn", markup, out _);
 
         Assert.Contains(
             result.Diagnostics,
@@ -379,7 +379,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Border Aspect="$BaseMotion">
               <Border.Resources>
-                <Aspect Name="BaseMotion" TargetType="Cerneala.UI.Controls.Control">
+                <Aspect Name="BaseMotion" TargetType="Control">
                   @on Loaded
                   {
                     @animate { @to { Opacity = 1; } }
@@ -389,7 +389,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionDerivedTarget.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionDerivedTarget.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
     }
@@ -398,7 +398,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionMarkupSpecializesSpecsWithoutRuntimeNameLookup()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionTypedSpec.cui.xml",
+            "MotionTypedSpec.crn",
             MotionAspectMarkup(
                 """
                 @on Loaded
@@ -436,7 +436,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionWrongTarget.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionWrongTarget.crn", markup, out _);
 
         AssertMotionDiagnostic(result, "Aspect");
     }
@@ -453,7 +453,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionIllegalContext.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionIllegalContext.crn", markup, out _);
 
         AssertMotionDiagnostic(result, "@animate");
         AssertMotionDiagnostic(result, "Aspect");
@@ -492,7 +492,7 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
 
-        GeneratorRunResult result = RunGeneratorWithInput("PublicMotionOptions.cui.xml", markup, inputSource, out Compilation compilation);
+        GeneratorRunResult result = RunGeneratorWithInput("PublicMotionOptions.crn", markup, inputSource, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
     }
@@ -526,7 +526,7 @@ public sealed partial class UiMarkupGeneratorTests
                   }
             """);
 
-        GeneratorRunResult result = RunGenerator("MotionGrammar.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionGrammar.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
     }
@@ -539,7 +539,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionGrammarRecoversWithFocusedDiagnostics(string execution, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionRecovery.cui.xml",
+            "MotionRecovery.crn",
             MotionAspectMarkup($$"""
                 @on Loaded
                 {
@@ -555,7 +555,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionGrammarRejectsXmlControlsInsideExecutionBodies()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionXmlExecution.cui.xml",
+            "MotionXmlExecution.crn",
             MotionAspectMarkup(
                 """
                 @on Click
@@ -585,7 +585,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionBuiltInEvent.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionBuiltInEvent.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -633,17 +633,17 @@ public sealed partial class UiMarkupGeneratorTests
             public partial class MainWindow : Window { }
             """;
         string markup = $$"""
-            <Window>
+            <Window xmlns:views="clr-namespace:TestInput.Views;assembly=GeneratorTests">
               <Window.Resources>
-                <Aspect Name="Motion" TargetType="TestInput.Views.EventBorder">
+                <Aspect Name="Motion" TargetType="views:EventBorder">
                   @on {{eventName}} { @animate { @to { Opacity = 1; } } }
                 </Aspect>
               </Window.Resources>
-              <EventBorder Aspect="$Motion" />
+              <views:EventBorder Aspect="$Motion" />
             </Window>
             """;
 
-        GeneratorRunResult result = RunPairedGenerator("Views/MainWindow.cui.xml", markup, inputSource, out Compilation compilation);
+        GeneratorRunResult result = RunPairedGenerator("Views/MainWindow.crn", markup, inputSource, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -668,17 +668,17 @@ public sealed partial class UiMarkupGeneratorTests
             public partial class MainWindow : Window { }
             """;
         string markup = $$"""
-            <Window>
+            <Window xmlns:views="clr-namespace:TestInput.Views;assembly=GeneratorTests">
               <Window.Resources>
-                <Aspect Name="Motion" TargetType="TestInput.Views.EventBorder">
+                <Aspect Name="Motion" TargetType="views:EventBorder">
                   @on {{eventName}} { @animate { @to { Opacity = 1; } } }
                 </Aspect>
               </Window.Resources>
-              <EventBorder Aspect="$Motion" />
+              <views:EventBorder Aspect="$Motion" />
             </Window>
             """;
 
-        GeneratorRunResult result = RunPairedGenerator("Views/MainWindow.cui.xml", markup, inputSource, out _);
+        GeneratorRunResult result = RunPairedGenerator("Views/MainWindow.crn", markup, inputSource, out _);
 
         AssertMotionDiagnostic(result, eventName);
     }
@@ -689,14 +689,14 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Button Aspect="$Motion">
               <Button.Resources>
-                <Aspect Name="Motion" TargetType="Cerneala.UI.Elements.UIElement">
+                <Aspect Name="Motion" TargetType="UIElement">
                   @on Click { @animate { @to { Opacity = 1; } } }
                 </Aspect>
               </Button.Resources>
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionGeneralEventTarget.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionGeneralEventTarget.crn", markup, out _);
 
         AssertMotionDiagnostic(result, "Click");
     }
@@ -717,7 +717,16 @@ public sealed partial class UiMarkupGeneratorTests
     private static void AssertNoGeneratorOrCompilationErrors(GeneratorRunResult result, Compilation compilation)
     {
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.DoesNotContain(compilation.GetDiagnostics(), diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Diagnostic[] compilationErrors = compilation.GetDiagnostics()
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .ToArray();
+        string generatedSources = string.Join(
+            Environment.NewLine + "-----" + Environment.NewLine,
+            result.GeneratedSources.Select(source => source.SourceText.ToString()));
+        Assert.True(
+            compilationErrors.Length == 0,
+            string.Join(Environment.NewLine, compilationErrors.Select(diagnostic => diagnostic.ToString())) +
+            Environment.NewLine + generatedSources);
     }
 
     private static void AssertMotionDiagnostic(GeneratorRunResult result, string expectedMessageFragment)

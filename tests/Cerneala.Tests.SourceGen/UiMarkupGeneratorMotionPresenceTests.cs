@@ -16,7 +16,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionPresenceGeneratesTypedOptionsBeforeAttachment()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionPresence.cui.xml",
+            "MotionPresence.crn",
             PresenceMarkup(excludeInputWhileExiting: false),
             out Compilation compilation);
 
@@ -90,7 +90,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionPresenceRejectsUnsupportedOrRetroactiveShapes(string body, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "InvalidMotionPresence.cui.xml",
+            "InvalidMotionPresence.crn",
             MotionAspectMarkup(body),
             out _);
 
@@ -99,7 +99,7 @@ public sealed partial class UiMarkupGeneratorTests
 
     private static Border CreateGeneratedPresenceBorder(string markup)
     {
-        GeneratorRunResult result = RunGenerator("RuntimeMotionPresence.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("RuntimeMotionPresence.crn", markup, out Compilation compilation);
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);

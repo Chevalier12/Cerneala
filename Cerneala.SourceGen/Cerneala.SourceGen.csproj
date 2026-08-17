@@ -25,7 +25,7 @@
                       LogicalName="Cerneala.SourceGen.Prism.prism-catalog.json" />
   </ItemGroup>
 
-  <Target Name="IncludeLanguageAnalyzerDependency" AfterTargets="GetTargetPath">
+  <Target Name="IncludeLanguageAnalyzerDependency" BeforeTargets="GetTargetPath">
     <ItemGroup>
       <TargetPathWithTargetPlatformMoniker
         Include="$(TargetDir)Cerneala.Language.dll"

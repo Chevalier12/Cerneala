@@ -54,7 +54,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "TypedBindingEmission.cui.xml",
+            "TypedBindingEmission.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -109,7 +109,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "ConditionalProviderLifecycle.cui.xml",
+            "ConditionalProviderLifecycle.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -167,7 +167,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "TemplateBindingLifetime.cui.xml",
+            "TemplateBindingLifetime.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -204,7 +204,7 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
         GeneratorRunResult userControlResult = RunPairedGenerator(
-            "Views/BindingView.cui.xml",
+            "Views/BindingView.crn",
             "<UserControl><TextBlock Text=\"$DataContext.Name\" /></UserControl>",
             userControlSource,
             out Compilation userControlCompilation);
@@ -235,7 +235,7 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
         GeneratorRunResult windowResult = RunPairedGenerator(
-            "Views/BindingWindow.cui.xml",
+            "Views/BindingWindow.crn",
             "<Window><TextBlock Text=\"$DataContext.Name\" /></Window>",
             windowSource,
             out Compilation windowCompilation);

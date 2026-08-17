@@ -52,7 +52,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "BindingSemanticMatrix.cui.xml",
+            "BindingSemanticMatrix.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -86,7 +86,7 @@ public sealed partial class UiMarkupGeneratorTests
         string markup = "<TextBlock DataType=\"TestInput.ViewModel\" Text=\"" + value + "\" />";
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "InvalidBindingToken.cui.xml",
+            "InvalidBindingToken.crn",
             markup,
             inputSource,
             out _);
@@ -118,7 +118,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
         GeneratorRunResult valid = RunGeneratorWithInput(
-            "AssignmentBindings.cui.xml",
+            "AssignmentBindings.crn",
             validMarkup,
             inputSource,
             out _);
@@ -130,7 +130,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
         GeneratorRunResult purePath = RunGeneratorWithInput(
-            "QuotedPurePath.cui.xml",
+            "QuotedPurePath.crn",
             purePathMarkup,
             inputSource,
             out _);
@@ -143,7 +143,7 @@ public sealed partial class UiMarkupGeneratorTests
             <TextBlock DataType="TestInput.ViewModel" Text="Hello $DataContext.Name:OneWay" />
             """;
         GeneratorRunResult modeInInterpolation = RunGeneratorWithInput(
-            "InterpolationMode.cui.xml",
+            "InterpolationMode.crn",
             modeInInterpolationMarkup,
             inputSource,
             out _);
@@ -156,7 +156,7 @@ public sealed partial class UiMarkupGeneratorTests
             <TextBlock DataType="TestInput.ViewModel" Text="Hello $DataContext.Name:Sideways" />
             """;
         GeneratorRunResult unknownModeInterpolation = RunGeneratorWithInput(
-            "UnknownInterpolationMode.cui.xml",
+            "UnknownInterpolationMode.crn",
             unknownModeInterpolationMarkup,
             inputSource,
             out _);
@@ -171,7 +171,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
         GeneratorRunResult invalidAssignment = RunGeneratorWithInput(
-            "InvalidAssignmentMode.cui.xml",
+            "InvalidAssignmentMode.crn",
             invalidAssignmentMarkup,
             inputSource,
             out _);
@@ -184,7 +184,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(assignmentLine.IndexOf(":Sideways", StringComparison.Ordinal), assignmentPosition.Character);
 
         GeneratorRunResult literalDollar = RunGenerator(
-            "LiteralDollar.cui.xml",
+            "LiteralDollar.crn",
             "<TextBlock Text=\"Pret $ 10, literal \\$DataContext.Name\" />",
             out _);
         Assert.DoesNotContain(literalDollar.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -198,7 +198,7 @@ public sealed partial class UiMarkupGeneratorTests
             public sealed class PlainViewModel { public string Name { get; set; } = "Value"; }
             """;
         GeneratorRunResult unobservable = RunGeneratorWithInput(
-            "UnobservableSemanticBinding.cui.xml",
+            "UnobservableSemanticBinding.crn",
             "<TextBlock DataType=\"TestInput.PlainViewModel\" Text=\"$DataContext.Name\" />",
             unobservableSource,
             out _);
@@ -216,7 +216,7 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
         GeneratorRunResult readOnly = RunGeneratorWithInput(
-            "ReadOnlySemanticBinding.cui.xml",
+            "ReadOnlySemanticBinding.crn",
             "<TextBox DataType=\"TestInput.ReadOnlyViewModel\" Text=\"$DataContext.Name:TwoWay\" />",
             readOnlySource,
             out _);
@@ -234,7 +234,7 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
         GeneratorRunResult mismatch = RunGeneratorWithInput(
-            "MismatchSemanticBinding.cui.xml",
+            "MismatchSemanticBinding.crn",
             "<TextBlock DataType=\"TestInput.MismatchViewModel\" IsEnabled=\"$DataContext.Name\" />",
             mismatchSource,
             out _);
@@ -243,7 +243,7 @@ public sealed partial class UiMarkupGeneratorTests
             diagnostic => diagnostic.GetMessage().Contains("not compatible", StringComparison.OrdinalIgnoreCase));
 
         GeneratorRunResult self = RunGenerator(
-            "SelfSemanticBinding.cui.xml",
+            "SelfSemanticBinding.crn",
             "<TextBlock IsEnabled=\"$self.IsEnabled\" />",
             out _);
         Assert.Contains(
@@ -271,7 +271,7 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
         GeneratorRunResult userControl = RunPairedGenerator(
-            "Views/BindingView.cui.xml",
+            "Views/BindingView.crn",
             "<UserControl><TextBlock Text=\"$DataContext.Name\" /></UserControl>",
             userControlSource,
             out _);
@@ -285,7 +285,7 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
         GeneratorRunResult window = RunPairedGenerator(
-            "Views/BindingWindow.cui.xml",
+            "Views/BindingWindow.crn",
             "<Window><TextBlock Text=\"$DataContext.Name\" /></Window>",
             windowSource,
             out _);

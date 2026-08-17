@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Cerneala.Language;
 using Cerneala.Language.Diagnostics;
 using Cerneala.Language.Semantics;
 using Cerneala.Language.Semantics.Symbols;
@@ -201,7 +202,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         IncrementalValuesProvider<MarkupSource> markupFiles = context.AdditionalTextsProvider
-            .Where(static file => IsMarkupFile(file))
+            .Where(static file => CernealaDocumentPath.IsMarkupFile(file.Path))
             .Select(static (file, cancellationToken) => new MarkupSource(
                 file.Path,
                 file.GetText(cancellationToken)?.ToString()));
@@ -209,12 +210,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         IncrementalValueProvider<ImmutableArray<MarkupSource>> applicationFiles = markupFiles
             .Where(static file => file.Document?.Root.Name.LocalName == "Application")
             .Collect();
-        IncrementalValuesProvider<SemanticMarkupSource> semanticMarkupFiles = markupFiles
-            .Combine(applicationFiles)
+        IncrementalValueProvider<SemanticAnalysisContext> semanticContext = applicationFiles
             .Combine(context.CompilationProvider)
+            .Select(static (input, _) => new SemanticAnalysisContext(input.Left, input.Right));
+        IncrementalValuesProvider<SemanticMarkupSource> semanticMarkupFiles = markupFiles
+            .Combine(semanticContext)
             .Select(static (input, cancellationToken) => AnalyzeMarkupFile(
-                input.Left.Left,
-                input.Left.Right,
+                input.Left,
                 input.Right,
                 cancellationToken))
             .WithTrackingName("CernealaLanguageSemanticModel");
@@ -224,18 +226,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             static (sourceContext, input) => GenerateFiles(sourceContext, input.Left, input.Right));
     }
 
-    private static bool IsMarkupFile(AdditionalText file)
-    {
-        return file.Path.EndsWith(".cui.xml", StringComparison.OrdinalIgnoreCase);
-    }
-
     private static SemanticMarkupSource AnalyzeMarkupFile(
         MarkupSource file,
-        ImmutableArray<MarkupSource> applicationFiles,
-        Compilation compilation,
+        SemanticAnalysisContext context,
         CancellationToken cancellationToken)
     {
-        MarkupSource[] semanticInputs = applicationFiles
+        MarkupSource[] semanticInputs = context.ApplicationFiles
             .Append(file)
             .GroupBy(candidate => candidate.Path, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.Last())
@@ -245,12 +241,25 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             .OfType<CernealaDocument>()
             .ToArray();
         using CernealaCompilation languageCompilation = new(
-            new RoslynCompilationSymbols(compilation),
+            context.Symbols,
             languageDocuments,
             AnalysisMode.Build);
         SourceGeneratorSemanticModel semanticModel = SourceGeneratorSemanticModel.Create(
             languageCompilation.GetSemanticModel(file.Path, cancellationToken));
         return new SemanticMarkupSource(file, semanticModel);
+    }
+
+    private sealed class SemanticAnalysisContext
+    {
+        public SemanticAnalysisContext(ImmutableArray<MarkupSource> applicationFiles, Compilation compilation)
+        {
+            ApplicationFiles = applicationFiles;
+            Symbols = new RoslynCompilationSymbols(compilation);
+        }
+
+        public ImmutableArray<MarkupSource> ApplicationFiles { get; }
+
+        public RoslynCompilationSymbols Symbols { get; }
     }
 
     private static void GenerateFiles(SourceProductionContext context, ImmutableArray<SemanticMarkupSource> inputs, Compilation compilation)
@@ -608,15 +617,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
     private static string CreateClassName(string path)
     {
-        string rawName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(path));
-        return CreateIdentifier(rawName);
+        return CreateIdentifier(CernealaDocumentPath.GetLogicalName(path));
     }
 
     private static string CreateDisambiguatedClassName(string path)
     {
         string? directoryName = Path.GetDirectoryName(path);
         string? parentName = string.IsNullOrEmpty(directoryName) ? null : Path.GetFileName(directoryName);
-        string baseName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(path));
+        string baseName = CernealaDocumentPath.GetLogicalName(path);
         return string.IsNullOrEmpty(parentName)
             ? CreateClassName(path)
             : CreateIdentifier(parentName + "-" + baseName);
@@ -1376,7 +1384,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             int id = nextResourceId++;
             string generatedName = name ??
-                Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Path)) +
+                CernealaDocumentPath.GetLogicalName(file.Path) +
                 ".ContentTemplate." + id.ToString(CultureInfo.InvariantCulture);
             return new ContentTemplateResource(
                 name,
@@ -1389,9 +1397,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 resource);
         }
 
-        private INamedTypeSymbol? ResolveMarkupTypeReference(MarkupAttribute attribute)
+        private INamedTypeSymbol? ResolveMarkupTypeReference(MarkupAttribute attribute) =>
+            ResolveMarkupTypeReference(attribute.Value, attribute.Parent);
+
+        private INamedTypeSymbol? ResolveMarkupTypeReference(string rawReference, MarkupElement? context)
         {
-            string reference = attribute.Value.Trim();
+            string reference = rawReference.Trim();
             if (reference.StartsWith("global::", StringComparison.Ordinal))
             {
                 reference = reference.Substring("global::".Length);
@@ -1410,7 +1421,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             string prefix = reference.Substring(0, prefixSeparator);
             string localName = reference.Substring(prefixSeparator + 1);
-            MarkupNamespace? xmlNamespace = attribute.Parent?.GetNamespaceOfPrefix(prefix);
+            MarkupNamespace? xmlNamespace = context?.GetNamespaceOfPrefix(prefix);
             const string clrNamespacePrefix = "clr-namespace:";
             if (xmlNamespace is null ||
                 !xmlNamespace.NamespaceName.StartsWith(clrNamespacePrefix, StringComparison.Ordinal))
@@ -1717,7 +1728,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             targetName = targetName.Trim();
-            if (ResolveAspectTargetType(targetName) is null)
+            if (ResolveAspectTargetType(targetName, resource) is null)
             {
                 Report(UnsupportedElement, resource, targetName);
                 return;
@@ -2283,7 +2294,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             List<(AspectResource Aspect, INamedTypeSymbol OwnerType)> templates = [];
             foreach (AspectResource aspect in allAspects.Where(candidate => candidate.Template is not null))
             {
-                INamedTypeSymbol? ownerType = ResolveAspectTargetTypeSymbol(aspect.TargetName);
+                INamedTypeSymbol? ownerType = ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source);
                 if (!IsControlType(ownerType))
                 {
                     Report(
@@ -2382,7 +2393,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             templateParts[template] = new Dictionary<string, MarkupElement>(emissionContext.Parts, StringComparer.Ordinal);
 
             string typeCode = ownerType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            string generatedName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Path)) +
+            string generatedName = CernealaDocumentPath.GetLogicalName(file.Path) +
                 "." + ownerElementName + ".Template." + templateId.ToString(CultureInfo.InvariantCulture);
             currentLines.Add(assignmentTarget + " = new global::Cerneala.UI.Controls.Templates.ComponentTemplate<" + typeCode + ">(");
             currentLines.Add("    " + Literal(generatedName) + ",");
@@ -3193,7 +3204,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                             Literal(brush.Name) + "), " + brush.Variable + ");");
                         break;
                     case AspectResource aspect:
-                        string targetType = ResolveAspectTargetType(aspect.TargetName)!;
+                        string targetType = ResolveAspectTargetType(aspect.TargetName, aspect.Source)!;
                         string key = aspect.Name is null ? "typeof(" + targetType + ")" : Literal(aspect.Name);
                         IEnumerable<string> propertyNames = aspect.Assignments.Select(assignment => assignment.PropertyName);
                         if (aspect.Template is not null)
@@ -3299,7 +3310,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             List<string> applicatorLines = [];
             List<string> applicatorPostLines = [];
-            MarkupElement targetElement = new(aspect.TargetName);
+            MarkupElement targetElement = new(ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!.Name);
             WithEmissionBuffers(applicatorLines, applicatorPostLines, () =>
             {
                 if (!ResolveMotionAspect(targetElement, "target", aspect))
@@ -3358,7 +3369,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             List<string> applicatorLines = [];
             List<string> applicatorPostLines = [];
-            MarkupElement targetElement = new(aspect.TargetName);
+            MarkupElement targetElement = new(ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!.Name);
             WithEmissionBuffers(applicatorLines, applicatorPostLines, () =>
             {
                 if (!ResolveMotionAspect(targetElement, "target", aspect))
@@ -3415,42 +3426,76 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : compilation.GetTypeByMetadataName(semanticSymbol.ValueType);
             if (semanticType is not null)
             {
+                resolvedElementTypes[element.Name.Value] = semanticType;
                 resolvedElementTypes[elementName] = semanticType;
                 return semanticType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             }
 
-            INamedTypeSymbol? type = ResolveElementTypeSymbol(elementName);
+            INamedTypeSymbol? type = element.Name.Value.Contains(':')
+                ? ResolveMarkupTypeReference(element.Name.Value, element)
+                : ResolveBuiltInElementTypeSymbol(elementName);
             if (type is null)
             {
                 return null;
             }
 
+            resolvedElementTypes[element.Name.Value] = type;
             resolvedElementTypes[elementName] = type;
             return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
 
-        private string? ResolveAspectTargetType(string targetName)
+        private string? ResolveAspectTargetType(string targetName, MarkupElement? source = null)
         {
-            return ResolveAspectTargetTypeSymbol(targetName)?
+            return ResolveAspectTargetTypeSymbol(targetName, source)?
                 .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
 
-        private INamedTypeSymbol? ResolveAspectTargetTypeSymbol(string targetName)
+        private INamedTypeSymbol? ResolveAspectTargetTypeSymbol(string targetName, MarkupElement? source = null)
         {
-            string metadataName = targetName.StartsWith("global::", StringComparison.Ordinal)
-                ? targetName.Substring("global::".Length)
-                : targetName;
-            INamedTypeSymbol? type = metadataName.Contains('.')
-                ? compilation.GetTypeByMetadataName(metadataName)
-                : compilation.GetTypeByMetadataName("Cerneala.UI.Controls." + metadataName);
+            string reference = targetName.Trim();
+            if (resolvedElementTypes.TryGetValue(reference, out INamedTypeSymbol? resolved))
+            {
+                return resolved;
+            }
+
+            INamedTypeSymbol? type = reference.Contains(':')
+                ? ResolveMarkupTypeReference(reference, source)
+                : ResolveBuiltInElementTypeSymbol(reference);
+
             INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
-            if (type is not null && type.TypeKind == TypeKind.Class && !type.IsAbstract &&
+            if (type is not null && type.TypeKind == TypeKind.Class &&
                 uiElementType is not null && IsOrDerivesFrom(type, uiElementType))
             {
+                resolvedElementTypes[reference] = type;
+                resolvedElementTypes[type.Name] = type;
                 return type;
             }
 
-            return ResolveElementTypeSymbol(targetName);
+            return null;
+        }
+
+        private INamedTypeSymbol? ResolveBuiltInElementTypeSymbol(string elementName)
+        {
+            string metadataName = elementName.StartsWith("global::", StringComparison.Ordinal)
+                ? elementName.Substring("global::".Length)
+                : elementName;
+            if (metadataName.StartsWith("Cerneala.UI.", StringComparison.Ordinal))
+            {
+                return compilation.GetTypeByMetadataName(metadataName);
+            }
+
+            if (metadataName.Contains('.'))
+            {
+                return null;
+            }
+
+            return compilation.GetTypeByMetadataName("Cerneala.UI.Controls." + metadataName) ??
+                compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Primitives." + metadataName) ??
+                compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Shapes." + metadataName) ??
+                compilation.GetTypeByMetadataName("Cerneala.UI.Elements." + metadataName) ??
+                compilation.GetTypeByMetadataName("Cerneala.UI.Layout.Panels." + metadataName) ??
+                compilation.GetTypeByMetadataName("Cerneala.UI.Media." + metadataName) ??
+                compilation.GetTypeByMetadataName("Cerneala.UI.Automation." + metadataName);
         }
 
         private INamedTypeSymbol? ResolveElementTypeSymbol(string elementName)
@@ -3460,29 +3505,14 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return resolved;
             }
 
-            INamedTypeSymbol? type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls." + elementName);
+            INamedTypeSymbol? type = ResolveBuiltInElementTypeSymbol(elementName);
             INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
             INamedTypeSymbol? windowType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Window");
-            if (type is null)
-            {
-                type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Primitives." + elementName);
-            }
-
-            if (type is null)
-            {
-                type = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Shapes." + elementName);
-            }
-
-            if (type is null)
-            {
-                type = compilation.GetTypeByMetadataName("Cerneala.UI.Layout.Panels." + elementName);
-            }
-
             if (type is null || type.TypeKind != TypeKind.Class || type.IsAbstract ||
                 uiElementType is null || !IsOrDerivesFrom(type, uiElementType) ||
                 (windowType is not null && IsOrDerivesFrom(type, windowType)))
             {
-                type = ResolveCustomElementType(elementName);
+                type = null;
             }
 
             if (type is not null)
@@ -3545,7 +3575,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return resolved;
             }
 
-            INamedTypeSymbol? namedTargetType = ResolveAspectTargetTypeSymbol(namedAspect.TargetName);
+            INamedTypeSymbol? namedTargetType = ResolveAspectTargetTypeSymbol(namedAspect.TargetName, namedAspect.Source);
             INamedTypeSymbol? appliedElementType = ResolvePropertyOwnerType(elementName, ReferenceEquals(element, document.Root));
             if (namedTargetType is null || appliedElementType is null || !IsOrDerivesFrom(appliedElementType, namedTargetType))
             {
@@ -3796,7 +3826,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             int nearestDistance = int.MaxValue;
             foreach (AspectResource candidate in candidates)
             {
-                INamedTypeSymbol? candidateType = ResolveAspectTargetTypeSymbol(candidate.TargetName);
+                INamedTypeSymbol? candidateType = ResolveAspectTargetTypeSymbol(candidate.TargetName, candidate.Source);
                 int distance = candidateType is null
                     ? -1
                     : GetBaseTypeDistance(appliedElementType, candidateType);
@@ -4025,10 +4055,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             if (trimmedValue.StartsWith("$", StringComparison.Ordinal))
             {
+                string resourceName = trimmedValue.EndsWith(":OneWay", StringComparison.Ordinal)
+                    ? trimmedValue.Substring(1, trimmedValue.Length - ":OneWay".Length - 1)
+                    : trimmedValue.Substring(1);
                 GeneratedExpression? resourceExpression = ResolveReferenceValue(
                     elementName,
                     propertyName,
-                    trimmedValue.Substring(1),
+                    resourceName,
                     spec.ValueKind,
                     attribute);
                 if (resourceExpression is not null)

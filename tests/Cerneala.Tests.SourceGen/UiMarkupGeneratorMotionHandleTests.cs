@@ -25,7 +25,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionHandles.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionHandles.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -52,7 +52,7 @@ public sealed partial class UiMarkupGeneratorTests
     {
         string markup = MotionHandleMarkup(aspectBody);
 
-        GeneratorRunResult result = RunGenerator("MotionHandleInvalid.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionHandleInvalid.crn", markup, out _);
 
         AssertContainsHandleDiagnostic(result, expectedMessage);
     }
@@ -70,7 +70,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipCancel.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipCancel.crn", markup, out _);
 
         AssertContainsHandleDiagnostic(result, "cannot contain @cancel");
     }
@@ -83,7 +83,7 @@ public sealed partial class UiMarkupGeneratorTests
     {
         string markup = $"<Border>{command}</Border>";
 
-        GeneratorRunResult result = RunGenerator("MotionHandleOutsideAspect.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionHandleOutsideAspect.crn", markup, out _);
 
         AssertContainsHandleDiagnostic(result, expectedMessage);
     }
@@ -95,7 +95,7 @@ public sealed partial class UiMarkupGeneratorTests
             "@handle Active; @on Loaded { @sequence { @run $Pulse as Active; } }");
 
         GeneratorRunResult result = RunGenerator(
-            "MotionHandleComposition.cui.xml",
+            "MotionHandleComposition.crn",
             markup,
             out Compilation compilation);
 

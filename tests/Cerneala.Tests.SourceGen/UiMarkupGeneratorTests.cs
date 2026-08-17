@@ -39,7 +39,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "DeclarativeContentTemplate.cui.xml",
+            "DeclarativeContentTemplate.crn",
             markup,
             out Compilation compilation);
         Diagnostic diagnostic = Assert.Single(
@@ -65,7 +65,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "ItemsControlTemplates.cui.xml",
+            "ItemsControlTemplates.crn",
             markup,
             out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -95,7 +95,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "ItemsControlPanel.cui.xml",
+            "ItemsControlPanel.crn",
             markup,
             out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -123,7 +123,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "ComboBoxTemplates.cui.xml",
+            "ComboBoxTemplates.crn",
             markup,
             out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -164,7 +164,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "AliasedContentTemplate.cui.xml",
+            "AliasedContentTemplate.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -178,6 +178,42 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(2, items.Templates.Count);
         Assert.Equal("TestInput.PropertyRow", items.Templates[0].DataType?.FullName);
         Assert.Equal(typeof(Button), items.Templates[1].DataType);
+    }
+
+    [Fact]
+    public void CustomElementRequiresClrNamespaceAlias()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+
+            namespace TestInput;
+
+            public sealed class FancyControl : Border
+            {
+            }
+            """;
+        const string importedMarkup = """
+            <views:FancyControl xmlns:views="clr-namespace:TestInput;assembly=GeneratorTests" />
+            """;
+
+        GeneratorRunResult imported = RunGeneratorWithInput(
+            "ImportedFancyControl.crn",
+            importedMarkup,
+            inputSource,
+            out Compilation importedCompilation);
+
+        AssertNoGeneratorOrCompilationErrors(imported, importedCompilation);
+        Assert.Contains("global::TestInput.FancyControl", SingleGeneratedSource(imported), StringComparison.Ordinal);
+
+        GeneratorRunResult implicitType = RunGeneratorWithInput(
+            "ImplicitFancyControl.crn",
+            "<FancyControl />",
+            inputSource,
+            out _);
+
+        Assert.Contains(implicitType.Diagnostics, diagnostic =>
+            diagnostic.Severity == DiagnosticSeverity.Error &&
+            diagnostic.GetMessage().Contains("FancyControl", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -195,7 +231,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "NamedContentTemplate.cui.xml",
+            "NamedContentTemplate.crn",
             markup,
             out Compilation compilation);
         Diagnostic diagnostic = Assert.Single(
@@ -232,7 +268,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "InlineContentTemplate.cui.xml",
+            "InlineContentTemplate.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -307,7 +343,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "ScopedRootDataContext.cui.xml",
+            "ScopedRootDataContext.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -385,7 +421,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "NestedScopedDataContext.cui.xml",
+            "NestedScopedDataContext.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -437,7 +473,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "TwoWayContentTemplate.cui.xml",
+            "TwoWayContentTemplate.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -488,7 +524,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "NestedTwoWayContentTemplate.cui.xml",
+            "NestedTwoWayContentTemplate.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -547,7 +583,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "DynamicLocalAspect.cui.xml",
+            "DynamicLocalAspect.crn",
             markup,
             out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -591,7 +627,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Grid>
             """;
 
-        GeneratorRunResult result = RunGenerator("GridView.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("GridView.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         string generatedSource = SingleGeneratedSource(result);
         Assert.Contains("GridLength.Auto", generatedSource);
@@ -645,7 +681,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("GridTemplate.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("GridTemplate.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -670,9 +706,9 @@ public sealed partial class UiMarkupGeneratorTests
     [InlineData("<Grid><TextBlock Grid.ColumnSpan=\"0\" /></Grid>")]
     public void InvalidGridMarkupReportsPropertyValueDiagnostic(string markup)
     {
-        GeneratorRunResult result = RunGenerator("InvalidGrid.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("InvalidGrid.crn", markup, out _);
 
-        AssertDiagnostic(result, "CERNEALAUI004", "InvalidGrid.cui.xml");
+        AssertDiagnostic(result, "CERNEALAUI004", "InvalidGrid.crn");
         Assert.Empty(result.GeneratedSources);
     }
 
@@ -699,7 +735,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("part-path.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("part-path.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         string generatedSource = SingleGeneratedSource(result);
         Assert.Contains("ObserveTemplatePartProperty(Host, \"Chrome\"", generatedSource);
@@ -739,7 +775,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("Sample.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("Sample.crn", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -767,7 +803,7 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = "<TextBlock Width=\"40\" Height=\"20\" />";
 
-        GeneratorRunResult result = RunGenerator("ExplicitSize.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("ExplicitSize.crn", markup, out Compilation compilation);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         using MemoryStream stream = new();
@@ -788,7 +824,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("typed-view.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("typed-view.crn", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.Contains("public static partial class TypedViewFactory", generatedSource);
@@ -822,7 +858,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("NamedColors.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("NamedColors.crn", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -861,8 +897,8 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult resourceResult = RunGenerator("BorderResource.cui.xml", resourceMarkup, out Compilation resourceCompilation);
-        GeneratorRunResult propertyResult = RunGenerator("BorderProperty.cui.xml", propertyMarkup, out Compilation propertyCompilation);
+        GeneratorRunResult resourceResult = RunGenerator("BorderResource.crn", resourceMarkup, out Compilation resourceCompilation);
+        GeneratorRunResult propertyResult = RunGenerator("BorderProperty.crn", propertyMarkup, out Compilation propertyCompilation);
 
         Assert.DoesNotContain(resourceResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.DoesNotContain(propertyResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -899,8 +935,8 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult resourceResult = RunGenerator("BackgroundResource.cui.xml", resourceMarkup, out Compilation resourceCompilation);
-        GeneratorRunResult propertyResult = RunGenerator("BackgroundProperty.cui.xml", propertyMarkup, out Compilation propertyCompilation);
+        GeneratorRunResult resourceResult = RunGenerator("BackgroundResource.crn", resourceMarkup, out Compilation resourceCompilation);
+        GeneratorRunResult propertyResult = RunGenerator("BackgroundProperty.crn", propertyMarkup, out Compilation propertyCompilation);
 
         Assert.DoesNotContain(resourceResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.DoesNotContain(propertyResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -925,7 +961,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("DirectAssignments.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("DirectAssignments.crn", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -954,7 +990,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("ResourceFragment.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("ResourceFragment.crn", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -996,7 +1032,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("CompositeBrushes.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("CompositeBrushes.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         string generatedSource = SingleGeneratedSource(result);
         Assert.Contains("global::Cerneala.UI.Media.LinearGradientBrush", generatedSource);
@@ -1036,7 +1072,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("RuntimeResources.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("RuntimeResources.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1080,7 +1116,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "DynamicTemplatedAspect.cui.xml",
+            "DynamicTemplatedAspect.crn",
             markup,
             out Compilation compilation);
         Assert.DoesNotContain(
@@ -1132,7 +1168,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("NamedLocalAspect.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("NamedLocalAspect.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1166,9 +1202,9 @@ public sealed partial class UiMarkupGeneratorTests
             <TextBlock Text="Hello" />
             """;
 
-        GeneratorRunResult result = RunGenerator("TopLevelResources.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("TopLevelResources.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "TopLevelResources.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "TopLevelResources.crn");
         Assert.Contains("<RootType.Resources>", diagnostic.GetMessage(), StringComparison.Ordinal);
         Assert.Empty(result.GeneratedSources);
     }
@@ -1193,7 +1229,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("KeywordComparators.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("KeywordComparators.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1229,7 +1265,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("ScopedResources.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("ScopedResources.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1255,9 +1291,9 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("WrongResourceOwner.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("WrongResourceOwner.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "WrongResourceOwner.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "WrongResourceOwner.crn");
         Assert.Contains("StackPanel.Resources", diagnostic.GetMessage(), StringComparison.Ordinal);
         Assert.Empty(result.GeneratedSources);
     }
@@ -1273,7 +1309,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("BrushResource.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("BrushResource.crn", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -1295,9 +1331,9 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("BadBrush.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("BadBrush.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "BadBrush.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "BadBrush.crn");
         Assert.Contains("SolidColorBrush.Color", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
@@ -1315,9 +1351,9 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("LegacyAspectType.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("LegacyAspectType.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "LegacyAspectType.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "LegacyAspectType.crn");
         Assert.Contains("Aspect.Target", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
@@ -1336,7 +1372,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("InlineTemplate.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("InlineTemplate.crn", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -1381,7 +1417,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("TemplateBoolean.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("TemplateBoolean.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1417,7 +1453,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("TemplateBranches.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("TemplateBranches.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1449,7 +1485,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("TemplateConditionalChild.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("TemplateConditionalChild.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
@@ -1484,7 +1520,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("AspectTemplate.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("AspectTemplate.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1518,7 +1554,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("TemplatePrecedence.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("TemplatePrecedence.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1541,9 +1577,9 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("PanelTemplate.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("PanelTemplate.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI012", "PanelTemplate.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI012", "PanelTemplate.crn");
         Assert.Contains("Control", diagnostic.GetMessage(), StringComparison.Ordinal);
         Assert.Empty(result.GeneratedSources);
     }
@@ -1565,7 +1601,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("NestedTemplates.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("NestedTemplates.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1605,7 +1641,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("TemplateScopes.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("TemplateScopes.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1635,7 +1671,7 @@ public sealed partial class UiMarkupGeneratorTests
               </Button.Aspect>
             </Button>
             """;
-        GeneratorRunResult inline = RunGenerator("InlineAspectTemplate.cui.xml", inlineMarkup, out Compilation inlineCompilation);
+        GeneratorRunResult inline = RunGenerator("InlineAspectTemplate.crn", inlineMarkup, out Compilation inlineCompilation);
         Assert.DoesNotContain(inline.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         using MemoryStream inlineStream = new();
         Assert.True(inlineCompilation.Emit(inlineStream).Success);
@@ -1651,7 +1687,7 @@ public sealed partial class UiMarkupGeneratorTests
               </Button.Resources>
             </Button>
             """;
-        GeneratorRunResult named = RunGenerator("NamedAspectTemplate.cui.xml", namedMarkup, out Compilation namedCompilation);
+        GeneratorRunResult named = RunGenerator("NamedAspectTemplate.crn", namedMarkup, out Compilation namedCompilation);
         Assert.DoesNotContain(named.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         using MemoryStream namedStream = new();
         Assert.True(namedCompilation.Emit(namedStream).Success);
@@ -1675,7 +1711,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("TemplatePartIsolation.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("TemplatePartIsolation.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
@@ -1706,7 +1742,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("InlineAspectPrecedence.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("InlineAspectPrecedence.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         using MemoryStream stream = new();
         Assert.True(compilation.Emit(stream).Success);
@@ -1719,15 +1755,15 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Theory]
     [InlineData(
-        "ScrollViewerParts.cui.xml",
+        "ScrollViewerParts.crn",
         "<ScrollViewer>@template { <StackPanel><ScrollContentPresenter Name=\"PART_ScrollContentPresenter\" /><ScrollBar Name=\"PART_HorizontalScrollBar\" /><ScrollBar Name=\"PART_VerticalScrollBar\" /></StackPanel> }</ScrollViewer>",
         "PART_ScrollContentPresenter,PART_HorizontalScrollBar,PART_VerticalScrollBar")]
     [InlineData(
-        "ScrollBarParts.cui.xml",
+        "ScrollBarParts.crn",
         "<ScrollBar>@template { <StackPanel><RepeatButton Name=\"PART_DecreaseButton\" /><Track Name=\"PART_Track\" /><RepeatButton Name=\"PART_IncreaseButton\" /></StackPanel> }</ScrollBar>",
         "PART_DecreaseButton,PART_Track,PART_IncreaseButton")]
     [InlineData(
-        "TrackParts.cui.xml",
+        "TrackParts.crn",
         "<Track>@template { <Thumb Name=\"PART_Thumb\" /> }</Track>",
         "PART_Thumb")]
     public void GeneratedScrollingTemplatesRegisterDeclaredPartNames(
@@ -1765,9 +1801,9 @@ public sealed partial class UiMarkupGeneratorTests
     [InlineData("<Button><Button.Resources><SolidColorBrush Name=\"owner\" Color=\"#FF000000\" /></Button.Resources></Button>", "CERNEALAUI005", "reserved")]
     public void InvalidTemplateShapesReportFocusedDiagnostics(string markup, string diagnosticId, string message)
     {
-        GeneratorRunResult result = RunGenerator("InvalidTemplate.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("InvalidTemplate.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, diagnosticId, "InvalidTemplate.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, diagnosticId, "InvalidTemplate.crn");
         Assert.Contains(message, diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
         Assert.Empty(result.GeneratedSources);
     }
@@ -1786,7 +1822,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("TemplateLifecycle.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("TemplateLifecycle.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         using MemoryStream stream = new();
         Assert.True(compilation.Emit(stream).Success);
@@ -1821,7 +1857,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("LogicalAttachDetach.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("LogicalAttachDetach.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         using MemoryStream stream = new();
         Assert.True(compilation.Emit(stream).Success);
@@ -1866,7 +1902,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("DefaultTextAspect.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("DefaultTextAspect.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1905,7 +1941,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("NamedAspect.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("NamedAspect.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1925,7 +1961,7 @@ public sealed partial class UiMarkupGeneratorTests
             <Border RenderTransformOrigin="0,0.5" />
             """;
 
-        GeneratorRunResult result = RunGenerator("LayoutPoint.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("LayoutPoint.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1953,7 +1989,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("AspectBrushReference.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("AspectBrushReference.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -1978,7 +2014,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("ForegroundProperty.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("ForegroundProperty.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2005,9 +2041,9 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("UnknownReference.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("UnknownReference.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "UnknownReference.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "UnknownReference.crn");
         Assert.Contains("MissingColor", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
@@ -2019,7 +2055,7 @@ public sealed partial class UiMarkupGeneratorTests
             <TextBlock Name="KickerLabel" Text="HELLO" />
             """;
 
-        GeneratorRunResult result = RunGenerator("NamedElement.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("NamedElement.crn", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -2043,9 +2079,9 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("DuplicateName.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("DuplicateName.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "DuplicateName.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "DuplicateName.crn");
         Assert.Contains("Duplicate", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
@@ -2066,9 +2102,9 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("AspectMismatch.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("AspectMismatch.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "AspectMismatch.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "AspectMismatch.crn");
         Assert.Contains("Button.Aspect", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
@@ -2089,9 +2125,9 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("DuplicateDefaultAspect.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("DuplicateDefaultAspect.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "DuplicateDefaultAspect.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "DuplicateDefaultAspect.crn");
         Assert.Contains("TextBlock", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
@@ -2112,9 +2148,9 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("UnsupportedAspectProperty.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("UnsupportedAspectProperty.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "UnsupportedAspectProperty.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "UnsupportedAspectProperty.crn");
         Assert.Contains("TextBlock.Bogus", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
@@ -2130,9 +2166,9 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("NestedResources.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("NestedResources.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI002", "NestedResources.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI002", "NestedResources.crn");
         Assert.Contains("Resources", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
@@ -2145,9 +2181,9 @@ public sealed partial class UiMarkupGeneratorTests
             <TextBlock Text="Two" />
             """;
 
-        GeneratorRunResult result = RunGenerator("MultipleRoots.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MultipleRoots.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "MultipleRoots.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "MultipleRoots.crn");
         Assert.Contains("exactly one UI root", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
         Assert.Empty(result.GeneratedSources);
     }
@@ -2164,9 +2200,9 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("FragmentDiagnosticLocation.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("FragmentDiagnosticLocation.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "FragmentDiagnosticLocation.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "FragmentDiagnosticLocation.crn");
         Assert.Equal(4, diagnostic.Location.GetLineSpan().StartLinePosition.Line);
         Assert.Empty(result.GeneratedSources);
     }
@@ -2174,9 +2210,9 @@ public sealed partial class UiMarkupGeneratorTests
     [Fact]
     public void FirstLineFragmentDiagnosticsUseOriginalMarkupColumn()
     {
-        GeneratorRunResult result = RunGenerator("FirstLineDiagnosticLocation.cui.xml", "<TextBlock Bogus=\"12\" />", out _);
+        GeneratorRunResult result = RunGenerator("FirstLineDiagnosticLocation.crn", "<TextBlock Bogus=\"12\" />", out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "FirstLineDiagnosticLocation.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "FirstLineDiagnosticLocation.crn");
         Assert.Equal(11, diagnostic.Location.GetLineSpan().StartLinePosition.Character);
         Assert.Empty(result.GeneratedSources);
     }
@@ -2193,7 +2229,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("XmlDeclarationFragment.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("XmlDeclarationFragment.crn", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -2212,9 +2248,9 @@ public sealed partial class UiMarkupGeneratorTests
             <TextBlock Text="Hello" />
             """;
 
-        GeneratorRunResult result = RunGenerator("TopLevelText.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("TopLevelText.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "TopLevelText.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "TopLevelText.crn");
         Assert.Contains("exactly one UI root", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
         Assert.Empty(result.GeneratedSources);
     }
@@ -2222,9 +2258,9 @@ public sealed partial class UiMarkupGeneratorTests
     [Fact]
     public void AdjacentMultipleUiRootsReportMalformedMarkupDiagnostic()
     {
-        GeneratorRunResult result = RunGenerator("AdjacentRoots.cui.xml", "<TextBlock Text=\"One\" /><TextBlock Text=\"Two\" />", out _);
+        GeneratorRunResult result = RunGenerator("AdjacentRoots.crn", "<TextBlock Text=\"One\" /><TextBlock Text=\"Two\" />", out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "AdjacentRoots.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "AdjacentRoots.crn");
         Assert.Contains("exactly one UI root", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
         Assert.Empty(result.GeneratedSources);
     }
@@ -2232,9 +2268,9 @@ public sealed partial class UiMarkupGeneratorTests
     [Fact]
     public void TopLevelCDataAfterRootReportsMalformedMarkupDiagnostic()
     {
-        GeneratorRunResult result = RunGenerator("TrailingCData.cui.xml", "<TextBlock Text=\"Hello\" /><![CDATA[stray]]>", out _);
+        GeneratorRunResult result = RunGenerator("TrailingCData.crn", "<TextBlock Text=\"Hello\" /><![CDATA[stray]]>", out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "TrailingCData.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "TrailingCData.crn");
         Assert.Contains("exactly one UI root", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
         Assert.Empty(result.GeneratedSources);
     }
@@ -2242,55 +2278,55 @@ public sealed partial class UiMarkupGeneratorTests
     [Fact]
     public void MalformedMarkupReportsDiagnostic()
     {
-        GeneratorRunResult result = RunGenerator("Broken.cui.xml", "<StackPanel>", out _);
+        GeneratorRunResult result = RunGenerator("Broken.crn", "<StackPanel>", out _);
 
-        AssertDiagnostic(result, "CERNEALAUI001", "Broken.cui.xml");
+        AssertDiagnostic(result, "CERNEALAUI001", "Broken.crn");
         Assert.Empty(result.GeneratedSources);
     }
 
     [Fact]
     public void UnsupportedElementReportsDiagnostic()
     {
-        GeneratorRunResult result = RunGenerator("Unsupported.cui.xml", "<BogusWidget />", out _);
+        GeneratorRunResult result = RunGenerator("Unsupported.crn", "<BogusWidget />", out _);
 
-        AssertDiagnostic(result, "CERNEALAUI002", "Unsupported.cui.xml");
+        AssertDiagnostic(result, "CERNEALAUI002", "Unsupported.crn");
         Assert.Empty(result.GeneratedSources);
     }
 
     [Fact]
     public void UnsupportedPropertyReportsDiagnostic()
     {
-        GeneratorRunResult result = RunGenerator("UnsupportedProperty.cui.xml", "<TextBlock Bogus=\"12\" />", out _);
+        GeneratorRunResult result = RunGenerator("UnsupportedProperty.crn", "<TextBlock Bogus=\"12\" />", out _);
 
-        AssertDiagnostic(result, "CERNEALAUI003", "UnsupportedProperty.cui.xml");
+        AssertDiagnostic(result, "CERNEALAUI003", "UnsupportedProperty.crn");
         Assert.Empty(result.GeneratedSources);
     }
 
     [Fact]
     public void ControlPropertiesOnStackPanelReportDiagnosticInsteadOfGeneratingInvalidCode()
     {
-        GeneratorRunResult result = RunGenerator("BadPanel.cui.xml", "<StackPanel Padding=\"4\" />", out _);
+        GeneratorRunResult result = RunGenerator("BadPanel.crn", "<StackPanel Padding=\"4\" />", out _);
 
-        AssertDiagnostic(result, "CERNEALAUI003", "BadPanel.cui.xml");
+        AssertDiagnostic(result, "CERNEALAUI003", "BadPanel.crn");
         Assert.Empty(result.GeneratedSources);
     }
 
     [Fact]
     public void InvalidRuntimeValidatedValuesReportDiagnostics()
     {
-        GeneratorRunResult fontResult = RunGenerator("BadFont.cui.xml", "<TextBlock FontSize=\"0\" />", out _);
-        GeneratorRunResult paddingResult = RunGenerator("BadPadding.cui.xml", "<Border Padding=\"-1\" />", out _);
+        GeneratorRunResult fontResult = RunGenerator("BadFont.crn", "<TextBlock FontSize=\"0\" />", out _);
+        GeneratorRunResult paddingResult = RunGenerator("BadPadding.crn", "<Border Padding=\"-1\" />", out _);
 
-        AssertDiagnostic(fontResult, "CERNEALAUI004", "BadFont.cui.xml");
-        AssertDiagnostic(paddingResult, "CERNEALAUI004", "BadPadding.cui.xml");
+        AssertDiagnostic(fontResult, "CERNEALAUI004", "BadFont.crn");
+        AssertDiagnostic(paddingResult, "CERNEALAUI004", "BadPadding.crn");
     }
 
     [Fact]
     public void InvalidBooleanPropertyValueDiagnosticNamesMarkupProperty()
     {
-        GeneratorRunResult result = RunGenerator("BadVisibility.cui.xml", "<TextBlock IsVisible=\"maybe\" />", out _);
+        GeneratorRunResult result = RunGenerator("BadVisibility.crn", "<TextBlock IsVisible=\"maybe\" />", out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "BadVisibility.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "BadVisibility.crn");
         Assert.Contains("TextBlock.IsVisible", diagnostic.GetMessage());
     }
 
@@ -2298,8 +2334,8 @@ public sealed partial class UiMarkupGeneratorTests
     public void DistinctMarkupFilesWithSameBaseNameEmitUniqueFactories()
     {
         GeneratorRunResult result = RunGenerator(
-            new MarkupFile("Views/Main.cui.xml", "<TextBlock Text=\"View\" />"),
-            new MarkupFile("Dialogs/Main.cui.xml", "<TextBlock Text=\"Dialog\" />"));
+            new MarkupFile("Views/Main.crn", "<TextBlock Text=\"View\" />"),
+            new MarkupFile("Dialogs/Main.crn", "<TextBlock Text=\"Dialog\" />"));
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Equal(2, result.GeneratedSources.Length);
@@ -2323,7 +2359,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("ReactiveBorder.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("ReactiveBorder.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2357,7 +2393,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("ConditionalChildren.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("ConditionalChildren.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2394,7 +2430,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("ConditionalButton.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("ConditionalButton.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2428,7 +2464,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("TypedContext.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("TypedContext.crn", markup, out Compilation compilation);
         string generatedSource = SingleGeneratedSource(result);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Contains("Create(global::Cerneala.UI.Elements.UIElement dataContext)", generatedSource);
@@ -2462,7 +2498,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("InheritedContext.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("InheritedContext.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2538,7 +2574,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGeneratorWithInput("NestedPath.cui.xml", markup, inputSource, out Compilation compilation);
+        GeneratorRunResult result = RunGeneratorWithInput("NestedPath.crn", markup, inputSource, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2605,7 +2641,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGeneratorWithInput("ContextOperand.cui.xml", markup, inputSource, out Compilation compilation);
+        GeneratorRunResult result = RunGeneratorWithInput("ContextOperand.crn", markup, inputSource, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2655,7 +2691,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGeneratorWithInput("Comparators.cui.xml", markup, inputSource, out Compilation compilation);
+        GeneratorRunResult result = RunGeneratorWithInput("Comparators.crn", markup, inputSource, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2698,7 +2734,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("LogicalPrecedence.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("LogicalPrecedence.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2735,7 +2771,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("ShortCircuit.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("ShortCircuit.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2782,7 +2818,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGeneratorWithInput("LogicalRange.cui.xml", markup, inputSource, out Compilation compilation);
+        GeneratorRunResult result = RunGeneratorWithInput("LogicalRange.crn", markup, inputSource, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2827,7 +2863,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         UIElement context = new() { IsEnabled = false };
-        GeneratorRunResult result = RunGenerator("LogicalSources.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("LogicalSources.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Contains("RegisterLifetime", SingleGeneratedSource(result));
 
@@ -2878,7 +2914,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGeneratorWithInput("NullableOr.cui.xml", markup, inputSource, out Compilation compilation);
+        GeneratorRunResult result = RunGeneratorWithInput("NullableOr.crn", markup, inputSource, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2916,7 +2952,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         UIElement context = new() { IsEnabled = false };
-        GeneratorRunResult result = RunGenerator("LogicalLifecycle.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("LogicalLifecycle.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -2956,7 +2992,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGeneratorWithInput("KeywordAtoms.cui.xml", markup, inputSource, out Compilation compilation);
+        GeneratorRunResult result = RunGeneratorWithInput("KeywordAtoms.crn", markup, inputSource, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         string generatedSource = SingleGeneratedSource(result);
         Assert.Equal(2, Count(generatedSource, "ObserveDataPath("));
@@ -2984,7 +3020,7 @@ public sealed partial class UiMarkupGeneratorTests
     [InlineData("<TextBlock>@when FontSize { @if value == \"large\" { Text = \"x\"; } }</TextBlock>", "type")]
     public void InvalidLogicalExpressionsReportFocusedDiagnostics(string markup, string message)
     {
-        GeneratorRunResult result = RunGenerator("InvalidLogical.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("InvalidLogical.crn", markup, out _);
 
         Diagnostic diagnostic = Assert.Single(result.Diagnostics, item =>
             item.Id is "CERNEALAUI006" or "CERNEALAUI007");
@@ -3005,9 +3041,9 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("LogicalLocation.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("LogicalLocation.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI007", "LogicalLocation.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI007", "LogicalLocation.crn");
         FileLinePositionSpan span = diagnostic.Location.GetLineSpan();
         Assert.Equal(2, span.StartLinePosition.Line);
         Assert.Equal(8, span.StartLinePosition.Character);
@@ -3025,7 +3061,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("LocalWins.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("LocalWins.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -3059,7 +3095,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
 
-        GeneratorRunResult result = RunGenerator("NestedWhen.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("NestedWhen.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -3092,7 +3128,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("ReactiveAspect.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("ReactiveAspect.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         using MemoryStream stream = new();
@@ -3116,9 +3152,9 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("UnsupportedDirective.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("UnsupportedDirective.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI006", "UnsupportedDirective.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI006", "UnsupportedDirective.crn");
         Assert.Contains("@animate", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
@@ -3132,9 +3168,9 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("NestedDataType.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("NestedDataType.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI007", "NestedDataType.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI007", "NestedDataType.crn");
         Assert.Contains("only on the root", diagnostic.GetMessage());
         Assert.Empty(result.GeneratedSources);
     }
@@ -3167,7 +3203,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/MainWindow.cui.xml",
+            "Views/MainWindow.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3225,7 +3261,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/TemplateView.cui.xml",
+            "Views/TemplateView.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3263,12 +3299,12 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/InvalidTemplateView.cui.xml",
+            "Views/InvalidTemplateView.crn",
             markup,
             inputSource,
             out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI012", "Views/InvalidTemplateView.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI012", "Views/InvalidTemplateView.crn");
         Assert.Contains("direct visual child", diagnostic.GetMessage(), StringComparison.Ordinal);
     }
 
@@ -3282,18 +3318,18 @@ public sealed partial class UiMarkupGeneratorTests
             public partial class CustomTemplateView : UserControl { }
             """;
         const string markup = """
-            <UserControl>
-              <FancyButton Content="Fancy">
+            <UserControl xmlns:views="clr-namespace:TestInput.Views;assembly=GeneratorTests">
+              <views:FancyButton Content="Fancy">
                 @template
                 {
                   <ContentPresenter Content="$owner.Content" />
                 }
-              </FancyButton>
+              </views:FancyButton>
             </UserControl>
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/CustomTemplateView.cui.xml",
+            "Views/CustomTemplateView.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3338,7 +3374,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/EventTemplateView.cui.xml",
+            "Views/EventTemplateView.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3381,20 +3417,20 @@ public sealed partial class UiMarkupGeneratorTests
             public partial class ReadOnlyTemplateView : UserControl { }
             """;
         const string markup = """
-            <UserControl>
+            <UserControl xmlns:views="clr-namespace:TestInput.Views;assembly=GeneratorTests">
               <Button>
-                @template { <ReadOnlyPart MirrorFontSize="$owner.FontSize" /> }
+                @template { <views:ReadOnlyPart MirrorFontSize="$owner.FontSize" /> }
               </Button>
             </UserControl>
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/ReadOnlyTemplateView.cui.xml",
+            "Views/ReadOnlyTemplateView.crn",
             markup,
             inputSource,
             out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI012", "Views/ReadOnlyTemplateView.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI012", "Views/ReadOnlyTemplateView.crn");
         Assert.Contains("read-only", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
     }
 
@@ -3418,7 +3454,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/ConditionalView.cui.xml",
+            "Views/ConditionalView.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3455,7 +3491,7 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void PairedMarkupResolvesCustomControlThroughCompanionUsingScope()
+    public void PairedMarkupResolvesCustomControlThroughClrNamespaceAlias()
     {
         const string inputSource = """
             using Cerneala.UI.Controls;
@@ -3485,13 +3521,13 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
         const string markup = """
-            <UserControl>
-              <ProfileCard Score="7" />
+            <UserControl xmlns:components="clr-namespace:TestInput.Components;assembly=GeneratorTests">
+              <components:ProfileCard Score="7" />
             </UserControl>
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/MainView.cui.xml",
+            "Views/MainView.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3520,15 +3556,15 @@ public sealed partial class UiMarkupGeneratorTests
             public partial class MainWindow : Window { }
             """;
         const string markup = """
-            <Window>
-              <GaugeBorder TrackLength="42">
+            <Window xmlns:views="clr-namespace:TestInput.Views;assembly=GeneratorTests">
+              <views:GaugeBorder TrackLength="42">
                 <TextBlock Text="custom content" />
-              </GaugeBorder>
+              </views:GaugeBorder>
             </Window>
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/MainWindow.cui.xml",
+            "Views/MainWindow.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3557,7 +3593,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("SemanticControls.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("SemanticControls.crn", markup, out Compilation compilation);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         using MemoryStream stream = new();
@@ -3603,7 +3639,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("InlineAspect.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("InlineAspect.crn", markup, out Compilation compilation);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         using MemoryStream stream = new();
@@ -3642,9 +3678,9 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("ConflictingAspect.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("ConflictingAspect.crn", markup, out _);
 
-        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "ConflictingAspect.cui.xml");
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "ConflictingAspect.crn");
         Assert.Contains("cannot combine", diagnostic.GetMessage(), StringComparison.Ordinal);
     }
 
@@ -3660,7 +3696,7 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
         GeneratorRunResult constructorResult = RunPairedGenerator(
-            "Views/BadView.cui.xml",
+            "Views/BadView.crn",
             "<UserControl />",
             constructorSource,
             out _);
@@ -3673,7 +3709,7 @@ public sealed partial class UiMarkupGeneratorTests
             public partial class EventView : UserControl { }
             """;
         GeneratorRunResult handlerResult = RunPairedGenerator(
-            "Views/EventView.cui.xml",
+            "Views/EventView.crn",
             "<UserControl><Button Click=\"Missing\" /></UserControl>",
             handlerSource,
             out _);
@@ -3691,7 +3727,7 @@ public sealed partial class UiMarkupGeneratorTests
             </UserControl>
             """;
         GeneratorRunResult rootResult = RunPairedGenerator(
-            "Views/RootView.cui.xml",
+            "Views/RootView.crn",
             conditionalRoot,
             rootSource,
             out _);
@@ -3730,7 +3766,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/RootItemsView.cui.xml",
+            "Views/RootItemsView.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3792,7 +3828,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/MainWindow.cui.xml",
+            "Views/MainWindow.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3847,7 +3883,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/TemplateWindow.cui.xml",
+            "Views/TemplateWindow.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3886,7 +3922,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/AspectWindow.cui.xml",
+            "Views/AspectWindow.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -3913,7 +3949,7 @@ public sealed partial class UiMarkupGeneratorTests
             public partial class MainWindow : Window { }
             """;
         GeneratorRunResult wrongRoot = RunPairedGenerator(
-            "Views/MainWindow.cui.xml",
+            "Views/MainWindow.crn",
             "<UserControl />",
             validSource,
             out _);
@@ -3928,14 +3964,14 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
         GeneratorRunResult constructor = RunPairedGenerator(
-            "Views/DialogWindow.cui.xml",
+            "Views/DialogWindow.crn",
             "<Window />",
             constructorSource,
             out _);
         Assert.Contains(constructor.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI010");
 
         GeneratorRunResult conditionalRoot = RunPairedGenerator(
-            "Views/MainWindow.cui.xml",
+            "Views/MainWindow.crn",
             "<Window>@when IsEnabled { @if value == True { <Button /> } }</Window>",
             validSource,
             out _);
@@ -3951,7 +3987,7 @@ public sealed partial class UiMarkupGeneratorTests
             public partial class MainWindow : Window { }
             """;
         GeneratorRunResult standalone = RunPairedGenerator(
-            "Views/MainWindow.cui.xml",
+            "Views/MainWindow.crn",
             "<Window Title=\"Standalone\" />",
             noEntryPoint,
             out Compilation standaloneCompilation,
@@ -3970,7 +4006,7 @@ public sealed partial class UiMarkupGeneratorTests
             public static class Program { public static void Main() { } }
             """;
         GeneratorRunResult hosted = RunPairedGenerator(
-            "Views/MainWindow.cui.xml",
+            "Views/MainWindow.crn",
             "<Window Title=\"Hosted\" />",
             existingEntryPoint,
             out Compilation hostedCompilation,
@@ -4007,7 +4043,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunPairedGenerator(
-            "Views/MainWindow.cui.xml",
+            "Views/MainWindow.crn",
             "<Window />",
             inputSource,
             out Compilation compilation,
@@ -4028,8 +4064,8 @@ public sealed partial class UiMarkupGeneratorTests
     [Fact]
     public void ChangingOneMarkupFileReusesIndependentSemanticModels()
     {
-        InMemoryAdditionalText first = new("First.cui.xml", "<Button Content=\"First\" />");
-        InMemoryAdditionalText second = new("Second.cui.xml", "<Button Content=\"Second\" />");
+        InMemoryAdditionalText first = new("First.crn", "<Button Content=\"First\" />");
+        InMemoryAdditionalText second = new("Second.crn", "<Button Content=\"Second\" />");
         CSharpCompilation compilation = CSharpCompilation.Create(
             "IncrementalGeneratorTests",
             [CSharpSyntaxTree.ParseText("namespace TestInput { public static class Anchor { } }")],
@@ -4044,7 +4080,7 @@ public sealed partial class UiMarkupGeneratorTests
                 trackIncrementalGeneratorSteps: true));
 
         driver = driver.RunGenerators(compilation);
-        InMemoryAdditionalText changed = new("First.cui.xml", "<Button Content=\"Changed\" />");
+        InMemoryAdditionalText changed = new("First.crn", "<Button Content=\"Changed\" />");
         driver = driver.ReplaceAdditionalText(first, changed).RunGenerators(compilation);
 
         var outputs = driver.GetRunResult().Results.Single()

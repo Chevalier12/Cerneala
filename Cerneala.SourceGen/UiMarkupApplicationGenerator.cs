@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Cerneala.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -32,7 +33,7 @@ public sealed partial class UiMarkupGenerator
         bool applicationDocument = file.Document?.Root.Name.LocalName == "Application";
 
         SyntaxTree[] trees = compilation.SyntaxTrees
-            .Where(tree => PathsEqual(tree.FilePath, file.Path + ".cs"))
+            .Where(tree => PathsEqual(tree.FilePath, CernealaDocumentPath.GetCompanionPath(file.Path)))
             .ToArray();
         if (trees.Length != 1)
         {
@@ -45,7 +46,7 @@ public sealed partial class UiMarkupGenerator
             return default;
         }
 
-        string expectedName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Path));
+        string expectedName = CernealaDocumentPath.GetLogicalName(file.Path);
         ClassDeclarationSyntax[] declarations = trees[0].GetRoot().DescendantNodes()
             .OfType<ClassDeclarationSyntax>()
             .Where(declaration => declaration.Identifier.ValueText == expectedName)

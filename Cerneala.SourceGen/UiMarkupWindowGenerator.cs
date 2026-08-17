@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Cerneala.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -31,7 +32,7 @@ public sealed partial class UiMarkupGenerator
         Compilation compilation)
     {
         bool windowDocument = file.Document?.Root.Name.LocalName == "Window";
-        string companionPath = file.Path + ".cs";
+        string companionPath = CernealaDocumentPath.GetCompanionPath(file.Path);
         SyntaxTree[] matchingTrees = compilation.SyntaxTrees
             .Where(tree => PathsEqual(tree.FilePath, companionPath))
             .ToArray();
@@ -47,7 +48,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         SyntaxTree tree = matchingTrees[0];
-        string expectedName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Path));
+        string expectedName = CernealaDocumentPath.GetLogicalName(file.Path);
         ClassDeclarationSyntax[] declarations = tree.GetRoot()
             .DescendantNodes()
             .OfType<ClassDeclarationSyntax>()

@@ -561,7 +561,7 @@ public sealed partial class UiMarkupGenerator
             }
 
             string targetName = resource.Attribute("TargetType")?.Value.Trim() ?? string.Empty;
-            if (targetName.Length == 0 || ResolveAspectTargetTypeSymbol(targetName) is null)
+            if (targetName.Length == 0 || ResolveAspectTargetTypeSymbol(targetName, resource) is null)
             {
                 Report(InvalidPropertyValue, (object?)resource.Attribute("TargetType") ?? resource, "MotionClip", "TargetType", targetName);
                 return;
@@ -747,7 +747,7 @@ public sealed partial class UiMarkupGenerator
                 return true;
             }
 
-            INamedTypeSymbol? targetType = ResolveAspectTargetTypeSymbol(aspect.TargetName);
+            INamedTypeSymbol? targetType = ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source);
             INamedTypeSymbol? applicationType = ResolvePropertyOwnerType(
                 applicationElement.Name.LocalName,
                 ReferenceEquals(applicationElement, document.Root));
@@ -1070,7 +1070,7 @@ public sealed partial class UiMarkupGenerator
                 INamedTypeSymbol? applicationType = ResolvePropertyOwnerType(
                     applicationElement.Name.LocalName,
                     ReferenceEquals(applicationElement, document.Root));
-                INamedTypeSymbol? clipTargetType = ResolveAspectTargetTypeSymbol(clip.TargetName);
+                INamedTypeSymbol? clipTargetType = ResolveAspectTargetTypeSymbol(clip.TargetName, clip.Source);
                 if (applicationType is null || clipTargetType is null || !IsOrDerivesFrom(applicationType, clipTargetType))
                 {
                     Report(

@@ -61,7 +61,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismFixtureShell.cui.xml",
+            "PrismFixtureShell.crn",
             markup,
             out Compilation compilation);
 
@@ -181,7 +181,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "CompletePrismSyntax.cui.xml",
+            "CompletePrismSyntax.crn",
             markup,
             out Compilation compilation);
 
@@ -241,7 +241,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "ReactiveAspectPrism.cui.xml",
+            "ReactiveAspectPrism.crn",
             markup,
             out Compilation compilation);
 
@@ -268,7 +268,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismUnknownDirective.cui.xml",
+            "PrismUnknownDirective.crn",
             markup,
             out _);
 
@@ -277,7 +277,7 @@ public sealed partial class UiMarkupGeneratorTests
             "PRISM1001",
             markup,
             "@sparkle",
-            "Prism markup in 'PrismUnknownDirective.cui.xml' is invalid: " +
+            "Prism markup in 'PrismUnknownDirective.crn' is invalid: " +
             "Unknown Prism directive '@sparkle'. Exactly eight Prism directives are supported.");
     }
 
@@ -296,7 +296,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismMissingBrace.cui.xml",
+            "PrismMissingBrace.crn",
             markup,
             out _);
 
@@ -305,7 +305,7 @@ public sealed partial class UiMarkupGeneratorTests
             "PRISM1002",
             markup,
             "@prism",
-            "Prism markup in 'PrismMissingBrace.cui.xml' is invalid: " +
+            "Prism markup in 'PrismMissingBrace.crn' is invalid: " +
             "@prism is missing its closing '}'.");
     }
 
@@ -325,7 +325,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismIllegalChild.cui.xml",
+            "PrismIllegalChild.crn",
             markup,
             out _);
 
@@ -334,7 +334,7 @@ public sealed partial class UiMarkupGeneratorTests
             "PRISM1003",
             markup,
             "@filter",
-            "Prism markup in 'PrismIllegalChild.cui.xml' is invalid: " +
+            "Prism markup in 'PrismIllegalChild.crn' is invalid: " +
             "@filter is not allowed directly inside @prism.");
     }
 
@@ -357,7 +357,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismUnknownProperty.cui.xml",
+            "PrismUnknownProperty.crn",
             markup,
             out _);
 
@@ -380,7 +380,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismUnknownFilter.cui.xml",
+            "PrismUnknownFilter.crn",
             markup,
             out _);
 
@@ -401,7 +401,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismDuplicateName.cui.xml",
+            "PrismDuplicateName.crn",
             markup,
             out _);
 
@@ -427,7 +427,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismMissingParameter.cui.xml",
+            "PrismMissingParameter.crn",
             markup,
             out _);
 
@@ -450,7 +450,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismLayerChild.cui.xml",
+            "PrismLayerChild.crn",
             markup,
             out _);
 
@@ -471,7 +471,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismMultipleBackdrop.cui.xml",
+            "PrismMultipleBackdrop.crn",
             markup,
             out _);
 
@@ -492,7 +492,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismBackdropOrder.cui.xml",
+            "PrismBackdropOrder.crn",
             markup,
             out _);
 
@@ -516,7 +516,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismClipToBelow.cui.xml",
+            "PrismClipToBelow.crn",
             markup,
             out _);
 
@@ -547,7 +547,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismTemplateScope.cui.xml",
+            "PrismTemplateScope.crn",
             markup,
             out Compilation compilation);
 
@@ -581,7 +581,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismIndependentArguments.cui.xml",
+            "PrismIndependentArguments.crn",
             markup,
             out Compilation compilation);
 
@@ -617,7 +617,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismTypedEmission.cui.xml",
+            "PrismTypedEmission.crn",
             markup,
             out Compilation compilation);
 
@@ -686,7 +686,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismTemplateEmission.cui.xml",
+            "PrismTemplateEmission.crn",
             markup,
             out Compilation compilation);
 
@@ -718,7 +718,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismInvalidDomain.cui.xml",
+            "PrismInvalidDomain.crn",
             markup,
             out _);
 
@@ -741,7 +741,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismEmptyLayer.cui.xml",
+            "PrismEmptyLayer.crn",
             markup,
             out _);
 
@@ -753,9 +753,9 @@ public sealed partial class UiMarkupGeneratorTests
     {
         MarkupFile[] files =
         [
-            new("PrismMotionSelf.cui.xml", PrismMotionSelfMarkup("$self.prism.Glow.Opacity")),
-            new("PrismMotionOwner.cui.xml", PrismMotionOwnerMarkup("$owner.prism.Glow.Opacity")),
-            new("PrismMotionNamed.cui.xml", PrismMotionNamedMarkup("$Card.prism.Glow.Opacity"))
+            new("PrismMotionSelf.crn", PrismMotionSelfMarkup("$self.prism.Glow.Opacity")),
+            new("PrismMotionOwner.crn", PrismMotionOwnerMarkup("$owner.prism.Glow.Opacity")),
+            new("PrismMotionNamed.crn", PrismMotionNamedMarkup("$Card.prism.Glow.Opacity"))
         ];
 
         GeneratorRunResult result = RunGenerator(files, out Compilation compilation);
@@ -811,7 +811,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismMotionTypedParameters.cui.xml",
+            "PrismMotionTypedParameters.crn",
             markup,
             out Compilation compilation);
 
@@ -864,7 +864,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismMotionDiscrete.cui.xml",
+            "PrismMotionDiscrete.crn",
             markup,
             out Compilation compilation);
 
@@ -896,7 +896,7 @@ public sealed partial class UiMarkupGeneratorTests
         string markup = PrismMotionSelfMarkup(path);
 
         GeneratorRunResult result = RunGenerator(
-            "PrismMotionInvalid.cui.xml",
+            "PrismMotionInvalid.crn",
             markup,
             out _);
 

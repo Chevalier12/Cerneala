@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Cerneala.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -58,7 +59,7 @@ public sealed partial class UiMarkupGenerator
         MarkupSource file,
         Compilation compilation)
     {
-        string companionPath = file.Path + ".cs";
+        string companionPath = CernealaDocumentPath.GetCompanionPath(file.Path);
         SyntaxTree[] matchingTrees = compilation.SyntaxTrees
             .Where(tree => PathsEqual(tree.FilePath, companionPath))
             .ToArray();
@@ -74,7 +75,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         SyntaxTree tree = matchingTrees[0];
-        string expectedName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Path));
+        string expectedName = CernealaDocumentPath.GetLogicalName(file.Path);
         ClassDeclarationSyntax[] declarations = tree.GetRoot()
             .DescendantNodes()
             .OfType<ClassDeclarationSyntax>()
@@ -521,42 +522,6 @@ public sealed partial class UiMarkupGenerator
             }
 
             return false;
-        }
-
-        private INamedTypeSymbol? ResolveCustomElementType(string elementName)
-        {
-            if (userControlPair is null)
-            {
-                return null;
-            }
-
-            SemanticModel model = compilation.GetSemanticModel(userControlPair.SyntaxTree);
-            INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
-            INamedTypeSymbol? windowType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Window");
-            if (uiElementType is null)
-            {
-                return null;
-            }
-
-            INamedTypeSymbol[] candidates = model.LookupNamespacesAndTypes(userControlPair.LookupPosition, name: elementName)
-                .Select(symbol => symbol is IAliasSymbol alias ? alias.Target : symbol)
-                .OfType<INamedTypeSymbol>()
-                .Where(type => type.TypeKind == TypeKind.Class && !type.IsAbstract)
-                .Where(type => !SymbolEqualityComparer.Default.Equals(type, userControlPair.TypeSymbol))
-                .Where(type => IsOrDerivesFrom(type, uiElementType))
-                .Where(type => windowType is null || !IsOrDerivesFrom(type, windowType))
-                .Where(type => compilation.IsSymbolAccessibleWithin(type, userControlPair.TypeSymbol))
-                .Where(HasAccessibleParameterlessConstructor)
-                .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default)
-                .ToArray();
-            return candidates.Length == 1 ? candidates[0] : null;
-        }
-
-        private bool HasAccessibleParameterlessConstructor(INamedTypeSymbol type)
-        {
-            return type.InstanceConstructors.Any(constructor =>
-                constructor.Parameters.Length == 0 &&
-                compilation.IsSymbolAccessibleWithin(constructor, userControlPair!.TypeSymbol));
         }
 
         private static bool IsOrDerivesFrom(INamedTypeSymbol type, INamedTypeSymbol expectedBase)

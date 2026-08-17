@@ -9,7 +9,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionLayoutGeneratesTypedIdentityAndOptionsBeforeAttachment()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionLayout.cui.xml",
+            "MotionLayout.crn",
             """
             <TextBlock Text="card">
               <TextBlock.Resources>
@@ -42,7 +42,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionLayoutRejectsUnsupportedOrRetroactiveShapes(string body, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "InvalidMotionLayout.cui.xml",
+            "InvalidMotionLayout.crn",
             """
             <TextBlock Text="card">
               <TextBlock.Resources>

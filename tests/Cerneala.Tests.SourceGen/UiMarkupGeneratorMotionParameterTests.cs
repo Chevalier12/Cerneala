@@ -36,7 +36,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipParameters.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionClipParameters.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -75,7 +75,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionClipNestedParameters.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionClipNestedParameters.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -112,7 +112,7 @@ public sealed partial class UiMarkupGeneratorTests
     {
         string markup = MotionClipParameterMarkup(body, "@run $Parameterized;");
 
-        GeneratorRunResult result = RunGenerator("MotionClipInvalidParameter.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipInvalidParameter.crn", markup, out _);
 
         AssertContainsMotionDiagnostic(result, expectedMessage);
     }
@@ -127,7 +127,7 @@ public sealed partial class UiMarkupGeneratorTests
             "@parameter Distance: float; @animate { @to { TranslateY = Distance; } }",
             run);
 
-        GeneratorRunResult result = RunGenerator("MotionClipInvalidArgument.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipInvalidArgument.crn", markup, out _);
 
         AssertContainsMotionDiagnostic(result, expectedMessage);
     }
@@ -139,7 +139,7 @@ public sealed partial class UiMarkupGeneratorTests
             "@parameter Spec: MotionSpec[double] = Tween(100ms); @animate with Spec { @to { TranslateY = 0; } }",
             "@run $Parameterized;");
 
-        GeneratorRunResult result = RunGenerator("MotionClipWrongSpecType.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipWrongSpecType.crn", markup, out _);
 
         AssertContainsMotionDiagnostic(result, "not compatible with property type");
     }
@@ -151,7 +151,7 @@ public sealed partial class UiMarkupGeneratorTests
             "@parameter Spec: MotionSpec&lt;float&gt; = Tween(100ms); @animate with Spec { @to { Opacity = 1; } }",
             "@run $Parameterized;");
 
-        GeneratorRunResult result = RunGenerator("MotionClipCSharpGenericSyntax.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionClipCSharpGenericSyntax.crn", markup, out _);
 
         AssertContainsMotionDiagnostic(result, "MotionSpec[float]");
     }
@@ -160,7 +160,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionParameterIsRejectedOutsideMotionClip()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionParameterOutsideClip.cui.xml",
+            "MotionParameterOutsideClip.crn",
             MotionAspectMarkup("@parameter Distance: float = 2; @on Loaded { @animate { @to { Opacity = 1; } } }"),
             out _);
 

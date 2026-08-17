@@ -10,7 +10,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionCompositionGeneratesParallelContainingSequence()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionParallelSequence.cui.xml",
+            "MotionParallelSequence.crn",
             MotionAspectMarkup(
                 """
                 @on Loaded
@@ -38,7 +38,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionCompositionGeneratesSequenceContainingParallel()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionSequenceParallel.cui.xml",
+            "MotionSequenceParallel.crn",
             MotionAspectMarkup(
                 """
                 @on Loaded
@@ -68,7 +68,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionCompositionRejectsEmptyGroups(string execution, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionEmptyGroup.cui.xml",
+            "MotionEmptyGroup.crn",
             MotionAspectMarkup($$"""
                 @on Loaded
                 {
@@ -84,7 +84,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionCompositionRequiresExplicitRelationshipBetweenSiblings()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionSiblingExecutions.cui.xml",
+            "MotionSiblingExecutions.crn",
             MotionAspectMarkup(
                 """
                 @on Loaded

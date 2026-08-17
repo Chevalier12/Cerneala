@@ -56,7 +56,7 @@ public sealed partial class UiMarkupGeneratorTests
         {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("ro-RO");
             GeneratorRunResult result = RunGeneratorWithInput(
-                "BindingOneWay.cui.xml",
+                "BindingOneWay.crn",
                 markup,
                 inputSource,
                 out Compilation compilation);
@@ -135,7 +135,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "BindingInterpolation.cui.xml",
+            "BindingInterpolation.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -194,7 +194,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "BindingInterpolationScopes.cui.xml",
+            "BindingInterpolationScopes.crn",
             markup,
             out Compilation compilation);
 
@@ -241,7 +241,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "UnobservableBinding.cui.xml",
+            "UnobservableBinding.crn",
             markup,
             inputSource,
             out _);
@@ -250,7 +250,7 @@ public sealed partial class UiMarkupGeneratorTests
             result.Diagnostics,
             candidate => candidate.Severity == DiagnosticSeverity.Error &&
                 candidate.GetMessage().Contains("INotifyPropertyChanged", StringComparison.Ordinal));
-        Assert.Equal("UnobservableBinding.cui.xml", diagnostic.Location.GetLineSpan().Path);
+        Assert.Equal("UnobservableBinding.crn", diagnostic.Location.GetLineSpan().Path);
     }
 
     [Fact]
@@ -303,7 +303,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "OffThreadBinding.cui.xml",
+            "OffThreadBinding.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -350,7 +350,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "InheritedBinding.cui.xml",
+            "InheritedBinding.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -401,7 +401,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "TwoWayNamedBinding.cui.xml",
+            "TwoWayNamedBinding.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -450,7 +450,7 @@ public sealed partial class UiMarkupGeneratorTests
             <TextBlock IsVisible="True" IsEnabled="$self.IsVisible:OneWay" />
             """;
         GeneratorRunResult valid = RunGenerator(
-            "SelfBinding.cui.xml",
+            "SelfBinding.crn",
             validMarkup,
             out Compilation compilation);
         Assert.DoesNotContain(valid.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -463,14 +463,14 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.False(text.IsEnabled);
 
         GeneratorRunResult invalid = RunGenerator(
-            "SelfBindingLoop.cui.xml",
+            "SelfBindingLoop.crn",
             "<TextBlock IsEnabled=\"$self.IsEnabled\" />",
             out _);
         Diagnostic diagnostic = Assert.Single(
             invalid.Diagnostics,
             candidate => candidate.Severity == DiagnosticSeverity.Error &&
                 candidate.GetMessage().Contains("itself", StringComparison.OrdinalIgnoreCase));
-        Assert.Equal("SelfBindingLoop.cui.xml", diagnostic.Location.GetLineSpan().Path);
+        Assert.Equal("SelfBindingLoop.crn", diagnostic.Location.GetLineSpan().Path);
     }
 
     [Fact]
@@ -486,7 +486,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "TemplatePartBinding.cui.xml",
+            "TemplatePartBinding.crn",
             markup,
             out Compilation compilation);
 
@@ -555,7 +555,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
-            "ConditionalBinding.cui.xml",
+            "ConditionalBinding.crn",
             markup,
             inputSource,
             out Compilation compilation);
@@ -609,7 +609,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
         GeneratorRunResult literal = RunGenerator(
-            "ConditionalLiteral.cui.xml",
+            "ConditionalLiteral.crn",
             literalMarkup,
             out Compilation literalCompilation);
         Assert.DoesNotContain(literal.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -634,7 +634,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TextBlock>
             """;
         GeneratorRunResult invalid = RunGeneratorWithInput(
-            "QuotedConditionalBinding.cui.xml",
+            "QuotedConditionalBinding.crn",
             invalidMarkup,
             inputSource,
             out _);
@@ -642,7 +642,7 @@ public sealed partial class UiMarkupGeneratorTests
             invalid.Diagnostics,
             candidate => candidate.Severity == DiagnosticSeverity.Error &&
                 candidate.GetMessage().Contains("unquoted", StringComparison.OrdinalIgnoreCase));
-        Assert.Equal("QuotedConditionalBinding.cui.xml", diagnostic.Location.GetLineSpan().Path);
+        Assert.Equal("QuotedConditionalBinding.crn", diagnostic.Location.GetLineSpan().Path);
     }
 
     [Fact]
@@ -663,7 +663,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "BindingCompatibility.cui.xml",
+            "BindingCompatibility.crn",
             markup,
             out Compilation compilation);
 
@@ -705,11 +705,11 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
         GeneratorRunResult implicitResult = RunGenerator(
-            "ImplicitOwnerBinding.cui.xml",
+            "ImplicitOwnerBinding.crn",
             implicitMarkup,
             out Compilation implicitCompilation);
         GeneratorRunResult explicitResult = RunGenerator(
-            "ExplicitOwnerBinding.cui.xml",
+            "ExplicitOwnerBinding.crn",
             explicitMarkup,
             out Compilation explicitCompilation);
         Assert.DoesNotContain(implicitResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);

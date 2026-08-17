@@ -15,7 +15,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionGesturePressGeneratesSemanticRoutedAdapterAndCleanup()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionGesturePress.cui.xml",
+            "MotionGesturePress.crn",
             MotionAspectMarkup("@gesture press with Tween(160ms, EaseOut);"),
             out Compilation compilation);
 
@@ -41,7 +41,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionGesturePressRejectsUnsupportedGesturesAndEndpoints(string declaration, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionInvalidGesture.cui.xml",
+            "MotionInvalidGesture.crn",
             MotionAspectMarkup(declaration),
             out _);
 
@@ -60,7 +60,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
         GeneratorRunResult result = RunGenerator(
-            "MotionGestureRuntime.cui.xml",
+            "MotionGestureRuntime.crn",
             markup,
             out Compilation compilation);
         AssertNoGeneratorOrCompilationErrors(result, compilation);
@@ -103,7 +103,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionDragGeneratesRoutedInputAdapterWithDeterministicCleanup()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionDrag.cui.xml",
+            "MotionDrag.crn",
             MotionAspectMarkup("@drag with Spring(520, 38, 1);"),
             out Compilation compilation);
 
@@ -138,7 +138,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionDragRejectsUnsupportedOptionsAndDecay(string declaration, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionInvalidDrag.cui.xml",
+            "MotionInvalidDrag.crn",
             MotionAspectMarkup(declaration),
             out _);
 
@@ -157,7 +157,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionDecayDrag.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionDecayDrag.crn", markup, out _);
 
         AssertMotionDiagnostic(result, "Decay");
     }
@@ -174,7 +174,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
         GeneratorRunResult result = RunGenerator(
-            "MotionDragRuntime.cui.xml",
+            "MotionDragRuntime.crn",
             markup,
             out Compilation compilation);
         AssertNoGeneratorOrCompilationErrors(result, compilation);
@@ -283,7 +283,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionScroll.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionScroll.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -313,7 +313,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionHorizontalScroll.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionHorizontalScroll.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -343,7 +343,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionInvalidScroll.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionInvalidScroll.crn", markup, out _);
 
         AssertMotionDiagnostic(result, expectedMessage);
     }
@@ -352,7 +352,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionKeyframesGeneratePerPropertySpecsWithSyntheticGapFrames()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionKeyframeGaps.cui.xml",
+            "MotionKeyframeGaps.crn",
             MotionAspectMarkup(
                 """
                 @on Loaded
@@ -399,7 +399,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionKeyframeClip.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionKeyframeClip.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -411,7 +411,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionKeyframesGenerateStepEasing()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionKeyframeSteps.cui.xml",
+            "MotionKeyframeSteps.crn",
             MotionAspectMarkup(
                 """
                 @on Loaded
@@ -439,7 +439,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionKeyframesRejectInvalidStepEasing(string easing)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionInvalidKeyframeStep.cui.xml",
+            "MotionInvalidKeyframeStep.crn",
             MotionAspectMarkup($$"""
                 @on Loaded
                 {
@@ -458,7 +458,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionKeyframesMapHoldToKeyframeWithoutChangingCompletionPersistence()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionKeyframeHold.cui.xml",
+            "MotionKeyframeHold.crn",
             MotionAspectMarkup(
                 """
                 @on Loaded
@@ -483,7 +483,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionHoldAndStepAreRejectedOutsideKeyframes(string animation)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionHoldOutsideKeyframes.cui.xml",
+            "MotionHoldOutsideKeyframes.crn",
             MotionAspectMarkup("@on Loaded { " + animation + " }"),
             out _);
 
@@ -498,7 +498,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionKeyframesRejectInvalidRanges(string range, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionInvalidKeyframeRange.cui.xml",
+            "MotionInvalidKeyframeRange.crn",
             MotionAspectMarkup($$"""
                 @on Loaded
                 {
@@ -521,7 +521,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionKeyframesRejectOverlappingRangesForSameProperty()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionOverlappingKeyframes.cui.xml",
+            "MotionOverlappingKeyframes.crn",
             MotionAspectMarkup(
                 """
                 @on Loaded
@@ -542,7 +542,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionKeyframesAllowOverlappingRangesForDifferentProperties()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionIndependentKeyframes.cui.xml",
+            "MotionIndependentKeyframes.crn",
             MotionAspectMarkup(
                 """
                 @on Loaded
@@ -567,7 +567,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionKeyframesRejectNonDeterministicOrWrappedSpecs(string spec, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionInvalidKeyframeSpec.cui.xml",
+            "MotionInvalidKeyframeSpec.crn",
             MotionAspectMarkup($$"""
                 @on Loaded
                 {
@@ -593,7 +593,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionKeyframesRejectNestedGroups(string child, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionNestedKeyframes.cui.xml",
+            "MotionNestedKeyframes.crn",
             MotionAspectMarkup($$"""
                 @on Loaded
                 {
@@ -611,7 +611,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionWrappersRequireTween(string spec, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionInvalidWrapper.cui.xml",
+            "MotionInvalidWrapper.crn",
             MotionAspectMarkup($$"""
                 @on Loaded
                 {
@@ -631,7 +631,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionWrappersGenerateTypedTweenSpecs(string spec, string expectedCode)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionWrapper.cui.xml",
+            "MotionWrapper.crn",
             MotionAspectMarkup("@on Loaded { @animate with " + spec + " { @from { Opacity = 0; } @to { Opacity = 1; } } }"),
             out Compilation compilation);
 
@@ -647,7 +647,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionWrappersRejectInvalidCounts(string spec)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionWrapperCount.cui.xml",
+            "MotionWrapperCount.crn",
             MotionAspectMarkup("@on Loaded { @animate with " + spec + " { @to { Opacity = 1; } } }"),
             out _);
 
@@ -681,7 +681,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionStagger.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionStagger.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -697,7 +697,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionStaggerRejectsUnavailableNamedCollection()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionMissingStaggerTarget.cui.xml",
+            "MotionMissingStaggerTarget.crn",
             MotionAspectMarkup(
                 "@on Loaded { @stagger target $Missing each 40ms { @animate with Tween(100ms) { @to { Opacity = 1; } } } }"),
             out _);
@@ -727,7 +727,7 @@ public sealed partial class UiMarkupGeneratorTests
             </Border>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionAdvancedSpecs.cui.xml", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("MotionAdvancedSpecs.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
@@ -746,7 +746,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionResourcesRejectInvalidAdvancedOptions(string resource, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionInvalidAdvancedSpec.cui.xml",
+            "MotionInvalidAdvancedSpec.crn",
             AdvancedMotionResourceMarkup(resource),
             out _);
 
@@ -757,7 +757,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionDecayResourceRemainsExplicitlyUnsupported()
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionDeferredDecay.cui.xml",
+            "MotionDeferredDecay.crn",
             AdvancedMotionResourceMarkup("<Decay Name=\"Invalid\" ValueType=\"float\" InitialVelocity=\"1200\" Deceleration=\"0.998\" />"),
             out _);
 
@@ -771,7 +771,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionStaggerRequiresExactlyOneTweenAnimation(string body, string expectedMessage)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionInvalidStagger.cui.xml",
+            "MotionInvalidStagger.crn",
             MotionAspectMarkup($$"""
                 @on Loaded
                 {

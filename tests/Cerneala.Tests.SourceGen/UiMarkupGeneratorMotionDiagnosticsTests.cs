@@ -36,7 +36,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void MotionDiagnosticsUseCategorySpecificIds(string body, string expectedId)
     {
         GeneratorRunResult result = RunGenerator(
-            "MotionDiagnosticCategory.cui.xml",
+            "MotionDiagnosticCategory.crn",
             MotionAspectMarkup(body),
             out _);
 
@@ -50,7 +50,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string token = "DoesNotExist";
         string markup = MotionAspectMarkup("@on Loaded { @animate { @to { " + token + " = 1; } } }");
 
-        GeneratorRunResult result = RunGenerator("MotionTargetSpan.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionTargetSpan.crn", markup, out _);
 
         Diagnostic diagnostic = Assert.Single(result.Diagnostics.Where(candidate => candidate.Severity == DiagnosticSeverity.Error));
         Assert.Equal("CERNEALAUI021", diagnostic.Id);
@@ -74,7 +74,7 @@ public sealed partial class UiMarkupGeneratorTests
             </StackPanel>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionResourceSpan.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionResourceSpan.crn", markup, out _);
 
         Diagnostic diagnostic = Assert.Single(result.Diagnostics.Where(candidate => candidate.Severity == DiagnosticSeverity.Error));
         Assert.Equal("CERNEALAUI023", diagnostic.Id);
@@ -87,14 +87,14 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Button Aspect="$Motion">
               <Button.Resources>
-                <Aspect Name="Motion" TargetType="Cerneala.UI.Elements.UIElement">
+                <Aspect Name="Motion" TargetType="UIElement">
                   @on Click { @animate { @to { Opacity = 1; } } }
                 </Aspect>
               </Button.Resources>
             </Button>
             """;
 
-        GeneratorRunResult result = RunGenerator("MotionEventSuggestion.cui.xml", markup, out _);
+        GeneratorRunResult result = RunGenerator("MotionEventSuggestion.crn", markup, out _);
 
         Diagnostic diagnostic = Assert.Single(result.Diagnostics.Where(candidate => candidate.Severity == DiagnosticSeverity.Error));
         Assert.Equal("CERNEALAUI022", diagnostic.Id);
@@ -108,8 +108,8 @@ public sealed partial class UiMarkupGeneratorTests
         string markup = MotionAspectMarkup(
             "@on Loaded { @sequence { @animate { @to { Opacity = 1; } } @animate { @to { Scale = 1; } } } }");
 
-        GeneratorRunResult first = RunGenerator("MotionGeneratedContract.cui.xml", markup, out Compilation firstCompilation);
-        GeneratorRunResult second = RunGenerator("MotionGeneratedContract.cui.xml", markup, out Compilation secondCompilation);
+        GeneratorRunResult first = RunGenerator("MotionGeneratedContract.crn", markup, out Compilation firstCompilation);
+        GeneratorRunResult second = RunGenerator("MotionGeneratedContract.crn", markup, out Compilation secondCompilation);
 
         AssertNoGeneratorOrCompilationErrors(first, firstCompilation);
         AssertNoGeneratorOrCompilationErrors(second, secondCompilation);

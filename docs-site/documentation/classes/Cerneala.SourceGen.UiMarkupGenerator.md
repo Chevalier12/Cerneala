@@ -8,7 +8,7 @@ Assembly/Project: `Cerneala.SourceGen`
 
 Source: `Cerneala.SourceGen/UiMarkupGenerator.cs`
 
-Implements an incremental Roslyn source generator that converts `.cui.xml` UI markup additional files into typed Cerneala UI factory classes.
+Implements an incremental Roslyn source generator that converts `.crn` UI markup additional files into typed Cerneala UI factory classes.
 
 ```csharp
 [Generator]
@@ -26,7 +26,7 @@ Attributes:
 
 ## Examples
 
-A `.cui.xml` additional file named `Sample.cui.xml` can define a supported UI tree:
+A `.crn` additional file named `Sample.crn` can define a supported UI tree:
 
 ```xml
 <StackPanel>
@@ -42,11 +42,11 @@ global::Cerneala.UI.Elements.UIElement root =
     Cerneala.GeneratedUi.SampleFactory.Create();
 ```
 
-For a file named `typed-view.cui.xml`, the generated type name is `TypedViewFactory`.
+For a file named `typed-view.crn`, the generated type name is `TypedViewFactory`.
 
 ## Remarks
 
-`UiMarkupGenerator` reads compiler additional text files whose paths end with `.cui.xml`, ignoring case. It creates a `Cerneala.Language` document, uses the shared tolerant syntax tree and semantic model in strict `Build` mode, and emits one generated static partial factory class under the `Cerneala.GeneratedUi` namespace only after validation succeeds.
+`UiMarkupGenerator` reads compiler additional text files whose paths end with `.crn`, ignoring case. Only this canonical suffix participates in generation; other additional files are ignored. It creates a `Cerneala.Language` document, uses the shared tolerant syntax tree and semantic model in strict `Build` mode, and emits one generated static partial factory class under the `Cerneala.GeneratedUi` namespace only after validation succeeds.
 
 The shared language layer owns lossless parsing, recovery, source spans, binding,
 resource, template, Aspect, Motion, and Prism semantics, plus the host-agnostic
@@ -63,7 +63,7 @@ Generated factories contain:
 | `Create()` | Builds and returns the root `global::Cerneala.UI.Elements.UIElement`. |
 | `AsGeneratedFactory()` | Returns a `global::Cerneala.UI.Markup.GeneratedUiFactory` that wraps `Create`. |
 
-The generated factory class name is based on the markup file name without the `.cui.xml` suffix, converted to a valid identifier and suffixed with `Factory`. Duplicate base names are disambiguated with the parent directory name, then with a stable FNV-1a hash if needed.
+The generated factory class name is based on the markup file name without the `.crn` suffix, converted to a valid identifier and suffixed with `Factory`. Duplicate base names are disambiguated with the parent directory name, then with a stable FNV-1a hash if needed.
 
 Reactive directive expressions support the lowercase `and` and `or` operators plus parentheses. Their precedence is `comparison` before `and` before `or`; parentheses override the default order.
 
@@ -226,7 +226,7 @@ are converted to Roslyn source locations by the generator host adapter.
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Initialize(IncrementalGeneratorInitializationContext context)` | `void` | Registers incremental source output for collected `.cui.xml` additional files. |
+| `Initialize(IncrementalGeneratorInitializationContext context)` | `void` | Registers incremental source output for collected `.crn` additional files. |
 
 ## Applies To
 
