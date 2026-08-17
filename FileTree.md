@@ -32,8 +32,12 @@ Generated from `.`.
 |   |   |   |-- 2026-07-20-prism-filter-catalog.md
 |   |   |   |-- 2026-07-20-prism-retained-cache-off-baseline.md
 |   |   |   |-- 2026-07-21-prism-integration-hardening.md
-|   |   |   +-- 2026-07-21-prism-retained-cache.md
+|   |   |   |-- 2026-07-21-prism-retained-cache.md
+|   |   |   |-- 2026-08-13-language-core.md
+|   |   |   |-- 2026-08-15-visual-studio-community-extension.json
+|   |   |   +-- 2026-08-15-visual-studio-community-extension.md
 |   |   |-- Cerneala.Benchmarks.csproj
+|   |   |-- CernealaLanguageBenchmarks.cs
 |   |   |-- PrismInstanceBenchmarks.cs
 |   |   |-- PrismRetainedCacheBenchmarkRunner.cs
 |   |   |-- Program.cs
@@ -145,6 +149,101 @@ Generated from `.`.
 |       |-- 2026-07-17-presentation-frame-budget/
 |       |   +-- README.md
 |       +-- 2026-08-11-aspect-mutation/
+|-- Cerneala.Language/
+|   |-- Compatibility/
+|   |   +-- IsExternalInit.cs
+|   |-- Diagnostics/
+|   |   |-- AnalysisMode.cs
+|   |   |-- CernealaDiagnosticCatalog.cs
+|   |   |-- LanguageDiagnostic.cs
+|   |   |-- LanguageDiagnosticDescriptor.cs
+|   |   +-- LanguageDiagnosticSeverity.cs
+|   |-- Features/
+|   |   |-- CernealaCodeActionService.cs
+|   |   |-- CernealaCompletionModels.cs
+|   |   |-- CernealaCompletionService.cs
+|   |   |-- CernealaDocumentation.cs
+|   |   |-- CernealaFormattingModels.cs
+|   |   |-- CernealaFormattingService.cs
+|   |   |-- CernealaLanguageFacts.cs
+|   |   |-- CernealaNavigationModels.cs
+|   |   |-- CernealaNavigationService.cs
+|   |   |-- CernealaStructureModels.cs
+|   |   +-- CernealaStructureService.cs
+|   |-- Prism/
+|   |   +-- Catalog/
+|   |       +-- PrismLanguageCatalog.cs
+|   |-- Properties/
+|   |   +-- AssemblyInfo.cs
+|   |-- Semantics/
+|   |   |-- Symbols/
+|   |   |   |-- LanguageSymbols.cs
+|   |   |   +-- RoslynCompilationSymbols.cs
+|   |   |-- CernealaCompilation.cs
+|   |   |-- CernealaDocument.cs
+|   |   |-- CernealaSemanticModel.Bindings.cs
+|   |   |-- CernealaSemanticModel.Completion.cs
+|   |   |-- CernealaSemanticModel.cs
+|   |   |-- CernealaSemanticModel.MotionPrism.cs
+|   |   |-- CernealaSemanticModel.Navigation.cs
+|   |   |-- CernealaSemanticModel.Scopes.cs
+|   |   +-- SemanticSymbols.cs
+|   |-- Syntax/
+|   |   |-- Embedded/
+|   |   |   |-- BindingSyntax.cs
+|   |   |   |-- BindingSyntaxParser.cs
+|   |   |   |-- DirectiveSyntaxParser.cs
+|   |   |   |-- EmbeddedSyntax.cs
+|   |   |   |-- MotionSyntaxParser.cs
+|   |   |   |-- PrismModelSyntax.cs
+|   |   |   +-- PrismSyntaxParser.cs
+|   |   |-- MarkupLexer.cs
+|   |   |-- MarkupParser.cs
+|   |   |-- SyntaxDiagnostic.cs
+|   |   |-- SyntaxKind.cs
+|   |   |-- SyntaxNode.cs
+|   |   +-- SyntaxToken.cs
+|   |-- Text/
+|   |   |-- LinePosition.cs
+|   |   |-- SourceText.cs
+|   |   |-- TextChange.cs
+|   |   +-- TextSpan.cs
+|   |-- tmp/
+|   |-- Cerneala.Language.csproj
+|   +-- CernealaDocumentPath.cs
+|-- Cerneala.LanguageServer/
+|   |-- Features/
+|   |   |-- BuildDiagnosticStore.cs
+|   |   |-- CompletionService.cs
+|   |   |-- DiagnosticPublisher.cs
+|   |   |-- DiagnosticService.cs
+|   |   |-- FormattingService.cs
+|   |   |-- NavigationService.cs
+|   |   +-- StructureService.cs
+|   |-- Logging/
+|   |   |-- CrashReporter.cs
+|   |   |-- IServerLogger.cs
+|   |   |-- ServerTelemetry.cs
+|   |   |-- ServerTraceLevel.cs
+|   |   +-- StructuredServerLogger.cs
+|   |-- Properties/
+|   |   +-- AssemblyInfo.cs
+|   |-- Protocol/
+|   |   |-- LanguageServerEndpoint.cs
+|   |   |-- LanguageServerHost.cs
+|   |   +-- LspContracts.cs
+|   |-- Workspace/
+|   |   |-- CernealaWorkspace.cs
+|   |   |-- DocumentOverlayStore.cs
+|   |   |-- PathComparer.cs
+|   |   |-- ProjectContext.cs
+|   |   |-- WorkspaceConfiguration.cs
+|   |   |-- WorkspaceDocumentSnapshot.cs
+|   |   |-- WorkspaceInfoDiagnostic.cs
+|   |   |-- WorkspaceProjectSummary.cs
+|   |   +-- WorkspaceState.cs
+|   |-- Cerneala.LanguageServer.csproj
+|   +-- Program.cs
 |-- Cerneala.SourceGen/
 |   |-- Prism/
 |   |   |-- Binding/
@@ -168,8 +267,12 @@ Generated from `.`.
 |   |-- tests/
 |   |   +-- CodexPresentationHarness/
 |   |       +-- generated/
+|   |-- tmp/
 |   |-- Cerneala.SourceGen.csproj
+|   |-- MarkupDom.cs
 |   |-- MotionMarkupLanguage.cs
+|   |-- SourceGeneratorDiagnosticAdapter.cs
+|   |-- SourceGeneratorSemanticModel.cs
 |   |-- UiMarkupApplicationGenerator.cs
 |   |-- UiMarkupBindingResolver.cs
 |   |-- UiMarkupDirectiveParser.cs
@@ -179,41 +282,63 @@ Generated from `.`.
 |   |-- UiMarkupReactiveEmitter.cs
 |   |-- UiMarkupUserControlGenerator.cs
 |   +-- UiMarkupWindowGenerator.cs
+|-- Cerneala.VisualStudio/
+|   |-- Assets/
+|   |   +-- cerneala.png
+|   |-- Grammars/
+|   |   +-- cerneala.tmLanguage.json
+|   |-- Server/
+|   |   |-- CernealaServerProcessManager.cs
+|   |   +-- SystemCernealaServerProcess.cs
+|   |-- Cerneala.pkgdef
+|   |-- Cerneala.VisualStudio.csproj
+|   |-- CernealaCommands.vsct
+|   |-- CernealaContentType.cs
+|   |-- CernealaLanguageServerProvider.cs
+|   |-- CernealaOutputChannel.cs
+|   |-- CernealaPackage.cs
+|   |-- language-configuration.json
+|   |-- RestartLanguageServerCommand.cs
+|   |-- source.extension.vsixmanifest
+|   |-- THIRD-PARTY-NOTICES.txt
+|   +-- VisualStudioServerLog.cs
 |-- CernealaPresentation/
 |   |-- Properties/
 |   |   +-- AssemblyInfo.cs
 |   |-- tests/
 |   |   +-- CodexPresentationHarness/
 |   |       +-- generated/
-|   |-- App.cui.xml
-|   |-- App.cui.xml.cs
-|   |-- AspectChapterView.cui.xml
-|   |-- AspectChapterView.cui.xml.cs
+|   |-- tmp/
+|   |-- App.crn
+|   |-- App.crn.cs
+|   |-- AspectChapterView.crn
+|   |-- AspectChapterView.crn.cs
 |   |-- AspectStudioPropertyRows.cs
-|   |-- BrandMark.cui.xml
-|   |-- BrandMark.cui.xml.cs
+|   |-- BrandMark.crn
+|   |-- BrandMark.crn.cs
 |   |-- CernealaPresentation.csproj
-|   |-- FramePipelineChapterView.cui.xml
-|   |-- FramePipelineChapterView.cui.xml.cs
-|   |-- MarkupChapterView.cui.xml
-|   |-- MarkupChapterView.cui.xml.cs
-|   |-- MotionChapterView.cui.xml
-|   |-- MotionChapterView.cui.xml.cs
-|   |-- OpeningView.cui.xml
-|   |-- OpeningView.cui.xml.cs
+|   |-- FramePipelineChapterView.crn
+|   |-- FramePipelineChapterView.crn.cs
+|   |-- MarkupChapterView.crn
+|   |-- MarkupChapterView.crn.cs
+|   |-- MotionChapterView.crn
+|   |-- MotionChapterView.crn.cs
+|   |-- OpeningView.crn
+|   |-- OpeningView.crn.cs
 |   |-- PresentationWindow.Automation.cs
-|   |-- PresentationWindow.cui.xml
-|   |-- PresentationWindow.cui.xml.cs
+|   |-- PresentationWindow.crn
+|   |-- PresentationWindow.crn.cs
 |   |-- PresentationWindow.OuterGlowLab.cs
-|   |-- PrismChapterView.cui.xml
-|   |-- PrismChapterView.cui.xml.cs
-|   |-- PrismOuterGlowLabView.cui.xml
-|   |-- PrismOuterGlowLabView.cui.xml.cs
+|   |-- PrismChapterView.crn
+|   |-- PrismChapterView.crn.cs
+|   |-- PrismOuterGlowLabView.crn
+|   |-- PrismOuterGlowLabView.crn.cs
 |   |-- PrismStudioModel.cs
-|   |-- RetainedModelChapterView.cui.xml
-|   |-- RetainedModelChapterView.cui.xml.cs
-|   |-- WelcomeChapterView.cui.xml
-|   +-- WelcomeChapterView.cui.xml.cs
+|   |-- PrismStudioRows.cs
+|   |-- RetainedModelChapterView.crn
+|   |-- RetainedModelChapterView.crn.cs
+|   |-- WelcomeChapterView.crn
+|   +-- WelcomeChapterView.crn.cs
 |-- docs/
 |   |-- audits/
 |   |   |-- prism-visual-algorithm-checklist-2026-07-25.md
@@ -256,7 +381,12 @@ Generated from `.`.
 |   |   |-- 2026-07-18-prism-retained-composition-graph.md
 |   |   |-- 2026-07-18-prism-retained-pixel-cache.md
 |   |   |-- 2026-07-22-prism-studio-presentation.md
-|   |   +-- 2026-07-28-motion-studio.md
+|   |   |-- 2026-07-28-motion-studio.md
+|   |   |-- 2026-08-13-cerneala-language-core.md
+|   |   |-- 2026-08-13-cerneala-language-server.md
+|   |   |-- 2026-08-13-visual-studio-community-extension.md
+|   |   |-- 2026-08-13-visual-studio-language-integration-plan-index.md
+|   |   +-- 2026-08-14-crn-markup-extension-migration.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -318,6 +448,7 @@ Generated from `.`.
 |   |-- developer-preview-checklist.md
 |   |-- developer-preview-scope.md
 |   |-- getting-started.md
+|   |-- language-server.md
 |   |-- markup-data-bindings.md
 |   |-- motion-api.md
 |   |-- motion-diagnostics.md
@@ -333,6 +464,8 @@ Generated from `.`.
 |   |-- prism-neighborhood-filters.md
 |   |-- prism-public-api-baseline.md
 |   |-- prism-technical-design.md
+|   |-- visual-studio-community-spike.md
+|   |-- visual-studio-community.md
 |   +-- wpf-event-coverage.md
 |-- docs-site/
 |   |-- assets/
@@ -1194,6 +1327,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Theming.ThemePalette.md
 |   |   |   |-- Cerneala.UI.Theming.ThemeProvider.md
 |   |   |   |-- Cerneala.UI.Theming.ThemeResource_T_.md
+|   |   |   |-- Cerneala.VisualStudio.CernealaPackage.md
 |   |   |   |-- RoslynRepoIndexer.Core.CallGraphDirection.md
 |   |   |   |-- RoslynRepoIndexer.Core.CallGraphEdge.md
 |   |   |   |-- RoslynRepoIndexer.Core.CallGraphNode.md
@@ -1872,19 +2006,20 @@ Generated from `.`.
 |   |   +-- SvgWindow.cs
 |   |-- Cerneala.ComboBoxLab/
 |   |   |-- Cerneala.ComboBoxLab.csproj
-|   |   |-- MainWindow.cui.xml
-|   |   +-- MainWindow.cui.xml.cs
+|   |   |-- MainWindow.crn
+|   |   +-- MainWindow.crn.cs
 |   |-- Cerneala.Playground/
 |   |   |-- Cerneala.Playground.csproj
-|   |   |-- MainWindow.cui.xml
-|   |   |-- MainWindow.cui.xml.cs
+|   |   |-- MainWindow.crn
+|   |   |-- MainWindow.crn.cs
 |   |   +-- SvgWindow.cs
 |   +-- CernealaOracle/
 |       |-- CernealaOracle.csproj
-|       |-- MainWindow.cui.xml
-|       +-- MainWindow.cui.xml.cs
+|       |-- MainWindow.crn
+|       +-- MainWindow.crn.cs
 |-- Properties/
 |   +-- AssemblyInfo.cs
+|-- spikes/
 |-- tests/
 |   |-- Cerneala.Tests/
 |   |   |-- Architecture/
@@ -2395,10 +2530,51 @@ Generated from `.`.
 |   |   |-- Cerneala.Tests.csproj
 |   |   |-- GameBootstrapTests.cs
 |   |   +-- GlobalUsings.cs
+|   |-- Cerneala.Tests.Language/
+|   |   |-- Corpus/
+|   |   |   |-- constructs.json
+|   |   |   |-- crn-migration-stage0-inventory.txt
+|   |   |   |-- repository-documents.txt
+|   |   |   +-- sourcegen-diagnostics.json
+|   |   |-- Cerneala.Tests.Language.csproj
+|   |   |-- CernealaDocumentPathTests.cs
+|   |   |-- CompletionTests.cs
+|   |   |-- CorpusCase.cs
+|   |   |-- CorpusCoverageTests.cs
+|   |   |-- DiagnosticCatalogTests.cs
+|   |   |-- EmbeddedSyntaxTests.cs
+|   |   |-- FormattingTests.cs
+|   |   |-- LanguagePipelineHarness.cs
+|   |   |-- MarkupParserTests.cs
+|   |   |-- MotionPrismSemanticTests.cs
+|   |   |-- NavigationTests.cs
+|   |   |-- RecoveryBaselineTests.cs
+|   |   |-- SEMANTIC-INVENTORY.md
+|   |   |-- SemanticScopesTests.cs
+|   |   |-- SemanticWorkspaceTests.cs
+|   |   |-- SourceGeneratorDiagnosticBaselineTests.cs
+|   |   |-- SourceTextTests.cs
+|   |   +-- StructureTests.cs
+|   |-- Cerneala.Tests.LanguageServer/
+|   |   |-- Diagnostics/
+|   |   |   +-- diagnostic-catalog-golden.json
+|   |   |-- Cerneala.Tests.LanguageServer.csproj
+|   |   |-- CompletionProtocolTests.cs
+|   |   |-- CrashReporterTests.cs
+|   |   |-- DiagnosticsTests.cs
+|   |   |-- FormattingProtocolTests.cs
+|   |   |-- HardeningProtocolTests.cs
+|   |   |-- NavigationProtocolTests.cs
+|   |   |-- ProcessLifecycleTests.cs
+|   |   |-- ProtocolContractTests.cs
+|   |   |-- ProtocolTestClient.cs
+|   |   |-- StructureProtocolTests.cs
+|   |   +-- WorkspaceTests.cs
 |   |-- Cerneala.Tests.SourceGen/
 |   |   |-- Prism/
 |   |   |   |-- PrismCatalogCompilerTests.cs
 |   |   |   +-- PrismMarkupContractTests.cs
+|   |   |-- tmp/
 |   |   |-- Cerneala.Tests.SourceGen.csproj
 |   |   |-- PresentationMarkupRegressionTests.cs
 |   |   |-- UiMarkupGeneratorApplicationTests.cs
@@ -2406,6 +2582,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorFileExtensionTests.cs
 |   |   |-- UiMarkupGeneratorMotionClipTests.cs
 |   |   |-- UiMarkupGeneratorMotionCompositionTests.cs
 |   |   |-- UiMarkupGeneratorMotionDiagnosticsTests.cs
@@ -2415,10 +2592,49 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorMotionPresenceTests.cs
 |   |   |-- UiMarkupGeneratorMotionTests.cs
 |   |   |-- UiMarkupGeneratorMotionTimelineTests.cs
+|   |   |-- UiMarkupGeneratorResourceBindingModeTests.cs
 |   |   +-- UiMarkupGeneratorTests.cs
-|   +-- Cerneala.WindowsDxSmoke/
-|       |-- Cerneala.WindowsDxSmoke.csproj
-|       +-- WindowsDxSmokeApplication.cs
+|   |-- Cerneala.Tests.VisualStudio/
+|   |   |-- Golden/
+|   |   |   |-- cerneala-tokenization.crn
+|   |   |   +-- cerneala-tokenization.golden.json
+|   |   |-- Cerneala.Tests.VisualStudio.csproj
+|   |   |-- CernealaGrammarTests.cs
+|   |   |-- CernealaServerProcessManagerTests.cs
+|   |   |-- Stage4IntegrationHarnessTests.cs
+|   |   |-- Stage5PerformanceHarnessTests.cs
+|   |   |-- Stage6ReleaseHarnessTests.cs
+|   |   +-- VisualStudioPackageTests.cs
+|   |-- Cerneala.WindowsDxSmoke/
+|   |   |-- Cerneala.WindowsDxSmoke.csproj
+|   |   +-- WindowsDxSmokeApplication.cs
+|   +-- Fixtures/
+|       |-- LanguageServerWorkspace/
+|       |   |-- LanguageServerWorkspace.csproj
+|       |   |-- View.crn
+|       |   +-- View.crn.cs
+|       |-- VisualStudioConsumer/
+|       |   |-- AuthoringView.crn
+|       |   |-- AuthoringView.crn.cs
+|       |   |-- DashboardModels.cs
+|       |   |-- Invoke-CommunityIntegration.ps1
+|       |   |-- Invoke-CommunityPerformance.ps1
+|       |   |-- Invoke-CommunityRelease.ps1
+|       |   |-- MainView.crn
+|       |   |-- MainView.crn.cs
+|       |   |-- SecondaryView.crn
+|       |   |-- SecondaryView.crn.cs
+|       |   |-- StatusCard.cs
+|       |   |-- VisualStudioConsumer.csproj
+|       |   +-- VisualStudioConsumer.slnx
+|       +-- VisualStudioIntegrationHost/
+|           |-- source.extension.vsixmanifest
+|           |-- Stage4Commands.vsct
+|           |-- Stage4IntegrationPackage.cs
+|           |-- VisualStudioIntegrationHost.csproj
+|           |-- VisualStudioStage4Runner.cs
+|           |-- VisualStudioStage4Runner.Presentation.cs
+|           +-- VisualStudioStage5Runner.cs
 |-- tmp/
 |-- Tools/
 |   |-- PrismAudit/
@@ -2477,12 +2693,16 @@ Generated from `.`.
 |   |   |-- README.md
 |   |   |-- RoslynRepoIndexer.sln
 |   |   +-- RoslynRepoIndexer.slnx
-|   +-- scripts/
-|       |-- Archive-Repo.ps1
-|       |-- Archive-Repo.Tests.ps1
-|       |-- Measure-PrismOuterGlowColdStart.ps1
-|       |-- New-FileTree.ps1
-|       +-- New-PrismFilterReference.ps1
+|   |-- scripts/
+|   |   |-- Archive-Repo.ps1
+|   |   |-- Archive-Repo.Tests.ps1
+|   |   |-- Build-CernealaVisualStudioRelease.ps1
+|   |   |-- Measure-PrismOuterGlowColdStart.ps1
+|   |   |-- New-FileTree.ps1
+|   |   +-- New-PrismFilterReference.ps1
+|   |-- spikes/
+|   +-- temp/
+|       +-- Stage1RuntimeFixture/
 |-- UI/
 |   |-- Accessibility/
 |   |   |-- AccessibleName.cs
