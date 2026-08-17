@@ -33,16 +33,8 @@ internal sealed class CernealaCompletionService
             ["PrismComposition"] = ["Name"]
         };
 
-    private static readonly IReadOnlyDictionary<string, string[]> KnownSignatures =
-        new Dictionary<string, string[]>(StringComparer.Ordinal)
-        {
-            ["Tween"] = ["duration", "easing", "delay", "fillMode"],
-            ["Spring"] = ["stiffness", "damping", "mass", "restSpeed", "restDelta", "velocityMode"],
-            ["Repeat"] = ["spec", "count"],
-            ["PingPong"] = ["spec", "count"],
-            ["Step"] = ["count"],
-            ["CubicBezier"] = ["x1", "y1", "x2", "y2"]
-        };
+    private static readonly string[] TargetPropertyDirectiveKeywords =
+        ["@default", "@when", "@if", "@from", "@to", "@set", "@scroll"];
 
     public IReadOnlyList<CernealaCompletionItem> GetCompletions(
         CernealaDocument document,
@@ -112,14 +104,23 @@ internal sealed class CernealaCompletionService
     {
         string source = document.Text.ToString();
         offset = Clamp(offset, 0, source.Length);
+        CompletionSite site = CompletionSite.Classify(source, offset);
+        CernealaSignatureHelp? attributeValueHelp = GetAttributeValueSignatureHelp(site, model);
+        if (attributeValueHelp is not null)
+        {
+            return attributeValueHelp;
+        }
+
         FunctionCall? call = FindFunctionCall(source, offset);
         if (call is null)
         {
             return null;
         }
 
-        string[]? parameters = KnownSignatures.TryGetValue(call.Name, out string[]? known)
-            ? known
+        IReadOnlyList<LanguageArgumentFact> motionArguments =
+            CernealaLanguageFacts.FindMotionCallArguments(call.Name);
+        string[]? parameters = motionArguments.Count > 0
+            ? motionArguments.Select(argument => argument.Name).ToArray()
             : null;
         IReadOnlyList<LanguageArgumentFact> prismArguments = CernealaLanguageFacts.FindPrismProperties(call.Name);
         if (parameters is null && prismArguments.Count > 0)
@@ -144,6 +145,42 @@ internal sealed class CernealaCompletionService
             call.Name + "(" + string.Join(", ", parameters) + ")",
             parameters.Select(parameter => new CernealaSignatureParameter(parameter)).ToArray());
         return new CernealaSignatureHelp([signature], 0, activeParameter);
+    }
+
+    private static CernealaSignatureHelp? GetAttributeValueSignatureHelp(
+        CompletionSite site,
+        CernealaSemanticModel? model)
+    {
+        if (site.Kind != CompletionSiteKind.AttributeValue || model is null ||
+            site.ValuePrefix.Any(character => !char.IsWhiteSpace(character) &&
+                !char.IsDigit(character) && character is not ('+' or '-' or '.' or ',')))
+        {
+            return null;
+        }
+
+        ElementSyntax? element = model.FindCompletionElement(site.Offset);
+        ILanguageMemberSymbol? member = FindTargetMember(model, element, site.AttributeName);
+        if (member is null ||
+            !member.ValueTypeMetadataName.TrimEnd('?').EndsWith("Thickness", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        CernealaSignature uniform = new(
+            "Thickness(uniform)",
+            [new CernealaSignatureParameter("uniform", "The same value for all four sides.")]);
+        CernealaSignature components = new(
+            "Thickness(left, top, right, bottom)",
+            [
+                new CernealaSignatureParameter("left", "Space on the left side."),
+                new CernealaSignatureParameter("top", "Space on the top side."),
+                new CernealaSignatureParameter("right", "Space on the right side."),
+                new CernealaSignatureParameter("bottom", "Space on the bottom side.")
+            ]);
+        int commaCount = site.ValuePrefix.Count(character => character == ',');
+        int activeSignature = commaCount == 0 ? 0 : 1;
+        int activeParameter = activeSignature == 0 ? 0 : Clamp(commaCount, 0, 3);
+        return new CernealaSignatureHelp([uniform, components], activeSignature, activeParameter);
     }
 
     private static void AddElementCompletions(
@@ -236,7 +273,12 @@ internal sealed class CernealaCompletionService
                 continue;
             }
 
-            string label = GetMarkupTypeName(type, model.GetCompletionAliases());
+            string? label = GetMarkupTypeName(type, model.GetCompletionAliases());
+            if (label is null)
+            {
+                continue;
+            }
+
             Add(result, label, ElementInsertion(site, label), site.WordSpan,
                 CernealaCompletionItemKind.Element, type.MetadataName, "10", type.MetadataName);
         }
@@ -423,8 +465,9 @@ internal sealed class CernealaCompletionService
 
         if (attributeName.StartsWith("xmlns", StringComparison.Ordinal))
         {
+            string namespacePrefix = GetClrNamespacePrefix(site.ValuePrefix);
             foreach ((string ns, string assembly) in model.CompletionCompilation.GetTypes()
-                .Where(type => type.Namespace.Length > 0)
+                .Where(type => IsCompletableNamespace(type.Namespace, namespacePrefix))
                 .Select(type => (type.Namespace, type.AssemblyName))
                 .Distinct()
                 .OrderBy(value => value.Namespace, StringComparer.Ordinal))
@@ -447,11 +490,34 @@ internal sealed class CernealaCompletionService
                 continue;
             }
 
-            string label = GetMarkupTypeName(type, model.GetCompletionAliases());
+            string? label = GetMarkupTypeName(type, model.GetCompletionAliases());
+            if (label is null)
+            {
+                continue;
+            }
+
             Add(result, label, label, site.ValueWordSpan, CernealaCompletionItemKind.Type,
                 type.MetadataName, "10", type.MetadataName);
         }
     }
+
+    private static string GetClrNamespacePrefix(string valuePrefix)
+    {
+        const string marker = "clr-namespace:";
+        if (!valuePrefix.StartsWith(marker, StringComparison.Ordinal))
+        {
+            return string.Empty;
+        }
+
+        string specification = valuePrefix.Substring(marker.Length);
+        int assemblySeparator = specification.IndexOf(';');
+        return (assemblySeparator < 0 ? specification : specification.Substring(0, assemblySeparator)).Trim();
+    }
+
+    private static bool IsCompletableNamespace(string namespaceName, string prefix) =>
+        namespaceName.Length > 0 &&
+        namespaceName[0] != '<' &&
+        namespaceName.StartsWith(prefix, StringComparison.Ordinal);
 
     private static void AddBindingCompletions(
         ICollection<CernealaCompletionItem> result,
@@ -556,9 +622,73 @@ internal sealed class CernealaCompletionService
         CernealaSemanticModel? model,
         ElementSyntax? element)
     {
+        string statement = GetEmbeddedStatementPrefix(site.Source, site.Offset);
+        if (IsMotionHandleCompletionSite(statement) && model is not null)
+        {
+            foreach (string handle in model.GetCompletionMotionHandles(element, site.Offset))
+            {
+                Add(result, handle, handle, site.WordSpan,
+                    CernealaCompletionItemKind.Variable, "Motion handle", "00");
+            }
+
+            return;
+        }
+
+        ReferenceMemberSite? memberReference = FindReferenceMemberSite(site.Source, site.Offset);
+        if (memberReference is not null && model is not null &&
+            IsDirectiveReferenceContext(site.Source, site.Offset, statement, element))
+        {
+            AddDirectiveReferenceMemberCompletions(result, model, element, memberReference);
+            return;
+        }
+
+        ReferenceSite? reference = FindReferenceSite(site.Source, site.Offset);
+        if (reference is not null && model is not null &&
+            IsDirectiveReferenceContext(site.Source, site.Offset, statement, element))
+        {
+            AddDirectiveReferenceCompletions(result, model, element, reference);
+            return;
+        }
+
+        if (model is not null &&
+            TryGetReactiveExpressionOperandContext(statement, out bool includeWhenValue))
+        {
+            ILanguageTypeSymbol? targetType = model.GetCompletionElementType(element);
+            foreach (ILanguageMemberSymbol member in
+                targetType?.GetMembers() ?? Array.Empty<ILanguageMemberSymbol>())
+            {
+                if (member.Kind == LanguageMemberKind.Property && member.CanRead)
+                {
+                    Add(result, member.Name, member.Name, site.WordSpan,
+                        CernealaCompletionItemKind.Property, member.ValueTypeMetadataName, "00",
+                        targetType!.MetadataName, member.Name);
+                }
+            }
+
+            if (includeWhenValue)
+            {
+                Add(result, "value", "value", site.WordSpan,
+                    CernealaCompletionItemKind.Variable, "Current @when value", "00");
+            }
+
+            return;
+        }
+
         FunctionCall? call = FindFunctionCall(site.Source, site.Offset);
         if (call is not null)
         {
+            IReadOnlyList<LanguageArgumentFact> motionArguments =
+                CernealaLanguageFacts.FindMotionCallArguments(call.Name);
+            if (call.ActiveParameter < motionArguments.Count)
+            {
+                LanguageArgumentFact activeArgument = motionArguments[call.ActiveParameter];
+                foreach (string value in activeArgument.AllowedValues.Distinct(StringComparer.Ordinal))
+                {
+                    Add(result, value, value, site.WordSpan,
+                        CernealaCompletionItemKind.Value, activeArgument.ValueType, "00");
+                }
+            }
+
             IReadOnlyList<LanguageArgumentFact> arguments = CernealaLanguageFacts.FindPrismProperties(call.Name);
             foreach (LanguageArgumentFact argument in arguments)
             {
@@ -585,7 +715,6 @@ internal sealed class CernealaCompletionService
             return;
         }
 
-        string statement = GetEmbeddedStatementPrefix(site.Source, site.Offset);
         if (IsInsideDirective(site.Source, site.Offset, "@animate") &&
             !IsInsideDirective(site.Source, site.Offset, "@from") &&
             !IsInsideDirective(site.Source, site.Offset, "@to"))
@@ -619,8 +748,11 @@ internal sealed class CernealaCompletionService
             return;
         }
 
-        if ((IsInsideDirective(site.Source, site.Offset, "@from") ||
-            IsInsideDirective(site.Source, site.Offset, "@to")) && model is not null)
+        if (model is not null &&
+            !site.WordPrefix.StartsWith("@", StringComparison.Ordinal) &&
+            TargetPropertyDirectiveKeywords.Contains(
+            FindInnermostDirectiveKeyword(site.Source, site.Offset),
+            StringComparer.Ordinal))
         {
             ILanguageTypeSymbol? targetType = model.GetCompletionElementType(element);
             int equals = statement.LastIndexOf('=');
@@ -720,6 +852,168 @@ internal sealed class CernealaCompletionService
             Add(result, keyword, insertion, site.WordSpan,
                 CernealaCompletionItemKind.Keyword, "Cerneala directive", "00");
         }
+    }
+
+    private static void AddDirectiveReferenceCompletions(
+        ICollection<CernealaCompletionItem> result,
+        CernealaSemanticModel model,
+        ElementSyntax? element,
+        ReferenceSite reference)
+    {
+        IReadOnlyList<CompletionScopedSymbol> sources = model.GetCompletionSources(element);
+        AddScopedReferenceCompletions(result, sources, reference.ReplacementSpan, _ => true);
+    }
+
+    private static void AddDirectiveReferenceMemberCompletions(
+        ICollection<CernealaCompletionItem> result,
+        CernealaSemanticModel model,
+        ElementSyntax? element,
+        ReferenceMemberSite reference)
+    {
+        ILanguageTypeSymbol? currentType =
+            model.GetCompletionBindingSourceType(element, reference.OwnerSegments[0]);
+        for (int index = 1; index < reference.OwnerSegments.Count && currentType is not null; index++)
+        {
+            currentType = currentType.GetMembers(reference.OwnerSegments[index])
+                .FirstOrDefault(member =>
+                    member.Kind == LanguageMemberKind.Property && !member.IsStatic && member.CanRead)?.ValueType;
+        }
+
+        if (currentType is null)
+        {
+            return;
+        }
+
+        foreach (ILanguageMemberSymbol member in currentType.GetMembers()
+            .Where(member => !member.IsStatic && IsReferenceMemberCompletionCandidate(member))
+            .GroupBy(member => member.Name, StringComparer.Ordinal)
+            .Select(group => group.First()))
+        {
+            CernealaCompletionItemKind kind = member.Kind switch
+            {
+                LanguageMemberKind.Event => CernealaCompletionItemKind.Event,
+                LanguageMemberKind.Method => CernealaCompletionItemKind.Function,
+                LanguageMemberKind.Field => CernealaCompletionItemKind.Variable,
+                _ => CernealaCompletionItemKind.Property
+            };
+            Add(result, member.Name, member.Name, reference.ReplacementSpan, kind,
+                member.ValueTypeMetadataName, "10", currentType.MetadataName, member.Name);
+        }
+    }
+
+    private static bool IsReferenceMemberCompletionCandidate(ILanguageMemberSymbol member) =>
+        member.Kind != LanguageMemberKind.Property || member.CanRead || member.CanWrite;
+
+    private static void AddScopedReferenceCompletions(
+        ICollection<CernealaCompletionItem> result,
+        IEnumerable<CompletionScopedSymbol> sources,
+        TextSpan replacementSpan,
+        Func<CompletionScopedSymbol, bool> predicate)
+    {
+        foreach (CompletionScopedSymbol source in sources.Where(predicate))
+        {
+            string label = "$" + source.Name;
+            CernealaCompletionItemKind kind = source.Kind is "binding" or "element"
+                ? CernealaCompletionItemKind.Variable
+                : CernealaCompletionItemKind.Resource;
+            Add(result, label, label, replacementSpan, kind,
+                source.Type?.MetadataName ?? source.Kind, "00", source.Type?.MetadataName);
+        }
+    }
+
+    private static bool IsDirectiveReferenceContext(
+        string source,
+        int offset,
+        string statement,
+        ElementSyntax? element)
+    {
+        if (IsInsideBraceBody(source, offset) || statement.IndexOf('@') >= 0 ||
+            element?.Name.Split(':').Last() is "Aspect" or "MotionClip" or "PrismComposition")
+        {
+            return true;
+        }
+
+        IEnumerable<string> directives = CernealaLanguageFacts.MotionDirectiveKeywords
+            .Concat(CernealaLanguageFacts.PrismDirectiveKeywords)
+            .Concat(["@default", "@template"]);
+        return IsInsideAnyDirective(source, offset, directives);
+    }
+
+    private static bool IsInsideBraceBody(string source, int offset)
+    {
+        int closingDepth = 0;
+        for (int index = offset - 1; index >= 0; index--)
+        {
+            if (source[index] == '}')
+            {
+                closingDepth++;
+            }
+            else if (source[index] == '{')
+            {
+                if (closingDepth == 0)
+                {
+                    return true;
+                }
+
+                closingDepth--;
+            }
+        }
+
+        return false;
+    }
+
+    private static ReferenceSite? FindReferenceSite(string source, int offset)
+    {
+        int identifierStart = offset;
+        while (identifierStart > 0 && IsIdentifierCharacter(source[identifierStart - 1]))
+        {
+            identifierStart--;
+        }
+
+        if (identifierStart <= 0 || source[identifierStart - 1] != '$')
+        {
+            return null;
+        }
+
+        int referenceStart = identifierStart - 1;
+        return new ReferenceSite(new TextSpan(referenceStart, offset - referenceStart));
+    }
+
+    private static ReferenceMemberSite? FindReferenceMemberSite(string source, int offset)
+    {
+        int memberStart = offset;
+        while (memberStart > 0 && IsIdentifierCharacter(source[memberStart - 1]))
+        {
+            memberStart--;
+        }
+
+        if (memberStart <= 0 || source[memberStart - 1] != '.')
+        {
+            return null;
+        }
+
+        int ownerEnd = memberStart - 1;
+        int ownerStart = ownerEnd;
+        while (ownerStart > 0 &&
+            (IsIdentifierCharacter(source[ownerStart - 1]) || source[ownerStart - 1] == '.'))
+        {
+            ownerStart--;
+        }
+
+        if (ownerStart <= 0 || source[ownerStart - 1] != '$')
+        {
+            return null;
+        }
+
+        string[] ownerSegments = source.Substring(ownerStart, ownerEnd - ownerStart).Split('.');
+        if (ownerSegments.Length == 0 || ownerSegments.Any(segment => segment.Length == 0))
+        {
+            return null;
+        }
+
+        return new ReferenceMemberSite(
+            ownerSegments,
+            new TextSpan(memberStart, offset - memberStart));
     }
 
     private static ILanguageMemberSymbol? FindTargetMember(
@@ -822,11 +1116,12 @@ internal sealed class CernealaCompletionService
         type.IsOrDerivesFrom(parameter.TypeMetadataName.TrimEnd('?')) ||
         type.IsOrImplements(parameter.TypeMetadataName.TrimEnd('?'));
 
-    private static string GetMarkupTypeName(
+    private static string? GetMarkupTypeName(
         ILanguageTypeSymbol type,
         IReadOnlyList<CompletionNamespaceAlias> aliases)
     {
-        if (type.Namespace.StartsWith("Cerneala.UI.", StringComparison.Ordinal))
+        if (type.Namespace == "Cerneala.UI" ||
+            type.Namespace.StartsWith("Cerneala.UI.", StringComparison.Ordinal))
         {
             return type.Name;
         }
@@ -834,7 +1129,7 @@ internal sealed class CernealaCompletionService
         CompletionNamespaceAlias? alias = aliases.FirstOrDefault(candidate =>
             string.Equals(candidate.Namespace, type.Namespace, StringComparison.Ordinal) &&
             (candidate.Assembly.Length == 0 || string.Equals(candidate.Assembly, type.AssemblyName, StringComparison.Ordinal)));
-        return alias is null ? type.Name : alias.Prefix + ":" + type.Name;
+        return alias is null ? null : alias.Prefix + ":" + type.Name;
     }
 
     private static HashSet<string> ReadAttributeNames(string source, int tagStart, int offset)
@@ -983,6 +1278,67 @@ internal sealed class CernealaCompletionService
     private static bool IsInsideAnyDirective(string source, int offset, IEnumerable<string> keywords) =>
         keywords.Any(keyword => IsInsideDirective(source, offset, keyword));
 
+    private static string? FindInnermostDirectiveKeyword(string source, int offset)
+    {
+        Stack<string?> blocks = new();
+        bool quoted = false;
+        char quote = '\0';
+        for (int index = 0; index < offset; index++)
+        {
+            char character = source[index];
+            if (quoted)
+            {
+                if (character == quote && (index == 0 || source[index - 1] != '\\'))
+                {
+                    quoted = false;
+                }
+
+                continue;
+            }
+
+            if (character is '\'' or '"')
+            {
+                quoted = true;
+                quote = character;
+            }
+            else if (character == '{')
+            {
+                blocks.Push(FindDirectiveKeywordBeforeBody(source, index));
+            }
+            else if (character == '}' && blocks.Count > 0)
+            {
+                blocks.Pop();
+            }
+        }
+
+        return blocks.Count == 0 ? null : blocks.Peek();
+    }
+
+    private static string? FindDirectiveKeywordBeforeBody(string source, int openingBrace)
+    {
+        int at = source.LastIndexOf('@', Math.Max(0, openingBrace - 1));
+        if (at < 0)
+        {
+            return null;
+        }
+
+        for (int index = at + 1; index < openingBrace; index++)
+        {
+            if (source[index] is '{' or '}' or ';' or '<' or '>')
+            {
+                return null;
+            }
+        }
+
+        int end = at + 1;
+        while (end < openingBrace && IsIdentifierCharacter(source[end]))
+        {
+            end++;
+        }
+
+        return end == at + 1 ? null : source.Substring(at, end - at);
+    }
+
     private static string GetEmbeddedStatementPrefix(string source, int offset)
     {
         int start = offset;
@@ -992,6 +1348,110 @@ internal sealed class CernealaCompletionService
         }
 
         return source.Substring(start, offset - start);
+    }
+
+    private static bool IsMotionHandleCompletionSite(string statement)
+    {
+        string trimmed = statement.TrimStart();
+        if (trimmed.StartsWith("@cancel", StringComparison.Ordinal))
+        {
+            string suffix = trimmed.Substring("@cancel".Length).TrimStart();
+            return suffix.All(IsIdentifierCharacter);
+        }
+
+        if (!trimmed.StartsWith("@run", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        int separator = trimmed.LastIndexOf(" as ", StringComparison.Ordinal);
+        return separator >= 0 && trimmed.Substring(separator + 4).All(IsIdentifierCharacter);
+    }
+
+    private static bool TryGetReactiveExpressionOperandContext(
+        string statement,
+        out bool includeWhenValue)
+    {
+        int whenStart = FindLastDirectiveKeyword(statement, "@when");
+        int ifStart = FindLastDirectiveKeyword(statement, "@if");
+        int keywordStart = Math.Max(whenStart, ifStart);
+        string? keyword = keywordStart == whenStart && whenStart >= 0
+            ? "@when"
+            : ifStart >= 0 ? "@if" : null;
+        includeWhenValue = keyword == "@if";
+        return keyword is not null &&
+            IsReactiveExpressionOperandSite(
+                statement.Substring(keywordStart + keyword.Length));
+    }
+
+    private static bool IsReactiveExpressionOperandSite(string expression)
+    {
+        string rightTrimmed = expression.TrimEnd();
+        if (rightTrimmed.Length == 0)
+        {
+            return true;
+        }
+
+        if (rightTrimmed.EndsWith("(", StringComparison.Ordinal) ||
+            EndsWithComparisonOperator(rightTrimmed))
+        {
+            return true;
+        }
+
+        int wordStart = rightTrimmed.Length;
+        while (wordStart > 0 && IsIdentifierCharacter(rightTrimmed[wordStart - 1]))
+        {
+            wordStart--;
+        }
+
+        string lastWord = rightTrimmed.Substring(wordStart);
+        bool hasTrailingWhitespace = rightTrimmed.Length < expression.Length;
+        if (hasTrailingWhitespace)
+        {
+            return lastWord is "and" or "or";
+        }
+
+        string beforeWord = rightTrimmed.Substring(0, wordStart).TrimEnd();
+        return beforeWord.Length == 0 ||
+            beforeWord.EndsWith("(", StringComparison.Ordinal) ||
+            EndsWithComparisonOperator(beforeWord) ||
+            EndsWithLogicalOperator(beforeWord);
+    }
+
+    private static bool EndsWithComparisonOperator(string text) =>
+        text.EndsWith("==", StringComparison.Ordinal) ||
+        text.EndsWith("!=", StringComparison.Ordinal) ||
+        text.EndsWith("<=", StringComparison.Ordinal) ||
+        text.EndsWith(">=", StringComparison.Ordinal) ||
+        text.EndsWith("<", StringComparison.Ordinal) ||
+        text.EndsWith(">", StringComparison.Ordinal);
+
+    private static bool EndsWithLogicalOperator(string text)
+    {
+        int end = text.Length;
+        int start = end;
+        while (start > 0 && IsIdentifierCharacter(text[start - 1]))
+        {
+            start--;
+        }
+
+        string word = text.Substring(start, end - start);
+        return word is "and" or "or";
+    }
+
+    private static int FindLastDirectiveKeyword(string text, string keyword)
+    {
+        int start = text.LastIndexOf(keyword, StringComparison.Ordinal);
+        if (start < 0)
+        {
+            return -1;
+        }
+
+        int end = start + keyword.Length;
+        bool validStart = start == 0 || char.IsWhiteSpace(text[start - 1]) ||
+            text[start - 1] is '>' or '{' or '}';
+        bool validEnd = end == text.Length || char.IsWhiteSpace(text[end]);
+        return validStart && validEnd ? start : -1;
     }
 
     private static bool IsInsideDirective(string source, int offset, string keyword)
@@ -1043,6 +1503,12 @@ internal sealed class CernealaCompletionService
         char.IsLetterOrDigit(character) || character == '_';
 
     private sealed record FunctionCall(string Name, int ActiveParameter);
+
+    private sealed record ReferenceSite(TextSpan ReplacementSpan);
+
+    private sealed record ReferenceMemberSite(
+        IReadOnlyList<string> OwnerSegments,
+        TextSpan ReplacementSpan);
 
     private enum CompletionSiteKind
     {

@@ -154,7 +154,9 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
         public string AssemblyName => symbol.ContainingAssembly?.Name ?? string.Empty;
 
-        public string Namespace => symbol.ContainingNamespace?.ToDisplayString() ?? string.Empty;
+        public string Namespace => symbol.ContainingNamespace is { IsGlobalNamespace: false } containingNamespace
+            ? containingNamespace.ToDisplayString()
+            : string.Empty;
 
         public LanguageAccessibility Accessibility => ConvertAccessibility(symbol.DeclaredAccessibility);
 

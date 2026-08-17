@@ -30,6 +30,39 @@ internal static class CernealaLanguageFacts
     private static readonly Lazy<PrismLanguageCatalog> prismCatalog =
         new(PrismLanguageCatalog.LoadDefault);
 
+    private static readonly IReadOnlyDictionary<string, LanguageArgumentFact[]> MotionCallArguments =
+        new Dictionary<string, LanguageArgumentFact[]>(StringComparer.Ordinal)
+        {
+            ["Tween"] =
+            [
+                new("duration", "duration", required: true, ["100ms", "250ms", "1s"]),
+                new("easing", "easing", required: false,
+                    ["Linear", "Standard", "Emphasized", "EaseIn", "EaseOut", "EaseInOut", "Sharp"])
+            ],
+            ["Spring"] =
+            [
+                new("stiffness", "number", required: true),
+                new("damping", "number", required: false),
+                new("mass", "number", required: false)
+            ],
+            ["Repeat"] =
+            [
+                new("spec", "motion spec", required: true),
+                new("count", "positive count or forever", required: true, ["forever"])
+            ],
+            ["PingPong"] =
+            [
+                new("spec", "motion spec", required: true),
+                new("count", "positive count or forever", required: true, ["forever"])
+            ],
+            ["Step"] =
+            [
+                new("count", "positive count", required: true),
+                new("position", "step position", required: false,
+                    ["JumpStart", "JumpEnd", "JumpBoth", "JumpNone"])
+            ]
+        };
+
     public static IReadOnlyList<string> MotionDirectiveKeywords { get; } =
     [
         "@when", "@if", "@on", "@presence", "@layout", "@scroll", "@drag", "@gesture",
@@ -51,6 +84,11 @@ internal static class CernealaLanguageFacts
         new("holdOnComplete", "System.Boolean", required: false, ["true", "false"]),
         new("debugName", "System.String", required: false)
     ];
+
+    public static IReadOnlyList<LanguageArgumentFact> FindMotionCallArguments(string functionName) =>
+        MotionCallArguments.TryGetValue(functionName, out LanguageArgumentFact[]? arguments)
+            ? arguments
+            : Array.Empty<LanguageArgumentFact>();
 
     public static IReadOnlyList<string> GetPrismSymbols(string kind) => prismCatalog.Value.Symbols
         .Where(symbol => string.Equals(symbol.Kind, kind, StringComparison.Ordinal))

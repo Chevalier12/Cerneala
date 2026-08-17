@@ -9,7 +9,7 @@ public sealed class SourceGeneratorDiagnosticBaselineTests
     {
         HarnessDiagnostic[] actual = CorpusCatalog.Load()
             .Where(item => item.Recovery)
-            .SelectMany(item => LanguagePipelineHarness.Analyze(item.Id + ".cui.xml", item.Invalid)
+            .SelectMany(item => LanguagePipelineHarness.Analyze(item.Id + ".crn", item.Invalid)
                 .SourceGeneratorDiagnostics)
             .ToArray();
         string sourcePath = Path.Combine(

@@ -150,6 +150,7 @@ internal sealed partial class CernealaSemanticModel
         string sourceName = sourceSegment.Name.TrimStart('$');
         ILanguageTypeSymbol? currentType;
         LanguageSourceLocation? sourceLocation = null;
+        CernealaSemanticSymbolKind sourceKind = CernealaSemanticSymbolKind.BindingSource;
         bool validateObservability = false;
         bool allowPropertyChain = false;
         bool requiresUiProperty = false;
@@ -198,6 +199,7 @@ internal sealed partial class CernealaSemanticModel
         {
             currentType = resource.Type;
             sourceLocation = resource.Location;
+            sourceKind = CernealaSemanticSymbolKind.ResourceReference;
         }
         else if (templateContexts.ContainsKey(source) && nameScopes
             .Where(pair => !templateContexts.ContainsKey(pair.Key))
@@ -214,7 +216,7 @@ internal sealed partial class CernealaSemanticModel
         }
 
         symbols.Add(new CernealaSemanticSymbol(
-            CernealaSemanticSymbolKind.BindingSource,
+            sourceKind,
             sourceName,
             currentType?.MetadataName ?? "System.Object",
             sourceSegment.Span,
@@ -416,16 +418,17 @@ internal sealed partial class CernealaSemanticModel
 
     private void AddBindingModeSymbol(BindingPathSyntax path, ILanguageTypeSymbol? type)
     {
-        if (path.ModeSpan.Length == 0)
+        if (path.ModeSpan.Length <= 1)
         {
             return;
         }
 
+        TextSpan valueSpan = new(path.ModeSpan.Start + 1, path.ModeSpan.Length - 1);
         symbols.Add(new CernealaSemanticSymbol(
             CernealaSemanticSymbolKind.BindingMode,
             path.Mode.ToString(),
             "Cerneala.UI.Data.BindingMode",
-            path.ModeSpan,
+            valueSpan,
             type,
             value: path.Mode));
     }
@@ -508,6 +511,16 @@ internal sealed partial class CernealaSemanticModel
 
         (string text, int offset) = BuildDirectTextBuffer(aspect.Element);
         EmbeddedParseResult<DirectiveDocumentSyntax> parsed = DirectiveSyntaxParser.Parse(text, offset);
+        foreach (EmbeddedDiagnostic diagnostic in parsed.Diagnostics.Where(diagnostic =>
+            ShouldBindAspectAssignment(aspect.Element, diagnostic.Span.Start)))
+        {
+            AddDiagnostic(
+                diagnostic.Id,
+                diagnostic.Span,
+                Path.GetFileName(document.Path),
+                diagnostic.Message);
+        }
+
         foreach (DirectiveSyntax directive in parsed.Syntax.Directives.Where(directive =>
             directive.Keyword is "@when" or "@if" or "@default" or "@template"))
         {
@@ -523,7 +536,13 @@ internal sealed partial class CernealaSemanticModel
                 definitionLocation: aspect.Location));
             if (kind == CernealaSemanticSymbolKind.AspectCondition)
             {
-                BindConditionPaths(aspect.Element, parsed.Syntax.Text, parsed.Syntax.AbsoluteOffset, directive, dataType);
+                BindConditionPaths(
+                    aspect.Element,
+                    parsed.Syntax.Text,
+                    parsed.Syntax.AbsoluteOffset,
+                    directive,
+                    aspect.TargetType,
+                    dataType);
             }
         }
 
@@ -617,11 +636,35 @@ internal sealed partial class CernealaSemanticModel
         string text,
         int absoluteOffset,
         DirectiveSyntax directive,
+        ILanguageTypeSymbol targetType,
         ILanguageTypeSymbol? dataType)
     {
         int relativeStart = directive.Span.End - absoluteOffset;
         int brace = text.IndexOf('{', Math.Max(0, relativeStart));
         int end = brace < 0 ? text.Length : brace;
+        foreach ((string name, TextSpan span) in ExtractConditionPropertyCandidates(
+            text,
+            relativeStart,
+            end,
+            absoluteOffset))
+        {
+            ILanguageMemberSymbol? member = FindProperty(targetType, name);
+            if (member is null || !member.CanRead)
+            {
+                continue;
+            }
+
+            symbols.Add(new CernealaSemanticSymbol(
+                CernealaSemanticSymbolKind.AspectConditionProperty,
+                name,
+                member.ValueTypeMetadataName,
+                span,
+                member.ValueType,
+                member,
+                definitionLocation: member.Locations.FirstOrDefault(),
+                isWritable: member.CanWrite));
+        }
+
         foreach ((string expression, int offset) in ExtractBindingExpressions(text, relativeStart, end, absoluteOffset))
         {
             EmbeddedParseResult<BindingValueSyntax> parsed = BindingSyntaxParser.Parse(expression, offset);
@@ -633,6 +676,67 @@ internal sealed partial class CernealaSemanticModel
             {
                 AddBindingDiagnostic(expression, diagnostic.Span, diagnostic.Message);
             }
+        }
+    }
+
+    private static IEnumerable<(string Name, TextSpan Span)> ExtractConditionPropertyCandidates(
+        string text,
+        int start,
+        int end,
+        int absoluteOffset)
+    {
+        int position = Math.Max(0, start);
+        while (position < end && position < text.Length)
+        {
+            char character = text[position];
+            if (char.IsWhiteSpace(character) || character is '(' or ')' or '<' or '>' or '=' or '!')
+            {
+                position++;
+                continue;
+            }
+
+            if (character == '"')
+            {
+                position++;
+                bool escaped = false;
+                while (position < end && position < text.Length)
+                {
+                    char quoted = text[position++];
+                    if (escaped)
+                    {
+                        escaped = false;
+                    }
+                    else if (quoted == '\\')
+                    {
+                        escaped = true;
+                    }
+                    else if (quoted == '"')
+                    {
+                        break;
+                    }
+                }
+
+                continue;
+            }
+
+            int candidateStart = position;
+            while (position < end && position < text.Length &&
+                !char.IsWhiteSpace(text[position]) &&
+                text[position] is not '(' and not ')' and not '<' and not '>' and not '=' and not '!')
+            {
+                position++;
+            }
+
+            string candidate = text.Substring(candidateStart, position - candidateStart);
+            if (candidate.Length == 0 || candidate[0] == '$' || candidate is "and" or "or" or "value" ||
+                !candidate.All(current => char.IsLetterOrDigit(current) || current == '_'))
+            {
+                continue;
+            }
+
+            yield return (
+                candidate,
+                new TextSpan(absoluteOffset + candidateStart, candidate.Length));
         }
     }
 

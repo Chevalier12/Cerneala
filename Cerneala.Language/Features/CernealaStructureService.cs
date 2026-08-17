@@ -1,4 +1,5 @@
 using Cerneala.Language.Semantics;
+using Cerneala.Language.Semantics.Symbols;
 using Cerneala.Language.Syntax;
 using Cerneala.Language.Syntax.Embedded;
 using Cerneala.Language.Text;
@@ -13,31 +14,55 @@ internal sealed class CernealaStructureService
         CancellationToken cancellationToken = default)
     {
         List<TokenCandidate> candidates = new();
+        NamedElementIndex namedElements = BuildNamedElementIndex(document.Syntax);
         foreach (ElementSyntax element in document.Syntax.DescendantElements())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            CernealaSemanticTokenKind elementKind = element.Kind == SyntaxKind.PropertyElement
-                ? CernealaSemanticTokenKind.Property
-                : CernealaSemanticTokenKind.ElementType;
-            AddCandidate(candidates, element.NameToken.Span, elementKind, 10);
-            if (!element.CloseNameToken.IsMissing)
+            if (element.Kind == SyntaxKind.PropertyElement)
             {
-                AddCandidate(candidates, element.CloseNameToken.Span, elementKind, 10);
+                AddCandidate(candidates, element.NameToken.Span, CernealaSemanticTokenKind.Property, 10);
+                if (!element.CloseNameToken.IsMissing)
+                {
+                    AddCandidate(candidates, element.CloseNameToken.Span, CernealaSemanticTokenKind.Property, 10);
+                }
             }
-
-            foreach (AttributeSyntax attribute in element.Attributes.Where(attribute =>
-                attribute.NameToken.Text == "xmlns" ||
-                attribute.NameToken.Text.StartsWith("xmlns:", StringComparison.Ordinal)))
+            else
             {
-                AddCandidate(candidates, attribute.NameToken.Span, CernealaSemanticTokenKind.Namespace, 80);
+                AddCandidate(candidates, element.NameToken.Span, CernealaSemanticTokenKind.Keyword, 10);
+                if (!element.CloseNameToken.IsMissing)
+                {
+                    AddCandidate(candidates, element.CloseNameToken.Span, CernealaSemanticTokenKind.Keyword, 10);
+                }
             }
 
             foreach (AttributeSyntax attribute in element.Attributes)
             {
+                bool isNamespace = attribute.NameToken.Text == "xmlns" ||
+                    attribute.NameToken.Text.StartsWith("xmlns:", StringComparison.Ordinal);
+                AddCandidate(
+                    candidates,
+                    attribute.NameToken.Span,
+                    isNamespace ? CernealaSemanticTokenKind.Namespace : CernealaSemanticTokenKind.Property,
+                    isNamespace ? 80 : 20);
+
                 TextSpan content = AttributeContentSpan(attribute);
                 if (content.Length == 0)
                 {
                     continue;
+                }
+
+                if (attribute.NameToken.Text == "Name")
+                {
+                    AddCandidate(
+                        candidates,
+                        content,
+                        CernealaSemanticTokenKind.Variable,
+                        75,
+                        CernealaSemanticTokenModifiers.Declaration);
+                }
+                else if (attribute.NameToken.Text is "TargetType" or "DataType")
+                {
+                    AddCandidate(candidates, content, CernealaSemanticTokenKind.Keyword, 75);
                 }
 
                 EmbeddedParseResult<BindingValueSyntax> binding = BindingSyntaxParser.Parse(
@@ -48,17 +73,7 @@ internal sealed class CernealaStructureService
                     : [binding.Syntax.Binding];
                 foreach (BindingPathSyntax path in paths)
                 {
-                    foreach ((BindingPathSegmentSyntax segment, int index) in path.Segments.Select(
-                        (segment, index) => (segment, index)))
-                    {
-                        AddCandidate(
-                            candidates,
-                            segment.Span,
-                            index == 0
-                                ? CernealaSemanticTokenKind.BindingSource
-                                : CernealaSemanticTokenKind.BindingMember,
-                            90);
-                    }
+                    AddBindingCandidates(candidates, document, path, namedElements);
                 }
             }
         }
@@ -71,8 +86,33 @@ internal sealed class CernealaStructureService
                 text.Token.Span.Start);
             foreach (DirectiveSyntax directive in parsed.Syntax.Directives)
             {
-                AddCandidate(candidates, directive.Span, CernealaSemanticTokenKind.Directive, 90);
+                AddCandidate(candidates, directive.Span, CernealaSemanticTokenKind.Keyword, 90);
+                if (directive.Keyword is "@when" or "@if")
+                {
+                    AddConditionCandidates(candidates, parsed.Syntax, directive);
+                }
             }
+
+            foreach (AssignmentSyntax assignment in parsed.Syntax.Assignments)
+            {
+                if (assignment.Name.StartsWith("$", StringComparison.Ordinal))
+                {
+                    AddBindings(candidates, document, assignment.Name, assignment.NameSpan.Start, namedElements);
+                }
+                else
+                {
+                    AddCandidate(candidates, assignment.NameSpan, CernealaSemanticTokenKind.Property, 85);
+                }
+
+                AddBindings(
+                    candidates,
+                    document,
+                    document.Text.Substring(assignment.ValueSpan),
+                    assignment.ValueSpan.Start,
+                    namedElements);
+            }
+
+            AddBindings(candidates, document, text.Token.Text, text.Token.Span.Start, namedElements);
         }
 
         if (model is not null)
@@ -84,10 +124,10 @@ internal sealed class CernealaStructureService
                 {
                     AddCandidate(
                         candidates,
-                        symbol.Span,
+                        SemanticTokenSpan(document, symbol),
                         kind,
                         priority,
-                        IsDeclaration(symbol.Kind)
+                        IsDeclaration(symbol)
                             ? CernealaSemanticTokenModifiers.Declaration
                             : CernealaSemanticTokenModifiers.None);
                 }
@@ -136,7 +176,7 @@ internal sealed class CernealaStructureService
         foreach (CernealaSemanticModel model in models)
         {
             foreach (IGrouping<TextSpan, CernealaSemanticSymbol> group in model.Symbols
-                .Where(symbol => IsWorkspaceDeclaration(symbol.Kind))
+                .Where(IsWorkspaceDeclaration)
                 .GroupBy(symbol => symbol.Span))
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -421,6 +461,180 @@ internal sealed class CernealaStructureService
         CernealaSemanticTokenModifiers modifiers = CernealaSemanticTokenModifiers.None) =>
         candidates.Add(new TokenCandidate(span, kind, priority, modifiers));
 
+    private static void AddBindings(
+        ICollection<TokenCandidate> candidates,
+        CernealaDocument document,
+        string text,
+        int absoluteOffset,
+        NamedElementIndex namedElements)
+    {
+        int position = 0;
+        while (position < text.Length)
+        {
+            if (text[position] != '$' ||
+                position + 1 >= text.Length ||
+                !IsIdentifierStart(text[position + 1]))
+            {
+                position++;
+                continue;
+            }
+
+            int start = position++;
+            while (position < text.Length &&
+                (IsIdentifierPart(text[position]) || text[position] is '.' or ':' or '$'))
+            {
+                position++;
+            }
+
+            EmbeddedParseResult<BindingValueSyntax> parsed = BindingSyntaxParser.Parse(
+                text.Substring(start, position - start),
+                absoluteOffset + start);
+            if (parsed.Syntax.Binding is BindingPathSyntax binding)
+            {
+                AddBindingCandidates(candidates, document, binding, namedElements);
+            }
+        }
+    }
+
+    private static void AddBindingCandidates(
+        ICollection<TokenCandidate> candidates,
+        CernealaDocument document,
+        BindingPathSyntax path,
+        NamedElementIndex namedElements)
+    {
+        foreach ((BindingPathSegmentSyntax segment, int index) in path.Segments.Select(
+            (segment, index) => (segment, index)))
+        {
+            TextSpan span = segment.Span;
+            if (index == 0 && span.Start > 0 && document.Text[span.Start - 1] == '$')
+            {
+                span = new TextSpan(span.Start - 1, span.Length + 1);
+            }
+
+            string name = segment.Name.TrimStart('$');
+            CernealaSemanticTokenKind kind = index == 0
+                ? namedElements.Resources.Contains(name)
+                    ? CernealaSemanticTokenKind.Label
+                    : CernealaSemanticTokenKind.Variable
+                : CernealaSemanticTokenKind.Property;
+            AddCandidate(candidates, span, kind, 90);
+        }
+
+        if (path.ModeSpan.Length > 1)
+        {
+            AddCandidate(
+                candidates,
+                new TextSpan(path.ModeSpan.Start + 1, path.ModeSpan.Length - 1),
+                CernealaSemanticTokenKind.EnumMember,
+                90);
+        }
+    }
+
+    private static void AddConditionCandidates(
+        ICollection<TokenCandidate> candidates,
+        DirectiveDocumentSyntax syntax,
+        DirectiveSyntax directive)
+    {
+        int start = directive.Span.End - syntax.AbsoluteOffset;
+        int end = syntax.Text.IndexOf('{', Math.Max(0, start));
+        if (end < 0)
+        {
+            end = syntax.Text.Length;
+        }
+
+        int position = Math.Max(0, start);
+        while (position < end)
+        {
+            if (syntax.Text[position] is '\'' or '"')
+            {
+                char quote = syntax.Text[position++];
+                bool escaped = false;
+                while (position < end)
+                {
+                    char current = syntax.Text[position++];
+                    if (escaped)
+                    {
+                        escaped = false;
+                    }
+                    else if (current == '\\')
+                    {
+                        escaped = true;
+                    }
+                    else if (current == quote)
+                    {
+                        break;
+                    }
+                }
+
+                continue;
+            }
+
+            if (!IsIdentifierStart(syntax.Text[position]))
+            {
+                position++;
+                continue;
+            }
+
+            int candidateStart = position++;
+            while (position < end && IsIdentifierPart(syntax.Text[position]))
+            {
+                position++;
+            }
+
+            string candidate = syntax.Text.Substring(candidateStart, position - candidateStart);
+            if (candidateStart > 0 && syntax.Text[candidateStart - 1] is '$' or '.')
+            {
+                continue;
+            }
+
+            if (candidate is "and" or "or" or "value" or "true" or "false" or "null" or "current")
+            {
+                continue;
+            }
+
+            AddCandidate(
+                candidates,
+                new TextSpan(syntax.AbsoluteOffset + candidateStart, candidate.Length),
+                CernealaSemanticTokenKind.ConditionProperty,
+                95);
+        }
+    }
+
+    private static NamedElementIndex BuildNamedElementIndex(DocumentSyntax document)
+    {
+        HashSet<string> resources = new(StringComparer.Ordinal);
+        HashSet<string> controls = new(StringComparer.Ordinal);
+        foreach (ElementSyntax element in document.Children.OfType<ElementSyntax>())
+        {
+            CollectNamedElements(element, parentIsResources: false, resources, controls);
+        }
+
+        return new NamedElementIndex(resources, controls);
+    }
+
+    private static void CollectNamedElements(
+        ElementSyntax element,
+        bool parentIsResources,
+        ISet<string> resources,
+        ISet<string> controls)
+    {
+        string? name = AttributeValue(element, "Name");
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            (parentIsResources ? resources : controls).Add(name!);
+        }
+
+        bool isResources = element.Kind == SyntaxKind.PropertyElement && LocalName(element.Name) == "Resources";
+        foreach (ElementSyntax child in element.Children.OfType<ElementSyntax>())
+        {
+            CollectNamedElements(child, isResources, resources, controls);
+        }
+    }
+
+    private static bool IsIdentifierStart(char character) => char.IsLetter(character) || character == '_';
+
+    private static bool IsIdentifierPart(char character) => char.IsLetterOrDigit(character) || character == '_';
+
     private static bool TryMapToken(
         CernealaSemanticSymbolKind symbol,
         out CernealaSemanticTokenKind kind,
@@ -431,61 +645,110 @@ internal sealed class CernealaStructureService
         {
             case CernealaSemanticSymbolKind.RootType:
             case CernealaSemanticSymbolKind.Element:
+                kind = default;
+                return false;
             case CernealaSemanticSymbolKind.TypeReference:
-                kind = CernealaSemanticTokenKind.ElementType;
+                kind = CernealaSemanticTokenKind.Keyword;
                 return true;
             case CernealaSemanticSymbolKind.PropertyElement:
             case CernealaSemanticSymbolKind.Property:
                 kind = CernealaSemanticTokenKind.Property;
                 return true;
             case CernealaSemanticSymbolKind.AttachedProperty:
-                kind = CernealaSemanticTokenKind.AttachedProperty;
+                kind = CernealaSemanticTokenKind.Property;
                 return true;
             case CernealaSemanticSymbolKind.Event:
                 kind = CernealaSemanticTokenKind.Event;
                 return true;
             case CernealaSemanticSymbolKind.BindingSource:
-                kind = CernealaSemanticTokenKind.BindingSource;
+                kind = CernealaSemanticTokenKind.Variable;
                 return true;
             case CernealaSemanticSymbolKind.BindingSegment:
+                kind = CernealaSemanticTokenKind.Property;
+                return true;
             case CernealaSemanticSymbolKind.BindingMode:
-                kind = CernealaSemanticTokenKind.BindingMember;
+                kind = CernealaSemanticTokenKind.EnumMember;
+                return true;
+            case CernealaSemanticSymbolKind.ResourceReference:
+                kind = CernealaSemanticTokenKind.Label;
+                priority = 120;
                 return true;
             case CernealaSemanticSymbolKind.MotionDirective:
+                kind = CernealaSemanticTokenKind.Keyword;
+                priority = 130;
+                return true;
             case CernealaSemanticSymbolKind.MotionTarget:
+                kind = CernealaSemanticTokenKind.Variable;
+                priority = 130;
+                return true;
             case CernealaSemanticSymbolKind.MotionEvent:
+                kind = CernealaSemanticTokenKind.Event;
+                priority = 130;
+                return true;
             case CernealaSemanticSymbolKind.MotionProperty:
+                kind = CernealaSemanticTokenKind.Property;
+                priority = 130;
+                return true;
             case CernealaSemanticSymbolKind.MotionSpec:
             case CernealaSemanticSymbolKind.MotionComposition:
+                kind = CernealaSemanticTokenKind.Function;
+                priority = 130;
+                return true;
             case CernealaSemanticSymbolKind.MotionLifecycle:
+                kind = CernealaSemanticTokenKind.Keyword;
+                priority = 130;
+                return true;
             case CernealaSemanticSymbolKind.MotionParameter:
+                kind = CernealaSemanticTokenKind.Parameter;
+                priority = 130;
+                return true;
             case CernealaSemanticSymbolKind.MotionHandle:
-                kind = CernealaSemanticTokenKind.Motion;
+                kind = CernealaSemanticTokenKind.Label;
                 priority = 130;
                 return true;
             case CernealaSemanticSymbolKind.PrismDirective:
+                kind = CernealaSemanticTokenKind.Keyword;
+                priority = 140;
+                return true;
             case CernealaSemanticSymbolKind.PrismComposition:
             case CernealaSemanticSymbolKind.PrismNode:
+                kind = CernealaSemanticTokenKind.Variable;
+                priority = 140;
+                return true;
             case CernealaSemanticSymbolKind.PrismOperation:
+                kind = CernealaSemanticTokenKind.Function;
+                priority = 140;
+                return true;
             case CernealaSemanticSymbolKind.PrismProperty:
+                kind = CernealaSemanticTokenKind.Property;
+                priority = 140;
+                return true;
             case CernealaSemanticSymbolKind.PrismParameter:
+                kind = CernealaSemanticTokenKind.Parameter;
+                priority = 140;
+                return true;
             case CernealaSemanticSymbolKind.PrismValue:
-                kind = CernealaSemanticTokenKind.Prism;
+                kind = CernealaSemanticTokenKind.EnumMember;
                 priority = 140;
                 return true;
             case CernealaSemanticSymbolKind.AspectCondition:
-                kind = CernealaSemanticTokenKind.Directive;
+                kind = CernealaSemanticTokenKind.Keyword;
+                priority = 120;
+                return true;
+            case CernealaSemanticSymbolKind.AspectConditionProperty:
+                kind = CernealaSemanticTokenKind.ConditionProperty;
+                priority = 120;
+                return true;
+            case CernealaSemanticSymbolKind.AspectAssignment:
+                kind = CernealaSemanticTokenKind.Property;
                 priority = 120;
                 return true;
             case CernealaSemanticSymbolKind.Name:
             case CernealaSemanticSymbolKind.Resource:
-            case CernealaSemanticSymbolKind.ResourceReference:
             case CernealaSemanticSymbolKind.ContentTemplate:
             case CernealaSemanticSymbolKind.TemplatePart:
             case CernealaSemanticSymbolKind.Aspect:
-            case CernealaSemanticSymbolKind.AspectAssignment:
-            case CernealaSemanticSymbolKind.AspectApplication:
-                kind = CernealaSemanticTokenKind.Resource;
+                kind = CernealaSemanticTokenKind.Variable;
                 priority = 120;
                 return true;
             default:
@@ -493,6 +756,15 @@ internal sealed class CernealaStructureService
                 return false;
         }
     }
+
+    private static TextSpan SemanticTokenSpan(
+        CernealaDocument document,
+        CernealaSemanticSymbol symbol) =>
+        symbol.Kind is CernealaSemanticSymbolKind.ResourceReference or CernealaSemanticSymbolKind.BindingSource &&
+        symbol.Span.Start > 0 &&
+        document.Text[symbol.Span.Start - 1] == '$'
+            ? new TextSpan(symbol.Span.Start - 1, symbol.Span.Length + 1)
+            : symbol.Span;
 
     private static bool IsDeclaration(CernealaSemanticSymbolKind kind) => kind is
         CernealaSemanticSymbolKind.RootType or CernealaSemanticSymbolKind.Name or
@@ -503,7 +775,13 @@ internal sealed class CernealaStructureService
         CernealaSemanticSymbolKind.PrismComposition or CernealaSemanticSymbolKind.PrismNode or
         CernealaSemanticSymbolKind.PrismParameter;
 
-    private static bool IsWorkspaceDeclaration(CernealaSemanticSymbolKind kind) => IsDeclaration(kind);
+    private static bool IsDeclaration(CernealaSemanticSymbol symbol) =>
+        IsDeclaration(symbol.Kind) &&
+        (symbol.Kind != CernealaSemanticSymbolKind.MotionHandle ||
+            symbol.DefinitionLocation is LanguageSourceLocation definition &&
+            definition.Span.Equals(symbol.Span));
+
+    private static bool IsWorkspaceDeclaration(CernealaSemanticSymbol symbol) => IsDeclaration(symbol);
 
     private static bool IsOutlineDeclaration(CernealaSemanticSymbolKind kind) => kind is
         CernealaSemanticSymbolKind.Name or CernealaSemanticSymbolKind.Resource or
@@ -606,4 +884,8 @@ internal sealed class CernealaStructureService
         CernealaSemanticTokenKind Kind,
         int Priority,
         CernealaSemanticTokenModifiers Modifiers);
+
+    private sealed record NamedElementIndex(
+        HashSet<string> Resources,
+        HashSet<string> Controls);
 }

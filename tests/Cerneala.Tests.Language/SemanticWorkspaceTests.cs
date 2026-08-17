@@ -16,7 +16,7 @@ public sealed class SemanticWorkspaceTests
     {
         CSharpCompilation project = CreateCompilation(
         [
-            new SourceFile("Views/MainView.cui.xml.cs", """
+            new SourceFile("Views/MainView.crn.cs", """
                 using System;
                 using Cerneala.UI.Controls;
                 namespace Demo.Views;
@@ -34,7 +34,7 @@ public sealed class SemanticWorkspaceTests
         ]);
         RoslynCompilationSymbols adapter = new(project, version: 4);
         CernealaDocument document = Document(
-            "Views/MainView.cui.xml",
+            "Views/MainView.crn",
             "<UserControl Count=\"4\" Ready=\"OnReady\"><TextBlock Text=\"Hello\" /></UserControl>");
         using CernealaCompilation compilation = new(adapter, [document], AnalysisMode.Build);
 
@@ -46,7 +46,7 @@ public sealed class SemanticWorkspaceTests
         Assert.Equal("Demo.Views.MainView", root.ValueType);
         Assert.Equal("Content", root.ContentPropertyName);
         Assert.Contains("Paired view documentation", root.TypeSymbol!.DocumentationXml, StringComparison.Ordinal);
-        Assert.Contains(root.TypeSymbol.Locations, location => location.Path.EndsWith("MainView.cui.xml.cs", StringComparison.Ordinal));
+        Assert.Contains(root.TypeSymbol.Locations, location => location.Path.EndsWith("MainView.crn.cs", StringComparison.Ordinal));
         Assert.Equal(4, count.Value);
         Assert.Equal(CernealaSemanticSymbolKind.Event, ready.Kind);
         Assert.Empty(model.Diagnostics);
@@ -59,7 +59,7 @@ public sealed class SemanticWorkspaceTests
     public void BuiltInRootKindsResolveWithoutCompanionFiles(string rootName, string expectedType)
     {
         CSharpCompilation project = CreateCompilation([]);
-        CernealaDocument document = Document(rootName + ".cui.xml", "<" + rootName + " />");
+        CernealaDocument document = Document(rootName + ".crn", "<" + rootName + " />");
         using CernealaCompilation compilation = new(new RoslynCompilationSymbols(project), [document]);
 
         CernealaSemanticModel model = compilation.GetSemanticModel(document.Path);
@@ -88,7 +88,7 @@ public sealed class SemanticWorkspaceTests
               <w:FancyButton Count="7" Grid.Row="2" IsEnabled="false" />
             </StackPanel>
             """;
-        CernealaDocument document = Document("Alias.cui.xml", markup);
+        CernealaDocument document = Document("Alias.crn", markup);
         using CernealaCompilation compilation = new(new RoslynCompilationSymbols(project), [document], AnalysisMode.Build);
 
         CernealaSemanticModel model = compilation.GetSemanticModel(document.Path);
@@ -116,7 +116,7 @@ public sealed class SemanticWorkspaceTests
         MetadataReference projectReference = MetadataReference.CreateFromImage(image.ToArray());
         CSharpCompilation project = CreateCompilation([], additionalReferences: [projectReference]);
         CernealaDocument document = Document(
-            "Reference.cui.xml",
+            "Reference.crn",
             "<ext:ReferencedButton xmlns:ext=\"clr-namespace:External.Widgets;assembly=ExternalWidgets\" />");
         using CernealaCompilation compilation = new(new RoslynCompilationSymbols(project), [document]);
 
@@ -135,8 +135,8 @@ public sealed class SemanticWorkspaceTests
             namespace One { public sealed class Twin : Button { } }
             namespace Two { public sealed class Twin : Button { } }
             """)]);
-        CernealaDocument duplicate = Document("Duplicate.cui.xml", "<Twin />");
-        CernealaDocument literal = Document("Literal.cui.xml", "<Button IsEnabled=\"perhaps\" />");
+        CernealaDocument duplicate = Document("Duplicate.crn", "<Twin />");
+        CernealaDocument literal = Document("Literal.crn", "<Button IsEnabled=\"perhaps\" />");
         using CernealaCompilation compilation = new(new RoslynCompilationSymbols(project), [duplicate, literal], AnalysisMode.Build);
 
         Assert.Equal("CERNEALAUI002", Assert.Single(compilation.GetSemanticModel(duplicate.Path).Diagnostics).Id);
@@ -155,7 +155,7 @@ public sealed class SemanticWorkspaceTests
             """)]);
         Assert.Contains(project.GetDiagnostics(), diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         CernealaDocument document = Document(
-            "Errors.cui.xml",
+            "Errors.crn",
             "<g:GoodButton xmlns:g=\"clr-namespace:Demo\" Level=\"3\" />");
         using CernealaCompilation compilation = new(new RoslynCompilationSymbols(project), [document]);
 
@@ -170,7 +170,7 @@ public sealed class SemanticWorkspaceTests
     {
         CSharpCompilation project = CreateCompilation([]);
         CernealaDocument document = Document(
-            "Stable.cui.xml",
+            "Stable.crn",
             "<Button IsEnabled=\"true\" Content=\"Save\" />");
         using CernealaCompilation first = new(new RoslynCompilationSymbols(project, 1), [document], AnalysisMode.Build);
         using CernealaCompilation second = new(new RoslynCompilationSymbols(project, 1), [document], AnalysisMode.Build);
@@ -188,8 +188,8 @@ public sealed class SemanticWorkspaceTests
     public void VersionedCachesRetainOnlyUnaffectedDocuments()
     {
         CSharpCompilation project = CreateCompilation([]);
-        CernealaDocument firstDocument = Document("First.cui.xml", "<Button />");
-        CernealaDocument secondDocument = Document("Second.cui.xml", "<TextBlock />");
+        CernealaDocument firstDocument = Document("First.crn", "<Button />");
+        CernealaDocument secondDocument = Document("Second.crn", "<TextBlock />");
         CernealaCompilation original = new(new RoslynCompilationSymbols(project, version: 1), [firstDocument, secondDocument]);
         CernealaSemanticModel firstModel = original.GetSemanticModel(firstDocument.Path);
         CernealaSemanticModel secondModel = original.GetSemanticModel(secondDocument.Path);
@@ -210,7 +210,7 @@ public sealed class SemanticWorkspaceTests
     public void LifecycleAndCancellationAreExplicit()
     {
         CSharpCompilation project = CreateCompilation([]);
-        CernealaDocument document = Document("Cancel.cui.xml", "<Button />");
+        CernealaDocument document = Document("Cancel.crn", "<Button />");
         CernealaCompilation compilation = new(new RoslynCompilationSymbols(project), [document]);
         using CancellationTokenSource cancellation = new();
         cancellation.Cancel();

@@ -84,13 +84,34 @@ public sealed class CompletionTests
             "<Window xmlns:test=\"clr-namespace:Test;assembly=CompletionCorpus\" DataType=\"test:|caret|\" />");
         using CompletionFixture targetType = CompletionFixture.Create(
             "<Window><Window.Resources><Aspect TargetType=\"|caret|\" /></Window.Resources></Window>");
+        using CompletionFixture importedTargetType = CompletionFixture.Create(
+            "<Window xmlns:custom=\"clr-namespace:Custom;assembly=CompletionCorpus\"><Window.Resources><Aspect TargetType=\"|caret|\" /></Window.Resources></Window>");
         using CompletionFixture xmlns = CompletionFixture.Create(
             "<Window xmlns:custom=\"|caret|\" />");
 
         Assert.Contains(dataType.Complete(), item => item.Label == "test:ViewModel");
         Assert.Contains(targetType.Complete(), item => item.Label == "Button");
+        Assert.DoesNotContain(targetType.Complete(), item => item.Label == "FancyControl");
+        Assert.Contains(importedTargetType.Complete(), item => item.Label == "custom:FancyControl");
         Assert.DoesNotContain(targetType.Complete(), item => item.Detail == "System.String");
         Assert.Contains(xmlns.Complete(), item => item.InsertText.Contains("clr-namespace:Custom", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NamespaceCompletionExcludesGlobalNamespaceAndHonorsTypedPrefix()
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window xmlns:views=\"clr-namespace:Cerneala.|caret|\" />");
+
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+
+        Assert.Contains(items, item => item.Label == "Cerneala.UI.Controls");
+        Assert.All(items, item => Assert.True(
+            item.Label.StartsWith("Cerneala.", StringComparison.Ordinal),
+            $"Namespace completion ignored the typed prefix: {item.Label}"));
+        Assert.DoesNotContain(items, item =>
+            item.Label == "<global namespace>" ||
+            item.InsertText.Contains("<global namespace>", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -125,6 +146,78 @@ public sealed class CompletionTests
         Assert.Contains(aspect.Complete(), item => item.Label == "$Primary");
         Assert.Contains(motion.Complete(), item => item.Label == "$Quick");
         Assert.Contains(prism.Complete(), item => item.Kind == CernealaCompletionItemKind.Function);
+    }
+
+    [Fact]
+    public void DollarTriggerCompletesReferencesInEveryValidDirectiveContext()
+    {
+        static string Markup(string body) =>
+            "<Window DataType=\"Test.ViewModel\"><Window.Resources>" +
+            "<Tween Name=\"Quick\" Duration=\"100ms\" />" +
+            "<MotionClip Name=\"Pulse\" TargetType=\"Button\" />" +
+            "<Aspect Name=\"Animated\" TargetType=\"Button\">" + body +
+            "</Aspect></Window.Resources><Button Name=\"Action\" /></Window>";
+
+        using CompletionFixture attribute = CompletionFixture.Create(
+            Markup(string.Empty).Replace("<Button Name=\"Action\" />", "<Button Name=\"Action\" Tag=\"$|caret|\" />", StringComparison.Ordinal));
+        using CompletionFixture condition = CompletionFixture.Create(
+            Markup("@when $|caret| { Opacity = 1; }"));
+        using CompletionFixture target = CompletionFixture.Create(
+            Markup("@animate { @from { $|caret| } }"));
+        using CompletionFixture run = CompletionFixture.Create(
+            Markup("@on Loaded { @run $|caret|; }"));
+        using CompletionFixture spec = CompletionFixture.Create(
+            Markup("@on Loaded { @animate with $|caret| { @to { Opacity = 1; } } }"));
+
+        Assert.Contains(attribute.Complete(), item => item.Label == "$DataContext");
+        Assert.Contains(attribute.Complete(), item => item.Label == "$Action");
+        Assert.Contains(condition.Complete(), item => item.Label == "$DataContext");
+        Assert.Contains(condition.Complete(), item => item.Label == "$self");
+        Assert.Contains(condition.Complete(), item => item.Label == "$Action");
+
+        IReadOnlyList<CernealaCompletionItem> targetItems = target.Complete();
+        Assert.Contains(targetItems, item => item.Label == "$self");
+        Assert.Contains(targetItems, item => item.Label == "$Action");
+        Assert.Contains(targetItems, item => item.Label == "$DataContext");
+        Assert.Contains(targetItems, item => item.Label == "$Quick");
+        Assert.Contains(targetItems, item => item.Label == "$Pulse");
+
+        IReadOnlyList<CernealaCompletionItem> runItems = run.Complete();
+        Assert.Contains(runItems, item => item.Label == "$Pulse");
+        Assert.Contains(runItems, item => item.Label == "$DataContext");
+        Assert.Contains(runItems, item => item.Label == "$Quick");
+        Assert.Contains(runItems, item => item.Label == "$Action");
+
+        IReadOnlyList<CernealaCompletionItem> specItems = spec.Complete();
+        CernealaCompletionItem quick = Assert.Single(specItems.Where(item => item.Label == "$Quick"));
+        Assert.Contains(specItems, item => item.Label == "$DataContext");
+        Assert.Contains(specItems, item => item.Label == "$Pulse");
+        Assert.Contains(specItems, item => item.Label == "$Action");
+        string applied = spec.Text.Substring(0, quick.ReplacementSpan.Start) +
+            quick.InsertText +
+            spec.Text.Substring(quick.ReplacementSpan.End);
+        Assert.Contains("with $Quick", applied, StringComparison.Ordinal);
+        Assert.DoesNotContain("with $$Quick", applied, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NamedReferenceMemberCompletionUsesTheReferencedElementType()
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" +
+            "@animate { @from { $Action.|caret| } }</Aspect></Window.Resources>" +
+            "<Button Name=\"Action\" /></Window>");
+
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+        CernealaCompletionItem opacity = Assert.Single(items.Where(item => item.Label == "Opacity"));
+
+        Assert.Equal(CernealaCompletionItemKind.Property, opacity.Kind);
+        Assert.Contains(items, item => item.Label == "Click" && item.Kind == CernealaCompletionItemKind.Event);
+        string applied = fixture.Text.Substring(0, opacity.ReplacementSpan.Start) +
+            opacity.InsertText +
+            fixture.Text.Substring(opacity.ReplacementSpan.End);
+        Assert.Contains("$Action.Opacity", applied, StringComparison.Ordinal);
+        Assert.DoesNotContain("$Action..Opacity", applied, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -172,7 +265,7 @@ public sealed class CompletionTests
             "<Window><Window.Resources><Aspect TargetType=\"Button\">@animate { @to { Op|caret| } }</Aspect></Window.Resources></Window>");
         CernealaCompletionService service = new();
         CernealaDocument signatureDocument = new(
-            "Signature.cui.xml",
+            "Signature.crn",
             LanguageSourceText.From("<Window>Tween(100ms, )</Window>"));
         int signatureOffset = signatureDocument.Text.ToString().IndexOf(")", StringComparison.Ordinal);
 
@@ -185,6 +278,181 @@ public sealed class CompletionTests
             service.GetSignatureHelp(signatureDocument, signatureOffset));
         Assert.Equal(1, help.ActiveParameter);
         Assert.Contains("duration", Assert.Single(help.Signatures).Label, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TargetTypePropertiesCompleteInEveryWritableDirectiveBody()
+    {
+        static CompletionFixture Aspect(string body) => CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" + body +
+            "</Aspect></Window.Resources></Window>");
+        static CompletionFixture Motion(string body) => CompletionFixture.Create(
+            "<Window><Window.Resources><MotionClip Name=\"Pulse\" TargetType=\"Button\">" + body +
+            "</MotionClip></Window.Resources></Window>");
+
+        using CompletionFixture @default = Aspect("@default { Op|caret| }");
+        using CompletionFixture when = Aspect("@when IsMouseOver { Op|caret| }");
+        using CompletionFixture conditional = Aspect(
+            "@when IsKeyboardFocusWithin { @if value == true { Op|caret| } }");
+        using CompletionFixture set = Motion("@set { Op|caret| }");
+        using CompletionFixture from = Motion("@animate { @from { Op|caret| } @to { Opacity = 1; } }");
+        using CompletionFixture scroll = Motion("@scroll { Op|caret| }");
+        using CompletionFixture value = Aspect("@default { HorizontalAlignment = |caret| }");
+
+        foreach (CompletionFixture fixture in new[] { @default, when, conditional, set, from, scroll })
+        {
+            CernealaCompletionItem opacity = Assert.Single(
+                fixture.Complete().Where(item => item.Label == "Opacity"));
+            Assert.Equal(CernealaCompletionItemKind.Property, opacity.Kind);
+            Assert.Equal("Opacity = ", opacity.InsertText);
+        }
+
+        Assert.Contains(value.Complete(), item => item.Label == "Center");
+    }
+
+    [Fact]
+    public void IfDirectiveCompletesInsideWhenBeforeTargetProperties()
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" +
+            "@when IsMouseOver { @i|caret| }" +
+            "</Aspect></Window.Resources></Window>");
+
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+
+        Assert.Contains(items, item =>
+            item.Label == "@if" && item.Kind == CernealaCompletionItemKind.Keyword);
+        Assert.DoesNotContain(items, item => item.Kind == CernealaCompletionItemKind.Property);
+    }
+
+    [Theory]
+    [InlineData("@when |caret| { Opacity = 1; }")]
+    [InlineData("@when IsM|caret| { Opacity = 1; }")]
+    [InlineData("@when IsEnabled and (|caret|) { Opacity = 1; }")]
+    [InlineData("@when IsEnabled or |caret| { Opacity = 1; }")]
+    [InlineData("@when IsEnabled { @if value == true and (|caret|) { Opacity = 1; } }")]
+    public void ReactiveExpressionOperandsCompleteFromTheAspectTargetType(string body)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" + body +
+            "</Aspect></Window.Resources></Window>");
+
+        CernealaCompletionItem property = Assert.Single(
+            fixture.Complete().Where(item => item.Label == "IsMouseOver"));
+
+        Assert.Equal(CernealaCompletionItemKind.Property, property.Kind);
+        Assert.Equal("IsMouseOver", property.InsertText);
+    }
+
+    [Fact]
+    public void IfExpressionAlsoCompletesTheWhenValueOperand()
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" +
+            "@when IsEnabled { @if |caret| { Opacity = 1; } }" +
+            "</Aspect></Window.Resources></Window>");
+
+        CernealaCompletionItem value = Assert.Single(
+            fixture.Complete().Where(item => item.Label == "value"));
+
+        Assert.Equal(CernealaCompletionItemKind.Variable, value.Kind);
+        Assert.Equal("value", value.InsertText);
+    }
+
+    [Theory]
+    [InlineData("Tween(680ms, Ea|caret|)", "EaseIn", "easing")]
+    [InlineData("Step(4, Ju|caret|)", "JumpEnd", "step position")]
+    [InlineData("Repeat(Tween(680ms, EaseIn), fo|caret|)", "forever", "positive count or forever")]
+    public void MotionCallArgumentsCompleteTheirKnownValues(
+        string expression,
+        string expected,
+        string expectedDetail)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create("<Window>" + expression + "</Window>");
+
+        CernealaCompletionItem item = Assert.Single(
+            fixture.Complete().Where(candidate => candidate.Label == expected));
+
+        Assert.Equal(expectedDetail, item.Detail);
+        AssertValidAfterInsertion(fixture.Text, item);
+    }
+
+    [Theory]
+    [InlineData("as |caret|")]
+    [InlineData("as Lo|caret|")]
+    public void MotionRunHandleCompletionOffersDeclaredHandles(string handleExpression)
+    {
+        const string markup = """
+            <Window>
+              <Window.Resources>
+                <MotionClip Name="Pulse" TargetType="Button" />
+                <Aspect Name="Animated" TargetType="Button">
+                  @handle Loading;
+                  @on Loaded {
+                    @run $Pulse HANDLE_EXPRESSION;
+                  }
+                </Aspect>
+              </Window.Resources>
+            </Window>
+            """;
+        using CompletionFixture fixture = CompletionFixture.Create(
+            markup.Replace("HANDLE_EXPRESSION", handleExpression, StringComparison.Ordinal));
+
+        CernealaCompletionItem loading = Assert.Single(
+            fixture.Complete().Where(item => item.Label == "Loading"));
+
+        Assert.Equal("Loading", loading.InsertText);
+        Assert.Equal("Motion handle", loading.Detail);
+        string applied = fixture.Text.Substring(0, loading.ReplacementSpan.Start) +
+            loading.InsertText +
+            fixture.Text.Substring(loading.ReplacementSpan.End);
+        Assert.Contains("as Loading;", applied, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Tween(100ms, )", "Tween(duration, easing)", 1)]
+    [InlineData("Spring(100, 10, )", "Spring(stiffness, damping, mass)", 2)]
+    [InlineData("Repeat(Tween(100ms), )", "Repeat(spec, count)", 1)]
+    [InlineData("Step(4, )", "Step(count, position)", 1)]
+    public void MotionSignatureHelpMatchesTheBuildAcceptedArguments(
+        string expression,
+        string expectedLabel,
+        int expectedActiveParameter)
+    {
+        CernealaCompletionService service = new();
+        CernealaDocument document = new(
+            "Signature.crn",
+            LanguageSourceText.From("<Window>" + expression + "</Window>"));
+        int offset = document.Text.ToString().LastIndexOf(')');
+
+        CernealaSignatureHelp help = Assert.IsType<CernealaSignatureHelp>(
+            service.GetSignatureHelp(document, offset));
+
+        Assert.Equal(expectedActiveParameter, help.ActiveParameter);
+        Assert.Equal(expectedLabel, Assert.Single(help.Signatures).Label);
+    }
+
+    [Theory]
+    [InlineData("<Window><Button Margin=\"|caret|\" /></Window>", 0, 0, "Thickness(uniform)")]
+    [InlineData("<Window><Button Margin=\"0,|caret|\" /></Window>", 1, 1, "Thickness(left, top, right, bottom)")]
+    [InlineData("<Window><Button Padding=\"0,4,|caret|\" /></Window>", 1, 2, "Thickness(left, top, right, bottom)")]
+    [InlineData("<Window><Border BorderThickness=\"0,4,8,|caret|\" /></Window>", 1, 3, "Thickness(left, top, right, bottom)")]
+    public void ThicknessAttributeSignatureHelpNamesTheActiveComponent(
+        string markup,
+        int expectedActiveSignature,
+        int expectedActiveParameter,
+        string expectedLabel)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(markup);
+        CernealaCompletionService service = new();
+
+        CernealaSignatureHelp help = Assert.IsType<CernealaSignatureHelp>(
+            service.GetSignatureHelp(fixture.Document, fixture.Offset, fixture.Model));
+
+        Assert.Equal(2, help.Signatures.Count);
+        Assert.Equal(expectedActiveSignature, help.ActiveSignature);
+        Assert.Equal(expectedActiveParameter, help.ActiveParameter);
+        Assert.Equal(expectedLabel, help.Signatures[help.ActiveSignature].Label);
     }
 
     [Fact]
@@ -221,7 +489,7 @@ public sealed class CompletionTests
         Assert.Contains("Amount", Assert.Single(motionHelp.Signatures).Label, StringComparison.Ordinal);
 
         string prismSignatureText = prism.Text.Replace(")", ", )", StringComparison.Ordinal);
-        CernealaDocument prismSignatureDocument = new("PrismSignature.cui.xml", LanguageSourceText.From(prismSignatureText));
+        CernealaDocument prismSignatureDocument = new("PrismSignature.crn", LanguageSourceText.From(prismSignatureText));
         int signatureOffset = prismSignatureText.IndexOf(")", StringComparison.Ordinal);
         CernealaSignatureHelp prismHelp = Assert.IsType<CernealaSignatureHelp>(
             service.GetSignatureHelp(prismSignatureDocument, signatureOffset));
@@ -382,7 +650,7 @@ public sealed class CompletionTests
             int offset = markedText.IndexOf(Caret, StringComparison.Ordinal);
             Assert.True(offset >= 0, "The completion fixture requires a caret marker.");
             string text = markedText.Replace(Caret, string.Empty, StringComparison.Ordinal);
-            CernealaDocument document = new("View.cui.xml", LanguageSourceText.From(text));
+            CernealaDocument document = new("View.crn", LanguageSourceText.From(text));
             if (!semantic)
             {
                 return new CompletionFixture(text, offset, document, null, null);

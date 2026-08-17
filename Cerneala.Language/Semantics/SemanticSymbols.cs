@@ -24,6 +24,7 @@ internal enum CernealaSemanticSymbolKind
     Aspect,
     AspectAssignment,
     AspectCondition,
+    AspectConditionProperty,
     AspectApplication,
     MotionDirective,
     MotionTarget,

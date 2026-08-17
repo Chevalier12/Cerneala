@@ -13,6 +13,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         "Cerneala.UI.Controls",
         "Cerneala.UI.Controls.Primitives",
         "Cerneala.UI.Controls.Shapes",
+        "Cerneala.UI.Elements",
         "Cerneala.UI.Layout.Panels",
         "Cerneala.UI.Media",
         "Cerneala.UI.Automation"
@@ -474,12 +475,8 @@ internal sealed partial class CernealaSemanticModel : IDisposable
 
         if (isRoot && element.Name is "Application" or "Window" or "UserControl")
         {
-            string pairPath = document.Path + ".cs";
-            string expectedName = Path.GetFileName(document.Path);
-            if (expectedName.EndsWith(".cui.xml", StringComparison.OrdinalIgnoreCase))
-            {
-                expectedName = expectedName.Substring(0, expectedName.Length - ".cui.xml".Length);
-            }
+            string pairPath = CernealaDocumentPath.GetCompanionPath(document.Path);
+            string expectedName = CernealaDocumentPath.GetLogicalName(document.Path);
 
             ILanguageTypeSymbol? pair = compilation.FindDeclaredTypeForFile(pairPath, expectedName);
             string expectedBase = element.Name switch
@@ -514,16 +511,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             return null;
         }
 
-        ILanguageTypeSymbol? unqualified = ResolveUnqualifiedType(element.Name);
-        if (unqualified is not null)
-        {
-            return unqualified;
-        }
-
-        ILanguageTypeSymbol? markupType = ResolveMarkupType(element.Name);
-        return markupType is not null && !markupType.IsAbstract
-            ? markupType
-            : null;
+        return ResolveUnqualifiedType(element.Name) ?? ResolveBuiltInMarkupType(element.Name);
     }
 
     private ILanguageTypeSymbol? ResolveValueElementType(ElementSyntax element)
@@ -598,14 +586,24 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             }
         }
 
+        return null;
+    }
+
+    private ILanguageTypeSymbol? ResolveMarkupType(string name)
+    {
+        ILanguageTypeSymbol? builtIn = ResolveBuiltInMarkupType(name);
+        if (builtIn is not null)
+        {
+            return builtIn;
+        }
+
         ILanguageTypeSymbol[] custom = compilation.FindTypes(name)
-            .Where(IsUsableElementType)
             .OrderBy(type => type.MetadataName, StringComparer.Ordinal)
             .ToArray();
         return custom.Length == 1 ? custom[0] : null;
     }
 
-    private ILanguageTypeSymbol? ResolveMarkupType(string name)
+    private ILanguageTypeSymbol? ResolveBuiltInMarkupType(string name)
     {
         foreach (string @namespace in BuiltInNamespaces)
         {
@@ -616,14 +614,40 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             }
         }
 
-        ILanguageTypeSymbol[] custom = compilation.FindTypes(name)
-            .OrderBy(type => type.MetadataName, StringComparer.Ordinal)
-            .ToArray();
-        return custom.Length == 1 ? custom[0] : null;
+        return null;
     }
 
     private ILanguageTypeSymbol? ResolveTypeReference(AttributeSyntax attribute) =>
         ResolveTypeReference(Unquote(attribute.ValueToken.Text), aliases);
+
+    private ILanguageTypeSymbol? ResolveTargetTypeReference(AttributeSyntax attribute) =>
+        ResolveTargetTypeReference(Unquote(attribute.ValueToken.Text), aliases);
+
+    private ILanguageTypeSymbol? ResolveTargetTypeReference(
+        string reference,
+        IReadOnlyDictionary<string, NamespaceAlias> namespaceAliases)
+    {
+        reference = reference.Trim();
+        int separator = reference.IndexOf(':');
+        return separator > 0
+            ? ResolveTypeReference(reference, namespaceAliases)
+            : ResolveUnqualifiedTargetType(reference);
+    }
+
+    private ILanguageTypeSymbol? ResolveUnqualifiedTargetType(string name)
+    {
+        foreach (string @namespace in BuiltInNamespaces)
+        {
+            ILanguageTypeSymbol? builtIn = compilation.FindType(@namespace + "." + name);
+            if (builtIn is not null && builtIn.IsClass &&
+                builtIn.IsOrDerivesFrom("Cerneala.UI.Elements.UIElement"))
+            {
+                return builtIn;
+            }
+        }
+
+        return null;
+    }
 
     private ILanguageTypeSymbol? ResolveTypeReference(
         string reference,
@@ -838,6 +862,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         CernealaSemanticSymbolKind.BindingMode or CernealaSemanticSymbolKind.ResourceReference or
         CernealaSemanticSymbolKind.TypeReference or CernealaSemanticSymbolKind.Aspect or
         CernealaSemanticSymbolKind.AspectAssignment or CernealaSemanticSymbolKind.AspectCondition or
+        CernealaSemanticSymbolKind.AspectConditionProperty or
         CernealaSemanticSymbolKind.AspectApplication or CernealaSemanticSymbolKind.MotionDirective or
         CernealaSemanticSymbolKind.MotionTarget or CernealaSemanticSymbolKind.MotionEvent or
         CernealaSemanticSymbolKind.MotionProperty or CernealaSemanticSymbolKind.MotionSpec or

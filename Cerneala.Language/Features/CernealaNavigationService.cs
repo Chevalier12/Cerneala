@@ -57,7 +57,7 @@ internal sealed class CernealaNavigationService
             symbol.TypeSymbol?.Locations ?? Array.Empty<LanguageSourceLocation>();
         if (symbol.Kind == CernealaSemanticSymbolKind.RootType)
         {
-            string pairedPath = model.Document.Path + ".cs";
+            string pairedPath = CernealaDocumentPath.GetCompanionPath(model.Document.Path);
             LanguageSourceLocation[] paired = locations.Where(location =>
                 string.Equals(NormalizePath(location.Path), NormalizePath(pairedPath), StringComparison.OrdinalIgnoreCase))
                 .ToArray();
@@ -568,7 +568,10 @@ internal sealed class CernealaNavigationService
         return diagnostic.Id + " identifies a Cerneala markup contract that could not be proven at this token.";
     }
 
-    private static string DisplayKind(CernealaSemanticSymbolKind kind) => kind.ToString();
+    private static string DisplayKind(CernealaSemanticSymbolKind kind) =>
+        kind == CernealaSemanticSymbolKind.AspectConditionProperty
+            ? CernealaSemanticSymbolKind.Property.ToString()
+            : kind.ToString();
 
     private static bool SameLocation(CernealaLocation left, CernealaLocation right) =>
         string.Equals(NormalizePath(left.Path), NormalizePath(right.Path), StringComparison.OrdinalIgnoreCase) &&

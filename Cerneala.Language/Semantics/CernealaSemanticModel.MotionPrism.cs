@@ -185,7 +185,7 @@ internal sealed partial class CernealaSemanticModel
         AttributeSyntax? targetAttribute = FindAttribute(element, "TargetType");
         ILanguageTypeSymbol? targetType = targetAttribute is null
             ? null
-            : ResolveTypeReference(targetAttribute) ?? ResolveUnqualifiedType(Unquote(targetAttribute.ValueToken.Text));
+            : ResolveTargetTypeReference(targetAttribute);
         if (targetType is null)
         {
             AddMotionDiagnostic(
@@ -644,6 +644,15 @@ internal sealed partial class CernealaSemanticModel
             {
                 AddMotionDiagnostic("CERNEALAUI020", span, "Motion handle '" + handle + "' is undeclared or used before its declaration.");
             }
+            else
+            {
+                symbols.Add(new CernealaSemanticSymbol(
+                    CernealaSemanticSymbolKind.MotionHandle,
+                    handle,
+                    "Cerneala.UI.Markup.MarkupMotionExecution",
+                    span,
+                    definitionLocation: new LanguageSourceLocation(document.Path, declaration)));
+            }
 
             return;
         }
@@ -692,6 +701,15 @@ internal sealed partial class CernealaSemanticModel
             if (!handles.TryGetValue(handle, out TextSpan declaration) || declaration.Start > handleSpan.Start)
             {
                 AddMotionDiagnostic("CERNEALAUI020", handleSpan, "Motion handle '" + handle + "' is undeclared or used before its declaration.");
+            }
+            else
+            {
+                symbols.Add(new CernealaSemanticSymbol(
+                    CernealaSemanticSymbolKind.MotionHandle,
+                    handle,
+                    "Cerneala.UI.Markup.MarkupMotionExecution",
+                    handleSpan,
+                    definitionLocation: new LanguageSourceLocation(document.Path, declaration)));
             }
         }
     }

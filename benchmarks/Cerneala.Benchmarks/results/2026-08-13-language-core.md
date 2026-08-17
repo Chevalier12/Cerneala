@@ -30,11 +30,11 @@ dotnet run -c Release --project .\benchmarks\Cerneala.Benchmarks\Cerneala.Benchm
 | Medium | 7,887 | Incremental edit | 0.662 | 4.370 | 140,768 |
 | Medium | 7,887 | Semantic bind | 20.425 | 23.530 | 869,529 |
 | Medium | 7,887 | Warm query | 0.006 | 0.019 | 464 |
-| `AspectChapterView.cui.xml` | 21,123 | Parse cold | 1.386 | 5.505 | 285,384 |
-| `AspectChapterView.cui.xml` | 21,123 | Parse warm | 1.447 | 8.017 | 279,296 |
-| `AspectChapterView.cui.xml` | 21,123 | Incremental edit | 1.534 | 1.925 | 369,984 |
-| `AspectChapterView.cui.xml` | 21,123 | Semantic bind | 14.923 | 15.999 | 2,479,080 |
-| `AspectChapterView.cui.xml` | 21,123 | Warm query | 0.062 | 2.076 | 464 |
+| `AspectChapterView.crn` | 21,123 | Parse cold | 1.386 | 5.505 | 285,384 |
+| `AspectChapterView.crn` | 21,123 | Parse warm | 1.447 | 8.017 | 279,296 |
+| `AspectChapterView.crn` | 21,123 | Incremental edit | 1.534 | 1.925 | 369,984 |
+| `AspectChapterView.crn` | 21,123 | Semantic bind | 14.923 | 15.999 | 2,479,080 |
+| `AspectChapterView.crn` | 21,123 | Warm query | 0.062 | 2.076 | 464 |
 
 ## Gates And Allocation Review
 

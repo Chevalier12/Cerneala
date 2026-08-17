@@ -51,7 +51,7 @@ dotnet run -c Release --project .\benchmarks\Cerneala.Benchmarks\Cerneala.Benchm
 ```
 
 The gate measures cold and warm parse, a local incremental edit, semantic bind,
-and a warm symbol query for small, medium, and `AspectChapterView.cui.xml`
+and a warm symbol query for small, medium, and `AspectChapterView.crn`
 documents. It reports p95, maximum latency, and managed bytes per operation. The
 large-document budgets are below 50 ms for parse/edit and below 25 ms for a warm
 semantic query; every measured synchronous operation must remain below 100 ms.

@@ -17,6 +17,6 @@ This stage-0 inventory is executable through `Corpus/constructs.json`. Every row
 ## Corpus contract
 
 - `constructs.json` is the versioned valid/invalid semantic matrix.
-- `repository-documents.txt` freezes all repository `.cui.xml` files plus the documentation and sourcegen test sources represented by the matrix.
+- `repository-documents.txt` freezes all repository `.crn` files plus the documentation and sourcegen test sources represented by the matrix.
 - `sourcegen-diagnostics.json` freezes invalid-corpus diagnostics by id, severity, message and UTF-16 line/character span.
 - `LanguagePipelineHarness` runs `Cerneala.Language` syntax first, suppresses the provisional semantic lane below unrecoverable syntax, and runs the current source generator independently for parity snapshots.

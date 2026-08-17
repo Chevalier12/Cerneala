@@ -117,7 +117,7 @@ public sealed class FormattingTests
         string root = FindRepositoryRoot();
         string presentation = Path.Combine(root, "CernealaPresentation");
 
-        foreach (string path in Directory.GetFiles(presentation, "*.cui.xml", SearchOption.TopDirectoryOnly)
+        foreach (string path in Directory.GetFiles(presentation, "*.crn", SearchOption.TopDirectoryOnly)
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
         {
             string text = File.ReadAllText(path);
@@ -248,7 +248,7 @@ public sealed class FormattingTests
     }
 
     private static CernealaDocument Document(string text, long version = 1) =>
-        new("View.cui.xml", SourceText.From(text, version));
+        new("View.crn", SourceText.From(text, version));
 
     private static string ElementShape(Cerneala.Language.Syntax.ElementSyntax element) =>
         element.Name + "|" + string.Join(
@@ -311,7 +311,7 @@ public sealed class FormattingTests
 
         public static Fixture Create(string markup, long version = 1, string? companion = null)
         {
-            string codePath = Path.GetFullPath("View.cui.xml.cs");
+            string codePath = Path.GetFullPath("View.crn.cs");
             companion ??= """
                 using Cerneala.UI.Controls;
                 namespace Fixture;
@@ -323,7 +323,7 @@ public sealed class FormattingTests
                 [CSharpSyntaxTree.ParseText(companion, path: codePath)],
                 PlatformReferences().Append(MetadataReference.CreateFromFile(typeof(UIElement).Assembly.Location)),
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-            CernealaDocument document = new(Path.GetFullPath("View.cui.xml"), SourceText.From(markup, version));
+            CernealaDocument document = new(Path.GetFullPath("View.crn"), SourceText.From(markup, version));
             CernealaCompilation compilation = new(
                 new RoslynCompilationSymbols(roslyn),
                 [document],

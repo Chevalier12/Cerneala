@@ -229,10 +229,12 @@ internal sealed partial class CernealaSemanticModel
             _ => null
         };
         ILanguageTypeSymbol? targetType = null;
-        if (kind == ResourceKind.Aspect && FindAttribute(element, "TargetType") is AttributeSyntax targetAttribute)
+        if ((kind == ResourceKind.Aspect || kind == ResourceKind.MotionClip) &&
+            FindAttribute(element, "TargetType") is AttributeSyntax targetAttribute)
         {
-            targetType = ResolveTypeReference(Unquote(targetAttribute.ValueToken.Text), namespaceAliases) ??
-                ResolveUnqualifiedType(Unquote(targetAttribute.ValueToken.Text));
+            targetType = ResolveTargetTypeReference(
+                Unquote(targetAttribute.ValueToken.Text),
+                namespaceAliases);
         }
 
         TextSpan nameSpan = nameAttribute is null ? element.NameToken.Span : AttributeContentSpan(nameAttribute);

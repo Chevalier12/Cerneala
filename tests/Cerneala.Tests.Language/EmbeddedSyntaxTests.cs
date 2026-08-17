@@ -72,8 +72,63 @@ public sealed class EmbeddedSyntaxTests
         });
         EmbeddedParseResult<DirectiveDocumentSyntax> result = MotionSyntaxParser.Parse(text);
 
-        Assert.Empty(result.Diagnostics);
+        Assert.DoesNotContain(
+            result.Diagnostics,
+            diagnostic => diagnostic.Message.StartsWith("Unknown", StringComparison.Ordinal));
         Assert.Equal(20, result.Syntax.Directives.Count);
+    }
+
+    [Theory]
+    [InlineData("@layout id $self.Tag with Tween(100ms, Linear)")]
+    [InlineData("@drag with Spring(500, 40)")]
+    [InlineData("@gesture press with Tween(100ms, Linear)")]
+    [InlineData("@run $LoadingSequence as Loading")]
+    [InlineData("@cancel Loading")]
+    [InlineData("@handle Loading")]
+    [InlineData("@parameter Delay: Time = 100ms")]
+    public void MotionStatementDirectiveWithoutSemicolonProducesSyntaxDiagnostic(string text)
+    {
+        EmbeddedParseResult<DirectiveDocumentSyntax> result = MotionSyntaxParser.Parse(text);
+
+        EmbeddedDiagnostic diagnostic = Assert.Single(result.Diagnostics);
+        Assert.Equal("CERNEALAUI020", diagnostic.Id);
+        Assert.Equal(LanguageDiagnosticSeverity.Error, diagnostic.GetSeverity(AnalysisMode.Editor));
+        Assert.Contains("must end with ';'", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MotionAssignmentWithoutSemicolonProducesSyntaxDiagnostic()
+    {
+        const string text = """
+            @to
+            {
+                $VisualStage.Opacity = 1
+            }
+            """;
+        EmbeddedParseResult<DirectiveDocumentSyntax> result = MotionSyntaxParser.Parse(text);
+
+        EmbeddedDiagnostic diagnostic = Assert.Single(result.Diagnostics);
+        Assert.Equal("CERNEALAUI020", diagnostic.Id);
+        Assert.Equal(LanguageDiagnosticSeverity.Error, diagnostic.GetSeverity(AnalysisMode.Editor));
+        Assert.Equal("$VisualStage.Opacity = 1", text.Substring(diagnostic.Span.Start, diagnostic.Span.Length));
+    }
+
+    [Fact]
+    public void MotionDirectiveHeaderOptionDoesNotRequireSemicolon()
+    {
+        const string text = """
+            @on Loaded
+            {
+                @scroll source $Scroller axis horizontal allowLayout = true
+                {
+                    Width = 20..80;
+                }
+            }
+            """;
+
+        EmbeddedParseResult<DirectiveDocumentSyntax> result = MotionSyntaxParser.Parse(text);
+
+        Assert.Empty(result.Diagnostics);
     }
 
     [Fact]

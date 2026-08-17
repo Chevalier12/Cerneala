@@ -1,0 +1,44 @@
+# Stage 0 inventory frozen on 2026-08-14.
+# Markup documents (16)
+CernealaPresentation/App.cui.xml
+CernealaPresentation/AspectChapterView.cui.xml
+CernealaPresentation/BrandMark.cui.xml
+CernealaPresentation/FramePipelineChapterView.cui.xml
+CernealaPresentation/MarkupChapterView.cui.xml
+CernealaPresentation/MotionChapterView.cui.xml
+CernealaPresentation/OpeningView.cui.xml
+CernealaPresentation/PresentationWindow.cui.xml
+CernealaPresentation/PrismChapterView.cui.xml
+CernealaPresentation/PrismOuterGlowLabView.cui.xml
+CernealaPresentation/RetainedModelChapterView.cui.xml
+CernealaPresentation/WelcomeChapterView.cui.xml
+Playground/Cerneala.ComboBoxLab/MainWindow.cui.xml
+Playground/Cerneala.Playground/MainWindow.cui.xml
+Playground/CernealaOracle/MainWindow.cui.xml
+tests/Fixtures/LanguageServerWorkspace/View.cui.xml
+
+# Companion source files (16)
+CernealaPresentation/App.cui.xml.cs
+CernealaPresentation/AspectChapterView.cui.xml.cs
+CernealaPresentation/BrandMark.cui.xml.cs
+CernealaPresentation/FramePipelineChapterView.cui.xml.cs
+CernealaPresentation/MarkupChapterView.cui.xml.cs
+CernealaPresentation/MotionChapterView.cui.xml.cs
+CernealaPresentation/OpeningView.cui.xml.cs
+CernealaPresentation/PresentationWindow.cui.xml.cs
+CernealaPresentation/PrismChapterView.cui.xml.cs
+CernealaPresentation/PrismOuterGlowLabView.cui.xml.cs
+CernealaPresentation/RetainedModelChapterView.cui.xml.cs
+CernealaPresentation/WelcomeChapterView.cui.xml.cs
+Playground/Cerneala.ComboBoxLab/MainWindow.cui.xml.cs
+Playground/Cerneala.Playground/MainWindow.cui.xml.cs
+Playground/CernealaOracle/MainWindow.cui.xml.cs
+tests/Fixtures/LanguageServerWorkspace/View.cui.xml.cs
+
+# Projects owning AdditionalFiles (5 globs and 1 explicit fixture include)
+Cerneala.csproj
+CernealaPresentation/CernealaPresentation.csproj
+Playground/Cerneala.ComboBoxLab/Cerneala.ComboBoxLab.csproj
+Playground/Cerneala.Playground/Cerneala.Playground.csproj
+Playground/CernealaOracle/CernealaOracle.csproj
+tests/Fixtures/LanguageServerWorkspace/LanguageServerWorkspace.csproj

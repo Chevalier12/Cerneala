@@ -4,17 +4,17 @@ namespace Cerneala.Language.Features;
 
 internal enum CernealaSemanticTokenKind
 {
-    ElementType,
+    Type,
     Property,
-    AttachedProperty,
     Event,
     Namespace,
-    Resource,
-    BindingSource,
-    BindingMember,
-    Directive,
-    Motion,
-    Prism
+    Variable,
+    Keyword,
+    Function,
+    Parameter,
+    EnumMember,
+    Label,
+    ConditionProperty
 }
 
 [Flags]

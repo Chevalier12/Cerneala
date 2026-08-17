@@ -14,7 +14,7 @@ namespace Cerneala.Tests.Language;
 public sealed class NavigationTests
 {
     private const string FixtureRoot = "C:/cerneala-navigation-fixture";
-    private const string MarkupPath = FixtureRoot + "/View.cui.xml";
+    private const string MarkupPath = FixtureRoot + "/View.crn";
     private const string CodePath = MarkupPath + ".cs";
     private const string GeneratedPath = FixtureRoot + "/obj/View.g.cs";
 
@@ -280,8 +280,8 @@ public sealed class NavigationTests
     {
         const string alphaPath = FixtureRoot + "/Alpha.cs";
         const string betaPath = FixtureRoot + "/Beta.cs";
-        const string alphaMarkupPath = FixtureRoot + "/Alpha.cui.xml";
-        const string betaMarkupPath = FixtureRoot + "/Beta.cui.xml";
+        const string alphaMarkupPath = FixtureRoot + "/Alpha.crn";
+        const string betaMarkupPath = FixtureRoot + "/Beta.crn";
         const string alphaCode = """
             using System.ComponentModel;
             namespace Shared;

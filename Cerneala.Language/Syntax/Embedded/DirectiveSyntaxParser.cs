@@ -16,6 +16,11 @@ internal static class DirectiveSyntaxParser
         "@cancel", "@handle", "@parameter", "@from", "@to", "@default", "@template"
     ];
 
+    private static readonly string[] semicolonTerminatedMotionKeywords =
+    [
+        "@layout", "@drag", "@gesture", "@run", "@cancel", "@handle", "@parameter"
+    ];
+
     private static readonly string[] prismKeywords =
     [
         "@prism", "@parameter", "@layer", "@group", "@filter", "@style", "@mask", "@backdrop"
@@ -43,8 +48,10 @@ internal static class DirectiveSyntaxParser
         List<AssignmentSyntax> assignments = new();
         List<DirectiveBlockSyntax> blocks = new();
         List<EmbeddedDiagnostic> diagnostics = new();
+        List<EmbeddedDiagnostic> statementDiagnostics = new();
         Stack<int> braces = new();
         Stack<int> parentheses = new();
+        bool inDirectiveHeader = false;
         bool quoted = false;
         char quote = '\0';
         bool escaped = false;
@@ -79,6 +86,7 @@ internal static class DirectiveSyntaxParser
 
             if (character == '@')
             {
+                inDirectiveHeader = true;
                 int start = position++;
                 while (position < text.Length && IsIdentifierPart(text[position]))
                 {
@@ -98,6 +106,20 @@ internal static class DirectiveSyntaxParser
                 else
                 {
                     directives.Add(new DirectiveSyntax(keyword, span, braces.Count));
+                    if (language == EmbeddedLanguageKind.Motion &&
+                        semicolonTerminatedMotionKeywords.Contains(keyword, StringComparer.Ordinal) &&
+                        !HasTerminatingSemicolon(text, position, out int statementEnd))
+                    {
+                        while (statementEnd > start && char.IsWhiteSpace(text[statementEnd - 1]))
+                        {
+                            statementEnd--;
+                        }
+
+                        statementDiagnostics.Add(new EmbeddedDiagnostic(
+                            MissingDelimiterId(language),
+                            "Motion directive '" + keyword + "' must end with ';'.",
+                            new TextSpan(absoluteOffset + start, Math.Max(1, statementEnd - start))));
+                    }
                 }
 
                 continue;
@@ -107,8 +129,10 @@ internal static class DirectiveSyntaxParser
             {
                 case '{':
                     braces.Push(position);
+                    inDirectiveHeader = false;
                     break;
                 case '}':
+                    inDirectiveHeader = false;
                     if (braces.Count == 0)
                     {
                         diagnostics.Add(new EmbeddedDiagnostic(
@@ -140,15 +164,34 @@ internal static class DirectiveSyntaxParser
                     }
                     break;
                 case '=' when !IsComparator(text, position):
-                    AssignmentSyntax? assignment = TryReadAssignment(text, position, absoluteOffset);
+                    AssignmentSyntax? assignment = TryReadAssignment(
+                        text,
+                        position,
+                        absoluteOffset,
+                        out bool hasTerminatingSemicolon);
                     if (assignment is not null)
                     {
                         assignments.Add(assignment);
+                        if (!hasTerminatingSemicolon && parentheses.Count == 0 && !inDirectiveHeader)
+                        {
+                            int spanStart = assignment.NameSpan.Start;
+                            int spanEnd = Math.Max(assignment.NameSpan.End, assignment.ValueSpan.End);
+                            statementDiagnostics.Add(new EmbeddedDiagnostic(
+                                MissingDelimiterId(language),
+                                language == EmbeddedLanguageKind.Motion
+                                    ? "Motion property assignment must end with ';'."
+                                    : "Property assignment must end with ';'.",
+                                new TextSpan(spanStart, Math.Max(1, spanEnd - spanStart))));
+                        }
                     }
+                    break;
+                case ';':
+                    inDirectiveHeader = false;
                     break;
             }
         }
 
+        bool hasIncompleteSyntax = quoted || parentheses.Count > 0 || braces.Count > 0;
         if (quoted)
         {
             int quoteStart = text.LastIndexOf(quote);
@@ -177,6 +220,11 @@ internal static class DirectiveSyntaxParser
                 transient: true));
         }
 
+        if (!hasIncompleteSyntax)
+        {
+            diagnostics.AddRange(statementDiagnostics);
+        }
+
         foreach (int opening in braces)
         {
             blocks.Add(new DirectiveBlockSyntax(
@@ -194,8 +242,13 @@ internal static class DirectiveSyntaxParser
             diagnostics);
     }
 
-    private static AssignmentSyntax? TryReadAssignment(string text, int equals, int absoluteOffset)
+    private static AssignmentSyntax? TryReadAssignment(
+        string text,
+        int equals,
+        int absoluteOffset,
+        out bool hasTerminatingSemicolon)
     {
+        hasTerminatingSemicolon = false;
         int nameEnd = equals;
         while (nameEnd > 0 && char.IsWhiteSpace(text[nameEnd - 1]))
         {
@@ -249,6 +302,7 @@ internal static class DirectiveSyntaxParser
             else if (parentheses == 0 && (character is ';' or '}' or '\r' or '\n') &&
                 !(character == ';' && IsXmlEntityTerminator(text, valueEnd)))
             {
+                hasTerminatingSemicolon = character == ';';
                 break;
             }
 
@@ -270,6 +324,63 @@ internal static class DirectiveSyntaxParser
     {
         return position > 0 && text[position - 1] is '=' or '!' or '<' or '>' ||
             position + 1 < text.Length && text[position + 1] == '=';
+    }
+
+    private static bool HasTerminatingSemicolon(string text, int start, out int statementEnd)
+    {
+        bool quoted = false;
+        char quote = '\0';
+        bool escaped = false;
+        int parentheses = 0;
+
+        for (int position = start; position < text.Length; position++)
+        {
+            char character = text[position];
+            if (quoted)
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                }
+                else if (character == '\\')
+                {
+                    escaped = true;
+                }
+                else if (character == quote)
+                {
+                    quoted = false;
+                }
+
+                continue;
+            }
+
+            if (character is '\'' or '"')
+            {
+                quoted = true;
+                quote = character;
+            }
+            else if (character == '(')
+            {
+                parentheses++;
+            }
+            else if (character == ')' && parentheses > 0)
+            {
+                parentheses--;
+            }
+            else if (parentheses == 0 && character == ';' && !IsXmlEntityTerminator(text, position))
+            {
+                statementEnd = position + 1;
+                return true;
+            }
+            else if (parentheses == 0 && character is '{' or '}' or '@')
+            {
+                statementEnd = position;
+                return false;
+            }
+        }
+
+        statementEnd = text.Length;
+        return false;
     }
 
     private static bool IsIdentifierPart(char character) => char.IsLetterOrDigit(character) || character == '_';

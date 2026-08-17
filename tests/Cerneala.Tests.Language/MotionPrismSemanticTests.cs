@@ -32,7 +32,7 @@ public sealed class MotionPrismSemanticTests
             </Border>
             """;
 
-        CernealaSemanticModel model = Model("TypedMotion.cui.xml", markup);
+        CernealaSemanticModel model = Model("TypedMotion.crn", markup);
 
         Assert.Empty(model.Diagnostics.Where(IsMotionOrPrism));
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.MotionEvent && symbol.Name == "Loaded" && symbol.MemberSymbol is not null);
@@ -54,7 +54,7 @@ public sealed class MotionPrismSemanticTests
     public void MotionDiagnosticCategoriesMatchTheSourceGenerator(string body, string expectedId)
     {
         string markup = MotionAspectMarkup(body);
-        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("MotionParity.cui.xml", markup);
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("MotionParity.crn", markup);
 
         HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics, diagnostic => diagnostic.Id == expectedId);
         HarnessDiagnostic sourceGenerator = Assert.Single(result.SourceGeneratorDiagnostics, diagnostic => diagnostic.Id == expectedId);
@@ -82,7 +82,7 @@ public sealed class MotionPrismSemanticTests
             </StackPanel>
             """;
 
-        CernealaSemanticModel model = Model("TypedPrism.cui.xml", markup);
+        CernealaSemanticModel model = Model("TypedPrism.crn", markup);
 
         Assert.Empty(model.Diagnostics.Where(IsMotionOrPrism));
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.PrismComposition && symbol.Name == "CardFx");
@@ -108,7 +108,7 @@ public sealed class MotionPrismSemanticTests
     {
         string markup = "<StackPanel><StackPanel.Resources><PrismComposition Name=\"Fx\">" + body +
             "</PrismComposition></StackPanel.Resources></StackPanel>";
-        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.cui.xml", markup);
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
 
         HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics, diagnostic => diagnostic.Id == expectedId);
         HarnessDiagnostic sourceGenerator = Assert.Single(result.SourceGeneratorDiagnostics, diagnostic => diagnostic.Id == expectedId);
@@ -129,7 +129,7 @@ public sealed class MotionPrismSemanticTests
             </Border>
             """;
 
-        CernealaSemanticModel model = Model("PrismMotion.cui.xml", markup);
+        CernealaSemanticModel model = Model("PrismMotion.crn", markup);
 
         Assert.Empty(model.Diagnostics.Where(IsMotionOrPrism));
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.MotionProperty && symbol.Name == "Opacity" && symbol.TypeSymbol is not null);
@@ -159,7 +159,7 @@ public sealed class MotionPrismSemanticTests
             </StackPanel>
             """;
 
-        CernealaSemanticModel model = Model("IncompletePrism.cui.xml", markup);
+        CernealaSemanticModel model = Model("IncompletePrism.crn", markup);
 
         Assert.Contains(model.Diagnostics, diagnostic => diagnostic.Id == "PRISM1002");
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.Element && symbol.Name == "Button");
@@ -179,7 +179,7 @@ public sealed class MotionPrismSemanticTests
             </StackPanel>
             """;
 
-        CernealaSemanticModel model = Model("IncompleteMotion.cui.xml", markup);
+        CernealaSemanticModel model = Model("IncompleteMotion.crn", markup);
 
         Assert.Contains(model.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI020");
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.Element && symbol.Name == "Button");
@@ -196,7 +196,7 @@ public sealed class MotionPrismSemanticTests
 
         foreach ((string document, int index) in documents.Select((document, index) => (document, index)))
         {
-            LanguagePipelineResult result = LanguagePipelineHarness.Analyze("MotionPrism" + index + ".cui.xml", document);
+            LanguagePipelineResult result = LanguagePipelineHarness.Analyze("MotionPrism" + index + ".crn", document);
             Assert.Empty(result.SemanticDiagnostics);
             Assert.Empty(result.SourceGeneratorDiagnostics);
         }
@@ -215,7 +215,7 @@ public sealed class MotionPrismSemanticTests
             trees,
             PlatformReferences().Append(MetadataReference.CreateFromFile(typeof(UIElement).Assembly.Location)),
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-        CernealaDocument[] documents = Directory.EnumerateFiles(presentation, "*.cui.xml", SearchOption.AllDirectories)
+        CernealaDocument[] documents = Directory.EnumerateFiles(presentation, "*.crn", SearchOption.AllDirectories)
             .Select(path => new CernealaDocument(path, SourceText.From(File.ReadAllText(path))))
             .ToArray();
         using CernealaCompilation workspace = new(

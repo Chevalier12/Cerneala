@@ -13,7 +13,7 @@ public sealed class RecoveryBaselineTests
     [MemberData(nameof(RecoveryCases))]
     public void IncompleteDocumentsRequireTolerantRecovery(CorpusCase item)
     {
-        LanguagePipelineResult result = LanguagePipelineHarness.Analyze(item.Id + ".cui.xml", item.Invalid);
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze(item.Id + ".crn", item.Invalid);
 
         Assert.True(
             result.Syntax.Succeeded,
@@ -29,7 +29,7 @@ public sealed class RecoveryBaselineTests
     [MemberData(nameof(RecoveryCases))]
     public void UnrecoverableSyntaxSuppressesSemanticCascades(CorpusCase item)
     {
-        LanguagePipelineResult result = LanguagePipelineHarness.Analyze(item.Id + ".cui.xml", item.Invalid);
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze(item.Id + ".crn", item.Invalid);
 
         if (result.Syntax.Diagnostics.Count > 0)
         {

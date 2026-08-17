@@ -189,16 +189,16 @@ internal sealed class LanguageBenchmarkFixture : IDisposable
         return size switch
         {
             CernealaLanguageDocumentSize.Small => new LanguageBenchmarkFixture(
-                "SmallBenchmark.cui.xml",
+                "SmallBenchmark.crn",
                 "<StackPanel><TextBlock Text=\"Hello\" /><Button Content=\"Run\" /></StackPanel>"),
             CernealaLanguageDocumentSize.Medium => FromRepositoryFile(
                 repository,
                 "CernealaPresentation",
-                "MarkupChapterView.cui.xml"),
+                "MarkupChapterView.crn"),
             CernealaLanguageDocumentSize.Large => FromRepositoryFile(
                 repository,
                 "CernealaPresentation",
-                "AspectChapterView.cui.xml"),
+                "AspectChapterView.crn"),
             _ => throw new ArgumentOutOfRangeException(nameof(size))
         };
     }

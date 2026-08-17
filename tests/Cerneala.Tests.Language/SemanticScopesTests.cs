@@ -54,7 +54,7 @@ public sealed class SemanticScopesTests
               </StackPanel>
             </UserControl>
             """;
-        CernealaSemanticModel model = Model("MainView.cui.xml", markup, ViewModels);
+        CernealaSemanticModel model = Model("MainView.crn", markup, ViewModels);
 
         Assert.Empty(model.Diagnostics);
         Assert.Equal("Demo.ViewModel", SymbolAt(model, markup, "ViewModel").ValueType);
@@ -74,7 +74,7 @@ public sealed class SemanticScopesTests
               <TextBlock Text="$Missing.First.Second.Third" />
             </UserControl>
             """;
-        CernealaSemanticModel model = Model("MainView.cui.xml", markup, ViewModels);
+        CernealaSemanticModel model = Model("MainView.crn", markup, ViewModels);
 
         LanguageDiagnostic diagnostic = Assert.Single(model.Diagnostics);
         Assert.Equal("CERNEALAUI007", diagnostic.Id);
@@ -96,7 +96,7 @@ public sealed class SemanticScopesTests
               </StackPanel>
             </UserControl>
             """;
-        CernealaSemanticModel model = Model("MainView.cui.xml", markup, ViewModels);
+        CernealaSemanticModel model = Model("MainView.crn", markup, ViewModels);
 
         Assert.Empty(model.Diagnostics);
         CernealaSemanticSymbol owner = SymbolAt(model, markup, "$owner");
@@ -126,15 +126,15 @@ public sealed class SemanticScopesTests
             </StackPanel>
             """;
         CernealaSemanticModel model = Model(
-            "Local.cui.xml",
+            "Local.crn",
             local,
             string.Empty,
-            new CernealaDocument("App.cui.xml", SourceText.From(application)));
+            new CernealaDocument("App.crn", SourceText.From(application)));
 
         Assert.Empty(model.Diagnostics);
         CernealaSemanticSymbol reference = SymbolAt(model, local, "$Accent");
         Assert.Equal(CernealaSemanticSymbolKind.ResourceReference, reference.Kind);
-        Assert.Equal("Local.cui.xml", reference.DefinitionLocation?.Path);
+        Assert.Equal("Local.crn", reference.DefinitionLocation?.Path);
 
         const string duplicate = """
             <StackPanel><StackPanel.Resources>
@@ -142,7 +142,7 @@ public sealed class SemanticScopesTests
               <SolidColorBrush Name="Accent" Color="#445566" />
             </StackPanel.Resources></StackPanel>
             """;
-        Assert.Contains(Model("Duplicate.cui.xml", duplicate, string.Empty).Diagnostics,
+        Assert.Contains(Model("Duplicate.crn", duplicate, string.Empty).Diagnostics,
             diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Message.Contains("Duplicate resource Name", StringComparison.Ordinal));
     }
 
@@ -161,7 +161,7 @@ public sealed class SemanticScopesTests
               </ItemsControl>
             </UserControl>
             """;
-        CernealaSemanticModel model = Model("MainView.cui.xml", markup, ViewModels);
+        CernealaSemanticModel model = Model("MainView.crn", markup, ViewModels);
 
         Assert.Empty(model.Diagnostics);
         Assert.Equal("Demo.Row", SymbolAt(model, markup, "Row\" Key").ValueType);
@@ -187,12 +187,12 @@ public sealed class SemanticScopesTests
             </Application>
             """;
         const string local = "<Button Aspect=\"$Primary\" />";
-        CernealaSemanticModel applicationModel = Model("App.cui.xml", application, string.Empty);
+        CernealaSemanticModel applicationModel = Model("App.crn", application, string.Empty);
         CernealaSemanticModel localModel = Model(
-            "Local.cui.xml",
+            "Local.crn",
             local,
             string.Empty,
-            new CernealaDocument("App.cui.xml", SourceText.From(application)));
+            new CernealaDocument("App.crn", SourceText.From(application)));
 
         Assert.Empty(applicationModel.Diagnostics);
         Assert.Empty(localModel.Diagnostics);
@@ -203,10 +203,10 @@ public sealed class SemanticScopesTests
         Assert.Equal(CernealaSemanticSymbolKind.ResourceReference, SymbolAt(localModel, local, "$Primary").Kind);
 
         CernealaSemanticModel invalid = Model(
-            "Invalid.cui.xml",
+            "Invalid.crn",
             "<TextBlock Aspect=\"$Primary\" />",
             string.Empty,
-            new CernealaDocument("App.cui.xml", SourceText.From(application)));
+            new CernealaDocument("App.crn", SourceText.From(application)));
         Assert.Contains(invalid.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI004");
     }
 
@@ -215,9 +215,9 @@ public sealed class SemanticScopesTests
     {
         (string Path, string Markup)[] cases =
         [
-            ("Bindings.cui.xml", "<StackPanel><Button Name=\"Source\" IsEnabled=\"true\"/><TextBlock Text=\"$Source.IsEnabled\" /></StackPanel>"),
-            ("Templates.cui.xml", "<Button>@template { <Border Name=\"Chrome\" IsEnabled=\"$owner.IsEnabled\" /> }</Button>"),
-            ("Aspects.cui.xml", "<StackPanel><StackPanel.Resources><Aspect Name=\"Primary\" TargetType=\"Button\">@default { IsEnabled = true; }</Aspect></StackPanel.Resources><Button Aspect=\"$Primary\" /></StackPanel>")
+            ("Bindings.crn", "<StackPanel><Button Name=\"Source\" IsEnabled=\"true\"/><TextBlock Text=\"$Source.IsEnabled\" /></StackPanel>"),
+            ("Templates.crn", "<Button>@template { <Border Name=\"Chrome\" IsEnabled=\"$owner.IsEnabled\" /> }</Button>"),
+            ("Aspects.crn", "<StackPanel><StackPanel.Resources><Aspect Name=\"Primary\" TargetType=\"Button\">@default { IsEnabled = true; }</Aspect></StackPanel.Resources><Button Aspect=\"$Primary\" /></StackPanel>")
         ];
 
         foreach ((string path, string markup) in cases)
@@ -234,7 +234,7 @@ public sealed class SemanticScopesTests
     {
         string root = CorpusCatalog.RepositoryRoot();
         string presentation = Path.Combine(root, "CernealaPresentation");
-        string[] paths = Directory.EnumerateFiles(presentation, "*.cui.xml")
+        string[] paths = Directory.EnumerateFiles(presentation, "*.crn")
             .Where(path =>
             {
                 string text = File.ReadAllText(path);
@@ -253,7 +253,7 @@ public sealed class SemanticScopesTests
             trees,
             references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-        CernealaDocument[] documents = Directory.EnumerateFiles(presentation, "*.cui.xml")
+        CernealaDocument[] documents = Directory.EnumerateFiles(presentation, "*.crn")
             .Select(path => new CernealaDocument(path, SourceText.From(File.ReadAllText(path))))
             .ToArray();
         using CernealaCompilation workspace = new(new RoslynCompilationSymbols(project), documents, AnalysisMode.Build);

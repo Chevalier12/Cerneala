@@ -40,7 +40,7 @@ public sealed class MarkupParserTests
         string manifest = Path.Combine(AppContext.BaseDirectory, "Corpus", "repository-documents.txt");
         string[] paths = File.ReadAllLines(manifest)
             .Select(line => line.Trim())
-            .Where(line => line.EndsWith(".cui.xml", StringComparison.Ordinal))
+            .Where(line => line.EndsWith(".crn", StringComparison.Ordinal))
             .ToArray();
 
         foreach (string path in paths)
@@ -79,7 +79,7 @@ public sealed class MarkupParserTests
     [Fact]
     public void TenThousandRandomIncrementalEditsNeverThrowOrProduceInvalidSpans()
     {
-        string seedPath = Path.Combine(CorpusCatalog.RepositoryRoot(), "CernealaPresentation", "AspectChapterView.cui.xml");
+        string seedPath = Path.Combine(CorpusCatalog.RepositoryRoot(), "CernealaPresentation", "AspectChapterView.crn");
         SourceText source = SourceText.From(File.ReadAllText(seedPath));
         Random random = new(0xCE2E_A1A);
         string[] insertions = ["<", ">", "\"", "'", "@if ", "{}", " ", "x", "</", "<!--"];

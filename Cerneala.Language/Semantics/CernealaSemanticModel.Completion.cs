@@ -26,7 +26,7 @@ internal sealed partial class CernealaSemanticModel
         }
 
         if (resourceElements.TryGetValue(element, out ResourceDefinition? resource) &&
-            resource.Kind == ResourceKind.Aspect)
+            resource.TargetType is not null)
         {
             return resource.TargetType;
         }
@@ -163,6 +163,34 @@ internal sealed partial class CernealaSemanticModel
         }
 
         return result.Values.OrderBy(value => value.Name, StringComparer.Ordinal).ToArray();
+    }
+
+    internal IReadOnlyList<string> GetCompletionMotionHandles(ElementSyntax? element, int offset)
+    {
+        ElementSyntax? scope = element;
+        while (scope is not null && !string.Equals(
+            scope.Name.Split(':').Last(),
+            "Aspect",
+            StringComparison.Ordinal))
+        {
+            scope = parents.TryGetValue(scope, out ElementSyntax? parent) ? parent : null;
+        }
+
+        if (scope is null)
+        {
+            return Array.Empty<string>();
+        }
+
+        return symbols.Where(symbol =>
+                symbol.Kind == CernealaSemanticSymbolKind.MotionHandle &&
+                symbol.Span.Start < offset &&
+                scope.Span.Contains(symbol.Span.Start) &&
+                symbol.DefinitionLocation is LanguageSourceLocation definition &&
+                definition.Span.Equals(symbol.Span))
+            .Select(symbol => symbol.Name)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToArray();
     }
 
     internal IReadOnlyList<CompletionNamespaceAlias> GetCompletionAliases() => aliases
