@@ -1,0 +1,29 @@
+<!-- Cerneala grammar corpus -->
+<UserControl xmlns:ui="clr-namespace:Sample" x:DataType="ui:MainViewModel">
+  <Grid.Resources>
+    <PrismComposition Name="GlowFx">
+      @parameter Radius: float = 4;
+      @layer Glow
+      {
+        @filter Blur { Radius = $root.BlurRadius; }
+      }
+    </PrismComposition>
+  </Grid.Resources>
+  <MotionClip Name="Reveal">
+    @sequence
+    {
+      @animate with Tween(120ms)
+      {
+        @from { $self.Opacity = 0; }
+        @to { $self.Opacity = 1; }
+      }
+    }
+  </MotionClip>
+  <TextBlock Text="$DataContext.Title:OneWay" Foreground="$AccentBrush" />
+  <Button Content="{Binding SaveLabel}" />
+  <Broken Attribute="
+  <Border>
+    @prism $GlowFx(Radius = 12);
+  </Border>
+  &lt;escaped&gt;
+</UserControl>
