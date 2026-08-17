@@ -4265,6 +4265,11 @@
     "source": "UI/Prism/Runtime/PrismVersions.cs"
   },
   {
+    "name": "Cerneala.VisualStudio.CernealaPackage",
+    "file": "documentation/classes/Cerneala.VisualStudio.CernealaPackage.md",
+    "source": "Cerneala.VisualStudio/CernealaPackage.cs"
+  },
+  {
     "name": "RoslynRepoIndexer.Core.CallGraphDirection",
     "file": "documentation/classes/RoslynRepoIndexer.Core.CallGraphDirection.md",
     "source": "Tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/SemanticQueries.cs"

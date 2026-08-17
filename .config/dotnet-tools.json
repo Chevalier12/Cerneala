@@ -7,6 +7,13 @@
       "commands": [
         "mgfxc"
       ]
+    },
+    "sign": {
+      "version": "0.9.1-beta.26330.1",
+      "commands": [
+        "sign"
+      ],
+      "rollForward": false
     }
   }
 }

@@ -1,0 +1,568 @@
+{
+  "checks": [
+    {
+      "details": "Edition=Community; Version=18.0",
+      "name": "host.community-sku",
+      "passed": true
+    },
+    {
+      "details": "The Cerneala product assembly was not loaded while the solution had no open .crn document.",
+      "name": "startup.no-cerneala-assembly",
+      "passed": true
+    },
+    {
+      "details": "No Cerneala language server process existed before a .crn document was opened.",
+      "name": "startup.no-server-process",
+      "passed": true
+    },
+    {
+      "details": "The Cerneala AsyncPackage remained unloaded at solution startup.",
+      "name": "startup.package-remains-lazy",
+      "passed": true
+    },
+    {
+      "details": "Provider activation CPU instrumentation returned 15.6250 ms.",
+      "name": "instrumentation.fixture.provider-activation-cpu",
+      "passed": true
+    },
+    {
+      "details": "provider-activation-cpu=15.625 ms; budget=100.000 ms.",
+      "name": "budget.fixture.provider-activation-cpu",
+      "passed": true
+    },
+    {
+      "details": "server-ready-cold=833.196 ms; budget=2000.000 ms.",
+      "name": "budget.fixture.server-ready-cold",
+      "passed": true
+    },
+    {
+      "details": "first-completion-cold=1357.454 ms; budget=2500.000 ms.",
+      "name": "budget.fixture.first-completion-cold",
+      "passed": true
+    },
+    {
+      "details": "Second-half private-byte growth=4907008; budget=100663296; midpoint=884043776; final=888950784.",
+      "name": "soak.open-close.devenv-plateau",
+      "passed": true
+    },
+    {
+      "details": "Second-half private-byte growth=0; budget=33554432; midpoint=271622144; final=271560704.",
+      "name": "soak.open-close.server-plateau",
+      "passed": true
+    },
+    {
+      "details": "100 open/close cycles completed with one owned server; baseline private bytes=900902912.",
+      "name": "soak.open-close-cycles",
+      "passed": true
+    },
+    {
+      "details": "Second-half private-byte growth=0; budget=100663296; midpoint=889544704; final=864247808.",
+      "name": "soak.edits.devenv-plateau",
+      "passed": true
+    },
+    {
+      "details": "Second-half private-byte growth=0; budget=33554432; midpoint=271560704; final=271560704.",
+      "name": "soak.edits.server-plateau",
+      "passed": true
+    },
+    {
+      "details": "1,000 editor changes completed with one owned server; baseline private bytes=888979456.",
+      "name": "soak.one-thousand-edits",
+      "passed": true
+    },
+    {
+      "details": "soak completion succeeded through the Visual Studio completion API.",
+      "name": "editor-responsive.soak-completion",
+      "passed": true
+    },
+    {
+      "details": "The provider API behind Tools.CernealaRestartLanguageServer accepted the restart request.",
+      "name": "resilience.restart-provider-api",
+      "passed": true
+    },
+    {
+      "details": "The restart command replaced PID 9700 without blocking the hidden editor.",
+      "name": "resilience.restart-server",
+      "passed": true
+    },
+    {
+      "details": "completion after restart succeeded through the Visual Studio completion API.",
+      "name": "editor-responsive.completion-after-restart",
+      "passed": true
+    },
+    {
+      "details": "The fixture had an intentional C# build error and Visual Studio remained responsive.",
+      "name": "resilience.project-build-errors",
+      "passed": true
+    },
+    {
+      "details": "completion with C# build errors succeeded through the Visual Studio completion API.",
+      "name": "editor-responsive.completion-with-c--build-errors",
+      "passed": true
+    },
+    {
+      "details": "Removing the intentional error restored a green build without restarting Visual Studio.",
+      "name": "resilience.build-repair",
+      "passed": true
+    },
+    {
+      "details": "completion after fixture reload succeeded through the Visual Studio completion API.",
+      "name": "editor-responsive.completion-after-fixture-reload",
+      "passed": true
+    },
+    {
+      "details": "fixture closed, reopened and returned completion with one server process.",
+      "name": "resilience.solution-reload.fixture",
+      "passed": true
+    },
+    {
+      "details": "Provider activation CPU instrumentation returned 0.0000 ms.",
+      "name": "instrumentation.cerneala-slnx.provider-activation-cpu",
+      "passed": true
+    },
+    {
+      "details": "provider-activation-cpu=0.000 ms; budget=100.000 ms.",
+      "name": "budget.cerneala-slnx.provider-activation-cpu",
+      "passed": true
+    },
+    {
+      "details": "server-ready-cold=964.291 ms; budget=2000.000 ms.",
+      "name": "budget.cerneala-slnx.server-ready-cold",
+      "passed": true
+    },
+    {
+      "details": "first-completion-cold=1922.658 ms; budget=2500.000 ms.",
+      "name": "budget.cerneala-slnx.first-completion-cold",
+      "passed": true
+    },
+    {
+      "details": "completion after Cerneala.slnx reload succeeded through the Visual Studio completion API.",
+      "name": "editor-responsive.completion-after-cerneala-slnx-reload",
+      "passed": true
+    },
+    {
+      "details": "Cerneala.slnx closed, reopened and returned completion with one server process.",
+      "name": "resilience.solution-reload.cerneala-slnx",
+      "passed": true
+    },
+    {
+      "details": "All language server processes created by the hidden Community instance exited after solution close.",
+      "name": "shutdown.no-owned-server-process",
+      "passed": true
+    }
+  ],
+  "finishedUtc": {
+    "DateTime": "2026-08-15T16:05:26.862Z",
+    "OffsetMinutes": 0
+  },
+  "hostEdition": "Community",
+  "hostVersion": "18.0",
+  "memoryBytes": 17159348224,
+  "memorySamples": [
+    {
+      "devenvPrivateBytes": 900902912,
+      "name": "open-close-0",
+      "serverPrivateBytes": 271659008,
+      "serverProcessCount": 1
+    },
+    {
+      "devenvPrivateBytes": 884043776,
+      "name": "open-close-50",
+      "serverPrivateBytes": 271622144,
+      "serverProcessCount": 1
+    },
+    {
+      "devenvPrivateBytes": 888950784,
+      "name": "open-close-100",
+      "serverPrivateBytes": 271560704,
+      "serverProcessCount": 1
+    },
+    {
+      "devenvPrivateBytes": 888979456,
+      "name": "edits-0",
+      "serverPrivateBytes": 271560704,
+      "serverProcessCount": 1
+    },
+    {
+      "devenvPrivateBytes": 889544704,
+      "name": "edits-500",
+      "serverPrivateBytes": 271560704,
+      "serverProcessCount": 1
+    },
+    {
+      "devenvPrivateBytes": 864247808,
+      "name": "edits-1000",
+      "serverPrivateBytes": 271560704,
+      "serverProcessCount": 1
+    }
+  ],
+  "metrics": [
+    {
+      "name": "host-ready-from-process-start",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 1808.4477000000002,
+      "workspace": "fixture"
+    },
+    {
+      "name": "extension-load",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 117.1443,
+      "workspace": "fixture"
+    },
+    {
+      "budget": 100,
+      "name": "provider-activation-cpu",
+      "passed": true,
+      "unit": "cpu-ms",
+      "value": 15.625,
+      "workspace": "fixture"
+    },
+    {
+      "budget": 2000,
+      "name": "server-ready-cold",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 833.1961,
+      "workspace": "fixture"
+    },
+    {
+      "budget": 2500,
+      "name": "first-completion-cold",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 1357.4544,
+      "workspace": "fixture"
+    },
+    {
+      "name": "first-diagnostics",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 16406.9591,
+      "workspace": "fixture"
+    },
+    {
+      "name": "editor-warm-completion-min",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 25.3137,
+      "workspace": "fixture"
+    },
+    {
+      "name": "editor-warm-completion-p50",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 29.4112,
+      "workspace": "fixture"
+    },
+    {
+      "name": "editor-warm-completion-p95",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 40.8866,
+      "workspace": "fixture"
+    },
+    {
+      "name": "editor-warm-completion-max",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 42.5841,
+      "workspace": "fixture"
+    },
+    {
+      "name": "editor-warm-diagnostics-min",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 139.7382,
+      "workspace": "fixture"
+    },
+    {
+      "name": "editor-warm-diagnostics-p50",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 155.3768,
+      "workspace": "fixture"
+    },
+    {
+      "name": "editor-warm-diagnostics-p95",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 171.4147,
+      "workspace": "fixture"
+    },
+    {
+      "name": "editor-warm-diagnostics-max",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 186.9769,
+      "workspace": "fixture"
+    },
+    {
+      "name": "server-restart",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 352.2719,
+      "workspace": "fixture"
+    },
+    {
+      "name": "solution-reload",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 1003.5781000000001,
+      "workspace": "fixture"
+    },
+    {
+      "name": "solution-open",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 1019.8850000000001,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "extension-load",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 65.9856,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "budget": 100,
+      "name": "provider-activation-cpu",
+      "passed": true,
+      "unit": "cpu-ms",
+      "value": 0,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "budget": 2000,
+      "name": "server-ready-cold",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 964.2914000000001,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "budget": 2500,
+      "name": "first-completion-cold",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 1922.6584,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "first-diagnostics",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 32813.26,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "editor-warm-completion-min",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 149.9892,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "editor-warm-completion-p50",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 181.5267,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "editor-warm-completion-p95",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 228.2408,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "editor-warm-completion-max",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 229.6216,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "editor-warm-diagnostics-min",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 264.07,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "editor-warm-diagnostics-p50",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 264.781,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "editor-warm-diagnostics-p95",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 311.3587,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "editor-warm-diagnostics-max",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 342.31030000000004,
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "solution-reload",
+      "passed": true,
+      "unit": "wall-ms",
+      "value": 1663.2138,
+      "workspace": "Cerneala.slnx"
+    }
+  ],
+  "operatingSystem": "Microsoft Windows NT 10.0.26200.0",
+  "passed": true,
+  "processorCount": 8,
+  "processorName": "AMD EPYC 9354 32-Core Processor",
+  "sampleGroups": [
+    {
+      "name": "editor-warm-completion",
+      "values": [
+        36.1509,
+        34.7624,
+        42.5841,
+        29.4112,
+        28.529700000000002,
+        25.3137,
+        27.834500000000002,
+        27.835,
+        29.044800000000002,
+        30.3934,
+        40.0144,
+        26.3656,
+        29.0968,
+        28.271700000000003,
+        27.431900000000002,
+        37.290800000000004,
+        32.8686,
+        35.8138,
+        40.8866,
+        31.098100000000002
+      ],
+      "workspace": "fixture"
+    },
+    {
+      "name": "editor-warm-diagnostics",
+      "values": [
+        155.43380000000002,
+        186.9769,
+        170.9733,
+        155.3911,
+        142.8638,
+        140.2903,
+        154.26420000000002,
+        155.2759,
+        139.8377,
+        139.7382,
+        171.35850000000002,
+        155.54680000000002,
+        155.3768,
+        139.814,
+        155.3817,
+        139.7903,
+        155.7972,
+        139.8006,
+        171.4147,
+        170.8985
+      ],
+      "workspace": "fixture"
+    },
+    {
+      "name": "editor-warm-completion",
+      "values": [
+        229.6216,
+        149.9892,
+        194.9914,
+        179.01520000000002,
+        195.42610000000002,
+        183.02880000000002,
+        184.69920000000002,
+        179.7972,
+        181.6951,
+        198.7024,
+        166.2597,
+        169.9687,
+        178.6543,
+        170.8589,
+        181.5267,
+        177.92700000000002,
+        228.2408,
+        169.0731,
+        184.4562,
+        181.9803
+      ],
+      "workspace": "Cerneala.slnx"
+    },
+    {
+      "name": "editor-warm-diagnostics",
+      "values": [
+        311.3587,
+        310.7896,
+        264.0732,
+        266.3722,
+        264.1327,
+        264.1571,
+        265.12010000000004,
+        264.57120000000003,
+        264.09340000000003,
+        264.12530000000004,
+        264.5602,
+        278.1256,
+        296.1585,
+        264.07,
+        311.2465,
+        264.781,
+        279.61920000000003,
+        342.31030000000004,
+        267.2092,
+        264.6454
+      ],
+      "workspace": "Cerneala.slnx"
+    }
+  ],
+  "serverPids": [
+    4376,
+    9700,
+    12260,
+    13072,
+    17484
+  ],
+  "startedUtc": {
+    "DateTime": "2026-08-15T16:03:45.816Z",
+    "OffsetMinutes": 0
+  },
+  "visualStudioInstallation": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community (18.9.12105.275)",
+  "externalChecks": [
+    {
+      "name": "lsp-warm-budgets-full-solution",
+      "passed": true,
+      "details": "real JSON-RPC: completion p95 < 100 ms; diagnostics p95 < 200 ms"
+    },
+    {
+      "name": "extension-disabled-api",
+      "passed": true,
+      "details": "responsive=True; ownedServerCount=0; observationSeconds=5"
+    },
+    {
+      "name": "shutdown-no-process-leak",
+      "passed": true,
+      "details": "observedServerPids=4376,9700,12260,13072,17484; all exited"
+    },
+    {
+      "name": "server-unavailable",
+      "passed": true,
+      "details": "responsive=True; ownedServerCount=0; observationSeconds=12"
+    }
+  ]
+}
