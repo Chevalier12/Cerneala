@@ -180,7 +180,7 @@
 <span class="tok-tag">&lt;/Window&gt;</span></code></pre>
         </article>
         <article class="code-file code-file--cui">
-          <header><span>Cerneala</span><strong>MainWindow.cui.xml</strong></header>
+          <header><span>Cerneala</span><strong>MainWindow.crn</strong></header>
           <pre><code><span class="tok-tag">&lt;Window</span> <span class="tok-prop">DataType</span>=<span class="tok-str">"EditorViewModel"</span>
         <span class="tok-prop">Title</span>=<span class="tok-str">"Sample"</span>
         <span class="tok-prop">Width</span>=<span class="tok-str">"800"</span> <span class="tok-prop">Height</span>=<span class="tok-str">"600"</span><span class="tok-tag">&gt;</span>
@@ -195,8 +195,8 @@
       </div>
       <div class="translation-table">
         <div class="translation-row translation-row--head"><span>WPF expectation</span><span>Cerneala reality</span><span>Verdict</span></div>
-        <div class="translation-row"><span>XAML maps markup to CLR objects and may compile to BAML.</span><span><code>.cui.xml</code> is an AdditionalFile consumed by a Roslyn source generator that emits typed partial C#.</span><span class="status status--different">Different</span></div>
-        <div class="translation-row"><span><code>.xaml.cs</code> supplies code-behind.</span><span>A matching <code>.cui.xml.cs</code> partial class supplies behavior and validated handlers.</span><span class="status status--close">Close</span></div>
+        <div class="translation-row"><span>XAML maps markup to CLR objects and may compile to BAML.</span><span><code>.crn</code> is an AdditionalFile consumed by a Roslyn source generator that emits typed partial C#.</span><span class="status status--different">Different</span></div>
+        <div class="translation-row"><span><code>.xaml.cs</code> supplies code-behind.</span><span>A matching <code>.crn.cs</code> partial class supplies behavior and validated handlers.</span><span class="status status--close">Close</span></div>
         <div class="translation-row"><span>Markup extensions, arbitrary namespaces, runtime loading, and the broad XAML language.</span><span>Only the documented Cerneala grammar: elements, properties, events, resources, Aspects, logical <code>@when</code>/<code>@if</code>, templates, and source-generated bindings/interpolation.</span><span class="status status--partial">Constrained</span></div>
         <div class="translation-row"><span>Visual Studio XAML designer and mature design-time metadata.</span><span>No WPF designer compatibility or general design surface is promised.</span><span class="status status--absent">Absent</span></div>
       </div>

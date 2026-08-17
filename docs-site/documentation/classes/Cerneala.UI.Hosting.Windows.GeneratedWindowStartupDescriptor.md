@@ -24,7 +24,7 @@ int exitCode = GeneratedWindowApplication.Run(descriptor, args);
 ## Constructors
 | Name | Description |
 | --- | --- |
-| `GeneratedWindowStartupDescriptor(Func<Application>, Action<IServiceCollection>, Func<IServiceProvider, Window>, string?)` | Creates the application-aware startup callbacks emitted for `App.cui.xml`; the startup type name is optional diagnostic context. |
+| `GeneratedWindowStartupDescriptor(Func<Application>, Action<IServiceCollection>, Func<IServiceProvider, Window>, string?)` | Creates the application-aware startup callbacks emitted for `App.crn`; the startup type name is optional diagnostic context. |
 | `GeneratedWindowStartupDescriptor(Action<IServiceCollection>, Func<IServiceProvider, Window>)` | Creates the legacy main-window callbacks used when no application definition exists. |
 
 ## Remarks

@@ -25,7 +25,7 @@ PrismGroupDefinition group = new(
             "Content",
             filters: [new PrismFilterDefinition(PrismFilterId.Blur)])
     ],
-    sourceSpan: new PrismSourceSpan(40, 12, "Card.cui.xml"));
+    sourceSpan: new PrismSourceSpan(40, 12, "Card.crn"));
 ```
 
 ## Remarks

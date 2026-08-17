@@ -26,7 +26,7 @@ PrismLayerDefinition layer = new(
     new PrismNodeId(1),
     "Content",
     styles: [new PrismStyleDefinition(PrismStyleId.DropShadow)],
-    sourceSpan: new PrismSourceSpan(24, 7, "Card.cui.xml"));
+    sourceSpan: new PrismSourceSpan(24, 7, "Card.crn"));
 ```
 
 ## Remarks

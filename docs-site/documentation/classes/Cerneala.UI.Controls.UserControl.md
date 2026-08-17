@@ -19,7 +19,7 @@ public sealed class SettingsView : UserControl
 ```
 
 ## Remarks
-`UserControl` adds the semantic boundary used by generated `.cui.xml` user controls while retaining normal `Control` layout, resources, and rendering behavior.
+`UserControl` adds the semantic boundary used by generated `.crn` user controls while retaining normal `Control` layout, resources, and rendering behavior.
 
 The control renders its inherited `Background`, `BorderBrush`, and `BorderThickness` across its arranged bounds before rendering its generated or assigned component-template content. A `null` background remains transparent.
 

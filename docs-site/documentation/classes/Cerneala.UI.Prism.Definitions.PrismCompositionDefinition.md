@@ -28,7 +28,7 @@ PrismCompositionDefinition composition = new(
             "Glass",
             filters: [new PrismFilterDefinition(PrismFilterId.Blur)])
     ],
-    sourceSpan: new PrismSourceSpan(0, 128, "Card.cui.xml"));
+    sourceSpan: new PrismSourceSpan(0, 128, "Card.crn"));
 ```
 
 ## Remarks

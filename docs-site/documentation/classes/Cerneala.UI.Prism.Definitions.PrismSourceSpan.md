@@ -21,9 +21,9 @@ using Cerneala.UI.Prism.Definitions;
 PrismSourceSpan span = new(
     start: 24,
     length: 7,
-    sourceName: "Card.cui.xml");
+    sourceName: "Card.crn");
 
-Console.WriteLine(span); // Card.cui.xml@24+7
+Console.WriteLine(span); // Card.crn@24+7
 ```
 
 ## Remarks

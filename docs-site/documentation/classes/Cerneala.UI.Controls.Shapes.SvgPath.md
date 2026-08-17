@@ -63,7 +63,7 @@ The inherited `Shape` renderer scales the SVG geometry from `ViewBox` into the a
 
 ## Applies To
 
-Cerneala retained UI shape controls and generated `.cui.xml` markup in the `Cerneala` project.
+Cerneala retained UI shape controls and generated `.crn` markup in the `Cerneala` project.
 
 ## See Also
 

@@ -20,7 +20,7 @@ PrismBackdropDefinition backdrop = new(
     new PrismNodeId(20),
     "Glass",
     filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
-    sourceSpan: new PrismSourceSpan(72, 9, "Card.cui.xml"));
+    sourceSpan: new PrismSourceSpan(72, 9, "Card.crn"));
 ```
 
 ## Remarks

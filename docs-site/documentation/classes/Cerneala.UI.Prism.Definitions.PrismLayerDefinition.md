@@ -21,7 +21,7 @@ PrismLayerDefinition layer = new(
     "SoftGlow",
     filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
     styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)],
-    sourceSpan: new PrismSourceSpan(24, 7, "Card.cui.xml"));
+    sourceSpan: new PrismSourceSpan(24, 7, "Card.crn"));
 ```
 
 ## Remarks

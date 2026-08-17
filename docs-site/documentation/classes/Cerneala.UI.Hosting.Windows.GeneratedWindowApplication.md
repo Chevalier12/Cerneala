@@ -24,7 +24,7 @@ int exitCode = GeneratedWindowApplication.Run(descriptor, args);
 | `Run(GeneratedWindowStartupDescriptor, IReadOnlyList<string>)` | Runs standalone using the supplied startup arguments and returns the application exit code. |
 
 ## Remarks
-Only one distinct startup descriptor may be registered. Descriptors generated from `App.cui.xml` include an application factory; legacy descriptors retain the main-window-only path for compatibility.
+Only one distinct startup descriptor may be registered. Descriptors generated from `App.crn` include an application factory; legacy descriptors retain the main-window-only path for compatibility.
 
 For application-aware descriptors, `Run` constructs and installs `Application`, configures and publishes services, raises startup, resolves and shows the declarative startup window, pumps until shutdown, and returns the first exit code supplied to `Application.Shutdown(int)`. Cleanup disposes the runtime and application service provider and clears `Application.Current`.
 

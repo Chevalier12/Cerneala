@@ -10,9 +10,9 @@ const comparisonRows = [
   ['Runtime', 'Dispatcher idle behavior', 'Allocation-free Relay and scheduler idle queries after warmup', 'native', '`HasPendingWork`, `PendingCount`, idle Relay drain and Queue Engine work checks avoid tree scans and speculative snapshots.'],
   ['Runtime', 'WPF device-independent units', '`UiViewport` + `UiCoordinateMapper` + DPI services', 'different', 'Logical-to-physical mapping is explicit at host/backend boundaries; exact WPF DPI behavior is not promised.'],
 
-  ['Authoring', '`.xaml`', '`.cui.xml`', 'different', 'The file is XML-shaped Cerneala markup, not WPF XAML.'],
+  ['Authoring', '`.xaml`', '`.crn`', 'different', 'The file is XML-shaped Cerneala markup, not WPF XAML.'],
   ['Authoring', 'BAML / WPF XAML build tasks', 'Roslyn incremental source generator', 'native', 'Markup is an AdditionalFile and generates typed partial C# at compile time.'],
-  ['Authoring', '`.xaml.cs` code-behind', '`.cui.xml.cs` partial class', 'close', 'The paired-file mental model transfers, but generated members and grammar are Cerneala-specific.'],
+  ['Authoring', '`.xaml.cs` code-behind', '`.crn.cs` partial class', 'close', 'The paired-file mental model transfers, but generated members and grammar are Cerneala-specific.'],
   ['Authoring', '`x:Name` + namescopes', '`Name` + generated typed members / template parts', 'different', 'Names are resolved by the generator and template-part instances; WPF namescope parity is not claimed.'],
   ['Authoring', 'WPF markup extensions', 'Documented directives and resource references', 'partial', 'There is no general `{Extension ...}` ecosystem equivalent in the preview contract.'],
   ['Authoring', '`XamlReader` / loose runtime XAML', 'No general runtime XAML interpretation', 'absent', 'Cerneala deliberately supports a compile-time authoring path instead.'],
@@ -28,7 +28,7 @@ const comparisonRows = [
   ['Properties', '`Freezable`', 'No direct framework-wide analogue', 'absent', 'Freeze, clone, inheritance context, and Freezable animation behavior do not transfer.'],
   ['Properties', '`SetCurrentValue` / expression preservation', 'Explicit value sources and mutations', 'different', 'WPF expression-preservation behavior must not be assumed.'],
 
-  ['Data', '`Binding` + string `PropertyPath`', 'Source-generated `.cui.xml` paths + `Binding<T>` / `BindingOperations`', 'different', 'Markup paths are resolved by Roslyn into typed access and observation; runtime reflection is not the hot path.'],
+  ['Data', '`Binding` + string `PropertyPath`', 'Source-generated `.crn` paths + `Binding<T>` / `BindingOperations`', 'different', 'Markup paths are resolved by Roslyn into typed access and observation; runtime reflection is not the hot path.'],
   ['Data', '`INotifyPropertyChanged`', 'Supported by generated `$DataContext` paths', 'close', 'CLR owners are observed explicitly; attached generated bindings coalesce worker notifications through the root Relay before reading paths or touching UI.'],
   ['Data', 'Cross-thread binding notifications', 'Coalesced latest-state refresh on `UiRelay`', 'native', 'The worker callback filters the property name only; full path evaluation and target mutation happen later on the UI thread.'],
   ['Data', '`INotifyCollectionChanged`', '`ObservableList<T>` / `IObservableList<T>`', 'close', 'Collection changes drive retained item paths, with a smaller explicit contract.'],

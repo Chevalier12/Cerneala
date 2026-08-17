@@ -724,7 +724,7 @@ footer{
         <p class="eyebrow">Compiled authoring · retained runtime · C#</p>
         <h1 class="hero__h1">Cerneala</h1>
         <p class="hero__sub">A retained UI framework for native windows and game hosts.</p>
-        <p class="hero__body">Author views in <code>.cui.xml</code> and partial C#. Run typed properties, aspects, templates, routed input, incremental layout, motion, and cached drawing on one deterministic frame contract.</p>
+        <p class="hero__body">Author views in <code>.crn</code> and partial C#. Run typed properties, aspects, templates, routed input, incremental layout, motion, and cached drawing on one deterministic frame contract.</p>
         <div class="hero__ctas">
           <a class="btn btn--solid" href="https://github.com/Chevalier12/Cerneala">View on GitHub</a>
           <a class="btn btn--ghost" href="documentation.html">Read the Docs</a>
@@ -834,7 +834,7 @@ footer{
       <div class="surface__stack" aria-label="Framework layers">
         <div class="surface__layer surface__layer--author">
           <span>Author</span>
-          <strong>.cui.xml + generated bindings + partial C#</strong>
+          <strong>.crn + generated bindings + partial C#</strong>
         </div>
         <div class="surface__layer surface__layer--model">
           <span>Model</span>
@@ -864,8 +864,8 @@ footer{
         <path d="m13 15-3 3 3 3m6-6 3 3-3 3m-2-8-2 10"/>
       </svg>
       <h3>Compiled Markup</h3>
-      <p><code>.cui.xml</code> additional files compile into partial windows and controls with named elements, event hooks, resources, aspects, templates, logical conditions, and typed OneWay/TwoWay data bindings. Behavior stays in matching C#.</p>
-      <div class="feature-tile__api">.cui.xml · UiMarkupGenerator · $DataContext · partial classes</div>
+      <p><code>.crn</code> additional files compile into partial windows and controls with named elements, event hooks, resources, aspects, templates, logical conditions, and typed OneWay/TwoWay data bindings. Behavior stays in matching C#.</p>
+      <div class="feature-tile__api">.crn · UiMarkupGenerator · $DataContext · partial classes</div>
     </div>
 
     <div class="feature-tile feature-tile--pink">
@@ -1101,7 +1101,7 @@ footer{
     <div class="section-head" style="margin-left:auto;margin-right:auto;text-align:center;">
       <p class="eyebrow" style="justify-content:center;">Markup + code-behind</p>
       <h2>Describe the tree. Keep behavior in C#.</h2>
-      <p style="margin-left:auto;margin-right:auto;">A <code>.cui.xml</code> additional file declares the retained window, named elements, and event hooks. Its matching <code>.cui.xml.cs</code> partial class receives typed names and handler wiring at build time.</p>
+      <p style="margin-left:auto;margin-right:auto;">A <code>.crn</code> additional file declares the retained window, named elements, and event hooks. Its matching <code>.crn.cs</code> partial class receives typed names and handler wiring at build time.</p>
     </div>
 
     <div class="markup-demo">
@@ -1120,7 +1120,7 @@ footer{
       <div class="markup-demo__files">
         <article class="markup-file markup-file--xml">
           <header class="markup-file__head">
-            <span class="markup-file__name">MainWindow.cui.xml</span>
+            <span class="markup-file__name">MainWindow.crn</span>
             <span class="markup-file__kind">Markup</span>
           </header>
           <div class="markup-file__body">
@@ -1173,7 +1173,7 @@ footer{
 
         <article class="markup-file markup-file--cs">
           <header class="markup-file__head">
-            <span class="markup-file__name">MainWindow.cui.xml.cs</span>
+            <span class="markup-file__name">MainWindow.crn.cs</span>
             <span class="markup-file__kind">Behavior</span>
           </header>
           <div class="markup-file__body">
@@ -1223,7 +1223,7 @@ footer{
         <div class="markup-demo__step">
           <span>01</span>
           <strong>Additional file</strong>
-          <small>MSBuild feeds every <code>.cui.xml</code> file to the incremental generator.</small>
+          <small>MSBuild feeds every <code>.crn</code> file to the incremental generator.</small>
         </div>
         <div class="markup-demo__step">
           <span>02</span>
