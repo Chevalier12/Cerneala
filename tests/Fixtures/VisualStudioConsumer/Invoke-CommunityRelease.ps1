@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^\d+\.\d+\.\d+(?:\.\d+)?$')]
-    [string]$Version = '0.1.0',
+    [string]$Version = '0.1.30',
     [ValidatePattern('^\d+\.\d+\.\d+(?:\.\d+)?$')]
     [string]$PreviousVersion = '0.0.9',
     [string]$RootSuffix = 'Stage6RC',
@@ -412,7 +412,7 @@ try {
         sha256 = $candidateBuild.Sha256
         deterministicUnsignedSha256 = $candidateBuild.UnsignedSha256
         downgradeInstallerExitCode = $downgradeExitCode
-        settingsCompatibility = 'No user settings surface exists in 0.1.0; the stable identity remained enabled and functional across upgrade.'
+        settingsCompatibility = 'No user settings surface exists in 0.1.30; the stable identity remained enabled and functional across upgrade.'
         integrationChecks = @($integration.checks).Count
         uninstallResidue = 0
         automation = 'Hidden Experimental Instance; VSIXInstaller, CreateExpInstance, DTE and Visual Studio editor APIs only.'

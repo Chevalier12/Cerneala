@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^\d+\.\d+\.\d+(?:\.\d+)?$')]
-    [string]$Version = '0.1.0',
+    [string]$Version,
     [string]$OutputDirectory,
     [switch]$SkipSigning,
     [string]$SigningThumbprint = $env:CERNEALA_VSIX_SIGNING_THUMBPRINT,
@@ -12,6 +12,15 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+$projectPath = Join-Path $repoRoot 'Cerneala.VisualStudio\Cerneala.VisualStudio.csproj'
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    [xml]$project = Get-Content -LiteralPath $projectPath
+    $Version = $project.Project.PropertyGroup.Version | Select-Object -First 1
+    if ($Version -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') {
+        throw 'Cerneala.VisualStudio.csproj does not declare a valid release Version.'
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     $OutputDirectory = Join-Path $repoRoot 'artifacts\visual-studio'
 }
@@ -176,7 +185,6 @@ function Get-SigningCertificateFingerprint {
 
 $installation = Get-VisualStudioInstallation
 $msbuild = Join-Path $installation 'MSBuild\Current\Bin\MSBuild.exe'
-$projectPath = Join-Path $repoRoot 'Cerneala.VisualStudio\Cerneala.VisualStudio.csproj'
 $builtVsix = Join-Path $repoRoot 'Cerneala.VisualStudio\bin\Release\net472\Cerneala.VisualStudio.vsix'
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 

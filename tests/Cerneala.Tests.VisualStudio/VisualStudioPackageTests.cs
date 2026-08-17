@@ -29,6 +29,7 @@ public sealed class VisualStudioPackageTests
     [Fact]
     public void VsixContainsHostServerGrammarConfigurationAndAssets()
     {
+        string expectedVersion = ProjectVersion();
         string vsixPath = FindVsix();
         using ZipArchive package = ZipFile.OpenRead(vsixPath);
         HashSet<string> entries = package.Entries
@@ -44,10 +45,10 @@ public sealed class VisualStudioPackageTests
         Assert.Contains("LICENSE", entries);
         Assert.Contains("THIRD-PARTY-NOTICES.txt", entries);
         Assert.Contains(entries, entry => entry.Equals(
-            "Server/0.1.0/Cerneala.LanguageServer.exe",
+            $"Server/{expectedVersion}/Cerneala.LanguageServer.exe",
             StringComparison.OrdinalIgnoreCase));
         Assert.Contains(entries, entry => entry.Equals(
-            "Server/0.1.0/coreclr.dll",
+            $"Server/{expectedVersion}/coreclr.dll",
             StringComparison.OrdinalIgnoreCase));
 
         ZipArchiveEntry manifestEntry = Assert.Single(package.Entries.Where(entry => entry.FullName.Equals(
@@ -56,7 +57,7 @@ public sealed class VisualStudioPackageTests
         using Stream manifestStream = manifestEntry.Open();
         XDocument packagedManifest = XDocument.Load(manifestStream);
         XElement packagedIdentity = Assert.Single(packagedManifest.Descendants(Vsix + "Identity"));
-        Assert.Equal("0.1.0", (string?)packagedIdentity.Attribute("Version"));
+        Assert.Equal(expectedVersion, (string?)packagedIdentity.Attribute("Version"));
     }
 
     [Fact]
@@ -106,6 +107,12 @@ public sealed class VisualStudioPackageTests
     }
 
     private static string ProjectDirectory() => Path.Combine(RepositoryRoot(), "Cerneala.VisualStudio");
+
+    private static string ProjectVersion()
+    {
+        XDocument project = XDocument.Load(Path.Combine(ProjectDirectory(), "Cerneala.VisualStudio.csproj"));
+        return Assert.Single(project.Descendants("Version")).Value;
+    }
 
     internal static string RepositoryRoot()
     {
