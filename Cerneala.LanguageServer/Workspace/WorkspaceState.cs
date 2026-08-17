@@ -1,3 +1,4 @@
+using Cerneala.Language;
 using Cerneala.LanguageServer.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -26,6 +27,12 @@ internal sealed class WorkspaceState : IDisposable
 
     public IReadOnlyList<ProjectContext> Projects { get; }
 
+    public static WorkspaceState Empty(long revision) => new(
+        revision,
+        null,
+        [],
+        new Dictionary<string, ProjectContext[]>(PathComparer.Instance));
+
     public static async Task<WorkspaceState> LoadAsync(
         WorkspaceConfiguration configuration,
         long revision,
@@ -35,7 +42,7 @@ internal sealed class WorkspaceState : IDisposable
         string? workspacePath = configuration.ResolveWorkspacePath();
         if (workspacePath is null)
         {
-            return new WorkspaceState(revision, null, [], new Dictionary<string, ProjectContext[]>(PathComparer.Instance));
+            return Empty(revision);
         }
 
         Dictionary<string, string> properties = new(StringComparer.OrdinalIgnoreCase)
@@ -73,9 +80,15 @@ internal sealed class WorkspaceState : IDisposable
                 throw new NotSupportedException("Unsupported workspace file '" + workspacePath + "'.");
             }
 
+            solution = RemoveAnalyzerReferences(solution);
+
             List<ProjectContext> contexts = new();
             foreach (IGrouping<string, Project> group in solution.Projects
-                .Where(project => project.Language == LanguageNames.CSharp && project.FilePath is not null)
+                .Where(project => project.Language == LanguageNames.CSharp &&
+                    project.FilePath is not null &&
+                    project.AdditionalDocuments.Any(document =>
+                        document.FilePath is not null &&
+                        CernealaDocumentPath.IsMarkupFile(document.FilePath)))
                 .GroupBy(project => PathComparer.Normalize(project.FilePath!), PathComparer.Instance))
             {
                 Project selected = SelectTargetFramework(group, configuration.ActiveTargetFramework);
@@ -146,5 +159,19 @@ internal sealed class WorkspaceState : IDisposable
         }
 
         return candidates[0];
+    }
+
+    private static Solution RemoveAnalyzerReferences(Solution solution)
+    {
+        foreach (ProjectId projectId in solution.ProjectIds)
+        {
+            Project? project = solution.GetProject(projectId);
+            if (project is not null && project.AnalyzerReferences.Count != 0)
+            {
+                solution = solution.WithProjectAnalyzerReferences(projectId, []);
+            }
+        }
+
+        return solution;
     }
 }

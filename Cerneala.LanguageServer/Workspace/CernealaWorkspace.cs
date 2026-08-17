@@ -17,6 +17,8 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
     private CancellationTokenSource stateVersionCancellation = new();
     private FileSystemWatcher? watcher;
     private CancellationTokenSource? debounceCancellation;
+    private Task? initialReloadTask;
+    private bool initialLoadDeferred;
     private bool disposed;
 
     private CernealaWorkspace(WorkspaceConfiguration configuration, IServerLogger logger)
@@ -24,10 +26,10 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
         this.configuration = configuration;
         this.logger = logger;
         Telemetry = new ServerTelemetry(logger);
-        state = WorkspaceState.LoadAsync(configuration with { SolutionPath = null, RootPath = null }, 0, logger, CancellationToken.None)
-            .GetAwaiter()
-            .GetResult();
+        state = WorkspaceState.Empty(0);
     }
+
+    internal event Action? Reloaded;
 
     public long Revision
     {
@@ -47,12 +49,31 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
     public static async Task<CernealaWorkspace> CreateAsync(
         WorkspaceConfiguration configuration,
         IServerLogger logger,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool deferInitialLoad = false)
     {
         CernealaWorkspace workspace = new(configuration, logger);
-        await workspace.ReloadAsync(cancellationToken).ConfigureAwait(false);
+        if (deferInitialLoad)
+        {
+            workspace.initialLoadDeferred = true;
+        }
+        else
+        {
+            await workspace.ReloadAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         workspace.StartWatcher();
         return workspace;
+    }
+
+    internal void StartDeferredInitialLoad()
+    {
+        if (!initialLoadDeferred || initialReloadTask is not null)
+        {
+            return;
+        }
+
+        initialReloadTask = ReloadInitialWorkspaceAsync();
     }
 
     public bool OpenDocument(string uri, string text, long version) =>
@@ -100,6 +121,7 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
             previousCancellation.Cancel();
             previousCancellation.Dispose();
             previous.Release();
+            Reloaded?.Invoke();
         }
         finally
         {
@@ -166,6 +188,10 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
             return state.GetOwners(path).Select(owner => owner.Summary).ToArray();
         }
     }
+
+    internal IReadOnlyList<string> GetOpenDocumentUris() => overlays.GetSnapshots()
+        .Select(snapshot => new Uri(snapshot.Path).AbsoluteUri)
+        .ToArray();
 
     public async Task<VersionedDocumentResult<T>?> RunDocumentRequestAsync<T>(
         string uri,
@@ -312,6 +338,11 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
         lifetimeCancellation.Cancel();
         overlays.Dispose();
 
+        if (initialReloadTask is not null)
+        {
+            await initialReloadTask.ConfigureAwait(false);
+        }
+
         await reloadGate.WaitAsync().ConfigureAwait(false);
         try
         {
@@ -355,6 +386,21 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
         watcher.Created += OnWorkspaceFileChanged;
         watcher.Deleted += OnWorkspaceFileChanged;
         watcher.Renamed += OnWorkspaceFileChanged;
+    }
+
+    private async Task ReloadInitialWorkspaceAsync()
+    {
+        try
+        {
+            await ReloadAsync(lifetimeCancellation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            logger.Critical("workspace.initialLoadFailed", ("exceptionType", exception.GetType().FullName));
+        }
     }
 
     private void OnWorkspaceFileChanged(object sender, FileSystemEventArgs args)

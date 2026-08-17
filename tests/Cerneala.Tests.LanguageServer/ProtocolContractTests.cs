@@ -37,8 +37,7 @@ public sealed class ProtocolContractTests
         Assert.NotNull(result.Capabilities.SemanticTokensProvider);
         Assert.True(result.Capabilities.SemanticTokensProvider.Full.Delta);
         Assert.Equal(
-            ["elementType", "property", "attachedProperty", "event", "namespace", "resource",
-                "bindingSource", "bindingMember", "directive", "motion", "prism"],
+            ["type", "property", "event", "namespace", "variable", "keyword", "function", "parameter", "enumMember", "label", "property"],
             result.Capabilities.SemanticTokensProvider.Legend.TokenTypes);
         Assert.Equal(["declaration"], result.Capabilities.SemanticTokensProvider.Legend.TokenModifiers);
         Assert.True(result.Capabilities.DocumentSymbolProvider);
@@ -57,6 +56,34 @@ public sealed class ProtocolContractTests
     }
 
     [Fact]
+    public async Task VisualStudioPushModeDoesNotAdvertisePullDiagnostics()
+    {
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+
+        InitializeResult result = await client.InitializeAsync(
+            timeout.Token,
+            diagnosticsMode: "push");
+
+        Assert.Null(result.Capabilities.DiagnosticProvider);
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
+    [Fact]
+    public async Task VisualStudioUsesThemeDistinctSemanticTokenClassifications()
+    {
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+
+        InitializeResult result = await client.InitializeAsync(timeout.Token, host: "visualStudio");
+
+        Assert.Equal(
+            ["type", "property name", "event", "namespace", "type", "keyword", "function", "parameter", "enumMember", "keyword - control", "method name"],
+            result.Capabilities.SemanticTokensProvider!.Legend.TokenTypes);
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
+    [Fact]
     public async Task DiagnosticsAndCompletionAreGreenAfterIncrementalChange()
     {
         using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
@@ -64,7 +91,7 @@ public sealed class ProtocolContractTests
         await client.InitializeAsync(timeout.Token);
         await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
 
-        string uri = new Uri(Path.GetFullPath("View.cui.xml")).AbsoluteUri;
+        string uri = new Uri(Path.GetFullPath("View.crn")).AbsoluteUri;
         await client.Rpc.NotifyWithParameterObjectAsync(
             "textDocument/didOpen",
             new DidOpenTextDocumentParams
@@ -127,7 +154,7 @@ public sealed class ProtocolContractTests
         await client.InitializeAsync(timeout.Token);
         await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
 
-        string uri = new Uri(Path.GetFullPath("Recovery.cui.xml")).AbsoluteUri;
+        string uri = new Uri(Path.GetFullPath("Recovery.crn")).AbsoluteUri;
         await client.Rpc.NotifyWithParameterObjectAsync(
             "textDocument/didOpen",
             new DidOpenTextDocumentParams
@@ -174,13 +201,77 @@ public sealed class ProtocolContractTests
     }
 
     [Fact]
+    public async Task IncrementalPushDiagnosticsReportEmbeddedSyntaxBeforeDeferredWorkspaceLoads()
+    {
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        await client.InitializeAsync(
+            timeout.Token,
+            diagnosticsMode: "push",
+            deferWorkspaceLoad: true);
+
+        string uri = new Uri(Path.GetFullPath("DeferredMotion.crn")).AbsoluteUri;
+        const string validText = """
+            <Window>
+              <Window.Resources>
+                <MotionClip Name="LoadingSequence" TargetType="Window">
+                  @run $LoadingSequence as Loading;
+                </MotionClip>
+              </Window.Resources>
+            </Window>
+            """;
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didOpen",
+            new DidOpenTextDocumentParams
+            {
+                TextDocument = new TextDocumentItem
+                {
+                    Uri = uri,
+                    LanguageId = "cerneala",
+                    Version = 1,
+                    Text = validText
+                }
+            });
+        await client.WaitForDiagnosticsAsync(
+            notification => notification.Uri == uri && notification.Version == 1,
+            timeout.Token);
+
+        long started = System.Diagnostics.Stopwatch.GetTimestamp();
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didChange",
+            new DidChangeTextDocumentParams
+            {
+                TextDocument = new VersionedTextDocumentIdentifier { Uri = uri, Version = 2 },
+                ContentChanges =
+                [
+                    new TextDocumentContentChangeEvent
+                    {
+                        Text = validText.Replace(" as Loading;", " as Loading", StringComparison.Ordinal)
+                    }
+                ]
+            });
+
+        using CancellationTokenSource diagnosticTimeout = new(TimeSpan.FromSeconds(2));
+        PublishDiagnosticsParams diagnostics = await client.WaitForDiagnosticsAsync(
+            notification => notification.Uri == uri &&
+                notification.Version == 2 &&
+                notification.Diagnostics.Any(diagnostic => diagnostic.Code == "CERNEALAUI020"),
+            diagnosticTimeout.Token);
+        TimeSpan elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(started);
+
+        Assert.Contains(diagnostics.Diagnostics, diagnostic => diagnostic.Code == "CERNEALAUI020");
+        Assert.True(elapsed < TimeSpan.FromSeconds(1), $"Embedded diagnostics took {elapsed.TotalMilliseconds:F0} ms.");
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
+    [Fact]
     public async Task BuildDiagnosticsSuppressOnlyTheMatchingLspIdentity()
     {
         using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
         await using ProtocolTestClient client = ProtocolTestClient.Start();
         await client.InitializeAsync(timeout.Token);
 
-        string uri = new Uri(Path.GetFullPath("BuildDedupe.cui.xml")).AbsoluteUri;
+        string uri = new Uri(Path.GetFullPath("BuildDedupe.crn")).AbsoluteUri;
         await client.Rpc.NotifyWithParameterObjectAsync(
             "textDocument/didOpen",
             new DidOpenTextDocumentParams
@@ -245,7 +336,7 @@ public sealed class ProtocolContractTests
             {
                 TextDocument = new TextDocumentItem
                 {
-                    Uri = "file:///private/View.cui.xml",
+                    Uri = "file:///private/View.crn",
                     LanguageId = "cerneala",
                     Version = 1,
                     Text = "private-document-secret"
@@ -255,6 +346,6 @@ public sealed class ProtocolContractTests
 
         string output = logs.ToString();
         Assert.DoesNotContain("private-document-secret", output, StringComparison.Ordinal);
-        Assert.DoesNotContain("file:///private/View.cui.xml", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("file:///private/View.crn", output, StringComparison.Ordinal);
     }
 }

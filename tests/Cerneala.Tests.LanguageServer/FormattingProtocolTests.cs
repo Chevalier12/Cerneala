@@ -18,7 +18,7 @@ public sealed class FormattingProtocolTests
         Assert.NotNull(initialized.Capabilities.DocumentOnTypeFormattingProvider);
         Assert.NotNull(initialized.Capabilities.CodeActionProvider);
 
-        string uri = new Uri(Path.GetFullPath("FormattingProtocol.cui.xml")).AbsoluteUri;
+        string uri = new Uri(Path.GetFullPath("FormattingProtocol.crn")).AbsoluteUri;
         const string unformatted = "<Window>\n<Button />\n</Window>";
         string text = unformatted;
         await OpenAsync(client, uri, text);

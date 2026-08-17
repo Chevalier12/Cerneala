@@ -1,14 +1,69 @@
 using System.Xml.Linq;
+using System.Collections.Immutable;
 using Cerneala.LanguageServer.Features;
 using Cerneala.LanguageServer.Logging;
 using Cerneala.LanguageServer.Protocol;
 using Cerneala.LanguageServer.Workspace;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Cerneala.Tests.LanguageServer;
 
 public sealed class WorkspaceTests
 {
     private static readonly CancellationToken TestCancellation = CancellationToken.None;
+
+    [Fact]
+    public async Task ProjectContextDoesNotEvaluateProjectAnalyzers()
+    {
+        using AdhocWorkspace workspace = new();
+        ProjectId projectId = ProjectId.CreateNewId();
+        Solution solution = workspace.CurrentSolution.AddProject(ProjectInfo.Create(
+            projectId,
+            VersionStamp.Create(),
+            "Fixture",
+            "Fixture",
+            LanguageNames.CSharp,
+            filePath: Path.Combine(Path.GetTempPath(), "cerneala-analyzer-probe.csproj"),
+            compilationOptions: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
+            metadataReferences: [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)]));
+        TrackingAnalyzerReference analyzer = new();
+        Project project = solution.GetProject(projectId)!.AddAnalyzerReference(analyzer);
+
+        using ProjectContext context = Assert.IsType<ProjectContext>(
+            await ProjectContext.CreateAsync(project, revision: 1, TestCancellation));
+
+        Assert.Equal(0, analyzer.RequestCount);
+    }
+
+    [Fact]
+    public async Task CrnDocumentHasProjectOwnershipAndSemanticContext()
+    {
+        using TemporaryWorkspace fixture = TemporaryWorkspace.CreateExtensionMigrationProject();
+        await using CernealaWorkspace workspace = await CreateWorkspaceAsync(fixture.ProjectPath);
+
+        Assert.Single(workspace.GetOwnerSummaries(fixture.MarkupUri));
+        using WorkspaceDocumentSnapshot snapshot = await workspace.GetSnapshotAsync(
+            fixture.MarkupUri,
+            TestCancellation);
+
+        Assert.False(snapshot.IsStandalone);
+        Assert.Contains("System.Runtime", snapshot.ResolveTypeAssemblies("System.String"));
+        Assert.Single(snapshot.GetSemanticModels(TestCancellation));
+    }
+
+    [Fact]
+    public async Task LegacyCuiXmlDocumentHasNoProjectOwnership()
+    {
+        using TemporaryWorkspace fixture = TemporaryWorkspace.CreateExtensionMigrationProject();
+        await using CernealaWorkspace workspace = await CreateWorkspaceAsync(fixture.ProjectPath);
+        string legacyUri = new Uri(fixture.LegacyMarkupPath!).AbsoluteUri;
+
+        Assert.Empty(workspace.GetOwnerSummaries(legacyUri));
+        using WorkspaceDocumentSnapshot snapshot = await workspace.GetSnapshotAsync(legacyUri, TestCancellation);
+        Assert.True(snapshot.IsStandalone);
+    }
 
     [Fact]
     public async Task ProjectWorkspaceUsesUnsavedOverlayAndReturnsToSavedSemanticContext()
@@ -72,7 +127,7 @@ public sealed class WorkspaceTests
     }
 
     [Fact]
-    public async Task ReloadTracksBrokenCompilationRenameAndDelete()
+    public async Task ReloadPreservesOwnershipForBrokenCompilationAndTracksRenameAndDelete()
     {
         using TemporaryWorkspace fixture = TemporaryWorkspace.CreateSingleProject();
         await using CernealaWorkspace workspace = await CreateWorkspaceAsync(fixture.ProjectPath);
@@ -80,10 +135,10 @@ public sealed class WorkspaceTests
 
         fixture.WriteCode("namespace Fixture; internal sealed class Broken {");
         await workspace.ReloadAsync(TestCancellation);
-        Assert.True(Assert.Single(workspace.GetOwnerSummaries(fixture.MarkupUri)).HasCompilationErrors);
+        Assert.Single(workspace.GetOwnerSummaries(fixture.MarkupUri));
 
         string originalUri = fixture.MarkupUri;
-        string renamedPath = fixture.RenameMarkup("Renamed.cui.xml");
+        string renamedPath = fixture.RenameMarkup("Renamed.crn");
         await workspace.ReloadAsync(TestCancellation);
         Assert.Empty(workspace.GetOwnerSummaries(originalUri));
         Assert.Single(workspace.GetOwnerSummaries(new Uri(renamedPath).AbsoluteUri));
@@ -202,7 +257,7 @@ public sealed class WorkspaceTests
 
         for (int cycle = 0; cycle < 1000; cycle++)
         {
-            string uri = new Uri(Path.Combine(fixture.RootPath, "Cycle" + cycle + ".cui.xml")).AbsoluteUri;
+            string uri = new Uri(Path.Combine(fixture.RootPath, "Cycle" + cycle + ".crn")).AbsoluteUri;
             Assert.True(workspace.OpenDocument(uri, "<Window />", 1));
             Assert.True(workspace.ApplyChanges(uri, 2, [FullReplacement("<Window Title=\"" + cycle + "\" />")]));
             using WorkspaceDocumentSnapshot snapshot = await workspace.GetSnapshotAsync(uri, TestCancellation);
@@ -212,7 +267,7 @@ public sealed class WorkspaceTests
 
         for (int index = 0; index < StructureService.MaximumTokenCacheEntries + 32; index++)
         {
-            string uri = new Uri(Path.Combine(fixture.RootPath, "Token" + index + ".cui.xml")).AbsoluteUri;
+            string uri = new Uri(Path.Combine(fixture.RootPath, "Token" + index + ".crn")).AbsoluteUri;
             Assert.True(workspace.OpenDocument(uri, "<Window />", 1));
             Assert.NotNull(await structure.GetSemanticTokensAsync(uri, TestCancellation));
         }
@@ -221,7 +276,7 @@ public sealed class WorkspaceTests
         Assert.Equal(StructureService.MaximumTokenCacheEntries + 32, workspace.OpenDocumentCount);
         for (int index = 0; index < StructureService.MaximumTokenCacheEntries + 32; index++)
         {
-            string uri = new Uri(Path.Combine(fixture.RootPath, "Token" + index + ".cui.xml")).AbsoluteUri;
+            string uri = new Uri(Path.Combine(fixture.RootPath, "Token" + index + ".crn")).AbsoluteUri;
             workspace.CloseDocument(uri);
             structure.Clear(uri);
         }
@@ -249,14 +304,53 @@ public sealed class WorkspaceTests
             TestCancellation);
     }
 
+    private sealed class TrackingAnalyzerReference : AnalyzerReference
+    {
+        public int RequestCount { get; private set; }
+
+        public override string FullPath => "tracking-analyzer.dll";
+
+        public override object Id { get; } = new();
+
+        public override ImmutableArray<DiagnosticAnalyzer> GetAnalyzers(string language)
+        {
+            RequestCount++;
+            return [];
+        }
+
+        public override ImmutableArray<DiagnosticAnalyzer> GetAnalyzersForAllLanguages()
+        {
+            RequestCount++;
+            return [];
+        }
+
+        public override ImmutableArray<ISourceGenerator> GetGenerators(string language)
+        {
+            RequestCount++;
+            return [];
+        }
+
+        public override ImmutableArray<ISourceGenerator> GetGeneratorsForAllLanguages()
+        {
+            RequestCount++;
+            return [];
+        }
+    }
+
     private sealed class TemporaryWorkspace : IDisposable
     {
-        private TemporaryWorkspace(string rootPath, string projectPath, string markupPath, string? solutionPath = null)
+        private TemporaryWorkspace(
+            string rootPath,
+            string projectPath,
+            string markupPath,
+            string? solutionPath = null,
+            string? legacyMarkupPath = null)
         {
             RootPath = rootPath;
             ProjectPath = projectPath;
             MarkupPath = markupPath;
             SolutionPath = solutionPath;
+            LegacyMarkupPath = legacyMarkupPath;
         }
 
         public string RootPath { get; }
@@ -269,21 +363,35 @@ public sealed class WorkspaceTests
 
         public string? SolutionPath { get; }
 
+        public string? LegacyMarkupPath { get; }
+
+        public static TemporaryWorkspace CreateExtensionMigrationProject()
+        {
+            string root = CreateRoot();
+            string project = Path.Combine(root, "Fixture.csproj");
+            string markup = Path.Combine(root, "View.crn");
+            string legacyMarkup = Path.Combine(root, "Legacy.cui.xml");
+            WriteProject(project, "Fixture", [markup, legacyMarkup]);
+            File.WriteAllText(markup, "<Window />");
+            File.WriteAllText(legacyMarkup, "<Window />");
+            return new TemporaryWorkspace(root, project, markup, legacyMarkupPath: legacyMarkup);
+        }
+
         public static TemporaryWorkspace CreateSingleProject()
         {
             string root = CreateRoot();
             string project = Path.Combine(root, "Fixture.csproj");
-            string markup = Path.Combine(root, "View.cui.xml");
+            string markup = Path.Combine(root, "View.crn");
             WriteProject(project, "Fixture", [markup]);
             File.WriteAllText(markup, "<Window />");
-            File.WriteAllText(Path.Combine(root, "View.cui.xml.cs"), "namespace Fixture; internal sealed class View { }");
+            File.WriteAllText(Path.Combine(root, "View.crn.cs"), "namespace Fixture; internal sealed class View { }");
             return new TemporaryWorkspace(root, project, markup);
         }
 
         public static TemporaryWorkspace CreateTwoProjectsWithLinkedMarkup(bool useLegacySolution = false)
         {
             string root = CreateRoot();
-            string shared = Path.Combine(root, "Shared.cui.xml");
+            string shared = Path.Combine(root, "Shared.crn");
             File.WriteAllText(shared, "<Window />");
             string alphaDirectory = Directory.CreateDirectory(Path.Combine(root, "Alpha")).FullName;
             string betaDirectory = Directory.CreateDirectory(Path.Combine(root, "Beta")).FullName;
@@ -308,7 +416,7 @@ public sealed class WorkspaceTests
         {
             string root = CreateRoot();
             string project = Path.Combine(root, "Multi.csproj");
-            string markup = Path.Combine(root, "View.cui.xml");
+            string markup = Path.Combine(root, "View.crn");
             File.WriteAllText(project, """
                 <Project Sdk="Microsoft.NET.Sdk">
                   <PropertyGroup>
@@ -316,7 +424,7 @@ public sealed class WorkspaceTests
                     <AssemblyName>Multi</AssemblyName>
                   </PropertyGroup>
                   <ItemGroup>
-                    <AdditionalFiles Include="View.cui.xml" />
+                    <AdditionalFiles Include="View.crn" />
                   </ItemGroup>
                 </Project>
                 """);
@@ -328,14 +436,14 @@ public sealed class WorkspaceTests
         public static TemporaryWorkspace CreateStandaloneDocument()
         {
             string root = CreateRoot();
-            string markup = Path.Combine(root, "Loose.cui.xml");
+            string markup = Path.Combine(root, "Loose.crn");
             File.WriteAllText(markup, "<Window />");
             return new TemporaryWorkspace(root, Path.Combine(root, "missing.csproj"), markup);
         }
 
         public void WriteMarkup(string text) => File.WriteAllText(MarkupPath, text);
 
-        public void WriteCode(string text) => File.WriteAllText(Path.Combine(RootPath, "View.cui.xml.cs"), text);
+        public void WriteCode(string text) => File.WriteAllText(Path.Combine(RootPath, "View.crn.cs"), text);
 
         public string RenameMarkup(string fileName)
         {

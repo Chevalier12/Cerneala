@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Cerneala.LanguageServer.Features;
 using Cerneala.LanguageServer.Logging;
 using Cerneala.LanguageServer.Workspace;
@@ -19,6 +20,7 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
     private StructureService? structureService;
     private FormattingService? formattingService;
     private JsonRpc? client;
+    private bool semanticTokensRefreshSupported;
 
     public Task<int> ExitTask => exitCompletion.Task;
 
@@ -34,15 +36,21 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
         }
 
         CernealaInitializationOptions? options = request.InitializationOptions;
+        semanticTokensRefreshSupported = SupportsSemanticTokensRefresh(request.Capabilities);
         WorkspaceConfiguration configuration = WorkspaceConfiguration.Create(
             request.RootUri,
             options?.SolutionPath,
             options?.ActiveTargetFramework,
             options?.Configuration);
-        workspace = await CernealaWorkspace.CreateAsync(configuration, logger, cancellationToken).ConfigureAwait(false);
+        workspace = await CernealaWorkspace.CreateAsync(
+            configuration,
+            logger,
+            cancellationToken,
+            options?.DeferWorkspaceLoad == true).ConfigureAwait(false);
         buildDiagnostics = new BuildDiagnosticStore();
         diagnosticService = new DiagnosticService(workspace, buildDiagnostics);
         diagnosticPublisher = new DiagnosticPublisher(diagnosticService, PublishDiagnosticsAsync, logger);
+        workspace.Reloaded += OnWorkspaceReloaded;
         completionService = new CompletionService(workspace);
         navigationService = new NavigationService(workspace);
         structureService = new StructureService(workspace);
@@ -59,12 +67,17 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
                     Change = 2,
                     Save = new SaveOptions { IncludeText = false }
                 },
-                DiagnosticProvider = new DiagnosticOptions
-                {
-                    Identifier = "cerneala",
-                    InterFileDependencies = true,
-                    WorkspaceDiagnostics = false
-                },
+                DiagnosticProvider = string.Equals(
+                    options?.DiagnosticsMode,
+                    "push",
+                    StringComparison.OrdinalIgnoreCase)
+                    ? null
+                    : new DiagnosticOptions
+                    {
+                        Identifier = "cerneala",
+                        InterFileDependencies = true,
+                        WorkspaceDiagnostics = false
+                    },
                 CompletionProvider = new CompletionOptions
                 {
                     ResolveProvider = true,
@@ -72,7 +85,7 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
                 },
                 SignatureHelpProvider = new SignatureHelpOptions
                 {
-                    TriggerCharacters = ["(", ","],
+                    TriggerCharacters = ["(", ",", "\"", "'"],
                     RetriggerCharacters = [","]
                 },
                 HoverProvider = true,
@@ -84,7 +97,7 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
                 {
                     Legend = new SemanticTokensLegend
                     {
-                        TokenTypes = StructureService.TokenTypes,
+                        TokenTypes = StructureService.GetTokenTypes(options?.Host),
                         TokenModifiers = StructureService.TokenModifiers
                     },
                     Full = new SemanticTokensFullOptions { Delta = true }
@@ -392,6 +405,7 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
     public void Initialized(object? request)
     {
         EnsureInitialized();
+        GetWorkspace().StartDeferredInitialLoad();
         logger.Info("lifecycle.ready");
     }
 
@@ -569,6 +583,62 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
         return rpc.NotifyWithParameterObjectAsync("textDocument/publishDiagnostics", notification);
     }
 
+    private void OnWorkspaceReloaded()
+    {
+        DiagnosticPublisher? publisher = diagnosticPublisher;
+        CernealaWorkspace? currentWorkspace = workspace;
+        if (publisher is null || currentWorkspace is null)
+        {
+            return;
+        }
+
+        foreach (string uri in currentWorkspace.GetOpenDocumentUris())
+        {
+            publisher.Schedule(uri);
+        }
+
+        if (semanticTokensRefreshSupported)
+        {
+            _ = RefreshSemanticTokensAsync();
+        }
+    }
+
+    private async Task RefreshSemanticTokensAsync()
+    {
+        JsonRpc? rpc = client;
+        if (rpc is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await rpc.InvokeWithCancellationAsync<object?>(
+                "workspace/semanticTokens/refresh",
+                [],
+                CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            logger.Info(
+                "semanticTokens.refreshFailed",
+                ("exceptionType", exception.GetType().FullName));
+        }
+    }
+
+    private static bool SupportsSemanticTokensRefresh(object? capabilities)
+    {
+        if (capabilities is not JsonElement root ||
+            !root.TryGetProperty("workspace", out JsonElement workspaceCapabilities) ||
+            !workspaceCapabilities.TryGetProperty("semanticTokens", out JsonElement semanticTokens) ||
+            !semanticTokens.TryGetProperty("refreshSupport", out JsonElement refreshSupport))
+        {
+            return false;
+        }
+
+        return refreshSupport.ValueKind == JsonValueKind.True;
+    }
+
     private async ValueTask DisposeWorkspaceAsync()
     {
         DiagnosticPublisher? currentPublisher = Interlocked.Exchange(ref diagnosticPublisher, null);
@@ -587,6 +657,7 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
         CernealaWorkspace? current = Interlocked.Exchange(ref workspace, null);
         if (current is not null)
         {
+            current.Reloaded -= OnWorkspaceReloaded;
             await current.DisposeAsync().ConfigureAwait(false);
         }
     }

@@ -12,11 +12,22 @@ internal sealed class StructureService(CernealaWorkspace workspace) : IDisposabl
 
     public static readonly string[] TokenTypes =
     [
-        "elementType", "property", "attachedProperty", "event", "namespace", "resource",
-        "bindingSource", "bindingMember", "directive", "motion", "prism"
+        "type", "property", "event", "namespace", "variable", "keyword", "function", "parameter", "enumMember", "label", "property"
+    ];
+
+    private static readonly string[] VisualStudioTokenTypes =
+    [
+        "type", "property name", "event", "namespace", "type", "keyword", "function", "parameter", "enumMember", "keyword - control", "method name"
     ];
 
     public static readonly string[] TokenModifiers = ["declaration"];
+
+    public static string[] GetTokenTypes(string? host) => string.Equals(
+        host,
+        "visualStudio",
+        StringComparison.OrdinalIgnoreCase)
+            ? VisualStudioTokenTypes
+            : TokenTypes;
 
     private readonly object cacheGate = new();
     private readonly CernealaStructureService service = new();

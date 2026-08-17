@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="View.cui.xml" />
+    <AdditionalFiles Include="View.crn" />
   </ItemGroup>
 
 </Project>

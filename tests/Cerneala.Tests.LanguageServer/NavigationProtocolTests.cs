@@ -247,9 +247,9 @@ public sealed class NavigationProtocolTests
             Directory.CreateDirectory(root);
             Directory.CreateDirectory(Path.Combine(root, "Generated"));
             string project = Path.Combine(root, "Fixture.csproj");
-            string code = Path.Combine(root, "View.cui.xml.cs");
-            string view = Path.Combine(root, "View.cui.xml");
-            string application = Path.Combine(root, "App.cui.xml");
+            string code = Path.Combine(root, "View.crn.cs");
+            string view = Path.Combine(root, "View.crn");
+            string application = Path.Combine(root, "App.crn");
             XDocument projectDocument = new(
                 new XElement("Project",
                     new XAttribute("Sdk", "Microsoft.NET.Sdk"),
@@ -260,8 +260,8 @@ public sealed class NavigationProtocolTests
                         new XElement("AssemblyName", "NavigationProtocolFixture")),
                     new XElement("ItemGroup",
                         new XElement("ProjectReference", new XAttribute("Include", Path.Combine(repositoryRoot, "Cerneala.csproj"))),
-                        new XElement("AdditionalFiles", new XAttribute("Include", "View.cui.xml")),
-                        new XElement("AdditionalFiles", new XAttribute("Include", "App.cui.xml")))));
+                        new XElement("AdditionalFiles", new XAttribute("Include", "View.crn")),
+                        new XElement("AdditionalFiles", new XAttribute("Include", "App.crn")))));
             projectDocument.Save(project);
             File.WriteAllText(code, """
                 using System.ComponentModel;
@@ -341,6 +341,8 @@ public sealed class NavigationProtocolTests
             };
             start.ArgumentList.Add("build");
             start.ArgumentList.Add(ProjectPath);
+            start.ArgumentList.Add("--configuration");
+            start.ArgumentList.Add("Release");
             start.ArgumentList.Add("--nologo");
             start.ArgumentList.Add("--verbosity");
             start.ArgumentList.Add("quiet");

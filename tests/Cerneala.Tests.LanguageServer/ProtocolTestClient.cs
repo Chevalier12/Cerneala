@@ -53,7 +53,10 @@ internal sealed class ProtocolTestClient : IAsyncDisposable
 
     public async Task<InitializeResult> InitializeAsync(
         CancellationToken cancellationToken,
-        string? workspacePath = null) =>
+        string? workspacePath = null,
+        string? diagnosticsMode = null,
+        string? host = null,
+        bool deferWorkspaceLoad = false) =>
         await Rpc.InvokeWithParameterObjectAsync<InitializeResult>(
             "initialize",
             new InitializeParams
@@ -62,10 +65,23 @@ internal sealed class ProtocolTestClient : IAsyncDisposable
                 RootUri = workspacePath is null
                     ? null
                     : new Uri(Path.GetDirectoryName(Path.GetFullPath(workspacePath))!).AbsoluteUri,
-                Capabilities = new { },
-                InitializationOptions = workspacePath is null
+                Capabilities = new
+                {
+                    workspace = new
+                    {
+                        semanticTokens = new { refreshSupport = true }
+                    }
+                },
+                InitializationOptions = workspacePath is null && diagnosticsMode is null && host is null &&
+                    !deferWorkspaceLoad
                     ? null
-                    : new CernealaInitializationOptions { SolutionPath = workspacePath }
+                    : new CernealaInitializationOptions
+                    {
+                        SolutionPath = workspacePath,
+                        DiagnosticsMode = diagnosticsMode,
+                        Host = host,
+                        DeferWorkspaceLoad = deferWorkspaceLoad
+                    }
             },
             cancellationToken).ConfigureAwait(false);
 
@@ -73,6 +89,9 @@ internal sealed class ProtocolTestClient : IAsyncDisposable
         Func<PublishDiagnosticsParams, bool> predicate,
         CancellationToken cancellationToken) =>
         notifications.WaitAsync(predicate, cancellationToken);
+
+    public Task WaitForSemanticTokensRefreshAsync(CancellationToken cancellationToken) =>
+        notifications.WaitForSemanticTokensRefreshAsync(cancellationToken);
 
     public async Task<int> StopAsync(CancellationToken cancellationToken)
     {
@@ -92,10 +111,21 @@ internal sealed class ProtocolTestClient : IAsyncDisposable
     {
         private readonly Channel<PublishDiagnosticsParams> diagnostics =
             Channel.CreateUnbounded<PublishDiagnosticsParams>();
+        private readonly Channel<bool> semanticTokenRefreshes = Channel.CreateUnbounded<bool>();
 
         [JsonRpcMethod("textDocument/publishDiagnostics", UseSingleObjectParameterDeserialization = true)]
         public void PublishDiagnostics(PublishDiagnosticsParams notification) =>
             diagnostics.Writer.TryWrite(notification);
+
+        [JsonRpcMethod("workspace/semanticTokens/refresh")]
+        public object RefreshSemanticTokens()
+        {
+            semanticTokenRefreshes.Writer.TryWrite(true);
+            return new object();
+        }
+
+        public async Task WaitForSemanticTokensRefreshAsync(CancellationToken cancellationToken) =>
+            await semanticTokenRefreshes.Reader.ReadAsync(cancellationToken);
 
         public async Task<PublishDiagnosticsParams> WaitAsync(
             Func<PublishDiagnosticsParams, bool> predicate,

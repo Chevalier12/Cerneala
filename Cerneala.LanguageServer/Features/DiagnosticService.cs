@@ -1,6 +1,7 @@
 using Cerneala.Language.Diagnostics;
 using Cerneala.Language.Semantics;
 using Cerneala.Language.Syntax;
+using Cerneala.Language.Syntax.Embedded;
 using Cerneala.Language.Text;
 using Cerneala.LanguageServer.Protocol;
 using Cerneala.LanguageServer.Workspace;
@@ -83,9 +84,81 @@ internal sealed class DiagnosticService(CernealaWorkspace workspace, BuildDiagno
             ];
         }
 
-        return snapshot.Syntax.Diagnostics
+        List<LanguageDiagnostic> diagnostics = snapshot.Syntax.Diagnostics
             .Select(diagnostic => CreateMalformedDiagnostic(snapshot, diagnostic.Span, diagnostic.Message))
             .ToList();
+        diagnostics.AddRange(CreateStandaloneEmbeddedDiagnostics(snapshot));
+        return diagnostics;
+    }
+
+    private static IEnumerable<LanguageDiagnostic> CreateStandaloneEmbeddedDiagnostics(
+        WorkspaceDocumentSnapshot snapshot)
+    {
+        foreach (ElementSyntax element in snapshot.Syntax.DescendantElements())
+        {
+            (string text, int offset) = BuildDirectTextBuffer(snapshot, element);
+            if (text.Length == 0)
+            {
+                continue;
+            }
+
+            string elementName = LocalName(element.Name);
+            IReadOnlyList<EmbeddedDiagnostic> embeddedDiagnostics;
+            if (elementName is "Aspect" or "MotionClip")
+            {
+                EmbeddedParseResult<DirectiveDocumentSyntax> parsed = MotionSyntaxParser.Parse(text, offset);
+                embeddedDiagnostics = parsed.Diagnostics.Take(1).ToArray();
+            }
+            else if (elementName == "PrismComposition")
+            {
+                embeddedDiagnostics = PrismSyntaxParser.ParseComposition(text, offset).Diagnostics;
+            }
+            else if (text.IndexOf("@prism", StringComparison.Ordinal) >= 0)
+            {
+                embeddedDiagnostics = PrismSyntaxParser.ParseApplications(text, offset).Diagnostics;
+            }
+            else
+            {
+                continue;
+            }
+
+            foreach (EmbeddedDiagnostic diagnostic in embeddedDiagnostics)
+            {
+                yield return new LanguageDiagnostic(
+                    CernealaDiagnosticCatalog.Get(diagnostic.Id),
+                    diagnostic.Span,
+                    AnalysisMode.Editor,
+                    Path.GetFileName(snapshot.Document.Path),
+                    diagnostic.Message);
+            }
+        }
+    }
+
+    private static (string Text, int Offset) BuildDirectTextBuffer(
+        WorkspaceDocumentSnapshot snapshot,
+        ElementSyntax element)
+    {
+        int start = element.OpenEndToken.Span.End;
+        int end = element.CloseLessThanToken.IsMissing ? element.Span.End : element.CloseLessThanToken.Span.Start;
+        if (end <= start)
+        {
+            return (string.Empty, start);
+        }
+
+        char[] buffer = Enumerable.Repeat(' ', end - start).ToArray();
+        foreach (TextSyntax text in element.Children.OfType<TextSyntax>())
+        {
+            string value = snapshot.Document.Text.Substring(text.Span);
+            value.CopyTo(0, buffer, text.Span.Start - start, value.Length);
+        }
+
+        return (new string(buffer), start);
+    }
+
+    private static string LocalName(string name)
+    {
+        int separator = name.LastIndexOf(':');
+        return separator < 0 ? name : name.Substring(separator + 1);
     }
 
     private static LanguageDiagnostic CreateMalformedDiagnostic(

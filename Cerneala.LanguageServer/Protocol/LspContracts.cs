@@ -19,6 +19,9 @@ internal sealed class InitializeParams
 
 internal sealed class CernealaInitializationOptions
 {
+    [JsonPropertyName("host")]
+    public string? Host { get; init; }
+
     [JsonPropertyName("solutionPath")]
     public string? SolutionPath { get; init; }
 
@@ -27,6 +30,12 @@ internal sealed class CernealaInitializationOptions
 
     [JsonPropertyName("configuration")]
     public string? Configuration { get; init; }
+
+    [JsonPropertyName("diagnosticsMode")]
+    public string? DiagnosticsMode { get; init; }
+
+    [JsonPropertyName("deferWorkspaceLoad")]
+    public bool DeferWorkspaceLoad { get; init; }
 }
 
 internal sealed class InitializeResult

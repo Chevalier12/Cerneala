@@ -1,3 +1,4 @@
+using Cerneala.Language;
 using Cerneala.Language.Semantics;
 using Cerneala.Language.Semantics.Symbols;
 using LanguageSourceText = Cerneala.Language.Text.SourceText;
@@ -25,8 +26,7 @@ internal sealed class ProjectContext : IDisposable
         Summary = new WorkspaceProjectSummary(
             projectFilePath,
             targetFramework,
-            roslynCompilation.AssemblyName ?? Path.GetFileNameWithoutExtension(projectFilePath),
-            roslynCompilation.GetDiagnostics().Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+            roslynCompilation.AssemblyName ?? Path.GetFileNameWithoutExtension(projectFilePath));
     }
 
     public string ProjectFilePath { get; }
@@ -48,7 +48,8 @@ internal sealed class ProjectContext : IDisposable
             return null;
         }
 
-        Compilation? compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+        Project symbolProject = project.WithAnalyzerReferences([]);
+        Compilation? compilation = await symbolProject.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
         if (compilation is null)
         {
             return null;
@@ -58,7 +59,7 @@ internal sealed class ProjectContext : IDisposable
         foreach (TextDocument additionalDocument in project.AdditionalDocuments)
         {
             if (additionalDocument.FilePath is null ||
-                !additionalDocument.FilePath.EndsWith(".cui.xml", StringComparison.OrdinalIgnoreCase) ||
+                !CernealaDocumentPath.IsMarkupFile(additionalDocument.FilePath) ||
                 !File.Exists(additionalDocument.FilePath))
             {
                 continue;

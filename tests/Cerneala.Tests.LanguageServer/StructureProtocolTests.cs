@@ -13,10 +13,15 @@ public sealed class StructureProtocolTests
         using TemporaryStructureWorkspace fixture = TemporaryStructureWorkspace.Create();
         using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(2));
         await using ProtocolTestClient client = ProtocolTestClient.Start();
-        InitializeResult initialized = await client.InitializeAsync(timeout.Token, fixture.ProjectPath);
+        InitializeResult initialized = await client.InitializeAsync(
+            timeout.Token,
+            fixture.ProjectPath,
+            host: "visualStudio",
+            deferWorkspaceLoad: true);
         await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
 
         Assert.NotNull(initialized.Capabilities.SemanticTokensProvider);
+        Assert.Contains("keyword - control", initialized.Capabilities.SemanticTokensProvider!.Legend.TokenTypes);
         Assert.True(initialized.Capabilities.DocumentSymbolProvider);
         Assert.True(initialized.Capabilities.WorkspaceSymbolProvider);
         Assert.True(initialized.Capabilities.FoldingRangeProvider);
@@ -42,9 +47,30 @@ public sealed class StructureProtocolTests
             timeout.Token);
         Assert.NotEmpty(full.Data);
         Assert.Equal(0, full.Data.Length % 5);
+        IReadOnlyList<DecodedSemanticToken> semanticTokens = DecodeSemanticTokens(
+            markup,
+            full.Data,
+            initialized.Capabilities.SemanticTokensProvider!.Legend.TokenTypes);
+        foreach (string elementName in new[] { "Window", "SolidColorBrush", "Grid", "Button", "TextBlock" })
+        {
+            Assert.Contains(semanticTokens, token =>
+                token.Text == elementName && token.Type == "keyword");
+            Assert.DoesNotContain(semanticTokens, token =>
+                token.Text == elementName && token.Type != "keyword");
+        }
+
+        Assert.Contains(semanticTokens, token => token.Text == "$Accent" && token.Type == "keyword - control");
+        Assert.Contains(semanticTokens, token => token.Text == "$UnsavedAction" && token.Type == "type");
+        Assert.Contains(semanticTokens, token => token.Text == "OneWay" && token.Type == "enumMember");
+        Assert.Contains(semanticTokens, token =>
+            token.Text == "IsEnabled" && token.Type == "method name");
+        Assert.Contains(semanticTokens, token =>
+            token.Text == "IsMouseOver" && token.Type == "method name");
+        Assert.Contains(semanticTokens, token => token.Text == "Opacity" && token.Type == "property name");
 
         LspDocumentSymbol[] symbols = await DocumentSymbolsAsync(client, fixture.MarkupUri, timeout.Token);
         Assert.Contains(Flatten(symbols), symbol => symbol.Name == "UnsavedAction");
+        await client.WaitForSemanticTokensRefreshAsync(timeout.Token);
         LspSymbolInformation[] workspaceSymbols = await client.Rpc.InvokeWithParameterObjectAsync<LspSymbolInformation[]>(
             "workspace/symbol",
             new WorkspaceSymbolParams { Query = "Unsaved" },
@@ -129,6 +155,29 @@ public sealed class StructureProtocolTests
         return new LspPosition { Line = line, Character = offset - lineStart };
     }
 
+    private static IReadOnlyList<DecodedSemanticToken> DecodeSemanticTokens(
+        string text,
+        IReadOnlyList<int> data,
+        IReadOnlyList<string> tokenTypes)
+    {
+        string[] lines = text.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
+        List<DecodedSemanticToken> result = [];
+        int line = 0;
+        int character = 0;
+        for (int index = 0; index < data.Count; index += 5)
+        {
+            int deltaLine = data[index];
+            line += deltaLine;
+            character = deltaLine == 0 ? character + data[index + 1] : data[index + 1];
+            int length = data[index + 2];
+            result.Add(new DecodedSemanticToken(
+                lines[line].Substring(character, length),
+                tokenTypes[data[index + 3]]));
+        }
+
+        return result;
+    }
+
     private sealed class TemporaryStructureWorkspace : IDisposable
     {
         private TemporaryStructureWorkspace(string rootPath, string projectPath, string markupPath)
@@ -151,10 +200,19 @@ public sealed class StructureProtocolTests
               <!-- keep this fold -->
               <Window.Resources>
                 <SolidColorBrush Name="Accent" />
+                <Aspect TargetType="Button">
+                  @when IsEnabled {
+                    @if value == true and IsMouseOver {
+                      Opacity = 1;
+                    }
+                  }
+                </Aspect>
               </Window.Resources>
-              <StackPanel>
-                <Button Name="UnsavedAction" Background="$Accent" />
-              </StackPanel>
+              <Grid Name="VisualStage">
+                <Button Name="UnsavedAction" Background="$Accent:OneWay" />
+                <TextBlock Name="MessageWake" Opacity="$UnsavedAction.Opacity" Text="Consistent type color" />
+                <TextBlock Name="MessagePersist" Text="Second named control" />
+              </Grid>
             </Window>
             """;
 
@@ -164,7 +222,7 @@ public sealed class StructureProtocolTests
             string root = Path.Combine(Path.GetTempPath(), "cerneala-structure-protocol-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             string project = Path.Combine(root, "Fixture.csproj");
-            string markup = Path.Combine(root, "View.cui.xml");
+            string markup = Path.Combine(root, "View.crn");
             XDocument projectDocument = new(
                 new XElement("Project",
                     new XAttribute("Sdk", "Microsoft.NET.Sdk"),
@@ -174,9 +232,9 @@ public sealed class StructureProtocolTests
                         new XElement("Nullable", "enable")),
                     new XElement("ItemGroup",
                         new XElement("ProjectReference", new XAttribute("Include", Path.Combine(repositoryRoot, "Cerneala.csproj"))),
-                        new XElement("AdditionalFiles", new XAttribute("Include", "View.cui.xml")))));
+                        new XElement("AdditionalFiles", new XAttribute("Include", "View.crn")))));
             projectDocument.Save(project);
-            File.WriteAllText(Path.Combine(root, "View.cui.xml.cs"), """
+            File.WriteAllText(Path.Combine(root, "View.crn.cs"), """
                 using Cerneala.UI.Controls;
                 namespace Fixture;
                 public sealed partial class View : Window { }
@@ -207,6 +265,8 @@ public sealed class StructureProtocolTests
             };
             start.ArgumentList.Add("build");
             start.ArgumentList.Add(ProjectPath);
+            start.ArgumentList.Add("--configuration");
+            start.ArgumentList.Add("Release");
             start.ArgumentList.Add("--nologo");
             start.ArgumentList.Add("--verbosity");
             start.ArgumentList.Add("quiet");
@@ -233,4 +293,6 @@ public sealed class StructureProtocolTests
             throw new DirectoryNotFoundException("Could not locate the Cerneala repository root.");
         }
     }
+
+    private sealed record DecodedSemanticToken(string Text, string Type);
 }

@@ -3,8 +3,7 @@ namespace Cerneala.LanguageServer.Workspace;
 internal sealed record WorkspaceProjectSummary(
     string ProjectFilePath,
     string? TargetFramework,
-    string AssemblyName,
-    bool HasCompilationErrors);
+    string AssemblyName);
 
 internal sealed record VersionedDocumentResult<T>(long Version, T Value);
 

@@ -7,6 +7,7 @@ namespace Cerneala.LanguageServer.Features;
 
 internal sealed class DiagnosticPublisher : IAsyncDisposable
 {
+    private static readonly TimeSpan CoalesceDelay = TimeSpan.FromMilliseconds(15);
     private readonly DiagnosticService diagnostics;
     private readonly Func<PublishDiagnosticsParams, Task> publish;
     private readonly IServerLogger logger;
@@ -75,6 +76,7 @@ internal sealed class DiagnosticPublisher : IAsyncDisposable
     {
         try
         {
+            await Task.Delay(CoalesceDelay, cancellationToken).ConfigureAwait(false);
             await session.Serial.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {

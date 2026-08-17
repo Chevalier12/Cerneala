@@ -19,7 +19,7 @@ public sealed class DiagnosticsTests
     [Fact]
     public void CatalogGoldenMatchesLspAndSourceGeneratorForEveryDiagnostic()
     {
-        const string path = "catalog.cui.xml";
+        const string path = "catalog.crn";
         SourceText languageSource = SourceText.From("A\U0001F600\r\n0123456789");
         RoslynSourceText roslynSource = RoslynSourceText.From(languageSource.ToString());
         TextSpan span = new(7, 3);
@@ -106,7 +106,7 @@ public sealed class DiagnosticsTests
         Directory.CreateDirectory(root);
         try
         {
-            string path = Path.Combine(root, "Loose.cui.xml");
+            string path = Path.Combine(root, "Loose.crn");
             File.WriteAllText(path, "<Window /><Window />");
             WorkspaceConfiguration configuration = new(root, null, null, "Debug", WatchFileSystem: false);
             await using CernealaWorkspace workspace = await CernealaWorkspace.CreateAsync(
@@ -131,9 +131,83 @@ public sealed class DiagnosticsTests
     }
 
     [Fact]
+    public async Task MissingMotionAssignmentSemicolonIsPublishedAsEditorError()
+    {
+        string root = RepositoryRoot();
+        string projectPath = Path.Combine(root, "CernealaPresentation", "CernealaPresentation.csproj");
+        string markupPath = Path.Combine(root, "CernealaPresentation", "OpeningView.crn");
+        const string validAssignment = "$VisualStage.Opacity = 1;";
+        const string invalidAssignment = "$VisualStage.Opacity = 1";
+        string markup = File.ReadAllText(markupPath);
+        Assert.Contains(validAssignment, markup, StringComparison.Ordinal);
+        markup = markup.Replace(validAssignment, invalidAssignment, StringComparison.Ordinal);
+
+        await using CernealaWorkspace workspace = await CreateWorkspaceAsync(projectPath);
+        string uri = new Uri(markupPath).AbsoluteUri;
+        Assert.True(workspace.OpenDocument(uri, markup, 1));
+        DiagnosticService service = new(workspace, new BuildDiagnosticStore());
+
+        VersionedDocumentResult<IReadOnlyList<LspDiagnostic>>? result = await service.AnalyzeAsync(
+            uri,
+            CancellationToken.None);
+
+        Assert.NotNull(result);
+        LspDiagnostic diagnostic = Assert.Single(
+            result.Value,
+            candidate => candidate.Code == "CERNEALAUI020" &&
+                candidate.Message.Contains("must end with ';'", StringComparison.Ordinal));
+        Assert.Equal(1, diagnostic.Severity);
+        Assert.Equal(diagnostic.Range.Start.Line, diagnostic.Range.End.Line);
+        Assert.True(diagnostic.Range.End.Character > diagnostic.Range.Start.Character);
+    }
+
+    [Fact]
+    public async Task MissingRequiredSemicolonsAcrossAspectAndMotionArePublishedAsEditorErrors()
+    {
+        string root = RepositoryRoot();
+        string projectPath = Path.Combine(root, "CernealaPresentation", "CernealaPresentation.csproj");
+        string markupPath = Path.Combine(root, "CernealaPresentation", "OpeningView.crn");
+        const string validRun = "@run $LoadingSequence as Loading;";
+        const string validAspectAssignment = "FontFamily = \"Segoe UI Variable Text\";";
+        string markup = File.ReadAllText(markupPath);
+
+        int runIndex = markup.IndexOf(validRun, StringComparison.Ordinal);
+        Assert.True(runIndex >= 0);
+        markup = markup.Remove(runIndex + validRun.Length - 1, 1);
+
+        int aspectIndex = markup.IndexOf(validAspectAssignment, StringComparison.Ordinal);
+        Assert.True(aspectIndex >= 0);
+        markup = markup.Remove(aspectIndex + validAspectAssignment.Length - 1, 1);
+
+        await using CernealaWorkspace workspace = await CreateWorkspaceAsync(projectPath);
+        string uri = new Uri(markupPath).AbsoluteUri;
+        Assert.True(workspace.OpenDocument(uri, markup, 1));
+        DiagnosticService service = new(workspace, new BuildDiagnosticStore());
+
+        VersionedDocumentResult<IReadOnlyList<LspDiagnostic>>? result = await service.AnalyzeAsync(
+            uri,
+            CancellationToken.None);
+
+        Assert.NotNull(result);
+        LspDiagnostic motionDiagnostic = Assert.Single(
+            result.Value,
+            candidate => candidate.Code == "CERNEALAUI020" &&
+                candidate.Message.Contains("must end with ';'", StringComparison.Ordinal));
+        LspDiagnostic aspectDiagnostic = Assert.Single(
+            result.Value,
+            candidate => candidate.Code == "CERNEALAUI006" &&
+                candidate.Message.Contains("must end with ';'", StringComparison.Ordinal));
+
+        Assert.Equal(1, motionDiagnostic.Severity);
+        Assert.Equal(1, aspectDiagnostic.Severity);
+        Assert.True(motionDiagnostic.Range.End.Character > motionDiagnostic.Range.Start.Character);
+        Assert.True(aspectDiagnostic.Range.End.Character > aspectDiagnostic.Range.Start.Character);
+    }
+
+    [Fact]
     public void BuildDedupeRemovesOnlyTheExactSourceGeneratorIdentity()
     {
-        string uri = new Uri(Path.GetFullPath("Dedupe.cui.xml")).AbsoluteUri;
+        string uri = new Uri(Path.GetFullPath("Dedupe.crn")).AbsoluteUri;
         LspDiagnostic duplicate = Diagnostic("CERNEALAUI003", 2, 4, 2, 11, "same");
         LspDiagnostic distinctSpan = Diagnostic("CERNEALAUI003", 3, 4, 3, 11, "same");
         LspDiagnostic distinctCause = Diagnostic("CERNEALAUI003", 2, 4, 2, 11, "different");
@@ -212,7 +286,7 @@ public sealed class DiagnosticsTests
             await using CernealaWorkspace workspace = await CreateWorkspaceAsync(project);
             DiagnosticService service = new(workspace, new BuildDiagnosticStore());
             string projectDirectory = Path.GetDirectoryName(project)!;
-            string[] documents = Directory.EnumerateFiles(projectDirectory, "*.cui.xml", SearchOption.AllDirectories)
+            string[] documents = Directory.EnumerateFiles(projectDirectory, "*.crn", SearchOption.AllDirectories)
                 .Where(path => !IsBuildOutput(path))
                 .OrderBy(path => path, StringComparer.Ordinal)
                 .ToArray();
@@ -315,7 +389,7 @@ public sealed class DiagnosticsTests
             string root = Path.Combine(Path.GetTempPath(), $"cerneala-lsp-diagnostics-{Guid.NewGuid():N}");
             Directory.CreateDirectory(root);
             string projectPath = Path.Combine(root, "Diagnostics.csproj");
-            string markupPath = Path.Combine(root, "View.cui.xml");
+            string markupPath = Path.Combine(root, "View.crn");
             XDocument project = new(
                 new XElement("Project",
                     new XAttribute("Sdk", "Microsoft.NET.Sdk"),
@@ -324,7 +398,7 @@ public sealed class DiagnosticsTests
                     new XElement("ItemGroup",
                         new XElement("ProjectReference",
                             new XAttribute("Include", Path.Combine(repositoryRoot, "Cerneala.csproj"))),
-                        new XElement("AdditionalFiles", new XAttribute("Include", "View.cui.xml")))));
+                        new XElement("AdditionalFiles", new XAttribute("Include", "View.crn")))));
             project.Save(projectPath);
             File.WriteAllText(markupPath, "<StackPanel />");
             File.WriteAllText(

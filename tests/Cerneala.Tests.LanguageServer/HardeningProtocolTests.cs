@@ -17,6 +17,49 @@ public sealed class LanguageServerPerformanceCollection
 public sealed class HardeningProtocolTests
 {
     [Fact]
+    public async Task FullSolutionIncrementalRequestsRespectWarmBudgets()
+    {
+        using IDisposable performanceGate = AcquirePerformanceGate();
+        using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(3));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        string repositoryRoot = TemporaryHardeningWorkspace.FindRepositoryRoot();
+        string solutionPath = Path.Combine(repositoryRoot, "Cerneala.slnx");
+        await client.InitializeAsync(timeout.Token, solutionPath);
+        await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
+
+        string path = Path.Combine(repositoryRoot, "CernealaPresentation", "PresentationWindow.crn");
+        string uri = new Uri(path).AbsoluteUri;
+        string original = File.ReadAllText(path);
+        int insertionOffset = original.LastIndexOf("</", StringComparison.Ordinal);
+        Assert.True(insertionOffset >= 0);
+        string changed = original.Insert(insertionOffset, "\n<StackP");
+        LspPosition completionPosition = PositionAt(changed, insertionOffset + "\n<StackP".Length);
+        TextDocumentPositionParams completionRequest = Request(uri, completionPosition);
+        await OpenAsync(client, uri, original);
+
+        int version = 1;
+        List<double> completionSamples = new();
+        List<double> diagnosticSamples = new();
+        for (int sample = -10; sample < 20; sample++)
+        {
+            await ChangeAsync(client, uri, ++version, changed);
+            double completionElapsed = await MeasureAsync(() => CompletionAsync(client, completionRequest, timeout.Token));
+            double diagnosticsElapsed = await MeasureAsync(() => DiagnosticsAsync(client, uri, timeout.Token));
+            if (sample >= 0)
+            {
+                completionSamples.Add(completionElapsed);
+                diagnosticSamples.Add(diagnosticsElapsed);
+            }
+
+            await ChangeAsync(client, uri, ++version, original);
+        }
+
+        AssertBudget("full-solution incremental completion", completionSamples, 100);
+        AssertBudget("full-solution incremental diagnostics", diagnosticSamples, 200);
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
+    [Fact]
     public async Task ConcurrentTypingCancellationReloadAndWarmBudgetsStayBounded()
     {
         using IDisposable performanceGate = AcquirePerformanceGate();
@@ -265,8 +308,8 @@ public sealed class HardeningProtocolTests
             string root = Path.Combine(Path.GetTempPath(), "cerneala-hardening-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             string project = Path.Combine(root, "Fixture.csproj");
-            string first = Path.Combine(root, "View.cui.xml");
-            string second = Path.Combine(root, "Second.cui.xml");
+            string first = Path.Combine(root, "View.crn");
+            string second = Path.Combine(root, "Second.crn");
             XDocument projectDocument = new(
                 new XElement("Project",
                     new XAttribute("Sdk", "Microsoft.NET.Sdk"),
@@ -275,8 +318,8 @@ public sealed class HardeningProtocolTests
                         new XElement("AssemblyName", "HardeningProtocolFixture")),
                     new XElement("ItemGroup",
                         new XElement("ProjectReference", new XAttribute("Include", Path.Combine(repositoryRoot, "Cerneala.csproj"))),
-                        new XElement("AdditionalFiles", new XAttribute("Include", "View.cui.xml")),
-                        new XElement("AdditionalFiles", new XAttribute("Include", "Second.cui.xml")))));
+                        new XElement("AdditionalFiles", new XAttribute("Include", "View.crn")),
+                        new XElement("AdditionalFiles", new XAttribute("Include", "Second.crn")))));
             projectDocument.Save(project);
             File.WriteAllText(Path.Combine(root, "Views.cs"), """
                 using Cerneala.UI.Controls;
@@ -309,7 +352,7 @@ public sealed class HardeningProtocolTests
             return builder.Append("  </StackPanel>\n</Window>").ToString();
         }
 
-        private static string FindRepositoryRoot()
+        public static string FindRepositoryRoot()
         {
             DirectoryInfo? directory = new(AppContext.BaseDirectory);
             while (directory is not null)
