@@ -802,7 +802,7 @@ public sealed class PrismGraphContractTests
             new PrismNodeId(1),
             "Broken",
             filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
-            sourceSpan: new PrismSourceSpan(12, 6, "Card.cui.xml"));
+            sourceSpan: new PrismSourceSpan(12, 6, "Card.crn"));
         PrismCompositionDefinition definition =
             PrismTestData.Composition("DiagnosticCard", layer);
         PrismDrawScope scope = PrismTestData.Scope(definition);
@@ -820,7 +820,7 @@ public sealed class PrismGraphContractTests
         Assert.Equal(layer.Id, exception.Diagnostic.NodeId);
         Assert.Equal("Broken", exception.Diagnostic.NodeName);
         Assert.Equal(layer.SourceSpan, exception.Diagnostic.SourceSpan);
-        Assert.Contains("Card.cui.xml@12+6", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("Card.crn@12+6", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -831,7 +831,7 @@ public sealed class PrismGraphContractTests
             "BrokenBackdrop",
             filters: [new PrismFilterDefinition(PrismFilterId.GaussianBlur)],
             mask: new PrismMaskDefinition(new PrismResourceId(71)),
-            sourceSpan: new PrismSourceSpan(33, 8, "Window.cui.xml"));
+            sourceSpan: new PrismSourceSpan(33, 8, "Window.crn"));
         PrismDrawScope scope = PrismTestData.Scope(
             PrismTestData.Composition(
                 "BackdropDiagnostic",
@@ -861,7 +861,7 @@ public sealed class PrismGraphContractTests
                 "First",
                 PrismTestData.Layer(1, "Content")),
             ownerToken: 81);
-        PrismSourceSpan secondSpan = new(44, 5, "Second.cui.xml");
+        PrismSourceSpan secondSpan = new(44, 5, "Second.crn");
         PrismCompositionDefinition secondDefinition = new(
             "Second",
             [PrismTestData.Layer(2, "Content")],

@@ -1,4 +1,5 @@
 <Window
+    xmlns:local="clr-namespace:Cerneala.Playground"
     Title="Cerneala Playground"
     Width="800"
     Height="600"
@@ -94,7 +95,7 @@
                 Background="$SurfaceBrush"
                 BorderBrush="$DividerBrush"
                 BorderThickness="0,0,1,0">
-                <ShowcaseNavigation
+                <local:ShowcaseNavigation
                     Name="NavigationScrollViewer"
                     ShowcaseSelected="OnShowcaseSelected" />
             </Border>

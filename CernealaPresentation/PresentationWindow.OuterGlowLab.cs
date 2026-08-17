@@ -5,6 +5,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.MonoGame;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Layout;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Properties;
@@ -22,9 +23,11 @@ public partial class PresentationWindow
         TimeSpan animationDuration = TimeSpan.FromSeconds(4);
         DateTimeOffset startedUtc = DateTimeOffset.UtcNow;
 
-        PrismOuterGlowLabView lab = new();
+        PrismOuterGlowLabView lab = OuterGlowLabSurface;
         outerGlowLabActive = true;
-        Content = lab;
+        OpeningSurface.Visibility = Visibility.Collapsed;
+        TourSurface.Visibility = Visibility.Collapsed;
+        lab.Visibility = Visibility.Visible;
         await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
         UIElement target = lab.Target;
         if (IsOuterGlowColdOnlyRequested())

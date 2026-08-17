@@ -41,7 +41,7 @@ public sealed class AspectChapterViewTests : IDisposable
     [Fact]
     public void MarkupDefinesThreeElementsPreviewAndPropertyInspector()
     {
-        XDocument markup = XDocument.Load(RepositoryFile("CernealaPresentation", "AspectChapterView.cui.xml"));
+        XDocument markup = XDocument.Load(RepositoryFile("CernealaPresentation", "AspectChapterView.crn"));
         string[] names = markup.Descendants()
             .Select(element => (string?)element.Attribute("Name"))
             .Where(name => name is not null)
@@ -61,11 +61,11 @@ public sealed class AspectChapterViewTests : IDisposable
     [Fact]
     public void MarkupDeclaresPropertyInspectorItemsSource()
     {
-        XDocument markup = XDocument.Load(RepositoryFile("CernealaPresentation", "AspectChapterView.cui.xml"));
+        XDocument markup = XDocument.Load(RepositoryFile("CernealaPresentation", "AspectChapterView.crn"));
         XElement propertyItems = Assert.Single(markup.Descendants()
             .Where(element => (string?)element.Attribute("Name") == "PropertyItems"));
         string codeBehind = File.ReadAllText(
-            RepositoryFile("CernealaPresentation", "AspectChapterView.cui.xml.cs"));
+            RepositoryFile("CernealaPresentation", "AspectChapterView.crn.cs"));
 
         Assert.Equal("$root.PropertyRows", (string?)propertyItems.Attribute("ItemsSource"));
         Assert.DoesNotContain("PropertyItems.ItemsSource", codeBehind, StringComparison.Ordinal);
@@ -574,10 +574,7 @@ public sealed class AspectChapterViewTests : IDisposable
     [InlineData(830, 586)]
     public void StudioInspectorArrangesInsideTourViewport(float width, float height)
     {
-        AspectChapterView view = new();
-        view.PrepareEditorForTests();
-
-        Arrange(view, width, height);
+        _ = AttachStudio(out AspectChapterView view, width, height);
 
         ScrollViewer inspector = Assert.Single(Descendants(view)
             .OfType<ScrollViewer>()

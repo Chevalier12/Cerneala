@@ -1,4 +1,4 @@
-<UserControl>
+<UserControl xmlns:studio="clr-namespace:Cerneala.Presentation">
     <UserControl.Resources>
         <Aspect
             Name="PrismStudioGhostButton"
@@ -108,7 +108,7 @@
             TargetType="ComboBox">
             @default
             {
-                Background = "#00000000";
+                Background = "#FF14181E";
                 BorderBrush = "#FF343C46";
                 BorderThickness = "1";
                 Foreground = "#FFE8EBE8";
@@ -117,6 +117,31 @@
                 Padding = "7,6,7,6";
                 Margin = "0,0,3,3";
                 MaxDropDownHeight = 180;
+            }
+        </Aspect>
+        <Aspect
+            Name="PrismStudioSelectionButton"
+            TargetType="ToggleButton">
+            @default
+            {
+                Background = "#FF14181E";
+                BorderBrush = "#FF343C46";
+                BorderThickness = "1";
+                Foreground = "#FFE8EBE8";
+                FontFamily = "Cascadia Mono SemiBold";
+                FontSize = 8;
+                Padding = "7,6,7,6";
+                Margin = "0,0,3,3";
+            }
+            @when IsChecked
+            {
+                Background = "#FF14373D";
+                BorderBrush = $CyanBrush;
+                Foreground = $CyanBrush;
+            }
+            @when IsMouseOver
+            {
+                BorderBrush = $CyanBrush;
             }
         </Aspect>
         <Aspect
@@ -419,7 +444,102 @@
                     BorderThickness="1"
                     VerticalScrollBarVisibility="Auto"
                     HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Name="LayersPanel" Margin="8" />
+                        <ItemsControl
+                            Name="LayerItems"
+                            ItemsSource="$root.LayerRows"
+                            Margin="8">
+                            <ItemsControl.ItemsPanel>
+                                <StackPanel />
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.Templates>
+                                <ContentTemplate DataType="studio:PrismStudioLayerRow">
+                                    <Border
+                                        Background="#FF14181E"
+                                        Margin="0,0,0,7"
+                                        Padding="7">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <CheckBox
+                                                    Aspect="$PrismStudioCheckBox"
+                                                    IsChecked="$DataContext.IsVisible:TwoWay" />
+                                                <ToggleButton
+                                                    Aspect="$PrismStudioSelectionButton"
+                                                    Content="$DataContext.Content"
+                                                    IsChecked="$DataContext.IsSelected"
+                                                    Command="$DataContext.SelectCommand"
+                                                    Width="100" />
+                                                <Button
+                                                    Aspect="$PrismStudioButton"
+                                                    Content="^"
+                                                    Command="$DataContext.MoveUpCommand"
+                                                    Padding="4" />
+                                                <Button
+                                                    Aspect="$PrismStudioButton"
+                                                    Content="v"
+                                                    Command="$DataContext.MoveDownCommand"
+                                                    Padding="4" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                Text="FILTERS"
+                                                FontFamily="Cascadia Mono SemiBold"
+                                                FontSize="8"
+                                                Foreground="$SlateBrush"
+                                                Margin="0,6,0,4" />
+                                            <ItemsControl ItemsSource="$DataContext.Filters">
+                                                <ItemsControl.ItemsPanel>
+                                                    <StackPanel />
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.Templates>
+                                                    <ContentTemplate DataType="studio:PrismStudioOperationRow">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <CheckBox
+                                                                Aspect="$PrismStudioCheckBox"
+                                                                IsChecked="$DataContext.IsVisible:TwoWay" />
+                                                            <ToggleButton
+                                                                Aspect="$PrismStudioSelectionButton"
+                                                                Content="$DataContext.Content"
+                                                                IsChecked="$DataContext.IsSelected"
+                                                                Command="$DataContext.SelectCommand"
+                                                                Width="100" />
+                                                            <Button Aspect="$PrismStudioButton" Content="^" Command="$DataContext.MoveUpCommand" Padding="4" />
+                                                            <Button Aspect="$PrismStudioButton" Content="v" Command="$DataContext.MoveDownCommand" Padding="4" />
+                                                        </StackPanel>
+                                                    </ContentTemplate>
+                                                </ItemsControl.Templates>
+                                            </ItemsControl>
+                                            <TextBlock
+                                                Text="STYLES"
+                                                FontFamily="Cascadia Mono SemiBold"
+                                                FontSize="8"
+                                                Foreground="$SlateBrush"
+                                                Margin="0,6,0,4" />
+                                            <ItemsControl ItemsSource="$DataContext.Styles">
+                                                <ItemsControl.ItemsPanel>
+                                                    <StackPanel />
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.Templates>
+                                                    <ContentTemplate DataType="studio:PrismStudioOperationRow">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <CheckBox
+                                                                Aspect="$PrismStudioCheckBox"
+                                                                IsChecked="$DataContext.IsVisible:TwoWay" />
+                                                            <ToggleButton
+                                                                Aspect="$PrismStudioSelectionButton"
+                                                                Content="$DataContext.Content"
+                                                                IsChecked="$DataContext.IsSelected"
+                                                                Command="$DataContext.SelectCommand"
+                                                                Width="100" />
+                                                            <Button Aspect="$PrismStudioButton" Content="^" Command="$DataContext.MoveUpCommand" Padding="4" />
+                                                            <Button Aspect="$PrismStudioButton" Content="v" Command="$DataContext.MoveDownCommand" Padding="4" />
+                                                        </StackPanel>
+                                                    </ContentTemplate>
+                                                </ItemsControl.Templates>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </ContentTemplate>
+                            </ItemsControl.Templates>
+                        </ItemsControl>
                 </ScrollViewer>
                 <Grid Grid.Row="2" Margin="0,8,0,0">
                     <Grid.ColumnDefinitions>
@@ -478,8 +598,8 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="1.35*" />
                         </Grid.ColumnDefinitions>
-                        <Button Name="FilterTab" Aspect="$PrismStudioCatalogButton" Content="FILTERS" Click="OnFiltersTab" Margin="0,0,3,0" />
-                        <Button Name="StyleTab" Aspect="$PrismStudioCatalogButton" Grid.Column="1" Content="STYLES" Click="OnStylesTab" Margin="3,0,3,0" />
+                        <ToggleButton Name="FilterTab" Aspect="$PrismStudioSelectionButton" Content="FILTERS" Click="OnFiltersTab" Margin="0,0,3,0" />
+                        <ToggleButton Name="StyleTab" Aspect="$PrismStudioSelectionButton" Grid.Column="1" Content="STYLES" Click="OnStylesTab" Margin="3,0,3,0" />
                         <Button Name="CategoryButton" Aspect="$PrismStudioCatalogButton" Grid.Column="2" Content="ALL CATEGORIES" Click="OnCategory" Margin="3,0,0,0" />
                     </Grid>
                     <ScrollViewer
@@ -490,7 +610,23 @@
                         BorderThickness="1"
                         VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel Name="CatalogPanel" Margin="8" />
+                        <ItemsControl
+                            Name="CatalogItems"
+                            ItemsSource="$root.CatalogRows"
+                            Margin="8">
+                            <ItemsControl.ItemsPanel>
+                                <VirtualizingStackPanel />
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.Templates>
+                                <ContentTemplate DataType="studio:PrismStudioCatalogRow">
+                                    <Button
+                                        Aspect="$PrismStudioButton"
+                                        Content="$DataContext.Content"
+                                        Command="$DataContext.Command"
+                                        Margin="0,0,0,4" />
+                                </ContentTemplate>
+                            </ItemsControl.Templates>
+                        </ItemsControl>
                     </ScrollViewer>
                 </Grid>
                 <Grid Grid.Row="2">
@@ -517,7 +653,102 @@
                     BorderThickness="1"
                     VerticalScrollBarVisibility="Auto"
                     HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Name="InspectorPanel" Margin="8" />
+                    <ItemsControl
+                        Name="InspectorItems"
+                        ItemsSource="$root.InspectorRows"
+                        Margin="8">
+                        <ItemsControl.ItemsPanel>
+                            <StackPanel />
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.Templates>
+                            <ContentTemplate DataType="studio:PrismStudioLayerTitleRow">
+                                <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$LimeBrush" Margin="0,6,0,4" TextWrapping="Wrap" />
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:PrismStudioOperationTitleRow">
+                                <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$PinkBrush" Margin="0,6,0,4" TextWrapping="Wrap" />
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:PrismStudioUnitSliderRow">
+                                <StackPanel Margin="0,5,0,7">
+                                    <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$SlateBrush" Margin="0,0,0,4" />
+                                    <Slider Aspect="$PrismStudioSlider" Minimum="0" Maximum="1" Value="$DataContext.Value:TwoWay" />
+                                </StackPanel>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:PrismStudioChoiceRow">
+                                <StackPanel Margin="0,5,0,7">
+                                    <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$SlateBrush" Margin="0,0,0,4" />
+                                    <ComboBox Aspect="$PrismStudioComboBox" ItemsSource="$DataContext.Items" SelectedIndex="$DataContext.SelectedIndex:TwoWay" />
+                                </StackPanel>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:PrismStudioBooleanRow">
+                                <StackPanel Margin="0,5,0,7">
+                                    <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$SlateBrush" Margin="0,0,0,4" />
+                                    <CheckBox Aspect="$PrismStudioCheckBox" IsChecked="$DataContext.IsChecked:TwoWay" />
+                                </StackPanel>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:PrismStudioFiniteNumberRow">
+                                <StackPanel Margin="0,5,0,7">
+                                    <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$SlateBrush" Margin="0,0,0,4" />
+                                    <Slider Aspect="$PrismStudioSlider" Minimum="$DataContext.Minimum" Maximum="$DataContext.Maximum" Value="$DataContext.Value:TwoWay" />
+                                    <TextBox Aspect="$PrismStudioTextBox" Text="$DataContext.Text:TwoWay" />
+                                </StackPanel>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:PrismStudioStepperRow">
+                                <StackPanel Margin="0,5,0,7">
+                                    <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$SlateBrush" Margin="0,0,0,4" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Aspect="$PrismStudioButton" Content="-" Command="$DataContext.DecreaseCommand" Padding="4" />
+                                        <TextBox Aspect="$PrismStudioTextBox" Text="$DataContext.Text:TwoWay" Width="98" />
+                                        <Button Aspect="$PrismStudioButton" Content="+" Command="$DataContext.IncreaseCommand" Padding="4" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:PrismStudioColorRow">
+                                <StackPanel Margin="0,5,0,7">
+                                    <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$SlateBrush" Margin="0,0,0,4" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <ColorSwatch Width="24" Height="24" BorderBrush="$LineStrongBrush" BorderThickness="1" Margin="0,0,5,0" SelectedColor="$DataContext.SelectedColor:TwoWay" />
+                                        <TextBox Aspect="$PrismStudioTextBox" Text="$DataContext.Text:TwoWay" Width="112" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Aspect="$PrismStudioButton" Content="." Background="#FF4DF0FF" Command="$DataContext.SetColorCommand" CommandParameter="#FF4DF0FF" Padding="6,4,6,4" />
+                                        <Button Aspect="$PrismStudioButton" Content="." Background="#FFFF3EA5" Command="$DataContext.SetColorCommand" CommandParameter="#FFFF3EA5" Padding="6,4,6,4" />
+                                        <Button Aspect="$PrismStudioButton" Content="." Background="#FFC6FF3D" Command="$DataContext.SetColorCommand" CommandParameter="#FFC6FF3D" Padding="6,4,6,4" />
+                                        <Button Aspect="$PrismStudioButton" Content="." Background="#FFFF8A3D" Command="$DataContext.SetColorCommand" CommandParameter="#FFFF8A3D" Padding="6,4,6,4" />
+                                        <Button Aspect="$PrismStudioButton" Content="." Background="#FFFFFFFF" Command="$DataContext.SetColorCommand" CommandParameter="#FFFFFFFF" Padding="6,4,6,4" />
+                                        <Button Aspect="$PrismStudioButton" Content="." Background="#FF000000" Command="$DataContext.SetColorCommand" CommandParameter="#FF000000" Padding="6,4,6,4" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:PrismStudioVectorRow">
+                                <StackPanel Margin="0,5,0,7">
+                                    <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$SlateBrush" Margin="0,0,0,4" />
+                                    <ItemsControl ItemsSource="$DataContext.Components">
+                                        <ItemsControl.ItemsPanel>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.Templates>
+                                            <ContentTemplate DataType="studio:PrismStudioVectorComponentRow">
+                                                <TextBox Aspect="$PrismStudioTextBox" Text="$DataContext.Text:TwoWay" Width="54" Margin="0,0,3,0" />
+                                            </ContentTemplate>
+                                        </ItemsControl.Templates>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:PrismStudioResourceRow">
+                                <StackPanel Margin="0,5,0,7">
+                                    <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$SlateBrush" Margin="0,0,0,4" />
+                                    <TextBlock Text="RESOURCE REQUIRED / IMPORT DISABLED" FontFamily="Cascadia Mono" FontSize="9" Foreground="$PinkBrush" />
+                                </StackPanel>
+                            </ContentTemplate>
+                            <ContentTemplate DataType="studio:PrismStudioOperationActionsRow">
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,7">
+                                    <Button Aspect="$PrismStudioButton" Content="^" Command="$DataContext.MoveUpCommand" Padding="4" />
+                                    <Button Aspect="$PrismStudioButton" Content="v" Command="$DataContext.MoveDownCommand" Padding="4" />
+                                    <Button Aspect="$PrismStudioButton" Content="DELETE OP" Command="$DataContext.DeleteCommand" />
+                                </StackPanel>
+                            </ContentTemplate>
+                        </ItemsControl.Templates>
+                    </ItemsControl>
                 </ScrollViewer>
             </Grid>
         </Grid>

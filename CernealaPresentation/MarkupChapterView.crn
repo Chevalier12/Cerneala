@@ -14,7 +14,7 @@
                 FontSize="42"
                 Margin="0,12,0,0" />
             <TextBlock
-                Text="Every .cui.xml file is an additional file consumed by the incremental generator. Named elements and event hooks become compiled, typed C# with no runtime XML parser in the frame loop."
+                Text="Every .crn file is an additional file consumed by the incremental generator. Named elements and event hooks become compiled, typed C# with no runtime XML parser in the frame loop."
                 FontSize="16"
                 Foreground="$SlateBrush"
                 TextWrapping="Wrap"
@@ -41,7 +41,7 @@
                             Padding="16,11,16,11">
                             <Grid>
                                 <TextBlock
-                                    Text="MainWindow.cui.xml"
+                                    Text="MainWindow.crn"
                                     FontFamily="Cascadia Mono SemiBold"
                                     FontSize="11" />
                                 <TextBlock
@@ -75,7 +75,7 @@
                             Padding="16,11,16,11">
                             <Grid>
                                 <TextBlock
-                                    Text="MainWindow.cui.xml.cs"
+                                    Text="MainWindow.crn.cs"
                                     FontFamily="Cascadia Mono SemiBold"
                                     FontSize="11" />
                                 <TextBlock

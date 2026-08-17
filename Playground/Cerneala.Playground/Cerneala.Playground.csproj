@@ -12,7 +12,7 @@
     <ProjectReference Include="..\..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**" />
+    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />
     <Content Include="..\Assets\fxemoji.svg" Link="fxemoji.svg" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

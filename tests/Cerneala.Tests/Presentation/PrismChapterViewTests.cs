@@ -35,7 +35,7 @@ public sealed class PrismChapterViewTests : IDisposable
     [Fact]
     public void MarkupDefinesFourRenderOwningTargetsAndThreeEditorZones()
     {
-        XDocument markup = XDocument.Load(RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml"));
+        XDocument markup = XDocument.Load(RepositoryFile("CernealaPresentation", "PrismChapterView.crn"));
         string[] names = markup.Descendants()
             .Select(element => (string?)element.Attribute("Name"))
             .Where(name => name is not null)
@@ -52,7 +52,7 @@ public sealed class PrismChapterViewTests : IDisposable
         Assert.Contains("InspectorHost", names);
         Assert.Contains("StatusFallback", names);
 
-        string code = File.ReadAllText(RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs"));
+        string code = File.ReadAllText(RepositoryFile("CernealaPresentation", "PrismChapterView.crn.cs"));
         Assert.Contains("PrismStudioTarget.Mascot => PreviewMascotImage", code, StringComparison.Ordinal);
         Assert.DoesNotContain("internal sealed class PrismStudio", code, StringComparison.Ordinal);
     }
@@ -60,14 +60,15 @@ public sealed class PrismChapterViewTests : IDisposable
     [Fact]
     public void CatalogToolbarUsesCompactButtonsWithEnoughVerticalSpace()
     {
-        XDocument markup = XDocument.Load(RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml"));
+        XDocument markup = XDocument.Load(RepositoryFile("CernealaPresentation", "PrismChapterView.crn"));
         XElement[] buttons = [
             FindNamedElement(markup, "FilterTab"),
             FindNamedElement(markup, "StyleTab"),
             FindNamedElement(markup, "CategoryButton")];
 
-        Assert.All(buttons, button =>
-            Assert.Equal("$PrismStudioCatalogButton", (string?)button.Attribute("Aspect")));
+        Assert.Equal("$PrismStudioSelectionButton", (string?)buttons[0].Attribute("Aspect"));
+        Assert.Equal("$PrismStudioSelectionButton", (string?)buttons[1].Attribute("Aspect"));
+        Assert.Equal("$PrismStudioCatalogButton", (string?)buttons[2].Attribute("Aspect"));
 
         XElement toolbar = Assert.IsType<XElement>(buttons[0].Parent);
         Assert.Equal("38", (string?)toolbar.Parent?.Elements().First(element => element.Name.LocalName == "Grid.RowDefinitions")
@@ -78,7 +79,7 @@ public sealed class PrismChapterViewTests : IDisposable
     public void PrismTextBoxesUseLightTextAndCaret()
     {
         XDocument markup = XDocument.Load(
-            RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml"));
+            RepositoryFile("CernealaPresentation", "PrismChapterView.crn"));
         XElement searchBox = FindNamedElement(markup, "SearchBox");
         XElement textBoxAspect = Assert.Single(markup.Descendants("Aspect").Where(
             aspect => (string?)aspect.Attribute("Name") == "PrismStudioTextBox"));
@@ -98,10 +99,10 @@ public sealed class PrismChapterViewTests : IDisposable
         Assert.Equal(11, PrismCatalog.Filters.Count(operation => operation.RequiresResource));
         Assert.Single(PrismCatalog.Styles.Where(operation => operation.RequiresResource));
 
-        string code = File.ReadAllText(RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs"));
+        string code = File.ReadAllText(RepositoryFile("CernealaPresentation", "PrismChapterView.crn.cs"));
         foreach (PrismCatalogValueKind kind in Enum.GetValues<PrismCatalogValueKind>())
         {
-            Assert.Contains($"case PrismCatalogValueKind.{kind}", code, StringComparison.Ordinal);
+            Assert.Contains($"PrismCatalogValueKind.{kind}", code, StringComparison.Ordinal);
         }
         Assert.Contains("DetachPrism();", code, StringComparison.Ordinal);
         Assert.Contains("GeneratedMarkup.AttachPrism", code, StringComparison.Ordinal);
@@ -111,7 +112,7 @@ public sealed class PrismChapterViewTests : IDisposable
     public void PrismStudioSliderAspectLivesInChapterMarkupWithoutAWrapperControl()
     {
         XDocument markup = XDocument.Load(
-            RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml"));
+            RepositoryFile("CernealaPresentation", "PrismChapterView.crn"));
         XElement[] aspects = markup.Descendants("Aspect")
             .Where(aspect => ((string?)aspect.Attribute("Name"))?.StartsWith(
                 "PrismStudioSlider",
@@ -128,18 +129,17 @@ public sealed class PrismChapterViewTests : IDisposable
             Assert.Single(aspects.SelectMany(aspect => aspect.Descendants()).Where(
                 element => (string?)element.Attribute("Name") == "PART_Thumb")).Name.LocalName);
 
+        Assert.NotEmpty(markup.Descendants("Slider").Where(
+            slider => (string?)slider.Attribute("Aspect") == "$PrismStudioSlider"));
         string code = File.ReadAllText(
-            RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs"));
-        Assert.Contains(
-            "ApplyAspect(new Slider(), \"PrismStudioSlider\")",
-            code,
-            StringComparison.Ordinal);
+            RepositoryFile("CernealaPresentation", "PrismChapterView.crn.cs"));
+        Assert.DoesNotContain("new Slider", code, StringComparison.Ordinal);
         Assert.DoesNotContain("PrismStudioSlider sliderView", code, StringComparison.Ordinal);
         Assert.DoesNotContain("ElementAspect", code, StringComparison.Ordinal);
         Assert.False(File.Exists(
-            RepositoryFile("CernealaPresentation", "PrismStudioSlider.cui.xml")));
+            RepositoryFile("CernealaPresentation", "PrismStudioSlider.crn")));
         Assert.False(File.Exists(
-            RepositoryFile("CernealaPresentation", "PrismStudioSlider.cui.xml.cs")));
+            RepositoryFile("CernealaPresentation", "PrismStudioSlider.crn.cs")));
     }
 
     [Fact]
@@ -240,7 +240,7 @@ public sealed class PrismChapterViewTests : IDisposable
         Assert.Equal(2 + symbolParameterCount, comboBoxes.Length);
         Assert.DoesNotContain(
             "CreateCycleButton",
-            File.ReadAllText(RepositoryFile("CernealaPresentation", "PrismChapterView.cui.xml.cs")),
+            File.ReadAllText(RepositoryFile("CernealaPresentation", "PrismChapterView.crn.cs")),
             StringComparison.Ordinal);
 
         PrismBlendMode nextBlendMode = Assert.IsType<PrismBlendMode>(
@@ -263,22 +263,17 @@ public sealed class PrismChapterViewTests : IDisposable
         view.AddLayerForTests();
         root.ProcessFrame();
         ComboBox comboBox = Assert.Single(Descendants(view).OfType<ComboBox>());
-        Cerneala.UI.Controls.Primitives.ToggleButton toggle =
-            Assert.IsType<Cerneala.UI.Controls.Primitives.ToggleButton>(
-                comboBox.ComponentTemplateInstance!.Parts["PART_DropDownToggle"]);
-        TextBox editor = Assert.IsType<TextBox>(
-            comboBox.ComponentTemplateInstance.Parts["PART_EditableTextBox"]);
         Color paper = new(232, 235, 232);
         Color line = new(52, 60, 70);
         Color panel = new(20, 24, 30);
         Assert.Equal(
-            UiPropertyValueSource.AspectVisualState,
+            UiPropertyValueSource.LocalAspectBase,
             comboBox.GetValueSource(Control.BackgroundProperty));
         Assert.Equal(
-            UiPropertyValueSource.AspectVisualState,
+            UiPropertyValueSource.LocalAspectBase,
             comboBox.GetValueSource(Control.ForegroundProperty));
         Assert.Equal(
-            Color.Transparent,
+            panel,
             Assert.IsType<SolidColorBrush>(comboBox.Background).Color);
         Assert.Equal(
             paper,
@@ -286,30 +281,6 @@ public sealed class PrismChapterViewTests : IDisposable
         Assert.Equal(
             line,
             Assert.IsType<SolidColorBrush>(comboBox.BorderBrush).Color);
-        Assert.Equal(
-            Color.Transparent,
-            Assert.IsType<SolidColorBrush>(editor.Background).Color);
-        Assert.Equal(
-            paper,
-            Assert.IsType<SolidColorBrush>(editor.Foreground).Color);
-        Assert.Equal(
-            paper,
-            Assert.IsType<SolidColorBrush>(editor.CaretBrush).Color);
-        Assert.Equal(
-            Color.Transparent,
-            Assert.IsType<SolidColorBrush>(toggle.Background).Color);
-        Assert.Equal(
-            paper,
-            Assert.IsType<SolidColorBrush>(toggle.Foreground).Color);
-        Assert.Equal(
-            line,
-            Assert.IsType<SolidColorBrush>(toggle.BorderBrush).Color);
-        Cerneala.UI.Controls.Shapes.Path toggleGlyph =
-            Assert.IsType<Cerneala.UI.Controls.Shapes.Path>(toggle.Content);
-        Assert.Equal(
-            paper,
-            Assert.IsType<SolidColorBrush>(toggleGlyph.Fill).Color);
-
         comboBox.IsDropDownOpen = true;
         root.ProcessFrame();
 

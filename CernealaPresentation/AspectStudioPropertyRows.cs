@@ -54,6 +54,8 @@ internal sealed class AspectStudioTextRow : AspectStudioPropertyRowModel
     private readonly Func<string, (bool Success, object? Value, string Error)> parse;
     private readonly Action<object?> commit;
     private readonly Action<string> reportError;
+    private readonly Brush validBrush;
+    private readonly Brush invalidBrush;
     private string text;
     private Brush borderBrush;
 
@@ -62,6 +64,8 @@ internal sealed class AspectStudioTextRow : AspectStudioPropertyRowModel
         Brush labelBrush,
         string text,
         Brush borderBrush,
+        Brush validBrush,
+        Brush invalidBrush,
         Func<string, (bool Success, object? Value, string Error)> parse,
         Action<object?> commit,
         Action<string> reportError)
@@ -69,6 +73,8 @@ internal sealed class AspectStudioTextRow : AspectStudioPropertyRowModel
     {
         this.text = text;
         this.borderBrush = borderBrush;
+        this.validBrush = validBrush;
+        this.invalidBrush = invalidBrush;
         this.parse = parse;
         this.commit = commit;
         this.reportError = reportError;
@@ -85,7 +91,7 @@ internal sealed class AspectStudioTextRow : AspectStudioPropertyRowModel
             }
 
             (bool success, object? parsed, string error) = parse(text);
-            BorderBrush = success ? AspectChapterView.LineBrush : AspectChapterView.PinkBrush;
+            BorderBrush = success ? validBrush : invalidBrush;
             if (success)
             {
                 commit(parsed);
@@ -173,6 +179,8 @@ internal sealed class AspectStudioColorRow : AspectStudioPropertyRowModel
     private readonly Func<string, (bool Success, object? Value, string Error)> parse;
     private readonly Action<object?> commit;
     private readonly Action<string> reportError;
+    private readonly Brush validBrush;
+    private readonly Brush invalidBrush;
     private string text;
     private Color selectedColor;
     private Brush borderBrush;
@@ -184,6 +192,8 @@ internal sealed class AspectStudioColorRow : AspectStudioPropertyRowModel
         string text,
         Color selectedColor,
         Brush borderBrush,
+        Brush validBrush,
+        Brush invalidBrush,
         Func<string, (bool Success, object? Value, string Error)> parse,
         Action<object?> commit,
         Action<string> reportError)
@@ -192,6 +202,8 @@ internal sealed class AspectStudioColorRow : AspectStudioPropertyRowModel
         this.text = text;
         this.selectedColor = selectedColor;
         this.borderBrush = borderBrush;
+        this.validBrush = validBrush;
+        this.invalidBrush = invalidBrush;
         this.parse = parse;
         this.commit = commit;
         this.reportError = reportError;
@@ -208,7 +220,7 @@ internal sealed class AspectStudioColorRow : AspectStudioPropertyRowModel
             }
 
             (bool success, object? parsed, string error) = parse(text);
-            BorderBrush = success ? AspectChapterView.LineBrush : AspectChapterView.PinkBrush;
+            BorderBrush = success ? validBrush : invalidBrush;
             if (!success)
             {
                 reportError(error);
@@ -245,7 +257,7 @@ internal sealed class AspectStudioColorRow : AspectStudioPropertyRowModel
             try
             {
                 Text = AspectChapterView.FormatBrush(brush);
-                BorderBrush = AspectChapterView.LineBrush;
+                BorderBrush = validBrush;
             }
             finally
             {

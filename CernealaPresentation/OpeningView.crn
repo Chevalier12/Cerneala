@@ -1,4 +1,5 @@
 <UserControl
+    xmlns:views="clr-namespace:Cerneala.Presentation;assembly=CernealaPresentation"
     Aspect="$LoadingMotion"
     Background="#FF080A0D"
     BorderBrush="#FF2A2E38"
@@ -28,7 +29,7 @@
             Color="#FF555E6E" />
         <MotionClip
             Name="LoadingSequence"
-            TargetType="Cerneala.Presentation.OpeningView">
+            TargetType="views:OpeningView">
             @sequence
             {
                 @parallel
@@ -373,7 +374,7 @@
         </MotionClip>
         <Aspect
             Name="LoadingMotion"
-            TargetType="Cerneala.Presentation.OpeningView">
+            TargetType="views:OpeningView">
             @handle Loading;
             @on StartRequested
             {
@@ -384,6 +385,7 @@
             TargetType="TextBlock">
             @default
             {
+
                 FontFamily = "Segoe UI Variable Text";
                 FontSize = 14;
                 Foreground = $PaperBrush;
@@ -402,6 +404,7 @@
                 BorderThickness = "1";
                 Padding = "22,13,22,13";
             }
+
             @when IsMouseOver
             {
                 Background = $LimeBrush;
@@ -442,7 +445,7 @@
                     Grid.Column="0"
                     Orientation="Horizontal"
                     VerticalAlignment="Center">
-                    <BrandMark />
+                    <views:BrandMark />
                     <TextBlock
                         Text="/"
                         FontFamily="Cascadia Mono"
@@ -592,7 +595,7 @@
                                 Text="01"
                                 FontFamily="Cascadia Mono SemiBold"
                                 FontSize="10"
-                                Foreground="$CyanBrush" />
+                                Foreground="$CyanBrush:OneWay" />
                             <TextBlock
                                 Text="BUILD-TIME MARKUP"
                                 FontFamily="Cascadia Mono"

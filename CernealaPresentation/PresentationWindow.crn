@@ -1,4 +1,5 @@
 <Window
+    xmlns:views="clr-namespace:Cerneala.Presentation"
     Title="Cerneala Orientation"
     Width="1320"
     Height="860"
@@ -195,7 +196,7 @@
                         <ColumnDefinition
                             Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <BrandMark
+                    <views:BrandMark
                         Grid.Column="0"
                         VerticalAlignment="Center" />
                     <StackPanel
@@ -459,27 +460,27 @@
                     HorizontalScrollBarVisibility="Disabled">
                     <Grid
                         ClipToBounds="True">
-                        <WelcomeChapterView
+                        <views:WelcomeChapterView
                             Name="PageWelcome"
                             Visibility="Collapsed" />
-                        <RetainedModelChapterView
+                        <views:RetainedModelChapterView
                             Name="PageRetained"
                             Visibility="Collapsed" />
-                        <MarkupChapterView
+                        <views:MarkupChapterView
                             Name="PageMarkup"
                             Visibility="Collapsed" />
-                        <MotionChapterView
+                        <views:MotionChapterView
                             Name="PageMotion"
                             Visibility="Collapsed" />
-                        <FramePipelineChapterView
+                        <views:FramePipelineChapterView
                             Name="PagePipeline"
                             Visibility="Collapsed" />
                     </Grid>
                 </ScrollViewer>
-                <AspectChapterView
+                <views:AspectChapterView
                     Name="PageAspect"
                     Visibility="Collapsed" />
-                <PrismChapterView
+                <views:PrismChapterView
                     Name="PagePrism"
                     Visibility="Collapsed" />
             </Grid>
@@ -552,8 +553,11 @@
             </Grid>
         </Border>
         </Grid>
-        <OpeningView
+        <views:OpeningView
             Name="OpeningSurface"
             ContinueRequested="OnOpeningContinue" />
+        <views:PrismOuterGlowLabView
+            Name="OuterGlowLabSurface"
+            Visibility="Collapsed" />
     </Grid>
 </Window>

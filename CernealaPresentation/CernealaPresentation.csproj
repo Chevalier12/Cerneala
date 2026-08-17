@@ -12,7 +12,7 @@
     <ProjectReference Include="..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**" />
+    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />
     <Content Include="..\docs-site\assets\cerneala-mascot-void-suction-well.svg"
              Link="Assets\cerneala-mascot-void-suction-well.svg"
              CopyToOutputDirectory="PreserveNewest" />

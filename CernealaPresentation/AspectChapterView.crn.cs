@@ -29,14 +29,6 @@ public partial class AspectChapterView : UserControl
         typeof(AspectChapterView),
         new UiPropertyMetadata<IEnumerable?>(null));
 
-    private static readonly SolidColorBrush PanelBrush = new(new Color(20, 24, 30));
-    private static readonly SolidColorBrush SelectedBrush = new(new Color(20, 55, 61));
-    internal static readonly SolidColorBrush LineBrush = new(new Color(52, 60, 70));
-    private static readonly SolidColorBrush PaperBrush = new(new Color(237, 239, 243));
-    private static readonly SolidColorBrush MutedBrush = new(new Color(150, 160, 171));
-    private static readonly SolidColorBrush CyanBrush = new(new Color(77, 240, 255));
-    internal static readonly SolidColorBrush PinkBrush = new(new Color(255, 62, 165));
-    private static readonly SolidColorBrush LimeBrush = new(new Color(198, 255, 61));
     private static readonly HashSet<UiProperty> HiddenProperties =
     [
         UIElement.DataContextProperty,
@@ -68,6 +60,20 @@ public partial class AspectChapterView : UserControl
         get => GetValue(PropertyRowsProperty);
         set => SetValue(PropertyRowsProperty, value);
     }
+
+    private Brush PanelBrush => FindResource<Brush>("PanelBrush");
+
+    private Brush SelectedBrush => FindResource<Brush>("CyanWashBrush");
+
+    private Brush LineBrush => FindResource<Brush>("LineStrongBrush");
+
+    private Brush MutedBrush => FindResource<Brush>("SlateBrush");
+
+    private Brush CyanBrush => FindResource<Brush>("CyanBrush");
+
+    private Brush PinkBrush => FindResource<Brush>("PinkBrush");
+
+    private Brush LimeBrush => FindResource<Brush>("LimeBrush");
 
     protected override void OnAttached()
     {
@@ -366,6 +372,8 @@ public partial class AspectChapterView : UserControl
                 FormatBrush(brush),
                 brush is SolidColorBrush solid ? solid.Color : Color.Transparent,
                 LineBrush,
+                LineBrush,
+                PinkBrush,
                 parse,
                 commit,
                 UpdateStatus);
@@ -376,6 +384,8 @@ public partial class AspectChapterView : UserControl
             labelBrush,
             FormatValue(property, current),
             LineBrush,
+            LineBrush,
+            PinkBrush,
             parse,
             commit,
             UpdateStatus);
@@ -667,7 +677,7 @@ public partial class AspectChapterView : UserControl
         _ => brush.GetType().Name
     };
 
-    private static Brush OwnerBrush(Type ownerType) => ownerType == typeof(TextBlock) || ownerType == typeof(ContentControl)
+    private Brush OwnerBrush(Type ownerType) => ownerType == typeof(TextBlock) || ownerType == typeof(ContentControl)
         ? PinkBrush
         : ownerType == typeof(Control) ? LimeBrush : CyanBrush;
 

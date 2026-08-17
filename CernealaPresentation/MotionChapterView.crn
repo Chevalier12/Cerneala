@@ -1,9 +1,10 @@
 <UserControl
+    xmlns:views="clr-namespace:Cerneala.Presentation"
     Aspect="$ChapterMotion">
     <UserControl.Resources>
         <MotionClip
             Name="ReactorReplay"
-            TargetType="Cerneala.Presentation.MotionChapterView">
+            TargetType="views:MotionChapterView">
             @sequence
             {
                 @set
@@ -518,7 +519,7 @@
         </MotionClip>
         <Aspect
             Name="ChapterMotion"
-            TargetType="Cerneala.Presentation.MotionChapterView">
+            TargetType="views:MotionChapterView">
             @handle Playback;
             @when $self.Visibility
             {
