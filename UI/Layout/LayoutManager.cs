@@ -41,7 +41,6 @@ public sealed class LayoutManager
         LayoutSize desired = element.Measure(new MeasureContext(availableSize, LayoutRounding.ForScale(root.Scale)));
         element.LastMeasureAvailableSize = availableSize;
         element.LastMeasureLayoutVersion = element.LayoutVersion;
-        element.LastMeasureViewportVersion = root.ViewportVersion;
         return new LayoutResult(desired, element.ArrangedBounds, false, false, false);
     }
 
@@ -124,16 +123,17 @@ public sealed class LayoutManager
             return new LayoutSize(root.ViewportWidth, root.ViewportHeight);
         }
 
-        if (element.LastMeasureAvailableSize is LayoutSize previousAvailableSize &&
-            element.LastMeasureViewportVersion == root.ViewportVersion)
-        {
-            return previousAvailableSize;
-        }
-
         UIElement? parent = element.VisualParent;
         if (parent is UIRoot)
         {
             return new LayoutSize(root.ViewportWidth, root.ViewportHeight);
+        }
+
+        // A nested element's parent owns its measure constraint. Arranged bounds are not a
+        // substitute because panels may deliberately measure an axis with infinity.
+        if (element.LastMeasureAvailableSize is LayoutSize previousAvailableSize)
+        {
+            return previousAvailableSize;
         }
 
         if (parent is not null && parent.ArrangedBounds.Width > 0 && parent.ArrangedBounds.Height > 0)

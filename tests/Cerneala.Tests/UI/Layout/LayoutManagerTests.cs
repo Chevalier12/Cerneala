@@ -244,6 +244,25 @@ public sealed class LayoutManagerTests
     }
 
     [Fact]
+    public void QueuedChildMeasurePreservesParentConstraintAcrossViewportVersionChange()
+    {
+        UIRoot root = new(100, 100);
+        StackPanel panel = new() { Width = 50 };
+        StackAxisSensitiveElement child = new();
+        panel.VisualChildren.Add(child);
+        root.VisualChildren.Add(panel);
+        root.ProcessFrame();
+
+        root.SetViewport(80, 100, 1);
+        child.DirtyState.Mark(InvalidationFlags.Measure);
+        root.LayoutQueue.EnqueueMeasure(child);
+        root.ProcessFrame();
+
+        Assert.Equal(40, child.DesiredSize.Height);
+        Assert.True(float.IsPositiveInfinity(child.LastMeasureAvailableSize?.Height ?? 0));
+    }
+
+    [Fact]
     public void ScrollOffsetDoesNotRebuildContentLocalRenderCache()
     {
         UIRoot root = new(100, 100);
@@ -354,6 +373,17 @@ public sealed class LayoutManagerTests
             return context.AvailableSize.Width <= 40
                 ? new LayoutSize(40, 30)
                 : new LayoutSize(100, 10);
+        }
+    }
+
+    private sealed class StackAxisSensitiveElement : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            float height = float.IsPositiveInfinity(context.AvailableSize.Height)
+                ? 40
+                : context.AvailableSize.Height;
+            return new LayoutSize(20, height);
         }
     }
 

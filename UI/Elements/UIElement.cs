@@ -281,8 +281,6 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal int LastMeasureLayoutVersion { get; set; } = -1;
 
-    internal int LastMeasureViewportVersion { get; set; } = -1;
-
     private LayoutSize? previousMeasureAvailableSize;
     private LayoutSize previousMeasureDesiredSize;
     private int previousMeasureLayoutVersion = -1;
@@ -762,7 +760,6 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         SetDesiredSize(desired);
         LastMeasureAvailableSize = context.AvailableSize;
         LastMeasureLayoutVersion = LayoutVersion;
-        LastMeasureViewportVersion = Root?.ViewportVersion ?? -1;
         RecordScheduledMeasureVisit();
         return desired;
     }
@@ -813,7 +810,6 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         LastMeasureAvailableSize = null;
         LastMeasureLayoutVersion = -1;
-        LastMeasureViewportVersion = -1;
         previousMeasureAvailableSize = null;
         previousMeasureLayoutVersion = -1;
         olderMeasureAvailableSize = null;
@@ -1057,7 +1053,6 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
         LastMeasureAvailableSize = cachedAvailableSize;
         LastMeasureLayoutVersion = cachedLayoutVersion;
-        LastMeasureViewportVersion = Root?.ViewportVersion ?? -1;
         SetDesiredSize(cachedDesiredSize);
 
         cachedAvailableSize = currentAvailableSize;
