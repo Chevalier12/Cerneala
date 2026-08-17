@@ -1,6 +1,6 @@
 # Markup Data Bindings
 
-Cerneala `.cui.xml` files support source-generated property bindings. The
+Cerneala `.crn` files support source-generated property bindings. The
 generator resolves every source and target with Roslyn and emits typed getters,
 setters, and observation factories. Binding paths are not interpreted through
 reflection or `StringPropertyPath` at runtime.

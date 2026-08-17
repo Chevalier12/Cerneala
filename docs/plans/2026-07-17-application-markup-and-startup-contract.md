@@ -1,4 +1,4 @@
-# Plan: `App.cui.xml` si contractul declarativ de aplicatie
+# Plan: `App.crn` si contractul declarativ de aplicatie
 
 > Data: 2026-07-17
 > Status: finalizat
@@ -9,8 +9,8 @@
 Cerneala va suporta o pereche compilata:
 
 ```text
-App.cui.xml
-App.cui.xml.cs
+App.crn
+App.crn.cs
 ```
 
 cu o radacina `Application`, similara ca rol cu `App.xaml` din WPF si `App.axaml` din Avalonia:
@@ -113,23 +113,23 @@ Rezultatul este ca resursele comune trebuie tinute intr-un owner vizual, repetat
 ## 3. Decizii fixate
 
 - Tipul public va fi `Cerneala.UI.Application`.
-- Companionul `App.cui.xml.cs` va declara o clasa partiala, concreta, derivata din `Application`.
-- `App.cui.xml` va folosi radacina `<Application>`.
+- Companionul `App.crn.cs` va declara o clasa partiala, concreta, derivata din `Application`.
+- `App.crn` va folosi radacina `<Application>`.
 - Un executabil poate avea cel mult o definitie `Application` paired.
 - Entry point-ul generat va apartine definitiei `Application`, nu ferestrei numite `MainWindow`.
 - Sintaxa initiala va fi `StartupWindow="<type-name>"`, nu `StartupUri`.
 - `StartupWindow` va fi rezolvat semantic in scope-ul companionului C# si trebuie sa indice un tip concret, accesibil, derivat din `Window`.
 - `MainWindow` nu va fi un nume de tip rezervat; orice fereastra indicata de `StartupWindow` devine initial valoarea proprietatii runtime `Application.MainWindow`.
 - `ShutdownMode` va accepta `OnLastWindowClose`, `OnMainWindowClose` si `OnExplicitShutdown`.
-- Valoarea implicita pentru aplicatiile cu `App.cui.xml` va fi `OnLastWindowClose`, la fel ca modelele desktop consacrate.
+- Valoarea implicita pentru aplicatiile cu `App.crn` va fi `OnLastWindowClose`, la fel ca modelele desktop consacrate.
 - `Application.Resources` va fi acelasi provider observabil instalat drept application-scope in toate ferestrele aplicatiei.
 - Resursele locale de element, `UserControl` si `Window` vor continua sa aiba prioritate fata de resursele aplicatiei.
 - `<Application.Resources>` va accepta aceleasi declaratii existente potrivite scope-ului de aplicatie: brush-uri, `<Aspect>`, `<Tween>` si `<Spring>`.
 - Motion clips care refera elemente prin nume nu vor fi legale in `Application`, deoarece aplicatia nu are visual tree sau namescope.
 - `@when`, `@if`, `@set`, `@animate`, copii vizuali, `Name`, `DataType` si event handlers de element nu vor fi legale direct pe `Application`.
-- `ConfigureServices`, startup-ul si exit-ul vor fi override-uri de instanta; vechiul hook static ramane numai in fallback-ul legacy fara `App.cui.xml`.
+- `ConfigureServices`, startup-ul si exit-ul vor fi override-uri de instanta; vechiul hook static ramane numai in fallback-ul legacy fara `App.crn`.
 - In absenta unei definitii `Application`, conventia existenta `MainWindow` va ramane temporar functionala pentru compatibilitate.
-- Daca exista `App.cui.xml`, fallback-ul `MainWindow` este dezactivat complet; nu se emit doi descriptori si doua entry point-uri.
+- Daca exista `App.crn`, fallback-ul `MainWindow` este dezactivat complet; nu se emit doi descriptori si doua entry point-uri.
 - Hosted mode-ul existent ramane suportat: host-ul extern pompeaza runtime-ul, dar `Application` si service provider-ul au acelasi lifecycle ca in standalone.
 
 ## 4. Contract public propus
@@ -220,12 +220,12 @@ Aspectele application-scope se aplica tuturor ferestrelor, dar aspectele mai apr
 - suport Linux/macOS ori lifetimes Avalonia-style pentru mobile/browser;
 - pack URI, runtime XML loading sau alegerea startup-ului prin cale de fisier;
 - merged resource dictionaries si includes in aceasta etapa;
-- hot reload pentru `App.cui.xml`;
+- hot reload pentru `App.crn`;
 - splash screen;
 - session activation, protocol activation sau file activation;
 - handler global pentru exceptii neprocesate;
 - mai multe instante `Application` in acelasi proces/thread UI;
-- impartirea `PresentationWindow.cui.xml` in capitole; aceasta va fi un plan separat;
+- impartirea `PresentationWindow.crn` in capitole; aceasta va fi un plan separat;
 - transformarea tuturor API-urilor interne de hosting in API public.
 
 ## 6. Fisiere estimate
@@ -247,8 +247,8 @@ Aspectele application-scope se aplica tuturor ferestrelor, dar aspectele mai apr
 - `tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorApplicationTests.cs`.
 - `tests/Cerneala.Tests/UI/Hosting/ApplicationRuntimeTests.cs`.
 - fixture-uri fake pentru platforma Window, extinse numai unde lifecycle-ul nou o cere.
-- `CernealaPresentation/App.cui.xml`.
-- `CernealaPresentation/App.cui.xml.cs`.
+- `CernealaPresentation/App.crn`.
+- `CernealaPresentation/App.crn.cs`.
 
 ### Documentatie
 
@@ -266,7 +266,7 @@ Lista este estimativa. Nu se creeaza abstractions decorative daca implementarea 
 - [x] Adauga teste SourceGen RED care demonstreaza ca `<Application StartupWindow="ShellWindow">` paired cu `App : Application` nu este recunoscut in baseline.
 - [x] Adauga un test RED care cere ca entry point-ul sa fie emis din definitia `Application` chiar daca startup window nu se numeste `MainWindow`.
 - [x] Adauga teste RED pentru standalone si hosted mode, pastrand diferenta actuala dintre `Main()` si module initializer.
-- [x] Caracterizeaza prin teste comportamentul legacy: un executabil fara `App.cui.xml`, cu exact un `MainWindow`, continua sa emita startup-ul actual.
+- [x] Caracterizeaza prin teste comportamentul legacy: un executabil fara `App.crn`, cu exact un `MainWindow`, continua sa emita startup-ul actual.
 - [x] Adauga teste RED pentru aplicatie duplicata, companion lipsa, radacina gresita, tip de baza gresit si constructor declarat de utilizator.
 - [x] Adauga teste RED pentru `StartupWindow` lipsa, necunoscut, ambiguu, inaccesibil, abstract, non-`Window` si referinta la `Application` insasi.
 - [x] Adauga teste runtime RED pentru cele trei shutdown modes, anularea `Closing`, exit code si `Exit` exact o data.
@@ -297,7 +297,7 @@ Lista este estimativa. Nu se creeaza abstractions decorative daca implementarea 
 - [x] Nu exista doua surse de adevar pentru `MainWindow`, lista de ferestre sau shutdown.
 - [x] Inchiderea anulata nu produce `Exit`, disposal sau inchiderea celorlalte ferestre.
 
-### Etapa 2 - Generatorul pentru `App.cui.xml`
+### Etapa 2 - Generatorul pentru `App.crn`
 
 - [x] Adauga pairing pentru un document cu radacina `<Application>` si companion C# partial derivat din `Application`.
 - [x] Cere cel mult o definitie `Application` intr-un output executabil si emite diagnostic precis pentru duplicate.
@@ -317,7 +317,7 @@ Lista este estimativa. Nu se creeaza abstractions decorative daca implementarea 
 **Gate etapa 2**
 
 - [x] Toate cazurile SourceGen RED din etapa 0 sunt verzi.
-- [x] Un executable cu `App.cui.xml` si o fereastra `ShellWindow` genereaza exact un entry point si porneste `ShellWindow`.
+- [x] Un executable cu `App.crn` si o fereastra `ShellWindow` genereaza exact un entry point si porneste `ShellWindow`.
 - [x] Un proiect legacy fara App continua sa genereze exact startup-ul anterior.
 - [x] Nicio cale de startup noua nu foloseste reflection, `Activator.CreateInstance` sau nume de fisier interpretat la runtime.
 
@@ -363,8 +363,8 @@ Lista este estimativa. Nu se creeaza abstractions decorative daca implementarea 
 
 ### Etapa 5 - Migrarea `CernealaPresentation`
 
-- [x] Adauga `CernealaPresentation/App.cui.xml` cu `StartupWindow="MainWindow"` si shutdown mode explicit.
-- [x] Adauga `CernealaPresentation/App.cui.xml.cs` derivat din `Application`.
+- [x] Adauga `CernealaPresentation/App.crn` cu `StartupWindow="MainWindow"` si shutdown mode explicit.
+- [x] Adauga `CernealaPresentation/App.crn.cs` derivat din `Application`.
 - [x] Muta orice configurare DI application-scope din vechiul hook static in override-ul de instanta, daca exista.
 - [x] Muta in App numai resursele consumate real de mai multe ferestre; nu goli mecanic Window resources locale.
 - [x] Demonstreaza ca `MainWindow`, `PresentationWindow` si `MotionLabWindow` vad aceleasi resurse globale unde este intentionat.
@@ -375,7 +375,7 @@ Lista este estimativa. Nu se creeaza abstractions decorative daca implementarea 
 
 **Gate etapa 5**
 
-- [x] Presentation porneste din declaratia `App.cui.xml`, nu din numele clasei `MainWindow`.
+- [x] Presentation porneste din declaratia `App.crn`, nu din numele clasei `MainWindow`.
 - [x] Toate cele trei ferestre functioneaza, iar inchiderea urmeaza `ShutdownMode` declarat.
 - [x] Benchmarkul Presentation existent poate porni si opri aplicatia fara schimbari fragile de timing sau automation.
 
@@ -446,12 +446,12 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - Nu face `Application` proprietarul rendererului, input-ului sau contextelor native; acestea raman la `WindowApplicationRuntime`.
 - Nu pastra doua cai active de startup cand exista App markup.
 - Nu relaxa diagnosticele pentru a permite Motion clips globale fara namescope.
-- Nu sparge `PresentationWindow.cui.xml` in acest plan; App face posibila organizarea resurselor, dar componentizarea este o livrare separata.
+- Nu sparge `PresentationWindow.crn` in acest plan; App face posibila organizarea resurselor, dar componentizarea este o livrare separata.
 - Nu elimina fallback-ul legacy pana cand toate sample-urile si consumatorii repo-ului au migrat si o schimbare breaking este aprobata separat.
 
 ## 11. Definitia de gata
 
-- [x] Un proiect executabil poate declara `App.cui.xml` + `App.cui.xml.cs` si nu are nevoie de `Program.cs`.
+- [x] Un proiect executabil poate declara `App.crn` + `App.crn.cs` si nu are nevoie de `Program.cs`.
 - [x] `StartupWindow` poate indica orice tip concret `Window` valid, indiferent de numele lui.
 - [x] Generatorul emite exact un entry point/descriptor din App si nu mai depinde de numele `MainWindow`.
 - [x] `Application.Current`, `Resources`, `Services`, `MainWindow`, `Windows`, `ActiveWindow`, lifecycle-ul si shutdown-ul functioneaza conform contractului.

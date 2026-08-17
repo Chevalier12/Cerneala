@@ -249,7 +249,7 @@ dragul costumului și cravatei.
 ## Arhitectura de nivel înalt
 
 ```text
-.cui.xml
+.crn
     |
     v
 Prism parser + semantic binder

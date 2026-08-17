@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `.cui.xml` source-generator support for `Resources`, named resources via `Name`, reusable `Aspect` declarations, `$Name` references, and deterministic cascade application.
+**Goal:** Add `.crn` source-generator support for `Resources`, named resources via `Name`, reusable `Aspect` declarations, `$Name` references, and deterministic cascade application.
 
 **Architecture:** Keep the implementation inside `Cerneala.SourceGen/UiMarkupGenerator.cs` and split the existing nested `GenerationScope` into small nested records/helpers for document parsing, symbol collection, value parsing, and element emission. Preserve the current generated-code style: direct public property assignments, no runtime markup parser, no `SetValue`, and source-generator diagnostics for invalid authoring input.
 
@@ -30,7 +30,7 @@
 ## Implementation Notes
 
 - Treat `Resources` as authoring metadata, not a UI element. It must not be emitted as a retained UI element.
-- Valid `.cui.xml` may be an XML fragment with one optional top-level `Resources` element and exactly one top-level UI root element.
+- Valid `.crn` may be an XML fragment with one optional top-level `Resources` element and exactly one top-level UI root element.
 - `Name` is the only reference identity. `Key` is not supported in markup.
 - `$Name` references resolve through one document-level namespace shared by elements and resources.
 - `Aspect="$KickerText"` accepts only named `Aspect` resources.
@@ -65,7 +65,7 @@ public void ResourcesCanPrecedeSingleUiRootWithoutEmittingResourceElement()
         <TextBlock Text="Hello" />
         """;
 
-    GeneratorRunResult result = RunGenerator("ResourceFragment.cui.xml", markup, out Compilation compilation);
+    GeneratorRunResult result = RunGenerator("ResourceFragment.crn", markup, out Compilation compilation);
     string generatedSource = SingleGeneratedSource(result);
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -89,9 +89,9 @@ public void MultipleUiRootsReportMalformedMarkupDiagnostic()
         <TextBlock Text="Two" />
         """;
 
-    GeneratorRunResult result = RunGenerator("MultipleRoots.cui.xml", markup, out _);
+    GeneratorRunResult result = RunGenerator("MultipleRoots.crn", markup, out _);
 
-    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "MultipleRoots.cui.xml");
+    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI001", "MultipleRoots.crn");
     Assert.Contains("exactly one UI root", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
     Assert.Empty(result.GeneratedSources);
 }
@@ -262,7 +262,7 @@ public void RefactoredPropertySpecsPreserveExistingDirectAssignments()
         </Border>
         """;
 
-    GeneratorRunResult result = RunGenerator("DirectAssignments.cui.xml", markup, out Compilation compilation);
+    GeneratorRunResult result = RunGenerator("DirectAssignments.crn", markup, out Compilation compilation);
     string generatedSource = SingleGeneratedSource(result);
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -438,7 +438,7 @@ public void SolidColorBrushResourceEmitsNamedBrushVariable()
         <TextBlock Text="Hello" />
         """;
 
-    GeneratorRunResult result = RunGenerator("BrushResource.cui.xml", markup, out Compilation compilation);
+    GeneratorRunResult result = RunGenerator("BrushResource.crn", markup, out Compilation compilation);
     string generatedSource = SingleGeneratedSource(result);
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -459,9 +459,9 @@ public void InvalidSolidColorBrushColorReportsDiagnostic()
         <TextBlock Text="Hello" />
         """;
 
-    GeneratorRunResult result = RunGenerator("BadBrush.cui.xml", markup, out _);
+    GeneratorRunResult result = RunGenerator("BadBrush.crn", markup, out _);
 
-    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "BadBrush.cui.xml");
+    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "BadBrush.crn");
     Assert.Contains("SolidColorBrush.Color", diagnostic.GetMessage());
     Assert.Empty(result.GeneratedSources);
 }
@@ -699,7 +699,7 @@ public void UnnamedAspectAppliesToEveryMatchingElement()
         </StackPanel>
         """;
 
-    GeneratorRunResult result = RunGenerator("DefaultTextAspect.cui.xml", markup, out Compilation compilation);
+    GeneratorRunResult result = RunGenerator("DefaultTextAspect.crn", markup, out Compilation compilation);
     string generatedSource = SingleGeneratedSource(result);
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -734,7 +734,7 @@ public void NamedAspectAppliesAfterUnnamedDefault()
         <TextBlock Aspect="$KickerText" Text="HELLO" />
         """;
 
-    GeneratorRunResult result = RunGenerator("NamedAspect.cui.xml", markup, out Compilation compilation);
+    GeneratorRunResult result = RunGenerator("NamedAspect.crn", markup, out Compilation compilation);
     string generatedSource = SingleGeneratedSource(result);
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -1069,7 +1069,7 @@ public void AspectCanReferenceSolidColorBrushForColorProperty()
         <TextBlock Aspect="$KickerText" Text="HELLO" />
         """;
 
-    GeneratorRunResult result = RunGenerator("AspectBrushReference.cui.xml", markup, out Compilation compilation);
+    GeneratorRunResult result = RunGenerator("AspectBrushReference.crn", markup, out Compilation compilation);
     string generatedSource = SingleGeneratedSource(result);
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -1098,9 +1098,9 @@ public void UnknownNameReferenceReportsDiagnostic()
         <TextBlock Aspect="$KickerText" />
         """;
 
-    GeneratorRunResult result = RunGenerator("UnknownReference.cui.xml", markup, out _);
+    GeneratorRunResult result = RunGenerator("UnknownReference.crn", markup, out _);
 
-    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "UnknownReference.cui.xml");
+    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "UnknownReference.crn");
     Assert.Contains("MissingColor", diagnostic.GetMessage());
     Assert.Empty(result.GeneratedSources);
 }
@@ -1180,7 +1180,7 @@ public void ElementNameRegistersGeneratedVariableSymbol()
         <TextBlock Name="KickerLabel" Text="HELLO" />
         """;
 
-    GeneratorRunResult result = RunGenerator("NamedElement.cui.xml", markup, out Compilation compilation);
+    GeneratorRunResult result = RunGenerator("NamedElement.crn", markup, out Compilation compilation);
     string generatedSource = SingleGeneratedSource(result);
 
     Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -1202,9 +1202,9 @@ public void DuplicateNameAcrossResourceAndElementReportsDiagnostic()
         <TextBlock Name="Duplicate" Text="HELLO" />
         """;
 
-    GeneratorRunResult result = RunGenerator("DuplicateName.cui.xml", markup, out _);
+    GeneratorRunResult result = RunGenerator("DuplicateName.crn", markup, out _);
 
-    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "DuplicateName.cui.xml");
+    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "DuplicateName.crn");
     Assert.Contains("Duplicate", diagnostic.GetMessage());
     Assert.Empty(result.GeneratedSources);
 }
@@ -1292,9 +1292,9 @@ public void AspectTargetMismatchReportsDiagnostic()
         <Button Aspect="$KickerText" />
         """;
 
-    GeneratorRunResult result = RunGenerator("AspectMismatch.cui.xml", markup, out _);
+    GeneratorRunResult result = RunGenerator("AspectMismatch.crn", markup, out _);
 
-    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "AspectMismatch.cui.xml");
+    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "AspectMismatch.crn");
     Assert.Contains("Button.Aspect", diagnostic.GetMessage());
     Assert.Empty(result.GeneratedSources);
 }
@@ -1314,9 +1314,9 @@ public void DuplicateUnnamedAspectForTargetReportsDiagnostic()
         <TextBlock />
         """;
 
-    GeneratorRunResult result = RunGenerator("DuplicateDefaultAspect.cui.xml", markup, out _);
+    GeneratorRunResult result = RunGenerator("DuplicateDefaultAspect.crn", markup, out _);
 
-    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "DuplicateDefaultAspect.cui.xml");
+    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "DuplicateDefaultAspect.crn");
     Assert.Contains("TextBlock", diagnostic.GetMessage());
     Assert.Empty(result.GeneratedSources);
 }
@@ -1336,9 +1336,9 @@ public void UnsupportedAspectPropertyReportsDiagnostic()
         <TextBlock />
         """;
 
-    GeneratorRunResult result = RunGenerator("UnsupportedAspectProperty.cui.xml", markup, out _);
+    GeneratorRunResult result = RunGenerator("UnsupportedAspectProperty.crn", markup, out _);
 
-    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "UnsupportedAspectProperty.cui.xml");
+    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI003", "UnsupportedAspectProperty.crn");
     Assert.Contains("TextBlock.Width", diagnostic.GetMessage());
     Assert.Empty(result.GeneratedSources);
 }
@@ -1353,9 +1353,9 @@ public void NestedResourcesReportsDiagnostic()
         <TextBlock />
         """;
 
-    GeneratorRunResult result = RunGenerator("NestedResources.cui.xml", markup, out _);
+    GeneratorRunResult result = RunGenerator("NestedResources.crn", markup, out _);
 
-    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "NestedResources.cui.xml");
+    Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI005", "NestedResources.crn");
     Assert.Contains("Nested Resources", diagnostic.GetMessage());
     Assert.Empty(result.GeneratedSources);
 }

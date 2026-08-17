@@ -60,7 +60,7 @@ fara suport runtime si nu prezinta niciuna dintre ele ca sintaxa livrata.
 ### Etapa 1 - Diagnostics si generated source quality
 
 - [x] Stabileste IDs si mesaje distincte pentru syntax, target resolution, event resolution, property/spec typing, composition, lifecycle-only directives si unsupported runtime capability.
-- [x] Mapeaza fiecare diagnostic la tokenul/directiva exacta din `.cui.xml`, inclusiv resources referenced din alt scope.
+- [x] Mapeaza fiecare diagnostic la tokenul/directiva exacta din `.crn`, inclusiv resources referenced din alt scope.
 - [x] Emite generated members cu names stabile si `#line`/source mapping unde infrastructura generatorului permite, fara sa sacrifice debugging-ul C#. (Names sunt deterministe si acoperite contractual; `#line` nu a fost adaugat peste metoda factory comuna, deoarece ar mapa gresit statements din noduri XML intercalate si ar degrada debugging-ul C#.)
 - [x] Adauga snapshot/contract tests pentru codul generat: fara reflection, dynamic, per-frame lookup dupa string sau closures recreate la fiecare tick.
 - [x] Adauga diagnostics suggestions pentru `TargetType` prea general si custom event gasit pe tipul concret.

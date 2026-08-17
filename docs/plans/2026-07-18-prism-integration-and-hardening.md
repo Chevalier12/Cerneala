@@ -44,7 +44,7 @@ stabilește prin măsurători limitele, performanța și rezistența la lifecycl
 ## Etapa 2 — dogfooding în Presentation
 
 - [x] Aplică Prism prin Cerneala markup unui element natural din
-  `CernealaPresentation/SolarSystemChapterView.cui.xml`, preferabil cardului de
+  `CernealaPresentation/SolarSystemChapterView.crn`, preferabil cardului de
   planetă și fundalului lui, fără custom control `OnRender` și fără schimbarea
   logicii orbitelor/selectării.
 - [x] Definește compoziția reutilizabilă ca `PrismComposition` și exercită

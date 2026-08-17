@@ -2,7 +2,7 @@
 
 ## Context
 
-Cerneala currently has a small XML-based UI markup source generator that consumes `.cui.xml` additional files and emits code-first factories. The supported element/property surface is intentionally narrow and does not include aspect resources or aspect references.
+Cerneala currently has a small XML-based UI markup source generator that consumes `.crn` additional files and emits code-first factories. The supported element/property surface is intentionally narrow and does not include aspect resources or aspect references.
 
 This design adds authoring syntax for aspect resources in markup without exposing low-level variant mechanics in the markup surface.
 

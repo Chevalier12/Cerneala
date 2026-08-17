@@ -6,8 +6,8 @@ A Windows executable can declare its application without `Program.cs` by pairing
 these files:
 
 ```text
-App.cui.xml
-App.cui.xml.cs
+App.crn
+App.crn.cs
 ```
 
 The markup root must be `Application`. The companion must declare one concrete
@@ -16,7 +16,7 @@ and omit a user-declared constructor.
 
 ## Minimal Complete Example
 
-`App.cui.xml`:
+`App.crn`:
 
 ```xml
 <Application StartupWindow="ShellWindow"
@@ -27,7 +27,7 @@ and omit a user-declared constructor.
 </Application>
 ```
 
-`App.cui.xml.cs`:
+`App.crn.cs`:
 
 ```csharp
 using Cerneala.UI;
@@ -44,7 +44,7 @@ public partial class App : Application
 }
 ```
 
-`ShellWindow.cui.xml`:
+`ShellWindow.crn`:
 
 ```xml
 <Window Title="Sample" Width="800" Height="600">
@@ -52,7 +52,7 @@ public partial class App : Application
 </Window>
 ```
 
-`ShellWindow.cui.xml.cs`:
+`ShellWindow.crn.cs`:
 
 ```csharp
 using Cerneala.UI.Controls;
@@ -78,7 +78,7 @@ files:
     <ProjectReference Include="..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**" />
+    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />
   </ItemGroup>
 </Project>
 ```

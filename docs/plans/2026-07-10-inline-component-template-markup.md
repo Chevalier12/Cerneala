@@ -369,7 +369,7 @@ Pentru o radacina `Window`:
 
 ### Playground si documentatie
 
-- `Playground/Cerneala.Playground/MainWindow.cui.xml`
+- `Playground/Cerneala.Playground/MainWindow.crn`
   - pastrarea Aspectelor cu `Name`/`Target`;
   - un exemplu real de `Button` cu `@template`, hover si `ContentPresenter`.
 - `docs/aspect-system.md`

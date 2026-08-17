@@ -3,7 +3,7 @@
 > Data: 2026-07-14
 > Status: finalizat
 > Dependenta: `docs/plans/2026-07-13-markup-logical-expressions.md` (implementat)
-> Scop: adaugam binding-uri source-generated `OneWay` si `TwoWay` in atributele si assignment-urile conditionale `.cui.xml` si formalizam sursele din `@when` ca binding-uri read-only compuse, fara reflection paths sau un al doilea motor reactiv.
+> Scop: adaugam binding-uri source-generated `OneWay` si `TwoWay` in atributele si assignment-urile conditionale `.crn` si formalizam sursele din `@when` ca binding-uri read-only compuse, fara reflection paths sau un al doilea motor reactiv.
 
 ## 1. Rezumat
 
@@ -275,7 +275,7 @@ mai intai elementele denumite si ataseaza binding-urile dependente dupa ce toate
 referintele din scope sunt disponibile.
 
 Nu se expune AST-ul generatorului ca API public si nu se muta parsing-ul
-`.cui.xml` in runtime.
+`.crn` in runtime.
 
 ### 6.2 Endpoint runtime reutilizabil
 
@@ -492,7 +492,7 @@ Fisiere modificate:
   unquoted si diagnosticul binding-urilor scrise ca string quoted
 - `UI/Markup/GeneratedMarkupConditions.cs`
 - `tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTests.cs`
-- `docs/getting-started.md` sau pagina conceptuala curenta pentru `.cui.xml`
+- `docs/getting-started.md` sau pagina conceptuala curenta pentru `.crn`
 - `docs-site/documentation/classes/Cerneala.UI.Markup.GeneratedMarkup.md`
 - `docs-site/documentation/classes/Cerneala.UI.Markup.MarkupObservation.md`
 - `docs-site/documentation/classes/Cerneala.UI.Markup.MarkupDataPathSegment.md`
@@ -887,7 +887,7 @@ atribute si conditii. RoslynIndexer raporteaza zero warnings, iar
 
 ### Etapa 6 - Documentatie si API public
 
-- [x] Actualizeaza documentatia conceptuala `.cui.xml` cu gramatica
+- [x] Actualizeaza documentatia conceptuala `.crn` cu gramatica
   `source-path[:mode]`, `OneWay` implicit, exemple OneWay/TwoWay, cai nested,
   elemente denumite, `$self`, template parts si cerinta `DataType`.
 - [x] Documenteaza binding-urile unquoted din assignment-uri conditionale,

@@ -394,7 +394,7 @@ Replace the current section 25 file list:
 - [x] `UI/Markup/MarkupDiagnostic.cs`
 - [x] `UI/Markup/ContentPropertyAttribute.cs` - optional ergonomic hint.
 - [x] `UI/Markup/DesignTimeOnlyAttribute.cs`
-- [x] `Cerneala.SourceGen/UiMarkupGenerator.cs` - optional incremental source generator for `.cui.xml` files that emits code-first retained UI factories.
+- [x] `Cerneala.SourceGen/UiMarkupGenerator.cs` - optional incremental source generator for `.crn` files that emits code-first retained UI factories.
 ```
 
 with:

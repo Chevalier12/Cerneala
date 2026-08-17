@@ -4,7 +4,7 @@ Data: 2026-07-13
 
 ## Obiectiv
 
-Extindem limbajul directivelor din fisierele `.cui.xml` cu operatorii lowercase
+Extindem limbajul directivelor din fisierele `.crn` cu operatorii lowercase
 `and`, `or` si paranteze de grupare, fara sa transformam markup-ul intr-un al
 doilea C#. Expresiile trebuie sa ramana tipizate, source-generated, reactive si
 compatibile cu sintaxa existenta.
@@ -152,7 +152,7 @@ Exemple tinta:
 
 ## Etapa 6: documentatie si exemplu real
 
-- [x] Actualizeaza documentatia conceptuala pentru directivele `.cui.xml` cu
+- [x] Actualizeaza documentatia conceptuala pentru directivele `.crn` cu
       gramatica, precedenta si exemple pentru `and`, `or` si paranteze.
 - [x] Explica diferenta dintre short-circuit-ul evaluarii si observarea tuturor
       dependentelor.
@@ -160,7 +160,7 @@ Exemple tinta:
       frunze non-Boolean intr-un `@when` compus.
 - [x] Actualizeaza exemplele stale de pe site care descriu sintaxa reactiva.
 - [x] Adauga in Playground un exemplu mic, lizibil, care combina doua stari si
-      afiseaza efectul fara sa transforme `MainWindow.cui.xml` intr-o ciorba.
+      afiseaza efectul fara sa transforme `MainWindow.crn` intr-o ciorba.
 - [x] Daca implementarea modifica vreun API public, actualizeaza in acelasi
       change paginile din `docs-site/documentation/classes/` si manifestul;
       altfel consemneaza explicit ca schimbarea este doar de limbaj/sourcegen.

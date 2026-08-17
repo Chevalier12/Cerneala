@@ -64,7 +64,7 @@ Nu schimbam comportamentul public deja implementat:
 - inchiderea ferestrelor owned si politica de shutdown pentru `MainWindow`;
 - thread affinity pentru toate operatiile Window;
 - DPI logic pentru layout si pixeli fizici pentru backbuffer;
-- `MainWindow.cui.xml` + `MainWindow.cui.xml.cs`;
+- `MainWindow.crn` + `MainWindow.crn.cs`;
 - constructorul si entry point-ul generate;
 - integrarea DI si `App.ConfigureServices`;
 - `@when`, `@if`, resources, aspects, names si event handlers.

@@ -51,7 +51,7 @@ ListBox list = new()
 
 ## Declare The Application
 
-Desktop projects should pair `App.cui.xml` with `App.cui.xml.cs`. The application
+Desktop projects should pair `App.crn` with `App.crn.cs`. The application
 definition selects any concrete `Window` type at build time, owns global
 resources, and generates the process entry point. A separate `Program.cs` is not
 required.
@@ -80,9 +80,27 @@ URI or runtime-loaded file. See [Application Markup](application-markup.md) for
 shutdown policies, global resources, shadowing, lifecycle, diagnostics, and the
 legacy fallback.
 
+### Migrate Existing Markup To `.crn`
+
+The `.crn` extension is a direct breaking replacement for `.cui.xml`; the XML
+dialect and file contents do not change. Rename `View.cui.xml` to `View.crn`,
+rename its companion `View.cui.xml.cs` to `View.crn.cs`, and update the project
+item to `AdditionalFiles Include="**\*.crn"`. Cerneala does not provide an
+alias, transition warning, or dual support for `.cui.xml`.
+
+### Use The Visual Studio Community Extension
+
+Visual Studio Community 2026 18.9 users can install the Cerneala VSIX for
+`.crn` highlighting, local editing rules, diagnostics, completion, navigation,
+rename, semantic tokens, structure, formatting, and code actions. The bundled
+language server is self-contained; do not configure `.crn` as generic XML or
+install a separate server/runtime. See
+[Visual Studio Community Extension](visual-studio-community.md) for installation,
+updates, uninstall, tested features, logs, privacy, and current limitations.
+
 ## Build A Generated Window In Markup
 
-Paired `.cui.xml` Window and UserControl files are a supported generated authoring path. The generator resolves controls and UI properties semantically through Roslyn, validates event handlers against the companion code-behind, and emits typed C#.
+Paired `.crn` Window and UserControl files are a supported generated authoring path. The generator resolves controls and UI properties semantically through Roslyn, validates event handlers against the companion code-behind, and emits typed C#.
 
 ```xml
 <Window Title="Sample" Width="800" Height="600">
@@ -223,4 +241,4 @@ Use targeted tests to protect no-work frames, Tab focus navigation, command stat
 
 ## What Not To Use Yet
 
-These surfaces remain deferred for Developer Preview: arbitrary XAML compatibility, runtime markup parsing, string-path binding as the core hot path, package split, native accessibility completion, full IME, and advanced rendering claims. Use only the documented `.cui.xml` grammar; unsupported XAML syntax is not interpreted dynamically.
+These surfaces remain deferred for Developer Preview: arbitrary XAML compatibility, runtime markup parsing, string-path binding as the core hot path, package split, native accessibility completion, full IME, and advanced rendering claims. Use only the documented `.crn` grammar; unsupported XAML syntax is not interpreted dynamically.

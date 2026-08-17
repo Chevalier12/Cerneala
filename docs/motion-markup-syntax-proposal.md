@@ -904,7 +904,7 @@ restarts a slot by canceling its previous execution before storing the new one;
 | `CERNEALAUI026` | Runtime capability deliberately not supported |
 
 Diagnostics select the exact directive, target, event, property, or resource
-token in the `.cui.xml` source. Generated member names are deterministic. The
+token in the `.crn` source. Generated member names are deterministic. The
 shared factory does not force `#line` mappings across interleaved XML nodes,
 because a false C# mapping would make generated-code debugging worse.
 

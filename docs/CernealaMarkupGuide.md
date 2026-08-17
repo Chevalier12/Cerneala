@@ -14,7 +14,7 @@ elements, properties, resources, bindings, directives, or motion targets.
 
 ### Shared language model
 
-All `.cui.xml` dialects now pass through one lossless, recovery-capable parser and
+All `.crn` dialects now pass through one lossless, recovery-capable parser and
 one semantic model in `Cerneala.Language`. Bindings, resources, templates,
 Aspect, Motion, and Prism therefore use the same source spans, symbols, and
 diagnostics before `Cerneala.SourceGen` lowers the validated result to C#.
@@ -22,15 +22,18 @@ diagnostics before `Cerneala.SourceGen` lowers the validated result to C#.
 Recovery keeps a partially typed document analyzable, but it does not weaken the
 build contract: saved markup is analyzed in strict `Build` mode, errors stop
 source emission, and generated code remains statically typed and reflection-free.
-The shared model is editor-agnostic infrastructure, not a promise that an LSP or
-editor integration is already shipped.
+The Visual Studio Community 2026 18.9 extension ships the local language server,
+TextMate fallback, diagnostics, IntelliSense, navigation, semantic tokens,
+structure, formatting, and code actions for `.crn`. Do not register these files
+as generic XML; follow the
+[Visual Studio Community Extension](visual-studio-community.md) guide instead.
 
 ## 1. Agent contract
 
 When doing visual UI work:
 
-1. Read the entire target `.cui.xml` file before editing it.
-2. Read `App.cui.xml` and one or two visually related sibling views.
+1. Read the entire target `.crn` file before editing it.
+2. Read `App.crn` and one or two visually related sibling views.
 3. Preserve existing `Name`, event handler, `Aspect`, `MotionClip`, and binding
    identifiers unless the task explicitly requires changing behavior.
 4. Prefer existing global brushes and aspects over local duplicates.
@@ -45,13 +48,13 @@ When doing visual UI work:
 
 ## 2. File model
 
-Cerneala build-time markup files use the `.cui.xml` suffix.
+Cerneala build-time markup files use the `.crn` suffix.
 
 Typical file pairs:
 
 ```text
-DashboardView.cui.xml
-DashboardView.cui.xml.cs
+DashboardView.crn
+DashboardView.crn.cs
 ```
 
 The companion class name must match the base file name:
@@ -79,7 +82,7 @@ The project must include markup as Roslyn additional files. The presentation
 project uses:
 
 ```xml
-<AdditionalFiles Include="**\*.cui.xml" Exclude="bin\**;obj\**" />
+<AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />
 ```
 
 ## 3. Root documents
@@ -120,7 +123,7 @@ Use `Window` for native top-level windows:
 
 ### Application
 
-`App.cui.xml` owns application-wide resources and startup:
+`App.crn` owns application-wide resources and startup:
 
 ```xml
 <Application
@@ -374,7 +377,7 @@ The repository currently contains these useful visual controls:
 This list describes available runtime classes, not a promise that every WPF
 property exists. Before using an unfamiliar control or property:
 
-1. Find an existing `.cui.xml` usage.
+1. Find an existing `.crn` usage.
 2. Read its class under `UI/Controls/`.
 3. Check its page under `docs-site/documentation/classes/`.
 4. Build immediately after the first small usage.
@@ -434,7 +437,7 @@ Use shapes for simple artwork and indicators:
 
 Useful shape properties include `Fill`, `Stroke`, and `StrokeThickness`.
 
-Do not hand-write SVG markup inside a `.cui.xml` file. Use Cerneala's `Path`,
+Do not hand-write SVG markup inside a `.crn` file. Use Cerneala's `Path`,
 `Image`, an existing custom SVG control, or a raster asset according to the
 project's established pattern.
 
@@ -528,7 +531,7 @@ Gradient stop offsets must be between `0` and `1`.
 
 ### Current CernealaPresentation palette
 
-`CernealaPresentation/App.cui.xml` currently defines:
+`CernealaPresentation/App.crn` currently defines:
 
 - Neutral: `InkBrush`, `PanelBrush`, `PanelAltBrush`, `RaisedBrush`
 - Lines: `LineBrush`, `LineStrongBrush`
@@ -1086,7 +1089,7 @@ render-cache metrics.
 
 Before declaring visual work complete:
 
-- [ ] The target `.cui.xml` is well-formed XML.
+- [ ] The target `.crn` is well-formed XML.
 - [ ] The relevant project builds with zero errors.
 - [ ] Existing element names and handlers still resolve.
 - [ ] Every `$Resource` exists in local, ancestor, or application scope.

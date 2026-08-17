@@ -34,7 +34,7 @@ Fluxul principal este:
 - Nu se folosesc Prism, `PrismInstance`, filtre, styles, backdrops sau diagnostics Prism.
 - Nu se definesc resurse, reguli, stari ori motion prin Aspect. Aplicatia nu inregistreaza un pachet Aspect propriu si nu foloseste directive `@when`, `@animate`, `@parallel` sau `@sequence`.
 - Stilul Cerneala Presentation este reprodus local printr-o paleta C# si factory/helper-e mici pentru controale, fara dependenta de proiectul `CernealaPresentation`.
-- Fereastra si arborele UI sunt construite in C#. Singurul markup permis este `App.cui.xml` minimal necesar contractului actual de startup desktop; acesta nu contine UI, Aspect sau Motion.
+- Fereastra si arborele UI sunt construite in C#. Singurul markup permis este `App.crn` minimal necesar contractului actual de startup desktop; acesta nu contine UI, Aspect sau Motion.
 - Prima versiune nu salveaza proiecte pe disc, nu exporta video/cod, nu implementeaza undo/redo si nu permite plugin-uri.
 
 ## Directia vizuala si layout
@@ -99,8 +99,8 @@ Fluxul principal este:
 
 - [ ] Adauga `MotionStudio/MotionStudio.csproj` ca aplicatie `net8.0-windows`/`WinExe`, cu referinte la `Cerneala.csproj` si generatorul Cerneala.
 - [ ] Adauga proiectul in `Cerneala.slnx` si configureaza icon-ul si dependentele minime necesare.
-- [ ] Adauga `MotionStudio/App.cui.xml` exclusiv pentru `StartupWindow` si shutdown mode, fara resources, Aspect sau Motion markup.
-- [ ] Adauga `MotionStudio/App.cui.xml.cs` si `MotionStudio/MotionStudioWindow.cs`; construieste integral continutul ferestrei in C#.
+- [ ] Adauga `MotionStudio/App.crn` exclusiv pentru `StartupWindow` si shutdown mode, fara resources, Aspect sau Motion markup.
+- [ ] Adauga `MotionStudio/App.crn.cs` si `MotionStudio/MotionStudioWindow.cs`; construieste integral continutul ferestrei in C#.
 - [ ] Adauga `MotionStudio/Visual/MotionStudioPalette.cs` si helper-e DRY pentru etichete, butoane, panouri si separatoare, fara un mini-framework de styling.
 - [ ] Construieste layout-ul responsive cu header, Components, canvas, inspector si Motion Tree.
 - [ ] Adauga un proiect de teste `tests/MotionStudio.Tests/MotionStudio.Tests.csproj` si include-l in solutie.

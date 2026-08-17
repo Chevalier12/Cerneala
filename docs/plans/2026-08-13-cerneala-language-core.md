@@ -3,11 +3,11 @@
 > Data: 2026-08-13
 > Status: finalizat
 > Dependenta: niciuna
-> Scop: extragem parsing-ul si semantica `.cui.xml` intr-un nucleu tolerant si editor-agnostic, apoi migram source generatorul pe el fara schimbari de comportament la build.
+> Scop: extragem parsing-ul si semantica `.crn` intr-un nucleu tolerant si editor-agnostic, apoi migram source generatorul pe el fara schimbari de comportament la build.
 
 ## 1. Baseline si problema actuala
 
-`Cerneala.SourceGen/UiMarkupGenerator.cs` detecteaza `*.cui.xml`, protejeaza comparatori din directive, inveleste documentul intr-un fragment artificial si il parseaza prin `XDocument.Parse`. Un tag sau quote neterminat invalideaza intregul document, comportament acceptabil la build, dar inutil pentru IntelliSense in timp ce utilizatorul tasteaza.
+`Cerneala.SourceGen/UiMarkupGenerator.cs` detecteaza `*.crn`, protejeaza comparatori din directive, inveleste documentul intr-un fragment artificial si il parseaza prin `XDocument.Parse`. Un tag sau quote neterminat invalideaza intregul document, comportament acceptabil la build, dar inutil pentru IntelliSense in timp ce utilizatorul tasteaza.
 
 Diagnostics `CERNEALAUI*` sunt declarate in source generator, iar rezolvarea de tipuri, bindings, resources, templates, Aspect, Motion si Prism este impartita intre `UiMarkupGenerator.GenerationScope`, partiale si subfolderele Prism. Aceste tipuri sunt strans legate de `SourceProductionContext`, `XElement` si emiterea C#. Un language server nu le poate reutiliza fara sa ruleze generatorul sau sa copieze semantica.
 
@@ -24,7 +24,7 @@ Diagnostics `CERNEALAUI*` sunt declarate in source generator, iar rezolvarea de 
 ## 3. Non-obiective
 
 - Fara protocol LSP, VSIX, editor UI sau dependinte `Microsoft.VisualStudio.*` in acest proiect.
-- Fara reflection, runtime XML parser ori schimbarea formatului `.cui.xml`.
+- Fara reflection, runtime XML parser ori schimbarea formatului `.crn`.
 - Fara rescriere estetica a codului generat daca output-ul actual este semantic echivalent.
 - Fara tolerarea la build a documentelor incomplete; recovery este pentru analiza editorului, iar compilarea documentului salvat ramane stricta.
 
@@ -49,7 +49,7 @@ Diagnostics `CERNEALAUI*` sunt declarate in source generator, iar rezolvarea de 
 ### Etapa 0 - Inventar semantic si corpus RED
 
 - [x] Inventariaza toate constructiile acceptate de source generator din `UiMarkupGenerator`, `UiMarkupBindingResolver`, `UiMarkupDirectiveParser`, Motion si Prism si mapeaza fiecare constructie la testele existente.
-- [x] Construieste un corpus versionat din toate fisierele `.cui.xml` din repo, exemplele documentate si markup-urile valide/invalide din `Cerneala.Tests.SourceGen`.
+- [x] Construieste un corpus versionat din toate fisierele `.crn` din repo, exemplele documentate si markup-urile valide/invalide din `Cerneala.Tests.SourceGen`.
 - [x] Adauga `tests/Cerneala.Tests.Language/Cerneala.Tests.Language.csproj` si un harness care ruleaza acelasi document prin parserul nou, semantic model si source generator.
 - [x] Adauga teste RED pentru documente incomplete dupa fiecare categorie de token: `<`, nume de element, atribut, quote, property element, binding, directive body, Motion si Prism.
 - [x] Adauga teste RED care cer maximum un diagnostic primar per zona sintactica rupta si absenta diagnostics semantice sub nodul nerecuperabil.
@@ -97,7 +97,7 @@ Diagnostics `CERNEALAUI*` sunt declarate in source generator, iar rezolvarea de 
 
 - [x] Defineste `CernealaCompilation`, `CernealaDocument` si `CernealaSemanticModel` cu lifecycle explicit si cancellation.
 - [x] Defineste adaptorul minim peste Roslyn `Compilation`, `ITypeSymbol`, membri, accessibility, inheritance, XML docs si source locations.
-- [x] Rezolva `clr-namespace`, aliases, root type, paired `.cui.xml.cs`, `Application`, `Window`, `UserControl` si custom controls prin simbolurile proiectului.
+- [x] Rezolva `clr-namespace`, aliases, root type, paired `.crn.cs`, `Application`, `Window`, `UserControl` si custom controls prin simbolurile proiectului.
 - [x] Modeleaza content properties, normal properties, property elements, attached properties, events si conversiile de literal existente.
 - [x] Separa bind-ul semantic de emitere: rezultatul contine simboluri si valori validate, nu fragmente C#.
 - [x] Adauga cache-uri versionate pe compilation/document si invalideaza numai proiectele/documentele afectate de schimbari.
@@ -157,7 +157,7 @@ Diagnostics `CERNEALAUI*` sunt declarate in source generator, iar rezolvarea de 
 
 ### Etapa 7 - Performanta, API si documentatie
 
-- [x] Adauga benchmarkuri pentru parse cold/warm, edit incremental, semantic bind si query at-position pe documente mici, medii si `AspectChapterView.cui.xml`.
+- [x] Adauga benchmarkuri pentru parse cold/warm, edit incremental, semantic bind si query at-position pe documente mici, medii si `AspectChapterView.crn`.
 - [x] Stabileste baseline hardware si gate-uri: parse/edit p95 sub 50 ms pentru documentul mare, query semantic warm p95 sub 25 ms si zero operatie sincrona neanulabila peste 100 ms.
 - [x] Profileaza allocatiile si elimina reconstruirile complete produse de o editare locala acolo unde benchmarkul demonstreaza impact. (Nu a fost necesara optimizarea: editarea mare are p95 1,534 ms, aproximativ 32x sub buget, desi aloca 369.984 B/op.)
 - [x] Marcheaza suprafata cross-assembly minima; evita API-uri publice de consum general si documenteaza obligatoriu orice tip public ramas.
@@ -172,7 +172,7 @@ Diagnostics `CERNEALAUI*` sunt declarate in source generator, iar rezolvarea de 
 ## 6. Definitia de gata
 
 - [x] Exista un singur parser tolerant si un singur semantic model pentru Cerneala.
-- [x] Source generatorul foloseste nucleul comun pentru toate dialectele `.cui.xml`.
+- [x] Source generatorul foloseste nucleul comun pentru toate dialectele `.crn`.
 - [x] Documentele incomplete pot fi analizate incremental fara crash si fara cascada inutila de diagnostics.
 - [x] Diagnostics sunt host-agnostic si au paritate exacta la build.
 - [x] Toate testele si benchmarkurile planului sunt GREEN.

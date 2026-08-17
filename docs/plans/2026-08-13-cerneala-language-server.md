@@ -7,7 +7,7 @@
 
 ## 1. Baseline si contract
 
-Repo-ul nu contine astazi un language server. Source generatorul primeste `Compilation` si `AdditionalFiles` numai in timpul build-ului, iar Visual Studio nu are un proces care sa mentina document snapshots, sa mapeze `.cui.xml` la proiect ori sa raspunda la cereri editoriale.
+Repo-ul nu contine astazi un language server. Source generatorul primeste `Compilation` si `AdditionalFiles` numai in timpul build-ului, iar Visual Studio nu are un proces care sa mentina document snapshots, sa mapeze `.crn` la proiect ori sa raspunda la cereri editoriale.
 
 Serverul trebuie sa lucreze pe bufferul nesalvat, sa incarce contextul C# al proiectului, sa anuleze cererile stale si sa nu ruleze generatorul complet la fiecare tasta. Orice rezultat semantic vine din `Cerneala.Language`; serverul traduce doar catre LSP.
 
@@ -46,7 +46,7 @@ Serverul trebuie sa lucreze pe bufferul nesalvat, sa incarce contextul C# al pro
 
 - [x] Selecteaza o implementare LSP mentinuta si compatibila cu runtime-ul livrat; documenteaza protocol version, framing, serialization si politica de upgrade.
 - [x] Adauga serverul si proiectul de protocol tests in solutie, cu transport in-memory pentru teste si stdio/duplex stream pentru host.
-- [x] Adauga un test RED care initializeaza serverul, deschide un `.cui.xml`, aplica `didChange` incremental si cere diagnostics/completion.
+- [x] Adauga un test RED care initializeaza serverul, deschide un `.crn`, aplica `didChange` incremental si cere diagnostics/completion.
 - [x] Defineste capabilities declarate exact; serverul nu anunta un feature pana cand testul protocol-level al feature-ului este GREEN.
 - [x] Defineste logging structurat, trace levels si crash reports fara continut de document implicit.
 - [x] Reindexeaza solutia.
@@ -58,7 +58,7 @@ Serverul trebuie sa lucreze pe bufferul nesalvat, sa incarce contextul C# al pro
 
 ### Etapa 1 - Workspace, proiecte si sincronizare documente
 
-- [x] Mapeaza URI-urile `.cui.xml` la proiectele care le includ ca `AdditionalFiles`, inclusiv `.slnx`, `.sln`, project references si linked files.
+- [x] Mapeaza URI-urile `.crn` la proiectele care le includ ca `AdditionalFiles`, inclusiv `.slnx`, `.sln`, project references si linked files.
 - [x] Construieste Roslyn compilations pentru proiectul owner si actualizeaza contextul la schimbari `.cs`, `.csproj`, references, configuration sau target framework.
 - [x] Defineste politica multi-target: selecteaza contextul activ oferit de host si deduplica rezultatele identice; nu amesteca simboluri incompatibile intre TFMs.
 - [x] Mentine overlay pentru bufferul nesalvat fara sa scrie pe disk si aplica numai schimbari cu versiune mai noua.
@@ -111,7 +111,7 @@ Serverul trebuie sa lucreze pe bufferul nesalvat, sa incarce contextul C# al pro
 
 - [x] Afiseaza hover pentru elemente, proprietati, events si tipuri cu signature, inherited/declaring type, default value si XML docs disponibile.
 - [x] Afiseaza hover tipizat pentru binding segments, resources, Aspect/Motion/Prism symbols si diagnostics explanation fara duplicarea mesajului brut.
-- [x] Implementeaza go-to-definition catre tip/membru C#, paired `.cui.xml.cs`, named element, resource, template, Aspect, Motion clip/spec si Prism symbol definit local.
+- [x] Implementeaza go-to-definition catre tip/membru C#, paired `.crn.cs`, named element, resource, template, Aspect, Motion clip/spec si Prism symbol definit local.
 - [x] Implementeaza references pentru names/resources/simboluri declarative cu scopes corecte si pentru simboluri C# prin Roslyn.
 - [x] Implementeaza document highlights pentru declaratie si utilizari in fisierul curent.
 - [x] Permite rename numai cand toate referintele sunt rezolvate exact si editurile nu ating text arbitrar; refuza explicit cazurile ambigue.
