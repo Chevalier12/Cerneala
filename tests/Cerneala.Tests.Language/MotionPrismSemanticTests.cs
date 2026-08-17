@@ -211,7 +211,7 @@ public sealed class MotionPrismSemanticTests
             .Select(path => CSharpSyntaxTree.ParseText(File.ReadAllText(path), path: path))
             .ToArray();
         CSharpCompilation compilation = CSharpCompilation.Create(
-            "CernealaPresentationSemanticMotionPrism",
+            "CernealaPresentation",
             trees,
             PlatformReferences().Append(MetadataReference.CreateFromFile(typeof(UIElement).Assembly.Location)),
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
