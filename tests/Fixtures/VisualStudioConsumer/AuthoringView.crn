@@ -1,0 +1,18 @@
+<UserControl xmlns:consumer="clr-namespace:VisualStudioConsumer">
+    <UserControl.Resources>
+        <PrismComposition Name="AuthoringFx">
+            @parameter Radius: float = 3;
+            @layer Main
+            {
+                @filter Blur { Radius = 3; }
+            }
+        </PrismComposition>
+    </UserControl.Resources>
+    <StackPanel>
+        <consumer:StatusCard Status="Authoring" Text="Ready" />
+        <TextBlock Name="CompletionAnchor" Text="Completion target" />
+        <Border>
+            @prism $AuthoringFx(Radius = 6);
+        </Border>
+    </StackPanel>
+</UserControl>

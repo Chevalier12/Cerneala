@@ -1,0 +1,6 @@
+<UserControl xmlns:consumer="clr-namespace:VisualStudioConsumer">
+    <StackPanel>
+        <consumer:StatusCard Status="Secondary" Text="Second document" />
+        <TextBlock Name="SharedTitle" Text="Ready for simultaneous edits" />
+    </StackPanel>
+</UserControl>

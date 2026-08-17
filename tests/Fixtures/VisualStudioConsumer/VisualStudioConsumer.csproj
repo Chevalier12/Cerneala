@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <CernealaRepoRoot Condition="'$(CernealaRepoRoot)' == ''">..\..\..</CernealaRepoRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CernealaRepoRoot)\Cerneala.csproj" />
+    <ProjectReference
+      Include="$(CernealaRepoRoot)\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />
+  </ItemGroup>
+
+  <!-- STAGE4_PACKAGE_REFERENCE
+  <ItemGroup>
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+  </ItemGroup>
+  -->
+
+</Project>

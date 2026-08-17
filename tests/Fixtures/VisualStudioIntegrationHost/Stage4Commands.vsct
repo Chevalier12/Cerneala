@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable">
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidStage4Package">
+    <Groups>
+      <Group guid="guidStage4CommandSet" id="Stage4ToolsGroup" priority="0x0700">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
+    </Groups>
+    <Buttons>
+      <Button guid="guidStage4CommandSet" id="RunStage4Integration" priority="0x0100" type="Button">
+        <Parent guid="guidStage4CommandSet" id="Stage4ToolsGroup" />
+        <Strings>
+          <ButtonText>CernealaRunStage4Integration</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <Symbols>
+    <GuidSymbol name="guidStage4Package" value="{9e0c367a-03d5-4f16-845d-2751454e12d8}" />
+    <GuidSymbol name="guidStage4CommandSet" value="{52f83415-3e31-41d1-9017-a7ce582b2642}">
+      <IDSymbol name="Stage4ToolsGroup" value="0x1020" />
+      <IDSymbol name="RunStage4Integration" value="0x0100" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

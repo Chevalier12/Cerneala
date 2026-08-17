@@ -1,0 +1,60 @@
+<UserControl
+    xmlns:consumer="clr-namespace:VisualStudioConsumer"
+    DataType="VisualStudioConsumer.DashboardViewModel">
+    <UserControl.Resources>
+        <Aspect Name="CardAspect" TargetType="Border">
+            @default
+            {
+                Background = "#FF14181E";
+                BorderBrush = "#FF4DF0FF";
+                BorderThickness = "1";
+                Padding = "12";
+            }
+            @when IsMouseOver
+            {
+                BorderBrush = "#FFC6FF3D";
+            }
+        </Aspect>
+        <MotionClip Name="Reveal" TargetType="consumer:MainView">
+            @sequence
+            {
+                @animate with Tween(120ms)
+                {
+                    @from { $self.Opacity = 0; }
+                    @to { $self.Opacity = 1; }
+                }
+            }
+        </MotionClip>
+        <PrismComposition Name="GlowFx">
+            @parameter Radius: float = 4;
+            @layer Glow
+            {
+                @filter Blur { Radius = 4; }
+            }
+        </PrismComposition>
+    </UserControl.Resources>
+    <StackPanel>
+        <consumer:StatusCard
+            Status="Ready"
+            Text="$DataContext.Title"
+            FontSize="18" />
+        <ItemsControl>
+            <ItemsControl.ItemsPanel>
+                <StackPanel />
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.Templates>
+                <ContentTemplate DataType="consumer:DashboardRow">
+                    <Border Aspect="$CardAspect">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="$DataContext.Label" />
+                            <CheckBox IsChecked="$DataContext.IsReady" />
+                        </StackPanel>
+                    </Border>
+                </ContentTemplate>
+            </ItemsControl.Templates>
+        </ItemsControl>
+        <Border Aspect="$CardAspect">
+            @prism $GlowFx(Radius = 8);
+        </Border>
+    </StackPanel>
+</UserControl>
