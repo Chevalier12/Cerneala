@@ -1,0 +1,11 @@
+[$RootKey$\TextMate\Repositories]
+"Cerneala"="$PackageFolder$\Grammars"
+
+[$RootKey$\TextMate\LanguageConfiguration\GrammarMapping]
+"text.cerneala"="$PackageFolder$\language-configuration.json"
+
+[$RootKey$\TextMate\LanguageConfiguration\ContentTypeMapping]
+"cerneala-crn"="$PackageFolder$\language-configuration.json"
+
+[$RootKey$\Editors\{8B382828-6202-11D1-8870-0000F87579D2}\Extensions]
+"crn"=dword:00000064

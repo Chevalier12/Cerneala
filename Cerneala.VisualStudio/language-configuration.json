@@ -1,0 +1,34 @@
+{
+  "comments": {
+    "blockComment": ["<!--", "-->"]
+  },
+  "brackets": [
+    ["<", ">"],
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "autoClosingPairs": [
+    { "open": "<", "close": ">", "notIn": ["string", "comment"] },
+    { "open": "{", "close": "}", "notIn": ["string", "comment"] },
+    { "open": "[", "close": "]", "notIn": ["string", "comment"] },
+    { "open": "(", "close": ")", "notIn": ["string", "comment"] },
+    { "open": "\"", "close": "\"", "notIn": ["string", "comment"] },
+    { "open": "'", "close": "'", "notIn": ["string", "comment"] }
+  ],
+  "surroundingPairs": [
+    ["<", ">"],
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    ["\"", "\""],
+    ["'", "'"]
+  ],
+  "indentationRules": {
+    "increaseIndentPattern": "^.*(?:<(?!!|\\?|/)[^>]*(?:[^/]>|[^>]$)|\\{)\\s*$",
+    "decreaseIndentPattern": "^\\s*(?:</[^>]+>|\\})",
+    "indentNextLinePattern": "^\\s*@(?:when|if|on|presence|layout|scroll|drag|gesture|set|animate|keyframes|stagger|parallel|sequence|run|handle|from|to|prism|layer|group|filter|style|mask|backdrop|default|template)\\b[^{}]*$",
+    "unIndentedLinePattern": "^\\s*(?:<!--.*-->|<\\?.*\\?>)\\s*$"
+  },
+  "wordPattern": "(-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:ms|s|%|f)?)|([@$]?[A-Za-z_][A-Za-z0-9_.:-]*)"
+}

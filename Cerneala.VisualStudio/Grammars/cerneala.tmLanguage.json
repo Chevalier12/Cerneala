@@ -1,0 +1,381 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Cerneala",
+  "scopeName": "text.cerneala",
+  "fileTypes": [
+    "crn"
+  ],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#cdata" },
+    { "include": "#processing-instructions" },
+    { "include": "#entities" },
+    { "include": "#property-tags" },
+    { "include": "#prism-tags" },
+    { "include": "#motion-tags" },
+    { "include": "#tags" },
+    { "include": "#assignments" },
+    { "include": "#attribute-names" },
+    { "include": "#strings" },
+    { "include": "#parameter-directives" },
+    { "include": "#prism-directives" },
+    { "include": "#motion-directives" },
+    { "include": "#aspect-directives" },
+    { "include": "#incomplete-directives" },
+    { "include": "#bindings" },
+    { "include": "#literals" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.xml.cerneala",
+          "begin": "<!--",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.begin.cerneala" }
+          },
+          "end": "-->|(?=$)",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.comment.end.cerneala" }
+          }
+        }
+      ]
+    },
+    "cdata": {
+      "patterns": [
+        {
+          "name": "string.unquoted.cdata.cerneala",
+          "begin": "<!\\[CDATA\\[",
+          "end": "\\]\\]>|(?=$)"
+        }
+      ]
+    },
+    "processing-instructions": {
+      "patterns": [
+        {
+          "name": "meta.tag.preprocessor.cerneala",
+          "begin": "(<\\?)([A-Za-z_][A-Za-z0-9_.:-]*)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.cerneala" },
+            "2": { "name": "entity.name.tag.preprocessor.cerneala" }
+          },
+          "end": "\\?>|(?=$)"
+        }
+      ]
+    },
+    "entities": {
+      "patterns": [
+        {
+          "name": "constant.character.entity.xml.cerneala",
+          "match": "&(?:[A-Za-z_][A-Za-z0-9_.:-]*|#[0-9]+|#x[0-9A-Fa-f]+);"
+        }
+      ]
+    },
+    "property-tags": {
+      "patterns": [
+        {
+          "name": "meta.element.property.cerneala",
+          "begin": "(</?)([A-Za-z_][A-Za-z0-9_:-]*\\.[A-Za-z_][A-Za-z0-9_.:-]*)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.cerneala" },
+            "2": { "name": "keyword.other.type.cerneala" }
+          },
+          "end": "(/?>)|(?=$)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.cerneala" }
+          },
+          "patterns": [
+            { "include": "#attribute-names" },
+            { "include": "#strings" },
+            { "include": "#entities" }
+          ]
+        }
+      ]
+    },
+    "prism-tags": {
+      "patterns": [
+        {
+          "name": "meta.element.prism.cerneala",
+          "begin": "(</?)((?:[A-Za-z_][A-Za-z0-9_-]*:)?PrismComposition)\\b",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.cerneala" },
+            "2": { "name": "keyword.other.type.cerneala" }
+          },
+          "end": "(/?>)|(?=$)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.cerneala" }
+          },
+          "patterns": [
+            { "include": "#attribute-names" },
+            { "include": "#strings" },
+            { "include": "#entities" }
+          ]
+        }
+      ]
+    },
+    "motion-tags": {
+      "patterns": [
+        {
+          "name": "meta.element.motion.cerneala",
+          "begin": "(</?)((?:[A-Za-z_][A-Za-z0-9_-]*:)?MotionClip)\\b",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.cerneala" },
+            "2": { "name": "keyword.other.type.cerneala" }
+          },
+          "end": "(/?>)|(?=$)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.cerneala" }
+          },
+          "patterns": [
+            { "include": "#attribute-names" },
+            { "include": "#strings" },
+            { "include": "#entities" }
+          ]
+        }
+      ]
+    },
+    "tags": {
+      "patterns": [
+        {
+          "name": "meta.element.cerneala",
+          "begin": "(</?)([A-Za-z_][A-Za-z0-9_.:-]*)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.cerneala" },
+            "2": { "name": "keyword.other.type.cerneala" }
+          },
+          "end": "(/?>)|(?=$)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.cerneala" }
+          },
+          "patterns": [
+            { "include": "#attribute-names" },
+            { "include": "#strings" },
+            { "include": "#entities" }
+          ]
+        },
+        {
+          "name": "invalid.illegal.incomplete-tag.cerneala",
+          "match": "<[/!?]?[A-Za-z_][A-Za-z0-9_.:-]*"
+        },
+        {
+          "name": "punctuation.definition.tag.end.cerneala",
+          "match": "^\\s*/?>"
+        }
+      ]
+    },
+    "attribute-names": {
+      "patterns": [
+        {
+          "name": "entity.other.attribute-name.namespace.cerneala",
+          "match": "\\bxmlns(?::[A-Za-z_][A-Za-z0-9_.-]*)?(?=\\s*=)"
+        },
+        {
+          "name": "keyword.other.directive.attribute.cerneala",
+          "match": "\\bx:(?:Class|DataType|Name|Key|Uid)(?=\\s*=)"
+        },
+        {
+          "name": "entity.other.attribute-name.property.cerneala",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_:-]*\\.[A-Za-z_][A-Za-z0-9_.:-]*(?=\\s*=)"
+        },
+        {
+          "name": "entity.other.attribute-name.cerneala",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_.:-]*(?=\\s*=)"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.cerneala",
+          "begin": "\"",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.cerneala" }
+          },
+          "end": "\"|(?=$)",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.cerneala" }
+          },
+          "patterns": [
+            { "include": "#brace-bindings" },
+            { "include": "#bindings" },
+            { "include": "#qualified-types" },
+            { "include": "#entities" }
+          ]
+        },
+        {
+          "name": "string.quoted.single.cerneala",
+          "begin": "'",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.cerneala" }
+          },
+          "end": "'|(?=$)",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.cerneala" }
+          },
+          "patterns": [
+            { "include": "#brace-bindings" },
+            { "include": "#bindings" },
+            { "include": "#qualified-types" },
+            { "include": "#entities" }
+          ]
+        }
+      ]
+    },
+    "brace-bindings": {
+      "patterns": [
+        {
+          "name": "meta.binding.cerneala",
+          "begin": "(\\{)(Binding|x:Bind)\\b",
+          "beginCaptures": {
+            "1": { "name": "punctuation.section.embedded.begin.cerneala" },
+            "2": { "name": "support.function.binding.cerneala" }
+          },
+          "end": "\\}|(?=$)",
+          "endCaptures": {
+            "0": { "name": "punctuation.section.embedded.end.cerneala" }
+          },
+          "patterns": [
+            { "include": "#bindings" },
+            { "include": "#literals" }
+          ]
+        },
+        {
+          "name": "meta.resource-reference.cerneala",
+          "begin": "(\\{)(StaticResource|DynamicResource|ThemeResource)\\b",
+          "beginCaptures": {
+            "1": { "name": "punctuation.section.embedded.begin.cerneala" },
+            "2": { "name": "support.function.resource.cerneala" }
+          },
+          "end": "\\}|(?=$)",
+          "endCaptures": {
+            "0": { "name": "punctuation.section.embedded.end.cerneala" }
+          }
+        }
+      ]
+    },
+    "bindings": {
+      "patterns": [
+        {
+          "name": "variable.other.binding.cerneala",
+          "match": "\\$(?:self|owner|root|DataContext|[A-Za-z_][A-Za-z0-9_]*)(?:\\.(?:prism\\.)?[A-Za-z_][A-Za-z0-9_]*)+(?::(?:OneWay|TwoWay|OneTime|OneWayToSource))?"
+        },
+        {
+          "name": "variable.other.resource.cerneala",
+          "match": "\\$[A-Za-z_][A-Za-z0-9_]*"
+        }
+      ]
+    },
+    "qualified-types": {
+      "patterns": [
+        {
+          "name": "entity.name.type.qualified.cerneala",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_-]*:[A-Za-z_][A-Za-z0-9_.-]*\\b"
+        }
+      ]
+    },
+    "parameter-directives": {
+      "patterns": [
+        {
+          "match": "(@parameter)\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)(?:\\s*(:)\\s*([A-Za-z_][A-Za-z0-9_]*))?",
+          "captures": {
+            "1": { "name": "storage.modifier.parameter.cerneala" },
+            "2": { "name": "variable.parameter.cerneala" },
+            "3": { "name": "punctuation.separator.type.cerneala" },
+            "4": { "name": "storage.type.parameter.cerneala" }
+          }
+        }
+      ]
+    },
+    "prism-directives": {
+      "patterns": [
+        {
+          "match": "(@(?:layer|group|filter|style|backdrop))\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.prism.cerneala" },
+            "2": { "name": "entity.name.section.prism.cerneala" }
+          }
+        },
+        {
+          "name": "keyword.control.prism.cerneala",
+          "match": "@(?:prism|layer|group|filter|style|mask|backdrop)\\b"
+        }
+      ]
+    },
+    "motion-directives": {
+      "patterns": [
+        {
+          "match": "(@handle)\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.motion.cerneala" },
+            "2": { "name": "entity.name.label.handle.cerneala" }
+          }
+        },
+        {
+          "match": "(@cancel)\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.motion.cerneala" },
+            "2": { "name": "entity.name.label.handle.cerneala" }
+          }
+        },
+        {
+          "match": "\\b(as)\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.motion.cerneala" },
+            "2": { "name": "entity.name.label.handle.cerneala" }
+          }
+        },
+        {
+          "name": "keyword.control.motion.cerneala",
+          "match": "@(?:when|if|on|presence|layout|scroll|drag|gesture|set|animate|keyframes|stagger|parallel|sequence|run|cancel|handle|from|to)\\b"
+        },
+        {
+          "name": "support.function.motion.cerneala",
+          "match": "\\b(?:Tween|Spring|Decay|Keyframes|Repeat|PingPong|Linear|EaseIn|EaseOut|EaseInOut)\\b"
+        }
+      ]
+    },
+    "aspect-directives": {
+      "patterns": [
+        {
+          "name": "keyword.control.aspect.cerneala",
+          "match": "@(?:default|template)\\b"
+        }
+      ]
+    },
+    "incomplete-directives": {
+      "patterns": [
+        {
+          "name": "keyword.control.directive.incomplete.cerneala",
+          "match": "@[A-Za-z_][A-Za-z0-9_]*"
+        }
+      ]
+    },
+    "assignments": {
+      "patterns": [
+        {
+          "match": "\\b([A-Za-z_][A-Za-z0-9_.]*)(\\s*)(=)",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.property.cerneala" },
+            "3": { "name": "keyword.operator.assignment.cerneala" }
+          }
+        }
+      ]
+    },
+    "literals": {
+      "patterns": [
+        {
+          "name": "constant.other.color.cerneala",
+          "match": "#[0-9A-Fa-f]{6}(?:[0-9A-Fa-f]{2})?\\b"
+        },
+        {
+          "name": "constant.numeric.cerneala",
+          "match": "(?<![A-Za-z0-9_])-?(?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+)(?:ms|s|%|f)?\\b"
+        },
+        {
+          "name": "constant.language.cerneala",
+          "match": "\\b(?:true|false|null|current)\\b"
+        }
+      ]
+    }
+  }
+}

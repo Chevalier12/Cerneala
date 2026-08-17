@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable">
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidCernealaPackage">
+    <Groups>
+      <Group guid="guidCernealaCommandSet" id="CernealaToolsGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <Button guid="guidCernealaCommandSet" id="RestartLanguageServer" priority="0x0100" type="Button">
+        <Parent guid="guidCernealaCommandSet" id="CernealaToolsGroup" />
+        <Strings>
+          <ButtonText>Cerneala: Restart Language Server</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <Symbols>
+    <GuidSymbol name="guidCernealaPackage" value="{f7d79e1c-8074-46ec-80ca-79347f6d896a}" />
+    <GuidSymbol name="guidCernealaCommandSet" value="{e3f8e801-d52b-4d85-a65a-749d33594e8c}">
+      <IDSymbol name="CernealaToolsGroup" value="0x1020" />
+      <IDSymbol name="RestartLanguageServer" value="0x0100" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>
