@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Markup`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Markup/UiMarkupTypeRegistry.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupTypeRegistry.cs)
+Source: `UI/Markup/UiMarkupElementRegistration.cs`
 
 Describes how a markup element name maps to a `UIElement` factory, optional child/content behavior, and the set of markup properties that can be applied to created elements.
 

@@ -1,159 +1,159 @@
-# Plan: migrarea markup-ului Cerneala la extensia `.crn`
+# Plan: migration of markup Cerneala to extension `.crn`
 
-> Data: 2026-08-14
-> Status: finalizat
-> Dependente: `docs/plans/2026-08-13-cerneala-language-core.md`, `docs/plans/2026-08-13-cerneala-language-server.md`
-> Blocheaza: `docs/plans/2026-08-13-visual-studio-community-extension.md`
-> Scop: inlocuim direct si complet extensia compusa `.cui.xml` cu `.crn`, pastrand neschimbat dialectul XML Cerneala si fara compatibilitate temporara pentru extensia veche.
+> Date: 2026-08-14
+> Status: completed
+> Dependencies: `docs/plans/2026-08-13-cerneala-language-core.md`, `docs/plans/2026-08-13-cerneala-language-server.md`
+> Dependent plan: `docs/plans/2026-08-13-visual-studio-community-extension.md`
+> Purpose: we directly and completely replace the compound extension `.cui.xml` with `.crn`, keeping the XML dialect Cerneala unchanged and without temporary compatibility for the old extension.
 
-## 1. Rezumat si decizii
+## 1. Summary and decisions
 
-Markup-ul Cerneala ramane acelasi dialect XML tolerant si source-generated. Se schimba numai contractul de nume al documentului: `View.cui.xml` devine `View.crn`, iar companionul `View.cui.xml.cs` devine `View.crn.cs` deoarece pairing-ul curent este definit ca `document.Path + ".cs"`.
+The Cerneala markup remains the same tolerant and source-generated XML dialect. Only the document name contract changes: `View.cui.xml` becomes `View.crn`, and the companion `View.cui.xml.cs` becomes `View.crn.cs` because the current pairing is defined as `document.Path + ".cs"`.
 
-Migrarea este un breaking change imediat. Source generatorul, language serverul si proiectele nu mai accepta `.cui.xml` dupa inchiderea acestui plan. Nu adaugam warning de tranzitie, alias ori suport permanent dublu. Decizia evita conflictul Visual Studio dintre extensia compusa si content type-ul XML generic; nu schimbam sintaxa doar ca sa-i facem editorului pe plac, ca aia ar fi alta belea si alt plan.
+Migration is an immediate breaking change. The source generator, language server and projects no longer accept `.cui.xml` after the closure of this plan. We do not add transition warning, alias or permanent double support. The decision avoids the Visual Studio conflict between the compound extension and the generic XML content type; we don't change the syntax just to please the editor, as that would be another problem and another plan.
 
-## 2. Baseline si problema actuala
+## 2. Baseline and the current problem
 
-- `Cerneala.SourceGen/UiMarkupGenerator.cs` filtreaza `AdditionalText` prin `EndsWith(".cui.xml")`.
-- `Cerneala.LanguageServer/Workspace/ProjectContext.cs` incarca numai additional documents cu acelasi sufix.
-- `Cerneala.Language/Semantics/CernealaSemanticModel.cs` elimina sufixul compus pentru a rezolva tipul companion.
-- Cinci proiecte includ markup-ul prin globul `AdditionalFiles Include="**\*.cui.xml"`; fixture-ul Language Server este al saselea owner si include explicit `View.cui.xml`.
-- Repo-ul contine 16 documente markup versionate si 16 companions cu conventia veche.
-- Testele Language, SourceGen si LanguageServer, corpusul versionat, benchmarkurile, documentatia publica si planurile contin cai sau exemple `.cui.xml`.
-- Spike-ul Visual Studio 18.9 a demonstrat ca `DocumentFilter.FromGlobPattern("**/*.cui.xml")` este respins de evaluatorul compile-time al `LanguageServerProvider`, iar un `DocumentTypeConfiguration` cu `.cui.xml` compileaza dar documentul este deschis efectiv cu content type `XML`. Extensia simpla `.crn` elimina ambiguitatea fara bridge MEF in-proc.
+- `Cerneala.SourceGen/UiMarkupGenerator.cs` filters `AdditionalText` through `EndsWith(".cui.xml")`.
+- `Cerneala.LanguageServer/Workspace/ProjectContext.cs` uploads only additional documents with the same suffix.
+- `Cerneala.Language/Semantics/CernealaSemanticModel.cs` remove compound suffix to resolve companion type.
+- Five projects include the markup through the globe `AdditionalFiles Include="**\*.cui.xml"`; the Language Server fixture is the sixth owner and explicitly includes `View.cui.xml`.
+- The repo contains 16 versioned markup documents and 16 companions with the old convention.
+- The Language, SourceGen and LanguageServer tests, the versioned corpus, benchmarks, public documentation and plans contain paths or examples `.cui.xml`.
+- The Visual Studio 18.9 spike demonstrated that `DocumentFilter.FromGlobPattern("**/*.cui.xml")` is rejected by the compile-time evaluator of `LanguageServerProvider`, and a `DocumentTypeConfiguration` with `.cui.xml` compiles but the document is actually opened with content type `XML`. The simple extension `.crn` eliminates the ambiguity without the in-proc MEF bridge.
 
-## 3. Obiective
+## 3. Objectives
 
-- Un singur contract intern pentru extensie, detectie, nume logic si cale companion.
-- Source generatorul si language serverul accepta exclusiv `.crn`, case-insensitive.
-- Toate documentele versionate si companions lor folosesc `.crn`/`.crn.cs` fara schimbarea continutului XML sau C#.
-- Build-ul, diagnostics, output-ul generat, semantic pairing-ul si toate capabilitatile LSP raman echivalente dupa redenumire.
-- Toate proiectele, testele, corpusurile, benchmarkurile, documentatia si planurile active descriu `.crn` ca extensie canonica.
+- A single internal contract for extension, detection, logical name and companion path.
+- The source generator and the language server exclusively accept `.crn`, case-insensitive.
+- All versioned documents and their companions use `.crn`/`.crn.cs` without changing the XML or C# content.
+- Build, diagnostics, generated output, semantic pairing and all LSP capabilities remain equivalent after renaming.
+- All projects, tests, corpora, benchmarks, documentation and active plans describe `.crn` as canonical extension.
 
-## 4. Non-obiective si stop conditions
+## 4. Non-objectives and stop conditions
 
-- Fara format declarativ nou, parser nou, schema noua ori modificari de sintaxa.
-- Fara suport dual, redirect, warning de depreciere sau auto-conversie pentru `.cui.xml`.
-- Fara modificari ale API-ului public runtime Cerneala.
-- Fara bridge Visual Studio MEF/content type; planul VSIX se reia numai dupa ce `.crn` este contractul GREEN al repo-ului.
-- Daca redenumirea schimba output-ul C# generat, diagnostics ori rezolvarea companionului in alt mod decat calea fisierului, batch-ul se opreste si divergenta se investigheaza in layer-ul care detine conventia.
+- No new declarative format, new parser, new scheme or syntax changes.
+- No dual support, redirect, depreciation warning or auto-conversion for `.cui.xml`.
+- No changes to the Cerneala public runtime API.
+- No Visual Studio MEF/content type bridge; the VSIX plan resumes only after `.crn` is the GREEN contract of the repo.
+- If the renaming changes the generated C# output, diagnostics or solving the companion in a way other than the file path, the batch stops and the divergence is investigated in the layer that holds the convention.
 
-## 5. Arhitectura propusa
+## 5. The proposed architecture
 
-`Cerneala.Language` devine proprietarul conventiei printr-un helper intern unic, de exemplu `CernealaDocumentPath`, accesibil assembly-urilor prietene deja declarate in `Properties/AssemblyInfo.cs`. Helperul expune sufixul canonic `.crn`, verificarea case-insensitive, derivarea numelui logic si calea companion `.crn.cs`. `Cerneala.SourceGen`, `Cerneala.LanguageServer` si semantic modelul il folosesc in locul literalelor duplicate.
+`Cerneala.Language` becomes the owner of the convention through a unique internal helper, for example `CernealaDocumentPath`, accessible to friendly assemblies already declared in `Properties/AssemblyInfo.cs`. The helper exposes the canonical suffix `.crn`, case-insensitive checking, logical name derivation, and the companion path `.crn.cs`. `Cerneala.SourceGen`, `Cerneala.LanguageServer` and semantically I use the model instead of duplicate literals.
 
-MSBuild ramane proprietarul includerii fisierelor ca `AdditionalFiles`, dar fiecare proiect foloseste exclusiv globul `**\*.crn`. Continutul XML nu este interpretat diferit. Renumele fisierelor se face cu operatii care pastreaza istoricul si continutul, inclusiv modificarile locale deja existente.
+MSBuild remains the owner of the include files as `AdditionalFiles`, but each project uses the `**\*.crn` glob exclusively. XML content is not interpreted differently. File renaming is done with operations that preserve history and content, including existing local changes.
 
-## 6. Fisiere estimate
+## 6. Estimated files
 
-- `Cerneala.Language/` pentru helperul intern al conventiei de cale.
+- `Cerneala.Language/` for the internal helper of the track convention.
 - `Cerneala.Language/Semantics/CernealaSemanticModel.cs`.
 - `Cerneala.SourceGen/UiMarkupGenerator.cs`.
 - `Cerneala.LanguageServer/Workspace/ProjectContext.cs`.
-- `Cerneala.csproj`, `CernealaPresentation/CernealaPresentation.csproj`, proiectele Playground si `tests/Fixtures/LanguageServerWorkspace/LanguageServerWorkspace.csproj`.
-- Cele 16 fisiere markup si cele 16 companions din `CernealaPresentation/`, `Playground/` si fixture-ul Language Server.
-- Suitele `tests/Cerneala.Tests.Language/`, `tests/Cerneala.Tests.SourceGen/` si `tests/Cerneala.Tests.LanguageServer/`.
-- Corpusul si benchmarkurile de limbaj.
-- Documentatia din `docs/`, `docs-site/` si planurile de integrare Visual Studio.
+- `Cerneala.csproj`, `CernealaPresentation/CernealaPresentation.csproj`, the Playground and `tests/Fixtures/LanguageServerWorkspace/LanguageServerWorkspace.csproj` projects.
+- The 16 markup files and the 16 companions from `CernealaPresentation/`, `Playground/` and the Language Server fixture.
+- Suites `tests/Cerneala.Tests.Language/`, `tests/Cerneala.Tests.SourceGen/` and `tests/Cerneala.Tests.LanguageServer/`.
+- Corpus and language benchmarks.
+- The documentation from `docs/`, `docs-site/` and the Visual Studio integration plans.
 
-## 7. Etape de implementare
+## 7. Implementation stages
 
-### Etapa 0 - Baseline si teste RED pentru noul contract
+### Stage 0 - Baseline and RED tests for the new contract
 
-- [x] Inventariaza si ingheata lista celor 16 documente markup si 16 companions care trebuie redenumite, plus toate proiectele care le includ ca `AdditionalFiles`. (Inventar: `tests/Cerneala.Tests.Language/Corpus/crn-migration-stage0-inventory.txt`.)
-- [x] Adauga teste RED in `Cerneala.Tests.Language` pentru detectia `.crn`, derivarea numelui logic `View` si pairing-ul `View.crn` -> `View.crn.cs`.
-- [x] Adauga teste RED in `Cerneala.Tests.SourceGen` care cer generare pentru `View.crn` si zero output pentru acelasi continut furnizat ca `View.cui.xml`.
-- [x] Adauga teste RED in `Cerneala.Tests.LanguageServer` care cer project ownership si semantic context pentru `View.crn`, dar nu pentru `View.cui.xml`.
-- [x] Captureaza baseline-ul output-ului generat si al diagnostics pentru un document reprezentativ inainte de redenumire, astfel incat schimbarea de cale sa nu mascheze o divergenta semantica. (Hint `ViewFactory.abdf9b8e.g.cs`, SHA-256 `DCD437128E0720708F736B79865B5D8C9F3A1D38C2BA580473DD655E62F4CF9F`, zero diagnostics.)
-- [x] Reindexeaza solutia.
+- [x] Inventory and freeze the list of 16 markup documents and 16 companions that must be renamed, plus all the projects that include them as `AdditionalFiles`. (Inventory: `tests/Cerneala.Tests.Language/Corpus/crn-migration-stage0-inventory.txt`.)
+- [x] Add RED tests in `Cerneala.Tests.Language` for the detection of `.crn`, the derivation of the logical name `View` and the pairing `View.crn` -> `View.crn.cs`.
+- [x] Add RED tests in `Cerneala.Tests.SourceGen` that request generation for `View.crn` and zero output for the same content provided as `View.cui.xml`.
+- [x] Add RED tests in `Cerneala.Tests.LanguageServer` that ask for project ownership and semantic context for `View.crn`, but not for `View.cui.xml`.
+- [x] Captures the baseline of the generated output and diagnostics for a representative document before renaming, so that the path change does not mask a semantic divergence. (Hint `ViewFactory.abdf9b8e.g.cs`, SHA-256 `DCD437128E0720708F736B79865B5D8C9F3A1D38C2BA580473DD655E62F4CF9F`, zero diagnostics.)
+- [x] Reindex the solution.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Testele `.crn` sunt RED exclusiv din cauza literalelor si globurilor vechi, nu din cauza harness-ului.
-- [x] Testele negative pentru `.cui.xml` descriu breaking change-ul aprobat si nu accepta fallback implicit.
+- [x] The `.crn` tests are RED exclusively because of old literals and globs, not because of the harness.
+- [x] The negative tests for `.cui.xml` describe the approved breaking change and do not accept default fallback.
 
-### Etapa 1 - Contractul intern unic si hosturile de limbaj
+### Stage 1 - The single internal contract and language hosts
 
-- [x] Adauga helperul intern de cale in `Cerneala.Language` cu extensia `.crn`, comparatie case-insensitive, nume logic si companion path; nu introduce API public.
-- [x] Inlocuieste filtrul privat din `UiMarkupGenerator.IsMarkupFile` cu helperul comun.
-- [x] Inlocuieste filtrarea additional documents din `ProjectContext.CreateAsync` cu helperul comun.
-- [x] Inlocuieste strip-ul `.cui.xml` si construirea companionului din `CernealaSemanticModel` cu helperul comun.
-- [x] Elimina literalele de conventie duplicate din codul de productie si pastreaza ownership-ul in `Cerneala.Language`.
-- [x] Ruleaza testele RED din etapa 0 si suitele tintite Language, SourceGen si LanguageServer afectate. (GREEN: 8 Language, 3 SourceGen si 2 LanguageServer.)
-- [x] Reindexeaza solutia.
+- [x] Add the internal path helper in `Cerneala.Language` with the `.crn` extension, case-insensitive comparison, logical name and companion path; does not introduce public API.
+- [x] Replaces the private filter from `UiMarkupGenerator.IsMarkupFile` with the common helper.
+- [x] Replaces additional documents filtering from `ProjectContext.CreateAsync` with the common helper.
+- [x] Replaces the `.cui.xml` strip and the companion build from `CernealaSemanticModel` with the common helper.
+- [x] Remove duplicate convention literals from the production code and keep the ownership in `Cerneala.Language`.
+- [x] Run the RED tests from stage 0 and the affected Language, SourceGen and LanguageServer target suites. (GREEN: 8 Language, 3 SourceGen and 2 LanguageServer.)
+- [x] Reindex the solution.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] `.crn` este singura extensie acceptata de toate cele trei hosturi, iar `.cui.xml` este ignorata determinist.
-- [x] Pairing-ul root type gaseste `View.crn.cs`, class-name generation elimina exact `.crn`, iar output-ul semantic ramane identic baseline-ului.
+- [x] `.crn` is the only extension accepted by all three hosts, and `.cui.xml` is deterministically ignored.
+- [x] The root type pairing finds `View.crn.cs`, class-name generation removes exactly `.crn`, and the semantic output remains identical to the baseline.
 
-### Etapa 2 - Redenumirea fisierelor si integrarea MSBuild
+### Stage 2 - File renaming and MSBuild integration
 
-- [x] Redenumeste toate cele 16 documente `.cui.xml` la `.crn` fara modificarea continutului.
-- [x] Redenumeste toate cele 16 companions `.cui.xml.cs` la `.crn.cs`, pastrand integral modificarile locale existente.
-- [x] Schimba toate cele sase globuri `AdditionalFiles` la `**\*.crn` si confirma ca niciun proiect nu include extensia veche.
-- [x] Actualizeaza fixture-ul Language Server, corpusul `repository-documents.txt`, golden paths si orice resursa de test care encodeaza numele vechi.
-- [x] Actualizeaza benchmarkurile de limbaj sa incarce documentele `.crn` redenumite fara schimbarea corpusului masurat.
-- [x] Construieste `CernealaPresentation` si cele trei proiecte Playground si confirma ca source generatorul produce aceleasi tipuri/hint names aprobate. (GREEN: 15 output-uri cu stem-urile aprobate; numai hash-ul derivat din cale s-a schimbat.)
-- [x] Reindexeaza solutia.
+- [x] Renames all 16 documents `.cui.xml` to `.crn` without changing the content.
+- [x] Renames all 16 companions `.cui.xml.cs` to `.crn.cs`, fully preserving the existing local changes.
+- [x] Change all six globes `AdditionalFiles` to `**\*.crn` and confirm that no project includes the old extension.
+- [x] Updates the Language Server fixture, the `repository-documents.txt` corpus, golden paths and any test resource that encodes the old name.
+- [x] Updates the language benchmarks to load the renamed `.crn` documents without changing the measured corpus.
+- [x] Build `CernealaPresentation` and the three Playground projects and confirm that the source generator produces the same approved types/hint names. (GREEN: 15 outputs with approved stems; only the hash derived from the path changed.)
+- [x] Reindex the solution.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Nu mai exista fisiere versionate `*.cui.xml` sau `*.cui.xml.cs` in afara dovezilor temporare ale spike-ului, care sunt sterse inainte de checkpoint.
-- [x] Toate proiectele reale si fixture-ul extern compileaza folosind exclusiv `AdditionalFiles` `.crn`.
+- [x] There are no more `*.cui.xml` or `*.cui.xml.cs` versioned files except the temporary evidence of the spike, which are deleted before the checkpoint.
+- [x] All real projects and the external fixture compile using `AdditionalFiles` `.crn` exclusively.
 
-### Etapa 3 - Migrarea completa a testelor si corpusurilor
+### Stage 3 - Complete migration of tests and corpora
 
-- [x] Actualizeaza toate path literals din testele Language pentru `.crn`, inclusiv recovery, semantic scopes, navigation, formatting, completion si sourcegen parity.
-- [x] Actualizeaza toate path literals din testele SourceGen, inclusiv Application, bindings, Motion, Prism si presentation regression.
-- [x] Actualizeaza toate path literals din protocol tests LanguageServer, inclusiv workspace reload, diagnostics, completion, navigation, formatting, structure si hardening.
-- [x] Pastreaza exemple `.cui.xml` numai in testele negative explicite care verifica respingerea breaking change-ului.
-- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests.Language\Cerneala.Tests.Language.csproj`, `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj` si `dotnet test .\tests\Cerneala.Tests.LanguageServer\Cerneala.Tests.LanguageServer.csproj`. (GREEN: 125 + 431 + 30 teste.)
-- [x] Reindexeaza solutia.
+- [x] Updates all path literals from the Language tests for `.crn`, including recovery, semantic scopes, navigation, formatting, completion and sourcegen parity.
+- [x] Updates all path literals from the SourceGen tests, including Application, bindings, Motion, Prism and presentation regression.
+- [x] Updates all path literals from the LanguageServer protocol tests, including workspace reload, diagnostics, completion, navigation, formatting, structure and hardening.
+- [x] Keep `.cui.xml` examples only in explicit negative tests that verify the rejection of the breaking change.
+- [x] Runs `dotnet test .\tests\Cerneala.Tests.Language\Cerneala.Tests.Language.csproj`, `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj` and `dotnet test .\tests\Cerneala.Tests.LanguageServer\Cerneala.Tests.LanguageServer.csproj`. (GREEN: 125 + 431 + 30 tests.)
+- [x] Reindex the solution.
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] Toate parity, corpus si protocol tests sunt GREEN pe `.crn`.
-- [x] Nicio capacitate de limbaj nu depinde accidental de faptul ca documentul avea extensia finala `.xml`.
+- [x] All parity, corpus and protocol tests are GREEN on `.crn`.
+- [x] No language capability is accidentally dependent on the fact that the document had the final extension `.xml`.
 
-### Etapa 4 - Documentatie si planuri dependente
+### Stage 4 - Documentation and dependent plans
 
-- [x] Actualizeaza ghidurile active din `docs/` si paginile produsului din `docs-site/` astfel incat exemplele, setup-ul MSBuild si descrierile sa foloseasca `.crn`.
-- [x] Actualizeaza pagina API `docs-site/documentation/classes/Cerneala.SourceGen.UiMarkupGenerator.md` cu skill-ul `writing-api-documentation`; verifica manifestul, fara pagina noua daca numele API-ului nu se schimba. (Pagina existenta ramane in manifest; nu a fost adaugata sau redenumita.)
-- [x] Actualizeaza celelalte pagini API care descriu explicit `.cui.xml`, fara a schimba documentatie fara legatura.
-- [x] Actualizeaza planurile Language/Core, LanguageServer si indexul Visual Studio la contractul `.crn`, pastrand checkmark-urile istorice valide.
-- [x] Adauga acest plan ca dependenta explicita a `2026-08-13-visual-studio-community-extension.md` si schimba activation/document filters/fixtures la `*.crn`.
-- [x] Documenteaza breaking change-ul in ghidul de pornire: rename `View.cui.xml` -> `View.crn`, `View.cui.xml.cs` -> `View.crn.cs` si `AdditionalFiles` -> `**\*.crn`; fara promisiune de compatibilitate.
+- [x] Update the active guides from `docs/` and the product pages from `docs-site/` so that the examples, MSBuild setup and descriptions use `.crn`.
+- [x] Updates the `docs-site/documentation/classes/Cerneala.SourceGen.UiMarkupGenerator.md` API page with the `writing-api-documentation` skill; check the manifest, without the new page if the API name does not change. (The existing page remains in the manifest; it has not been added or renamed.)
+- [x] Updates the other API pages that explicitly describe `.cui.xml`, without changing unrelated documentation.
+- [x] Updates the Language/Core, LanguageServer and Visual Studio index plans to contract `.crn`, keeping the historical checkmarks valid.
+- [x] Add this plan as an explicit dependency of `2026-08-13-visual-studio-community-extension.md` and change activation/document filters/fixtures to `*.crn`.
+- [x] Document the breaking change in the startup guide: rename `View.cui.xml` -> `View.crn`, `View.cui.xml.cs` -> `View.crn.cs` and `AdditionalFiles` -> `**\*.crn`; no promise of compatibility.
 
-**Gate etapa 4**
+**Gate Stage 4**
 
-- [x] Documentatia publica descrie un singur contract `.crn`, iar planul VSIX nu mai cere workaround pentru XML generic.
-- [x] Orice aparitie ramasa a textului `.cui.xml` este fie in acest istoric de migrare, fie intr-un test negativ explicit si are motiv verificabil. (Exceptii intentionate: ghidul de migrare, acest plan si indexul/spike-ul istoric, inventarul Stage 0 si cele trei teste negative.)
+- [x] The public documentation describes a single contract `.crn`, and the VSIX plan no longer requires a workaround for generic XML.
+- [x] Any remaining occurrence of the text `.cui.xml` is either in this migration history or in an explicit negative test and has a verifiable reason. (Intentional exceptions: the migration guide, this plan and the historical index/spike, the Stage 0 inventory, and the three negative tests.)
 
-### Etapa 5 - Verificare finala si inchiderea breaking change-ului
+### Stage 5 - Final verification and closing of the breaking change
 
-- [x] Ruleaza build-urile proiectelor `CernealaPresentation`, Playground si fixture-ul LanguageServer dupa ultima modificare relevanta. (GREEN; dovezile Stage 2 au ramas valide pentru proiectele neatinse, iar `CernealaPresentation` a fost reconstruit dupa actualizarea markup-ului.)
-- [x] Ruleaza suitele tintite Language, SourceGen si LanguageServer in starea finala. (GREEN: 125 + 431 + 30 teste.)
-- [x] Ruleaza `dotnet test .\Cerneala.slnx` o singura data dupa ultima modificare de cod/proiect/fisier redenumit. (GREEN final: 3.507 teste; un esec tranzitoriu de allocation-gate a trecut izolat si la rerularea completa fara schimbare de cod.)
-- [x] Verifica prin inventar ca exista 16 documente `*.crn`, 16 companions `*.crn.cs` si zero fisiere reale `*.cui.xml`/`*.cui.xml.cs`.
-- [x] Ruleaza `git diff --check`, inspecteaza rename detection si confirma ca redenumirea nu a pierdut modificarile locale preexistente. (32 mapari: 27 blob-uri identice cu HEAD si 5 redenumiri cu continut modificat asteptat; toate cele 32 au pastrat SHA-256 la mutare.)
-- [x] Reindexeaza solutia finala si cere indexare fara erori noi.
+- [x] Run the builds of the `CernealaPresentation` projects, Playground and the LanguageServer fixture after the last relevant modification. (GREEN; Stage 2 proofs remained valid for untouched projects, and `CernealaPresentation` was rebuilt after the markup was updated.)
+- [x] Runs the targeted Language, SourceGen and LanguageServer suites in the final state. (GREEN: 125 + 431 + 30 tests.)
+- [x] Runs `dotnet test .\Cerneala.slnx` only once after the last change of code/project/renamed file. (Final GREEN: 3,507 tests; a transient allocation-gate failure passed in isolation and on full rerun without code change.)
+- [x] Check through the inventory that there are 16 documents `*.crn`, 16 companions `*.crn.cs` and zero real files `*.cui.xml`/`*.cui.xml.cs`.
+- [x] Run `git diff --check`, inspect rename detection and confirm that the renaming did not lose pre-existing local changes. (32 mappings: 27 blobs identical to HEAD and 5 renames with expected changed content; all 32 kept SHA-256 on move.)
+- [x] Reindex the final solution and request indexing without new errors.
 
-**Gate etapa 5**
+**Gate Stage 5**
 
-- [x] Build-ul, source generatorul, semantic modelul si LSP folosesc exclusiv `.crn` si toate suitele sunt GREEN.
-- [x] Migrarea este documentata ca breaking change complet; nu exista alias, warning temporar ori suport dual ascuns.
+- [x] The build, source generator, semantic model and LSP use exclusively `.crn` and all suites are GREEN.
+- [x] The migration is documented as a complete breaking change; there is no alias, temporary warning or hidden dual support.
 
-## 8. Ordinea recomandata
+## 8. Recommended order
 
-1. Inchide etapele 0-5 ale acestui plan in ordine, cate un batch atomic per etapa.
-2. Abia dupa gate-ul final reia `docs/plans/2026-08-13-visual-studio-community-extension.md` de la Etapa 0.
-3. Refaca spike-ul VSIX direct pe document type-ul simplu `.crn`; nu reutiliza bridge-ul `.cui.xml` abandonat.
+1. Close stages 0-5 of this plan in order, one atomic batch per stage.
+2. `docs/plans/2026-08-13-visual-studio-community-extension.md` from Stage 0 resumes only after the final gate.
+3. Restore the VSIX spike directly on the simple document type `.crn`; do not reuse the abandoned `.cui.xml` bridge.
 
-## 9. Definitia de gata
+## 9. The definition of ready
 
-- [x] `.crn` este singura extensie de markup Cerneala acceptata de build, semantic model, language server si proiecte.
-- [x] Toate documentele si companions versionate sunt redenumite fara schimbare de continut sau comportament generat.
-- [x] `.cui.xml` este respinsa explicit si apare numai in dovezi istorice ori teste negative aprobate.
-- [x] Toate testele tintite, proiectele consumatoare si `dotnet test .\Cerneala.slnx` sunt GREEN.
-- [x] Documentatia, API docs si planurile dependente sunt sincronizate cu breaking change-ul.
+- [x] `.crn` is the only Cerneala markup extension supported by build, semantic model, language server and projects.
+- [x] All versioned documents and companions are renamed without changing the content or behavior generated.
+- [x] `.cui.xml` is explicitly rejected and appears only in historical evidence or approved negative tests.
+- [x] All targeted tests, consuming projects and `dotnet test .\Cerneala.slnx` are GREEN.
+- [x] The documentation, API docs and dependent plans are synchronized with the breaking change.

@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Text`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Text/BidiTextService.cs`
+Source: `UI/Text/BidiTextRun.cs`
 
 Represents a directional run within a bidirectional text string.
 

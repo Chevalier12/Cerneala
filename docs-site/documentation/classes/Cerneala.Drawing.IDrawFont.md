@@ -7,16 +7,39 @@ Assembly/Project: `Cerneala`
 
 Source: `Drawing/IDrawFont.cs`
 
-Provides the `Cerneala.Drawing.IDrawFont` API surface.
+Describes the font identity and nominal size carried by drawing text runs.
 
 ```csharp
 public interface IDrawFont
 ```
 
+## Examples
+
+```csharp
+using Cerneala.Drawing;
+
+sealed record DemoFont(string FamilyName, float Size) : IDrawFont;
+
+IDrawFont font = new DemoFont("Demo Sans", 16);
+DrawTextRun run = new(font, "Cerneala", 16);
+```
+
 ## Remarks
 
-This page is generated from the repository API index so the documentation surface stays aligned with the source tree.
+`IDrawFont` is the drawing-layer font contract consumed by `DrawTextRun` and exposed on `DrawCommand.Font`. Implementations provide only the family name and nominal font size; font loading is handled separately by `IFontSource`.
+
+## Properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `FamilyName` | `string` | Gets the font family identity. |
+| `Size` | `float` | Gets the nominal font size represented by the font instance. |
 
 ## Applies to
 
-Cerneala UI runtime and framework API consumers.
+Cerneala drawing text commands and font-loading integrations.
+
+## See also
+
+- `Cerneala.Drawing.DrawTextRun`
+- `Cerneala.Drawing.IFontSource`

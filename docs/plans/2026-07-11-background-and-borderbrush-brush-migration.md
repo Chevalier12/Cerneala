@@ -1,13 +1,12 @@
-# Plan: migrarea `Background` si `BorderBrush` la tipul `Brush`
+# Plan: migration of `Background` and `BorderBrush` to type `Brush`
 
-## Rezumat
+## Summary
 
-Schimbam `Control.Background` si `Control.BorderBrush` din `Color` in `Brush?`, astfel incat controalele sa poata folosi culori solide, gradienti, imagini, desene si brush-uri vizuale. Planul depinde de infrastructura din `2026-07-11-brush-types-and-rendering.md`.
+We change `Control.Background` and `Control.BorderBrush` from `Color` to `Brush?`, so that the controls can use solid colors, gradients, images, drawings and visual brushes. The plan depends on the infrastructure in `2026-07-11-brush-types-and-rendering.md`.
 
-Acestea sunt breaking changes intentionate. Valorile `Color` trebuie impachetate explicit in `SolidColorBrush`; nu adaugam conversii implicite si nu pastram aliasuri de culoare.
+These are intentional breaking changes. The values ​​`Color` must be explicitly wrapped in `SolidColorBrush`; we do not add default conversions and do not keep color aliases.
 
-## Contracte finale
-
+## Final contracts
 ```csharp
 public static readonly UiProperty<Brush?> BackgroundProperty;
 public Brush? Background { get; set; }
@@ -15,44 +14,42 @@ public Brush? Background { get; set; }
 public static readonly UiProperty<Brush?> BorderBrushProperty;
 public Brush? BorderBrush { get; set; }
 ```
+- Both properties have the default value `null`.
+- `null` means that the surface or outline is not drawn.
+- `BorderThickness` remains separate; zero thickness suppresses the outline.
+- `Background="Tomato"` and `BorderBrush="Tomato"` explicitly produce `new SolidColorBrush(Color.Tomato)`.
+- Resource references must resolve to `Brush`.
+- Property-element shapes accept compound brushes.
+- `Foreground` remains `Color` in this plan and has a separate plan.
 
-- Ambele proprietati au valoarea implicita `null`.
-- `null` inseamna ca suprafata sau conturul nu se deseneaza.
-- `BorderThickness` ramane separat; grosimea zero suprima conturul.
-- `Background="Tomato"` si `BorderBrush="Tomato"` produc explicit `new SolidColorBrush(Color.Tomato)`.
-- Referintele de resurse trebuie sa rezolve la `Brush`.
-- Formele property-element accepta brush-uri compuse.
-- `Foreground` ramane `Color` in acest plan si are un plan separat.
+## Phase 1: `Control` contract
 
-## Faza 1: contractul `Control`
+1. We change `BackgroundProperty` and `BorderBrushProperty` to `UiProperty<Brush?>`.
+2. We change the CLR properties to `Brush?` with default `null`.
+3. We keep rendering invalidation and visual input.
+4. We eliminate assumptions based on `Color.A`.
+5. We add API tests for the type, default and absence of the `BorderColor` alias.
 
-1. Schimbam `BackgroundProperty` si `BorderBrushProperty` in `UiProperty<Brush?>`.
-2. Schimbam proprietatile CLR in `Brush?` cu default `null`.
-3. Pastram invalidarea de render si input visual.
-4. Eliminam presupunerile bazate pe `Color.A`.
-5. Adaugam teste API pentru tip, default si absenta aliasului `BorderColor`.
+## Phase 2: controls and rendering
 
-## Faza 2: controale si randare
+1. We adapt `Border`, `Button`, `CheckBox`, `ListBoxItem`, `ScrollBar`, `Thumb`, `Track`, `ProgressBar` and `TextBoxBase`.
+2. The order remains background -> border -> content.
+3. The brushes are sent intact via `DrawingContext` and `DrawCommand` to the backend.
+4. `SolidColorBrush` uses the existing fast track; compound brushes use the textured pipeline.
+5. We test fill and stroke with solid, linear gradient, radial gradient and image brush.
 
-1. Adaptam `Border`, `Button`, `CheckBox`, `ListBoxItem`, `ScrollBar`, `Thumb`, `Track`, `ProgressBar` si `TextBoxBase`.
-2. Ordinea ramane background -> border -> content.
-3. Brush-urile sunt trimise intacte prin `DrawingContext` si `DrawCommand` catre backend.
-4. `SolidColorBrush` foloseste calea rapida existenta; brush-urile compuse folosesc pipeline-ul texturat.
-5. Testam fill si stroke cu solid, linear gradient, radial gradient si image brush.
+## Phase 3: aspects, themes and motion
 
-## Faza 3: aspecte, teme si motion
+1. `ButtonTokens.Background`, `HoverBackground`, `PressedBackground` and `BorderBrush` become `AspectToken<Brush?>`.
+2. We add semantic tokens `DefaultAspectTokens.Brush.Background`, `Surface` and `Border`.
+3. The colors in `ThemePalette` remain semantic colors for clear color and brush derivation; control properties receive tokens `Brush`.
+4. `AnimatablePropertyRegistry` uses `BrushMixer` for both properties.
+5. Solid brushes and gradients with compatible stops are interpolated; image/drawing/visual brushes are not interpolated as integer values.
 
-1. `ButtonTokens.Background`, `HoverBackground`, `PressedBackground` si `BorderBrush` devin `AspectToken<Brush?>`.
-2. Adaugam token-uri semantice `DefaultAspectTokens.Brush.Background`, `Surface` si `Border`.
-3. Culorile din `ThemePalette` raman culori semantice pentru clear color si derivarea brush-urilor; proprietatile de control primesc token-uri `Brush`.
-4. `AnimatablePropertyRegistry` foloseste `BrushMixer` pentru ambele proprietati.
-5. Solid brush-urile si gradientii cu stop-uri compatibile se interpoleaza; image/drawing/visual brush-urile nu se interpoleaza ca valori intregi.
+## Phase 4: markup and generator
 
-## Faza 4: markup si generator
-
-1. Runtime schema si source generator detecteaza ambele proprietati ca `Brush?`.
-2. Suportam shorthand de culoare, resurse si property elements:
-
+1. Runtime schema and source generator detect both properties as `Brush?`.
+2. We support color shorthand, resources and property elements:
 ```xml
 <Border Background="Tomato" BorderBrush="#FF334455" />
 ```
@@ -71,11 +68,9 @@ public Brush? BorderBrush { get; set; }
   </Border.BorderBrush>
 </Border>
 ```
+3. Incompatible resources and incomplete brushes produce diagnostics, not hidden conversions.
 
-3. Resursele incompatibile si brush-urile incomplete produc diagnostice, nu conversii ascunse.
-
-## Faza 5: migrare si documentatie
-
+## Phase 5: migration and documentation
 ```csharp
 // vechi
 control.Background = Color.White;
@@ -86,23 +81,23 @@ control.Background = new SolidColorBrush(Color.White);
 control.BorderBrush = new SolidColorBrush(Color.Red);
 ```
 
-1. Actualizam sample-urile, testele, paginile API si manifestul documentatiei.
-2. Documentam `null` ca transparent semantic.
-3. Nu introducem aliasuri sau operatori impliciti pentru `Color`.
+1. We update the samples, tests, API pages and the documentation manifest.
+2. We document `null` as semantic transparency.
+3. We do not introduce aliases or default operators for `Color`.
 
-## Acceptanta
+## Acceptance
 
-- build complet fara warnings sau erori;
-- toate testele existente migrate;
-- teste API si invalidare pentru ambele proprietati;
-- teste markup pentru shorthand, resurse si property elements;
-- teste de randare pentru solid, linear, radial si image brush pe fill si border;
-- teste motion pentru solid si gradient compatibil;
-- documentatia si manifestul sincronizate.
+- complete build without warnings or errors;
+- all existing tests migrated;
+- API tests and invalidation for both properties;
+- markup tests for shorthand, resources and property elements;
+- rendering tests for solid, linear, radial and image brush on fill and border;
+- motion tests for solid and compatible gradient;
+- synchronized documentation and manifest.
 
-## Non-obiective
+## Non-objectives
 
-- migrarea `Foreground`;
-- schimbarea `SelectionBackground`, `CaretColor` sau a clear color-ului ferestrei;
-- conversii implicite `Color` -> `Brush`;
-- un sistem nou de layout sau clipping.
+- `Foreground` migration;
+- changing `SelectionBackground`, `CaretColor` or the clear color of the window;
+- implicit conversions `Color` -> `Brush`;
+- a new layout or clipping system.

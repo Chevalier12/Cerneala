@@ -29,10 +29,10 @@
 - [x] Phase 2/4 must model typed velocity, not just `float InitialVelocity`, because springs/decay over `DrawPoint`, `Thickness`, rects, and transforms need vector-space velocity.
 - [x] Phase 7 must name the renderer integration points explicitly; adding `OpacityProperty` to `UIElement` without command/cache support would be decorative nonsense.
 - [x] Phase 9 must add a before/after property mutation seam. `UiObject.PropertyChanged` fires after effective value changes and does not expose enough source/base-target information for robust implicit animation.
-- [x] Phase 1 must create every type referenced by the initial `MotionSystem` API. `MotionTimelineRegistry`, `MotionDiagnostics`, `ReducedMotionPolicy`, and `MotionTokens` cannot magically appear in later phases while Phase 1 still compiles. Nu merge cu "las' ca vine el".
+- [x] Phase 1 must create every type referenced by the initial `MotionSystem` API. `MotionTimelineRegistry`, `MotionDiagnostics`, `ReducedMotionPolicy`, and `MotionTokens` cannot magically appear in later phases while Phase 1 still compiles. No hand-waving that it will arrive later.
 - [x] Phase 1 must explicitly integrate with `UiFrameScheduler` or `UIRoot.ProcessFrame`; otherwise motion is root-owned in theory and dead in practice.
 - [x] Phase 7 must define transform-channel properties used by examples and composition rules. `UIElement.ScaleProperty` cannot appear in API examples unless the plan actually creates it.
-- [x] Phase 1 must define UI-thread/root affinity. Motion graph mutation from arbitrary threads would turn deterministic animation into o ciorba cu suruburi.
+- [x] Phase 1 must define UI-thread/root affinity. Motion graph mutation from arbitrary threads would turn deterministic animation into an incoherent mess.
 - [x] Phase 5 must define `MotionHandle` lifetime, completion waiting, and disposal semantics. Otherwise canceled/completed handles and callbacks can leak roots/elements.
 - [x] Phase 7 must define `RenderTransformOrigin` coordinate semantics, not just add a property and hope pixels read minds.
 - [x] Phase 20 must define `MotionGroup` as real files/API/tests if it is replacing `Storyboard`.

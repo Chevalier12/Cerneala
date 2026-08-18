@@ -22,9 +22,10 @@ The type is an internal implementation detail. `AspectEngine` creates and update
 
 ```csharp
 AspectEngineElementState state = states.GetOrCreateValue(element);
-bool changed = ApplyResolved(element, state.LastResolved, resolved);
+bool changed = ApplyResolved(element, state.LastResolved, resolved, themeProvider);
 
 state.LastResolved = resolved;
+state.LastThemeProvider = themeProvider;
 state.Diagnostics = BuildDiagnostics(resolved, environment, counters.Snapshot());
 ```
 
@@ -33,6 +34,8 @@ state.Diagnostics = BuildDiagnostics(resolved, environment, counters.Snapshot())
 `AspectEngineElementState` is the mutable state record used by `AspectEngine` for a single `UIElement`. The engine keeps instances in a `ConditionalWeakTable<UIElement, AspectEngineElementState>`, so state is associated with an element without adding public API surface to the element itself.
 
 `LastResolved` stores the previous `ResolvedAspect` produced by `Apply`. `AspectEngine.Apply` compares this value with the next resolved aspect to update changed aspect-base values and clear aspect-base values that no longer resolve. `AspectEngine.Clear` uses the same stored result to clear previously applied `UiPropertyValueSource.AspectBase` values, then sets `LastResolved` to `null`.
+
+`LastThemeProvider` stores the theme provider associated with the last application. `AspectEngine.Clear` uses it together with the last resolved motion metadata so clearing aspect-base values can participate in the same motion transaction as other aspect mutations, then resets it to `null`.
 
 `Diagnostics` stores the last diagnostics snapshot built during `Apply`. It is initialized to an empty `AspectDiagnostics.Snapshot`, replaced after successful application, returned by `AspectEngine.GetDiagnostics`, and reset to an empty snapshot by `Clear`.
 
@@ -43,6 +46,7 @@ This class is internal and is not intended for application code. Public consumer
 | Name | Type | Description |
 | --- | --- | --- |
 | `LastResolved` | `ResolvedAspect?` | Gets or sets the last resolved aspect result applied for the element, or `null` before application or after `AspectEngine.Clear`. |
+| `LastThemeProvider` | `ThemeProvider?` | Gets or sets the theme provider associated with the last application, or `null` when no provider was supplied or after `AspectEngine.Clear`. |
 | `Diagnostics` | `AspectDiagnostics.Snapshot` | Gets or sets the diagnostics snapshot associated with the latest application; defaults to an empty snapshot. |
 
 ## Applies to

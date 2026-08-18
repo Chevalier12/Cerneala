@@ -1,125 +1,125 @@
-# Plan: hardening pentru text texture cache si frame budget in CernealaPresentation
+# Plan: hardening for text texture cache and frame budget in CernealaPresentation
 
-> Data: 2026-07-17
-> Status: finalizat
-> Dependenta: Motion markup si automatizarea CernealaPresentation existente
-> Scop: eliminam rerasterizarea repetata a textului animat si garantam printr-un benchmark nativ ca incarcarea fiecarui view relevant ramane in bugetul de 60 FPS.
+> Date: 2026-07-17
+> Status: completed
+> Dependency: Motion markup and existing CernealaPresentation automation
+> Goal: we eliminate the repeated rerastering of the animated text and guarantee through a native benchmark that the loading of each relevant view remains within the 60 FPS budget.
 
-## 1. Rezumat
+## 1. Summary
 
-Profilarea nativa a CernealaPresentation a demonstrat ca toate view-urile in afara de
-Welcome pot depasi bugetul de `16.6667 ms` la incarcare. Problema nu este `Present()`
-sau VSync: `UiFrame.ProcessingTime` este capturat inainte de `Present()`, iar spike-urile
-se afla in `Draw`.
+The native profiling of CernealaPresentation demonstrated that all views except for
+Welcome can exceed the budget of `16.6667 ms` when loading. The problem is not `Present()`
+or VSync: `UiFrame.ProcessingTime` is captured before `Present()`, and the spikes
+it is located in `Draw`.
 
-Root cause-ul este compus din trei comportamente din pipeline-ul de text:
+The root cause is composed of three behaviors in the text pipeline:
 
-- `MonoGameDrawingBackend.TextTextureKey` include faza subpixel exacta a pozitiei;
-- Motion schimba acea faza aproape la fiecare frame, producand cache misses repetate;
-- `PruneInactiveTextTextureCaches()` evacueaza dupa fiecare frame toate texturile care
-  nu au fost folosite in acel frame, inclusiv textele view-urilor temporar collapsed.
+- `MonoGameDrawingBackend.TextTextureKey` includes the exact subpixel phase of the position;
+- Motion changes that phase almost every frame, producing repeated cache misses;
+- `PruneInactiveTextTextureCaches()` evacuates after each frame all the textures that
+  were not used in that frame, including the texts of temporarily collapsed views.
 
-Un cache miss executa sincron `SkiaTextRasterizer.RasterizeSubpixel()`, creeaza
-referintele white/black, trei layere RGB, masca grayscale si patru texturi GPU.
-Baseline-ul instrumentat a observat aproximativ `4-6 MB` alocati pe frame-urile
-obisnuite, `7-11 MB` pe spike-uri si GC in 99 dintre 102 frame-uri peste buget.
+A cache miss executes synchronously `SkiaTextRasterizer.RasterizeSubpixel()`, creates
+white/black references, three RGB layers, grayscale mask and four GPU textures.
+The instrumented baseline observed approximately `4-6 MB` allocated on the frames
+usual, `7-11 MB` on spikes and GC in 99 out of 102 frames over budget.
 
-Doua experimente controlate au confirmat cauza:
+Two controlled experiments confirmed the cause:
 
-- neutralizarea fazei subpixel a redus puternic alocarile si spike-urile din timpul Motion;
-- neutralizarea fazei plus pastrarea cache-ului intre view-uri a lasat numai primul
-  cold load; ciclurile 2 si 3 au avut zero depasiri, cu maxime warm de aproximativ
-  `1.1-5 ms`.
+- the neutralization of the subpixel phase strongly reduced allocations and spikes during Motion;
+- neutralizing the phase plus keeping the cache between views left only the first one
+  cold load; cycles 2 and 3 had zero exceedances, with warm maxima of approx
+  ZZZ BLACK 10ZZZ.
 
-Planul inlocuieste politica de cache "ultimul frame sau gunoi" cu retentie bounded,
-foloseste faze subpixel canonice si optimizeaza cold rasterization. Benchmark-ul nativ
-folosit la diagnostic devine gate permanent.
+The plan replaces the "last frame or garbage" cache policy with bounded retention,
+uses canonical subpixel phases and optimizes cold rasterization. The native benchmark
+used for diagnosis becomes permanent gate.
 
-## 2. Obiective
+## 2. Objectives
 
-- Nicio rerasterizare de text doar fiindca un view a lipsit dintr-un singur frame.
-- Un numar finit si controlat de variante subpixel pentru text animat.
-- Evacuare bounded/LRU cu `Dispose()` corect pentru toate texturile GPU dependente.
-- Reducerea alocarilor cold-path, inclusiv eliminarea mastii grayscale cand textul solid
-  nu o foloseste.
-- Zero frame-uri cu `ProcessingTime > 16.6667 ms` la cold si warm load pentru Retained,
-  Markup, Aspect, Motion, Frame Pipeline si Diagnostics pe gate-ul nativ Release.
-- Benchmark permanent, machine-readable si cu exit code non-zero la regresie.
+- No rerastering of text just because a view was missing from a single frame.
+- A finite and controlled number of subpixel variants for animated text.
+- Bounded/LRU evacuation with correct `Dispose()` for all dependent GPU textures.
+- Reduction of cold-path allocations, including the removal of the grayscale mask when the text is solid
+  don't use it.
+- Zero frames with `ProcessingTime > 16.6667 ms` at cold and warm load for Retained,
+  Markup, Aspect, Motion, Frame Pipeline and Diagnostics on the native Release gate.
+- Permanent benchmark, machine-readable and with non-zero exit code for regression.
 
-## 3. Non-obiective
+## 3. Non-objectives
 
-- Nu schimbam semantica Motion sau markup-ul Presentation doar ca sa ascundem costul.
-- Nu eliminam subpixel text rendering si nu acceptam text neclar drept optimizare.
-- Nu introducem un atlas global de glyph-uri, rasterizare GPU sau worker pipeline
-  asincron daca fixul bounded cache plus cold-path optimization satisface gate-ul.
-- Nu transformam `UiFrame` intr-un API public de profiler si nu adaugam phase timings
-  publice doar pentru benchmark.
-- Nu garantam 60 FPS pentru hardware arbitrar; gate-ul masoara acelasi WindowsDX runtime,
-  aceeasi configuratie Release si acelasi mediu de referinta documentat.
+- We do not change the Motion semantics or the Presentation markup just to hide the cost.
+- We do not remove subpixel text rendering and do not accept blurred text as an optimization.
+- We do not introduce a global glyph atlas, GPU rasterization or worker pipeline
+  asynchronous if the fixed bounded cache plus cold-path optimization satisfies the gate.
+- We do not turn `UiFrame` into a public profiler API and do not add phase timings
+  public only for benchmark.
+- We do not guarantee 60 FPS for arbitrary hardware; the gate measures the same WindowsDX runtime,
+  the same Release configuration and the same documented reference environment.
 
-## 4. Arhitectura propusa
+## 4. The proposed architecture
 
-### 4.1 Faza subpixel canonica
+### 4.1 Canonical subpixel phase
 
-`MonoGameDrawingBackend` va normaliza faza fizica inainte de construirea
-`TextTextureKey`. Grid-ul initial trebuie validat la 8 faze pe axa; daca inspectia
-pixel-diff arata ca 4 faze sunt indistinguibile la scale-urile suportate, se poate alege
-grila mai mica.
+`MonoGameDrawingBackend` will normalize the physical phase before building
+`TextTextureKey`. The initial grid must be validated at 8 phases on the axis; if the inspection
+pixel-diff shows that 4 phases are indistinguishable at the supported scales, you can choose
+smaller grid.
 
-Aceeasi faza canonica trebuie folosita atat in cheie, cat si la rasterizare. Nu este
-legal ca doua pozitii sa imparta cheia, dar textura sa depinda de prima pozitie exacta
-care a ratat cache-ul.
+The same canonical phase must be used both in keying and rasterization. It is not
+legal for two positions to share the key, but the texture depends on the first exact position
+which missed the cache.
 
-Pozitia finala de draw continua sa foloseasca baseline-ul real si maparea existenta.
-Cuantizarea controleaza numai varianta rasterizata, nu geometria logica.
+The final draw position continues to use the actual baseline and existing mapping.
+Quantization controls only the rasterized version, not the logical geometry.
 
-### 4.2 Cache bounded intre frame-uri
+### 4.2 Cache bounded between frames
 
-Cache-ul de text va retine intrari intre frame-uri si intre view switches. Fiecare
-intrare va urmari ultima generatie/frame in care a fost folosita si costul aproximativ
+The text cache will retain entries between frames and between view switches. Each one
+entry will follow the last generation/frame in which it was used and the approximate cost
 in bytes.
 
-Evacuarea va avea doua limite explicite:
+The evacuation will have two explicit limits:
 
-- un plafon de memorie/texturi;
-- o perioada minima de retentie sau o politica LRU care nu evacueaza continutul doar
-  fiindca a lipsit din frame-ul curent.
+- a memory/texture ceiling;
+- a minimum retention period or an LRU policy that does not just evacuate the content
+  because it was missing from the current frame.
 
-Cand o intrare este evacuata, backend-ul trebuie sa elibereze Red, Green, Blue si masca
-optionala, apoi sa elimine toate texturile brush dependente de aceeasi cheie.
-`CoordinateScale` change, device reset si `Dispose()` continua sa goleasca imediat tot.
+When an input is evicted, the backend must release Red, Green, Blue and the mask
+optional, then remove all brush textures dependent on the same key.
+`CoordinateScale` change, device reset and `Dispose()` continues to immediately empty everything.
 
 ### 4.3 Cold rasterization
 
-Textul solid nu va construi textura de masca folosita exclusiv de text brushes
-nesolide. Pipeline-ul subpixel va evita copii LINQ si buffers temporare nenecesare si
-va folosi pooling numai unde ownership-ul bufferului dupa `Texture2D.SetData()` este
-clar.
+Solid text will not build the mask texture used exclusively by text brushes
+not solid. The subpixel pipeline will avoid LINQ copies and unnecessary temporary buffers and
+will use pooling only where the ownership of the buffer is after `Texture2D.SetData()`
+clearly
 
-Prima aparitie a unui text ramane sincrona in aceasta etapa, dar costul agregat al
-primului view load trebuie sa satisfaca acelasi gate de `16.6667 ms`. Daca optimizarile
-locale nu sunt suficiente, implementarea se opreste si documenteaza profilul ramas
-inainte de a extinde scope-ul la prewarm/async rasterization.
+The first appearance of a text remains synchronous at this stage, but the aggregate cost of
+the first view load must satisfy the same gate of `16.6667 ms`. If the optimizations
+local are not enough, the implementation stops and documents the remaining profile
+before expanding the scope to prewarm/async rasterization.
 
-### 4.4 Gate nativ permanent
+### 4.4 Permanent native gate
 
-`PresentationWindow.Automation.cs` va primi un mod opt-in separat pentru frame budget.
-El va conduce controalele existente prin automation peers, va exclude Welcome si va
-captura primele 45 de frame-uri dupa fiecare switch.
+`PresentationWindow.Automation.cs` will get a separate opt-in mode for frame budget.
+He will manage the existing controls through automation peers, exclude Welcome and will
+capture the first 45 frames after each switch.
 
-Un runner dedicat din `benchmarks/Cerneala.PresentationFrameBudget/` va porni
-CernealaPresentation in `Release`, va valida raportul JSON si va esua daca:
+A dedicated runner from `benchmarks/Cerneala.PresentationFrameBudget/` will start
+CernealaPresentation in `Release`, will validate the JSON report and will fail if:
 
-- un view nu produce numarul asteptat de frame-uri;
-- apare o exceptie sau procesul depaseste timeout-ul;
-- orice cold sau warm frame are `ProcessingTime > 16.6667 ms`;
-- raportul include Welcome sau omite unul dintre cele sase view-uri;
-- warm loads arata rerasterizare/GC churn peste bugetele stabilite in etapa 0.
+- a view does not produce the expected number of frames;
+- an exception occurs or the process exceeds the timeout;
+- any cold or warm frame has `ProcessingTime > 16.6667 ms`;
+- the report includes Welcome or omits one of the six views;
+- warm loads show rerastering/GC churn over the budgets established in stage 0.
 
-Benchmark-ul este un gate nativ Windows, nu un test unit cross-platform si nu ruleaza
-implicit in `dotnet test`.
+The benchmark is a native Windows gateway, not a cross-platform unit test, and it does not run
+default in `dotnet test`.
 
-## 5. Fisiere estimate
+## 5. Estimated files
 
 - `Drawing/MonoGame/MonoGameDrawingBackend.cs`
 - `Drawing/Text/SkiaTextRasterizer.cs`
@@ -132,133 +132,133 @@ implicit in `dotnet test`.
 - `benchmarks/results/<data>-presentation-frame-budget/README.md`
 - `Cerneala.slnx`
 
-Nu este planificata o schimbare de API public. Daca implementarea cere membri
-public/protected noi in Cerneala, etapa respectiva se opreste pentru review si
-documentatie API inainte de continuare.
+No public API change is planned. If the implementation requires members
+public/protected new in Cerneala, the respective stage stops for review and
+API documentation before continuing.
 
-## 6. Etape de implementare
+## 6. Implementation stages
 
-### Etapa 0 - Benchmark RED permanent si baseline
+### Stage 0 - Permanent RED Benchmark and baseline
 
-- [x] Promoveaza harness-ul temporar intr-un mod frame-budget opt-in in `PresentationWindow.Automation.cs`, fara reflection si fara modificari de markup facute numai pentru test.
-- [x] Captureaza pentru fiecare sample: ciclu, capitol, indexul frame-ului, `ProcessingTime`, `ElapsedTime`, `FrameStats`, cold/warm si timestamp relativ.
-- [x] Exclude explicit Welcome si ruleaza Retained, Markup, Aspect, Motion, Frame Pipeline si Diagnostics in ordinea reala a navigatiei.
-- [x] Adauga runner-ul `benchmarks/Cerneala.PresentationFrameBudget` cu 8 cicluri, 45 frame-uri per load, timeout bounded, raport JSON si sumar lizibil.
-- [x] Fa runner-ul sa iasa non-zero pentru orice frame peste `16.6667 ms`, raport incomplet, eroare asincrona sau proces blocat.
-- [x] Inregistreaza baseline-ul RED in `benchmarks/results/<data>-presentation-frame-budget/README.md`, inclusiv hardware, OS, configuratie, maxime per view, counts peste buget si comanda exacta.
-- [x] Confirma ca baseline-ul reproduce alocari/GC asociate draw-ului printr-un profiling run separat; nu introduce phase timings publice permanente.
-- [x] Reindexeaza dupa fiecare modificare C# sau project-file.
+- [x] Promote the temporary harness in a frame-budget opt-in mode in `PresentationWindow.Automation.cs`, without reflection and without markup changes made only for the test.
+- [x] Captures for each sample: cycle, chapter, frame index, `ProcessingTime`, `ElapsedTime`, `FrameStats`, cold/warm and relative timestamp.
+- [x] Excludes explicitly Welcome and runs Retained, Markup, Aspect, Motion, Frame Pipeline and Diagnostics in the actual navigation order.
+- [x] Add the `benchmarks/Cerneala.PresentationFrameBudget` runner with 8 cycles, 45 frames per load, bounded timeout, JSON report and readable summary.
+- [x] Make the runner output non-zero for any frame above `16.6667 ms`, incomplete report, asynchronous error or blocked process.
+- [x] Record the RED baseline in `benchmarks/results/<data>-presentation-frame-budget/README.md`, including hardware, OS, configuration, maximums per view, counts over budget and exact order.
+- [x] Confirm that the baseline reproduces allocations/GC associated with the draw through a separate profiling run; does not introduce permanent public phase timings.
+- [x] Reindex after each C# or project-file change.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Comanda de benchmark ruleaza end-to-end pe window-ul WindowsDX real si esueaza RED pentru cauza observata, nu pentru build, timeout sau fixture defect.
-- [x] Raportul contine exact cele sase view-uri cerute, separat cold/warm, si pastreaza dovada baseline-ului.
+- [x] The benchmark command runs end-to-end on the real WindowsDX window and fails RED for the observed cause, not for build, timeout or fixture failure.
+- [x] The report contains exactly the six required views, separated cold/warm, and preserves the evidence of the baseline.
 
-### Etapa 1 - Contracte RED pentru cache si lifecycle GPU
+### Stage 1 - RED contracts for GPU cache and lifecycle
 
-- [x] Inlocuieste testul `CompletingFrameEvictsTextTexturesNotUsedByThatFrame` cu teste RED pentru retentie intre frame-uri si evacuare numai la depasirea politicii bounded.
-- [x] Adauga un test care foloseste textul A, apoi B, apoi A si cere cache hit pentru revenirea la A.
-- [x] Adauga un test cu suficiente chei pentru a depasi plafonul si verifica evacuarea LRU determinista, nu crestere nelimitata.
-- [x] Verifica prin test ca evacuarea elibereaza toate texturile RGB, masca optionala si intrarile `textBrushTextureCache` dependente.
-- [x] Pastreaza teste pentru `Dispose()` idempotent, coordinate-scale reset si device reset; fiecare trebuie sa goleasca imediat cache-urile.
-- [x] Adauga diagnostics counters interni/test-only pentru hits, misses, evictions si estimated bytes, fara API public.
-- [x] Reindexeaza dupa modificarile C#.
+- [x] Replaces the `CompletingFrameEvictsTextTexturesNotUsedByThatFrame` test with RED tests for retention between frames and evacuation only when the bounded policy is exceeded.
+- [x] Add a test that uses the text A, then B, then A and requires a cache hit to return to A.
+- [x] Add a test with enough keys to exceed the cap and check for deterministic LRU eviction, not unlimited growth.
+- [x] Check by test that the exhaust releases all RGB textures, optional mask and dependent `textBrushTextureCache` inputs.
+- [x] Keep tests for `Dispose()` idempotent, coordinate-scale reset and device reset; everyone must immediately empty the caches.
+- [x] Add internal/test-only diagnostics counters for hits, misses, evictions and estimated bytes, without public API.
+- [x] Reindex after C# changes.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] Noile teste esueaza RED impotriva politicii actuale de pruning per-frame si descriu exact ownership-ul resurselor GPU.
-- [x] Niciun test nu cere cache nelimitat sau omiterea `Dispose()`.
+- [x] The new tests fail RED against the current per-frame pruning policy and accurately describe GPU resource ownership.
+- [x] No test asks for unlimited cache or skipping `Dispose()`.
 
-### Etapa 2 - Faze subpixel finite si corecte
+### Stage 2 - Finished and correct subpixel phases
 
-- [x] Introdu o functie unica de normalizare/cuantizare pentru faza fizica, cu comportament definit pentru pozitii negative, scale fractional si valori aproape de 0/1.
-- [x] Foloseste faza canonica in `TextTextureKey` si aceeasi faza in inputul `RasterizeSubpixel`; elimina dependenta de float-uri animate exacte.
-- [x] Adauga teste pentru numarul maxim de chei produse de o translatie lunga la scale 1, 1.25, 1.5 si 2.
-- [x] Adauga pixel-diff tests pentru fazele canonice si pozitiile dintre ele; verifica baseline, clipping, culoare/gamma si absenta salturilor mai mari decat toleranta acceptata.
-- [x] Verifica text solid si text cu brush, deoarece ambele cache-uri includ cheia textului.
-- [x] Pastreaza `TextTextureKey` separat pentru font, size, coordinate scale si rasterization color.
-- [x] Reindexeaza dupa modificarile C#.
+- [x] Introduces a unique normalization/quantization function for the physical phase, with defined behavior for negative positions, fractional scales and values close to 0/1.
+- [x] Uses the canonical phase in `TextTextureKey` and the same phase in the `RasterizeSubpixel` input; remove the dependency on accurate animated floats.
+- [x] Add tests for the maximum number of keys produced by a long translation at scales 1, 1.25, 1.5 and 2.
+- [x] Add pixel-diff tests for the canonical phases and the positions between them; check baseline, clipping, color/gamma and the absence of jumps greater than the accepted tolerance.
+- [x] Check solid text and brush text, because both caches include the text key.
+- [x] Keep `TextTextureKey` separately for font, size, scale coordinates and rasterization color.
+- [x] Reindex after C# changes.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] O animatie de pozitie produce un numar bounded de variante, apoi cache hits, fara rerasterizare continua.
-- [x] Pixel-diff-ul confirma ca optimizarea nu transforma textul in marmelada vizuala.
+- [x] A position animation produces a bounded number of variants, then cache hits, without continuous rerastering.
+- [x] The pixel-diff confirms that the optimization does not turn the text into visual marmalade.
 
-### Etapa 3 - Cache bounded si cold-path optimization
+### Stage 3 - Cache bounded and cold-path optimization
 
-- [x] Implementeaza generatia/frame usage si politica bounded/LRU in `MonoGameDrawingBackend`.
-- [x] Evacueaza intrarile numai dupa aplicarea limitelor explicite si dispose-uie resursele in ordine sigura pentru GraphicsDevice.
-- [x] Leaga lifecycle-ul `textBrushTextureCache` de cheia textului parinte, astfel incat o evacuare sa nu lase texturi orfane.
-- [x] Fa masca grayscale optionala si construieste-o numai cand un text brush nesolid o cere.
-- [x] Elimina `Select(...).ToArray()` si alte copii temporare din `CreateGrayscaleMask` si profileaza buffers mari din `RasterizeSubpixelReference`/`CreateSubpixelLayers`.
-- [x] Foloseste `ArrayPool<byte>` numai daca bufferul poate fi returnat dupa upload fara ca `RasterizedText` sau `Texture2D` sa-i pastreze referinta.
-- [x] Adauga allocation tests dupa warm-up pentru static text, animated text si A-B-A view switching.
-- [x] Ruleaza benchmark-ul dupa fiecare subpas si pastreaza comparatia cold/warm fata de baseline.
-- [x] Reindexeaza dupa modificarile C#.
+- [x] Implements generation/frame usage and bounded/LRU policy in `MonoGameDrawingBackend`.
+- [x] Evacuates inputs only after applying explicit limits and disposes resources in safe order for GraphicsDevice.
+- [x] Bind the lifecycle `textBrushTextureCache` to the key of the parent text, so that an escape does not leave orphaned textures.
+- [x] Make grayscale mask optional and build it only when a non-solid text brush requires it.
+- [x] Remove `Select(...).ToArray()` and other temporary copies from `CreateGrayscaleMask` and profile large buffers from `RasterizeSubpixelReference`/`CreateSubpixelLayers`.
+- [x] Use `ArrayPool<byte>` only if the buffer can be returned after upload without `RasterizedText` or `Texture2D` keeping its reference.
+- [x] Add allocation tests after warm-up for static text, animated text and A-B-A view switching.
+- [x] Run the benchmark after each substep and keep the cold/warm comparison against the baseline.
+- [x] Reindex after C# changes.
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] Warm view switching are zero cache misses pentru texturi deja retinute, in afara invalidarilor legitime de font/scale/color.
-- [x] Animated text ajunge la hits dupa popularea variantelor canonice si nu mai produce GC repetat in draw.
-- [x] Cache-ul respecta plafonul si toate resursele evacuate sunt dispose-uite.
-- [x] Niciunul dintre cele sase view-uri nu depaseste `16.6667 ms` in benchmark; cold si warm trec separat.
+- [x] Warm view switching has zero cache misses for already retained textures, apart from legitimate font/scale/color invalidations.
+- [x] Animated text reaches hits after the popularization of the canonical variants and no longer produces repeated GC in the draw.
+- [x] The cache respects the ceiling and all evacuated resources are disposed.
+- [x] None of the six views exceeds `16.6667 ms` in the benchmark; cold and warm pass separately.
 
-### Etapa 4 - Hardening al benchmark-ului si integrare
+### Stage 4 - Hardening of the benchmark and integration
 
-- [x] Adauga proiectul benchmark in folderul `/benchmarks/` din `Cerneala.slnx`.
-- [x] Documenteaza in README comanda, cerintele WindowsDX, formatul raportului, timeout-ul si faptul ca rezultatele sunt environment-specific.
-- [x] Ruleaza benchmark-ul de trei ori in procese Release curate si cere zero depasiri in toate cele trei rulari.
-- [x] Pastreaza rezultatul final in `benchmarks/results/<data>-presentation-frame-budget/README.md` langa baseline, cu acelasi hardware si aceiasi parametri.
-- [x] Confirma ca benchmark-ul nu forteaza GC, nu scrie in callback-ul de frame si nu include timpul propriei serializari in `ProcessingTime`.
-- [x] Confirma ca procesul inchide window-ul pe succes, failure si timeout si nu lasa procese Cerneala/dotnet active.
-- [x] Reindexeaza dupa modificarile C# si project-file.
+- [x] Add the benchmark project to the `/benchmarks/` folder from `Cerneala.slnx`.
+- [x] Document in the README the command, the WindowsDX requirements, the report format, the timeout and the fact that the results are environment-specific.
+- [x] Run the benchmark three times in clean Release processes and ask for zero exceedances in all three runs.
+- [x] Keep the final result in `benchmarks/results/<data>-presentation-frame-budget/README.md` near the baseline, with the same hardware and the same parameters.
+- [x] Confirm that the benchmark does not force GC, does not write in the frame callback and does not include the time of its own serialization in `ProcessingTime`.
+- [x] Confirm that the process closes the window on success, failure and timeout and does not leave Cerneala/dotnet processes active.
+- [x] Reindex after C# and project-file changes.
 
-**Gate etapa 4**
+**Gate Stage 4**
 
-- [x] Comanda `dotnet run -c Release --project .\benchmarks\Cerneala.PresentationFrameBudget\Cerneala.PresentationFrameBudget.csproj -- --cycles 8 --frames-per-load 45 --budget-ms 16.6667` este GREEN de trei ori consecutiv.
-- [x] Fiecare raport contine 360 de frame-uri pentru fiecare view, exceptand numai diferente explicit justificate de inchiderea ferestrei.
-- [x] Welcome nu apare in samples sau agregate.
+- [x] The order `dotnet run -c Release --project .\benchmarks\Cerneala.PresentationFrameBudget\Cerneala.PresentationFrameBudget.csproj -- --cycles 8 --frames-per-load 45 --budget-ms 16.6667` is GREEN three times in a row.
+- [x] Each report contains 360 frames for each view, except for differences explicitly justified by closing the window.
+- [x] Welcome does not appear in samples or aggregates.
 
-### Etapa 5 - Verificare finala si documentatie
+### Stage 5 - Final verification and documentation
 
-- [x] Ruleaza testele focusate pentru `MonoGameDrawingBackendStateTests` si `TextPipelineTests`.
-- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj`.
-- [x] Ruleaza `dotnet test .\Cerneala.slnx`.
-- [x] Ruleaza benchmark-ul final exact din gate-ul etapei 4 si compara raportul cu baseline-ul RED.
-- [x] Cere validare vizuala umana pentru text static si animat la scale 1, 1.25, 1.5 si 2; agentul nu inventeaza rezultatul acestui gate.
-- [x] Ruleaza public API diff; daca este gol, consemneaza ca nu sunt necesare pagini noi in `docs-site/documentation/classes/`. (Diff-ul strict contine doar doua adaugari documentate; verificarea de compatibilitate non-strict este GREEN.)
-- [x] Daca exista schimbari publice neasteptate, actualizeaza documentatia prin `writing-api-documentation` si sincronizeaza manifestul unde se adauga sau redenumesc pagini. (Paginile existente pentru `UIRoot` si `UiFrame` sunt sincronizate; manifestul nu necesita schimbare.)
-- [x] Ruleaza `git diff --check` si RoslynIndexer `doctor/status` dupa indexarea finala.
-- [x] Confirma ca nu exista warnings noi, teste skipped noi, procese ramase sau artefacte temporare de profiling. (Warning-ul indexerului pentru `tmp/presentation-frame-cause.nettrace.etlx` este un artefact preexistent al utilizatorului, nu unul creat de plan.)
+- [x] Run the focused tests for `MonoGameDrawingBackendStateTests` and `TextPipelineTests`.
+- [x] Runs `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj`.
+- [x] Runs `dotnet test .\Cerneala.slnx`.
+- [x] Run the final benchmark exactly from the stage 4 gate and compare the report with the RED baseline.
+- [x] Request human visual validation for static and animated text at scales 1, 1.25, 1.5 and 2; the agent does not invent the result of this gate.
+- [x] Run public API diff; if it is empty, it records that no new pages are needed in `docs-site/documentation/classes/`. (The strict diff contains only two documented additions; the non-strict compatibility check is GREEN.)
+- [x] If there are unexpected public changes, update the documentation via `writing-api-documentation` and synchronize the manifest where pages are added or renamed. (The existing pages for `UIRoot` and `UiFrame` are synchronized; the manifest does not require change.)
+- [x] Run `git diff --check` and RoslynIndexer `doctor/status` after final indexing.
+- [x] Confirm that there are no new warnings, new skipped tests, remaining processes or temporary profiling artifacts. (The indexer warning for `tmp/presentation-frame-cause.nettrace.etlx` is a pre-existing user artifact, not one created by the plan.)
 
-**Gate etapa 5**
+**Gate Stage 5**
 
-- [x] Testele focusate, proiectul runtime, intreaga solutie si benchmark-ul nativ sunt GREEN.
-- [x] Validarea umana confirma text clar si stabil in Motion, fara jitter, ghosting sau schimbari de culoare/gamma.
-- [x] Benchmark-ul demonstreaza zero frame-uri peste buget pentru fiecare load relevant, nu doar o medie frumoasa care ascunde spike-uri jegoase.
+- [x] The focused tests, the runtime project, the entire solution and the native benchmark are GREEN.
+- [x] Human validation confirms clear and stable text in Motion, without jitter, ghosting or color/gamma changes.
+- [x] The benchmark demonstrates zero frames over the budget for each relevant load, not just a nice average that hides annoying spikes.
 
-## 7. Ordinea recomandata
+## 7. Recommended order
 
-1. Ingheata benchmark-ul RED si baseline-ul inainte de productie.
-2. Scrie contractele RED pentru retentie, bounded eviction si phase cardinality.
-3. Canonicalizeaza faza subpixel.
-4. Inlocuieste pruning-ul per-frame cu cache bounded/LRU.
-5. Optimizeaza cold rasterization pana trece acelasi gate.
-6. Intareste runner-ul permanent, documenteaza rezultatele si ruleaza verificarea completa.
+1. Freeze the RED benchmark and baseline before production.
+2. Write the RED contracts for retention, bounded eviction and phase cardinality.
+3. Canonicalize the subpixel phase.
+4. Replace per-frame pruning with bounded/LRU cache.
+5. Optimize cold rasterization until the same gate passes.
+6. Strengthen the runner permanently, document the results and run the full check.
 
 ## 8. Stop conditions
 
-- [x] Opreste extinderea spre glyph atlas sau rasterizare asincrona daca fixul local trece gate-ul. (Nu au fost introduse glyph atlas sau rasterizare asincrona.)
-- [x] Opreste implementarea si cere review daca solutia necesita API public nou in Cerneala. (Utilizatorul a aprobat explicit extinderea Diagnostics; cele doua adaugari sunt documentate si nu expun phase timings.)
-- [x] Nu relaxa bugetul, nu exclude frame-uri lente si nu muta serializarea astfel incat benchmark-ul sa cosmetizeze rezultatul.
-- [x] Nu rezolva problema ascunzand view-urile, eliminand Motion sau reducand continutul Presentation.
+- [x] Stops the extension to glyph atlas or asynchronous rasterization if the local fix passes the gate. (No glyph atlas or asynchronous rasterization were introduced.)
+- [x] Stop the implementation and ask for a review if the solution requires a new public API in Cerneala. (The user has explicitly approved the Diagnostics extension; the two additions are documented and do not expose phase timings.)
+- [x] Do not relax the budget, do not exclude slow frames and do not move the serialization so that the benchmark beautifies the result.
+- [x] Do not solve the problem by hiding the views, removing Motion or reducing the Presentation content.
 
-## 9. Definitia de gata
+## 9. The definition of ready
 
-- [x] Cache-ul de text pastreaza continut reutilizabil intre frame-uri si view-uri fara crestere necontrolata.
-- [x] Motion nu mai produce o cheie noua pentru fiecare pozitie float si nu mai declanseaza rerasterizare continua.
-- [x] Cold text rasterization nu mai aloca si copiaza buffers care nu sunt necesare tipului de text desenat.
-- [x] Resursele GPU sunt dispose-uite determinist la eviction, scale change, device reset si backend disposal.
-- [x] Toate testele de contract si lifecycle sunt GREEN.
-- [x] Benchmark-ul nativ Release este GREEN de trei ori consecutiv si raporteaza zero frame-uri peste `16.6667 ms` pentru toate cele sase view-uri.
-- [x] Utilizatorul confirma vizual ca textul static si animat ramane clar; performanta nu a fost cumparata cu pixeli fututi.
+- [x] The text cache keeps reusable content between frames and views without uncontrolled growth.
+- [x] Motion no longer produces a new key for each float position and no longer triggers continuous rescanning.
+- [x] Cold text rasterization no longer allocates and copies buffers that are not necessary for the type of text drawn.
+- [x] GPU resources are disposed deterministically for eviction, scale change, device reset and backend disposal.
+- [x] All contract and lifecycle tests are GREEN.
+- [x] The Release native benchmark is GREEN three times in a row and reports zero frames above `16.6667 ms` for all six views.
+- [x] The user visually confirms that the static and animated text remains clear; performance was not bought with broken pixels.

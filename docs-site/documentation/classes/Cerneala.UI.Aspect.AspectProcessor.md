@@ -57,6 +57,8 @@ The processor is root-owned. `Process`, `Clear`, and environment synchronization
 
 Each `Process` call builds an `AspectCatalog` from the root's `AspectRegistry`. When the catalog or active `Theme` changes, the processor rebuilds the effective token values from catalog defaults, overlays the semantic colors and brushes projected by `ThemeTokenBridge`, and publishes the changes through its stable runtime environment. Component-template token bindings share that environment and therefore observe the same updates.
 
+The processor also synchronizes component and content template definitions from the catalog. A control's named component template is resolved from the registered definitions, with the closest assignable owner type winning and later definitions winning equal-specificity ties. A `ContentPresenter` refreshes its content-template registry when the catalog version changes. Template-created slot elements are processed with their registered slot path, the owner component's variants and states, and the slot element's data context with the owner component recorded as data owner, allowing slot rules and content templates to observe the owner context.
+
 The engine receives the target element, current catalog, synchronized environment, root theme provider, and the element's `AspectVariantSet` when the element is a `Control`; non-control elements are processed with `AspectVariantSet.Empty`. It also receives an `AspectDataContext` built from the element's current `DataContext`, so `AspectCondition.Data` works on the root frame-processing path.
 
 `Clear` delegates to `AspectEngine.Clear`. Element lifecycle cleanup calls this during detach, which removes previously applied aspect-base values and clears the engine's tracked diagnostics and dependencies for that element.
@@ -79,7 +81,7 @@ The `Engine` property exposes the owned `AspectEngine` for diagnostics, dependen
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Process(UIElement element)` | `void` | Applies the current root aspect registry and theme context to `element`. Throws `ArgumentNullException` when `element` is `null`. |
+| `Process(UIElement element)` | `void` | Applies the current root aspect registry, theme context, and catalog-backed template context to `element`. This also refreshes a `ContentPresenter`, applies owner context to registered template slots, and applies a control template when needed. Throws `ArgumentNullException` when `element` is `null`. |
 | `Clear(UIElement element)` | `void` | Clears aspect-base values and tracked aspect state for `element` through the owned engine. |
 
 ## Applies to

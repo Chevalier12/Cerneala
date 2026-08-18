@@ -1,11 +1,10 @@
-# Plan: migrarea `Window` la Win32 + MonoGame WindowsDX
+# Plan: `Window` migration to Win32 + MonoGame WindowsDX
 
-## Rezumat
+## Summary
 
-Inlocuim backend-ul general Skia folosit acum de ferestrele native cu randare MonoGame WindowsDX. Cerneala ramane Windows-first in aceasta etapa, pastreaza ferestrele Win32 si foloseste Skia + HarfBuzz numai pentru pipeline-ul de text.
+We are replacing the generic Skia backend now used by native windows with MonoGame WindowsDX rendering. Cerneala remains Windows-first at this stage, keeps Win32 windows and uses Skia + HarfBuzz only for the text pipeline.
 
-Aplicatia nu expune `Game1`, `Game.Run()` sau boilerplate de startup. Runtime-ul Cerneala detine un singur message pump Win32 si o colectie de sesiuni grafice, cate una pentru fiecare `Window`.
-
+The application does not expose `Game1`, `Game.Run()` or startup boilerplate. The Cerneala runtime has a single Win32 message pump and a collection of graphics sessions, one for each `Window`.
 ```text
 Proces Cerneala
 └── WindowApplicationRuntime
@@ -19,73 +18,71 @@ Proces Cerneala
     ├── WindowContext B
     └── WindowContext C
 ```
+## Fixed decisions
 
-## Decizii fixate
+- V1 is Windows-only and uses `MonoGame.Framework.WindowsDX` `3.8.4.1`.
+- Win32 remains responsible for `HWND`, messages, input, focus, DPI, ownership, dialogues and lifecycle.
+- MonoGame is the only general UI rendering backend.
+- Each window gets its own `GraphicsDevice`, its own swap-chain and its own GPU resources.
+- The runtime uses a single UI thread and a single message pump for all windows.
+- We do not create instances of `Game` and we do not run multiple `Game.Run()`. We directly use the public APIs `GraphicsDevice`, `SpriteBatch` and `PresentationParameters`.
+- `PresentationParameters.DeviceWindowHandle` receives the `HWND` of the Cerneala window.
+- Skia and HarfBuzz remain exclusively in the measurement, shaping and rasterization of the text. The resulting texture is loaded and drawn by MonoGame.
+- We don't start secondary processes and we don't use reflection to access MonoGame internals.
+- The public API `Window`, the paired markup generator and the startup without `Program.cs` remain unchanged.
 
-- V1 este Windows-only si foloseste `MonoGame.Framework.WindowsDX` `3.8.4.1`.
-- Win32 ramane responsabil pentru `HWND`, mesaje, input, focus, DPI, ownership, dialoguri si lifecycle.
-- MonoGame este singurul backend general de randare UI.
-- Fiecare fereastra primeste propriul `GraphicsDevice`, propriul swap-chain si propriile resurse GPU.
-- Runtime-ul foloseste un singur thread UI si un singur message pump pentru toate ferestrele.
-- Nu cream instante `Game` si nu rulam mai multe `Game.Run()`. Folosim direct API-urile publice `GraphicsDevice`, `SpriteBatch` si `PresentationParameters`.
-- `PresentationParameters.DeviceWindowHandle` primeste `HWND`-ul ferestrei Cerneala.
-- Skia si HarfBuzz raman exclusiv in masurarea, shaping-ul si rasterizarea textului. Textura rezultata este incarcata si desenata prin MonoGame.
-- Nu pornim procese secundare si nu folosim reflection pentru a accesa internals MonoGame.
-- API-ul public `Window`, generatorul paired markup si startup-ul fara `Program.cs` raman neschimbate.
+## Motivation
 
-## Motivatie
+The current implementation correctly creates native Win32 windows, but `Win32WindowPlatform` builds a `SkiaDrawingBackend` that draws all UI commands in a BGRA bitmap and presents it through Win32. This violates the architectural limit of the project: Skia must serve the text, not become the general renderer.
 
-Implementarea actuala creeaza corect ferestre native Win32, dar `Win32WindowPlatform` construieste un `SkiaDrawingBackend` care deseneaza toate comenzile UI intr-un bitmap BGRA si il prezinta prin Win32. Aceasta incalca limita arhitecturala a proiectului: Skia trebuie sa deserveasca textul, nu sa devina rendererul general.
+WindowsDX allows avoiding a MonoGame fork:
 
-WindowsDX permite evitarea unui fork MonoGame:
+- `GraphicsDevice` has a public builder;
+- `PresentationParameters.DeviceWindowHandle` is public;
+- the WindowsDX backend creates the swap-chain for the provided handle;
+- `GraphicsDevice.Present()` presents the associated swap-chain.
 
-- `GraphicsDevice` are constructor public;
-- `PresentationParameters.DeviceWindowHandle` este public;
-- backend-ul WindowsDX creeaza swap-chain-ul pentru handle-ul furnizat;
-- `GraphicsDevice.Present()` prezinta swap-chain-ul asociat.
+DesktopGL is not used at this stage because its implementation binds the OpenGL context to the internal singleton `SdlGameWindow.Instance`, which prevents the clean association of multiple Cerneala windows through the public API.
 
-DesktopGL nu este folosit in aceasta etapa deoarece implementarea sa leaga contextul OpenGL de singletonul intern `SdlGameWindow.Instance`, ceea ce impiedica asocierea curata a mai multor ferestre Cerneala prin API-ul public.
-
-Referinte:
+References:
 
 - <https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.GraphicsDevice.html>
 - <https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.PresentationParameters.html>
 - <https://github.com/MonoGame/MonoGame/blob/v3.8.4.1/MonoGame.Framework/Platform/Graphics/GraphicsDevice.DirectX.cs>
 - <https://github.com/MonoGame/MonoGame/blob/v3.8.4.1/MonoGame.Framework/Platform/Graphics/GraphicsDevice.OpenGL.cs>
 
-## Contracte pastrate
+## Contracts kept
 
-Nu schimbam comportamentul public deja implementat:
+We do not change the already implemented public behavior:
 
-- `Show()`, `Hide()`, `Activate()` si `Close()`;
-- `ShowDialogAsync()`, `Owner`, `OwnedWindows` si `DialogResult`;
-- `SourceInitialized`, `Initialized`, `Loaded`, `ContentRendered`, `Closing` si `Closed`;
-- interdictia de a redeschide o fereastra inchisa;
-- inchiderea ferestrelor owned si politica de shutdown pentru `MainWindow`;
-- thread affinity pentru toate operatiile Window;
-- DPI logic pentru layout si pixeli fizici pentru backbuffer;
+- `Show()`, `Hide()`, `Activate()` and `Close()`;
+- `ShowDialogAsync()`, `Owner`, `OwnedWindows` and `DialogResult`;
+- `SourceInitialized`, `Initialized`, `Loaded`, `ContentRendered`, `Closing` and `Closed`;
+- the prohibition to reopen a closed window;
+- closing the owned windows and shutdown policy for `MainWindow`;
+- thread affinity for all Window operations;
+- Logical DPI for layout and physical pixels for backbuffer;
 - `MainWindow.crn` + `MainWindow.crn.cs`;
-- constructorul si entry point-ul generate;
-- integrarea DI si `App.ConfigureServices`;
-- `@when`, `@if`, resources, aspects, names si event handlers.
+- the constructor and the generated entry point;
+- integration of DI and `App.ConfigureServices`;
+- `@when`, `@if`, resources, aspects, names and event handlers.
 
-## Non-obiective
+## Non-objectives
 
-- Linux, macOS, DesktopGL sau Vulkan;
-- mai multe procese;
-- instante independente de `Game`;
-- partajarea obiectelor `Texture2D` intre ferestre;
-- un singur `GraphicsDevice` cu mai multe swap-chain-uri;
-- custom chrome, transparenta sau ferestre borderless noi;
-- schimbari ale gramaticii markup;
-- redesign pentru `MonoGameUiHost` folosit in jocurile existente, in afara adaptarilor necesare pentru WindowsDX.
+- Linux, macOS, DesktopGL or Vulkan;
+- several processes;
+- courts independent of `Game`;
+- sharing `Texture2D` objects between windows;
+- a single `GraphicsDevice` with several swap-chains;
+- custom chrome, transparency or new borderless windows;
+- changes to the markup grammar;
+- redesign for `MonoGameUiHost` used in existing games, apart from the necessary adaptations for WindowsDX.
 
-## Arhitectura tinta
+## Target architecture
 
 ### `WindowApplicationRuntime`
 
-Runtime-ul ramane proprietarul tuturor ferestrelor si continua sa pompeze mesajele o singura data:
-
+The runtime remains the owner of all windows and continues to pump messages only once:
 ```csharp
 while (windows.Count > 0)
 {
@@ -98,13 +95,11 @@ while (windows.Count > 0)
     }
 }
 ```
-
-Nu introducem un al doilea scheduler. `WindowApplicationRuntime` continua sa decida cand exista lucru retained, motion activ sau un repaint cerut.
+We do not introduce a second scheduler. `WindowApplicationRuntime` continues to decide when there is retained work, active motion or a requested repaint.
 
 ### `Win32WindowPlatform`
 
-Platforma continua sa creeze si sa detina fiecare `HWND`. Dupa crearea handle-ului, cere unei fabrici grafice sa construiasca sesiunea WindowsDX.
-
+The platform continues to create and own each `HWND`. After creating the handle, ask a graphics factory to build the WindowsDX session.
 ```text
 CreateWindow
 ├── CreateWindowEx
@@ -112,13 +107,11 @@ CreateWindow
 ├── create Win32InputSource
 └── create WindowGraphicsSession(hwnd, pixelWidth, pixelHeight)
 ```
-
-`WM_SIZE` si `WM_DPICHANGED` actualizeaza viewport-ul si cer redimensionarea backbuffer-ului. Dimensiunile zero din minimize nu reseteaza device-ul si nu declanseaza randare.
+`WM_SIZE` and `WM_DPICHANGED` update the viewport and request the resizing of the backbuffer. The zero dimensions in the minimization do not reset the device and do not trigger rendering.
 
 ### `WindowGraphicsSession`
 
-Introducem o abstractie interna testabila:
-
+We introduce a testable internal abstraction:
 ```csharp
 internal interface IWindowGraphicsSession : IDisposable
 {
@@ -131,19 +124,17 @@ internal interface IWindowGraphicsSession : IDisposable
     void Present();
 }
 ```
-
-Implementarea `WindowsDxWindowGraphicsSession` detine:
+The `WindowsDxWindowGraphicsSession` implementation has:
 
 - `GraphicsDevice`;
 - `SpriteBatch`;
-- textura alba 1x1;
+- white texture 1x1;
 - `SkiaTextRasterizer`;
 - `MonoGameDrawingBackend`;
-- `MonoGameImageLoader` si cache-ul de imagini al ferestrei;
-- `PresentationParameters` curente.
+- `MonoGameImageLoader` and the image cache of the window;
+- `PresentationParameters` currents.
 
-Crearea device-ului foloseste API public:
-
+Creating the device uses the public API:
 ```csharp
 PresentationParameters parameters = new()
 {
@@ -161,25 +152,23 @@ GraphicsDevice device = new(
     GraphicsProfile.HiDef,
     parameters);
 ```
+Creation errors must be converted into a descriptive Cerneala exception that includes the adapter, profile, size, and handle, without losing the original exception.
 
-Erorile de creare trebuie transformate intr-o exceptie Cerneala descriptiva care include adapterul, profilul, dimensiunea si handle-ul, fara a pierde exceptia originala.
+### GPU resources
 
-### Resurse GPU
+MonoGame resources are bound to `GraphicsDevice`, so GPU caches become per-window:
 
-Resursele MonoGame sunt legate de `GraphicsDevice`, deci cache-urile GPU devin per-window:
+- a path-backed image can share bytes/decoded pixels at the CPU level;
+- each session loads its own instance `Texture2D`;
+- shaped/rasterized text can share CPU results only if the DPI/font identity is compatible;
+- the text texture remains in the `MonoGameDrawingBackend` cache of the session;
+- a `MonoGameImage` created for device A cannot be drawn by device B.
 
-- o imagine path-backed poate partaja bytes/decoded pixels la nivel CPU;
-- fiecare sesiune incarca propria instanta `Texture2D`;
-- textul shaped/rasterizat poate partaja rezultate CPU numai daca identitatea DPI/font este compatibila;
-- textura de text ramane in cache-ul `MonoGameDrawingBackend` al sesiunii;
-- un `MonoGameImage` creat pentru device-ul A nu poate fi desenat de device-ul B.
-
-`IWindowPlatform.ImageLoader` si `ImageResourceCache` nu mai pot fi globale. Ele se muta pe `IPlatformWindow` sau in `IWindowGraphicsSession`, iar `WindowApplicationRuntime` le ataseaza la `UIRoot`-ul corespunzator.
+`IWindowPlatform.ImageLoader` and `ImageResourceCache` can no longer be global. They move to `IPlatformWindow` or `IWindowGraphicsSession`, and `WindowApplicationRuntime` attaches them to the corresponding `UIRoot`.
 
 ### Text
 
-Pipeline-ul tinta este:
-
+The target pipeline is:
 ```text
 TextBlock
 → HarfBuzz shaping
@@ -189,204 +178,200 @@ TextBlock
 → MonoGameDrawingBackend
 → swap-chain WindowsDX
 ```
-
-`SkiaDrawingBackend` nu participa la acest flux. `SkiaFont`, `SkiaTextShaper` si `SkiaTextRasterizer` raman valide.
+`SkiaDrawingBackend` does not participate in this stream. `SkiaFont`, `SkiaTextShaper` and `SkiaTextRasterizer` remain valid.
 
 ### Input
 
-`Win32InputSource` ramane per fereastra. Nu folosim `Keyboard`, `Mouse` sau `GamePad` statice din MonoGame pentru Window hosting.
+`Win32InputSource` remains per window. We do not use static `Keyboard`, `Mouse` or `GamePad` from MonoGame for Window hosting.
 
-Mesajele sunt rutate natural dupa `HWND`:
+Messages are naturally routed to `HWND`:
 
-- pointer si wheel;
-- keyboard si focus;
-- text input;
-- resize si move;
-- activate/deactivate;
+- pointer and wheel;
+- keyboard and focus;
+- input text;
+- resize and move;
+- activated/deactivated;
 - close;
 - DPI change.
 
-Astfel doua ferestre nu isi pot consuma sau suprascrie reciproc input-ul.
+Thus, two windows cannot consume or overwrite each other's input.
 
-## Modificari de proiect
+## Project changes
 
-1. Inlocuim `MonoGame.Framework.DesktopGL` cu `MonoGame.Framework.WindowsDX` `3.8.4.1`.
-2. Mutam proiectele runtime pe `net8.0-windows`:
+1. We replace `MonoGame.Framework.DesktopGL` with `MonoGame.Framework.WindowsDX` `3.8.4.1`.
+2. We move the runtime projects to `net8.0-windows`:
    - `Cerneala.csproj`;
    - Playground;
-   - testele runtime care referentiaza Cerneala.
-3. `Cerneala.SourceGen` ramane `netstandard2.0`.
-4. Eliminam `SkiaSharp.NativeAssets.Linux` din configuratia Windows-first.
-5. Verificam graful NuGet pentru native assets Skia Windows si adaugam explicit pachetul Win32 numai daca nu este deja tranzitiv.
-6. Adaugam proprietatile Windows SDK strict necesare, fara a activa implicit WinForms sau WPF.
-7. Pastram `AllowUnsafeBlocks` dezactivat daca WindowsDX si interop-ul existent nu il cer.
+   - runtime tests referencing Cerneala.
+3. `Cerneala.SourceGen` remains `netstandard2.0`.
+4. We remove `SkiaSharp.NativeAssets.Linux` from the Windows-first configuration.
+5. We check the NuGet graph for Skia Windows native assets and explicitly add the Win32 package only if it is not already transitive.
+6. We add the strictly necessary Windows SDK properties, without activating WinForms or WPF by default.
+7. We keep `AllowUnsafeBlocks` disabled if WindowsDX and the existing interop do not require it.
 
-## Plan de implementare
+## Implementation plan
 
-### Etapa 0: probe tehnice RED/GREEN
+### Stage 0: RED/GREEN technical tests
 
-Inainte de migrarea runtime-ului, adaugam smoke tests Windows intr-un proces separat:
+Before migrating the runtime, we add Windows smoke tests in a separate process:
 
-1. cream un `HWND` de test;
-2. cream un `GraphicsDevice` WindowsDX cu acel handle;
-3. desenam o culoare si apelam `Present()`;
-4. verificam prin readback/captura ca suprafata nu este goala;
-5. cream doua `HWND` si doua `GraphicsDevice` in acelasi proces;
-6. prezentam culori diferite in fiecare;
-7. inchidem prima sesiune si demonstram ca a doua continua sa randeze;
-8. redimensionam independent ambele backbuffer-uri;
-9. impunem timeout si cleanup fortat pentru a nu bloca suita.
+1. create a test `HWND`;
+2. create a `GraphicsDevice` WindowsDX with that handle;
+3. draw a color and call `Present()`;
+4. we check by readback/capture that the surface is not empty;
+5. create two `HWND` and two `GraphicsDevice` in the same process;
+6. we present different colors in each;
+7. we close the first session and demonstrate that the second continues to render;
+8. we resize independently both backbuffers;
+9. we impose timeout and forced cleanup in order not to block the suite.
 
-Aceasta proba este poarta de intrare. Nu eliminam backend-ul actual pana cand scenariul cu doua ferestre nu este demonstrat pe Windows.
+This sample is the gateway. We are not removing the current backend until the dual window scenario is demonstrated on Windows.
 
-### Etapa 1: limita grafica interna
+### Stage 1: internal graphic limit
 
-- adaugam `IWindowGraphicsSession`;
-- adaugam o fabrica injectabila pentru teste;
-- adaptam fake platformele existente;
-- pastram temporar o implementare Skia numai pentru a mentine testele verzi in timpul migrarii;
-- mutam image loader/cache de la platforma globala la sesiunea ferestrei.
+- add `IWindowGraphicsSession`;
+- we add an injectable factory for tests;
+- we adapt existing platforms;
+- we temporarily keep a Skia implementation only to keep the tests green during the migration;
+- we move the image loader/cache from the global platform to the window session.
 
-### Etapa 2: sesiunea WindowsDX
+### Step 2: WindowsDX session
 
-- implementam `WindowsDxWindowGraphicsSession`;
-- cream `GraphicsDevice`, `SpriteBatch`, white pixel si `MonoGameDrawingBackend`;
-- conectam `SkiaTextRasterizer`;
-- implementam begin frame, clear, draw si present;
-- implementam resize cu `GraphicsDevice.Reset` si aceleasi `PresentationParameters`/`HWND`;
-- tratam minimize, device lost, resize failure si disposal partial.
+- we implement `WindowsDxWindowGraphicsSession`;
+- cream `GraphicsDevice`, `SpriteBatch`, white pixel and `MonoGameDrawingBackend`;
+- we connect `SkiaTextRasterizer`;
+- we implement begin frame, clear, draw and present;
+- we implement resize with `GraphicsDevice.Reset` and the same `PresentationParameters`/`HWND`;
+- we handle minimize, device lost, resize failure and partial disposal.
 
-### Etapa 3: integrarea Win32
+### Step 3: Win32 integration
 
-- `Win32PlatformWindow` creeaza sesiunea dupa `CreateWindowEx`;
-- `DrawingBackend` vine din sesiune;
-- `Present()` deleaga la `GraphicsDevice.Present()`;
-- eliminam bufferul BGRA, `WM_PAINT` blit-ul Skia si resize-ul bitmapului;
-- `WM_PAINT` valideaza paint region si marcheaza contextul pentru repaint, fara randare reentranta in `WndProc`;
-- `WM_SIZE` si `WM_DPICHANGED` reprogrameaza resize-ul pe runtime.
+- `Win32PlatformWindow` creates the session after `CreateWindowEx`;
+- `DrawingBackend` comes from the session;
+- `Present()` delegates to `GraphicsDevice.Present()`;
+- remove the BGRA buffer, `WM_PAINT` the Skia flash and the bitmap resize;
+- `WM_PAINT` validates the paint region and marks the context for repaint, without re-entering rendering in `WndProc`;
+- `WM_SIZE` and `WM_DPICHANGED` reprogram the resize at runtime.
 
-### Etapa 4: resurse si text
+### Stage 4: resources and text
 
-- conectam `MonoGameImageLoader` per fereastra;
-- demonstram ca aceeasi imagine poate fi incarcata in doua device-uri fara a partaja `Texture2D`;
-- pastram cache-ul text per backend;
-- verificam shaping, line metrics, baseline, clipping si DPI;
-- eliminam conversiile specifice `SkiaDrawImage` din Window hosting.
+- we connect `MonoGameImageLoader` per window;
+- we demonstrate that the same image can be loaded in two devices without sharing `Texture2D`;
+- we keep the text cache per backend;
+- we check shaping, line metrics, baseline, clipping and DPI;
+- we remove the specific `SkiaDrawImage` conversions from Window hosting.
 
-### Etapa 5: mai multe ferestre
+### Step 5: More windows
 
-- demonstram doua si apoi trei ferestre simultane in acelasi PID;
-- verificam update/draw/present independent;
-- ascunderea unei ferestre nu suspenda celelalte;
-- inchiderea unei ferestre elibereaza numai device-ul si resursele sale;
-- owner/dialog disable afecteaza input-ul, nu schedulerul sau device-ul owner-ului;
-- inchiderea `MainWindow` continua sa aplice politica Cerneala existenta.
+- we demonstrate two and then three simultaneous windows in the same PID;
+- we check update/draw/present independently;
+- hiding a window does not suspend the others;
+- closing a window releases only the device and its resources;
+- owner/dialog disable affects the input, not the scheduler or the owner's device;
+- the closure of `MainWindow` continues to apply the existing Cerneala policy.
 
-### Etapa 6: eliminarea backend-ului general Skia
+### Step 6: Remove general Skia backend
 
-Dupa ce WindowsDX este complet verde:
+After WindowsDX is completely green:
 
-- eliminam `SkiaDrawingBackend` din `Win32WindowPlatform`;
-- eliminam `SkiaDrawImage` si `SkiaImageLoader` daca Roslyn confirma ca nu mai au consumatori legitimi;
-- eliminam testele backend-ului general Skia sau le inlocuim cu teste pentru componentele text Skia;
-- adaugam un architecture test care interzice dependenta `UI/Hosting/Windows` de `Cerneala.Drawing.Skia.SkiaDrawingBackend`;
-- adaugam un test care cere `MonoGameDrawingBackend` pentru fiecare sesiune Window reala.
+- we remove `SkiaDrawingBackend` from `Win32WindowPlatform`;
+- we eliminate `SkiaDrawImage` and `SkiaImageLoader` if Roslyn confirms that they no longer have legitimate consumers;
+- we remove the tests of the general Skia backend or replace them with tests for Skia text components;
+- we add an architecture test that prohibits the dependency of `UI/Hosting/Windows` on `Cerneala.Drawing.Skia.SkiaDrawingBackend`;
+- we add a test that asks for `MonoGameDrawingBackend` for each real Window session.
 
-### Etapa 7: Playground si generator
+### Stage 7: Playground and generator
 
-- generatorul si API-ul markup nu se schimba;
-- Playground ramane fara `Program.cs` si fara `Game1.cs`;
-- startup-ul generat porneste `WindowApplicationRuntime`;
-- `MainWindow` este randat prin WindowsDX;
-- adaugam o fereastra secundara minima in testele de integrare, nu neaparat in showcase-ul initial;
-- verificam ca toate ferestrele au PID-ul procesului Playground.
+- the markup generator and API do not change;
+- Playground remains without `Program.cs` and without `Game1.cs`;
+- the generated startup starts `WindowApplicationRuntime`;
+- `MainWindow` is rendered by WindowsDX;
+- we add a minimal secondary window in the integration tests, not necessarily in the initial showcase;
+- we check that all windows have the PID of the Playground process.
 
-## Testare
+## Testing
 
-### Unit si contract
+### Unit and contract
 
-- fabrica grafica primeste exact `HWND`, pixel size si DPI scale;
-- fiecare `WindowContext` primeste alta sesiune;
-- resize-ul actualizeaza viewport-ul si backbuffer-ul o singura data;
-- minimize nu creeaza backbuffer `0x0`;
-- `Hide()` pastreaza device-ul;
-- `Close()` dispune backend, cache-uri, SpriteBatch si GraphicsDevice exact o data;
-- erorile partiale de initializare nu lasa `HWND`, device sau resurse native active;
-- thread affinity ramane impusa.
+- the graphic factory receives exactly `HWND`, pixel size and DPI scale;
+- each `WindowContext` receives another session;
+- resize updates the viewport and the backbuffer only once;
+- minimize does not create backbuffer `0x0`;
+- `Hide()` keeps the device;
+- `Close()` has backend, caches, SpriteBatch and GraphicsDevice exactly once;
+- partial initialization errors do not leave `HWND`, devices or native resources active;
+- thread affinity remains imposed.
 
-### Rendering Windows
+### Windows rendering
 
-- toate `DrawCommandKind` sunt randate de `MonoGameDrawingBackend`;
-- clipping si scissor sunt restaurate intre frame-uri;
-- textul Skia/HarfBuzz ajunge intr-o textura MonoGame si este vizibil;
-- imaginea path-backed este vizibila;
-- DPI 100%, 125%, 150% si 200%;
-- resize repetat nu pierde continut si nu scurge resurse;
-- pixel checks distincte pentru doua ferestre simultane.
+- all `DrawCommandKind` are rendered by `MonoGameDrawingBackend`;
+- clipping and scissoring are restored between frames;
+- the Skia/HarfBuzz text ends up in a MonoGame texture and is visible;
+- the path-backed image is visible;
+- DPI 100%, 125%, 150% and 200%;
+- repeated resize does not lose content and does not drain resources;
+- distinct pixel checks for two simultaneous windows.
 
 ### Multi-window
 
-- doua si trei `HWND` au acelasi PID;
-- fiecare are `GraphicsDevice` distinct;
-- focusul si input-ul sunt rutate numai ferestrei tinta;
-- inchiderea A nu afecteaza randarea B;
-- owner handle si modal disable sunt corecte;
-- dialogurile imbricate isi completeaza task-urile cu rezultatul corect;
-- shutdown-ul principal elibereaza toate device-urile si handle-urile.
+- two and three `HWND` have the same PID;
+- each has a distinct `GraphicsDevice`;
+- focus and input are routed only to the target window;
+- closing A does not affect the rendering of B;
+- owner handle and modal disable are correct;
+- nested dialogs complete their tasks with the correct result;
+- the main shutdown releases all devices and handles.
 
-### Compatibilitate
+### Compatibility
 
-- toate testele SourceGen raman verzi;
-- `UserControl`, markup standalone, resources, aspects si `@when/@if` raman neschimbate;
-- `MonoGameUiHost` continua sa functioneze intr-un joc WindowsDX existent;
-- niciun proiect runtime nu mai referentiaza DesktopGL;
-- Skia general rendering nu mai este accesibil din Window hosting.
+- all SourceGen tests remain green;
+- `UserControl`, standalone markup, resources, aspects and `@when/@if` remain unchanged;
+- `MonoGameUiHost` continues to work in an existing WindowsDX game;
+- no runtime project references DesktopGL anymore;
+- Skia general rendering is no longer accessible from Window hosting.
 
-## Verificare finala
-
+## Final check
 ```powershell
 dotnet restore Cerneala.slnx
 dotnet test Cerneala.slnx --no-restore
 dotnet build Cerneala.slnx --no-restore
 dotnet format Cerneala.slnx --no-restore --verify-no-changes
 ```
+In addition:
 
-In plus:
+- we run the Win32/WindowsDX smoke test in a separate process with timeout;
+- launch Playground and check `MainWindow` plus at least one secondary window;
+- check PID, `HWND`, resize, input, rendering and exit code `0`;
+- we run `git diff --check`;
+- we regenerate `FileTree.md`;
+- we reindex `Cerneala.slnx` with RoslynIndexer after each code or project change.
 
-- rulam smoke test-ul Win32/WindowsDX intr-un proces separat cu timeout;
-- lansam Playground si verificam `MainWindow` plus cel putin o fereastra secundara;
-- verificam PID, `HWND`, resize, input, randare si exit code `0`;
-- rulam `git diff --check`;
-- regeneram `FileTree.md`;
-- reindexam `Cerneala.slnx` cu RoslynIndexer dupa fiecare modificare de cod sau proiect.
+## Risks and measures
 
-## Riscuri si masuri
+### GPU cost per window
 
-### Cost GPU per fereastra
+Each `GraphicsDevice` doubles GPU resources. V1 accepts the cost for isolation and simplicity. We are adding diagnostic counters per session and descriptive limits for allocation failures.
 
-Fiecare `GraphicsDevice` dubleaza resursele GPU. V1 accepta costul pentru izolare si simplitate. Adaugam contoare diagnostice per sesiune si limite descriptive pentru esecuri de alocare.
+### Device lost and resize
 
-### Device lost si resize
+WindowsDX can lose or reset the device. All resources created by the session should be rebuildable, and errors should be isolated to the affected window when possible.
 
-WindowsDX poate pierde sau reseta device-ul. Toate resursele create de sesiune trebuie reconstruibile, iar erorile trebuie izolate la fereastra afectata cand este posibil.
+### VSync with multiple windows
 
-### VSync cu mai multe ferestre
+Multiple sequential `PresentInterval.One` calls can block the same thread. The technical test measures the cost. If necessary, the runtime uses VSync only for the active window or switches secondary sessions to `PresentInterval.Immediate`, without changing the public API.
 
-Mai multe apeluri secventiale `PresentInterval.One` pot bloca acelasi thread. Proba tehnica masoara costul. Daca este necesar, runtime-ul foloseste VSync numai pentru fereastra activa sau trece sesiunile secundare pe `PresentInterval.Immediate`, fara a schimba API-ul public.
+### WindowsDX dependency
+WindowsDX makes the runtime Windows-only. This is an explicit decision for the V1, not a hidden accident. Internal contracts remain separate so that a future backend can implement the same `IWindowGraphicsSession`.
 
-### Dependenta WindowsDX
+## Acceptance criteria
 
-WindowsDX face runtime-ul Windows-only. Aceasta este o decizie explicita pentru V1, nu un accident ascuns. Contractele interne raman separate astfel incat un backend viitor sa poata implementa aceeasi `IWindowGraphicsSession`.
+The migration is complete only when:
 
-## Criterii de acceptare
-
-Migrarea este completa numai cand:
-
-- nicio fereastra Cerneala nu foloseste `SkiaDrawingBackend` pentru randare generala;
-- `MainWindow` si ferestrele secundare sunt randate prin `MonoGameDrawingBackend`;
-- fiecare fereastra are propriul `GraphicsDevice` si propriul swap-chain;
-- doua ferestre pot randa, primi input, fi redimensionate si inchise independent in acelasi proces;
-- Skia/HarfBuzz sunt folosite numai pentru text;
-- Playground nu contine `Game1.cs`, `Program.cs` sau boilerplate de startup;
-- toate testele, build-ul, formatterul si smoke test-ul nativ sunt verzi;
-- procesul se inchide cu exit code `0` si fara handle-uri/device-uri ramase active.
+- no Cerneala window uses `SkiaDrawingBackend` for general rendering;
+- `MainWindow` and secondary windows are rendered by `MonoGameDrawingBackend`;
+- each window has its own `GraphicsDevice` and its own swap-chain;
+- two windows can render, receive input, be resized and closed independently in the same process;
+- Skia/HarfBuzz are used only for text;
+- Playground does not contain `Game1.cs`, `Program.cs` or startup boilerplate;
+- all tests, the build, the formatter and the native smoke test are green;
+- the process closes with exit code `0` and no handles/devices left active.

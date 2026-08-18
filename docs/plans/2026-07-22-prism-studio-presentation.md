@@ -1,82 +1,82 @@
 # Plan: Prism Studio in CernealaPresentation
 
-> Data: 2026-07-22
-> Status: finalizat
-> Scop: Adauga dupa Motion un capitol Prism cu editor Photoshop-like complet, alimentat de catalogul public Prism si verificat end-to-end.
+> Date: 2026-07-22
+> Status: completed
+> Goal: Add after Motion a Prism chapter with a full Photoshop-like editor, powered by the public Prism catalog and verified end-to-end.
 
-## Decizii si non-obiective
+## Decisions and non-objectives
 
-- Galeria are patru tinte locale: mascota, poster tipografic, badge geometric si card UI.
-- Acelasi stack se muta intre tinte si porneste dintr-un preset determinist de doua layere.
-- Layerele contin liste separate de filtre si styles; nu se simuleaza intercalarea lor.
-- Catalogul afiseaza toate cele 134 de filtre si 10 styles; operatiile cu resurse obligatorii raman vizibile, dar blocate.
-- Stack-ul nu are limita artificiala; diagnostics arata costul si fallback-urile.
-- Nu se implementeaza persistenta, importul resurselor sau schimbarea semanticii Prism.
+- The gallery has four local targets: mascot, typographic poster, geometric badge and UI card.
+- The same stack moves between targets and starts from a deterministic preset of two layers.
+- The layers contain separate lists of filters and styles; their intercalation is not simulated.
+- The catalog displays all 134 filters and 10 styles; operations with mandatory resources remain visible, but blocked.
+- The stack has no artificial limit; diagnostics shows the cost and fallbacks.
+- Persistence, import of resources or change of Prism semantics are not implemented.
 
-## Etape de implementare
+## Implementation stages
 
-### Etapa 0 - Catalogul public si accesul tipizat
+### Stage 0 - Public catalog and standardized access
 
-- [x] Extinde catalogul si generatorul cu metadata publica immutable pentru operatie, parametru, tip, default, unitate, domeniu numeric, optiuni symbol si dependenta de resurse.
-- [x] Expune `PrismCatalog`, `PrismCatalogOperationInfo`, `PrismCatalogParameterInfo`, `PrismCatalogOperationKind` si `PrismCatalogValueKind` fara a duplica JSON-ul in Presentation.
-- [x] Adauga `GetValue<T>` si `SetValue<T>` pe `PrismFilterState` si `PrismStyleState`, cu validare pentru operatie, descriptor, tip si symbol.
-- [x] Pastreaza compatibile helper-ele generate si comportamentul runtime existent.
-- [x] Adauga teste SourceGen si runtime pentru 134 filtre, 10 styles, toate tipurile, metadata, round-trip, versionare si state expirat dupa `ReplaceDefinition`.
-- [x] Documenteaza toate API-urile publice noi in `docs-site/documentation/classes/` si sincronizeaza manifestul.
+- [x] Extends the catalog and generator with immutable public metadata for operation, parameter, type, default, unit, numeric range, symbol options and resource dependency.
+- [x] Expose `PrismCatalog`, `PrismCatalogOperationInfo`, `PrismCatalogParameterInfo`, `PrismCatalogOperationKind` and `PrismCatalogValueKind` without duplicating the JSON in Presentation.
+- [x] Add `GetValue<T>` and `SetValue<T>` to `PrismFilterState` and `PrismStyleState`, with validation for operation, descriptor, type and symbol.
+- [x] Keep the generated helpers and the existing runtime behavior compatible.
+- [x] Add SourceGen and runtime tests for 134 filters, 10 styles, all types, metadata, round-trip, versioning and expired states after `ReplaceDefinition`.
+- [x] Document all new public APIs in `docs-site/documentation/classes/` and synchronize the manifest.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Build-ul si testele Prism/SourceGen tintite sunt verzi, iar API-ul public nu cere slot-uri sau string-uri magice consumatorului.
+- [x] The targeted Prism/SourceGen build and tests are green, and the public API does not ask for slots or magic strings from the consumer.
 
-### Etapa 1 - Modelul editorului Prism Studio
+### Step 1 - Prism Studio Editor Model
 
-- [x] Adauga modelul Presentation pentru layere, filtre, styles, selectie, valori tipizate si presetul initial.
-- [x] Construieste definitia Prism in ordinea declarata, reaplica valorile dupa schimbari structurale si conserva stack-ul la schimbarea tintei.
-- [x] Implementeaza add/remove/reorder/visibility/reset fara limita de stack si blocheaza operatiile cu resurse obligatorii.
-- [x] Adauga teste pentru ordinea filtre/styles, reset, selectie, stack nelimitat, operatii blocate si conservarea valorilor.
+- [x] Adds the Presentation model for layers, filters, styles, selection, typed values and the initial preset.
+- [x] Build the Prism definition in the declared order, reapply the values ​​after structural changes and preserve the stack when changing the target.
+- [x] Implements add/remove/reorder/visibility/reset without stack limit and blocks operations with mandatory resources.
+- [x] Adds tests for order of filters/styles, reset, selection, unlimited stack, blocked operations and preservation of values.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] Modelul produce compozitii valide si toate testele lui sunt verzi fara dependenta de UI sau GPU.
+- [x] The model produces valid compositions and all its tests are green without UI or GPU dependency.
 
-### Etapa 2 - View-ul interactiv si preview-urile
+### Stage 2 - The interactive view and the previews
 
-- [x] Adauga `PrismChapterView` cu preview, galerie de patru tinte, panou de layere si inspector/catalog responsive la 1320x860 si 1080x720.
-- [x] Randaza integral local cele patru mostre, inclusiv asset-ul mascotei, pentru captura Prism corecta.
-- [x] Conecteaza actiunile de layer/filter/style, search, categorii, tab-uri si reset la model si `PrismInstance.ReplaceDefinition`.
-- [x] Genereaza editori pentru number, integer, boolean, color, vector, symbol si starea resource read-only.
-- [x] Afiseaza toate operatiile, marcajul `RESOURCE REQUIRED` si diagnostics live pentru pass-uri, surfaces, bytes si fallback.
-- [x] Gestioneaza explicit attachment-ul, detach-ul, schimbarea tintei si resursele preview-urilor.
+- [x] Add `PrismChapterView` with preview, four-target gallery, layers panel and inspector/catalog responsive to 1320x860 and 1080x720.
+- [x] Fully renders the four samples locally, including the mascot asset, for the correct Prism capture.
+- [x] Connect the layer/filter/style, search, categories, tabs and reset actions to the model and `PrismInstance.ReplaceDefinition`.
+- [x] Generate editors for number, integer, boolean, color, vector, symbol and read-only resource status.
+- [x] Displays all operations, the `RESOURCE REQUIRED` mark and live diagnostics for passes, surfaces, bytes and fallback.
+- [x] Explicitly manages attachment, detachment, target change and preview resources.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Interactiunile modifica imediat preview-ul, layout-ul nu se suprapune, iar view-ul nu lasa attachment-uri sau resurse dupa detach.
+- [x] Interactions immediately change the preview, the layout does not overlap, and the view does not leave attachments or resources after detaching.
 
-### Etapa 3 - Integrarea in tur si automatizare
+### Stage 3 - Integration into the tour and automation
 
-- [x] Insereaza `PRISM` dupa `MOTION`, renumeroteaza Pipeline/Diagnostics si actualizeaza paginile, toggle-urile, handler-ele si counter-ul la 8 capitole.
-- [x] Inlocuieste indecsii magici din frame callbacks si automatizare cu identificare semantica stabila.
-- [x] Extinde automatizarea si smoke frame-budget pentru noul capitol si diagnostics Prism.
-- [x] Adauga regresie de lifecycle pentru navigari repetate spre/dinspre Prism.
+- [x] Insert `PRISM` after `MOTION`, renumber Pipeline/Diagnostics and update pages, toggles, handlers and counter to 8 chapters.
+- [x] Replaces magic indexes in frame callbacks and automation with stable semantic identification.
+- [x] Extends the automation and smoke frame-budget for the new Prism chapter and diagnostics.
+- [x] Add lifecycle regression for repeated navigations to/from Prism.
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] Turul complet, captura directa a capitolului 06 si automatizarea repetata ruleaza fara leak, timeout sau capitol gresit.
+- [x] Full tour, direct capture of chapter 06 and repeated automation runs without leak, timeout or wrong chapter.
 
-### Etapa 4 - Verificarea finala
+### Stage 4 - Final check
 
-- [x] Ruleaza reindexarea si doctorul RoslynIndexer.
-- [x] Ruleaza testele SourceGen, testele Cerneala si `dotnet test .\Cerneala.slnx` in starea finala.
-- [x] Ruleaza automatizarea Presentation si un frame-budget smoke cycle.
-- [x] Captureaza si inspecteaza vizual Prism la dimensiunea implicita si minima, inclusiv preview neblank, text, clipping si diagnostics.
-- [x] Ruleaza verificarea documentatiei/API, `git diff --check` si auditul final al diff-ului.
+- [x] Dr. RoslynIndexer is also running reindexing.
+- [x] Run the SourceGen tests, the Cerneala and `dotnet test .\Cerneala.slnx` tests in the final state.
+- [x] Runs Presentation automation and a frame-budget smoke cycle.
+- [x] Capture and visually inspect Prism at default and minimum size, including non-blank preview, text, clipping and diagnostics.
+- [x] Run the documentation/API check, `git diff --check` and the final audit of the diff.
 
-**Gate etapa 4**
+**Gate Stage 4**
 
-- [x] Toate verificarile sunt verzi si nu exista cod temporar, churn generat accidental sau regresii vizuale cunoscute.
+- [x] All checks are green and there is no temporary code, accidentally generated churn or known visual regressions.
 
-## Definitia de gata
+## The definition of ready
 
-- [x] Capitolul Prism Studio este complet functional dupa Motion, cu toate filtrele/styles descoperite din catalog, editor tipizat, patru tinte si diagnostics live.
-- [x] API-ul public, documentatia, lifecycle-ul, automatizarea, performanta smoke si suita completa sunt verificate.
-- [x] Toate etapele si gate-urile sunt bifate, iar statusul planului este `finalizat`.
+- [x] The Prism Studio chapter is fully functional after Motion, with all the filters/styles discovered from the catalog, typed editor, four targets and live diagnostics.
+- [x] The public API, documentation, lifecycle, automation, smoke performance and the full suite are verified.
+- [x] All stages and gates are checked, and the status of the plan is `finalizat`.

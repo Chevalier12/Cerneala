@@ -1,6 +1,6 @@
 # Relay implementation notes
 
-## Etapa 0 baseline
+## Stage 0 baseline
 
 - `FileTree.md` regenerated on 2026-07-14 before repository inspection.
 - Roslyn index: 1,936 documents, 27,843 symbols, 114,062 references, 0 index warnings.
@@ -54,7 +54,7 @@ Direct `MotionThreadGuard` references exist in:
 - Constructor or guard examples/contract text: `DerivedMotionValue_T_`, `ManualMotionTimeline`, `MotionCompletedEventArgs`, `MotionFrame`, `MotionGraph`, `MotionHandle`, `MotionNode`, `MotionSystem`, `MotionValue_T_`, `MotionValue_T_.ValueNode`, `MotionValue`, `MotionValueChanged_T_`, and `MotionTransactionContext` class pages.
 - Historical references under `docs/superpowers/plans/2026-07-07-modern-motion-system.md` are implementation history and are not live API documentation.
 
-## Etapa 1 verification
+## Stage 1 verification
 
 - Added the root-owned `UiRelay`, strict `UiRelayOptions`, an atomic MPSC pending count, snapshot/budget drain semantics, `ExecutionContext` flow, race-safe cancellation, and async-first completion propagation.
 - `UIRoot` constructs `Relay` before the remaining root-owned services and therefore captures the root construction thread as the UI owner.
@@ -63,7 +63,7 @@ Direct `MotionThreadGuard` references exist in:
 - The public surface has no Relay constructor, blocking invoke, owned thread, or nested pump. Relay enqueue and pending reads do not inspect the retained tree.
 - API documentation now includes `UiRelay`, `UiRelayOptions`, and the updated `UIRoot.Relay` ownership contract; the documentation manifest resolves both new class pages.
 
-## Etapa 2 verification
+## Stage 2 verification
 
 - Added the internal `UiRelaySynchronizationContext`: `Post` routes through Relay, while `Send` runs only on the owner thread and directs off-thread callers to `InvokeAsync`.
 - Relay drain enters an idempotent, nestable context scope and restores the exact previous context through `Dispose`, including the `AggregateException` path.
@@ -72,7 +72,7 @@ Direct `MotionThreadGuard` references exist in:
 - A stage-one cancellation test exposed its now-invalid assumption that an async continuation would escape to the thread pool. The test was corrected to perform the required later drain; no owner-thread `.Wait()` or `.Result` was introduced.
 - The focused Relay suite passed 25 tests and three repeated runs; the runtime suite excluding the intentional stage-zero RED specification passed 1,794 tests.
 
-## Etapa 3 verification
+## Stage 3 verification
 
 - Added one root update gate that verifies Relay ownership, installs the root-specific synchronization context, drains one stable snapshot, records dispatch statistics, and restores the previous context.
 - `UIRoot.ProcessFrame` owns the public drain path; `UiHost` reuses the internal frame core for both scheduler gates without a second drain. Relay invalidations are processed pre-input in the same update, while drain and input reposts wait for the next update.
@@ -82,7 +82,7 @@ Direct `MotionThreadGuard` references exist in:
 - The hosting-focused suite passed 94 tests and three repeated runs. The full runtime suite excluding the intentional stage-zero RED specification passed 1,806 tests, including existing scheduler/input/render ordering and idle-frame contracts.
 - Updated the `UIRoot`, `UiHost`, `MonoGameUiHost`, `UiRelay`, and `FrameStats` API pages for the new public surface and update ordering.
 
-## Etapa 4 verification
+## Stage 4 verification
 
 - Added the `UiObject.VerifyMutationAccess` hook before every typed and untyped property-store mutation. `UIElement` delegates attached access to `Root.Relay`; detached elements still accept configuration on any thread and adopt root ownership only when attached.
 - `UIElementCollection`, `ElementLifecycle`, root resource/platform/image/viewport/theme methods, and root invalidation now fail before tree, version, dirty-state, or queue mutation when called off-thread.
@@ -93,7 +93,7 @@ Direct `MotionThreadGuard` references exist in:
 - Public root mutation audit: direct `UIRoot` resource, platform, image, viewport, theme, invalidation, frame, host, and Relay entry points are guarded. Remaining low-level surfaces are deliberately UI-thread-only through their owning host/scheduler contract: direct `Measure`/`Arrange`, `GetSemanticsTree` cache refresh, mutable element resources/handler/binding collections, exposed retained queues/caches, and direct renderer/layout subsystem calls. They are not auto-marshaled and callers must enter through the host or `UIRoot.Relay`.
 - Focused Motion/Aspect/affinity coverage passed 248 tests, all 12 stage-zero contract tests passed, and the full runtime suite passed 1,826 tests. No locks were added to layout, render, or the property store.
 
-## Etapa 8 verification
+## Stage 8 verification
 
 - The public API audit confirmed the intentional Relay additions on `UIRoot`, `UiHost`, `MonoGameUiHost`, `FrameStats`, `BindingOperations`, and the new `UiRelay`/`UiRelayOptions` types, together with the intentional removal of the legacy Motion guard surface. The audit caught and corrected the host Relay convenience properties to the approved nullable contract.
 - API documentation uses `docs-site/documentation/classes/` as its single source of truth. The 859-entry manifest has no missing files, missing sources, duplicate names, or duplicate files; it contains the two Relay pages and no legacy Motion guard entry.

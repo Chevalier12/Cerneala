@@ -1,13 +1,12 @@
-# Plan: template-uri de componenta declarate direct in markup
+# Plan: component templates declared directly in the markup
 
-**Data:** 2026-07-10  
-**Status:** Implementat si verificat  
-**Scop:** Extinderea markup-ului Cerneala astfel incat orice element derivat din `Control` sa poata declara un `@template` local, iar un `Aspect` sa poata furniza acelasi tip modern de `ComponentTemplate`.
+**Date:** 2026-07-10
+**Status:** Implemented and verified
+**Purpose:** Extend the Cerneala markup so that any element derived from `Control` can declare a local `@template`, and a `Aspect` can provide the same modern type of `ComponentTemplate`.
 
-## Rezumat
+## Summary
 
-Vrem sa permitem forma locala:
-
+We want to allow the local form:
 ```xml
 <Button Content="Close">
     @template
@@ -27,9 +26,7 @@ Vrem sa permitem forma locala:
     }
 </Button>
 ```
-
-si aceeasi capacitate intr-un Aspect:
-
+and the same capacity in an Aspect:
 ```xml
 <Aspect Name="TitleBarButton" TargetType="Button">
     @default
@@ -57,91 +54,83 @@ si aceeasi capacitate intr-un Aspect:
     }
 </Aspect>
 ```
+The generator will transform the statement into a modern `ComponentTemplate<TControl>`. We do not introduce a second infrastructure of templates and we do not revive legacy APIs.
 
-Generatorul va transforma declaratia intr-un `ComponentTemplate<TControl>` modern. Nu introducem o a doua infrastructura de template si nu reinviem API-urile legacy.
+## Decisions that must be confirmed at the review
 
-## Decizii care trebuie confirmate la review
+1. **The Aspect API remains unchanged: `Name` + `Target`.** The implementation adds `@template` on top of the existing contract and does not rename attributes or runtime members.
+2. **`@template` is only available on `Control`.** A `StackPanel`, for example, derives from `UIElement`, not `Control`, so it gets diagnostic.
+3. **Inside the template, `$owner` is the templated control, and `$self` is the current visual element.** An unqualified property from a `@when`, such as `IsMouseOver`, is shorthand for `$owner.IsMouseOver` in this context only.
+4. **The content is not designed by default.** If the template must display `Button.Content`, the author explicitly writes a `ContentPresenter Content="$owner.Content"`.
+5. **Templates cannot be combined.** The source with the highest precedent wins; `@default` and the conditions of the Aspect continue to apply.
+6. **A `@template` directly at the root of a paired `UserControl` defines the body of the already generated template.** We do not assign a second `ComponentTemplate` above the one used by the generator for that `UserControl`.
 
-1. **API-ul Aspect ramane neschimbat: `Name` + `Target`.** Implementarea adauga `@template` peste contractul existent si nu redenumeste atribute ori membri runtime.
-2. **`@template` este disponibil numai pe `Control`.** Un `StackPanel`, de exemplu, deriva din `UIElement`, nu din `Control`, deci primeste diagnostic.
-3. **In interiorul template-ului, `$owner` este controlul templated, iar `$self` este elementul vizual curent.** O proprietate necalificata dintr-un `@when`, precum `IsMouseOver`, este prescurtare pentru `$owner.IsMouseOver` numai in acest context.
-4. **Continutul nu este proiectat implicit.** Daca template-ul trebuie sa afiseze `Button.Content`, autorul scrie explicit un `ContentPresenter Content="$owner.Content"`.
-5. **Template-urile nu se combina.** Castiga sursa cu precedenta cea mai mare; `@default` si conditiile Aspectului continua sa se aplice.
-6. **Un `@template` direct pe radacina unui `UserControl` paired defineste corpul template-ului generat deja.** Nu asignam un al doilea `ComponentTemplate` peste cel folosit de generator pentru acel `UserControl`.
+## Semantic behavior
 
-## Comportament semantic
+### Eligibility
 
-### Eligibilitate
+- `@template` can appear directly in the content of an element whose resolved type derives from `Cerneala.UI.Controls.Control`.
+- The rule is determined semantically by Roslyn, not by a hardcoded catalog of controls.
+- Custom controls are automatically accepted if they derive from `Control`.
+- An element can have at most one direct `@template`.
+- A template contains exactly one root element that derives from `UIElement`.
+- The raw text, assignments and several root elements directly below `@template` are invalid.
+- `@template` cannot appear directly in a `@when` or `@if` in the first version. The dynamic change of the template remains outside the scope.
+- A Control inside another template can declare its own `@template`; this case must work recursively.
 
-- `@template` poate aparea direct in continutul unui element al carui tip rezolvat deriva din `Cerneala.UI.Controls.Control`.
-- Regula este determinata semantic prin Roslyn, nu printr-un catalog hardcodat de controale.
-- Controalele custom sunt acceptate automat daca deriva din `Control`.
-- Un element poate avea cel mult un `@template` direct.
-- Un template contine exact un element radacina care deriva din `UIElement`.
-- Textul brut, asignarile si mai multe elemente radacina direct sub `@template` sunt invalide.
-- `@template` nu poate aparea direct intr-un `@when` sau `@if` in prima versiune. Schimbarea dinamica a template-ului ramane in afara scopului.
-- Un Control aflat in interiorul altui template poate declara propriul sau `@template`; acest caz trebuie sa functioneze recursiv.
+### The content of the control
 
-### Continutul controlului
+- The `@template` directive is consumed by the compiler and does not become `Content` or a visual child.
+- A `Button` can simultaneously have a `@template` and normal content.
+- Normal content continues to be assigned to the `Content` property according to existing rules.
+- The template decides if and where it projects that content through an explicit `ContentPresenter`.
+- We do not introduce default design, default slot or a secretly generated `ContentPresenter`.
 
-- Directiva `@template` este consumata de compilator si nu devine `Content` sau copil vizual.
-- Un `Button` poate avea simultan un `@template` si continut normal.
-- Continutul normal continua sa fie atribuit proprietatii `Content` conform regulilor existente.
-- Template-ul decide daca si unde proiecteaza acel continut printr-un `ContentPresenter` explicit.
-- Nu introducem proiectare implicita, slot implicit sau un `ContentPresenter` generat pe ascuns.
+### The field of expressions
 
-### Domeniul expresiilor
-
-- `$owner.Property` se refera la instanta de Control pentru care este aplicat template-ul.
-- `$self.Property` se refera la elementul vizual curent in care apare directiva reactiva.
-- In interiorul unui template, `@when IsMouseOver` este echivalent cu `@when $owner.IsMouseOver`.
-- In afara unui template, expresiile necalificate isi pastreaza semantica actuala: elementul curent.
-- `$ResourceName` isi pastreaza semantica de resource lexical.
-- Numele `$owner` si `$self` devin rezervate si nu pot fi folosite ca identitati de resource sau element.
-- Accesul arbitrar `$ElementName.Property` in interiorul template-ului nu intra in prima etapa; partile se acceseaza prin `ComponentTemplateInstance.Parts` la runtime.
+- `$owner.Property` refers to the Control instance for which the template is applied.
+- `$self.Property` refers to the current visual element in which the reactive directive appears.
+- Inside a template, `@when IsMouseOver` is equivalent to `@when $owner.IsMouseOver`.
+- Outside of a template, unqualified expressions keep their current semantics: the current element.
+- `$ResourceName` keeps its lexical resource semantics.
+- The names `$owner` and `$self` become reserved and cannot be used as resource or element identities.
+- Arbitrary access `$ElementName.Property` inside the template does not enter the first stage; the parts are accessed through `ComponentTemplateInstance.Parts` at runtime.
 
 ### Template binding
 
-Un atribut precum:
-
+An attribute such as:
 ```xml
 <Border Background="$owner.Background"/>
 ```
-
-va fi emis ca un binding realizat prin `ComponentTemplateContext.Bind`, nu ca o valoare copiata o singura data:
-
+will be issued as a binding made by `ComponentTemplateContext.Bind`, not as a value copied only once:
 ```csharp
 templateContext.Bind(
     Control.BackgroundProperty,
     border,
     Control.BackgroundProperty);
 ```
+The generator must validate semantically:
 
-Generatorul trebuie sa valideze semantic:
+- the existence of the property on the owner;
+- the existence of the target property on the element;
+- type compatibility;
+- the possibility to write the target property;
+- the use of a reactive property compatible with `Bind`.
 
-- existenta proprietatii pe owner;
-- existenta proprietatii tinta pe element;
-- compatibilitatea tipurilor;
-- posibilitatea de a scrie proprietatea tinta;
-- folosirea unei proprietati reactive compatibile cu `Bind`.
+In the first version we accept direct property-to-property binding. We do not add converters, arithmetic expressions, nested paths or bidirectional binding.
 
-In prima versiune acceptam binding direct proprietate-la-proprietate. Nu adaugam convertoare, expresii aritmetice, cai imbricate sau binding bidirectional.
+### Reactive conditions in templates
 
-### Conditii reactive in template
-
-Forma booleana prescurtata devine valida:
-
+The abbreviated boolean form becomes valid:
 ```xml
 @when $owner.IsMouseOver
 {
     Background = "#252B36";
 }
 ```
+It is semantically equivalent to the old explicit form for the true boolean case. The parser must not invent a false `@if` in the AST; the emitter validates that the observed source is boolean.
 
-Ea este echivalenta semantic cu vechea forma explicita pentru cazul boolean adevarat. Parserul nu trebuie sa inventeze un `@if` fals in AST; emitter-ul valideaza ca sursa observata este booleana.
-
-Forma existenta ramane valida pentru valori cu mai multe ramuri:
-
+The existing form remains valid for values ​​with several branches:
 ```xml
 @when Status
 {
@@ -156,24 +145,21 @@ Forma existenta ramane valida pentru valori cu mai multe ramuri:
     }
 }
 ```
+Conditional values ​​take precedence over template binding as long as the condition is active. When the condition becomes false, the conditional value is removed and the binding to `$owner.Background` becomes visible again.
 
-Valorile conditionale au precedenta peste template binding cat timp conditia este activa. Cand conditia devine falsa, valoarea conditionala este eliminata si binding-ul catre `$owner.Background` redevine vizibil.
+### Names and parts of templates
 
-### Nume si parti de template
+- `Name="Bd"` from an inline template does not generate a field on the external code-behind.
+- Each such name is registered through `ComponentTemplateContext.RequirePart`.
+- Parts are available on `ComponentTemplateInstance.Parts`.
+- The namespace of the template parts is separated from the namespace of the external document.
+- Duplicate names in the same template produce a diagnosis.
+- The same template can be instantiated several times without the parts of an instance overlapping each other.
+Intentional exception: The content generated for the root of a `UserControl` paired preserves the current behavior for the named members of that UserControl. Controls with inline templates nested in that content, however, use the isolated parts space.
 
-- `Name="Bd"` dintr-un template inline nu genereaza un camp pe code-behind-ul exterior.
-- Fiecare astfel de nume este inregistrat prin `ComponentTemplateContext.RequirePart`.
-- Partile sunt disponibile pe `ComponentTemplateInstance.Parts`.
-- Spatiul de nume al partilor template-ului este separat de spatiul de nume al documentului exterior.
-- Numele duplicate in acelasi template produc diagnostic.
-- Acelasi template poate fi instantiat de mai multe ori fara ca partile unei instante sa se calce intre ele.
+## Aspects and precedent
 
-Exceptie intentionata: continutul generat pentru radacina unui `UserControl` paired pastreaza comportamentul actual pentru membrii numiti ai acelui UserControl. Controalele cu template inline imbricate in acel continut folosesc insa spatiul de parti izolat.
-
-## Aspecte si precedenta
-
-Sintaxa Aspect ramane cea existenta:
-
+The Aspect syntax remains the existing one:
 ```xml
 <Aspect TargetType="TextBlock">
     ...
@@ -183,44 +169,40 @@ Sintaxa Aspect ramane cea existenta:
     ...
 </Aspect>
 ```
+- `Target` describes the target type.
+- `Name` identifies a referable Aspect.
+- A Skin without `Name` remains the default Skin for the type.
+- The element reference remains `Aspect="$TitleBarButton"`.
+- `MarkupAspectResource.Name` and the existing internal model remain unchanged.
+- The implementation of `@template` does not produce any incompatible changes in the Aspect API.
 
-- `Target` descrie tipul tinta.
-- `Name` identifica un Aspect referentiabil.
-- Un Aspect fara `Name` ramane Aspectul implicit pentru tip.
-- Referinta pe element ramane `Aspect="$TitleBarButton"`.
-- `MarkupAspectResource.Name` si modelul intern existent raman neschimbate.
-- Implementarea `@template` nu produce nicio schimbare incompatibila in API-ul Aspect.
+The precedence order for `ComponentTemplateProperty` is:
 
-Ordinea de precedenta pentru `ComponentTemplateProperty` este:
+1. Default layout for type;
+2. Aspect referenced by `Aspect="$Name"`;
+3. Local aspect declared by `<Button.Aspect>`;
+4. `@template` declared directly on Control.
 
-1. Aspect implicit pentru tip;
-2. Aspect referentiat prin `Aspect="$Name"`;
-3. Aspect local declarat prin `<Button.Aspect>`;
-4. `@template` declarat direct pe Control.
+A source with a larger precedent completely replaces the previous template. The properties `@default` and the values ​​`@when` from Aspect remain active; only the value `ComponentTemplate` is overwritten.
 
-O sursa cu precedenta mai mare inlocuieste complet template-ul anterior. Proprietatile `@default` si valorile `@when` din Aspect raman active; numai valoarea `ComponentTemplate` este suprascrisa.
+A template declared in an Aspect is compiled only once in the scope of the resource and is stored as a value for `Control.ComponentTemplateProperty`. For an inline Aspect, the value is applied by `ElementAspect` at the `LocalAspectBase` level. For a direct `@template`, the generator uses the normal local setter.
 
-Un template declarat intr-un Aspect este compilat o singura data in scope-ul resource-ului si este stocat ca valoare pentru `Control.ComponentTemplateProperty`. Pentru un Aspect inline, valoarea este aplicata prin `ElementAspect` la nivelul `LocalAspectBase`. Pentru un `@template` direct, generatorul foloseste setter-ul local normal.
+## The proposed architecture
 
-## Arhitectura propusa
+### 1. AST of directives
 
-### 1. AST-ul directivelor
-
-Extindem `UiMarkupDirectiveParser` cu:
-
+We extend `UiMarkupDirectiveParser` with:
 ```csharp
 internal sealed record DirectiveTemplateNode(
     XElement Root,
     SourceLocation Source) : DirectiveNode;
 ```
+`DirectiveWhenNode` must be able to represent separately:
 
-`DirectiveWhenNode` trebuie sa poata reprezenta separat:
+- explicit branches `@if`;
+- a direct boolean body.
 
-- ramuri explicite `@if`;
-- un corp boolean direct.
-
-Parserul primeste un context explicit de capabilitati, nu o succesiune de bool-uri greu de urmarit. De exemplu:
-
+The parser receives an explicit context of capabilities, not a sequence of hard-to-follow bools. For example:
 ```csharp
 [Flags]
 internal enum DirectiveContentKind
@@ -230,13 +212,11 @@ internal enum DirectiveContentKind
     Templates = 4
 }
 ```
+Nesting rules are validated in the parser where they are strictly grammatical. Type eligibility and property compatibility remain in the semantic phase.
 
-Regulile de nesting sunt validate in parser acolo unde sunt strict gramaticale. Eligibilitatea tipului si compatibilitatea proprietatilor raman in faza semantica.
+### 2. The semantic model of the template
 
-### 2. Modelul semantic al template-ului
-
-Introducem un model intern mic, separat de XML-ul brut:
-
+We introduce a small internal model, separate from the raw XML:
 ```csharp
 internal sealed record TemplateDeclaration(
     XElement Root,
@@ -245,33 +225,30 @@ internal sealed record TemplateDeclaration(
     TemplateOrigin Origin,
     SourceLocation Source);
 ```
-
-`TemplateOrigin` distinge doar cazurile necesare emiterii si precedentei:
+`TemplateOrigin` distinguishes only the cases necessary for issuance and precedent:
 
 - `AspectResource`;
 - `InlineAspect`;
 - `DirectElement`;
 - `PairedUserControlRoot`.
 
-Nu construim o ierarhie extensibila inutila si nu mutam logica runtime in generator.
+We don't build an unnecessary extensible hierarchy and we don't move the runtime logic into the generator.
 
-### 3. Contextul de emitere
+### 3. Issue context
 
-`GenerationScope` primeste un stack de contexte pentru template-uri. Contextul curent contine:
+`GenerationScope` receives a stack of contexts for templates. The current context contains:
 
-- variabila `ComponentTemplateContext<TControl>`;
-- expresia owner-ului;
-- simbolul tipului owner;
-- namespace-ul partilor;
-- indicatorul ca emiterea curenta este intr-un template;
-- elementul vizual curent folosit de `$self`.
+- variable `ComponentTemplateContext<TControl>`;
+- the expression of the owner;
+- the symbol of the owner type;
+- the namespace of the parties;
+- the indicator that the current emission is in a template;
+- the current visual element used by `$self`.
+A reusable helper is needed for the temporary change of buffers `currentLines` and `currentPostLines`. The existing code in the conditional emitter already does this; we extract it in a safe scope and reuse it for templates, including nested templates.
 
-Este necesar un helper reutilizabil pentru schimbarea temporara a bufferelor `currentLines` si `currentPostLines`. Codul existent din emitter-ul conditional face deja aceasta manevra; il extragem intr-un scope sigur si il refolosim pentru template-uri, inclusiv template-uri imbricate.
+### 4. Issuing a direct template
 
-### 4. Emiterea unui template direct
-
-Pentru un Button normal, forma generata va fi echivalenta cu:
-
+For a normal Button, the generated form will be equivalent to:
 ```csharp
 button.ComponentTemplate = new ComponentTemplate<Button>(
     "Inline.Button.<locatie-determinista>",
@@ -286,322 +263,318 @@ button.ComponentTemplate = new ComponentTemplate<Button>(
         return border0;
     });
 ```
+The name of the template is deterministic, based on the type, origin and stable position in the document. We do not use GUIDs, so that the generated source and snapshots remain clean.
 
-Numele template-ului este determinist, bazat pe tip, origine si pozitia stabila in document. Nu folosim GUID-uri, ca generated source-ul si snapshot-urile sa ramana curate.
+Lambda is not forced `static`: event handlers and generated resources may need the code-behind instance. The generator can issue `static` only when it proves that there are no captures; this optimization is not necessary in the first implementation.
 
-Lambda nu este fortata `static`: event handler-ele si resursele generate pot avea nevoie de instanta code-behind. Generatorul poate emite `static` numai cand demonstreaza ca nu exista capturi; aceasta optimizare nu este necesara in prima implementare.
+### 5. Integration with the property emitter
 
-### 5. Integrarea cu emitter-ul de proprietati
+`EmitProperty` remains responsible for existing literal values. We add a template-aware branch for expressions `$owner.Property` and, where relevant, `$self.Property`.
 
-`EmitProperty` ramane responsabil pentru valorile literale existente. Adaugam o ramura template-aware pentru expresii `$owner.Property` si, unde este relevant, `$self.Property`.
-
-Rezolvarea trebuie sa foloseasca infrastructura semantica existenta:
+The solution must use the existing semantic infrastructure:
 
 - `ResolveElementTypeSymbol`;
 - `ResolvePropertyOwnerType`;
 - `FindPropertySpec`;
 - `IsOrDerivesFrom`.
 
-Nu adaugam liste de tipuri sau proprietati cunoscute manual.
+We do not add lists of known types or properties manually.
 
-### 6. Integrarea cu emitter-ul reactiv
+### 6. Integration with the reactive emitter
 
-`UiMarkupReactiveEmitter` primeste rezolvarea explicita a sursei observate:
+`UiMarkupReactiveEmitter` receives the explicit resolution of the observed source:
 
-- `$owner` -> owner-ul template-ului;
-- `$self` -> elementul curent;
-- necalificat in template -> owner;
-- necalificat in afara template-ului -> elementul curent;
-- `$DataContext` si resursele existente -> comportamentul actual.
+- `$owner` -> the owner of the template;
+- `$self` -> the current element;
+- unqualified in template -> owner;
+- unqualified outside the template -> current element;
+- `$DataContext` and existing resources -> current behavior.
 
-Abonamentele create pentru `@when` in template trebuie sa fie detinute de instanta template-ului si eliminate la inlocuirea sau detasarea acesteia. Nu acceptam o implementare care functioneaza vizual, dar lasa abonamente agatate dupa ea.
+The subscriptions created for `@when` in templates must be owned by the template instance and removed when it is replaced or removed. We do not accept an implementation that works visually, but leaves subscriptions hanging after it.
 
-### 7. Paired UserControl si Window
+### 7. Paired UserControl and Window
 
-Pentru o radacina paired `UserControl`:
+For a paired root `UserControl`:
 
-- `@template` furnizeaza corpul lui `__CernealaGeneratedTemplate` deja creat de generator;
-- nu se emite o asignare suplimentara la `ComponentTemplate`;
-- `$owner` este instanta acelui UserControl;
-- nu poate exista simultan si un copil vizual direct pe wrapper, deoarece ambele ar defini radacina template-ului;
-- controalele imbricate se comporta normal.
+- `@template` provides the body of `__CernealaGeneratedTemplate` already created by the generator;
+- no additional assignment is issued to `ComponentTemplate`;
+- `$owner` is the instance of that UserControl;
+- there cannot be a visual child directly on the wrapper at the same time, because both would define the root of the template;
+- nested controls behave normally.
 
-Pentru o radacina `Window`:
+For a `Window` root:
 
-- `Window` poate primi un `ComponentTemplate` local ca orice alt Control;
-- copilul vizual direct continua sa fie `Window.Content`;
-- cele doua pot coexista;
-- template-ul trebuie sa proiecteze explicit continutul daca vrea sa-l afiseze.
+- `Window` can receive a local `ComponentTemplate` like any other Control;
+- the direct visual child continues to be `Window.Content`;
+- the two can coexist;
+- the template must explicitly design the content if it wants to display it.
 
-## Fisiere vizate
+## Targeted files
 
 ### Generator
 
 - `Cerneala.SourceGen/UiMarkupDirectiveParser.cs`
-  - AST pentru `@template`;
-  - corp boolean direct pentru `@when`;
-  - reguli gramaticale si nesting.
+  - AST for `@template`;
+  - direct boolean body for `@when`;
+  - grammatical rules and nesting.
 - `Cerneala.SourceGen/UiMarkupGenerator.cs`
-  - pastrarea contractului Aspect `Name`/`Target`;
-  - model semantic de template;
-  - validare `Control`;
-  - emitere `ComponentTemplate<TControl>`;
+- keeping the contract Aspect `Name`/`Target`;
+  - semantic template model;
+  - validation `Control`;
+  - issuing `ComponentTemplate<TControl>`;
   - template binding;
-  - precedenta Aspect/direct;
-  - parti numite si scope-uri imbricate.
+  - previous Aspect/direct;
+  - named parts and nested scopes.
 - `Cerneala.SourceGen/UiMarkupReactiveEmitter.cs`
-  - `$owner`, `$self` si prescurtarea booleana;
-  - lifecycle corect pentru conditiile din template.
+  - `$owner`, `$self` and Boolean abbreviation;
+  - correct lifecycle for the conditions in the template.
 - `Cerneala.SourceGen/UiMarkupUserControlGenerator.cs`
-  - semantica speciala pentru radacina paired.
+  - special semantics for the paired root.
 - `Cerneala.SourceGen/UiMarkupWindowGenerator.cs`
-  - template local pe Window si coexistenta cu Content.
+  - local template on Windows and coexistence with Content.
 
 ### Runtime
 
 - `Cerneala/UI/Markup/MarkupAspectResource.cs`
-  - fara redenumiri de API;
-  - ajustari numai daca sunt necesare pentru stocarea template-ului modern in Aspect.
+  - no API renaming;
+  - adjustments only if they are necessary for storing the modern template in Aspect.
 - `Cerneala/UI/Styling/ElementAspect.cs`
-  - numai ajustarile strict necesare pentru valoarea `ComponentTemplateProperty`; nu se introduce o noua abstractie de template.
-- Infrastructura `ComponentTemplate*`
-  - schimbari numai daca testele de lifecycle dovedesc ca abonamentele sau partile nu sunt curatate corect.
+  - only the strictly necessary adjustments for the `ComponentTemplateProperty` value; a new template abstraction is not introduced.
+- Infrastructure `ComponentTemplate*`
+  - changes only if the lifecycle tests prove that the subscriptions or parts are not cleaned correctly.
 
-### Playground si documentatie
+### Playground and documentation
 
 - `Playground/Cerneala.Playground/MainWindow.crn`
-  - pastrarea Aspectelor cu `Name`/`Target`;
-  - un exemplu real de `Button` cu `@template`, hover si `ContentPresenter`.
+  - keeping Aspects with `Name`/`Target`;
+  - a real example of `Button` with `@template`, hover and `ContentPresenter`.
 - `docs/aspect-system.md`
-  - noua sintaxa si precedenta.
+  - the new syntax and the previous one.
 - `docs/getting-started.md`
-  - exemplu minimal de template direct.
+  - minimal example of direct templates.
 - `docs/developer-preview-scope.md`
-  - capabilitati si limitari explicite.
-- Documentatia API pentru `MarkupAspectResource`, numai daca suportul template necesita clarificari; `Name` ramane neschimbat.
+  - explicit capabilities and limitations.
+- API documentation for `MarkupAspectResource`, only if the template support requires clarification; `Name` remains unchanged.
 
-## Etape de implementare
+## Implementation stages
 
-### Etapa 1: teste RED pentru gramatica si contract
+### Stage 1: RED tests for grammar and contract
 
-- [ ] Adauga teste pentru parsarea unui `@template` valid.
-- [ ] Adauga teste pentru `@when` cu corp boolean direct.
-- [ ] Adauga test pentru un `@when` din template cu mai multe ramuri `@if`.
-- [ ] Adauga teste pentru zero, una si mai multe radacini.
-- [ ] Adauga teste pentru template duplicat si template in conditional.
-- [ ] Adauga test care demonstreaza ca `StackPanel` este respins semantic.
-- [ ] Adauga test care demonstreaza ca un Control custom descoperit prin Roslyn este acceptat.
-- [ ] Confirma ca testele esueaza din motivul asteptat inainte de codul de productie.
+- [ ] Add tests for parsing a valid `@template`.
+- [ ] Add tests for `@when` with direct boolean body.
+- [ ] Add test for a `@when` from templates with multiple branches `@if`.
+- [ ] Add tests for zero, one and more roots.
+- [ ] Add tests for duplicate templates and conditional templates.
+- [ ] Add test that proves that `StackPanel` is semantically rejected.
+- [ ] Add test that proves that a custom Control discovered through Roslyn is supported.
+- [ ] Confirm that the tests fail for the reason expected before the production code.
 
-### Etapa 2: parser si AST
+### Stage 2: parser and AST
 
-- [ ] Adauga `DirectiveTemplateNode`.
-- [ ] Inlocuieste combinatia actuala de flag-uri booleene cu un context lizibil de continut permis.
-- [ ] Extinde `DirectiveWhenNode` pentru corp boolean direct.
-- [ ] Pastreaza forma cu `@if` compatibila.
-- [ ] Emite erori gramaticale cu pozitia XML corecta.
-- [ ] Ruleaza testele parserului si reindexeaza solutia.
+- [ ] Add `DirectiveTemplateNode`.
+- [ ] Replaces the current combination of boolean flags with a readable context of allowed content.
+- [ ] Extends `DirectiveWhenNode` for direct boolean body.
+- [ ] Keeps its shape with compatible `@if`.
+- [ ] Issue grammatical errors with the correct XML position.
+- [ ] Run the parser tests and reindex the solution.
 
-### Etapa 3: conservarea contractului Aspect
+### Stage 3: preserving the Aspect contract
 
-- [ ] Pastreaza citirea atributelor `Name` si `Target` fara modificari de sintaxa.
-- [ ] Pastreaza `MarkupAspectResource.Name` si modelele interne existente.
-- [ ] Adauga teste de regresie pentru Aspect implicit si Aspect numit cu sintaxa actuala.
-- [ ] Confirma ca adaugarea unui `@template` nu schimba rezolvarea `Aspect="$Name"`.
-- [ ] Reindexeaza solutia dupa fiecare grup coerent de schimbari.
+- [ ] Keeps the reading of `Name` and `Target` attributes without syntax changes.
+- [ ] Keep `MarkupAspectResource.Name` and the existing internal models.
+- [ ] Add regression tests for Default Layout and Named Layout with current syntax.
+- [ ] Confirm that adding a `@template` does not change the `Aspect="$Name"` solution.
+- [ ] Re-indexes the solution after each coherent group of changes.
 
-### Etapa 4: emiterea template-ului local minimal
+### Stage 4: issuing the minimal local template
 
-- [ ] Detecteaza si extrage `@template` inaintea emiterii continutului normal.
-- [ ] Valideaza semantic ca owner-ul deriva din `Control`.
-- [ ] Introdu `TemplateDeclaration` si contextul de emitere.
-- [ ] Extrage helper-ul sigur pentru buffer-ele de cod generate.
-- [ ] Emite `ComponentTemplate<TControl>` cu nume determinist si o radacina `UIElement`.
-- [ ] Permite Content normal langa directiva fara ca directiva sa devina Content.
-- [ ] Sustine template-uri locale imbricate.
-- [ ] Inspecteaza generated source-ul pentru cod stabil si lizibil.
+- [ ] Detects and extracts `@template` before issuing normal content.
+- [ ] Validates semantically that the owner derives from `Control`.
+- [ ] Enter `TemplateDeclaration` and the broadcast context.
+- [ ] Extract the safe helper for generated code buffers.
+- [ ] Issue `ComponentTemplate<TControl>` with deterministic name and a root `UIElement`.
+- [ ] Allows normal Content next to the directive without the directive becoming Content.
+- [ ] Supports nested local templates.
+- [ ] Inspect the generated source for stable and readable code.
 
-### Etapa 5: `$owner`, `$self` si template bindings
+### Stage 5: `$owner`, `$self` and template bindings
 
-- [ ] Rezerva identificatorii `$owner` si `$self`.
-- [ ] Rezolva semantic proprietatile owner si target.
-- [ ] Emite `ComponentTemplateContext.Bind` pentru atributele `$owner.Property`.
-- [ ] Adauga suportul `$self.Property` acolo unde expresia este permisa.
-- [ ] Raporteaza diagnostic pentru proprietate inexistenta, tip incompatibil sau tinta nescriptibila.
-- [ ] Pastreaza lookup-ul lexical pentru `$ResourceName`.
-- [ ] Nu adauga conversii implicite ori cai imbricate.
+- [ ] Reserve the identifiers `$owner` and `$self`.
+- [ ] Semantically resolves the owner and target properties.
+- [ ] Issue `ComponentTemplateContext.Bind` for attributes `$owner.Property`.
+- [ ] Add `$self.Property` support where the expression is allowed.
+- [ ] Reports diagnosis for non-existent property, incompatible type or non-writable target.
+- [ ] Keeps the lexical lookup for `$ResourceName`.
+- [ ] Do not add default conversions or nested paths.
 
-### Etapa 6: reactive state in template
+### Stage 6: state reagents in templates
 
-- [ ] Extinde planul reactiv cu owner-ul si elementul curent.
-- [ ] Implementeaza `@when $owner.BoolProperty`.
-- [ ] Implementeaza shorthand-ul `@when BoolProperty` in template.
-- [ ] Implementeaza `@when $self.BoolProperty`.
-- [ ] Verifica revenirea de la valoarea conditionala la template binding.
-- [ ] Verifica detasarea abonamentelor cand template-ul este inlocuit sau reaplicat.
+- [ ] Extends the reactive plane with the owner and the current element.
+- [ ] Implements `@when $owner.BoolProperty`.
+- [ ] Implements the shorthand `@when BoolProperty` in templates.
+- [ ] Implements `@when $self.BoolProperty`.
+- [ ] Check the return from the conditional value to template binding.
+- [ ] Checks the detachment of subscriptions when the template is replaced or reapplied.
 
-### Etapa 7: template-uri in Aspect
+### Stage 7: templates in Aspect
 
-- [ ] Permite un singur `@template` in corpul unui Aspect.
-- [ ] Compileaza template-ul in scope-ul lexical al resource-ului.
-- [ ] Stocheaza valoarea in `Control.ComponentTemplateProperty` prin mecanismul Aspect existent.
-- [ ] Aplica ordinea de precedenta documentata.
-- [ ] Confirma ca override-ul template-ului nu elimina `@default` sau `@when` din Aspect.
-- [ ] Permite template si in `<Control.Aspect>` inline.
+- [ ] Allows a single `@template` in the body of an Aspect.
+- [ ] Compiles the template in the lexical scope of the resource.
+- [ ] Stores the value in `Control.ComponentTemplateProperty` through the existing Aspect mechanism.
+- [ ] Apply the previous documented order.
+- [ ] Confirm that the template override does not remove `@default` or `@when` from the Aspect.
+- [ ] Allows inline `<Control.Aspect>` templates as well.
 
-### Etapa 8: nume si parti
+### Stage 8: names and parts
 
-- [ ] Inregistreaza `Name` prin `RequirePart` pentru template-urile inline normale.
-- [ ] Detecteaza duplicatele in acelasi template.
-- [ ] Nu emite campuri code-behind exterioare pentru partile template-ului.
-- [ ] Verifica izolarea partilor intre doua instante ale aceluiasi template.
-- [ ] Pastreaza contractul actual pentru membrii paired UserControl.
+- [ ] Register `Name` through `RequirePart` for normal inline templates.
+- [ ] Detects duplicates in the same template.
+- [ ] Does not emit external code-behind fields for template parts.
+- [ ] Checks the isolation of the parts between two instances of the same template.
+- [ ] Keeps the current contract for paired UserControl members.
 
-### Etapa 9: radacini speciale
+### Stage 9: special roots
+- [ ] Integrates the `@template` body of a paired UserControl into the existing generated template.
+- [ ] Reports the conflict between that body and a direct visual child of the wrapper.
+- [ ] Allows `@template` on Windows without removing the normal Content.
+- [ ] Check `$owner`, event handlers and resources in both cases.
 
-- [ ] Integreaza corpul `@template` al unui paired UserControl in template-ul generat existent.
-- [ ] Raporteaza conflictul dintre acel corp si un copil vizual direct al wrapper-ului.
-- [ ] Permite `@template` pe Window fara a elimina Content-ul normal.
-- [ ] Verifica `$owner`, event handler-ele si resursele in ambele cazuri.
+### Stage 10: Playground and documentation
 
-### Etapa 10: Playground si documentatie
+- [ ] Keep and check the Playground `Name`/`Target` syntax.
+- [ ] Add a demonstration Button with direct templates, content and hover.
+- [ ] Documents syntax, scope, precedent and limitations.
+- [ ] Includes examples for templates directly, Default Layout, Named Layout and Inline Layout.
+- [ ] It explicitly says that `StackPanel` is not templatable because it does not derive from `Control`.
+- [ ] Regenerates `FileTree.md` if the structure of the documentation has changed.
 
-- [ ] Pastreaza si verifica sintaxa Playground `Name`/`Target`.
-- [ ] Adauga un Button demonstrativ cu template direct, continut si hover.
-- [ ] Documenteaza sintaxa, scope-ul, precedenta si limitarile.
-- [ ] Include exemple pentru template direct, Aspect implicit, Aspect cu Name si Aspect inline.
-- [ ] Spune explicit ca `StackPanel` nu este templatable deoarece nu deriva din `Control`.
-- [ ] Regenereaza `FileTree.md` daca structura documentatiei s-a schimbat.
-
-## Matrice de teste
+## Test matrix
 
 ### Source generator
 
-- [ ] Button cu `@template` emite `ComponentTemplate<Button>` si radacina corecta.
-- [ ] Directiva nu este tratata drept Content.
-- [ ] Template si atributul `Content` pot coexista.
-- [ ] Template si copilul Content normal pot coexista.
-- [ ] `$owner.Background` emite binding si urmareste schimbarea owner-ului.
-- [ ] `$owner.Content` alimenteaza explicit `ContentPresenter`.
-- [ ] `@when $owner.IsMouseOver` aplica si elimina valoarea conditionala.
-- [ ] Un singur `@when` accepta mai multe ramuri `@if`, fiecare cu propriile asignari si elemente conditionale.
-- [ ] `@when IsMouseOver` foloseste owner-ul in template.
-- [ ] `@when $self.IsMouseOver` foloseste partea curenta.
-- [ ] `$InkDim` continua sa rezolve resource-ul lexical.
-- [ ] `Name="Bd"` devine part, nu camp exterior.
-- [ ] Un Control imbricat poate avea propriul `@template`.
-- [ ] Un Aspect implicit poate furniza template.
-- [ ] Un Aspect cu `Name` poate furniza template.
-- [ ] `<Button.Aspect>` poate furniza template.
-- [ ] Template-ul direct castiga peste template-ul din Aspect.
-- [ ] `@default` si `@when` din Aspect raman aplicate dupa override.
-- [ ] Paired UserControl foloseste un singur template generat.
-- [ ] Window pastreaza Content-ul normal cu template local.
-- [ ] Generated code compileaza fara warnings.
+- [ ] Button with `@template` emits `ComponentTemplate<Button>` and the correct root.
+- [ ] The directive is not treated as Content.
+- [ ] Template and `Content` attribute can coexist.
+- [ ] Template and normal Content child can coexist.
+- [ ] `$owner.Background` issues binding and follows the change of owner.
+- [ ] `$owner.Content` explicitly feeds `ContentPresenter`.
+- [ ] `@when $owner.IsMouseOver` applies and removes the conditional value.
+- [ ] A single `@when` accepts several `@if` branches, each with its own assignments and conditional elements.
+- [ ] `@when IsMouseOver` uses the owner in templates.
+- [ ] `@when $self.IsMouseOver` uses the current part.
+- [ ] `$InkDim` continues to solve the lexical resource.
+- [ ] `Name="Bd"` becomes part, not outer field.
+- [ ] A nested Control can have its own `@template`.
+- [ ] A default Layout can provide templates.
+- [ ] A Skin with `Name` can provide templates.
+- [ ] `<Button.Aspect>` can provide templates.
+- [ ] The direct template wins over the template in Aspect.
+- [ ] `@default` and `@when` from Aspect remain applied after override.
+- [ ] Paired UserControl uses a single generated template.
+- [ ] Window keeps the normal Content with local template.
+- [ ] Generated code compiles without warnings.
 
-### Diagnostice
+### Diagnostics
 
-- [ ] `@template` pe `StackPanel`.
-- [ ] Doua `@template` pe acelasi Control.
-- [ ] Template fara radacina.
-- [ ] Template cu doua radacini.
-- [ ] Text sau asignare direct la radacina template-ului.
-- [ ] Template declarat intr-un conditional.
+- [ ] `@template` on `StackPanel`.
+- [ ] Two `@template` on the same Control.
+- [ ] Template without root.
+- [ ] Template with two roots.
+- [ ] Text or assignment directly to the root of the template.
+- [ ] Template declared in a conditional.
 - [ ] `$owner.UnknownProperty`.
 - [ ] `$self.UnknownProperty`.
-- [ ] Binding cu tipuri incompatibile.
-- [ ] Nume de parte duplicat.
-- [ ] Conflict pe radacina paired UserControl.
-- [ ] Un Aspect cu `Name`/`Target` continua sa compileze si sa se rezolve corect.
+- [ ] Binding with incompatible types.
+- [ ] Duplicate party name.
+- [ ] Conflict on the paired UserControl root.
+- [ ] An Aspect with `Name`/`Target` continues to compile and resolve correctly.
+Grammatical errors may continue to use existing diagnostics for invalid directives. For the semantic template contract, we introduce a dedicated diagnosis, for example `CERNEALAUI012`, with a specific message and exact location. We do not cram all cases into a generic "invalid template" type message.
 
-Erorile gramaticale pot continua sa foloseasca diagnosticul existent pentru directive invalide. Pentru contractul semantic de template introducem un diagnostic dedicat, de exemplu `CERNEALAUI012`, cu mesaj specific si locatie exacta. Nu inghesuim toate cazurile intr-un mesaj generic de tipul "template invalid".
+### Runtime and lifecycle
 
-### Runtime si lifecycle
+- [ ] Changing the owner property updates the linked part.
+- [ ] Replacing the template detaches the bindings of the old instance.
+- [ ] Re-applying the template does not duplicate subscriptions.
+- [ ] The parts of the old court are not accessible after the replacement.
+- [ ] Two controls with the same template have independent part dictionaries.
+- [ ] The reactive condition returns to the binding value after deactivation.
+- [ ] The local source `ComponentTemplate` wins over the Aspect sources according to the previous one.
 
-- [ ] Schimbarea proprietatii owner actualizeaza partea legata.
-- [ ] Inlocuirea template-ului detaseaza binding-urile vechii instante.
-- [ ] Reaplicarea template-ului nu dubleaza abonamentele.
-- [ ] Partile vechii instante nu raman accesibile dupa inlocuire.
-- [ ] Doua controale cu acelasi template au dictionare de parti independente.
-- [ ] Conditia reactiva revine la valoarea de binding dupa dezactivare.
-- [ ] Sursa locala `ComponentTemplate` castiga peste sursele Aspect conform precedentei.
+## Final check
 
-## Verificare finala
+1. Run the targeted tests of the parser and the generator.
+2. Run the runtime tests for `ComponentTemplate`, binding and lifecycle.
+3. Run the entire suite with `dotnet test Cerneala.slnx --no-restore`.
+4. Run the complete build without warnings or errors.
+5. Run the formatter in verification mode.
+6. Inspect the generated source for the Playground examples.
+7. Start the Playground and check manually:
+   - the content of the Button;
+   - the hover;
+   - change of owner properties;
+   - opening several windows;
+   - reapplying/replacing the template.
+8. Run `git diff --check`.
+9. Regenerates `FileTree.md`.
+10. Reindex `Cerneala.slnx` with RoslynIndexer and confirm that the index is healthy.
 
-1. Ruleaza testele tintite ale parserului si generatorului.
-2. Ruleaza testele runtime pentru `ComponentTemplate`, binding si lifecycle.
-3. Ruleaza intreaga suita cu `dotnet test Cerneala.slnx --no-restore`.
-4. Ruleaza build-ul complet fara warnings sau errors.
-5. Ruleaza formatter-ul in mod de verificare.
-6. Inspecteaza generated source pentru exemplele Playground.
-7. Porneste Playground-ul si verifica manual:
-   - continutul Button-ului;
-   - hover-ul;
-   - schimbarea proprietatilor owner;
-   - deschiderea mai multor ferestre;
-   - reaplicarea/inlocuirea template-ului.
-8. Ruleaza `git diff --check`.
-9. Regenereaza `FileTree.md`.
-10. Reindexeaza `Cerneala.slnx` cu RoslynIndexer si confirma ca indexul este sanatos.
+## Non-targets for the first version
 
-## Non-obiective pentru prima versiune
+- Templates on any `UIElement` that do not derive from `Control`.
+- Template switching from `@when` or `@if`.
+- The structural combination of two templates.
+- `ContentPresenter` or slot generated by default.
+- Binding converters.
+- Bidirectional binding.
+- Horses like `$owner.User.Profile.Name`.
+- Arbitrary expressions in attributes.
+- Direct access `$PartName.Property` between the parts of the template.
+- New triggers, animations or visual states.
+- A new parallel runtime class with `ComponentTemplate`.
 
-- Template-uri pe orice `UIElement` care nu deriva din `Control`.
-- Template switching din `@when` sau `@if`.
-- Combinarea structurala a doua template-uri.
-- `ContentPresenter` sau slot generat implicit.
-- Convertoare de binding.
-- Binding bidirectional.
-- Cai precum `$owner.User.Profile.Name`.
-- Expresii arbitrare in atribute.
-- Acces direct `$PartName.Property` intre partile template-ului.
-- Triggers, animations sau visual states noi.
-- O noua clasa runtime paralela cu `ComponentTemplate`.
+## Risks and measures
 
-## Riscuri si masuri
+### Wrong scope for expressions
 
-### Scope gresit pentru expresii
+The biggest semantic risk is that an unqualified expression accidentally notices the visual part instead of the control. The template context must make this choice explicitly, and the tests for `$owner`, `$self` and the unqualified form must exist separately.
 
-Cel mai mare risc semantic este ca o expresie necalificata sa observe accidental partea vizuala in locul controlului. Contextul de template trebuie sa faca aceasta alegere explicit, iar testele pentru `$owner`, `$self` si forma necalificata trebuie sa existe separat.
+### Reactive subscriptions left after templates
 
-### Abonamente reactive ramase dupa template
+A template can be re-instantiated many times. All bindings and conditions created by the factory must be owned and removed together with `ComponentTemplateInstance`. The replacement and reapplication tests are blocking for going.
 
-Un template se poate reinstanta de multe ori. Toate binding-urile si conditiile create de factory trebuie detinute si eliminate impreuna cu `ComponentTemplateInstance`. Testele de inlocuire si reaplicare sunt blocante pentru merge.
+### Names transformed into global fields
+If the names in the templates use the usual code-behind mechanism, two instances will be overwritten. Normal templates must use `Parts` exclusively; the paired UserControl exception remains limited and explicitly tested.
 
-### Nume transformate in campuri globale
+### Regressions in Content
 
-Daca numele din template folosesc mecanismul code-behind obisnuit, doua instante se vor suprascrie. Template-urile normale trebuie sa foloseasca exclusiv `Parts`; exceptia paired UserControl ramane limitata si testata explicit.
+The directive must be removed from the child stream before the existing rules for Button, Border, Panel and Window. The tests must cover both the Content attribute and the direct visual child.
 
-### Regresii in Content
+### Regressions in the Aspect contract
 
-Directiva trebuie eliminata din fluxul de copii inainte de regulile existente pentru Button, Border, Panel si Window. Testele trebuie sa acopere atat Content atribut, cat si copil vizual direct.
+`@template` must be added without changing `Name`, `Target`, `Aspect="$Name"` or existing runtime metadata. The regression tests for Aspect are blocking, because here we are not doing renovation with the sledgehammer in an API that already works.
 
-### Regresii in contractul Aspect
+## Acceptance criteria
 
-`@template` trebuie adaugat fara sa schimbe `Name`, `Target`, `Aspect="$Name"` sau metadatele runtime existente. Testele de regresie pentru Aspect sunt blocante, fiindca aici nu facem renovare cu barosul intr-un API care deja functioneaza.
+The implementation is ready only when:
 
-## Criterii de acceptare
+- the direct syntax and that in Aspect produce the same modern `ComponentTemplate`;
+- any semantically discovered Custom Control can use `@template`;
+- a non-Control receives a clear diagnosis;
+- `$owner`, `$self`, resources and conditions have a deterministic scope;
+- The content is kept and designed only explicitly;
+- the previous Aspect/direct is proven by tests;
+- the parties are isolated per instance;
+- replacing the template does not leave bindings or old subscriptions;
+- The Playground demonstrates the end-to-end flow;
+- the documentation and all examples keep the `Name`/`Target` contract;
+- the build and the entire suite of tests are clean.
 
-Implementarea este gata numai cand:
-
-- sintaxa directa si cea din Aspect produc acelasi `ComponentTemplate` modern;
-- orice Control custom descoperit semantic poate folosi `@template`;
-- un non-Control primeste diagnostic clar;
-- `$owner`, `$self`, resource-urile si conditiile au scope determinist;
-- Content-ul este pastrat si proiectat numai explicit;
-- precedenta Aspect/direct este dovedita prin teste;
-- partile sunt izolate per instanta;
-- inlocuirea template-ului nu lasa binding-uri sau abonamente vechi;
-- Playground-ul demonstreaza fluxul end-to-end;
-- documentatia si toate exemplele pastreaza contractul `Name`/`Target`;
-- build-ul si intreaga suita de teste sunt curate.
-
-## Dovezi de implementare
+## Evidence of implementation
 
 - `dotnet build Cerneala.slnx --no-restore`: 0 warnings, 0 errors.
-- `dotnet test Cerneala.slnx --no-restore`: 1570 teste runtime/documentatie si 92 teste source-generator, toate verzi.
-- `dotnet format Cerneala.slnx --no-restore --verify-no-changes`: curat.
-- `git diff --check`: curat.
-- Generated source-ul Playground contine `ComponentTemplate<Button>`, `RequirePart`, owner bindings si `RegisterLifetime` pentru conditiile reactive.
-- Playground-ul compilat porneste, creeaza fereastra nativa `Cerneala generator playground` si ramane responsiv.
-- RoslynIndexer raporteaza index valid, fara fisiere dirty sau warnings.
+- `dotnet test Cerneala.slnx --no-restore`: 1570 runtime/documentation tests and 92 source-generator tests, all green.
+- `dotnet format Cerneala.slnx --no-restore --verify-no-changes`: clean.
+- `git diff --check`: clean.
+- The Playground generated source contains `ComponentTemplate<Button>`, `RequirePart`, owner bindings and `RegisterLifetime` for the reactive conditions.
+- The compiled playground starts, creates the native window `Cerneala generator playground` and remains responsive.
+- RoslynIndexer reports valid index, without dirty files or warnings.

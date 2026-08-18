@@ -1,167 +1,167 @@
-# Plan detaliat pentru Codex — Roslyn Repo Indexer
+# Detailed plan for Codex — Roslyn Repo Indexer
 
-> Scop: implementează un indexer Roslyn simplu, performant și complet pentru daily usage, care poate funcționa ca motor de căutare local pentru întregul repository. Nu folosi AI embedded, embeddings, vector DB, LLM local/cloud sau motoare externe de căutare. Folosește Roslyn pentru indexarea semantică a codului .NET și un index inversat simplu, scris în cod, pentru căutare text.
+> Goal: implement a simple, performant and complete Roslyn indexer for daily usage, which can work as a local search engine for the entire repository. Do not use embedded AI, embeddings, vector DB, local/cloud LLM or external search engines. It uses Roslyn for semantic indexing of .NET code and a simple inverted index written in code for text search.
 
-> Format: checklist nebifat intenționat. Codex trebuie să parcurgă taskurile de sus în jos și să nu lase TODO-uri, stub-uri sau „implement later”.
-
----
-
-## 0. Reguli obligatorii pentru implementare
-
-- [x] Implementează totul ca un tool local .NET, fără server, fără daemon permanent obligatoriu, fără servicii externe.
-- [x] Nu folosi modele AI, embeddings, vector search, ML.NET, OpenAI, Semantic Kernel, local LLM, cloud APIs sau librării similare.
-- [x] Nu folosi ElasticSearch, Lucene, Meilisearch, Typesense, SQLite FTS sau alt search engine extern.
-- [x] Nu trimite codul sursă în afara mașinii locale.
-- [x] Nu introduce HTTP clients, telemetry, analytics, upload, sync, background network calls sau servicii externe.
-- [x] Adaugă o verificare statică/test simplu care eșuează dacă proiectul tool-ului introduce dependențe evident AI/embedding/vector/HTTP/cloud.
-- [x] Folosește Roslyn pentru partea semantică: soluții/proiecte/documente, syntax trees, semantic models, simboluri și referințe.
-- [x] Folosește doar un index custom simplu pentru căutare: fișiere locale JSON/JSONL + dicționare în memorie.
-- [x] Căutarea trebuie să funcționeze pentru tot repo-ul: cod C# semantic + text search pentru fișiere text non-C# relevante.
-- [x] C# semantic indexing este obligatoriu și complet; non-C# text indexing este line-based, fără parser specializat.
-- [x] CLI-ul trebuie să poată fi folosit ușor de Codex sau de un developer uman.
-- [x] Toate comenzile importante trebuie să aibă output text human-readable și opțiune `--json` stabilă.
-- [x] Orice eroare de workspace/proiect/document trebuie logată clar; tool-ul trebuie să continue cu index parțial când este sigur.
-- [x] Nu lăsa cod duplicat mare, metode gigantice sau abstracții inutile; implementarea trebuie să rămână simplă.
-- [x] Nu face optimizări premature complicate; prioritizează: corectitudine, incrementalitate simplă, căutare rapidă, teste.
-- [x] Nu introduce threading agresiv; limitează paralelismul ca să nu explodeze memoria pe soluții mari.
-- [x] Nu indexa `bin`, `obj`, `.git`, `.vs`, `.idea`, `.vscode`, `node_modules`, `.roslyn-index`, `TestResults`, `artifacts`, `packages`.
-- [x] Nu indexa fișiere binare sau fișiere text foarte mari peste limita configurată.
-- [x] Nu scrie în afara repository-ului decât dacă userul cere explicit.
-- [x] Nu modifica sursa repo-ului indexat, în afară de adăugarea proiectului/tool-ului de indexare și a fișierelor lui de test.
+> Format: intentionally unchecked checklist. Codex must go through tasks from top to bottom and leave no TODOs, stubs or "implement later".
 
 ---
 
-## 1. Rezultat final așteptat
+## 0. Mandatory rules for implementation
 
-- [x] Creează un tool numit `ri` sau `roslyn-indexer`, cu proiect executabil packable ca .NET tool.
-- [x] Tool-ul trebuie să poată fi rulat din orice subfolder al repo-ului și să detecteze automat root-ul.
-- [x] Tool-ul trebuie să construiască indexul în folderul `.roslyn-index/` de la root-ul repo-ului.
-- [x] Tool-ul trebuie să poată face full index la prima rulare.
-- [x] Tool-ul trebuie să poată face incremental index la rulările următoare.
-- [x] Tool-ul trebuie să poată căuta simboluri, fișiere, text, referințe semantice aproximativ-indexate și referințe exacte on-demand.
-- [x] Tool-ul trebuie să poată sugera query-uri deterministe pentru agenți AI prin `ri suggest`, fără AI embedded.
-- [x] Tool-ul trebuie să poată diagnostica mediul prin `ri doctor`.
-- [x] Tool-ul trebuie să poată afișa rezultat cu path, line, column, kind, score, match reason și snippet.
-- [x] Tool-ul trebuie să suporte JSON output pentru integrare cu Codex.
-- [x] Tool-ul trebuie să includă teste unitare, teste de integrare și teste CLI.
-- [x] Tool-ul trebuie să includă un README scurt cu usage real.
-- [x] `dotnet build` trebuie să treacă.
-- [x] `dotnet test` trebuie să treacă.
-- [x] Nu trebuie să existe TODO-uri rămase în cod sau teste.
-
----
-
-## 2. Structura recomandată în repo
-
-- [x] Adaugă folderul `tools/RoslynRepoIndexer/`.
-- [x] Creează soluția `tools/RoslynRepoIndexer/RoslynRepoIndexer.sln`.
-- [x] Creează proiectul `tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynRepoIndexer.Core.csproj`.
-- [x] Creează proiectul `tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli/RoslynRepoIndexer.Cli.csproj`.
-- [x] Creează proiectul `tools/RoslynRepoIndexer/tests/RoslynRepoIndexer.Tests/RoslynRepoIndexer.Tests.csproj`.
-- [x] Adaugă toate proiectele în soluție.
-- [x] Fă `RoslynRepoIndexer.Cli` să refere `RoslynRepoIndexer.Core`.
-- [x] Fă `RoslynRepoIndexer.Tests` să refere `RoslynRepoIndexer.Core` și, unde este util, să ruleze CLI-ul ca proces.
-- [x] Dacă repo-ul folosește `Directory.Packages.props`, adaugă versiunile pachetelor acolo.
-- [x] Dacă repo-ul nu folosește Central Package Management, pune versiunile direct în `.csproj`.
-
-### Pachete runtime permise
-
-- [x] Adaugă `Microsoft.CodeAnalysis.CSharp.Workspaces`.
-- [x] Adaugă `Microsoft.CodeAnalysis.Workspaces.MSBuild`.
-- [x] Adaugă `Microsoft.Build.Locator`.
-- [x] Dacă repo-ul nu are deja pinning central, folosește versiunile stabile curente verificate la data planului: `Microsoft.CodeAnalysis.CSharp.Workspaces` `5.6.0`, `Microsoft.CodeAnalysis.Workspaces.MSBuild` `5.6.0`, `Microsoft.Build.Locator` `1.11.2`.
-- [x] Dacă repo-ul are deja pachete Roslyn pinuite, aliniază versiunile ca să nu introduci conflict între proiecte.
-- [x] Nu adăuga pachete runtime pentru CLI parsing; implementează parser simplu manual.
-- [x] Nu adăuga pachete runtime pentru logging; folosește `Console.Error`, JSONL log și clase simple interne.
-- [x] Nu adăuga pachete runtime pentru storage; folosește `System.Text.Json`, `FileStream`, `StreamReader`, `StreamWriter`.
-- [x] Nu adăuga pachete runtime pentru HTTP, telemetry, AI, embeddings sau vector search.
-
-### Pachete doar pentru teste
-
-- [x] Adaugă `Microsoft.NET.Test.Sdk`.
-- [x] Adaugă `xunit`.
-- [x] Adaugă `xunit.runner.visualstudio`.
-- [x] Nu adăuga framework de assertion separat decât dacă repo-ul îl folosește deja.
+- [x] Implements everything as a local .NET tool, no server, no mandatory permanent daemon, no external services.
+- [x] Do not use AI models, embeddings, vector search, ML.NET, OpenAI, Semantic Kernel, local LLM, cloud APIs or similar libraries.
+- [x] Do not use ElasticSearch, Lucene, Meilisearch, Typesense, SQLite FTS or any other external search engine.
+- [x] Don't send source code outside the local machine.
+- [x] Do not introduce HTTP clients, telemetry, analytics, upload, sync, background network calls or external services.
+- [x] Add a static check/simple test that fails if the tool project introduces obvious AI/embedding/vector/HTTP/cloud dependencies.
+- [x] Use Roslyn for the semantic part: solutions/projects/documents, syntax trees, semantic models, symbols and references.
+- [x] Use only a simple custom index for search: local JSON/JSONL files + in-memory dictionaries.
+- [x] Search should work for the whole repo: semantic C# code + text search for relevant non-C# text files.
+- [x] C# semantic indexing is mandatory and complete; non-C# text indexing is line-based, without a specialized parser.
+- [x] The CLI should be easily usable by Codex or a human developer.
+- [x] All important commands must have human-readable text output and stable `--json` option.
+- [x] Any workspace/project/document error must be clearly logged; the tool should continue with partial index when safe.
+- [x] Don't leave large duplicate code, gigantic methods or unnecessary abstractions; implementation must remain simple.
+- [x] Don't do complicated premature optimizations; prioritize: correctness, simple incrementality, fast search, tests.
+- [x] Does not introduce aggressive threading; limit parallelism so it doesn't blow up memory on large solutions.
+- [x] Do not index `bin`, `obj`, `.git`, `.vs`, `.idea`, `.vscode`, `node_modules`, `.roslyn-index`, `TestResults`, `artifacts`, `packages`.
+- [x] Do not index binary files or very large text files beyond the configured limit.
+- [x] Do not write outside the repository unless the user explicitly asks.
+- [x] Do not change the source of the indexed repo, other than adding the indexer project/tool ​​and its test files.
 
 ---
 
-## 3. Target framework și setup proiect
+## 1. Expected end result
 
-- [x] Targetează `net8.0` minim pentru proiectele tool-ului, dacă repo-ul permite.
-- [x] Dacă repo-ul impune `net9.0` sau `net10.0`, aliniază tool-ul la targetul standard al repo-ului.
-- [x] În proiectul CLI, setează `OutputType` la `Exe`.
-- [x] În proiectul CLI, setează `PackAsTool` la `true`.
-- [x] În proiectul CLI, setează `ToolCommandName` la `ri`.
-- [x] Activează `Nullable` în toate proiectele noi.
-- [x] Activează `ImplicitUsings` în toate proiectele noi.
-- [x] Setează `TreatWarningsAsErrors` la `true` pentru proiectele noi dacă repo-ul permite.
-- [x] Evită referințe directe la `Microsoft.Build.*` runtime în output, cu excepția `Microsoft.Build.Locator`.
-- [x] Înainte de orice folosire de API-uri MSBuild, apelează `MSBuildLocator.RegisterDefaults()` într-un punct izolat de startup.
-- [x] Implementează `ri --version`.
-- [x] Implementează `ri --help` și help per comandă.
-- [x] Asigură-te că proiectul CLI poate fi instalat ca local/global `dotnet tool`.
+- [x] Create a tool called `ri` or `roslyn-indexer`, with an executable project packable as a .NET tool.
+- [x] Tool should be able to be run from any subfolder of the repo and automatically detect root.
+- [x] The tool must build the index in the `.roslyn-index/` folder at the root of the repo.
+- [x] The tool must be able to do a full index on the first run.
+- [x] The tool must be able to make incremental index on subsequent runs.
+- [x] The tool must be able to search symbols, files, text, roughly-indexed semantic references and exact references on-demand.
+- [x] The tool must be able to suggest deterministic queries for AI agents via `ri suggest`, without embedded AI.
+- [x] The tool must be able to diagnose the environment through `ri doctor`.
+- [x] The tool must be able to display result with path, line, column, kind, score, match reason and snippet.
+- [x] Tool must support JSON output for integration with Codex.
+- [x] Tool must include unit tests, integration tests and CLI tests.
+- [x] The tool must include a short README with real usage.
+- [x] `dotnet build` must pass.
+- [x] `dotnet test` must pass.
+- [x] There should be no TODOs left in the code or tests.
 
 ---
 
-## 4. CLI — comenzi obligatorii
+## 2. Recommended structure in the repo
+
+- [x] Add folder `tools/RoslynRepoIndexer/`.
+- [x] Create the solution `tools/RoslynRepoIndexer/RoslynRepoIndexer.sln`.
+- [x] Create the project `tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Core/RoslynRepoIndexer.Core.csproj`.
+- [x] Create the project `tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli/RoslynRepoIndexer.Cli.csproj`.
+- [x] Create the project `tools/RoslynRepoIndexer/tests/RoslynRepoIndexer.Tests/RoslynRepoIndexer.Tests.csproj`.
+- [x] Add all projects to the solution.
+- [x] Make `RoslynRepoIndexer.Cli` refer to `RoslynRepoIndexer.Core`.
+- [x] Make `RoslynRepoIndexer.Tests` refer to `RoslynRepoIndexer.Core` and where useful run the CLI as a process.
+- [x] If the repo uses `Directory.Packages.props`, add the package versions there.
+- [x] If the repo does not use Central Package Management, put the versions directly in `.csproj`.
+
+### Allowed runtime packages
+
+- [x] Add `Microsoft.CodeAnalysis.CSharp.Workspaces`.
+- [x] Add `Microsoft.CodeAnalysis.Workspaces.MSBuild`.
+- [x] Add `Microsoft.Build.Locator`.
+- [x] If the repo does not already have central pinning, use the current stable versions verified at the plan date: `Microsoft.CodeAnalysis.CSharp.Workspaces` `5.6.0`, `Microsoft.CodeAnalysis.Workspaces.MSBuild` `5.6.0`, `Microsoft.Build.Locator` `1.11.2`.
+- [x] If the repo already has Roslyn packages pinned, align the versions so you don't conflict between projects.
+- [x] Do not add runtime packages for CLI parsing; implement simple parser manually.
+- [x] Do not add runtime packages for logging; uses `Console.Error`, JSONL log and simple internal classes.
+- [x] Do not add runtime packages for storage; use `System.Text.Json`, `FileStream`, `StreamReader`, `StreamWriter`.
+- [x] Do not add runtime packages for HTTP, telemetry, AI, embeddings or vector search.
+
+### Test packages only
+
+- [x] Add `Microsoft.NET.Test.Sdk`.
+- [x] Add `xunit`.
+- [x] Add `xunit.runner.visualstudio`.
+- [x] Don't add separate assertion framework unless the repo already uses it.
+
+---
+
+## 3. Target framework and project setup
+
+- [x] Target `net8.0` minimum for tool projects, if the repo allows.
+- [x] If the repo requires `net9.0` or `net10.0`, align the tool to the repo's standard target.
+- [x] In the CLI project, set `OutputType` to `Exe`.
+- [x] In the CLI project, set `PackAsTool` to `true`.
+- [x] In the CLI project, set `ToolCommandName` to `ri`.
+- [x] Enable `Nullable` in all new projects.
+- [x] Enable `ImplicitUsings` in all new projects.
+- [x] Set `TreatWarningsAsErrors` to `true` for new projects if the repo allows it.
+- [x] Avoid direct references to `Microsoft.Build.*` runtime in output, except `Microsoft.Build.Locator`.
+- [x] Before any use of MSBuild APIs, call `MSBuildLocator.RegisterDefaults()` in an isolated startup point.
+- [x] Implements `ri --version`.
+- [x] Implements `ri --help` and help per command.
+- [x] Make sure the CLI project can be installed as local/global `dotnet tool`.
+
+---
+
+## 4. CLI — mandatory commands
 
 ### `ri index`
 
-- [x] Implementează `ri index [path]`.
-- [x] Dacă `path` lipsește, folosește current directory.
-- [x] Detectează repo root pornind de la `path`.
-- [x] Construiește sau actualizează indexul din `.roslyn-index/`.
-- [x] Default: incremental index dacă există manifest valid.
-- [x] Suportă `--force` pentru full rebuild.
-- [x] Suportă `--json` pentru sumar machine-readable.
-- [x] Suportă `--include-generated` pentru source-generated documents Roslyn, default `false`.
-- [x] Suportă `--include-non-csharp-text true|false`, default `true`.
-- [x] Suportă `--max-text-file-bytes <bytes>`, default `1048576`.
-- [x] Suportă `--max-degree-of-parallelism <n>`, default `min(Environment.ProcessorCount, 4)`.
-- [x] Suportă `--config <file>`, default `.roslyn-index.json` dacă există.
-- [x] La final, afișează: repo root, soluții/proiecte detectate, docs indexate, docs skipped, simboluri, referințe, tokens, durată, warning count.
+- [x] Implements `ri index [path]`.
+- [x] If `path` is missing, use current directory.
+- [x] Detect root repo starting from `path`.
+- [x] Builds or updates the index from `.roslyn-index/`.
+- [x] Default: incremental index if valid manifest exists.
+- [x] Supports `--force` for full rebuild.
+- [x] Supports `--json` for machine-readable summary.
+- [x] Supports `--include-generated` for source-generated documents Roslyn, default `false`.
+- [x] Supports `--include-non-csharp-text true|false`, default `true`.
+- [x] Supports `--max-text-file-bytes <bytes>`, default `1048576`.
+- [x] Supports `--max-degree-of-parallelism <n>`, default `min(Environment.ProcessorCount, 4)`.
+- [x] Supports `--config <file>`, default `.roslyn-index.json` if it exists.
+- [x] Finally, show: repo root, solutions/projects detected, docs indexed, docs skipped, symbols, references, tokens, duration, warning count.
 
 ### `ri search`
 
-- [x] Implementează `ri search <query>`.
-- [x] Dacă indexul lipsește, afișează mesaj clar: rulează `ri index`.
-- [x] Caută în simboluri, text și fișiere.
-- [x] Suportă `--mode all|symbol|text|file|reference`, default `all`.
-- [x] Suportă `--kind <kind1,kind2>` pentru simboluri: `namespace,type,class,record,struct,interface,enum,delegate,method,constructor,property,indexer,event,field,enum-member,operator,local-function,parameter,local`.
-- [x] Suportă `--path <substring-or-glob-lite>`.
-- [x] Suportă `--project <name-or-path-substring>`.
-- [x] Suportă `--from-file <path>` pentru context-aware ranking.
-- [x] Suportă `--from-project <projectName>` pentru context-aware ranking.
-- [x] Suportă `--include-tests` și `--exclude-tests`.
-- [x] Suportă `--include-generated` pentru search explicit în fișiere generate indexate.
-- [x] Suportă `--limit <n>`, default `50`.
-- [x] Suportă `--json`.
-- [x] Suportă query cu ghilimele pentru phrase search simplu: `"Customer Service"`.
-- [x] Suportă token search case-insensitive by default.
-- [x] Suportă exact symbol search dacă query-ul arată ca FQN: `Namespace.Type.Member`.
-- [x] Rezultatele trebuie sortate stabil: score desc, path asc, line asc, column asc.
+- [x] Implements `ri search <query>`.
+- [x] If index is missing, display clear message: running `ri index`.
+- [x] Search in symbols, text and files.
+- [x] Supports `--mode all|symbol|text|file|reference`, default `all`.
+- [x] Supports `--kind <kind1,kind2>` for symbols: `namespace,type,class,record,struct,interface,enum,delegate,method,constructor,property,indexer,event,field,enum-member,operator,local-function,parameter,local`.
+- [x] Supports `--path <substring-or-glob-lite>`.
+- [x] Supports `--project <name-or-path-substring>`.
+- [x] Supports `--from-file <path>` for context-aware ranking.
+- [x] Supports `--from-project <projectName>` for context-aware ranking.
+- [x] Supports `--include-tests` and `--exclude-tests`.
+- [x] Supports `--include-generated` for explicit search in generated indexed files.
+- [x] Supports `--limit <n>`, default `50`.
+- [x] Supports `--json`.
+- [x] Supports query with quotes for simple phrase search: `"Customer Service"`.
+- [x] Supports token search case-insensitive by default.
+- [x] Supports exact symbol search if the query looks like FQN: `Namespace.Type.Member`.
+- [x] The results must be sorted stably: score desc, path asc, line asc, column asc.
 
 ### `ri suggest`
 
-- [x] Implementează `ri suggest <natural-language-question>`.
-- [x] Scop: traduce întrebări naturale în sugestii deterministe de comenzi `ri search`, `ri goto` și `ri refs`.
-- [x] Nu executa automat sugestiile în varianta default; doar propune comenzile.
-- [x] Nu folosi AI, embeddings, LLM, vector DB, servicii externe sau modele locale.
-- [x] Folosește doar indexul local existent: simboluri, tokens, path-uri, referințe și metadata de proiect.
-- [x] Suportă `--json`.
-- [x] Suportă `--limit <n>`, default `5`.
-- [x] Suportă `--execute-top <n>` opțional, default `0`, pentru a rula primele N sugestii și a returna rezultate combinate.
-- [x] Detectează intenții simple:
-  - [x] „unde este definit X?” / „where is X defined?” => sugerează `ri goto X`.
-  - [x] „cine folosește X?” / „where is X used?” / „unde e apelat X?” => sugerează `ri refs X`.
-  - [x] „unde se face X?” / „how is X done?” => sugerează `ri search` cu tokenuri extrase.
-  - [x] „config/settings/options” => boost pe config files, options classes și path-uri relevante.
-  - [x] „controller/endpoint/route/api” => boost pe Controllers, Minimal APIs și route-like code.
-  - [x] „test/spec/fixture” => include și boost pe proiecte/fișiere de test.
-- [x] Extrage tokenuri cu același `Tokenizer` folosit de search.
-- [x] Elimină stopwords română/engleză: `unde`, `care`, `cum`, `cine`, `este`, `sunt`, `se`, `face`, `găsește`, `find`, `where`, `how`, `what`, `who`, `is`, `are`, `the`, `a`, `an`, `to`, `of`.
-- [x] Păstrează termeni code-like: CamelCase, PascalCase, snake_case, kebab-case, quoted phrases, FQN-uri și identificatori cu `.`.
-- [x] Mapează sinonime simple și deterministe:
+- [x] Implements `ri suggest <natural-language-question>`.
+- [x] Purpose: translate natural queries into deterministic command suggestions `ri search`, `ri goto` and `ri refs`.
+- [x] Does not automatically execute the suggestions in the default version; just suggest the commands.
+- [x] Do not use AI, embeddings, LLM, vector DB, external services or local models.
+- [x] Use only existing local index: symbols, tokens, paths, references and project metadata.
+- [x] Supports `--json`.
+- [x] Supports `--limit <n>`, default `5`.
+- [x] Supports optional `--execute-top <n>`, default `0`, to run the first N suggestions and return combined results.
+- [x] Detect simple intents:
+  - [x] "where is X defined?" / "where is X defined?" => suggest `ri goto X`.
+  - [x] "who uses X?" / "where is X used?" / "where is X called?" => suggest `ri refs X`.
+  - [x] "where is X made?" / "how is X done?" => suggest `ri search` with extracted tokens.
+  - [x] "config/settings/options" => boost on config files, options classes and relevant paths.
+  - [x] "controller/endpoint/route/api" => boost on Controllers, Minimal APIs and route-like code.
+  - [x] "test/spec/fixture" => also includes boost on projects/test files.
+- [x] Extracts tokens with the same `Tokenizer` used by search.
+- [x] Eliminates Romanian/English stopwords: `unde`, `care`, `cum`, `cine`, `este`, `sunt`, `se`, `face`, `găsește`, `find`, `where`, `how`, `what`, `who`, `is`, `are`, `the`, `a`, `an`, `to`, `of`.
+- [x] Keep code-like terms: CamelCase, PascalCase, snake_case, kebab-case, quoted phrases, FQNs and identifiers with `.`.
+- [x] Map simple and deterministic synonyms:
   - [x] `login`, `auth`, `authentication`, `authorize`, `jwt`, `token`.
   - [x] `config`, `settings`, `options`.
   - [x] `db`, `database`, `repository`, `context`, `DbContext`.
@@ -169,97 +169,96 @@
   - [x] `validate`, `validation`, `validator`.
   - [x] `serialize`, `json`, `deserialize`.
   - [x] `save`, `persist`, `store`, `insert`, `update`.
-- [x] Pentru fiecare sugestie returnează: `command`, `query`, `mode`, `confidence`, `reason`, `expectedResultKind`.
-- [x] Sortează sugestiile determinist după `confidence desc`, apoi `command asc`.
-- [x] Dacă indexul lipsește, returnează mesaj clar: rulează `ri index`.
+- [x] For each suggestion return: `command`, `query`, `mode`, `confidence`, `reason`, `expectedResultKind`.
+- [x] Sorts suggestions deterministically by `confidence desc`, then `command asc`.
+- [x] If index is missing, return clear message: running `ri index`.
 
 ### `ri refs`
 
-- [x] Implementează `ri refs <symbol-query>`.
-- [x] Caută întâi simbolul în indexul local.
-- [x] Dacă există mai multe simboluri candidate, afișează lista de candidați și cere `--symbol-id` pentru dezambiguizare.
-- [x] Suportă `--symbol-id <id>`.
-- [x] Suportă `--exact` pentru referințe exacte via Roslyn `SymbolFinder.FindReferencesAsync` on-demand.
-- [x] Default: folosește referințele semantice indexate, apoi recomandă `--exact` dacă rezultatul poate fi ambiguu.
-- [x] Suportă `--json`.
-- [x] Afișează path, line, column, snippet și kind-ul referinței.
+- [x] Implements `ri refs <symbol-query>`.
+- [x] First look for the symbol in the local index.
+- [x] If there are multiple candidate symbols, display the candidate list and ask for `--symbol-id` for disambiguation.
+- [x] Supports `--symbol-id <id>`.
+- [x] Supports `--exact` for accurate references via Roslyn `SymbolFinder.FindReferencesAsync` on-demand.
+- [x] Default: use indexed semantic references, then recommend `--exact` if the result can be ambiguous.
+- [x] Supports `--json`.
+- [x] Displays the path, line, column, snippet and kind of the reference.
 
 ### `ri goto`
 
-- [x] Implementează `ri goto <symbol-query>`.
-- [x] Returnează declarațiile potrivite.
-- [x] Suportă `--json`.
-- [x] Suportă `--limit`, default `20`.
-- [x] Pentru overload-uri, afișează semnătura completă.
+- [x] Implements `ri goto <symbol-query>`.
+- [x] Returns matching statements.
+- [x] Supports `--json`.
+- [x] Supports `--limit`, default `20`.
+- [x] For overloads, show full signature.
 
 ### `ri symbols`
 
-- [x] Implementează `ri symbols`.
-- [x] Suportă `--prefix <prefix>`.
-- [x] Suportă `--contains <text>`.
-- [x] Suportă `--kind <kind1,kind2>`.
-- [x] Suportă `--json`.
-- [x] Suportă `--limit`, default `100`.
+- [x] Implements `ri symbols`.
+- [x] Supports `--prefix <prefix>`.
+- [x] Supports `--contains <text>`.
+- [x] Supports `--kind <kind1,kind2>`.
+- [x] Supports `--json`.
+- [x] Supports `--limit`, default `100`.
 
 ### `ri doctor`
 
-- [x] Implementează `ri doctor [path]`.
-- [x] Detectează repo root.
-- [x] Detectează `.sln`, `.slnx` și `.csproj` disponibile.
-- [x] Detectează SDK-urile .NET instalate, dacă pot fi citite fără build.
-- [x] Verifică dacă MSBuild poate fi localizat și înregistrat prin `Microsoft.Build.Locator`.
-- [x] Verifică dacă `MSBuildWorkspace` poate deschide soluția/proiectele selectate.
-- [x] Raportează proiecte unsupported sau care nu se pot încărca.
-- [x] Raportează directoare și fișiere skip-uite de configurare.
-- [x] Raportează dacă `.roslyn-index/` există și dacă schema este compatibilă.
-- [x] Nu modifică indexul și nu scrie fișiere, cu excepția outputului către stdout/stderr.
-- [x] Suportă `--json`.
-- [x] Returnează diagnostics machine-readable: `checks`, `status`, `message`, `severity`, `details`.
+- [x] Implements `ri doctor [path]`.
+- [x] Detect root repo.
+- [x] Detect `.sln`, `.slnx` and `.csproj` available.
+- [x] Detect installed .NET SDKs, if they can be read without build.
+- [x] Check if MSBuild can be located and registered via `Microsoft.Build.Locator`.
+- [x] Checks if `MSBuildWorkspace` can open the selected solution/projects.
+- [x] Report unsupported or unloadable projects.
+- [x] Report skipped configuration files and directories.
+- [x] Reports if `.roslyn-index/` exists and if the scheme is compatible.
+- [x] Do not change index or write files except output to stdout/stderr.
+- [x] Supports `--json`.
+- [x] Returns machine-readable diagnostics: `checks`, `status`, `message`, `severity`, `details`.
 
 ### `ri status`
 
-- [x] Implementează `ri status [path]`.
-- [x] Arată dacă indexul există.
-- [x] Arată schema version.
-- [x] Arată repo root indexat.
-- [x] Arată data ultimei indexări.
-- [x] Arată numărul de documente, simboluri, referințe, tokens.
-- [x] Arată câte fișiere par dirty față de manifest.
-- [x] Arată dacă indexul este stale, missing, valid, corrupt sau schema-incompatible.
-- [x] Arată ultimele warning-uri relevante.
-- [x] Suportă `--json`.
-- [x] Nu pornește Roslyn/MSBuild; trebuie să folosească doar filesystem + manifest.
+- [x] Implements `ri status [path]`.
+- [x] Shows if the index exists.
+- [x] Show version scheme.
+- [x] Show indexed root repo.
+- [x] Shows the date of the last indexing.
+- [x] Shows the number of documents, symbols, references, tokens.
+- [x] Shows how many files appear dirty against the manifest.
+- [x] Shows if the index is stale, missing, valid, corrupt or schema-incompatible.
+- [x] Shows the last relevant warnings.
+- [x] Supports `--json`.
+- [x] Not starting Roslyn/MSBuild; must only use filesystem + manifest.
 
 ### `ri clean`
 
-- [x] Implementează `ri clean [path]`.
-- [x] Șterge folderul `.roslyn-index/` doar din repo root detectat.
-- [x] Cere `--yes` pentru ștergere fără confirmare interactivă.
-- [x] Nu șterge nimic dacă repo root nu este detectat sigur.
+- [x] Implements `ri clean [path]`.
+- [x] Delete folder `.roslyn-index/` only from detected root repo.
+- [x] Request `--yes` for deletion without interactive confirmation.
+- [x] Don't delete anything if the root repo is not detected for sure.
 
 ---
 
-## 5. Coduri de exit obligatorii
+## 5. Mandatory exit codes
 
-- [x] Returnează `0` pentru succes.
-- [x] Returnează `1` pentru user/input error: comandă invalidă, argumente invalide, query lipsă, path invalid.
-- [x] Returnează `2` pentru repo/project/workspace loading error critic.
-- [x] Returnează `3` pentru index unavailable, missing, corrupt sau schema-incompatible când comanda cere index existent.
-- [x] Returnează `4` pentru internal error neașteptat.
-- [x] Returnează `5` pentru timeout/cancelled.
-- [x] `ri doctor` poate returna `0` dacă poate produce diagnostics chiar dacă unele checks sunt warning/fail; folosește exit non-zero doar când doctor însuși nu poate rula.
-- [x] În `--json`, include mereu `exitCode`, `success`, `warnings`, `errors`.
-- [x] Documentează codurile de exit în README.
-- [x] Testează codurile de exit pentru failure modes comune.
+- [x] Returns `0` on success.
+- [x] Returns `1` for user/input error: invalid command, invalid arguments, missing query, invalid path.
+- [x] Returns `2` for critical repo/project/workspace loading error.
+- [x] Returns `3` for unavailable, missing, corrupt or schema-incompatible index when the command asks for an existing index.
+- [x] Returns `4` for unexpected internal error.
+- [x] Returns `5` for timeout/cancelled.
+- [x] `ri doctor` can return `0` if it can produce diagnostics even if some checks are warning/fail; use exit non-zero only when doctor itself cannot run.
+- [x] In `--json`, always include `exitCode`, `success`, `warnings`, `errors`.
+- [x] Document the exit codes in the README.
+- [x] Test exit codes for common failure modes.
 
 ---
 
 ## 6. Config file `.roslyn-index.json`
 
-- [x] Dacă fișierul există în repo root, citește-l automat.
-- [x] Dacă fișierul nu există, folosește defaulturi interne.
-- [x] Suportă JSON cu schema simplă:
-
+- [x] If the file exists in the root repo, read it automatically.
+- [x] If the file does not exist, use internal defaults.
+- [x] Supports JSON with simple schema:
 ```json
 {
   "solution": null,
@@ -301,435 +300,429 @@
   ]
 }
 ```
-
-- [x] Validează configul și afișează warning clar pentru proprietăți necunoscute sau valori invalide.
-- [x] Nu pica dacă lipsește o proprietate; folosește default.
-- [x] Nu implementa globbing complex; pentru `excludeDirectories`, compară path segment case-insensitive pe Windows și case-sensitive pe Linux/macOS.
-- [x] Pentru `excludeFileSuffixes`, compară extensii case-insensitive.
-
----
-
-## 7. Descoperirea repo-ului
-
-- [x] Creează clasa `RepositoryDiscovery`.
-- [x] Pornind de la path-ul primit sau current directory, urcă până găsești `.git`.
-- [x] Dacă nu există `.git`, urcă până găsești `.sln`, `.slnx` sau `.csproj`.
-- [x] Dacă nu se găsește nimic relevant, returnează eroare cu mesaj explicit.
-- [x] Normalizează root path la full path fără separator final.
-- [x] Păstrează path-uri relative la repo root în index.
-- [x] Pentru enumerare text non-C#, folosește `git ls-files -co --exclude-standard` dacă `.git` există și `git` este disponibil.
-- [x] Dacă `git ls-files` eșuează, fallback la `Directory.EnumerateFiles` cu excluderile configurate.
-- [x] Nu include fișiere din `.roslyn-index/` în index.
+- [x] Validate config and show clear warning for unknown properties or invalid values.
+- [x] Don't fail if a property is missing; use default.
+- [x] Does not implement complex globbing; for `excludeDirectories`, compare path segment case-insensitive on Windows and case-sensitive on Linux/macOS.
+- [x] For `excludeFileSuffixes`, compare case-insensitive extensions.
 
 ---
 
-## 8. Descoperirea soluțiilor și proiectelor
+## 7. Discovering the repo
 
-- [x] Creează clasa `WorkspaceDiscovery`.
-- [x] Dacă configul specifică `solution`, folosește soluția respectivă.
-- [x] Dacă există exact o soluție `.sln` sau `.slnx` în root, folosește-o.
-- [x] Dacă există mai multe soluții în root, indexează toate și dedupează documentele după `fullPath + projectContext`.
-- [x] Dacă nu există soluții în root, caută recursiv `.sln` și `.slnx`, excluzând directoarele ignorate.
-- [x] Dacă nu există soluții, caută recursiv `.csproj`, excluzând directoarele ignorate.
-- [x] Deschide soluțiile cu `MSBuildWorkspace.OpenSolutionAsync`.
-- [x] Deschide proiectele standalone cu `MSBuildWorkspace.OpenProjectAsync`.
-- [x] Atașează handler la `workspace.WorkspaceFailed` și colectează warnings/errors.
-- [x] Dacă un proiect nu se poate încărca, loghează și continuă cu restul proiectelor.
-- [x] Dacă niciun document C# nu poate fi încărcat, eșuează cu exit code `4`.
-- [x] Pentru fiecare proiect, păstrează `ProjectId`, `Name`, `FilePath`, `Language`, target framework/context dacă este disponibil.
-- [x] Dedupează documentele linkuite: același `FilePath` poate apărea în mai multe proiecte; păstrează fiecare context semantic, dar evită duplicate în text index.
+- [x] Creates class `RepositoryDiscovery`.
+- [x] Starting from the received path or current directory, go up until you find `.git`.
+- [x] If there is no `.git`, go up until you find `.sln`, `.slnx` or `.csproj`.
+- [x] If nothing relevant is found, return error with explicit message.
+- [x] Normalizes root path to full path without trailing separator.
+- [x] Keep paths relative to the root repo in the index.
+- [x] For non-C# text enumeration, use `git ls-files -co --exclude-standard` if `.git` exists and `git` is available.
+- [x] If `git ls-files` fails, fallback to `Directory.EnumerateFiles` with configured exclusions.
+- [x] Do not include files from `.roslyn-index/` in the index.
 
 ---
 
-## 9. Modele de date interne
+## 8. Discovering solutions and projects
 
-- [x] Creează record `IndexManifest`.
-- [x] Creează record `ProjectEntry`.
-- [x] Creează record `DocumentEntry`.
-- [x] Creează record `SymbolEntry`.
-- [x] Creează record `ReferenceEntry`.
-- [x] Creează record `TokenPosting`.
-- [x] Creează record `SearchResult`.
-- [x] Creează record `QuerySuggestion`.
-- [x] Creează record `CommandResponse<T>` pentru output JSON uniform.
-- [x] Creează record `IndexDiagnostics`.
+- [x] Creates class `WorkspaceDiscovery`.
+- [x] If the config specifies `solution`, use that solution.
+- [x] If there is exactly one solution `.sln` or `.slnx` in root, use it.
+- [x] If there are multiple solutions in the root, index them all and dedupe the docs after `fullPath + projectContext`.
+- [x] If no solutions in root, recursively search for `.sln` and `.slnx`, excluding ignored directories.
+- [x] If no solutions, search recursively for `.csproj`, excluding ignored directories.
+- [x] Open the solutions with `MSBuildWorkspace.OpenSolutionAsync`.
+- [x] Open standalone projects with `MSBuildWorkspace.OpenProjectAsync`.
+- [x] Attach handler to `workspace.WorkspaceFailed` and collect warnings/errors.
+- [x] If a project cannot be loaded, log in and continue with the rest of the projects.
+- [x] If no C# document can be loaded, fail with exit code `4`.
+- [x] For each project, keep `ProjectId`, `Name`, `FilePath`, `Language`, target framework/context if available.
+- [x] Dedupe linked documents: the same `FilePath` can appear in several projects; preserves each semantic context but avoids duplicates in index text.
+
+---
+
+## 9. Internal data models
+
+- [x] Create record `IndexManifest`.
+- [x] Create record `ProjectEntry`.
+- [x] Create record `DocumentEntry`.
+- [x] Create record `SymbolEntry`.
+- [x] Create record `ReferenceEntry`.
+- [x] Create record `TokenPosting`.
+- [x] Create record `SearchResult`.
+- [x] Create record `QuerySuggestion`.
+- [x] Create record `CommandResponse<T>` for uniform JSON output.
+- [x] Create record `IndexDiagnostics`.
 
 ### `IndexManifest`
 
-- [x] Include `SchemaVersion`.
-- [x] Include `ToolVersion`.
-- [x] Include `RepoRoot`.
-- [x] Include `CreatedUtc`.
-- [x] Include `UpdatedUtc`.
-- [x] Include `ConfigHash`.
-- [x] Include `WorkspaceInputsHash`.
-- [x] Include lista de soluții/proiecte indexate.
-- [x] Include map `DocumentsByRelativePath` cu `DocumentState`.
-- [x] Include counters: `DocumentCount`, `SymbolCount`, `ReferenceCount`, `TokenCount`, `WarningCount`.
+- [x] Includes `SchemaVersion`.
+- [x] Includes `ToolVersion`.
+- [x] Includes `RepoRoot`.
+- [x] Includes `CreatedUtc`.
+- [x] Includes `UpdatedUtc`.
+- [x] Includes `ConfigHash`.
+- [x] Includes `WorkspaceInputsHash`.
+- [x] Includes list of indexed solutions/projects.
+- [x] Includes map `DocumentsByRelativePath` with `DocumentState`.
+- [x] Includes counters: `DocumentCount`, `SymbolCount`, `ReferenceCount`, `TokenCount`, `WarningCount`.
 
 ### `DocumentEntry`
 
-- [x] Include `DocumentId` intern stabil.
-- [x] Include `ProjectId`.
-- [x] Include `ProjectName`.
-- [x] Include `RelativePath`.
-- [x] Include `FullPath` doar transient, nu obligatoriu în index persistat.
-- [x] Include `Language`.
-- [x] Include `IsGenerated`.
-- [x] Include `IsNonCSharpText`.
-- [x] Include `LengthBytes`.
-- [x] Include `LastWriteUtc`.
-- [x] Include `ContentHash`.
-- [x] Include `DeclarationHash` pentru C#.
-- [x] Include `LineCount`.
+- [x] Includes `DocumentId` internally stable.
+- [x] Includes `ProjectId`.
+- [x] Includes `ProjectName`.
+- [x] Includes `RelativePath`.
+- [x] Include `FullPath` only transiently, not necessarily in persistent index.
+- [x] Includes `Language`.
+- [x] Includes `IsGenerated`.
+- [x] Includes `IsNonCSharpText`.
+- [x] Includes `LengthBytes`.
+- [x] Includes `LastWriteUtc`.
+- [x] Includes `ContentHash`.
+- [x] Includes `DeclarationHash` for C#.
+- [x] Includes `LineCount`.
 
 ### `SymbolEntry`
 
-- [x] Include `SymbolId` stabil.
-- [x] Include `DocumentId`.
-- [x] Include `ProjectId`.
-- [x] Include `Kind`.
-- [x] Include `Name`.
-- [x] Include `MetadataName`.
-- [x] Include `FullyQualifiedName`.
-- [x] Include `ContainerName`.
-- [x] Include `Signature`.
-- [x] Include `Accessibility`.
-- [x] Include `Modifiers` relevante: `static`, `abstract`, `virtual`, `override`, `async`, `partial`, `readonly`, `required`.
-- [x] Include `FilePath` relativ.
-- [x] Include `StartLine`, `StartColumn`, `EndLine`, `EndColumn`.
-- [x] Include `SpanStart`, `SpanLength`.
-- [x] Include `IsDefinition`.
-- [x] Include `IsPartial`.
-- [x] Include `ParameterTypes` pentru overload-uri.
-- [x] Include `ReturnType` pentru metode/proprietăți unde există.
+- [x] Includes stable `SymbolId`.
+- [x] Includes `DocumentId`.
+- [x] Includes `ProjectId`.
+- [x] Includes `Kind`.
+- [x] Includes `Name`.
+- [x] Includes `MetadataName`.
+- [x] Includes `FullyQualifiedName`.
+- [x] Includes `ContainerName`.
+- [x] Includes `Signature`.
+- [x] Includes `Accessibility`.
+- [x] Includes relevant `Modifiers`: `static`, `abstract`, `virtual`, `override`, `async`, `partial`, `readonly`, `required`.
+- [x] Includes relative `FilePath`.
+- [x] Includes `StartLine`, `StartColumn`, `EndLine`, `EndColumn`.
+- [x] Includes `SpanStart`, `SpanLength`.
+- [x] Includes `IsDefinition`.
+- [x] Includes `IsPartial`.
+- [x] Includes `ParameterTypes` for overloads.
+- [x] Include `ReturnType` for methods/properties where they exist.
 
 ### `ReferenceEntry`
 
-- [x] Include `ReferenceId` sau compus `SymbolId + DocumentId + SpanStart`.
-- [x] Include `SymbolId`.
-- [x] Include `DocumentId`.
-- [x] Include `ProjectId`.
-- [x] Include `FilePath` relativ.
-- [x] Include `StartLine`, `StartColumn`, `EndLine`, `EndColumn`.
-- [x] Include `SpanStart`, `SpanLength`.
-- [x] Include `ReferenceKind`: `read`, `write`, `invocation`, `type-use`, `attribute`, `object-creation`, `inheritance`, `unknown`.
-- [x] Include `ReferencedName` pentru fallback text.
+- [x] Includes `ReferenceId` or compound `SymbolId + DocumentId + SpanStart`.
+- [x] Includes `SymbolId`.
+- [x] Includes `DocumentId`.
+- [x] Includes `ProjectId`.
+- [x] Includes relative `FilePath`.
+- [x] Includes `StartLine`, `StartColumn`, `EndLine`, `EndColumn`.
+- [x] Includes `SpanStart`, `SpanLength`.
+- [x] Includes `ReferenceKind`: `read`, `write`, `invocation`, `type-use`, `attribute`, `object-creation`, `inheritance`, `unknown`.
+- [x] Includes `ReferencedName` for fallback text.
 
 ### `TokenPosting`
 
-- [x] Include `Token` normalizat lowercase invariant.
-- [x] Include `DocumentId`.
-- [x] Include `FilePath` relativ.
-- [x] Include `Line`.
-- [x] Include `Column`.
-- [x] Include `Weight`: `symbol-name`, `identifier`, `keyword`, `string`, `comment`, `path`, `text`.
-- [x] Nu stoca snippets mari în posting; citește snippetul din fișier la afișare.
+- [x] Includes `Token` normalized lowercase invariant.
+- [x] Includes `DocumentId`.
+- [x] Includes relative `FilePath`.
+- [x] Includes `Line`.
+- [x] Includes `Column`.
+- [x] Includes `Weight`: `symbol-name`, `identifier`, `keyword`, `string`, `comment`, `path`, `text`.
+- [x] Do not store large snippets in posting; read the snippet from the file on display.
 
 ### `SearchResult`
 
-- [x] Include `Kind`.
-- [x] Include `Score`.
-- [x] Include `MatchReason` explicit și scurt.
-- [x] Include `SymbolId`, când există.
-- [x] Include `SymbolName`, când există.
-- [x] Include `ContainingType`, când există.
-- [x] Include `FullyQualifiedName`, când există.
-- [x] Include `ProjectName`.
-- [x] Include `FilePath` relativ.
-- [x] Include `StartLine`, `StartColumn`, `EndLine`, `EndColumn`.
-- [x] Include `Snippet`, doar în output/render, nu obligatoriu în index.
-- [x] Include `ReferenceKind`, când rezultatul este referință.
+- [x] Includes `Kind`.
+- [x] Includes `Score`.
+- [x] Include `MatchReason` explicit and short.
+- [x] Includes `SymbolId`, when it exists.
+- [x] Includes `SymbolName`, when present.
+- [x] Includes `ContainingType`, when available.
+- [x] Includes `FullyQualifiedName`, when present.
+- [x] Includes `ProjectName`.
+- [x] Includes relative `FilePath`.
+- [x] Includes `StartLine`, `StartColumn`, `EndLine`, `EndColumn`.
+- [x] Includes `Snippet`, only in output/render, not necessarily in the index.
+- [x] Include `ReferenceKind`, when the result is a reference.
 
 ### `QuerySuggestion`
 
-- [x] Include `Command` complet care poate fi rulat de Codex.
-- [x] Include `Query`.
-- [x] Include `Mode`.
-- [x] Include `Confidence` între `0.0` și `1.0`.
-- [x] Include `Reason`.
-- [x] Include `ExpectedResultKind`.
-- [x] Include `ExecutedResults` doar când `--execute-top` este folosit.
+- [x] Includes full `Command` runnable by Codex.
+- [x] Includes `Query`.
+- [x] Includes `Mode`.
+- [x] Includes `Confidence` between `0.0` and `1.0`.
+- [x] Includes `Reason`.
+- [x] Includes `ExpectedResultKind`.
+- [x] Includes `ExecutedResults` only when `--execute-top` is used.
 
 ### `CommandResponse<T>`
 
-- [x] Include `Success`.
-- [x] Include `ExitCode`.
-- [x] Include `Command`.
-- [x] Include `Query`, când comanda are query.
-- [x] Include `RepoRoot`.
-- [x] Include `ElapsedMs`.
-- [x] Include `IndexUpdatedUtc`, când există index.
-- [x] Include `Results` sau payload specific comenzii.
-- [x] Include `Warnings`.
-- [x] Include `Errors`.
+- [x] Includes `Success`.
+- [x] Includes `ExitCode`.
+- [x] Includes `Command`.
+- [x] Includes `Query`, when the order has a query.
+- [x] Includes `RepoRoot`.
+- [x] Includes `ElapsedMs`.
+- [x] Includes `IndexUpdatedUtc`, when index exists.
+- [x] Includes `Results` or payload specific to the order.
+- [x] Includes `Warnings`.
+- [x] Includes `Errors`.
 
 ---
 
-## 10. Persistența indexului
+## 10. Index Persistence
 
-- [x] Creează folder `.roslyn-index/v1/`.
-- [x] Scrie `manifest.json`.
-- [x] Scrie `documents.jsonl`.
-- [x] Scrie `symbols.jsonl`.
-- [x] Scrie `references.jsonl`.
-- [x] Scrie `tokens.jsonl` sau `token-postings.jsonl`.
-- [x] Scrie `diagnostics.jsonl`.
-- [x] Opțional, scrie cache pentru exact refs în `.roslyn-index/v1/exact-refs-cache/`, invalidat la schimbarea indexului.
-- [x] Folosește `System.Text.Json` cu opțiuni explicite și stabile.
-- [x] Scrie fișierele în `tmp-{guid}` și apoi fă replace atomic la nivel de folder sau fișier.
-- [x] Nu lăsa index corupt dacă procesul se oprește la mijloc.
-- [x] La citire, validează `SchemaVersion`.
-- [x] Dacă schema e incompatibilă, cere `ri index --force` sau rebuild automat cu mesaj clar.
-- [x] Nu serializa path-uri absolute în rezultatele persistate, cu excepția `RepoRoot` din manifest.
-- [x] Normalizează separatorul de path în index la `/`.
-- [x] Menține output determinist: sortează intrările după path, project, span.
-
----
-
-## 11. Hashing și incremental indexing
-
-- [x] Creează clasa `DocumentHasher`.
-- [x] Pentru fiecare fișier, citește rapid `LengthBytes` și `LastWriteUtc`.
-- [x] Dacă length și last write sunt identice cu manifestul, consideră fișierul unchanged fără recitire.
-- [x] Dacă s-au schimbat, calculează `ContentHash` folosind SHA-256 din BCL.
-- [x] Pentru C#, calculează `DeclarationHash` din lista de declarații: kind + fully-qualified name + semnătură + accessibility + modifiers.
-- [x] Dacă doar body-ul unei metode s-a schimbat și `DeclarationHash` rămâne identic, reindexează doar documentul schimbat.
-- [x] Dacă `DeclarationHash` s-a schimbat, marchează proiectul curent și proiectele dependente direct ca semantic dirty.
-- [x] Dacă s-au schimbat `.sln`, `.slnx`, `.csproj`, `.props`, `.targets`, `Directory.Build.props`, `Directory.Build.targets`, `Directory.Packages.props`, `global.json`, `NuGet.config`, `packages.lock.json`, marchează full rebuild semantic.
-- [x] Dacă s-au șters fișiere, elimină complet documentele, simbolurile, referințele și tokenurile lor.
-- [x] Dacă s-au adăugat fișiere, indexează-le și actualizează manifestul.
-- [x] Reindexează proiectele afectate când project references se schimbă.
-- [x] Reindexează documentele/proiectele afectate când compilation options se schimbă.
-- [x] Stochează `IndexSchemaVersion` și forțează full rebuild la schimbare de schema.
-- [x] Adaugă tests pentru stale index prevention.
-- [x] Dacă mai mult de 20% din documentele C# sunt dirty, fă full semantic rebuild pentru simplitate.
-- [x] După orice incremental run, reconstruiește fișierele globale `symbols.jsonl`, `references.jsonl`, `tokens.jsonl` din segmentele actuale ca să eviți intrări stale.
+- [x] Create folder `.roslyn-index/v1/`.
+- [x] Write `manifest.json`.
+- [x] Write `documents.jsonl`.
+- [x] Write `symbols.jsonl`.
+- [x] Write `references.jsonl`.
+- [x] Write `tokens.jsonl` or `token-postings.jsonl`.
+- [x] Write `diagnostics.jsonl`.
+- [x] Optionally write cache for exact refs in `.roslyn-index/v1/exact-refs-cache/`, invalidated on index change.
+- [x] Use `System.Text.Json` with explicit and stable options.
+- [x] Write files to `tmp-{guid}` and then do atomic replace at folder or file level.
+- [x] Don't leave corrupt index if process stops in the middle.
+- [x] On read, validate `SchemaVersion`.
+- [x] If the scheme is incompatible, ask for `ri index --force` or rebuild automatically with a clear message.
+- [x] Don't serialize absolute paths in persisted results, except `RepoRoot` in the manifest.
+- [x] Normalizes the path separator in the index to `/`.
+- [x] Maintain deterministic output: sort inputs by path, project, span.
 
 ---
 
-## 12. Încărcarea Roslyn corectă
+## 11. Hashing and incremental indexing
 
-- [x] Creează `MSBuildRegistration` cu metodă statică `EnsureRegistered()`.
-- [x] Apelează `MSBuildLocator.RegisterDefaults()` înainte de orice tip MSBuild.
-- [x] Ține codul care folosește MSBuild în metode apelate după registrare.
-- [x] Creează `MSBuildWorkspace` cu proprietăți rezonabile, inclusiv `LoadMetadataForReferencedProjects = true` dacă este disponibil și util.
-- [x] Atașează `WorkspaceFailed`.
-- [x] Încarcă `Solution` sau `Project` asincron.
-- [x] Folosește `CancellationToken` în toate operațiile async.
-- [x] Nu rula `dotnet build`, `dotnet test` sau scripturi ale repo-ului ca parte din indexare.
-- [x] Nu pica dacă restore-ul nu este perfect; indexează cât se poate și loghează lipsurile.
-- [x] Pentru source-generated docs, implementează doar dacă `--include-generated` este setat.
-
----
-
-## 13. Colectarea documentelor
-
-- [x] Din fiecare `Project`, citește `Documents`.
-- [x] Ignoră documentele fără `FilePath`.
-- [x] Ignoră documentele sub directoare excluse.
-- [x] Ignoră documentele din `bin`/`obj`, chiar dacă Roslyn le expune accidental.
-- [x] Include doar fișiere existente pe disk, cu excepția source-generated docs când sunt cerute explicit.
-- [x] Pentru fiecare document, creează `DocumentEntry`.
-- [x] Pentru același fișier fizic inclus în mai multe proiecte, creează documente semantice separate per proiect, dar un singur text entry pentru full-text deduplicat.
-- [x] Pentru non-C# text, enumeră fișierele repo-ului prin git/fallback și exclude fișierele deja reprezentate ca C# documents.
+- [x] Creates class `DocumentHasher`.
+- [x] For each file, quickly read `LengthBytes` and `LastWriteUtc`.
+- [x] If length and last write are identical to the manifest, consider the file unchanged without rereading.
+- [x] If they have changed, calculate `ContentHash` using SHA-256 from BCL.
+- [x] For C#, calculate `DeclarationHash` from the list of declarations: kind + fully-qualified name + signature + accessibility + modifiers.
+- [x] If only the body of a method has changed and `DeclarationHash` remains identical, reindex only the changed document.
+- [x] If `DeclarationHash` has changed, marks the current project and directly dependent projects as semantically dirty.
+- [x] If `.sln`, `.slnx`, `.csproj`, `.props`, `.targets`, `Directory.Build.props`, `Directory.Build.targets`, `Directory.Packages.props`, `global.json`, `NuGet.config`, `NuGet.config` have changed. `packages.lock.json`, marks full semantic rebuild.
+- [x] If files have been deleted, completely remove their documents, symbols, references and tokens.
+- [x] If files have been added, index them and update the manifest.
+- [x] Reindex affected projects when project references change.
+- [x] Reindex affected documents/projects when compilation options change.
+- [x] Store `IndexSchemaVersion` and force full rebuild on scheme change.
+- [x] Add tests for stale index prevention.
+- [x] If more than 20% of C# documents are dirty, do full semantic rebuild for simplicity.
+- [x] After any incremental run, rebuild global files `symbols.jsonl`, `references.jsonl`, `tokens.jsonl` from current segments to avoid stale entries.
 
 ---
 
-## 14. Colectarea simbolurilor C#
+## 12. Correct Roslyn loading
 
-- [x] Creează `SymbolCollector`.
-- [x] Pentru fiecare document C# dirty, obține `SyntaxRoot`.
-- [x] Pentru fiecare document C# dirty, obține un singur `SemanticModel` și reutilizează-l în acel document.
-- [x] Vizitează nodurile de declarație și obține simbolul declarat cu `semanticModel.GetDeclaredSymbol(...)`.
-- [x] Nu apela `GetDeclaredSymbol` pe fiecare nod arbitrar dacă nu este necesar; filtrează mai întâi după tipuri de nod relevante.
-- [x] Indexează namespace-uri file-scoped și block-scoped.
-- [x] Indexează clase.
-- [x] Indexează record classes.
-- [x] Indexează record structs.
-- [x] Indexează structuri.
-- [x] Indexează interfețe.
-- [x] Indexează enum-uri.
-- [x] Indexează delegate.
-- [x] Indexează constructori.
-- [x] Indexează destructori/finalizers.
-- [x] Indexează metode.
-- [x] Indexează local functions.
-- [x] Indexează operatori.
-- [x] Indexează conversion operators.
-- [x] Indexează proprietăți.
-- [x] Indexează indexers.
-- [x] Indexează events.
-- [x] Indexează fields.
-- [x] Indexează enum members.
-- [x] Indexează parameters.
-- [x] Indexează locals unde Roslyn oferă simbol stabil; marchează-le `local`.
-- [x] Indexează type parameters pentru tipuri/metode generice.
-- [x] Indexează extension methods și marchează-le cu modifier/flag.
-- [x] Indexează partial declarations ca intrări separate care au același FQN, dar locații diferite.
-- [x] Indexează overload-uri ca intrări separate prin semnătură completă.
-- [x] Pentru fiecare simbol, generează `SymbolId` stabil.
-- [x] Preferă `DocumentationCommentId.CreateDeclarationId(symbol)` pentru simboluri publice/member-level unde returnează valoare.
-- [x] Folosește `SymbolKey.Create(symbol, cancellationToken).ToString()` ca fallback semantic.
-- [x] Pentru locals/parameters fără ID global, folosește fallback determinist: `projectId + relativePath + span + name + kind`.
-- [x] Normalizează display string fără `global::` pentru UX, dar păstrează fully qualified form intern.
-- [x] Nu include simboluri din metadata externă ca declarații repo.
+- [x] Creates `MSBuildRegistration` with static method `EnsureRegistered()`.
+- [x] Call `MSBuildLocator.RegisterDefaults()` before any MSBuild type.
+- [x] Keep code that uses MSBuild in methods called after registration.
+- [x] Creates `MSBuildWorkspace` with reasonable properties, including `LoadMetadataForReferencedProjects = true` if available and useful.
+- [x] Attach `WorkspaceFailed`.
+- [x] Load `Solution` or `Project` asynchronously.
+- [x] Use `CancellationToken` in all async operations.
+- [x] Do not run `dotnet build`, `dotnet test` or repo scripts as part of indexing.
+- [x] Do not crash if the restore is not perfect; index as much as possible and log the missing ones.
+- [x] For source-generated docs, deploy only if `--include-generated` is set.
 
 ---
 
-## 15. Colectarea referințelor semantice indexate
+## 13. Collection of documents
 
-- [x] Creează `ReferenceCollector`.
-- [x] Nu rula `SymbolFinder.FindReferencesAsync` pentru fiecare simbol în timpul indexării; ar fi prea lent.
-- [x] Pentru fiecare document C# dirty, folosește același `SemanticModel` ca la simboluri.
-- [x] Vizitează noduri de folosire relevante: identifier names, generic names, member access names, qualified names, object creation types, invocation expressions, attribute syntax, base type syntax.
-- [x] Pentru fiecare nod relevant, apelează `semanticModel.GetSymbolInfo(node, ct)`.
-- [x] Dacă `Symbol` este null și există un singur `CandidateSymbol`, folosește candidatul cu flag `ambiguous` intern sau warning low-level.
-- [x] Ignoră simbolurile care nu au nicio legătură cu repo-ul dacă nu există declarație locală indexată.
-- [x] Mapează simbolul la `SymbolId` cu aceeași strategie ca la declarations.
-- [x] Evită duplicatele prin cheie `symbolId + documentId + spanStart + spanLength`.
-- [x] Clasifică reference kind simplu: invocation, object creation, attribute, inheritance, read, write, type-use, unknown.
-- [x] Pentru read/write, folosește sintaxa părinte și operații simple; nu implementa dataflow complex.
-- [x] Păstrează referințele aproximativ-indexate pentru căutări rapide.
-- [x] Pentru exact references, implementează `ri refs --exact` cu `SymbolFinder.FindReferencesAsync` on-demand și cache opțional în index.
+- [x] From each `Project`, read `Documents`.
+- [x] Ignore documents without `FilePath`.
+- [x] Ignore documents under excluded directories.
+- [x] Ignore documents in `bin`/`obj`, even if Roslyn accidentally exposes them.
+- [x] Only include existing files on disk, except source-generated docs when explicitly requested.
+- [x] For each document, create `DocumentEntry`.
+- [x] For the same physical file included in several projects, create separate semantic documents per project, but only one text entry for deduplicated full-text.
+- [x] For non-C# text, list repo files via git/fallback and exclude files already represented as C# documents.
 
 ---
 
-## 16. Indexarea textului și tokenizarea
+## 14. Collecting C# Symbols
 
-- [x] Creează `Tokenizer`.
-- [x] Tokenizarea trebuie să funcționeze pe C# și fișiere text.
-- [x] Split pe whitespace, punctuație, operatori și separators.
-- [x] Split suplimentar pe camelCase și PascalCase.
-- [x] Split suplimentar pe snake_case și kebab-case.
-- [x] Normalizează tokenurile la lowercase invariant.
-- [x] Păstrează și forma întreagă pentru identificatori compuși: `CustomerService` produce `customerservice`, `customer`, `service`.
-- [x] Pentru `IHttpClientFactory`, produce `ihttpclientfactory`, `http`, `client`, `factory`.
-- [x] Include tokenuri de lungime 1 doar dacă sunt semnificative în cod: `i`, `x`, `y`, `T` pentru generics; altfel filtrează-le din text simplu.
-- [x] Pentru C#, folosește tokens Roslyn ca să marchezi greutăți: identifier, keyword, string, comment.
-- [x] Pentru non-C# text, folosește citire line-by-line.
-- [x] Pentru path-uri, indexează segmentele de path și numele fișierului cu weight `path`.
-- [x] Nu indexa fișiere binare: detectează NUL bytes în primii 8KB.
-- [x] Nu indexa fișiere mai mari decât `maxTextFileBytes`, dar loghează skip.
+- [x] Create `SymbolCollector`.
+- [x] For each C# dirty document, get `SyntaxRoot`.
+- [x] For each C# dirty document, get a single `SemanticModel` and reuse it in that document.
+- [x] Visit the declaration nodes and get the token declared with `semanticModel.GetDeclaredSymbol(...)`.
+- [x] Don't call `GetDeclaredSymbol` on every arbitrary node if not necessary; first filter by relevant node types.
+- [x] Index file-scoped and block-scoped namespaces.
+- [x] Index classes.
+- [x] Index record classes.
+- [x] Index record structs.
+- [x] Index structures.
+- [x] Indexes interfaces.
+- [x] Index enums.
+- [x] Index delegates.
+- [x] Index constructors.
+- [x] Index destructors/finalizers.
+- [x] Index methods.
+- [x] Index local functions.
+- [x] Index operators.
+- [x] Index conversion operators.
+- [x] Index properties.
+- [x] Indexes indexers.
+- [x] Index events.
+- [x] Index fields.
+- [x] Index enum members.
+- [x] Index parameters.
+- [x] Index locales where Roslyn provides stable symbol; mark them `local`.
+- [x] Index type parameters for generic types/methods.
+- [x] Index extension methods and mark them with modifier/flag.
+- [x] Index partial declarations as separate entries that have the same FQN but different locations.
+- [x] Index overloads as separate entries by full signature.
+- [x] For each symbol, generate stable `SymbolId`.
+- [x] Prefer `DocumentationCommentId.CreateDeclarationId(symbol)` for public/member-level symbols where it returns value.
+- [x] Use `SymbolKey.Create(symbol, cancellationToken).ToString()` as semantic fallback.
+- [x] For locals/parameters without global ID, use deterministic fallback: `projectId + relativePath + span + name + kind`.
+- [x] Normalize display string without `global::` for UX, but keep fully qualified form internally.
+- [x] Do not include symbols from external metadata as repo declarations.
 
 ---
 
-## 17. Query suggestion engine determinist
+## 15. Collection of indexed semantic references
 
-- [x] Creează `SuggestionService`.
-- [x] `SuggestionService` primește întrebarea naturală, indexul încărcat și opțiunile CLI.
-- [x] Normalizează textul folosind `Tokenizer`.
-- [x] Elimină stopwords română/engleză.
-- [x] Păstrează frazele dintre ghilimele ca termeni cu prioritate.
-- [x] Detectează tokenuri code-like și le tratează ca posibili identificatori.
-- [x] Aplică sinonimele configurate sau hardcodate simplu.
-- [x] Detectează intenția principală: definition, references, broad search, config, endpoint, tests, persistence, validation, serialization.
-- [x] Generează 3-5 sugestii concrete, nu zeci.
-- [x] Sugestiile trebuie să fie comenzi CLI complete, ușor de rulat de Codex.
-- [x] Nu introduce explicații lungi în `reason`; maxim o propoziție scurtă.
-- [x] Nu executa `ri search` intern decât dacă userul a cerut `--execute-top`.
-- [x] Cu `--execute-top`, rulează doar comenzi index-based; nu rula `ri refs --exact` automat.
-- [x] Rezultatul trebuie să fie deterministic pentru aceeași întrebare și același index.
+- [x] Create `ReferenceCollector`.
+- [x] Don't run `SymbolFinder.FindReferencesAsync` for each symbol during indexing; it would be too slow.
+- [x] For each C# dirty document, use the same `SemanticModel` as for symbols.
+- [x] Visit relevant usage nodes: identifier names, generic names, member access names, qualified names, object creation types, invocation expressions, attribute syntax, base type syntax.
+- [x] For each relevant node, call `semanticModel.GetSymbolInfo(node, ct)`.
+- [x] If `Symbol` is null and there is only one `CandidateSymbol`, use the candidate with internal flag `ambiguous` or low-level warning.
+- [x] Ignore symbols that have nothing to do with the repo if there is no indexed local declaration.
+- [x] Maps the symbol to `SymbolId` with the same strategy as declarations.
+- [x] Avoid duplicates by key `symbolId + documentId + spanStart + spanLength`.
+- [x] Classifies reference kind simply: invocation, object creation, attribute, inheritance, read, write, type-use, unknown.
+- [x] For read/write, use parent syntax and simple operations; does not implement complex dataflow.
+- [x] Keeps references roughly-indexed for quick lookups.
+- [x] For exact references, implement `ri refs --exact` with `SymbolFinder.FindReferencesAsync` on-demand and optional index cache.
 
 ---
 
-## 18. Search engine simplu
+## 16. Text Indexing and Tokenization
 
-- [x] Creează `IndexReader` care încarcă manifest + jsonl în memorie.
-- [x] Creează `SearchService`.
-- [x] Construiește dicționare în memorie:
+- [x] Create `Tokenizer`.
+- [x] Tokenization should work on C# and text files.
+- [x] Split on whitespace, punctuation, operators and separators.
+- [x] Additional split on camelCase and PascalCase.
+- [x] Additional split on snake_case and kebab-case.
+- [x] Normalize tokens to invariant lowercase.
+- [x] Also preserves the full form for compound identifiers: `CustomerService` produces `customerservice`, `customer`, `service`.
+- [x] For `IHttpClientFactory`, produces `ihttpclientfactory`, `http`, `client`, `factory`.
+- [x] Include tokens of length 1 only if they are meaningful in the code: `i`, `x`, `y`, `T` for generics; otherwise filter them from plain text.
+- [x] For C#, use Roslyn tokens to mark weights: identifier, keyword, string, comment.
+- [x] For non-C# text, use line-by-line reading.
+- [x] For paths, index path segments and filenames with weight `path`.
+- [x] Don't index binary files: detect NUL bytes in the first 8KB.
+- [x] Don't index files bigger than `maxTextFileBytes`, but log skip.
+
+---
+
+## 17. Deterministic query suggestion engine
+
+- [x] Create `SuggestionService`.
+- [x] `SuggestionService` gets the natural query, loaded index and CLI options.
+- [x] Normalize text using `Tokenizer`.
+- [x] Eliminates Romanian/English stopwords.
+- [x] Keep the phrases in quotes as priority terms.
+- [x] Detect code-like tokens and treat them as possible identifiers.
+- [x] Apply configured or hardcoded synonyms simply.
+- [x] Detect the main intent: definition, references, broad search, config, endpoint, tests, persistence, validation, serialization.
+- [x] Generate 3-5 concrete suggestions, not dozens.
+- [x] Hints must be full CLI commands, easy to run by Codex.
+- [x] Do not enter long explanations in `reason`; a short sentence at most.
+- [x] Do not execute `ri search` internally unless the user requested `--execute-top`.
+- [x] With `--execute-top`, only run index-based commands; do not run `ri refs --exact` automatically.
+- [x] The result must be deterministic for the same query and the same index.
+
+---
+
+## 18. Simple search engine
+
+- [x] Creates `IndexReader` which loads manifest + jsonl into memory.
+- [x] Create `SearchService`.
+- [x] Build dictionaries in memory:
   - [x] `symbolsById`.
   - [x] `symbolsByLowerName`.
   - [x] `symbolsByLowerFullyQualifiedName`.
   - [x] `tokenToPostings`.
   - [x] `referencesBySymbolId`.
   - [x] `documentsById`.
-- [x] Nu ține snippets în memorie; citește linia din fișier la render.
-- [x] Query parser simplu:
-  - [x] Separă phrase query între ghilimele.
-  - [x] Separă tokens normale.
-  - [x] Recunoaște prefixe simple `kind:`, `path:`, `project:`, `mode:`.
-  - [x] Nu implementa limbaj query complex cu operatori booleeni compleți.
-- [x] Pentru symbol search:
-  - [x] Exact FQN match are scor maxim.
-  - [x] Exact simple name match are scor mare.
-  - [x] Prefix simple name match are scor mediu-mare.
-  - [x] Contains simple/FQN match are scor mediu.
-  - [x] CamelCase acronym match are scor mediu.
-  - [x] Token overlap cu nume/simbol are scor mic-mediu.
-- [x] Pentru text search:
-  - [x] Intersectează postings pentru toate tokenurile query unde este posibil.
-  - [x] Dacă intersecția e goală, folosește union cu scor mai mic.
-  - [x] Phrase search verifică linia/snippetul real din fișier înainte de rezultat.
-- [x] Pentru file search:
-  - [x] Caută în path segments și file name.
-- [x] Pentru reference search:
-  - [x] Găsește simboluri candidate, apoi citește `referencesBySymbolId`.
-- [x] Pentru context-aware search:
-  - [x] Dacă există `--from-file`, detectează proiectul documentului și boostează același proiect.
-  - [x] Dacă există `--from-project`, boostează proiectul respectiv.
-  - [x] Boosteză proiectele legate prin project references.
-  - [x] Penalizează test projects default, exceptând query-uri de test sau `--include-tests`.
-  - [x] Exclude test projects când `--exclude-tests` este setat.
-- [x] Deduplicate results după `path + line + column + kind + symbolId`.
-- [x] Sortează stabil.
-- [x] Limitează la `--limit`, dar calculează suficient intern ca să ai rezultate bune după filtrare.
+- [x] Don't keep snippets in memory; read line from file to render.
+- [x] Simple query parser:
+  - [x] Separate phrase query between quotes.
+  - [x] Separate normal tokens.
+  - [x] Recognize simple prefixes `kind:`, `path:`, `project:`, `mode:`.
+  - [x] Does not implement complex query language with full boolean operators.
+- [x] For symbol search:
+  - [x] Exact FQN match has maximum score.
+  - [x] Exactly simple name match has a high score.
+  - [x] Prefix simple name match has a medium-high score.
+  - [x] Contains simple/FQN match has an average score.
+  - [x] CamelCase acronym match has an average score.
+  - [x] Token overlap with name/symbol has low-medium score.
+- [x] For text search:
+  - [x] Intersect postings for all query tokens where possible.
+  - [x] If the intersection is empty, use union with lower score.
+  - [x] Phrase search checks the actual line/snippet in the file before the result.
+- [x] For file search:
+- [x] Search in path segments and file name.
+- [x] For reference search:
+  - [x] Find candidate symbols, then read `referencesBySymbolId`.
+- [x] For context-aware search:
+  - [x] If `--from-file` exists, detect the document project and boost the same project.
+  - [x] If `--from-project` exists, boost that project.
+  - [x] Boosts projects linked by project references.
+  - [x] Penalizes default test projects, except for test queries or `--include-tests`.
+  - [x] Exclude test projects when `--exclude-tests` is set.
+- [x] Deduplicated results after `path + line + column + kind + symbolId`.
+- [x] Sort stable.
+- [x] Limits to `--limit`, but calculates enough internally to get good results after filtering.
 
 ---
 
-## 19. Scoring recomandat
+## 19. Recommended scoring
 
-- [x] Pornește scorul de la `0`.
+- [x] Start the score from `0`.
 - [x] Exact FQN symbol match: `+1000`.
-- [x] Exact simple symbol name: `+800`.
+- [x] Exactly simple symbol name: `+800`.
 - [x] Prefix symbol name: `+600`.
 - [x] CamelCase acronym match: `+500`.
 - [x] Contains symbol/FQN: `+350`.
-- [x] Token match în symbol name: `+250` per token.
-- [x] Token match în path: `+120` per token.
-- [x] Token match în identifier: `+100` per token.
-- [x] Token match în keyword: `+60` per token.
-- [x] Token match în string/comment/text: `+40` per token.
-- [x] Phrase match exact în linie: `+300`.
-- [x] Boost pentru același proiect când `--from-file`/`--from-project` este folosit: `+120`.
-- [x] Boost pentru proiecte direct referențiate/referențiate de context: `+60`.
-- [x] Penalizare pentru test projects: `-80`, cu excepția query-urilor explicit test/spec/fixture sau `--include-tests`.
-- [x] Penalizare pentru fișier generated: `-100`, dacă include-generated este activ.
-- [x] Penalizare pentru path foarte adânc sau vendor-like dacă nu a fost exclus: `-20`.
-- [x] Fiecare scor trebuie să producă un `MatchReason` scurt: `exact-fqn`, `exact-symbol`, `prefix-symbol`, `token-overlap`, `path-match`, `reference-match`, `phrase-match`, `context-boost`.
-- [x] Păstrează scoringul într-o singură clasă `SearchScorer` și testează-l separat.
-- [x] Adaugă teste pentru ranking order și match reasons.
+- [x] Token match in symbol name: `+250` per token.
+- [x] Token match in path: `+120` per token.
+- [x] Token match in identifier: `+100` per token.
+- [x] Token match in keyword: `+60` per token.
+- [x] Token match in string/comment/text: `+40` per token.
+- [x] Phrase match exactly in line: `+300`.
+- [x] Boost for the same project when `--from-file`/`--from-project` is used: `+120`.
+- [x] Boost for directly referenced/context referenced projects: `+60`.
+- [x] Penalty for test projects: `-80`, except for explicit test/spec/fixture or `--include-tests` queries.
+- [x] Penalty for generated file: `-100`, if include-generated is active.
+- [x] Penalty for very deep or vendor-like path if not excluded: `-20`.
+- [x] Each score must produce a short `MatchReason`: `exact-fqn`, `exact-symbol`, `prefix-symbol`, `token-overlap`, `path-match`, `reference-match`, `phrase-match`, `context-boost`.
+- [x] Keep scoring in one class `SearchScorer` and test it separately.
+- [x] Add tests for ranking order and match reasons.
 
 ---
 
-## 20. Output human-readable
+## 20. Human-readable output
 
-- [x] Pentru fiecare rezultat, afișează o linie de titlu:
-
+- [x] For each result, display a title line:
 ```text
 [method] CustomerService.GetCustomerAsync(int id)  src/App/Services/CustomerService.cs:42:17  score=920
 ```
-
-- [x] Afișează snippet pe linia următoare:
-
+- [x] Display the snippet on the following line:
 ```text
     public Task<Customer> GetCustomerAsync(int id)
 ```
-
-- [x] Pentru simboluri, include container/FQN când nu e redundant.
-- [x] Pentru referințe, include `ref-kind`.
-- [x] Pentru rezultate multe, afișează `showing N of M`.
-- [x] Pentru warnings, afișează sumar pe stderr, nu amesteca în stdout când `--json` este folosit.
+- [x] For symbols, include container/FQN when not redundant.
+- [x] For reference, include `ref-kind`.
+- [x] For many results, display `showing N of M`.
+- [x] For warnings, show summary on stderr, don't mix in stdout when `--json` is used.
 
 ---
 
-## 21. Output JSON stabil și contract pentru agenți AI
+## 21. Stable JSON output and contract for AI agents
 
-- [x] Toate comenzile cu `--json` emit un singur obiect JSON valid, nu JSONL.
-- [x] Nu scrie text human-readable în stdout când `--json` este activ.
-- [x] Warnings și logs merg în câmpul JSON `warnings`; stderr poate primi doar erori fatale non-JSON.
-- [x] Definește un contract comun pentru toate comenzile:
-
+- [x] All commands with `--json` emit a single valid JSON object, not JSONL.
+- [x] Don't write human-readable text to stdout when `--json` is active.
+- [x] Warnings and logs go in JSON field `warnings`; stderr can only receive non-JSON fatal errors.
+- [x] Defines a common contract for all orders:
 ```json
 {
   "success": true,
@@ -744,24 +737,22 @@
   "errors": []
 }
 ```
-
-- [x] Pentru `ri search --json`, rezultatele trebuie să includă:
+- [x] For `ri search --json`, the results must include:
   - [x] `filePath`.
   - [x] `startLine`.
   - [x] `startColumn`.
   - [x] `endLine`.
   - [x] `endColumn`.
   - [x] `kind`.
-  - [x] `symbolId`, când există.
-  - [x] `symbolName`, când există.
-  - [x] `containingType`, când există.
-  - [x] `fullyQualifiedName`, când există.
+  - [x] `symbolId`, when it exists.
+  - [x] `symbolName`, when it exists.
+  - [x] `containingType`, when it exists.
+  - [x] `fullyQualifiedName`, when it exists.
   - [x] `projectName`.
   - [x] `score`.
   - [x] `matchReason`.
   - [x] `snippet`.
-- [x] Exemplu `ri search --json`:
-
+- [x] Example `ri search --json`:
 ```json
 {
   "success": true,
@@ -796,16 +787,14 @@
   "errors": []
 }
 ```
-
-- [x] Pentru `ri suggest --json`, rezultatele trebuie să includă:
+- [x] For `ri suggest --json`, the results must include:
   - [x] `command`.
   - [x] `query`.
   - [x] `mode`.
   - [x] `confidence`.
   - [x] `reason`.
   - [x] `expectedResultKind`.
-- [x] Exemplu `ri suggest --json`:
-
+- [x] Example `ri suggest --json`:
 ```json
 {
   "success": true,
@@ -828,421 +817,418 @@
   "errors": []
 }
 ```
-
-- [x] Pentru `ri index --json`, include counters și timings: `discoveryMs`, `workspaceLoadMs`, `semanticIndexMs`, `textIndexMs`, `persistMs`, `totalMs`.
-- [x] Pentru `ri refs --json`, include candidate ambiguity dacă există.
-- [x] Pentru `ri doctor --json`, include lista de checks cu `name`, `status`, `severity`, `message`, `details`.
-- [x] Pentru `ri status --json`, include `indexState`: `missing`, `valid`, `stale`, `corrupt`, `schema-incompatible`.
-- [x] Nu schimba numele câmpurilor după ce sunt introduse; adaugă câmpuri noi fără breaking change.
-- [x] Adaugă snapshot tests pentru forma JSON a fiecărei comenzi.
-
----
-
-## 22. Performanță pentru daily usage
-
-- [x] Search-ul din index existent nu trebuie să pornească Roslyn.
-- [x] Search-ul trebuie doar să citească fișierele indexului și liniile necesare pentru snippets.
-- [x] `ri status` nu trebuie să pornească Roslyn.
-- [x] `ri clean` nu trebuie să pornească Roslyn.
-- [x] `ri index` este singura comandă care pornește workspace Roslyn, cu excepția `ri refs --exact`.
-- [x] Nu păstra `SemanticModel` în cache global după ce documentul a fost procesat.
-- [x] Obține un singur `SemanticModel` per document procesat și reutilizează-l pentru declarații + referințe.
-- [x] Nu construi `Compilation` separat pentru fiecare nod.
-- [x] Procesează proiectele secvențial sau cu paralelism limitat.
-- [x] Procesează documentele cu paralelism limitat și configurabil.
-- [x] Folosește streaming IO pentru fișiere JSONL.
-- [x] Nu serializa obiecte Roslyn.
-- [x] Nu ține `Solution`, `Project`, `Compilation`, `SemanticModel` în indexul persistat.
-- [x] Pentru rezultate, citește snippetul direct din fișier doar pentru top results, nu pentru toate candidatele.
-- [x] Măsoară durate pentru: discovery, workspace load, semantic index, text index, persist, search load, search score.
-- [x] Scrie aceste timings în diagnostics și în outputul `ri index --json`.
+- [x] For `ri index --json`, includes counters and timings: `discoveryMs`, `workspaceLoadMs`, `semanticIndexMs`, `textIndexMs`, `persistMs`, `totalMs`.
+- [x] For `ri refs --json`, include candidate ambiguity if it exists.
+- [x] For `ri doctor --json`, includes the check list with `name`, `status`, `severity`, `message`, `details`.
+- [x] For `ri status --json`, includes `indexState`: `missing`, `valid`, `stale`, `corrupt`, `schema-incompatible`.
+- [x] Do not change the names of the fields after they are entered; add new fields without breaking change.
+- [x] Add snapshot tests for the JSON form of each command.
 
 ---
 
-## 23. Performance budgets și benchmark smoke tests
+## 22. Performance for daily usage
 
-- [x] Definește clase de repo pentru testare și documentare:
-  - [x] small: sub 500 fișiere.
-  - [x] medium: 500-5.000 fișiere.
-  - [x] large: 5.000-25.000 fișiere.
-- [x] Definește bugete măsurabile în README/config pentru:
+- [x] Search in existing index should not start Roslyn.
+- [x] Search only needs to read the index files and lines needed for snippets.
+- [x] `ri status` should not start Roslyn.
+- [x] `ri clean` should not start Roslyn.
+- [x] `ri index` is the only command that starts Roslyn workspace, except `ri refs --exact`.
+- [x] Don't keep `SemanticModel` in global cache after the document has been processed.
+- [x] Get a single `SemanticModel` per processed document and reuse it for statements + references.
+- [x] Do not build `Compilation` separately for each node.
+- [x] Process projects sequentially or with limited parallelism.
+- [x] Process documents with limited and configurable parallelism.
+- [x] Use streaming IO for JSONL files.
+- [x] Do not serialize Roslyn objects.
+- [x] Don't keep `Solution`, `Project`, `Compilation`, `SemanticModel` in persistent index.
+- [x] For results, read the snippet directly from the file only for top results, not for all candidates.
+- [x] Measures durations for: discovery, workspace load, semantic index, text index, persist, search load, search score.
+- [x] Write these timings in the diagnostics and in the `ri index --json` output.
+
+---
+## 23. Performance budgets and benchmark smoke tests
+
+- [x] Define repo classes for testing and documentation:
+  - [x] small: under 500 files.
+  - [x] medium: 500-5,000 files.
+  - [x] large: 5,000-25,000 files.
+- [x] Define measurable budgets in README/config for:
   - [x] cold index.
-  - [x] warm incremental index fără schimbări.
-  - [x] warm incremental index după o schimbare de fișier.
-  - [x] query latency pentru `ri search`.
-  - [x] query latency pentru `ri goto`.
-  - [x] query latency pentru `ri suggest`.
+  - [x] warm incremental index without changes.
+  - [x] warm incremental index after a file change.
+  - [x] query latency for `ri search`.
+  - [x] query latency for `ri goto`.
+  - [x] query latency for `ri suggest`.
   - [x] approximate refs latency.
-  - [x] exact refs latency cu timeout.
-  - [x] memorie maximă aproximativă.
-- [x] Nu pune praguri fragile în testele unitare normale.
-- [x] Pune benchmark/smoke tests separate, relaxate, care rulează robust în CI.
-- [x] Fiecare comandă trebuie să raporteze `elapsedMs`.
-- [x] `ri search`, `ri goto`, `ri symbols`, `ri status`, `ri suggest` nu trebuie să pornească Roslyn/MSBuild.
-- [x] `ri refs --exact` trebuie să aibă timeout configurabil și cancellation token.
+  - [x] exactly refs latency with timeout.
+  - [x] approximate maximum memory.
+- [x] Don't put fragile thresholds in normal unit tests.
+- [x] Put separate, relaxed benchmark/smoke tests that run robustly in CI.
+- [x] Each order must report `elapsedMs`.
+- [x] `ri search`, `ri goto`, `ri symbols`, `ri status`, `ri suggest` should not start Roslyn/MSBuild.
+- [x] `ri refs --exact` must have configurable timeout and cancellation token.
 
 ---
 
-## 24. Robustețe și edge cases
+## 24. Robustness and edge cases
 
-- [x] Funcționează pe Windows, Linux și macOS.
-- [x] Normalizează path-uri cu `/` în index.
-- [x] Compară path-uri case-insensitive pe Windows și case-sensitive pe Linux/macOS.
-- [x] Suportă repo-uri cu spații în path.
-- [x] Suportă fișiere cu UTF-8 BOM.
-- [x] Suportă fișiere cu CRLF și LF.
-- [x] Suportă cod care nu compilează complet, cât timp Roslyn poate produce syntax/semantic parțial.
-- [x] Suportă proiecte unloadable parțial: log + continuă.
-- [x] Suportă multi-targeting prin context de proiect separat.
-- [x] Suportă linked files prin document semantic separat și text dedupe.
-- [x] Suportă partial classes și partial methods.
-- [x] Suportă top-level statements.
-- [x] Suportă global usings.
-- [x] Suportă file-scoped namespaces.
-- [x] Suportă nullable annotations în display string.
-- [x] Suportă generics și nested types în FQN.
-- [x] Suportă overload-uri și operators.
-- [x] Suportă extension methods.
-- [x] Suportă records și primary constructors.
-- [x] Suportă collection expressions și sintaxă C# modernă prin Roslyn curent.
-- [x] Nu crapă pe fișiere generate mari; le exclude default.
-- [x] Nu crapă pe path-uri lungi.
-- [x] Nu crapă dacă indexul este șters în timp ce rulează search; afișează eroare clară.
+- [x] Works on Windows, Linux and macOS.
+- [x] Normalize paths with `/` in the index.
+- [x] Compare case-insensitive paths on Windows and case-sensitive on Linux/macOS.
+- [x] Support repos with spaces in the path.
+- [x] Supports files with UTF-8 BOM.
+- [x] Supports files with CRLF and LF.
+- [x] Support code that doesn't fully compile, while Roslyn can produce partial syntax/semantics.
+- [x] Support partially unloadable projects: log + continue.
+- [x] Supports multi-targeting via separate project context.
+- [x] Supports linked files via separate semantic document and text after.
+- [x] Supports partial classes and partial methods.
+- [x] Supports top-level statements.
+- [x] Supports global usings.
+- [x] Support file-scoped namespaces.
+- [x] Support nullable annotations in display string.
+- [x] Support generics and nested types in FQN.
+- [x] Supports overloads and operators.
+- [x] Supports extension methods.
+- [x] Supports records and primary constructors.
+- [x] Support collection expressions and modern C# syntax via current Roslyn.
+- [x] Don't crack on large generated files; excludes them by default.
+- [x] Does not crack on long paths.
+- [x] Don't crash if index is deleted while search is running; show clear error.
 
 ---
 
-## 25. Clase recomandate în `Core`
+## 25. Recommended classes in `Core`
 
-- [x] `RepositoryDiscovery` — detectează root și enumeră fișiere.
-- [x] `IndexerConfig` — model config + defaulturi + validare.
-- [x] `ConfigLoader` — citește `.roslyn-index.json`.
-- [x] `MSBuildRegistration` — izolează `MSBuildLocator`.
-- [x] `WorkspaceDiscovery` — găsește soluții/proiecte.
-- [x] `WorkspaceLoader` — deschide workspace/solution/project.
-- [x] `DocumentHasher` — hash incremental.
-- [x] `BinaryFileDetector` — detectează fișiere non-text.
-- [x] `Tokenizer` — tokenizare text și identificatori.
-- [x] `SymbolIdProvider` — generează ID-uri stabile.
-- [x] `SymbolCollector` — colectează declarații.
-- [x] `ReferenceCollector` — colectează referințe semantice rapide.
-- [x] `TextIndexer` — indexează C# tokens + text non-C#.
-- [x] `IndexBuilder` — orchestrează indexarea.
-- [x] `IndexStore` — citește/scrie indexul.
-- [x] `IndexReader` — încarcă indexul pentru search.
-- [x] `QueryParser` — parsează query simplu.
-- [x] `SearchScorer` — scorare.
-- [x] `SearchService` — execută căutarea.
-- [x] `ExactReferenceService` — folosește `SymbolFinder.FindReferencesAsync` on-demand.
-- [x] `SnippetReader` — citește linii/snippets.
+- [x] `RepositoryDiscovery` — detect root and list files.
+- [x] `IndexerConfig` — config model + defaults + validation.
+- [x] `ConfigLoader` — read `.roslyn-index.json`.
+- [x] `MSBuildRegistration` — isolates `MSBuildLocator`.
+- [x] `WorkspaceDiscovery` — find solutions/projects.
+- [x] `WorkspaceLoader` — open workspace/solution/project.
+- [x] `DocumentHasher` — incremental hash.
+- [x] `BinaryFileDetector` — detect non-text files.
+- [x] `Tokenizer` — tokenization of text and identifiers.
+- [x] `SymbolIdProvider` — generate stable IDs.
+- [x] `SymbolCollector` — collect statements.
+- [x] `ReferenceCollector` — collect fast semantic references.
+- [x] `TextIndexer` — index C# tokens + non-C# text.
+- [x] `IndexBuilder` — orchestrates indexing.
+- [x] `IndexStore` — read/write index.
+- [x] `IndexReader` — load the index for search.
+- [x] `QueryParser` — parse simple query.
+- [x] `SearchScorer` — scoring.
+- [x] `SearchService` — execute the search.
+- [x] `ExactReferenceService` — use `SymbolFinder.FindReferencesAsync` on-demand.
+- [x] `SnippetReader` — read lines/snippets.
 - [x] `DiagnosticsCollector` — warnings, errors, timings.
-- [x] `JsonOutputWriter` — scrie JSON stabil.
-- [x] `HumanOutputWriter` — scrie output text.
+- [x] `JsonOutputWriter` — writes stable JSON.
+- [x] `HumanOutputWriter` — writes output text.
 
 ---
 
-## 26. CLI parser simplu
+## 26. Simple parser CLI
 
-- [x] Implementează parser manual în `RoslynRepoIndexer.Cli`.
-- [x] Primul argument este comanda.
-- [x] Restul argumentelor sunt poziționale sau opțiuni `--name value` / flags.
-- [x] Suportă `--help` global.
-- [x] Suportă `ri <command> --help`.
-- [x] Pentru argumente invalide, afișează help scurt și exit code `2`.
-- [x] Nu introduce librării pentru CLI.
-- [x] Nu implementa subcomenzi ascunse.
+- [x] Implement manual parser in `RoslynRepoIndexer.Cli`.
+- [x] The first argument is the command.
+- [x] The rest of the arguments are positional or options `--name value` / flags.
+- [x] Supports `--help` globally.
+- [x] Supports `ri <command> --help`.
+- [x] For invalid arguments, display short help and exit code `2`.
+- [x] Do not introduce libraries for CLI.
+- [x] Do not implement hidden subcommands.
 
 ---
 
-## 27. Algoritm `ri index` — pași expliciți
+## 27. Algorithm `ri index` — steps explained
 
-- [x] Parsează argumentele.
-- [x] Detectează repo root.
-- [x] Încarcă config.
-- [x] Calculează `ConfigHash`.
-- [x] Încarcă manifestul existent dacă există și `--force` nu este setat.
-- [x] Descoperă soluții/proiecte.
-- [x] Calculează `WorkspaceInputsHash` din `.sln/.slnx/.csproj/.props/.targets` relevante.
+- [x] Parse arguments.
+- [x] Detect root repo.
+- [x] Load config.
+- [x] Calculates `ConfigHash`.
+- [x] Load the existing manifest if it exists and `--force` is not set.
+- [x] Discover solutions/projects.
+- [x] Calculate `WorkspaceInputsHash` from relevant `.sln/.slnx/.csproj/.props/.targets`.
 - [x] Decide full vs incremental.
-- [x] Înregistrează MSBuild cu `MSBuildLocator`.
-- [x] Deschide workspace/solution/project.
-- [x] Colectează documentele C#.
-- [x] Enumeră fișierele text non-C#.
-- [x] Calculează state pentru documente și fișiere.
-- [x] Identifică added/changed/deleted/unchanged.
-- [x] Pentru documente C# dirty, colectează syntax root și semantic model.
-- [x] Colectează simboluri.
-- [x] Colectează referințe semantice rapide.
-- [x] Colectează tokenuri C#.
-- [x] Pentru fișiere non-C# dirty, colectează tokenuri text.
-- [x] Elimină intrările vechi pentru deleted/changed.
-- [x] Combină intrările unchanged existente cu intrările noi.
-- [x] Reconstruiește indexurile globale sorted/determinist.
-- [x] Scrie indexul într-un temp folder.
-- [x] Validează că fișierele scrise pot fi citite.
-- [x] Fă replace atomic.
-- [x] Afișează sumar.
+- [x] Register MSBuild with `MSBuildLocator`.
+- [x] Open workspace/solution/project.
+- [x] Collect the C# docs.
+- [x] List non-C# text files.
+- [x] Calculate states for documents and files.
+- [x] Identifies added/changed/deleted/unchanged.
+- [x] For C# dirty documents, collect root syntax and semantic model.
+- [x] Collect symbols.
+- [x] Collect fast semantic references.
+- [x] Collect C# tokens.
+- [x] For non-C# dirty files, collect text tokens.
+- [x] Remove old entries for deleted/changed.
+- [x] Combine existing unchanged entries with new entries.
+- [x] Rebuild sorted/deterministic global indexes.
+- [x] Writes the index to a temp folder.
+- [x] Validates that written files can be read.
+- [x] Do atomic replace.
+- [x] Show summary.
 
 ---
 
-## 28. Algoritm `ri suggest` — pași expliciți
+## 28. Algorithm `ri suggest` — steps explained
 
-- [x] Parsează argumentele.
-- [x] Detectează repo root.
-- [x] Verifică existența indexului.
-- [x] Încarcă manifest + index files în memorie.
-- [x] Normalizează întrebarea.
-- [x] Extrage tokens, phrases și code-like identifiers.
-- [x] Elimină stopwords.
-- [x] Aplică sinonimele deterministe.
-- [x] Detectează intenția.
-- [x] Generează sugestii de comenzi.
-- [x] Calculează confidence pentru fiecare sugestie.
-- [x] Sortează determinist.
-- [x] Dacă `--execute-top` > 0, execută doar top N comenzi index-based și atașează rezultate.
-- [x] Scrie human output sau JSON.
-
----
-
-## 29. Algoritm `ri doctor` — pași expliciți
-
-- [x] Parsează argumentele.
-- [x] Detectează repo root.
-- [x] Citește configul dacă există.
-- [x] Detectează soluții/proiecte.
-- [x] Verifică MSBuild Locator.
-- [x] Încearcă deschiderea workspace-ului într-un mod sigur, cu cancellation.
-- [x] Colectează `WorkspaceFailed` diagnostics.
-- [x] Verifică existența și schema indexului.
-- [x] Verifică exclude directories și limitele configurate.
-- [x] Scrie raport human-readable sau JSON.
+- [x] Parse the arguments.
+- [x] Detect root repo.
+- [x] Checks for the existence of the index.
+- [x] Load manifest + index files into memory.
+- [x] Normalize the question.
+- [x] Extracts tokens, phrases and code-like identifiers.
+- [x] Remove stopwords.
+- [x] Apply deterministic synonyms.
+- [x] Detect intent.
+- [x] Generate command suggestions.
+- [x] Compute confidences for each suggestion.
+- [x] Sort deterministically.
+- [x] If `--execute-top` > 0, execute only top N index-based commands and append results.
+- [x] Write human output or JSON.
 
 ---
 
-## 30. Algoritm `ri status` — pași expliciți
+## 29. `ri doctor` Algorithm — Explicit Steps
 
-- [x] Parsează argumentele.
-- [x] Detectează repo root.
-- [x] Verifică existența `.roslyn-index/`.
-- [x] Citește manifestul fără Roslyn/MSBuild.
-- [x] Verifică schema version.
-- [x] Verifică fișiere index lipsă/corupte.
-- [x] Calculează rapid dirty count pe baza length/last write/hash doar când este necesar.
-- [x] Returnează state: missing, valid, stale, corrupt, schema-incompatible.
-- [x] Scrie human output sau JSON.
-
----
-
-## 31. Algoritm `ri search` — pași expliciți
-
-- [x] Parsează argumentele.
-- [x] Detectează repo root.
-- [x] Verifică existența indexului.
-- [x] Încarcă manifest + index files în memorie.
-- [x] Parsează query.
-- [x] Aplică filtre.
-- [x] Rulează symbol search dacă mode permite.
-- [x] Rulează text search dacă mode permite.
-- [x] Rulează file search dacă mode permite.
-- [x] Rulează reference search dacă mode permite.
-- [x] Deduplicate.
-- [x] Scorează și sortează.
-- [x] Citește snippets doar pentru top results.
-- [x] Scrie human output sau JSON.
+- [x] Parse the arguments.
+- [x] Detect root repo.
+- [x] Read the config if it exists.
+- [x] Detect solutions/projects.
+- [x] Check MSBuild Locator.
+- [x] Try opening the workspace in safe mode with cancellation.
+- [x] Collect `WorkspaceFailed` diagnostics.
+- [x] Checks for index existence and schema.
+- [x] Check exclude directories and configured limits.
+- [x] Write human-readable or JSON report.
 
 ---
 
-## 32. Algoritm `ri refs --exact`
+## 30. Algorithm `ri status` — steps explained
 
-- [x] Parsează argumentele.
-- [x] Detectează repo root.
-- [x] Încarcă indexul pentru a găsi simbolul candidat.
-- [x] Dacă simbolul este ambiguu, returnează candidați și oprește.
-- [x] Înregistrează MSBuild.
-- [x] Redeschide aceeași soluție/proiect din manifest.
-- [x] Rezolvă simbolul în Roslyn folosind `SymbolKey` sau fallback după FQN + signature + location.
-- [x] Rulează `SymbolFinder.FindReferencesAsync(symbol, solution, cancellationToken)`.
-- [x] Transformă rezultatele în `SearchResult`.
-- [x] Sortează după path/line/column.
-- [x] Scrie output.
-- [x] Opțional, cache-uiește rezultatul exact în `.roslyn-index/v1/exact-refs-cache/` cu invalidare după `UpdatedUtc`.
+- [x] Parse the arguments.
+- [x] Detect root repo.
+- [x] Checks for the existence of `.roslyn-index/`.
+- [x] Read the manifest without Roslyn/MSBuild.
+- [x] Check the version scheme.
+- [x] Check for missing/corrupted index files.
+- [x] Quickly calculate dirty count based on length/last write/hash only when needed.
+- [x] Returns states: missing, valid, stale, corrupt, schema-incompatible.
+- [x] Write human output or JSON.
 
 ---
 
-## 33. Strategie clară pentru referințe
+## 31. Algorithm `ri search` — steps explained
 
-- [x] `ri search` trebuie să fie rapid și index-based.
-- [x] `ri refs <symbol>` folosește default referințe aproximative indexate.
-- [x] `ri refs <symbol> --exact` redeschide soluția/proiectele cu Roslyn și folosește `SymbolFinder.FindReferencesAsync`.
-- [x] `ri refs --exact` trebuie să suporte cancellation.
-- [x] `ri refs --exact` trebuie să suporte timeout configurabil prin `--timeout <seconds>` și config `exactRefsTimeoutSeconds`.
-- [x] Dacă timeout-ul este atins, returnează rezultate parțiale cu warning clar și exit code `5` doar dacă nu există niciun rezultat utilizabil.
-- [x] Nu apela `SymbolFinder.FindReferencesAsync` în `ri search`, `ri suggest`, `ri goto`, `ri symbols` sau `ri status`.
+- [x] Parse the arguments.
+- [x] Detect root repo.
+- [x] Checks for the existence of the index.
+- [x] Load manifest + index files into memory.
+- [x] Parse query.
+- [x] Apply filters.
+- [x] Run symbol search if mode allows.
+- [x] Run text search if mode allows.
+- [x] Run file search if mode allows.
+- [x] Run reference search if mode allows.
+- [x] Deduplicated.
+- [x] Score and sort.
+- [x] Read snippets only for top results.
+- [x] Write human output or JSON.
 
 ---
 
-## 34. Teste unitare obligatorii
+## 32. Algorithm `ri refs --exact`
 
-- [x] Test `RepositoryDiscovery` detectează `.git` root.
-- [x] Test `RepositoryDiscovery` detectează root fără `.git`, dar cu `.sln`.
-- [x] Test excludere directoare `bin`, `obj`, `.roslyn-index`.
-- [x] Test config default.
-- [x] Test config invalid produce warning, nu crash.
-- [x] Test `Tokenizer` pentru camelCase.
-- [x] Test `Tokenizer` pentru PascalCase.
-- [x] Test `Tokenizer` pentru snake_case.
-- [x] Test `Tokenizer` pentru kebab-case.
-- [x] Test `Tokenizer` pentru `IHttpClientFactory`.
-- [x] Test `Tokenizer` păstrează token întreg + subtokenuri.
-- [x] Test binary detector cu NUL bytes.
-- [x] Test path normalization Windows-like și Unix-like.
+- [x] Parse arguments.
+- [x] Detect root repo.
+- [x] Load the index to find the candidate symbol.
+- [x] If symbol is ambiguous, return candidates and stop.
+- [x] Register MSBuild.
+- [x] Reopens the same solution/project from the manifest.
+- [x] Resolve symbol in Roslyn using `SymbolKey` or fallback by FQN + signature + location.
+- [x] Running `SymbolFinder.FindReferencesAsync(symbol, solution, cancellationToken)`.
+- [x] Convert results to `SearchResult`.
+- [x] Sort by path/line/column.
+- [x] Write output.
+- [x] Optionally cache the exact result in `.roslyn-index/v1/exact-refs-cache/` with invalidation after `UpdatedUtc`.
+
+---
+
+## 33. Clear referral strategy
+
+- [x] `ri search` must be fast and index-based.
+- [x] `ri refs <symbol>` uses indexed approximate references by default.
+- [x] `ri refs <symbol> --exact` reopen the solution/projects with Roslyn and use `SymbolFinder.FindReferencesAsync`.
+- [x] `ri refs --exact` must support cancellation.
+- [x] `ri refs --exact` must support configurable timeout via `--timeout <seconds>` and config `exactRefsTimeoutSeconds`.
+- [x] If timeout is reached, return partial results with clear warning and exit code `5` only if there is no usable result.
+- [x] Do not call `SymbolFinder.FindReferencesAsync` in `ri search`, `ri suggest`, `ri goto`, `ri symbols` or `ri status`.
+
+---
+
+## 34. Mandatory unit tests
+
+- [x] Test `RepositoryDiscovery` detects `.git` root.
+- [x] Test `RepositoryDiscovery` detects root without `.git` but with `.sln`.
+- [x] Directory exclusion test `bin`, `obj`, `.roslyn-index`.
+- [x] Default config test.
+- [x] Invalid config test produces warning, not crash.
+- [x] Test `Tokenizer` for camelCase.
+- [x] Test `Tokenizer` for PascalCase.
+- [x] Test `Tokenizer` for snake_case.
+- [x] Test `Tokenizer` for kebab houses.
+- [x] Test `Tokenizer` for `IHttpClientFactory`.
+- [x] Test `Tokenizer` keeps whole token + subtokens.
+- [x] Test binary detector with NUL bytes.
+- [x] Test path normalization Windows-like and Unix-like.
 - [x] Test `SearchScorer` exact FQN > exact simple > prefix > contains.
-- [x] Test `QueryParser` cu phrase query.
-- [x] Test `QueryParser` cu `kind:` și `path:`.
-- [x] Test JSON serialization pentru manifest.
-- [x] Test JSON output schema pentru search result.
-- [x] Test deterministic sorting.
-- [x] Test `SuggestionService` pentru întrebări de tip definition -> `ri goto`.
-- [x] Test `SuggestionService` pentru întrebări de tip references -> `ri refs`.
-- [x] Test `SuggestionService` pentru întrebări broad -> `ri search`.
-- [x] Test stopword removal română/engleză.
+- [x] Test `QueryParser` with phrase query.
+- [x] Test `QueryParser` with `kind:` and `path:`.
+- [x] Test JSON serialization for the manifest.
+- [x] Test JSON output schema for search result.
+- [x] Deterministic sorting test.
+- [x] Test `SuggestionService` for definition questions -> `ri goto`.
+- [x] Test `SuggestionService` for reference questions -> `ri refs`.
+- [x] Test `SuggestionService` for questions broad -> `ri search`.
+- [x] Romanian/English stopword removal test.
 - [x] Test synonym expansion auth/config/database/endpoints/validation/serialization/persistence.
-- [x] Test confidence ordering deterministic.
-- [x] Test că output JSON respectă contractul comun.
-- [x] Test că `matchReason` este populat pentru rezultate.
-- [x] Test că nu există referințe de proiect către HTTP/AI/vector packages.
+- [x] Deterministic confidence ordering test.
+- [x] Test that JSON output respects the common contract.
+- [x] Test that `matchReason` is populated for results.
+- [x] Test that there are no project references to HTTP/AI/vector packages.
 
 ---
 
-## 35. Teste Roslyn/integration obligatorii
+## 35. Mandatory Roslyn/integration tests
 
-- [x] Creează fixture temporar cu o soluție minimală și un proiect C# SDK-style.
-- [x] Indexează o clasă simplă și verifică `class` symbol.
-- [x] Indexează namespace file-scoped.
-- [x] Indexează namespace block-scoped.
-- [x] Indexează record class.
-- [x] Indexează record struct.
-- [x] Indexează struct.
-- [x] Indexează interface.
-- [x] Indexează enum + enum members.
-- [x] Indexează delegate.
-- [x] Indexează constructor.
-- [x] Indexează method async.
-- [x] Indexează property.
-- [x] Indexează indexer.
-- [x] Indexează event.
-- [x] Indexează field.
-- [x] Indexează operator.
-- [x] Indexează conversion operator.
-- [x] Indexează local function.
-- [x] Indexează parameters.
-- [x] Indexează generic type și generic method.
-- [x] Indexează nested type.
-- [x] Indexează partial class în două fișiere.
-- [x] Indexează overload-uri și verifică semnături diferite.
-- [x] Indexează extension method și verifică flag/modifier.
-- [x] Indexează top-level statements fără crash.
-- [x] Indexează global usings fără crash.
-- [x] Verifică referință semantică la metodă prin invocation.
-- [x] Verifică referință semantică la tip prin object creation.
-- [x] Verifică referință semantică la atribut.
-- [x] Verifică referință semantică în inheritance/base type.
-- [x] Verifică linked file în două proiecte.
-- [x] Verifică proiect cu cod incomplet produce index parțial, nu crash.
-- [x] Indexează attributes și verifică simbol/referință.
-- [x] Indexează controllers ASP.NET Core minimal ca fixture text/symbol, fără a porni aplicația.
-- [x] Indexează Minimal APIs cu top-level statements.
-- [x] Indexează nullable reference types fără crash.
-- [x] Indexează aliases și using aliases.
-- [x] Indexează interface implementations și metode implementate.
-- [x] Indexează multi-targeted project fără duplicate instabile.
-- [x] Verifică `ri refs --exact` găsește referințe reale pentru un simbol simplu.
-
----
-
-## 36. Teste incremental obligatorii
-
-- [x] Full index creează manifest și toate fișierele indexului.
-- [x] A doua rulare fără schimbări marchează 0 dirty documents.
-- [x] Modificarea body-ului unei metode reindexează documentul, nu forțează full rebuild.
-- [x] Modificarea numelui unei metode schimbă `DeclarationHash`.
-- [x] Modificarea unei declarații marchează proiectul semantic dirty.
-- [x] Adăugarea unui fișier C# adaugă document/simboluri/tokens.
-- [x] Ștergerea unui fișier C# elimină document/simboluri/referințe/tokens.
-- [x] Modificarea `.csproj` declanșează rebuild semantic.
-- [x] Modificarea `Directory.Build.props` declanșează rebuild semantic.
-- [x] Modificarea `Directory.Build.targets` declanșează rebuild semantic.
-- [x] Modificarea `global.json` declanșează rebuild semantic.
-- [x] Modificarea `NuGet.config` declanșează rebuild semantic.
-- [x] Modificarea `packages.lock.json` declanșează rebuild semantic.
-- [x] Modificarea project references declanșează reindexare proiecte afectate.
-- [x] Schimbarea configului declanșează rebuild necesar.
-- [x] Index corupt sau schema veche produce mesaj clar și rebuild/eroare controlată.
+- [x] Create temporary fixture with a minimal solution and C# SDK-style project.
+- [x] Indexes a simple class and checks the `class` symbol.
+- [x] Index the file-scoped namespace.
+- [x] Index block-scoped namespaces.
+- [x] Index record class.
+- [x] Indexes record struct.
+- [x] Indexes struct.
+- [x] Index the interface.
+- [x] Index enum + enum members.
+- [x] Index delegates.
+- [x] Index builder.
+- [x] Index async method.
+- [x] Index property.
+- [x] Index indexer.
+- [x] Index event.
+- [x] Index field.
+- [x] Index operator.
+- [x] Index conversion operator.
+- [x] Index local function.
+- [x] Index parameters.
+- [x] Index generic type and generic method.
+- [x] Index nested type.
+- [x] Index partial class in two files.
+- [x] Index overloads and check different signatures.
+- [x] Index extension method and check flag/modifier.
+- [x] Indexes top-level statements without crashing.
+- [x] Index global usings without crashing.
+- [x] Checks semantic reference to the method by invocation.
+- [x] Check semantic reference to type via object creation.
+- [x] Checks semantic reference to attribute.
+- [x] Check semantic reference in inheritance/base type.
+- [x] Check linked files in two projects.
+- [x] Check project with incomplete code produces partial index, not crash.
+- [x] Index attributes and check symbol/reference.
+- [x] Index minimal ASP.NET Core controllers as a text/symbol fixture, without starting the application.
+- [x] Indexes Minimal APIs with top-level statements.
+- [x] Indexes nullable reference types without crashing.
+- [x] Index aliases and using aliases.
+- [x] Indexes interface implementations and implemented methods.
+- [x] Index multi-targeted project without unstable duplicates.
+- [x] Check `ri refs --exact` find real references for a simple symbol.
 
 ---
 
-## 37. Teste search obligatorii
+## 36. Incremental mandatory tests
 
-- [x] `ri search CustomerService` găsește clasa cu scor mare.
-- [x] `ri search My.Namespace.CustomerService` găsește exact FQN cu scor maxim.
-- [x] `ri search CS` găsește `CustomerService` prin acronym/camel case dacă implementat.
-- [x] `ri search customer service` găsește tokenuri separate.
-- [x] `ri search "Customer Service"` verifică phrase search în text.
-- [x] `ri search --mode symbol --kind method GetCustomerAsync` returnează metode.
-- [x] `ri search --mode file CustomerService.cs` returnează fișierul.
-- [x] `ri search --path Services CustomerService` filtrează după path.
-- [x] `ri goto CustomerService` returnează declarația.
-- [x] `ri refs GetCustomerAsync` returnează referințele indexate.
-- [x] `ri refs GetCustomerAsync --exact` returnează referințele exacte.
-- [x] Rezultatele sunt sortate determinist.
-- [x] `--limit 1` returnează un singur rezultat.
-- [x] `--json` este JSON valid.
-- [x] `ri suggest "unde se validează tokenul JWT?" --json` returnează sugestii `ri search` relevante.
-- [x] `ri suggest "unde este definit CustomerService?" --json` sugerează `ri goto CustomerService`.
-- [x] `ri suggest "cine folosește GetCustomerAsync?" --json` sugerează `ri refs GetCustomerAsync`.
-- [x] `ri search CustomerService --from-file <path>` boostează rezultate din proiectul curent.
-- [x] `ri search CustomerService --exclude-tests` exclude proiecte de test.
+- [x] Full index creates manifest and all index files.
+- [x] The second run without changes marks 0 dirty documents.
+- [x] Changing the body of a method reindexes the document, not forcing a full rebuild.
+- [x] Changing the name of a method changes `DeclarationHash`.
+- [x] Changing a declaration marks the semantic project dirty.
+- [x] Adding a C# file adds document/symbols/tokens.
+- [x] Deleting a C# file removes document/symbols/references/tokens.
+- [x] `.csproj` change triggers semantic rebuild.
+- [x] `Directory.Build.props` change triggers semantic rebuild.
+- [x] Change `Directory.Build.targets` triggers semantic rebuild.
+- [x] Change `global.json` triggers semantic rebuild.
+- [x] Change `NuGet.config` triggers semantic rebuild.
+- [x] Change `packages.lock.json` triggers semantic rebuild.
+- [x] Modifying project references triggers reindexing affected projects.
+- [x] Changing config triggers required rebuild.
+- [x] Corrupt index or old schema produces clear message and rebuild/checked error.
 
 ---
 
-## 38. Teste CLI obligatorii
+## 37. Mandatory search tests
 
-- [x] `ri --help` returnează exit code 0.
-- [x] `ri index --help` returnează exit code 0.
-- [x] Comandă necunoscută returnează exit code 2.
-- [x] Argument invalid returnează exit code 2.
-- [x] `ri search` fără query returnează exit code 2.
-- [x] `ri search query` fără index returnează exit code 3.
-- [x] `ri clean --yes` șterge indexul.
-- [x] `ri status` înainte de index afișează că indexul lipsește.
-- [x] `ri status` după index afișează counters.
-- [x] `ri doctor --json` returnează checks machine-readable.
-- [x] `ri suggest` fără întrebare returnează exit code 1.
-- [x] `ri suggest question` fără index returnează exit code 3.
-- [x] `ri --version` returnează exit code 0.
-- [x] Timeout controlat returnează exit code 5 unde este aplicabil.
-- [x] CLI nu scrie warnings în stdout când `--json` este activ.
-
----
-
-## 39. Teste performance/smoke obligatorii
-
-- [x] Generează în test un repo temporar cu minim 200 fișiere C# simple.
-- [x] Full index trebuie să termine fără out-of-memory și cu counters corecți.
-- [x] Search după index nu trebuie să pornească MSBuild/Roslyn; testează printr-un seam/mock simplu sau prin separarea serviciilor.
-- [x] `ri suggest`, `ri goto`, `ri symbols` și `ri status` după index nu trebuie să pornească MSBuild/Roslyn.
-- [x] Search pe indexul generat trebuie să returneze rezultat sub un prag relaxat, doar ca smoke test, nu benchmark strict.
-- [x] Incremental după modificarea unui fișier trebuie să marcheze sub 10% documente dirty în cazul body-only change.
-- [x] Testul de performance trebuie să fie robust în CI; evită praguri prea stricte de timp.
+- [x] `ri search CustomerService` find the class with high score.
+- [x] `ri search My.Namespace.CustomerService` finds exactly the highest scoring FQN.
+- [x] `ri search CS` finds `CustomerService` by acronym/camel case if implemented.
+- [x] `ri search customer service` finds separate tokens.
+- [x] `ri search "Customer Service"` check phrase search in the text.
+- [x] `ri search --mode symbol --kind method GetCustomerAsync` return methods.
+- [x] `ri search --mode file CustomerService.cs` returns the file.
+- [x] `ri search --path Services CustomerService` filters by path.
+- [x] `ri goto CustomerService` returns the statement.
+- [x] `ri refs GetCustomerAsync` returns indexed references.
+- [x] `ri refs GetCustomerAsync --exact` returns exact references.
+- [x] The results are sorted deterministically.
+- [x] `--limit 1` returns a single result.
+- [x] `--json` is valid JSON.
+- [x] `ri suggest "unde se validează tokenul JWT?" --json` returns relevant `ri search` suggestions.
+- [x] `ri suggest "where is CustomerService defined?" --json` suggests `ri goto CustomerService`.
+- [x] `ri suggest "who uses GetCustomerAsync?" --json` suggests `ri refs GetCustomerAsync`.
+- [x] `ri search CustomerService --from-file <path>` boosts results from the current project.
+- [x] `ri search CustomerService --exclude-tests` excludes test projects.
 
 ---
 
-## 40. README obligatoriu
+## 38. Mandatory CLI tests
 
-- [x] Adaugă `tools/RoslynRepoIndexer/README.md`.
-- [x] Explică ce face tool-ul în 5-8 rânduri.
-- [x] Explică explicit că nu folosește AI, embeddings sau search engine extern.
-- [x] Include comenzi:
+- [x] `ri --help` returns exit code 0.
+- [x] `ri index --help` returns exit code 0.
+- [x] Unknown command returns exit code 2.
+- [x] Invalid argument returns exit code 2.
+- [x] `ri search` without query returns exit code 2.
+- [x] `ri search query` without index returns exit code 3.
+- [x] `ri clean --yes` deletes the index.
+- [x] `ri status` before index shows index missing.
+- [x] `ri status` after index displays counters.
+- [x] `ri doctor --json` returns machine-readable checks.
+- [x] `ri suggest` without question returns exit code 1.
+- [x] `ri suggest question` without index returns exit code 3.
+- [x] `ri --version` returns exit code 0.
+- [x] Controlled timeout returns exit code 5 where applicable.
+- [x] CLI does not write warnings to stdout when `--json` is active.
 
+---
+
+## 39. Mandatory performance/smoke tests
+
+- [x] Generate a temporary repo with at least 200 simple C# files in the test.
+- [x] Full index must finish without out-of-memory and with correct counters.
+- [x] Search by index should not start MSBuild/Roslyn; test with a simple seam/mock or service separation.
+- [x] `ri suggest`, `ri goto`, `ri symbols` and `ri status` after index should not start MSBuild/Roslyn.
+- [x] Search on the generated index must return a result below a relaxed threshold, only as a smoke test, not a strict benchmark.
+- [x] Incremental after changing a file must mark below 10% dirty documents in case of body-only change.
+- [x] The performance test must be robust in CI; avoid too strict time thresholds.
+
+---
+
+## 40. Mandatory README
+
+- [x] Add `tools/RoslynRepoIndexer/README.md`.
+- [x] Explain what the tool does in 5-8 lines.
+- [x] Explicitly explains that it does not use AI, embeddings or external search engines.
+- [x] Includes orders:
 ```bash
 dotnet build tools/RoslynRepoIndexer/RoslynRepoIndexer.sln
 dotnet test tools/RoslynRepoIndexer/RoslynRepoIndexer.sln
@@ -1253,55 +1239,54 @@ dotnet run --project tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- search
 dotnet run --project tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- suggest "unde se validează tokenul JWT?"
 dotnet run --project tools/RoslynRepoIndexer/src/RoslynRepoIndexer.Cli -- refs CustomerService --exact
 ```
-
-- [x] Include exemplu JSON output pentru `search`, `suggest`, `status` și `doctor`.
-- [x] Include secțiune „Troubleshooting”.
-- [x] Include ce foldere sunt excluse default.
-- [x] Include cum se configurează `.roslyn-index.json`.
-- [x] Include secțiune pentru instalare ca `dotnet tool` local/global.
-- [x] Include sample `.riignore` sau explică de ce excluderile sunt doar în `.roslyn-index.json`.
-- [x] Include lista codurilor de exit.
+- [x] Includes example JSON output for `search`, `suggest`, `status` and `doctor`.
+- [x] Includes "Troubleshooting" section.
+- [x] Includes which folders are excluded by default.
+- [x] Includes how to configure `.roslyn-index.json`.
+- [x] Includes section to install as local/global `dotnet tool`.
+- [x] Include samples `.riignore` or explain why the exclusions are only in `.roslyn-index.json`.
+- [x] Includes the list of exit codes.
 
 ---
 
-## 41. Privacy, local-only și no-network guarantee
+## 41. Privacy, local-only and no-network guarantee
 
-- [x] Tool-ul nu face requesturi HTTP.
-- [x] Tool-ul nu pornește servicii externe.
-- [x] Tool-ul nu trimite cod sursă sau metadata în afara mașinii.
-- [x] Tool-ul nu folosește telemetry sau analytics.
-- [x] Tool-ul nu folosește AI, embeddings, vector databases sau LLM APIs.
-- [x] Adaugă test/static check care inspectează proiectele noi pentru package names interzise evidente: `OpenAI`, `SemanticKernel`, `MLNet`, `Pinecone`, `Qdrant`, `Weaviate`, `Elasticsearch`, `Lucene`, `HttpClientFactory` runtime dacă nu e justificat.
-- [x] Documentează explicit în README că tool-ul este local-only.
+- [x] The tool does not make HTTP requests.
+- [x] Tool does not start external services.
+- [x] The tool does not send source code or metadata outside the machine.
+- [x] The tool does not use telemetry or analytics.
+- [x] The tool does not use AI, embeddings, vector databases or LLM APIs.
+- [x] Add test/static check that inspects new projects for obvious forbidden package names: `OpenAI`, `SemanticKernel`, `MLNet`, `Pinecone`, `Qdrant`, `Weaviate`, `Elasticsearch`, `Lucene`, `HttpClientFactory` runtime if not justified.
+- [x] Explicitly documents in the README that the tool is local-only.
 
 ---
 
 ## 42. Definition of Done
 
-- [x] `dotnet build tools/RoslynRepoIndexer/RoslynRepoIndexer.sln` trece.
-- [x] `dotnet test tools/RoslynRepoIndexer/RoslynRepoIndexer.sln` trece.
-- [x] `ri index .` funcționează într-un repo C# real.
-- [x] `ri status .` arată index valid.
-- [x] `ri search <nume-clasă>` returnează declarația clasei.
-- [x] `ri search <nume-metodă>` returnează metoda și referințe/text relevante.
-- [x] `ri goto <symbol>` returnează declarația.
-- [x] `ri refs <symbol>` returnează referințe indexate.
-- [x] `ri refs <symbol> --exact` folosește Roslyn on-demand și returnează referințe exacte.
-- [x] `ri search <query> --json` returnează JSON valid conform schemei.
-- [x] `ri suggest <question> --json` returnează sugestii deterministe utile pentru Codex.
-- [x] `ri doctor . --json` returnează diagnostics utile.
-- [x] `ri --version` și `ri --help` funcționează.
-- [x] Contractele JSON au snapshot tests.
-- [x] Incremental indexing nu reprocesează totul la o schimbare body-only.
-- [x] Fișierele deleted sunt eliminate complet din index.
-- [x] Nu există TODO/stub/not implemented.
-- [x] Nu există dependențe AI/embedding/vector/search-server/HTTP/cloud telemetry.
-- [x] Nu există dependențe runtime inutile în afară de Roslyn/MSBuildLocator.
-- [x] README există și poate fi urmat de un developer nou.
+- [x] `dotnet build tools/RoslynRepoIndexer/RoslynRepoIndexer.sln` passes.
+- [x] `dotnet test tools/RoslynRepoIndexer/RoslynRepoIndexer.sln` passes.
+- [x] `ri index .` works in a real C# repo.
+- [x] `ri status .` shows valid index.
+- [x] `ri search <class-name>` returns the class declaration.
+- [x] `ri search <method-name>` returns method and relevant references/text.
+- [x] `ri goto <symbol>` returns the statement.
+- [x] `ri refs <symbol>` returns indexed references.
+- [x] `ri refs <symbol> --exact` uses Roslyn on-demand and returns exact references.
+- [x] `ri search <query> --json` returns valid JSON according to the schema.
+- [x] `ri suggest <question> --json` returns useful deterministic suggestions for Codex.
+- [x] `ri doctor . --json` returns useful diagnostics.
+- [x] `ri --version` and `ri --help` work.
+- [x] JSON contracts have snapshot tests.
+- [x] Incremental indexing does not reprocess everything on a body-only change.
+- [x] Deleted files are completely removed from the index.
+- [x] There is no TODO/stub/not implemented.
+- [x] No AI/embedding/vector/search-server/HTTP/cloud telemetry dependencies.
+- [x] No unnecessary runtime dependencies other than Roslyn/MSBuildLocator.
+- [x] README exists and can be followed by a new developer.
 
 ---
 
-## 43. Surse oficiale utile pentru Codex
+## 43. Useful official sources for the Codex
 
 - [x] Roslyn Workspace model: https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/work-with-workspace
 - [x] `Document` API: https://learn.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.document

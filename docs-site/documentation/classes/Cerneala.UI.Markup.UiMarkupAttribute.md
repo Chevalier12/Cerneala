@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Markup`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Markup/UiMarkupDocument.cs`
+Source: `UI/Markup/UiMarkupAttribute.cs`
 
 Represents a parsed markup attribute with name, value, and optional source location.
 

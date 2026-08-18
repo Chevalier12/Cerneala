@@ -1,44 +1,43 @@
 # Plan: RepeatButton
 
-> Data: 2026-07-13
-> Status: finalizat
-> Scop: introducerea unui buton care activeaza imediat la apasare si repeta activarea la intervale determinate cat timp ramane apasat
+> Date: 2026-07-13
+> Status: completed
+> Purpose: the introduction of a button that activates immediately when pressed and repeats the activation at determined intervals as long as it remains pressed
 
-## 1. Rezumat
+## 1. Summary
 
-`RepeatButton` va extinde comportamentul existent de buton fara sa introduca thread-uri, `Task.Delay`, timere globale sau comenzi executate direct din control. Timpul de repetare va veni din frame-ul host-ului, iar rutarea evenimentului `Click` si executia comenzilor vor folosi aceleasi contracte ca restul inputului Cerneala.
+`RepeatButton` will extend the existing button behavior without introducing threads, `Task.Delay`, global timers or commands executed directly from the control. The repetition time will come from the host frame, and the routing of the `Click` event and the execution of the commands will use the same contracts as the rest of the Cerneala input.
 
-Prima activare are loc la apasarea butonului stang. Dupa `Delay`, controlul produce cel mult o activare pe frame la fiecare `Interval`. Repetarea se opreste la release, anularea starii pressed, detach, disable, pierderea rutei sau schimbarea root-ului.
+The first activation takes place when the left button is pressed. After `Delay`, the control produces at most one activation per frame every `Interval`. Repetition stops upon release, cancellation of pressed status, detach, disable, loss of route or change of root.
 
-Presupunere de proiectare: `RepeatButton` va deriva din `Button`, nu direct din `ButtonBase`, pentru a reutiliza compozitia de continut si fallback-ul vizual actual. Daca inaintea implementarii apare un template implicit comun la nivel de `ButtonBase`, aceasta decizie trebuie reevaluata, nu copiata orbeste ca o reteta de sarmale.
+Design assumption: `RepeatButton` will derive from `Button`, not directly from `ButtonBase`, to reuse the current visual fallback and content composition. If before the implementation a common default template appears at the level of `ButtonBase`, this decision must be re-evaluated, not blindly copied like a recipe.
 
-## 2. Obiective
+## 2. Objectives
 
-- [x] Exista `Cerneala.UI.Controls.Primitives.RepeatButton` ca API public.
-- [x] `RepeatButton` expune `Delay` si `Interval` ca `UiProperty<int>` exprimate in milisecunde.
-- [x] `Delay` accepta valori finite intregi mai mari sau egale cu zero.
-- [x] `Interval` accepta numai valori intregi strict pozitive.
-- [x] Apasarea valida produce imediat un singur `Click` si o singura executie de comanda.
-- [x] Prima repetare are loc numai dupa expirarea `Delay`.
-- [x] Repetarile urmatoare respecta `Interval` si produc cel mult o activare pe frame.
-- [x] Un frame intarziat nu produce o rafala necontrolata de activari restante.
-- [x] Release-ul nu mai produce inca un click pentru `RepeatButton`.
-- [x] `Button`, `ToggleButton`, activarea din tastatura si comenzile existente isi pastreaza comportamentul.
-- [x] Implementarea este determinista in teste prin `TimeSpan` furnizat explicit host-ului.
+- [x] There is `Cerneala.UI.Controls.Primitives.RepeatButton` as a public API.
+- [x] `RepeatButton` exposes `Delay` and `Interval` as `UiProperty<int>` expressed in milliseconds.
+- [x] `Delay` accepts finite integer values ​​greater than or equal to zero.
+- [x] `Interval` accepts only strictly positive integer values.
+- [x] The valid press immediately produces a single `Click` and a single command execution.
+- [x] The first repetition takes place only after `Delay` expires.
+- [x] The following repetitions respect `Interval` and produce at most one activation per frame.
+- [x] A delayed frame does not produce an uncontrolled burst of outstanding activations.
+- [x] The release no longer produces a click for `RepeatButton`.
+- [x] `Button`, `ToggleButton`, keyboard activation and existing commands retain their behavior.
+- [x] The implementation is deterministic in tests through `TimeSpan` provided explicitly to the host.
 
-## 3. Non-obiective
+## 3. Non-objectives
 
-- [x] Nu introducem un scheduler general de timere UI.
-- [x] Nu folosim `System.Threading.Timer`, `DispatcherTimer`, `Task.Delay` sau lucru pe thread secundar.
-- [x] Nu adaugam accelerare progresiva a repetarii.
-- [x] Nu adaugam proprietati WPF care nu sunt necesare acestui slice.
-- [x] Nu modificam inca template-urile `ScrollBar`; acestea sunt tratate de planul dependent pentru partile de scrolling.
-- [x] Nu schimbam semantica generala a `Click` pentru butoanele obisnuite.
+- [x] We do not introduce a general UI timer scheduler.
+- [x] We do not use `System.Threading.Timer`, `DispatcherTimer`, `Task.Delay` or work on secondary thread.
+- [x] We do not add progressive repetition acceleration.
+- [x] We do not add WPF properties that are not necessary to this slice.
+- [x] We are not modifying the `ScrollBar` templates yet; these are handled by the dependent plane for the scrolling parts.
+- [x] We do not change the general semantics of `Click` for regular buttons.
 
-## 4. Contract propus
+## 4. Proposed contract
 
-API public estimat:
-
+Estimated Public API:
 ```csharp
 public class RepeatButton : Button
 {
@@ -49,14 +48,12 @@ public class RepeatButton : Button
     public int Interval { get; set; }
 }
 ```
-
-Valori implicite propuse:
+Suggested default values:
 
 - `Delay = 500` ms;
 - `Interval = 100` ms.
 
-Contract intern propus:
-
+Proposed internal contract:
 ```text
 UiHost frameTime
     -> ElementInputBridge.Dispatch(..., frameTime)
@@ -65,157 +62,157 @@ UiHost frameTime
             -> IInputCommandSource.ExecuteCommand(...)
 ```
 
-`RepeatButtonController` trebuie sa detina sesiunea temporara de repetare. Controlul expune configuratia si identitatea de input, dar nu primeste dependinte globale precum `CommandRouter`.
+`RepeatButtonController` must hold the temporary replay session. The control exposes the input configuration and identity, but does not receive global dependencies such as `CommandRouter`.
 
-## 5. Fisiere estimate
+## 5. Estimated files
 
-Fisiere noi:
+New files:
 
 - `UI/Controls/Primitives/RepeatButton.cs`;
 - `UI/Input/RepeatButtonController.cs`;
-- `UI/Input/IInputRepeatSource.cs`, numai daca marker-ul intern simplifica integrarea fara verificari concrete de tip;
+- `UI/Input/IInputRepeatSource.cs`, only if the internal marker simplifies the integration without concrete type checks;
 - `tests/Cerneala.Tests/Controls/Primitives/RepeatButtonTests.cs`;
 - `docs-site/documentation/classes/Cerneala.UI.Controls.Primitives.RepeatButton.md`.
 
-Fisiere modificate probabil:
+Probably changed files:
 
 - `UI/Controls/Primitives/ButtonBase.cs`;
 - `UI/Input/ElementInputBridge.cs`;
 - `UI/Hosting/UiHost.cs`;
-- `UI/Hosting/MonoGame/MonoGameUiHost.cs`, numai daca semnatura wrapper-ului o cere;
+- `UI/Hosting/MonoGame/MonoGameUiHost.cs`, only if the wrapper signature requires it;
 - `tests/Cerneala.Tests/UI/Hosting/UiHostTests.cs`;
 - `tests/Cerneala.Tests/UI/Input/ElementInputBridgeTests.cs`;
-- `docs-site/documentation/classes/Cerneala.UI.Controls.Primitives.ButtonBase.md` daca apare un hook protected nou;
+- `docs-site/documentation/classes/Cerneala.UI.Controls.Primitives.ButtonBase.md` if a new protected hook appears;
 - `docs-site/documentation/manifest.json`.
 
-## 6. Etape de implementare
+## 6. Implementation stages
 
-### Etapa 0 - Baseline si teste de caracterizare
+### Stage 0 - Baseline and characterization tests
 
-- [x] Genereaza `FileTree.md` si verifica indexul RoslynIndexer.
-- [x] Ruleaza testele existente pentru `Button`, `ButtonBase`, activare din tastatura, comenzi si `ElementInputBridge`.
-- [x] Adauga teste de caracterizare pentru click-ul normal pe release al unui `Button`.
-- [x] Adauga teste de caracterizare pentru executia unei comenzi exact o data la click.
-- [x] Adauga teste de caracterizare pentru anularea starii pressed la release si detach.
-- [x] Noteaza explicit ca aceste teste trebuie sa ramana neschimbate dupa introducerea repetarii. (Testele de caracterizare din `ElementInputBridgeTests` sunt contract de regresie si nu se modifica pentru a acomoda `RepeatButton`.)
+- [x] Generate `FileTree.md` and check the RoslynIndexer index.
+- [x] Run the existing tests for `Button`, `ButtonBase`, keyboard activation, commands and `ElementInputBridge`.
+- [x] Add characterization tests for the normal click on release of a `Button`.
+- [x] Adds characterization tests for executing a command exactly once per click.
+- [x] Adds characterization tests for canceling the pressed state at release and detach.
+- [x] Note explicitly that these tests must remain unchanged after the introduction of repetition. (The characterization tests in `ElementInputBridgeTests` are regression contracts and are not modified to accommodate `RepeatButton`.)
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Baseline-ul este verde.
-- [x] Contractul butoanelor normale este acoperit inainte de schimbarea inputului.
-- [x] Nicio modificare functionala nu a fost introdusa.
+- [x] The baseline is green.
+- [x] The normal button contract is covered before the input change.
+- [x] No functional changes were introduced.
 
-### Etapa 1 - API-ul RepeatButton
+### Step 1 - RepeatButton API
 
-- [x] Creeaza `RepeatButton` in namespace-ul `Cerneala.UI.Controls.Primitives`.
-- [x] Deriva temporar din `Button` conform presupunerii documentate.
-- [x] Inregistreaza `DelayProperty` cu valoarea implicita `500` si validare `>= 0`.
-- [x] Inregistreaza `IntervalProperty` cu valoarea implicita `100` si validare `> 0`.
-- [x] Expune proprietatile CLR `Delay` si `Interval`.
-- [x] Marcheaza proprietatile cu constrangerile de markup disponibile sau extinde validarea de markup numai daca este necesar. (Nu a fost necesara extinderea: constrangerile existente acopera proprietatile, iar validarea `UiProperty` ramane autoritara.)
-- [x] Adauga teste pentru valori implicite, valori valide si respingerea valorilor invalide.
-- [x] Verifica generarea/parsarea proprietatilor din markup cu valori intregi.
+- [x] Create `RepeatButton` in the `Cerneala.UI.Controls.Primitives` namespace.
+- [x] Temporarily derived from `Button` according to documented assumption.
+- [x] Register `DelayProperty` with default value `500` and validation `>= 0`.
+- [x] Register `IntervalProperty` with default value `100` and validation `> 0`.
+- [x] Exposes CLR properties `Delay` and `Interval`.
+- [x] Mark the properties with the available markup constraints or extend the markup validation only if necessary. (The extension was not necessary: the existing constraints cover the properties, and the `UiProperty` validation remains authoritative.)
+- [x] Add tests for default values, valid values, and rejection of invalid values.
+- [x] Checks the generation/parsing of markup properties with integer values.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] API-ul compileaza si validarea este acoperita.
-- [x] Controlul nu porneste singur thread-uri sau timere.
-- [x] Testele existente pentru butoane raman verzi.
+- [x] The API compiles and validation is covered.
+- [x] The control does not start threads or timers by itself.
+- [x] Existing tests for buttons remain green.
 
-### Etapa 2 - Un singur drum de activare
+### Stage 2 - One way to activate
 
-- [x] Extrage in `ButtonBase` un hook protected minimal care decide daca mouse-up produce click.
-- [x] Pastreaza valoarea implicita a hook-ului astfel incat `Button` si `ToggleButton` sa continue sa activeze pe release.
-- [x] Suprascrie hook-ul in `RepeatButton` pentru a evita click-ul suplimentar la release.
-- [x] Pastreaza `IInputActivatable.Activate()` ca drum unic pentru ridicarea evenimentului `Click`.
-- [x] Nu executa comanda direct din `RepeatButton`.
-- [x] Adauga teste care demonstreaza ca activarea programatica ridica un singur `Click`.
-- [x] Adauga teste care demonstreaza ca release-ul unui `RepeatButton` nu ridica un click suplimentar.
+- [x] Extracts in `ButtonBase` a minimal protected hook that decides whether mouse-up produces a click.
+- [x] Keep the default value of the hook so that `Button` and `ToggleButton` continue to activate on release.
+- [x] Overwrite the hook in `RepeatButton` to avoid the additional click on release.
+- [x] Keep `IInputActivatable.Activate()` as the unique path for raising the event `Click`.
+- [x] Do not execute the command directly from `RepeatButton`.
+- [x] Add tests that demonstrate that programmatic activation raises a single `Click`.
+- [x] Add tests that demonstrate that the release of a `RepeatButton` does not raise an additional click.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Exista o separare clara intre ridicarea `Click` si executia comenzii.
-- [x] Butoanele normale isi pastreaza semantica.
-- [x] `RepeatButton` nu dubleaza activarea la release.
+- [x] There is a clear separation between the raising of `Click` and the execution of the order.
+- [x] Normal buttons keep their semantics.
+- [x] `RepeatButton` does not duplicate activation at release.
 
-### Etapa 3 - Timpul de input determinist
+### Stage 3 - Deterministic input time
 
-- [x] Adauga un overload `ElementInputBridge.Dispatch(UIRoot, InputFrame, TimeSpan frameTime)`.
-- [x] Pastreaza overload-ul existent pentru compatibilitate si delega explicit cu o valoare neutra documentata. (`TimeSpan.Zero`.)
-- [x] Modifica `UiHost.UpdateCore` sa transmita acelasi `frameTime` folosit de frame catre input bridge.
-- [x] Nu reutiliza `ITimeSensitiveRenderElement`; repetarea este comportament de input, nu invalidare de render cu mustata falsa.
-- [x] Stabileste daca `frameTime` reprezinta timestamp absolut sau delta si pastreaza aceeasi semantica in host, controller si teste. (`frameTime` este delta scursa in frame-ul curent.)
-- [x] Adauga teste host care confirma propagarea timpului furnizat explicit.
-- [x] Verifica wrapper-ele MonoGame si Windows pentru semnaturi sau cai alternative de update. (Nu au fost necesare modificari: ambele cai ajung deja in `UiHost.UpdateCore` cu acelasi delta.)
+- [x] Add an overload `ElementInputBridge.Dispatch(UIRoot, InputFrame, TimeSpan frameTime)`.
+- [x] Keep the existing overload for compatibility and explicitly delegate with a documented neutral value. (`TimeSpan.Zero`.)
+- [x] Modify `UiHost.UpdateCore` to transmit the same `frameTime` used by the frame to the input bridge.
+- [x] Do not reuse `ITimeSensitiveRenderElement`; repetition is input behavior, not false-whisker rendering invalidation.
+- [x] Determines whether `frameTime` represents absolute or delta timestamp and keeps the same semantics in host, controller and tests. (`frameTime` is the delta drained in the current frame.)
+- [x] Add host tests that confirm the propagation of explicitly provided time.
+- [x] Check MonoGame and Windows wrappers for signatures or alternative update paths. (No changes were needed: both paths already reach `UiHost.UpdateCore` with the same delta.)
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] Inputul primeste timp determinist fara acces la ceas global.
-- [x] Nicio cale de host nu avanseaza timpul de doua ori.
-- [x] Testele fara timp explicit raman compatibile.
+- [x] The input receives deterministic time without access to the global clock.
+- [x] No host path advances time twice.
+- [x] Tests without explicit time remain compatible.
 
-### Etapa 4 - RepeatButtonController
+### Step 4 - RepeatButtonController
 
-- [x] Creeaza un controller intern detinut de `ElementInputBridge`.
-- [x] La mouse-down valid, rezolva cel mai apropiat repeat source din ruta vizuala.
-- [x] Porneste o singura sesiune pentru butonul stang si memoreaza sursa, root-ul si urmatorul termen.
-- [x] Produce imediat activarea initiala prin `IInputActivatable`.
-- [x] Executa comanda initiala prin `IInputCommandSource` si `CommandRouter`.
-- [x] Dupa `Delay`, produce cel mult o activare pe frame.
-- [x] Dupa prima repetare, programeaza urmatorul termen folosind `Interval`.
-- [x] La un frame foarte intarziat, sare peste intervalele vechi fara bucla de catch-up.
-- [x] Opreste sesiunea la mouse-up, detach, disable, hidden/collapsed, schimbare de root sau ruta invalida.
-- [x] Opreste sesiunea daca sursa nu mai este pressable ori command source valid.
-- [x] Decide si testeaza explicit comportamentul cand pointerul paraseste butonul cat timp butonul ramane apasat. (Sesiunea este anulata.)
-- [x] Pentru MVP, prefera anularea repetarii la iesirea din hit target in locul unei capturi implicite noi.
-- [x] Evita referinte stale dupa anulare.
+- [x] Creates an internal controller owned by `ElementInputBridge`.
+- [x] On valid mouse-down, resolve the nearest repeat source in the visual route.
+- [x] Starts a single session for the left button and memorizes the source, the root and the next term.
+- [x] Immediately produces the initial activation through `IInputActivatable`.
+- [x] Execute the initial order through `IInputCommandSource` and `CommandRouter`.
+- [x] After `Delay`, produces at most one activation per frame.
+- [x] After the first repetition, program the next term using `Interval`.
+- [x] At a very late frame, skip the old intervals without the catch-up loop.
+- [x] Stops the session on mouse-up, detach, disable, hidden/collapsed, root change or invalid route.
+- [x] Stops the session if the source is no longer pressable or the command source is valid.
+- [x] Decides and explicitly tests the behavior when the pointer leaves the button while the button remains pressed. (The session is cancelled.)
+- [x] For MVP, prefer canceling replay when exiting hit target instead of a new default capture.
+- [x] Avoid stale references after cancellation.
 
-**Gate etapa 4**
+**Gate Stage 4**
 
-- [x] Secventa click/command este `1 initial + N repetari`, fara click final accidental.
-- [x] Nu exista mai mult de o activare pe frame.
-- [x] Controllerul nu retine controale detasate.
-- [x] Comenzile routed si comenzile simple folosesc acelasi drum existent.
+- [x] The click/command sequence is `1 initial + N repetari`, without accidental final click.
+- [x] There is no more than one activation per frame.
+- [x] The controller does not retain detached controls.
+- [x] Routed commands and simple commands use the same existing path.
 
-### Etapa 5 - Interactiuni si cazuri limita
+### Stage 5 - Interactions and limit cases
 
-- [x] Testeaza `Delay = 0` fara dublarea activarii initiale.
-- [x] Testeaza schimbarea `Delay` in timpul unei sesiuni si fixeaza regula: afecteaza numai sesiunea urmatoare.
-- [x] Testeaza schimbarea `Interval` in timpul unei sesiuni si fixeaza regula: se aplica urmatorului termen calculat.
-- [x] Testeaza un frame care sare peste mai multe intervale.
-- [x] Testeaza release exact la termenul unei repetari; release-ul castiga si nu mai produce repeat.
-- [x] Testeaza disable si detach intre doua frame-uri.
-- [x] Testeaza comanda care devine `CanExecute == false` in timpul repetarii.
-- [x] Testeaza handler `Click` care modifica arborele sau elimina butonul.
-- [x] Testeaza doua `RepeatButton` apasate succesiv; sesiunea veche trebuie anulata.
-- [x] Testeaza ca butonul drept si wheel-ul nu pornesc repetarea.
-- [x] Testeaza activarea din tastatura si documenteaza ca MVP-ul repeta numai pointerul, daca nu este implementata repetarea pentru Space. (Space activeaza o singura data la release; repetarea MVP este numai pentru pointerul stang.)
+- [x] Test `Delay = 0` without duplicating the initial activation.
+- [x] Tests the `Delay` change during a session and sets the rule: it only affects the next session.
+- [x] Tests the change `Interval` during a session and sets the rule: it applies to the next calculated term.
+- [x] Tests a frame that jumps over several intervals.
+- [x] Test release exactly at the deadline of a repetition; the release wins and no longer produces repeats.
+- [x] Test disable and detach between two frames.
+- [x] Tests the command that becomes `CanExecute == false` during repetition.
+- [x] Test handler `Click` that modifies the tree or removes the button.
+- [x] Tests two `RepeatButton` pressed successively; the old session must be canceled.
+- [x] Tests that the right button and the wheel do not start the repetition.
+- [x] Tests the activation from the keyboard and documents that the MVP only repeats the pointer, if the repetition for Space is not implemented. (Space activates only once on release; MVP repetition is only for the left pointer.)
 
-**Gate etapa 5**
+**Gate Stage 5**
 
-- [x] Cazurile limita au rezultate deterministe.
-- [x] Nu exista activari dupa release sau detach.
-- [x] Nu exista diferente neintentionate pentru `Button` si `ToggleButton`.
+- [x] The limit cases have deterministic results.
+- [x] There are no activations after release or detachment.
+- [x] There are no unintentional differences for `Button` and `ToggleButton`.
 
-### Etapa 6 - Integrare, documentatie si verificare
+### Stage 6 - Integration, documentation and verification
 
-- [x] Inregistreaza `RepeatButton` in schema/factory-ul de markup daca tipurile nu sunt descoperite automat.
-- [x] Adauga un exemplu minimal in Playground numai daca exista deja o suprafata potrivita pentru controale primitive. (Nu a fost necesar: Playground-ul curent este un shell de navigare, fara o suprafata de showcase pentru controale primitive.)
-- [x] Creeaza documentatia API in `docs-site/documentation/classes/` folosind skill-ul `writing-api-documentation`.
-- [x] Actualizeaza `docs-site/documentation/manifest.json` pentru pagina noua.
-- [x] Actualizeaza documentatia `ButtonBase` daca hook-ul protected devine API public/protected.
-- [x] Reindexeaza dupa fiecare modificare de cod sau proiect.
-- [x] Ruleaza testele tintite pentru input, butoane, comenzi si host.
-- [x] Ruleaza `dotnet test Cerneala.slnx`.
-- [x] Verifica diff-ul API public si confirma ca include numai suprafata intentionata. (`RepeatButton`, proprietatile sale, hook-ul protected din `ButtonBase` si overload-ul temporizat din `ElementInputBridge`; mecanismul de repetare ramane intern.)
+- [x] Register `RepeatButton` in the markup scheme/factory if the types are not discovered automatically.
+- [x] Add a minimal example to the Playground only if there is already a suitable surface for primitive controls. (It wasn't necessary: the current Playground is a navigation shell, without a showcase surface for primitive controls.)
+- [x] Create the API documentation in `docs-site/documentation/classes/` using the `writing-api-documentation` skill.
+- [x] Updates `docs-site/documentation/manifest.json` for the new page.
+- [x] Updates the `ButtonBase` documentation if the protected hook becomes a public/protected API.
+- [x] Re-indexes after each code or project change.
+- [x] Run the targeted tests for input, buttons, commands and host.
+- [x] Runs `dotnet test Cerneala.slnx`.
+- [x] Check the public API diff and confirm that it only includes the intended surface. (`RepeatButton`, its properties, the protected hook from `ButtonBase` and the timed overload from `ElementInputBridge`; the repetition mechanism remains internal.)
 
-**Gate etapa 6**
+**Gate stage 6**
 
-- [x] Toata suita este verde.
-- [x] Documentatia publica este sincronizata.
-- [x] RepeatButton poate fi folosit din C# si markup.
-- [x] Planul dependent pentru scrollbar poate consuma controlul fara workaround-uri.
+- [x] The whole suite is green.
+- [x] The public documentation is synchronized.
+- [x] RepeatButton can be used from C# and markup.
+- [x] Dependent plane for scrollbar can consume control without workarounds.
 
-## 7. Definitia de gata
+## 7. The definition of ready
 
-`RepeatButton` este gata cand o apasare valida produce imediat un click si o executie de comanda, repetarea incepe numai dupa `Delay`, continua cel mult o data pe frame conform `Interval`, se opreste sigur in toate caile de anulare si nu schimba comportamentul butoanelor obisnuite. Niciun timer ascuns nu trebuie sa ramana sa bata in pereti dupa ce controlul a disparut.
+`RepeatButton` is ready when a valid press immediately produces a click and a command execution, the repetition starts only after `Delay`, continues at most once per frame according to `Interval`, stops safely in all cancellation paths and does not change the behavior of the regular buttons. No hidden timer should be left beating on the walls after the control has disappeared.

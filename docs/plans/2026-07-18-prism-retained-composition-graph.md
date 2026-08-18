@@ -1,157 +1,157 @@
-# Prism — retained rendering și graful de compoziție
+# Prism — retained rendering and composition graph
 
-## Scop
+## Purpose
 
-Introduce scope-urile Prism în lista retained de comenzi, analizează un frame o
-singură dată și construiește un graf backend-neutral. Etapa nu execută shader-e
-și nu deține resurse GPU.
+Inserts Prism scopes into the retained list of commands, parses a frame o
+once and construct a backend-neutral graph. The stage does not run shaders
+and has no GPU resources.
 
-**Dependență:** `2026-07-18-prism-foundation-and-catalog.md`.
+**Dependency:** `2026-07-18-prism-foundation-and-catalog.md`.
 
-## Etapa 0 — contracte RED
+## Stage 0 — RED contracts
 
-- [x] Adaugă teste RED în `tests/Cerneala.Tests/Drawing/Prism/` pentru
+- [x] Add RED tests in `tests/Cerneala.Tests/Drawing/Prism/` for
   `BeginPrism`/`EndPrism`, nesting, clip, transform, opacity, Presence children
-  și fallback-ul backendurilor fără Prism.
-- [x] Fixează prin teste ordinea din `DrawCommandListBuilder`: `PushClip`,
-  `BeginPrism`, comenzile locale/copiii/exiting children, `EndPrism`, `PopClip`.
-- [x] Adaugă teste RED pentru analiză: zero/unu/mai multe scope-uri, scope
-  invalid, versiune stale și cererea de backdrop făcută cel mult o dată.
-- [x] Adaugă teste RED pentru graful Photoshop: procesare bottom-up, grupuri,
-  măști, clipping chain, layer invizibil, `PassThrough` și backdrop separat.
+  and the fallback of backends without Prism.
+- [x] Fix the order of `DrawCommandListBuilder` by tests: `PushClip`,
+  `BeginPrism`, local orders/children/exiting children, `EndPrism`, `PopClip`.
+- [x] Add RED tests for parsing: zero/one/many scopes, scopes
+  invalid, stale version and backdrop request made at most once.
+- [x] Add RED tests for Photoshop graph: bottom-up processing, groups,
+  masks, clipping chain, invisible layer, `PassThrough` and separate backdrop.
 
-### Gate etapa 0
+### Gate stage 0
 
-- [x] Testele descriu semantică backend-neutral și nu fac assertions pe
-  SpriteBatch, RenderTarget2D ori numele unor shader-e.
+- [x] The tests describe backend-neutral semantics and do not make assertions on
+  SpriteBatch, RenderTarget2D or the names of some shaders.
 
-## Etapa 1 — comenzi retained tipate
+## Stage 1 — typed retained commands
 
-- [x] Extinde `Drawing/DrawCommandKind.cs` cu `BeginPrism` și `EndPrism`.
-- [x] Extinde `Drawing/DrawCommand.cs` cu un payload readonly și tipat
-  `PrismDrawScope`, plus fabrici dedicate; nu folosi `object`, dictionary sau
-  identificatori string.
-- [x] Payload-ul conține numai starea necesară frame-ului: definiție/instanță,
-  bounds, transform, pixel scale, versiunile structurală/de valori și generația
-  vizuală agregată a subtree-ului capturat.
-- [x] Include un `PrismCacheOwnerToken` numeric și fără referință inversă, astfel
-  încât backendul să poată indexa/invalida intrări fără să rețină elementul.
-- [x] Adaugă în `Drawing/DrawCommandList.cs` o versiune structurală minimă,
-  actualizată determinist la `Add`/`Clear`, pentru invalidarea analizei cached.
-- [x] Actualizează toate switch-urile de transform/translate și backendurile
-  fake astfel încât scope-ul să fie păstrat ori ignorat explicit.
+- [x] Extends `Drawing/DrawCommandKind.cs` with `BeginPrism` and `EndPrism`.
+- [x] Extends `Drawing/DrawCommand.cs` with a readonly payload and type
+  `PrismDrawScope`, plus dedicated factories; do not use `object`, dictionary or
+  string identifiers.
+- [x] The payload contains only the state required for the frame: definition/instance,
+  bounds, transform, pixel scale, structural/value versions and generation
+  aggregated view of the captured subtree.
+- [x] Includes a numerical `PrismCacheOwnerToken` and no reverse reference, thus
+  so that the backend can index/invalidate entries without retaining the element.
+- [x] Add in `Drawing/DrawCommandList.cs` a minimal structural version,
+  deterministically updated to `Add`/`Clear`, to invalidate cached parsing.
+- [x] Update all transform/translate switches and backends
+  fake so that the scope is kept or explicitly ignored.
 
-### Gate etapa 1
+### Gate stage 1
 
-- [x] Lista de comenzi rămâne reutilizabilă și readonly pentru consumatori,
-  fără metadata generică pentru un DAG care nu există încă.
+- [x] The order list remains reusable and readonly for consumers,
+  no generic metadata for a DAG that doesn't exist yet.
 
-## Etapa 2 — integrarea builderului retained
+## Stage 2 — integration of the retained builder
 
-- [x] Extinde `UI/Rendering/DrawCommandListBuilder.cs` să emită scope-ul exact
-  în jurul randării elementului, după clip și înainte de comenzile locale.
-- [x] Păstrează transformul și coordonatele scope-ului sincronizate cu aceleași
-  operații folosite pentru comenzile interioare.
-- [x] Exclude complet scope-ul pentru elemente fără Prism și pentru stări
-  nerandabile; un layer intern invizibil rămâne decizia grafului, nu a builderului.
-- [x] Verifică nesting-ul unui element Prism în alt element Prism și Presence
-  exiting children fără intercalarea greșită a perechilor Begin/End.
-- [x] Dacă invalidarea existentă nu poate separa compoziția de layout, adaugă
-  cea mai mică categorie presentation-only în scheduler/retained cache și
-  dovedește că nu reconstruiește `ElementRenderCache`. (Nu a fost necesar:
-  invalidarea Prism existentă este deja presentation-only, iar testele confirmă
-  reutilizarea `ElementRenderCache` și a listei structurale.)
+- [x] Extends `UI/Rendering/DrawCommandListBuilder.cs` to output the exact scope
+  around element rendering, after clip and before local controls.
+- [x] Keep the transform and scope coordinates in sync with the same
+  operations used for internal controls.
+- [x] Completely excludes scope for non-Prism elements and states
+  unprofitable; an invisible internal layer remains the graph's decision, not the builder's.
+- [x] Checks the nesting of a Prism element in another Prism and Presence element
+  exiting children without the wrong interleaving of Begin/End pairs.
+- [x] If existing invalidation cannot separate composition from layout, add
+  the smallest presentation-only category in the scheduler/retained cache and
+  prove that it does not reconstruct `ElementRenderCache`. (It was not necessary:
+  the existing Prism invalidation is already presentation-only, and the tests confirm
+  reuse of `ElementRenderCache` and structural list.)
 
-### Gate etapa 2
+### Gate stage 2
 
-- [x] Snapshot-urile comenzilor sunt stabile, perechile sunt balansate, iar o
-  schimbare de parametru Prism nu regenerează comenzile structurale.
+- [x] Snapshots of orders are stable, pairs are balanced, and o
+  parameter change Prism does not regenerate structural commands.
 
-## Etapa 3 — analiza unică a frame-ului
+## Stage 3 — single frame analysis
 
-- [x] Adaugă `Drawing/Prism/Graph/PrismFrameAnalyzer` și rezultatul imuabil
-  `PrismFrameAnalysis`, indexat după poziția comenzilor și versiunea listei.
-- [x] Analizorul face o singură trecere, validează nesting-ul și calculează
-  scope-urile active, bounds, necesarul de suprafețe, backdrop și capabilități.
-- [x] Produce pentru fiecare scope un `PrismDependencyStamp` backend-neutral,
-  compact și fără referințe la elemente, folosind versiunile retained propagate
-  incremental în locul unei traversări suplimentare a subtree-ului.
-- [x] Refolosește aceeași analiză în host și `PrismGraphBuilder`; interzice
-  scanarea separată a listei pentru backdrop ori bugete.
-- [x] Schimbă `IDrawingBackend.Render` să primească un
-  `DrawingFrameContext` tipat care transportă analiza și lease-ul backdrop
-  opțional, fără dependență MonoGame.
-- [x] Actualizează `RetainedRenderer`, `UiHost`, `IUiBackend`, backendurile,
-  test doubles și call site-urile existente pentru noul contract.
-- [x] Respinge analiza stale când versiunea listei nu mai corespunde și testează
-  reutilizarea sigură a `DrawCommandList`.
+- [x] Add `Drawing/Prism/Graph/PrismFrameAnalyzer` and the immutable result
+  `PrismFrameAnalysis`, indexed by command position and list version.
+- [x] The parser does a single pass, validates the nesting, and calculates
+  active scopes, bounds, required surfaces, backdrops and capabilities.
+- [x] Produces for each scope a backend-neutral `PrismDependencyStamp`,
+  compact and without element references, using propagated retained versions
+  incremental instead of an additional subtree traversal.
+- [x] Reuses the same analysis in host and `PrismGraphBuilder`; forbids
+  separate list scanning for backdrops or budgets.
+- [x] Exchange `IDrawingBackend.Render` to get one
+  `DrawingFrameContext` type carrying backdrop analysis and lease
+  optional, no MonoGame dependency.
+- [x] Update `RetainedRenderer`, `UiHost`, `IUiBackend`, backends,
+  test doubles and call existing sites for the new contract.
+- [x] Reject stale parsing when list version no longer matches and tests
+  safe reuse of `DrawCommandList`.
 
-### Gate etapa 3
+### Gate stage 3
 
-- [x] Un frame este analizat o singură dată, contextul nu deține resurse peste
-  frame, iar toate backendurile non-Prism păstrează outputul anterior.
+- [x] A frame is analyzed only once, the context does not hold resources over
+  frame, and all non-Prism backends keep the previous output.
 
-## Etapa 4 — graful semantic
+## Stage 4 — the semantic graph
 
-- [x] Adaugă `PrismGraphBuilder` cu noduri/edges tipate pentru capture, layer,
-  group, filter, style, mask, clip-to-below, composite, color conversion și
-  backdrop input.
-- [x] Atribuie fiecărui nod identitate structurală stabilă și dependențe
-  pixel-affecting explicite, necesare cache-ului retained cross-frame.
-- [x] Capturează imaginea controlului o singură dată și tratează rezultatele
-  intermediare ca valori explicite; nu permite layerului o sursă arbitrară.
-- [x] Construiește copiii în ordine bottom-up, păstrând ordinea declarată pentru
-  naming/diagnostics și izolând grupurile non-`PassThrough`.
-- [x] Modelează clipping chain și mask alpha separat; `Opacity` și `Fill` sunt
-  operații distincte, conform semanticii Photoshop.
-- [x] Include nodul backdrop numai ca plan de input separat, fără achiziție sau
-  API de host în această etapă.
-- [x] Emite diagnostics cu numele compoziției/nodului și source span-ul păstrat
-  de definiție când un graf nu poate fi construit.
+- [x] Add `PrismGraphBuilder` with typed nodes/edges for capture, layer,
+  group, filter, style, mask, clip-to-below, composite, color conversion and
+  background input.
+- [x] Assign each node stable structural identity and dependencies
+  explicit pixel-affecting, necessary for the retained cross-frame cache.
+- [x] Capture the control image once and process the results
+  intermediate as explicit values; does not allow the layer an arbitrary source.
+- [x] Build the children in bottom-up order, keeping the order declared for
+  naming/diagnostics and isolating the non-`PassThrough` groups.
+- [x] Model clipping chain and alpha mask separately; `Opacity` and `Fill` are
+  distinct operations, according to Photoshop semantics.
+- [x] Includes the backdrop node only as a separate input plane, no purchase or
+  Host API at this stage.
+- [x] Issue diagnostics with the name of the composition/node and the preserved source span
+  of definition when a graph cannot be constructed.
 
-### Gate etapa 4
+### Gate stage 4
 
-- [x] Golden snapshots ale grafului confirmă ordinea, dependențele și numărul
-  de capturi pentru compoziții simple, nested, masked și clipped.
+- [x] Golden graph snapshots confirm order, dependencies and count
+  of captures for simple, nested, masked and clipped compositions.
 
-## Etapa 5 — optimizare sigură
+## Stage 5 — secure optimization
 
-- [x] Adaugă `PrismGraphOptimizer` separat de builder; optimizerul nu modifică
-  definiția sau instanța.
-- [x] Marchează nodurile deterministe cacheable numai când toate resursele și
-  valorile lor pot participa la dependency stamp; celelalte rămân explicit
-  necacheable.
-- [x] Elimină noduri no-op dovedite, layere invizibile și conversii redundante;
-  fuzionează pași numai când catalogul declară echivalența.
-- [x] Calculează bounds extinse pentru blur, shadow, stroke și transform fără a
-  afecta layout/hitbox și fără a tăia pixeli necesari.
-- [x] Estimează peak live surfaces prin lifetime analysis și transmite un plan
-  explicit executorului, fără alocare GPU.
-- [x] Adaugă teste diferențiale builder vs optimizer pentru alpha, blend order,
-  masks, clipping și grupuri.
+- [x] Add `PrismGraphOptimizer` separately from builder; the optimizer does not modify
+  definition or instance.
+- [x] Mark deterministic nodes cacheable only when all resources and
+  their values can participate in the dependency stamp; the others remain explicit
+  uncacheable.
+- [x] Removes proven no-op nodes, invisible layers and redundant conversions;
+  merge steps only when the catalog declares equivalence.
+- [x] Calculates extended bounds for blur, shadow, stroke and transform without
+  affect layout/hitbox and without clipping needed pixels.
+- [x] Estimate peak live surfaces through lifetime analysis and transmit a plan
+  explicitly to the executor, without GPU allocation.
+- [x] Add builder vs optimizer differential tests for alpha, blend order,
+  masks, clipping and groups.
 
-### Gate etapa 5
+### Gate stage 5
 
-- [x] Graful optimizat este semantic echivalent cu cel brut și niciun test nu
-  depinde de ordinea accidentală a colecțiilor.
+- [x] The optimized graph is semantically equivalent to the raw one and no test is
+  depends on the random order of the collections.
 
-## Etapa 6 — documentare și verificare
+## Stage 6 — documentation and verification
 
-- [x] Actualizează cu skill-ul `writing-api-documentation` paginile
-  `IDrawingBackend`, `IUiBackend` și toate tipurile publice ale frame contextului;
-  sincronizează manifestul.
-- [x] Rulează reindexarea după fiecare lot C#/proiect.
-- [x] Rulează
+- [x] Updates the pages with the `writing-api-documentation` skill
+  `IDrawingBackend`, `IUiBackend` and all public frame context types;
+  synchronize the manifest.
+- [x] Run reindex after every C# batch/project.
+- [x] Running
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "Prism|DrawCommand|RetainedRenderer"`
-  și `dotnet test .\Cerneala.slnx`.
-- [x] Rulează `git diff --check` și diff-ul API public.
+  and `dotnet test .\Cerneala.slnx`.
+- [x] Runs `git diff --check` and the public API diff.
 
-## Definiția de gata
+## The definition of done
 
-- [x] Lista retained exprimă scope-uri Prism tipate și rămâne compatibilă cu
-  backendurile care nu execută efecte.
-- [x] Frame-ul este analizat o singură dată, iar graful brut și optimizat au
-  semantică verificată fără GPU.
-- [x] Identitățile nodurilor și dependency stamp-urile sunt stabile, complete și
-  gata de consumat de cache fără lookup string ori referințe la UI.
-- [x] Testele, documentația și toate gate-urile sunt verzi.
+- [x] The retained list expresses typed Prism scopes and remains compatible with
+  backends that don't run effects.
+- [x] The frame is analyzed only once, and the raw and optimized graph have
+  non-GPU verified semantics.
+- [x] Node identities and dependency stamps are stable, complete and
+  ready to be consumed by cache without lookup string or UI references.
+- [x] Tests, documentation and all gates are green.

@@ -44,6 +44,24 @@ Invalid rays remain useful training samples: the fitter maps their
 transmission to zero and their relative radius outside the valid housing
 interval so the runtime can reproduce blocking boundaries.
 
+The record does not validate or normalize its fields when it is constructed.
+Normalization happens inside `PrismLensProfileFitter.Fit` when the fitter
+builds polynomial inputs.
+
+## Properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `GhostIndex` | `int` | Identifies the reflection path to which the ray belongs. |
+| `PupilPosition` | `System.Numerics.Vector2` | Position of the ray in the normalized pupil. |
+| `IncidenceAngleDegrees` | `float` | Ray incidence angle in degrees. |
+| `WavelengthNanometers` | `float` | Ray wavelength in nanometers. |
+| `AperturePosition` | `System.Numerics.Vector2` | Fitted aperture-plane position for the ray. |
+| `SensorPosition` | `System.Numerics.Vector2` | Fitted sensor-plane position for the ray. |
+| `Transmission` | `float` | Measured transmission for the ray. |
+| `RelativeRadius` | `float` | Measured relative housing radius for the ray. |
+| `IsValid` | `bool` | Indicates whether the ray reached the valid optical path; defaults to `true`. |
+
 ## See also
 
 - [PrismLensProfileFitter](Cerneala.Drawing.Prism.Filters.PrismLensProfileFitter.md)

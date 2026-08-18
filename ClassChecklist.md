@@ -1,8 +1,13 @@
-# Class Checklist
+# Historical Class Checklist
 
 Generated from `.roslyn-index/v1/symbols.jsonl` using RoslynIndexer data.
 Test projects, test paths, Playground classes, and RoslynRepoIndexer tool classes are excluded.
-Verified at: 2026-07-09
+Verified at: 2026-08-18
+
+> This is a dated class-like symbol snapshot, retained for audit history. The
+> current public API source of truth is `docs-site/documentation/manifest.json`
+> together with `docs-site/documentation/classes/`; this snapshot is not a
+> substitute for that manifest.
 
 Total relevant class-like types: 617
 Classes: 487

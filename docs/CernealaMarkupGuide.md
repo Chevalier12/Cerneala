@@ -759,7 +759,7 @@ logical expressions:
 @when $self.Visibility
 @if value == Visible
 @if IsChecked == true
-@if ($DataContext.IsReady == true && IsEnabled == true)
+@if ($DataContext.IsReady == true and IsEnabled == true)
 ```
 
 Use `value` for the current value of the source watched by `@when`.

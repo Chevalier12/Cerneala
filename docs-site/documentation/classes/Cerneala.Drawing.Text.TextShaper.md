@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `Drawing/Text/TextShaper.cs`
 
-Provides a non-throwing facade for shaping and measuring Skia-backed drawing text runs.
+Provides a facade for shaping Skia-backed drawing text runs and reading their line metrics.
 
 ```csharp
 public sealed class TextShaper
@@ -34,6 +34,16 @@ if (TextShaper.Default.TryShape(textRun, out TextShapeResult shape))
 }
 ```
 
+Read the baseline and line height used by the Skia text pipeline:
+
+```csharp
+if (TextShaper.Default.TryMeasureBaseline(textRun, out float baseline) &&
+    TextShaper.Default.TryMeasureLineHeight(textRun, out float lineHeight))
+{
+    Console.WriteLine($"Baseline: {baseline}, line height: {lineHeight}");
+}
+```
+
 Measure caret-related vertical text metrics:
 
 ```csharp
@@ -51,11 +61,11 @@ if (TextShaper.Default.TryMeasureCaretVerticalMetrics(textRun, out TextCaretVert
 ```
 
 ## Remarks
-`TextShaper` wraps the Skia text shaping pipeline behind `Try...` methods. It accepts `DrawTextRun` instances whose `Font` is a `SkiaFont`; unsupported font implementations return `false` instead of throwing. This makes it useful for higher-level text layout code that can fall back to approximate metrics when the drawing backend cannot shape the run.
+`TextShaper` wraps the Skia text shaping and line-metrics pipeline behind `Try...` methods. It accepts `DrawTextRun` instances whose `Font` is a `SkiaFont`; unsupported font implementations return `false` and set the corresponding `out` value to its default instead of throwing. This makes it useful for higher-level text layout code that can fall back when the drawing backend cannot shape the run.
 
 `TryShape` delegates to `SkiaTextShaper.Shape` and returns the shaped glyph IDs, positions, and advance width in a `TextShapeResult`. Raster placement is calculated later by `SkiaTextRasterizer`.
 
-`TryMeasureLineHeight` and `TryMeasureCaretVerticalMetrics` both rasterize the sample text `"Ag"` with the run's font and size. The line-height method returns the rasterized height. The caret metrics method currently reports a top offset of `0` and the same rasterized height.
+`TryMeasureLineHeight`, `TryMeasureBaseline`, and `TryMeasureCaretVerticalMetrics` read the cached line metrics for the run's Skia typeface at the run's size. The metrics come from OpenType horizontal font extents when available and fall back to Skia font metrics otherwise. `TryMeasureBaseline` returns the baseline distance, `TryMeasureLineHeight` returns the line height, and caret metrics currently use an offset of `0` with that line height.
 
 All public methods throw `ArgumentNullException` when `textRun` is `null`. For non-Skia fonts, the methods return `false` and assign `default` or `0` to the `out` value.
 
@@ -73,14 +83,16 @@ All public methods throw `ArgumentNullException` when `textRun` is `null`. For n
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `TryShape(DrawTextRun textRun, out TextShapeResult result)` | `bool` | Attempts to shape a Skia-backed text run and returns `true` when shaping succeeds. |
-| `TryMeasureLineHeight(DrawTextRun textRun, out float lineHeight)` | `bool` | Attempts to measure line height by rasterizing the `"Ag"` sample text with the run's font and size. |
-| `TryMeasureCaretVerticalMetrics(DrawTextRun textRun, out TextCaretVerticalMetrics metrics)` | `bool` | Attempts to measure caret vertical metrics from a rasterized `"Ag"` sample. |
+| `TryMeasureLineHeight(DrawTextRun textRun, out float lineHeight)` | `bool` | Attempts to read the line height for the run's Skia typeface and size. |
+| `TryMeasureBaseline(DrawTextRun textRun, out float baseline)` | `bool` | Attempts to read the baseline distance for the run's Skia typeface and size. |
+| `TryMeasureCaretVerticalMetrics(DrawTextRun textRun, out TextCaretVerticalMetrics metrics)` | `bool` | Attempts to read caret metrics using a zero offset and the run's line height. |
 
 ## Exceptions
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `TryShape(DrawTextRun, out TextShapeResult)` | `ArgumentNullException` | `textRun` is `null`. |
 | `TryMeasureLineHeight(DrawTextRun, out float)` | `ArgumentNullException` | `textRun` is `null`. |
+| `TryMeasureBaseline(DrawTextRun, out float)` | `ArgumentNullException` | `textRun` is `null`. |
 | `TryMeasureCaretVerticalMetrics(DrawTextRun, out TextCaretVerticalMetrics)` | `ArgumentNullException` | `textRun` is `null`. |
 
 ## Applies to

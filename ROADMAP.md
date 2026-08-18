@@ -6,6 +6,13 @@ Goal: build a WPF-inspired UI framework on top of the existing drawing and input
 
 This is not a promise to clone every WPF feature exactly. It is the planned project map. If scope changes, update this file first.
 
+> **Current status (2026-08-18):** this is the legacy WPF-shaped roadmap and is
+> retained for historical planning context. The implemented architecture now
+> uses typed retained UI state rather than a WPF dependency-property clone and
+> is tracked in `ROADMAPv2.md` and `docs/architecture-v2.md`. The `.crn` language,
+> language server and Visual Studio integration are tracked by the dated plans
+> under `docs/plans/`; entries below should not be read as current API promises.
+
 Before implementing or changing anything from this roadmap, read `architecture.md`. It explains the existing `Drawing` and `UI/Input` architecture, including which planned WPF-style classes would duplicate existing primitives if implemented blindly.
 
 Legend:

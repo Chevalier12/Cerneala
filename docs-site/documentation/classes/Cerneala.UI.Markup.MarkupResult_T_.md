@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Markup`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Markup/UiMarkupDocument.cs`
+Source: `UI/Markup/MarkupResult{T}.cs`
 
 Represents the value produced by a markup operation together with diagnostics collected during that operation.
 

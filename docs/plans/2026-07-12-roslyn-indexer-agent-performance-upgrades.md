@@ -1,99 +1,98 @@
-# Plan: RoslynIndexer optimizat pentru agenti AI
+# Plan: RoslynIndexer optimized for AI agents
 
-**Data:** 2026-07-12  
-**Status:** Implementat  
-**Scop:** Transformarea RoslynIndexer dintr-un CLI corect semantic, dar costisitor la fiecare apel, intr-un serviciu MCP persistent, cu index query-oriented, latenta foarte mica, output compact si comenzi compuse construite special pentru fluxul de lucru al unui agent AI.
+**Date:** 2026-07-12
+**Status:** Implemented
+**Goal:** Transforming RoslynIndexer from a semantically correct CLI, but expensive at each call, into a persistent MCP service with index query-oriented, very low latency, compact output and compound commands built specifically for the workflow of an AI agent.
 
-> Implementarea finala foloseste segmente binare content-addressed per document in locul tabelelor binare monolitice schitate initial. Alegerea pastreaza publish-ul atomic, reduce indexul Cerneala la aproximativ 13 MB si permite rescrierea stricta a documentelor dirty. Memory mapping a ramas intentionat neimplementat: buffered reads respecta bugetul initial de load, deci complexitatea suplimentara nu este justificata de benchmark.
+> The final implementation uses content-addressed binary segments per document instead of the initially sketched monolithic binary tables. The choice keeps the publish atomic, reduces the index Cerneala to about 13 MB and allows strict rewriting of dirty documents. Memory mapping was intentionally left unimplemented: buffered reads respect the initial load budget, so the additional complexity is not justified by the benchmark.
 
-## Rezumat executiv
+## Executive summary
 
-RoslynIndexer are deja fundatia utila: indexare semantica Roslyn, cautare de simboluri, referinte, citire de fisiere, incrementalitate de baza si integrare MCP. Blocajul principal nu este lipsa de capabilitati, ci arhitectura de executie a query-urilor.
+RoslynIndexer already has the useful foundation: Roslyn semantic indexing, symbol searching, references, file reading, basic incrementality and MCP integration. The main blockage is not the lack of capabilities, but the query execution architecture.
 
-In forma actuala, fiecare apel:
+In its current form, each call:
 
-1. citeste integral indexul JSONL de pe disc;
-2. deserializeaza toate documentele, simbolurile, referintele si posting-urile;
-3. reconstruieste dictionarele de lookup in memorie;
-4. executa query-ul;
-5. arunca toata starea la finalul apelului.
+1. read the entire JSONL index from the disk;
+2. deserializes all documents, symbols, references and postings;
+3. rebuilds the lookup dictionaries in memory;
+4. execute the query;
+5. discard all status at the end of the call.
 
-Pe repository-ul Cerneala, masuratorile din 2026-07-12 au fost:
+On the Cerneala repository, the measurements from 2026-07-12 were:
 
-| Operatie | Rezultat masurat |
+| Operation | Measured result |
 |---|---:|
-| Documente C# indexate | 910 |
-| Simboluri | 24.861 |
-| Referinte | 53.048 |
-| Token postings | 452.324 |
-| Cold index C#-only | 17,7 s |
-| No-op incremental, 0 fisiere dirty | 15,1 s |
-| Search one-shot | 2,1-2,6 s |
-| Dimensiune totala index | aproximativ 129 MB |
-| `tokens.jsonl` | 88,9 MB |
+| Indexed C# Documents | 910 |
+| Symbols | 24,861 |
+| References | 53,048 |
+| Token postings | 452,324 |
+| Cold index C#-only | 17.7 s |
+| No-op incremental, 0 dirty files | 15.1 s |
+| Search one-shot | 2.1-2.6 s |
+| Total index size | approximately 129 MB |
+| `tokens.jsonl` | 88.9 MB |
 
-Prioritatea absoluta este reducerea latentei si a muncii repetate. Functionalitati precum ranking mai sofisticat sau extinderea `suggest` nu trebuie sa devanseze persistent query state, incrementalitatea reala si storage-ul orientat spre lookup.
+The absolute priority is to reduce latency and repetitive work. Functionalities such as more sophisticated ranking or the `suggest` extension must not overtake persistent query state, real incrementality and lookup-oriented storage.
 
-## Principii de produs
+## Product principles
 
-1. **Agentul AI este clientul principal.** Contractele, comenzile si output-ul sunt optimizate pentru numar mic de round-trip-uri, latenta mica si consum redus de tokeni.
-2. **MCP este suprafata principala.** CLI-ul ramane util pentru diagnostic, scripting si fallback, dar nu dicteaza arhitectura query path-ului MCP.
-3. **Cost proportional cu query-ul.** Un lookup de simbol exact nu trebuie sa citeasca 129 MB si sa reconstruiasca toate posting-urile.
-4. **No-op inseamna no-op.** Daca repository-ul si configuratia nu s-au schimbat, indexarea nu deschide MSBuildWorkspace si nu rescrie indexul.
-5. **Output compact implicit.** Campurile duplicate, null-urile fara valoare si textul explicativ redundant sunt eliminate din raspunsurile MCP.
-6. **Date structurate, nu proza.** Grafurile, relatiile si diagnosticele sunt returnate ca noduri, muchii, identificatori si coduri stabile.
-7. **Bugetele sunt parte din contract.** Comenzile compuse accepta limite pentru rezultate, caractere, noduri, adancime si timp.
-8. **Corectitudinea semantica nu se sacrifica.** Optimizarea nu transforma RoslynIndexer intr-un grep cu o palarie Roslyn pusa deasupra.
+1. **The AI agent is the main client.** Contracts, orders and output are optimized for a small number of round-trips, low latency and low token consumption.
+2. **MCP is the main surface.** The CLI remains useful for diagnostics, scripting and fallback, but does not dictate the MCP query path architecture.
+3. **Cost proportional to the query.** An exact symbol lookup does not have to read 129 MB and reconstruct all the postings.
+4. **No-op means no-op.** If the repository and configuration have not changed, indexing does not open MSBuildWorkspace and does not rewrite the index.
+5. **Default compact output.** Duplicate fields, nulls with no value and redundant explanatory text are removed from MCP responses.
+6. **Structured data, not prose.** Graphs, relationships and diagnostics are returned as nodes, edges, identifiers and stable codes.
+7. **Budgets are part of the contract.** Compound orders accept limits for results, characters, nodes, depth and time.
+8. **Semantic correctness is not sacrificed.** Optimization does not turn RoslynIndexer into a grep with a Roslyn hat on top.
 
-## Obiective masurabile
+## Measurable objectives
 
 ### Query path MCP
 
-- Primul query dupa pornirea MCP: sub 500 ms pe repository-ul Cerneala.
-- Query-uri ulterioare `search`: p50 sub 20 ms, p95 sub 50 ms.
-- `goto` cu symbol ID sau FQN exact: p95 sub 10 ms.
-- `refs` indexed: p95 sub 20 ms pentru maximum 100 rezultate.
-- Nicio deserializare integrala a posting-urilor dupa incarcarea initiala.
-- Nicio reconstructie a dictionarelor intre doua apeluri pe aceeasi generatie de index.
+- The first query after starting MCP: under 500 ms on the Cerneala repository.
+- Subsequent queries `search`: p50 under 20 ms, p95 under 50 ms.
+- `goto` with exact ID or FQN symbol: p95 under 10 ms.
+- `refs` indexed: p95 under 20 ms for a maximum of 100 results.
+- No complete deserialization of the postings after the initial upload.
+- No reconstruction of dictionaries between two calls on the same index generation.
 
-### Indexare
+### Indexing
 
-- No-op incremental: p95 sub 100 ms, fara pornire MSBuild/Roslyn workspace.
-- Schimbare body-only intr-un fisier: sub 1 s pe Cerneala.
-- Schimbare de declaratie locala: sub 2 s cand project graph-ul ramane stabil.
-- Full cold index: tinta initiala sub 12 s pe Cerneala, apoi optimizare pe baza profilerului.
-- Persistenta incrementala rescrie doar segmentele afectate.
+- Incremental no-op: p95 under 100 ms, without starting MSBuild/Roslyn workspace.
+- Body-only change in a file: under 1 s on Cerneala.
+- Local declaration change: under 2 s when the project graph remains stable.
+- Full cold index: initial target below 12 s on Cerneala, then optimization based on the profiler.
+- Incremental persistence only rewrites the affected segments.
 
-### Storage si memorie
+### Storage and memory
 
-- Reducerea indexului Cerneala de la aproximativ 129 MB la maximum 50 MB in prima versiune binara.
-- Eliminarea repetarii stringurilor pentru path, project, symbol ID si token.
-- Memorie MCP stabila dupa warm-up, fara crestere proportionala cu numarul de query-uri.
-- Zero copii integrale inutile ale colectiilor mari pe query path.
+- Reduction of the Cerneala index from approximately 129 MB to a maximum of 50 MB in the first binary version.
+- Elimination of string repetition for path, project, symbol ID and token.
+- Stable MCP memory after warm-up, without proportional increase with the number of queries.
+- Zero unnecessary integral copies of large collections on the query path.
 
-### Output pentru agent
+### Output for agent
 
-- Raspunsurile nu dubleaza aceleasi date in `data` si `results`.
-- Fiecare lista potential mare suporta `truncated` si `continuationToken`.
-- Fiecare comanda suporta un profil `compact`, iar acesta este implicit in MCP.
-- Comenzile compuse respecta `maxResults`, `maxChars`, `maxNodes`, `depth` si timeout.
+- The answers do not duplicate the same data in `data` and `results`.
+- Every potentially large list supports `truncated` and `continuationToken`.
+- Each command supports a profile `compact`, and this is default in MCP.
+- Compound commands respect `maxResults`, `maxChars`, `maxNodes`, `depth` and timeout.
 
-## Non-obiective initiale
+## Non-initial objectives
 
-- AI, embeddings, vector database sau servicii cloud.
-- Daemon de retea sau HTTP server.
-- Index semantic complet pentru limbaje non-C#.
-- Refacerea simultana a tuturor comenzilor CLI.
-- Ranking bazat pe modele statistice.
-- Watcher complex inainte ca fast path-ul determinist sa fie dovedit.
-- Compatibilitate eterna cu indexurile vechi; rebuild automat este acceptabil la schimbarea majora de schema.
+- AI, embeddings, vector database or cloud services.
+- Network daemon or HTTP server.
+- Complete semantic index for non-C# languages.
+- Simultaneous restoration of all CLI commands.
+- Ranking based on statistical models.
+- Complex watcher before the deterministic fast path is proven.
+- Eternal compatibility with old indexes; automatic rebuild is acceptable for major scheme change.
 
-## Arhitectura tinta
+## Target architecture
 
 ### 1. `RepositoryIndexSession`
 
-MCP pastreaza o sesiune per repository:
-
+MCP keeps one session per repository:
 ```text
 RepositorySessionRegistry
   repoRoot -> RepositoryIndexSession
@@ -103,23 +102,21 @@ RepositorySessionRegistry
                 async reload gate
                 usage/latency counters
 ```
+`RepositoryIndexSession` is responsible for:
 
-`RepositoryIndexSession` este responsabil pentru:
+- solving and normalizing a single `repoRoot`;
+- charging the current generation;
+- keeping lookups immutable;
+- cheap verification of the generation before the query;
+- reload only once when the manifest changes;
+- atomic swap between generations;
+- releasing the resources of the old generation after the end of the active readers.
 
-- rezolvarea si normalizarea unui singur `repoRoot`;
-- incarcarea generatiei curente;
-- pastrarea lookup-urilor imutabile;
-- verificarea ieftina a generatiei inainte de query;
-- reload o singura data cand manifestul se schimba;
-- swap atomic intre generatii;
-- eliberarea resurselor generatiei vechi dupa terminarea reader-ilor activi.
-
-Nu se introduce cache global static in Core. Lifetime-ul sesiunilor este detinut explicit de serverul MCP si poate fi testat izolat.
+No static global cache is introduced in Core. Session lifetime is explicitly owned by the MCP server and can be tested in isolation.
 
 ### 2. `QueryIndex`
 
-`QueryIndex` contine numai structurile necesare query-urilor:
-
+`QueryIndex` contains only the structures necessary for queries:
 ```text
 symbolId -> SymbolRecord
 lowerName -> symbol IDs
@@ -132,13 +129,11 @@ project graph adjacency
 call graph adjacency
 type hierarchy adjacency
 ```
+Collections are immutable after publication. Queries can run concurrently without global lock.
 
-Colectiile sunt imutabile dupa publicare. Query-urile pot rula concurent fara lock global.
+### 3. Segmented binary storage
 
-### 3. Storage binar segmentat
-
-Format propus:
-
+Proposed format:
 ```text
 .roslyn-index/
   current.json
@@ -155,56 +150,54 @@ Format propus:
       hierarchy.bin
       diagnostics.jsonl
 ```
+Rules:
 
-Reguli:
+- `current.json` atomically indicates the active generation.
+- Tables use compact numeric IDs.
+- Common strings are interned only once.
+- Posting lists are ordered and delta-encoded.
+- Numerical values ​​use variant where it brings measurable gain.
+- Large tables can be memory-mapped.
+- Each file has a header with magic, schema version, generation ID, row count and checksum.
+- The writing is done in a temporary generation, validated, then published atomically.
+- The previous generation remains available until the current readers release it.
 
-- `current.json` indica atomic generatia activa.
-- Tabelele folosesc ID-uri numerice compacte.
-- Stringurile comune sunt interned o singura data.
-- Posting lists sunt ordonate si delta-encoded.
-- Valorile numerice folosesc varint unde aduce castig masurabil.
-- Tabelele mari pot fi memory-mapped.
-- Fiecare fisier are header cu magic, schema version, generation ID, row count si checksum.
-- Scrierea se face intr-o generatie temporara, validata, apoi publicata atomic.
-- Generatia anterioara ramane disponibila pana cand reader-ii curenti o elibereaza.
+No SQLite, Lucene or other external engine is added. The format remains local and controlled by the project.
 
-Nu se adauga SQLite, Lucene sau alt motor extern. Formatul ramane local si controlat de proiect.
+### 4. Incrementality by segments
 
-### 4. Incrementalitate pe segmente
+Indexing is explicitly divided into:
 
-Indexarea este impartita explicit in:
-
-1. repository/config fingerprint;
+1. fingerprint repository/config;
 2. workspace graph fingerprint;
 3. file change detection;
 4. syntax/declaration change classification;
 5. semantic reindex plan;
-6. segment merge;
+6. segment goes;
 7. atomic publish.
 
-Fast path no-op se opreste dupa pasul 3. Nu deschide workspace-ul si nu rescrie manifestul doar ca sa demonstreze ca nu avea nimic de facut.
+Fast path no-op stops after step 3. It does not open the workspace and does not rewrite the manifest just to prove that it had nothing to do.
 
-Pentru fisiere modificate:
+For modified files:
 
-- body-only: actualizeaza tokenii, call edges si referintele locale afectate;
-- declaration change: invalideaza simbolul si proiectele dependente necesare;
-- project/config change: reconstruieste workspace graph-ul;
-- schema/tool version change: full rebuild explicit.
+- body-only: update tokens, call edges and affected local references;
+- declaration change: invalidates the symbol and the necessary dependent projects;
+- project/config change: rebuilds the workspace graph;
+- scheme/tool ​​version change: full rebuild explicitly.
 
 ### 5. Agent response layer
 
-Core-ul returneaza modele semantice bogate. MCP aplica un response profile:
+The core returns rich semantic models. MCP applies a response profile:
 
-- `compact`: campuri strict necesare, implicit;
-- `standard`: include snippets si explicatii de matching;
-- `diagnostic`: include timings, cache state si detalii de scoring.
+- `compact`: strictly necessary fields, default;
+- `standard`: includes snippets and matching explanations;
+- `diagnostic`: includes timings, cache state and scoring details.
 
-Trunchierea se face determinist si este raportata explicit. Nicio comanda nu returneaza accidental sute de mii de tokeni.
+Truncation is done deterministically and is reported explicitly. No order accidentally returns hundreds of thousands of tokens.
 
-## Contract MCP comun
+## Common MCP contract
 
-Toate comenzile noi si existente trebuie sa foloseasca un envelope unic:
-
+All new and existing orders must use a unique envelope:
 ```json
 {
   "success": true,
@@ -221,28 +214,26 @@ Toate comenzile noi si existente trebuie sa foloseasca un envelope unic:
   "data": {}
 }
 ```
+### Schema rules
 
-### Reguli de schema
-
-- Tipuri JSON exacte, fara union generic `string | number | boolean | null` pentru orice proprietate.
-- Enum-uri reale pentru `mode`, `kind`, `direction`, `profile` si `include`.
-- `minimum` si `maximum` pentru limite numerice.
-- Required fields corecte pentru fiecare tool.
-- Reguli mutual exclusive pentru variantele de partial read.
-- Default-uri declarate in schema.
+- Exact JSON types, without generic union `string | number | boolean | null` for any property.
+- Real enums for `mode`, `kind`, `direction`, `profile` and `include`.
+- `minimum` and `maximum` for numerical limits.
+- Correct required fields for each tool.
+- Mutually exclusive rules for partial read variants.
+- Defaults declared in the scheme.
 - `additionalProperties: false`.
-- Erori cu `code`, `message`, `retryable` si `suggestedAction`.
-- `repoRoot` devine optional cand serverul este pornit repo-bound.
-- Se elimina duplicarea dintre `data` si `results`.
+- Errors with `code`, `message`, `retryable` and `suggestedAction`.
+- `repoRoot` becomes optional when the server is started repo-bound.
+- The duplication between `data` and `results` is removed.
 
-## Comenzi noi
+## New orders
 
 ### `roslyn_inspect`
 
-Comanda principala pentru intelegerea unui simbol intr-un singur round-trip.
+The main command for understanding a symbol in a single round-trip.
 
-Input conceptual:
-
+Conceptual input:
 ```json
 {
   "symbol": "UIElement.InvalidateMeasure",
@@ -265,40 +256,38 @@ Input conceptual:
   "profile": "compact"
 }
 ```
-
-Output-ul contine identificatori reutilizabili de celelalte comenzi. Ambiguitatea nu este ascunsa: daca query-ul rezolva mai multe simboluri, comanda returneaza candidatii si un cod `ambiguous-symbol`.
+The output contains identifiers reusable by the other commands. The ambiguity is not hidden: if the query solves several symbols, the command returns the candidates and a code `ambiguous-symbol`.
 
 ### `roslyn_outline`
 
-Returneaza structura semantica a unui fisier, tip sau namespace fara continutul complet al fisierului.
+Returns the semantic structure of a file, type or namespace without the full content of the file.
 
-Trebuie sa includa:
+It must include:
 
-- namespaces si tipuri;
-- membri cu kind, accessibility, signature si span;
-- relatii base/interface;
+- namespaces and types;
+- members with kind, accessibility, signature and span;
+- base/interface relations;
 - optional private/generated members;
-- nesting pana la `depth`.
+- nesting until `depth`.
 
-Este comanda implicita de orientare inainte de `roslyn_read` pentru fisiere mari.
+It is the default orientation command before `roslyn_read` for large files.
 
 ### `roslyn_context`
 
-Construieste un pachet compact pentru o locatie sau un simbol:
+Build a compact package for a location or symbol:
 
 - containing symbol;
-- fragmentul sursa relevant;
-- declaratiile dependintelor directe;
-- callers/callees limitati;
-- teste candidate;
-- diagnostics locale, daca sunt disponibile.
+- the relevant source fragment;
+- declarations of direct dependencies;
+- limited callers/callees;
+- candidate tests;
+- local diagnostics, if available.
 
-Bugetul de caractere este obligatoriu si respectat dupa ordonarea relevantei.
+The character budget is mandatory and respected after ordering the relevant.
 
 ### `roslyn_callgraph`
 
-Returneaza graf structurat:
-
+Returns structured graph:
 ```json
 {
   "nodes": [
@@ -309,29 +298,27 @@ Returneaza graf structurat:
   ]
 }
 ```
-
-Suporta `direction: callers | callees | both`, `depth`, `maxNodes`, `includeTests` si `includeExternal`.
+It supports `direction: callers | callees | both`, `depth`, `maxNodes`, `includeTests` and `includeExternal`.
 
 ### `roslyn_impact`
 
-Raspunde la intrebarea "ce poate fi afectat daca modific acest simbol sau fisier?".
+It answers the question "what can be affected if I modify this symbol or file?".
 
-Include:
+Includes:
 
-- callers si references;
-- derived types si implementations;
+- callers and references;
+- derived types and implementations;
 - overrides;
 - public API exposure;
-- proiecte dependente;
-- teste candidate;
-- nivel de incredere determinist si motivul fiecarei legaturi.
+- dependent projects;
+- candidate tests;
+- deterministic trust level and the reason for each link.
 
-Nu pretinde ca prezice comportamentul runtime. Returneaza impact semantic si structural demonstrabil.
+It does not claim to predict runtime behavior. Returns demonstrable semantic and structural impact.
 
 ### `roslyn_batch`
 
-Executa mai multe operatii intr-un singur round-trip si permite dependente intre ele:
-
+It performs several operations in a single round-trip and allows dependencies between them:
 ```json
 {
   "operations": [
@@ -343,356 +330,352 @@ Executa mai multe operatii intr-un singur round-trip si permite dependente intre
   "timeoutMs": 1000
 }
 ```
-
-Operatiile permise sunt enumerate explicit; batch-ul nu devine un shell generic. Un esec poate fi configurat `stop` sau `continue`, iar fiecare rezultat pastreaza ID-ul operatiei.
+The permitted operations are listed explicitly; batch does not become a generic shell. A failure can be configured `stop` or `continue`, and each result keeps the operation ID.
 
 ### `roslyn_changes`
 
-Produce semantic diff fata de:
+Produces semantic diff compared to:
 
 - working tree versus `HEAD`;
-- index generation curenta versus precedenta;
-- doua commit-uri locale;
-- doua generatii de index.
+- current versus previous generation index;
+- two local commits;
+- two generations of index.
 
-Returneaza simboluri adaugate, sterse si modificate, signature changes, public API changes si proiecte afectate.
+Returns added, deleted and modified symbols, signature changes, public API changes and affected projects.
 
 ### `roslyn_tests_for`
 
-Rankeaza testele relevante pentru symbol, file sau change set folosind numai:
+Rank the relevant tests for symbol, file or change set using only:
 
-- referinte semantice;
+- semantic references;
 - call graph;
 - project references;
 - naming conventions;
 - path proximity;
-- istoric local optional numai daca este disponibil fara retea.
+- optional local history only if available offline.
 
-Fiecare candidat include motivele scorului. Comanda nu ruleaza testele.
-
+Each candidate includes scoring reasons. The command does not run the tests.
 ### `roslyn_capabilities`
 
-Returneaza versiunea serverului, comenzile, schema indexului, repository binding, starea sesiunii si limitele suportate. Aceasta comanda rezolva cazul in care agentul nu stie daca MCP-ul este instalat, configurat sau compatibil.
+Returns the server version, commands, index scheme, repository binding, session status and supported limits. This command solves the case where the agent does not know if the MCP is installed, configured or compatible.
 
 ### `roslyn_profile`
 
-Diagnostic local pentru dezvoltarea tool-ului, nu pentru utilizare zilnica. Returneaza:
+Local diagnosis for tool development, not for daily use. Returns:
 
 - load/reload timings;
 - query stage timings;
-- allocation estimates disponibile;
-- dimensiunea segmentelor;
+- allocation estimates available;
+- the size of the segments;
 - cache hit rates;
 - top term posting sizes;
 - no-op index breakdown.
 
-Nu trimite telemetrie si nu persista date in afara `.roslyn-index/`.
+It does not send telemetry and does not persist data outside of `.roslyn-index/`.
 
-## Upgrade-uri pentru comenzile existente
+## Upgrades for existing orders
 
 ### `roslyn_search`
 
-- Foloseste lookup direct pentru symbol exact si FQN exact.
-- Evita scanarea tuturor simbolurilor/referintelor daca exista candidati exacti.
-- Adauga `fields`, `profile`, `continuationToken` si bugete explicite.
-- Returneaza `matchReason` ca enum plus componente de scor in profil diagnostic.
-- Aplica timeout-ul si in load/reload, nu doar in scoring.
+- Use direct lookup for exact symbol and exact FQN.
+- Avoid scanning all symbols/references if there are exact candidates.
+- Add `fields`, `profile`, `continuationToken` and explicit budgets.
+- Returns `matchReason` as enum plus score components in diagnostic profile.
+- Apply the timeout also in load/reload, not only in scoring.
 
 ### `roslyn_goto`
 
-- Accepta direct `symbolId` fara query textual.
-- Returneaza signature si declaration span compact.
-- Diferentiaza declaration, partial declaration si generated declaration.
+- Accept directly `symbolId` without textual query.
+- Returns signature and declaration span compact.
+- Differentiate declaration, partial declaration and generated declaration.
 
 ### `roslyn_refs`
 
-- Grupeaza optional dupa `referenceKind`, file sau project.
-- Suporta paging stabil.
-- Exact refs foloseste o sesiune Roslyn reutilizabila optional, nu porneste workspace complet la fiecare apel.
-- Cache-ul exact este invalidat pe baza simbolului si a proiectelor afectate, nu doar prin timestamp global.
+- Optionally group by `referenceKind`, file or project.
+- Supports stable paging.
+- Exact refs uses an optionally reusable Roslyn session, does not start full workspace on every call.
+- The exact cache is invalidated based on the symbol and the affected projects, not just by the global timestamp.
 
-### `roslyn_read` si `roslyn_pread`
+### `roslyn_read` and `roslyn_pread`
 
-- Returneaza line numbers numai cand sunt cerute.
-- Adauga `maxChars` si semnal explicit de trunchiere.
-- Adauga `contentHash` pentru verificarea ca fisierul nu s-a schimbat intre read si edit.
-- `pread` accepta semantic span: containing member, declaration sau body.
+- Returns line numbers only when requested.
+- Add `maxChars` and explicit truncation signal.
+- Add `contentHash` to verify that the file has not changed between read and edit.
+- `pread` accepts semantic span: containing member, declaration or body.
 
 ### `roslyn_status`
 
-- Nu citeste integral fisierele JSONL doar pentru counts.
-- Citeste counts si generation state direct din manifest.
-- Raporteaza separat `indexState`, `sessionState` si `workspaceState`.
+- It does not fully read JSONL files only for counts.
+- Read counts and generation state directly from the manifest.
+- Report separately `indexState`, `sessionState` and `workspaceState`.
 
 ### `roslyn_doctor`
 
-- Include verificarea MCP repo binding.
-- Include schema/tool compatibility.
-- Include motivul exact pentru care indexul este stale.
-- Are un mod `quick` fara deschiderea workspace-ului si un mod `deep` explicit.
+- Includes MCP repo binding check.
+- Includes scheme/tool ​​compatibility.
+- Include the exact reason why the index is stale.
+- It has a mode `quick` without opening the workspace and an explicit mode `deep`.
 
 ### `roslyn_suggest`
 
-- Ramane functional, dar nu primeste investitii majore inaintea comenzilor semantice compuse.
-- Poate deveni un router determinist catre `inspect`, `impact`, `callgraph` si `tests_for`.
-- Nu mai genereaza stringuri CLI cand clientul este MCP; returneaza operatii structurate.
+- It remains functional, but does not receive major investments before compound semantic commands.
+- It can become a deterministic router to `inspect`, `impact`, `callgraph` and `tests_for`.
+- It no longer generates CLI strings when the client is MCP; returns structured operations.
 
-## Etape de implementare
+## Implementation stages
 
-### Etapa 0: baseline reproductibil
+### Stage 0: reproducible baseline
 
-- [ ] Adauga un corpus benchmark determinist cu clase small, medium si Cerneala-like.
-- [ ] Separa timpul de process startup, index load, lookup build, scoring si snippet hydration.
-- [ ] Masoara p50/p95 dupa warm-up pentru minimum 100 query-uri.
-- [ ] Masoara allocations si peak working set pentru load si query.
-- [ ] Masoara dimensiunea fiecarui fisier de index.
-- [ ] Salveaza baseline-ul ca artifact de test/benchmark, nu ca prag dependent de masina in unit tests.
-- [ ] Adauga un benchmark pentru 20 apeluri MCP in acelasi proces.
-- [ ] Adauga un benchmark no-op incremental care verifica explicit ca MSBuild nu este pornit.
+- [ ] Add a deterministic benchmark corpus with small, medium and Cerneala-like classes.
+- [ ] Separates the startup process time, index load, lookup build, scoring and snippet hydration.
+- [ ] Measure p50/p95 after warm-up for at least 100 queries.
+- [ ] Measure allocations and peak working set for load and query.
+- [ ] Measures the size of each index file.
+- [ ] Save the baseline as a test/benchmark artifact, not as a machine-dependent threshold in unit tests.
+- [ ] Add a benchmark for 20 MCP calls in the same process.
+- [ ] Add an incremental no-op benchmark that explicitly checks that MSBuild is not started.
 
-**Gate:** Nicio optimizare nu este acceptata fara comparatie cu baseline-ul si fara test functional echivalent.
+**Gate:** No optimization is accepted without comparison with the baseline and without an equivalent functional test.
 
-### Etapa 1: sesiune MCP persistenta
+### Stage 1: persistent MCP session
 
-- [ ] Introdu `RepositorySessionRegistry` cu lifetime detinut de host-ul MCP.
-- [ ] Introdu `RepositoryIndexSession` si `QueryIndex` imutabil.
-- [ ] Incarca indexul o singura data per generation ID.
-- [ ] Detecteaza schimbarea generatiei printr-o citire mica a manifestului curent.
-- [ ] Implementeaza reload single-flight.
-- [ ] Implementeaza swap atomic si concurenta intre readeri.
-- [ ] Adauga eviction configurabil pentru mai multe repository-uri, fara timer agresiv.
-- [ ] Instrumenteaza `sessionHit`, `reloadCount`, `loadMs` si `queryMs`.
-- [ ] Adauga teste concurente pentru query in timpul reload-ului.
+- [ ] Enter `RepositorySessionRegistry` with lifetime owned by the MCP host.
+- [ ] Enter `RepositoryIndexSession` and `QueryIndex` immutable.
+- [ ] Load the index only once per ID generation.
+- [ ] Detects the change of generation through a small reading of the current manifesto.
+- [ ] Implement single-flight reload.
+- [ ] Implements atomic swap and competition between readers.
+- [ ] Add configurable eviction for several repositories, without aggressive timer.
+- [ ] Instruments `sessionHit`, `reloadCount`, `loadMs` and `queryMs`.
+- [ ] Add concurrent tests for query during reload.
 
-**Gate:** 100 query-uri consecutive nu reconstruiesc lookup-urile, iar p95 warm search este sub 50 ms pe corpusul Cerneala-like.
+**Gate:** 100 consecutive queries do not rebuild the lookups, and p95 warm search is under 50 ms on the Cerneala-like corpus.
 
-### Etapa 2: fast path pentru no-op incremental
+### Stage 2: fast path for incremental no-op
 
-- [ ] Separa discovery fingerprint de workspace load.
-- [ ] Calculeaza config si workspace input fingerprint fara Roslyn.
-- [ ] Foloseste datele Git disponibile pentru lista de fisiere schimbate.
-- [ ] Adauga fallback filesystem determinist cand Git nu este disponibil.
-- [ ] Nu recalcula content hash pentru toate fisierele daca metadata si Git confirma ca sunt neschimbate.
-- [ ] Returneaza imediat cand change set-ul este gol.
-- [ ] Nu rescrie indexul, diagnostics sau generation pointer pe no-op.
-- [ ] Adauga test care interzice crearea MSBuildWorkspace pe no-op.
+- [ ] Separate discovery fingerprint from workspace load.
+- [ ] Calculates config and workspace input fingerprint without Roslyn.
+- [ ] Uses the available Git data for the list of changed files.
+- [ ] Add deterministic filesystem fallback when Git is not available.
+- [ ] Do not recalculate content hash for all files if metadata and Git confirm that they are unchanged.
+- [ ] Returns immediately when the change set is empty.
+- [ ] Do not rewrite the index, diagnostics or pointer generation on no-op.
+- [ ] Add test that prohibits creating MSBuildWorkspace on no-op.
 
-**Gate:** No-op incremental sub 100 ms p95 pe Cerneala si zero fisiere modificate in `.roslyn-index/`.
+**Gate:** No-op incremental under 100ms p95 on Cerneala and zero files changed in `.roslyn-index/`.
 
-### Etapa 3: contract MCP compact si strict
+### Stage 3: compact and strict MCP contract
 
-- [ ] Inlocuieste schema generica cu JSON Schema per tool.
-- [ ] Elimina campul duplicat `results` sau `data`.
-- [ ] Adauga response profiles.
-- [ ] Adauga structured error codes.
-- [ ] Adauga paging si continuation tokens semnate local cu generation ID.
-- [ ] Fa `repoRoot` optional pentru server repo-bound.
-- [ ] Adauga `roslyn_capabilities`.
-- [ ] Testeaza serializarea exacta si compatibilitatea schema-contract.
+- [ ] Replaces the generic schema with JSON Schema per tool.
+- [ ] Eliminate duplicate field `results` or `data`.
+- [ ] Add response profiles.
+- [ ] Add structured error codes.
+- [ ] Add paging and continuation tokens signed locally with generation ID.
+- [ ] Fa `repoRoot` optional for repo-bound server.
+- [ ] Add `roslyn_capabilities`.
+- [ ] Tests exact serialization and schema-contract compatibility.
 
-**Gate:** Raspunsul compact pentru un `goto` exact este sub 2 KB si nu contine campuri duplicate.
+**Gate:** The compact answer for an exact `goto` is under 2 KB and contains no duplicate fields.
 
-### Etapa 4: storage binar query-oriented
+### Stage 4: query-oriented binary storage
+- [ ] Defines the format and documents the invariants/headers.
+- [ ] Enter string tables and numeric IDs.
+- [ ] Implements writer and reader for documents/symbols.
+- [ ] Implement term dictionary and posting slices.
+- [ ] Implement references grouped by symbol ID.
+- [ ] Add checksum and truncation/corruption detection.
+- [ ] Add memory mapping only after benchmark compared to buffered reads.
+- [ ] Keeps the JSONL reader temporarily for migration and comparative tests.
+- [ ] Add the internal rebuild/migrate command via `roslyn_index --force`.
+- [ ] Removes the old reader after an explicit period of compatibility.
 
-- [ ] Defineste formatul si documenteaza invariants/header-ele.
-- [ ] Introdu string table si ID-uri numerice.
-- [ ] Implementeaza writer si reader pentru documents/symbols.
-- [ ] Implementeaza term dictionary si posting slices.
-- [ ] Implementeaza references grouped by symbol ID.
-- [ ] Adauga checksum si detectare de truncation/corruption.
-- [ ] Adauga memory mapping numai dupa benchmark comparativ cu buffered reads.
-- [ ] Pastreaza temporar reader-ul JSONL pentru migrare si teste comparative.
-- [ ] Adauga comanda interna de rebuild/migrate prin `roslyn_index --force`.
-- [ ] Elimina reader-ul vechi dupa o perioada explicita de compatibilitate.
+**Gate:** Index under 50 MB on Cerneala, semantically equivalent byte-for-byte results and first load under 500 ms.
 
-**Gate:** Index sub 50 MB pe Cerneala, rezultate byte-for-byte echivalente semantic si primul load sub 500 ms.
+### Stage 5: incremental persistence on segments
 
-### Etapa 5: persistenta incrementala pe segmente
+- [ ] Enter per-document ownership for symbols, references and postings.
+- [ ] Writes only the segments of dirty documents.
+- [ ] Implements deterministic segment merge/compaction.
+- [ ] Classify body-only versus declaration change with robust syntax/semantic declaration hash.
+- [ ] Invalidates dependent projects only when the declaration form requires it.
+- [ ] Keep the old generation until the publication and validation of the new one.
+- [ ] Add recovery after process kill in each publishing stage.
 
-- [ ] Introdu per-document ownership pentru simboluri, referinte si postings.
-- [ ] Scrie numai segmentele documentelor dirty.
-- [ ] Implementeaza segment merge/compaction determinist.
-- [ ] Clasifica body-only versus declaration change cu syntax/semantic declaration hash robust.
-- [ ] Invalideaza proiectele dependente numai cand forma declaratiilor o cere.
-- [ ] Pastreaza generatia veche pana la publicarea si validarea celei noi.
-- [ ] Adauga recovery dupa process kill in fiecare etapa de publicare.
+**Gate:** Body-only modification of a file does not rewrite unrelated segments and finishes under 1 s on Cerneala.
 
-**Gate:** Modificarea body-only a unui fisier nu rescrie segmente fara legatura si termina sub 1 s pe Cerneala.
+### Stage 6: `roslyn_outline`, `roslyn_inspect` and `roslyn_context`
 
-### Etapa 6: `roslyn_outline`, `roslyn_inspect` si `roslyn_context`
+- [ ] Defines common models for symbol summary, source span and related item.
+- [ ] Implements the outline from the index, without the Roslyn on-demand workspace.
+- [ ] Implements strict resolver for ambiguous ID/FQN/query symbol.
+- [ ] Implements inspect with include flags and budgets.
+- [ ] Implements deterministic ranking context.
+- [ ] Avoid duplicating the same fragment or symbol in the same answer.
+- [ ] Add truncation and order stability tests.
 
-- [ ] Defineste modele comune pentru symbol summary, source span si related item.
-- [ ] Implementeaza outline din index, fara workspace Roslyn on-demand.
-- [ ] Implementeaza resolver strict pentru symbol ID/FQN/query ambiguu.
-- [ ] Implementeaza inspect cu include flags si bugete.
-- [ ] Implementeaza context ranking determinist.
-- [ ] Evita duplicarea aceluiasi fragment sau simbol in acelasi raspuns.
-- [ ] Adauga teste de trunchiere si stabilitate a ordinii.
+**Gate:** Investigating a typical symbol requires a single call `inspect`, and the output follows `maxChars` exactly.
 
-**Gate:** Investigarea unui simbol tipic necesita un singur apel `inspect`, iar output-ul respecta exact `maxChars`.
+### Stage 7: call graph, hierarchy and impact
 
-### Etapa 7: call graph, hierarchy si impact
+- [ ] Indexes invocation edges separately from generic references.
+- [ ] Indexes base type, interface implementation and override edges.
+- [ ] Enter `roslyn_callgraph` with bounded crossing.
+- [ ] Enter `roslyn_impact` with deterministic reasons.
+- [ ] Detects and marks external or unresolved nodes.
+- [ ] Protects traversal against cycles and graph explosion.
+- [ ] Add tests for overloads, extension methods, virtual dispatch and partial methods.
 
-- [ ] Indexeaza invocation edges separat de referintele generice.
-- [ ] Indexeaza base type, interface implementation si override edges.
-- [ ] Introdu `roslyn_callgraph` cu traversare bounded.
-- [ ] Introdu `roslyn_impact` cu motive deterministe.
-- [ ] Detecteaza si marcheaza nodurile externe sau nerezolvate.
-- [ ] Protejeaza traversarea impotriva ciclurilor si graph explosion.
-- [ ] Adauga teste pentru overloads, extension methods, virtual dispatch si partial methods.
+**Gate:** Graphs are stable, bounded and do not confuse overloads with the same name.
 
-**Gate:** Grafurile sunt stabile, bounded si nu confunda overload-urile cu acelasi nume.
+### Stage 8: batch, changes and test selection
+- [ ] Implements the bounded executor for `roslyn_batch`.
+- [ ] Validates references between operations before execution.
+- [ ] Reuses the same session and the same generation for the entire batch.
+- [ ] Implements semantic diff between generations.
+- [ ] Integrates working tree/HEAD without network access.
+- [ ] Implements `roslyn_tests_for` with explainable scoring.
+- [ ] Add global limits for time, output and number of operations.
 
-### Etapa 8: batch, changes si test selection
+**Gate:** A `goto -> refs -> outline` batch makes a single generation check and has lower latency than three separate calls.
 
-- [ ] Implementeaza executorul bounded pentru `roslyn_batch`.
-- [ ] Valideaza referintele intre operatii inainte de executie.
-- [ ] Refoloseste aceeasi sesiune si aceeasi generatie pentru intregul batch.
-- [ ] Implementeaza semantic diff intre generatii.
-- [ ] Integreaza working tree/HEAD fara acces la retea.
-- [ ] Implementeaza `roslyn_tests_for` cu scoring explicabil.
-- [ ] Adauga limite globale pentru timp, output si numar de operatii.
+### Stage 9: hardening and local observability
 
-**Gate:** Un batch `goto -> refs -> outline` face un singur generation check si are latenta mai mica decat trei apeluri separate.
+- [ ] Enter `roslyn_profile` and consistent stage timings.
+- [ ] Add stress test with concurrent queries and repeated reindexing.
+- [ ] Add memory stability test on at least 10,000 queries.
+- [ ] Add crash recovery test for each publishing point.
+- [ ] Add incompatible scheme test and clear rebuild action.
+- [ ] Add fuzz tests for query/schema/continuation token.
+- [ ] Check path traversal and strict isolation at the root repo.
 
-### Etapa 9: hardening si observabilitate locala
+**Gate:** No corruption, deadlock, continuous memory growth or response from a mixed generation.
 
-- [ ] Introdu `roslyn_profile` si stage timings consistente.
-- [ ] Adauga stress test cu query-uri concurente si reindexari repetate.
-- [ ] Adauga test de memory stability pe minimum 10.000 query-uri.
-- [ ] Adauga test de crash recovery pentru fiecare punct de publicare.
-- [ ] Adauga test de schema incompatibila si rebuild action clar.
-- [ ] Adauga fuzz tests pentru query/schema/continuation token.
-- [ ] Verifica path traversal si izolarea stricta la repo root.
+## Test strategy
 
-**Gate:** Nicio corupere, deadlock, crestere continua de memorie sau raspuns dintr-o generatie amestecata.
+### Unit tests
 
-## Strategie de testare
-
-### Teste unitare
-
-- codec binar si varint;
-- string table;
+- binary and variable codec;
+- string tables;
 - posting list encode/decode;
-- generation pointer;
+- pointer generation;
 - query exact/prefix/token;
-- paging si continuation token;
-- graph traversal bounded;
-- response profile si truncation;
+- paging and continuation token;
+- bounded traversal graph;
+- response profile and truncation;
 - config/fingerprint classification.
 
-### Teste de integrare
+### Integration tests
 
 - full index -> load -> query;
-- no-op incremental;
+- incremental no-op;
 - body-only update;
 - declaration update;
 - project reference update;
-- query concurent cu atomic generation swap;
-- process kill inainte si dupa publish;
-- index corupt/trunchiat;
-- server repo-bound versus explicit repo root;
-- backward compatibility pe perioada migrarii.
+- concurrent query with atomic generation swap;
+- process kill before and after publish;
+- corrupt/truncated index;
+- repo-bound server versus explicit root repo;
+- backward compatibility during migration.
 
-### Benchmark-uri
+### Benchmarks
 
-- BenchmarkDotNet pentru codec, load si query hot paths;
-- test separat end-to-end MCP cu proces persistent;
-- corpusuri versionate small/medium/large;
-- rezultate p50/p95 si allocations;
-- size budget per table;
-- comparatie cu baseline-ul din Etapa 0.
+- BenchmarkDotNet for codec, load and query hot paths;
+- separate end-to-end MCP test with persistent process;
+- small/medium/large versioned corpora;
+- p50/p95 results and allocations;
+- budget size per table;
+- comparison with the baseline from Stage 0.
 
-Testele functionale nu folosesc praguri largi de zeci de secunde ca dovada de performanta. Performance budgets sensibile la hardware ruleaza in benchmark job dedicat; testele CI obisnuite verifica invariants precum "nu a fost apelat workspace loader" si "indexul nu a fost rescris".
+Functional tests do not use wide thresholds of tens of seconds as proof of performance. Hardware-sensitive performance budgets run in a dedicated benchmark job; regular CI tests check invariants such as "workspace loader was not called" and "index was not rewritten".
 
-## Migrare si compatibilitate
+## Migration and compatibility
 
-1. Creste schema indexului si adauga `storageFormat` in manifest.
-2. Reader-ul detecteaza JSONL vechi si raspunde cu actiunea structurata `rebuild-required`.
-3. `roslyn_index` reconstruieste in formatul nou intr-o generatie separata.
-4. MCP continua sa serveasca generatia veche pana cand cea noua este validata.
-5. Dupa publish, sesiunea face swap atomic.
-6. Nu se incearca transformarea in-place a fisierelor vechi.
+1. Increase the index scheme and add `storageFormat` to the manifest.
+2. The Reader detects old JSONL and responds with the structured action `rebuild-required`.
+3. `roslyn_index` rebuilds in the new format in a separate generation.
+4. MCP continues to serve the old generation until the new one is validated.
+5. After publish, the session does atomic swap.
+6. Do not attempt to convert old files in-place.
 
-Contractele MCP existente raman disponibile initial, dar raspunsurile compacte noi trebuie versionate clar daca eliminarea duplicarii `data/results` este breaking.
+Existing MCP contracts remain available initially, but new compact responses must be versioned clearly if deduplication `data/results` is breaking.
 
-## Riscuri si masuri
+## Risks and measures
 
-### Memorie prea mare in procesul MCP
+### Too much memory in the MCP process
 
-Sesiunea persistenta poate muta costul de pe CPU pe memorie. Se masoara working set-ul, se folosesc structuri compacte si memory mapping numai unde benchmark-ul demonstreaza castig. Registry-ul are eviction explicit pentru repository-uri inactive.
+Persistent session can move the cost from CPU to memory. The working set is measured, compact structures and memory mapping are used only where the benchmark demonstrates a gain. The registry has explicit eviction for inactive repositories.
 
-### Format binar greu de intretinut
+### Hard-to-maintain binary format
 
-Formatul primeste specificatie, headers versionate, readers mici per tabela, golden fixtures si teste corruption. Nu se inventeaza un mini-database general; se implementeaza strict operatiile necesare.
+The format receives specification, versioned headers, small readers per table, golden fixtures and corruption tests. A general mini-database is not invented; the necessary operations are strictly implemented.
 
-### Incrementalitate semantic incorecta
+### Semantically incorrect incrementality
 
-Body-only si declaration-change sunt validate prin teste diferentiale: rezultatul incremental trebuie sa fie identic cu un full rebuild pe acelasi repository.
+Body-only and declaration-change are validated through differential tests: the incremental result must be identical to a full rebuild on the same repository.
 
-### Reload in timpul query-ului
+### Reload during the query
 
-Fiecare query captureaza o generatie imutabila. Nu combina date din generatii diferite. Generatia veche este eliberata numai dupa iesirea ultimului reader.
+Each query captures an immutable generation. Do not combine data from different generations. The old generation is released only after the release of the last reader.
 
-### Comenzi compuse cu output exploziv
+### Compound commands with explosive output
 
-Toate traversarile au depth/maxNodes/maxResults/maxChars si timeout. Trunchierea este determinista, vizibila si paginabila.
+All traversals have depth/maxNodes/maxResults/maxChars and timeout. Truncation is deterministic, visible and pageable.
 
-### Optimizare prematura a cold indexului
+### Premature optimization of the cold index
 
-Cold index este important, dar query latency si no-op incremental au prioritate mai mare. Se profileaza inainte de paralelizare sau caching semantic complicat.
+Cold index is important, but query latency and incremental no-op have higher priority. It is profiled before parallelization or complicated semantic caching.
 
-## Ordine recomandata de livrare
+## Recommended delivery order
 
-1. Baseline si instrumentare.
-2. Sesiune MCP persistenta.
+1. Baseline and instrumentation.
+2. Persistent MCP session.
 3. Fast path no-op.
-4. Contract MCP compact si `roslyn_capabilities`.
-5. Storage binar.
-6. Persistenta incrementala pe segmente.
+4. Contract MCP compact and `roslyn_capabilities`.
+5. Binary storage.
+6. Incremental persistence on segments.
 7. `outline`, `inspect`, `context`.
-8. Call graph si impact.
-9. Batch, semantic changes si test selection.
-10. Hardening, profiling si eliminarea formatului vechi.
+8. Call graph and impact.
+9. Batch, semantic changes and test selection.
+10. Hardening, profiling and elimination of the old format.
 
-Nu se incepe cu `suggest` sau cu ranking sofisticat. A face sugestii mai inteligente peste un query de 2,5 secunde inseamna sa pui spoiler pe tractor.
+It doesn't start with `suggest` or sophisticated ranking. Making smarter suggestions over a 2.5 second query means putting a spoiler on the tractor.
 
-## Verificare finala
+## Final check
 
-1. Ruleaza build-ul complet fara warnings si errors.
-2. Ruleaza toate testele RoslynRepoIndexer.
-3. Ruleaza testele diferentiale full versus incremental.
-4. Ruleaza benchmark-urile pe corpusurile stabilite.
-5. Verifica bugetele p50/p95, allocations, working set si disk size.
-6. Ruleaza minimum 10.000 query-uri intr-o singura sesiune MCP.
-7. Ruleaza query-uri concurente in timpul reindexarii.
-8. Simuleaza process kill si valideaza recovery-ul generatiei anterioare.
-9. Verifica toate JSON Schema-urile MCP fata de contractele C#.
-10. Ruleaza `git diff --check`.
-11. Regenereaza `FileTree.md` daca apar fisiere noi.
-12. Reindexeaza `Cerneala.slnx` si confirma index valid, fara dirty files sau warnings.
+1. Run the complete build without warnings and errors.
+2. Run all RoslynRepoIndexer tests.
+3. Run the full versus incremental differential tests.
+4. Run the benchmarks on the established corpora.
+5. Check the p50/p95 budgets, allocations, working set and disk size.
+6. Run at least 10,000 queries in a single MCP session.
+7. Run concurrent queries during reindexing.
+8. Simulate process kill and validate the recovery of the previous generation.
+9. Check all JSON MCP Schemas against C# contracts.
+10. Run `git diff --check`.
+11. Regenerate `FileTree.md` if new files appear.
+12. Reindex `Cerneala.slnx` and confirm valid index, without dirty files or warnings.
 
-## Criterii de acceptare
+## Acceptance criteria
 
-Implementarea este considerata completa numai cand:
+The implementation is considered complete only when:
 
-- query-urile MCP reutilizeaza o sesiune persistenta si o generatie imutabila;
-- warm search p95 este sub 50 ms pe corpusul Cerneala-like;
-- no-op incremental este sub 100 ms si nu deschide MSBuildWorkspace;
-- indexul Cerneala ocupa maximum 50 MB;
-- un body-only change nu provoaca full persist sau full semantic rebuild;
-- contractele MCP sunt stricte, compacte si fara campuri duplicate;
-- `inspect`, `outline`, `context`, `callgraph`, `impact`, `batch`, `changes` si `tests_for` sunt bounded si testate;
-- incremental build produce aceleasi rezultate ca full rebuild;
-- query-urile concurente nu observa generatii partiale;
-- crash recovery pastreaza ultima generatie valida;
-- memoria ramane stabila pe 10.000 de query-uri;
-- documentatia tool-ului descrie arhitectura, comenzile si bugetele reale de performanta.
+- MCP queries reuse a persistent session and an immutable generation;
+- warm search p95 is below 50 ms on the Cerneala-like corpus;
+- incremental no-op is below 100 ms and does not open MSBuildWorkspace;
+- the index Cerneala occupies a maximum of 50 MB;
+- a body-only change does not cause full persist or full semantic rebuild;
+- MCP contracts are strict, compact and without duplicate fields;
+- `inspect`, `outline`, `context`, `callgraph`, `impact`, `batch`, `changes` and `tests_for` are bounded and tested;
+- incremental build produces the same results as full rebuild;
+- concurrent queries do not observe partial generations;
+- crash recovery keeps the last valid generation;
+- the memory remains stable for 10,000 queries;
+- the tool's documentation describes the architecture, commands and real performance budgets.
 
-## Decizii care trebuie confirmate inainte de implementare
+## Decisions that must be confirmed before implementation
 
-1. Format binar custom versus pastrarea JSONL pentru tabelele mici; recomandarea este binar pentru query tables si JSON numai pentru manifest/diagnostics.
-2. Memory mapping de la prima versiune versus dupa buffered binary reader; recomandarea este benchmark intai, apoi alegere.
-3. Breaking change imediat pentru eliminarea `data/results` versus versionare temporara; recomandarea este o versiune noua de contract MCP.
-4. O singura sesiune repo-bound versus registry multi-repo; recomandarea este suport intern multi-repo, dar configuratie repo-bound implicita.
-5. Exact Roslyn workspace persistent versus cache on-demand; recomandarea este amanarea lui pana dupa optimizarea indexed refs si masurarea utilizarii reale.
+1. Custom binary format versus keeping JSONL for small tables; the recommendation is binary for query tables and JSON only for manifest/diagnostics.
+2. Memory mapping from the first version versus after the buffered binary reader; the recommendation is benchmark first, then choice.
+3. Breaking change immediately for the elimination of `data/results` versus temporary versioning; the recommendation is a new version of the MCP contract.
+4. A single repo-bound session versus multi-repo registry; the recommendation is internal multi-repo support, but default repo-bound configuration.
+5. Exact Roslyn persistent workspace versus on-demand cache; the recommendation is to postpone it until after optimizing the indexed refs and measuring the real usage.

@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Markup`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Markup/UiMarkupDocument.cs`
+Source: `UI/Markup/UiMarkupChildContent.cs`
 
 Represents child-node content inside a markup node's ordered content list.
 

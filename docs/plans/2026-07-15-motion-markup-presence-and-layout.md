@@ -1,59 +1,59 @@
-# Plan: Presence si Layout Motion din Aspect markup
+# Plan: Presence and Layout Motion from Aspect markup
 
-> Data: 2026-07-15
-> Status: finalizat
-> Dependenta: `docs/plans/2026-07-15-motion-markup-foundation.md`
-> Scop: configuram coordinatorii existenti prin Aspect, cu timing si lifecycle identice API-ului runtime actual.
+> Date: 2026-07-15
+> Status: completed
+> Dependency: `docs/plans/2026-07-15-motion-markup-foundation.md`
+> Purpose: we configure the existing coordinators through Aspect, with timing and lifecycle identical to the current runtime API.
 
-## 1. Baseline si defecte relevante
+## 1. Baselines and relevant defects
 
-`PresenceOptions.FadeAndScale` accepta specs float pentru enter/exit si endpoint-uri fixe. `LayoutMotionOptions.Spring` accepta un `MotionSpec<Transform>` pentru correction. Presence trebuie setat inainte de attach.
+`PresenceOptions.FadeAndScale` accepts float specs for enter/exit and fixed endpoints. `LayoutMotionOptions.Spring` accepts a `MotionSpec<Transform>` for correction. Presence must be set before attach.
 
-Auditul a identificat un risc runtime real: `PresenceCoordinator.MarkAttached` creeaza subscriptions pentru opacity/scale fara sa le retina pentru disposal. Planul nu are voie sa acopere asta prin generated cleanup imposibil; runtime-ul trebuie reparat RED/GREEN inainte de markup Presence.
+The audit identified a real runtime risk: `PresenceCoordinator.MarkAttached` creates subscriptions for opacity/scale without retaining them for disposal. The plan is not allowed to cover this by generated cleanup impossible; the runtime must be repaired RED/GREEN before the Presence markup.
 
-## 2. Etape de implementare
+## 2. Implementation stages
 
-### Etapa 0 - RED pentru lifecycle runtime
+### Stage 0 - RED for lifecycle runtime
 
-- [x] Adauga test RED in `PresenceCoordinatorTests` pentru attach/detach/reattach repetat si demonstreaza ca subscriptions/graph values de enter nu se acumuleaza.
-- [x] Repara `PresenceCoordinator` astfel incat enter handles si subscriptions sa aiba owner, sa fie anulate/eliberate la detach, replacement si exit handoff.
-- [x] Verifica re-add in timpul exit si coexistenta cu layout correction.
-- [x] Actualizeaza API docs daca se schimba vreun membru public si reindexeaza solutia. (Nu a fost necesar: API-ul public a ramas neschimbat.)
+- [x] Add RED test in `PresenceCoordinatorTests` for repeated attach/detach/reattach and demonstrate that subscriptions/graph values of enter do not accumulate.
+- [x] Fix `PresenceCoordinator` so that enter handles and subscriptions have an owner, to be canceled/released at detach, replacement and exit handoff.
+- [x] Check re-add during exit and coexistence with layout correction.
+- [x] Updates API docs if any public member changes and reindexes the solution. (It wasn't necessary: the public API remained unchanged.)
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Presence runtime este stabil fara markup dupa stress attach/detach.
+- [x] Presence runtime is stable without markup after stress attach/detach.
 
-### Etapa 1 - `@presence`
+### Stage 1 - `@presence`
 
-- [x] Extinde Aspect AST cu exact o declaratie `@presence` si fields `enter`, `exit`, `excludeInputWhileExiting`.
-- [x] Specializeaza enter/exit la `MotionSpec<float>` si mapeaza exclusiv la `PresenceOptions.FadeAndScale`.
-- [x] Emite assignment-ul Presence inainte ca elementul sa intre in retained tree.
-- [x] Respinge custom endpoints, custom bodies, initial mode si Presence aplicat retroactiv unui element deja attached.
-- [x] Adauga teste sourcegen si runtime pentru enter, exit, input exclusion, removal o singura data si reduced motion.
-- [x] Reindexeaza solutia.
+- [x] Extends Aspect AST with exactly one declaration `@presence` and fields `enter`, `exit`, `excludeInputWhileExiting`.
+- [x] Specializes enter/exit at `MotionSpec<float>` and maps exclusively to `PresenceOptions.FadeAndScale`.
+- [x] Issue the Presence assignment before the element enters the retained tree.
+- [x] Rejects custom endpoints, custom bodies, initial mode and Presence retroactively applied to an already attached element.
+- [x] Adds sourcegen and runtime tests for enter, exit, input exclusion, removal once and reduced motion.
+- [x] Reindex the solution.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] Markup Presence produce acelasi state machine ca API-ul runtime si nu detine o a doua copie a lifecycle-ului.
+- [x] Markup Presence produces the same state machine as the runtime API and does not have a second copy of the lifecycle.
 
-### Etapa 2 - `@layout`
+### Stage 2 - `@layout`
 
-- [x] Parseaza `@layout id expression with spec` ca declaratie Aspect-owned unica.
-- [x] Rezolva ID-ul prin grammar-ul reactiv existent si specializeaza spec-ul la `MotionSpec<Transform>`.
-- [x] Emite `LayoutMotionId` si `LayoutMotionOptions` inainte de layout/attach, folosind coordinatorul existent pentru snapshots si correction.
-- [x] Adauga teste pentru layout rect change, mid-flight retarget, reparent cu acelasi element si detach cleanup.
-- [x] Adauga idle-frame assertions: tick-urile correction nu enqueuie measure/arrange.
-- [x] Respinge position/size modes, crossfade, shared element intre controale distincte si custom layout sequences.
-- [x] Reindexeaza solutia.
+- [x] Parse `@layout id expression with spec` as a unique Aspect-owned declaration.
+- [x] Resolve the ID through the existing reactive grammar and specialize the spec to `MotionSpec<Transform>`.
+- [x] Issue `LayoutMotionId` and `LayoutMotionOptions` before layout/attach, using the existing coordinator for snapshots and correction.
+- [x] Add tests for layout rect change, mid-flight retarget, reparent with the same element and detach cleanup.
+- [x] Add idle-frame assertions: correction ticks do not enqueue measure/arrange.
+- [x] Reject position/size modes, crossfade, shared element between distinct controls and custom layout sequences.
+- [x] Reindex the solution.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Layout markup produce numai render correction si revine la identity fara layout storm.
+- [x] Layout markup only produces render correction and returns to identity without layout storm.
 
-## 3. Verificare si definitia de gata
+## 3. Verification and definition ready
 
-- [x] Ruleaza testele Presence/Layout targetate si sourcegen Motion.
-- [x] Ruleaza stress attach/detach/reparent cu diagnostics counters.
-- [x] Ruleaza `dotnet test .\Cerneala.slnx`, `git diff --check` si reindexarea finala.
-- [x] Presence si Layout sunt declarative, coordinator-owned si fara extensiile crazy excluse de proposal.
+- [x] Run targeted Presence/Layout and sourcegen Motion tests.
+- [x] Run stress attach/detach/reparent with diagnostics counters.
+- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check` and the final reindex.
+- [x] Presence and Layout are declarative, coordinator-owned and without the crazy extensions excluded from the proposal.

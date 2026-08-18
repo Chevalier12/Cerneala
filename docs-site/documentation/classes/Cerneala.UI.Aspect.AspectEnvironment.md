@@ -62,7 +62,7 @@ Values are stored by `AspectToken`. Tokens compare by ordinal name and value typ
 
 `TryGet<T>` first checks the current environment. If the token is not present, it walks to the parent environment created by `CreateChildScope`. A value found in the current environment shadows the parent value for the same token.
 
-Calling either `Set` overload increments `Version`, including when replacing an existing value. `AspectEngine.Resolve` includes the current environment version in its match context so environment changes can participate in resolution and diagnostics.
+Calling either `Set` overload increments `Version`, including when replacing an existing value. The processor's internal runtime replacement also increments `Version` when it replaces the environment contents and raises token-change notifications for changed entries. `AspectEngine.Resolve` includes the current environment version in its match context so environment changes can participate in resolution and diagnostics.
 
 The generic `Set<T>` overload accepts the compile-time token type. The non-generic `Set(AspectToken, object?)` overload validates non-null values against `token.ValueType` and throws `ArgumentException` when the value cannot be assigned to that token type. `TryGet<T>` returns `false` when the stored value is incompatible with the requested typed token.
 
@@ -77,7 +77,7 @@ The generic `Set<T>` overload accepts the compile-time token type. The non-gener
 | Name | Type | Description |
 | --- | --- | --- |
 | `Name` | `string` | Gets the environment name used for diagnostics, including missing token errors. |
-| `Version` | `int` | Gets the number of successful `Set` calls made directly on this environment. |
+| `Version` | `int` | Gets the environment version. It increments after direct `Set` calls and after an internal runtime replacement. |
 
 ## Methods
 

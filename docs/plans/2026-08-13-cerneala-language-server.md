@@ -1,34 +1,34 @@
-# Plan: Cerneala Language Server si IntelliSense complet
+# Plan: Cerneala Language Server and complete IntelliSense
 
-> Data: 2026-08-13
-> Status: finalizat
-> Dependenta: `docs/plans/2026-08-13-cerneala-language-core.md`
-> Scop: construim un language server LSP host-agnostic care transforma syntax tree-ul si semantic modelul comun in IntelliSense complet, rapid si determinist.
+> Date: 2026-08-13
+> Status: completed
+> Dependency: `docs/plans/2026-08-13-cerneala-language-core.md`
+> Goal: we build a host-agnostic LSP language server that transforms the syntax tree and common semantic model into complete, fast and deterministic IntelliSense.
 
-## 1. Baseline si contract
+## 1. Baseline and contract
 
-Repo-ul nu contine astazi un language server. Source generatorul primeste `Compilation` si `AdditionalFiles` numai in timpul build-ului, iar Visual Studio nu are un proces care sa mentina document snapshots, sa mapeze `.crn` la proiect ori sa raspunda la cereri editoriale.
+The repo does not contain a language server today. The source generator receives `Compilation` and `AdditionalFiles` only during the build, and Visual Studio does not have a process to maintain document snapshots, to map `.crn` to the project or to respond to editorial requests.
 
-Serverul trebuie sa lucreze pe bufferul nesalvat, sa incarce contextul C# al proiectului, sa anuleze cererile stale si sa nu ruleze generatorul complet la fiecare tasta. Orice rezultat semantic vine din `Cerneala.Language`; serverul traduce doar catre LSP.
+The server must work on the unsaved buffer, load the project's C# context, cancel stale requests, and not run the full generator on every keystroke. Any semantic result comes from `Cerneala.Language`; the server only translates to the LSP.
 
-## 2. Capabilitati obligatorii
+## 2. Mandatory skills
 
-- Diagnostics push/pull cu paritate sourcegen si recovery in timpul tastarii.
-- Completion si completion resolve pentru structura XML, simboluri C#, bindings, resources, templates, Aspect, Motion si Prism.
-- Hover, signature help, go-to-definition, references, document highlight si rename sigur.
-- Document symbols, workspace symbols pentru simbolurile Cerneala, folding ranges si selection ranges.
-- Semantic tokens pentru XML Cerneala si limbajele embedded; TextMate ramane fallback instant, nu sursa semantica.
-- Full/range formatting, on-type formatting si code actions deterministe.
+- Diagnostics push/pull with sourcegen parity and recovery during typing.
+- Completion and resolve completion for XML structure, C# symbols, bindings, resources, templates, Aspect, Motion and Prism.
+- Hover, signature help, go-to-definition, references, document highlight and rename for sure.
+- Document symbols, workspace symbols for Cerneala symbols, folding ranges and selection ranges.
+- Semantic tokens for XML Cerneala and embedded languages; TextMate remains the instant fallback, not the semantic source.
+- Full/range formatting, on-type formatting and deterministic code actions.
 
-## 3. Arhitectura tinta
+## 3. The target architecture
 
-- Proiect executabil `Cerneala.LanguageServer` cu transport stream-based si lifecycle controlat de host.
-- Proiect `Cerneala.LanguageServer.ProtocolTests` care porneste serverul real prin JSON-RPC/LSP, nu cheama direct handlers in testele end-to-end.
-- Workspace service care mapeaza document -> project -> Roslyn `Compilation`, urmareste reload-uri si pastreaza snapshots versionate.
-- Feature handlers subtiri peste servicii editor-agnostic din `Cerneala.Language`.
-- Scheduler cu cancellation, coalescing si latest-document-version wins.
+- Executable project `Cerneala.LanguageServer` with stream-based transport and lifecycle controlled by the host.
+- `Cerneala.LanguageServer.ProtocolTests` project that starts the real server via JSON-RPC/LSP, does not directly call handlers in end-to-end tests.
+- Workspace service that maps document -> project -> Roslyn `Compilation`, tracks reloads and keeps versioned snapshots.
+- Thin feature handlers over editor-agnostic services from `Cerneala.Language`.
+- Scheduler with cancellation, coalescing and latest-document-version wins.
 
-## 4. Fisiere estimate
+## 4. Estimated files
 
 - `Cerneala.LanguageServer/Cerneala.LanguageServer.csproj`
 - `Cerneala.LanguageServer/Protocol/`
@@ -38,141 +38,141 @@ Serverul trebuie sa lucreze pe bufferul nesalvat, sa incarce contextul C# al pro
 - `tests/Cerneala.Tests.LanguageServer/`
 - `tests/Fixtures/LanguageServerWorkspace/`
 - `Cerneala.slnx`
-- API docs din `docs-site/documentation/classes/` numai pentru suprafata publica inevitabila
+- API docs from `docs-site/documentation/classes/` only for the inevitable public surface
 
-## 5. Etape de implementare
+## 5. Implementation stages
 
-### Etapa 0 - Contract LSP si harness RED
+### Stage 0 - LSP contract and RED harness
 
-- [x] Selecteaza o implementare LSP mentinuta si compatibila cu runtime-ul livrat; documenteaza protocol version, framing, serialization si politica de upgrade.
-- [x] Adauga serverul si proiectul de protocol tests in solutie, cu transport in-memory pentru teste si stdio/duplex stream pentru host.
-- [x] Adauga un test RED care initializeaza serverul, deschide un `.crn`, aplica `didChange` incremental si cere diagnostics/completion.
-- [x] Defineste capabilities declarate exact; serverul nu anunta un feature pana cand testul protocol-level al feature-ului este GREEN.
-- [x] Defineste logging structurat, trace levels si crash reports fara continut de document implicit.
-- [x] Reindexeaza solutia.
+- [x] Selects an LSP implementation maintained and compatible with the delivered runtime; documents protocol version, framing, serialization and upgrade policy.
+- [x] Add the server and the tests protocol project to the solution, with in-memory transport for tests and stdio/duplex stream for the host.
+- [x] Add a RED test that initializes the server, opens a `.crn`, applies incremental `didChange` and asks for diagnostics/completion.
+- [x] Defines declared capabilities exactly; the server does not announce a feature until the feature's protocol-level test is GREEN.
+- [x] Defines structured logging, trace levels and crash reports without default document content.
+- [x] Reindex the solution.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Procesul server porneste, negociaza initialize/shutdown/exit si poate fi terminat fara process leak.
-- [x] Testul functional este RED pentru lipsa feature handlers, nu pentru transport ori fixture.
+- [x] The server process starts, negotiates initialize/shutdown/exit and can be terminated without process leak.
+- [x] The functional test is RED for lack of feature handlers, not for transport or fixture.
 
-### Etapa 1 - Workspace, proiecte si sincronizare documente
+### Stage 1 - Workspace, projects and document synchronization
 
-- [x] Mapeaza URI-urile `.crn` la proiectele care le includ ca `AdditionalFiles`, inclusiv `.slnx`, `.sln`, project references si linked files.
-- [x] Construieste Roslyn compilations pentru proiectul owner si actualizeaza contextul la schimbari `.cs`, `.csproj`, references, configuration sau target framework.
-- [x] Defineste politica multi-target: selecteaza contextul activ oferit de host si deduplica rezultatele identice; nu amesteca simboluri incompatibile intre TFMs.
-- [x] Mentine overlay pentru bufferul nesalvat fara sa scrie pe disk si aplica numai schimbari cu versiune mai noua.
-- [x] Anuleaza parse/bind/feature requests pentru versiuni stale si publica rezultate numai daca document version mai este curenta.
-- [x] Gestioneaza fisiere standalone cu syntax-only support si un diagnostic informational unic privind lipsa proiectului semantic.
-- [x] Adauga teste pentru project reload, rename/delete, document in doua proiecte, broken C# compilation si server restart.
-- [x] Reindexeaza solutia.
+- [x] Map the URIs `.crn` to the projects that include them as `AdditionalFiles`, including `.slnx`, `.sln`, project references and linked files.
+- [x] Builds Roslyn compilations for the owner project and updates the context for changes `.cs`, `.csproj`, references, configuration or target framework.
+- [x] Defines the multi-target policy: selects the active context provided by the host and deduplicates identical results; do not mix incompatible symbols between TFMs.
+- [x] Maintain overlay for the unsaved buffer without writing to disk and apply only changes with a newer version.
+- [x] Cancel parse/bind/feature requests for stale versions and publish results only if the document version is still current.
+- [x] Manages standalone files with syntax-only support and a unique informational diagnosis regarding the lack of semantic project.
+- [x] Add tests for project reload, rename/delete, document in two projects, broken C# compilation and server restart.
+- [x] Reindex the solution.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] Bufferul nesalvat si source generatorul salvat folosesc acelasi semantic context dupa save/build.
-- [x] Nicio cerere stale nu poate suprascrie diagnostics ori completion pentru o versiune noua.
+- [x] The unsaved buffer and the saved source generator use the same semantic context after save/build.
+- [x] No old request can overwrite diagnostics or completion for a new version.
 
-### Etapa 2 - Diagnostics fara erori false
+### Stage 2 - Diagnostics without false errors
 
-- [x] Implementeaza diagnostics pe syntax si semantics folosind catalogul comun, cu mapping exact UTF-16 line/column.
-- [x] Publica diagnostics strict pentru documentul/version analizat si retrage diagnostics disparute dupa reparatie.
-- [x] Suprima diagnostics semantice dependente sub syntax nodes incomplete si limiteaza duplicatele la aceeasi cauza/span.
-- [x] Dedupeaza diagnostics LSP fata de diagnostics build/sourcegen din Error List dupa id, document si span, fara sa ascunda erori distincte.
-- [x] Adauga golden tests pentru toate `CERNEALAUI*`, Motion si Prism si compara rezultatul LSP cu source generatorul.
-- [x] Adauga scenarii de tastare caracter-cu-caracter pentru deschidere/inchidere tag, attribute, binding, directive si template.
-- [x] Ruleaza corpusul repo si cere zero diagnostics editor pentru fiecare document care compileaza valid.
-- [x] Reindexeaza solutia.
+- [x] Implement diagnostics on syntax and semantics using the common catalog, with exact UTF-16 line/column mapping.
+- [x] Publish strict diagnostics for the analyzed document/version and withdraw diagnostics that disappeared after repair.
+- [x] Suppress dependent semantic diagnostics under incomplete syntax nodes and limit duplicates to the same cause/span.
+- [x] Dedupes LSP diagnostics from build/sourcegen diagnostics from the Error List by id, document and span, without hiding distinct errors.
+- [x] Add golden tests for all `CERNEALAUI*`, Motion and Prism and compare the LSP result with the source generator.
+- [x] Add character-by-character typing scenarios for opening/closing tag, attribute, binding, directive and template.
+- [x] Runs the repo corpus and asks for zero editor diagnostics for each document that compiles validly.
+- [x] Reindex the solution.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Paritatea id/severity/message/span este exacta pentru erorile semantice stabile.
-- [x] `CernealaPresentation` si Playground au zero diagnostics false in editor.
+- [x] id/severity/message/span parity is exact for stable semantic errors.
+- [x] `CernealaPresentation` and Playground have zero false diagnostics in the editor.
 
-### Etapa 3 - Completion, resolve si signature help
+### Stage 3 - Completion, resolve and signature help
 
-- [x] Completeaza root elements si child elements permise de parent/content property, cu tipurile custom accesibile prin namespace aliases.
-- [x] Completeaza attributes, property elements, attached properties si events, eliminand membrii deja folositi unde contractul nu permite duplicate.
-- [x] Completeaza valori booleene, numerice, enum, colors/brushes, thickness, cursor, alignment si celelalte conversii recunoscute de build.
-- [x] Completeaza `xmlns` aliases, CLR namespaces, `DataType`, `TargetType`, template `DataType` si tipuri assignable valide.
-- [x] Completeaza resources vizibile dupa scope, element names, Aspect names, Motion specs/clips, Prism symbols si parameters.
-- [x] Completeaza binding sources si fiecare segment dupa tipul rezultat, inclusiv dupa schimbari locale de `DataContext`, cu modes numai unde sunt legale.
-- [x] Completeaza directive keywords, blocks, argument names si valori Motion/Prism pe baza contextului sintactic exact.
-- [x] Implementeaza completion resolve cu signature, declaring type, XML documentation, deprecation si source assembly fara a incarca totul upfront.
-- [x] Implementeaza signature help pentru directives/functions/specs/filter parameters cu active parameter corect dupa edits incomplete.
-- [x] Adauga tests negative care demonstreaza ca sugestiile imposibile nu apar.
-- [x] Reindexeaza solutia.
+- [x] Completes root elements and child elements allowed by parent/content property, with custom types accessible through namespace aliases.
+- [x] Complete attributes, property elements, attached properties and events, eliminating already used members where the contract does not allow duplicates.
+- [x] Fill in boolean values, numeric values, enum, colors/brushes, thickness, cursor, alignment and other conversions recognized by the build.
+- [x] Complete `xmlns` aliases, CLR namespaces, `DataType`, `TargetType`, templates `DataType` and valid assignable types.
+- [x] Complete visible resources by scope, element names, Aspect names, Motion specs/clips, Prism symbols and parameters.
+- [x] Complete binding sources and each segment according to the result type, including after local changes of `DataContext`, with modes only where they are legal.
+- [x] Complete directive keywords, blocks, argument names and Motion/Prism values ​​based on the exact syntactic context.
+- [x] Implements completion resolve with signature, declaring type, XML documentation, deprecation and source assembly without loading everything upfront.
+- [x] Implement signature help for directives/functions/specs/filter parameters with correct active parameter after incomplete edits.
+- [x] Add negative tests that demonstrate that impossible suggestions do not appear.
+- [x] Reindex the solution.
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] Matricea de completion acopera toate categoriile din corpus si fiecare item inserat produce markup valid in contextul testat.
-- [x] Completion warm p95 este sub 100 ms pe documentul mare si nu blocheaza alte documente.
+- [x] The completion matrix covers all the categories in the corpus and each inserted item produces valid markup in the tested context.
+- [x] Completion warm p95 is below 100 ms on the large document and does not block other documents.
 
-### Etapa 4 - Hover, navigare, references si rename
+### Stage 4 - Hover, navigation, references and rename
 
-- [x] Afiseaza hover pentru elemente, proprietati, events si tipuri cu signature, inherited/declaring type, default value si XML docs disponibile.
-- [x] Afiseaza hover tipizat pentru binding segments, resources, Aspect/Motion/Prism symbols si diagnostics explanation fara duplicarea mesajului brut.
-- [x] Implementeaza go-to-definition catre tip/membru C#, paired `.crn.cs`, named element, resource, template, Aspect, Motion clip/spec si Prism symbol definit local.
-- [x] Implementeaza references pentru names/resources/simboluri declarative cu scopes corecte si pentru simboluri C# prin Roslyn.
-- [x] Implementeaza document highlights pentru declaratie si utilizari in fisierul curent.
-- [x] Permite rename numai cand toate referintele sunt rezolvate exact si editurile nu ating text arbitrar; refuza explicit cazurile ambigue.
-- [x] Adauga teste cross-file, cross-project, shadowing, duplicate names, generated companion si documente partial invalide.
-- [x] Reindexeaza solutia.
+- [x] Displays hover for elements, properties, events and types with signature, inherited/declaring type, default value and available XML docs.
+- [x] Displays typed hover for binding segments, resources, Aspect/Motion/Prism symbols and diagnostics explanation without duplicating the raw message.
+- [x] Implement go-to-definition to C# type/member, paired `.crn.cs`, named element, resource, template, Aspect, Motion clip/spec and locally defined Prism symbol.
+- [x] Implement references for names/resources/declarative symbols with correct scopes and for C# symbols via Roslyn.
+- [x] Implement document highlights for declaration and usage in the current file.
+- [x] Allows renaming only when all references are resolved exactly and editors do not touch arbitrary text; explicitly refuse ambiguous cases.
+- [x] Add cross-file, cross-project, shadowing, duplicate names, generated companion and partially invalid documents tests.
+- [x] Reindex the solution.
 
-**Gate etapa 4**
+**Gate Stage 4**
 
-- [x] Navigarea nu conduce la generated `.g.cs` cand exista sursa user-authored mai buna.
-- [x] Rename produce workspace edits compilabile si nu modifica simboluri cu acelasi text din alt scope.
+- [x] Navigation does not lead to generated `.g.cs` when there is a better user-authored source.
+- [x] Rename produces compileable workspace edits and does not modify symbols with the same text from another scope.
 
-### Etapa 5 - Semantic tokens, symbols, folding si selection
+### Stage 5 - Semantic tokens, symbols, folding and selection
 
-- [x] Defineste semantic token legend pentru element type, property, attached property, event, namespace, resource, binding source/member, directive, Motion si Prism.
-- [x] Emite semantic tokens full si delta, versionate si anulabile, fara overlap invalid.
-- [x] Emite document symbols ierarhice pentru root, named elements, resources, templates, Aspects, Motion si Prism declarations.
-- [x] Emite workspace symbols pentru declaratiile Cerneala navigabile fara a indexa literals sau generated noise.
-- [x] Emite folding ranges pentru elements, resources, templates si directive blocks, pastrand comments/regions XML.
-- [x] Emite selection ranges de la token la expression, attribute, element si document.
-- [x] Adauga tests pe documente mixte si incomplete.
-- [x] Reindexeaza solutia.
+- [x] Defines semantic token legend for element type, property, attached property, event, namespace, resource, binding source/member, directive, Motion and Prism.
+- [x] Issue full and delta semantic tokens, versioned and cancelable, without invalid overlap.
+- [x] Issue hierarchical document symbols for root, named elements, resources, templates, Aspects, Motion and Prism declarations.
+- [x] Issue workspace symbols for navigable Cerneala statements without indexing literals or generated noise.
+- [x] Issue folding ranges for elements, resources, templates and directive blocks, keeping XML comments/regions.
+- [x] Issue selection ranges from token to expression, attribute, element and document.
+- [x] Add tests on mixed and incomplete documents.
+- [x] Reindex the solution.
 
-**Gate etapa 5**
+**Gate Stage 5**
 
-- [x] Tokenii semantici acopera sintaxa Cerneala pe care TextMate nu o poate distinge si raman stabili dupa editari locale.
-- [x] Symbols/folding nu dispar integral din cauza unei erori locale recuperabile.
+- [x] Semantic tokens cover the Cerneala syntax that TextMate cannot distinguish and remain stable after local edits.
+- [x] Symbols/folding do not disappear completely due to a local recoverable error.
 
-### Etapa 6 - Formatting si code actions
+### Stage 6 - Formatting and code actions
 
-- [x] Defineste un formatter canonical care pastreaza comments, text literal, directive semantics si ordinea atributelor user-authored daca nu exista motiv semantic de reordonare.
-- [x] Implementeaza document/range formatting, indentarea property elements si directive blocks si on-type formatting pentru `>`, newline si closing delimiters.
-- [x] Asigura idempotenta: doua formatari consecutive produc zero edits.
-- [x] Adauga code actions numai pentru reparatii deterministe: namespace alias lipsa, closing tag lipsa, typo cu candidat unic, event handler companion si conversie attribute/property-element unde este valida.
-- [x] Adauga organize/fix-all numai pentru diagnostics independente; refuza fix-all cand edits se suprapun ori schimba semantica.
-- [x] Adauga snapshot tests pentru markup real, comments, Motion, Prism si documente partiale.
-- [x] Reindexeaza solutia.
+- [x] Defines a canonical formatter that preserves comments, literal text, directive semantics and the order of user-authored attributes if there is no semantic reason for reordering.
+- [x] Implements document/range formatting, indentation of property elements and directive blocks and on-type formatting for `>`, newline and closing delimiters.
+- [x] Ensures idempotency: two consecutive formats produce zero edits.
+- [x] Add code actions only for deterministic repairs: namespace alias missing, closing tag missing, typo with unique candidate, event handler companion and attribute/property-element conversion where valid.
+- [x] Add organize/fix-all only for independent diagnostics; refuse fix-all when edits overlap or change semantics.
+- [x] Add snapshot tests for real markup, comments, Motion, Prism and partial documents.
+- [x] Reindex the solution.
 
-**Gate etapa 6**
+**Gate stage 6**
 
-- [x] Formatterul este lossless semantic, idempotent si nu produce diff pe corpusul deja formatat dupa aprobarea baseline-ului.
-- [x] Fiecare code action aplicata elimina diagnosticul tinta si lasa documentul parseabil.
+- [x] The formatter is semantically lossless, idempotent and does not produce diff on the corpus already formatted after approval of the baseline.
+- [x] Each action code applied removes the target diagnosis and leaves the document parseable.
 
-### Etapa 7 - Concurenta, performanta si hardening
+### Stage 7 - Competition, performance and hardening
 
-- [x] Instrumenteaza parse, bind, completion, diagnostics, navigation, queue time, cancellation si allocation fara a colecta text user-authored.
-- [x] Adauga stress tests cu typing rapid, doua documente active, project reload si 100 de cereri completion anulate.
-- [x] Impune latest-version wins, limite de cache si cleanup la close/solution unload/shutdown.
-- [x] Stabileste gate-uri pe hardware documentat: diagnostics warm p95 sub 200 ms, completion p95 sub 100 ms, hover/navigation p95 sub 100 ms si zero request neanulabila peste 500 ms.
-- [x] Verifica memory plateau dupa 1.000 open/change/close cycles si absenta child processes dupa shutdown/crash host.
-- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests.LanguageServer\Cerneala.Tests.LanguageServer.csproj`, `dotnet test .\Cerneala.slnx`, `git diff --check` si reindexarea finala.
-- [x] Documenteaza protocol capabilities, logging, troubleshooting si limitarea syntax-only pentru fisiere standalone.
+- [x] Instrument parse, bind, completion, diagnostics, navigation, queue time, cancellation and allocation without collecting user-authored text.
+- [x] Adds stress tests with fast typing, two active documents, project reload and 100 canceled completion requests.
+- [x] Enforce latest-version wins, cache limits and cleanup at close/solution unload/shutdown.
+- [x] Establishes gates on documented hardware: diagnostics warm p95 under 200 ms, completion p95 under 100 ms, hover/navigation p95 under 100 ms and non-cancellable zero request over 500 ms.
+- [x] Check memory plateau after 1,000 open/change/close cycles and absence of child processes after shutdown/crash host.
+- [x] Runs `dotnet test .\tests\Cerneala.Tests.LanguageServer\Cerneala.Tests.LanguageServer.csproj`, `dotnet test .\Cerneala.slnx`, `git diff --check` and final reindexing.
+- [x] Documents protocol capabilities, logging, troubleshooting and syntax-only limitation for standalone files.
 
-**Gate etapa 7**
+**Gate stage 7**
 
-- [x] Toate capabilitatile anuntate de server sunt testate protocol-level si respecta bugetele.
-- [x] Serverul este host-agnostic, nu referentiaza Visual Studio SDK si se inchide curat.
+- [x] All the capabilities announced by the server are protocol-level tested and respect the budgets.
+- [x] The server is host-agnostic, does not reference the Visual Studio SDK and closes cleanly.
 
-## 6. Definitia de gata
+## 6. The definition of ready
 
-- [x] Language serverul ofera toate capabilitatile obligatorii pentru intreg dialectul Cerneala.
-- [x] Diagnostics sunt identice cu build-ul si tolerante in timpul tastarii.
-- [x] Workspace-ul urmareste corect bufferul nesalvat, proiectele si compilatiile Roslyn.
-- [x] Completion si navigarea sunt tipizate, scoped si rapide.
-- [x] Toate protocol tests, stress tests si full suite sunt GREEN.
+- The [x] Language server offers all the mandatory capabilities for the entire Cerneala dialect.
+- [x] Diagnostics are identical to the build and tolerant during typing.
+- [x] Workspace correctly tracks the unsaved buffer, Roslyn projects and builds.
+- [x] Completion and navigation are typed, scoped and fast.
+- [x] All protocol tests, stress tests and full suite are GREEN.

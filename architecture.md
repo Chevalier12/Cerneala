@@ -54,6 +54,26 @@ routed event handlers / command bindings
 
 The input core separates raw frame state from routed UI dispatch. `InputFrame` says what changed this frame. `UiInputTree` and `RoutedEventRouter` decide how a routed event moves through a UI element tree.
 
+## Current Retained UI Layer
+
+The retained UI layer now sits above these drawing and input foundations. `UIRoot`
+owns the logical/visual tree, typed properties, invalidation queues, layout,
+retained render caches, hit testing, resources, Aspect styling and Motion state.
+`UiHost` and `MonoGameUiHost` connect that root to the game loop: update drains
+the root's Relay and processes dirty work, while draw submits the committed root
+command list without regenerating local element commands.
+
+The current supporting layers are:
+
+- `UI/Layout/LayoutManager` for cached measure and arrange work;
+- `UI/Rendering/RetainedRenderer` for scheduler-owned command generation;
+- `UI/Aspect`, `UI/Motion` and `UI/Prism` for styling, animation and presentation;
+- `Cerneala.Language`, `Cerneala.LanguageServer` and `Cerneala.VisualStudio` for
+  the shared `.crn` language, editor services and the Visual Studio host.
+
+These layers remain explicit. `Drawing` does not own layout or control state,
+and the language/editor infrastructure is not a runtime UI dependency.
+
 ## Folder Layout
 
 Production drawing files:

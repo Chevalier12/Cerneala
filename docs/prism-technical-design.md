@@ -1,253 +1,248 @@
 # Prism Technical Design Document
 
-## Statut
+## Status
 
-Acest document descrie arhitectura tehnică implementată pentru Prism în Cerneala.
-Compilatorul de markup, lifecycle-ul, graful de compoziție, executorul MonoGame,
-pipeline-urile de culoare/blending/măști/styles, backdrop-ul, diagnostics și
-cache-ul retained GPU cross-frame sunt implementate, testate și măsurate.
-Rezultatele finale sunt în
+This document describes the technical architecture implemented for Prism in Cerneala.
+The markup compiler, the lifecycle, the composition graph, the MonoGame executor,
+the color pipelines/blending/masks/styles, the backdrop, diagnostics and
+cross-frame GPU retained cache are implemented, tested and measured.
+The final results are in
 [`2026-07-21-prism-integration-hardening.md`](../benchmarks/Cerneala.Benchmarks/results/2026-07-21-prism-integration-hardening.md),
-iar contractul de utilizare este rezumat în [`prism-guide.md`](prism-guide.md).
+and the user agreement is summarized in [`prism-guide.md`](prism-guide.md).
 
-Compozitoare Prism pentru alte backend-uri grafice, SDK-ul public pentru operații
-third-party, compilarea shaderelor la runtime, adaptive quality, async compute și
-un scheduler GPU generic sunt explicit amânate. Formulările despre ele sunt idei
-de design, nu comportament livrat și nici muncă ascunsă a primei implementări.
+Prism composers for other graphics backends, the public SDK for operations
+third-party, compilation of shaders at runtime, adaptive quality, async compute and
+a generic GPU scheduler are explicitly deferred. Formulations about them are ideas
+by design, not delivered behavior and no hidden work of the first implementation.
 
-Contractul de markup și modelul mental sunt definite în
-[`prism-markup-syntax-proposal.md`](prism-markup-syntax-proposal.md). Catalogul
-normativ de filtre, stiluri, blend modes, profiluri de culoare și sampling este
-fișierul machine-readable
+The markup contract and mental model are defined in
+[`prism-markup-syntax-proposal.md`](prism-markup-syntax-proposal.md). The catalogue
+standard of filters, styles, blend modes, color profiles and sampling is
+machine-readable file
 [`prism-catalog.json`](../Cerneala.SourceGen/Prism/Catalog/prism-catalog.json).
-Acest TDD explică modul în care acel contract este compilat, executat și
-diagnosticat.
+This TDD explains how that contract is compiled, executed, and
+diagnosed.
 
-În caz de contradicție:
+In case of contradiction:
 
-- proposalul are prioritate pentru sintaxa și comportamentul observabil de autor;
-- acest TDD are prioritate pentru separarea responsabilităților și implementarea
-  internă;
-- o contradicție trebuie rezolvată în ambele documente înainte de implementare.
+- the proposal has priority for the syntax and behavior observable by the author;
+- this TDD takes priority for segregation of responsibilities and implementation
+  internal;
+- a contradiction must be resolved in both documents before implementation.
 
-## Clasificarea deciziilor
+## Classification of decisions
 
-Documentul separă explicit patru tipuri de afirmații:
+The document explicitly separates four types of claims:
 
-| Tip | Înseamnă |
+| Type | It means |
 | --- | --- |
-| Cerință confirmată | comportament cerut de proposal și de modelul Photoshop |
-| Decizie tehnică | soluție internă aleasă pentru cerințele confirmate |
-| Ipoteză de validat | alegere care are nevoie de prototip, benchmark sau conformance test |
-| Optimizare condiționată | nu se implementează până când profiling-ul nu demonstrează nevoia |
+| Confirmed Requirement | behavior required by the proposal and the Photoshop model |
+| Technical decision | chosen internal solution for confirmed requirements |
+| Hypothesis to be validated | choice that needs a prototype, benchmark or conformance test |
+| Conditional Optimization | not implemented until profiling demonstrates the need |
 
-`BeginPrism`/`EndPrism`, definițiile immutable, render graph-ul, ownership-ul
-MonoGame și cache-ul retained GPU cross-frame sunt decizii tehnice. Planning-ul
-paralel, execuția asincronă și API-ul public pentru filtre third-party sunt
-optimizări sau extensii condiționate, nu cerințe ale primei implementări.
+`BeginPrism`/`EndPrism`, immutable definitions, render graph, ownership
+MonoGame and cross-frame retained GPU cache are technical decisions. The planning
+parallel, asynchronous execution and public API for third-party filters are
+optimizations or conditional extensions, not requirements of the first implementation.
 
-Pentru prima implementare, scope-ul normativ este explicit: rezultatele GPU stabile
-pot fi reutilizate între frame-uri pe baza unui dependency stamp complet, iar
-catalogul built-in este închis la înregistrare publică. Forma semantică
-`@filter Name` nu promite discovery sau kerneluri furnizate de aplicație. Aceste
-decizii nu schimbă gramatica Prism.
+For the first implementation, the normative scope is explicit: stable GPU results
+can be reused between frames based on a complete dependency stamp, and
+the built-in catalog is closed to public record. Semantic form
+`@filter Name` does not promise discovery or application-provided kernels. These
+decisions do not change the Prism grammar.
+An assumption does not become default and a conditional optimization does not enter the criteria of
+acceptance without measurable proof and an updated decision in this document.
 
-O ipoteză nu devine default și o optimizare condiționată nu intră în criteriile de
-acceptare fără dovadă măsurabilă și o decizie actualizată în acest document.
+## Executive summary
 
-## Rezumat executiv
+Prism is a declarative visual compositor for an element's local visual
+UI. The control's own commands are captured only once as an image by
+base, processed through a composition of layers and then drawn without changing
+layout or hitbox. Visual descendants are not captured.
 
-Prism este un compositor vizual declarativ pentru vizualul local al unui element
-UI. Comenzile proprii ale controlului sunt capturate o singură dată ca imagine de
-bază, procesate printr-o compoziție de layere și apoi desenate fără să schimbe
-layout-ul sau hitbox-ul. Descendenții vizuali nu intră în captură.
+The implementation is divided into four areas:
 
-Implementarea este împărțită în patru zone:
+1. **Source generator**: parses markup, validates types and generates
+   immutable definitions and typed Motion targets.
+2. **Runtime UI**: create a lightweight instance per element, keep the parameters,
+   versioning and lifecycle, but does not own GPU resources.
+3. **Drawing composition**: transport through `DrawCommandList` Prism scopes
+   backend-neutral and builds a tidy render graph.
+4. **Backend MonoGame**: executes the render graph on the GPU, manages the shaders,
+   temporary surfaces, retained GPU cache, color management and backdrop.
 
-1. **Source generator**: parsează markupul, validează tipurile și generează
-   definiții immutable și target-uri Motion tipizate.
-2. **Runtime UI**: creează câte o instanță ușoară per element, păstrează parametrii,
-   versionarea și lifecycle-ul, dar nu deține resurse GPU.
-3. **Drawing composition**: transportă prin `DrawCommandList` scope-uri Prism
-   backend-neutral și construiește un render graph ordonat.
-4. **Backend MonoGame**: execută render graph-ul pe GPU, gestionează shader-ele,
-   suprafețele temporare, cache-ul retained GPU, color management-ul și backdrop-ul.
-
-Decizia structurală principală este folosirea a două comenzi balansate:
-
+The main structural decision is the use of two balanced commands:
 ```text
 BeginPrism
     comenzile locale ale elementului
 EndPrism
 comenzile descendenților vizuali
 ```
+The backend can thus capture the local visual of the control without
+`OnRender` custom, screenshots, recursion in view or knowledge of the UI tree.
 
-Backend-ul poate astfel captura vizualul local al controlului fără
-`OnRender` custom, screenshot-uri, recursie în view sau cunoașterea arborelui UI.
+## Objectives
 
-## Obiective
+- Full implementation of `PrismComposition` and `@prism` syntax.
+- Layer model mentally compatible with Photoshop.
+- All standard filters, styles and blend modes in the proposal.
+- Masks, clipping chains, groups, Blend If and advanced blending.
+- Real game backdrop and UI rendered underneath.
+- Typed integration with Motion and binding.
+- No changes to measurement, arrangement or hit testing.
+- No GPU resources owned by UI elements.
+- Zero CPU readback for captures and backdrop.
+- Local retained controls reusable during Prism animations.
+- Sufficient diagnostics for CPU, GPU, memory and cache cost.
+- Deterministic results between frames and predictable between backends.
 
-- Implementarea completă a sintaxei `PrismComposition` și `@prism`.
-- Model de layere compatibil mental cu Photoshop.
-- Toate filtrele, stilurile și blend modes normative din proposal.
-- Măști, clipping chains, groups, Blend If și advanced blending.
-- Backdrop real pentru joc și UI-ul randat dedesubt.
-- Integrare tipizată cu Motion și binding.
-- Nicio modificare a măsurării, aranjării sau hit testing-ului.
-- Nicio resursă GPU deținută de elemente UI.
-- Zero CPU readback pentru capturi și backdrop.
-- Comenzi locale retained reutilizabile în timpul animațiilor Prism.
-- Diagnosticare suficientă pentru cost CPU, GPU, memorie și cache.
-- Rezultate deterministe între frame-uri și predictibile între backend-uri.
+## Non-objectives
 
-## Non-obiective
+- Prism is not an image editor.
+- Prism does not execute the shader source entered in the markup.
+- Prism does not implement Neural Filters, Camera Raw, Digimarc or cloud operations.
+- Prism does not change the layout to accommodate shadows or blur.
+- Prism does not create independent input elements for layers.
+- Prism does not allow a layer to arbitrarily read another layer via `Source`.
+- Prism does not guarantee identical byte-for-byte results to Adobe's proprietary algorithms.
+- Prism does not move rendering responsibilities to controls or code-behind.
 
-- Prism nu este editor de imagini.
-- Prism nu execută shader source introdus în markup.
-- Prism nu implementează Neural Filters, Camera Raw, Digimarc sau operații cloud.
-- Prism nu modifică layout-ul pentru a face loc umbrelor sau blurului.
-- Prism nu creează elemente input independente pentru layere.
-- Prism nu permite unui layer să citească arbitrar alt layer prin `Source`.
-- Prism nu garantează rezultate identice byte-for-byte cu algoritmii privați Adobe.
-- Prism nu mută responsabilități de rendering în controale sau code-behind.
+## Language surface
 
-## Suprafața de limbaj
+TDD implements exactly the eight directives defined by the proposal:
 
-TDD-ul implementează exact cele opt directive definite de proposal:
-
-| Directivă | Rol tehnic |
+| Directive | Technical role |
 | --- | --- |
-| `@prism` | atașează o definiție reutilizabilă sau inline unui element |
-| `@parameter` | declară un slot tipizat suprascriptibil și adresabil |
-| `@layer` | declară un nod leaf care procesează rezultatul inferior |
-| `@group` | declară un container explicit pentru layere și groups |
-| `@filter` | adaugă o operație de procesare a pixelilor |
-| `@style` | adaugă o decorație Photoshop derivată din content |
-| `@mask` | limitează contribuția completă a unui scope |
-| `@backdrop` | procesează jocul și UI-ul compus dedesubt |
+| `@prism` | attaches a reusable or inline definition to an element |
+| `@parameter` | declares a typed overwritable and addressable slot |
+| `@layer` | declares a leaf node that processes the lower result |
+| `@group` | declares an explicit container for layers and groups |
+| `@filter` | adds a pixel processing operation |
+| `@style` | adds a Photoshop decoration derived from content |
+| `@mask` | limits the full contribution of a scope |
+| `@backdrop` | render the game and the composite UI underneath |
 
-`PrismComposition` este resursa reutilizabilă. Nicio directivă suplimentară nu este
-necesară pentru implementarea descrisă aici.
+`PrismComposition` is the reusable resource. No additional directive is
+required for the implementation described here.
 
-## Constrângeri existente
+## Existing constraints
 
-Cerneala folosește în prezent:
+Cerneala is currently using:
 
-- `ElementRenderCache` pentru comenzile locale ale fiecărui element;
-- `DrawCommandListBuilder` pentru compunerea subtree-urilor într-o listă flat;
-- `RetainedRenderer` pentru commit și submit;
-- `IDrawingBackend` drept graniță backend-neutral;
-- `MonoGameDrawingBackend` drept backend concret;
-- `UiHost.Update` și `UiHost.Draw` drept contract de frame;
-- Motion și generatorul de markup pentru proprietăți animate și target-uri statice.
+- `ElementRenderCache` for the local commands of each element;
+- `DrawCommandListBuilder` for composing subtrees in a flat list;
+- `RetainedRenderer` for commit and submit;
+- `IDrawingBackend` as backend-neutral boundary;
+- `MonoGameDrawingBackend` as concrete backend;
+- `UiHost.Update` and `UiHost.Draw` as a frame contract;
+- Motion and markup generator for animated properties and static targets.
 
-Prism trebuie să extindă această arhitectură, nu să creeze un al doilea renderer UI.
+Prism needs to extend this architecture, not create a second UI renderer.
 
-## Contract semantic consumat de runtime
+## Semantic contract consumed by runtime
 
-Contractul normativ complet este secțiunea
-`Foundation Rendering Contract` din proposal. Runtime-ul, analyzer-ul și backend-ul
-trebuie să păstreze aceleași reguli, fără interpretări locale:
+The full normative contract is the section
+`Foundation Rendering Contract` from the proposal. The runtime, the analyzer and the backend
+must keep the same rules, without local interpretations:
 
-- ordinea declarată este front-to-back ca în panoul Photoshop, iar evaluarea
-  normală este bottom-up;
-- sursa implicită este o singură captură immutable a vizualului local al
-  controlului, fără descendenții vizuali, iar numele nodurilor nu pot deveni surse;
-- layer-ul este frunză, group-ul este singurul container, iar masca se aplică
-  contribuției pregătite înainte de opacity și blend;
-- `ClipToBelow`, `PassThrough`, `Visible`, `Fill`, `Opacity` și `BlendIf` păstrează
-  exact ordinea și semantica definite în proposal;
-- profilul implicit este `LinearSrgb`;
-- Prism nu participă la layout, hit testing sau input.
+- the declared order is front-to-back as in the Photoshop panel, and the evaluation
+  normal is bottom-up;
+- the default source is a single immutable capture of the local visual of
+  control, without visual descendants, and node names cannot become sources;
+- the layer is the leaf, the group is the only container, and the mask is applied
+  contribution prepared before opacity and blend;
+- `ClipToBelow`, `PassThrough`, `Visible`, `Fill`, `Opacity` and `BlendIf` keep
+  exactly the order and semantics defined in the proposal;
+- the default profile is `LinearSrgb`;
+- Prism does not participate in layout, hit testing or input.
 
-Acest rezumat este o constrângere de implementare, nu o a doua definiție a
-comportamentului. Orice schimbare semantică se face mai întâi în contractul normativ
-din proposal și se reflectă aici în aceeași modificare.
+This summary is an implementation constraint, not a second definition of
+behavior. Any semantic change is first made in the normative contract
+from the proposal and is reflected here in the same amendment.
 
-## Principii obligatorii
+## Mandatory principles
 
-### UI-ul descrie, backend-ul procesează
+### The UI describes, the backend processes
 
-Elementul UI știe ce `PrismComposition` are atașat și care sunt valorile curente.
-Nu știe ce este un `RenderTarget2D`, `Effect`, shader pass sau texture pool.
+The UI element knows what `PrismComposition` has attached and what the current values are.
+It doesn't know what a `RenderTarget2D`, `Effect`, shader pass or texture pool is.
 
-### Definiție partajată, stare per instanță
+### Shared definition, state per instance
 
-`PrismCompositionDefinition` este immutable și poate fi partajată de toate
-elementele care folosesc aceeași resursă. Fiecare element primește propriul
-`PrismInstance` și propriile valori de parametri.
+`PrismCompositionDefinition` is immutable and can be shared by all
+elements that use the same resource. Each element gets its own
+`PrismInstance` and own parameter values.
+### No recapture per layer
 
-### Nicio recapturare per layer
+The control's local visual is executed only once in an area of
+basis. Layers process intermediate results, do not redraw the control.
 
-Vizualul local al controlului este executat o singură dată într-o suprafață de
-bază. Layerele procesează rezultate intermediare, nu redesenează controlul.
+### GPU-only for pixels
 
-### GPU-only pentru pixeli
+Captures, filters, masks, blend modes and the backdrop remain on the GPU. Reading
+pixels back to the CPU is forbidden in the normal rendering path.
 
-Capturile, filtrele, măștile, blend modes și backdrop-ul rămân pe GPU. Citirea
-pixelilor înapoi pe CPU este interzisă în calea normală de rendering.
+### No textual lookup per frame
 
-### Fără lookup textual per frame
+The generator turns names into numeric identifiers and typed keys.
+Strings remain only for diagnostics and tooling.
 
-Generatorul transformă numele în identificatori numerici și chei tipizate.
-Stringurile rămân doar pentru diagnostics și tooling.
+### Safe degradation
 
-### Degradare sigură
+An unavailable capability should not make the UI invisible. In the worst case,
+Prism is bypassed and the control is drawn normally.
 
-O capabilitate indisponibilă nu trebuie să facă UI-ul invizibil. În cel mai rău caz,
-Prism este bypass-uit, iar controlul este desenat normal.
-
-## Aplicarea DRY, YAGNI și SOLID
+## Application of DRY, YAGNI and SOLID
 
 ### DRY
 
-- Catalogul machine-readable este singura sursă pentru identificatori, proprietăți,
-  default-uri, limite și capabilități. Generatorul, runtime-ul, backend-ul și
-  documentația consumă artefacte generate din el.
-- Visibility, culling, bounds structurale și cerința de backdrop sunt calculate o
-  singură dată în `PrismFrameAnalysis`. Graph builder-ul consumă rezultatul; nu
-  repetă analiza.
-- Regulile de fallback sunt centralizate într-un `PrismFallbackPolicy`, nu
-  împrăștiate în kernels, planner și host.
+- The machine-readable catalog is the only source for identifiers, properties,
+  defaults, limits and capabilities. The generator, runtime, backend and
+  documentation consumes artifacts generated from it.
+- Visibility, culling, structural bounds and backdrop requirement are calculated o
+  only once in `PrismFrameAnalysis`. The graph builder consumes the result; no
+  repeat the analysis.
+- Fallback rules are centralized in a `PrismFallbackPolicy`, no
+  scattered in kernels, planner and host.
 
 ### YAGNI
 
-Implementarea obligatorie conține numai mecanisme cerute de sintaxa confirmată și
-de backend-ul MonoGame actual. Nu include:
+The mandatory implementation contains only mechanisms required by the confirmed syntax and
+of the current MonoGame backend. Does not include:
 
-- discovery public pentru filtre third-party;
-- planning paralel;
-- un model generic de GPU fences sau execuție asincronă;
-- degradare adaptivă automată a calității.
+- public discovery for third-party filters;
+- parallel planning;
+- a generic model of GPU fences or asynchronous execution;
+- automatic adaptive quality degradation.
 
-Acestea rămân posibile prin identificatori stabili și frontiere interne, dar se
-proiectează numai după apariția unui caz real și a unor măsurători. Nu se construiește
-o gară pentru trenul care poate, cândva, să treacă prin comună.
+These remain possible through stable identifiers and internal borders, but se
+design only after the occurrence of a real case and measurements. It doesn't build
+a station for the train that may someday pass through the commune.
 
-Cache-ul retained cross-frame nu este flexibilitate ipotetică: este o cerință
-confirmată pentru ca un Prism static să nu recaptureze și să nu refacă aceiași pixeli
-în fiecare frame. Implementarea sa rămâne strictă și specializată pentru rezultatele
-GPU Prism; nu justifică un framework generic de caching sau scheduling.
+Retained cross-frame cache is not hypothetical flexibility: it is a requirement
+fixed so that a static Prism doesn't recapture and redraw the same pixels
+in every frame. Its implementation remains strict and specialized for results
+GPU Prism; it does not justify a generic caching or scheduling framework.
 
-### SOLID fără interface mania
+### SOLID no mania interface
 
-- **SRP**: analyzer-ul analizează, graph builder-ul construiește, optimizer-ul
-  optimizează, executorul execută, iar pool-ul deține suprafețe.
-- **OCP**: operațiile built-in sunt înregistrate prin descriptori și planificatoare
-  specializate; adăugarea uneia nu extinde un switch central gigantic.
-- **LSP**: orice backend fără Prism poate ignora scope-urile și desena conținutul
-  normal, fără să-i schimbe semantica.
-- **ISP**: backdrop-ul rămâne un contract separat; `IDrawingBackend` nu primește
-  metode pentru fiecare filtru, stil sau resursă.
-- **DIP**: UI-ul și drawing composition depind de contracte backend-neutral;
-  MonoGame implementează aceste contracte și deține detaliile GPU.
+- **SRP**: the analyzer analyzes, the graph builder builds, the optimizer
+  optimizes, the executor executes, and the pool owns surfaces.
+- **OCP**: built-in operations are registered via descriptors and schedulers
+  specialized; adding one does not expand a giant central switch.
+- **LSP**: Any backend without Prism can ignore scopes and draw content
+  normally, without changing its semantics.
+- **ISP**: the backdrop remains a separate contract; `IDrawingBackend` does not receive
+  methods for each filter, style, or resource.
+- **DIP**: UI and drawing composition depend on backend-neutral contracts;
+MonoGame implements these contracts and owns the GPU details.
 
-Se introduc interfețe numai la granițe cu substituție reală, lifecycle diferit sau
-nevoie clară de test doubles. Clasele interne simple nu primesc câte o interfață de
-dragul costumului și cravatei.
+Interfaces are introduced only at boundaries with real substitution, different lifecycle or
+clear need for test doubles. Simple inner classes do not get an interface of
+for the sake of the suit and tie.
 
-## Arhitectura de nivel înalt
-
+## High level architecture
 ```text
 .crn
     |
@@ -265,7 +260,7 @@ cod generat
 UIElement + PrismAttachment
     |
     v
-BeginPrism / comenzi locale / EndPrism / comenzi descendenți
+BeginPrism / local commands / EndPrism / descendant commands
     |
     v
 PrismFrameAnalyzer
@@ -286,11 +281,9 @@ PrismGraphExecutor
     v
 GraphicsDevice
 ```
+## Code organization
 
-## Organizarea codului
-
-Structura recomandată este:
-
+The recommended structure is:
 ```text
 UI/Prism/
     Definitions/
@@ -323,43 +316,42 @@ tests/
     Cerneala.Tests.SourceGen/Prism/
     Cerneala.Tests.MonoGame/Prism/
 ```
+Responsibilities should not be moved between these directories just for convenience.
+In particular, `UI/Prism` cannot reference MonoGame.
 
-Responsabilitățile nu trebuie mutate între aceste directoare doar pentru comoditate.
-În special, `UI/Prism` nu poate referenția MonoGame.
+MonoGame shaders keep a single compiled entry point,
+`Shaders/CopyComposite.fx`, but this is only the aggregator of `#include`s.
+Common code, compositing, blend modes, color conversions and techniques live
+in dedicated modules. Each layer style has its own file in `Shaders/Styles/`,
+and the filters are grouped into `Shaders/Filters/` by the actual GPU algorithm
+(`Adjustment`, `Neighborhood`, `Resampling` and catalog families), not after
+the over a hundred public names that reuse the same primitives. The target
+MSBuild tracks all `.fx` fragments as inputs, so the change
+any include recompiles the embedded artifact `CopyComposite.mgfxo`.
 
-Shader-ele MonoGame păstrează un singur entry point compilat,
-`Shaders/CopyComposite.fx`, dar acesta este doar agregatorul de `#include`-uri.
-Codul comun, compoziția, blend modes, conversiile de culoare și tehnicile trăiesc
-în module dedicate. Fiecare layer style are propriul fișier în `Shaders/Styles/`,
-iar filtrele sunt grupate în `Shaders/Filters/` după algoritmul GPU real
-(`Adjustment`, `Neighborhood`, `Resampling` și familiile catalogului), nu după
-cele peste o sută de nume publice care reutilizează aceleași primitive. Target-ul
-MSBuild urmărește toate fragmentele `.fx` ca input-uri, astfel încât modificarea
-oricărui include recompilă artefactul embedded `CopyComposite.mgfxo`.
-
-## Modelul de definiții
+## The definitions model
 
 ### PrismCompositionDefinition
 
-Definiția reutilizabilă conține:
+The reusable definition contains:
 
-- identificator stabil;
-- parametrii declarați și valorile default;
-- working color profile;
-- global light angle și altitude;
-- lista ordonată de layere și groups;
-- backdrop-ul opțional;
-- tabela numelor adresabile;
-- tabela sloturilor de proprietăți;
-- hash structural pentru pipeline cache;
-- bounds expansion maxim static, când poate fi calculat.
+- stable identifier;
+- declared parameters and default values;
+- working color profiles;
+- global light angle and altitude;
+- ordered list of layers and groups;
+- the optional backdrop;
+- table of addressable names;
+- table of property slots;
+- structural hash for pipeline cache;
+- bounds maximum static expansion, when it can be calculated.
 
-Definiția este immutable după creare. Nu conține referință la elementul care o
-folosește și nu implementează `IDisposable`.
+The definition is immutable after creation. It does not contain a reference to the element that o
+use and do not implement `IDisposable`.
 
-### Noduri
+### Knots
 
-Arborele definiției folosește tipuri distincte:
+The definition tree uses distinct types:
 
 - `PrismLayerDefinition`;
 - `PrismGroupDefinition`;
@@ -368,177 +360,172 @@ Arborele definiției folosește tipuri distincte:
 - `PrismStyleDefinition`;
 - `PrismMaskDefinition`.
 
-`PrismLayerDefinition` este întotdeauna leaf. Numai `PrismGroupDefinition` poate
-conține layere sau alte groups.
+`PrismLayerDefinition` is always leaf. Only `PrismGroupDefinition` can
+contains layers or other groups.
 
-Fiecare nod primește un `PrismNodeId` numeric stabil în cadrul definiției. Numele
-opțional este păstrat separat pentru Motion și diagnostics.
+Each node receives a stable numeric `PrismNodeId` within the definition. The name
+optionally it is kept separately for Motion and diagnostics.
 
-### Proprietăți și parametri
+### Properties and parameters
 
-Fiecare valoare este reprezentată printr-un slot tipizat:
-
+Each value is represented by a typed slot:
 ```text
 PrismPropertyKey<T>
 PrismParameterKey<T>
 ```
-
-Sloturile sunt dense și grupate pe tipuri uzuale:
+Slots are dense and grouped by common types:
 
 - `bool`;
 - `int`;
 - `float`;
-- vectori și matrici;
-- culori;
-- enum-uri;
-- referințe immutable la imagini, gradients, patterns, LUT-uri sau curves.
+- vectors and matrices;
+- colors;
+- enums;
+- immutable references to images, gradients, patterns, LUTs or curves.
 
-Parametrii nu sunt dicționare de `string -> object`. Valorile complexe sunt
-referințe tipizate și validate.
+Parameters are not dictionaries by `string -> object`. Complex values are
+typed and validated references.
 
 ## PrismInstance
 
-O instanță este creată pentru fiecare aplicare `@prism`.
+An instance is created for each `@prism` application.
 
-Conține:
+Contains:
 
-- referința la definiția partajată;
-- stările tipizate și valorile parametrilor suprascriși;
-- versiunile structurale și de valori.
+- the reference to the shared definition;
+- typed states and overridden parameter values;
+- structural and value versions.
 
-`PrismAttachment` deține starea de atașare și subscriptions create de binding
-factories. `MarkupMotionSession` deține execuțiile și handles Motion. Separarea
-asta face ca `PrismInstance` să rămână un model de valori ușor, fără delegate sau
-referințe la element.
+`PrismAttachment` holds the attachment state and subscriptions created by the binding
+factories. `MarkupMotionSession` owns the Motion executions and handles. Separation
+this makes `PrismInstance` a lightweight value model with no delegates or
+element references.
 
-Nu conține:
+Does not contain:
 
 - textures;
 - render targets;
 - shader instances;
-- rezultate filtrate;
-- referințe către backend-ul MonoGame.
+- filtered results;
+- references to the MonoGame backend.
 
 ### PrismRenderState
 
-`PrismRenderState` este handle-ul backend-neutral referit de comanda `BeginPrism`.
-Este stabil pe durata atașării și conține:
+`PrismRenderState` is the backend-neutral handle referenced by the `BeginPrism` command.
+It is stable during attachment and contains:
 
-- definiția immutable;
-- bufferul dens de valori;
+- the immutable definition;
+- the dense buffer of values;
 - `ValueVersion`;
 - `VisibilityVersion`;
 - `ResourceVersion`.
 
-Valorile pot fi modificate numai pe thread-ul UI între update și draw. Backend-ul
-le citește sincron în `Render`. Implementarea curentă planifică și execută pe
-thread-ul de draw; nu introduce un pipeline CPU asincron sau stare mutabilă
-partajată între frame-uri.
+Values ​​can only be changed on the UI thread between update and draw. The backend
+reads them synchronously in `Render`. The current implementation plans and executes on
+the draw thread; does not introduce an asynchronous CPU pipeline or mutable state
+shared between frames.
 
-Această separare permite animațiilor Prism să schimbe parametri fără regenerarea
-comenzilor locale ale controlului.
+This separation allows Prism animations to change parameters without regeneration
+local control commands.
 
-## Atașare și lifecycle
+## Attachment and lifecycle
 
-`PrismAttachment` implementează comportamentul standard de lifecycle al elementului.
+`PrismAttachment` implements the standard element lifecycle behavior.
 
 ### Attach
 
-La atașare:
+When attaching:
 
-1. înlocuiește determinist și dispune orice attachment Prism anterior;
-2. înregistrează un singur `PrismAttachment` ca lifecycle behavior;
-3. creează `PrismInstance` din fabrica generată când elementul intră în arbore;
-4. conectează binding factories numai dacă elementul este efectiv randabil;
-5. revine curat dacă fabrica instanței sau un binding factory eșuează.
+1. Deterministically replaces and disposes any previous Prism attachment;
+2. record a single `PrismAttachment` as lifecycle behavior;
+3. create `PrismInstance` from the factory generated when the element enters the tree;
+4. connect binding factories only if the element is actually renderable;
+5. return clean if the instance factory or a binding factory fails.
 
-Integrarea ulterioară cu drawing atașează aceluiași transition
-`PrismRenderState`, alocă `PrismCacheOwnerToken` fără referință inversă la element
-și invalidează numai structura de compunere a root-ului. Aceste responsabilități
-nu sunt mutate în `PrismAttachment`.
+Further integration with drawing attaches the same transition
+`PrismRenderState`, allocates `PrismCacheOwnerToken` without dereference to element
+and invalidates only the root composition structure. These responsibilities
+they are not moved to `PrismAttachment`.
 
-### Detach
+### Detachment
 
-La detașare:
+On posting:
 
-1. sesiunea Motion anulează execuțiile asociate subtree-ului;
-2. attachment-ul elimină binding-urile și subscriptions în ordine inversă;
-3. elimină instanța curentă și toate referințele de lifecycle la disposal;
-4. integrarea drawing publică tokenul într-o coadă backend-neutrală de invalidare
-   consumată la următorul submit;
-5. nu contactează direct backend-ul și nu eliberează direct resurse GPU.
+1. the Motion session cancels the executions associated with the subtree;
+2. the attachment removes bindings and subscriptions in reverse order;
+3. remove the current instance and all lifecycle references to disposal;
+4. the drawing integration publishes the token to a backend-neutral invalidation queue
+   consumed on the next submit;
+5. does not directly contact the backend and does not directly release GPU resources.
 
-Backend-ul indexează intrările retained după token/generație și nu ține o referință
-puternică la `PrismInstance` sau `UIElement`. Dacă nu mai există un submit, dispose-ul
-backendului eliberează oricum întregul cache.
+The backend indexes the retained entries by token/generation and does not hold a reference
+strong at `PrismInstance` or `UIElement`. If there is no more submit, dispose of it
+backend flushes the entire cache anyway.
 
 ### Visibility
 
-Când elementul sau un ancestor devine `Hidden`, `Collapsed` ori
-`IsVisible=false`:
+When the element or an ancestor becomes `Hidden`, `Collapsed` or
+ZZZINCERNEALA19ZZZ:
 
-- Motion pentru Prism este anulat sincron și o singură dată prin lifecycle-ul
-  existent al subtree-ului;
-- subscriptions generate de binding factories sunt deconectate;
-- nicio comandă Prism nu este executată;
-- nu se achiziționează backdrop;
-- nu se alocă suprafețe;
-- tokenul cache este marcat o singură dată ca imediat evictable;
-- instanța veche poate rămâne doar ca stare inertă și nu mai primește scrieri.
+- Motion for Prism is canceled synchronously and only once per lifecycle
+  existing of the subtree;
+- subscriptions generated by binding factories are disconnected;
+- no Prism commands are executed;
+- no backdrop is purchased;
+- no surfaces are allocated;
+- the cache token is marked only once as immediately evictable;
+- the old instance can only remain as an inert state and no longer receives writes.
 
-Când elementul redevine efectiv randabil:
+When the item becomes effectively returnable:
 
-- fabrica generată creează o instanță nouă;
-- binding factories se reconectează și reaplică valorile de bază și valorile
-  surselor curente;
-- execuțiile Motion anulate nu reînvie și trebuie declanșate din nou explicit.
+- the generated factory creates a new instance;
+- binding factories reconnect and reapply core values and values
+  current sources;
+- Canceled Motion executions do not revive and must be explicitly triggered again.
 
-Când `Visible=false` pe un layer sau group:
+When `Visible=false` on a layer or group:
 
-- nodul și subtree-ul său sunt bypass-uite;
-- filtrele, stilurile și masca nu rulează;
-- Motion activ pentru proprietățile acelui scope este anulat;
-- o scriere externă sau un binding poate seta din nou `Visible=true`.
+- the node and its subtree are bypassed;
+- filters, styles and mask don't work;
+- Active motion for that scope's properties is cancelled;
+- an external write or bind can set `Visible=true` again.
 
-Un filter sau style cu `Visible=false` este eliminat din plan fără pass și fără
-suprafață intermediară. Un backdrop cu `Visible=false` nu contribuie la cerințele
-frame-ului pentru achiziția backdrop.
+A filter or style with `Visible=false` is removed from the plan without pass and without
+intermediate surface. A backdrop with `Visible=false` does not contribute to the requirements
+frame for backdrop acquisition.
 
-`Visible=false` nu este echivalent cu `Opacity=0`. Primul oprește munca; al doilea
-păstrează semantica de compunere și poate fi folosit pentru tranziții.
+`Visible=false` is not equivalent to `Opacity=0`. The first stops work; the second
+preserves composition semantics and can be used for transitions.
 
 ## Invalidation
 
-Prism introduce o invalidare de prezentare care nu reconstruiește comenzile locale.
+Prism introduces a presentation override that does not rebuild local commands.
 
-| Schimbare | Efect |
+| Change | Effect |
 | --- | --- |
-| Atașare, detașare sau altă definiție | recompunere structurală a root command list |
-| Parametru numeric, culoare, `Opacity`, `Visible` | increment `ValueVersion`, redraw |
-| Resursă auxiliară schimbată | increment `ResourceVersion`, redraw |
-| Bounds sau transform element | recompunere normală prin layout/render scope |
-| Modificare conținut control | rebuild local cache existent |
+| Attachment, detachment or other definition | structural recompilation of root command list |
+| Numeric parameter, color, `Opacity`, `Visible` | increment `ValueVersion`, redraw |
+| Changed auxiliary resource | increment `ResourceVersion`, redraw |
+| Bounds or transform element | normal recomposition via layout/render scope |
+| Change control content | rebuild existing local cache |
 
-Nu se folosește invalidarea `Render` obișnuită pentru fiecare tick al unui parametru
-Prism, deoarece aceasta ar reconstrui inutil `ElementRenderCache`.
+The usual `Render` invalidation for each tick of a parameter is not used
+Prism, as this would unnecessarily rebuild `ElementRenderCache`.
 
-Se adaugă o categorie `Composition` în scheduler sau un semnal echivalent de
-presentation-only. Hosturile care desenează fiecare frame o pot trata ca statistică;
-hosturile on-demand o folosesc pentru a programa draw.
+A `Composition` category is added to the scheduler or an equivalent signal of
+presentation-only. Hosts that draw each frame may treat it as a statistic;
+on-demand hosts use it to schedule draw.
 
-## Integrarea în DrawCommandList
+## Integration into DrawCommandList
 
-### Comenzi noi
+### New orders
 
-`DrawCommandKind` primește:
-
+`DrawCommandKind` receives:
 ```text
 BeginPrism
 EndPrism
 ```
-
-`BeginPrism` conține un `PrismDrawScope` backend-neutral:
-
+`BeginPrism` contains a backend-neutral `PrismDrawScope`:
 ```text
 PrismRenderState
 PrismCacheOwnerToken
@@ -549,41 +536,37 @@ StructuralVersion
 ValueVersion
 VisualContentVersion
 ```
+`EndPrism` has no payload. Scopes must be balanced and can be nested.
 
-`EndPrism` nu are payload. Scope-urile trebuie să fie balansate și pot fi nested.
+### Composing the local visual
 
-### Compunerea vizualului local
-
-`DrawCommandListBuilder.AppendElement` emite:
-
+`DrawCommandListBuilder.AppendElement` issues:
 ```text
 clip-uri de ancestor deja active
-PushClip al elementului, dacă există
-BeginPrism, dacă elementul are Prism
+ PushClip for the element, if present
+ BeginPrism, if the element has Prism
 comenzile locale
-EndPrism, dacă elementul are Prism
+ EndPrism, if the element has Prism
 copiii vizuali
 copiii Presence aflați în exit
 PopClip
 ```
+Thus:
 
-Astfel:
+- Prism captures only local control commands;
+- descendants are normally composed over the Prism result and do not receive default
+  the effects of control;
+- explicit clips limit the final result;
+- the effects can extend the result beyond the arranged bounds if there is no clip;
+- Prism attached to descendants is evaluated independently;
+- the backend must not know `UIElement`.
 
-- Prism capturează exclusiv comenzile locale ale controlului;
-- descendenții sunt compuși normal peste rezultatul Prism și nu primesc implicit
-  efectele controlului;
-- clip-urile explicite limitează rezultatul final;
-- efectele pot extinde rezultatul dincolo de arranged bounds dacă nu există clip;
-- Prism atașat descendenților este evaluat independent;
-- backend-ul nu trebuie să cunoască `UIElement`.
+A backend without Prism support ignores `BeginPrism` and `EndPrism` but executes the commands
+among them. The control remains visible with no effects.
 
-Un backend fără suport Prism ignoră `BeginPrism` și `EndPrism`, dar execută comenzile
-dintre ele. Controlul rămâne vizibil fără efecte.
+## The frame contract
 
-## Contractul de frame
-
-`IDrawingBackend` primește context explicit:
-
+`IDrawingBackend` receives explicit context:
 ```csharp
 public interface IDrawingBackend
 {
@@ -592,9 +575,7 @@ public interface IDrawingBackend
         in DrawingFrameContext frame);
 }
 ```
-
-`DrawingFrameContext` conține:
-
+`DrawingFrameContext` contains:
 ```text
 UiFrameId
 ViewportSize
@@ -605,106 +586,104 @@ PrismCacheInvalidations
 BackdropFrameLease?
 DiagnosticsSink
 ```
+The existing context-free signature is replaced. All backends and test
+doubles must be updated in the same change.
 
-Semnătura context-free existentă este înlocuită. Toate backend-urile și test
-doubles trebuie actualizate în aceeași schimbare.
+Before the backdrop acquisition, `PrismFrameAnalyzer` makes the only structural pass
+over controls, clip stack and Prism states. It produces a `PrismFrameAnalysis`
+immutable containing visible scopes, culling results, bounds
+structural, dependency stamps, cacheable nodes and `RequiresBackdrop`.
 
-Înainte de achiziția backdrop, `PrismFrameAnalyzer` face singura trecere structurală
-peste comenzi, clip stack și stările Prism. Produce un `PrismFrameAnalysis`
-immutable care conține scope-urile vizibile, rezultatele de culling, bounds-urile
-structurale, dependency stamp-urile, nodurile cacheable și `RequiresBackdrop`.
+The host uses `RequiresBackdrop` for acquisition, then passes the same analysis
+by `DrawingFrameContext`. The graph builder consumes it without recomputing
+visibility, culling or backdrop requirement. In debug, command list versions
+and analysis are checked to prevent using a stale analysis.
+Owner/resource invalidations are drained only once in the context of the frame
+and consumed by the backend before the lookup.
 
-Hostul folosește `RequiresBackdrop` pentru achiziție, apoi transmite aceeași analiză
-prin `DrawingFrameContext`. Graph builder-ul o consumă fără să recalculeze
-visibility, culling sau cerința de backdrop. În debug, versiunile listei de comenzi
-și analizei sunt verificate pentru a preveni folosirea unei analize stale.
-Invalidările de owner/resource sunt drenate o singură dată în contextul frame-ului
-și consumate de backend înainte de lookup.
+## SpriteBatch Ownership
 
-## Ownership-ul SpriteBatch
+`MonoGameUiHost` no longer opens a single `SpriteBatch.Begin` around the whole
+UI. Prism must be able to:
 
-`MonoGameUiHost` nu mai deschide un singur `SpriteBatch.Begin` în jurul întregului
-UI. Prism trebuie să poată:
+- change the render target;
+- finish a batch before a filter pass;
+- perform one or more full-screen passes;
+- resume drawing normal commands;
+- restore GraphicsDevice state.
 
-- schimba render target-ul;
-- termina un batch înainte de un filter pass;
-- executa unul sau mai multe full-screen passes;
-- relua desenarea comenzilor normale;
-- restaura state-ul GraphicsDevice.
+Therefore, `MonoGameDrawingBackend.Render` becomes the full owner of
+`SpriteBatch.Begin/End` and transitions between passes.
 
-Prin urmare, `MonoGameDrawingBackend.Render` devine proprietarul complet al
-`SpriteBatch.Begin/End` și al tranzițiilor dintre passes.
-
-Backend-ul salvează și restaurează starea pe care contractul hostului o declară:
+The backend saves and restores the state that the host contract declares:
 
 - render targets;
 - viewport;
-- scissor rectangle;
-- blend, rasterizer, depth-stencil și sampler states.
+- rectangular scissors;
+- blend, rasterizer, depth-stencil and sampler states.
 
-Restaurarea se face în `finally`, inclusiv când un kernel eșuează.
+Restore is done in `finally`, including when a kernel fails.
 
-## Construirea render graph-ului
+## Building the render graph
 
-Pipeline-ul are responsabilități separate:
+The pipeline has separate responsibilities:
 
-1. `PrismFrameAnalyzer` parsează structura scope-urilor, rezolvă visibility,
-   culling și cerințele frame-ului.
-2. `PrismGraphBuilder` transformă comenzile și analiza într-un graph semantic
+1. `PrismFrameAnalyzer` parses the structure of scopes, resolves visibility,
+   culling and frame requirements.
+2. `PrismGraphBuilder` transforms commands and analysis into a semantic graph
    immutable.
-3. `PrismGraphOptimizer` elimină no-op-uri și fuzionează passes fără să schimbe
-   ordinea semantică.
-4. `PrismGraphExecutor` execută graph-ul și gestionează exclusiv resursele GPU.
+3. `PrismGraphOptimizer` removes no-ops and merges passes without changing
+   semantic order.
+4. `PrismGraphExecutor` runs the graph and manages GPU resources exclusively.
 
-Semantica layer styles este tradusă de `PrismStylePlanner` într-un plan comun de
-sampling și compoziție. Descriptorul generat al catalogului furnizează sloturile,
-default-urile, determinismul, cacheability și versiunea dependenței. Backend-ul
-consumă planul printr-o singură tehnică `LayerStyle`; cele zece familii nu au
-surse shader copiate separat.
+The semantics of layer styles is translated by `PrismStylePlanner` into a common plane of
+sampling and composition. The generated catalog descriptor provides the slots,
+defaults, determinism, cacheability and dependency versioning. The backend
+consume the plane with a single technique `LayerStyle`; the ten families do not have
+shader sources copied separately.
 
-Nodurile principale sunt:
+The main nodes are:
 
-- primitive batch;
+- batch primitives;
 - clip;
-- control capture;
+- capture control;
 - filter pass;
 - style pass;
 - mask pass;
 - blend pass;
 - color conversion;
-- backdrop input;
-- final composite.
+- background input;
+- composite finish.
 
-Analyzer-ul, builder-ul și optimizer-ul sunt backend-neutral. Lucrează cu
-descriptorii catalogului și nu referențiază MonoGame.
+The analyzer, builder and optimizer are backend-neutral. Work with
+catalog descriptors and does not reference MonoGame.
 
 ### Scope Prism
 
-La `BeginPrism`, graph builder-ul memorează nodul de compoziție aflat dedesubt și începe
-captura controlului. La `EndPrism`:
+At `BeginPrism`, the graph builder memorizes the underlying composition node and starts
+capture control. At `EndPrism`:
 
-1. finalizează captura controlului;
-2. pregătește backdrop-ul, dacă există;
-3. evaluează stack-ul controlului bottom-up;
-4. compune controlul procesat peste backdrop;
-5. înlocuiește scope-ul cu rezultatul final.
+1. completes control capture;
+2. prepare the backdrop, if any;
+3. evaluate the bottom-up control stack;
+4. compose the processed control over the backdrop;
+5. replace scope with end result.
 
 ### Nested Prism
 
-Un scope interior este rezolvat înaintea scope-ului exterior. Backdrop-ul interior
-vede nodul compus imediat înaintea controlului său, inclusiv jocul, conținutul
-părintelui și sibling-urile inferioare. Nu vede propriul rezultat sau UI-ul superior.
+An inner scope is resolved before the outer scope. The interior backdrop
+it sees the composite node immediately before its control, including the game, content
+parent and lower siblings. It doesn't see its own result or the top UI.
 
-## Evaluarea compoziției
+## Composition evaluation
 
-Ordinea din markup este ordinea panoului Photoshop:
+The order in the markup is the Photoshop panel order:
 
-- prima declarație este vizual în față;
-- ultima declarație este vizual în spate;
-- execuția începe de jos și urcă.
+- the first statement is visually in front;
+- the last statement is visually behind;
+- the execution starts from the bottom and goes up.
 
-Pentru un layer:
-
+For a layer:
 ```text
 rezultatul acumulat dedesubt
     -> filtre bottom-up
@@ -715,94 +694,89 @@ rezultatul acumulat dedesubt
     -> ClipToBelow
     -> Opacity
     -> Blend If
-    -> blend cu rezultatul inferior
+     -> blend with the lower result
 ```
-
 ### Groups
 
-`PassThrough` permite copiilor să interacționeze direct cu rezultatul exterior.
-Orice alt blend mode izolează grupul într-o suprafață, aplică filtrele, stilurile,
-masca și opacity-ul grupului, apoi îl blenduiește ca o singură imagine.
+`PassThrough` allows children to interact directly with the external output.
+Any other blend mode isolates the group in a surface, applies the filters, styles,
+mask and opacity of the group, then blends it as a single image.
 
 ### Clipping chains
 
-Un layer cu `ClipToBelow=true` folosește alpha layerului-base inferior din același
-scope. Lanțul se termină la primul sibling inferior neclipped. Generatorul respinge
-lanțurile fără bază.
+A layer with `ClipToBelow=true` uses the alpha of the lower base-layer of the same
+scope. The chain ends at the first unclipped lower sibling. The generator rejects
+baseless chains.
 
-### Fill și Opacity
+### Fill and Opacity
 
-`Fill` reduce doar conținutul pregătit. Stilurile rămân vizibile.
-`Opacity` se aplică rezultatului complet content-plus-styles.
+`Fill` only reduces prepared content. Styles remain visible.
+`Opacity` applies to the full content-plus-styles result.
 
 ### Blend If
 
-`ThisLayerRange` și `UnderlyingRange` sunt transformate în rampe feathered. Evaluarea
-se face în working color profile, pe canalul selectat, înaintea blend-ului final.
+`ThisLayerRange` and `UnderlyingRange` are transformed into feathered ramps. Evaluation
+it is done in working color profile, on the selected channel, before the final blend.
 
-## Catalogul de operații
+## The catalog of operations
 
-Lista completă și default-urile sunt păstrate în proposal și nu sunt duplicate în
-acest document.
+The full list and defaults are kept in the proposal and are not duplicated in the
+this document.
 
-Implementarea internă grupează operațiile după primitive GPU reutilizabile:
+The internal implementation groups operations by reusable GPU primitives:
 
-- conversii de culoare și LUT;
-- color matrix și curves;
-- convoluții;
-- blur separabil;
-- neighborhood și morphology;
-- resampling și transform;
-- displacement și distortion;
-- noise și procedural generation;
+- color and LUT conversions;
+- color matrix and curves;
+- convolutions;
+- separable blur;
+- neighborhood and morphology;
+- resampling and transform;
+- displacement and distortion;
+- noise and procedural generation;
 - edge detection;
 - alpha derivation;
-- distance field pentru styles;
+- distance field for styles;
 - blend kernels.
 
-Un filtru semantic poate produce unul sau mai multe passes. Markupul nu expune
-această diferență.
+A semantic filter can produce one or more passes. Markup does not expose
+this difference.
 
-### Registrul built-in
+### Built-in registry
 
-`PrismBuiltinCatalog` este sursa unică pentru:
+`PrismBuiltinCatalog` is the single source for:
 
-- numele semantic;
-- identificatorul stabil;
-- categoria filter sau style;
-- proprietățile și tipurile lor;
-- default-urile;
-- intervalele valide;
-- capabilitățile necesare;
-- strategia de bounds expansion;
-- cheia kernelului backend.
+- the semantic name;
+- the stable identifier;
+- filter or style category;
+- their properties and types;
+- the defaults;
+- the valid intervals;
+- the necessary capabilities;
+- the bounds expansion strategy;
+- backend kernel key.
+The catalog is described in a JSON file validated by JSON Schema and included as
+`AdditionalFile` for source generator. Runtime descriptors are generated from it
+type, the backend registry, and the catalog tables in the proposal. CI regenerates
+artifacts and fail if diff. Do not manually maintain separate lists in
+documentation, generator and backend.
 
-Catalogul este descris într-un fișier JSON validat prin JSON Schema și inclus ca
-`AdditionalFile` pentru source generator. Din el se generează descriptorii runtime
-tipizați, registrul backend și tabelele catalogului din proposal. CI regenerează
-artefactele și eșuează dacă există diff. Nu se mențin manual liste separate în
-documentație, generator și backend.
+### Public extensibility deferred
 
-### Extensibilitate publică amânată
-
-Sintaxa rezervă forma simplă:
-
+The syntax reserves the simple form:
 ```text
 @filter ChromaticAberration
 ```
+The first implementation does not publish attributes, assembly discovery, kernel factories or
+a third-party SDK. The internal registry serves the built-in catalog exclusively.
+Stable identifiers and syntax do not block a future extension, but the API does
+public is only projected when there is at least one real filter outside
+framework and we know its packaging, backend and lifecycle requirements.
 
-Prima implementare nu publică atribute, discovery de assembly, kernel factories sau
-un SDK third-party. Registrul intern deservește exclusiv catalogul built-in.
-Identificatorii stabili și sintaxa nu blochează o extensie viitoare, dar API-ul
-public se proiectează abia când există cel puțin un filtru real din afara
-framework-ului și îi cunoaștem cerințele de packaging, backend și lifecycle.
+The markup does not support shader source, `Program`, effect filenames or `$Filter`.
 
-Markupul nu acceptă shader source, `Program`, effect filenames sau `$Filter`.
+## Compiling the markup
 
-## Compilarea markupului
-
-Pipeline-ul source generator este:
-
+The source generator pipeline is:
 ```text
 XML + directive text
     -> Prism lexer/parser
@@ -812,289 +786,279 @@ XML + directive text
     -> symbol table
     -> C# emitter
 ```
-
 ### Parser
 
-Parserul Prism este separat de parserul Motion, dar reutilizează infrastructura
-existentă pentru:
+The Prism parser is separate from the Motion parser, but reuses the infrastructure
+existing for:
 
-- locații în fișier;
-- valori literale;
-- referințe `$`;
-- assignments cu `=`;
-- blocuri cu `{}`;
+- locations in the file;
+- literal values;
+- references `$`;
+- assignments with `=`;
+- blocks with `{}`;
 - diagnostic reporting.
 
-AST-ul păstrează exact locația fiecărei directive, proprietăți și valori.
+The AST preserves the exact location of each directive, property, and value.
 
 ### Binder
 
-Binder-ul rezolvă:
+Binder solves:
 
-- resurse `PrismComposition`;
-- parametri și overrides;
-- tipuri filter și style;
-- proprietăți și tipurile lor;
-- namescope-ul layer/group/backdrop;
-- ordinea și legalitatea nodurilor;
-- referințe la imagini, masks, LUT-uri, gradients și patterns;
-- target-uri Motion `.prism`.
+- resources `PrismComposition`;
+- parameters and overrides;
+- filter and style types;
+- properties and their types;
+- the layer/group/backdrop namescope;
+- the order and legality of the nodes;
+- references to images, masks, LUTs, gradients and patterns;
+- Motion targets `.prism`.
 
-Toată validarea structurală din proposal este build-time.
+All structural validation in the proposal is build-time.
 
-### Cod generat
+### Generated code
 
-Pentru o resursă reutilizabilă se generează:
+For a reusable resource, generate:
 
-- o definiție statică partajată;
-- un factory de instanțe;
-- o structură tipizată pentru overrides;
-- identificatori numerici pentru noduri și parametri.
+- a shared static definition;
+- a court factory;
+- a typed structure for overrides;
+- numeric identifiers for nodes and parameters.
 
-Pentru `@prism $Name(...)` se generează:
+For `@prism $Name(...)` it generates:
 
-1. crearea instanței;
-2. aplicarea overrides tipizate;
-3. atașarea la element;
-4. înregistrarea cleanup-ului în lifecycle.
+1. creation of the court;
+2. application of typed overrides;
+3. attachment to the element;
+4. registration of the cleanup in the lifecycle.
 
-Nu se generează reflection, parsare de stringuri sau dicționare per frame.
+No reflection, string parsing or dictionaries are generated per frame.
 
-## Integrarea Motion
+## Motion integration
 
-Target-ul:
-
+The target:
 ```text
 $self.prism.Highlights.SoftGlow.GlowRadius
 ```
-
-este rezolvat la build-time în:
-
+is resolved at build-time in:
 ```text
 element target
 PrismNodeId path
 PrismPropertyKey<float>
 ```
+The generator validates:
 
-Generatorul validează:
+- the existence of Prism on the element;
+- each group/layer/backdrop segment;
+- the final property or parameter;
+- value type;
+- the existence of the Motion mixer.
 
-- existența Prism pe element;
-- fiecare segment de group/layer/backdrop;
-- proprietatea sau parametrul final;
-- tipul valorii;
-- existența mixerului Motion.
+The prefixes `$self`, `$owner`, and `$Name` are statically resolved. `$owner` is valid
+only in a template component and uses the owner element kept by the context
+of emission; `$Name` must be in the same namescope. The issued code accesses
+directly the instance, `PrismNodeId` and the typed slot, without reflection or dispatch
+textually.
 
-Prefixele `$self`, `$owner` și `$Name` sunt rezolvate static. `$owner` este valid
-numai într-un component template și folosește elementul owner păstrat de contextul
-de emission; `$Name` trebuie să fie în același namescope. Codul emis accesează
-direct instanța, `PrismNodeId` și slotul tipizat, fără reflection sau dispatch
-textual.
+### Discreet writings
 
-### Scrieri discrete
-
-`Visible`, valorile booleene, întregii și enum-urile suportate folosesc scrieri
-discrete. Ele pot fi setate de Motion, dar nu sunt interpolate. Numerele și
-culorile folosesc mixerele Motion continue existente. Pentru fade se animează
+`Visible`, supported booleans, integers, and enums use writes
+discreet. They can be set by Motion, but are not interpolated. The numbers and
+colors use existing continuous Motion mixers. For fade it animates
 `Opacity`.
 
-Bindingul Motion Prism este identificat de element și property ID-ul generat.
-Înlocuirea instanței elimină bindingul vechi și creează unul pentru instanța
-curentă. O scriere identică nu schimbă `ValueVersion` și produce zero invalidări
-de prezentare.
+The Motion Prism binding is identified by the generated ID element and property.
+Replacing the instance removes the old binding and creates one for the instance
+current. An identical write does not change `ValueVersion` and produces zero invalidations
+presentation.
 
-### Anulare
+### Cancellation
 
-- detașarea elementului anulează toate target-urile Prism;
-- `Hidden`, `Collapsed` și `IsVisible=false`, inclusiv pe un ancestor, anulează
-  sincron Motion pentru subtree;
-- revenirea la starea randabilă nu repornește o execuție anulată;
-- ascunderea unui group anulează Motion pentru descendenții săi;
-- ascunderea unui layer sau backdrop anulează Motion din acel scope;
-- Motion nu este păstrat în viață doar pentru că definiția este reutilizabilă.
+- detaching the element cancels all Prism targets;
+- `Hidden`, `Collapsed` and `IsVisible=false`, including an ancestor, cancel
+  synchronous Motion for subtree;
+- returning to the runnable state does not restart a canceled execution;
+- hiding a group cancels Motion for its descendants;
+- hiding a layer or backdrop cancels Motion from that scope;
+- Motion is not kept alive just because the definition is reusable.
 
 ## Color management
 
-Default-ul este `LinearSrgb`.
+The default is `LinearSrgb`.
 
-Pipeline-ul este:
-
+The pipeline is:
 ```text
-profil sursă
+ source profile
     -> working profile Prism
-    -> filtre, styles și blending
+     -> filters, styles and blending
     -> output profile al hostului
 ```
+The final conversion is done only once.
 
-Conversia finală se face o singură dată.
-
-### Reprezentarea pixelilor
+### Representation of pixels
 
 - alpha premultiplied;
-- calcule floating point în intermediare;
-- zero-alpha guard la unpremultiply;
-- HSL blend modes lucrează pe culoare neasociată;
-- masks sunt tratate ca date scalare, nu ca imagini color reinterpretate.
+- intermediate floating point calculations;
+- zero-alpha guard to unpremultiply;
+- HSL blend modes work on non-associated color;
+- masks are treated as scalar data, not as reinterpreted color images.
 
-Contractul folosește profilul declarat de `PrismRendererOptions.HostColorProfile`
-atât pentru pixelii capturați de la host, cât și pentru destinația de prezentare.
-Valoarea implicită este `Srgb`. Conversia generică trece din profilul hostului în
-working profile și înapoi fără clamp intermediar. O compoziție nested este
-prezentată o dată în profilul hostului, apoi conversia de intrare a părintelui
-rulează o dată; nu se aplică gamma de două ori și nu se reinterpretează implicit
-scRGB drept sRGB.
+The contract uses the profile declared by `PrismRendererOptions.HostColorProfile`
+both for the pixels captured from the host and for the presentation destination.
+The default value is `Srgb`. The generic conversion goes from the host profile to the
+working profile and back without intermediate clamp. A nested composition is
+presented once in the host's profile, then the parent's input conversion
+run once; don't apply gamma twice and don't reinterpret by default
+scRGB as sRGB.
 
-Toate pass-urile primesc și produc RGBA premultiplicat. Conversiile fac
-unpremultiply numai cât aplică transferul sau matricea, iar alpha zero produce
-obligatoriu RGB zero. `Fill` scalează conținutul înaintea layer styles;
-`Opacity` scalează rezultatul complet după styles și mask.
+All passes receive and output premultiplied RGBA. Conversions do
+unpremultiply only applies the transfer or matrix, and produces alpha zero
+mandatory RGB zero. `Fill` scales content before layer styles;
+`Opacity` scales the full result by styles and mask.
 
-### Formate MonoGame
+### MonoGame formats
 
-Ordinea implementată este:
+The order implemented is:
 
-1. `HalfVector4` pentru toate intermediarele Prism;
-2. formatul destinației hostului pentru prezentare (`Color` implicit pentru SDR,
-   floating-point RGBA pentru scRGB);
-3. format scalar pentru masks când platforma îl suportă;
-4. `Color` pentru masks când nu există format scalar renderable.
+1. `HalfVector4` for all Prism intermediates;
+2. host destination format for presentation (default `Color` for SDR,
+   floating-point RGBA for scRGB);
+3. scalar format for masks when the platform supports it;
+4. `Color` for masks when there is no renderable scalar format.
 
-`ScRgb` este linear BT.709/D65 și păstrează valori RGB negative sau peste `1` în
-`HalfVector4`; alpha rămâne coverage liniar premultiplicat. Când profilul hostului
-este `ScRgb`, hostul trebuie să furnizeze și să prezinte RGBA floating-point și să
-configureze swapchain-ul scRGB (`1.0` corespunde la 80 niți). Opțiunea Prism declară
-semantica pixelilor, dar nu poate transforma un backbuffer de 8 biți într-unul HDR.
-Un backend fără format floating-point trebuie să raporteze capabilitatea lipsă și
-să facă bypass, nu să comprime silențios HDR în SDR.
+`ScRgb` is linear BT.709/D65 and retains negative RGB values or above `1` in
+`HalfVector4`; alpha remains premultiplied linear coverage. When the host profile
+is `ScRgb`, the host must provide and present floating-point RGBA and
+configure the scRGB swapchain (`1.0` corresponds to 80 nits). The Prism option declares
+pixel semantics, but cannot convert an 8-bit backbuffer to an HDR one.
+A backend without floating-point format must report the missing capability and
+to bypass, not silently compress HDR to SDR.
 
-### Toleranța numerică
+### Numerical tolerance
 
-Referința CPU folosește `double`; shader-ele folosesc `float`, intermediarele
-`HalfVector4`, iar output-ul golden este `R8G8B8A8_UNorm`. Gate-ul WindowsDX
-acceptă maximum `2/255` pe fiecare canal. Pragul acoperă rotunjirea half-float,
-evaluarea transferului pe GPU și cuantizarea UNorm finală, dar este suficient de
-strict pentru a detecta halo-uri, o conversie lipsă sau aplicarea dublă a gamma.
-Alpha zero și curățarea RGB asociată rămân exacte, nu doar în toleranță.
+The CPU reference uses `double`; the shaders use `float`, the intermediates
+`HalfVector4`, and the golden output is `R8G8B8A8_UNorm`. The WindowsDX gate
+supports a maximum of `2/255` per channel. Threshold covers half-float rounding,
+transfer evaluation on GPU and final UNorm quantization, but it is enough
+strictly to detect halos, a missing conversion or double application of gamma.
+Alpha zero and associated RGB cleanup remain accurate, not just within tolerance.
 
 ## Blend modes
 
-Registrul construiește câte o tehnică `${BlendMode}Blend` pentru fiecare simbol
-generat din catalog. Lipsa tehnicii este eroare de inițializare a pachetului de
-shader-e; executorul nu remapează niciun mod necunoscut la `Normal`.
+The register builds one `${BlendMode}Blend` technique for each symbol
+generated from the catalog. Missing technique is package initialization error of
+shader-e; the executor does not remap any unknown modes to `Normal`.
 
-Shaderul folosește primitive comune pentru modurile separabile, luminozitate,
-saturație, `ClipColor`, `SetLuminosity` și `SetSaturation`. Wrapper-ele tehnicilor
-aleg primitiva, fără copii independente ale întregului shader. Modurile HSL fac
-unpremultiply cu gardă la alpha zero și reasociază rezultatul înainte de scriere.
+The shader uses common primitives for separable modes, brightness,
+saturation, `ClipColor`, `SetLuminosity` and `SetSaturation`. Technique wrappers
+I choose the primitive, without independent copies of the whole shader. HSL mods do
+unpremultiply guard to alpha zero and reassociate the result before writing.
 
-Pentru sursa și fundalul premultiplicate, cu valorile straight `Cs`, `Cb` și
-alpha `As`, `Ab`, compoziția comună este:
-
+For premultiplied source and background, with straight values `Cs`, `Cb` and
+alpha `As`, `Ab`, the common composition is:
 ```text
 Ao = As + Ab - As * Ab
 Co = Cs * As * (1 - Ab)
    + Cb * Ab * (1 - As)
    + B(Cb, Cs) * As * Ab
 ```
+The intermediates remain `HalfVector4`, and the pass writes all premultiplied RGBA.
+The full set of blend kernels requires profile `ps_4_0` and feature level `10_0`;
+these values ​​are part of the WindowsDX conformance manifest.
 
-Intermediarele rămân `HalfVector4`, iar pass-ul scrie tot RGBA premultiplicat.
-Setul complet de blend kernels cere profilul `ps_4_0` și feature level `10_0`;
-aceste valori sunt parte din manifestul conformance WindowsDX.
+`BlendChannels` independently selects straight RGB and alpha channels between
+composite result and background. `Knockout` replaces the overlapping contribution with
+straight color of the source; the structural difference between `Shallow` and `Deep` is
+stored in the graph and becomes observable when traversing groups. The flags which
+affect styles, masks and clipping are snapshot-look at the end node of
+composition, not reread from UI state in executor.
 
-`BlendChannels` selectează independent canalele straight RGB și alpha dintre
-rezultatul compus și fundal. `Knockout` înlocuiește contribuția suprapusă cu
-culoarea straight a sursei; diferența structurală dintre `Shallow` și `Deep` este
-păstrată în graph și devine observabilă la traversarea grupurilor. Flagurile care
-afectează styles, masks și clipping sunt snapshot-uite pe nodul final de
-compoziție, nu recitite din starea UI în executor.
+`BlendIf` produces two linear ramps for each interval
+`(blackStart, blackEnd, whiteStart, whiteEnd)`: rise from zero to one between
+black thresholds, plateau, then drop from one to zero between white thresholds.
+Ramps `ThisLayerRange` and `UnderlyingRange`, evaluated on the selected channel in
+working profile, multiply and scale the source contribution before
+final composition.
 
-`BlendIf` produce două rampe lineare pentru fiecare interval
-`(blackStart, blackEnd, whiteStart, whiteEnd)`: urcare de la zero la unu între
-pragurile negre, platou, apoi coborâre de la unu la zero între pragurile albe.
-Rampele `ThisLayerRange` și `UnderlyingRange`, evaluate pe canalul selectat în
-working profile, se înmulțesc și scalează contribuția sursei înainte de
-compoziția finală.
+All mods should be tested with:
 
-Toate modurile trebuie testate cu:
+- alpha zero and one;
+- partial alpha;
+- black, white and values ​​above one in HDR;
+- source and destination with different profiles;
+- `Fill`, `Opacity`, masks and clipping chains.
 
-- alpha zero și unu;
-- alpha parțial;
-- negru, alb și valori peste unu în HDR;
-- source și destination cu profile diferite;
-- `Fill`, `Opacity`, masks și clipping chains.
+`Dissolve` uses the deterministic hash of the pixel coordinate, the identifier
+layer and `DissolveSeed`. The normalized seed is sent explicitly to the shader,
+and the same input produces the same pattern between frames. He is not allowed to
+flicker.
 
-`Dissolve` folosește hash determinist din coordonata pixelului, identificatorul
-layerului și `DissolveSeed`. Seed-ul normalizat este trimis explicit shaderului,
-iar aceeași intrare produce același pattern între frame-uri. Nu are voie să
-pâlpâie.
-
-Ordinea rămâne bottom-up. Un group cu `PassThrough` transmite fundalul exterior
-copiilor; orice alt blend mode este o frontieră de izolare și compune grupul ca o
-singură imagine. `Fill` scalează conținutul înaintea styles, iar `Opacity`
-scalează contribuția completă înainte de blend.
+The order remains bottom-up. A group with `PassThrough` transmits the external background
+children; any other blend mode is an isolation boundary and composes the group as a
+single image. `Fill` scales content before styles, and `Opacity`
+scale the full contribution before the blend.
 
 ## Styles
 
-Styles folosesc alpha prepared content și nu recapturează controlul. Graph-ul
-păstrează acest input pre-`Fill` prin muchia `StyleSource`, separat de `Content`,
-astfel încât `Fill=0` ascunde conținutul, nu și stilurile. `Opacity` rămâne după
-rezultatul complet content-plus-styles.
+Styles use alpha prepared content and do not recapture control. The graph
+preserve this pre-`Fill` input by the edge `StyleSource`, separated from `Content`,
+so `Fill=0` hides the content, not the styles. `Opacity` stays behind
+the full content-plus-styles result.
 
-`PrismStylePlanner` consumă direct sloturile tipizate generate și produce planuri
-pentru `DropShadow`, `InnerShadow`, `OuterGlow`, `InnerGlow`, `BevelEmboss`,
-`Satin`, `ColorOverlay`, `GradientOverlay`, `PatternOverlay` și `Stroke`.
-Executorul împachetează planul pentru o singură tehnică GPU `LayerStyle`, iar
-registrul validează toate cele zece identificatoare de catalog la același kernel.
+`PrismStylePlanner` directly consumes the generated typed slots and produces blueprints
+for `DropShadow`, `InnerShadow`, `OuterGlow`, `InnerGlow`, `BevelEmboss`,
+`Satin`, `ColorOverlay`, `GradientOverlay`, `PatternOverlay` and `Stroke`.
+The executor packs the plan for a single GPU technique `LayerStyle`, and
+the registry validates all ten catalog identifiers to the same kernel.
 
-Primitivele interne includ:
+Internal primitives include:
 
-- alpha dilation și erosion;
-- un edge/distance field aproximativ comun;
-- blur și offset sampling comune;
+- alpha dilation and erosion;
+- an approximately common edge/distance field;
+- common blur and offset sampling;
 - contour lookup;
-- gradient și pattern sampling;
+- gradient and pattern sampling;
 - highlight/shadow lighting;
-- compoziție RGBA premultiplicată cu blend modes.
+- premultiplied RGBA composition with blend modes.
 
-`BevelEmboss` rămâne un singur style semantic; Contour și Texture sunt
-subcomponente ale planului, nu layere ascunse. Resursele gradient/pattern intră în
-dependency stamp cu versiunea lor; o resursă activă fără versiune stabilă face
-nodul necacheable.
+`BevelEmboss` remains a single semantic style; Contour and Texture are
+subcomponents of the plane, not hidden layers. Gradient/pattern resources go into
+dependency stamp with their version; an active resource without a stable version does
+non-cacheable node.
 
-Aceeași funcție `PrismStylePlanner.ExpandBounds` este consumată de optimizer pentru
-shadow, glow, bevel și stroke, iar executorul folosește aceeași geometrie de
-sampling. Formulele nu sunt duplicate în analyzer sau backend.
+The same function `PrismStylePlanner.ExpandBounds` is consumed by the optimizer for
+shadow, glow, bevel and stroke, and the executor uses the same geometry of
+sampling. Formulas are not duplicated in the analyzer or backend.
 
-Mai multe instanțe ale aceluiași style sunt păstrate și executate bottom-up în
-ordinea declarată.
+Multiple instances of the same style are stored and executed bottom-up in
+the order stated.
 
 ## Masks
 
-Masca este evaluată după content și styles, înainte de opacity și blend.
+The mask is evaluated by content and styles, before opacity and blend.
 
-Pașii sunt:
+The steps are:
 
-1. rezolvarea imaginii;
-2. conversia canalului `Alpha` sau `Luminance`;
+1. solving the image;
+2. conversion of channel `Alpha` or `Luminance`;
 3. `Invert`;
-4. feather;
+4. feathers;
 5. density;
-6. multiplicarea contribuției complete.
+6. multiplying the full contribution.
 
-Feather mărește bounds-ul de sampling, dar nu layout-ul.
+Feather increases the sampling bounds, but not the layout.
 
-Resursa lipsă produce diagnostic și o mască complet opacă, astfel încât controlul
-nu dispare accidental.
+The missing resource produces diagnostic and a completely opaque mask so that the control
+it doesn't disappear by accident.
 
 ## Backdrop
 
-Generatorul permite cel mult un `@backdrop`, numai ca ultim copil direct al
-compoziției. Poziția lui în markup exprimă faptul că este planul vizual cel mai din
-spate; executorul îl pregătește înainte de compunerea controlului.
+The generator allows at most one `@backdrop`, only as the last direct child of
+composition. Its position in the markup expresses the fact that it is the most visual plane
+back; the executor prepares it before composing the control.
 
-### Contract de host
+### Hosting contract
 
-Hostul expune:
-
+The host exhibits:
 ```csharp
 public interface IBackdropFrameSource
 {
@@ -1103,334 +1067,328 @@ public interface IBackdropFrameSource
         out BackdropFrameLease frame);
 }
 ```
-
-Lease-ul conține:
+The lease contains:
 
 - `IBackdropSurface`;
 - `ContentVersion`;
-- dimensiunea în pixeli;
-- transformarea screen-to-surface;
-- profilul de culoare.
+- size in pixels;
+- screen-to-surface transformation;
+- the color profile.
 
-`MonoGameUiHostOptions` primește un `IBackdropFrameSource?`.
-
-### Achiziție
+`MonoGameUiHostOptions` gets a `IBackdropFrameSource?`.
+### Purchase
 
 `UiHost.Draw`:
 
-1. rulează o singură dată `PrismFrameAnalyzer`;
-2. dacă analiza cere backdrop, apelează `TryAcquire` cel mult o dată;
-3. introduce lease-ul în `DrawingFrameContext`;
-4. execută backend-ul;
-5. eliberează lease-ul în `finally`.
+1. run once `PrismFrameAnalyzer`;
+2. if the analysis requires backdrop, call `TryAcquire` at most once;
+3. enter the lease in `DrawingFrameContext`;
+4. run the backend;
+5. release the lease in `finally`.
 
-Un backdrop ascuns, clipped-out sau aparținând unui element invizibil nu declanșează
-achiziție.
+A hidden backdrop, clipped-out or belonging to an invisible element does not trigger
+purchase.
 
-### Compoziție
+### Composition
 
-Suprafața hostului este importată read-only în render graph. UI-ul inferior este
-adăugat în paint order. Fiecare backdrop citește nodul inferior exact din punctul
-scope-ului său.
+The host surface is imported read-only into the render graph. The lower UI is
+added to paint order. Each backdrop reads the bottom node exactly from the point
+its scope.
 
-Feedback-ul este imposibil deoarece un nod poate depinde numai de noduri create
-anterior.
+Feedback is impossible because a node can only depend on created nodes
+previously.
 
-### Host fără backdrop
+### Host without backdrop
 
-Când sursa lipsește sau refuză achiziția:
+When the source is missing or refuses to purchase:
 
-- se omite numai planul backdrop;
-- stack-ul controlului rulează normal;
-- se emite `BackdropUnavailable` o singură dată per definiție și stare de host;
-- nu se folosesc pixeli din frame-ul anterior.
+- only the backdrop plan is omitted;
+- the control stack runs normally;
+- `BackdropUnavailable` is issued only once per definition and host status;
+- pixels from the previous frame are not used.
 
-## Render targets și pooling
+## Render targets and pooling
 
-`PrismSurfacePool` este deținut de backend.
+`PrismSurfacePool` is owned by the backend.
 
-Cheia unei suprafețe include:
+A surface key includes:
 
-- width și height;
+- width and height;
 - format;
 - mip count;
 - sample count;
 - usage flags;
 - color profile class.
 
-Suprafețele sunt returnate la pool după ultima utilizare din graph. Reutilizarea se
-face numai după ce backend-ul MonoGame garantează că GPU-ul nu le mai folosește,
-folosind politica de reciclare sigură oferită de capabilitățile MonoGame curente.
-TDD-ul nu introduce o abstracție generică de fences pentru backend-uri ipotetice.
+Surfaces are returned to the pool after the last use in the graph. Reuse se
+do only after the MonoGame backend guarantees that the GPU is no longer using them,
+using the safe recycling policy provided by current MonoGame capabilities.
+TDD does not introduce a generic abstraction of fences for hypothetical backends.
 
-`PrismRendererOptions` expune configurația implementată pentru:
+`PrismRendererOptions` exposes the implemented configuration for:
 
-- bugetul hard total al tuturor suprafețelor Prism;
-- bugetul soft și numărul maxim de intrări pentru cache-ul retained;
-- activarea dependency-diff diagnostics de development.
+- the total hard budget of all Prism surfaces;
+- the soft budget and the maximum number of entries for the retained cache;
+- activation of development dependency-diff diagnostics.
 
-Benchmarkul de referință fixează 512 MiB hard, 256 MiB retained soft și 256 de
-intrări. Testele unitare folosesc limite mici injectate. Presiunea transient
-evacuează mai întâi intrările retained nepin-uite; dacă hard limit-ul tot nu poate
-admite suprafața necesară, executorul raportează `PRISM7006` cu
-`SurfaceAllocationFailed`, restaurează target-ul și state-ul hostului, eliberează
-lease-urile și continuă comenzile interioare brute rămase. Nu există depășire
-ascunsă sau sistem adaptiv de calitate.
+The reference benchmark fixes 512 MiB hard, 256 MiB retained soft and 256
+entries. Unit tests use injected small bounds. Transient pressure
+first evacuates non-forgotten retained entries; if the hard limit still can't
+admits the necessary area, the executor reports `PRISM7006` with
+`SurfaceAllocationFailed`, restore target and host state, release
+leases and continues the remaining gross internal orders. There is no override
+hidden or quality adaptive system.
 
-## Cache-uri
+## Caches
 
 ### Pipeline cache
 
-Cheia conține:
+The key contains:
 
-- hash-ul structural al definiției;
-- backend și capability set;
+- the structural hash of the definition;
+- backend and capability set;
 - working/output profile class;
 - quality level;
 - shader package version.
 
-Schimbarea valorilor parametrilor nu recompilă pipeline-ul.
+Changing parameter values ​​does not recompile the pipeline.
 
-### Partajare backdrop în frame
+### Share backdrop in frame
 
-În interiorul unui singur frame, cheia de partajare conține:
+Within a single frame, the shared key contains:
 
-- identitatea nodului inferior;
+- the identity of the lower node;
 - `ContentVersion`;
-- versiunile UI inferioare;
-- regiunea extinsă;
-- pixel scale și downsample level;
-- profilele de culoare;
-- prefixul de filtre și valorile sale;
-- masca, dacă afectează rezultatul cache-uit.
-
-Se poate reutiliza un downsample pyramid sau un prefix blur comun. Tint-ul, masca
-sau opacity-ul diferit nu sunt împinse greșit în aceeași intrare. Toate intrările
-și lease-urile acestei structuri expiră la sfârșitul draw-ului curent.
+- lower UI versions;
+- the extended region;
+- pixel scale and downsample level;
+- color profiles;
+- the filter prefix and its values;
+- mask, if it affects the cache-look result.
+A downsample pyramid or a common blur prefix can be reused. The tint, the mask
+or different opacity are not mistakenly pushed to the same input. All entries
+and leases of this structure expire at the end of the current draw.
 
 ### Cache retained cross-frame
 
-Prima implementare păstrează rezultate GPU Prism între frame-uri atunci când toate
-dependențele care pot schimba pixelii sunt stabile. Cache-ul este backend-owned și
-separat de pool-ul transient:
+The first implementation preserves GPU Prism results between frames when all
+dependencies that can change pixels are stable. The cache is backend-owned and
+separate from the transient pool:
 
-- pool-ul transient reciclează suprafețe scratch fără a păstra conținutul;
-- cache-ul retained păstrează conținutul unei suprafețe și dependency stamp-ul său;
-- o suprafață poate fi promovată din transient în retained numai după finalizarea
-  cu succes a nodului;
-- eviction-ul întoarce suprafața în pool sau o eliberează conform bugetului.
+- the transient pool recycles scratch surfaces without keeping the content;
+- the retained cache keeps the content of a surface and its dependency stamp;
+- a surface can be promoted from transient to retained only after completion
+  successfully of the node;
+- the eviction returns the surface to the pool or releases it according to the budget.
 
-`PrismFrameAnalyzer` produce un `PrismDependencyStamp` compact, fără referințe la
-elemente UI. Stamp-ul include:
+`PrismFrameAnalyzer` produces a compact `PrismDependencyStamp` with no references to
+UI elements. The stamp includes:
 
-- versiunea structurală a compoziției și identitatea stabilă a nodului;
-- versiunea valorilor Prism sau fingerprint-ul valorilor pixel-affecting;
-- tokenul unic, nerefolosit, al attachment-ului și versiunea rezultatului vizual
-  local capturat;
-- pentru backdrop, identitatea providerului, `ContentVersion` și versiunile tuturor
-  nodurilor UI inferioare;
-- identitățile și versiunile imaginilor, măștilor, LUT-urilor, patternurilor și
-  resurselor auxiliare;
-- bounds rasterizate, pixel scale și transformările care schimbă sampling-ul;
-- working/output color profile, formatul suprafeței și sampling quality;
-- backend capability set și versiunea pachetului de shader-e.
+- the structural version of the composition and the stable identity of the node;
+- the version of the Prism values ​​or the fingerprint of the pixel-affecting values;
+- the unique, unused token of the attachment and the version of the visual result
+  local captured;
+- for backdrop, provider identity, `ContentVersion` and all versions
+  lower UI nodes;
+- the identities and versions of images, masks, LUTs, patterns and
+  auxiliary resources;
+- rasterized bounds, pixel scales and the transformations that change the sampling;
+- working/output color profile, surface format and sampling quality;
+- backend capability set and shader-e package version.
 
-Versiunea vizuală locală se întreține incremental în retained UI: o proprietate
-render-affecting, Motion sau o resursă a elementului incrementează generația locală.
-Schimbările descendenților nu invalidează captura Prism a ancestorului.
+The local visual version is maintained incrementally in retainedUI: a property
+render-affecting, Motion, or an element resource increments the local generation.
+Descendant changes do not invalidate the ancestor's Prism capture.
 
-`PrismGraphOptimizer` marchează explicit nodurile cacheable. Un nod este eligibil
-numai dacă operația este deterministă, toate resursele sale au versiuni și cheia
-conține toate dependențele. Timpul curent, un seed implicit variabil, un provider
-fără `ContentVersion` stabil sau o capabilitate necunoscută fac nodul necacheable.
+`PrismGraphOptimizer` explicitly marks cacheable nodes. A node is eligible
+only if the operation is deterministic do all its resources have versions and the key
+contains all dependencies. The current time, a variable default seed, a provider
+no stable `ContentVersion` or an unknown capability make the node uncacheable.
 
-Executorul verifică mai întâi rezultatul final. Un hit final sare capturarea
-controlului și toate passes acoperite. La miss, verifică nodurile intermediare și
-poate elimina numai prefixele acoperite de hit-uri valide. Un rezultat nou este
-promovat după execuția completă; un frame eșuat nu poluează cache-ul.
+The executor first checks the final result. A final hit jumps the capture
+control and all passes covered. On miss, check intermediate nodes and
+can only remove prefixes covered by valid hits. A new result is
+promoted after complete execution; a failed frame does not pollute the cache.
 
-Eviction-ul este LRU byte-budgeted și rulează numai pentru intrări care nu sunt
-pin-uite de draw-ul curent. Intrările nu conțin owner, binding, Motion handle sau
-delegate. Detach-ul și replacement-ul compoziției invalidează generația ownerului;
-device loss, shader package, viewport, output profile și resource replacement
-invalidează intrările afectate. `Hidden`/`Collapsed` fac zero lookup și zero
-promotion, iar intrările lor devin imediat evictable.
+Eviction is LRU byte-budgeted and only runs on entries that are not
+pin-look at the current draw. Entries do not contain owner, binding, Motion handle or
+delegates. Detachment and replacement of the composition invalidate the generation of the owner;
+device loss, shader package, viewport, output profile and resource replacement
+invalidate the affected entries. `Hidden`/`Collapsed` do zero lookup and zero
+promotion, and their entries become immediately evictable.
 
-Un singur accountant aplică bugetul hard cumulat pentru transient și retained.
-Cache-ul retained are un soft cap și este primul evacuat când un pass corect are
-nevoie de memorie transient. Corectitudinea frame-ului are prioritate față de
-hit-rate, fără depășirea hard cap-ului.
+A single accountant applies the cumulative hard budget for transient and retained.
+The retained cache has a soft head and is the first to be evicted when a correct pass has
+need transient memory. Frame correctness takes precedence over
+hit-rate, without exceeding the hard cap.
 
-Nu se introduce o abstracție generică de cache, task graph sau fences. Cache-ul este
-specializat pentru suprafețe GPU Prism și respectă modelul sincron al backend-ului
-MonoGame actual.
+No generic abstraction of cache, task graph or fences is introduced. The cache is
+specialized for GPU Prism surfaces and adheres to the synchronous backend model
+Current MonoGame.
 
-### Implementare și bugete confirmate
+### Implementation and budgets confirmed
 
-Implementarea MonoGame separă `PrismRetainedSurfaceCache` de `PrismSurfacePool` și
-folosește un accountant comun pentru suprafețele transient și retained. Configurația
-publică este `PrismRendererOptions`, transmisă direct constructorului
-`MonoGameDrawingBackend` sau prin `MonoGameUiHostOptions.PrismRendererOptions`.
-Valorile implicite măsurate sunt:
+The MonoGame implementation separates `PrismRetainedSurfaceCache` from `PrismSurfacePool` and
+use a common accountant for transient and retained surfaces. The configuration
+public is `PrismRendererOptions`, sent directly to the builder
+`MonoGameDrawingBackend` or via `MonoGameUiHostOptions.PrismRendererOptions`.
+The default measured values are:
 
-- 512 MiB pentru `SurfaceHardByteLimit`, aplicat tuturor suprafețelor Prism;
-- 256 MiB pentru `RetainedCacheSoftByteLimit`;
-- 256 pentru `RetainedCacheEntryLimit`;
-- dependency-diff diagnostics oprite implicit.
+- 512 MiB for `SurfaceHardByteLimit`, applied to all Prism surfaces;
+- 256 MiB for `RetainedCacheSoftByteLimit`;
+- 256 for `RetainedCacheEntryLimit`;
+- dependency-diff diagnostics turned off by default.
 
-Limitele rămân configurabile și sunt validate înainte de crearea executorului.
-Limita retained sau limita de intrări setată la zero împiedică promovarea. Modul
-cache-off există numai intern pentru conformance, diagnostics și benchmark; nu
-adaugă directivă, proprietate de layer sau dialect markup.
+Limits remain configurable and are validated before the executor is created.
+The retained limit or entry limit set to zero prevents promotion. The mode
+cache-off exists only internally for conformance, diagnostics and benchmark; no
+add directive, layer property or dialect markup.
 
-`PrismRendererDiagnostics` expune snapshot-uri immutable cu hit-uri finale și
-intermediare, miss/promotion/eviction și motivele lor, bytes și intrări curente,
-peak bytes, intrări pin-uite și capturi/passes economisite. Clasificarea diferenței
-de dependency stamp este calculată numai când development diagnostics sunt pornite;
-calea implicită nu construiește diff-uri și nu alocă pentru ele per frame.
+`PrismRendererDiagnostics` exposes immutable snapshots with final hits and
+intermediate, miss/promotion/eviction and their reasons, bytes and current entries,
+peak bytes, missed entries and catches/passes saved. Classification of the difference
+de dependency stamp is calculated only when development diagnostics are turned on;
+the default path doesn't build diffs and doesn't allocate for them per frame.
 
-Benchmark-ul Release WindowsDX a rulat de trei ori pe NVIDIA RTX 2000 Ada la
-256 x 144 și 640 x 360, pentru 12 scenarii cu cache on/off și câte 96 de frame-uri
-măsurate după warmup. Toate contoarele de lucru, cache, suprafețe, alocări și
-eviction au fost identice între rulări. Hit-urile statice au `0 B` managed,
-controlul static a redus limita superioară GPU de la 2.332 ms la 0.340 ms, iar
-24 de instanțe comune de la 46.503 ms la 0.991 ms la rezoluția medium. Cazurile
-dinamice raportează explicit alocările de bookkeeping și nu pretind hit-uri.
-Matricea completă, scaling-ul, justificarea bugetelor și dogfood gate-ul sunt în
+The Release WindowsDX benchmark ran three times on the NVIDIA RTX 2000 Ada la
+256 x 144 and 640 x 360, for 12 scenarios with on/off cache and 96 frames each
+measured after warmup. All work counters, cache, surfaces, allocations and
+eviction were identical between runs. Static hits have `0 B` managed,
+static control reduced the GPU upper limit from 2,332 ms to 0,340 ms, and
+24 common instances from 46.503ms to 0.991ms at medium resolution. The cases
+dynamics explicitly report bookkeeping allocations and do not claim hits.
+Full matrix, scaling, justifying budgets and dogfood gate are in
 [`2026-07-21-prism-integration-hardening.md`](../benchmarks/Cerneala.Benchmarks/results/2026-07-21-prism-integration-hardening.md).
 
-## Bounds și clipping
+## Bounds and clipping
 
-Fiecare kernel declară o funcție de expansion:
-
+Each kernel declares an expansion function:
 ```text
 Expand(inputBounds, parameterValues) -> outputBounds
 ```
+Examples:
 
-Exemple:
-
-- shadow: offset plus spread și blur radius;
+- shadow: offset plus spread and blur radius;
 - Gaussian blur: support radius;
-- transform: bounds-ul colțurilor transformate;
-- displacement: deplasarea maximă;
+- transform: bounds of transformed corners;
+- displacement: maximum displacement;
 - color adjustment: zero expansion.
 
-Operation planners declară expansion-ul, iar graph builder-ul propagă bounds
-bottom-up. Executorul alocă numai regiunea rezultată. Clamping-ul la viewport se
-face după expansion.
+Operation planners declare the expansion, and the graph builder propagates the bounds
+bottom-up. The executor allocates only the resulting region. Clamping to the viewport se
+do after expansion.
 
-Prism nu schimbă:
+Prism does not change:
 
 - `DesiredSize`;
 - `ArrangedBounds`;
-- hitbox-ul;
-- route-ul input;
-- focus sau accessibility.
+- the hitbox;
+- the input route;
+- focus or accessibility.
 
-Clip-urile explicite ale elementului și ancestorilor se aplică rezultatului final.
+Explicit clips of the element and ancestors apply to the final result.
 
-## Optimizări obligatorii
+## Mandatory optimizations
 
-### Pass fusion
+### Fusion pass
 
-Se combină când rezultatul rămâne identic:
+Combine when the result remains the same:
 
-- color matrices consecutive;
-- opacity și color multiply;
-- conversii de culoare adiacente;
-- anumite blend și mask operations;
-- filtre no-op cu valori default.
+- consecutive color matrices;
+- opacity and color multiply;
+- adjacent color conversions;
+- certain blend and mask operations;
+- no-op filters with default values.
 
-Nu se schimbă ordinea semantică pentru a economisi passes.
+Do not change the semantic order to save passes.
 
 ### Blur
 
-- kernel separabil;
-- downsample controlat pentru raze mari;
-- padding corect;
-- reuse al pyramid-ului;
-- quality level inclus în cheia cache.
+- separable kernel;
+- controlled downsample for large radii;
+- correct padding;
+- success of the pyramid;
+- quality level included in the cache key.
 
 ### Batching
 
-Comenzile primitive consecutive care nu traversează un scope, clip sau dependency
-barrier rămân batch-uibile.
+Consecutive primitive commands that do not cross a scope, clip, or dependency
+barrier remain batch-uible.
 
-### Calea no-op
+### The no-op path
 
-O compoziție în care toate nodurile sunt hidden sau no-op trebuie să se reducă la
-desenarea normală a controlului fără captură offscreen.
+A composition where all nodes are hidden or no-op must reduce to
+normal control drawing without offscreen capture.
 
-Pentru layer styles, graph builder-ul nu emite stările `Visible=false`, iar
-optimizer-ul elimină numai passes dovedite no-op de planificatorul comun generat
-din catalog. `Opacity=0` este suficient pentru fiecare familie cu o singură
-contribuție; `BevelEmboss` este no-op numai când atât highlight opacity, cât și
-shadow opacity sunt zero. Aliasarea se face către inputul `Content`, elimină
-`StyleSource`-ul rămas fără consumator și păstrează ordinea celorlalte styles,
-`Fill`, layer opacity, mask, clipping și blend.
+For layer styles, the graph builder does not emit the `Visible=false` states anymore
+the optimizer removes only passes proven no-op by the generated joint scheduler
+from the catalog. `Opacity=0` is enough for every family with only one
+contribution; `BevelEmboss` is no-op only when both highlight opacity and
+shadow opacity are zero. Aliasing is done to input `Content`, remove
+The `StyleSource` left without a consumer and keeps the order of the other styles,
+`Fill`, layer opacity, mask, clipping and blend.
 
-## Erori și fallback
+## Errors and fallbacks
 
-| Situație | Comportament |
+| Situation | Behavior |
 | --- | --- |
-| Markup invalid | diagnostic build-time, fără cod Prism invalid |
-| Kernel built-in lipsă | bypass operație, diagnostic runtime |
-| Backdrop indisponibil | omit backdrop, control normal |
-| Profil custom indisponibil | bypass compoziție, fără reinterpretare silențioasă |
-| Hard limit suprafețe depășit | eviction retained nepin-uit; apoi `PRISM7006`/`SurfaceAllocationFailed`, restaurare host și reluarea comenzilor interioare brute rămase |
-| Shader compilation/package lipsă | bypass operație și diagnostic o singură dată |
-| Device reset/loss | golire resurse GPU și recreare lazy |
-| Excepție în executor | restaurare state, control normal când poate fi reluat sigur |
+| Invalid markup | build-time diagnostic, no invalid Prism code |
+| Kernel built-in missing | operation bypass, runtime diagnostic |
+| Backdrop unavailable | omit backdrop, normal control |
+| Custom profile unavailable | composition bypass, no silent reinterpretation |
+| Hard surface limit exceeded | eviction retained nepin-uit; then `PRISM7006`/`SurfaceAllocationFailed`, restore host and retry remaining raw internal commands |
+| Shader compilation/package missing | bypass operation and diagnosis only once |
+| Device reset/loss | draining GPU resources and lazy recreation |
+| Exception in Executor | restore states, normal control when it can be resumed safely |
 
-Nu se afișează rezultate parțiale corupte și nu se reciclează un backdrop vechi.
+No showing corrupt partial results or recycling an old backdrop.
 
 ## Diagnostics
 
 ### Build-time
 
-Diagnosticile folosesc prefixul `PRISM`.
+Diagnostics use the prefix `PRISM`.
 
-Grupele recomandate:
+Recommended groups:
 
-- `PRISM1xxx`: sintaxă;
-- `PRISM2xxx`: structură layer/group/backdrop;
-- `PRISM3xxx`: catalog și proprietăți;
-- `PRISM4xxx`: resurse și color profiles;
-- `PRISM5xxx`: target-uri Motion;
-- `PRISM6xxx`: limite statice și capabilități cunoscute.
+- `PRISM1xxx`: syntax;
+- `PRISM2xxx`: layer/group/backdrop structure;
+- `PRISM3xxx`: catalog and properties;
+- `PRISM4xxx`: resources and color profiles;
+- `PRISM5xxx`: Motion targets;
+- `PRISM6xxx`: static limits and known capabilities.
 
-Fiecare diagnostic indică locația exactă și oferă un mesaj care descrie remedierea,
-nu doar faptul că parserul s-a supărat.
+Each diagnostic indicates the exact location and provides a message describing the fix,
+not just that the parser got upset.
 
-### Diagnostics de execuție
+### Execution diagnostics
 
-Vederea operațională internă, activată numai pentru development diagnostics,
-expune per frame:
+Internal operational view, enabled only for development diagnostics,
+expose per frame:
 
-- compoziții întâlnite și executate;
-- layere/groups visible și bypass-uite;
-- număr passes planificate, fuzionate și executate;
-- capturi control;
-- backdrop acquisitions;
-- cache hits și misses;
-- suprafețe în uz și peak bytes;
-- pixels procesați;
+- compositions encountered and performed;
+- layers/groups visible and bypass-oite;
+- number of planned, merged and executed passes;
+- control captures;
+- background acquisitions;
+- cache hits and misses;
+- surfaces in use and peak bytes;
+- processed pixels;
 - shader switches;
-- fallback-uri și capabilități lipsă;
-- timp CPU pentru planning;
-- timp GPU când platforma oferă timestamp queries.
+- fallbacks and missing capabilities;
+- CPU time for planning;
+- GPU time when the platform provides timestamp queries.
 
-API-ul public `PrismRendererDiagnostics` expune snapshot-uri immutable cu
-contoare de cache, capturi/passes economisite și utilizarea suprafețelor. Detaliile
-de graph, Motion, backdrop și failure path rămân în vederea internă deterministă,
-care redactează identificatorii GPU instabili și nu ține elemente UI în viață.
-Calea implicită nu construiește dependency diff-uri și are zero alocări per frame
-după warmup pentru Prism static.
+The `PrismRendererDiagnostics` public API exposes immutable snapshots with
+cache counters, catches/passes saved and surface usage. The details
+of graph, Motion, backdrop and failure path remain in the deterministic internal view,
+which writes unstable GPU identifiers and does not keep UI elements alive.
+The default path does not build dependency diffs and has zero allocations per frame
+after warmup for static Prism.
 
 ### Graph dump
 
-Diagnostics poate produce un dump textual determinist:
-
+Diagnostics can produce a deterministic textual dump:
 ```text
 Prism CardGlass
   Backdrop Glass
@@ -1442,331 +1400,330 @@ Prism CardGlass
     OuterGlow size=18
   Composite
 ```
-
-Dump-ul nu include pointere sau identificatori nondeterministici.
+The dump does not include pointers or nondeterministic identifiers.
 
 ## Threading
 
-- Markup definitions sunt immutable și thread-safe.
-- `PrismInstance` se modifică numai pe UI thread.
-- Source-ul backdrop este apelat numai în draw submission.
-- Analyzer-ul, graph builder-ul și optimizer-ul rulează pe thread-ul de draw.
-- Executorul și pool-ul respectă thread-ul GraphicsDevice.
-- Nu se introduc lock-uri în hot path-ul UI curent.
-- Nu se introduc task-uri de background sau ownership cross-thread în prima
-  implementare.
+- Markup definitions are immutable and thread-safe.
+- `PrismInstance` only changes on UI thread.
+- The backdrop source is only called in draw submission.
+- The analyzer, graph builder and optimizer run on the draw thread.
+- The executor and pool respect the GraphicsDevice thread.
+- No locks are entered in the current UI hot path.
+- No background tasks or cross-thread ownership are introduced in the first
+  implementation.
 
-## Testare
+## Testing
 
 ### Source generator
 
-Teste obligatorii pentru:
+Mandatory tests for:
 
-- toate directivele și combinațiile legale;
-- fiecare diagnostic structural din proposal;
-- tipuri și default-uri din catalog;
-- overrides și independența instanțelor;
-- namescope și duplicate names;
-- target-uri Motion valide și invalide;
-- resurse application/window/template;
-- cod generat fără reflection și lookup textual.
+- all directives and legal combinations;
+- each structural diagnosis in the proposal;
+- types and defaults from the catalog;
+- overrides and the independence of the courts;
+- namescope and duplicate names;
+- valid and invalid Motion targets;
+- application/window/template resources;
+- code generated without reflection and textual lookup.
 
 ### Runtime UI
 
-Teste unitare pentru:
+Unit tests for:
 
-- attach/detach idempotent;
-- versiuni și sloturi tipizate;
-- schimbări de parametri fără rebuild local;
-- visibility și anulare Motion;
+- idempotent attach/detach;
+- typified versions and slots;
+- parameter changes without local rebuild;
+- visibility and Motion cancellation;
 - resource invalidation;
-- lipsa referințelor după detach.
+- lack of references after detachment.
 
-### Analiză și render graph
+### Analyze and render graph
 
-Pipeline-ul backend-neutral trebuie testat fără GPU:
+The backend-neutral pipeline must be tested without a GPU:
 
-- analiza rulează o singură dată și este reutilizată de host și graph builder;
-- ordine bottom-up;
-- groups PassThrough și isolated;
+- the analysis runs only once and is reused by the host and graph builder;
+- bottom-up orders;
+- PassThrough and isolated groups;
 - clipping chains;
 - masks;
 - Fill versus Opacity;
 - Blend If;
 - bounds expansion;
 - nested Prism;
-- backdrop dependency fără cicluri;
-- pass fusion fără schimbare semantică;
-- cache keys complete.
+- backdrop dependency without cycles;
+- pass fusion without semantic change;
+- complete cache keys.
 
-Un test de arhitectură verifică faptul că analyzer-ul, builder-ul și optimizer-ul nu
-referențiază MonoGame. Un test de generare verifică faptul că descriptorii runtime,
-registrul backend și tabelele documentate provin din același catalog.
+An architecture test verifies that the analyzer, builder, and optimizer do not
+references MonoGame. A build test verifies that the runtime descriptors,
+the backend registry and documented tables come from the same catalog.
 
-### Backend MonoGame
+### MonoGame backend
 
-Teste de integrare pentru:
+Integration tests for:
 
-- scope-uri balansate;
-- restaurarea GraphicsDevice state;
+- balanced scopes;
+- restoring the GraphicsDevice state;
 - surface pooling;
 - device reset;
-- lipsa CPU readback;
-- fallback pentru formate indisponibile;
-- determinism pentru noise și Dissolve.
+- lack of CPU readback;
+- fallback for unavailable formats;
+- determinism for noise and Dissolve.
 
-### Conformance vizual
+### Visual compliance
 
-Fiecare intrare din catalog are:
+Each catalog entry has:
 
-- o scenă minimă;
-- o imagine de referință;
-- profil și format declarate;
-- toleranță numerică;
-- cel puțin un caz cu alpha parțial.
+- a minimal scene;
+- a reference image;
+- declared profile and format;
+- numerical tolerance;
+- at least one case with partial alpha.
 
-Blend modes și styles au matrice de cazuri comune. Screenshot-urile sunt capturate
-prin harness-ul/API-ul automat al repository-ului, nu manual.
+Blend modes and styles have common case arrays. Screenshots are captured
+via the repository's automated harness/API, not manually.
 
-### Teste backdrop
+### Background tests
 
-Golden tests acoperă:
+Golden tests cover:
 
-- joc static;
-- joc animat cu `ContentVersion` nou;
-- UI inferior;
+- static game;
+- animated game with new `ContentVersion`;
+- lower UI;
 - nested Prism;
-- mai multe controale care împart blur prefix;
-- host fără source;
-- source care schimbă profilul sau dimensiunea;
-- viewport scale diferit.
+- more controls that share blur prefix;
+- host without source;
+- source that changes profile or size;
+- different viewport scale.
 
-### Teste cache retained
+### Cache retained tests
 
-Testele compară întotdeauna outputul cache-on cu outputul cache-off și acoperă:
+The tests always compare cache-on output to cache-off output and cover:
 
-- al doilea frame identic produce hit final și sare capture/effect passes;
-- schimbarea conținutului, parametrilor, resurselor, lower UI, pixel scale,
-  profilului sau shader package produce miss;
-- o scriere cu aceeași valoare nu invalidează intrarea;
-- două controale cu definiție comună nu își împrumută rezultatul când stamp-urile
-  diferă;
-- hit intermediar și hit final păstrează același alpha, bounds și blend order;
-- eviction LRU respectă byte budget-ul și nu evacuează o intrare pin-uită;
-- hide/collapse fac zero lookup/promotion, iar detach/replacement/device reset
-  invalidează corect;
-- hash collision-ul nu poate valida singur un hit fără verificarea identității
-  structurale și a dependency stamp-ului complet.
+- the second identical frame produces the final hit and jump capture/effect passes;
+- change of content, parameters, resources, lower UI, pixel scale,
+  profile or shader package produce miss;
+- a write with the same value does not invalidate the entry;
+- two controls with common definition do not borrow their result when stamps
+  differ;
+- intermediate hit and final hit keep the same alpha, bounds and blend order;
+- LRU eviction respects the byte budget and does not evict a forgotten pin entry;
+- hide/collapse do zero lookup/promotion, and detach/replacement/device reset
+  invalidate correctly;
+- hash collision cannot validate a hit by itself without identity verification
+  structural and of the complete dependency stamp.
 
-### Memory leak și stress
+### Memory leak and stress
 
-Testele repetă:
+The tests repeat:
 
-- 10.000 attach/detach;
-- navigare între view cu Prism și view fără Prism;
-- hide/unhide repetat;
-- schimbare composition resource;
+- 10,000 attach/detach;
+- navigation between view with Prism and view without Prism;
+- repeated hide/unhide;
+- resource composition change;
 - device reset;
-- backdrop source replacement.
+- background source replacement.
 
-După cleanup:
+After cleanup:
 
-- elementele și instanțele trebuie colectabile;
-- numărul de subscriptions revine la bază;
-- cache-ul GPU respectă bugetul;
-- pool-ul nu crește după warmup stabil;
-- Motion diagnostics nu raportează noduri active orfane.
+- elements and instances must be collectable;
+- the number of subscriptions returns to the base;
+- GPU cache respects the budget;
+- the pool does not increase after a stable warmup;
+- Motion diagnostics does not report active orphan nodes.
 
-## Bugete de performanță
+## Performance budgets
 
-Gate-uri finale măsurate:
+Measured final gates:
 
-| Scenariu | Buget |
+| Scenario | Budget |
 | --- | --- |
-| Tree neschimbat, Prism static | `0 B` alocări managed per draw după warmup |
-| Al doilea frame static identic | hit retained; zero capture și zero effect passes acoperite |
-| Input pixel-affecting schimbat | miss obligatoriu și output identic cu cache-off |
-| Parametru Prism animat | fără rebuild `ElementRenderCache` |
-| Layer hidden | zero passes și zero surfaces pentru acel layer |
-| Backdrop hidden | zero acquisition cauzată de acel backdrop |
-| Planning pentru scenele standard | baseline înregistrat și prag aprobat înainte de merge |
-| Pool stabil | memorie sub limita configurată după warmup |
-| Cache retained stabil | byte budget respectat și hit rate raportat |
-| Attach/detach stress | nicio creștere retained după GC și drain |
+| Tree unchanged, Prism static | `0 B` allocations managed per draw after warmup |
+| The second identical static frame | hit retained; zero capture and zero effect passes covered |
+| Input pixel-affecting changed | mandatory miss and output identical to cache-off |
+| Animated Prism parameter | without rebuild `ElementRenderCache` |
+| Layer hidden | zero passes and zero surfaces for that layer |
+| Background hidden | zero acquisition caused by that backdrop |
+| Planning for standard scenes | baseline recorded and threshold approved before going |
+| Stable pool | memory below configured limit after warmup |
+| Cache retained stable | byte budget respected and hit rate reported |
+| Attach/detach stress | no growth retained after GC and drain |
 | Presentation Solar System | cold max 388.664 ms < 500 ms; warm p99 12.874 ms < 16.6667 ms |
 
-Valorile provin din trei rulări Release ale matricei cu 12 scenarii, două
-rezoluții și cache on/off. Dogfood-ul WindowsDX a rulat opt cicluri a câte 45 de
-frame-uri pentru fiecare dintre cele șapte capitole Presentation. Cele două
-eșantioane Solar warm peste target și maximul warm de 49.363 ms rămân vizibile în
-JSON; gate-ul folosește p99 și nu ascunde spike-urile prin adaptive quality.
-Setup-ul și toate valorile sunt în benchmarkul de integration hardening, nu într-o
-captură aleasă convenabil.
+Values are from three Release runs of the 12-scenario array, two
+resolutions and cache on/off. The WindowsDX dogfood ran eight cycles of 45
+frames for each of the seven Presentation chapters. The two
+samples Solar warm above target and maximum warm of 49.363 ms remain visible in
+JSON; the gate uses p99 and does not hide the spikes through adaptive quality.
+The setup and all values are in the integration hardening benchmark, not in a
+conveniently chosen catch.
 
-### Dovada curentă pentru layer styles
+### Current proof for layer styles
 
-Gate-ul automat WindowsDX folosește o scenă cu 48 de passes `ColorOverlay`.
-După opt frame-uri de warmup și un frame de stabilizare după GC, măsoară 16
-frame-uri consecutive și cere simultan:
+The automatic WindowsDX gate uses a 48-pass scene `ColorOverlay`.
+After eight warmup frames and one stabilization frame after GC, it measures 16
+consecutive frames and simultaneous requests:
 
-- `0 B` alocări managed pe thread-ul de draw;
-- niciun render target nou după warmup;
-- creșterea contorului de suprafețe reutilizate;
-- zero lease-uri active după fiecare frame;
-- un peak de suprafețe live mai mic decât numărul de styles.
+- `0 B` allocations managed on the draw thread;
+- no new render target after warmup;
+- increasing the counter of reused surfaces;
+- zero active leases after each frame;
+- a peak of live surfaces lower than the number of styles.
 
-Un test de arhitectură separat scanează calea de producție
-`Drawing/MonoGame/Prism/**/*.cs` și respinge apelurile `GetData` și
-`GetBackBufferData`. Astfel, măsurarea surface reuse și contractul fără CPU
-readback rămân verificabile în CI, nu doar observații dintr-o sesiune de
+A separate architecture test scans the production path
+`Drawing/MonoGame/Prism/**/*.cs` and reject calls `GetData` and
+`GetBackBufferData`. Thus, surface reuse measurement and CPU-free contract
+readbacks remain verifiable in CI, not just observations from a session of
 profiling.
 
-## Securitate și robustețe
+## Security and robustness
 
-- Niciun shader source din markup.
-- Nicio cale de fișier arbitrară trimisă direct backend-ului.
-- Dimensiunile, razele, numărul de passes și kernelurile sunt limitate.
-- Matricile și valorile floating-point resping `NaN` și infinity.
-- Catalogul built-in are identificatori stabili și schema validată.
-- Analyzer-ul detectează overflow-ul bounds și costurile imposibile înainte de
-  alocare.
-- Backdrop surfaces sunt read-only pentru Prism.
+- No shader source from markup.
+- No arbitrary file path sent directly to the backend.
+- Sizes, radii, number of passes and kernels are limited.
+- Arrays and floating-point values ​​reject `NaN` and infinity.
+- The built-in catalog has stable identifiers and validated schema.
+- The analyzer detects overflow bounds and impossible costs before
+  allocation.
+- Backdrop surfaces are read-only for Prism.
 
-## Rezultatul compatibilității API
+## API compatibility result
 
-Comparația finală cu [`prism-public-api-baseline.md`](prism-public-api-baseline.md)
-clasifică schimbările astfel:
+Final comparison with [`prism-public-api-baseline.md`](prism-public-api-baseline.md)
+classify the changes as follows:
 
-- `IDrawingBackend.Render(DrawCommandList)` devine
-  `Render(DrawCommandList, in DrawingFrameContext)`. Este un breaking change
-  necesar pentru contextul unic creat de host, lease-ul backdrop frame-scoped și
-  analiza executată o singură dată.
-- `IUiBackend.BackdropFrameSource` este un default interface member care întoarce
-  `null`; backend-urile existente nu primesc o nouă obligație de implementare.
-- `MonoGameUiHostOptions.BackdropFrameSource` și `PrismRendererOptions` sunt
-  adăugări opționale.
-- `BeginPrism`/`EndPrism`, tipurile publice de authoring/runtime/hosting și cheile
-  Motion tipizate sunt aditive. Consumatorii care fac switch exhaustiv pe
-  `DrawCommandKind` trebuie să aibă un caz implicit pentru valori noi.
-- Tipurile de graph, analysis și planning, constructorii de context și requirement
-  graph-bearing expuși temporar în timpul dezvoltării au fost internalizați. Este
-  o rupere source/binary numai pentru consumatorii suprafeței Prism pre-release și
-  este necesară pentru ca ownership-ul analizei să rămână în host/framework.
+- `IDrawingBackend.Render(DrawCommandList)` becomes
+  ZZZ BLACK 10ZZZ. It is a breaking change
+  required for the unique context created by the host, the backdrop frame-scoped lease and
+  analysis performed only once.
+- `IUiBackend.BackdropFrameSource` is a default interface member that returns
+  `null`; existing backends do not receive a new deployment obligation.
+- `MonoGameUiHostOptions.BackdropFrameSource` and `PrismRendererOptions` are
+  optional additions.
+- `BeginPrism`/`EndPrism`, authoring/runtime/hosting public types and keys
+  Typed motions are additive. Consumers who switch exhaustively on
+  `DrawCommandKind` must have a default case for new values.
+- Graph, analysis and planning types, context and requirement builders
+  graph-bearing temporarily exposed during development have been internalized. It is
+  a source/binary rip only for pre-release Prism surface consumers and
+  is required for analysis ownership to remain in the host/framework.
 
-SDK ApiCompat rulat între assembly-ul de la `HEAD` și assembly-ul final raportează
-exact 28 de `CP0001` pentru tipurile graph/planning internalizate și 5 `CP0002`
-pentru constructorii/proprietățile/metoda graph-bearing eliminate. Nu există altă
-rupere neclasificată; schimbarea mai veche a semnăturii `IDrawingBackend` este
-acoperită separat de baseline-ul pre-Prism de mai sus.
+The ApiCompat SDK run between the assembly from `HEAD` and the final assembly reports
+exactly 28 `CP0001` for internalized graph/planning types and 5 `CP0002`
+for graph-bearing constructors/properties/method removed. There is no other
+unclassified break; the older signature change `IDrawingBackend` is
+covered separately from the pre-Prism baseline above.
 
-Nu există API public pentru extensii third-party. Toate cele 78 de tipuri publice
-Prism sau extinse de Prism au pagină în `docs-site/documentation/classes/` și
-intrare în manifest.
+There is no public API for third-party extensions. All 78 public types
+Prism or extended by Prism have page in `docs-site/documentation/classes/` and
+manifest entry.
 
-## Ordine recomandată de implementare
+## Recommended order of implementation
 
-1. Modelul immutable, catalogul și validarea catalogului.
-2. Parser, binder, diagnostics și cod generat.
-3. `PrismInstance`, lifecycle, parameter store și target-uri Motion.
-4. `BeginPrism`/`EndPrism` și integrarea retained fără GPU.
-5. Frame analyzer, graph builder, optimizer, validation și bounds propagation.
-6. Ownership-ul SpriteBatch, surface pool și executorul MonoGame.
-7. Color pipeline, Normal blend, masks și structura layer/group.
-8. Toate blend modes și toate styles.
-9. Catalogul complet de filtre și conformance images.
-10. Backdrop source și ordered lower-UI composition.
-11. Dependency stamps, cache retained GPU cross-frame, invalidare și eviction.
-12. Diagnostics, benchmarks, stress, device loss și documentație publică.
+1. Immutable model, catalog and catalog validation.
+2. Parser, binder, diagnostics and generated code.
+3. `PrismInstance`, lifecycle, parameter store and Motion targets.
+4. `BeginPrism`/`EndPrism` and retained integration without GPU.
+5. Frame analyzer, graph builder, optimizer, validation and bounds propagation.
+6. Ownership of SpriteBatch, surface pool and MonoGame executor.
+7. Color pipeline, Normal blend, masks and layer/group structure.
+8. All blend modes and all styles.
+9. The complete catalog of filters and conformance images.
+10. Backdrop source and ordered lower-UI composition.
+11. Dependency stamps, cache retained GPU cross-frame, invalidation and eviction.
+12. Diagnostics, benchmarks, stress, device loss and public documentation.
 
-O etapă nu este considerată terminată dacă lasă workarounds în view-uri sau resurse
-fără ownership clar.
+A stage is not considered finished if it leaves workarounds in views or resources
+without clear ownership.
 
-Planning-ul paralel și extensiile publice third-party nu sunt etape ascunse în
-această listă. Fiecare cere un caz real, măsurători și o decizie separată. Cache-ul
-cross-frame este etapă obligatorie și nu poate fi mutat în backlog.
+Parallel planning and third-party public extensions are not hidden steps in
+this list. Each requires a real case, measurements and a separate decision. The cache
+cross-frame is a mandatory stage and cannot be moved to the backlog.
 
-## Criterii de acceptare
+## Acceptance criteria
 
-Prism este implementat complet când:
+Prism is fully implemented when:
 
-- sintaxa normativă compilează și toate exemplele proposalului funcționează;
-- toate filtrele, stilurile și blend modes din catalog au implementare și tests;
-- source generator-ul respinge toate structurile ilegale;
-- Motion poate targeta static parametri și proprietăți Prism;
-- hide/collapse/detach opresc munca și Motion-ul asociat;
-- controlul este capturat o singură dată per evaluare;
-- nicio cale normală nu face CPU readback;
-- backdrop-ul vede jocul și UI-ul inferior fără feedback;
-- layout-ul și hitbox-ul rămân neschimbate;
-- custom backends pot face bypass sigur;
-- analiza structurală este unică și reutilizată pentru backdrop și graph;
-- un Prism static produce hit retained și sare capture/pass-urile acoperite, iar
-  orice schimbare pixel-affecting produce miss și rezultat corect;
-- cache-ul retained respectă bugetul, eviction-ul, lifecycle-ul și device reset fără
-  a ține elemente UI în viață;
-- catalogul generează descriptorii, registrul backend și documentația fără liste
-  paralele;
-- MonoGame respectă limitele validate prin benchmark și restaurează GraphicsDevice
-  state;
-- testele golden, stress, memory și device reset sunt verzi;
-- diagnostics explică passes, cache și memorie;
-- documentația publică este sincronizată.
+- the normative syntax compiles and all the examples of the proposal work;
+- all filters, styles and blend modes in the catalog have implementation and tests;
+- the source generator rejects all illegal structures;
+- Motion can statically target Prism parameters and properties;
+- hide/collapse/detach stop work and associated Motion;
+- control is captured only once per assessment;
+- no normal path does CPU readback;
+- the backdrop sees the game and the lower UI without feedback;
+- the layout and hitbox remain unchanged;
+- custom backends can bypass safely;
+- structural analysis is unique and reused for backdrop and graph;
+- a static Prism produces hit retained and skips capture/covered passes again
+  any pixel-affecting change produces miss and correct result;
+- the retained cache respects budget, eviction, lifecycle and device reset without
+  keep UI elements alive;
+- catalog generates descriptors, backend registry and unlisted documentation
+  parallels;
+- MonoGame respects benchmark validated limits and restores GraphicsDevice
+  states;
+- golden, stress, memory and device reset tests are green;
+- diagnostics explains passes, cache and memory;
+- public documentation is synchronized.
 
-## Riscuri principale
+## Main risks
 
-### Explozia numărului de passes
+### The explosion of the number of passes
 
-Catalogul este mare. Fără pass fusion, bounds regionale și downsampling, o
-compoziție aparent simplă poate deveni prea scumpă.
+The catalog is large. No pass fusion, regional bounds and downsampling, o
+seemingly simple composition can become too expensive.
 
 ### State management MonoGame
 
-Schimbarea render targets și a `SpriteBatch` poate corupe rendering-ul jocului dacă
-state-ul nu este restaurat riguros.
+Changing render targets and `SpriteBatch` can corrupt game rendering if
+the state is not rigorously restored.
 
-### Cache incorect
+### Bad cache
 
-O cheie incompletă produce pixeli vechi sau împrumută rezultatul altui control.
-Corectitudinea are prioritate față de hit rate.
+An incomplete key produces old pixels or borrows the result of another control.
+Correctness takes precedence over hit rate.
 
-### Diferențe între platforme
+### Differences between platforms
 
-Formatele renderable, precision și shader profile diferă. Capability checks și
-conformance tolerances trebuie să fie explicite.
+Renderable, precision and shader profile formats differ. Capability checks and
+conformance tolerances must be explicit.
 
-### Catalog duplicat
+### Duplicate catalog
 
-Dacă generatorul, runtime-ul și backend-ul mențin liste separate, ele vor diverge.
-Catalogul unic generat este obligatoriu.
+If the generator, runtime, and backend maintain separate lists, they will diverge.
+The unique catalog generated is mandatory.
 
-### God object în planning
+### God object in planning
 
-Dacă analiza, semantica operațiilor, optimizarea și execuția ajung într-o singură
-clasă, orice filtru nou va modifica același nucleu fragil. Separarea analyzer,
-builder, optimizer și operation planners este obligatorie.
+If analysis, semantics of operations, optimization and execution come into one
+class, any new filter will modify the same fragile core. separation analyzer,
+builder, optimizer and operation planners is mandatory.
 
-### Supra-arhitecturare
+### Super-architecture
 
-Extensibilitatea publică și concurența pot produce mult cod fără valoare demonstrată.
-Ele rămân în afara implementării până când un caz real și profiling-ul justifică
-separat complexitatea. Cache-ul retained cerut rămâne specializat pentru Prism și nu
-devine pretext pentru un framework generic.
+Public extensibility and concurrency can produce a lot of code with no demonstrated value.
+They remain out of deployment until a real case and profiling warrants
+complexity separately. The required retained cache remains specialized for Prism and not
+becomes a pretext for a generic framework.
 
 ### Lifecycle
 
-Bindings, Motion handles sau cache-uri care țin elementul în viață ar recrea exact
-genul de memory leak pe care arhitectura trebuie să îl prevină.
+Bindings, Motion handles or caches that keep the element alive would recreate exactly
+the kind of memory leak that the architecture is supposed to prevent.
 
-## Decizia finală
+## Final decision
 
-Prism este implementat ca extensie a pipeline-ului retained și a backend-ului de
-drawing, nu ca efect atașat care se randează singur.
+Prism is implemented as an extension of the retained pipeline and the backend of
+drawing, not as an attached effect that renders itself.
 
-Markupul produce o definiție immutable. Elementul deține numai o instanță ușoară.
-Lista de comenzi delimitează vizualul local al elementului. Analyzer-ul produce o
-singură descriere a frame-ului, graph builder-ul o transformă în graph, iar
-optimizer-ul îl simplifică.
-Backend-ul procesează GPU-only și deține toate resursele temporare și retained.
+The markup produces an immutable definition. The element holds only a lightweight instance.
+The command list delimits the local visual of the element. The analyzer produces a
+single description of the frame, the graph builder turns it into a graph, and
+the optimizer simplifies it.
+The backend processes GPU-only and owns all temporary and retained resources.
 
-Această separare păstrează sintaxa simplă, permite puterea modelului Photoshop și
-evită să transformăm fiecare control într-un mic renderer improvizat.
+This separation keeps the syntax simple, enables the power of the Photoshop model, and
+it avoids turning every control into a little makeshift renderer.

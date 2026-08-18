@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Platform`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Platform/IFileDialogService.cs`
+Source: `UI/Platform/FileDialogFilter.cs`
 
 Describes a named file type filter for file open and save dialogs.
 

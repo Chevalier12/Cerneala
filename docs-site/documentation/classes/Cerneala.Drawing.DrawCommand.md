@@ -25,6 +25,7 @@ Create commands directly and inspect the command kind before handing them to a b
 
 ```csharp
 using Cerneala.Drawing;
+using Cerneala.UI.Media;
 
 DrawCommand fill = DrawCommand.FillRectangle(
     new DrawRect(0, 0, 120, 48),
@@ -42,11 +43,17 @@ if (line.Kind == DrawCommandKind.DrawLine)
     DrawPoint end = line.EndPoint;
     float strokeThickness = line.Thickness;
 }
+
+IDrawBrush brush = new SolidColorBrush(Color.CornflowerBlue);
+DrawCommand brushedFill = DrawCommand.FillRectangle(
+    new DrawRect(0, 60, 120, 24),
+    brush,
+    opacity: 0.8f);
 ```
 
 ## Remarks
 
-`DrawCommand` is a value object for retained drawing work. Each static factory method sets `Kind` and populates only the payload fields needed by that command kind. For example, `DrawLine` uses `Position`, `EndPoint`, `Color`, and `Thickness`, while `DrawImage` uses `Rect`, `Color`, and `Image`.
+`DrawCommand` is a value object for retained drawing work. Each static factory method sets `Kind` and populates only the payload fields needed by that command kind. For example, color-based `DrawLine` uses `Position`, `EndPoint`, `Color`, and `Thickness`, brush-based primitives use `Brush` and `BrushOpacity`, and `DrawImage` uses `Rect`, `Color`, and `Image`.
 
 `BeginPrism` and `EndPrism` delimit a retained Prism capture scope. Only the begin command carries a typed `PrismDrawScope`; backends that do not implement Prism may ignore both delimiters while continuing to process the commands between them.
 
@@ -79,10 +86,15 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | Name | Returns | Description |
 | --- | --- | --- |
 | `FillRectangle(DrawRect rect, Color color)` | `DrawCommand` | Creates a `FillRectangle` command with `Rect` and `Color` populated. |
+| `FillRectangle(DrawRect rect, IDrawBrush brush, float opacity = 1)` | `DrawCommand` | Creates a brush-based `FillRectangle` command. |
 | `DrawRectangle(DrawRect rect, Color color, float thickness)` | `DrawCommand` | Creates a `DrawRectangle` command and validates `thickness`. |
+| `DrawRectangle(DrawRect rect, IDrawBrush brush, float thickness, float opacity = 1)` | `DrawCommand` | Creates a brush-based `DrawRectangle` command and validates `thickness`. |
 | `FillEllipse(DrawRect bounds, Color color)` | `DrawCommand` | Creates a `FillEllipse` command with `Rect` and `Color` populated. |
+| `FillEllipse(DrawRect bounds, IDrawBrush brush, float opacity = 1)` | `DrawCommand` | Creates a brush-based `FillEllipse` command. |
 | `DrawEllipse(DrawRect bounds, Color color, float thickness)` | `DrawCommand` | Creates a `DrawEllipse` command and validates `thickness`. |
+| `DrawEllipse(DrawRect bounds, IDrawBrush brush, float thickness, float opacity = 1)` | `DrawCommand` | Creates a brush-based `DrawEllipse` command and validates `thickness`. |
 | `DrawLine(DrawPoint start, DrawPoint end, Color color, float thickness)` | `DrawCommand` | Creates a `DrawLine` command, validates both points against the pixel range, and validates `thickness`. |
+| `DrawLine(DrawPoint start, DrawPoint end, IDrawBrush brush, float thickness, float opacity = 1)` | `DrawCommand` | Creates a brush-based `DrawLine` command and validates both points and `thickness`. |
 | `FillPath(string pathData, DrawRect sourceBounds, DrawRect destination, IDrawBrush brush, float opacity = 1)` | `DrawCommand` | Creates a filled SVG path command that stretches `sourceBounds` into `destination`. |
 | `DrawText(DrawTextRun textRun, DrawPoint position, Color color)` | `DrawCommand` | Creates a `DrawText` command with `Text`, `TextRun`, `Font`, `Position`, and `Color` populated. |
 | `DrawText(DrawTextRun textRun, DrawPoint position, IDrawBrush brush, float opacity = 1)` | `DrawCommand` | Creates a brush-based text command. The backend applies the brush through the glyph mask. |
@@ -97,6 +109,8 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `DrawRectangle` | `ArgumentOutOfRangeException` | `thickness` is zero, negative, non-finite, or above the valid pixel-size range. |
+| Brush-based fill or stroke overloads | `ArgumentNullException` | `brush` is null. |
+| Brush-based fill or stroke overloads | `ArgumentOutOfRangeException` | `opacity` is non-finite or outside `0` through `1`; stroke overloads also reject an invalid `thickness`. |
 | `DrawEllipse` | `ArgumentOutOfRangeException` | `thickness` is zero, negative, non-finite, or above the valid pixel-size range. |
 | `DrawLine` | `ArgumentOutOfRangeException` | `start` or `end` has a coordinate outside the valid pixel range, or `thickness` is invalid. |
 | `FillPath` | `ArgumentException` | `pathData` is null, empty, or whitespace. |

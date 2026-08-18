@@ -12,7 +12,7 @@ Implements an incremental Roslyn source generator that converts `.crn` UI markup
 
 ```csharp
 [Generator]
-public sealed class UiMarkupGenerator : IIncrementalGenerator
+public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 ```
 
 Inheritance:
@@ -46,7 +46,7 @@ For a file named `typed-view.crn`, the generated type name is `TypedViewFactory`
 
 ## Remarks
 
-`UiMarkupGenerator` reads compiler additional text files whose paths end with `.crn`, ignoring case. Only this canonical suffix participates in generation; other additional files are ignored. It creates a `Cerneala.Language` document, uses the shared tolerant syntax tree and semantic model in strict `Build` mode, and emits one generated static partial factory class under the `Cerneala.GeneratedUi` namespace only after validation succeeds.
+`UiMarkupGenerator` reads compiler additional text files whose paths end with `.crn`, ignoring case. Other additional files are ignored. Each file is parsed into the shared `Cerneala.Language` document and analyzed in strict `Build` mode; a file with error diagnostics does not emit generated source.
 
 The shared language layer owns lossless parsing, recovery, source spans, binding,
 resource, template, Aspect, Motion, and Prism semantics, plus the host-agnostic
@@ -56,14 +56,14 @@ results to C#. Recovery support is available to editor-agnostic consumers, but i
 does not make incomplete saved markup valid at build and does not itself expose an
 LSP service.
 
-Generated factories contain:
+An ordinary markup file produces a static partial factory under the `Cerneala.GeneratedUi` namespace. A root `DataType` adds typed `Create(dataContext)` and `AsGeneratedFactory(dataContext)` overloads. All ordinary factories expose:
 
 | Member | Description |
 | --- | --- |
 | `Create()` | Builds and returns the root `global::Cerneala.UI.Elements.UIElement`. |
 | `AsGeneratedFactory()` | Returns a `global::Cerneala.UI.Markup.GeneratedUiFactory` that wraps `Create`. |
 
-The generated factory class name is based on the markup file name without the `.crn` suffix, converted to a valid identifier and suffixed with `Factory`. Duplicate base names are disambiguated with the parent directory name, then with a stable FNV-1a hash if needed.
+The generated factory class name is based on the markup file name without the `.crn` suffix, converted to a valid identifier and suffixed with `Factory`. Duplicate base names are disambiguated with the parent directory name, then with a stable FNV-1a hash if needed. Files paired with compatible `Application`, `Window`, or `UserControl` partial declarations follow their corresponding generated startup or control path instead of the ordinary standalone factory path.
 
 Reactive directive expressions support the lowercase `and` and `or` operators plus parentheses. Their precedence is `comparison` before `and` before `or`; parentheses override the default order.
 
@@ -156,52 +156,44 @@ All syntactic leaves stay observed even though generated Boolean evaluation
 short-circuits.
 
 Bindings stop on detach and refresh on reattach. Bindings created by a
-component-template factory are disposed with the template instance. Source
-notifications consumed by a binding must be raised on the binding's captured
-UI/update thread; the runtime fails fast instead of implicitly marshaling them.
+component-template factory are disposed with the template instance. CLR
+`INotifyPropertyChanged` notifications may be raised on worker threads; the
+runtime queues refresh work through the target root's Relay and does not read
+the path or write the target on the worker. Direct Cerneala UI-property
+notifications remain UI-thread-only.
 
 See `docs/markup-data-bindings.md` for the complete grammar, name-scope rules,
 null and cascade behavior, diagnostics, and unsupported features.
 
-Supported root and child elements:
+### Markup Shapes
+
+The generator resolves built-in controls and imported public CLR types rather than using a fixed five-element list. A custom element must be qualified through a `clr-namespace` XML namespace alias; an unqualified custom type is rejected. Container relationships are resolved from the target type: panels receive logical and visual children, decorators receive `Child`, and content controls receive `Content`.
+
+The current source and regression tests cover, among others:
 
 | Markup element | Generated type |
 | --- | --- |
-| `Panel` | `global::Cerneala.UI.Controls.Panel` |
-| `StackPanel` | `global::Cerneala.UI.Controls.StackPanel` |
-| `Border` | `global::Cerneala.UI.Controls.Border` |
-| `Button` | `global::Cerneala.UI.Controls.Button` |
-| `TextBlock` | `global::Cerneala.UI.Controls.TextBlock` |
+| `Panel` and `StackPanel` | Logical and visual child collections |
+| `Border` and other decorators | `Child` assignment |
+| `Button` and other content controls | `Content` assignment |
+| `ItemsControl` and derived controls | Inline `ContentTemplate`, `ItemTemplate`, and `ItemsPanel` markup |
+| Imported CLR controls | Type resolution through a `clr-namespace` alias |
 
-Supported child relationships:
+Inline content templates have exactly one visual root, may declare `DataType`, `Name`, `Key`, and `Priority`, and use the template item as the `$DataContext` source. Tests cover nested `DataContext` scopes, typed `INotifyPropertyChanged` paths, retargeting after an intermediate object changes, and `TwoWay` write-back from a generated control.
 
-| Parent element | Generated relationship |
+Supported generated value categories include:
+
+| Category | Examples |
 | --- | --- |
-| `Panel` | Adds the child to `LogicalChildren` and `VisualChildren`. |
-| `StackPanel` | Adds the child to `LogicalChildren` and `VisualChildren`. |
-| `Border` | Assigns the child to `Child`. |
-| `Button` | Assigns the child to `Content`. |
+| Scalar literals | `bool`, integer, `float`, `double`, `decimal`, enum, and finite positive values where the target property requires them |
+| Layout values | `Thickness` and `LayoutPoint`, including comma-separated forms |
+| Drawing values | Named or hexadecimal colors, byte color components, and brush resources/property elements |
+| Generated content | Direct text for content-bearing controls and `ContentTemplate` declarations |
+| Reactive values | Typed `$DataContext`, `$element`, `$self`, `$root`, `$control.parts.$part`, and `$owner` paths, including `OneWay` and `TwoWay` modes where the endpoint is writable |
 
-Supported attributes:
+Color values accept the named colors known by the generator, ignoring case. They also accept hexadecimal colors and comma-separated byte components in `R, G, B` or `R, G, B, A` form.
 
-| Attribute | Applies to | Value handling |
-| --- | --- | --- |
-| `Text` | `TextBlock` | Emits a C# string literal. |
-| `Content` | `Button` | Emits a C# string literal. |
-| `IsEnabled` | Any supported element | Requires a Boolean value. |
-| `IsVisible` | Any supported element | Requires a Boolean value. |
-| `Margin` | Any supported element | Requires one float or four comma-separated floats. |
-| `Background` | `Border`, `Button`, `TextBlock` | Accepts a color shorthand converted to `SolidColorBrush`, a brush resource, or a composite brush property element. |
-| `Foreground` | `Border`, `Button`, `TextBlock` | Requires a supported color value. |
-| `BorderBrush` | `Border`, `Button`, `TextBlock` | Accepts a color shorthand converted to `SolidColorBrush`, a brush resource, or a composite brush property element. |
-| `BorderThickness` | `Border`, `Button`, `TextBlock` | Requires one non-negative float or four comma-separated non-negative floats. |
-| `Padding` | `Border`, `Button`, `TextBlock` | Requires one non-negative float or four comma-separated non-negative floats. |
-| `FontFamily` | `Border`, `Button`, `TextBlock` | Requires a non-whitespace string. |
-| `FontSize` | `Border`, `Button`, `TextBlock` | Requires a positive finite float. |
-
-Color attributes accept the named values `Transparent`, `White`, and `Black`, ignoring case. They also accept comma-separated byte components in `R, G, B` or `R, G, B, A` form.
-
-Direct text content is supported for `TextBlock` and `Button`. For `TextBlock`, direct text sets `Text`; for `Button`, it sets `Content`. Direct text on other supported elements is reported as an unsupported `#text` property.
+Direct text content is assigned to the target's supported text or content property. Direct text on an element without such a property is reported as an unsupported `#text` property.
 
 The generator reports diagnostics instead of emitting source when markup cannot be processed successfully:
 
@@ -211,7 +203,17 @@ The generator reports diagnostics instead of emitting source when markup cannot 
 | `CERNEALAUI002` | The markup contains an unsupported element. |
 | `CERNEALAUI003` | The markup contains an unsupported property, text content, or child relationship. |
 | `CERNEALAUI004` | The markup contains an invalid value for a supported property. |
+| `CERNEALAUI005` | The document shape is invalid, including invalid resource or template placement. |
+| `CERNEALAUI006` | A markup directive is invalid. |
 | `CERNEALAUI007` | A binding or reactive source has invalid syntax, scope, mode, type, accessibility, observability, or writability. |
+| `CERNEALAUI008` | A `UserControl` declaration is invalid. |
+| `CERNEALAUI009` | A markup event handler is invalid. |
+| `CERNEALAUI010` | A `Window` declaration is invalid. |
+| `CERNEALAUI011` | Generated `Window` startup is invalid. |
+| `CERNEALAUI012` | A component template declaration is invalid. |
+| `CERNEALAUI013` | An `Application` declaration is invalid. |
+| `CERNEALAUI014` | Application startup is invalid. |
+| `CERNEALAUI020`-`CERNEALAUI026` | Motion syntax, target, event, type, composition, lifecycle, or runtime capability is invalid. |
 
 Diagnostics use exact source spans from the shared syntax and semantic model and
 are converted to Roslyn source locations by the generator host adapter.
@@ -235,6 +237,7 @@ Cerneala source generation project targeting `netstandard2.0`.
 ## See Also
 
 - `Cerneala.SourceGen.UiMarkupGenerator.GenerationScope`
+- `Cerneala.SourceGen.UiMarkupGenerator.MarkupSource`
 - `Cerneala.UI.Markup.GeneratedUiFactory`
 - `Cerneala.UI.Markup.GeneratedMarkup`
 - `docs/markup-data-bindings.md`

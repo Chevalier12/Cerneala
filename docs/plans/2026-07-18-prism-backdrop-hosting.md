@@ -1,126 +1,124 @@
-# Prism — backdrop și integrarea hostului
+# Prism — backdrop and host integration
 
-## Scop
+## Purpose
 
-Permite Prism să proceseze lumea jocului și UI-ul aflat sub control, fără
-readback CPU și fără a confunda backdrop-ul cu imaginea controlului.
+It allows Prism to render the game world and UI under control without
+readback CPU and without confusing the backdrop with the control image.
 
-**Dependențe:** `2026-07-18-prism-retained-composition-graph.md` și
+**Dependencies:** `2026-07-18-prism-retained-composition-graph.md` and
 `2026-07-18-prism-monogame-compositor.md`.
 
-## Etapa 0 — contracte RED
+## Stage 0 — RED contracts
 
-- [x] Adaugă teste RED backend-neutral pentru zero/unu backdrop, obligația de a
-  fi ultimul copil direct și excluderea conținutului propriu/suprapus.
-- [x] Adaugă teste RED de host pentru achiziție zero când nu e cerut, exact una
-  per frame când mai multe compoziții îl folosesc și release în `finally`.
-- [x] Fixează prin teste ordinea: lumea jocului + UI inferior → backdrop plane
-  → conținutul controlului → UI superior.
-- [x] Adaugă cazuri RED pentru host fără provider, resize, source replacement,
-  nested Prism, Hidden/Collapsed și excepție în executor.
+- [x] Add backend-neutral RED tests for zero/one backdrop, the obligation to
+  be the last direct child and exclude own/overlapping content.
+- [x] Add host RED tests for zero acquisition when not required, exactly one
+  per frame when several compositions use it and release in `finally`.
+- [x] Fix through tests the order: game world + lower UI → backdrop plane
+  → control content → top UI.
+- [x] Add RED cases for host without provider, resize, source replacement,
+  nested Prism, Hidden/Collapsed and exception in executor.
 
-### Gate etapa 0
+### Gate stage 0
 
-- [x] Testele disting clar „capture control” de „backdrop frame” și nu presupun
-  o implementare MonoGame în contractele backend-neutral.
+- [x] The tests clearly distinguish "capture control" from "backdrop frame" and do not assume
+  a MonoGame implementation in backend-neutral contracts.
 
-## Etapa 1 — contractele hostului
+## Stage 1 — host contracts
 
-- [x] Adaugă un contract public minim `IBackdropFrameSource` și un lease
-  frame-scoped readonly, fără API generic de texture ownership.
-- [x] Definește metadata necesară: dimensiune, pixel scale, color profile,
-  alpha/format, coordinate transform, `ContentVersion` monoton și lifetime până
-  la finalul frame-ului.
-- [x] Adaugă providerul opțional în `IUiBackend`/`MonoGameUiHostOptions` ori în
-  cel mai mic contract de host deja responsabil pentru frame acquisition;
-  evită service locator și singleton global.
-- [x] Validează compatibilitatea provider/backend la pornirea hostului și oferă
-  diagnostic clar când backdrop-ul nu poate fi furnizat.
-- [x] Documentează explicit că aplicația păstrează ownership-ul scenei, iar
-  Cerneala împrumută numai frame-ul deja randat.
+- [x] Add a minimum public contract `IBackdropFrameSource` and a lease
+  frame-scoped readonly, no generic texture ownership API.
+- [x] Defines required metadata: size, pixel scale, color profile,
+  alpha/format, coordinate transform, `ContentVersion` monotone and lifetime up to
+  at the end of the frame.
+- [x] Add the optional provider in `IUiBackend`/`MonoGameUiHostOptions` or in
+  the smallest host contract already responsible for frame acquisition;
+  avoid service locator and global singleton.
+- [x] Validates provider/backend compatibility at host startup and offers
+  clear diagnosis when backdrop cannot be provided.
+- [x] Explicitly documents that the application retains ownership of the scene, and
+  Cerneala borrows only the already rendered frame.
 
-### Gate etapa 1
+### Gate stage 1
 
-- [x] Hostul fără Prism/backdrop nu trebuie să implementeze nimic nou
-  obligatoriu, iar lease-ul nu poate supraviețui frame-ului.
+- [x] Host without Prism/backdrop doesn't need to implement anything new
+  mandatory, and the lease cannot survive the frame.
 
-## Etapa 2 — achiziție coordonată de analiză
+## Stage 2 — Coordinated Analysis Acquisition
 
-- [x] Folosește exclusiv `PrismFrameAnalysis` pentru a decide dacă frame-ul cere
-  backdrop; nu rescana `DrawCommandList`.
-- [x] Achiziționează cel mult un lease per frame și pune-l în
-  `DrawingFrameContext` pentru toți consumatorii compatibili.
-- [x] Sari achiziția când toate backdrop-urile sunt invizibile, clipped-out sau
-  eliminate de optimizer.
-- [x] Eliberează lease-ul în `finally` după submit, inclusiv la excepții și
+- [x] Use exclusively `PrismFrameAnalysis` to decide if the frame requires
+  backdrop; do not rescan `DrawCommandList`.
+- [x] Purchase at most one lease per frame and put it in
+  `DrawingFrameContext` for all compatible consumers.
+- [x] Skip purchase when all backdrops are invisible, clipped-out or
+  removed by the optimizer.
+- [x] Release the lease in `finally` after submit, including exceptions and
   device reset.
-- [x] Adaugă counters pentru requested/acquired/shared/skipped/failed și teste
-  pentru fiecare cale.
+- [x] Add counters for requested/acquired/shared/skipped/failed and tests
+  for each path.
 
-### Gate etapa 2
+### Gate stage 2
 
-- [x] Un frame fără nevoie face zero apeluri, iar un frame cu oricâte
-  backdrop-uri compatibile face o singură achiziție.
+- [x] A frame without need makes zero calls, and a frame with any amount
+  Compatible backdrops make one purchase.
 
-## Etapa 3 — semantica grafului
+## Stage 3 — graph semantics
+- [x] Extends the graph with a separate backdrop input and clipping it into
+  coordinates of the control, without turning it into layer `Source`.
+- [x] Process the filters/styles/mask/properties declared in `@backdrop`
+  according to the catalog and compose the result before the control layers.
+- [x] Respect UI order: the backdrop only sees what the host has completed under
+  control, not the siblings drawn afterwards or the content of the control itself.
+- [x] Apply color profile and alpha metadata only once; reject times
+  observably degrades incompatible formats through central policy.
+- [x] Add graph snapshots for a backdrop, more controls,
+  nested groups and invisible layer.
 
-- [x] Extinde graful cu un input backdrop separat și cu decuparea lui în
-  coordonatele controlului, fără a-l transforma în `Source` de layer.
-- [x] Procesează filtrele/styles/mask/proprietățile declarate în `@backdrop`
-  conform catalogului și compune rezultatul înaintea layerelor controlului.
-- [x] Respectă ordinea UI: backdrop-ul vede numai ce hostul a finalizat sub
-  control, nu frații desenați ulterior sau conținutul controlului însuși.
-- [x] Aplică profilul de culoare și alpha metadata o singură dată; respinge ori
-  degradează observabil formatele incompatibile prin politica centrală.
-- [x] Adaugă snapshots de graf pentru un backdrop, mai multe controale,
-  nested groups și layer invizibil.
+### Gate stage 3
 
-### Gate etapa 3
+- [x] The graph does not contain cycles and shows explicitly what frame backdrop it is
+  split and where it is cropped/converted.
 
-- [x] Graful nu conține cicluri și arată explicit ce frame backdrop este
-  împărțit și unde este decupat/convertit.
+## Step 4 — MonoGame adapter
 
-## Etapa 4 — adaptorul MonoGame
+- [x] Implements the WindowsDX adapter that provides the already rendered scene texture
+  or an explicit GPU resolver; prohibits `GetData` and CPU copying.
+- [x] Integrate the order in `WindowsDxWindowGraphicsSession` and the normal path
+  `MonoGameUiHost.Draw`, keeping the same contract for `RenderPng`.
+- [x] Reuse the frame-local lease between compositions and allocate only
+  the intermediate surfaces required by the graph.
+- [x] Manage resize, MSAA resolve, format/color mismatch, device reset and
+  provider replacement without orphaned resources.
+- [x] Propagate `ContentVersion`, lower UI versions and raster metadata in
+  the dependency stamp consumed by the retained cache plan; the host does not retain
+  source texture by frame.
 
-- [x] Implementează adaptorul WindowsDX care oferă textura scenei deja randate
-  sau un resolve GPU explicit; interzice `GetData` și copierea prin CPU.
-- [x] Integrează ordinea în `WindowsDxWindowGraphicsSession` și calea normală
-  `MonoGameUiHost.Draw`, păstrând același contract pentru `RenderPng`.
-- [x] Refolosește lease-ul frame-local între compoziții și alocă doar
-  suprafețele intermediare cerute de graf.
-- [x] Gestionează resize, MSAA resolve, format/color mismatch, device reset și
-  provider replacement fără resurse orfane.
-- [x] Propagă `ContentVersion`, versiunile UI inferioare și metadata de raster în
-  dependency stamp-ul consumat de planul cache-ului retained; hostul nu reține
-  textura sursă după frame.
+### Gate stage 4
 
-### Gate etapa 4
+- [x] The backdrop runs completely GPU-side, only once per frame, and
+  surfaces and leases are released at all exits.
 
-- [x] Backdrop-ul rulează complet GPU-side, o singură dată per frame, iar
-  suprafețele și lease-urile sunt eliberate la toate ieșirile.
+## Stage 5 — conformance, lifecycle and API docs
 
-## Etapa 5 — conformance, lifecycle și API docs
-
-- [x] Adaugă scene automate cu gameplay/background recognoscibil, UI inferior,
-  control cu blur/color backdrop și UI superior neafectat.
-- [x] Capturează prin `IWindowPlatform.RenderPng` și verifică golden-uri pentru
-  coordonate, blur edges, alpha, resize și două controale ce împart frame-ul.
-  (Contractul real din repo este `IWindowScreenshotSource.RenderPng`, folosit de
-  runtime peste sesiunea creată de `IWindowPlatform`.)
-- [x] Rulează stress de navigare, hide/unhide, provider replacement și device
-  reset cu contoare de resurse și `WeakReference`.
-- [x] Documentează contractele publice cu skill-ul
-  `writing-api-documentation`, actualizează `IUiBackend`,
-  `MonoGameUiHostOptions`, tipurile backdrop și manifestul.
-- [x] Rulează reindexarea după fiecare lot C#/proiect.
-- [x] Rulează
+- [x] Add auto cutscenes with recognizable gameplay/background, inferior UI,
+  control with blur/color backdrop and top UI unaffected.
+- [x] Capture via `IWindowPlatform.RenderPng` and check goldens for
+  coordinates, blur edges, alpha, resize and two controls that divide the frame.
+  (The actual contract in the repo is `IWindowScreenshotSource.RenderPng`, used by
+  runtime over the session created by `IWindowPlatform`.)
+- [x] Runs navigation stress, hide/unhide, provider replacement and device
+  reset with resource counters and `WeakReference`.
+- [x] Documents public contracts with the skill
+  `writing-api-documentation`, update `IUiBackend`,
+  `MonoGameUiHostOptions`, the backdrop types and the manifest.
+- [x] Run reindex after every C# batch/project.
+- [x] Running
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "PrismBackdrop|MonoGameUiHost|RenderPng"`,
-  `dotnet test .\Cerneala.slnx` și `git diff --check`.
+  `dotnet test .\Cerneala.slnx` and `git diff --check`.
 
-## Definiția de gata
-
-- [x] Prism poate procesa lumea jocului/UI-ul inferior printr-un lease
-  frame-scoped, fără readback, și expune toate versiunile necesare reutilizării
-  corecte a rezultatului procesat între frame-uri.
-- [x] Ordinea, sharing-ul, failure paths, lifecycle-ul și documentația sunt
-  verificate automat.
+## The definition of done
+- [x] Prism can render the game world/lower UI via a lease
+  frame-scoped, with no readback, and exposes all versions needed for reuse
+  correctness of the processed result between frames.
+- [x] Order, sharing, failure paths, lifecycle and documentation are
+  checked automatically.

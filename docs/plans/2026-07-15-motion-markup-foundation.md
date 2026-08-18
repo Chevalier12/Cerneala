@@ -1,131 +1,131 @@
-# Plan: foundation pentru Motion markup
+# Plan: foundation for Motion markup
 
-> Data: 2026-07-15
-> Status: finalizat
-> Dependenta: niciuna
-> Scop: livram prima verticala utilizabila cu specs Tween/Spring, Aspect inline/named, `@when`, `@if`, `@on`, `@animate`, `@from` si `@to`, complet source-generated si cu lifecycle corect.
+> Date: 2026-07-15
+> Status: completed
+> Dependency: none
+> Purpose: we deliver the first usable vertical with Tween/Spring specs, inline/named Aspect, `@when`, `@if`, `@on`, `@animate`, `@from` and `@to`, completely source-generated and with correct lifecycle.
 
-## 1. Baseline si problema actuala
+## 1. Baseline and the current problem
 
-`UiMarkupDirectiveParser.cs` parseaza astazi `@when`, `@if`, `@default` si `@template` intr-un AST intern. `UiMarkupReactiveEmitter` rezolva surse tipizate si `GeneratedMarkup.AttachConditions` leaga un controller de `IElementLifecycleBehavior`. `UiMarkupGenerator` cunoaste deja resources `Aspect`, dar acestea contin assignments/template, nu comportament Motion.
+`UiMarkupDirectiveParser.cs` now parses `@when`, `@if`, `@default` and `@template` in an internal AST. `UiMarkupReactiveEmitter` solves typed sources and `GeneratedMarkup.AttachConditions` connects a controller to `IElementLifecycleBehavior`. `UiMarkupGenerator` already knows resources `Aspect`, but they contain assignments/templates, not Motion behavior.
 
-Motion expune `MotionAnimationBuilder<T>`, `MotionPropertyBinding<T>` si specs tipizate. Builder-ul public seteaza implicit `HoldOnComplete=true`, dar nu expune toate `MotionPropertyStartOptions`; markup-ul nu trebuie sa ocoleasca aceasta lipsa prin acces la membri internal.
+Motion exhibits `MotionAnimationBuilder<T>`, `MotionPropertyBinding<T>` and typical specs. The public builder defaults to `HoldOnComplete=true`, but does not expose all `MotionPropertyStartOptions`; the markup must not bypass this lack by accessing internal members.
 
-## 2. Arhitectura propusa
+## 2. The proposed architecture
 
-- Extindem parserul existent printr-un AST Motion separat, nu prin concatenare de stringuri C#.
-- Separarea recomandata este `UiMarkupMotionParser`, `UiMarkupMotionResolver` si `UiMarkupMotionEmitter` ca partiale ale generatorului; numele sunt estimative, responsabilitatile nu.
-- Adaugam un bridge runtime generat in `UI/Markup/GeneratedMarkupMotion.cs`: un behavior per element/Aspect creeaza o sesiune la attach, detaseaza events/observations si anuleaza executions la detach.
-- Resursele `Tween` si `Spring` sunt declaratii generator-known. La fiecare utilizare, resolverul construieste `MotionSpec<T>` pentru tipul proprietatii; nu apare un spec netipizat runtime.
-- Named Aspects sunt expandate si validate la fiecare application site. Compatibilitatea foloseste assignability (`elementType` deriva din `TargetType`), nu egalitate de nume.
-- `$Name.Property` este rezolvat static fata de elementele numite vizibile la application site; o aplicare care nu poate satisface toate targets primeste diagnostic.
+- We extend the existing parser through a separate Motion AST, not through C# string concatenation.
+- The recommended separation is `UiMarkupMotionParser`, `UiMarkupMotionResolver` and `UiMarkupMotionEmitter` as parts of the generator; names are estimates, responsibilities are not.
+- We add a bridge runtime generated in `UI/Markup/GeneratedMarkupMotion.cs`: a behavior per element/Aspect creates a session when attach, detaches events/observations and cancels executions when detach.
+- The resources `Tween` and `Spring` are generator-known declarations. On each use, the resolver constructs `MotionSpec<T>` for the property type; an untyped runtime spec does not appear.
+- Named Aspects are expanded and validated at each application site. Compatibility uses assignability (`elementType` derives from `TargetType`), not name equality.
+- `$Name.Property` is resolved statically against the elements called visible at the application site; an application that cannot satisfy all targets receives a diagnosis.
 
-## 3. Non-obiective
+## 3. Non-objectives
 
-- Fara `MotionClip`, composition, keyframes, handles, Presence, Layout, Scroll, Drag sau Gesture in aceasta verticala.
-- Fara `$event`, reflection, method interception, arbitrary C# expressions sau runtime parsing.
-- Fara schimbarea semanticii existente pentru assignments si templates din `Aspect`.
+- No `MotionClip`, composition, keyframes, handles, Presence, Layout, Scroll, Drag or Gesture in this vertical.
+- No `$event`, reflection, method interception, arbitrary C# expressions or runtime parsing.
+- Without changing the existing semantics for assignments and templates from `Aspect`.
 
-## 4. Fisiere estimate
+## 4. Estimated files
 
 - `Cerneala.SourceGen/UiMarkupDirectiveParser.cs`
-- partiale noi sub `Cerneala.SourceGen/` pentru AST, rezolvare si emitere Motion
+- new partials under `Cerneala.SourceGen/` for AST, solving and issuing Motion
 - `Cerneala.SourceGen/UiMarkupGenerator.cs`
 - `UI/Markup/GeneratedMarkupMotion.cs`
-- `UI/Motion/MotionAnimationBuilder.cs` numai daca este necesar un overload public pentru `MotionPropertyStartOptions`
+- `UI/Motion/MotionAnimationBuilder.cs` only if a public overload is required for `MotionPropertyStartOptions`
 - `tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorMotionTests.cs`
 - `tests/Cerneala.Tests/UI/Markup/GeneratedMarkupMotionTests.cs`
-- paginile API afectate din `docs-site/documentation/classes/`
+- the affected API pages from `docs-site/documentation/classes/`
 
-## 5. Etape de implementare
+## 5. Implementation stages
 
-### Etapa 0 - RED si contract public minim
+### Stage 0 - RED and minimum public contract
 
-- [x] Adauga teste sourcegen RED pentru resources `Tween`/`Spring`, Aspect named si inline, un `@animate` cu `@from`/`@to`, `current`, spec implicit si spec per proprietate.
-- [x] Adauga diagnostics RED pentru `@to` lipsa, proprietate inexistenta, tip incompatibil, mixer absent, `@from` fara pereche in `@to`, resource necunoscut si directive Motion in context ilegal.
-- [x] Adauga teste RED pentru `retarget`, `holdOnComplete` si `debugName`; confirma printr-un test de API ca generatorul nu are nevoie de membri internal.
-- [x] Stabileste overload-ul public minim al `MotionAnimationBuilder<T>` sau bridge-ul public `GeneratedMarkup` care transmite `MotionPropertyStartOptions`, fara a duplica logica din `MotionPropertyBinding<T>`.
-- [x] Actualizeaza API docs pentru orice membru public introdus si ruleaza public API diff review.
-- [x] Reindexeaza solutia dupa modificarile C#.
+- [x] Add sourcegen RED tests for resources `Tween`/`Spring`, Aspect named and inline, a `@animate` with `@from`/`@to`, `current`, default spec and spec per property.
+- [x] Add RED diagnostics for missing `@to`, nonexistent property, incompatible type, absent mixer, `@from` without pair in `@to`, unknown resource and Motion directive in illegal context.
+- [x] Add RED tests for `retarget`, `holdOnComplete` and `debugName`; confirm through an API test that the generator does not need internal members.
+- [x] Establishes the minimum public overload of `MotionAnimationBuilder<T>` or the public bridge `GeneratedMarkup` that transmits `MotionPropertyStartOptions`, without duplicating the logic from `MotionPropertyBinding<T>`.
+- [x] Update API docs for any public member entered and run public API diff review.
+- [x] Reindex the solution after C# changes.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Testele noi esueaza din motivele comportamentale asteptate, iar contractul ales poate reprezenta toate cele trei options reale.
-- [x] Nu a fost introdus un model runtime generic de AST sau un spec netipizat.
+- [x] The new tests fail for the expected behavioral reasons, and the chosen contract can represent all three real options.
+- [x] No generic AST runtime model or untyped spec was introduced.
 
-### Etapa 1 - Gramatica si AST Motion
+### Stage 1 - Grammar and AST Motion
 
-- [x] Extinde `DirectiveCursor` astfel incat sa recunoasca directivele Motion numai in corpurile Aspect permise, pastrand `@when`/`@if` existente compatibile.
-- [x] Modeleaza explicit `@animate`, `@from`, `@to`, assignments targetate, `with`, options si source locations.
-- [x] Parseaza valorile Motion printr-o gramatica limitata: literals tipizabile, `current`, sursele reactive deja suportate, resource references si conditional expression folosita de proposal; nu emite direct text arbitrar ca C#.
-- [x] Parseaza duratele `ms`/`s`, easing names si constructorii inline `Tween(...)`/`Spring(...)` cu diagnostics la tokenul gresit.
-- [x] Pastreaza XML controls interzise in execution bodies si pastreaza directivele non-Motion neschimbate.
-- [x] Adauga teste de recovery pentru acolade, semicolon, quote si directive necunoscute.
-- [x] Reindexeaza solutia.
+- [x] Extends `DirectiveCursor` to recognize Motion directives only in allowed Aspect bodies, keeping existing `@when`/`@if` compatible.
+- [x] Explicitly models `@animate`, `@from`, `@to`, targeted assignments, `with`, options and source locations.
+- [x] Parse Motion values ​​through a limited grammar: typeable literals, `current`, reactive sources already supported, resource references and conditional expression used by the proposal; it doesn't directly output arbitrary text like C#.
+- [x] Parse durations `ms`/`s`, easing names and inline constructors `Tween(...)`/`Spring(...)` with diagnostics for the wrong token.
+- [x] Keep XML controls forbidden in execution bodies and keep non-Motion directives unchanged.
+- [x] Add recovery tests for braces, semicolons, quotes and unknown directives.
+- [x] Reindex the solution.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] AST-ul separa syntax, semantic type si emitted code; niciun test nu depinde de matching fragil pe corpuri brute.
-- [x] Toate testele parserului si testele vechi `@when`/`@if` sunt GREEN.
+- [x] AST separates syntax, semantic type and emitted code; no test depends on fragile matching on raw bodies.
+- [x] All parser tests and old tests `@when`/`@if` are GREEN.
 
-### Etapa 2 - Rezolvare semantica statica
+### Stage 2 - Static semantic resolution
 
-- [x] Rezolva `TargetType` inclusiv custom controls si valideaza aplicarea prin assignability.
-- [x] Rezolva unqualified properties pe target si `$Name.Property` per application site, inclusiv forward references in namescope-ul aplicatiei.
-- [x] Infer type-ul `T`, verifica `UiProperty<T>`, accesibilitatea, read-only si interpolatorul/mixerul compatibil.
-- [x] Specializeaza fiecare resource Tween/Spring la `MotionSpec<T>` la locul utilizarii si deduplica doar constructiile identice din acelasi generated scope.
-- [x] Rezolva `current` la valoarea vizuala Motion curenta, nu la o citire stale a base value.
-- [x] Valideaza ca fiecare proprietate din `@from` exista in `@to`; `@from` omis porneste din valoarea vizuala curenta.
-- [x] Valideaza options exact la `Restart|PreserveProgress`, Boolean si string; respinge `conflict`, channel si reduced-motion options inventate.
-- [x] Reindexeaza solutia.
+- [x] Solves `TargetType` including custom controls and validates the application through assignability.
+- [x] Resolve unqualified properties on target and `$Name.Property` per application site, including forward references in the application namescope.
+- [x] Infer type `T`, check `UiProperty<T>`, accessibility, read-only and compatible interpolator/mixer.
+- [x] Specializes each Tween/Spring resource to `MotionSpec<T>` at the place of use and deduplicates only the identical constructions from the same generated scope.
+- [x] Resolve `current` to the current Motion visual value, not to a stale reading of the base value.
+- [x] Validates that each property in `@from` exists in `@to`; `@from` omitted starts from the current visual value.
+- [x] Validate options exactly at `Restart|PreserveProgress`, Boolean and string; reject `conflict`, channel and reduced-motion options invented.
+- [x] Reindex the solution.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Diagnostics diferentiaza type missing, property missing, wrong target, wrong value type, missing mixer si invalid spec type.
-- [x] Nicio rezolvare runtime dupa nume nu apare in codul generat.
+- [x] Diagnostics differentiates type missing, property missing, wrong target, wrong value type, missing mixer and invalid spec type.
+- [x] No runtime resolution by name appears in the generated code.
 
-### Etapa 3 - Activare prin stare si events
+### Stage 3 - Activation by status and events
 
-- [x] Refoloseste resolverul de observations pentru `@when` si `@if`, astfel incat toate dependentele sa ramana observate si reevaluarea sa respecte short-circuit-ul existent.
-- [x] Defineste activarea: fiecare trecere relevanta a ramurii porneste execution-ul declarat; reevaluarea fara schimbare nu reporneste animatia.
-- [x] Rezolva `@on EventName` la `IEventSymbol` pe `TargetType`/base types si genereaza abonare/dezabonare directa `+=`/`-=`, inclusiv pentru wrappers de routed events.
-- [x] Emite diagnostic daca event-ul lipseste, este inaccesibil sau membrul omonim nu este event; nu cauta si nu modifica metode.
-- [x] Ignora event args in limbaj, conform deciziei fara `$event`.
-- [x] Adauga teste cu event built-in, custom CLR event, custom routed event, event mostenit si `TargetType` prea general.
-- [x] Adauga teste attach/detach/reattach care numara invocarile si demonstreaza o singura subscription activa.
-- [x] Reindexeaza solutia.
+- [x] Reuses the observations resolver for `@when` and `@if`, so that all dependencies remain observed and the reevaluation respects the existing short-circuit.
+- [x] Defines the activation: each relevant passage of the branch starts the declared execution; reevaluating without change does not restart the animation.
+- [x] Resolves `@on EventName` to `IEventSymbol` on `TargetType`/base types and generates direct subscription/unsubscription `+=`/`-=`, including for routed event wrappers.
+- [x] Issue a diagnosis if the event is missing, inaccessible or the homonymous member is not an event; does not search or modify methods.
+- [x] Ignore event args in the language, according to the decision without `$event`.
+- [x] Add tests with built-in event, custom CLR event, custom routed event, inherited event and `TargetType` too general.
+- [x] Add attach/detach/reattach tests that count invocations and demonstrate a single active subscription.
+- [x] Reindex the solution.
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] Custom events functioneaza fara reflection si fara method injection.
-- [x] Dupa detach, event-ul si observations nu mai pot porni Motion.
+- [x] Custom events work without reflection and without method injection.
+- [x] After detach, the event and observations can no longer start Motion.
 
-### Etapa 4 - Emitere si lifecycle
+### Stage 4 - Issue and lifecycle
 
-- [x] Implementeaza behavior-ul runtime per Aspect cu sesiune noua la attach si cleanup idempotent la detach/dispose.
-- [x] Emite pornirea proprietatilor dintr-un `@animate` in paralel si grupeaza handles pentru cancellation la detach, fara sa schimbe semantica publicului `MotionGroupHandle`.
-- [x] Aplica `@from` prin calea Motion corecta, apoi porneste `@to` cu spec si options; evita flash-ul intermediar intre writes.
-- [x] Asigura ordinea: resources si Presence/Layout-independent properties sunt configurate inainte de attach, iar animations cer root Motion numai dupa attach.
-- [x] Adauga teste cu doua instante ale aceluiasi Aspect pentru a demonstra sessions si handles independente.
-- [x] Adauga test de replacement/detach in timpul animatiei si confirma zero active handles dupa cleanup.
-- [x] Reindexeaza solutia.
+- [x] Implements the runtime behavior per Aspect with new session at attach and idempotent cleanup at detach/dispose.
+- [x] Issue the start of properties from a `@animate` in parallel and group handles for cancellation at detach, without changing the semantics of the public `MotionGroupHandle`.
+- [x] Apply `@from` through the correct Motion path, then start `@to` with spec and options; avoid the intermediate flash between writes.
+- [x] Ensure order: resources and Presence/Layout-independent properties are configured before attach, and animations require root Motion only after attach.
+- [x] Add tests with two instances of the same Aspect to demonstrate independent sessions and handles.
+- [x] Add replacement/detach test during animation and confirm zero active handles after cleanup.
+- [x] Reindex the solution.
 
-**Gate etapa 4**
+**Gate Stage 4**
 
-- [x] Verticala hover/event din proposal ruleaza complet din markup.
-- [x] Nu exista subscriptions sau graph nodes ramase dupa 100 cicluri attach/detach.
+- [x] The vertical hover/event from the proposal runs completely from the markup.
+- [x] There are no subscriptions or graph nodes left after 100 attach/detach cycles.
 
-## 6. Verificare
+## 6. Verification
 
-- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`.
-- [x] Ruleaza testele targetate `GeneratedMarkupMotionTests` din `Cerneala.Tests`.
-- [x] Inspecteaza codul generat pentru event wiring, spec specialization si absenta reflection.
-- [x] Ruleaza `dotnet test .\Cerneala.slnx`.
-- [x] Ruleaza `git diff --check` si reindexarea finala.
+- [x] Runs `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`.
+- [x] Run the targeted tests `GeneratedMarkupMotionTests` from `Cerneala.Tests`.
+- [x] Inspect the generated code for event wiring, spec specialization and absent reflection.
+- [x] Runs `dotnet test .\Cerneala.slnx`.
+- [x] Runs `git diff --check` and the final reindexing.
 
-## 7. Definitia de gata
+## 7. The definition of ready
 
-- [x] Named si inline Aspects pot porni tween/spring animations prin stare sau events.
-- [x] `@from`, `@to`, `current`, target properties si options sunt tipizate si diagnosticate la build.
-- [x] Custom events sunt abonate direct si curatate determinist.
-- [x] API docs si documentatia conceptuala descriu exact verticala livrata.
+- [x] Named and inline Aspects can start tween/spring animations via state or events.
+- [x] `@from`, `@to`, `current`, target properties and options are typed and diagnosed at build.
+- [x] Custom events are subscribed directly and cleaned deterministically.
+- [x] API docs and conceptual documentation describe exactly the delivered vertical.

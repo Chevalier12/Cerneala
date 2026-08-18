@@ -18,22 +18,20 @@ Inheritance:
 
 ## Examples
 
-Use the motion system exposed by a root to create a graph value and advance it with a deterministic clock:
+Use the motion system exposed by a root to create a graph value and sample it with the system clock:
 
 ```csharp
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Specs;
 
-ManualMotionClock clock = new();
+SystemMotionClock clock = new();
 UIRoot root = new(motionClock: clock);
 
 MotionValue<double> opacity = root.Motion.Graph.CreateValue(0d);
 opacity.AnimateTo(1d, Motion.Tween<double>(TimeSpan.FromMilliseconds(100)));
 
-MotionFrameResult first = root.Motion.Tick(MotionFrameReason.Manual);
-clock.Advance(TimeSpan.FromMilliseconds(16));
-MotionFrameResult second = root.Motion.Tick(MotionFrameReason.Manual);
+MotionFrameResult frame = root.Motion.Tick(MotionFrameReason.Manual);
 ```
 
 Wrap animatable property mutations in a transaction:

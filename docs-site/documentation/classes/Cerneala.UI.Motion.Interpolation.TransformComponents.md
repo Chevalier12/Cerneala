@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Motion.Interpolation`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Motion/Interpolation/TransformMixer.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Motion/Interpolation/TransformMixer.cs)
+Source: `UI/Motion/Interpolation/TransformComponents.cs`
 
 Represents the component form used by `TransformMixer` when composing, decomposing, and interpolating two-dimensional transforms.
 

@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Markup`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Markup/UiMarkupTypeRegistry.cs`
+Source: `UI/Markup/UiMarkupPropertyRegistration.cs`
 
 Registers how a markup attribute value is applied to a UI element property.
 

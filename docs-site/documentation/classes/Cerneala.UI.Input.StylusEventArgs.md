@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Input`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Input/StylusInputBridge.cs`
+Source: `UI/Input/StylusEventArgs.cs`
 
 Provides routed stylus event data for a single stylus input point.
 

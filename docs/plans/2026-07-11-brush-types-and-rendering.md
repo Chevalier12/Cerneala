@@ -1,153 +1,153 @@
-# Plan: completarea modelului Brush si a randarii
+# Plan: completing the Brush model and rendering
 
-## Rezumat
+## Summary
 
-Completam sistemul `Brush` astfel incat Cerneala sa poata reprezenta si randa culori solide, gradienti, imagini, desene si vizuale. Implementarea trebuie sa acopere atat modelul de date, cat si traducerea catre backend-ul WindowsDX/MonoGame; nu este suficient sa adaugam clase care raman simple containere.
+We complete the `Brush` system so that Cerneala can represent and render solid colors, gradients, images, drawings and visuals. The implementation must cover both the data model and the translation to the WindowsDX/MonoGame backend; it is not enough to add classes that remain simple containers.
 
-La final, fiecare tip de brush acceptat de API trebuie sa aiba:
+Finally, each type of brush supported by the API must have:
 
-- validare proprie si egalitate determinista;
-- suport in markup si source generator unde are sens;
-- cache/resource lifetime corect pentru fiecare `GraphicsDevice`;
-- o cale de randare testabila prin `IDrawingBackend`;
-- teste de regresie pentru continut, clipping, opacity si transformari.
+- own validation and deterministic equality;
+- support in markup and source generator where it makes sense;
+- correct cache/resource lifetime for each `GraphicsDevice`;
+- a testable rendering path through `IDrawingBackend`;
+- regression tests for content, clipping, opacity and transformations.
 
-## Starea actuala
+## Current status
 
-Exista deja:
+There are already:
 
-- `Brush` cu `SolidColor` optional;
+- `Brush` with optional `SolidColor`;
 - `SolidColorBrush`;
 - `LinearGradientBrush`;
 - `RadialGradientBrush`;
-- `Pen` care retine un `Brush`.
+- `Pen` which retains a `Brush`.
 
-Lipsesc sau sunt incomplete:
+Missing or incomplete:
 
 - `ImageBrush`;
 - `DrawingBrush`;
 - `VisualBrush`;
-- o abstractie comuna de tip `TileBrush` pentru stretch, alignment, viewport si tile mode;
-- randarea gradientilor si a brush-urilor non-solide;
-- cache-uri GPU per fereastra pentru resursele folosite de brush-uri;
-- suport de markup pentru brush-uri compuse.
+- a common abstraction of type `TileBrush` for stretch, alignment, viewport and tile mode;
+- rendering of gradients and non-solid brushes;
+- GPU caches per window for the resources used by the brushes;
+- markup support for compound brushes.
 
-Rendererul actual deseneaza primitivele cu `Color`; gradient brush-urile existente nu ajung in backend.
+The current renderer draws primitives with `Color`; the existing gradient brushes do not reach the backend.
 
-## Decizii de arhitectura
+## Architectural decisions
 
-- `Brush` ramane API-ul semantic public; backend-ul primeste o reprezentare interna pregatita pentru device.
-- `SolidColorBrush` este calea rapida si nu creeaza resurse GPU suplimentare.
-- Gradientii sunt randati prin resurse GPU per `GraphicsDevice`, nu prin sampling CPU la fiecare pixel.
-- `ImageBrush` reutilizeaza loader-ul si cache-ul de imagini al ferestrei; niciun `Texture2D` nu este partajat intre ferestre.
-- `DrawingBrush` foloseste o lista de comenzi rasterizabila, nu un al doilea renderer general.
-- `VisualBrush` foloseste un render target offscreen si are protectie explicita impotriva ciclurilor vizuale.
-- Nu introducem dependente de WPF sau de internals MonoGame.
-- API-ul pastreaza coordonate Cerneala si aplica transformarea DPI o singura data, in acelasi loc ca restul randarii.
+- `Brush` remains the public semantic API; the backend receives an internal representation prepared for the device.
+- `SolidColorBrush` is the fast path and does not create additional GPU resources.
+- Gradients are rendered by GPU resources per `GraphicsDevice`, not by CPU sampling at each pixel.
+- `ImageBrush` reuses the loader and image cache of the window; no `Texture2D` is shared between windows.
+- `DrawingBrush` uses a rasterizable command list, not a second general renderer.
+- `VisualBrush` uses an offscreen render target and has explicit protection against visual cycles.
+- We do not introduce dependencies on WPF or MonoGame internals.
+- The API keeps coordinates Cerneala and applies the DPI transformation only once, in the same place as the rest of the rendering.
 
-## Faza 1: contract si model comun
+## Phase 1: contract and common model
 
-1. Definim contractul `Brush` pentru:
-   - identificarea tipului;
+1. We define the `Brush` contract for:
+   - type identification;
    - opacity;
-   - validarea valorilor;
-   - conversia catre o descriere interna de sampling.
-2. Introducem `TileBrush` daca proprietatile sunt comune:
+   - validation of values;
+   - conversion to an internal sampling description.
+2. Enter `TileBrush` if the properties are common:
    - `Stretch`;
-   - `AlignmentX` si `AlignmentY`;
-   - `Viewport` si `Viewbox`;
+   - `AlignmentX` and `AlignmentY`;
+   - `Viewport` and `Viewbox`;
    - `TileMode`;
    - `Opacity`.
-3. Stabilim enum-urile si valorile implicite fara a copia automat toate proprietatile WPF care nu pot fi randate in Cerneala.
-4. Pastram `SolidColor` doar ca shortcut pentru `SolidColorBrush`; brush-urile compuse returneaza `null`.
-5. Adaugam teste pentru validarea stop-urilor, radii, coordonate si egalitate structurala.
+3. We set enums and default values ​​without automatically copying all non-renderable WPF properties to Cerneala.
+4. We keep `SolidColor` only as a shortcut for `SolidColorBrush`; compound brushes return `null`.
+5. We are adding tests for the validation of stops, radii, coordinates and structural equality.
 
-## Faza 2: gradienti
+## Phase 2: gradients
 
-1. Definim formatul intern pentru gradient:
-   - lista sortata de stop-uri;
-   - premultiplicarea alpha;
-   - interpolare in spatiul decis de renderer;
-   - clamp pentru offset-uri si extensie pentru capete.
-2. Implementam in `MonoGameDrawingBackend` o reprezentare GPU comuna pentru linear si radial:
-   - textura de stop-uri sau buffer echivalent;
-   - quad/mesh cu parametrii gradientului;
-   - blending alpha compatibil cu textul si primitivele existente.
-3. Aplicam corect `Clip`, `Opacity`, `RenderTransform` si `CoordinateScale`.
-4. Tratam gradientii degenerati predictibil: un singur stop, lungime zero, radii invalide sau stop-uri duplicate.
-5. Adaugam imagini de referinta si pixel diffs pentru linear/radial la scale 1.0, 1.25 si 1.5.
+1. We define the internal format for the gradient:
+   - sorted list of stops;
+   - alpha premultiplication;
+   - interpolation in the space decided by the renderer;
+   - clamp for offsets and extension for heads.
+2. We implement in `MonoGameDrawingBackend` a common GPU representation for linear and radial:
+   - stop texture or equivalent buffer;
+   - quad/mesh with gradient parameters;
+   - alpha blending compatible with existing text and primitives.
+3. We correctly apply `Clip`, `Opacity`, `RenderTransform` and `CoordinateScale`.
+4. We treat degenerate gradients predictably: single stop, zero length, invalid radii or duplicate stops.
+5. We add reference images and pixel diffs for linear/radial at scales 1.0, 1.25 and 1.5.
 
-## Faza 3: ImageBrush
+## Phase 3: ImageBrush
 
-1. Introducem `ImageBrush` cu:
-   - sursa (`IDrawImage` sau URI/path rezolvat prin loader);
-   - `Stretch`, alignment, viewport si tile mode;
+1. Enter `ImageBrush` with:
+   - source (`IDrawImage` or URI/path resolved by loader);
+   - `Stretch`, alignment, viewport and tile mode;
    - opacity;
-   - comportament explicit pentru imagine lipsa sau invalida.
-2. Separaram datele CPU de textura GPU:
-   - decoded image/cache CPU partajabil;
-   - `Texture2D` creat per sesiune/fereastra;
-   - invalidare cand sursa se schimba.
-3. Implementam sampling si tiling in backend, inclusiv clipping si DPI.
-4. Adaugam teste pentru aspect ratio, crop, repeat, mirror si device isolation.
+   - explicit behavior for missing or invalid image.
+2. We separate the CPU data from the GPU texture:
+   - decoded image/sharable CPU cache;
+   - `Texture2D` created per session/window;
+   - invalidation when the source changes.
+3. We implement sampling and tiling in the backend, including clipping and DPI.
+4. We are adding tests for aspect ratio, crop, repeat, mirror and device isolation.
 
-## Faza 4: DrawingBrush
+## Phase 4: DrawingBrush
 
-1. Stabilim forma publica a continutului: lista de `DrawCommand` sau un obiect de desen imutabil.
-2. Definim limite clare:
-   - fara acces la `UIElement` din `DrawingBrush`;
-   - fara efecte care cer cicluri de layout;
-   - continutul trebuie sa fie sigur de re-randat.
-3. Rasterizam continutul intr-un render target/textura cache-uita per device.
-4. Aplicam tile, transform, opacity si clip peste continutul rasterizat.
-5. Testam ca schimbarea unei comenzi invalideaza doar brush-ul afectat.
+1. We establish the public form of the content: the list of `DrawCommand` or an immutable drawing object.
+2. We define clear limits:
+   - no access to `UIElement` from `DrawingBrush`;
+   - no effects that require layout cycles;
+   - the content must be safe to re-render.
+3. We rasterize the content in a cached render target/texture per device.
+4. We apply tile, transform, opacity and clip over the rasterized content.
+5. We test that changing a command invalidates only the affected brush.
 
-## Faza 5: VisualBrush
+## Phase 5: VisualBrush
 
-1. Definim daca sursa este un `UIElement` existent sau un template separat; prima versiune foloseste un element existent.
-2. Introducem un render pass offscreen explicit, separat de frame-ul principal.
-3. Detectam cicluri de tip `VisualBrush -> element -> brush` si esuam controlat, fara recursie infinita.
-4. Stabilim politica pentru elemente detached, resurse, input si focus: `VisualBrush` este doar vizual.
-5. Cache-uim render target-ul pe device si invalidam la schimbari de layout, proprietati sau continut.
-6. Adaugam teste pentru sursa proprie, sursa parinte, cicluri si schimbari de dimensiune.
+1. We define if the source is an existing `UIElement` or a separate template; the first version uses an existing element.
+2. We introduce an explicit render pass offscreen, separated from the main frame.
+3. We detect cycles of type `VisualBrush -> element -> brush` and fail controlled, without infinite recursion.
+4. We establish the policy for detached elements, resources, input and focus: `VisualBrush` is only visual.
+5. We cache the render target on the device and invalidate it when layout, properties or content changes.
+6. We add tests for own source, parent source, cycles and size changes.
 
-## Faza 6: markup si resurse
+## Phase 6: markup and resources
 
-1. Extindem schema runtime si source generator-ul pentru:
+1. We extend the runtime scheme and the source generator for:
    - `<SolidColorBrush ... />`;
    - `<LinearGradientBrush ...>`;
    - `<RadialGradientBrush ...>`;
    - `<ImageBrush ...>`;
-   - `<DrawingBrush ...>`;
+- `<DrawingBrush ...>`;
    - `<VisualBrush ...>`.
-2. Permitem proprietati simple pentru brush (`Color`, `Opacity`, stop-uri, sursa) si proprietate-element unde continutul este compus.
-3. Facem referintele de resurse tip-safe: `$Accent` trebuie sa produca `Brush`, nu sa fie fortat in `Color`.
-4. Pastreaza diagnosticele pentru tipuri incompatibile, stop-uri lipsa, surse necunoscute si combinatii imposibile.
-5. Documentam ce sintaxa este compilata si ce sintaxa ramane runtime-only.
+2. We allow simple brush properties (`Color`, `Opacity`, stops, source) and element-property where the content is composed.
+3. We make resource references type-safe: `$Accent` must produce `Brush`, not be forced into `Color`.
+4. Keep diagnostics for incompatible types, missing stops, unknown sources and impossible combinations.
+5. We document which syntax is compiled and which syntax remains runtime-only.
 
-## Faza 7: integrare cu backend-urile si lifetime
+## Phase 7: integration with backends and lifetime
 
-1. Extindem `IDrawingBackend` cu operatii interne pentru brush, fara sa rupem API-ul public al `DrawingContext`.
-2. Mutam toate resursele GPU brush in ownership-ul sesiunii grafice a ferestrei.
-3. Eliberam render target-uri, texturi si cache-uri la `Dispose`, resize si device reset.
-4. Verificam ca doua ferestre pot folosi aceeasi descriere Brush fara sa partajeze obiecte GPU.
-5. Pastram fallback-ul solid pentru backend-uri care nu suporta inca brush-uri compuse si raportam diagnostic clar.
+1. We extend `IDrawingBackend` with internal operations for the brush, without breaking the public API of `DrawingContext`.
+2. We move all the GPU brush resources into the ownership of the graphic session of the window.
+3. We release render targets, textures and caches to `Dispose`, resize and device reset.
+4. We verify that two windows can use the same Brush description without sharing GPU objects.
+5. We keep the solid fallback for backends that do not yet support compound brushes and we report clear diagnosis.
 
-## Testare si acceptanta
+## Testing and acceptance
 
-- teste unitare pentru fiecare model Brush si proprietatile comune;
-- teste source generator si runtime markup pentru toate tipurile;
-- teste de render pentru culoare, alpha, clipping, transform si DPI;
-- pixel diffs pentru linear, radial si image brush;
-- teste de lifetime per `GraphicsDevice` si device reset;
-- teste de cicluri si invalidare pentru `VisualBrush`;
-- build fara warnings si suitele runtime/sourcegen complet verzi;
-- documentatie API actualizata si niciun tip Brush declarat dar nerandabil fara un diagnostic explicit.
+- unit tests for each Brush model and common properties;
+- source generator and runtime markup tests for all types;
+- render tests for color, alpha, clipping, transform and DPI;
+- pixel diffs for linear, radial and image brush;
+- lifetime tests per `GraphicsDevice` and device reset;
+- cycle tests and invalidation for `VisualBrush`;
+- build without warnings and completely green runtime/sourcegen suites;
+- updated API documentation and no Brush type declared but unrenderable without an explicit diagnosis.
 
-## Non-obiective
+## Non-objectives
 
-- compatibilitate binara cu o implementare WPF;
-- efecte WPF care cer compozitor separat;
-- shader-e arbitrare expuse utilizatorului in prima versiune;
-- partajarea resurselor GPU intre ferestre;
-- schimbarea proprietatilor `Background` si `Foreground` in acest plan.
+- binary compatibility with a WPF implementation;
+- WPF effects that require a separate composer;
+- arbitrary shaders exposed to the user in the first version;
+- sharing GPU resources between windows;
+- the change of properties `Background` and `Foreground` in this plan.

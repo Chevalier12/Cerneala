@@ -1,124 +1,124 @@
-# Prism — culoare, blending și stiluri Photoshop
+# Prism — color, blending and Photoshop styles
 
-## Scop
+## Purpose
 
-Livrează semantica de culoare, blending, măști și cele zece familii de layer
-styles aprobate, peste compozitorul GPU funcțional.
+It delivers color semantics, blending, masks and the ten layer families
+approved styles, over working GPU composer.
 
-**Dependențe:** `2026-07-18-prism-markup-motion-and-lifecycle.md` și
+**Dependencies:** `2026-07-18-prism-markup-motion-and-lifecycle.md` and
 `2026-07-18-prism-monogame-compositor.md`.
 
-## Etapa 0 — matricea de acoperire
+## Stage 0 — coverage matrix
 
-- [x] Generează din catalog matricea completă pentru color profiles, blend
-  modes, advanced blending, `BlendIf`, masks, clipping și style types.
-- [x] Adaugă pentru fiecare intrare cel puțin un test semantic RED și un caz
-  vizual reprezentativ; testele nu repetă manual defaults din catalog.
-- [x] Definește golden contractul: dimensiune, format, alpha premultiplicat,
-  profil de culoare, seed, toleranță per canal și hardware/driver suportat.
-- [x] Adaugă imagini analitice mici pentru cazurile în care rezultatul poate fi
-  calculat exact, nu doar screenshot-uri „arată bine”.
+- [x] Generates the complete matrix for color profiles, blend from the catalog
+  modes, advanced blending, `BlendIf`, masks, clipping and style types.
+- [x] Add for each entry at least one RED semantic test and one case
+  visually representative; the tests do not manually repeat defaults from the catalog.
+- [x] Defines the golden contract: size, format, premultiplied alpha,
+  color profile, seed, tolerance per channel and supported hardware/driver.
+- [x] Add small analytical images for cases where the result can be
+  calculated exactly, not just "look good" screenshots.
 
-### Gate etapa 0
+### Gate stage 0
 
-- [x] Matricea eșuează automat dacă o intrare din catalog nu are kernel, test și
-  documentație asociată.
+- [x] Array automatically fails if a catalog entry has no kernel, test and
+  associated documentation.
 
-## Etapa 1 — pipeline de culoare și alpha
+## Stage 1 — color and alpha pipeline
 
-- [x] Implementează conversiile generate pentru `LinearSrgb` implicit și
-  profilurile selectabile aprobate, la intrarea și ieșirea compoziției.
-- [x] Definește o singură convenție internă pentru alpha premultiplicat și
-  aplic-o în capture, filters, styles, masks, blends și present.
-- [x] Separă `Opacity` de `Fill` astfel încât layer styles să urmeze semantica
+- [x] Implements the conversions generated for `LinearSrgb` by default and
+  approved selectable profiles at composition entry and exit.
+- [x] Defines a single internal convention for premultiplied alpha and
+  apply it in capture, filters, styles, masks, blends and present.
+- [x] Separates `Opacity` from `Fill` so that layer styles follow the semantics
   Photoshop.
-- [x] Testează culori transparente, edge pixels, zero/unu alpha, round-trip,
-  compoziții nested cu profil diferit și lipsa double conversion.
-- [x] Verifică diferențele CPU/GPU pe vectori de referință și documentează
-  toleranța numerică justificată.
+- [x] Test transparent colors, edge pixels, zero/one alpha, round-trip,
+  nested compositions with different profile and lack of double conversion.
+- [x] Check CPU/GPU differences on reference vectors and document
+  justified numerical tolerance.
 
-### Gate etapa 1
+### Gate stage 1
 
-- [x] Toate kernelurile fundamentale au aceeași convenție de culoare/alpha, iar
-  testele detectează halo-uri și aplicarea dublă a gamma.
+- [x] All fundamental kernels have the same color/alpha convention, and
+  tests detect halos and double application of gamma.
 
-## Etapa 2 — blending Photoshop
+## Stage 2 — Photoshop blending
 
-- [x] Implementează toate blend modes declarate în catalog, grupate prin
-  primitive comune generate, nu prin shader separat copiat pentru fiecare mod.
-- [x] Implementează advanced blending și `BlendIf` cu canalele, pragurile și
-  tranzițiile definite în proposal/catalog.
-- [x] Respectă izolarea grupului și `PassThrough`, ordinea bottom-up și
-  combinația distinctă dintre layer opacity și fill.
-- [x] Adaugă teste analitice pentru fiecare blend mode pe pixeli opaci,
-  transparenți și parțial transparenți.
-- [x] Adaugă conformance vizual pentru combinații de grup, mask, clipping chain,
-  styles și blend modes nontriviale.
+- [x] Implements all blend modes declared in the catalog, grouped by
+  common primitives generated, not by separate shader copied for each mode.
+- [x] Implements advanced blending and `BlendIf` with channels, thresholds and
+  the transitions defined in the proposal/catalogue.
+- [x] Respects group isolation and `PassThrough`, bottom-up order and
+  the distinct combination of layer opacity and fill.
+- [x] Add analytical tests for each blend mode on opaque pixels,
+  transparent and partially transparent.
+- [x] Adds visual conformance for group, mask, clipping chain combinations,
+  nontrivial styles and blend modes.
 
-### Gate etapa 2
+### Gate stage 2
 
-- [x] Fiecare blend mode din catalog are kernel și test verde, fără fallback
-  silențios la `Normal`.
+- [x] Each blend mode in the catalog has kernel and green test, without fallback
+  silent at `Normal`.
 
-## Etapa 3 — măști și clipping
+## Step 3 — masks and clipping
 
-- [x] Implementează masca reală de layer, transformul ei, opacity/density,
-  invert și feather conform proprietăților catalogului.
-- [x] Implementează `ClipToBelow` ca lanț de alpha al layerului inferior,
-  independent de mask și fără a transforma layerul într-un container.
-- [x] Optimizează cazurile mask identitate/zero și clipping absent numai după
-  testele de echivalență.
-- [x] Extinde bounds pentru feather și verifică sampling la margini fără a
-  schimba layout-ul sau hitbox-ul.
-- [x] Adaugă golden-uri pentru mask + style, mask + transform, clipping chain și
-  grupuri nested.
+- [x] Implements the real layer mask, its transform, opacity/density,
+invert and feather according to catalog properties.
+- [x] Implements `ClipToBelow` as lower layer alpha chain,
+  independent of the mask and without turning the layer into a container.
+- [x] Optimize the mask identity/zero cases and clipping absent only after
+  equivalence tests.
+- [x] Extend bounds for feather and check sampling at edges without a
+  change the layout or hitbox.
+- [x] Add goldens for mask + style, mask + transform, clipping chain and
+  nested groups.
 
-### Gate etapa 3
+### Gate stage 3
 
-- [x] Mask și clipping au rezultate distincte, corecte și stabile, inclusiv la
-  alpha parțial și bounds extinse.
+- [x] Mask and clipping have distinct, correct and stable results, including at
+  partial alpha and extended bounds.
 
-## Etapa 4 — layer styles
+## Stage 4 — layer styles
 
-- [x] Implementează primitive interne comune pentru distance/edge field,
-  contour, gradient/pattern sampling și compositing; fiecare style își declară
-  doar planul specific.
-- [x] Declară determinismul, cacheability și versiunile resurselor pentru fiecare
-  style/primitive, generate din catalog și consumate de dependency stamp.
-- [x] Implementează din catalog `DropShadow`, `InnerShadow`, `OuterGlow`,
+- [x] Implements common internal primitives for distance/edge field,
+  contour, gradient/pattern sampling and compositing; each style declares itself
+  only the specific plan.
+- [x] Declare determinism, cacheability and resource versions for each
+  style/primitives, generated from the catalog and consumed by the stamp dependency.
+- [x] Implement from catalog `DropShadow`, `InnerShadow`, `OuterGlow`,
   `InnerGlow`, `BevelEmboss`, `Satin`, `ColorOverlay`, `GradientOverlay`,
-  `PatternOverlay` și `Stroke`.
-- [x] Respectă ordinea Photoshop dintre style-uri, `Fill`, layer content și
-  opacity, inclusiv style-urile multiple de același tip dacă proposal-ul le
-  permite.
-- [x] Calculează bounds pentru shadow/glow/bevel/stroke prin aceleași primitive
-  folosite de optimizer; nu dubla formulele în backend și analyzer.
-- [x] Adaugă teste pentru toate proprietățile/defaults generate și golden-uri
-  pentru fiecare familie, plus combinații mask/clipping/blend.
+  `PatternOverlay` and `Stroke`.
+- [x] Respect the Photoshop order between styles, `Fill`, layer content and
+  opacity, including multiple styles of the same type if the proposal them
+  allows.
+- [x] Calculate bounds for shadow/glow/bevel/stroke using the same primitives
+  used by the optimizer; don't duplicate formulas in backend and analyzer.
+- [x] Add tests for all generated properties/defaults and goldens
+  for each family, plus mask/clipping/blend combinations.
 
-### Gate etapa 4
+### Gate stage 4
 
-- [x] Toate cele zece familii din catalog sunt implementate, animate prin
-  sloturile tipate și acoperite de teste fără shader/source duplicat inutil.
+- [x] All ten families in the catalog are implemented, animated by
+  slots typed and covered by tests without unnecessary duplicate shader/source.
 
-## Etapa 5 — performanță și verificare
+## Stage 5 — performance and verification
 
-- [x] Profilează scene cu multe layer styles și dovedește reuse-ul suprafețelor,
-  absența readbackului și zero alocări managed după warmup.
-- [x] Verifică optimizerul: elimină styles invizibile/no-op, dar păstrează
-  ordinea și alpha pentru toate combinațiile testate.
-- [x] Actualizează documentația publică cu skill-ul
-  `writing-api-documentation` și manifestul pentru tipurile/proprietățile
-  expuse.
-- [x] Rulează reindexarea după fiecare lot C#/proiect.
-- [x] Rulează
-  `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "PrismColor|PrismBlend|PrismStyle|PrismMask"`
-  și `dotnet test .\Cerneala.slnx`.
-- [x] Rulează toate capturile prin API-ul automatizat și `git diff --check`.
+- [x] Profiles scenes with many layer styles and proves the reuse of surfaces,
+  absence of readback and zero managed allocations after warmup.
+- [x] Check optimizer: remove invisible/no-op styles but keep
+  order and alpha for all combinations tested.
+- [x] Updates the public documentation with the skill
+  `writing-api-documentation` and the manifest for the types/properties
+  exposed.
+- [x] Run reindexing after every C# batch/project.
+- [x] Running
+  ZZZ BLACK30ZZZ
+  and `dotnet test .\Cerneala.slnx`.
+- [x] Run all captures through the automated API and `git diff --check`.
 
-## Definiția de gata
+## The definition of done
 
-- [x] Matricea catalogului este completă pentru culoare, blending, masks,
-  clipping și toate style-urile.
-- [x] Conformance analitic și vizual, performanța, API docs și gate-urile sunt
-  verzi.
+- [x] The catalog matrix is complete for color, blending, masks,
+  clipping and all styles.
+- [x] Analytical and visual conformance, performance, API docs and gates are
+  green

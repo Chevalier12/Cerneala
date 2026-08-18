@@ -31,7 +31,7 @@ toggle.IsChecked = true;
 
 ## Remarks
 
-`ToggleButton` registers a mouse-up handler in its constructor. When the routed mouse event is a completed left-button click, the control calls `OnToggle`, which flips `IsChecked`.
+`ToggleButton` inherits release activation from `ButtonBase`. When `ButtonBase` receives a completed left-button mouse-up, it invokes the overridden `OnClick`; `ToggleButton` first calls `OnToggle`, raises `Checked` or `Unchecked` for the resulting state, and then lets the base implementation raise `Click`.
 
 `IsChecked` is backed by a `UiProperty<bool>` with a default value of `false`. Its metadata uses `AffectsRender` and `AffectsInputVisual`, so changing the checked state invalidates visual output relevant to rendering and input visuals.
 
@@ -41,12 +41,14 @@ Derive from `ToggleButton` and override `OnToggle` when a custom toggle policy i
 
 | Name | Description |
 | --- | --- |
-| `ToggleButton()` | Initializes a toggle button and registers the mouse-up handler that drives click toggling. |
+| `ToggleButton()` | Initializes a toggle button using `ButtonBase`'s focus, cursor, and mouse-up activation behavior. |
 
 ## Fields
 
 | Name | Description |
 | --- | --- |
+| `CheckedEvent` | Identifies the bubbling `Checked` event. |
+| `UncheckedEvent` | Identifies the bubbling `Unchecked` event. |
 | `IsCheckedProperty` | Identifies the `IsChecked` UI property. The default value is `false`; metadata affects render and input visuals. |
 
 ## Properties
@@ -60,6 +62,14 @@ Derive from `ToggleButton` and override `OnToggle` when a custom toggle policy i
 | Name | Description |
 | --- | --- |
 | `OnToggle()` | Flips `IsChecked`. Override this method to customize checked-state transitions. |
+| `OnClick()` | Toggles the state, raises `Checked` or `Unchecked`, and then delegates to `ButtonBase.OnClick()` to raise `Click`. |
+
+## Events
+
+| Name | Event Type | Description |
+| --- | --- | --- |
+| `Checked` | `RoutedEventHandler` | Occurs after `IsChecked` changes to `true` during activation. |
+| `Unchecked` | `RoutedEventHandler` | Occurs after `IsChecked` changes to `false` during activation. |
 
 ## Applies to
 

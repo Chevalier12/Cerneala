@@ -1,94 +1,94 @@
-# Plan: composition, MotionClip si execution handles
+# Plan: composition, MotionClip and execution handles
 
-> Data: 2026-07-15
-> Status: finalizat
-> Dependenta: `docs/plans/2026-07-15-motion-markup-foundation.md`
-> Scop: adaugam composition explicita, retete reutilizabile si cancellation per Aspect fara sa inventam un runtime `MotionClip`.
+> Date: 2026-07-15
+> Status: completed
+> Dependency: `docs/plans/2026-07-15-motion-markup-foundation.md`
+> Purpose: we add explicit composition, reusable recipes and cancellation per Aspect without inventing a `MotionClip` runtime.
 
-## 1. Baseline si constrangere reala
+## 1. Baseline and real constraint
 
-Runtime-ul are `MotionGroup.Parallel(MotionHandle[])`, `MotionSequence.Start(Func<MotionHandle>[])` si `MotionGroupHandle`. Aceste API-uri nu pot reprezenta direct un arbore arbitrar in care group handles sunt copii ai altor groups. Generatorul trebuie sa aiba un adaptor de execution propriu, cu un contract unificat peste leaf si group handles, fara sa pretinda ca `MotionGroupHandle` are `Complete()` public sau cancellation modes.
+The runtime has `MotionGroup.Parallel(MotionHandle[])`, `MotionSequence.Start(Func<MotionHandle>[])` and `MotionGroupHandle`. These APIs cannot directly represent an arbitrary tree in which group handles are children of other groups. The generator must have its own execution adapter, with a unified contract over leaf and group handles, without claiming that `MotionGroupHandle` has `Complete()` public or cancellation modes.
 
-## 2. Arhitectura propusa
+## 2. The proposed architecture
 
-- `MarkupMotionExecution` din bridge-ul `GeneratedMarkup` unifica `Completion`, `Cancel` si terminal state pentru codul generat, adaptand `MotionHandle` si `MotionGroupHandle`.
-- `@parallel` si `@sequence` compun acest adaptor; nu schimba API-ul general Motion daca adaptorul generator-owned este suficient.
-- `MotionClip` este compilat ca factory/recipe tipizata in generated code. Declaratia resource este imutabila si nu detine subscriptions sau handles.
-- Fiecare `@run` creeaza o execution noua. `@handle` este un slot per sesiune de Aspect, nu un nume global.
+- `MarkupMotionExecution` from the bridge `GeneratedMarkup` unifies `Completion`, `Cancel` and terminal state for the generated code, adapting `MotionHandle` and `MotionGroupHandle`.
+- `@parallel` and `@sequence` compose this adapter; do not change the general Motion API if the generator-owned adapter is sufficient.
+- `MotionClip` is compiled as a factory/recipe typed in generated code. The resource declaration is immutable and does not have subscriptions or handles.
+- Each `@run` creates a new execution. `@handle` is a per-session Aspect slot, not a global name.
 
-## 3. Etape de implementare
+## 3. Implementation stages
 
-### Etapa 0 - RED pentru composition
+### Stage 0 - RED for composition
 
-- [x] Adauga teste RED pentru `@parallel`, `@sequence` si nesting in ambele directii.
-- [x] Adauga teste RED pentru completion ordering, cancel in mijlocul sequence si zero-step/one-step edge cases.
-- [x] Adauga un test care demonstreaza ca runtime API-urile actuale nu pot fi fortate prin casts sau polling; foloseste adaptorul explicit.
-- [x] Adauga teste de lifecycle: detach anuleaza copiii activi si nu porneste pasii viitori ai unei sequence.
-- [x] Reindexeaza solutia.
+- [x] Add RED tests for `@parallel`, `@sequence` and nesting in both directions.
+- [x] Add RED tests for completion ordering, cancel in the middle of the sequence and zero-step/one-step edge cases.
+- [x] Add a test that demonstrates that the current runtime APIs cannot be forced by casts or polling; use the adapter explicitly.
+- [x] Add lifecycle tests: detach cancels active children and does not start future steps of a sequence.
+- [x] Reindex the solution.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Modelul de execution are o singura semantica pentru leaf/group si nu expune operatii inexistente precum generic `Complete`.
+- [x] The execution model has only one semantic for leaf/group and does not expose non-existent operations like generic `Complete`.
 
-### Etapa 1 - Execution tree
+### Stage 1 - Execution tree
 
-- [x] Extinde AST-ul cu un `execution-body` recursiv pentru `@animate`, `@parallel` si `@sequence`.
-- [x] Impune cel putin un copil pentru groups si diagnostics precise pentru siblings plasati fara composition explicita.
-- [x] Implementeaza adaptorul runtime cu cancel idempotent, completion exact o data si fara continuations care tin sesiunea vie dupa detach.
-- [x] Emite parallel astfel incat completion asteapta toti copiii; emite sequence astfel incat urmatorul copil porneste numai dupa completare naturala.
-- [x] Propaga cancellation fara a inventa selectable cancel behavior pentru `MotionGroupHandle`.
-- [x] Reindexeaza solutia.
+- [x] Extend the AST with a recursive `execution-body` for `@animate`, `@parallel` and `@sequence`.
+- [x] Requires at least one child for groups and precise diagnostics for siblings placed without explicit composition.
+- [x] Implements the runtime adapter with idempotent cancel, completion exactly once and without continuations that keep the session alive after detach.
+- [x] Issue in parallel so that completion waits for all children; emits sequence so that the next child starts only after natural completion.
+- [x] Propagate cancellation without inventing selectable cancel behavior for `MotionGroupHandle`.
+- [x] Reindex the solution.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] Arbori nested functioneaza si se curata determinist.
-- [x] Existing `MotionGroupTests` si toate testele Motion core raman GREEN.
+- [x] Nested trees work and clean up deterministically.
+- [x] Existing `MotionGroupTests` and all Motion core tests remain GREEN.
 
-### Etapa 2 - MotionClip resources
+### Stage 2 - MotionClip resources
 
-- [x] Parseaza `<MotionClip Name TargetType>` in resource scopes si cere exact un top-level execution body.
-- [x] Respinge `@when`, `@on`, `@run` si al doilea body in interiorul clipului.
-- [x] Rezolva target properties si `$part` la fiecare application/run site, cu assignability fata de `TargetType`.
-- [x] Emite reteta ca factory fara runtime class `MotionClip`, fara subscriptions si fara stare partajata.
-- [x] Implementeaza `@run $Clip` ca execution leaf numai in Aspect.
-- [x] Adauga diagnostics pentru clip lipsa, wrong target, recursive invocation si direct assignment pe control.
-- [x] Reindexeaza solutia.
+- [x] Parse `<MotionClip Name TargetType>` in resource scopes and ask for exactly one top-level execution body.
+- [x] Rejects `@when`, `@on`, `@run` and the second body inside the clip.
+- [x] Resolve target properties and `$part` for each application/run site, with assignability to `TargetType`.
+- [x] Issue the recipe as factory without runtime class `MotionClip`, without subscriptions and without shared state.
+- [x] Implements `@run $Clip` as execution leaf only in Aspect.
+- [x] Add diagnostics for missing clip, wrong target, recursive invocation and direct assignment on control.
+- [x] Reindex the solution.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Doua instante si doua rulari simultane ale aceluiasi clip nu impart handles sau valori mutable.
-- [x] Resource lookup este rezolvat la build, nu prin dictionary lookup pe fiecare run.
+- [x] Two instances and two simultaneous runs of the same clip do not share handles or mutable values.
+- [x] Resource lookup is solved at build, not by dictionary lookup on each run.
 
-### Etapa 3 - Parametri tipizati
+### Stage 3 - Typed parameters
 
-- [x] Parseaza `@parameter Name: Type = default` numai la inceputul unui MotionClip.
-- [x] Limiteaza tipurile la valori/specs pe care resolverul le poate valida static; respinge duplicate, defaults incompatibile si parametri nefolosibili.
-- [x] Emite parametri immutable per execution si valideaza named arguments, required arguments si duplicate arguments.
-- [x] Permite parametri in values, specs, counts, ranges si options numai unde tipul rezultat ramane cunoscut.
-- [x] Adauga teste pentru spec parameter XML-safe `MotionSpec[float]`, numeric parameter, default si diagnostics.
-- [x] Reindexeaza solutia.
+- [x] Parse `@parameter Name: Type = default` only at the beginning of a MotionClip.
+- [x] Limits types to values/specs that the resolver can statically validate; rejects duplicates, incompatible defaults and unusable parameters.
+- [x] Issue immutable parameters per execution and validate named arguments, required arguments and duplicate arguments.
+- [x] Allows parameters in values, specs, counts, ranges and options only where the resulting type remains known.
+- [x] Add tests for spec parameter XML-safe `MotionSpec[float]`, numeric parameter, default and diagnostics.
+- [x] Reindex the solution.
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] Niciun parametru nu devine `object` sau dynamic in codul generat.
+- [x] No parameter becomes `object` or dynamic in the generated code.
 
-### Etapa 4 - Handles si cancellation
+### Stage 4 - Handles and cancellation
 
-- [x] Parseaza `@handle Name`, `@run $Clip as Name` si `@cancel Name` numai in Aspect.
-- [x] Creeaza sloturile per sesiune; un nou `@run ... as` anuleaza execution-ul anterior inainte de replacement.
-- [x] Anuleaza toate sloturile la detach si elimina referintele la execution terminate.
-- [x] Emite diagnostics pentru handle nedeclarat, duplicate, use-before-declaration si `@cancel` in MotionClip.
-- [x] Adauga stress test cu restart/cancel repetat si verifica Motion graph + memorie stabilizata dupa GC.
-- [x] Reindexeaza solutia.
+- [x] Parse `@handle Name`, `@run $Clip as Name` and `@cancel Name` in Aspect only.
+- [x] Creates the slots per session; a new `@run ... as` cancels the previous execution before replacement.
+- [x] Cancels all slots at detach and removes references to finished execution.
+- [x] Issue diagnostics for undeclared handles, duplicates, use-before-declaration and `@cancel` in MotionClip.
+- [x] Add stress test with repeated restart/cancel and check Motion graph + stabilized memory after GC.
+- [x] Reindex the solution.
 
-**Gate etapa 4**
+**Gate Stage 4**
 
-- [x] Handles nu ies din instanta Aspectului si nu exista generic `@complete`.
+- [x] Handles do not come out of the Aspect instance and there is no generic `@complete`.
 
-## 4. Verificare si definitia de gata
+## 4. Verification and definition ready
 
-- [x] Ruleaza suitele sourcegen si runtime Motion targetate.
-- [x] Inspecteaza generated code pentru un clip parametrizat nested si confirma factory nou per run.
-- [x] Ruleaza `dotnet test .\Cerneala.slnx`, `git diff --check` si reindexarea finala.
-- [x] Composition nested, MotionClip single-body, parameters si handles respecta exact grammar-ul proposal-ului.
-- [x] API docs sunt actualizate pentru orice bridge public nou.
+- [x] Runs targeted sourcegen and runtime Motion suites.
+- [x] Inspect the generated code for a nested parameterized clip and confirm new factory per run.
+- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check` and the final reindex.
+- [x] Composition nested, MotionClip single-body, parameters and handles exactly respect the grammar of the proposal.
+- [x] API docs are updated for any new public bridge.

@@ -6,6 +6,16 @@ Product vision: **WPF 2026**, not WPF 2000. Cerneala should keep the WPF ideas t
 
 The UI tree is retained. The game loop may call update and draw every frame, but Cerneala should not recompute layout or regenerate drawing commands unless invalidated state requires it.
 
+> **Current status (2026-08-18):** the retained UI pipeline, typed properties,
+> layout/render scheduling, Aspect, Motion and Prism layers are implemented in
+> the current tree. The shared `.crn` language, language server, Visual Studio
+> Community host and external consumer fixture are also present. This roadmap
+> remains a maturity ledger: checked items describe delivered evidence, while
+> unchecked or legacy path names are deferred work and are not promises about a
+> future WPF-compatible surface. See `docs/architecture-v2.md`,
+> `docs/language-server.md` and `docs/visual-studio-community.md` for current
+> contracts.
+
 Legend:
 
 - `[x]` Exists now at the maturity claimed by the line text.

@@ -1,10 +1,10 @@
 # Prism visual style algorithm checklist
 
-`HasModernAlgorithm = true` inseamna ca implementarea curenta are un algoritm
-vizual coerent, distinct si suficient de solid pentru un produs. Nu inseamna
-paritate pixel-perfect cu Photoshop. Verdictul este intentionat strict:
-aproximarile neverificate, parametrii fara efect si implementarile generice
-mascate sub nume distincte sunt `false`.
+`HasModernAlgorithm = true` means that the current implementation has an algorithm
+visually coherent, distinct and solid enough for a product. It doesn't mean
+pixel-perfect parity with Photoshop. The verdict is strictly intended:
+unverified approximations, parameters without effect and generic implementations
+disguised under distinct names are `false`.
 
 [x] DropShadow true
 [x] InnerShadow true

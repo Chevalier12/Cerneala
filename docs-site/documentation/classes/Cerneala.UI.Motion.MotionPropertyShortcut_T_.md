@@ -6,7 +6,7 @@ Namespace: `Cerneala.UI.Motion`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Motion/MotionAnimationBuilder.cs`
+Source: `UI/Motion/MotionPropertyShortcut.cs`
 
 Provides a fluent shortcut for animating or scroll-binding one predefined `UiProperty<T>` on a `UIElement`.
 

@@ -1,74 +1,73 @@
-# Plan: Scroll timelines, Drag si Gesture din Aspect markup
+# Plan: Scroll timelines, Drag and Gesture from Aspect markup
 
-> Data: 2026-07-15
-> Status: finalizat
-> Dependenta: `docs/plans/2026-07-15-motion-markup-foundation.md`
-> Scop: legam input-ul semantic si scroll progress la Motion fara `$event`, polling inutil sau subscription leaks.
+> Date: 2026-07-15
+> Status: completed
+> Dependency: `docs/plans/2026-07-15-motion-markup-foundation.md`
+> Goal: link semantic input and scroll progress to Motion without `$event`, unnecessary polling or subscription leaks.
 
-## 1. Baseline si defecte relevante
+## 1. Baselines and relevant defects
 
-`ScrollTimeline` produce vertical/horizontal normalized progress, dar cere `Update()`. `ScrollMotionBinding<T>` se aboneaza la progress in constructor si pastreaza listeners fara un contract de unbind/dispose. `DragMotionController` pastreaza doua subscriptions, dar nu implementeaza disposal. Acestea sunt bug-uri reale de lifecycle care blocheaza wiring-ul markup repetabil.
+`ScrollTimeline` produces vertical/horizontal normalized progress, but requires `Update()`. `ScrollMotionBinding<T>` subscribes to progress in the constructor and keeps listeners without a unbind/dispose contract. `DragMotionController` keeps two subscriptions, but does not implement disposal. These are real lifecycle bugs that block repeatable markup wiring.
 
-## 2. Etape de implementare
+## 2. Implementation stages
 
-### Etapa 0 - RED si reparatii runtime
+### Stage 0 - RED and runtime repairs
 
-- [x] Adauga teste RED pentru disposal `ScrollMotionBinding`: dupa unbind/detach, progress nu mai scrie proprietatea si listener count nu creste la reattach.
-- [x] Introdu un contract idempotent de unbind/dispose pentru scroll binding si pastreaza subscription-ul la progress pentru eliberare.
-- [x] Adauga teste RED pentru `DragMotionController` disposal si reattach; confirma ca vechile `DragX/DragY` nu mai scriu elementul.
-- [x] Repara controllerul Drag sa detina si sa elibereze subscriptions si active handles fara sa schimbe semantica Begin/Move/End.
-- [x] Verifica daca `ScrollTimeline` necesita disposal pentru graph values/event wiring si implementeaza ownership-ul minim real. (Nu necesita disposal propriu: valorile idle nu sunt graph work; bindings detin si elibereaza singurul event wiring.)
-- [x] Actualizeaza toate paginile API public afectate si manifestul daca este cazul. (Manifestul nu necesita schimbare: nu au fost adaugate sau redenumite pagini.)
-- [x] Reindexeaza solutia.
+- [x] Add RED tests for disposal `ScrollMotionBinding`: after unbind/detach, progress no longer writes the property and listener count does not increase on reattach.
+- [x] Introduce an idempotent unbind/dispose contract for scroll binding and keep the subscription in progress for release.
+- [x] Add RED tests for `DragMotionController` disposal and reattach; confirm that the old `DragX/DragY` no longer write the element.
+- [x] Fix the Drag controller to hold and release subscriptions and active handles without changing the Begin/Move/End semantics.
+- [x] Checks if `ScrollTimeline` requires disposal for graph values/event wiring and implements the minimum real ownership. (It does not require its own disposal: idle values are not graph work; bindings own and release the only event wiring.)
+- [x] Updates all affected public API pages and the manifest if applicable. (The manifest does not require change: no pages have been added or renamed.)
+- [x] Reindex the solution.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] API-urile runtime pot fi create/distruse de 100 de ori fara listeners sau graph work rezidual.
+- [x] runtime APIs can be created/destroyed 100 times without listeners or residual graph work.
 
-### Etapa 1 - `@scroll`
+### Stage 1 - `@scroll`
 
-- [x] Parseaza source, axis si assignments float range in declaratia `@scroll`.
-- [x] Rezolva source la un `ScrollViewer` attached si targets la proprietati `float` animabile.
-- [x] Genereaza o singura timeline per declaratie/sesiune, o actualizare initiala si updates din evenimentul ScrollChanged relevant; fara polling per frame cand offsetul nu se schimba.
-- [x] Mapeaza ranges exclusiv prin `ScrollTimelineProgress.Map(from,to)` si `AllowLayout()` numai cand `allowLayout=true` este explicit.
-- [x] Elibereaza event subscription, bindings si timeline la detach.
-- [x] Respinge pixel ranges, easing, input subranges, keyframe scroll si non-float targets.
-- [x] Adauga teste pentru vertical/horizontal, clamp, zero extent, layout opt-in si detach.
-- [x] Reindexeaza solutia.
+- [x] Parse source, axis and float range assignments in the `@scroll` declaration.
+- [x] Resolve source to an attached `ScrollViewer` and targets to animable `float` properties.
+- [x] Generates a single timeline per statement/session, an initial update and updates from the relevant ScrollChanged event; without polling per frame when the offset does not change.
+- [x] Map ranges exclusively through `ScrollTimelineProgress.Map(from,to)` and `AllowLayout()` only when `allowLayout=true` is explicit.
+- [x] Release event subscription, bindings and timeline at the detachment.
+- [x] Rejects pixel ranges, easing, input subranges, keyframe scroll and non-float targets.
+- [x] Add tests for vertical/horizontal, clamp, zero extent, opt-in layout and detach.
+- [x] Reindex the solution.
 
-**Gate etapa 1**
+**Gate stage 1**
+- [x] Scroll render-only does not produce measure/arrange and does not leave the frame requester active when the scroll is idle.
 
-- [x] Scroll render-only nu produce measure/arrange si nu lasa frame requester activ cand scroll-ul este idle.
+### Stage 2 - `@drag`
 
-### Etapa 2 - `@drag`
+- [x] Parse restricted `@drag with spec` without event variables or nonexistent options.
+- [x] Generates routed pointer subscriptions for begin/move/end/capture-lost and internally translates args in controller calls.
+- [x] Creates the controller only after attach and disposes it upon detach; capture state does not survive the session.
+- [x] Accurately maps both translation axes, fixed velocity projection and settle/capture-lost behavior from runtime.
+- [x] Rejects axis, bounds, resistance, snapping, separate source/target and Decay release.
+- [x] Add tests with input routed real, capture loss, detach mid-drag and reattach.
+- [x] Reindex the solution.
 
-- [x] Parseaza restricted `@drag with spec` fara event variables sau options inexistente.
-- [x] Genereaza routed pointer subscriptions pentru begin/move/end/capture-lost si traduce intern args in apelurile controllerului.
-- [x] Creeaza controllerul numai dupa attach si il dispose-uieste la detach; capture state nu supravietuieste sesiunii.
-- [x] Mapeaza exact ambele translation axes, velocity projection fixa si settle/capture-lost behavior din runtime.
-- [x] Respinge axis, bounds, resistance, snapping, separate source/target si Decay release.
-- [x] Adauga teste cu input routed real, capture loss, detach mid-drag si reattach.
-- [x] Reindexeaza solutia.
+**Gate stage 2**
 
-**Gate etapa 2**
+- [x] A single pointer event produces a single update regardless of the number of previous attach/detach cycles.
 
-- [x] Un singur pointer event produce un singur update indiferent de numarul ciclurilor attach/detach anterioare.
+### Stage 3 - `@gesture press`
 
-### Etapa 3 - `@gesture press`
+- [x] Parse exclusively `@gesture press with spec`.
+- [x] Generate pressed/released/capture-lost wiring to `GestureMotionController`, without `$event` in the language.
+- [x] Keep runtime endpoints 0.97 and 1 and reject pinch/rotate/custom scale endpoints.
+- [x] Add tests for press/release, rapid retarget, detach pressed and reduced motion.
+- [x] Reindex the solution.
 
-- [x] Parseaza exclusiv `@gesture press with spec`.
-- [x] Genereaza pressed/released/capture-lost wiring catre `GestureMotionController`, fara `$event` in limbaj.
-- [x] Pastreaza endpoint-urile runtime 0.97 si 1 si respinge pinch/rotate/custom scale endpoints.
-- [x] Adauga teste pentru press/release, rapid retarget, detach pressed si reduced motion.
-- [x] Reindexeaza solutia.
+**Gate stage 3**
 
-**Gate etapa 3**
+- [x] Gesture markup is only an adapter over the existing semantic controller, not a second gesture recognizer.
 
-- [x] Gesture markup este doar adaptor peste controllerul semantic existent, nu un al doilea gesture recognizer.
+## 3. Verification and definition ready
 
-## 3. Verificare si definitia de gata
-
-- [x] Ruleaza testele Motion Input, ScrollViewer si sourcegen Motion targetate.
-- [x] Ruleaza stress click/drag/scroll + attach/detach si verifica memorie stabilizata si listener counts. (100 de cicluri per adaptor; handlers raman unici si graph work revine la zero.)
-- [x] Ruleaza `dotnet test .\Cerneala.slnx`, `git diff --check` si reindexarea finala.
-- [x] Scroll, Drag si Gesture functioneaza fara polling inutil, `$event` sau leaks.
+- [x] Runs the targeted Motion Input, ScrollViewer and sourcegen Motion tests.
+- [x] Run stress click/drag/scroll + attach/detach and check stabilized memory and listener counts. (100 cycles per adapter; handlers remain unique and graph work returns to zero.)
+- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check` and the final reindex.
+- [x] Scroll, Drag and Gesture work without unnecessary polling, `$event` or leaks.

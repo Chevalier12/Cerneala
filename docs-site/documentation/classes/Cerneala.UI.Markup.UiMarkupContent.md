@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Markup`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Markup/UiMarkupDocument.cs`
+Source: `UI/Markup/UiMarkupContent.cs`
 
 Defines the abstract base type for ordered content entries stored by `UiMarkupNode.Content`.
 

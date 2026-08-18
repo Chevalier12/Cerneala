@@ -1,234 +1,233 @@
 # Plan: Motion Studio
 
-> Data: 2026-07-28
-> Status: propus
-> Scop: Adauga o aplicatie desktop Cerneala separata, numita Motion Studio, care permite unui utilizator sa construiasca si sa ruleze vizual componente Motion asupra unui singur shape, fara cod Motion scris de utilizator, Prism sau authoring Aspect.
+> Date: 2026-07-28
+> Status: proposed
+> Purpose: Add a separate Cerneala desktop application, called Motion Studio, that allows a user to visually build and run Motion components on a single shape, without user-written Motion code, Prism, or Aspect authoring.
 
-## Viziune
+## Vision
 
-Motion Studio este un demonstrativ si un instrument de explorare pentru API-ul imperativ Cerneala Motion. Canvas-ul contine exact un singur shape global. Utilizatorul creeaza componente numite, iar fiecare componenta descrie un arbore Motion editabil care tinteste acelasi shape. Componentele nu sunt layere vizuale si nu creeaza alte elemente in canvas.
+Motion Studio is a demo and exploration tool for the imperative Cerneala Motion API. The canvas contains exactly one global shape. The user creates named components, and each component describes an editable Motion tree that targets the same shape. Components are not visual layers and do not create other elements in the canvas.
 
-Fluxul principal este:
+The main stream is:
 
-1. utilizatorul configureaza shape-ul global;
-2. creeaza sau selecteaza o componenta Motion;
-3. construieste vizual animatii si compozitii pentru componenta;
-4. apasa Play sau Replay;
-5. Motion Studio traduce definitia editabila in apeluri reale Cerneala Motion;
-6. acelasi shape global afiseaza rezultatul.
+1. the user configures the global shape;
+2. create or select a Motion component;
+3. visually builds animations and compositions for the component;
+4. press Play or Replay;
+5. Motion Studio translates the editable definition into real Cerneala Motion calls;
+6. the same global shape displays the result.
 
-## Decizii de produs si arhitectura
+## Product decisions and architecture
 
-- Canvas-ul contine exact un shape: `Rectangle`, `Ellipse` sau `Path` SVG.
-- Panoul inspirat de Photoshop se numeste `COMPONENTS`, nu `LAYERS`.
-- O componenta este un program Motion numit, nu un element vizual, control sau container.
-- Toate componentele tintesc aceeasi instanta de shape din canvas.
-- O singura componenta ruleaza la un moment dat. Play pe alta componenta anuleaza executia activa cu `KeepCurrent`, apoi porneste noua componenta. Aceasta regula evita conflicte invizibile intre doua programe editate separat.
-- `Play` porneste din starea curenta a shape-ului. `Replay` anuleaza executia, restaureaza baseline-ul documentului si ruleaza componenta selectata. `Reset Target` restaureaza doar baseline-ul. `Stop` pastreaza valoarea vizuala curenta.
-- In interiorul unei componente, operatiile pot rula secvential sau in paralel. Arborele Motion, nu o lista plata, este sursa de adevar.
-- Modelul editabil al documentului ramane separat de `MotionHandle`, `MotionGroupHandle` si celelalte obiecte runtime.
-- Executorul foloseste API-ul Cerneala Motion; aplicatia nu implementeaza un al doilea motor de interpolare sau un frame loop paralel.
-- Front-end-ul expune toate capabilitatile Motion aplicabile unui singur element fix: proprietati animabile compatibile, From/To, Tween, Spring, Keyframes, Decay, Sequence, Parallel, start options, retarget mode, priority, hold-on-complete, cancel/complete si implicit transactions unde acestea au semantica utila.
-- Nu se expun functionalitati care necesita alte tinte sau alt context: Stagger multi-target, layout transitions intre elemente, Presence, ScrollTimeline, Drag, Gestures sau animatii de colectii.
-- `MotionStateBuilder` nu intra in UI pana cand API-ul sau public ofera comportament executabil, nu doar un facade gol.
-- Nu se folosesc Prism, `PrismInstance`, filtre, styles, backdrops sau diagnostics Prism.
-- Nu se definesc resurse, reguli, stari ori motion prin Aspect. Aplicatia nu inregistreaza un pachet Aspect propriu si nu foloseste directive `@when`, `@animate`, `@parallel` sau `@sequence`.
-- Stilul Cerneala Presentation este reprodus local printr-o paleta C# si factory/helper-e mici pentru controale, fara dependenta de proiectul `CernealaPresentation`.
-- Fereastra si arborele UI sunt construite in C#. Singurul markup permis este `App.crn` minimal necesar contractului actual de startup desktop; acesta nu contine UI, Aspect sau Motion.
-- Prima versiune nu salveaza proiecte pe disc, nu exporta video/cod, nu implementeaza undo/redo si nu permite plugin-uri.
+- The canvas contains exactly one shape: `Rectangle`, `Ellipse` or `Path` SVG.
+- The Photoshop inspired panel is called `COMPONENTS`, not `LAYERS`.
+- A component is a named Motion program, not a visual element, control, or container.
+- All components target the same shape instance in the canvas.
+- Only one component runs at a time. Play on another component cancels the active execution with `KeepCurrent`, then starts the new component. This rule avoids invisible conflicts between two programs edited separately.
+- `Play` starts from the current state of the shape. `Replay` cancels the execution, restores the baseline of the document and runs the selected component. `Reset Target` only restores the baseline. `Stop` keeps the current visual value.
+- Inside a component, operations can run sequentially or in parallel. The Motion tree, not a pay list, is the source of truth.
+- The editable model of the document remains separate from `MotionHandle`, `MotionGroupHandle` and the other runtime objects.
+- The executor uses the Cerneala Motion API; the application does not implement a second interpolation engine or a parallel frame loop.
+- The front-end exposes all Motion capabilities applicable to a single fixed element: compatible animated properties, From/To, Tween, Spring, Keyframes, Decay, Sequence, Parallel, start options, retarget mode, priority, hold-on-complete, cancel/complete and implicit transactions where they have useful semantics.
+- Functionalities that require other targets or other context are not exposed: Stagger multi-target, layout transitions between elements, Presence, ScrollTimeline, Drag, Gestures or collection animations.
+- `MotionStateBuilder` does not enter the UI until its public API provides executable behavior, not just an empty facade.
+- Prism, `PrismInstance`, filters, styles, backdrops or Prism diagnostics are not used.
+- Resources, rules, states or motion are not defined by Aspect. The application does not register its own Appearance package and does not use directives `@when`, `@animate`, `@parallel` or `@sequence`.
+- The Cerneala Presentation style is reproduced locally through a C# palette and small factory/helpers for controls, without dependency on the `CernealaPresentation` project.
+- The window and the UI tree are built in C#. The only markup allowed is the minimum `App.crn` required for the current desktop startup contract; it does not contain UI, Aspect or Motion.
+- The first version does not save projects on disk, does not export video/code, does not implement undo/redo and does not allow plugins.
 
-## Directia vizuala si layout
+## Visual direction and layout
 
-- Fereastra tinta: 1360x880, utilizabila pana la minimum 1100x720.
-- Paleta locala urmeaza Presentation: ink `#0A0B0E`, panel `#14161B`, panel-alt `#101217`, raised `#191C22`, linii `#2A2E38`/`#424754`, paper `#EDEFF3`, slate `#8A93A6`, cyan `#4DF0FF`, pink `#FF3EA5`, lime `#C6FF3D`, orange `#FF8A3D`.
-- `Cascadia Mono` este folosit pentru etichete, valori, status si diagnostics; textul general foloseste `Segoe UI Variable`.
-- Structura principala:
-  - bara superioara cu titlu, starea playback-ului, Reset Target, Stop, Play si Replay;
-  - panou stanga `COMPONENTS`, cu creare, selectare, redenumire, duplicare, stergere si Play;
-  - canvas central inchis, cu grid discret, bounds vizibile si shape-ul unic;
-  - inspector dreapta contextual pentru shape sau nodul Motion selectat;
-  - zona inferioara `MOTION TREE`, cu arborele componentei si actiuni de add/reorder/delete.
-- Layout-ul preia densitatea si contrastul Presentation, dar nu copiaza turul, navigatia pe capitole sau continutul Prism Studio.
+- Target window: 1360x880, usable up to minimum 1100x720.
+- The local palette follows Presentation: ink `#0A0B0E`, panel `#14161B`, panel-alt `#101217`, raised `#191C22`, lines `#2A2E38`/`#424754`, paper `#EDEFF3`, slate `#8A93A6`, cyan `#4DF0FF`, pink `#FF3EA5`, lime `#C6FF3D`, orange `#FF8A3D`.
+- `Cascadia Mono` is used for labels, values, status and diagnostics; the general text uses `Segoe UI Variable`.
+- Main structure:
+  - upper bar with title, playback status, Reset Target, Stop, Play and Replay;
+  - left panel `COMPONENTS`, with creation, selection, renaming, duplication, deletion and Play;
+  - closed central canvas, with discrete grid, visible bounds and unique shape;
+  - contextual right inspector for the selected Motion shape or node;
+  - the lower area `MOTION TREE`, with the component tree and add/reorder/delete actions.
+- The layout takes the density and contrast of Presentation, but does not copy the tour, chapter navigation or Prism Studio content.
 
-## Modelul documentului
+## Document model
 
 - `MotionStudioDocument`
   - `TargetShapeDefinition Target`
   - `IList<MotionComponentDefinition> Components`
   - `Guid? SelectedComponentId`
 - `TargetShapeDefinition`
-  - tipul shape-ului;
-  - geometria Path optionala;
-  - width, height, fill, stroke si stroke thickness;
-  - baseline pentru pozitie, translate, scale si opacity;
-  - render transform origin daca API-ul shape-ului il permite fara schimbari speculative de framework.
+  - the type of shape;
+  - optional Path geometry;
+  - width, height, fill, stroke and stroke thickness;
+  - baseline for position, translate, scale and opacity;
+  - render transform origin if the API of the shape allows it without speculative framework changes.
 - `MotionComponentDefinition`
-  - id stabil;
-  - nume valid si unic pentru afisare;
-  - un singur `MotionNodeDefinition Root`.
-- Noduri initiale:
+  - stable id;
+  - valid and unique display name;
+  - a single `MotionNodeDefinition Root`.
+- Initial nodes:
   - `SequenceNodeDefinition`;
   - `ParallelNodeDefinition`;
   - `AnimationNodeDefinition`;
-  - `SetValueNodeDefinition` doar pentru schimbari instantanee explicite;
-  - `TransactionNodeDefinition` numai daca etapa de fezabilitate confirma o corespondenta clara cu `BeginTransaction`.
+  - `SetValueNodeDefinition` only for explicit instant changes;
+- `TransactionNodeDefinition` only if the feasibility stage confirms a clear correspondence with `BeginTransaction`.
 - `AnimationNodeDefinition`
-  - proprietate selectata dintr-un catalog tipizat;
-  - From optional si To obligatoriu;
-  - spec: Tween, Spring, Keyframes sau Decay;
-  - `MotionPropertyStartOptions`: retarget mode, priority, debug name si hold-on-complete.
-- Keyframes au offset in `[0, 1]`, valoare tipizata, easing optional si hold; primul offset este 0, ultimul este 1, iar lista ramane sortata.
+  - property selected from a standardized catalog;
+  - From optional and To mandatory;
+  - spec: Tween, Spring, Keyframes or Decay;
+  - `MotionPropertyStartOptions`: retarget mode, priority, debug name and hold-on-complete.
+- Keyframes have offset in `[0, 1]`, typed value, optional easing and hold; the first offset is 0, the last is 1, and the list remains sorted.
 
-## Etape de implementare
+## Implementation stages
 
-### Etapa 0 - Contractul de capabilitati si probele de fezabilitate
+### Stage 0 - Capabilities contract and feasibility tests
 
-- [ ] Inventariaza API-ul public Motion aplicabil unui singur `UIElement` si scrie o matrice interna `capabilitate -> control front-end -> API Cerneala -> test`.
-- [ ] Confirma prin teste focalizate ca un shape atasat poate anima corect proprietatile de baza `TranslateX`, `TranslateY`, `Scale` si `Opacity` prin `MotionElementFacade`.
-- [ ] Verifica proprietatile Shape care pot fi animate prin `Animate<T>` si mixerele inregistrate; nu afisa in catalog proprietati fara mixer sau fara semantica de randare corecta.
-- [ ] Verifica secventierea, paralelismul, anularea, complete, retarget, priority si hold-on-complete pe o singura tinta.
-- [ ] Verifica daca implicit transactions pot fi reprezentate predictibil de un nod vizual; elimina `TransactionNodeDefinition` din scope daca nu aduce o capabilitate distincta fata de Parallel.
-- [ ] Adauga numai testele de regresie Cerneala necesare pentru defecte sau goluri reale descoperite de probe.
-- [ ] Daca este necesara schimbarea unui API public Cerneala, actualizeaza in aceeasi etapa paginile corespunzatoare din `docs-site/documentation/classes/`; nu extinde framework-ul doar pentru comoditatea aplicatiei.
+- [ ] Inventory the Motion public API applicable to a single `UIElement` and write an internal array `capabilitate -> control front-end -> API Cerneala -> test`.
+- [ ] Confirm through focused tests that an attached shape can correctly animate the basic properties `TranslateX`, `TranslateY`, `Scale` and `Opacity` through `MotionElementFacade`.
+- [ ] Check the Shape properties that can be animated by `Animate<T>` and the registered mixers; does not display in the catalog properties without a mixer or without the correct rendering semantics.
+- [ ] Checks sequencing, parallelism, cancellation, complete, retarget, priority and hold-on-complete on a single target.
+- [ ] Checks if default transactions can be represented predictably by a visual node; remove `TransactionNodeDefinition` from scope if it does not bring a distinct capability to Parallel.
+- [ ] Add only the Cerneala regression tests needed for real defects or gaps discovered by tests.
+- [ ] If it is necessary to change a public API Cerneala, update the corresponding pages from `docs-site/documentation/classes/` in the same stage; do not extend the framework just for the convenience of the application.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [ ] Matricea de capabilitati este completa, fiecare control planificat are o cale runtime verificata, iar scope-ul final nu promite functionalitati Motion incompatibile cu o singura tinta.
+- [ ] The capabilities matrix is complete, each planned control has a verified runtime path, and the final scope does not promise incompatible Motion functionalities with a single target.
 
-### Etapa 1 - Proiectul standalone si shell-ul programatic
+### Stage 1 - The standalone project and the programmatic shell
 
-- [ ] Adauga `MotionStudio/MotionStudio.csproj` ca aplicatie `net8.0-windows`/`WinExe`, cu referinte la `Cerneala.csproj` si generatorul Cerneala.
-- [ ] Adauga proiectul in `Cerneala.slnx` si configureaza icon-ul si dependentele minime necesare.
-- [ ] Adauga `MotionStudio/App.crn` exclusiv pentru `StartupWindow` si shutdown mode, fara resources, Aspect sau Motion markup.
-- [ ] Adauga `MotionStudio/App.crn.cs` si `MotionStudio/MotionStudioWindow.cs`; construieste integral continutul ferestrei in C#.
-- [ ] Adauga `MotionStudio/Visual/MotionStudioPalette.cs` si helper-e DRY pentru etichete, butoane, panouri si separatoare, fara un mini-framework de styling.
-- [ ] Construieste layout-ul responsive cu header, Components, canvas, inspector si Motion Tree.
-- [ ] Adauga un proiect de teste `tests/MotionStudio.Tests/MotionStudio.Tests.csproj` si include-l in solutie.
+- [ ] Add `MotionStudio/MotionStudio.csproj` as application `net8.0-windows`/`WinExe`, with references to `Cerneala.csproj` and generator Cerneala.
+- [ ] Add the project in `Cerneala.slnx` and configure the icon and the minimum required dependencies.
+- [ ] Add `MotionStudio/App.crn` exclusively for `StartupWindow` and shutdown mode, without resources, Aspect or Motion markup.
+- [ ] Add `MotionStudio/App.crn.cs` and `MotionStudio/MotionStudioWindow.cs`; fully builds the contents of the window in C#.
+- [ ] Add `MotionStudio/Visual/MotionStudioPalette.cs` and DRY helper for labels, buttons, panels and dividers, without a styling mini-framework.
+- [ ] Build the responsive layout with header, Components, canvas, inspector and Motion Tree.
+- [ ] Add a test project `tests/MotionStudio.Tests/MotionStudio.Tests.csproj` and include it in the solution.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [ ] Motion Studio porneste ca aplicatie separata la dimensiunea implicita si minima, fara referinta la `CernealaPresentation`, Prism sau un pachet Aspect definit de aplicatie.
+- [ ] Motion Studio starts as a separate application at the default and minimum size, without reference to `CernealaPresentation`, Prism or an application-defined Appearance package.
 
-### Etapa 2 - Modelul editabil si comenzile front-end
+### Stage 2 - Editable model and front-end commands
 
-- [ ] Implementeaza modelele documentului in `MotionStudio/Model/` ca obiecte independente de UI si runtime handles.
-- [ ] Implementeaza catalogul tipizat de proprietati si specs in `MotionStudio/Motion/MotionCapabilityCatalog.cs`, alimentat explicit din matricea etapei 0.
-- [ ] Implementeaza validarea pentru nume, valori finite, durate pozitive, parametri Spring/Decay, keyframes si structura arborelui.
-- [ ] Implementeaza operatiile create/select/rename/duplicate/delete component si add/move/delete node ca servicii de model testabile.
-- [ ] Defineste un document initial determinist cu un ellipse si trei componente demonstrative: `Entrance`, `Bounce` si `Exit`.
-- [ ] Foloseste `ActionCommand` pentru toate actiunile UI si actualizeaza `CanExecute` pentru selectii, radacina invalida si playback activ.
-- [ ] Adauga teste pentru mutatii, selectie, duplicare deep-copy, stergerea ultimei componente, validare si presetul initial.
+- [ ] Implements the document models in `MotionStudio/Model/` as UI-independent objects and runtime handles.
+- [ ] Implements the typed catalog of properties and specs in `MotionStudio/Motion/MotionCapabilityCatalog.cs`, fed explicitly from the stage 0 matrix.
+- [ ] Implements validation for names, finite values, positive durations, Spring/Decay parameters, keyframes and tree structure.
+- [ ] Implements the operations create/select/rename/duplicate/delete component and add/move/delete node as testable model services.
+- [ ] Defines an initial deterministic document with an ellipse and three demonstrative components: `Entrance`, `Bounce` and `Exit`.
+- [ ] Use `ActionCommand` for all UI actions and update `CanExecute` for selections, invalid root and active playback.
+- [ ] Add tests for mutations, selection, deep-copy duplication, deletion of the last component, validation and the initial preset.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [ ] Documentul si arborele Motion pot fi editate complet in teste fara a construi o fereastra sau a porni frame loop-ul.
+- [ ] The Motion document and tree can be completely edited in tests without building a window or starting the frame loop.
 
-### Etapa 3 - Compilatorul si sesiunea de playback Motion
+### Stage 3 - The compiler and the Motion playback session
 
-- [ ] Implementeaza `MotionComponentCompiler`, care transforma recursiv definitiile in apeluri reale Motion si returneaza un handle agregat detinut de sesiune.
-- [ ] Compileaza `Sequence` cu pornire lazy a fiecarui pas si `Parallel` cu toate animatiile copil pornite in acelasi frame logic.
-- [ ] Compileaza Tween, Spring, Keyframes si Decay folosind specs publice Cerneala si valori tipizate din catalog.
-- [ ] Aplica From numai cand este prezent, iar To, retarget mode, priority, debug name si hold-on-complete exact conform definitiei.
-- [ ] Implementeaza `MotionPlaybackSession` cu starile Idle, Playing, Completed, Canceled si Faulted, fara a retine handle-uri terminale.
-- [ ] Implementeaza politica exclusiva: Play pe alta componenta anuleaza sesiunea activa cu KeepCurrent.
-- [ ] Implementeaza Play, Replay, Stop si Reset Target conform deciziilor planului.
-- [ ] Propaga erorile de compilare/runtime in diagnostics UI fara a lasa noduri active sau shape-ul intr-o stare invalida.
-- [ ] Adauga teste cu clock controlat pentru ordine, paralelism, valori finale, replay determinist, anulare, schimbarea componentei si disposal.
+- [ ] Implements `MotionComponentCompiler`, which recursively transforms definitions into real Motion calls and returns an aggregate handle owned by the session.
+- [ ] Compile `Sequence` with lazy start of each step and `Parallel` with all child animations started in the same logical frame.
+- [ ] Compiles Tween, Spring, Keyframes and Decay using public specs Cerneala and typed values ​​from the catalog.
+- [ ] Apply From only when it is present, and To, retarget mode, priority, debug name and hold-on-complete exactly according to the definition.
+- [ ] Implements `MotionPlaybackSession` with Idle, Playing, Completed, Canceled and Faulted states, without retaining terminal handles.
+- [ ] Implements the exclusive policy: Play on another component cancels the active session with KeepCurrent.
+- [ ] Implements Play, Replay, Stop and Reset Target according to plan decisions.
+- [ ] Propagate compile/runtime errors in UI diagnostics without leaving active nodes or the shape in an invalid state.
+- [ ] Add clock-controlled tests for order, parallelism, final values, deterministic replay, cancellation, component change and disposal.
 
-**Gate etapa 3**
+**Gate stage 3**
+- [ ] Presets and synthetic trees run exclusively through Cerneala Motion, have deterministic results and do not leave active handles/nodes after completion or cancellation.
 
-- [ ] Preseturile si arborii sintetici ruleaza exclusiv prin Cerneala Motion, au rezultate deterministe si nu lasa handles/noduri active dupa finalizare sau anulare.
+### Stage 4 - Canvas and global shape inspector
 
-### Etapa 4 - Canvas-ul si inspectorul shape-ului global
+- [ ] Builds the canvas with a centered viewport, clipping, discrete grid and bounds for the shape, without Prism or backdrop effects.
+- [ ] Allows to change between Rectangle, Ellipse and Path keeping only one target attached.
+- [ ] Connect the shape inspector to dimensions, fill, stroke, stroke thickness and baseline transform.
+- [ ] When changing the shape type, cancel the playback, replace the target only once and reapply the baseline.
+- [ ] Validates Path SVG and keeps the last valid geometry when the entered text is invalid.
+- [ ] Displays the current runtime coordinates and values ​​separately from the baseline, so that Play does not rewrite the document.
+- [ ] Add tests for target replacement, baseline/reset, invalid input, clipping and absence of additional visual copies in the canvas.
 
-- [ ] Construieste canvas-ul cu viewport centrat, clipping, grid discret si bounds pentru shape, fara Prism sau efecte de backdrop.
-- [ ] Permite schimbarea intre Rectangle, Ellipse si Path pastrand o singura tinta atasata.
-- [ ] Conecteaza inspectorul shape-ului la dimensiuni, fill, stroke, stroke thickness si baseline transform.
-- [ ] La schimbarea tipului de shape, anuleaza playback-ul, inlocuieste tinta o singura data si reaplica baseline-ul.
-- [ ] Valideaza Path SVG si pastreaza ultima geometrie valida cand textul introdus este invalid.
-- [ ] Afiseaza coordonatele si valorile runtime curente separat de baseline, astfel incat Play sa nu rescrie documentul.
-- [ ] Adauga teste pentru inlocuirea tintei, baseline/reset, input invalid, clipping si absenta copiilor vizuali suplimentari in canvas.
+**Gate Stage 4**
 
-**Gate etapa 4**
+- [ ] The canvas always has exactly one target shape, the changes in the inspector are immediate, and Reset Target completely restores the documented state.
 
-- [ ] Canvas-ul are permanent exact un shape tinta, modificarile inspectorului sunt imediate, iar Reset Target restaureaza complet starea documentata.
+### Stage 5 - Components and the Motion Tree editor
 
-### Etapa 5 - Components si editorul Motion Tree
+- [ ] Builds the Components panel with selection, create, rename, duplicate, delete, Play and status indicator per component.
+- [ ] Build recursive Motion Tree for Sequence, Parallel, Animation, Set Value and Transaction only if it remained in scope.
+- [ ] Allows adding a valid contextual child, moving up/down, moving between compatible containers and deleting without producing an invalid tree.
+- [ ] Builds the contextual inspector for the composition and animation nodes.
+- [ ] Generate typed editors for float, color/brush and any other type confirmed by the catalog, without string casting in the executor.
+- [ ] Builds Tween, Spring, Keyframes and Decay editors; keyframes support add, delete, reorder by offset, easing and hold.
+- [ ] Shows start options in an Advanced section and displays short explanations for retarget, priority and hold-on-complete.
+- [ ] Visually marks the active node and the progress of the component without making the document model dependent on the runtime state.
+- [ ] Add command and view-model tests for all editions and states `CanExecute`.
 
-- [ ] Construieste panoul Components cu selectie, create, rename, duplicate, delete, Play si indicator de stare per componenta.
-- [ ] Construieste Motion Tree recursiv pentru Sequence, Parallel, Animation, Set Value si Transaction numai daca a ramas in scope.
-- [ ] Permite adaugarea unui copil valid contextual, mutarea sus/jos, mutarea intre containere compatibile si stergerea fara a produce un arbore invalid.
-- [ ] Construieste inspectorul contextual pentru nodurile de compozitie si animatie.
-- [ ] Genereaza editori tipizati pentru float, color/brush si orice alt tip confirmat de catalog, fara string casting in executor.
-- [ ] Construieste editorii Tween, Spring, Keyframes si Decay; keyframes suporta add, delete, reorder prin offset, easing si hold.
-- [ ] Expune start options intr-o sectiune Advanced si afiseaza explicatii scurte pentru retarget, priority si hold-on-complete.
-- [ ] Marcheaza vizual nodul activ si progresul componentei fara a face modelul documentului dependent de starea runtime.
-- [ ] Adauga teste de comanda si view-model pentru toate editele si starile `CanExecute`.
+**Gate Stage 5**
 
-**Gate etapa 5**
+- [ ] A user can build from the front-end a component with sequential and parallel animations, modify it and run it without writing code or markup.
 
-- [ ] Un utilizator poate construi din front-end o componenta cu animatii secventiale si paralele, o poate modifica si o poate rula fara a scrie cod sau markup.
+### Stage 6 - Diagnostics, lifecycle and accessibility
 
-### Etapa 6 - Diagnostics, lifecycle si accesibilitate
+- [ ] Displays the active component, session status, active node, elapsed time, active Motion nodes and the last cancellation/error reason.
+- [ ] Add global stop, safe reset and cleanup when closing the window.
+- [ ] Ensure visible focus, consistent Tab order, keyboard activation and accessible names for icon-only commands.
+- [ ] Add documented shortcuts for Play/Replay, Stop, Reset Target, New Component and Delete Node using input commands Cerneala.
+- [ ] Checks repeated component, shape and node changes during playback for subscription leaks and abandoned handles.
+- [ ] Adds a deterministic automation/capture mode via environment variables, similar in intent to Presentation, but local to the Motion Studio project.
 
-- [ ] Afiseaza componenta activa, starea sesiunii, nodul activ, timpul scurs, nodurile Motion active si ultimul motiv de anulare/eroare.
-- [ ] Adauga Stop global, reset sigur si cleanup la inchiderea ferestrei.
-- [ ] Asigura focus vizibil, ordine Tab coerenta, activare din tastatura si accessible names pentru comenzile icon-only.
-- [ ] Adauga shortcut-uri documentate pentru Play/Replay, Stop, Reset Target, New Component si Delete Node folosind input commands Cerneala.
-- [ ] Verifica schimbari repetate de componenta, shape si nod in timpul playback-ului pentru subscription leaks si handles abandonate.
-- [ ] Adauga un mod de automatizare/captura determinist prin variabile de mediu, similar ca intentie cu Presentation, dar local proiectului Motion Studio.
+**Gate stage 6**
 
-**Gate etapa 6**
+- [ ] The repeated playback and closing the window does not leave handles, callbacks or active subscriptions, and the main stream is fully usable from the keyboard.
 
-- [ ] Playback-ul repetat si inchiderea ferestrei nu lasa handles, callbacks sau subscriptions active, iar fluxul principal este utilizabil integral din tastatura.
+### Stage 7 - Visual verification, performance and documentation
 
-### Etapa 7 - Verificare vizuala, performanta si documentatie
+- [ ] Adds smoke tests for startup, initial preset, Play, Replay, Stop, component change and shape change.
+- [ ] Capture and visually inspect the window at 1360x880 and 1100x720 for clipping, overlap, contrast, focus and readability.
+- [ ] Check the frame budget during a component with Sequence + Parallel + Keyframes and confirm the lack of layout invalidation per frame for transform/opacity.
+- [ ] Run the targeted Motion tests, `MotionStudio.Tests` and then `dotnet test .\Cerneala.slnx`.
+- [ ] Run the reindexing and `doctor` through RoslynRepoIndexer after the final changes.
+- [ ] Updates public documentation Cerneala only for public APIs changed in implementation; the application documentation remains a short README in `MotionStudio/README.md`.
+- [ ] Run `git diff --check` and audit the project dependencies to confirm the absence of Prism, `CernealaPresentation` and Aspect authoring.
 
-- [ ] Adauga smoke tests pentru startup, presetul initial, Play, Replay, Stop, schimbarea componentei si schimbarea shape-ului.
-- [ ] Captureaza si inspecteaza vizual fereastra la 1360x880 si 1100x720 pentru clipping, overlap, contrast, focus si lizibilitate.
-- [ ] Verifica frame budget-ul in timpul unei componente cu Sequence + Parallel + Keyframes si confirma lipsa layout invalidation per frame pentru transform/opacity.
-- [ ] Ruleaza testele Motion tintite, `MotionStudio.Tests` si apoi `dotnet test .\Cerneala.slnx`.
-- [ ] Ruleaza reindexarea si `doctor` prin RoslynRepoIndexer dupa modificarile finale.
-- [ ] Actualizeaza documentatia publica Cerneala numai pentru API-uri publice schimbate in implementare; documentatia aplicatiei ramane un README scurt in `MotionStudio/README.md`.
-- [ ] Ruleaza `git diff --check` si auditeaza dependentele proiectului pentru a confirma absenta Prism, `CernealaPresentation` si Aspect authoring.
+**Gate stage 7**
 
-**Gate etapa 7**
+- [ ] All tests and verifications are green, the captures are correct at both sizes, the frame budget is acceptable and there is no temporary code or out-of-scope dependencies.
 
-- [ ] Toate testele si verificarile sunt verzi, capturile sunt corecte la ambele dimensiuni, frame budget-ul este acceptabil si nu exista cod temporar sau dependente in afara scope-ului.
+## Dependencies between stages
 
-## Dependente intre etape
+- Stage 0 blocks the catalog, the animation model and the executor.
+- Stage 1 can start after establishing the startup contract and remains separate from the executor.
+- Stage 2 depends on the matrix of stage 0.
+- Stage 3 depends on the model of stage 2.
+- Stage 4 depends on the shell of stage 1 and the baseline contract from stage 2.
+- Stage 5 depends on stages 2-4.
+- Stage 6 depends on the complete playback and UI.
+- Stage 7 starts only after closing all the previous gates.
 
-- Etapa 0 blocheaza catalogul, modelul animatiilor si executorul.
-- Etapa 1 poate incepe dupa stabilirea contractului de startup si ramane separata de executor.
-- Etapa 2 depinde de matricea etapei 0.
-- Etapa 3 depinde de modelul etapei 2.
-- Etapa 4 depinde de shell-ul etapei 1 si de contractul de baseline din etapa 2.
-- Etapa 5 depinde de etapele 2-4.
-- Etapa 6 depinde de playback-ul si UI-ul complete.
-- Etapa 7 incepe numai dupa inchiderea tuturor gate-urilor anterioare.
+## Non-objectives
 
-## Non-obiective
+- several shapes simultaneously in the canvas;
+- visual layers or z-order;
+- import of Photoshop images or documents;
+- Prism and any Prism filter/compositor;
+- Aspect authoring, Aspect motion or copying Presentation resources;
+- Motion markup;
+- scroll-linked, gesture, drag, presence, layout motion or stagger multi-target;
+- code editor, scripting console or C# generation in the first version;
+- persistence, undo/redo, export video/GIF or project files;
+- modification of Cerneala Motion semantics to accommodate an application workaround.
 
-- mai multe shape-uri simultan in canvas;
-- layere vizuale sau z-order;
-- import de imagini ori documente Photoshop;
-- Prism si orice filtru/compositor Prism;
-- Aspect authoring, Aspect motion sau copierea resurselor Presentation;
-- markup Motion;
-- scroll-linked, gesture, drag, presence, layout motion sau stagger multi-target;
-- editor de cod, consola de scripting sau generare C# in prima versiune;
-- persistenta, undo/redo, export video/GIF sau project files;
-- modificarea semanticii Cerneala Motion pentru a acomoda un workaround de aplicatie.
+## The definition of ready
 
-## Definitia de gata
-
-- [ ] Motion Studio este un proiect desktop standalone inclus in solutie si porneste independent de Presentation.
-- [ ] Canvas-ul contine exact un shape global configurabil.
-- [ ] Utilizatorul poate crea mai multe componente Motion, toate tintind acelasi shape.
-- [ ] Fiecare componenta poate combina vizual animatii in Sequence si Parallel si poate folosi toate specs/options Motion confirmate ca aplicabile unei singure tinte.
-- [ ] Play, Replay, Stop, Reset Target si schimbarea componentei au comportament determinist si testat.
-- [ ] Utilizatorul nu scrie cod sau markup pentru a construi animatiile.
-- [ ] Aplicatia nu depinde de Prism, CernealaPresentation sau Aspect authoring.
-- [ ] Modelul editabil este separat de runtime handles si executorul foloseste motorul Cerneala Motion existent.
-- [ ] Testele unitare, integration, lifecycle, smoke, suita completa si inspectia vizuala sunt verzi.
-- [ ] Orice API public Cerneala schimbat are documentatia din `docs-site/documentation/classes/` sincronizata.
+- [ ] Motion Studio is a standalone desktop project included in the solution and starts independently of Presentation.
+- [ ] The canvas contains exactly one configurable global shape.
+- [ ] The user can create several Motion components, all targeting the same shape.
+- [ ] Each component can visually combine Sequence and Parallel animations and can use all Motion specs/options confirmed as applicable to a single target.
+- [ ] Play, Replay, Stop, Reset Target and component change have deterministic and tested behavior.
+- [ ] The user does not write code or markup to build the animations.
+- [ ] The application does not depend on Prism, CernealaPresentation or Aspect authoring.
+- [ ] The editable model is separated from the runtime handles and the executor uses the existing Cerneala Motion engine.
+- [ ] Unit tests, integration, lifecycle, smoke, complete suite and visual inspection are green.
+- [ ] Any public API Cerneala changed has the documentation from `docs-site/documentation/classes/` synchronized.

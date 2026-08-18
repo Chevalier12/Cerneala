@@ -2,7 +2,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Data`
 Assembly/Project: `Cerneala`
-Source: `UI/Data/IObservableList{T}.cs`
+Source: `UI/Data/ObservableListChangeKind.cs`
 Provides the `Cerneala.UI.Data.ObservableListChangeKind` API surface.
 ```csharp
 public enum ObservableListChangeKind

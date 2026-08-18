@@ -2,7 +2,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Platform`
 Assembly/Project: `Cerneala`
-Source: `UI/Platform/ICursorService.cs`
+Source: `UI/Platform/CursorShape.cs`
 Provides the `Cerneala.UI.Platform.CursorShape` API surface.
 ```csharp
 public enum CursorShape

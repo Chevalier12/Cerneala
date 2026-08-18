@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Input`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Input/StylusInputBridge.cs`
+Source: `UI/Input/StylusInputPoint.cs`
 
 Represents one stylus sample delivered to the retained UI input system.
 

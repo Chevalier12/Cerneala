@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Ink`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Ink/StrokeCollection.cs`
+Source: `UI/Ink/StrokeCollectionChangedEventArgs.cs`
 
 Provides event data for changes raised by `StrokeCollection.Changed`.
 

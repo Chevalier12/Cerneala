@@ -48,7 +48,7 @@ FrameStats stats = root.ProcessFrame(motionReason: MotionFrameReason.Scheduled);
 
 `MotionFrameCoordinator` is created by `MotionSystem` and exposed through `MotionSystem.Frames`. In normal use, `UIRoot.ProcessFrame` passes it to `UiFrameScheduler.ProcessFrame`, which calls the coordinator before layout, after layout, before render, and after render.
 
-Every public method verifies motion thread affinity through `MotionSystem.ThreadGuard`. Calls must run on the thread that created the owning `MotionSystem`.
+Every public method verifies motion thread affinity through `MotionSystem.VerifyAccess`, which delegates to the owning `UIRoot.Relay`. Calls must run on the thread accepted by that root Relay.
 
 `BeginFrame` starts diagnostic frame tracking, stores the frame reason for later phases, resets the per-frame sampled flag, and records `MotionFramePhase.AfterInput` for input-driven frames or `MotionFramePhase.PreInput` for all other reasons.
 

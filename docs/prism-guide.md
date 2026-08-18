@@ -1,33 +1,32 @@
-# Ghid Prism
+# Guide Prism
 
-Prism procesează doar prezentarea unui element Cerneala. Nu schimbă măsurarea,
-aranjarea, hitbox-ul, focusul sau rutarea inputului.
+Prism only processes the presentation of a Cerneala element. It does not change the measurement,
+arrangement, hitbox, focus or input routing.
 
-## Modelul Photoshop și sursa implicită
+## Photoshop model and default source
 
-Prism capturează o singură dată numai vizualul local al controlului: comenzile
-produse de propriul `OnRender`, fără comenzile descendenților vizuali. Acea captură
-este sursa implicită a stivei normale; copiii sunt desenați normal după rezultatul
-Prism, iar numele layerelor și group-urilor sunt adrese pentru Motion și
-diagnostics, nu surse de imagini.
+Prism only captures the local visual of the control once: the commands
+produced by `OnRender`'s own, without the commands of visual descendants. That catch
+is the default normal stack source; children are drawn normally after the result
+Prism, and the layer and group names are addresses for Motion and
+diagnostics, not image sources.
 
-Ordinea declarată este ca în panoul Photoshop: primul nod este în față, ultimul
-este în spate, iar evaluarea se face de jos în sus. Un `@backdrop` este o suprafață
-separată sub control, nu intră în stiva normală.
+The declared order is like in the Photoshop panel: first node is in front, last
+is at the back, and the evaluation is done from the bottom up. A `@backdrop` is a surface
+separated under control, does not go on the normal stack.
 
-## Layer, group, mask și clipping
+## Layer, group, mask and clipping
 
-- `@layer` este leaf și conține filtre și/sau styles.
-- `@group` conține layere sau grupuri imbricate și poate procesa rezultatul lor.
-- `@mask` se aplică rezultatului pregătit după filtre și styles, înainte de
-  opacity și blend.
-- `ClipToBelow = true` folosește alpha-ul celui mai apropiat sibling normal
-  neclipped de dedesubt, în același scope.
-- `Visible = false` elimină întregul scope și munca lui; `Opacity = 0` păstrează
-  evaluarea, apoi face contribuția transparentă.
+- `@layer` is leaf and contains filters and/or styles.
+- `@group` contains nested layers or groups and can process their output.
+- `@mask` applies to the prepared result after filters and styles, before
+  opacity and blend.
+- `ClipToBelow = true` uses the alpha of the closest normal sibling
+  unclipped below, in the same scope.
+- `Visible = false` removes its entire scope and work; `Opacity = 0` keeps
+  evaluation, then make the contribution transparent.
 
-Exemplu generic:
-
+Generic example:
 ```xml
 <PrismComposition Name="FrostedPanelPrism">
     @layer Highlight
@@ -74,63 +73,60 @@ Exemplu generic:
     @prism $FrostedPanelPrism;
 </Border>
 ```
-
-Un `@backdrop` este opțional, unic și ultimul copil direct al compoziției.
+A `@backdrop` is optional, unique, and the last direct child of the composition.
 
 ## Motion paths
 
-Motion intră în instanța Prism prin segmentul rezervat `.prism.`:
-
+Motion enters the Prism instance through the reserved segment `.prism.`:
 ```text
 $self.prism.Highlight.Opacity
 $owner.prism.CardTreatment.CardClarity.Visible
 $FrostedPanel.prism.SpaceGlass.Opacity
 ```
+`$self`, `$owner` and namescope names follow existing Motion rules.
+Intermediate segments cross groups and named nodes. The numbers and
+colors interpolate continuously; bool, int and enum change discretely at the end
+the interval. Resources are not animable. The generator validates the path and type,
+and the runtime does not do textual lookup per frame.
 
-`$self`, `$owner` și numele din namescope urmează regulile Motion existente.
-Segmentele intermediare traversează group-uri și noduri numite. Numerele și
-culorile se interpolează continuu; bool, int și enum se schimbă discret la finalul
-intervalului. Resursele nu sunt animabile. Generatorul validează calea și tipul,
-iar runtime-ul nu face lookup textual per frame.
+## Backdrop and backends
 
-## Backdrop și backend-uri
+The host parses the list only once and requests at most one readonly lease for
+frames. If the provider is absent or refuses to purchase, only the backdrop plan is
+omitted; the control stack and normal content continue. The lease is released in
+same draw, including exceptions.
 
-Hostul analizează lista o singură dată și cere cel mult un lease readonly pentru
-frame. Dacă providerul lipsește sau refuză achiziția, numai planul backdrop este
-omis; stiva controlului și conținutul normal continuă. Lease-ul este eliberat în
-același draw, inclusiv la excepții.
+A backend without Prism ignores `BeginPrism` and `EndPrism` but processes all
+the commands between them. It doesn't need to implement backdrop and none appears
+change of layout or input.
 
-Un backend fără Prism ignoră `BeginPrism` și `EndPrism`, dar procesează toate
-comenzile dintre ele. Nu trebuie să implementeze backdrop și nu apare nicio
-schimbare de layout sau input.
+## Diagnostics and budgets
 
-## Diagnostics și bugete
+`MonoGameDrawingBackend.RendererDiagnostics` provides immutable snapshots for
+hit/miss/promotion/eviction, bytes, entries, peaks, catches and passes saved.
+Detailed operational diagnostics are internal, deterministic, redact IDs
+Unstable GPUs and activates via `PrismRendererOptions` only when needed.
 
-`MonoGameDrawingBackend.RendererDiagnostics` oferă snapshot-uri immutable pentru
-hit/miss/promotion/eviction, bytes, intrări, peak, capturi și passes economisite.
-Diagnostics operaționale detaliate sunt interne, deterministe, redactează ID-uri
-GPU instabile și se activează prin `PrismRendererOptions` numai la nevoie.
+Measured defaults are 512 MiB hard for all Prism surfaces, 256 MiB
+soft cache retained and 256 entries. At pressure the LRU is evacuated
+don't forget If the hard limit still cannot accommodate a transient surface, the backend
+report `PRISM7006`/`SurfaceAllocationFailed`, restore host and continue
+the remaining gross internal orders, without partial output or quality downgrade
+hidden
 
-Defaulturile măsurate sunt 512 MiB hard pentru toate suprafețele Prism, 256 MiB
-soft pentru cache-ul retained și 256 de intrări. La presiune se evacuează LRU
-nepin-uit. Dacă hard limit-ul tot nu poate admite o suprafață transient, backend-ul
-raportează `PRISM7006`/`SurfaceAllocationFailed`, restaurează hostul și continuă
-comenzile interioare brute rămase, fără output parțial sau quality downgrade
-ascuns.
+Markup errors use diagnostics `PRISM1xxx`-`PRISM6xxx`; failure paths of
+runtime uses accurate, deduplicated diagnostics where the contract requires it.
 
-Erorile de markup folosesc diagnostics `PRISM1xxx`-`PRISM6xxx`; failure paths de
-runtime folosesc diagnostics precise, deduplicate unde contractul o cere.
+## Catalogue
 
-## Catalog
+The machine-readable catalog remains the only source for operations, properties,
+types, defaults and capabilities. Complete lists are not copied here:
 
-Catalogul machine-readable rămâne singura sursă pentru operații, proprietăți,
-tipuri, defaulturi și capabilități. Listele complete nu se copiază aici:
+- [generated filter reference](prism-filter-reference.generated.md)
+- [adjustment filters](prism-adjustment-filters.md)
+- [distortion filters](prism-distortion-filters.md)
+- [neighborhood filters](prism-neighborhood-filters.md)
+- [](prism-catalog-filters.md) filter catalog
 
-- [referința generată a filtrelor](prism-filter-reference.generated.md)
-- [filtre de ajustare](prism-adjustment-filters.md)
-- [filtre de distorsiune](prism-distortion-filters.md)
-- [filtre de vecinătate](prism-neighborhood-filters.md)
-- [catalogul de filtre](prism-catalog-filters.md)
-
-Prima implementare nu include SDK public pentru operații third-party, shader
-source la runtime, adaptive quality sau async compute.
+The first implementation does not include the public SDK for third-party shader operations
+source at runtime, adaptive quality or async compute.

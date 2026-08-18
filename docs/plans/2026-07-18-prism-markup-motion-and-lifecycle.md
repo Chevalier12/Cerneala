@@ -1,141 +1,140 @@
-# Prism — markup, Motion și lifecycle
+# Prism — markup, Motion and lifecycle
 
-## Scop
+## Purpose
 
-Compilează sintaxa Prism în definiții tipate, atașează instanța la element și
-permite Motion să anime proprietăți Prism fără reflection ori lookup string la
+Compiles the Prism syntax into type definitions, attaches the instance to the element, and
+allows Motion to animate Prism properties without reflection or lookup string to
 runtime.
 
-**Dependență:** `2026-07-18-prism-foundation-and-catalog.md`.
+**Dependency:** `2026-07-18-prism-foundation-and-catalog.md`.
 
-## Etapa 0 — contracte RED
+## Stage 0 — RED contracts
 
-- [x] Adaugă fixtures RED în `tests/Cerneala.Tests.SourceGen/Prism/` pentru
-  resurse `<PrismComposition>`, `@prism $Resource(...)`, compoziții inline și
-  exact cele opt directive aprobate.
-- [x] Acoperă sintaxa completă: parametri tipați, layer/group bottom-up,
-  filter/style/mask, backdrop ultim, proprietăți Photoshop și profil de culoare.
-- [x] Adaugă cazuri RED pentru directive necunoscute, proprietăți greșite,
-  nume duplicate, parametri lipsă, layer cu layer copil, mai multe backdrop-uri
-  și backdrop care nu este ultimul.
-- [x] Adaugă fixtures RED pentru căile Motion
-  `$self.prism.Layer.Property`, `$owner.prism.Layer.Property` și
-  `$Name.prism.Layer.Property`, inclusiv nume/proprietăți inexistente.
+- [x] Add RED fixtures in `tests/Cerneala.Tests.SourceGen/Prism/` for
+  resources `<PrismComposition>`, `@prism $Resource(...)`, inline compositions and
+  exactly the eight approved directives.
+- [x] Covers the full syntax: typed parameters, layer/group bottom-up,
+  filter/style/mask, ultimate backdrop, photoshop properties and color profile.
+- [x] Add RED cases for unknown directives, wrong properties,
+  duplicate names, missing parameters, layer with child layer, multiple backdrops
+  and the backdrop which is not the last.
+- [x] Add RED fixtures for Motion paths
+  `$self.prism.Layer.Property`, `$owner.prism.Layer.Property` and
+  `$Name.prism.Layer.Property`, including non-existent names/properties.
 
-### Gate etapa 0
+### Gate stage 0
 
-- [x] Testele separă erorile de parse, binding și emission, verifică span-uri
-  exacte și nu eșuează din cauza unor fixtures CUI invalide fără legătură.
+- [x] Tests separate parse, binding and emission errors, check spans
+  accurate and do not fail due to invalid unrelated CUI fixtures.
 
-## Etapa 1 — parser și AST
+## Stage 1 — parser and AST
 
-- [x] Extinde infrastructura existentă `UiMarkupDirectiveParser` pentru
-  delimitarea blocurilor, expresii și valori comune; ține gramatica Prism în
-  `Cerneala.SourceGen/Prism/Syntax/`, nu într-un al doilea parser general.
-- [x] Creează un AST Prism intern și mic care păstrează ordinea declarată,
-  source spans și forma expresiilor, fără a importa tipurile runtime.
-- [x] Acceptă numai directivele din catalogul limbajului Prism și numai copiii
-  legali pentru fiecare context.
-- [x] Adaugă diagnostice stabile `PRISM1xxx` pentru lexare/parse și teste
-  snapshot pentru textul și locația fiecărui diagnostic.
+- [x] Extends the existing infrastructure `UiMarkupDirectiveParser` for
+  block delimitation, common expressions and values; keep Prism grammar in
+  `Cerneala.SourceGen/Prism/Syntax/`, not in a second general parser.
+- [x] Creates an internal and small Prism AST that preserves the declared order,
+  source spans and form expressions, without importing runtime types.
+- [x] Only supports Prism language catalog directives and only children
+  legal for each context.
+- [x] Add stable diagnostics `PRISM1xxx` for lexer/parse and tests
+  snapshot for the text and location of each diagnosis.
 
-### Gate etapa 1
+### Gate stage 1
 
-- [x] Parserul recuperează după o eroare fără cascade inutile și refolosește
-  sintaxa comună CUI în loc să dubleze reguli pentru `{}`, `=` și expresii.
+- [x] Parser recovers from an error without unnecessary cascades and reuses
+  common CUI syntax instead of duplicating rules for `{}`, `=` and expressions.
 
-## Etapa 2 — binder static
+## Stage 2 — static binder
 
-- [x] Adaugă în `Cerneala.SourceGen/Prism/Binding/` rezolvarea resurselor,
-  parametrilor, numelor de layer/group/backdrop și proprietăților generate din
-  catalog.
-- [x] Validează tipurile și conversiile la compile time; nu emite reflection,
-  dictionary string sau `dynamic` pentru cazurile valide.
-- [x] Rezolvă proprietățile filter/style/mask direct la chei tipate și emite
-  `PRISM2xxx` pentru simboluri, tipuri, domenii și capabilități invalide.
-- [x] Validează nesting-ul, ordinea backdrop-ului, `ClipToBelow` fără layer
-  inferior și coliziunile de nume înainte de emission.
-- [x] Testează accesul din template/resource scope și două instanțe ale
-  aceleiași resurse cu parametri diferiți.
+- [x] Add in `Cerneala.SourceGen/Prism/Binding/` resource resolution,
+  parameters, layer/group/backdrop names and properties generated from
+  catalogue.
+- [x] Validate types and conversions at compile time; emits no reflection,
+  dictionary string or `dynamic` for valid cases.
+- [x] Resolves filter/style/mask properties directly to typed keys and emits
+  `PRISM2xxx` for invalid symbols, types, domains, and capabilities.
+- [x] Validate nesting, backdrop order, `ClipToBelow` no layer
+  lower and name collisions before emission.
+- [x] Test access from template/resource scope and two instances of
+  the same resource with different parameters.
 
-### Gate etapa 2
+### Gate stage 2
+- [x] All approved examples from the proposal compile, and all examples
+  declared illegal receive a single useful diagnosis at the correct source span.
 
-- [x] Toate exemplele aprobate din proposal compilează, iar toate exemplele
-  declarate ilegale primesc un singur diagnostic util la source span-ul corect.
+## Stage 3 — emission and attachment
 
-## Etapa 3 — emission și atașare
+- [x] Generates in `Cerneala.SourceGen/Prism/Emission/` immutable definitions
+  shared and factories by `PrismInstance`; does not generate GPU graph or MonoGame code.
+- [x] Add an internal `PrismAttachment` to `UI/Prism/Runtime/` that implements
+  `IElementLifecycleBehavior`, model `MarkupMotionSession`.
+- [x] Attach only one Prism instance per element, handle replacement
+  deterministic and removes all references to detach/dispose.
+- [x] Binds dynamic expressions to typed slots and unbinds
+  when the element or template is removed from the tree.
+- [x] Add generated-source and runtime tests for attach, detach, reattach,
+  replacement, template recycling and two different roots.
 
-- [x] Generează în `Cerneala.SourceGen/Prism/Emission/` definiții imuabile
-  partajate și fabrici de `PrismInstance`; nu genera graf GPU sau cod MonoGame.
-- [x] Adaugă un `PrismAttachment` intern în `UI/Prism/Runtime/` care implementează
-  `IElementLifecycleBehavior`, după modelul `MarkupMotionSession`.
-- [x] Atașează o singură instanță Prism per element, gestionează replacement-ul
-  determinist și elimină toate referințele la detach/dispose.
-- [x] Leagă expresiile dinamice la sloturile tipate și deconectează bindingurile
-  când elementul sau template-ul este scos din arbore.
-- [x] Adaugă teste generated-source și runtime pentru attach, detach, reattach,
-  replacement, template recycling și două root-uri diferite.
+### Gate stage 3
 
-### Gate etapa 3
+- [x] The generated code does not contain the dispatch string in the hot path, and 10,000
+  attach/detach cycles do not keep Prism elements or instances alive.
 
-- [x] Codul generat nu conține string dispatch în hot path, iar 10.000 de
-  cicluri attach/detach nu păstrează elemente sau instanțe Prism vii.
+## Stage 4 — Motion integration
 
-## Etapa 4 — integrarea Motion
+- [x] Extends the existing Motion resolver with the segment `.prism` and generates
+  static instance access, named node, and property key.
+- [x] Reuses the Motion scheduler, specs, cancellation and lifecycle;
+  Prism does not introduce a second animation engine.
+- [x] Allows animation of numeric, color, bool/Visible and properties
+  enums only where the catalog defines interpolation or shift
+  discreet.
+- [x] Invalidates presentation/composition only for value changes;
+  it does not rebuild the layout, hitbox, `ElementRenderCache` or topology
+  graph if the structural version has not changed.
+- [x] Add RED/green tests for `$self`, `$owner`, named element, undo,
+  replace, Hidden/Collapsed and writing an already current value.
 
-- [x] Extinde resolverul Motion existent cu segmentul `.prism` și generează
-  acces static la instanță, nod numit și cheie de proprietate.
-- [x] Refolosește schedulerul, specs, cancellation și lifecycle-ul Motion;
-  Prism nu introduce un al doilea motor de animație.
-- [x] Permite animația proprietăților numerice, culorilor, bool/Visible și
-  enumurilor doar acolo unde catalogul definește interpolarea sau schimbarea
-  discretă.
-- [x] Invalidează doar prezentarea/compoziția pentru schimbările de valoare;
-  nu reconstruieste layout-ul, hitbox-ul, `ElementRenderCache` ori topologia
-  grafului dacă versiunea structurală nu s-a schimbat.
-- [x] Adaugă teste RED/green pentru `$self`, `$owner`, element numit, anulare,
-  replace, Hidden/Collapsed și scrierea unei valori deja curente.
+### Gate stage 4
 
-### Gate etapa 4
+- [x] A Prism animation runs without structural rebuild and is canceled o
+  only when the owner becomes unprofitable or leaves.
 
-- [x] O animație Prism rulează fără rebuild structural și este anulată o
-  singură dată când owner-ul devine ne-randabil sau se detașează.
+## Stage 5 — visibility and memory
 
-## Etapa 5 — vizibilitate și memorie
+- [x] Connects `Visible`, `Hidden`, `Collapsed`, detach and disposal to the same
+  lifecycle policy; the unrenderable state produces zero tick Motion and zero
+  Prism invalidation.
+- [x] Ensures deterministic resuming when returning to the tree: base values and
+  bindings are reapplied, but aborted executions do not revive themselves.
+- [x] Add repeated navigation tests between chapters, hide/unhide, resource
+  replacement and GC with `WeakReference`.
+- [x] Measure allocations after warmup for an animated parameter and prove that
+  no closures or collections occur per frame.
 
-- [x] Conectează `Visible`, `Hidden`, `Collapsed`, detach și disposal la aceeași
-  politică lifecycle; starea nerandabilă produce zero tick Motion și zero
-  invalidare Prism.
-- [x] Asigură reluarea deterministă la revenirea în arbore: valorile de bază și
-  bindingurile sunt reaplicate, dar execuțiile anulate nu reînvie singure.
-- [x] Adaugă teste de navigare repetată între chaptere, hide/unhide, resource
-  replacement și GC cu `WeakReference`.
-- [x] Măsoară alocările după warmup pentru un parametru animat și dovedește că
-  nu apar closure-uri sau colecții per frame.
+### Gate stage 5
 
-### Gate etapa 5
+- [x] Tests do not find Motion left active, references held or Prism working
+after hiding or detaching the owner.
 
-- [x] Testele nu găsesc Motion rămas activ, referințe reținute sau lucru Prism
-  după ascunderea ori detașarea owner-ului.
+## Stage 6 — documentation and verification
 
-## Etapa 6 — documentare și verificare
-
-- [x] Actualizează proposal-ul și TDD-ul numai unde implementarea a clarificat
-  semantică deja aprobată; orice schimbare de limbaj se întoarce la design,
-  nu este strecurată prin cod.
-- [x] Documentează toate API-urile publice noi/modificate în
-  `docs-site/documentation/classes/` cu skill-ul
-  `writing-api-documentation` și sincronizează manifestul.
-- [x] Rulează reindexarea obligatorie după fiecare lot C#/proiect.
-- [x] Rulează
+- [x] Update the proposal and TDD only where the implementation clarified
+  semantics already approved; any change in language goes back to design,
+  it is not slipped through the code.
+- [x] Document all new/changed public APIs in
+  `docs-site/documentation/classes/` with the skill
+  `writing-api-documentation` and synchronize the manifest.
+- [x] Run mandatory reindexing after every C# batch/project.
+- [x] Running
   `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`,
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "Prism|Motion"`
-  și `git diff --check`.
+  and `git diff --check`.
 
-## Definiția de gata
+## The definition of done
 
-- [x] Sintaxa aprobată compilează în cod tipat, cu diagnostics precise pentru
-  toate formele invalide.
-- [x] Motion, bindingurile și lifecycle-ul folosesc infrastructura existentă,
-  fără motor paralel sau workaround în view.
-- [x] Testele de source generation, invalidare, memorie și lifecycle sunt verzi.
+- [x] Approved syntax compiles to typed code, with accurate diagnostics for
+  all invalid forms.
+- [x] Motion, bindings and lifecycle use the existing infrastructure,
+  no parallel engine or workaround in view.
+- [x] Source generation, invalidation, memory and lifecycle tests are green.

@@ -2,6 +2,14 @@
 
 This plan turns `ROADMAPv2_AUDIT.md` into an ordered execution checklist. Do not use it to add new features. Use it to harden the retained UI foundation.
 
+> **Status (2026-08-18):** the retained rendering, tree mutation, scheduler,
+> input-route, resource, layout-diagnostics and roadmap-honesty work recorded
+> here is implemented and documented. The Phase 3 full-suite gate remains open:
+> the final run reported 3,595 passing tests and one existing completion-budget
+> performance failure; the isolated failing test passed on rerun. The remaining
+> unchecked items also include process-only actions such as committing a
+> checkpoint or intentionally retained stop conditions.
+
 ## Step 0: Cleanup Commit
 
 - [ ] Commit the current cleanup work:
@@ -156,9 +164,9 @@ Detailed plan: `docs/superpowers/plans/2026-07-05-clarify-package-boundary-depen
 
 ### Phase 3 Gate
 
-- [ ] `ROADMAPv2.md` no longer overclaims Later/Optional maturity.
-- [ ] Deferred work is explicitly marked as deferred, experimental, or frozen.
-- [ ] `dotnet test Cerneala.slnx` passes.
+- [x] `ROADMAPv2.md` no longer overclaims Later/Optional maturity.
+- [x] Deferred work is explicitly marked as deferred, experimental, or frozen.
+- [ ] `dotnet test Cerneala.slnx` passes. (2026-08-18 run: 3,595 passed, 1 existing completion-budget performance failure; isolated rerun passed.)
 - [ ] Commit Phase 3.
 
 ## Execution Order
@@ -174,7 +182,10 @@ Detailed plan: `docs/superpowers/plans/2026-07-05-clarify-package-boundary-depen
 9. [x] Execute roadmap honesty pass: `freeze-later-experimental-scope`.
 10. [x] Execute `clarify-text-services-mvp`.
 11. [x] Execute `clarify-package-boundary-dependencies`.
-12. [ ] Run full tests and commit Phase 3.
+12. [ ] Run full tests and commit Phase 3. (2026-08-18: the full suite had one
+    existing completion-budget performance failure; its isolated rerun passed.
+    The documentation audit verifies the plan state, but does not create a
+    source-control commit.)
 
 ## Stop Conditions
 

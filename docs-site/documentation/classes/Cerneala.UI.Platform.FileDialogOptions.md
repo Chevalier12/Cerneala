@@ -6,7 +6,7 @@ Namespace: `Cerneala.UI.Platform`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Platform/IFileDialogService.cs`
+Source: `UI/Platform/FileDialogOptions.cs`
 
 Captures optional metadata used by `IFileDialogService` when opening or saving files.
 

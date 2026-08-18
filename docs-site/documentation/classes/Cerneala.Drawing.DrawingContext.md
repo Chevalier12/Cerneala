@@ -54,10 +54,15 @@ Clip commands are recorded in order. `PushClip` adds a rectangular clip command,
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `FillRectangle(DrawRect, Color)` | `void` | Appends a `FillRectangle` command for the specified rectangle and color. |
+| `FillRectangle(DrawRect, IDrawBrush)` | `void` | Appends a brush-based `FillRectangle` command. |
 | `DrawRectangle(DrawRect, Color, float)` | `void` | Appends a `DrawRectangle` stroke command with the specified rectangle, color, and positive thickness. |
+| `DrawRectangle(DrawRect, IDrawBrush, float)` | `void` | Appends a brush-based `DrawRectangle` stroke command with the specified positive thickness. |
 | `FillEllipse(DrawRect, Color)` | `void` | Appends a `FillEllipse` command for the specified bounds and color. |
+| `FillEllipse(DrawRect, IDrawBrush)` | `void` | Appends a brush-based `FillEllipse` command. |
 | `DrawEllipse(DrawRect, Color, float)` | `void` | Appends a `DrawEllipse` stroke command with the specified bounds, color, and positive thickness. |
+| `DrawEllipse(DrawRect, IDrawBrush, float)` | `void` | Appends a brush-based `DrawEllipse` stroke command with the specified positive thickness. |
 | `DrawLine(DrawPoint, DrawPoint, Color, float)` | `void` | Appends a `DrawLine` command from `start` to `end` with the specified color and positive thickness. |
+| `DrawLine(DrawPoint, DrawPoint, IDrawBrush, float)` | `void` | Appends a brush-based `DrawLine` command with the specified positive thickness. |
 | `FillPath(string, DrawRect, DrawRect, IDrawBrush)` | `void` | Appends an SVG path fill command using a source view box, destination bounds, and brush. |
 | `DrawText(DrawTextRun, DrawPoint, Color)` | `void` | Appends a compatibility `DrawText` command for the text run at the specified position and color. |
 | `DrawText(DrawTextRun, DrawPoint, IDrawBrush)` | `void` | Appends a `DrawText` command that applies the complete brush through the glyph coverage mask. |

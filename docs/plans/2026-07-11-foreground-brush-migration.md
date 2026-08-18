@@ -1,59 +1,55 @@
-# Plan: migrarea `Foreground` la tipul `Brush`
+# Plan: migration `Foreground` to type `Brush`
 
-## Rezumat
+## Summary
 
-Schimbam `Control.Foreground` din `Color` in `Brush?` fara sa expunem un contract fals in care doar `SolidColorBrush` functioneaza. Spre deosebire de background si border, foreground-ul ajunge in rasterizarea textului si necesita mascarea glyph-urilor cu brush-uri compuse.
+We change `Control.Foreground` from `Color` to `Brush?` without exposing a fake contract in which only `SolidColorBrush` works. Unlike the background and border, the foreground reaches the rasterization of the text and requires the masking of the glyphs with compound brushes.
 
-## Contract final propus
-
+## Proposed final contract
 ```csharp
 public static readonly UiProperty<Brush?> ForegroundProperty;
 public Brush? Foreground { get; set; }
 ```
+- The default value is a concrete `SolidColorBrush(Color.Black)`, because the inherited text must remain visible.
+- The property remains inherited and affects rendering.
+- `Foreground="Tomato"` explicitly produces `SolidColorBrush`.
+- We do not keep an alias `ForegroundColor` and we do not add default conversion from `Color`.
 
-- Valoarea implicita este un `SolidColorBrush(Color.Black)` concret, deoarece textul mostenit trebuie sa ramana vizibil.
-- Proprietatea ramane mostenita si afecteaza render.
-- `Foreground="Tomato"` produce explicit `SolidColorBrush`.
-- Nu pastram un alias `ForegroundColor` si nu adaugam conversie implicita din `Color`.
+## Technical problem
 
-## Problema tehnica
+Today `Foreground` is consumed as `Color` by `TextBlock`, `Button`, `CheckBox`, `ContentPresenter`, `TextBoxBase`, `TextAspect`, `TextRenderer`, `DrawTextRun` and the Skia/MonoGame backend. A gradient or image brush should be applied over the coverage of the glyphs, not over the full text rectangle.
 
-Astazi `Foreground` este consumat ca `Color` de `TextBlock`, `Button`, `CheckBox`, `ContentPresenter`, `TextBoxBase`, `TextAspect`, `TextRenderer`, `DrawTextRun` si backend-ul Skia/MonoGame. Un gradient sau image brush trebuie aplicat peste acoperirea glyph-urilor, nu peste dreptunghiul complet al textului.
+## Phase 1: command pattern for text
 
-## Faza 1: modelul de comanda pentru text
+1. We extend the text command to transport `IDrawBrush`, keeping the color overload only if it is internally API compatible.
+2. The separation remains clear: shaping produces glyphs and metrics, brushing produces the final color.
+3. The cache key of the text separates the mask of the glyphs from the brush, so that changing the brush does not needlessly reraster the shape of the text.
+4. Caches and resources remain isolated per `GraphicsDevice`.
 
-1. Extindem comanda de text sa transporte `IDrawBrush`, pastrand overload-ul de culoare doar daca este API intern compatibil.
-2. Separarea ramane clara: shaping-ul produce glyph-uri si metrici, brush-ul produce culoarea finala.
-3. Cache key-ul textului separa masca glyph-urilor de brush, astfel incat schimbarea brush-ului sa nu rerasterizeze inutil forma textului.
-4. Cache-urile si resursele raman izolate per `GraphicsDevice`.
+## Phase 2: rasterization and composition
 
-## Faza 2: rasterizare si compozitie
+1. Skia produces an alpha mask or color-independent overlay texture.
+2. `SolidColorBrush` colors the mask through the existing fast path.
+3. Linear and radial gradient are sampled in the coordinates of the text layout.
+4. Image/drawing/visual brush use the same stretch, viewport, viewbox and tile mode rules as the other surfaces.
+5. The opacity of the brush and the opacity of the element are composed only once.
 
-1. Skia produce o masca alpha sau o textura de acoperire independenta de culoare.
-2. `SolidColorBrush` coloreaza masca prin calea rapida existenta.
-3. Linear si radial gradient sunt esantionate in coordonatele layout-ului textului.
-4. Image/drawing/visual brush folosesc aceleasi reguli de stretch, viewport, viewbox si tile mode ca celelalte suprafete.
-5. Opacitatea brush-ului si opacitatea elementului se compun o singura data.
+## Phase 3: controls and inheritance
 
-## Faza 3: controale si mostenire
+1. We migrate `Control.ForegroundProperty` and all bindings/templates to `Brush?`.
+2. `TextBlock`, `Button`, `CheckBox`, `Label`, `ContentPresenter`, `TextBoxBase` and derived controls send the complete brush to `TextRenderer`.
+3. `CaretColor` and `SelectionBackground` remain `Color` at this stage.
+4. We check the inherited propagation and the invalidation of the subtrees.
 
-1. Migrăm `Control.ForegroundProperty` si toate binding-urile/template-urile la `Brush?`.
-2. `TextBlock`, `Button`, `CheckBox`, `Label`, `ContentPresenter`, `TextBoxBase` si controalele derivate trimit brush-ul complet catre `TextRenderer`.
-3. `CaretColor` si `SelectionBackground` raman `Color` in aceasta etapa.
-4. Verificam propagarea mostenita si invalidarea subarborilor.
+## Phase 4: aspects, themes and motion
 
-## Faza 4: aspecte, teme si motion
+1. Foreground tokens become `AspectToken<Brush?>`.
+2. The theme derives solid brushes from existing semantic colors.
+3. `BrushMixer` animates structurally compatible solid brushes and gradients.
+4. Image/drawing/visual brush snap to destination or require animation of internal properties, not interpolation between objects.
 
-1. Token-urile foreground devin `AspectToken<Brush?>`.
-2. Tema deriva brush-uri solide din culorile semantice existente.
-3. `BrushMixer` anima solid brush-uri si gradienti structural compatibili.
-4. Image/drawing/visual brush fac snap la destinatie sau cer animarea proprietatilor interne, nu interpolare intre obiecte.
-
-## Faza 5: markup
-
-1. Shorthand-ul de culoare, resursele si property elements au aceeasi semantica runtime/sourcegen.
-2. Exemple acceptate:
-
+## Phase 5: markup
+1. The color shorthand, resources and property elements have the same runtime/sourcegen semantics.
+2. Accepted examples:
 ```xml
 <TextBlock Foreground="Tomato" Text="Salut" />
 ```
@@ -65,31 +61,30 @@ Astazi `Foreground` este consumat ca `Color` de `TextBlock`, `Button`, `CheckBox
   </TextBlock.Foreground>
 </TextBlock>
 ```
+3. Resources that are not `Brush` produce type diagnosis.
 
-3. Resursele care nu sunt `Brush` produc diagnostic de tip.
+## Testing and acceptance
 
-## Testare si acceptanta
+- API tests for `UiProperty<Brush?>`, default and inheritance;
+- shaping tests that demonstrate that the brush does not change the metrics;
+- pixel tests for solid text, linear gradient, radial gradient and image brush;
+- bidi, wrapping, trimming, selection and clipping tests;
+- cache tests for reusing the glyph mask;
+- tests DPI, resize, device reset and windows with different devices;
+- motion tests for solid and compatible gradient;
+- build and complete suite without warnings or errors;
+- synchronized API documentation and migration guide.
 
-- teste API pentru `UiProperty<Brush?>`, default si mostenire;
-- teste de shaping care demonstreaza ca brush-ul nu schimba metricile;
-- pixel tests pentru text solid, linear gradient, radial gradient si image brush;
-- teste bidi, wrapping, trimming, selectie si clipping;
-- teste de cache pentru reutilizarea mastii glyph-urilor;
-- teste DPI, resize, device reset si ferestre cu device-uri diferite;
-- teste motion pentru solid si gradient compatibil;
-- build si suita completa fara warnings sau erori;
-- documentatie API si ghid de migrare sincronizate.
+## Risks
 
-## Riscuri
+- coloring the text directly in the current texture can multiply the cache explosively;
+- the coordinates of the brush must be established for each line and run bidi;
+- subpixel antialiasing may be incompatible with a simple alpha mask;
+- visual brush can introduce cycles through content that includes the source text.
 
-- colorarea textului direct in textura actuala poate multiplica exploziv cache-ul;
-- coordonatele brush-ului trebuie stabilite pentru fiecare linie si run bidi;
-- subpixel antialiasing-ul poate fi incompatibil cu o masca alpha simpla;
-- visual brush poate introduce cicluri prin continut care include textul sursa.
+## Non-objectives
 
-## Non-obiective
-
-- migrarea `CaretColor` sau `SelectionBackground`;
-- animarea arbitrara intre doua image/visual brushes;
-- schimbarea algoritmilor de shaping, bidi sau line breaking;
-- compatibilitate binara cu `UiProperty<Color>`.
+- `CaretColor` or `SelectionBackground` migration;
+- arbitrary animation between two image/visual brushes;
+- changing the shaping, bidi or line breaking algorithms;
+- binary compatibility with `UiProperty<Color>`.

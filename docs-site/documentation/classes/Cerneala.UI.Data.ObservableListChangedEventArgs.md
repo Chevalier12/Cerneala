@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Data`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Data/IObservableList{T}.cs`
+Source: `UI/Data/ObservableListChangedEventArgs.cs`
 
 Describes an untyped change notification raised by an observable list.
 

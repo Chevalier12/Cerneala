@@ -1,145 +1,145 @@
-# Prism — catalogul complet de filtre
+# Prism — the complete filter catalog
 
-## Scop
+## Purpose
 
-Implementează toate filtrele Photoshop aprobate în catalogul Prism și le leagă
-de parser, runtime, optimizer, kerneluri, diagnostics și teste fără liste
-duplicate manual.
+Implements all approved Photoshop filters in the Prism catalog and links them
+of parser, runtime, optimizer, kernels, diagnostics and tests without lists
+manually duplicated.
 
-**Dependențe:** `2026-07-18-prism-markup-motion-and-lifecycle.md` și
+**Dependencies:** `2026-07-18-prism-markup-motion-and-lifecycle.md` and
 `2026-07-18-prism-monogame-compositor.md`.
 
-## Etapa 0 — contract de completitudine
+## Stage 0 — completeness contract
 
-- [x] Generează din `prism-catalog.json` matricea filtru → proprietăți/defaults
-  → planner → kernel → test semantic → golden → documentație.
-- [x] Adaugă un test RED care eșuează pentru fiecare filtru ori proprietate
-  fără implementare; nu menține allowlist-uri paralele în teste.
-- [x] Clasifică fiecare filtru după primitive reutilizabile, extinderea
-  bounds-ului, sampling, format/color space, capabilități GPU, determinism,
-  cacheability și resursele care trebuie versionate.
-- [x] Definește pentru filtrele cu randomness un seed explicit și output
-  determinist; interzice timpul curent sau RNG global ca input ascuns.
-- [x] Definește politica pentru formate/capabilități indisponibile prin
-  `PrismFallbackPolicy`, cu diagnostic observabil, fără substituție silențioasă.
+- [x] Generate from `prism-catalog.json` the filter matrix → properties/defaults
+  → planner → kernel → semantic test → golden → documentation.
+- [x] Add a RED test that fails for each filter or property
+  no implementation; do not maintain parallel allowlists in tests.
+- [x] Classifies each filter by reusable primitives, extension
+  bounds, sampling, format/color space, GPU capabilities, determinism,
+  cacheability and resources to be versioned.
+- [x] Defines for randomness filters an explicit seed and output
+  deterministic; disallow current time or global RNG as hidden input.
+- [x] Defines the policy for formats/capabilities unavailable via
+  `PrismFallbackPolicy`, with observable diagnosis, no silent substitution.
 
-### Gate etapa 0
+### Gate stage 0
 
-- [x] Catalogul complet produce automat o listă finită de implementat și buildul
-  nu poate deveni verde cu o intrare uitată.
+- [x] The full catalog automatically produces a finite list to deploy and build
+  cannot turn green with a forgotten entry.
 
-## Etapa 1 — primitive și filtre de ajustare
+## Stage 1 — primitives and adjustment filters
 
-- [x] Implementează primitive comune pentru matrix/curve/LUT, channel mapping,
-  thresholds, histogram-free levels și conversii de culoare.
-- [x] Implementează toate filtrele de ajustare/color declarate în catalog,
-  folosind aceleași primitive și aceeași convenție linear/premultiplied.
-- [x] Generează bindingul parametrilor și validarea domeniilor din catalog;
-  plannerul nu repetă defaults.
-- [x] Adaugă vectori analitici pentru pixeli opaci/transparenți, valori limită,
-  canale individuale și profiluri de culoare selectabile.
-- [x] Adaugă golden-uri numai pentru interacțiuni care nu pot fi validate
-  suficient prin vectori. (Nu a fost necesar: toate interacțiunile acestei
-  familii sunt acoperite suficient prin vectori analitici.)
+- [x] Implements common primitives for matrix/curve/LUT, channel mapping,
+  thresholds, histogram-free levels and color conversions.
+- [x] Implements all adjustment/color filters declared in the catalog,
+  using the same primitives and the same linear/premultiplied convention.
+- [x] Generates parameter binding and domain validation in the catalog;
+  the planner does not repeat defaults.
+- [x] Add analytic vectors for opaque/transparent pixels, boundary values,
+  individual channels and selectable color profiles.
+- [x] Add goldens only for interactions that cannot be validated
+  enough through vectors. (It was not necessary: all interactions of this
+  families are sufficiently covered by analytical vectors.)
 
-### Gate etapa 1
+### Gate stage 1
 
-- [x] Toate ajustările din catalog au implementare, test și documentație, fără
-  conversii gamma sau alpha duplicate.
+- [x] All adjustments in the catalog have implementation, test and documentation, no
+  duplicate gamma or alpha conversions.
 
-## Etapa 2 — blur, sharpen și noise
+## Stage 2 — blur, sharpen and noise
 
-- [x] Implementează primitive comune separabile pentru blur, convolution,
-  neighborhood sampling și noise determinist.
-- [x] Implementează toate filtrele Blur, Sharpen și Noise declarate în catalog,
-  inclusiv variantele care cer kernel specializat.
-- [x] Calculează radius/bounds o singură dată în planner și transmite kernelului
-  parametri pregătiți; shaderul nu reinterpretează semantica markup.
-- [x] Alege strategia de sampling/passes după capabilități și dimensiune fără
-  quality degradation ascuns ori praguri numerice nebenchmarkuite.
-- [x] Testează edge sampling, alpha edges, raze zero/maxime, seed, imagini mici
-  și nested color profiles.
+- [x] Implements common separable primitives for blur, convolution,
+  neighborhood sampling and deterministic noise.
+- [x] Implements all the Blur, Sharpen and Noise filters declared in the catalog,
+  including variants that require a specialized kernel.
+- [x] Calculate radius/bounds only once in planner and pass to kernel
+  prepared parameters; the shader does not reinterpret the markup semantics.
+- [x] Choose the sampling/passes strategy according to capabilities and size without
+hidden quality degradation or non-benchmarked numerical thresholds.
+- [x] Test edge sampling, alpha edges, zero/maximum radii, seed, small images
+  and nested color profiles.
 
-### Gate etapa 2
+### Gate stage 2
 
-- [x] Rezultatul este determinist, bounds nu taie pixeli, iar optimizerul
-  elimină numai filtrele matematic no-op.
+- [x] The result is deterministic, bounds do not cut pixels, and the optimizer
+  only removes math no-op filters.
 
-## Etapa 3 — distort, transform și resampling
+## Step 3 — distort, transform and resampling
 
-- [x] Implementează primitive comune pentru coordinate mapping, displacement,
-  polar/cartesian transform, wrap/clamp/mirror și sampling quality.
-- [x] Implementează toate filtrele Distort și transformările din catalog,
-  inclusiv intrările care necesită mai multe passes.
-- [x] Păstrează transformul vizual în Prism: nu propagă dimensiuni noi în
-  measure/arrange și nu modifică hitbox-ul.
-- [x] Validează resursele auxiliare definite de sintaxa aprobată fără a
-  reintroduce o proprietate generică `Source` ori shader filename.
-- [x] Testează coordonate negative, scale extreme, margini, transparență,
-  nested transforms și compoziții clipped/masked.
+- [x] Implements common primitives for coordinate mapping, displacement,
+  polar/cartesian transform, wrap/clamp/mirror and sampling quality.
+- [x] Implements all the Distort filters and transformations in the catalog,
+  including entries that require multiple passes.
+- [x] Keep visual transform in Prism: don't propagate new dimensions into
+  measure/arrange and doesn't change the hitbox.
+- [x] Validate auxiliary resources defined by the approved syntax without a
+  reintroduces a generic property `Source` or shader filename.
+- [x] Test negative coordinates, extreme scales, edges, transparency,
+  nested transforms and clipped/masked compositions.
 
-### Gate etapa 3
+### Gate stage 3
 
-- [x] Toate filtrele de distorsiune au mapping și sampling verificat, iar inputul
-  controlului rămâne sursa implicită.
+- [x] All distortion filters have mapping and sampling verified, and the input
+  control remains the default source.
 
-## Etapa 4 — stylize, pixelate, render și restul catalogului
+## Stage 4 — stylize, pixelate, render and the rest of the catalog
 
-- [x] Implementează primitivele lipsă pentru edge detection, morphology,
-  quantization, tiling, procedural patterns și operațiile multi-pass necesare.
-- [x] Implementează toate filtrele Stylize, Pixelate, Render și orice altă
-  familie aprobată în proposal/catalog; nicio intrare nu rămâne „TODO”.
-- [x] Refolosește primitivele style/filter când operația matematică este
-  identică, dar păstrează plannere separate când semantica publică diferă.
-- [x] Testează determinismul procedural, alpha, bounds, ordinea chaining-ului,
-  group isolation și interacțiunea cu mask/clipping/blend.
-- [x] Generează o galerie de conformance din aceeași listă de catalog, fără
-  view-uri scrise manual per filtru.
+- [x] Implement the missing primitives for edge detection, morphology,
+  quantization, tiling, procedural patterns and the necessary multi-pass operations.
+- [x] Implements all Stylize, Pixelate, Render and any other filters
+  approved family in the proposal/catalogue; no entry remains "TODO".
+- [x] Reuse style/filter primitives when the math operation is
+  identical, but keep separate layouts when the public semantics differ.
+- [x] Test procedural determinism, alpha, bounds, chaining order,
+  group isolation and interaction with mask/clipping/blend.
+- [x] Generate a conformance gallery from the same catalog list without
+  manually written views per filter.
 
-### Gate etapa 4
+### Gate stage 4
 
-- [x] Matricea catalogului raportează zero filtre/proprietăți fără planner,
-  kernel, test și documentație.
+- [x] Catalog matrix reports zero filters/properties without planner,
+  kernel, test and documentation.
 
-## Etapa 5 — optimizer și performanță
+## Stage 5 — optimizer and performance
 
-- [x] Marchează în catalog numai operațiile sigur fuzionabile și verifică
-  diferențial outputul fuzionat față de passes separate.
-- [x] Elimină filtrele no-op după valorile efective tipate și păstrează ordinea
-  pentru operațiile necomutative.
-- [x] Profilează scene reprezentative simple, chained și nested; măsoară passes,
-  peak surfaces, CPU submit, GPU time, hit/miss retained și alocări după warmup.
-- [x] Introdu praguri ori limite publice numai pe baza benchmarkurilor și
-  documentează motivul; nu adăuga quality presets/adaptive quality necerute.
-  (Nu a fost necesar: măsurătorile justifică gate-uri structurale, dar nu
-  limite publice de timp portabile între GPU-uri.)
-- [x] Verifică mii de frame-uri animate pentru bounded surface reuse și lipsa
-  recompilării shaderelor ori construirii de graf per schimbare nonstructurală.
+- [x] Mark only the safely mergeable operations in the catalog and check
+  differential fused output versus separate passes.
+- [x] Remove no-op filters by actual typed values and keep order
+  for non-commutative operations.
+- [x] Profiles simple, chained and nested representative scenes; measure passes,
+  peak surfaces, CPU submit, GPU time, hit/miss retained and allocations after warmup.
+- [x] Enter thresholds or public limits only based on benchmarks and
+  document the reason; do not add unwanted quality presets/adaptive quality.
+  (It wasn't necessary: the measurements justify structural gates, but they don't
+  public time limits portable between GPUs.)
+- [x] Check thousands of animated frames for bounded surface reuse and lack
+  recompiling the shaders or building the graph per non-structural change.
 
-### Gate etapa 5
+### Gate stage 5
 
-- [x] Optimizarea păstrează conformance-ul, iar scenariile statice și animate
-  respectă bugetele stabilite prin măsurători.
+- [x] Optimization preserves conformance and static and animated scenarios
+  respects the budgets established by measurements.
 
-## Etapa 6 — documentare și verificare
+## Stage 6 — documentation and verification
 
-- [x] Generează referința filtrelor/proprietăților/defaults din catalog și
-  păstrează explicațiile conceptuale scrise manual separat de datele generate.
-- [x] Folosește skill-ul `writing-api-documentation` pentru orice tip public și
-  sincronizează `docs-site/documentation/manifest.json`. (Audit efectuat cu
-  skill-ul; nu a fost necesară o modificare: lotul nu schimbă API-ul public,
-  iar manifestul are toate cele 926 de pagini existente.)
-- [x] Rulează reindexarea după fiecare lot C#/proiect.
-- [x] Rulează
+- [x] Generates the reference of filters/properties/defaults from the catalog and
+  keep handwritten conceptual explanations separate from generated data.
+- [x] Use the skill `writing-api-documentation` for any public type and
+  synchronize `docs-site/documentation/manifest.json`. (Audit performed with
+  the skill; no change required: batch does not change the public API,
+  and the manifesto has all 926 existing pages.)
+- [x] Run reindexing after every C# batch/project.
+- [x] Running
   `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --filter Prism`,
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter PrismFilter`
-  și `dotnet test .\Cerneala.slnx`.
-- [x] Rulează galeria prin API-ul de captură automatizat și `git diff --check`.
+  and `dotnet test .\Cerneala.slnx`.
+- [x] Runs the gallery via the automated capture API and `git diff --check`.
 
-## Definiția de gata
+## The definition of done
 
-- [x] Fiecare filtru și proprietate aprobate în catalog au traseu complet de la
-  markup la kernel, diagnostics, test și documentație.
-- [x] Nicio listă paralelă, extensie publică terță sau runtime shader source nu
-  a fost introdusă.
-- [x] Conformance-ul și benchmarkurile sunt verzi.
+- [x] Each approved filter and property in the catalog has full path from
+  kernel markup, diagnostics, test and documentation.
+- [x] No parallel list, third party public extension or runtime shader source
+  was introduced.
+- [x] Conformance and benchmarks are green.

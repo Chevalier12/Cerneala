@@ -1,79 +1,78 @@
 # Conceptual Ideas
 
-Directie posibila pentru Cerneala: un UI framework retained-mode pentru MonoGame, cu invalidation, debugging si scheduling inspirate mai mult din game engines decat din framework-uri desktop clasice.
+Possible direction for Cerneala: a retained-mode UI framework for MonoGame, with invalidation, debugging and scheduling inspired more by game engines than by classic desktop frameworks.
 
-## 1. UI ca graf de dependente
+## 1. UI as a dependency graph
 
-In loc ca totul sa fie modelat doar ca arbore visual/logical, layout-ul, input-ul, render-ul, resursele si state-ul pot fi vazute ca un graf incremental explicit.
+Instead of everything being modeled only as a visual/logical tree, the layout, input, render, resources and state can be seen as an explicit incremental graph.
 
-Fiecare nod ar putea declara ce consuma si ce produce:
+Each node could declare what it consumes and what it produces:
 
-- `Measure` depinde de font metrics, continut, constraints si style.
-- `Arrange` depinde de rezultatul de measure si de layout parent.
-- `Render` depinde de style, geometry, text shaping si assets.
-- `HitTest` depinde de bounds, visibility, enabled state si clipping.
+- `Measure` depends on font metrics, content, constraints and style.
+- `Arrange` depends on the measure result and the parent layout.
+- `Render` depends on style, geometry, text shaping and assets.
+- `HitTest` depends on bounds, visibility, enabled state and clipping.
 
-Invalidarea ar deveni propagare prin graf, nu doar flags propagate in sus si in jos prin arbore.
+The invalidation would become propagation through the graph, not just flags propagated up and down the tree.
 
-## 2. Frame scheduler cu buget real
+## 2. Frame scheduler with real budget
 
-Pentru MonoGame, scheduler-ul poate fi o diferenta majora. In loc sa proceseze mereu toata munca, poate decide ce incape in bugetul frame-ului.
+For MonoGame, the scheduler can be a major difference. Instead of always processing all the work, it can decide what fits in the frame budget.
 
-Exemple:
+Examples:
 
-- Layout critic procesat imediat.
-- Text rasterization amanat cand frame-ul e aglomerat.
-- Image decode facut in background.
-- Hit-test cache refacut partial.
-- Render cache degradat temporar si reconstruit ulterior.
+- Critical layout processed immediately.
+- Text rasterization postponed when the frame is crowded.
+- Image decode done in the background.
+- Hit-test cache partially redone.
+- Render cache temporarily degraded and rebuilt later.
 
-Scopul ar fi un UI care ramane responsiv chiar si cand are multa munca de facut.
+The goal would be a UI that remains responsive even when it has a lot of work to do.
 
-## 3. Declarative retained UI peste game loop immediate
+## 3. Declarative retained UI over game loop immediate
 
-Cerneala poate combina retained UI pentru meniuri, toolbars, inspectoare si editori cu predictibilitatea unui game loop.
+Cerneala can combine retained UI for menus, toolbars, inspectors and editors with the predictability of a game loop.
 
-Ideea centrala:
+The central idea:
 
-- Structura UI este retained.
-- Starea poate fi declarativa.
-- Input-ul si rendering-ul raman procesate explicit per frame.
-- Integrarea cu gameplay/editor runtime ramane directa, fara strat magic greu de controlat.
+- The UI structure is retained.
+- Status can be declarative.
+- Input and rendering are processed explicitly per frame.
+- The integration with gameplay/runtime editor remains direct, without a magic layer difficult to control.
 
-## 4. Diagnostic-first UI
+## 4. Diagnosis-first UI
 
-`InvalidationTrace` poate deveni o trasatura principala, nu doar un helper de debugging.
+`InvalidationTrace` can become a main feature, not just a debugging helper.
 
-Framework-ul ar putea raspunde direct la intrebari precum:
+The framework could directly answer questions such as:
 
-- De ce s-a relayout-uit elementul acesta?
-- Ce proprietate a provocat render?
-- Ce handler a consumat input-ul?
-- Ce frame a depasit bugetul?
-- Ce cache a fost invalidat inutil?
+- Why was this element relayed?
+- What property caused render?
+- Which handler consumed the input?
+- Which frame exceeded the budget?
+- What cache was unnecessarily invalidated?
 
-Un UI framework unde debugging-ul este first-class ar avea identitate puternica, mai ales pentru tooling si jocuri.
+A UI framework where debugging is first-class would have a strong identity, especially for tooling and games.
 
-## 5. Layout bazat pe constraints si prioritati
+## 5. Layout based on constraints and priorities
 
-Pe langa modelul clasic `Measure` / `Arrange`, Cerneala ar putea avea primitive de layout bazate pe relatii.
+Besides the classic model `Measure` / `Arrange`, Cerneala could have layout primitives based on relations.
 
-Exemple:
+Examples:
 
-- Aliniere dupa baseline.
-- Pastrare aspect ratio.
+- Alignment according to the baseline.
+- Keeping aspect ratio.
 - Pin to safe area.
-- Size dupa continut, dar limitat de viewport.
-- Distributie in functie de prioritati.
-- Relatii intre elemente care nu sunt neaparat parent-child directe.
+- Size by content, but limited by viewport.
+- Distribution according to priorities.
+- Relationships between elements that are not necessarily direct parent-child.
 
-Nu trebuie un solver complet de la inceput. Important este sa existe loc pentru layout relational acolo unde `Measure` / `Arrange` devine greoi.
+You don't need a complete solver from scratch. It is important to have room for relational layout where `Measure` / `Arrange` becomes cumbersome.
 
-## 6. Input unificat ca timeline
+## 6. Unified input as a timeline
+Input can be treated as a stream/timeline, not just as isolated events.
 
-Input-ul poate fi tratat ca stream/timeline, nu doar ca evenimente izolate.
-
-Surse posibile:
+Possible sources:
 
 - Mouse.
 - Keyboard.
@@ -84,42 +83,42 @@ Surse posibile:
 - Focus transitions.
 - Gestures.
 
-Pentru MonoGame, suportul coerent pentru mouse, tastatura, touch si gamepad ar fi un avantaj real fata de framework-urile desktop clasice.
+For MonoGame, consistent support for mouse, keyboard, touch and gamepad would be a real advantage over classic desktop frameworks.
 
-## 7. Styles ca date compilabile
+## 7. Styles as compilable data
 
-In loc de styling foarte dinamic si greu de urmarit, styles pot fi date validate si eventual compilate.
+Instead of very dynamic and hard-to-follow styling, styles can be data validated and eventually compiled.
 
-Avantajul important: framework-ul poate sti dinainte efectele unei schimbari.
+The important advantage: the framework can know in advance the effects of a change.
 
-Exemple:
+Examples:
 
-- `Background` este render-only.
-- `FontSize` afecteaza measure, arrange si render.
-- `IsEnabled` afecteaza hit-test si visual input state.
+- `Background` is render-only.
+- `FontSize` affects measure, arrange and render.
+- `IsEnabled` affects hit-test and visual input state.
 
-Asta s-ar potrivi bine cu sistemul existent de `UiPropertyOptions`.
+That would fit well with the existing system of `UiPropertyOptions`.
 
-## 8. Render cache explicit pe elemente
+## 8. Render cache explicitly on elements
 
-Elementele pot declara explicit cum participa la caching.
+Elements can explicitly state how they participate in caching.
 
-Exemple de metadata:
+Examples of metadata:
 
 - Cacheable.
 - Volatile.
-- Depends on transform.
-- Depends on clipping.
+- Depends on transformation.
+- It depends on clipping.
 - Can be atlased.
 - Text cache key.
 - Partial redraw region.
 
-Scopul este sa nu fie nevoie de redraw complet cand doar o bucata mica din UI s-a schimbat.
+The goal is not to need a complete redraw when only a small piece of the UI has changed.
 
-## Pozitionare
+## Positioning
 
-Cerneala nu trebuie sa fie doar o clona mai mica de WPF sau Avalonia. O pozitionare mai interesanta:
+Cerneala doesn't have to be just a smaller clone of WPF or Avalonia. A more interesting positioning:
 
-**Un UI framework retained-mode pentru MonoGame, cu invalidation, diagnostics si scheduling de game engine.**
+**A retained-mode UI framework for MonoGame, with game engine invalidation, diagnostics and scheduling.**
 
-Aceasta directie pastreaza ideile bune din framework-urile desktop, dar le adapteaza pentru runtime-uri interactive unde predictibilitatea frame-ului, debugging-ul si controlul explicit conteaza mai mult.
+This direction keeps the good ideas from desktop frameworks, but adapts them for interactive runtimes where frame predictability, debugging and explicit control matter more.

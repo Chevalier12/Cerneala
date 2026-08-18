@@ -1,98 +1,98 @@
-# Filtrele Prism de ajustare
+# Adjustment Prism filters
 
-Acest document descrie convențiile matematice comune pentru filtrele de
-ajustare. Lista de filtre, proprietățile, valorile implicite, domeniile,
-plannerul, kernelul și proprietarii de conformance sunt generate din
-`Cerneala.SourceGen/Prism/Catalog/prism-catalog.json`; documentul nu este o a
-doua sursă de adevăr pentru acele date.
+This document describes common mathematical conventions for filters
+adjustment. List of filters, properties, default values, domains,
+planner, kernel and conformance owners are generated from
+`Cerneala.SourceGen/Prism/Catalog/prism-catalog.json`; the document is not a a
+two sources of truth for that data.
 
-## Conducta de culoare
+## Pipe color
 
-Un filtru primește suprafața de lucru premultiplicată. Kernelul o
-depremultiplică o singură dată, convertește culoarea prin conducta comună Prism
-în linear sRGB, aplică ajustarea și modul de blend, apoi convertește rezultatul
-înapoi în profilul de lucru și îl premultiplică cu același alpha. Pixelul cu
-alpha zero rămâne zero. Conversiile gamma, matricile de profil și operațiile
-alpha sunt cele comune din conducta Prism; filtrele nu au copii locale ale
-acestor formule.
+A filter receives the premultiplied working surface. The kernel o
+depremultiply once, convert color via common Prism pipeline
+in linear sRGB, apply the adjustment and blend mode, then convert the result
+back into the working profile and premultiplies it with the same alpha. The pixel with
+alpha zero remains zero. Gamma conversions, profile matrices and operations
+alpha are the common ones from the Prism pipeline; filters do not have local copies of
+these formulas.
 
-Toate ajustările folosesc bounds-ul exact al sursei. Ele nu schimbă layout-ul,
-hitbox-ul sau dimensiunea suprafeței.
+All adjustments use the exact source bounds. They do not change the layout,
+the hitbox or surface size.
 
-## Primitive comune
+## Common primitives
 
-- **Matrix** aplică o matrice RGB 3x3 și o constantă per canal.
-- **Curve** compilează punctele `Composite`, `Red`, `Green` și `Blue` cu PCHIP
-  shape-preserving într-un singur LUT RGB `1024x1`. Curba canalului se aplică
-  prima, apoi curba composite.
-- **LUT** citește un Hald CLUT 3D canonic: o imagine pătrată cu latura
-  `level³`, care reprezintă un cub cu latura `level²`, cu roșul variind cel mai
-  repede în ordinea row-major. Acceptă interpolare tetraedrică sau trilineară.
-- **Channel mapping** selectează canalul înaintea curbei, nivelului sau
-  transformării.
-- **Threshold** calculează o histogramă globală a luminanței liniare, alege pragul Otsu cu varianță maximă între clase și folosește parametrul catalogat doar ca fallback pentru imagini degenerate sau complet transparente.
-- **Levels** remapează intervalul de intrare, gamma și intervalul de ieșire.
-  Cu `Auto=true`, construiește pe GPU o distribuție sincronizată pentru
-  canalul selectat, elimină câte 0,1% din fiecare coadă și folosește limitele
-  rezultate ca puncte de intrare. Analiza ignoră pixelii complet transparenți
-  și nu citește textura înapoi pe CPU.
+- **Matrix** applies a 3x3 RGB matrix and a constant per channel.
+- **Curve** compile points `Composite`, `Red`, `Green` and `Blue` with PCHIP
+  shape-preserving in a single LUT RGB `1024x1`. The channel curve is applied
+  first, then the composite curve.
+- **LUT** reads a canonical Hald CLUT 3D: a square image with side
+  `level³`, which represents a cube with side `level²`, with red varying the most
+  quickly in row-major order. Supports tetrahedral or trilinear interpolation.
+- **Channel mapping** selects the channel before the curve, level or
+  transformation.
+- **Threshold** calculates a global linear luminance histogram, chooses the Otsu threshold with maximum between-class variance, and uses the cataloged parameter only as a fallback for degenerate or fully transparent images.
+- **Levels** remaps input range, gamma and output range.
+  With `Auto=true`, build on the GPU a synchronized distribution for
+  selected channel, remove 0.1% of each tail and use limits
+  results as entry points. The analysis ignores fully transparent pixels
+  and doesn't read the texture back to the CPU.
 
-## Semantica filtrelor
+## Semantics of filters
 
-| Filtru | Semantica Prism |
+| Filter | Prism Semantics |
 | --- | --- |
-| `BrightnessContrast` | luminozitate în stopuri și contrast exponențial în jurul pivotului 0.18; varianta lineară veche rămâne selectabilă prin `UseLegacy` |
-| `Levels` | remapare input/gamma/output pe RGB ori pe un canal; `Auto` alege limite robuste din percentila sincronizată a imaginii |
-| `Curves` | PCHIP cubic C1 pentru puncte composite și per-canal, compilat într-un LUT RGB de 1024 eșantioane |
-| `Exposure` | transformare exposure/contrast cu stiluri linear, video și logarithmic, direcții forward/inverse, pivot și parametri log configurabili |
-| `Vibrance` | curbă polinomială în RGB perceptual pentru valori pozitive, desaturare globală pentru valori negative și mască opțională pentru tonurile pielii |
-| `HueSaturation` | ajustare Okhsl punctuală, cu hue ponderat pe intervalul de culoare, saturație normalizată la gamutul sRGB și lightness perceptual; `Colorize` interpolează tot în același spațiu |
-| `ColorBalance` | corecții ponderate pentru shadows, midtones și highlights, cu luminanță opțional păstrată |
-| `BlackWhite` | mixer monocrom RGB configurabil (`Red·R + Green·G + Blue·B`), cu normalizare opțională prin `abs(1 / (Red + Green + Blue))`; valorile implicite sunt `0.333` pe fiecare canal |
-| `PhotoFilter` | amestec liniar per canal între sursă și culoarea filtrului, controlat de `Density`, cu alpha copiat neschimbat |
-| `ChannelMixer` | subset RGB al unei matrice 4x5: trei rânduri RGB plus constante, aplicate după unpremultiply și urmate de clamp/premultiply |
-| `ColorLookup` | Hald CLUT 3D din resursa versionată, cu indexare canonică row-major și interpolare trilineară ca în `HaldClutImage` |
-| `Invert` | complement RGB în spațiul linear |
-| `Posterize` | cuantizare uniformă la numărul catalogat de niveluri |
-| `Threshold` | alb/negru după pragul global Otsu al luminanței liniare; o histogramă uniformă returnează singurul nivel ocupat, iar una fără pixeli vizibili folosește fallback-ul catalogat |
-| `GradientMap` | transfer LUT 1D linear-sRGB versionat după luminanța CIE lineară, cu interpolare, reverse și dithering Bayer 4x4 determinist |
-| `SelectiveColor` | corecție CMYK Photoshop/FFmpeg pe Reds, Yellows, Greens, Cyans, Blues, Magentas, Whites, Neutrals și Blacks, în mod Relative sau Absolute |
+| `BrightnessContrast` | brightness in taillights and exponential contrast around pivot 0.18; the old linear variant remains selectable via `UseLegacy` |
+| `Levels` | remap input/gamma/output on RGB or on one channel; `Auto` chooses robust thresholds from the synchronized image percentile |
+| `Curves` | PCHIP cubic C1 for composite dots and per-channel, compiled into a 1024-sample RGB LUT |
+| `Exposure` | exposure/contrast transformation with linear, video and logarithmic styles, forward/reverse directions, pivot and configurable log parameters |
+| `Vibrance` | polynomial curve in perceptual RGB for positive values, global desaturation for negative values ​​and optional mask for skin tones |
+| `HueSaturation` | point Okhsl adjustment, with hue weighted on the color range, saturation normalized to the sRGB gamut and perceptual lightness; `Colorize` also interpolates in the same space |
+| `ColorBalance` | weighted corrections for shadows, midtones and highlights, with optional luminance preserved |
+| `BlackWhite` | configurable RGB monochrome mixer (`Red·R + Green·G + Blue·B`), with optional normalization via `abs(1 / (Red + Green + Blue))`; default values ​​are `0.333` on each channel |
+| `PhotoFilter` | linear blend per channel between source and filter color, controlled by `Density`, with alpha copied unchanged |
+| `ChannelMixer` | RGB subset of a 4x5 matrix: three RGB rows plus constants, applied after unpremultiply and followed by clamp/premultiply |
+| `ColorLookup` | Hald CLUT 3D from the versioned resource, with canonical row-major indexing and trilinear interpolation as in `HaldClutImage` |
+| `Invert` | RGB complement in the linear space |
+| `Posterize` | uniform quantization to the cataloged number of levels |
+| `Threshold` | black/white by global Otsu threshold of linear luminance; a uniform histogram returns the only occupied level, and one with no visible pixels uses the cataloged fallback |
+| `GradientMap` | 1D linear-sRGB LUT transfer versioned by linear CIE luminance, with Bayer 4x4 deterministic interpolation, reverse and dithering |
+| `SelectiveColor` | CMYK Photoshop/FFmpeg correction on Reds, Yellows, Greens, Cyans, Blues, Magentas, Whites, Neutrals and Blacks, in Relative or Absolute mode |
 
-`SelectiveColor` păstrează formula FFmpeg per interval și canal: combină
-componenta CMY cu `K` prin `((-1 - adjustment) * K) - adjustment`, aplică
-factorul `1 - value` în modul Relative, limitează contribuția la intervalul
-valid al canalului și abia apoi o ponderază cu masca intervalului.
+`SelectiveColor` keeps the FFmpeg formula per interval and channel: combine
+CMY component with `K` through `((-1 - adjustment) * K) - adjustment`, apply
+factor `1 - value` in Relative mode, limits the contribution to the range
+valid channel and only then weights it with the interval mask.
 
-`GradientMap` cere un `PrismGradientMapResource` valid, cu puncte strict crescătoare care acoperă `[0, 1]`. Resursa este versionată și cache-uită ca LUT 1D de 256 eșantioane; lipsa ei produce fallback copy.
+`GradientMap` requires a valid `PrismGradientMapResource` with strictly ascending points covering `[0, 1]`. The resource is versioned and cached as a 256-sample 1D LUT; its absence produces fallback copy.
 
-`Curves` cere un `PrismCurvesResource` valid. Punctele folosesc coordonate
-normalizate, au input strict crescător și includ capetele zero și unu. LUT-ul
-este versionat împreună cu resursa și cache-uit de executor; shaderul face câte
-un sample pentru fiecare canal, fără pass suplimentar.
+`Curves` requires a valid `PrismCurvesResource`. Points use coordinates
+normalized, have strictly increasing input and include zero and one ends. the LUT
+is versioned along with the resource and executor cache; the shader does how much
+one sample for each channel, no additional pass.
 
-`Vibrance` convertește temporar culoarea lineară în sRGB perceptual și păstrează
-alfa. `Amount>0` aplică un răspuns polinomial care scade spre zero pe măsură ce
-culoarea este deja saturată; `Amount<0` folosește o cale separată de desaturare.
-`AvoidSaturatingSkinTones=true` atenuează numai impulsul pozitiv în sectorul
-tonurilor pielii. `GrayColorTransform` configurează axa de gri, iar
-`Saturation` rămâne o ajustare globală aplicată după vibrance.
+`Vibrance` temporarily converts linear color to perceptual sRGB and preserves
+alpha. `Amount>0` applies a polynomial response that decays to zero as
+the color is already saturated; `Amount<0` uses a separate desaturation pathway.
+`AvoidSaturatingSkinTones=true` only dampens the positive momentum in the sector
+skin tones. `GrayColorTransform` configures the gray axis again
+`Saturation` remains a global adjustment applied after vibrance.
 
-`ColorLookup` cere o imagine Hald CLUT validă, codificată în RGB linear:
-latura ei trebuie să fie exact `level³` pentru un `level >= 2`. Executorul
-validează această formă înainte de GPU, indexează texelul prin
-`r + size * (g + size * b)` și depremultiplică texelul LUT la sample.
-Interpolarea implicită este tetraedrică; `Linear`/`Trilinear` selectează
-trilineara. `Intensity` amestecă rezultatul LUT cu sursa după conversia în
-linear sRGB. Alfa sursei rămâne neschimbat și un pixel cu alfa zero rămâne zero.
-Dacă resursa lipsește, are formă invalidă sau nu poate fi folosită, executorul
-aplică politica de fallback Prism și publică un diagnostic; nu înlocuiește
-LUT-ul pe furiș.
+`ColorLookup` requires a valid Hald CLUT image, encoded in linear RGB:
+its side must be exactly `level³` for a `level >= 2`. The executor
+validate this shape before the GPU, index the texel via
+`r + size * (g + size * b)` and depremultiply the LUT texel to samples.
+The default interpolation is tetrahedral; `Linear`/`Trilinear` select
+trilinear. `Intensity` mixes the LUT output with the source after converting to
+linear sRGB. The source alpha remains unchanged and a pixel with zero alpha remains zero.
+If the resource is missing, has an invalid form, or cannot be used, the executor
+apply the Prism fallback policy and publish a diagnostic; does not replace
+The LUT in stealth.
 
-## Conformance
+## Compliance
 
-Vectorii analitici verifică pixeli opaci și transparenți, alpha asociat, valori
-limită, canale individuale și toate profilurile de culoare selectabile.
-Interacțiunile din această familie au rezultate analitice suficiente, deci nu
-este necesar un golden raster separat pentru etapa de ajustări. Semantica de
-mai sus este contractul Prism și nu pretinde compatibilitate byte-for-byte cu
-implementări proprietare.
+Analytical vectors check opaque and transparent pixels, associated alpha, values
+limit, individual channels and all selectable color profiles.
+Interactions in this family have sufficient analytical results, so no
+a separate golden raster is required for the adjustments stage. Semantics of
+above is the Prism contract and does not claim byte-for-byte compatibility with
+proprietary implementations.

@@ -18,7 +18,7 @@ Inheritance:
 
 ## Examples
 
-Enable tracing on a root-owned motion system, run an animation, and inspect the recorded event kinds:
+Enable tracing on a root-owned motion system, sample an animation, and inspect the recorded event kinds:
 
 ```csharp
 using Cerneala.UI.Elements;
@@ -26,15 +26,13 @@ using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Diagnostics;
 using Cerneala.UI.Motion.Specs;
 
-ManualMotionClock clock = new();
+SystemMotionClock clock = new();
 UIRoot root = new(100, 100, motionClock: clock);
 root.Motion.Diagnostics.IsEnabled = true;
 
 MotionValue<float> value = root.Motion.Graph.CreateValue(0f);
 value.AnimateTo(1f, Motion.Tween<float>(TimeSpan.FromMilliseconds(10)));
 
-root.Motion.Tick();
-clock.Advance(TimeSpan.FromMilliseconds(10));
 root.Motion.Tick();
 
 IReadOnlyList<MotionTraceEvent> events = root.Motion.Diagnostics.Trace.Events;

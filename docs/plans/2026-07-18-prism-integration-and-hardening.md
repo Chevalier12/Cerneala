@@ -1,149 +1,148 @@
-# Prism — integrare și hardening
+# Prism — integration and hardening
 
-## Scop
+## Purpose
 
-Închide matricea de acoperire, probează Prism într-un view Cerneala real și
-stabilește prin măsurători limitele, performanța și rezistența la lifecycle.
+Close the coverage matrix, sample Prism in a real Cerneala view, and
+establishes limits, performance and lifecycle resistance through measurements.
 
-**Dependențe:** toate celelalte planuri Prism din
+**Dependencies:** all other Prism plans from
 `2026-07-18-prism-plan-index.md`.
 
-## Etapa 0 — auditul completitudinii
+## Stage 0 — completeness audit
 
-- [x] Generează raportul final catalog → sintaxă → binder → runtime → graph →
-  kernel → Motion → diagnostics → test → documentație.
-- [x] Compară raportul cu toate filtrele, styles, blend modes, masks, backdrop,
-  color profiles și proprietățile aprobate în cele două documente de design.
-- [x] Elimină intrările moarte, dublurile și API-urile adăugate „poate cândva”;
-  nu completa golurile prin fallback tăcut.
-- [x] Rulează diff-ul API față de baseline-ul fundației și justifică fiecare
-  simbol public printr-un scenariu din proposal.
+- [x] Generate the final report catalog → syntax → binder → runtime → graph →
+  kernel → Motion → diagnostics → test → documentation.
+- [x] Compare the report with all filters, styles, blend modes, masks, backdrop,
+  color profiles and properties approved in the two design documents.
+- [x] Remove dead entries, duplicates and "maybe someday" added APIs;
+  don't fill gaps with silent fallback.
+- [x] Run the API diff against the foundation baseline and justify each
+  public symbol through a script from the proposal.
 
-### Gate etapa 0
+### Gate stage 0
 
-- [x] Raportul are zero goluri, zero defaults divergente și zero API public
-  fără consumator curent.
+- [x] The report has zero gaps, zero divergent defaults and zero public API
+  without current consumer.
 
-## Etapa 1 — diagnostics operaționale
+## Stage 1 — operational diagnostics
 
-- [x] Finalizează diagnostics pentru parse/binding, capabilități, fallback,
-  graph build, surface budgets, shader load și backdrop acquisition.
-- [x] Expune o vedere diagnostică internă cu compoziții active, passes,
-  captures, surfaces, peak, allocations, fallback și Motion activ, fără
-  referințe care prelungesc lifetime-ul elementelor.
-- [x] Fă dump-ul grafului determinist și redactează identificatorii GPU
-  instabili, astfel încât snapshot-urile să fie utile în CI.
-- [x] Adaugă teste care verifică faptul că diagnostics dezactivate au overhead
-  minim și zero alocări per frame după warmup.
+- [x] Complete diagnostics for parse/binding, capabilities, fallback,
+  graph build, surface budgets, shader load and backdrop acquisition.
+- [x] Exposes an internal diagnostic view with active compositions, passes,
+  captures, surfaces, peak, allocations, fallback and Motion active, without
+  references that extend the lifetime of elements.
+- [x] Dump deterministic graph and redact GPU identifiers
+  unstable, so snapshots are useful in CI.
+- [x] Add tests that check that disabled diagnostics have overhead
+  minimum and zero allocations per frame after warmup.
 
-### Gate etapa 1
+### Gate stage 1
 
-- [x] Pentru orice failure path important există un diagnostic precis și un
-  test, iar diagnostics nu introduc memory leak ori muncă ascunsă.
+- [x] For any important failure path there is a precise diagnosis and a
+  test and diagnostics do not introduce memory leak or hidden work.
 
-## Etapa 2 — dogfooding în Presentation
+## Stage 2 — dogfooding in Presentation
 
-- [x] Aplică Prism prin Cerneala markup unui element natural din
-  `CernealaPresentation/SolarSystemChapterView.crn`, preferabil cardului de
-  planetă și fundalului lui, fără custom control `OnRender` și fără schimbarea
-  logicii orbitelor/selectării.
-- [x] Definește compoziția reutilizabilă ca `PrismComposition` și exercită
-  minimum layer, group, style/filter, mask, Motion pe layer numit și backdrop.
-- [x] Adaugă o stare deterministă de automatizare care fixează planeta,
-  animația, viewportul și timpul înainte de captură.
-- [x] Extinde raportul existent din
-  `CernealaPresentation/PresentationWindow.Automation.cs` cu counters Prism
-  utili, fără API de test în view-ul de producție.
-- [x] Capturează desktop și viewport mic exclusiv prin API-ul
-  `IWindowPlatform.RenderPng`; verifică vizual și automat lipsa overlapului,
-  clippingului accidental și textului ilizibil.
+- [x] Apply Prism via Cerneala markup to a natural element from
+  `CernealaPresentation/SolarSystemChapterView.crn`, preferable to the card of
+  planet and its background, without custom control `OnRender` and without the change
+  orbits/selection logic.
+- [x] Defines the reusable composition as `PrismComposition` and exercises
+  minimum layer, group, style/filter, mask, Motion on layer also called backdrop.
+- [x] Adds a deterministic automation state that fixes the planet,
+  animation, viewport and time before capture.
+- [x] Extends the existing report from
+  `CernealaPresentation/PresentationWindow.Automation.cs` with Prism counters
+  useful, no test API in production view.
+- [x] Capture desktop and small viewport exclusively via API
+  `IWindowPlatform.RenderPng`; visually and automatically check the lack of overlap,
+  accidental clipping and illegible text.
 
-### Gate etapa 2
+### Gate stage 2
+- [x] The actual example uses only markup and public Prism APIs, and whatever
+  discovered defect is fixed in the framework and covered by the regression test.
 
-- [x] Exemplul real folosește numai markup și API-uri Prism publice, iar orice
-  defect descoperit este reparat în framework și acoperit de regression test.
+## Stage 3 — lifecycle and memory
 
-## Etapa 3 — lifecycle și memorie
-
-- [x] Rulează minimum 10.000 de cicluri attach/detach/reattach pentru instanțe
-  Prism cu Motion, bindings, filters, styles, masks și backdrop.
-- [x] Automatizează navigarea repetată SolarSystem ↔ Diagnostics și verifică
-  zero Motion, passes, leases și suprafețe active după ascundere/detașare.
-- [x] Testează hide/unhide, `Collapsed`, resource replacement, template
-  recycling, root replacement, resize, device reset și backdrop source
+- [x] Run a minimum of 10,000 attach/detach/reattach cycles for instances
+  Prism with Motion, bindings, filters, styles, masks and backdrop.
+- [x] Automate SolarSystem ↔ Diagnostics repeat navigation and check
+  zero Motion, passes, leases and active surfaces after hide/detach.
+- [x] Test hide/unhide, `Collapsed`, resource replacement, template
+  recycling, root replacement, resize, device reset and backdrop source
   replacement.
-- [x] Folosește `WeakReference`, contoarele poolului și snapshoturi de memorie
-  pentru a separa managed leaks de resurse GPU neeliberate.
-- [x] Repară orice leak în owner-ul invariantului și adaugă întâi un test RED;
-  nu introduce cleanup special în SolarSystem. (Nu a fost necesar: stress-ul,
-  `WeakReference`-urile și contoarele GPU nu au detectat niciun leak.)
+- [x] Uses `WeakReference`, pool counters and memory snapshots
+  to separate managed leaks from unreleased GPU resources.
+- [x] Fix any leak in the invariant owner and add a RED test first;
+  does not introduce special cleanup in SolarSystem. (It was not necessary: stress,
+  `WeakReference`s and GPU counters detected no leaks.)
 
-### Gate etapa 3
+### Gate stage 3
 
-- [x] După GC/device cleanup, numărul elementelor, instanțelor, Motion handles,
-  leases și resurselor GPU reținute revine la baseline.
+- [x] After GC/device cleanup, the number of elements, instances, Motion handles,
+  leases and retained GPU resources returns to baseline.
 
-## Etapa 4 — performanță și bugete
+## Stage 4 — performance and budgets
 
-- [x] Construiește benchmarkuri pentru static, animated parameter, multe
-  layere, chains de filtre, styles, nested groups și backdrop împărțit.
-- [x] Măsoară CPU build/submit, GPU frame time, passes, captures, allocations,
-  peak live surfaces, hit/miss retained și memorie GPU la rezoluții
-  reprezentative.
-- [x] Confirmă zero alocări managed după warmup pentru Prism static și lipsa
-  rebuildului `ElementRenderCache` la animații nonstructurale.
-- [x] Confirmă că al doilea frame identic produce hit retained, zero capture și
-  zero effect passes acoperite, iar fiecare input pixel-affecting produce miss.
-- [x] Stabilește abia acum valorile implicite pentru surface budget și limitele
-  cache-ului transient/retained; documentează datele și comportamentul când
-  limita este depășită.
-- [x] Nu adăuga adaptive quality, async compute sau API de plugin terț;
-  înregistrează separat oportunitățile doar dacă datele le cer.
+- [x] Build benchmarks for static, animated parameter, many
+  layers, filter chains, styles, nested groups and split backdrop.
+- [x] Measures CPU build/submit, GPU frame time, passes, captures, allocations,
+  peak live surfaces, hit/miss retained and GPU memory at resolutions
+  representative.
+- [x] Confirm zero managed allocations after warmup for Prism static and missing
+  rebuild `ElementRenderCache` to non-structural animations.
+- [x] Confirms that the second identical frame produces hit retained, zero capture and
+  zero effect passes covered, and every pixel-affecting input produces a miss.
+- [x] Only now sets default values for surface budget and limits
+  transient/retained cache; document data and behavior when
+  the limit is exceeded.
+- [x] Do not add adaptive quality, async compute or third-party plugin API;
+  record opportunities separately only if the data requires them.
 
-### Gate etapa 4
+### Gate stage 4
 
-- [x] Bugetele au benchmark reproductibil și failure behavior determinist, iar
-  scena dogfood rămâne în target fără degradare ascunsă.
+- [x] Budgets have reproducible benchmark and deterministic failure behavior, again
+  the dogfood scene stays on target with no hidden degradation.
 
-## Etapa 5 — documentație și compatibilitate
+## Stage 5 — documentation and compatibility
 
-- [x] Actualizează proposal-ul și TDD-ul cu deciziile finale măsurate, păstrând
-  clar separate contractul implementat și ideile amânate.
-- [x] Folosește skill-ul `writing-api-documentation` pentru toate paginile din
-  `docs-site/documentation/classes/` atinse și sincronizează manifestul.
-- [x] Adaugă ghiduri concise pentru modelul Photoshop, sursa implicită,
-  layer/group/mask/clipping, Motion paths, backdrop și diagnostics; datele
-  catalogului rămân generate.
-- [x] Verifică backendurile non-Prism: conținutul interior se redă normal, fără
-  excepție, schimbare de layout/input sau obligația unui backdrop provider.
-- [x] Rulează verificarea de compatibilitate API și marchează explicit orice
-  breaking change necesar în documentația release-ului.
+- [x] Update the proposal and the TDD with the final measured decisions, keeping
+  clearly separate the implemented contract and the postponed ideas.
+- [x] Use the skill `writing-api-documentation` for all pages in
+  `docs-site/documentation/classes/` touched and sync manifest.
+- [x] Add concise guides for Photoshop model, default source,
+  layer/group/mask/clipping, Motion paths, backdrop and diagnostics; the data
+  catalog remain generated.
+- [x] Check non-Prism backends: inner content renders normally without
+  exception, change of layout/input or obligation of a backdrop provider.
+- [x] Runs the API compatibility check and explicitly marks anything
+  breaking change required in the release documentation.
 
-### Gate etapa 5
+### Gate stage 5
 
-- [x] Documentația descrie exact comportamentul implementat și toate API-urile
-  publice au pagină și intrare corectă în manifest.
+- [x] The documentation describes exactly the implemented behavior and all APIs
+  public have the correct manifest page and entry.
 
-## Etapa 6 — suită finală
+## Stage 6 — final suite
 
-- [x] Rulează reindexarea completă și
+- [x] Run full reindex and
   `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- doctor`.
-- [x] Rulează
+- [x] Running
   `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`.
-- [x] Rulează
+- [x] Running
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj`.
-- [x] Rulează `dotnet test .\Cerneala.slnx` din checkout/build curat, inclusiv
-  recompilarea shaderelor.
-- [x] Rulează automatizarea Presentation și toate capturile golden prin API pe
-  viewporturile stabilite.
-- [x] Rulează benchmarkurile și stress tests finale, salvează baseline-urile
-  reproductibile și verifică limitele.
-- [x] Rulează `git diff --check`, raportul API și raportul catalogului.
+- [x] Run `dotnet test .\Cerneala.slnx` from checkout/clean build, incl
+  recompiling shaders.
+- [x] Run Presentation automation and all golden captures via API on
+  set viewports.
+- [x] Run benchmarks and final stress tests, save baselines
+  reproducible and check limits.
+- [x] Run `git diff --check`, API report and catalog report.
 
-## Definiția de gata
+## The definition of done
 
-- [x] Prism este demonstrat end-to-end în markup real, fără code-behind de
-  randare sau workaround la nivel de view.
-- [x] Catalogul complet, conformance-ul, lifecycle-ul, memoria, performanța,
-  cache-ul retained, compatibilitatea și documentația sunt verzi.
-- [x] Toate gate-urile din index și din cele nouă planuri sunt bifate.
+- [x] Prism is demonstrated end-to-end in real markup, without code-behind
+  rendering or workaround at view level.
+- [x] Full catalog, conformance, lifecycle, memory, performance,
+  cache retained, compatibility and documentation are green.
+- [x] All gates in the index and in the nine planes are checked.

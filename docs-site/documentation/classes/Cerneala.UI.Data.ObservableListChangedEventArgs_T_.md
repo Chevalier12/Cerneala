@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Data`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Data/IObservableList{T}.cs`
+Source: `UI/Data/ObservableListChangedEventArgs{T}.cs`
 
 Observable list implementation: `UI/Data/ObservableList{T}.cs`
 

@@ -48,9 +48,7 @@ TextCaretVerticalMetrics metrics =
 
 `TextCaretVerticalMetrics` is the drawing-layer value passed from text shaping and layout code to caret rendering code. `OffsetY` is the vertical distance from the top of the text editing area to the top of the caret. `Height` is the caret height.
 
-`TextShaper.TryMeasureCaretVerticalMetrics` creates this value from a rasterized `"Ag"` sample when the text run uses a Skia-backed font. `TextCaretLayout.GetCaretVerticalMetrics` falls back to `OffsetY` equal to `0` and `Height` equal to `TextAspect.FontSize * TextAspect.Scale` when raster metrics are unavailable.
-
-The internal text-input viewport used by `TextBox` and `PasswordBox` uses `OffsetY + Height` during measurement so the editing surface can contain the caret. During rendering, it clamps the offset and height to the available content bounds before drawing the caret.
+`TextShaper.TryMeasureCaretVerticalMetrics` creates this value with an `OffsetY` of `0` and the cached Skia line height when the text run uses a Skia-backed font. The line height is read from OpenType horizontal font extents when available, with Skia font metrics as the fallback; no sample glyph is rasterized for this measurement.
 
 The constructor requires a finite `offsetY` and a positive finite `height`. Because this is a struct, `default(TextCaretVerticalMetrics)` is readable and has both values equal to `0`, but it does not satisfy the constructor's positive-height invariant.
 

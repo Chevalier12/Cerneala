@@ -1,178 +1,177 @@
-# Plan: nucleu comun de limbaj Cerneala
+# Plan: Cerneala common language core
 
-> Data: 2026-08-13
-> Status: finalizat
-> Dependenta: niciuna
-> Scop: extragem parsing-ul si semantica `.crn` intr-un nucleu tolerant si editor-agnostic, apoi migram source generatorul pe el fara schimbari de comportament la build.
+> Date: 2026-08-13
+> Status: completed
+> Dependency: none
+> Goal: we extract the parsing and semantics of `.crn` in a tolerant and editor-agnostic kernel, then we migrate the source generator to it without changing the build behavior.
 
-## 1. Baseline si problema actuala
+## 1. Baseline and the current problem
 
-`Cerneala.SourceGen/UiMarkupGenerator.cs` detecteaza `*.crn`, protejeaza comparatori din directive, inveleste documentul intr-un fragment artificial si il parseaza prin `XDocument.Parse`. Un tag sau quote neterminat invalideaza intregul document, comportament acceptabil la build, dar inutil pentru IntelliSense in timp ce utilizatorul tasteaza.
+`Cerneala.SourceGen/UiMarkupGenerator.cs` detects `*.crn`, protects comparators from directives, wraps the document in an artificial fragment and parses it through `XDocument.Parse`. An unfinished tag or quote invalidates the entire document, acceptable behavior at build, but useless for IntelliSense while the user is typing.
 
-Diagnostics `CERNEALAUI*` sunt declarate in source generator, iar rezolvarea de tipuri, bindings, resources, templates, Aspect, Motion si Prism este impartita intre `UiMarkupGenerator.GenerationScope`, partiale si subfolderele Prism. Aceste tipuri sunt strans legate de `SourceProductionContext`, `XElement` si emiterea C#. Un language server nu le poate reutiliza fara sa ruleze generatorul sau sa copieze semantica.
+Diagnostics `CERNEALAUI*` are declared in the source generator, and the resolution of types, bindings, resources, templates, Aspect, Motion and Prism is shared between `UiMarkupGenerator.GenerationScope`, partials and Prism subfolders. These types are closely related to `SourceProductionContext`, `XElement` and the C# release. A language server cannot reuse them without running the generator or copying the semantics.
 
-## 2. Arhitectura tinta
+## 2. The target architecture
 
-- Proiect nou `Cerneala.Language/Cerneala.Language.csproj`, compatibil cu `netstandard2.0` pentru consum din source generator si fara dependinte Visual Studio/LSP.
-- Text model imuabil cu offset-uri, line map, versiuni si source spans stabile.
-- Lexer/parser tolerant pentru XML-ul Cerneala si limbajele embedded, cu noduri lipsa si tokeni omisi/skipped reprezentati explicit.
-- Syntax tree lossless: trivia, comments, ordine de atribute si textul original pot fi reconstruite fara pierdere.
-- Semantic model separat de syntax tree, construit peste un adaptor de simboluri Roslyn si capabil sa raspunda incremental la queries de editor.
-- Catalog unic pentru diagnostics Cerneala; source generatorul si language serverul fac doar conversia catre tipul de diagnostic al hostului.
-- Emiterea C# ramane in `Cerneala.SourceGen`, dar primeste noduri si simboluri deja rezolvate din nucleul comun.
+- New project `Cerneala.Language/Cerneala.Language.csproj`, compatible with `netstandard2.0` for consumption from source generator and without Visual Studio/LSP dependencies.
+- Immutable text model with stable offsets, line map, versions and source spans.
+- Tolerant lexer/parser for XML Cerneala and embedded languages, with missing nodes and omitted/skipped tokens explicitly represented.
+- Syntax tree lossless: trivia, comments, order of attributes and the original text can be reconstructed without loss.
+- Semantic model separated from the syntax tree, built on a Roslyn symbol adapter and able to respond incrementally to editor queries.
+- Unique catalog for diagnostics Cerneala; the source generator and the language server only convert to the diagnostic type of the host.
+- C# output remains in `Cerneala.SourceGen`, but receives already resolved nodes and symbols from the common core.
 
-## 3. Non-obiective
+## 3. Non-objectives
 
-- Fara protocol LSP, VSIX, editor UI sau dependinte `Microsoft.VisualStudio.*` in acest proiect.
-- Fara reflection, runtime XML parser ori schimbarea formatului `.crn`.
-- Fara rescriere estetica a codului generat daca output-ul actual este semantic echivalent.
-- Fara tolerarea la build a documentelor incomplete; recovery este pentru analiza editorului, iar compilarea documentului salvat ramane stricta.
+- No LSP protocol, VSIX, UI editor or `Microsoft.VisualStudio.*` dependencies in this project.
+- No reflection, runtime XML parser or format change `.crn`.
+- No aesthetic rewriting of the generated code if the current output is semantically equivalent.
+- No toleration of incomplete documents during build; recovery is for editor analysis, and the compilation of the saved document remains strict.
 
-## 4. Fisiere estimate
+## 4. Estimated files
 
 - `Cerneala.Language/Cerneala.Language.csproj`
-- `Cerneala.Language/Text/` pentru source text, spans, line map si incremental changes
-- `Cerneala.Language/Syntax/` pentru tokens, nodes, lexer, parser si recovery
-- `Cerneala.Language/Semantics/` pentru compilation context, scopes, symbols si semantic model
-- `Cerneala.Language/Diagnostics/` pentru catalogul comun `CERNEALAUI*`
-- `Cerneala.Language/Features/` pentru completion facts, symbol locations si document outline independente de LSP
+- `Cerneala.Language/Text/` for source text, spans, line map and incremental changes
+- `Cerneala.Language/Syntax/` for tokens, nodes, lexer, parser and recovery
+- `Cerneala.Language/Semantics/` for compilation context, scopes, symbols and semantic model
+- `Cerneala.Language/Diagnostics/` for the common catalog `CERNEALAUI*`
+- `Cerneala.Language/Features/` for completing facts, symbol locations and document outline independent of LSP
 - `Cerneala.SourceGen/Cerneala.SourceGen.csproj`
-- `Cerneala.SourceGen/UiMarkupGenerator.cs` si partialele sale
+- `Cerneala.SourceGen/UiMarkupGenerator.cs` and its partials
 - `Cerneala.SourceGen/Prism/**`
 - `tests/Cerneala.Tests.Language/`
 - `tests/Cerneala.Tests.SourceGen/`
 - `Cerneala.slnx`
-- API docs din `docs-site/documentation/classes/` pentru orice tip public necesar intre assemblies
+- API docs from `docs-site/documentation/classes/` for any public type required between assemblies
 
-## 5. Etape de implementare
+## 5. Implementation stages
 
-### Etapa 0 - Inventar semantic si corpus RED
+### Stage 0 - Semantic inventory and RED corpus
 
-- [x] Inventariaza toate constructiile acceptate de source generator din `UiMarkupGenerator`, `UiMarkupBindingResolver`, `UiMarkupDirectiveParser`, Motion si Prism si mapeaza fiecare constructie la testele existente.
-- [x] Construieste un corpus versionat din toate fisierele `.crn` din repo, exemplele documentate si markup-urile valide/invalide din `Cerneala.Tests.SourceGen`.
-- [x] Adauga `tests/Cerneala.Tests.Language/Cerneala.Tests.Language.csproj` si un harness care ruleaza acelasi document prin parserul nou, semantic model si source generator.
-- [x] Adauga teste RED pentru documente incomplete dupa fiecare categorie de token: `<`, nume de element, atribut, quote, property element, binding, directive body, Motion si Prism.
-- [x] Adauga teste RED care cer maximum un diagnostic primar per zona sintactica rupta si absenta diagnostics semantice sub nodul nerecuperabil.
-- [x] Captureaza baseline-ul actual al diagnostics sourcegen dupa id, severitate, mesaj si span pentru corpusul invalid.
-- [x] Reindexeaza solutia.
+- [x] Inventory all the constructions accepted by the source generator from `UiMarkupGenerator`, `UiMarkupBindingResolver`, `UiMarkupDirectiveParser`, Motion and Prism and map each construction to the existing tests.
+- [x] Builds a versioned corpus from all the `.crn` files in the repo, the documented examples and the valid/invalid markups from `Cerneala.Tests.SourceGen`.
+- [x] Add `tests/Cerneala.Tests.Language/Cerneala.Tests.Language.csproj` and a harness that runs the same document through the new parser, semantic model and source generator.
+- [x] Add RED tests for incomplete documents by each token category: `<`, element name, attribute, quote, property element, binding, directive body, Motion and Prism.
+- [x] Add RED tests that ask for a maximum of one primary diagnosis per broken syntactic area and absent semantic diagnostics under the unrecoverable node.
+- [x] Captures the current sourcegen diagnostics baseline by id, severity, message and span for the invalid corpus.
+- [x] Reindex the solution.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Fiecare constructie Cerneala curenta apare in matrice si are cel putin un exemplu valid si unul invalid relevant.
-- [x] Testele recovery sunt RED din cauza dependentei actuale de `XDocument`, nu din cauza harness-ului.
+- [x] Each current Cerneala construction appears in the matrix and has at least one valid and one relevant invalid example.
+- [x] The recovery tests are RED because of the current dependency on `XDocument`, not because of the harness.
 
-### Etapa 1 - Text model si parser tolerant lossless
+### Stage 1 - Text model and lossless tolerant parser
 
-- [x] Implementeaza source text, line map si aplicarea editurilor incrementale cu offset-uri UTF-16 compatibile LSP/Roslyn.
-- [x] Implementeaza lexerul pentru delimitatori XML, names, namespaces, strings, comments, CDATA/trivia si text embedded fara sa modifice caracterele directivei.
-- [x] Implementeaza syntax nodes pentru document, element, attribute, property element, text, comment si error/missing nodes.
-- [x] Implementeaza recovery local pentru closing tags lipsa, quotes neterminate, elemente suprapuse, text top-level si EOF in interiorul unui nod.
-- [x] Pastreaza exact source spans pentru tokenii reali si defineste zero-width spans deterministe pentru tokenii lipsa.
-- [x] Adauga round-trip tests care reconstruiesc byte-for-byte documentele valide, inclusiv whitespace si comments.
-- [x] Adauga mutation tests care aplica editari caracter cu caracter si confirma ca parserul nu arunca exceptii.
-- [x] Reindexeaza solutia.
+- [x] Implements source text, line map and application of incremental edits with LSP/Roslyn compatible UTF-16 offsets.
+- [x] Implements the lexer for XML delimiters, names, namespaces, strings, comments, CDATA/trivia and embedded text without modifying the directive characters.
+- [x] Implements syntax nodes for document, element, attribute, property element, text, comment and error/missing nodes.
+- [x] Implements local recovery for missing closing tags, unfinished quotes, overlapping elements, top-level text and EOF inside a node.
+- [x] Keep exact source spans for real tokens and define deterministic zero-width spans for missing tokens.
+- [x] Add round-trip tests that reconstruct byte-for-byte valid documents, including whitespace and comments.
+- [x] Add mutation tests that apply character-by-character edits and confirm that the parser does not throw exceptions.
+- [x] Reindex the solution.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] Parserul proceseaza intregul corpus si 10.000 de editari incrementale randomizate fara crash, hang sau span in afara documentului.
-- [x] Documentele valide au un arbore complet, iar cele incomplete pastreaza siblings de dupa eroare cand delimitarea permite recovery.
+- [x] The parser processes the entire corpus and 10,000 randomized incremental edits without crash, hang or span outside the document.
+- [x] The valid documents have a complete tree, and the incomplete ones keep the siblings after the error when the delimitation allows recovery.
 
-### Etapa 2 - Limbajele embedded si diagnostics comune
+### Stage 2 - Common embedded and diagnostic languages
 
-- [x] Muta gramatica pentru bindings, interpolari si modes din `UiMarkupBindingResolver` in syntax nodes independente de emitere.
-- [x] Muta `@template`, `@when`, `@if`, assignments si celelalte directive din `UiMarkupDirectiveParser` intr-un parser embedded cu source spans absolute.
-- [x] Muta sintaxa Motion din `UiMarkupMotionSyntax`, `MotionMarkupLanguage` si resolverele aferente in nucleul comun.
-- [x] Muta sintaxa si catalogul Prism din `Cerneala.SourceGen/Prism/Syntax` si `Prism/Catalog`, fara dependinte de emitter.
-- [x] Centralizeaza descriptorii `CERNEALAUI*` intr-un catalog host-agnostic cu id, severity, message format, category si exact span.
-- [x] Defineste modurile `Editor` si `Build`: acelasi parser si aceeasi semantica, dar diagnostics de incompletitudine tranzitorie sunt reduse in editor si stricte la build.
-- [x] Adauga teste de recovery pentru fiecare limbaj embedded, inclusiv braces, commas, quotes, comparatori si nesting neterminat.
-- [x] Reindexeaza solutia.
+- [x] Moves the grammar for bindings, interpolations and modes from `UiMarkupBindingResolver` to emission-independent syntax nodes.
+- [x] Move `@template`, `@when`, `@if`, assignments and the other directives from `UiMarkupDirectiveParser` to an embedded parser with absolute source spans.
+- [x] Moves the Motion syntax from `UiMarkupMotionSyntax`, `MotionMarkupLanguage` and related resolvers to the common core.
+- [x] Moves Prism syntax and catalog from `Cerneala.SourceGen/Prism/Syntax` and `Prism/Catalog`, without emitter dependency.
+- [x] Centralizes the `CERNEALAUI*` descriptors in a host-agnostic catalog with id, severity, message format, category and exact span.
+- [x] Defines `Editor` and `Build` modes: same parser and same semantics, but transient incompleteness diagnostics are reduced in editor and strict in build.
+- [x] Add recovery tests for each embedded language, including braces, commas, quotes, comparators and unfinished nesting.
+- [x] Reindex the solution.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Niciun parser embedded nu primeste `XText`, `XElement` sau `SourceProductionContext`.
-- [x] Diagnostics valide existente isi pastreaza id-ul si mesajul; orice schimbare de span este explicata de o localizare mai precisa si aprobata in golden files.
+- [x] No embedded parser receives `XText`, `XElement` or `SourceProductionContext`.
+- [x] Existing valid diagnostics keep their id and message; any span change is explained by a more precise localization and approved in the golden files.
 
-### Etapa 3 - Workspace semantic si adaptor Roslyn
+### Stage 3 - Semantic Workspace and Roslyn adapter
 
-- [x] Defineste `CernealaCompilation`, `CernealaDocument` si `CernealaSemanticModel` cu lifecycle explicit si cancellation.
-- [x] Defineste adaptorul minim peste Roslyn `Compilation`, `ITypeSymbol`, membri, accessibility, inheritance, XML docs si source locations.
-- [x] Rezolva `clr-namespace`, aliases, root type, paired `.crn.cs`, `Application`, `Window`, `UserControl` si custom controls prin simbolurile proiectului.
-- [x] Modeleaza content properties, normal properties, property elements, attached properties, events si conversiile de literal existente.
-- [x] Separa bind-ul semantic de emitere: rezultatul contine simboluri si valori validate, nu fragmente C#.
-- [x] Adauga cache-uri versionate pe compilation/document si invalideaza numai proiectele/documentele afectate de schimbari.
-- [x] Adauga teste cu project references, tipuri partiale, namespace aliases, tipuri duplicate si compilatii cu erori C# independente.
-- [x] Reindexeaza solutia.
+- [x] Defines `CernealaCompilation`, `CernealaDocument` and `CernealaSemanticModel` with explicit lifecycle and cancellation.
+- [x] Defines the minimum adapter over Roslyn `Compilation`, `ITypeSymbol`, members, accessibility, inheritance, XML docs and source locations.
+- [x] Resolve `clr-namespace`, aliases, root type, paired `.crn.cs`, `Application`, `Window`, `UserControl` and custom controls through the project symbols.
+- [x] Model content properties, normal properties, property elements, attached properties, events and existing literal conversions.
+- [x] Separate the semantic bind from the emission: the result contains validated symbols and values, not C# fragments.
+- [x] Add versioned caches to the compilation/document and invalidate only the projects/documents affected by the changes.
+- [x] Add tests with project references, partial types, namespace aliases, duplicate types and compilations with independent C# errors.
+- [x] Reindex the solution.
 
-**Gate etapa 3**
+**Gate stage 3**
+- [x] The same markup and the same `Compilation` produce the same ordered set of symbols and diagnostics regardless of the host.
+- [x] The semantic core does not load assemblies and does not use reflection.
 
-- [x] Acelasi markup si aceeasi `Compilation` produc acelasi set ordonat de simboluri si diagnostics indiferent de host.
-- [x] Nucleul semantic nu incarca assemblies si nu foloseste reflection.
+### Stage 4 - Scopes, bindings, resources, templates and Aspect
 
-### Etapa 4 - Scopes, bindings, resources, templates si Aspect
+- [x] Move namescopes, resource scopes, application resources and shadowing/duplicate names rules to the semantic model.
+- [x] Resolve `$DataContext`, `$root`, `$self`, named elements, resources, template owner/parts and binding modes through typed symbols.
+- [x] Model the local changes of `DataContext` and validate the subsequent segments against the resulting type, including in `ContentTemplate DataType`.
+- [x] Resolve `ItemsControl.Templates`, template selection according to `DataType`, `ItemsPanel`, `ItemsSource` and content ownership.
+- [x] Move `Aspect` resources, `TargetType`, assignments, templates, conditions and application-site validation to the common core.
+- [x] Add anti-cascade diagnostics: an unresolved binding source does not produce an error for each dependent segment.
+- [x] Add parity tests for all existing binding/template/Aspect tests and for the real markup from `CernealaPresentation`.
+- [x] Reindex the solution.
 
-- [x] Muta in semantic model namescopes, resource scopes, application resources si regulile de shadowing/duplicate names.
-- [x] Rezolva `$DataContext`, `$root`, `$self`, elemente numite, resources, template owner/parts si binding modes prin simboluri tipizate.
-- [x] Modeleaza schimbarile locale de `DataContext` si valideaza segmentele ulterioare fata de tipul rezultat, inclusiv in `ContentTemplate DataType`.
-- [x] Rezolva `ItemsControl.Templates`, selectia template-ului dupa `DataType`, `ItemsPanel`, `ItemsSource` si content ownership.
-- [x] Muta `Aspect` resources, `TargetType`, assignments, templates, conditions si application-site validation in nucleul comun.
-- [x] Adauga diagnostics anti-cascada: o sursa de binding nerezolvata nu produce cate o eroare pentru fiecare segment dependent.
-- [x] Adauga parity tests pentru toate testele binding/template/Aspect existente si pentru markup-ul real din `CernealaPresentation`.
-- [x] Reindexeaza solutia.
+**Gate Stage 4**
 
-**Gate etapa 4**
+- [x] Semantic model can respond to the type and symbol to any valid binding segment and to any resource reference.
+- [x] The corpus valid for bindings, templates and Aspect has zero divergences from the source generator.
 
-- [x] Semantic model poate raspunde tipului si simbolului la orice segment valid de binding si la orice resource reference.
-- [x] Corpusul valid pentru bindings, templates si Aspect are zero divergente fata de source generator.
+### Stage 5 - Semantics of Motion and Prism
 
-### Etapa 5 - Semantica Motion si Prism
+- [x] Moves the resolution of targets, events, properties, specs, compositions and lifecycle Motion to the semantic model, leaving the emitter to only translate the result.
+- [x] Move the Prism binding for directives, catalog symbols, parameters, values, nesting and Motion interop to the semantic model.
+- [x] Exposes editor-agnostic facts for directive keywords, argument lists, parameter types, enum-like values ​​and symbol locations.
+- [x] Add parity tests for all `UiMarkupGeneratorMotion*` and `PrismMarkupContractTests` suites.
+- [x] Add recovery tests for an incomplete Motion/Prism document that preserves semantic understanding for unaffected XML elements.
+- [x] Reindex the solution.
 
-- [x] Muta rezolvarea targeturilor, events, properties, specs, compositions si lifecycle Motion in semantic model, lasand emitterul doar sa traduca rezultatul.
-- [x] Muta binding-ul Prism pentru directives, catalog symbols, parameters, values, nesting si Motion interop in semantic model.
-- [x] Expune facts editor-agnostic pentru directive keywords, argument lists, parameter types, enum-like values si symbol locations.
-- [x] Adauga parity tests pentru toate suitele `UiMarkupGeneratorMotion*` si `PrismMarkupContractTests`.
-- [x] Adauga recovery tests pentru un document Motion/Prism incomplet care pastreaza semantic understanding pentru elementele XML neafectate.
-- [x] Reindexeaza solutia.
+**Gate Stage 5**
 
-**Gate etapa 5**
+- [x] Motion and Prism no longer have a private semantic binder that can diverge from the common core.
+- [x] All existing Motion/Prism diagnostics have exact host-independent parity.
 
-- [x] Motion si Prism nu mai au binder semantic privat care poate diverge de nucleul comun.
-- [x] Toate diagnostics Motion/Prism existente au paritate exacta host-independent.
+### Stage 6 - Migrating the generator source
 
-### Etapa 6 - Migrarea source generatorului
+- [x] Reference `Cerneala.Language` from `Cerneala.SourceGen` without changing the `netstandard2.0` compatibility of the analyzer.
+- [x] Replaces `ParseDocument`, `MarkupDocument`, `XElement`-based private binding and diagnostics with common syntax tree and semantic model.
+- [x] Adapt emitters for elements, bindings, resources, Aspect, Motion and Prism to common semantic results.
+- [x] Eliminate duplicate parsers, descriptors and resolvers only after all parity tests are GREEN.
+- [x] Keep incremental caching generator: changing a document must not semantically regenerate all independent documents.
+- [x] Compare the output generated for the corpus; accept textual differences only if assembly behavior and diagnostics are identical or the improvement is explicitly approved.
+- [x] Runs `dotnet test .\tests\Cerneala.Tests.Language\Cerneala.Tests.Language.csproj` and `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`.
+- [x] Reindex the solution.
 
-- [x] Referentiaza `Cerneala.Language` din `Cerneala.SourceGen` fara sa schimbi compatibilitatea `netstandard2.0` a analyzerului.
-- [x] Inlocuieste `ParseDocument`, `MarkupDocument`, `XElement`-based binding si diagnostics private cu syntax tree si semantic model comune.
-- [x] Adapteaza emitters pentru elemente, bindings, resources, Aspect, Motion si Prism la rezultatele semantice comune.
-- [x] Elimina parserii, descriptorii si resolverele duplicate numai dupa ce toate parity tests sunt GREEN.
-- [x] Pastreaza incremental generator caching: schimbarea unui document nu trebuie sa regenereze semantic toate documentele independente.
-- [x] Compara output-ul generat pentru corpus; accepta diferente textuale numai daca assembly behavior si diagnostics sunt identice sau imbunatatirea este aprobata explicit.
-- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests.Language\Cerneala.Tests.Language.csproj` si `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`.
-- [x] Reindexeaza solutia.
+**Gate stage 6**
 
-**Gate etapa 6**
+- [x] `Cerneala.SourceGen` no longer uses `XDocument`/`XElement` for markup analysis.
+- [x] All existing sourcegen tests are GREEN and the valid corpus generates functional assemblies.
 
-- [x] `Cerneala.SourceGen` nu mai foloseste `XDocument`/`XElement` pentru analiza markup-ului.
-- [x] Toate testele sourcegen existente sunt GREEN si corpusul valid genereaza assemblies functionale.
+### Stage 7 - Performance, API and documentation
 
-### Etapa 7 - Performanta, API si documentatie
+- [x] Add benchmarks for parse cold/warm, incremental edit, semantic bind and query at-position on small, medium and `AspectChapterView.crn` documents.
+- [x] Establishes hardware baselines and gates: parse/edit p95 under 50 ms for large documents, warm semantic query p95 under 25 ms and zero non-cancellable synchronous operation over 100 ms.
+- [x] Profiles allocations and removes full rebuilds produced by a local edit where the benchmark demonstrates impact. (No optimization needed: the big edit has p95 1.534ms, about 32x under budget, although it allocates 369,984 B/op.)
+- [x] Marks the minimal cross-assembly surface; avoid public APIs for general consumption and mandatory document any remaining public type.
+- [x] Updates `docs/CernealaMarkupGuide.md`, bindings/Motion/Prism documentation and `UiMarkupGenerator` page with new common model without promising LSP before plan 2.
+- [x] Runs `dotnet test .\Cerneala.slnx`, the approved benchmarks, `git diff --check` and the final reindex.
 
-- [x] Adauga benchmarkuri pentru parse cold/warm, edit incremental, semantic bind si query at-position pe documente mici, medii si `AspectChapterView.crn`.
-- [x] Stabileste baseline hardware si gate-uri: parse/edit p95 sub 50 ms pentru documentul mare, query semantic warm p95 sub 25 ms si zero operatie sincrona neanulabila peste 100 ms.
-- [x] Profileaza allocatiile si elimina reconstruirile complete produse de o editare locala acolo unde benchmarkul demonstreaza impact. (Nu a fost necesara optimizarea: editarea mare are p95 1,534 ms, aproximativ 32x sub buget, desi aloca 369.984 B/op.)
-- [x] Marcheaza suprafata cross-assembly minima; evita API-uri publice de consum general si documenteaza obligatoriu orice tip public ramas.
-- [x] Actualizeaza `docs/CernealaMarkupGuide.md`, documentatia bindings/Motion/Prism si pagina `UiMarkupGenerator` cu noul model comun fara a promite LSP inainte de planul 2.
-- [x] Ruleaza `dotnet test .\Cerneala.slnx`, benchmarkurile aprobate, `git diff --check` si reindexarea finala.
+**Gate stage 7**
 
-**Gate etapa 7**
+- [x] The common core respects budgets, has no host dependencies and has synchronized documentation/API docs.
+- [x] There are no known semantic differences between build and editor-agnostic services.
 
-- [x] Nucleul comun respecta bugetele, nu are dependinte de host si are documentatie/API docs sincronizate.
-- [x] Nu exista diferente semantice cunoscute intre build si serviciile editor-agnostic.
+## 6. The definition of ready
 
-## 6. Definitia de gata
-
-- [x] Exista un singur parser tolerant si un singur semantic model pentru Cerneala.
-- [x] Source generatorul foloseste nucleul comun pentru toate dialectele `.crn`.
-- [x] Documentele incomplete pot fi analizate incremental fara crash si fara cascada inutila de diagnostics.
-- [x] Diagnostics sunt host-agnostic si au paritate exacta la build.
-- [x] Toate testele si benchmarkurile planului sunt GREEN.
+- [x] There is only one tolerant parser and only one semantic model for Cerneala.
+- [x] Source generator uses the common kernel for all `.crn` dialects.
+- [x] Incomplete documents can be analyzed incrementally without crashing and without the unnecessary cascade of diagnostics.
+- [x] Diagnostics are host-agnostic and have exact build parity.
+- [x] All tests and benchmarks of the plan are GREEN.

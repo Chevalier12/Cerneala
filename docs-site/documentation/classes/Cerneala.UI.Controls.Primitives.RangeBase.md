@@ -57,6 +57,8 @@ float current = range.Value; // 40
 
 `RangeBase` is the common base for controls that expose a bounded `float` value. It stores the lower endpoint in `Minimum`, the upper endpoint in `Maximum`, the current value in `Value`, and step sizes in `SmallChange` and `LargeChange`.
 
+`ValueChanged` is a bubbling routed event raised after the effective `Value` changes. Its `RoutedPropertyChangedEventArgs<float>` payload reports the old and new effective values.
+
 `Minimum`, `Maximum`, and `Value` accept only finite floating-point values. `SmallChange` and `LargeChange` accept only finite, non-negative values.
 
 `Value` is coerced into the current `Minimum..Maximum` range. Setting `Value` above `Maximum` stores `Maximum`; setting it below `Minimum` stores `Minimum`. When `Minimum` or `Maximum` changes, `Value` is coerced again.
@@ -75,6 +77,7 @@ The range endpoints are kept ordered. If `Minimum` is set above `Maximum`, `Maxi
 
 | Name | Type | Description |
 | --- | --- | --- |
+| `ValueChangedEvent` | `RoutedEvent` | Identifies the bubbling `ValueChanged` event. |
 | `MinimumProperty` | `UiProperty<float>` | Identifies the `Minimum` property. The default value is `0`; values must be finite. Metadata options are `AffectsArrange` and `AffectsRender`. |
 | `MaximumProperty` | `UiProperty<float>` | Identifies the `Maximum` property. The default value is `1`; values must be finite. Metadata options are `AffectsArrange` and `AffectsRender`. |
 | `ValueProperty` | `UiProperty<float>` | Identifies the `Value` property. The default value is `0`; values must be finite and are coerced into the active range. Metadata options are `AffectsArrange`, `AffectsRender`, and `AffectsInputVisual`. |
@@ -104,7 +107,9 @@ The range endpoints are kept ordered. If `Minimum` is set above `Maximum`, `Maxi
 
 ## Events
 
-`RangeBase` does not declare public events.
+| Name | Event Type | Description |
+| --- | --- | --- |
+| `ValueChanged` | `EventHandler<RoutedPropertyChangedEventArgs<float>>` | Occurs after the effective `Value` changes and bubbles through the retained UI tree. |
 
 ## Property Information
 

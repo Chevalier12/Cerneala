@@ -24,6 +24,13 @@ the process and streams, sends `initialize`/`initialized`, and closes it with
 `shutdown` followed by `exit`. Disconnecting the host stream also tears down the
 workspace, watchers, cancellation sources, and caches.
 
+The canonical Cerneala document extension is `.crn`. The server discovers only
+`.crn` additional files and pairs a view with the sibling `.crn.cs` companion;
+the retired `.cui.xml` suffix is intentionally not an alias. Build-time source
+generation and editor requests both consume the shared `Cerneala.Language`
+syntax and semantic model, so the server does not maintain a second parser or
+binding implementation.
+
 ## Advertised capabilities
 
 The server advertises only protocol-tested features:
@@ -45,6 +52,12 @@ versions are accepted, and a newer version cancels requests for the previous one
 Project reload similarly cancels work against the old compilation. Semantic token
 history is limited to 256 documents and telemetry retains at most 2,048 samples;
 both are cleared during close/unload/shutdown.
+
+Workspace reloads are debounced for 150 ms and ignore `bin` and `obj` changes.
+Requests capture a workspace revision and the active overlay versions; a result
+is returned only when both are still current. A deferred initial workspace load
+is available to hosts that need the process to become responsive before Roslyn
+project discovery completes.
 
 Files not owned by a project receive syntax-only completion, diagnostics,
 formatting, symbols, folding, and selection support. They also receive the single

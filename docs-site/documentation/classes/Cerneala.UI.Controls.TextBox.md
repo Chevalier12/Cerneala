@@ -10,14 +10,14 @@ Source: `UI/Controls/TextBox.cs`
 Represents an extensible single-line plain-text editing control.
 
 ```csharp
-public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource
+public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource, ITextInputHost
 ```
 
 Inheritance:
 `object` -> `UiObject` -> `UIElement` -> `Control` -> `TextBox`
 
 Implements:
-`ITimeSensitiveRenderElement`, `IPointerDragSource`
+`ITimeSensitiveRenderElement`, `IPointerDragSource`, `ITextInputHost`
 
 ## Examples
 

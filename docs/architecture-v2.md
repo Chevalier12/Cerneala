@@ -1,6 +1,6 @@
 # Cerneala Architecture v2
 
-This document describes the retained UI architecture planned above the existing `Drawing` and `UI/Input` foundations.
+This document describes the current retained UI architecture above the existing `Drawing` and `UI/Input` foundations. The roadmap sections below are deliberately limited to behavior that is implemented or has an explicit maturity marker; do not read this file as a promise that every WPF-shaped API exists.
 
 Read `architecture.md` first. That file explains what drawing and input already do. This file explains how the retained UI layers should use them.
 
@@ -32,7 +32,8 @@ UIRoot
         +--> Hit Testing
         +--> Focus
         +--> Commands
-        +--> Styling Metadata
+        +--> Aspect / Motion / Prism
+        +--> Markup and source generation
         |
         +--> Drawing
         |
@@ -85,6 +86,12 @@ Value precedence is:
 ```text
 local > animation > style visual state > style base > inherited > default
 ```
+
+The implemented property store also tracks the value source explicitly. Aspect
+application writes through `UiPropertyValueSource.AspectBase`, animation writes
+through the motion source, and local values remain above those framework-owned
+values. This source information is part of invalidation and is not inferred by
+reflection at render time.
 
 ## Logical And Visual Trees
 
@@ -217,9 +224,14 @@ MVP command work should support:
 - execution route;
 - button command binding.
 
-## Styling Metadata
+## Styling, Motion, And Markup
 
-Styling is not implemented in the first docs slice, but invalidation must be designed for it.
+Aspect is the current styling and template composition layer. `AspectRegistry`
+builds immutable catalogs, `AspectProcessor` resolves rules for attached roots,
+and `AspectEngine` applies winning values with dependency diagnostics. Target
+type, state, variant, slot, data and resource dependencies participate in the
+resolution key; clearing an aspect removes only the values owned by the aspect
+source.
 
 Style metadata can decide whether a visual state change affects:
 
@@ -228,11 +240,22 @@ Style metadata can decide whether a visual state change affects:
 - hit testing;
 - inherited values.
 
-Templates are code-first until markup exists.
+Motion owns animated property values, transactions, presence, layout correction,
+scroll and gesture bindings under the root clock. Render-only motion changes
+must not enqueue measure or arrange work. Prism remains a render-pipeline
+extension and therefore does not change layout, hit testing or focus.
+
+The `.crn` markup path is shared by the language core, source generator and
+language server. The generator consumes validated semantic results and emits
+typed C#; the editor uses the same syntax and semantic model for recovery,
+completion and diagnostics. `.cui.xml` is retired and is not a supported alias.
 
 ## Hosting
 
-The MonoGame host integrates retained UI with the game loop.
+`UiHost` and `MonoGameUiHost` integrate retained UI with the game loop. A root
+owns the Relay, frame scheduler, layout manager, retained renderer, resources,
+aspects and motion state; hosts submit input during update and drawing during
+draw without rebuilding unchanged retained work.
 
 Expected frame shape:
 
@@ -240,14 +263,28 @@ Expected frame shape:
 Update:
   read input
   update retained input state
-  process dirty work
+  drain Relay and process dirty work
 
 Draw:
   get cached root command list
-  render through IDrawingBackend
+  render through `IDrawingBackend.Render(...)`
 ```
 
-The host may call draw every frame. That must not imply layout/render command regeneration every frame.
+The host may call draw every frame. That must not imply layout/render command
+regeneration every frame. A second unchanged frame is expected to be idle for
+retained scheduling and command generation.
+
+## Current Boundaries
+
+- `Cerneala.UI` remains backend-neutral; MonoGame and WindowsDX types stay in
+  hosting and drawing adapter folders.
+- `Cerneala.Language` is editor/build infrastructure and is not a runtime UI
+  dependency.
+- Visual Studio support is an out-of-process `.crn` language-server host. It
+  does not turn the runtime into a Visual Studio or XAML compatibility layer.
+- The API reference under `docs-site/documentation/classes/` is the source of
+  truth for public members; this architecture document explains ownership and
+  flow rather than duplicating every API signature.
 
 ## MVP Acceptance Gates
 

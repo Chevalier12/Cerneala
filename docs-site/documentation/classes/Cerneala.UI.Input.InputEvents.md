@@ -102,43 +102,43 @@ The `All` property exposes the complete catalog in declaration order. It is usef
 
 | Name | Routed event name | Routing strategy | Args type |
 | --- | --- | --- | --- |
-| `PreviewStylusDownEvent` | `PreviewStylusDown` | `Tunnel` | `RoutedEventArgs` |
-| `StylusDownEvent` | `StylusDown` | `Bubble` | `RoutedEventArgs` |
-| `PreviewStylusUpEvent` | `PreviewStylusUp` | `Tunnel` | `RoutedEventArgs` |
-| `StylusUpEvent` | `StylusUp` | `Bubble` | `RoutedEventArgs` |
-| `PreviewStylusMoveEvent` | `PreviewStylusMove` | `Tunnel` | `RoutedEventArgs` |
-| `StylusMoveEvent` | `StylusMove` | `Bubble` | `RoutedEventArgs` |
-| `PreviewStylusInAirMoveEvent` | `PreviewStylusInAirMove` | `Tunnel` | `RoutedEventArgs` |
-| `StylusInAirMoveEvent` | `StylusInAirMove` | `Bubble` | `RoutedEventArgs` |
-| `StylusEnterEvent` | `StylusEnter` | `Direct` | `RoutedEventArgs` |
-| `StylusLeaveEvent` | `StylusLeave` | `Direct` | `RoutedEventArgs` |
-| `PreviewStylusInRangeEvent` | `PreviewStylusInRange` | `Tunnel` | `RoutedEventArgs` |
-| `StylusInRangeEvent` | `StylusInRange` | `Bubble` | `RoutedEventArgs` |
-| `PreviewStylusOutOfRangeEvent` | `PreviewStylusOutOfRange` | `Tunnel` | `RoutedEventArgs` |
-| `StylusOutOfRangeEvent` | `StylusOutOfRange` | `Bubble` | `RoutedEventArgs` |
-| `PreviewStylusSystemGestureEvent` | `PreviewStylusSystemGesture` | `Tunnel` | `RoutedEventArgs` |
-| `StylusSystemGestureEvent` | `StylusSystemGesture` | `Bubble` | `RoutedEventArgs` |
-| `GotStylusCaptureEvent` | `GotStylusCapture` | `Bubble` | `RoutedEventArgs` |
-| `LostStylusCaptureEvent` | `LostStylusCapture` | `Bubble` | `RoutedEventArgs` |
-| `PreviewStylusButtonDownEvent` | `PreviewStylusButtonDown` | `Tunnel` | `RoutedEventArgs` |
-| `StylusButtonDownEvent` | `StylusButtonDown` | `Bubble` | `RoutedEventArgs` |
-| `PreviewStylusButtonUpEvent` | `PreviewStylusButtonUp` | `Tunnel` | `RoutedEventArgs` |
-| `StylusButtonUpEvent` | `StylusButtonUp` | `Bubble` | `RoutedEventArgs` |
+| `PreviewStylusDownEvent` | `PreviewStylusDown` | `Tunnel` | `StylusEventArgs` |
+| `StylusDownEvent` | `StylusDown` | `Bubble` | `StylusEventArgs` |
+| `PreviewStylusUpEvent` | `PreviewStylusUp` | `Tunnel` | `StylusEventArgs` |
+| `StylusUpEvent` | `StylusUp` | `Bubble` | `StylusEventArgs` |
+| `PreviewStylusMoveEvent` | `PreviewStylusMove` | `Tunnel` | `StylusEventArgs` |
+| `StylusMoveEvent` | `StylusMove` | `Bubble` | `StylusEventArgs` |
+| `PreviewStylusInAirMoveEvent` | `PreviewStylusInAirMove` | `Tunnel` | `StylusEventArgs` |
+| `StylusInAirMoveEvent` | `StylusInAirMove` | `Bubble` | `StylusEventArgs` |
+| `StylusEnterEvent` | `StylusEnter` | `Direct` | `StylusEventArgs` |
+| `StylusLeaveEvent` | `StylusLeave` | `Direct` | `StylusEventArgs` |
+| `PreviewStylusInRangeEvent` | `PreviewStylusInRange` | `Tunnel` | `StylusEventArgs` |
+| `StylusInRangeEvent` | `StylusInRange` | `Bubble` | `StylusEventArgs` |
+| `PreviewStylusOutOfRangeEvent` | `PreviewStylusOutOfRange` | `Tunnel` | `StylusEventArgs` |
+| `StylusOutOfRangeEvent` | `StylusOutOfRange` | `Bubble` | `StylusEventArgs` |
+| `PreviewStylusSystemGestureEvent` | `PreviewStylusSystemGesture` | `Tunnel` | `StylusEventArgs` |
+| `StylusSystemGestureEvent` | `StylusSystemGesture` | `Bubble` | `StylusEventArgs` |
+| `GotStylusCaptureEvent` | `GotStylusCapture` | `Bubble` | `StylusEventArgs` |
+| `LostStylusCaptureEvent` | `LostStylusCapture` | `Bubble` | `StylusEventArgs` |
+| `PreviewStylusButtonDownEvent` | `PreviewStylusButtonDown` | `Tunnel` | `StylusEventArgs` |
+| `StylusButtonDownEvent` | `StylusButtonDown` | `Bubble` | `StylusEventArgs` |
+| `PreviewStylusButtonUpEvent` | `PreviewStylusButtonUp` | `Tunnel` | `StylusEventArgs` |
+| `StylusButtonUpEvent` | `StylusButtonUp` | `Bubble` | `StylusEventArgs` |
 
 ## Touch Fields
 
 | Name | Routed event name | Routing strategy | Args type |
 | --- | --- | --- | --- |
-| `PreviewTouchDownEvent` | `PreviewTouchDown` | `Tunnel` | `RoutedEventArgs` |
-| `TouchDownEvent` | `TouchDown` | `Bubble` | `RoutedEventArgs` |
-| `PreviewTouchMoveEvent` | `PreviewTouchMove` | `Tunnel` | `RoutedEventArgs` |
-| `TouchMoveEvent` | `TouchMove` | `Bubble` | `RoutedEventArgs` |
-| `PreviewTouchUpEvent` | `PreviewTouchUp` | `Tunnel` | `RoutedEventArgs` |
-| `TouchUpEvent` | `TouchUp` | `Bubble` | `RoutedEventArgs` |
-| `TouchEnterEvent` | `TouchEnter` | `Direct` | `RoutedEventArgs` |
-| `TouchLeaveEvent` | `TouchLeave` | `Direct` | `RoutedEventArgs` |
-| `GotTouchCaptureEvent` | `GotTouchCapture` | `Bubble` | `RoutedEventArgs` |
-| `LostTouchCaptureEvent` | `LostTouchCapture` | `Bubble` | `RoutedEventArgs` |
+| `PreviewTouchDownEvent` | `PreviewTouchDown` | `Tunnel` | `TouchEventArgs` |
+| `TouchDownEvent` | `TouchDown` | `Bubble` | `TouchEventArgs` |
+| `PreviewTouchMoveEvent` | `PreviewTouchMove` | `Tunnel` | `TouchEventArgs` |
+| `TouchMoveEvent` | `TouchMove` | `Bubble` | `TouchEventArgs` |
+| `PreviewTouchUpEvent` | `PreviewTouchUp` | `Tunnel` | `TouchEventArgs` |
+| `TouchUpEvent` | `TouchUp` | `Bubble` | `TouchEventArgs` |
+| `TouchEnterEvent` | `TouchEnter` | `Direct` | `TouchEventArgs` |
+| `TouchLeaveEvent` | `TouchLeave` | `Direct` | `TouchEventArgs` |
+| `GotTouchCaptureEvent` | `GotTouchCapture` | `Bubble` | `TouchEventArgs` |
+| `LostTouchCaptureEvent` | `LostTouchCapture` | `Bubble` | `TouchEventArgs` |
 
 ## Manipulation Fields
 
@@ -159,14 +159,14 @@ The `All` property exposes the complete catalog in declaration order. It is usef
 | `QueryContinueDragEvent` | `QueryContinueDrag` | `Bubble` | `RoutedEventArgs` |
 | `PreviewGiveFeedbackEvent` | `PreviewGiveFeedback` | `Tunnel` | `RoutedEventArgs` |
 | `GiveFeedbackEvent` | `GiveFeedback` | `Bubble` | `RoutedEventArgs` |
-| `PreviewDragEnterEvent` | `PreviewDragEnter` | `Tunnel` | `RoutedEventArgs` |
-| `DragEnterEvent` | `DragEnter` | `Bubble` | `RoutedEventArgs` |
-| `PreviewDragOverEvent` | `PreviewDragOver` | `Tunnel` | `RoutedEventArgs` |
-| `DragOverEvent` | `DragOver` | `Bubble` | `RoutedEventArgs` |
-| `PreviewDragLeaveEvent` | `PreviewDragLeave` | `Tunnel` | `RoutedEventArgs` |
-| `DragLeaveEvent` | `DragLeave` | `Bubble` | `RoutedEventArgs` |
-| `PreviewDropEvent` | `PreviewDrop` | `Tunnel` | `RoutedEventArgs` |
-| `DropEvent` | `Drop` | `Bubble` | `RoutedEventArgs` |
+| `PreviewDragEnterEvent` | `PreviewDragEnter` | `Tunnel` | `DragEventArgs` |
+| `DragEnterEvent` | `DragEnter` | `Bubble` | `DragEventArgs` |
+| `PreviewDragOverEvent` | `PreviewDragOver` | `Tunnel` | `DragEventArgs` |
+| `DragOverEvent` | `DragOver` | `Bubble` | `DragEventArgs` |
+| `PreviewDragLeaveEvent` | `PreviewDragLeave` | `Tunnel` | `DragEventArgs` |
+| `DragLeaveEvent` | `DragLeave` | `Bubble` | `DragEventArgs` |
+| `PreviewDropEvent` | `PreviewDrop` | `Tunnel` | `DragEventArgs` |
+| `DropEvent` | `Drop` | `Bubble` | `DragEventArgs` |
 
 ## Applies To
 

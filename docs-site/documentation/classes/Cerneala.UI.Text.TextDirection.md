@@ -2,7 +2,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Text`
 Assembly/Project: `Cerneala`
-Source: `UI/Text/BidiTextService.cs`
+Source: `UI/Text/TextDirection.cs`
 Provides the `Cerneala.UI.Text.TextDirection` API surface.
 ```csharp
 public enum TextDirection

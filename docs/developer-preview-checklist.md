@@ -10,7 +10,8 @@
 - Diagnostics expose trace events and active graph snapshots.
 - Default UI chrome uses the modern Aspect runtime path.
 - Aspect samples cover tokens, variants, slots, component templates, and content templates.
-- Legacy animation remains compatibility-only.
+- Legacy animation/storyboard APIs remain compatibility-only; current animation
+  work uses the root-owned Motion system and its typed specs.
 
 ## Verification Commands
 

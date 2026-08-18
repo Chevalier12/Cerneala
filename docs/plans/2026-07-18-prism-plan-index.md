@@ -1,136 +1,136 @@
-# Prism — indexul planului de implementare
+# Prism — deployment plan index
 
-## Scop
+## Purpose
 
-Acest index transformă deciziile din
-[`docs/prism-technical-design.md`](../prism-technical-design.md) și
+This index transforms decisions from
+[`docs/prism-technical-design.md`](../prism-technical-design.md) and
 [`docs/prism-markup-syntax-proposal.md`](../prism-markup-syntax-proposal.md)
-într-o ordine de implementare verificabilă. Prism rămâne procesare vizuală:
-nu modifică layout-ul, hitbox-ul sau rutarea inputului.
+in a verifiable order of implementation. Prism remains visual processing:
+does not change layout, hitbox or input routing.
 
-Planul este împărțit pentru ca SourceGen, runtime-ul retained, executorul GPU și
-backdrop-ul să poată avea teste și gate-uri proprii. Nu se implementează „totul
-într-o clasă mare”, iar etapele independente nu sunt forțate într-un singur
-branch logic.
+The plan is split for SourceGen, the retained runtime, the GPU executor, and
+the backdrop can have its own tests and gates. It does not implement "everything
+into a large class', and the independent stages are not forced into one
+logical branch.
 
-## Decizii obligatorii
+## Binding decisions
 
-- Sintaxa publică are numai directivele `@prism`, `@parameter`, `@layer`,
-  `@group`, `@filter`, `@style`, `@mask` și `@backdrop`.
-- Resursa reutilizabilă se numește `PrismComposition`; instanțele sunt create
-  per element, iar definițiile compilate sunt imuabile și partajabile.
-- Imaginea controlului este sursa implicită. Un `@layer` este frunză, un
-  `@group` poate conține layere sau grupuri, iar primul element declarat este
-  în față. Evaluarea compoziției se face de jos în sus.
-- Un `@backdrop` este opțional, unic și ultimul copil direct al Prism-ului.
-- Catalogul de tipuri, proprietăți, valori implicite, identificatori și
-  capabilități are o singură sursă machine-readable.
-- Prima implementare nu expune SDK public pentru filtre terțe și nu compilează
-  shader-e la runtime.
-- Rezultatele GPU Prism stabile sunt păstrate și reutilizate între frame-uri pe
-  baza unui dependency stamp complet, sub buget explicit și fără referințe la UI.
-- Invizibil, `Hidden`, `Collapsed` sau detașat înseamnă zero lucru Prism și
-  anularea Motion-ului asociat.
-- Back-endurile care nu implementează Prism ignoră scope-ul vizual și redau
-  conținutul interior normal.
+- The public syntax has only the directives `@prism`, `@parameter`, `@layer`,
+  `@group`, `@filter`, `@style`, `@mask` and `@backdrop`.
+- The reusable resource is called `PrismComposition`; instances are created
+  per element, and compiled definitions are immutable and shareable.
+- The control image is the default source. A `@layer` is leaf, a
+  `@group` can contain layers or groups, and the first element declared is
+  in front. Composition evaluation is done from the bottom up.
+- A `@backdrop` is optional, unique, and the last direct child of Prism.
+- Catalog of types, properties, default values, identifiers and
+  capabilities has a single machine-readable source.
+- The first implementation does not expose the public SDK for third-party filters and does not compile
+  shaders at runtime.
+- Stable GPU Prism results are preserved and reused between frames per
+  the basis of a complete dependency stamp, under explicit budget and without references to UI.
+- Invisible, `Hidden`, `Collapsed` or detached means zero Prism work and
+  cancellation of the associated Motion.
+- Backends that don't implement Prism ignore visual scope and render
+  normal internal contents.
 
-## Ordine și dependențe
+## Orders and dependencies
 
-1. [Fundație și catalog](2026-07-18-prism-foundation-and-catalog.md) — fără
-   dependențe. GATA
-
-   **Model:** `gpt-5.6-sol` · **Reasoning:** `xhigh`
-
-2. [Markup, Motion și lifecycle](2026-07-18-prism-markup-motion-and-lifecycle.md)
-   — depinde de fundație. GATA
-
-   **Model:** `gpt-5.6-sol` · **Reasoning:** `max`
-
-3. [Retained rendering și graful de compoziție](2026-07-18-prism-retained-composition-graph.md)
-   — depinde de fundație; poate avansa în paralel cu markup-ul. GATA
-
-   **Model:** `gpt-5.6-sol` · **Reasoning:** `ultra`
-
-4. [Compozitorul MonoGame](2026-07-18-prism-monogame-compositor.md) — depinde
-   de graful de compoziție. GATA
-
-   **Model:** `gpt-5.6-sol` · **Reasoning:** `max`
-
-5. [Culoare, blending și stiluri](2026-07-18-prism-color-blend-and-styles.md) —
-   depinde de markup și compozitor. GATA
-
-   **Model:** `gpt-5.6-sol` · **Reasoning:** `max`
-
-6. [Catalogul de filtre](2026-07-18-prism-filter-catalog.md) — depinde de
-   markup și compozitor; poate avansa în paralel cu stilurile. GATA
+1. [Foundation and catalog](2026-07-18-prism-foundation-and-catalog.md) — without
+   dependencies. DONE
 
    **Model:** `gpt-5.6-sol` · **Reasoning:** `xhigh`
 
-7. [Backdrop și integrarea hostului](2026-07-18-prism-backdrop-hosting.md) —
-   depinde de graful de compoziție și compozitor. GATA
+2. [Markup, Motion and lifecycle](2026-07-18-prism-markup-motion-and-lifecycle.md)
+   — depends on the foundation. DONE
 
    **Model:** `gpt-5.6-sol` · **Reasoning:** `max`
 
-8. [Cache retained GPU](2026-07-18-prism-retained-pixel-cache.md) — depinde de
-   graf, compozitor, catalogul vizual complet și backdrop. GATA
+3. [Retained rendering and composition graph](2026-07-18-prism-retained-composition-graph.md)
+   — depends on the foundation; can advance in parallel with the markup. DONE
 
    **Model:** `gpt-5.6-sol` · **Reasoning:** `ultra`
 
-9. [Integrare și hardening](2026-07-18-prism-integration-and-hardening.md) —
-   depinde de toate planurile precedente. GATA
+4. [MonoGame](2026-07-18-prism-monogame-compositor.md) Composer — depends
+   of the composition graph. DONE
 
    **Model:** `gpt-5.6-sol` · **Reasoning:** `max`
 
-## Gate-uri globale
+5. [Colour, blending and styles](2026-07-18-prism-color-blend-and-styles.md) —
+   it depends on the markup and composer. DONE
 
-- [x] Înaintea primului cod Prism, armonizează cele două documente-sursă:
-  cache-ul retained cross-frame este obligatoriu, iar extensiile publice terțe
-  sunt explicit amânate, fără schimbarea gramaticii aprobate.
-- [x] Nu începe un plan dependent până când toate gate-urile planurilor sale
-  prealabile sunt bifate și testele lor țintite sunt verzi.
-- [x] Pentru fiecare schimbare C# sau de proiect, rulează imediat:
+   **Model:** `gpt-5.6-sol` · **Reasoning:** `max`
+
+6. [](2026-07-18-prism-filter-catalog.md) filter catalog — depends on
+markup and compositor; can advance in parallel with the styles. DONE
+
+   **Model:** `gpt-5.6-sol` · **Reasoning:** `xhigh`
+
+7. [Backdrop and host integration](2026-07-18-prism-backdrop-hosting.md) —
+   depends on composition graph and composer. DONE
+
+   **Model:** `gpt-5.6-sol` · **Reasoning:** `max`
+
+8. [Cache retained GPU](2026-07-18-prism-retained-pixel-cache.md) — depends on
+   graph, compositor, full visual catalog and backdrop. DONE
+
+   **Model:** `gpt-5.6-sol` · **Reasoning:** `ultra`
+
+9. [Integration and hardening](2026-07-18-prism-integration-and-hardening.md) —
+   depends on all previous plans. DONE
+
+   **Model:** `gpt-5.6-sol` · **Reasoning:** `max`
+
+## Global gates
+
+- [x] Before the first Prism code, harmonize the two source documents:
+  retained cross-frame cache is mandatory, and third-party public extensions
+  are explicitly postponed, without changing the approved grammar.
+- [x] Do not start a dependent plan until all its plan gates
+  prerequisites are checked and their target tests are green.
+- [x] For each C# or project change, run immediately:
   `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json`.
-- [x] Pentru fiecare API public nou sau modificat, actualizează în aceeași
-  etapă `docs-site/documentation/classes/` cu skill-ul
-  `writing-api-documentation` și sincronizează
+- [x] For each new or changed public API, update to the same
+  stage `docs-site/documentation/classes/` with the skill
+  `writing-api-documentation` and sync
   `docs-site/documentation/manifest.json`.
-- [x] Nicio etapă GPU nu pornește înainte ca testele modelului CPU și ale
-  grafului backend-neutral să fie verzi; un screenshot nu înlocuiește un test
-  semantic.
-- [x] Niciun cache hit cross-frame nu este acceptat doar pe baza unui hash;
-  outputul cache-on trebuie să fie identic cu cache-off, iar dependency stamp-ul
-  trebuie să includă fiecare input pixel-affecting.
-- [x] Toate verificările vizuale folosesc API-ul existent de captură
-  `IWindowPlatform.RenderPng`/automatizarea Presentation, nu screenshot-uri
-  făcute manual.
-- [x] Orice workaround în `CernealaPresentation` pentru o problemă a
-  frameworkului blochează gate-ul; invariantul se repară în stratul care îl
-  deține.
-- [x] La finalul fiecărui plan rulează `git diff --check` și verifică explicit
-  să nu existe fișiere generate, binare shader sau schimbări fără proprietar.
+- [x] No GPU stage starts before CPU model tests and ale
+  backend-neutral graph to be green; a screenshot does not replace a test
+  semantically.
+- [x] No cross-frame hit cache is supported based on a hash only;
+  the cache-on output must be identical to the cache-off, and the dependency stamp
+  must include every pixel-affecting input.
+- [x] All visual checks use the existing capture API
+  `IWindowPlatform.RenderPng`/Automation Presentation, not screenshots
+  made by hand.
+- [x] Any workaround in `CernealaPresentation` for a problem a
+  the framework blocks the gate; the invariant is fixed in the layer that
+  owns
+- [x] At the end of each plan run `git diff --check` and check explicitly
+  no spawn files, shader binaries, or ownerless changes.
 
 ## Stop conditions
 
-Implementarea se oprește și decizia se întoarce în documentele de design dacă:
+Implementation stops and the decision returns to the design documents if:
 
-- contractul cerut nu poate fi exprimat prin cele opt directive aprobate;
-- o optimizare schimbă ordinea Photoshop, alpha-ul sau rezultatul măștilor;
-- un API public terț ar fi necesar doar pentru a evita o extensie internă
-  simplă;
-- un buget numeric trebuie ghicit înainte să existe măsurători;
-- hostul nu poate furniza backdrop-ul fără sincronizare GPU sau readback CPU.
+- the requested contract cannot be expressed through the eight approved directives;
+- an optimization changes the order of Photoshop, the alpha or the result of the masks;
+- a third party public API would only be needed to avoid an internal extension
+  simple;
+- a numerical budget must be guessed before there are measurements;
+- the host cannot provide the backdrop without GPU synchronization or CPU readback.
 
-## Definiția de gata
+## The definition of done
 
-- [x] Toate cele nouă planuri sunt complet bifate, în ordinea dependențelor.
+- [x] All nine plans are fully checked, in order of dependencies.
 - [x] `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`,
-  `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj` și
-  `dotnet test .\Cerneala.slnx` sunt verzi.
-- [x] Matricea generată catalog → parser → runtime → kernel → test → documentație
-  nu conține intrări lipsă.
-- [x] Testele de lifecycle, memorie, device reset, performanță și conformance
-  vizuală sunt verzi pe configurația suportată WindowsDX.
-- [x] Un Prism static produce hit retained fără recapturare ori effect passes,
-  iar orice input pixel-affecting schimbat produce miss și output corect.
-- [x] RoslynIndexer `doctor` și reindexarea completă sunt verzi, documentația
-  publică este sincronizată, iar `git diff --check` nu raportează probleme.
+  `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj` and
+  `dotnet test .\Cerneala.slnx` are green.
+- [x] Generated matrix catalog → parser → runtime → kernel → test → documentation
+  contains no missing entries.
+- [x] Lifecycle, memory, device reset, performance and conformance tests
+  visual are green on supported WindowsDX configuration.
+- [x] A static Prism produces hit retained without recapture or effect passes,
+  and any changed pixel-affecting input produces misses and correct output.
+- [x] RoslynIndexer `doctor` and full reindexing are green, documentation
+  public is synchronized and `git diff --check` reports no problems.

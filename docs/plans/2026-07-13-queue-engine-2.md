@@ -1,27 +1,27 @@
 # Plan: Queue Engine 2.0
 
-> Data: 2026-07-13
-> Status: finalizat
-> Scop: modernizarea cozilor de invalidare si a ordonarii elementelor fara schimbarea contractelor publice sau a semanticii frame-ului
+> Date: 2026-07-13
+> Status: completed
+> Purpose: modernization of invalidation queues and element ordering without changing public contracts or frame semantics
 
-## 1. Rezumat executiv
+## 1. Executive summary
 
-Queue Engine 2.0 va inlocui implementarea repetata `HashSet<UIElement> + List<UIElement>` din cozile de invalidare cu un nucleu intern comun, cu operatii O(1) pentru interogarile uzuale si cu o singura indexare a ordinii vizuale pentru fiecare versiune a arborelui.
+Queue Engine 2.0 will replace the repeated `HashSet<UIElement> + List<UIElement>` implementation of invalidation queues with a common internal core, with O(1) operations for common queries and a single indexing of the visual order for each version of the tree.
 
-Schimbarea urmareste patru probleme concrete:
+The change follows four concrete problems:
 
-- `HasWork` construieste snapshot-uri si poate traversa arborele doar ca sa afle daca o coada este goala;
-- fiecare coada isi recalculeaza separat ordinea elementelor;
-- eliminarea elementelor foloseste cautari si stergeri liniare din lista;
-- aceeasi logica de coada este duplicata in mai multe clase si risca sa evolueze diferit.
+- `HasWork` builds snapshots and can traverse the tree only to find out if a queue is empty;
+- each queue recalculates the order of the elements separately;
+- removing elements uses searches and linear deletions from the list;
+- the same queue logic is duplicated in several classes and risks evolving differently.
 
-Implementarea va pastra clasele publice existente si comportamentul observabil. Nu facem o revolutie cu furca in scheduler; schimbam motorul de sub capota si verificam fiecare surub.
+The implementation will preserve existing public classes and observable behavior. We are not making a revolution with a fork in the scheduler; we change the engine under the hood and check every screw.
 
-## 2. Baseline si problema actuala
+## 2. Baseline and the current problem
 
-### 2.1 Implementarea actuala
+### 2.1 Current implementation
 
-Urmatoarele cozi folosesc aceeasi structura de baza:
+The following queues use the same basic structure:
 
 - `LayoutQueue`;
 - `RenderQueue`;
@@ -30,8 +30,7 @@ Urmatoarele cozi folosesc aceeasi structura de baza:
 - `InheritedPropertyQueue`;
 - `CommandStateQueue`.
 
-Modelul curent este, in esenta:
-
+The current model is, in essence:
 ```text
 HashSet<UIElement> membership
 List<UIElement> order
@@ -39,92 +38,90 @@ Snapshot() -> ElementQueueOrder.Sort(root, order)
 Remove(element) -> order.RemoveAll(...)
 HasWork -> Snapshot().Count > 0
 ```
+### 2.2 Observed costs
 
-### 2.2 Costuri observate
+- [x] We capture a reproducible baseline for `HasWork`, snapshot and drain.
+- [x] We confirm the number of complete traversals of the tree on an idle frame.
+- [x] We confirm the allocations produced by repeated queries `HasWork`.
+- [x] We confirm the scaling curve for emptying a queue with 100, 1,000 and 10,000 elements.
+- [x] We save the baseline results in the project's benchmark artifact.
 
-- [x] Capturam un baseline reproductibil pentru `HasWork`, snapshot si drain.
-- [x] Confirmam numarul de traversari complete ale arborelui pe un frame idle.
-- [x] Confirmam alocarile produse de interogarile repetate `HasWork`.
-- [x] Confirmam curba de scalare pentru golirea unei cozi cu 100, 1.000 si 10.000 de elemente.
-- [x] Salvam rezultatele baseline in artefactul de benchmark al proiectului.
+The current observation, which must be transformed into a test and measure:
 
-Observatia curenta, care trebuie transformata in test si masuratoare:
+- `ElementQueueOrder.Sort` builds a dictionary of the entire tree for each snapshot;
+- `LayoutQueue.HasWork` asks for two snapshots, one for measure and one for arrange;
+- `Scheduler.HasWork` can be consulted from several points of the same update;
+- an idle frame can end up traversing the same tree several times without any real thing;
+- `List.RemoveAll` executed for each element can turn emptying a large queue into a cost close to O(Q²).
 
-- `ElementQueueOrder.Sort` construieste un dictionar al intregului arbore pentru fiecare snapshot;
-- `LayoutQueue.HasWork` cere doua snapshot-uri, unul pentru measure si unul pentru arrange;
-- `Scheduler.HasWork` poate fi consultat din mai multe puncte ale aceluiasi update;
-- un frame idle poate ajunge sa traverseze acelasi arbore de mai multe ori fara sa existe lucru real;
-- `List.RemoveAll` executat pentru fiecare element poate transforma golirea unei cozi mari intr-un cost apropiat de O(Q²).
+## 3. Measurable objectives
 
-## 3. Obiective masurabile
+- [x] `HasWork` is O(1) for each queue.
+- [x] `HasWork` does not build snapshots.
+- [x] `HasWork` does not cross the visual tree.
+- [x] `Contains`, `Enqueue` and `Remove` are O(1) amortized.
+- [x] The Snapshot sorts only the elements actually in the queue.
+- [x] The complete visual order is indexed at most once for the same value `UIRoot.TreeVersion`.
+- [x] The order index is reused by all queues of the same root.
+- [x] Emptying a queue no longer causes repeated linear deletions from an auxiliary list.
+- [x] The public order of the snapshots remains identical to the current visual order.
+- [x] The semantics of the scheduler snapshot remains unchanged.
+- [x] No public signature is modified.
+- [x] All existing tests remain green.
+- [x] Playground Diagnostic for the repaired scenario remains at a single useful measurement.
 
-- [x] `HasWork` este O(1) pentru fiecare coada.
-- [x] `HasWork` nu construieste snapshot-uri.
-- [x] `HasWork` nu traverseaza arborele vizual.
-- [x] `Contains`, `Enqueue` si `Remove` sunt O(1) amortizat.
-- [x] Snapshot-ul sorteaza numai elementele aflate efectiv in coada.
-- [x] Ordinea vizuala completa este indexata cel mult o data pentru aceeasi valoare `UIRoot.TreeVersion`.
-- [x] Indexul ordinii este reutilizat de toate cozile aceluiasi root.
-- [x] Golirea unei cozi nu mai face stergeri liniare repetate dintr-o lista auxiliara.
-- [x] Ordinea publica a snapshot-urilor ramane identica cu ordinea vizuala actuala.
-- [x] Semantica snapshot-ului schedulerului ramane neschimbata.
-- [x] Nicio semnatura publica nu este modificata.
-- [x] Toate testele existente raman verzi.
-- [x] Diagnosticul Playground pentru scenariul reparat ramane la o singura masurare utila.
+## 4. Non-objectives
 
-## 4. Non-obiective
+Queue Engine 2.0 will not include the following changes:
 
-Queue Engine 2.0 nu va include urmatoarele schimbari:
+- [x] We do not rewrite the `MeasureCore` or `ArrangeCore` algorithms of the controls.
+- [x] We do not introduce a new state machine for layout.
+- [x] We do not add multi-pass layout limited by a frame budget.
+- [x] We do not optimize separately `Grid`, `StackPanel` or other panels.
+- [x] We do not change the property invalidation policy.
+- [x] We do not change the phase order from `UiFrameScheduler`.
+- [x] We do not introduce concurrency or parallel processing of queues.
+- [x] We are not exposing a new public API just for diagnostics.
+- [x] We do not combine here the render cache, hit-testing or other optimizations without direct connection with the queue engine.
 
-- [x] Nu rescriem algoritmii `MeasureCore` sau `ArrangeCore` ai controalelor.
-- [x] Nu introducem un nou state machine pentru layout.
-- [x] Nu adaugam layout multi-pass limitat printr-un frame budget.
-- [x] Nu optimizam separat `Grid`, `StackPanel` sau alte panouri.
-- [x] Nu schimbam politica de invalidare a proprietatilor.
-- [x] Nu schimbam ordinea fazelor din `UiFrameScheduler`.
-- [x] Nu introducem concurenta sau procesare paralela a cozilor.
-- [x] Nu expunem un API public nou doar pentru diagnostic.
-- [x] Nu combinam aici cache-ul de render, hit-testing sau alte optimizari fara legatura directa cu motorul cozilor.
+These can become separate projects after the queue engine has predictable costs. Otherwise we would put the turbo on the car while changing the wheels, which is spectacular only until the fence comes into question.
 
-Acestea pot deveni proiecte separate dupa ce motorul cozilor are costuri predictibile. Altfel am pune turbo pe masina in timp ce schimbam rotile, ceea ce e spectaculos doar pana intra gardul in discutie.
+## 5. Contracts to be kept
 
-## 5. Contracte care trebuie pastrate
+### 5.1 Queues Agreement
 
-### 5.1 Contractul cozilor
+- [x] An element can exist at most once in a queue.
+- [x] The identity of the element is referential, not based on equal value.
+- [x] Re-enqueue after `Remove` works normally.
+- [x] `Snapshot` does not implicitly modify the valid elements in the queue.
+- [x] The detached elements are not returned to the consumer.
+- [x] A tree mutation can leave in the queue the invalidation of the root that represents that mutation.
+- [x] Public Snapshots preserve deterministic visual order.
 
-- [x] Un element poate exista cel mult o data intr-o coada.
-- [x] Identitatea elementului este referentiala, nu bazata pe egalitate de valoare.
-- [x] Re-enqueue dupa `Remove` functioneaza normal.
-- [x] `Snapshot` nu modifica implicit elementele valide din coada.
-- [x] Elementele detasate nu sunt returnate consumatorului.
-- [x] O mutatie de arbore poate lasa in coada invalidarea root-ului care reprezinta acea mutatie.
-- [x] Snapshot-urile publice pastreaza ordinea vizuala determinista.
+### 5.2 Special contract of `LayoutQueue`
 
-### 5.2 Contractul special al `LayoutQueue`
+- [x] Metadata `LayoutQueueEntryKind` is preserved.
+- [x] The priority remains `Direct > Required > Propagated`.
+- [x] A higher priority invalidation promotes the existing entry.
+- [x] An invalidation with a lower priority does not demote the existing entry.
+- [x] `SnapshotMeasure` public remains parent-first.
+- [x] The internal snapshot used by the incremental measure can remain bottom-up where the current contract requires it.
+- [x] Measure and arrange remain logically distinct queues.
 
-- [x] Metadata `LayoutQueueEntryKind` este pastrata.
-- [x] Prioritatea ramane `Direct > Required > Propagated`.
-- [x] O invalidare cu prioritate mai mare promoveaza intrarea existenta.
-- [x] O invalidare cu prioritate mai mica nu retrogradeaza intrarea existenta.
-- [x] `SnapshotMeasure` public ramane parent-first.
-- [x] Snapshot-ul intern folosit de measure incremental poate ramane bottom-up acolo unde contractul actual o cere.
-- [x] Measure si arrange raman cozi logic distincte.
+### 5.3 Scheduler Agreement
 
-### 5.3 Contractul schedulerului
+- [x] Each phase processes a stable snapshot.
+- [x] Re-enqueue in the same phase is postponed for the next frame.
+- [x] The work produced for a later phase can be consumed in the same frame.
+- [x] If the processing throws an exception, the current element and the rest of the snapshot are not lost.
+- [x] The order of the phases remains unchanged.
+- [x] A frame without invalidations does not start artificial work.
 
-- [x] Fiecare faza proceseaza un snapshot stabil.
-- [x] Re-enqueue in aceeasi faza este amanat pentru frame-ul urmator.
-- [x] Lucrul produs pentru o faza ulterioara poate fi consumat in acelasi frame.
-- [x] Daca procesarea arunca o exceptie, elementul curent si restul snapshot-ului nu se pierd.
-- [x] Ordinea fazelor ramane neschimbata.
-- [x] Un frame fara invalidari nu porneste lucru artificial.
+## 6. The proposed architecture
 
-## 6. Arhitectura propusa
+### 6.1 Reusable inner core
 
-### 6.1 Nucleu intern reutilizabil
-
-Introducem un tip intern generic, cu un nume final stabilit in implementare, de forma:
-
+We introduce a generic internal type, with a final name established in the implementation, of the form:
 ```csharp
 internal sealed class ElementWorkQueue<TMetadata>
 {
@@ -138,44 +135,40 @@ internal sealed class ElementWorkQueue<TMetadata>
     public IReadOnlyList<ElementWorkItem<TMetadata>> Snapshot(UIRoot root);
 }
 ```
+Responsibilities:
 
-Responsabilitati:
+- stores a single entry for each instance `UIElement`;
+- uses comparison by reference;
+- apply an explicit merge/promotion function for metadata;
+- exposes `Count` and `HasWork` without snapshot;
+- remove entries directly from the dictionary;
+- sorts only the keys in the queue when the snapshot is requested;
+- defensively cleans entries that no longer belong to root.
 
-- stocheaza o singura intrare pentru fiecare instanta `UIElement`;
-- foloseste comparare prin referinta;
-- aplica o functie explicita de merge/promotion pentru metadata;
-- expune `Count` si `HasWork` fara snapshot;
-- elimina intrarile direct din dictionar;
-- sorteaza doar cheile aflate in coada cand se cere snapshot;
-- curata defensiv intrarile care nu mai apartin root-ului.
+For queues without metadata we use a minimal internal type, not six copied implementations with the same shit in a different hat.
 
-Pentru cozile fara metadata folosim un tip intern minimal, nu sase implementari copiate cu acelasi rahat in alta palarie.
+### 6.2 Common index of the visual order
 
-### 6.2 Index comun al ordinii vizuale
-
-Introducem un serviciu intern asociat root-ului, de forma:
-
+We introduce an internal service associated with the root, in the form:
 ```text
 ElementQueueOrderIndex
   root
   indexedTreeVersion
   Dictionary<UIElement, int> preorderOrdinal
 ```
+Rules:
 
-Reguli:
+- the index is built lazy, only on the first snapshot that actually has elements;
+- the validation key is `UIRoot.TreeVersion`;
+- all queues of the same root use the same index;
+- a tree mutation logically invalidates the index by changing the version;
+- the reconstruction completely replaces the old dictionary in order not to keep stale references;
+- the order is exactly the visual preorder used now;
+- elements absent from the index are considered detached and are defensively removed from the snapshot.
 
-- indexul este construit lazy, doar la primul snapshot care are efectiv elemente;
-- cheia de validare este `UIRoot.TreeVersion`;
-- toate cozile aceluiasi root folosesc acelasi index;
-- o mutatie de arbore invalideaza logic indexul prin schimbarea versiunii;
-- reconstruirea inlocuieste complet dictionarul vechi pentru a nu pastra referinte stale;
-- ordinea este exact preorder-ul vizual folosit acum;
-- elementele absente din index sunt considerate detasate si sunt eliminate defensiv din snapshot.
+### 6.3 Keeping existing wrappers
 
-### 6.3 Pastrarea wrapperelor existente
-
-Clasele publice actuale raman fatada compatibila:
-
+The current public classes remain compatible facade:
 ```text
 RenderQueue -------------------+
 AspectQueue -------------------|
@@ -184,33 +177,32 @@ InheritedPropertyQueue --------|
 CommandStateQueue -------------+
 
 LayoutQueue ----------------------> ElementWorkQueue<LayoutQueueEntryKind>
-                                    + doua instante: measure si arrange
+                                     + two instances: measure and arrange
 ```
+Advantages:
 
-Avantaje:
+- consumers must not be modified;
+- The public API and documentation remain stable;
+- migration can be done queue by queue;
+- the common core can be tested separately from the scheduler.
 
-- consumatorii nu trebuie modificati;
-- API-ul public si documentatia raman stabile;
-- migrarea se poate face coada cu coada;
-- nucleul comun poate fi testat separat de scheduler.
+### 6.4 Cleaning of detached elements
 
-### 6.4 Curatarea elementelor detasate
+We use two levels of protection:
 
-Folosim doua niveluri de protectie:
+1. Active cleanup on detach, via a unique internal root point that removes the element or subtree from all relevant queues.
+2. Defensive snapshot cleaning, for cases where a rare detachment path bypasses the main mechanism.
 
-1. Curatare activa la detach, printr-un punct intern unic al root-ului care elimina elementul sau subarborele din toate cozile relevante.
-2. Curatare defensiva la snapshot, pentru cazurile in care o cale rara de detach ocoleste mecanismul principal.
+Conditions:
 
-Conditii:
+- [x] Active cleanup does not remove root invalidation caused by tree mutation.
+- [x] Clearing a subtree does not traverse the entire remaining tree.
+- [x] Snapshot checks only the elements in the queue, not all visual elements.
+- [x] `HasWork` remains O(1); we don't hide a crossing under an innocent face getter.
 
-- [x] Curatarea activa nu elimina invalidarea root-ului produsa de mutatia arborelui.
-- [x] Curatarea unui subarbore nu traverseaza intregul arbore ramas.
-- [x] Snapshot-ul verifica numai elementele aflate in coada, nu toate elementele vizuale.
-- [x] `HasWork` ramane O(1); nu ascundem o traversare sub un getter cu fata nevinovata.
+## 7. Estimated file structure
 
-## 7. Structura de fisiere estimata
-
-Fisiere noi posibile:
+Possible new files:
 
 - `Cerneala/UI/Invalidation/ElementWorkQueue.cs`;
 - `Cerneala/UI/Invalidation/ElementQueueOrderIndex.cs`;
@@ -221,7 +213,7 @@ Fisiere noi posibile:
 - `benchmarks/Cerneala.Benchmarks/QueueEngineBenchmarks.cs`;
 - `benchmarks/Cerneala.Benchmarks/README.md`.
 
-Fisiere existente probabil modificate:
+Existing files possibly modified:
 
 - `Cerneala/UI/Invalidation/ElementQueueOrder.cs`;
 - `Cerneala/UI/Invalidation/LayoutQueue.cs`;
@@ -231,101 +223,101 @@ Fisiere existente probabil modificate:
 - `Cerneala/UI/Invalidation/InheritedPropertyQueue.cs`;
 - `Cerneala/UI/Invalidation/CommandStateQueue.cs`;
 - `Cerneala/UI/Invalidation/UiFrameScheduler.cs`;
-- clasa interna care detaseaza elemente din `UIRoot`;
-- testele existente ale cozilor si schedulerului.
+- the internal class that detaches elements from `UIRoot`;
+- existing queues and scheduler tests.
 
-Lista este orientativa. Nu cream fisiere sau abstractii doar pentru ca arata frumos intr-o diagrama.
+The list is indicative. We don't create files or abstractions just because they look nice in a diagram.
 
-## 8. Plan de implementare
+## 8. Implementation plan
 
-### Etapa 0 - Baseline si plasa de siguranta
+### Stage 0 - Baseline and safety net
 
-- [x] Ruleaza generatorul `FileTree.md` si actualizeaza indexul Roslyn.
-- [x] Ruleaza intreaga suita de teste si noteaza numarul de teste si durata.
-- [x] Adauga teste de caracterizare pentru ordinea tuturor snapshot-urilor.
-- [x] Adauga teste de caracterizare pentru deduplicare si re-enqueue.
-- [x] Adauga teste de caracterizare pentru detach.
-- [x] Adauga teste de caracterizare pentru exceptii in scheduler.
-- [x] Adauga teste de caracterizare pentru lucrul produs intre faze.
-- [x] Instrumenteaza intern numarul de build-uri ale ordinii vizuale pentru teste.
-- [x] Masoara baseline-ul pentru scenariile din sectiunea de benchmark.
-- [x] Salveaza rezultatele cu informatii despre build, runtime si hardware.
+- [x] Run the `FileTree.md` generator and update the Roslyn index.
+- [x] Run the entire suite of tests and write down the number of tests and the duration.
+- [x] Add characterization tests for the order of all snapshots.
+- [x] Add characterization tests for deduplication and re-enqueue.
+- [x] Add characterization tests for detachment.
+- [x] Add characterization tests for exceptions in the scheduler.
+- [x] Add characterization tests for the work produced between phases.
+- [x] Internally instruments the number of builds of the visual order for tests.
+- [x] Measures the baseline for the scenarios in the benchmark section.
+- [x] Save the results with build, runtime and hardware information.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Toate testele de caracterizare trec pe implementarea curenta.
-- [x] Baseline-ul este reproductibil.
-- [x] Avem o dovada masurabila pentru traversarile si alocarile actuale.
-- [x] Nu exista schimbari de comportament in aceasta etapa.
+- [x] All characterization tests pass on the current implementation.
+- [x] The baseline is reproducible.
+- [x] We have measurable proof of current crossings and allocations.
+- [x] There are no changes in behavior at this stage.
 
-### Etapa 1 - Indexul comun de ordine vizuala
+### Stage 1 - Common index of visual order
 
-- [x] Introdu `ElementQueueOrderIndex` ca tip intern.
-- [x] Leaga indexul de un singur `UIRoot`.
-- [x] Construieste preorder ordinal identic cu algoritmul actual.
-- [x] Cache-uieste rezultatul dupa `TreeVersion`.
-- [x] Reconstruieste indexul doar cand versiunea arborelui s-a schimbat.
-- [x] Inlocuieste dictionarul vechi la rebuild pentru a elibera referintele stale.
-- [x] Expune un hook intern de diagnostic pentru numarul de build-uri, disponibil testelor.
-- [x] Adauga sortarea unui set mic de elemente folosind ordinalele cache-uite.
-- [x] Trateaza determinist elementele care nu apartin root-ului.
-- [x] Pastreaza `ElementQueueOrder` temporar ca adaptor, daca asta reduce riscul migrarii. (Nu a fost necesar; adaptorul vechi a fost eliminat.)
+- [x] Enter `ElementQueueOrderIndex` as internal type.
+- [x] Binds the index to a single `UIRoot`.
+- [x] Constructs an ordinal preorder identical to the current algorithm.
+- [x] Caches the result after `TreeVersion`.
+- [x] Rebuild the index only when the tree version has changed.
+- [x] Replaces the old dictionary on rebuild to release stale references.
+- [x] Exposes an internal diagnostic hook for the number of builds available to tests.
+- [x] Add sorting of a small set of elements using cached ordinals.
+- [x] Deterministically treats elements that do not belong to the root.
+- [x] Keep `ElementQueueOrder` temporarily as an adapter, if this reduces the risk of migration. (It wasn't necessary; the old adapter was removed.)
 
-Teste etapa 1:
+Tests stage 1:
 
-- [x] Primul snapshot construieste indexul o singura data.
-- [x] Snapshot-uri repetate pe acelasi `TreeVersion` reutilizeaza indexul.
-- [x] Snapshot-uri din cozi diferite reutilizeaza acelasi index.
-- [x] O mutatie de arbore produce exact un rebuild la urmatoarea utilizare.
-- [x] Ordinea dupa rebuild reflecta noua structura vizuala.
-- [x] Un element detasat nu primeste ordinal valid.
-- [x] Un arbore gol si un root singur sunt tratate corect.
-- [x] Arborii adanci nu folosesc o recursie noua mai riscanta decat implementarea existenta.
+- [x] The first snapshot builds the index only once.
+- [x] Repeated snapshots on the same `TreeVersion` reuse the index.
+- [x] Snapshots from different queues reuse the same index.
+- [x] A tree mutation produces exactly one rebuild on the next use.
+- [x] The order after rebuild reflects the new visual structure.
+- [x] A detached element does not receive a valid ordinal.
+- [x] An empty tree and a single root are handled correctly.
+- [x] Deep trees do not use a new recursion riskier than the existing implementation.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] Ordinea rezultata este byte-for-byte echivalenta in testele de caracterizare.
-- [x] Cel mult un build complet are loc pentru fiecare `TreeVersion` folosit.
-- [x] Nicio interogare `HasWork` nu cere indexul.
-- [x] Toate testele raman verzi.
+- [x] The resulting order is byte-for-byte equivalent in the characterization tests.
+- [x] At most one full build occurs for each `TreeVersion` used.
+- [x] No query `HasWork` asks for the index.
+- [x] All tests remain green.
 
-### Etapa 2 - Nucleul `ElementWorkQueue<TMetadata>`
+### Stage 2 - Nucleus `ElementWorkQueue<TMetadata>`
 
-- [x] Introdu tipul intern generic.
-- [x] Foloseste un comparer de identitate referentiala explicit.
-- [x] Implementeaza `Count` si `HasWork` direct peste numarul de intrari.
-- [x] Implementeaza `Contains` fara snapshot.
-- [x] Implementeaza enqueue cu deduplicare O(1) amortizat.
-- [x] Implementeaza merge-ul de metadata printr-o strategie simpla injectata in constructor.
-- [x] Implementeaza `Remove` prin stergere directa din dictionar.
-- [x] Implementeaza snapshot stabil peste o copie a intrarilor curente.
-- [x] Sorteaza copia folosind indexul comun al root-ului.
-- [x] Elimina defensiv intrarile detasate descoperite la snapshot.
-- [x] Evita LINQ pe caile fierbinti daca produce alocari evitabile.
-- [x] Nu adauga pooling pana cand profilerul nu demonstreaza ca este necesar.
+- [x] Enter the generic internal type.
+- [x] Uses an explicit referential identity comparer.
+- [x] Implements `Count` and `HasWork` directly over the number of entries.
+- [x] Implements `Contains` without snapshot.
+- [x] Implements enqueue with deduplication O(1) amortized.
+- [x] Implements metadata merging through a simple strategy injected into the constructor.
+- [x] Implements `Remove` by direct deletion from the dictionary.
+- [x] Implements stable snapshot over a copy of current entries.
+- [x] Sorts the copy using the common index of the root.
+- [x] Defensively removes the detached entries discovered in the snapshot.
+- [x] Avoid LINQ on hot paths if it produces avoidable allocations.
+- [x] Do not add pooling until the profiler proves that it is necessary.
 
-Teste etapa 2:
+Tests stage 2:
 
-- [x] Enqueue repetat nu dubleaza elementul.
-- [x] Doua instante distincte raman distincte chiar daca ar avea egalitate de valoare.
-- [x] Remove inexistent este sigur.
-- [x] Remove urmat de enqueue readauga elementul o singura data.
-- [x] Snapshot-ul este stabil daca se fac enqueue-uri dupa capturarea lui.
-- [x] Merge-ul de metadata promoveaza, dar nu retrogradeaza.
-- [x] Elementele detasate sunt curatate fara a traversa tot arborele.
-- [x] `HasWork` si `Count` nu construiesc indexul.
-- [x] Coada goala nu aloca la `HasWork` dupa warmup.
+- [x] Repeated enqueue does not duplicate the element.
+- [x] Two distinct courts remain distinct even if they have equal value.
+- [x] Remove nonexistent is safe.
+- [x] Remove followed by enqueue re-adds the element only once.
+- [x] The snapshot is stable if enqueues are made after its capture.
+- [x] The metadata merge promotes, but does not demote.
+- [x] The detached elements are cleaned without crossing the entire shaft.
+- [x] `HasWork` and `Count` do not build the index.
+- [x] The empty queue does not allocate to `HasWork` after warmup.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Nucleul comun trece toate testele izolate.
-- [x] Operatiile simple nu mai depind de o lista auxiliara.
-- [x] Nu exista `RemoveAll` pe calea de drain.
-- [x] Nu s-a modificat inca niciun contract public.
+- [x] The common core passes all isolated tests.
+- [x] Simple operations no longer depend on an auxiliary list.
+- [x] There is no `RemoveAll` on the drain path.
+- [x] No public contract has been modified yet.
 
-### Etapa 3 - Migrarea cozilor fara metadata
+### Stage 3 - Migration of queues without metadata
 
-Ordine recomandata de migrare:
+Recommended migration order:
 
 - [x] `RenderQueue`.
 - [x] `AspectQueue`.
@@ -333,309 +325,306 @@ Ordine recomandata de migrare:
 - [x] `InheritedPropertyQueue`.
 - [x] `CommandStateQueue`.
 
-Pentru fiecare coada:
+For each queue:
 
-- [x] Pastreaza numele clasei si semnaturile publice.
-- [x] Inlocuieste colectiile duplicate cu nucleul comun.
-- [x] Pastreaza validarea argumentelor si exceptiile existente.
-- [x] Pastreaza ordinea snapshot-ului.
-- [x] Pastreaza semantica detach.
-- [x] Ruleaza testele specifice cozii dupa migrare.
-- [x] Ruleaza testele schedulerului dupa migrare.
-- [x] Reindexeaza repository-ul dupa fiecare modificare de cod sau proiect.
+- [x] Keeps the class name and public signatures.
+- [x] Replaces duplicate collections with the common core.
+- [x] Keeps the validation of existing arguments and exceptions.
+- [x] Keeps the order of the snapshot.
+- [x] Keeps the detach semantics.
+- [x] Run the queue-specific tests after migration.
+- [x] Run the scheduler tests after migration.
+- [x] Re-indexes the repository after each code or project modification.
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] Toate cele cinci cozi folosesc acelasi nucleu.
-- [x] Testele contractuale comune trec pentru fiecare wrapper.
-- [x] Nu exista copii ramase ale modelului `HashSet + List`.
-- [x] API diff-ul public este gol.
-- [x] Toate testele raman verzi.
+- [x] All five queues use the same core.
+- [x] Common contract tests pass for each wrapper.
+- [x] There are no remaining copies of the `HashSet + List` model.
+- [x] API public diff is empty.
+- [x] All tests remain green.
 
-### Etapa 4 - Migrarea `LayoutQueue`
+### Stage 4 - Migration `LayoutQueue`
 
-- [x] Modeleaza measure si arrange ca doua instante ale nucleului comun.
-- [x] Pastreaza separat numarul de intrari pentru fiecare faza.
-- [x] Implementeaza merge-ul `LayoutQueueEntryKind` cu prioritatea actuala.
-- [x] Pastreaza snapshot-ul public measure in ordine parent-first.
-- [x] Pastreaza inversarea interna pentru measure incremental unde este necesara.
-- [x] Pastreaza snapshot-ul arrange in ordinea ceruta de scheduler.
-- [x] Pastreaza metodele de remove individual si remove complet.
-- [x] Verifica situatiile in care acelasi element se afla simultan in measure si arrange.
-- [x] Verifica enqueue in timpul procesarii measure si arrange.
-- [x] Elimina implementarea veche numai dupa echivalenta completa.
+- [x] Model measure and arrange as two instances of the common core.
+- [x] Keeps the number of entries for each phase separately.
+- [x] Implement the `LayoutQueueEntryKind` merge with the current priority.
+- [x] Keeps the public measure snapshot in parent-first order.
+- [x] Keep the internal inversion for incremental measure where necessary.
+- [x] Keeps the arrange snapshot in the order requested by the scheduler.
+- [x] Keeps the individual remove and complete remove methods.
+- [x] Checks the situations where the same element is simultaneously in measure and arrange.
+- [x] Check enqueue during measure and arrange processing.
+- [x] Remove the old implementation only after complete equivalence.
 
-Teste etapa 4:
+Tests stage 4:
 
-- [x] `Direct` promoveaza `Required` si `Propagated`.
-- [x] `Required` promoveaza `Propagated`, dar nu `Direct`.
-- [x] `Propagated` nu retrogradeaza nimic.
-- [x] Parent-first public ramane neschimbat.
-- [x] Bottom-up intern ramane neschimbat.
-- [x] Measure si arrange nu isi corup reciproc intrarile.
-- [x] `HasWork` nu construieste niciunul dintre snapshot-uri.
-- [x] O singura intrare measure din Playground produce o singura masurare utila.
+- [x] `Direct` promotes `Required` and `Propagated`.
+- [x] `Required` promotes `Propagated`, but not `Direct`.
+- [x] `Propagated` does not downgrade anything.
+- [x] Parent-first public remains unchanged.
+- [x] Internal bottom-up remains unchanged.
+- [x] Measure and arrange do not corrupt each other's inputs.
+- [x] `HasWork` does not build any of the snapshots.
+- [x] A single measure input from the Playground produces a single useful measurement.
 
-**Gate etapa 4**
+**Gate Stage 4**
 
-- [x] `LayoutQueue` nu mai contine colectii sau sortare duplicata.
-- [x] Toate testele layout si scheduler trec.
-- [x] Scenariul Playground ramane reparat.
-- [x] API diff-ul public este gol.
+- [x] `LayoutQueue` no longer contains collections or duplicate sorting.
+- [x] All layout and scheduler tests pass.
+- [x] The Playground scenario remains fixed.
+- [x] API public diff is empty.
 
-### Etapa 5 - Curatarea activa la detach
+### Stage 5 - Active cleaning at detachment
 
-- [x] Identifica punctul unic prin care un element sau subarbore paraseste un `UIRoot`.
-- [x] Adauga o metoda interna a schedulerului/root-ului pentru eliminarea elementului din toate cozile.
-- [x] Curata toate elementele subarborelui detasat.
-- [x] Pastreaza invalidarile valide ale root-ului generate de mutatie.
-- [x] Pastreaza fallback-ul defensiv din snapshot.
-- [x] Evita expunerea publica a mecanismului.
-- [x] Verifica reatasarea aceluiasi element si re-enqueue ulterior.
+- [x] Identifies the unique point through which an element or subtree leaves a `UIRoot`.
+- [x] Add an internal scheduler/root method to remove the item from all queues.
+- [x] Clean all the elements of the detached sub-shaft.
+- [x] Keeps valid root invalidations generated by mutation.
+- [x] Keeps the defensive fallback from the snapshot.
+- [x] Avoid public exposure of the mechanism.
+- [x] Checks the reattachment of the same element and re-enqueues afterwards.
 
-Teste etapa 5:
+Tests stage 5:
 
-- [x] Detach elimina elementul din fiecare tip de coada.
-- [x] Detach de subarbore elimina toti descendentii programati.
-- [x] Fratii ramasi in arbore nu sunt eliminati.
-- [x] Root-ul ramane programat daca mutatia l-a invalidat.
-- [x] Reattach permite invalidari noi.
-- [x] Snapshot-ul defensiv curata o intrare stale simulata.
-- [x] `HasWork` devine false imediat cand ultima intrare reala este detasata.
+- [x] Detach removes the element from each queue type.
+- [x] Detach from subtree removes all scheduled descendants.
+- [x] Brothers remaining in the tree are not eliminated.
+- [x] The root remains programmed if the mutation has invalidated it.
+- [x] Reattach allows new invalidations.
+- [x] Defensive Snapshot clears a simulated stable entry.
+- [x] `HasWork` becomes false as soon as the last real input is detached.
 
-**Gate etapa 5**
+**Gate Stage 5**
 
-- [x] Cozile nu pastreaza intentionat referinte la subarbori detasati.
-- [x] Semantica testelor existente pentru detach este pastrata.
-- [x] Nu exista traversari complete ale arborelui ramas pentru cleanup.
+- [x] Queues do not intentionally keep references to detached subtrees.
+- [x] The semantics of the existing tests for detach is preserved.
+- [x] There are no complete traversals of the tree left for cleanup.
 
-### Etapa 6 - Integrarea si stabilitatea schedulerului
+### Stage 6 - Integration and stability of the scheduler
 
-- [x] Pastreaza modelul snapshot plus remove per element.
-- [x] Profita de noul `Remove` O(1) fara a introduce un API destructiv prematur.
-- [x] Verifica toate punctele care consulta `Scheduler.HasWork`.
-- [x] Confirma ca interogarile repetate sunt ieftine si fara efecte secundare.
-- [x] Verifica restaurarea intrarilor la exceptie.
-- [x] Verifica amanarea re-enqueue-ului in aceeasi faza.
-- [x] Verifica procesarea downstream in acelasi frame.
-- [x] Verifica limita de lucru si conditiile de continuare ale frame-ului.
-- [x] Elimina adaptoarele temporare ramase din `ElementQueueOrder`, daca nu mai sunt folosite.
+- [x] Keep the snapshot plus remove model per element.
+- [x] Take advantage of the new `Remove` O(1) without introducing a premature destructive API.
+- [x] Check all points that refer to `Scheduler.HasWork`.
+- [x] Confirm that repeated queries are cheap and without side effects.
+- [x] Checks the restoration of exceptions.
+- [x] Checks the postponement of the re-enqueue in the same phase.
+- [x] Check the downstream processing in the same frame.
+- [x] Checks the working limit and the continuation conditions of the frame.
+- [x] Remove the remaining temporary adapters from `ElementQueueOrder`, if they are no longer used.
 
-Teste etapa 6:
+Tests stage 6:
 
-- [x] Re-enqueue measure in measure este amanat.
-- [x] Invalidarea arrange produsa de measure este procesata in acelasi frame cand contractul o permite.
-- [x] Invalidarea render produsa de layout este procesata in acelasi frame.
-- [x] Exceptia nu pierde elementul curent.
-- [x] Exceptia nu pierde elementele neprocesate ale snapshot-ului.
-- [x] Ordinea elementelor ramane determinista dupa recuperare.
-- [x] Frame idle nu construieste index si nu aloca prin `HasWork`.
-- [x] Frame fara schimbari raporteaza zero lucru de layout.
+- [x] Re-enqueue measure in measure is postponed.
+- [x] The invalidation of arrange produced by measure is processed in the same frame when the contract allows it.
+- [x] Render invalidation produced by the layout is processed in the same frame.
+- [x] The exception does not lose the current element.
+- [x] The exception does not lose the unprocessed elements of the snapshot.
+- [x] The order of elements remains deterministic after recovery.
+- [x] Frame idle does not build index and does not allocate via `HasWork`.
+- [x] Frame without changes reports zero layout work.
 
-**Gate etapa 6**
+**Gate stage 6**
 
-- [x] `UiFrameSchedulerTests` trec integral.
-- [x] `FrameSchedulerStabilityTests` trec integral.
-- [x] Toate testele repository-ului trec.
-- [x] Nu exista diferente observabile in afara performantei.
+- [x] `UiFrameSchedulerTests` pass in full.
+- [x] `FrameSchedulerStabilityTests` pass in full.
+- [x] All repository tests pass.
+- [x] There are no observable differences outside of performance.
 
-### Etapa 7 - Benchmark-uri si praguri de performanta
+### Stage 7 - Benchmarks and performance thresholds
 
-Adauga un proiect BenchmarkDotNet separat numai pentru scenariile stabile ale motorului de cozi. Nu pune benchmark-uri cu praguri de timp fragile in suita unitara.
+Add a separate BenchmarkDotNet project just for stable queue engine scenarios. Do not put benchmarks with fragile time thresholds in the unitary suite.
 
-Scenarii:
+Scenarios:
 
-- [x] `HasWork` idle pe arbori de 100, 1.000 si 10.000 de elemente.
-- [x] `HasWork` repetat de mai multe ori in acelasi frame.
-- [x] Snapshot cu 1, 10, 100 si 1.000 de elemente programate intr-un arbore mare.
-- [x] Drain pentru 100, 1.000 si 10.000 de intrari.
-- [x] Snapshot-uri succesive din cozi diferite pe acelasi `TreeVersion`.
-- [x] Rebuild dupa o mutatie de arbore.
-- [x] Promotion de metadata in `LayoutQueue`.
-- [x] Detach de subarbore cu elemente programate.
+- [x] `HasWork` idle on trees of 100, 1,000 and 10,000 elements.
+- [x] `HasWork` repeated several times in the same frame.
+- [x] Snapshot with 1, 10, 100 and 1,000 programmed elements in a large tree.
+- [x] Drain for 100, 1,000 and 10,000 entries.
+- [x] Successive snapshots from different queues on the same `TreeVersion`.
+- [x] Rebuild after a tree mutation.
+- [x] Promotion of metadata in `LayoutQueue`.
+- [x] Detachment of sub-tree with programmed elements.
 
-Metrici:
+Metrics:
 
-- [x] Timp mediu si distributie.
-- [x] Bytes alocati per operatie.
-- [x] Gen0/Gen1 collections unde sunt relevante.
-- [x] Numar de build-uri ale indexului.
-- [x] Numar de noduri vizitate pentru indexare.
-- [x] Numar de elemente sortate per snapshot.
+- [x] Average time and distribution.
+- [x] Bytes allocated per operation.
+- [x] Gen0/Gen1 collections where relevant.
+- [x] Number of index builds.
+- [x] Number of nodes visited for indexing.
+- [x] Number of elements sorted per snapshot.
 
-Praguri functionale obligatorii:
+Mandatory functional thresholds:
+- [x] `HasWork` makes zero visual crossings.
+- [x] `HasWork` allocates zero bytes after warmup.
+- [x] A `TreeVersion` produces at most one build of the common index.
+- [x] Drain no longer contains O(Q) deletions for each element.
+- [x] The cost of the drain increases approximately linearly with the number of entries.
+- [x] Snapshot depends on Q scheduled elements plus at most one rebuild per version, not N for each queue.
 
-- [x] `HasWork` face zero traversari vizuale.
-- [x] `HasWork` aloca zero bytes dupa warmup.
-- [x] Un `TreeVersion` produce cel mult un build al indexului comun.
-- [x] Drain nu mai contine stergeri O(Q) pentru fiecare element.
-- [x] Costul drain-ului creste aproximativ liniar cu numarul de intrari.
-- [x] Snapshot-ul depinde de Q elemente programate plus cel mult un rebuild per versiune, nu de N pentru fiecare coada.
+The absolute thresholds in milliseconds are established after the baseline on the same hardware and are documented in the benchmark artifact. We don't put in CI a hysterical timer that drops because Windows decided to scratch its antivirus.
 
-Pragurile absolute in milisecunde se stabilesc dupa baseline pe acelasi hardware si se documenteaza in artefactul benchmark-ului. Nu bagam in CI un cronometru isteric care pica pentru ca Windows a decis sa-si scarpine antivirusul.
+**Gate stage 7**
 
-**Gate etapa 7**
+- [x] The before/after results are saved and comparable.
+- [x] All functional thresholds are met.
+- [x] There is no significant regression in small snapshots.
+- [x] Any accepted regression is explained explicitly. (It was not necessary to accept any regression.)
 
-- [x] Rezultatele before/after sunt salvate si comparabile.
-- [x] Toate pragurile functionale sunt indeplinite.
-- [x] Nu exista regresie semnificativa in snapshot-urile mici.
-- [x] Orice regresie acceptata este explicata explicit. (Nu a fost necesara acceptarea vreunei regresii.)
+### Stage 8 - Cleaning, documentation and final verification
 
-### Etapa 8 - Curatare, documentatie si verificare finala
+- [x] Eliminate old code and unused adapters.
+- [x] Eliminate diagnostic hooks that are not needed for tests or benchmarks.
+- [x] Keep the remaining hooks `internal`, not public.
+- [x] Runs the project formatter.
+- [x] Run `dotnet build` for the solution.
+- [x] Run all tests.
+- [x] Run the final benchmarks in Release configuration.
+- [x] Run the Playground scenario and save the relevant diagnosis.
+- [x] Regenerate `FileTree.md`.
+- [x] Re-index the solution with RoslynIndexer.
+- [x] Runs `git diff --check`.
+- [x] Manually check the public API diff.
+- [x] Update this plan by ticking off the executed tasks.
 
-- [x] Elimina codul vechi si adaptoarele nefolosite.
-- [x] Elimina hook-urile de diagnostic care nu sunt necesare testelor sau benchmark-urilor.
-- [x] Pastreaza hook-urile ramase `internal`, nu publice.
-- [x] Ruleaza formatterul proiectului.
-- [x] Ruleaza `dotnet build` pentru solutie.
-- [x] Ruleaza toate testele.
-- [x] Ruleaza benchmark-urile finale in configuratie Release.
-- [x] Ruleaza scenariul Playground si salveaza diagnosticul relevant.
-- [x] Genereaza din nou `FileTree.md`.
-- [x] Reindexeaza solutia cu RoslynIndexer.
-- [x] Ruleaza `git diff --check`.
-- [x] Verifica manual diff-ul public de API.
-- [x] Actualizeaza acest plan bifand taskurile executate.
+Documentation:
 
-Documentatie:
+- [x] Confirm that there are no public API changes.
+- [x] If a public change inevitably occurs, stop the implementation and discuss the contract separately. (Did not apply: public API remained unchanged.)
+- [x] For any approved public change, update the documentation from `docs-site/documentation/classes/` using the mandatory skill. (Not applied: there are no public changes.)
+- [x] Document the benchmarks and their running mode in the README of the benchmark project.
 
-- [x] Confirma ca nu exista schimbari de API public.
-- [x] Daca apare inevitabil o schimbare publica, opreste implementarea si discuta separat contractul. (Nu s-a aplicat: API-ul public a ramas neschimbat.)
-- [x] Pentru orice schimbare publica aprobata, actualizeaza documentatia din `docs-site/documentation/classes/` folosind skill-ul obligatoriu. (Nu s-a aplicat: nu exista schimbari publice.)
-- [x] Documenteaza benchmark-urile si modul lor de rulare in README-ul proiectului de benchmark.
+**Gate Stage 8**
 
-**Gate etapa 8**
+- [x] Green build.
+- [x] All green tests.
+- [x] Final benchmarks archived.
+- [x] Public API unchanged.
+- [x] Clean repository, no temporary files or leftover processes.
 
-- [x] Build verde.
-- [x] Toate testele verzi.
-- [x] Benchmark-uri finale arhivate.
-- [x] API public neschimbat.
-- [x] Repository curat, fara fisiere temporare sau procese ramase.
+## 9. Test strategy
 
-## 9. Strategie de testare
+### 9.1 Unit tests
 
-### 9.1 Teste unitare
+Unit tests validate invariants, not runtimes:
 
-Testele unitare valideaza invarianti, nu timpi de executie:
+- [x] referential identity;
+- [x] deduplication;
+- [x] metadata promotion;
+- [x] remove and re-enqueue;
+- [x] stable snapshot;
+- [x] visual order;
+- [x] cache after `TreeVersion`;
+- [x] detach and reattach;
+- [x] empty tail;
+- [x] exceptions.
 
-- [x] identitate referentiala;
-- [x] deduplicare;
-- [x] promotion de metadata;
-- [x] remove si re-enqueue;
-- [x] snapshot stabil;
-- [x] ordine vizuala;
-- [x] cache dupa `TreeVersion`;
-- [x] detach si reattach;
-- [x] coada goala;
-- [x] exceptii.
+### 9.2 Contract tests for wrappers
+The same basic suite must be applied to all simple queues:
 
-### 9.2 Teste contractuale pentru wrappere
-
-Aceeasi suita de baza trebuie aplicata tuturor cozilor simple:
-
-- [x] enqueue o data;
-- [x] enqueue duplicat;
+- [x] enqueue once;
+- [x] duplicate enqueue;
 - [x] contains;
 - [x] remove;
 - [x] snapshot order;
 - [x] detached pruning;
 - [x] repeated `HasWork`.
 
-Astfel evitam situatia in care cinci cozi folosesc acelasi motor, dar una isi pune mustata falsa si decide ca regulile nu i se aplica.
+Thus we avoid the situation in which five tails use the same engine, but one puts on a fake mustache and decides that the rules do not apply to it.
 
-### 9.3 Teste de integrare
+### 9.3 Integration Tests
 
 - [x] frame idle;
-- [x] frame cu o singura invalidare measure;
-- [x] frame cu invalidari in toate fazele;
-- [x] invalidare produsa de o faza upstream;
-- [x] re-enqueue in aceeasi faza;
-- [x] exceptie la mijlocul snapshot-ului;
-- [x] mutatie de arbore intre doua frame-uri;
-- [x] detach in timpul procesarii;
-- [x] Playground fara interactiune.
+- [x] frame with a single measure invalidation;
+- [x] frame with invalidations in all phases;
+- [x] invalidation produced by an upstream phase;
+- [x] re-enqueue in the same phase;
+- [x] exception in the middle of the snapshot;
+- [x] tree mutation between two frames;
+- [x] detach during processing;
+- [x] Playground without interaction.
 
-### 9.4 Benchmark-uri
+### 9.4 Benchmarks
 
-Benchmark-urile masoara performanta, dar nu inlocuiesc testele functionale. Rezultatele trebuie comparate in Release, pe acelasi runtime si acelasi hardware, cu suficiente iteratii pentru stabilizare.
+Benchmarks measure performance, but do not replace functional tests. The results must be compared in Release, on the same runtime and the same hardware, with enough iterations for stabilization.
 
-## 10. Riscuri si mitigari
+## 10. Risks and mitigations
 
-### Risc: ordinea vizuala se schimba subtil
+### Risk: the visual order changes subtly
 
-Mitigare:
+Mitigation:
 
-- [x] teste de caracterizare inainte de refactor;
-- [x] acelasi preorder ca implementarea actuala;
-- [x] comparatii explicite pe arbori cu mai multe niveluri si frati.
+- [x] characterization tests before the refactor;
+- [x] the same preorder as the current implementation;
+- [x] explicit comparisons on trees with multiple levels and siblings.
 
-### Risc: indexul comun pastreaza referinte stale
+### Risk: the shared index keeps stale references
 
-Mitigare:
+Mitigation:
 
-- [x] dictionarul este inlocuit complet la schimbarea `TreeVersion`;
-- [x] cleanup activ la detach;
-- [x] fallback defensiv la snapshot;
-- [x] teste cu detach/reattach si colectare unde este practic.
+- [x] the dictionary is completely replaced when changing `TreeVersion`;
+- [x] cleanup active at detach;
+- [x] defensive fallback to snapshot;
+- [x] tests with detach/reattach and collection where practical.
 
-### Risc: `HasWork` raporteaza intrari detasate
+### Risk: `HasWork` reports detached entries
 
-Mitigare:
+Mitigation:
 
-- [x] cleanup sincron la detach;
-- [x] teste care cer `HasWork == false` imediat dupa eliminarea ultimei intrari;
-- [x] snapshot pruning ramane protectie secundara, nu mecanism principal.
+- [x] synchronous cleanup at detach;
+- [x] tests that ask for `HasWork == false` immediately after removing the last entry;
+- [x] snapshot pruning remains secondary protection, not the main mechanism.
 
-### Risc: metadata de layout este pierduta sau retrogradata
+### Risk: layout metadata is lost or downgraded
 
-Mitigare:
+Mitigation:
 
-- [x] merge function izolata si testata exhaustiv;
-- [x] migrarea `LayoutQueue` se face ultima;
-- [x] testele curente raman sursa de adevar pentru comportament.
+- [x] works isolated and exhaustively tested;
+- [x] migration `LayoutQueue` is done last;
+- [x] current tests remain the source of truth for behavior.
 
-### Risc: exceptiile pierd lucru din snapshot
+### Risk: exceptions lose work from the snapshot
 
-Mitigare:
+Mitigation:
 
-- [x] nu schimbam contractul snapshot al schedulerului;
-- [x] pastram restaurarea explicita;
-- [x] teste pentru elementul curent si restul neprocesat.
+- [x] we do not change the scheduler's snapshot contract;
+- [x] we keep the restoration explicit;
+- [x] tests for the current element and the rest unprocessed.
 
-### Risc: abstractia generica devine prea desteapta
+### Risk: generic abstraction becomes too clever
 
-Mitigare:
+Mitigation:
 
-- [x] nucleul cunoaste numai membership, metadata, snapshot si order index;
-- [x] politica fiecarei faze ramane in wrapper/scheduler;
-- [x] fara pooling, batching distructiv sau concurenta pana nu exista dovada ca sunt necesare.
+- [x] the core knows only membership, metadata, snapshot and order index;
+- [x] the policy of each phase remains in the wrapper/scheduler;
+- [x] without pooling, destructive batching or competition until there is proof that they are necessary.
 
-### Risc: benchmark-ul masoara zgomotul sistemului
+### Risk: the benchmark measures system noise
 
-Mitigare:
+Mitigation:
 
 - [x] BenchmarkDotNet in Release;
-- [x] aceeasi masina si acelasi runtime pentru comparatii;
-- [x] praguri structurale in teste, praguri temporale in rapoarte;
-- [x] mai multe dimensiuni de intrare pentru a vedea curba, nu doar un numar sexy.
+- [x] same machine and same runtime for comparisons;
+- [x] structural thresholds in tests, temporal thresholds in reports;
+- [x] more input sizes to see the curve, not just a sexy number.
 
-## 11. Conditii de oprire
+## 11. Stop conditions
+The implementation stops for re-evaluation if any of the following situations occur:
 
-Implementarea se opreste pentru reevaluare daca apare oricare dintre situatiile urmatoare:
+- [ ] a public API change is required;
+- [ ] the current order cannot be reproduced without changing the contract;
+- [ ] `TreeVersion` does not cover all the relevant mutations of the tree;
+- [ ] the active cleanup at the detachment requires extensive changes in the ownership of the elements;
+- [ ] the exception recovery cannot be kept with the proposed kernel;
+- [ ] benchmarks show persistent regressions for small tails;
+- [ ] the solution starts asking for pooling, locks or concurrency without data to justify them.
 
-- [ ] este necesara o schimbare de API public;
-- [ ] ordinea actuala nu poate fi reprodusa fara schimbarea contractului;
-- [ ] `TreeVersion` nu acopera toate mutatiile relevante ale arborelui;
-- [ ] cleanup-ul activ la detach necesita modificari largi in ownership-ul elementelor;
-- [ ] recuperarea la exceptie nu poate fi pastrata cu nucleul propus;
-- [ ] benchmark-urile arata regresii persistente pentru cozile mici;
-- [ ] solutia incepe sa ceara pooling, lock-uri sau concurenta fara date care sa le justifice.
+In these cases, the problem is documented and decided separately. We do not cover the crack with silicone and optimism.
 
-In aceste cazuri se documenteaza problema si se decide separat. Nu acoperim crapatura cu silicon si optimism.
+## 12. Recommended sequence of commits
 
-## 12. Secventa recomandata de commit-uri
-
-Implementarea a fost livrata ca un singur working-tree batch; nu s-au creat commit-uri deoarece utilizatorul nu a cerut commit sau publicare. Lista ramane nebifata intentionat si nu reprezinta lucru tehnic restant.
+The implementation was delivered as a single working-tree batch; no commits were created because the user did not request a commit or publish. The list remains unchecked intentionally and does not represent outstanding technical work.
 
 - [ ] `test: characterize queue engine behavior`
 - [ ] `perf: cache visual queue order per tree version`
@@ -647,47 +636,47 @@ Implementarea a fost livrata ca un singur working-tree batch; nu s-au creat comm
 - [ ] `bench: add queue engine performance scenarios`
 - [ ] `docs: record queue engine 2.0 results`
 
-Commit-urile pot fi comasate daca diff-urile sunt mici, dar ordinea conceptuala trebuie pastrata. Fiecare commit trebuie sa construiasca si sa aiba testele relevante verzi.
+The commits can be merged if the diffs are small, but the conceptual order must be preserved. Each commit must build and have the relevant tests green.
 
-## 13. Checklist final de acceptanta
+## 13. Final acceptance checklist
 
-### Corectitudine
+### Fairness
 
-- [x] Toate testele existente si noi trec.
-- [x] Ordinea snapshot-urilor este identica cu baseline-ul.
-- [x] Deduplicarea si promotion-ul functioneaza.
-- [x] Detach nu lasa lucru fals in cozi.
-- [x] Exceptiile nu pierd lucru.
-- [x] Semantica fazelor schedulerului este neschimbata.
+- [x] All existing and new tests pass.
+- [x] The order of the snapshots is identical to the baseline.
+- [x] Deduplication and promotion work.
+- [x] Detach doesn't leave fake thing in queues.
+- [x] Exceptions do not lose work.
+- [x] The semantics of the scheduler phases is unchanged.
 
-### Performanta
+### Performance
 
-- [x] `HasWork` este O(1), fara traversari si fara alocari dupa warmup.
-- [x] Ordinea vizuala este construita cel mult o data per `TreeVersion`.
-- [x] Toate cozile reutilizeaza acelasi index al root-ului.
-- [x] `Remove` nu mai executa scanari liniare.
-- [x] Drain-ul nu mai are comportament patratic.
-- [x] Snapshot-ul sorteaza numai intrarile programate.
-- [x] Playground ramane la o singura masurare utila in scenariul validat.
+- [x] `HasWork` is O(1), without crossings and without allocations after warmup.
+- [x] The visual order is built at most once per `TreeVersion`.
+- [x] All queues reuse the same root index.
+- [x] `Remove` no longer performs linear scans.
+- [x] Drain no longer has quadratic behavior.
+- [x] Snapshot sorts only programmed entries.
+- [x] Playground remains at only one useful measurement in the validated scenario.
 
-### Arhitectura
+### Architecture
 
-- [x] Exista un singur nucleu pentru membership si snapshot.
-- [x] Wrapperele publice raman subtiri si compatibile.
-- [x] Politicile specifice fazelor nu sunt impinse in nucleul generic.
-- [x] Nu exista cod duplicat ramas pentru aceeasi operatie de coada.
-- [x] Nu au fost introduse abstractii nefolosite.
+- [x] There is only one core for membership and snapshot.
+- [x] Public wrappers remain thin and compatible.
+- [x] Phase-specific policies are not pushed into the generic core.
+- [x] There is no duplicate code left for the same queue operation.
+- [x] No unused abstractions were entered.
 
-### Livrare
+### Delivery
 
-- [x] Build Release verde.
-- [x] Suita completa verde.
-- [x] Benchmark before/after disponibil.
-- [x] API public neschimbat.
-- [x] Documentatia relevanta este sincronizata.
-- [x] `FileTree.md` si indexul Roslyn sunt actualizate.
-- [x] Planul este bifat conform stadiului real, fara checkbox-uri de decor.
+- [x] Build Release green.
+- [x] Complete green suite.
+- [x] Benchmark before/after available.
+- [x] public API unchanged.
+- [x] The relevant documentation is synchronized.
+- [x] `FileTree.md` and the Roslyn index are updated.
+- [x] The plan is ticked according to the actual stage, without decoration checkboxes.
 
-## 14. Definitia de "gata"
+## 14. The definition of "ready"
 
-Queue Engine 2.0 este gata cand un frame idle poate intreba de lucru de cate ori are nevoie fara sa traverseze arborele, cozile pot drena loturi mari fara cost patratic, toate fazele impart aceeasi ordine vizuala cache-uita, iar utilizatorul nu observa nicio schimbare in afara faptului ca framework-ul nu mai gafaie ca dupa urcat zece etaje cu frigiderul in brate.
+Queue Engine 2.0 is ready when an idle frame can ask for work as many times as it needs without traversing the tree, queues can drain large batches without quadratic cost, all phases share the same cache-forgotten visual order, and the user doesn't notice any change apart from the fact that the framework no longer makes mistakes like after climbing ten floors with the refrigerator in its arms.

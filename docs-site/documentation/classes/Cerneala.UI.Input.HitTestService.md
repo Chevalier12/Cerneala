@@ -43,6 +43,9 @@ if (result is not null)
 Use a filter to reject an element and its descendants while still allowing siblings behind it to be tested:
 
 ```csharp
+UIElement overlay = new();
+root.VisualChildren.Add(overlay);
+
 HitTestFilter filter = new(element =>
     ReferenceEquals(element, overlay)
         ? HitTestFilterBehavior.ExcludeSubtree
@@ -63,7 +66,7 @@ Elements are skipped when they are presence-exiting, do not participate in hit t
 
 Clipping is honored only when a `ClipNode` is set on an element. A child outside its parent's arranged bounds can still be hit when the parent is not clipped. The root viewport is special: points outside a `UIRoot` viewport are rejected.
 
-Hit testing uses arranged layout bounds. Render transforms do not change the tested bounds.
+Hit testing starts from arranged layout bounds, then maps the pointer into each element's transformed coordinate space. Render and motion transforms therefore move, scale, and rotate the effective hit-test region. A non-invertible transform makes that element and its subtree un-hittable.
 
 The returned `HitTestResult` stores the hit `UIElement`, its `UiElementId`, and the original `X` and `Y` coordinates passed to the service.
 

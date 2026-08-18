@@ -1,209 +1,207 @@
-# Plan: Relay - auto-marshaling UI modern
+# Plan: Relay - modern UI auto-marshaling
 
-> Data: 2026-07-14
-> Status: finalizat
-> Dependenta: nucleul Relay-ului este independent; integrarea generatorului
-> de binding depinde de `docs/plans/2026-07-14-markup-data-bindings.md`
-> Scop: introducerea unui Relay UI async-first, determinist si observabil,
-> integrat cu frame loop-ul Cerneala si cu sursele reactive externe, fara thread
-> UI secundar, blocking invoke sau mutatii concurente ale arborelui retained
+> Date: 2026-07-14
+> Status: completed
+> Dependency: the core of Relay is independent; generator integration
+> of binding depends on `docs/plans/2026-07-14-markup-data-bindings.md`
+> Goal: introducing an async-first, deterministic and observable Relay UI,
+> integrated with the frame loop Cerneala and with external reactive sources, without thread
+> Secondary UI, blocking invoke or concurrent mutations of the retained tree
 
-## 1. Rezumat
+## 1. Summary
 
-Cerneala nu are astazi un mecanism general prin care un semnal venit de pe un
-worker thread sa fie executat sigur pe thread-ul `Update`/UI. Evenimentele C#
-sunt sincrone, astfel ca `INotifyPropertyChanged`, `ObservableValue<T>`,
-`CanExecuteChanged`, schimbarile de tema si schimbarile de resurse ruleaza
-handlerul pe thread-ul emitent. Daca acel handler scrie o proprietate UI,
-invalideaza un element sau modifica o coada retained, UI-ul este atins de pe
-thread-ul gresit.
+Cerneala today does not have a general mechanism by which a signal coming from a
+worker thread to be executed safely on the `Update`/UI thread. C# Events
+are synchronous, such that `INotifyPropertyChanged`, `ObservableValue<T>`,
+`CanExecuteChanged`, theme changes and resource changes are running
+handler on the issuing thread. If that handler writes a UI property,
+invalidates an element or modifies a retained queue, the UI is reached from
+wrong thread.
 
-Solutia tinta este un `UiRelay` detinut de fiecare `UIRoot`, cu:
+The target solution is a `UiRelay` owned by each `UIRoot`, with:
 
-- coada multi-producer/single-consumer thread-safe;
-- API public async-first: `Post`, `InvokeAsync`, `CheckAccess` si `VerifyAccess`;
-- drain o singura data la inceputul fiecarui update, inainte de scheduler si
+- multi-producer/single-consumer thread-safe queue;
+- Public API async-first: `Post`, `InvokeAsync`, `CheckAccess` and `VerifyAccess`;
+- drain once at the beginning of each update, before the scheduler and
   input;
-- snapshot si buget determinist, astfel incat un callback care se reposteaza sa
-  nu manance frame-ul cu tot cu farfurie;
-- integrare cu `SynchronizationContext` numai pe durata executiei UI;
-- anulare, propagarea exceptiilor, statistici si teste de concurenta;
-- coalescing specializat pentru binding-uri si alte semnale de tip "re-query
+- snapshot and deterministic budget, so that a callback that reposts itself
+  don't eat the frame with everything with a plate;
+- integration with `SynchronizationContext` only during UI execution;
+- cancellation, propagation of exceptions, statistics and competition tests;
+- specialized coalescing for bindings and other "re-query" type signals
   current state";
-- fail-fast pentru mutatiile UI directe off-thread, fiindca auto-marshaling-ul
-  nu transforma arborele retained intr-o colectie concurenta.
+- fail-fast for direct off-thread UI mutations, because the auto-marshaling
+  do not turn the retained tree into a concurrent collection.
 
-### 1.1 Branding si vocabular
+### 1.1 Branding and vocabulary
 
-Subsistemul se numeste **Relay**: preia lucru de pe orice thread si il preda
-thread-ului proprietar al root-ului, fara sa ascunda mutatii concurente si fara
-sa inventeze un al doilea UI thread. Formula scurta este: **Relay muta executia,
-nu datele**.
+The subsystem is called **Relay**: it takes work from any thread and hands it over
+to the thread owning the root, without hiding concurrent mutations and without
+to invent a second UI thread. The short formula is: **Relay moves execution,
+not the data**.
 
-| Subsistem | Rol | API reprezentativ |
+| Subsystem | Role | Representative API |
 | --- | --- | --- |
-| Aspect | style, tema si cascada | `AspectEngine`, `AspectRegistry` |
-| Motion | storyboard si animatii | `MotionSystem`, `MotionGraph` |
-| Relay | handoff intre thread-uri, continuari async si auto-marshaling | `UiRelay`, `UiRelayOptions` |
+| Aspect | style, theme and waterfall | `AspectEngine`, `AspectRegistry` |
+| Motion | storyboard and animation | `MotionSystem`, `MotionGraph` |
+| Relay | handoff between threads, async continuations and auto-marshaling | `UiRelay`, `UiRelayOptions` |
 
-Branding-ul public foloseste namespace-ul `Cerneala.UI.Relay`, proprietatea
-`UIRoot.Relay` si tipurile `UiRelay`/`UiRelayOptions`. Verbele tehnice familiare
-raman `Post`, `InvokeAsync`, `CheckAccess` si `VerifyAccess`; nu expunem in
-paralel tipuri sau proprietati publice numite `Dispatcher`, fiindca doua nume
-pentru aceeasi dracovenie ar produce numai confuzie.
+Public branding uses the `Cerneala.UI.Relay` namespace, property
+`UIRoot.Relay` and types `UiRelay`/`UiRelayOptions`. Familiar technical verbs
+remain `Post`, `InvokeAsync`, `CheckAccess` and `VerifyAccess`; we do not expose in
+parallel types or public properties called `Dispatcher`, because they are two names
+for the same madness would only produce confusion.
 
-## 2. Decizii stabilite si presupuneri
-
-- Thread-ul proprietar al unui `UIRoot` este thread-ul pe care root-ul este
-  construit. Relay devine unica sursa de adevar pentru thread affinity in
-  serviciile root-owned, inclusiv Aspect si Motion.
-- `UiRelay` nu creeaza si nu detine un thread. `UiHost.Update`,
-  `MonoGameUiHost.Update`, `WindowApplicationRuntime.PumpOnce` si apelurile
-  directe `UIRoot.ProcessFrame` pompeaza lucrul pe thread-ul existent al UI-ului.
-- Fiecare root are propriul Relay si propria coada. Nu exista un
-  `UiRelay.Current` static global, deoarece Cerneala suporta mai multe
-  root-uri si ferestre.
-- `Post` si `InvokeAsync` pun intotdeauna lucrul in coada, inclusiv cand sunt
-  apelate de pe thread-ul UI, pentru ordine FIFO predictibila. Codul deja aflat
-  pe UI thread poate apela direct operatia daca doreste executie imediata.
-- Nu exista `Invoke`/`Send` blocant public, nested message pump sau asteptare
-  sincrona. `.Wait()`, `.Result` si `GetAwaiter().GetResult()` pe thread-ul UI
-  raman utilizari gresite si trebuie documentate ca potential deadlock.
-- Callback-urile existente la inceputul drain-ului formeaza un snapshot stabil.
-  Lucrul postat in timpul drain-ului este amanat pentru urmatorul update.
-- Ordinea este FIFO dupa linearizarea enqueue-ului; fiecare producer isi
-  pastreaza ordinea. Nu promitem o ordine arbitrara intre doua thread-uri care
-  posteaza simultan.
-- Bugetul implicit este de 1.024 callback-uri per update si este configurabil
-  prin `UiRelayOptions.MaxCallbacksPerUpdate`. Bugetul este numeric, nu
-  bazat pe cronometru, pentru teste si frame-uri deterministe.
-- API-urile publice de scheduling captureaza `ExecutionContext`, astfel incat
-  cultura, `AsyncLocal` si contextul de tracing sa urmeze callback-ul. Codul de
-  drain restaureaza intotdeauna contextul anterior.
-- `InvokeAsync` captureaza exceptia sau anularea in `Task`; o exceptie din
-  `Post` nu este inghitita. Relay-ul proceseaza restul snapshot-ului, apoi
-  arunca un `AggregateException` din update pentru callback-urile fire-and-forget
-  esuate.
-- Anularea inainte de executie impiedica apelarea callback-ului. Dupa ce un
-  callback sincron a inceput, token-ul nu il poate intrerupe. Overload-ul async
-  primeste token-ul si isi controleaza cooperativ anularea.
-- `SynchronizationContext.Send` executa inline numai pe thread-ul proprietar;
-  off-thread arunca `NotSupportedException` si indica `InvokeAsync`. `Post`
-  delega la Relay.
-- Un `INotifyPropertyChanged` off-thread nu este evaluat pe worker. Handlerul
-  filtreaza numai numele proprietatii, marcheaza o versiune atomica si programeaza
-  o reevaluare a starii curente pe UI thread.
-- Binding-urile cu tinta atasata fac fast-path sincron pentru notificari deja
-  ridicate pe UI thread. Numai notificarile off-thread sunt coalesced si amanate.
-- `UiObject.PropertyChanged` ridicat off-thread nu poate fi "reparat" dupa fapt:
-  proprietatea UI a fost deja mutata. Mutatia directa a unui `UIElement` atasat
-  ramane interzisa si trebuie oprita inaintea scrierii.
-- Auto-marshaling-ul protejeaza UI-ul, nu face automat thread-safe ViewModel-ul,
-  colectiile sau obiectele sursa. Sursa trebuie sa permita o citire coerenta pe
-  UI thread dupa notificare.
-- `ObservableList<T>` si mutatiile incrementale ale colectiilor raman UI-affine
-  in acest plan. Pentru ele se foloseste explicit
-  `await root.Relay.InvokeAsync(() => items.Add(item))`; nu simulam
-  thread-safety peste un `List<T>` care nu o are.
-- Pana la implementarea etapei de integrare cu binding-urile, planul
-  `2026-07-14-markup-data-bindings.md` pastreaza fail-fast strict pentru orice
+## 2. Established decisions and assumptions
+- The owning thread of a `UIRoot` is the thread the root is on
+  built. Relay becomes the only source of truth for thread affinity in
+  root-owned services, including Aspect and Motion.
+- `UiRelay` does not create or own a thread. `UiHost.Update`,
+  `MonoGameUiHost.Update`, `WindowApplicationRuntime.PumpOnce` and the calls
+  direct `UIRoot.ProcessFrame` pumps the work on the existing UI thread.
+- Each root has its own Relay and its own queue. There isn't one
+  `UiRelay.Current` global static, because Cerneala supports more
+  roots and windows.
+- `Post` and `InvokeAsync` always put the work in the queue, including when they are
+  called from the UI thread, for predictable FIFO order. Code already found
+  the UI thread can directly call the operation if it wants immediate execution.
+- There is no `Invoke`/`Send` public blocker, nested message pump or waiting
+  synchronous. `.Wait()`, `.Result` and `GetAwaiter().GetResult()` on the UI thread
+  wrong uses remain and must be documented as potential deadlock.
+- The existing callbacks at the beginning of the drain form a stable snapshot.
+  The work posted during the drain is postponed for the next update.
+- The order is FIFO after the linearization of the enqueue; each producer himself
+  keep order. We do not promise an arbitrary order between two threads that
+  post simultaneously.
+- The default budget is 1,024 callbacks per update and is configurable
+  through `UiRelayOptions.MaxCallbacksPerUpdate`. The budget is numerical, no
+  timer based, for tests and deterministic frames.
+- The public scheduling APIs capture `ExecutionContext`, so that
+  culture, `AsyncLocal` and the tracing context to follow the callback. The code of
+  drain always restores the previous context.
+- `InvokeAsync` captures the exception or cancellation in `Task`; an exception from
+  `Post` is not swallowed. The relay processes the rest of the snapshot, then
+  throw a `AggregateException` from update for fire-and-forget callbacks
+  failed.
+- Canceling before execution prevents the callback from being called. After one
+  synchronous callback has started, the token cannot interrupt it. The async overload
+  receives the token and cooperatively controls its cancellation.
+- `SynchronizationContext.Send` executes inline only on the owner thread;
+  off-thread throws `NotSupportedException` and indicates `InvokeAsync`. `Post`
+  delegate to Relay.
+- An off-thread `INotifyPropertyChanged` is not evaluated on the worker. The handler
+  filter only the property name, mark an atomic version and schedule
+  a reevaluation of the current state on the UI thread.
+- Bindings with attached target make fast-path synchronous for notifications already
+  raised on UI thread. Only off-thread notifications are coalesced and deferred.
+- `UiObject.PropertyChanged` raised off-thread cannot be "fixed" after the fact:
+  the UI property has already been moved. Direct mutation of an attached `UIElement`
+  remains prohibited and must be stopped before writing.
+- Auto-marshaling protects the UI, it does not automatically make the ViewModel thread-safe,
+  collections or source objects. The source must allow a coherent reading on
+  UI thread after notification.
+- `ObservableList<T>` and the incremental mutations of the collections remain UI-affine
+  in this plan. It is used explicitly for them
+  `await root.Relay.InvokeAsync(() => items.Add(item))`; I'm not pretending
+  thread-safety over a `List<T>` that doesn't have it.
+- Until the implementation of the integration stage with the bindings, the plan
+  `2026-07-14-markup-data-bindings.md` keeps fail-fast strict for everything
   `PropertyChanged` off-thread.
 
-## 3. Baseline si problema actuala
+## 3. Baseline and the current problem
 
-### 3.1 Frame loop si ownership
+### 3.1 Frame loop and ownership
 
-- `UIRoot` detine `UiFrameScheduler`, cozile retained, `MotionSystem`, cache-ul de
-  render si serviciile de root.
-- `UiHost.UpdateCore` poate apela `UIRoot.ProcessFrame` o data inainte de input si
-  inca o data dupa input. Un Relay integrat naiv in `ProcessFrame` ar putea
-  drena de doua ori in acelasi update si ar strica semantica snapshot-ului.
-- `MonoGameUiHost.Update` pompeaza `GeneratedWindowApplication`, apoi deleaga la
+- `UIRoot` owns `UiFrameScheduler`, the retained queues, `MotionSystem`, the cache of
+  render and root services.
+- `UiHost.UpdateCore` can call `UIRoot.ProcessFrame` once before input and
+  once more after input. A relay integrated naively in `ProcessFrame` could
+  it drains twice in the same update and would spoil the semantics of the snapshot.
+- `MonoGameUiHost.Update` pumps `GeneratedWindowApplication`, then delegates to
   `UiHost.Update`.
-- `WindowApplicationRuntime.PumpOnce` randeaza o fereastra numai daca exista
-  `RenderRequested`, lucru in `UiFrameScheduler`, motion activ sau pointer repeat.
-  Un Relay cu backlog trebuie adaugat explicit acestui wake predicate.
-- `WindowApplicationRuntime` are deja un `ownerThreadId` si `VerifyAccess`, iar
-  Motion are propriul `MotionThreadGuard`; cele doua mecanisme paralele sunt
-  baseline-ul care trebuie eliminat, nu arhitectura pe care o conservam.
+- `WindowApplicationRuntime.PumpOnce` renders a window only if it exists
+  `RenderRequested`, work in `UiFrameScheduler`, motion active or pointer repeat.
+  A Relay with backlog must be explicitly added to this wake predicate.
+- `WindowApplicationRuntime` already has a `ownerThreadId` and `VerifyAccess`, and
+  Motion has its own `MotionThreadGuard`; the two parallel mechanisms are
+  the baseline that needs to be removed, not the architecture we are preserving.
 
-### 3.2 Surse reactive
+### 3.2 Reactive sources
 
-- `UiObject.OnPropertyChanged` invoca handler-ele sincron.
-- `GeneratedMarkupConditions.Subscribe` asculta direct
-  `UiObject.PropertyChanged` sau `INotifyPropertyChanged` pe thread-ul emitent.
-- `UiPropertyBinding<T>` asculta direct `ObservableValue<T>.ValueChanged` si
-  scrie imediat tinta.
-- `ObservableValue<T>` si `ObservableList<T>` nu sunt colectii concurente.
-- `UIRoot.OnResourceChanged`, `ThemeChangedSubscription` si
-  `ButtonBase.OnCanExecuteChanged` ajung in invalidari sau cozi retained fara un
+- `UiObject.OnPropertyChanged` invokes handlers synchronously.
+- `GeneratedMarkupConditions.Subscribe` listen directly
+  `UiObject.PropertyChanged` or `INotifyPropertyChanged` on the issuing thread.
+- `UiPropertyBinding<T>` listen directly to `ObservableValue<T>.ValueChanged` and
+  immediately write the target.
+- `ObservableValue<T>` and `ObservableList<T>` are not competing collections.
+- `UIRoot.OnResourceChanged`, `ThemeChangedSubscription` and
+  `ButtonBase.OnCanExecuteChanged` end up in invalids or retained queues without one
   marshal general.
 
-### 3.3 Infrastructura reutilizabila existenta
+### 3.3 Existing reusable infrastructure
 
-- Queue Engine 2.0 ofera cozi rapide pentru elemente retained, dar acestea sunt
-  UI-thread-only si ordonate vizual; nu trebuie refolosite fortat ca o coada MPSC
-  de delegate.
-- `FrameStats` si `InvalidationTrace` sunt punctele existente pentru
-  observabilitatea unui frame.
-- `IElementLifecycleBehavior`, attach/detach si generation guards din markup sunt
-  punctele potrivite pentru anularea callback-urilor reactive stale.
+- Queue Engine 2.0 offers fast queues for retained elements, but these are
+  UI-thread-only and visually ordered; they must not be forcibly reused as an MPSC queue
+  of delegates.
+- `FrameStats` and `InvalidationTrace` are the existing points for
+  observability of a frame.
+- `IElementLifecycleBehavior`, attach/detach and generation guards from markup are
+the right points for canceling stale reactive callbacks.
 
-## 4. Obiective
+## 4. Objectives
 
-- [x] O operatie postata de pe orice worker thread ruleaza exclusiv pe thread-ul
-  proprietar al root-ului, la inceputul urmatorului update eligibil.
-- [x] `UiRelay.CheckAccess` si `VerifyAccess` ofera acelasi adevar pentru
-  hosting, binding-uri, motion si mutatii UI atasate.
-- [x] Enqueue este thread-safe si O(1) amortizat, iar verificarea backlog-ului nu
-  traverseaza arborele si nu aloca dupa warmup.
-- [x] Drain-ul este FIFO, bugetat si bazat pe snapshot; nu exista starvation
-  provocat de auto-repost in acelasi update.
-- [x] Lucrul Relay-ului ruleaza inainte de schedulerul retained si input,
-  iar invalidarile produse sunt procesate in acelasi update cand bugetele
-  schedulerului permit.
-- [x] `UiHost.Update` dreneaza o singura data, chiar daca proceseaza schedulerul
-  pre-input si post-input.
-- [x] Standalone Windows se trezeste pentru backlog-ul Relay-ului chiar daca
-  nu exista invalidari sau motion.
-- [x] Continuarile `await` pornite din callback-uri UI revin prin Relay fara
-  instalarea permanenta a unui context global.
-- [x] Rafalele off-thread de `PropertyChanged` produc cel mult o reevaluare
-  pending per binding activ, fara pierderea ultimei schimbari.
-- [x] Detach, template swap, root replacement si disposal nu permit unui callback
-  vechi sa scrie intr-o tinta inactiva.
-- [x] Mutatiile UI directe off-thread sunt respinse inaintea schimbarii starii.
-- [x] API-ul public are documentatie completa si exemple async fara blocking.
-- [x] Exista statistici pentru enqueue, execute, cancel, fault, deferred si
-  backlog, plus benchmark-uri multi-producer.
+- [x] An operation posted from any worker thread runs exclusively on the thread
+  owner of the root, at the beginning of the next eligible update.
+- [x] `UiRelay.CheckAccess` and `VerifyAccess` give the same truth for
+  hosting, bindings, motion and UI changes attached.
+- [x] Enqueue is thread-safe and O(1) amortized, and backlog checking is not
+  traverse the tree and do not allocate after warmup.
+- [x] Drain is FIFO, budgeted and based on snapshot; there is no starvation
+  caused by auto-repost in the same update.
+- [x] The Relay job runs before the retained and input scheduler,
+  and the invalidations produced are processed in the same update as the budgets
+  scheduler allow.
+- [x] `UiHost.Update` drains only once, even if the scheduler processes
+  pre-input and post-input.
+- [x] Standalone Windows wakes up for the Relay backlog even if
+  there are no invalidations or motions.
+- [x] `await` continuations started from UI callbacks return via Relay without
+  the permanent installation of a global context.
+- [x] Off-thread bursts by `PropertyChanged` produce at most a re-evaluation
+  pending per active binding, without losing the last change.
+- [x] Detach, template swap, root replacement and disposal do not allow a callback
+  old to write to an inactive target.
+- [x] Direct off-thread UI mutations are rejected before state change.
+- [x] The public API has complete documentation and async examples without blocking.
+- [x] There are statistics for enqueue, execute, cancel, fault, deferred and
+  backlog, plus multi-producer benchmarks.
 
-## 5. Non-obiective
+## 5. Non-objectives
 
-- Nu cream un thread UI nou si nu preluam bucla principala MonoGame.
-- Nu facem layout, render, hit testing sau motion in paralel.
-- Nu adaugam prioritati, delayed dispatch, timers, cron jobs ori un task scheduler
-  general. Pot veni ulterior numai pe baza unui caz real.
-- Nu implementam un `Relay.Invoke` blocant si nu emulam nested message loops
-  din framework-uri desktop vechi.
-- Nu facem `ObservableList<T>`, ViewModel-urile sau colectiile utilizatorului
-  thread-safe prin magie. Mutatiile incrementale de colectie se posteaza explicit
-  pe Relay.
-- Nu interceptam automat orice event arbitrar din aplicatie. Migrarile automate
-  se limiteaza la punctele first-party care ating UI-ul si au semantica definita
-  in acest plan.
-- Nu schimbam ordinea fazelor retained din `UiFrameScheduler`; Relay-ul este
-  o poarta pre-frame, nu o noua coada de elemente vizuale.
-- Nu mutam un `UIRoot` deja construit pe alt thread. O asemenea migrare ar cere
-  un contract separat pentru motion, backend grafic si resurse native.
-- Nu garantam snapshot atomic pentru o cale CLR ale carei obiecte sunt modificate
-  simultan fara sincronizarea autorului ViewModel-ului.
+- We don't create a new UI thread and we don't take over the main MonoGame loop.
+- We do not do layout, render, hit testing or motion in parallel.
+- We do not add priorities, delayed dispatch, timers, cron jobs or a task scheduler
+  general. I can come later only on the basis of a real case.
+- We do not implement a `Relay.Invoke` blocker and do not emulate nested message loops
+  from old desktop frameworks.
+- We do not `ObservableList<T>`, ViewModels or user collections
+  magically thread-safe. Incremental collection mutations are posted explicitly
+  on Relay.
+- We do not automatically intercept any arbitrary event from the application. Automatic migrations
+  it is limited to first-party points that touch the UI and have defined semantics
+  in this plan.
+- We do not change the order of retained phases from `UiFrameScheduler`; The relay is
+  a pre-frame gate, not a new queue of visuals.
+- We do not move an already built `UIRoot` to another thread. Such a migration would require
+  a separate contract for motion, graphic backend and native resources.
+- We do not guarantee atomic snapshot for a CLR path whose objects are modified
+simultaneously without synchronizing the author of the ViewModel.
 
-## 6. Contract public propus
+## 6. Proposed public contract
 
 ### 6.1 `UiRelay`
 
-Suprafata tinta din `Cerneala.UI.Relay`:
-
+Target surface from `Cerneala.UI.Relay`:
 ```csharp
 public sealed class UiRelay
 {
@@ -228,105 +226,101 @@ public sealed class UiRelay
         CancellationToken cancellationToken = default);
 }
 ```
+Rules:
 
-Reguli:
-
-- toate overload-urile valideaza `null` sincron;
-- toate enqueue-urile sunt FIFO si asincrone fata de apelant;
-- `TaskCompletionSource` foloseste `RunContinuationsAsynchronously`;
-- `InvokeAsync(Func<CancellationToken, Task>)` porneste delegatul pe UI thread,
-  nu blocheaza drain-ul pana la completare si propaga rezultatul in task-ul
-  returnat;
-- `Post` este pentru fire-and-forget controlat; codul care are nevoie de rezultat,
-  anulare sau tratarea exceptiei foloseste `InvokeAsync`;
-- `PendingCount` include work items neincepute, nu operatii async deja pornite;
-- callback-urile publice ruleaza cu `ExecutionContext` capturat la enqueue.
+- all overloads validate `null` synchronously;
+- all enqueues are FIFO and asynchronous to the caller;
+- `TaskCompletionSource` uses `RunContinuationsAsynchronously`;
+- `InvokeAsync(Func<CancellationToken, Task>)` starts the delegate on the UI thread,
+  it does not block the drain until completion and propagates the result in the task
+  returned;
+- `Post` is for controlled fire-and-forget; the code that needs the result,
+  canceling or handling the exception uses `InvokeAsync`;
+- `PendingCount` includes unstarted work items, not already started async operations;
+- public callbacks run with `ExecutionContext` captured at enqueue.
 
 ### 6.2 `UiRelayOptions`
-
 ```csharp
 public sealed class UiRelayOptions
 {
     public int MaxCallbacksPerUpdate { get; init; } = 1024;
 }
 ```
+- values ​​lower than or equal to zero are rejected;
+- the options are copied/validated when building the root, not read mutable in
+  the middle of the frame;
+- the configuration enters as the last optional parameter in the constructor `UIRoot`, without
+  to break existing calls.
 
-- valorile mai mici sau egale cu zero sunt respinse;
-- optiunile sunt copiate/validate la constructia root-ului, nu citite mutabil in
-  mijlocul frame-ului;
-- configurarea intra ca ultim parametru optional in constructorul `UIRoot`, fara
-  sa rupa apelurile existente.
+### 6.3 Exposure through hosting
 
-### 6.3 Expunere prin hosting
+- `UIRoot.Relay` is the non-null source of truth.
+- `UiHost.Relay` and `MonoGameUiHost.Relay` are nullable properties of
+  convenience, because the host can exist temporarily without root.
+- `SetRoot` verifies that it is called on the Relay thread of the new one
+  roots; don't close the old root's Relay, because that root may be
+  reused or processed directly.
 
-- `UIRoot.Relay` este sursa de adevar non-null.
-- `UiHost.Relay` si `MonoGameUiHost.Relay` sunt proprietati nullable de
-  convenienta, deoarece host-ul poate exista temporar fara root.
-- `SetRoot` verifica faptul ca este apelat pe thread-ul Relay-ului noului
-  root; nu inchide Relay-ul root-ului vechi, deoarece acel root poate fi
-  refolosit sau procesat direct.
+### 6.4 Scoped async context
 
-### 6.4 Context async scoped
+An internal `UiRelaySynchronizationContext` is only installed around:
 
-Un `UiRelaySynchronizationContext` intern este instalat numai in jurul:
+- the drain of the Relay;
+- retained processing;
+- input routing and handlers called by it;
+- hosting callbacks that run as part of the update.
 
-- drain-ului Relay-ului;
-- procesarii retained;
-- rutarii input-ului si handler-elor apelate de ea;
-- callback-urilor de hosting care ruleaza ca parte din update.
+The previous context is restored in `finally`. Two roots pumped successively on
+the same thread does not mix its continuations. `SynchronizationContext.Post`
+call `UiRelay.Post`; `Send` is allowed inline only when
+`CheckAccess == true`, otherwise throw.
 
-Contextul anterior este restaurat in `finally`. Doua root-uri pompate succesiv pe
-acelasi thread nu isi amesteca continuarile. `SynchronizationContext.Post`
-apeleaza `UiRelay.Post`; `Send` este permis inline numai cand
-`CheckAccess == true`, altfel arunca.
+## 7. The proposed architecture
 
-## 7. Arhitectura propusa
+### 7.1 MPSC core and work items
 
-### 7.1 Nucleu MPSC si work items
+`UiRelay` uses a `ConcurrentQueue<UiRelayWorkItem>` and counters
+atomic for backlog. A single consumer, the UI thread, executes the drain.
 
-`UiRelay` foloseste un `ConcurrentQueue<UiRelayWorkItem>` si contoare
-atomice pentru backlog. Un singur consumer, thread-ul UI, executa drain-ul.
+Each work item contains only what the contract requires:
 
-Fiecare work item contine numai ce cere contractul sau:
+- callbacks and states;
+- `ExecutionContext` captured;
+- fire-and-forget or request/response type;
+- optional source completion;
+- optional token and registration;
+- atomic state `Pending`, `Running`, `Completed` or `Canceled`.
 
-- callback si state;
-- `ExecutionContext` capturat;
-- tipul fire-and-forget sau request/response;
-- completion source optional;
-- token si registration optional;
-- stare atomica `Pending`, `Running`, `Completed` sau `Canceled`.
+We do not use `Channel<T>`, thread pool consumer or `Task.Run` for drain. The tail
+it is only transport between productions and frame loop; otherwise we would build a bus
+to cross the kitchen.
 
-Nu folosim `Channel<T>`, thread pool consumer sau `Task.Run` pentru drain. Coada
-este doar transport intre produceri si frame loop; altfel am construi un autobuz
-ca sa traversam bucataria.
+### 7.2 Deterministic drain
 
-### 7.2 Drain determinist
+At the beginning of the update:
 
-La inceputul update-ului:
+1. the owner thread is checked;
+2. the existing pending number is captured;
+3. the limit is `min(snapshotCount, MaxCallbacksPerUpdate)`;
+4. at most that FIFO limit is processed;
+5. canceled work items are completed as canceled without callback;
+6. exceptions `InvokeAsync` complete the faulted task;
+7. the exceptions `Post` are collected, without abandoning the rest of the snapshot;
+8. the remaining backlog is reported and postponed for the next update;
+9. after the snapshot, a single `AggregateException` is thrown for the `Post`s
+   failed.
 
-1. se verifica thread-ul proprietar;
-2. se captureaza numarul pending existent;
-3. limita este `min(snapshotCount, MaxCallbacksPerUpdate)`;
-4. se proceseaza cel mult acea limita FIFO;
-5. work items anulate sunt finalizate ca anulate fara callback;
-6. exceptiile `InvokeAsync` finalizeaza task-ul faulted;
-7. exceptiile `Post` sunt colectate, fara sa abandoneze restul snapshot-ului;
-8. backlog-ul ramas este raportat si amanat pentru update-ul urmator;
-9. dupa snapshot se arunca un singur `AggregateException` pentru `Post`-urile
-   esuate.
+A concurrent enqueue after capturing the snapshot is visible in
+`HasPendingWork`, but does not enter the current drain. Counters must avoid
+lost wakeups when enqueue and dequeue are interspersed.
 
-Un enqueue concurent dupa capturarea snapshot-ului este vizibil in
-`HasPendingWork`, dar nu intra in drain-ul curent. Contoarele trebuie sa evite
-lost wakeups cand enqueue si dequeue se intercaleaza.
+### 7.3 Integration with `UiHost` and `UIRoot`
 
-### 7.3 Integrare cu `UiHost` si `UIRoot`
-
-`UiHost.UpdateCore` deschide o singura sesiune de update pentru root:
-
+`UiHost.UpdateCore` opens a single update session for root:
 ```text
 VerifyAccess
 Install scoped SynchronizationContext
-Apply viewport, initial-frame si time-sensitive invalidations
+Apply viewport, initial-frame and time-sensitive invalidations
 Drain Relay once
 Run pre-input scheduler gate
 Dispatch input
@@ -334,146 +328,142 @@ Run post-input scheduler gate
 Commit retained render data
 Restore previous SynchronizationContext
 ```
-
-`UIRoot.ProcessFrame` ramane util in teste si hosting custom: apelul public
-deschide aceeasi poarta, dreneaza o data si apoi proceseaza schedulerul. `UiHost`
-foloseste un core intern care nu redreneaza intre poarta pre-input si cea
+`UIRoot.ProcessFrame` remains useful in tests and custom hosting: the public call
+open the same gate, drain once and then process the scheduler. `UiHost`
+it uses an internal core that does not re-drain between the pre-input gate and the
 post-input.
 
-Callback-urile Relay-ului pot invalida UI-ul, iar schedulerul vede acele
-invalidari in acelasi update. Un `Post` facut din input sau din timpul drain-ului
-asteapta update-ul urmator.
+Relay callbacks can invalidate the UI, and the scheduler sees those
+invalidations in the same update. A `Post` made from the input or during the drain
+waiting for the next update.
 
-### 7.4 Wake-up pentru Windows si MonoGame
+### 7.4 Wake-up for Windows and MonoGame
 
-- `MonoGameUiHost` este pompat de joc la fiecare update si nu necesita semnal OS
-  separat.
-- `WindowApplicationRuntime.PumpOnce` include
-  `context.Root.Relay.HasPendingWork` in predicatul care cere `Render`.
-- `RenderRequested` si backlog-ul Relay-ului raman concepte separate; un
-  callback care nu schimba vizual nimic poate produce un update fara draw nou,
-  conform contractului retained existent.
-- `UiHost.SetRoot` si `WindowApplicationRuntime.GetOrCreateContext` verifica
-  compatibilitatea thread-ului root-ului cu runtime-ul ferestrei.
+- `MonoGameUiHost` is pumped by the game with every update and does not require an OS signal
+  separately.
+- `WindowApplicationRuntime.PumpOnce` includes
+  `context.Root.Relay.HasPendingWork` in the predicate that requires `Render`.
+- `RenderRequested` and the Relay backlog remain separate concepts; one
+  callback that doesn't visually change anything can produce an update without a new draw,
+  according to the existing retained contract.
+- `UiHost.SetRoot` and `WindowApplicationRuntime.GetOrCreateContext` check
+  compatibility of the root thread with the window runtime.
 
-### 7.5 Thread affinity pentru UI
+### 7.5 Thread affinity for UI
 
-Se introduce un hook intern de mutatie in `UiObject`, no-op pentru obiectele
-generice si verificat de `UIElement` cand este atasat:
-
+An internal mutation hook is introduced in `UiObject`, no-op for objects
+generic and verified by `UIElement` when attached:
 ```text
 UiObject.SetValue/ClearValue/SetValueUntyped/ClearValueUntyped
     -> VerifyMutationAccess()
 UIElement.VerifyMutationAccess()
     -> Root?.Relay.VerifyAccess()
 ```
+The same check applies to canonical points that bypass the properties:
 
-Aceeasi verificare se aplica punctelor canonice care ocolesc proprietatile:
+- mutations in `UIElementCollection`;
+- attach/detach from subtree;
+- mutable methods of `UIRoot`;
+- `UiHost.Update` and `Draw`;
+- root-owned integration of motion.
 
-- mutatii in `UIElementCollection`;
-- attach/detach de subtree;
-- metode mutabile ale `UIRoot`;
-- `UiHost.Update` si `Draw`;
-- integrarea root-owned a motion.
+Detached objects can be built and configured before attach, but
+the attach and any subsequent mutation of an attached element must be on
+the root thread. Reads do not receive locks; The UI remains thread-affine.
 
-Obiectele detasate pot fi construite si configurate inainte de attach, dar
-attach-ul si orice mutatie ulterioara a unui element atasat trebuie sa fie pe
-thread-ul root-ului. Citirile nu primesc lock-uri; UI-ul ramane thread-affine.
+### 7.5.1 Motion uses Relay, without its own guard
 
-### 7.5.1 Motion foloseste Relay, fara guard propriu
+`MotionThreadGuard` is completely deleted. There is no `[Obsolete]` adapter left, alias,
+compatibility shim or internal copy with another hat. For root-owned Motion,
+`MotionSystem` delegates the checks to `UIRoot.Relay`; internal points can
+use a thin `MotionSystem.VerifyAccess()`, but it does not have thread ID and
+it does not expose a second source of truth.
 
-`MotionThreadGuard` se sterge complet. Nu ramane adaptor `[Obsolete]`, alias,
-compatibility shim sau copie interna cu alta palarie. Pentru Motion root-owned,
-`MotionSystem` deleaga verificarile catre `UIRoot.Relay`; punctele interne pot
-folosi un `MotionSystem.VerifyAccess()` subtire, dar acesta nu detine thread ID si
-nu expune o a doua sursa de adevar.
+Public change is intentionally breaking:
 
-Schimbarea publica este intentionat breaking:
+- the type and the file `MotionThreadGuard` are deleted;
+- delete `MotionSystem.ThreadGuard`;
+- the constructors `MotionGraph` that receive `MotionThreadGuard` are deleted;
+- standalone public constructors of `MotionGraph` and `ManualMotionTimeline`
+  internally captures the current thread through the Relay internal joint contract;
+- the internal root-owned constructor of `MotionGraph` receives Relay access of
+  root, without publishing a new abstraction only for compatibility;
+- all `motion.ThreadGuard.VerifyAccess()` calls become delegated checks
+  to Relay, and the references from the tests and examples are rewritten.
 
-- se sterge tipul si fisierul `MotionThreadGuard`;
-- se sterge `MotionSystem.ThreadGuard`;
-- se sterg constructorii `MotionGraph` care primesc `MotionThreadGuard`;
-- constructorii publici standalone ai `MotionGraph` si `ManualMotionTimeline`
-  captureaza intern thread-ul curent prin contractul comun intern Relay;
-- constructorul intern root-owned al `MotionGraph` primeste accesul Relay al
-  root-ului, fara sa publice o abstractie noua numai pentru compatibilitate;
-- toate apelurile `motion.ThreadGuard.VerifyAccess()` devin verificari delegate
-  catre Relay, iar referintele din teste si exemple sunt rescrise.
+### 7.5.2 Aspect uses the same authority
 
-### 7.5.2 Aspect foloseste aceeasi autoritate
-
-Nu se creeaza `AspectThreadGuard`. Operatiile Aspect care modifica registre,
-environment, subscriptions, invalidation sau aplica stiluri pe un root atasat
-verifica accesul prin acelasi Relay. Auditul include cel putin
+`AspectThreadGuard` is not created. Aspect operations that modify registers,
+environment, subscriptions, invalidation or apply styles to an attached root
+check access through the same Relay. The audit includes at least
 `AspectRegistry.Register/Unregister`, `AspectEnvironment.Set`,
-`AspectInvalidation.Track/Recompute/Untrack`, `AspectEngine.Apply` si
-`AspectProcessor.Process/Clear`. Obiectele standalone fara root isi pastreaza
-contractul local actual; din clipa in care ating un root, Relay decide thread-ul.
+`AspectInvalidation.Track/Recompute/Untrack`, `AspectEngine.Apply` and
+`AspectProcessor.Process/Clear`. Standalone objects without root keep their
+current local contract; from the moment I touch a root, Relay decides the thread.
 
-### 7.6 Auto-marshaling pentru binding-uri
+### 7.6 Auto-marshaling for bindings
 
-Controllerul reactiv comun are doua cai:
+The common reactive controller has two paths:
 
-- pe UI thread: reevalueaza imediat, pastrand latenta si semantica existenta;
-- off-thread: nu citeste calea si nu atinge tinta; incrementeaza o versiune
-  atomica si cere o singura reevaluare pending pe Relay.
+- on UI thread: reevaluate immediately, keeping latent and existing semantics;
+- off-thread: does not read the path and does not reach the target; increment a version
+  atomica and asks for a single reevaluation pending on Relay.
 
-Coalescing-ul foloseste `requestedVersion`, `processedVersion`, un flag atomic
-de enqueue si generation-ul activarii. Daca o notificare soseste in cursul
-reevaluarii, callback-ul nu pierde wakeup-ul: programeaza exact o continuare
-pentru update-ul urmator. La executie se citeste starea curenta, nu valoarea
-capturata de primul event.
+Coalescing uses `requestedVersion`, `processedVersion`, an atomic flag
+of enqueue and activation generation. If a notification arrives during the course
+reevaluation, the callback does not lose the wakeup: it schedules exactly a continuation
+for the next update. During execution, the current state is read, not the value
+captured by the first event.
 
-Reguli lifecycle:
+Lifecycle rules:
 
-- controllerul captureaza Relay-ul root-ului la attach/activare;
-- detach dezaboneaza sursele si invalideaza generation-ul;
-- un callback deja in coada verifica generation-ul si devine no-op;
-- reattach porneste cu generation nou si refresh complet;
-- template swap/disposal nu lasa coada sa retina permanent controllerul;
-- binding-ul conditional inactiv si fragmentele short-circuited nu programeaza
-  refresh inutil;
-- interpolarile si expresiile `@when` fac coalescing la nivelul controllerului
-  compus, nu cate o scriere UI pentru fiecare frunza.
+- the controller captures the root Relay upon attach/activation;
+- detach unsubscribes the sources and invalidates the generation;
+- a callback already in the queue checks the generation and becomes no-op;
+- reattach starts with new generation and complete refresh;
+- template swap/disposal does not let the queue permanently retain the controller;
+- the inactive conditional binding and the short-circuited fragments do not program
+  refresh unnecessary;
+- interpolations and `@when` expressions coalesce at the controller level
+  compound, not one UI write for each leaf.
 
-Pentru `TwoWay`, scrierea target-to-source porneste de pe UI thread. Daca sursa
-raspunde ulterior cu `PropertyChanged` off-thread, acel echo urmeaza aceeasi cale
-coalesced si reentrancy guard-ul ramane valid peste granita de frame.
+For `TwoWay`, the target-to-source write starts from the UI thread. If the source
+later responds with `PropertyChanged` off-thread, that echo follows the same path
+coalesce and the reentrancy guard remains valid across the frame boundary.
+### 7.7 Programmatic Binding
 
-### 7.7 Binding programatic
+`UiPropertyBinding<T>` adopts the same dispatch controller:
 
-`UiPropertyBinding<T>` adopta acelasi controller de dispatch:
+- an attached `UIElement` target automatically uses `Root.Relay`;
+- `BindingOperations` receives overloads with `UiRelay` explicitly for one
+  `UiObject` generic or a target not yet attached;
+- an off-thread event without a resolvable Relay produces an actionable error,
+  not a direct writing;
+- The explicit Relay must coincide with the Relay of the root after
+  attach, otherwise the binding is rejected;
+- Existing APIs remain compatible for strictly UI-thread uses.
 
-- un target `UIElement` atasat foloseste automat `Root.Relay`;
-- `BindingOperations` primeste overload-uri cu `UiRelay` explicit pentru un
-  `UiObject` generic sau un target inca neatasat;
-- un event off-thread fara Relay rezolvabil produce o eroare actionabila,
-  nu o scriere directa;
-- Relay-ul explicit trebuie sa coincida cu Relay-ul root-ului dupa
-  attach, altfel binding-ul este respins;
-- API-urile existente raman compatibile pentru utilizarile strict UI-thread.
+### 7.8 Other first-party notices
 
-### 7.8 Alte notificari first-party
+External handlers that touch root are audited. Initial policy:
 
-Se face un audit al handler-elor externe care ating root-ul. Politica initiala:
-
-| Semnal | Politica |
+| Signal | Policy |
 | --- | --- |
 | CLR `INotifyPropertyChanged` | auto-marshal, coalesced per controller |
-| `ObservableValue<T>.ValueChanged` | auto-marshal cand binding-ul are Relay |
-| `ICommand.CanExecuteChanged` | auto-marshal si coalesce per command source/control |
-| `ThemeProvider.ThemeChanged` | auto-marshal si coalesce per root |
-| `IObservableResourceProvider.ResourceChanged` | marshal FIFO; fara coalescing pana cand semantica delta permite |
-| `ObservableList<T>.Changed` | UI-thread-only; mutatia se posteaza explicit |
-| `UiObject.PropertyChanged` | UI-thread-only; mutatia este verificata inainte de event |
-| input, layout, render, motion graph | UI-thread-only; folosesc explicit Relay-ul la intrare |
+| `ObservableValue<T>.ValueChanged` | auto-marshal when the binding has Relay |
+| `ICommand.CanExecuteChanged` | auto-marshal and coalesce per command source/control |
+| `ThemeProvider.ThemeChanged` | auto-marshal and coalesce per root |
+| `IObservableResourceProvider.ResourceChanged` | FIFO marshal; without coalescing until the delta semantics allow |
+| `ObservableList<T>.Changed` | UI-thread-only; the mutation is posted explicitly |
+| `UiObject.PropertyChanged` | UI-thread-only; the mutation is verified before the event |
+| input, layout, render, motion graph | UI-thread-only; I explicitly use the Relay at the input |
 
-Nu introducem un adaptor generic care captureaza orice event prin reflection.
-Fiecare integrare isi declara politica de coalescing, lifecycle si consistenta.
+We do not introduce a generic adapter that captures any event through reflection.
+Each integration declares its policy of coalescing, lifecycle and consistency.
 
-### 7.9 Statistici si diagnostic
+### 7.9 Statistics and diagnosis
 
-`FrameStats` primeste contoare pentru:
+`FrameStats` receives counters for:
 
 - `RelayedCallbacks`;
 - `CanceledRelayCallbacks`;
@@ -481,38 +471,38 @@ Fiecare integrare isi declara politica de coalescing, lifecycle si consistenta.
 - `DeferredRelayCallbacks`;
 - `RelayBacklogAfterUpdate`.
 
-`HasWork` include callback-urile executate in update. Un frame care doar dreneaza
-Relay-ul nu este raportat ca idle. `UiRelay` pastreaza contoare cumulative interne
-pentru benchmark si teste, fara un sistem paralel de logging. Finalizarea
-ulterioara a unui delegate async nu modifica retroactiv un `FrameStats` deja
-publicat; rezultatul sau exceptia raman pe `Task`.
+`HasWork` includes the callbacks executed in the update. A frame that just drains
+The relay is not reported as idle. `UiRelay` keeps internal cumulative counters
+for benchmarks and tests, without a parallel logging system. Completion
+the subsequent async delegate does not retroactively modify an already `FrameStats`
+published; the result or exception remains on `Task`.
 
-Mesajele fail-fast includ:
+Fail-fast messages include:
 
-- numele operatiei;
-- thread-ul proprietar si thread-ul curent;
-- root-ul sau proprietatea diagnosticabila, cand exista;
-- recomandarea concreta `Relay.Post` sau `await Relay.InvokeAsync`.
+- the name of the operation;
+- the owner thread and the current thread;
+- the root or the diagnosable property, when it exists;
+- the concrete recommendation `Relay.Post` or `await Relay.InvokeAsync`.
 
-## 8. Fisiere estimate
+## 8. Estimated files
 
-Fisiere noi probabile:
+Likely new files:
 
 - `UI/Relay/UiRelay.cs`;
 - `UI/Relay/UiRelayOptions.cs`;
 - `UI/Relay/UiRelaySynchronizationContext.cs`;
 - `UI/Relay/UiRelayWorkItem.cs`;
-- un contract intern minimal de thread access sub `UI/Relay/`, numai daca este
-  necesar pentru obiectele Motion standalone;
+- a minimal internal thread access contract under `UI/Relay/`, only if it is
+  required for standalone Motion objects;
 - `tests/Cerneala.Tests/UI/Relay/UiRelayTests.cs`;
 - `tests/Cerneala.Tests/UI/Relay/UiRelayConcurrencyTests.cs`;
 - `tests/Cerneala.Tests/UI/Relay/UiRelaySynchronizationContextTests.cs`;
 - `tests/Cerneala.Tests/UI/Hosting/UiHostRelayIntegrationTests.cs`;
 - `tests/Cerneala.Tests/UI/Data/UiPropertyBindingThreadingTests.cs`;
 - `benchmarks/Cerneala.Benchmarks/UiRelayBenchmarks.cs`;
-- pagini API noi sub `docs-site/documentation/classes/` pentru tipurile publice.
+- new API pages under `docs-site/documentation/classes/` for public types.
 
-Fisiere existente probabil modificate:
+Existing files possibly modified:
 
 - `UI/Elements/UIRoot.cs`;
 - `UI/Hosting/UiHost.cs`;
@@ -526,493 +516,491 @@ Fisiere existente probabil modificate:
 - `UI/Motion/Core/MotionSystem.cs`;
 - `UI/Motion/Core/MotionGraph.cs`;
 - `UI/Motion/Core/ManualMotionTimeline.cs`;
-- toate fisierele Motion care apeleaza astazi `ThreadGuard.VerifyAccess()`;
-- implementarea Aspect pentru registry, environment, invalidation, engine si
+- all Motion files calling today `ThreadGuard.VerifyAccess()`;
+- Aspect implementation for registry, environment, invalidation, engine and
   processor;
-- `UI/Data/BindingOperations.cs` si controllerul comun de binding;
-- integrarile command, theme si resources;
-- testele si documentatia API ale tuturor tipurilor publice afectate.
+- `UI/Data/BindingOperations.cs` and the common binding controller;
+- command, theme and resource integrations;
+- API tests and documentation of all affected public types.
 
-Fisiere sterse intentionat:
+Intentionally deleted files:
 
 - `UI/Motion/Core/MotionThreadGuard.cs`;
-- testele dedicate exclusiv vechiului guard;
+- tests dedicated exclusively to the old guard;
 - `docs-site/documentation/classes/Cerneala.UI.Motion.Core.MotionThreadGuard.md`;
-- intrarea sa din `docs-site/documentation/manifest.json`.
+- its entry from `docs-site/documentation/manifest.json`.
 
-Dependente intre planuri:
+Dependencies between plans:
 
-- nucleul Relay, hosting-ul, thread affinity, Motion si Aspect pot fi
-  implementate independent;
-- integrarea completa a binding-urilor se face dupa contractul sintactic din
+- the Relay core, hosting, thread affinity, Motion and Aspect can be
+  implemented independently;
+- the complete integration of the bindings is done according to the syntactic contract from
   `docs/plans/2026-07-14-markup-data-bindings.md`;
-- pana atunci, binding-urile pastreaza contractul strict/fail-fast descris acolo.
+- until then, the bindings keep the strict/fail-fast contract described there.
 
-## 9. Checklist de implementare
+## 9. Implementation checklist
 
-### Etapa 0 - Inventar, baseline si teste RED
+### Stage 0 - Inventory, baseline and RED tests
 
-- [x] Regenereaza `FileTree.md`, indexeaza `Cerneala.slnx --json` si confirma
-  `doctor` verde inainte de schimbari.
-- [x] Foloseste RoslynIndexer pentru definitii si referinte ale `MotionThreadGuard`,
-  `MotionSystem.ThreadGuard`, constructorilor `MotionGraph` si apelurilor
-  `ThreadGuard.VerifyAccess`; salveaza inventarul in notele implementarii.
-- [x] Inventariaza exemplele si paginile API care construiesc
-  `MotionThreadGuard`, plus intrarea exacta din manifest.
-- [x] Caracterizeaza thread ownership pentru `UIRoot`, `UiHost`,
-  `MonoGameUiHost`, `WindowApplicationRuntime`, Motion standalone si Aspect.
-- [x] Caracterizeaza ordinea actuala din `UiHost.Update`: pre-input, input,
-  post-input, scheduler si commit, astfel incat Relay sa fie drenat exact o data.
-- [x] Adauga teste RED pentru `Post` worker-to-UI, FIFO, exact-once, snapshot,
-  buget, anulare, exceptii si backlog pe un root idle.
-- [x] Adauga teste RED pentru continuari `await`, doua root-uri pe acelasi thread
-  si restaurarea `SynchronizationContext` anterior.
-- [x] Adauga teste RED care dovedesc ca mutatiile directe off-thread nu schimba
-  property store-ul, arborele sau cozile retained inainte sa arunce.
-- [x] Adauga teste RED pentru Motion root-owned si Aspect care trebuie sa accepte
-  numai thread-ul declarat de Relay.
-- [x] Adauga teste de caracterizare pentru constructorii Motion standalone care
-  trebuie sa ramana utilizabili dupa stergerea guard-ului public.
-- [x] Foloseste bariere si primitive deterministe in testele concurente; nu folosi
-  `Thread.Sleep` ca dovada de sincronizare.
+- [x] Regenerate `FileTree.md`, index `Cerneala.slnx --json` and confirm
+  `doctor` green before changes.
+- [x] Use RoslynIndexer for definitions and references of `MotionThreadGuard`,
+  `MotionSystem.ThreadGuard`, builders `MotionGraph` and calls
+  `ThreadGuard.VerifyAccess`; save the inventory in the implementation notes.
+- [x] Inventory the examples and API pages that build
+  `MotionThreadGuard`, plus the exact entry from the manifest.
+- [x] Characterizes thread ownership for `UIRoot`, `UiHost`,
+  `MonoGameUiHost`, `WindowApplicationRuntime`, Motion standalone and Aspect.
+- [x] Characterizes the current order from `UiHost.Update`: pre-input, input,
+  post-input, scheduler and commit, so that Relay is drained exactly once.
+- [x] Add RED tests for `Post` worker-to-UI, FIFO, exact-once, snapshot,
+  budget, cancellation, exceptions and backlog on an idle root.
+- [x] Add RED tests for continuations `await`, two roots on the same thread
+  and the previous `SynchronizationContext` restoration.
+- [x] Add RED tests that prove that direct off-thread mutations do not change
+  property store, tree or tails retained before throwing.
+- [x] Add RED tests for root-owned Motion and Aspect that must accept
+  only the thread declared by Relay.
+- [x] Add characterization tests for Motion standalone builders which
+  they must remain usable after deleting the public guard.
+- [x] Use barriers and deterministic primitives in concurrent tests; don't use
+  `Thread.Sleep` as proof of synchronization.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Testele RED esueaza din motivele de threading asteptate, nu din setup sau
-  timing fragil.
-- [x] Ordinea frame-ului si comportamentul UI-thread existent sunt caracterizate.
-- [x] Toate referintele publice si documentare ale `MotionThreadGuard` sunt
-  inventariate inainte de stergere.
-- [x] Baseline-ul complet este verde in afara testelor RED noi.
-- [x] Nicio semnatura publica nu este schimbata in etapa 0.
+- [x] The RED tests fail for the expected threading reasons, not from the setup or
+  fragile timing.
+- [x] The order of the frame and the existing UI-thread behavior are characterized.
+- [x] All public and documentary references of `MotionThreadGuard` are
+  inventoried before deletion.
+- [x] The full baseline is green except for the new RED tests.
+- [x] No public signature is changed in stage 0.
 
-### Etapa 1 - Thread access si nucleul `UiRelay`
+### Stage 1 - Thread access and the core `UiRelay`
 
-- [x] Introdu `UiRelayOptions` cu default 1.024 si validare stricta pentru
+- [x] Enter `UiRelayOptions` with default 1.024 and strict validation for
   `MaxCallbacksPerUpdate > 0`.
-- [x] Introdu `UiRelay` root-owned, capturand owner thread ID in
-  constructorul `UIRoot`.
-- [x] Implementeaza `CheckAccess`, `VerifyAccess`, `HasPendingWork` si
-  `PendingCount` fara traversari sau lock global pe calea de citire.
-- [x] Implementeaza coada MPSC cu `ConcurrentQueue`, pending counter atomic si
-  work item state machine care nu poate fi executat de doua ori.
-- [x] Implementeaza `Post(Action)` cu capturarea `ExecutionContext`.
-- [x] Implementeaza overload-urile `InvokeAsync` cu
-  `TaskCompletionSource` configurat `RunContinuationsAsynchronously`.
-- [x] Implementeaza anularea race-safe inainte de dequeue, intre dequeue si run
-  si dupa pornirea callback-ului async.
-- [x] Implementeaza drain-ul intern snapshot-based cu buget numeric si FIFO.
-- [x] Proceseaza restul snapshot-ului dupa exceptii `Post`, apoi arunca un
-  `AggregateException`; nu transforma exceptiile `InvokeAsync` in erori de
-  frame.
-- [x] Elibereaza `CancellationTokenRegistration`, `ExecutionContext`, delegatele
-  si completion sources dupa finalizare pentru a nu retine grafuri de obiecte.
-- [x] Adauga teste pentru argumente null, optiuni invalide, access checks,
-  enqueue/dequeue, FIFO, anulare si exceptii.
-- [x] Adauga teste multi-producer care verifica exact-once si FIFO per producer,
-  fara sa impuna o ordine falsa intre thread-uri concurente.
-- [x] Adauga teste pentru enqueue concurent cu finalul drain-ului, verificand ca
-  `HasPendingWork` nu pierde wakeup-ul.
-- [x] Adauga teste pentru callback care se reposteaza: noul work item ramane
-  pentru update-ul urmator.
-- [x] Adauga teste pentru bugetul 1.024, backlog si continuarea in update-uri
-  succesive.
-- [x] Reindexeaza dupa fiecare modificare C# sau project-file.
+- [x] Enter `UiRelay` root-owned, capturing owner thread ID in
+  constructor `UIRoot`.
+- [x] Implements `CheckAccess`, `VerifyAccess`, `HasPendingWork` and
+  `PendingCount` without crossings or global lock on the read path.
+- [x] Implements the MPSC queue with `ConcurrentQueue`, pending counter atomic and
+  work item state machine that cannot be executed twice.
+- [x] Implements `Post(Action)` with capture `ExecutionContext`.
+- [x] Implements the `InvokeAsync` overloads with
+  `TaskCompletionSource` configured `RunContinuationsAsynchronously`.
+- [x] Implements race-safe cancellation before dequeue, between dequeue and run
+  and after starting the async callback.
+- [x] Implements the internal snapshot-based drain with numerical budget and FIFO.
+- [x] Process the rest of the snapshot after exceptions `Post`, then throw a
+  `AggregateException`; do not turn exceptions `InvokeAsync` into errors of
+  frames.
+- [x] Release `CancellationTokenRegistration`, `ExecutionContext`, the delegates
+  and completion sources after completion in order not to retain graphs of objects.
+- [x] Add tests for null arguments, invalid options, access checks,
+  enqueue/dequeue, FIFO, cancellation and exceptions.
+- [x] Adds multi-producer tests that check exactly-once and FIFO per producer,
+  without imposing a false order between competing threads.
+- [x] Add tests for enqueue competing with the end of the drain, checking that
+  `HasPendingWork` doesn't miss the wakeup.
+- [x] Add tests for callbacks that are reposted: the new work item remains
+  for the next update.
+- [x] Add tests for the 1,024 budget, backlog and continuation in updates
+  successive.
+- [x] Reindexes after each C# or project-file modification.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] Nucleul trece toate testele unitare si de concurenta repetate.
-- [x] Nicio operatie UI nu este inca migrata partial la Relay.
-- [x] Enqueue si `HasPendingWork` nu depind de arborele retained.
-- [x] Nu exista blocking invoke, nested pump sau thread creat de Relay.
+- [x] The core passes all repeated unit and concurrency tests.
+- [x] No UI operation is partially migrated to Relay yet.
+- [x] Enqueue and `HasPendingWork` do not depend on the retained tree.
+- [x] There is no blocking invoke, nested pump or thread created by Relay.
 
-### Etapa 2 - `SynchronizationContext` async-first
+### Stage 2 - `SynchronizationContext` async-first
 
-- [x] Introdu adaptorul intern `UiRelaySynchronizationContext`.
-- [x] Leaga `Post` de Relay si implementeaza `Send` numai ca fast-path pe
-  owner thread; off-thread arunca un mesaj care recomanda `InvokeAsync`.
-- [x] Captureaza si restaureaza contextul anterior cu `try/finally`.
-- [x] Adauga un scope intern idempotent pentru update-uri nested controlate, fara
-  sa lase contextul instalat dupa iesire sau exceptie.
-- [x] Verifica faptul ca un `await Task.Yield()` pornit intr-un callback UI isi
-  continua executia pe Relay intr-un update ulterior.
-- [x] Verifica `AsyncLocal`, cultura si contextul de tracing peste `Post`,
-  `InvokeAsync` si continuari async.
-- [x] Verifica doua root-uri pe acelasi thread: fiecare continuare revine in
-  coada root-ului care a capturat-o.
-- [x] Verifica faptul ca un context preexistent este restaurat exact dupa update.
-- [x] Verifica exceptiile si anularea callback-urilor async fara blocarea drain-ului.
-- [x] Reindexeaza dupa modificarile C#.
+- [x] Insert the `UiRelaySynchronizationContext` internal adapter.
+- [x] Connects `Post` to Relay and implements `Send` only as fast-path on
+  owner thread; off-thread throws a message recommending `InvokeAsync`.
+- [x] Capture and restore the previous context with `try/finally`.
+- [x] Add an idempotent internal scope for controlled nested updates, without
+  to leave the context installed after exit or exception.
+- [x] Checks that a `await Task.Yield()` started in a UI callback
+  continue the execution on Relay in a later update.
+- [x] Check `AsyncLocal`, culture and tracing context over `Post`,
+  `InvokeAsync` and continue async.
+- [x] Check two roots on the same thread: each continuation returns in
+  the tail of the root that captured it.
+- [x] Checks the fact that a pre-existing context is restored exactly after the update.
+- [x] Checks exceptions and cancellation of async callbacks without blocking the drain.
+- [x] Reindex after C# changes.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Continuarile async revin pe root-ul corect.
-- [x] Niciun test nu depinde de `.Wait()` sau `.Result` pe owner thread.
-- [x] Contextul nu ramane global instalat intre doua update-uri.
-- [x] API-ul public ramane async-first si minimal.
+- [x] Async continuations return to the correct root.
+- [x] No test depends on `.Wait()` or `.Result` on the owner thread.
+- [x] The context does not remain globally installed between two updates.
+- [x] The public API remains async-first and minimal.
 
-### Etapa 3 - Integrarea cu frame loop-ul si hosting-ul
+### Stage 3 - Integration with frame loop and hosting
 
-- [x] Adauga `UIRoot.Relay` si construieste-l inainte de serviciile
-  root-owned care au nevoie de thread access.
-- [x] Introdu poarta interna de update care verifica accesul, instaleaza contextul
-  si dreneaza Relay-ul exact o data.
-- [x] Refactorizeaza `UIRoot.ProcessFrame` intr-o intrare publica cu drain si un
-  core intern reutilizat de `UiHost` fara al doilea drain.
-- [x] Integreaza poarta in `UiHost.UpdateCore` inainte de scheduler si input.
-- [x] Adauga `UiHost.Relay` si `MonoGameUiHost.Relay` ca proprietati de
-  convenienta fara duplicarea ownership-ului.
-- [x] Verifica `UiHost.Update`, `Draw`, `SetRoot` si root-ul nou prin
-  `VerifyAccess` inainte de mutatii sau backend calls.
-- [x] Adauga `Relay.HasPendingWork` in wake predicate-ul
+- [x] Add `UIRoot.Relay` and build it before services
+  root-owned that need thread access.
+- [x] Enter the internal update gate that verifies access, installs the context
+  and drains the Relay exactly once.
+- [x] Refactors `UIRoot.ProcessFrame` into a public entrance with drain and a
+  internal core reused by `UiHost` without second drain.
+- [x] Integrates the gate in `UiHost.UpdateCore` before scheduler and input.
+- [x] Add `UiHost.Relay` and `MonoGameUiHost.Relay` as properties of
+  convenience without duplication of ownership.
+- [x] Check `UiHost.Update`, `Draw`, `SetRoot` and the new root via
+  `VerifyAccess` before moves or backend calls.
+- [x] Add `Relay.HasPendingWork` to the wake predicate
   `WindowApplicationRuntime.PumpOnce`.
-- [x] Verifica la crearea contextului de fereastra faptul ca runtime-ul si root-ul
-  au acelasi owner thread.
-- [x] Pastreaza o singura pompare in `MonoGameUiHost.Update`, inclusiv cand
-  `GeneratedWindowApplication.PumpHosted` ruleaza inaintea host-ului principal.
-- [x] Asigura ca invalidarile produse de Relay sunt procesate in poarta
-  pre-input a aceluiasi update.
-- [x] Asigura ca un `Post` facut in input sau drain este amanat pana la urmatorul
-  update, chiar daca host-ul ruleaza schedulerul post-input.
-- [x] Extinde `FrameStats` cu contoarele de dispatch si include executia in
+- [x] Checks when creating the window context that the runtime and the root
+they have the same owner thread.
+- [x] Keep a single pump in `MonoGameUiHost.Update`, including when
+  `GeneratedWindowApplication.PumpHosted` runs before the main host.
+- [x] Ensures that the invalidations produced by Relay are processed in the gateway
+  pre-input of the same update.
+- [x] Ensures that a `Post` made in input or drain is postponed until the next
+  update, even if the host is running the post-input scheduler.
+- [x] Extends `FrameStats` with dispatch counters and includes execution in
   `HasWork`.
-- [x] Pastreaza testele idle: zero callback-uri inseamna zero alocari noi pe
-  calea de verificare si nu porneste schedulerul artificial.
-- [x] Adauga teste de root replacement: vechiul Relay nu este inchis,
-  noul root este verificat, iar fiecare coada este pompata numai cu root-ul sau.
-- [x] Reindexeaza dupa fiecare modificare C#.
+- [x] Keep tests idle: zero callbacks means zero new allocations on
+  verification path and does not start the artificial scheduler.
+- [x] Add root replacement tests: the old Relay is not closed,
+  the new root is checked, and each queue is pumped only with its root.
+- [x] Reindex after each C# change.
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] `UiHost.Update` dreneaza exact o data pe toate caile.
-- [x] Standalone Windows proceseaza un callback pe un root anterior idle.
-- [x] Invalidarile Relay-ului ajung in retained scheduler in acelasi update.
-- [x] Testele existente de ordine input/scheduler/render si no-work raman verzi.
+- [x] `UiHost.Update` drains exactly once on all paths.
+- [x] Standalone Windows processes a callback on a previously idle root.
+- [x] Relay invalidations arrive in the retained scheduler in the same update.
+- [x] The existing input/scheduler/render and no-work order tests remain green.
 
-### Etapa 4 - Thread affinity pentru UI, Motion si Aspect
+### Stage 4 - Thread affinity for UI, Motion and Aspect
 
-- [x] Adauga hook-ul intern `VerifyMutationAccess` in `UiObject` si apeleaza-l
-  in toate caile typed/untyped de `SetValue` si `ClearValue` inaintea accesului la
+- [x] Add the internal hook `VerifyMutationAccess` to `UiObject` and call it
+  in all paths typed/untyped by `SetValue` and `ClearValue` before access to
   `UiPropertyStore`.
-- [x] Suprascrie hook-ul in `UIElement` folosind `Root?.Relay.VerifyAccess`,
-  pastrand configurarea libera pentru elemente detasate.
-- [x] Protejeaza mutatiile canonice din `UIElementCollection` si
-  `ElementLifecycle.AttachSubtree/DetachSubtree` inainte de schimbarea arborelui.
-- [x] Protejeaza metodele mutabile root-owned care pot invalida, schimba tema,
-  resursele, viewport-ul sau serviciile platformei.
-- [x] Introdu numai daca este necesar contractul intern minimal de thread access
-  din subsistemul Relay; `UiRelay` il implementeaza, iar varianta standalone
-  captureaza thread-ul curent fara API public nou.
-- [x] Migreaza `MotionSystem` root-owned la acelasi thread access detinut de
-  `UIRoot.Relay` si adauga un `MotionSystem.VerifyAccess()` intern doar ca punct
-  de delegare, fara owner thread propriu.
-- [x] Sterge proprietatea publica `MotionSystem.ThreadGuard` si inlocuieste toate
-  apelurile `motion.ThreadGuard.VerifyAccess()` din coordinatoare, bindings,
-  transactions si frame processing.
-- [x] Rescrie constructorii `MotionGraph`: overload-urile standalone captureaza
-  intern thread-ul apelant, iar constructorul root-owned intern primeste thread
-  access-ul Relay; niciun overload nu mai primeste `MotionThreadGuard`.
-- [x] Migreaza `ManualMotionTimeline` si testele standalone la noul contract
-  intern, pastrand verificarea thread affinity fara guard public.
-- [x] Sterge complet `UI/Motion/Core/MotionThreadGuard.cs`; nu adauga `[Obsolete]`,
-  adaptor, alias, forwarding type sau shim de compatibilitate.
-- [x] Verifica prin RoslynIndexer ca nu mai exista referinte C# la tip,
-  `MotionSystem.ThreadGuard` sau constructorii eliminati.
-- [x] Leaga punctele mutable Aspect la Relay fara `AspectThreadGuard`: registry,
-  environment, invalidation, engine si processor verifica acelasi owner thread
-  inainte de a modifica stare root-owned.
-- [x] Adauga teste Aspect pe owner thread si off-thread pentru
-  `Register/Unregister`, `Set`, `Track/Recompute/Untrack`, `Apply`, `Process` si
-  `Clear`, ajustate la suprafata publica/interna reala gasita la implementare.
-- [x] Adauga teste care confirma ca o mutatie off-thread nu schimba valoarea,
-  sursa valorii, dirty flags, coada de invalidare sau versiunea arborelui.
-- [x] Adauga teste pentru element detasat configurat pe worker si atasat ulterior
-  pe owner thread.
-- [x] Adauga teste pentru attach/detach, Motion, Aspect si root methods off-thread.
-- [x] Ruleaza un audit Roslyn al punctelor publice care modifica un root atasat si
-  noteaza explicit exceptiile ramase UI-thread-only prin contract superior.
-- [x] Reindexeaza dupa fiecare modificare C#.
+- [x] Overwrite the hook in `UIElement` using `Root?.Relay.VerifyAccess`,
+  keeping the configuration free for detached elements.
+- [x] Protects the canonical mutations in `UIElementCollection` and
+  `ElementLifecycle.AttachSubtree/DetachSubtree` before changing the shaft.
+- [x] Protects mutable root-owned methods that can invalidate, change the theme,
+  resources, viewport or platform services.
+- [x] Enter only if the minimum internal thread access contract is required
+  from the Relay subsystem; `UiRelay` implements it, and the standalone version
+  capture the current thread without new public API.
+- [x] Migrate `MotionSystem` root-owned to the same access thread owned by
+  `UIRoot.Relay` and add an internal `MotionSystem.VerifyAccess()` only as a point
+  of delegation, without own thread owner.
+- [x] Deletes public property `MotionSystem.ThreadGuard` and replaces all
+  calls `motion.ThreadGuard.VerifyAccess()` from coordinators, bindings,
+  transactions and frame processing.
+- [x] Rewrite constructors `MotionGraph`: standalone overloads capture
+  internally the calling thread, and the internal root-owned constructor receives thread
+  Relay access; `MotionThreadGuard` no longer receives any overload.
+- [x] Migrate `ManualMotionTimeline` and the standalone tests to the new contract
+  internally, keeping the thread affinity check without public guard.
+- [x] Completely delete `UI/Motion/Core/MotionThreadGuard.cs`; do not add `[Obsolete]`,
+  adapter, alias, forwarding type or compatibility shim.
+- [x] Check through RoslynIndexer that there are no more C# references to the type,
+  `MotionSystem.ThreadGuard` or removed builders.
+- [x] Link mutable points Aspect to Relay without `AspectThreadGuard`: registry,
+  environment, invalidation, engine and processor check the same owner thread
+  before changing root-owned state.
+- [x] Add Aspect tests on owner thread and off-thread for
+  `Register/Unregister`, `Set`, `Track/Recompute/Untrack`, `Apply`, `Process` and
+  `Clear`, adjusted to the real public/internal surface found during implementation.
+- [x] Add tests that confirm that an off-thread mutation does not change the value,
+  value source, dirty flags, invalidation queue or version tree.
+- [x] Add tests for detached element configured on the worker and attached later
+  on the owner thread.
+- [x] Add tests for attach/detach, Motion, Aspect and off-thread root methods.
+- [x] Run a Roslyn audit of public points that modify an attached root and
+  explicitly note the remaining UI-thread-only exceptions by superior contract.
+- [x] Reindex after each C# change.
 
-**Gate etapa 4**
+**Gate Stage 4**
 
-- [x] Proprietatile si arborele UI nu pot fi mutate off-thread prin caile
-  canonice.
-- [x] Motion si restul root-ului folosesc acelasi owner thread.
-- [x] Aspect si restul root-ului folosesc acelasi owner thread, fara guard separat.
-- [x] `MotionThreadGuard`, `MotionSystem.ThreadGuard` si constructorii care il
-  primeau nu mai exista in API-ul compilat.
-- [x] Elementele detasate raman usor de construit fara un Relay artificial.
-- [x] Nu au fost introduse lock-uri in layout, render sau property store.
+- [x] Properties and UI tree cannot be moved off-thread via paths
+  canonical.
+- [x] Motion and the rest of the root use the same owner thread.
+- [x] Aspect and the rest of the root use the same owner thread, without a separate guard.
+- [x] `MotionThreadGuard`, `MotionSystem.ThreadGuard` and the builders who
+  receive no longer exists in the compiled API.
+- [x] The detached elements remain easy to build without an artificial Relay.
+- [x] No locks were entered in layout, render or property store.
 
-### Etapa 5 - Auto-marshaling pentru binding-uri
+### Stage 5 - Auto-marshaling for bindings
 
-- [x] Implementeaza in controllerul reactiv comun fast-path UI si calea
-  off-thread coalesced, fara evaluarea sursei pe worker.
-- [x] Foloseste versiuni atomice si generation guards astfel incat o notificare
-  sosita in timpul refresh-ului sa nu fie pierduta.
-- [x] Re-evalueaza pe UI thread intreaga cale tipizata si reconecteaza segmentele
-  nested la starea curenta.
-- [x] Coalesce-uieste per controller binding-urile simple, interpolarile si
-  expresiile `@when`, nu per event brut.
-- [x] Pastreaza short-circuit-ul logic la evaluare, dar permite oricarei frunze
-  observate sa ceara reevaluarea compozitiei.
-- [x] Anuleaza logic callback-urile stale la detach, reattach, template swap,
-  pierderea unei ramuri conditionale si disposal.
-- [x] Pastreaza fast-path-ul sincron pentru `PropertyChanged` deja ridicat pe
-  thread-ul UI.
-- [x] Verifica `TwoWay`: write-back-ul local ramane imediat, echo-ul off-thread
-  nu creeaza bucla si ultima valoare castiga determinist.
-- [x] Migreaza `UiPropertyBinding<T>` si `ObservableValue<T>.ValueChanged` la
-  acelasi mecanism de dispatch.
-- [x] Adauga overload-uri `BindingOperations` cu Relay explicit pentru
-  tinte generice/neatasate si valideaza mismatch-ul dupa attach.
-- [x] Pastreaza fail-fast actionabil cand un binding programatic off-thread nu
-  poate rezolva niciun Relay.
-- [x] Adauga teste cu 1, 2 si 10.000 de notificari, mai multi produceri, cai
-  nested, schimbarea `DataContext`, interpolare si `(A and B) or C`.
-- [x] Adauga teste pentru event in-flight simultan cu detach/dispose si confirma
-  zero scrieri stale si zero retineri dupa urmatorul drain.
-- [x] Adauga teste care confirma ca sursa nu este citita deloc pe worker thread.
-- [x] Actualizeaza contractul strict din planul si documentatia data binding:
-  CLR `INotifyPropertyChanged` atasat devine auto-marshal, in timp ce
-  `UiObject.PropertyChanged` si mutatiile UI directe raman strict UI-thread.
-- [x] Reindexeaza dupa fiecare modificare C# sau source-generator.
+- [x] Implements in the common reactive controller fast-path UI and the path
+  off-thread coalesced, without evaluating the source on the worker.
+- [x] Uses atomic versions and generation guards so that a notification
+  arrived during the refresh not to be lost.
+- [x] Re-evaluates the entire typed path on the UI thread and reconnects the segments
+  nested to the current state.
+- [x] Coalesce per controller simple bindings, interpolations and
+  the expressions `@when`, not per gross event.
+- [x] Keeps the logic short-circuit at evaluation, but allows any leaf
+  observed to ask for the re-evaluation of the composition.
+- [x] Logically cancels stale callbacks to detach, reattach, template swap,
+  the loss of a conditional branch and disposal.
+- [x] Keep the synchronous fast-path for `PropertyChanged` already raised on
+  the UI thread.
+- [x] Check `TwoWay`: local write-back remains immediate, off-thread echo
+  it does not create the loop and the last value wins deterministically.
+- [x] Migrate `UiPropertyBinding<T>` and `ObservableValue<T>.ValueChanged` to
+  the same dispatch mechanism.
+- [x] Add `BindingOperations` overloads with explicit Relay for
+  generic/unattached targets and validates the mismatch after attach.
+- [x] Keeps fail-fast actionable when an off-thread programmatic binding does not
+  can resolve no Relay.
+- [x] Add tests with 1, 2 and 10,000 notifications, more productions, paths
+  nested, change `DataContext`, interpolation and `(A and B) or C`.
+- [x] Add tests for event in-flight simultaneously with detach/dispose and confirm
+  zero stale writing and zero retention after the next drain.
+- [x] Add tests that confirm that the source is not read at all on the worker thread.
+- [x] Updates the strict contract from the plan and data binding documentation:
+  CLR `INotifyPropertyChanged` attached becomes auto-marshal, while
+  `UiObject.PropertyChanged` and direct UI mutations remain strictly UI-thread.
+- [x] Reindex after each C# or source-generator change.
 
-**Gate etapa 5**
+**Gate Stage 5**
 
-- [x] Toate formele de binding din planul dependent reactioneaza off-thread fara
-  a atinge UI-ul pe worker.
-- [x] Burst-urile sunt coalesced si ultima stare nu se pierde.
-- [x] Lifecycle-ul nu permite callback-uri stale sau subscription leaks.
-- [x] Comportamentul UI-thread existent ramane imediat si compatibil.
+- [x] All forms of binding in the dependent plane react off-thread without
+  to touch the UI on the worker.
+- [x] Bursts are coalesced and the last state is not lost.
+- [x] Lifecycle does not allow stale callbacks or subscription leaks.
+- [x] The existing UI-thread behavior remains immediate and compatible.
 
-### Etapa 6 - Alte semnale first-party
+### Stage 6 - Other first-party signals
 
-- [x] Inventariaza prin Roslyn toate subscription-urile in care un event extern
-  ajunge in `Invalidate`, intr-o coada retained sau intr-o mutatie UI.
-- [x] Migreaza `ICommand.CanExecuteChanged` la un refresh coalesced pe Relay
-  per control/sursa activa.
-- [x] Migreaza `ThemeProvider.ThemeChanged` la o invalidare coalesced per root.
-- [x] Migreaza `IObservableResourceProvider.ResourceChanged` la callback-uri FIFO
-  pe Relay, pastrand ordinea deltelor si fara coalescing nejustificat.
-- [x] Verifica unsubscribe si callback stale la schimbarea providerului, detach,
-  root replacement si disposal.
-- [x] Pastreaza `ObservableList<T>.Changed` UI-thread-only si adauga diagnostic
-  inainte de procesarea unei mutatii off-thread observate de un control atasat.
-- [x] Adauga exemple si teste pentru mutatia corecta a colectiei prin
-  `InvokeAsync`, inclusiv anulare.
-- [x] Nu migra un event doar fiindca exista; documenteaza pentru fiecare daca
-  este UI-owned, auto-marshaled sau cere dispatch explicit.
-- [x] Reindexeaza dupa fiecare modificare C#.
+- [x] Inventory through Roslyn all subscriptions in which an external event
+  it ends up in `Invalidate`, in a retained queue or in a UI mutation.
+- [x] Migrate `ICommand.CanExecuteChanged` to a coalesced refresh on Relay
+  per active control/source.
+- [x] Migrate `ThemeProvider.ThemeChanged` to a coalesced invalidation per root.
+- [x] Migrate `IObservableResourceProvider.ResourceChanged` to FIFO callbacks
+  on Relay, keeping the order of the deltas and without unjustified coalescing.
+- [x] Check unsubscribe and callback stale when changing the provider, detach,
+  root replacement and disposal.
+- [x] Keep `ObservableList<T>.Changed` UI-thread-only and add diagnostic
+  before processing an off-thread mutation observed by an attached control.
+- [x] Add examples and tests for the correct mutation of the collection by
+  `InvokeAsync`, including cancellation.
+- [x] Don't migrate an event just because it exists; document for each if
+  is UI-owned, auto-marshaled or requires explicit dispatch.
+- [x] Reindex after each C# change.
 
-**Gate etapa 6**
+**Gate stage 6**
 
-- [x] Niciun handler first-party inventariat nu atinge accidental cozi retained
-  de pe worker.
-- [x] Semnalele coalesced nu pierd starea finala, iar deltele FIFO nu isi schimba
-  ordinea.
-- [x] Colectiile mutable nu sunt prezentate fals ca thread-safe.
-- [x] Toate subscription-urile noi au cleanup verificat.
+- [x] No inventoried first-party handlers accidentally touch retained queues
+  from the worker.
+- [x] The coalescent signals do not lose their final state, and the FIFO deltas do not change
+  the order.
+- [x] Mutable collections are not falsely presented as thread-safe.
+- [x] All new subscriptions have cleanup checked.
+### Stage 7 - Performance, stress and diagnosis
 
-### Etapa 7 - Performanta, stres si diagnostic
-
-- [x] Adauga benchmark-uri Release pentru `Post`, `InvokeAsync`, drain gol,
-  drain 1/100/1.024, backlog peste buget si enqueue cu 1/2/4/8 produceri.
-- [x] Adauga benchmark pentru coalescing-ul a 10.000 de notificari intr-un singur
-  binding si intr-o interpolare cu mai multe surse.
-- [x] Masoara timp, bytes alocati, Gen0 si throughput; arhiveaza hardware-ul,
-  runtime-ul si configuratia alaturi de rezultate.
-- [x] Verifica structural ca `HasPendingWork` si `PendingCount` nu aloca dupa
+- [x] Add Release benchmarks for `Post`, `InvokeAsync`, empty drain,
+  drain 1/100/1.024, backlog over budget and enqueue with 1/2/4/8 productions.
+- [x] Add benchmark for coalescing 10,000 notifications into one
+  binding and in an interpolation with several sources.
+- [x] Measure time, allocated bytes, Gen0 and throughput; archive the hardware,
+  the runtime and the configuration along with the results.
+- [x] Structurally check that `HasPendingWork` and `PendingCount` do not allocate after
   warmup.
-- [x] Verifica faptul ca un frame idle fara backlog nu aloca din cauza
-  Relay-ului si nu instaleaza inutil obiecte noi de context.
-- [x] Ruleaza stress test cu produceri concurenti, anulare, exceptii, detach si
-  root replacement pentru cel putin 100.000 de work items, fara sleeps fragile.
-- [x] Verifica exact-once: executate + anulate = acceptate, fara pierderi sau
-  duplicate.
-- [x] Verifica backlog bounded per binding datorita coalescing-ului, chiar daca
-  root-ul ramane nepompat temporar.
-- [x] Nu adauga pooling pana cand benchmark-ul demonstreaza o problema reala si
-  testele pot garanta resetarea completa a work item-ului.
-- [x] Reindexeaza dupa modificarile de benchmark/project.
+- [x] Checks the fact that an idle frame without backlog does not allocate due
+  Relay and does not needlessly install new context objects.
+- [x] Run stress test with concurrent productions, cancellation, exceptions, detach and
+  root replacement for at least 100,000 work items, without fragile sleeps.
+- [x] Check exactly-once: executed + canceled = accepted, no loss or
+  duplicates.
+- [x] Check backlog bounded per binding due to coalescing, even if
+  the root remains temporarily unrooted.
+- [x] Do not add pooling until the benchmark demonstrates a real problem and
+  the tests can guarantee the complete reset of the work item.
+- [x] Re-indexes after benchmark/project changes.
 
-**Gate etapa 7**
+**Gate stage 7**
 
-- [x] Rezultatele sunt reproductibile si comparate cu baseline-ul.
-- [x] Drain-ul respecta bugetul si scaleaza aproximativ liniar.
-- [x] Frame-ul idle nu primeste regresii de alocare sau lucru fals.
-- [x] Nu exista lost wakeups, duplicate sau callback-uri dupa anulare confirmata.
+- [x] The results are reproducible and compared with the baseline.
+- [x] The drain respects the budget and scales approximately linearly.
+- [x] The idle frame does not receive allocation regressions or false work.
+- [x] There are no lost wakeups, duplicates or callbacks after confirmed cancellation.
 
-### Etapa 8 - Documentatie API si verificare finala
+### Stage 8 - API documentation and final verification
 
-- [x] Foloseste skill-ul `writing-api-documentation` pentru toate schimbarile
-  publice din `docs-site/documentation/classes/`.
-- [x] Adauga pagini pentru `UiRelay` si `UiRelayOptions` si actualizeaza
+- [x] Use the `writing-api-documentation` skill for all changes
+  public from `docs-site/documentation/classes/`.
+- [x] Add pages for `UiRelay` and `UiRelayOptions` and update
   `docs-site/documentation/manifest.json`.
-- [x] Actualizeaza paginile `UIRoot`, `UiHost`, `MonoGameUiHost`, `FrameStats`,
+- [x] Update the pages `UIRoot`, `UiHost`, `MonoGameUiHost`, `FrameStats`,
   `BindingOperations`, `UiPropertyBinding<T>`, `MotionSystem`, `MotionGraph`,
-  `ManualMotionTimeline` si orice alt tip public modificat.
-- [x] Sterge pagina API `Cerneala.UI.Motion.Core.MotionThreadGuard.md`, elimina
-  intrarea din manifest si rescrie toate exemplele care construiau guard-ul.
-- [x] Confirma prin cautare text ca `MotionThreadGuard` nu mai apare in C#,
-  teste, API docs sau manifest; mentiunile istorice din acest plan sunt singura
-  exceptie acceptata.
-- [x] Documenteaza branding-ul Relay alaturi de Aspect si Motion, fara alias
-  public `Dispatcher` si fara nume amestecate intre namespace, tipuri si host-uri.
-- [x] Documenteaza exemple pentru `Post`, `InvokeAsync`, rezultat generic,
-  anulare, exceptii si mutatia unei `ObservableList<T>` pe UI thread.
-- [x] Documenteaza ordinea exacta fata de input/scheduler, snapshot-ul,
-  bugetul, latenta de un update si faptul ca root-ul trebuie pompat.
-- [x] Documenteaza diferenta dintre auto-marshaling-ul unei notificari CLR si
-  interdictia mutarii directe a unui `UIElement` off-thread.
-- [x] Documenteaza obligatia sursei de a permite citire coerenta si faptul ca
-  auto-marshaling-ul nu face ViewModel-ul sau colectia thread-safe.
-- [x] Documenteaza lipsa `Invoke` blocant, lipsa prioritatilor si riscul de
-  deadlock al asteptarii sincrone pe owner thread.
-- [x] Actualizeaza documentatia conceptuala de hosting si data binding, fara a
-  pune API docs sub `docs/documentation/`.
-- [x] Ruleaza un diff public API si confirma ca toate adaugarile sunt intentionate,
-  nullable corecte si documentate.
-- [x] Ruleaza formatterul, `dotnet build .\Cerneala.slnx` si
-  `dotnet test .\Cerneala.slnx`.
-- [x] Ruleaza testele tinta cu
+  `ManualMotionTimeline` and any other modified public type.
+- [x] Delete API page `Cerneala.UI.Motion.Core.MotionThreadGuard.md`, remove
+  entry from the manifest and rewrites all the examples that built the guard.
+- [x] Confirm by text search that `MotionThreadGuard` no longer appears in C#,
+  tests, API docs or manifest; the historical mentions in this plan are the only ones
+  exception accepted.
+- [x] Documents the Relay branding along with Aspect and Motion, without alias
+  public `Dispatcher` and no names mixed between namespaces, types and hosts.
+- [x] Document examples for `Post`, `InvokeAsync`, generic result,
+  cancellation, exceptions and the mutation of a `ObservableList<T>` on UI thread.
+- [x] Documents the exact order compared to the input/scheduler, the snapshot,
+the budget, the latency of an update and the fact that the root must be pumped.
+- [x] Documents the difference between auto-marshaling a CLR notification and
+  prohibition of direct movement of a `UIElement` off-thread.
+- [x] Documents the obligation of the source to allow coherent reading and the fact that
+  auto-marshaling does not make the ViewModel or collection thread-safe.
+- [x] Documents the lack of `Invoke` blocker, the lack of priorities and the risk of
+  deadlock of the synchronous waiting on the owner thread.
+- [x] Updates the conceptual documentation of hosting and data binding, without a
+  put API docs under `docs/documentation/`.
+- [x] Run a public API diff and confirm that all additions are intentional,
+  correct and documented nullables.
+- [x] Run the formatter, `dotnet build .\Cerneala.slnx` and
+  ZZZ BLACK 10ZZZ.
+- [x] Run the target tests with
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "FullyQualifiedName~UiRelay|FullyQualifiedName~Relay"`.
-- [x] Ruleaza testele de hosting, data binding, Motion, Aspect, invalidation,
-  lifecycle si Windows runtime.
-- [x] Ruleaza benchmark-urile finale in Release si salveaza raportul.
-- [x] Regenereaza `FileTree.md`, reindexeaza `Cerneala.slnx --json` si confirma
-  zero warnings ale indexerului.
-- [x] Ruleaza `git diff --check` si confirma ca nu au ramas fisiere temporare,
-  procese sau teste flaky.
+- [x] Run the hosting, data binding, Motion, Aspect, invalidation tests,
+  lifecycle and Windows runtime.
+- [x] Run the final benchmarks in Release and save the report.
+- [x] Regenerate `FileTree.md`, reindex `Cerneala.slnx --json` and confirm
+  zero warnings of the indexer.
+- [x] Run `git diff --check` and confirm that there are no temporary files left,
+  flaky processes or tests.
 
-**Gate etapa 8**
+**Gate Stage 8**
 
-- [x] Build-ul si suita completa sunt verzi.
-- [x] API diff-ul contine numai suprafata aprobata.
-- [x] Documentatia API si manifestul sunt sincronizate.
-- [x] Benchmark-urile si testele de stres sunt arhivate si reproductibile.
+- [x] The build and the complete suite are green.
+- [x] API diff contains only the approved surface.
+- [x] The API documentation and the manifest are synchronized.
+- [x] Benchmarks and stress tests are archived and reproducible.
 
-## 10. Riscuri si mitigari
+## 10. Risks and mitigations
 
-### Lost wakeup intre coalescing si drain
+### Lost wakeup between coalescing and drain
 
-- [x] Foloseste versiuni atomice si teste cu bariere in toate ferestrele de race,
-  nu un simplu flag resetat naiv.
+- [x] Use atomic versions and barrier tests in all cold windows,
+  not a simple naively reset flag.
 
-### Callback async care blocheaza frame-ul
+### Async callback that blocks the frame
 
-- [x] Drain-ul porneste delegatul async si urmareste task-ul fara sa astepte
-  sincron completarea lui.
+- [x] The drain starts the async delegate and follows the task without waiting
+  its synchronous completion.
 
-### Backlog nelimitat pe un root nepompat
+### Unlimited backlog on a non-pumped root
 
-- [x] Coalesce-uieste automat semnalele de stare, expune `PendingCount`, aplica
-  buget per update si documenteaza anularea pentru operatiile explicite.
+- [x] Automatically merges status signals, exposes `PendingCount`, applies
+  budget per update and documents the cancellation for explicit operations.
 
-### Exceptie fire-and-forget pierduta
+### Fire-and-forget exception lost
 
-- [x] Proceseaza snapshot-ul complet, numara fault-ul si arunca agregat din
-  update; nu lasa erorile sa dispara in neant ca salariul dupa facturi.
+- [x] Process the complete snapshot, count the fault and throw aggregate from
+  update; don't let the errors disappear into nothingness like the salary after the invoices.
 
-### Mutatie UI deja facuta inainte de marshal
+### UI move already done before the marshal
 
-- [x] Verifica accesul la intrarile canonice de mutatie; nu incerca sa marshal-uiesti
-  `UiObject.PropertyChanged` dupa ce property store-ul a fost schimbat.
+- [x] Checks access to canonical mutation entries; don't try to marshal
+  `UiObject.PropertyChanged` after the property store was changed.
 
-### Colectie citita in timp ce worker-ul o modifica
+### Collection read while the worker modifies it
 
-- [x] Pastreaza `ObservableList<T>` UI-thread-only si cere postarea mutatiei
-  complete pe Relay.
+- [x] Keep `ObservableList<T>` UI-thread-only and ask to post the mutation
+  complete on Relay.
 
-### Dublu drain in `UiHost.Update`
+### Double drain in `UiHost.Update`
+- [x] Separates the public gateway `UIRoot.ProcessFrame` from the internal core used by
+  host and explicitly tests the pre-input plus post-input update.
 
-- [x] Separa poarta publica `UIRoot.ProcessFrame` de core-ul intern folosit de
-  host si testeaza explicit update-ul pre-input plus post-input.
+### Standalone Windows does not wake up
 
-### Standalone Windows nu se trezeste
+- [x] Include the Relay backlog in the wake predicate and test a root
+  completely idle with a single callback worker.
 
-- [x] Include backlog-ul Relay-ului in wake predicate si testeaza un root
-  complet idle cu un singur callback worker.
+### The breaking migration of Motion leaves an old path behind
 
-### Migrarea breaking a Motion lasa o cale veche in urma
+- [x] Deletes the old guard and overloads in one coherent batch,
+  migrate all call sites from the repo and explicitly validate the API diff;
+  the intended compatibility is the standalone behavior, not the old signatures.
 
-- [x] Sterge guard-ul si overload-urile vechi intr-un singur batch coerent,
-  migreaza toate call site-urile din repo si valideaza explicit API diff-ul;
-  compatibilitatea urmarita este comportamentul standalone, nu semnaturile vechi.
+### ExecutionContext holds objects
 
-### ExecutionContext retine obiecte
+- [x] Cleans references after execution/cancellation and adds tests with weak references
+  for callbacks and detached controllers.
 
-- [x] Curata referintele dupa executie/anulare si adauga teste cu weak references
-  pentru callback-uri si controllere detasate.
+## 11. Stop conditions
 
-## 11. Conditii de oprire
+The implementation stops for re-evaluation if:
 
-Implementarea se opreste pentru reevaluare daca:
+Final audit: none of the stop conditions were activated. May ticks
+below explicitly confirms the negative check of each condition.
 
-Audit final: niciuna dintre conditiile de oprire nu s-a activat. Bifele de mai
-jos confirma explicit verificarea negativa a fiecarei conditii.
+- [x] Confirmed that the frame loop can guarantee a single drain without the public change of
+  semantics `UiHost.Update`;
+- [x] Confirmed that `WindowApplicationRuntime` and his roots do not have owner threads
+  legitimately different in the current configuration;
+- [x] Confirmed that the integration with the bindings does not evaluate CLR paths on the worker;
+- [x] Confirmed that atomic versions avoid lost wakeups without an unbounded queue per event;
+- [x] Confirmed that a blocking invoke or nested pump is not necessary for compatibility;
+- [x] Confirmed that first-party collection mutations are not accepted off-thread without
+  a thread-safe source;
+- [x] Confirmed that the public API does not accumulate priorities, timers or generic scheduler
+  without separate request;
+- [x] Confirmed that the benchmarks do not show a persistent idle regression that cannot be isolated.
 
-- [x] Confirmat ca frame loop-ul poate garanta un singur drain fara schimbarea publica a
-  semanticii `UiHost.Update`;
-- [x] Confirmat ca `WindowApplicationRuntime` si root-urile sale nu au owner threads
-  legitim diferite in configuratia actuala;
-- [x] Confirmat ca integrarea cu binding-urile nu evalueaza cai CLR pe worker;
-- [x] Confirmat ca versiunile atomice evita lost wakeups fara o coada nebounded per event;
-- [x] Confirmat ca nu este necesar un blocking invoke sau nested pump pentru compatibilitate;
-- [x] Confirmat ca mutatiile first-party de colectie nu sunt acceptate off-thread fara
-  o sursa thread-safe;
-- [x] Confirmat ca API-ul public nu acumuleaza prioritati, timers sau scheduler generic
-  fara cerinta separata;
-- [x] Confirmat ca benchmark-urile nu arata o regresie idle persistenta care nu poate fi izolata.
+The problem is documented and discussed separately; we do not cover it with a global lock
+and a prayer.
 
-Problema se documenteaza si se discuta separat; nu o acoperim cu un lock global
-si o rugaciune.
+## 12. Recommended order
 
-## 12. Ordinea recomandata
+1. Characterize the thread, frame order and current defects.
+2. Build and verify the MPSC core in isolation.
+3. Add the async scoped context.
+4. Integrate a single drain gate in root and hosts.
+5. Unify thread affinity for property store, tree, Motion and Aspect and
+   completely delete `MotionThreadGuard`.
+6. After completing the data binding plan, adopt Relay and coalescing
+   in the common reactive controller.
+7. Migrate the other first-party signals according to the table, without magic adapter.
+8. Close performance, documentation and complete suite.
 
-1. Caracterizeaza thread-ul, frame order si defectele actuale.
-2. Construieste si verifica izolat nucleul MPSC.
-3. Adauga contextul async scoped.
-4. Integreaza o singura poarta de drain in root si host-uri.
-5. Unifica thread affinity pentru property store, arbore, Motion si Aspect si
-   sterge complet `MotionThreadGuard`.
-6. Dupa finalizarea planului de data binding, adopta Relay-ul si coalescing-ul
-   in controllerul reactiv comun.
-7. Migreaza celelalte semnale first-party conform tabelului, fara adaptor magic.
-8. Inchide performanta, documentatia si suita completa.
+## 13. The definition of ready
 
-## 13. Definitia de gata
+- [x] Any `Post`/`InvokeAsync` accepted by Relay runs exactly once or
+  is canceled explicitly, never per worker and never twice.
+- [x] The relay is drained only once at the beginning of the update, before
+scheduler and input, with snapshot and deterministic budget.
+- [x] An idle Windows root is woken up by the backlog, and a MonoGame host
+  process to the following `Update`.
+- [x] `await` from the UI code returns through the context of the correct root, and the context
+  previously it is restored after the update.
+- [x] Direct mutations of an attached element are rejected off-thread before
+  to change the property store, tree or retained queues.
+- [x] Motion and Aspect use the Relay authority of root; does not exist
+  `MotionThreadGuard`, `AspectThreadGuard` or another parallel owner thread source.
+- [x] `MotionSystem.ThreadGuard`, builders receiving the guard, API page
+  and the manifest entry have disappeared, and Motion standalone remains functional.
+- [x] The simple, nested, `TwoWay`, interpolated, conditional and
+  expressions `@when` auto-marshal `INotifyPropertyChanged` off-thread,
+  they coalesce the bursts and display the last state.
+- [x] Detach, reattach, template swap, root replacement and disposal does not leave
+  stale callbacks, forgotten tasks or retained references.
+- [x] `CanExecuteChanged`, the theme and resources follow the stated policy, and
+  mutable collections require the explicit use of Relay.
+- [x] The idle frame remains cheap, the backlog is observable, and the benchmarks
+  confirm the multi-producer scaling and the budgeted drain.
+- [x] All new public APIs are documented in the single source of truth,
+  the manifest is synchronized, the diff API is approved, the build and all
+  tests are green.
+- [x] The public surface consistently carries the `Relay` branding: namespace
+  `Cerneala.UI.Relay`, `UiRelay`, `UiRelayOptions` and the properties `.Relay`, without
+  public duplicates called `Dispatcher`.
 
-- [x] Orice `Post`/`InvokeAsync` acceptat de Relay ruleaza exact o data sau
-  este anulat explicit, niciodata pe worker si niciodata de doua ori.
-- [x] Relay-ul este drenat o singura data la inceputul update-ului, inainte de
-  scheduler si input, cu snapshot si buget determinist.
-- [x] Un root Windows idle este trezit de backlog, iar un host MonoGame il
-  proceseaza la urmatorul `Update`.
-- [x] `await` din cod UI revine prin contextul root-ului corect, iar contextul
-  anterior este restaurat dupa update.
-- [x] Mutatiile directe ale unui element atasat sunt respinse off-thread inainte
-  sa schimbe property store-ul, arborele sau cozile retained.
-- [x] Motion si Aspect folosesc autoritatea Relay a root-ului; nu exista
-  `MotionThreadGuard`, `AspectThreadGuard` sau alta sursa paralela de owner thread.
-- [x] `MotionSystem.ThreadGuard`, constructorii care primeau guard-ul, pagina API
-  si intrarea din manifest au disparut, iar Motion standalone ramane functional.
-- [x] Binding-urile simple, nested, `TwoWay`, interpolate, conditionale si
-  expresiile `@when` auto-marshal-uiesc `INotifyPropertyChanged` off-thread,
-  coalesce-uiesc burst-urile si afiseaza ultima stare.
-- [x] Detach, reattach, template swap, root replacement si disposal nu lasa
-  callback-uri stale, task-uri uitate sau referinte retinute.
-- [x] `CanExecuteChanged`, tema si resursele urmeaza politica declarata, iar
-  colectiile mutable cer folosirea explicita a Relay-ului.
-- [x] Frame-ul idle ramane ieftin, backlog-ul este observabil, iar benchmark-urile
-  confirma scalarea multi-producer si drain-ul bugetat.
-- [x] Toate API-urile publice noi sunt documentate in sursa unica de adevar,
-  manifestul este sincronizat, API diff-ul este aprobat, build-ul si toate
-  testele sunt verzi.
-- [x] Suprafata publica poarta consecvent branding-ul `Relay`: namespace
-  `Cerneala.UI.Relay`, `UiRelay`, `UiRelayOptions` si proprietatile `.Relay`, fara
-  dubluri publice numite `Dispatcher`.
-
-Sistemul este gata cand un worker poate anunta UI-ul fara sa-l atinga direct,
-frame loop-ul decide exact cand ruleaza lucrul, iar o rafala de notificari nu
-transforma update-ul intr-un tomberon de callback-uri nedeterministe.
+The system is ready when a worker can announce the UI without touching it directly,
+the frame loop decides exactly when the thing runs, and a flurry of notifications does not
+turn the update into a dumpster of non-deterministic callbacks.

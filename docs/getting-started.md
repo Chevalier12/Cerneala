@@ -7,7 +7,7 @@ Cerneala is a retained, code-first UI layer. The Developer Preview path is C# ob
 | Subsystem | Role |
 | --- | --- |
 | Aspect | Resolves style, theme, variants, and templates. |
-| Motion | Owns storyboards, animated values, and frame sampling. |
+| Motion | Owns typed motion specs, animated values, and frame sampling. |
 | Relay | Moves callback execution from producer threads to the UI thread owned by a root. |
 
 ## Retained Update/Draw Contract

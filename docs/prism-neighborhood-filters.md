@@ -9,25 +9,25 @@ noise families; it does not duplicate the generated property table.
 
 `PrismNeighborhoodPlanner` reads the typed parameter snapshot once while the
 graph is built. It converts DIP radii and distances to device pixels, prepares
-logical bounds radii separately, resolves symbolic modes, and stores immutable
+logical bounds radiate separately, resolves symbolic modes, and stores immutable
 pass settings on each filter node. The executor binds only those prepared
 settings. The shader never reads markup defaults or converts public units.
 
 Gaussian and box filters use horizontal and vertical graph passes. Filters
 whose sampling path is directional, radial, resource-driven, or edge-aware use
-a direct pass. A dimension with one pixel is omitted from a separable plan; a
+a direct pass. A dimension with one pixel is omitted from a separable plane; a
 one-by-one source becomes an exact no-op when the operation cannot change it.
 Box `Iterations` widens the prepared convolution support explicitly rather than
-introducing a device-dependent pass threshold. Referința CPU folosește o
-summed-area table; shaderul folosește forma separabilă echivalentă și evaluează
-toate cele `2 * radius + 1` tap-uri, fără plafon ascuns de calitate.
+introducing a device-dependent pass threshold. The CPU reference uses a
+summed-area table; the shader uses the equivalent separable form and evaluates
+all `2 * radius + 1` taps, no hidden ceiling quality.
 
 Sampling quality is fixed by the catalog symbol:
 
 | Quality | Samples |
 | --- | ---: |
-| `Draft` / `Low` | 5 |
-| `Good` / `Medium` | 9 |
+| `Draft` / `Low` | 5|
+| `Good` / `Medium` | 9|
 | `Best` / `High` | 17 |
 
 The fixed-quality filters do not reduce quality adaptively. Image size only
@@ -38,7 +38,7 @@ that budget again from its own arc length.
 
 ## Color and alpha
 
-Every neighborhood sample is converted from the composition's working profile
+Each neighborhood sample is converted from the composition's working profile
 to linear sRGB through the same conversion helpers used by adjustment filters.
 Convolution operates on associated RGBA, so transparent colored pixels cannot
 create halos. The result is blended at the filter opacity and converted back to
@@ -46,7 +46,7 @@ the working profile once.
 
 The edge modes are `Clamp`, `Transparent`, `Wrap`, and `Mirror` (with
 `Reflect` mapped to `Mirror`). Transparent addressing contributes zero
-associated RGBA outside the source; the other modes remap the coordinate before
+associated RGBA outside the source; the other modes remap the coordinates before
 sampling.
 
 ## Implemented families
@@ -57,165 +57,164 @@ The classic and specialized blur set is:
 - `LensBlur`, `MotionBlur`, `RadialBlur`, `ShapeBlur`, `SmartBlur`, and
   `SurfaceBlur`
 - `FieldBlur`, `IrisBlur`, `TiltShift`, `PathBlur`, and `SpinBlur`
-
 `Average` is a distinct fixed 3x3 box convolution: all nine taps have weight
 `1/9`, edges clamp to the source, and bounds do not expand. CPU reference and
 GPU shader both evaluate the same kernel in linear premultiplied RGBA.
 
-`SmartBlur` și `SurfaceBlur` folosesc un suport bilateral 2D decupat la disc,
-nu un șir rar de puncte spirale. `Quality` alege rezoluția grilei 5x5, 9x9 sau
-17x17. Ambele înmulțesc ponderile Gaussian spațiale și de range; SmartBlur
-măsoară distanța RGB straight, iar SurfaceBlur măsoară diferența de luminanță
-lineară. CPU și GPU normalizează aceeași grilă.
+`SmartBlur` and `SurfaceBlur` use a 2D disc-cut bilateral media,
+not a sparse row of spiral dots. `Quality` choose grid resolution 5x5, 9x9 or
+17x17. Both multiply the spatial and range Gaussian weights; SmartBlur
+measures RGB straight distance and SurfaceBlur measures luminance difference
+linear. CPU and GPU normalize the same grid.
 
-`FieldBlur` citește adâncimea normalizată din `BlurField`, aplică inversarea
-opțională și calculează circle of confusion din distanța față de
-`FocalDistance`. Raza aperturii este `Blur * CoC`; eșantioanele sunt distribuite
-pe disc și ponderate opțional prin luminanță pentru highlights. CPU și GPU
-folosesc aceeași formulă, același suport și alpha asociat.
+`FieldBlur` reads normalized depth from `BlurField`, applies inversion
+optional and calculate circle of confusion from distance to
+`FocalDistance`. The radius of the aperture is `Blur * CoC`; samples are distributed
+on disk and optionally luminance-weighted for highlights. CPU and GPU
+they use the same formula, same support and associated alpha.
 
-`IrisBlur` construiește o mască de focalizare eliptică rotită în jurul lui
-`Center`. Interiorul razelor rămâne clar, `Feather` produce tranziția smoothstep,
-iar în exterior circle of confusion ajunge la raza `Blur`. Parametrii decorativi
-fără efect au fost eliminați; CPU și GPU rotesc coordonata înainte de scalarea
-elipsei.
+`IrisBlur` builds an elliptical focus mask rotated around it
+ZZZ BLACK 10ZZZ. The interior of the rays remains clear, `Feather` produces the smoothstep transition,
+and outside the circle of confusion reaches the radius `Blur`. Decorative parameters
+without effect were removed; The CPU and GPU rotate the coordinate before scaling
+the ellipse.
 
-`TiltShift` folosește distanța semnată față de un plan orientat de `Angle`.
-Banda `FocusWidth` rămâne clară, `Feather` produce tranziția smoothstep, iar
-raza ajunge la `Blur` în afara benzii. Opțiunile fără efect au fost eliminate,
-iar CPU/GPU folosesc aceeași mască.
+`TiltShift` uses the signed distance to a plane oriented by `Angle`.
+`FocusWidth` band remains clear, `Feather` produces smoothstep transition, and
+range reaches `Blur` out of band. Options without effect have been removed,
+and CPU/GPU use the same mask.
 
-`SpinBlur` integrează un arc centrat pe poziția pixelului, în coordonate de
-pixel pentru a păstra traiectoria circulară pe suprafețe dreptunghiulare.
-`Center` și `Radius` sunt normalizate, iar `Feather` este fracția interioară
-`0..1` a razei elipsei. Numărul de tap-uri este impar, crește aproximativ cu
-lungimea arcului și este plafonat la 65; aproape de centru se reduce automat.
-Calea obișnuită folosește o recurență trigonometrică și sampling biliniar.
-`StrobeStrength` combină expunerea continuă cu ferestrele periodice definite de
-`StrobeFlashes` și `StrobeDuration`, iar `Noise` perturbă determinist numai
-tap-urile interioare. CPU și GPU acumulează și normalizează RGBA asociat în
-același pass direct, fără resurse auxiliare.
+`SpinBlur` integrates an arc centered on the pixel position, in coordinates of
+pixel to preserve circular trajectory on rectangular surfaces.
+`Center` and `Radius` are normalized and `Feather` is the inner fraction
+`0..1` of the radius of the ellipse. The number of taps is odd, increasing by approx
+arc length and is capped at 65; close to the center is automatically reduced.
+The usual way uses a trigonometric recurrence and bilinear sampling.
+`StrobeStrength` combines continuous exposure with periodic windows defined by
+`StrobeFlashes` and `StrobeDuration` and `Noise` deterministically disrupt only
+the inner taps. CPU and GPU accumulate and normalize RGBA associated in
+the same direct pass, without auxiliary resources.
 
 The sharpening set is `Sharpen`, `SharpenMore`, `SharpenEdges`, `UnsharpMask`,
 `SmartSharpen`, and `HighPass`.
 
-`Sharpen` folosește un kernel radial cu cinci tap-uri în cruce. Lobul negativ
-este calculat separat pe fiecare canal din minimul, maximul și headroom-ul local,
-iar `Amount` controlează monoton intensitatea în intervalul `0..1`. Filtrul
-rulează într-un singur pass pe RGB liniar straight, păstrează alpha pixelului
-central și repremultiplică rezultatul; vecinii complet transparenți moștenesc
-culoarea centrală pentru calcul, evitând franjurile de transparent black.
-CPU și GPU folosesc aceeași formulă, clamp la margine și aceleași cinci tap-uri.
+`Sharpen` uses a radial kernel with five cross taps. The negative lobe
+is calculated separately on each channel from the minimum, maximum and local headroom,
+and `Amount` monotonically controls the intensity in the range `0..1`. The filter
+run in one pass on RGB linear straight, preserve pixel alpha
+central and remultiplies the result; fully transparent neighbors inherit
+the central color for the calculation, avoiding the fringes of transparent black.
+The CPU and GPU use the same formula, edge clamp and the same five taps.
 
-`SharpenMore` folosește un high-boost 3x3 cu blur binomial
-`[1 2 1; 2 4 2; 1 2 1] / 16`. La valoarea implicită `Amount = 0.5`,
-formula este `2 * centru - blur`; intervalul `0..1` scalează monoton reziduul
-până la intensitate dublă. Cele nouă tap-uri sunt evaluate explicit într-un
-singur pass, cu clamp la margine, pe RGB liniar straight. Alpha central rămâne
-neschimbat, vecinii complet transparenți folosesc culoarea centrală în calcul,
-iar CPU și GPU repremultiplică același rezultat.
+`SharpenMore` uses a 3x3 high-boost with binomial blur
+`[1 2 1; 2 4 2; 1 2 1] / 16`. At the default value of `Amount = 0.5`,
+the formula is `2 * centru - blur`; the interval `0..1` monotonically scales the residual
+up to double intensity. The nine taps are explicitly evaluated in a
+single pass, with edge clamp, on RGB linear straight. Central Alpha remains
+unchanged, fully transparent neighbors use the center color in the calculation,
+and the CPU and GPU remultiply the same result.
 
-`SharpenEdges` evaluează un gradient Sobel normalizat pe o vecinătate 3x3 și
-folosește magnitudinea lui drept poartă pentru același sharpen limitat de
-contrast local ca `Sharpen`. `Threshold` stabilește centrul unei tranziții
-smoothstep cu lățime proporțională pragului, în locul unei întreruperi binare,
-iar `Amount` controlează intensitatea maximă. Implementarea CPU/GPU este un
-singur pass determinist cu nouă tap-uri, clamp la margine și RGB liniar straight.
-Alpha central rămâne neschimbat, iar vecinii complet transparenți moștenesc
-culoarea centrală în calcul ca să nu producă franjuri sau muchii false.
+`SharpenEdges` evaluates a normalized Sobel gradient on a 3x3 neighborhood and
+use its magnitude as a gate for the same sharpen limited by
+local contrast as `Sharpen`. `Threshold` sets the center of a transition
+threshold-width smoothstep, instead of a binary break,
+and `Amount` controls the maximum intensity. CPU/GPU implementation is a
+deterministic single pass with nine taps, edge clamp and RGB linear straight.
+The central alpha remains unchanged and the fully transparent neighbors inherit
+the central color in the calculation so as not to produce false fringing or edges.
 
-`UnsharpMask` construiește masca dintr-un Gaussian separabil cu suport finit la
-`Radius` și sigma `Radius / 3`, apoi recombină textura originală cu reziduul
-`original - blur`. `Amount` scalează explicit reziduul, iar `Threshold`
-controlează o poartă smoothstep centrată pe diferența de luminanță, cu o bandă
-minimă de un nivel pe 8 biți ca să evite o tăietură vizibilă. Cele două pass-uri
-Gaussian folosesc câte 17 tap-uri și sunt urmate de un pass fără sampling de
-vecinătate care citește atât blurul, cât și originalul păstrat de graful Prism.
-Calculul high-boost rulează pe RGB liniar straight, păstrează alpha original și
-repremultiplică rezultatul. CPU și GPU folosesc aceeași formulă, iar `Amount = 0`,
-`Radius = 0` și sursa 1x1 sunt no-op-uri exacte.
+`UnsharpMask` constructs the mask from a separable Gaussian with finite support at
+`Radius` and sigma `Radius / 3`, then recombine the original texture with the residue
+`original - blur`. `Amount` explicitly scales the residual, and `Threshold`
+controls a smoothstep gate centered on the luminance difference with one strip
+minimum of one 8-bit level to avoid visible clipping. The two passes
+Gaussian uses 17 taps each and are followed by a pass without sampling de
+neighborhood that reads both the blur and the original preserved by the Prism graph.
+The high-boost calculation runs on RGB linear straight, preserves the original alpha and
+remultiplies the result. CPU and GPU use the same formula, and `Amount = 0`,
+`Radius = 0` and 1x1 source are exact no-ops.
 
-`SmartSharpen` folosește deconvoluție Richardson-Lucy cu patru iterații fixe,
-care funcționează și ca regularizare. Fiecare iterație execută convoluția
-estimării, raportul față de original, back-projection cu PSF-ul oglindit și
-actualizarea multiplicativă; un al șaptesprezecelea pass aplică `Amount` și
-protecțiile tonale. `Remove` selectează PSF Gaussian, disc pentru lens blur sau
-segment orientat de `Angle` pentru motion blur. `ReduceNoise` amortizează
-corecția multiplicativă către identitate, iar controalele shadow/highlight
-reduc efectul folosind luminanța locală și razele lor configurate. CPU și GPU
-lucrează pe RGB liniar straight, păstrează alpha original și repremultiplică
-rezultatul. Graful păstrează separat observația și estimarea iterației, iar GPU
-folosește suprafețe ping-pong; valorile corecției sunt codificate reversibil pe
-suprafețele normalizate intermediare. Pass-urile de sampling nu extind limitele
-logice ale imaginii.
+`SmartSharpen` uses Richardson-Lucy deconvolution with four fixed iterations,
+which also works as regularization. Each iteration executes the convolution
+estimates, the ratio to the original, back-projection with the mirrored PSF and
+multiplicative updating; a seventeenth pass applies `Amount` and
+tonal protections. `Remove` select Gaussian PSF, disk for lens blur or
+segment oriented by `Angle` for motion blur. `ReduceNoise` amortizes
+multiplicative correction to identity, and shadow/highlight controls
+reduce the effect by using local luminance and their configured radii. CPU and GPU
+works on RGB linear straight, keeps original alpha and repremultiplies
+the result. The graph keeps the iteration observation and estimation separate, and the GPU
+use ping-pong surfaces; the correction values are reversibly encoded on
+intermediate normalized surfaces. Sampling passes do not extend the limits
+logic of the image.
 
 The noise and cleanup set is `AddNoise`, `Despeckle`, `DustScratches`, `Median`,
 and `ReduceNoise`. `AddNoise` preserves its explicit 32-bit catalog seed as two
-prepared 16-bit halves and combines them with pixel coordinates and channel in
+prepares 16-bit halves and combines them with pixel coordinates and channel in
 a stateless integer permutation. `Uniform` maps one permuted sample to `[-1, 1]`;
 `Gaussian` transforms paired samples into a zero-mean, unit-variance normal
-deviate instead of averaging uniforms. Both CPU and GPU run
+deviated instead of averaging uniforms. Both CPU and GPU run
 in one direct pass, apply the delta to linear straight RGB, clamp, repremultiply,
 and preserve source alpha. The implementation never reads time or global random
-state, and monochromatic mode applies the same deviate to all color channels.
+state, and monochromatic mode applies the same deviation to all color channels.
 
-`Despeckle` folosește detecție mediană comutată și restaurare progresivă. Trei
-pass-uri de detecție compară luminanța liniară straight a centrului cu eșantionul
-median și marchează numai diferențele mai mari decât `Threshold`. Trei pass-uri
-de restaurare înlocuiesc pixelii marcați cu mediana calculată exclusiv din
-vecinii deja considerați buni; un pass final rezolvă orice marcaj rămas și
-aplică opacity/blend față de intrarea originală. `Radius` controlează efectiv
-suportul izotrop: raza mică folosește vecinătatea 3x3, iar razele mai mari folosesc
-21 de poziții distribuite pe un disc scalat. Starea intermediară păstrează RGB
-linear straight și masca binară pe suprafețe `HalfVector4`; pass-ul final
-restabilește alpha central original și repremultiplică RGB. CPU și GPU folosesc
-aceeași ordine a eșantioanelor, aceleași trei iterații și clamp la margine;
-`Radius = 0` este identitate exactă.
+`Despeckle` uses switched median detection and progressive restoration. Three
+detection passes compare the straight line luminance of the center with the sample
+median and marks only differences greater than `Threshold`. Three passes
+restoration replace the marked pixels with the median calculated exclusively from
+neighbors already considered good; a final pass resolves any remaining markup and
+applies opacity/blend to the original input. `Radius` actually controls
+isotropic support: the small radius uses the 3x3 neighborhood, and the larger radii use the
+21 positions distributed on a scaled disk. The intermediate state preserves RGB
+linear straight and binary mask on surfaces `HalfVector4`; the final pass
+restores original center alpha and remultiplies RGB. CPU and GPU use
+same order of samples, same three iterations and edge clamp;
+`Radius = 0` is exact identity.
 
-`DustScratches` folosește o mediană adaptivă comutată într-un singur pass direct.
-Plannerul convertește `Radius` în pixeli, îl rotunjește în sus și limitează suportul
-GPU la raza 3, adică maximum 7x7. Pentru fiecare pixel, filtrul încearcă în ordine
-ferestrele 3x3, 5x5 și 7x7 până când mediana este strict între minimul și maximul
-luminanței locale. În acea fereastră, centrul este înlocuit numai dacă este un
-extrem local și diferența sa față de mediană depășește `Threshold`; dacă nicio
-fereastră nu separă semnalul de impuls, se folosește mediana celei mai mari
-ferestre, tot prin aceeași poartă de prag. Sortarea folosește luminanța RGB
-linear straight, dar înlocuirea păstrează alpha centrului și repremultiplică
-culoarea mediană. CPU și GPU folosesc aceeași extindere, același clamp la margine
-și aceeași limită de rază; `Radius = 0` este identitate exactă.
+`DustScratches` uses a single-pass switched adaptive median.
+Planner converts `Radius` to pixels, rounds it up and limits the support
+GPU at radius 3, i.e. 7x7 maximum. For each pixel, the filter tries in order
+the 3x3, 5x5, and 7x7 windows until the median is strictly between the minimum and maximum
+local luminance. In that window, the center is replaced only if it is one
+extreme local and its difference from the median exceeds `Threshold`; if none
+window does not separate the impulse signal, the median of the largest is used
+windows, also through the same threshold gate. Sorting uses RGB luminance
+linear straight, but the replacement keeps the center alpha and remultiplies
+the middle color. The CPU and GPU use the same expansion, the same edge clamp
+and the same radius limit; `Radius = 0` is exact identity.
 
-`Median` folosește o rețea fixă de compare-exchange pentru cele nouă eșantioane
-ale ferestrei 3x3, cu clamp la margine și fără ramificații dependente de date în
-shader. Rangul este luminanța RGB linear straight, iar rezultatul este pixelul
-RGBA asociat aflat pe poziția mediană, nu o culoare sintetizată separat pe
-canale. CPU și GPU execută aceeași ordine de comparații și păstrează astfel
-aceeași semantică pentru pixeli translucizi. `Radius` este un selector integer:
-`0` este identitate exactă, `1` activează kernelul 3x3, iar alte valori sunt
-respinse de domeniul catalogului.
+`Median` uses a fixed compare-exchange network for the nine samples
+of the 3x3 window, with edge clamp and no data-dependent branches in
+shaders. The rank is the RGB linear straight luminance, and the result is the pixel
+Associated RGBA located on the median position, not a color synthesized separately on
+channels. The CPU and GPU execute the same order of comparisons and keep it that way
+same semantics for translucent pixels. `Radius` is an integer selector:
+`0` is exact identity, `1` enables 3x3 kernel, and other values are
+rejected by the catalog domain.
 
-`ReduceNoise` folosește normalized convolution din familia Domain Transform
-descrisă de Gastal și Oliveira, adaptată backendului Prism bazat pe pixel
-shadere. Plannerul emite trei iterații, fiecare cu un pass orizontal și unul
-vertical, iar sigma fiecărei iterații urmează programarea din lucrare. Distanța
-transformată combină variația luma cu variația chroma în YCoCg; `Strength` și
-`SharpenDetails` controlează luma, `ReduceColorNoise` controlează chroma, iar
-`PreserveDetails` restrânge domeniul de range și readaugă stratul de detaliu la
-recombinare. `RemoveJpegArtifact` adaugă două pass-uri block-aware care operează
-numai pe frontierele grilei JPEG 8x8 și sunt urmate de aceeași recombinare cu
-originalul. CPU și GPU folosesc aceleași formule, clamp la margine și maximum
-opt tap-uri pe fiecare parte. Toate pass-urile filtrează RGB liniar straight,
-maschează contribuțiile cu diferența de alpha, păstrează alpha central
-nefiltrat și repremultiplică rezultatul. Când toate controalele sunt zero și
-eliminarea artefactelor JPEG este dezactivată, întregul plan este identitate
-exactă.
+`ReduceNoise` uses normalized convolution from the Domain Transform family
+described by Gastal and Oliveira, adapted to the pixel-based Prism backend
+shaders. The planner outputs three iterations, each with a horizontal pass and one
+vertically, and the sigma of each iteration follows the programming in the paper. The distance
+transform combines luma variation with chroma variation in YCoCg; `Strength` and
+`SharpenDetails` controls luma, `ReduceColorNoise` controls chroma, and
+`PreserveDetails` narrows the range domain and re-adds the detail layer to
+recombination. `RemoveJpegArtifact` adds two block-aware passes that operate
+only on the borders of the JPEG 8x8 grid and are followed by the same recombination with
+the original. CPU and GPU use the same formulas, edge clamp and max
+eight taps on each side. All passes filter RGB linear straight,
+mask alpha difference contributions, keep central alpha
+unfiltered and remultiplies the result. When all checks are zero and
+JPEG artifact removal is disabled, the entire plan is identity
+exact.
 
 ## Auxiliary resources
 
 `LensBlur.DepthMap` is optional. `ShapeBlur.Shape`, `FieldBlur.BlurField`, and
-`PathBlur.Path` are required typed image resources. Their resource identifiers
-participate in graph dependencies and versioning. A specified resource that is
+`PathBlur.Path` has required typed image resources. Their resource identifiers
+participated in graph dependencies and versioning. A specified resource that is
 missing, disposed, from another graphics device, or otherwise unavailable
-causes the configured `PrismFallbackPolicy` action and an observable diagnostic;
+causes the configured `PrismFallbackPolicy` action and an observable diagnosis;
 the executor does not silently substitute another filter.
 
 ## Bounds and optimization
@@ -226,6 +225,6 @@ covers every sampled pixel. Document-space effects whose samples remain inside
 the source keep source bounds.
 
 The optimizer removes a neighborhood node only when its prepared pass is an
-exact no-op and its opacity/blend state is neutral. Zero radius, zero amount,
-and a degenerate one-pixel axis are evaluated in the planner. Nonzero filters,
+exactly no-op and its opacity/blend state is neutral. Zero radius, zero amount,
+and a degenerate one-pixel axis are evaluated in the planner. nonzero filters,
 resource-driven filters, and non-normal blend modes retain their ordering.

@@ -1,133 +1,132 @@
-# Prism — compozitorul MonoGame
+# Prism — MonoGame composer
 
-## Scop
+## Purpose
 
-Execută graful Prism pe MonoGame/WindowsDX, cu ownership clar al stării,
-suprafețe transient frame-local și shader-e compilate la build. Etapa livrează
-mecanismul GPU și kernelurile de bază; cache-ul retained se construiește separat
-peste aceste contracte.
+Run the Prism graph on MonoGame/WindowsDX, with clear state ownership,
+frame-local transient surfaces and compiled shaders at build. Stage delivers
+GPU engine and underlying kernels; the retained cache is built separately
+over these contracts.
 
-**Dependență:** `2026-07-18-prism-retained-composition-graph.md`.
+**Dependency:** `2026-07-18-prism-retained-composition-graph.md`.
 
-## Etapa 0 — baseline GPU și pipeline shader
+## Stage 0 — baseline GPU and shader pipeline
 
-- [x] Extinde testele existente
+- [x] Extends existing tests
   `tests/Cerneala.Tests/Drawing/MonoGame/MonoGameDrawingBackendStateTests.cs`
-  cu cazuri RED pentru ownership complet, excepții, restore și render consecutiv.
-- [x] Adaugă un spike local, mic și șters după decizie, care verifică tool-ul
-  MonoGame de compilare a efectelor compatibil cu pachetul `3.8.4.1`.
-- [x] Fixează contractul pipeline-ului: surse `.fx` versionate sub
-  `Drawing/MonoGame/Prism/Shaders/`, compilare deterministă la build,
-  `.mgfxo` embedded în assembly și încărcare din bytes.
-- [x] Pin-uiește tool-ul de build în repository și adaugă un check de clean
-  build/CI care detectează artefacte lipsă sau stale; interzice compilarea la
-  runtime și dependența de `ContentManager` al aplicației.
-- [x] Verifică shaderul minim copy/composite printr-un test de integrare
-  WindowsDX înainte de a construi registry-ul de kerneluri.
+  with RED cases for full ownership, exceptions, restore and consecutive render.
+- [x] Add a local spike, small and deleted after decision, that checks the tool
+  MonoGame effects compilation compatible with `3.8.4.1` pack.
+- [x] Fix pipeline contract: `.fx` sources versioned under
+  `Drawing/MonoGame/Prism/Shaders/`, deterministic compilation to build,
+  `.mgfxo` embedded in assembly and loading from bytes.
+- [x] Pin the build tool to the repository and add a clean check
+  build/CI detecting missing or stale artifacts; prohibit compilation to
+  runtime and the application's `ContentManager` dependency.
+- [x] Check the minimal copy/composite shader through an integration test
+  WindowsDX before building the kernel registry.
 
-### Gate etapa 0
+### Gate stage 0
 
-- [x] Un checkout curat poate produce și încărca determinist shaderul minim,
-  fără fișiere generate manual ori tool instalat global implicit.
+- [x] A clean checkout can deterministically produce and load the minimal shader,
+  no manually generated files or globally installed tools by default.
 
-## Etapa 1 — ownership și restaurarea stării
+## Stage 1 — ownership and status restoration
 
-- [x] Mută ownership-ul top-level `SpriteBatch.Begin/End` în
-  `MonoGameDrawingBackend.Render`; actualizează
-  `UI/Hosting/MonoGame/MonoGameUiHost.cs` să nu mai deschidă batch-ul extern.
-- [x] Actualizează `WindowsDxWindowGraphicsSession` și calea `RenderPng` la
-  același contract, fără două implementări divergente.
-- [x] Capturează și restaurează în `finally` render targets, viewport, scissor,
-  blend/depth/rasterizer/sampler state și orice stare modificată de executor.
-- [x] Definește explicit cine deține `SpriteBatch`, `GraphicsDevice` și
-  lifetime-ul backendului; validează opțiunile în
+- [x] Move ownership of top-level `SpriteBatch.Begin/End` to
+  `MonoGameDrawingBackend.Render`; update
+  `UI/Hosting/MonoGame/MonoGameUiHost.cs` to stop opening the external batch.
+- [x] Update `WindowsDxWindowGraphicsSession` and `RenderPng` path to
+  the same contract, without two divergent implementations.
+- [x] Capture and restore to `finally` render targets, viewport, scissor,
+  blend/depth/rasterizer/sampler state and any state modified by the executor.
+- [x] Defines explicitly who owns `SpriteBatch`, `GraphicsDevice` and
+  the lifetime of the backend; validate options in
   `MonoGameUiHostOptions`.
-- [x] Adaugă teste pentru excepție în mijlocul unui pass, device state
-  preexistent, două hosturi secvențiale și frame fără Prism.
+- [x] Add tests for exception in the middle of a pass, device state
+  pre-existing, two sequential hosts and frames without Prism.
 
-### Gate etapa 1
+### Gate stage 1
 
-- [x] După succes sau excepție, hostul primește exact starea documentată, iar
-  UI-ul fără Prism produce același output ca baseline-ul.
+- [x] Upon success or exception, the host receives exactly the documented state again
+  The UI without Prism produces the same output as the baseline.
 
-## Etapa 2 — suprafețe frame-local
+## Stage 2 — frame-local surfaces
 
-- [x] Adaugă `Drawing/MonoGame/Prism/Surfaces/PrismSurfacePool` cu chei tipate
-  pentru dimensiune, format, samples și color space.
-- [x] Pool-ul reutilizează numai resurse compatibile, eliberează lease-urile în
-  `finally` și evacuează resursele la resize/device reset/dispose.
-- [x] Definește explicit contractul prin care o suprafață finalizată poate fi
-  promovată ulterior într-un owner retained, fără ca pool-ul transient să îi
-  recicleze conținutul.
-- [x] Aplică planul de lifetime și peak surfaces calculat backend-neutral;
-  executorul nu recalculează graful ori liveness-ul.
-- [x] Introdu opțiuni publice numai pentru limite măsurabile necesare acum;
-  valorile numerice finale rămân nefixate până la benchmarkurile de hardening.
-  (Nu a fost necesar: limita transient este derivată din
-  `PeakLiveSurfaces`, fără o valoare publică arbitrară.)
-- [x] Adaugă teste pentru reuse, dimensiuni/formate incompatibile, excepții,
-  resize, device reset și bounded growth pe mii de frame-uri.
+- [x] Add `Drawing/MonoGame/Prism/Surfaces/PrismSurfacePool` with typed keys
+  for size, format, samples and color space.
+- [x] Pool reuses only compatible resources, releases leases in
+  `finally` and evacuate resources at resize/device reset/dispose.
+- [x] Explicitly defines the contract by which a finished surface can be
+  subsequently promoted to an owner retained, without the transient pool to them
+  recycle content.
+- [x] Apply the backend-neutral calculated lifetime and peak surfaces plan;
+  the executor does not recalculate the graph or the liveness.
+- [x] Introduce public options only for measurable limits needed now;
+  the final numerical values ​​remain unfixed until the hardening benchmarks.
+  (It was not necessary: the transient limit is derived from
+  `PeakLiveSurfaces`, without an arbitrary public value.)
+- [x] Add tests for reuses, incompatible sizes/formats, exceptions,
+  resize, device reset and bounded growth on thousands of frames.
 
-### Gate etapa 2
+### Gate stage 2
 
-- [x] Contorul de resurse revine la zero lease-uri active după fiecare frame și
-  memoria GPU nu crește necontrolat în testul de stress.
+- [x] The resource counter resets to zero active leases after each frame and
+  GPU memory does not grow uncontrollably in the stress test.
 
-## Etapa 3 — executorul și kernelurile de bază
+## Stage 3 — executor and core kernels
 
-- [x] Adaugă `Drawing/MonoGame/Prism/Execution/PrismGraphExecutor` care consumă
-  exclusiv graful optimizat și planul de suprafețe.
-- [x] Implementează pass-urile fundamentale: capture, copy, clear, normal
-  composite, mask alpha, clip alpha, color conversion și present.
-- [x] Adaugă `PrismKernelRegistry` generat/validat față de catalog, dar
-  înregistrează în această etapă numai kernelurile fundamentale.
-- [x] Centralizează bind-ul parametrilor tipați și convențiile de alpha/UV/pixel
-  size; nu permite string uniforms în bucla per-frame.
-- [x] Evită `GetData`, readback CPU, flush-uri ascunse și crearea de
-  `Effect`/`RenderTarget2D` în timpul unui pass.
-- [x] Leagă erorile de capabilitate de `PrismFallbackPolicy` și diagnostics,
-  fără catch care transformă silențios efectul în alt rezultat.
+- [x] Add `Drawing/MonoGame/Prism/Execution/PrismGraphExecutor` that consumes
+  exclusive of the optimized graph and surface plane.
+- [x] Implements the fundamental passes: capture, copy, clear, normal
+  composite, mask alpha, clip alpha, color conversion and present.
+- [x] Add `PrismKernelRegistry` generated/validated against the catalog, but
+  register only fundamental kernels at this stage.
+- [x] Centralize type parameter bind and alpha/UV/pixel conventions
+  size; does not allow string uniforms in the per-frame loop.
+- [x] Avoid `GetData`, CPU readback, hidden flushes and creating
+  `Effect`/`RenderTarget2D` during a pass.
+- [x] Link capability errors to `PrismFallbackPolicy` and diagnostics,
+  no catch that silently transforms the effect into another result.
 
-### Gate etapa 3
+### Gate stage 3
 
-- [x] O compoziție simplă capturează controlul o singură dată, rulează
-  offscreen și se compune corect fără alocări managed după warmup.
+- [x] A simple composition captures control once, runs
+  offscreen and composes correctly without managed allocations after warmup.
 
-## Etapa 4 — diagnostics și conformance de bază
+## Stage 4 — basic diagnostics and compliance
 
-- [x] Expune intern contoare pentru passes, captures, surfaces create/reused,
-  peak live surfaces, fallback și timp CPU de submit.
-- [x] Adaugă dump determinist al grafului executat și corelare cu
-  `PrismFrameAnalysis`, fără a expune obiecte GPU public.
-- [x] Construiește scene minime de test pentru normal blend, opacity, fill,
-  mask, clip, nested Prism și transform.
-- [x] Capturează rezultatul exclusiv prin API-ul
-  `IWindowPlatform.RenderPng`/WindowsDX și compară-l cu golden-uri versionate,
-  cu profil, alpha și toleranță declarate.
-- [x] Adaugă teste pentru device lost/reset și disposal în timpul navigării.
+- [x] Internally displays counters for passes, captures, surfaces created/reused,
+  peak live surfaces, fallback and CPU time to submit.
+- [x] Add deterministic dump of executed graph and correlation with
+  `PrismFrameAnalysis`, without exposing GPU objects to the public.
+- [x] Build minimal test scenes for normal blend, opacity, fill,
+  mask, clip, nested Prism and transform.
+- [x] Capture the result exclusively through the API
+  `IWindowPlatform.RenderPng`/WindowsDX and compare it with versioned goldens,
+  with profile, alpha and tolerance declared.
+- [x] Add tests for device lost/reset and disposal during navigation.
 
-### Gate etapa 4
+### Gate stage 4
 
-- [x] Testele semantice și imaginile de bază sunt verzi pe WindowsDX, iar
-  diagnostics confirmă lipsa pass-urilor și suprafețelor inutile.
+- [x] Semantic tests and core images are green on WindowsDX again
+  diagnostics confirm the absence of unnecessary passes and surfaces.
 
-## Etapa 5 — API docs și verificare
-
-- [x] Actualizează cu skill-ul `writing-api-documentation`
-  `MonoGameDrawingBackend`, `MonoGameUiHostOptions` și orice contract public
-  schimbat; corectează inclusiv vechea afirmație că backendul nu deține
+## Stage 5 — API docs and verification
+- [x] Updates with the `writing-api-documentation` skill
+  `MonoGameDrawingBackend`, `MonoGameUiHostOptions` and any public contract
+  changed; also corrects the old statement that the backend does not own
   `Begin/End`.
-- [x] Sincronizează `docs-site/documentation/manifest.json`.
-- [x] Rulează reindexarea după fiecare lot C#/proiect.
-- [x] Rulează
+- [x] Sync `docs-site/documentation/manifest.json`.
+- [x] Run reindexing after every C# batch/project.
+- [x] Running
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "MonoGame|Prism"`,
-  `dotnet test .\Cerneala.slnx` și un clean build care recompilă shader-ele.
-- [x] Rulează `git diff --check` și verifică să nu existe binare neexplicate ori
-  shader-e compilate la runtime.
+  `dotnet test .\Cerneala.slnx` and a clean build that recompiles the shaders.
+- [x] Run `git diff --check` and check for unexplained binaries or
+  shaders are compiled at runtime.
 
-## Definiția de gata
+## The definition of done
 
-- [x] Backendul deține și restaurează starea, executorul rulează graful de bază,
-  iar pool-ul este bounded și sigur la excepții/reset.
-- [x] Pipeline-ul shader este reproducibil din checkout curat.
-- [x] Testele GPU de bază, documentația și gate-urile sunt verzi.
+- [x] The backend owns and restores the state, the executor runs the underlying graph,
+  and the pool is bounded and exception/reset safe.
+- [x] The shader pipeline is reproducible from clean checkout.
+- [x] Core GPU tests, documentation and gates are green.

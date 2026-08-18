@@ -41,7 +41,7 @@ Layout participation depends only on `UIElement.Visibility`. Elements with `Visi
 
 Rendering participation requires both `UIElement.IsVisible` and `UIElement.Visibility == Visibility.Visible`. A hidden element still takes layout space, but it is not rendered.
 
-Input and hit-test participation use the same public visibility checks as rendering and also require that the element is not in the internal presence-exiting state. Disabled elements are not filtered by this class; callers such as hit testing and focus policy apply `IsEnabled` separately when that matters.
+Input participation uses the same public visibility checks as rendering and also requires that the element is not in the internal presence-exiting state. Hit-test participation additionally requires `IsHitTestVisible`. Disabled elements are not filtered by this class; callers such as hit testing and focus policy apply `IsEnabled` separately when that matters.
 
 All methods validate the `element` argument with `ArgumentNullException.ThrowIfNull`.
 
@@ -51,7 +51,7 @@ All methods validate the `element` argument with `ArgumentNullException.ThrowIfN
 | `ParticipatesInLayout(UIElement)` | Returns `true` when `element.Visibility` is not `Visibility.Collapsed`. |
 | `ParticipatesInRendering(UIElement)` | Returns `true` when `element.IsVisible` is `true` and `element.Visibility` is `Visibility.Visible`. |
 | `ParticipatesInInput(UIElement)` | Returns `true` when the element is not presence-exiting, `IsVisible` is `true`, and `Visibility` is `Visible`. |
-| `ParticipatesInHitTest(UIElement)` | Returns `true` when the element is not presence-exiting, `IsVisible` is `true`, and `Visibility` is `Visible`. |
+| `ParticipatesInHitTest(UIElement)` | Returns `true` when the element is not presence-exiting, `IsHitTestVisible` is `true`, `IsVisible` is `true`, and `Visibility` is `Visible`. |
 
 ## Participation Rules
 | Element state | Layout | Rendering | Input route | Hit testing |
@@ -60,6 +60,7 @@ All methods validate the `element` argument with `ArgumentNullException.ThrowIfN
 | `IsVisible = true`, `Visibility = Hidden` | Yes | No | No | No |
 | `IsVisible = true`, `Visibility = Collapsed` | No | No | No | No |
 | `IsVisible = false`, `Visibility = Visible` | Yes | No | No | No |
+| `IsHitTestVisible = false`, otherwise visible | Yes | Yes | Yes | No |
 | Presence-exiting element | Based on `Visibility` | Based on `IsVisible` and `Visibility` | No | No |
 
 ## Exceptions

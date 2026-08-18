@@ -50,11 +50,24 @@ six outputs. Coefficients are solved with ridge-regularized least squares.
 Run fitting when a lens model changes, then retain the resulting immutable
 profile as a resource. Do not fit profiles once per rendered frame.
 
+`Fit` uses default options when `options` is `null`. It groups samples by
+`GhostIndex`, orders ghosts by that index, and skips angular regions that have
+fewer than `MinimumSamplesPerRegion` samples. Every ghost must still produce at
+least one region.
+
 ## Methods
 
 | Name | Returns | Description |
 | --- | --- | --- |
 | `Fit(IEnumerable<PrismLensFlareRaySample>, PrismLensProfileFitOptions?)` | `PrismLensProfileResource` | Fits all ghost paths and angular regions. |
+
+## Exceptions
+
+| Exception | Condition |
+| --- | --- |
+| `ArgumentNullException` | `samples` is `null`. |
+| `ArgumentException` | `samples` is empty, or a ghost does not contain enough samples for any fitted angular region. |
+| `ArgumentOutOfRangeException` | `options` contains an unsupported or non-finite value. |
 
 ## See also
 

@@ -2,7 +2,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Ink`
 Assembly/Project: `Cerneala`
-Source: `UI/Ink/StrokeCollection.cs`
+Source: `UI/Ink/StrokeCollectionChangeKind.cs`
 Provides the `Cerneala.UI.Ink.StrokeCollectionChangeKind` API surface.
 ```csharp
 public enum StrokeCollectionChangeKind

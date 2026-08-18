@@ -30,7 +30,7 @@ This document defines the supported Cerneala Developer Preview surface. It is a 
 - Markup/sourcegen syntax beyond the documented `.crn` grammar
 - String-path binding as core hot path
 - Advanced rendering/effects/path rendering/render targets
-- Animation/storyboard expansion
+- Legacy animation/storyboard expansion beyond the current root-owned Motion system
 - Advanced input categories beyond platform-backed seams
 
 These areas may have prototype files or tests, but they are unsupported for Developer Preview samples unless a later plan explicitly promotes them.

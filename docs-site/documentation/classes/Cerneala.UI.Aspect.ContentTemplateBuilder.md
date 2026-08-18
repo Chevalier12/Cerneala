@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Aspect`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Aspect/AspectPackageBuilder.cs`
+Source: `UI/Aspect/ContentTemplateBuilder.cs`
 
 Adds content template definitions to an `AspectPackageBuilder` package composition.
 

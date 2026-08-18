@@ -2,7 +2,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Input`
 Assembly/Project: `Cerneala`
-Source: `UI/Input/StylusInputBridge.cs`
+Source: `UI/Input/StylusInputAction.cs`
 Provides the `Cerneala.UI.Input.StylusInputAction` API surface.
 ```csharp
 public enum StylusInputAction

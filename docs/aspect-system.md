@@ -145,12 +145,12 @@ Definitions added through `AspectPackage.Content(...)` are synchronized into the
 ## Diagnostics
 
 Use `AspectTrace` and `AspectDiagnostics` to inspect winning declarations, rejected declarations, layer, specificity, package origin, slots, variants, states, and token traces.
-# Accesarea partilor unui template
+# Accessing Template Parts
 
-O proprietate observabila a unei parti din template poate fi folosita in `@when` si ca operand in `@if`:
+An observable property of a template part can be used in `@when` and as an operand in `@if`:
 
 ```xml
 @when $scrollViewer.parts.$contentPresenter.IsEnabled
 ```
 
-Forma este `$control.parts.$part.Property`. `parts` este un segment semantic rezervat si se scrie lowercase. Controlul si partea trebuie sa fie declarate local, iar proprietatea finala trebuie sa fie o `UiProperty` descoperita semantic. Observatia se reconecteaza automat cand `ComponentTemplate` este inlocuit.
+The form is `$control.parts.$part.Property`. `parts` is a reserved semantic segment and is written in lowercase. The control and part must be declared locally, and the final property must be a semantically discovered `UiProperty`. The observation reconnects automatically when the `ComponentTemplate` is replaced.

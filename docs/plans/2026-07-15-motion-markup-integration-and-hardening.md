@@ -1,127 +1,126 @@
-# Plan: integrare, diagnostics si hardening pentru Motion markup
+# Plan: integration, diagnostics and hardening for Motion markup
 
-> Data: 2026-07-15
-> Status: finalizat
-> Dependenta: toate celelalte planuri `2026-07-15-motion-markup-*`
-> Scop: dogfood-uim limbajul, inchidem diagnostics/lifecycle/performance si promovam proposal-ul la documentatie implementata.
+> Date: 2026-07-15
+> Status: completed
+> Dependency: all other plans `2026-07-15-motion-markup-*`
+> Purpose: dogfood-we surprise the language, close diagnostics/lifecycle/performance and promote the proposal to the implemented documentation.
 
-## 1. Obiective
+## 1. Objectives
 
-- O singura suprafata coerenta, nu sase feature islands care se saluta din departare.
-- Diagnostics cu source spans precise si generated code lizibil.
-- Dovada prin CernealaPresentation ca un showcase Motion complex poate fi scris predominant in markup.
-- Stress gates pentru leaks, allocations, idle frames si cleanup.
+- One coherent surface, not six feature islands that greet each other from afar.
+- Diagnostics with precise source spans and readable generated code.
+- Proof by CernealaPresentation that a complex Motion showcase can be predominantly written in markup.
+- Stress gates for leaks, allocations, idle frames and cleanup.
 
-## 2. Non-obiective
+## 2. Non-objectives
 
-- Fara extensie VS/LSP completa in acest plan.
-- Fara noi semantics Motion fata de proposal si deciziile Decay acceptate explicit.
-- Fara rescrierea unrelated a CernealaPresentation.
+- No full VS/LSP extension in this plan.
+- No new Motion semantics compared to the proposal and Decay decisions explicitly accepted.
+- No unrelated rewriting of CernealaPresentation.
 
-## 3. Etape de implementare
+## 3. Implementation stages
 
-### Audit etapa 0 - matrice de acoperire
+### Audit stage 0 - coverage matrix
 
-| Constructie publica | Plan proprietar | Test pozitiv | Diagnostic negativ relevant | Rezultat audit |
+| Public construction | Proprietary plan | Positive test | Relevant negative diagnosis | Audit result |
 | --- | --- | --- | --- | --- |
-| `Tween`, `Spring`, Aspect named/inline, `@when`, `@if`, `@on`, `@animate`, `@from`, `@to`, `current`, `$part`, start options | foundation | `UiMarkupGeneratorMotionTests` | acelasi fixture: missing `@to`, property/type/mixer/resource/context/options/event | implementat |
-| `@set`, `@parallel`, `@sequence` si nesting | composition-and-clips | `UiMarkupGeneratorMotionClipTests`, `UiMarkupGeneratorMotionCompositionTests` | valori discrete invalide, empty groups, siblings fara composition, lifecycle cancel | implementat |
-| `MotionClip`, `@run` | composition-and-clips | `UiMarkupGeneratorMotionClipTests` | acelasi fixture: body count/context, missing/wrong target, recursion/direct assignment | implementat |
-| `@parameter` si arguments tipizate | composition-and-clips | `UiMarkupGeneratorMotionParameterTests` | acelasi fixture: duplicate/missing/wrong type/unsupported use | implementat |
-| `@handle`, `as`, `@cancel` | composition-and-clips | `UiMarkupGeneratorMotionHandleTests` | acelasi fixture: undeclared/duplicate/use-before-declaration/clip context | implementat |
-| `@keyframes`, ranges, `hold`, `Step`, `Repeat`, `PingPong`, `@stagger`, spec options | timelines-and-specs | `UiMarkupGeneratorMotionTimelineTests` | acelasi fixture: ranges/overlap/nesting/spec/count/context invalid | implementat |
-| `Decay` | timelines-and-specs | testele de respingere din `UiMarkupGeneratorMotionTimelineTests` | resource-ul si constructorul inline sunt respinse | deferred: runtime-ul nu are execution tipizat fara `@to` decorativ |
-| `@presence` | presence-and-layout | `UiMarkupGeneratorMotionPresenceTests` | acelasi fixture: duplicate/custom endpoints/body/retroactive attach | implementat |
-| `@layout` | presence-and-layout | `UiMarkupGeneratorMotionLayoutTests` | acelasi fixture: mode/crossfade/shared-element/custom sequence | implementat |
-| `@scroll`, `@drag`, `@gesture press` | scroll-and-input | `MotionInputTimelineTests` plus stress/runtime tests din planul proprietar | parser/resolver resping ranges/easing/non-float, drag options si gestures nesustinute | implementat; contractele sourcegen dedicate se intaresc in etapa 1 |
-| `@else`, `$event`, transactions, resursa directa `Motion`, layout programming extensions | explicit in afara limbajului | n/a | unknown/illegal directive si diagnostics de capability/context | absent intentionat; nu exista lowering sau exemplu declarat livrat |
+| `Tween`, `Spring`, Layout named/inline, `@when`, `@if`, `@on`, `@animate`, `@from`, `@to`, `current`, `$part`, start options | foundation | `UiMarkupGeneratorMotionTests` | same fixture: missing `@to`, property/type/mixer/resource/context/options/event | implemented |
+| `@set`, `@parallel`, `@sequence` and nesting | composition-and-clips | `UiMarkupGeneratorMotionClipTests`, `UiMarkupGeneratorMotionCompositionTests` | invalid discrete values, empty groups, siblings without composition, lifecycle cancel | implemented |
+| `MotionClip`, `@run` | composition-and-clips | `UiMarkupGeneratorMotionClipTests` | same fixture: body count/context, missing/wrong target, recursion/direct assignment | implemented |
+| `@parameter` and typed arguments | composition-and-clips | `UiMarkupGeneratorMotionParameterTests` | same fixture: duplicate/missing/wrong type/unsupported use | implemented |
+| `@handle`, `as`, `@cancel` | composition-and-clips | `UiMarkupGeneratorMotionHandleTests` | same fixture: undeclared/duplicate/use-before-declaration/clip context | implemented |
+| `@keyframes`, ranges, `hold`, `Step`, `Repeat`, `PingPong`, `@stagger`, spec options | timelines-and-specs | `UiMarkupGeneratorMotionTimelineTests` | same fixture: invalid ranges/overlap/nesting/spec/count/context | implemented |
+| `Decay` | timelines-and-specs | the rejection tests from `UiMarkupGeneratorMotionTimelineTests` | the resource and the inline constructor are rejected | deferred: the runtime has no typed execution without decorative `@to` |
+| `@presence` | presence-and-layout | `UiMarkupGeneratorMotionPresenceTests` | same fixture: duplicate/custom endpoints/body/retroactive attach | implemented |
+| `@layout` | presence-and-layout | `UiMarkupGeneratorMotionLayoutTests` | same fixture: mode/crossfade/shared-element/custom sequence | implemented |
+| `@scroll`, `@drag`, `@gesture press` | scroll-and-input | `MotionInputTimelineTests` plus stress/runtime tests from the proprietary plan | parser/resolver rejecting ranges/easing/non-float, drag options and unsupported gestures | implemented; dedicated sourcegen contracts are strengthened in stage 1 |
+| `@else`, `$event`, transactions, direct resource `Motion`, layout programming extensions | explicitly outside the language | n/a | unknown/illegal directives and diagnostics of capability/context | intentionally absent; there is no lowering or example declared delivered |
 
-Auditul public API pentru worktree fata de `HEAD` este gol. Paginile care trebuie
-revizuite/sincronizate in etapa 4 pentru suprafata agregata sunt
-`Cerneala.UI.Markup.GeneratedMarkup`,
+Public API audit for worktree against `HEAD` is empty. The right pages
+revised/synchronized in stage 4 for the aggregate surface are
+ZZZ BLACK10ZZZ,
 `Cerneala.UI.Markup.MarkupMotionExecution`,
-`Cerneala.UI.Motion.Input.ScrollMotionBinding<T>` si
-`Cerneala.UI.Motion.Input.DragMotionController`; toate cele patru pagini exista deja
-in `docs-site/documentation/classes/`. Proposal-ul marcheaza explicit drept deferred
-Decay, seek/reverse/scrubbing, ordering Stagger extins, Presence/layout/input options
-fara suport runtime si nu prezinta niciuna dintre ele ca sintaxa livrata.
+`Cerneala.UI.Motion.Input.ScrollMotionBinding<T>` and
+`Cerneala.UI.Motion.Input.DragMotionController`; all four pages already exist
+in `docs-site/documentation/classes/`. The proposal is explicitly marked as deferred
+Decay, seek/reverse/scrubbing, extended Stagger ordering, Presence/layout/input options
+without runtime support and does not present any of them as the delivered syntax.
 
-### Etapa 0 - Audit de suprafata
+### Stage 0 - Surface audit
 
-- [x] Construieste o matrice intre fiecare exemplu/directiva din `motion-markup-syntax-proposal.md`, planul care o implementeaza, testul pozitiv si diagnosticul negativ relevant.
-- [x] Elimina sau marcheaza explicit deferred orice exemplu care nu poate fi coborat la runtime-ul actual; nu lasa syntax decorativ.
-- [x] Confirma absenta `@else`, `$event`, transactions, direct `Motion` resources si layout-programming extensions.
-- [x] Ruleaza public API diff si inventariaza toate paginile `docs-site/documentation/classes/` care trebuie sincronizate.
+- [x] Build a matrix between each example/directive from `motion-markup-syntax-proposal.md`, the plan that implements it, the positive test and the relevant negative diagnosis.
+- [x] Remove or explicitly mark deferred any example that cannot be downloaded at the current runtime; leave no decorative syntax.
+- [x] Confirm the absence of `@else`, `$event`, transactions, direct `Motion` resources and layout-programming extensions.
+- [x] Run the public API diff and inventory all `docs-site/documentation/classes/` pages that need to be synchronized.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Fiecare constructie din proposal este implementata, respinsa cu diagnostic sau marcata explicit deferred cu motiv runtime.
+- [x] Each construction in the proposal is implemented, rejected with diagnosis or marked explicitly deferred with a runtime reason.
 
-### Etapa 1 - Diagnostics si generated source quality
+### Stage 1 - Diagnostics and generated source quality
 
-- [x] Stabileste IDs si mesaje distincte pentru syntax, target resolution, event resolution, property/spec typing, composition, lifecycle-only directives si unsupported runtime capability.
-- [x] Mapeaza fiecare diagnostic la tokenul/directiva exacta din `.crn`, inclusiv resources referenced din alt scope.
-- [x] Emite generated members cu names stabile si `#line`/source mapping unde infrastructura generatorului permite, fara sa sacrifice debugging-ul C#. (Names sunt deterministe si acoperite contractual; `#line` nu a fost adaugat peste metoda factory comuna, deoarece ar mapa gresit statements din noduri XML intercalate si ar degrada debugging-ul C#.)
-- [x] Adauga snapshot/contract tests pentru codul generat: fara reflection, dynamic, per-frame lookup dupa string sau closures recreate la fiecare tick.
-- [x] Adauga diagnostics suggestions pentru `TargetType` prea general si custom event gasit pe tipul concret.
-- [x] Reindexeaza solutia.
+- [x] Establish distinct IDs and messages for syntax, target resolution, event resolution, property/spec typing, composition, lifecycle-only directives and unsupported runtime capability.
+- [x] Map each diagnosis to the exact token/directive in `.crn`, including resources referenced from another scope.
+- [x] Issue generated members with stable names and `#line`/source mapping where the generator infrastructure allows, without sacrificing C# debugging. (Names are deterministic and contractually covered; `#line` was not added over the common factory method, because it would incorrectly map statements from interleaved XML nodes and degrade C# debugging.)
+- [x] Add snapshot/contract tests for generated code: without reflection, dynamic, per-frame lookup by string or closures recreated at each tick.
+- [x] Add diagnostics suggestions for too general `TargetType` and custom event found on the concrete type.
+- [x] Reindex the solution.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] Un utilizator poate localiza eroarea din mesaj si source span fara sa citeasca generated C# ca pe zațul din cafea.
+- [x] A user can locate the error in the message and source span without reading generated C# like coffee grounds.
 
-### Etapa 2 - Dogfood in CernealaPresentation
+### Stage 2 - Dogfood in CernealaPresentation
 
-- [x] Migreaza un behavior mic hover/event la foundation syntax si verifica echivalenta vizuala.
-- [x] Migreaza Motion view/showcase la `Aspect`, `MotionClip`, `@set`, composition si handles pe masura ce suprafetele devin disponibile; inclusiv replay-ul si starile lui discrete sunt integral in markup, fara orchestration code-behind.
-- [x] Foloseste cel putin un custom event pentru a demonstra static `@on` wiring si un attach/detach cycle real.
-- [x] Foloseste Layout sau Presence numai daca showcase-ul are un caz natural; nu adauga decoratii doar ca sa bifam API-uri. (Nu a fost necesar: Motion Lab nu insereaza/elimina sau reparenteaza elemente.)
-- [x] Ruleaza automatizarea existenta din `PresentationWindow.Automation.cs` si compara screenshots/behavior cu baseline-ul acceptat. (2 cicluri complete, 15 samples, fara eroare; captura Motion Lab 1125x765 a pastrat geometria/paleta si nu are overlap.)
-- [x] Reindexeaza solutia.
+- [x] Migrate a small hover/event behavior to foundation syntax and check the visual equivalence.
+- [x] Migrate Motion view/showcase to `Aspect`, `MotionClip`, `@set`, composition and handles as the surfaces become available; including the replay and its discrete states are fully in the markup, without code-behind orchestration.
+- [x] Use at least one custom event to demonstrate static `@on` wiring and a real attach/detach cycle.
+- [x] Use Layout or Presence only if the showcase has a natural case; don't add decorations just to tick off APIs. (It wasn't necessary: Motion Lab doesn't insert/remove or reparent elements.)
+- [x] Run the existing automation from `PresentationWindow.Automation.cs` and compare screenshots/behavior with the accepted baseline. (2 complete cycles, 15 samples, no error; the Motion Lab 1125x765 capture kept the geometry/palette and has no overlap.)
+- [x] Reindex the solution.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] Showcase-ul complex nu necesita manual handle orchestration in code-behind pentru lucrurile reprezentabile in markup.
+- [x] The complex showcase does not require manual handle orchestration in the code-behind for the things representable in the markup.
 
-### Etapa 3 - Lifecycle si memory stress
+### Stage 3 - Lifecycle and memory stress
 
-- [x] Adauga un test integrat cu 100 cicluri attach/detach/reattach pentru Aspect cu `@when`, custom `@on`, active clip, handle, Presence, Scroll si Drag unde se aplica.
-- [x] Verifica dupa settle/GC ca Motion graph active nodes, event subscriptions, observations, controllers si retained elements revin la baseline.
-- [x] Adauga rapid Next/Previous-style restart/cancel stress pentru a preveni regresia de memorie observata in CernealaPresentation.
-- [x] Adauga idle-frame assertions: fara active/infinite motion, markup behavior nu cere frames si nu produce layout/render invalidation.
-- [x] Adauga allocation budget dupa warmup pentru hover/event restart si scroll update. (Warmup 64, 1.000 interactiuni masurate, plafon 40 MB si stabilitate intre cele doua jumatati; baseline local observat ~28,2 MB.)
-- [x] Reindexeaza solutia.
+- [x] Add an integrated test with 100 attach/detach/reattach cycles for Aspect with `@when`, custom `@on`, active clip, handle, Presence, Scroll and Drag where applicable.
+- [x] Check after settle/GC that Motion graph active nodes, event subscriptions, observations, controllers and retained elements return to the baseline.
+- [x] Quickly add Next/Previous-style restart/cancel stress to prevent memory regression seen in CernealaPresentation.
+- [x] Add idle-frame assertions: without active/infinite motion, markup behavior does not require frames and does not produce layout/render invalidation.
+- [x] Add allocation budget after warmup for hover/event restart and scroll update. (Warmup 64, 1,000 measured interactions, 40 MB ceiling and stability between the two halves; observed local baseline ~28.2 MB.)
+- [x] Reindex the solution.
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] Stress tests sunt deterministe si GREEN; cresterea tranzitorie a heap-ului se stabilizeaza si nu corespunde unor owners retinuti. (27 teste lifecycle/runtime relevante GREEN, inclusiv cele 2 gate-uri integrate noi.)
+- [x] Stress tests are deterministic and GREEN; the transient growth of the heap stabilizes and does not correspond to retained owners. (27 relevant GREEN lifecycle/runtime tests, including the 2 new integrated gates.)
 
-### Etapa 4 - Documentatie si tooling contract
+### Stage 4 - Documentation and tooling contract
+- [x] Transform the proposal into implemented language documentation or keep separately a clearly marked deferred section; eliminate the formulation of the proposal for what is delivered. (The historical file remains at the same path for link compatibility, but the title and content are language reference; the undelivered surface is isolated under `Deferred Surface`.)
+- [x] Documents grammar, ownership, event semantics, no-reflection lowering, lifecycle, cancellation and all runtime limitations.
+- [x] Update Motion/API docs and all public API pages using the `writing-api-documentation` skill; synchronize the manifest. (The four inventoried pages were synchronized; their entries already existed in the manifest, so no JSON modification was necessary.)
+- [x] Add a machine-readable table or a unique grammar used/tested by the generator that can later feed syntax highlighting/completion; do not manually duplicate keywords in two unvalidated sources. (`MotionMarkupLanguage.DirectiveNames` is consumed by the parser and fully traversed by the contractual test.)
+- [x] Document requirements for future tooling: completion, hover types, go-to-definition, rename, quick fixes and generated-code preview, without declaring them implemented.
+- [x] Reindex the solution.
 
-- [x] Transforma proposal-ul in documentatie de limbaj implementat sau pastreaza separat o sectiune clar marcata deferred; elimina formularea de proposal pentru ce este livrat. (Fisierul istoric ramane la acelasi path pentru link compatibility, dar titlul si continutul sunt language reference; suprafata nelivrata este izolata sub `Deferred Surface`.)
-- [x] Documenteaza grammar, ownership, event semantics, no-reflection lowering, lifecycle, cancellation si toate limitarile runtime.
-- [x] Actualizeaza docs Motion/API si toate public API pages folosind skill-ul `writing-api-documentation`; sincronizeaza manifestul. (Cele patru pagini inventariate au fost sincronizate; intrarile lor existau deja in manifest, deci nu a fost necesara modificarea JSON.)
-- [x] Adauga un tabel machine-readable sau o gramatica unica folosita/testata de generator care poate alimenta ulterior syntax highlighting/completion; nu duplica manual keywords in doua surse nevalidate. (`MotionMarkupLanguage.DirectiveNames` este consumat de parser si parcurs integral de testul contractual.)
-- [x] Documenteaza requirements pentru viitorul tooling: completion, hover types, go-to-definition, rename, quick fixes si generated-code preview, fara a le declara implementate.
-- [x] Reindexeaza solutia.
+**Gate Stage 4**
 
-**Gate etapa 4**
+- [x] The documentation and the generator do not contradict each other for any public example. (161 sourcegen Motion GREEN tests, including directive table contract.)
 
-- [x] Documentatia si generatorul nu se contrazic pentru niciun exemplu public. (161 teste sourcegen Motion GREEN, inclusiv contractul tabelului de directive.)
+### Stage 5 - Final check
 
-### Etapa 5 - Verificare finala
+- [x] Runs `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`. (329 passed, 0 failed, 0 skipped.)
+- [x] Runs `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj`. (1,899 passed, 0 failed, 0 skipped.)
+- [x] Runs `dotnet test .\Cerneala.slnx`. (1,899 runtime + 329 sourcegen passed, 0 failed, 0 skipped.)
+- [x] Runs the CernealaPresentation smoke and visual inspection/automation of the migrated showcase. (The final cycle has 8 samples/8 chapters without error report; Motion in-flight capture 1650x990 confirms stable layout, discrete states generated by `@set` and active animations without overlap.)
+- [x] Run `git diff --check`, public API diff and RoslynIndexer `doctor/status` after final indexing. (`diff --check` clean, runtime public API diff empty, indexing has 0 warnings; `doctor/status` reports expected `stale` only because the worktree has modified uncommitted files.)
+- [x] Confirm that there are no new skipped tests, new warnings or generated source with reflection/dynamic. (0 skipped, build/test without warnings; the generated source contract prohibits reflection, `dynamic`, string lookup and tick closures.)
 
-- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`. (329 passed, 0 failed, 0 skipped.)
-- [x] Ruleaza `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj`. (1.899 passed, 0 failed, 0 skipped.)
-- [x] Ruleaza `dotnet test .\Cerneala.slnx`. (1.899 runtime + 329 sourcegen passed, 0 failed, 0 skipped.)
-- [x] Ruleaza smoke-ul CernealaPresentation si inspectia vizuala/automation a showcase-ului migrat. (Ciclul final are 8 samples/8 chapters fara error report; captura Motion in-flight 1650x990 confirma layout stabil, starile discrete generate de `@set` si animatiile active fara overlap.)
-- [x] Ruleaza `git diff --check`, public API diff si RoslynIndexer `doctor/status` dupa indexarea finala. (`diff --check` curat, runtime public API diff gol, indexarea are 0 warnings; `doctor/status` raporteaza asteptat `stale` doar fiindca worktree-ul are fisiere necomise modificate.)
-- [x] Confirma ca nu exista tests skipped noi, warnings noi sau generated source cu reflection/dynamic. (0 skipped, build/test fara warnings; contractul generated source interzice reflection, `dynamic`, string lookup si tick closures.)
+## 4. The definition of ready
 
-## 4. Definitia de gata
-
-- [x] Toata sintaxa acceptata este tipizata, source-generated, diagnosticata si demonstrata intr-o aplicatie reala.
-- [x] Events custom, observations, clips, handles si input controllers se detaseaza complet.
-- [x] Performance gates demonstreaza zero work in idle si lipsa cresterii necontrolate la repeated interaction.
-- [x] Tooling-ul viitor are un contract stabil de grammar/symbols/diagnostics pe care poate construi, fara sa ghiceasca limbajul.
-- [x] Motion markup este suficient de coerent incat WPF poate incepe sa planga regulamentar.
+- [x] All supported syntax is typed, source-generated, diagnosed and demonstrated in a real application.
+- [x] Custom events, observations, clips, handles and input controllers are completely detachable.
+- [x] Performance gates demonstrate zero work in idle and lack of uncontrolled growth at repeated interaction.
+- [x] The future tooling has a stable grammar/symbols/diagnostics contract that it can build on, without guessing the language.
+- [x] Motion markup is coherent enough that WPF can start crying regularly.

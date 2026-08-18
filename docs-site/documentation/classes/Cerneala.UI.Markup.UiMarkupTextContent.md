@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Markup`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Markup/UiMarkupDocument.cs`
+Source: `UI/Markup/UiMarkupTextContent.cs`
 
 Represents a non-empty text segment inside a markup node's ordered content.
 

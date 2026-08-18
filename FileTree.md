@@ -1327,97 +1327,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Theming.ThemePalette.md
 |   |   |   |-- Cerneala.UI.Theming.ThemeProvider.md
 |   |   |   |-- Cerneala.UI.Theming.ThemeResource_T_.md
-|   |   |   |-- Cerneala.VisualStudio.CernealaPackage.md
-|   |   |   |-- RoslynRepoIndexer.Core.CallGraphDirection.md
-|   |   |   |-- RoslynRepoIndexer.Core.CallGraphEdge.md
-|   |   |   |-- RoslynRepoIndexer.Core.CallGraphNode.md
-|   |   |   |-- RoslynRepoIndexer.Core.CallGraphResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.CandidateFile.md
-|   |   |   |-- RoslynRepoIndexer.Core.ChangeComparison.md
-|   |   |   |-- RoslynRepoIndexer.Core.ChangedFile.md
-|   |   |   |-- RoslynRepoIndexer.Core.ChangedSymbol.md
-|   |   |   |-- RoslynRepoIndexer.Core.CommandResponse_T_.md
-|   |   |   |-- RoslynRepoIndexer.Core.CommandResponse.md
-|   |   |   |-- RoslynRepoIndexer.Core.ConfigLoadResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.ContextResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.DiagnosticsCollector.md
-|   |   |   |-- RoslynRepoIndexer.Core.DoctorCheck.md
-|   |   |   |-- RoslynRepoIndexer.Core.DoctorService.md
-|   |   |   |-- RoslynRepoIndexer.Core.DoctorSummary.md
-|   |   |   |-- RoslynRepoIndexer.Core.DocumentEntry.md
-|   |   |   |-- RoslynRepoIndexer.Core.DocumentState.md
-|   |   |   |-- RoslynRepoIndexer.Core.ExactReferenceService.md
-|   |   |   |-- RoslynRepoIndexer.Core.FileReadCommandRequest.md
-|   |   |   |-- RoslynRepoIndexer.Core.HumanOutputWriter.md
-|   |   |   |-- RoslynRepoIndexer.Core.ImpactLink.md
-|   |   |   |-- RoslynRepoIndexer.Core.ImpactResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexBuilder.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexCommandRequest.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexDiagnostics.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexGenerationStamp.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexManifest.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexReader.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexSnapshot.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexStatus.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexStore.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexSummary.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexTimingSummary.md
-|   |   |   |-- RoslynRepoIndexer.Core.IndexUnavailableException.md
-|   |   |   |-- RoslynRepoIndexer.Core.InspectInclude.md
-|   |   |   |-- RoslynRepoIndexer.Core.InspectResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.IRoslynIndexerApplicationService.md
-|   |   |   |-- RoslynRepoIndexer.Core.JsonOutputWriter.md
-|   |   |   |-- RoslynRepoIndexer.Core.LoadedWorkspace.md
-|   |   |   |-- RoslynRepoIndexer.Core.MSBuildRegistration.md
-|   |   |   |-- RoslynRepoIndexer.Core.NoCSharpDocumentsException.md
-|   |   |   |-- RoslynRepoIndexer.Core.OutlineItem.md
-|   |   |   |-- RoslynRepoIndexer.Core.OutlineResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.ParsedQuery.md
-|   |   |   |-- RoslynRepoIndexer.Core.PartialFileReadCommandRequest.md
-|   |   |   |-- RoslynRepoIndexer.Core.PathCommandRequest.md
-|   |   |   |-- RoslynRepoIndexer.Core.ProjectEntry.md
-|   |   |   |-- RoslynRepoIndexer.Core.QueryIndex.md
-|   |   |   |-- RoslynRepoIndexer.Core.ReferenceCollector.md
-|   |   |   |-- RoslynRepoIndexer.Core.ReferenceEntry.md
-|   |   |   |-- RoslynRepoIndexer.Core.RefsCommandRequest.md
-|   |   |   |-- RoslynRepoIndexer.Core.RepositoryFileReadException.md
-|   |   |   |-- RoslynRepoIndexer.Core.RepositoryFileReadResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.RepositoryIndexSession.md
-|   |   |   |-- RoslynRepoIndexer.Core.RepositoryPartialFileReadResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.RepositoryRoot.md
-|   |   |   |-- RoslynRepoIndexer.Core.RepositoryRootKind.md
-|   |   |   |-- RoslynRepoIndexer.Core.RepositorySessionMetrics.md
-|   |   |   |-- RoslynRepoIndexer.Core.RepositorySessionRegistry.md
-|   |   |   |-- RoslynRepoIndexer.Core.RepositoryWorkspaceSession.md
-|   |   |   |-- RoslynRepoIndexer.Core.RoslynIndexerApplicationService.md
-|   |   |   |-- RoslynRepoIndexer.Core.SearchCommandRequest.md
-|   |   |   |-- RoslynRepoIndexer.Core.SearchExecution.md
-|   |   |   |-- RoslynRepoIndexer.Core.SearchMode.md
-|   |   |   |-- RoslynRepoIndexer.Core.SearchRequest.md
-|   |   |   |-- RoslynRepoIndexer.Core.SearchResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.SearchScore.md
-|   |   |   |-- RoslynRepoIndexer.Core.SearchScorer.md
-|   |   |   |-- RoslynRepoIndexer.Core.SearchService.md
-|   |   |   |-- RoslynRepoIndexer.Core.SegmentPersistenceSummary.md
-|   |   |   |-- RoslynRepoIndexer.Core.SemanticChangeKind.md
-|   |   |   |-- RoslynRepoIndexer.Core.SemanticChangeService.md
-|   |   |   |-- RoslynRepoIndexer.Core.SemanticChangesResult.md
-|   |   |   |-- RoslynRepoIndexer.Core.SemanticQueryService.md
-|   |   |   |-- RoslynRepoIndexer.Core.SourceSpanSummary.md
-|   |   |   |-- RoslynRepoIndexer.Core.StatusSummary.md
-|   |   |   |-- RoslynRepoIndexer.Core.SymbolCollector.md
-|   |   |   |-- RoslynRepoIndexer.Core.SymbolEntry.md
-|   |   |   |-- RoslynRepoIndexer.Core.SymbolIdProvider.md
-|   |   |   |-- RoslynRepoIndexer.Core.SymbolQueryCommandRequest.md
-|   |   |   |-- RoslynRepoIndexer.Core.SymbolQueryException.md
-|   |   |   |-- RoslynRepoIndexer.Core.SymbolSummary.md
-|   |   |   |-- RoslynRepoIndexer.Core.TestCandidate.md
-|   |   |   |-- RoslynRepoIndexer.Core.TextIndexer.md
-|   |   |   |-- RoslynRepoIndexer.Core.TokenPosting.md
-|   |   |   |-- RoslynRepoIndexer.Core.TokenValue.md
-|   |   |   |-- RoslynRepoIndexer.Core.WorkspaceInput.md
-|   |   |   |-- RoslynRepoIndexer.Core.WorkspaceLoader.md
-|   |   |   +-- RoslynRepoIndexer.Core.WorkspaceLoadingException.md
+|   |   |   +-- Cerneala.VisualStudio.CernealaPackage.md
 |   |   +-- manifest.json
 |   |-- .nojekyll
 |   |-- about.css
@@ -3429,6 +3339,7 @@ Generated from `.`.
 |-- Cerneala.slnx
 |-- ClassChecklist.md
 |-- ConceptualIdeas.md
+|-- DOCUMENTATION_CHECKLIST.md
 |-- GameBootstrap.cs
 |-- global.json
 |-- LICENSE

@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Markup`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Markup/UiMarkupDocument.cs`
+Source: `UI/Markup/UiMarkupNode.cs`
 
 Represents one parsed or programmatically-created UI markup element, including its name, attributes, ordered content, child nodes, text, and optional source location.
 

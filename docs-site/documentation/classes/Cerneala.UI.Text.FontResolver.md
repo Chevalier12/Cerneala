@@ -65,7 +65,7 @@ sealed record DemoFont(string FamilyName, float Size) : IDrawFont;
 - From a `TextAspect`, using `TextAspect.FontResourceId` when present or `TextAspect.FontFamily` with `TextAspect.FontSize * TextAspect.Scale` otherwise.
 - From a `ResourceId<FontResource>`, when the resolver was constructed with an `IResourceProvider`.
 
-When no `IFontSource` is supplied, family-name resolution creates a deterministic fallback `IDrawFont` that stores only the requested family name and size. The fallback does not perform global font lookup or rasterization by itself.
+The parameterless constructor uses `SystemFontSource`, so family-name resolution performs the normal system-font lookup used by the drawing stack. A deterministic fallback `IDrawFont` is used only when the two-parameter constructor is given a `null` font source, for example `new FontResolver(null, null)`; it stores only the requested family name and size and does not perform global font lookup or rasterization by itself.
 
 When an `IFontSource` is supplied, `Resolve(string, float)` delegates directly to `IFontSource.LoadFont`. If that source returns `null`, `ResolvedTextFont` throws `ArgumentNullException`; `FontResolver` does not silently fall back.
 
@@ -74,7 +74,7 @@ Resource-backed resolution requires an `IResourceProvider`. If the provider is a
 ## Constructors
 | Name | Description |
 | --- | --- |
-| `FontResolver()` | Creates a resolver with no font source and no resource provider. Family-name resolution uses the deterministic fallback font. |
+| `FontResolver()` | Creates a resolver backed by the default `SystemFontSource`; it has no resource provider. |
 | `FontResolver(IFontSource fontSource)` | Creates a resolver that loads family-name requests through `fontSource`. Throws `ArgumentNullException` when `fontSource` is `null`. |
 | `FontResolver(IResourceProvider resourceProvider)` | Creates a resolver that can resolve `FontResource` values. Throws `ArgumentNullException` when `resourceProvider` is `null`. |
 | `FontResolver(IFontSource? fontSource, IResourceProvider? resourceProvider)` | Creates a resolver with optional family-name and resource-backed font services. `null` values are accepted. |
@@ -82,12 +82,12 @@ Resource-backed resolution requires an `IResourceProvider`. If the provider is a
 ## Properties
 | Name | Description |
 | --- | --- |
-| `Default` | Gets a shared resolver constructed with no font source and no resource provider. |
+| `Default` | Gets a shared resolver constructed with the default `SystemFontSource` and no resource provider. |
 
 ## Methods
 | Name | Description |
 | --- | --- |
-| `Resolve(string familyName, float size)` | Resolves a font by family name and size. Throws `ArgumentException` for empty or whitespace family names, and `ArgumentOutOfRangeException` for non-positive or non-finite sizes. |
+| `Resolve(string familyName, float size)` | Resolves a font by family name and size through the configured font source, or creates the deterministic fallback when no source is configured. Throws `ArgumentException` for empty or whitespace family names, and `ArgumentOutOfRangeException` for non-positive or non-finite sizes. |
 | `Resolve(TextAspect aspect)` | Resolves the font described by `aspect`. A font resource id takes precedence over family name and scaled font size. |
 | `Resolve(ResourceId<FontResource> id)` | Resolves a `FontResource` through the configured resource provider. Throws `InvalidOperationException` when no provider is configured, and `KeyNotFoundException` when the resource provider cannot find the resource. |
 

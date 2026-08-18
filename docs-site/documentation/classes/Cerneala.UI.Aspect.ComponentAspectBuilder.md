@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Aspect`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Aspect/AspectPackageBuilder.cs`
+Source: `UI/Aspect/ComponentAspectBuilder.cs`
 
 Collects component aspect rule sets and component template definitions while configuring an `AspectPackageBuilder`.
 

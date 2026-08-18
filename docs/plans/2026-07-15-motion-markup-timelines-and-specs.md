@@ -1,98 +1,98 @@
-# Plan: keyframes, repeat, ping-pong, stagger si specs avansate
+# Plan: keyframes, repeat, ping-pong, stagger and advanced specs
 
-> Data: 2026-07-15
-> Status: finalizat
-> Dependenta: `docs/plans/2026-07-15-motion-markup-foundation.md`, `docs/plans/2026-07-15-motion-markup-composition-and-clips.md`
-> Scop: expunem numai timeline/spec semantics sustinute real de runtime si respingem combinatiile care ar minti utilizatorul.
+> Date: 2026-07-15
+> Status: completed
+> Dependency: `docs/plans/2026-07-15-motion-markup-foundation.md`, `docs/plans/2026-07-15-motion-markup-composition-and-clips.md`
+> Purpose: we expose only timeline/spec semantics actually supported by the runtime and reject combinations that would deceive the user.
 
 ## 1. Contract
 
-`KeyframesSpec<T>` cere frames la offset 0 si 1 si avanseaza automat pe o durata finita. Nu are seek, reverse sau progress extern. Repeat/PingPong infasoara numai `TweenSpec<T>`. `MotionStagger` calculeaza exclusiv `offset * index`.
+`KeyframesSpec<T>` requests frames at offset 0 and 1 and advances automatically for a finite duration. It has no seek, reverse or external progress. Repeat/PingPong wraps only `TweenSpec<T>`. `MotionStagger` calculates exclusively `offset * index`.
 
-Decay ramane o problema explicita: `DecaySpec<T>` foloseste velocity si ignora destinatia `to` primita de sampler. Nu se va introduce o forma `@animate` care afiseaza un `@to` mincinos. Contractul declarativ Decay trebuie inchis printr-o decizie documentata si teste inainte de emitere.
+Decay remains an explicit problem: `DecaySpec<T>` uses velocity and ignores the destination `to` received by the sampler. A form `@animate` that displays a false `@to` will not be entered. The Decay declarative contract must be closed through a documented decision and tests before issuance.
 
-**Decizie Decay:** markup-ul Decay ramane deferred. Nu acceptam nici resource `Decay`, nici constructor inline in aceasta verticala, deoarece toate execution-urile de proprietate disponibile cer `@to`, iar `DecaySpec<T>` ignora acel endpoint. O sintaxa viitoare trebuie sa porneasca explicit de la valoarea vizuala curenta si o velocity tipizata, fara `@to`, dupa ce runtime-ul ofera un execution contract dedicat.
+**Decay decision:** the Decay markup remains deferred. We do not accept either resource `Decay` or inline constructor in this vertical, because all available property executions require `@to`, and `DecaySpec<T>` ignores that endpoint. A future syntax must explicitly start from the current visual value and a typed velocity, without `@to`, after the runtime provides a dedicated execution contract.
 
-## 2. Etape de implementare
+## 2. Implementation stages
 
-### Etapa 0 - Caracterizare runtime si diagnostics RED
+### Stage 0 - Runtime characterization and RED diagnostics
 
-- [x] Adauga/completeaza teste runtime pentru boundaries Keyframes, gap retention, duplicate offsets, Hold, StepEasing si completion value.
-- [x] Pastreaza testele Repeat/PingPong pentru cycle count si final value par/impar ca plasa de siguranta.
-- [x] Adauga teste sourcegen RED pentru ranges invalide, overlap pe aceeasi proprietate, overlap legal pe proprietati diferite, Spring/Decay in keyframes si nested groups ilegale.
-- [x] Adauga teste RED pentru restrictiile Repeat/PingPong la Tween si Stagger la un singur Tween `@animate`.
-- [x] Scrie in acest plan, inainte de implementarea Decay markup, forma acceptata si motivul pentru care nu cere un endpoint ignorat; daca decizia nu exista, mentine Decay markup deferred. (Decay markup ramane deferred: runtime-ul nu are execution fara endpoint.)
-- [x] Reindexeaza solutia.
+- [x] Adds/completes runtime tests for boundaries Keyframes, gap retention, duplicate offsets, Hold, StepEasing and completion value.
+- [x] Keep the Repeat/PingPong tests for cycle count and final value even/odd as a safety net.
+- [x] Add sourcegen RED tests for invalid ranges, overlap on the same property, legal overlap on different properties, Spring/Decay in keyframes and illegal nested groups.
+- [x] Add RED tests for Repeat/PingPong restrictions to Tween and Stagger to a single Tween `@animate`.
+- [x] Write in this plan, before implementing Decay markup, the accepted form and the reason why it does not ask for an ignored endpoint; if the decision does not exist, keep Decay markup deferred. (Decay markup remains deferred: the runtime has no execution without an endpoint.)
+- [x] Reindex the solution.
 
-**Gate etapa 0**
+**Gate Stage 0**
 
-- [x] Fiecare constructie poate fi coborata la un API runtime real fara camp decorativ sau comportament inventat.
+- [x] Each construct can be downgraded to a real runtime API without decorative field or invented behavior.
 
-### Etapa 1 - Keyframes timeline
+### Stage 1 - Keyframes timeline
 
-- [x] Parseaza `@keyframes duration` cu copii exclusiv ranged `@animate start%..end%`.
-- [x] Grupeaza segmentele per target property si construieste un singur `KeyframesSpec<T>` per proprietate.
-- [x] Insereaza frames sintetice la 0/1 si la marginile gap-urilor astfel incat runtime-ul sa retina ultima valoare exact cum spune proposal-ul.
-- [x] Respinge ranges goale, inversate, in afara intervalului si overlaps pe aceeasi target property; permite boundary comun.
-- [x] Permite Tween easing si `Step(...)`; respinge Spring, Decay, Repeat si PingPong in ranged children. (`Step(...)` este inchis complet in etapa 2.)
-- [x] Emite timeline-ul ca execution body compatibil cu composition si MotionClip.
-- [x] Reindexeaza solutia.
+- [x] Parses `@keyframes duration` with exclusively ranged children `@animate start%..end%`.
+- [x] Group the segments per target property and build a single `KeyframesSpec<T>` per property.
+- [x] Inserts synthetic frames at 0/1 and at the edges of the gaps so that the runtime retains the last value exactly as the proposal says.
+- [x] Rejects empty, inverted, out-of-range ranges and overlaps on the same target property; allow common boundary.
+- [x] Allows Tween easing and `Step(...)`; rejects Spring, Decay, Repeat and PingPong in ranged children. (`Step(...)` is completely closed in stage 2.)
+- [x] Emits the timeline as an execution body compatible with composition and MotionClip.
+- [x] Reindex the solution.
 
-**Gate etapa 1**
+**Gate stage 1**
 
-- [x] Timeline-urile din proposal au values exacte la 0%, boundaries, gaps si 100% sub `ManualMotionTimeline`/clock de test.
+- [x] The timelines in the proposal have exact values at 0%, boundaries, gaps and 100% under `ManualMotionTimeline`/test clock.
 
-### Etapa 2 - Hold si steps
+### Stage 2 - Hold and steps
 
-- [x] Mapeaza `hold` la `MotionKeyframe<T>.Hold` pe segmentul corect, fara sa il confunde cu `holdOnComplete`.
-- [x] Mapeaza `Step(count, JumpStart|JumpEnd|JumpBoth|JumpNone)` la `StepEasing` si valideaza count/options la build.
-- [x] Adauga teste care diferentiaza sampling hold de persistence dupa completion.
-- [x] Adauga diagnostics pentru steps/hold in afara keyframes.
-- [x] Reindexeaza solutia.
+- [x] Maps `hold` to `MotionKeyframe<T>.Hold` on the correct segment, without confusing it with `holdOnComplete`.
+- [x] Map `Step(count, JumpStart|JumpEnd|JumpBoth|JumpNone)` to `StepEasing` and validate count/options at build.
+- [x] Add tests that differentiate sampling hold from persistence after completion.
+- [x] Add diagnostics for steps/hold outside keyframes.
+- [x] Reindex the solution.
 
-**Gate etapa 2**
+**Gate stage 2**
 
-- [x] `hold` schimba numai sampling-ul segmentului; `holdOnComplete` ramane singurul control al value-source persistence.
+- [x] `hold` only changes the sampling of the segment; `holdOnComplete` remains the only control of value-source persistence.
 
-### Etapa 3 - Repeat si PingPong
+### Stage 3 - Repeat and PingPong
 
-- [x] Parseaza `Repeat(Tween(...), count|forever)` si `PingPong(Tween(...), cycles)` ca spec constructors, nu execution nodes.
-- [x] Specializeaza wrappers la `TweenSpec<T>` si respinge Spring/Decay/clip/group arguments.
-- [x] Valideaza count pozitiv si PingPong finit; documenteaza reduced-motion pentru repeat forever.
-- [x] Adauga teste generated-code + runtime pentru odd/even completion si cancellation infinite.
-- [x] Reindexeaza solutia.
+- [x] Parse `Repeat(Tween(...), count|forever)` and `PingPong(Tween(...), cycles)` as spec constructors, not execution nodes.
+- [x] Specializes wrappers to `TweenSpec<T>` and rejects Spring/Decay/clip/group arguments.
+- [x] Validates positive count and finished PingPong; document reduced-motion for repeat forever.
+- [x] Add generated-code + runtime tests for odd/even completion and infinite cancellation.
+- [x] Reindex the solution.
 
-**Gate etapa 3**
+**Gate stage 3**
 
-- [x] Even PingPong termina la `@from`, odd la `@to`, inclusiv prin property binding.
+- [x] Even PingPong ends at `@from`, odd at `@to`, including through property binding.
 
-### Etapa 4 - Stagger
+### Stage 4 - Stagger
 
-- [x] Parseaza restricted `@stagger target ... each ...` cu exact un Tween-based `@animate`.
-- [x] Rezolva colectia si item type static, face snapshot la execution start si aplica `WithDelay(offset * index)`.
-- [x] Respinge reverse/center ordering, Spring, arbitrary sequence si mutation-driven rescheduling.
-- [x] Adauga teste pentru empty collection, snapshot mutation, cancellation si cleanup.
-- [x] Reindexeaza solutia.
+- [x] Parse restricted `@stagger target ... each ...` with exactly one Tween-based `@animate`.
+- [x] Resolves the static collection and item type, takes a snapshot at execution start and applies `WithDelay(offset * index)`.
+- [x] Rejects reverse/center ordering, Spring, arbitrary sequence and mutation-driven rescheduling.
+- [x] Add tests for empty collection, snapshot mutation, cancellation and cleanup.
+- [x] Reindex the solution.
 
-**Gate etapa 4**
+**Gate Stage 4**
 
-- [x] Stagger nu introduce scheduler paralel si nu enumera colectia pe fiecare frame.
+- [x] Stagger does not introduce a parallel scheduler and does not enumerate the collection on each frame.
 
-### Etapa 5 - Spec options si Decay gate
+### Stage 5 - Spec options and Decay gate
 
-- [x] Parseaza Tween `Delay`, `FillMode` si Spring `RestSpeed`, `RestDelta`, `VelocityMode`, pastrand nota ca property retarget nu foloseste astazi sampler retarget pentru velocity preservation.
-- [x] Valideaza Decay `ValueType`, typed `InitialVelocity`, `Deceleration`, bounds pereche, comparability si Bounce spec type. (Neaplicabil dupa Gate 0: forma intreaga este respinsa inainte de validarea optiunilor, nu partial acceptata.)
-- [x] Implementeaza executia Decay numai daca Gate etapa 0 a stabilit o sintaxa fara `@to` fals; altfel documenteaza declaratia/executia ca deferred si nu accepta resource inutil in markup.
-- [x] Actualizeaza proposal-ul daca decizia Decay schimba grammar-ul, in acelasi change cu tests.
-- [x] Reindexeaza solutia.
+- [x] Parse Tween `Delay`, `FillMode` and Spring `RestSpeed`, `RestDelta`, `VelocityMode`, keeping in mind that property retarget does not use sampler retarget today for velocity preservation.
+- [x] Validate Decay `ValueType`, typed `InitialVelocity`, `Deceleration`, paired bounds, comparability and Bounce spec type. (Not applicable after Gate 0: the entire form is rejected before the options are validated, not partially accepted.)
+- [x] Implements Decay execution only if Gate stage 0 has established a syntax without false `@to`; otherwise, it documents the declaration/execution as deferred and does not accept unnecessary resources in the markup.
+- [x] Updates the proposal if the Decay decision changes the grammar, in the same change with tests.
+- [x] Reindex the solution.
 
-**Gate etapa 5**
+**Gate Stage 5**
 
-- [x] Nicio optiune acceptata de parser nu este ignorata silentios de codul generat.
+- [x] No option accepted by the parser is silently ignored by the generated code.
 
-## 3. Verificare si definitia de gata
+## 3. Verification and definition ready
 
-- [x] Ruleaza testele Specs/Core Motion si sourcegen Motion.
-- [x] Ruleaza `dotnet test .\Cerneala.slnx`, `git diff --check` si reindexarea finala.
-- [x] Keyframes, Hold, Step, Repeat, PingPong si Stagger au semantics deterministe demonstrate cu clock manual.
-- [x] Seek/reverse/scrubbing si combinatiile nesustinute primesc diagnostics, nu pseudo-suport.
+- [x] Run the Specs/Core Motion and sourcegen Motion tests.
+- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check` and the final reindex.
+- [x] Keyframes, Hold, Step, Repeat, PingPong and Stagger have deterministic semantics demonstrated with manual clock.
+- [x] Seek/reverse/scrubbing and unsupported combinations receive diagnostics, not pseudo-support.

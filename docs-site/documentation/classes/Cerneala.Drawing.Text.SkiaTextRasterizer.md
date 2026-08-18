@@ -37,13 +37,13 @@ byte[] pixels = rasterized.RgbaPixels;
 ```
 
 ## Remarks
-`SkiaTextRasterizer` is the Skia-backed text rasterization step used by the drawing text pipeline. It requires text runs whose `DrawTextRun.Font` is a `SkiaFont`; other `IDrawFont` implementations are rejected.
+`SkiaTextRasterizer` is the Skia-backed text rasterization step used by the drawing text pipeline. A `SkiaFont` is used directly. Other `IDrawFont` implementations are resolved by family name through `SKFontManager.Default`; when no typeface matches, the rasterizer uses `SKTypeface.Default` while preserving the run's requested family name.
 
 `Rasterize` first delegates shaping to the configured `SkiaTextShaper`. The shaped glyph identifiers and positions are then packed into an `SKTextBlob`, drawn into an `SKBitmap` with antialiasing enabled, and returned as a `RasterizedText` instance.
 
-`RasterizeMask` renders the same shaped glyph coverage in white with premultiplied alpha. Backends cache this color-independent mask so changing a text brush does not reshape or rerasterize the glyph geometry.
+`RasterizeMask` renders the same shaped glyph geometry in white with premultiplied alpha. It produces the same shape metadata and pixels as `Rasterize` with `Color.White`, which lets callers apply their own color after rasterization.
 
-The generated bitmap uses `SKColorType.Rgba8888` and premultiplied alpha. The method creates at least a `1` by `1` result, including for text that produces no glyphs. For glyph content, the rasterizer computes bitmap dimensions from the text blob bounds, trims fully transparent columns from the left edge when possible, and records the adjusted drawing origin in `RasterizedText.OriginOffset`.
+The generated bitmap uses `SKColorType.Rgba8888` and premultiplied alpha. The method creates at least a `1` by `1` result, including for text that produces no glyphs. For glyph content, the rasterizer computes bitmap dimensions from the text blob bounds, trims fully transparent columns from the left edge while keeping at least one column, and records the adjusted drawing origin in `RasterizedText.OriginOffset`.
 
 The `Color` argument is converted directly to an `SKColor` using its red, green, blue, and alpha components.
 
@@ -62,8 +62,8 @@ The `Color` argument is converted directly to an `SKColor` using its red, green,
 ## Exceptions
 | Exception | Condition |
 | --- | --- |
-| `ArgumentNullException` | `textShaper` is `null` in the constructor, or `textRun` is `null` in `Rasterize`. |
-| `InvalidOperationException` | `textRun.Font` is not a `SkiaFont`, the shaped text blob cannot be built, or the underlying shaper cannot shape the supplied font data. |
+| `ArgumentNullException` | `textShaper` is `null` in the constructor, or `textRun` is `null` in `Rasterize` or `RasterizeMask`. |
+| `InvalidOperationException` | The resolved font data cannot be shaped or the shaped text blob cannot be created. |
 
 ## Applies to
 Cerneala's Skia-backed drawing text pipeline, including `MonoGameDrawingBackend` and `MonoGameContentServices` integrations that use `SkiaTextRasterizer` for text texture generation.

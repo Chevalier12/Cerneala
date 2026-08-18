@@ -1,124 +1,124 @@
-# Prism — fundație și catalog unic
+# Prism — unique foundation and catalog
 
-## Scop
+## Purpose
 
-Construiește modelul backend-neutral, catalogul machine-readable și contractele
-de versiune pe care se bazează toate celelalte planuri. Etapa nu desenează pe
-GPU și nu modifică parserul CUI.
+Build the backend-neutral model, machine-readable catalog and contracts
+version on which all other plans are based. The stage does not draw on
+GPU and does not modify the CUI parser.
 
-**Dependențe:** niciuna.
+**Dependencies:** none.
 
-## Etapa 0 — decizii și baseline
+## Stage 0 — decisions and baselines
 
-- [x] Corectează contradicțiile dintre
-  `docs/prism-technical-design.md` și
-  `docs/prism-markup-syntax-proposal.md`: prima implementare include cache
-  retained cross-frame, dar nu are înregistrare publică de filtre sau shader-e
-  încărcate după nume arbitrar; păstrează sintaxa și comportamentul Photoshop.
-- [x] Documentează explicit ordinea de randare, sursa implicită, regula de
-  frunză pentru layer, `@group`, masca, `ClipToBelow`, `PassThrough`,
-  `Visible`, `Fill`, `Opacity`, `BlendIf`, culoarea implicită `LinearSrgb` și
-  faptul că Prism nu influențează layout-ul ori inputul.
-- [x] Inventariază API-urile publice pe care planurile ulterioare le vor atinge
-  (`IDrawingBackend`, `IUiBackend`, `MonoGameUiHostOptions`) și salvează
-  baseline-ul API pentru diff-ul final.
-- [x] Adaugă teste RED în `tests/Cerneala.Tests/UI/Prism/` pentru definiții
-  imuabile, ordine bottom-up, unicitatea numelor și validarea structurii
-  layer/group/backdrop, fără să adaugi încă execuție GPU.
+- [x] Fix contradictions between
+  `docs/prism-technical-design.md` and
+  `docs/prism-markup-syntax-proposal.md`: first implementation includes cache
+  retained cross-frame, but has no public registration of filters or shaders
+  loaded by arbitrary name; preserves Photoshop syntax and behavior.
+- [x] Explicitly documents the render order, default source, rule of
+  leaf for layer, `@group`, mask, `ClipToBelow`, `PassThrough`,
+  `Visible`, `Fill`, `Opacity`, `BlendIf`, default color `LinearSrgb` and
+  the fact that Prism does not influence layout or input.
+- [x] Inventory the public APIs that later plans will touch
+  (`IDrawingBackend`, `IUiBackend`, `MonoGameUiHostOptions`) and save
+  API baseline for final diff.
+- [x] Add RED tests in `tests/Cerneala.Tests/UI/Prism/` for definitions
+  immutables, bottom-up ordering, name uniqueness and structure validation
+  layer/group/backdrop without adding GPU execution yet.
 
-### Gate etapa 0
+### Gate stage 0
 
-- [x] Cele două documente de design nu se mai contrazic, iar testele RED
-  eșuează exclusiv fiindcă modelul Prism lipsește.
+- [x] The two design documents no longer contradict each other, and the RED tests
+  it fails exclusively because the Prism model is missing.
 
-## Etapa 1 — catalogul DRY
+## Stage 1 — DRY catalog
 
-- [x] Creează o singură sursă machine-readable în
-  `Cerneala.SourceGen/Prism/Catalog/prism-catalog.json` și schema ei; catalogul
-  include identificatorii stabili, tipurile, proprietățile, valorile implicite,
-  domeniile, unitățile, capabilitățile, determinismul și cacheability pentru
-  filtre, stiluri, blend modes, profiluri de culoare și sampling.
-- [x] Include în catalog toate familiile Photoshop aprobate în proposal, fără
-  a copia aceleași liste în C#, shader-e și documentație.
-- [x] Adaugă un generator/validator determinist care produce artefactele tipate
-  necesare SourceGen, runtime și backend; consumatorii folosesc același fișier
-  fizic, nu copii sincronizate manual.
-- [x] Generează o matrice de acoperire catalog → runtime → kernel → test →
-  documentație care poate eșua la build când o intrare nu are proprietar.
-- [x] Testează identificatori duplicați, valori implicite incompatibile,
-  intervale invalide, proprietăți necunoscute și output nedeterminist.
+- [x] Create a single machine-readable source in
+  `Cerneala.SourceGen/Prism/Catalog/prism-catalog.json` and its scheme; the catalog
+  includes stable identifiers, types, properties, default values,
+  domains, units, capabilities, determinism and cacheability for
+  filters, styles, blend modes, color profiles and sampling.
+- [x] Includes in the catalog all Photoshop families approved in the proposal, without
+  to copy the same lists in C#, shaders and documentation.
+- [x] Add a deterministic generator/validator that produces the typed artifacts
+  SourceGen, runtime and backend required; consumers use the same file
+  physically, not manually synchronized copies.
+- [x] Generate a catalog → runtime → kernel → test → coverage matrix
+  documentation that build can fail when an entry has no owner.
+- [x] Test for duplicate identifiers, incompatible defaults,
+  invalid ranges, unknown properties, and nondeterministic output.
 
-### Gate etapa 1
+### Gate stage 1
 
-- [x] O singură comandă de build regenerează/verifică toate artefactele, iar o
-  intrare intenționat incompletă face testul catalogului să pice cu diagnostic
-  precis.
+- [x] A single build command regenerates/verifies all artifacts, and o
+  intentionally incomplete input causes the catalog test to fail with diagnostic
+  precisely
 
-## Etapa 2 — modelul de definiții
+## Stage 2 — definitions model
 
-- [x] Adaugă în `UI/Prism/Definitions/` tipurile imuabile
+- [x] Add to `UI/Prism/Definitions/` the immutable types
   `PrismCompositionDefinition`, `PrismNodeDefinition`,
-  `PrismLayerDefinition`, `PrismGroupDefinition`,
-  `PrismBackdropDefinition`, definițiile de mask/filter/style și cheile tipate
-  de parametri generate din catalog.
-- [x] Modelează copiii layer-ului drept colecții separate de filtre, stiluri și
-  cel mult o mască; nu permite unui layer copii layer/group.
-- [x] Modelează ordinea declarată o singură dată și oferă enumerare bottom-up
-  fără a muta ori duplica nodurile.
-- [x] Validează nume opționale unice în scope-ul compoziției pentru accesul
-  Motion și interzice folosirea numelor ca surse arbitrare.
-- [x] Păstrează `@backdrop` într-un plan separat logic, dar include în model
-  invariantul „maxim unul, ultimul copil direct”.
-- [x] Mută politica de degradare într-un singur
-  `Drawing/Prism/Catalog/PrismFallbackPolicy`; definițiile nu cunosc MonoGame.
-- [x] Fă verzi testele RED și adaugă teste de egalitate structurală, snapshot
-  determinist și serializare diagnostică.
+`PrismLayerDefinition`, `PrismGroupDefinition`,
+  `PrismBackdropDefinition`, mask/filter/style definitions and typed keys
+  of parameters generated from the catalog.
+- [x] Model the layer's children as separate collections of filters, styles, and
+  at most one mask; does not allow a layer to be layer/group children.
+- [x] Models the order declared only once and provides bottom-up enumeration
+  without moving or duplicating nodes.
+- [x] Validates optional composition-scoped unique names for access
+  Motion and prohibits the use of names as arbitrary sources.
+- [x] Keep `@backdrop` in a separate logical plane, but include it in the model
+  the "maximum one, last direct child" invariant.
+- [x] Move degradation policy to one
+  `Drawing/Prism/Catalog/PrismFallbackPolicy`; definitions do not know MonoGame.
+- [x] Make RED tests green and add structural equality tests, snapshot
+  deterministic and diagnostic serialization.
 
-### Gate etapa 2
+### Gate stage 2
 
-- [x] Modelul nu referă `Microsoft.Xna.Framework.Graphics`, nu conține stare
-  mutabilă per control și exprimă toate invariantele structurale fără `object`
-  sau lookup-uri string în hot path.
+- [x] The model does not refer to `Microsoft.Xna.Framework.Graphics`, it does not contain state
+  mutable per control and expresses all structural invariants without `object`
+  or string lookups in the hot path.
 
-## Etapa 3 — instanța per element
+## Step 3 — instance per element
 
-- [x] Adaugă în `UI/Prism/Runtime/` `PrismInstance`, depozitul dens și tipat de
-  parametri, `PrismStructuralVersion`, `PrismValueVersion` și starea
-  layer/group/backdrop adresabilă după chei generate.
-- [x] Separă definiția partajată de valorile instanței; nicio resursă GPU nu
-  este deținută de `UIElement` sau `PrismInstance`.
-- [x] Implementează `Visible`, `Opacity`, `Fill`, blend mode, advanced blending,
-  `BlendIf`, `ClipToBelow`, mask/style/filter values și profilul de culoare ca
-  proprietăți tipate, cu defaults exclusiv din catalog.
-- [x] Incrementează versiunea structurală doar când se schimbă topologia și
-  versiunea valorilor doar când se schimbă datele; scrierile identice sunt
-  no-op.
-- [x] Adaugă teste pentru izolare între două controale ce folosesc aceeași
-  compoziție, replacement, reset la defaults și lipsa alocărilor după warmup
-  pentru actualizări tipate repetate.
+- [x] Add to `UI/Prism/Runtime/` `PrismInstance`, the dense and typed deposit of
+  parameters, `PrismStructuralVersion`, `PrismValueVersion` and status
+  layer/group/backdrop addressable by generated keys.
+- [x] Separates shared definition from instance values; no GPU resources
+  is owned by `UIElement` or `PrismInstance`.
+- [x] Implements `Visible`, `Opacity`, `Fill`, blend mode, advanced blending,
+  `BlendIf`, `ClipToBelow`, mask/style/filter values and color profile as
+  typed properties, with defaults exclusively from the catalog.
+- [x] Increment structural version only when topology changes and
+  version values only when data changes; the writings are identical
+  no op.
+- [x] Add tests for isolation between two controls that use the same
+  composition, replacement, reset to defaults and lack of allocations after warmup
+  for repeated typed updates.
 
-### Gate etapa 3
+### Gate stage 3
 
-- [x] Două instanțe partajează definiția fără a partaja stare, iar benchmarkul
-  de actualizare nu face lookup string și nu creează obiecte per frame.
+- [x] Two instances share the definition without sharing state, and the benchmark
+  updater does not do string lookups and does not create objects per frame.
 
-## Etapa 4 — documentare și verificare
+## Stage 4 — documentation and verification
 
-- [x] Dacă modelul expune tipuri publice, folosește skill-ul
-  `writing-api-documentation` pentru paginile din
-  `docs-site/documentation/classes/` și sincronizează manifestul; nu adăuga
-  documentație API în `docs/documentation/`.
-- [x] Rulează reindexarea RoslynIndexer după fiecare lot C#/proiect și, la
+- [x] If the model exposes public types, use the skill
+  `writing-api-documentation` for pages from
+  `docs-site/documentation/classes/` and synchronize the manifest; don't add
+  API documentation in `docs/documentation/`.
+- [x] Run RoslynIndexer reindex after every C# batch/project and at
   final, `doctor`.
-- [x] Rulează
-  `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter Prism` și
+- [x] Running
+  `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter Prism` and
   `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`.
-- [x] Rulează `git diff --check` și compară diff-ul API cu baseline-ul etapei 0.
+- [x] Run `git diff --check` and compare API diff to stage 0 baseline.
 
-## Definiția de gata
+## The definition of done
 
-- [x] Catalogul este unica sursă de adevăr și validează toate intrările
-  aprobate.
-- [x] Definițiile sunt imuabile, instanțele sunt izolate și niciun tip din
-  fundație nu depinde de backendul GPU.
-- [x] Testele țintite, documentația publică și gate-urile etapelor sunt verzi.
+- [x] The catalog is the only source of truth and validates all entries
+  approved.
+- [x] Definitions are immutable, instances are isolated, and no type of
+  foundation does not depend on the GPU backend.
+- [x] Targeted tests, public documentation and stage gates are green.

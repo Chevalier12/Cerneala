@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Aspect`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Aspect/AspectPackageBuilder.cs`
+Source: `UI/Aspect/AspectTokenBuilder.cs`
 
 Collects aspect token default values for an `AspectPackageBuilder.Tokens` callback.
 
