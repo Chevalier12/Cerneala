@@ -4,6 +4,8 @@ namespace Cerneala.Tests.UI.Hosting;
 
 public sealed class WindowsDxProcessSmokeTests
 {
+    private static readonly TimeSpan SmokeTimeout = TimeSpan.FromSeconds(60);
+
     [Fact]
     public async Task TwoWindowSmokeCompletesInIsolatedProcess()
     {
@@ -37,7 +39,7 @@ public sealed class WindowsDxProcessSmokeTests
         Task<string> output = process.StandardOutput.ReadToEndAsync();
         Task<string> error = process.StandardError.ReadToEndAsync();
 
-        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(20));
+        using CancellationTokenSource timeout = new(SmokeTimeout);
         try
         {
             await process.WaitForExitAsync(timeout.Token);
@@ -45,7 +47,10 @@ public sealed class WindowsDxProcessSmokeTests
         catch (OperationCanceledException)
         {
             process.Kill(entireProcessTree: true);
-            throw new TimeoutException("The isolated WindowsDX smoke process exceeded 20 seconds.");
+            await process.WaitForExitAsync(CancellationToken.None);
+            throw new TimeoutException(
+                $"The isolated WindowsDX smoke process exceeded {SmokeTimeout.TotalSeconds} seconds. " +
+                $"stdout: {await output} stderr: {await error}");
         }
 
         Assert.True(

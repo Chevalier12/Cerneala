@@ -44,7 +44,7 @@ public sealed class CheckBoxTests
     [Fact]
     public void CheckBoxTemplateSeparatesBackgroundTextAndCheckMarkBrushes()
     {
-        UIRoot root = new();
+        UIRoot root = new(200, 100);
         SolidColorBrush foreground = new(Color.White);
         SolidColorBrush background = new(Color.Black);
         CheckBox checkBox = new()
@@ -55,8 +55,6 @@ public sealed class CheckBoxTests
             Background = background
         };
         root.VisualChildren.Add(checkBox);
-        checkBox.Measure(new MeasureContext(new LayoutSize(200, 100)));
-        checkBox.Arrange(new ArrangeContext(new LayoutRect(20, 30, 80, 20)));
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();
 
@@ -66,6 +64,14 @@ public sealed class CheckBoxTests
         UIElement indicator = Assert.IsAssignableFrom<UIElement>(checkMark.VisualParent);
         DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
+        Assert.True(
+            indicator.ArrangedBounds.Width > 0 && indicator.ArrangedBounds.Height > 0,
+            $"Indicator must have positive arranged bounds, but was {indicator.ArrangedBounds}; " +
+            $"desired {indicator.DesiredSize}; measure constraint {indicator.LastMeasureAvailableSize}; " +
+            $"parent bounds {indicator.VisualParent?.ArrangedBounds}; parent desired {indicator.VisualParent?.DesiredSize}.");
+        Assert.True(
+            checkMark.ArrangedBounds.Width > 0 && checkMark.ArrangedBounds.Height > 0,
+            $"Check mark must have positive arranged bounds, but was {checkMark.ArrangedBounds}.");
         Assert.Equal(indicator.ArrangedBounds.Width, indicator.ArrangedBounds.Height);
         float checkBoxCenterY = checkBox.ArrangedBounds.Y + (checkBox.ArrangedBounds.Height / 2);
         float indicatorCenterY = indicator.ArrangedBounds.Y + (indicator.ArrangedBounds.Height / 2);
