@@ -595,6 +595,71 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void ApplicationResourcesRecoverAfterTransientFrameworkReferenceLoss()
+    {
+        InMemoryAdditionalText view = new(
+            "SharedView.crn",
+            "<UserControl><Border Name=\"ContinueButton\" Background=\"$Accent\" /></UserControl>");
+        InMemoryAdditionalText application = new(
+            "App.crn",
+            """
+            <Application StartupWindow="ShellWindow">
+                <Application.Resources>
+                    <SolidColorBrush Name="Accent" Color="#FF20A060" />
+                </Application.Resources>
+            </Application>
+            """);
+        CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
+        CSharpCompilation compilation = CSharpCompilation.Create(
+            "GeneratorTests",
+            [
+                CSharpSyntaxTree.ParseText(ApplicationInput, parseOptions, path: "App.crn.cs"),
+                CSharpSyntaxTree.ParseText(
+                    "namespace TestInput { public partial class SharedView : Cerneala.UI.Controls.UserControl { } }",
+                    parseOptions,
+                    path: "SharedView.crn.cs")
+            ],
+            References(),
+            new CSharpCompilationOptions(OutputKind.WindowsApplication));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new UiMarkupGenerator().AsSourceGenerator()],
+            [application, view],
+            parseOptions: parseOptions);
+
+        driver = driver.RunGenerators(compilation);
+        GeneratorRunResult initial = driver.GetRunResult().Results.Single();
+        Assert.DoesNotContain(initial.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains(
+            initial.GeneratedSources,
+            source => source.HintName.Contains("SharedViewUserControl", StringComparison.Ordinal));
+
+        MetadataReference[] frameworkReferences = compilation.References
+            .Where(
+            reference => string.Equals(
+                reference.Display,
+                typeof(Cerneala.UI.Elements.UIElement).Assembly.Location,
+                StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        Assert.NotEmpty(frameworkReferences);
+        CSharpCompilation degradedCompilation = compilation.RemoveReferences(frameworkReferences);
+        driver = driver.RunGenerators(degradedCompilation);
+        Assert.Contains(
+            driver.GetRunResult().Results.Single().Diagnostics,
+            diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        CSharpCompilation recoveredCompilation = degradedCompilation.AddReferences(frameworkReferences);
+        Assert.NotNull(recoveredCompilation.GetTypeByMetadataName("Cerneala.UI.Application"));
+        driver = driver.RunGenerators(recoveredCompilation);
+        GeneratorRunResult recovered = driver.GetRunResult().Results.Single();
+
+        GeneratedSourceResult recoveredView = Assert.Single(
+            recovered.GeneratedSources,
+            source => source.HintName.Contains("SharedViewUserControl", StringComparison.Ordinal));
+        Assert.Contains("ContinueButton", recoveredView.SourceText.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(recovered.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+    }
+
+    [Fact]
     public void ApplicationResourceReferencesAreTypeCheckedAcrossDocuments()
     {
         MarkupFile[] files =

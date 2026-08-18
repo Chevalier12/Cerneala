@@ -264,7 +264,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
     private static void GenerateFiles(SourceProductionContext context, ImmutableArray<SemanticMarkupSource> inputs, Compilation compilation)
     {
-        ImmutableArray<MarkupSource> files = inputs.Select(input => input.Source).ToImmutableArray();
+        ImmutableArray<MarkupSource> files = inputs
+            .Select(input => new MarkupSource(input.Source.Path, input.Source.Text))
+            .ToImmutableArray();
         IReadOnlyDictionary<string, SourceGeneratorSemanticModel> semanticModels = inputs.ToDictionary(
             input => input.Source.Path,
             input => input.SemanticModel,
