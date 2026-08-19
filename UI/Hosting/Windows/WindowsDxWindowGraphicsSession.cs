@@ -18,15 +18,28 @@ namespace Cerneala.UI.Hosting.Windows;
 
 internal sealed class WindowsDxWindowGraphicsSessionFactory : IWindowGraphicsSessionFactory
 {
+    private readonly bool useMultisampling;
+
+    public WindowsDxWindowGraphicsSessionFactory(bool useMultisampling = true)
+    {
+        this.useMultisampling = useMultisampling;
+    }
+
     public IWindowGraphicsSession Create(nint windowHandle, int pixelWidth, int pixelHeight, float coordinateScale)
     {
-        return new WindowsDxWindowGraphicsSession(windowHandle, pixelWidth, pixelHeight, coordinateScale);
+        return new WindowsDxWindowGraphicsSession(
+            windowHandle,
+            pixelWidth,
+            pixelHeight,
+            coordinateScale,
+            useMultisampling);
     }
 }
 
 internal sealed class WindowsDxWindowGraphicsSession :
     IWindowGraphicsSession,
     IWindowScreenshotSource,
+    IWindowPresentedFrameSource,
     IWindowPrismScreenshotDiagnosticsSource,
     IBackdropFrameSource
 {
@@ -47,7 +60,12 @@ internal sealed class WindowsDxWindowGraphicsSession :
     private PrismExecutionDiagnostics? lastPrismScreenshotDiagnostics;
     private bool disposed;
 
-    public WindowsDxWindowGraphicsSession(nint windowHandle, int pixelWidth, int pixelHeight, float coordinateScale)
+    public WindowsDxWindowGraphicsSession(
+        nint windowHandle,
+        int pixelWidth,
+        int pixelHeight,
+        float coordinateScale,
+        bool useMultisampling = true)
     {
         if (windowHandle == 0)
         {
@@ -67,8 +85,12 @@ internal sealed class WindowsDxWindowGraphicsSession :
         RenderTarget2D? createdFrameTarget = null;
         try
         {
-            presentationParameters = CreatePresentationParameters(windowHandle, pixelWidth, pixelHeight);
-            createdDevice = CreateGraphicsDevice(presentationParameters);
+            presentationParameters = CreatePresentationParameters(
+                windowHandle,
+                pixelWidth,
+                pixelHeight,
+                useMultisampling);
+            createdDevice = CreateGraphicsDevice(presentationParameters, useMultisampling);
             createdSpriteBatch = new SpriteBatch(createdDevice);
             createdWhitePixel = new Texture2D(createdDevice, 1, 1);
             createdWhitePixel.SetData([XnaColor.White]);
@@ -206,7 +228,9 @@ internal sealed class WindowsDxWindowGraphicsSession :
             clearColor);
     }
 
-    public void Present()
+    public void Present() => CompleteFrame(present: true);
+
+    public void CompleteFrame(bool present)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         if (activeFrameKind != FrameKind.OnScreen ||
@@ -222,6 +246,11 @@ internal sealed class WindowsDxWindowGraphicsSession :
             try
             {
                 graphicsDevice.SetRenderTarget(null);
+                if (!present)
+                {
+                    return;
+                }
+
                 spriteBatch.Begin(
                     SpriteSortMode.Deferred,
                     BlendState.Opaque,
@@ -382,7 +411,11 @@ internal sealed class WindowsDxWindowGraphicsSession :
         }
     }
 
-    private static PresentationParameters CreatePresentationParameters(nint handle, int width, int height)
+    private static PresentationParameters CreatePresentationParameters(
+        nint handle,
+        int width,
+        int height,
+        bool useMultisampling)
     {
         return new PresentationParameters
         {
@@ -391,11 +424,30 @@ internal sealed class WindowsDxWindowGraphicsSession :
             BackBufferHeight = height,
             BackBufferFormat = SurfaceFormat.Color,
             DepthStencilFormat = DepthFormat.None,
-            MultiSampleCount = 8,
+            MultiSampleCount = useMultisampling ? 8 : 0,
             IsFullScreen = false,
             PresentationInterval = PresentInterval.One,
             RenderTargetUsage = RenderTargetUsage.PreserveContents
         };
+    }
+
+    public WindowPreviewFrame CapturePresentedFrame(byte[]? reusablePixels = null)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        if (activeFrameKind != FrameKind.None)
+        {
+            throw new InvalidOperationException("The presented frame cannot be captured while another frame is active.");
+        }
+
+        RenderTarget2D target = RequireFrameTarget();
+        int stride = checked(target.Width * 4);
+        int pixelCount = checked(stride * target.Height);
+        byte[] pixels = reusablePixels is { Length: var length } && length == pixelCount
+            ? reusablePixels
+            : new byte[pixelCount];
+        target.GetData(pixels);
+
+        return new WindowPreviewFrame(pixels, target.Width, target.Height, stride);
     }
 
     private void BeginBackdropFrame(
@@ -521,7 +573,7 @@ internal sealed class WindowsDxWindowGraphicsSession :
                 parameters.BackBufferWidth,
                 parameters.BackBufferHeight,
                 false,
-                parameters.BackBufferFormat,
+                SurfaceFormat.Bgra32,
                 DepthFormat.None,
                 parameters.MultiSampleCount,
                 RenderTargetUsage.PreserveContents);
@@ -533,16 +585,19 @@ internal sealed class WindowsDxWindowGraphicsSession :
                 parameters.BackBufferWidth,
                 parameters.BackBufferHeight,
                 false,
-                parameters.BackBufferFormat,
+                SurfaceFormat.Bgra32,
                 DepthFormat.None,
                 0,
                 RenderTargetUsage.PreserveContents);
         }
     }
 
-    private static GraphicsDevice CreateGraphicsDevice(PresentationParameters parameters)
+    private static GraphicsDevice CreateGraphicsDevice(
+        PresentationParameters parameters,
+        bool useMultisampling)
     {
-        foreach (int sampleCount in new[] { 8, 4, 2, 0 })
+        int[] sampleCounts = useMultisampling ? [8, 4, 2, 0] : [0];
+        foreach (int sampleCount in sampleCounts)
         {
             parameters.MultiSampleCount = sampleCount;
             try

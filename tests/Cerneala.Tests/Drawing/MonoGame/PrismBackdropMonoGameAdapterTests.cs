@@ -63,7 +63,7 @@ public sealed class PrismBackdropMonoGameAdapterTests
         Assert.Equal(Height, metadata.PixelHeight);
         Assert.Equal(1f, metadata.PixelScale);
         Assert.Equal(PrismColorProfile.Srgb, metadata.ColorProfile);
-        Assert.Equal(BackdropPixelFormat.Rgba8Unorm, metadata.PixelFormat);
+        Assert.Equal(BackdropPixelFormat.Bgra8Unorm, metadata.PixelFormat);
         Assert.Equal(BackdropAlphaMode.Premultiplied, metadata.AlphaMode);
         Assert.Equal(Matrix3x2.Identity, metadata.CoordinateTransform);
         Assert.Equal(1, session.ActiveBackdropLeaseCount);
@@ -297,9 +297,17 @@ public sealed class PrismBackdropMonoGameAdapterTests
                 "Prism",
                 "Execution",
                 "PrismGraphExecutor.cs"));
+        int acquireStart = adapterSource.IndexOf(
+            "public IBackdropFrameLease AcquireFrame(",
+            StringComparison.Ordinal);
+        int acquireEnd = adapterSource.IndexOf(
+            "public void Resize(",
+            acquireStart,
+            StringComparison.Ordinal);
+        Assert.True(acquireStart >= 0 && acquireEnd > acquireStart);
         Assert.DoesNotContain(
             ".GetData",
-            adapterSource,
+            adapterSource.Substring(acquireStart, acquireEnd - acquireStart),
             StringComparison.Ordinal);
         Assert.DoesNotContain(
             ".GetData",

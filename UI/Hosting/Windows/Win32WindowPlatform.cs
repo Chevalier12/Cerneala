@@ -16,16 +16,24 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
     private static readonly Win32.WndProc WindowProcedure = WndProc;
     private static ushort classAtom;
     private readonly IWindowGraphicsSessionFactory graphicsSessionFactory;
+    private readonly float? coordinateScaleOverride;
     private readonly Win32CursorService cursorService = new();
     private readonly IPlatformServices platformServices;
     private bool disposed;
 
     public Win32WindowPlatform()
-        : this(new WindowsDxWindowGraphicsSessionFactory())
+        : this(new WindowsDxWindowGraphicsSessionFactory(), coordinateScaleOverride: null)
     {
     }
 
     internal Win32WindowPlatform(IWindowGraphicsSessionFactory graphicsSessionFactory)
+        : this(graphicsSessionFactory, coordinateScaleOverride: null)
+    {
+    }
+
+    internal Win32WindowPlatform(
+        IWindowGraphicsSessionFactory graphicsSessionFactory,
+        float? coordinateScaleOverride)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -35,6 +43,11 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         WindowsDpiAwareness.EnsurePerMonitorV2();
         EnsureWindowClass();
         this.graphicsSessionFactory = graphicsSessionFactory ?? throw new ArgumentNullException(nameof(graphicsSessionFactory));
+        if (coordinateScaleOverride is float scale)
+        {
+            UiCoordinateMapper.ValidateScale(scale);
+        }
+        this.coordinateScaleOverride = coordinateScaleOverride;
         platformServices = new PlatformServices(Cursor: cursorService);
     }
 
@@ -46,7 +59,12 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         ArgumentNullException.ThrowIfNull(window);
         ArgumentNullException.ThrowIfNull(callbacks);
 
-        Win32PlatformWindow created = new(window, callbacks, graphicsSessionFactory, cursorService);
+        Win32PlatformWindow created = new(
+            window,
+            callbacks,
+            graphicsSessionFactory,
+            cursorService,
+            coordinateScaleOverride);
         if (!Windows.TryAdd(created.Handle, created))
         {
             created.Dispose();
@@ -139,6 +157,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         private readonly Win32InputSource inputSource = new();
         private readonly IWindowGraphicsSession graphicsSession;
         private readonly ICursorService cursorService;
+        private readonly float? coordinateScaleOverride;
         private bool destroyed;
         private bool visible;
         private bool initialPlacementApplied;
@@ -156,11 +175,13 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             Window window,
             IWindowPlatformCallbacks callbacks,
             IWindowGraphicsSessionFactory graphicsSessionFactory,
-            ICursorService cursorService)
+            ICursorService cursorService,
+            float? coordinateScaleOverride)
         {
             this.window = window;
             this.callbacks = callbacks;
             this.cursorService = cursorService;
+            this.coordinateScaleOverride = coordinateScaleOverride;
             desiredState = window.WindowState;
             style = StyleFor(window.ResizeMode);
             extendedStyle = ExtendedStyleFor(window);
@@ -187,7 +208,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                 throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not create a native Cerneala window.");
             }
 
-            scale = Math.Max(1, Win32.GetDpiForWindow(Handle)) / 96f;
+            scale = ResolveCoordinateScale();
             inputSource.CoordinateScale = scale;
             Win32.GetClientRect(Handle, out Win32.RECT clientRect);
             viewport = UiViewport.FromPhysicalPixels(clientRect.Width, clientRect.Height, scale);
@@ -245,7 +266,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             int clientWidth = Math.Max(1, (int)MathF.Ceiling(window.Width * scale));
             int clientHeight = Math.Max(1, (int)MathF.Ceiling(window.Height * scale));
             Win32.RECT outer = new(0, 0, clientWidth, clientHeight);
-            Win32.AdjustWindowRectExForDpi(ref outer, style, false, extendedStyle, (uint)MathF.Round(scale * 96));
+            Win32.AdjustWindowRectExForDpi(ref outer, style, false, extendedStyle, NativeDpi());
             (int x, int y) = ResolvePosition(window, outer.Width, outer.Height, scale);
             nint insertAfter = window.Topmost ? Win32.HWND_TOPMOST : Win32.HWND_NOTOPMOST;
             Win32.SetWindowPos(
@@ -426,7 +447,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         private void ResizeSurface()
         {
             Win32.GetClientRect(Handle, out Win32.RECT rect);
-            float scale = Math.Max(1, Win32.GetDpiForWindow(Handle)) / 96f;
+            float scale = ResolveCoordinateScale();
             inputSource.CoordinateScale = scale;
             viewport = UiViewport.FromPhysicalPixels(rect.Width, rect.Height, scale);
             if (rect.Width > 0 &&
@@ -459,7 +480,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         private void ApplyDpiChange(nuint wParam, nint lParam)
         {
             uint dpi = (uint)(wParam & 0xFFFF);
-            float scale = Math.Max(1, dpi) / 96f;
+            float scale = coordinateScaleOverride ?? (Math.Max(1, dpi) / 96f);
             inputSource.CoordinateScale = scale;
             Win32.RECT suggested = Marshal.PtrToStructure<Win32.RECT>(lParam);
             Win32.SetWindowPos(
@@ -529,7 +550,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
                 0,
                 Math.Max(1, (int)MathF.Ceiling(logicalWidth * scale)),
                 Math.Max(1, (int)MathF.Ceiling(logicalHeight * scale)));
-            Win32.AdjustWindowRectExForDpi(ref rect, style, false, extendedStyle, (uint)MathF.Round(scale * 96));
+            Win32.AdjustWindowRectExForDpi(ref rect, style, false, extendedStyle, NativeDpi());
             return (rect.Width, rect.Height);
         }
 
@@ -625,5 +646,10 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         private static int SignedLowWord(nint value) => unchecked((short)((long)value & 0xFFFF));
 
         private static int SignedHighWord(nint value) => unchecked((short)(((long)value >> 16) & 0xFFFF));
+
+        private float ResolveCoordinateScale() =>
+            coordinateScaleOverride ?? (Math.Max(1, Win32.GetDpiForWindow(Handle)) / 96f);
+
+        private uint NativeDpi() => Math.Max(1, Win32.GetDpiForWindow(Handle));
     }
 }

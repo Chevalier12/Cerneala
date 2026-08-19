@@ -57,11 +57,30 @@ internal interface IWindowGraphicsSession : IDisposable
     void BeginFrame(Color clearColor);
 
     void Present();
+
+    void CompleteFrame(bool present)
+    {
+        if (present)
+        {
+            Present();
+        }
+    }
 }
 
 internal interface IWindowScreenshotSource
 {
     void RenderPng(Stream output, Color clearColor, Action<IDrawingBackend> draw);
+}
+
+internal readonly record struct WindowPreviewFrame(
+    byte[] Pixels,
+    int PixelWidth,
+    int PixelHeight,
+    int Stride);
+
+internal interface IWindowPresentedFrameSource
+{
+    WindowPreviewFrame CapturePresentedFrame(byte[]? reusablePixels = null);
 }
 
 internal interface IWindowPrismScreenshotDiagnosticsSource

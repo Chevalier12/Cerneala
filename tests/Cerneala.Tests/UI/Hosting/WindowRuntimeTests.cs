@@ -135,6 +135,58 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void DesignPreviewRendersOffscreenWithoutPresentingOrWaitingForTheCompositor()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Preview" } };
+
+        runtime.StartPreviewWindow(window);
+        FakeGraphicsSession session = Assert.Single(platform.Windows).Session;
+        Assert.Equal(1, session.BeginFrameCount);
+        Assert.Equal(0, session.PresentCount);
+
+        window.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "preview frame");
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal(2, session.BeginFrameCount);
+        Assert.Equal(0, session.PresentCount);
+        Assert.Equal(0, platform.PresentedFrameWaitCount);
+    }
+
+    [Fact]
+    public void DesignPreviewForwardsPointerHoverAndButtonTransitions()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Continue", Width = 180, Height = 48 };
+        int clickCount = 0;
+        button.Click += (_, _) => clickCount++;
+        Window window = new() { Content = button };
+        runtime.StartPreviewWindow(window);
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + (bounds.Width / 2);
+        float y = bounds.Y + (bounds.Height / 2);
+
+        runtime.MovePreviewPointer(window, x, y);
+
+        Assert.True(button.IsMouseOver);
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(button.IsMouseOver);
+
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: true);
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: false);
+
+        Assert.Equal(1, clickCount);
+
+        runtime.LeavePreviewPointer(window);
+
+        Assert.False(button.IsMouseOver);
+    }
+
+    [Fact]
     public void FrameProcessingTimeExcludesThePresentationWait()
     {
         FakeWindowPlatform platform = new();

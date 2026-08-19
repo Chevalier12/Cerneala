@@ -89,6 +89,31 @@ internal sealed class WindowApplicationRuntime : IDisposable
         Show(window, modal: false);
     }
 
+    internal void StartPreviewWindow(Window window)
+    {
+        VerifyAccess();
+        ObjectDisposedException.ThrowIf(disposed, this);
+        ArgumentNullException.ThrowIfNull(window);
+        if (window.IsClosed)
+        {
+            throw new InvalidOperationException("A closed Window cannot be used for preview.");
+        }
+
+        if (application is not null)
+        {
+            application.MainWindow = window;
+        }
+        else
+        {
+            legacyMainWindow = window;
+        }
+
+        WindowContext context = GetOrCreateContext(window);
+        context.IsPreview = true;
+        window.SetShown(true);
+        Render(context, TimeSpan.Zero);
+    }
+
     public void Show(Window window, bool modal)
     {
         VerifyAccess();
@@ -312,6 +337,18 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 graphicsSession as IBackdropFrameSource));
     }
 
+    internal WindowPreviewFrame CapturePreviewFrame(
+        Window window,
+        byte[]? reusablePixels = null)
+    {
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(window);
+        IWindowGraphicsSession graphicsSession = RequireContext(window).PlatformWindow.GraphicsSession;
+        return graphicsSession is IWindowPresentedFrameSource frameSource
+            ? frameSource.CapturePresentedFrame(reusablePixels)
+            : throw new NotSupportedException("The active Window graphics backend cannot capture its presented frame.");
+    }
+
     public AutomationSession CreateAutomationSession(Window window)
     {
         VerifyAccess();
@@ -324,6 +361,84 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 (frames, cancellationToken) =>
                     EnqueueAutomationDragAsync(context, frames, cancellationToken)),
             path => SaveScreenshot(window, path));
+    }
+
+    internal void ClickPreview(Window window, float x, float y)
+    {
+        VerifyAccess();
+        WindowContext context = RequireContext(window);
+        context.PreviewInputDriver.ClickAt(x, y);
+        context.RenderRequested = true;
+    }
+
+    internal void MovePreviewPointer(Window window, float x, float y)
+    {
+        VerifyAccess();
+        WindowContext context = RequireContext(window);
+        context.PreviewInputDriver.MovePointerTo(x, y);
+        context.RenderRequested = true;
+    }
+
+    internal void SetPreviewPointerButton(
+        Window window,
+        float x,
+        float y,
+        InputMouseButton button,
+        bool isDown)
+    {
+        VerifyAccess();
+        WindowContext context = RequireContext(window);
+        context.PreviewInputDriver.SetPointerButtonAt(x, y, button, isDown);
+        context.RenderRequested = true;
+    }
+
+    internal void ScrollPreviewPointer(Window window, float x, float y, int wheelDelta)
+    {
+        VerifyAccess();
+        WindowContext context = RequireContext(window);
+        context.PreviewInputDriver.ScrollPointerAt(x, y, wheelDelta);
+        context.RenderRequested = true;
+    }
+
+    internal void LeavePreviewPointer(Window window)
+    {
+        VerifyAccess();
+        WindowContext context = RequireContext(window);
+        context.PreviewInputDriver.LeavePointer();
+        context.RenderRequested = true;
+    }
+
+    internal void SetPreviewKeyState(Window window, InputKey key, bool isDown)
+    {
+        VerifyAccess();
+        WindowContext context = RequireContext(window);
+        context.PreviewInputDriver.SetKeyState(key, isDown);
+        context.RenderRequested = true;
+    }
+
+    internal void ResetPreviewInput(Window window)
+    {
+        VerifyAccess();
+        WindowContext context = RequireContext(window);
+        context.PreviewInputDriver.ResetInput();
+        context.RenderRequested = true;
+    }
+
+    internal void SendPreviewText(Window window, string text)
+    {
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(text);
+        WindowContext context = RequireContext(window);
+        context.PreviewInputDriver.SendText(text);
+        context.RenderRequested = true;
+    }
+
+    internal void PressPreviewKey(Window window, InputKey key, AutomationModifiers modifiers)
+    {
+        VerifyAccess();
+        WindowContext context = RequireContext(window);
+        context.PreviewInputDriver.PressKey(key, modifiers);
+        context.RenderRequested = true;
     }
 
     private Task EnqueueAutomationDragAsync(
@@ -379,7 +494,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
     {
         VerifyAccess();
         platform.PumpEvents();
-        bool framePresented = false;
+        bool frameRendered = false;
+        bool compositorWaitRequired = false;
         foreach (WindowContext context in contexts.Values.ToArray())
         {
             if (!context.Window.IsShown ||
@@ -401,16 +517,18 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 context.Root.Motion.HasActiveMotion ||
                 context.Host.InputBridge.HasActivePointerRepeat)
             {
-                framePresented |= Render(context, elapsedTime, renderTimeAlreadyAdvanced: true);
+                bool rendered = Render(context, elapsedTime, renderTimeAlreadyAdvanced: true);
+                frameRendered |= rendered;
+                compositorWaitRequired |= rendered && !context.IsPreview;
             }
         }
 
-        if (framePresented)
+        if (compositorWaitRequired)
         {
             platform.WaitForPresentedFrames();
         }
 
-        return framePresented;
+        return frameRendered;
     }
 
     public void RunStandalone(Window window)
@@ -565,7 +683,9 @@ internal sealed class WindowApplicationRuntime : IDisposable
                     ? queuedRequest
                     : null;
             InputFrame inputFrame = automationRequest?.Frame ??
-                context.PlatformWindow.InputSource.GetFrame();
+                (context.IsPreview
+                    ? context.PreviewInputDriver.GetCurrentFrame()
+                    : context.PlatformWindow.InputSource.GetFrame());
             TimeSpan inputCollectionTime = Stopwatch.GetElapsedTime(inputCollectionStarted);
             long retainedUpdateStarted = Stopwatch.GetTimestamp();
             UiFrame frame;
@@ -617,7 +737,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             }
             finally
             {
-                graphicsSession.Present();
+                graphicsSession.CompleteFrame(present: !context.IsPreview);
             }
 
             using (context.Root.Relay.EnterSynchronizationContext())
@@ -808,6 +928,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             PlatformWindow = platformWindow;
             Root = root;
             Host = host;
+            PreviewInputDriver = new RetainedAutomationInputDriver(host);
         }
 
         public Window Window { get; }
@@ -818,9 +939,13 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         public UiHost Host { get; }
 
+        public RetainedAutomationInputDriver PreviewInputDriver { get; }
+
         public bool IsModal { get; set; }
 
         public bool ContentRendered { get; set; }
+
+        public bool IsPreview { get; set; }
 
         public bool RenderRequested { get; set; } = true;
 

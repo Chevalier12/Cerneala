@@ -10,6 +10,8 @@ public sealed class RetainedAutomationInputDriver : IAutomationInputDriver
 {
     private readonly UiHost host;
     private readonly Func<IReadOnlyList<InputFrame>, CancellationToken, Task>? frameSynchronizedDrag;
+    private readonly HashSet<InputMouseButton> pressedButtons = [];
+    private readonly HashSet<InputKey> pressedKeys = [];
     private PointerSnapshot pointer = PointerSnapshot.Empty;
     private KeyboardSnapshot keyboard = KeyboardSnapshot.Empty;
     private bool dragging;
@@ -46,6 +48,82 @@ public sealed class RetainedAutomationInputDriver : IAutomationInputDriver
         SetPointerButton(InputMouseButton.Left, true);
         SetPointerButton(InputMouseButton.Left, false);
     }
+
+    internal void ClickAt(float x, float y)
+    {
+        ValidatePointerPosition(x, y);
+
+        MovePointer(x, y);
+        SetPointerButton(InputMouseButton.Left, true);
+        SetPointerButton(InputMouseButton.Left, false);
+    }
+
+    internal void MovePointerTo(float x, float y)
+    {
+        ValidatePointerPosition(x, y);
+        MovePointer(x, y);
+    }
+
+    internal void SetPointerButtonAt(float x, float y, InputMouseButton button, bool isDown)
+    {
+        ValidatePointerPosition(x, y);
+        if (button == InputMouseButton.None)
+        {
+            throw new ArgumentOutOfRangeException(nameof(button));
+        }
+
+        MovePointer(x, y);
+        SetPointerButton(button, isDown);
+    }
+
+    internal void ScrollPointerAt(float x, float y, int wheelDelta)
+    {
+        ValidatePointerPosition(x, y);
+        MovePointer(x, y);
+        PointerSnapshot next = pointer.WithWheelValue(checked(pointer.WheelValue + wheelDelta));
+        Dispatch(next, keyboard, []);
+        pointer = next;
+    }
+
+    internal void LeavePointer() => MovePointer(-1, -1);
+
+    internal void SetKeyState(InputKey key, bool isDown)
+    {
+        if (key is InputKey.None or InputKey.Unknown)
+        {
+            throw new ArgumentOutOfRangeException(nameof(key));
+        }
+
+        if (isDown)
+        {
+            pressedKeys.Add(key);
+        }
+        else
+        {
+            pressedKeys.Remove(key);
+        }
+
+        SetKeyboard(pressedKeys);
+    }
+
+    internal void ResetInput()
+    {
+        PointerSnapshot nextPointer = pointer;
+        foreach (InputMouseButton button in pressedButtons)
+        {
+            nextPointer = nextPointer.WithButton(button, false);
+        }
+
+        KeyboardSnapshot nextKeyboard = KeyboardSnapshot.Empty;
+        Dispatch(nextPointer, nextKeyboard, []);
+        pointer = nextPointer;
+        keyboard = nextKeyboard;
+        pressedButtons.Clear();
+        pressedKeys.Clear();
+    }
+
+    internal InputFrame GetCurrentFrame() =>
+        new(pointer, pointer, keyboard, keyboard, []);
 
     public async Task DragAsync(
         UIElement target,
@@ -159,13 +237,24 @@ public sealed class RetainedAutomationInputDriver : IAutomationInputDriver
         PointerSnapshot next = pointer.WithButton(button, isDown);
         Dispatch(next, keyboard, []);
         pointer = next;
+        if (isDown)
+        {
+            pressedButtons.Add(button);
+        }
+        else
+        {
+            pressedButtons.Remove(button);
+        }
     }
 
     private void SetKeyboard(IReadOnlyCollection<InputKey> downKeys)
     {
-        KeyboardSnapshot next = KeyboardSnapshot.FromDownKeys(downKeys);
+        InputKey[] keys = downKeys.ToArray();
+        KeyboardSnapshot next = KeyboardSnapshot.FromDownKeys(keys);
         Dispatch(pointer, next, []);
         keyboard = next;
+        pressedKeys.Clear();
+        pressedKeys.UnionWith(keys);
     }
 
     private void Dispatch(IReadOnlyList<TextInputSnapshotEvent> textInputEvents)
@@ -217,6 +306,14 @@ public sealed class RetainedAutomationInputDriver : IAutomationInputDriver
         if (!float.IsFinite(ratio) || ratio is < 0 or > 1)
         {
             throw new ArgumentOutOfRangeException(parameterName, ratio, "Automation drag ratios must be between 0 and 1.");
+        }
+    }
+
+    private static void ValidatePointerPosition(float x, float y)
+    {
+        if (!float.IsFinite(x) || !float.IsFinite(y))
+        {
+            throw new ArgumentOutOfRangeException(nameof(x), "Preview pointer coordinates must be finite.");
         }
     }
 
